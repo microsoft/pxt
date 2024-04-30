@@ -6,7 +6,7 @@
 
 import * as Blockly from "blockly";
 
-import { DUPLICATE_ON_DRAG_MUTATION_KEY } from "./duplicateOnDrag";
+import { DUPLICATE_ON_DRAG_MUTATION_KEY, isAllowlistedShadow } from "./duplicateOnDrag";
 import eventUtils = Blockly.Events;
 import Coordinate = Blockly.utils.Coordinate;
 import dom = Blockly.utils.dom;
@@ -76,7 +76,7 @@ export class DuplicateOnDragStrategy implements Blockly.IDragStrategy {
      * from any parent blocks.
      */
     startDrag(e?: PointerEvent): void {
-        if (this.block.isShadow()) {
+        if (this.block.isShadow() && !isAllowlistedShadow(this.block)) {
             this.startDraggingShadow(e);
             return;
         }
@@ -151,6 +151,11 @@ export class DuplicateOnDragStrategy implements Blockly.IDragStrategy {
     private disconnectBlock(healStack: boolean) {
         let clone: Blockly.Block;
         let target: Blockly.Connection;
+        const isShadow = this.block.isShadow();
+
+        if (isShadow) {
+            this.block.setShadow(false);
+        }
 
         const mutation = this.block.mutationToDom?.();
 
@@ -175,6 +180,7 @@ export class DuplicateOnDragStrategy implements Blockly.IDragStrategy {
 
         if (clone && target) {
             target.connect(clone.outputConnection);
+            clone.setShadow(isShadow);
 
             mutation.setAttribute(DUPLICATE_ON_DRAG_MUTATION_KEY, "false");
             this.block.domToMutation?.(mutation);
@@ -461,8 +467,4 @@ export class DuplicateOnDragStrategy implements Blockly.IDragStrategy {
         this.block.setDragging(false);
         this.dragging = false;
     }
-}
-
-function isDuplicateOnDragBlock(block: Blockly.Block) {
-    return block.mutationToDom?.()?.getAttribute(DUPLICATE_ON_DRAG_MUTATION_KEY)?.toLowerCase() === "true";
 }

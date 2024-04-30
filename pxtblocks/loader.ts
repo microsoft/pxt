@@ -25,6 +25,7 @@ import { initContextMenu } from "./contextMenu";
 import { renderCodeCard } from "./codecardRenderer";
 import { applyMonkeyPatches } from "./monkeyPatches";
 import { FieldDropdown } from "./fields/field_dropdown";
+import { DuplicateOnDragStrategy, setDraggableShadowBlocks } from "./plugins/duplicateOnDrag";
 
 
 interface BlockDefinition {
@@ -101,8 +102,7 @@ export function blockSymbol(type: string): pxtc.SymbolInfo {
 export function injectBlocks(blockInfo: pxtc.BlocksInfo): pxtc.SymbolInfo[] {
     cachedBlockInfo = blockInfo;
 
-    // FIXME (riknoll): This relies on Blockly's custom dragging support (coming in v11)
-    // Blockly.pxtBlocklyUtils.whitelistDraggableBlockTypes(blockInfo.blocks.filter(fn => fn.attributes.duplicateShadowOnDrag).map(fn => fn.attributes.blockId));
+   setDraggableShadowBlocks(blockInfo.blocks.filter(fn => fn.attributes.duplicateShadowOnDrag).map(fn => fn.attributes.blockId));
 
     // inject Blockly with all block definitions
     return blockInfo.blocks
@@ -216,6 +216,10 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
 
     const helpUrl = pxt.blocks.getHelpUrl(fn);
     if (helpUrl) block.setHelpUrl(helpUrl)
+
+    if ((block as Blockly.BlockSvg).setDragStrategy) {
+        (block as Blockly.BlockSvg).setDragStrategy(new DuplicateOnDragStrategy(block as Blockly.BlockSvg));
+    }
 
     block.setColour(typeof color === "string" ? pxt.toolbox.getAccessibleBackground(color) : color);
     let blockShape = provider.SHAPES.ROUND;

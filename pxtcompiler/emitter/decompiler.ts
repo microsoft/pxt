@@ -361,7 +361,7 @@ namespace ts.pxtc.decompiler {
         snippetMode?: boolean; // do not emit "on start"
         alwaysEmitOnStart?: boolean; // emit "on start" even if empty
         errorOnGreyBlocks?: boolean; // fail on grey blocks (usefull when testing docs)
-        allowedArgumentTypes?: string[]; // a whitelist of types that can be decompiled for user defined function arguments
+        allowedArgumentTypes?: string[]; // an allowlist of types that can be decompiled for user defined function arguments
         generateSourceMap?: boolean; // generate block ids
         /*@internal*/
         includeGreyBlockMessages?: boolean; // adds error attributes to the mutations in typescript_statement blocks (for debug pruposes)

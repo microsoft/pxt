@@ -56,7 +56,7 @@ namespace pxt {
             if (pxt.github.isGithubId(fullVers)) {
                 const repoInfo = pxt.github.parseRepoId(fullVers);
                 const packagesConfig = await pxt.packagesConfigAsync()
-                const gitRepo = await pxt.github.repoAsync(repoInfo.fullName, packagesConfig)    // Make sure repo exists and is whitelisted
+                const gitRepo = await pxt.github.repoAsync(repoInfo.fullName, packagesConfig)    // Make sure repo exists and is allowlisted
                 return gitRepo ? await pxt.github.pkgConfigAsync(repoInfo.fullName, repoInfo.tag, packagesConfig) : null
             } else if (fullVers.startsWith("workspace:")) {
                 // It's a local package
