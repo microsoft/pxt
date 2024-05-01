@@ -74,15 +74,6 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
         );
     };
 
-    const getRubricName = (): JSX.Element | null => {
-        const rubricName = getSafeChecklistName(teacherTool);
-        return rubricName ? (
-            <div className={css["rubric-name"]}>
-                <span>{rubricName}</span>
-            </div>
-        ) : null;
-    };
-
     const onHomeClicked = () => {
         pxt.tickEvent(Ticks.HomeLink);
 
@@ -103,7 +94,6 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
             <div className={css["left-menu"]}>
                 {getOrganizationLogo()}
                 {getTargetLogo()}
-                {getRubricName()}
             </div>
 
             <div className={css["right-menu"]}>
