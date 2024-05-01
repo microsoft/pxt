@@ -22,7 +22,7 @@ export const ImportRubricModal: React.FC<IProps> = () => {
     async function handleFileDroppedAsync(file: File) {
         const parsedRubric = await getRubricFromFileAsync(file, false /* allow partial */);
         if (!parsedRubric) {
-            setErrorMessage(Strings.InvalidRubricFile);
+            setErrorMessage(Strings.InvalidChecklistFile);
         } else {
             setErrorMessage(undefined);
             closeModal();
@@ -31,7 +31,7 @@ export const ImportRubricModal: React.FC<IProps> = () => {
     }
 
     return teacherTool.modalOptions?.modal === "import-rubric" ? (
-        <Modal title={Strings.ImportRubric} onClose={closeModal} className={css["import-rubric-modal"]}>
+        <Modal title={Strings.ImportChecklist} onClose={closeModal} className={css["import-rubric-modal"]}>
             <div className={css["import-rubric"]}>
                 <DragAndDropFileSurface onFileDroppedAsync={handleFileDroppedAsync} errorMessage={errorMessage} />
             </div>

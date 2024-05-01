@@ -19,7 +19,7 @@ export const ActiveRubricDisplay: React.FC<ActiveRubricDisplayProps> = ({}) => {
                     label={Strings.Name}
                     ariaLabel={Strings.Name}
                     onChange={setRubricName}
-                    placeholder={Strings.RubricName}
+                    placeholder={Strings.ChecklistName}
                     initialValue={teacherTool.rubric.name}
                     preserveValueOnBlur={true}
                     className={css["rubric-name-input"]}

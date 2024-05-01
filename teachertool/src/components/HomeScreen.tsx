@@ -88,7 +88,7 @@ interface RubricResourceCardProps {
 
 const RubricResourceCard: React.FC<RubricResourceCardProps> = ({ cardTitle, imageUrl, rubricUrl }) => {
     const onCardClickedAsync = async () => {
-        pxt.tickEvent(Ticks.LoadRubric, { rubricUrl });
+        pxt.tickEvent(Ticks.LoadChecklist, { rubricUrl });
         await loadRubricAsync(rubricUrl);
     };
     return (
@@ -143,12 +143,12 @@ const Carousel: React.FC<CarouselProps> = ({ children }) => {
 
 const GetStarted: React.FC = () => {
     const onNewRubricClickedAsync = async () => {
-        pxt.tickEvent(Ticks.NewRubric);
+        pxt.tickEvent(Ticks.NewChecklist);
         await resetRubricAsync();
     };
 
     const onImportRubricClicked = () => {
-        pxt.tickEvent(Ticks.ImportRubric);
+        pxt.tickEvent(Ticks.ImportChecklist);
         showModal({ modal: "import-rubric" } as ImportRubricOptions);
     };
 
@@ -159,13 +159,13 @@ const GetStarted: React.FC = () => {
             </div>
             <Carousel>
                 <IconCard
-                    title={Strings.NewRubric}
+                    title={Strings.NewChecklist}
                     icon={"fas fa-plus-circle"}
                     className={css.newRubric}
                     onClick={onNewRubricClickedAsync}
                 />
                 <IconCard
-                    title={Strings.ImportRubric}
+                    title={Strings.ImportChecklist}
                     icon={"fas fa-file-upload"}
                     className={css.importRubric}
                     onClick={onImportRubricClicked}

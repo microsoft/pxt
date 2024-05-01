@@ -21,18 +21,18 @@ import { PrintButton } from "./PrintButton";
 import { ImportRubricOptions } from "../types/modalOptions";
 
 function handleImportRubricClicked() {
-    pxt.tickEvent(Ticks.ImportRubric);
+    pxt.tickEvent(Ticks.ImportChecklist);
     showModal({ modal: "import-rubric" } as ImportRubricOptions);
 }
 
 function handleExportRubricClicked() {
-    pxt.tickEvent(Ticks.ExportRubric);
+    pxt.tickEvent(Ticks.ExportChecklist);
     const { state: teacherTool } = stateAndDispatch();
     writeRubricToFile(teacherTool.rubric);
 }
 
 async function handleNewRubricClickedAsync() {
-    pxt.tickEvent(Ticks.NewRubric);
+    pxt.tickEvent(Ticks.NewChecklist);
     await resetRubricAsync();
 }
 
@@ -82,21 +82,21 @@ function getActionMenuItems(tab: TabName): MenuItem[] {
         case "rubric":
             items.push(
                 {
-                    title: Strings.NewRubric,
-                    label: Strings.NewRubric,
-                    ariaLabel: Strings.NewRubric,
+                    title: Strings.NewChecklist,
+                    label: Strings.NewChecklist,
+                    ariaLabel: Strings.NewChecklist,
                     onClick: handleNewRubricClickedAsync,
                 },
                 {
-                    title: Strings.ImportRubric,
-                    label: Strings.ImportRubric,
-                    ariaLabel: Strings.ImportRubric,
+                    title: Strings.ImportChecklist,
+                    label: Strings.ImportChecklist,
+                    ariaLabel: Strings.ImportChecklist,
                     onClick: handleImportRubricClicked,
                 },
                 {
-                    title: Strings.ExportRubric,
-                    label: Strings.ExportRubric,
-                    ariaLabel: Strings.ExportRubric,
+                    title: Strings.ExportChecklist,
+                    label: Strings.ExportChecklist,
+                    ariaLabel: Strings.ExportChecklist,
                     onClick: handleExportRubricClicked,
                 }
             );

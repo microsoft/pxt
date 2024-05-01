@@ -72,7 +72,7 @@ export function getSafeProjectName(state: AppState): string | undefined {
 }
 
 export function getSafeRubricName(state: AppState): string | undefined {
-    return state.rubric.name || Strings.UntitledRubric;
+    return state.rubric.name || Strings.UntitledChecklist;
 }
 
 export function getCatalogCriteria(state: AppState): CatalogCriteria[] {

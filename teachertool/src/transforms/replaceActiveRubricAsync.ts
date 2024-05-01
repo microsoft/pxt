@@ -12,8 +12,8 @@ export async function replaceActiveRubricAsync(newRubric: Rubric): Promise<boole
     const title =
         !newRubric.name && !newRubric.criteria?.length
             ? Strings.CreateEmptyChecklist
-            : lf("Import '{0}'?", newRubric.name ? newRubric.name : Strings.UntitledRubric);
-    if (isRubricLoaded(teacherTool) && !(await confirmAsync(title, Strings.ConfirmReplaceRubricMsg))) {
+            : lf("Import '{0}'?", newRubric.name ? newRubric.name : Strings.UntitledChecklist);
+    if (isRubricLoaded(teacherTool) && !(await confirmAsync(title, Strings.ConfirmReplaceChecklistMsg))) {
         return false;
     }
 
