@@ -87,38 +87,6 @@
             ]
         },
         {
-            ".desc": "A variable's value is set",
-            "name": "variable_set",
-            "threshold": 1,
-            "checks": [
-                {
-                    "validator": "blocksExist",
-                    "blockCounts": [
-                        {
-                            "blockId": "variables_set",
-                            "count": 1
-                        }
-                    ]
-                }
-            ]
-        },
-        {
-            ".desc": "A variable's value is used",
-            "name": "variable_accessed",
-            "threshold": 1,
-            "checks": [
-                {
-                    "validator": "blocksExist",
-                    "blockCounts": [
-                        {
-                            "blockId": "variables_get",
-                            "count": 1
-                        }
-                    ]
-                }
-            ]
-        },
-        {
             ".desc": "A parameter's value is used",
             "name": "parameter_variable_accessed",
             "threshold": 1,
