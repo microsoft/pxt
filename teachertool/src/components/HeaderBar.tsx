@@ -4,7 +4,6 @@ import css from "./styling/HeaderBar.module.scss";
 import { Button } from "react-common/components/controls/Button";
 import { MenuBar } from "react-common/components/controls/MenuBar";
 import { AppStateContext } from "../state/appStateContext";
-import { getSafeChecklistName } from "../state/helpers";
 import { Ticks } from "../constants";
 
 interface HeaderBarProps {}
