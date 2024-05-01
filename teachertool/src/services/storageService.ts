@@ -1,7 +1,7 @@
 import { openDB, IDBPDatabase } from "idb";
 import { ErrorCode } from "../types/errorCode";
 import { logError } from "./loggingService";
-import { Rubric } from "../types/rubric";
+import { Checklist } from "../types/checklist";
 
 // ----------------------------------
 // Local Storage (for simple key -> value mappings of small data)
@@ -9,7 +9,7 @@ import { Rubric } from "../types/rubric";
 
 const KEY_PREFIX = "teachertool";
 const AUTORUN_KEY = [KEY_PREFIX, "autorun"].join("/");
-const LAST_ACTIVE_RUBRIC_KEY = [KEY_PREFIX, "lastActiveRubric"].join("/");
+const LAST_ACTIVE_CHECKLIST_KEY = [KEY_PREFIX, "lastActiveChecklist"].join("/");
 const SPLIT_POSITION_KEY = [KEY_PREFIX, "splitPosition"].join("/");
 
 function getValue(key: string, defaultValue?: string): string | undefined {
@@ -30,7 +30,7 @@ function delValue(key: string) {
 
 const teacherToolDbName = "makecode-project-insights";
 const dbVersion = 1;
-const rubricsStoreName = "rubrics";
+const checklistsStoreName = "checklists";
 
 class TeacherToolDb {
     db: IDBPDatabase | undefined;
@@ -39,7 +39,7 @@ class TeacherToolDb {
         if (this.db) return;
         this.db = await openDB(teacherToolDbName, dbVersion, {
             upgrade(db) {
-                db.createObjectStore(rubricsStoreName, { keyPath: "name" });
+                db.createObjectStore(checklistsStoreName, { keyPath: "name" });
             },
         });
     }
@@ -82,16 +82,16 @@ class TeacherToolDb {
         }
     }
 
-    public getRubric(name: string): Promise<Rubric | undefined> {
-        return this.getAsync<Rubric>(rubricsStoreName, name);
+    public getChecklist(name: string): Promise<Checklist | undefined> {
+        return this.getAsync<Checklist>(checklistsStoreName, name);
     }
 
-    public saveRubric(rubric: Rubric): Promise<void> {
-        return this.setAsync(rubricsStoreName, rubric);
+    public saveChecklist(checklist: Checklist): Promise<void> {
+        return this.setAsync(checklistsStoreName, checklist);
     }
 
-    public deleteRubric(name: string): Promise<void> {
-        return this.deleteAsync(rubricsStoreName, name);
+    public deleteChecklist(name: string): Promise<void> {
+        return this.deleteAsync(checklistsStoreName, name);
     }
 }
 
@@ -101,14 +101,14 @@ const getDb = (async () => {
     return db;
 })();
 
-async function saveRubricToIndexedDbAsync(rubric: Rubric) {
+async function saveChecklistToIndexedDbAsync(checklist: Checklist) {
     const db = await getDb;
-    await db.saveRubric(rubric);
+    await db.saveChecklist(checklist);
 }
 
-async function deleteRubricFromIndexedDbAsync(name: string) {
+async function deleteChecklistFromIndexedDbAsync(name: string) {
     const db = await getDb;
-    await db.deleteRubric(name);
+    await db.deleteChecklist(name);
 }
 
 // ----------------------------------
@@ -132,18 +132,18 @@ export function setAutorun(autorun: boolean) {
     }
 }
 
-export function getLastActiveRubricName(): string {
+export function getLastActiveChecklistName(): string {
     try {
-        return getValue(LAST_ACTIVE_RUBRIC_KEY) ?? "";
+        return getValue(LAST_ACTIVE_CHECKLIST_KEY) ?? "";
     } catch (e) {
         logError(ErrorCode.localStorageReadError, e);
         return "";
     }
 }
 
-export function setLastActiveRubricName(name: string) {
+export function setLastActiveChecklistName(name: string) {
     try {
-        setValue(LAST_ACTIVE_RUBRIC_KEY, name);
+        setValue(LAST_ACTIVE_CHECKLIST_KEY, name);
     } catch (e) {
         logError(ErrorCode.localStorageWriteError, e);
     }
@@ -166,29 +166,29 @@ export function setLastSplitPosition(position: string) {
     }
 }
 
-export async function getRubric(name: string): Promise<Rubric | undefined> {
+export async function getChecklist(name: string): Promise<Checklist | undefined> {
     const db = await getDb;
 
-    let rubric: Rubric | undefined = undefined;
-    rubric = await db.getRubric(name);
+    let checklist: Checklist | undefined = undefined;
+    checklist = await db.getChecklist(name);
 
-    return rubric;
+    return checklist;
 }
 
-export async function getLastActiveRubricAsync(): Promise<Rubric | undefined> {
-    const lastActiveRubricName = getLastActiveRubricName();
-    return await getRubric(lastActiveRubricName);
+export async function getLastActiveChecklistAsync(): Promise<Checklist | undefined> {
+    const lastActiveChecklistName = getLastActiveChecklistName();
+    return await getChecklist(lastActiveChecklistName);
 }
 
-export async function saveRubricAsync(rubric: Rubric) {
-    await saveRubricToIndexedDbAsync(rubric);
-    setLastActiveRubricName(rubric.name);
+export async function saveChecklistAsync(checklist: Checklist) {
+    await saveChecklistToIndexedDbAsync(checklist);
+    setLastActiveChecklistName(checklist.name);
 }
 
-export async function deleteRubricAsync(name: string) {
-    await deleteRubricFromIndexedDbAsync(name);
+export async function deleteChecklistAsync(name: string) {
+    await deleteChecklistFromIndexedDbAsync(name);
 
-    if (getLastActiveRubricName() === name) {
-        setLastActiveRubricName("");
+    if (getLastActiveChecklistName() === name) {
+        setLastActiveChecklistName("");
     }
 }

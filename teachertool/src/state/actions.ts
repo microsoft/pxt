@@ -1,7 +1,7 @@
 import { ToastWithId, TabName, ProjectData } from "../types";
 import { CatalogCriteria, CriteriaResult } from "../types/criteria";
 import { ModalOptions } from "../types/modalOptions";
-import { Rubric } from "../types/rubric";
+import { Checklist } from "../types/checklist";
 
 // Changes to app state are performed by dispatching actions to the reducer
 type ActionBase = {
@@ -56,9 +56,9 @@ type SetCatalogOpen = ActionBase & {
     open: boolean;
 };
 
-type SetRubric = ActionBase & {
-    type: "SET_RUBRIC";
-    rubric: Rubric;
+type SetChecklist = ActionBase & {
+    type: "SET_CHECKLIST";
+    checklist: Checklist;
 };
 
 type ShowModal = ActionBase & {
@@ -126,7 +126,7 @@ export type Action =
     | SetTargetConfig
     | SetCatalog
     | SetCatalogOpen
-    | SetRubric
+    | SetChecklist
     | ShowModal
     | HideModal
     | SetValidatorPlans
@@ -184,9 +184,9 @@ const setCatalogOpen = (open: boolean): SetCatalogOpen => ({
     open,
 });
 
-const setRubric = (rubric: Rubric): SetRubric => ({
-    type: "SET_RUBRIC",
-    rubric,
+const setChecklist = (checklist: Checklist): SetChecklist => ({
+    type: "SET_CHECKLIST",
+    checklist: checklist,
 });
 
 const showModal = (modalOptions: ModalOptions): ShowModal => ({
@@ -250,7 +250,7 @@ export {
     setTargetConfig,
     setCatalog,
     setCatalogOpen,
-    setRubric,
+    setChecklist,
     showModal,
     hideModal,
     setValidatorPlans,

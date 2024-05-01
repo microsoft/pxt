@@ -9,16 +9,16 @@ import { Link } from "react-common/components/controls/Link";
 import { Button } from "react-common/components/controls/Button";
 import { classList } from "react-common/components/util";
 import { showModal } from "../transforms/showModal";
-import { resetRubricAsync } from "../transforms/resetRubricAsync";
-import { loadRubricAsync } from "../transforms/loadRubricAsync";
+import { resetChecklistAsync } from "../transforms/resetChecklistAsync";
+import { loadChecklistAsync } from "../transforms/loadChecklistAsync";
 import { Constants, Strings, Ticks } from "../constants";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Mousewheel, Navigation } from "swiper";
 import { AppStateContext } from "../state/appStateContext";
 import { CarouselCardSet, RequestStatus } from "../types";
 import { useJsonDocRequest } from "../hooks/useJsonDocRequest";
-import { isRubricResourceCard } from "../utils";
-import { ImportRubricOptions } from "../types/modalOptions";
+import { isChecklistResourceCard } from "../utils";
+import { ImportChecklistOptions } from "../types/modalOptions";
 
 const Welcome: React.FC = () => {
     return (
@@ -80,21 +80,21 @@ const LoadingCard: React.FC<LoadingCardProps> = ({ delay }) => {
     );
 };
 
-interface RubricResourceCardProps {
+interface ChecklistResourceCardProps {
     cardTitle: string;
     imageUrl: string;
-    rubricUrl: string;
+    checklistUrl: string;
 }
 
-const RubricResourceCard: React.FC<RubricResourceCardProps> = ({ cardTitle, imageUrl, rubricUrl }) => {
+const ChecklistResourceCard: React.FC<ChecklistResourceCardProps> = ({ cardTitle, imageUrl, checklistUrl }) => {
     const onCardClickedAsync = async () => {
-        pxt.tickEvent(Ticks.LoadChecklist, { rubricUrl });
-        await loadRubricAsync(rubricUrl);
+        pxt.tickEvent(Ticks.LoadChecklist, { checklistUrl });
+        await loadChecklistAsync(checklistUrl);
     };
     return (
         <div className={css.cardContainer}>
             <Button
-                className={classList(css.cardButton, css.rubricResource)}
+                className={classList(css.cardButton, css.checklistResource)}
                 title={cardTitle}
                 onClick={onCardClickedAsync}
             >
@@ -105,7 +105,7 @@ const RubricResourceCard: React.FC<RubricResourceCardProps> = ({ cardTitle, imag
                         backgroundSize: "cover",
                     }}
                 >
-                    <div className={classList(css.cardTitle, css.rubricResourceCardTitle)}>
+                    <div className={classList(css.cardTitle, css.checklistResourceCardTitle)}>
                         <h3>{cardTitle}</h3>
                     </div>
                 </div>
@@ -142,14 +142,14 @@ const Carousel: React.FC<CarouselProps> = ({ children }) => {
 };
 
 const GetStarted: React.FC = () => {
-    const onNewRubricClickedAsync = async () => {
+    const onNewChecklistClickedAsync = async () => {
         pxt.tickEvent(Ticks.NewChecklist);
-        await resetRubricAsync();
+        await resetChecklistAsync();
     };
 
-    const onImportRubricClicked = () => {
+    const onImportChecklistClicked = () => {
         pxt.tickEvent(Ticks.ImportChecklist);
-        showModal({ modal: "import-rubric" } as ImportRubricOptions);
+        showModal({ modal: "import-checklist" } as ImportChecklistOptions);
     };
 
     return (
@@ -161,14 +161,14 @@ const GetStarted: React.FC = () => {
                 <IconCard
                     title={Strings.NewChecklist}
                     icon={"fas fa-plus-circle"}
-                    className={css.newRubric}
-                    onClick={onNewRubricClickedAsync}
+                    className={css.newChecklist}
+                    onClick={onNewChecklistClickedAsync}
                 />
                 <IconCard
                     title={Strings.ImportChecklist}
                     icon={"fas fa-file-upload"}
-                    className={css.importRubric}
-                    onClick={onImportRubricClicked}
+                    className={css.importChecklist}
+                    onClick={onImportChecklistClicked}
                 />
             </Carousel>
         </div>
@@ -201,8 +201,8 @@ const CardCarousel: React.FC<DataCarouselProps> = ({ title, cardsUrl }) => {
                 {fetchStatus === "success" && (
                     <Carousel>
                         {cardSet?.cards.map((card, index) => {
-                            if (isRubricResourceCard(card)) {
-                                return <RubricResourceCard key={index} {...card} />;
+                            if (isChecklistResourceCard(card)) {
+                                return <ChecklistResourceCard key={index} {...card} />;
                             } else {
                                 return <LoadingCard />;
                             }

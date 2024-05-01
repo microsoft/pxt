@@ -11,8 +11,8 @@ import { Toasts } from "./components/Toasts";
 import { showToast } from "./transforms/showToast";
 import { loadCatalogAsync } from "./transforms/loadCatalogAsync";
 import { loadValidatorPlansAsync } from "./transforms/loadValidatorPlansAsync";
-import { tryLoadLastActiveRubricAsync } from "./transforms/tryLoadLastActiveRubricAsync";
-import { ImportRubricModal } from "./components/ImportRubricModal";
+import { tryLoadLastActiveChecklistAsync } from "./transforms/tryLoadLastActiveChecklistAsync";
+import { ImportChecklistModal } from "./components/ImportChecklistModal";
 import { ConfirmationModal } from "./components/ConfirmationModal";
 import { BlockPickerModal } from "./components/BlockPickerModal";
 import { ScreenReaderAnnouncer } from "./components/ScreenReaderAnnouncer";
@@ -33,7 +33,7 @@ export const App = () => {
                 // Load catalog and validator plans into state.
                 await loadCatalogAsync();
                 await loadValidatorPlansAsync();
-                await tryLoadLastActiveRubricAsync();
+                await tryLoadLastActiveChecklistAsync();
 
                 // Test notification
                 showToast({
@@ -57,7 +57,7 @@ export const App = () => {
         <>
             <HeaderBar />
             <MainPanel />
-            <ImportRubricModal />
+            <ImportChecklistModal />
             <ConfirmationModal />
             <BlockPickerModal />
             <Toasts />
