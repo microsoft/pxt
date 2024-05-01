@@ -179,7 +179,7 @@ my_asset_pack=github:my_github_username/my_asset_pack
 ```
 ````
 
-**Important**: Make sure that the name on the left hand side of the "=" matches the name of your extension from Step 1. However, if the asset pack's repository name contains "-" such as `github:my_github_username/my-asset-pack`, the name on the left of the "=" should replace the "-" characters with spaces such that `my-asset-pack` becomes `my asset pack`.
+**Important**: Make sure that the name on the left hand side of the "=" matches the name of your extension from Step 1. However, if the asset pack's repository name contains "-" such as `github:my_github_username/my-asset-pack`, the name on the left of the "=" should remove the "-" characters such that `my-asset-pack` becomes `myassetpack`.
 
 Now, instead of including the background image in your code snippets, you can reference it like so:
 
