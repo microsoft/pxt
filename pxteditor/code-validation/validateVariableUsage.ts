@@ -13,12 +13,11 @@ export function validateVariableUsage({
     count: number;
     name?: String;
 }): {
-    passingVarDefinitions: Blockly.Block[];
-    passingVarCount: number;
+    passingVarDefinitions: Map<string, Blockly.Block[]>;
     passed: boolean;
 } {
     const varDefinitionBlocks: Map<string, Blockly.Block[]> = new Map();
-    const usedVars: Set<string> = new Set(); // Use set so we don't double count vars
+    const usedVars: Set<string> = new Set();
 
     for (const block of usedBlocks) {
         if (!block.isEnabled()) {
@@ -45,18 +44,12 @@ export function validateVariableUsage({
 
     // Var passes check if it is both used and defined.
     // We return the definition blocks to allow for recursively checking how the var was set.
-    // Track passingVarCount separately, since a var could have more than one set block.
-    const passingVarDefinitions: Blockly.Block[] = [];
-    let passingVarCount = 0;
-    for (const varName of usedVars) {
-        const varBlocks = varDefinitionBlocks.get(varName) ?? [];
-        if (varBlocks.length > 0) {
-            passingVarCount++;
-            for (const varBlock of varBlocks) {
-                passingVarDefinitions.push(varBlock);
-            }
+    const passingVarDefinitions = new Map<string, Blockly.Block[]>();
+    for (const [varName, definitionBlocks] of varDefinitionBlocks) {
+        if (usedVars.has(varName)) {
+            passingVarDefinitions.set(varName, definitionBlocks);
         }
     }
 
-    return { passingVarDefinitions, passingVarCount, passed: passingVarCount >= count };
+    return { passingVarDefinitions, passed: passingVarDefinitions.size >= count };
 }

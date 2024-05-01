@@ -115,5 +115,12 @@ function runVariableUsageValidation(usedBlocks: Blockly.Block[], inputs: pxt.blo
         count: inputs.count,
         name: inputs.name
     });
-    return [blockResults.passingVarDefinitions, blockResults.passed];
+
+    // Flatten the map of passing variable definition blocks
+    const passingVarDefinitions: Blockly.Block[] = [];
+    for (const blocks of blockResults.passingVarDefinitions.values()) {
+        passingVarDefinitions.push(...blocks);
+    }
+
+    return [passingVarDefinitions, blockResults.passed];
 }
