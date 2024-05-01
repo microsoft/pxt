@@ -46,8 +46,8 @@ const WorkspaceTabButtons: React.FC = () => {
 
     return (
         <TabGroup>
-            <TabButton name="home">{lf("Home")}</TabButton>
-            <TabButton name="rubric">{lf("Rubric")}</TabButton>
+            <TabButton name="home">{Strings.Home}</TabButton>
+            <TabButton name="rubric">{Strings.Checklist}</TabButton>
             <TabButton name="results" disabled={!isProjectLoaded(teacherTool)}>
                 {lf("Results")}
             </TabButton>

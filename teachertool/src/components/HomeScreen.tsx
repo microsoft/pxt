@@ -15,7 +15,7 @@ import { Constants, Strings, Ticks } from "../constants";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Mousewheel, Navigation } from "swiper";
 import { AppStateContext } from "../state/appStateContext";
-import { CarouselCardSet, RequestStatus, CarouselRubricResourceCard, CardType } from "../types";
+import { CarouselCardSet, RequestStatus } from "../types";
 import { useJsonDocRequest } from "../hooks/useJsonDocRequest";
 import { isRubricResourceCard } from "../utils";
 import { ImportRubricOptions } from "../types/modalOptions";
@@ -23,9 +23,9 @@ import { ImportRubricOptions } from "../types/modalOptions";
 const Welcome: React.FC = () => {
     return (
         <div className={css.welcome}>
-            <h1>{lf("Welcome to MakeCode Project Insights!")}</h1>
+            <h1>{lf("Welcome to MakeCode Code Evaluation!")}</h1>
             <p>
-                {lf("This tool is designed to help you evaluate student projects using a rubric.")}{" "}
+                {lf("This tool is designed to help you evaluate student projects using an automated checklist.")}{" "}
                 <Link target="_blank" href={Constants.LearnMoreLink}>
                     {lf("Learn More.")}
                 </Link>
