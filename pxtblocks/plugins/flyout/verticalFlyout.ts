@@ -208,6 +208,14 @@ export class VerticalFlyout implements Blockly.IFlyout {
         }
     }
 
+    getContents(): (Blockly.Block | Blockly.FlyoutButton)[] {
+        if (this.activeFlyout) {
+            return this.activeFlyout.getContents() as (Blockly.Block | Blockly.FlyoutButton)[];
+        }
+
+        return [];
+    }
+
     protected blocksToString(xmlList: Element[]): string {
         let xmlSerializer: XMLSerializer = null;
         const serialize = (e: Element) => {
