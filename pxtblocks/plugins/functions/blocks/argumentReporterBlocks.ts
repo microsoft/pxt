@@ -7,7 +7,7 @@ import {
     ARGUMENT_REPORTER_CUSTOM_BLOCK_TYPE,
 } from "../constants";
 import { MsgKey } from "../msg";
-import { DUPLICATE_ON_DRAG_MUTATION_KEY, DuplicateOnDragStrategy } from "../../duplicateOnDrag";
+import { DUPLICATE_ON_DRAG_MUTATION_KEY, DuplicateOnDragStrategy, setDuplicateOnDragStrategy } from "../../duplicateOnDrag";
 import { PathObject } from "../../renderer/pathObject";
 
 type ArgumentReporterMixinType = typeof ARGUMENT_REPORTER_MIXIN;
@@ -57,7 +57,7 @@ Blockly.Blocks[ARGUMENT_REPORTER_BOOLEAN_BLOCK_TYPE] = {
             extensions: ["output_boolean"],
         });
         this.typeName_ = "boolean";
-        this.setDragStrategy(new DuplicateOnDragStrategy(this));
+        setDuplicateOnDragStrategy(this);
     },
 };
 
@@ -77,7 +77,7 @@ Blockly.Blocks[ARGUMENT_REPORTER_STRING_BLOCK_TYPE] = {
             extensions: ["output_string"],
         });
         this.typeName_ = "string";
-        this.setDragStrategy(new DuplicateOnDragStrategy(this));
+        setDuplicateOnDragStrategy(this);
     },
 };
 
@@ -97,7 +97,7 @@ Blockly.Blocks[ARGUMENT_REPORTER_NUMBER_BLOCK_TYPE] = {
             extensions: ["output_number"],
         });
         this.typeName_ = "number";
-        this.setDragStrategy(new DuplicateOnDragStrategy(this));
+        setDuplicateOnDragStrategy(this);
     },
 };
 
@@ -117,7 +117,7 @@ Blockly.Blocks[ARGUMENT_REPORTER_ARRAY_BLOCK_TYPE] = {
             extensions: ["output_array"],
         });
         this.typeName_ = "Array";
-        this.setDragStrategy(new DuplicateOnDragStrategy(this));
+        setDuplicateOnDragStrategy(this);
     },
 };
 
@@ -139,7 +139,7 @@ Blockly.Blocks[ARGUMENT_REPORTER_CUSTOM_BLOCK_TYPE] = {
             output: null,
         });
         this.typeName_ = "";
-        this.setDragStrategy(new DuplicateOnDragStrategy(this));
+        setDuplicateOnDragStrategy(this);
     },
 
     mutationToDom(this: ArgumentReporterBlock) {

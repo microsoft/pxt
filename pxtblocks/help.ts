@@ -5,7 +5,7 @@ import * as Blockly from "blockly";
 import { cleanOuterHTML, getFirstChildWithAttr } from "./xml";
 import { promptTranslateBlock } from "./external";
 import { createToolboxBlock } from "./toolbox";
-import { DuplicateOnDragStrategy } from "./plugins/duplicateOnDrag";
+import { DuplicateOnDragStrategy, setDuplicateOnDragStrategy } from "./plugins/duplicateOnDrag";
 
 export function setBuiltinHelpInfo(block: any, id: string) {
     const info = pxt.blocks.getBlockDefinition(id);
@@ -23,7 +23,7 @@ export function setHelpResources(block: Blockly.BlockSvg, id: string, name: stri
     if (colour) block.setColour(colour);
     if (undeletable) block.setDeletable(false);
 
-    block.setDragStrategy(new DuplicateOnDragStrategy(block));
+    setDuplicateOnDragStrategy(block);
 
     let tb = document.getElementById('blocklyToolboxDefinition');
     let xml: HTMLElement = tb ? getFirstChildWithAttr(tb, "block", "type", id) as HTMLElement : undefined;

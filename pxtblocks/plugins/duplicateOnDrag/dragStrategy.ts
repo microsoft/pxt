@@ -468,3 +468,8 @@ export class DuplicateOnDragStrategy implements Blockly.IDragStrategy {
         this.dragging = false;
     }
 }
+
+
+export function setDuplicateOnDragStrategy(block: Blockly.Block | Blockly.BlockSvg) {
+    (block as Blockly.BlockSvg).setDragStrategy?.(new DuplicateOnDragStrategy(block as Blockly.BlockSvg));
+}

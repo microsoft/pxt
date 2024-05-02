@@ -25,7 +25,7 @@ import { initContextMenu } from "./contextMenu";
 import { renderCodeCard } from "./codecardRenderer";
 import { applyMonkeyPatches } from "./monkeyPatches";
 import { FieldDropdown } from "./fields/field_dropdown";
-import { DuplicateOnDragStrategy, setDraggableShadowBlocks } from "./plugins/duplicateOnDrag";
+import { setDraggableShadowBlocks, setDuplicateOnDragStrategy } from "./plugins/duplicateOnDrag";
 
 
 interface BlockDefinition {
@@ -217,9 +217,7 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
     const helpUrl = pxt.blocks.getHelpUrl(fn);
     if (helpUrl) block.setHelpUrl(helpUrl)
 
-    if ((block as Blockly.BlockSvg).setDragStrategy) {
-        (block as Blockly.BlockSvg).setDragStrategy(new DuplicateOnDragStrategy(block as Blockly.BlockSvg));
-    }
+    setDuplicateOnDragStrategy(block);
 
     block.setColour(typeof color === "string" ? pxt.toolbox.getAccessibleBackground(color) : color);
     let blockShape = provider.SHAPES.ROUND;
