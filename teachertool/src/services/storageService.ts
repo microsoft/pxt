@@ -29,7 +29,7 @@ function delValue(key: string) {
 // ----------------------------------
 
 const teacherToolDbName = "makecode-project-insights";
-const dbVersion = 1;
+const dbVersion = 2;
 const checklistsStoreName = "checklists";
 
 class TeacherToolDb {
