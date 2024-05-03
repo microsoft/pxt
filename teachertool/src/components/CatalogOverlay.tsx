@@ -1,6 +1,6 @@
 import { useContext, useMemo, useState } from "react";
 import { AppStateContext } from "../state/appStateContext";
-import { addCriteriaToRubric } from "../transforms/addCriteriaToRubric";
+import { addCriteriaToChecklist } from "../transforms/addCriteriaToChecklist";
 import { CatalogCriteria } from "../types/criteria";
 import { getCatalogCriteria } from "../state/helpers";
 import { ReadOnlyCriteriaDisplay } from "./ReadonlyCriteriaDisplay";
@@ -75,7 +75,7 @@ const CatalogList: React.FC = () => {
 
     const criteria = useMemo<CatalogCriteria[]>(
         () => getCatalogCriteria(teacherTool),
-        [teacherTool.catalog, teacherTool.rubric]
+        [teacherTool.catalog, teacherTool.checklist]
     );
 
     function updateRecentlyAddedValue(id: string, value: NodeJS.Timeout | undefined) {
@@ -91,7 +91,7 @@ const CatalogList: React.FC = () => {
     }
 
     function onItemClicked(c: CatalogCriteria) {
-        addCriteriaToRubric([c.id]);
+        addCriteriaToChecklist([c.id]);
 
         // Set a timeout to remove the recently added indicator
         // and save it in the state.
@@ -109,7 +109,7 @@ const CatalogList: React.FC = () => {
     return (
         <div className={css["catalog-list"]}>
             {criteria.map(c => {
-                const existingInstanceCount = teacherTool.rubric.criteria.filter(
+                const existingInstanceCount = teacherTool.checklist.criteria.filter(
                     i => i.catalogCriteriaId === c.id
                 ).length;
                 const isMaxed = c.maxCount !== undefined && existingInstanceCount >= c.maxCount;

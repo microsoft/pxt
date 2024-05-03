@@ -1,4 +1,4 @@
-// A criteria defined in the catalog of all possible criteria for the user to choose from when creating a rubric.
+// A criteria defined in the catalog of all possible criteria for the user to choose from when creating a checklist.
 export interface CatalogCriteria {
     id: string; // A unique id (GUID) for the catalog criteria
     use: string; // Refers to the validator plan this criteria relies upon
@@ -10,7 +10,7 @@ export interface CatalogCriteria {
     maxCount?: number; // The maximum number of instances allowed for this criteria within a single checklist. Unlimited if undefined.
 }
 
-// An instance of a criteria in a rubric.
+// An instance of a criteria in a checklist.
 export interface CriteriaInstance {
     catalogCriteriaId: string;
     instanceId: string;

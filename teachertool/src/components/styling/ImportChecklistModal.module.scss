@@ -1,15 +1,15 @@
-.import-rubric-modal {
+.import-checklist-modal {
     div[class*="common-modal-body"] {
         background-color: var(--pxt-content-background);
         justify-content: center;
     }
 
-    .import-rubric {
+    .import-checklist {
         display: flex;
         flex-direction: column;
         gap: 0.5rem;
 
-        .rubric-preview-container {
+        .checklist-preview-container {
             max-height: 50vh;
             overflow-y: auto;
             border: 2px solid var(--pxt-content-foreground);

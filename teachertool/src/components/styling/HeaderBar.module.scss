@@ -41,17 +41,4 @@
             margin: 0 1rem;
         }
     }
-
-    .rubric-name {
-        display: flex;
-        align-items: center;
-        &:before {
-            height: 1.5rem;
-            border-left: 2px solid var(--pxt-headerbar-foreground);
-            content: " ";
-        }
-        span {
-            margin: 0 1rem;
-        }
-    }
 }

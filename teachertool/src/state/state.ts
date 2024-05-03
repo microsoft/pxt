@@ -1,8 +1,8 @@
 import { ToastWithId, TabName, ProjectData } from "../types";
 import { CatalogCriteria, CriteriaResult } from "../types/criteria";
 import { ModalOptions } from "../types/modalOptions";
-import { Rubric } from "../types/rubric";
-import { makeRubric } from "../utils";
+import { Checklist } from "../types/checklist";
+import { makeChecklist as makeChecklist } from "../utils";
 
 export type AppState = {
     targetConfig?: pxt.TargetConfig;
@@ -10,7 +10,7 @@ export type AppState = {
     evalResults: pxt.Map<CriteriaResult>; // Criteria Instance Id -> Result
     projectMetadata: ProjectData | undefined;
     catalog: CatalogCriteria[] | undefined;
-    rubric: Rubric;
+    checklist: Checklist;
     activeTab: TabName;
     validatorPlans: pxt.blocks.ValidatorPlan[] | undefined;
     autorun: boolean;
@@ -30,7 +30,7 @@ export const initialAppState: AppState = {
     evalResults: {},
     projectMetadata: undefined,
     catalog: undefined,
-    rubric: makeRubric(),
+    checklist: makeChecklist(),
     activeTab: "home",
     validatorPlans: undefined,
     autorun: false,
