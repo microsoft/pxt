@@ -301,6 +301,19 @@
                     "count": 0
                 }
             ]
+        },
+        {
+            ".desc": "The zero number block is present.",
+            "name": "number_zero",
+            "threshold": 1,
+            "checks": [
+                {
+                    "validator": "blockFieldValueExists",
+                    "fieldType": "NUM",
+                    "fieldValue": 0,
+                    "blockType": "math_number"
+                }
+            ]
         }
     ]
 }
