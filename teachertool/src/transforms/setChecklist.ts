@@ -1,12 +1,12 @@
 import { stateAndDispatch } from "../state";
-import { Rubric } from "../types/rubric";
+import { Checklist } from "../types/checklist";
 import * as Actions from "../state/actions";
 import * as AutorunService from "../services/autorunService";
 import { setEvalResultsToNotStarted } from "./setEvalResultsToNotStarted";
 
-export function setRubric(rubric: Rubric) {
+export function setChecklist(checklist: Checklist) {
     const { dispatch } = stateAndDispatch();
-    dispatch(Actions.setRubric(rubric));
-    setEvalResultsToNotStarted({ rubric });
+    dispatch(Actions.setChecklist(checklist));
+    setEvalResultsToNotStarted({ checklist });
     AutorunService.poke();
 }

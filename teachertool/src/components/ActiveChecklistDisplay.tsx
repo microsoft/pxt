@@ -1,28 +1,28 @@
 import { useContext } from "react";
 import { Strings } from "../constants";
 import { AppStateContext } from "../state/appStateContext";
-import { setRubricName } from "../transforms/setRubricName";
+import { setChecklistName } from "../transforms/setChecklistName";
 import { DebouncedInput } from "./DebouncedInput";
 import { AddCriteriaButton } from "./AddCriteriaButton";
-import css from "./styling/ActiveRubricDisplay.module.scss";
+import css from "./styling/ActiveChecklistDisplay.module.scss";
 import React from "react";
 import { CriteriaTable } from "./CriteriaTable";
 
-interface ActiveRubricDisplayProps {}
-export const ActiveRubricDisplay: React.FC<ActiveRubricDisplayProps> = ({}) => {
+interface ActiveChecklistDisplayProps {}
+export const ActiveChecklistDisplay: React.FC<ActiveChecklistDisplayProps> = ({}) => {
     const { state: teacherTool } = useContext(AppStateContext);
 
     return (
-        <div className={css["rubric-display"]}>
-            <div className={css["rubric-name-input-container"]}>
+        <div className={css["checklist-display"]}>
+            <div className={css["checklist-name-input-container"]}>
                 <DebouncedInput
                     label={Strings.Name}
                     ariaLabel={Strings.Name}
-                    onChange={setRubricName}
-                    placeholder={Strings.RubricName}
-                    initialValue={teacherTool.rubric.name}
+                    onChange={setChecklistName}
+                    placeholder={Strings.ChecklistName}
+                    initialValue={teacherTool.checklist.name}
                     preserveValueOnBlur={true}
-                    className={css["rubric-name-input"]}
+                    className={css["checklist-name-input"]}
                 />
             </div>
             <CriteriaTable />

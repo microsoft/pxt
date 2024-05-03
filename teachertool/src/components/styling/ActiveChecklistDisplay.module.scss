@@ -1,9 +1,9 @@
-.rubric-display {
+.checklist-display {
     display: flex;
     flex-direction: column;
     margin: 0 1rem 1rem 1rem;
 
-    .rubric-name-input-container {
+    .checklist-name-input-container {
         // Designed to mirror share-link-input layout.
         display: flex;
         flex-direction: row;
@@ -15,7 +15,7 @@
         padding-top: 1px;
     }
 
-    .rubric-name-input {
+    .checklist-name-input {
         display: flex;
         flex-direction: row;
         width: 100%;

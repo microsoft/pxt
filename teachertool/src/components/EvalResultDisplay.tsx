@@ -11,8 +11,8 @@ const ResultsHeader: React.FC = () => {
 
     return (
         <div className={css["header"]}>
-            <div className={css["rubric-name"]}>
-                <h2>{teacherTool.rubric.name}</h2>
+            <div className={css["checklist-name"]}>
+                <h2>{teacherTool.checklist.name}</h2>
             </div>
             <div className={css["project-details"]}>
                 <div className={css["project-text"]}>

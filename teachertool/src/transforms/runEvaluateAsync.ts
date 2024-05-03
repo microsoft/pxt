@@ -88,7 +88,7 @@ export async function runEvaluateAsync(fromUserInteraction: boolean) {
 
     // EvalRequest promises will resolve to true if evaluation completed successfully (regarless of pass/fail).
     // They will only resolve to false if evaluation was unable to complete.
-    const evalRequests = teacherTool.rubric.criteria.map(
+    const evalRequests = teacherTool.checklist.criteria.map(
         criteriaInstance =>
             new Promise(async resolve => {
                 const existingOutcome = teacherTool.evalResults[criteriaInstance.instanceId]?.result;
@@ -149,7 +149,7 @@ export async function runEvaluateAsync(fromUserInteraction: boolean) {
     const results = await Promise.all(evalRequests);
     if (fromUserInteraction) {
         const errorCount = results.filter(r => !r).length;
-        if (errorCount === teacherTool.rubric.criteria.length) {
+        if (errorCount === teacherTool.checklist.criteria.length) {
             showToast(makeToast("error", lf("Unable to run evaluation")));
         } else if (errorCount > 0) {
             showToast(makeToast("error", lf("Unable to evaluate some criteria")));

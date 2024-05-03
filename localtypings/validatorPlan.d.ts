@@ -40,6 +40,12 @@ declare namespace pxt.blocks {
         count: number;
     }
 
+    export interface VariableUsageValidatorCheck extends ValidatorCheckBase {
+        validator: "variableUsage";
+        count: number;
+        name?: string;
+    }
+
     export interface EvaluationResult {
         result?: boolean;
         notes?: string;
