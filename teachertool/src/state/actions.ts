@@ -186,7 +186,7 @@ const setCatalogOpen = (open: boolean): SetCatalogOpen => ({
 
 const setChecklist = (checklist: Checklist): SetChecklist => ({
     type: "SET_CHECKLIST",
-    checklist: checklist,
+    checklist,
 });
 
 const showModal = (modalOptions: ModalOptions): ShowModal => ({
