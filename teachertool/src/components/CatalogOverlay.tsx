@@ -123,7 +123,7 @@ const CatalogList: React.FC = () => {
     }
 
     return (
-        <Accordion className={css["catalog-list"]}>
+        <Accordion className={css["catalog-list"]} multiExpand={true}>
             {Object.keys(criteriaGroupedByTag).map(tag => {
                 return (
                     <Accordion.Item>

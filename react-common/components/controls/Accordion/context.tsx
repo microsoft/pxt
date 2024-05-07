@@ -1,16 +1,20 @@
 import * as React from "react";
 
 interface AccordionState {
-    expanded?: string;
+    multiExpand?: boolean;
+    expanded: string[];
 }
 
 const AccordionStateContext = React.createContext<AccordionState>(null);
 const AccordionDispatchContext = React.createContext<(action: Action) => void>(null);
 
-export const AccordionProvider = ({ children }: React.PropsWithChildren<{}>) => {
+export const AccordionProvider = ({ multiExpand, children }: React.PropsWithChildren<{multiExpand?: boolean}>) => {
     const [state, dispatch] = React.useReducer(
         accordionReducer,
-        {}
+        {
+            expanded: [],
+            multiExpand
+        }
     );
 
     return (
@@ -27,15 +31,27 @@ type SetExpanded = {
     id: string;
 };
 
+type RemoveExpanded = {
+    type: "REMOVE_EXPANDED";
+    id: string;
+};
+
 type ClearExpanded = {
     type: "CLEAR_EXPANDED";
 };
 
-type Action = SetExpanded | ClearExpanded;
+type Action = SetExpanded | RemoveExpanded | ClearExpanded;
 
 export const setExpanded = (id: string): SetExpanded => (
     {
         type: "SET_EXPANDED",
+        id
+    }
+);
+
+export const removeExpanded = (id: string): RemoveExpanded => (
+    {
+        type: "REMOVE_EXPANDED",
         id
     }
 );
@@ -59,7 +75,12 @@ function accordionReducer(state: AccordionState, action: Action): AccordionState
         case "SET_EXPANDED":
             return {
                 ...state,
-                expanded: action.id
+                expanded: state.multiExpand ? [...state.expanded, action.id] : [action.id]
+            };
+        case "REMOVE_EXPANDED":
+            return {
+                ...state,
+                expanded: state.expanded.filter(id => id !== action.id)
             };
         case "CLEAR_EXPANDED":
             return {

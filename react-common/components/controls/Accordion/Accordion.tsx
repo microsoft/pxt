@@ -1,9 +1,10 @@
 import * as React from "react";
 import { ContainerProps, classList, fireClickOnEnter } from "../../util";
 import { useId } from "../../../hooks/useId";
-import { AccordionProvider, clearExpanded, setExpanded, useAccordionDispatch, useAccordionState } from "./context";
+import { AccordionProvider, removeExpanded, setExpanded, useAccordionDispatch, useAccordionState } from "./context";
 
 export interface AccordionProps extends ContainerProps {
+    multiExpand?: boolean;
     children?: React.ReactElement<AccordionItemProps>[] | React.ReactElement<AccordionItemProps>;
 }
 
@@ -27,10 +28,11 @@ export const Accordion = (props: AccordionProps) => {
         ariaHidden,
         ariaDescribedBy,
         role,
+        multiExpand
     } = props;
 
     return (
-        <AccordionProvider>
+        <AccordionProvider multiExpand={multiExpand}>
             <div
                 className={classList("common-accordion", className)}
                 id={id}
@@ -62,11 +64,11 @@ export const AccordionItem = (props: AccordionItemProps) => {
 
     const panelId = useId();
     const mappedChildren = React.Children.toArray(children);
-    const isExpanded = expanded === panelId;
+    const isExpanded = expanded.indexOf(panelId) != -1;
 
     const onHeaderClick = React.useCallback(() => {
         if (isExpanded) {
-            dispatch(clearExpanded());
+            dispatch(removeExpanded(panelId));
         }
         else {
             dispatch(setExpanded(panelId));
