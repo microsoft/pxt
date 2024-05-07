@@ -194,13 +194,15 @@ export async function deleteChecklistAsync(name: string) {
     }
 }
 
-export function getExpandedCatalogTags(): string[] {
+// Returns undefined if it has not been set or if there was an issue.
+// Empty list means it was explicitly set to empty.
+export function getExpandedCatalogTags(): string[] | undefined {
     try {
         const tags = getValue(EXPANDED_CATALOG_TAGS_KEY);
-        return tags ? JSON.parse(tags) : [];
+        return tags ? JSON.parse(tags) : undefined;
     } catch (e) {
         logError(ErrorCode.localStorageReadError, e);
-        return [];
+        return undefined;
     }
 }
 
@@ -213,17 +215,24 @@ export async function setExpandedCatalogTags(tags: string[]) {
 }
 
 export async function addExandedCatalogTagAsync(tag: string) {
-    const expandedTags = getExpandedCatalogTags();
+    let expandedTags = getExpandedCatalogTags();
+    if (!expandedTags) {
+        expandedTags = [];
+    }
     expandedTags.push(tag);
     await setExpandedCatalogTags(expandedTags);
 }
 
 export async function removeExpandedCatalogTagAsync(tag: string) {
-    const expandedTags = getExpandedCatalogTags();
-    const index = expandedTags.indexOf(tag);
-    if (index !== -1) {
-        expandedTags.splice(index, 1);
-        await setExpandedCatalogTags(expandedTags);
+    let expandedTags = getExpandedCatalogTags();
+    if (!expandedTags) {
+        await setExpandedCatalogTags([]);
+    } else {
+        const index = expandedTags.indexOf(tag);
+        if (index !== -1) {
+            expandedTags.splice(index, 1);
+            await setExpandedCatalogTags(expandedTags);
+        }
     }
 }
 

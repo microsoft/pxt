@@ -140,12 +140,11 @@ const CatalogList: React.FC = () => {
         return null;
     }
 
-    const expandedTags = getExpandedCatalogTags();
-
-    // If no tags are expanded, expand the first one.
-    if (expandedTags.length === 0) {
+    let expandedTags = getExpandedCatalogTags();
+    if (!expandedTags) {
+        // If we haven't saved an expanded set, default expand the first one.
         addExandedCatalogTagAsync(tags[0]);
-        expandedTags.push(tags[0]);
+        expandedTags = [tags[0]];
     }
 
     const expandedIds = expandedTags.map(t => getItemIdForTag(t));
