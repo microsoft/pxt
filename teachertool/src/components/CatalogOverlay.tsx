@@ -6,12 +6,16 @@ import { getCatalogCriteria } from "../state/helpers";
 import { ReadOnlyCriteriaDisplay } from "./ReadonlyCriteriaDisplay";
 import { Strings } from "../constants";
 import { Button } from "react-common/components/controls/Button";
+import { Accordion } from "react-common/components/controls/Accordion";
 import { getReadableCriteriaTemplate, makeToast } from "../utils";
 import { setCatalogOpen } from "../transforms/setCatalogOpen";
 import { classList } from "react-common/components/util";
 import { announceToScreenReader } from "../transforms/announceToScreenReader";
 import { FocusTrap } from "react-common/components/controls/FocusTrap";
 import css from "./styling/CatalogOverlay.module.scss";
+import { logError } from "../services/loggingService";
+import { ErrorCode } from "../types/errorCode";
+import { AccordionHeader, AccordionItem, AccordionPanel } from "react-common/components/controls/Accordion/Accordion";
 
 interface CatalogHeaderProps {
     onClose: () => void;
@@ -73,10 +77,22 @@ const CatalogList: React.FC = () => {
     const recentlyAddedWindowMs = 500;
     const [recentlyAddedIds, setRecentlyAddedIds] = useState<pxsim.Map<NodeJS.Timeout>>({});
 
-    const criteria = useMemo<CatalogCriteria[]>(
-        () => getCatalogCriteria(teacherTool),
-        [teacherTool.catalog, teacherTool.checklist]
-    );
+    // For now, we only look at the first tag of each criteria.
+    const criteriaGroupedByTag = useMemo<pxt.Map<CatalogCriteria[]>>(() => {
+        const grouped: pxt.Map<CatalogCriteria[]> = {};
+        getCatalogCriteria(teacherTool)?.forEach(c => {
+            const tag = c.tags?.[0];
+            if (!tag) {
+                logError(ErrorCode.missingTag, { message: "Catalog criteria missing tag", criteria: c });
+                return;
+            }
+            if (!grouped[tag]) {
+                grouped[tag] = [];
+            }
+            grouped[tag].push(c);
+        });
+        return grouped;
+    }, [teacherTool.catalog]);
 
     function updateRecentlyAddedValue(id: string, value: NodeJS.Timeout | undefined) {
         setRecentlyAddedIds(prevState => {
@@ -107,33 +123,42 @@ const CatalogList: React.FC = () => {
     }
 
     return (
-        <div className={css["catalog-list"]}>
-            {criteria.map(c => {
-                const existingInstanceCount = teacherTool.checklist.criteria.filter(
-                    i => i.catalogCriteriaId === c.id
-                ).length;
-                const isMaxed = c.maxCount !== undefined && existingInstanceCount >= c.maxCount;
+        <Accordion className={css["catalog-list"]}>
+            {Object.keys(criteriaGroupedByTag).map(tag => {
                 return (
-                    c.template && (
-                        <Button
-                            id={`criteria_${c.id}`}
-                            title={getReadableCriteriaTemplate(c)}
-                            key={c.id}
-                            className={css["catalog-item"]}
-                            label={
-                                <CatalogItemLabel
-                                    catalogCriteria={c}
-                                    isMaxed={isMaxed}
-                                    recentlyAdded={recentlyAddedIds[c.id] !== undefined}
-                                />
-                            }
-                            onClick={() => onItemClicked(c)}
-                            disabled={isMaxed}
-                        />
-                    )
+                    <Accordion.Item>
+                        <Accordion.Header>{tag}</Accordion.Header>
+                        <Accordion.Panel>
+                            {criteriaGroupedByTag[tag].map(c => {
+                                const existingInstanceCount = teacherTool.checklist.criteria.filter(
+                                    i => i.catalogCriteriaId === c.id
+                                ).length;
+                                const isMaxed = c.maxCount !== undefined && existingInstanceCount >= c.maxCount;
+                                return (
+                                    c.template && (
+                                        <Button
+                                            id={`criteria_${c.id}`}
+                                            title={getReadableCriteriaTemplate(c)}
+                                            key={c.id}
+                                            className={css["catalog-item"]}
+                                            label={
+                                                <CatalogItemLabel
+                                                    catalogCriteria={c}
+                                                    isMaxed={isMaxed}
+                                                    recentlyAdded={recentlyAddedIds[c.id] !== undefined}
+                                                />
+                                            }
+                                            onClick={() => onItemClicked(c)}
+                                            disabled={isMaxed}
+                                        />
+                                    )
+                                );
+                            })}
+                        </Accordion.Panel>
+                    </Accordion.Item>
                 );
             })}
-        </div>
+        </Accordion>
     );
 };
 
