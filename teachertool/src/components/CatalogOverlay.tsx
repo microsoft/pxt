@@ -7,7 +7,7 @@ import { ReadOnlyCriteriaDisplay } from "./ReadonlyCriteriaDisplay";
 import { Strings } from "../constants";
 import { Button } from "react-common/components/controls/Button";
 import { Accordion } from "react-common/components/controls/Accordion";
-import { getReadableCriteriaTemplate, makeToast } from "../utils";
+import { getReadableCriteriaTemplate } from "../utils";
 import { setCatalogOpen } from "../transforms/setCatalogOpen";
 import { classList } from "react-common/components/util";
 import { announceToScreenReader } from "../transforms/announceToScreenReader";
@@ -15,7 +15,6 @@ import { FocusTrap } from "react-common/components/controls/FocusTrap";
 import css from "./styling/CatalogOverlay.module.scss";
 import { logError } from "../services/loggingService";
 import { ErrorCode } from "../types/errorCode";
-import { AccordionHeader, AccordionItem, AccordionPanel } from "react-common/components/controls/Accordion/Accordion";
 
 interface CatalogHeaderProps {
     onClose: () => void;
