@@ -11,6 +11,7 @@ const KEY_PREFIX = "teachertool";
 const AUTORUN_KEY = [KEY_PREFIX, "autorun"].join("/");
 const LAST_ACTIVE_CHECKLIST_KEY = [KEY_PREFIX, "lastActiveChecklist"].join("/");
 const SPLIT_POSITION_KEY = [KEY_PREFIX, "splitPosition"].join("/");
+const EXPANDED_CATALOG_TAGS_KEY = [KEY_PREFIX, "expandedCatalogTags"].join("/");
 
 function getValue(key: string, defaultValue?: string): string | undefined {
     return localStorage.getItem(key) || defaultValue;
@@ -192,3 +193,37 @@ export async function deleteChecklistAsync(name: string) {
         setLastActiveChecklistName("");
     }
 }
+
+export function getExpandedCatalogTags(): string[] {
+    try {
+        const tags = getValue(EXPANDED_CATALOG_TAGS_KEY);
+        return tags ? JSON.parse(tags) : [];
+    } catch (e) {
+        logError(ErrorCode.localStorageReadError, e);
+        return [];
+    }
+}
+
+export async function setExpandedCatalogTags(tags: string[]) {
+    try {
+        setValue(EXPANDED_CATALOG_TAGS_KEY, JSON.stringify(tags));
+    } catch (e) {
+        logError(ErrorCode.localStorageWriteError, e);
+    }
+}
+
+export async function addExandedCatalogTagAsync(tag: string) {
+    const expandedTags = getExpandedCatalogTags();
+    expandedTags.push(tag);
+    await setExpandedCatalogTags(expandedTags);
+}
+
+export async function removeExpandedCatalogTagAsync(tag: string) {
+    const expandedTags = getExpandedCatalogTags();
+    const index = expandedTags.indexOf(tag);
+    if (index !== -1) {
+        expandedTags.splice(index, 1);
+        await setExpandedCatalogTags(expandedTags);
+    }
+}
+

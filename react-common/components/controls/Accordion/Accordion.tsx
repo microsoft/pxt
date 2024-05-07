@@ -13,6 +13,7 @@ export interface AccordionItemProps extends ContainerProps {
     children?: [React.ReactElement<AccordionHeaderProps>, React.ReactElement<AccordionPanelProps>];
     noChevron?: boolean;
     itemId?: string;
+    onExpandToggled?: (expanded: boolean) => void;
 }
 
 export interface AccordionHeaderProps extends ContainerProps {
@@ -61,6 +62,7 @@ export const AccordionItem = (props: AccordionItemProps) => {
         role,
         noChevron,
         itemId,
+        onExpandToggled,
     } = props;
 
     const { expanded } = useAccordionState();
@@ -77,6 +79,7 @@ export const AccordionItem = (props: AccordionItemProps) => {
         else {
             dispatch(setExpanded(panelId));
         }
+        onExpandToggled?.(!isExpanded);
     }, [isExpanded]);
 
     return (

@@ -15,6 +15,8 @@ import { FocusTrap } from "react-common/components/controls/FocusTrap";
 import { logError } from "../services/loggingService";
 import { ErrorCode } from "../types/errorCode";
 import css from "./styling/CatalogOverlay.module.scss";
+import { addExandedCatalogTagAsync, getExpandedCatalogTags, removeExpandedCatalogTagAsync } from "../services/storageService";
+import exp from "constants";
 
 interface CatalogHeaderProps {
     onClose: () => void;
@@ -125,12 +127,33 @@ const CatalogList: React.FC = () => {
         return `accordion-item-${tag}`;
     }
 
+    function onTagExpandToggled(tag: string, expanded: boolean) {
+        if (expanded) {
+            /* await */ addExandedCatalogTagAsync(tag);
+        } else {
+            /* await */ removeExpandedCatalogTagAsync(tag);
+        }
+    }
+
     const tags = Object.keys(criteriaGroupedByTag);
+    if (tags.length === 0) {
+        return null;
+    }
+
+    const expandedTags = getExpandedCatalogTags();
+
+    // If no tags are expanded, expand the first one.
+    if (expandedTags.length === 0) {
+        addExandedCatalogTagAsync(tags[0]);
+        expandedTags.push(tags[0]);
+    }
+
+    const expandedIds = expandedTags.map(t => getItemIdForTag(t));
     return (
-        <Accordion className={css["catalog-list"]} multiExpand={true} defaultExpandedIds={[getItemIdForTag(tags[0])]}>
+        <Accordion className={css["catalog-list"]} multiExpand={true} defaultExpandedIds={expandedIds}>
             {tags.map(tag => {
                 return (
-                    <Accordion.Item itemId={getItemIdForTag(tag)}>
+                    <Accordion.Item itemId={getItemIdForTag(tag)} onExpandToggled={expanded => onTagExpandToggled(tag, expanded)} key={getItemIdForTag(tag)}>
                         <Accordion.Header>{tag}</Accordion.Header>
                         <Accordion.Panel>
                             {criteriaGroupedByTag[tag].map(c => {
