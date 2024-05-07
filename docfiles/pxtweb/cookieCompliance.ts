@@ -9,6 +9,7 @@ namespace pxt {
     let analyticsLoaded = false;
     let interactiveConsent = false;
     let isProduction = false;
+    let partnerName: string;
 
     class TelemetryQueue<A, B, C> {
         private q: [A, B, C][] = [];
@@ -176,6 +177,16 @@ namespace pxt {
     }
 
     export function initializeAppInsightsInternal(includeCookie = false) {
+        try {
+            const params = new URLSearchParams(window.location.search);
+            if (params.has("partner")) {
+                partnerName = params.get("partner");
+            }
+        }
+        catch (e) {
+            console.warn("Could not parse search string", e);
+        }
+
         // loadAppInsights is defined in docfiles/tracking.html
         const loadAI = (window as any).loadAppInsights;
         if (loadAI) {
@@ -211,6 +222,10 @@ namespace pxt {
         telemetryItem.properties = telemetryItem.properties || {};
         telemetryItem.properties["target"] = pxtConfig.targetId;
         telemetryItem.properties["stage"] = (pxtConfig.relprefix || "/--").replace(/[^a-z]/ig, '')
+
+        if (partnerName) {
+            telemetryItem.properties["partner"] = partnerName;
+        }
 
         const userAgent = navigator.userAgent.toLowerCase();
         const userAgentRegexResult = /\belectron\/(\d+\.\d+\.\d+.*?)(?: |$)/i.exec(userAgent); // Example navigator.userAgent: "Mozilla/5.0 Chrome/61.0.3163.100 Electron/2.0.0 Safari/537.36"
