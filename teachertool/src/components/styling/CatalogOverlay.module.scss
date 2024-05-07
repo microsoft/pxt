@@ -59,6 +59,10 @@
             width: 100%;
             height: 100%;
 
+            div[class*="common-accordion-chevron"] {
+                width: 3rem; // Match action-indicators
+            }
+
             button[class*="common-accordion-header-outer"] {
                 background-color: var(--pxt-content-foreground);
                 color: var(--pxt-content-background);
@@ -86,7 +90,7 @@
                     .action-indicators {
                         position: relative;
                         padding: 0 1rem 0 0;
-                        width: 3rem;
+                        width: 3rem; // Match common-accordion-chevron
                         display: flex;
                         align-items: center;
                         justify-content: center;
