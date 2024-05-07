@@ -85,11 +85,12 @@ const CatalogList: React.FC = () => {
     const criteriaGroupedByTag = useMemo<pxt.Map<CatalogCriteria[]>>(() => {
         const grouped: pxt.Map<CatalogCriteria[]> = {};
         getCatalogCriteria(teacherTool)?.forEach(c => {
-            const tag = c.tags?.[0];
-            if (!tag) {
+            if (!c.tags || c.tags.length === 0) {
                 logError(ErrorCode.missingTag, { message: "Catalog criteria missing tag", criteria: c });
                 return;
             }
+
+            const tag = c.tags[0];
             if (!grouped[tag]) {
                 grouped[tag] = [];
             }
