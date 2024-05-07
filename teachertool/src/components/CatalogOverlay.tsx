@@ -14,9 +14,12 @@ import { announceToScreenReader } from "../transforms/announceToScreenReader";
 import { FocusTrap } from "react-common/components/controls/FocusTrap";
 import { logError } from "../services/loggingService";
 import { ErrorCode } from "../types/errorCode";
+import {
+    addExandedCatalogTagAsync,
+    getExpandedCatalogTags,
+    removeExpandedCatalogTagAsync,
+} from "../services/storageService";
 import css from "./styling/CatalogOverlay.module.scss";
-import { addExandedCatalogTagAsync, getExpandedCatalogTags, removeExpandedCatalogTagAsync } from "../services/storageService";
-import exp from "constants";
 
 interface CatalogHeaderProps {
     onClose: () => void;
@@ -152,7 +155,11 @@ const CatalogList: React.FC = () => {
         <Accordion className={css["catalog-list"]} multiExpand={true} defaultExpandedIds={expandedIds}>
             {tags.map(tag => {
                 return (
-                    <Accordion.Item itemId={getItemIdForTag(tag)} onExpandToggled={expanded => onTagExpandToggled(tag, expanded)} key={getItemIdForTag(tag)}>
+                    <Accordion.Item
+                        itemId={getItemIdForTag(tag)}
+                        onExpandToggled={expanded => onTagExpandToggled(tag, expanded)}
+                        key={getItemIdForTag(tag)}
+                    >
                         <Accordion.Header>{tag}</Accordion.Header>
                         <Accordion.Panel>
                             {criteriaGroupedByTag[tag].map(c => {
