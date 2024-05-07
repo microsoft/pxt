@@ -12,9 +12,9 @@ import { setCatalogOpen } from "../transforms/setCatalogOpen";
 import { classList } from "react-common/components/util";
 import { announceToScreenReader } from "../transforms/announceToScreenReader";
 import { FocusTrap } from "react-common/components/controls/FocusTrap";
-import css from "./styling/CatalogOverlay.module.scss";
 import { logError } from "../services/loggingService";
 import { ErrorCode } from "../types/errorCode";
+import css from "./styling/CatalogOverlay.module.scss";
 
 interface CatalogHeaderProps {
     onClose: () => void;
