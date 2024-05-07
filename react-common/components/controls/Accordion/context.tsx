@@ -8,11 +8,11 @@ interface AccordionState {
 const AccordionStateContext = React.createContext<AccordionState>(null);
 const AccordionDispatchContext = React.createContext<(action: Action) => void>(null);
 
-export const AccordionProvider = ({ multiExpand, children }: React.PropsWithChildren<{multiExpand?: boolean}>) => {
+export const AccordionProvider = ({ multiExpand, defaultExpandedIds, children }: React.PropsWithChildren<{multiExpand?: boolean, defaultExpandedIds?: string[]}>) => {
     const [state, dispatch] = React.useReducer(
         accordionReducer,
         {
-            expanded: [],
+            expanded: defaultExpandedIds ?? [],
             multiExpand
         }
     );

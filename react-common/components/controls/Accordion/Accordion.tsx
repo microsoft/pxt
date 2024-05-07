@@ -5,12 +5,14 @@ import { AccordionProvider, removeExpanded, setExpanded, useAccordionDispatch, u
 
 export interface AccordionProps extends ContainerProps {
     multiExpand?: boolean;
+    defaultExpandedIds?: string[];
     children?: React.ReactElement<AccordionItemProps>[] | React.ReactElement<AccordionItemProps>;
 }
 
 export interface AccordionItemProps extends ContainerProps {
     children?: [React.ReactElement<AccordionHeaderProps>, React.ReactElement<AccordionPanelProps>];
     noChevron?: boolean;
+    itemId?: string;
 }
 
 export interface AccordionHeaderProps extends ContainerProps {
@@ -28,11 +30,12 @@ export const Accordion = (props: AccordionProps) => {
         ariaHidden,
         ariaDescribedBy,
         role,
-        multiExpand
+        multiExpand,
+        defaultExpandedIds
     } = props;
 
     return (
-        <AccordionProvider multiExpand={multiExpand}>
+        <AccordionProvider multiExpand={multiExpand} defaultExpandedIds={defaultExpandedIds}>
             <div
                 className={classList("common-accordion", className)}
                 id={id}
@@ -56,13 +59,14 @@ export const AccordionItem = (props: AccordionItemProps) => {
         ariaHidden,
         ariaDescribedBy,
         role,
-        noChevron
+        noChevron,
+        itemId,
     } = props;
 
     const { expanded } = useAccordionState();
     const dispatch = useAccordionDispatch();
 
-    const panelId = useId();
+    const panelId = itemId ?? useId();
     const mappedChildren = React.Children.toArray(children);
     const isExpanded = expanded.indexOf(panelId) != -1;
 

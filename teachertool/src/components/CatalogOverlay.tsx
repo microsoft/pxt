@@ -122,11 +122,16 @@ const CatalogList: React.FC = () => {
         announceToScreenReader(lf("Added '{0}' to checklist.", getReadableCriteriaTemplate(c)));
     }
 
+    function getItemIdForTag(tag: string) {
+        return `accordion-item-${tag}`;
+    }
+
+    const tags = Object.keys(criteriaGroupedByTag);
     return (
-        <Accordion className={css["catalog-list"]} multiExpand={true}>
-            {Object.keys(criteriaGroupedByTag).map(tag => {
+        <Accordion className={css["catalog-list"]} multiExpand={true} defaultExpandedIds={[getItemIdForTag(tags[0])]}>
+            {tags.map(tag => {
                 return (
-                    <Accordion.Item>
+                    <Accordion.Item itemId={getItemIdForTag(tag)}>
                         <Accordion.Header>{tag}</Accordion.Header>
                         <Accordion.Panel>
                             {criteriaGroupedByTag[tag].map(c => {
