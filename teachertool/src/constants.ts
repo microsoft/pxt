@@ -33,6 +33,7 @@ export namespace Strings {
     export const Checklist = lf("Checklist");
     export const Home = lf("Home");
     export const CreateEmptyChecklist = lf("Create Empty Checklist");
+    export const Other = lf("Other");
 }
 
 export namespace Ticks {

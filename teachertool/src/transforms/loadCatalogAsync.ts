@@ -1,3 +1,4 @@
+import { Strings } from "../constants";
 import { loadTestableCollectionFromDocsAsync } from "../services/backendRequests";
 import { stateAndDispatch } from "../state";
 import * as Actions from "../state/actions";
@@ -20,7 +21,7 @@ export async function loadCatalogAsync() {
 
         // Add default tag if none are present
         if (!c.tags || c.tags.length === 0) {
-            c.tags = ["Other"];
+            c.tags = [Strings.Other];
         }
     });
 
