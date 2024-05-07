@@ -8,14 +8,15 @@ interface AccordionState {
 const AccordionStateContext = React.createContext<AccordionState>(null);
 const AccordionDispatchContext = React.createContext<(action: Action) => void>(null);
 
-export const AccordionProvider = ({ multiExpand, defaultExpandedIds, children }: React.PropsWithChildren<{multiExpand?: boolean, defaultExpandedIds?: string[]}>) => {
-    const [state, dispatch] = React.useReducer(
-        accordionReducer,
-        {
-            expanded: defaultExpandedIds ?? [],
-            multiExpand
-        }
-    );
+export const AccordionProvider = ({
+    multiExpand,
+    defaultExpandedIds,
+    children,
+}: React.PropsWithChildren<{ multiExpand?: boolean; defaultExpandedIds?: string[] }>) => {
+    const [state, dispatch] = React.useReducer(accordionReducer, {
+        expanded: defaultExpandedIds ?? [],
+        multiExpand,
+    });
 
     return (
         <AccordionStateContext.Provider value={state}>
@@ -63,7 +64,7 @@ export const clearExpanded = (): ClearExpanded => (
 );
 
 export function useAccordionState() {
-    return React.useContext(AccordionStateContext)
+    return React.useContext(AccordionStateContext);
 }
 
 export function useAccordionDispatch() {
@@ -75,17 +76,17 @@ function accordionReducer(state: AccordionState, action: Action): AccordionState
         case "SET_EXPANDED":
             return {
                 ...state,
-                expanded: state.multiExpand ? [...state.expanded, action.id] : [action.id]
+                expanded: state.multiExpand ? [...state.expanded, action.id] : [action.id],
             };
         case "REMOVE_EXPANDED":
             return {
                 ...state,
-                expanded: state.expanded.filter(id => id !== action.id)
+                expanded: state.expanded.filter((id) => id !== action.id),
             };
         case "CLEAR_EXPANDED":
             return {
                 ...state,
-                expanded: undefined
+                expanded: undefined,
             };
     }
 }
