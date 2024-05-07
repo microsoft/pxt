@@ -14,8 +14,8 @@
     align-items: center;
 
     .catalog-content-container {
-        max-width: 95%;
-        max-height: 95%;
+        width: 95%;
+        height: 95%;
         background-color: var(--pxt-page-background);
         border-radius: .285rem; // Match modal
         display: flex;
@@ -57,6 +57,15 @@
             display: flex;
             flex-direction: column;
             width: 100%;
+
+
+            button[class*="common-accordion-header-outer"] {
+                background-color: var(--pxt-content-foreground);
+                color: var(--pxt-content-background);
+                border-bottom: 1px solid var(--pxt-content-accent);
+                font-size: 1.2rem;
+                padding: 0.5rem 0.95rem;
+            }
 
             .catalog-item {
                 width: 100%;
