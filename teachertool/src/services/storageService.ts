@@ -235,4 +235,3 @@ export async function removeExpandedCatalogTagAsync(tag: string) {
         }
     }
 }
-
