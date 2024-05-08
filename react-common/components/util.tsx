@@ -92,3 +92,24 @@ export function screenToSVGCoord(ref: SVGSVGElement, coord: ClientCoordinates) {
     screenCoord.y = coord.clientY;
     return screenCoord.matrixTransform(ref.getScreenCTM().inverse());
 }
+
+export function findNextFocusableElement(elements: HTMLElement[], focusedIndex: number, index: number, forward: boolean): HTMLElement {
+    const increment = forward ? 1 : -1;
+    const element = elements[index];
+    // in this case, there are no focusable elements
+    if (focusedIndex === index) {
+        return element;
+    }
+    if (getComputedStyle(element).display !== "none") {
+        return element;
+    } else {
+        if (index + increment >= elements.length) {
+            index = 0;
+        } else if (index + increment < 0) {
+            index = elements.length - 1;
+        } else {
+            index += increment;
+        }
+    }
+    return findNextFocusableElement(elements, focusedIndex, index, forward);
+}

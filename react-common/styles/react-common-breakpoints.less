@@ -4,7 +4,6 @@
 @largeMonitorBreakpoint: 1200px;
 @widescreenMonitorBreakpoint: 1920px;
 
-@smallMobileScreen: (@mobileBreakpoint + 1px);
 @largestMobilePortraitScreen: (@mobileBreakpoint + 100px);
 @largestMobileScreen: (@tabletBreakpoint - 1px);
 @largestTabletScreen: (@computerBreakpoint - 1px);
@@ -13,8 +12,6 @@
 
 @portraitMobileAndBelow: ~"only screen and (max-width: @{largestMobilePortraitScreen})";
 @mobileAndBelow: ~"only screen and (max-width: @{largestMobileScreen})";
-@mobileShare: ~"only screen and (max-width: @{largestMobilePortraitScreen})";
-@smallMobileShare: ~"only screen and (max-width: @{smallMobileScreen})";
 @tabletAndBelow: ~"only screen and (max-width: @{largestTabletScreen})";
 @computerAndBelow: ~"only screen and (max-width: @{largestSmallMonitor})";
 @largeMonitorAndBelow: ~"only screen and (max-width: @{largestLargeMonitor})";

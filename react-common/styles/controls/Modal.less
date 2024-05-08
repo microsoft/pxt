@@ -20,8 +20,10 @@
 .common-modal {
     width: 50%;
     max-width: 40rem;
+    max-height: 100%;
     border-radius: .285rem;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 
 .wide > .common-modal {
@@ -152,11 +154,5 @@
 
     .common-modal {
         border: 1px solid @highContrastTextColor;
-    }
-}
-
-@media @smallMobileShare {
-    .wide>.common-modal {
-        height: 95%;
     }
 }
