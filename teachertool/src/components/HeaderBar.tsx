@@ -4,7 +4,6 @@ import css from "./styling/HeaderBar.module.scss";
 import { Button } from "react-common/components/controls/Button";
 import { MenuBar } from "react-common/components/controls/MenuBar";
 import { AppStateContext } from "../state/appStateContext";
-import { getSafeRubricName } from "../state/helpers";
 import { Ticks } from "../constants";
 
 interface HeaderBarProps {}
@@ -74,15 +73,6 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
         );
     };
 
-    const getRubricName = (): JSX.Element | null => {
-        const rubricName = getSafeRubricName(teacherTool);
-        return rubricName ? (
-            <div className={css["rubric-name"]}>
-                <span>{rubricName}</span>
-            </div>
-        ) : null;
-    };
-
     const onHomeClicked = () => {
         pxt.tickEvent(Ticks.HomeLink);
 
@@ -103,7 +93,6 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
             <div className={css["left-menu"]}>
                 {getOrganizationLogo()}
                 {getTargetLogo()}
-                {getRubricName()}
             </div>
 
             <div className={css["right-menu"]}>

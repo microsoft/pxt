@@ -1,6 +1,6 @@
 import { CriteriaInstance } from "./criteria";
 
-export interface Rubric {
+export interface Checklist {
     name: string;
     criteria: CriteriaInstance[];
 }

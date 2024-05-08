@@ -1,19 +1,19 @@
 import { stateAndDispatch } from "../state";
 import { EvaluationStatus, CriteriaResult } from "../types/criteria";
-import { Rubric } from "../types/rubric";
+import { Checklist } from "../types/checklist";
 import * as Actions from "../state/actions";
 
 export function setEvalResultsToNotStarted({
     overwriteExistingEntries,
-    rubric,
+    checklist,
 }: {
     overwriteExistingEntries?: boolean;
-    rubric?: Rubric;
+    checklist?: Checklist;
 }): void {
     const { state: teachertool, dispatch } = stateAndDispatch();
     let allEvalResults: pxt.Map<CriteriaResult> = {};
-    const usedRubric = rubric || teachertool.rubric;
-    for (const criteria of usedRubric.criteria) {
+    const usedChecklist = checklist || teachertool.checklist;
+    for (const criteria of usedChecklist.criteria) {
         const instanceId = criteria.instanceId;
         if (!teachertool.evalResults[instanceId] || overwriteExistingEntries) {
             allEvalResults[instanceId] = { result: EvaluationStatus.NotStarted };

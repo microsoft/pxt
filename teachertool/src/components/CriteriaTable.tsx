@@ -2,7 +2,7 @@ import { useContext } from "react";
 import { Strings } from "../constants";
 import { AppStateContext } from "../state/appStateContext";
 import { getCatalogCriteriaWithId } from "../state/helpers";
-import { removeCriteriaFromRubric } from "../transforms/removeCriteriaFromRubric";
+import { removeCriteriaFromChecklist } from "../transforms/removeCriteriaFromChecklist";
 import { CriteriaInstance } from "../types/criteria";
 import { classList } from "react-common/components/util";
 import { Button } from "react-common/components/controls/Button";
@@ -39,7 +39,7 @@ const CriteriaInstanceRow: React.FC<CriteriaInstanceDisplayProps> = ({ criteriaI
                     className={css["delete-criteria-button"]}
                     title={Strings.Remove}
                     ariaLabel={Strings.Remove}
-                    onClick={() => removeCriteriaFromRubric(criteriaInstance)}
+                    onClick={() => removeCriteriaFromChecklist(criteriaInstance)}
                 />
             </div>
         </div>
@@ -50,7 +50,7 @@ interface CriteriaTableProps {}
 const CriteriaTableControl: React.FC<CriteriaTableProps> = ({}) => {
     const { state: teacherTool } = useContext(AppStateContext);
 
-    return teacherTool.rubric.criteria?.length > 0 ? (
+    return teacherTool.checklist.criteria?.length > 0 ? (
         <div className={css["criteria-table"]} role="table" aria-label={Strings.Criteria}>
             <div role="rowgroup">
                 <div className={css["criteria-header"]} role="row">
@@ -67,7 +67,7 @@ const CriteriaTableControl: React.FC<CriteriaTableProps> = ({}) => {
                 </div>
             </div>
             <div className={css["criteria-table-body"]} role="rowgroup">
-                {teacherTool.rubric.criteria.map(criteriaInstance => {
+                {teacherTool.checklist.criteria.map(criteriaInstance => {
                     return (
                         <CriteriaInstanceRow criteriaInstance={criteriaInstance} key={criteriaInstance.instanceId} />
                     );

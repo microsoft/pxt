@@ -4,8 +4,8 @@ import * as Actions from "../state/actions";
 import { CatalogCriteria } from "../types/criteria";
 
 const prodFiles = [
-    "/teachertool/catalog.json", // target-specific catalog
     "/teachertool/catalog-shared.json", // shared across all targets
+    "/teachertool/catalog.json", // target-specific catalog
 ];
 
 export async function loadCatalogAsync() {

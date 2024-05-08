@@ -4,16 +4,16 @@ import { logDebug, logError } from "../services/loggingService";
 import { CriteriaInstance, CriteriaParameterValue } from "../types/criteria";
 import { nanoid } from "nanoid";
 import { ErrorCode } from "../types/errorCode";
-import { setRubric } from "./setRubric";
+import { setChecklist } from "./setChecklist";
 import { Ticks } from "../constants";
 
-export function addCriteriaToRubric(catalogCriteriaIds: string[]) {
+export function addCriteriaToChecklist(catalogCriteriaIds: string[]) {
     const { state: teacherTool, dispatch } = stateAndDispatch();
 
     // Create instances for each of the catalog criteria.
-    const newRubric = {
-        ...teacherTool.rubric,
-        criteria: [...(teacherTool.rubric.criteria ?? [])],
+    const newChecklist = {
+        ...teacherTool.checklist,
+        criteria: [...(teacherTool.checklist.criteria ?? [])],
     };
 
     for (const catalogCriteriaId of catalogCriteriaIds) {
@@ -42,10 +42,10 @@ export function addCriteriaToRubric(catalogCriteriaIds: string[]) {
             params,
         } as CriteriaInstance;
 
-        newRubric.criteria.push(criteriaInstance);
+        newChecklist.criteria.push(criteriaInstance);
     }
 
-    setRubric(newRubric);
+    setChecklist(newChecklist);
 
     pxt.tickEvent(Ticks.AddCriteria, {
         ids: JSON.stringify(catalogCriteriaIds),

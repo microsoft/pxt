@@ -26,3 +26,4 @@ You can write, edit, and test a tutorial with the online [**Tutorial Tool**](htt
 * [Multi-language](/writing-docs/tutorials/multi-lang) - Tutorials for both Blocks and Code
 * [Adding Resources](/writing-docs/tutorials/resources) - Including a resource section in a tutorial
 * [Publish](/writing-docs/tutorials/publish) - How to publish a tutorial
+* [Troubleshoot](/writing-docs/tutorials/troubleshooting) - Troubleshooting problems with a tutorial

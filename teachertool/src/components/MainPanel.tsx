@@ -1,7 +1,7 @@
 import * as React from "react";
 import css from "./styling/MainPanel.module.scss";
 import { SplitPane } from "./SplitPane";
-import { RubricWorkspace } from "./RubricWorkspace";
+import { ChecklistWorkspace } from "./ChecklistWorkspace";
 import { ProjectWorkspace } from "./ProjectWorkspace";
 import { getLastSplitPosition, setLastSplitPosition } from "../services/storageService";
 
@@ -22,7 +22,7 @@ export const MainPanel: React.FC<IProps> = () => {
                 defaultSize={defaultSize}
                 startingSize={lastSavedSplitPosition}
                 primary={"left"}
-                left={<RubricWorkspace />}
+                left={<ChecklistWorkspace />}
                 right={<ProjectWorkspace />}
                 leftMinSize="5rem"
                 rightMinSize="5rem"
