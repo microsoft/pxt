@@ -37,11 +37,7 @@ type RemoveExpanded = {
     id: string;
 };
 
-type ClearExpanded = {
-    type: "CLEAR_EXPANDED";
-};
-
-type Action = SetExpanded | RemoveExpanded | ClearExpanded;
+type Action = SetExpanded | RemoveExpanded;
 
 export const setExpanded = (id: string): SetExpanded => (
     {
@@ -54,12 +50,6 @@ export const removeExpanded = (id: string): RemoveExpanded => (
     {
         type: "REMOVE_EXPANDED",
         id
-    }
-);
-
-export const clearExpanded = (): ClearExpanded => (
-    {
-        type: "CLEAR_EXPANDED"
     }
 );
 
@@ -82,11 +72,6 @@ function accordionReducer(state: AccordionState, action: Action): AccordionState
             return {
                 ...state,
                 expanded: state.expanded.filter((id) => id !== action.id),
-            };
-        case "CLEAR_EXPANDED":
-            return {
-                ...state,
-                expanded: undefined,
             };
     }
 }
