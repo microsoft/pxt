@@ -15,7 +15,7 @@ import { FocusTrap } from "react-common/components/controls/FocusTrap";
 import { logError } from "../services/loggingService";
 import { ErrorCode } from "../types/errorCode";
 import {
-    addExandedCatalogTagAsync,
+    addExpandedCatalogTagAsync,
     getExpandedCatalogTags,
     removeExpandedCatalogTagAsync,
 } from "../services/storageService";
@@ -133,7 +133,7 @@ const CatalogList: React.FC = () => {
 
     function onTagExpandToggled(tag: string, expanded: boolean) {
         if (expanded) {
-            /* await */ addExandedCatalogTagAsync(tag);
+            /* await */ addExpandedCatalogTagAsync(tag);
         } else {
             /* await */ removeExpandedCatalogTagAsync(tag);
         }
@@ -147,7 +147,7 @@ const CatalogList: React.FC = () => {
     let expandedTags = getExpandedCatalogTags();
     if (!expandedTags) {
         // If we haven't saved an expanded set, default expand the first one.
-        addExandedCatalogTagAsync(tags[0]);
+        addExpandedCatalogTagAsync(tags[0]);
         expandedTags = [tags[0]];
     }
 

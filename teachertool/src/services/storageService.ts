@@ -214,7 +214,7 @@ export async function setExpandedCatalogTags(tags: string[]) {
     }
 }
 
-export async function addExandedCatalogTagAsync(tag: string) {
+export async function addExpandedCatalogTagAsync(tag: string) {
     let expandedTags = getExpandedCatalogTags();
     if (!expandedTags) {
         expandedTags = [];
