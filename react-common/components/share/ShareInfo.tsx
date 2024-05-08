@@ -324,7 +324,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
             {showSimulator && shareState !== "gifrecord" &&
                 <div className="project-share-thumbnail">
                     {thumbnailUri
-                        ? <img src={thumbnailUri} alt={lf("Preview of your code running on a micro:bit")} aria-label={lf("Micro:bit simulator preview")}/>
+                        ? <img src={thumbnailUri} alt={lf("Preview of your code running on the simulator")} aria-label={lf("Simulator preview")}/>
                         : <div className="project-thumbnail-placeholder">
                              <div className="common-spinner" />
                         </div>
