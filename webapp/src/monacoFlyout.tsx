@@ -6,6 +6,7 @@ import * as workspace from "./workspace";
 import * as data from "./data";
 import * as auth from "./auth";
 import { HELP_IMAGE_URI } from "../../pxteditor";
+import * as pxtblockly from "../../pxtblocks";
 
 import ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -353,7 +354,11 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
         const params = block.parameters;
         const blockColor = pxt.toolbox.getAccessibleBackground(block.attributes.color || color);
         const blockDescription = this.getBlockDescription(block, params ? params.slice() : null);
-        const helpUrl = block.attributes.help;
+        const helpUrl = pxt.blocks.getHelpUrl(block as pxtc.SymbolInfo);
+
+        const openHelp = () => {
+            pxtblockly.external.openHelpUrl(helpUrl);
+        };
 
         const qName = this.getQName(block) || this.getSnippetName(block);
         const selected = qName == this.state.selectedBlock;
@@ -385,9 +390,11 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
                 <div className="description">{description}</div>
                 <div className="signature">
                     <span>{snippet ? snippet : `${qName}(${params ? params.map(p => `${p.name}`).join(", ") : ""})`}</span>
-                    {helpUrl && <a className="blockHelp" href={`/reference/${helpUrl}`} target="_blank" rel="noopener noreferrer" role="button">
-                        <i className="question circle outline icon" aria-label={lf("Open documentation")}></i>
-                    </a>}
+                    {helpUrl &&
+                        <a className="blockHelp" role="button" onClick={openHelp}>
+                            <i className="question circle outline icon" aria-label={lf("Open documentation")}></i>
+                        </a>
+                    }
                 </div>
                 {params && <div className="params">
                     {params.map((p, i) => {
