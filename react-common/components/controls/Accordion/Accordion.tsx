@@ -70,7 +70,7 @@ export const AccordionItem = (props: AccordionItemProps) => {
 
     const panelId = itemId ?? useId();
     const mappedChildren = React.Children.toArray(children);
-    const isExpanded = expanded.indexOf(panelId) != -1;
+    const isExpanded = expanded.indexOf(panelId) !== -1;
 
     const onHeaderClick = React.useCallback(() => {
         if (isExpanded) {
