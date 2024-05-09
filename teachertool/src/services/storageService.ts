@@ -206,7 +206,7 @@ export function getExpandedCatalogTags(): string[] | undefined {
     }
 }
 
-export async function setExpandedCatalogTagsAsync(tags: string[]) {
+export function setExpandedCatalogTags(tags: string[]) {
     try {
         setValue(EXPANDED_CATALOG_TAGS_KEY, JSON.stringify(tags));
     } catch (e) {
@@ -214,24 +214,24 @@ export async function setExpandedCatalogTagsAsync(tags: string[]) {
     }
 }
 
-export async function addExpandedCatalogTagAsync(tag: string) {
+export function addExpandedCatalogTag(tag: string) {
     let expandedTags = getExpandedCatalogTags();
     if (!expandedTags) {
         expandedTags = [];
     }
     expandedTags.push(tag);
-    await setExpandedCatalogTagsAsync(expandedTags);
+    setExpandedCatalogTags(expandedTags);
 }
 
-export async function removeExpandedCatalogTagAsync(tag: string) {
+export function removeExpandedCatalogTag(tag: string) {
     let expandedTags = getExpandedCatalogTags();
     if (!expandedTags) {
-        await setExpandedCatalogTagsAsync([]);
+        setExpandedCatalogTags([]);
     } else {
         const index = expandedTags.indexOf(tag);
         if (index !== -1) {
             expandedTags.splice(index, 1);
-            await setExpandedCatalogTagsAsync(expandedTags);
+            setExpandedCatalogTags(expandedTags);
         }
     }
 }

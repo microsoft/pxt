@@ -14,11 +14,7 @@ import { announceToScreenReader } from "../transforms/announceToScreenReader";
 import { FocusTrap } from "react-common/components/controls/FocusTrap";
 import { logError } from "../services/loggingService";
 import { ErrorCode } from "../types/errorCode";
-import {
-    addExpandedCatalogTagAsync,
-    getExpandedCatalogTags,
-    removeExpandedCatalogTagAsync,
-} from "../services/storageService";
+import { addExpandedCatalogTag, getExpandedCatalogTags, removeExpandedCatalogTag } from "../services/storageService";
 import css from "./styling/CatalogOverlay.module.scss";
 
 interface CatalogHeaderProps {
@@ -163,9 +159,9 @@ const CatalogList: React.FC = () => {
 
     function onTagExpandToggled(tag: string, expanded: boolean) {
         if (expanded) {
-            /* await */ addExpandedCatalogTagAsync(tag);
+            addExpandedCatalogTag(tag);
         } else {
-            /* await */ removeExpandedCatalogTagAsync(tag);
+            removeExpandedCatalogTag(tag);
         }
     }
 
@@ -177,7 +173,7 @@ const CatalogList: React.FC = () => {
     let expandedTags = getExpandedCatalogTags();
     if (!expandedTags) {
         // If we haven't saved an expanded set, default expand the first one.
-        addExpandedCatalogTagAsync(tags[0]);
+        addExpandedCatalogTag(tags[0]);
         expandedTags = [tags[0]];
     }
 
