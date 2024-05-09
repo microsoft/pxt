@@ -89,7 +89,6 @@ const CatalogItem: React.FC<CatalogItemProps> = ({ catalogCriteria, recentlyAdde
     const isMaxed = catalogCriteria.maxCount !== undefined && existingInstanceCount >= catalogCriteria.maxCount;
     return catalogCriteria.template ? (
         <Button
-            id={`criteria_${catalogCriteria.id}`}
             title={getReadableCriteriaTemplate(catalogCriteria)}
             key={catalogCriteria.id}
             className={css["catalog-item"]}
