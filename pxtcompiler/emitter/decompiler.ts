@@ -65,7 +65,7 @@ namespace ts.pxtc.decompiler {
     /**
      * Max number of blocks before we bail out of decompilation
      */
-    const MAX_BLOCKS = 1500;
+    const MAX_BLOCKS = 6000;
 
     const lowerCaseAlphabetStartCode = 97;
     const lowerCaseAlphabetEndCode = 122;
