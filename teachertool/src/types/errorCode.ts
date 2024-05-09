@@ -27,4 +27,5 @@ export enum ErrorCode {
     invalidValidatorPlan = "invalidValidatorPlan",
     askCopilotQuestion = "askCopilotQuestion",
     missingTag = "missingTag",
+    noCatalogCriteria = "noCatalogCriteria"
 }

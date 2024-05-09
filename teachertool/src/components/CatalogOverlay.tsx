@@ -167,6 +167,7 @@ const CatalogList: React.FC = () => {
 
     const tags = Object.keys(criteriaGroupedByTag);
     if (tags.length === 0) {
+        logError(ErrorCode.noCatalogCriteria);
         return null;
     }
 
