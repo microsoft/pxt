@@ -75,6 +75,37 @@ const CatalogItemLabel: React.FC<CatalogItemLabelProps> = ({ catalogCriteria, is
     );
 };
 
+interface CatalogItemProps {
+    catalogCriteria: CatalogCriteria;
+    recentlyAddedIds: pxsim.Map<NodeJS.Timeout>;
+    onItemClicked: (c: CatalogCriteria) => void;
+}
+const CatalogItem: React.FC<CatalogItemProps> = ({ catalogCriteria, recentlyAddedIds, onItemClicked }) => {
+    const { state: teacherTool } = useContext(AppStateContext);
+
+    const existingInstanceCount = teacherTool.checklist.criteria.filter(
+        i => i.catalogCriteriaId === catalogCriteria.id
+    ).length;
+    const isMaxed = catalogCriteria.maxCount !== undefined && existingInstanceCount >= catalogCriteria.maxCount;
+    return catalogCriteria.template ? (
+        <Button
+            id={`criteria_${catalogCriteria.id}`}
+            title={getReadableCriteriaTemplate(catalogCriteria)}
+            key={catalogCriteria.id}
+            className={css["catalog-item"]}
+            label={
+                <CatalogItemLabel
+                    catalogCriteria={catalogCriteria}
+                    isMaxed={isMaxed}
+                    recentlyAdded={recentlyAddedIds[catalogCriteria.id] !== undefined}
+                />
+            }
+            onClick={() => onItemClicked(catalogCriteria)}
+            disabled={isMaxed}
+        />
+    ) : null;
+};
+
 const CatalogList: React.FC = () => {
     const { state: teacherTool } = useContext(AppStateContext);
 
@@ -163,31 +194,13 @@ const CatalogList: React.FC = () => {
                     >
                         <Accordion.Header>{tag}</Accordion.Header>
                         <Accordion.Panel>
-                            {criteriaGroupedByTag[tag].map(c => {
-                                const existingInstanceCount = teacherTool.checklist.criteria.filter(
-                                    i => i.catalogCriteriaId === c.id
-                                ).length;
-                                const isMaxed = c.maxCount !== undefined && existingInstanceCount >= c.maxCount;
-                                return (
-                                    c.template && (
-                                        <Button
-                                            id={`criteria_${c.id}`}
-                                            title={getReadableCriteriaTemplate(c)}
-                                            key={c.id}
-                                            className={css["catalog-item"]}
-                                            label={
-                                                <CatalogItemLabel
-                                                    catalogCriteria={c}
-                                                    isMaxed={isMaxed}
-                                                    recentlyAdded={recentlyAddedIds[c.id] !== undefined}
-                                                />
-                                            }
-                                            onClick={() => onItemClicked(c)}
-                                            disabled={isMaxed}
-                                        />
-                                    )
-                                );
-                            })}
+                            {criteriaGroupedByTag[tag].map(c => (
+                                <CatalogItem
+                                    catalogCriteria={c}
+                                    recentlyAddedIds={recentlyAddedIds}
+                                    onItemClicked={onItemClicked}
+                                />
+                            ))}
                         </Accordion.Panel>
                     </Accordion.Item>
                 );
