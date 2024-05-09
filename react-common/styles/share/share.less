@@ -150,6 +150,7 @@
     margin-top: 1rem;
     position: relative;
     margin-bottom: 2rem;
+    justify-content: space-between;
 }
 
 .project-share-social {
@@ -311,6 +312,12 @@
 @media @tabletAndBelow {
     .gif-recorder-content .thumbnail-controls {
         padding: 0 2rem;
+    }
+
+    .common-button.square-button.embed.gray.mobile-portrait-hidden {
+        // important is need for color to override semantic ui's use of important
+        color: #323130 !important;
+        background: #e0e1e2;
     }
 }
 

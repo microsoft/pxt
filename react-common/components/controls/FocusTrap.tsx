@@ -1,5 +1,5 @@
 import * as React from "react";
-import { classList, nodeListToArray } from "../util";
+import { classList, nodeListToArray, findNextFocusableElement } from "../util";
 
 export interface FocusTrapProps extends React.PropsWithChildren<{}> {
     onEscape: () => void;
@@ -58,24 +58,24 @@ export const FocusTrap = (props: FocusTrapProps) => {
 
             if (forward) {
                 if (goToEnd) {
-                    focusable[focusable.length - 1].focus();
+                    findNextFocusableElement(focusable, index, focusable.length - 1, forward).focus();
                 }
                 else if (index === focusable.length - 1) {
-                    focusable[0].focus();
+                    findNextFocusableElement(focusable, index, 0, forward).focus();
                 }
                 else {
-                    focusable[index + 1].focus();
+                    findNextFocusableElement(focusable, index, index + 1, forward).focus();
                 }
             }
             else {
                 if (goToEnd) {
-                    focusable[0].focus();
+                    findNextFocusableElement(focusable, index, 0, forward).focus();
                 }
                 else if (index === 0) {
-                    focusable[focusable.length - 1].focus();
+                    findNextFocusableElement(focusable, index, focusable.length - 1, forward).focus();
                 }
                 else {
-                    focusable[Math.max(index - 1, 0)].focus();
+                    findNextFocusableElement(focusable, index, Math.max(index - 1, 0), forward).focus();
                 }
             }
 
