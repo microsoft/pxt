@@ -48,7 +48,6 @@ namespace ts.pxtc.decompiler {
 
     export type Comment = MultiLineComment | SingleLineComment;
 
-    export const FILE_TOO_LARGE_CODE = 9266;
     export const DECOMPILER_ERROR = 9267;
 
     interface DecompileModuleExport {
@@ -61,11 +60,6 @@ namespace ts.pxtc.decompiler {
     }
 
     const SK = ts.SyntaxKind;
-
-    /**
-     * Max number of blocks before we bail out of decompilation
-     */
-    const MAX_BLOCKS = 6000;
 
     const lowerCaseAlphabetStartCode = 97;
     const lowerCaseAlphabetEndCode = 122;
@@ -511,31 +505,18 @@ namespace ts.pxtc.decompiler {
             }
         }
         catch (e) {
-            if ((<any>e).programTooLarge) {
-                result.success = false;
-                result.diagnostics = pxtc.patchUpDiagnostics([{
-                    file,
-                    start: file.getFullStart(),
-                    length: file.getFullWidth(),
-                    messageText: e.message,
-                    category: ts.DiagnosticCategory.Error,
-                    code: FILE_TOO_LARGE_CODE
-                }]);
-            }
-            else {
-                // don't throw
-                pxt.reportException(e);
-                result.success = false;
-                result.diagnostics = pxtc.patchUpDiagnostics([{
-                    file,
-                    start: file.getFullStart(),
-                    length: file.getFullWidth(),
-                    messageText: e.message,
-                    category: ts.DiagnosticCategory.Error,
-                    code: DECOMPILER_ERROR
-                }]);
-                return result;
-            }
+            // don't throw
+            pxt.reportException(e);
+            result.success = false;
+            result.diagnostics = pxtc.patchUpDiagnostics([{
+                file,
+                start: file.getFullStart(),
+                length: file.getFullWidth(),
+                messageText: e.message,
+                category: ts.DiagnosticCategory.Error,
+                code: DECOMPILER_ERROR
+            }]);
+            return result;
         }
 
         if (n) {
@@ -650,15 +631,6 @@ ${output}</xml>`;
                     return `${getArgKeyRecursive((n as ts.CallExpression).expression)}(${(n as ts.CallExpression).arguments.map(getArgKeyRecursive).join(",")})`
                 default:
                     return n.getText();
-            }
-        }
-
-        function countBlock() {
-            emittedBlocks++;
-            if (emittedBlocks > MAX_BLOCKS) {
-                let e = new Error(Util.lf("Could not decompile because the script is too large"));
-                (<any>e).programTooLarge = true;
-                throw e
             }
         }
 
@@ -854,9 +826,6 @@ ${output}</xml>`;
                 const node = n as ExpressionNode;
                 const isShadow = shadow || node.isShadow;
                 const tag = isShadow ? "shadow" : "block";
-                if (!isShadow) {
-                    countBlock();
-                }
 
                 write(`<${tag} ${node.id ? `id="${node.id}" ` : ''}type="${U.htmlEscape(node.type)}">`)
                 emitBlockNodeCore(node);
@@ -865,7 +834,6 @@ ${output}</xml>`;
         }
 
         function openBlockTag(type: string, node: StatementNode) {
-            countBlock();
             const id = node && node.id;
             write(`<block ${id ? `id="${node.id}" ` : ''}type="${U.htmlEscape(type)}">`)
         }
