@@ -11,6 +11,7 @@ const KEY_PREFIX = "teachertool";
 const AUTORUN_KEY = [KEY_PREFIX, "autorun"].join("/");
 const LAST_ACTIVE_CHECKLIST_KEY = [KEY_PREFIX, "lastActiveChecklist"].join("/");
 const SPLIT_POSITION_KEY = [KEY_PREFIX, "splitPosition"].join("/");
+const EXPANDED_CATALOG_TAGS_KEY = [KEY_PREFIX, "expandedCatalogTags"].join("/");
 
 function getValue(key: string, defaultValue?: string): string | undefined {
     return localStorage.getItem(key) || defaultValue;
@@ -190,5 +191,47 @@ export async function deleteChecklistAsync(name: string) {
 
     if (getLastActiveChecklistName() === name) {
         setLastActiveChecklistName("");
+    }
+}
+
+// Returns undefined if it has not been set or if there was an issue.
+// Empty list means it was explicitly set to empty.
+export function getExpandedCatalogTags(): string[] | undefined {
+    try {
+        const tags = getValue(EXPANDED_CATALOG_TAGS_KEY);
+        return tags ? JSON.parse(tags) : undefined;
+    } catch (e) {
+        logError(ErrorCode.localStorageReadError, e);
+        return undefined;
+    }
+}
+
+export function setExpandedCatalogTags(tags: string[]) {
+    try {
+        setValue(EXPANDED_CATALOG_TAGS_KEY, JSON.stringify(tags));
+    } catch (e) {
+        logError(ErrorCode.localStorageWriteError, e);
+    }
+}
+
+export function addExpandedCatalogTag(tag: string) {
+    let expandedTags = getExpandedCatalogTags();
+    if (!expandedTags) {
+        expandedTags = [];
+    }
+    expandedTags.push(tag);
+    setExpandedCatalogTags(expandedTags);
+}
+
+export function removeExpandedCatalogTag(tag: string) {
+    let expandedTags = getExpandedCatalogTags();
+    if (!expandedTags) {
+        setExpandedCatalogTags([]);
+    } else {
+        const index = expandedTags.indexOf(tag);
+        if (index !== -1) {
+            expandedTags.splice(index, 1);
+            setExpandedCatalogTags(expandedTags);
+        }
     }
 }

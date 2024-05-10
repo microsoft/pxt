@@ -1,17 +1,22 @@
 import * as React from "react";
 
 interface AccordionState {
-    expanded?: string;
+    multiExpand?: boolean;
+    expanded: string[];
 }
 
 const AccordionStateContext = React.createContext<AccordionState>(null);
 const AccordionDispatchContext = React.createContext<(action: Action) => void>(null);
 
-export const AccordionProvider = ({ children }: React.PropsWithChildren<{}>) => {
-    const [state, dispatch] = React.useReducer(
-        accordionReducer,
-        {}
-    );
+export const AccordionProvider = ({
+    multiExpand,
+    defaultExpandedIds,
+    children,
+}: React.PropsWithChildren<{ multiExpand?: boolean; defaultExpandedIds?: string[] }>) => {
+    const [state, dispatch] = React.useReducer(accordionReducer, {
+        expanded: defaultExpandedIds ?? [],
+        multiExpand,
+    });
 
     return (
         <AccordionStateContext.Provider value={state}>
@@ -27,11 +32,12 @@ type SetExpanded = {
     id: string;
 };
 
-type ClearExpanded = {
-    type: "CLEAR_EXPANDED";
+type RemoveExpanded = {
+    type: "REMOVE_EXPANDED";
+    id: string;
 };
 
-type Action = SetExpanded | ClearExpanded;
+type Action = SetExpanded | RemoveExpanded;
 
 export const setExpanded = (id: string): SetExpanded => (
     {
@@ -40,14 +46,15 @@ export const setExpanded = (id: string): SetExpanded => (
     }
 );
 
-export const clearExpanded = (): ClearExpanded => (
+export const removeExpanded = (id: string): RemoveExpanded => (
     {
-        type: "CLEAR_EXPANDED"
+        type: "REMOVE_EXPANDED",
+        id
     }
 );
 
 export function useAccordionState() {
-    return React.useContext(AccordionStateContext)
+    return React.useContext(AccordionStateContext);
 }
 
 export function useAccordionDispatch() {
@@ -59,12 +66,12 @@ function accordionReducer(state: AccordionState, action: Action): AccordionState
         case "SET_EXPANDED":
             return {
                 ...state,
-                expanded: action.id
+                expanded: state.multiExpand ? [...state.expanded, action.id] : [action.id],
             };
-        case "CLEAR_EXPANDED":
+        case "REMOVE_EXPANDED":
             return {
                 ...state,
-                expanded: undefined
+                expanded: state.expanded.filter((id) => id !== action.id),
             };
     }
 }

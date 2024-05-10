@@ -6,6 +6,7 @@
             "template": "${Block} used ${count} times",
             "description": "This block was used the specified number of times in your project.",
             "docPath": "/teachertool",
+            "tags": ["General"],
             "params": [
                 {
                     "name": "block",
@@ -27,6 +28,7 @@
             "description": "The project contains at least the specified number of comments.",
             "docPath": "/teachertool",
             "maxCount": 1,
+            "tags": ["General"],
             "params": [
                 {
                     "name": "count",
@@ -43,6 +45,7 @@
             "docPath": "/teachertool",
             "description": "The program uses at least this many loops of any kind (for, repeat, while, or for-of).",
             "maxCount": 1,
+            "tags": ["Code Elements"],
             "params": [
                 {
                     "name": "count",
@@ -59,6 +62,7 @@
             "docPath": "/teachertool",
             "description": "At least this many user-defined functions are created and called.",
             "maxCount": 1,
+            "tags": ["Code Elements"],
             "params": [
                 {
                     "name": "count",
@@ -75,6 +79,7 @@
             "docPath": "/teachertool",
             "description": "The program creates and uses at least this many user-defined variables.",
             "maxCount": 1,
+            "tags": ["Code Elements"],
             "params": [
                 {
                     "name": "count",

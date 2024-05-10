@@ -1,3 +1,4 @@
+import { Strings } from "../constants";
 import { loadTestableCollectionFromDocsAsync } from "../services/backendRequests";
 import { stateAndDispatch } from "../state";
 import * as Actions from "../state/actions";
@@ -12,11 +13,16 @@ export async function loadCatalogAsync() {
     const { dispatch } = stateAndDispatch();
     const fullCatalog = await loadTestableCollectionFromDocsAsync<CatalogCriteria>(prodFiles, "criteria");
 
-    // Convert parameter names to lower-case for case-insensitive matching
     fullCatalog.forEach(c => {
+        // Convert parameter names to lower-case for case-insensitive matching
         c.params?.forEach(p => {
             p.name = p.name.toLocaleLowerCase();
         });
+
+        // Add default tag if none are present
+        if (!c.tags || c.tags.length === 0) {
+            c.tags = [Strings.Other];
+        }
     });
 
     dispatch(Actions.setCatalog(fullCatalog));

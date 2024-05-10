@@ -26,4 +26,6 @@ export enum ErrorCode {
     unrecognizedSystemParameter = "unrecognizedSystemParameter",
     invalidValidatorPlan = "invalidValidatorPlan",
     askCopilotQuestion = "askCopilotQuestion",
+    missingTag = "missingTag",
+    noCatalogCriteria = "noCatalogCriteria"
 }
