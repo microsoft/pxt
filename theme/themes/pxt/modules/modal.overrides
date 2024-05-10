@@ -145,6 +145,15 @@
     }
 }
 
+.ui.modal .ui.button:focus {
+    outline: 1px solid @white;
+    outline-offset: -7px;
+}
+
+.ui.modal .ui.button.approve.secondary:focus {
+    background: rgba(0,0,0,0.75);
+}
+
 .header-actions {
     display: flex;
     align-items: center;
