@@ -1196,9 +1196,13 @@ export class Modal extends data.Component<ModalProps, ModalState> {
     }
 
     private isFocusable(e: HTMLElement) {
-        return (e.getAttribute("data-isfocusable") === "true"
+        if (e) {
+            return (e.getAttribute("data-isfocusable") === "true"
             || e.tabIndex !== -1)
             && getComputedStyle(e).display !== "none";
+        } else {
+            return false;
+        }
     }
 
     private afterOpen() {
@@ -1222,9 +1226,14 @@ export class Modal extends data.Component<ModalProps, ModalState> {
     componentWillUnmount() {
         cancelAnimationFrame(this.animationRequestId);
         if (!this.props.dontRestoreFocus) {
-            let toFocus = this.state.previouslyFocused as HTMLElement
-            while (!this.isFocusable(toFocus)) {
-                toFocus = toFocus.parentElement;
+            let toFocus = this.state.previouslyFocused as HTMLElement;
+            while (toFocus && !this.isFocusable(toFocus)) {
+                const toFocusParent = toFocus.parentElement;
+                if (toFocusParent) {
+                    toFocus = toFocusParent;
+                } else {
+                    break;
+                }
             }
             toFocus.focus();
         }
