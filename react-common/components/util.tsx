@@ -113,3 +113,9 @@ export function findNextFocusableElement(elements: HTMLElement[], focusedIndex: 
     }
     return findNextFocusableElement(elements, focusedIndex, index, forward);
 }
+
+export function isFocusable(e: HTMLElement) {
+    return (e.getAttribute("data-isfocusable") === "true"
+        || e.tabIndex !== -1)
+        && getComputedStyle(e).display !== "none";
+}

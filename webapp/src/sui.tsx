@@ -1169,12 +1169,14 @@ export interface ModalProps extends ReactModal.Props {
     allowResetFocus?: boolean;
     modalDidOpen?: (ref: HTMLElement) => void;
     overlayClassName?: string;
+    dontRestoreFocus?: boolean;
 }
 
 interface ModalState {
     marginTop?: number;
     scrolling?: boolean;
     mountClasses?: string;
+    previouslyFocused?: Element;
 }
 
 export class Modal extends data.Component<ModalProps, ModalState> {
@@ -1186,10 +1188,17 @@ export class Modal extends data.Component<ModalProps, ModalState> {
         super(props);
         this.id = ts.pxtc.Util.guidGen();
         this.state = {
+            previouslyFocused: document.activeElement
         }
 
         this.onRequestClose = this.onRequestClose.bind(this);
         this.afterOpen = this.afterOpen.bind(this);
+    }
+
+    private isFocusable(e: HTMLElement) {
+        return (e.getAttribute("data-isfocusable") === "true"
+            || e.tabIndex !== -1)
+            && getComputedStyle(e).display !== "none";
     }
 
     private afterOpen() {
@@ -1212,6 +1221,13 @@ export class Modal extends data.Component<ModalProps, ModalState> {
 
     componentWillUnmount() {
         cancelAnimationFrame(this.animationRequestId);
+        if (!this.props.dontRestoreFocus) {
+            let toFocus = this.state.previouslyFocused as HTMLElement
+            while (!this.isFocusable(toFocus)) {
+                toFocus = toFocus.parentElement;
+            }
+            toFocus.focus();
+        }
     }
 
     setPositionAndClassNames = () => {

@@ -1,5 +1,5 @@
 import * as React from "react";
-import { classList, nodeListToArray, findNextFocusableElement } from "../util";
+import { classList, nodeListToArray, findNextFocusableElement, isFocusable } from "../util";
 
 export interface FocusTrapProps extends React.PropsWithChildren<{}> {
     onEscape: () => void;
@@ -8,6 +8,7 @@ export interface FocusTrapProps extends React.PropsWithChildren<{}> {
     arrowKeyNavigation?: boolean;
     dontStealFocus?: boolean;
     includeOutsideTabOrder?: boolean;
+    dontRestoreFocus?: boolean;
 }
 
 export const FocusTrap = (props: FocusTrapProps) => {
@@ -18,12 +19,25 @@ export const FocusTrap = (props: FocusTrapProps) => {
         onEscape,
         arrowKeyNavigation,
         dontStealFocus,
-        includeOutsideTabOrder
+        includeOutsideTabOrder,
+        dontRestoreFocus
     } = props;
 
     let container: HTMLDivElement;
-
+    const previouslyFocused = React.useRef<Element>(document.activeElement);
     const [stoleFocus, setStoleFocus] = React.useState(false);
+
+    React.useEffect(() => {
+        return () => {
+            if (!dontRestoreFocus) {
+                let toFocus = previouslyFocused.current as HTMLElement
+                while (!isFocusable(toFocus)) {
+                    toFocus = toFocus.parentElement;
+                }
+                toFocus.focus()
+            }
+        }
+    }, [previouslyFocused])
 
     const getElements = () => {
         const all = nodeListToArray(
