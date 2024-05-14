@@ -1,5 +1,5 @@
 import * as React from "react";
-import { classList, nodeListToArray, findNextFocusableElement, isFocusable } from "../util";
+import { classList, nodeListToArray, findNextFocusableElement, focusLastActive } from "../util";
 
 export interface FocusTrapProps extends React.PropsWithChildren<{}> {
     onEscape: () => void;
@@ -29,15 +29,11 @@ export const FocusTrap = (props: FocusTrapProps) => {
 
     React.useEffect(() => {
         return () => {
-            if (!dontRestoreFocus) {
-                let toFocus = previouslyFocused.current as HTMLElement
-                while (!isFocusable(toFocus)) {
-                    toFocus = toFocus.parentElement;
-                }
-                toFocus.focus()
+            if (!dontRestoreFocus && previouslyFocused.current) {
+                focusLastActive(previouslyFocused.current as HTMLElement)
             }
         }
-    }, [previouslyFocused])
+    }, [])
 
     const getElements = () => {
         const all = nodeListToArray(

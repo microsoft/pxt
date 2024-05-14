@@ -7,6 +7,7 @@ import * as data from "./data";
 import * as core from "./core";
 import * as auth from "./auth";
 import { fireClickOnEnter } from "./util";
+import { focusLastActive } from "../../react-common/components/util";
 
 export const appElement = document.getElementById('content');
 
@@ -1195,16 +1196,6 @@ export class Modal extends data.Component<ModalProps, ModalState> {
         this.afterOpen = this.afterOpen.bind(this);
     }
 
-    private isFocusable(e: HTMLElement) {
-        if (e) {
-            return (e.getAttribute("data-isfocusable") === "true"
-            || e.tabIndex !== -1)
-            && getComputedStyle(e).display !== "none";
-        } else {
-            return false;
-        }
-    }
-
     private afterOpen() {
         const { modalDidOpen } = this.props;
         this.setState({ scrolling: false });
@@ -1227,15 +1218,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
         cancelAnimationFrame(this.animationRequestId);
         if (!this.props.dontRestoreFocus) {
             let toFocus = this.state.previouslyFocused as HTMLElement;
-            while (toFocus && !this.isFocusable(toFocus)) {
-                const toFocusParent = toFocus.parentElement;
-                if (toFocusParent) {
-                    toFocus = toFocusParent;
-                } else {
-                    break;
-                }
-            }
-            toFocus.focus();
+            focusLastActive(toFocus);
         }
     }
 

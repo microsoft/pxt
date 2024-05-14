@@ -115,7 +115,23 @@ export function findNextFocusableElement(elements: HTMLElement[], focusedIndex: 
 }
 
 export function isFocusable(e: HTMLElement) {
-    return (e.getAttribute("data-isfocusable") === "true"
+    if (e) {
+        return (e.getAttribute("data-isfocusable") === "true"
         || e.tabIndex !== -1)
         && getComputedStyle(e).display !== "none";
+    } else {
+        return false;
+    }
+}
+
+export function focusLastActive(el: HTMLElement) {
+    while (el && !isFocusable(el)) {
+        const toFocusParent = el.parentElement;
+        if (toFocusParent) {
+            el = toFocusParent;
+        } else {
+            break;
+        }
+    }
+    el.focus();
 }
