@@ -1218,7 +1218,9 @@ export class Modal extends data.Component<ModalProps, ModalState> {
         cancelAnimationFrame(this.animationRequestId);
         if (!this.props.dontRestoreFocus) {
             let toFocus = this.state.previouslyFocused as HTMLElement;
-            focusLastActive(toFocus);
+            if (toFocus) {
+                focusLastActive(toFocus);
+            }
         }
     }
 
