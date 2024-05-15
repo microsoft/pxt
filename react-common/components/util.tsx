@@ -113,3 +113,25 @@ export function findNextFocusableElement(elements: HTMLElement[], focusedIndex: 
     }
     return findNextFocusableElement(elements, focusedIndex, index, forward);
 }
+
+export function isFocusable(e: HTMLElement) {
+    if (e) {
+        return (e.getAttribute("data-isfocusable") === "true"
+        || e.tabIndex !== -1)
+        && getComputedStyle(e).display !== "none";
+    } else {
+        return false;
+    }
+}
+
+export function focusLastActive(el: HTMLElement) {
+    while (el && !isFocusable(el)) {
+        const toFocusParent = el.parentElement;
+        if (toFocusParent) {
+            el = toFocusParent;
+        } else {
+            break;
+        }
+    }
+    el.focus();
+}

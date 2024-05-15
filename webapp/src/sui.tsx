@@ -7,6 +7,7 @@ import * as data from "./data";
 import * as core from "./core";
 import * as auth from "./auth";
 import { fireClickOnEnter } from "./util";
+import { focusLastActive } from "../../react-common/components/util";
 
 export const appElement = document.getElementById('content');
 
@@ -1169,12 +1170,14 @@ export interface ModalProps extends ReactModal.Props {
     allowResetFocus?: boolean;
     modalDidOpen?: (ref: HTMLElement) => void;
     overlayClassName?: string;
+    dontRestoreFocus?: boolean;
 }
 
 interface ModalState {
     marginTop?: number;
     scrolling?: boolean;
     mountClasses?: string;
+    previouslyFocused?: Element;
 }
 
 export class Modal extends data.Component<ModalProps, ModalState> {
@@ -1186,6 +1189,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
         super(props);
         this.id = ts.pxtc.Util.guidGen();
         this.state = {
+            previouslyFocused: document.activeElement
         }
 
         this.onRequestClose = this.onRequestClose.bind(this);
@@ -1212,6 +1216,12 @@ export class Modal extends data.Component<ModalProps, ModalState> {
 
     componentWillUnmount() {
         cancelAnimationFrame(this.animationRequestId);
+        if (!this.props.dontRestoreFocus) {
+            let toFocus = this.state.previouslyFocused as HTMLElement;
+            if (toFocus) {
+                focusLastActive(toFocus);
+            }
+        }
     }
 
     setPositionAndClassNames = () => {
