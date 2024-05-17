@@ -37,6 +37,7 @@ export interface ImageEditorProps {
     nested?: boolean;
     lightMode?: boolean;
     hideDoneButton?: boolean;
+    hideAssetName?: boolean;
 }
 
 export interface ImageEditorState {
@@ -76,7 +77,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
     }
 
     render(): JSX.Element {
-        const { singleFrame, lightMode, hideDoneButton } = this.props;
+        const { singleFrame, lightMode, hideDoneButton, hideAssetName } = this.props;
         const instanceStore = this.getStore();
 
         const { tileToEdit, editingTile, alert } = this.state;
@@ -92,11 +93,21 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
                         <ImageCanvas suppressShortcuts={editingTile} lightMode={lightMode} />
                         {isAnimationEditor && !singleFrame ? <Timeline /> : undefined}
                     </div>
-                    <BottomBar singleFrame={singleFrame} onDoneClick={this.onDoneClick} hideDoneButton={!!hideDoneButton} />
+                    <BottomBar singleFrame={singleFrame} onDoneClick={this.onDoneClick} hideDoneButton={!!hideDoneButton} hideAssetName={!!hideAssetName} />
                     {alert && alert.title && <Alert title={alert.title} text={alert.text} options={alert.options} />}
                 </div>
             </Provider>
-            {editingTile && <ImageEditor store={tileEditorStore} ref="nested-image-editor" onDoneClicked={this.onTileEditorFinished} asset={tileToEdit} singleFrame={true} nested={true} />}
+            {editingTile &&
+                <ImageEditor
+                    store={tileEditorStore}
+                    ref="nested-image-editor"
+                    onDoneClicked={this.onTileEditorFinished}
+                    asset={tileToEdit}
+                    singleFrame={true}
+                    nested={true}
+                    hideAssetName={hideAssetName}
+                />
+            }
         </div>
     }
 

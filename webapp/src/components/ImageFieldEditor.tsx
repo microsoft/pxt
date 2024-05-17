@@ -87,11 +87,15 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
 
         let showHeader = headerVisible;
         // If there is no asset, show the gallery to prevent changing shape when it's added
-        const showGallery = !this.props.isMusicEditor && (!this.asset || editingTile || this.asset.type !== pxt.AssetType.Tilemap);
+        let showGallery = !this.props.isMusicEditor && (!this.asset || editingTile || this.asset.type !== pxt.AssetType.Tilemap);
         const showMyAssets = !hideMyAssets && !editingTile;
 
         if (this.asset && !this.galleryAssets && showGallery) {
             this.updateGalleryAssets();
+        }
+
+        if (!this.galleryAssets?.length) {
+            showGallery = false;
         }
 
         const specialTags = this.props.includeSpecialTagsInFilter ? [] : ["tile", "dialog", "background"];
@@ -181,6 +185,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
                             onTileEditorOpenClose={this.onTileEditorOpenClose}
                             lightMode={this.lightMode}
                             hideDoneButton={this.props.hideDoneButton}
+                            hideAssetName={!pxt.appTarget?.appTheme?.assetEditor}
                         />
                     }
                     <ImageEditorGallery
