@@ -2113,6 +2113,25 @@ export class ProjectView
         await this.reloadHeaderAsync();
     }
 
+    async renameProject() {
+        if (!pkg.mainEditorPkg().header) return;
+        // Prompt for the new project name
+        const opts: core.PromptOptions = {
+            header: lf("Choose a new name for your project"),
+            agreeLbl: lf("Rename"),
+            agreeClass: "green approve positive",
+            initialValue: pkg.mainEditorPkg().header.name,
+            placeholder: lf("Enter your project name here"),
+            size: "tiny"
+        };
+        const newName = await core.promptAsync(opts);
+        if (newName === null)
+            return; // null means cancelled
+        
+        const clonedHeader = await workspace.renameAsync(pkg.mainEditorPkg().header, newName);
+        await workspace.saveAsync(clonedHeader);
+    }
+
     removeProject() {
         if (!pkg.mainEditorPkg().header) return;
 
