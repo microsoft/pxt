@@ -763,6 +763,21 @@ export function installAsync(h0: InstallHeader, text: ScriptText, dontOverwriteI
         .then(() => h);
 }
 
+export async function renameAsync(h: Header, newName: string): Promise<Header> {
+    const text = await getTextAsync(h.id);
+
+    let newHdr = U.flatClone(h)
+
+    const dupText = U.flatClone(text);
+    newHdr.name = newName;
+    const cfg = JSON.parse(text[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+    cfg.name = newHdr.name;
+    dupText[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
+
+    return importAsync(newHdr, dupText)
+        .then(() => newHdr)
+}
+
 export async function duplicateAsync(h: Header, newName?: string, newText?: ScriptText): Promise<Header> {
     const text = newText || (await getTextAsync(h.id));
 
