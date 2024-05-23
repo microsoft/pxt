@@ -1966,7 +1966,7 @@ export class ProjectView
         }
         else if (!header.tutorial.templateCode || header.tutorial.templateLoaded) {
             if (header.tutorial.mergeCarryoverCode && header.tutorial.mergeHeaderId) {
-                console.warn(lf(`Refusing to carry code between tutorials because the loaded tutorial "{0}" does not contain a template code block.`, header.tutorial.tutorial));
+                console.warn(lf("Refusing to carry code between tutorials because the loaded tutorial \"{0}\" does not contain a template code block.", header.tutorial.tutorial));
             }
             return;
         }
