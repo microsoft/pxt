@@ -1961,8 +1961,15 @@ export class ProjectView
 
     private async loadTutorialTemplateCodeAsync(): Promise<void> {
         const header = pkg.mainEditorPkg().header;
-        if (!header || !header.tutorial || !header.tutorial.templateCode || header.tutorial.templateLoaded)
+        if (!header || !header.tutorial) {
             return;
+        }
+        else if (!header.tutorial.templateCode || header.tutorial.templateLoaded) {
+            if (header.tutorial.mergeCarryoverCode && header.tutorial.mergeHeaderId) {
+                console.warn(lf(`Refusing to carry code between tutorials because the loaded tutorial "{0}" does not contain a template code block.`, header.tutorial.tutorial));
+            }
+            return;
+        }
 
         const template = header.tutorial.templateCode;
 
