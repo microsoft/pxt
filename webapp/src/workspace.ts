@@ -774,8 +774,8 @@ export async function renameAsync(h: Header, newName: string): Promise<Header> {
     cfg.name = newHdr.name;
     dupText[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
 
-    return importAsync(newHdr, dupText)
-        .then(() => newHdr)
+    await importAsync(newHdr, dupText);
+    return newHdr;
 }
 
 export async function duplicateAsync(h: Header, newName?: string, newText?: ScriptText): Promise<Header> {

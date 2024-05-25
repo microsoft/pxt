@@ -190,6 +190,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
     }
 
     async handleRename() {
+        pxt.tickEvent("scriptmanager.rename", undefined, { interactiveConsent: true });
         const header = this.getSelectedHeader();
         // Prompt for the new project name
         const opts: core.PromptOptions = {
