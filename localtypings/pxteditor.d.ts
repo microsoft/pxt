@@ -885,6 +885,7 @@ declare namespace pxt.editor {
         importExampleAsync(options: ExampleImportOptions): Promise<void>;
         showScriptManager(): void;
         importProjectDialog(): void;
+        renameProject(): void;
         removeProject(): void;
         editText(): void;
 

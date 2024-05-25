@@ -132,6 +132,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.openSettings = this.openSettings.bind(this);
         this.showPackageDialog = this.showPackageDialog.bind(this);
         this.showBoardDialog = this.showBoardDialog.bind(this);
+        this.renameProject = this.renameProject.bind(this);
         this.removeProject = this.removeProject.bind(this);
         this.saveProject = this.saveProject.bind(this);
         this.toggleCollapse = this.toggleCollapse.bind(this);
@@ -183,6 +184,11 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
     saveProject() {
         pxt.tickEvent("menu.saveproject", undefined, { interactiveConsent: true });
         this.props.parent.saveAndCompile();
+    }
+
+    renameProject() {
+        pxt.tickEvent("menu.renameproject", undefined, { interactiveConsent: true });
+        this.props.parent.renameProject();
     }
 
     removeProject() {
@@ -326,6 +332,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             {pxt.webBluetooth.isAvailable() ? <sui.Item role="menuitem" icon='bluetooth' text={lf("Pair Bluetooth")} onClick={this.pairBluetooth} /> : undefined}
             {showPrint ? <sui.Item role="menuitem" icon="print" text={lf("Print...")} onClick={this.print} /> : undefined}
             {showSave ? <sui.Item role="menuitem" icon="save" text={lf("Save Project")} onClick={this.saveProject} /> : undefined}
+            {!isController ? <sui.Item role="menuitem" icon="edit" text={lf("Rename Project")} onClick={this.renameProject} /> : undefined}
             {!isController ? <sui.Item role="menuitem" icon="trash" text={lf("Delete Project")} onClick={this.removeProject} /> : undefined}
             {targetTheme.timeMachine ? <sui.Item role="menuitem" icon="history" text={lf("Version History")} onClick={this.showTurnBackTimeDialog} /> : undefined}
             {showSimCollapse ? <sui.Item role="menuitem" icon='toggle right' text={simCollapseText} onClick={this.toggleCollapse} /> : undefined}
