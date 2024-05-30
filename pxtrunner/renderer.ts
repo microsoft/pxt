@@ -731,11 +731,14 @@ async function renderNamespaces(options: ClientRenderOptions): Promise<void> {
 
     let nsStyleBuffer = '';
     for (const ns of Object.keys(namespaceToColor)) {
-        const color = pxt.getWhiteContrastingBackground(namespaceToColor[ns] || '#dddddd');
+        const color = namespaceToColor[ns];
         nsStyleBuffer += `
                 span.docs.${ns.toLowerCase()} {
-                    background-color: ${color} !important;
-                    border-color: ${pxt.toolbox.fadeColor(color, 0.1, false)} !important;
+                    border-radius: 0;
+                    border-bottom: 2px solid ${color};
+                    color: black;
+                    font-weight: 600;
+                    background-color: transparent;
                 }
             `;
     }
@@ -744,8 +747,11 @@ async function renderNamespaces(options: ClientRenderOptions): Promise<void> {
         const color = pxt.toolbox.getNamespaceColor(ns);
         nsStyleBuffer += `
                 span.docs.${ns.toLowerCase()} {
-                    background-color: ${color} !important;
-                    border-color: ${pxt.toolbox.fadeColor(color, 0.1, false)} !important;
+                    border-radius: 0;
+                    border-bottom: 2px solid ${color};
+                    color: black;
+                    font-weight: 600;
+                    background-color: transparent;
                 }
             `;
     }
@@ -774,7 +780,8 @@ function renderInlineBlocksAsync(options: BlocksRenderOptions): Promise<void> {
         if (mbtn) {
             const mtxt = /^(([^\:\.]*?)[\:\.])?(.*)$/.exec(mbtn[2]);
             const ns = mtxt[2] ? mtxt[2].trim().toLowerCase() : '';
-            const lev = mbtn[1].length == 1 ? `docs inlinebutton ${ns}` : `docs inlineblock ${ns}`;
+            const fixedNs = ns.replace(/\(.*?\)/g, '');
+            const lev = mbtn[1].length == 1 ? `docs inlinebutton ${fixedNs}` : `docs inlineblock ${fixedNs}`;
             const txt = mtxt[3].trim();
             $el.replaceWith($(`<span class="${lev}"/>`).text(pxt.U.rlf(txt)));
             return renderNextAsync();
