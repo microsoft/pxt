@@ -977,9 +977,27 @@ export class ToolboxStyle extends data.Component<ToolboxStyleProps, {}> {
         return <style>
             {categories.filter(c => !!c.color).map(category =>
                 `span.docs.inlineblock.${category.nameid.toLowerCase()} {
-                    background-color: ${category.color};
-                    border-color: ${pxt.toolbox.fadeColor(category.color, 0.1, false)};
-                }`
+                    border-radius: 0;
+                    border-bottom: 2px solid ${category.color};
+                    color: black;
+                    font-weight: 600;
+                    background-color: transparent;
+                }
+                span.docs.inlineblock {
+                    border-radius: 0;
+                    border-bottom: 2px solid black;
+                    color: black;
+                    font-weight: 600;
+                    background-color: transparent;
+                }
+                span.docs.inlineblock.${category.nameid.toLowerCase()} i {
+                    font-family: 'Icons';
+                    content: "${category.icon || pxt.toolbox.getNamespaceIcon(category.nameid.toLowerCase())}";
+                    color: ${category.color || pxt.toolbox.getNamespaceColor(category.nameid.toLowerCase())};
+                    font-style: normal;
+                    margin-right: 4px;
+                }
+                `
             )}
         </style>
     }
