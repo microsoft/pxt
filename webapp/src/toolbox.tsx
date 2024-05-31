@@ -976,19 +976,19 @@ export class ToolboxStyle extends data.Component<ToolboxStyleProps, {}> {
         // and assosiate them with a specific category
         return <style>
             {categories.filter(c => !!c.color).map(category =>
-                `span.docs.inlineblock.${category.nameid.toLowerCase()} {
-                    border-radius: 0;
-                    border-bottom: 2px solid ${category.color};
-                    color: black;
-                    font-weight: 600;
-                    background-color: transparent;
-                }
+                `
                 span.docs.inlineblock {
                     border-radius: 0;
                     border-bottom: 2px solid black;
                     color: black;
                     font-weight: 600;
                     background-color: transparent;
+                }
+                .hc span.docs.inlineblock {
+                    color: white;
+                }
+                span.docs.inlineblock.${category.nameid.toLowerCase()} {
+                    border-bottom: 2px solid ${category.color};
                 }
                 span.docs.inlineblock.${category.nameid.toLowerCase()} i {
                     font-family: 'Icons';
