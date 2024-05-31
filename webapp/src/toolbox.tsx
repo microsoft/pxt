@@ -992,7 +992,6 @@ export class ToolboxStyle extends data.Component<ToolboxStyleProps, {}> {
                 }
                 span.docs.inlineblock.${category.nameid.toLowerCase()} i {
                     font-family: 'Icons';
-                    content: "${category.icon || pxt.toolbox.getNamespaceIcon(category.nameid.toLowerCase())}";
                     color: ${category.color || pxt.toolbox.getNamespaceColor(category.nameid.toLowerCase())};
                     font-style: normal;
                     margin-right: 4px;
