@@ -58,6 +58,11 @@ export function initLoops() {
                     },
                     {
                         "type": "input_value",
+                        "name": "FROM",
+                        "check": "Number"
+                    },
+                    {
+                        "type": "input_value",
                         "name": "TO",
                         "check": "Number"
                     }
@@ -125,6 +130,11 @@ export function initLoops() {
                         // cannot be used as variable name at this point.
                         // Translate or decide the default variable name
                         // with care.
+                    },
+                    {
+                        "type": "input_value",
+                        "name": "FROM",
+                        "check": "Number"
                     },
                     {
                         "type": "input_value",

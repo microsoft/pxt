@@ -367,7 +367,7 @@ namespace pxt.blocks {
                 url: '/blocks/loops/for',
                 category: 'loops',
                 block: {
-                    message0: Util.lf("for %1 from 0 to %2"),
+                    message0: Util.lf("for %1 from %2 to %3"),
                     variable: Util.lf("{id:var}index"),
                     appendField: Util.lf("{id:for}do")
                 }
@@ -378,7 +378,7 @@ namespace pxt.blocks {
                 url: '/blocks/loops/for',
                 category: 'loops',
                 block: {
-                    message0: Util.lf("for %1 from 0 to %2"),
+                    message0: Util.lf("for %1 from %2 to %3"),
                     variable: Util.lf("{id:var}index"),
                     appendField: Util.lf("{id:for}do")
                 }

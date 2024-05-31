@@ -57,6 +57,11 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                             <mutation duplicateondrag="true"></mutation>
                         </block>
                     </value>
+                    <value name="FROM">
+                        <shadow type="math_whole_number">
+                            <field name="NUM">0</field>
+                        </shadow>
+                    </value>
                     <value name="TO">
                         <shadow type="math_whole_number">
                             <field name="NUM">4</field>
