@@ -1770,14 +1770,14 @@ ${output}</xml>`;
 
         function getForStatement(n: ts.ForStatement): StatementNode {
             const initializer = n.initializer as ts.VariableDeclarationList;
-            const indexVar = (initializer.declarations[0].name as ts.Identifier).text;
             const condition = n.condition as ts.BinaryExpression
 
-            const renamed = getVariableName(initializer.declarations[0].name as ts.Identifier);
+            const assignment = initializer.declarations[0] as VariableDeclaration;
+            const renamed = getVariableName(assignment.name as ts.Identifier);
 
             let r: StatementNode;
 
-            if (condition.operatorToken.kind === SK.LessThanToken && !checkForVariableUsages(n.statement)) {
+            if (condition.operatorToken.kind === SK.LessThanToken && (assignment.initializer as ts.LiteralExpression).text === "0" && !checkForVariableUsages(n.statement)) {
                 r = mkStmt("controls_repeat_ext", n);
                 r.fields = [];
                 r.inputs = [getValue("TIMES", condition.right, wholeNumberType)];
@@ -1809,6 +1809,7 @@ ${output}</xml>`;
                 else if (condition.operatorToken.kind === SK.LessThanEqualsToken) {
                     r.inputs.push(getValue("TO", condition.right, wholeNumberType));
                 }
+                r.inputs.push(getValue("FROM", assignment.initializer, wholeNumberType))
             }
 
             const statement = getStatementBlock(n.statement);
@@ -2583,8 +2584,8 @@ ${output}</xml>`;
             }
 
             const assignment = initializer.declarations[0] as VariableDeclaration;
-            if (assignment.initializer.kind !== SK.NumericLiteral || (assignment.initializer as ts.LiteralExpression).text !== "0") {
-                return Util.lf("for loop initializers must be initialized to 0");
+            if (assignment.initializer.kind !== SK.NumericLiteral) {
+                return Util.lf("for loop initializers must be initialized to number");
             }
 
             const indexVar = (assignment.name as ts.Identifier).text;
