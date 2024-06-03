@@ -72,6 +72,7 @@ export function infer(allBlocks: Blockly.Block[], e: Environment, w: Blockly.Wor
 
                 case "pxt_controls_for":
                 case "controls_simple_for":
+                    unionParam(e, b, "FROM", ground(pNumber.type));
                     unionParam(e, b, "TO", ground(pNumber.type));
                     break;
                 case "pxt_controls_for_of":
