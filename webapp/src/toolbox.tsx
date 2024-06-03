@@ -977,24 +977,8 @@ export class ToolboxStyle extends data.Component<ToolboxStyleProps, {}> {
         return <style>
             {categories.filter(c => !!c.color).map(category =>
                 `
-                span.docs.inlineblock {
-                    border-radius: 0;
-                    border-bottom: 2px solid black;
-                    color: black;
-                    font-weight: 600;
-                    background-color: transparent;
-                }
-                .hc span.docs.inlineblock {
-                    color: white;
-                }
                 span.docs.inlineblock.${category.nameid.toLowerCase()} {
-                    border-bottom: 2px solid ${category.color};
-                }
-                span.docs.inlineblock.${category.nameid.toLowerCase()} i {
-                    font-family: 'Icons';
-                    color: ${category.color || pxt.toolbox.getNamespaceColor(category.nameid.toLowerCase())};
-                    font-style: normal;
-                    margin-right: 4px;
+                    --inline-namespace-color: ${category.color || pxt.toolbox.getNamespaceColor(category.nameid.toLowerCase()) || "black"};
                 }
                 `
             )}

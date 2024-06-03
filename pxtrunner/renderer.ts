@@ -734,11 +734,7 @@ async function renderNamespaces(options: ClientRenderOptions): Promise<void> {
         const color = namespaceToColor[ns];
         nsStyleBuffer += `
                 span.docs.${ns.toLowerCase()} {
-                    border-radius: 0;
-                    border-bottom: 2px solid ${color};
-                    color: black;
-                    font-weight: 600;
-                    background-color: transparent;
+                    --inline-namespace-color: ${color};
                 }
             `;
     }
@@ -747,11 +743,7 @@ async function renderNamespaces(options: ClientRenderOptions): Promise<void> {
         const color = pxt.toolbox.getNamespaceColor(ns);
         nsStyleBuffer += `
                 span.docs.${ns.toLowerCase()} {
-                    border-radius: 0;
-                    border-bottom: 2px solid ${color};
-                    color: black;
-                    font-weight: 600;
-                    background-color: transparent;
+                    --inline-namespace-color: ${color};
                 }
             `;
     }
