@@ -204,7 +204,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         const newName = await core.promptAsync(opts);
         if (newName === null)
             return false; // null means cancelled
-        
+
         const clonedHeader = await workspace.renameAsync(header, newName);
         await workspace.saveAsync(clonedHeader);
         this.setState({ selected: {} });
