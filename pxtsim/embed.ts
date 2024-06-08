@@ -347,7 +347,7 @@ namespace pxsim {
         }
 
         if (delay)
-            setTimeout(p, delay);
+            timers.setTimeout(p, delay);
         else p();
     }
 

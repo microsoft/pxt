@@ -166,12 +166,12 @@ namespace pxsim {
                     this.queue.shift();
                     // if there is already something in the queue, start processing
                     if (this.queue[0]) {
-                        this.queue[0].setTimeoutHandle = setTimeout(this.process, this.queue[0].interval);
+                        this.queue[0].setTimeoutHandle = timers.setTimeout(this.process, this.queue[0].interval);
                     }
                     // this may push additional stuff
                     top.whenDone(false);
                 } else {
-                    top.setTimeoutHandle = setTimeout(this.process, top.interval);
+                    top.setTimeoutHandle = timers.setTimeout(this.process, top.interval);
                 }
             }
         }
@@ -182,7 +182,7 @@ namespace pxsim {
             for (let a of q) {
                 a.whenDone(true)
                 if (a.setTimeoutHandle) {
-                    clearTimeout(a.setTimeoutHandle);
+                    timers.clearTimeout(a.setTimeoutHandle);
                 }
             }
         }
@@ -193,7 +193,7 @@ namespace pxsim {
                 this.queue.shift();
                 top.whenDone(true);
                 if (top.setTimeoutHandle) {
-                    clearTimeout(top.setTimeoutHandle);
+                    timers.clearTimeout(top.setTimeoutHandle);
                 }
             }
         }
@@ -323,7 +323,7 @@ namespace pxsim {
                 gain.gain.setTargetAtTime(0, context().currentTime, 0.015);
             }
 
-            setTimeout(() => {
+            timers.setTimeout(() => {
                 gain.disconnect();
                 if (osc) osc.disconnect();
             }, 450)
@@ -857,7 +857,7 @@ namespace pxsim {
                 // note on -- todo handle velocity
                 tone(noteFrequency, 1);
                 if (channel == 9) // drums don't call noteOff
-                    setTimeout(() => stopTone(), 500);
+                    timers.setTimeout(() => stopTone(), 500);
             }
         }
     }

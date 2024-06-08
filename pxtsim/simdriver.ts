@@ -584,13 +584,13 @@ namespace pxsim {
         private frameCleanupTimeout: any = undefined;
         private cancelFrameCleanup() {
             if (this.frameCleanupTimeout) {
-                clearTimeout(this.frameCleanupTimeout);
+                timers.clearTimeout(this.frameCleanupTimeout);
                 this.frameCleanupTimeout = undefined;
             }
         }
         private scheduleFrameCleanup() {
             this.cancelFrameCleanup();
-            this.frameCleanupTimeout = setTimeout(() => {
+            this.frameCleanupTimeout = timers.setTimeout(() => {
                 this.frameCleanupTimeout = undefined;
                 this.cleanupFrames();
             }, 5000);
