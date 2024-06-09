@@ -92,6 +92,14 @@ namespace pxsim {
             return o;
         }
 
+        static fromAny(o: any): any {
+            if (!o) return o;
+            if (o instanceof RefObject) return o; // already a Ref* object
+            if (Array.isArray(o)) return RefCollection.fromAny(o);
+            if (typeof o === "object") return RefMap.fromAny(o);
+            return o; // number, string, boolean, null, undefined, etc...
+        }
+
         static toDebugString(o: any): string {
             if (o === null) return "null";
             if (o === undefined) return "undefined;"
@@ -345,6 +353,14 @@ namespace pxsim {
             this.data.forEach(d => {
                 r[d.key] = RefObject.toAny(d.val);
             })
+            return r;
+        }
+
+        static fromAny(o: any): RefMap {
+            const r = new RefMap();
+            for (let k of Object.keys(o)) {
+                r.data.push({ key: k, val: RefObject.fromAny(o[k]) })
+            }
             return r;
         }
     }

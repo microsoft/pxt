@@ -1178,6 +1178,7 @@ namespace pxsim {
             let lastYield = Date.now()
             let userGlobals: string[];
             let __this = this // ex
+            const yieldDelay = msg.yieldDelay !== undefined ? msg.yieldDelay : 5;
             this.traceDisabled = !!msg.traceDisabled;
 
             // this is passed to generated code
@@ -1257,7 +1258,7 @@ namespace pxsim {
                     lastYield = now
                     s.pc = pc;
                     s.r0 = r0;
-                    timers.setTimeout(loopForSchedule(s), 5)
+                    timers.setTimeout(loopForSchedule(s), yieldDelay)
                     return true
                 }
                 return false

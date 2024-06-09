@@ -23,6 +23,15 @@ namespace pxsim {
             return this.data.map(v => RefObject.toAny(v));
         }
 
+        static fromAny(arr: any[], deep: boolean = true) {
+            const r = new RefCollection();
+            if (deep)
+                r.data = arr.map(v => RefObject.fromAny(v));
+            else
+                r.data = arr.slice(0);
+            return r;
+        }
+
         toDebugString(): string {
             let s = "[";
             for (let i = 0; i < this.data.length; ++i) {
