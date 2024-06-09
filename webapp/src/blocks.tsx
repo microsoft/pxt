@@ -106,7 +106,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     setBreakpointsFromBlocks(): void {
         this.breakpointsSet = this.getBreakpoints();
-        simulator.driver.setBreakpoints(this.breakpointsSet);
+        simulator.driver?.setBreakpoints(this.breakpointsSet);
     }
 
     getBreakpoints() {
