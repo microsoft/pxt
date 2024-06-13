@@ -21,8 +21,8 @@ interface Rect {
 }
 
 interface CommentMap {
-    orphans: Blockly.WorkspaceComment[];
-    idToComments: pxt.Map<Blockly.WorkspaceComment[]>;
+    orphans: Blockly.comments.RenderedWorkspaceComment[];
+    idToComments: pxt.Map<Blockly.comments.RenderedWorkspaceComment[]>;
 }
 
 
@@ -83,7 +83,7 @@ function compileWorkspace(e: Environment, w: Blockly.Workspace, blockInfo: pxtc.
         // compile workspace comments, add them to the top
         const topComments = w.getTopComments(true);
         const commentMap = groupWorkspaceComments(topblocks as Blockly.BlockSvg[],
-            topComments as Blockly.WorkspaceCommentSvg[]);
+            topComments as Blockly.comments.RenderedWorkspaceComment[]);
 
         commentMap.orphans.forEach(comment => append(stmtsMain, compileWorkspaceComment(comment).children));
 
@@ -220,7 +220,7 @@ function blockKey(b: Blockly.Block) {
             }
         }
 
-        if (input.type === Blockly.inputTypes.VALUE) {
+        if (input.type === Blockly.inputs.inputTypes.VALUE) {
             if (input.connection.targetBlock()) {
                 inputs.push(blockKey(input.connection.targetBlock()));
             }
@@ -842,7 +842,7 @@ function mkVariableDeclaration(v: VarInfo, blockInfo: pxtc.BlocksInfo) {
     return pxt.blocks.mkStmt(pxt.blocks.mkText("let " + v.escapedName + tp + " = "), defl)
 }
 
-function groupWorkspaceComments(blocks: Blockly.BlockSvg[], comments: Blockly.WorkspaceCommentSvg[]): CommentMap {
+function groupWorkspaceComments(blocks: Blockly.BlockSvg[], comments: Blockly.comments.RenderedWorkspaceComment[]): CommentMap {
     if (!blocks.length || blocks.some(b => !b.rendered)) {
         return {
             orphans: comments,
@@ -869,7 +869,7 @@ function groupWorkspaceComments(blocks: Blockly.BlockSvg[], comments: Blockly.Wo
     const radius = 20;
     for (const comment of comments) {
         const bounds = comment.getBoundingRectangle();
-        const size = comment.getHeightWidth();
+        const size = comment.getSize();
 
         const x = bounds.left;
         const y = bounds.top;
@@ -1277,8 +1277,8 @@ function compileStdCall(e: Environment, b: Blockly.Block, func: StdFunc, comment
     }
 }
 
-function compileWorkspaceComment(c: Blockly.WorkspaceComment): pxt.blocks.JsNode {
-    const content = c.getContent();
+function compileWorkspaceComment(c: Blockly.comments.RenderedWorkspaceComment): pxt.blocks.JsNode {
+    const content = c.getText();
     return pxt.blocks.H.mkMultiComment(content.trim());
 }
 

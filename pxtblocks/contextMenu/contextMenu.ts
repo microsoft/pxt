@@ -28,9 +28,11 @@ export function initContextMenu() {
 }
 
 export function setupWorkspaceContextMenu(workspace: Blockly.WorkspaceSvg) {
+    Blockly.ContextMenuItems.registerCommentOptions();
     workspace.configureContextMenu = (options, e) => {
         if (workspace.options.comments && !workspace.options.readOnly) {
-            options.unshift(Blockly.ContextMenu.workspaceCommentOption(workspace, e))
+            // options.unshift(Blockly.ContextMenu.workspaceCommentOption(workspace, e))
+
         }
 
         onWorkspaceContextMenu(workspace, options);

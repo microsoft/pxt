@@ -324,7 +324,7 @@ function diffWorkspaceNoEvents(oldWs: Blockly.Workspace, newWs: Blockly.Workspac
     }
 
     function forceRender(b: Blockly.Block) {
-        b.rendered = false;
+        // b.rendered = false;
         b.inputList.forEach(i => i.fieldRow.forEach(f => {
             f.init();
 
@@ -404,7 +404,7 @@ function diffWorkspaceNoEvents(oldWs: Blockly.Workspace, newWs: Blockly.Workspac
         if (options.statementsOnly) {
             // mark all nested reporters as unmodified
             (b.inputList || [])
-                .map(input => input.type == Blockly.inputTypes.VALUE && input.connection && input.connection.targetBlock())
+                .map(input => input.type == Blockly.inputs.inputTypes.VALUE && input.connection && input.connection.targetBlock())
                 .filter(argBlock => !!argBlock)
                 .forEach(argBlock => unmodified(argBlock))
         }

@@ -106,15 +106,10 @@ const IF_ELSE_MIXIN = {
         const block = this;
         const oldMutationDom = block.mutationToDom();
         const oldMutation = oldMutationDom && Blockly.Xml.domToText(oldMutationDom);
-        // Switch off rendering while the source block is rebuilt.
-        const savedRendered = block.rendered;
-        block.rendered = false;
         // Update the mutation
         if (update) update.call(this);
         // Allow the source block to rebuild itself.
         this.updateShape_();
-        // Restore rendering and show the changes.
-        block.rendered = savedRendered;
         // Mutation may have added some elements that need initializing.
         if (block instanceof Blockly.BlockSvg) {
             block.initSvg();
@@ -172,14 +167,14 @@ const IF_ELSE_MIXIN = {
             this.appendDummyInput('IFBUTTONS' + i)
                 .appendField(
                     new Blockly.FieldImage(this.REMOVE_IMAGE_DATAURI, 24, 24, "*", removeElseIf, false))
-                .setAlign(Blockly.ALIGN_RIGHT);
+                .setAlign(Blockly.inputs.Align.RIGHT);
             this.appendStatementInput('DO' + i);
         }
         if (this.elseCount_) {
             this.appendDummyInput('ELSETITLE')
                 .appendField(Blockly.Msg.CONTROLS_IF_MSG_ELSE);
             this.appendDummyInput('ELSEBUTTONS')
-                .setAlign(Blockly.ALIGN_RIGHT)
+                .setAlign(Blockly.inputs.Align.RIGHT)
                 .appendField(
                     new Blockly.FieldImage(this.REMOVE_IMAGE_DATAURI, 24, 24, "*", this.removeElse_.bind(this), false));
             this.appendStatementInput('ELSE');
