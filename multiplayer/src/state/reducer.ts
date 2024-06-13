@@ -34,6 +34,7 @@ export default function reducer(state: AppState, action: Action): AppState {
                     gameState: undefined,
                     gameMetadata: undefined,
                     gamePaused: undefined,
+                    collabInfo: undefined,
                     presence: { ...defaultPresence },
                     modal: undefined,
                     modalOpts: undefined,
@@ -47,6 +48,14 @@ export default function reducer(state: AppState, action: Action): AppState {
                 gameState: {
                     ...state.gameState,
                     ...action.gameInfo,
+                },
+            };
+        }
+        case "SET_COLLAB_INFO": {
+            return {
+                ...state,
+                collabInfo: {
+                    ...action.collabInfo,
                 },
             };
         }
@@ -77,6 +86,7 @@ export default function reducer(state: AppState, action: Action): AppState {
                 playerSlot: undefined,
                 gameState: undefined,
                 gameMetadata: undefined,
+                collabInfo: undefined,
             };
         }
         case "SET_GAME_MODE": {
@@ -169,8 +179,7 @@ export default function reducer(state: AppState, action: Action): AppState {
             };
         }
         case "SET_PRESENCE_ICON_OVERRIDE": {
-            let nextPresenceIcon =
-                state.gameState?.presenceIconOverrides?.slice() || [];
+            let nextPresenceIcon = state.gameState?.presenceIconOverrides?.slice() || [];
             nextPresenceIcon[action.slot] = action.icon;
             return {
                 ...state,
@@ -181,8 +190,7 @@ export default function reducer(state: AppState, action: Action): AppState {
             };
         }
         case "SET_REACTION_ICON_OVERRIDE": {
-            let nextReactionIcons =
-                state.gameState?.reactionIconOverrides?.slice() || [];
+            let nextReactionIcons = state.gameState?.reactionIconOverrides?.slice() || [];
             nextReactionIcons[action.slot] = action.icon;
             return {
                 ...state,

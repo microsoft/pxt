@@ -17,25 +17,15 @@ export default function Render(props: { particle: Particle }) {
         return {
             flyUpDuration,
             rotationDuration: 3 + Math.random() * 0.5,
-            rotationAnim:
-                Math.random() > 0.5
-                    ? "reaction-rotate-left"
-                    : "reaction-rotate-right",
-            horzAnim:
-                Math.random() > 0.5
-                    ? "reaction-fly-left"
-                    : "reaction-fly-right",
+            rotationAnim: Math.random() > 0.5 ? "reaction-rotate-left" : "reaction-rotate-right",
+            horzAnim: Math.random() > 0.5 ? "reaction-fly-left" : "reaction-fly-right",
             flyHorzDuration,
         };
     }, []);
 
     const override = reactionIconOverrides?.[index + 1];
     const display = override ? (
-        <img
-            className="pixel-art-image tw-w-[100%]"
-            src={override}
-            alt={lf("Game reaction image {0}", index + 1)}
-        />
+        <img className="pixel-art-image tw-w-[100%]" src={override} alt={lf("Game reaction image {0}", index + 1)} />
     ) : (
         emoji
     );

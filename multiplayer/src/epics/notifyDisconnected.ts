@@ -2,7 +2,7 @@ import { dispatch } from "../state";
 import { showToast, setNetMode } from "../state/actions";
 import { GameOverReason } from "../types";
 
-export function notifyGameDisconnected(reason: GameOverReason | undefined) {
+export function notifyDisconnected(reason: GameOverReason | undefined) {
     try {
         dispatch(setNetMode("init"));
         switch (reason) {

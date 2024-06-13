@@ -10,8 +10,7 @@ export default function Render(
         onCancel: () => any;
     }>
 ) {
-    const { title, confirmLabel, cancelLabel, children, onConfirm, onCancel } =
-        props;
+    const { title, confirmLabel, cancelLabel, children, onConfirm, onCancel } = props;
 
     const actions: ModalAction[] = [
         {

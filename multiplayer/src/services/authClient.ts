@@ -17,9 +17,7 @@ class AuthClient extends pxt.auth.AuthClient {
         }
         await setUserProfileAsync(state.profile);
     }
-    protected onUserPreferencesChanged(
-        diff: ts.pxtc.jsonPatch.PatchOperation[]
-    ): Promise<void> {
+    protected onUserPreferencesChanged(diff: ts.pxtc.jsonPatch.PatchOperation[]): Promise<void> {
         return Promise.resolve();
     }
     protected onStateCleared(): Promise<void> {
@@ -53,9 +51,7 @@ export async function clientAsync(): Promise<AuthClient | undefined> {
     return authClientPromise;
 }
 
-export async function authCheckAsync(): Promise<
-    pxt.auth.UserProfile | undefined
-> {
+export async function authCheckAsync(): Promise<pxt.auth.UserProfile | undefined> {
     const cli = await clientAsync();
     const query = pxt.Util.parseQueryString(window.location.href);
     if (query["authcallback"]) {
