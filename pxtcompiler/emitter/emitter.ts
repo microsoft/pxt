@@ -2226,7 +2226,7 @@ ${lbl}: .short 0xffff
                             }
                             args.push(irToNode(expr))
                         } else {
-                            if (!isNumericLiteral(prm.initializer)) {
+                            if (!opts.unfetteredInitializers && !isNumericLiteral(prm.initializer)) {
                                 userError(9212, lf("only numbers, null, true and false supported as default arguments"))
                             }
                             args.push(prm.initializer)

@@ -767,6 +767,7 @@ declare namespace ts.pxtc {
         debugMode?: boolean; // set dynamically, not in config
         compilerExtension?: string; // JavaScript code to load in compiler
         shimRenames?: pxt.Map<string>;
+        unfetteredInitializers?: boolean; // removes isNumericLiteral check on default argument values
     }
 
     type BlockContentPart = BlockLabel | BlockParameter | BlockImage;
@@ -1075,6 +1076,7 @@ declare namespace ts.pxtc {
         clearIncrBuildAndRetryOnError?: boolean; // on error when compiling in service, try again with a full recompile.
         errorOnGreyBlocks?: boolean;
         generateSourceMap?: boolean;
+        unfetteredInitializers?: boolean; // disables IsNumericLiteral check for default argument values
 
         otherMultiVariants?: ExtensionTarget[];
 
