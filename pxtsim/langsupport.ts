@@ -96,15 +96,15 @@ namespace pxsim {
             if (!o) return o;
             if (o instanceof RefObject) return o; // already a Ref* object
             if (Array.isArray(o)) return RefCollection.fromAny(o);
-            if (typeof o === "object") return RefMap.fromAny(o);
+            if (typeof o === "object") return RefRecord.fromAny(o);
             return o; // number, string, boolean, null, undefined, etc...
         }
 
         static toDebugString(o: any): string {
             if (o === null) return "null";
             if (o === undefined) return "undefined;"
-            if (o.vtable && o.vtable.name) return o.vtable.name;
             if (o.toDebugString) return o.toDebugString();
+            if (o.vtable && o.vtable.name) return o.vtable.name;
             if (typeof o == "string") return JSON.stringify(o);
             return o.toString();
         }
@@ -148,6 +148,32 @@ namespace pxsim {
         print() {
             if (runtime && runtime.refCountingDebug)
                 console.log(`RefRecord id:${this.id} (${this.vtable.name})`)
+        }
+
+        toDebugString(): string {
+            let s = "RefRecord: {"
+            const keys = Object.keys(this.fields)
+            for (let i = 0; i < keys.length; ++i) {
+                if (i > 0) s += ", "
+                s += keys[i] + ": " + RefObject.toDebugString(this.fields[keys[i]])
+            }
+            return s + "}";
+        }
+
+        toAny(): any {
+            const r: any = {};
+            for (let k of Object.keys(this.fields)) {
+                r[k] = RefObject.toAny(this.fields[k]);
+            }
+            return r;
+        }
+
+        static fromAny(o: any): RefRecord {
+            const r = new RefRecord();
+            for (let k of Object.keys(o)) {
+                r.fields[k] = RefObject.fromAny(o[k]);
+            }
+            return r;
         }
     }
 
@@ -346,6 +372,15 @@ namespace pxsim {
         print() {
             if (runtime && runtime.refCountingDebug)
                 console.log(`RefMap id:${this.id} size:${this.data.length}`)
+        }
+
+        toDebugString(): string {
+            let s = "RefMap: {"
+            for (let i = 0; i < this.data.length; ++i) {
+                if (i > 0) s += ", "
+                s += this.data[i].key + ": " + RefObject.toDebugString(this.data[i].val)
+            }          
+            return s + "}";  
         }
 
         toAny(): any {
