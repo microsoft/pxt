@@ -1096,7 +1096,7 @@ declare namespace pxt.editor {
         deployAsync?: (r: pxtc.CompileResult) => Promise<void>;
         saveOnlyAsync?: (r: ts.pxtc.CompileResult) => Promise<void>;
         saveProjectAsync?: (project: pxt.cpp.HexFile) => Promise<void>;
-        saveCompiledProjectAsync?: (project: pxt.cpp.HexFile, compileResult: pxtc.CompileResult) => Promise<void>;
+        saveCompiledProjectAsync?: (project: pxt.cpp.HexFile, compileResult: pxtc.CompileResult, confirmAsync: (options: any) => Promise<number>) => Promise<void>;
         renderBrowserDownloadInstructions?: () => any /* JSX.Element */;
         renderUsbPairDialog?: (firmwareUrl?: string, failedOnce?: boolean) => any /* JSX.Element */;
         renderIncompatibleHardwareDialog?: (unsupportedParts: string[]) => any /* JSX.Element */;
