@@ -630,7 +630,7 @@ function ${id}(s) {
                 const ifaceFieldName = bin.ifaceMembers[procid.ifaceIndex]
                 U.assert(!!ifaceFieldName, `no name for ${procid.ifaceIndex}`)
 
-                write(`if (!${frameRef}.arg0.vtable.iface) {`)
+                write(`if (!${frameRef}.arg0.vtable?.iface) {`)
                 let args = topExpr.args.map((a, i) => `${frameRef}.arg${i}`)
                 args.splice(1, 0, JSON.stringify(ifaceFieldName))
                 const accessor = `pxsim_pxtrt.map${procid.isSet ? "Set" : "Get"}ByString`
