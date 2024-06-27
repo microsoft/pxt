@@ -64,6 +64,7 @@ const IF_ELSE_MIXIN = {
      */
     restoreConnections_: function (this: IfElseBlock) {
         for (let i = 1; i <= this.elseifCount_; i++) {
+            this.getInput('IF' + i).connection.setShadowState({ 'type': 'logic_boolean', 'fields': { 'BOOL': 'FALSE' } });
             this.valueConnections_[i]?.reconnect(this, 'IF' + i);
             this.statementConnections_[i]?.reconnect(this, 'DO' + i);
         }
