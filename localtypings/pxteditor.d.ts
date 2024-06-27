@@ -1088,15 +1088,23 @@ declare namespace pxt.editor {
         monacoToolbox?: ToolboxDefinition;
     }
 
+    export interface ExtensionInitOptions {
+        confirmAsync: (options: any) => Promise<number>;
+        infoNotification: (msg: string) => void;
+        warningNotification: (msg: string) => void;
+        errorNotification: (msg: string) => void;
+    }
+
     export interface ExtensionResult {
         hexFileImporters?: IHexFileImporter[];
         resourceImporters?: IResourceImporter[];
+        initAsync?: (opts: ExtensionInitOptions) => Promise<void>;
         beforeCompile?: () => void;
         patchCompileResultAsync?: (r: pxtc.CompileResult) => Promise<void>;
         deployAsync?: (r: pxtc.CompileResult) => Promise<void>;
         saveOnlyAsync?: (r: ts.pxtc.CompileResult) => Promise<void>;
         saveProjectAsync?: (project: pxt.cpp.HexFile) => Promise<void>;
-        saveCompiledProjectAsync?: (project: pxt.cpp.HexFile, compileResult: pxtc.CompileResult, confirmAsync: (options: any) => Promise<number>) => Promise<void>;
+        saveCompiledProjectAsync?: (project: pxt.cpp.HexFile, compileResult: pxtc.CompileResult) => Promise<void>;
         renderBrowserDownloadInstructions?: () => any /* JSX.Element */;
         renderUsbPairDialog?: (firmwareUrl?: string, failedOnce?: boolean) => any /* JSX.Element */;
         renderIncompatibleHardwareDialog?: (unsupportedParts: string[]) => any /* JSX.Element */;

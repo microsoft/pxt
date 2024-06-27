@@ -364,6 +364,15 @@ function applyExtensionResult() {
         log(`extension showProgramTooLargeErrorAsync`);
         pxt.commands.showProgramTooLargeErrorAsync = res.showProgramTooLargeErrorAsync;
     }
+
+    if (res.initAsync) {
+        res.initAsync({
+            confirmAsync: core.confirmAsync,
+            infoNotification: core.infoNotification,
+            warningNotification: core.warningNotification,
+            errorNotification: core.errorNotification,
+        });
+    }
 }
 
 export async function initAsync() {

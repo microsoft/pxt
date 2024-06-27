@@ -2701,7 +2701,7 @@ export class ProjectView
                 this.syncPreferredEditor()
                 const mpkg = pkg.mainPkg;
                 const hexFile = await mpkg.saveToJsonAsync();
-                await pxt.commands.saveCompiledProjectAsync(hexFile, compileResult, core.confirmAsync);
+                await pxt.commands.saveCompiledProjectAsync(hexFile, compileResult);
             });
         }
         else {
