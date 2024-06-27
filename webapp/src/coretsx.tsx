@@ -34,6 +34,7 @@ export class CoreDialog extends React.Component<core.PromptOptions, CoreDialogSt
         this.handleInputChange = this.handleInputChange.bind(this);
         this.handleConfirmationTextChange = this.handleConfirmationTextChange.bind(this);
         this.handleConfirmationCheckboxChange = this.handleConfirmationCheckboxChange.bind(this);
+        if (props.forceUpdate) props.forceUpdate(() => this.forceUpdate());
     }
 
     hide() {
@@ -105,7 +106,12 @@ export class CoreDialog extends React.Component<core.PromptOptions, CoreDialogSt
         const size = options.size === undefined ? 'small' : options.size;
         const isEscapable = options.hasCloseIcon || !options.hideCancel;
 
-        const buttons = options.buttons ? options.buttons.filter(b => !!b) : [];
+        const buttons = options.buttonsFn
+            ? options.buttonsFn().filter(b => !!b)
+            : options.buttons
+                ? options.buttons.filter(b => !!b)
+                : [];
+
         buttons.forEach(btn => {
             const onclick = btn.onclick;
             btn.onclick = () => {
@@ -145,6 +151,7 @@ export class CoreDialog extends React.Component<core.PromptOptions, CoreDialogSt
                 defaultOpen={true} buttons={buttons}
                 dimmer={true} closeIcon={options.hasCloseIcon}
                 header={options.header}
+                headerFn={options.headerFn}
                 headerIcon={options.headerIcon}
                 closeOnDimmerClick={isEscapable}
                 closeOnDocumentClick={isEscapable}

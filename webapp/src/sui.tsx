@@ -1154,6 +1154,7 @@ export interface ModalProps extends ReactModal.Props {
     longer?: boolean;
 
     header?: string;
+    headerFn?: () => string;
     headerIcon?: string;
     headerClass?: string;
     description?: string;
@@ -1265,12 +1266,14 @@ export class Modal extends data.Component<ModalProps, ModalState> {
     renderCore() {
         const { isOpen, size, longer, basic, className,
             onClose, closeIcon, children, onKeyDown,
-            header, headerIcon, headerClass, headerActions, helpUrl, description,
+            header, headerFn, headerIcon, headerClass, headerActions, helpUrl, description,
             closeOnDimmerClick, closeOnDocumentClick, closeOnEscape,
             shouldCloseOnEsc, shouldCloseOnOverlayClick, shouldFocusAfterRender, overlayClassName, ...rest } = this.props;
         const { marginTop, scrolling, mountClasses } = this.state;
         const isFullscreen = size == 'fullscreen';
         const showBack = isFullscreen && !!closeIcon;
+
+        const resolvedHeader = header ? header : headerFn ? headerFn() : undefined;
 
         const classes = cx([
             'ui',
@@ -1288,7 +1291,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
             mountClasses
         ])
         const aria = {
-            labelledby: header ? this.id + 'title' : undefined,
+            labelledby: resolvedHeader ? this.id + 'title' : undefined,
             describedby: (!isFullscreen && description) ? this.id + 'description' : this.id + 'desc'
         }
         const customStyles = {
@@ -1308,9 +1311,9 @@ export class Modal extends data.Component<ModalProps, ModalState> {
             style={customStyles}
             role="dialog"
             aria={aria} {...rest}>
-            {header || showBack || helpUrl ? <div id={this.id + 'title'} className={"header " + (headerClass || "")}>
+            {resolvedHeader || showBack || helpUrl ? <div id={this.id + 'title'} className={"header " + (headerClass || "")}>
                 {headerIcon && <Icon icon={headerIcon} />}
-                <h3 className="header-title" style={{ margin: `0 ${helpUrl ? '-20rem' : '0'} 0 ${showBack ? '-20rem' : '0'}` }}>{header}</h3>
+                <h3 className="header-title" style={{ margin: `0 ${helpUrl ? '-20rem' : '0'} 0 ${showBack ? '-20rem' : '0'}` }}>{resolvedHeader}</h3>
                 {showBack ? <div className="header-close">
                     <Button className="back-button large" title={lf("Go back")} onClick={onClose} tabIndex={0} onKeyDown={fireClickOnEnter}>
                         <Icon icon="arrow left" />
@@ -1319,7 +1322,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
                 </div> : undefined}
                 {helpUrl ?
                     <div className="header-help">
-                        <a className={`ui icon help-button`} href={helpUrl} target="_docs" role="link" aria-label={lf("Help on {0} dialog", header)} title={lf("Help on {0} dialog", header)}>
+                        <a className={`ui icon help-button`} href={helpUrl} target="_docs" role="link" aria-label={lf("Help on {0} dialog", resolvedHeader)} title={lf("Help on {0} dialog", resolvedHeader)}>
                             <Icon icon="help" />
                         </a>
                     </div>
