@@ -6,7 +6,7 @@ The process of obtaining a GitHub Teacher account is free and includes other ben
 
 ## Create a GitHub Teacher Account
 
-![GitHub Educator Verification](youtube:XYErnMTILEQ)
+https://youtu.be/XYErnMTILEQ
 
 ### Sign up for a GitHub account
 
