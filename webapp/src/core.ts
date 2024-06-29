@@ -209,6 +209,7 @@ export interface DialogOptions {
     confirmationCheckbox?: string;  // Display a checkbox the user must check to confirm.
     confirmationGranted?: boolean;
     onClose?: () => void;
+    nonEscapable?: boolean; // if true, the dialog cannot be closed by pressing ESC or clicking outside of it
 }
 
 export function dialogAsync(options: DialogOptions): Promise<void> {

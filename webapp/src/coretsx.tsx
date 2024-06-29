@@ -104,7 +104,7 @@ export class CoreDialog extends React.Component<core.PromptOptions, CoreDialogSt
         const options = this.props;
         const { inputValue, inputError } = this.state;
         const size = options.size === undefined ? 'small' : options.size;
-        const isEscapable = options.hasCloseIcon || !options.hideCancel;
+        const isEscapable = !options.nonEscapable && (options.hasCloseIcon || !options.hideCancel);
 
         const buttons = options.buttonsFn
             ? options.buttonsFn().filter(b => !!b)
