@@ -379,8 +379,8 @@ namespace pxsim {
             for (let i = 0; i < this.data.length; ++i) {
                 if (i > 0) s += ", "
                 s += this.data[i].key + ": " + RefObject.toDebugString(this.data[i].val)
-            }          
-            return s + "}";  
+            }
+            return s + "}";
         }
 
         toAny(): any {
