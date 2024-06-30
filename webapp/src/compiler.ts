@@ -478,7 +478,7 @@ export function workerOpAsync<T extends keyof pxtc.service.ServiceOps>(op: T, ar
         })
 }
 
-let firstTypecheck: Promise<void>;
+let firstTypecheck: Promise<any>;
 let cachedApis: pxtc.ApisInfo;
 let cachedBlocks: pxtc.BlocksInfo;
 let refreshApis = false;
@@ -547,7 +547,7 @@ export function snippetAsync(qName: string, python?: boolean): Promise<string> {
     })).then(res => res as string)
 }
 
-export function typecheckAsync() {
+export async function typecheckAsync(): Promise<pxtc.CompileResult> {
     const epkg = pkg.mainEditorPkg();
     const isFirstTypeCheck = !firstTypecheck;
     let p = epkg.buildAssetsAsync()
@@ -557,12 +557,12 @@ export function typecheckAsync() {
             return workerOpAsync("setOptions", { options: opts })
         })
         .then(() => workerOpAsync("allDiags", {}) as Promise<pxtc.CompileResult>)
-        .then(r => setDiagnostics("typecheck", r.diagnostics, r.sourceMap))
-        .then(() => {
+        .then(r => { setDiagnostics("typecheck", r.diagnostics, r.sourceMap); return r; })
+        .then(r => {
             if (isFirstTypeCheck) {
                 refreshLanguageServiceApisInfo();
             }
-            return ensureApisInfoAsync();
+            return ensureApisInfoAsync().then(() => r);
         })
         .catch(catchUserErrorAndSetDiags(null))
     if (isFirstTypeCheck) firstTypecheck = p;

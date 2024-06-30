@@ -975,7 +975,7 @@ export class ProjectView
         this.saveFileAsync(); // don't wait for saving to backend store to finish before typechecking
         const state = this.editor.snapshotState()
         compiler.typecheckAsync()
-            .then(resp => {
+            .then(async cr => {
                 const end = Util.now();
                 // if typecheck is slow (>10s)
                 // and it happened more than 2 times,
@@ -996,6 +996,15 @@ export class ProjectView
                 }
 
                 this.maybeShowPackageErrors();
+
+                if (cr.success && pxt.commands.saveCompiledProjectAsync) {
+                    const mpkg = pkg.mainPkg;
+                    const hexFile = await mpkg.saveToJsonAsync();
+                    if (!cr.headerId) {
+                        cr.headerId = this.state.header.id;
+                    }
+                    /*async*/ pxt.commands.saveCompiledProjectAsync(hexFile, cr, false);
+                }
             });
     })
 
@@ -2701,7 +2710,10 @@ export class ProjectView
                 this.syncPreferredEditor()
                 const mpkg = pkg.mainPkg;
                 const hexFile = await mpkg.saveToJsonAsync();
-                await pxt.commands.saveCompiledProjectAsync(hexFile, compileResult);
+                if (!compileResult.headerId) {
+                    compileResult.headerId = this.state.header.id;
+                }
+                /*await*/ pxt.commands.saveCompiledProjectAsync(hexFile, compileResult, true);
             });
         }
         else {
