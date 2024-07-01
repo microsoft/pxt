@@ -2704,16 +2704,12 @@ export class ProjectView
             return mpkg.saveToJsonAsync()
                 .then(project => pxt.commands.saveProjectAsync(project));
         }
-        if (pxt.appTarget.compile.saveAsPNG) {
-            return this.saveProjectAsPNGAsync(true);
-        }
-        else {
-            return this.exportProjectToFileAsync()
-                .then((buf: Uint8Array) => {
-                    const fn = pkg.genFileName(".mkcd");
-                    pxt.BrowserUtils.browserDownloadUInt8Array(buf, fn, { contentType: 'application/octet-stream' });
-                })
-        }
+        if (pxt.appTarget.compile.saveAsPNG) return this.saveProjectAsPNGAsync(true);
+        else return this.exportProjectToFileAsync()
+            .then((buf: Uint8Array) => {
+                const fn = pkg.genFileName(".mkcd");
+                pxt.BrowserUtils.browserDownloadUInt8Array(buf, fn, { contentType: 'application/octet-stream' });
+            })
     }
 
     ///////////////////////////////////////////////////////////
