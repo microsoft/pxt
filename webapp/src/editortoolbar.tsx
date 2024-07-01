@@ -186,9 +186,6 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
 
     protected onDownloadButtonClick = async () => {
         pxt.tickEvent("editortools.downloadbutton", { collapsed: this.getCollapsedState() }, { interactiveConsent: true });
-        if (!pxt.appTarget.compile.hasHex) {
-            return this.saveFile();
-        }
         if (this.shouldShowPairingDialogOnDownload()
             && !pxt.packetio.isConnected()
             && !pxt.packetio.isConnecting()
@@ -202,9 +199,6 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         // Matching the tick in the call to compile() above for historical reasons
         pxt.tickEvent("editortools.download", { collapsed: this.getCollapsedState() }, { interactiveConsent: true });
         pxt.tickEvent("editortools.downloadasfile", { collapsed: this.getCollapsedState() }, { interactiveConsent: true });
-        if (!pxt.appTarget.compile.hasHex) {
-            return this.saveFile();
-        }
         (this.props.parent as ProjectView).compile(true);
     }
 
@@ -385,7 +379,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
             && !targetTheme.hideProjectRename && !debugging;
         const showProjectRenameReadonly = false; // always allow renaming, even for github projects
         const compile = pxt.appTarget.compile;
-        const compileBtn = targetTheme.showDownloadButton || compile.hasHex || compile.saveAsPNG || compile.useUF2;
+        const compileBtn = compile.hasHex || compile.saveAsPNG || compile.useUF2;
         const compileTooltip = lf("Download your code to {0}", targetTheme.boardName);
         const compileLoading = !!compiling;
         const running = simState == SimState.Running;
