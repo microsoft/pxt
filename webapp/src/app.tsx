@@ -557,6 +557,9 @@ export class ProjectView
         if (txt != this.editorFile.content)
             simulator.setDirty();
         if (this.editor.isIncomplete()) return Promise.resolve();
+        if (pxt.commands.notifyProjectSaved) {
+            pxt.commands.notifyProjectSaved(this.state.header);
+        }
         return this.editorFile.setContentAsync(txt);
     }
 
@@ -997,13 +1000,8 @@ export class ProjectView
 
                 this.maybeShowPackageErrors();
 
-                if (cr.success && pxt.commands.saveCompiledProjectAsync) {
-                    const mpkg = pkg.mainPkg;
-                    const hexFile = await mpkg.saveToJsonAsync();
-                    if (!cr.headerId) {
-                        cr.headerId = this.state.header.id;
-                    }
-                    /*async*/ pxt.commands.saveCompiledProjectAsync(hexFile, cr, false);
+                if (cr.success && pxt.commands.notifyProjectCompiled) {
+                    pxt.commands.notifyProjectCompiled(this.state.header.id, cr);
                 }
             });
     })
@@ -2705,17 +2703,6 @@ export class ProjectView
         if (pxt.appTarget.compile.saveAsPNG) {
             return this.saveProjectAsPNGAsync(true);
         }
-        if (pxt.commands.saveCompiledProjectAsync) {
-            return compiler.compileAsync().then(async compileResult => {
-                this.syncPreferredEditor()
-                const mpkg = pkg.mainPkg;
-                const hexFile = await mpkg.saveToJsonAsync();
-                if (!compileResult.headerId) {
-                    compileResult.headerId = this.state.header.id;
-                }
-                /*await*/ pxt.commands.saveCompiledProjectAsync(hexFile, compileResult, true);
-            });
-        }
         else {
             return this.exportProjectToFileAsync()
                 .then((buf: Uint8Array) => {
@@ -4365,10 +4352,14 @@ export class ProjectView
         config.name = name;
         return f.setContentAsync(pxt.Package.stringifyConfig(config))
             .then(() => {
-                if (this.state.header)
+                if (this.state.header) {
                     this.setState({
                         projectName: name
                     })
+                    if (pxt.commands.notifyProjectSaved) {
+                        pxt.commands.notifyProjectSaved(this.state.header);
+                    }
+                }
             });
     }
 

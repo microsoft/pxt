@@ -318,10 +318,6 @@ function applyExtensionResult() {
         log(`extension save project async`);
         pxt.commands.saveProjectAsync = res.saveProjectAsync;
     }
-    if (res.saveCompiledProjectAsync) {
-        log(`extension save compiled project async`);
-        pxt.commands.saveCompiledProjectAsync = res.saveCompiledProjectAsync;
-    }
     if (res.renderBrowserDownloadInstructions) {
         log(`extension upload renderBrowserDownloadInstructions`);
         pxt.commands.renderBrowserDownloadInstructions = res.renderBrowserDownloadInstructions;
@@ -363,6 +359,22 @@ function applyExtensionResult() {
     if (res.showProgramTooLargeErrorAsync) {
         log(`extension showProgramTooLargeErrorAsync`);
         pxt.commands.showProgramTooLargeErrorAsync = res.showProgramTooLargeErrorAsync;
+    }
+    if (res.getDownloadMenuItems) {
+        log(`extension getDownloadMenuItems`);
+        pxt.commands.getDownloadMenuItems = res.getDownloadMenuItems;
+    }
+    if (res.notifyProjectSaved) {
+        log(`extension notifyProjectSaved`);
+        pxt.commands.notifyProjectSaved = res.notifyProjectSaved;
+    }
+    if (res.notifyProjectCompiled) {
+        log(`extension notifyProjectCompiled`);
+        pxt.commands.notifyProjectCompiled = res.notifyProjectCompiled;
+    }
+    if (res.onDownloadButtonClick) {
+        log(`extension onDownloadButtonClick`);
+        pxt.commands.onDownloadButtonClick = res.onDownloadButtonClick;
     }
 
     if (res.initAsync) {

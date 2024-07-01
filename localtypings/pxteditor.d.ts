@@ -1104,7 +1104,6 @@ declare namespace pxt.editor {
         deployAsync?: (r: pxtc.CompileResult) => Promise<void>;
         saveOnlyAsync?: (r: ts.pxtc.CompileResult) => Promise<void>;
         saveProjectAsync?: (project: pxt.cpp.HexFile) => Promise<void>;
-        saveCompiledProjectAsync?: (project: pxt.cpp.HexFile, compileResult: pxtc.CompileResult, interactive: boolean) => Promise<void>;
         renderBrowserDownloadInstructions?: () => any /* JSX.Element */;
         renderUsbPairDialog?: (firmwareUrl?: string, failedOnce?: boolean) => any /* JSX.Element */;
         renderIncompatibleHardwareDialog?: (unsupportedParts: string[]) => any /* JSX.Element */;
@@ -1114,7 +1113,11 @@ declare namespace pxt.editor {
         blocklyPatch?: (pkgTargetVersion: string, dom: Element) => void;
         webUsbPairDialogAsync?: (pairAsync: () => Promise<boolean>, confirmAsync: (options: any) => Promise<number>) => Promise<number>;
         mkPacketIOWrapper?: (io: pxt.packetio.PacketIO) => pxt.packetio.PacketIOWrapper;
-
+        getDownloadMenuItems?: () => any[]; /* sui.ItemProps[] */
+        notifyProjectCompiled?: (headerId: string, compileResult: pxtc.CompileResult) => void;
+        notifyProjectSaved?: (header: pxt.workspace.Header) => void;
+        onDownloadButtonClick?: () => Promise<void>;
+    
         // Used with the @tutorialCompleted macro. See docs/writing-docs/tutorials.md for more info
         onTutorialCompleted?: () => void;
 

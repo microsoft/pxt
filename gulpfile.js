@@ -783,6 +783,7 @@ exports.testhelpers = testhelpers;
 exports.testpxteditor = testpxteditor;
 exports.reactCommon = reactCommon;
 exports.compiler = pxtcompiler;
+exports.pxtlib = pxtlib;
 exports.cli = gulp.series(
     gulp.parallel(pxtlib, pxtweb),
     gulp.parallel(pxtcompiler, pxtsim, backendutils),
