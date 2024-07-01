@@ -26,7 +26,7 @@ const SCALE = pxt.BrowserUtils.isEdge() ? 25 : 1;
 export class TimelineFrame extends React.Component<TimelineFrameProps, TimelineFrameState> {
     protected canvas: HTMLCanvasElement;
 
-    protected intervalId: ReturnType<typeof setInterval>;
+    protected intervalId: number;
     protected intervalcurrent: number;
 
     constructor(props: TimelineFrameProps) {

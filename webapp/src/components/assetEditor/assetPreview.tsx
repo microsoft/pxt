@@ -6,7 +6,7 @@ interface AssetPreviewProps {
 
 export class AssetPreview extends React.Component<AssetPreviewProps> {
     protected ref: HTMLImageElement;
-    protected animationIntervalRef: ReturnType<typeof setInterval>;
+    protected animationIntervalRef: number;
     protected currentFrame: number;
 
     render() {
