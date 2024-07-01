@@ -205,7 +205,7 @@ function isSubtype(apis: pxtc.ApisInfo, specific: string, general: string) {
 function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, comp: pxt.blocks.BlockCompileInfo) {
     const ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
     let instance = fn.kind == pxtc.SymbolKind.Method || fn.kind == pxtc.SymbolKind.Property;
-    if (typeof fn.isInstance === "boolean") instance = fn.isInstance;
+    if (typeof fn.isInstance === "boolean" && !fn.attributes?.defaultInstance) instance = fn.isInstance;
     const nsinfo = info.apis.byQName[ns];
     const color =
         // blockNamespace overrides color on block

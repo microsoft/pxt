@@ -127,7 +127,7 @@ namespace pxt.blocks {
         };
 
         let instance = (fn.kind == ts.pxtc.SymbolKind.Method || fn.kind == ts.pxtc.SymbolKind.Property) && !fn.attributes.defaultInstance;
-        if (typeof fn.isInstance === "boolean") instance = fn.isInstance;
+        if (typeof fn.isInstance === "boolean" && !fn.attributes?.defaultInstance) instance = fn.isInstance;
         const hasBlockDef = !!fn.attributes._def;
         const defParameters = hasBlockDef ? fn.attributes._def.parameters.slice(0) : undefined;
         const optionalStart = hasBlockDef ? defParameters.length : (fn.parameters ? fn.parameters.length : 0);
