@@ -21,7 +21,7 @@ export class GenericBanner extends data.Component<GenericBannerProps, {}> {
     delayTime: number;
     doneSleeping: boolean;
     bannerType: string;
-    timer: ReturnType<typeof setTimeout>;
+    timer: number;
 
     constructor(props: GenericBannerProps) {
         super(props);

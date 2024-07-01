@@ -24,7 +24,7 @@ interface EditorToolbarState {
 }
 
 export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarState> {
-    protected compileTimeout: ReturnType<typeof setTimeout>;
+    protected compileTimeout: number;
 
     constructor(props: ISettingsProps) {
         super(props);

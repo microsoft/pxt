@@ -79,7 +79,7 @@ function createSimRecorderRef() {
     let handlers: ((newState: SimRecorderState) => void)[] = [];
     let thumbHandlers: ((uri: string, type: "gif" | "png") => void)[] = [];
     let errorHandlers: ((message: string) => void)[] = [];
-    let timeoutRef: ReturnType<typeof setTimeout>;
+    let timeoutRef: number;
 
     const addStateChangeListener = (handler: (newState: SimRecorderState) => void) => {
         handlers.push(handler);
