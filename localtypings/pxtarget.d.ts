@@ -1092,6 +1092,7 @@ declare namespace ts.pxtc {
 
         /* @internal */
         ignoreFileResolutionErrors?: boolean; // ignores triple-slash directive errors; debug only
+        unfetteredInitializers?: boolean; // removes isNumericLiteral check on default argument values
     }
 
     interface BuiltSimJsInfo {

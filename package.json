@@ -87,7 +87,6 @@
     "lzma": "2.3.2",
     "marked": "0.3.19",
     "mocha": "5.1.0",
-    "original-fs": "^1.2.0",
     "pngjs": "3.4.0",
     "postcss": "6.0.21",
     "promise.prototype.finally": "^3.1.2",
@@ -97,8 +96,7 @@
     "rtlcss": "2.2.1",
     "sanitize-html": "2.3.2",
     "semantic-ui-less": "2.4.1",
-    "terser": "5.6.0",
-    "uuid": "^9.0.1"
+    "terser": "5.6.0"
   },
   "lazyDependencies": {
     "node-hid": "^0.7.2",
@@ -121,7 +119,6 @@
     "@types/react-tooltip": "3.3.6",
     "@types/request": "2.48.5",
     "@types/resize-observer-browser": "^0.1.5",
-    "@types/uuid": "^9.0.8",
     "@types/web-bluetooth": "0.0.4",
     "@typescript-eslint/eslint-plugin": "^4.20.0",
     "@typescript-eslint/parser": "^4.20.0",
