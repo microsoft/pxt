@@ -336,7 +336,7 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
                 }
             });
 
-            simulator.driver.variablesAsync(v.value.id, fieldsToGet)
+            simulator.driver?.variablesAsync(v.value.id, fieldsToGet)
                 .then((msg: pxsim.VariablesMessage) => {
                     if (msg && msg.variables) {
                         let nextID = this.state.nextID;

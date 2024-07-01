@@ -124,17 +124,17 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     addBreakpointFromEvent(blockId: string) {
         this.breakpointsSet.push(this.breakpointsByBlock[blockId]);
-        simulator.driver.setBreakpoints(this.breakpointsSet);
+        simulator.driver?.setBreakpoints(this.breakpointsSet);
     }
 
     removeBreakpointFromEvent(blockId: string) {
         let breakpointId = this.breakpointsByBlock[blockId];
         this.breakpointsSet.filter(breakpoint => breakpoint != breakpointId);
-        simulator.driver.setBreakpoints(this.breakpointsSet);
+        simulator.driver?.setBreakpoints(this.breakpointsSet);
     }
 
     clearBreakpoints(): void {
-        simulator.driver.setBreakpoints([]);
+        simulator.driver?.setBreakpoints([]);
     }
 
     handleKeyDown = (e: any) => {

@@ -80,7 +80,7 @@ export class DebuggerToolbar extends data.Component<DebuggerToolbarProps, Debugg
         const isDebugging = parentState.debugging;
         if (!isDebugging) return <div />;
 
-        const isDebuggerRunning = simulator.driver && simulator.driver.state == pxsim.SimulatorState.Running;
+        const isDebuggerRunning = simulator.driver && simulator.driver?.state == pxsim.SimulatorState.Running;
         const advancedDebugging = !this.props.parent.isBlocksActive();
 
         const isValidDebugFile = advancedDebugging || this.props.parent.isBlocksActive() || pxt.appTarget.appTheme.debugExtensionCode;

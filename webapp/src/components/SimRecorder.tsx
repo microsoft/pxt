@@ -16,7 +16,7 @@ export const SimRecorderImpl: SimRecorder = props => {
     const [loanedSimulator, setLoanedSimulator] = React.useState<HTMLElement>(undefined);
 
     React.useEffect(() => {
-        const sim = simulator.driver.loanSimulator()
+        const sim = simulator.driver?.loanSimulator()
         setLoanedSimulator(sim);
 
         const ref = createSimRecorderRef();
@@ -45,8 +45,8 @@ export const SimRecorderImpl: SimRecorder = props => {
         })
 
         return () => {
-            simulator.driver.unloanSimulator();
-            simulator.driver.stopRecording();
+            simulator.driver?.unloanSimulator();
+            simulator.driver?.stopRecording();
             getEditorAsync().then(editor => {
                 editor.popScreenshotHandler()
             })
@@ -128,7 +128,7 @@ function createSimRecorderRef() {
         encoder.cancel();
         encoder.start();
         const gifwidth = pxt.appTarget.appTheme.simGifWidth || 160;
-        simulator.driver.startRecording(gifwidth);
+        simulator.driver?.startRecording(gifwidth);
         setState("recording");
 
         if (timeoutRef) clearTimeout(timeoutRef);
@@ -141,7 +141,7 @@ function createSimRecorderRef() {
 
     const stopRecordingAsync = async () => {
         if (ref.state !== "recording") return undefined;
-        simulator.driver.stopRecording();
+        simulator.driver?.stopRecording();
         if (timeoutRef) clearTimeout(timeoutRef);
         setState("rendering");
 

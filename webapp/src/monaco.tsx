@@ -1552,7 +1552,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     private sendBreakpoints() {
         if (this.breakpoints) {
-            simulator.driver.setBreakpoints(this.getBreakpoints());
+            simulator.driver?.setBreakpoints(this.getBreakpoints());
         }
     }
 
