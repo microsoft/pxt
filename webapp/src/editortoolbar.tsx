@@ -379,7 +379,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
             && !targetTheme.hideProjectRename && !debugging;
         const showProjectRenameReadonly = false; // always allow renaming, even for github projects
         const compile = pxt.appTarget.compile;
-        const compileBtn = compile.hasHex || compile.saveAsPNG || compile.useUF2;
+        const compileBtn = !!pxt.commands.onDownloadButtonClick || (compile.hasHex || compile.saveAsPNG || compile.useUF2);
         const compileTooltip = lf("Download your code to {0}", targetTheme.boardName);
         const compileLoading = !!compiling;
         const running = simState == SimState.Running;
