@@ -172,6 +172,11 @@ export class ProjectView
         onDataChanged: (path) => this.onCloudStatusChanged(path)
     }
 
+    private headerChangeSubscriber: data.DataSubscriber = {
+        subscriptions: [],
+        onDataChanged: (path) => this.onHeaderChanged(path)
+    }
+
     // component ID strings
     static readonly tutorialCardId = "tutorialcard";
 
@@ -557,9 +562,6 @@ export class ProjectView
         if (txt != this.editorFile.content)
             simulator.setDirty();
         if (this.editor.isIncomplete()) return Promise.resolve();
-        if (pxt.commands.notifyProjectSaved) {
-            pxt.commands.notifyProjectSaved(this.state.header);
-        }
         return this.editorFile.setContentAsync(txt);
     }
 
@@ -1130,11 +1132,13 @@ export class ProjectView
         // subscribe to user preference changes (for simulator or non-render subscriptions)
         data.subscribe(this.highContrastSubscriber, auth.HIGHCONTRAST);
         data.subscribe(this.cloudStatusSubscriber, `${cloud.HEADER_CLOUDSTATE}:*`);
+        data.subscribe(this.headerChangeSubscriber, "header:*");
     }
 
     public componentWillUnmount() {
         data.unsubscribe(this.highContrastSubscriber);
         data.unsubscribe(this.cloudStatusSubscriber);
+        data.unsubscribe(this.headerChangeSubscriber);
     }
 
     // Add an error guard for the entire application
@@ -3829,6 +3833,16 @@ export class ProjectView
         }
     }
 
+    onHeaderChanged(path: string) {
+        const parts = path.split("header:");
+        if (parts.length < 2) return;
+        const headerId = parts[1];
+        if (headerId !== this.state.header?.id) return;
+        if (pxt.commands.notifyProjectSaved) {
+            pxt.commands.notifyProjectSaved(this.state.header);
+        }
+    }
+
     runSimulator(opts: compiler.CompileOptions = {}): Promise<void> {
         const emptyRun = this.firstRun
             && opts.background
@@ -4352,14 +4366,10 @@ export class ProjectView
         config.name = name;
         return f.setContentAsync(pxt.Package.stringifyConfig(config))
             .then(() => {
-                if (this.state.header) {
+                if (this.state.header)
                     this.setState({
                         projectName: name
                     })
-                    if (pxt.commands.notifyProjectSaved) {
-                        pxt.commands.notifyProjectSaved(this.state.header);
-                    }
-                }
             });
     }
 
