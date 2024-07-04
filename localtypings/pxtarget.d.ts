@@ -248,6 +248,7 @@ declare namespace pxt {
         stopOnChange?: boolean;
         emptyRunCode?: string; // when non-empty and autoRun is disabled, this code is run upon simulator first start
         hideRestart?: boolean;
+        hideRun?: boolean;
         // moved to theme
         // moved to theme
         // debugger?: boolean;

@@ -111,7 +111,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const isTabTutorial = inTutorial && !pxt.BrowserUtils.useOldTutorialLayout();
         const inCodeEditor = parent.isBlocksActive() || parent.isJavaScriptActive() || parent.isPythonActive();
 
-        const run = true;
+        const run = !simOpts.hideRun;
         const restart = run && !simOpts.hideRestart;
         const debug = targetTheme.debugger && !inTutorial && !pxt.BrowserUtils.isIE();
         const debugging = parentState.debugging;
