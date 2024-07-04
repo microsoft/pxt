@@ -177,6 +177,11 @@ export function all(): Experiment[] {
             name: lf("Time Machine"),
             description: lf("Save and restore past versions of a project")
         },
+        {
+            id: "advancedForLoop",
+            name: lf("Advanced For-Loop"),
+            description: lf("Add \"start\" and \"step\" parameter in for-loop")
+        },
     ].filter(experiment => ids.indexOf(experiment.id) > -1 && !(pxt.BrowserUtils.isPxtElectron() && experiment.enableOnline));
 }
 
