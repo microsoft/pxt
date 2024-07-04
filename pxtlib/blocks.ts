@@ -383,6 +383,17 @@ namespace pxt.blocks {
                     appendField: Util.lf("{id:for}do")
                 }
             },
+            'controls_advanced_for': {
+                name: Util.lf("a loop that repeats the number of times you say"),
+                tooltip: Util.lf("Have the variable '{0}' take on the values from the first number to the end number, counting by the step number, and do the specified blocks."), // The name of the iteration variable that goes in {0} is replaced in blocklyloader
+                url: '/blocks/loops/for',
+                category: 'loops',
+                block: {
+                    message0: Util.lf("for %1 from %2 to %3 by %4"),
+                    variable: Util.lf("{id:var}index"),
+                    appendField: Util.lf("{id:for}do")
+                }
+            },
             'pxt_controls_for_of': {
                 name: Util.lf("a loop that repeats for each value in an array"),
                 tooltip: Util.lf("Have the variable '{0}' take the value of each item in the array one by one, and do the specified blocks."), // The name of the iteration variable that goes in {0} is replaced in blocklyloader

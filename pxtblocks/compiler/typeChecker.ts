@@ -74,6 +74,11 @@ export function infer(allBlocks: Blockly.Block[], e: Environment, w: Blockly.Wor
                 case "controls_simple_for":
                     unionParam(e, b, "TO", ground(pNumber.type));
                     break;
+                case "controls_advanced_for":
+                    unionParam(e, b, "FROM", ground(pNumber.type));
+                    unionParam(e, b, "TO", ground(pNumber.type));
+                    unionParam(e, b, "BY", ground(pNumber.type));
+                    break;
                 case "pxt_controls_for_of":
                 case "controls_for_of":
                     const listTp = returnType(e, getInputTargetBlock(e, b, "LIST"));
@@ -575,6 +580,7 @@ export function getDeclaredVariables(block: Blockly.Block, e: Environment): Decl
     switch (block.type) {
         case 'pxt_controls_for':
         case 'controls_simple_for':
+        case 'controls_advanced_for':
             return [{
                 name: getLoopVariableField(e, block).getField("VAR").getText(),
                 type: pNumber

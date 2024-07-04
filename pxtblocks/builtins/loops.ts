@@ -194,6 +194,83 @@ export function initLoops() {
         }
     };
 
+    // controls_advanced_for
+    const controlsAdvancedForId = "controls_advanced_for";
+    const controlsAdvancedForDef = pxt.blocks.getBlockDefinition(controlsAdvancedForId);
+    Blockly.Blocks[controlsAdvancedForId] = {
+        /**
+         * Block for 'for' loop with 'start' and 'step' value.
+         * @this Blockly.Block
+         */
+        init: function () {
+            this.jsonInit({
+                "message0": controlsAdvancedForDef.block["message0"],
+                "args0": [
+                    {
+                        "type": "input_value",
+                        "name": "VAR",
+                        "variable": controlsAdvancedForDef.block["variable"],
+                        "check": "Variable"
+                    },
+                    {
+                        "type": "input_value",
+                        "name": "FROM",
+                        "check": "Number"
+                    },
+                    {
+                        "type": "input_value",
+                        "name": "TO",
+                        "check": "Number"
+                    },
+                    {
+                        "type": "input_value",
+                        "name": "BY",
+                        "check": "Number"
+                    }
+                ],
+                "previousStatement": null,
+                "nextStatement": null,
+                "colour": pxt.toolbox.getNamespaceColor('loops'),
+                "inputsInline": true
+            });
+            this.appendStatementInput('DO')
+                .appendField(controlsAdvancedForDef.block["appendField"]);
+
+            let thisBlock = this;
+            setHelpResources(this,
+                controlsAdvancedForId,
+                controlsAdvancedForDef.name,
+                function () {
+                    return pxt.U.rlf(<string>controlsAdvancedForDef.tooltip,
+                        thisBlock.getInputTargetBlock('VAR') ? thisBlock.getInputTargetBlock('VAR').getField('VAR').getText() : '');
+                },
+                controlsAdvancedForDef.url,
+                String(pxt.toolbox.getNamespaceColor('loops'))
+            );
+        },
+        /**
+         * Return all variables referenced by this block.
+         * @return {!Array.<string>} List of variable names.
+         * @this Blockly.Block
+         */
+        getVars: function (): any[] {
+            return [this.getField('VAR').getText()];
+        },
+        /**
+         * Notification that a variable is renaming.
+         * If the name matches one of this block's variables, rename it.
+         * @param {string} oldName Previous name of variable.
+         * @param {string} newName Renamed variable.
+         * @this Blockly.Block
+         */
+        renameVar: function (oldName: string, newName: string) {
+            const varField = this.getField('VAR');
+            if (Blockly.Names.equals(oldName, varField.getText())) {
+                varField.setValue(newName);
+            }
+        }
+    };
+
     // break statement
     const breakBlockDef = pxt.blocks.getBlockDefinition(ts.pxtc.TS_BREAK_TYPE);
     Blockly.Blocks[pxtc.TS_BREAK_TYPE] = {

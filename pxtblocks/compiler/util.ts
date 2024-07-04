@@ -42,7 +42,7 @@ function mkIndent(depth: number) {
 }
 
 export function getLoopVariableField(e: Environment, b: Blockly.Block) {
-    return (b.type == "pxt_controls_for" || b.type == "pxt_controls_for_of") ?
+    return (b.type == "pxt_controls_for" || b.type == "pxt_controls_for_of" || b.type == "controls_advanced_for") ?
         getInputTargetBlock(e, b, "VAR") : b;
 }
 
