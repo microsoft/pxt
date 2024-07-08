@@ -11,18 +11,64 @@ import * as identity from "./identity";
 import * as pkg from "./package";
 import * as projects from "./projects";
 import * as tutorial from "./tutorial";
+import * as simulator from "./simulator";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 type HeaderBarView = "home" | "editor" | "tutorial" | "tutorial-tab" | "debugging" | "sandbox";
 const LONGPRESS_DURATION = 750;
-
-export class HeaderBar extends data.Component<ISettingsProps, {}> {
+//// SAMLABS  console button listener
+export class HeaderBar extends data.Component<ISettingsProps, {isFlashInProgress:boolean;isFlashing:boolean; flashCount:number; showConsole:boolean;}> {
     protected longpressTimer: any;
     protected touchStartTime: number;
+    private flashTimeout: number | null = null;
 
     constructor(props: ISettingsProps) {
         super(props);
+
+        this.state = {
+            isFlashInProgress: false,
+            isFlashing: false,
+            flashCount: 0,
+            showConsole: false
+        };
+        window.addEventListener("message", this.handleConsoleFlash);
     }
+
+    componentWillUnmount() {
+        window.removeEventListener("message", this.handleConsoleFlash);
+        if (this.flashTimeout) {
+            clearTimeout(this.flashTimeout);
+        }
+    }
+
+    handleConsoleFlash = (event: MessageEvent) => {
+        if(this.state.isFlashInProgress) return;
+        if (event.data.type === `CONSOLE_BUTTON_FLASH_ON`) {
+            if (!this.state.showConsole) {
+                    this.setState({ isFlashing: true, flashCount: 0 }, this.flashSequence);
+            }
+        }
+    };
+
+    flashSequence = () => {
+        this.setState({isFlashInProgress: true});
+        if (this.state.flashCount < 3) {
+            this.flashTimeout = setTimeout(() => {
+                this.setState(
+                    prevState => ({
+                        isFlashing: !prevState.isFlashing,
+                        flashCount: prevState.flashCount + 1
+                    }),
+                    this.flashSequence
+                );
+            }, 333);
+        } else {
+            this.setState({ isFlashing: false, flashCount: 0, isFlashInProgress: false});
+        }
+    };
+
+    //// SAMLABS end console button listener
+
 
     goHome = () => {
         pxt.tickEvent("menu.home", undefined, { interactiveConsent: true });
@@ -221,6 +267,35 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
         }
     }
 
+
+
+    getConsoleButton = (showConsole: boolean) => {
+        const { isFlashing } = this.state;
+        return (
+            <div style={{
+                display: 'flex',
+                flexDirection: "column",
+                padding: 4,
+                borderRadius: 4,
+                backgroundColor: isFlashing ? '#fff' : (showConsole ? '#fff' : '#26d0c4')
+            }}>
+                <svg style={{padding: 4, margin: 'auto', fill: '#fff', width: 31, height: 32}} width="22" height="22"
+                     viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg">
+                    <path style={{stroke: isFlashing ? '#26d0c4' : (showConsole ? '#26d0c4' : 'unset')}}
+                          d="M4.11914 6.09015C3.724 6.47601 3.71643 7.10913 4.10229 7.50427L7.47876 10.9616L4.04126 14.3909C3.65027 14.7809 3.64941 15.4141 4.03955 15.8051L4.18726 15.9531C4.57727 16.3441 5.21045 16.3448 5.60144 15.9548L9.79395 11.7723C9.85828 11.7081 9.91211 11.6373 9.95532 11.5621C10.2584 11.1736 10.2354 10.6114 9.88159 10.2491L5.68835 5.95538C5.30249 5.56024 4.66943 5.55273 4.27429 5.9386L4.11914 6.09015Z"/>
+                    <path style={{stroke: isFlashing ? '#26d0c4' : (showConsole ? '#26d0c4' : 'unset')}}
+                          d="M18.3438 15.1958C18.3438 14.6435 17.896 14.1958 17.3438 14.1958H10.7213C10.1691 14.1958 9.72131 14.6435 9.72131 15.1958V15.4049C9.72131 15.9572 10.1691 16.4049 10.7213 16.4049H17.3438C17.896 16.4049 18.3438 15.9572 18.3438 15.4049V15.1958Z"/>
+                    <path fillRule="evenodd" clipRule="evenodd"
+                          style={{stroke: isFlashing ? '#26d0c4' : (showConsole ? '#26d0c4' : 'unset')}}
+                          d="M0 2C0 0.895447 0.895386 0 2 0H20C21.1046 0 22 0.895447 22 2V20C22 21.1046 21.1046 22 20 22H2C0.895386 22 0 21.1046 0 20V2ZM2 2H20V20H2V2Z"/>
+                </svg>
+                <span style={{padding: 2, fontSize: 13, color: isFlashing ? '#26d0c4' : (showConsole ? '#26d0c4' : '#fff')}}>Console</span>
+            </div>
+        );
+    }
+
+
+
     renderCore() {
         const targetTheme = pxt.appTarget.appTheme;
         const highContrast = this.getData<boolean>(auth.HIGHCONTRAST);
@@ -240,10 +315,22 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
         // Approximate each tutorial step to be 22 px
         const manyTutorialSteps = view == "tutorial" && (tutorialOptions.tutorialStepInfo.length * 22 > window.innerWidth / 3);
 
-        return <div id="mainmenu" className={`ui borderless fixed menu ${targetTheme.invertedMenu ? `inverted` : ''} ${manyTutorialSteps ? "thin" : ""}`} role="menubar">
+        return <div id="mainmenu"
+                    className={`ui borderless fixed menu ${targetTheme.invertedMenu ? `inverted` : ''} ${manyTutorialSteps ? "thin" : ""}`}
+                    role="menubar">
             <div className="left menu">
                 {/*///// SAMLABS back button*/}
-                {home && <sui.Item className={`icon`} role="menuitem" title={lf("Back to SAMStudio")} icon="no-select chevron left large" ariaLabel={lf("Back to SAMStudio")} onClick={()=>{window.location.href = 'https://studio.samlabs.com/'}} />}
+                {home && <sui.Item className={`icon`} role="menuitem" title={lf("Back to SAMStudio")}
+                                   icon="no-select chevron left large" ariaLabel={lf("Back to SAMStudio")}
+                                   onClick={() => {
+                                       window.location.href = 'https://studio.samlabs.com/'
+                                   }}/>}
+                {!home && <sui.Item className={`icon`}  role="menuitem" title={lf("Console")} ariaLabel={lf("Console")} onClick={() => {
+                    this.setState({showConsole: !this.state.showConsole,isFlashInProgress:  false});
+                    simulator.driver.samMessageToTarget({type: `CONSOLE_CALLED`, value: !this.state.showConsole});
+                }}>
+                    {this.getConsoleButton(this.state.showConsole)}
+                </sui.Item>}
                 {/*///// SAMLABS end back button*/}
                 {isNativeHost && <sui.Item className="icon nativeback" role="menuitem" icon="chevron left large" ariaLabel={lf("Back to application")}
                     onClick={cmds.nativeHostBackAsync} onMouseDown={this.backButtonTouchStart} onMouseUp={this.backButtonTouchEnd} onMouseLeave={this.backButtonTouchEnd} />}
