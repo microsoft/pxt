@@ -5575,6 +5575,32 @@ function handleHash(newHash: { cmd: string; arg: string }, loading: boolean): bo
             pxt.BrowserUtils.changeHash("");
             editor.loadHeaderAsync(workspace.getHeader(newHash.arg));
             return true;
+        case "cloudheader":
+            pxt.tickEvent("hash." + newHash.cmd);
+            pxt.BrowserUtils.changeHash("");
+            // workspace.freshHeader를 참고했습니다.
+            const tempHeader: pxt.workspace.Header = {
+                id: newHash.arg,
+                name: "temp",
+                target: pxt.appTarget.id,
+                targetVersion: pxt.appTarget.versions.target,
+                meta: {},
+                editor: pxt.JAVASCRIPT_PROJECT_NAME,
+                pubId: "",
+                pubCurrent: false,
+                _rev: null,
+                recentUse: 0,
+                modificationTime: 0,
+                cloudUserId: null,
+                cloudCurrent: false,
+                cloudVersion: null,
+                cloudLastSyncTime: 0,
+                isDeleted: false,
+            }
+            cloud.syncAsync({ hdrs: [tempHeader], direction: "down" }).then(
+                () => editor.loadHeaderAsync(workspace.getHeader(newHash.arg))
+            );
+            return true;
         case "sandboxproject":
         case "project":
             pxt.tickEvent("hash." + newHash.cmd);
