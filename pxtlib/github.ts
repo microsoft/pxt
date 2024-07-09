@@ -289,10 +289,11 @@ namespace pxt.github {
             const f = resp.json as FileContent
             isPrivateRepoCache[parsed.slug] = true
             // if they give us content, just return it
-            if (f && f.encoding == "base64" && f.content != null)
-                return atob(f.content)
+            if (f && f.encoding == "base64" && f.content != null) {
+                return Util.fromUTF8(atob(f.content));
+            }
             // otherwise, go to download URL
-            return U.httpGetTextAsync(f.download_url)
+            return U.httpGetTextAsync(f.download_url);
         })
     }
 
