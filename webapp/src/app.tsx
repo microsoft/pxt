@@ -5680,6 +5680,7 @@ function isProjectRelatedHash(hash: { cmd: string; arg: string }): boolean {
         case "sandboxproject":
         case "project":
         case "header":
+        case "cloudheader":
             return true;
         case "github":
         default:
