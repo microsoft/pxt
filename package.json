@@ -1,27 +1,6 @@
 {
-  "name": "pxt-core",
-  "version": "10.2.0",
-  "description": "Microsoft MakeCode provides Blocks / JavaScript / Python tools and editors",
-  "keywords": [
-    "TypeScript",
-    "JavaScript",
-    "Blockly",
-    "education",
-    "microbit",
-    "Adafruit",
-    "Arcade",
-    "Python",
-    "pxt",
-    "Microsoft",
-    "Microsoft MakeCode"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/microsoft/pxt.git"
-  },
-  "author": "Microsoft Corporation",
-  "license": "MIT",
-  "homepage": "https://github.com/microsoft/pxt#readme",
+  "name": "@team-monolith/pxt-core",
+  "version": "0.1.0",
   "files": [
     "README.md",
     "built/*.js",
