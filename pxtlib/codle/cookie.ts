@@ -23,6 +23,9 @@ namespace pxt.codle {
   }
 
   export function getCookieName(name: string): string {
+    if (window.location.hostname === "localhost") {
+      return `${name}_localhost_local`;
+    }
     const tenant = window.location.hostname.split(".")[1];
     return `${name}_${tenant}_${getEnv()}`;
   }
