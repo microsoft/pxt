@@ -15,7 +15,7 @@ namespace pxt.codle {
   }
 
   export function getEnv(): string {
-    return window.location.hostname.split(".")[0] === "localhost"
+    return window.location.hostname === "localhost"
       ? "local"
       : window.location.hostname.includes("dev")
       ? "dev"
@@ -23,7 +23,7 @@ namespace pxt.codle {
   }
 
   export function getCookieName(name: string): string {
-    const tenant = window.location.hostname.split(".")[0];
+    const tenant = window.location.hostname.split(".")[1];
     return `${name}_${tenant}_${getEnv()}`;
   }
 
