@@ -255,10 +255,10 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
                 {isNativeHost && <sui.Item className="icon nativeback" role="menuitem" icon="chevron left large" ariaLabel={lf("Back to application")}
                     onClick={cmds.nativeHostBackAsync} onMouseDown={this.backButtonTouchStart} onMouseUp={this.backButtonTouchEnd} onMouseLeave={this.backButtonTouchEnd} />}
                 {false && this.getOrganizationLogo(targetTheme, highContrast, view)}
-                {false && view === "tutorial"
+                {false && (view === "tutorial"
                     // TODO: temporary place for tutorial name, we will eventually redesign the header for tutorial view
                     ? <sui.Item className="tutorialname" tabIndex={-1} textClass="landscape only" text={tutorialOptions.tutorialName}/>
-                    : this.getTargetLogo(targetTheme, highContrast, view)}
+                    : this.getTargetLogo(targetTheme, highContrast, view))}
             </div>
             {!home && <div className="center menu">
                 {this.getCenterLabel(targetTheme, view, tutorialOptions)}
