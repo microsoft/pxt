@@ -16,7 +16,7 @@ jobs:
           node-version: '20'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
