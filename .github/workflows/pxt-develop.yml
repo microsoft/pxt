@@ -17,8 +17,8 @@ jobs:
 
       - name: Configure npm
         run: |
-          echo "@samlabs:registry=https://your-private-registry-url/" >> .npmrc
-          echo "//your-private-registry-url/:_authToken=${NPM_TOKEN}" >> .npmrc
+          echo "@samlabs:registry=https://registry.npmjs.org/" >> .npmrc
+          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> .npmrc
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
