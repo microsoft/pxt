@@ -483,6 +483,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     pxtblockly.cleanBlocks();
                     pxtblockly.initializeAndInject(blocksInfo);
 
+                    if (!mainPkg.files[blockFile].content) {
+                        return [undefined, true];
+                    }
+
                     // It's possible that the extensions changed and some blocks might not exist anymore
                     if (!pxtblockly.validateAllReferencedBlocksExist(mainPkg.files[blockFile].content)) {
                         return [undefined, true];
