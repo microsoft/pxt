@@ -589,16 +589,21 @@ namespace pxt.auth {
 
         static async staticApiAsync<T = any>(url: string, data?: any, method?: string, authToken?: string): Promise<ApiResult<T>> {
             const headers: pxt.Map<string> = {};
-            // authToken = authToken || (await getAuthTokenAsync());
-            // if (authToken) {
-            //     headers["authorization"] = `mkcd ${authToken}`;
-            // }
+            /*
+            authToken = authToken || (await getAuthTokenAsync());
+            if (authToken) {
+                headers["authorization"] = `mkcd ${authToken}`;
+            }
+            */
             const token = pxt.codle.getCookieToken();
             if (token) {
                 headers["Authorization"] =  `Bearer ${token}`;
             }
             headers[X_PXT_TARGET] = pxt.appTarget?.id;
-            // url = pxt.BrowserUtils.isLocalHostDev() ? `${pxt.cloud.DEV_BACKEND}${url}` : url;
+
+            /*
+            url = pxt.BrowserUtils.isLocalHostDev() ? `${pxt.cloud.DEV_BACKEND}${url}` : url;
+            */
             url = `${Cloud.apiRoot.replace(/\/$/, "")}${url}`;
 
             return pxt.Util.requestAsync({
