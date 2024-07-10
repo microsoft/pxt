@@ -5935,12 +5935,24 @@ document.addEventListener("DOMContentLoaded", async () => {
     pxt.hexloader.hideLoading = () => core.hideLoading("hexcloudcompiler");
     pxt.docs.requireMarked = () => require("marked");
 
+    /*
     // allow static web site to specify custom backend
     if (pxt.appTarget.cloud?.apiRoot)
         Cloud.apiRoot = pxt.appTarget.cloud.apiRoot
     else {
         const hm = /^(https:\/\/[^/]+)/.exec(window.location.href)
         if (hm) Cloud.apiRoot = hm[1] + "/api/"
+    }
+    */
+
+    // 테넌트에 맞게 class rails apiRoot를 설정합니다.
+    const hostname = window.location.hostname;
+    if (hostname === "localhost") {
+        Cloud.apiRoot = "https://class.dev.codle.io/microbit/";
+    } else {
+        const parts = hostname.split(".");
+        const classRailsUrl = `https://class.${parts.slice(1).join(".")}`;
+        Cloud.apiRoot = `${classRailsUrl}/microbit/`;
     }
 
     if (query["hw"]) {

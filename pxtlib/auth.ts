@@ -598,7 +598,8 @@ namespace pxt.auth {
                 headers["Authorization"] =  `Bearer ${token}`;
             }
             headers[X_PXT_TARGET] = pxt.appTarget?.id;
-            url = pxt.BrowserUtils.isLocalHostDev() ? `${pxt.cloud.DEV_BACKEND}${url}` : `${Cloud.apiRoot}${url}`;
+            // url = pxt.BrowserUtils.isLocalHostDev() ? `${pxt.cloud.DEV_BACKEND}${url}` : url;
+            url = `${Cloud.apiRoot.replace(/\/$/, "")}${url}`;
 
             return pxt.Util.requestAsync({
                 url,
