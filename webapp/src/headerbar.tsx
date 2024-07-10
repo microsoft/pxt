@@ -251,7 +251,7 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
         const manyTutorialSteps = view == "tutorial" && (tutorialOptions.tutorialStepInfo.length * 22 > window.innerWidth / 3);
 
         return <div id="mainmenu" className={`ui borderless fixed menu ${targetTheme.invertedMenu ? `inverted` : ''} ${manyTutorialSteps ? "thin" : ""}`} role="menubar">
-            <div className="left menu">
+            {false && <div className="left menu">
                 {isNativeHost && <sui.Item className="icon nativeback" role="menuitem" icon="chevron left large" ariaLabel={lf("Back to application")}
                     onClick={cmds.nativeHostBackAsync} onMouseDown={this.backButtonTouchStart} onMouseUp={this.backButtonTouchEnd} onMouseLeave={this.backButtonTouchEnd} />}
                 {this.getOrganizationLogo(targetTheme, highContrast, view)}
@@ -259,7 +259,7 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
                     // TODO: temporary place for tutorial name, we will eventually redesign the header for tutorial view
                     ? <sui.Item className="tutorialname" tabIndex={-1} textClass="landscape only" text={tutorialOptions.tutorialName}/>
                     : this.getTargetLogo(targetTheme, highContrast, view)}
-            </div>
+            </div>}
             {!home && <div className="center menu">
                 {this.getCenterLabel(targetTheme, view, tutorialOptions)}
             </div>}
