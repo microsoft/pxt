@@ -5951,11 +5951,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     // 테넌트에 맞게 class rails apiRoot를 설정합니다.
     const hostname = window.location.hostname;
     if (hostname === "localhost") {
-        Cloud.apiRoot = "https://class.dev.codle.io/microbit/";
+        Cloud.apiRoot = "https://class.dev.codle.io/makecode/";
     } else {
         const parts = hostname.split(".");
         const classRailsUrl = `https://class.${parts.slice(1).join(".")}`;
-        Cloud.apiRoot = `${classRailsUrl}/microbit/`;
+        Cloud.apiRoot = `${classRailsUrl}/makecode/`;
     }
 
     if (query["hw"]) {
