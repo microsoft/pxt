@@ -13,12 +13,33 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '20'
+          node-version: '16'
 
-      - name: Install dependencies
-        run: npm install
+      - name: Configure npm
+        run: |
+          echo "@samlabs:registry=https://your-private-registry-url/" >> .npmrc
+          echo "//your-private-registry-url/:_authToken=${NPM_TOKEN}" >> .npmrc
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: Check NPM_TOKEN
+        run: |
+          if [ -n "$NPM_TOKEN" ]; then
+            echo "NPM_TOKEN is set. First 4 characters: ${NPM_TOKEN:0:4}"
+          else
+            echo "NPM_TOKEN is not set"
+          fi
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Install dependencies
+        run: npm install --userconfig ./.npmrc --registry=https://your-private-registry-url/
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build
         run: npm run build
+
+      - name: Log npm config
+        run: npm config list
