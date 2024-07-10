@@ -5578,7 +5578,10 @@ function handleHash(newHash: { cmd: string; arg: string }, loading: boolean): bo
         case "cloudheader":
             pxt.tickEvent("hash." + newHash.cmd);
             pxt.BrowserUtils.changeHash("");
-            // workspace.freshHeader를 참고했습니다.
+
+            // cloud.syncAsync의 hdrs 인자에 전달되는 temp header를 만듭니다.
+            // syncAsync 함수 내부에서는 이 header의 id만 사용합니다.
+            // 초기값은 workspace.freshHeader를 참고했습니다.
             const tempHeader: pxt.workspace.Header = {
                 id: newHash.arg,
                 name: "temp",
