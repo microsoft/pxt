@@ -239,7 +239,7 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
         const { home, header, tutorialOptions } = this.props.parent.state;
         const isController = pxt.shell.isControllerMode();
         const isNativeHost = cmds.isNativeHost();
-        const hasIdentity = auth.hasIdentity() && false; // hide for codle
+        const hasIdentity = auth.hasIdentity();
         const activeEditor = this.props.parent.isPythonActive() ? "Python"
             : (this.props.parent.isJavaScriptActive() ? "JavaScript" : "Blocks");
 
@@ -269,7 +269,7 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
                 {showShareButton && <sui.Item className="icon shareproject mobile hide" role="menuitem" title={lf("Publish your game to create a shareable link")} icon="share alternate large" ariaLabel={lf("Share Project")} onClick={this.showShareDialog} />}
                 {showHelpButton && <container.DocsMenu parent={this.props.parent} editor={activeEditor} />}
                 {this.getSettingsMenu(view)}
-                {hasIdentity && (view === "home" || view === "editor" || view === "tutorial-tab") && <identity.UserMenu parent={this.props.parent} />}
+                {false && hasIdentity && (view === "home" || view === "editor" || view === "tutorial-tab") && <identity.UserMenu parent={this.props.parent} />}
             </div>
         </div>
     }
