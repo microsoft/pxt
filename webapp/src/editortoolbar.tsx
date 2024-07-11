@@ -37,6 +37,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         this.redo = this.redo.bind(this);
         this.zoomIn = this.zoomIn.bind(this);
         this.zoomOut = this.zoomOut.bind(this);
+        this.codeHelper = this.codeHelper.bind(this);
         this.startStopSimulator = this.startStopSimulator.bind(this);
         this.toggleDebugging = this.toggleDebugging.bind(this);
         this.toggleCollapsed = this.toggleCollapsed.bind(this);
@@ -79,6 +80,11 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         pxt.tickEvent("editortools.zoomOut", { view: view, collapsed: this.getCollapsedState() }, { interactiveConsent: true });
         this.props.parent.editor.zoomOut();
         this.props.parent.forceUpdate();
+    }
+
+    codeHelper(view?: string) {
+        pxt.tickEvent("editortools.codeHelper", { view: view, collapsed: this.getCollapsedState() }, { interactiveConsent: true });
+        this.props.parent.runCodeHelper();
     }
 
     startStopSimulator(view?: string) {
@@ -157,6 +163,21 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         }
 
         return saveInput;
+    }
+
+    private getCodeHelper(view: View): JSX.Element { // question circle
+        // TODO thsparks : how to do icon properly? icon prop doesn't work because it adds 'icon' string and breaks fontawesome stuff.
+        return (
+            <EditorToolbarButton
+                className="editortools-btn code-helper-editortools-btn"
+                title={lf("Ask Copilot")}
+                onButtonClick={this.codeHelper}
+                view={this.getViewString(view)}
+                key="code-helper"
+            >
+                <i className="fas fa-hat-wizard" aria-hidden="true" role="presentation" />
+            </EditorToolbarButton>
+        );
     }
 
     private getZoomControl(view: View): JSX.Element[] {
@@ -380,6 +401,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         const running = simState == SimState.Running;
         const starting = simState == SimState.Starting;
 
+        const showCodeHelper = !readOnly && !flyoutOnly;
         const showUndoRedo = !readOnly && !debugging && !flyoutOnly;
         const showZoomControls = !flyoutOnly;
         const showGithub = !!pxt.appTarget.cloud
@@ -441,6 +463,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
             <div id="editorToolbarArea" role="menubar" className="ui column items">
                 {showUndoRedo && <div className="ui icon buttons">{this.getUndoRedo(computer)}</div>}
                 {showZoomControls && <div className="ui icon buttons mobile hide">{this.getZoomControl(computer)}</div>}
+                {showCodeHelper && <div className="ui icon buttons">{this.getCodeHelper(computer)}</div>}
                 {targetTheme.bigRunButton && !pxt.shell.isTimeMachineEmbed() &&
                     <div className="big-play-button-wrapper">
                         <EditorToolbarButton

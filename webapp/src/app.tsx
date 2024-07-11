@@ -4560,6 +4560,29 @@ export class ProjectView
         }
     }
 
+    async runCodeHelper() {
+        console.log("Running code helper...");
+
+        const opts: core.PromptOptions = {
+            header: lf("What are you trying to do?"),
+            agreeLbl: lf("Ask Copilot"),
+            placeholder: lf("Make my character jump"),
+            agreeIcon: "question",
+            hideCancel: true,
+            hasCloseIcon: true,
+        };
+
+        const response = await core.promptAsync(opts);
+        if (!response) return; // null means cancelled, empty string means ok (but no value entered)
+
+        const target = pxt.appTarget.name;
+        const code = pkg.mainEditorPkg().files[pxt.MAIN_BLOCKS].content;
+        const goal = response;
+        const allowedBlocks = this.getToolboxCategories().categories.map(c => c.blocks.map(b => b.blockId ?? b.name)).join(",");
+
+        console.log("Ask Copilot", { target, code, goal, allowedBlocks });
+    }
+
     ///////////////////////////////////////////////////////////
     ////////////             Tutorials            /////////////
     ///////////////////////////////////////////////////////////
@@ -5300,6 +5323,7 @@ export class ProjectView
             </div>
         );
     }
+
 }
 
 function render() {

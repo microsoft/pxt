@@ -1044,6 +1044,7 @@ declare namespace pxt.editor {
         hasHeaderBeenPersistentShared(): boolean;
         getSharePreferenceForHeader(): boolean;
         saveSharePreferenceForHeaderAsync(anonymousByDefault: boolean): Promise<void>;
+        runCodeHelper(): void;
     }
 
     export interface IHexFileImporter {
