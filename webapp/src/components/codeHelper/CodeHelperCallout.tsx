@@ -81,27 +81,56 @@ export function CodeHelperCallout(props: CodeHelperCalloutProps) {
 
     type questionState = "ask" | "answer" | "loading" | "error";
     const [ currentState, setCurrentState ] = React.useState<questionState>("ask");
-    const [ idXmlMap, setIdXmlMap ] = React.useState<pxt.Map<string> | undefined>(undefined);
+    const [ allowedBlocks, setAllowedBlocks ] = React.useState<pxt.Map<pxt.editor.ToolboxBlockDefinition> | undefined>(undefined); // Maps id to blocks xml that can be used to get an svg
+    const [ idToSvgMap, setIdToSvgMap ] = React.useState<pxt.Map<string> | undefined>(undefined); // Maps id to svg src
     const [ reasoning, setReasoning ] = React.useState<string | undefined>(undefined);
+
+    React.useEffect(() => {
+        loadAllowedBlocksAsync();
+    }, []);
+
+    async function loadAllowedBlocksAsync() {
+        const categories = parent.getToolboxCategories();
+
+        const blockMap: pxt.Map<pxt.editor.ToolboxBlockDefinition> = {};
+        for (const category of categories.categories) {
+            if (!category.blocks) continue;
+
+            for (const block of category.blocks) {
+                if (block.blockId) {
+                    blockMap[block.blockId] = block;
+                }
+            }
+        }
+        setAllowedBlocks(blockMap);
+    }
 
     async function updateIdXmlMapAsync(blockIds: string[]) {
         const xml: pxt.Map<string> = {};
         for (const blockId of blockIds) {
             try {
-                const renderedBlock = await parent.renderByBlockIdAsync({
-                    blockId,
-                    snippetMode: true,
-                    layout: pxt.editor.BlockLayout.Align,
-                    action: "renderbyblockid",
-                    type: "pxthost"
-                });
+                const renderedBlock = allowedBlocks[blockId].blockXml
+                    ? parent.renderXml({
+                          xml: allowedBlocks[blockId].blockXml,
+                          snippetMode: true,
+                          layout: pxt.editor.BlockLayout.Align,
+                          action: "renderxml",
+                          type: "pxthost",
+                      })
+                    : await parent.renderByBlockIdAsync({
+                          blockId,
+                          snippetMode: true,
+                          layout: pxt.editor.BlockLayout.Align,
+                          action: "renderbyblockid",
+                          type: "pxthost",
+                      });
                 const resultXml = await renderedBlock.resultXml;
                 xml[blockId] = resultXml.xml;
             } catch (e) {
                 console.error(`Error rendering block ${blockId}: ${e}`);
             }
         }
-        setIdXmlMap(xml);
+        setIdToSvgMap(xml);
     }
 
     async function processResponseAsync(response: string) {
@@ -116,7 +145,10 @@ export function CodeHelperCallout(props: CodeHelperCalloutProps) {
         if (!question) closeCallout();
 
         setCurrentState("loading");
-        const response = await parent.runCodeHelperAsync(question);
+        if (!allowedBlocks || Object.keys(allowedBlocks).length == 0) {
+            await loadAllowedBlocksAsync();
+        };
+        const response = await parent.runCodeHelperAsync(question, Object.keys(allowedBlocks));
 
         if (!response) {
             setCurrentState("error");
@@ -129,7 +161,7 @@ export function CodeHelperCallout(props: CodeHelperCalloutProps) {
         <Modal className={classList("code-helper-callout", className)} title={lf("Ask Copilot")} onClose={closeCallout}>
             { currentState == "ask" && <AskQuestionContent parent={props.parent} onAskQuestion={onAskQuestionAsync} /> }
             { currentState == "loading" && <LoadingContent />}
-            { currentState == "answer" && <AnswerContent idXmlMap={idXmlMap} reasoning={reasoning} /> }
+            { currentState == "answer" && <AnswerContent idXmlMap={idToSvgMap} reasoning={reasoning} /> }
             { currentState == "error" && <div className="error-message">Something went wrong!</div> }
         </Modal>
     );

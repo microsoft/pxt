@@ -4564,10 +4564,10 @@ export class ProjectView
         }
     }
 
-    async runCodeHelperAsync(goal: string): Promise<string> {
+    async runCodeHelperAsync(goal: string, allowedBlocksList: string[]): Promise<string> {
         const target = pxt.appTarget.name;
         const code = pkg.mainEditorPkg().files[pxt.MAIN_BLOCKS].content;
-        const allowedBlocks = this.getToolboxCategories().categories.map(c => c.blocks.map(b => b.blockId ?? b.name)).join(",");
+        const allowedBlocks = allowedBlocksList.join(",");
 
         const url =  `http://localhost:8080/api/copilot/helper` // `https://thsparks.staging.pxt.io/api/copilot/helper`; // pxt.Cloud.apiRoot
 

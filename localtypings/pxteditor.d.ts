@@ -1045,7 +1045,7 @@ declare namespace pxt.editor {
         hasHeaderBeenPersistentShared(): boolean;
         getSharePreferenceForHeader(): boolean;
         saveSharePreferenceForHeaderAsync(anonymousByDefault: boolean): Promise<void>;
-        runCodeHelperAsync(goal: string): Promise<string>;
+        runCodeHelperAsync(goal: string, allowedBlocksList: string[]): Promise<string>;
         showCodeHelper(): void;
         hideCodeHelper(): void;
     }
