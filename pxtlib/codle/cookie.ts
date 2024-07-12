@@ -4,6 +4,7 @@
 
 namespace pxt.codle {
   function getCookie(name: string) {
+    // document.cookie 값에서 name에 해당하는 쿠키를 찾아 반환합니다.
     let matches = document.cookie.match(
       new RegExp(
         "(?:^|; )" +
