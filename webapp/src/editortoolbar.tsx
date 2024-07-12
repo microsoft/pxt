@@ -84,7 +84,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
 
     codeHelper(view?: string) {
         pxt.tickEvent("editortools.codeHelper", { view: view, collapsed: this.getCollapsedState() }, { interactiveConsent: true });
-        this.props.parent.runCodeHelper();
+        this.props.parent.showCodeHelper();
     }
 
     startStopSimulator(view?: string) {

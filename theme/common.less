@@ -1800,6 +1800,71 @@ p.ui.font.small {
 }
 
 /*******************************
+        Code Helper
+*******************************/
+
+// Overrides, largely using old tutorial hint CSS
+.code-helper-callout {
+    font-size: 1rem;
+
+    .ask-question-content {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+
+        .ask-button {
+            align-self: flex-end;
+        }
+
+        .common-input-group {
+            height: 3rem;
+            font-size: 1rem;
+        }
+    }
+
+    .common-spinner {
+        align-self: center;
+        width: 5rem;
+        height: 5rem;
+    }
+
+    .answer-content {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+
+        .footer {
+            width: 100%;
+            font-size: 0.8rem;
+            color: gray;
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+
+            .rate-buttons {
+                display: flex;
+                flex-direction: row;
+
+                .common-button {
+                    padding: 0.1rem;
+                    border-radius: 100%;
+                    background-color: transparent;
+                    color: @black;
+                    border: none;
+                    font-size: 1rem;
+
+                    :hover {
+                        font-size: 1.2rem;
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+
+/*******************************
         Media Adjustments
 *******************************/
 

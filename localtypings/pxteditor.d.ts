@@ -767,6 +767,7 @@ declare namespace pxt.editor {
         extensionsVisible?: boolean;
         isMultiplayerGame?: boolean; // Arcade: Does the current project contain multiplayer blocks?
         onboarding?: pxt.tour.BubbleStep[];
+        showCodeHelper?: boolean;
     }
 
     export interface EditorState {
@@ -1044,7 +1045,9 @@ declare namespace pxt.editor {
         hasHeaderBeenPersistentShared(): boolean;
         getSharePreferenceForHeader(): boolean;
         saveSharePreferenceForHeaderAsync(anonymousByDefault: boolean): Promise<void>;
-        runCodeHelper(): void;
+        runCodeHelperAsync(goal: string): Promise<string>;
+        showCodeHelper(): void;
+        hideCodeHelper(): void;
     }
 
     export interface IHexFileImporter {

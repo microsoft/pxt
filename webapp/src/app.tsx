@@ -80,6 +80,7 @@ import { mergeProjectCode, appendTemporaryAssets } from "./mergeProjects";
 import { Tour } from "./components/onboarding/Tour";
 import { parseTourStepsAsync } from "./onboarding";
 import { initGitHubDb } from "./idbworkspace";
+import { CodeHelperCallout } from "./components/codeHelper/CodeHelperCallout";
 
 pxt.blocks.requirePxtBlockly = () => pxtblockly as any;
 pxt.blocks.requireBlockly = () => Blockly;
@@ -196,6 +197,7 @@ export class ProjectView
             isMultiplayerGame: false,
             onboarding: undefined,
             mute: pxt.editor.MuteState.Unmuted,
+            showCodeHelper: false
         };
         if (!this.settings.editorFontSize) this.settings.editorFontSize = /mobile/i.test(navigator.userAgent) ? 15 : 19;
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
@@ -220,6 +222,8 @@ export class ProjectView
         this.setEditorOffset = this.setEditorOffset.bind(this);
         this.resetTutorialTemplateCode = this.resetTutorialTemplateCode.bind(this);
         this.initSimulatorMessageHandlers();
+        this.showCodeHelper = this.showCodeHelper.bind(this);
+        this.hideCodeHelper = this.hideCodeHelper.bind(this);
 
         // add user hint IDs and callback to hint manager
         if (pxt.BrowserUtils.useOldTutorialLayout) this.hintManager.addHint(ProjectView.tutorialCardId, this.tutorialCardHintCallback.bind(this));
@@ -4560,24 +4564,9 @@ export class ProjectView
         }
     }
 
-    async runCodeHelper() {
-        console.log("Running code helper...");
-
-        const opts: core.PromptOptions = {
-            header: lf("What are you trying to do?"),
-            agreeLbl: lf("Ask Copilot"),
-            placeholder: lf("Make my character jump"),
-            agreeIcon: "question",
-            hideCancel: true,
-            hasCloseIcon: true,
-        };
-
-        const response = await core.promptAsync(opts);
-        if (!response) return; // null means cancelled, empty string means ok (but no value entered)
-
+    async runCodeHelperAsync(goal: string): Promise<string> {
         const target = pxt.appTarget.name;
         const code = pkg.mainEditorPkg().files[pxt.MAIN_BLOCKS].content;
-        const goal = response;
         const allowedBlocks = this.getToolboxCategories().categories.map(c => c.blocks.map(b => b.blockId ?? b.name)).join(",");
 
         const url =  `http://localhost:8080/api/copilot/helper` // `https://thsparks.staging.pxt.io/api/copilot/helper`; // pxt.Cloud.apiRoot
@@ -4597,36 +4586,13 @@ export class ProjectView
                 throw new Error("Unable to reach Copilot");
             }
             result = await request.json();
-            this.showCodeHelperResponse(result);
+            console.log("Copilot Response", result);
+            return result;
         } catch (e) {
             console.error("Unable to reach Copilot", e);
         }
-    }
 
-    async showCodeHelperResponse(response: string) {
-
-        // block is at the start of the message surrounded in back ticks.
-        const blockId = response.match(/`([^`]*)`/)?.[1];
-        const reason = response.replace(/`([^`]*)`/, "");
-
-        const renderedBlock = await this.renderByBlockIdAsync({
-            blockId,
-            snippetMode: true,
-            layout: pxt.editor.BlockLayout.Align,
-            action: "renderbyblockid",
-            type: "pxthost"
-        });
-        const renderedBlockXml = await renderedBlock.resultXml;
-
-        const opts: core.DialogOptions = {
-            header: renderedBlockXml.xml ? lf("Consider using...") : lf("Here's what I found..."),
-            jsx: renderedBlockXml.xml ? <img src={renderedBlockXml.xml} alt={blockId}/> : undefined,
-            body: reason,
-            hasCloseIcon: true,
-            hideCancel: true,
-        };
-
-        core.dialogAsync(opts);
+        return "";
     }
 
     ///////////////////////////////////////////////////////////
@@ -5123,6 +5089,21 @@ export class ProjectView
     }
 
     ///////////////////////////////////////////////////////////
+    ////////////            Code Helper           /////////////
+    ///////////////////////////////////////////////////////////
+
+    hideCodeHelper() {
+        console.log("Hide code helper");
+        pxt.tickEvent("codeHelper.hide", { view: 'computer' }, { interactiveConsent: true });
+        this.setState({ showCodeHelper: false });
+    }
+
+    showCodeHelper() {
+        console.log("Show code helper");
+        this.setState({ showCodeHelper: true });
+    }
+
+    ///////////////////////////////////////////////////////////
     ////////////             Key map              /////////////
     ///////////////////////////////////////////////////////////
 
@@ -5366,6 +5347,7 @@ export class ProjectView
                 {lightbox ? <sui.Dimmer isOpen={true} active={lightbox} portalClassName={'tutorial'} className={'ui modal'}
                     shouldFocusAfterRender={false} closable={true} onClose={this.hideLightbox} /> : undefined}
                 {this.state.onboarding && <Tour tourSteps={this.state.onboarding} onClose={this.hideOnboarding} />}
+                {this.state.showCodeHelper && <CodeHelperCallout parent={this} closeCallout={this.hideCodeHelper}/>}
             </div>
         );
     }
