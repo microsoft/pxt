@@ -6,6 +6,11 @@ import { Button } from "../../../../react-common/components/controls/Button";
 import { Input } from "../../../../react-common/components/controls/Input";
 import { Modal } from "../../../../react-common/components/controls/Modal";
 
+interface AnswerFormat {
+    blocks: string[];
+    reason: string;
+}
+
 interface AskQuestionContentProps {
     parent: IProjectView;
     onAskQuestion: (question: string) => void;
@@ -27,9 +32,12 @@ function AskQuestionContent(props: AskQuestionContentProps) {
     );
 }
 
-interface AnswerFormat {
-    blocks: string[];
-    reason: string;
+function LoadingContent() {
+    return (
+        <div className="loading-content">
+            <div className="common-spinner" />
+        </div>
+    );
 }
 
 interface AnswerContentProps {
@@ -44,9 +52,9 @@ function AnswerContent(props: AnswerContentProps) {
         <div className="answer-content">
             {hasBlocks && <span className="starter-text">{lf("Consider using:")}</span>}
             {hasBlocks && (
-                <div className="block-preview">
+                <div className="block-display">
                     {Object.keys(idXmlMap).map((id) => (
-                        <img src={idXmlMap[id]} alt={id} key={`block_preview_${id}`} />
+                        <img src={idXmlMap[id]} alt={id} key={`block-display-${id}`} />
                     ))}
                 </div>
             )}
@@ -54,8 +62,8 @@ function AnswerContent(props: AnswerContentProps) {
             <div className="footer">
                 <span className="ai-warning">{lf("AI-generated content may be incorrect")}</span>
                 <div className="rate-buttons">
-                    <Button className="thumb-up secondary" title={lf("I like this suggestion")} leftIcon="far fa-thumbs-up" onClick={() => {}}/>
-                    <Button className="thumb-down secondary" title={lf("I dislike this suggestion")} leftIcon="far fa-thumbs-down" onClick={() => {}}/>
+                    <Button title={lf("I dislike this suggestion")} leftIcon="far fa-thumbs-down" onClick={() => {}}/>
+                    <Button title={lf("I like this suggestion")} leftIcon="far fa-thumbs-up" onClick={() => {}}/>
                 </div>
             </div>
         </div>
@@ -79,26 +87,28 @@ export function CodeHelperCallout(props: CodeHelperCalloutProps) {
     async function updateIdXmlMapAsync(blockIds: string[]) {
         const xml: pxt.Map<string> = {};
         for (const blockId of blockIds) {
-            const renderedBlock = await parent.renderByBlockIdAsync({
-                blockId,
-                snippetMode: true,
-                layout: pxt.editor.BlockLayout.Align,
-                action: "renderbyblockid",
-                type: "pxthost"
-            });
-            const resultXml = await renderedBlock.resultXml;
-            xml[blockId] = resultXml.xml;
+            try {
+                const renderedBlock = await parent.renderByBlockIdAsync({
+                    blockId,
+                    snippetMode: true,
+                    layout: pxt.editor.BlockLayout.Align,
+                    action: "renderbyblockid",
+                    type: "pxthost"
+                });
+                const resultXml = await renderedBlock.resultXml;
+                xml[blockId] = resultXml.xml;
+            } catch (e) {
+                console.error(`Error rendering block ${blockId}: ${e}`);
+            }
         }
         setIdXmlMap(xml);
     }
 
     async function processResponseAsync(response: string) {
-        // block is at the start of the message surrounded in back ticks.
-        const blockId = response.match(/`([^`]*)`/)?.[1];
-        const reason = response.replace(/`([^`]*)`/, "")?.trim();
+        const parsedResponse: AnswerFormat = JSON.parse(response) as AnswerFormat;
 
-        await updateIdXmlMapAsync([blockId]);
-        setReasoning(reason);
+        await updateIdXmlMapAsync(parsedResponse.blocks);
+        setReasoning(parsedResponse.reason);
         setCurrentState("answer");
     }
 
@@ -118,7 +128,7 @@ export function CodeHelperCallout(props: CodeHelperCalloutProps) {
     return (
         <Modal className={classList("code-helper-callout", className)} title={lf("Ask Copilot")} onClose={closeCallout}>
             { currentState == "ask" && <AskQuestionContent parent={props.parent} onAskQuestion={onAskQuestionAsync} /> }
-            { currentState == "loading" && <div className="common-spinner" />}
+            { currentState == "loading" && <LoadingContent />}
             { currentState == "answer" && <AnswerContent idXmlMap={idXmlMap} reasoning={reasoning} /> }
             { currentState == "error" && <div className="error-message">Something went wrong!</div> }
         </Modal>
