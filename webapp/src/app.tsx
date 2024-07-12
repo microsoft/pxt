@@ -4597,10 +4597,36 @@ export class ProjectView
                 throw new Error("Unable to reach Copilot");
             }
             result = await request.json();
-            console.log("Response", result);
+            this.showCodeHelperResponse(result);
         } catch (e) {
             console.error("Unable to reach Copilot", e);
         }
+    }
+
+    async showCodeHelperResponse(response: string) {
+
+        // block is at the start of the message surrounded in back ticks.
+        const blockId = response.match(/`([^`]*)`/)?.[1];
+        const reason = response.replace(/`([^`]*)`/, "");
+
+        const renderedBlock = await this.renderByBlockIdAsync({
+            blockId,
+            snippetMode: true,
+            layout: pxt.editor.BlockLayout.Align,
+            action: "renderbyblockid",
+            type: "pxthost"
+        });
+        const renderedBlockXml = await renderedBlock.resultXml;
+
+        const opts: core.DialogOptions = {
+            header: renderedBlockXml.xml ? lf("Consider using...") : lf("Here's what I found..."),
+            jsx: renderedBlockXml.xml ? <img src={renderedBlockXml.xml} alt={blockId}/> : undefined,
+            body: reason,
+            hasCloseIcon: true,
+            hideCancel: true,
+        };
+
+        core.dialogAsync(opts);
     }
 
     ///////////////////////////////////////////////////////////
