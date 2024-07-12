@@ -4580,7 +4580,27 @@ export class ProjectView
         const goal = response;
         const allowedBlocks = this.getToolboxCategories().categories.map(c => c.blocks.map(b => b.blockId ?? b.name)).join(",");
 
-        console.log("Ask Copilot", { target, code, goal, allowedBlocks });
+        const url =  `http://localhost:8080/api/copilot/helper` // `https://thsparks.staging.pxt.io/api/copilot/helper`; // pxt.Cloud.apiRoot
+
+        const data = { target, code, goal, allowedBlocks };
+        console.log("Ask Copilot", data);
+
+        let result: string = "";
+        try {
+            const request = await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data),
+            });
+
+            if (!request.ok) {
+                throw new Error("Unable to reach Copilot");
+            }
+            result = await request.json();
+            console.log("Response", result);
+        } catch (e) {
+            console.error("Unable to reach Copilot", e);
+        }
     }
 
     ///////////////////////////////////////////////////////////
