@@ -3,16 +3,13 @@
  */
 
 namespace pxt.codle {
+  /**
+   * document.cookie에서 name에 해당하는 쿠키 값을 가져옵니다.
+   */
   function getCookie(name: string) {
-    // document.cookie 값에서 name에 해당하는 쿠키를 찾아 반환합니다.
-    let matches = document.cookie.match(
-      new RegExp(
-        "(?:^|; )" +
-          name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, "\\$1") +
-          "=([^;]*)"
-      )
-    );
-    return matches ? decodeURIComponent(matches[1]) : undefined;
+    const cookies = document.cookie.split("; ");
+    const cookie = cookies.find((cookie) => cookie.startsWith(name + "="));
+    return cookie ? decodeURIComponent(cookie.split("=")[1]) : undefined;
   }
 
   export function getEnv(): string {
