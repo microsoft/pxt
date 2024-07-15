@@ -5575,6 +5575,35 @@ function handleHash(newHash: { cmd: string; arg: string }, loading: boolean): bo
             pxt.BrowserUtils.changeHash("");
             editor.loadHeaderAsync(workspace.getHeader(newHash.arg));
             return true;
+        case "cloudheader":
+            pxt.tickEvent("hash." + newHash.cmd);
+            pxt.BrowserUtils.changeHash("");
+
+            // cloud.syncAsync의 hdrs 인자에 전달되는 temp header를 만듭니다.
+            // syncAsync 함수 내부에서는 이 header의 id만 사용합니다.
+            // 초기값은 workspace.freshHeader를 참고했습니다.
+            const tempHeader: pxt.workspace.Header = {
+                id: newHash.arg,
+                name: "temp",
+                target: pxt.appTarget.id,
+                targetVersion: pxt.appTarget.versions.target,
+                meta: {},
+                editor: pxt.JAVASCRIPT_PROJECT_NAME,
+                pubId: "",
+                pubCurrent: false,
+                _rev: null,
+                recentUse: 0,
+                modificationTime: 0,
+                cloudUserId: null,
+                cloudCurrent: false,
+                cloudVersion: null,
+                cloudLastSyncTime: 0,
+                isDeleted: false,
+            }
+            cloud.syncAsync({ hdrs: [tempHeader], direction: "down" }).then(
+                () => editor.loadHeaderAsync(workspace.getHeader(newHash.arg))
+            );
+            return true;
         case "sandboxproject":
         case "project":
             pxt.tickEvent("hash." + newHash.cmd);
@@ -5654,6 +5683,7 @@ function isProjectRelatedHash(hash: { cmd: string; arg: string }): boolean {
         case "sandboxproject":
         case "project":
         case "header":
+        case "cloudheader":
             return true;
         case "github":
         default:
@@ -5908,12 +5938,24 @@ document.addEventListener("DOMContentLoaded", async () => {
     pxt.hexloader.hideLoading = () => core.hideLoading("hexcloudcompiler");
     pxt.docs.requireMarked = () => require("marked");
 
+    /*
     // allow static web site to specify custom backend
     if (pxt.appTarget.cloud?.apiRoot)
         Cloud.apiRoot = pxt.appTarget.cloud.apiRoot
     else {
         const hm = /^(https:\/\/[^/]+)/.exec(window.location.href)
         if (hm) Cloud.apiRoot = hm[1] + "/api/"
+    }
+    */
+
+    // 테넌트에 맞게 class rails apiRoot를 설정합니다.
+    const hostname = window.location.hostname;
+    if (hostname === "localhost") {
+        Cloud.apiRoot = "https://class.dev.codle.io/makecode/";
+    } else {
+        const parts = hostname.split(".");
+        const classRailsUrl = `https://class.${parts.slice(1).join(".")}`;
+        Cloud.apiRoot = `${classRailsUrl}/makecode/`;
     }
 
     if (query["hw"]) {

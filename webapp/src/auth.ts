@@ -25,13 +25,15 @@ export const HAS_USED_CLOUD = "has-used-cloud"; // Key into local storage to see
 
 export class Component<TProps, TState> extends data.Component<TProps, TState> {
     public getUserProfile(): pxt.auth.UserProfile {
-        return this.getData<pxt.auth.UserProfile>(USER_PROFILE);
+        return { id: "00000000-0000-0000-0000-000000000000" };
+        // return this.getData<pxt.auth.UserProfile>(USER_PROFILE);
     }
     public getUserPreferences(): pxt.auth.UserPreferences {
         return this.getData<pxt.auth.UserPreferences>(USER_PREFERENCES);
     }
     public isLoggedIn(): boolean {
-        return this.getData<boolean>(LOGGED_IN);
+        return true;
+        // return this.getData<boolean>(LOGGED_IN);
     }
 }
 
@@ -170,11 +172,13 @@ export function hasIdentity(): boolean {
 }
 
 export function loggedIn(): boolean {
-    return data.getData<boolean>(LOGGED_IN);
+    return true;
+    // return data.getData<boolean>(LOGGED_IN);
 }
 
 export function userProfile(): pxt.auth.UserProfile {
-    return data.getData<pxt.auth.UserProfile>(USER_PROFILE);
+    return { id: "00000000-0000-0000-0000-000000000000" };
+    // return data.getData<pxt.auth.UserProfile>(USER_PROFILE);
 }
 
 export function userPreferences(): pxt.auth.UserPreferences {
