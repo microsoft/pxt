@@ -5,7 +5,9 @@ namespace pxt.toolbox {
         math: '#712672',
         variables: '#A80000',
         functions: '#005a9e',
+        /////samlabs
         text: '#43a1d4',
+        /////end samlabs color change
         arrays: '#A94400',
         advanced: '#3c3c3c',
         addpackage: '#717171',

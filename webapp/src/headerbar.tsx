@@ -356,6 +356,31 @@ export class HeaderBar extends data.Component<ISettingsProps, {isFlashInProgress
                                     }}>
                     {this.getConsoleButton(this.state.showConsole)}
                 </sui.Item>}
+                {!home && this.state.showConsole &&
+                    <sui.Item className={`icon`} role="menuitem" title={lf("Clear Console")}
+                              ariaLabel={lf("Clear Console button")}
+                              icon={'ban small'}
+                              onClick={() => {
+                                  simulator.driver.samMessageToTarget({
+                                      type: `CLEAR_CONSOLE_CALLED`
+                                  });
+                              }}>
+                        <div style={{
+                            display: 'flex',
+                            flexDirection: "column",
+                            width: 100,
+                            borderRadius: 4,
+                            backgroundColor:'#26d0c4'
+                        }}>
+                            <span style={{
+                                padding: 2,
+                                marginLeft: 2,
+                                fontSize: 14,
+                                color: '#fff',
+                                textAlign: 'center'
+                            }}>Clear Console</span>
+                        </div>
+                    </sui.Item>}
                 {/*///// SAMLABS end back button*/}
                 {isNativeHost && <sui.Item className="icon nativeback" role="menuitem" icon="chevron left large" ariaLabel={lf("Back to application")}
                     onClick={cmds.nativeHostBackAsync} onMouseDown={this.backButtonTouchStart} onMouseUp={this.backButtonTouchEnd} onMouseLeave={this.backButtonTouchEnd} />}
