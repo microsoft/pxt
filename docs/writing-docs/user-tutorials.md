@@ -12,7 +12,6 @@ https://youtu.be/XsM8hp7eysA
 
 Author the tutorial content in a **Markdown** file in your project. The format is the same as what's documented in [tutorials](/writing-docs/tutorials). 
 
-The dependencies are used when starting the tutorial project, but code content (``main.blocks``, ``main.ts``) is ignored.
 
 ### ~ hint
 
@@ -34,6 +33,10 @@ The easiest way to share a tutorial is to first share the program. Then, use the
 The complete shared url is formatted like:
 
     https://makecode.microbit.org/#tutorial:https://makecode.com/_sIty7Iop
+
+**Important Note**
+
+The dependencies are used when starting the tutorial project, but code content (``main.blocks``, ``main.ts``) is ignored. This includes ``custom.ts``! If you are hoping to include custom blocks in a tutorial, make it as an extension first so it gets added to the project's dependencies. More on how to make an extension is [here](/extensions/getting-started/).
 
 ### ~ alert
 
@@ -104,12 +107,14 @@ region specific language code or language neutral. MakeCode will pick the best m
 
 https://youtu.be/3LKmE0c5UZU
 
-### Repository as extension
+### Repository with custom blocks
 
 If the tutorial repository contains JavaScript files (``.ts``),
 it will automatically be added to the dependencies of the 
 program used during the tutorial. This allows you to package custom blocks
 in your tutorials or teach your extensions via tutorials.
+
+However, this includes ``main.ts``, so if you've built a sample program while making the tutorial, make sure to move the code into another project or delete it before sharing the tutorial. If ``main.ts`` has any code in it, the code will run when the tutorial gets opened!
 
 ## Report abuse and approvals
 
