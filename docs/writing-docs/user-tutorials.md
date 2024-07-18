@@ -34,9 +34,9 @@ The complete shared url is formatted like:
 
     https://makecode.microbit.org/#tutorial:https://makecode.com/_sIty7Iop
 
-**Important Note**
+### Project dependencies
 
-The dependencies are used when starting the tutorial project, but code content (``main.blocks``, ``main.ts``) is ignored. This includes ``custom.ts``! If you are hoping to include custom blocks in a tutorial, make it as an extension first so it gets added to the project's dependencies. More on how to make an extension is [here](/extensions/getting-started/).
+The dependencies for a shared tutorial project are used when the tutorial starts. The project code content (``main.blocks``, ``main.ts``) is ignored though. This also includes the code in ``custom.ts``! If you are hoping to include custom blocks in a tutorial, put them in an extension first, then that extension can get added to the project's dependencies. Read more about making [extensions](/extensions/getting-started/).
 
 ### ~ alert
 
