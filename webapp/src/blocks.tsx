@@ -1764,7 +1764,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
                 // Create the block XML from block definition.
                 if (!blockXml) {
-                    blockXml = pxtblockly.createToolboxBlock(this.blockInfo, fn, comp);
+                    blockXml = pxtblockly.createToolboxBlock(this.blockInfo, fn, comp, shadow);
 
                     if (fn.attributes.optionalVariableArgs && fn.attributes.toolboxVariableArgs) {
                         const handlerArgs = comp.handlerArgs;

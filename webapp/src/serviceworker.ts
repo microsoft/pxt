@@ -26,25 +26,26 @@ enum DisconnectResponse {
     Waiting,
     TimedOut
 }
+// Empty string for released, otherwise contains the ref or version path
+const ref = `@relprefix@`.replace("---", "").replace(/^\//, "");
+const pageUrl =  `@targetUrl@/` + ref;
+
+// pxtRelId is replaced with the commit hash for this release
+const refCacheName = "makecode;" + ref + ";@pxtRelId@";
 
 initWebappServiceWorker();
 initWebUSB();
 
 function initWebappServiceWorker() {
-    // Empty string for released, otherwise contains the ref or version path
-    const ref = `@relprefix@`.replace("---", "").replace(/^\//, "");
 
     // We don't do offline for version paths, only named releases
     const isNamedEndpoint = ref.indexOf("/") === -1;
-
-    // pxtRelId is replaced with the commit hash for this release
-    const refCacheName = "makecode;" + ref + ";@pxtRelId@";
 
     const cdnUrl = `@cdnUrl@`;
 
     const webappUrls = [
         // The current page
-        `@targetUrl@/` + ref,
+        pageUrl,
         `@simUrl@`,
 
         // webapp files
@@ -197,11 +198,48 @@ function initWebappServiceWorker() {
     });
 
     self.addEventListener("fetch", (ev: ServiceWorkerEvent) => {
-        ev.respondWith(caches.match(ev.request)
-            .then(response => {
-                return response || fetch(ev.request)
-            }))
+        ev.respondWith(handleFetch(ev));
     });
+
+    async function handleFetch(ev: ServiceWorkerEvent): Promise<Response> {
+        if (ev.request.url.startsWith(pageUrl)) {
+            let path = ev.request.url.slice(pageUrl.length);
+            if (path.startsWith("/")) path = path.slice(1);
+
+            // If this is just the main page with a query parameter, attempt
+            // to fetch from the network and fall back to the cache if it fails
+            if (path.charAt(0) === "?") {
+                let response: Response;
+                try {
+                    response = await fetch(ev.request);
+
+                    // Store this response in the cache in case the user tries
+                    // to visit this same query param offline
+                    const cache = await caches.open(refCacheName);
+                    cache.put(ev.request, response.clone());
+                }
+                catch (e) {
+                    // Ignore
+                }
+
+                if (response) {
+                    return response;
+                }
+                else {
+                    console.warn(`Unable to fetch ${ev.request.url}, falling back to cache`);
+                }
+            }
+        }
+
+        // Check to see if it's in the cache
+        const match = await caches.match(ev.request);
+
+        if (match) return match;
+
+        // Fall back to the network
+        const response = fetch(ev.request);
+        return response;
+    }
 
 
     function dedupe(urls: string[]) {
