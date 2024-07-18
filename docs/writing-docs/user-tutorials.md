@@ -114,7 +114,7 @@ it will automatically be added to the dependencies of the
 program used during the tutorial. This allows you to package custom blocks
 in your tutorials or teach your extensions via tutorials.
 
-However, this includes ``main.ts``, so if you've built a sample program while making the tutorial, make sure to move the code into another project or delete it before sharing the tutorial. If ``main.ts`` has any code in it, the code will run when the tutorial gets opened!
+It's important to know that tutorial project includes any code you might have in ``main.ts``. So, if you've built a sample program while making the tutorial, make sure to move the code into another project or delete it before sharing the tutorial. If ``main.ts`` has any code in it, the code will run when the tutorial gets opened!
 
 ## Report abuse and approvals
 
