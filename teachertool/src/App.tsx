@@ -16,10 +16,13 @@ import { ImportChecklistModal } from "./components/ImportChecklistModal";
 import { ConfirmationModal } from "./components/ConfirmationModal";
 import { BlockPickerModal } from "./components/BlockPickerModal";
 import { ScreenReaderAnnouncer } from "./components/ScreenReaderAnnouncer";
+import { SignInModal } from "./components/SignInModal";
+import * as authClient from "./services/authClient";
 
 export const App = () => {
     const { state, dispatch } = useContext(AppStateContext);
     const [inited, setInited] = useState(false);
+    const [authCheckComplete, setAuthCheckComplete] = useState(false); // TODO thsparks : do we need this?
 
     const ready = usePromise(AppStateReady, false);
 
@@ -35,19 +38,19 @@ export const App = () => {
                 await loadValidatorPlansAsync();
                 await tryLoadLastActiveChecklistAsync();
 
-                // Test notification
-                showToast({
-                    ...makeToast("success", "🎓", 2000),
-                    hideIcon: true,
-                    hideDismissBtn: true,
-                    className: "app-large-toast",
-                });
-
                 setInited(true);
                 logDebug("App initialized");
             });
         }
     }, [ready, inited]);
+
+    useEffect(() => {
+        // On mount, check if user is signed in
+        authClient
+            .authCheckAsync()
+            .then(() => setAuthCheckComplete(true))
+            .catch(() => setAuthCheckComplete(true));
+    }, [setAuthCheckComplete]);
 
     return !inited ? (
         <div className="ui active dimmer">
@@ -56,7 +59,8 @@ export const App = () => {
     ) : (
         <>
             <HeaderBar />
-            <MainPanel />
+            {state.userProfile && <MainPanel />}
+            {authCheckComplete && <SignInModal />}
             <ImportChecklistModal />
             <ConfirmationModal />
             <BlockPickerModal />

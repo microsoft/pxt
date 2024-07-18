@@ -145,5 +145,11 @@ export default function reducer(state: AppState, action: Action): AppState {
                 screenReaderAnnouncement: action.announcement,
             };
         }
+        case "SET_USER_PROFILE": {
+            return {
+                ...state,
+                userProfile: action.profile,
+            };
+        }
     }
 }

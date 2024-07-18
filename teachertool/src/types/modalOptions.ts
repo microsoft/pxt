@@ -16,4 +16,8 @@ export type ImportChecklistOptions = {
     modal: "import-checklist";
 };
 
-export type ModalOptions = ImportChecklistOptions | ConfirmationModalOptions | BlockPickerOptions;
+export type SignInOptions = {
+    modal: "sign-in";
+}
+
+export type ModalOptions = ImportChecklistOptions | ConfirmationModalOptions | BlockPickerOptions | SignInOptions;

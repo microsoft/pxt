@@ -110,6 +110,11 @@ type SetScreenReaderAnnouncement = ActionBase & {
     announcement: string;
 };
 
+type SetUserProfile = ActionBase & {
+    type: "SET_USER_PROFILE";
+    profile: pxt.auth.UserProfile | undefined;
+};
+
 /**
  * Union of all actions
  */
@@ -134,7 +139,8 @@ export type Action =
     | SetAutorun
     | SetToolboxCategories
     | SetBlockImageUri
-    | SetScreenReaderAnnouncement;
+    | SetScreenReaderAnnouncement
+    | SetUserProfile;
 
 /**
  * Action creators
@@ -238,6 +244,11 @@ const setScreenReaderAnnouncement = (announcement: string): SetScreenReaderAnnou
     announcement,
 });
 
+const setUserProfile = (profile: pxt.auth.UserProfile | undefined): SetUserProfile => ({
+    type: "SET_USER_PROFILE",
+    profile,
+});
+
 export {
     showToast,
     dismissToast,
@@ -259,4 +270,5 @@ export {
     setToolboxCategories,
     setBlockImageUri,
     setScreenReaderAnnouncement,
+    setUserProfile,
 };
