@@ -1,10 +1,9 @@
 # Recommended browser for Mac
 
-As you are using a Mac, it is recommended that you use [Safari][]. Alternatively,
-[Google Chrome][chrome] and [Mozilla Firefox][firefox] are also supported.
+While using MakeCode with the Mac, the recommended browsers to use are [Google Chrome][chrome] or [Microsoft Edge][edge] since they have good support of WebUSB for seamless downloads. [Safari][safari] and [Mozilla Firefox][firefox] are also supported but downloads require a bit more user interaction.
 
 Please see [here][technical] for technical information on which browsers are
-supported, or [here][versions] to check which version you are using.
+supported, or check [here][versions] to see which version you are using.
 
 [edge]: https://www.microsoft.com/en-us/windows/microsoft-edge
 [ie]: https://www.microsoft.com/en-us/download/internet-explorer.aspx
