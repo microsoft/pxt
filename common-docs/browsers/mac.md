@@ -1,7 +1,7 @@
 # Recommended browser for Mac
 
-As you are using a Mac, it is recommended that you use [Safari][]. Alternatively,
-[Google Chrome][chrome] and [Mozilla Firefox][firefox] are also supported.
+As you are using a Mac, it is recommended that you use [Google Chrome][chrome] or [Microsoft Edge][edge] as they support webusb for seamless download. Alternatively,
+ [Safari][] and [Mozilla Firefox][firefox] and are also supported.
 
 Please see [here][technical] for technical information on which browsers are
 supported, or [here][versions] to check which version you are using.
