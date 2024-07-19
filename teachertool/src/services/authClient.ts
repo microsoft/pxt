@@ -2,7 +2,9 @@ import { setUserProfile } from "../transforms/setUserProfile";
 
 class AuthClient extends pxt.auth.AuthClient {
     protected async onSignedIn(): Promise<void> {}
-    protected async onSignedOut(): Promise<void> {}
+    protected async onSignedOut(): Promise<void> {
+        setUserProfile(undefined);
+    }
     protected async onSignInFailed(): Promise<void> {}
     protected async onUserProfileChanged(): Promise<void> {
         const profile = await this.userProfileAsync();
