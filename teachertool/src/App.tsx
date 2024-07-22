@@ -45,11 +45,16 @@ export const App = () => {
     }, [ready, inited]);
 
     useEffect(() => {
-        // On mount, check if user is signed in
-        authClient
-            .authCheckAsync()
-            .then(() => setAuthCheckComplete(true))
-            .catch(() => setAuthCheckComplete(true));
+        async function checkAuth() {
+            // On mount, check if user is signed in
+            try {
+                await authClient.authCheckAsync()
+                setAuthCheckComplete(true)
+            } catch (e) {
+                setAuthCheckComplete(true)
+            }
+        }
+        checkAuth();
     }, [setAuthCheckComplete]);
 
     return !inited ? (
@@ -59,7 +64,7 @@ export const App = () => {
     ) : (
         <>
             <HeaderBar />
-            {state.userProfile && <MainPanel />}
+            {authCheckComplete && state.userProfile && <MainPanel />}
             {authCheckComplete && <SignInModal />}
             <ImportChecklistModal />
             <ConfirmationModal />
