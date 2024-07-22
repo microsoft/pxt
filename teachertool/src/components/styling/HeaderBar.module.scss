@@ -41,4 +41,44 @@
             margin: 0 1rem;
         }
     }
+
+    .user-menu {
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+
+        .sign-in-button {
+            height: 80%;
+            margin: .5rem 1rem;
+            margin-right: 1rem;
+            padding: .6rem;
+            font-weight: 500;
+            flex-direction: row-reverse;
+            align-items: center;
+        }
+
+        .header-dropdown {
+            height: inherit;
+            cursor: pointer;
+            width: 3.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .avatar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+
+            img {
+                border: solid 2px white;
+                border-radius: 100%;
+                width: 2.5rem;
+                height: 2.5rem;
+            }
+        }
+    }
 }
