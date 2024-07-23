@@ -16,6 +16,12 @@ export default function PlayingGame() {
         return getLaunchedGame();
     }, [kiosk.launchedGameId]);
 
+    const makeRunUrl = () => {
+        return pxt.webConfig?.runUrl
+        ? "https://arcade.makecode.com" + pxt.webConfig.runUrl
+        : configData.PlayUrlRoot;
+    }
+
     // Handle Back and Start button presses
     useOnControlPress(
         [],
@@ -45,7 +51,7 @@ export default function PlayingGame() {
         }
     }, [launchedGame]);
 
-    const playUrlRoot = pxt.BrowserUtils.isLocalHost() ? configData.LocalPlayUrlRoot : configData.PlayUrlRoot;
+    const playUrlRoot = pxt.BrowserUtils.isLocalHost() ? configData.LocalPlayUrlRoot : makeRunUrl();
     const playUrl = useMemo(() => {
         if (launchedGame && !fetchingBuiltJsInfo) {
             return stringifyQueryString(playUrlRoot, {
