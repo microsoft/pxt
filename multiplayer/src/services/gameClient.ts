@@ -75,14 +75,10 @@ class GameClient {
 
     private sendMessage(msg: Protocol.Message | Buffer) {
         if (msg instanceof Buffer) {
-            this.sock?.send(msg, {}, (err: any) => {
-                if (err) pxt.log("Error sending message. " + err.toString());
-            });
+            this.sock?.send(msg, {}, () => {});
         } else {
             const payload = JSON.stringify(msg);
-            this.sock?.send(payload, {}, (err: any) => {
-                if (err) pxt.log("Error sending message. " + err.toString());
-            });
+            this.sock?.send(payload, {}, () => {});
         }
     }
 
@@ -189,6 +185,10 @@ class GameClient {
                     notifyGameDisconnected(this.gameOverReason);
                     clearTimeout(joinTimeout);
                     resolve();
+                });
+
+                this.sock?.on("error", err => {
+                    if (err) pxt.log("Error sending message. " + err.toString());
                 });
 
                 this.sendMessage({
