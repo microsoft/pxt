@@ -45,9 +45,10 @@ export default function PlayingGame() {
         }
     }, [launchedGame]);
 
+    const playUrlRoot = pxt.BrowserUtils.isLocalHost() ? configData.LocalPlayUrlRoot : configData.PlayUrlRoot;
     const playUrl = useMemo(() => {
         if (launchedGame && !fetchingBuiltJsInfo) {
-            return stringifyQueryString(configData.PlayUrlRoot, {
+            return stringifyQueryString(playUrlRoot, {
                 id: getEffectiveGameId(launchedGame),
                 // TODO: Show sim buttons on mobile & touch devices.
                 hideSimButtons: pxt.BrowserUtils.isMobile() ? undefined : 1,
