@@ -31,6 +31,7 @@ interface DebuggerVariablesProps {
     breakpoint?: pxsim.DebuggerBreakpointMessage;
     filters?: string[]
     activeFrame?: number;
+    includeAllVariables?: boolean;
 }
 
 interface DebuggerVariablesState {
@@ -336,11 +337,19 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
                 }
             });
 
-            simulator.driver.variablesAsync(v.value.id, fieldsToGet)
+            simulator.driver.variablesAsync(v.value.id, fieldsToGet, !!this.props.includeAllVariables)
                 .then((msg: pxsim.VariablesMessage) => {
                     if (msg && msg.variables) {
                         let nextID = this.state.nextID;
-                        v.children = Object.keys(msg.variables).map(key => ({ name: key, value: msg.variables[key], id: nextID++ }))
+                        const variables = Object.keys(msg.variables).map(key => ({ name: key, value: msg.variables[key], id: nextID++ }));
+                        variables.sort((a, b) => {
+                            const aInternal = a.name.charAt(0) === "_";
+                            const bInternal = b.name.charAt(0) === "_"
+                            if (aInternal === bInternal) return 0;
+                            else if (aInternal) return 1;
+                            else return -1;
+                        })
+                        v.children = variables;
                         this.setState({ globalFrame: this.state.globalFrame, nextID })
                     }
                 })
