@@ -109,6 +109,11 @@ export function workspaceToDom(workspace: Blockly.Workspace, keepIds?: boolean):
         v.remove();
     }
 
+    // Make sure we never accidentally save projects in readonly mode
+    clearReadOnlyInfo(xml.getElementsByTagName("block"));
+    clearReadOnlyInfo(xml.getElementsByTagName("shadow"));
+    clearReadOnlyInfo(xml.getElementsByTagName("comment"));
+
     if (xml.firstChild) {
         xml.insertBefore(variables, xml.firstChild);
     }
@@ -117,6 +122,18 @@ export function workspaceToDom(workspace: Blockly.Workspace, keepIds?: boolean):
     }
 
     return xml;
+}
+
+function clearReadOnlyInfo(elements: HTMLCollectionOf<Element>) {
+    for (let i = 0; i < elements.length; i++) {
+        const current = elements.item(i);
+        if (current.hasAttribute("editable")) {
+            current.removeAttribute("editable");
+        }
+        if (current.hasAttribute("movable")) {
+            current.removeAttribute("movable");
+        }
+    }
 }
 
 // Saves only the blocks xml by iterating over the top blocks
