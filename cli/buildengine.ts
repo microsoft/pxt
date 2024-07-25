@@ -711,3 +711,149 @@ function filterDrives(drives: string[]): string[] {
         }
     });
 }
+
+interface CompileExtReq {
+    config: string;
+    tag: string;
+    replaceFiles: pxt.Map<string>;
+    dependencies?: pxt.Map<string>;
+}
+
+interface CompileServiceConfig {
+    id: string;
+    repourl?: string;
+    binary?: string;
+    target?: string;
+    board?: string;
+    image?: string; // docker image
+    hexfile?: string;
+    clone?: string;
+    buildcmd?: string;
+}
+
+interface FileEntry {
+    name: string;
+    text: string;
+}
+
+interface CompileServiceResult {
+    stdout: string;
+    stderr: string;
+    status: number | null;
+    hexfile?: string
+}
+
+export async function compileWithLocalCompileService(extinfo: pxtc.ExtensionInfo): Promise<pxtc.HexInfo> {
+    const resp = await runDockerCompileAsync(extinfo.compileData);
+
+    if (resp.hexfile) {
+        console.log("Compile successful");
+    }
+    else {
+        console.log("Compile failed");
+        console.log(resp.stderr)
+        console.log(resp.stdout)
+    }
+
+    return resp.hexfile && {
+        hex: resp.hexfile.split(/\r?\n/)
+    };
+}
+
+async function runDockerCompileAsync(data: string) {
+    const compileReq: CompileExtReq = JSON.parse(Buffer.from(data, "base64").toString("utf8"));
+    const deploymentConfig = JSON.parse(fs.readFileSync(path.resolve("../../../pxt-deployment-config/production/config.json"), "utf8"));
+
+    const compileServiceConfig = (deploymentConfig.compileServices as CompileServiceConfig[]).find(cs => cs.id === compileReq.config);
+
+    const isPlatformio = !!compileServiceConfig.board
+
+    if (!(isPlatformio || compileServiceConfig.hexfile)) {
+        const tag = compileReq.tag || ""
+
+        if (compileServiceConfig.repourl) {
+            if (/^[\w.\-]+$/.test(tag)) {
+                compileServiceConfig.repourl = compileServiceConfig.repourl.replace(/#.*/g, "") + "#" + compileReq.tag;
+            }
+        }
+
+        const moduleName = compileServiceConfig.binary.replace(/-combined/, "").replace(/\.hex$/, "");
+
+        const modulejson = {
+            "name": moduleName,
+            "version": "0.0.0",
+            "description": "Auto-generated. Do not edit.",
+            "license": "n/a",
+            "dependencies": compileReq.dependencies || {},
+            "targetDependencies": {},
+            "bin": "./source"
+        };
+
+        if (compileServiceConfig.repourl) {
+            let repoSlug = compileServiceConfig.repourl.replace(/^https?:\/\/[^\/]+\//, "").replace(/\.git#/, "#")
+            let pkgName = repoSlug.replace(/#.*/, "").replace(/^.*\//, "")
+            modulejson.dependencies[pkgName] = repoSlug
+        }
+
+        compileReq.replaceFiles["/module.json"] = JSON.stringify(modulejson, null, 2) + "\n"
+    }
+
+    const mappedFiles: FileEntry[] = (
+        Object.keys(compileReq.replaceFiles).map(
+            filename => {
+                return {
+                    name: filename.replace(/^\/+/, ""),
+                    text: compileReq.replaceFiles[filename]
+                };
+            }
+        )
+    );
+
+    let image = compileServiceConfig.image
+    if (!image) {
+        if (isPlatformio) {
+            image = "pext/platformio:latest";
+        }
+        else {
+            image = "mcr.microsoft.com/makecode/yotta:main-gcc5";
+        }
+    }
+
+    let hexFile = compileServiceConfig.hexfile;
+    if (!hexFile && !isPlatformio) {
+        hexFile = "source/" + compileServiceConfig.binary;
+    }
+
+    let gittag = "";
+
+    if (compileServiceConfig.clone) {
+        gittag = compileReq.tag;
+    }
+    else if (compileServiceConfig.repourl) {
+        gittag = compileServiceConfig.repourl.replace(/.*#/, "");
+    }
+
+    const compileRequest = {
+        op: "buildex",
+        files: mappedFiles,
+        gittag: gittag,
+        empty: true,
+        hexfile: hexFile,
+        target: compileServiceConfig.target,
+        platformio: isPlatformio,
+        clone: compileServiceConfig.clone,
+        buildcmd: compileServiceConfig.buildcmd,
+        image: image,
+        githubToken: process.env["GH_ACCESS_TOKEN"]
+    };
+
+    const stdout = await nodeutil.spawnWithPipeAsync({
+        cmd: "docker",
+        args: ["run", "-i", "--env", "LOCAL_BUILD='TRUE'", pxt.appTarget.compileService.dockerImage],
+        input: JSON.stringify(compileRequest)
+    })
+
+    const resp = JSON.parse(stdout.toString("utf8")) as CompileServiceResult;
+
+    return resp;
+}
