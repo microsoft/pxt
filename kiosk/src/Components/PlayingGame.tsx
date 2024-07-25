@@ -17,9 +17,7 @@ export default function PlayingGame() {
     }, [kiosk.launchedGameId]);
 
     const makeRunUrl = () => {
-        return pxt.webConfig?.runUrl
-        ? "https://arcade.makecode.com" + pxt.webConfig.runUrl
-        : configData.PlayUrlRoot;
+        return pxt.webConfig?.runUrl ?? configData.PlayUrlRoot;
     }
 
     // Handle Back and Start button presses
