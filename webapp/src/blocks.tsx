@@ -244,7 +244,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     onPageVisibilityChanged(isVisible: boolean) {
         if (!isVisible) return;
-        this.highlightStatement(this.highlightedStatement);
+        if (!this.parent.state.debugging) {
+            this.highlightStatement(this.highlightedStatement);
+        }
     }
 
     isDropdownDivVisible(): boolean {

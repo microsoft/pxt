@@ -410,11 +410,13 @@ export class ProjectView
         }
 
         if (!active && this.state.autoRun) {
-            if (simulator.driver.state == pxsim.SimulatorState.Running) {
-                this.suspendSimulator();
-                this.setState({ resumeOnVisibility: true });
+            if (!this.state.debugging) {
+                if (simulator.driver.state == pxsim.SimulatorState.Running) {
+                    this.suspendSimulator();
+                    this.setState({ resumeOnVisibility: true });
+                }
+                this.saveFileAsync();
             }
-            this.saveFileAsync();
         } else if (active) {
             data.invalidate("header:*")
             let hdrId = this.state.header ? this.state.header.id : '';
