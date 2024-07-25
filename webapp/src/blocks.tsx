@@ -25,7 +25,7 @@ import Util = pxt.Util;
 import { DebuggerToolbox } from "./debuggerToolbox";
 import { ErrorList } from "./errorList";
 import { resolveExtensionUrl } from "./extensionManager";
-import { initEditorExtensionsAsync } from "../../pxteditor";
+import { experiments, initEditorExtensionsAsync } from "../../pxteditor";
 
 
 import IProjectView = pxt.editor.IProjectView;
@@ -244,7 +244,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     onPageVisibilityChanged(isVisible: boolean) {
         if (!isVisible) return;
-        this.highlightStatement(this.highlightedStatement);
+        if (!this.parent.state.debugging) {
+            this.highlightStatement(this.highlightedStatement);
+        }
     }
 
     isDropdownDivVisible(): boolean {
@@ -913,7 +915,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         pxt.perf.measureStart("updateToolbox")
         const debugging = !!this.parent.state.debugging;
-        let debuggerToolbox = debugging ? <DebuggerToolbox ref={this.handleDebuggerToolboxRef} parent={this.parent} apis={this.blockInfo.apis.byQName} /> : <div />;
+        let debuggerToolbox = debugging ? <DebuggerToolbox
+                ref={this.handleDebuggerToolboxRef}
+                parent={this.parent}
+                apis={this.blockInfo.apis.byQName}
+                showCallStack={experiments.isEnabled("advancedBlockDebugger")}
+            /> : <div />;
 
         if (debugging) {
             this.toolbox.hide();

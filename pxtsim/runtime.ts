@@ -1352,7 +1352,7 @@ namespace pxsim {
                         if (dbgHeap) {
                             const v = dbgHeap[vmsg.variablesReference];
                             if (v !== undefined)
-                                vars = dumpHeap(v, dbgHeap, vmsg.fields);
+                                vars = dumpHeap(v, dbgHeap, vmsg.fields, undefined, vmsg.includeAll);
                         }
                         Runtime.postMessage(<pxsim.VariablesMessage>{
                             type: "debugger",
