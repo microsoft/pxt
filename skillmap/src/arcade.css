@@ -3,18 +3,18 @@ body {
 }
 
 .arcade {
-    --primary-color: #E77038;
+    --primary-color: #116E79;
     --secondary-color: #ffeb9a;
-    --tertiary-color: #E77038;
+    --tertiary-color: #116E79;
 
     --hover-color: var(--secondary-color);
     --active-color: var(--tertiary-color);
     --inactive-color: #BFBFBF;
 
     --invert-active-color: #fff;
-    --invert-hover-text-color: #E77038;
+    --invert-hover-text-color: #116E79;
 
-    --body-background-color: #FDF3E0;
+    --body-background-color: #F8FAFC;
     --card-hover-color: var(--default-card-color);
 }
 

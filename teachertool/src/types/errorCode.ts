@@ -13,8 +13,8 @@ export enum ErrorCode {
     unableToSetIndexedDbRecord = "unableToSetIndexedDbRecord",
     unableToDeleteIndexedDbRecord = "unableToDeleteIndexedDbRecord",
     unableToLoadCriteriaInstance = "unableToLoadCriteriaInstance",
-    unableToExportRubric = "unableToExportRubric",
-    unableToReadRubricFile = "unableToReadRubricFile",
+    unableToExportChecklist = "unableToExportChecklist",
+    unableToReadChecklistFile = "unableToReadChecklistFile",
     localStorageReadError = "localStorageReadError",
     localStorageWriteError = "localStorageWriteError",
     missingCriteriaInstance = "missingCriteriaInstance",
@@ -26,4 +26,6 @@ export enum ErrorCode {
     unrecognizedSystemParameter = "unrecognizedSystemParameter",
     invalidValidatorPlan = "invalidValidatorPlan",
     askCopilotQuestion = "askCopilotQuestion",
+    missingTag = "missingTag",
+    noCatalogCriteria = "noCatalogCriteria"
 }

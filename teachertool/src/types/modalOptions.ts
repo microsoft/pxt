@@ -12,8 +12,8 @@ export type BlockPickerOptions = {
     paramName: string;
 };
 
-export type ImportRubricOptions = {
-    modal: "import-rubric";
+export type ImportChecklistOptions = {
+    modal: "import-checklist";
 };
 
-export type ModalOptions = ImportRubricOptions | ConfirmationModalOptions | BlockPickerOptions;
+export type ModalOptions = ImportChecklistOptions | ConfirmationModalOptions | BlockPickerOptions;

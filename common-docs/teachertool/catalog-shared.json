@@ -1,43 +1,12 @@
 {
     "criteria": [
         {
-            "id": "D21D76A2-D9FD-4F9B-B0AC-973CB870EA78",
-            "use": "variable_set",
-            "template": "At least one custom variable is set",
-            "docPath": "/teachertool",
-            "description": "At least one user-defined variable is set to a value.",
-            "maxCount": 1
-        },
-        {
-            "id": "0173898D-8A48-4266-AAB9-CE934471A734",
-            "use": "variable_accessed",
-            "template": "At least one variable is accessed",
-            "docPath": "/teachertool",
-            "description": "At least one variable's value is read.",
-            "maxCount": 1
-        },
-        {
-            "id": "7AE7EA2A-3AC8-42DC-89DB-65E3AE157156",
-            "use": "block_comment_used",
-            "template": "At least ${count} comments",
-            "description": "The project contains at least the specified number of comments.",
-            "docPath": "/teachertool",
-            "maxCount": 1,
-            "params": [
-                {
-                    "name": "count",
-                    "type": "number",
-                    "default": 1,
-                    "paths": ["checks[0].count"]
-                }
-            ]
-        },
-        {
             "id": "59AAC5BA-B0B3-4389-AA90-1E767EFA8563",
             "use": "block_used_n_times",
             "template": "${Block} used ${count} times",
             "description": "This block was used the specified number of times in your project.",
             "docPath": "/teachertool",
+            "tags": ["General"],
             "params": [
                 {
                     "name": "block",
@@ -53,12 +22,30 @@
             ]
         },
         {
+            "id": "7AE7EA2A-3AC8-42DC-89DB-65E3AE157156",
+            "use": "block_comment_used",
+            "template": "At least ${count} comments",
+            "description": "The project contains at least the specified number of comments.",
+            "docPath": "/teachertool",
+            "maxCount": 1,
+            "tags": ["General"],
+            "params": [
+                {
+                    "name": "count",
+                    "type": "number",
+                    "default": 1,
+                    "paths": ["checks[0].count"]
+                }
+            ]
+        },
+        {
             "id": "B8987394-1531-4C71-8661-BE4086CE0C6E",
             "use": "n_loops",
             "template": "At least ${count} loops used",
             "docPath": "/teachertool",
             "description": "The program uses at least this many loops of any kind (for, repeat, while, or for-of).",
             "maxCount": 1,
+            "tags": ["Code Elements"],
             "params": [
                 {
                     "name": "count",
@@ -75,11 +62,29 @@
             "docPath": "/teachertool",
             "description": "At least this many user-defined functions are created and called.",
             "maxCount": 1,
+            "tags": ["Code Elements"],
             "params": [
                 {
                     "name": "count",
                     "type": "number",
                     "paths": ["checks[0].count", "checks[1].count"],
+                    "default": 1
+                }
+            ]
+        },
+        {
+            "id": "0DFA44C8-3CA5-4C77-946E-AF09F6C03879",
+            "use": "variable_usage",
+            "template": "Uses at least ${count} variables",
+            "docPath": "/teachertool",
+            "description": "The program creates and uses at least this many user-defined variables.",
+            "maxCount": 1,
+            "tags": ["Code Elements"],
+            "params": [
+                {
+                    "name": "count",
+                    "type": "number",
+                    "paths": ["checks[0].count"],
                     "default": 1
                 }
             ]

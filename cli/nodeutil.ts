@@ -63,6 +63,8 @@ export function readResAsync(g: events.EventEmitter) {
 
 export function spawnAsync(opts: SpawnOptions) {
     opts.pipe = false
+    // https://nodejs.org/en/blog/vulnerability/april-2024-security-releases-2
+    if (os.platform() === "win32" && typeof opts.shell === "undefined") opts.shell = true
     return spawnWithPipeAsync(opts)
         .then(() => { })
 }

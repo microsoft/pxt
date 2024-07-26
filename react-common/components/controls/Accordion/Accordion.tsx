@@ -1,15 +1,19 @@
 import * as React from "react";
 import { ContainerProps, classList, fireClickOnEnter } from "../../util";
 import { useId } from "../../../hooks/useId";
-import { AccordionProvider, clearExpanded, setExpanded, useAccordionDispatch, useAccordionState } from "./context";
+import { AccordionProvider, removeExpanded, setExpanded, useAccordionDispatch, useAccordionState } from "./context";
 
 export interface AccordionProps extends ContainerProps {
+    multiExpand?: boolean;
+    defaultExpandedIds?: string[];
     children?: React.ReactElement<AccordionItemProps>[] | React.ReactElement<AccordionItemProps>;
 }
 
 export interface AccordionItemProps extends ContainerProps {
     children?: [React.ReactElement<AccordionHeaderProps>, React.ReactElement<AccordionPanelProps>];
     noChevron?: boolean;
+    itemId?: string;
+    onExpandToggled?: (expanded: boolean) => void;
 }
 
 export interface AccordionHeaderProps extends ContainerProps {
@@ -27,10 +31,12 @@ export const Accordion = (props: AccordionProps) => {
         ariaHidden,
         ariaDescribedBy,
         role,
+        multiExpand,
+        defaultExpandedIds
     } = props;
 
     return (
-        <AccordionProvider>
+        <AccordionProvider multiExpand={multiExpand} defaultExpandedIds={defaultExpandedIds}>
             <div
                 className={classList("common-accordion", className)}
                 id={id}
@@ -54,23 +60,26 @@ export const AccordionItem = (props: AccordionItemProps) => {
         ariaHidden,
         ariaDescribedBy,
         role,
-        noChevron
+        noChevron,
+        itemId,
+        onExpandToggled,
     } = props;
 
     const { expanded } = useAccordionState();
     const dispatch = useAccordionDispatch();
 
-    const panelId = useId();
+    const panelId = itemId ?? useId();
     const mappedChildren = React.Children.toArray(children);
-    const isExpanded = expanded === panelId;
+    const isExpanded = expanded.indexOf(panelId) !== -1;
 
     const onHeaderClick = React.useCallback(() => {
         if (isExpanded) {
-            dispatch(clearExpanded());
+            dispatch(removeExpanded(panelId));
         }
         else {
             dispatch(setExpanded(panelId));
         }
+        onExpandToggled?.(!isExpanded);
     }, [isExpanded]);
 
     return (

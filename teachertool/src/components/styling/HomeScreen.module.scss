@@ -89,7 +89,7 @@ div.page {
             }
         }
 
-        &.newRubric {
+        &.newChecklist {
             background-color: var(--pxt-button-primary-background);
             color: var(--pxt-button-primary-foreground);
 
@@ -97,7 +97,7 @@ div.page {
                 outline-color: var(--pxt-button-primary-foreground);
             }
         }
-        &.importRubric {
+        &.importChecklist {
             background-color: var(--pxt-headerbar-background);
             color: var(--pxt-button-primary-foreground);
 
@@ -126,13 +126,13 @@ div.page {
                 animation-delay: 0.3s;
             }
         }
-        &.rubricResource {
+        &.checklistResource {
             background-size: 100% 100%;
             background-repeat: no-repeat;
             grid-area: 1 / 1 / 2 / 5;
             border: 1px solid var(--pxt-content-background);
 
-            .rubricResourceCardTitle {
+            .checklistResourceCardTitle {
                 background-color: rgba(228, 231, 241, 0.9);
                 color: var(--pxt-page-foreground);
             }

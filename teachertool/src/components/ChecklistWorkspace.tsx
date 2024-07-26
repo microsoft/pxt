@@ -1,5 +1,5 @@
 import * as React from "react";
-import css from "./styling/RubricWorkspace.module.scss";
+import css from "./styling/ChecklistWorkspace.module.scss";
 import { useContext, useRef } from "react";
 import { AppStateContext, stateAndDispatch } from "../state/appStateContext";
 import { Toolbar } from "./Toolbar";
@@ -7,33 +7,33 @@ import { TabGroup, TabButton } from "./TabGroup";
 import { TabPanel } from "./TabPanel";
 import { HomeScreen } from "./HomeScreen";
 import { EvalResultDisplay } from "./EvalResultDisplay";
-import { ActiveRubricDisplay } from "./ActiveRubricDisplay";
+import { ActiveChecklistDisplay } from "./ActiveChecklistDisplay";
 import { MenuItem } from "react-common/components/controls/MenuDropdown";
 import { TabName } from "../types";
 import { runEvaluateAsync } from "../transforms/runEvaluateAsync";
-import { writeRubricToFile } from "../services/fileSystemService";
+import { writeChecklistToFile } from "../services/fileSystemService";
 import { showModal } from "../transforms/showModal";
 import { isProjectLoaded } from "../state/helpers";
 import { setAutorun } from "../transforms/setAutorun";
 import { Strings, Ticks } from "../constants";
-import { resetRubricAsync } from "../transforms/resetRubricAsync";
+import { resetChecklistAsync } from "../transforms/resetChecklistAsync";
 import { PrintButton } from "./PrintButton";
-import { ImportRubricOptions } from "../types/modalOptions";
+import { ImportChecklistOptions } from "../types/modalOptions";
 
-function handleImportRubricClicked() {
-    pxt.tickEvent(Ticks.ImportRubric);
-    showModal({ modal: "import-rubric" } as ImportRubricOptions);
+function handleImportChecklistClicked() {
+    pxt.tickEvent(Ticks.ImportChecklist);
+    showModal({ modal: "import-checklist" } as ImportChecklistOptions);
 }
 
-function handleExportRubricClicked() {
-    pxt.tickEvent(Ticks.ExportRubric);
+function handleExportChecklistClicked() {
+    pxt.tickEvent(Ticks.ExportChecklist);
     const { state: teacherTool } = stateAndDispatch();
-    writeRubricToFile(teacherTool.rubric);
+    writeChecklistToFile(teacherTool.checklist);
 }
 
-async function handleNewRubricClickedAsync() {
-    pxt.tickEvent(Ticks.NewRubric);
-    await resetRubricAsync();
+async function handleNewChecklistClickedAsync() {
+    pxt.tickEvent(Ticks.NewChecklist);
+    await resetChecklistAsync();
 }
 
 async function handleEvaluateClickedAsync() {
@@ -46,8 +46,8 @@ const WorkspaceTabButtons: React.FC = () => {
 
     return (
         <TabGroup>
-            <TabButton name="home">{lf("Home")}</TabButton>
-            <TabButton name="rubric">{lf("Rubric")}</TabButton>
+            <TabButton name="home">{Strings.Home}</TabButton>
+            <TabButton name="checklist">{Strings.Checklist}</TabButton>
             <TabButton name="results" disabled={!isProjectLoaded(teacherTool)}>
                 {lf("Results")}
             </TabButton>
@@ -65,8 +65,8 @@ const WorkspaceTabPanels: React.FC<WorkspaceTabPanelsProps> = ({ resultsRef }) =
             <TabPanel name="home">
                 <HomeScreen />
             </TabPanel>
-            <TabPanel name="rubric">
-                <ActiveRubricDisplay />
+            <TabPanel name="checklist">
+                <ActiveChecklistDisplay />
             </TabPanel>
             <TabPanel name="results">
                 <EvalResultDisplay resultsRef={resultsRef} />
@@ -79,25 +79,25 @@ function getActionMenuItems(tab: TabName): MenuItem[] {
     const items: MenuItem[] = [];
     switch (tab) {
         case "home":
-        case "rubric":
+        case "checklist":
             items.push(
                 {
-                    title: Strings.NewRubric,
-                    label: Strings.NewRubric,
-                    ariaLabel: Strings.NewRubric,
-                    onClick: handleNewRubricClickedAsync,
+                    title: Strings.NewChecklist,
+                    label: Strings.NewChecklist,
+                    ariaLabel: Strings.NewChecklist,
+                    onClick: handleNewChecklistClickedAsync,
                 },
                 {
-                    title: Strings.ImportRubric,
-                    label: Strings.ImportRubric,
-                    ariaLabel: Strings.ImportRubric,
-                    onClick: handleImportRubricClicked,
+                    title: Strings.ImportChecklist,
+                    label: Strings.ImportChecklist,
+                    ariaLabel: Strings.ImportChecklist,
+                    onClick: handleImportChecklistClicked,
                 },
                 {
-                    title: Strings.ExportRubric,
-                    label: Strings.ExportRubric,
-                    ariaLabel: Strings.ExportRubric,
-                    onClick: handleExportRubricClicked,
+                    title: Strings.ExportChecklist,
+                    label: Strings.ExportChecklist,
+                    ariaLabel: Strings.ExportChecklist,
+                    onClick: handleExportChecklistClicked,
                 }
             );
             break;
@@ -143,7 +143,7 @@ const WorkspaceToolbarButtons: React.FC<WorkspaceToolbarButtonsProps> = ({ resul
     );
 };
 
-export const RubricWorkspace: React.FC = () => {
+export const ChecklistWorkspace: React.FC = () => {
     const resultsRef = useRef<HTMLDivElement>(null);
     return (
         <div className={css.panel}>
