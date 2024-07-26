@@ -576,7 +576,7 @@ namespace pxsim {
         constructor(public handler: RefAction, public flags: number) {}
 
         async runAsync(eventValue: EventIDType, runtime: Runtime, valueToArgs?: EventValueToActionArgs) {
-            // The default behavior can technically be configujred in codal, but we always set it to queue if busy
+            // The default behavior can technically be configured in codal, but we always set it to queue if busy
             const flags = this.flags || MessageListenerFlags.MESSAGE_BUS_LISTENER_QUEUE_IF_BUSY;
 
             if (flags === MessageListenerFlags.MESSAGE_BUS_LISTENER_IMMEDIATE) {
