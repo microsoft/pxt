@@ -22,7 +22,7 @@ import * as authClient from "./services/authClient";
 export const App = () => {
     const { state, dispatch } = useContext(AppStateContext);
     const [inited, setInited] = useState(false);
-    const [authCheckComplete, setAuthCheckComplete] = useState(false); // TODO thsparks : do we need this?
+    const [authCheckComplete, setAuthCheckComplete] = useState(false);
 
     const ready = usePromise(AppStateReady, false);
 
@@ -57,15 +57,17 @@ export const App = () => {
         checkAuth();
     }, [setAuthCheckComplete]);
 
-    return !inited ? (
+    return !inited || !authCheckComplete ? (
         <div className="ui active dimmer">
+            <div>{"TODO thsparks: Remove. Auth check: " + authCheckComplete}</div>
             <div className="ui large main loader msft"></div>
         </div>
     ) : (
         <>
             <HeaderBar />
-            {authCheckComplete && state.userProfile && <MainPanel />}
-            {authCheckComplete && <SignInModal />}
+            {!state.userProfile && <div>{lf("Sign in is required to use this tool. Add sign in button here.")}</div>}
+            {state.userProfile && <MainPanel />}
+            <SignInModal />
             <ImportChecklistModal />
             <ConfirmationModal />
             <BlockPickerModal />

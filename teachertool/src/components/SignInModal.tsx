@@ -14,6 +14,7 @@ export const SignInModal: React.FC<IProps> = () => {
             onClose={hideModal}
             onSignIn={async (provider, rememberMe) => {
                 await authClient.loginAsync(provider.id, rememberMe);
+                hideModal();
             }}
             dialogMessages={{
                 signInMessage: lf("Sign in to use the MakeCode Code Checker."),
