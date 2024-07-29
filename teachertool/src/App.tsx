@@ -18,6 +18,7 @@ import { BlockPickerModal } from "./components/BlockPickerModal";
 import { ScreenReaderAnnouncer } from "./components/ScreenReaderAnnouncer";
 import { SignInModal } from "./components/SignInModal";
 import * as authClient from "./services/authClient";
+import { SignedOutPanel } from "./components/SignedOutPanel";
 
 export const App = () => {
     const { state, dispatch } = useContext(AppStateContext);
@@ -59,14 +60,12 @@ export const App = () => {
 
     return !inited || !authCheckComplete ? (
         <div className="ui active dimmer">
-            <div>{"TODO thsparks: Remove. Auth check: " + authCheckComplete}</div>
             <div className="ui large main loader msft"></div>
         </div>
     ) : (
         <>
             <HeaderBar />
-            {!state.userProfile && <div>{lf("Sign in is required to use this tool. Add sign in button here.")}</div>}
-            {state.userProfile && <MainPanel />}
+            {state.userProfile ? <MainPanel /> : <SignedOutPanel />}
             <SignInModal />
             <ImportChecklistModal />
             <ConfirmationModal />
