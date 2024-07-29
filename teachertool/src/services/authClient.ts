@@ -14,9 +14,9 @@ class AuthClient extends pxt.auth.AuthClient {
         logError(ErrorCode.signInFailed, "Sign in failed");
     }
     protected async onUserProfileChanged(): Promise<void> {
-        const profile = await this.userProfileAsync();
-        logDebug("User profile changed", profile);
-        setUserProfile(profile);
+        const state = await pxt.auth.getUserStateAsync();
+        logDebug("User profile changed", state.profile);
+        setUserProfile(state.profile);
     }
     protected async onUserPreferencesChanged(diff: ts.pxtc.jsonPatch.PatchOperation[]): Promise<void> {
         logDebug("User preferences changed", diff);
@@ -40,11 +40,11 @@ export async function clientAsync(): Promise<AuthClient | undefined> {
     }
     if (authClientPromise) return authClientPromise;
     authClientPromise = new Promise<AuthClient>(async (resolve, reject) => {
-        const cli = new AuthClient();
-        await cli.initAsync();
-        await cli.authCheckAsync();
-        await cli.initialUserPreferencesAsync();
-        resolve(cli as AuthClient);
+            const cli = new AuthClient();
+            await cli.initAsync();
+            await cli.authCheckAsync();
+            await cli.initialUserPreferencesAsync();
+            resolve(cli as AuthClient);
     });
     return authClientPromise;
 }
