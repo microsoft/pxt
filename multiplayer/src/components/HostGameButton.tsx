@@ -2,12 +2,7 @@ import { Button } from "react-common/components/controls/Button";
 import { hostGameAsync } from "../epics/hostGameAsync";
 import { cleanupShareCode } from "../util";
 
-export default function Render(props: {
-    shareId: string;
-    title: string;
-    subtitle: string;
-    image?: string;
-}) {
+export default function Render(props: { shareId: string; title: string; subtitle: string; image?: string }) {
     const { title, subtitle, image } = props;
     const shareCode = cleanupShareCode(props.shareId)!;
 
@@ -28,11 +23,7 @@ export default function Render(props: {
             title={buttonTitle}
             label={
                 <>
-                    <img
-                        className="tw-w-full tw-aspect-[4/3]"
-                        src={bkgdImage}
-                        alt={thumbnailAltText}
-                    />
+                    <img className="tw-w-full tw-aspect-[4/3]" src={bkgdImage} alt={thumbnailAltText} />
                     <div className="tw-text-left tw-px-2 tw-pt-1 tw-hidden tw-truncate tw-leading-normal sm:tw-block">
                         {pxt.U.rlf(title)}
                     </div>

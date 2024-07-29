@@ -193,6 +193,7 @@ namespace pxt.auth {
                 key: genId(),
                 callbackState,
                 callbackPathname: window.location.pathname,
+                callbackParams: pxt.U.parseQueryString(window.location.search),
                 idp,
                 persistent
             };
@@ -643,6 +644,7 @@ namespace pxt.auth {
         key: string;
         callbackState: CallbackState;
         callbackPathname: string;
+        callbackParams?: pxt.Map<string>;
         idp: pxt.IdentityProviderId;
         authCodeVerifier?: string;
         persistent: boolean;
@@ -724,7 +726,7 @@ namespace pxt.auth {
 
         // Clear url parameters and redirect to the callback location.
         const hash = callbackState.hash.startsWith('#') ? callbackState.hash : `#${callbackState.hash}`;
-        const params = pxt.Util.stringifyQueryString('', callbackState.params);
+        const params = pxt.Util.stringifyQueryString('', { ...callbackState.params, ...loginState.callbackParams });
         const pathname = loginState.callbackPathname.startsWith('/') ? loginState.callbackPathname : `/${loginState.callbackPathname}`;
         const redirect = `${pathname}${params}${hash}`;
         window.location.href = redirect;

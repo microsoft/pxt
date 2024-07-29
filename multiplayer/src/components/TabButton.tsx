@@ -9,21 +9,15 @@ export default function Render(props: {
     return (
         <div>
             <Button
-                className={`tw-m-0 tw-px-8 ${
-                    props.selected ? "tw-font-bold" : ""
-                }`}
+                className={`tw-m-0 tw-px-8 ${props.selected ? "tw-font-bold" : ""}`}
                 title={props.title}
                 label={props.label ?? props.title}
                 onClick={props.onClick}
             />
             <div
-                className={
-                    "tw-mx-1 tw-border-b-2 tw-rounded-sm tw-ease-linear tw-duration-[75ms]"
-                }
+                className={"tw-mx-1 tw-border-b-2 tw-rounded-sm tw-ease-linear tw-duration-[75ms]"}
                 style={{
-                    borderColor: props.selected
-                        ? "var(--primary-color)"
-                        : "transparent",
+                    borderColor: props.selected ? "var(--primary-color)" : "transparent",
                 }}
             ></div>
         </div>

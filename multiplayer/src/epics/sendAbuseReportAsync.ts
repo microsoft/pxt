@@ -4,13 +4,10 @@ import { showToast } from "../state/actions";
 export async function sendAbuseReportAsync(shareCode: string, text: string) {
     try {
         pxt.tickEvent("mp.reportabuse");
-        const res = await fetch(
-            `https://makecode.com/api/${shareCode}/abusereports`,
-            {
-                method: "POST",
-                body: JSON.stringify({ text }),
-            }
-        );
+        const res = await fetch(`https://makecode.com/api/${shareCode}/abusereports`, {
+            method: "POST",
+            body: JSON.stringify({ text }),
+        });
         if (res.status === 200) {
             dispatch(
                 showToast({

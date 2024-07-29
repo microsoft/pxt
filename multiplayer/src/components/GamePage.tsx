@@ -26,11 +26,7 @@ export default function Render(props: GamePageProps) {
             )}
             <div
                 className="tw-flex tw-flex-col tw-items-center tw-grow tw-pb-4"
-                style={
-                    state.gameState?.gameMode !== "playing"
-                        ? { display: "none" }
-                        : undefined
-                }
+                style={state.gameState?.gameMode !== "playing" ? { display: "none" } : undefined}
             >
                 <ArcadeSimulator />
                 <div className="tw-flex tw-flex-row tw-w-full tw-items-center tw-justify-between tw-mt-1 tw-ml-1">

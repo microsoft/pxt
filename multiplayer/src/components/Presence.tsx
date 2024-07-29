@@ -1,11 +1,4 @@
-import {
-    RefObject,
-    useCallback,
-    useContext,
-    useMemo,
-    useRef,
-    useState,
-} from "react";
+import { RefObject, useCallback, useContext, useMemo, useRef, useState } from "react";
 import { AppStateContext } from "../state/AppStateContext";
 import ReactionEmitter from "./ReactionEmitter";
 import UserIcon from "./icons/UserIcon";
@@ -150,28 +143,19 @@ function PlayerMenu(
                 tw-w-11 tw-justify-center tw-items-center
                 tw-text-slot-${slot}-color`}
                         style={{
-                            backgroundColor: `rgba(var(--slot-${
-                                isEmpty ? 0 : slot
-                            }-color),0.1)`,
-                            borderColor: `rgb(var(--slot-${
-                                isEmpty ? 0 : slot
-                            }-color))`,
+                            backgroundColor: `rgba(var(--slot-${isEmpty ? 0 : slot}-color),0.1)`,
+                            borderColor: `rgb(var(--slot-${isEmpty ? 0 : slot}-color))`,
                         }}
                     >
-                        <UserIcon
-                            slot={isEmpty ? 0 : slot}
-                            dataUri={iconOverride}
-                        />
+                        <UserIcon slot={isEmpty ? 0 : slot} dataUri={iconOverride} />
                         {user && <ReactionEmitter clientId={user.id} />}
                         {isMySlot && (
                             <div className="tw-absolute tw-translate-y-[110%]">
                                 <div
                                     className="tw-z-10 tw-border tw-rounded-xl tw-text-xs tw-px-2 tw-font-medium tw-uppercase"
                                     style={{
-                                        backgroundColor:
-                                            "rgb(var(--you-tag-bg-color))",
-                                        borderColor:
-                                            "rgb(var(--you-tag-border-color))",
+                                        backgroundColor: "rgb(var(--you-tag-bg-color))",
+                                        borderColor: "rgb(var(--you-tag-border-color))",
                                     }}
                                 >
                                     {lf("you")}
@@ -180,11 +164,7 @@ function PlayerMenu(
                         )}
                     </div>
                 }
-                title={
-                    !isEmpty
-                        ? lf("Player {0}", slot)
-                        : lf("Player {0} (empty)", slot)
-                }
+                title={!isEmpty ? lf("Player {0}", slot) : lf("Player {0} (empty)", slot)}
                 onClick={() => setShowPlayerMenu(!showPlayerMenu)}
                 buttonRef={setPlayerButtonRef}
             />

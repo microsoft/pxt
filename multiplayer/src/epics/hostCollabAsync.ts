@@ -1,19 +1,8 @@
-import * as gameClient from "../services/gameClient";
+import * as collabClient from "../services/collabClient";
 import { dispatch } from "../state";
-import { dismissToast, setNetMode, setGameInfo, showToast, setClientRole } from "../state/actions";
-import { cleanupShareCode } from "../util";
+import { dismissToast, setNetMode, setCollabInfo, showToast, setClientRole } from "../state/actions";
 
-export async function hostGameAsync(shareCode: string | undefined) {
-    shareCode = cleanupShareCode(shareCode);
-    if (!shareCode) {
-        return dispatch(
-            showToast({
-                type: "error",
-                text: lf("Invalid share code or link. Please try again."),
-                timeoutMs: 5000,
-            })
-        );
-    }
+export async function hostCollabAsync() {
     const connectingToast = showToast({
         type: "info",
         text: lf("Connecting..."),
@@ -23,7 +12,7 @@ export async function hostGameAsync(shareCode: string | undefined) {
         dispatch(setNetMode("connecting"));
         dispatch(connectingToast);
 
-        const hostResult = await gameClient.hostGameAsync(shareCode);
+        const hostResult = await collabClient.hostCollabAsync();
         pxt.debug(hostResult);
 
         if (hostResult.success) {
@@ -35,7 +24,7 @@ export async function hostGameAsync(shareCode: string | undefined) {
                 })
             );
             dispatch(setClientRole("host"));
-            dispatch(setGameInfo(hostResult));
+            dispatch(setCollabInfo(hostResult));
             dispatch(setNetMode("connected"));
         } else {
             throw new Error(`host http response: ${hostResult.statusCode}`);

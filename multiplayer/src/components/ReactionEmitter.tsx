@@ -19,10 +19,7 @@ export default function Render(props: { clientId: string }) {
                 index: reaction.index,
                 startTime: Date.now(),
             };
-            setActiveParticles(activeParticles => [
-                ...activeParticles,
-                particle,
-            ]);
+            setActiveParticles(activeParticles => [...activeParticles, particle]);
         }
     }, [reaction, activeParticles, setActiveParticles]);
 
