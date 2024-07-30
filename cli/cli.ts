@@ -1458,7 +1458,6 @@ export async function internalBuildTargetAsync(options: BuildTargetOptions = {})
     }
 
     copyCommonSim();
-    // copyBlocklyMedia();
     await simshimAsync();
     await buildFolderAsync('compiler', true, 'compiler');
     await fillInCompilerExtension(pxt.appTarget);
@@ -2721,31 +2720,6 @@ function buildCommonSimAsync() {
         return Promise.resolve();
     }
 }
-
-// async function copyBlocklyMedia() {
-//     let targetMediaDir = path.resolve("sim/public/blockly/media");
-//     const simNodeModule = path.resolve(`node_modules/pxt-${pxt.appTarget.id}-sim`)
-
-//     if (nodeutil.existsDirSync(simNodeModule)) {
-//         targetMediaDir = path.join(simNodeModule, "public", "blockly", "media");
-//     }
-
-//     if (!nodeutil.existsDirSync(targetMediaDir)) {
-//         nodeutil.mkdirP(targetMediaDir);
-//     }
-
-//     let blocklyMediaDir = path.resolve("node_modules/blockly/media");
-
-//     if (!nodeutil.existsDirSync(blocklyMediaDir)) {
-//         blocklyMediaDir = path.resolve("node_modules/pxt-core/node_modules/blockly/media");
-//     }
-
-//     for (const file of fs.readdirSync(blocklyMediaDir)) {
-//         if (file.endsWith(".png") || file.endsWith("svg") || file.endsWith(".cur")) {
-//             nodeutil.cp(path.join(blocklyMediaDir, file), targetMediaDir);
-//         }
-//     }
-// }
 
 function renderDocs(builtPackaged: string, localDir: string) {
     const dst = path.resolve(path.join(builtPackaged, localDir))
