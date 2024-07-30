@@ -1,10 +1,15 @@
 import { setUserProfile } from "../transforms/setUserProfile";
+import { showToast } from "../transforms/showToast";
 import { ErrorCode } from "../types/errorCode";
+import { makeToast } from "../utils";
 import { logDebug, logError } from "./loggingService";
 
 class AuthClient extends pxt.auth.AuthClient {
     protected async onSignedIn(): Promise<void> {
         logDebug("User signed in");
+        const state = await pxt.auth.getUserStateAsync();
+        const firstName = pxt.auth.firstName(state?.profile!);
+        showToast(makeToast("success", firstName ? lf("Welcome {0}", firstName) : lf("Welcome!")));
     }
     protected async onSignedOut(): Promise<void> {
         logDebug("User signed out");
