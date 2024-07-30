@@ -442,7 +442,7 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
     const constName = "dal.d.ts";
     let constPath = constName;
     const config = mainPkg && mainPkg.config;
-    const corePackage = config && config.dalDTS && config.dalDTS.corePackage;
+    const corePackage = config?.dalDTS?.corePackage;
     if (corePackage)
         constPath = path.join(corePackage, constName);
     let vals: Map<string> = {}
