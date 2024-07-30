@@ -1460,7 +1460,7 @@ export async function internalBuildTargetAsync(options: BuildTargetOptions = {})
     copyCommonSim();
     await simshimAsync();
     await buildFolderAsync('compiler', true, 'compiler');
-    await fillInCompilerExtension(pxt.appTarget);
+    fillInCompilerExtension(pxt.appTarget);
 
     if (options.rebundle) {
         await buildTargetCoreAsync({ quick: true });
