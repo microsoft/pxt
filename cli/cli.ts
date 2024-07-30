@@ -38,7 +38,7 @@ pxt.docs.requireDOMSanitizer = () => require("sanitize-html");
 let forceCloudBuild = process.env["KS_FORCE_CLOUD"] !== "no";
 let forceLocalBuild = !!process.env["PXT_FORCE_LOCAL"];
 let forceBuild = false; // don't use cache
-let useCompileServiceDocker = true;
+let useCompileServiceDocker = false;
 
 Error.stackTraceLimit = 100;
 
@@ -1441,37 +1441,41 @@ export function buildTargetAsync(parsed?: commandParser.ParsedCommand): Promise<
         .then(() => internalBuildTargetAsync(opts));
 }
 
-export function internalBuildTargetAsync(options: BuildTargetOptions = {}): Promise<void> {
+export async function internalBuildTargetAsync(options: BuildTargetOptions = {}): Promise<void> {
     if (pxt.appTarget.id == "core")
         return buildTargetCoreAsync(options)
-
-    let initPromise: Promise<void>;
 
     const commonPackageDir = path.resolve("node_modules/pxt-common-packages")
 
     // Make sure to build common sim in case of a local clean. This will do nothing for
     // targets without pxt-common-packages installed.
     if (!inCommonPkg("built/common-sim.js") || !inCommonPkg("built/common-sim.d.ts")) {
-        initPromise = buildCommonSimAsync();
+        await buildCommonSimAsync();
+    }
+
+    if (nodeutil.existsDirSync(simDir())) {
+        await extractLocStringsAsync("sim-strings", [simDir()]);
+    }
+
+    copyCommonSim();
+    // copyBlocklyMedia();
+    await simshimAsync();
+    await buildFolderAsync('compiler', true, 'compiler');
+    await fillInCompilerExtension(pxt.appTarget);
+
+    if (options.rebundle) {
+        await buildTargetCoreAsync({ quick: true });
     }
     else {
-        initPromise = Promise.resolve();
+        await buildTargetCoreAsync(options);
     }
 
-    if (nodeutil.existsDirSync(simDir()))
-        initPromise = initPromise.then(() => extractLocStringsAsync("sim-strings", [simDir()]));
-
-    return initPromise
-        .then(() => { copyCommonSim(); return simshimAsync() })
-        .then(() => buildFolderAsync('compiler', true, 'compiler'))
-        .then(() => fillInCompilerExtension(pxt.appTarget))
-        .then(() => options.rebundle ? buildTargetCoreAsync({ quick: true }) : buildTargetCoreAsync(options))
-        .then(() => buildSimAsync())
-        .then(() => buildFolderAsync('cmds', true))
-        .then(() => buildSemanticUIAsync())
-        .then(() => buildEditorExtensionAsync("editor", "extendEditor"))
-        .then(() => buildEditorExtensionAsync("fieldeditors", "extendFieldEditors"))
-        .then(() => buildFolderAsync('server', true, 'server'))
+    await buildSimAsync();
+    await buildFolderAsync('cmds', true);
+    await buildSemanticUIAsync();
+    await buildEditorExtensionAsync("editor", "extendEditor");
+    await buildEditorExtensionAsync("fieldeditors", "extendFieldEditors");
+    await buildFolderAsync('server', true, 'server');
 
     function inCommonPkg(p: string) {
         return fs.existsSync(path.join(commonPackageDir, p));
@@ -2717,6 +2721,31 @@ function buildCommonSimAsync() {
         return Promise.resolve();
     }
 }
+
+// async function copyBlocklyMedia() {
+//     let targetMediaDir = path.resolve("sim/public/blockly/media");
+//     const simNodeModule = path.resolve(`node_modules/pxt-${pxt.appTarget.id}-sim`)
+
+//     if (nodeutil.existsDirSync(simNodeModule)) {
+//         targetMediaDir = path.join(simNodeModule, "public", "blockly", "media");
+//     }
+
+//     if (!nodeutil.existsDirSync(targetMediaDir)) {
+//         nodeutil.mkdirP(targetMediaDir);
+//     }
+
+//     let blocklyMediaDir = path.resolve("node_modules/blockly/media");
+
+//     if (!nodeutil.existsDirSync(blocklyMediaDir)) {
+//         blocklyMediaDir = path.resolve("node_modules/pxt-core/node_modules/blockly/media");
+//     }
+
+//     for (const file of fs.readdirSync(blocklyMediaDir)) {
+//         if (file.endsWith(".png") || file.endsWith("svg") || file.endsWith(".cur")) {
+//             nodeutil.cp(path.join(blocklyMediaDir, file), targetMediaDir);
+//         }
+//     }
+// }
 
 function renderDocs(builtPackaged: string, localDir: string) {
     const dst = path.resolve(path.join(builtPackaged, localDir))
