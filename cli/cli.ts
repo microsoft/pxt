@@ -4778,18 +4778,21 @@ async function buildDalDTSAsync(c: commandParser.ParsedCommand) {
 
     if (fs.existsSync("pxtarget.json")) {
         pxt.log(`generating dal.d.ts for packages`)
-        return rebundleAsync()
-            .then(() => forEachBundledPkgAsync((f, dir) => {
-                return f.loadAsync()
-                    .then(() => {
-                        if (f.config.dalDTS && f.config.dalDTS.corePackage) {
-                            console.log(`  ${dir}`)
-                            return prepAsync()
-                                .then(() => build.buildDalConst(build.thisBuild, f, true, true));
-                        }
-                        return Promise.resolve();
-                    })
-            }));
+        await rebundleAsync();
+        await forEachBundledPkgAsync(async (f, dir) => {
+            await f.loadAsync();
+            if (f.config.dalDTS && f.config.dalDTS.corePackage) {
+                console.log(`  ${dir}`)
+
+                if (f.config.dalDTS.compileServiceVariant) {
+                    pxt.setAppTargetVariant(f.config.dalDTS.compileServiceVariant);
+                    setBuildEngine();
+                }
+
+                await prepAsync();
+                build.buildDalConst(build.thisBuild, f, true, true);
+            }
+        })
     } else {
         ensurePkgDir()
         await mainPkg.loadAsync()
