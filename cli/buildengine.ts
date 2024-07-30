@@ -387,14 +387,14 @@ function runDockerAsync(args: string[], flags?: string[]) {
         if (process.platform == "darwin")
             mountArg += ":delegated"
 
-        let fullArgs = ["--rm", "-v", mountArg, "-w", "/src"].concat(dargs).concat([cs.dockerImage]).concat(args);
+        let fullArgs = ["--rm", "-v", mountArg, "-w", "/src", ...dargs, cs.dockerImage, ...args];
         if (flags) {
-            fullArgs = flags.concat(fullArgs)
+            fullArgs = [...flags, ...fullArgs];
         }
 
         return nodeutil.spawnAsync({
             cmd: "docker",
-            args: ["run"].concat(fullArgs),
+            args: ["run", ...fullArgs],
             cwd: thisBuild.buildPath
         })
     }
