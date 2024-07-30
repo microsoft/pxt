@@ -56,8 +56,6 @@
             color: var(--pxt-page-foreground);
         }
 
-        // Extract into var so it works in rgba.
-        $page-foreground-color: var(--pxt-page-foreground);
         div[class*="common-menu-dropdown-pane"] {
             border-radius: 0 0  0.25rem 0.25rem;
             box-shadow: 0 1px 3px 0 var(--pxt-page-foreground-shadow);
