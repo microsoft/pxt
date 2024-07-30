@@ -124,7 +124,7 @@ namespace pxsim {
         }
     }
 
-    export function dumpHeap(v: any, heap: Map<any>, fields?: string[], filters?: string[]): Variables {
+    export function dumpHeap(v: any, heap: Map<any>, fields?: string[], filters?: string[], includeAll = false): Variables {
         function frameVars(frame: any, fields?: string[]) {
             const r: Variables = {}
             for (let k of Object.keys(frame)) {
@@ -141,14 +141,29 @@ namespace pxsim {
                 }
             }
             if (frame.fields) {
-                for (let k of Object.keys(frame.fields).filter(field => !field.startsWith('_'))) {
+                for (let k of Object.keys(frame.fields).filter(field => includeAll || !field.startsWith('_'))) {
                     r[k] = valToJSON(frame.fields[k], heap)
                 }
-            } else if (Array.isArray(frame.data)) {
+            }
+            else if (frame instanceof RefMap) {
+                for (const entry of frame.data) {
+                    r[entry.key] = valToJSON(entry.val, heap);
+                }
+            }
+            else if (Array.isArray(frame.data)) {
                 // This is an Array.
                 (frame.data as any[]).forEach((element, index) => {
                     r[index] = valToJSON(element, heap);
                 });
+            }
+            else if (frame._width !== undefined && frame._height !== undefined) {
+                // Probably a RefImage
+                r["width"] = frame._width;
+                r["height"] = frame._height;
+
+                if (includeAll && frame._bpp !== undefined) {
+                    r["isMono"] = frame._bpp === 1;
+                }
             }
             return r
         }

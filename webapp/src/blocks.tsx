@@ -25,7 +25,7 @@ import Util = pxt.Util;
 import { DebuggerToolbox } from "./debuggerToolbox";
 import { ErrorList } from "./errorList";
 import { resolveExtensionUrl } from "./extensionManager";
-import { initEditorExtensionsAsync } from "../../pxteditor";
+import { experiments, initEditorExtensionsAsync } from "../../pxteditor";
 
 
 import IProjectView = pxt.editor.IProjectView;
@@ -244,7 +244,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     onPageVisibilityChanged(isVisible: boolean) {
         if (!isVisible) return;
-        this.highlightStatement(this.highlightedStatement);
+        if (!this.parent.state.debugging) {
+            this.highlightStatement(this.highlightedStatement);
+        }
     }
 
     isDropdownDivVisible(): boolean {
@@ -345,7 +347,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         let minDistanceFromOrigin: number;
         let closestToOrigin: Blockly.utils.Rect;
 
-        (this.editor.getTopComments(false) as Blockly.WorkspaceCommentSvg[]).forEach(b => {
+        (this.editor.getTopComments(false) as Blockly.comments.RenderedWorkspaceComment[]).forEach(b => {
             const bounds = b.getBoundingRectangle();
 
             const distanceFromOrigin = Math.sqrt(bounds.left * bounds.left + bounds.top * bounds.top);
@@ -381,7 +383,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         else {
             if (closestToOrigin) {
                 // Otherwise translate the blocks so that they are positioned on the top left
-                this.editor.getTopComments(false).forEach(c => c.moveBy(-closestToOrigin.left, -closestToOrigin.top));
+                this.editor.getTopComments(false).forEach(c => (c as Blockly.comments.RenderedWorkspaceComment).moveBy(-closestToOrigin.left, -closestToOrigin.top));
                 this.editor.getTopBlocks(false).forEach(b => b.moveBy(-closestToOrigin.left, -closestToOrigin.top));
             }
             this.editor.scrollX = 10;
@@ -913,7 +915,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         pxt.perf.measureStart("updateToolbox")
         const debugging = !!this.parent.state.debugging;
-        let debuggerToolbox = debugging ? <DebuggerToolbox ref={this.handleDebuggerToolboxRef} parent={this.parent} apis={this.blockInfo.apis.byQName} /> : <div />;
+        let debuggerToolbox = debugging ? <DebuggerToolbox
+                ref={this.handleDebuggerToolboxRef}
+                parent={this.parent}
+                apis={this.blockInfo.apis.byQName}
+                showCallStack={experiments.isEnabled("advancedBlockDebugger")}
+            /> : <div />;
 
         if (debugging) {
             this.toolbox.hide();

@@ -38,6 +38,7 @@ pxt.docs.requireDOMSanitizer = () => require("sanitize-html");
 let forceCloudBuild = process.env["KS_FORCE_CLOUD"] !== "no";
 let forceLocalBuild = !!process.env["PXT_FORCE_LOCAL"];
 let forceBuild = false; // don't use cache
+let useCompileServiceDocker = true;
 
 Error.stackTraceLimit = 100;
 
@@ -64,6 +65,7 @@ function parseHwVariant(parsed: commandParser.ParsedCommand) {
 function parseBuildInfo(parsed?: commandParser.ParsedCommand) {
     const cloud = parsed && parsed.flags["cloudbuild"];
     const local = parsed && parsed.flags["localbuild"];
+    const useCompService = parsed?.flags["localcompileservice"]
     const hwvariant = parseHwVariant(parsed);
     forceBuild = parsed && !!parsed.flags["force"];
     if (cloud && local)
@@ -76,6 +78,11 @@ function parseBuildInfo(parsed?: commandParser.ParsedCommand) {
     if (local) {
         forceCloudBuild = false;
         forceLocalBuild = true;
+    }
+    if (useCompService) {
+        forceCloudBuild = false;
+        forceLocalBuild = true;
+        useCompileServiceDocker = true;
     }
 
     if (hwvariant) {
@@ -3151,6 +3158,10 @@ class Host
 
         if (!forceLocalBuild && (extInfo.onlyPublic || forceCloudBuild))
             return pxt.hexloader.getHexInfoAsync(this, extInfo)
+
+        if (useCompileServiceDocker) {
+            return build.compileWithLocalCompileService(extInfo);
+        }
 
         setBuildEngine()
         return build.buildHexAsync(build.thisBuild, mainPkg, extInfo, forceBuild)
@@ -6685,6 +6696,11 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
                 description: "Build native image using local toolchains",
                 aliases: ["local", "l", "local-build", "lb"]
             },
+            localcompileservice: {
+                description: "Build native image using docker",
+                hidden: true,
+                aliases: []
+            },
             force: {
                 description: "skip cache lookup and force build",
                 aliases: ["f"]
@@ -6761,6 +6777,11 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
                 description: "Build native image using local toolchains",
                 aliases: ["local", "l", "local-build", "lb"]
             },
+            localcompileservice: {
+                description: "Build native image using docker",
+                hidden: true,
+                aliases: []
+            },
             force: {
                 description: "skip cache lookup and force build",
                 aliases: ["f"]
@@ -6835,6 +6856,11 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
                 description: "Build native image using local toolchains",
                 aliases: ["local", "l", "local-build", "lb"]
             },
+            localcompileservice: {
+                description: "Build native image using docker",
+                hidden: true,
+                aliases: []
+            },
             locs: {
                 description: "Download localization files and bundle them",
                 aliases: ["locales", "crowdin"]
@@ -6892,6 +6918,11 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
             localbuild: {
                 description: "Build native image using local toolchains",
                 aliases: ["local", "l", "local-build", "lb"]
+            },
+            localcompileservice: {
+                description: "Build native image using docker",
+                hidden: true,
+                aliases: []
             },
             just: { description: "just serve without building" },
             rebundle: { description: "rebundle when change is detected", aliases: ["rb"] },
@@ -6961,6 +6992,11 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
                 description: "Build native image using local toolchains",
                 aliases: ["local", "l", "local-build", "lb"]
             },
+            localcompileservice: {
+                description: "Build native image using docker",
+                hidden: true,
+                aliases: []
+            },
             force: {
                 description: "skip cache lookup and force build",
                 aliases: ["f"]
@@ -6988,6 +7024,11 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
             localbuild: {
                 description: "Build native image using local toolchains",
                 aliases: ["local", "l", "local-build", "lb"]
+            },
+            localcompileservice: {
+                description: "Build native image using docker",
+                hidden: true,
+                aliases: []
             },
             force: {
                 description: "skip cache lookup and force build",
@@ -7260,6 +7301,11 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
             localbuild: {
                 description: "Build native image using local toolchains",
                 aliases: ["local", "l", "local-build", "lb"]
+            },
+            localcompileservice: {
+                description: "Build native image using docker",
+                hidden: true,
+                aliases: []
             },
             clean: { description: "delete all previous repos" },
             fast: { description: "don't check tag" },

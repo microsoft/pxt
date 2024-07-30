@@ -63,7 +63,7 @@ const FUNCTION_CALL_MIXIN: FunctionCallMixin = {
 
     afterWorkspaceLoad: function(this: FunctionCallBlock) {
         for (const input of this.inputList) {
-            if (input.type !== Blockly.inputTypes.VALUE) continue;
+            if (input.type !== Blockly.inputs.inputTypes.VALUE) continue;
             const target = input.connection?.targetBlock();
 
             if (target) {

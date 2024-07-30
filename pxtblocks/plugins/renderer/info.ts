@@ -60,7 +60,7 @@ export class RenderInfo extends Blockly.zelos.RenderInfo {
             // pxt-blockly for collapsed statement rendering, check for statement
             // input anywhere in block
             const hasStatement = this.block_.inputList.find(function (el) {
-                return el.type == Blockly.inputTypes.STATEMENT;
+                return el.type == Blockly.inputs.inputTypes.STATEMENT;
             });
             if (hasStatement) {
                 activeRow = this.addCollapsedRow_(activeRow);
