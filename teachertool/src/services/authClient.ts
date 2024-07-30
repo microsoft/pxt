@@ -16,6 +16,9 @@ class AuthClient extends pxt.auth.AuthClient {
     protected async onUserProfileChanged(): Promise<void> {
         const state = await pxt.auth.getUserStateAsync();
         logDebug("User profile changed", state.profile);
+        if (state?.profile) {
+            pxt.auth.generateUserProfilePicDataUrl(state.profile);
+        }
         setUserProfile(state.profile);
     }
     protected async onUserPreferencesChanged(diff: ts.pxtc.jsonPatch.PatchOperation[]): Promise<void> {
