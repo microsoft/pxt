@@ -26,14 +26,6 @@ export type AppState = {
     };
 };
 
-const defaultProfile: pxt.auth.UserProfile | undefined = pxt.BrowserUtils.isLocalHost() ? {
-    id: "debug_user",
-    idp: {
-        username: "Debug User",
-        displayName: "Debug User",
-    }
-} : undefined;
-
 export const initialAppState: AppState = {
     toasts: [],
     evalResults: {},
@@ -49,7 +41,7 @@ export const initialAppState: AppState = {
     copilotEndpointOverride: undefined,
     catalogOpen: false,
     screenReaderAnnouncement: undefined,
-    userProfile: defaultProfile,
+    userProfile: undefined,
     flags: {
         testCatalog: false,
     },
