@@ -31,7 +31,7 @@ export class FieldAutocapitalizeTextInput extends Blockly.FieldTextInput {
         }
     }
 
-    protected widgetCreate_(): HTMLElement {
+    protected widgetCreate_(): HTMLInputElement | HTMLTextAreaElement {
         const input = super.widgetCreate_();
 
         if (this.disableAutocapitalize) {

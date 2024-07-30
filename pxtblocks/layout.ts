@@ -67,7 +67,7 @@ declare function unescape(escapeUri: string): string;
  * of blocks / comments to get as getTopBlock(true)/getTopComment(true)
  */
 export function splitSvg(svg: SVGSVGElement, ws: Blockly.WorkspaceSvg, emPixels: number = 18): Element {
-    const comments = ws.getTopComments(true) as Blockly.WorkspaceCommentSvg[];
+    const comments = ws.getTopComments(true) as Blockly.comments.RenderedWorkspaceComment[];
     const blocks = ws.getTopBlocks(true) as Blockly.BlockSvg[];
     // don't split for a single block
     if (comments.length + blocks.length < 2)
@@ -116,7 +116,7 @@ export function splitSvg(svg: SVGSVGElement, ws: Blockly.WorkspaceSvg, emPixels:
     }
 
     comments.forEach((comment, commenti) => extract('blocklyBubbleCanvas', 'blocklyBlockCanvas',
-        commenti, comment.getHeightWidth(), { x: 0, y: 0 }, "blocklyComment"));
+        commenti, comment.getSize(), { x: 0, y: 0 }, "blocklyComment"));
     blocks.forEach((block, blocki) => {
         const size = block.getHeightWidth();
         const translate = { x: 0, y: 0 };
@@ -132,10 +132,10 @@ export function splitSvg(svg: SVGSVGElement, ws: Blockly.WorkspaceSvg, emPixels:
 
 export function verticalAlign(ws: Blockly.WorkspaceSvg, emPixels: number) {
     let y = 0
-    let comments = ws.getTopComments(true) as Blockly.WorkspaceCommentSvg[];
+    let comments = ws.getTopComments(true) as Blockly.comments.RenderedWorkspaceComment[];
     comments.forEach(comment => {
         comment.moveBy(0, y)
-        y += comment.getHeightWidth().height
+        y += comment.getSize().height
         y += emPixels; //buffer
     })
     let blocks = ws.getTopBlocks(true) as Blockly.BlockSvg[];
@@ -165,15 +165,15 @@ export function flow(ws: Blockly.WorkspaceSvg, opts?: FlowOptions) {
 
             // Only use the width if in portrait, otherwise the blocks are too spread out
             if (metrics.viewHeight > metrics.viewWidth) {
-                flowBlocks(ws.getTopComments(true) as Blockly.WorkspaceCommentSvg[], ws.getTopBlocks(true) as Blockly.BlockSvg[], undefined, metrics.viewWidth)
+                flowBlocks(ws.getTopComments(true) as Blockly.comments.RenderedWorkspaceComment[], ws.getTopBlocks(true) as Blockly.BlockSvg[], undefined, metrics.viewWidth)
                 ws.scroll(marginx, marginy);
                 return;
             }
         }
-        flowBlocks(ws.getTopComments(true) as Blockly.WorkspaceCommentSvg[], ws.getTopBlocks(true) as Blockly.BlockSvg[], opts.ratio);
+        flowBlocks(ws.getTopComments(true) as Blockly.comments.RenderedWorkspaceComment[], ws.getTopBlocks(true) as Blockly.BlockSvg[], opts.ratio);
     }
     else {
-        flowBlocks(ws.getTopComments(true) as Blockly.WorkspaceCommentSvg[], ws.getTopBlocks(true) as Blockly.BlockSvg[]);
+        flowBlocks(ws.getTopComments(true) as Blockly.comments.RenderedWorkspaceComment[], ws.getTopBlocks(true) as Blockly.BlockSvg[]);
     }
     ws.scroll(marginx, marginy);
 }
@@ -399,7 +399,7 @@ function convertIconsToPngAsync(xsg: Document): Promise<void> {
 }
 
 interface Formattable {
-    value: Blockly.BlockSvg | Blockly.WorkspaceCommentSvg;
+    value: Blockly.BlockSvg | Blockly.comments.RenderedWorkspaceComment;
     children?: Formattable[];
     width: number;
     height: number;
@@ -409,7 +409,7 @@ interface Formattable {
     y?: number;
 }
 
-function flowBlocks(comments: Blockly.WorkspaceCommentSvg[], blocks: Blockly.BlockSvg[], ratio: number = 1.62, maxWidth?: number) {
+function flowBlocks(comments: Blockly.comments.RenderedWorkspaceComment[], blocks: Blockly.BlockSvg[], ratio: number = 1.62, maxWidth?: number) {
     // Margin between blocks and their comments
     const innerGroupMargin = 13;
 
@@ -417,7 +417,7 @@ function flowBlocks(comments: Blockly.WorkspaceCommentSvg[], blocks: Blockly.Blo
     const outerGroupMargin = 45;
 
     const groups: Formattable[] = [];
-    const commentMap: pxt.Map<Blockly.WorkspaceCommentSvg> = {};
+    const commentMap: pxt.Map<Blockly.comments.RenderedWorkspaceComment> = {};
 
     comments.forEach(comment => {
         const ref: string = (comment as any).data;
@@ -562,7 +562,7 @@ function flowBlocks(comments: Blockly.WorkspaceCommentSvg[], blocks: Blockly.Blo
     }
 }
 
-function formattable(entity: Blockly.BlockSvg | Blockly.WorkspaceCommentSvg): Formattable {
-    const hw = entity.getHeightWidth();
+function formattable(entity: Blockly.BlockSvg | Blockly.comments.RenderedWorkspaceComment): Formattable {
+    const hw = entity instanceof Blockly.BlockSvg ? entity.getHeightWidth() : entity.getSize();
     return { value: entity, height: hw.height, width: hw.width }
 }

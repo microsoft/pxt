@@ -4,7 +4,7 @@ import { MutatingBlock } from "../legacyMutations";
 
 
 export function forEachChildExpression(block: Blockly.Block, cb: (block: Blockly.Block) => void, recursive = false) {
-    block.inputList.filter(i => i.type === Blockly.inputTypes.VALUE).forEach(i => {
+    block.inputList.filter(i => i.type === Blockly.inputs.inputTypes.VALUE).forEach(i => {
         if (i.connection && i.connection.targetBlock()) {
             cb(i.connection.targetBlock());
             if (recursive) {
@@ -15,7 +15,7 @@ export function forEachChildExpression(block: Blockly.Block, cb: (block: Blockly
 }
 
 export function forEachStatementInput(block: Blockly.Block, cb: (block: Blockly.Block) => void) {
-    block.inputList.filter(i => i.type === Blockly.inputTypes.STATEMENT).forEach(i => {
+    block.inputList.filter(i => i.type === Blockly.inputs.inputTypes.STATEMENT).forEach(i => {
         if (i.connection && i.connection.targetBlock()) {
             cb(i.connection.targetBlock());
         }

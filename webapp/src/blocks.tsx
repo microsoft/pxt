@@ -347,7 +347,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         let minDistanceFromOrigin: number;
         let closestToOrigin: Blockly.utils.Rect;
 
-        (this.editor.getTopComments(false) as Blockly.WorkspaceCommentSvg[]).forEach(b => {
+        (this.editor.getTopComments(false) as Blockly.comments.RenderedWorkspaceComment[]).forEach(b => {
             const bounds = b.getBoundingRectangle();
 
             const distanceFromOrigin = Math.sqrt(bounds.left * bounds.left + bounds.top * bounds.top);
@@ -383,7 +383,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         else {
             if (closestToOrigin) {
                 // Otherwise translate the blocks so that they are positioned on the top left
-                this.editor.getTopComments(false).forEach(c => c.moveBy(-closestToOrigin.left, -closestToOrigin.top));
+                this.editor.getTopComments(false).forEach(c => (c as Blockly.comments.RenderedWorkspaceComment).moveBy(-closestToOrigin.left, -closestToOrigin.top));
                 this.editor.getTopBlocks(false).forEach(b => b.moveBy(-closestToOrigin.left, -closestToOrigin.top));
             }
             this.editor.scrollX = 10;

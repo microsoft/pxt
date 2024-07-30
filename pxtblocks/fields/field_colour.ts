@@ -3,6 +3,8 @@
 import * as Blockly from "blockly";
 import { FieldCustom, FieldCustomOptions } from "./field_utils";
 
+import { FieldColour } from "@blockly/field-colour";
+
 /**
      * The value modes:
      *     hex - Outputs an HTML color string: "#ffffff" (with quotes)
@@ -18,7 +20,7 @@ export interface FieldColourNumberOptions extends FieldCustomOptions {
     valueMode?: FieldColourValueMode;
 }
 
-export class FieldColorNumber extends Blockly.FieldColour implements FieldCustom {
+export class FieldColorNumber extends FieldColour implements FieldCustom {
     public isFieldCustom_ = true;
 
     protected colour_: string;
@@ -48,7 +50,7 @@ export class FieldColorNumber extends Blockly.FieldColour implements FieldCustom
         if (params.valueMode) this.valueMode_ = params.valueMode;
     }
 
-    setColours(colours: string[], titles?: string[]): Blockly.FieldColour {
+    setColours(colours: string[], titles?: string[]): FieldColour {
         const s = super.setColours(colours, titles);
         this.colours_ = colours;
         return s;
