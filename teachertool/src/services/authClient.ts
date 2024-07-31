@@ -14,13 +14,15 @@ class AuthClient extends pxt.auth.AuthClient {
     protected async onSignedOut(): Promise<void> {
         logDebug("User signed out");
         setUserProfile(undefined);
+        return Promise.resolve();
     }
     protected async onSignInFailed(): Promise<void> {
-        logError(ErrorCode.signInFailed, "Sign in failed");
+        logError(ErrorCode.signInFailed);
+        return Promise.resolve();
     }
     protected async onUserProfileChanged(): Promise<void> {
         const state = await pxt.auth.getUserStateAsync();
-        logDebug("User profile changed", state.profile);
+        logDebug(`User profile changed`, state.profile);
         if (state?.profile) {
             pxt.auth.generateUserProfilePicDataUrl(state.profile);
         }
@@ -28,15 +30,19 @@ class AuthClient extends pxt.auth.AuthClient {
     }
     protected async onUserPreferencesChanged(diff: ts.pxtc.jsonPatch.PatchOperation[]): Promise<void> {
         logDebug("User preferences changed", diff);
+        return Promise.resolve();
     }
     protected async onProfileDeleted(userId: string): Promise<void> {
         logDebug("Profile deleted", userId);
+        return Promise.resolve();
     }
     protected async onApiError(err: any): Promise<void> {
         logError(ErrorCode.loginApiError, "API error", err);
+        return Promise.resolve();
     }
     protected async onStateCleared(): Promise<void> {
         logDebug("State cleared");
+        return Promise.resolve();
     }
 }
 
