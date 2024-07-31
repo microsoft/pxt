@@ -16,8 +16,8 @@ export const SignInModal: React.FC<IProps> = () => {
                 hideModal();
             }}
             dialogMessages={{
-                signInMessage: lf("Sign in to use the MakeCode Code Checker."),
-                signUpMessage: lf("Sign up to use the MakeCode Code Checker."),
+                signInMessage: lf("Sign in to use MakeCode Code Evaluation."),
+                signUpMessage: lf("Sign up to use MakeCode Code Evaluation."),
             }}
             hideDismissButton={true}
         />
