@@ -20,12 +20,12 @@ export function exitToEnterHighScore(highScoreMode: string): void {
     launchedGameHighs = launchedGameHighs || [];
     const currentHighScore = state.mostRecentScores[0];
     const lastScore = launchedGameHighs[launchedGameHighs.length - 1]?.score;
-    const isScoreInRange = highScoreMode === "lowscore" ? currentHighScore > lastScore : currentHighScore < lastScore;
+    const scoreOutOfRange = highScoreMode === "lowscore" ? currentHighScore > lastScore : currentHighScore < lastScore;
 
     if (
         launchedGameHighs.length === configData.HighScoresToKeep &&
         lastScore &&
-        isScoreInRange
+        scoreOutOfRange
     ) {
         exitGame(KioskState.GameOver);
     } else {
