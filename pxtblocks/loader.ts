@@ -108,7 +108,7 @@ export function injectBlocks(blockInfo: pxtc.BlocksInfo): pxtc.SymbolInfo[] {
     return blockInfo.blocks
         .map(fn => {
             const comp = pxt.blocks.compileInfo(fn);
-            const block = createToolboxBlock(blockInfo, fn, comp);
+            const block = createToolboxBlock(blockInfo, fn, comp, false, 2);
 
             if (fn.attributes.blockBuiltin) {
                 pxt.Util.assert(!!builtinBlocks()[fn.attributes.blockId]);
