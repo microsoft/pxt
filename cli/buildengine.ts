@@ -58,10 +58,10 @@ export const buildEngines: Map<BuildEngine> = {
 
     dockeryotta: {
         id: "dockeryotta",
-        updateEngineAsync: () => runDockerAsync(["yotta", "update"]),
-        buildAsync: () => runDockerAsync(["yotta", "build"]),
+        updateEngineAsync: () => runDockerYottaAsync(["yotta", "update"]),
+        buildAsync: () => runDockerYottaAsync(["yotta", "build"]),
         setPlatformAsync: () =>
-            runDockerAsync(["yotta", "target", pxt.appTarget.compileService.yottaTarget]),
+            runDockerYottaAsync(["yotta", "target", pxt.appTarget.compileService.yottaTarget]),
         patchHexInfo: patchYottaHexInfo,
         prepBuildDirAsync: noopAsync,
         buildPath: "built/dockeryt",
@@ -368,7 +368,7 @@ function runPlatformioAsync(args: string[]) {
     })
 }
 
-function runDockerAsync(args: string[]) {
+function runDockerAsync(args: string[], flags?: string[]) {
     if (process.env["PXT_NODOCKER"] == "force") {
         const cmd = args.shift()
         return nodeutil.spawnAsync({
@@ -387,12 +387,27 @@ function runDockerAsync(args: string[]) {
         if (process.platform == "darwin")
             mountArg += ":delegated"
 
+        let fullArgs = ["--rm", "-v", mountArg, "-w", "/src", ...dargs, cs.dockerImage, ...args];
+        if (flags) {
+            fullArgs = [...flags, ...fullArgs];
+        }
+
         return nodeutil.spawnAsync({
             cmd: "docker",
-            args: ["run", "--rm", "-v", mountArg, "-w", "/src"].concat(dargs).concat([cs.dockerImage]).concat(args),
+            args: ["run", ...fullArgs],
             cwd: thisBuild.buildPath
         })
     }
+}
+
+function runDockerYottaAsync(args: string[]) {
+    let fullpath = process.cwd() + "/" + thisBuild.buildPath + "/"
+
+    fs.copyFileSync(path.join(__dirname, "prepYotta.js"), path.join(fullpath, "prepYotta.js"));
+
+    let argVariable = args.join(" ");
+
+    return runDockerAsync(["/bin/bash", "-c", `node prepYotta.js; ${argVariable}`], ["--env", "GITHUB_ACCESS_TOKEN"])
 }
 
 let parseCppInt = pxt.cpp.parseCppInt;
@@ -844,7 +859,7 @@ async function runDockerCompileAsync(data: string) {
         clone: compileServiceConfig.clone,
         buildcmd: compileServiceConfig.buildcmd,
         image: image,
-        githubToken: process.env["GH_ACCESS_TOKEN"]
+        githubToken: process.env["GITHUB_ACCESS_TOKEN"]
     };
 
     const stdout = await nodeutil.spawnWithPipeAsync({
