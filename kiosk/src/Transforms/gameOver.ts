@@ -27,7 +27,7 @@ export function gameOver(skipHighScore?: boolean): void {
             selectedGame?.highScoreMode !== "None" &&
             state.mostRecentScores?.length
         ) {
-            exitToEnterHighScore();
+            exitToEnterHighScore(selectedGame?.highScoreMode!);
         } else {
             exitGame(KioskState.GameOver);
         }
