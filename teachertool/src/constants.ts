@@ -52,6 +52,9 @@ export namespace Ticks {
     export const AddCriteria = "teachertool.addcriteria";
     export const RemoveCriteria = "teachertool.removecriteria";
     export const AddResultNotes = "teachertool.addresultnotes";
+    export const UserMenuSignout = "teachertool.usermenu.signout";
+    export const UserMenuSignIn = "teachertool.usermenu.signin";
+    export const SignedOutPanelSignIn = "teachertool.signedoutpanel.signin";
 }
 
 namespace Misc {

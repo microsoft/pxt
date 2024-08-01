@@ -82,7 +82,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
     }
 
     async function onLogoutClicked() {
-        pxt.tickEvent(`teachertool.usermenu.signout`);
+        pxt.tickEvent(Ticks.UserMenuSignout);
         await authClient.logoutAsync(location.hash);
     }
 
@@ -129,7 +129,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
                         title={lf("Sign In")}
                         label={lf("Sign In")}
                         onClick={() => {
-                            pxt.tickEvent(`teachertool.usermenu.signin`);
+                            pxt.tickEvent(Ticks.UserMenuSignIn);
                             showModal({ modal: "sign-in" });
                         }}
                     />

@@ -3,6 +3,7 @@ import css from "./styling/SignedOutPanel.module.scss";
 import { Button } from "react-common/components/controls/Button";
 import { classList } from "react-common/components/util";
 import { showModal } from "../transforms/showModal";
+import { Ticks } from "../constants";
 
 // This component should never really be visible, but it exists as a fallback
 // in case the sign-in modal is ever closed unexpectedly.
@@ -19,7 +20,7 @@ export const SignedOutPanel: React.FC<IProps> = () => {
                         title={lf("Sign In")}
                         label={lf("Sign In")}
                         onClick={() => {
-                            pxt.tickEvent(`teachertool.signedoutpanel.signin`);
+                            pxt.tickEvent(Ticks.SignedOutPanelSignIn);
                             showModal({ modal: "sign-in" });
                         }}
                     />
