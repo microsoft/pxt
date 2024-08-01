@@ -45,7 +45,7 @@ export const App = () => {
     }, [ready, inited]);
 
     useEffect(() => {
-        async function checkAuth() {
+        async function checkAuthAsync() {
             // On mount, check if user is signed in
             try {
                 await authClient.authCheckAsync()
@@ -57,7 +57,7 @@ export const App = () => {
             }
             setAuthCheckComplete(true)
         }
-        checkAuth();
+        checkAuthAsync();
     }, []);
 
     return !inited || !authCheckComplete ? (
