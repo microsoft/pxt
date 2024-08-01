@@ -1,6 +1,6 @@
 import { useContext, } from "react";
 import { AppStateContext } from "../state/appStateContext";
-import { SignInModal as RcSignInModal } from "react-common/components/profile/SignInModal";
+import { SignInModal as RCSignInModal } from "react-common/components/profile/SignInModal";
 import { hideModal } from "../transforms/hideModal";
 import * as authClient from "../services/authClient";
 
@@ -9,7 +9,7 @@ export const SignInModal: React.FC<IProps> = () => {
     const { state: teacherTool } = useContext(AppStateContext);
 
     return teacherTool.modalOptions?.modal === "sign-in" ? (
-        <RcSignInModal
+        <RCSignInModal
             onClose={hideModal}
             onSignIn={async (provider, rememberMe) => {
                 await authClient.loginAsync(provider.id, rememberMe);
