@@ -155,6 +155,17 @@ export class BaseFieldTextDropdown extends Blockly.FieldTextInput {
             this.size_.height / 2 -
             this.getConstants().FIELD_DROPDOWN_SVG_ARROW_SIZE / 2);
 
+        if (this.sourceBlock_.RTL && this.textElement_) {
+            const constants = this.getConstants();
+            const contentWidth = Blockly.utils.dom.getFastTextWidth(
+                this.textElement_,
+                constants!.FIELD_TEXT_FONTSIZE,
+                constants!.FIELD_TEXT_FONTWEIGHT,
+                constants!.FIELD_TEXT_FONTFAMILY,
+              );
+            this.positionTextElement_(-arrowWidth, contentWidth)
+        }
+
         this.size_.width += arrowWidth;
     }
 
@@ -172,7 +183,7 @@ export class BaseFieldTextDropdown extends Blockly.FieldTextInput {
             : 0;
         const textPadding = this.getConstants()!.FIELD_DROPDOWN_SVG_ARROW_PADDING;
         const svgArrowSize = this.getConstants()!.FIELD_DROPDOWN_SVG_ARROW_SIZE;
-        const arrowX = block.RTL ? xPadding : x + textPadding;
+        const arrowX = block.RTL ? (xPadding / 2) : x + textPadding;
         this.svgArrow.setAttribute(
             'transform',
             'translate(' + arrowX + ',' + y + ')',
