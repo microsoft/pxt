@@ -1,14 +1,25 @@
+import { logDebug } from "../services/loggingService";
 import { stateAndDispatch } from "../state";
 import * as actions from "../state/actions";
+import { hideModal } from "./hideModal";
 import { showModal } from "./showModal";
 
 export function setUserProfile(profile: pxt.auth.UserProfile | undefined) {
-    const { dispatch } = stateAndDispatch();
+    const { state, dispatch } = stateAndDispatch();
 
-    dispatch(actions.setUserProfile(profile));
-    if (!profile) {
+    const newProfile = profile?.id ? profile : undefined;
+    logDebug("Set user profile", {
+        oldProfile: state.userProfile,
+        incomingProfile: profile,
+        finalProfile: newProfile
+    });
+
+    dispatch(actions.setUserProfile(newProfile));
+    if (!newProfile) {
         showModal({
             modal: "sign-in"
         })
-    };
+    } else if (state.modalOptions?.modal === "sign-in") {
+        hideModal();
+    }
 }

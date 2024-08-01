@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+import { useContext, } from "react";
 import { AppStateContext } from "../state/appStateContext";
 import { SignInModal as RcSignInModal } from "react-common/components/profile/SignInModal";
 import { hideModal } from "../transforms/hideModal";
@@ -13,7 +13,7 @@ export const SignInModal: React.FC<IProps> = () => {
             onClose={hideModal}
             onSignIn={async (provider, rememberMe) => {
                 await authClient.loginAsync(provider.id, rememberMe);
-                hideModal();
+                // modal will hide when the user profile is set after loginAsync completes.
             }}
             dialogMessages={{
                 signInMessage: lf("Sign in to use MakeCode Code Evaluation."),
