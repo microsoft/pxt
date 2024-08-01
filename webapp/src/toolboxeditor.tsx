@@ -212,6 +212,7 @@ export abstract class ToolboxEditor extends srceditor.Editor {
                             || md.icon : pxt.toolbox.getNamespaceIcon(ns);
                         category.groups = builtInCategory.groups || md.groups;
                         category.customClick = builtInCategory.customClick;
+                        category.onlyTriggerOnClick = builtInCategory.onlyTriggerOnClick;
                     } else if (isTopLevelExtension(ns, md)) {
                         category.allowDelete = true;
                     }
