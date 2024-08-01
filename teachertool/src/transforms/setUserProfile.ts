@@ -7,6 +7,7 @@ import { showModal } from "./showModal";
 export function setUserProfile(profile: pxt.auth.UserProfile | undefined) {
     const { state, dispatch } = stateAndDispatch();
 
+    // Sometimes profile comes in as an empty object. In that case, we should treat it as undefined.
     const newProfile = profile?.id ? profile : undefined;
     logDebug("Set user profile", {
         oldProfile: state.userProfile,

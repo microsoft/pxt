@@ -1,14 +1,12 @@
 import { useEffect, useContext, useState } from "react";
 import { AppStateContext, AppStateReady } from "./state/appStateContext";
 import { usePromise } from "./hooks/usePromise";
-import { makeToast } from "./utils";
 import * as Actions from "./state/actions";
 import { downloadTargetConfigAsync } from "./services/backendRequests";
-import { logDebug } from "./services/loggingService";
+import { logDebug, logError } from "./services/loggingService";
 import { HeaderBar } from "./components/HeaderBar";
 import { MainPanel } from "./components/MainPanel";
 import { Toasts } from "./components/Toasts";
-import { showToast } from "./transforms/showToast";
 import { loadCatalogAsync } from "./transforms/loadCatalogAsync";
 import { loadValidatorPlansAsync } from "./transforms/loadValidatorPlansAsync";
 import { tryLoadLastActiveChecklistAsync } from "./transforms/tryLoadLastActiveChecklistAsync";
@@ -17,8 +15,9 @@ import { ConfirmationModal } from "./components/ConfirmationModal";
 import { BlockPickerModal } from "./components/BlockPickerModal";
 import { ScreenReaderAnnouncer } from "./components/ScreenReaderAnnouncer";
 import { SignInModal } from "./components/SignInModal";
-import * as authClient from "./services/authClient";
 import { SignedOutPanel } from "./components/SignedOutPanel";
+import * as authClient from "./services/authClient";
+import { ErrorCode } from "./types/errorCode";
 
 export const App = () => {
     const { state, dispatch } = useContext(AppStateContext);
@@ -50,13 +49,16 @@ export const App = () => {
             // On mount, check if user is signed in
             try {
                 await authClient.authCheckAsync()
-                setAuthCheckComplete(true)
             } catch (e) {
-                setAuthCheckComplete(true)
+                // Log error but continue
+                // Don't include actual error in error log in case PII
+                logError(ErrorCode.authCheckFailed);
+                logDebug("Auth check failed details", e);
             }
+            setAuthCheckComplete(true)
         }
         checkAuth();
-    }, [setAuthCheckComplete]);
+    }, []);
 
     return !inited || !authCheckComplete ? (
         <div className="ui active dimmer">

@@ -37,7 +37,9 @@ class AuthClient extends pxt.auth.AuthClient {
         return Promise.resolve();
     }
     protected async onApiError(err: any): Promise<void> {
-        logError(ErrorCode.loginApiError, "API error", err);
+        // Include detailed error separately in case PII (logError goes to our telemetry).
+        logError(ErrorCode.loginApiError, "API error");
+        logDebug("API error details", err);
         return Promise.resolve();
     }
     protected async onStateCleared(): Promise<void> {

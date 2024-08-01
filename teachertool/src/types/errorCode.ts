@@ -29,5 +29,6 @@ export enum ErrorCode {
     missingTag = "missingTag",
     noCatalogCriteria = "noCatalogCriteria",
     signInFailed = "signInFailed",
-    loginApiError = "loginApiError"
+    loginApiError = "loginApiError",
+    authCheckFailed = "authCheckFailed"
 }
