@@ -77,8 +77,19 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
         );
     };
 
+    function encodedAvatarPic(profile: pxt.auth.UserProfile): string | undefined {
+        const type = profile?.idp?.picture?.mimeType;
+        const encodedImg = profile?.idp?.picture?.encoded;
+        return type && encodedImg ? `data:${type};base64,${encodedImg}` : undefined;
+    }
+
     function avatarPicUrl(): string | undefined {
-        return teacherTool.userProfile?.idp?.pictureUrl ?? teacherTool.userProfile?.idp?.picture?.dataUrl;
+        if (!teacherTool.userProfile) return undefined;
+        return (
+            teacherTool.userProfile.idp?.pictureUrl ??
+            teacherTool.userProfile.idp?.picture?.dataUrl ??
+            encodedAvatarPic(teacherTool.userProfile)
+        );
     }
 
     async function onLogoutClicked() {
