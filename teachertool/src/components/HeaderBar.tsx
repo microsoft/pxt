@@ -5,6 +5,10 @@ import { Button } from "react-common/components/controls/Button";
 import { MenuBar } from "react-common/components/controls/MenuBar";
 import { AppStateContext } from "../state/appStateContext";
 import { Ticks } from "../constants";
+import { MenuDropdown, MenuItem } from "react-common/components/controls/MenuDropdown";
+import { showModal } from "../transforms/showModal";
+import * as authClient from "../services/authClient";
+import { classList } from "react-common/components/util";
 
 interface HeaderBarProps {}
 
@@ -13,21 +17,21 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
 
     const appTheme = pxt.appTarget?.appTheme;
 
-    const onBrandIconClick = () => {
+    function onBrandIconClick() {
         pxt.tickEvent(Ticks.BrandLink);
         if (appTheme?.logoUrl) {
             window.open(appTheme.logoUrl);
         }
     };
 
-    const onOrgClick = () => {
+    function onOrgClick() {
         pxt.tickEvent(Ticks.OrgLink);
         if (appTheme?.organizationUrl) {
             window.open(appTheme.organizationUrl);
         }
     };
 
-    const getOrganizationLogo = () => {
+    function getOrganizationLogo() {
         return (
             <div className={css["org"]} onClick={onOrgClick}>
                 {appTheme.organizationWideLogo || appTheme.organizationLogo ? (
@@ -43,7 +47,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
         );
     };
 
-    const getTargetLogo = () => {
+    function getTargetLogo() {
         return (
             <div
                 className={css["brand"]}
@@ -73,20 +77,77 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
         );
     };
 
-    const onHomeClicked = () => {
-        pxt.tickEvent(Ticks.HomeLink);
+    function encodedAvatarPic(profile: pxt.auth.UserProfile): string | undefined {
+        const type = profile?.idp?.picture?.mimeType;
+        const encodedImg = profile?.idp?.picture?.encoded;
+        return type && encodedImg ? `data:${type};base64,${encodedImg}` : undefined;
+    }
 
-        // relprefix looks like "/beta---", need to chop off the hyphens and slash
-        let rel = pxt.webConfig?.relprefix.substr(0, pxt.webConfig.relprefix.length - 3);
-        if (pxt.appTarget.appTheme.homeUrl && rel) {
-            if (pxt.appTarget.appTheme.homeUrl?.lastIndexOf("/") === pxt.appTarget.appTheme.homeUrl?.length - 1) {
-                rel = rel.substr(1);
-            }
-            window.open(pxt.appTarget.appTheme.homeUrl + rel);
-        } else {
-            window.open(pxt.appTarget.appTheme.homeUrl);
+    function avatarPicUrl(): string | undefined {
+        if (!teacherTool.userProfile) return undefined;
+        return (
+            teacherTool.userProfile.idp?.pictureUrl ??
+            teacherTool.userProfile.idp?.picture?.dataUrl ??
+            encodedAvatarPic(teacherTool.userProfile)
+        );
+    }
+
+    async function onLogoutClicked() {
+        pxt.tickEvent(Ticks.UserMenuSignout);
+        await authClient.logoutAsync(location.hash);
+    }
+
+    function getUserMenu() {
+        const items: MenuItem[] = [];
+        if (teacherTool.userProfile) {
+            items.push({
+                id: "signout",
+                title: lf("Sign Out"),
+                label: lf("Sign Out"),
+                onClick: onLogoutClicked,
+            });
         }
-    };
+
+        // Google user picture URL must have referrer policy set to no-referrer
+        const avatarElem = avatarPicUrl() ? (
+            <div className={css["avatar"]}>
+                <img src={avatarPicUrl()} alt={lf("Profile Image")} referrerPolicy="no-referrer" aria-hidden="true" />
+            </div>
+        ) : undefined;
+
+        const initialsElem = teacherTool.userProfile ? (
+            <span>
+                <div className={css["avatar-initials"]} aria-hidden="true">
+                    {pxt.auth.userInitials(teacherTool.userProfile)}
+                </div>
+            </span>
+        ) : (
+            <></>
+        );
+        return (
+            <div className={css["user-menu"]}>
+                {teacherTool.userProfile ? (
+                    <MenuDropdown
+                        id="profile-dropdown"
+                        items={items}
+                        label={avatarElem || initialsElem}
+                        title={lf("Profile Settings")}
+                    />
+                ) : (
+                    <Button
+                        className={classList("inverted", css["sign-in-button"])}
+                        rightIcon="xicon cloud-user"
+                        title={lf("Sign In")}
+                        label={lf("Sign In")}
+                        onClick={() => {
+                            pxt.tickEvent(Ticks.UserMenuSignIn);
+                            showModal({ modal: "sign-in" });
+                        }}
+                    />
+                )}
+            </div>
+        );
+    }
 
     return (
         <MenuBar className={css["header"]} ariaLabel={lf("Header")} role="navigation">
@@ -96,12 +157,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
             </div>
 
             <div className={css["right-menu"]}>
-                <Button
-                    className="menu-button"
-                    leftIcon="fas fa-home large"
-                    title={lf("Open the MakeCode editor")}
-                    onClick={onHomeClicked}
-                />
+                {getUserMenu()}
             </div>
         </MenuBar>
     );

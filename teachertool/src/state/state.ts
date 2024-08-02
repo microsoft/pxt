@@ -20,6 +20,7 @@ export type AppState = {
     copilotEndpointOverride?: string; // TODO: remove once copilot is available in prod.
     catalogOpen: boolean;
     screenReaderAnnouncement?: string;
+    userProfile: pxt.auth.UserProfile | undefined;
     flags: {
         testCatalog: boolean;
     };
@@ -40,6 +41,7 @@ export const initialAppState: AppState = {
     copilotEndpointOverride: undefined,
     catalogOpen: false,
     screenReaderAnnouncement: undefined,
+    userProfile: undefined,
     flags: {
         testCatalog: false,
     },

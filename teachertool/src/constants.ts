@@ -34,6 +34,7 @@ export namespace Strings {
     export const Home = lf("Home");
     export const CreateEmptyChecklist = lf("Create Empty Checklist");
     export const Other = lf("Other");
+    export const SignIn = lf("Sign In");
 }
 
 export namespace Ticks {
@@ -51,6 +52,9 @@ export namespace Ticks {
     export const AddCriteria = "teachertool.addcriteria";
     export const RemoveCriteria = "teachertool.removecriteria";
     export const AddResultNotes = "teachertool.addresultnotes";
+    export const UserMenuSignout = "teachertool.usermenu.signout";
+    export const UserMenuSignIn = "teachertool.usermenu.signin";
+    export const SignedOutPanelSignIn = "teachertool.signedoutpanel.signin";
 }
 
 namespace Misc {

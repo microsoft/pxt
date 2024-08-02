@@ -41,4 +41,39 @@
             margin: 0 1rem;
         }
     }
+
+    .user-menu {
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+
+        .sign-in-button {
+            height: 80%;
+            margin: .5rem 1rem;
+            padding: .6rem;
+            color: var(--pxt-page-foreground);
+        }
+
+        div[class*="common-menu-dropdown-pane"] {
+            border-radius: 0 0  0.25rem 0.25rem;
+            box-shadow: 0 1px 3px 0 var(--pxt-page-foreground-shadow);
+            background: var(--pxt-page-background);
+            padding: 0.15rem;
+        }
+
+        .avatar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+
+            img {
+                border: solid 2px white;
+                border-radius: 100%;
+                width: 2.5rem;
+                height: 2.5rem;
+            }
+        }
+    }
 }

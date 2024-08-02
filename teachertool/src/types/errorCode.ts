@@ -27,5 +27,8 @@ export enum ErrorCode {
     invalidValidatorPlan = "invalidValidatorPlan",
     askCopilotQuestion = "askCopilotQuestion",
     missingTag = "missingTag",
-    noCatalogCriteria = "noCatalogCriteria"
+    noCatalogCriteria = "noCatalogCriteria",
+    signInFailed = "signInFailed",
+    loginApiError = "loginApiError",
+    authCheckFailed = "authCheckFailed"
 }

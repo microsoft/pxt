@@ -1,0 +1,23 @@
+.signed-out-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+
+    .signed-out-panel {
+        background: var(--pxt-page-background);
+        color: var(--pxt-page-foreground);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        border: 1px solid var(--pxt-page-foreground);
+        padding: 4rem;
+        border-radius: 1rem;
+        gap: 1rem;
+
+        h1 {
+            margin: 0;
+        }
+    }
+}
