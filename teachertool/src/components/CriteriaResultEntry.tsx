@@ -12,6 +12,7 @@ import { getCatalogCriteriaWithId, getCriteriaInstanceWithId } from "../state/he
 import { ReadOnlyCriteriaDisplay } from "./ReadonlyCriteriaDisplay";
 import { EvaluationStatus } from "../types/criteria";
 import { ThreeDotsLoadingDisplay } from "./ThreeDotsLoadingDisplay";
+import { CriteriaFeedback } from "./CriteriaFeedback";
 
 interface AddNotesButtonProps {
     criteriaId: string;
@@ -86,6 +87,7 @@ export const CriteriaResultEntry: React.FC<CriteriaResultEntryProps> = ({ criter
         <>
             {catalogCriteria && (
                 <div className={css["specific-criteria-result"]} key={criteriaId} aria-busy={isInProgress}>
+                    {/* Criteria Text & Overall Result (Looks Good, Needs Work, Etc...) */}
                     <div className={css["result-details"]}>
                         <ReadOnlyCriteriaDisplay
                             catalogCriteria={catalogCriteria}
@@ -99,6 +101,8 @@ export const CriteriaResultEntry: React.FC<CriteriaResultEntryProps> = ({ criter
                             />
                         )}
                     </div>
+
+                    {/* Notes */}
                     {isInProgress ? (
                         <ThreeDotsLoadingDisplay className={css["loading-display"]} />
                     ) : (
@@ -111,6 +115,11 @@ export const CriteriaResultEntry: React.FC<CriteriaResultEntryProps> = ({ criter
                             {!showInput && <AddNotesButton criteriaId={criteriaId} setShowInput={setShowInput} />}
                             {showInput && <CriteriaResultNotes criteriaId={criteriaId} />}
                         </div>
+                    )}
+
+                    {/* Criteria Response Feedback (For us, not student feedback) */}
+                    {!isInProgress && catalogCriteria.requestFeedback && (
+                        <CriteriaFeedback catalogCriteriaId={catalogCriteria.id} className={css["criteria-feedback"]}/>
                     )}
                 </div>
             )}
