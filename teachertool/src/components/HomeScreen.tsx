@@ -23,7 +23,7 @@ import { ImportChecklistOptions } from "../types/modalOptions";
 const Welcome: React.FC = () => {
     return (
         <div className={css.welcome}>
-            <h1>{lf("Welcome to MakeCode Code Evaluation!")}</h1>
+            <h1>{lf("Welcome to {0}!", Strings.ToolName)}</h1>
             <p>
                 {lf("This tool is designed to help you evaluate student projects using an automated checklist.")}{" "}
                 <Link target="_blank" href={Constants.LearnMoreLink}>

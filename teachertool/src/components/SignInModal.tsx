@@ -3,6 +3,7 @@ import { AppStateContext } from "../state/appStateContext";
 import { SignInModal as RCSignInModal } from "react-common/components/profile/SignInModal";
 import { hideModal } from "../transforms/hideModal";
 import * as authClient from "../services/authClient";
+import { Strings } from "../constants";
 
 export interface IProps {}
 export const SignInModal: React.FC<IProps> = () => {
@@ -16,8 +17,8 @@ export const SignInModal: React.FC<IProps> = () => {
                 // modal will hide when the user profile is set after loginAsync completes.
             }}
             dialogMessages={{
-                signInMessage: lf("Sign in to use MakeCode Code Evaluation."),
-                signUpMessage: lf("Sign up to use MakeCode Code Evaluation."),
+                signInMessage: lf("Sign in to use {0}.", Strings.ToolName),
+                signUpMessage: lf("Sign up to use {0}.", Strings.ToolName),
             }}
             hideDismissButton={true}
         />
