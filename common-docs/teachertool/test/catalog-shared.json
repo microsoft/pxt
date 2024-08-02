@@ -8,6 +8,7 @@
             "docPath": "/teachertool",
             "maxCount": 10,
             "tags": ["General"],
+            "requestFeedback": true,
             "params": [
                 {
                     "name": "question",
