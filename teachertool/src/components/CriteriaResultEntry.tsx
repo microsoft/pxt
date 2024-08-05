@@ -119,7 +119,7 @@ export const CriteriaResultEntry: React.FC<CriteriaResultEntryProps> = ({ criter
 
                     {/* Criteria Response Feedback (For us, not student feedback) */}
                     {!isInProgress && catalogCriteria.requestFeedback && (
-                        <CriteriaFeedback catalogCriteriaId={catalogCriteria.id} className={css["criteria-feedback"]}/>
+                        <CriteriaFeedback catalogCriteriaId={catalogCriteria.id} className={classList(css["no-print"], css["criteria-feedback"])}/>
                     )}
                 </div>
             )}
