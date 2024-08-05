@@ -188,25 +188,3 @@ Blockly.Css.register(`
     stroke-width: 2;
 }
 `)
-
-function getContrastingBorderColor(color: string) {
-    const darkerColor = pxt.getContrastingColor(color, color, -0.05, 4.5, 100);
-    const lighterColor = pxt.getContrastingColor(color, color, 0.05, 4.5, 100);
-
-    if (!darkerColor) {
-        if (lighterColor) {
-            return lighterColor[0]
-        }
-    }
-    else if (!lighterColor) {
-        return darkerColor[0]
-    }
-    else {
-        if (lighterColor[1] < darkerColor[1]) {
-            return lighterColor[0]
-        }
-        return darkerColor[0];
-    }
-
-    return "#000000";
-}
