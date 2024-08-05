@@ -216,7 +216,10 @@ export function createShadowValue(info: pxtc.BlocksInfo, p: pxt.blocks.BlockPara
                 const shadowSymbol = info.blocks.find(s => s.attributes.blockId === shadow.getAttribute("type"));
                 if (shadowSymbol) {
                     const shadowXml = createToolboxBlock(info, shadowSymbol, pxt.blocks.compileInfo(shadowSymbol), true, maxRecursion - 1);
-                    shadow.innerHTML = shadowXml.innerHTML;
+                    while (shadowXml.firstChild) {
+                        shadow.appendChild(shadowXml.firstChild.cloneNode(true));
+                        shadowXml.firstChild.remove();
+                    }
                 }
             }
         }
