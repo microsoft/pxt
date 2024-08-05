@@ -362,4 +362,10 @@ export abstract class ToolboxEditor extends srceditor.Editor {
 
         return this.blockGroupsCache[ns];
     }
+
+    override focusToolbox(itemToFocus?: string) {
+        if (this.toolbox) {
+            this.toolbox.focus(itemToFocus);
+        }
+    }
 }

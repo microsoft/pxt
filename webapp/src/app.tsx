@@ -80,6 +80,7 @@ import { mergeProjectCode, appendTemporaryAssets } from "./mergeProjects";
 import { Tour } from "./components/onboarding/Tour";
 import { parseTourStepsAsync } from "./onboarding";
 import { initGitHubDb } from "./idbworkspace";
+import { CategoryNameID } from "./toolbox";
 
 pxt.blocks.requirePxtBlockly = () => pxtblockly as any;
 pxt.blocks.requireBlockly = () => Blockly;
@@ -159,6 +160,7 @@ export class ProjectView
     private preserveUndoStack: boolean;
     private rootClasses: string[];
     private pendingImport: pxt.Util.DeferredPromise<void>;
+    private shouldFocusToolbox: boolean;
 
     private highContrastSubscriber: data.DataSubscriber = {
         subscriptions: [],
@@ -4501,6 +4503,10 @@ export class ProjectView
             ...this.state,
             extensionsVisible: false
         })
+
+        if (this.state.accessibleBlocks) {
+            this.editor.focusToolbox(CategoryNameID.Extensions);
+        }
     }
 
     showPackageDialog() {
@@ -4923,6 +4929,13 @@ export class ProjectView
             this.pendingImport.resolve();
             this.pendingImport = undefined;
         }
+
+        if (this.shouldFocusToolbox) {
+            this.shouldFocusToolbox = false;
+            if (this.state.currFile && this.editor) {
+                this.editor.focusToolbox(CategoryNameID.Extensions);
+            }
+        }
     }
 
     setEditorOffset() {
@@ -5236,7 +5249,17 @@ export class ProjectView
         const hasIdentity = pxt.auth.hasIdentity();
         return (
             <div id='root' className={rootClasses}>
-                {this.state.extensionsVisible && <extensionsBrowser.ExtensionsBrowser hideExtensions={this.hidePackageDialog} importExtensionCallback={() => this.showImportFileDialog({ extension: true })} header={this.state.header} reloadHeaderAsync={() => { return this.reloadHeaderAsync() }} />}
+                {this.state.extensionsVisible &&
+                    <extensionsBrowser.ExtensionsBrowser
+                        hideExtensions={this.hidePackageDialog}
+                        importExtensionCallback={() => this.showImportFileDialog({ extension: true })}
+                        header={this.state.header}
+                        reloadHeaderAsync={async () => {
+                            await this.reloadHeaderAsync()
+                            this.shouldFocusToolbox = !!this.state.accessibleBlocks;
+                        }}
+                    />
+                }
                 {greenScreen ? <greenscreen.WebCam close={this.toggleGreenScreen} /> : undefined}
                 {accessibleBlocks && <accessibleblocks.AccessibleBlocksInfo />}
                 {hideMenuBar || inHome ? undefined :

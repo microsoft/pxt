@@ -261,7 +261,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         this.setSelection(treeRow, index, undefined, true);
     }
 
-    focus() {
+    focus(itemToFocus?: string) {
         if (!this.rootElement) return;
         if (this.selectedItem && this.selectedItem.getTreeRow()) {
             // Focus the selected item
@@ -270,6 +270,14 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
             this.setSelection(selectedItem, selectedItemIndex, true);
         } else {
             // Focus first item in the toolbox
+            if (itemToFocus) {
+                for (const item of this.items) {
+                    if (item.nameid === itemToFocus) {
+                        this.setSelection(item, this.items.indexOf(item), true);
+                        return;
+                    }
+                }
+            }
             this.selectFirstItem();
         }
     }
