@@ -210,10 +210,8 @@ export function createShadowValue(info: pxtc.BlocksInfo, p: pxt.blocks.BlockPara
     }
 
     if (maxRecursion) {
-        const allShadows = value.getElementsByTagName("shadow");
-        for (let i = 0; i < allShadows.length; i++) {
-            const shadow = allShadows.item(i);
-
+        const allShadows = pxt.Util.toArray(value.getElementsByTagName("shadow"));
+        for (const shadow of allShadows) {
             if (!shadow.innerHTML) {
                 const shadowSymbol = info.blocks.find(s => s.attributes.blockId === shadow.getAttribute("type"));
                 if (shadowSymbol) {
