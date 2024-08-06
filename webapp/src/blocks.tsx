@@ -890,12 +890,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         // TODO: Add accessible blocks plugin from Blockly
     }
 
-    focusToolbox() {
-        if (this.toolbox) {
-            this.toolbox.focus();
-        }
-    }
-
     renderToolbox(immediate?: boolean) {
         if (pxt.shell.isReadOnly()) return;
         const blocklyToolboxDiv = this.getBlocklyToolboxDiv();
