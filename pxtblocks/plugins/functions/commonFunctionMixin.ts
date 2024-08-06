@@ -175,7 +175,9 @@ export const COMMON_FUNCTION_MIXIN = {
                 if (saveInfo) {
                     const block = saveInfo["block"];
                     if (block?.isShadow()) {
-                        block.dispose(false);
+                        if (!block.isDeadOrDying()) {
+                            block.dispose(false);
+                        }
                         delete connectionMap[id];
                     }
                 }
