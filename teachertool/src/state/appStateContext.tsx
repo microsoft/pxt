@@ -10,6 +10,8 @@ let dispatch: React.Dispatch<Action>;
 
 let initializationComplete: () => void;
 
+const DEV_BACKEND_LOCALHOST = "http://localhost:8080";
+
 // This promise will resolve when the app state is initialized and available outside the React context.
 export const AppStateReady: Promise<boolean> = new Promise(resolve => {
     initializationComplete = () => resolve(true);
@@ -41,7 +43,9 @@ export function AppStateProvider(props: React.PropsWithChildren<{}>): React.Reac
     const copilotSlot = url.match(/copilot=([^&]+)/);
     const copilotEndpoint =
         copilotSlot && copilotSlot[1]
-            ? `https://makecode-app-backend-ppe-${copilotSlot[1]}.azurewebsites.net/api`
+            ? copilotSlot[1] === "local"
+                ? `${DEV_BACKEND_LOCALHOST}/api`
+                : `https://makecode-ppe-app-backend-eastus-${copilotSlot[1]}.azurewebsites.net/api`
             : undefined;
 
     // Create the application state and state change mechanism (dispatch)
