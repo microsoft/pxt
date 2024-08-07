@@ -13,7 +13,7 @@ export function setDraggableShadowBlocks(ids: string[]) {
 }
 
 export function isAllowlistedShadow(block: Blockly.Block) {
-    if (draggableShadowAllowlist && block.isShadow()) {
+    if (draggableShadowAllowlist) {
         if (draggableShadowAllowlist.indexOf(block.type) !== -1) {
             return true;
         }

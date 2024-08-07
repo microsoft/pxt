@@ -151,6 +151,7 @@ export class DuplicateOnDragStrategy implements Blockly.IDragStrategy {
     private disconnectBlock(healStack: boolean) {
         let clone: Blockly.Block;
         let target: Blockly.Connection;
+        let xml: Element;
         const isShadow = this.block.isShadow();
 
         if (isShadow) {
@@ -159,12 +160,16 @@ export class DuplicateOnDragStrategy implements Blockly.IDragStrategy {
 
         const mutation = this.block.mutationToDom?.();
 
-        if (mutation?.getAttribute(DUPLICATE_ON_DRAG_MUTATION_KEY)?.toLowerCase() === "true") {
+        if (mutation?.getAttribute(DUPLICATE_ON_DRAG_MUTATION_KEY)?.toLowerCase() === "true" || (isAllowlistedShadow(this.block) && isShadow)) {
             const output = this.block.outputConnection;
 
             if (!output?.targetConnection) return;
 
-            clone = Blockly.Xml.domToBlock(Blockly.Xml.blockToDom(this.block, true) as Element, this.block.workspace);
+            xml = Blockly.Xml.blockToDom(this.block, true) as Element;
+
+            if (!isShadow) {
+                clone = Blockly.Xml.domToBlock(xml, this.block.workspace);
+            }
             target = output.targetConnection;
         }
 
@@ -175,12 +180,15 @@ export class DuplicateOnDragStrategy implements Blockly.IDragStrategy {
             this.startChildConn = this.block.nextConnection?.targetConnection;
         }
 
+        if (target && isShadow) {
+            target.setShadowDom(xml)
+        }
+
         this.block.unplug(healStack);
         Blockly.blockAnimations.disconnectUiEffect(this.block);
 
-        if (clone && target) {
+        if (target && clone) {
             target.connect(clone.outputConnection);
-            clone.setShadow(isShadow);
 
             mutation.setAttribute(DUPLICATE_ON_DRAG_MUTATION_KEY, "false");
             this.block.domToMutation?.(mutation);
