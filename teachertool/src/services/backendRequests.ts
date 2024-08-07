@@ -105,7 +105,7 @@ export async function askCopilotQuestionAsync(shareId: string, question: string)
 
         const request = await fetch(url, {
             method: "POST",
-            headers: headers, // TODO thsparks : condense?
+            headers,
             body: JSON.stringify(data),
         });
 
