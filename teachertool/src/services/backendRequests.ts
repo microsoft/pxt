@@ -1,6 +1,7 @@
 import { stateAndDispatch } from "../state";
 import { ErrorCode } from "../types/errorCode";
 import { logError } from "./loggingService";
+import * as auth from "./authClient";
 
 export async function fetchJsonDocAsync<T = any>(url: string): Promise<T | undefined> {
     try {
@@ -99,19 +100,33 @@ export async function askCopilotQuestionAsync(shareId: string, question: string)
     const data = { id: shareId, question };
     let result: string = "";
     try {
+        const headers = await getAuthHeadersAsync();
+        headers["Content-Type"] = "application/json";
+
         const request = await fetch(url, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: headers, // TODO thsparks : condense?
             body: JSON.stringify(data),
         });
 
         if (!request.ok) {
-            throw new Error("Unable to reach Copilot");
+            throw new Error("Unable to reach AI");
         }
         result = await request.json();
     } catch (e) {
-        logError(ErrorCode.askCopilotQuestion, e);
+        logError(ErrorCode.askAIQuestion, e);
     }
 
     return result;
+}
+
+async function getAuthHeadersAsync(): Promise<pxt.Map<string>> {
+    const headers: pxt.Map<string> = {};
+    const authToken = await auth.authTokenAsync();
+    if (authToken) {
+        headers["authorization"] = `mkcd ${authToken}`;
+    }
+    headers["x-pxt-target"] = pxt.appTarget?.id;
+
+    return headers;
 }
