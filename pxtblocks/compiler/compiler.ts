@@ -314,6 +314,7 @@ function compileStatementBlock(e: Environment, b: Blockly.Block): pxt.blocks.JsN
         case 'pxt_controls_for':
         case 'controls_for':
         case 'controls_simple_for':
+        case 'controls_advanced_for':
             r = compileControlsFor(e, b, comments);
             break;
         case 'pxt_controls_for_of':

@@ -68,7 +68,7 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                     name: "pxt_controls_for_of",
                     attributes: {
                         blockId: "pxt_controls_for_of",
-                        weight: 46
+                        weight: 45
                     },
                     blockXml: `<block type="pxt_controls_for_of">
                     <value name="VAR">
@@ -110,6 +110,38 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                     weight: 29
                 },
                 blockXml: `<block type="continue_keyword"></block>`
+            });
+        }
+        if (pxt.appTarget.appTheme.advancedForLoop) {
+            _cachedBuiltinCategories[CategoryNameID.Loops].blocks.push({
+                name: "controls_advanced_for",
+                attributes: {
+                    blockId: "controls_advanced_for",
+                    weight: 46
+                },
+                blockXml: `<block type="controls_advanced_for">
+                <value name="VAR">
+                    <block type="variables_get_reporter">
+                        <field name="VAR">${lf("{id:var}index")}</field>
+                        <mutation duplicateondrag="true"></mutation>
+                    </block>
+                </value>
+                <value name="FROM">
+                    <shadow type="math_number">
+                        <field name="NUM">0</field>
+                    </shadow>
+                </value>
+                <value name="TO">
+                    <shadow type="math_number">
+                        <field name="NUM">4</field>
+                    </shadow>
+                </value>
+                <value name="BY">
+                    <shadow type="math_number">
+                        <field name="NUM">1</field>
+                    </shadow>
+                </value>
+            </block>`
             });
         }
         _cachedBuiltinCategories[CategoryNameID.Logic] = {

@@ -440,6 +440,7 @@ declare namespace pxt {
         disableAPICache?: boolean; // Disables the api cache in target.js
         sidebarTutorial?: boolean; // Move the tutorial pane to be on the left side of the screen
         legacyTutorial?: boolean; // Use the legacy tutorial format without tabs
+        advancedForLoop?: boolean; // Add for-loop with "start" and "step" parameter
         /**
          * Internal and temporary flags:
          * These flags may be removed without notice, please don't take a dependency on them
