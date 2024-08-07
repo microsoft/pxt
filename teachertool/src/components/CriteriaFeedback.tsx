@@ -1,7 +1,7 @@
-import { Button } from "react-common/components/controls/Button";
 import css from "./styling/CriteriaFeedback.module.scss";
+import { Button } from "react-common/components/controls/Button";
 import { Ticks } from "../constants";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { showToast } from "../transforms/showToast";
 import { makeToast } from "../utils";
 import { classList } from "react-common/components/util";
@@ -13,7 +13,7 @@ interface ICriteriaFeedbackProps {
 export const CriteriaFeedback: React.FC<ICriteriaFeedbackProps> = ({className, catalogCriteriaId}) => {
     const [helpful, setHelpful] = useState<boolean | undefined>(undefined);
 
-    function onResponseClicked(isHelpful: boolean) {
+    const onResponseClicked = useCallback((isHelpful: boolean) => {
         const previousHelpful = helpful;
 
         // If they click the same button again, unset the feedback.
@@ -32,7 +32,7 @@ export const CriteriaFeedback: React.FC<ICriteriaFeedbackProps> = ({className, c
         if (newHelpful !== undefined) {
             showToast(makeToast(newHelpful ? "success" : "info", lf("Thanks for your feedback!")));
         }
-    }
+    }, [helpful, catalogCriteriaId]);
 
     const thumbsUpIcon = helpful === true ? "fas fa-thumbs-up" : "far fa-thumbs-up";
     const thumbsDownIcon = helpful === false ? "fas fa-thumbs-down" : "far fa-thumbs-down";
