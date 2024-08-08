@@ -16,7 +16,7 @@ Let's get you to the right place.
 ### Minecraft
 
 - For help on setting up MakeCode and Minecraft, follow the [setup guide](https://minecraft.makecode.com/setup).
-- Running into issues with Code Connection, MakeCode for Minecraft, or Minecraft Education Edition? Post your question on [Minecraft EE Tech Support](https://education.minecraft.net/technical-support).
+- Running into issues with Code Connection, MakeCode for Minecraft, or Minecraft Education Edition? Post your question on [Minecraft EE Tech Support](https://educommunity.minecraft.net/hc).
 
 ### Arcade
 
