@@ -27,6 +27,8 @@ namespace pxsim {
             aspectRatio?: number;
             permanent?: boolean;
         }>;
+        // needed when messageSimulators are used to provide to their frame
+        userLanguage?: string;
     }
 
     export enum SimulatorState {
@@ -356,6 +358,7 @@ namespace pxsim {
                                 const useLocalHost = U.isLocalHost() && /localhostmessagesims=1/i.test(window.location.href)
                                 const url = ((useLocalHost && messageSimulator.localHostUrl) || messageSimulator.url)
                                     .replace("$PARENT_ORIGIN$", encodeURIComponent(this.options.parentOrigin || ""))
+                                    .replace("$LANGUAGE$", encodeURIComponent(this.options.userLanguage))
                                 let wrapper = this.createFrame(url);
                                 this.container.appendChild(wrapper);
                                 messageFrame = wrapper.firstElementChild as HTMLIFrameElement;
