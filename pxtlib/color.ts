@@ -69,7 +69,7 @@ namespace pxt {
         return 0.2126 * r2 + 0.7152 * g2 + 0.0722 * b2;
     }
 
-    function contrastRatio(fg: string, bg: string) {
+    export function contrastRatio(fg: string, bg: string) {
         return (relativeLuminance(fg) + 0.05) / (relativeLuminance(bg) + 0.05)
     }
 
