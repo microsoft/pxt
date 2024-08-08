@@ -630,6 +630,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         super.setVisible(v);
         // if we are hiding monaco, clear error list
         if (!v) this.onErrorChanges([]);
+        // if we are showing monaco, resize to make sure sim state gets set
+        else this.parent.fireResize();
     }
 
     display(): JSX.Element {

@@ -4851,6 +4851,7 @@ export class ProjectView
                             pxt.tickEvent("tutorial.share", undefined, { interactiveConsent: false });
                             this.showShareDialog(lf("Well done! Would you like to share your project?"));
                         }
+                        this.showMiniSim(pxt.BrowserUtils.isTabletSize());
                     })
             }
         }
@@ -5160,7 +5161,8 @@ export class ProjectView
         const sandbox = pxt.shell.isSandboxMode();
         const isBlocks = !this.editor.isVisible || this.getPreferredEditor() === pxt.BLOCKS_PROJECT_NAME;
         const sideDocs = !(sandbox || targetTheme.hideSideDocs);
-        const tutorialOptions = this.state.tutorialOptions;
+        const tutorialCompleted = !!this.state.header?.tutorialCompleted;
+        const tutorialOptions = tutorialCompleted ? undefined : this.state.tutorialOptions;
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
         const isSidebarTutorial = pxt.appTarget.appTheme.sidebarTutorial;
         const isTabTutorial = inTutorial && !pxt.BrowserUtils.useOldTutorialLayout();
