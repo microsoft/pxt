@@ -1,9 +1,9 @@
-# remove At
+# remove At (no return value)
 
-Remove and return an element from an array at some position.
+Remove an element from an array at some position.
 
 ```sig
-[""].removeAt(0)
+[""]._removeAtStatement(0)
 ```
 
 The size of the array shrinks by one. The element is removed from the array at the position you want. All the other elements after it are moved (shifted) to down to the next lower position. So, an array that has the numbers
@@ -11,28 +11,23 @@ The size of the array shrinks by one. The element is removed from the array at t
 
 ```block
 let myNumbers = [4, 5, 9, 3, 2]
-let item = myNumbers.removeAt(2)
+myNumbers.removeAt(2)
 ```
 
 ## Parameters
 
 * **index**: the position in the array to get the element from.
 
-## Returns
-
-* the element in the array from the position you chose.
-
 ## Example
 
-Remove the most dangerous level of radiation from the list.
+Remove the largest animal from the list of primates.
 
 ```block
-let radLevels = ["alpha", "beta", "gamma"]
-let level = radLevels.indexOf("gamma")
-let unzapped = radLevels.removeAt(level)
+let primates = ["chimpanzee", "baboon", "gorilla", "macaque"]
+let largest = primates.indexOf("gorilla")
+primates.removeAt(largest)
 ```
 
 ## See also
 
-[remove at (no return value)](/reference/arrays/remove-at-statement),
-[insert at](/reference/arrays/insert-at)
+[remove at](/reference/arrays/remove-at), [insert at](/reference/arrays/insert-at)
