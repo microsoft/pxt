@@ -107,6 +107,7 @@ export async function askCopilotQuestionAsync(shareId: string, question: string)
             method: "POST",
             headers,
             body: JSON.stringify(data),
+            credentials: "include",
         });
 
         if (!request.ok) {
