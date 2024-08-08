@@ -29,7 +29,7 @@ Remove the most dangerous level of radiation from the list.
 ```block
 let radLevels = ["alpha", "beta", "gamma"]
 let level = radLevels.indexOf("gamma")
-radLevels.removeAt(level)
+let unzapped = radLevels.removeAt(level)
 ```
 
 ## See also
