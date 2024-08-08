@@ -4797,7 +4797,7 @@ export class ProjectView
         pxt.perf.measureEnd("startActivity")
     }
 
-    completeTutorialAsync(): Promise<void> {
+    async completeTutorialAsync(): Promise<void> {
         pxt.tickEvent("tutorial.finish", { tutorial: this.state.header?.tutorial?.tutorial });
         pxt.tickEvent("tutorial.complete", { tutorial: this.state.header?.tutorial?.tutorial });
         core.showLoading("leavingtutorial", lf("leaving tutorial..."));
@@ -4816,45 +4816,31 @@ export class ProjectView
                 }
             this.state.header.tutorial = undefined;
         }
+        const isSkillmap = pxt.BrowserUtils.isSkillmapEditor();
 
-        if (pxt.BrowserUtils.isIE()) {
-            // For some reason, going from a tutorial straight to the editor in
-            // IE causes the JavaScript runtime to go bad. In order to work around
-            // the issue we go to the homescreen instead of the to the editor. See
-            // https://github.com/Microsoft/pxt-microbit/issues/1249 for more info.
-            this.exitTutorial();
-            return Promise.resolve(); // TODO cleanup
-        }
-        else {
-            if (pxt.BrowserUtils.isSkillmapEditor()) {
-                return this.exitTutorialAsync()
-                    .finally(() => {
-                        core.hideLoading("leavingtutorial")
-                    })
+        try {
+            await this.exitTutorialAsync();
+            if (!isSkillmap) {
+                const curr = pkg.mainEditorPkg().header;
+                await this.loadHeaderAsync(curr);
             }
-            else {
-                return this.exitTutorialAsync()
-                    .then(() => {
-                        let curr = pkg.mainEditorPkg().header;
-                        return this.loadHeaderAsync(curr);
-                    }).finally(() => {
-                        core.hideLoading("leavingtutorial")
-                        if (this.state.collapseEditorTools && !pxt.appTarget.simulator.headless) {
-                            this.expandSimulator();
-                        }
-                        this.postTutorialProgress();
-                    })
-                    .then(() => {
-                        if (pxt.appTarget.cloud &&
-                            pxt.appTarget.cloud.sharing &&
-                            pxt.appTarget.appTheme.shareFinishedTutorials) {
-                            pxt.tickEvent("tutorial.share", undefined, { interactiveConsent: false });
-                            this.showShareDialog(lf("Well done! Would you like to share your project?"));
-                        }
-                        this.showMiniSim(pxt.BrowserUtils.isTabletSize());
-                    })
-            }
+        } finally {
+            core.hideLoading("leavingtutorial");
         }
+
+        if (isSkillmap) {
+            return;
+        }
+
+        if (this.state.collapseEditorTools && !pxt.appTarget.simulator.headless) {
+            this.expandSimulator();
+        }
+        this.postTutorialProgress();
+        if (pxt.appTarget.cloud?.sharing && pxt.appTarget.appTheme.shareFinishedTutorials) {
+            pxt.tickEvent("tutorial.share", undefined, { interactiveConsent: false });
+            this.showShareDialog(lf("Well done! Would you like to share your project?"));
+        }
+        this.showMiniSim(pxt.BrowserUtils.isTabletSize());
     }
 
     exitTutorial(removeProject?: boolean) {
