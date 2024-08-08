@@ -1,6 +1,5 @@
 import Cloud = pxt.Cloud;
 import U = pxt.Util;
-import { isNativeHost } from "./cmds";
 
 let iface: pxt.worker.Iface
 let bridgeBySocket: pxt.Map<TCPSocket> = {}
