@@ -5866,7 +5866,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     pxt.perf.measureEnd("setAppTarget");
 
     let theme = pxt.appTarget.appTheme;
-    const isControllerIFrame = (theme.allowParentController || pxt.shell.isControllerMode()) && pxt.BrowserUtils.isIFrame();
+    const isControllerIFrame = theme.allowParentController || pxt.shell.isControllerMode()
     // disable auth in iframe scenarios
     if (isControllerIFrame)
         pxt.auth.enableAuth(false);

@@ -150,6 +150,14 @@
                     logs.appendChild(img)
                 }
             }
+            if (msg.download) {
+                const blob = new Blob([msg.download], {type: "application/octet-stream"});
+                const a = document.createElement("a");
+                a.href = URL.createObjectURL(blob);
+                a.download = `${msg.name}.hex`;
+                a.click();
+                URL.revokeObjectURL(a.href);
+            }
             delete pendingMsgs[msg.id];
         }
 
@@ -169,10 +177,19 @@
             }
             reader.readAsText(f);
         }
+
+        function toggleControllerMode() {
+            const iframe = document.querySelector("#iframe");
+            const src = new URL(iframe.src);
+            let controller = src.searchParams.get("controller");
+            src.searchParams.set("controller", controller === "1" ? "2" : "1");
+            iframe.src = src.toString();
+        }
     </script>
 </head>
 <body>
     <div id="buttons" class="ui buttons">
+        <button class="ui button" onclick="toggleControllerMode()">toggle mode</button>
         <button class="ui button" onclick="sendMessage('switchblocks')">switch to blocks</button>
         <button class="ui button" onclick="sendMessage('switchjavascript')">switch to javascript</button>
         <button class="ui button" onclick="sendMessage('setlanguagerestriction')">restrict language</button>
@@ -181,6 +198,7 @@
         <button class="ui button" onclick="sendMessage('stopsimulator')">stop sim</button>
         <button class="ui button" onclick="sendMessage('newproject')">newproject</button>
         <button class="ui button" onclick="sendMessage('importproject')">importproject</button>
+        <button class="ui button" onclick="sendMessage('compile')">compile</button>
         <button class="ui button" onclick="toggleFilters()">filter</button>
         <button class="ui button" onclick="sendMessage('toggletrace')">toggle trace</button>
         <button class="ui button" onclick="sendMessage('settracestate')">trace on</button>

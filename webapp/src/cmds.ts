@@ -145,6 +145,9 @@ export function nativeHostPostMessageFunction(): (msg: NativeHostMessage) => voi
     const android = (<any>window).android;
     if (android && android.postMessage)
         return msg => android.postMessage(JSON.stringify(msg));
+    if (pxt.shell.getControllerMode() === pxt.shell.ControllerMode.App) {
+        return msg => window.parent.postMessage(msg, "*");
+    }
     return undefined;
 }
 
@@ -394,7 +397,7 @@ export async function initAsync() {
     // check if webUSB is available and usable
     if ((pxt.appTarget?.compile?.isNative || pxt.appTarget?.compile?.hasHex) && !pxt.BrowserUtils.isPxtElectron()) {
         // TODO: WebUSB is currently disabled in electron app, but should be supported.
-        if (pxt.usb.isAvailable() && pxt.appTarget?.compile?.webUSB) {
+        if (pxt.shell.getControllerMode() !== pxt.shell.ControllerMode.App && pxt.usb.isAvailable() && pxt.appTarget?.compile?.webUSB) {
             log(`enabled webusb`);
             pxt.usb.setEnabled(true);
             pxt.packetio.mkPacketIOAsync = pxt.usb.mkWebUSBHIDPacketIOAsync;
