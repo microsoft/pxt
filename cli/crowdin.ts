@@ -63,7 +63,7 @@ export async function uploadBuiltStringsAsync(filename: string, crowdinDir?: str
     const contents = fs.readFileSync(filename, "utf8");
 
     pxt.log(`Uploading ${filename} to ${crowdinFile}`);
-    await uploadFileAsync(crowdinFile, contents);
+    await uploadWithRetries(crowdinFile, contents);
 }
 
 async function uploadDocsTranslationsAsync(srcDir: string, crowdinDir: string): Promise<void> {
@@ -83,8 +83,14 @@ async function uploadDocsTranslationsAsync(srcDir: string, crowdinDir: string): 
             continue;
         }
 
-        pxt.log(`Uploading ${file} to ${crowdinFile}`);
-        await uploadFileAsync(crowdinFile, fs.readFileSync(file, "utf8"));
+        const fileContent = fs.readFileSync(file, "utf8");
+        if (!fileContent.trim()) {
+            pxt.log(`skipping empty file ${file}`)
+        }
+        else {
+            pxt.log(`Uploading ${file} to ${crowdinFile}`);
+            await uploadWithRetries(crowdinFile, fileContent);
+        }
     }
 }
 
@@ -121,7 +127,7 @@ async function uploadBundledTranslationsAsync(crowdinDir: string) {
         const data = JSON.parse(fs.readFileSync(file, 'utf8')) as Map<string>;
         const crowdinFile = path.join(crowdinDir, path.basename(file));
         pxt.log(`Uploading ${file} to ${crowdinFile}`);
-        await uploadFileAsync(crowdinFile, JSON.stringify(data));
+        await uploadWithRetries(crowdinFile, JSON.stringify(data));
     }
 }
 
@@ -408,5 +414,25 @@ async function execRestoreFiles(time: string | number) {
         if ((isCore && !isCoreFile) || !file.startsWith(crowdinDir + "/")) continue;
 
         await restoreFileBefore(file, cutoffTime);
+    }
+}
+
+async function uploadWithRetries(filename: string, fileContent: string, attempts = 3) {
+    for (let i = 0; i < attempts; i++) {
+        try {
+            await uploadFileAsync(filename, fileContent);
+            return;
+        }
+        catch (e) {
+            if (i < attempts - 1) {
+                console.warn(e);
+                pxt.log(`Upload failed, retrying in 3 seconds`);
+                await pxt.U.delay(3000);
+            }
+            else {
+                pxt.log(`Maximum upload retries exceeded for file ${filename}`);
+                throw e;
+            }
+        }
     }
 }
