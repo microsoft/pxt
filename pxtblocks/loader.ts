@@ -1,6 +1,5 @@
 /// <reference path="../built/pxtlib.d.ts" />
 import * as Blockly from "blockly";
-import { WorkspaceSearch } from "@blockly/plugin-workspace-search";
 import { optionalDummyInputPrefix, optionalInputWithFieldPrefix, provider } from "./constants";
 import { initExpandableBlock, initVariableArgsBlock, appendMutation } from "./composableMutations";
 import { addMutation, MutatingBlock, MutatorTypes } from "./legacyMutations";
@@ -840,81 +839,5 @@ export function setVarFieldValue(block: Blockly.Block, fieldName: string, newNam
         const model = varField.getVariable();
         model.name = newName;
         varField.setValue(model.getId());
-    }
-}
-
-export class PxtWorkspaceSearch extends WorkspaceSearch {
-    protected injectionDiv: Element;
-    protected inputElement_: HTMLInputElement;
-
-    constructor(workspace: Blockly.WorkspaceSvg) {
-        super(workspace);
-        this.injectionDiv = workspace.getInjectionDiv();
-    }
-
-    protected override createTextInput(): HTMLInputElement {
-        const textInput = super.createTextInput();
-        this.inputElement_ = textInput;
-
-        // Register this event listener before the Blockly implementation
-        // registers theres. Inside the listener we call stopImmediatePropagation
-        // to prevent the Blockly listener from firing.
-        textInput.addEventListener("keydown", e => {
-            this.onKeyDown_(e);
-        });
-
-        return textInput;
-    }
-
-    // This is the same as the Blockly implementation but allows you to
-    // search backwards by holding shift and pressing enter
-    protected onKeyDown_(e: KeyboardEvent) {
-        if (e.key === 'Escape') {
-            this.close();
-            e.stopImmediatePropagation();
-        }
-        else if (e.key === 'Enter') {
-            if (this.searchOnInput) {
-                if (e.shiftKey) {
-                    this.previous();
-                }
-                else {
-                    this.next();
-                }
-                e.stopImmediatePropagation();
-            } else {
-                if (!this.inputElement_) return;
-                const inputValue = this.inputElement_.value.trim();
-                if (inputValue !== this.searchText) {
-                    this.searchAndHighlight(inputValue, this.preserveSelected);
-                    e.stopImmediatePropagation();
-                }
-            }
-        }
-    }
-
-    protected override highlightSearchGroup(blocks: Blockly.BlockSvg[]) {
-        blocks.forEach((block) => {
-            const blockPath = block.pathObject.svgPath;
-            Blockly.utils.dom.addClass(blockPath, 'blockly-ws-search-highlight-pxt');
-        });
-    }
-
-    protected override unhighlightSearchGroup(blocks: Blockly.BlockSvg[]) {
-        blocks.forEach((block) => {
-            const blockPath = block.pathObject.svgPath;
-            Blockly.utils.dom.removeClass(blockPath, 'blockly-ws-search-highlight-pxt');
-        });
-    }
-
-    override open() {
-        super.open();
-        this.inputElement_.select();
-        Blockly.utils.dom.addClass(this.injectionDiv, 'blockly-ws-searching');
-    }
-
-    override close() {
-        super.close();
-        Blockly.utils.dom.removeClass(this.injectionDiv, 'blockly-ws-searching');
     }
 }
