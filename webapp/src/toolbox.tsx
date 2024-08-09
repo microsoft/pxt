@@ -6,13 +6,13 @@ import * as editor from "./toolboxeditor"
 import * as sui from "./sui"
 import * as core from "./core"
 import * as coretsx from "./coretsx";
-import * as pkg from "./package";
 
 import Util = pxt.Util;
 import { fireClickOnEnter } from "./util"
 import { DeleteConfirmationModal } from "../../react-common/components/extensions/DeleteConfirmationModal"
 
 import * as Blockly from "blockly";
+import { classList } from "../../react-common/components/util"
 
 export const enum CategoryNameID {
     Loops = "loops",
@@ -89,6 +89,7 @@ export interface BuiltinCategoryDefinition {
     removed?: boolean;
     custom?: boolean; // Only add blocks defined in .blocks and don't query nsMap for more
     customClick?: (theEditor: editor.ToolboxEditor) => boolean; // custom handler
+    onlyTriggerOnClick?: boolean;
 }
 
 export interface ToolboxProps {
@@ -121,12 +122,12 @@ export interface ToolboxState {
 const MONACO_EDITOR_NAME: string = "monaco";
 
 export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
-
     private rootElement: HTMLElement;
 
     private selectedItem: CategoryItem;
     private selectedIndex: number;
     private items: ToolboxCategory[];
+    private selectedTreeRow: ToolboxCategory;
 
     constructor(props: ToolboxProps) {
         super(props);
@@ -217,15 +218,15 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         })
     }
 
-    setSelection(treeRow: ToolboxCategory, index: number, force?: boolean) {
+    setSelection(treeRow: ToolboxCategory, index: number, force?: boolean, isClick = false) {
         const { editorname, parent } = this.props;
-        const { nameid, subns, customClick } = treeRow;
+        const { nameid, subns, customClick, onlyTriggerOnClick } = treeRow;
 
         pxt.tickEvent(`${editorname}.toolbox.click`, undefined, { interactiveConsent: true });
 
         let id = subns ? nameid + subns : nameid;
 
-        if (this.state.selectedItem == id && !force) {
+        if (this.state.selectedItem == id && !force && !onlyTriggerOnClick) {
             this.clearSelection();
 
             // Hide flyout
@@ -233,8 +234,13 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         } else {
             let handled = false;
             if (customClick) {
-                handled = customClick(parent);
-                if (handled) return;
+                if (!onlyTriggerOnClick || isClick) {
+                    handled = customClick(parent);
+                    if (handled) return;
+                }
+                else {
+                    this.closeFlyout();
+                }
             }
 
             if (!handled) {
@@ -251,7 +257,11 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         }
     }
 
-    focus() {
+    onCategoryClick = (treeRow: ToolboxCategory, index: number) => {
+        this.setSelection(treeRow, index, undefined, true);
+    }
+
+    focus(itemToFocus?: string) {
         if (!this.rootElement) return;
         if (this.selectedItem && this.selectedItem.getTreeRow()) {
             // Focus the selected item
@@ -260,6 +270,14 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
             this.setSelection(selectedItem, selectedItemIndex, true);
         } else {
             // Focus first item in the toolbox
+            if (itemToFocus) {
+                for (const item of this.items) {
+                    if (item.nameid === itemToFocus) {
+                        this.setSelection(item, this.items.indexOf(item), true);
+                        return;
+                    }
+                }
+            }
             this.selectFirstItem();
         }
     }
@@ -330,7 +348,6 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
     }
 
     showAdvanced() {
-        const { parent } = this.props;
         if (this.selectedItem && this.selectedItem.props.treeRow
             && this.selectedItem.props.treeRow.advanced) {
             this.clear();
@@ -340,7 +357,6 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
     }
 
     getSearchBlocks(): BlockDefinition[] {
-        const { parent } = this.props;
         const { searchBlocks } = this.state;
         return searchBlocks.map(searchResult => {
             return {
@@ -369,13 +385,9 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         this.showFlyout(searchTreeRow);
     }
 
-    private selectedTreeRow: ToolboxCategory;
     private showFlyout(treeRow: ToolboxCategory) {
         const { parent } = this.props;
-        // const t0 = performance.now();
         parent.showFlyout(treeRow);
-        // const t1 = performance.now();
-        // pxt.debug("perf: call to showFlyout took " + (t1 - t0) + " milliseconds.");
     }
 
     private async deleteExtension(ns: string) {
@@ -447,28 +459,43 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
     renderCore() {
         const { editorname, parent } = this.props;
         const { showAdvanced, visible, loading, selectedItem, expandedItem, hasSearch, showSearchBox, hasError, tryToDeleteNamespace } = this.state;
-        if (!visible) return <div style={{ display: 'none' }} />
+        if (!visible) {
+            return (
+                <div style={{ display: 'none' }} />
+            );
+        }
 
         const theme = pxt.appTarget.appTheme;
         const tutorialOptions = parent.parent.state.tutorialOptions;
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial
         const hasTopBlocks = !!theme.topBlocks && !inTutorial;
-
         const showToolboxLabel = inTutorial;
 
-        if (loading || hasError) return <div>
-            <div className="blocklyTreeRoot">
-                <div className="blocklyTreeRow" style={{ opacity: 0 }} />
-            </div>
-            {loading ? <div className="ui active dimmer">
-                <div className="ui loader indeterminate" />
-            </div> : undefined}
-            {hasError ? <div className="ui">
-                {lf("Toolbox crashed..")}
-                <sui.Button icon='refresh' onClick={this.recoverToolbox}
-                    text={lf("Reload")} className='fluid' />
-            </div> : undefined}
-        </div>;
+        if (loading || hasError) {
+            return (
+                <div>
+                    <div className="blocklyTreeRoot">
+                        <div className="blocklyTreeRow" style={{ opacity: 0 }} />
+                    </div>
+                    {loading &&
+                        <div className="ui active dimmer">
+                            <div className="ui loader indeterminate" />
+                        </div>
+                    }
+                    {hasError &&
+                        <div className="ui">
+                            {lf("Toolbox crashed..")}
+                            <sui.Button
+                                icon='refresh'
+                                onClick={this.recoverToolbox}
+                                text={lf("Reload")}
+                                className='fluid'
+                            />
+                        </div>
+                    }
+                </div>
+            );
+        }
 
         const hasAdvanced = this.hasAdvancedCategories();
 
@@ -486,43 +513,136 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         };
 
         const appTheme = pxt.appTarget.appTheme;
-        const classes = sui.cx([
+        const classes = classList(
             'pxtToolbox',
-            appTheme.invertedToolbox ? 'invertedToolbox' : '',
-            appTheme.coloredToolbox ? 'coloredToolbox' : ''
-        ])
+            appTheme.invertedToolbox && 'invertedToolbox',
+            appTheme.coloredToolbox && 'coloredToolbox'
+        );
 
         let index = 0;
         let topRowIndex = 0; // index of top-level rows for animation
         const advancedButtonState = showAdvanced ? "advancedexpanded" : "advancedcollapsed";
-        return <div ref={this.handleRootElementRef} className={classes} id={`${editorname}EditorToolbox`}>
-            <ToolboxStyle categories={this.items} />
-            {showToolboxLabel && <div className="toolbox-title">{lf("Toolbox")}</div>}
-            {showSearchBox ? <ToolboxSearch ref="searchbox" parent={parent} toolbox={this} editorname={editorname} /> : undefined}
-            <div className="blocklyTreeRoot">
-                <div role="tree">
-                    {tryToDeleteNamespace ? <DeleteConfirmationModal ns={tryToDeleteNamespace} onCancelClick={this.cancelDeleteExtension} onDeleteClick={this.deleteExtension}/>:undefined}
-                    {hasSearch ? <CategoryItem key={"search"} toolbox={this} index={index++} selected={selectedItem == "search"} treeRow={searchTreeRow} onCategoryClick={this.setSelection} /> : undefined}
-                    {hasTopBlocks ? <CategoryItem key={"topblocks"} toolbox={this} selected={selectedItem == "topblocks"} treeRow={topBlocksTreeRow} onCategoryClick={this.setSelection} /> : undefined}
-                    {nonAdvancedCategories.map((treeRow) => (
-                        <CategoryItem key={treeRow.nameid} toolbox={this} index={index++} selected={selectedItem == treeRow.nameid} childrenVisible={expandedItem == treeRow.nameid} treeRow={treeRow} onCategoryClick={this.setSelection} topRowIndex={topRowIndex++} shouldAnimate={this.state.shouldAnimate} hasDeleteButton={treeRow.allowDelete} onDeleteClick={this.handleRemoveExtension}>
-                            {treeRow.subcategories ? treeRow.subcategories.map((subTreeRow) => (
-                                <CategoryItem key={subTreeRow.nameid + subTreeRow.subns} index={index++} toolbox={this} selected={selectedItem == (subTreeRow.nameid + subTreeRow.subns)} treeRow={subTreeRow} onCategoryClick={this.setSelection} />
-                            )) : undefined}
-                        </CategoryItem>
-                    ))}
-                    {hasAdvanced ? <TreeSeparator key="advancedseparator" /> : undefined}
-                    {hasAdvanced ? <CategoryItem toolbox={this} treeRow={{ nameid: "", name: pxt.toolbox.advancedTitle(), color: pxt.toolbox.getNamespaceColor('advanced'), icon: pxt.toolbox.getNamespaceIcon(advancedButtonState), advancedButtonState: advancedButtonState }} onCategoryClick={this.advancedClicked} topRowIndex={topRowIndex++} /> : undefined}
-                    {showAdvanced ? advancedCategories.map((treeRow) => (
-                        <CategoryItem key={treeRow.nameid} toolbox={this} index={index++} selected={selectedItem == treeRow.nameid} childrenVisible={expandedItem == treeRow.nameid} treeRow={treeRow} onCategoryClick={this.setSelection}>
-                            {treeRow.subcategories ? treeRow.subcategories.map((subTreeRow) => (
-                                <CategoryItem key={subTreeRow.nameid} toolbox={this} index={index++} selected={selectedItem == (subTreeRow.nameid + subTreeRow.subns)} treeRow={subTreeRow} onCategoryClick={this.setSelection} />
-                            )) : undefined}
-                        </CategoryItem>
-                    )) : undefined}
+        return (
+            <div
+                ref={this.handleRootElementRef}
+                className={classes}
+                id={`${editorname}EditorToolbox`}
+            >
+                <ToolboxStyle categories={this.items} />
+                {showToolboxLabel &&
+                    <div className="toolbox-title">{lf("Toolbox")}</div>
+                }
+                {showSearchBox &&
+                    <ToolboxSearch
+                        ref="searchbox"
+                        parent={parent}
+                        toolbox={this}
+                        editorname={editorname}
+                    />
+                }
+                <div className="blocklyTreeRoot">
+                    <div role="tree">
+                        {tryToDeleteNamespace &&
+                            <DeleteConfirmationModal
+                                ns={tryToDeleteNamespace}
+                                onCancelClick={this.cancelDeleteExtension}
+                                onDeleteClick={this.deleteExtension}
+                            />
+                        }
+                        {hasSearch &&
+                            <CategoryItem
+                                key={"search"}
+                                toolbox={this}
+                                index={index++}
+                                selected={selectedItem == "search"}
+                                treeRow={searchTreeRow}
+                                onCategoryClick={this.onCategoryClick}
+                            />
+                        }
+                        {hasTopBlocks &&
+                            <CategoryItem
+                                key={"topblocks"}
+                                toolbox={this}
+                                selected={selectedItem == "topblocks"}
+                                treeRow={topBlocksTreeRow}
+                                onCategoryClick={this.onCategoryClick}
+                            />
+                        }
+                        {nonAdvancedCategories.map(treeRow =>
+                            <CategoryItem
+                                key={treeRow.nameid}
+                                toolbox={this}
+                                index={index++}
+                                selected={selectedItem == treeRow.nameid}
+                                childrenVisible={expandedItem == treeRow.nameid}
+                                treeRow={treeRow}
+                                onCategoryClick={this.onCategoryClick}
+                                topRowIndex={topRowIndex++}
+                                shouldAnimate={this.state.shouldAnimate}
+                                hasDeleteButton={treeRow.allowDelete}
+                                onDeleteClick={this.handleRemoveExtension}
+                            >
+                                {treeRow.subcategories &&
+                                    treeRow.subcategories.map(subTreeRow =>
+                                        <CategoryItem
+                                            key={subTreeRow.nameid + subTreeRow.subns}
+                                            index={index++}
+                                            toolbox={this}
+                                            selected={selectedItem == (subTreeRow.nameid + subTreeRow.subns)}
+                                            treeRow={subTreeRow}
+                                            onCategoryClick={this.onCategoryClick}
+                                        />
+                                    )
+                                }
+                            </CategoryItem>
+                        )}
+                        {hasAdvanced &&
+                            <>
+                                <TreeSeparator key="advancedseparator" />
+                                <CategoryItem
+                                    toolbox={this}
+                                    treeRow={{
+                                        nameid: "",
+                                        name: pxt.toolbox.advancedTitle(),
+                                        color: pxt.toolbox.getNamespaceColor('advanced'),
+                                        icon: pxt.toolbox.getNamespaceIcon(advancedButtonState),
+                                        advancedButtonState: advancedButtonState
+                                    }}
+                                    onCategoryClick={this.advancedClicked}
+                                    topRowIndex={topRowIndex++}
+                                />
+                            </>
+                        }
+                        {showAdvanced &&
+                            advancedCategories.map(treeRow =>
+                                <CategoryItem
+                                    key={treeRow.nameid}
+                                    toolbox={this}
+                                    index={index++}
+                                    selected={selectedItem == treeRow.nameid}
+                                    childrenVisible={expandedItem == treeRow.nameid}
+                                    treeRow={treeRow}
+                                    onCategoryClick={this.onCategoryClick}
+                                >
+                                    {treeRow.subcategories &&
+                                        treeRow.subcategories.map(subTreeRow =>
+                                            <CategoryItem
+                                                key={subTreeRow.nameid}
+                                                toolbox={this}
+                                                index={index++}
+                                                selected={selectedItem == (subTreeRow.nameid + subTreeRow.subns)}
+                                                treeRow={subTreeRow}
+                                                onCategoryClick={this.onCategoryClick}
+                                            />
+                                        )
+                                    }
+                                </CategoryItem>
+                            )
+                        }
+                    </div>
                 </div>
             </div>
-        </div>
+        );
     }
 }
 
@@ -634,7 +754,7 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
     }
 
     previousItem() {
-        const { toolbox, childrenVisible } = this.props;
+        const { toolbox } = this.props;
         const editorname = toolbox.props.editorname;
 
         pxt.tickEvent(`${editorname}.toolbox.keyboard.prev"`, undefined, { interactiveConsent: true });
@@ -642,7 +762,7 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
     }
 
     nextItem() {
-        const { toolbox, childrenVisible } = this.props;
+        const { toolbox } = this.props;
         const editorname = toolbox.props.editorname;
 
         pxt.tickEvent(`${editorname}.toolbox.keyboard.next"`, undefined, { interactiveConsent: true });
@@ -657,13 +777,22 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
         const { toolbox, childrenVisible, hasDeleteButton } = this.props;
         const { selected } = this.state;
 
-        return <TreeItem>
-            <TreeRow ref={this.handleTreeRowRef} isRtl={toolbox.isRtl()} {...this.props} selected={selected}
-                onClick={this.handleClick} onKeyDown={this.handleKeyDown} hasDeleteButton={hasDeleteButton}/>
-            <TreeGroup visible={childrenVisible}>
-                {this.props.children}
-            </TreeGroup>
-        </TreeItem>
+        return (
+            <TreeItem>
+                <TreeRow
+                    ref={this.handleTreeRowRef}
+                    isRtl={toolbox.isRtl()}
+                    {...this.props}
+                    selected={selected}
+                    onClick={this.handleClick}
+                    onKeyDown={this.handleKeyDown}
+                    hasDeleteButton={hasDeleteButton}
+                />
+                <TreeGroup visible={childrenVisible}>
+                    {this.props.children}
+                </TreeGroup>
+            </TreeItem>
+        );
     }
 }
 
@@ -684,6 +813,7 @@ export interface ToolboxCategory {
     subcategories?: ToolboxCategory[];
 
     customClick?: (theEditor: editor.ToolboxEditor) => boolean;
+    onlyTriggerOnClick?: boolean;
     advanced?: boolean; /*@internal*/
     allowDelete?: boolean;
     // for advanced button, the current state of the button
@@ -703,7 +833,6 @@ export interface TreeRowProps {
 }
 
 export class TreeRow extends data.Component<TreeRowProps, {}> {
-
     private treeRow: HTMLElement;
     private baseAnimationDelay: number = 1;
     private animationDelay: number = 0.15;
@@ -746,7 +875,7 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
     }
 
     renderCore() {
-        const { selected, onClick, onKeyDown, isRtl, topRowIndex, hasDeleteButton, onDeleteClick } = this.props;
+        const { selected, onClick, onKeyDown, topRowIndex, hasDeleteButton } = this.props;
         const { nameid, advancedButtonState, subns, name, icon } = this.props.treeRow;
         const appTheme = pxt.appTarget.appTheme;
         const metaColor = this.getMetaColor();
@@ -785,26 +914,51 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
         const dataNs = advancedButtonState || nameid;
 
         const extraIconClass = !subns && Object.keys(this.brandIcons).includes(icon) ? 'brandIcon' : ''
-        return <div role="button" ref={this.handleTreeRowRef} className={treeRowClass}
-            style={treeRowStyle} tabIndex={0}
-            data-ns={dataNs}
-            aria-label={lf("Toggle category {0}", rowTitle)} aria-expanded={selected}
-            onClick={onClick} onContextMenu={onClick} onKeyDown={onKeyDown ? onKeyDown : fireClickOnEnter}>
-            <span className="blocklyTreeIcon" role="presentation"></span>
-            <span style={iconImageStyle} className={`blocklyTreeIcon ${iconClass} ${extraIconClass}`} role="presentation">{iconContent}</span>
-            <span className="blocklyTreeLabel">{rowTitle}</span>
-            {hasDeleteButton ? <i className="blocklyTreeButton icon times circle" onClick={this.handleDeleteClick}/>: undefined}
-        </div>
+        return (
+            <div
+                role="button"
+                ref={this.handleTreeRowRef}
+                className={treeRowClass}
+                style={treeRowStyle}
+                tabIndex={0}
+                data-ns={dataNs}
+                aria-label={lf("Toggle category {0}", rowTitle)}
+                aria-expanded={selected}
+                onClick={onClick}
+                onContextMenu={onClick}
+                onKeyDown={onKeyDown ? onKeyDown : fireClickOnEnter}
+            >
+                <span className="blocklyTreeIcon" role="presentation"/>
+                <span
+                    style={iconImageStyle}
+                    className={`blocklyTreeIcon ${iconClass} ${extraIconClass}`}
+                    role="presentation"
+                >
+                    {iconContent}
+                </span>
+                <span className="blocklyTreeLabel">
+                    {rowTitle}
+                </span>
+                {hasDeleteButton &&
+                    <i
+                        className="blocklyTreeButton icon times circle"
+                        onClick={this.handleDeleteClick}
+                    />
+                }
+            </div>
+        );
     }
 }
 
 export class TreeSeparator extends data.Component<{}, {}> {
     renderCore() {
-        return <TreeItem>
-            <div className="blocklyTreeSeparator">
-                <span style={{ display: 'inline-block' }} role="presentation"></span>
-            </div>
-        </TreeItem>
+        return (
+            <TreeItem>
+                <div className="blocklyTreeSeparator">
+                    <span style={{ display: 'inline-block' }} role="presentation"></span>
+                </div>
+            </TreeItem>
+        );
     }
 }
 
@@ -816,9 +970,11 @@ export interface TreeItemProps {
 export class TreeItem extends data.Component<TreeItemProps, {}> {
     renderCore() {
         const { selected } = this.props;
-        return <div role="treeitem" aria-selected={selected}>
-            {this.props.children}
-        </div>
+        return (
+            <div role="treeitem" aria-selected={selected}>
+                {this.props.children}
+            </div>
+        );
     }
 }
 
@@ -832,9 +988,11 @@ export class TreeGroup extends data.Component<TreeGroupProps, {}> {
         const { visible } = this.props;
         if (!this.props.children) return <div />;
 
-        return <div role="tree" style={{ backgroundPosition: '0px 0px', 'display': visible ? '' : 'none' }}>
-            {this.props.children}
-        </div>
+        return (
+            <div role="tree" style={{ backgroundPosition: '0px 0px', 'display': visible ? '' : 'none' }}>
+                {this.props.children}
+            </div>
+        );
     }
 }
 
@@ -850,7 +1008,6 @@ export interface ToolboxSearchState {
 }
 
 export class ToolboxSearch extends data.Component<ToolboxSearchProps, ToolboxSearchState> {
-
     constructor(props: ToolboxSearchProps) {
         super(props);
         this.state = {
@@ -923,17 +1080,35 @@ export class ToolboxSearch extends data.Component<ToolboxSearchProps, ToolboxSea
 
     renderCore() {
         const { searchAccessibilityLabel } = this.state;
-        return <div id="blocklySearchArea">
-            <div id="blocklySearchInput" className="ui fluid icon input" role="search">
-                <input ref="searchInput" type="text" placeholder={lf("Search...")}
-                    onFocus={this.searchImmediate} onKeyDown={this.handleKeyDown} onChange={this.handleChange}
-                    id="blocklySearchInputField" className="blocklySearchInputField"
-                    aria-label={lf("Search")}
-                    autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} />
-                <i className="search icon" role="presentation" aria-hidden="true"></i>
-                <div className="accessible-hidden" id="blocklySearchLabel" aria-live="polite"> {searchAccessibilityLabel} </div>
+        return (
+            <div id="blocklySearchArea">
+                <div id="blocklySearchInput" className="ui fluid icon input" role="search">
+                    <input
+                        ref="searchInput"
+                        type="text"
+                        placeholder={lf("Search...")}
+                        onFocus={this.searchImmediate}
+                        onKeyDown={this.handleKeyDown}
+                        onChange={this.handleChange}
+                        id="blocklySearchInputField"
+                        className="blocklySearchInputField"
+                        aria-label={lf("Search")}
+                        autoComplete="off"
+                        autoCorrect="off"
+                        autoCapitalize="off"
+                        spellCheck={false}
+                    />
+                    <i className="search icon" role="presentation" aria-hidden="true" />
+                    <div
+                        className="accessible-hidden"
+                        id="blocklySearchLabel"
+                        aria-live="polite"
+                    >
+                        {searchAccessibilityLabel}
+                    </div>
+                </div>
             </div>
-        </div>
+        );
     }
 }
 
@@ -959,9 +1134,11 @@ export class ToolboxTrashIcon extends data.Component<ToolboxTrashIconProps, {}> 
     }
 
     renderCore() {
-        return <div id="blocklyTrashIcon" style={this.getStyle()}>
-            <i className="trash icon" aria-hidden="true"></i>
-        </div>
+        return (
+            <div id="blocklyTrashIcon" style={this.getStyle()}>
+                <i className="trash icon" aria-hidden="true"></i>
+            </div>
+        );
     }
 }
 
@@ -974,14 +1151,16 @@ export class ToolboxStyle extends data.Component<ToolboxStyleProps, {}> {
         const { categories } = this.props;
         // Add inline CSS for each category used so that the tutorial engine is able to render blocks
         // and assosiate them with a specific category
-        return <style>
-            {categories.filter(c => !!c.color).map(category =>
-                `
-                span.docs.inlineblock.${category.nameid.toLowerCase()} {
-                    --inline-namespace-color: ${category.color || pxt.toolbox.getNamespaceColor(category.nameid.toLowerCase()) || "black"};
-                }
-                `
-            )}
-        </style>
+        return (
+            <style>
+                {categories.filter(c => !!c.color).map(category =>
+                    `
+                    span.docs.inlineblock.${category.nameid.toLowerCase()} {
+                        --inline-namespace-color: ${category.color || pxt.toolbox.getNamespaceColor(category.nameid.toLowerCase()) || "black"};
+                    }
+                    `
+                )}
+            </style>
+        );
     }
 }

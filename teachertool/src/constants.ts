@@ -55,6 +55,7 @@ export namespace Ticks {
     export const UserMenuSignout = "teachertool.usermenu.signout";
     export const UserMenuSignIn = "teachertool.usermenu.signin";
     export const SignedOutPanelSignIn = "teachertool.signedoutpanel.signin";
+    export const CriteriaFeedback = "teachertool.criteriafeedback"
 }
 
 namespace Misc {

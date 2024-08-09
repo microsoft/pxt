@@ -9,6 +9,7 @@ export interface CatalogCriteria {
     hideInCatalog?: boolean; // Whether the criteria should be hidden in the user-facing catalog
     maxCount?: number; // The maximum number of instances allowed for this criteria within a single checklist. Unlimited if undefined.
     tags?: string[]; // Tags to help categorize the criteria
+    requestFeedback?: boolean; // Whether the criteria should request feedback from the user
 }
 
 // An instance of a criteria in a checklist.

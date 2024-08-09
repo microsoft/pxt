@@ -219,19 +219,20 @@ function registerDeleteAllBlocks() {
 
             // Add a little animation to deleting.
             const DELAY = 10;
+            let eventGroup = Blockly.utils.idGenerator.genUid();
             const deleteNext = () => {
-                let eventGroup = Blockly.utils.idGenerator.genUid();
-                Blockly.Events.setGroup(eventGroup);
                 let block = deleteList.shift();
                 if (block) {
-                    if (block.workspace) {
+                    if (!block.isDeadOrDying()) {
+                        Blockly.Events.setGroup(eventGroup);
                         block.dispose(false, true);
+                        Blockly.Events.setGroup(false);
+
                         setTimeout(deleteNext, DELAY);
                     } else {
                         deleteNext();
                     }
                 }
-                Blockly.Events.setGroup(false);
             }
 
             pxt.tickEvent("blocks.context.delete", undefined, { interactiveConsent: true });
