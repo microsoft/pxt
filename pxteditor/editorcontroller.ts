@@ -66,7 +66,7 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
                     return getEditorAsync().then(projectView => {
                         const req = data as pxt.editor.EditorMessageRequest;
                         pxt.debug(`pxteditor: ${req.action}`);
-                        switch (req.action.toLowerCase()) {
+                        switch (req.action.toLowerCase() as pxt.editor.EditorMessageRequest["action"]) {
                             case "switchjavascript": return Promise.resolve().then(() => projectView.openJavaScript());
                             case "switchpython": return Promise.resolve().then(() => projectView.openPython());
                             case "switchblocks": return Promise.resolve().then(() => projectView.openBlocks());
