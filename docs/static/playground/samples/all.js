@@ -81,12 +81,6 @@
         },
         {
             chapter: "Field editors",
-            name: "Dropdowns",
-            id: "field-editors-dropdowns",
-            path: "field-editors/dropdowns"
-        },
-        {
-            chapter: "Field editors",
             name: "Grid picker",
             id: "field-editors-gridpicker",
             path: "field-editors/gridpicker"
