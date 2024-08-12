@@ -63,6 +63,7 @@ export class TextInputBubble extends Bubble {
         public readonly workspace: Blockly.WorkspaceSvg,
         protected anchor: Blockly.utils.Coordinate,
         protected ownerRect?: Blockly.utils.Rect,
+        protected readonly readOnly?: boolean
     ) {
         super(workspace, anchor, ownerRect);
         dom.addClass(this.svgRoot, 'blocklyTextInputBubble');
@@ -71,6 +72,10 @@ export class TextInputBubble extends Bubble {
         ));
         this.resizeGroup = this.createResizeHandle(this.svgRoot, workspace);
         this.setSize(this.DEFAULT_SIZE, true);
+
+        if (readOnly) {
+            this.deleteIcon.style.display = "none";
+        }
     }
 
     /** @returns the text of this bubble. */
@@ -119,6 +124,10 @@ export class TextInputBubble extends Bubble {
         ) as HTMLTextAreaElement;
         textArea.className = 'blocklyTextarea blocklyText';
         textArea.setAttribute('dir', this.workspace.RTL ? 'RTL' : 'LTR');
+
+        if (this.readOnly) {
+            textArea.setAttribute("disabled", "true");
+        }
 
         body.appendChild(textArea);
         inputRoot.appendChild(body);
@@ -216,7 +225,7 @@ export class TextInputBubble extends Bubble {
     }
 
     isDeletable(): boolean {
-        return true;
+        return !this.readOnly;
     }
 
     /** Handles mouse down events on the resize target. */
