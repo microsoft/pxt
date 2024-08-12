@@ -22,8 +22,7 @@ let iframeClient: IFrameEmbeddedClient;
  * Some commands may be async, use the ``id`` field to correlate to the original request.
  */
 export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) {
-    const allowEditorMessages = (pxt.appTarget.appTheme.allowParentController || pxt.shell.isControllerMode())
-        && pxt.BrowserUtils.isIFrame();
+    const allowEditorMessages = pxt.appTarget.appTheme.allowParentController || pxt.shell.isControllerMode();
     const allowExtensionMessages = pxt.appTarget.appTheme.allowPackageExtensions;
     const allowSimTelemetry = pxt.appTarget.appTheme.allowSimulatorTelemetry;
 
@@ -77,6 +76,7 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
                             case "closeflyout": return Promise.resolve().then(() => projectView.closeFlyout());
                             case "unloadproject": return Promise.resolve().then(() => projectView.unloadProjectAsync());
                             case "saveproject": return projectView.saveProjectAsync();
+                            case "compile": return projectView.compile();
                             case "redo": return Promise.resolve()
                                 .then(() => {
                                     const editor = projectView.editor;

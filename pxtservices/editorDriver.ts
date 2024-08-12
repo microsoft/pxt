@@ -141,6 +141,15 @@ export class EditorDriver extends IframeDriver {
         );
     }
 
+    async compile() {
+        await this.sendRequest(
+            {
+                type: "pxteditor",
+                action: "compile"
+            } as pxt.editor.EditorMessageRequest
+        );
+    }
+
     async undo() {
         await this.sendRequest(
             {

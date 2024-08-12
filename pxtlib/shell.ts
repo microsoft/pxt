@@ -6,7 +6,14 @@ namespace pxt.shell {
         Controller
     }
 
+    export enum ControllerMode {
+        None,
+        Basic,
+        App
+    }
+
     let layoutType: EditorLayoutType;
+    let controllerMode: ControllerMode = ControllerMode.None
 
     let editorReadonly: boolean = false;
     let noDefaultProject: boolean = false;
@@ -20,7 +27,11 @@ namespace pxt.shell {
                 // in iframe
                 || pxt.BrowserUtils.isIFrame();
             const nosandbox = /nosandbox=1/i.test(window.location.href);
-            const controller = /controller=1/i.test(window.location.href) && pxt.BrowserUtils.isIFrame();
+            const controllerMatch = /controller=(0|1|2)/i.exec(window.location.href)
+            if (controllerMatch && pxt.BrowserUtils.isIFrame()) {
+                controllerMode = parseInt(controllerMatch[1])
+            }
+            const controller = controllerMode !== ControllerMode.None
             const readonly = /readonly=1/i.test(window.location.href);
             const layout = /editorlayout=(widget|sandbox|ide)/i.exec(window.location.href);
             const noproject = /noproject=1/i.test(window.location.href);
@@ -73,6 +84,11 @@ namespace pxt.shell {
     export function isControllerMode() {
         init();
         return layoutType == EditorLayoutType.Controller;
+    }
+
+    export function getControllerMode() {
+        init();
+        return controllerMode;
     }
 
     export function isPyLangPref(): boolean {

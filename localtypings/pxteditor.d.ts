@@ -65,6 +65,7 @@ declare namespace pxt.editor {
         | "setscale"
         | "startactivity"
         | "saveproject"
+        | "compile"
         | "unloadproject"
         | "shareproject"
         | "savelocalprojectstocloud"
