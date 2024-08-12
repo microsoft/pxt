@@ -29,7 +29,7 @@ namespace pxt.shell {
             const nosandbox = /nosandbox=1/i.test(window.location.href);
             const controllerMatch = /controller=(0|1|2)/i.exec(window.location.href)
             if (controllerMatch && pxt.BrowserUtils.isIFrame()) {
-                controllerMode = parseInt(controllerMatch[1], 10)
+                controllerMode = parseInt(controllerMatch[1])
             }
             const controller = controllerMode !== ControllerMode.None
             const readonly = /readonly=1/i.test(window.location.href);
