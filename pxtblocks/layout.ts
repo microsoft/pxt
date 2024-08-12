@@ -15,49 +15,96 @@ export function patchBlocksFromOldWorkspace(blockInfo: ts.pxtc.BlocksInfo, oldWs
     const newWs = loadWorkspaceXml(newXml, true);
     // position blocks
     alignBlocks(blockInfo, oldWs, newWs);
-    // inject disabled blocks
-    return injectDisabledBlocks(oldWs, newWs);
-}
 
-function injectDisabledBlocks(oldWs: Blockly.Workspace, newWs: Blockly.Workspace): string {
+    // inject disabled blocks
     const oldDom = workspaceToDom(oldWs, true);
     const newDom = workspaceToDom(newWs, true);
-    pxt.Util.toArray(oldDom.childNodes)
-        .filter((n: ChildNode) => n.nodeType == Node.ELEMENT_NODE && (n as Element).localName == "block" && (<Element>n).getAttribute("disabled") == "true")
-        .filter((n: Element) => !!Blockly.Blocks[n.getAttribute("type")])
-        .forEach(n => newDom.appendChild(newDom.ownerDocument.importNode(n, true)));
-    const updatedXml = Blockly.Xml.domToText(newDom);
-    return updatedXml;
+
+    for (const child of oldDom.childNodes) {
+        if (
+            child.nodeType !== Node.ELEMENT_NODE ||
+            (child as Element).localName !== "block" ||
+            (child as Element).getAttribute("disabled") !== "true"
+        ) {
+            continue;
+        }
+
+        newDom.appendChild(newDom.ownerDocument.importNode(child, true));
+    }
+
+    return Blockly.Xml.domToText(newDom);
 }
 
-function alignBlocks(blockInfo: ts.pxtc.BlocksInfo, oldWs: Blockly.Workspace, newWs: Blockly.Workspace) {
+function alignBlocks(blockInfo: ts.pxtc.BlocksInfo, oldWs: Blockly.Workspace, newWs: Blockly.Workspace): void {
     let env: Environment;
-    let newBlocks: pxt.Map<Blockly.Block[]>; // support for multiple events with similar name
-    oldWs.getTopBlocks(false).filter(ob => ob.isEnabled())
-        .forEach(ob => {
-            const otp = ob.getRelativeToSurfaceXY();
-            if (otp && otp.x != 0 && otp.y != 0) {
-                if (!env) {
-                    env = mkEnv(oldWs, blockInfo);
-                    newBlocks = {};
-                    newWs.getTopBlocks(false).forEach(b => {
-                        const nkey = callKey(env, b);
-                        const nbs = newBlocks[nkey] || [];
-                        nbs.push(b);
-                        newBlocks[nkey] = nbs;
-                    });
-                }
-                const oldKey = callKey(env, ob);
-                const newBlock = (newBlocks[oldKey] || []).shift();
+    let keyToBlocks: pxt.Map<Blockly.Block[]>; // support for multiple events with similar name
+    const oldTopBlocks = oldWs.getTopBlocks(false).filter(ob => ob.isEnabled());
+    const newTopBlocks = newWs.getTopBlocks(false);
 
-                // FIXME: I don't think we're really supposed to edit the block coordinate this way
-                if (newBlock) {
-                    const coord = newBlock.getRelativeToSurfaceXY();
-                    coord.x = otp.x;
-                    coord.y = otp.y;
-                }
+    let textToComments: pxt.Map<Blockly.comments.WorkspaceComment[]>;
+    const oldComments = oldWs.getTopComments(false);
+    const newComments = newWs.getTopComments(false);
+
+    for (const oldBlock of oldTopBlocks) {
+        const oldPosition = oldBlock.getRelativeToSurfaceXY();
+        if (!(oldPosition && oldPosition.x != 0 && oldPosition.y != 0)) continue;
+
+        if (!env) {
+            env = mkEnv(oldWs, blockInfo);
+            keyToBlocks = {};
+            for (const newBlock of newTopBlocks) {
+                const newBlockKey = callKey(env, newBlock);
+                const keyBlockList = keyToBlocks[newBlockKey] || [];
+                keyBlockList.push(newBlock);
+                keyToBlocks[newBlockKey] = keyBlockList;
             }
-        })
+        }
+        const oldBlockKey = callKey(env, oldBlock);
+        const newBlock = (keyToBlocks[oldBlockKey] || []).shift();
+
+        // FIXME: I don't think we're really supposed to edit the block coordinate this way
+        if (newBlock) {
+            const coord = newBlock.getRelativeToSurfaceXY();
+            coord.x = oldPosition.x;
+            coord.y = oldPosition.y;
+        }
+    }
+
+    for (const oldComment of oldComments) {
+        const oldPosition = oldComment.getRelativeToSurfaceXY();
+
+        if (!(oldPosition && oldPosition.x != 0 && oldPosition.y != 0)) continue;
+
+        if (!textToComments) {
+            textToComments = {};
+            for (const newComment of newComments) {
+                const text = normalizeCommentText(newComment.getText());
+                const keyCommentList = textToComments[text] || [];
+                keyCommentList.push(newComment);
+                textToComments[text] = keyCommentList;
+            }
+        }
+
+        const text = normalizeCommentText(oldComment.getText());
+        const newComment = (textToComments[text] || []).shift();
+
+        if (newComment) {
+            const oldSize = oldComment.getSize();
+            // Restore the old comment text because sometimes the compile/decompile loop
+            // can alter the whitespace a bit
+            newComment.setText(oldComment.getText());
+            newComment.setSize(oldSize);
+
+            const coord = newComment.getRelativeToSurfaceXY();
+            coord.x = oldPosition.x;
+            coord.y = oldPosition.y;
+        }
+    }
+}
+
+function normalizeCommentText(text: string) {
+    text = text.replace(/\n/g, "");
+    return text.trim();
 }
 
 declare function unescape(escapeUri: string): string;
