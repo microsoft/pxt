@@ -4,7 +4,8 @@ import * as Blockly from "blockly";
 import { FieldCustom, FieldCustomOptions } from "./field_utils";
 
 export interface FieldTextDropdownOptions extends FieldCustomOptions {
-    values: any;
+    values?: string;
+    data?: string;
 }
 
 export class BaseFieldTextDropdown extends Blockly.FieldTextInput {
@@ -38,6 +39,21 @@ export class BaseFieldTextDropdown extends Blockly.FieldTextInput {
 
         if (!this.dropDownOpen_) this.showDropdown_();
         Blockly.Touch.clearTouchIdentifier();
+    }
+
+    override doValueUpdate_(newValue: string) {
+        if (
+            newValue?.length > 1 &&
+            newValue.charAt(0) === newValue.charAt(newValue.length - 1) &&
+            (
+                newValue.charAt(0) === "'" ||
+                newValue.charAt(0) === '"'
+            )
+        ) {
+            newValue = newValue.slice(1, newValue.length - 1)
+        }
+
+        super.doValueUpdate_(newValue);
     }
 
     getOptions(useCache?: boolean): Blockly.MenuOption[] {
@@ -268,6 +284,57 @@ export class FieldTextDropdown extends BaseFieldTextDropdown implements FieldCus
     public isFieldCustom_ = true;
 
     constructor(text: string, options: FieldTextDropdownOptions, opt_validator?: Blockly.FieldValidator) {
-        super(text, options.values, opt_validator);
+        super(text, parseDropdownOptions(options), opt_validator);
     }
+}
+
+function parseDropdownOptions(options: FieldTextDropdownOptions): [string, string][] {
+    if (options.values) {
+        return options.values.split(",").map(v => [v, v]);
+    }
+    else if (options.data) {
+        let result: [string, string][];
+        try {
+            const data = JSON.parse(options.data);
+            if (Array.isArray(data) && data.length) {
+                if (isStringArray(data)) {
+                    result = data.map(v => [v, v]);
+                }
+                else {
+                    let foundError = false;
+                    for (const value of data) {
+                        if (!Array.isArray(value) || value.length !== 2 || !isStringArray(value)) {
+                            foundError = true;
+                            break;
+                        }
+                    }
+
+                    if (!foundError) {
+                        result = data;
+                    }
+                }
+            }
+        }
+        catch (e) {
+            // parse error
+        }
+
+        if (result) {
+            return result;
+        }
+        else {
+            console.warn("Could not parse textdropdown data field");
+        }
+    }
+
+    return [];
+}
+
+function isStringArray(arr: any[]): arr is string[] {
+    for (const val of arr) {
+        if (typeof val !== "string") {
+            return false;
+        }
+    }
+    return true;
 }
