@@ -5,6 +5,7 @@ import "mocha";
 import * as chai from "chai";
 import * as dmp from "diff-match-patch";
 import * as pxteditor from "../../pxteditor";
+import { getTextAtTime, HistoryFile, updateHistory } from "../../pxteditor/history";
 
 pxt.appTarget = {
     versions: {
@@ -221,7 +222,7 @@ describe("updateHistory", () => {
         for (let i = 1; i < testVersions.length; i++) {
             let nextText = { ...testVersions[i] };
 
-            pxteditor.history.updateHistory(prevText, nextText, i * ONE_HOUR, [], diffText, patchText);
+            pxteditor.history.updateHistory(prevText, nextText, i * ONE_HOUR, i * ONE_HOUR, [], diffText, patchText);
 
             prevText = nextText;
         }
@@ -247,7 +248,7 @@ describe("updateHistory", () => {
         for (let i = 1; i < testVersions.length; i++) {
             let nextText = { ...testVersions[i] };
 
-            pxteditor.history.updateHistory(prevText, nextText, i * ONE_MINUTE, [], diffText, patchText);
+            pxteditor.history.updateHistory(prevText, nextText, i * ONE_MINUTE, i * ONE_MINUTE, [], diffText, patchText);
 
             prevText = nextText;
         }
@@ -276,7 +277,7 @@ describe("updateHistory", () => {
         for (let i = 1; i < testVersions.length; i++) {
             let nextText = { ...testVersions[i] };
 
-            pxteditor.history.updateHistory(prevText, nextText, i * ONE_HOUR, [], diffText, patchText);
+            pxteditor.history.updateHistory(prevText, nextText, i * ONE_HOUR, i * ONE_HOUR, [], diffText, patchText);
 
             prevText = nextText;
         }
@@ -305,7 +306,7 @@ describe("updateHistory", () => {
         for (let i = 1; i < testVersions.length; i++) {
             let nextText = { ...testVersions[i] };
 
-            pxteditor.history.updateHistory(prevText, nextText, i * period, [], diffText, patchText);
+            pxteditor.history.updateHistory(prevText, nextText, i * period, i * period, [], diffText, patchText);
 
             prevText = nextText;
         }
@@ -326,4 +327,117 @@ describe("updateHistory", () => {
             chai.expect(currentText[pxt.CONFIG_NAME]).to.equal(comp[pxt.CONFIG_NAME])
         }
     });
-})
+
+    it("should restore to the version on the timestamp", () => {
+        const project = createProjectText();
+        const history = JSON.parse(project[pxt.HISTORY_FILE]) as HistoryFile;
+
+        for (const entry of history.entries) {
+            const { files } = getTextAtTime(project, history, entry.timestamp, patchText);
+
+            chai.expect(files[pxt.MAIN_TS]).equals(entry.timestamp.toString());
+        }
+    });
+});
+
+function createProjectText(): pxt.workspace.ScriptText {
+    // A realistic timeline of project edits
+    const dates = [
+        new Date(2024, 8, 13, 8, 0, 0, 0),
+        new Date(2024, 8, 13, 8, 15, 0, 0),
+        new Date(2024, 8, 13, 8, 17, 0, 0),
+        new Date(2024, 8, 13, 8, 23, 0, 0),
+        new Date(2024, 8, 13, 8, 24, 0, 0),
+        new Date(2024, 8, 13, 8, 25, 0, 0),
+        new Date(2024, 8, 13, 8, 45, 0, 0),
+        new Date(2024, 8, 13, 8, 47, 0, 0),
+        new Date(2024, 8, 13, 9, 13, 0, 0),
+        new Date(2024, 8, 13, 9, 27, 0, 0),
+        new Date(2024, 8, 13, 9, 34, 0, 0),
+        new Date(2024, 8, 13, 9, 52, 0, 0),
+        new Date(2024, 8, 13, 9, 54, 0, 0),
+        new Date(2024, 8, 13, 9, 56, 0, 0),
+        new Date(2024, 8, 13, 10, 5, 0, 0),
+        new Date(2024, 8, 13, 10, 7, 0, 0),
+        new Date(2024, 8, 15, 8, 0, 0, 0),
+        new Date(2024, 8, 15, 8, 15, 0, 0),
+        new Date(2024, 8, 15, 8, 15, 20, 0),
+        new Date(2024, 8, 15, 8, 15, 45, 0),
+        new Date(2024, 8, 15, 8, 16, 0, 0),
+        new Date(2024, 8, 15, 8, 16, 20, 0),
+        new Date(2024, 8, 15, 8, 16, 45, 0),
+        new Date(2024, 8, 15, 8, 17, 0, 0),
+        new Date(2024, 8, 15, 8, 17, 20, 0),
+        new Date(2024, 8, 15, 8, 17, 45, 0),
+        new Date(2024, 8, 15, 8, 18, 0, 0),
+        new Date(2024, 8, 15, 8, 18, 20, 0),
+        new Date(2024, 8, 15, 8, 18, 45, 0),
+        new Date(2024, 8, 15, 8, 19, 0, 0),
+        new Date(2024, 8, 15, 8, 19, 20, 0),
+        new Date(2024, 8, 15, 8, 19, 45, 0),
+        new Date(2024, 8, 15, 8, 20, 0, 0),
+        new Date(2024, 8, 15, 8, 20, 20, 0),
+        new Date(2024, 8, 15, 8, 20, 45, 0),
+        new Date(2024, 8, 15, 8, 21, 0, 0),
+        new Date(2024, 8, 15, 8, 21, 20, 0),
+        new Date(2024, 8, 15, 8, 21, 45, 0),
+        new Date(2024, 8, 15, 8, 22, 0, 0),
+        new Date(2024, 8, 15, 8, 22, 20, 0),
+        new Date(2024, 8, 15, 8, 22, 45, 0),
+        new Date(2024, 8, 15, 8, 23, 0, 0),
+        new Date(2024, 8, 15, 8, 23, 20, 0),
+        new Date(2024, 8, 15, 8, 23, 45, 0),
+        new Date(2024, 8, 15, 8, 24, 0, 0),
+        new Date(2024, 8, 15, 8, 24, 20, 0),
+        new Date(2024, 8, 15, 8, 24, 45, 0),
+        new Date(2024, 8, 15, 8, 25, 0, 0),
+        new Date(2024, 8, 15, 8, 25, 20, 0),
+        new Date(2024, 8, 15, 8, 25, 45, 0),
+        new Date(2024, 8, 15, 8, 26, 0, 0),
+        new Date(2024, 8, 15, 8, 26, 20, 0),
+        new Date(2024, 8, 15, 8, 26, 45, 0),
+        new Date(2024, 8, 15, 8, 27, 0, 0),
+        new Date(2024, 8, 15, 8, 27, 20, 0),
+        new Date(2024, 8, 15, 8, 27, 45, 0),
+        new Date(2024, 8, 15, 8, 28, 0, 0),
+        new Date(2024, 8, 15, 8, 28, 20, 0),
+        new Date(2024, 8, 15, 8, 28, 45, 0),
+        new Date(2024, 8, 15, 8, 29, 0, 0),
+        new Date(2024, 8, 15, 8, 29, 20, 0),
+        new Date(2024, 8, 15, 8, 29, 45, 0),
+        new Date(2024, 8, 15, 8, 30, 0, 0),
+        new Date(2024, 8, 15, 8, 30, 20, 0),
+        new Date(2024, 8, 15, 8, 30, 45, 0),
+        new Date(2024, 8, 18, 8, 45, 0, 0),
+    ];
+
+    let currentText = {
+        [pxt.MAIN_TS]: "start"
+    };
+
+    // At each time, push an edit that contains the
+    // timestamp
+    let prevEditTime: number;
+    for (const date of dates) {
+        const newText = {
+            ...currentText,
+            [pxt.MAIN_TS]: "" + date.getTime()
+        };
+
+        updateHistory(
+            currentText,
+            newText,
+            prevEditTime || date.getTime(),
+            date.getTime(),
+            [],
+            diffText,
+            patchText
+        )
+
+        currentText = {
+            ...newText
+        };
+    }
+
+    return currentText;
+}

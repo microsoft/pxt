@@ -6,7 +6,7 @@ import { Button } from "../../react-common/components/controls/Button";
 import { hideDialog, warningNotification } from "./core";
 import { FocusTrap } from "../../react-common/components/controls/FocusTrap";
 import { classList } from "../../react-common/components/util";
-import { HistoryFile, applySnapshot } from "../../pxteditor/history";
+import { HistoryFile, applySnapshot, getTextAtTime, patchConfigEditorVersion } from "../../pxteditor/history";
 
 import ScriptText = pxt.workspace.ScriptText;
 
@@ -338,7 +338,7 @@ async function getTextAtTimestampAsync(text: ScriptText, history: HistoryFile, t
 
     if (time.kind === "snapshot") {
         const snapshot = history.snapshots.find(s => s.timestamp === time.timestamp)
-        return patchPxtJson(applySnapshot(text, snapshot.text), snapshot.editorVersion);
+        return patchConfigEditorVersion(applySnapshot(text, snapshot.text), snapshot.editorVersion);
     }
     else if (time.kind === "share") {
         const share = history.shares.find(s => s.timestamp === time.timestamp);
@@ -351,39 +351,7 @@ async function getTextAtTimestampAsync(text: ScriptText, history: HistoryFile, t
         };
     }
 
-    let currentText = text;
-
-    for (let i = 0; i < history.entries.length; i++) {
-        const index = history.entries.length - 1 - i;
-        const entry = history.entries[index];
-        currentText = workspace.applyDiff(currentText, entry);
-        if (entry.timestamp === time.timestamp) {
-            const version = index > 0 ? history.entries[index - 1].editorVersion : entry.editorVersion;
-            return patchPxtJson(currentText, version)
-        }
-    }
-
-    return { files: currentText, editorVersion };
-}
-
-function patchPxtJson(text: ScriptText, editorVersion: string): Project {
-    text = {...text};
-
-    // Attempt to update the version in pxt.json
-    try {
-        const config = JSON.parse(text[pxt.CONFIG_NAME]) as pxt.PackageConfig;
-        if (config.targetVersions) {
-            config.targetVersions.target = editorVersion;
-        }
-        text[pxt.CONFIG_NAME] = JSON.stringify(config, null, 4);
-    }
-    catch (e) {
-    }
-
-    return {
-        files: text,
-        editorVersion
-    };
+    return workspace.restoreTextToTime(text, history, time.timestamp);
 }
 
 function formatTime(time: number) {
