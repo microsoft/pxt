@@ -6,7 +6,7 @@ import { Button } from "../../react-common/components/controls/Button";
 import { hideDialog, warningNotification } from "./core";
 import { FocusTrap } from "../../react-common/components/controls/FocusTrap";
 import { classList } from "../../react-common/components/util";
-import { HistoryFile, applySnapshot, getTextAtTime, patchConfigEditorVersion } from "../../pxteditor/history";
+import { HistoryFile, applySnapshot, patchConfigEditorVersion } from "../../pxteditor/history";
 
 import ScriptText = pxt.workspace.ScriptText;
 
