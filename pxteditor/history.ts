@@ -4,6 +4,7 @@ export interface HistoryFile {
     entries: HistoryEntry[];
     snapshots: SnapshotEntry[];
     shares: ShareEntry[];
+    lastSaveTime: number;
 }
 
 export interface HistoryEntry {
@@ -284,7 +285,7 @@ export function parseHistoryFile(text: string): HistoryFile {
     return result;
 }
 
-export function updateHistory(previousText: ScriptText, toWrite: ScriptText, lastEditTime: number, currentTime: number, shares: pxt.workspace.PublishVersion[], diff: (a: string, b: string) => unknown, patch: (p: unknown, text: string) => string) {
+export function updateHistory(previousText: ScriptText, toWrite: ScriptText, currentTime: number, shares: pxt.workspace.PublishVersion[], diff: (a: string, b: string) => unknown, patch: (p: unknown, text: string) => string) {
     let history: HistoryFile;
 
     // Always base the history off of what was in the previousText,
@@ -292,12 +293,16 @@ export function updateHistory(previousText: ScriptText, toWrite: ScriptText, las
     // in some way
     if (previousText[pxt.HISTORY_FILE]) {
         history = parseHistoryFile(previousText[pxt.HISTORY_FILE]);
+        if (history.lastSaveTime === undefined) {
+            history.lastSaveTime = currentTime;
+        }
     }
     else {
         history = {
             entries: [],
             snapshots: [takeSnapshot(previousText, currentTime - 1)],
-            shares: []
+            shares: [],
+            lastSaveTime: currentTime
         };
     }
 
@@ -321,7 +326,13 @@ export function updateHistory(previousText: ScriptText, toWrite: ScriptText, las
     // combine it with the previous diff if it's been less than the
     // interval time
     let shouldCombine = false;
-    if (history.entries.length > 1) {
+    if (history.entries.length === 1) {
+        const topTime = history.entries[history.entries.length - 1].timestamp;
+        if (currentTime - topTime < diffInterval()) {
+            shouldCombine = true;
+        }
+    }
+    else if (history.entries.length > 1) {
         const topTime = history.entries[history.entries.length - 1].timestamp;
         const prevTime = history.entries[history.entries.length - 2].timestamp;
 
@@ -335,18 +346,20 @@ export function updateHistory(previousText: ScriptText, toWrite: ScriptText, las
         const prevEntry = history.entries.pop();
         const prevText = applyDiff(previousText, prevEntry, patch);
 
-        const diffed = diffScriptText(prevText, toWrite, currentTime, diff);
+        const diffed = diffScriptText(prevText, toWrite, prevEntry.timestamp, diff);
         if (diffed) {
             history.entries.push(diffed);
         }
     }
     else {
-        const diffed = diffScriptText(previousText, toWrite, lastEditTime, diff);
+        const diffed = diffScriptText(previousText, toWrite, history.lastSaveTime, diff);
 
         if (diffed) {
             history.entries.push(diffed);
         }
     }
+
+    history.lastSaveTime = currentTime;
 
     // Finally, update the snapshots. These are failsafes in case something
     // goes wrong with the diff history. We keep one snapshot per interval for
@@ -387,7 +400,8 @@ export function pushSnapshotOnHistory(text: ScriptText, currentTime: number) {
         history = {
             entries: [],
             snapshots: [],
-            shares: []
+            shares: [],
+            lastSaveTime: currentTime
         };
     }
 
@@ -406,7 +420,8 @@ export function updateShareHistory(text: ScriptText, currentTime: number, shares
         history = {
             entries: [],
             snapshots: [],
-            shares: []
+            shares: [],
+            lastSaveTime: currentTime
         };
     }
 
@@ -428,11 +443,11 @@ export function getTextAtTime(text: ScriptText, history: HistoryFile, time: numb
     for (let i = 0; i < history.entries.length; i++) {
         const index = history.entries.length - 1 - i;
         const entry = history.entries[index];
+        currentText = applyDiff(currentText, entry, patch);
         if (entry.timestamp === time) {
             const version = index > 0 ? history.entries[index - 1].editorVersion : entry.editorVersion;
             return patchConfigEditorVersion(currentText, version)
         }
-        currentText = applyDiff(currentText, entry, patch);
     }
 
     return { files: currentText, editorVersion: pxt.appTarget.versions.target };

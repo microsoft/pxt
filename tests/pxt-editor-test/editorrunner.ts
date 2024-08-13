@@ -207,7 +207,7 @@ for (let i = 0; i < 20; i++) {
     testVersions.push({
         [pxt.MAIN_BLOCKS]: makeFile(),
         [pxt.MAIN_TS]: makeFile(),
-        [pxt.CONFIG_NAME]: JSON.stringify(config)
+        [pxt.CONFIG_NAME]: JSON.stringify(config, null, 4)
     });
 }
 
@@ -222,7 +222,7 @@ describe("updateHistory", () => {
         for (let i = 1; i < testVersions.length; i++) {
             let nextText = { ...testVersions[i] };
 
-            pxteditor.history.updateHistory(prevText, nextText, i * ONE_HOUR, i * ONE_HOUR, [], diffText, patchText);
+            pxteditor.history.updateHistory(prevText, nextText, i * ONE_HOUR, [], diffText, patchText);
 
             prevText = nextText;
         }
@@ -248,21 +248,32 @@ describe("updateHistory", () => {
         for (let i = 1; i < testVersions.length; i++) {
             let nextText = { ...testVersions[i] };
 
-            pxteditor.history.updateHistory(prevText, nextText, i * ONE_MINUTE, i * ONE_MINUTE, [], diffText, patchText);
+            pxteditor.history.updateHistory(prevText, nextText, i * ONE_MINUTE, [], diffText, patchText);
 
             prevText = nextText;
         }
 
         const history = pxteditor.history.parseHistoryFile(prevText[pxt.HISTORY_FILE]);
 
+        for (const entry of history.entries) {
+            console.log(new Date(entry.timestamp).toString())
+        }
+
         chai.expect(history.entries.length).to.equal(Math.floor((testVersions.length / 5)) + 1);
 
-        let currentText = prevText;
         for (let i = 0; i < history.entries.length; i++) {
             const index = history.entries.length - 1 - i;
-            currentText = pxteditor.history.applyDiff(currentText, history.entries[index], patchText);
+            const timestamp = history.entries[index].timestamp;
+            const currentText = getTextAtTime(prevText, history, timestamp, patchText).files;
 
-            const compIndex = index ? Math.floor(history.entries[index - 1].timestamp / ONE_MINUTE) : 0;
+            for (let j = 0; j < testVersions.length; j++) {
+                if (testVersions[j][pxt.MAIN_BLOCKS] === currentText[pxt.MAIN_BLOCKS]) {
+                    console.log(`timestamp: ${timestamp} index: ${index} versionIndex: ${j}`);
+                    break;
+                }
+            }
+
+            const compIndex = index ? Math.floor(history.entries[index].timestamp / ONE_MINUTE) : 0;
             const comp = testVersions[compIndex];
 
             chai.expect(currentText[pxt.MAIN_BLOCKS]).to.equal(comp[pxt.MAIN_BLOCKS])
@@ -277,7 +288,7 @@ describe("updateHistory", () => {
         for (let i = 1; i < testVersions.length; i++) {
             let nextText = { ...testVersions[i] };
 
-            pxteditor.history.updateHistory(prevText, nextText, i * ONE_HOUR, i * ONE_HOUR, [], diffText, patchText);
+            pxteditor.history.updateHistory(prevText, nextText, i * ONE_HOUR, [], diffText, patchText);
 
             prevText = nextText;
         }
@@ -306,7 +317,7 @@ describe("updateHistory", () => {
         for (let i = 1; i < testVersions.length; i++) {
             let nextText = { ...testVersions[i] };
 
-            pxteditor.history.updateHistory(prevText, nextText, i * period, i * period, [], diffText, patchText);
+            pxteditor.history.updateHistory(prevText, nextText, i * period, [], diffText, patchText);
 
             prevText = nextText;
         }
@@ -417,7 +428,6 @@ function createProjectText(): pxt.workspace.ScriptText {
 
     // At each time, push an edit that contains the
     // timestamp
-    let prevEditTime: number;
     for (const date of dates) {
         const newText = {
             ...currentText,
@@ -427,7 +437,6 @@ function createProjectText(): pxt.workspace.ScriptText {
         updateHistory(
             currentText,
             newText,
-            prevEditTime || date.getTime(),
             date.getTime(),
             [],
             diffText,

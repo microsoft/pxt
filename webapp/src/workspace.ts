@@ -663,10 +663,8 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
                         toWrite = { ...previous.text };
                     }
 
-                    const lastEditTime = h.recentUse * 1000;
-
                     if (toWrite) {
-                        pxteditor.history.updateHistory(previous.text, toWrite, lastEditTime || Date.now(), Date.now(), h.pubVersions || [], diffText, patchText);
+                        pxteditor.history.updateHistory(previous.text, toWrite, Date.now(), h.pubVersions || [], diffText, patchText);
                     }
                 }
             }

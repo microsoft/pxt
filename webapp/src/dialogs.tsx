@@ -890,7 +890,8 @@ export async function showTurnBackTimeDialogAsync(header: pxt.workspace.Header, 
             newHistory = {
                 entries:  history.entries.slice(0, history.entries.findIndex(e => e.timestamp === timestamp)),
                 snapshots: history.snapshots.filter(s => s.timestamp <= timestamp),
-                shares: history.shares.filter(s => s.timestamp <= timestamp)
+                shares: history.shares.filter(s => s.timestamp <= timestamp),
+                lastSaveTime: timestamp
             }
         }
 
