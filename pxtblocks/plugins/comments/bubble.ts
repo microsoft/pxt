@@ -56,7 +56,7 @@ export abstract class Bubble implements Blockly.IDeletable {
 
     private topBar: SVGRectElement;
 
-    private deleteIcon: SVGImageElement;
+    protected deleteIcon: SVGImageElement;
 
     private collapseIcon: SVGImageElement;
 
