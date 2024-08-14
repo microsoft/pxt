@@ -286,7 +286,7 @@ declare interface String {
      */
     //% shim=String_::charCodeAt weight=46
     //% help=text/char-code-at
-    //% blockId="string_charcode_at" block="char code from $this=text|at $pos" blockNamespace="text"
+    //% blockId="string_charcode_at" block="char code from $this=text|at $index" blockNamespace="text"
     //% this.defl="this"
     charCodeAt(index: number): number;
 
