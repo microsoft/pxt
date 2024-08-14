@@ -15,7 +15,6 @@ import { FunctionManager } from "./functionManager";
 import { MsgKey } from "./msg";
 import { newFunctionMutation } from "./blocks/functionDeclarationBlock";
 import { FunctionDefinitionBlock } from "./blocks/functionDefinitionBlock";
-import { ArgumentReporterBlock } from "./blocks/argumentReporterBlocks";
 
 export type StringMap<T> = { [index: string]: T };
 
