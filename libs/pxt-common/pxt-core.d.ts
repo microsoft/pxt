@@ -284,7 +284,10 @@ declare interface String {
      * Return the Unicode value of the character at the specified location.
      * @param index The zero-based index of the desired character. If there is no character at the specified index, NaN is returned.
      */
-    //% shim=String_::charCodeAt
+    //% shim=String_::charCodeAt weight=46
+    //% help=text/char-code-at
+    //% blockId="string_charcode_at" block="char code from $this=text|at $index" blockNamespace="text"
+    //% this.defl="this"
     charCodeAt(index: number): number;
 
     /**
