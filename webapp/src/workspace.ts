@@ -20,6 +20,7 @@ import U = pxt.Util;
 import Cloud = pxt.Cloud;
 
 import * as pxtblockly from "../../pxtblocks";
+import { getTextAtTime, HistoryFile } from "../../pxteditor/history";
 
 
 // Avoid importing entire crypto-js
@@ -735,8 +736,8 @@ function patchText(patch: unknown, a: string) {
     return differ.patch_apply(patch as any, a)[0]
 }
 
-export function applyDiff(text: ScriptText, history: pxteditor.history.HistoryEntry) {
-    return pxteditor.history.applyDiff(text, history, patchText);
+export function restoreTextToTime(text: ScriptText, history: HistoryFile, timestamp: number) {
+    return getTextAtTime(text, history, timestamp, patchText);
 }
 
 export function importAsync(h: Header, text: ScriptText, isCloud = false) {
