@@ -15,6 +15,7 @@ import { FunctionManager } from "./functionManager";
 import { MsgKey } from "./msg";
 import { newFunctionMutation } from "./blocks/functionDeclarationBlock";
 import { FunctionDefinitionBlock } from "./blocks/functionDefinitionBlock";
+import { ArgumentReporterBlock } from "./blocks/argumentReporterBlocks";
 
 export type StringMap<T> = { [index: string]: T };
 
@@ -213,6 +214,12 @@ export function mutateCallersAndDefinition(name: string, ws: Blockly.Workspace, 
                         // Find the argument ID corresponding to this old argument name.
                         let argName = d.getFieldValue("VALUE");
                         let argId = oldArgNamesToIds[argName];
+
+                        // This argument reporter must belong to a different block. For example,
+                        // a block with handlerStatement=1 and draggableParameters=reporter
+                        if (argId === undefined) {
+                            return;
+                        }
 
                         if (!idsToNewArgNames[argId]) {
                             // That arg ID no longer exists on the new mutation, delete this

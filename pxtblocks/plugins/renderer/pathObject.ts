@@ -121,7 +121,7 @@ export class PathObject extends Blockly.zelos.PathObject {
         }
     }
 
-    setHasDottedOutllineOnHover(enabled: boolean) {
+    setHasDottedOutlineOnHover(enabled: boolean) {
         this.hasDottedOutlineOnHover = enabled;
 
         if (enabled) {
