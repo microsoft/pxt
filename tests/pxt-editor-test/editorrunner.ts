@@ -255,23 +255,12 @@ describe("updateHistory", () => {
 
         const history = pxteditor.history.parseHistoryFile(prevText[pxt.HISTORY_FILE]);
 
-        for (const entry of history.entries) {
-            console.log(new Date(entry.timestamp).toString())
-        }
-
         chai.expect(history.entries.length).to.equal(Math.floor((testVersions.length / 5)) + 1);
 
         for (let i = 0; i < history.entries.length; i++) {
             const index = history.entries.length - 1 - i;
             const timestamp = history.entries[index].timestamp;
             const currentText = getTextAtTime(prevText, history, timestamp, patchText).files;
-
-            for (let j = 0; j < testVersions.length; j++) {
-                if (testVersions[j][pxt.MAIN_BLOCKS] === currentText[pxt.MAIN_BLOCKS]) {
-                    console.log(`timestamp: ${timestamp} index: ${index} versionIndex: ${j}`);
-                    break;
-                }
-            }
 
             const compIndex = index ? Math.floor(history.entries[index].timestamp / ONE_MINUTE) : 0;
             const comp = testVersions[compIndex];
