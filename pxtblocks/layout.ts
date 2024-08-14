@@ -22,9 +22,9 @@ export function patchBlocksFromOldWorkspace(blockInfo: ts.pxtc.BlocksInfo, oldWs
 
     for (const child of oldDom.childNodes) {
         if (
-            child.nodeType !== Node.ELEMENT_NODE ||
-            (child as Element).localName !== "block" ||
-            (child as Element).getAttribute("disabled") !== "true"
+            !pxt.BrowserUtils.isElement(child) ||
+            child.localName !== "block" ||
+            child.getAttribute("disabled") !== "true"
         ) {
             continue;
         }
