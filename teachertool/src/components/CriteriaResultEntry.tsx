@@ -96,6 +96,8 @@ export const CriteriaResultEntry: React.FC<CriteriaResultEntryProps> = ({ criter
     const catalogCriteria = criteriaInstance ? getCatalogCriteriaWithId(criteriaInstance.catalogCriteriaId) : undefined;
 
     const isInProgress = evalStatus === EvaluationStatus.InProgress;
+    const isNotStarted = evalStatus === EvaluationStatus.NotStarted;
+
     return (
         <>
             {catalogCriteria && criteriaInstance && (
@@ -120,15 +122,15 @@ export const CriteriaResultEntry: React.FC<CriteriaResultEntryProps> = ({ criter
                         </div>
                     )}
 
-                    <div className={css["separator"]}></div>
-
                     {/* Criteria Response Feedback (For us, not student feedback) */}
-                    {!isInProgress && catalogCriteria.requestFeedback && (
+                    {!isInProgress && !isNotStarted && catalogCriteria.requestFeedback && (
                         <CriteriaFeedback
                             catalogCriteriaId={catalogCriteria.id}
                             className={classList("no-print", css["criteria-feedback"])}
                         />
                     )}
+
+                    <div className={css["separator"]}></div>
                 </div>
             )}
         </>
