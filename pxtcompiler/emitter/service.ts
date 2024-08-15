@@ -1020,6 +1020,10 @@ namespace ts.pxtc.service {
             const { apis } = lastApiInfo;
             const blocksInfo = blocksInfoOp(apis, bannedCategories);
             const checker = service && service.getProgram().getTypeChecker();
+            // needed for blocks that have parent wraps like music.play(...)
+            // with this snippet call, we are dragging a block from the toolbox,
+            // so we want to include the parent snippet
+            const includeParentSnippet = true;
             const snippetContext = {
                 apis,
                 blocksInfo,
@@ -1027,6 +1031,7 @@ namespace ts.pxtc.service {
                 bannedCategories,
                 screenSize,
                 checker,
+                includeParentSnippet
             }
             const snippetNode = getSnippet(snippetContext, fn, n as FunctionLikeDeclaration, isPython)
             const snippet = snippetStringify(snippetNode)
