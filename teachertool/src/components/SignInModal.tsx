@@ -1,4 +1,4 @@
-import { useContext, } from "react";
+import { useContext } from "react";
 import { AppStateContext } from "../state/appStateContext";
 import { SignInModal as RCSignInModal } from "react-common/components/profile/SignInModal";
 import { hideModal } from "../transforms/hideModal";

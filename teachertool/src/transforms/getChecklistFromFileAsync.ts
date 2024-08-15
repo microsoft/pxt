@@ -12,7 +12,9 @@ export async function getChecklistFromFileAsync(file: File, allowPartial: boolea
         const checklistVerificationResult = verifyChecklistIntegrity(checklist);
 
         if (!checklistVerificationResult.valid) {
-            checklist = allowPartial ? { ...checklist, criteria: checklistVerificationResult.validCriteria } : undefined;
+            checklist = allowPartial
+                ? { ...checklist, criteria: checklistVerificationResult.validCriteria }
+                : undefined;
         }
     }
 

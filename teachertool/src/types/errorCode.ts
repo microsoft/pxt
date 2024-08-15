@@ -28,7 +28,8 @@ export enum ErrorCode {
     askAIQuestion = "askAIQuestion",
     missingTag = "missingTag",
     noCatalogCriteria = "noCatalogCriteria",
+    criteriaInstanceNotFound = "criteriaInstanceNotFound",
     signInFailed = "signInFailed",
     loginApiError = "loginApiError",
-    authCheckFailed = "authCheckFailed"
+    authCheckFailed = "authCheckFailed",
 }

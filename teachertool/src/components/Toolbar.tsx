@@ -10,14 +10,22 @@ interface ToolbarButtonProps extends ButtonProps {
 
 const ToolbarButton: React.FC<ToolbarButtonProps> = props => {
     return (
-        <Button {...props} className={classList(css["toolbar-button"], "tt-toolbar-button")} rightIcon={props.icon} />
+        <Button
+            {...props}
+            className={classList(css["toolbar-button"], "tt-toolbar-button", props.className)}
+            rightIcon={props.icon}
+        />
     );
 };
 
-interface ToolbarControlGroupProps extends React.PropsWithChildren<{}> {}
+interface ToolbarControlGroupProps extends React.PropsWithChildren<{}> {
+    className?: string;
+}
 
-const ToolbarControlGroup: React.FC<ToolbarControlGroupProps> = ({ children }) => {
-    return <div className={classList(css["toolbar-control-group"], "tt-toolbar-control-group")}>{children}</div>;
+const ToolbarControlGroup: React.FC<ToolbarControlGroupProps> = ({ children, className }) => {
+    return (
+        <div className={classList(css["toolbar-control-group"], "tt-toolbar-control-group", className)}>{children}</div>
+    );
 };
 
 interface ToolbarMenuDropdownProps extends MenuDropdownProps {}
@@ -27,7 +35,7 @@ const ToolbarMenuDropdown: React.FC<ToolbarMenuDropdownProps> = props => {
     return (
         <MenuDropdown
             {...props}
-            className={classList(css["toolbar-menu-dropdown"], "tt-toolbar-menu-dropdown")}
+            className={classList(css["toolbar-menu-dropdown"], "tt-toolbar-menu-dropdown", props.className)}
             label={dropdownLabel}
         />
     );
@@ -38,9 +46,10 @@ interface ToolbarToggleProps {
     title: string;
     isChecked: boolean;
     onChange: (checked: boolean) => void;
+    className?: string;
 }
 
-const ToolbarToggle: React.FC<ToolbarToggleProps> = ({ label, title, isChecked, onChange }) => {
+const ToolbarToggle: React.FC<ToolbarToggleProps> = ({ label, title, isChecked, onChange, className }) => {
     const [checked, setChecked] = React.useState(isChecked);
 
     const onClick = () => {
@@ -50,7 +59,7 @@ const ToolbarToggle: React.FC<ToolbarToggleProps> = ({ label, title, isChecked, 
 
     return (
         <Button
-            className={css["toggle-button"]}
+            className={classList(css["toggle-button"], className)}
             title={title}
             label={label}
             ariaLabel={label}
@@ -65,11 +74,12 @@ interface ToolbarControlProps {
     left?: React.ReactNode;
     center?: React.ReactNode;
     right?: React.ReactNode;
+    className?: string;
 }
 
-const ToolbarControl: React.FC<ToolbarControlProps> = ({ left, center, right }) => {
+const ToolbarControl: React.FC<ToolbarControlProps> = ({ left, center, right, className }) => {
     return (
-        <div className={classList(css["toolbar"], "tt-toolbar")}>
+        <div className={classList(css["toolbar"], "tt-toolbar", className)}>
             <div className={classList(css["left"], "tt-toolbar-left")}>{left}</div>
             <div className={classList(css["center"], "tt-toolbar-center")}>{center}</div>
             <div className={classList(css["right"], "tt-toolbar-right")}>{right}</div>

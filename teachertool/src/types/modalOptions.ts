@@ -18,6 +18,6 @@ export type ImportChecklistOptions = {
 
 export type SignInOptions = {
     modal: "sign-in";
-}
+};
 
 export type ModalOptions = ImportChecklistOptions | ConfirmationModalOptions | BlockPickerOptions | SignInOptions;

@@ -158,5 +158,6 @@
     .criteria-description {
         color: var(--pxt-page-foreground-light);
         margin-top: 0.2rem;
+        width: -webkit-fill-available;
     }
 }

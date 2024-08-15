@@ -44,6 +44,7 @@ declare namespace pxt.editor {
          */
         action: "switchblocks"
         | "switchjavascript"
+        | "switchpython"
         | "startsimulator"
         | "restartsimulator"
         | "stopsimulator" // EditorMessageStopRequest
@@ -64,6 +65,7 @@ declare namespace pxt.editor {
         | "setscale"
         | "startactivity"
         | "saveproject"
+        | "compile"
         | "unloadproject"
         | "shareproject"
         | "savelocalprojectstocloud"

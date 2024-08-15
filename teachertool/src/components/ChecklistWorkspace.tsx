@@ -7,7 +7,6 @@ import { TabGroup, TabButton } from "./TabGroup";
 import { TabPanel } from "./TabPanel";
 import { HomeScreen } from "./HomeScreen";
 import { EvalResultDisplay } from "./EvalResultDisplay";
-import { ActiveChecklistDisplay } from "./ActiveChecklistDisplay";
 import { MenuItem } from "react-common/components/controls/MenuDropdown";
 import { TabName } from "../types";
 import { runEvaluateAsync } from "../transforms/runEvaluateAsync";
@@ -47,10 +46,7 @@ const WorkspaceTabButtons: React.FC = () => {
     return (
         <TabGroup>
             <TabButton name="home">{Strings.Home}</TabButton>
-            <TabButton name="checklist">{Strings.Checklist}</TabButton>
-            <TabButton name="results" disabled={!isProjectLoaded(teacherTool)}>
-                {lf("Results")}
-            </TabButton>
+            <TabButton name="results">{Strings.Checklist}</TabButton>
         </TabGroup>
     );
 };
@@ -65,9 +61,6 @@ const WorkspaceTabPanels: React.FC<WorkspaceTabPanelsProps> = ({ resultsRef }) =
             <TabPanel name="home">
                 <HomeScreen />
             </TabPanel>
-            <TabPanel name="checklist">
-                <ActiveChecklistDisplay />
-            </TabPanel>
             <TabPanel name="results">
                 <EvalResultDisplay resultsRef={resultsRef} />
             </TabPanel>
@@ -79,7 +72,6 @@ function getActionMenuItems(tab: TabName): MenuItem[] {
     const items: MenuItem[] = [];
     switch (tab) {
         case "home":
-        case "checklist":
             items.push(
                 {
                     title: Strings.NewChecklist,

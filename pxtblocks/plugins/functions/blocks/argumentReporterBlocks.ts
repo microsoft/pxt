@@ -36,8 +36,9 @@ const ARGUMENT_REPORTER_MIXIN = {
         if (xmlElement.hasAttribute(DUPLICATE_ON_DRAG_MUTATION_KEY)) {
             this.duplicateOnDrag_ = xmlElement.getAttribute(DUPLICATE_ON_DRAG_MUTATION_KEY).toLowerCase() === "true";
             if (this.pathObject) {
-                (this.pathObject as PathObject).setHasDottedOutllineOnHover(this.duplicateOnDrag_);
-            }        }
+                (this.pathObject as PathObject).setHasDottedOutlineOnHover(this.duplicateOnDrag_);
+            }
+        }
     },
 };
 
@@ -154,7 +155,7 @@ Blockly.Blocks[ARGUMENT_REPORTER_CUSTOM_BLOCK_TYPE] = {
 
         ARGUMENT_REPORTER_MIXIN.domToMutation.call(this, xmlElement);
         if (this.pathObject) {
-            (this.pathObject as PathObject).setHasDottedOutllineOnHover(this.duplicateOnDrag_);
+            (this.pathObject as PathObject).setHasDottedOutlineOnHover(this.duplicateOnDrag_);
         }
     },
 };

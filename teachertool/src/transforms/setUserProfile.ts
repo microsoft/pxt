@@ -12,14 +12,14 @@ export function setUserProfile(profile: pxt.auth.UserProfile | undefined) {
     logDebug("Set user profile", {
         oldProfile: state.userProfile,
         incomingProfile: profile,
-        finalProfile: newProfile
+        finalProfile: newProfile,
     });
 
     dispatch(actions.setUserProfile(newProfile));
     if (!newProfile) {
         showModal({
-            modal: "sign-in"
-        })
+            modal: "sign-in",
+        });
     } else if (state.modalOptions?.modal === "sign-in") {
         hideModal();
     }

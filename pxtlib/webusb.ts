@@ -270,6 +270,7 @@ namespace pxt.usb {
             if (!this.dev?.forget)
                 return false;
             try {
+                await this.disconnectAsync();
                 await this.dev.forget();
                 return true;
                 // connection changed listener will handle disconnecting when access is revoked.

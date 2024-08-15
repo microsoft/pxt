@@ -396,7 +396,7 @@ export function initFunctions() {
             }
 
             if (this.pathObject) {
-                (this.pathObject as PathObject).setHasDottedOutllineOnHover(this.duplicateOnDrag_);
+                (this.pathObject as PathObject).setHasDottedOutlineOnHover(this.duplicateOnDrag_);
             }
 
             setOutputCheck(this, typeName, cachedBlockInfo);

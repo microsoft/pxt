@@ -1,7 +1,6 @@
 import * as Blockly from "blockly";
 
 import { TextInputBubble } from "./textinput_bubble";
-import { TextBubble } from "./text_bubble";
 
 const eventUtils = Blockly.Events;
 
@@ -29,9 +28,6 @@ export class CommentIcon extends Blockly.icons.Icon {
 
     /** The bubble used to show editable text to the user. */
     private textInputBubble: TextInputBubble | null = null;
-
-    /** The bubble used to show non-editable text to the user. */
-    private textBubble: TextBubble | null = null;
 
     /** The text of this comment. */
     private text = '';
@@ -111,7 +107,6 @@ export class CommentIcon extends Blockly.icons.Icon {
     override dispose() {
         super.dispose();
         this.textInputBubble?.dispose();
-        this.textBubble?.dispose();
     }
 
     override getWeight(): number {
@@ -127,7 +122,6 @@ export class CommentIcon extends Blockly.icons.Icon {
         const colour = (this.sourceBlock as Blockly.BlockSvg).style.colourPrimary;
         const borderColour = (this.sourceBlock as Blockly.BlockSvg).style.colourTertiary;
         this.textInputBubble?.setColour(colour, borderColour);
-        this.textBubble?.setColour(colour, borderColour);
     }
 
     /**
@@ -147,7 +141,6 @@ export class CommentIcon extends Blockly.icons.Icon {
         super.onLocationChange(blockOrigin);
         const anchorLocation = this.getAnchorLocation();
         this.textInputBubble?.setAnchorLocation(anchorLocation);
-        this.textBubble?.setAnchorLocation(anchorLocation);
     }
 
     /** Sets the text of this comment. Updates any bubbles if they are visible. */
@@ -164,7 +157,6 @@ export class CommentIcon extends Blockly.icons.Icon {
         );
         this.text = text;
         this.textInputBubble?.setText(this.text);
-        this.textBubble?.setText(this.text);
     }
 
     /** Returns the text of this comment. */
@@ -260,8 +252,8 @@ export class CommentIcon extends Blockly.icons.Icon {
 
     async setBubbleVisible(visible: boolean): Promise<void> {
         if (this.bubbleVisiblity === visible) return;
-        if (visible && (this.textBubble || this.textInputBubble)) return;
-        if (!visible && !(this.textBubble || this.textInputBubble)) return;
+        if (visible && this.textInputBubble) return;
+        if (!visible && !this.textInputBubble) return;
 
         this.bubbleVisiblity = visible;
 
@@ -283,13 +275,15 @@ export class CommentIcon extends Blockly.icons.Icon {
             this.hideBubble();
         }
 
-        eventUtils.fire(
-            new (eventUtils.get(eventUtils.BUBBLE_OPEN))(
-                this.sourceBlock,
-                visible,
-                'comment',
-            ),
-        );
+        if (this.sourceBlock.isEditable()) {
+            eventUtils.fire(
+                new (eventUtils.get(eventUtils.BUBBLE_OPEN))(
+                    this.sourceBlock,
+                    visible,
+                    'comment',
+                ),
+            );
+        }
     }
 
     /**
@@ -317,20 +311,23 @@ export class CommentIcon extends Blockly.icons.Icon {
 
     /** Shows the non editable text bubble for this comment. */
     private showNonEditableBubble() {
-        this.textBubble = new TextBubble(
-            this.getText(),
+        this.textInputBubble = new TextInputBubble(
             this.sourceBlock.workspace as Blockly.WorkspaceSvg,
             this.getAnchorLocation(),
             this.getBubbleOwnerRect(),
+            true
         );
+        this.textInputBubble.setText(this.getText());
+        this.textInputBubble.setSize(this.bubbleSize, true);
+        this.textInputBubble.setCollapseHandler(() => {
+            this.setBubbleVisible(false);
+        });
     }
 
     /** Hides any open bubbles owned by this comment. */
     private hideBubble() {
         this.textInputBubble?.dispose();
         this.textInputBubble = null;
-        this.textBubble?.dispose();
-        this.textBubble = null;
     }
 
     /**

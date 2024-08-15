@@ -224,7 +224,7 @@ export class ProjectView
         this.initSimulatorMessageHandlers();
 
         // add user hint IDs and callback to hint manager
-        if (pxt.BrowserUtils.useOldTutorialLayout) this.hintManager.addHint(ProjectView.tutorialCardId, this.tutorialCardHintCallback.bind(this));
+        if (pxt.BrowserUtils.useOldTutorialLayout()) this.hintManager.addHint(ProjectView.tutorialCardId, this.tutorialCardHintCallback.bind(this));
     }
 
     private autoRunOnStart(): boolean {
@@ -3277,6 +3277,7 @@ export class ProjectView
             if (simRestart) this.stopSimulator();
             let state = this.editor.snapshotState()
             this.syncPreferredEditor()
+            const attemptedVariants = pxt.appTarget.multiVariants;
 
             try {
                 const resp = await compiler.compileAsync({ native: true, forceEmit: true });
@@ -3304,7 +3305,7 @@ export class ProjectView
 
                     if (noHexFileDiagnostic?.code === 9283 /*program too large*/ && pxt.commands.showProgramTooLargeErrorAsync) {
                         pxt.tickEvent("compile.programTooLargeDialog");
-                        const res = await pxt.commands.showProgramTooLargeErrorAsync(pxt.appTarget.multiVariants, core.confirmAsync, saveOnly);
+                        const res = await pxt.commands.showProgramTooLargeErrorAsync(attemptedVariants, core.confirmAsync, saveOnly);
                         if (res?.recompile) {
                             pxt.tickEvent("compile.programTooLargeDialog.recompile");
                             const oldVariants = pxt.appTarget.multiVariants;
@@ -4797,7 +4798,7 @@ export class ProjectView
         pxt.perf.measureEnd("startActivity")
     }
 
-    completeTutorialAsync(): Promise<void> {
+    async completeTutorialAsync(): Promise<void> {
         pxt.tickEvent("tutorial.finish", { tutorial: this.state.header?.tutorial?.tutorial });
         pxt.tickEvent("tutorial.complete", { tutorial: this.state.header?.tutorial?.tutorial });
         core.showLoading("leavingtutorial", lf("leaving tutorial..."));
@@ -4816,44 +4817,31 @@ export class ProjectView
                 }
             this.state.header.tutorial = undefined;
         }
+        const isSkillmap = pxt.BrowserUtils.isSkillmapEditor();
 
-        if (pxt.BrowserUtils.isIE()) {
-            // For some reason, going from a tutorial straight to the editor in
-            // IE causes the JavaScript runtime to go bad. In order to work around
-            // the issue we go to the homescreen instead of the to the editor. See
-            // https://github.com/Microsoft/pxt-microbit/issues/1249 for more info.
-            this.exitTutorial();
-            return Promise.resolve(); // TODO cleanup
-        }
-        else {
-            if (pxt.BrowserUtils.isSkillmapEditor()) {
-                return this.exitTutorialAsync()
-                    .finally(() => {
-                        core.hideLoading("leavingtutorial")
-                    })
+        try {
+            await this.exitTutorialAsync();
+            if (!isSkillmap) {
+                const curr = pkg.mainEditorPkg().header;
+                await this.loadHeaderAsync(curr);
             }
-            else {
-                return this.exitTutorialAsync()
-                    .then(() => {
-                        let curr = pkg.mainEditorPkg().header;
-                        return this.loadHeaderAsync(curr);
-                    }).finally(() => {
-                        core.hideLoading("leavingtutorial")
-                        if (this.state.collapseEditorTools && !pxt.appTarget.simulator.headless) {
-                            this.expandSimulator();
-                        }
-                        this.postTutorialProgress();
-                    })
-                    .then(() => {
-                        if (pxt.appTarget.cloud &&
-                            pxt.appTarget.cloud.sharing &&
-                            pxt.appTarget.appTheme.shareFinishedTutorials) {
-                            pxt.tickEvent("tutorial.share", undefined, { interactiveConsent: false });
-                            this.showShareDialog(lf("Well done! Would you like to share your project?"));
-                        }
-                    })
-            }
+        } finally {
+            core.hideLoading("leavingtutorial");
         }
+
+        if (isSkillmap) {
+            return;
+        }
+
+        if (this.state.collapseEditorTools && !pxt.appTarget.simulator.headless) {
+            this.expandSimulator();
+        }
+        this.postTutorialProgress();
+        if (pxt.appTarget.cloud?.sharing && pxt.appTarget.appTheme.shareFinishedTutorials) {
+            pxt.tickEvent("tutorial.share", undefined, { interactiveConsent: false });
+            this.showShareDialog(lf("Well done! Would you like to share your project?"));
+        }
+        this.showMiniSim(pxt.BrowserUtils.isTabletSize());
     }
 
     exitTutorial(removeProject?: boolean) {
@@ -5160,7 +5148,8 @@ export class ProjectView
         const sandbox = pxt.shell.isSandboxMode();
         const isBlocks = !this.editor.isVisible || this.getPreferredEditor() === pxt.BLOCKS_PROJECT_NAME;
         const sideDocs = !(sandbox || targetTheme.hideSideDocs);
-        const tutorialOptions = this.state.tutorialOptions;
+        const tutorialCompleted = !!this.state.header?.tutorialCompleted;
+        const tutorialOptions = tutorialCompleted ? undefined : this.state.tutorialOptions;
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
         const isSidebarTutorial = pxt.appTarget.appTheme.sidebarTutorial;
         const isTabTutorial = inTutorial && !pxt.BrowserUtils.useOldTutorialLayout();
@@ -5878,7 +5867,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     pxt.perf.measureEnd("setAppTarget");
 
     let theme = pxt.appTarget.appTheme;
-    const isControllerIFrame = (theme.allowParentController || pxt.shell.isControllerMode()) && pxt.BrowserUtils.isIFrame();
+    const isControllerIFrame = theme.allowParentController || pxt.shell.isControllerMode()
     // disable auth in iframe scenarios
     if (isControllerIFrame)
         pxt.auth.enableAuth(false);
