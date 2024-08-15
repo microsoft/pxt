@@ -5,12 +5,23 @@ import reducer from "./reducer";
 import assert from "assert";
 import { getAutorun } from "../services/storageService";
 
+const DEV_BACKEND_LOCALHOST = "http://localhost:8080";
+
+// Read the URL parameters and set the initial state accordingly
+const url = window.location.href;
+const testCatalog = !!/testcatalog(?:[:=])1/.test(url) || !!/tc(?:[:=])1/.test(url);
+const copilotSlot = url.match(/copilot=([^&]+)/);
+const copilotEndpoint =
+    copilotSlot && copilotSlot[1]
+        ? copilotSlot[1] === "local"
+            ? `${DEV_BACKEND_LOCALHOST}/api`
+            : `https://makecode-ppe-app-backend-eastus-${copilotSlot[1]}.azurewebsites.net/api`
+        : undefined;
+
 let state: AppState;
 let dispatch: React.Dispatch<Action>;
 
 let initializationComplete: () => void;
-
-const DEV_BACKEND_LOCALHOST = "http://localhost:8080";
 
 // This promise will resolve when the app state is initialized and available outside the React context.
 export const AppStateReady: Promise<boolean> = new Promise(resolve => {
@@ -36,18 +47,6 @@ const initialAppStateContextProps: AppStateContextProps = {
 export const AppStateContext = createContext<AppStateContextProps>(initialAppStateContextProps);
 
 export function AppStateProvider(props: React.PropsWithChildren<{}>): React.ReactElement {
-    // Read the URL parameters and set the initial state accordingly
-    const url = window.location.href;
-    const testCatalog = !!/testcatalog(?:[:=])1/.test(url) || !!/tc(?:[:=])1/.test(url);
-
-    const copilotSlot = url.match(/copilot=([^&]+)/);
-    const copilotEndpoint =
-        copilotSlot && copilotSlot[1]
-            ? copilotSlot[1] === "local"
-                ? `${DEV_BACKEND_LOCALHOST}/api`
-                : `https://makecode-ppe-app-backend-eastus-${copilotSlot[1]}.azurewebsites.net/api`
-            : undefined;
-
     // Create the application state and state change mechanism (dispatch)
     const [state_, dispatch_] = useReducer(reducer, {
         ...initialAppState,

@@ -22,14 +22,14 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
         if (appTheme?.logoUrl) {
             window.open(appTheme.logoUrl);
         }
-    };
+    }
 
     function onOrgClick() {
         pxt.tickEvent(Ticks.OrgLink);
         if (appTheme?.organizationUrl) {
             window.open(appTheme.organizationUrl);
         }
-    };
+    }
 
     function getOrganizationLogo() {
         return (
@@ -45,7 +45,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
                 )}
             </div>
         );
-    };
+    }
 
     function getTargetLogo() {
         return (
@@ -75,7 +75,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
                 )}
             </div>
         );
-    };
+    }
 
     function encodedAvatarPic(profile: pxt.auth.UserProfile): string | undefined {
         const type = profile?.idp?.picture?.mimeType;
@@ -156,9 +156,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
                 {getTargetLogo()}
             </div>
 
-            <div className={css["right-menu"]}>
-                {getUserMenu()}
-            </div>
+            <div className={css["right-menu"]}>{getUserMenu()}</div>
         </MenuBar>
     );
 };

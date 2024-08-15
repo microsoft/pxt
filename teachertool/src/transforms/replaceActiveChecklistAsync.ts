@@ -18,6 +18,6 @@ export async function replaceActiveChecklistAsync(newChecklist: Checklist): Prom
     }
 
     setChecklist(newChecklist);
-    setActiveTab("checklist");
+    setActiveTab("results");
     return true;
 }

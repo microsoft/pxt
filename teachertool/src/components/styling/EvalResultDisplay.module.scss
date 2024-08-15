@@ -4,16 +4,82 @@
     overflow: auto;
 }
 
+.checklist-name-input-container {
+    // Designed to mirror share-link-input layout.
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    height: 3.625rem;
+    min-height: 3.625rem;
+
+    // Compensate for border on share-link-input.
+    padding-top: 1px;
+}
+
+.checklist-name-input {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+
+    label[class*="common-input-label"] {
+        font-size: 1rem;
+        font-weight: 600;
+        opacity: 0.8;
+        max-height: 2rem;
+    }
+
+    div[class*="common-input-group"] {
+        flex-grow: 1;
+        height: unset;
+        outline: none;
+        border: none;
+        border-radius: 99px;
+
+        &:focus-within::after,
+        &:focus::after {
+            outline: none;
+            border: solid 1px var(--pxt-content-accent);
+        }
+    }
+
+    input[class*="common-input"] {
+        // Need !important to override react-common/common-input-group's font-size specificity
+        font-size: 1.5rem !important;
+        font-weight: 500;
+        margin: 0;
+        margin-top: 1px;
+    }
+}
+
+.edit-checklist-name-button {
+    margin: 0;   
+    padding: 0; 
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 0.25rem;
+    font-size: 1rem;
+}
+
+.results-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
+    justify-content: flex-start;
+    width: -webkit-fill-available;
+    padding: 0.5rem;
+}
+
 .specific-criteria-result {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding-left: 0.5rem;
-    padding-bottom: 0.5rem;
-    margin-top: 0.5rem;
+    justify-content: flex-start;
+    width: -webkit-fill-available;
     min-height: 9rem;
-    border-bottom: solid 1px var(--pxt-content-accent);
     break-inside: avoid;
+    gap: 0.5rem;
 
     .loading-display {
         padding-top: 0;
@@ -22,8 +88,24 @@
 
     .criteria-feedback {
         align-self: flex-end;
-        margin-top: 0.5rem;
     }
+
+    &:focus-within,
+    &:hover,
+    &:focus {
+        .result-toolbar-button {
+            opacity: 1 !important;
+            .disabled {
+                opacity: 0.8 !important;
+            }
+        }
+    }
+}
+
+.separator {
+    border-bottom: solid 1px var(--pxt-content-accent);
+    margin-top: 0.5rem;
+    width: -webkit-fill-available;
 }
 
 .result-details {
@@ -31,9 +113,9 @@
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    margin: 0.2rem 0;
     width: 100%;
     height: 50%;
+    gap: 0.5rem;
 
     .display-string {
         font-weight: 500;
@@ -43,6 +125,39 @@
     }
 }
 
+.result-toolbar {
+    background-color: transparent;
+}
+
+.result-toolbar-button {
+    width: 100%;
+    height: 100%;
+    background-color: var(--pxt-content-background);
+    // Need opacity-based hiding (rather than display) for transitions
+    // Need !important to override common-button's opacity in disabled state
+    opacity: 0 !important;
+    transition: background-color 0.1s ease, opacity 0.1s ease;
+    color: var(--black);
+    padding: 0.2rem;
+    margin: 0;
+    border-radius: 0;
+
+    &:focus-within,
+    &:hover,
+    &:focus {
+        opacity: 1 !important;
+        .disabled {
+            opacity: 0.8 !important;
+        }
+    }
+}
+
+.result-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
 .result-notes {
     display: flex;
     flex-direction: column;
@@ -50,7 +165,7 @@
     justify-content: flex-end;
     width: 100%;
     min-height: 5.5rem;
-    margin-top: 0.25rem;
+    gap: 0.5rem;
 
     .notes-container {
         width: 100%;
@@ -82,8 +197,6 @@
     flex-direction: row;
     justify-content: space-between;
     padding: 0.5rem 0;
-    border-bottom: solid 1px var(--pxt-content-accent);
-    // height: 2.625rem;
 
     .checklist-name {
         h2 {
@@ -121,20 +234,15 @@
     }
 }
 
-@media print {
-    .no-print {
-        display: none !important;
-    }
+.footer {
+    display: flex;
+    flex-direction: column;
+    margin-top: 0.5rem;
+}
 
+@media print {
     .specific-criteria-result {
         min-height: 5.5rem;
     }
 
-    .result-notes {
-        height: 7rem;
-    }
-
-    .result-notes.no-print {
-        height: 1rem;
-    }
 }

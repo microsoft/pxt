@@ -10,29 +10,32 @@ interface ICriteriaFeedbackProps {
     catalogCriteriaId: string;
     className?: string;
 }
-export const CriteriaFeedback: React.FC<ICriteriaFeedbackProps> = ({className, catalogCriteriaId}) => {
+export const CriteriaFeedback: React.FC<ICriteriaFeedbackProps> = ({ className, catalogCriteriaId }) => {
     const [helpful, setHelpful] = useState<boolean | undefined>(undefined);
 
-    const onResponseClicked = useCallback((isHelpful: boolean) => {
-        const previousHelpful = helpful;
+    const onResponseClicked = useCallback(
+        (isHelpful: boolean) => {
+            const previousHelpful = helpful;
 
-        // If they click the same button again, unset the feedback.
-        const newHelpful = previousHelpful === isHelpful ? undefined : isHelpful;
+            // If they click the same button again, unset the feedback.
+            const newHelpful = previousHelpful === isHelpful ? undefined : isHelpful;
 
-        setHelpful(newHelpful);
-        pxt.tickEvent(Ticks.CriteriaFeedback, {
-            criteriaId: catalogCriteriaId,
-            helpful: newHelpful + "",
+            setHelpful(newHelpful);
+            pxt.tickEvent(Ticks.CriteriaFeedback, {
+                criteriaId: catalogCriteriaId,
+                helpful: newHelpful + "",
 
-            // Record previous value to help us track if the user is changing feedback that was already sent
-            // (i.e. pressed thumbs up, then changed to thumbs down), or if they reset their feedback.
-            previousValue: previousHelpful + ""
-        });
+                // Record previous value to help us track if the user is changing feedback that was already sent
+                // (i.e. pressed thumbs up, then changed to thumbs down), or if they reset their feedback.
+                previousValue: previousHelpful + "",
+            });
 
-        if (newHelpful !== undefined) {
-            showToast(makeToast(newHelpful ? "success" : "info", lf("Thanks for your feedback!")));
-        }
-    }, [helpful, catalogCriteriaId]);
+            if (newHelpful !== undefined) {
+                showToast(makeToast(newHelpful ? "success" : "info", lf("Thanks for your feedback!")));
+            }
+        },
+        [helpful, catalogCriteriaId]
+    );
 
     const thumbsUpIcon = helpful === true ? "fas fa-thumbs-up" : "far fa-thumbs-up";
     const thumbsDownIcon = helpful === false ? "fas fa-thumbs-down" : "far fa-thumbs-down";
@@ -41,9 +44,19 @@ export const CriteriaFeedback: React.FC<ICriteriaFeedbackProps> = ({className, c
         <div className={classList(css["criteria-feedback-container"], className)}>
             <span className={css["label"]}>{lf("Was this response helpful?")}</span>
             <span className={css["rate-buttons"]}>
-                <Button className={css["feedback-button"]} title={lf("Helpful")} onClick={() => onResponseClicked(true)} rightIcon={thumbsUpIcon} />
-                <Button className={css["feedback-button"]} title={lf("Unhelpful")} onClick={() => onResponseClicked(false)} rightIcon={thumbsDownIcon} />
+                <Button
+                    className={css["feedback-button"]}
+                    title={lf("Helpful")}
+                    onClick={() => onResponseClicked(true)}
+                    rightIcon={thumbsUpIcon}
+                />
+                <Button
+                    className={css["feedback-button"]}
+                    title={lf("Unhelpful")}
+                    onClick={() => onResponseClicked(false)}
+                    rightIcon={thumbsDownIcon}
+                />
             </span>
         </div>
     );
-}
+};

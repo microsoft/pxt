@@ -18,6 +18,7 @@ import { SignInModal } from "./components/SignInModal";
 import { SignedOutPanel } from "./components/SignedOutPanel";
 import * as authClient from "./services/authClient";
 import { ErrorCode } from "./types/errorCode";
+import { loadProjectMetadataAsync } from "./transforms/loadProjectMetadataAsync";
 
 export const App = () => {
     const { state, dispatch } = useContext(AppStateContext);
@@ -39,6 +40,17 @@ export const App = () => {
                 await tryLoadLastActiveChecklistAsync();
 
                 setInited(true);
+
+                // Check if a project was specified on the URL and load it if so.
+                const projectParam = window.location.href.match(/project=([^&]+)/)?.[1];
+                if (!!projectParam) {
+                    const decoded = decodeURIComponent(projectParam);
+                    const shareId = pxt.Cloud.parseScriptId(decoded);
+                    if (!!shareId) {
+                        await loadProjectMetadataAsync(decoded, shareId);
+                    }
+                }
+
                 logDebug("App initialized");
             });
         }
@@ -48,14 +60,14 @@ export const App = () => {
         async function checkAuthAsync() {
             // On mount, check if user is signed in
             try {
-                await authClient.authCheckAsync()
+                await authClient.authCheckAsync();
             } catch (e) {
                 // Log error but continue
                 // Don't include actual error in error log in case PII
                 logError(ErrorCode.authCheckFailed);
                 logDebug("Auth check failed details", e);
             }
-            setAuthCheckComplete(true)
+            setAuthCheckComplete(true);
         }
         checkAuthAsync();
     }, []);

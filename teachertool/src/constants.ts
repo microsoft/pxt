@@ -7,6 +7,7 @@ export namespace Strings {
     export const ImportChecklist = lf("Import Checklist");
     export const ExportChecklist = lf("Export Checklist");
     export const Remove = lf("Remove");
+    export const Evaluate = lf("Evaluate");
     export const Criteria = lf("Criteria");
     export const Name = lf("Name");
     export const ChecklistName = lf("Checklist Name");
@@ -35,6 +36,7 @@ export namespace Strings {
     export const CreateEmptyChecklist = lf("Create Empty Checklist");
     export const Other = lf("Other");
     export const SignIn = lf("Sign In");
+    export const ConfirmDeleteCriteriaInstance = lf("Are you sure you want to remove this criteria?");
 }
 
 export namespace Ticks {
@@ -55,7 +57,7 @@ export namespace Ticks {
     export const UserMenuSignout = "teachertool.usermenu.signout";
     export const UserMenuSignIn = "teachertool.usermenu.signin";
     export const SignedOutPanelSignIn = "teachertool.signedoutpanel.signin";
-    export const CriteriaFeedback = "teachertool.criteriafeedback"
+    export const CriteriaFeedback = "teachertool.criteriafeedback";
 }
 
 namespace Misc {
