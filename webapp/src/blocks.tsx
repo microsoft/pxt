@@ -315,7 +315,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
             pxtblockly.upgradeTilemapsInWorkspace(this.editor, pxt.react.getTilemapProject());
 
-            this.initLayout();
+            this.initLayout(xml);
             this.editor.clearUndo();
             this.reportDeprecatedBlocks();
             this.updateGrayBlocks();
@@ -340,58 +340,70 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         dom.querySelectorAll("block[deletable], shadow[deletable]").forEach(b => { b.removeAttribute("deletable") });
     }
 
-    private initLayout() {
-        let needsLayout = false;
-        let flyoutOnly = !this.editor.getToolbox() && this.editor.getFlyout();
+    private initLayout(xml: Element) {
+        const flyoutOnly = !this.editor.getToolbox() && this.editor.getFlyout();
+
+        if (!flyoutOnly) {
+            // If the blocks file has no location info (e.g. it's from the decompiler), format the code.
+            let needsLayout = false;
+            for (const child of xml.childNodes) {
+                if (!pxt.BrowserUtils.isElement(child)) continue;
+                if (child.localName !== "block" && child.localName !== "comment") continue;
+
+                const x = child.getAttribute("x") ?? "10";
+                const y = child.getAttribute("y") ?? "10";
+
+                if (x === "10" && y === "10") {
+                    needsLayout = true;
+                    break;
+                }
+            }
+
+            if (needsLayout) {
+                pxtblockly.flow(this.editor, { useViewWidth: true });
+                return;
+            }
+        }
 
         let minDistanceFromOrigin: number;
-        let closestToOrigin: Blockly.utils.Rect;
+        let closestToOrigin: Blockly.utils.Coordinate;
 
-        (this.editor.getTopComments(false) as Blockly.comments.RenderedWorkspaceComment[]).forEach(b => {
-            const bounds = b.getBoundingRectangle();
+        for (const comment of this.editor.getTopComments(false) as Blockly.comments.RenderedWorkspaceComment[]) {
+            const coord = comment.getRelativeToSurfaceXY();
 
-            const distanceFromOrigin = Math.sqrt(bounds.left * bounds.left + bounds.top * bounds.top);
-
-            if (minDistanceFromOrigin === undefined || distanceFromOrigin < minDistanceFromOrigin) {
-                closestToOrigin = bounds;
-                minDistanceFromOrigin = distanceFromOrigin;
-            }
-
-            needsLayout = needsLayout || (bounds.left == 10 && bounds.top == 10);
-        });
-        let blockPositions: { left: number, top: number }[] = [];
-        (this.editor.getTopBlocks(false) as Blockly.BlockSvg[]).forEach(b => {
-            const bounds = b.getBoundingRectangle()
-
-            const distanceFromOrigin = Math.sqrt(bounds.left * bounds.left + bounds.top * bounds.top);
+            const distanceFromOrigin = Math.sqrt(coord.x * coord.x + coord.y * coord.y);
 
             if (minDistanceFromOrigin === undefined || distanceFromOrigin < minDistanceFromOrigin) {
-                closestToOrigin = bounds;
+                closestToOrigin = coord;
                 minDistanceFromOrigin = distanceFromOrigin;
             }
-
-            const isOverlapping = !!blockPositions.find(b => b.left === bounds.left && b.top === bounds.top)
-            needsLayout = needsLayout || isOverlapping;
-
-            blockPositions.push(bounds)
-        });
-
-        if (needsLayout && !flyoutOnly) {
-            // If the blocks file has no location info (e.g. it's from the decompiler), format the code.
-            pxtblockly.flow(this.editor, { useViewWidth: true });
         }
-        else {
-            if (closestToOrigin) {
-                // Otherwise translate the blocks so that they are positioned on the top left
-                this.editor.getTopComments(false).forEach(c => (c as Blockly.comments.RenderedWorkspaceComment).moveBy(-closestToOrigin.left, -closestToOrigin.top));
-                this.editor.getTopBlocks(false).forEach(b => b.moveBy(-closestToOrigin.left, -closestToOrigin.top));
+
+        for (const block of this.editor.getTopBlocks(false)) {
+            const coord = block.getRelativeToSurfaceXY();
+
+            const distanceFromOrigin = Math.sqrt(coord.x * coord.x + coord.y * coord.y);
+
+            if (minDistanceFromOrigin === undefined || distanceFromOrigin < minDistanceFromOrigin) {
+                closestToOrigin = coord;
+                minDistanceFromOrigin = distanceFromOrigin;
             }
-            this.editor.scrollX = 10;
-            this.editor.scrollY = 10;
-
-            // Forces scroll to take effect
-            this.editor.resizeContents();
         }
+
+        if (closestToOrigin) {
+            // Otherwise translate the blocks so that they are positioned on the top left
+            for (const comment of this.editor.getTopComments(false) as Blockly.comments.RenderedWorkspaceComment[]) {
+                comment.moveBy(-closestToOrigin.x, -closestToOrigin.y);
+            }
+            for (const block of this.editor.getTopBlocks(false)) {
+                block.moveBy(-closestToOrigin.x, -closestToOrigin.y);
+            }
+        }
+        this.editor.scrollX = 10;
+        this.editor.scrollY = 10;
+
+        // Forces scroll to take effect
+        this.editor.resizeContents();
     }
 
     private initPrompts() {
