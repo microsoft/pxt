@@ -28,7 +28,8 @@ export enum ErrorCode {
     askCopilotQuestion = "askCopilotQuestion",
     missingTag = "missingTag",
     noCatalogCriteria = "noCatalogCriteria",
+    criteriaInstanceNotFound = "criteriaInstanceNotFound",
     signInFailed = "signInFailed",
     loginApiError = "loginApiError",
-    authCheckFailed = "authCheckFailed"
+    authCheckFailed = "authCheckFailed",
 }

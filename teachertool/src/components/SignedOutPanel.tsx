@@ -15,15 +15,15 @@ export const SignedOutPanel: React.FC<IProps> = () => {
                 <h1>{lf("Sign In Required")}</h1>
                 <div>{lf("Sign in is required to use this tool.")}</div>
                 <Button
-                        className={classList("primary", css["sign-in-button"])}
-                        rightIcon="xicon cloud-user"
-                        title={lf("Sign In")}
-                        label={lf("Sign In")}
-                        onClick={() => {
-                            pxt.tickEvent(Ticks.SignedOutPanelSignIn);
-                            showModal({ modal: "sign-in" });
-                        }}
-                    />
+                    className={classList("primary", css["sign-in-button"])}
+                    rightIcon="xicon cloud-user"
+                    title={lf("Sign In")}
+                    label={lf("Sign In")}
+                    onClick={() => {
+                        pxt.tickEvent(Ticks.SignedOutPanelSignIn);
+                        showModal({ modal: "sign-in" });
+                    }}
+                />
             </div>
         </div>
     );

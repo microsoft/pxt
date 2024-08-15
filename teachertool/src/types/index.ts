@@ -21,7 +21,7 @@ export type ToastWithId = Toast & {
     id: string;
 };
 
-export type TabName = "home" | "checklist" | "results";
+export type TabName = "home" | "results";
 
 export type CardType = "checklist-resource";
 

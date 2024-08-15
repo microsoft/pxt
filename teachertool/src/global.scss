@@ -120,6 +120,22 @@ code {
 }
 
 /*******************************/
+/**** PRINT MEDIA QUERIES ******/
+/*******************************/
+
+@media print {
+    .no-print {
+        display: none !important;
+    }
+}
+
+@media screen {
+    .only-print {
+        display: none !important;
+    }
+}
+
+/*******************************/
 /****  NOTIFICATION STYLING  ***/
 /*******************************/
 
