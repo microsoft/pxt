@@ -1199,6 +1199,7 @@ namespace pxsim {
             let userGlobals: string[];
             let __this = this // ex
             this.traceDisabled = !!msg.traceDisabled;
+            const yieldDelay = msg.yieldDelay !== undefined ? msg.yieldDelay : 5;
 
             // this is passed to generated code
             const evalIface = {
@@ -1277,7 +1278,7 @@ namespace pxsim {
                     lastYield = now
                     s.pc = pc;
                     s.r0 = r0;
-                    setTimeout(loopForSchedule(s), 5)
+                    setTimeout(loopForSchedule(s), yieldDelay)
                     return true
                 }
                 return false
