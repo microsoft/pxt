@@ -2516,6 +2516,17 @@ export class ProjectView
         await this.loadHeaderAsync(newHeader)
     }
 
+    async importEmbedProjectAsync(importId: string) {
+        const project = await pxteditor.importDb.removeProjectAsync(importId);
+
+        if (project) {
+            return this.installAndLoadProjectAsync(project);
+        }
+        else {
+            Util.userError(lf("Unable to import project"));
+        }
+    }
+
     openProjectByHeaderIdAsync(headerId: string) {
         const header = workspace.getHeader(headerId);
         return this.loadHeaderAsync(header);
@@ -5607,6 +5618,15 @@ function handleHash(newHash: { cmd: string; arg: string }, loading: boolean): bo
                 .finally(() => {
                     pxt.BrowserUtils.changeHash("");
                     core.hideLoading("skillmapimport")
+                });
+            return true;
+        case "embedimport":
+            const importId = newHash.arg;
+            core.showLoading("embedimport", lf("loading project..."));
+            editor.importEmbedProjectAsync(importId)
+                .finally(() => {
+                    pxt.BrowserUtils.changeHash("");
+                    core.hideLoading("embedimport")
                 });
             return true;
         case "github": {

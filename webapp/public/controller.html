@@ -8,10 +8,12 @@
     <style>
         @import "/blb/semantic.css";
 
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+
         #logs {
-            position: absolute;
-            left: 0;
-            top: 2rem;
             width: 100%;
             height: 10rem;
             border: 0;
@@ -23,12 +25,12 @@
         }
 
         #iframe {
-            position: absolute;
-            left: 0;
-            top: 12.5rem;
-            width: 100%;
-            height: calc(100% - 12.5rem);
             border: 0;
+            flex-grow: 1;
+        }
+
+        .ui.buttons {
+            flex-wrap: wrap;
         }
     </style>
     <script>
@@ -41,6 +43,24 @@
             "pxt.json": "{\n    \"name\": \"Untitled\",\n    \"dependencies\": {\n        \"core\": \"*\"\n    },\n    \"description\": \"\",\n    \"files\": [\n        \"main.blocks\",\n        \"main.ts\",\n        \"README.md\"\n    ]\n}"
           }
         }];
+        var header = {
+            target: "microbit",
+            targetVersion: "7.0.15",
+            name: "controller-test-project",
+            meta: {},
+            editor: "blocksprj",
+            pubId: "",
+            pubCurrent: false,
+            _rev: null,
+            id: "762e2fa2-2129-4122-a651-bff7fd72cc95",
+            recentUse: Date.now(),
+            modificationTime: Date.now(),
+            cloudUserId: null,
+            cloudCurrent: false,
+            cloudVersion: null,
+            cloudLastSyncTime: 0,
+            isDeleted: false,
+        };
         var filters = {
             "namespaces": {
                 "events": 0,
@@ -107,6 +127,17 @@
                 msg.restriction = languageRestrictions[languageRestrictionIndex];
                 languageRestrictionIndex = (languageRestrictionIndex + 1) % languageRestrictions.length;
             }
+            else if (action == 'importexternalproject') {
+                const text =  { ...projects[0].text }
+                const config = JSON.parse(text["pxt.json"]);
+                config.name = header.name;
+                text["pxt.json"] = JSON.stringify(config);
+                msg.project = {
+                    header,
+                    text
+                };
+                msg.response = true;
+            }
             if (msg.response)
                 pendingMsgs[msg.id] = msg;
             editor.postMessage(msg, "*")
@@ -140,6 +171,9 @@
                 } else if (msg.action == "workspacesave") {
                     console.log(JSON.stringify(msg.project, null, 2))
                     lastSaved = msg.project;
+                }
+                else if (msg.action == "importexternalproject") {
+                    console.log(msg.resp);
                 }
             }
             if (msg.type == "pxteditor") {
@@ -212,6 +246,7 @@
         <button class="ui button" onclick="sendMessage('print')">print</button>
         <button class="ui button" onclick="sendMessage('pair')">pair</button>
         <button class="ui button" onclick="sendMessage('info')">info</button>
+        <button class="ui button" onclick="sendMessage('importexternalproject')">importexternalproject</button>
         <br/>
         <input id="hexfile" class="ui input" type="file" />
         <button class="ui button" onclick="importHexFile()">import hex</button>
