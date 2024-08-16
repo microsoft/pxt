@@ -2,6 +2,7 @@
     height: 100%;
     padding: 1rem;
     overflow: auto;
+    container-type: inline-size;
 }
 
 .checklist-name-input-container {
@@ -14,6 +15,45 @@
 
     // Compensate for border on share-link-input.
     padding-top: 1px;
+}
+
+.checklist-control-tray {
+    display: flex;
+    flex-direction: row;
+    justify-content: end;
+    gap: 0.5rem;
+}
+
+.control-button {
+    margin: 0;
+    padding: 0 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    line-height: 2rem;
+
+    span[class*="common-button-flex"] {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+
+    i[class*="fas"] {
+        margin: 0;
+        width: auto;
+        height: auto;
+        font-size: unset;
+    }
+
+    &[class*="disabled"] {
+        border: 1px solid var(--pxt-button-secondary-accent) !important;
+    }
+
+    @container (inline-size < 550px) {
+        span[class*="common-button-label"] {
+            display: none;
+        }
+       
+    }
 }
 
 .checklist-name-input {
@@ -96,6 +136,7 @@
         .result-toolbar-button {
             opacity: 1 !important;
             .disabled {
+                border: 1px solid var(--pxt-button-secondary-accent) !important;
                 opacity: 0.8 !important;
             }
         }
@@ -125,30 +166,20 @@
     }
 }
 
-.result-toolbar {
-    background-color: transparent;
+.result-toolbar-tray {
+    display: flex;
+    flex-direction: row;
+    justify-content: right;
+    gap: 0.5rem;
 }
 
 .result-toolbar-button {
-    width: 100%;
-    height: 100%;
-    background-color: var(--pxt-content-background);
     // Need opacity-based hiding (rather than display) for transitions
     // Need !important to override common-button's opacity in disabled state
     opacity: 0 !important;
-    transition: background-color 0.1s ease, opacity 0.1s ease;
-    color: var(--black);
-    padding: 0.2rem;
-    margin: 0;
-    border-radius: 0;
 
-    &:focus-within,
-    &:hover,
-    &:focus {
-        opacity: 1 !important;
-        .disabled {
-            opacity: 0.8 !important;
-        }
+    span[class*="common-button-label"] {
+        display: none;
     }
 }
 
@@ -194,11 +225,18 @@
 
 .header {
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
+    gap: 0.5rem;
     justify-content: space-between;
     padding: 0.5rem 0;
 
     .checklist-name {
+        display: flex;
+        flex-direction: row;
+        align-items: start;
+        justify-content: space-between;
+        gap: 0.5rem;
+    
         h2 {
             font-size: 1.5rem;
             font-weight: 500;
