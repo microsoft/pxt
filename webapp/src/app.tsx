@@ -1972,8 +1972,10 @@ export class ProjectView
 
         const projectname = projectNameForEditor(preferredEditor || header.editor);
 
-
-        if (projectname === pxt.JAVASCRIPT_PROJECT_NAME) {
+        if (projectname === pxt.PYTHON_PROJECT_NAME && header.tutorial.templateLanguage === "python") {
+            currentText[pxt.MAIN_PY] = template;
+        }
+        else if (projectname === pxt.JAVASCRIPT_PROJECT_NAME) {
             currentText[pxt.MAIN_TS] = template;
         }
         else if (projectname === pxt.PYTHON_PROJECT_NAME) {
