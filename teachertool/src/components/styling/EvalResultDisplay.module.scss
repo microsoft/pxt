@@ -20,7 +20,7 @@
 .checklist-control-tray {
     display: flex;
     flex-direction: row;
-    justify-content: end;
+    justify-content: flex-end;
     gap: 0.5rem;
 }
 
@@ -233,7 +233,7 @@
     .checklist-name {
         display: flex;
         flex-direction: row;
-        align-items: start;
+        align-items: flex-start;
         justify-content: space-between;
         gap: 0.5rem;
     
