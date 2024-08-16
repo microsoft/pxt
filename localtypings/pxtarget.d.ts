@@ -1151,6 +1151,7 @@ declare namespace pxt.tutorial {
         code: string[]; // all code
         language?: string; // language of code snippet (ts or python)
         templateCode?: string;
+        templateLanguage?: string; // language of template code
         metadata?: TutorialMetadata;
         assetFiles?: pxt.Map<string>;
         jres?: string; // JRES to be used when generating hints; necessary for tilemaps
@@ -1256,6 +1257,7 @@ declare namespace pxt.tutorial {
         tutorialCode?: string[]; // all tutorial code bundled
         tutorialRecipe?: boolean; // micro tutorial running within the context of a script
         templateCode?: string;
+        templateLanguage?: string;
         mergeHeaderId?: string;
         mergeCarryoverCode?: boolean;
         autoexpandStep?: boolean; // autoexpand tutorial card if instruction text overflows
