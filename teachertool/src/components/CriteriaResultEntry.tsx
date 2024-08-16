@@ -59,8 +59,7 @@ const CriteriaResultToolbarTray: React.FC<{ criteriaId: string }> = ({ criteriaI
     }
 
     return (
-        <div
-            className={classList(css["result-toolbar-tray"], "no-print")}>
+        <div className={classList(css["result-toolbar-tray"], "no-print")}>
             <Button
                 className={classList("secondary", css["control-button"], css["result-toolbar-button"])}
                 rightIcon="fas fa-trash"

@@ -38,7 +38,7 @@ export const ChecklistWorkspace: React.FC = () => {
     const resultsRef = useRef<HTMLDivElement>(null);
     return (
         <div className={css.panel}>
-            <Toolbar left={<WorkspaceTabButtons />}  />
+            <Toolbar left={<WorkspaceTabButtons />} />
             <WorkspaceTabPanels resultsRef={resultsRef} />
         </div>
     );

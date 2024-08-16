@@ -49,7 +49,7 @@ interface ToolbarToggleProps extends Partial<ButtonProps> {
     className?: string;
 }
 
-const ToolbarToggle: React.FC<ToolbarToggleProps> = (props) => {
+const ToolbarToggle: React.FC<ToolbarToggleProps> = props => {
     const { label, title, isChecked, onToggle, className } = props;
     const [checked, setChecked] = React.useState(isChecked);
 
