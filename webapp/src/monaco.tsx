@@ -1724,6 +1724,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 res[ns] = [];
             }
             res[ns].push(fn);
+            if (fn.attributes.toolboxParent) {
+                const parent = this.blockInfo.blocks.find(b => b.attributes.blockId === fn.attributes.toolboxParent);
+                const currentBlock = res[ns].find(resB => resB.name === fn.name);
+                if (parent && currentBlock) {
+                    currentBlock.attributes.parentBlock = parent;
+                }
+            }
 
             const subcat = fn.attributes.subcategory;
             const advanced = fn.attributes.advanced;
