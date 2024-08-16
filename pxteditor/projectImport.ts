@@ -16,6 +16,7 @@ export async function saveProjectAsync(project: pxt.workspace.Project): Promise<
     };
 
     const db = await initAsync();
+    await db.deleteAllAsync(PROJECT_TABLE);
     await db.setAsync(PROJECT_TABLE, toStore);
 
     return toStore.importId;
@@ -25,7 +26,7 @@ export async function removeProjectAsync(importId: string): Promise<pxt.workspac
     const db = await initAsync();
 
     const stored = await db.getAsync<StoredProject>(PROJECT_TABLE, importId);
-    await db.deleteAsync(PROJECT_TABLE, importId);
+    await db.deleteAllAsync(PROJECT_TABLE);
 
     return stored.project;
 }
