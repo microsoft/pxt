@@ -5951,7 +5951,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // 테넌트에 맞게 class rails apiRoot를 설정합니다.
     const hostname = window.location.hostname;
     if (hostname === "localhost") {
-        Cloud.apiRoot = "https://class.dev.codle.io/makecode/";
+        Cloud.apiRoot = ""; // FIXME: 로컬호스트에서 테스팅할 백엔드 주소를 입력해주세요.
     } else {
         const parts = hostname.split(".");
         const classRailsUrl = `https://class.${parts.slice(1).join(".")}`;

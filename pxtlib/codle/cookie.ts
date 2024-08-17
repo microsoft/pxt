@@ -2,7 +2,7 @@
  * Cookie 관련 함수들을 정의합니다.
  */
 
-namespace pxt.codle {
+namespace pxt.cookie {
   /**
    * document.cookie에서 name에 해당하는 쿠키 값을 가져옵니다.
    */
