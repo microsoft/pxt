@@ -595,7 +595,7 @@ namespace pxt.auth {
                 headers["authorization"] = `mkcd ${authToken}`;
             }
             */
-            const token = pxt.codle.getCookieToken();
+            const token = pxt.cookie.getCookieToken();
             if (token) {
                 headers["Authorization"] =  `Bearer ${token}`;
             }
