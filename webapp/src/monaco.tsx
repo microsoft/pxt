@@ -128,7 +128,7 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                         // remove what precedes the "." in the full snippet.
                         // E.g. if the user is typing "mobs.", we want to complete with "spawn" (name) not "mobs.spawn" (qName)
                         if (completions.isMemberCompletion && snippet) {
-                            const nameStart = snippet.lastIndexOf(name);
+                            const nameStart = snippet.split("(")[0].lastIndexOf(name);
                             if (nameStart !== -1) {
                                 snippet = snippet.substr(nameStart)
                             }
