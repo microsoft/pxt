@@ -28,7 +28,7 @@ export async function removeProjectAsync(importId: string): Promise<pxt.workspac
     const stored = await db.getAsync<StoredProject>(PROJECT_TABLE, importId);
     await db.deleteAllAsync(PROJECT_TABLE);
 
-    return stored.project;
+    return stored?.project;
 }
 
 async function initAsync() {
