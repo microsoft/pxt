@@ -899,7 +899,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     public moveFocusToFlyout() {
-        // TODO: Add accessible blocks plugin from Blockly
+        if (this.navigationController) {
+            this.navigationController.navigation.focusFlyout(this.editor);
+        }
+
+        (this.editor.getInjectionDiv() as HTMLDivElement).focus();
     }
 
     renderToolbox(immediate?: boolean) {
