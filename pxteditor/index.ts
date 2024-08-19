@@ -3,6 +3,7 @@ import * as monaco from "./monaco";
 import * as workspace from "./workspace";
 import * as experiments from "./experiments";
 import * as validation from "./code-validation";
+import * as importDb from "./projectImport";
 
 export * from "./editor";
 export * from "./editorcontroller";
@@ -18,5 +19,6 @@ export {
     monaco,
     workspace,
     experiments,
-    validation
+    validation,
+    importDb
 };

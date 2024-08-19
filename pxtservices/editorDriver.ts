@@ -259,6 +259,18 @@ export class EditorDriver extends IframeDriver {
         );
     }
 
+    async importExternalProject(project: pxt.workspace.Project) {
+        const resp = await this.sendRequest(
+            {
+                type: "pxteditor",
+                action: "importexternalproject",
+                project,
+            } as pxt.editor.EditorMessageImportExternalProjectRequest
+        ) as pxt.editor.EditorMessageImportExternalProjectResponse;
+
+        return resp.resp.importUrl;
+    }
+
     async openHeader(headerId: string) {
         await this.sendRequest(
             {
