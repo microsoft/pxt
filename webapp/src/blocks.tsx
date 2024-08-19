@@ -646,7 +646,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 pxtblockly.FIELD_EDITOR_OPEN_EVENT_TYPE
             ];
 
-            if (ev.type !== "var_create" && ev.type !== "marker_move") {
+            if (shouldEventHideFlyout(ev)) {
                 this.hideFlyout();
             }
 
@@ -899,7 +899,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     public moveFocusToFlyout() {
-        // TODO: Add accessible blocks plugin from Blockly
+        if (this.navigationController) {
+            this.navigationController.navigation.focusFlyout(this.editor);
+        }
+
+        (this.editor.getInjectionDiv() as HTMLDivElement).focus();
     }
 
     renderToolbox(immediate?: boolean) {
@@ -1967,4 +1971,21 @@ function fixHighlight(block: Blockly.BlockSvg) {
     if (connectedTo) {
         fixHighlight(connectedTo);
     }
+}
+
+function shouldEventHideFlyout(ev: Blockly.Events.Abstract) {
+    if (ev.type === "var_create" || ev.type === "marker_move") {
+        return false;
+    }
+
+    // If a block is selected when the user clicks on a flyout button (e.g. "Make a Variable"),
+    // a selected event will fire unselecting the block before the var_create event is fired.
+    // Make sure we don't close the flyout in the case where a block is simply being unselected.
+    if (ev.type === "selected") {
+        if (!(ev as Blockly.Events.Selected).newElementId) {
+            return false;
+        }
+    }
+
+    return true;
 }
