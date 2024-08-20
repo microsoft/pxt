@@ -53,6 +53,7 @@ declare namespace pxt.editor {
         | "closeflyout"
         | "newproject"
         | "importproject"
+        | "importexternalproject"
         | "importtutorial"
         | "openheader"
         | "proxytosim" // EditorMessageSimulatorMessageProxyRequest
@@ -256,6 +257,19 @@ declare namespace pxt.editor {
         // (optional) filtering argument
         filters?: ProjectFilters;
         searchBar?: boolean;
+    }
+
+    export interface EditorMessageImportExternalProjectRequest extends EditorMessageRequest {
+        action: "importexternalproject";
+        // project to load
+        project: pxt.workspace.Project;
+    }
+
+    export interface EditorMessageImportExternalProjectResponse extends EditorMessageResponse {
+        action: "importexternalproject";
+        resp: {
+            importUrl: string;
+        };
     }
 
     export interface EditorMessageSaveLocalProjectsToCloud extends EditorMessageRequest {

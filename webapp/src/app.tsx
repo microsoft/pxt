@@ -1990,8 +1990,10 @@ export class ProjectView
 
         const projectname = projectNameForEditor(preferredEditor || header.editor);
 
-
-        if (projectname === pxt.JAVASCRIPT_PROJECT_NAME) {
+        if (projectname === pxt.PYTHON_PROJECT_NAME && header.tutorial.templateLanguage === "python") {
+            currentText[pxt.MAIN_PY] = template;
+        }
+        else if (projectname === pxt.JAVASCRIPT_PROJECT_NAME) {
             currentText[pxt.MAIN_TS] = template;
         }
         else if (projectname === pxt.PYTHON_PROJECT_NAME) {
@@ -2514,6 +2516,17 @@ export class ProjectView
         await workspace.saveAsync(newHeader);
         data.invalidate("headers:");
         await this.loadHeaderAsync(newHeader)
+    }
+
+    async importEmbedProjectAsync(importId: string) {
+        const project = await pxteditor.importDb.removeProjectAsync(importId);
+
+        if (project) {
+            return this.installAndLoadProjectAsync(project);
+        }
+        else {
+            Util.userError(lf("Unable to import project"));
+        }
     }
 
     openProjectByHeaderIdAsync(headerId: string) {
@@ -5607,6 +5620,15 @@ function handleHash(newHash: { cmd: string; arg: string }, loading: boolean): bo
                 .finally(() => {
                     pxt.BrowserUtils.changeHash("");
                     core.hideLoading("skillmapimport")
+                });
+            return true;
+        case "embedimport":
+            const importId = newHash.arg;
+            core.showLoading("embedimport", lf("loading project..."));
+            editor.importEmbedProjectAsync(importId)
+                .finally(() => {
+                    pxt.BrowserUtils.changeHash("");
+                    core.hideLoading("embedimport")
                 });
             return true;
         case "github": {

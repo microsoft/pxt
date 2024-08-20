@@ -3,17 +3,19 @@ export namespace Strings {
     export const ConfirmReplaceChecklistMsg = lf("This will replace your current checklist. Continue?");
     export const UntitledProject = lf("Untitled Project");
     export const UntitledChecklist = lf("Untitled Checklist");
+    export const NewChecklistTitle = lf("New Checklist");
     export const NewChecklist = lf("New Checklist");
     export const ImportChecklist = lf("Import Checklist");
     export const ExportChecklist = lf("Export Checklist");
+    export const Export = lf("Export");
     export const Remove = lf("Remove");
     export const Evaluate = lf("Evaluate");
     export const Criteria = lf("Criteria");
     export const Name = lf("Name");
-    export const ChecklistName = lf("Checklist Name");
+    export const ChecklistNamePlaceholder = lf("Enter Checklist Name");
     export const AddCriteria = lf("Add Criteria");
     export const Actions = lf("Actions");
-    export const AutoRun = lf("auto-run");
+    export const AutoRun = lf("Auto-run");
     export const AutoRunDescription = lf("Automatically re-evaluate when the checklist or project changes");
     export const AddNotes = lf("Add Notes");
     export const DragAndDrop = lf("Drag & Drop");
@@ -37,6 +39,11 @@ export namespace Strings {
     export const Other = lf("Other");
     export const SignIn = lf("Sign In");
     export const ConfirmDeleteCriteriaInstance = lf("Are you sure you want to remove this criteria?");
+    export const Print = lf("Print");
+    export const Rename = lf("Rename");
+    export const RenameChecklist = lf("Rename checklist");
+    export const PrintChecklist = lf("Print checklist");
+    export const EvaluateChecklist = lf("Evaluate checklist");
 }
 
 export namespace Ticks {
@@ -58,6 +65,7 @@ export namespace Ticks {
     export const UserMenuSignIn = "teachertool.usermenu.signin";
     export const SignedOutPanelSignIn = "teachertool.signedoutpanel.signin";
     export const CriteriaFeedback = "teachertool.criteriafeedback";
+    export const Print = "teachertool.print";
 }
 
 namespace Misc {
