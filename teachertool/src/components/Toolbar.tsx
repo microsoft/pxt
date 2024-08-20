@@ -41,24 +41,26 @@ const ToolbarMenuDropdown: React.FC<ToolbarMenuDropdownProps> = props => {
     );
 };
 
-interface ToolbarToggleProps {
+interface ToolbarToggleProps extends Partial<ButtonProps> {
     label: string;
     title: string;
     isChecked: boolean;
-    onChange: (checked: boolean) => void;
+    onToggle: (checked: boolean) => void;
     className?: string;
 }
 
-const ToolbarToggle: React.FC<ToolbarToggleProps> = ({ label, title, isChecked, onChange, className }) => {
+const ToolbarToggle: React.FC<ToolbarToggleProps> = props => {
+    const { label, title, isChecked, onToggle, className } = props;
     const [checked, setChecked] = React.useState(isChecked);
 
     const onClick = () => {
         setChecked(!checked);
-        onChange(!checked);
+        onToggle(!checked);
     };
 
     return (
         <Button
+            {...props}
             className={classList(css["toggle-button"], className)}
             title={title}
             label={label}

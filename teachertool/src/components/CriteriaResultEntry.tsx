@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useState, useContext, useEffect } from "react";
+import { useContext } from "react";
 import css from "./styling/EvalResultDisplay.module.scss";
 import { AppStateContext } from "../state/appStateContext";
 import { classList } from "react-common/components/util";
@@ -12,9 +12,9 @@ import { CriteriaResult, EvaluationStatus } from "../types/criteria";
 import { ThreeDotsLoadingDisplay } from "./ThreeDotsLoadingDisplay";
 import { CriteriaFeedback } from "./CriteriaFeedback";
 import { CriteriaInstanceDisplay } from "./CriteriaInstanceDisplay";
-import { Toolbar } from "./Toolbar";
 import { runSingleEvaluateAsync } from "../transforms/runSingleEvaluateAsync";
 import { removeCriteriaFromChecklist } from "../transforms/removeCriteriaFromChecklist";
+import { Button } from "react-common/components/controls/Button";
 
 interface CriteriaResultNotesProps {
     criteriaId: string;
@@ -59,26 +59,21 @@ const CriteriaResultToolbarTray: React.FC<{ criteriaId: string }> = ({ criteriaI
     }
 
     return (
-        <Toolbar
-            className={classList(css["result-toolbar"], "no-print")}
-            right={
-                <Toolbar.ControlGroup>
-                    <Toolbar.Button
-                        className={css["result-toolbar-button"]}
-                        icon="fas fa-trash"
-                        title={Strings.Remove}
-                        onClick={handleDeleteClickedAsync}
-                    />
-                    <Toolbar.Button
-                        className={css["result-toolbar-button"]}
-                        icon="fas fa-play"
-                        title={Strings.Evaluate}
-                        onClick={handleEvaluateClickedAsync}
-                        disabled={!isProjectLoaded(teacherTool)}
-                    />
-                </Toolbar.ControlGroup>
-            }
-        ></Toolbar>
+        <div className={classList(css["result-toolbar-tray"], "no-print")}>
+            <Button
+                className={classList("secondary", css["control-button"], css["result-toolbar-button"])}
+                rightIcon="fas fa-trash"
+                title={Strings.Remove}
+                onClick={handleDeleteClickedAsync}
+            />
+            <Button
+                className={classList("secondary", css["control-button"], css["result-toolbar-button"])}
+                rightIcon="fas fa-play"
+                title={Strings.Evaluate}
+                onClick={handleEvaluateClickedAsync}
+                disabled={!isProjectLoaded(teacherTool)}
+            />
+        </div>
     );
 };
 
