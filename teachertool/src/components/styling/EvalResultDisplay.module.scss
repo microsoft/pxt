@@ -5,18 +5,6 @@
     container-type: inline-size;
 }
 
-.checklist-name-input-container {
-    // Designed to mirror share-link-input layout.
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    height: 3.625rem;
-    min-height: 3.625rem;
-
-    // Compensate for border on share-link-input.
-    padding-top: 1px;
-}
-
 .checklist-control-tray {
     display: flex;
     flex-direction: row;
@@ -48,7 +36,7 @@
         border: 1px solid var(--pxt-button-secondary-accent) !important;
     }
 
-    @container (inline-size < 550px) {
+    @container (inline-size < 665px) {
         span[class*="common-button-label"] {
             display: none;
         }
@@ -62,25 +50,9 @@
     align-items: center;
     gap: 0.5rem;
 
-    label[class*="common-input-label"] {
-        font-size: 1rem;
-        font-weight: 600;
-        opacity: 0.8;
-        max-height: 2rem;
-    }
-
     div[class*="common-input-group"] {
         flex-grow: 1;
         height: unset;
-        outline: none;
-        border: none;
-        border-radius: 99px;
-
-        &:focus-within::after,
-        &:focus::after {
-            outline: none;
-            border: solid 1px var(--pxt-content-accent);
-        }
     }
 
     input[class*="common-input"] {
@@ -225,7 +197,7 @@
 
 .header {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     gap: 0.5rem;
     justify-content: space-between;
     padding: 0.5rem 0;
@@ -236,6 +208,7 @@
         align-items: flex-start;
         justify-content: space-between;
         gap: 0.5rem;
+        min-width: 14rem;
     
         h2 {
             font-size: 1.5rem;

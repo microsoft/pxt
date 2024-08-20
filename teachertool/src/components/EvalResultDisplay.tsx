@@ -67,45 +67,6 @@ const ResultsHeader: React.FC<ResultsHeaderProps> = ({ printRef }) => {
     return (
         <>
             <div className={css["header"]}>
-                <div className={classList(css["checklist-control-tray"], "no-print")}>
-                    <Button
-                        className={classList("secondary", css["control-button"])}
-                        label={Strings.Rename}
-                        title={Strings.RenameChecklist}
-                        rightIcon="fas fa-pencil-alt"
-                        onClick={handleRenameClicked}
-                    />
-                    <Button
-                        className={classList("secondary", css["control-button"])}
-                        label={Strings.Print}
-                        title={Strings.PrintChecklist}
-                        rightIcon="fas fa-print"
-                        onClick={handlePrintClicked}
-                    />
-                    <Button
-                        className={classList("secondary", css["control-button"])}
-                        label={Strings.Evaluate}
-                        title={Strings.EvaluateChecklist}
-                        rightIcon="fas fa-play"
-                        onClick={handleEvaluateClickedAsync}
-                        disabled={!isProjectLoaded(teacherTool)}
-                    />
-                    <Toolbar.Toggle
-                        className={classList("secondary", css["control-button"])}
-                        label={Strings.AutoRun}
-                        title={Strings.AutoRunDescription}
-                        isChecked={autorun}
-                        onToggle={onAutorunToggled}
-                    />
-                    <Button
-                        className={classList("secondary", css["control-button"])}
-                        label={Strings.Export}
-                        title={Strings.ExportChecklist}
-                        rightIcon="fas fa-download"
-                        onClick={handleExportChecklistClicked}
-                        disabled={!isProjectLoaded(teacherTool)}
-                    />
-                </div>
                 <div className={css["checklist-name"]}>
                     <div className={css["checklist-name-input"]}>
                         <div className={classList(css["checklist-name"], "only-print")}>
@@ -132,6 +93,38 @@ const ResultsHeader: React.FC<ResultsHeaderProps> = ({ printRef }) => {
                             </div>
                         </div>
                     )}
+                </div>
+                <div className={classList(css["checklist-control-tray"], "no-print")}>
+                    <Button
+                        className={classList("secondary", css["control-button"])}
+                        label={Strings.Export}
+                        title={Strings.ExportChecklist}
+                        rightIcon="fas fa-download"
+                        onClick={handleExportChecklistClicked}
+                        disabled={!isProjectLoaded(teacherTool)}
+                    />
+                    <Button
+                        className={classList("secondary", css["control-button"])}
+                        label={Strings.Print}
+                        title={Strings.PrintChecklist}
+                        rightIcon="fas fa-print"
+                        onClick={handlePrintClicked}
+                    />
+                    <Toolbar.Toggle
+                        className={classList("secondary", css["control-button"])}
+                        label={Strings.AutoRun}
+                        title={Strings.AutoRunDescription}
+                        isChecked={autorun}
+                        onToggle={onAutorunToggled}
+                    />
+                    <Button
+                        className={classList("primary", css["control-button"])}
+                        label={Strings.Evaluate}
+                        title={Strings.EvaluateChecklist}
+                        rightIcon="fas fa-play"
+                        onClick={handleEvaluateClickedAsync}
+                        disabled={!isProjectLoaded(teacherTool)}
+                    />
                 </div>
             </div>
             <div className={css["separator"]}></div>
