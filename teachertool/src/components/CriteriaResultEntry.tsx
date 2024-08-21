@@ -15,7 +15,6 @@ import { CriteriaInstanceDisplay } from "./CriteriaInstanceDisplay";
 import { runSingleEvaluateAsync } from "../transforms/runSingleEvaluateAsync";
 import { removeCriteriaFromChecklist } from "../transforms/removeCriteriaFromChecklist";
 import { Button } from "react-common/components/controls/Button";
-import { clearEvalResult } from "../state/actions";
 import { setEvalResult } from "../transforms/setEvalResult";
 
 interface CriteriaResultNotesProps {
