@@ -48,6 +48,7 @@ export namespace Strings {
     export const EvaluateChecklist = lf("Evaluate checklist");
     export const UnableToEvaluate = lf("Unable to evaluate");
     export const UnableToReachAI = lf("Unable to reach the AI");
+    export const Dismiss = lf("Dismiss");
 }
 
 export namespace Ticks {
