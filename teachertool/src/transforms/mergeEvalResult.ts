@@ -7,6 +7,10 @@ export function mergeEvalResult(criteriaInstanceId: string, outcome?: Evaluation
     const { state: teacherTool, dispatch } = stateAndDispatch();
 
     const newCriteriaEvalResult = { ...teacherTool.evalResults[criteriaInstanceId] };
+
+    // Clear any errors from the previous result.
+    newCriteriaEvalResult.error = undefined;
+
     if (outcome !== undefined) {
         newCriteriaEvalResult.result = outcome;
     }
