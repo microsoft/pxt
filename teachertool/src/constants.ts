@@ -1,4 +1,6 @@
 export namespace Strings {
+    export const AppTitle = lf("Code Evaluation");
+    export const AppTitleShort = lf("Code Eval");
     export const ErrorLoadingChecklistMsg = lf("That wasn't a valid checklist.");
     export const ConfirmReplaceChecklistMsg = lf("This will replace your current checklist. Continue?");
     export const UntitledProject = lf("Untitled Project");

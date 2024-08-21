@@ -4,13 +4,21 @@ import css from "./styling/HeaderBar.module.scss";
 import { Button } from "react-common/components/controls/Button";
 import { MenuBar } from "react-common/components/controls/MenuBar";
 import { AppStateContext } from "../state/appStateContext";
-import { Ticks } from "../constants";
+import { Strings, Ticks } from "../constants";
 import { MenuDropdown, MenuItem } from "react-common/components/controls/MenuDropdown";
 import { showModal } from "../transforms/showModal";
 import * as authClient from "../services/authClient";
 import { classList } from "react-common/components/util";
 
-interface HeaderBarProps {}
+const betaTag = () => {
+    return (
+        <div className={css["beta-tag"]}>
+            {lf("Beta")}
+        </div>
+    );
+};
+
+interface HeaderBarProps { }
 
 export const HeaderBar: React.FC<HeaderBarProps> = () => {
     const { state: teacherTool } = useContext(AppStateContext);
@@ -35,11 +43,18 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
         return (
             <div className={css["org"]} onClick={onOrgClick}>
                 {appTheme.organizationWideLogo || appTheme.organizationLogo ? (
-                    <img
-                        className={css["logo"]}
-                        src={appTheme.organizationWideLogo || appTheme.organizationLogo}
-                        alt={lf("{0} Logo", appTheme.organization)}
-                    />
+                    <>
+                        {appTheme.organizationWideLogo && <img
+                            className={classList(css["logo"], "min-lg")}
+                            src={appTheme.organizationWideLogo}
+                            alt={lf("{0} Logo", appTheme.organization)}
+                        />}
+                        {appTheme.organizationLogo && <img
+                            className={classList(css["logo"], "max-lg")}
+                            src={appTheme.organizationLogo}
+                            alt={lf("{0} Logo", appTheme.organization)}
+                        />}
+                    </>
                 ) : (
                     <span className="name">{appTheme.organization}</span>
                 )}
@@ -65,11 +80,18 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
                         </span>,
                     ]
                 ) : appTheme.logo || appTheme.portraitLogo ? (
-                    <img
-                        className={css["logo"]}
-                        src={appTheme.logo || appTheme.portraitLogo}
-                        alt={lf("{0} Logo", appTheme.boardName)}
-                    />
+                    <>
+                        {appTheme.logo && <img
+                            className={classList(css["logo"], "min-md")}
+                            src={appTheme.logo}
+                            alt={lf("{0} Logo", appTheme.boardName)}
+                        />}
+                        {appTheme.portraitLogo && <img
+                            className={classList(css["logo"], "max-md")}
+                            src={appTheme.portraitLogo}
+                            alt={lf("{0} Logo", appTheme.boardName)}
+                        />}
+                    </>
                 ) : (
                     <span className={css["name"]}>{appTheme.boardName}</span>
                 )}
@@ -154,6 +176,15 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
             <div className={css["left-menu"]}>
                 {getOrganizationLogo()}
                 {getTargetLogo()}
+            </div>
+
+            <div className={css["centered-panel"]}>
+                <div className={classList(css["app-title"], "min-md")}>{Strings.AppTitle}
+                    {betaTag()}
+                </div>
+                <div className={classList(css["app-title"], "max-md min-sm")}>{Strings.AppTitleShort}
+                    {betaTag()}
+                </div>
             </div>
 
             <div className={css["right-menu"]}>{getUserMenu()}</div>

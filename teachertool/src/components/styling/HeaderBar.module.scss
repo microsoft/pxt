@@ -42,6 +42,22 @@
         }
     }
 
+    .centered-panel {
+        position: absolute;
+        justify-content: center;
+        align-items: center;
+        display: flex;
+        width: 100%;
+
+        div.app-title {
+            position: relative;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.25rem;
+            text-align: center;
+        }
+    }
+
     .user-menu {
         height: 100%;
         display: flex;
@@ -76,4 +92,17 @@
             }
         }
     }
+}
+
+.beta-tag {
+    text-transform: uppercase;
+    position: absolute;
+    top: 3px;
+    right: -50px;
+    background-color: var(--pxt-success);
+    color: black;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: bold;
 }

@@ -136,6 +136,86 @@ code {
 }
 
 /*******************************/
+/****  BREAKPOINT QUERIES  *****/
+/*******************************/
+
+// Composable breakpoints
+
+.min-xl,
+.max-xl,
+.min-lg,
+.max-lg,
+.min-md,
+.max-md,
+.min-sm,
+.max-sm,
+.min-xs,
+.max-xs {
+    display: initial;
+}
+
+// becomes visible at width >= 1024px
+@media (min-width: 1024px) {
+    .max-xl {
+        display: none !important;
+    }
+}
+// becomes visible at width < 1024px
+@media (max-width: 1023.98px) {
+    .min-xl {
+        display: none !important;
+    }
+}
+// becomes visible at width >= 720px
+@media (min-width: 720px) {
+    .max-lg {
+        display: none !important;
+    }
+}
+// becomes visible at width < 720px
+@media (max-width: 719.98px) {
+    .min-lg {
+        display: none !important;
+    }
+}
+// becomes visible at width >= 480px
+@media (min-width: 480px) {
+    .max-md {
+        display: none !important;
+    }
+}
+// becomes visible at width < 480px
+@media (max-width: 479.98px) {
+    .min-md {
+        display: none !important;
+    }
+}
+// becomes visible at width >= 240px
+@media (min-width: 240px) {
+    .max-sm {
+        display: none !important;
+    }
+}
+// becomes visible at width < 240px
+@media (max-width: 239.98px) {
+    .min-sm {
+        display: none !important;
+    }
+}
+// becomes visible at width >= 240px
+@media (min-width: 240px) {
+    .max-xs {
+        display: none !important;
+    }
+}
+// becomes visible at width < 240px
+@media (max-width: 239.98px) {
+    .min-xs {
+        display: none !important;
+    }
+}
+
+/*******************************/
 /****  NOTIFICATION STYLING  ***/
 /*******************************/
 
