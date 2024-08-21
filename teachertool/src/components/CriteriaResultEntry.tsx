@@ -48,10 +48,9 @@ interface CriteriaResultErrorProps {
     error: string;
 }
 const CriteriaResultError: React.FC<CriteriaResultErrorProps> = ({ error }) => {
-    // Display an X icon and the error message in a faint red box
     return (
         <div className={css["result-error"]}>
-            <i className="fas fa-times-circle"></i>
+            <i className="fas fa-exclamation-circle"></i>
             <div className={css["error-info-container"]}>
                 <span className={css["error-title"]}>{Strings.UnableToEvaluate}</span>
                 <span className={css["error-details"]}>{error}</span>
