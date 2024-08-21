@@ -132,16 +132,15 @@
 
         .dismiss-button {
             position: absolute;
-            top: 0.5rem;
-            right: 0;
+            top: 0.6rem;
+            right: 0.1rem;
             background-color: transparent;
             border-radius: 100%;
             margin: 0;
             padding: 0;
-            font-size: 1rem;
 
-            &:hover {
-                font-size: 1.2rem;
+            i:hover {
+                scale: 1.1;
             }
         }
     }
