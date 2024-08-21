@@ -54,7 +54,7 @@ export const CriteriaEvalResultDropdown: React.FC<CriteriaEvalResultProps> = ({ 
         <Dropdown
             id="project-eval-result-dropdown"
             selectedId={selectedResult}
-            className={classList("rounded", selectedResult, selectedResult === "notevaluated" ? "no-print" : undefined)}
+            className={classList("rounded", selectedResult)}
             items={dropdownItems}
             onItemSelected={id => setEvalResultOutcome(criteriaId, itemIdToCriteriaResult[id])}
         />
