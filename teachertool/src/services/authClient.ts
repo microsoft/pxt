@@ -101,3 +101,7 @@ export async function loginAsync(
 export async function authTokenAsync(): Promise<string | undefined> {
     return await pxt.auth.getAuthTokenAsync();
 }
+
+export async function getAuthHeadersAsync(): Promise<pxt.Map<string>> {
+    return await pxt.auth.getAuthHeadersAsync();
+}

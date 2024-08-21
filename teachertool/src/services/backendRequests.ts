@@ -100,7 +100,7 @@ export async function askCopilotQuestionAsync(shareId: string, question: string)
     const data = { id: shareId, question };
     let result: string = "";
     try {
-        const headers = await pxt.auth.getAuthHeadersAsync();
+        const headers = await auth.getAuthHeadersAsync();
         headers["Content-Type"] = "application/json";
 
         const request = await fetch(url, {
