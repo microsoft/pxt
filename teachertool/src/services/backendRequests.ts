@@ -100,7 +100,7 @@ export async function askCopilotQuestionAsync(shareId: string, question: string)
     const data = { id: shareId, question };
     let result: string = "";
     try {
-        const headers = await getAuthHeadersAsync();
+        const headers = await pxt.auth.getAuthHeadersAsync();
         headers["Content-Type"] = "application/json";
 
         const request = await fetch(url, {
@@ -119,15 +119,4 @@ export async function askCopilotQuestionAsync(shareId: string, question: string)
     }
 
     return result;
-}
-
-async function getAuthHeadersAsync(): Promise<pxt.Map<string>> {
-    const headers: pxt.Map<string> = {};
-    const authToken = await auth.authTokenAsync();
-    if (authToken) {
-        headers["authorization"] = `mkcd ${authToken}`;
-    }
-    headers["x-pxt-target"] = pxt.appTarget?.id;
-
-    return headers;
 }
