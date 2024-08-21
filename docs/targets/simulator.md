@@ -62,4 +62,6 @@ in ``pxtarget.json`` under the ``simulator.messageSimulators`` field:
 When loading the message simulator url, MakeCode expands ``$PARENT_ORIGIN$`` with the URI-encoded origin of the editor.
 You can use this value to validate the origin of iframe messages.
 
+Similarly, $LANGUAGE$ will be expanded to the URI-encoded language code matching the active MakeCode language.
+
 Optionally, you can specify a ``localHostUrl`` that will be used in local development mode.
