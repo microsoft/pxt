@@ -139,78 +139,104 @@ code {
 /****  BREAKPOINT QUERIES  *****/
 /*******************************/
 
-// Composable breakpoints
+// Composable breakpoints, aligned to react-common breakpoint sizes (see https://github.com/microsoft/pxt/blob/master/react-common/styles/react-common-breakpoints.less)
 
+// Become visible at the given breakpoint
 .min-xl,
-.max-xl,
 .min-lg,
-.max-lg,
 .min-md,
-.max-md,
 .min-sm,
-.max-sm,
+.min-2sm,
 .min-xs,
-.max-xs {
+.min-2xs {
+    display: initial;
+}
+// Become invisible at the given breakpoint
+.max-xl,
+.max-lg,
+.max-md,
+.max-sm,
+.max-2sm,
+.max-xs,
+.max-2xs {
     display: initial;
 }
 
-// becomes visible at width >= 1024px
-@media (min-width: 1024px) {
+$smallMobileBreakpoint: 240px;
+$mobileBreakpoint: 320px;
+$smallTabletBreakpoint: 480px;
+$tabletBreakpoint: 768px;
+$computerBreakpoint: 992px;
+$largeMonitorBreakpoint: 1200px;
+$widescreenMonitorBreakpoint: 1920px;
+
+@media (min-width: $widescreenMonitorBreakpoint) {
     .max-xl {
         display: none !important;
     }
 }
-// becomes visible at width < 1024px
-@media (max-width: 1023.98px) {
-    .min-xl {
-        display: none !important;
-    }
-}
-// becomes visible at width >= 720px
-@media (min-width: 720px) {
+@media (min-width: $largeMonitorBreakpoint) {
     .max-lg {
         display: none !important;
     }
 }
-// becomes visible at width < 720px
-@media (max-width: 719.98px) {
-    .min-lg {
-        display: none !important;
-    }
-}
-// becomes visible at width >= 480px
-@media (min-width: 480px) {
+@media (min-width: $computerBreakpoint) {
     .max-md {
         display: none !important;
     }
 }
-// becomes visible at width < 480px
-@media (max-width: 479.98px) {
-    .min-md {
-        display: none !important;
-    }
-}
-// becomes visible at width >= 240px
-@media (min-width: 240px) {
+@media (min-width: $tabletBreakpoint) {
     .max-sm {
         display: none !important;
     }
 }
-// becomes visible at width < 240px
-@media (max-width: 239.98px) {
-    .min-sm {
+@media (min-width: $smallTabletBreakpoint) {
+    .max-2sm {
         display: none !important;
     }
 }
-// becomes visible at width >= 240px
-@media (min-width: 240px) {
+@media (min-width: $mobileBreakpoint) {
     .max-xs {
         display: none !important;
     }
 }
-// becomes visible at width < 240px
-@media (max-width: 239.98px) {
+@media (min-width: $smallMobileBreakpoint) {
+    .max-2xs {
+        display: none !important;
+    }
+}
+@media (max-width: ($widescreenMonitorBreakpoint - 0.02px)) {
+    .min-xl {
+        display: none !important;
+    }
+}
+@media (max-width: ($largeMonitorBreakpoint - 0.02px)) {
+    .min-lg {
+        display: none !important;
+    }
+}
+@media (max-width: ($computerBreakpoint - 0.02px)) {
+    .min-md {
+        display: none !important;
+    }
+}
+@media (max-width: ($tabletBreakpoint - 0.02px)) {
+    .min-sm {
+        display: none !important;
+    }
+}
+@media (max-width: ($smallTabletBreakpoint - 0.02px)) {
+    .min-2sm {
+        display: none !important;
+    }
+}
+@media (max-width: ($mobileBreakpoint - 0.02px)) {
     .min-xs {
+        display: none !important;
+    }
+}
+@media (max-width: ($smallMobileBreakpoint - 0.02px)) {
+    .min-2xs {
         display: none !important;
     }
 }

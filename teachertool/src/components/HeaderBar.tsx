@@ -45,12 +45,12 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
                 {appTheme.organizationWideLogo || appTheme.organizationLogo ? (
                     <>
                         {appTheme.organizationWideLogo && <img
-                            className={classList(css["logo"], "min-lg")}
+                            className={classList(css["logo"], "min-sm")}
                             src={appTheme.organizationWideLogo}
                             alt={lf("{0} Logo", appTheme.organization)}
                         />}
                         {appTheme.organizationLogo && <img
-                            className={classList(css["logo"], "max-lg")}
+                            className={classList(css["logo"], "max-sm")}
                             src={appTheme.organizationLogo}
                             alt={lf("{0} Logo", appTheme.organization)}
                         />}
@@ -82,12 +82,12 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
                 ) : appTheme.logo || appTheme.portraitLogo ? (
                     <>
                         {appTheme.logo && <img
-                            className={classList(css["logo"], "min-md")}
+                            className={classList(css["logo"], "min-2sm")}
                             src={appTheme.logo}
                             alt={lf("{0} Logo", appTheme.boardName)}
                         />}
                         {appTheme.portraitLogo && <img
-                            className={classList(css["logo"], "max-md")}
+                            className={classList(css["logo"], "max-2sm")}
                             src={appTheme.portraitLogo}
                             alt={lf("{0} Logo", appTheme.boardName)}
                         />}
@@ -179,10 +179,10 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
             </div>
 
             <div className={css["centered-panel"]}>
-                <div className={classList(css["app-title"], "min-md")}>{Strings.AppTitle}
+                <div className={classList(css["app-title"], "min-sm")}>{Strings.AppTitle}
                     {betaTag()}
                 </div>
-                <div className={classList(css["app-title"], "max-md min-sm")}>{Strings.AppTitleShort}
+                <div className={classList(css["app-title"], "min-2xs max-sm")}>{Strings.AppTitleShort}
                     {betaTag()}
                 </div>
             </div>
