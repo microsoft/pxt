@@ -46,6 +46,8 @@ export namespace Strings {
     export const RenameChecklist = lf("Rename checklist");
     export const PrintChecklist = lf("Print checklist");
     export const EvaluateChecklist = lf("Evaluate checklist");
+    export const UnableToEvaluate = lf("Unable to evaluate");
+    export const UnableToReachAI = lf("Unable to reach the AI");
 }
 
 export namespace Ticks {

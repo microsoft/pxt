@@ -44,6 +44,22 @@ const CriteriaResultNotes: React.FC<CriteriaResultNotesProps> = ({ criteriaId })
     );
 };
 
+interface CriteriaResultErrorProps {
+    error: string;
+}
+const CriteriaResultError: React.FC<CriteriaResultErrorProps> = ({ error }) => {
+    // Display an X icon and the error message in a faint red box
+    return (
+        <div className={css["result-error"]}>
+            <i className="fas fa-times-circle"></i>
+            <div className={css["error-info-container"]}>
+                <span className={css["error-title"]}>{Strings.UnableToEvaluate}</span>
+                <span className={css["error-details"]}>{error}</span>
+            </div>
+        </div>
+    );
+}
+
 const CriteriaResultToolbarTray: React.FC<{ criteriaId: string }> = ({ criteriaId }) => {
     const { state: teacherTool } = useContext(AppStateContext);
 
@@ -86,6 +102,7 @@ export const CriteriaResultEntry: React.FC<CriteriaResultEntryProps> = ({ criter
     const evalResult: CriteriaResult | undefined = teacherTool.evalResults[criteriaId];
     const evalStatus = evalResult ? evalResult.result : EvaluationStatus.NotStarted;
     const hasFeedback = !!evalResult?.notes;
+    const hasError = !!evalResult?.error;
 
     const criteriaInstance = getCriteriaInstanceWithId(teacherTool, criteriaId);
     const catalogCriteria = criteriaInstance ? getCatalogCriteriaWithId(criteriaInstance.catalogCriteriaId) : undefined;
@@ -108,9 +125,11 @@ export const CriteriaResultEntry: React.FC<CriteriaResultEntryProps> = ({ criter
                         )}
                     </div>
 
-                    {/* Notes */}
+                    {/* Notes & Errors */}
                     {isInProgress ? (
                         <ThreeDotsLoadingDisplay className={css["loading-display"]} />
+                    ) : hasError ? (
+                        <CriteriaResultError error={evalResult.error!} />
                     ) : (
                         <div className={classList(css["result-notes"], !hasFeedback ? "no-print" : undefined)}>
                             <CriteriaResultNotes criteriaId={criteriaId} />

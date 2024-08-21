@@ -47,4 +47,5 @@ export enum EvaluationStatus {
 export interface CriteriaResult {
     result: EvaluationStatus;
     notes?: string;
+    error?: string;
 }
