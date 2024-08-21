@@ -107,6 +107,7 @@
         flex-direction: row;
         align-items: center;
         justify-content: flex-start;
+        position: relative;
         width: 100%;
         padding: 0.5rem;
         border: 1px solid var(--pxt-error);
@@ -126,6 +127,21 @@
 
             .error-details {
                 font-weight: 500;
+            }
+        }
+
+        .dismiss-button {
+            position: absolute;
+            top: 0.5rem;
+            right: 0;
+            background-color: transparent;
+            border-radius: 100%;
+            margin: 0;
+            padding: 0;
+            font-size: 1rem;
+
+            &:hover {
+                font-size: 1.2rem;
             }
         }
     }
