@@ -14,8 +14,8 @@ const copilotSlot = url.match(/copilot=([^&]+)/);
 const copilotEndpoint =
     copilotSlot && copilotSlot[1]
         ? copilotSlot[1] === "local"
-            ? `${DEV_BACKEND_LOCALHOST}/api`
-            : `https://makecode-ppe-app-backend-eastus-${copilotSlot[1]}.azurewebsites.net/api`
+            ? `${DEV_BACKEND_LOCALHOST}/api/`
+            : `https://${copilotSlot[1]}.staging.pxt.io/api/`
         : undefined;
 
 let state: AppState;
