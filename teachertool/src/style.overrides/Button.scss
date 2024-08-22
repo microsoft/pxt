@@ -47,7 +47,10 @@
     border: solid 1px var(--pxt-page-foreground);
 
     .common-button-flex {
-        padding: 0.75rem;
+        padding: 0.65rem;
+        display: flex;
+        align-items: center;
+        height: 100%;
     }
 
     @media print {
@@ -57,7 +60,7 @@
 
         text-align: center;
         padding-right: 8px;
-        border: none;
+        border: none !important;
 
         .common-button-label {
             border-bottom: 1px solid var(--pxt-page-foreground);
@@ -66,9 +69,9 @@
 }
 
 .fail > .common-button.common-dropdown-button {
-    //background-color: var(--pxt-warning);
+    border: 3px solid var(--pxt-warning);
 }
 
 .pass > .common-button.common-dropdown-button {
-    //background-color: var(--pxt-success);
+    border: 3px solid var(--pxt-success-accent);
 }
