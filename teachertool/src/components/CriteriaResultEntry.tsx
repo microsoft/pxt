@@ -52,7 +52,7 @@ interface CriteriaResultErrorProps {
 
 const CriteriaResultError: React.FC<CriteriaResultErrorProps> = ({ criteriaInstanceId, error }) => {
     return (
-        <div className={css["result-error"]}>
+        <div className={classList(css["result-error"], "no-print")}>
             <i className="fas fa-exclamation-circle"></i>
             <div className={css["error-info-container"]}>
                 <span className={css["error-title"]}>{Strings.UnableToEvaluate}</span>
