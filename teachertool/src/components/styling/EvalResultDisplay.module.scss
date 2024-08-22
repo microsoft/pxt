@@ -102,6 +102,50 @@
         align-self: flex-end;
     }
 
+    .result-error {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-start;
+        position: relative;
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid var(--pxt-error);
+        border-radius: 1rem;
+        background-color: var(--pxt-error-background);
+        gap: 0.5rem;
+
+        .error-info-container {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: space-between;
+            overflow: hidden;
+
+            .error-title {
+                font-weight: 600;
+            }
+
+            .error-details {
+                font-weight: 500;
+            }
+        }
+
+        .dismiss-button {
+            position: absolute;
+            top: 0.6rem;
+            right: 0.1rem;
+            background-color: transparent;
+            border-radius: 100%;
+            margin: 0;
+            padding: 0;
+
+            i:hover {
+                scale: 1.1;
+            }
+        }
+    }
+
     &:focus-within,
     &:hover,
     &:focus {

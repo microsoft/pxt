@@ -15,6 +15,7 @@ import { CriteriaInstanceDisplay } from "./CriteriaInstanceDisplay";
 import { runSingleEvaluateAsync } from "../transforms/runSingleEvaluateAsync";
 import { removeCriteriaFromChecklist } from "../transforms/removeCriteriaFromChecklist";
 import { Button } from "react-common/components/controls/Button";
+import { setEvalResult } from "../transforms/setEvalResult";
 
 interface CriteriaResultNotesProps {
     criteriaId: string;
@@ -39,6 +40,31 @@ const CriteriaResultNotes: React.FC<CriteriaResultNotesProps> = ({ criteriaId })
                 onChange={onTextChange}
                 autoComplete={false}
                 intervalMs={500}
+            />
+        </div>
+    );
+};
+
+interface CriteriaResultErrorProps {
+    criteriaInstanceId: string;
+    error: string;
+}
+
+const CriteriaResultError: React.FC<CriteriaResultErrorProps> = ({ criteriaInstanceId, error }) => {
+    return (
+        <div className={classList(css["result-error"], "no-print")}>
+            <i className="fas fa-exclamation-circle"></i>
+            <div className={css["error-info-container"]}>
+                <span className={css["error-title"]}>{Strings.UnableToEvaluate}</span>
+                <span className={css["error-details"]}>{error}</span>
+            </div>
+            <Button
+                className={css["dismiss-button"]}
+                leftIcon="fas fa-times-circle"
+                title={Strings.Dismiss}
+                onClick={() =>
+                    setEvalResult(criteriaInstanceId, { result: EvaluationStatus.NotStarted, error: undefined })
+                }
             />
         </div>
     );
@@ -86,6 +112,7 @@ export const CriteriaResultEntry: React.FC<CriteriaResultEntryProps> = ({ criter
     const evalResult: CriteriaResult | undefined = teacherTool.evalResults[criteriaId];
     const evalStatus = evalResult ? evalResult.result : EvaluationStatus.NotStarted;
     const hasFeedback = !!evalResult?.notes;
+    const hasError = !!evalResult?.error;
 
     const criteriaInstance = getCriteriaInstanceWithId(teacherTool, criteriaId);
     const catalogCriteria = criteriaInstance ? getCatalogCriteriaWithId(criteriaInstance.catalogCriteriaId) : undefined;
@@ -108,9 +135,11 @@ export const CriteriaResultEntry: React.FC<CriteriaResultEntryProps> = ({ criter
                         )}
                     </div>
 
-                    {/* Notes */}
+                    {/* Notes & Errors */}
                     {isInProgress ? (
                         <ThreeDotsLoadingDisplay className={css["loading-display"]} />
+                    ) : hasError ? (
+                        <CriteriaResultError criteriaInstanceId={criteriaInstance.instanceId} error={evalResult.error!} />
                     ) : (
                         <div className={classList(css["result-notes"], !hasFeedback ? "no-print" : undefined)}>
                             <CriteriaResultNotes criteriaId={criteriaId} />

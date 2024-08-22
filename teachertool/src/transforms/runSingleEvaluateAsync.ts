@@ -12,6 +12,7 @@ import { getSystemParameter } from "../utils/getSystemParameter";
 import { runValidatorPlanOverrideAsync } from "../validatorPlanOverrides/runValidatorPlanOverrideAsync";
 import { setEvalResultOutcome } from "./setEvalResultOutcome";
 import { mergeEvalResult } from "./mergeEvalResult";
+import { setEvalResult } from "./setEvalResult";
 
 function generateValidatorPlan(
     criteriaInstance: CriteriaInstance,
@@ -117,25 +118,33 @@ export async function runSingleEvaluateAsync(criteriaInstanceId: string, fromUse
             return resolve(false);
         }
 
-        // Only call into iframe if teacher tool has not specified an override for this plan.
-        let planResult = await runValidatorPlanOverrideAsync(plan);
-        if (!planResult) {
-            planResult = await runValidatorPlanAsync(plan, loadedValidatorPlans);
-        }
+        try {
+            // Only call into iframe if teacher tool has not specified an override for this plan.
+            let planResult = await runValidatorPlanOverrideAsync(plan);
+            if (!planResult) {
+                planResult = await runValidatorPlanAsync(plan, loadedValidatorPlans);
+            }
 
-        if (planResult) {
-            const result =
-                planResult.result === undefined
-                    ? EvaluationStatus.CompleteWithNoResult
-                    : planResult.result
-                    ? EvaluationStatus.Pass
-                    : EvaluationStatus.Fail;
+            if (planResult) {
+                const result =
+                    planResult.result === undefined
+                        ? EvaluationStatus.CompleteWithNoResult
+                        : planResult.result
+                        ? EvaluationStatus.Pass
+                        : EvaluationStatus.Fail;
 
-            mergeEvalResult(criteriaInstance.instanceId, result, planResult.notes);
-            return resolve(true); // evaluation completed successfully, so return true (regardless of pass/fail)
-        } else {
-            dispatch(Actions.clearEvalResult(criteriaInstance.instanceId));
-            return resolve(false);
+                mergeEvalResult(criteriaInstance.instanceId, result, planResult.notes);
+                return resolve(true); // evaluation completed successfully, so return true (regardless of pass/fail)
+            } else {
+                dispatch(Actions.clearEvalResult(criteriaInstance.instanceId));
+                return resolve(false);
+            }
+
+        } catch (e) {
+            setEvalResult(criteriaInstance.instanceId, {
+                result: EvaluationStatus.NotStarted,
+                error: (e as Error)?.message,
+            });
         }
     });
 
