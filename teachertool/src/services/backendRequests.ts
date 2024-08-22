@@ -1,3 +1,4 @@
+import { Strings } from "../constants";
 import { stateAndDispatch } from "../state";
 import { ErrorCode } from "../types/errorCode";
 import { logError } from "./loggingService";
@@ -111,11 +112,12 @@ export async function askCopilotQuestionAsync(shareId: string, question: string)
         });
 
         if (!request.ok) {
-            throw new Error("Unable to reach AI");
+            throw new Error(Strings.UnableToReachAI);
         }
         result = await request.json();
     } catch (e) {
         logError(ErrorCode.askAIQuestion, e);
+        throw e; // We will catch this upstream so we can show the error
     }
 
     return result;

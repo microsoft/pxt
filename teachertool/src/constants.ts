@@ -1,4 +1,6 @@
 export namespace Strings {
+    export const AppTitle = lf("Code Evaluation");
+    export const AppTitleShort = lf("Code Eval");
     export const ErrorLoadingChecklistMsg = lf("That wasn't a valid checklist.");
     export const ConfirmReplaceChecklistMsg = lf("This will replace your current checklist. Continue?");
     export const UntitledProject = lf("Untitled Project");
@@ -44,6 +46,9 @@ export namespace Strings {
     export const RenameChecklist = lf("Rename checklist");
     export const PrintChecklist = lf("Print checklist");
     export const EvaluateChecklist = lf("Evaluate checklist");
+    export const UnableToEvaluate = lf("Unable to evaluate");
+    export const UnableToReachAI = lf("Unable to reach the AI");
+    export const Dismiss = lf("Dismiss");
 }
 
 export namespace Ticks {
