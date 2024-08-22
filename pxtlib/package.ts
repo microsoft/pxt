@@ -1167,35 +1167,36 @@ namespace pxt {
                 }
                 const prevVariant = pxt.appTargetVariant
 
-                if (variant)
-                    pxt.setAppTargetVariant(variant, { temporary: true })
+                if (variant) {
+                    pxt.setAppTargetVariant(variant, { temporary: true });
+                }
+
+                let einfo: pxtc.ExtensionInfo;
 
                 try {
-                    let einfo = cpp.getExtensionInfo(this)
+                    res.target = pxt.appTarget.compile;
+                    einfo = cpp.getExtensionInfo(this)
                     if (!shimsGenerated && (einfo.shimsDTS || einfo.enumsDTS)) {
                         shimsGenerated = true
                         if (einfo.shimsDTS) generateFile("shims.d.ts", einfo.shimsDTS)
                         if (einfo.enumsDTS) generateFile("enums.d.ts", einfo.enumsDTS)
                     }
-
-                    const inf = target.isNative ? await this.host().getHexInfoAsync(einfo) : null
-
-                    einfo = U.flatClone(einfo)
-                    if (!target.keepCppFiles) {
-                        delete einfo.compileData;
-                        delete einfo.generatedFiles;
-                        delete einfo.extensionFiles;
-                    }
-                    einfo.hexinfo = inf
-
-                    res.extinfo = einfo
-                    res.target = pxt.appTarget.compile
-
                 } finally {
-                    if (variant)
+                    if (variant) {
                         pxt.setAppTargetVariant(prevVariant, { temporary: true })
+                    }
                 }
 
+                const inf = target.isNative ? await this.host().getHexInfoAsync(einfo) : null
+
+                einfo = U.flatClone(einfo)
+                if (!target.keepCppFiles) {
+                    delete einfo.compileData;
+                    delete einfo.generatedFiles;
+                    delete einfo.extensionFiles;
+                }
+                einfo.hexinfo = inf
+                res.extinfo = einfo
                 return res
             }
 
@@ -1226,25 +1227,31 @@ namespace pxt {
 
 
             let ext: pxtc.ExtensionInfo = null
-            for (let v of variants) {
-                if (ext)
-                    pxt.debug(`building for ${v}`)
-                const etarget = await fillExtInfoAsync(v)
-                const einfo = etarget.extinfo
-                einfo.appVariant = v
-                einfo.outputPrefix = variants.length == 1 || !v ? "" : v + "-"
-                if (ext) {
-                    opts.otherMultiVariants.push(etarget)
-                } else {
-                    etarget.target.isNative = opts.target.isNative;
-                    opts.target = etarget.target;
+            await Promise.all(
+                variants.map(
+                    async v => {
+                        if (ext) {
+                            pxt.debug(`building for ${v}`);
+                        }
+                        const etarget = await fillExtInfoAsync(v);
+                        const einfo = etarget.extinfo;
+                        einfo.appVariant = v;
+                        einfo.outputPrefix = variants.length == 1 || !v ? "" : v + "-";
+                        if (ext) {
+                            opts.otherMultiVariants.push(etarget);
+                        }
+                        else {
+                            etarget.target.isNative = opts.target.isNative;
+                            opts.target = etarget.target;
 
-                    ext = einfo
-                    opts.otherMultiVariants = []
-                }
-            }
+                            ext = einfo;
+                            opts.otherMultiVariants = [];
+                        }
+                    }
+                )
+            );
+
             opts.extinfo = ext
-
             opts.target.preferredEditor = this.getPreferredEditor();
 
             const noFileEmbed = appTarget.compile.shortPointers ||
