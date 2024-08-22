@@ -5939,8 +5939,19 @@ document.addEventListener("DOMContentLoaded", async () => {
         return epkg.tilemapProject;
     }
 
-    pxt.hexloader.showLoading = (msg) => core.showLoading("hexcloudcompiler", msg);
-    pxt.hexloader.hideLoading = () => core.hideLoading("hexcloudcompiler");
+    let loadCount = 0;
+    pxt.hexloader.showLoading = (msg) => {
+        loadCount++;
+        if (loadCount === 1) {
+            core.showLoading("hexcloudcompiler", msg);
+        }
+    };
+    pxt.hexloader.hideLoading = () => {
+        loadCount--;
+        if (loadCount === 0) {
+            core.hideLoading("hexcloudcompiler");
+        }
+    };
     pxt.docs.requireMarked = () => require("marked");
 
     // allow static web site to specify custom backend
