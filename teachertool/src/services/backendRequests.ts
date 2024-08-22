@@ -2,6 +2,7 @@ import { Strings } from "../constants";
 import { stateAndDispatch } from "../state";
 import { ErrorCode } from "../types/errorCode";
 import { logError } from "./loggingService";
+import * as auth from "./authClient";
 
 export async function fetchJsonDocAsync<T = any>(url: string): Promise<T | undefined> {
     try {
@@ -95,15 +96,19 @@ export async function askCopilotQuestionAsync(shareId: string, question: string)
 
     const url = `${
         teacherTool.copilotEndpointOverride ? teacherTool.copilotEndpointOverride : pxt.Cloud.apiRoot
-    }/copilot/question`;
+    }copilot/question`;
 
     const data = { id: shareId, question };
     let result: string = "";
     try {
+        const headers = await auth.getAuthHeadersAsync();
+        headers["Content-Type"] = "application/json";
+
         const request = await fetch(url, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers,
             body: JSON.stringify(data),
+            credentials: "include",
         });
 
         if (!request.ok) {
@@ -111,7 +116,7 @@ export async function askCopilotQuestionAsync(shareId: string, question: string)
         }
         result = await request.json();
     } catch (e) {
-        logError(ErrorCode.askCopilotQuestion, e);
+        logError(ErrorCode.askAIQuestion, e);
         throw e; // We will catch this upstream so we can show the error
     }
 

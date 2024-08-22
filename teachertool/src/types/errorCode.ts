@@ -25,7 +25,7 @@ export enum ErrorCode {
     selectedBlockWithoutOptions = "selectedBlockWithoutOptions",
     unrecognizedSystemParameter = "unrecognizedSystemParameter",
     invalidValidatorPlan = "invalidValidatorPlan",
-    askCopilotQuestion = "askCopilotQuestion",
+    askAIQuestion = "askAIQuestion",
     missingTag = "missingTag",
     noCatalogCriteria = "noCatalogCriteria",
     criteriaInstanceNotFound = "criteriaInstanceNotFound",
