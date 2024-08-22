@@ -3,7 +3,7 @@ import { AppStateContext, AppStateReady } from "./state/appStateContext";
 import { usePromise } from "./hooks/usePromise";
 import * as Actions from "./state/actions";
 import { downloadTargetConfigAsync } from "./services/backendRequests";
-import { logDebug, logError } from "./services/loggingService";
+import { initLoggingService, logDebug, logError } from "./services/loggingService";
 import { HeaderBar } from "./components/HeaderBar";
 import { MainPanel } from "./components/MainPanel";
 import { Toasts } from "./components/Toasts";
@@ -24,6 +24,8 @@ export const App = () => {
     const { state, dispatch } = useContext(AppStateContext);
     const [inited, setInited] = useState(false);
     const [authCheckComplete, setAuthCheckComplete] = useState(false);
+
+    initLoggingService();
 
     const ready = usePromise(AppStateReady, false);
 
