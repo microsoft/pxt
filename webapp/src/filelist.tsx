@@ -362,11 +362,13 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                 return Promise.resolve()
             }
             let fileText = "";
-            if (fileName == customFile) {
+            const tsFiles = pkgCfg.files.filter(f => f.endsWith(".ts"));
+            // if the length is 1, the only ts file is main.ts, thus
+            // we are adding the first custom file to the project
+            if (tsFiles.length === 1) {
                 fileText = customFileHeader(pxt.appTarget.appTheme.homeUrl) + customFileText;
             } else if (comment) {
-                fileText = `${comment} ${commentText}
-`;
+                fileText = `${comment} ${commentText}`;
             }
 
             return this.props.parent.updateFileAsync(fileName, fileText, true);
