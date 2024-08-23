@@ -23,7 +23,17 @@ export const MakeCodeFrame: React.FC<IProps> = () => {
             url = editorUrl.substr(0, editorUrl.length - 1);
         }
         const shareSection = shareId ? `#pub:${shareId}` : "";
-        url += `?controller=1&teachertool=1&readonly=1&ws=mem&nocookiebanner=1&frameid=${frameId}${shareSection}`;
+
+        // check for dbg and consoletick flags and pass them through to the iframe if present.
+        let additionalFlags = "";
+        if (pxt.options.debug) {
+            additionalFlags += "&dbg=1";
+        }
+        if (pxt.analytics.consoleTicks) {
+            additionalFlags += "&consoleticks=1";
+        }
+
+        url += `?controller=1&teachertool=1&readonly=1&ws=mem&nocookiebanner=1&frameid=${frameId}${shareSection}${additionalFlags}`;
         return url;
     }
 
