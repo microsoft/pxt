@@ -28,6 +28,8 @@ export async function runEvaluateAsync(fromUserInteraction: boolean) {
             showToast(makeToast("error", lf("Unable to run evaluation")));
         } else if (errorCount > 0) {
             showToast(makeToast("error", lf("Unable to evaluate some criteria")));
+        } else {
+            showToast(makeToast("success", lf("Evaluation complete")));
         }
     }
 }
