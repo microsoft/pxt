@@ -1106,7 +1106,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         // clear previous warnings on non-disabled blocks
         this.editor.getAllBlocks(false).filter(b => b.isEnabled()).forEach((b: Blockly.BlockSvg) => {
-            b.setWarningText(null);
+            b.setWarningText(null, pxtblockly.PXT_WARNING_ID);
             setHighlightWarning(b, false);
         });
         let tsfile = file && file.epkg && file.epkg.files[file.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME)];
@@ -1122,7 +1122,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 let b = this.editor.getBlockById(bid) as Blockly.BlockSvg;
                 if (b) {
                     let txt = ts.pxtc.flattenDiagnosticMessageText(diag.messageText, "\n");
-                    b.setWarningText(txt);
+                    b.setWarningText(txt, pxtblockly.PXT_WARNING_ID);
                     setHighlightWarning(b, true);
                 }
             }
@@ -1133,7 +1133,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 let b = this.editor.getBlockById(d.blockId) as Blockly.BlockSvg;
 
                 if (b) {
-                    b.setWarningText(d.message);
+                    b.setWarningText(d.message, pxtblockly.PXT_WARNING_ID);
                     setHighlightWarning(b, true);
                 }
             }
@@ -1155,7 +1155,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.editor.highlightBlock(bid);
                 if (brk) {
                     const b = this.editor.getBlockById(bid) as Blockly.BlockSvg;
-                    b.setWarningText(brk ? brk.exceptionMessage : undefined);
+                    b.setWarningText(brk ? brk.exceptionMessage : undefined, pxtblockly.PXT_WARNING_ID);
                     // ensure highlight is in the screen when a breakpoint info is available
                     // TODO: make warning mode look good
                     // b.setHighlightWarning(brk && !!brk.exceptionMessage);

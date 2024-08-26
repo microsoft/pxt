@@ -25,6 +25,8 @@ interface CommentMap {
     idToComments: pxt.Map<Blockly.comments.RenderedWorkspaceComment[]>;
 }
 
+export const PXT_WARNING_ID = "WARNING_MESSAGE"
+
 
 export function compileBlockAsync(b: Blockly.Block, blockInfo: pxtc.BlocksInfo): Promise<BlockCompilationResult> {
     const w = b.workspace;
@@ -185,7 +187,7 @@ function compileWorkspace(e: Environment, w: Blockly.Workspace, blockInfo: pxtc.
     } catch (err) {
         let be: Blockly.Block = (err as any).block;
         if (be) {
-            be.setWarningText(err + "");
+            be.setWarningText(err + "", PXT_WARNING_ID);
             e.errors.push(be);
         }
         else {
