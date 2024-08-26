@@ -4,6 +4,7 @@ import { Point, Environment, VarInfo, Scope, PlaceholderLikeBlock, StdFunc } fro
 import { countOptionals, getFunctionName, getInputTargetBlock, getLoopVariableField, isMutatingBlock, visibleParams } from "./util";
 import { getDefinition } from "../plugins/functions";
 import { CommonFunctionBlock } from "../plugins/functions/commonFunctionMixin";
+import { PXT_WARNING_ID } from "./compiler";
 
 interface DeclaredVariable {
     name: string;
@@ -174,7 +175,7 @@ export function infer(allBlocks: Blockly.Block[], e: Environment, w: Blockly.Wor
             }
         } catch (err) {
             const be = ((<any>err).block as Blockly.Block) || b;
-            be.setWarningText(err + "");
+            be.setWarningText(err + "", PXT_WARNING_ID);
             e.errors.push(be);
         }
     });
