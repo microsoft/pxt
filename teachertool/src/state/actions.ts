@@ -80,9 +80,9 @@ type SetActiveTab = ActionBase & {
     tabName: TabName;
 };
 
-type SetAutorun = ActionBase & {
-    type: "SET_AUTORUN";
-    autorun: boolean;
+type SetRunOnLoad = ActionBase & {
+    type: "SET_RUN_ON_LOAD";
+    runOnLoad: boolean;
 };
 
 type SetEvalResultsBatch = ActionBase & {
@@ -136,7 +136,7 @@ export type Action =
     | HideModal
     | SetValidatorPlans
     | SetActiveTab
-    | SetAutorun
+    | SetRunOnLoad
     | SetToolboxCategories
     | SetBlockImageUri
     | SetScreenReaderAnnouncement
@@ -214,9 +214,9 @@ const setActiveTab = (tabName: TabName): SetActiveTab => ({
     tabName,
 });
 
-const setAutorun = (autorun: boolean): SetAutorun => ({
-    type: "SET_AUTORUN",
-    autorun,
+const setRunOnLoad = (runOnLoad: boolean): SetRunOnLoad => ({
+    type: "SET_RUN_ON_LOAD",
+    runOnLoad,
 });
 
 const setEvalResultsBatch = (criteriaResults: pxt.Map<CriteriaResult>): SetEvalResultsBatch => ({
@@ -266,7 +266,7 @@ export {
     hideModal,
     setValidatorPlans,
     setActiveTab,
-    setAutorun,
+    setRunOnLoad,
     setToolboxCategories,
     setBlockImageUri,
     setScreenReaderAnnouncement,

@@ -12,8 +12,6 @@ import { DebouncedInput } from "./DebouncedInput";
 import { setChecklistName } from "../transforms/setChecklistName";
 import { Strings, Ticks } from "../constants";
 import { Button } from "react-common/components/controls/Button";
-import { Toolbar } from "./Toolbar";
-import { setAutorun } from "../transforms/setAutorun";
 import { runEvaluateAsync } from "../transforms/runEvaluateAsync";
 import { isProjectLoaded } from "../state/helpers";
 import { showToast } from "../state/actions";
@@ -27,19 +25,9 @@ interface ResultsHeaderProps {
 
 const ResultsHeader: React.FC<ResultsHeaderProps> = ({ printRef }) => {
     const { state: teacherTool } = useContext(AppStateContext);
-    const { checklist, projectMetadata, autorun } = teacherTool;
+    const { checklist, projectMetadata } = teacherTool;
     let { name: checklistName } = checklist;
-    const [checklistNameInputRef, setChecklistNameInputRef] = useState<HTMLInputElement | null>(null);
-
-    const handleRenameClicked = () => {
-        checklistNameInputRef?.focus();
-        checklistNameInputRef?.setSelectionRange(0, checklistNameInputRef.value.length);
-    };
-
-    const onAutorunToggled = (checked: boolean) => {
-        pxt.tickEvent(Ticks.Autorun, { checked: checked ? "true" : "false" });
-        setAutorun(checked);
-    };
+    const [checklistNameInputRef, setChecklistNameInputRef] = useState<HTMLInputElement>();
 
     const handleEvaluateClickedAsync = async () => {
         pxt.tickEvent(Ticks.Evaluate);
@@ -80,6 +68,7 @@ const ResultsHeader: React.FC<ResultsHeaderProps> = ({ printRef }) => {
                             initialValue={checklistName}
                             preserveValueOnBlur={true}
                             handleInputRef={setChecklistNameInputRef}
+                            onFocus={() => checklistNameInputRef?.select()}
                         />
                     </div>
                     {projectMetadata && (
@@ -109,13 +98,6 @@ const ResultsHeader: React.FC<ResultsHeaderProps> = ({ printRef }) => {
                         title={Strings.PrintChecklist}
                         rightIcon="fas fa-print"
                         onClick={handlePrintClicked}
-                    />
-                    <Toolbar.Toggle
-                        className={classList("secondary", css["control-button"])}
-                        label={Strings.AutoRun}
-                        title={Strings.AutoRunDescription}
-                        isChecked={autorun}
-                        onToggle={onAutorunToggled}
                     />
                     <Button
                         className={classList("primary", css["control-button"])}
