@@ -125,7 +125,9 @@ namespace ts.pxtc.service {
         let overrideSnippet: SnippetNode;
         if (parameterOverride) {
             overrideParamLabel = Object.keys(parameterOverride)?.[0];
-            overrideSnippet = parameterOverride[overrideParamLabel];
+            if (overrideParamLabel) {
+                overrideSnippet = parameterOverride[overrideParamLabel];
+            }
         }
 
 
