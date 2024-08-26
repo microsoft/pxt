@@ -128,7 +128,7 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                         // remove what precedes the "." in the full snippet.
                         // E.g. if the user is typing "mobs.", we want to complete with "spawn" (name) not "mobs.spawn" (qName)
                         if (completions.isMemberCompletion && snippet) {
-                            const nameStart = snippet.lastIndexOf(name);
+                            const nameStart = snippet.split("(")[0].lastIndexOf(name);
                             if (nameStart !== -1) {
                                 snippet = snippet.substr(nameStart)
                             }
@@ -1724,6 +1724,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 res[ns] = [];
             }
             res[ns].push(fn);
+            if (fn.attributes.toolboxParent) {
+                const parent = this.blockInfo.blocks.find(b => b.attributes.blockId === fn.attributes.toolboxParent);
+                const currentBlock = res[ns].find(resB => resB.name === fn.name);
+                if (parent && currentBlock) {
+                    currentBlock.attributes.parentBlock = parent;
+                }
+            }
 
             const subcat = fn.attributes.subcategory;
             const advanced = fn.attributes.advanced;

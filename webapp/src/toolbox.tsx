@@ -54,6 +54,8 @@ export interface BlockDefinition {
         topblockWeight?: number;
         help?: string;
         _def?: pxtc.ParsedBlockDef;
+        parentBlock?: BlockDefinition;
+        toolboxParentArgument?: string;
     };
     retType?: string;
     blockXml?: string;
