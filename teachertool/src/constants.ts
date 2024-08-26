@@ -18,7 +18,7 @@ export namespace Strings {
     export const AddCriteria = lf("Add Criteria");
     export const Actions = lf("Actions");
     export const RunOnLoad = lf("Eval on load");
-    export const RunOnLoadDescription = lf("Automatically evaluate the project when it is loaded");
+    export const RunOnLoadDescription = lf("Automatically evaluate a project when it is loaded");
     export const AddNotes = lf("Add Notes");
     export const DragAndDrop = lf("Drag & Drop");
     export const ReleaseToUpload = lf("Release to Upload");
