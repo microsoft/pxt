@@ -17,7 +17,7 @@ export namespace Strings {
     export const ChecklistNamePlaceholder = lf("Enter Checklist Name");
     export const AddCriteria = lf("Add Criteria");
     export const Actions = lf("Actions");
-    export const RunOnLoad = lf("Eval on load");
+    export const RunOnLoad = lf("Evaluate on load");
     export const RunOnLoadDescription = lf("Automatically evaluate a project when it is loaded");
     export const AddNotes = lf("Add Notes");
     export const DragAndDrop = lf("Drag & Drop");
