@@ -17,8 +17,8 @@ export namespace Strings {
     export const ChecklistNamePlaceholder = lf("Enter Checklist Name");
     export const AddCriteria = lf("Add Criteria");
     export const Actions = lf("Actions");
-    export const AutoRun = lf("Auto-run");
-    export const AutoRunDescription = lf("Automatically re-evaluate when the checklist or project changes");
+    export const RunOnLoad = lf("Evaluate on load");
+    export const RunOnLoadDescription = lf("Automatically evaluate a project when it is loaded");
     export const AddNotes = lf("Add Notes");
     export const DragAndDrop = lf("Drag & Drop");
     export const ReleaseToUpload = lf("Release to Upload");
@@ -62,7 +62,7 @@ export namespace Ticks {
     export const ExportChecklist = "teachertool.exportchecklist";
     export const LoadChecklist = "teachertool.loadchecklist";
     export const Evaluate = "teachertool.evaluate";
-    export const Autorun = "teachertool.autorun";
+    export const RunOnLoad = "teachertool.runonload";
     export const AddCriteria = "teachertool.addcriteria";
     export const RemoveCriteria = "teachertool.removecriteria";
     export const AddResultNotes = "teachertool.addresultnotes";

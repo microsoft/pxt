@@ -3,7 +3,7 @@ import { AppState, initialAppState } from "./state";
 import { Action } from "./actions";
 import reducer from "./reducer";
 import assert from "assert";
-import { getAutorun } from "../services/storageService";
+import { getRunOnLoad } from "../services/storageService";
 
 const DEV_BACKEND_LOCALHOST = "http://localhost:8080";
 
@@ -50,7 +50,7 @@ export function AppStateProvider(props: React.PropsWithChildren<{}>): React.Reac
     // Create the application state and state change mechanism (dispatch)
     const [state_, dispatch_] = useReducer(reducer, {
         ...initialAppState,
-        autorun: getAutorun(),
+        runOnLoad: getRunOnLoad(),
         copilotEndpointOverride: copilotEndpoint,
         flags: {
             ...initialAppState.flags,

@@ -6,6 +6,11 @@ import { runSingleEvaluateAsync } from "./runSingleEvaluateAsync";
 
 export async function runEvaluateAsync(fromUserInteraction: boolean) {
     const { state: teacherTool } = stateAndDispatch();
+    const { projectMetadata } = teacherTool;
+
+    if (!projectMetadata) {
+        return;
+    }
 
     if (fromUserInteraction) {
         setActiveTab("results");

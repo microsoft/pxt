@@ -119,10 +119,10 @@ export default function reducer(state: AppState, action: Action): AppState {
                 activeTab: action.tabName,
             };
         }
-        case "SET_AUTORUN": {
+        case "SET_RUN_ON_LOAD": {
             return {
                 ...state,
-                autorun: action.autorun,
+                runOnLoad: action.runOnLoad,
             };
         }
         case "SET_TOOLBOX_CATEGORIES": {
