@@ -391,7 +391,7 @@ async function expandImagesAsync(xsg: Document): Promise<void> {
     const dataUriPromises = images
         .filter(image => {
             const href = image.getAttributeNS(XLINK_NAMESPACE, "href");
-            return !!href
+            return href && !/^data:/.test(href);
         })
         .map(async image => {
             const href = image.getAttributeNS(XLINK_NAMESPACE, "href");
