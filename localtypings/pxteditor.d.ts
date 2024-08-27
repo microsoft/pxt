@@ -99,6 +99,7 @@ declare namespace pxt.editor {
         | "info" // return info data`
         | "tutorialevent"
         | "editorcontentloaded"
+        | "serviceworkerregistered"
         | "runeval"
 
         // package extension messasges
