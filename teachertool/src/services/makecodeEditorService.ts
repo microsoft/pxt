@@ -2,9 +2,10 @@
 
 import { ErrorCode } from "../types/errorCode";
 import { logDebug, logError } from "./loggingService";
-import * as AutorunService from "./autorunService";
 import { EditorDriver } from "pxtservices/editorDriver";
 import { loadToolboxCategoriesAsync } from "../transforms/loadToolboxCategoriesAsync";
+import { stateAndDispatch } from "../state";
+import { runEvaluateAsync } from "../transforms/runEvaluateAsync";
 
 let driver: EditorDriver | undefined;
 let highContrast: boolean = false;
@@ -27,7 +28,12 @@ export function setEditorRef(ref: HTMLIFrameElement | undefined) {
             logDebug(`Sent message to iframe. ID: ${ev?.id}`, ev);
         });
         driver.addEventListener("editorcontentloaded", ev => {
-            AutorunService.poke();
+            const { state } = stateAndDispatch();
+            const { runOnLoad, projectMetadata } = state;
+
+            if (runOnLoad && !!projectMetadata) {
+                runEvaluateAsync(true); // cause a switch to checklist tab on run
+            }
 
             // Reload all blocks in the background, no need to await.
             /* await */ loadToolboxCategoriesAsync();

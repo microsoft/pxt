@@ -26,6 +26,7 @@ export interface InputProps extends ControlProps {
     onChange?: (newValue: string) => void;
     onEnterKey?: (value: string) => void;
     onIconClick?: (value: string) => void;
+    onFocus?: (value: string) => void;
     onBlur?: (value: string) => void;
     onOptionSelected?: (value: string) => void;
 }
@@ -53,6 +54,7 @@ export const Input = (props: InputProps) => {
         onChange,
         onEnterKey,
         onIconClick,
+        onFocus,
         onBlur,
         onOptionSelected,
         handleInputRef,
@@ -119,6 +121,12 @@ export const Input = (props: InputProps) => {
         }
     }
 
+    const focusHandler = () => {
+        if (onFocus) {
+            onFocus(value);
+        }
+    }
+
     const blurHandler = () => {
         if (onBlur) {
             onBlur(value);
@@ -172,6 +180,7 @@ export const Input = (props: InputProps) => {
                     onChange={changeHandler}
                     onKeyDown={keyDownHandler}
                     onBlur={blurHandler}
+                    onFocus={focusHandler}
                     autoComplete={autoComplete ? "" : "off"}
                     autoCorrect={autoComplete ? "" : "off"}
                     autoCapitalize={autoComplete ? "" : "off"}

@@ -139,7 +139,10 @@ export const CriteriaResultEntry: React.FC<CriteriaResultEntryProps> = ({ criter
                     {isInProgress ? (
                         <ThreeDotsLoadingDisplay className={css["loading-display"]} />
                     ) : hasError ? (
-                        <CriteriaResultError criteriaInstanceId={criteriaInstance.instanceId} error={evalResult.error!} />
+                        <CriteriaResultError
+                            criteriaInstanceId={criteriaInstance.instanceId}
+                            error={evalResult.error!}
+                        />
                     ) : (
                         <div className={classList(css["result-notes"], !hasFeedback ? "no-print" : undefined)}>
                             <CriteriaResultNotes criteriaId={criteriaId} />

@@ -13,7 +13,7 @@ export type AppState = {
     checklist: Checklist;
     activeTab: TabName;
     validatorPlans: pxt.blocks.ValidatorPlan[] | undefined;
-    autorun: boolean;
+    runOnLoad: boolean;
     modalOptions: ModalOptions | undefined;
     toolboxCategories?: pxt.Map<pxt.editor.ToolboxCategoryDefinition>;
     blockImageCache: pxt.Map<string>; // block id -> image uri
@@ -33,7 +33,7 @@ export const initialAppState: AppState = {
     checklist: makeChecklist(),
     activeTab: "home",
     validatorPlans: undefined,
-    autorun: false,
+    runOnLoad: false,
     modalOptions: undefined,
     toolboxCategories: undefined,
     blockImageCache: {},

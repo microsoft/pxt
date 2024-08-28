@@ -81,6 +81,11 @@ function generateValidatorPlan(
 
 export async function runSingleEvaluateAsync(criteriaInstanceId: string, fromUserInteraction: boolean) {
     const { state: teacherTool, dispatch } = stateAndDispatch();
+    const { projectMetadata } = teacherTool;
+
+    if (!projectMetadata) {
+        return;
+    }
 
     const criteriaInstance = getCriteriaInstanceWithId(teacherTool, criteriaInstanceId);
 
@@ -139,7 +144,6 @@ export async function runSingleEvaluateAsync(criteriaInstanceId: string, fromUse
                 dispatch(Actions.clearEvalResult(criteriaInstance.instanceId));
                 return resolve(false);
             }
-
         } catch (e) {
             setEvalResult(criteriaInstance.instanceId, {
                 result: EvaluationStatus.NotStarted,
