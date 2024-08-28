@@ -1,6 +1,7 @@
 import { stateAndDispatch } from "../state";
 import { EvaluationStatus } from "../types/criteria";
 import { setEvalResult } from "./setEvalResult";
+import { setUserFeedback } from "./setUserFeedback";
 
 // This will set the outcome and notes for a given criteria instance id, but if the provided value is undefined, it will not change that value.
 export function mergeEvalResult(criteriaInstanceId: string, outcome?: EvaluationStatus, notes?: string) {
@@ -15,6 +16,10 @@ export function mergeEvalResult(criteriaInstanceId: string, outcome?: Evaluation
         newCriteriaEvalResult.result = outcome;
     }
     if (notes !== undefined) {
+        if (newCriteriaEvalResult.notes !== notes) {
+            // If the notes are changing, we should clear any user feedback.
+            setUserFeedback(criteriaInstanceId, undefined);
+        }
         newCriteriaEvalResult.notes = notes;
     }
 

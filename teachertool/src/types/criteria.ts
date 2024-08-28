@@ -1,3 +1,5 @@
+import { UserFeedback } from ".";
+
 // A criteria defined in the catalog of all possible criteria for the user to choose from when creating a checklist.
 export interface CatalogCriteria {
     id: string; // A unique id (GUID) for the catalog criteria
@@ -17,6 +19,7 @@ export interface CriteriaInstance {
     catalogCriteriaId: string;
     instanceId: string;
     params: CriteriaParameterValue[] | undefined;
+    userFeedback?: UserFeedback;
 }
 
 // Represents a parameter definition in a catalog criteria.

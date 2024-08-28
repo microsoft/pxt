@@ -1,4 +1,4 @@
-import { ToastWithId, TabName, ProjectData } from "../types";
+import { ToastWithId, TabName, ProjectData, UserFeedback } from "../types";
 import { CatalogCriteria, CriteriaResult } from "../types/criteria";
 import { ModalOptions } from "../types/modalOptions";
 import { Checklist } from "../types/checklist";
@@ -115,6 +115,12 @@ type SetUserProfile = ActionBase & {
     profile: pxt.auth.UserProfile | undefined;
 };
 
+type SetUserFeedback = ActionBase & {
+    type: "SET_USER_FEEDBACK";
+    criteriaInstanceId: string;
+    userFeedback: UserFeedback;
+};
+
 /**
  * Union of all actions
  */
@@ -140,7 +146,8 @@ export type Action =
     | SetToolboxCategories
     | SetBlockImageUri
     | SetScreenReaderAnnouncement
-    | SetUserProfile;
+    | SetUserProfile
+    | SetUserFeedback;
 
 /**
  * Action creators
@@ -249,6 +256,12 @@ const setUserProfile = (profile: pxt.auth.UserProfile | undefined): SetUserProfi
     profile,
 });
 
+const setUserFeedback = (criteriaInstanceId: string, userFeedback: UserFeedback): SetUserFeedback => ({
+    type: "SET_USER_FEEDBACK",
+    criteriaInstanceId,
+    userFeedback,
+});
+
 export {
     showToast,
     dismissToast,
@@ -271,4 +284,5 @@ export {
     setBlockImageUri,
     setScreenReaderAnnouncement,
     setUserProfile,
+    setUserFeedback,
 };

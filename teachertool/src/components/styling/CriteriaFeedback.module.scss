@@ -19,7 +19,7 @@
             border: none;
             font-size: 1rem;
 
-            :hover {
+            &:not([class~="disabled"]):hover {
                 font-size: 1.2rem;
             }
 

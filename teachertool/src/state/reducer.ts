@@ -151,5 +151,16 @@ export default function reducer(state: AppState, action: Action): AppState {
                 userProfile: action.profile,
             };
         }
+        case "SET_USER_FEEDBACK": {
+            const checklist = { ...state.checklist };
+            const criteriaInstance = checklist.criteria.find(c => c.instanceId === action.criteriaInstanceId);
+            if (criteriaInstance) {
+                criteriaInstance.userFeedback = action.userFeedback;
+            }
+            return {
+                ...state,
+                checklist,
+            };
+        }
     }
 }
