@@ -96,7 +96,7 @@ export async function askCopilotQuestionAsync(shareId: string, question: string)
     let result: string = "";
     try {
         const request = await pxt.auth.AuthClient.staticApiAsync(url, data, "POST");
-        if (request.statusCode !== 200) {
+        if (!request.success) {
             throw new Error(request.err || lf("Unable to reach AI. Error code: {0}", request.statusCode));
         }
         result = await request.resp.json();
