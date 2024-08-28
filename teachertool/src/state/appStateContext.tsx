@@ -10,13 +10,6 @@ const DEV_BACKEND_LOCALHOST = "http://localhost:8080";
 // Read the URL parameters and set the initial state accordingly
 const url = window.location.href;
 const testCatalog = !!/testcatalog(?:[:=])1/.test(url) || !!/tc(?:[:=])1/.test(url);
-const copilotSlot = url.match(/copilot=([^&]+)/);
-const copilotEndpoint =
-    copilotSlot && copilotSlot[1]
-        ? copilotSlot[1] === "local"
-            ? `${DEV_BACKEND_LOCALHOST}/api/`
-            : `https://${copilotSlot[1]}.staging.pxt.io/api/`
-        : undefined;
 
 let state: AppState;
 let dispatch: React.Dispatch<Action>;
@@ -51,10 +44,9 @@ export function AppStateProvider(props: React.PropsWithChildren<{}>): React.Reac
     const [state_, dispatch_] = useReducer(reducer, {
         ...initialAppState,
         runOnLoad: getRunOnLoad(),
-        copilotEndpointOverride: copilotEndpoint,
         flags: {
             ...initialAppState.flags,
-            testCatalog: testCatalog || !!copilotEndpoint,
+            testCatalog: testCatalog,
         },
     });
 
