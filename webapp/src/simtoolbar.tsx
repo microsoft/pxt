@@ -113,7 +113,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
 
         const run = true;
         const restart = run && !simOpts.hideRestart;
-        const debug = targetTheme.debugger && !inTutorial && !pxt.BrowserUtils.isIE();
+        const debug = targetTheme.debugger && !inTutorial && !pxt.BrowserUtils.isIE() && !pxt.shell.isReadOnly();
         const debugging = parentState.debugging;
         // we need to escape full screen from a tutorial!
         const fullscreen = run && !simOpts.hideFullscreen && !sandbox;
