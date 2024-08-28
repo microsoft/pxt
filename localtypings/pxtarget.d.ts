@@ -830,6 +830,7 @@ declare namespace ts.pxtc {
         fixedInstance?: boolean;
         expose?: boolean; // expose to VM despite being in pxt:: namespace
         decompileIndirectFixedInstances?: boolean; // Attribute on TYPEs with fixedInstances set to indicate that expressions with that type may be decompiled even if not a fixed instance
+        decompilerShadowAlias?: string; // hints to the decompiler that this block can be replaced with the block with this id if doing so would create a shadow block
         constantShim?: boolean;
         indexedInstanceNS?: string;
         indexedInstanceShim?: string;

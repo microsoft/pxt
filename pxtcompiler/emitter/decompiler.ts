@@ -1216,6 +1216,9 @@ ${output}</xml>`;
             }
 
             let idfn = attributes.blockIdentity ? blocksInfo.apis.byQName[attributes.blockIdentity] : blocksInfo.blocksById[blockId];
+            if (blockId && idfn.attributes.blockId !== blockId && idfn.attributes.decompilerShadowAlias === blockId) {
+                idfn = blocksInfo.blocksById[blockId];
+            }
             return getEnumFieldBlock(idfn, value);
         }
 
