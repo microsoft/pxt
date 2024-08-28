@@ -110,6 +110,7 @@ code {
     border-radius: 99px;
     background-clip: padding-box;
     background-color: rgb(206, 205, 206);
+
     &:hover {
         // Style matching the standalone editor
         //background-color: rgb(187, 187, 187);
@@ -124,6 +125,10 @@ code {
 /*******************************/
 
 @media print {
+    * {
+        break-before: avoid;
+    }
+
     .no-print {
         display: none !important;
     }
@@ -151,6 +156,7 @@ code {
 .min-2xs {
     display: initial;
 }
+
 // Become invisible at the given breakpoint
 .max-xl,
 .max-lg,
@@ -175,66 +181,79 @@ $widescreenMonitorBreakpoint: 1920px;
         display: none !important;
     }
 }
+
 @media (min-width: $largeMonitorBreakpoint) {
     .max-lg {
         display: none !important;
     }
 }
+
 @media (min-width: $computerBreakpoint) {
     .max-md {
         display: none !important;
     }
 }
+
 @media (min-width: $tabletBreakpoint) {
     .max-sm {
         display: none !important;
     }
 }
+
 @media (min-width: $smallTabletBreakpoint) {
     .max-2sm {
         display: none !important;
     }
 }
+
 @media (min-width: $mobileBreakpoint) {
     .max-xs {
         display: none !important;
     }
 }
+
 @media (min-width: $smallMobileBreakpoint) {
     .max-2xs {
         display: none !important;
     }
 }
+
 @media (max-width: ($widescreenMonitorBreakpoint - 0.02px)) {
     .min-xl {
         display: none !important;
     }
 }
+
 @media (max-width: ($largeMonitorBreakpoint - 0.02px)) {
     .min-lg {
         display: none !important;
     }
 }
+
 @media (max-width: ($computerBreakpoint - 0.02px)) {
     .min-md {
         display: none !important;
     }
 }
+
 @media (max-width: ($tabletBreakpoint - 0.02px)) {
     .min-sm {
         display: none !important;
     }
 }
+
 @media (max-width: ($smallTabletBreakpoint - 0.02px)) {
     .min-2sm {
         display: none !important;
     }
 }
+
 @media (max-width: ($mobileBreakpoint - 0.02px)) {
     .min-xs {
         display: none !important;
     }
 }
+
 @media (max-width: ($smallMobileBreakpoint - 0.02px)) {
     .min-2xs {
         display: none !important;
