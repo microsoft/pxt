@@ -4101,7 +4101,7 @@ export class ProjectView
         const blockInfo = blocksInfo.blocksById[req.blockId];
         const symbolInfo: pxtc.SymbolInfo = blocksInfo.apis.byQName[blockInfo.qName];
         const compileInfo: pxt.blocks.BlockCompileInfo = pxt.blocks.compileInfo(symbolInfo);
-        const xml = pxtblockly.createToolboxBlock(blocksInfo, symbolInfo, compileInfo);
+        const xml = pxtblockly.createToolboxBlock(blocksInfo, symbolInfo, compileInfo, false, 3);
         return this.renderXmlInner(xml.outerHTML, req.snippetMode, req.layout);
     }
 
