@@ -19,28 +19,29 @@
     font-size: 1rem;
     line-height: 2rem;
 
-    span[class*="common-button-flex"] {
+    span[class~="common-button-flex"] {
         display: flex;
         gap: 0.5rem;
         align-items: center;
     }
 
-    i[class*="fas"] {
+    i[class~="fas"] {
         margin: 0;
         width: auto;
         height: auto;
         font-size: unset;
     }
 
-    &[class*="disabled"] {
+    &[class~="disabled"] {
         border: 1px solid var(--pxt-button-secondary-accent) !important;
     }
 
-    @container (inline-size < 665px) {
-        span[class*="common-button-label"] {
-            display: none;
+    @container (inline-size < 645px) {
+        &:not([class~="common-button"][class~="primary"]) {
+            span[class~="common-button-label"] {
+                display: none !important;
+            }
         }
-       
     }
 }
 
@@ -50,12 +51,12 @@
     align-items: center;
     gap: 0.5rem;
 
-    div[class*="common-input-group"] {
+    div[class~="common-input-group"] {
         flex-grow: 1;
         height: unset;
     }
 
-    input[class*="common-input"] {
+    input[class~="common-input"] {
         // Need !important to override react-common/common-input-group's font-size specificity
         font-size: 1.5rem !important;
         font-weight: 500;
@@ -65,8 +66,8 @@
 }
 
 .edit-checklist-name-button {
-    margin: 0;   
-    padding: 0; 
+    margin: 0;
+    padding: 0;
     width: 1.75rem;
     height: 1.75rem;
     border-radius: 0.25rem;
@@ -90,7 +91,6 @@
     justify-content: flex-start;
     width: -webkit-fill-available;
     min-height: 9rem;
-    break-inside: avoid;
     gap: 0.5rem;
 
     .loading-display {
@@ -151,6 +151,7 @@
     &:focus {
         .result-toolbar-button {
             opacity: 1 !important;
+
             .disabled {
                 border: 1px solid var(--pxt-button-secondary-accent) !important;
                 opacity: 0.8 !important;
@@ -194,7 +195,7 @@
     // Need !important to override common-button's opacity in disabled state
     opacity: 0 !important;
 
-    span[class*="common-button-label"] {
+    span[class~="common-button-label"] {
         display: none;
     }
 }
@@ -203,6 +204,8 @@
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    align-self: flex-start;
+    margin-top: 0.5rem;
 }
 
 .result-notes {
@@ -216,14 +219,20 @@
 
     .notes-container {
         width: 100%;
+        max-width: 100%;
         font-weight: 600;
+
+        &.for-print {
+            font-weight: normal;
+            white-space: pre-wrap;
+        }
     }
 
-    div[class*="common-input-wrapper"] {
+    div[class~="common-input-wrapper"] {
         width: 100%;
         font-weight: 500;
 
-        div[class*="common-input-group"] {
+        div[class~="common-input-group"] {
             min-height: 3rem;
             max-height: 5rem;
             border-radius: 0.5rem;

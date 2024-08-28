@@ -23,25 +23,33 @@ interface CriteriaResultNotesProps {
 
 const CriteriaResultNotes: React.FC<CriteriaResultNotesProps> = ({ criteriaId }) => {
     const { state: teacherTool } = useContext(AppStateContext);
+    const notes = teacherTool.evalResults[criteriaId]?.notes;
 
     const onTextChange = (str: string) => {
         setEvalResultNotes(criteriaId, str);
     };
 
     return (
-        <div className={css["notes-container"]}>
-            <DebouncedTextarea
-                placeholder={lf("Write your notes here")}
-                ariaLabel={lf("Feedback regarding the criteria result")}
-                label={lf("Feedback")}
-                title={lf("Write your notes here")}
-                initialValue={teacherTool.evalResults[criteriaId]?.notes}
-                autoResize={true}
-                onChange={onTextChange}
-                autoComplete={false}
-                intervalMs={500}
-            />
-        </div>
+        <>
+            <div className={classList(css["notes-container"], "no-print")}>
+                <DebouncedTextarea
+                    placeholder={lf("Write your notes here")}
+                    ariaLabel={lf("Feedback regarding the criteria result")}
+                    label={lf("Feedback")}
+                    title={lf("Write your notes here")}
+                    initialValue={notes}
+                    autoResize={true}
+                    onChange={onTextChange}
+                    autoComplete={false}
+                    intervalMs={500}
+                />
+            </div>
+            {notes && (
+                <div className={classList(css["notes-container"], css["for-print"], "only-print")}>
+                    {notes}
+                </div>
+            )}
+        </>
     );
 };
 
