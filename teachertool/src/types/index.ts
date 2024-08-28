@@ -51,3 +51,5 @@ export type CriteriaTemplateSegment = {
     type: "plain-text" | "param";
     content: string; // plain text or parameter name
 };
+
+export type UserFeedback = "helpful" | "not-helpful" | undefined;

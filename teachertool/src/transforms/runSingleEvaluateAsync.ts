@@ -13,6 +13,7 @@ import { runValidatorPlanOverrideAsync } from "../validatorPlanOverrides/runVali
 import { setEvalResultOutcome } from "./setEvalResultOutcome";
 import { mergeEvalResult } from "./mergeEvalResult";
 import { setEvalResult } from "./setEvalResult";
+import { setUserFeedback } from "./setUserFeedback";
 
 function generateValidatorPlan(
     criteriaInstance: CriteriaInstance,
@@ -142,9 +143,11 @@ export async function runSingleEvaluateAsync(criteriaInstanceId: string, fromUse
                 return resolve(true); // evaluation completed successfully, so return true (regardless of pass/fail)
             } else {
                 dispatch(Actions.clearEvalResult(criteriaInstance.instanceId));
+                setUserFeedback(criteriaInstanceId, undefined);
                 return resolve(false);
             }
         } catch (e) {
+            setUserFeedback(criteriaInstanceId, undefined);
             setEvalResult(criteriaInstance.instanceId, {
                 result: EvaluationStatus.NotStarted,
                 error: (e as Error)?.message,

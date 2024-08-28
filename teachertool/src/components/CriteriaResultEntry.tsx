@@ -44,11 +44,7 @@ const CriteriaResultNotes: React.FC<CriteriaResultNotesProps> = ({ criteriaId })
                     intervalMs={500}
                 />
             </div>
-            {notes && (
-                <div className={classList(css["notes-container"], css["for-print"], "only-print")}>
-                    {notes}
-                </div>
-            )}
+            {notes && <div className={classList(css["notes-container"], css["for-print"], "only-print")}>{notes}</div>}
         </>
     );
 };
@@ -158,9 +154,9 @@ export const CriteriaResultEntry: React.FC<CriteriaResultEntryProps> = ({ criter
                     )}
 
                     {/* Criteria Response Feedback (For us, not student feedback) */}
-                    {!isInProgress && !isNotStarted && catalogCriteria.requestFeedback && (
+                    {!isInProgress && !isNotStarted && !hasError && catalogCriteria.requestFeedback && (
                         <CriteriaFeedback
-                            catalogCriteriaId={catalogCriteria.id}
+                            criteriaInstanceId={criteriaInstance.instanceId}
                             className={classList("no-print", css["criteria-feedback"])}
                         />
                     )}
