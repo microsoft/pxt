@@ -551,6 +551,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (pxt.appTarget.appTheme.workspaceSearch && !this.workspaceSearch) {
             this.workspaceSearch = new pxtblockly.PxtWorkspaceSearch(this.editor);
             this.workspaceSearch.init();
+            pxtblockly.external.setOpenWorkspaceSearch(() => {
+                this.workspaceSearch.open();
+            });
         }
     }
 
