@@ -102,7 +102,7 @@ export async function askCopilotQuestionAsync(shareId: string, question: string)
         result = await request.resp.json();
     } catch (e) {
         logError(ErrorCode.askAIQuestion, e);
-        throw e; // We will catch this upstream so we can show the error
+        throw new Error(Strings.UnableToReachAI); // We will catch this upstream so we can show the error
     }
 
     return result;
