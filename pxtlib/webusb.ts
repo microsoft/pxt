@@ -244,7 +244,7 @@ namespace pxt.usb {
             }
         }
 
-        error(msg: string) {
+        error(msg: string): never {
             throw new USBError(U.lf("USB error on device {0} ({1})", this.dev.productName, msg))
         }
 
@@ -406,31 +406,28 @@ namespace pxt.usb {
             loop()
         }
 
-        recvPacketAsync(): Promise<Uint8Array> {
-            let final = (res: USBInTransferResult) => {
-                if (res.status != "ok")
-                    this.error("USB IN transfer failed")
-                let arr = new Uint8Array(res.data.buffer)
-                if (arr.length == 0)
-                    return this.recvPacketAsync()
-                return arr
-            }
-
-            if (!this.dev)
-                return Promise.reject(new Error("Disconnected"))
-
-            if (!this.epIn) {
-                return this.dev.controlTransferIn({
+        async recvPacketAsync(timeoutMs?: number): Promise<Uint8Array> {
+            const startTime = Date.now();
+            while (!timeoutMs || Date.now() < startTime + timeoutMs) {
+                if (!this.dev) {
+                    return Promise.reject(new Error("Disconnected"))
+                }
+                const res = await (this.epIn ? this.dev.transferIn(this.epIn.endpointNumber, 64) : this.dev.controlTransferIn({
                     requestType: "class",
                     recipient: "interface",
                     request: controlTransferGetReport,
                     value: controlTransferInReport,
                     index: this.iface.interfaceNumber
-                }, 64).then(final)
-            }
+                }, 64));
 
-            return this.dev.transferIn(this.epIn.endpointNumber, 64)
-                .then(final)
+                if (res.status != "ok")
+                    this.error("USB IN transfer failed")
+                let arr = new Uint8Array(res.data.buffer)
+                if (arr.length != 0) {
+                    return arr
+                }
+            }
+            this.error("USB IN timed out");
         }
 
         initAsync(): Promise<void> {
