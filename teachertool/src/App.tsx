@@ -79,8 +79,7 @@ export const App = () => {
     ) : (
         <>
             <HeaderBar />
-            {state.userProfile ? <MainPanel /> : <SignedOutPanel />}
-            <SignInModal />
+            {state.userProfile ? <MainPanel /> : <MainPanel />}
             <ImportChecklistModal />
             <ConfirmationModal />
             <BlockPickerModal />
