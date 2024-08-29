@@ -10,7 +10,7 @@ import { runEvaluateAsync } from "../transforms/runEvaluateAsync";
 let driver: EditorDriver | undefined;
 let highContrast: boolean = false;
 
-export function setEditorRef(ref: HTMLIFrameElement | undefined) {
+export function setEditorRef(ref: HTMLIFrameElement | undefined, forceReload: () => void) {
     if (driver) {
         if (driver.iframe === ref) return;
 
@@ -26,6 +26,10 @@ export function setEditorRef(ref: HTMLIFrameElement | undefined) {
         });
         driver.addEventListener("sent", ev => {
             logDebug(`Sent message to iframe. ID: ${ev?.id}`, ev);
+        });
+        driver.addEventListener("serviceworkerregistered", ev => {
+            logDebug(`Service worker registered. Reloading iframe.`);
+            forceReload();
         });
         driver.addEventListener("editorcontentloaded", ev => {
             const { state } = stateAndDispatch();

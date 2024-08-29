@@ -40,7 +40,7 @@ export function init(updated: () => void) {
     function scheduleUpdate() {
         postHostMessageAsync({
             action: "serviceworkerregistered",
-            type: "pxteditor"
+            type: "pxthost"
         });
         if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.noReloadOnUpdate)
             return;

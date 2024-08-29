@@ -453,6 +453,10 @@ declare namespace pxt.editor {
         advanced?: boolean;
     }
 
+    export interface EditorMessageServiceWorkerRegisteredRequest extends EditorMessageRequest {
+        action: "serviceworkerregistered";
+    }
+
     export interface EditorMessageGetToolboxCategoriesResponse {
         categories: pxt.editor.ToolboxCategoryDefinition[];
     }

@@ -447,6 +447,7 @@ export class EditorDriver extends IframeDriver {
     addEventListener(event: "workspacediagnostics", handler: (ev: pxt.editor.EditorWorkspaceDiagnostics) => void): void;
     addEventListener(event: "editorcontentloaded", handler: (ev: pxt.editor.EditorContentLoadedRequest) => void): void;
     addEventListener(event: "projectcloudstatus", handler: (ev: pxt.editor.EditorMessageProjectCloudStatus) => void): void;
+    addEventListener(event: "serviceworkerregistered", handler: (ev: pxt.editor.EditorMessageServiceWorkerRegisteredRequest) => void): void;
     addEventListener(event: string, handler: (ev: any) => void): void {
         super.addEventListener(event, handler);
     }

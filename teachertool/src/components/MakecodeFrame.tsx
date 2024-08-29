@@ -1,17 +1,25 @@
 /// <reference path="../../../localtypings/pxteditor.d.ts" />
 
 import css from "./styling/MakeCodeFrame.module.scss";
-import { useContext, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { setEditorRef } from "../services/makecodeEditorService";
 import { AppStateContext } from "../state/appStateContext";
 import { getEditorUrl } from "../utils";
 import { classList } from "react-common/components/util";
+import { logDebug } from "../services/loggingService";
 
 interface IProps {}
 
 export const MakeCodeFrame: React.FC<IProps> = () => {
     const { state: teacherTool } = useContext(AppStateContext);
-    const [frameId] = useState(pxt.Util.guidGen());
+    const [frameId, setFrameId] = useState(pxt.Util.guidGen());
+    const [frameUrl, setFrameUrl] = useState("");
+    const iframeRef = useRef<HTMLIFrameElement | null>(null);
+
+    useEffect(() => {
+        const newUrl = createIFrameUrl(teacherTool.projectMetadata?.id || "");
+        setFrameUrl(newUrl);
+    }, [frameId, teacherTool.projectMetadata?.id]);
 
     function createIFrameUrl(shareId: string): string {
         const editorUrl: string = pxt.BrowserUtils.isLocalHost()
@@ -37,17 +45,23 @@ export const MakeCodeFrame: React.FC<IProps> = () => {
         return url;
     }
 
-    const handleIFrameRef = (el: HTMLIFrameElement | null) => {
+    function handleIFrameRef(el: HTMLIFrameElement | null) {
+        iframeRef.current = el;
         if (el) {
-            setEditorRef(el);
+            setEditorRef(el, forceIFrameReload);
         }
-    };
+    }
+
+    function forceIFrameReload() {
+        setFrameId(pxt.Util.guidGen());
+    }
 
     /* eslint-disable @microsoft/sdl/react-iframe-missing-sandbox */
     return (
         <iframe
+            id="code-eval-project-view-frame"
             className={classList(css["makecode-frame"], teacherTool.projectMetadata?.id ? undefined : css["invisible"])}
-            src={createIFrameUrl(teacherTool.projectMetadata?.id || "")}
+            src={frameUrl}
             title={"title"}
             ref={handleIFrameRef}
         />
