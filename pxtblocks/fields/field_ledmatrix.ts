@@ -203,7 +203,7 @@ export class FieldMatrix extends Blockly.Field implements FieldCustom {
 
             // select and hide chaff
             Blockly.hideChaff();
-            (this.sourceBlock_ as Blockly.BlockSvg).select();
+            Blockly.common.setSelected(this.sourceBlock_ as Blockly.BlockSvg);
 
             this.toggleRect(x, y);
             pxsim.pointerEvents.down.forEach(evid => svgRoot.addEventListener(evid, this.dontHandleMouseEvent_));
