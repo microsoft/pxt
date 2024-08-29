@@ -30,7 +30,7 @@ export function setEditorRef(ref: HTMLIFrameElement | undefined, forceReload: ()
         driver.addEventListener("serviceworkerregistered", ev => {
             logDebug(`Service worker registered. Reloading iframe.`);
             forceReload();
-        })
+        });
         driver.addEventListener("editorcontentloaded", ev => {
             const { state } = stateAndDispatch();
             const { runOnLoad, projectMetadata } = state;

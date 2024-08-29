@@ -45,7 +45,7 @@ export const MakeCodeFrame: React.FC<IProps> = () => {
         return url;
     }
 
-    function handleIFrameRef (el: HTMLIFrameElement | null) {
+    function handleIFrameRef(el: HTMLIFrameElement | null) {
         iframeRef.current = el;
         if (el) {
             setEditorRef(el, forceIFrameReload);
