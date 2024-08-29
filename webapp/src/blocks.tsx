@@ -1956,9 +1956,13 @@ function clearTemporaryAssetBlockData(workspace: Blockly.Workspace) {
     forEachImageField(workspace, field => field.clearTemporaryAssetData());
 }
 
-function setHighlightWarning(block: Blockly.BlockSvg, enabled: boolean) {
+async function setHighlightWarning(block: Blockly.BlockSvg, enabled: boolean) {
     (block.pathObject as PathObject).setHasError(enabled);
     block.setHighlighted(enabled);
+    if (enabled) {
+        await Blockly.renderManagement.finishQueuedRenders();
+        (block.pathObject as PathObject).resizeHighlight();
+    }
 }
 
 function isBreakpointSet(block: Blockly.BlockSvg) {
