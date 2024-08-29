@@ -1110,7 +1110,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         // clear previous warnings on non-disabled blocks
         this.editor.getAllBlocks(false).filter(b => b.isEnabled()).forEach((b: Blockly.BlockSvg) => {
             b.setWarningText(null, pxtblockly.PXT_WARNING_ID);
-            setHighlightWarning(b, false);
+            setHighlightWarningAsync(b, false);
         });
         let tsfile = file && file.epkg && file.epkg.files[file.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME)];
         if (!tsfile || !tsfile.diagnostics) return;
@@ -1126,7 +1126,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 if (b) {
                     let txt = ts.pxtc.flattenDiagnosticMessageText(diag.messageText, "\n");
                     b.setWarningText(txt, pxtblockly.PXT_WARNING_ID);
-                    setHighlightWarning(b, true);
+                    setHighlightWarningAsync(b, true);
                 }
             }
         })
@@ -1137,7 +1137,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
                 if (b) {
                     b.setWarningText(d.message, pxtblockly.PXT_WARNING_ID);
-                    setHighlightWarning(b, true);
+                    setHighlightWarningAsync(b, true);
                 }
             }
         })
@@ -1956,9 +1956,13 @@ function clearTemporaryAssetBlockData(workspace: Blockly.Workspace) {
     forEachImageField(workspace, field => field.clearTemporaryAssetData());
 }
 
-function setHighlightWarning(block: Blockly.BlockSvg, enabled: boolean) {
+async function setHighlightWarningAsync(block: Blockly.BlockSvg, enabled: boolean) {
     (block.pathObject as PathObject).setHasError(enabled);
     block.setHighlighted(enabled);
+    if (enabled) {
+        await Blockly.renderManagement.finishQueuedRenders();
+        (block.pathObject as PathObject).resizeHighlight();
+    }
 }
 
 function isBreakpointSet(block: Blockly.BlockSvg) {
