@@ -368,6 +368,12 @@ export function patchCommentIds(xml: Element) {
             comment.setAttribute("id", Blockly.utils.idGenerator.genUid());
         }
     }
+
+    // Also patch comments that don't have a width/height set
+    for (const comment of xml.querySelectorAll("comment:not([h])")) {
+        comment.setAttribute("h", "80");
+        comment.setAttribute("w", "160");
+    }
 }
 
 function promoteShadow(shadow: Element) {
