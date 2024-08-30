@@ -19,7 +19,7 @@ export async function runEvaluateAsync(fromUserInteraction: boolean) {
     // EvalRequest promises will resolve to true if evaluation completed successfully (regarless of pass/fail).
     // They will only resolve to false if evaluation was unable to complete.
     const evalRequests = teacherTool.checklist.criteria.map(criteriaInstance =>
-        runSingleEvaluateAsync(criteriaInstance.instanceId, false)
+        runSingleEvaluateAsync(criteriaInstance.instanceId, fromUserInteraction)
     );
 
     if (evalRequests.length === 0) {
