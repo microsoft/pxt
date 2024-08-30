@@ -114,6 +114,13 @@ export class TextInputBubble extends Bubble {
             container,
         );
 
+        // in safari and firefox, contentTop will return the incorrect
+        // height for the topbar unless the rect is already in the dom.
+        // this settimeout will run after the render is complete.
+        setTimeout(() => {
+            inputRoot.setAttribute("y", this.contentTop() + "");
+        });
+
         const body = document.createElementNS(dom.HTML_NS, 'body');
         body.setAttribute('xmlns', dom.HTML_NS);
         body.className = 'blocklyMinimalBody';
