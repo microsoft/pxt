@@ -72,7 +72,7 @@ export namespace Ticks {
     export const SignedOutPanelSignIn = "teachertool.signedoutpanel.signin";
     export const CriteriaFeedback = "teachertool.criteriafeedback";
     export const Print = "teachertool.print";
-    export const UnhandledEvalError = "teachertool.evaluateerror"
+    export const UnhandledEvalError = "teachertool.evaluateerror";
 }
 
 namespace Misc {

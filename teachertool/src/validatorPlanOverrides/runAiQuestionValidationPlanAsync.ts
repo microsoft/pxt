@@ -21,6 +21,6 @@ export async function runAiQuestionValidationPlanAsync(
         executionSuccess: !!response,
         result: undefined,
         notes: response,
-        executionErrorMsg: response ? undefined : Strings.UnableToReachAI
+        executionErrorMsg: response ? undefined : Strings.UnableToReachAI,
     };
 }

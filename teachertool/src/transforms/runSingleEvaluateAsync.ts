@@ -153,7 +153,10 @@ export async function runSingleEvaluateAsync(criteriaInstanceId: string, fromUse
         } catch (e) {
             // Catch-all error scenario. Ideally criteria evaluation will catch errors and report through the result,
             // but this is a fallback in case something goes extra wrong.
-            pxt.tickEvent(Ticks.UnhandledEvalError, { catalogCriteriaId: criteriaInstance.catalogCriteriaId , error: (e as Error)?.message });
+            pxt.tickEvent(Ticks.UnhandledEvalError, {
+                catalogCriteriaId: criteriaInstance.catalogCriteriaId,
+                error: (e as Error)?.message,
+            });
             setUserFeedback(criteriaInstanceId, undefined);
             setEvalResult(criteriaInstance.instanceId, {
                 result: EvaluationStatus.NotStarted,
