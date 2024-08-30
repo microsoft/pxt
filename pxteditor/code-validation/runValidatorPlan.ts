@@ -10,7 +10,7 @@ import { validateSpecificBlockCommentsExist } from "./validateSpecificBlockComme
 import { getNestedChildBlocks } from "./getNestedChildBlocks";
 import { validateVariableUsage } from "./validateVariableUsage";
 
-export function runValidatorPlan(usedBlocks: Blockly.Block[], plan: pxt.blocks.ValidatorPlan, planLib: pxt.blocks.ValidatorPlan[]): boolean {
+export function runValidatorPlan(usedBlocks: Blockly.Block[], plan: pxt.blocks.ValidatorPlan, planLib: pxt.blocks.ValidatorPlan[]): pxt.blocks.EvaluationResult {
     const startTime = Date.now();
     let checksSucceeded = 0;
     let successfulBlocks: Blockly.Block[] = [];
@@ -38,8 +38,11 @@ export function runValidatorPlan(usedBlocks: Blockly.Block[], plan: pxt.blocks.V
                 break;
             default:
                 pxt.debug(`Unrecognized validator: ${check.validator}`);
-                checkPassed = false;
-                break;
+                pxt.tickEvent("validation.unrecognized_validator", { validator: check.validator });
+                return {
+                    executionSuccess: false,
+                    executionErrorMsg: lf(`Unrecognized evaluation rule`)
+                };
         }
 
         if (checkPassed && check.childValidatorPlans) {
@@ -65,7 +68,10 @@ export function runValidatorPlan(usedBlocks: Blockly.Block[], plan: pxt.blocks.V
         passed: `${passed}`,
     });
 
-    return passed;
+    return {
+        result: passed,
+        executionSuccess: true
+    };
 }
 
 function runBlocksExistValidation(usedBlocks: Blockly.Block[], inputs: pxt.blocks.BlocksExistValidatorCheck): [Blockly.Block[], boolean] {

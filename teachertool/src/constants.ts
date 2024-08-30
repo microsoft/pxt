@@ -48,6 +48,7 @@ export namespace Strings {
     export const EvaluateChecklist = lf("Evaluate checklist");
     export const UnableToEvaluate = lf("Unable to evaluate");
     export const UnableToReachAI = lf("Unable to reach the AI service");
+    export const UnexpectedError = lf("An unexpected error occurred");
     export const Dismiss = lf("Dismiss");
 }
 
@@ -71,6 +72,7 @@ export namespace Ticks {
     export const SignedOutPanelSignIn = "teachertool.signedoutpanel.signin";
     export const CriteriaFeedback = "teachertool.criteriafeedback";
     export const Print = "teachertool.print";
+    export const UnhandledEvalError = "teachertool.evaluateerror"
 }
 
 namespace Misc {
