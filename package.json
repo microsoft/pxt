@@ -1,6 +1,6 @@
 {
   "name": "pxt-core",
-  "version": "10.2.31",
+  "version": "10.3.0",
   "description": "Microsoft MakeCode provides Blocks / JavaScript / Python tools and editors",
   "keywords": [
     "TypeScript",
