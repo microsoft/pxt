@@ -5,8 +5,6 @@ import * as Actions from "../state/actions";
 import { getCatalogCriteriaWithId, getCriteriaInstanceWithId } from "../state/helpers";
 import { EvaluationStatus, CriteriaInstance } from "../types/criteria";
 import { ErrorCode } from "../types/errorCode";
-import { makeToast } from "../utils";
-import { showToast } from "./showToast";
 import jp from "jsonpath";
 import { getSystemParameter } from "../utils/getSystemParameter";
 import { runValidatorPlanOverrideAsync } from "../validatorPlanOverrides/runValidatorPlanOverrideAsync";
@@ -166,13 +164,5 @@ export async function runSingleEvaluateAsync(criteriaInstanceId: string, fromUse
         }
     });
 
-    const success = await evalRequest;
-
-    if (fromUserInteraction) {
-        if (!success) {
-            showToast(makeToast("error", lf("Unable to run evaluation")));
-        }
-    }
-
-    return success;
+    return await evalRequest;
 }

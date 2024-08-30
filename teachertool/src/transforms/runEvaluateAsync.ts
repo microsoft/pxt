@@ -3,6 +3,7 @@ import { makeToast } from "../utils";
 import { showToast } from "./showToast";
 import { setActiveTab } from "./setActiveTab";
 import { runSingleEvaluateAsync } from "./runSingleEvaluateAsync";
+import { Strings } from "../constants";
 
 export async function runEvaluateAsync(fromUserInteraction: boolean) {
     const { state: teacherTool } = stateAndDispatch();
@@ -16,8 +17,6 @@ export async function runEvaluateAsync(fromUserInteraction: boolean) {
         setActiveTab("results");
     }
 
-    // EvalRequest promises will resolve to true if evaluation completed successfully (regarless of pass/fail).
-    // They will only resolve to false if evaluation was unable to complete.
     const evalRequests = teacherTool.checklist.criteria.map(criteriaInstance =>
         runSingleEvaluateAsync(criteriaInstance.instanceId, fromUserInteraction)
     );
@@ -26,15 +25,17 @@ export async function runEvaluateAsync(fromUserInteraction: boolean) {
         return;
     }
 
+    // EvalRequest promises will resolve to true if evaluation completed successfully (regarless of pass/fail).
+    // They will only resolve to false if evaluation was unable to complete.
     const results = await Promise.all(evalRequests);
     if (fromUserInteraction) {
         const errorCount = results.filter(r => !r).length;
         if (errorCount === teacherTool.checklist.criteria.length) {
-            showToast(makeToast("error", lf("Unable to run evaluation")));
+            showToast(makeToast("error", Strings.UnableToEvaluate));
         } else if (errorCount > 0) {
-            showToast(makeToast("error", lf("Unable to evaluate some criteria")));
+            showToast(makeToast("error", Strings.UnableToEvaluatePartial));
         } else {
-            showToast(makeToast("success", lf("Evaluation complete")));
+            showToast(makeToast("success", Strings.EvaluationComplete));
         }
     }
 }
