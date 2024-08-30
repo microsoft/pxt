@@ -16,6 +16,8 @@ import { runSingleEvaluateAsync } from "../transforms/runSingleEvaluateAsync";
 import { removeCriteriaFromChecklist } from "../transforms/removeCriteriaFromChecklist";
 import { Button } from "react-common/components/controls/Button";
 import { setEvalResult } from "../transforms/setEvalResult";
+import { showToast } from "../transforms/showToast";
+import { makeToast } from "../utils";
 
 interface CriteriaResultNotesProps {
     criteriaId: string;
@@ -79,7 +81,13 @@ const CriteriaResultToolbarTray: React.FC<{ criteriaId: string }> = ({ criteriaI
 
     async function handleEvaluateClickedAsync() {
         pxt.tickEvent(Ticks.Evaluate);
-        await runSingleEvaluateAsync(criteriaId, true);
+        const success = await runSingleEvaluateAsync(criteriaId, true);
+
+        if (success) {
+            showToast(makeToast("success", Strings.EvaluationComplete));
+        } else {
+            showToast(makeToast("error", Strings.UnableToEvaluate));
+        }
     }
 
     async function handleDeleteClickedAsync() {

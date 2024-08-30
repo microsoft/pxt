@@ -50,6 +50,8 @@ export namespace Strings {
     export const UnableToReachAI = lf("Unable to reach the AI service");
     export const UnexpectedError = lf("An unexpected error occurred");
     export const Dismiss = lf("Dismiss");
+    export const EvaluationComplete = lf("Evaluation complete");
+    export const UnableToEvaluatePartial = lf("Unable to evaluate some criteria")
 }
 
 export namespace Ticks {
