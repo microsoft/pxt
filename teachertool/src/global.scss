@@ -150,6 +150,7 @@ code {
 .min-xl,
 .min-lg,
 .min-md,
+.min-2md,
 .min-sm,
 .min-2sm,
 .min-xs,
@@ -161,6 +162,7 @@ code {
 .max-xl,
 .max-lg,
 .max-md,
+.max-2md,
 .max-sm,
 .max-2sm,
 .max-xs,
@@ -173,6 +175,7 @@ $mobileBreakpoint: 320px;
 $smallTabletBreakpoint: 480px;
 $tabletBreakpoint: 768px;
 $computerBreakpoint: 992px;
+$smallComputerBreakpoint: 800px;
 $largeMonitorBreakpoint: 1200px;
 $widescreenMonitorBreakpoint: 1920px;
 
@@ -190,6 +193,12 @@ $widescreenMonitorBreakpoint: 1920px;
 
 @media (min-width: $computerBreakpoint) {
     .max-md {
+        display: none !important;
+    }
+}
+
+@media (min-width: $smallComputerBreakpoint) {
+    .max-2md {
         display: none !important;
     }
 }
@@ -232,6 +241,12 @@ $widescreenMonitorBreakpoint: 1920px;
 
 @media (max-width: ($computerBreakpoint - 0.02px)) {
     .min-md {
+        display: none !important;
+    }
+}
+
+@media (max-width: ($smallComputerBreakpoint - 0.02px)) {
+    .min-2md {
         display: none !important;
     }
 }
