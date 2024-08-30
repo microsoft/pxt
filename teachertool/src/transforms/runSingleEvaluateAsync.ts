@@ -132,7 +132,7 @@ export async function runSingleEvaluateAsync(criteriaInstanceId: string, fromUse
                 planResult = await runValidatorPlanAsync(plan, loadedValidatorPlans);
             }
 
-            if (planResult && planResult.executionSuccess) {
+            if (planResult?.executionSuccess) {
                 const result =
                     planResult.result === undefined
                         ? EvaluationStatus.CompleteWithNoResult
