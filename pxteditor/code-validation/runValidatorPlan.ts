@@ -41,7 +41,7 @@ export function runValidatorPlan(usedBlocks: Blockly.Block[], plan: pxt.blocks.V
                 pxt.tickEvent("validation.unrecognized_validator", { validator: check.validator });
                 return {
                     executionSuccess: false,
-                    executionErrorMsg: lf(`Unrecognized evaluation rule`)
+                    executionErrorMsg: lf("Unrecognized evaluation rule")
                 };
         }
 
