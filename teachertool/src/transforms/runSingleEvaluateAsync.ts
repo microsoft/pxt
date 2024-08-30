@@ -14,6 +14,7 @@ import { setEvalResultOutcome } from "./setEvalResultOutcome";
 import { mergeEvalResult } from "./mergeEvalResult";
 import { setEvalResult } from "./setEvalResult";
 import { setUserFeedback } from "./setUserFeedback";
+import { Strings, Ticks } from "../constants";
 
 function generateValidatorPlan(
     criteriaInstance: CriteriaInstance,
@@ -131,7 +132,7 @@ export async function runSingleEvaluateAsync(criteriaInstanceId: string, fromUse
                 planResult = await runValidatorPlanAsync(plan, loadedValidatorPlans);
             }
 
-            if (planResult) {
+            if (planResult?.executionSuccess) {
                 const result =
                     planResult.result === undefined
                         ? EvaluationStatus.CompleteWithNoResult
@@ -142,16 +143,26 @@ export async function runSingleEvaluateAsync(criteriaInstanceId: string, fromUse
                 mergeEvalResult(criteriaInstance.instanceId, result, planResult.notes);
                 return resolve(true); // evaluation completed successfully, so return true (regardless of pass/fail)
             } else {
-                dispatch(Actions.clearEvalResult(criteriaInstance.instanceId));
+                setEvalResult(criteriaInstance.instanceId, {
+                    result: EvaluationStatus.NotStarted,
+                    error: planResult?.executionErrorMsg ?? Strings.UnexpectedError,
+                });
                 setUserFeedback(criteriaInstanceId, undefined);
                 return resolve(false);
             }
         } catch (e) {
+            // Catch-all error scenario. Ideally criteria evaluation will catch errors and report through the result,
+            // but this is a fallback in case something goes extra wrong.
+            pxt.tickEvent(Ticks.UnhandledEvalError, {
+                catalogCriteriaId: criteriaInstance.catalogCriteriaId,
+                error: (e as Error)?.message,
+            });
             setUserFeedback(criteriaInstanceId, undefined);
             setEvalResult(criteriaInstance.instanceId, {
                 result: EvaluationStatus.NotStarted,
-                error: (e as Error)?.message,
+                error: Strings.UnexpectedError,
             });
+            return resolve(false);
         }
     });
 

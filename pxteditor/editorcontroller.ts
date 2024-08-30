@@ -199,7 +199,7 @@ case "renderxml": {
                                         const blocks = projectView.getBlocks();
                                         return runValidatorPlan(blocks, plan, planLib)})
                                     .then (results => {
-                                        resp = { result: results };
+                                        resp = results;
                                     });
                             }
 case "gettoolboxcategories": {
