@@ -38,7 +38,7 @@ export async function webUsbPairThemedDialogAsync(pairAsync: () => Promise<boole
     }
 
     const notPairedResult = () => userPrefersDownloadFlag ? pxt.commands.WebUSBPairResult.UserRejected : pxt.commands.WebUSBPairResult.Failed;
-
+    let lastPairingError: any;
 
     if (!await showConnectDeviceDialogAsync(confirmAsync))
         return notPairedResult();
@@ -82,6 +82,7 @@ export async function webUsbPairThemedDialogAsync(pairAsync: () => Promise<boole
                 paired = await pairAsync();
             } catch (e) {
                 errMessage = e.message;
+                lastPairingError = e;
             }
             core.hideDialog();
 
@@ -111,6 +112,7 @@ export async function webUsbPairThemedDialogAsync(pairAsync: () => Promise<boole
         } catch (e) {
             // Error while attempting connection
             paired = false;
+            lastPairingError = e;
         }
         core.hideLoading("attempting-connection");
     }
@@ -119,7 +121,7 @@ export async function webUsbPairThemedDialogAsync(pairAsync: () => Promise<boole
         await showConnectionSuccessAsync(confirmAsync, implicitlyCalled);
     }
     else {
-        const tryAgain = await showConnectionFailureAsync(confirmAsync, implicitlyCalled);
+        const tryAgain = await showConnectionFailureAsync(confirmAsync, implicitlyCalled, lastPairingError);
 
         if (tryAgain) return webUsbPairThemedDialogAsync(pairAsync, confirmAsync, implicitlyCalled);
     }
@@ -254,16 +256,19 @@ function showConnectionSuccessAsync(confirmAsync: ConfirmAsync, willTriggerDownl
 }
 
 
-function showConnectionFailureAsync(confirmAsync: ConfirmAsync, showDownloadAsFileButton?: boolean) {
+function showConnectionFailureAsync(confirmAsync: ConfirmAsync, showDownloadAsFileButton: boolean, error: any) {
     const boardName = getBoardName();
     const tryAgainText = lf("Try Again");
     const helpText = lf("Help");
     const downloadAsFileText = lf("Download as File");
 
+    const errorDisplay = error?.type === "devicelocked"
+        ? lf("We couldn't connect to your {0}. It may be in use by another application.", boardName)
+        : lf("We couldn't find your {0}.", boardName);
     const jsxd = () => (
         <div>
             <div className="ui content download-troubleshoot-header">
-                {lf("We couldn't find your {0}.", boardName)}
+                {errorDisplay}
                 <br />
                 <br />
                 {lf("Click \"{0}\" for more info, \"{1}\" to retry pairing, or \"{2}\" for drag-and-drop flashing.", helpText, tryAgainText, downloadAsFileText)}

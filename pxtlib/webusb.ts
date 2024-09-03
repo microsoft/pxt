@@ -1,3 +1,23 @@
+// Declare the subset of usb interface we depend on; definitely typed has full but
+// better to list it as optional / use our existing types where possible.
+// https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/types/w3c-web-usb/index.d.ts
+interface Navigator {
+    readonly usb?: {
+        getDevices(): Promise<pxt.usb.USBDevice[]>;
+        requestDevice(options?: pxt.usb.USBDeviceRequestOptions): Promise<pxt.usb.USBDevice>;
+        addEventListener(
+            type: "connect" | "disconnect",
+            listener: (ev: pxt.usb.USBConnectionEvent) => any,
+            useCapture?: boolean,
+        ): void;
+        removeEventListener(
+            type: "connect" | "disconnect",
+            callback: (ev: pxt.usb.USBConnectionEvent) => any,
+            useCapture?: boolean,
+        ): void;
+    }
+}
+
 namespace pxt.usb {
 
     /**
@@ -39,6 +59,15 @@ namespace pxt.usb {
         serialNumber?: string;
     }
 
+    export interface USBDeviceRequestOptions {
+        filters: USBDeviceFilter[];
+        exclusionFilters?: USBDeviceFilter[] | undefined;
+    }
+
+    export interface USBConnectionEvent extends Event {
+        device: USBDevice;
+    }
+
     // this is for HF2
     export let filters: USBDeviceFilter[] = [{
         classCode: 255,
@@ -60,7 +89,6 @@ namespace pxt.usb {
     export type USBDirection = "in" | "out";
 
     export type BufferSource = Uint8Array;
-
 
     export interface USBConfiguration {
         configurationValue: number;
@@ -197,8 +225,8 @@ namespace pxt.usb {
 
             this.enabled = true;
             this.log("registering webusb events");
-            (navigator as any).usb.addEventListener('disconnect', this.handleUSBDisconnected, false);
-            (navigator as any).usb.addEventListener('connect', this.handleUSBConnected, false);
+            navigator.usb?.addEventListener('disconnect', this.handleUSBDisconnected, false);
+            navigator.usb?.addEventListener('connect', this.handleUSBConnected, false);
         }
 
         disable() {
@@ -206,31 +234,29 @@ namespace pxt.usb {
 
             this.enabled = false;
             this.log(`unregistering webusb events`);
-            (navigator as any).usb.removeEventListener('disconnect', this.handleUSBDisconnected);
-            (navigator as any).usb.removeEventListener('connect', this.handleUSBConnected);
+            navigator?.usb.removeEventListener('disconnect', this.handleUSBDisconnected);
+            navigator?.usb.removeEventListener('connect', this.handleUSBConnected);
         }
 
-        disposeAsync(): Promise<void> {
+        async disposeAsync(): Promise<void> {
             this.disable();
-            return Promise.resolve();
         }
 
-        private handleUSBDisconnected(event: any) {
+        private handleUSBDisconnected(event: USBConnectionEvent) {
             this.log("device disconnected")
             if (event.device == this.dev) {
                 this.log("clear device")
                 this.clearDev();
-                if (this.onDeviceConnectionChanged)
-                    this.onDeviceConnectionChanged(false);
+                this.onDeviceConnectionChanged?.(false);
             }
         }
-        private handleUSBConnected(event: any) {
-            const newdev = event.device as USBDevice;
+
+        private handleUSBConnected(event: USBConnectionEvent) {
+            const newdev = event.device;
             this.log(`device connected ${newdev.serialNumber}`)
             if (!this.dev && !this.connecting) {
                 this.log("attach device")
-                if (this.onDeviceConnectionChanged)
-                    this.onDeviceConnectionChanged(true);
+                this.onDeviceConnectionChanged?.(true);
             }
         }
 
@@ -239,8 +265,7 @@ namespace pxt.usb {
                 this.dev = null
                 this.epIn = null
                 this.epOut = null
-                if (this.onConnectionChanged)
-                    this.onConnectionChanged();
+                this.onConnectionChanged?.();
             }
         }
 
@@ -252,26 +277,27 @@ namespace pxt.usb {
             pxt.debug("webusb: " + msg)
         }
 
-        disconnectAsync() {
-            this.ready = false
-            if (!this.dev) return Promise.resolve()
-            this.log("close device")
-            return this.dev.close()
-                .catch(e => {
-                    // just ignore errors closing, most likely device just disconnected
-                })
-                .then(() => {
-                    this.clearDev()
-                    return U.delay(500)
-                })
+        async disconnectAsync() {
+            this.ready = false;
+            if (!this.dev) return;
+            this.log("close device");
+            try {
+                await this.dev.close();
+            } catch (e) {
+                // just ignore errors closing, most likely device just disconnected
+            }
+
+            this.clearDev();
+            await U.delay(500);
         }
 
         async forgetAsync(): Promise<boolean> {
             if (!this.dev?.forget)
                 return false;
             try {
+                const dev = this.dev;
                 await this.disconnectAsync();
-                await this.dev.forget();
+                await dev.forget();
                 return true;
                 // connection changed listener will handle disconnecting when access is revoked.
             } catch (e) {
@@ -279,20 +305,22 @@ namespace pxt.usb {
             }
         }
 
-        reconnectAsync() {
+        async reconnectAsync() {
             this.log("reconnect")
             this.setConnecting(true);
-            return this.disconnectAsync()
-                .then(tryGetDevicesAsync)
-                .then(devs => this.connectAsync(devs))
-                .finally(() => this.setConnecting(false));
+            try {
+                await this.disconnectAsync();
+                const devs = await tryGetDevicesAsync();
+                await this.connectAsync(devs);
+            } finally {
+                this.setConnecting(false);
+            }
         }
 
         private setConnecting(v: boolean) {
             if (v != this.connecting) {
                 this.connecting = v;
-                if (this.onConnectionChanged)
-                    this.onConnectionChanged();
+                this.onConnectionChanged?.();
             }
         }
 
@@ -334,7 +362,7 @@ namespace pxt.usb {
                 for (let i = 0; i < devs.length; ++i) {
                     const dev = devs[i];
                     this.dev = dev;
-                    this.log(`connect device: ${dev.manufacturerName} ${dev.productName}`)
+                    this.log(`connect device: ${dev.manufacturerName} ${dev.productName}`);
                     this.log(`serial number: ${dev.serialNumber} ${this.lastKnownDeviceSerialNumber === dev.serialNumber ? "(last known device)" : ""} `);
                     try {
                         await this.initAsync();
@@ -355,62 +383,60 @@ namespace pxt.usb {
             }
         }
 
-        sendPacketAsync(pkt: Uint8Array) {
+        async sendPacketAsync(pkt: Uint8Array) {
             if (!this.dev)
-                return Promise.reject(new Error("Disconnected"))
-            Util.assert(pkt.length <= 64)
+                throw new Error("Disconnected")
+            Util.assert(pkt.length <= 64);
+
             if (!this.epOut) {
-                return this.dev.controlTransferOut({
+                const res = await this.dev.controlTransferOut({
                     requestType: "class",
                     recipient: "interface",
                     request: controlTransferSetReport,
                     value: controlTransferOutReport,
                     index: this.iface.interfaceNumber
-                }, pkt).then(res => {
-                    if (res.status != "ok")
-                        this.error("USB CTRL OUT transfer failed")
-                })
+                }, pkt);
+                if (res.status != "ok")
+                    this.error("USB CTRL OUT transfer failed");
+            } else {
+                const res = await this.dev.transferOut(this.epOut.endpointNumber, pkt);
+                if (res.status != "ok")
+                    this.error("USB OUT transfer failed");
             }
-            return this.dev.transferOut(this.epOut.endpointNumber, pkt)
-                .then(res => {
-                    if (res.status != "ok")
-                        this.error("USB OUT transfer failed")
-                })
         }
 
-        private readLoop() {
+        private async readLoop() {
             if (this.readLoopStarted)
-                return
-            this.readLoopStarted = true
-            this.log("start read loop")
-            let loop = (): void => {
-                if (!this.ready)
-                    U.delay(300).then(loop)
-                else
-                    this.recvPacketAsync()
-                        .then(buf => {
-                            if (buf[0]) {
-                                // we've got data; retry reading immedietly after processing it
-                                this.onData(buf)
-                                loop()
-                            } else {
-                                // throttle down if no data coming
-                                U.delay(500).then(loop)
-                            }
-                        }, err => {
-                            if (this.dev)
-                                this.onError(err)
-                            U.delay(300).then(loop)
-                        })
+                return;
+            this.readLoopStarted = true;
+            this.log("start read loop");
+            while (true) {
+                if (!this.ready) {
+                    await U.delay(300);
+                    continue;
+                }
+                try {
+                    const buf = await this.recvPacketAsync();
+                    if (buf[0]) {
+                        // we've got data; retry reading immedietly after processing it
+                        this.onData(buf);
+                    } else {
+                        // throttle down if no data coming
+                        await U.delay(500);
+                    }
+                } catch (e) {
+                    if (this.dev)
+                        this.onError(e);
+                    await U.delay(300);
+                }
             }
-            loop()
         }
 
         async recvPacketAsync(timeoutMs?: number): Promise<Uint8Array> {
             const startTime = Date.now();
             while (!timeoutMs || Date.now() < startTime + timeoutMs) {
                 if (!this.dev) {
-                    return Promise.reject(new Error("Disconnected"))
+                    throw new Error("Disconnected");
                 }
                 const res = await (this.epIn ? this.dev.transferIn(this.epIn.endpointNumber, 64) : this.dev.controlTransferIn({
                     requestType: "class",
@@ -421,104 +447,101 @@ namespace pxt.usb {
                 }, 64));
 
                 if (res.status != "ok")
-                    this.error("USB IN transfer failed")
-                let arr = new Uint8Array(res.data.buffer)
+                    this.error("USB IN transfer failed");
+                let arr = new Uint8Array(res.data.buffer);
                 if (arr.length != 0) {
-                    return arr
+                    return arr;
                 }
             }
             this.error("USB IN timed out");
         }
 
-        initAsync(): Promise<void> {
+        async initAsync(): Promise<void> {
             if (!this.dev)
-                return Promise.reject(new Error("Disconnected"))
-            let dev = this.dev
-            this.log("open device")
-            return dev.open()
-                // assume one configuration; no one really does more
-                .then(() => {
-                    this.log("select configuration")
-                    return dev.selectConfiguration(1)
-                })
-                .then(() => {
-                    let matchesFilters = (iface: USBInterface) => {
-                        let a0 = iface.alternates[0]
-                        for (let f of filters) {
-                            if (f.classCode == null || a0.interfaceClass === f.classCode) {
-                                if (f.subclassCode == null || a0.interfaceSubclass === f.subclassCode) {
-                                    if (f.protocolCode == null || a0.interfaceProtocol === f.protocolCode) {
-                                        if (a0.endpoints.length == 0)
-                                            return true
-                                        if (a0.endpoints.length == 2 &&
-                                            a0.endpoints.every(e => e.packetSize == 64))
-                                            return true
-                                    }
-                                }
+                throw new Error("Disconnected");
+            const dev = this.dev;
+            this.log("open device");
+            await dev.open();
+
+            // assume one configuration; no one really does more
+            this.log("select configuration")
+            await dev.selectConfiguration(1)
+            let matchesFilters = (iface: USBInterface) => {
+                let a0 = iface.alternates[0];
+                for (let f of filters) {
+                    if (f.classCode == null || a0.interfaceClass === f.classCode) {
+                        if (f.subclassCode == null || a0.interfaceSubclass === f.subclassCode) {
+                            if (f.protocolCode == null || a0.interfaceProtocol === f.protocolCode) {
+                                if (a0.endpoints.length == 0)
+                                    return true;
+                                if (a0.endpoints.length == 2 &&
+                                    a0.endpoints.every(e => e.packetSize == 64))
+                                    return true;
                             }
                         }
-                        return false
                     }
-                    this.log("got " + dev.configurations[0].interfaces.length + " interfaces")
-                    const matching = dev.configurations[0].interfaces.filter(matchesFilters)
-                    let iface = matching[matching.length - 1]
-                    this.log(`${matching.length} matching interfaces; picking ${iface ? "#" + iface.interfaceNumber : "n/a"}`)
-                    if (!iface)
-                        this.error("cannot find supported USB interface")
-                    this.altIface = iface.alternates[0]
-                    this.iface = iface
-                    if (this.altIface.endpoints.length) {
-                        this.log("using dedicated endpoints")
-                        this.epIn = this.altIface.endpoints.filter(e => e.direction == "in")[0]
-                        this.epOut = this.altIface.endpoints.filter(e => e.direction == "out")[0]
-                        Util.assert(this.epIn.packetSize == 64);
-                        Util.assert(this.epOut.packetSize == 64);
-                    } else {
-                        this.log("using ctrl pipe")
-                    }
-                    this.log("claim interface")
-                    return dev.claimInterface(iface.interfaceNumber)
-                })
-                .then(() => {
-                    this.log("device ready")
-                    this.lastKnownDeviceSerialNumber = this.dev.serialNumber;
-                    this.ready = true;
-                    if (isHF2)
-                        this.readLoop();
-                    if (this.onConnectionChanged)
-                        this.onConnectionChanged();
-                })
+                }
+                return false;
+            }
+            this.log("got " + dev.configurations[0].interfaces.length + " interfaces");
+            const matching = dev.configurations[0].interfaces.filter(matchesFilters);
+            let iface = matching[matching.length - 1];
+            this.log(`${matching.length} matching interfaces; picking ${iface ? "#" + iface.interfaceNumber : "n/a"}`);
+            if (!iface)
+                this.error("cannot find supported USB interface");
+            this.altIface = iface.alternates[0];
+            this.iface = iface;
+            if (this.altIface.endpoints.length) {
+                this.log("using dedicated endpoints");
+                this.epIn = this.altIface.endpoints.filter(e => e.direction == "in")[0];
+                this.epOut = this.altIface.endpoints.filter(e => e.direction == "out")[0];
+                Util.assert(this.epIn.packetSize == 64);
+                Util.assert(this.epOut.packetSize == 64);
+            } else {
+                this.log("using ctrl pipe");
+            }
+            this.log("claim interface");
+            await dev.claimInterface(iface.interfaceNumber);
+            this.log("device ready");
+            this.lastKnownDeviceSerialNumber = this.dev.serialNumber;
+            this.ready = true;
+            if (isHF2) {
+                // just starting, not waiting on it.
+                this.readLoop();
+            }
+            this.onConnectionChanged?.();
         }
     }
 
-    export function pairAsync(): Promise<boolean> {
-        return ((navigator as any).usb.requestDevice({
-            filters: filters
-        }) as Promise<USBDevice>)
-            .then(dev => !!dev)
-            .catch(e => {
-                // user cancelled
-                if (e.name == "NotFoundError")
-                    return undefined;
-                throw e;
-            })
+    export async function pairAsync(): Promise<boolean> {
+        try {
+            const dev = await navigator.usb.requestDevice({
+                filters: filters
+            });
+            return !!dev;
+        } catch (e) {
+            // user cancelled
+            if (e.name == "NotFoundError")
+                return undefined;
+            throw e;
+        }
     }
 
     export async function tryGetDevicesAsync(): Promise<USBDevice[]> {
         log(`webusb: get devices`)
         try {
-            const devs = await ((navigator as any).usb.getDevices() as Promise<USBDevice[]>);
-            return devs || []
+            const devs = await navigator.usb.getDevices();
+            return devs || [];
         }
         catch (e) {
-            reportException(e)
+            reportException(e);
             return [];
         }
     }
 
     let _hid: WebUSBHID;
     export function mkWebUSBHIDPacketIOAsync(): Promise<pxt.packetio.PacketIO> {
-        pxt.debug(`packetio: mk webusb io`)
+        pxt.debug(`packetio: mk webusb io`);
         if (!_hid)
             _hid = new WebUSBHID();
         _hid.enable();
@@ -582,7 +605,7 @@ namespace pxt.usb {
             return "electron";
         }
 
-        const _usb = (navigator as any).usb;
+        const _usb = navigator.usb;
         if (!_usb) {
             return "notimpl";
         }
