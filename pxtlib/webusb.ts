@@ -234,8 +234,8 @@ namespace pxt.usb {
 
             this.enabled = false;
             this.log(`unregistering webusb events`);
-            navigator?.usb.removeEventListener('disconnect', this.handleUSBDisconnected);
-            navigator?.usb.removeEventListener('connect', this.handleUSBConnected);
+            navigator.usb?.removeEventListener('disconnect', this.handleUSBDisconnected);
+            navigator.usb?.removeEventListener('connect', this.handleUSBConnected);
         }
 
         async disposeAsync(): Promise<void> {
@@ -507,7 +507,7 @@ namespace pxt.usb {
             this.ready = true;
             if (isHF2) {
                 // just starting, not waiting on it.
-                this.readLoop();
+                /* await */ this.readLoop();
             }
             this.onConnectionChanged?.();
         }
@@ -515,7 +515,7 @@ namespace pxt.usb {
 
     export async function pairAsync(): Promise<boolean> {
         try {
-            const dev = await navigator.usb.requestDevice({
+            const dev = await navigator.usb?.requestDevice({
                 filters: filters
             });
             return !!dev;
@@ -530,7 +530,7 @@ namespace pxt.usb {
     export async function tryGetDevicesAsync(): Promise<USBDevice[]> {
         log(`webusb: get devices`)
         try {
-            const devs = await navigator.usb.getDevices();
+            const devs = await navigator.usb?.getDevices();
             return devs || [];
         }
         catch (e) {
