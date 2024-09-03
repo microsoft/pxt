@@ -1,6 +1,6 @@
 # MakeCode micro:bit 2024 Update
 
-Posted on September 4, 2024 by Jaqster
+**Posted on September 4, 2024 by [Jaqster](https://github.com/jaqster)**
 
 Today we are releasing our annual update for [MakeCode for the micro:bit](https://makecode.microbit.org). This year we have been focusing on some core foundational and infrastructure-level work to ensure that MakeCode is set up for future success and is more reliable and secure than ever before.
 
@@ -24,11 +24,11 @@ Have you ever been working on a project when all of a sudden, your evil twin tak
 
 In the Version History pane, you can see the timestamps of when your code was automatically saved. You can click on the different times to see the version of your code at that time, and you can see when you shared your project. Using the buttons at the top, you can save a copy of any version of your program, or you can restore an older version of your code (before your evil twin took over).
 
-<VersionHistory.gif à will be updated>
+&lt;VersionHistory.gif - will be updated&gt;
 
 Tutorial accessibility improvements We released [Immersive Reader](https://youtu.be/ZYJhQ0HNvq4) support for tutorial instructions back in 2021 in order to support students with literacy challenges. We’re continuing to improve the accessibility of our tutorials for color blind and vision impaired users by changing the block name color highlighting to include the icon and improve color contrast readability.
 
-< Tutorial Instructions.jpg>
+<Tutorial Instructions.jpg>
 
 ## Audio recording improvements in simulator
 
@@ -48,15 +48,17 @@ And finally we do have a few new blocks in this release –
 
 · Char code from string: this is a helpful Text block that will return the ASCII code of a character in a string at a specified index position.
 
-<CharCodeBlock.jpg> · Pins Update: big thanks to GitHub contributor [Sae](https://github.com/sae220) who helped us make this subtle change to allow for more flexibility in programming the micro:bit pins. MakeCode allows you to read from and write to pins P0-P16 on the micro:bit, and these pins can be used for both analog and/or digital signals. To learn more about the micro:bit pins, see https://makecode.microbit.org/device/pins. In this release, we updated the pins blocks to allow for dragging and dropping different pin values and even variables.
+<CharCodeBlock.jpg>
+
+· Pins Update: big thanks to GitHub contributor [Sae](https://github.com/sae220) who helped us make this subtle change to allow for more flexibility in programming the micro:bit pins. MakeCode allows you to read from and write to pins P0-P16 on the micro:bit, and these pins can be used for both analog and/or digital signals. To learn more about the micro:bit pins, see https://makecode.microbit.org/device/pins. In this release, we updated the pins blocks to allow for dragging and dropping different pin values and even variables.
 
 <Pins Old.png>
 
-Old Pins
+### Old Pins
 
 <Pins New.png>
 
-## New Pins
+### New Pins
 
 <NewPins.gif>
 
@@ -64,17 +66,17 @@ Old Pins
 
 <Old Nested Blocks.png>
 
-Old Nested Blocks
+### Old Nested Blocks
 
 <New Nested Blocks.png>
 
-## New Nested Blocks
+### New Nested Blocks
 
 Thank you to everyone who has logged bugs, submitted PR’s, translated and suggested new features throughout the year! Any new bugs you find in this release, please log them in GitHub: https://github.com/Microsoft/pxt-microbit/issues
 
 Any other comments, suggestions, and feedback, please participate in the micro:bit community on Slack: https://tech.microbit.org/get-involved/where-to-find or the MakeCode Forum https://forum.makecode.com.
 
 Happy Making and Coding!
-<br/>
 
+<br/>
 The MakeCode Team
