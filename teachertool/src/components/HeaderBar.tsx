@@ -151,27 +151,42 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
             <></>
         );
         return (
-            <div className={css["user-menu"]}>
-                {teacherTool.userProfile ? (
-                    <MenuDropdown
-                        id="profile-dropdown"
-                        items={items}
-                        label={avatarElem || initialsElem}
-                        title={lf("Profile Settings")}
-                    />
-                ) : (
+            <>
+                <div>
                     <Button
-                        className={classList("inverted", css["sign-in-button"])}
-                        rightIcon="xicon cloud-user"
-                        title={lf("Sign In")}
-                        label={lf("Sign In")}
+                        className={css["feedback-btn"]}
+                        labelClassName="min-sm"
+                        leftIcon="xicon feedback"
+                        title={Strings.GiveFeedback}
+                        label={Strings.GiveFeedback}
                         onClick={() => {
-                            pxt.tickEvent(Ticks.UserMenuSignIn);
-                            showModal({ modal: "sign-in" });
+                            pxt.tickEvent(Ticks.FeedbackForm);
                         }}
+                        href="https://aka.ms/teachertool-feedback"
                     />
-                )}
-            </div>
+                </div>
+                <div className={css["user-menu"]}>
+                    {teacherTool.userProfile ? (
+                        <MenuDropdown
+                            id="profile-dropdown"
+                            items={items}
+                            label={avatarElem || initialsElem}
+                            title={lf("Profile Settings")}
+                        />
+                    ) : (
+                        <Button
+                            className={classList("inverted", css["sign-in-button"])}
+                            rightIcon="xicon cloud-user"
+                            title={lf("Sign In")}
+                            label={lf("Sign In")}
+                            onClick={() => {
+                                pxt.tickEvent(Ticks.UserMenuSignIn);
+                                showModal({ modal: "sign-in" });
+                            }}
+                        />
+                    )}
+                </div>
+            </>
         );
     }
 
@@ -183,11 +198,11 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
             </div>
 
             <div className={css["centered-panel"]}>
-                <div className={classList(css["app-title"], "min-sm")}>
+                <div className={classList(css["app-title"], "min-2md")}>
                     {Strings.AppTitle}
                     {betaTag()}
                 </div>
-                <div className={classList(css["app-title"], "min-2xs max-sm")}>
+                <div className={classList(css["app-title"], "min-xs max-2md")}>
                     {Strings.AppTitleShort}
                     {betaTag()}
                 </div>
