@@ -40,6 +40,10 @@ Last year we released the [audio recording and playback extension](https://makec
 
 ![Audio sampling](/static/blog/microbit/2024-update/audio-sampling.jpg)
 
+## WebUSB reliability
+
+[Last year](https://makecode.com/blog/microbit/2023-release) we released the new "one-click-to-download" functionality supported by WebUSB. Since then, we’ve done a lot of work to ensure that this method of pairing the micro:bit to the browser is reliable and just works all the time across different platforms. Please try it out – it should be very stable. If you are still experiencing any issues with downloading programs to the micro:bit through this method, please let us know by filing a ticket at the [micro:bit support desk](https://support.microbit.org/support/tickets/new).
+
 ## New blocks
 
 And finally, we do have a few new blocks in this release –
