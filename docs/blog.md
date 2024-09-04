@@ -1,6 +1,6 @@
 # Microsoft MakeCode Blog
 
-## [MakeCode micro:bit 2024 Update](/blog/microbit/2024-update)
+## [MakeCode for micro:bit 2024 Update](/blog/microbit/2024-update)
 
 September 4, 2024 by [Jaqster](https://github.com/jaqster)
 
