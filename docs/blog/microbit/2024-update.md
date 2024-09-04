@@ -1,4 +1,4 @@
-# MakeCode for micro:bit 2024 Update
+# MakeCode for the micro:bit 2024 Update
 
 **Posted on September 4, 2024 by [Jaqster](https://github.com/jaqster)**
 
