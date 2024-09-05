@@ -879,6 +879,7 @@ export function applyUpgradesAsync(): Promise<UpgradeResult> {
 }
 
 function upgradeFromBlocksAsync(): Promise<UpgradeResult> {
+    pxtblockly.cleanBlocks();
     const mainPkg = pkg.mainPkg;
     const project = pkg.getEditorPkg(mainPkg);
     const targetVersion = project.header.targetVersion;
