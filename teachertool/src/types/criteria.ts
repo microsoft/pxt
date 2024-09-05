@@ -20,6 +20,7 @@ export interface CriteriaInstance {
     instanceId: string;
     params: CriteriaParameterValue[] | undefined;
     userFeedback?: UserFeedback;
+    deleted?: boolean;
 }
 
 // Represents a parameter definition in a catalog criteria.

@@ -18,6 +18,7 @@ import { Button } from "react-common/components/controls/Button";
 import { setEvalResult } from "../transforms/setEvalResult";
 import { showToast } from "../transforms/showToast";
 import { makeToast } from "../utils";
+import { readdCriteriaToChecklist } from "../transforms/readdCriteriaToChecklist";
 
 interface CriteriaResultNotesProps {
     criteriaId: string;
@@ -76,6 +77,20 @@ const CriteriaResultError: React.FC<CriteriaResultErrorProps> = ({ criteriaInsta
     );
 };
 
+export const UndoDeleteCriteriaButton: React.FC<{ criteriaId: string }> = ({ criteriaId }) => {
+    const handleUndoClicked = () => {
+        readdCriteriaToChecklist(criteriaId);
+    }
+
+    return (
+        <Button
+            title={Strings.Undo}
+            label={Strings.Undo}
+            onClick={handleUndoClicked}
+        />
+    )
+}
+
 const CriteriaResultToolbarTray: React.FC<{ criteriaId: string }> = ({ criteriaId }) => {
     const { state: teacherTool } = useContext(AppStateContext);
 
@@ -91,9 +106,8 @@ const CriteriaResultToolbarTray: React.FC<{ criteriaId: string }> = ({ criteriaI
     }
 
     async function handleDeleteClickedAsync() {
-        if (confirm(Strings.ConfirmDeleteCriteriaInstance)) {
-            removeCriteriaFromChecklist(criteriaId);
-        }
+        removeCriteriaFromChecklist(criteriaId);
+        showToast(makeToast("info", Strings.CriteriaDeleted, 5000, <UndoDeleteCriteriaButton criteriaId={criteriaId} />));
     }
 
     return (

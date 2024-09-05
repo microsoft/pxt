@@ -122,6 +122,7 @@ const CriteriaWithResultsTable: React.FC = () => {
         <div className={css["results-list"]}>
             {Object.values(criteria).map(criteriaInstance => {
                 return (
+                    !criteriaInstance.deleted &&
                     <CriteriaResultEntry criteriaId={criteriaInstance.instanceId} key={criteriaInstance.instanceId} />
                 );
             })}

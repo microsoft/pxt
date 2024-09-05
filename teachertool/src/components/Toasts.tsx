@@ -54,7 +54,7 @@ const ToastNotification: React.FC<IToastNotificationProps> = ({ toast }) => {
                 <div className={css["text-container"]}>
                     {toast.text && <div className={classList(css["text"], "tt-toast-text")}>{toast.text}</div>}
                     {toast.detail && <div className={css["detail"]}>{toast.detail}</div>}
-                    {toast.jsx && <div>{toast.jsx}</div>}
+                    {toast.jsx && <div className={css["custom-jsx"]}>{toast.jsx}</div>}
                 </div>
                 {!toast.hideDismissBtn && !toast.showSpinner && (
                     <div className={css["dismiss-btn"]} onClick={handleDismissClicked}>
