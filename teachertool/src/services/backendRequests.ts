@@ -99,7 +99,7 @@ export async function askCopilotQuestionAsync(shareId: string, question: string)
         if (!request.success) {
             throw new Error(request.err || lf("Unable to reach AI. Error code: {0}", request.statusCode));
         }
-        result = await request.resp.json();
+        result = await request.resp;
     } catch (e) {
         logError(ErrorCode.askAIQuestion, e);
     }
