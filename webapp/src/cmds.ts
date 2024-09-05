@@ -135,6 +135,35 @@ function showUploadInstructionsAsync(
     }).then(() => { });
 }
 
+export function showReconnectDeviceInstructionsAsync(
+    confirmAsync: (options: core.PromptOptions) => Promise<number>
+): Promise<void> {
+    const boardName = pxt.appTarget.appTheme.boardName || lf("device");
+    const helpUrl = pxt.appTarget.appTheme.usbDocs;
+    const jsx = webusb.renderDisconnectDeviceDialog();
+    const body = lf("Your {0} appears to have stalled; please disconnect any battery and usb connection, and try again.", boardName);
+    return confirmAsync({
+        header: lf("{0} Connection failed...", boardName),
+        body,
+        jsx,
+        hasCloseIcon: true,
+        hideAgree: true,
+        helpUrl,
+        bigHelpButton: true,
+        className: 'downloaddialog',
+        buttons: [
+            {
+                label: lf("Done"),
+                className: "primary",
+                onclick: () => {
+                    pxt.tickEvent('downloaddialog.done')
+                    core.hideDialog();
+                }
+            },
+        ]
+    }).then(() => { });
+}
+
 export function nativeHostPostMessageFunction(): (msg: NativeHostMessage) => void {
     const webkit = (<any>window).webkit;
     if (webkit
@@ -261,6 +290,9 @@ export async function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.comma
             // device is locked or used by another tab
             pxt.tickEvent("hid.flash.devicelocked");
             log(`error: device locked`);
+        } else if (e.type == "inittimeout") {
+            pxt.tickEvent("hid.flash.inittimeout");
+            await showReconnectDeviceInstructionsAsync(core.confirmAsync);
         } else {
             pxt.tickEvent("hid.flash.error");
             log(`hid error ${e.message}`)
@@ -461,8 +493,12 @@ export async function maybeReconnectAsync(pairIfDeviceNotFound = false, skipIfCo
                 await wrapper.reconnectAsync();
                 return true;
             } catch (e) {
-                if (e.type == "devicenotfound")
+                if (e.type == "devicenotfound") {
                     return !!pairIfDeviceNotFound && pairAsync();
+                } else if (e.type == "inittimeout") {
+                    pxt.tickEvent("hid.flash.inittimeout");
+                    await showReconnectDeviceInstructionsAsync(core.confirmAsync);
+                }
                 throw e;
             }
         } finally {

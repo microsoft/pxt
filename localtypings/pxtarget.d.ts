@@ -522,6 +522,7 @@ declare namespace pxt {
 
         dragFileImage?: string;
         connectDeviceImage?: string;
+        disconnectDeviceImage?: string;
         selectDeviceImage?: string;
         connectionSuccessImage?: string;
         incompatibleHardwareImage?: string;
