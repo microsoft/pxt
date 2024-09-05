@@ -34,3 +34,9 @@ export class PxtWorkspaceSearch extends WorkspaceSearch {
         Blockly.utils.dom.removeClass(this.injectionDiv, 'blockly-ws-searching');
     }
 }
+
+Blockly.Css.register(`
+.blockly-ws-search button {
+    padding-left: 6px;
+    padding-right: 6px;
+}`);
