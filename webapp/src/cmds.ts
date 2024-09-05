@@ -141,10 +141,8 @@ export function showReconnectDeviceInstructionsAsync(
     const boardName = pxt.appTarget.appTheme.boardName || lf("device");
     const helpUrl = pxt.appTarget.appTheme.usbDocs;
     const jsx = webusb.renderDisconnectDeviceDialog();
-    const body = lf("Your {0} appears to have stalled; please disconnect any battery and usb connection, and try again.", boardName);
     return confirmAsync({
         header: lf("{0} Connection failed...", boardName),
-        body,
         jsx,
         hasCloseIcon: true,
         hideAgree: true,
