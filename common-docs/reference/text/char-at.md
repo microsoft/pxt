@@ -37,4 +37,5 @@ for (let i = 0; i < sentence.length; i++) {
 
 ## See also
 
+[char code at](/reference/text/char-code-at),
 [substr](/reference/text/substr)
