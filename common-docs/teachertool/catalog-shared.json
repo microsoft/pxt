@@ -3,8 +3,8 @@
         {
             "id": "59AAC5BA-B0B3-4389-AA90-1E767EFA8563",
             "use": "block_used_n_times",
-            "template": "${Block} used ${count} times",
-            "description": "This block was used the specified number of times in your project.",
+            "template": "${Block} used at least ${count} times",
+            "description": "This block was used at least the specified number of times in your project.",
             "docPath": "/teachertool",
             "tags": ["General"],
             "params": [
