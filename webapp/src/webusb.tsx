@@ -515,6 +515,25 @@ export function renderUnpairDialog() {
     return { header, jsx, helpUrl };
 }
 
+export function renderDisconnectDeviceDialog() {
+    const boardName = getBoardName();
+    const disconnectImage = theme().disconnectDeviceImage;
+
+    return <>
+        {disconnectImage && <img
+            className="ui image centered medium"
+            src={disconnectImage}
+            alt={lf("Image of {0} being disconnected", boardName)}
+        />}
+        <div>
+            {lf("Your {0} appears to have stalled", boardName)}
+            <br />
+            <br />
+            {lf("Please disconnect any battery and usb connection, and try again.")}
+        </div>
+    </>;
+}
+
 export async function showDeviceForgottenDialog(confirmAsync: ConfirmAsync) {
     const boardName = getBoardName();
     const deviceForgottenImage = theme().usbDeviceForgottenImage;
