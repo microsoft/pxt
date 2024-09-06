@@ -84,6 +84,7 @@ export const UndoDeleteCriteriaButton: React.FC<{ criteriaId: string }> = ({ cri
 
     return (
         <Button
+            className="undo-button"
             title={Strings.Undo}
             label={Strings.Undo}
             onClick={handleUndoClicked}
@@ -107,7 +108,7 @@ const CriteriaResultToolbarTray: React.FC<{ criteriaId: string }> = ({ criteriaI
 
     async function handleDeleteClickedAsync() {
         removeCriteriaFromChecklist(criteriaId);
-        showToast(makeToast("info", Strings.CriteriaDeleted, 5000, <UndoDeleteCriteriaButton criteriaId={criteriaId} />));
+        showToast(makeToast("info", Strings.CriteriaDeleted, 500000, <UndoDeleteCriteriaButton criteriaId={criteriaId} />));
     }
 
     return (

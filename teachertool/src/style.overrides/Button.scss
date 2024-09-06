@@ -75,3 +75,14 @@
 .pass > .common-button.common-dropdown-button {
     border: 3px solid var(--pxt-success-accent);
 }
+
+.undo-button {
+    width: 3rem;
+    height: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--pxt-button-secondary-background);
+    color: var(--pxt-button-secondary-foreground);
+}
