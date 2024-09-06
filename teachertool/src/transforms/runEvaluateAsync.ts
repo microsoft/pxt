@@ -17,7 +17,9 @@ export async function runEvaluateAsync(fromUserInteraction: boolean) {
         setActiveTab("results");
     }
 
-    const evalRequests = teacherTool.checklist.criteria.map(criteriaInstance =>
+    const validCriteria = teacherTool.checklist.criteria.filter(c => !c.deleted);
+
+    const evalRequests = validCriteria.map(criteriaInstance =>
         runSingleEvaluateAsync(criteriaInstance.instanceId, fromUserInteraction)
     );
 
