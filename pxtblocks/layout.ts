@@ -329,9 +329,9 @@ export function cleanUpBlocklySvg(svg: SVGElement): SVGElement {
     return svg;
 }
 
-export function blocklyToSvgAsync(sg: SVGElement, x: number, y: number, width: number, height: number, scale?: number): Promise<BlockSvg> {
+export async function blocklyToSvgAsync(sg: SVGElement, x: number, y: number, width: number, height: number, scale?: number): Promise<BlockSvg> {
     if (!sg.childNodes[0])
-        return Promise.resolve<BlockSvg>(undefined);
+        return undefined;
 
     sg.removeAttribute("width");
     sg.removeAttribute("height");
@@ -351,30 +351,29 @@ export function blocklyToSvgAsync(sg: SVGElement, x: number, y: number, width: n
     const customCssHref = (document.getElementById(`style-${isRtl ? 'rtl' : ''}blockly.css`) as HTMLLinkElement).href;
     const semanticCssHref = pxt.Util.toArray(document.head.getElementsByTagName("link"))
         .filter(l => pxt.Util.endsWith(l.getAttribute("href"), "semantic.css"))[0].href;
-    return Promise.all([pxt.BrowserUtils.loadAjaxAsync(customCssHref), pxt.BrowserUtils.loadAjaxAsync(semanticCssHref)])
-        .then((customCss) => {
-            const blocklySvg = pxt.Util.toArray(document.head.querySelectorAll("style"))
-                .filter((el: HTMLStyleElement) => /\.blocklySvg/.test(el.innerText))[0] as HTMLStyleElement;
-            // Custom CSS injected directly into the DOM by Blockly
-            customCss.unshift((document.getElementById(`blockly-common-style`) as HTMLLinkElement)?.innerText || "");
-            customCss.unshift((document.getElementById(`blockly-renderer-style-pxt-classic`) as HTMLLinkElement)?.innerText || "");
-            // CSS may contain <, > which need to be stored in CDATA section
-            const cssString = (blocklySvg ? blocklySvg.innerText : "") + '\n\n' + customCss.map(el => el + '\n\n');
-            cssLink.appendChild(xsg.createCDATASection(cssString));
-            xsg.documentElement.insertBefore(cssLink, xsg.documentElement.firstElementChild);
 
-            return expandImagesAsync(xsg)
-                .then(() => convertIconsToPngAsync(xsg))
-                .then(() => {
-                    return <BlockSvg>{
-                        width: renderWidth,
-                        height: renderHeight,
-                        svg: serializeNode(xsg).replace('<style xmlns="http://www.w3.org/1999/xhtml">', '<style>'),
-                        xml: documentToSvg(xsg),
-                        css: cssString
-                    };
-                });
-        })
+    const customCss = await Promise.all([pxt.BrowserUtils.loadAjaxAsync(customCssHref), pxt.BrowserUtils.loadAjaxAsync(semanticCssHref)]);
+
+    const blocklySvg = pxt.Util.toArray(document.head.querySelectorAll("style"))
+        .filter((el: HTMLStyleElement) => /\.blocklySvg/.test(el.innerText))[0] as HTMLStyleElement;
+    // Custom CSS injected directly into the DOM by Blockly
+    customCss.unshift((document.getElementById(`blockly-common-style`) as HTMLLinkElement)?.innerText || "");
+    customCss.unshift((document.getElementById(`blockly-renderer-style-pxt-classic`) as HTMLLinkElement)?.innerText || "");
+    // CSS may contain <, > which need to be stored in CDATA section
+    const cssString = (blocklySvg ? blocklySvg.innerText : "") + '\n\n' + customCss.map(el => el + '\n\n');
+    cssLink.appendChild(xsg.createCDATASection(cssString));
+    xsg.documentElement.insertBefore(cssLink, xsg.documentElement.firstElementChild);
+
+    await expandImagesAsync(xsg);
+    await convertIconsToPngAsync(xsg);
+
+    return <BlockSvg>{
+        width: renderWidth,
+        height: renderHeight,
+        svg: serializeNode(xsg).replace('<style xmlns="http://www.w3.org/1999/xhtml">', '<style>'),
+        xml: documentToSvg(xsg),
+        css: cssString
+    };
 }
 
 export function documentToSvg(xsg: Node): string {
@@ -388,92 +387,92 @@ async function expandImagesAsync(xsg: Document): Promise<void> {
     if (!imageXLinkCache) imageXLinkCache = {};
 
     const images = pxt.Util.toArray(xsg.getElementsByTagName("image"))
-    const dataUriPromises = images
+    const xlinkedImages = images
         .filter(image => {
             const href = image.getAttributeNS(XLINK_NAMESPACE, "href");
             return href && !/^data:/.test(href);
-        })
-        .map(async image => {
-            const href = image.getAttributeNS(XLINK_NAMESPACE, "href");
-            let dataUri = imageXLinkCache[href];
-
-            if (!dataUri) {
-                try {
-                    const img = await pxt.BrowserUtils.loadImageAsync(image.getAttributeNS(XLINK_NAMESPACE, "href"));
-                    const cvs = document.createElement("canvas") as HTMLCanvasElement;
-                    const ctx = cvs.getContext("2d");
-                    let w = img.width
-                    let h = img.height
-                    cvs.width = w;
-                    cvs.height = h;
-                    ctx.drawImage(img, 0, 0, w, h, 0, 0, cvs.width, cvs.height);
-                    dataUri = cvs.toDataURL("image/png");
-                    imageXLinkCache[href] = dataUri;
-                }
-                catch (e) {
-                    // ignore load error
-                    pxt.debug(`svg render: failed to load ${href}`);
-                    dataUri = "";
-                }
-            }
-            image.setAttributeNS(XLINK_NAMESPACE, "href", href);
         });
 
-    const linkedIconPromises = images
-        .filter(image => /^\/.*.svg$/.test(image.getAttribute("href")))
-        .map(async image => {
-            const svgUri = image.getAttribute("href");
+    for (const image of xlinkedImages) {
+        const href = image.getAttributeNS(XLINK_NAMESPACE, "href");
+        let dataUri = imageXLinkCache[href];
 
-            // Don't love hard coding these icon values, but the comment icons set their
-            // width/height using CSS so there isn't a great means of detecting it
-            let width = 24;
-            let height = 24;
-            if (image.hasAttribute("width") && image.hasAttribute("height")) {
-                width = parseInt(image.getAttribute("width").replace(/[^0-9]/g, ""));
-                height = parseInt(image.getAttribute("height").replace(/[^0-9]/g, ""));
+        if (!dataUri) {
+            try {
+                const img = await pxt.BrowserUtils.loadImageAsync(image.getAttributeNS(XLINK_NAMESPACE, "href"));
+                const cvs = document.createElement("canvas") as HTMLCanvasElement;
+                const ctx = cvs.getContext("2d");
+                let w = img.width
+                let h = img.height
+                cvs.width = w;
+                cvs.height = h;
+                ctx.drawImage(img, 0, 0, w, h, 0, 0, cvs.width, cvs.height);
+                dataUri = cvs.toDataURL("image/png");
+                imageXLinkCache[href] = dataUri;
             }
-            else if (image.classList.contains("blocklyResizeHandle")) {
-                width = 12;
-                height = 12;
+            catch (e) {
+                // ignore load error
+                pxt.debug(`svg render: failed to load ${href}`);
+                dataUri = "";
             }
+        }
+        image.setAttributeNS(XLINK_NAMESPACE, "href", href);
+    }
 
-            let href = imageXLinkCache[svgUri];
-            if (!href) {
-                href = await pxt.BrowserUtils.encodeToPngAsync(svgUri, { width, height, pixelDensity: 2 });
-            }
+    const linkedSvgImages = images
+        .filter(image => /^\/.*.svg$/.test(image.getAttribute("href")));
 
-            imageXLinkCache[svgUri] = href;
-            image.setAttribute("href", href);
-        });
+    for (const image of linkedSvgImages) {
+        const svgUri = image.getAttribute("href");
 
-    await Promise.all(dataUriPromises.concat(linkedIconPromises));
+        // Don't love hard coding these icon values, but the comment icons set their
+        // width/height using CSS so there isn't a great means of detecting it
+        let width = 24;
+        let height = 24;
+        if (image.hasAttribute("width") && image.hasAttribute("height")) {
+            width = parseInt(image.getAttribute("width").replace(/[^0-9]/g, ""));
+            height = parseInt(image.getAttribute("height").replace(/[^0-9]/g, ""));
+        }
+        else if (image.classList.contains("blocklyResizeHandle")) {
+            width = 12;
+            height = 12;
+        }
+
+        let href = imageXLinkCache[svgUri];
+        if (!href) {
+            href = await pxt.BrowserUtils.encodeToPngAsync(svgUri, { width, height, pixelDensity: 2 });
+        }
+
+        imageXLinkCache[svgUri] = href;
+        image.setAttribute("href", href);
+    }
 }
 
 let imageIconCache: pxt.Map<string>;
 async function convertIconsToPngAsync(xsg: Document): Promise<void> {
     if (!imageIconCache) imageIconCache = {};
 
-    if (!pxt.BrowserUtils.isEdge()) return Promise.resolve();
+    if (!pxt.BrowserUtils.isEdge()) {
+        return;
+    }
 
-    const images = pxt.Util.toArray(xsg.getElementsByTagName("image"));
+    const images = pxt.Util.toArray(xsg.getElementsByTagName("image"))
+        .filter(image => /^data:image\/svg\+xml/.test(image.getAttributeNS(XLINK_NAMESPACE, "href")));
 
-    const dataUriPromises = images
-        .filter(image => /^data:image\/svg\+xml/.test(image.getAttributeNS(XLINK_NAMESPACE, "href")))
-        .map(async image => {
-            const svgUri = image.getAttributeNS(XLINK_NAMESPACE, "href");
-            const width = parseInt(image.getAttribute("width").replace(/[^0-9]/g, ""));
-            const height = parseInt(image.getAttribute("height").replace(/[^0-9]/g, ""));
+    for (const image of images) {
+        const svgUri = image.getAttributeNS(XLINK_NAMESPACE, "href");
+        const width = parseInt(image.getAttribute("width").replace(/[^0-9]/g, ""));
+        const height = parseInt(image.getAttribute("height").replace(/[^0-9]/g, ""));
 
-            let href = imageIconCache[svgUri];
-            if (!href) {
-                href = await pxt.BrowserUtils.encodeToPngAsync(svgUri, { width, height, pixelDensity: 2 });
-            }
+        let href = imageIconCache[svgUri];
+        if (!href) {
+            href = await pxt.BrowserUtils.encodeToPngAsync(svgUri, { width, height, pixelDensity: 2 });
+            console.log(`HREF: ${href}`);
+        }
 
-            imageIconCache[svgUri] = href;
-            image.setAttributeNS(XLINK_NAMESPACE, "href", href);
-        });
-
-    await Promise.all(dataUriPromises);
+        imageIconCache[svgUri] = href;
+        image.setAttributeNS(XLINK_NAMESPACE, "href", href);
+    }
 }
 
 interface Formattable {
