@@ -103,41 +103,41 @@ function registerHelp() {
 
 function registerDuplicate() {
     const duplicateOption: Blockly.ContextMenuRegistry.RegistryItem = {
-      displayText() {
-        return lf("Duplicate")
-      },
-      preconditionFn(scope: Blockly.ContextMenuRegistry.Scope) {
-        const block = scope.block;
-        if (!block!.isInFlyout && block!.isDeletable() && block!.isMovable()) {
-          if (block!.isDuplicatable()) {
-            return 'enabled';
-          }
-          return 'disabled';
-        }
-        return 'hidden';
-      },
-      callback(scope: Blockly.ContextMenuRegistry.Scope) {
-        if (!scope.block) return;
+        displayText() {
+            return lf("Duplicate")
+        },
+        preconditionFn(scope: Blockly.ContextMenuRegistry.Scope) {
+            const block = scope.block;
+            if (!block!.isInFlyout && block!.isDeletable() && block!.isMovable()) {
+                if (block!.isDuplicatable()) {
+                    return 'enabled';
+                }
+                return 'disabled';
+            }
+            return 'hidden';
+        },
+        callback(scope: Blockly.ContextMenuRegistry.Scope) {
+            if (!scope.block) return;
 
-        let duplicateOnDrag = false;
-        if ((scope.block as any).duplicateOnDrag_) {
-            (scope.block as any).duplicateOnDrag_ = false;
-            duplicateOnDrag = true;
-        }
+            let duplicateOnDrag = false;
+            if ((scope.block as any).duplicateOnDrag_) {
+                (scope.block as any).duplicateOnDrag_ = false;
+                duplicateOnDrag = true;
+            }
 
-        const data = scope.block.toCopyData();
+            const data = scope.block.toCopyData();
 
-        if (duplicateOnDrag) {
-            (scope.block as any).duplicateOnDrag_ = true;
-        }
+            if (duplicateOnDrag) {
+                (scope.block as any).duplicateOnDrag_ = true;
+            }
 
-        if (!data) return;
+            if (!data) return;
 
-        Blockly.clipboard.paste(data, scope.block.workspace);
-      },
-      scopeType: Blockly.ContextMenuRegistry.ScopeType.BLOCK,
-      id: 'blockDuplicate',
-      weight: BlockContextWeight.Duplicate,
+            Blockly.clipboard.paste(data, scope.block.workspace);
+        },
+        scopeType: Blockly.ContextMenuRegistry.ScopeType.BLOCK,
+        id: 'blockDuplicate',
+        weight: BlockContextWeight.Duplicate,
     };
     Blockly.ContextMenuRegistry.registry.register(duplicateOption);
-  }
+}
