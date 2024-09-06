@@ -83,6 +83,13 @@ function registerSnapshotCode() {
             pxt.tickEvent("blocks.context.screenshot", undefined, { interactiveConsent: true });
             (async () => {
                 let uri = await screenshotAsync(scope.workspace, null, pxt.appTarget.appTheme?.embedBlocksInSnapshot);
+
+                if (pxt.BrowserUtils.isSafari()) {
+                    // For some reason, Safari doesn't always load embedded images the first time. This is a silly fix,
+                    // but snapshotting a second time fixes the issue.
+                    uri = await screenshotAsync(scope.workspace, null, pxt.appTarget.appTheme?.embedBlocksInSnapshot);
+                }
+
                 if (pxt.BrowserUtils.isSafari()) {
                     uri = uri.replace(/^data:image\/[^;]/, 'data:application/octet-stream');
                 }
