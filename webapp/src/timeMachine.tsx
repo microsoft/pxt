@@ -439,14 +439,7 @@ function getTimelineEntries(history: HistoryFile): TimelineEntry[] {
 
     const createTimeEntry = (timestamp: number, kind: "snapshot" | "diff" | "share") => {
         const date = new Date(timestamp);
-        const key = new Date(date.toLocaleDateString(
-            pxt.U.userLanguage(),
-            {
-                year: "numeric",
-                month: "numeric",
-                day: "numeric"
-            }
-        )).getTime();
+        const key = new Date(date.getFullYear(), date.getMonth(), date.getDay()).getTime();
 
         if (!buckets[key]) {
             buckets[key] = [];
