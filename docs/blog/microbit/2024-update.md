@@ -24,7 +24,7 @@ Have you ever been working on a project when all of a sudden, your evil twin tak
 
 In the **Version History** pane, you can see the timestamps of when your code was automatically saved. You can click on the different times to see the version of your code at that time, and you can see when you shared your project. Using the buttons at the top, you can save a copy of any version of your program, or you can restore an older version of your code (before your evil twin took over).
 
-&lt;**VersionHistory.gif - will be updated**&gt;
+![Version history animation](/static/blog/microbit/2024-update/version-history.gif)
 
 ## Tutorial accessibility improvements
 
