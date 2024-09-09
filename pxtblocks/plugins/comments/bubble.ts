@@ -206,6 +206,10 @@ export abstract class Bubble implements Blockly.IDeletable {
         this.renderTail();
     }
 
+    getPositionRelativeToAnchor() {
+        return new Blockly.utils.Coordinate(this.relativeLeft, this.relativeTop);
+    }
+
     /** @returns the size of this bubble. */
     protected getSize() {
         return this.size;

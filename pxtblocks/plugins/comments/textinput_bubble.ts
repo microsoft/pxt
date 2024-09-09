@@ -37,6 +37,9 @@ export class TextInputBubble extends Bubble {
     /** Functions listening for changes to the size of this bubble. */
     private sizeChangeListeners: (() => void)[] = [];
 
+     /** Functions listening for changes to the position of this bubble. */
+    private positionChangeListeners: (() => void)[] = []
+
     /** The text of this bubble. */
     private text = '';
 
@@ -83,6 +86,11 @@ export class TextInputBubble extends Bubble {
         return this.text;
     }
 
+    override moveTo(x: number, y: number) {
+        super.moveTo(x, y);
+        this.onPositionChange();
+    }
+
     /** Sets the text of this bubble. Calls change listeners. */
     setText(text: string) {
         this.text = text;
@@ -98,6 +106,10 @@ export class TextInputBubble extends Bubble {
     /** Adds a change listener to be notified when this bubble's size changes. */
     addSizeChangeListener(listener: () => void) {
         this.sizeChangeListeners.push(listener);
+    }
+
+    addPositionChangeListener(listener: () => void) {
+        this.positionChangeListeners.push(listener);
     }
 
     /** Creates the editor UI for this bubble. */
@@ -313,6 +325,13 @@ export class TextInputBubble extends Bubble {
     /** Handles a size change event for the text area. Calls event listeners. */
     private onSizeChange() {
         for (const listener of this.sizeChangeListeners) {
+            listener();
+        }
+    }
+
+    /** Handles a position change event for the text area. Calls event listeners. */
+    private onPositionChange() {
+        for (const listener of this.positionChangeListeners) {
             listener();
         }
     }
