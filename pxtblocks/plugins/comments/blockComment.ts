@@ -1,6 +1,7 @@
 import * as Blockly from "blockly";
 
 import { TextInputBubble } from "./textinput_bubble";
+import { deleteBlockDataForField, getBlockDataForField, setBlockDataForField } from "../../fields";
 
 const eventUtils = Blockly.Events;
 
@@ -12,6 +13,12 @@ const DEFAULT_BUBBLE_WIDTH = 160;
 
 /** The default height in workspace-scale units of the text input bubble. */
 const DEFAULT_BUBBLE_HEIGHT = 80;
+
+// makecode fields generated from functions always use valid JavaScript
+// identifiers for their names. starting the name with a ~ prevents us
+// from colliding with those fields
+const COMMENT_OFFSET_X_FIELD_NAME = "~commentOffsetX";
+const COMMENT_OFFSET_Y_FIELD_NAME = "~commentOffsetY";
 
 /**
  * An icon which allows the user to add comment text to a block.
@@ -145,6 +152,19 @@ export class CommentIcon extends Blockly.icons.Icon {
 
     /** Sets the text of this comment. Updates any bubbles if they are visible. */
     setText(text: string) {
+        // Blockly comments are omitted from XML serialization if they're empty.
+        // In that case, they won't be present in the saved XML but any comment offset
+        // data that was previously saved will be since it's a part of the block's
+        // serialized data and not the comment's. In order to prevent that orphaned save
+        // data from persisting, we need to clear it when the user creates a new comment.
+
+        // If setText is called with the empty string while our text is already the
+        // empty string, that means that this comment is newly created and we can safely
+        // clear any pre-existing saved offset data.
+        if (!this.text && !text) {
+            this.clearSavedOffsetData();
+        }
+
         const oldText = this.text;
         eventUtils.fire(
             new (eventUtils.get(eventUtils.BLOCK_CHANGE))(
@@ -246,6 +266,15 @@ export class CommentIcon extends Blockly.icons.Icon {
         }
     }
 
+    onPositionChange(): void {
+        if (this.textInputBubble) {
+            const coord = this.textInputBubble.getPositionRelativeToAnchor();
+
+            setBlockDataForField(this.sourceBlock, COMMENT_OFFSET_X_FIELD_NAME, coord.x + "");
+            setBlockDataForField(this.sourceBlock, COMMENT_OFFSET_Y_FIELD_NAME, coord.y + "");
+        }
+    }
+
     bubbleIsVisible(): boolean {
         return this.bubbleVisiblity;
     }
@@ -291,6 +320,7 @@ export class CommentIcon extends Blockly.icons.Icon {
      * to update the state of this icon in response to changes in the bubble.
      */
     private showEditableBubble() {
+        const savedPosition = this.getSavedOffsetData();
         this.textInputBubble = new TextInputBubble(
             this.sourceBlock.workspace as Blockly.WorkspaceSvg,
             this.getAnchorLocation(),
@@ -300,17 +330,24 @@ export class CommentIcon extends Blockly.icons.Icon {
         this.textInputBubble.setSize(this.bubbleSize, true);
         this.textInputBubble.addTextChangeListener(() => this.onTextChange());
         this.textInputBubble.addSizeChangeListener(() => this.onSizeChange());
+        this.textInputBubble.addPositionChangeListener(() => this.onPositionChange());
         this.textInputBubble.setDeleteHandler(() => {
             this.setBubbleVisible(false);
             this.sourceBlock.setCommentText(null);
+            this.clearSavedOffsetData();
         });
         this.textInputBubble.setCollapseHandler(() => {
             this.setBubbleVisible(false);
         });
+
+        if (savedPosition) {
+            this.textInputBubble.setPositionRelativeToAnchor(savedPosition.x, savedPosition.y);
+        }
     }
 
     /** Shows the non editable text bubble for this comment. */
     private showNonEditableBubble() {
+        const savedPosition = this.getSavedOffsetData();
         this.textInputBubble = new TextInputBubble(
             this.sourceBlock.workspace as Blockly.WorkspaceSvg,
             this.getAnchorLocation(),
@@ -322,6 +359,9 @@ export class CommentIcon extends Blockly.icons.Icon {
         this.textInputBubble.setCollapseHandler(() => {
             this.setBubbleVisible(false);
         });
+        if (savedPosition) {
+            this.textInputBubble.setPositionRelativeToAnchor(savedPosition.x, savedPosition.y);
+        }
     }
 
     /** Hides any open bubbles owned by this comment. */
@@ -349,6 +389,25 @@ export class CommentIcon extends Blockly.icons.Icon {
     private getBubbleOwnerRect(): Blockly.utils.Rect {
         const bbox = (this.sourceBlock as Blockly.BlockSvg).getSvgRoot().getBBox();
         return new Blockly.utils.Rect(bbox.y, bbox.y + bbox.height, bbox.x, bbox.x + bbox.width);
+    }
+
+    private getSavedOffsetData(): Blockly.utils.Coordinate | undefined {
+        const offsetX = getBlockDataForField(this.sourceBlock, COMMENT_OFFSET_X_FIELD_NAME);
+        const offsetY = getBlockDataForField(this.sourceBlock, COMMENT_OFFSET_Y_FIELD_NAME);
+
+        if (offsetX && offsetY) {
+            return new Blockly.utils.Coordinate(
+                parseFloat(offsetX),
+                parseFloat(offsetY)
+            );
+        }
+
+        return undefined;
+    }
+
+    private clearSavedOffsetData() {
+        deleteBlockDataForField(this.sourceBlock, COMMENT_OFFSET_X_FIELD_NAME);
+        deleteBlockDataForField(this.sourceBlock, COMMENT_OFFSET_Y_FIELD_NAME);
     }
 }
 
