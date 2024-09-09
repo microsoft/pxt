@@ -1,7 +1,7 @@
 import * as Blockly from "blockly";
 
 import { TextInputBubble } from "./textinput_bubble";
-import { getBlockDataForField, setBlockDataForField } from "../../fields";
+import { deleteBlockDataForField, getBlockDataForField, setBlockDataForField } from "../../fields";
 
 const eventUtils = Blockly.Events;
 
@@ -152,6 +152,19 @@ export class CommentIcon extends Blockly.icons.Icon {
 
     /** Sets the text of this comment. Updates any bubbles if they are visible. */
     setText(text: string) {
+        // Blockly comments are omitted from XML serialization if they're empty.
+        // In that case, they won't be present in the saved XML but any comment offset
+        // data that was previously saved will be since it's a part of the block's
+        // serialized data and not the comment's. In order to prevent that orphaned save
+        // data from persisting, we need to clear it when the user creates a new comment.
+
+        // If setText is called with the empty string while our text is already the
+        // empty string, that means that this comment is newly created and we can safely
+        // clear any pre-existing saved offset data.
+        if (!this.text && !text) {
+            this.clearSavedOffsetData();
+        }
+
         const oldText = this.text;
         eventUtils.fire(
             new (eventUtils.get(eventUtils.BLOCK_CHANGE))(
@@ -321,6 +334,7 @@ export class CommentIcon extends Blockly.icons.Icon {
         this.textInputBubble.setDeleteHandler(() => {
             this.setBubbleVisible(false);
             this.sourceBlock.setCommentText(null);
+            this.clearSavedOffsetData();
         });
         this.textInputBubble.setCollapseHandler(() => {
             this.setBubbleVisible(false);
@@ -389,6 +403,11 @@ export class CommentIcon extends Blockly.icons.Icon {
         }
 
         return undefined;
+    }
+
+    private clearSavedOffsetData() {
+        deleteBlockDataForField(this.sourceBlock, COMMENT_OFFSET_X_FIELD_NAME);
+        deleteBlockDataForField(this.sourceBlock, COMMENT_OFFSET_Y_FIELD_NAME);
     }
 }
 
