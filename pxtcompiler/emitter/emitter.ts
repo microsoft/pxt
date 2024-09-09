@@ -3342,7 +3342,7 @@ ${lbl}: .short 0xffff
                     proc.emitExpr(emitCallCore(trg, trg, [src], null, decl as FunctionLikeDeclaration))
                 } else {
                     for (;;) {
-                        if (trg.kind == SK.PropertyAccessExpression) {
+                        if (trg.kind === SK.PropertyAccessExpression) {
                             const idx = fieldIndex(trg as PropertyAccessExpression)
                             const fld = getFieldInfo(idx.classInfo, idx.name)
                             const attrs = parseComments(fld);

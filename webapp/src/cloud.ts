@@ -586,7 +586,7 @@ export async function requestProjectCloudStatus(headerIds: string[]): Promise<vo
 const CLOUDSAVE_DEBOUNCE_MS = 3000;
 const CLOUDSAVE_MAX_MS = 15000;
 let headerWorklist: { [headerId: string]: boolean } = {};
-let onHeaderChangeTimeout: number = null;
+let onHeaderChangeTimeout: number = 0;
 let onHeaderChangeStarted: number = 0;
 const onHeaderChangeSubscriber: data.DataSubscriber = {
     subscriptions: [],
