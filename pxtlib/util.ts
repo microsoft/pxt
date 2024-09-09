@@ -978,27 +978,51 @@ namespace ts.pxtc.Util {
     }
 
     export class PromiseQueue {
-        promises: pxt.Map<(() => Promise<any>)[]> = {};
+        protected allSettledPromise: DeferredPromise<void>;
+        protected queues: pxt.Map<(() => Promise<any>)[]> = {};
 
-        enqueue<T>(id: string, f: () => Promise<T>): Promise<T> {
+        enqueue<T>(id: string, operation: () => Promise<T>): Promise<T> {
             return new Promise<T>((resolve, reject) => {
-                let arr = this.promises[id]
-                if (!arr) {
-                    arr = this.promises[id] = []
+                let queue = this.queues[id]
+                if (!queue) {
+                    queue = this.queues[id] = []
                 }
-                arr.push(() =>
-                    f()
+                queue.push(() =>
+                    operation()
                         .finally(() => {
-                            arr.shift()
-                            if (arr.length == 0)
-                                delete this.promises[id]
-                            else
-                                arr[0]()
+                            queue.shift();
+                            if (queue.length == 0) {
+                                delete this.queues[id];
+
+                                if (this.allSettledPromise && this.areAllPromisesSettled()) {
+                                    this.allSettledPromise.resolve();
+                                    this.allSettledPromise = undefined;
+                                }
+                            }
+                            else {
+                                queue[0]();
+                            }
                         })
-                        .then(resolve, reject))
-                if (arr.length == 1)
-                    arr[0]()
-            })
+                        .then(resolve, reject)
+                );
+                if (queue.length == 1) {
+                    queue[0]();
+                }
+            });
+        }
+
+        async allSettled(): Promise<void> {
+            if (this.areAllPromisesSettled()) return;
+
+            if (!this.allSettledPromise) {
+                this.allSettledPromise = defer();
+            }
+
+            return this.allSettledPromise.promise;
+        }
+
+        protected areAllPromisesSettled() {
+            return Object.keys(this.queues).length === 0
         }
     }
 

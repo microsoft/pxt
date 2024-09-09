@@ -1677,47 +1677,56 @@ let syncAsyncPromise: Promise<pxt.editor.EditorSyncState>;
 export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
     pxt.debug("workspace: sync")
     if (syncAsyncPromise) return syncAsyncPromise;
-    return syncAsyncPromise = impl.listAsync()
-        .catch((e) => {
-            // There might be a problem with the native databases. Switch to memory for this session so the user can at
-            // least use the editor.
-            return switchToMemoryWorkspace("sync failed")
-                .then(() => impl.listAsync());
-        })
-        .then(headers => {
-            const existing = U.toDictionary(allScripts || [], h => h.header.id)
-            // this is an in-place update the header instances
-            allScripts = headers.map(hd => {
-                let ex = existing[hd.id]
-                if (ex) {
-                    if (JSON.stringify(ex.header) !== JSON.stringify(hd)) {
-                        U.jsonCopyFrom(ex.header, hd)
-                        // force reload
-                        ex.text = undefined
-                        ex.version = undefined
-                        data.invalidateHeader("header", hd);
-                        data.invalidateHeader("text", hd);
-                        data.invalidateHeader("pkg-git-status", hd);
-                        data.invalidate("gh-commits:*"); // invalidate commits just in case
-                    }
-                } else {
-                    ex = {
-                        header: hd,
-                        text: undefined,
-                        version: undefined,
-                    }
-                }
-                return ex;
-            })
-            cloudsync.syncAsync(); // sync in background
-        })
-        .then(() => {
-            refreshHeadersSession();
-            return impl.getSyncState ? impl.getSyncState() : null
-        })
+    return syncAsyncPromise = syncCoreAsync()
         .finally(() => {
             syncAsyncPromise = undefined;
         });
+}
+
+async function syncCoreAsync(): Promise<pxt.editor.EditorSyncState> {
+    let headers: pxt.workspace.Header[];
+
+    await headerQ.allSettled();
+
+    try {
+        headers = await impl.listAsync();
+    }
+    catch (e) {
+        // There might be a problem with the native databases. Switch to memory for this session so the user can at
+        // least use the editor.
+        await switchToMemoryWorkspace("sync failed");
+
+        headers = await impl.listAsync();
+    }
+
+    const existing = U.toDictionary(allScripts || [], h => h.header.id)
+    // this is an in-place update the header instances
+    allScripts = headers.map(hd => {
+        let ex = existing[hd.id]
+        if (ex) {
+            if (JSON.stringify(ex.header) !== JSON.stringify(hd)) {
+                U.jsonCopyFrom(ex.header, hd)
+                // force reload
+                ex.text = undefined
+                ex.version = undefined
+                data.invalidateHeader("header", hd);
+                data.invalidateHeader("text", hd);
+                data.invalidateHeader("pkg-git-status", hd);
+                data.invalidate("gh-commits:*"); // invalidate commits just in case
+            }
+        } else {
+            ex = {
+                header: hd,
+                text: undefined,
+                version: undefined,
+            }
+        }
+        return ex;
+    });
+
+    cloudsync.syncAsync(); // sync in background
+    refreshHeadersSession();
+    return impl.getSyncState ? impl.getSyncState() : null
 }
 
 export function resetAsync() {
