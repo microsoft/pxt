@@ -440,6 +440,10 @@ const buildSVGIcons = () => {
     })
 }
 
+const copyBlocklyMedia = () =>
+    gulp.src("node_modules/blockly/media/*")
+    .pipe(gulp.dest("webapp/public/blockly/media"))
+
 
 
 /********************************************************
@@ -591,6 +595,12 @@ const kiosk = createWebappTasks("kiosk");
 const teacherTool = createWebappTasks("teachertool");
 
 /********************************************************
+                      Tutorial Tool
+*********************************************************/
+
+const tutorialTool = createWebappTasks("tutorialtool");
+
+/********************************************************
                  Webapp build wrappers
 *********************************************************/
 
@@ -604,7 +614,7 @@ const maybeUpdateWebappStrings = () => {
 
 const maybeBuildWebapps = () => {
     if (!shouldBuildWebapps()) return noop;
-    return gulp.parallel(skillmap, authcode, multiplayer, kiosk, teacherTool);
+    return gulp.parallel(skillmap, authcode, multiplayer, kiosk, teacherTool, tutorialTool);
 }
 
 /********************************************************
@@ -723,7 +733,7 @@ function getMochaExecutable() {
 const buildAll = gulp.series(
     updatestrings,
     maybeUpdateWebappStrings(),
-    copyTypescriptServices,
+    gulp.parallel(copyTypescriptServices, copyBlocklyMedia),
     gulp.parallel(pxtlib, pxtweb),
     gulp.parallel(pxtcompiler, pxtsim, backendutils),
     pxtpy,
@@ -756,6 +766,13 @@ exports.webapp = gulp.series(
     browserifyWebapp,
     browserifyAssetEditor
 )
+
+exports.pxtrunner = gulp.series(
+    gulp.parallel(reactCommon, pxtblocks, pxteditor, pxtservices),
+    pxtrunner,
+    browserifyEmbed,
+    pxtembed,
+);
 
 exports.skillmapTest = testSkillmap;
 exports.updatestrings = updatestrings;

@@ -98,11 +98,14 @@ export async function getFileProgressAsync(file: string, languages?: string[]) {
     return results;
 }
 
-export async function listFilesAsync(directory: string): Promise<string[]> {
-    directory = normalizePath(directory);
+export async function listFilesAsync(directory?: string): Promise<string[]> {
     const files = (await getAllFiles()).map(file => normalizePath(file.path));
 
-    return files.filter(file => file.startsWith(directory));
+    if (directory) {
+        directory = normalizePath(directory);
+        return files.filter(file => file.startsWith(directory));
+    }
+    return files;
 }
 
 export async function downloadTranslationsAsync(directory?: string) {
@@ -296,6 +299,8 @@ async function getAllFiles() {
 }
 
 async function createFile(fileName: string, fileContent: any, directoryId?: number): Promise<void> {
+    if (pxt.crowdin.testMode) return;
+
     const { uploadStorageApi, sourceFilesApi } = getClient();
 
     // This request happens in two parts: first we upload the file to the storage API,
@@ -315,6 +320,8 @@ async function createFile(fileName: string, fileContent: any, directoryId?: numb
 }
 
 async function createDirectory(dirName: string, directoryId?: number): Promise<SourceFilesModel.Directory> {
+    if (pxt.crowdin.testMode) return undefined;
+
     const { sourceFilesApi } = getClient();
 
     const dir = await sourceFilesApi.createDirectory(projectId, {
@@ -329,14 +336,85 @@ async function createDirectory(dirName: string, directoryId?: number): Promise<S
     return dir.data;
 }
 
+export async function restoreFileBefore(filename: string, cutoffTime: number) {
+    const revisions = await listFileRevisions(filename);
+
+    let lastRevision: SourceFilesModel.FileRevision;
+    let lastRevisionBeforeCutoff: SourceFilesModel.FileRevision;
+
+    for (const rev of revisions) {
+        const time = new Date(rev.date).getTime();
+
+        if (lastRevision) {
+            if (time > new Date(lastRevision.date).getTime()) {
+                lastRevision = rev;
+            }
+        }
+        else {
+            lastRevision = rev;
+        }
+
+        if (time < cutoffTime) {
+            if (lastRevisionBeforeCutoff) {
+                if (time > new Date(lastRevisionBeforeCutoff.date).getTime()) {
+                    lastRevisionBeforeCutoff = rev;
+                }
+            }
+            else {
+                lastRevisionBeforeCutoff = rev;
+            }
+        }
+    }
+
+    if (lastRevision === lastRevisionBeforeCutoff) {
+        pxt.log(`${filename} already at most recent valid revision before ${formatTime(cutoffTime)}`);
+    }
+    else if (lastRevisionBeforeCutoff) {
+        pxt.log(`Restoring ${filename} to revision ${formatTime(new Date(lastRevisionBeforeCutoff.date).getTime())}`)
+        await restorefile(lastRevisionBeforeCutoff.fileId, lastRevisionBeforeCutoff.id);
+    }
+    else {
+        pxt.log(`No revisions found for ${filename} before ${formatTime(cutoffTime)}`);
+    }
+}
+
+function formatTime(time: number) {
+    const date = new Date(time);
+    return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+}
+
+async function listFileRevisions(filename: string): Promise<SourceFilesModel.FileRevision[]> {
+    const { sourceFilesApi } = getClient();
+
+    const fileId = await getFileIdAsync(filename);
+    const revisions = await sourceFilesApi
+        .withFetchAll()
+        .listFileRevisions(projectId, fileId);
+
+    return revisions.data.map(rev => rev.data);
+}
+
 
 async function updateFile(fileId: number, fileName: string, fileContent: any): Promise<void> {
+    if (pxt.crowdin.testMode) return;
+
     const { uploadStorageApi, sourceFilesApi } = getClient();
 
     const storageResponse = await uploadStorageApi.addStorage(fileName, fileContent);
 
     await sourceFilesApi.updateOrRestoreFile(projectId, fileId, {
         storageId: storageResponse.data.id,
+        updateOption: "keep_translations"
+    });
+}
+
+async function restorefile(fileId: number, revisionId: number) {
+    if (pxt.crowdin.testMode) return;
+
+    const { sourceFilesApi } = getClient();
+
+    await sourceFilesApi.updateOrRestoreFile(projectId, fileId, {
+        revisionId
     });
 }
 
@@ -380,6 +458,7 @@ function crowdinCredentials(): Credentials {
 // calls path.normalize and removes leading slash
 function normalizePath(p: string) {
     p = path.normalize(p);
+    p = p.replace(/\\/g, "/");
     if (/^[\/\\]/.test(p)) p = p.slice(1)
 
     return p;

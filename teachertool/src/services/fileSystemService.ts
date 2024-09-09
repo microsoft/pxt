@@ -1,33 +1,33 @@
 import { logError } from "../services/loggingService";
 import { ErrorCode } from "../types/errorCode";
-import { Rubric } from "../types/rubric";
+import { Checklist } from "../types/checklist";
 
-// Serializes the active rubric and writes it to a file.
+// Serializes the active checklist and writes it to a file.
 // Returns true if the file was written successfully, false otherwise.
-export function writeRubricToFile(rubric: Rubric): boolean {
-    const sanitizedName = rubric.name ? pxt.Util.sanitizeFileName(rubric.name) : "";
-    const fileName = `${sanitizedName ? sanitizedName : lf("unnamed-rubric")}.json`;
+export function writeChecklistToFile(checklist: Checklist): boolean {
+    const sanitizedName = checklist.name ? pxt.Util.sanitizeFileName(checklist.name) : "";
+    const fileName = `${sanitizedName ? sanitizedName : lf("unnamed-checklist")}.json`;
 
     // Write content to the given path on disk.
-    const rubricJson = JSON.stringify(rubric, null, 4);
+    const checklistJson = JSON.stringify(checklist, null, 4);
 
     try {
-        pxt.BrowserUtils.browserDownloadText(rubricJson, fileName);
+        pxt.BrowserUtils.browserDownloadText(checklistJson, fileName);
         return true;
     } catch (error) {
-        logError(ErrorCode.unableToExportRubric, error);
+        logError(ErrorCode.unableToExportChecklist, error);
         return false;
     }
 }
 
-export async function loadRubricFromFileAsync(file: File): Promise<Rubric | undefined> {
-    let rubric: Rubric | undefined = undefined;
+export async function loadChecklistFromFileAsync(file: File): Promise<Checklist | undefined> {
+    let checklist: Checklist | undefined = undefined;
 
     try {
-        const rubricJson = await pxt.Util.fileReadAsTextAsync(file);
-        rubric = JSON.parse(rubricJson) as Rubric;
+        const checklistJson = await pxt.Util.fileReadAsTextAsync(file);
+        checklist = JSON.parse(checklistJson) as Checklist;
     } catch (error) {
-        logError(ErrorCode.unableToReadRubricFile, error);
+        logError(ErrorCode.unableToReadChecklistFile, error);
     }
-    return rubric;
+    return checklist;
 }

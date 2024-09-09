@@ -24,10 +24,11 @@ export function gameOver(skipHighScore?: boolean): void {
 
         if (
             !skipHighScore &&
-            selectedGame?.highScoreMode !== "None" &&
+            selectedGame &&
+            selectedGame.highScoreMode !== "None" &&
             state.mostRecentScores?.length
         ) {
-            exitToEnterHighScore();
+            exitToEnterHighScore(selectedGame.highScoreMode);
         } else {
             exitGame(KioskState.GameOver);
         }

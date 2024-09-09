@@ -3,7 +3,13 @@ import { AppState, initialAppState } from "./state";
 import { Action } from "./actions";
 import reducer from "./reducer";
 import assert from "assert";
-import { getAutorun } from "../services/storageService";
+import { getRunOnLoad } from "../services/storageService";
+
+const DEV_BACKEND_LOCALHOST = "http://localhost:8080";
+
+// Read the URL parameters and set the initial state accordingly
+const url = window.location.href;
+const testCatalog = !!/testcatalog(?:[:=])1/.test(url) || !!/tc(?:[:=])1/.test(url);
 
 let state: AppState;
 let dispatch: React.Dispatch<Action>;
@@ -34,17 +40,13 @@ const initialAppStateContextProps: AppStateContextProps = {
 export const AppStateContext = createContext<AppStateContextProps>(initialAppStateContextProps);
 
 export function AppStateProvider(props: React.PropsWithChildren<{}>): React.ReactElement {
-    // Read the URL parameters and set the initial state accordingly
-    const url = window.location.href;
-    const testCatalog = !!/testcatalog(?:[:=])1/.test(url) || !!/tc(?:[:=])1/.test(url);
-
     // Create the application state and state change mechanism (dispatch)
     const [state_, dispatch_] = useReducer(reducer, {
         ...initialAppState,
-        autorun: getAutorun(),
+        runOnLoad: getRunOnLoad(),
         flags: {
             ...initialAppState.flags,
-            testCatalog,
+            testCatalog: testCatalog,
         },
     });
 

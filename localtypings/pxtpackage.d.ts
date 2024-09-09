@@ -12,8 +12,6 @@ declare namespace pxt {
         targetId?: string;
         targetWebsite?: string;
         pxt?: string;
-        pxtCrowdinBranch?: string;
-        targetCrowdinBranch?: string;
         tag?: string;
         branch?: string;
         commits?: string; // URL
@@ -78,6 +76,7 @@ declare namespace pxt {
             corePackage?: string;
             includeDirs?: string[];
             excludePrefix?: string[];
+            compileServiceVariant?: string;
         };
         features?: string[];
         hidden?: boolean; // hide package from package selection dialog

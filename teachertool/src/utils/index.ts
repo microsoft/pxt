@@ -1,8 +1,9 @@
 import { nanoid } from "nanoid";
-import { CarouselRubricResourceCard, CriteriaTemplateSegment, ToastType, ToastWithId } from "../types";
-import { Rubric } from "../types/rubric";
+import { CarouselChecklistResourceCard, CriteriaTemplateSegment, ToastType, ToastWithId } from "../types";
+import { Checklist } from "../types/checklist";
 import { classList } from "react-common/components/util";
 import { CatalogCriteria } from "../types/criteria";
+import { Strings } from "../constants";
 
 export function makeToast(type: ToastType, text: string, timeoutMs: number = 5000): ToastWithId {
     return {
@@ -30,15 +31,15 @@ export function classes(css: { [name: string]: string }, ...names: string[]) {
     return classList(...names.map(n => css[n]));
 }
 
-export function makeRubric(): Rubric {
+export function makeChecklist(): Checklist {
     return {
-        name: "",
+        name: Strings.NewChecklistTitle,
         criteria: [],
     };
 }
 
-export const isRubricResourceCard = (card: any): card is CarouselRubricResourceCard => {
-    return typeof card === "object" && card.cardType === "rubric-resource";
+export const isChecklistResourceCard = (card: any): card is CarouselChecklistResourceCard => {
+    return typeof card === "object" && card.cardType === "checklist-resource";
 };
 
 export function getProjectLink(inputText: string): string {

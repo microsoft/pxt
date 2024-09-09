@@ -46,11 +46,47 @@ export const Textarea = (props: TextareaProps) => {
 
     const [value, setValue] = React.useState(initialValue || "");
     const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+    const previousWidthRef = React.useRef<number>(0);
+
+    const fitVerticalSizeToContent = () => {
+        if (!textareaRef.current) {
+            return;
+        }
+
+        textareaRef.current.style.height = "1px";
+        textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
 
     React.useEffect(() => {
         setValue(initialValue)
+
+        if (autoResize && textareaRef.current) {
+            fitVerticalSizeToContent();
+        }
     }, [initialValue])
 
+    React.useEffect(() => {
+        if (!autoResize) {
+            return () => {};
+        }
+
+        const observer = new ResizeObserver((entries) => {
+            // If the width has changed, we need to update the vertical height to account for it.
+            const width = entries[0].contentRect.width;
+            if (previousWidthRef.current != width) {
+                requestAnimationFrame(() => fitVerticalSizeToContent());
+                previousWidthRef.current = width;
+            }
+        });
+        
+        if (textareaRef.current) {
+            observer.observe(textareaRef.current);
+        }
+
+        return () => {
+            observer.disconnect();
+        }
+    }, [autoResize]);
 
     const changeHandler = (e: React.ChangeEvent<any>) => {
         const newValue = (e.target as any).value;
@@ -61,8 +97,7 @@ export const Textarea = (props: TextareaProps) => {
             onChange(newValue);
         }
         if (autoResize && textareaRef.current) {
-            textareaRef.current.style.height = "1px";
-            textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+            fitVerticalSizeToContent();
         }
     }
 

@@ -1,11 +1,10 @@
+import css from "./styling/CriteriaInstanceDisplay.module.scss";
 import { getCatalogCriteriaWithId } from "../state/helpers";
 import { CriteriaInstance, CriteriaParameterValue } from "../types/criteria";
 import { logDebug } from "../services/loggingService";
 import { setParameterValue } from "../transforms/setParameterValue";
 import { classList } from "react-common/components/util";
 import { getReadableBlockString, splitCriteriaTemplate } from "../utils";
-// eslint-disable-next-line import/no-internal-modules
-import css from "./styling/CriteriaInstanceDisplay.module.scss";
 import { useContext, useMemo, useState } from "react";
 import { Input } from "react-common/components/controls/Input";
 import { Button } from "react-common/components/controls/Button";
@@ -158,7 +157,10 @@ export const CriteriaInstanceDisplay: React.FC<CriteriaInstanceDisplayProps> = (
                     </span>
                 ))}
             </div>
-            <div className={css["criteria-description"]}>{catalogCriteria.description}</div>
+            <div className={classList(css["criteria-description"], "no-print")}>{catalogCriteria.description}</div>
+            <div className={classList(css["criteria-description"], css["for-print"], "only-print")}>
+                {catalogCriteria.description}
+            </div>
         </div>
     ) : null;
 };

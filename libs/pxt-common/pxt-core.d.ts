@@ -155,7 +155,7 @@ interface Array<T> {
     //% shim=Array_::removeElement weight=48
     removeElement(element: T): boolean;
 
-    /** Remove the element at a certain index. */
+    /** Remove and return the element at a certain index. */
     //% help=arrays/remove-at
     //% shim=Array_::removeAt weight=47
     //% blockId="array_removeat" block="%list| get and remove value at %index" blockNamespace="arrays"
@@ -245,7 +245,7 @@ interface Array<T> {
     _shiftStatement(): void;
 
     /** Remove the element at a certain index. */
-    //% help=arrays/remove-at
+    //% help=arrays/remove-at-statement
     //% shim=Array_::removeAt weight=14
     //% blockId="array_removeat_statement" block="%list| remove value at %index" blockNamespace="arrays"
     //% blockAliasFor="Array.removeAt"
@@ -284,7 +284,10 @@ declare interface String {
      * Return the Unicode value of the character at the specified location.
      * @param index The zero-based index of the desired character. If there is no character at the specified index, NaN is returned.
      */
-    //% shim=String_::charCodeAt
+    //% shim=String_::charCodeAt weight=46
+    //% help=text/char-code-at
+    //% blockId="string_charcode_at" block="char code from $this=text|at $index" blockNamespace="text"
+    //% this.defl="this"
     charCodeAt(index: number): number;
 
     /**

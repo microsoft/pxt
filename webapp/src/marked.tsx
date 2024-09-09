@@ -400,10 +400,12 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                         : `docs inlineblock ${displayNs}`;
 
                     const inlineBlockDiv = document.createElement('span');
+                    const inlineBlockIcon = document.createElement('i');
                     pxsim.U.clear(inlineBlock);
                     inlineBlock.appendChild(inlineBlockDiv);
                     inlineBlockDiv.className = lev;
-                    inlineBlockDiv.textContent = pxt.U.rlf(txt);
+                    inlineBlockDiv.append(inlineBlockIcon);
+                    inlineBlockDiv.append(pxt.U.rlf(txt));
                     inlineBlockDiv.setAttribute("data-ns", behaviorNs);
                     if (displayNs !== behaviorNs) {
                         inlineBlockDiv.setAttribute("data-norecolor", "true")
@@ -446,10 +448,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                     inlineBlock.tabIndex = 0;
                     inlineBlock.ariaLabel = lf("Toggle the {0} category", ns);
                     inlineBlock.title = inlineBlock.ariaLabel;
-                    if (color && !inlineBlock.getAttribute("data-norecolor")) {
-                        inlineBlock.style.backgroundColor = color;
-                        inlineBlock.style.borderColor = pxt.toolbox.fadeColor(color, 0.1, false);
-                    }
+                    inlineBlock.children[0].append(bi?.attributes?.icon || pxt.toolbox.getNamespaceIcon(ns) || "");
                     inlineBlock.addEventListener("click", e => {
                         // need to filter out editors that are currently hidden as we leave toolboxes in dom
                         const editorSelector = `#maineditor > div:not([style*="display:none"]):not([style*="display: none"])`;

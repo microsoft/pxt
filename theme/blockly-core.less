@@ -59,6 +59,7 @@ svg.blocklySvg {
 body.blocklyMinimalBody {
     min-width: initial;
     overflow: initial;
+    position: unset;
 }
 
 @supports (-ms-accelerator:true) {
@@ -324,13 +325,13 @@ text.blocklyCheckbox {
         Comments
 *******************************/
 
-.blocklyCommentForeignObject {
-    overflow: hidden;
+.blocklyDeleteIcon {
+    display: block;
 }
 
-.blocklyMinimalBody {
-    position: static; // override default 'position: fixed' for comment <body> element
-    border: 1px solid #FAF6BD; // match comment color
+.blocklyComment .blocklyTextarea {
+    border: none;
+    color: #575E75;
 }
 
 /*******************************

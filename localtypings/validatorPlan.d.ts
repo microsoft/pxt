@@ -40,8 +40,17 @@ declare namespace pxt.blocks {
         count: number;
     }
 
+    export interface VariableUsageValidatorCheck extends ValidatorCheckBase {
+        validator: "variableUsage";
+        count: number;
+        name?: string;
+    }
+
     export interface EvaluationResult {
-        result: boolean;
+        result?: boolean;
+        notes?: string;
+        executionSuccess: boolean;
+        executionErrorMsg?: string;
     }
 
     export interface BlockFieldValueExistsCheck extends ValidatorCheckBase {
@@ -49,5 +58,11 @@ declare namespace pxt.blocks {
         fieldType: string;
         fieldValue: string;
         blockType: string;
+    }
+
+    export interface AiQuestionValidatorCheck extends ValidatorCheckBase {
+        validator: "aiQuestion";
+        question: string;
+        shareId: string;
     }
 }

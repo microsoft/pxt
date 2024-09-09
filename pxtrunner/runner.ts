@@ -253,8 +253,6 @@ function initInnerAsync() {
             targetId: pxt.appTarget.id,
             baseUrl: cfg.commitCdnUrl,
             code: lang,
-            pxtBranch: versions ? versions.pxtCrowdinBranch : "",
-            targetBranch: versions ? versions.targetCrowdinBranch : "",
             force: force,
         })
         .then(() => initHost())
@@ -605,9 +603,7 @@ export function setEditorContextAsync(mode: LanguageMode, localeInfo: string) {
         return pxt.Util.updateLocalizationAsync({
             targetId: pxt.appTarget.id,
             baseUrl: pxt.webConfig.commitCdnUrl,
-            code: localeInfo.replace(localeLiveRx, ''),
-            pxtBranch: pxt.appTarget.versions.pxtCrowdinBranch,
-            targetBranch: pxt.appTarget.versions.targetCrowdinBranch,
+            code: localeInfo.replace(localeLiveRx, '')
         });
     }
 

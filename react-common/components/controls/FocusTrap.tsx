@@ -1,5 +1,5 @@
 import * as React from "react";
-import { classList, nodeListToArray } from "../util";
+import { classList, nodeListToArray, findNextFocusableElement, focusLastActive } from "../util";
 
 export interface FocusTrapProps extends React.PropsWithChildren<{}> {
     onEscape: () => void;
@@ -8,6 +8,7 @@ export interface FocusTrapProps extends React.PropsWithChildren<{}> {
     arrowKeyNavigation?: boolean;
     dontStealFocus?: boolean;
     includeOutsideTabOrder?: boolean;
+    dontRestoreFocus?: boolean;
 }
 
 export const FocusTrap = (props: FocusTrapProps) => {
@@ -18,12 +19,21 @@ export const FocusTrap = (props: FocusTrapProps) => {
         onEscape,
         arrowKeyNavigation,
         dontStealFocus,
-        includeOutsideTabOrder
+        includeOutsideTabOrder,
+        dontRestoreFocus
     } = props;
 
     let container: HTMLDivElement;
-
+    const previouslyFocused = React.useRef<Element>(document.activeElement);
     const [stoleFocus, setStoleFocus] = React.useState(false);
+
+    React.useEffect(() => {
+        return () => {
+            if (!dontRestoreFocus && previouslyFocused.current) {
+                focusLastActive(previouslyFocused.current as HTMLElement)
+            }
+        }
+    }, [])
 
     const getElements = () => {
         const all = nodeListToArray(
@@ -58,24 +68,24 @@ export const FocusTrap = (props: FocusTrapProps) => {
 
             if (forward) {
                 if (goToEnd) {
-                    focusable[focusable.length - 1].focus();
+                    findNextFocusableElement(focusable, index, focusable.length - 1, forward).focus();
                 }
                 else if (index === focusable.length - 1) {
-                    focusable[0].focus();
+                    findNextFocusableElement(focusable, index, 0, forward).focus();
                 }
                 else {
-                    focusable[index + 1].focus();
+                    findNextFocusableElement(focusable, index, index + 1, forward).focus();
                 }
             }
             else {
                 if (goToEnd) {
-                    focusable[0].focus();
+                    findNextFocusableElement(focusable, index, 0, forward).focus();
                 }
                 else if (index === 0) {
-                    focusable[focusable.length - 1].focus();
+                    findNextFocusableElement(focusable, index, focusable.length - 1, forward).focus();
                 }
                 else {
-                    focusable[Math.max(index - 1, 0)].focus();
+                    findNextFocusableElement(focusable, index, Math.max(index - 1, 0), forward).focus();
                 }
             }
 

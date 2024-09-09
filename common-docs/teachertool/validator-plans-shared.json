@@ -87,38 +87,6 @@
             ]
         },
         {
-            ".desc": "A variable's value is set",
-            "name": "variable_set",
-            "threshold": 1,
-            "checks": [
-                {
-                    "validator": "blocksExist",
-                    "blockCounts": [
-                        {
-                            "blockId": "variables_set",
-                            "count": 1
-                        }
-                    ]
-                }
-            ]
-        },
-        {
-            ".desc": "A variable's value is used",
-            "name": "variable_accessed",
-            "threshold": 1,
-            "checks": [
-                {
-                    "validator": "blocksExist",
-                    "blockCounts": [
-                        {
-                            "blockId": "variables_get",
-                            "count": 1
-                        }
-                    ]
-                }
-            ]
-        },
-        {
             ".desc": "A parameter's value is used",
             "name": "parameter_variable_accessed",
             "threshold": 1,
@@ -271,6 +239,59 @@
                             "count": 1
                         }
                     ]
+                }
+            ]
+        },
+        {
+            ".desc": "Block used n times (to be filled in by the user)",
+            "name": "block_used_n_times",
+            "threshold": 1,
+            "checks": [
+                {
+                    "validator": "blocksExist",
+                    "blockCounts": [
+                        {
+                            "blockId": "",
+                            "count": 0
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            ".desc": "Loops used n times (to be filled in by the user)",
+            "name": "n_loops",
+            "threshold": 1,
+            "checks": [
+                {
+                    "validator": "blocksInSetExist",
+                    "blocks": ["controls_repeat_ext", "device_while", "pxt_controls_for", "pxt_controls_for_of"],
+                    "count": 0
+                }
+            ]
+        },
+        {
+            ".desc": "Variable creation & usage validation, with optional name filtering",
+            "name": "variable_usage",
+            "threshold": 1,
+            "checks": [
+                {
+                    "validator": "variableUsage",
+                    "count": 0,
+                    "name": ""
+                }
+            ]
+        },
+        {
+            ".desc": "The zero number block is present.",
+            "name": "number_zero",
+            "threshold": 1,
+            "checks": [
+                {
+                    "validator": "blockFieldValueExists",
+                    "fieldType": "NUM",
+                    "fieldValue": 0,
+                    "blockType": "math_number"
                 }
             ]
         }

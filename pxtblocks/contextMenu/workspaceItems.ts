@@ -1,6 +1,7 @@
 /// <reference path="../../built/pxtlib.d.ts" />
 import * as Blockly from "blockly";
 import { flow, screenshotAsync, screenshotEnabled, setCollapsedAll } from "../layout";
+import { openWorkspaceSearch } from "../external";
 
 // Lower weight is higher in context menu
 enum WorkspaceContextWeight {
@@ -8,7 +9,8 @@ enum WorkspaceContextWeight {
     FormatCode = 30,
     CollapseBlocks = 40,
     ExpandBlocks = 50,
-    Snapshot = 60
+    Snapshot = 60,
+    Find = 70
 }
 
 export function registerWorkspaceItems() {
@@ -17,6 +19,7 @@ export function registerWorkspaceItems() {
     registerCollapseBlocks();
     registerExpandBlocks();
     registerDeleteAllBlocks();
+    registerFind();
 
     // Unregister the builtin options that we don't use
     Blockly.ContextMenuRegistry.registry.unregister("workspaceDelete");
@@ -80,6 +83,13 @@ function registerSnapshotCode() {
             pxt.tickEvent("blocks.context.screenshot", undefined, { interactiveConsent: true });
             (async () => {
                 let uri = await screenshotAsync(scope.workspace, null, pxt.appTarget.appTheme?.embedBlocksInSnapshot);
+
+                if (pxt.BrowserUtils.isSafari()) {
+                    // For some reason, Safari doesn't always load embedded images the first time. This is a silly fix,
+                    // but snapshotting a second time fixes the issue.
+                    uri = await screenshotAsync(scope.workspace, null, pxt.appTarget.appTheme?.embedBlocksInSnapshot);
+                }
+
                 if (pxt.BrowserUtils.isSafari()) {
                     uri = uri.replace(/^data:image\/[^;]/, 'data:application/octet-stream');
                 }
@@ -219,19 +229,20 @@ function registerDeleteAllBlocks() {
 
             // Add a little animation to deleting.
             const DELAY = 10;
+            let eventGroup = Blockly.utils.idGenerator.genUid();
             const deleteNext = () => {
-                let eventGroup = Blockly.utils.idGenerator.genUid();
-                Blockly.Events.setGroup(eventGroup);
                 let block = deleteList.shift();
                 if (block) {
-                    if (block.workspace) {
+                    if (!block.isDeadOrDying()) {
+                        Blockly.Events.setGroup(eventGroup);
                         block.dispose(false, true);
+                        Blockly.Events.setGroup(false);
+
                         setTimeout(deleteNext, DELAY);
                     } else {
                         deleteNext();
                     }
                 }
-                Blockly.Events.setGroup(false);
             }
 
             pxt.tickEvent("blocks.context.delete", undefined, { interactiveConsent: true });
@@ -250,4 +261,32 @@ function registerDeleteAllBlocks() {
         weight: WorkspaceContextWeight.DeleteAll,
     };
     Blockly.ContextMenuRegistry.registry.register(deleteAllOption);
+}
+
+function registerFind() {
+    const findOption: Blockly.ContextMenuRegistry.RegistryItem = {
+        displayText() {
+            return pxt.U.lf("Find…")
+        },
+        preconditionFn(scope: Blockly.ContextMenuRegistry.Scope) {
+            const ws = scope.workspace;
+
+            if (ws.options.readOnly || !pxt.appTarget.appTheme.workspaceSearch) {
+                return 'hidden';
+            }
+
+            return 'enabled';
+        },
+        callback(scope: Blockly.ContextMenuRegistry.Scope) {
+            if (!scope.workspace) return;
+
+            pxt.tickEvent("blocks.context.find", undefined, { interactiveConsent: true });
+            openWorkspaceSearch();
+
+        },
+        scopeType: Blockly.ContextMenuRegistry.ScopeType.WORKSPACE,
+        id: 'pxtWorkspaceFind',
+        weight: WorkspaceContextWeight.Find,
+    };
+    Blockly.ContextMenuRegistry.registry.register(findOption);
 }

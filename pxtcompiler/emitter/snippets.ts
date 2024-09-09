@@ -104,12 +104,14 @@ namespace ts.pxtc.service {
         takenNames: pxt.Map<SymbolInfo>;
         checker: ts.TypeChecker;
         screenSize?: pxt.Size;
+        parameterOverride?: { [key: string]: SnippetNode };
+        includeParentSnippet?: boolean;
     }
 
     export function getSnippet(context: SnippetContext, fn: SymbolInfo, decl: ts.FunctionLikeDeclaration, python?: boolean, recursionDepth = 0): SnippetNode {
         // TODO: a lot of this is duplicate logic with blocklyloader.ts:buildBlockFromDef; we should
         //  unify these approaches
-        let { apis, takenNames, blocksInfo, screenSize, checker } = context;
+        let { apis, takenNames, blocksInfo, screenSize, checker, parameterOverride, includeParentSnippet } = context;
 
         const PY_INDENT: string = (pxt as any).py.INDENT;
         const fileType = python ? "python" : "typescript";
@@ -118,6 +120,16 @@ namespace ts.pxtc.service {
         let addNamespace = false;
         let namespaceToUse = "";
         let functionCount = 0;
+        let parentSnippet: SnippetNode;
+        let overrideParamLabel: string;
+        let overrideSnippet: SnippetNode;
+        if (parameterOverride) {
+            overrideParamLabel = Object.keys(parameterOverride)?.[0];
+            if (overrideParamLabel) {
+                overrideSnippet = parameterOverride[overrideParamLabel];
+            }
+        }
+
 
         let preStmt: SnippetNode[] = [];
 
@@ -280,6 +292,21 @@ namespace ts.pxtc.service {
             }
         }
 
+        if (includeParentSnippet && element.attributes.toolboxParent && recursionDepth === 0) {
+            overrideSnippet = [preStmt, insertText];
+            overrideParamLabel = element.attributes.toolboxParentArgument;
+            parameterOverride = {[overrideParamLabel]: overrideSnippet}
+            const parentFn = blocksById[fn.attributes.toolboxParent];
+            parentSnippet = getSnippet(
+                {...context, parameterOverride},
+                parentFn,
+                lastApiInfo.decls[parentFn.qName] as ts.FunctionLikeDeclaration,
+                python,
+                recursionDepth + 1,
+            );
+            return parentSnippet;
+        }
+
         return [preStmt, insertText]
 
         function getUniqueName(inName: string): string {
@@ -292,6 +319,10 @@ namespace ts.pxtc.service {
             const typeNode = param.type;
             if (!typeNode)
                 return python ? "None" : "null"
+
+            if (overrideSnippet && param.symbol.escapedName === overrideParamLabel) {
+                return snippetStringify(overrideSnippet);
+            }
 
             const name = param.name.kind === SK.Identifier ? (param.name as ts.Identifier).text : undefined;
 

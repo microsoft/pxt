@@ -713,54 +713,48 @@ function decompileApiAsync(options: ClientRenderOptions): Promise<DecompileResul
     return decompileApiPromise;
 }
 
-function renderNamespaces(options: ClientRenderOptions): Promise<void> {
-    if (pxt.appTarget.id == "core") return Promise.resolve();
+async function renderNamespaces(options: ClientRenderOptions): Promise<void> {
+    if (pxt.appTarget.id == "core") return;
 
-    return decompileApiAsync(options)
-        .then((r) => {
-            let res: pxt.Map<string> = {};
-            const info = r.compileBlocks.blocksInfo;
-            info.blocks.forEach(fn => {
-                const ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
-                if (!res[ns]) {
-                    const nsn = info.apis.byQName[ns];
-                    if (nsn && nsn.attributes.color)
-                        res[ns] = nsn.attributes.color;
+    const decompileResult = await decompileApiAsync(options);
+    const info = decompileResult.compileBlocks.blocksInfo;
+
+    let namespaceToColor: pxt.Map<string> = {};
+    for (const fn of info.blocks) {
+        const ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
+        if (!namespaceToColor[ns]) {
+            const nsn = info.apis.byQName[ns];
+            if (nsn && nsn.attributes.color)
+                namespaceToColor[ns] = nsn.attributes.color;
+        }
+    }
+
+    let nsStyleBuffer = '';
+    for (const ns of Object.keys(namespaceToColor)) {
+        const color = namespaceToColor[ns];
+        nsStyleBuffer += `
+                span.docs.${ns.toLowerCase()} {
+                    --inline-namespace-color: ${color};
                 }
-            });
-            let nsStyleBuffer = '';
-            Object.keys(res).forEach(ns => {
-                const color = res[ns] || '#dddddd';
-                nsStyleBuffer += `
-                        span.docs.${ns.toLowerCase()} {
-                            background-color: ${color} !important;
-                            border-color: ${pxt.toolbox.fadeColor(color, 0.1, false)} !important;
-                        }
-                    `;
-            })
-            return nsStyleBuffer;
-        })
-        .then((nsStyleBuffer) => {
-            Object.keys(pxt.toolbox.blockColors).forEach((ns) => {
-                const color = pxt.toolbox.getNamespaceColor(ns);
-                nsStyleBuffer += `
-                        span.docs.${ns.toLowerCase()} {
-                            background-color: ${color} !important;
-                            border-color: ${pxt.toolbox.fadeColor(color, 0.1, false)} !important;
-                        }
-                    `;
-            })
-            return nsStyleBuffer;
-        })
-        .then((nsStyleBuffer) => {
-            // Inject css
-            let nsStyle = document.createElement('style');
-            nsStyle.id = "namespaceColors";
-            nsStyle.type = 'text/css';
-            let head = document.head || document.getElementsByTagName('head')[0];
-            head.appendChild(nsStyle);
-            nsStyle.appendChild(document.createTextNode(nsStyleBuffer));
-        });
+            `;
+    }
+
+    for (const ns of Object.keys(pxt.toolbox.blockColors)) {
+        const color = pxt.toolbox.getNamespaceColor(ns);
+        nsStyleBuffer += `
+                span.docs.${ns.toLowerCase()} {
+                    --inline-namespace-color: ${color};
+                }
+            `;
+    }
+
+    // Inject css
+    let nsStyle = document.createElement('style');
+    nsStyle.id = "namespaceColors";
+    nsStyle.type = 'text/css';
+    let head = document.head || document.getElementsByTagName('head')[0];
+    head.appendChild(nsStyle);
+    nsStyle.appendChild(document.createTextNode(nsStyleBuffer));
 }
 
 function renderInlineBlocksAsync(options: BlocksRenderOptions): Promise<void> {
@@ -778,7 +772,8 @@ function renderInlineBlocksAsync(options: BlocksRenderOptions): Promise<void> {
         if (mbtn) {
             const mtxt = /^(([^\:\.]*?)[\:\.])?(.*)$/.exec(mbtn[2]);
             const ns = mtxt[2] ? mtxt[2].trim().toLowerCase() : '';
-            const lev = mbtn[1].length == 1 ? `docs inlinebutton ${ns}` : `docs inlineblock ${ns}`;
+            const fixedNs = ns.replace(/\(.*?\)/g, '');
+            const lev = mbtn[1].length == 1 ? `docs inlinebutton ${fixedNs}` : `docs inlineblock ${fixedNs}`;
             const txt = mtxt[3].trim();
             $el.replaceWith($(`<span class="${lev}"/>`).text(pxt.U.rlf(txt)));
             return renderNextAsync();
@@ -875,8 +870,9 @@ function renderApisAsync(options: ClientRenderOptions, replaceParent: boolean): 
                     return l.name.localeCompare(r.name);
                 })
 
-                const ul = $('<div />').addClass('ui divided items');
-                ul.attr("role", "listbox");
+                const ul = document.createElement("div");
+                ul.className = "ui divided items";
+                ul.setAttribute("role", "list");
                 csymbols.forEach(symbol => addSymbolCardItem(ul, symbol, "item"));
                 if (replaceParent) c = c.parent();
                 c.replaceWith(ul)
@@ -884,16 +880,20 @@ function renderApisAsync(options: ClientRenderOptions, replaceParent: boolean): 
         });
 }
 
-function addCardItem(ul: JQuery, card: pxt.CodeCard) {
+function addCardItem(ul: Element, card: pxt.CodeCard) {
     if (!card) return;
     const mC = /^\/(v\d+)/.exec(card.url);
     const mP = /^\/(v\d+)/.exec(window.location.pathname);
     const inEditor = /#doc/i.test(window.location.href);
     if (card.url && !mC && mP && !inEditor) card.url = `/${mP[1]}/${card.url}`;
-    ul.append(renderCodeCard(card, { hideHeader: true, shortName: true }));
+
+    const listItem = document.createElement("div");
+    listItem.setAttribute("role", "listitem");
+    listItem.append(renderCodeCard(card, { hideHeader: true, shortName: true }));
+    ul.append(listItem);
 }
 
-function addSymbolCardItem(ul: JQuery, symbol: pxtc.SymbolInfo, cardStyle?: string) {
+function addSymbolCardItem(ul: Element, symbol: pxtc.SymbolInfo, cardStyle?: string) {
     const attributes = symbol.attributes;
     const block = !attributes.blockHidden && Blockly.Blocks[attributes.blockId];
     const card = block?.codeCard;
@@ -920,8 +920,9 @@ function renderLinksAsync(options: ClientRenderOptions, cls: string, replacePare
         if (!cjs) return;
         const file = cjs.getSourceFile(pxt.MAIN_TS);
         const stmts = file.statements.slice(0);
-        const ul = $('<div />').addClass('ui cards');
-        ul.attr("role", "listbox");
+        const ul = document.createElement("div");
+        ul.setAttribute("role", "list");
+        ul.className = "card-list";
         stmts.forEach(stmt => {
             const kind = stmt.kind;
             const info = decompileCallInfo(stmt);
@@ -1057,8 +1058,8 @@ function fillCodeCardAsync(c: JQuery, cards: pxt.CodeCard[], options: CodeCardRe
         c.replaceWith(cc);
     } else {
         let cd = document.createElement("div")
-        cd.className = "ui cards";
-        cd.setAttribute("role", "listbox")
+        cd.className = "card-list";
+        cd.setAttribute("role", "list")
         cards.forEach(card => {
             // patch card url with version if necessary, we don't do this in the editor because that goes through the backend and passes the targetVersion then
             const mC = /^\/(v\d+)/.exec(card.url);
@@ -1066,8 +1067,12 @@ function fillCodeCardAsync(c: JQuery, cards: pxt.CodeCard[], options: CodeCardRe
             const inEditor = /#doc/i.test(window.location.href);
             if (card.url && !mC && mP && !inEditor) card.url = `/${mP[1]}${card.url}`;
             const cardEl = renderCodeCard(card, options);
-            cd.appendChild(cardEl)
-            // automitcally display package icon for approved packages
+
+            const outer = document.createElement("div");
+            outer.setAttribute("role", "listitem");
+            outer.appendChild(cardEl);
+            cd.appendChild(outer)
+            // automatically display package icon for approved packages
             if (card.cardType == "package") {
                 const repoId = pxt.github.parseRepoId((card.url || "").replace(/^\/pkg\//, ''));
                 if (repoId) {
@@ -1081,13 +1086,13 @@ function fillCodeCardAsync(c: JQuery, cards: pxt.CodeCard[], options: CodeCardRe
                                     // update card info
                                     card.imageUrl = pxt.github.mkRepoIconUrl(repoId);
                                     // inject
-                                    cd.insertBefore(renderCodeCard(card, options), cardEl);
+                                    outer.insertBefore(renderCodeCard(card, options), cardEl);
                                     cardEl.remove();
                                     break;
                             }
                         })
                         .catch(e => {
-                            // swallow
+                            // ignore
                             pxt.reportException(e);
                             pxt.debug(`failed to load repo ${card.url}`)
                         })
@@ -1254,24 +1259,37 @@ function renderTypeScript(options?: ClientRenderOptions) {
     });
 }
 
-function renderGhost(options: ClientRenderOptions) {
-    let c = $('code.lang-ghost');
+function removeSnippet(c: JQuery<HTMLElement>, options: ClientRenderOptions) {
     if (options.snippetReplaceParent)
         c = c.parent();
     c.remove();
 }
 
+function removeScopedConfig(type: string, scope: "local" | "global", options: ClientRenderOptions) {
+    $(`code.lang-${type}\\.${scope}`).each((i, c) => {
+        let $c = $(c);
+        removeSnippet($c, options);
+    });
+}
+
+function renderGhost(options: ClientRenderOptions) {
+    let c = $('code.lang-ghost');
+    removeSnippet(c, options);
+}
+
+function renderTemplate(options: ClientRenderOptions) {
+    let c = $('code.lang-template');
+    removeSnippet(c, options);
+}
+
 function renderBlockConfig(options: ClientRenderOptions) {
-    function render(scope: "local" | "global") {
-        $(`code.lang-blockconfig.${scope}`).each((i, c) => {
-            let $c = $(c);
-            if (options.snippetReplaceParent)
-                $c = $c.parent();
-            $c.remove();
-        });
-    }
-    render("local");
-    render("global");
+    removeScopedConfig("blockconfig", "local", options);
+    removeScopedConfig("blockconfig", "global", options);
+}
+
+function renderValidation(options: ClientRenderOptions) {
+    removeScopedConfig("validation", "local", options);
+    removeScopedConfig("validation", "global", options);
 }
 
 function renderSims(options: ClientRenderOptions) {
@@ -1281,11 +1299,23 @@ function renderSims(options: ClientRenderOptions) {
         let $c = $(c);
         let padding = '81.97%';
         if (pxt.appTarget.simulator) padding = (100 / pxt.appTarget.simulator.aspectRatio) + '%';
-        let $sim = $(`<div class="ui card"><div class="ui content">
+        const simTitle = lf("MakeCode {0} Simulator", pxt.appTarget.appTheme?.boardName || pxt.appTarget.name);
+
+        let $sim = $(`
+            <div class="ui card">
+                <div class="ui content">
                     <div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;">
-                    <iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" allowfullscreen="allowfullscreen" frameborder="0" sandbox="allow-popups allow-forms allow-scripts allow-same-origin"></iframe>
+                        <iframe
+                            style="position:absolute;top:0;left:0;width:100%;height:100%;"
+                            allowfullscreen="allowfullscreen"
+                            frameborder="0"
+                            sandbox="allow-popups allow-forms allow-scripts allow-same-origin"
+                            title="${pxt.U.htmlEscape(simTitle)}"
+                        ></iframe>
                     </div>
-                    </div></div>`)
+                </div>
+            </div>
+        `);
         const deps = options.package ? "&deps=" + encodeURIComponent(options.package) : "";
 
         const url = getRunUrl(options) + "#nofooter=1" + deps;
@@ -1313,6 +1343,8 @@ export function renderAsync(options?: ClientRenderOptions): Promise<void> {
     renderQueue = [];
     renderGhost(options);
     renderBlockConfig(options);
+    renderTemplate(options);
+    renderValidation(options);
     renderSims(options);
     renderTypeScript(options);
     renderDirectPython(options);

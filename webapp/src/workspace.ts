@@ -20,6 +20,7 @@ import U = pxt.Util;
 import Cloud = pxt.Cloud;
 
 import * as pxtblockly from "../../pxtblocks";
+import { getTextAtTime, HistoryFile } from "../../pxteditor/history";
 
 
 // Avoid importing entire crypto-js
@@ -735,8 +736,8 @@ function patchText(patch: unknown, a: string) {
     return differ.patch_apply(patch as any, a)[0]
 }
 
-export function applyDiff(text: ScriptText, history: pxteditor.history.HistoryEntry) {
-    return pxteditor.history.applyDiff(text, history, patchText);
+export function restoreTextToTime(text: ScriptText, history: HistoryFile, timestamp: number) {
+    return getTextAtTime(text, history, timestamp, patchText);
 }
 
 export function importAsync(h: Header, text: ScriptText, isCloud = false) {
@@ -761,6 +762,21 @@ export function installAsync(h0: InstallHeader, text: ScriptText, dontOverwriteI
     return pxt.github.cacheProjectDependenciesAsync(cfg)
         .then(() => importAsync(h, text))
         .then(() => h);
+}
+
+export async function renameAsync(h: Header, newName: string): Promise<Header> {
+    const text = await getTextAsync(h.id);
+
+    let newHdr = U.flatClone(h)
+
+    const dupText = U.flatClone(text);
+    newHdr.name = newName;
+    const cfg = JSON.parse(text[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+    cfg.name = newHdr.name;
+    dupText[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
+
+    await importAsync(newHdr, dupText);
+    return newHdr;
 }
 
 export async function duplicateAsync(h: Header, newName?: string, newText?: ScriptText): Promise<Header> {

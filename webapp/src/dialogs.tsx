@@ -870,6 +870,14 @@ export async function showTurnBackTimeDialogAsync(header: pxt.workspace.Header, 
     if (text?.[pxt.HISTORY_FILE]) {
         history = pxteditor.history.parseHistoryFile(text[pxt.HISTORY_FILE]);
     }
+    else {
+        history = {
+            entries: [],
+            snapshots: [],
+            shares: [],
+            lastSaveTime: Date.now()
+        };
+    }
 
     const loadProject = async (text: pxt.workspace.ScriptText, editorVersion: string) => {
         core.hideDialog();
@@ -890,14 +898,14 @@ export async function showTurnBackTimeDialogAsync(header: pxt.workspace.Header, 
             newHistory = {
                 entries:  history.entries.slice(0, history.entries.findIndex(e => e.timestamp === timestamp)),
                 snapshots: history.snapshots.filter(s => s.timestamp <= timestamp),
-                shares: history.shares.filter(s => s.timestamp <= timestamp)
+                shares: history.shares.filter(s => s.timestamp <= timestamp),
+                lastSaveTime: timestamp
             }
         }
 
-        if (text[pxt.HISTORY_FILE]) {
-            text[pxt.HISTORY_FILE] = JSON.stringify(newHistory);
-        }
-        const date = new Date(timestamp);
+        text[pxt.HISTORY_FILE] = JSON.stringify(newHistory);
+
+        const date = timestamp ? new Date(timestamp) : new Date();
 
         const dateString = date.toLocaleDateString(
             pxt.U.userLanguage(),

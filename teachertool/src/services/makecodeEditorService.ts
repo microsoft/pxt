@@ -2,14 +2,15 @@
 
 import { ErrorCode } from "../types/errorCode";
 import { logDebug, logError } from "./loggingService";
-import * as AutorunService from "./autorunService";
 import { EditorDriver } from "pxtservices/editorDriver";
 import { loadToolboxCategoriesAsync } from "../transforms/loadToolboxCategoriesAsync";
+import { stateAndDispatch } from "../state";
+import { runEvaluateAsync } from "../transforms/runEvaluateAsync";
 
 let driver: EditorDriver | undefined;
 let highContrast: boolean = false;
 
-export function setEditorRef(ref: HTMLIFrameElement | undefined) {
+export function setEditorRef(ref: HTMLIFrameElement | undefined, forceReload: () => void) {
     if (driver) {
         if (driver.iframe === ref) return;
 
@@ -21,13 +22,22 @@ export function setEditorRef(ref: HTMLIFrameElement | undefined) {
         driver = new EditorDriver(ref);
 
         driver.addEventListener("message", ev => {
-            logDebug(`Message received from iframe: ${JSON.stringify(ev)}`);
+            logDebug(`Message received from iframe. ID: ${ev?.id}`, ev);
         });
         driver.addEventListener("sent", ev => {
-            logDebug(`Sent message to iframe: ${JSON.stringify(ev)}`);
+            logDebug(`Sent message to iframe. ID: ${ev?.id}`, ev);
+        });
+        driver.addEventListener("serviceworkerregistered", ev => {
+            logDebug(`Service worker registered. Reloading iframe.`);
+            forceReload();
         });
         driver.addEventListener("editorcontentloaded", ev => {
-            AutorunService.poke();
+            const { state } = stateAndDispatch();
+            const { runOnLoad, projectMetadata } = state;
+
+            if (runOnLoad && !!projectMetadata) {
+                runEvaluateAsync(true); // cause a switch to checklist tab on run
+            }
 
             // Reload all blocks in the background, no need to await.
             /* await */ loadToolboxCategoriesAsync();

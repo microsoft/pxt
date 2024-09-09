@@ -14,6 +14,7 @@ import { TutorialContainer } from "./components/tutorial/TutorialContainer";
 import { VerticalResizeContainer } from '../../react-common/components/controls/VerticalResizeContainer'
 
 import ISettingsProps = pxt.editor.ISettingsProps;
+import { classList } from "../../react-common/components/util";
 
 interface SidepanelState {
     resized?: boolean;
@@ -153,14 +154,25 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         const hideSimulator = pxt.appTarget.simulator?.hideSim;
         const showOpenInVscodeButton = parent.isJavaScriptActive() && pxt.appTarget?.appTheme?.showOpenInVscode;
 
-        const simContainerClassName = `simulator-container ${this.props.tutorialSimSidebar ? "" : " hidden"}`;
-        const outerTutorialContainerClassName = `editor-sidebar tutorial-container-outer${this.props.tutorialSimSidebar ? " topInstructions" : ""}`
+        const simContainerClassName = classList(
+            "simulator-container",
+            !this.props.tutorialSimSidebar && "hidden"
+        );
+        const outerTutorialContainerClassName = classList(
+            "editor-sidebar",
+            "tutorial-container-outer",
+            this.props.tutorialSimSidebar && "topInstructions"
+        );
+        const editorSidebarClassName = classList(
+            "editor-sidebar",
+            this.props.tutorialSimSidebar && "tutorial-sim"
+        );
         const shouldResize = pxt.BrowserUtils.isTabletSize() || this.props.tutorialSimSidebar;
         const editorSidebarHeight = shouldResize ? `${this.state.height}px` : undefined;
 
         return <div id="simulator" className="simulator">
             {!hasSimulator && <div id="boardview" className="headless-sim" role="region" aria-label={lf("Simulator")} tabIndex={-1} />}
-            <div id="editorSidebar" className="editor-sidebar" style={!this.props.tutorialSimSidebar ? { height: editorSidebarHeight } : undefined}>
+            <div id="editorSidebar" className={editorSidebarClassName} style={!this.props.tutorialSimSidebar ? { height: editorSidebarHeight } : undefined}>
                 <div className={simContainerClassName}>
                     <div className={`ui items simPanel ${showHostMultiplayerGameButton ? "multiplayer-preview" : ""}`} ref={this.handleSimPanelRef}>
                         {!hideSimulator && <div id="boardview" className="ui vertical editorFloat" role="region" aria-label={lf("Simulator")} tabIndex={inHome ? -1 : 0} />}

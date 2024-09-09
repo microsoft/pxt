@@ -1,6 +1,6 @@
 import { AppState } from "./state";
 import { Action } from "./actions";
-import { updateStoredRubricAsync } from "../transforms/updateStoredRubric";
+import { updateStoredChecklistAsync } from "../transforms/updateStoredChecklistAsync";
 
 // The reducer's job is to apply state changes by creating a copy of the existing state with the change applied.
 // The reducer must not create side effects. E.g. do not dispatch a state change from within the reducer.
@@ -76,11 +76,17 @@ export default function reducer(state: AppState, action: Action): AppState {
                 catalog: action.catalog,
             };
         }
-        case "SET_RUBRIC": {
-            /*await*/ updateStoredRubricAsync(state.rubric, action.rubric); // fire and forget, we don't need to wait for this to finish.
+        case "SET_CATALOG_OPEN": {
             return {
                 ...state,
-                rubric: action.rubric,
+                catalogOpen: action.open,
+            };
+        }
+        case "SET_CHECKLIST": {
+            /*await*/ updateStoredChecklistAsync(state.checklist, action.checklist); // fire and forget, we don't need to wait for this to finish.
+            return {
+                ...state,
+                checklist: action.checklist,
             };
         }
         case "SHOW_MODAL": {
@@ -113,10 +119,10 @@ export default function reducer(state: AppState, action: Action): AppState {
                 activeTab: action.tabName,
             };
         }
-        case "SET_AUTORUN": {
+        case "SET_RUN_ON_LOAD": {
             return {
                 ...state,
-                autorun: action.autorun,
+                runOnLoad: action.runOnLoad,
             };
         }
         case "SET_TOOLBOX_CATEGORIES": {
@@ -131,6 +137,29 @@ export default function reducer(state: AppState, action: Action): AppState {
             return {
                 ...state,
                 blockImageCache: cache,
+            };
+        }
+        case "SET_SCREEN_READER_ANNOUNCEMENT": {
+            return {
+                ...state,
+                screenReaderAnnouncement: action.announcement,
+            };
+        }
+        case "SET_USER_PROFILE": {
+            return {
+                ...state,
+                userProfile: action.profile,
+            };
+        }
+        case "SET_USER_FEEDBACK": {
+            const checklist = { ...state.checklist };
+            const criteriaInstance = checklist.criteria.find(c => c.instanceId === action.criteriaInstanceId);
+            if (criteriaInstance) {
+                criteriaInstance.userFeedback = action.userFeedback;
+            }
+            return {
+                ...state,
+                checklist,
             };
         }
     }

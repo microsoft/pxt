@@ -4,6 +4,7 @@ export interface HistoryFile {
     entries: HistoryEntry[];
     snapshots: SnapshotEntry[];
     shares: ShareEntry[];
+    lastSaveTime: number;
 }
 
 export interface HistoryEntry {
@@ -292,12 +293,16 @@ export function updateHistory(previousText: ScriptText, toWrite: ScriptText, cur
     // in some way
     if (previousText[pxt.HISTORY_FILE]) {
         history = parseHistoryFile(previousText[pxt.HISTORY_FILE]);
+        if (history.lastSaveTime === undefined) {
+            history.lastSaveTime = currentTime;
+        }
     }
     else {
         history = {
             entries: [],
             snapshots: [takeSnapshot(previousText, currentTime - 1)],
-            shares: []
+            shares: [],
+            lastSaveTime: currentTime
         };
     }
 
@@ -321,7 +326,13 @@ export function updateHistory(previousText: ScriptText, toWrite: ScriptText, cur
     // combine it with the previous diff if it's been less than the
     // interval time
     let shouldCombine = false;
-    if (history.entries.length > 1) {
+    if (history.entries.length === 1) {
+        const topTime = history.entries[history.entries.length - 1].timestamp;
+        if (currentTime - topTime < diffInterval()) {
+            shouldCombine = true;
+        }
+    }
+    else if (history.entries.length > 1) {
         const topTime = history.entries[history.entries.length - 1].timestamp;
         const prevTime = history.entries[history.entries.length - 2].timestamp;
 
@@ -332,20 +343,23 @@ export function updateHistory(previousText: ScriptText, toWrite: ScriptText, cur
 
     if (shouldCombine) {
         // Roll back the last diff and create a new one
-        const prevText = applyDiff(previousText, history.entries.pop(), patch);
+        const prevEntry = history.entries.pop();
+        const prevText = applyDiff(previousText, prevEntry, patch);
 
-        const diffed = diffScriptText(prevText, toWrite, currentTime, diff);
+        const diffed = diffScriptText(prevText, toWrite, prevEntry.timestamp, diff);
         if (diffed) {
             history.entries.push(diffed);
         }
     }
     else {
-        const diffed = diffScriptText(previousText, toWrite, currentTime, diff);
+        const diffed = diffScriptText(previousText, toWrite, history.lastSaveTime, diff);
 
         if (diffed) {
             history.entries.push(diffed);
         }
     }
+
+    history.lastSaveTime = currentTime;
 
     // Finally, update the snapshots. These are failsafes in case something
     // goes wrong with the diff history. We keep one snapshot per interval for
@@ -386,7 +400,8 @@ export function pushSnapshotOnHistory(text: ScriptText, currentTime: number) {
         history = {
             entries: [],
             snapshots: [],
-            shares: []
+            shares: [],
+            lastSaveTime: currentTime
         };
     }
 
@@ -405,7 +420,8 @@ export function updateShareHistory(text: ScriptText, currentTime: number, shares
         history = {
             entries: [],
             snapshots: [],
-            shares: []
+            shares: [],
+            lastSaveTime: currentTime
         };
     }
 
@@ -419,6 +435,42 @@ export function updateShareHistory(text: ScriptText, currentTime: number, shares
     }
 
     text[pxt.HISTORY_FILE] = JSON.stringify(history);
+}
+
+export function getTextAtTime(text: ScriptText, history: HistoryFile, time: number, patch: (p: unknown, text: string) => string) {
+    let currentText = { ...text };
+
+    for (let i = 0; i < history.entries.length; i++) {
+        const index = history.entries.length - 1 - i;
+        const entry = history.entries[index];
+        currentText = applyDiff(currentText, entry, patch);
+        if (entry.timestamp === time) {
+            const version = index > 0 ? history.entries[index - 1].editorVersion : entry.editorVersion;
+            return patchConfigEditorVersion(currentText, version)
+        }
+    }
+
+    return { files: currentText, editorVersion: pxt.appTarget.versions.target };
+}
+
+export function patchConfigEditorVersion(text: ScriptText, editorVersion: string) {
+    text = { ...text };
+
+    // Attempt to update the version in pxt.json
+    try {
+        const config = JSON.parse(text[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+        if (config.targetVersions) {
+            config.targetVersions.target = editorVersion;
+        }
+        text[pxt.CONFIG_NAME] = JSON.stringify(config, null, 4);
+    }
+    catch (e) {
+    }
+
+    return {
+        files: text,
+        editorVersion
+    };
 }
 
 function takeSnapshot(text: ScriptText, time: number) {

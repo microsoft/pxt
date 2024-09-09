@@ -412,7 +412,7 @@ namespace py {
     }
     export interface Constant extends Expr {
         kind: "Constant";
-        value: any; // ??? 
+        value: any; // ???
     }
 
     // the following expression can appear in assignment context
@@ -470,7 +470,7 @@ def to_json(val):
         for attr_name in dir(val):
             if not attr_name.startswith("_"):
                 js[attr_name] = to_json(getattr(val, attr_name))
-        return js    
+        return js
     if isinstance(val, (bytearray, bytes)):
         return [x for x in val]
     raise Exception("unhandled: %s (type %s)" % (val, type(val)))
@@ -1443,7 +1443,6 @@ let funMap: Map<FunOverride> = {
     "ustruct.calcsize": { n: "pins.packedSize", t: tpNumber },
     "pins.I2CDevice.read_into": { n: ".readInto", t: tpVoid },
     "bool": { n: "!!", t: tpBoolean },
-    "Array.index": { n: ".indexOf", t: tpNumber },
     "time.sleep": { n: "pause", t: tpVoid, scale: 1000 }
 }
 

@@ -125,7 +125,11 @@ const EditorToggleAccessibleMenu = (props: EditorToggleProps) => {
         next.push({...current});
 
         // The selected item will always be a top-level option, not in a dropdown
-        if (selected === index) next[next.length - 1].selected = true;
+        if (selected === index) {
+            next[next.length - 1].selected = true;
+        } else {
+            next[next.length - 1].selected = false;
+        }
 
         if (isDropdownItem(current)) {
             next.push(...current.items.filter(i => i.focusable))

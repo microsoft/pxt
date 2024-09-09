@@ -12,12 +12,12 @@ export type BlockPickerOptions = {
     paramName: string;
 };
 
-export type CatalogDisplayOptions = {
-    modal: "catalog-display";
+export type ImportChecklistOptions = {
+    modal: "import-checklist";
 };
 
-export type ImportRubricOptions = {
-    modal: "import-rubric";
+export type SignInOptions = {
+    modal: "sign-in";
 };
 
-export type ModalOptions = CatalogDisplayOptions | ImportRubricOptions | ConfirmationModalOptions | BlockPickerOptions;
+export type ModalOptions = ImportChecklistOptions | ConfirmationModalOptions | BlockPickerOptions | SignInOptions;

@@ -316,7 +316,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
 
         const simCollapseText = headless ? lf("Toggle the File Explorer") : lf("Toggle the simulator");
 
-        return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("More...")} className="item icon more-dropdown-menuitem" ref={ref => this.dropdown = ref}>
+        return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("Settings")} className="item icon more-dropdown-menuitem" ref={ref => this.dropdown = ref}>
             {showHome && <sui.Item className="mobile only inherit" role="menuitem" icon="home" title={lf("Home")} text={lf("Home")} ariaLabel={lf("Home screen")} onClick={this.showExitAndSaveDialog} />}
             {showShare && <sui.Item className="mobile only inherit" role="menuitem" icon="share alternate" title={lf("Publish your game to create a shareable link")} text={lf("Share")} ariaLabel={lf("Share Project")} onClick={this.showShareDialog} />}
             {(showHome || showShare) && <div className="ui divider mobile only inherit" />}
@@ -525,12 +525,12 @@ export class EditorSelector extends data.Component<IEditorSelectorProps, {}> {
         }
 
         return (
-            <div id="editortoggle" className={`ui grid padded ${(pyOnly || tsOnly) ? "one-language" : ""}`} role="listbox" aria-orientation="horizontal">
+            <div id="editortoggle" className={`ui grid padded ${(pyOnly || tsOnly) ? "one-language" : ""}`} role="listbox" aria-orientation="horizontal" aria-label={lf("Editor toggle")}>
                 {showSandbox && <SandboxMenuItem parent={parent} />}
                 {showBlocks && <BlocksMenuItem parent={parent} />}
                 {textLanguage}
                 {secondTextLanguage}
-                {showDropdown && <sui.DropdownMenu id="editordropdown" role="menuitem" icon="chevron down" rightIcon title={lf("Select code editor language")} className={`item button attached right ${dropdownActive ? "active" : ""}`}>
+                {showDropdown && <sui.DropdownMenu id="editordropdown" role="option" icon="chevron down" rightIcon title={lf("Select code editor language")} className={`item button attached right ${dropdownActive ? "active" : ""}`}>
                     <JavascriptMenuItem parent={parent} />
                     <PythonMenuItem parent={parent} />
                 </sui.DropdownMenu>}

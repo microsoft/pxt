@@ -1,3 +1,4 @@
+import { Strings } from "../constants";
 import { stateAndDispatch } from "../state";
 import { ErrorCode } from "../types/errorCode";
 import { logError } from "./loggingService";
@@ -68,7 +69,7 @@ function getTestFilePath(fileName: string) {
 export async function loadTestableCollectionFromDocsAsync<T>(fileNames: string[], rootName: string): Promise<T[]> {
     const { state: teacherTool } = stateAndDispatch();
 
-    const files = teacherTool.flags.testCatalog ? fileNames.concat(fileNames.map(getTestFilePath)) : fileNames;
+    const files = teacherTool.flags.testCatalog ? fileNames.map(getTestFilePath).concat(fileNames) : fileNames;
     let allResults: T[] = [];
     for (const planFile of files) {
         try {
@@ -87,4 +88,21 @@ export async function loadTestableCollectionFromDocsAsync<T>(fileNames: string[]
     }
 
     return allResults;
+}
+
+export async function askCopilotQuestionAsync(shareId: string, question: string): Promise<string | undefined> {
+    const url = `/api/copilot/question`;
+    const data = { id: shareId, question };
+    let result: string = "";
+    try {
+        const request = await pxt.auth.AuthClient.staticApiAsync(url, data, "POST");
+        if (!request.success) {
+            throw new Error(request.err || lf("Unable to reach AI. Error code: {0}", request.statusCode));
+        }
+        result = await request.resp;
+    } catch (e) {
+        logError(ErrorCode.askAIQuestion, e);
+    }
+
+    return result;
 }

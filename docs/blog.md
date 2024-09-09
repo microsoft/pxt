@@ -1,5 +1,13 @@
 # Microsoft MakeCode Blog
 
+## [MakeCode for the micro:bit 2024 Update](/blog/microbit/2024-update)
+
+September 4, 2024 by [Jaqster](https://github.com/jaqster)
+
+Today we are releasing our annual update for [MakeCode for the micro:bit](https://makecode.microbit.org). This year we have been focusing on some core foundational and infrastructure-level work...
+
+**[Continue reading this blog post](/blog/microbit/2024-update)**
+
 ## [MakeCode Arcade - now more ways to play!](/blog/arcade/arcade-on-microbit-xbox)
 
 November 6th, 2023 by [Jaqster](https://github.com/jaqster)

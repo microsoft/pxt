@@ -44,6 +44,7 @@ declare namespace pxt.editor {
          */
         action: "switchblocks"
         | "switchjavascript"
+        | "switchpython"
         | "startsimulator"
         | "restartsimulator"
         | "stopsimulator" // EditorMessageStopRequest
@@ -52,6 +53,7 @@ declare namespace pxt.editor {
         | "closeflyout"
         | "newproject"
         | "importproject"
+        | "importexternalproject"
         | "importtutorial"
         | "openheader"
         | "proxytosim" // EditorMessageSimulatorMessageProxyRequest
@@ -64,6 +66,7 @@ declare namespace pxt.editor {
         | "setscale"
         | "startactivity"
         | "saveproject"
+        | "compile"
         | "unloadproject"
         | "shareproject"
         | "savelocalprojectstocloud"
@@ -96,6 +99,7 @@ declare namespace pxt.editor {
         | "info" // return info data`
         | "tutorialevent"
         | "editorcontentloaded"
+        | "serviceworkerregistered"
         | "runeval"
 
         // package extension messasges
@@ -254,6 +258,19 @@ declare namespace pxt.editor {
         // (optional) filtering argument
         filters?: ProjectFilters;
         searchBar?: boolean;
+    }
+
+    export interface EditorMessageImportExternalProjectRequest extends EditorMessageRequest {
+        action: "importexternalproject";
+        // project to load
+        project: pxt.workspace.Project;
+    }
+
+    export interface EditorMessageImportExternalProjectResponse extends EditorMessageResponse {
+        action: "importexternalproject";
+        resp: {
+            importUrl: string;
+        };
     }
 
     export interface EditorMessageSaveLocalProjectsToCloud extends EditorMessageRequest {
@@ -434,6 +451,10 @@ declare namespace pxt.editor {
     export interface EditorMessageGetToolboxCategoriesRequest extends EditorMessageRequest {
         action: "gettoolboxcategories";
         advanced?: boolean;
+    }
+
+    export interface EditorMessageServiceWorkerRegisteredRequest extends EditorMessageRequest {
+        action: "serviceworkerregistered";
     }
 
     export interface EditorMessageGetToolboxCategoriesResponse {

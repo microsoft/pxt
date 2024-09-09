@@ -1,7 +1,7 @@
-import { ToastWithId, TabName, ProjectData } from "../types";
+import { ToastWithId, TabName, ProjectData, UserFeedback } from "../types";
 import { CatalogCriteria, CriteriaResult } from "../types/criteria";
 import { ModalOptions } from "../types/modalOptions";
-import { Rubric } from "../types/rubric";
+import { Checklist } from "../types/checklist";
 
 // Changes to app state are performed by dispatching actions to the reducer
 type ActionBase = {
@@ -51,9 +51,14 @@ type SetCatalog = ActionBase & {
     catalog: CatalogCriteria[] | undefined;
 };
 
-type SetRubric = ActionBase & {
-    type: "SET_RUBRIC";
-    rubric: Rubric;
+type SetCatalogOpen = ActionBase & {
+    type: "SET_CATALOG_OPEN";
+    open: boolean;
+};
+
+type SetChecklist = ActionBase & {
+    type: "SET_CHECKLIST";
+    checklist: Checklist;
 };
 
 type ShowModal = ActionBase & {
@@ -75,9 +80,9 @@ type SetActiveTab = ActionBase & {
     tabName: TabName;
 };
 
-type SetAutorun = ActionBase & {
-    type: "SET_AUTORUN";
-    autorun: boolean;
+type SetRunOnLoad = ActionBase & {
+    type: "SET_RUN_ON_LOAD";
+    runOnLoad: boolean;
 };
 
 type SetEvalResultsBatch = ActionBase & {
@@ -100,6 +105,22 @@ type SetBlockImageUri = ActionBase & {
     imageUri: string;
 };
 
+type SetScreenReaderAnnouncement = ActionBase & {
+    type: "SET_SCREEN_READER_ANNOUNCEMENT";
+    announcement: string;
+};
+
+type SetUserProfile = ActionBase & {
+    type: "SET_USER_PROFILE";
+    profile: pxt.auth.UserProfile | undefined;
+};
+
+type SetUserFeedback = ActionBase & {
+    type: "SET_USER_FEEDBACK";
+    criteriaInstanceId: string;
+    userFeedback: UserFeedback;
+};
+
 /**
  * Union of all actions
  */
@@ -115,14 +136,18 @@ export type Action =
     | SetEvalResultsBatch
     | SetTargetConfig
     | SetCatalog
-    | SetRubric
+    | SetCatalogOpen
+    | SetChecklist
     | ShowModal
     | HideModal
     | SetValidatorPlans
     | SetActiveTab
-    | SetAutorun
+    | SetRunOnLoad
     | SetToolboxCategories
-    | SetBlockImageUri;
+    | SetBlockImageUri
+    | SetScreenReaderAnnouncement
+    | SetUserProfile
+    | SetUserFeedback;
 
 /**
  * Action creators
@@ -167,9 +192,14 @@ const setCatalog = (catalog: CatalogCriteria[] | undefined): SetCatalog => ({
     catalog,
 });
 
-const setRubric = (rubric: Rubric): SetRubric => ({
-    type: "SET_RUBRIC",
-    rubric,
+const setCatalogOpen = (open: boolean): SetCatalogOpen => ({
+    type: "SET_CATALOG_OPEN",
+    open,
+});
+
+const setChecklist = (checklist: Checklist): SetChecklist => ({
+    type: "SET_CHECKLIST",
+    checklist,
 });
 
 const showModal = (modalOptions: ModalOptions): ShowModal => ({
@@ -191,9 +221,9 @@ const setActiveTab = (tabName: TabName): SetActiveTab => ({
     tabName,
 });
 
-const setAutorun = (autorun: boolean): SetAutorun => ({
-    type: "SET_AUTORUN",
-    autorun,
+const setRunOnLoad = (runOnLoad: boolean): SetRunOnLoad => ({
+    type: "SET_RUN_ON_LOAD",
+    runOnLoad,
 });
 
 const setEvalResultsBatch = (criteriaResults: pxt.Map<CriteriaResult>): SetEvalResultsBatch => ({
@@ -216,6 +246,22 @@ const setBlockImageUri = (blockId: string, imageUri: string): SetBlockImageUri =
     imageUri,
 });
 
+const setScreenReaderAnnouncement = (announcement: string): SetScreenReaderAnnouncement => ({
+    type: "SET_SCREEN_READER_ANNOUNCEMENT",
+    announcement,
+});
+
+const setUserProfile = (profile: pxt.auth.UserProfile | undefined): SetUserProfile => ({
+    type: "SET_USER_PROFILE",
+    profile,
+});
+
+const setUserFeedback = (criteriaInstanceId: string, userFeedback: UserFeedback): SetUserFeedback => ({
+    type: "SET_USER_FEEDBACK",
+    criteriaInstanceId,
+    userFeedback,
+});
+
 export {
     showToast,
     dismissToast,
@@ -227,12 +273,16 @@ export {
     setEvalResultsBatch,
     setTargetConfig,
     setCatalog,
-    setRubric,
+    setCatalogOpen,
+    setChecklist,
     showModal,
     hideModal,
     setValidatorPlans,
     setActiveTab,
-    setAutorun,
+    setRunOnLoad,
     setToolboxCategories,
     setBlockImageUri,
+    setScreenReaderAnnouncement,
+    setUserProfile,
+    setUserFeedback,
 };

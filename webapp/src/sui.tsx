@@ -7,6 +7,7 @@ import * as data from "./data";
 import * as core from "./core";
 import * as auth from "./auth";
 import { fireClickOnEnter } from "./util";
+import { focusLastActive } from "../../react-common/components/util";
 
 export const appElement = document.getElementById('content');
 
@@ -500,7 +501,7 @@ export class Item extends data.Component<ItemProps, {}> {
         return (
             <div className={genericClassName("ui item link", this.props, true) + ` ${this.props.active ? 'active' : ''}`}
                 role={this.props.role}
-                aria-label={ariaLabel || title || text}
+                aria-label={(!this.props.role || this.props.role === "presentation") ? "" : ariaLabel || title || text}
                 aria-selected={this.props.active}
                 aria-hidden={ariaHidden}
                 title={title || text}
@@ -1170,12 +1171,14 @@ export interface ModalProps extends ReactModal.Props {
     allowResetFocus?: boolean;
     modalDidOpen?: (ref: HTMLElement) => void;
     overlayClassName?: string;
+    dontRestoreFocus?: boolean;
 }
 
 interface ModalState {
     marginTop?: number;
     scrolling?: boolean;
     mountClasses?: string;
+    previouslyFocused?: Element;
 }
 
 export class Modal extends data.Component<ModalProps, ModalState> {
@@ -1187,6 +1190,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
         super(props);
         this.id = ts.pxtc.Util.guidGen();
         this.state = {
+            previouslyFocused: document.activeElement
         }
 
         this.onRequestClose = this.onRequestClose.bind(this);
@@ -1213,6 +1217,12 @@ export class Modal extends data.Component<ModalProps, ModalState> {
 
     componentWillUnmount() {
         cancelAnimationFrame(this.animationRequestId);
+        if (!this.props.dontRestoreFocus) {
+            let toFocus = this.state.previouslyFocused as HTMLElement;
+            if (toFocus) {
+                focusLastActive(toFocus);
+            }
+        }
     }
 
     setPositionAndClassNames = () => {

@@ -88,16 +88,25 @@ export function initialize() {
                 switch (event.data.command) {
                     case "setstate":
                         switch (event.data.stateKey) {
-                            case Constants.allScoresStateKey:
+                            case Constants.allScoresStateKey: {
                                 const rawData = atob(event.data.stateValue);
                                 const json = decodeURIComponent(rawData);
+                                const scoresEntry = JSON.parse(json);
+                                let scoresList: number[] = scoresEntry;
+                                if (scoresEntry["allScores"] !== undefined) {
+                                    scoresList = scoresEntry["allScores"];
+                                }
+                                if (state.launchedGameId && scoresEntry["scoringType"]) {
+                                    dispatch(Actions.updateGame(state.launchedGameId, { ...launchedGame, highScoreMode: scoresEntry["scoringType"]}));
+                                }
                                 dispatch(
                                     Actions.setMostRecentScores(
-                                        JSON.parse(json)
+                                        scoresList
                                     )
                                 );
                                 gameOver();
                                 break;
+                            }
                         }
                         break;
                 }

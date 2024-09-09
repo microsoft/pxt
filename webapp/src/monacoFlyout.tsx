@@ -6,6 +6,7 @@ import * as workspace from "./workspace";
 import * as data from "./data";
 import * as auth from "./auth";
 import { HELP_IMAGE_URI } from "../../pxteditor";
+import * as pxtblockly from "../../pxtblocks";
 
 import ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -251,8 +252,17 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
 
     protected getBlockDescription(block: toolbox.BlockDefinition, params: pxtc.ParameterDesc[]): JSX.Element[] {
         let description = [];
-        let compileInfo = pxt.blocks.compileInfo(block as pxtc.SymbolInfo)
+        let compileInfo = pxt.blocks.compileInfo(block as pxtc.SymbolInfo);
         let parts = block.attributes._def && block.attributes._def.parts;
+        if (block.attributes.parentBlock) {
+            const parent = block.attributes.parentBlock;
+            const parentBlockParts = [...parent.attributes._def.parts];
+            const overrideLocation = parentBlockParts.findIndex((part: any) => part.kind === "param" && part.name === block.attributes.toolboxParentArgument);
+            if (overrideLocation !== -1) {
+                parentBlockParts.splice(overrideLocation, 1, ...block.attributes._def.parts);
+                parts = parentBlockParts;
+            }
+        }
         let name = block.qName || block.name;
         const isPython = this.props.fileType == pxt.editor.FileType.Python;
 
@@ -351,9 +361,13 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
 
         const snippet = isPython ? block.pySnippet : block.snippet;
         const params = block.parameters;
-        const blockColor = block.attributes.color || color;
+        const blockColor = pxt.toolbox.getAccessibleBackground(block.attributes.color || color);
         const blockDescription = this.getBlockDescription(block, params ? params.slice() : null);
-        const helpUrl = block.attributes.help;
+        const helpUrl = pxt.blocks.getHelpUrl(block as pxtc.SymbolInfo);
+
+        const openHelp = () => {
+            pxtblockly.external.openHelpUrl(helpUrl);
+        };
 
         const qName = this.getQName(block) || this.getSnippetName(block);
         const selected = qName == this.state.selectedBlock;
@@ -385,9 +399,11 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
                 <div className="description">{description}</div>
                 <div className="signature">
                     <span>{snippet ? snippet : `${qName}(${params ? params.map(p => `${p.name}`).join(", ") : ""})`}</span>
-                    {helpUrl && <a className="blockHelp" href={`/reference/${helpUrl}`} target="_blank" rel="noopener noreferrer" role="button">
-                        <i className="question circle outline icon" aria-label={lf("Open documentation")}></i>
-                    </a>}
+                    {helpUrl &&
+                        <a className="blockHelp" role="button" onClick={openHelp}>
+                            <i className="question circle outline icon" aria-label={lf("Open documentation")}></i>
+                        </a>
+                    }
                 </div>
                 {params && <div className="params">
                     {params.map((p, i) => {
@@ -404,7 +420,7 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
 
     renderCore() {
         const { name, ns, color, icon, groups } = this.state;
-        const rgb = pxt.toolbox.convertColor(color || (ns && pxt.toolbox.getNamespaceColor(ns)) || "255");
+        const rgb = pxt.toolbox.getAccessibleBackground(pxt.toolbox.convertColor(color || (ns && pxt.toolbox.getNamespaceColor(ns)) || "255"));
         const iconClass = `blocklyTreeIcon${icon ? (ns || icon).toLowerCase() : "Default"}`.replace(/\s/g, "");
         return <div id="monacoFlyoutWidget" className="monacoFlyout" style={this.getFlyoutStyle()}>
             <div id="monacoFlyoutWrapper" onScroll={this.scrollHandler} onWheel={this.wheelHandler} role="list">

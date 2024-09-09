@@ -149,7 +149,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
             <div key={`mystuff_gallerysegment`} className="ui segment gallerysegment mystuff-segment" role="region" aria-label={lf("My Projects")}>
                 <div className="ui heading">
                     <div className="column" style={{ zIndex: 1 }}
-                        role={scriptManager && "button"} onClick={scriptManager && this.showScriptManager} onKeyDown={scriptManager && fireClickOnEnter}
+                        onClick={scriptManager && this.showScriptManager} onKeyDown={scriptManager && fireClickOnEnter}
                     >
                         {scriptManager ? <h2 className="ui header myproject-header">
                             {lf("My Projects")}
@@ -296,7 +296,7 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
         const reportAbuse = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing;
         const showDivider = targetTheme.selectLanguage || targetTheme.highContrast || githubUser;
 
-        return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("More...")} className="item icon more-dropdown-menuitem" ref={ref => this.dropdown = ref}>
+        return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("Settings")} className="item icon more-dropdown-menuitem" ref={ref => this.dropdown = ref}>
             {targetTheme.selectLanguage && <sui.Item icon='xicon globe' role="menuitem" text={lf("Language")} onClick={this.showLanguagePicker} />}
             {targetTheme.highContrast && <sui.Item role="menuitem" text={highContrast ? lf("High Contrast Off") : lf("High Contrast On")} onClick={this.toggleHighContrast} />}
             {githubUser && <div className="ui divider"></div>}

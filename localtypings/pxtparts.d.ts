@@ -223,6 +223,7 @@ declare namespace pxsim {
     export interface VariablesRequestMessage extends DebuggerMessage {
         variablesReference: string;
         fields?: string[]
+        includeAll?: boolean;
     }
 
     export interface VariablesMessage extends DebuggerMessage {

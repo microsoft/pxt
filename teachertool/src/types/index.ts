@@ -21,20 +21,20 @@ export type ToastWithId = Toast & {
     id: string;
 };
 
-export type TabName = "home" | "rubric" | "results";
+export type TabName = "home" | "results";
 
-export type CardType = "rubric-resource";
+export type CardType = "checklist-resource";
 
-// Rubric Card types that can be appear in the carousel
+// Checklist Card types that can be appear in the carousel
 export type CarouselCard = {
     cardType: CardType;
 };
 
-export type CarouselRubricResourceCard = CarouselCard & {
-    cardType: "rubric-resource";
+export type CarouselChecklistResourceCard = CarouselCard & {
+    cardType: "checklist-resource";
     cardTitle: string;
     imageUrl: string;
-    rubricUrl: string;
+    checklistUrl: string;
 };
 
 export type CarouselCardSet = {
@@ -51,3 +51,5 @@ export type CriteriaTemplateSegment = {
     type: "plain-text" | "param";
     content: string; // plain text or parameter name
 };
+
+export type UserFeedback = "helpful" | "not-helpful" | undefined;

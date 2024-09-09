@@ -1,3 +1,5 @@
+@import "./docs/tocheader.less";
+
 /*******************************
              Docs
 *******************************/
@@ -30,7 +32,6 @@
 
 #docs .footer,
 #docs .topbar,
-.ui.menu.fixed.docs,
 #docs {
     top: auto;
     background: hsl(@docsHue, 25%, 85%);
@@ -87,6 +88,12 @@
     a {
         color: @docsLinkColor;
     }
+
+    // links within paragraphs should be underlined for accessibility
+    p a {
+        text-decoration: underline;
+    }
+
     span.block {
         display: inline-block;
         vertical-align: middle;
@@ -185,6 +192,17 @@
 
         &:hover, &:focus {
             border: 2px solid @docsCardHoverBorderColor;
+        }
+    }
+
+    .card-list {
+        display: flex;
+        flex-wrap: wrap;
+        row-gap: 1.5rem;
+        column-gap: 1rem;
+
+        div .ui.card {
+            height: 100%;
         }
     }
 
@@ -358,6 +376,15 @@
             padding: 0;
         }
     }
+
+    span.docs.inlineblock {
+        border-bottom: 3px solid var(--inline-namespace-color);
+        border-radius: 0;
+        color: black;
+        font-weight: 600;
+        background-color: transparent;
+        padding-bottom: 0.1rem;
+    }
 }
 
 .ui.sidebar.menu.docs {
@@ -450,44 +477,6 @@
 
 .sideDocs #sidedocsbar a {
     color: @docsLinkColor;
-}
-
-#top-bar {
-    .header-org-logo img,
-    .header-org-logo-sm img {
-        height: 1.4rem;
-    }
-
-    .header-org-logo-sm {
-        display: none;
-    }
-
-    .header-title:before {
-        content: "";
-        position: relative;
-        height: 1.5rem;
-        border-left: 2px solid #fff;
-        margin: 0.75rem;
-    }
-
-    .header-title span {
-        margin: 0.5rem;
-        font-size: 18px;
-        font-weight: 700;
-    }
-}
-
-@media only screen and (max-width: 767px) {
-    #top-bar {
-        .header-org-logo,
-        .header-title {
-            display: none;
-        }
-
-        .header-org-logo-sm {
-            display: block;
-        }
-    }
 }
 
 .replaceDocsAvatar() when not (@docsAvatarImage = none) {

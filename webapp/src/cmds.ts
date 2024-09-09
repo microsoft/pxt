@@ -135,6 +135,33 @@ function showUploadInstructionsAsync(
     }).then(() => { });
 }
 
+export function showReconnectDeviceInstructionsAsync(
+    confirmAsync: (options: core.PromptOptions) => Promise<number>
+): Promise<void> {
+    const boardName = pxt.appTarget.appTheme.boardName || lf("device");
+    const helpUrl = pxt.appTarget.appTheme.usbDocs;
+    const jsx = webusb.renderDisconnectDeviceDialog();
+    return confirmAsync({
+        header: lf("{0} Connection failed...", boardName),
+        jsx,
+        hasCloseIcon: true,
+        hideAgree: true,
+        helpUrl,
+        bigHelpButton: true,
+        className: 'downloaddialog',
+        buttons: [
+            {
+                label: lf("Done"),
+                className: "primary",
+                onclick: () => {
+                    pxt.tickEvent('downloaddialog.done')
+                    core.hideDialog();
+                }
+            },
+        ]
+    }).then(() => { });
+}
+
 export function nativeHostPostMessageFunction(): (msg: NativeHostMessage) => void {
     const webkit = (<any>window).webkit;
     if (webkit
@@ -145,6 +172,9 @@ export function nativeHostPostMessageFunction(): (msg: NativeHostMessage) => voi
     const android = (<any>window).android;
     if (android && android.postMessage)
         return msg => android.postMessage(JSON.stringify(msg));
+    if (pxt.shell.getControllerMode() === pxt.shell.ControllerMode.App) {
+        return msg => window.parent.postMessage(msg, "*");
+    }
     return undefined;
 }
 
@@ -258,6 +288,9 @@ export async function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.comma
             // device is locked or used by another tab
             pxt.tickEvent("hid.flash.devicelocked");
             log(`error: device locked`);
+        } else if (e.type == "inittimeout") {
+            pxt.tickEvent("hid.flash.inittimeout");
+            await showReconnectDeviceInstructionsAsync(core.confirmAsync);
         } else {
             pxt.tickEvent("hid.flash.error");
             log(`hid error ${e.message}`)
@@ -419,7 +452,7 @@ export async function initAsync() {
     // check if webUSB is available and usable
     if ((pxt.appTarget?.compile?.isNative || pxt.appTarget?.compile?.hasHex) && !pxt.BrowserUtils.isPxtElectron()) {
         // TODO: WebUSB is currently disabled in electron app, but should be supported.
-        if (pxt.usb.isAvailable() && pxt.appTarget?.compile?.webUSB) {
+        if (pxt.shell.getControllerMode() !== pxt.shell.ControllerMode.App && pxt.usb.isAvailable() && pxt.appTarget?.compile?.webUSB) {
             log(`enabled webusb`);
             pxt.usb.setEnabled(true);
             pxt.packetio.mkPacketIOAsync = pxt.usb.mkWebUSBHIDPacketIOAsync;
@@ -483,8 +516,12 @@ export async function maybeReconnectAsync(pairIfDeviceNotFound = false, skipIfCo
                 await wrapper.reconnectAsync();
                 return true;
             } catch (e) {
-                if (e.type == "devicenotfound")
+                if (e.type == "devicenotfound") {
                     return !!pairIfDeviceNotFound && pairAsync();
+                } else if (e.type == "inittimeout") {
+                    pxt.tickEvent("hid.flash.inittimeout");
+                    await showReconnectDeviceInstructionsAsync(core.confirmAsync);
+                }
                 throw e;
             }
         } finally {

@@ -32,8 +32,8 @@ export const logInfo = (message: any) => {
     console.log(timestamp(), message);
 };
 
-export const logDebug = (message: any) => {
+export const logDebug = (message: any, data?: any) => {
     if (pxt.BrowserUtils.isLocalHost() || pxt.options.debug) {
-        console.log(timestamp(), message);
+        console.log(timestamp(), message, data);
     }
 };

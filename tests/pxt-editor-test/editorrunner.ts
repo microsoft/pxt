@@ -5,6 +5,7 @@ import "mocha";
 import * as chai from "chai";
 import * as dmp from "diff-match-patch";
 import * as pxteditor from "../../pxteditor";
+import { getTextAtTime, HistoryFile, updateHistory } from "../../pxteditor/history";
 
 pxt.appTarget = {
     versions: {
@@ -206,7 +207,7 @@ for (let i = 0; i < 20; i++) {
     testVersions.push({
         [pxt.MAIN_BLOCKS]: makeFile(),
         [pxt.MAIN_TS]: makeFile(),
-        [pxt.CONFIG_NAME]: JSON.stringify(config)
+        [pxt.CONFIG_NAME]: JSON.stringify(config, null, 4)
     });
 }
 
@@ -256,12 +257,12 @@ describe("updateHistory", () => {
 
         chai.expect(history.entries.length).to.equal(Math.floor((testVersions.length / 5)) + 1);
 
-        let currentText = prevText;
         for (let i = 0; i < history.entries.length; i++) {
             const index = history.entries.length - 1 - i;
-            currentText = pxteditor.history.applyDiff(currentText, history.entries[index], patchText);
+            const timestamp = history.entries[index].timestamp;
+            const currentText = getTextAtTime(prevText, history, timestamp, patchText).files;
 
-            const compIndex = index ? Math.floor(history.entries[index - 1].timestamp / ONE_MINUTE) : 0;
+            const compIndex = index ? Math.floor(history.entries[index].timestamp / ONE_MINUTE) : 0;
             const comp = testVersions[compIndex];
 
             chai.expect(currentText[pxt.MAIN_BLOCKS]).to.equal(comp[pxt.MAIN_BLOCKS])
@@ -326,4 +327,115 @@ describe("updateHistory", () => {
             chai.expect(currentText[pxt.CONFIG_NAME]).to.equal(comp[pxt.CONFIG_NAME])
         }
     });
-})
+
+    it("should restore to the version on the timestamp", () => {
+        const project = createProjectText();
+        const history = JSON.parse(project[pxt.HISTORY_FILE]) as HistoryFile;
+
+        for (const entry of history.entries) {
+            const { files } = getTextAtTime(project, history, entry.timestamp, patchText);
+
+            chai.expect(files[pxt.MAIN_TS]).equals(entry.timestamp.toString());
+        }
+    });
+});
+
+function createProjectText(): pxt.workspace.ScriptText {
+    // A realistic timeline of project edits
+    const dates = [
+        new Date(2024, 8, 13, 8, 0, 0, 0),
+        new Date(2024, 8, 13, 8, 15, 0, 0),
+        new Date(2024, 8, 13, 8, 17, 0, 0),
+        new Date(2024, 8, 13, 8, 23, 0, 0),
+        new Date(2024, 8, 13, 8, 24, 0, 0),
+        new Date(2024, 8, 13, 8, 25, 0, 0),
+        new Date(2024, 8, 13, 8, 45, 0, 0),
+        new Date(2024, 8, 13, 8, 47, 0, 0),
+        new Date(2024, 8, 13, 9, 13, 0, 0),
+        new Date(2024, 8, 13, 9, 27, 0, 0),
+        new Date(2024, 8, 13, 9, 34, 0, 0),
+        new Date(2024, 8, 13, 9, 52, 0, 0),
+        new Date(2024, 8, 13, 9, 54, 0, 0),
+        new Date(2024, 8, 13, 9, 56, 0, 0),
+        new Date(2024, 8, 13, 10, 5, 0, 0),
+        new Date(2024, 8, 13, 10, 7, 0, 0),
+        new Date(2024, 8, 15, 8, 0, 0, 0),
+        new Date(2024, 8, 15, 8, 15, 0, 0),
+        new Date(2024, 8, 15, 8, 15, 20, 0),
+        new Date(2024, 8, 15, 8, 15, 45, 0),
+        new Date(2024, 8, 15, 8, 16, 0, 0),
+        new Date(2024, 8, 15, 8, 16, 20, 0),
+        new Date(2024, 8, 15, 8, 16, 45, 0),
+        new Date(2024, 8, 15, 8, 17, 0, 0),
+        new Date(2024, 8, 15, 8, 17, 20, 0),
+        new Date(2024, 8, 15, 8, 17, 45, 0),
+        new Date(2024, 8, 15, 8, 18, 0, 0),
+        new Date(2024, 8, 15, 8, 18, 20, 0),
+        new Date(2024, 8, 15, 8, 18, 45, 0),
+        new Date(2024, 8, 15, 8, 19, 0, 0),
+        new Date(2024, 8, 15, 8, 19, 20, 0),
+        new Date(2024, 8, 15, 8, 19, 45, 0),
+        new Date(2024, 8, 15, 8, 20, 0, 0),
+        new Date(2024, 8, 15, 8, 20, 20, 0),
+        new Date(2024, 8, 15, 8, 20, 45, 0),
+        new Date(2024, 8, 15, 8, 21, 0, 0),
+        new Date(2024, 8, 15, 8, 21, 20, 0),
+        new Date(2024, 8, 15, 8, 21, 45, 0),
+        new Date(2024, 8, 15, 8, 22, 0, 0),
+        new Date(2024, 8, 15, 8, 22, 20, 0),
+        new Date(2024, 8, 15, 8, 22, 45, 0),
+        new Date(2024, 8, 15, 8, 23, 0, 0),
+        new Date(2024, 8, 15, 8, 23, 20, 0),
+        new Date(2024, 8, 15, 8, 23, 45, 0),
+        new Date(2024, 8, 15, 8, 24, 0, 0),
+        new Date(2024, 8, 15, 8, 24, 20, 0),
+        new Date(2024, 8, 15, 8, 24, 45, 0),
+        new Date(2024, 8, 15, 8, 25, 0, 0),
+        new Date(2024, 8, 15, 8, 25, 20, 0),
+        new Date(2024, 8, 15, 8, 25, 45, 0),
+        new Date(2024, 8, 15, 8, 26, 0, 0),
+        new Date(2024, 8, 15, 8, 26, 20, 0),
+        new Date(2024, 8, 15, 8, 26, 45, 0),
+        new Date(2024, 8, 15, 8, 27, 0, 0),
+        new Date(2024, 8, 15, 8, 27, 20, 0),
+        new Date(2024, 8, 15, 8, 27, 45, 0),
+        new Date(2024, 8, 15, 8, 28, 0, 0),
+        new Date(2024, 8, 15, 8, 28, 20, 0),
+        new Date(2024, 8, 15, 8, 28, 45, 0),
+        new Date(2024, 8, 15, 8, 29, 0, 0),
+        new Date(2024, 8, 15, 8, 29, 20, 0),
+        new Date(2024, 8, 15, 8, 29, 45, 0),
+        new Date(2024, 8, 15, 8, 30, 0, 0),
+        new Date(2024, 8, 15, 8, 30, 20, 0),
+        new Date(2024, 8, 15, 8, 30, 45, 0),
+        new Date(2024, 8, 18, 8, 45, 0, 0),
+    ];
+
+    let currentText = {
+        [pxt.MAIN_TS]: "start"
+    };
+
+    // At each time, push an edit that contains the
+    // timestamp
+    for (const date of dates) {
+        const newText = {
+            ...currentText,
+            [pxt.MAIN_TS]: "" + date.getTime()
+        };
+
+        updateHistory(
+            currentText,
+            newText,
+            date.getTime(),
+            [],
+            diffText,
+            patchText
+        )
+
+        currentText = {
+            ...newText
+        };
+    }
+
+    return currentText;
+}

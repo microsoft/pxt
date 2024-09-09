@@ -1,5 +1,6 @@
 import * as core from "./core";
 import * as cmds from "./cmds";
+import { postHostMessageAsync } from "../../pxteditor";
 
 export function init(updated: () => void) {
     if ("serviceWorker" in navigator
@@ -37,6 +38,10 @@ export function init(updated: () => void) {
     }
 
     function scheduleUpdate() {
+        postHostMessageAsync({
+            action: "serviceworkerregistered",
+            type: "pxthost"
+        });
         if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.noReloadOnUpdate)
             return;
         core.infoNotification(lf("Update download complete. Reloading... "));

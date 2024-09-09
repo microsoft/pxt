@@ -128,7 +128,7 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                         // remove what precedes the "." in the full snippet.
                         // E.g. if the user is typing "mobs.", we want to complete with "spawn" (name) not "mobs.spawn" (qName)
                         if (completions.isMemberCompletion && snippet) {
-                            const nameStart = snippet.lastIndexOf(name);
+                            const nameStart = snippet.split("(")[0].lastIndexOf(name);
                             if (nameStart !== -1) {
                                 snippet = snippet.substr(nameStart)
                             }
@@ -459,10 +459,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 tsFile = pxt.MAIN_TS;
             }
 
-            const failedAsync = (file: string, programTooLarge = false) => {
+            const failedAsync = (file: string) => {
                 core.cancelAsyncLoading("switchtoblocks");
                 this.forceDiagnosticsUpdate();
-                return this.showBlockConversionFailedDialog(file, programTooLarge);
+                return this.showBlockConversionFailedDialog(file);
             }
 
             // might be undefined
@@ -482,6 +482,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     blocksInfo = bi;
                     pxtblockly.cleanBlocks();
                     pxtblockly.initializeAndInject(blocksInfo);
+
+                    if (!mainPkg.files[blockFile].content) {
+                        return [undefined, true];
+                    }
 
                     // It's possible that the extensions changed and some blocks might not exist anymore
                     if (!pxtblockly.validateAllReferencedBlocksExist(mainPkg.files[blockFile].content)) {
@@ -519,9 +523,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                                         if (!resp.success) {
                                             const failed = resp.failedResponse;
                                             this.currFile.diagnostics = failed.diagnostics;
-                                            let tooLarge = false;
-                                            failed.diagnostics.forEach(d => tooLarge = (tooLarge || d.code === 9266 /* error code when script is too large */));
-                                            return failedAsync(blockFile, tooLarge);
+                                            return failedAsync(blockFile);
                                         }
                                         xml = resp.outText;
                                         Util.assert(!!xml);
@@ -530,7 +532,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                                     })
                             }
                             else {
-                                return failedAsync(blockFile, false)
+                                return failedAsync(blockFile)
                             }
 
                         })
@@ -544,29 +546,22 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return initPromise;
     }
 
-    public showBlockConversionFailedDialog(blockFile: string, programTooLarge: boolean): Promise<void> {
+    public showBlockConversionFailedDialog(blockFile: string): Promise<void> {
         const isPython = this.fileType == pxt.editor.FileType.Python;
         const tickLang = isPython ? "python" : "typescript";
 
         let bf = pkg.mainEditorPkg().files[blockFile];
-        if (programTooLarge) {
-            pxt.tickEvent(`${tickLang}.programTooLarge`);
-        }
         let body: string;
         let disagreeLbl: string;
         if (isPython) {
-            body = programTooLarge ?
-                lf("Your program is too large to convert into blocks. You can keep working in Python or discard your changes and go back to the previous Blocks version.") :
-                lf("We are unable to convert your Python code back to blocks. You can keep working in Python or discard your changes and go back to the previous Blocks version.");
+            body = lf("We are unable to convert your Python code back to blocks. You can keep working in Python or discard your changes and go back to the previous Blocks version.");
             disagreeLbl = lf("Stay in Python");
         } else {
-            body = programTooLarge ?
-                lf("Your program is too large to convert into blocks. You can keep working in JavaScript or discard your changes and go back to the previous Blocks version.") :
-                lf("We are unable to convert your JavaScript code back to blocks. You can keep working in JavaScript or discard your changes and go back to the previous Blocks version.");
+            body = lf("We are unable to convert your JavaScript code back to blocks. You can keep working in JavaScript or discard your changes and go back to the previous Blocks version.");
             disagreeLbl = lf("Stay in JavaScript");
         }
         return core.confirmAsync({
-            header: programTooLarge ? lf("Program too large") : lf("Oops, there is a problem converting your code."),
+            header: lf("Oops, there is a problem converting your code."),
             body,
             agreeLbl: lf("Discard and go to Blocks"),
             agreeClass: "cancel",
@@ -635,6 +630,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         super.setVisible(v);
         // if we are hiding monaco, clear error list
         if (!v) this.onErrorChanges([]);
+        // if we are showing monaco, resize to make sure sim state gets set
+        else this.parent.fireResize();
     }
 
     display(): JSX.Element {
@@ -1727,6 +1724,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 res[ns] = [];
             }
             res[ns].push(fn);
+            if (fn.attributes.toolboxParent) {
+                const parent = this.blockInfo.blocks.find(b => b.attributes.blockId === fn.attributes.toolboxParent);
+                const currentBlock = res[ns].find(resB => resB.name === fn.name);
+                if (parent && currentBlock) {
+                    currentBlock.attributes.parentBlock = parent;
+                }
+            }
 
             const subcat = fn.attributes.subcategory;
             const advanced = fn.attributes.advanced;

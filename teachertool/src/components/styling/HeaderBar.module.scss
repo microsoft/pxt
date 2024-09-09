@@ -21,6 +21,7 @@
         display: flex;
         align-items: center;
         cursor: pointer;
+
         .logo {
             height: 1.4rem;
             margin: 0 1rem;
@@ -31,27 +32,105 @@
         display: flex;
         align-items: center;
         cursor: pointer;
+
         &:before {
             height: 1.5rem;
             border-left: 2px solid var(--pxt-headerbar-foreground);
             content: " ";
         }
+
         .logo {
             height: 1.1rem;
             margin: 0 1rem;
         }
     }
 
-    .rubric-name {
+    .centered-panel {
+        position: absolute;
+        justify-content: center;
+        align-items: center;
+        display: flex;
+        width: 100%;
+
+        div.app-title {
+            position: relative;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.25rem;
+            text-align: center;
+        }
+    }
+
+    .user-menu {
+        height: 100%;
         display: flex;
         align-items: center;
-        &:before {
-            height: 1.5rem;
-            border-left: 2px solid var(--pxt-headerbar-foreground);
-            content: " ";
+        justify-content: flex-end;
+
+        .sign-in-button {
+            height: 80%;
+            margin: .5rem 1rem;
+            padding: .6rem;
+            color: var(--pxt-page-foreground);
         }
-        span {
-            margin: 0 1rem;
+
+        div[class*="common-menu-dropdown-pane"] {
+            border-radius: 0 0 0.25rem 0.25rem;
+            box-shadow: 0 1px 3px 0 var(--pxt-page-foreground-shadow);
+            background: var(--pxt-page-background);
+            padding: 0.15rem;
         }
+
+        .avatar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+
+            img {
+                border: solid 2px white;
+                border-radius: 100%;
+                width: 2.5rem;
+                height: 2.5rem;
+            }
+        }
+    }
+}
+
+.beta-tag {
+    text-transform: uppercase;
+    position: absolute;
+    top: 3px;
+    right: -50px;
+    background-color: var(--pxt-success);
+    color: black;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: bold;
+}
+
+.feedback-btn {
+    color: var(--pxt-headerbar-foreground);
+    margin: 0;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.5rem;
+    font-size: medium;
+    line-height: 2rem;
+
+    i {
+        font-size: larger;
+    }
+
+    &[class~="common-button"] {
+        background-color: var(--pxt-headerbar-background);
+
+        :hover {
+            background-color: var(--pxt-headerbar-background-smoke);
+        }
+    }
+
+    [class~="common-button-label"] {
+        margin-left: 0.3rem;
     }
 }

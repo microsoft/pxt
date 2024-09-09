@@ -141,6 +141,15 @@ export class EditorDriver extends IframeDriver {
         );
     }
 
+    async compile() {
+        await this.sendRequest(
+            {
+                type: "pxteditor",
+                action: "compile"
+            } as pxt.editor.EditorMessageRequest
+        );
+    }
+
     async undo() {
         await this.sendRequest(
             {
@@ -248,6 +257,18 @@ export class EditorDriver extends IframeDriver {
                 searchBar
             } as pxt.editor.EditorMessageImportProjectRequest
         );
+    }
+
+    async importExternalProject(project: pxt.workspace.Project) {
+        const resp = await this.sendRequest(
+            {
+                type: "pxteditor",
+                action: "importexternalproject",
+                project,
+            } as pxt.editor.EditorMessageImportExternalProjectRequest
+        ) as pxt.editor.EditorMessageImportExternalProjectResponse;
+
+        return resp.resp.importUrl;
     }
 
     async openHeader(headerId: string) {
@@ -426,6 +447,7 @@ export class EditorDriver extends IframeDriver {
     addEventListener(event: "workspacediagnostics", handler: (ev: pxt.editor.EditorWorkspaceDiagnostics) => void): void;
     addEventListener(event: "editorcontentloaded", handler: (ev: pxt.editor.EditorContentLoadedRequest) => void): void;
     addEventListener(event: "projectcloudstatus", handler: (ev: pxt.editor.EditorMessageProjectCloudStatus) => void): void;
+    addEventListener(event: "serviceworkerregistered", handler: (ev: pxt.editor.EditorMessageServiceWorkerRegisteredRequest) => void): void;
     addEventListener(event: string, handler: (ev: any) => void): void {
         super.addEventListener(event, handler);
     }

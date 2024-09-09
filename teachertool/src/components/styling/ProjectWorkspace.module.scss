@@ -4,6 +4,7 @@
     display: flex;
     flex-direction: column;
     background-color: var(--pxt-headerbar-accent-smoke);
+    position: relative;
 
     .projectName {
         height: 100%;
@@ -13,6 +14,10 @@
         line-height: normal;
         display: flex;
         align-items: center;
+        padding-left: 0.5rem;
+        text-wrap: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     iframe {
