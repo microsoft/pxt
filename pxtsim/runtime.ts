@@ -3,6 +3,14 @@
 namespace pxsim {
     const MIN_MESSAGE_WAIT_MS = 200;
     let tracePauseMs = 0;
+
+    enum MessageListenerFlags {
+        MESSAGE_BUS_LISTENER_REENTRANT = 8,
+        MESSAGE_BUS_LISTENER_QUEUE_IF_BUSY = 16,
+        MESSAGE_BUS_LISTENER_DROP_IF_BUSY = 32,
+        MESSAGE_BUS_LISTENER_IMMEDIATE = 192
+    }
+
     export namespace timers {
         function globalSpace(): any {
             try { return global; } catch { }
@@ -30,6 +38,7 @@ namespace pxsim {
             clearIntervalFn(id);
         }
     }
+
     export namespace U {
         // Keep these helpers unified with pxtlib/browserutils.ts
         export function containsClass(el: SVGElement | HTMLElement, classes: string) {
