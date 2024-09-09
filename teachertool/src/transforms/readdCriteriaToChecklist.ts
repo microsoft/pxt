@@ -12,10 +12,8 @@ export function readdCriteriaToChecklist(criteriaInstanceId: string) {
     const instance = getCriteriaInstanceWithId(teacherTool, criteriaInstanceId);
     const catalogCriteriaId = instance?.catalogCriteriaId;
     const allCriteria = [...teacherTool.checklist.criteria];
-    console.log("all of the criteria", allCriteria);
     const criteriaIndex = allCriteria.findIndex(c => c.instanceId === criteriaInstanceId);
     allCriteria[criteriaIndex].deleted = false;
-    console.log("all of the criteria after deletion", allCriteria);
 
     const newChecklist = {
         ...teacherTool.checklist,

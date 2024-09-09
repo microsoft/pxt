@@ -19,6 +19,7 @@ import { setEvalResult } from "../transforms/setEvalResult";
 import { showToast } from "../transforms/showToast";
 import { makeToast } from "../utils";
 import { readdCriteriaToChecklist } from "../transforms/readdCriteriaToChecklist";
+import { dismissToast } from "../state/actions";
 
 interface CriteriaResultNotesProps {
     criteriaId: string;
@@ -77,9 +78,13 @@ const CriteriaResultError: React.FC<CriteriaResultErrorProps> = ({ criteriaInsta
     );
 };
 
-export const UndoDeleteCriteriaButton: React.FC<{ criteriaId: string }> = ({ criteriaId }) => {
+const UndoDeleteCriteriaButton: React.FC<{ criteriaId: string, toastId: string }> = ({ criteriaId, toastId }) => {
+    const { dispatch } = useContext(AppStateContext);
     const handleUndoClicked = () => {
         readdCriteriaToChecklist(criteriaId);
+        if (toastId) {
+            dispatch(dismissToast(toastId));
+        }
     }
 
     return (
@@ -108,7 +113,9 @@ const CriteriaResultToolbarTray: React.FC<{ criteriaId: string }> = ({ criteriaI
 
     async function handleDeleteClickedAsync() {
         removeCriteriaFromChecklist(criteriaId);
-        showToast(makeToast("info", Strings.CriteriaDeleted, 500000, <UndoDeleteCriteriaButton criteriaId={criteriaId} />));
+        const toast = makeToast("info", Strings.CriteriaDeleted);
+        toast.jsx = <UndoDeleteCriteriaButton criteriaId={criteriaId} toastId={toast.id} />;
+        showToast(toast);
     }
 
     return (
