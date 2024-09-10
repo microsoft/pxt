@@ -4,7 +4,7 @@ import { setChecklist } from "./setChecklist";
 import { Ticks } from "../constants";
 import { getCriteriaInstanceWithId } from "../state/helpers";
 
-export function readdCriteriaToChecklist(criteriaInstanceId: string) {
+export function reAddCriteriaToChecklist(criteriaInstanceId: string) {
     const { state: teacherTool } = stateAndDispatch();
 
     logDebug(`Re-adding criteria with id: ${criteriaInstanceId}`);

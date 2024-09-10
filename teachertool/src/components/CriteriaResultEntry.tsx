@@ -18,7 +18,7 @@ import { Button } from "react-common/components/controls/Button";
 import { setEvalResult } from "../transforms/setEvalResult";
 import { showToast } from "../transforms/showToast";
 import { makeToast } from "../utils";
-import { readdCriteriaToChecklist } from "../transforms/readdCriteriaToChecklist";
+import { reAddCriteriaToChecklist } from "../transforms/reAddCriteriaToChecklist";
 import { dismissToast } from "../state/actions";
 import { softDeleteCriteriaFromChecklist } from "../transforms/softDeleteCriteriaFromChecklist";
 
@@ -82,7 +82,7 @@ const CriteriaResultError: React.FC<CriteriaResultErrorProps> = ({ criteriaInsta
 const UndoDeleteCriteriaButton: React.FC<{ criteriaId: string, toastId: string }> = ({ criteriaId, toastId }) => {
     const { dispatch } = useContext(AppStateContext);
     const handleUndoClicked = () => {
-        readdCriteriaToChecklist(criteriaId);
+        reAddCriteriaToChecklist(criteriaId);
         if (toastId) {
             dispatch(dismissToast(toastId));
         }
