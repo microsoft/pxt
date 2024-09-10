@@ -6,7 +6,7 @@
             "template": "Ask AI: ${question}",
             "description": "Experimental: AI outputs may not be accurate. Use with caution and always review responses.",
             "docPath": "/teachertool",
-            "maxCount": 10,
+            "maxCount": 5,
             "tags": ["General"],
             "requestFeedback": true,
             "params": [

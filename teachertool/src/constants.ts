@@ -51,7 +51,8 @@ export namespace Strings {
     export const UnexpectedError = lf("An unexpected error occurred");
     export const Dismiss = lf("Dismiss");
     export const EvaluationComplete = lf("Evaluation complete");
-    export const UnableToEvaluatePartial = lf("Unable to evaluate some criteria")
+    export const UnableToEvaluatePartial = lf("Unable to evaluate some criteria");
+    export const GiveFeedback = lf("Give Feedback");
 }
 
 export namespace Ticks {
@@ -75,10 +76,11 @@ export namespace Ticks {
     export const CriteriaFeedback = "teachertool.criteriafeedback";
     export const Print = "teachertool.print";
     export const UnhandledEvalError = "teachertool.evaluateerror";
+    export const FeedbackForm = "teachertool.feedbackform";
 }
 
 namespace Misc {
-    export const LearnMoreLink = "https://makecode.com/teachertool"; // TODO: Replace with golink or aka.ms link
+    export const LearnMoreLink = "https://makecode.microbit.org/teachertool"; // TODO: Replace with golink or aka.ms link
 }
 
 export const Constants = Object.assign(Misc, { Strings, Ticks });

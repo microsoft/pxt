@@ -21,6 +21,7 @@
         display: flex;
         align-items: center;
         cursor: pointer;
+
         .logo {
             height: 1.4rem;
             margin: 0 1rem;
@@ -31,11 +32,13 @@
         display: flex;
         align-items: center;
         cursor: pointer;
+
         &:before {
             height: 1.5rem;
             border-left: 2px solid var(--pxt-headerbar-foreground);
             content: " ";
         }
+
         .logo {
             height: 1.1rem;
             margin: 0 1rem;
@@ -72,7 +75,7 @@
         }
 
         div[class*="common-menu-dropdown-pane"] {
-            border-radius: 0 0  0.25rem 0.25rem;
+            border-radius: 0 0 0.25rem 0.25rem;
             box-shadow: 0 1px 3px 0 var(--pxt-page-foreground-shadow);
             background: var(--pxt-page-background);
             padding: 0.15rem;
@@ -105,4 +108,29 @@
     border-radius: 0.25rem;
     font-size: 0.75rem;
     font-weight: bold;
+}
+
+.feedback-btn {
+    color: var(--pxt-headerbar-foreground);
+    margin: 0;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.5rem;
+    font-size: medium;
+    line-height: 2rem;
+
+    i {
+        font-size: larger;
+    }
+
+    &[class~="common-button"] {
+        background-color: var(--pxt-headerbar-background);
+
+        :hover {
+            background-color: var(--pxt-headerbar-background-smoke);
+        }
+    }
+
+    [class~="common-button-label"] {
+        margin-left: 0.3rem;
+    }
 }

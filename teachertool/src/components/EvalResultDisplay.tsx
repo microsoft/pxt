@@ -90,7 +90,6 @@ const ResultsHeader: React.FC<ResultsHeaderProps> = ({ printRef }) => {
                         title={Strings.ExportChecklist}
                         rightIcon="fas fa-download"
                         onClick={handleExportChecklistClicked}
-                        disabled={!isProjectLoaded(teacherTool)}
                     />
                     <Button
                         className={classList("secondary", css["control-button"])}
