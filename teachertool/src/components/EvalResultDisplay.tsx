@@ -13,10 +13,9 @@ import { setChecklistName } from "../transforms/setChecklistName";
 import { Strings, Ticks } from "../constants";
 import { Button } from "react-common/components/controls/Button";
 import { runEvaluateAsync } from "../transforms/runEvaluateAsync";
-import { isProjectLoaded } from "../state/helpers";
 import { showToast } from "../state/actions";
 import { makeToast } from "../utils";
-import { getSafeChecklistName, getActiveCriteria } from "../state/helpers";
+import { isProjectLoaded, getSafeChecklistName, getActiveCriteria } from "../state/helpers";
 import { writeChecklistToFile } from "../services/fileSystemService";
 
 interface ResultsHeaderProps {
@@ -27,6 +26,7 @@ const ResultsHeader: React.FC<ResultsHeaderProps> = ({ printRef }) => {
     const { state: teacherTool } = useContext(AppStateContext);
     const { checklist, projectMetadata } = teacherTool;
     let { name: checklistName } = checklist;
+    const criteriaToExport = getActiveCriteria(teacherTool);
     const [checklistNameInputRef, setChecklistNameInputRef] = useState<HTMLInputElement>();
 
     const handleEvaluateClickedAsync = async () => {
@@ -49,7 +49,7 @@ const ResultsHeader: React.FC<ResultsHeaderProps> = ({ printRef }) => {
 
     const handleExportChecklistClicked = () => {
         pxt.tickEvent(Ticks.ExportChecklist);
-        writeChecklistToFile(checklist);
+        writeChecklistToFile({ name: checklistName, criteria: criteriaToExport });
     };
 
     return (
