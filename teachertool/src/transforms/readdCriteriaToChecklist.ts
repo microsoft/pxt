@@ -7,7 +7,7 @@ import { getCriteriaInstanceWithId } from "../state/helpers";
 export function readdCriteriaToChecklist(criteriaInstanceId: string) {
     const { state: teacherTool } = stateAndDispatch();
 
-    logDebug(`Removing criteria with id: ${criteriaInstanceId}`);
+    logDebug(`Re-adding criteria with id: ${criteriaInstanceId}`);
 
     const instance = getCriteriaInstanceWithId(teacherTool, criteriaInstanceId);
     const catalogCriteriaId = instance?.catalogCriteriaId;
