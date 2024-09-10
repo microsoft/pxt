@@ -4936,7 +4936,7 @@ export async function staticpkgAsync(parsed: commandParser.ParsedCommand) {
         await internalGenDocsAsync(false, true);
         if (locsSrc) {
             const languages = pxt.appTarget?.appTheme?.availableLocales
-                .filter(langId => nodeutil.existsDirSync(path.join(locsSrc, langId)));
+                ?.filter(langId => nodeutil.existsDirSync(path.join(locsSrc, langId))) ?? [];
 
             await crowdin.buildAllTranslationsAsync(async (fileName: string) => {
                 const output: pxt.Map<pxt.Map<string>> = {};
