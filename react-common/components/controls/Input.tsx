@@ -66,6 +66,7 @@ export const Input = (props: InputProps) => {
 
     const [value, setValue] = React.useState(initialValue || "");
     const [expanded, setExpanded] = React.useState(false);
+    const [pattern, setPattern] = React.useState(filter ? new RegExp(filter) : undefined);
 
     let container: HTMLDivElement;
 
@@ -86,9 +87,8 @@ export const Input = (props: InputProps) => {
 
     const changeHandler = (e: React.ChangeEvent<any>) => {
         let newValue = (e.target as any).value;
-        if (newValue && filter) {
-            const pat = new RegExp(filter);
-            newValue = newValue.match(pat)?.join("") || "";
+        if (newValue && pattern) {
+            newValue = newValue.match(pattern)?.join("") || "";
         }
         if (!readOnly && (value !== newValue)) {
             setValue(newValue);
