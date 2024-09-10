@@ -16,7 +16,7 @@ import { runEvaluateAsync } from "../transforms/runEvaluateAsync";
 import { isProjectLoaded } from "../state/helpers";
 import { showToast } from "../state/actions";
 import { makeToast } from "../utils";
-import { getSafeChecklistName } from "../state/helpers";
+import { getSafeChecklistName, getActiveCriteria } from "../state/helpers";
 import { writeChecklistToFile } from "../services/fileSystemService";
 
 interface ResultsHeaderProps {
@@ -115,14 +115,12 @@ const ResultsHeader: React.FC<ResultsHeaderProps> = ({ printRef }) => {
 
 const CriteriaWithResultsTable: React.FC = () => {
     const { state: teacherTool } = useContext(AppStateContext);
-    const { checklist } = teacherTool;
-    const { criteria } = checklist;
+    const criteria = getActiveCriteria(teacherTool);
 
     return (
         <div className={css["results-list"]}>
             {Object.values(criteria).map(criteriaInstance => {
                 return (
-                    !criteriaInstance.deleted &&
                     <CriteriaResultEntry criteriaId={criteriaInstance.instanceId} key={criteriaInstance.instanceId} />
                 );
             })}
