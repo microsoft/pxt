@@ -80,7 +80,7 @@ const CatalogItem: React.FC<CatalogItemProps> = ({ catalogCriteria, recentlyAdde
     const { state: teacherTool } = useContext(AppStateContext);
 
     const existingInstanceCount = teacherTool.checklist.criteria.filter(
-        i => i.catalogCriteriaId === catalogCriteria.id && !i.deleted
+        i => i.catalogCriteriaId === catalogCriteria.id
     ).length;
     const isMaxed = catalogCriteria.maxCount !== undefined && existingInstanceCount >= catalogCriteria.maxCount;
     return catalogCriteria.template ? (

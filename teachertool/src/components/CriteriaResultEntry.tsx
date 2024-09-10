@@ -20,6 +20,7 @@ import { showToast } from "../transforms/showToast";
 import { makeToast } from "../utils";
 import { readdCriteriaToChecklist } from "../transforms/readdCriteriaToChecklist";
 import { dismissToast } from "../state/actions";
+import { softDeleteCriteriaFromChecklist } from "../transforms/softDeleteCriteriaFromChecklist";
 
 interface CriteriaResultNotesProps {
     criteriaId: string;
@@ -112,10 +113,14 @@ const CriteriaResultToolbarTray: React.FC<{ criteriaId: string }> = ({ criteriaI
     }
 
     async function handleDeleteClickedAsync() {
-        removeCriteriaFromChecklist(criteriaId);
-        const toast = makeToast("info", Strings.CriteriaDeleted);
+        const toastTimeout = 5000;
+        softDeleteCriteriaFromChecklist(criteriaId);
+        const toast = makeToast("info", Strings.CriteriaDeleted, toastTimeout);
         toast.jsx = <UndoDeleteCriteriaButton criteriaId={criteriaId} toastId={toast.id} />;
         showToast(toast);
+        setTimeout(() => {
+            removeCriteriaFromChecklist(criteriaId);
+        }, toastTimeout + 500);
     }
 
     return (
