@@ -5,13 +5,12 @@ import { classList } from "react-common/components/util";
 import { CatalogCriteria } from "../types/criteria";
 import { Strings } from "../constants";
 
-export function makeToast(type: ToastType, text: string, timeoutMs: number = 5000, jsx?: React.ReactNode): ToastWithId {
+export function makeToast(type: ToastType, text: string, timeoutMs: number = 5000): ToastWithId {
     return {
         id: nanoid(),
         type,
         text,
         timeoutMs,
-        jsx,
     };
 }
 
