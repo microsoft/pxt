@@ -7,8 +7,8 @@ const os = require("os");
 const path = require("path");
 const fs = require("fs");
 
-const token = process.env["GH_ACCESS_TOKEN"];
-if (process.env["GH_ACCESS_TOKEN"]) {
+const token = process.env["GITHUB_ACCESS_TOKEN"];
+if (process.env["GITHUB_ACCESS_TOKEN"]) {
     console.log("Writing .netrc and .yotta/config.json")
     const home = os.homedir();
 
