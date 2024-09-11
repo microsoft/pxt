@@ -58,9 +58,9 @@ function generateValidatorPlan(
             const systemParam = catalogParam as SystemParameter;
             if (systemParam.key) {
                 param.value = getSystemParameter(systemParam.key, teacherTool);
-                if (!param.value) {
-                    param.value = catalogParam.default;
-                }
+            }
+            if (!param.value) {
+                param.value = catalogParam.default;
             }
         }
 
@@ -68,6 +68,17 @@ function generateValidatorPlan(
             // User didn't set a value for the parameter.
             if (showErrors) {
                 logError(ErrorCode.evalParameterUnset, "Attempting to evaluate criteria with unset parameter value", {
+                    catalogId: criteriaInstance.catalogCriteriaId,
+                    paramName: param.name,
+                });
+            }
+            return undefined;
+        }
+
+        const validationResult = catalogParam.validate(param.value);
+        if (!validationResult.valid) {
+            if (showErrors) {
+                logError(ErrorCode.invalidParameterValue, validationResult.message, {
                     catalogId: criteriaInstance.catalogCriteriaId,
                     paramName: param.name,
                 });

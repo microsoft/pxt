@@ -27,14 +27,24 @@ const InlineInputSegment: React.FC<InlineInputSegmentProps> = ({
     shouldExpand,
     numeric,
 }) => {
-    const [isEmpty, setIsEmpty] = useState(!initialValue);
+    const [errorMessage, setErrorMessage] = useState(initialValue ? "" : Strings.ValueRequired);
 
     function onChange(newValue: string) {
-        setIsEmpty(!newValue);
-        setParameterValue(instance.instanceId, param.name, newValue);
+        if (!newValue) {
+            setErrorMessage(Strings.ValueRequired);
+        }
+
+        // TODO thsparks : rather than a result like this, store in the value object itself (isValid and/or errorMessage)?
+        const setResult = setParameterValue(instance.instanceId, param.name, newValue);
+        if (!setResult.success) {
+            // Message should always be set in this case, but add generic ErrorSettingValue fallback just in case.
+            setErrorMessage(setResult.message || Strings.ErrorSettingValue);
+        } else {
+            setErrorMessage("");
+        }
     }
 
-    const tooltip = isEmpty ? `${param.name}: ${Strings.ValueRequired}` : param.name;
+    const tooltip = errorMessage ? `${param.name}: ${errorMessage}` : param.name;
     return (
         <div title={tooltip} className={css["inline-input-wrapper"]}>
             <Input
@@ -42,9 +52,9 @@ const InlineInputSegment: React.FC<InlineInputSegmentProps> = ({
                     css["inline-input"],
                     numeric ? css["number-input"] : css["string-input"],
                     shouldExpand ? css["long"] : undefined,
-                    isEmpty ? css["error"] : undefined
+                    errorMessage ? css["error"] : undefined
                 )}
-                icon={isEmpty ? "fas fa-exclamation-triangle" : undefined}
+                icon={errorMessage ? "fas fa-exclamation-triangle" : undefined}
                 initialValue={initialValue}
                 onChange={onChange}
                 preserveValueOnBlur={true}

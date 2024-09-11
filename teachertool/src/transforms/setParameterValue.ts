@@ -5,17 +5,23 @@ import { EvaluationStatus } from "../types/criteria";
 import { ErrorCode } from "../types/errorCode";
 import { setEvalResultOutcome } from "./setEvalResultOutcome";
 import { setChecklist } from "./setChecklist";
-import { showToast } from "./showToast";
-import { makeToast } from "../utils";
+import { Strings } from "../constants";
 
-export function setParameterValue(instanceId: string, paramName: string, newValue: any) {
+export interface SetParameterValueResult {
+    success: boolean;
+    message?: string;
+}
+export function setParameterValue(instanceId: string, paramName: string, newValue: any): SetParameterValueResult {
     const { state: teacherTool } = stateAndDispatch();
     logDebug(`Setting parameter '${paramName}' to '${newValue}' for criteria instance '${instanceId}'`);
 
     const oldCriteriaInstance = getCriteriaInstanceWithId(teacherTool, instanceId);
     if (!oldCriteriaInstance) {
         logError(ErrorCode.missingCriteriaInstance, `Unable to find criteria instance with id '${instanceId}'`);
-        return;
+        return {
+            success: false,
+            message: Strings.CriteriaDefinitionCorrupt,
+        };
     }
 
     const oldParam = oldCriteriaInstance.params?.find(p => p.name === paramName);
@@ -24,7 +30,10 @@ export function setParameterValue(instanceId: string, paramName: string, newValu
             ErrorCode.missingParameter,
             `Unable to find parameter with name '${paramName}' in criteria instance '${instanceId}'`
         );
-        return;
+        return {
+            success: false,
+            message: Strings.CriteriaDefinitionCorrupt,
+        }
     }
 
     const paramDef = getParameterDefinition(oldCriteriaInstance.catalogCriteriaId, paramName);
@@ -34,12 +43,18 @@ export function setParameterValue(instanceId: string, paramName: string, newValu
             "Attempting to evaluate criteria with unrecognized parameter",
             { catalogId: oldCriteriaInstance.catalogCriteriaId, paramName }
         );
-        return;
+        return {
+            success: false,
+            message: Strings.CriteriaDefinitionCorrupt,
+        }
     }
-    if (!paramDef.validate(newValue)) {
-        // TODO thsparks : handle appropriately
-        showToast(makeToast("error", "Invalid input value"));
-        return;
+
+    const paramValidation = paramDef.validate(newValue);
+    if (!paramValidation.valid) {
+        return {
+            success: false,
+            message: paramValidation.message,
+        }
     }
 
     const newParam = { ...oldParam, value: newValue };
@@ -54,4 +69,5 @@ export function setParameterValue(instanceId: string, paramName: string, newValu
 
     setChecklist(newChecklist);
     setEvalResultOutcome(instanceId, EvaluationStatus.NotStarted);
+    return { success: true };
 }

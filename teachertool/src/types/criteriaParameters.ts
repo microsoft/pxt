@@ -1,8 +1,13 @@
+import { Strings } from "../constants";
 import { logError } from "../services/loggingService";
 import { ErrorCode } from "./errorCode";
 
 // Represents a parameter definition in a catalog criteria.
 export type CriteriaParameterType = "string" | "longString" | "number" | "block" | "system";
+export interface CriteriaParameterValidationResult {
+    valid: boolean;
+    message?: string
+};
 export class CriteriaParameter {
     name: string;
     type: CriteriaParameterType;
@@ -16,8 +21,8 @@ export class CriteriaParameter {
         this.paths = paths;
     }
 
-    validate(value: any): boolean {
-        return true;
+    validate(value: string): CriteriaParameterValidationResult {
+        return { valid: true };
     }
 }
 
@@ -29,8 +34,14 @@ export class BaseStringParameter extends CriteriaParameter {
         this.maxCharacters = maxCharacters;
     }
 
-    override validate(value: any): boolean {
-        return typeof value === "string" && (!this.maxCharacters || value.length <= this.maxCharacters);
+    override validate(value: string): CriteriaParameterValidationResult {
+        if (!value?.trim()) {
+            return { valid: false, message: Strings.ValueRequired };
+        }
+        if (this.maxCharacters && value.length > this.maxCharacters) {
+            return { valid: false, message: Strings.ExceedsMaxLength };
+        }
+        return { valid: true };
     }
 }
 
@@ -56,10 +67,28 @@ export class NumberParameter extends CriteriaParameter {
         this.max = max;
     }
 
-    override validate(value: any): boolean {
+    override validate(value: any): CriteriaParameterValidationResult {
         // Ensure the value is numeric and within the specified range.
         const num = Number(value);
-        return !isNaN(num) && (!this.min || num >= this.min) && (!this.max || num <= this.max);
+        if (isNaN(num)) {
+            return {
+                valid: false,
+                message: Strings.MustBeANumber
+            };
+        }
+        if (this.min && num < this.min) {
+            return {
+                valid: false,
+                message: Strings.BelowMin
+            };
+        }
+        if (this.max && num > this.max) {
+            return {
+                valid: false,
+                message: Strings.ExceedsMax
+            };
+        }
+        return { valid: true };
     }
 }
 
