@@ -34,7 +34,7 @@ const InlineInputSegment: React.FC<InlineInputSegmentProps> = ({
         setParameterValue(instance.instanceId, param.name, newValue);
     }
 
-    const tooltip = isEmpty ? `"${param.name}: ${Strings.ValueRequired}` : param.name;
+    const tooltip = isEmpty ? `${param.name}: ${Strings.ValueRequired}` : param.name;
     return (
         <div title={tooltip} className={css["inline-input-wrapper"]}>
             <Input
@@ -51,7 +51,7 @@ const InlineInputSegment: React.FC<InlineInputSegmentProps> = ({
                 placeholder={numeric ? "0" : param.name}
                 title={tooltip}
                 autoComplete={false}
-                type={numeric ? "number" : "text"}
+                filter={numeric ? "[0-9]{1,2}" : undefined}
             />
         </div>
     );
