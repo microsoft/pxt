@@ -462,7 +462,7 @@ function decompileSnippetsCoreAsync(opts: pxtc.CompileOptions): Promise<string[]
     return workerOpAsync("decompileSnippets", { options: opts })
 }
 
-export function workerOpAsync<T extends keyof pxtc.service.ServiceOps>(op: T, arg: pxtc.service.OpArg): Promise<any> {
+export function workerOpAsync<T extends keyof pxtc.service.ServiceOps>(op: T, arg: pxtc.service.OpArg): Promise<ReturnType<pxtc.service.ServiceOps[T]>> {
     const startTm = Date.now()
     pxt.debug("worker op: " + op)
     return pxt.worker.getWorker(pxt.webConfig.workerjs)
@@ -544,27 +544,31 @@ export function snippetAsync(qName: string, python?: boolean): Promise<string> {
     return initStep.then(() => workerOpAsync("snippet", {
         snippet: { qName, python },
         runtime: pxt.appTarget.runtime
-    })).then(res => res as string)
+    }));
 }
 
 export async function typecheckAsync(): Promise<pxtc.CompileResult> {
     const epkg = pkg.mainEditorPkg();
     const isFirstTypeCheck = !firstTypecheck;
-    let p = epkg.buildAssetsAsync()
-        .then(() => pkg.mainPkg.getCompileOptionsAsync())
-        .then(opts => {
-            opts.testMode = true // show errors in all top-level code
-            return workerOpAsync("setOptions", { options: opts })
-        })
-        .then(() => workerOpAsync("allDiags", {}) as Promise<pxtc.CompileResult>)
-        .then(r => { setDiagnostics("typecheck", r.diagnostics, r.sourceMap); return r; })
-        .then(r => {
+    const p = (async () => {
+        try {
+            await epkg.buildAssetsAsync();
+            const opts = await pkg.mainPkg.getCompileOptionsAsync();
+            // show errors in all top-level code
+            opts.testMode = true;
+            await workerOpAsync("setOptions", { options: opts });
+            const r = await workerOpAsync("allDiags", {});
+            setDiagnostics("typecheck", r.diagnostics, r.sourceMap);
             if (isFirstTypeCheck) {
                 refreshLanguageServiceApisInfo();
+                await ensureApisInfoAsync();
             }
-            return ensureApisInfoAsync().then(() => r);
-        })
-        .catch(catchUserErrorAndSetDiags(null))
+            return r;
+        } catch (e) {
+            catchUserErrorAndSetDiags(null);
+            return undefined;
+        }
+    })();
     if (isFirstTypeCheck) firstTypecheck = p;
     return p;
 }
