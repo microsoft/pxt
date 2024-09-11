@@ -14,25 +14,24 @@ export async function loadCatalogAsync() {
     const { dispatch } = stateAndDispatch();
     const fullCatalog = await loadTestableCollectionFromDocsAsync<CatalogCriteria>(prodFiles, "criteria");
 
-    // Re-instantiate catalog parameters into their more specific types
     for (const criteria of fullCatalog) {
         for (let i = 0; i < (criteria.params?.length ?? 0); i++) {
-            const param = criteria.params![i];
-            criteria.params![i] = createSpecificParameter(param, criteria.id);
-        }
-    }
+            // Re-instantiate parameter into its more specific type.
+            // If we don't do this, parameters will all have the base CriteriaParameter
+            // validate function instead of their more specific overloads.
+            const newParam = createSpecificParameter(criteria.params![i], criteria.id);
 
-    fullCatalog.forEach(c => {
-        // Convert parameter names to lower-case for case-insensitive matching
-        c.params?.forEach(p => {
-            p.name = p.name.toLocaleLowerCase();
-        });
+            // Convert to lower-case for case-insensitive matching
+            newParam.name = newParam.name.toLocaleLowerCase();
+
+            criteria.params![i] = newParam;
+        }
 
         // Add default tag if none are present
-        if (!c.tags || c.tags.length === 0) {
-            c.tags = [Strings.Other];
+        if (!criteria.tags || criteria.tags.length === 0) {
+            criteria.tags = [Strings.Other];
         }
-    });
+    }
 
     dispatch(Actions.setCatalog(fullCatalog));
 }
