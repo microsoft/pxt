@@ -1,6 +1,25 @@
 import { logError } from "../services/loggingService";
-import { CriteriaParameter, CriteriaParameterType } from "./criteria";
 import { ErrorCode } from "./errorCode";
+
+// Represents a parameter definition in a catalog criteria.
+export type CriteriaParameterType = "string" | "longString" | "number" | "block" | "system";
+export class CriteriaParameter {
+    name: string;
+    type: CriteriaParameterType;
+    default: string | undefined;
+    paths: string[]; // The json path(s) to update with the parameter value in the catalog criteria.
+
+    constructor(name: string, type: CriteriaParameterType, paths: string[], defaultValue?: string) {
+        this.name = name;
+        this.type = type;
+        this.default = defaultValue;
+        this.paths = paths;
+    }
+
+    validate(value: any): boolean {
+        return true;
+    }
+}
 
 export class BaseStringParameter extends CriteriaParameter {
     maxCharacters: number | undefined;

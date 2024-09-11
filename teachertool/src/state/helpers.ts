@@ -1,10 +1,11 @@
 import { logError } from "../services/loggingService";
-import { CatalogCriteria, CriteriaInstance, CriteriaParameter } from "../types/criteria";
+import { CatalogCriteria, CriteriaInstance } from "../types/criteria";
 import { ErrorCode } from "../types/errorCode";
 import { Checklist } from "../types/checklist";
 import { stateAndDispatch } from "./appStateContext";
 import { AppState } from "./state";
 import { Strings } from "../constants";
+import { CriteriaParameter } from "../types/criteriaParameters";
 
 export function getCatalogCriteriaWithId(id: string): CatalogCriteria | undefined {
     const { state } = stateAndDispatch();

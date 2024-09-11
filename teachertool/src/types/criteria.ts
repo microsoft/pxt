@@ -1,4 +1,5 @@
 import { UserFeedback } from ".";
+import { CriteriaParameter } from "./criteriaParameters";
 
 // A criteria defined in the catalog of all possible criteria for the user to choose from when creating a checklist.
 export interface CatalogCriteria {
@@ -20,27 +21,6 @@ export interface CriteriaInstance {
     instanceId: string;
     params: CriteriaParameterValue[] | undefined;
     userFeedback?: UserFeedback;
-}
-
-// TODO move criteria parameter types to the criteriaParameters.ts file
-// Represents a parameter definition in a catalog criteria.
-export type CriteriaParameterType = "string" | "longString" | "number" | "block" | "system";
-export class CriteriaParameter {
-    name: string;
-    type: CriteriaParameterType;
-    default: string | undefined;
-    paths: string[]; // The json path(s) to update with the parameter value in the catalog criteria.
-
-    constructor(name: string, type: CriteriaParameterType, paths: string[], defaultValue?: string) {
-        this.name = name;
-        this.type = type;
-        this.default = defaultValue;
-        this.paths = paths;
-    }
-
-    validate(value: any): boolean {
-        return true;
-    }
 }
 
 // Represents a parameter value in a criteria instance.
