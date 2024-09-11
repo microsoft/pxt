@@ -53,7 +53,6 @@ export namespace Strings {
     export const EvaluationComplete = lf("Evaluation complete");
     export const UnableToEvaluatePartial = lf("Unable to evaluate some criteria");
     export const GiveFeedback = lf("Give Feedback");
-    export const CriteriaDefinitionCorrupt = lf("Criteria definition is corrupt");
     export const ExceedsMaxLength = lf("Exceeds maximum length");
     export const MustBeANumber = lf("Must be a number");
     export const BelowMin = lf("Below minimum value");
