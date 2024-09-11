@@ -2,12 +2,14 @@ import { Strings } from "../constants";
 import { logError } from "../services/loggingService";
 import { ErrorCode } from "./errorCode";
 
-// Represents a parameter definition in a catalog criteria.
 export type CriteriaParameterType = "string" | "longString" | "number" | "block" | "system";
+
 export interface CriteriaParameterValidationResult {
     valid: boolean;
     message?: string
 };
+
+// Represents a parameter definition in a catalog criteria.
 export class CriteriaParameter {
     name: string;
     type: CriteriaParameterType;
