@@ -36,27 +36,6 @@ export function setParameterValue(instanceId: string, paramName: string, newValu
         }
     }
 
-    const paramDef = getParameterDefinition(oldCriteriaInstance.catalogCriteriaId, paramName);
-    if (!paramDef) {
-        logError(
-            ErrorCode.evalMissingCatalogParameter,
-            "Attempting to evaluate criteria with unrecognized parameter",
-            { catalogId: oldCriteriaInstance.catalogCriteriaId, paramName }
-        );
-        return {
-            success: false,
-            message: Strings.CriteriaDefinitionCorrupt,
-        }
-    }
-
-    const paramValidation = paramDef.validate(newValue);
-    if (!paramValidation.valid) {
-        return {
-            success: false,
-            message: paramValidation.message,
-        }
-    }
-
     const newParam = { ...oldParam, value: newValue };
     const newCriteriaInstance = {
         ...oldCriteriaInstance,

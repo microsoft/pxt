@@ -58,7 +58,7 @@ export namespace Strings {
     export const MustBeANumber = lf("Must be a number");
     export const BelowMin = lf("Below minimum value");
     export const ExceedsMax = lf("Exceeds maximum value");
-    export const ErrorSettingValue = lf("Error setting value");
+    export const InvalidValue = lf("Invalid value");
 }
 
 export namespace Ticks {
