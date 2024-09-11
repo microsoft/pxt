@@ -13,6 +13,7 @@ import { mergeEvalResult } from "./mergeEvalResult";
 import { setEvalResult } from "./setEvalResult";
 import { setUserFeedback } from "./setUserFeedback";
 import { Strings, Ticks } from "../constants";
+import { SystemParameter } from "../types/criteriaParameters";
 
 function generateValidatorPlan(
     criteriaInstance: CriteriaInstance,
@@ -53,10 +54,13 @@ function generateValidatorPlan(
             return undefined;
         }
 
-        if (catalogParam.type === "system" && catalogParam.key) {
-            param.value = getSystemParameter(catalogParam.key, teacherTool);
-            if (!param.value) {
-                param.value = catalogParam.default;
+        if (catalogParam.type === "system") {
+            const systemParam = catalogParam as SystemParameter;
+            if (systemParam.key) {
+                param.value = getSystemParameter(systemParam.key, teacherTool);
+                if (!param.value) {
+                    param.value = catalogParam.default;
+                }
             }
         }
 

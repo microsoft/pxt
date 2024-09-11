@@ -32,4 +32,5 @@ export enum ErrorCode {
     signInFailed = "signInFailed",
     loginApiError = "loginApiError",
     authCheckFailed = "authCheckFailed",
+    unrecognizedParameterType = "unrecognizedParameterType",
 }

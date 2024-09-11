@@ -1,10 +1,12 @@
 import { logDebug, logError } from "../services/loggingService";
 import { stateAndDispatch } from "../state";
-import { getCriteriaInstanceWithId } from "../state/helpers";
+import { getParameterDefinition, getCriteriaInstanceWithId } from "../state/helpers";
 import { EvaluationStatus } from "../types/criteria";
 import { ErrorCode } from "../types/errorCode";
 import { setEvalResultOutcome } from "./setEvalResultOutcome";
 import { setChecklist } from "./setChecklist";
+import { showToast } from "./showToast";
+import { makeToast } from "../utils";
 
 export function setParameterValue(instanceId: string, paramName: string, newValue: any) {
     const { state: teacherTool } = stateAndDispatch();
@@ -22,6 +24,21 @@ export function setParameterValue(instanceId: string, paramName: string, newValu
             ErrorCode.missingParameter,
             `Unable to find parameter with name '${paramName}' in criteria instance '${instanceId}'`
         );
+        return;
+    }
+
+    const paramDef = getParameterDefinition(oldCriteriaInstance.catalogCriteriaId, paramName);
+    if (!paramDef) {
+        logError(
+            ErrorCode.evalMissingCatalogParameter,
+            "Attempting to evaluate criteria with unrecognized parameter",
+            { catalogId: oldCriteriaInstance.catalogCriteriaId, paramName }
+        );
+        return;
+    }
+    if (!paramDef.validate(newValue)) {
+        // TODO thsparks : handle appropriately
+        showToast(makeToast("error", "Invalid input value"));
         return;
     }
 
