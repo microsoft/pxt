@@ -22,6 +22,7 @@ export interface InputProps extends ControlProps {
     handleInputRef?: React.RefObject<HTMLInputElement> | ((ref: HTMLInputElement) => void);
     preserveValueOnBlur?: boolean;
     options?: pxt.Map<string>;
+    filter?: string;
 
     onChange?: (newValue: string) => void;
     onEnterKey?: (value: string) => void;
@@ -62,8 +63,9 @@ export const Input = (props: InputProps) => {
         options
     } = props;
 
-    const [value, setValue] = React.useState(undefined);
+    const [value, setValue] = React.useState(initialValue || "");
     const [expanded, setExpanded] = React.useState(false);
+    const [filter] = React.useState(props.filter ? new RegExp(props.filter) : undefined);
 
     let container: HTMLDivElement;
 
@@ -83,7 +85,10 @@ export const Input = (props: InputProps) => {
     }
 
     const changeHandler = (e: React.ChangeEvent<any>) => {
-        const newValue = (e.target as any).value;
+        let newValue = (e.target as any).value;
+        if (newValue && filter) {
+            newValue = newValue.match(filter)?.join("") || "";
+        }
         if (!readOnly && (value !== newValue)) {
             setValue(newValue);
         }
@@ -147,7 +152,7 @@ export const Input = (props: InputProps) => {
 
         const value = options[option];
         setValue(value);
-        if (onOptionSelected) { 
+        if (onOptionSelected) {
             onOptionSelected(value);
         }
 
@@ -174,7 +179,7 @@ export const Input = (props: InputProps) => {
                     aria-hidden={ariaHidden}
                     type={type || "text"}
                     placeholder={placeholder}
-                    value={value !== undefined ? value : (initialValue || "")}
+                    value={value}
                     readOnly={!!readOnly}
                     onClick={clickHandler}
                     onChange={changeHandler}
