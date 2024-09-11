@@ -35,9 +35,8 @@ export class BaseStringParameter extends CriteriaParameter {
     }
 
     override validate(value: string): CriteriaParameterValidationResult {
-        if (!value?.trim()) {
-            return { valid: false, message: Strings.ValueRequired };
-        }
+        if (!value) return { valid: true }; // Unset is okay for initial value
+
         if (this.maxCharacters && value.length > this.maxCharacters) {
             return { valid: false, message: Strings.ExceedsMaxLength };
         }
