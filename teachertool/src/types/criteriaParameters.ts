@@ -6,8 +6,8 @@ export type CriteriaParameterType = "string" | "longString" | "number" | "block"
 
 export interface CriteriaParameterValidationResult {
     valid: boolean;
-    message?: string
-};
+    message?: string;
+}
 
 // Represents a parameter definition in a catalog criteria.
 export class CriteriaParameter {
@@ -31,7 +31,13 @@ export class CriteriaParameter {
 export class BaseStringParameter extends CriteriaParameter {
     maxCharacters: number | undefined;
 
-    constructor(name: string, type: CriteriaParameterType, paths: string[], defaultValue?: string, maxCharacters?: number) {
+    constructor(
+        name: string,
+        type: CriteriaParameterType,
+        paths: string[],
+        defaultValue?: string,
+        maxCharacters?: number
+    ) {
         super(name, type, paths, defaultValue);
         this.maxCharacters = maxCharacters;
     }
@@ -74,19 +80,19 @@ export class NumberParameter extends CriteriaParameter {
         if (isNaN(num)) {
             return {
                 valid: false,
-                message: Strings.MustBeANumber
+                message: Strings.MustBeANumber,
             };
         }
         if (this.min && num < this.min) {
             return {
                 valid: false,
-                message: Strings.BelowMin
+                message: Strings.BelowMin,
             };
         }
         if (this.max && num > this.max) {
             return {
                 valid: false,
-                message: Strings.ExceedsMax
+                message: Strings.ExceedsMax,
             };
         }
         return { valid: true };
