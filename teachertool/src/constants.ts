@@ -53,6 +53,8 @@ export namespace Strings {
     export const EvaluationComplete = lf("Evaluation complete");
     export const UnableToEvaluatePartial = lf("Unable to evaluate some criteria");
     export const GiveFeedback = lf("Give Feedback");
+    export const CriteriaDeleted = lf("Criteria Deleted");
+    export const Undo = lf("Undo");
 }
 
 export namespace Ticks {

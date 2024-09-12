@@ -11,6 +11,10 @@ export function getCatalogCriteriaWithId(id: string): CatalogCriteria | undefine
     return state.catalog?.find(c => c.id === id);
 }
 
+export function getActiveCriteria(state: AppState): CriteriaInstance[] {
+    return state.checklist.criteria.filter(c => !c.deleted);
+}
+
 export function getCriteriaInstanceWithId(state: AppState, id: string): CriteriaInstance | undefined {
     return state.checklist.criteria.find(c => c.instanceId === id);
 }

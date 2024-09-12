@@ -43,6 +43,7 @@
         gap: 0.5rem;
         padding: 0.75rem;
         font-size: 1.125rem;
+        align-items: center;
 
         .icon-container {
             display: flex;
@@ -72,7 +73,8 @@
 
         .text-container {
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
+            align-items: center;
             text-align: left;
 
             .text {
@@ -84,6 +86,11 @@
 
             .detail {
                 font-size: 0.875rem;
+            }
+
+            .custom-jsx {
+                pointer-events: auto;
+                margin-left: 1rem;
             }
         }
 

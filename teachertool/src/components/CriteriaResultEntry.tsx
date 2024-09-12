@@ -18,6 +18,9 @@ import { Button } from "react-common/components/controls/Button";
 import { setEvalResult } from "../transforms/setEvalResult";
 import { showToast } from "../transforms/showToast";
 import { makeToast } from "../utils";
+import { reAddCriteriaToChecklist } from "../transforms/reAddCriteriaToChecklist";
+import { dismissToast } from "../state/actions";
+import { softDeleteCriteriaFromChecklist } from "../transforms/softDeleteCriteriaFromChecklist";
 
 interface CriteriaResultNotesProps {
     criteriaId: string;
@@ -76,6 +79,25 @@ const CriteriaResultError: React.FC<CriteriaResultErrorProps> = ({ criteriaInsta
     );
 };
 
+const UndoDeleteCriteriaButton: React.FC<{ criteriaId: string, toastId: string }> = ({ criteriaId, toastId }) => {
+    const { dispatch } = useContext(AppStateContext);
+    const handleUndoClicked = () => {
+        reAddCriteriaToChecklist(criteriaId);
+        if (toastId) {
+            dispatch(dismissToast(toastId));
+        }
+    }
+
+    return (
+        <Button
+            className="undo-button"
+            title={Strings.Undo}
+            label={Strings.Undo}
+            onClick={handleUndoClicked}
+        />
+    )
+}
+
 const CriteriaResultToolbarTray: React.FC<{ criteriaId: string }> = ({ criteriaId }) => {
     const { state: teacherTool } = useContext(AppStateContext);
 
@@ -91,9 +113,14 @@ const CriteriaResultToolbarTray: React.FC<{ criteriaId: string }> = ({ criteriaI
     }
 
     async function handleDeleteClickedAsync() {
-        if (confirm(Strings.ConfirmDeleteCriteriaInstance)) {
+        const toastTimeout = 5000;
+        softDeleteCriteriaFromChecklist(criteriaId);
+        const toast = makeToast("info", Strings.CriteriaDeleted, toastTimeout);
+        toast.jsx = <UndoDeleteCriteriaButton criteriaId={criteriaId} toastId={toast.id} />;
+        showToast(toast);
+        setTimeout(() => {
             removeCriteriaFromChecklist(criteriaId);
-        }
+        }, toastTimeout + 500);
     }
 
     return (

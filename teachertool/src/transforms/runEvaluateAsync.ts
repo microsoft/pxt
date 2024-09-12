@@ -4,6 +4,7 @@ import { showToast } from "./showToast";
 import { setActiveTab } from "./setActiveTab";
 import { runSingleEvaluateAsync } from "./runSingleEvaluateAsync";
 import { Strings } from "../constants";
+import { getActiveCriteria } from "../state/helpers";
 
 export async function runEvaluateAsync(fromUserInteraction: boolean) {
     const { state: teacherTool } = stateAndDispatch();
@@ -17,7 +18,9 @@ export async function runEvaluateAsync(fromUserInteraction: boolean) {
         setActiveTab("results");
     }
 
-    const evalRequests = teacherTool.checklist.criteria.map(criteriaInstance =>
+    const activeCriteria = getActiveCriteria(teacherTool);
+
+    const evalRequests = activeCriteria.map(criteriaInstance =>
         runSingleEvaluateAsync(criteriaInstance.instanceId, fromUserInteraction)
     );
 

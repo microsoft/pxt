@@ -4,20 +4,21 @@ import { setChecklist } from "./setChecklist";
 import { Ticks } from "../constants";
 import { getCriteriaInstanceWithId } from "../state/helpers";
 
-export function removeCriteriaFromChecklist(criteriaInstanceId: string) {
+export function softDeleteCriteriaFromChecklist(criteriaInstanceId: string) {
     const { state: teacherTool } = stateAndDispatch();
 
-    logDebug(`Removing criteria with id: ${criteriaInstanceId}`);
+    logDebug(`Soft deleting criteria with id: ${criteriaInstanceId}`);
 
     const instance = getCriteriaInstanceWithId(teacherTool, criteriaInstanceId);
     const catalogCriteriaId = instance?.catalogCriteriaId;
+    const allCriteria = [...teacherTool.checklist.criteria];
+    const criteriaIndex = allCriteria.findIndex(c => c.instanceId === criteriaInstanceId);
+    allCriteria[criteriaIndex].deleted = true;
+
 
     const newChecklist = {
         ...teacherTool.checklist,
-        criteria: teacherTool.checklist.criteria.filter(c =>
-            c.instanceId !== criteriaInstanceId ||
-            c.instanceId === criteriaInstanceId && !c.deleted
-        ),
+        criteria: allCriteria,
     };
 
     setChecklist(newChecklist);
