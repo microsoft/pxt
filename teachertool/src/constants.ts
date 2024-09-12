@@ -32,7 +32,6 @@ export namespace Strings {
     export const Continue = lf("Continue");
     export const Loading = lf("Loading...");
     export const Close = lf("Close");
-    export const Max = lf("Max");
     export const AddToChecklist = lf("Add to Checklist");
     export const SelectCriteriaDescription = lf("Select the criteria you'd like to include");
     export const Checklist = lf("Checklist");
@@ -53,6 +52,7 @@ export namespace Strings {
     export const EvaluationComplete = lf("Evaluation complete");
     export const UnableToEvaluatePartial = lf("Unable to evaluate some criteria");
     export const GiveFeedback = lf("Give Feedback");
+    export const MaxReached = lf("Maximum count reached for this item");
 }
 
 export namespace Ticks {
