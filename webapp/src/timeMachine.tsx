@@ -362,21 +362,31 @@ function formatTime(time: number) {
 }
 
 function formatDate(time: number) {
+    const oneDay = 1000 * 60 * 60 * 24;
+
     const now = new Date();
     const nowYear = now.getFullYear();
     const nowMonth = now.getMonth();
     const nowDay = now.getDate();
 
-    const date = new Date(time);
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    const day = date.getDate();
+    const today = new Date(nowYear, nowMonth, nowDay);
+    const yesterday = new Date(today.getTime() - oneDay);
+    const oneWeekAgo = new Date(today.getTime() - oneDay * 7);
 
-    const diff = Date.now() - time;
-    const oneDay = 1000 * 60 * 60 * 24;
+    const editTime = new Date(time);
+    const editDay = new Date(editTime.getFullYear(), editTime.getMonth(), editTime.getDate());
 
-    if (year !== nowYear) {
-        return date.toLocaleDateString(
+    if (time >= today.getTime()) {
+        return lf("Today");
+    }
+    else if (time >= yesterday.getTime()) {
+        return lf("Yesterday")
+    }
+    else if (time >= oneWeekAgo.getTime()) {
+        return lf("{0} days ago", Math.floor((today.getTime() - editDay.getTime()) / oneDay));
+    }
+    else if (editDay.getFullYear() !== today.getFullYear()) {
+        return editTime.toLocaleDateString(
             pxt.U.userLanguage(),
             {
                 year: "numeric",
@@ -385,17 +395,8 @@ function formatDate(time: number) {
             }
         );
     }
-    else if (nowMonth === month && nowDay === day) {
-        return lf("Today");
-    }
-    else if (diff < oneDay * 2) {
-        return lf("Yesterday")
-    }
-    else if (diff < oneDay * 8) {
-        return lf("{0} days ago", Math.floor(diff / oneDay))
-    }
     else {
-        return date.toLocaleDateString(
+        return editTime.toLocaleDateString(
             pxt.U.userLanguage(),
             {
                 month: "short",
@@ -439,7 +440,7 @@ function getTimelineEntries(history: HistoryFile): TimelineEntry[] {
 
     const createTimeEntry = (timestamp: number, kind: "snapshot" | "diff" | "share") => {
         const date = new Date(timestamp);
-        const key = new Date(date.getFullYear(), date.getMonth(), date.getDay()).getTime();
+        const key = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
 
         if (!buckets[key]) {
             buckets[key] = [];
