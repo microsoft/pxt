@@ -746,6 +746,7 @@ declare namespace ts.pxtc {
         utf8?: boolean;
         switches: CompileSwitches;
         deployDrives?: string; // partial name of drives where the .hex file should be copied
+        fileDeployPaths?: pxt.Map<string>; // Path IDs => path for file deployments
         deployFileMarker?: string;
         shortPointers?: boolean; // set to true for 16 bit pointers
         flashCodeAlign?: number; // defaults to 1k

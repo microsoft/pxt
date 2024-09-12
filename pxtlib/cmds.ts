@@ -36,6 +36,7 @@ namespace pxt.commands {
     export let showProgramTooLargeErrorAsync: (variants: string[], confirmAsync: (options: any) => Promise<number>, saveOnly?: boolean) => Promise<RecompileOptions>;
     export let saveProjectAsync: (project: pxt.cpp.HexFile) => Promise<void> = undefined;
     export let electronDeployAsync: (r: ts.pxtc.CompileResult) => Promise<void> = undefined; // A pointer to the Electron deploy function, so that targets can access it in their extension.ts
+    export let electronFileDeployAsync: (deployRequest: pxt.electron.FileDeployRequest) => Promise<void> = undefined; // A pointer to the Electron file deploy function, so that targets can access it in their extension.ts
     export let webUsbPairDialogAsync: (pairAsync: () => Promise<boolean>, confirmAsync: (options: any) => Promise<WebUSBPairResult>, implicitlyCalled?: boolean) => Promise<WebUSBPairResult> = undefined;
     export let onTutorialCompleted: () => void = undefined;
     export let workspaceLoadedAsync: () => Promise<void> = undefined;

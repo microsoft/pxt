@@ -480,6 +480,7 @@ export async function initAsync() {
         log(`deploy: electron`);
         pxt.commands.deployCoreAsync = electron.driveDeployAsync;
         pxt.commands.electronDeployAsync = electron.driveDeployAsync;
+        pxt.commands.electronFileDeployAsync = electron.deployFilesAsync;
     } else if (webUSBSupported) {
         log(`deploy: webusb`);
         pxt.commands.deployCoreAsync = hidDeployCoreAsync;
