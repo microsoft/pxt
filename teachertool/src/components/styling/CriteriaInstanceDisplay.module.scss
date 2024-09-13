@@ -28,6 +28,7 @@
 
     .segment-container {
         display: flex;
+        flex-wrap: wrap;
         flex-direction: row;
         align-items: flex-start;
         justify-content: flex-start;
@@ -158,7 +159,8 @@
     .criteria-description {
         color: var(--pxt-page-foreground-light);
         margin-top: 0.2rem;
-        width: -webkit-fill-available;
+        width: 100%; // For non-webkit browsers
+        width: -webkit-fill-available; // Webkit browsers
 
         &.for-print {
             font-style: italic;
