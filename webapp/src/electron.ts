@@ -157,6 +157,7 @@ export async function deployFilesAsync(deployRequest: pxt.electron.FileDeployReq
         await fileDeployDeferred.promise
     } catch (e) {
         pxt.tickEvent("electron.filedeploy.failed");
+        throw e;
     } finally {
         fileDeployDeferred = null;
     }
