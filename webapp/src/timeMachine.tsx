@@ -223,8 +223,13 @@ export const TimeMachine = (props: TimeMachineProps) => {
         "controller",
         "skillsMap",
         "noproject",
-        "nocookiebanner"
+        "nocookiebanner",
     ];
+
+    const localToken = pxt.storage.getLocal("local_token");
+    if (localToken) {
+        queryParams.push(`local_token=${localToken}`);
+    }
 
     if (pxt.appTarget?.appTheme.timeMachineQueryParams) {
         queryParams = queryParams.concat(pxt.appTarget.appTheme.timeMachineQueryParams);
