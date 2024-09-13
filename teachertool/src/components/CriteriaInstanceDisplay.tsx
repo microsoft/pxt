@@ -12,6 +12,7 @@ import { AppStateContext } from "../state/appStateContext";
 import { Strings } from "../constants";
 import { showModal } from "../transforms/showModal";
 import { BlockPickerOptions } from "../types/modalOptions";
+import { validateParameterValue } from "../utils/validateParameterValue";
 
 interface InlineInputSegmentProps {
     initialValue: string;
@@ -40,7 +41,7 @@ const InlineInputSegment: React.FC<InlineInputSegmentProps> = ({
         // Without this, we risk erroring too soon (i.e. typing in first digit of number with min > 10),
         // losing the user's input (which could be long), or desynchronizing the UI from the state.
         // It will still be blocked via a separate check when the user tries to evaluate the criteria.
-        const paramValidation = paramDefinition.validate(initialValue);
+        const paramValidation = validateParameterValue(paramDefinition, initialValue);
         if (!paramValidation.valid) {
             setErrorMessage(paramValidation.message ?? Strings.InvalidValue);
         } else {

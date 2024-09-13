@@ -14,6 +14,7 @@ import { setEvalResult } from "./setEvalResult";
 import { setUserFeedback } from "./setUserFeedback";
 import { Strings, Ticks } from "../constants";
 import { SystemParameter } from "../types/criteriaParameters";
+import { validateParameterValue } from "../utils/validateParameterValue";
 
 function generateValidatorPlan(
     criteriaInstance: CriteriaInstance,
@@ -75,7 +76,7 @@ function generateValidatorPlan(
             return undefined;
         }
 
-        const validationResult = catalogParam.validate(param.value);
+        const validationResult = validateParameterValue(catalogParam, param.value);
         if (!validationResult.valid) {
             if (showErrors) {
                 logError(ErrorCode.invalidParameterValue, validationResult.message, {
