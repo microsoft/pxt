@@ -1,4 +1,3 @@
-import { Strings } from "../constants";
 import { stateAndDispatch } from "../state";
 import { ErrorCode } from "../types/errorCode";
 import { logError } from "./loggingService";

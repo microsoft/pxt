@@ -1187,6 +1187,8 @@ namespace pxt {
                     }
                 }
 
+                einfo.appVariant = variant;
+
                 const inf = target.isNative ? await this.host().getHexInfoAsync(einfo) : null
 
                 einfo = U.flatClone(einfo)
