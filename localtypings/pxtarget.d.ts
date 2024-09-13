@@ -481,7 +481,6 @@ declare namespace pxt {
         songEditor?: boolean; // enable the song asset type and field editor
         multiplayer?: boolean; // enable multiplayer features
         shareToKiosk?: boolean; // enable sharing to a kiosk
-        blocklySoundVolume?: number; // A number between 0 and 1 that sets the volume for blockly sounds (e.g. connect, disconnect, click)
         timeMachine?: boolean;
         timeMachineQueryParams?: string[]; // An array of query params to pass to timemachine iframe embed
         timeMachineDiffInterval?: number; // An interval in milliseconds at which to take diffs to store in project history. Defaults to 5 minutes
