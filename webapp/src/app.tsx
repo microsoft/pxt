@@ -4208,6 +4208,22 @@ export class ProjectView
         dialogs.showAboutDialogAsync(this);
     }
 
+    async showTurnBackTimeDialogAsync() {
+        let simWasRunning = this.isSimulatorRunning();
+        if (simWasRunning) {
+            this.stopSimulator();
+        }
+
+        await dialogs.showTurnBackTimeDialogAsync(this.state.header, () => {
+            this.reloadHeaderAsync();
+            simWasRunning = false;
+        });
+
+        if (simWasRunning) {
+            this.startSimulator();
+        }
+    }
+
     showLoginDialog(continuationHash?: string) {
         this.loginDialog.show(continuationHash);
     }

@@ -1,0 +1,33 @@
+.common-tree {
+    display: flex;
+    flex-direction: column;
+}
+
+.common-tree.subtree .common-treeitem {
+    // The width of the chevron is 1.81rem + 0.25rem margin
+    padding-left: 2.06rem;
+}
+
+.common-treeitem {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
+    height: 3rem;
+    cursor: pointer;
+
+    background-color: @treeitemBackgroundColor;
+
+    text-wrap: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.common-treeitem:hover {
+    filter: grayscale(.15) brightness(.85) contrast(1.3);
+}
+
+.common-treeitem-container {
+    display: flex;
+    flex-direction: column;
+}
