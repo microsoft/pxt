@@ -5,13 +5,14 @@ import { logDebug } from "../services/loggingService";
 import { setParameterValue } from "../transforms/setParameterValue";
 import { classList } from "react-common/components/util";
 import { getReadableBlockString, splitCriteriaTemplate } from "../utils";
-import { useContext, useMemo, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import { Input } from "react-common/components/controls/Input";
 import { Button } from "react-common/components/controls/Button";
 import { AppStateContext } from "../state/appStateContext";
 import { Strings } from "../constants";
 import { showModal } from "../transforms/showModal";
 import { BlockPickerOptions } from "../types/modalOptions";
+import { getBlockReadableName } from "../services/makecodeEditorService";
 
 interface InlineInputSegmentProps {
     initialValue: string;
@@ -67,14 +68,9 @@ interface BlockData {
 }
 const BlockInputSegment: React.FC<BlockInputSegmentProps> = ({ instance, param }) => {
     const { state: teacherTool } = useContext(AppStateContext);
-    function handleClick() {
-        showModal({
-            modal: "block-picker",
-            criteriaInstanceId: instance.instanceId,
-            paramName: param.name,
-        } as BlockPickerOptions);
-    }
+    const [blockText, setBlockText] = useState<string | undefined>(undefined);
 
+    // Maybe makes sense to move this to use effect and handle call to setBlockText as a separate part of same use effect?
     const blockData = useMemo<BlockData | undefined>(() => {
         if (!param.value || !teacherTool.toolboxCategories) {
             return undefined;
@@ -84,16 +80,29 @@ const BlockInputSegment: React.FC<BlockInputSegmentProps> = ({ instance, param }
         for (const category of Object.values(teacherTool.toolboxCategories)) {
             const block = category.blocks?.find(b => b.blockId === param.value);
             if (block) {
+                async function updateBlockText(blockId: string | undefined) {
+                    const blockReadableName = blockId ? await getBlockReadableName(blockId) : undefined;
+                    setBlockText(blockReadableName ? blockReadableName.parts.map(part => part.content).join(" ") : undefined);
+                }
+                /* await */ updateBlockText(block.blockId);
                 return { category, block };
             }
         }
         return undefined;
     }, [param.value, teacherTool.toolboxCategories]);
 
+    function handleClick() {
+        showModal({
+            modal: "block-picker",
+            criteriaInstanceId: instance.instanceId,
+            paramName: param.name,
+        } as BlockPickerOptions);
+    }
+
     const style = blockData ? { backgroundColor: blockData.category.color, color: "white" } : undefined;
     return (
         <Button
-            label={blockData ? getReadableBlockString(blockData.block.name) : param.value || param.name}
+            label={blockText || param.value || param.name}
             className={classList(css["block-input-btn"], param.value ? undefined : css["error"])}
             onClick={handleClick}
             title={param.value ? Strings.SelectBlock : `${Strings.SelectBlock}: ${Strings.ValueRequired}`}

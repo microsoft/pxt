@@ -9,6 +9,7 @@ import { HELP_IMAGE_URI } from "../../pxteditor";
 import * as pxtblockly from "../../pxtblocks";
 
 import ISettingsProps = pxt.editor.ISettingsProps;
+import { getSnippetName } from "./monacopyhelper";
 
 const DRAG_THRESHOLD = 5;
 const SELECTED_BORDER_WIDTH = 4;
@@ -135,7 +136,7 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
                 dragBlock.id = "monacoDraggingBlock";
                 dragBlock.textContent = block.snippetOnly
                     ? block.snippet
-                    : `${this.getQName(block) || this.getSnippetName(block)}${params ? `(${params.map(p => p.name).join(", ")})` : ""}`
+                    : `${this.getQName(block) || getSnippetName(block, this.props.fileType == pxt.editor.FileType.Python)}${params ? `(${params.map(p => p.name).join(", ")})` : ""}`
                 dragBlock.style.backgroundColor = this.dragInfo.color;
                 parent.appendChild(dragBlock);
 
@@ -245,11 +246,6 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
         return this.props.fileType == pxt.editor.FileType.Python && block.pyQName ? block.pyQName : block.qName;
     }
 
-    protected getSnippetName(block: toolbox.BlockDefinition): string {
-        const isPython = this.props.fileType == pxt.editor.FileType.Python;
-        return (isPython ? (block.pySnippetName || block.pyName) : undefined) || block.snippetName || block.name;
-    }
-
     protected getBlockDescription(block: toolbox.BlockDefinition, params: pxtc.ParameterDesc[]): JSX.Element[] {
         let description = [];
         let compileInfo = pxt.blocks.compileInfo(block as pxtc.SymbolInfo);
@@ -295,7 +291,7 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
             })
         } else {
             // if no blockdef found, use the snippet name
-            description.push(<span key={name}>{this.getSnippetName(block) || block.name}</span>)
+            description.push(<span key={name}>{getSnippetName(block, isPython) || block.name}</span>)
         }
 
         // imitates block behavior in adding "run code" before any handler
@@ -369,7 +365,7 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
             pxtblockly.external.openHelpUrl(helpUrl);
         };
 
-        const qName = this.getQName(block) || this.getSnippetName(block);
+        const qName = this.getQName(block) || getSnippetName(block, this.props.fileType == pxt.editor.FileType.Python);
         const selected = qName == this.state.selectedBlock;
         const hover = qName == this.state.hoverBlock;
 

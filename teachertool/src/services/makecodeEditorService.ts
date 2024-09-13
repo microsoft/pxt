@@ -63,6 +63,11 @@ export async function getToolboxCategoriesAsync(
     return response;
 }
 
+export async function getBlockReadableName(blockId: string): Promise<pxt.editor.ReadableBlockName | undefined> {
+    const response = driver ? await driver.getBlockReadableName(blockId) : undefined;
+    return response;
+}
+
 export async function getBlockImageUriFromXmlAsync(xml: string): Promise<string | undefined> {
     const response = driver ? await driver.renderXml(xml) : undefined;
     return response;

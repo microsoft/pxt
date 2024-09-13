@@ -49,6 +49,7 @@ import * as sidepanel from "./sidepanel";
 import * as qr from "./qr";
 
 import * as monaco from "./monaco"
+import * as monacoHelpers from "./monacopyhelper"
 import * as pxtjson from "./pxtjson"
 import * as serial from "./serial"
 import * as blocks from "./blocks"
@@ -80,7 +81,7 @@ import { mergeProjectCode, appendTemporaryAssets } from "./mergeProjects";
 import { Tour } from "./components/onboarding/Tour";
 import { parseTourStepsAsync } from "./onboarding";
 import { initGitHubDb } from "./idbworkspace";
-import { CategoryNameID } from "./toolbox";
+import { BlockDefinition, CategoryNameID } from "./toolbox";
 
 pxt.blocks.requirePxtBlockly = () => pxtblockly as any;
 pxt.blocks.requireBlockly = () => Blockly;
@@ -4140,6 +4141,26 @@ export class ProjectView
             } as pxt.editor.ToolboxCategoryDefinition;
         });
         return { categories };
+    }
+
+    getReadableBlockName(blockId: string): pxt.editor.ReadableBlockName | undefined {
+        // Get toolbox block definition.
+        let blockMatch: BlockDefinition = undefined;
+        for (const advanced of [true, false]) {
+            for (const category of this.blocksEditor.getToolboxCategories(advanced)) {
+                blockMatch = category.blocks.find(b => b.attributes.blockId === blockId);
+                if (blockMatch) break;
+            }
+            if (blockMatch) break;
+        }
+
+        if (!blockMatch) {
+            console.log("DEBUG: No Block Match for blockId: " + blockId);
+            return undefined;
+        }
+
+        const readableName = monacoHelpers.getBlockDescription(blockMatch, blockMatch.parameters ? blockMatch.parameters.slice() : null, false);
+        return readableName;
     }
 
     launchFullEditor() {
