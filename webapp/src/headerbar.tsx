@@ -13,7 +13,7 @@ import * as projects from "./projects";
 import * as tutorial from "./tutorial";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
-type HeaderBarView = "home" | "editor" | "tutorial" | "tutorial-tab" | "debugging" | "sandbox";
+type HeaderBarView = "home" | "editor" | "tutorial" | "tutorial-tab" | "debugging" | "sandbox" | "time-machine";
 const LONGPRESS_DURATION = 750;
 
 export class HeaderBar extends data.Component<ISettingsProps, {}> {
@@ -87,6 +87,8 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
             return "home";
         } else if (pxt.shell.isSandboxMode()) {
             return "sandbox";
+        } else if (pxt.shell.isTimeMachineEmbed()) {
+            return "time-machine";
         } else if (debugging) {
             return "debugging";
         } else if (!pxt.BrowserUtils.useOldTutorialLayout() && !!tutorialOptions?.tutorial) {
@@ -99,6 +101,9 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
     }
 
     getOrganizationLogo(targetTheme: pxt.AppTheme, highContrast?: boolean, view?: string) {
+        if (view === "time-machine") {
+            return <></>;
+        }
         return <div className="ui item logo organization">
             {targetTheme.organizationWideLogo || targetTheme.organizationLogo
                 ? <img className={`ui logo ${view !== "home" ? "mobile hide" : ""}`} src={targetTheme.organizationWideLogo || targetTheme.organizationLogo} alt={lf("{0} Logo", targetTheme.organization)} />
@@ -108,6 +113,9 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
     }
 
     getTargetLogo(targetTheme: pxt.AppTheme, highContrast?: boolean, view?: string) {
+        if (view === "time-machine") {
+            return <></>;
+        }
         // TODO: "sandbox" view components are temporary share page layout
         return <div aria-label={lf("{0} Logo", targetTheme.boardName)} role="menuitem" className={`ui item logo brand ${view !== "sandbox" && view !== "home" ? "mobile hide" : ""}`} onClick={this.brandIconClick}>
             {targetTheme.useTextLogo
@@ -142,6 +150,7 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
                 return  <sui.MenuItem className="centered" icon="large bug" name="Debug Mode" />
             case "sandbox":
             case "editor":
+            case "time-machine":
                 if (hideToggle) {
                     // Label for single language
                     switch (languageRestriction) {

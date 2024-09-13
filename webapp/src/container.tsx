@@ -135,6 +135,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.pair = this.pair.bind(this);
         this.pairBluetooth = this.pairBluetooth.bind(this);
         this.showAboutDialog = this.showAboutDialog.bind(this);
+        this.showTurnBackTimeDialog = this.showTurnBackTimeDialog.bind(this);
         this.print = this.print.bind(this);
         this.signOutGithub = this.signOutGithub.bind(this);
     }
@@ -230,6 +231,11 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.props.parent.showAboutDialog();
     }
 
+    showTurnBackTimeDialog() {
+        pxt.tickEvent("menu.turnBackTime");
+        this.props.parent.showTurnBackTimeDialogAsync();
+    }
+
     print() {
         pxt.tickEvent("menu.print");
         this.props.parent.printCode();
@@ -305,6 +311,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             {showPrint ? <sui.Item role="menuitem" icon="print" text={lf("Print...")} onClick={this.print} /> : undefined}
             {showSave ? <sui.Item role="menuitem" icon="save" text={lf("Save Project")} onClick={this.saveProject} /> : undefined}
             {!isController ? <sui.Item role="menuitem" icon="trash" text={lf("Delete Project")} onClick={this.removeProject} /> : undefined}
+            {targetTheme.timeMachine ? <sui.Item role="menuitem" icon="history" text={lf("Version History")} onClick={this.showTurnBackTimeDialog} /> : undefined}
             {showSimCollapse ? <sui.Item role="menuitem" icon='toggle right' text={lf("Toggle the simulator")} onClick={this.toggleCollapse} /> : undefined}
             <div className="ui divider"></div>
             {targetTheme.selectLanguage ? <sui.Item icon='xicon globe' role="menuitem" text={lf("Language")} onClick={this.showLanguagePicker} /> : undefined}
