@@ -83,13 +83,13 @@ export class NumberParameter extends CriteriaParameter {
                 message: Strings.MustBeANumber,
             };
         }
-        if (this.min && num < this.min) {
+        if (this.min !== undefined && num < this.min) {
             return {
                 valid: false,
                 message: Strings.BelowMin,
             };
         }
-        if (this.max && num > this.max) {
+        if (this.max !== undefined && num > this.max) {
             return {
                 valid: false,
                 message: Strings.ExceedsMax,
