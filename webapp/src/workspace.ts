@@ -549,7 +549,6 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
             text,
             version: null
         }
-        allScripts.push(e)
     }
 
     const hasUserFileChanges = () => {
@@ -665,6 +664,10 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
 
         if (text) {
             e.version = ver;
+        }
+
+        if (newSave) {
+            allScripts.push(e);
         }
 
         if (isUserChange) {

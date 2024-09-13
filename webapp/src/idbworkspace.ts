@@ -83,6 +83,7 @@ async function listAsync(): Promise<pxt.workspace.Header[]> {
 async function getAsync(h: Header): Promise<pxt.workspace.File> {
     const db = await getDbAsync();
     const res = await db.getAsync<StoredText>(TEXTS_TABLE, h.id);
+    if (!res) return undefined;
     return {
         header: h,
         text: res.files,
