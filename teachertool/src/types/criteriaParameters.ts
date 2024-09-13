@@ -105,6 +105,8 @@ export class BlockParameter extends CriteriaParameter {
     }
 }
 
+// System parameters are fields that can change for a criteria but which are not set directly by the user.
+// For example, the project id could be a parameter, but we fill it automatically at eval-time based on the loaded project.
 export class SystemParameter extends CriteriaParameter {
     key?: string;
 
