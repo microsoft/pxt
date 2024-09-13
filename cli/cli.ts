@@ -3030,6 +3030,7 @@ class SnippetHost implements pxt.Host {
 class Host
     implements pxt.Host {
     fileOverrides: Map<string> = {}
+    queue = new pxt.Util.PromiseQueue();
 
     resolve(module: pxt.Package, filename: string) {
         //pxt.debug(`resolving ${module.level}:${module.id} -- ${filename} in ${path.resolve(".")}`)
@@ -3165,10 +3166,22 @@ class Host
         if (useCompileServiceDocker) {
             return build.compileWithLocalCompileService(extInfo);
         }
+        return this.queue.enqueue("getHexInfoAsync", async () => {
+            const prevVariant = pxt.appTargetVariant;
 
-        setBuildEngine()
-        return build.buildHexAsync(build.thisBuild, mainPkg, extInfo, forceBuild)
-            .then(() => build.thisBuild.patchHexInfo(extInfo))
+            if (extInfo.appVariant && extInfo.appVariant !== prevVariant) {
+                pxt.setAppTargetVariant(extInfo.appVariant, { temporary: true });
+            }
+            setBuildEngine()
+            await build.buildHexAsync(build.thisBuild, mainPkg, extInfo, forceBuild)
+            const res = build.thisBuild.patchHexInfo(extInfo);
+
+            if (extInfo.appVariant && extInfo.appVariant !== prevVariant) {
+                pxt.setAppTargetVariant(prevVariant);
+            }
+
+            return res;
+        });
     }
 
     cacheStoreAsync(id: string, val: string): Promise<void> {
