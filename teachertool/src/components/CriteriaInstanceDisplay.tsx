@@ -4,7 +4,7 @@ import { CriteriaInstance, CriteriaParameterValue } from "../types/criteria";
 import { logDebug } from "../services/loggingService";
 import { setParameterValue } from "../transforms/setParameterValue";
 import { classList } from "react-common/components/util";
-import { getReadableBlockString, splitCriteriaTemplate } from "../utils";
+import { splitCriteriaTemplate } from "../utils";
 import { useContext, useEffect, useMemo, useState } from "react";
 import { Input } from "react-common/components/controls/Input";
 import { Button } from "react-common/components/controls/Button";
@@ -58,6 +58,57 @@ const InlineInputSegment: React.FC<InlineInputSegmentProps> = ({
     );
 };
 
+interface BlockReadableNameProps {
+    blockData: BlockData;
+}
+const BlockReadableName: React.FC<BlockReadableNameProps> = ({ blockData }) => {
+    const [readableName, setReadableName] = useState<pxt.editor.ReadableBlockName | undefined>(undefined);
+
+    useEffect(() => {
+        async function updateReadableName(blockId: string | undefined) {
+            let blockReadableName: pxt.editor.ReadableBlockName | undefined;
+            if (blockId) {
+                blockReadableName = blockId ? await getBlockReadableName(blockId) : undefined;
+            }
+            if (blockReadableName) {
+                setReadableName(blockReadableName);
+            } else {
+                setReadableName({
+                    parts: [{ kind: "label", content: blockData.block.snippetName || blockData.block.name }],
+                } as pxt.editor.ReadableBlockName);
+            }
+        }
+
+        updateReadableName(blockData.block.blockId);
+    }, [blockData]);
+
+    const readableComponent = readableName?.parts.map((part, i) => {
+        if (part.kind === "label" || part.kind === "break") {
+            return (
+                <span
+                    key={`block-name-part-${i}`}
+                    className={classList(css["block-name-segment"], css["block-name-label"])}
+                >
+                    {part.kind == "label" ? part.content : " "}
+                </span>
+            );
+        } else if (part.kind === "param") {
+            return (
+                <span
+                    key={`block-name-part-${i}`}
+                    className={classList(css["block-name-segment"], css["block-name-param"])}
+                >
+                    {part.content}
+                </span>
+            );
+        }
+    });
+
+    return (
+        <span className={css["block-readable-name"]}>{readableComponent || <div className="common-spinner" />}</span>
+    );
+};
+
 interface BlockInputSegmentProps {
     instance: CriteriaInstance;
     param: CriteriaParameterValue;
@@ -68,7 +119,6 @@ interface BlockData {
 }
 const BlockInputSegment: React.FC<BlockInputSegmentProps> = ({ instance, param }) => {
     const { state: teacherTool } = useContext(AppStateContext);
-    const [blockText, setBlockText] = useState<string | undefined>(undefined);
 
     // Maybe makes sense to move this to use effect and handle call to setBlockText as a separate part of same use effect?
     const blockData = useMemo<BlockData | undefined>(() => {
@@ -80,11 +130,6 @@ const BlockInputSegment: React.FC<BlockInputSegmentProps> = ({ instance, param }
         for (const category of Object.values(teacherTool.toolboxCategories)) {
             const block = category.blocks?.find(b => b.blockId === param.value);
             if (block) {
-                async function updateBlockText(blockId: string | undefined) {
-                    const blockReadableName = blockId ? await getBlockReadableName(blockId) : undefined;
-                    setBlockText(blockReadableName ? blockReadableName.parts.map(part => part.content).join(" ") : undefined);
-                }
-                /* await */ updateBlockText(block.blockId);
                 return { category, block };
             }
         }
@@ -100,9 +145,10 @@ const BlockInputSegment: React.FC<BlockInputSegmentProps> = ({ instance, param }
     }
 
     const style = blockData ? { backgroundColor: blockData.category.color, color: "white" } : undefined;
+    const blockDisplay = blockData ? <BlockReadableName blockData={blockData} /> : null;
     return (
         <Button
-            label={blockText || param.value || param.name}
+            label={blockDisplay || param.value || param.name}
             className={classList(css["block-input-btn"], param.value ? undefined : css["error"])}
             onClick={handleClick}
             title={param.value ? Strings.SelectBlock : `${Strings.SelectBlock}: ${Strings.ValueRequired}`}
