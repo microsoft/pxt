@@ -2476,7 +2476,7 @@ export class ProjectView
             this.hintManager.clearViewedHints();
 
             return this.createProjectAsync({
-                name: "untitled",
+                name: lf("untitled"),
                 tutorial: options,
                 preferredEditor: editor,
                 dependencies
@@ -2894,7 +2894,7 @@ export class ProjectView
         this.setSideDoc(undefined);
         if (!options.prj) options.prj = pxt.appTarget.blocksprj;
         let cfg = pxt.U.clone(options.prj.config);
-        cfg.name = options.name || lf("Untitled");
+        cfg.name = options.name || pxt.commands.getDefaultProjectName?.() || lf("Untitled");
         cfg.documentation = options.documentation;
         let files: pxt.workspace.ScriptText = Util.clone(options.prj.files)
         if (options.filesOverride) {

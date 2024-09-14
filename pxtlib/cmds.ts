@@ -44,4 +44,5 @@ namespace pxt.commands {
     export let notifyProjectCompiled: (headerId: string, compileResult: pxtc.CompileResult) => void = undefined;
     export let notifyProjectSaved: (header: pxt.workspace.Header) => void = undefined;
     export let onDownloadButtonClick: () => Promise<void> = undefined;
+    export let getDefaultProjectName: () => string = undefined;
 }
