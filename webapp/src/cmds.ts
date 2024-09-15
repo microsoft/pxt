@@ -393,6 +393,10 @@ function applyExtensionResult() {
         log(`extension showProgramTooLargeErrorAsync`);
         pxt.commands.showProgramTooLargeErrorAsync = res.showProgramTooLargeErrorAsync;
     }
+    if (res.getDefaultProjectName) {
+        log(`extension getDefaultProjectName`);
+        pxt.commands.getDefaultProjectName = res.getDefaultProjectName;
+    }
     if (res.getDownloadMenuItems) {
         log(`extension getDownloadMenuItems`);
         pxt.commands.getDownloadMenuItems = res.getDownloadMenuItems;

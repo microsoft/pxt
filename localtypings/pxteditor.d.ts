@@ -1138,6 +1138,7 @@ declare namespace pxt.editor {
         notifyProjectCompiled?: (headerId: string, compileResult: pxtc.CompileResult) => void;
         notifyProjectSaved?: (header: pxt.workspace.Header) => void;
         onDownloadButtonClick?: () => Promise<void>;
+        getDefaultProjectName?: () => string; // If defined, replaces 'Untitled' as the default project name
     
         // Used with the @tutorialCompleted macro. See docs/writing-docs/tutorials.md for more info
         onTutorialCompleted?: () => void;
