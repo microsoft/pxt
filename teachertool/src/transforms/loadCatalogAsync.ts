@@ -8,7 +8,6 @@ const prodFiles = [
     "/teachertool/catalog-shared.json", // shared across all targets
     "/teachertool/catalog.json", // target-specific catalog
 ];
-
 export async function loadCatalogAsync() {
     const { dispatch } = stateAndDispatch();
     const fullCatalog = await loadTestableCollectionFromDocsAsync<CatalogCriteria>(prodFiles, "criteria");

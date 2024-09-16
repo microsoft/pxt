@@ -13,6 +13,7 @@
                 {
                     "name": "question",
                     "type": "longString",
+                    "maxCharacters": 1000,
                     "paths": ["checks[0].question"]
                 },
                 {
