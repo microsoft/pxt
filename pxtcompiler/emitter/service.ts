@@ -204,6 +204,7 @@ namespace ts.pxtc {
                 pkg,
                 pkgs,
                 extendsTypes,
+                isStatic: decl.modifiers?.some(m => m.kind === SyntaxKind.StaticKeyword),
                 retType:
                     stmt.kind == SyntaxKind.Constructor ? "void" :
                         kind == SymbolKind.Module ? "" :

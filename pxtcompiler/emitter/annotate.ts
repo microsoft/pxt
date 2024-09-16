@@ -116,7 +116,9 @@ namespace ts.pxtc {
                     case SK.SetAccessor:
                     case SK.MethodDeclaration:
                     case SK.MethodSignature:
-                        isMethod = true
+                        if (!isStatic(decl)) {
+                            isMethod = true
+                        }
                         break;
                     default:
                         break;
