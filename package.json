@@ -78,7 +78,7 @@
     "cssnano": "4.1.10",
     "dashjs": "^4.4.0",
     "diff-match-patch": "^1.0.5",
-    "dompurify": "2.0.17",
+    "dompurify": "2.5.4",
     "faye-websocket": "0.11.1",
     "karma": "6.3.10",
     "karma-chai": "0.1.0",
