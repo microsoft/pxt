@@ -5441,7 +5441,7 @@ export async function buildCoreDeclarationFiles(parsed: commandParser.ParsedComm
     nodeutil.mkdirP(builtFolder);
     process.chdir(cwd);
 
-    const host = shareId ? new Host() : new SnippetHost("decl-build", { "main.ts" : "" }, { "blocksprj": "*" }, true);
+    const host = shareId ? new Host() : new SnippetHost("decl-build", { "main.ts" : "" }, { "blocksprj": "*" });
     const mainPkg = new pxt.MainPackage(host);
 
     if (shareId) {
