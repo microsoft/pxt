@@ -2983,10 +2983,6 @@ class SnippetHost implements pxt.Host {
             }
             p = path.parse(p.dir);
         }
-        // const i = cwd.lastIndexOf(path.sep + "pxt" + path.sep);
-        // if (i !== -1) {
-        //     return cwd.substr(0, i + 5);
-        // }
         return path.join(cwd, "node_modules", "pxt-core");
     }
 
