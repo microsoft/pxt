@@ -5438,40 +5438,57 @@ export async function buildShareSimJsAsync(parsed: commandParser.ParsedCommand) 
 }
 
 export async function buildCoreDeclarationFiles(parsed: commandParser.ParsedCommand) {
-    const rootPackage = parsed.args[0]
     const cwd = process.cwd();
-    const builtFolder = path.join(cwd, "temp");
+    const builtFolder = path.join(cwd, "temp", "dts");
     nodeutil.mkdirP(builtFolder);
-    // process.chdir(builtFolder);
+    process.chdir(cwd);
 
-    // const host = new SnippetHost("decl-build", { "main.ts" : "" }, { "blocksprj": "*" }, true);
     const host = new SnippetHost("decl-build", { "main.ts" : "" }, { "blocksprj": "*" }, true);
     const mainPkg = new pxt.MainPackage(host);
     console.log("installing")
-    // await mainPkg.host().downloadPackageAsync(mainPkg);
     await mainPkg.installAllAsync();
     console.log("installed")
     const opts = await mainPkg.getCompileOptionsAsync();
     console.log("created compiler options")
     opts.tsCompileOptions = opts.tsCompileOptions ?? {};
     opts.tsCompileOptions.declaration = true;
-    
-    const compileResult = pxtc.getTSProgram(opts);
+    await rimrafAsync(builtFolder, {});
+
+    const tsProg = pxtc.getTSProgram(opts);
     console.log("compiled")
-    // compileResult.diagnostics?.forEach(diag => {
-    //     console.error(diag.messageText)
-    // })
-    // const a: pxt.Map<string> = {}
-    compileResult.emit(
+
+    let combined = ""
+    const writeDts = (fileName: string, data: string) => {
+        console.log(`writing ${fileName}`);
+        const writePath = path.join(builtFolder, fileName);
+        nodeutil.mkdirP(path.parse(writePath).dir);
+        fs.writeFileSync(writePath, data);
+        combined += data + "\n\n";
+    }
+
+    // pre-created
+    for (const file of tsProg.getSourceFiles()) {
+        if (file.fileName.endsWith(".d.ts")) {
+            writeDts(
+                file.fileName,
+                file.getFullText()
+            );
+        }
+    }
+
+    // generated via build
+    tsProg.emit(
         undefined,
         (fileName: string, data: string) => {
-            console.log(`writing ${fileName}`);
-            fs.writeFileSync(path.join(builtFolder, fileName), data);
+            if (!data?.trim()) return;
+            writeDts(fileName, data);
         },
         undefined,
         true
     );
-    // fs.writeFileSync(path.join(builtFolder, 'justsavethis.json'), JSON.stringify(a));
+
+    console.log(`writing combined.d.ts`)
+    fs.writeFileSync(path.join(builtFolder, "combined.d.ts"), combined);
 }
 
 export function gendocsAsync(parsed: commandParser.ParsedCommand) {
