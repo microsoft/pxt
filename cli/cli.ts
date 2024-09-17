@@ -5474,13 +5474,14 @@ export async function buildCoreDeclarationFiles(parsed: commandParser.ParsedComm
 
     // generated via build
     tsProg.emit(
-        undefined,
+        /** targetSourceFile **/ undefined,
         (fileName: string, data: string) => {
             if (!data?.trim()) return;
             writeDts(fileName, data);
         },
-        undefined,
-        true
+        /** cancellation token **/ undefined,
+        /** emitOnlyDtsFiles **/ true,
+        /** customTransformers -> I believe where we should apply culling of deprecated blocks */
     );
 
     console.log(`writing combined.d.ts`)
