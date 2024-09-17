@@ -2954,17 +2954,17 @@ class SnippetHost implements pxt.Host {
 
         if (module.id === "this") {
             if (filename === "pxt-core.d.ts") {
-                const contents = fs.readFileSync(path.join(this.getRepoDir(), "libs", "pxt-common", "pxt-core.d.ts"), 'utf8');
+                const contents = fs.readFileSync(path.join(this.getPxtRepoDir(), "libs", "pxt-common", "pxt-core.d.ts"), 'utf8');
                 this.writeFile(module, filename, contents);
                 return contents;
             }
             else if (filename === "pxt-helpers.ts") {
-                const contents = fs.readFileSync(path.resolve(this.getRepoDir(), "libs", "pxt-common", "pxt-helpers.ts"), 'utf8');
+                const contents = fs.readFileSync(path.resolve(this.getPxtRepoDir(), "libs", "pxt-common", "pxt-helpers.ts"), 'utf8');
                 this.writeFile(module, filename, contents);
                 return contents;
             }
             else if (filename === "pxt-python.d.ts" || filename === "pxt-python-helpers.ts") {
-                const contents = fs.readFileSync(path.resolve(this.getRepoDir(), "libs", "pxt-python", filename), 'utf8');
+                const contents = fs.readFileSync(path.resolve(this.getPxtRepoDir(), "libs", "pxt-python", filename), 'utf8');
                 this.writeFile(module, filename, contents);
                 return contents;
             }
@@ -2974,10 +2974,20 @@ class SnippetHost implements pxt.Host {
         return null;
     }
 
-    private getRepoDir() {
+    private getPxtRepoDir() {
         const cwd = process.cwd();
-        const i = cwd.lastIndexOf(path.sep + "pxt" + path.sep);
-        return cwd.substr(0, i + 5);
+        let p = path.parse(cwd);
+        while (p.base) {
+            if (p.base === "pxt") {
+                return path.format(p);
+            }
+            p = path.parse(p.dir);
+        }
+        // const i = cwd.lastIndexOf(path.sep + "pxt" + path.sep);
+        // if (i !== -1) {
+        //     return cwd.substr(0, i + 5);
+        // }
+        return path.join(cwd, "node_modules", "pxt-core");
     }
 
     writeFile(module: pxt.Package, filename: string, contents: string) {
@@ -4068,6 +4078,7 @@ function compilesOK(opts: pxtc.CompileOptions, fn: string, content: string) {
     return res.success
 }
 
+
 function getApiInfoAsync() {
     return prepBuildOptionsAsync(BuildOption.GenDocs)
         .then(opts => {
@@ -4874,7 +4885,7 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
                 console.log(compileResult.times)
 
             switch (buildOpts.mode) {
-                case BuildOption.GenDocs:
+                case BuildOption.GenDocs: {
                     const apiInfo = pxtc.getApiInfo(res.ast, compileOptions.jres)
                     // keeps apis from this module only
                     for (const infok in apiInfo.byQName) {
@@ -4905,6 +4916,7 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
                         }
                     }
                     return null
+                }
                 case BuildOption.Deploy:
                     if (pxt.commands.hasDeployFn())
                         return pxt.commands.deployAsync(res)
@@ -5423,6 +5435,43 @@ export async function buildShareSimJsAsync(parsed: commandParser.ParsedCommand) 
 
     process.chdir(cwd);
     console.log(`saved prebuilt ${id} to ${outputLocation}`);
+}
+
+export async function buildCoreDeclarationFiles(parsed: commandParser.ParsedCommand) {
+    const rootPackage = parsed.args[0]
+    const cwd = process.cwd();
+    const builtFolder = path.join(cwd, "temp");
+    nodeutil.mkdirP(builtFolder);
+    // process.chdir(builtFolder);
+
+    // const host = new SnippetHost("decl-build", { "main.ts" : "" }, { "blocksprj": "*" }, true);
+    const host = new SnippetHost("decl-build", { "main.ts" : "" }, { "blocksprj": "*" }, true);
+    const mainPkg = new pxt.MainPackage(host);
+    console.log("installing")
+    // await mainPkg.host().downloadPackageAsync(mainPkg);
+    await mainPkg.installAllAsync();
+    console.log("installed")
+    const opts = await mainPkg.getCompileOptionsAsync();
+    console.log("created compiler options")
+    opts.tsCompileOptions = opts.tsCompileOptions ?? {};
+    opts.tsCompileOptions.declaration = true;
+    
+    const compileResult = pxtc.getTSProgram(opts);
+    console.log("compiled")
+    // compileResult.diagnostics?.forEach(diag => {
+    //     console.error(diag.messageText)
+    // })
+    // const a: pxt.Map<string> = {}
+    compileResult.emit(
+        undefined,
+        (fileName: string, data: string) => {
+            console.log(`writing ${fileName}`);
+            fs.writeFileSync(path.join(builtFolder, fileName), data);
+        },
+        undefined,
+        true
+    );
+    // fs.writeFileSync(path.join(builtFolder, 'justsavethis.json'), JSON.stringify(a));
 }
 
 export function gendocsAsync(parsed: commandParser.ParsedCommand) {
@@ -6835,6 +6884,11 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
             },
         },
     }, buildShareSimJsAsync)
+
+    p.defineCommand({
+        name: "buildcoredts",
+        help: "build d.ts files for core packages",
+    }, buildCoreDeclarationFiles)
 
     simpleCmd("clean", "removes built folders", cleanAsync);
     advancedCommand("cleangen", "remove generated files", cleanGenAsync);
