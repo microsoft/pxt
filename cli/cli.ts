@@ -5434,13 +5434,21 @@ export async function buildShareSimJsAsync(parsed: commandParser.ParsedCommand) 
 }
 
 export async function buildCoreDeclarationFiles(parsed: commandParser.ParsedCommand) {
+    const shareId = parsed.args[0]?.trim();
+    console.log(shareId ? `Building .d.ts for ${shareId}` : `Building .d.ts for blocksprj`);
     const cwd = process.cwd();
-    const builtFolder = path.join(cwd, "temp", "dts");
+    const builtFolder = path.join(cwd, "temp", shareId ? `${shareId}dts` : "dts");
     nodeutil.mkdirP(builtFolder);
     process.chdir(cwd);
 
-    const host = new SnippetHost("decl-build", { "main.ts" : "" }, { "blocksprj": "*" }, true);
+    const host = shareId ? new Host() : new SnippetHost("decl-build", { "main.ts" : "" }, { "blocksprj": "*" }, true);
     const mainPkg = new pxt.MainPackage(host);
+
+    if (shareId) {
+        mainPkg._verspec = `pub:${shareId}`;
+        await mainPkg.host().downloadPackageAsync(mainPkg);
+    }
+
     console.log("installing")
     await mainPkg.installAllAsync();
     console.log("installed")
@@ -6902,6 +6910,7 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
     p.defineCommand({
         name: "buildcoredts",
         help: "build d.ts files for core packages",
+        argString: "<share id>",
     }, buildCoreDeclarationFiles)
 
     simpleCmd("clean", "removes built folders", cleanAsync);
