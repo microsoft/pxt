@@ -53,6 +53,11 @@ export namespace Strings {
     export const UnableToEvaluatePartial = lf("Unable to evaluate some criteria");
     export const GiveFeedback = lf("Give Feedback");
     export const MaxReached = lf("Maximum count reached for this item");
+    export const ExceedsMaxLength = lf("Exceeds maximum length");
+    export const MustBeANumber = lf("Must be a number");
+    export const BelowMin = lf("Below minimum value");
+    export const ExceedsMax = lf("Exceeds maximum value");
+    export const InvalidValue = lf("Invalid value");
 }
 
 export namespace Ticks {
@@ -77,6 +82,7 @@ export namespace Ticks {
     export const Print = "teachertool.print";
     export const UnhandledEvalError = "teachertool.evaluateerror";
     export const FeedbackForm = "teachertool.feedbackform";
+    export const ParamErrorMissingMessage = "teachertool.paramerrormissingmessage";
 }
 
 namespace Misc {

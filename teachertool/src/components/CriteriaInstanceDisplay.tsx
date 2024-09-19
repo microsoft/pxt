@@ -1,5 +1,5 @@
 import css from "./styling/CriteriaInstanceDisplay.module.scss";
-import { getCatalogCriteriaWithId } from "../state/helpers";
+import { getCatalogCriteriaWithId, getParameterDefinition } from "../state/helpers";
 import { CriteriaInstance, CriteriaParameterValue } from "../types/criteria";
 import { logDebug } from "../services/loggingService";
 import { setParameterValue } from "../transforms/setParameterValue";
@@ -12,6 +12,7 @@ import { AppStateContext } from "../state/appStateContext";
 import { Strings } from "../constants";
 import { showModal } from "../transforms/showModal";
 import { BlockPickerOptions } from "../types/modalOptions";
+import { validateParameterValue } from "../utils/validateParameterValue";
 import { getBlockReadableName } from "../services/makecodeEditorService";
 
 interface InlineInputSegmentProps {
@@ -28,14 +29,36 @@ const InlineInputSegment: React.FC<InlineInputSegmentProps> = ({
     shouldExpand,
     numeric,
 }) => {
-    const [isEmpty, setIsEmpty] = useState(!initialValue);
+    const [errorMessage, setErrorMessage] = useState(initialValue ? "" : Strings.ValueRequired);
+    const paramDefinition = useMemo(() => getParameterDefinition(instance.catalogCriteriaId, param.name), [param]);
+
+    useEffect(() => {
+        if (!paramDefinition) {
+            return;
+        }
+
+        // We still allow some invalid values to be set on the parameter so the user can see what they typed
+        // and the associated error.
+        // Without this, we risk erroring too soon (i.e. typing in first digit of number with min > 10),
+        // losing the user's input (which could be long), or desynchronizing the UI from the state.
+        // It will still be blocked via a separate check when the user tries to evaluate the criteria.
+        const paramValidation = validateParameterValue(paramDefinition, initialValue);
+        if (!paramValidation.valid) {
+            setErrorMessage(paramValidation.message ?? Strings.InvalidValue);
+        } else {
+            setErrorMessage("");
+        }
+    }, [initialValue]);
 
     function onChange(newValue: string) {
-        setIsEmpty(!newValue);
+        if (!newValue) {
+            setErrorMessage(Strings.ValueRequired);
+        }
+
         setParameterValue(instance.instanceId, param.name, newValue);
     }
 
-    const tooltip = isEmpty ? `${param.name}: ${Strings.ValueRequired}` : param.name;
+    const tooltip = errorMessage ? `${param.name}: ${errorMessage}` : param.name;
     return (
         <div title={tooltip} className={css["inline-input-wrapper"]}>
             <Input
@@ -43,9 +66,9 @@ const InlineInputSegment: React.FC<InlineInputSegmentProps> = ({
                     css["inline-input"],
                     numeric ? css["number-input"] : css["string-input"],
                     shouldExpand ? css["long"] : undefined,
-                    isEmpty ? css["error"] : undefined
+                    errorMessage ? css["error"] : undefined
                 )}
-                icon={isEmpty ? "fas fa-exclamation-triangle" : undefined}
+                icon={errorMessage ? "fas fa-exclamation-triangle" : undefined}
                 initialValue={initialValue}
                 onChange={onChange}
                 preserveValueOnBlur={true}
