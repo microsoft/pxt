@@ -93,9 +93,11 @@ const BlockReadableName: React.FC<BlockReadableNameProps> = ({ blockData }) => {
             if (blockId) {
                 blockReadableName = blockId ? await getBlockReadableName(blockId) : undefined;
             }
+
             if (blockReadableName) {
                 setReadableName(blockReadableName);
             } else {
+                // We were unable to get block name from the editor. Fallback to snippet name and/or name.
                 setReadableName({
                     parts: [{ kind: "label", content: blockData.block.snippetName || blockData.block.name }],
                 } as pxt.editor.ReadableBlockName);
@@ -106,25 +108,17 @@ const BlockReadableName: React.FC<BlockReadableNameProps> = ({ blockData }) => {
     }, [blockData]);
 
     const readableComponent = readableName?.parts.map((part, i) => {
-        if (part.kind === "label" || part.kind === "break") {
-            return (
-                <span
-                    key={`block-name-part-${i}`}
-                    className={classList(css["block-name-segment"], css["block-name-label"])}
-                >
-                    {part.kind == "label" ? part.content : " "}
-                </span>
-            );
-        } else if (part.kind === "param") {
-            return (
-                <span
-                    key={`block-name-part-${i}`}
-                    className={classList(css["block-name-segment"], css["block-name-param"])}
-                >
-                    {part.content}
-                </span>
-            );
-        }
+        return (
+            <span
+                key={`block-name-part-${i}`}
+                className={classList(
+                    css["block-name-segment"],
+                    part.kind === "param" ? css["block-name-param"] : css["block-name-label"]
+                )}
+            >
+                {part.kind == "break" ? "" : part.content}
+            </span>
+        );
     });
 
     return (
@@ -143,7 +137,6 @@ interface BlockData {
 const BlockInputSegment: React.FC<BlockInputSegmentProps> = ({ instance, param }) => {
     const { state: teacherTool } = useContext(AppStateContext);
 
-    // Maybe makes sense to move this to use effect and handle call to setBlockText as a separate part of same use effect?
     const blockData = useMemo<BlockData | undefined>(() => {
         if (!param.value || !teacherTool.toolboxCategories) {
             return undefined;
