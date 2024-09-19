@@ -100,7 +100,6 @@ export function getBlockDescription(block: toolbox.BlockDefinition, params: pxtc
             parts = parentBlockParts;
         }
     }
-    let name = block.qName || block.name;
 
     if (parts) {
         if (params &&
@@ -129,10 +128,7 @@ export function getBlockDescription(block: toolbox.BlockDefinition, params: pxtc
                     break;
             }
         })
-    } else {
-        // if no blockdef found, use the snippet name
-        description.push({kind: "label", content: getSnippetName(block, isPython) || block.name})
     }
 
-    return { parts: description };
+    return description.length > 0 ? { parts: description } : undefined;
 }

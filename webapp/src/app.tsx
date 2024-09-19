@@ -4143,23 +4143,83 @@ export class ProjectView
         return { categories };
     }
 
-    getReadableBlockName(blockId: string): pxt.editor.ReadableBlockName | undefined {
-        // Get toolbox block definition.
-        let blockMatch: BlockDefinition = undefined;
-        for (const advanced of [true, false]) {
-            for (const category of this.blocksEditor.getToolboxCategories(advanced)) {
-                blockMatch = category.blocks.find(b => b.attributes.blockId === blockId);
-                if (blockMatch) break;
+    // TODO thsparks : find a better name
+    getReadableBlockNameFromBlocksBlockDefinition(block: pxt.blocks.BlockDefinition): pxt.editor.ReadableBlockName | undefined {
+        const parts: pxt.editor.ReadableBlockNamePart[] = [];
+        if (block?.block["message0"]) {
+            // These message values use %1, %2, etc. for parameters.
+            // Extract these into generic "value" parameters.
+            const message = block.block["message0"];
+            const regex = /%(\d+)/g;
+            let lastIndex = 0;
+            let match;
+
+            while ((match = regex.exec(message)) !== null) {
+                // Add the text before the parameter as a label (if it's not empty)
+                if (match.index > lastIndex) {
+                    const content = message.substring(lastIndex, match.index).trim();
+                    if (content) {
+                        parts.push({ kind: "label", content });
+                    }
+                }
+
+                // Add the parameter
+                parts.push({
+                    kind: "param",
+                    content: "value"
+                });
+                lastIndex = regex.lastIndex;
             }
-            if (blockMatch) break;
+
+            // Add any remaining text after the last parameter as a label
+            if (lastIndex < message.length) {
+                parts.push({
+                    kind: "label",
+                    content: message.substring(lastIndex).trim()
+                });
+            }
+        } else {
+            parts.push({ kind: "label", content: block.name });
         }
 
-        if (!blockMatch) {
+        return { parts };
+    }
+
+    getReadableBlockName(blockId: string): pxt.editor.ReadableBlockName | undefined {
+        // Get toolbox block definition.
+        let toolboxBlockMatch: BlockDefinition = undefined;
+        for (const advanced of [true, false]) {
+            for (const category of this.blocksEditor.getToolboxCategories(advanced)) {
+                toolboxBlockMatch = category.blocks.find(b => b.attributes.blockId === blockId);
+                if (toolboxBlockMatch) break;
+            }
+            if (toolboxBlockMatch) break;
+        }
+
+        if (!toolboxBlockMatch) {
             console.log("DEBUG: No Block Match for blockId: " + blockId);
             return undefined;
         }
 
-        const readableName = monacoHelpers.getBlockDescription(blockMatch, blockMatch.parameters ? blockMatch.parameters.slice() : null, false);
+        let readableName = monacoHelpers.getBlockDescription(
+            toolboxBlockMatch,
+            toolboxBlockMatch.parameters ? toolboxBlockMatch.parameters.slice() : null,
+            false);
+
+        if (!readableName) {
+            const blocksBlockMatch = pxt.blocks.getBlockDefinition(blockId);
+            if (blocksBlockMatch) {
+                readableName = this.getReadableBlockNameFromBlocksBlockDefinition(blocksBlockMatch);
+            }
+        }
+
+        if (!readableName) {
+            readableName.parts.push({
+                kind: "label",
+                content: monacoHelpers.getSnippetName(toolboxBlockMatch, false) || toolboxBlockMatch.name,
+            });
+        }
+
         return readableName;
     }
 
