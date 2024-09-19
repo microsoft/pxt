@@ -6098,6 +6098,35 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
             if (showHome) return Promise.resolve();
 
+            if (/[&?]autoExpandSimulator=1/.test(window.location.href)) {
+                theEditor.setSimulatorFullScreen(true);
+            }
+
+            const languageRestrictionMatch = /languageRestriction=(python-only|javascript-only|blocks-only|no-blocks|no-python|no-javascript)/i.exec(window.location.href);
+            if (languageRestrictionMatch) {
+                let languageRestriction: pxt.editor.LanguageRestriction = pxt.editor.LanguageRestriction.Standard;
+                switch (languageRestrictionMatch[1].toLowerCase()) {
+                    case "python-only":
+                        languageRestriction = pxt.editor.LanguageRestriction.PythonOnly;
+                        break;
+                    case "javascript-only":
+                        languageRestriction = pxt.editor.LanguageRestriction.JavaScriptOnly;
+                        break;
+                    case "blocks-only":
+                        languageRestriction = pxt.editor.LanguageRestriction.BlocksOnly;
+                        break;
+                    case "no-blocks":
+                        languageRestriction = pxt.editor.LanguageRestriction.NoBlocks;
+                        break;
+                    case "no-python":
+                        languageRestriction = pxt.editor.LanguageRestriction.NoPython;
+                        break;
+                    case "no-javascript":
+                        languageRestriction = pxt.editor.LanguageRestriction.NoJavaScript;
+                        break;
+                }
+                theEditor.setLanguageRestrictionAsync(languageRestriction);
+            }
 
             // default handlers
             const ent = theEditor.settings.fileHistory.filter(e => !!workspace.getHeader(e.id))[0];
