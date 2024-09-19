@@ -24,7 +24,7 @@ export function setApiAsync(f: (path: string, data?: any) => Promise<any>) {
 function getAsync(h: Header) {
     return apiAsync("pkg/" + h.path)
         .then((resp: pxt.FsPkg) => {
-            if (!resp.files) {
+            if (!resp?.files) {
                 return undefined;
             }
             let r: pxt.workspace.File = {
