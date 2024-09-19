@@ -74,6 +74,17 @@ export abstract class IframeDriver {
     protected onMessageReceived = (event: MessageEvent) => {
         const data = event.data;
 
+        switch (data.type) {
+            case "pxteditor":
+            case "pxthost":
+            case "pxtpkgext":
+            case "pxtsim":
+                break;
+            default:
+                return;
+        }
+
+
         if (data) {
             if (this.frameId && data.frameId !== this.frameId) {
                 return;
