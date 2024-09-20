@@ -11,7 +11,7 @@ import { getReadableBlockString } from "../utils";
 import { setParameterValue } from "../transforms/setParameterValue";
 import { ErrorCode } from "../types/errorCode";
 import { logError } from "../services/loggingService";
-import { Strings } from "../constants";
+import { Strings, Ticks } from "../constants";
 import { BlockPickerOptions } from "../types/modalOptions";
 import css from "./styling/BlockPickerModal.module.scss";
 
@@ -51,6 +51,7 @@ const BlockPickerCategory: React.FC<BlockPickerCategoryProps> = ({ category, onB
     const [expanded, setExpanded] = useState(false);
 
     function blockSelected(block: pxt.editor.ToolboxBlockDefinition) {
+        pxt.tickEvent(Ticks.BlockPickerBlockSelected, { blockId: block.blockId ?? "" });
         onBlockSelected?.(block);
     }
 
