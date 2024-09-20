@@ -31,7 +31,7 @@ export const ShareLinkInput: React.FC<IProps> = () => {
         const shareId = pxt.Cloud.parseScriptId(text);
         if (!shareId) {
             pxt.tickEvent(Ticks.LoadProjectInvalid);
-            showToast(makeToast("error", lf(Strings.InvalidShareLink)));
+            showToast(makeToast("error", Strings.InvalidShareLink));
             return;
         }
 
