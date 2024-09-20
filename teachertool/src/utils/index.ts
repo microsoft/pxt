@@ -86,3 +86,8 @@ export function getChecklistHash(checklist: Checklist): string {
     // and it could be translated, etc for built-in checklists.
     return pxt.Util.sha256(JSON.stringify(checklist.criteria));
 }
+
+export function getObfuscatedProjectId(projectId: string | undefined): string {
+    // Just to err on the safe side for privacy, don't log the whole share id.
+    return !projectId || projectId?.length <= 5 ? "" : "..." + projectId.slice(-5);
+}

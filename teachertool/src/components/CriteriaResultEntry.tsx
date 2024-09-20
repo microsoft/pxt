@@ -17,7 +17,7 @@ import { removeCriteriaFromChecklist } from "../transforms/removeCriteriaFromChe
 import { Button } from "react-common/components/controls/Button";
 import { setEvalResult } from "../transforms/setEvalResult";
 import { showToast } from "../transforms/showToast";
-import { getChecklistHash, makeToast } from "../utils";
+import { getChecklistHash, getObfuscatedProjectId, makeToast } from "../utils";
 
 interface CriteriaResultNotesProps {
     criteriaId: string;
@@ -84,7 +84,7 @@ const CriteriaResultToolbarTray: React.FC<{ criteriaId: string }> = ({ criteriaI
         pxt.tickEvent(Ticks.SingleEvaluate, {
             catalogCriteriaId: criteriaInstance?.catalogCriteriaId ?? "",
             checklistHash: getChecklistHash(teacherTool.checklist),
-            projectId: teacherTool.projectMetadata?.id ?? "",
+            projectId: getObfuscatedProjectId(teacherTool.projectMetadata?.id),
         });
         const success = await runSingleEvaluateAsync(criteriaId, true);
 

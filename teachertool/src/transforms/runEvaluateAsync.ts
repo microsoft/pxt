@@ -1,5 +1,5 @@
 import { stateAndDispatch } from "../state";
-import { getChecklistHash, makeToast } from "../utils";
+import { getChecklistHash, getObfuscatedProjectId, makeToast } from "../utils";
 import { showToast } from "./showToast";
 import { setActiveTab } from "./setActiveTab";
 import { runSingleEvaluateAsync } from "./runSingleEvaluateAsync";
@@ -30,7 +30,7 @@ export async function runEvaluateAsync(fromUserInteraction: boolean) {
         criteriaCount: evalRequests.length,
         catalogCriteriaIds: JSON.stringify(teacherTool.checklist.criteria.map(c => c.catalogCriteriaId)),
         checklistHash: getChecklistHash(teacherTool.checklist),
-        projectId: teacherTool.projectMetadata?.id ?? "",
+        projectId: getObfuscatedProjectId(teacherTool.projectMetadata?.id),
     });
 
     // EvalRequest promises will resolve to true if evaluation completed successfully (regarless of pass/fail).
