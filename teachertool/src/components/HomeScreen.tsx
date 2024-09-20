@@ -88,7 +88,6 @@ interface ChecklistResourceCardProps {
 
 const ChecklistResourceCard: React.FC<ChecklistResourceCardProps> = ({ cardTitle, imageUrl, checklistUrl }) => {
     const onCardClickedAsync = async () => {
-        pxt.tickEvent(Ticks.LoadChecklist, { checklistUrl });
         await loadChecklistAsync(checklistUrl);
     };
     return (

@@ -73,7 +73,7 @@ export namespace Ticks {
     export const ImportChecklistSuccess = "teachertool.importchecklist.success";
     export const ImportChecklistClose = "teachertool.importchecklist.close";
     export const ExportChecklist = "teachertool.exportchecklist";
-    export const LoadChecklist = "teachertool.loadchecklist";
+    export const LoadChecklistFromUrl = "teachertool.loadchecklistfromurl";
     export const SingleEvaluate = "teachertool.singleevaluate";
     export const BulkEvaluate = "teachertool.bulkevaluate";
     export const RunOnLoad = "teachertool.runonload";
