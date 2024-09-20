@@ -3,7 +3,7 @@ import { logError } from "../services/loggingService";
 import { stateAndDispatch } from "../state";
 import * as Actions from "../state/actions";
 import { getCriteriaInstanceWithId } from "../state/helpers";
-import { CriteriaResult } from "../types/criteria";
+import { CriteriaResult, EvaluationStatus } from "../types/criteria";
 import { ErrorCode } from "../types/errorCode";
 
 // Send tick events related to changes happening in the criteria result.
@@ -21,8 +21,8 @@ function reportChanges(criteriaId: string, result: CriteriaResult) {
 
         pxt.tickEvent(Ticks.SetEvalResultOutcome, {
             catalogCriteriaId: criteriaInstance.catalogCriteriaId,
-            newValue: result.result,
-            oldValue: previousResult?.result,
+            newValue: EvaluationStatus[result.result],
+            oldValue: previousResult?.result ? EvaluationStatus[previousResult.result] : "",
             newValueIsManual: result.resultIsManual + "",
             oldValueIsManual: previousResult?.resultIsManual + "",
         });
