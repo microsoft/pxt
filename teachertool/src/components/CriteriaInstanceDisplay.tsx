@@ -13,7 +13,7 @@ import { Strings, Ticks } from "../constants";
 import { showModal } from "../transforms/showModal";
 import { BlockPickerOptions } from "../types/modalOptions";
 import { validateParameterValue } from "../utils/validateParameterValue";
-import { getReadableBlockName } from "../services/makecodeEditorService";
+import { loadReadableBlockName } from "../transforms/loadReadableBlockName";
 
 interface InlineInputSegmentProps {
     initialValue: string;
@@ -91,7 +91,7 @@ const ReadableBlockNameDisplay: React.FC<ReadableBlockNameDisplayProps> = ({ blo
         async function updateReadableName(blockId: string | undefined) {
             let blockReadableName: pxt.editor.ReadableBlockName | undefined;
             if (blockId) {
-                blockReadableName = blockId ? await getReadableBlockName(blockId) : undefined;
+                blockReadableName = blockId ? await loadReadableBlockName(blockId) : undefined;
             }
 
             if (blockReadableName) {
