@@ -449,6 +449,20 @@
             window.pxtTickEvent("offlineapp.download", { "target": "@targetid@", "platform": "mac64" });
         }
         $(function () {
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const versionOverride = urlParams.get("version") || urlParams.get("v");
+
+                if (versionOverride && /^v\d+\.\d+\.\d+$/i.test(versionOverride)) {
+                    updateDownloadLinks(versionOverride);
+                    showAgree();
+                    hideLoader();
+                    return;
+                }
+            } catch (e) {
+                console.warn("Could not parse search string", e);
+            }
+
             $.getJSON("https://makecode.com/api/config/@targetid@/targetconfig")
                 .then(function (data) {
                     hideLoader();
