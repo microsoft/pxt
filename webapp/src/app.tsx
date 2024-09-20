@@ -4143,48 +4143,6 @@ export class ProjectView
         return { categories };
     }
 
-    // TODO thsparks : find a better name for this function
-    getBlockTextPartsFromBlocksBlockDefinition(block: pxt.blocks.BlockDefinition): pxt.editor.BlockTextParts | undefined {
-        const parts: pxt.editor.BlockTextPart[] = [];
-        if (block?.block["message0"]) {
-            // These message values use %1, %2, etc. for parameters.
-            // Extract these into generic "value" parameters.
-            const message = block.block["message0"];
-            const regex = /%(\d+)/g;
-            let lastIndex = 0;
-            let match;
-
-            while ((match = regex.exec(message)) !== null) {
-                // Add the text before the parameter as a label (if it's not empty)
-                if (match.index > lastIndex) {
-                    const content = message.substring(lastIndex, match.index).trim();
-                    if (content) {
-                        parts.push({ kind: "label", content });
-                    }
-                }
-
-                // Add the parameter
-                parts.push({
-                    kind: "param",
-                    content: "value"
-                });
-                lastIndex = regex.lastIndex;
-            }
-
-            // Add any remaining text after the last parameter as a label
-            if (lastIndex < message.length) {
-                parts.push({
-                    kind: "label",
-                    content: message.substring(lastIndex).trim()
-                });
-            }
-        } else {
-            parts.push({ kind: "label", content: block.name });
-        }
-
-        return { parts };
-    }
-
     getBlockTextParts(blockId: string): pxt.editor.BlockTextParts | undefined {
         // Get toolbox block definition.
         let toolboxBlockMatch: BlockDefinition = undefined;
@@ -4209,7 +4167,7 @@ export class ProjectView
         if (!readableName) {
             const blocksBlockMatch = pxt.blocks.getBlockDefinition(blockId);
             if (blocksBlockMatch) {
-                readableName = this.getBlockTextPartsFromBlocksBlockDefinition(blocksBlockMatch);
+                readableName = toolboxHelpers.getBlockTextPartsFromBlocksBlockDefinition(blocksBlockMatch);
             }
         }
 
