@@ -389,7 +389,7 @@ export class EditorDriver extends IframeDriver {
         return (resp.resp as pxt.editor.EditorMessageGetToolboxCategoriesResponse).categories;
     }
 
-    async getBlockReadableName(blockId: string): Promise<pxt.editor.ReadableBlockName | undefined> {
+    async getReadableBlockName(blockId: string): Promise<pxt.editor.ReadableBlockName | undefined> {
         const resp = await this.sendRequest(
             {
                 type: "pxteditor",

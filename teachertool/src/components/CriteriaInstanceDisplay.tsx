@@ -13,7 +13,7 @@ import { Strings } from "../constants";
 import { showModal } from "../transforms/showModal";
 import { BlockPickerOptions } from "../types/modalOptions";
 import { validateParameterValue } from "../utils/validateParameterValue";
-import { getBlockReadableName } from "../services/makecodeEditorService";
+import { getReadableBlockName } from "../services/makecodeEditorService";
 
 interface InlineInputSegmentProps {
     initialValue: string;
@@ -81,17 +81,17 @@ const InlineInputSegment: React.FC<InlineInputSegmentProps> = ({
     );
 };
 
-interface BlockReadableNameProps {
+interface ReadableBlockNameDisplayProps {
     blockData: BlockData;
 }
-const BlockReadableName: React.FC<BlockReadableNameProps> = ({ blockData }) => {
+const ReadableBlockNameDisplay: React.FC<ReadableBlockNameDisplayProps> = ({ blockData }) => {
     const [readableName, setReadableName] = useState<pxt.editor.ReadableBlockName | undefined>(undefined);
 
     useEffect(() => {
         async function updateReadableName(blockId: string | undefined) {
             let blockReadableName: pxt.editor.ReadableBlockName | undefined;
             if (blockId) {
-                blockReadableName = blockId ? await getBlockReadableName(blockId) : undefined;
+                blockReadableName = blockId ? await getReadableBlockName(blockId) : undefined;
             }
 
             if (blockReadableName) {
@@ -161,7 +161,7 @@ const BlockInputSegment: React.FC<BlockInputSegmentProps> = ({ instance, param }
     }
 
     const style = blockData ? { backgroundColor: blockData.category.color, color: "white" } : undefined;
-    const blockDisplay = blockData ? <BlockReadableName blockData={blockData} /> : null;
+    const blockDisplay = blockData ? <ReadableBlockNameDisplay blockData={blockData} /> : null;
     return (
         <Button
             label={blockDisplay || param.value || param.name}
