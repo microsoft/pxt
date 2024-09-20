@@ -5,7 +5,7 @@ import { useReactToPrint } from "react-to-print";
 import { AppStateContext } from "../state/appStateContext";
 import { CriteriaResultEntry } from "./CriteriaResultEntry";
 import { QRCodeSVG } from "qrcode.react";
-import { getProjectLink } from "../utils";
+import { getChecklistHash, getObfuscatedProjectId, getProjectLink } from "../utils";
 import { classList } from "react-common/components/util";
 import { AddCriteriaButton } from "./AddCriteriaButton";
 import { DebouncedInput } from "./DebouncedInput";
@@ -30,6 +30,15 @@ const ResultsHeader: React.FC<ResultsHeaderProps> = ({ printRef }) => {
     const [checklistNameInputRef, setChecklistNameInputRef] = useState<HTMLInputElement>();
 
     const handleEvaluateClickedAsync = async () => {
+        pxt.tickEvent(Ticks.BulkEvaluate, {
+            fromUserInteraction: true + "",
+            runOnLoad: false + "",
+            criteriaCount: checklist.criteria.length,
+            catalogCriteriaIds: JSON.stringify(checklist.criteria.map(c => c.catalogCriteriaId)),
+            checklistHash: getChecklistHash(checklist),
+            projectId: getObfuscatedProjectId(projectMetadata?.id),
+        });
+
         await runEvaluateAsync(true);
     };
 
