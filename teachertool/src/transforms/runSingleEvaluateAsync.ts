@@ -121,7 +121,7 @@ export async function runSingleEvaluateAsync(criteriaInstanceId: string, fromUse
             return resolve(true);
         }
 
-        setEvalResultOutcome(criteriaInstance.instanceId, EvaluationStatus.InProgress);
+        setEvalResultOutcome(criteriaInstance.instanceId, EvaluationStatus.InProgress, false);
 
         const loadedValidatorPlans = teacherTool.validatorPlans;
         if (!loadedValidatorPlans) {
@@ -154,11 +154,12 @@ export async function runSingleEvaluateAsync(criteriaInstanceId: string, fromUse
                         ? EvaluationStatus.Pass
                         : EvaluationStatus.Fail;
 
-                mergeEvalResult(criteriaInstance.instanceId, result, planResult.notes);
+                mergeEvalResult(criteriaInstance.instanceId, false, result, planResult.notes);
                 return resolve(true); // evaluation completed successfully, so return true (regardless of pass/fail)
             } else {
                 setEvalResult(criteriaInstance.instanceId, {
                     result: EvaluationStatus.NotStarted,
+                    resultIsManual: false,
                     error: planResult?.executionErrorMsg ?? Strings.UnexpectedError,
                 });
                 setUserFeedback(criteriaInstanceId, undefined);
@@ -174,6 +175,7 @@ export async function runSingleEvaluateAsync(criteriaInstanceId: string, fromUse
             setUserFeedback(criteriaInstanceId, undefined);
             setEvalResult(criteriaInstance.instanceId, {
                 result: EvaluationStatus.NotStarted,
+                resultIsManual: false,
                 error: Strings.UnexpectedError,
             });
             return resolve(false);

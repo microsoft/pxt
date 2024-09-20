@@ -34,4 +34,5 @@ export enum ErrorCode {
     authCheckFailed = "authCheckFailed",
     unrecognizedParameterType = "unrecognizedParameterType",
     invalidParameterValue = "invalidParameterValue",
+    invalidPremadeChecklist = "invalidPremadeChecklist",
 }

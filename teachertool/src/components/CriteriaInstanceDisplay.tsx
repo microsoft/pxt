@@ -9,7 +9,7 @@ import { useContext, useEffect, useMemo, useState } from "react";
 import { Input } from "react-common/components/controls/Input";
 import { Button } from "react-common/components/controls/Button";
 import { AppStateContext } from "../state/appStateContext";
-import { Strings } from "../constants";
+import { Strings, Ticks } from "../constants";
 import { showModal } from "../transforms/showModal";
 import { BlockPickerOptions } from "../types/modalOptions";
 import { validateParameterValue } from "../utils/validateParameterValue";
@@ -153,6 +153,7 @@ const BlockInputSegment: React.FC<BlockInputSegmentProps> = ({ instance, param }
     }, [param.value, teacherTool.toolboxCategories]);
 
     function handleClick() {
+        pxt.tickEvent(Ticks.BlockPickerOpened, { criteriaCatalogId: instance.catalogCriteriaId });
         showModal({
             modal: "block-picker",
             criteriaInstanceId: instance.instanceId,

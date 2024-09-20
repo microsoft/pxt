@@ -44,10 +44,7 @@ const CatalogItemLabel: React.FC<CatalogItemLabelProps> = ({ catalogCriteria, is
         <div className={css["catalog-item-label"]}>
             <div className={css["action-indicators"]}>
                 {isMaxed ? (
-                    <i
-                        className="fas fa-check"
-                        title={Strings.MaxReached}
-                    />
+                    <i className="fas fa-check" title={Strings.MaxReached} />
                 ) : (
                     <>
                         <i
@@ -59,10 +56,7 @@ const CatalogItemLabel: React.FC<CatalogItemLabelProps> = ({ catalogCriteria, is
                             title={lf("Added!")}
                         />
                         <i
-                            className={classList(
-                                "fas fa-plus",
-                                recentlyAdded ? css["hide-indicator"] : undefined
-                            )}
+                            className={classList("fas fa-plus", recentlyAdded ? css["hide-indicator"] : undefined)}
                             title={Strings.AddToChecklist}
                         />
                     </>

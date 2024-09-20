@@ -4,7 +4,12 @@ import { setEvalResult } from "./setEvalResult";
 import { setUserFeedback } from "./setUserFeedback";
 
 // This will set the outcome and notes for a given criteria instance id, but if the provided value is undefined, it will not change that value.
-export function mergeEvalResult(criteriaInstanceId: string, outcome?: EvaluationStatus, notes?: string) {
+export function mergeEvalResult(
+    criteriaInstanceId: string,
+    isManual: boolean,
+    outcome?: EvaluationStatus,
+    notes?: string
+) {
     const { state: teacherTool, dispatch } = stateAndDispatch();
 
     const newCriteriaEvalResult = { ...teacherTool.evalResults[criteriaInstanceId] };
@@ -14,6 +19,7 @@ export function mergeEvalResult(criteriaInstanceId: string, outcome?: Evaluation
 
     if (outcome !== undefined) {
         newCriteriaEvalResult.result = outcome;
+        newCriteriaEvalResult.resultIsManual = isManual;
     }
     if (notes !== undefined) {
         if (newCriteriaEvalResult.notes !== notes) {
