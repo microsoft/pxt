@@ -93,6 +93,8 @@ export namespace Ticks {
     export const LoadProjectFromInput = "teachertool.loadproject.frominput";
     export const LoadProjectFromUrl = "teachertool.loadproject.fromurl";
     export const LoadProjectInvalid = "teachertool.loadproject.invalid";
+    export const BlockPickerBlockSelected = "teachertool.blockpicker.blockselected";
+    export const BlockPickerOpened = "teachertool.blockpicker.opened";
 }
 
 namespace Misc {
