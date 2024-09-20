@@ -80,3 +80,9 @@ export function getReadableBlockString(name: string) {
         return pxt.Util.camelCaseToLowercaseWithSpaces(name);
     }
 }
+
+export function getChecklistHash(checklist: Checklist): string {
+    // We only hash the criteria (not the name), since the name doesn't really matter in our scenarios,
+    // and it could be translated, etc for built-in checklists.
+    return pxt.Util.sha256(JSON.stringify(checklist.criteria));
+}

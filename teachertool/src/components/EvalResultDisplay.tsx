@@ -30,7 +30,6 @@ const ResultsHeader: React.FC<ResultsHeaderProps> = ({ printRef }) => {
     const [checklistNameInputRef, setChecklistNameInputRef] = useState<HTMLInputElement>();
 
     const handleEvaluateClickedAsync = async () => {
-        pxt.tickEvent(Ticks.Evaluate);
         await runEvaluateAsync(true);
     };
 

@@ -70,7 +70,8 @@ export namespace Ticks {
     export const ImportChecklist = "teachertool.importchecklist";
     export const ExportChecklist = "teachertool.exportchecklist";
     export const LoadChecklist = "teachertool.loadchecklist";
-    export const Evaluate = "teachertool.evaluate";
+    export const SingleEvaluate = "teachertool.singleevaluate";
+    export const BulkEvaluate = "teachertool.bulkevaluate";
     export const RunOnLoad = "teachertool.runonload";
     export const AddCriteria = "teachertool.addcriteria";
     export const RemoveCriteria = "teachertool.removecriteria";
