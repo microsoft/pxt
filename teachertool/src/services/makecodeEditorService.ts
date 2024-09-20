@@ -74,8 +74,8 @@ export async function getToolboxCategoriesAsync(
     return response;
 }
 
-export async function getReadableBlockName(blockId: string): Promise<pxt.editor.ReadableBlockName | undefined> {
-    const response = driver ? await driver.getReadableBlockName(blockId) : undefined;
+export async function getBlockTextParts(blockId: string): Promise<pxt.editor.BlockTextParts | undefined> {
+    const response = driver ? await driver.getBlockTextParts(blockId) : undefined;
     return response;
 }
 

@@ -12,7 +12,7 @@ const RUN_ON_LOAD_KEY = [KEY_PREFIX, "runOnLoad"].join("/");
 const LAST_ACTIVE_CHECKLIST_KEY = [KEY_PREFIX, "lastActiveChecklist"].join("/");
 const SPLIT_POSITION_KEY = [KEY_PREFIX, "splitPosition"].join("/");
 const EXPANDED_CATALOG_TAGS_KEY = [KEY_PREFIX, "expandedCatalogTags"].join("/");
-const READABLE_BLOCK_NAME_PREFIX = [KEY_PREFIX, "readableBlockName"].join("/");
+const BLOCK_TEXT_PARTS_PREFIX = [KEY_PREFIX, "blockTextParts"].join("/");
 
 function getValue(key: string, defaultValue?: string): string | undefined {
     return localStorage.getItem(key) || defaultValue;
@@ -113,8 +113,8 @@ async function deleteChecklistFromIndexedDbAsync(name: string) {
     await db.deleteChecklist(name);
 }
 
-function getReadableBlockNameKey(blockId: string): string {
-    return [READABLE_BLOCK_NAME_PREFIX, blockId].join("/");
+function getBlockTextPartsKey(blockId: string): string {
+    return [BLOCK_TEXT_PARTS_PREFIX, blockId].join("/");
 }
 
 // ----------------------------------
@@ -241,8 +241,8 @@ export function removeExpandedCatalogTag(tag: string) {
     }
 }
 
-export function getCachedReadableBlockName(blockId: string): pxt.editor.ReadableBlockName | undefined {
-    const key = getReadableBlockNameKey(blockId);
+export function getCachedBlockTextParts(blockId: string): pxt.editor.BlockTextParts | undefined {
+    const key = getBlockTextPartsKey(blockId);
     try {
         const cachedReadableBlockName = getValue(key);
         return cachedReadableBlockName ? JSON.parse(cachedReadableBlockName) : undefined;
@@ -252,8 +252,8 @@ export function getCachedReadableBlockName(blockId: string): pxt.editor.Readable
     }
 }
 
-export function cacheReadableBlockName(blockId: string, readableBlockName: pxt.editor.ReadableBlockName) {
-    const key = getReadableBlockNameKey(blockId);
+export function cacheBlockTextParts(blockId: string, readableBlockName: pxt.editor.BlockTextParts) {
+    const key = getBlockTextPartsKey(blockId);
     try {
         setValue(key, JSON.stringify(readableBlockName));
     } catch (e) {

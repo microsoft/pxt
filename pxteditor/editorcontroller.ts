@@ -209,11 +209,11 @@ case "renderxml": {
                                         resp = projectView.getToolboxCategories(msg.advanced);
                                     });
                             }
-                            case "getreadableblockname": {
+                            case "getblocktextparts": {
                                 const msg = data as pxt.editor.EditorMessageGetBlockReadableNameRequest;
                                 return Promise.resolve()
                                     .then(() => {
-                                        const readableName = projectView.getReadableBlockName(msg.blockId);
+                                        const readableName = projectView.getBlockTextParts(msg.blockId);
                                         resp = { readableName } as pxt.editor.EditorMessageGetBlockReadableNameResponse;
                                     });
                             }

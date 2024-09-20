@@ -6,8 +6,8 @@ export function getSnippetName(block: toolbox.BlockDefinition, isPython: boolean
 }
 
 // TODO thsparks : move monacoFlyout to use this too.
-export function getBlockDescription(block: toolbox.BlockDefinition, params: pxtc.ParameterDesc[], isPython: boolean): pxt.editor.ReadableBlockName {
-    let description: pxt.editor.ReadableBlockNamePart[] = [];
+export function getBlockTextParts(block: toolbox.BlockDefinition, params: pxtc.ParameterDesc[], isPython: boolean): pxt.editor.BlockTextParts {
+    let description: pxt.editor.BlockTextPart[] = [];
     let compileInfo = pxt.blocks.compileInfo(block as pxtc.SymbolInfo);
     let parts = block.attributes._def && block.attributes._def.parts;
     if (block.attributes.parentBlock) {

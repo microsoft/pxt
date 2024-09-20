@@ -4144,8 +4144,8 @@ export class ProjectView
     }
 
     // TODO thsparks : find a better name for this function
-    getReadableBlockNameFromBlocksBlockDefinition(block: pxt.blocks.BlockDefinition): pxt.editor.ReadableBlockName | undefined {
-        const parts: pxt.editor.ReadableBlockNamePart[] = [];
+    getBlockTextPartsFromBlocksBlockDefinition(block: pxt.blocks.BlockDefinition): pxt.editor.BlockTextParts | undefined {
+        const parts: pxt.editor.BlockTextPart[] = [];
         if (block?.block["message0"]) {
             // These message values use %1, %2, etc. for parameters.
             // Extract these into generic "value" parameters.
@@ -4185,7 +4185,7 @@ export class ProjectView
         return { parts };
     }
 
-    getReadableBlockName(blockId: string): pxt.editor.ReadableBlockName | undefined {
+    getBlockTextParts(blockId: string): pxt.editor.BlockTextParts | undefined {
         // Get toolbox block definition.
         let toolboxBlockMatch: BlockDefinition = undefined;
         for (const advanced of [true, false]) {
@@ -4201,7 +4201,7 @@ export class ProjectView
             return undefined;
         }
 
-        let readableName = toolboxHelpers.getBlockDescription(
+        let readableName = toolboxHelpers.getBlockTextParts(
             toolboxBlockMatch,
             toolboxBlockMatch.parameters ? toolboxBlockMatch.parameters.slice() : null,
             false);
@@ -4209,7 +4209,7 @@ export class ProjectView
         if (!readableName) {
             const blocksBlockMatch = pxt.blocks.getBlockDefinition(blockId);
             if (blocksBlockMatch) {
-                readableName = this.getReadableBlockNameFromBlocksBlockDefinition(blocksBlockMatch);
+                readableName = this.getBlockTextPartsFromBlocksBlockDefinition(blocksBlockMatch);
             }
         }
 

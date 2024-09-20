@@ -13,7 +13,7 @@ import { Strings, Ticks } from "../constants";
 import { showModal } from "../transforms/showModal";
 import { BlockPickerOptions } from "../types/modalOptions";
 import { validateParameterValue } from "../utils/validateParameterValue";
-import { loadReadableBlockName } from "../transforms/loadReadableBlockName";
+import { loadBlockTextParts } from "../transforms/loadReadableBlockName";
 
 interface InlineInputSegmentProps {
     initialValue: string;
@@ -81,33 +81,33 @@ const InlineInputSegment: React.FC<InlineInputSegmentProps> = ({
     );
 };
 
-interface ReadableBlockNameDisplayProps {
+interface ReadableBlockNameProps {
     blockData: BlockData;
 }
-const ReadableBlockNameDisplay: React.FC<ReadableBlockNameDisplayProps> = ({ blockData }) => {
-    const [readableName, setReadableName] = useState<pxt.editor.ReadableBlockName | undefined>(undefined);
+const ReadableBlockName: React.FC<ReadableBlockNameProps> = ({ blockData }) => {
+    const [blockTextParts, setBlockTextParts] = useState<pxt.editor.BlockTextParts | undefined>(undefined);
 
     useEffect(() => {
         async function updateReadableName(blockId: string | undefined) {
-            let blockReadableName: pxt.editor.ReadableBlockName | undefined;
+            let blockReadableName: pxt.editor.BlockTextParts | undefined;
             if (blockId) {
-                blockReadableName = blockId ? await loadReadableBlockName(blockId) : undefined;
+                blockReadableName = blockId ? await loadBlockTextParts(blockId) : undefined;
             }
 
             if (blockReadableName) {
-                setReadableName(blockReadableName);
+                setBlockTextParts(blockReadableName);
             } else {
                 // We were unable to get block name from the editor. Fallback to snippet name and/or name.
-                setReadableName({
+                setBlockTextParts({
                     parts: [{ kind: "label", content: blockData.block.snippetName || blockData.block.name }],
-                } as pxt.editor.ReadableBlockName);
+                } as pxt.editor.BlockTextParts);
             }
         }
 
         updateReadableName(blockData.block.blockId);
     }, [blockData]);
 
-    const readableComponent = readableName?.parts.map((part, i) => {
+    const readableComponent = blockTextParts?.parts.map((part, i) => {
         return (
             <span
                 key={`block-name-part-${i}`}
@@ -162,7 +162,7 @@ const BlockInputSegment: React.FC<BlockInputSegmentProps> = ({ instance, param }
     }
 
     const style = blockData ? { backgroundColor: blockData.category.color, color: "white" } : undefined;
-    const blockDisplay = blockData ? <ReadableBlockNameDisplay blockData={blockData} /> : null;
+    const blockDisplay = blockData ? <ReadableBlockName blockData={blockData} /> : null;
     return (
         <Button
             label={blockDisplay || param.value || param.name}
