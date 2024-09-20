@@ -4143,7 +4143,7 @@ export class ProjectView
         return { categories };
     }
 
-    // TODO thsparks : find a better name
+    // TODO thsparks : find a better name for this function
     getReadableBlockNameFromBlocksBlockDefinition(block: pxt.blocks.BlockDefinition): pxt.editor.ReadableBlockName | undefined {
         const parts: pxt.editor.ReadableBlockNamePart[] = [];
         if (block?.block["message0"]) {
