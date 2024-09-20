@@ -83,6 +83,8 @@ export namespace Ticks {
     export const UnhandledEvalError = "teachertool.evaluateerror";
     export const FeedbackForm = "teachertool.feedbackform";
     export const ParamErrorMissingMessage = "teachertool.paramerrormissingmessage";
+    export const SetEvalResultOutcome = "teachertool.setevalresultoutcome";
+    export const SetEvalResultNotes = "teachertool.setevalresultnotes";
 }
 
 namespace Misc {

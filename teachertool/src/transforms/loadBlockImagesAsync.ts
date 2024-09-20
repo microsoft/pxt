@@ -17,6 +17,7 @@ async function loadBlockImageAsync(block: pxt.editor.ToolboxBlockDefinition) {
     const imageUri = block.blockXml
         ? await getBlockImageUriFromXmlAsync(block.blockXml)
         : await getBlockImageUriFromBlockIdAsync(block.blockId);
+
     if (imageUri) {
         const { dispatch } = stateAndDispatch();
         dispatch(Actions.setBlockImageUri(block.blockId, imageUri));
