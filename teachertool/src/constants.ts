@@ -58,6 +58,7 @@ export namespace Strings {
     export const BelowMin = lf("Below minimum value");
     export const ExceedsMax = lf("Exceeds maximum value");
     export const InvalidValue = lf("Invalid value");
+    export const InvalidShareLink = lf("Invalid share link");
 }
 
 export namespace Ticks {
@@ -89,6 +90,9 @@ export namespace Ticks {
     export const ParamErrorMissingMessage = "teachertool.paramerrormissingmessage";
     export const SetEvalResultOutcome = "teachertool.setevalresultoutcome";
     export const SetEvalResultNotes = "teachertool.setevalresultnotes";
+    export const LoadProjectFromInput = "teachertool.loadproject.frominput";
+    export const LoadProjectFromUrl = "teachertool.loadproject.fromurl";
+    export const LoadProjectInvalid = "teachertool.loadproject.invalid";
 }
 
 namespace Misc {

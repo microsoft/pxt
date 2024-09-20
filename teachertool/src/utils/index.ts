@@ -84,7 +84,7 @@ export function getReadableBlockString(name: string) {
 export function getChecklistHash(checklist: Checklist): string {
     // We only hash the criteria (not the name), since the name doesn't really matter in our scenarios,
     // and it could be translated, etc for built-in checklists.
-    return pxt.Util.sha256(JSON.stringify(checklist.criteria));
+    return checklist.criteria.length == 0 ? "empty" : pxt.Util.sha256(JSON.stringify(checklist.criteria));
 }
 
 export function getObfuscatedProjectId(projectId: string | undefined): string {
