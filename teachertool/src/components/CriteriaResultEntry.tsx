@@ -17,7 +17,7 @@ import { removeCriteriaFromChecklist } from "../transforms/removeCriteriaFromChe
 import { Button } from "react-common/components/controls/Button";
 import { setEvalResult } from "../transforms/setEvalResult";
 import { showToast } from "../transforms/showToast";
-import { makeToast } from "../utils";
+import { getChecklistHash, getObfuscatedProjectId, makeToast } from "../utils";
 
 interface CriteriaResultNotesProps {
     criteriaId: string;
@@ -69,7 +69,11 @@ const CriteriaResultError: React.FC<CriteriaResultErrorProps> = ({ criteriaInsta
                 leftIcon="fas fa-times-circle"
                 title={Strings.Dismiss}
                 onClick={() =>
-                    setEvalResult(criteriaInstanceId, { result: EvaluationStatus.NotStarted, error: undefined })
+                    setEvalResult(criteriaInstanceId, {
+                        result: EvaluationStatus.NotStarted,
+                        resultIsManual: false,
+                        error: undefined,
+                    })
                 }
             />
         </div>
@@ -80,7 +84,12 @@ const CriteriaResultToolbarTray: React.FC<{ criteriaId: string }> = ({ criteriaI
     const { state: teacherTool } = useContext(AppStateContext);
 
     async function handleEvaluateClickedAsync() {
-        pxt.tickEvent(Ticks.Evaluate);
+        const criteriaInstance = getCriteriaInstanceWithId(teacherTool, criteriaId);
+        pxt.tickEvent(Ticks.SingleEvaluate, {
+            catalogCriteriaId: criteriaInstance?.catalogCriteriaId ?? "",
+            checklistHash: getChecklistHash(teacherTool.checklist),
+            projectId: getObfuscatedProjectId(teacherTool.projectMetadata?.id),
+        });
         const success = await runSingleEvaluateAsync(criteriaId, true);
 
         if (success) {

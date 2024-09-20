@@ -19,6 +19,7 @@ import { SignedOutPanel } from "./components/SignedOutPanel";
 import * as authClient from "./services/authClient";
 import { ErrorCode } from "./types/errorCode";
 import { loadProjectMetadataAsync } from "./transforms/loadProjectMetadataAsync";
+import { Ticks } from "./constants";
 
 export const App = () => {
     const { state, dispatch } = useContext(AppStateContext);
@@ -47,6 +48,7 @@ export const App = () => {
                     const decoded = decodeURIComponent(projectParam);
                     const shareId = pxt.Cloud.parseScriptId(decoded);
                     if (!!shareId) {
+                        pxt.tickEvent(Ticks.LoadProjectFromUrl);
                         await loadProjectMetadataAsync(decoded, shareId);
                     }
                 }

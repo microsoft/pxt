@@ -68,7 +68,7 @@ export function isProjectLoaded(state: AppState): boolean {
 }
 
 export function isChecklistLoaded(state: AppState): boolean {
-    return !!(state.checklist.criteria.length || state.checklist.name);
+    return !!state.checklist.criteria.length;
 }
 
 export function getSafeProjectName(state: AppState): string | undefined {
