@@ -49,7 +49,7 @@ import * as sidepanel from "./sidepanel";
 import * as qr from "./qr";
 
 import * as monaco from "./monaco"
-import * as monacoHelpers from "./monacopyhelper"
+import * as toolboxHelpers from "./toolboxHelpers"
 import * as pxtjson from "./pxtjson"
 import * as serial from "./serial"
 import * as blocks from "./blocks"
@@ -4201,7 +4201,7 @@ export class ProjectView
             return undefined;
         }
 
-        let readableName = monacoHelpers.getBlockDescription(
+        let readableName = toolboxHelpers.getBlockDescription(
             toolboxBlockMatch,
             toolboxBlockMatch.parameters ? toolboxBlockMatch.parameters.slice() : null,
             false);
@@ -4216,7 +4216,7 @@ export class ProjectView
         if (!readableName) {
             readableName.parts.push({
                 kind: "label",
-                content: monacoHelpers.getSnippetName(toolboxBlockMatch, false) || toolboxBlockMatch.name,
+                content: toolboxHelpers.getSnippetName(toolboxBlockMatch, false) || toolboxBlockMatch.name,
             });
         }
 
