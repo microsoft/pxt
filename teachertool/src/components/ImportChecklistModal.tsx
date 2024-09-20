@@ -23,10 +23,10 @@ export const ImportChecklistModal: React.FC<IProps> = () => {
     async function handleFileDroppedAsync(file: File) {
         const parsedChecklist = await getChecklistFromFileAsync(file, false /* allow partial */);
         if (!parsedChecklist) {
-            pxt.tickEvent(Ticks.ImportChecklistInvalidFile)
+            pxt.tickEvent(Ticks.ImportChecklistInvalidFile);
             setErrorMessage(Strings.InvalidChecklistFile);
         } else {
-            pxt.tickEvent(Ticks.ImportChecklistSuccess)
+            pxt.tickEvent(Ticks.ImportChecklistSuccess);
             setErrorMessage(undefined);
             closeModal(true);
             replaceActiveChecklistAsync(parsedChecklist);
@@ -34,7 +34,11 @@ export const ImportChecklistModal: React.FC<IProps> = () => {
     }
 
     return teacherTool.modalOptions?.modal === "import-checklist" ? (
-        <Modal title={Strings.ImportChecklist} onClose={() => closeModal(false)} className={css["import-checklist-modal"]}>
+        <Modal
+            title={Strings.ImportChecklist}
+            onClose={() => closeModal(false)}
+            className={css["import-checklist-modal"]}
+        >
             <div className={css["import-checklist"]}>
                 <DragAndDropFileSurface onFileDroppedAsync={handleFileDroppedAsync} errorMessage={errorMessage} />
             </div>

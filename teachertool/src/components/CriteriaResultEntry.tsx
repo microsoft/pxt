@@ -69,7 +69,11 @@ const CriteriaResultError: React.FC<CriteriaResultErrorProps> = ({ criteriaInsta
                 leftIcon="fas fa-times-circle"
                 title={Strings.Dismiss}
                 onClick={() =>
-                    setEvalResult(criteriaInstanceId, { result: EvaluationStatus.NotStarted, resultIsManual: false, error: undefined })
+                    setEvalResult(criteriaInstanceId, {
+                        result: EvaluationStatus.NotStarted,
+                        resultIsManual: false,
+                        error: undefined,
+                    })
                 }
             />
         </div>
