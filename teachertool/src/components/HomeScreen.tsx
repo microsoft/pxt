@@ -148,7 +148,7 @@ const GetStarted: React.FC = () => {
     };
 
     const onImportChecklistClicked = () => {
-        pxt.tickEvent(Ticks.ImportChecklist);
+        pxt.tickEvent(Ticks.ImportChecklistOpen);
         showModal({ modal: "import-checklist" } as ImportChecklistOptions);
     };
 
