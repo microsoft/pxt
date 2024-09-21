@@ -108,6 +108,15 @@ const ReadableBlockName: React.FC<ReadableBlockNameProps> = ({ blockData }) => {
     }, [blockData]);
 
     const readableComponent = blockTextParts?.parts.map((part, i) => {
+        let content = "";
+        if (part.kind === "param") {
+            // Mask default values like "hello!" with generic "value"
+            // This is done to reduce confusion about what is actually being checked.
+            content = lf("value");
+        } else if (part.kind === "label" && part.content) {
+            content = part.content;
+        }
+
         return (
             <span
                 key={`block-name-part-${i}`}
@@ -116,7 +125,7 @@ const ReadableBlockName: React.FC<ReadableBlockNameProps> = ({ blockData }) => {
                     part.kind === "param" ? css["block-name-param"] : css["block-name-label"]
                 )}
             >
-                {part.kind == "break" ? "" : part.content}
+                {content}
             </span>
         );
     });
