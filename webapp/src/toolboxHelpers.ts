@@ -8,7 +8,7 @@ export function getSnippetName(block: toolbox.BlockDefinition, isPython: boolean
 // TODO thsparks : find a better name for this function
 export function getBlockTextPartsFromBlocksBlockDefinition(block: pxt.blocks.BlockDefinition): pxt.editor.BlockTextParts | undefined {
     const parts: pxt.editor.BlockTextPart[] = [];
-    if (block?.block["message0"]) {
+    if (block?.block && block.block["message0"]) {
         // These message values use %1, %2, etc. for parameters.
         // Extract these into generic "value" parameters.
         const message = block.block["message0"];
@@ -33,7 +33,7 @@ export function getBlockTextPartsFromBlocksBlockDefinition(block: pxt.blocks.Blo
             lastIndex = regex.lastIndex;
         }
 
-        // Add any remaining text after the last parameter as a label
+        // Add any remaining text after the last parameter
         if (lastIndex < message.length) {
             parts.push({
                 kind: "label",
@@ -47,8 +47,8 @@ export function getBlockTextPartsFromBlocksBlockDefinition(block: pxt.blocks.Blo
     return { parts };
 }
 
-// TODO thsparks : move monacoFlyout to use this too.
-export function getBlockTextParts(block: toolbox.BlockDefinition, params: pxtc.ParameterDesc[], isPython: boolean): pxt.editor.BlockTextParts {
+// Breaks a block down into segments that can be displayed in a readable format.
+export function getBlockTextParts(block: toolbox.BlockDefinition, params: pxtc.ParameterDesc[], isPython: boolean): pxt.editor.BlockTextParts | undefined {
     let description: pxt.editor.BlockTextPart[] = [];
     let compileInfo = pxt.blocks.compileInfo(block as pxtc.SymbolInfo);
     let parts = block.attributes._def && block.attributes._def.parts;
