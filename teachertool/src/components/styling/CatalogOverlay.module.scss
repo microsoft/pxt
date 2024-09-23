@@ -112,5 +112,19 @@
                 }
             }
         }
+
+                /* Styles for iPads (portrait mode) */
+        @media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
+            .catalog-list {
+                height: 80%;
+            }
+        }
+
+        /* Styles for iPads (landscape mode) */
+        @media (min-width: 1024px) and (max-width: 1366px) and (orientation: landscape) {
+            .catalog-list {
+                height: 70%;
+            }
+        }
     }
 }
