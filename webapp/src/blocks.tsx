@@ -1076,7 +1076,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 }
                 this.currFile = file;
                 // Clear the search field if a value exists
-                let searchField = document.getElementById('blocklySearchInputField') as HTMLInputElement;
+                let searchField = document.querySelector("input.blocklySearchInput") as HTMLInputElement;
                 if (searchField && searchField.value) {
                     searchField.value = '';
                 }

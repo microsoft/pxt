@@ -1092,7 +1092,6 @@ export class ToolboxSearch extends data.Component<ToolboxSearchProps, ToolboxSea
                         onFocus={this.searchImmediate}
                         onKeyDown={this.handleKeyDown}
                         onChange={this.handleChange}
-                        id="blocklySearchInputField"
                         className="blocklySearchInputField"
                         aria-label={lf("Search")}
                         autoComplete="off"
