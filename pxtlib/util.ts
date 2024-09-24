@@ -1199,6 +1199,7 @@ namespace ts.pxtc.Util {
         "fo": { englishName: "Faroese", localizedName: "føroyskt" },
         "fr": { englishName: "French", localizedName: "Français" },
         "fr-CA": { englishName: "French (Canada)", localizedName: "Français (Canada)" },
+        "ga-IE": { englishName: "Irish", localizedName: "Gaeilge" },
         "gl": { englishName: "Galician", localizedName: "galego" },
         "gu-IN": { englishName: "Gujarati", localizedName: "ગુજરાતી" },
         "haw": { englishName: "Hawaiian", localizedName: "ʻŌlelo Hawaiʻi" },
