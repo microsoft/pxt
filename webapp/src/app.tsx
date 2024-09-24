@@ -4145,37 +4145,43 @@ export class ProjectView
 
     getBlockTextParts(blockId: string): pxt.editor.BlockTextParts | undefined {
         // Get toolbox block definition.
-        let toolboxBlockMatch: BlockDefinition = undefined;
-        for (const advanced of [true, false]) {
+        const toolboxBlockMatches: BlockDefinition[] = [];
+        for (const advanced of [false, true]) {
             for (const category of this.blocksEditor.getToolboxCategories(advanced)) {
-                toolboxBlockMatch = category.blocks.find(b => b.attributes.blockId === blockId);
-                if (toolboxBlockMatch) break;
+                for (const match of category.blocks?.filter(b => b.attributes.blockId === blockId) ?? []) {
+                    toolboxBlockMatches.push(match);
+                }
             }
-            if (toolboxBlockMatch) break;
         }
 
-        if (!toolboxBlockMatch) {
-            console.log("DEBUG: No Block Match for blockId: " + blockId);
+        if (toolboxBlockMatches.length === 0) {
             return undefined;
         }
 
-        let readableName = toolboxHelpers.getBlockTextParts(
-            toolboxBlockMatch,
-            toolboxBlockMatch.parameters ? toolboxBlockMatch.parameters.slice() : null,
-            false);
+        const blockSnippets: string[] = [];
+        for (const match of toolboxBlockMatches) {
+            let readableName = toolboxHelpers.getBlockTextParts(
+                match,
+                match.parameters ? match.parameters.slice() : null,
+                false);
 
-        if (!readableName) {
-            const blocksBlockMatch = pxt.blocks.getBlockDefinition(blockId);
-            if (blocksBlockMatch) {
-                readableName = toolboxHelpers.getBlockTextPartsFromBlocksBlockDefinition(blocksBlockMatch);
-            }
+                if (readableName) {
+                    // TODO thsparks - what to do if there are multiple matches?
+                    return readableName;
+                }
+
+                if (!readableName) {
+                    blockSnippets.push(toolboxHelpers.getSnippetName(match, false) || match.name);
+                }
         }
 
-        if (!readableName) {
-            readableName.parts.push({
-                kind: "label",
-                content: toolboxHelpers.getSnippetName(toolboxBlockMatch, false) || toolboxBlockMatch.name,
-            });
+        const readableName: pxt.editor.BlockTextParts = blockSnippets.length === 0 ? undefined : {
+            parts: [
+                {
+                    kind: "label",
+                    content: blockSnippets.join(" | ")
+                }
+            ],
         }
 
         return readableName;
