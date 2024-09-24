@@ -461,7 +461,7 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                     </block>`
                 }, {
                     name: "math_js_op",
-                    snippetName: "square root",
+                    snippetName: "sqrt | sin | cos | tan | ...",
                     attributes: {
                         blockId: "math_js_op",
                         weight: 81
