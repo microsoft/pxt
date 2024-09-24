@@ -82,9 +82,10 @@ const InlineInputSegment: React.FC<InlineInputSegmentProps> = ({
 };
 
 interface ReadableBlockNameProps {
-    blockData: BlockData;
+    blockId: string;
 }
-const ReadableBlockName: React.FC<ReadableBlockNameProps> = ({ blockData }) => {
+const ReadableBlockName: React.FC<ReadableBlockNameProps> = ({ blockId }) => {
+    const { state: teacherTool } = useContext(AppStateContext);
     const [blockTextParts, setBlockTextParts] = useState<pxt.editor.BlockTextParts | undefined>(undefined);
 
     useEffect(() => {
@@ -96,16 +97,19 @@ const ReadableBlockName: React.FC<ReadableBlockNameProps> = ({ blockData }) => {
 
             if (blockReadableName) {
                 setBlockTextParts(blockReadableName);
+            } else if (!teacherTool.toolboxCategories) {
+                // If teacherTool.toolboxCategories has not loaded yet, we may get the readable component later once it loads.
+                // Show a spinner (handled below).
+                setBlockTextParts(undefined);
             } else {
-                // We were unable to get block name from the editor. Fallback to snippet name and/or name.
-                setBlockTextParts({
-                    parts: [{ kind: "label", content: blockData.block.snippetName || blockData.block.name }],
-                } as pxt.editor.BlockTextParts);
+                // TeacherTool.toolboxCategories has loaded and we still don't have a readable component.
+                // We won't be able to get it, so fallback to the id.
+                setBlockTextParts({ parts: [ { kind: "label", content: blockId } ] });
             }
         }
 
-        updateReadableName(blockData.block.blockId);
-    }, [blockData]);
+        updateReadableName(blockId);
+    }, [blockId, teacherTool.toolboxCategories]);
 
     const readableComponent = blockTextParts?.parts.map((part, i) => {
         let content = "";
@@ -171,7 +175,7 @@ const BlockInputSegment: React.FC<BlockInputSegmentProps> = ({ instance, param }
     }, [param.value, teacherTool.toolboxCategories]);
 
     const style = blockData ? { backgroundColor: blockData.category.color, color: "white" } : undefined;
-    const blockDisplay = blockData ? <ReadableBlockName blockData={blockData} /> : param.value || param.name;
+    const blockDisplay = param.value ? <ReadableBlockName blockId={param.value} /> : param.name;
     return (
         <Button
             label={blockDisplay}
