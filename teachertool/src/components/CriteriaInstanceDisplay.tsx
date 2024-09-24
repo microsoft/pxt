@@ -146,6 +146,15 @@ interface BlockData {
 const BlockInputSegment: React.FC<BlockInputSegmentProps> = ({ instance, param }) => {
     const { state: teacherTool } = useContext(AppStateContext);
 
+    function handleClick() {
+        pxt.tickEvent(Ticks.BlockPickerOpened, { criteriaCatalogId: instance.catalogCriteriaId });
+        showModal({
+            modal: "block-picker",
+            criteriaInstanceId: instance.instanceId,
+            paramName: param.name,
+        } as BlockPickerOptions);
+    }
+
     const blockData = useMemo<BlockData | undefined>(() => {
         if (!param.value || !teacherTool.toolboxCategories) {
             return undefined;
@@ -160,15 +169,6 @@ const BlockInputSegment: React.FC<BlockInputSegmentProps> = ({ instance, param }
         }
         return undefined;
     }, [param.value, teacherTool.toolboxCategories]);
-
-    function handleClick() {
-        pxt.tickEvent(Ticks.BlockPickerOpened, { criteriaCatalogId: instance.catalogCriteriaId });
-        showModal({
-            modal: "block-picker",
-            criteriaInstanceId: instance.instanceId,
-            paramName: param.name,
-        } as BlockPickerOptions);
-    }
 
     const style = blockData ? { backgroundColor: blockData.category.color, color: "white" } : undefined;
     const blockDisplay = blockData ? <ReadableBlockName blockData={blockData} /> : null;
