@@ -171,10 +171,10 @@ const BlockInputSegment: React.FC<BlockInputSegmentProps> = ({ instance, param }
     }, [param.value, teacherTool.toolboxCategories]);
 
     const style = blockData ? { backgroundColor: blockData.category.color, color: "white" } : undefined;
-    const blockDisplay = blockData ? <ReadableBlockName blockData={blockData} /> : null;
+    const blockDisplay = blockData ? <ReadableBlockName blockData={blockData} /> : param.value || param.name;
     return (
         <Button
-            label={blockDisplay || param.value || param.name}
+            label={blockDisplay}
             className={classList(css["block-input-btn"], param.value ? undefined : css["error"])}
             onClick={handleClick}
             title={param.value ? Strings.SelectBlock : `${Strings.SelectBlock}: ${Strings.ValueRequired}`}
