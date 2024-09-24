@@ -1192,6 +1192,8 @@ namespace ts.pxtc.Util {
         "fi": { englishName: "Finnish", localizedName: "Suomi" },
         "fr": { englishName: "French", localizedName: "Français" },
         "fr-CA": { englishName: "French (Canada)", localizedName: "Français (Canada)" },
+        "ga-IE": { englishName: "Irish", localizedName: "Gaeilge" },
+        "gl": { englishName: "Galician", localizedName: "galego" },
         "gu-IN": { englishName: "Gujarati", localizedName: "ગુજરાતી" },
         "he": { englishName: "Hebrew", localizedName: "עברית" },
         "hr": { englishName: "Croatian", localizedName: "Hrvatski" },
