@@ -1,4 +1,3 @@
-
 import * as toolbox from "./toolbox";
 
 // Breaks a block down into segments that can be displayed in a readable format.
