@@ -95,6 +95,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 case "pxt_controls_for":
                 case "controls_for":
                 case "controls_simple_for":
+                case "controls_advanced_for":
                     // Get the conditional breakpoint
                     breakpoint = blockToAllBreakpoints[blockId][2];
                     break;

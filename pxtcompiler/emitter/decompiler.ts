@@ -1773,25 +1773,35 @@ ${output}</xml>`;
 
         function getForStatement(n: ts.ForStatement): StatementNode {
             const initializer = n.initializer as ts.VariableDeclarationList;
-            const indexVar = (initializer.declarations[0].name as ts.Identifier).text;
-            const condition = n.condition as ts.BinaryExpression
+            const condition = n.condition as ts.BinaryExpression;
+            const incrementor = n.incrementor as ts.PostfixUnaryExpression | ts.PrefixUnaryExpression | ts.BinaryExpression;
 
-            const renamed = getVariableName(initializer.declarations[0].name as ts.Identifier);
+            const assignment = initializer.declarations[0] as VariableDeclaration;
+            const renamed = getVariableName(assignment.name as ts.Identifier);
+            const increamentValue = getIncrementValue(incrementor);
 
             let r: StatementNode;
+            let skipFlag: boolean;
 
-            if (condition.operatorToken.kind === SK.LessThanToken && !checkForVariableUsages(n.statement)) {
-                r = mkStmt("controls_repeat_ext", n);
-                r.fields = [];
-                r.inputs = [getValue("TIMES", condition.right, wholeNumberType)];
-                r.handlers = [];
+            if ((assignment.initializer as ts.LiteralExpression).text === "0" && increamentValue === 1) {
+                if (condition.operatorToken.kind === SK.LessThanToken && !checkForVariableUsages(n.statement)) {
+                    r = mkStmt("controls_repeat_ext", n);
+                    r.inputs = [getValue("TIMES", condition.right, wholeNumberType)];
+                    skipFlag = true;
+                }
+                else {
+                    r = mkStmt("pxt_controls_for", n);
+                    r.inputs = [];
+                }
+            } else {
+                r = mkStmt("controls_advanced_for", n);
+                r.inputs = [
+                    getValue("FROM", assignment.initializer, numberType),
+                    getValue("BY", increamentValue, numberType)
+                ];
             }
-            else {
-                r = mkStmt("pxt_controls_for", n);
-                r.fields = [];
-                r.inputs = [];
-                r.handlers = [];
-                r.inputs = [getDraggableVariableBlock("VAR", renamed)];
+            if (!skipFlag) {
+                r.inputs.push(getDraggableVariableBlock("VAR", renamed));
 
                 if (condition.operatorToken.kind === SK.LessThanToken) {
                     const unwrappedRightSide = unwrapNode(condition.right);
@@ -1824,6 +1834,14 @@ ${output}</xml>`;
                 }
 
                 return ts.forEachChild(node, checkForVariableUsages);
+            }
+
+            function getIncrementValue(expression: Expression): number {
+                if (expression.kind === SK.PostfixUnaryExpression || expression.kind === SK.PrefixUnaryExpression) {
+                    return 1;
+                }
+                const binaryExpression = expression as ts.BinaryExpression;
+                return parseFloat((binaryExpression.right as ts.Identifier).text);
             }
         }
 
@@ -2586,8 +2604,8 @@ ${output}</xml>`;
             }
 
             const assignment = initializer.declarations[0] as VariableDeclaration;
-            if (assignment.initializer.kind !== SK.NumericLiteral || (assignment.initializer as ts.LiteralExpression).text !== "0") {
-                return Util.lf("for loop initializers must be initialized to 0");
+            if (assignment.initializer.kind !== SK.NumericLiteral) {
+                return Util.lf("for loop initializers must be initialized to number");
             }
 
             const indexVar = (assignment.name as ts.Identifier).text;
@@ -2615,6 +2633,12 @@ ${output}</xml>`;
                     const incrementor = n.incrementor as ts.PostfixUnaryExpression | ts.PrefixUnaryExpression;
                     if (incrementor.operator === SK.PlusPlusToken && incrementor.operand.kind === SK.Identifier) {
                         return (incrementor.operand as ts.Identifier).text === varName;
+                    }
+                }
+                if (n.incrementor.kind === SK.BinaryExpression) {
+                    const assignment = n.incrementor as ts.BinaryExpression;
+                    if (assignment.operatorToken.kind === SK.PlusEqualsToken) {
+                        return (assignment.left as ts.Identifier).text === varName;
                     }
                 }
                 return false;
