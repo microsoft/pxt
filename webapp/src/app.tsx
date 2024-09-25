@@ -4170,11 +4170,12 @@ export class ProjectView
             // Found nultiple blocks matching the id, or we were unable to generate a readable name from block parameters.
             // In this case, use the block snippet names to describe the block.
             const blockSnippets: string[] = [];
-            for (const block of blocksWithId) {
-                    blockSnippets.push(toolboxHelpers.getSnippetName(block, false) || block.name);
+            for (const name of blocksWithId.map(b => b.snippetName || b.name)) {
+                if (blockSnippets.indexOf(name) === -1) {
+                    blockSnippets.push(name);
+                }
             }
-
-            readableName = blockSnippets.length === 0 ? undefined : {
+            readableName = {
                 parts: [
                     {
                         kind: "label",
