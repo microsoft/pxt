@@ -104,7 +104,7 @@ const ReadableBlockName: React.FC<ReadableBlockNameProps> = ({ blockId }) => {
             } else {
                 // TeacherTool.toolboxCategories has loaded and we still don't have a readable component.
                 // We won't be able to get it, so fallback to the id.
-                setBlockAsText({ parts: [ { kind: "label", content: blockId } ] });
+                setBlockAsText({ parts: [{ kind: "label", content: blockId }] });
             }
         }
 
