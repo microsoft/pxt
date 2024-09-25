@@ -4167,7 +4167,7 @@ export class ProjectView
         }
 
         if (!readableName) {
-            // Found nultiple blocks matching the id, or we were unable to generate a readable name from block parameters.
+            // Found multiple blocks matching the id, or we were unable to generate a readable name from block parameters.
             // In this case, use the block snippet names to describe the block.
             const blockSnippets: string[] = [];
             for (const name of blocksWithId.map(b => b.snippetName || b.name)) {
