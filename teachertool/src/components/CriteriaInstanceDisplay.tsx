@@ -13,7 +13,7 @@ import { Strings, Ticks } from "../constants";
 import { showModal } from "../transforms/showModal";
 import { BlockPickerOptions } from "../types/modalOptions";
 import { validateParameterValue } from "../utils/validateParameterValue";
-import { loadBlockTextParts } from "../transforms/loadReadableBlockName";
+import { loadBlockAsText } from "../transforms/loadReadableBlockName";
 
 interface InlineInputSegmentProps {
     initialValue: string;
@@ -86,32 +86,32 @@ interface ReadableBlockNameProps {
 }
 const ReadableBlockName: React.FC<ReadableBlockNameProps> = ({ blockId }) => {
     const { state: teacherTool } = useContext(AppStateContext);
-    const [blockTextParts, setBlockTextParts] = useState<pxt.editor.BlockTextParts | undefined>(undefined);
+    const [blockAsText, setBlockAsText] = useState<pxt.editor.BlockAsText | undefined>(undefined);
 
     useEffect(() => {
         async function updateReadableName(blockId: string | undefined) {
-            let blockReadableName: pxt.editor.BlockTextParts | undefined;
+            let blockReadableName: pxt.editor.BlockAsText | undefined;
             if (blockId) {
-                blockReadableName = blockId ? await loadBlockTextParts(blockId) : undefined;
+                blockReadableName = blockId ? await loadBlockAsText(blockId) : undefined;
             }
 
             if (blockReadableName) {
-                setBlockTextParts(blockReadableName);
+                setBlockAsText(blockReadableName);
             } else if (!teacherTool.toolboxCategories) {
                 // If teacherTool.toolboxCategories has not loaded yet, we may get the readable component later once it loads.
                 // Show a spinner (handled below).
-                setBlockTextParts(undefined);
+                setBlockAsText(undefined);
             } else {
                 // TeacherTool.toolboxCategories has loaded and we still don't have a readable component.
                 // We won't be able to get it, so fallback to the id.
-                setBlockTextParts({ parts: [ { kind: "label", content: blockId } ] });
+                setBlockAsText({ parts: [ { kind: "label", content: blockId } ] });
             }
         }
 
         updateReadableName(blockId);
     }, [blockId, teacherTool.toolboxCategories]);
 
-    const readableComponent = blockTextParts?.parts.map((part, i) => {
+    const readableComponent = blockAsText?.parts.map((part, i) => {
         let content = "";
         if (part.kind === "param") {
             // Mask default values like "hello!" with generic "value"

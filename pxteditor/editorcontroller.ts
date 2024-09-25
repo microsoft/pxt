@@ -209,12 +209,12 @@ case "renderxml": {
                                         resp = projectView.getToolboxCategories(msg.advanced);
                                     });
                             }
-                            case "getblocktextparts": {
-                                const msg = data as pxt.editor.EditorMessageGetBlockReadableNameRequest;
+                            case "getblockastext": {
+                                const msg = data as pxt.editor.EditorMessageGetBlockAsTextRequest;
                                 return Promise.resolve()
                                     .then(() => {
-                                        const readableName = projectView.getBlockTextParts(msg.blockId);
-                                        resp = { readableName } as pxt.editor.EditorMessageGetBlockReadableNameResponse;
+                                        const readableName = projectView.getBlockAsText(msg.blockId);
+                                        resp = { blockAsText: readableName } as pxt.editor.EditorMessageGetBlockAsTextResponse;
                                     });
                             }
                             case "renderpython": {

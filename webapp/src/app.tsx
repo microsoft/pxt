@@ -4156,14 +4156,14 @@ export class ProjectView
         return matches;
     }
 
-    getBlockTextParts(blockId: string): pxt.editor.BlockTextParts | undefined {
+    getBlockAsText(blockId: string): pxt.editor.BlockAsText | undefined {
         const blocksWithId = this.getBlocksWithId(blockId);
-        let readableName: pxt.editor.BlockTextParts = undefined;
+        let readableName: pxt.editor.BlockAsText = undefined;
         if (blocksWithId.length === 0) {
             return undefined;
         } else if (blocksWithId.length === 1) {
             const block = blocksWithId[0];
-            readableName = toolboxHelpers.getBlockTextParts(block, block.parameters ? block.parameters.slice() : null, false);
+            readableName = toolboxHelpers.getBlockAsText(block, block.parameters ? block.parameters.slice() : null, false);
         }
 
         if (!readableName) {

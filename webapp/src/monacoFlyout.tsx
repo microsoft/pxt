@@ -7,7 +7,7 @@ import * as data from "./data";
 import * as auth from "./auth";
 import * as pxtblockly from "../../pxtblocks";
 import { HELP_IMAGE_URI } from "../../pxteditor";
-import { getBlockTextParts } from "./toolboxHelpers";
+import { getBlockAsText } from "./toolboxHelpers";
 
 import ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -257,9 +257,9 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
         let name = block.qName || block.name;
         const isPython = this.props.fileType == pxt.editor.FileType.Python;
 
-        const blockTextParts = getBlockTextParts(block, params, isPython);
-        if (blockTextParts?.parts?.length) {
-            blockTextParts.parts?.forEach((part, i) => {
+        const blockAsText = getBlockAsText(block, params, isPython);
+        if (blockAsText?.parts?.length) {
+            blockAsText.parts?.forEach((part, i) => {
                 switch (part.kind) {
                     case "label":
                         description.push(<span key={name + i}>{part.content}</span>);

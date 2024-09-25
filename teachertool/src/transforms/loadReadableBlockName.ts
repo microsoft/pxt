@@ -1,17 +1,17 @@
-import { getBlockTextParts } from "../services/makecodeEditorService";
-import { cacheBlockTextParts, getCachedBlockTextParts } from "../services/storageService";
+import { getBlockAsText } from "../services/makecodeEditorService";
+import { cacheBlockAsText, getCachedBlockAsText } from "../services/storageService";
 
-export async function loadBlockTextParts(blockId: string): Promise<pxt.editor.BlockTextParts | undefined> {
+export async function loadBlockAsText(blockId: string): Promise<pxt.editor.BlockAsText | undefined> {
     // Check for cached version.
-    let readableBlockName = getCachedBlockTextParts(blockId);
+    let readableBlockName = getCachedBlockAsText(blockId);
     if (readableBlockName) {
         return Promise.resolve(readableBlockName);
     }
 
     // Call into editor service & cache result
-    readableBlockName = await getBlockTextParts(blockId);
+    readableBlockName = await getBlockAsText(blockId);
     if (readableBlockName) {
-        cacheBlockTextParts(blockId, readableBlockName);
+        cacheBlockAsText(blockId, readableBlockName);
     }
 
     return readableBlockName;

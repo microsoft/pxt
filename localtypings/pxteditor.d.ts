@@ -75,7 +75,7 @@ declare namespace pxt.editor {
         | "convertcloudprojectstolocal"
         | "setlanguagerestriction"
         | "gettoolboxcategories"
-        | "getblocktextparts"
+        | "getblockastext"
 
         | "toggletrace" // EditorMessageToggleTraceRequest
         | "togglehighcontrast"
@@ -458,13 +458,13 @@ declare namespace pxt.editor {
         categories: pxt.editor.ToolboxCategoryDefinition[];
     }
 
-    export interface EditorMessageGetBlockReadableNameRequest extends EditorMessageRequest {
-        action: "getblocktextparts";
+    export interface EditorMessageGetBlockAsTextRequest extends EditorMessageRequest {
+        action: "getblockastext";
         blockId: string;
     }
 
-    export interface EditorMessageGetBlockReadableNameResponse {
-        readableName: pxt.editor.BlockTextParts | undefined;
+    export interface EditorMessageGetBlockAsTextResponse {
+        blockAsText: pxt.editor.BlockAsText | undefined;
     }
 
     export interface EditorMessageServiceWorkerRegisteredRequest extends EditorMessageRequest {
@@ -1007,7 +1007,7 @@ declare namespace pxt.editor {
         // getBlocks(): Blockly.Block[];
         getBlocks(): any[];
         getToolboxCategories(advanced?: boolean): pxt.editor.EditorMessageGetToolboxCategoriesResponse;
-        getBlockTextParts(blockId: string): pxt.editor.BlockTextParts | undefined;
+        getBlockAsText(blockId: string): pxt.editor.BlockAsText | undefined;
 
         toggleHighContrast(): void;
         setHighContrast(on: boolean): void;
@@ -1275,7 +1275,7 @@ declare namespace pxt.editor {
         blockId?: string;
     }
 
-    export interface BlockTextParts {
+    export interface BlockAsText {
         parts: BlockTextPart[];
     }
 

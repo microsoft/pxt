@@ -2,7 +2,7 @@
 import * as toolbox from "./toolbox";
 
 // Breaks a block down into segments that can be displayed in a readable format.
-export function getBlockTextParts(block: toolbox.BlockDefinition, params: pxtc.ParameterDesc[], isPython: boolean): pxt.editor.BlockTextParts | undefined {
+export function getBlockAsText(block: toolbox.BlockDefinition, params: pxtc.ParameterDesc[], isPython: boolean): pxt.editor.BlockAsText | undefined {
     let description: pxt.editor.BlockTextPart[] = [];
     let compileInfo = pxt.blocks.compileInfo(block as pxtc.SymbolInfo);
     let parts = block.attributes._def && block.attributes._def.parts;

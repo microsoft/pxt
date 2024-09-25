@@ -389,16 +389,16 @@ export class EditorDriver extends IframeDriver {
         return (resp.resp as pxt.editor.EditorMessageGetToolboxCategoriesResponse).categories;
     }
 
-    async getBlockTextParts(blockId: string): Promise<pxt.editor.BlockTextParts | undefined> {
+    async getBlockAsText(blockId: string): Promise<pxt.editor.BlockAsText | undefined> {
         const resp = await this.sendRequest(
             {
                 type: "pxteditor",
-                action: "getblocktextparts",
+                action: "getblockastext",
                 blockId
-            } as pxt.editor.EditorMessageGetBlockReadableNameRequest
+            } as pxt.editor.EditorMessageGetBlockAsTextRequest
         ) as pxt.editor.EditorMessageResponse;
 
-        return (resp.resp as pxt.editor.EditorMessageGetBlockReadableNameResponse)?.readableName;
+        return (resp.resp as pxt.editor.EditorMessageGetBlockAsTextResponse)?.blockAsText;
     }
 
     async runValidatorPlan(validatorPlan: pxt.blocks.ValidatorPlan, planLib: pxt.blocks.ValidatorPlan[]) {
