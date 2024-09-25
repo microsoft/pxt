@@ -176,7 +176,7 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                 </block>`
                 }, {
                     name: "logic_compare_lt",
-                    snippetName: "less than",
+                    snippetName: "less than | greater than",
                     attributes: {
                         blockId: "logic_compare",
                         group: lf("Comparison"),
@@ -476,7 +476,7 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                     </block>`
                 }, {
                     name: "math_js_round",
-                    snippetName: "round",
+                    snippetName: "round | ceil | floor | trunc",
                     attributes: {
                         blockId: "math_js_round",
                         weight: 80
@@ -632,7 +632,7 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                 },
                 {
                     name: "lists_length",
-                    snippetName: "array length",
+                    snippetName: "length",
                     attributes: {
                         blockId: "lists_length",
                         group: "Read",
@@ -744,7 +744,7 @@ export function getPauseUntil() {
     if (opts) {
         pauseUntil = {
             name: pxtc.PAUSE_UNTIL_TYPE,
-
+            snippetName: "pause until",
             attributes: {
                 blockId: pxtc.PAUSE_UNTIL_TYPE,
                 blockNamespace: opts.category || "loops",
@@ -786,6 +786,7 @@ export function allBuiltinBlocks() {
     // Add on start built in block
     builtinBlockCache[ts.pxtc.ON_START_TYPE] = {
         name: ts.pxtc.ON_START_TYPE,
+        snippetName: "on start",
         attributes: {
             blockId: ts.pxtc.ON_START_TYPE,
             weight: pxt.appTarget.runtime.onStartWeight || 10,
