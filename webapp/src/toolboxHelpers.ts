@@ -1,10 +1,6 @@
 
 import * as toolbox from "./toolbox";
 
-export function getSnippetName(block: toolbox.BlockDefinition, isPython: boolean): string {
-    return (isPython ? (block.pySnippetName || block.pyName) : undefined) || block.snippetName || block.name;
-}
-
 // Breaks a block down into segments that can be displayed in a readable format.
 export function getBlockTextParts(block: toolbox.BlockDefinition, params: pxtc.ParameterDesc[], isPython: boolean): pxt.editor.BlockTextParts | undefined {
     let description: pxt.editor.BlockTextPart[] = [];
