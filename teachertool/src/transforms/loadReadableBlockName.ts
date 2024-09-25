@@ -5,7 +5,7 @@ export async function loadBlockAsText(blockId: string): Promise<pxt.editor.Block
     // Check for cached version.
     let readableBlockName = getCachedBlockAsText(blockId);
     if (readableBlockName) {
-        return Promise.resolve(readableBlockName);
+        return readableBlockName;
     }
 
     // Call into editor service & cache result
