@@ -5,8 +5,9 @@ import * as toolbox from "./toolbox";
 import * as workspace from "./workspace";
 import * as data from "./data";
 import * as auth from "./auth";
-import { HELP_IMAGE_URI } from "../../pxteditor";
 import * as pxtblockly from "../../pxtblocks";
+import { HELP_IMAGE_URI } from "../../pxteditor";
+import { getBlockAsText } from "./toolboxHelpers";
 
 import ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -253,48 +254,26 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
     protected getBlockDescription(block: toolbox.BlockDefinition, params: pxtc.ParameterDesc[]): JSX.Element[] {
         let description = [];
         let compileInfo = pxt.blocks.compileInfo(block as pxtc.SymbolInfo);
-        let parts = block.attributes._def && block.attributes._def.parts;
-        if (block.attributes.parentBlock) {
-            const parent = block.attributes.parentBlock;
-            const parentBlockParts = [...parent.attributes._def.parts];
-            const overrideLocation = parentBlockParts.findIndex((part: any) => part.kind === "param" && part.name === block.attributes.toolboxParentArgument);
-            if (overrideLocation !== -1) {
-                parentBlockParts.splice(overrideLocation, 1, ...block.attributes._def.parts);
-                parts = parentBlockParts;
-            }
-        }
         let name = block.qName || block.name;
         const isPython = this.props.fileType == pxt.editor.FileType.Python;
 
-        if (parts) {
-            if (params &&
-                parts.filter((p: any) => p.kind == "param").length > params.length) {
-                // add empty param when first argument is "this"
-                params.unshift(null);
-            }
-            parts.forEach((part, i) => {
+        const blockAsText = getBlockAsText(block, params, isPython);
+        if (blockAsText?.parts?.length) {
+            blockAsText.parts?.forEach((part, i) => {
                 switch (part.kind) {
                     case "label":
-                        description.push(<span key={name + i}>{part.text}</span>);
+                        description.push(<span key={name + i}>{part.content}</span>);
                         break;
                     case "break":
                         description.push(<span key={name + i}>{" "}</span>);
                         break;
                     case "param":
-                        let actualParam = compileInfo?.definitionNameToParam[part.name];
-                        let val = actualParam?.defaultValue
-                            || part.varName
-                            || actualParam?.actualName
-                            || part.name
-                        if (isPython && actualParam?.defaultValue) {
-                            val = pxtc.tsSnippetToPySnippet(val);
-                        }
-                        description.push(<span className="argName" key={name + i}>{val}</span>);
+                        description.push(<span className="argName" key={name + i}>{part.content}</span>);
                         break;
                 }
-            })
+            });
         } else {
-            // if no blockdef found, use the snippet name
+            // if no parts found, use the snippet name
             description.push(<span key={name}>{this.getSnippetName(block) || block.name}</span>)
         }
 
