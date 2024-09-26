@@ -57,10 +57,12 @@ export function registerBlockReviewComment() {
         },
         callback(scope: Blockly.ContextMenuRegistry.Scope) {
             const block = scope.block;
-            if (block!.hasIcon(REVIEW_COMMENT_ICON_TYPE)) {
+            if (block.hasIcon(REVIEW_COMMENT_ICON_TYPE)) {
                 block.removeIcon(REVIEW_COMMENT_ICON_TYPE);
             } else {
-                block!.addIcon(new ReviewCommentIcon(block!));
+                const reviewCommentIcon = new ReviewCommentIcon(block);
+                block.addIcon(reviewCommentIcon);
+                reviewCommentIcon.setBubbleVisible(true); // Auto-expand when created.
             }
         },
         scopeType: Blockly.ContextMenuRegistry.ScopeType.BLOCK,
