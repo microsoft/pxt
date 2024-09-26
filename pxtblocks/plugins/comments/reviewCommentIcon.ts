@@ -78,7 +78,8 @@ export class ReviewCommentIcon extends CommentIcon {
             },
             this.svgRoot
         );
-        Blockly.utils.dom.addClass(this.svgRoot!, 'blockly-icon-comment'); // TODO thsparks : customize?
+        Blockly.utils.dom.addClass(this.svgRoot!, 'blockly-icon-comment');
+        Blockly.utils.dom.addClass(this.svgRoot!, 'blockly-icon-review-comment');
     }
 
     override getType(): Blockly.icons.IconType<CommentIcon> {
@@ -190,5 +191,9 @@ Blockly.icons.registry.register(REVIEW_COMMENT_ICON_TYPE, ReviewCommentIcon);
 Blockly.Css.register(`
     .blocklyTextInputBubble.reviewCommentBubble .blocklyTextarea {
       background-color: #c7f8ff;
+    }
+
+    .blockly-icon-comment.blockly-icon-review-comment {
+        opacity: 0.9;
     }
 `);
