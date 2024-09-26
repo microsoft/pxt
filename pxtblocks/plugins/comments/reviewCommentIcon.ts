@@ -65,6 +65,18 @@ export class ReviewCommentIcon extends CommentIcon {
         this.textInputBubble?.setColour(colour, borderColour);
     }
 
+    protected override showEditableBubble(): void {
+        super.showEditableBubble();
+
+        // We have to override this method to prevent the setCommentText(null) call
+        // and replace it with a call to update the data field, and to remove the icon.
+        this.textInputBubble.setDeleteHandler(() => {
+            this.setBubbleVisible(false);
+            this.clearAllData();
+            this.sourceBlock.removeIcon(REVIEW_COMMENT_ICON_TYPE);
+        });
+    }
+
     /** Sets the text of this comment. Updates any bubbles if they are visible. */
     override setText(text: string) {
         // Blockly comments are omitted from XML serialization if they're empty.
