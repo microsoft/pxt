@@ -10,6 +10,9 @@ import { getBlockDataForField } from "../../fields/field_utils";
 const REVIEW_COMMENT_OFFSET_X_FIELD_NAME = "~reviewCommentOffsetX";
 const REVIEW_COMMENT_OFFSET_Y_FIELD_NAME = "~reviewCommentOffsetY";
 
+const REVIEW_COMMENT_BUBBLE_WIDTH_FIELD_NAME = "~reviewCommentWidth";
+const REVIEW_COMMENT_HEIGHT_FIELD_NAME = "~reviewCommentHeight";
+
 // makecode field for review comments on a block
 // TODO thsparks - could do this with a data field like the offsets above, would need to override get/set/changed text maybe?
 // TODO thsparks - maybe can store this more like normal comments with mutationToDom?
@@ -36,8 +39,19 @@ export class ReviewCommentIcon extends CommentIcon {
 
     constructor(protected readonly sourceBlock: Blockly.Block) {
         super(sourceBlock);
+        this.setInitialValues();
+    }
 
-        this.text = getBlockDataForField(sourceBlock, REVIEW_COMMENT_FIELD_NAME) || "";
+    setInitialValues() {
+        this.text = getBlockDataForField(this.sourceBlock, REVIEW_COMMENT_FIELD_NAME) || "";
+
+        const bubbleWidth = parseInt(getBlockDataForField(this.sourceBlock, REVIEW_COMMENT_BUBBLE_WIDTH_FIELD_NAME) || "0");
+        const bubbleHeight = parseInt(getBlockDataForField(this.sourceBlock, REVIEW_COMMENT_HEIGHT_FIELD_NAME) || "0");
+        if (bubbleWidth && bubbleHeight) {
+            this.setBubbleSize(new Blockly.utils.Size(bubbleWidth, bubbleHeight));
+        }
+
+        this.setBubbleVisible(!!this.text);
     }
 
     override getType(): Blockly.icons.IconType<CommentIcon> {
@@ -71,11 +85,6 @@ export class ReviewCommentIcon extends CommentIcon {
         this.textInputBubble?.setText(this.text);
     }
 
-    /** Returns the text of this comment. */
-    getText(): string {
-        return this.text;
-    }
-
     /**
      * Updates the text of this comment in response to changes in the text of
      * the input bubble.
@@ -93,6 +102,23 @@ export class ReviewCommentIcon extends CommentIcon {
     clearAllData(): void {
         this.clearSavedOffsetData();
         deleteBlockDataForField(this.sourceBlock, REVIEW_COMMENT_FIELD_NAME);
+    }
+
+    override onSizeChange(): void {
+        super.onSizeChange();
+        this.updateSizeData();
+    }
+
+    override setBubbleSize(size: Blockly.utils.Size): void {
+        super.setBubbleSize(size);
+        this.updateSizeData();
+    }
+
+    updateSizeData() {
+        if (this.textInputBubble) {
+            setBlockDataForField(this.sourceBlock, REVIEW_COMMENT_BUBBLE_WIDTH_FIELD_NAME, this.textInputBubble.getSize().width + "");
+            setBlockDataForField(this.sourceBlock, REVIEW_COMMENT_HEIGHT_FIELD_NAME, this.textInputBubble.getSize().height + "");
+        }
     }
 }
 
