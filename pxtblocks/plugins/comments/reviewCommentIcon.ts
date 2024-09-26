@@ -67,40 +67,6 @@ export class ReviewCommentIcon extends CommentIcon {
             },
             this.svgRoot
         );
-        // Blockly.utils.dom.createSvgElement('rect',
-        //     {
-        //         'class': 'blocklyIconSymbol',
-        //         'x': '4',
-        //         'y': '8',
-        //         'height': '1',
-        //         'width': '6',
-        //         'style': 'fill: #575E75;'
-        //     },
-        //     this.svgRoot
-        // );
-        // Blockly.utils.dom.createSvgElement(
-        //     Blockly.utils.Svg.RECT,
-        //     {
-        //         'class': 'blocklyIconSymbol',
-        //         'x': '4',
-        //         'y': '6',
-        //         'height': '1',
-        //         'width': '6',
-        //         'style': 'fill: #575E75;'
-        //     },
-        //     this.svgRoot
-        // );
-        // Blockly.utils.dom.createSvgElement('rect',
-        //     {
-        //         'class': 'blocklyIconSymbol',
-        //         'x': '4',
-        //         'y': '4',
-        //         'height': '1',
-        //         'width': '8',
-        //         'style': 'fill: #575E75;'
-        //     },
-        //     this.svgRoot
-        // );
         Blockly.utils.dom.createSvgElement(
             Blockly.utils.Svg.PATH,
             {
