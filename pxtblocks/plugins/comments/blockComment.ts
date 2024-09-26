@@ -36,8 +36,6 @@ export class CommentIcon extends Blockly.icons.Icon {
 
     protected xOffsetFieldName = COMMENT_OFFSET_X_FIELD_NAME;
     protected yOffsetFieldName = COMMENT_OFFSET_Y_FIELD_NAME;
-    protected bubbleClasses: string[] = [];
-    protected bubbleHeaderText: string = undefined;
 
     /** The bubble used to show editable text to the user. */
     protected textInputBubble: TextInputBubble | null = null;
@@ -321,20 +319,24 @@ export class CommentIcon extends Blockly.icons.Icon {
         }
     }
 
+    // Function to allow subclasses to override the creation of the text input bubble
+    protected createTextInputBubble(readOnly: boolean): TextInputBubble {
+        const tib = new TextInputBubble(
+            this.sourceBlock.workspace as Blockly.WorkspaceSvg,
+            this.getAnchorLocation(),
+            this.getBubbleOwnerRect(),
+            readOnly
+        );
+        return tib;
+    }
+
     /**
      * Shows the editable text bubble for this comment, and adds change listeners
      * to update the state of this icon in response to changes in the bubble.
      */
     protected showEditableBubble() {
         const savedPosition = this.getSavedOffsetData();
-        this.textInputBubble = new TextInputBubble(
-            this.sourceBlock.workspace as Blockly.WorkspaceSvg,
-            this.getAnchorLocation(),
-            this.getBubbleOwnerRect(),
-            false,
-            this.bubbleClasses,
-            this.bubbleHeaderText,
-        );
+        this.textInputBubble = this.createTextInputBubble(false);
         this.textInputBubble.setText(this.getText());
         this.textInputBubble.setSize(this.bubbleSize, true);
         this.textInputBubble.addTextChangeListener(() => this.onTextChange());
@@ -357,14 +359,7 @@ export class CommentIcon extends Blockly.icons.Icon {
     /** Shows the non editable text bubble for this comment. */
     protected showNonEditableBubble() {
         const savedPosition = this.getSavedOffsetData();
-        this.textInputBubble = new TextInputBubble(
-            this.sourceBlock.workspace as Blockly.WorkspaceSvg,
-            this.getAnchorLocation(),
-            this.getBubbleOwnerRect(),
-            true,
-            this.bubbleClasses,
-            this.bubbleHeaderText,
-        );
+        this.textInputBubble = this.createTextInputBubble(true);
         this.textInputBubble.setText(this.getText());
         this.textInputBubble.setSize(this.bubbleSize, true);
         this.textInputBubble.setCollapseHandler(() => {
@@ -385,7 +380,7 @@ export class CommentIcon extends Blockly.icons.Icon {
      * @returns the location the bubble should be anchored to.
      *     I.E. the middle of this icon.
      */
-    private getAnchorLocation(): Blockly.utils.Coordinate {
+    protected getAnchorLocation(): Blockly.utils.Coordinate {
         const midIcon = SIZE / 2;
         return Blockly.utils.Coordinate.sum(
             this.workspaceLocation,
@@ -397,7 +392,7 @@ export class CommentIcon extends Blockly.icons.Icon {
      * @returns the rect the bubble should avoid overlapping.
      *     I.E. the block that owns this icon.
      */
-    private getBubbleOwnerRect(): Blockly.utils.Rect {
+    protected getBubbleOwnerRect(): Blockly.utils.Rect {
         const bbox = (this.sourceBlock as Blockly.BlockSvg).getSvgRoot().getBBox();
         return new Blockly.utils.Rect(bbox.y, bbox.y + bbox.height, bbox.x, bbox.x + bbox.width);
     }

@@ -3,6 +3,7 @@ import * as Blockly from "blockly";
 import { CommentIcon } from "./blockComment";
 import { deleteBlockDataForField, setBlockDataForField } from "../../fields";
 import { getBlockDataForField } from "../../fields/field_utils";
+import { TextInputBubble } from "./textinput_bubble";
 
 const eventUtils = Blockly.Events;
 
@@ -37,8 +38,6 @@ export class ReviewCommentIcon extends CommentIcon {
     protected weight = 1;
     protected xOffsetFieldName = REVIEW_COMMENT_OFFSET_X_FIELD_NAME;
     protected yOffsetFieldName = REVIEW_COMMENT_OFFSET_Y_FIELD_NAME;
-    protected bubbleClasses = ["reviewCommentBubble"];
-    protected bubbleHeaderText = lf("Feedback");
 
     constructor(protected readonly sourceBlock: Blockly.Block) {
         super(sourceBlock);
@@ -92,6 +91,19 @@ export class ReviewCommentIcon extends CommentIcon {
         const colour = "#00b4cc"; // "#7bd3ed";
         const borderColour = "#00b4cc"; // "#0d4b5e";
         this.textInputBubble?.setColour(colour, borderColour);
+    }
+
+    // Function to allow subclasses to override the creation of the text input bubble
+    override createTextInputBubble(readOnly: boolean): TextInputBubble {
+        const tib = new TextInputBubble(
+            this.sourceBlock.workspace as Blockly.WorkspaceSvg,
+            this.getAnchorLocation(),
+            this.getBubbleOwnerRect(),
+            false, // Ignore readonly flag. TODO thsparks, use readOnly || pxt.shell.isReviewMode()
+            ["reviewCommentBubble"],
+            lf("Feedback"),
+        );
+        return tib;
     }
 
     protected override showEditableBubble(): void {
