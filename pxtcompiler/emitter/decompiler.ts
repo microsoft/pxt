@@ -33,7 +33,8 @@ namespace ts.pxtc.decompiler {
 
     export enum CommentKind {
         SingleLine,
-        MultiLine
+        MultiLine,
+        Review
     }
 
     export interface MultiLineComment extends CommentInfo {
@@ -44,6 +45,11 @@ namespace ts.pxtc.decompiler {
     export interface SingleLineComment extends CommentInfo {
         kind: CommentKind.SingleLine;
         text: string;
+    }
+
+    export interface ReviewComment extends CommentInfo {
+        kind: CommentKind.Review;
+        lines: string[];
     }
 
     export type Comment = MultiLineComment | SingleLineComment;
@@ -1312,6 +1318,8 @@ ${output}</xml>`;
          *          a. If the comment is a single-line comment, combine it with the next single-line comment
          *          d. If the comment is not followed with an empty line, group it with the next statement or event
          *          e. All other comments are workspace comments
+         *
+         * If it's a review comment, we apply it in as a block field instead of a normal blockly comment. (TODO thsparks.)
          *
          * The below function gathers any comments associated to the Node, and attaches them
          * to the StatementNode.
