@@ -42,7 +42,7 @@ export class CommentIcon extends Blockly.icons.Icon {
     protected textInputBubble: TextInputBubble | null = null;
 
     /** The text of this comment. */
-    private text = '';
+    protected text = '';
 
     /** The size of this comment (which is applied to the editable bubble). */
     private bubbleSize = new Blockly.utils.Size(DEFAULT_BUBBLE_WIDTH, DEFAULT_BUBBLE_HEIGHT);
@@ -410,7 +410,7 @@ export class CommentIcon extends Blockly.icons.Icon {
         return undefined;
     }
 
-    private clearSavedOffsetData() {
+    protected clearSavedOffsetData() {
         deleteBlockDataForField(this.sourceBlock, this.xOffsetFieldName);
         deleteBlockDataForField(this.sourceBlock, this.yOffsetFieldName);
     }

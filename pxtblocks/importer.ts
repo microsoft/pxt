@@ -3,7 +3,8 @@
 import * as Blockly from "blockly";
 import { blockSymbol, buildinBlockStatements, hasArrowFunction, initializeAndInject } from "./loader";
 import { extensionBlocklyPatch } from "./external";
-import { FieldBase } from "./fields";
+import { FieldBase, getBlockDataForField, setBlockDataForField } from "./fields";
+import { REVIEW_COMMENT_FIELD_NAME, ReviewCommentIcon } from "./plugins/comments/reviewCommentIcon";
 
 export interface BlockSnippet {
     target: string; // pxt.appTarget.id
@@ -41,6 +42,7 @@ export function domToWorkspaceNoEvents(dom: Element, workspace: Blockly.Workspac
             }
         }
         applyMetaComments(workspace, opts);
+        applyReviewComments(workspace);
     } catch (e) {
         pxt.reportException(e);
     } finally {
@@ -76,6 +78,14 @@ function applyMetaComments(workspace: Blockly.Workspace, opts?: DomToWorkspaceOp
                 b.setCommentText(newCommentText || null);
             }
         });
+}
+
+function applyReviewComments(workspace: Blockly.Workspace) {
+    for (const block of workspace.getAllBlocks(false)) {
+        if (getBlockDataForField(block, REVIEW_COMMENT_FIELD_NAME)) {
+            block.addIcon(new ReviewCommentIcon(block));
+        }
+    }
 }
 
 export function clearWithoutEvents(workspace: Blockly.Workspace) {
