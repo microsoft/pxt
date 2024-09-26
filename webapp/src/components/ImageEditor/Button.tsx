@@ -11,20 +11,18 @@ export interface ButtonProps {
     noTab?: boolean;
 }
 
-export class IconButton extends React.Component<ButtonProps, {}> {
-    render() {
-        const { title, iconClass, onClick, toggle, disabled, noTab } = this.props;
+export const IconButton = (props: ButtonProps) => {
+    const { title, iconClass, onClick, toggle, disabled, noTab } = props;
 
-        return (
-            <div
-                role="button"
-                className={`image-editor-button ${toggle ? "toggle" : ""} ${disabled ? "disabled" : ""}`}
-                title={title}
-                tabIndex={(noTab || disabled) ? -1 : 0}
-                onClick={onClick}
-                onKeyDown={fireClickOnlyOnEnter}>
-                    <span className={iconClass} />
-            </div>
-        );
-    }
+    return (
+        <div
+            role="button"
+            className={`image-editor-button ${toggle ? "toggle" : ""} ${disabled ? "disabled" : ""}`}
+            title={title}
+            tabIndex={(noTab || disabled) ? -1 : 0}
+            onClick={onClick}
+            onKeyDown={fireClickOnlyOnEnter}>
+                <span className={iconClass} />
+        </div>
+    );
 }

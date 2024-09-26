@@ -1,4 +1,4 @@
-import { ImageEditorTool, TileDrawingMode } from "./store/imageReducer";
+import { ImageEditorTool, TileDrawingMode } from "./state";
 
 export enum ToolCursor {
     None = "none",

@@ -1,8 +1,5 @@
 import * as React from 'react';
-import { connect } from 'react-redux';
-import { ImageEditorStore } from './store/imageReducer';
-import { dispatchHideAlert } from './actions/dispatch';
-import { IconButton } from "./Button";
+import { hideAlert, ImageEditorContext } from './state';
 
 export interface AlertOption {
     label: string;
@@ -15,23 +12,22 @@ export interface AlertInfo {
     options?: AlertOption[];
 }
 
-interface AlertProps extends AlertInfo {
-    dispatchHideAlert: () => void;
-}
+export const Alert = (props: AlertInfo) => {
+    const { title, text, options } = props;
 
-class AlertImpl extends React.Component<AlertProps, {}> {
-    constructor(props: AlertProps) {
-        super(props);
+    const { dispatch } = React.useContext(ImageEditorContext);
+
+    const onCloseClick = () => {
+        dispatch(hideAlert());
     }
 
-    render() {
-        const { title, text, options, dispatchHideAlert } = this.props;
-        return  <div className="image-editor-alert-container" role="region" onClick={dispatchHideAlert}>
+    return (
+        <div className="image-editor-alert-container" role="region" onClick={onCloseClick}>
             <div className="image-editor-alert" role="dialog">
                 <div className="title">
                     <span className="ms-Icon ms-Icon--Warning"></span>
                     <span>{title}</span>
-                    <span className="ms-Icon ms-Icon--Cancel" role="button" onClick={dispatchHideAlert}></span>
+                    <span className="ms-Icon ms-Icon--Cancel" role="button" onClick={onCloseClick}></span>
                 </div>
                 <div className="text">{text}</div>
                 {options && <div className="options">
@@ -39,16 +35,5 @@ class AlertImpl extends React.Component<AlertProps, {}> {
                 </div>}
             </div>
         </div>
-    }
+    );
 }
-
-function mapStateToProps({ editor }: ImageEditorStore, ownProps: any) {
-    if (!editor) return {};
-    return ownProps;
-}
-
-const mapDispatchToProps = {
-    dispatchHideAlert
-};
-
-export const Alert = connect(mapStateToProps, mapDispatchToProps)(AlertImpl);

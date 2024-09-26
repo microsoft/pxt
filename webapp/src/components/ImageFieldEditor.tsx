@@ -5,7 +5,7 @@ import { AssetCardView } from "./assetEditor/assetCard";
 import { assetToGalleryItem, getAssets } from "../assets";
 import { ImageEditor } from "./ImageEditor/ImageEditor";
 import { obtainShortcutLock, releaseShortcutLock } from "./ImageEditor/keyboardShortcuts";
-import { GalleryTile, setTelemetryFunction } from './ImageEditor/store/imageReducer';
+import { GalleryTile, setTelemetryFunction } from './ImageEditor/state';
 import { FilterPanel } from './FilterPanel';
 import { fireClickOnEnter } from "../util";
 import { EditorToggle, EditorToggleItem, BasicEditorToggleItem } from "../../../react-common/components/controls/EditorToggle";

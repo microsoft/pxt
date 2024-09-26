@@ -1,247 +1,225 @@
 import * as React from "react";
-import { connect } from "react-redux";
-
-import { ImageEditorStore, AnimationState } from "./store/imageReducer";
-import { dispatchChangeCurrentFrame, dispatchNewFrame, dispatchDuplicateFrame, dispatchDeleteFrame, dispatchMoveFrame } from "./actions/dispatch";
 
 import { TimelineFrame } from "./TimelineFrame";
 import { bindGestureEvents, ClientCoordinates } from "./util";
+import { Action, deleteFrame, duplicateFrame, ImageEditorContext, moveFrame, newFrame, AnimationState, changeCurrentFrame } from "./state";
+import { classList } from "../../../../react-common/components/util";
 
-interface TimelineProps {
-    colors: string[];
-    frames: pxt.sprite.ImageState[];
+interface DragState {
+    scrollOffset: number;
+    dragEnd: boolean;
     currentFrame: number;
-    interval: number;
-    previewAnimating: boolean;
-
-    dispatchChangeCurrentFrame: (index: number) => void;
-    dispatchNewFrame: () => void;
-    dispatchDuplicateFrame: (index: number) => void;
-    dispatchDeleteFrame: (index: number) => void;
-    dispatchMoveFrame: (oldIndex: number, newIndex: number) => void;
-}
-
-interface TimelineState {
-    isMovingFrame?: boolean;
+    isMovingFrame: boolean;
+    dispatch: (a: Action) => void;
     dropPreviewIndex?: number;
 }
 
-export class TimelineImpl extends React.Component<TimelineProps, TimelineState> {
-    protected handlers: (() => void)[] = [];
-    protected frameScroller: HTMLDivElement;
-    protected scrollOffset = 0;
-    protected dragEnd = false;
+export const Timeline = () => {
+    const { state, dispatch } = React.useContext(ImageEditorContext);
+    const [isMovingFrame, setIsMovingFrame] = React.useState(false);
+    const [dropPreviewIndex, setDropPreviewIndex] = React.useState<number>(null);
 
-    constructor(props: TimelineProps) {
-        super(props);
-        this.state = {};
+    const dragState = React.useRef<DragState>({ scrollOffset: 0, dragEnd: false, isMovingFrame, dropPreviewIndex, dispatch, currentFrame: 0 });
+    const dragFrameRef = React.useRef<HTMLDivElement>();
+    const scrollerRef = React.useRef<HTMLDivElement>();
+
+    const { previewAnimating } = state.editor
+
+    const editState = state.store.present as AnimationState;
+    const { frames, currentFrame, interval, colors } = editState;
+
+    let renderFrames = frames.slice();
+    let dragFrame: pxt.sprite.ImageState;
+
+    if (isMovingFrame) {
+        dragFrame = frames[currentFrame];
+
+        renderFrames.splice(currentFrame, 1);
+        renderFrames.splice(dropPreviewIndex, 0, null)
     }
 
-    render() {
-        const { frames, colors, currentFrame, interval, previewAnimating } = this.props;
-        const { isMovingFrame, dropPreviewIndex } = this.state;
+    const onNewFrameClick = React.useCallback(() => {
+        dispatch(newFrame());
+    }, [dispatch]);
 
-        let renderFrames = frames.slice();
-        let dragFrame: pxt.sprite.ImageState;
+    const onDuplicateFrameClick = React.useCallback(() => {
+        dispatch(duplicateFrame(currentFrame));
+    }, [currentFrame, dispatch]);
 
-        if (isMovingFrame) {
-            dragFrame = frames[currentFrame];
+    const onDeleteFrameClick = React.useCallback(() => {
+        dispatch(deleteFrame(currentFrame));
+    }, [currentFrame, dispatch]);
 
-            renderFrames.splice(currentFrame, 1);
-            renderFrames.splice(dropPreviewIndex, 0, null)
+    const onFrameSelected = React.useCallback((index: number) => {
+        if (dragState.current.dragEnd) {
+            dragState.current.dragEnd = false;
         }
+        else if (index != currentFrame) {
+            dispatch(changeCurrentFrame(index));
+        }
+    }, [dispatch, currentFrame])
 
-        return (
-            <div className={`image-editor-timeline ${pxt.BrowserUtils.isEdge() ? 'edge' : ''}`}>
-                <div className="image-editor-timeline-preview" >
-                    <TimelineFrame frames={previewAnimating ? frames : [frames[currentFrame]]} colors={colors} interval={interval} animating={true} />
-                </div>
-                <div className="image-editor-timeline-frames-outer">
-                    <div className="image-editor-timeline-frames" ref="frame-scroller-ref">
-                        { renderFrames.map((frame, index) => {
-                                const isActive = !isMovingFrame && index === currentFrame;
-                                if (!frame) return <div className="image-editor-timeline-frame drop-marker" key={index} />
-
-                                return <div className={`image-editor-timeline-frame ${isActive ? "active" : ""}`} key={index} role="button" onClick={this.clickHandler(index)}>
-                                    <TimelineFrame
-                                        frames={[frame]}
-                                        colors={colors}
-                                        showActions={isActive}
-                                        duplicateFrame={this.duplicateFrame}
-                                        deleteFrame={this.deleteFrame} />
-                                </div>
-                            }
-                        ) }
-                        { dragFrame &&
-                            <div ref="floating-frame" className="image-editor-timeline-frame dragging">
-                                <TimelineFrame
-                                    frames={[dragFrame]}
-                                    colors={colors}
-                                    duplicateFrame={this.duplicateFrame}
-                                    deleteFrame={this.deleteFrame} />
-                            </div>
-                        }
-                        <div className="image-editor-timeline-frame collapsed" role="button" onClick={this.newFrame}>
-                            <span className="ms-Icon ms-Icon--Add" />
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
-    componentDidMount() {
-        this.frameScroller = this.refs["frame-scroller-ref"] as HTMLDivElement;
-
+    React.useEffect(() => {
         let last: number;
         let isScroll = false;
-        bindGestureEvents(this.frameScroller, {
-            onClick: coord => {
-                this.dragEnd = false;
+
+        const updateDragDrop = (coord: ClientCoordinates) => {
+            const parent = scrollerRef.current.getBoundingClientRect();
+            const scrollY = coord.clientY - parent.top;
+
+            const unit = scrollerRef.current.firstElementChild.getBoundingClientRect().height;
+            const index = Math.floor(scrollY / unit);
+
+            if (!dragState.current.isMovingFrame) {
+                setIsMovingFrame(true);
+                setDropPreviewIndex(dragState.current.currentFrame);
+            }
+            else if (dragFrameRef.current) {
+                dragFrameRef.current.style.top = scrollY + "px";
+                    setDropPreviewIndex(index);
+            }
+        }
+
+        bindGestureEvents(scrollerRef.current, {
+            onClick: () => {
+                dragState.current.dragEnd = false;
             },
             onDragStart: coord => {
                 last = coord.clientY;
-                pxt.BrowserUtils.addClass(this.frameScroller, "scrolling");
+                pxt.BrowserUtils.addClass(scrollerRef.current, "scrolling");
 
-                const parent = this.frameScroller.getBoundingClientRect();
+                const parent = scrollerRef.current.getBoundingClientRect();
                 const scrollY = coord.clientY - parent.top;
 
-                const unit = this.frameScroller.firstElementChild.getBoundingClientRect().height;
+                const unit = scrollerRef.current.firstElementChild.getBoundingClientRect().height;
                 const index = Math.floor(scrollY / unit);
 
-                isScroll = index !== this.props.currentFrame;
+                isScroll = index !== dragState.current.currentFrame;
             },
             onDragMove: coord => {
                 if (isScroll) {
-                    this.scrollOffset -= last - coord.clientY;
+                    dragState.current.scrollOffset -= last - coord.clientY;
                     last = coord.clientY;
 
                     try {
-                        const rect = this.frameScroller.getBoundingClientRect();
-                        const parent = this.frameScroller.parentElement.getBoundingClientRect();
+                        const rect = scrollerRef.current.getBoundingClientRect();
+                        const parent = scrollerRef.current.parentElement.getBoundingClientRect();
 
                         if (rect.height > parent.height) {
-                            this.scrollOffset = Math.max(Math.min(this.scrollOffset, 0), parent.height - rect.height - 15);
+                            dragState.current.scrollOffset = Math.max(Math.min(dragState.current.scrollOffset, 0), parent.height - rect.height - 15);
                         }
                         else {
-                            this.scrollOffset = 0;
+                            dragState.current.scrollOffset = 0;
                         }
-                        this.frameScroller.parentElement.scrollTop = -this.scrollOffset;
+                        scrollerRef.current.parentElement.scrollTop = -dragState.current.scrollOffset;
                     }
                     catch (e) {
                         // Some browsers throw if you get the bounds while not in the dom. Ignore it.
                     }
                 }
                 else {
-                    this.updateDragDrop(coord);
+                    updateDragDrop(coord);
                 }
             },
             onDragEnd: () => {
                 last = null;
-                pxt.BrowserUtils.removeClass(this.frameScroller, "scrolling");
-                this.dragEnd = true;
+                pxt.BrowserUtils.removeClass(scrollerRef.current, "scrolling");
+                dragState.current.dragEnd = true;
 
-                if (this.state.isMovingFrame) {
-                    const { dispatchMoveFrame, currentFrame } = this.props;
+                if (dragState.current.isMovingFrame) {
+                    const { dispatch, currentFrame } = dragState.current;
 
-                    dispatchMoveFrame(currentFrame, this.state.dropPreviewIndex);
-
-                    this.setState({
-                        isMovingFrame: false
-                    });
+                    dispatch(moveFrame(currentFrame, dragState.current.dropPreviewIndex));
+                    setIsMovingFrame(false);
                 }
             },
         });
 
-        this.frameScroller.addEventListener("wheel", ev => {
-            this.scrollOffset -= ev.deltaY
+        scrollerRef.current.addEventListener("wheel", ev => {
+            dragState.current.scrollOffset -= ev.deltaY
 
             try {
-                const rect = this.frameScroller.getBoundingClientRect();
-                const parent = this.frameScroller.parentElement.getBoundingClientRect();
+                const rect = scrollerRef.current.getBoundingClientRect();
+                const parent = scrollerRef.current.parentElement.getBoundingClientRect();
 
                 if (rect.height > parent.height) {
-                    this.scrollOffset = Math.max(Math.min(this.scrollOffset, 0), parent.height - rect.height - 15);
+                    dragState.current.scrollOffset = Math.max(Math.min(dragState.current.scrollOffset, 0), parent.height - rect.height - 15);
                 }
                 else {
-                    this.scrollOffset = 0;
+                    dragState.current.scrollOffset = 0;
                 }
-                this.frameScroller.parentElement.scrollTop = -this.scrollOffset;
+                scrollerRef.current.parentElement.scrollTop = -dragState.current.scrollOffset;
             }
             catch (e) {
                 // Some browsers throw if you get the bounds while not in the dom. Ignore it.
             }
         });
-    }
+    });
 
-    protected clickHandler(index: number) {
-        if (!this.handlers[index]) this.handlers[index] = () => {
-            const { currentFrame, dispatchChangeCurrentFrame } = this.props;
-            if (this.dragEnd) this.dragEnd = false;
-            else if (index != currentFrame) dispatchChangeCurrentFrame(index);
-        };
+    // FIXME: Obviously this is a little cursed, need to refactor how
+    // we do drag and drop behavior so that it doesn't need these values
+    // passed through. Can't pass them in the use effect dependencies because
+    // doing so will break the drag state if the state is changed while
+    // a drag is happening.
+    dragState.current.isMovingFrame = isMovingFrame;
+    dragState.current.currentFrame = currentFrame;
+    dragState.current.dropPreviewIndex = dropPreviewIndex;
+    dragState.current.dispatch = dispatch;
 
-        return this.handlers[index];
-    }
+    return (
+        <div className={`image-editor-timeline ${pxt.BrowserUtils.isEdge() ? 'edge' : ''}`}>
+            <div className="image-editor-timeline-preview" >
+                <TimelineFrame
+                    frames={previewAnimating ? frames : [frames[currentFrame]]}
+                    colors={colors} interval={interval}
+                    animating={true}
+                />
+            </div>
+            <div className="image-editor-timeline-frames-outer">
+                <div className="image-editor-timeline-frames" ref="frame-scroller-ref">
+                    {renderFrames.map((frame, index) => {
+                        const isActive = !isMovingFrame && index === currentFrame;
+                        if (!frame) {
+                            return (
+                                <div
+                                    key={index}
+                                    className="image-editor-timeline-frame drop-marker"
+                                />
+                            );
+                        }
 
-    protected duplicateFrame = () => {
-        const { currentFrame, dispatchDuplicateFrame } = this.props;
-        dispatchDuplicateFrame(currentFrame);
-    }
-
-    protected deleteFrame = () => {
-        const { currentFrame, dispatchDeleteFrame } = this.props;
-        dispatchDeleteFrame(currentFrame);
-    }
-
-    protected newFrame = () => {
-        const { dispatchNewFrame } = this.props;
-        if (this.dragEnd) this.dragEnd = false;
-        else dispatchNewFrame();
-    }
-
-    protected updateDragDrop(coord: ClientCoordinates) {
-        const parent = this.frameScroller.getBoundingClientRect();
-        const scrollY = coord.clientY - parent.top;
-
-        const unit = this.frameScroller.firstElementChild.getBoundingClientRect().height;
-        const index = Math.floor(scrollY / unit);
-
-        if (!this.state.isMovingFrame) {
-            this.setState({
-                isMovingFrame: true,
-                dropPreviewIndex: this.props.currentFrame,
-            });
-        }
-        else if (this.refs["floating-frame"]) {
-            const floating = this.refs["floating-frame"] as HTMLDivElement;
-            floating.style.top = scrollY + "px";
-
-            this.setState({ dropPreviewIndex: index });
-        }
-    }
+                        return (
+                            <div
+                                key={index}
+                                role="button"
+                                className={classList("image-editor-timeline-frame", isActive && "active")}
+                                onClick={() => onFrameSelected(index)}
+                            >
+                                <TimelineFrame
+                                    frames={[frame]}
+                                    colors={colors}
+                                    showActions={isActive}
+                                    duplicateFrame={onDuplicateFrameClick}
+                                    deleteFrame={onDeleteFrameClick}
+                                />
+                            </div>
+                        );
+                    })}
+                    {dragFrame &&
+                        <div ref="floating-frame" className="image-editor-timeline-frame dragging">
+                            <TimelineFrame
+                                frames={[dragFrame]}
+                                colors={colors}
+                                duplicateFrame={onDuplicateFrameClick}
+                                deleteFrame={onDeleteFrameClick}
+                            />
+                        </div>
+                    }
+                    <div className="image-editor-timeline-frame collapsed" role="button" onClick={onNewFrameClick}>
+                        <span className="ms-Icon ms-Icon--Add" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
 }
-
-function mapStateToProps({ store: { present }, editor }: ImageEditorStore, ownProps: any) {
-    let state = present as AnimationState;
-    if (!state) return {};
-    return {
-        frames: state.frames,
-        currentFrame: state.currentFrame,
-        colors: state.colors,
-        interval: state.interval,
-        previewAnimating: editor.previewAnimating
-    };
-}
-
-const mapDispatchToProps = {
-    dispatchDuplicateFrame,
-    dispatchDeleteFrame,
-    dispatchChangeCurrentFrame,
-    dispatchNewFrame,
-    dispatchMoveFrame
-};
-
-
-export const Timeline = connect(mapStateToProps, mapDispatchToProps)(TimelineImpl);
-

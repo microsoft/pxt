@@ -1,18 +1,11 @@
 import * as React from 'react';
-import { connect } from 'react-redux';
-
-import { ImageEditorStore, ImageEditorTool, AnimationState, TilemapState, TileDrawingMode, GalleryTile } from './store/imageReducer';
-import {
-    dispatchImageEdit, dispatchChangeZoom, dispatchChangeCursorLocation,
-    dispatchChangeImageTool, dispatchChangeSelectedColor, dispatchChangeBackgroundColor,
-    dispatchCreateNewTile
-} from "./actions/dispatch";
-import { GestureTarget, ClientCoordinates, bindGestureEvents, TilemapPatch, createTilemapPatchFromFloatingLayer } from './util';
+import { GestureTarget, ClientCoordinates, bindGestureEvents, TilemapPatch, createTilemapPatchFromFloatingLayer, useGestureEvents } from './util';
 
 import { Edit, EditState, getEdit, getEditState, ToolCursor, tools } from './toolDefinitions';
 import { createTile } from '../../assets';
 import { areShortcutsEnabled } from './keyboardShortcuts';
 import { LIGHT_MODE_TRANSPARENT } from './ImageEditor';
+import { ImageEditorContext, ImageEditorStore, ImageEditorTool, AnimationState, TilemapState, TileDrawingMode, GalleryTile, imageEdit, changeCanvasZoom, changeCursorLocation, changeImageTool, changeSelectedColor, changeBackgroundColor, createNewTile } from './state';
 
 const IMAGE_MIME_TYPE = "image/x-mkcd-f4"
 
@@ -1131,7 +1124,7 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
     }
 }
 
-function mapStateToProps({ store: { present }, editor }: ImageEditorStore, ownProps: any) {
+function mapStateToProps({ store: { present }, editor }: ImageEditorStore) {
     if (editor.isTilemap) {
         let state = (present as TilemapState);
         if (!state) return {} as ImageCanvasProps;
@@ -1170,14 +1163,26 @@ function mapStateToProps({ store: { present }, editor }: ImageEditorStore, ownPr
     } as ImageCanvasProps
 }
 
-const mapDispatchToProps = {
-    dispatchImageEdit,
-    dispatchChangeCursorLocation,
-    dispatchChangeZoom,
-    dispatchChangeImageTool,
-    dispatchChangeSelectedColor,
-    dispatchChangeBackgroundColor,
-    dispatchCreateNewTile
-};
+interface Props {
+    suppressShortcuts: boolean;
+    lightMode: boolean;
+}
 
-export const ImageCanvas = connect(mapStateToProps, mapDispatchToProps)(ImageCanvasImpl);
+export const ImageCanvas = (props: Props) => {
+    const { state, dispatch } = React.useContext(ImageEditorContext);
+    const mappedProps = mapStateToProps(state)
+
+    return (
+        <ImageCanvasImpl
+            {...mappedProps}
+            {...props}
+            dispatchImageEdit={state => dispatch(imageEdit(state))}
+            dispatchChangeZoom={zoom => dispatch(changeCanvasZoom(zoom))}
+            dispatchChangeCursorLocation={location => dispatch(changeCursorLocation(location as unknown as [number, number]))}
+            dispatchChangeImageTool={tool => dispatch(changeImageTool(tool))}
+            dispatchChangeSelectedColor={color => dispatch(changeSelectedColor(color))}
+            dispatchChangeBackgroundColor={color => dispatch(changeBackgroundColor(color))}
+            dispatchCreateNewTile={(tile, fg, bg, qname) => dispatch(createNewTile(tile, fg, bg, qname))}
+        />
+    );
+}

@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { EditState } from "./toolDefinitions";
 
 export const DRAG_RADIUS = 3;
@@ -168,79 +169,109 @@ export class GestureState {
 
 export function bindGestureEvents(el: HTMLElement, target: GestureTarget) {
     if (hasPointerEvents()) {
-        bindPointerEvents(el, target);
+        return bindPointerEvents(el, target);
     }
     else if (isTouchEnabled()) {
-        bindTouchEvents(el, target);
+        return bindTouchEvents(el, target);
     }
     else {
-        bindMouseEvents(el, target);
+        return bindMouseEvents(el, target);
     }
 }
 
 function bindPointerEvents(el: HTMLElement, target: GestureTarget) {
     let state: GestureState;
 
-    el.addEventListener("pointerup", ev => {
+    const pointerUp = (ev: PointerEvent) => {
         if (state) {
             state.end(clientCoord(ev));
             ev.preventDefault();
         }
         state = undefined;
-    });
+    };
 
-    el.addEventListener("pointerdown", ev => {
+    const pointerDown = (ev: PointerEvent) => {
         if (state) state.end();
 
         state = new GestureState(target, clientCoord(ev), isRightClick(ev));
         ev.preventDefault();
-    });
+    };
 
-    el.addEventListener("pointermove", ev => {
+    const pointerMove = (ev: PointerEvent) => {
         if (state) {
             state.update(clientCoord(ev));
             ev.preventDefault();
         }
-    });
+    };
 
-    el.addEventListener("pointerleave", ev => {
+    const pointerLeave = (ev: PointerEvent) => {
         if (state) {
             state.end(clientCoord(ev));
             ev.preventDefault();
         }
         state = undefined;
-    });
+    };
+
+    el.addEventListener("pointerup", pointerUp);
+    el.addEventListener("pointerdown", pointerDown);
+    el.addEventListener("pointermove", pointerMove);
+    el.addEventListener("pointerleave", pointerLeave);
+
+    return () => {
+        el.removeEventListener("pointerup", pointerUp);
+        el.removeEventListener("pointerdown", pointerDown);
+        el.removeEventListener("pointermove", pointerMove);
+        el.removeEventListener("pointerleave", pointerLeave);
+    };
 }
 
 function bindMouseEvents(el: HTMLElement, target: GestureTarget) {
     let state: GestureState;
 
-    el.addEventListener("mouseup", ev => {
-        if (state) state.end(clientCoord(ev));
+    const pointerUp = (ev: MouseEvent) => {
+        if (state) {
+            state.end(clientCoord(ev));
+        }
         state = undefined;
-    });
+    };
 
-    el.addEventListener("mousedown", ev => {
+    const pointerDown = (ev: MouseEvent) => {
         if (state) state.end();
 
         state = new GestureState(target, clientCoord(ev), isRightClick(ev));
-    });
+    };
 
-    el.addEventListener("mousemove", ev => {
-        if (state) state.update(clientCoord(ev));
-    });
+    const pointerMove = (ev: MouseEvent) => {
+        if (state) {
+            state.update(clientCoord(ev));
+        }
+    };
 
-    el.addEventListener("mouseleave", ev => {
-        if (state) state.end(clientCoord(ev));
+    const pointerLeave = (ev: MouseEvent) => {
+        if (state) {
+            state.end(clientCoord(ev));
+        }
         state = undefined;
-    });
+    };
+
+    el.addEventListener("mouseup", pointerUp);
+    el.addEventListener("mousedown", pointerDown);
+    el.addEventListener("mousemove", pointerMove);
+    el.addEventListener("mouseleave", pointerLeave);
+
+    return () => {
+        el.removeEventListener("mouseup", pointerUp);
+        el.removeEventListener("mousedown", pointerDown);
+        el.removeEventListener("mousemove", pointerMove);
+        el.removeEventListener("mouseleave", pointerLeave);
+    };
 }
 
 function bindTouchEvents(el: HTMLElement, target: GestureTarget) {
     let state: GestureState;
     let touchIdentifier: number | undefined;
 
-    el.addEventListener("touchend", ev => {
+    const touchEnd = (ev: TouchEvent) => {
         if (state && touchIdentifier) {
             const touch = getTouch(ev, touchIdentifier);
 
@@ -250,16 +281,16 @@ function bindTouchEvents(el: HTMLElement, target: GestureTarget) {
                 ev.preventDefault();
             }
         }
-    });
+    };
 
-    el.addEventListener("touchstart", ev => {
+    const touchStart = (ev: TouchEvent) => {
         if (state) state.end();
 
         touchIdentifier = ev.changedTouches[0].identifier;
         state = new GestureState(target, ev.changedTouches[0], isRightClick(ev));
-    });
+    };
 
-    el.addEventListener("touchmove", ev => {
+    const touchMove = (ev: TouchEvent) => {
         if (state && touchIdentifier) {
             const touch = getTouch(ev, touchIdentifier);
 
@@ -268,9 +299,9 @@ function bindTouchEvents(el: HTMLElement, target: GestureTarget) {
                 ev.preventDefault();
             }
         }
-    });
+    };
 
-    el.addEventListener("touchcancel", ev => {
+    const touchCancel = (ev: TouchEvent) => {
         if (state && touchIdentifier) {
             const touch = getTouch(ev, touchIdentifier);
 
@@ -280,7 +311,19 @@ function bindTouchEvents(el: HTMLElement, target: GestureTarget) {
                 ev.preventDefault();
             }
         }
-    });
+    };
+
+    el.addEventListener("touchend", touchEnd);
+    el.addEventListener("touchstart", touchStart);
+    el.addEventListener("touchmove", touchMove);
+    el.addEventListener("touchcancel", touchCancel);
+
+    return () => {
+        el.removeEventListener("touchend", touchEnd);
+        el.removeEventListener("touchstart", touchStart);
+        el.removeEventListener("touchmove", touchMove);
+        el.removeEventListener("touchcancel", touchCancel);
+    };
 }
 
 function getTouch(ev: TouchEvent, identifier: number) {
@@ -374,4 +417,184 @@ export function createTilemapPatchFromFloatingLayer(editState: EditState, tilese
         layers,
         tiles: referencedTiles.map(t => pxt.sprite.base64EncodeBitmap(t.bitmap))
     };
+}
+
+export function emptyFrame(width: number, height: number): pxt.sprite.ImageState {
+    return {
+        bitmap: new pxt.sprite.Bitmap(width, height).data()
+    }
+}
+
+export function useGestureEvents(el: React.RefObject<Element>, target: GestureTarget) {
+    if (hasPointerEvents()) {
+        usePointerEvents(el, target);
+    }
+    else if (isTouchEnabled()) {
+        useTouchEvents(el, target);
+    }
+    else {
+        useMouseEvents(el, target);
+    }
+}
+
+function usePointerEvents(el: React.RefObject<Element>, target: GestureTarget) {
+    const state = React.useRef<GestureState>();
+
+    useEffect(() => {
+        const element = el.current;
+        if (!element) return undefined;
+
+        const pointerUp = (ev: PointerEvent) => {
+            if (state.current) {
+                state.current.end(clientCoord(ev));
+                ev.preventDefault();
+            }
+            state.current = undefined;
+        };
+
+        const pointerDown = (ev: PointerEvent) => {
+            if (state.current) state.current.end();
+
+            state.current = new GestureState(target, clientCoord(ev), isRightClick(ev));
+            ev.preventDefault();
+        };
+
+        const pointerMove = (ev: PointerEvent) => {
+            if (state.current) {
+                state.current.update(clientCoord(ev));
+                ev.preventDefault();
+            }
+        };
+
+        const pointerLeave = (ev: PointerEvent) => {
+            if (state.current) {
+                state.current.end(clientCoord(ev));
+                ev.preventDefault();
+            }
+            state.current = undefined;
+        };
+
+        element.addEventListener("pointerup", pointerUp);
+        element.addEventListener("pointerdown", pointerDown);
+        element.addEventListener("pointermove", pointerMove);
+        element.addEventListener("pointerleave", pointerLeave);
+
+        return () => {
+            element.removeEventListener("pointerup", pointerUp);
+            element.removeEventListener("pointerdown", pointerDown);
+            element.removeEventListener("pointermove", pointerMove);
+            element.removeEventListener("pointerleave", pointerLeave);
+        };
+    }, [target]);
+}
+
+function useMouseEvents(el: React.RefObject<Element>, target: GestureTarget) {
+    const state = React.useRef<GestureState>();
+
+    React.useEffect(() => {
+        const element = el.current;
+        if (!element) return undefined;
+
+        const pointerUp = (ev: MouseEvent) => {
+            if (state.current) {
+                state.current.end(clientCoord(ev));
+            }
+            state.current = undefined;
+        };
+
+        const pointerDown = (ev: MouseEvent) => {
+            if (state.current) state.current.end();
+
+            state.current = new GestureState(target, clientCoord(ev), isRightClick(ev));
+        };
+
+        const pointerMove = (ev: MouseEvent) => {
+            if (state.current) {
+                state.current.update(clientCoord(ev));
+            }
+        };
+
+        const pointerLeave = (ev: MouseEvent) => {
+            if (state.current) {
+                state.current.end(clientCoord(ev));
+            }
+            state.current = undefined;
+        };
+
+        element.addEventListener("mouseup", pointerUp);
+        element.addEventListener("mousedown", pointerDown);
+        element.addEventListener("mousemove", pointerMove);
+        element.addEventListener("mouseleave", pointerLeave);
+
+        return () => {
+            element.removeEventListener("mouseup", pointerUp);
+            element.removeEventListener("mousedown", pointerDown);
+            element.removeEventListener("mousemove", pointerMove);
+            element.removeEventListener("mouseleave", pointerLeave);
+        };
+    }, [target])
+}
+
+function useTouchEvents(el: React.RefObject<Element>, target: GestureTarget) {
+    const state = React.useRef<GestureState>();
+    const touchIdentifier = React.useRef<number>();
+
+    React.useEffect(() => {
+        const element = el.current;
+        if (!element) return undefined;
+
+        const touchEnd = (ev: TouchEvent) => {
+            if (state.current && touchIdentifier.current) {
+                const touch = getTouch(ev, touchIdentifier.current);
+
+                if (touch) {
+                    state.current.end(touch);
+                    state.current = undefined;
+                    ev.preventDefault();
+                }
+            }
+        };
+
+        const touchStart = (ev: TouchEvent) => {
+            if (state.current) state.current.end();
+
+            touchIdentifier.current = ev.changedTouches[0].identifier;
+            state.current = new GestureState(target, ev.changedTouches[0], isRightClick(ev));
+        };
+
+        const touchMove = (ev: TouchEvent) => {
+            if (state.current && touchIdentifier.current) {
+                const touch = getTouch(ev, touchIdentifier.current);
+
+                if (touch) {
+                    state.current.update(touch);
+                    ev.preventDefault();
+                }
+            }
+        };
+
+        const touchCancel = (ev: TouchEvent) => {
+            if (state.current && touchIdentifier.current) {
+                const touch = getTouch(ev, touchIdentifier.current);
+
+                if (touch) {
+                    state.current.end(touch);
+                    state.current = undefined;
+                    ev.preventDefault();
+                }
+            }
+        };
+
+        element.addEventListener("touchend", touchEnd);
+        element.addEventListener("touchstart", touchStart);
+        element.addEventListener("touchmove", touchMove);
+        element.addEventListener("touchcancel", touchCancel);
+
+        return () => {
+            element.removeEventListener("touchend", touchEnd);
+            element.removeEventListener("touchstart", touchStart);
+            element.removeEventListener("touchmove", touchMove);
+            element.removeEventListener("touchcancel", touchCancel);
+        };
+    }, [target]);
 }

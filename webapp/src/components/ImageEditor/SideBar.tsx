@@ -1,69 +1,46 @@
 import * as React from "react";
-import { connect } from "react-redux";
 
 import { tools } from "./toolDefinitions";
 import { IconButton } from "./Button";
-import { ImageEditorTool, ImageEditorStore } from "./store/imageReducer";
-import { dispatchChangeImageTool } from "./actions/dispatch";
 import { Palette } from "./sprite/Palette";
 import { TilePalette } from "./tilemap/TilePalette";
 import { Minimap } from "./tilemap/Minimap";
+import { changeImageTool, ImageEditorContext, ImageEditorTool } from "./state";
 
 interface SideBarProps {
-    selectedTool: ImageEditorTool;
-    isTilemap: boolean;
-    dispatchChangeImageTool: (tool: ImageEditorTool) => void;
     lightMode: boolean;
 }
 
-export class SideBarImpl extends React.Component<SideBarProps,{}> {
-    protected handlers: (() => void)[] = [];
+export const SideBar = (props: SideBarProps) => {
+    const { state, dispatch } = React.useContext(ImageEditorContext);
 
-    render() {
-        const { selectedTool, isTilemap, lightMode } = this.props;
-        return (
-            <div className={`image-editor-sidebar ${isTilemap ? "tilemap" : ""}`}>
-                {isTilemap &&
-                    <div className="image-editor-tilemap-minimap">
-                        <Minimap lightMode={lightMode} />
-                    </div>
-                }
-                <div className="image-editor-tool-buttons">
-                    {tools.filter(td => !td.hiddenTool).map(td =>
-                        <IconButton
-                            key={td.tool}
-                            iconClass={td.iconClass}
-                            toggle={selectedTool != td.tool}
-                            title={td.title}
-                            onClick={this.clickHandler(td.tool)} />
-                    )}
+    const { lightMode } = props;
+    const { isTilemap, tool } = state.editor;
+
+    const onToolSelected = React.useCallback((tool: ImageEditorTool) => {
+        dispatch(changeImageTool(tool));
+    }, [dispatch]);
+
+    return (
+        <div className={`image-editor-sidebar ${isTilemap ? "tilemap" : ""}`}>
+            {isTilemap &&
+                <div className="image-editor-tilemap-minimap">
+                    <Minimap lightMode={lightMode} />
                 </div>
-                <div className="image-editor-palette">
-                    { isTilemap ? <TilePalette /> : <Palette /> }
-                </div>
+            }
+            <div className="image-editor-tool-buttons">
+                {tools.filter(td => !td.hiddenTool).map(td =>
+                    <IconButton
+                        key={td.tool}
+                        iconClass={td.iconClass}
+                        toggle={tool != td.tool}
+                        title={td.title}
+                        onClick={() => onToolSelected(td.tool)} />
+                )}
             </div>
-        );
-    }
-
-    protected clickHandler(tool: number) {
-        if (!this.handlers[tool]) this.handlers[tool] = () => this.props.dispatchChangeImageTool(tool);
-
-        return this.handlers[tool];
-    }
+            <div className="image-editor-palette">
+                { isTilemap ? <TilePalette /> : <Palette /> }
+            </div>
+        </div>
+    );
 }
-
-function mapStateToProps({ editor }: ImageEditorStore, ownProps: any) {
-    if (!editor) return {};
-    return {
-        isTilemap: editor.isTilemap,
-        selectedTool: editor.tool
-    };
-}
-
-const mapDispatchToProps = {
-    dispatchChangeImageTool
-};
-
-
-export const SideBar = connect(mapStateToProps, mapDispatchToProps)(SideBarImpl);
-

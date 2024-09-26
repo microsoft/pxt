@@ -1,57 +1,52 @@
 import * as React from 'react';
-import { connect } from 'react-redux';
 import { LIGHT_MODE_TRANSPARENT } from '../ImageEditor';
-import { ImageEditorStore, TilemapState, TileCategory } from '../store/imageReducer';
+import { ImageEditorContext, TilemapState } from '../state';
 
 export interface MinimapProps {
-    colors: string[];
-    tileset: pxt.TileSet;
-    tilemap: pxt.sprite.ImageState;
     lightMode: boolean;
 }
 
 const SCALE = pxt.BrowserUtils.isEdge() ? 25 : 1;
 
-class MinimapImpl extends React.Component<MinimapProps, {}> {
-    protected tileColors: string[] = [];
-    protected canvas: HTMLCanvasElement;
+export const Minimap = (props: MinimapProps) => {
+    const { state } = React.useContext(ImageEditorContext);
+    const canvasRef = React.useRef<HTMLCanvasElement>();
 
-    componentDidMount() {
-        this.canvas = this.refs["minimap-canvas"] as HTMLCanvasElement;
-        this.redrawCanvas();
-    }
+    const { lightMode } = props;
+    const { colors, tilemap, tileset } = (state.store.present as TilemapState);
 
-    componentDidUpdate() {
-        this.redrawCanvas();
-    }
-
-    render() {
-        return <div className="minimap-outer">
-            <canvas ref="minimap-canvas" className="paint-surface" />
-        </div>
-    }
-
-    redrawCanvas() {
-        const { tilemap, lightMode } = this.props;
+    React.useEffect(() => {
         let { bitmap, floating, layerOffsetX, layerOffsetY } = tilemap;
 
-        const context = this.canvas.getContext("2d");
+        const context = canvasRef.current.getContext("2d");
         const image = pxt.sprite.Tilemap.fromData(bitmap);
         const floatingImage = floating && floating.bitmap ? pxt.sprite.Tilemap.fromData(floating.bitmap) : null;
 
-        this.canvas.width = image.width * SCALE;
-        this.canvas.height = image.height * SCALE;
-        this.tileColors = [];
+        canvasRef.current.width = image.width * SCALE;
+        canvasRef.current.height = image.height * SCALE;
+        const tileColors: string[] = [];
+
+        const getColor = (index: number) => {
+            if (!tileColors[index]) {
+                if (index >= tileset.tiles.length) {
+                    return "#ffffff";
+                }
+                const bitmap = pxt.sprite.Bitmap.fromData(tileset.tiles[index].bitmap);
+                tileColors[index] = pxt.sprite.computeAverageColor(bitmap, colors);
+            }
+
+            return tileColors[index];
+        }
 
         for (let x = 0; x < image.width; x++) {
             for (let y = 0; y < image.height; y++) {
                 const float = floatingImage ? floatingImage.get(x - layerOffsetX, y - layerOffsetY) : null;
                 const index = image.get(x, y);
                 if (float) {
-                    context.fillStyle = this.getColor(float);
+                    context.fillStyle = getColor(float);
                     context.fillRect(x * SCALE, y * SCALE, SCALE, SCALE);
                 } else if (index) {
-                    context.fillStyle = this.getColor(index);
+                    context.fillStyle = getColor(index);
                     context.fillRect(x * SCALE, y * SCALE, SCALE, SCALE);
                 }
                 else if (lightMode) {
@@ -62,37 +57,11 @@ class MinimapImpl extends React.Component<MinimapProps, {}> {
                 }
             }
         }
-    }
+    }, [lightMode, colors, tilemap, tileset]);
 
-    protected getColor(index: number) {
-        if (!this.tileColors[index]) {
-            const { tileset, colors } = this.props;
-
-            if (index >= tileset.tiles.length) {
-                return "#ffffff";
-            }
-            const bitmap = pxt.sprite.Bitmap.fromData(tileset.tiles[index].bitmap);
-            this.tileColors[index] = pxt.sprite.computeAverageColor(bitmap, colors);
-        }
-
-        return this.tileColors[index];
-    }
+    return (
+        <div className="minimap-outer">
+            <canvas ref={canvasRef} className="paint-surface" />
+        </div>
+    );
 }
-
-
-function mapStateToProps({ store: { present }, editor }: ImageEditorStore, ownProps: any) {
-    let state = (present as TilemapState);
-    if (!state) return {};
-    return {
-        tilemap: state.tilemap,
-        tileset: state.tileset,
-        colors: state.colors
-    };
-}
-
-const mapDispatchToProps = {
-
-};
-
-
-export const Minimap = connect(mapStateToProps, mapDispatchToProps)(MinimapImpl);

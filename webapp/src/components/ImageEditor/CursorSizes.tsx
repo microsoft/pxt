@@ -1,54 +1,48 @@
 import * as React from 'react';
-import { ImageEditorStore, CursorSize } from './store/imageReducer';
-import { dispatchChangeCursorSize } from './actions/dispatch';
-import { connect } from 'react-redux';
+import { CursorSize, ImageEditorContext, changeCursorSize } from './state';
+import { classList } from '../../../../react-common/components/util';
 
-interface CursorSizesProps {
-    selected: CursorSize;
-    dispatchChangeCursorSize: (size: CursorSize) => void;
-}
-
-
-class CursorSizesImpl extends React.Component<CursorSizesProps, {}> {
-    protected handlers: (() => void)[] = [];
-
-    render() {
-        const { selected } = this.props;
-        return <div className="cursor-buttons">
-            <div className={`cursor-button-outer ${selected === CursorSize.One ? "selected" : ""}`} title={lf("Small Cursor (1px)")} role="button" onClick={this.clickHandler(CursorSize.One)}>
-                <div className="cursor-button small" />
-            </div>
-            <div className={`cursor-button-outer ${selected === CursorSize.Three ? "selected" : ""}`} title={lf("Medium Cursor (3px)")} role="button" onClick={this.clickHandler(CursorSize.Three)}>
-                <div className="cursor-button medium" />
-            </div>
-            <div className={`cursor-button-outer ${selected === CursorSize.Five ? "selected" : ""}`} title={lf("Large Cursor (5px)")} role="button" onClick={this.clickHandler(CursorSize.Five)}>
-                <div className="cursor-button large" />
-            </div>
+export const CursorSizes = () => {
+    return (
+        <div className="cursor-buttons">
+            <CursorButton
+                size={CursorSize.One}
+                title={lf("Small Cursor (1px)")}
+                className="small"
+            />
+            <CursorButton
+                size={CursorSize.Three}
+                title={lf("Medium Cursor (3px)")}
+                className="medium"
+            />
+            <CursorButton
+                size={CursorSize.Five}
+                title={lf("Large Cursor (5px)")}
+                className="large"
+            />
         </div>
-    }
-
-    clickHandler(size: CursorSize) {
-        if (!this.handlers[size]) {
-            this.handlers[size] = () => {
-                const { dispatchChangeCursorSize } = this.props;
-                dispatchChangeCursorSize(size);
-            }
-        }
-        return this.handlers[size];
-    }
+    );
 }
 
+const CursorButton = (props: {size: CursorSize, title: string, className: string}) => {
+    const { state, dispatch } = React.useContext(ImageEditorContext);
 
-function mapStateToProps({ editor }: ImageEditorStore, ownProps: any) {
-    if (!editor) return {};
-    return {
-        selected: editor.cursorSize
-    };
+    const { size, title, className } = props;
+
+    const onClick = React.useCallback(() => {
+        dispatch(changeCursorSize(size));
+    }, [size, dispatch]);
+
+    const isSelected = state.editor.cursorSize === size;
+
+    return (
+        <div
+            className={classList("cursor-button-outer", isSelected && "selected")}
+            title={title}
+            role="button"
+            onClick={onClick}
+        >
+            <div className={classList("cursor-button", className)} />
+        </div>
+    );
 }
-
-const mapDispatchToProps = {
-    dispatchChangeCursorSize
-};
-
-
-export const CursorSizes = connect(mapStateToProps, mapDispatchToProps)(CursorSizesImpl);

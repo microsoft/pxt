@@ -2,7 +2,7 @@ import * as React from "react";
 
 import { FieldEditorComponent } from '../blocklyFieldView';
 import { ImageEditor } from "./ImageEditor/ImageEditor";
-import { setTelemetryFunction, GalleryTile } from './ImageEditor/store/imageReducer';
+import { setTelemetryFunction, GalleryTile } from './ImageEditor/state';
 
 export interface TilemapFieldEditorProps {
 }

@@ -1,8 +1,5 @@
 import * as React from 'react';
 
-import { Store } from 'redux';
-import { Provider } from 'react-redux';
-import { mainStore, tileEditorStore } from './store/imageStore'
 import { SideBar } from './SideBar';
 import { BottomBar } from './BottomBar';
 import { TopBar } from './TopBar';
@@ -10,15 +7,12 @@ import { ImageCanvas } from './ImageCanvas';
 import { Alert, AlertInfo } from './Alert';
 
 import { Timeline } from './Timeline';
-import { addKeyListener, removeKeyListener, setStore } from './keyboardShortcuts';
-
-import { dispatchSetInitialState, dispatchImageEdit, dispatchChangeZoom, dispatchOpenAsset, dispatchCloseTileEditor, dispatchDisableResize, dispatchChangeAssetName, dispatchChangeImageDimensions, dispatchSetFrames } from './actions/dispatch';
-import { EditorState, AnimationState, TilemapState, GalleryTile, ImageEditorStore } from './store/imageReducer';
 import { imageStateToBitmap, imageStateToTilemap, applyBitmapData } from './util';
-import { Unsubscribe, Action } from 'redux';
 import { createNewImageAsset, getNewInternalID } from '../../assets';
 import { AssetEditorCore } from '../ImageFieldEditor';
 import { classList } from '../../../../react-common/components/util';
+import { Action, ImageEditorContext, ImageEditorStateProvider, TileEditorStateProvider, EditorState, AnimationState, TilemapState, GalleryTile, ImageEditorStore, setInitialState, changeImageDimensions, imageEdit, disableResize, closeTileEditor, changeCanvasZoom, openAsset, changeAssetName, setFrames } from './state';
+import { useKeyboardShortcuts } from './keyboardShortcuts';
 
 export const LIGHT_MODE_TRANSPARENT = "#dedede";
 
@@ -31,7 +25,6 @@ export interface ImageEditorProps {
     singleFrame?: boolean;
     onChange?: (value: string) => void;
     asset?: pxt.Asset;
-    store?: Store<ImageEditorStore>;
     onDoneClicked?: (value: pxt.Asset) => void;
     onTileEditorOpenClose?: (open: boolean) => void;
     nested?: boolean;
@@ -48,7 +41,7 @@ export interface ImageEditorState {
 }
 
 export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorState> implements AssetEditorCore {
-    protected unsubscribeChangeListener: Unsubscribe;
+    protected store: { state: ImageEditorStore, dispatch: (a: Action) => void };
 
     constructor(props: ImageEditorProps) {
         super(props);
@@ -57,49 +50,48 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
     }
 
     componentDidMount() {
-        addKeyListener();
-
         if (this.props.asset) {
             this.openAsset(this.props.asset);
         }
 
-        this.unsubscribeChangeListener = this.getStore().subscribe(this.onStoreChange);
-
         this.onResize();
     }
 
-    componentWillUnmount() {
-        if (!this.props.nested) removeKeyListener();
-
-        if (this.unsubscribeChangeListener) {
-            this.unsubscribeChangeListener()
-        }
-    }
-
     render(): JSX.Element {
-        const { singleFrame, lightMode, hideDoneButton, hideAssetName } = this.props;
-        const instanceStore = this.getStore();
+        const { singleFrame, lightMode, hideDoneButton, hideAssetName, nested } = this.props;
 
         const { tileToEdit, editingTile, alert } = this.state;
 
-        const isAnimationEditor = instanceStore.getState().store.present.kind === "Animation"
-
         return <div className="image-editor-outer">
-            <Provider store={instanceStore}>
-                <div className={classList("image-editor", editingTile && "editing-tile", hideDoneButton && "hide-done-button")}>
-                    <TopBar singleFrame={singleFrame} />
-                    <div className="image-editor-content">
-                        <SideBar lightMode={lightMode} />
-                        <ImageCanvas suppressShortcuts={editingTile} lightMode={lightMode} />
-                        {isAnimationEditor && !singleFrame ? <Timeline /> : undefined}
-                    </div>
-                    <BottomBar singleFrame={singleFrame} onDoneClick={this.onDoneClick} hideDoneButton={!!hideDoneButton} hideAssetName={!!hideAssetName} />
-                    {alert && alert.title && <Alert title={alert.title} text={alert.text} options={alert.options} />}
-                </div>
+            <Provider nested={nested}>
+                <ImageEditorContext.Consumer>
+                    {context => {
+                        if (this.store && this.store.state !== context.state) {
+                            this.store = context;
+                            this.onStoreChange();
+                        }
+                        else {
+                            this.store = context;
+                        }
+
+                        const isAnimationEditor = context.state.store.present.kind === "Animation";
+                        return (
+                            <div className={classList("image-editor", editingTile && "editing-tile", hideDoneButton && "hide-done-button")}>
+                                <TopBar singleFrame={singleFrame} />
+                                <div className="image-editor-content">
+                                    <SideBar lightMode={lightMode} />
+                                    <ImageCanvas suppressShortcuts={editingTile} lightMode={lightMode} />
+                                    {isAnimationEditor && !singleFrame ? <Timeline /> : undefined}
+                                </div>
+                                <BottomBar singleFrame={singleFrame} onDoneClick={this.onDoneClick} hideDoneButton={!!hideDoneButton} hideAssetName={!!hideAssetName} />
+                                {alert && alert.title && <Alert title={alert.title} text={alert.text} options={alert.options} />}
+                            </div>
+                        );
+                    }}
+                </ImageEditorContext.Consumer>
             </Provider>
             {editingTile &&
                 <ImageEditor
-                    store={tileEditorStore}
                     ref="nested-image-editor"
                     onDoneClicked={this.onTileEditorFinished}
                     asset={tileToEdit}
@@ -112,20 +104,20 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
     }
 
     openAsset(asset: pxt.Asset, gallery?: GalleryTile[], keepPast = false) {
-        this.dispatchOnStore(dispatchOpenAsset(asset, keepPast, gallery))
+        this.store.dispatch(openAsset(asset, keepPast, gallery));
 
         if (asset.meta.displayName) {
-            this.dispatchOnStore(dispatchChangeAssetName(asset.meta.displayName));
+            this.store.dispatch(changeAssetName(asset.meta.displayName));
         }
         else if (keepPast) {
-            this.dispatchOnStore(dispatchChangeAssetName(""));
+            this.store.dispatch(changeAssetName(""));
         }
     }
 
     openGalleryAsset(asset: pxt.Animation | pxt.ProjectImage | pxt.Tile) {
         const current = this.getAsset();
 
-        const frames = (this.getStore().getState().store.present as AnimationState).frames;
+        const frames = (this.store.state.store.present as AnimationState).frames;
 
         switch (current.type) {
             case pxt.AssetType.Animation:
@@ -135,7 +127,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
                         this.setCurrentFrame(pxt.sprite.Bitmap.fromData(asset.bitmap), frames.length === 1);
                         break;
                     case pxt.AssetType.Animation:
-                        this.dispatchOnStore(dispatchSetFrames(asset.frames.map(b => ({ bitmap: b }))));
+                        this.store.dispatch(setFrames(asset.frames.map(b => ({ bitmap: b }))));
                         break;
                 }
                 break;
@@ -154,11 +146,11 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
     }
 
     onResize() {
-        this.dispatchOnStore(dispatchChangeZoom(0));
+        this.store.dispatch(changeCanvasZoom(0));
     }
 
     getCurrentFrame(): pxt.sprite.Bitmap {
-        const state = this.getStore().getState();
+        const { state } = this.store;
         const animationState = state.store.present as AnimationState;
         const currentFrame = animationState.frames[animationState.currentFrame];
 
@@ -166,7 +158,14 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
     }
 
     getAsset(): pxt.Asset {
-        const type = this.getStore().getState().store.present.asset.type;
+        const { state } = this.store;
+        const asset = state.store.present.asset;
+
+        if (!asset) {
+            return undefined;
+        }
+
+        const type = asset.type;
         switch (type) {
             case pxt.AssetType.Tile:
                 return this.getTile();
@@ -180,14 +179,16 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
     }
 
     getImage(): pxt.ProjectImage {
-        const state = this.getStore().getState().store.present;
+        const { state } = this.store;
+        const imageState = state.store.present;
+
         const data = this.getCurrentFrame().data();
 
-        const meta: pxt.AssetMetadata = state.asset ? { ...state.asset.meta } : {};
+        const meta: pxt.AssetMetadata = imageState.asset ? { ...imageState.asset.meta } : {};
 
         return {
-            id: state.asset?.id,
-            internalID: state.asset ? state.asset.internalID : getNewInternalID(),
+            id: imageState.asset?.id,
+            internalID: imageState.asset ? imageState.asset.internalID : getNewInternalID(),
             type: pxt.AssetType.Image,
             bitmap: data,
             jresData: pxt.sprite.base64EncodeBitmap(data),
@@ -196,14 +197,15 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
     }
 
     getTile(): pxt.Tile {
-        const state = this.getStore().getState().store.present;
+        const { state } = this.store;
+        const tileState = state.store.present;
         const data = this.getCurrentFrame().data();
 
-        const meta: pxt.AssetMetadata = state.asset ? { ...state.asset.meta } : {};
+        const meta: pxt.AssetMetadata = tileState.asset ? { ...tileState.asset.meta } : {};
 
         return {
-            id: state.asset?.id,
-            internalID: state.asset ? state.asset.internalID : getNewInternalID(),
+            id: tileState.asset?.id,
+            internalID: tileState.asset ? tileState.asset.internalID : getNewInternalID(),
             isProjectTile: true,
             type: pxt.AssetType.Tile,
             bitmap: data,
@@ -213,7 +215,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
     }
 
     getAnimation(): pxt.Animation {
-        const state = this.getStore().getState();
+        const { state } = this.store;
         const animationState = state.store.present as AnimationState;
 
         const meta: pxt.AssetMetadata = animationState.asset ? { ...animationState.asset.meta } : {};
@@ -229,7 +231,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
     }
 
     getTilemap(): pxt.ProjectTilemap {
-        const state = this.getStore().getState();
+        const { state } = this.store;
         const tilemapState = state.store.present as TilemapState;
         const { floating, overlayLayers, layerOffsetX, layerOffsetY } = tilemapState.tilemap;
         const layers = applyBitmapData(pxt.sprite.Bitmap.fromData(overlayLayers[0]).copy().data(), floating && floating.overlayLayers && floating.overlayLayers[0], layerOffsetX, layerOffsetY);
@@ -250,7 +252,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
     }
 
     getPersistentData(): ImageEditorSaveState {
-        const state = this.getStore().getState();
+        const { state } = this.store
         return {
             editor: state.editor,
             past: state.store.past as AnimationState[]
@@ -259,13 +261,13 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
 
     restorePersistentData(oldValue: ImageEditorSaveState) {
         if (oldValue) {
-            this.dispatchOnStore(dispatchSetInitialState(oldValue.editor, oldValue.past));
+            this.store.dispatch(setInitialState(oldValue.editor, oldValue.past));
         }
     }
 
     setCurrentFrame(bitmap: pxt.sprite.Bitmap, shrinkIfNecessary: boolean) {
         if (!shrinkIfNecessary) {
-            const state = this.getStore().getState();
+            const { state } = this.store;
             const current = (state.store.present as AnimationState).frames[0];
 
             if (bitmap.width !== current.bitmap.width || bitmap.height !== current.bitmap.height) {
@@ -274,7 +276,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
                 ];
 
                 if (current.bitmap.width !== dimensions[0] || current.bitmap.height !== dimensions[1]) {
-                    this.dispatchOnStore(dispatchChangeImageDimensions(dimensions));
+                    this.store.dispatch(changeImageDimensions(dimensions[0], dimensions[1]));
                 }
 
                 bitmap = bitmap.copy();
@@ -282,7 +284,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
             }
         }
 
-        this.dispatchOnStore(dispatchImageEdit({ bitmap: bitmap.data() }));
+        this.store.dispatch(imageEdit({ bitmap: bitmap.data() }));
     }
 
     openInTileEditor(bitmap: pxt.sprite.Bitmap) {
@@ -290,7 +292,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
     }
 
     disableResize() {
-        this.dispatchOnStore(dispatchDisableResize());
+        this.store.dispatch(disableResize());
     }
 
     closeNestedEditor() {
@@ -316,48 +318,44 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
         }
     }
 
-    protected getStore() {
-        return this.props.store || mainStore;
-    }
-
     protected onStoreChange = () => {
         if (this.props.onChange) {
             this.props.onChange(this.props.singleFrame ? pxt.sprite.bitmapToImageLiteral(this.getCurrentFrame(), "typescript") : "")
         }
 
-        const store = this.getStore();
-        const state = store.getState();
-        setStore(store);
+        const { state } = this.store;
 
-        if (state.editor) this.setState({ alert: state.editor.alert });
 
-        if (!!state.editor.editingTile != !!this.state.editingTile) {
-            if (state.editor.editingTile) {
-                const index = state.editor.editingTile.tilesetIndex;
-                if (index) {
-                    const tile = (state.store.present as TilemapState).tileset.tiles[index];
-                    this.setState({
-                        editingTile: true,
-                        tileToEdit: tile
-                    });
+        setTimeout(() => {
+            if (state.editor) this.setState({ alert: state.editor.alert });
+            if (!!state.editor.editingTile != !!this.state.editingTile) {
+                if (state.editor.editingTile) {
+                    const index = state.editor.editingTile.tilesetIndex;
+                    if (index) {
+                        const tile = (state.store.present as TilemapState).tileset.tiles[index];
+                        this.setState({
+                            editingTile: true,
+                            tileToEdit: tile
+                        });
+                    }
+                    else {
+                        const tileWidth = (state.store.present as TilemapState).tileset.tileWidth;
+                        const emptyTile = createNewImageAsset(pxt.AssetType.Tile, tileWidth, tileWidth, lf("myTile")) as pxt.Tile;
+                        this.setState({
+                            editingTile: true,
+                            tileToEdit: emptyTile
+                        });
+                    }
+                    if (this.props.onTileEditorOpenClose) this.props.onTileEditorOpenClose(true);
                 }
                 else {
-                    const tileWidth = (state.store.present as TilemapState).tileset.tileWidth;
-                    const emptyTile = createNewImageAsset(pxt.AssetType.Tile, tileWidth, tileWidth, lf("myTile")) as pxt.Tile;
                     this.setState({
-                        editingTile: true,
-                        tileToEdit: emptyTile
+                        editingTile: false
                     });
+                    if (this.props.onTileEditorOpenClose) this.props.onTileEditorOpenClose(false);
                 }
-                if (this.props.onTileEditorOpenClose) this.props.onTileEditorOpenClose(true);
             }
-            else {
-                this.setState({
-                    editingTile: false
-                });
-                if (this.props.onTileEditorOpenClose) this.props.onTileEditorOpenClose(false);
-            }
-        }
+        })
     }
 
     protected onDoneClick = () => {
@@ -367,14 +365,40 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
     }
 
     protected onTileEditorFinished = (tile: pxt.Tile) => {
-        const store = this.getStore();
-        const tileEditState = store.getState().editor.editingTile;
+        const { state } = this.store;
+        const tileEditState = state.editor.editingTile;
         tile.isProjectTile = true;
 
-        this.dispatchOnStore(dispatchCloseTileEditor(tile, tileEditState.tilesetIndex))
+        this.store.dispatch(closeTileEditor(tile, tileEditState.tilesetIndex));
+    }
+}
+
+const Provider = (props: React.PropsWithChildren<{ nested: boolean }>) => {
+    const { nested, children } = props;
+
+    if (nested) {
+        return (
+            <TileEditorStateProvider>
+                {children};
+            </TileEditorStateProvider>
+        );
     }
 
-    protected dispatchOnStore(action: Action) {
-        this.getStore().dispatch(action);
-    }
+    return (
+        <ImageEditorStateProvider>
+            <KeyboardShortcut>
+                {children};
+            </KeyboardShortcut>
+        </ImageEditorStateProvider>
+    );
+}
+
+
+const KeyboardShortcut = ({ children }: React.PropsWithChildren<{}>) => {
+    useKeyboardShortcuts();
+    return (
+        <>
+            {children}
+        </>
+    )
 }

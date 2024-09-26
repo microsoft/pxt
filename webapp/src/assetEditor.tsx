@@ -5,7 +5,7 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 
 import { ImageFieldEditor } from "./components/ImageFieldEditor";
-import { setTelemetryFunction } from './components/ImageEditor/store/imageReducer';
+import { setTelemetryFunction } from './components/ImageEditor/state';
 import { IFrameEmbeddedClient } from "../../pxtservices/iframeEmbeddedClient";
 
 
