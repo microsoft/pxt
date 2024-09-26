@@ -49,6 +49,7 @@ import * as sidepanel from "./sidepanel";
 import * as qr from "./qr";
 
 import * as monaco from "./monaco"
+import * as toolboxHelpers from "./toolboxHelpers"
 import * as pxtjson from "./pxtjson"
 import * as serial from "./serial"
 import * as blocks from "./blocks"
@@ -80,7 +81,7 @@ import { mergeProjectCode, appendTemporaryAssets } from "./mergeProjects";
 import { Tour } from "./components/onboarding/Tour";
 import { parseTourStepsAsync } from "./onboarding";
 import { initGitHubDb } from "./idbworkspace";
-import { CategoryNameID } from "./toolbox";
+import { BlockDefinition, CategoryNameID } from "./toolbox";
 
 pxt.blocks.requirePxtBlockly = () => pxtblockly as any;
 pxt.blocks.requireBlockly = () => Blockly;
@@ -4140,6 +4141,51 @@ export class ProjectView
             } as pxt.editor.ToolboxCategoryDefinition;
         });
         return { categories };
+    }
+
+    getBlocksWithId(blockId: string): BlockDefinition[] {
+        const matches: BlockDefinition[] = [];
+        for (const advanced of [false, true]) {
+            for (const category of this.blocksEditor.getToolboxCategories(advanced)) {
+                for (const match of category.blocks?.filter(b => b.attributes.blockId === blockId) ?? []) {
+                    matches.push(match);
+                }
+            }
+        }
+
+        return matches;
+    }
+
+    getBlockAsText(blockId: string): pxt.editor.BlockAsText | undefined {
+        const blocksWithId = this.getBlocksWithId(blockId);
+        let readableName: pxt.editor.BlockAsText = undefined;
+        if (blocksWithId.length === 0) {
+            return undefined;
+        } else if (blocksWithId.length === 1) {
+            const block = blocksWithId[0];
+            readableName = toolboxHelpers.getBlockAsText(block, block.parameters ? block.parameters.slice() : null, false);
+        }
+
+        if (!readableName) {
+            // Found multiple blocks matching the id, or we were unable to generate a readable name from block parameters.
+            // In this case, use the block snippet names to describe the block.
+            const blockSnippets: string[] = [];
+            for (const name of blocksWithId.map(b => b.snippetName || b.name)) {
+                if (blockSnippets.indexOf(name) === -1) {
+                    blockSnippets.push(name);
+                }
+            }
+            readableName = {
+                parts: [
+                    {
+                        kind: "label",
+                        content: blockSnippets.join(" | ")
+                    }
+                ],
+            }
+        }
+
+        return readableName;
     }
 
     launchFullEditor() {

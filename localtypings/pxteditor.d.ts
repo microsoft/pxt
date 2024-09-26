@@ -75,6 +75,7 @@ declare namespace pxt.editor {
         | "convertcloudprojectstolocal"
         | "setlanguagerestriction"
         | "gettoolboxcategories"
+        | "getblockastext"
 
         | "toggletrace" // EditorMessageToggleTraceRequest
         | "togglehighcontrast"
@@ -453,12 +454,21 @@ declare namespace pxt.editor {
         advanced?: boolean;
     }
 
-    export interface EditorMessageServiceWorkerRegisteredRequest extends EditorMessageRequest {
-        action: "serviceworkerregistered";
-    }
-
     export interface EditorMessageGetToolboxCategoriesResponse {
         categories: pxt.editor.ToolboxCategoryDefinition[];
+    }
+
+    export interface EditorMessageGetBlockAsTextRequest extends EditorMessageRequest {
+        action: "getblockastext";
+        blockId: string;
+    }
+
+    export interface EditorMessageGetBlockAsTextResponse {
+        blockAsText: pxt.editor.BlockAsText | undefined;
+    }
+
+    export interface EditorMessageServiceWorkerRegisteredRequest extends EditorMessageRequest {
+        action: "serviceworkerregistered";
     }
 
     export interface DataStreams<T> {
@@ -997,6 +1007,7 @@ declare namespace pxt.editor {
         // getBlocks(): Blockly.Block[];
         getBlocks(): any[];
         getToolboxCategories(advanced?: boolean): pxt.editor.EditorMessageGetToolboxCategoriesResponse;
+        getBlockAsText(blockId: string): pxt.editor.BlockAsText | undefined;
 
         toggleHighContrast(): void;
         setHighContrast(on: boolean): void;
@@ -1262,6 +1273,15 @@ declare namespace pxt.editor {
          * The Blockly block id used to identify this block.
          */
         blockId?: string;
+    }
+
+    export interface BlockAsText {
+        parts: BlockTextPart[];
+    }
+
+    export interface BlockTextPart {
+        kind: "label" | "break" | "param",
+        content?: string,
     }
 
     interface BaseAssetEditorRequest {

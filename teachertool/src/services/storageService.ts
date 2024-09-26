@@ -12,6 +12,7 @@ const RUN_ON_LOAD_KEY = [KEY_PREFIX, "runOnLoad"].join("/");
 const LAST_ACTIVE_CHECKLIST_KEY = [KEY_PREFIX, "lastActiveChecklist"].join("/");
 const SPLIT_POSITION_KEY = [KEY_PREFIX, "splitPosition"].join("/");
 const EXPANDED_CATALOG_TAGS_KEY = [KEY_PREFIX, "expandedCatalogTags"].join("/");
+const BLOCK_AS_TEXT_PREFIX = [KEY_PREFIX, "blockAsText"].join("/");
 
 function getValue(key: string, defaultValue?: string): string | undefined {
     return localStorage.getItem(key) || defaultValue;
@@ -110,6 +111,10 @@ async function saveChecklistToIndexedDbAsync(checklist: Checklist) {
 async function deleteChecklistFromIndexedDbAsync(name: string) {
     const db = await getDb;
     await db.deleteChecklist(name);
+}
+
+function getBlockAsTextKey(blockId: string): string {
+    return [BLOCK_AS_TEXT_PREFIX, blockId].join("/");
 }
 
 // ----------------------------------
@@ -233,5 +238,25 @@ export function removeExpandedCatalogTag(tag: string) {
             expandedTags.splice(index, 1);
             setExpandedCatalogTags(expandedTags);
         }
+    }
+}
+
+export function getCachedBlockAsText(blockId: string): pxt.editor.BlockAsText | undefined {
+    const key = getBlockAsTextKey(blockId);
+    try {
+        const cachedReadableBlockName = getValue(key);
+        return cachedReadableBlockName ? JSON.parse(cachedReadableBlockName) : undefined;
+    } catch (e) {
+        logError(ErrorCode.localStorageReadError, e);
+        return undefined;
+    }
+}
+
+export function cacheBlockAsText(blockId: string, readableBlockName: pxt.editor.BlockAsText) {
+    const key = getBlockAsTextKey(blockId);
+    try {
+        setValue(key, JSON.stringify(readableBlockName));
+    } catch (e) {
+        logError(ErrorCode.localStorageWriteError, e);
     }
 }
