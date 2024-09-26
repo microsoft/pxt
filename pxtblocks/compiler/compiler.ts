@@ -8,8 +8,9 @@ import { append, countOptionals, escapeVarName, forEachChildExpression, getInput
 import { isArrayType } from "../toolbox";
 import { MutatorTypes } from "../legacyMutations";
 import { trackAllVariables } from "./variables";
-import { FieldTilemap, FieldTextInput } from "../fields";
+import { FieldTilemap, FieldTextInput, getBlockDataForField } from "../fields";
 import { CommonFunctionBlock } from "../plugins/functions/commonFunctionMixin";
+import { REVIEW_COMMENT_FIELD_NAME } from "../plugins/comments/reviewCommentIcon";
 
 
 interface Rect {
@@ -798,6 +799,13 @@ function maybeAddComment(b: Blockly.Block, comments: string[]) {
     const text = b.getCommentText?.();
     if (text) {
         comments.push(text)
+    }
+}
+
+function maybeAddReviewComment(b: Blockly.Block, reviewComments: string[]) {
+    const reviewComment = getBlockDataForField(b, REVIEW_COMMENT_FIELD_NAME);
+    if (reviewComment) {
+        reviewComments.push(reviewComment);
     }
 }
 
