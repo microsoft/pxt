@@ -17,24 +17,29 @@ const DEFAULT_BUBBLE_HEIGHT = 80;
 // makecode fields generated from functions always use valid JavaScript
 // identifiers for their names. starting the name with a ~ prevents us
 // from colliding with those fields
+// TODO thsparks : how are these persisted when converting?
 const COMMENT_OFFSET_X_FIELD_NAME = "~commentOffsetX";
 const COMMENT_OFFSET_Y_FIELD_NAME = "~commentOffsetY";
+
+/** The type string used to identify the comment icon. */
+const COMMENT_TYPE = Blockly.icons.IconType.COMMENT;
 
 /**
  * An icon which allows the user to add comment text to a block.
  */
 export class CommentIcon extends Blockly.icons.Icon {
-    /** The type string used to identify this icon. */
-    static readonly TYPE = Blockly.icons.IconType.COMMENT;
-
     /**
      * The weight this icon has relative to other icons. Icons with more positive
      * weight values are rendered farther toward the end of the block.
      */
-    static readonly WEIGHT = 3;
+    protected weight = 3;
+
+    protected elementName: string = "comment";
+    protected xOffsetFieldName = COMMENT_OFFSET_X_FIELD_NAME;
+    protected yOffsetFieldName = COMMENT_OFFSET_Y_FIELD_NAME;
 
     /** The bubble used to show editable text to the user. */
-    private textInputBubble: TextInputBubble | null = null;
+    protected textInputBubble: TextInputBubble | null = null;
 
     /** The text of this comment. */
     private text = '';
@@ -56,7 +61,7 @@ export class CommentIcon extends Blockly.icons.Icon {
     }
 
     override getType(): Blockly.icons.IconType<CommentIcon> {
-        return CommentIcon.TYPE;
+        return COMMENT_TYPE;
     }
 
     override initView(pointerdownListener: (e: PointerEvent) => void): void {
@@ -108,7 +113,7 @@ export class CommentIcon extends Blockly.icons.Icon {
             },
             this.svgRoot
         );
-        Blockly.utils.dom.addClass(this.svgRoot!, 'blockly-icon-comment');
+        Blockly.utils.dom.addClass(this.svgRoot!, 'blockly-icon-comment'); // TODO thsparks - could I do something similar in reviewCommentIcon and have custom css?
     }
 
     override dispose() {
@@ -117,7 +122,7 @@ export class CommentIcon extends Blockly.icons.Icon {
     }
 
     override getWeight(): number {
-        return CommentIcon.WEIGHT;
+        return this.weight;
     }
 
     override getSize(): Blockly.utils.Size {
@@ -169,7 +174,7 @@ export class CommentIcon extends Blockly.icons.Icon {
         eventUtils.fire(
             new (eventUtils.get(eventUtils.BLOCK_CHANGE))(
                 this.sourceBlock,
-                'comment',
+                this.elementName,
                 null,
                 oldText,
                 text,
@@ -247,7 +252,7 @@ export class CommentIcon extends Blockly.icons.Icon {
         eventUtils.fire(
             new (eventUtils.get(eventUtils.BLOCK_CHANGE))(
                 this.sourceBlock,
-                'comment',
+                this.elementName,
                 null,
                 this.text,
                 newText,
@@ -270,8 +275,8 @@ export class CommentIcon extends Blockly.icons.Icon {
         if (this.textInputBubble) {
             const coord = this.textInputBubble.getPositionRelativeToAnchor();
 
-            setBlockDataForField(this.sourceBlock, COMMENT_OFFSET_X_FIELD_NAME, coord.x + "");
-            setBlockDataForField(this.sourceBlock, COMMENT_OFFSET_Y_FIELD_NAME, coord.y + "");
+            setBlockDataForField(this.sourceBlock, this.xOffsetFieldName, coord.x + "");
+            setBlockDataForField(this.sourceBlock, this.yOffsetFieldName, coord.y + "");
         }
     }
 
@@ -309,7 +314,7 @@ export class CommentIcon extends Blockly.icons.Icon {
                 new (eventUtils.get(eventUtils.BUBBLE_OPEN))(
                     this.sourceBlock,
                     visible,
-                    'comment',
+                    this.elementName,
                 ),
             );
         }
@@ -391,9 +396,9 @@ export class CommentIcon extends Blockly.icons.Icon {
         return new Blockly.utils.Rect(bbox.y, bbox.y + bbox.height, bbox.x, bbox.x + bbox.width);
     }
 
-    private getSavedOffsetData(): Blockly.utils.Coordinate | undefined {
-        const offsetX = getBlockDataForField(this.sourceBlock, COMMENT_OFFSET_X_FIELD_NAME);
-        const offsetY = getBlockDataForField(this.sourceBlock, COMMENT_OFFSET_Y_FIELD_NAME);
+    getSavedOffsetData(): Blockly.utils.Coordinate | undefined {
+        const offsetX = getBlockDataForField(this.sourceBlock, this.xOffsetFieldName);
+        const offsetY = getBlockDataForField(this.sourceBlock, this.yOffsetFieldName);
 
         if (offsetX && offsetY) {
             return new Blockly.utils.Coordinate(
@@ -406,8 +411,8 @@ export class CommentIcon extends Blockly.icons.Icon {
     }
 
     private clearSavedOffsetData() {
-        deleteBlockDataForField(this.sourceBlock, COMMENT_OFFSET_X_FIELD_NAME);
-        deleteBlockDataForField(this.sourceBlock, COMMENT_OFFSET_Y_FIELD_NAME);
+        deleteBlockDataForField(this.sourceBlock, this.xOffsetFieldName);
+        deleteBlockDataForField(this.sourceBlock, this.yOffsetFieldName);
     }
 }
 
@@ -424,7 +429,10 @@ export interface CommentState {
 
     /** The width of the comment bubble. */
     width?: number;
+
+    /** True if this is a review comment */
+    review?: boolean;
 }
 
-Blockly.icons.registry.unregister(CommentIcon.TYPE.toString());
-Blockly.icons.registry.register(CommentIcon.TYPE, CommentIcon);
+Blockly.icons.registry.unregister(COMMENT_TYPE.toString());
+Blockly.icons.registry.register(COMMENT_TYPE, CommentIcon);

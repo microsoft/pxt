@@ -1,11 +1,13 @@
 /// <reference path="../../built/pxtlib.d.ts" />
 import * as Blockly from "blockly";
 import { openHelpUrl } from "../external";
+import { REVIEW_COMMENT_COMPONENT_NAME, REVIEW_COMMENT_ICON_TYPE, ReviewCommentIcon } from "../plugins/comments/reviewCommentIcon";
 
 // Lower weight is higher in context menu
 enum BlockContextWeight {
     Duplicate = 10,
     AddComment = 20,
+    AddReviewComment = 21,
     ExpandCollapse = 30,
     DeleteBlock = 40,
     Help = 50
@@ -21,10 +23,51 @@ export function registerBlockitems() {
     registerDuplicate();
     registerCollapseExpandBlock();
     registerHelp();
+    registerBlockReviewComment();
 
     // Fix the weights of the builtin options we do use
     Blockly.ContextMenuRegistry.registry.getItem("blockDelete").weight = BlockContextWeight.DeleteBlock;
     Blockly.ContextMenuRegistry.registry.getItem("blockComment").weight = BlockContextWeight.AddComment;
+}
+
+/**
+ * Option to add or remove block-level comment.
+ */
+export function registerBlockReviewComment() {
+    const commentOption: Blockly.ContextMenuRegistry.RegistryItem = {
+        displayText(scope: Blockly.ContextMenuRegistry.Scope) {
+            if (scope.block!.hasIcon(REVIEW_COMMENT_ICON_TYPE)) {
+                // TODO thsparks - need a second type for review comments?
+                // If there's already a comment,  option is to remove.
+                return lf("Delete Review Comment");
+            }
+            // If there's no comment yet, option is to add.
+            return lf("Add Review Comment");
+        },
+        preconditionFn(scope: Blockly.ContextMenuRegistry.Scope) {
+            // TODO thsparks only enabled / disabled if owner?
+            const block = scope.block;
+            if (!block!.isInFlyout &&
+                block!.workspace.options.comments &&
+                !block!.isCollapsed() &&
+                block!.isEditable()) {
+                return "enabled";
+            }
+            return "hidden";
+        },
+        callback(scope: Blockly.ContextMenuRegistry.Scope) {
+            const block = scope.block;
+            if (block!.hasIcon(REVIEW_COMMENT_ICON_TYPE)) {
+                block.removeIcon(REVIEW_COMMENT_ICON_TYPE);
+            } else {
+                block!.addIcon(new ReviewCommentIcon(block!));
+            }
+        },
+        scopeType: Blockly.ContextMenuRegistry.ScopeType.BLOCK,
+        id: "blockReviewComment",
+        weight: BlockContextWeight.AddReviewComment,
+    };
+    Blockly.ContextMenuRegistry.registry.register(commentOption);
 }
 
 /**
