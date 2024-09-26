@@ -37,6 +37,7 @@ export class CommentIcon extends Blockly.icons.Icon {
     protected elementName: string = "comment";
     protected xOffsetFieldName = COMMENT_OFFSET_X_FIELD_NAME;
     protected yOffsetFieldName = COMMENT_OFFSET_Y_FIELD_NAME;
+    protected bubbleClasses: string[] = [];
 
     /** The bubble used to show editable text to the user. */
     protected textInputBubble: TextInputBubble | null = null;
@@ -324,12 +325,14 @@ export class CommentIcon extends Blockly.icons.Icon {
      * Shows the editable text bubble for this comment, and adds change listeners
      * to update the state of this icon in response to changes in the bubble.
      */
-    private showEditableBubble() {
+    protected showEditableBubble() {
         const savedPosition = this.getSavedOffsetData();
         this.textInputBubble = new TextInputBubble(
             this.sourceBlock.workspace as Blockly.WorkspaceSvg,
             this.getAnchorLocation(),
             this.getBubbleOwnerRect(),
+            false,
+            this.bubbleClasses,
         );
         this.textInputBubble.setText(this.getText());
         this.textInputBubble.setSize(this.bubbleSize, true);
@@ -351,13 +354,14 @@ export class CommentIcon extends Blockly.icons.Icon {
     }
 
     /** Shows the non editable text bubble for this comment. */
-    private showNonEditableBubble() {
+    protected showNonEditableBubble() {
         const savedPosition = this.getSavedOffsetData();
         this.textInputBubble = new TextInputBubble(
             this.sourceBlock.workspace as Blockly.WorkspaceSvg,
             this.getAnchorLocation(),
             this.getBubbleOwnerRect(),
-            true
+            true,
+            this.bubbleClasses,
         );
         this.textInputBubble.setText(this.getText());
         this.textInputBubble.setSize(this.bubbleSize, true);

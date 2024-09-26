@@ -33,9 +33,9 @@ export class ReviewCommentIcon extends CommentIcon {
      * weight values are rendered farther toward the end of the block.
      */
     protected weight = 1;
-
     protected xOffsetFieldName = REVIEW_COMMENT_OFFSET_X_FIELD_NAME;
     protected yOffsetFieldName = REVIEW_COMMENT_OFFSET_Y_FIELD_NAME;
+    protected bubbleClasses = ["reviewCommentBubble"];
 
     constructor(protected readonly sourceBlock: Blockly.Block) {
         super(sourceBlock);
@@ -60,8 +60,8 @@ export class ReviewCommentIcon extends CommentIcon {
 
     override applyColour(): void {
         super.applyColour();
-        const colour = "#7bd3ed";
-        const borderColour = "#7bd3ed"; // "#0d4b5e";
+        const colour = "#00b4cc"; // "#7bd3ed";
+        const borderColour = "#00b4cc"; // "#0d4b5e";
         this.textInputBubble?.setColour(colour, borderColour);
     }
 
@@ -123,3 +123,9 @@ export class ReviewCommentIcon extends CommentIcon {
 }
 
 Blockly.icons.registry.register(REVIEW_COMMENT_ICON_TYPE, ReviewCommentIcon);
+
+Blockly.Css.register(`
+    .blocklyTextInputBubble.reviewCommentBubble .blocklyTextarea {
+      background-color: #c7f8ff;
+    }
+`);
