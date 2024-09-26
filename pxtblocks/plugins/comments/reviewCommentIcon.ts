@@ -4,6 +4,8 @@ import { CommentIcon } from "./blockComment";
 import { deleteBlockDataForField, setBlockDataForField } from "../../fields";
 import { getBlockDataForField } from "../../fields/field_utils";
 
+const eventUtils = Blockly.Events;
+
 // makecode fields generated from functions always use valid JavaScript
 // identifiers for their names. starting the name with a ~ prevents us
 // from colliding with those fields
@@ -117,9 +119,21 @@ export class ReviewCommentIcon extends CommentIcon {
             this.clearAllData();
         }
 
+        const oldText = this.text;
         setBlockDataForField(this.sourceBlock, REVIEW_COMMENT_FIELD_NAME, text);
         this.text = text;
         this.textInputBubble?.setText(this.text);
+
+        // Fire change event to save file
+        eventUtils.fire(
+            new (eventUtils.get(eventUtils.BLOCK_CHANGE))(
+                this.sourceBlock,
+                REVIEW_COMMENT_FIELD_NAME,
+                null,
+                oldText,
+                text,
+            ),
+        );
     }
 
     /**
@@ -129,11 +143,23 @@ export class ReviewCommentIcon extends CommentIcon {
     override onTextChange(): void {
         if (!this.textInputBubble) return;
 
+        const oldText = this.text;
         const newText = this.textInputBubble.getText();
         if (this.text === newText) return;
 
         setBlockDataForField(this.sourceBlock, REVIEW_COMMENT_FIELD_NAME, newText);
         this.text = newText;
+
+        // Fire change event to save file
+        eventUtils.fire(
+            new (eventUtils.get(eventUtils.BLOCK_CHANGE))(
+                this.sourceBlock,
+                REVIEW_COMMENT_FIELD_NAME,
+                null,
+                oldText,
+                newText,
+            ),
+        );
     }
 
     clearAllData(): void {
