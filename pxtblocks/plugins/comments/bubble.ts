@@ -79,7 +79,7 @@ export abstract class Bubble implements Blockly.IDeletable {
         public readonly workspace: Blockly.WorkspaceSvg,
         protected anchor: Blockly.utils.Coordinate,
         protected ownerRect?: Blockly.utils.Rect,
-        protected headerText?: string,
+        protected readonly headerText?: string,
     ) {
         this.id = Blockly.utils.idGenerator.getNextUniqueId();
         this.svgRoot = dom.createSvgElement(
@@ -167,6 +167,15 @@ export abstract class Bubble implements Blockly.IDeletable {
             this,
             this.onMouseDown,
         );
+
+        if (this.header) {
+            Blockly.browserEvents.conditionalBind(
+                this.header,
+                'pointerdown',
+                this,
+                this.onMouseDown,
+            );
+        }
 
         Blockly.browserEvents.conditionalBind(
             this.collapseIcon,
@@ -761,5 +770,6 @@ Blockly.Css.register(`
 
 .blocklyText.bubbleHeaderText {
     font-weight: bold;
+    cursor: grab;
 }
 `);

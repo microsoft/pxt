@@ -68,7 +68,7 @@ export class TextInputBubble extends Bubble {
         protected ownerRect?: Blockly.utils.Rect,
         protected readonly readOnly?: boolean,
         protected readonly additionalClasses?: string[],
-        protected headerText?: string,
+        protected readonly headerText?: string,
     ) {
         super(workspace, anchor, ownerRect, headerText);
         dom.addClass(this.svgRoot, 'blocklyTextInputBubble');
