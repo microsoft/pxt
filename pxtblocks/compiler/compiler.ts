@@ -10,7 +10,7 @@ import { MutatorTypes } from "../legacyMutations";
 import { trackAllVariables } from "./variables";
 import { FieldTilemap, FieldTextInput, getBlockDataForField } from "../fields";
 import { CommonFunctionBlock } from "../plugins/functions/commonFunctionMixin";
-import { REVIEW_COMMENT_FIELD_NAME } from "../plugins/comments/reviewCommentIcon";
+import { REVIEW_COMMENT_FIELD_NAME, ReviewCommentIcon } from "../plugins/comments/reviewCommentIcon";
 
 
 interface Rect {
@@ -800,12 +800,14 @@ function maybeAddComment(b: Blockly.Block, comments: string[]) {
     if (text) {
         comments.push(text)
     }
+
+    maybeAddReviewComment(b, comments);
 }
 
 function maybeAddReviewComment(b: Blockly.Block, reviewComments: string[]) {
     const reviewComment = getBlockDataForField(b, REVIEW_COMMENT_FIELD_NAME);
     if (reviewComment) {
-        reviewComments.push(reviewComment);
+        reviewComments.push(`${ReviewCommentIcon.getReviewCommentPrefix(b)}${reviewComment}`);
     }
 }
 

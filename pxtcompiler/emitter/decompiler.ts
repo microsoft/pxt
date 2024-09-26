@@ -49,10 +49,10 @@ namespace ts.pxtc.decompiler {
 
     export interface ReviewComment extends CommentInfo {
         kind: CommentKind.Review;
-        lines: string[];
+        text: string;
     }
 
-    export type Comment = MultiLineComment | SingleLineComment;
+    export type Comment = MultiLineComment | SingleLineComment | ReviewComment;
 
     export const DECOMPILER_ERROR = 9267;
 
@@ -1400,13 +1400,34 @@ ${output}</xml>`;
 
                 // Attach comments to StatementNode
                 if (stmt) {
+                    const stmtData: {commentRefs: string[]; fieldData: pxt.Map<string>;} = {
+                        commentRefs: [],
+                        fieldData: undefined,
+                    };
+
                     if (wsCommentRefs.length) {
-                        if (stmt.data) stmt.data += ";" + wsCommentRefs.join(";")
-                        else stmt.data = wsCommentRefs.join(";")
+                        if (stmtData.commentRefs) stmtData.commentRefs.concat(wsCommentRefs);
+                        else stmtData.commentRefs = wsCommentRefs;
                     }
-                    if (comments && comments.length) {
-                        if (stmt.comment) stmt.comment = stmt.comment.concat(comments);
-                        else stmt.comment = comments;
+
+                    const nonReviewComments = comments?.filter(c => c.kind !== CommentKind.Review);
+                    if (nonReviewComments && nonReviewComments.length) {
+                        if (stmt.comment) stmt.comment = stmt.comment.concat(nonReviewComments);
+                        else stmt.comment = nonReviewComments;
+                    }
+
+                    const reviewComments = comments?.filter(c => c.kind === CommentKind.Review);
+                    if (reviewComments && reviewComments.length) {
+                        // TODO thsparks : the c.kind === CommentKind.Review check here should be unnecessary but compiler is complainaing...
+                        const comboComment = reviewComments.map(c => c.kind === CommentKind.Review ? c.text : undefined).join("\n");
+                        if (!stmtData.fieldData) {
+                            stmtData.fieldData = {};
+                        }
+                        stmtData.fieldData["~reviewComment"] = comboComment;
+                    }
+
+                    if (stmtData.commentRefs || stmtData.fieldData) {
+                        stmt.data = JSON.stringify(stmtData);
                     }
                 }
             }
@@ -3791,29 +3812,41 @@ ${output}</xml>`;
                     commentText = commentText.replace(/\r\n/g, "\n");
                 }
                 if (commentRange.kind === SyntaxKind.SingleLineCommentTrivia) {
-                    const match = singleLineCommentRegex.exec(commentText);
-
-                    if (match) {
+                    const reviewPrefix = "// :: Feedback :: ";
+                    if (commentText.startsWith(reviewPrefix)) {
                         res.push({
-                            kind: CommentKind.SingleLine,
-                            text: match[1],
+                            kind: CommentKind.Review,
+                            text: commentText.replace(reviewPrefix, ""),
                             start: commentRange.pos,
                             end: commentRange.end,
                             hasTrailingNewline: !!commentRange.hasTrailingNewLine,
                             followedByEmptyLine,
-                            isTrailingComment
+                            isTrailingComment,
                         });
-                    }
-                    else {
-                        res.push({
-                            kind: CommentKind.SingleLine,
-                            text: "",
-                            start: commentRange.pos,
-                            end: commentRange.end,
-                            hasTrailingNewline: !!commentRange.hasTrailingNewLine,
-                            followedByEmptyLine,
-                            isTrailingComment
-                        });
+                    } else {
+                        const match = singleLineCommentRegex.exec(commentText);
+                        if (match) {
+                            res.push({
+                                kind: CommentKind.SingleLine,
+                                text: match[1],
+                                start: commentRange.pos,
+                                end: commentRange.end,
+                                hasTrailingNewline: !!commentRange.hasTrailingNewLine,
+                                followedByEmptyLine,
+                                isTrailingComment
+                            });
+                        }
+                        else {
+                            res.push({
+                                kind: CommentKind.SingleLine,
+                                text: "",
+                                start: commentRange.pos,
+                                end: commentRange.end,
+                                hasTrailingNewline: !!commentRange.hasTrailingNewLine,
+                                followedByEmptyLine,
+                                isTrailingComment
+                            });
+                        }
                     }
                 }
                 else {
@@ -3849,7 +3882,7 @@ ${output}</xml>`;
                     out += comment.text.trim() + "\n";
                 }
             }
-            else {
+            else if (comment.kind === CommentKind.MultiLine) {
                 for (const line of comment.lines) {
                     out += line.trim() + "\n";
                 }

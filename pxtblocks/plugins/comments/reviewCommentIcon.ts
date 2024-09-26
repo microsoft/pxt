@@ -44,6 +44,10 @@ export class ReviewCommentIcon extends CommentIcon {
         this.setInitialValues();
     }
 
+    static getReviewCommentPrefix(block: Blockly.Block): string {
+        return ":: Feedback :: ";
+    }
+
     setInitialValues() {
         this.text = getBlockDataForField(this.sourceBlock, REVIEW_COMMENT_FIELD_NAME) || "";
 

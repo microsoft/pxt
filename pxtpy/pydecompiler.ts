@@ -246,7 +246,7 @@ namespace pxt.py {
             if (comment.kind === pxtc.decompiler.CommentKind.SingleLine) {
                 out.push("# " + comment.text)
             }
-            else {
+            else if (comment.kind === pxtc.decompiler.CommentKind.MultiLine) {
                 out.push(`"""`)
                 for (const line of comment.lines) {
                     out.push(line);
