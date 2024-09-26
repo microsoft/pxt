@@ -38,6 +38,7 @@ export class ReviewCommentIcon extends CommentIcon {
     protected xOffsetFieldName = REVIEW_COMMENT_OFFSET_X_FIELD_NAME;
     protected yOffsetFieldName = REVIEW_COMMENT_OFFSET_Y_FIELD_NAME;
     protected bubbleClasses = ["reviewCommentBubble"];
+    protected bubbleHeaderText = lf("Feedback");
 
     constructor(protected readonly sourceBlock: Blockly.Block) {
         super(sourceBlock);

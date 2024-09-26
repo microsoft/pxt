@@ -1,6 +1,7 @@
 import * as Blockly from "blockly";
 
 import dom = Blockly.utils.dom;
+import { setHsvSaturation } from "blockly/core/utils/colour";
 
 /**
  * The abstract pop-up bubble class. This creates a UI that looks like a speech
@@ -56,6 +57,8 @@ export abstract class Bubble implements Blockly.IDeletable {
 
     private topBar: SVGRectElement;
 
+    protected header: SVGTextElement;
+
     protected deleteIcon: SVGImageElement;
 
     private collapseIcon: SVGImageElement;
@@ -76,6 +79,7 @@ export abstract class Bubble implements Blockly.IDeletable {
         public readonly workspace: Blockly.WorkspaceSvg,
         protected anchor: Blockly.utils.Coordinate,
         protected ownerRect?: Blockly.utils.Rect,
+        protected headerText?: string,
     ) {
         this.id = Blockly.utils.idGenerator.getNextUniqueId();
         this.svgRoot = dom.createSvgElement(
@@ -120,6 +124,17 @@ export abstract class Bubble implements Blockly.IDeletable {
             },
             embossGroup
         );
+
+        if (this.headerText) {
+            this.header = dom.createSvgElement(
+                Blockly.utils.Svg.TEXT,
+                {
+                    'class': 'blocklyText bubbleHeaderText'
+                },
+                embossGroup
+            );
+            this.header.textContent = this.headerText;
+        }
 
         this.deleteIcon = dom.createSvgElement(
             Blockly.utils.Svg.IMAGE,
@@ -227,6 +242,7 @@ export abstract class Bubble implements Blockly.IDeletable {
         const topBarSize = this.topBar.getBBox();
         const deleteSize = this.deleteIcon.getBBox();
         const foldoutSize = this.collapseIcon.getBBox();
+        const headerSize = this.header?.getBBox();
 
         size.width = Math.max(size.width, Bubble.MIN_SIZE);
         size.height = Math.max(size.height, Bubble.MIN_SIZE);
@@ -239,6 +255,9 @@ export abstract class Bubble implements Blockly.IDeletable {
 
         this.updateDeleteIconPosition(size, topBarSize, deleteSize);
         this.updateFoldoutIconPosition(topBarSize, foldoutSize);
+        if (headerSize) {
+            this.updateHeaderPosition(topBarSize, foldoutSize, deleteSize, headerSize);
+        }
 
         if (relayout) {
             this.positionByRect(this.ownerRect);
@@ -701,6 +720,25 @@ export abstract class Bubble implements Blockly.IDeletable {
         this.collapseIcon.setAttribute('x', `${foldoutMargin}`);
     }
 
+    private updateHeaderPosition(topBarSize: Blockly.utils.Size, foldoutSize: Blockly.utils.Size, deleteSize: Blockly.utils.Size, headerSize: Blockly.utils.Size) {
+        const foldoutMargin = this.calcFoldoutMargin(topBarSize, foldoutSize);
+        const deleteMargin = this.calcDeleteMargin(topBarSize, deleteSize);
+
+        // Position right of the foldout icon.
+        // Note, the y position is relative to the bottom of the text.
+        const xPos = foldoutSize.width + foldoutMargin + Bubble.BORDER_WIDTH;
+        const yPos = topBarSize.height - headerSize.height / 2 + Bubble.BORDER_WIDTH + 1.5 /* 1.5 is hackathon nudge to get this thing centered */;
+
+        // foldoutMargin intentionally included twice (once for left of icon, once for right)
+        if (topBarSize.width > xPos + foldoutMargin + headerSize.width + deleteSize.width + deleteMargin) {
+            this.header?.setAttribute('visibility', 'visibile');
+            this.header?.setAttribute('y', `${yPos}`);
+            this.header?.setAttribute('x', `${xPos}`);
+        } else {
+            this.header?.setAttribute('visibility', 'collapse');
+        }
+    }
+
     /** Calculates the margin that should exist around the delete icon. */
     private calcDeleteMargin(topBarSize: Blockly.utils.Size, deleteSize: Blockly.utils.Size) {
         return ((topBarSize.height - deleteSize.height) / 2) + Bubble.BORDER_WIDTH;
@@ -719,5 +757,9 @@ Blockly.Css.register(`
 
 .blocklyBubble .blocklyTextarea.blocklyText {
     color: #575E75;
+}
+
+.blocklyText.bubbleHeaderText {
+    font-weight: bold;
 }
 `);

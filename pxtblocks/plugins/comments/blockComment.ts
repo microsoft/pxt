@@ -34,10 +34,10 @@ export class CommentIcon extends Blockly.icons.Icon {
      */
     protected weight = 3;
 
-    protected elementName: string = "comment";
     protected xOffsetFieldName = COMMENT_OFFSET_X_FIELD_NAME;
     protected yOffsetFieldName = COMMENT_OFFSET_Y_FIELD_NAME;
     protected bubbleClasses: string[] = [];
+    protected bubbleHeaderText: string = undefined;
 
     /** The bubble used to show editable text to the user. */
     protected textInputBubble: TextInputBubble | null = null;
@@ -175,7 +175,7 @@ export class CommentIcon extends Blockly.icons.Icon {
         eventUtils.fire(
             new (eventUtils.get(eventUtils.BLOCK_CHANGE))(
                 this.sourceBlock,
-                this.elementName,
+                "comment",
                 null,
                 oldText,
                 text,
@@ -253,7 +253,7 @@ export class CommentIcon extends Blockly.icons.Icon {
         eventUtils.fire(
             new (eventUtils.get(eventUtils.BLOCK_CHANGE))(
                 this.sourceBlock,
-                this.elementName,
+                "comment",
                 null,
                 this.text,
                 newText,
@@ -315,7 +315,7 @@ export class CommentIcon extends Blockly.icons.Icon {
                 new (eventUtils.get(eventUtils.BUBBLE_OPEN))(
                     this.sourceBlock,
                     visible,
-                    this.elementName,
+                    "comment",
                 ),
             );
         }
@@ -333,6 +333,7 @@ export class CommentIcon extends Blockly.icons.Icon {
             this.getBubbleOwnerRect(),
             false,
             this.bubbleClasses,
+            this.bubbleHeaderText,
         );
         this.textInputBubble.setText(this.getText());
         this.textInputBubble.setSize(this.bubbleSize, true);
@@ -362,6 +363,7 @@ export class CommentIcon extends Blockly.icons.Icon {
             this.getBubbleOwnerRect(),
             true,
             this.bubbleClasses,
+            this.bubbleHeaderText,
         );
         this.textInputBubble.setText(this.getText());
         this.textInputBubble.setSize(this.bubbleSize, true);
