@@ -95,6 +95,10 @@ export class ReviewCommentIcon extends CommentIcon {
 
     // Function to allow subclasses to override the creation of the text input bubble
     override createTextInputBubble(readOnly: boolean): TextInputBubble {
+
+        // TODO thsparks - add username as header if logged in, or "Feedback" if not.
+        // TODO thsparks - also maybe return readonly version of bubble if username doesn't match header username. Idk.
+
         const tib = new TextInputBubble(
             this.sourceBlock.workspace as Blockly.WorkspaceSvg,
             this.getAnchorLocation(),
