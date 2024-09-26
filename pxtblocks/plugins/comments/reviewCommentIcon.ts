@@ -71,7 +71,7 @@ export class ReviewCommentIcon extends CommentIcon {
             Blockly.utils.Svg.PATH,
             {
                 'class': 'blocklyIconSymbol',
-                'd': 'm 17 3.5 -7.5 7.5 0 1.5 1.5 0 7.5 -7.5 z',
+                'd': 'm 17 2 -9 9 0 2 2 0 9 -9 z',
                 'style': 'fill: #575E75;'
             },
             this.svgRoot
