@@ -53,6 +53,65 @@ export class ReviewCommentIcon extends CommentIcon {
 
         this.setBubbleVisible(!!this.text);
     }
+    override initView(pointerdownListener: (e: PointerEvent) => void): void {
+        if (this.svgRoot) return; // Already initialized.
+
+        super.initView(pointerdownListener);
+
+        Blockly.utils.dom.createSvgElement(
+            Blockly.utils.Svg.PATH,
+            {
+                'class': 'blocklyIconShape',
+                'd': 'm 2,2 0,9.2211 3.0026599,0 1.6008929,1.5989 1.8138195,-1.5989 6.6046683,0 0,-9.2211 -13.0220406,0 z',
+                'style': 'fill: #fff;'
+            },
+            this.svgRoot
+        );
+        // Blockly.utils.dom.createSvgElement('rect',
+        //     {
+        //         'class': 'blocklyIconSymbol',
+        //         'x': '4',
+        //         'y': '8',
+        //         'height': '1',
+        //         'width': '6',
+        //         'style': 'fill: #575E75;'
+        //     },
+        //     this.svgRoot
+        // );
+        // Blockly.utils.dom.createSvgElement(
+        //     Blockly.utils.Svg.RECT,
+        //     {
+        //         'class': 'blocklyIconSymbol',
+        //         'x': '4',
+        //         'y': '6',
+        //         'height': '1',
+        //         'width': '6',
+        //         'style': 'fill: #575E75;'
+        //     },
+        //     this.svgRoot
+        // );
+        // Blockly.utils.dom.createSvgElement('rect',
+        //     {
+        //         'class': 'blocklyIconSymbol',
+        //         'x': '4',
+        //         'y': '4',
+        //         'height': '1',
+        //         'width': '8',
+        //         'style': 'fill: #575E75;'
+        //     },
+        //     this.svgRoot
+        // );
+        Blockly.utils.dom.createSvgElement(
+            Blockly.utils.Svg.PATH,
+            {
+                'class': 'blocklyIconSymbol',
+                'd': 'm 17 3.5 -7.5 7.5 0 1.5 1.5 0 7.5 -7.5 z',
+                'style': 'fill: #575E75;'
+            },
+            this.svgRoot
+        );
+        Blockly.utils.dom.addClass(this.svgRoot!, 'blockly-icon-comment'); // TODO thsparks : customize?
+    }
 
     override getType(): Blockly.icons.IconType<CommentIcon> {
         return REVIEW_COMMENT_ICON_TYPE;

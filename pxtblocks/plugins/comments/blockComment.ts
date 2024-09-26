@@ -114,7 +114,7 @@ export class CommentIcon extends Blockly.icons.Icon {
             },
             this.svgRoot
         );
-        Blockly.utils.dom.addClass(this.svgRoot!, 'blockly-icon-comment'); // TODO thsparks - could I do something similar in reviewCommentIcon and have custom css?
+        Blockly.utils.dom.addClass(this.svgRoot!, 'blockly-icon-comment');
     }
 
     override dispose() {
