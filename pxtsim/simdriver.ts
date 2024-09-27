@@ -142,7 +142,7 @@ namespace pxsim {
                 });
 
             // Preprocess simulator extensions
-            const hasSimXDevFlag = /[?&]simxdev(?:[=&#]|$)/i.test(window.location.href);
+            const simXDevMode = U.isLocalHost() && /[?&]simxdev(?:[=&#]|$)/i.test(window.location.href);
             Object.entries(options?.simulatorExtensions || {}).forEach(([key, simx]) => {
                 // Verify essential `simx` config was provided
                 if (
@@ -154,7 +154,7 @@ namespace pxsim {
                     return;
                 }
                 // Compute the effective URL
-                if (U.isLocalHost() && simx.devUrl && hasSimXDevFlag) {
+                if (simXDevMode && simx.devUrl) {
                     // Use the dev URL if the dev flag is set (and we're on localhost)
                     simx.url = new URL(simx.index, simx.devUrl).toString();
                 } else {
