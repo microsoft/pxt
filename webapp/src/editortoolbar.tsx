@@ -701,6 +701,8 @@ class EditorToolbarFeedbackNav extends React.Component<EditorToolbarFeedbackNavP
         if (block) {
             (this.props.parent.editor as blocks.Editor).editor.highlightBlock(block.id);
             (this.props.parent.editor as blocks.Editor).editor.centerOnBlock(block.id);
+
+            block.getIcon(REVIEW_COMMENT_ICON_TYPE)?.setBubbleVisible(true);
         }
     }
 
