@@ -1278,7 +1278,7 @@ export function serveAsync(options: ServeOptions) {
             }
         }
 
-        // Look for an .html file correspoding to `/---<pathname>`
+        // Look for an .html file corresponding to `/---<pathname>`
         // Handles serving of `trg-<target>.sim.local:<port>/---simulator`
         let match = /^\/?---?(.*)/.exec(pathname)
         if (match && match[1]) {
