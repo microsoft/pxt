@@ -30,7 +30,7 @@ namespace pxsim {
         }>;
         // Simulator extensions read from targetconfig.json's `approvedRepoLib` entry.
         simulatorExtensions?: pxt.Map<{
-            // Subset of pxt.SimulatorExtensionConfig
+            // Fields from pxt.SimulatorExtensionConfig
             aspectRatio?: number;
             permanent?: boolean;
             index?: string;
