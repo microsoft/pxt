@@ -677,7 +677,7 @@ class EditorToolbarFeedbackNav extends React.Component<EditorToolbarFeedbackNavP
         this.state = {
             isBlocksActive: this.props.parent.isBlocksActive(),
             blocksWithFeedback: [],
-            currentIndex: 0,
+            currentIndex: 0, // TODO thsparks : This is getting set to NaN for some reason, even with this here??
         }
     }
 
@@ -688,7 +688,8 @@ class EditorToolbarFeedbackNav extends React.Component<EditorToolbarFeedbackNavP
     }
 
     protected handleNextFeedbackClick = () => {
-        const newIndex = (this.state.currentIndex + 1) % this.state.blocksWithFeedback.length;
+        const currentIndex =  isNaN(this.state.currentIndex) ? 0 : this.state.currentIndex;
+        const newIndex = (currentIndex + 1) % this.state.blocksWithFeedback.length;
         this.setState({ currentIndex: newIndex });
         this.focusOnBlockAtIndex(newIndex);
     }
