@@ -5366,7 +5366,6 @@ function initPacketIO() {
             }
         },
         (type, payload) => {
-            /*
             const messageSimulators = pxt.appTarget.simulator?.messageSimulators;
             if (messageSimulators?.[type]) {
                 window.postMessage({
@@ -5377,7 +5376,6 @@ function initPacketIO() {
                     sender: "packetio",
                 }, "*")
             }
-            */
         });
 
     window.addEventListener('message', (ev: MessageEvent) => {
