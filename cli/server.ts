@@ -1158,7 +1158,7 @@ export function serveAsync(options: ServeOptions) {
                 method: req.method,
                 headers: req.headers
             };
-            
+
             const passthruReq = http.request(passthruOpts, passthruRes => {
                 res.writeHead(passthruRes.statusCode, passthruRes.headers);
                 passthruRes.pipe(res);
