@@ -3,8 +3,8 @@
 import * as Blockly from "blockly";
 import { blockSymbol, buildinBlockStatements, hasArrowFunction, initializeAndInject } from "./loader";
 import { extensionBlocklyPatch } from "./external";
-import { FieldBase, getBlockDataForField, setBlockDataForField } from "./fields";
-import { REVIEW_COMMENT_FIELD_NAME, ReviewCommentIcon } from "./plugins/comments/reviewCommentIcon";
+import { FieldBase } from "./fields";
+import { ReviewCommentIcon } from "./plugins/comments/reviewCommentIcon";
 
 export interface BlockSnippet {
     target: string; // pxt.appTarget.id
@@ -82,7 +82,7 @@ function applyMetaComments(workspace: Blockly.Workspace, opts?: DomToWorkspaceOp
 
 function applyReviewComments(workspace: Blockly.Workspace) {
     for (const block of workspace.getAllBlocks(false)) {
-        if (getBlockDataForField(block, REVIEW_COMMENT_FIELD_NAME)) {
+        if (ReviewCommentIcon.getReviewCommentForBlock(block)) {
             block.addIcon(new ReviewCommentIcon(block));
         }
     }

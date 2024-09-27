@@ -1,7 +1,7 @@
 /// <reference path="../../built/pxtlib.d.ts" />
 import * as Blockly from "blockly";
 import { openHelpUrl } from "../external";
-import { REVIEW_COMMENT_FIELD_NAME, REVIEW_COMMENT_ICON_TYPE, ReviewCommentIcon } from "../plugins/comments/reviewCommentIcon";
+import { REVIEW_COMMENT_ICON_TYPE, ReviewCommentIcon } from "../plugins/comments/reviewCommentIcon";
 
 // Lower weight is higher in context menu
 enum BlockContextWeight {

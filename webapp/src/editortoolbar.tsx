@@ -14,8 +14,7 @@ import { dialogAsync, hideDialog } from "./core";
 
 import ISettingsProps = pxt.editor.ISettingsProps;
 import SimState = pxt.editor.SimState;
-import { getBlockDataForField } from "../../pxtblocks";
-import { REVIEW_COMMENT_FIELD_NAME, REVIEW_COMMENT_ICON_TYPE } from "../../pxtblocks/plugins/comments/reviewCommentIcon";
+import { REVIEW_COMMENT_ICON_TYPE, ReviewCommentIcon } from "../../pxtblocks/plugins/comments/reviewCommentIcon";
 
 
 const enum View {
@@ -711,7 +710,7 @@ class EditorToolbarFeedbackNav extends React.Component<EditorToolbarFeedbackNavP
             return [];
         }
 
-        return this.props.parent.getBlocks().map(b => b as Blockly.Block).filter(b => !!getBlockDataForField(b, REVIEW_COMMENT_FIELD_NAME))
+        return this.props.parent.getBlocks().map(b => b as Blockly.Block).filter(b => !!ReviewCommentIcon.getReviewCommentForBlock(b));
     }
 
     protected updateBlocksWithFeedbackList() {

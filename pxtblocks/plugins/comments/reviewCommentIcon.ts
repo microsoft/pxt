@@ -2,7 +2,7 @@ import * as Blockly from "blockly";
 
 import { CommentIcon } from "./blockComment";
 import { deleteBlockDataForField, setBlockDataForField } from "../../fields";
-import { getBlockDataForField } from "../../fields/field_utils";
+import { getBlockData, getBlockDataForField } from "../../fields/field_utils";
 import { TextInputBubble } from "./textinput_bubble";
 
 const eventUtils = Blockly.Events;
@@ -44,12 +44,8 @@ export class ReviewCommentIcon extends CommentIcon {
         this.setInitialValues();
     }
 
-    static getReviewCommentPrefix(block: Blockly.Block): string {
-        return ":: Feedback :: ";
-    }
-
     setInitialValues() {
-        this.text = getBlockDataForField(this.sourceBlock, REVIEW_COMMENT_FIELD_NAME) || "";
+        this.text = ReviewCommentIcon.getReviewCommentForBlock(this.sourceBlock) || "";
 
         const bubbleWidth = parseInt(getBlockDataForField(this.sourceBlock, REVIEW_COMMENT_BUBBLE_WIDTH_FIELD_NAME) || "0");
         const bubbleHeight = parseInt(getBlockDataForField(this.sourceBlock, REVIEW_COMMENT_HEIGHT_FIELD_NAME) || "0");
@@ -204,6 +200,15 @@ export class ReviewCommentIcon extends CommentIcon {
             setBlockDataForField(this.sourceBlock, REVIEW_COMMENT_BUBBLE_WIDTH_FIELD_NAME, this.textInputBubble.getSize().width + "");
             setBlockDataForField(this.sourceBlock, REVIEW_COMMENT_HEIGHT_FIELD_NAME, this.textInputBubble.getSize().height + "");
         }
+    }
+
+    // Static Helpers
+    static getReviewCommentPrefix(block: Blockly.Block): string {
+        return ":: Feedback :: ";
+    }
+
+    static getReviewCommentForBlock(block: Blockly.Block): string | undefined {
+        return getBlockData(block)?.fieldData?.[REVIEW_COMMENT_FIELD_NAME];
     }
 }
 
