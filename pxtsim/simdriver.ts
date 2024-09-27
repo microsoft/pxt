@@ -28,7 +28,7 @@ namespace pxsim {
             aspectRatio?: number;
             permanent?: boolean;
         }>;
-        // Simulator extensions distilled from targetconfig.json's `approvedRepoLib` entry.
+        // Simulator extensions read from targetconfig.json's `approvedRepoLib` entry.
         simulatorExtensions?: pxt.Map<{
             // Subset of pxt.SimulatorExtensionConfig
             aspectRatio?: number;
