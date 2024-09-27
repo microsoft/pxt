@@ -163,7 +163,7 @@ namespace pxsim {
                     const simxPath = ["simx", key, "-", simx.index].join("/");
                     simx.url = new URL(simxPath, simUrl.origin).toString();
                 }
-        
+
                 // Add the origin to the allowed origins
                 this._allowedOrigins.push(new URL(simx.url).origin);
             });
@@ -403,7 +403,7 @@ namespace pxsim {
                             this.startFrame(messageFrame);
                             frames = this.simFrames(); // refresh
                         }
-        
+
                         // should we start a simulator extension for this message?
                         if (simulatorExtension) {
                             // find a frame already running that simulator
