@@ -803,6 +803,7 @@ export interface ServeOptions {
     wsPort?: number;
     serial?: boolean;
     noauth?: boolean;
+    backport?: number;
 }
 
 // can use http://localhost:3232/streams/nnngzlzxslfu for testing
@@ -988,6 +989,11 @@ export function serveAsync(options: ServeOptions) {
             }
         }
 
+        // Strip /app/hash-sig from URL.
+        // This can happen when the locally running backend is serving an uploaded target,
+        // but has been configured to route simulator urls to port 3232.
+        req.url = req.url.replace(/^\/app\/[0-9a-f]{40}(?:-[0-9a-f]{10})?(.*)$/i, "$1");
+
         let uri = url.parse(req.url);
         let pathname = decodeURI(uri.pathname);
         const opts: pxt.Map<string | string[]> = querystring.parse(url.parse(req.url).query);
@@ -1142,6 +1148,30 @@ export function serveAsync(options: ServeOptions) {
             }
         }
 
+        if (elts[0] == "simx" && serveOptions.backport) {
+            // Proxy requests for simulator extensions to the locally running backend.
+            // Should only get here when the backend is running locally and configured to serve the simulator from the cli (via LOCAL_SIM_PORT setting).
+            const passthruOpts = {
+                hostname: uri.hostname,
+                port: serveOptions.backport,
+                path: uri.path,
+                method: req.method,
+                headers: req.headers
+            };
+            
+            const passthruReq = http.request(passthruOpts, passthruRes => {
+                res.writeHead(passthruRes.statusCode, passthruRes.headers);
+                passthruRes.pipe(res);
+            });
+
+            passthruReq.on("error", e => {
+                console.error(`Error proxying request to port ${serveOptions.backport} .. ${e.message}`);
+                return error(500, e.message);
+            });
+
+            return req.pipe(passthruReq);
+        }
+
         if (options.packaged) {
             let filename = path.resolve(path.join(packagedDir, pathname))
             if (nodeutil.fileExistsSync(filename)) {
@@ -1245,6 +1275,20 @@ export function serveAsync(options: ServeOptions) {
                     sendFile(filename)
                 }
                 return;
+            }
+        }
+
+        // Look for an .html file correspoding to `/---<pathname>`
+        // Handles serving of `trg-<target>.sim.local:<port>/---simulator`
+        let match = /^\/?---?(.*)/.exec(pathname)
+        if (match && match[1]) {
+            const htmlPathname = `/${match[1]}.html`
+            for (let dir of dd) {
+                const filename = path.resolve(path.join(dir, htmlPathname))
+                if (nodeutil.fileExistsSync(filename)) {
+                    const html = expandHtml(fs.readFileSync(filename, "utf8"), htmlParams)
+                    return sendHtml(html)
+                }
             }
         }
 

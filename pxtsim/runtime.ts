@@ -285,11 +285,13 @@ namespace pxsim {
             return isPxtElectron() || isIpcRenderer();
         }
 
+        export function testLocalhost(url: string): boolean {
+            return /^http:\/\/(?:localhost|127\.0\.0\.1|192\.168\.\d{1,3}\.\d{1,3}|[a-zA-Z0-9.-]+\.local):\d+\/?/.test(url) && !/nolocalhost=1/.test(url);
+        }
+
         export function isLocalHost(): boolean {
             try {
-                return typeof window !== "undefined"
-                    && /^http:\/\/(localhost|127\.0\.0\.1):\d+\//.test(window.location.href)
-                    && !/nolocalhost=1/.test(window.location.href);
+                return typeof window !== "undefined" && testLocalhost(window.location.href);
             } catch (e) { return false; }
         }
 

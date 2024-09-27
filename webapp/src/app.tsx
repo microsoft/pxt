@@ -1055,7 +1055,7 @@ export class ProjectView
 
     public componentDidMount() {
         this.allEditors.forEach(e => e.prepare())
-        simulator.init(document.getElementById("boardview"), {
+        simulator.initAsync(document.getElementById("boardview"), {
             orphanException: brk => {
                 // TODO: start debugging session
                 // TODO: user friendly error message
@@ -1118,11 +1118,12 @@ export class ProjectView
                 pkg.mainEditorPkg().setSimState(k, v)
             },
             editor: this.state.header ? this.state.header.editor : ''
-        })
-        this.forceUpdate(); // we now have editors prepared
-
-        // start blockly load
-        this.loadBlocklyAsync();
+        }).then(() => {
+            // we now have editors prepared
+            this.forceUpdate();
+            // start blockly load
+            this.loadBlocklyAsync();
+        });
 
         // subscribe to user preference changes (for simulator or non-render subscriptions)
         data.subscribe(this.highContrastSubscriber, auth.HIGHCONTRAST);
@@ -5365,6 +5366,7 @@ function initPacketIO() {
             }
         },
         (type, payload) => {
+            /*
             const messageSimulators = pxt.appTarget.simulator?.messageSimulators;
             if (messageSimulators?.[type]) {
                 window.postMessage({
@@ -5375,13 +5377,15 @@ function initPacketIO() {
                     sender: "packetio",
                 }, "*")
             }
+            */
         });
 
     window.addEventListener('message', (ev: MessageEvent) => {
         const msg = ev.data
         if (msg.type === 'messagepacket'
             && msg.sender !== "packetio"
-            && pxt.appTarget.simulator?.messageSimulators?.[msg.channel]
+            //&& pxt.appTarget.simulator?.messageSimulators?.[msg.channel]
+            //&& pxt.appTarget.simulator?.simulatorExtensions?.[msg.channel]
             && msg.channel === pxt.HF2.CUSTOM_EV_JACDAC)
             pxt.packetio.sendCustomEventAsync(msg.channel, msg.data)
                 .then(() => { }, err => {

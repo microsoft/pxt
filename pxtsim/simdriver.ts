@@ -21,13 +21,24 @@ namespace pxsim {
         nestedEditorSim?: boolean;
         parentOrigin?: string;
         mpRole?: string;    // multiplayer role: "client", "server", or undefined
+        // `messageSimulators` is @DEPRECATED. Use `simulatorExtensions` instead.
         messageSimulators?: pxt.Map<{
             url: string;
             localHostUrl?: string;
             aspectRatio?: number;
             permanent?: boolean;
         }>;
-        // needed when messageSimulators are used to provide to their frame
+        // Simulator extensions distilled from targetconfig.json's `approvedRepoLib` entry.
+        simulatorExtensions?: pxt.Map<{
+            // Subset of pxt.SimulatorExtensionConfig
+            aspectRatio?: number;
+            permanent?: boolean;
+            index?: string;
+            devUrl?: string;
+            // Additional fields outside of pxt.SimulatorExtensionConfig
+            url?: string; // Computed URL
+        }>;
+        // needed when simulatorExtensions are used to provide to their frame
         userLanguage?: string;
     }
 
@@ -120,16 +131,43 @@ namespace pxsim {
 
             this._allowedOrigins.push(this.getSimUrl().origin);
 
-            const messageSimulators = options?.messageSimulators
-            if (messageSimulators) {
-                Object.keys(messageSimulators)
-                    .map(channel => messageSimulators[channel])
-                    .forEach(messageSimulator => {
-                        this._allowedOrigins.push(new URL(messageSimulator.url).origin);
-                        if (messageSimulator.localHostUrl)
-                            this._allowedOrigins.push(new URL(messageSimulator.localHostUrl).origin);
-                    });
-            }
+            // Legacy support for message simulators
+            const messageSimulators = options?.messageSimulators || {};
+            Object.keys(messageSimulators)
+                .map(channel => messageSimulators[channel])
+                .forEach(messageSimulator => {
+                    this._allowedOrigins.push(new URL(messageSimulator.url).origin);
+                    if (messageSimulator.localHostUrl)
+                        this._allowedOrigins.push(new URL(messageSimulator.localHostUrl).origin);
+                });
+
+            // Preprocess simulator extensions
+            const hasSimXDevFlag = /[?&]simxdev(?:[=&#]|$)/i.test(window.location.href);
+            Object.entries(options?.simulatorExtensions || {}).forEach(([key, simx]) => {
+                // Verify essential `simx` config was provided
+                if (
+                    !simx ||
+                    !simx.index ||
+                    !simx.aspectRatio ||
+                    simx.permanent === undefined
+                ) {
+                    return;
+                }
+                // Compute the effective URL
+                if (U.isLocalHost() && simx.devUrl && hasSimXDevFlag) {
+                    // Use the dev URL if the dev flag is set (and we're on localhost)
+                    simx.url = new URL(simx.index, simx.devUrl).toString();
+                } else {
+                    const simUrl = this.getSimUrl();
+                    // Construct the path. The "-" element delineates the extension key from the resource name.
+                    const simxPath = ["simx", key, "-", simx.index].join("/");
+                    simx.url = new URL(simxPath, simUrl.origin).toString();
+                }
+        
+                // Add the origin to the allowed origins
+                this._allowedOrigins.push(new URL(simx.url).origin);
+            });
+
             this._allowedOrigins = U.unique(this._allowedOrigins, f => f);
         }
 
@@ -349,8 +387,43 @@ namespace pxsim {
                         const messageSimulator = messageChannel &&
                             this.options.messageSimulators &&
                             this.options.messageSimulators[messageChannel];
-                        // should we start an extension editor?
-                        if (messageSimulator) {
+                        const simulatorExtension = messageChannel &&
+                            this.options.simulatorExtensions &&
+                            this.options.simulatorExtensions[messageChannel];
+
+                        const startSimulatorExtension = (url: string, permanent: boolean) => {
+                            let wrapper = this.createFrame(url);
+                            this.container.appendChild(wrapper);
+                            const messageFrame = wrapper.firstElementChild as HTMLIFrameElement;
+                            messageFrame.dataset[FRAME_DATA_MESSAGE_CHANNEL] = messageChannel;
+                            pxsim.U.addClass(wrapper, "simmsg")
+                            pxsim.U.addClass(wrapper, "simmsg" + messageChannel)
+                            if (permanent)
+                                messageFrame.dataset[PERMANENT] = "true";
+                            this.startFrame(messageFrame);
+                            frames = this.simFrames(); // refresh
+                        }
+        
+                        // should we start a simulator extension for this message?
+                        if (simulatorExtension) {
+                            // find a frame already running that simulator
+                            let messageFrame = frames.find(frame => frame.dataset[FRAME_DATA_MESSAGE_CHANNEL] === messageChannel);
+                            // not found, spin a new one
+                            if (!messageFrame) {
+                                const url = new URL(simulatorExtension.url);
+                                if (this.options.parentOrigin)
+                                    url.searchParams.set("parentOrigin", encodeURIComponent(this.options.parentOrigin));
+                                if (this.options.userLanguage)
+                                    url.searchParams.set("language", encodeURIComponent(this.options.userLanguage));
+                                startSimulatorExtension(url.toString(), simulatorExtension.permanent);
+                            }
+                            // not running the current run, restart
+                            else if (messageFrame.dataset['runid'] != this.runId) {
+                                this.startFrame(messageFrame);
+                            }
+                        }
+                        // (legacy: messageSimulator) should we start a message simulator for this message?
+                        else if (messageSimulator) {
                             // find a frame already running that simulator
                             let messageFrame = frames.find(frame => frame.dataset[FRAME_DATA_MESSAGE_CHANNEL] === messageChannel);
                             // not found, spin a new one
@@ -359,16 +432,7 @@ namespace pxsim {
                                 const url = ((useLocalHost && messageSimulator.localHostUrl) || messageSimulator.url)
                                     .replace("$PARENT_ORIGIN$", encodeURIComponent(this.options.parentOrigin || ""))
                                     .replace("$LANGUAGE$", encodeURIComponent(this.options.userLanguage))
-                                let wrapper = this.createFrame(url);
-                                this.container.appendChild(wrapper);
-                                messageFrame = wrapper.firstElementChild as HTMLIFrameElement;
-                                messageFrame.dataset[FRAME_DATA_MESSAGE_CHANNEL] = messageChannel;
-                                pxsim.U.addClass(wrapper, "simmsg")
-                                pxsim.U.addClass(wrapper, "simmsg" + messageChannel)
-                                if (messageSimulator.permanent)
-                                    messageFrame.dataset[PERMANENT] = "true";
-                                this.startFrame(messageFrame);
-                                frames = this.simFrames(); // refresh
+                                startSimulatorExtension(url, messageSimulator.permanent);
                             }
                             // not running the curren run, restart
                             else if (messageFrame.dataset['runid'] != this.runId) {
