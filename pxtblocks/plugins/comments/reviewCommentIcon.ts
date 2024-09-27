@@ -24,6 +24,12 @@ export const REVIEW_COMMENT_FIELD_NAME = "~reviewComment";
 /** The type string used to identify the comment icon. */
 export const REVIEW_COMMENT_ICON_TYPE = new Blockly.icons.IconType<ReviewCommentIcon>("review-comment");
 
+interface ReviewCommentInfo {
+    username?: string;
+    text?: string;
+    version?: string;
+}
+
 /**
  * An icon which allows the user to add comment text to a block.
  */
