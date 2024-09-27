@@ -202,11 +202,19 @@ case "renderxml": {
                                         resp = results;
                                     });
                             }
-case "gettoolboxcategories": {
+                            case "gettoolboxcategories": {
                                 const msg = data as pxt.editor.EditorMessageGetToolboxCategoriesRequest;
                                 return Promise.resolve()
                                     .then(() => {
                                         resp = projectView.getToolboxCategories(msg.advanced);
+                                    });
+                            }
+                            case "getblockastext": {
+                                const msg = data as pxt.editor.EditorMessageGetBlockAsTextRequest;
+                                return Promise.resolve()
+                                    .then(() => {
+                                        const readableName = projectView.getBlockAsText(msg.blockId);
+                                        resp = { blockAsText: readableName } as pxt.editor.EditorMessageGetBlockAsTextResponse;
                                     });
                             }
                             case "renderpython": {
