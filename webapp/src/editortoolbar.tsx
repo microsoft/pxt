@@ -1,8 +1,10 @@
 /// <reference path="../../built/pxtlib.d.ts" />
 
 import * as React from "react";
+import * as Blockly from "blockly";
 import * as data from "./data";
 import * as sui from "./sui";
+import * as blocks from "./blocks"
 import * as githubbutton from "./githubbutton";
 import * as cmds from "./cmds"
 import * as identity from "./identity";
@@ -12,6 +14,8 @@ import { dialogAsync, hideDialog } from "./core";
 
 import ISettingsProps = pxt.editor.ISettingsProps;
 import SimState = pxt.editor.SimState;
+import { getBlockDataForField } from "../../pxtblocks";
+import { REVIEW_COMMENT_FIELD_NAME, REVIEW_COMMENT_ICON_TYPE } from "../../pxtblocks/plugins/comments/reviewCommentIcon";
 
 
 const enum View {
@@ -439,6 +443,9 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
                         <identity.CloudSaveStatus headerId={header.id} />
                     </div>
                 </div>}
+            <div id="feedbackNavArea" role="menubar" className="ui column items">
+                <EditorToolbarFeedbackNav view={this.getViewString(computer)} parent={this.props.parent} />
+            </div>
             <div id="editorToolbarArea" role="menubar" className="ui column items">
                 {showUndoRedo && <div className="ui icon buttons">{this.getUndoRedo(computer)}</div>}
                 {showZoomControls && <div className="ui icon buttons mobile hide">{this.getZoomControl(computer)}</div>}
@@ -652,5 +659,94 @@ class EditorToolbarSaveInput extends React.Component<EditorToolbarSaveInputProps
             (e.target as HTMLInputElement).blur();
             e.stopPropagation();
         }
+    }
+}
+
+interface EditorToolbarFeedbackNavProps {
+    view: string;
+    parent: pxt.editor.IProjectView;
+}
+interface EditorToolbarFeedbackNavState {
+    blocksWithFeedback: Blockly.Block[];
+    isBlocksActive: boolean;
+    currentIndex: number;
+}
+class EditorToolbarFeedbackNav extends React.Component<EditorToolbarFeedbackNavProps, EditorToolbarFeedbackNavState> {
+    constructor(props: EditorToolbarFeedbackNavProps) {
+        super(props);
+
+        this.state = {
+            isBlocksActive: this.props.parent.isBlocksActive(),
+            blocksWithFeedback: [],
+            currentIndex: 0,
+        }
+    }
+
+    protected handlePrevFeedbackClick = () => {
+        const newIndex = this.state.currentIndex > 0 ? this.state.currentIndex - 1 : this.state.blocksWithFeedback.length - 1;
+        this.setState({ currentIndex: newIndex });
+        this.focusOnBlockAtIndex(newIndex);
+    }
+
+    protected handleNextFeedbackClick = () => {
+        const newIndex = (this.state.currentIndex + 1) % this.state.blocksWithFeedback.length;
+        this.setState({ currentIndex: newIndex });
+        this.focusOnBlockAtIndex(newIndex);
+    }
+
+    protected focusOnBlockAtIndex(index: number) {
+        if (!this.props.parent.isBlocksActive()) return;
+
+        const block = this.state.blocksWithFeedback[index];
+        if (block) {
+            (this.props.parent.editor as blocks.Editor).editor.highlightBlock(block.id);
+            (this.props.parent.editor as blocks.Editor).editor.centerOnBlock(block.id);
+        }
+    }
+
+    protected getBlocksWithFeedback(): Blockly.Block[] {
+        if (!this.props.parent.isBlocksActive()) {
+            return [];
+        }
+
+        return this.props.parent.getBlocks().map(b => b as Blockly.Block).filter(b => !!getBlockDataForField(b, REVIEW_COMMENT_FIELD_NAME))
+    }
+
+    protected updateBlocksWithFeedbackList() {
+        const blocksWithFeedback = this.getBlocksWithFeedback();
+        this.setState({ blocksWithFeedback, currentIndex: this.state.currentIndex % blocksWithFeedback.length });
+    }
+
+    componentDidMount() {
+        this.updateBlocksWithFeedbackList();
+    }
+
+    protected shouldUpdate(): boolean {
+        if (this.state.isBlocksActive !== this.props.parent.isBlocksActive()) return true;
+
+        const newBlocksWithFeedback = this.getBlocksWithFeedback();
+        if (newBlocksWithFeedback.length !== this.state.blocksWithFeedback.length) return true;
+        for (const blockId of newBlocksWithFeedback.map(b => b.id)) {
+            if (!this.state.blocksWithFeedback.find(b => b.id === blockId)) return true;
+        }
+
+        return false;
+    }
+
+    componentDidUpdate(prevProps: EditorToolbarFeedbackNavProps) {
+        if (this.shouldUpdate()) {
+            this.updateBlocksWithFeedbackList();
+
+            // Save this so we can tell if it changes.
+            this.setState({ isBlocksActive: this.props.parent.isBlocksActive() });
+        }
+    }
+
+    render() {
+        return this.state.blocksWithFeedback?.length ? (<div className="ui feedback-nav-container">
+                <EditorToolbarButton icon="arrow left" className="editortools-btn" title={lf("Previous Feedback")} onButtonClick={this.handlePrevFeedbackClick} view={this.props.view} />
+                <div className="feedback-nav-text">{lf("Feedback")}</div>
+                <EditorToolbarButton icon="arrow right" className="editortools-btn" title={lf("Next Feedback")} onButtonClick={this.handleNextFeedbackClick} view={this.props.view} />
+        </div>) : null;
     }
 }
