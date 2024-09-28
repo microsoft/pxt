@@ -159,8 +159,10 @@ namespace pxsim {
                     simx.url = new URL(simx.index, simx.devUrl).toString();
                 } else {
                     const simUrl = this.getSimUrl();
+                    // Ensure we preserve upload target path (/app/<sha>---simulator)
+                    const simPath = simUrl.pathname.replace(/---?.*/, "");
                     // Construct the path. The "-" element delineates the extension key from the resource name.
-                    const simxPath = ["simx", key, "-", simx.index].join("/");
+                    const simxPath = [simPath, "simx", key, "-", simx.index].join("/");
                     simx.url = new URL(simxPath, simUrl.origin).toString();
                 }
 

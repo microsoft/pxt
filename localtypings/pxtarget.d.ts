@@ -291,6 +291,9 @@ declare namespace pxt {
             // don't recycle the iframe between runs
             permanent?: boolean;
         }>;
+        // This is for testing new simulator extensions before adding them to targetconfig.json.
+        // DO NOT SHIP SIMULATOR EXTENSIONS HERE. Add them to targetconfig.json/approvedRepoLib instead.
+        testSimulatorExtensions?: pxt.Map<SimulatorExtensionConfig>;
     }
 
     interface TargetCompileService {

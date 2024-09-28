@@ -80,6 +80,16 @@ export async function initAsync(root: HTMLElement, cfg: SimulatorConfig) {
             permanent: true, // default to true
             ...e.v
         });
+    // Add in test simulator extensions
+    Object.entries(pxt.appTarget?.simulator?.testSimulatorExtensions || {})
+        .map(([k, v]) => ({ k: k, v: v as pxt.SimulatorExtensionConfig }))
+        .filter(e => !!e.v)
+        .forEach(e => simulatorExtensions[e.k] = {
+            index: "index.html", // default to index.html
+            aspectRatio: pxt.appTarget.simulator.aspectRatio || 1.22, // fallback to 1.22
+            permanent: true, // default to true
+            ...e.v
+        });
 
     let options: pxsim.SimulatorDriverOptions = {
         restart: () => cfg.restartSimulator(),
