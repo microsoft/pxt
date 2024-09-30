@@ -3,7 +3,8 @@
 Remove and return the last element from an array.
 
 ```sig
-["hello"].pop()
+["hello"].pop();
+["hello"]._popStatement();
 ```
 
 The last element in the array is removed, so the array becomes smaller by one element.

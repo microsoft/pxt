@@ -3,7 +3,8 @@
 Add an element to the front of an array.
 
 ```sig
-[""].unshift("hello")
+[""].unshift("hello");
+[""]._unshiftStatement("hello");
 ```
 
 You might have an array with 3 numbers, like 1, 2, and 3. If you want to add another number to the front,

@@ -3,7 +3,8 @@
 Remove and return an element from an array at some position.
 
 ```sig
-[""].removeAt(0)
+[""].removeAt(0);
+[""]._removeAtStatement(0);
 ```
 
 The size of the array shrinks by one. The element is removed from the array at the position you want. All the other elements after it are moved (shifted) to down to the next lower position. So, an array that has the numbers
