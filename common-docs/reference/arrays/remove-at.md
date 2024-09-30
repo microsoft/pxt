@@ -35,5 +35,4 @@ let unzapped = radLevels.removeAt(level)
 
 ## See also
 
-[remove at (no return value)](/reference/arrays/remove-at-statement),
 [insert at](/reference/arrays/insert-at)
