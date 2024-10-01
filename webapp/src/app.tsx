@@ -1053,9 +1053,9 @@ export class ProjectView
         this.initDragAndDrop();
     }
 
-    public componentDidMount() {
+    public async componentDidMount() {
         this.allEditors.forEach(e => e.prepare())
-        simulator.initAsync(document.getElementById("boardview"), {
+        await simulator.initAsync(document.getElementById("boardview"), {
             orphanException: brk => {
                 // TODO: start debugging session
                 // TODO: user friendly error message
@@ -1118,12 +1118,12 @@ export class ProjectView
                 pkg.mainEditorPkg().setSimState(k, v)
             },
             editor: this.state.header ? this.state.header.editor : ''
-        }).then(() => {
-            // we now have editors prepared
-            this.forceUpdate();
-            // start blockly load
-            this.loadBlocklyAsync();
         });
+
+        // we now have editors prepared
+        this.forceUpdate();
+        // start blockly load
+        this.loadBlocklyAsync();
 
         // subscribe to user preference changes (for simulator or non-render subscriptions)
         data.subscribe(this.highContrastSubscriber, auth.HIGHCONTRAST);
