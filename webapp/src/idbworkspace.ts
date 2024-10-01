@@ -406,7 +406,7 @@ export function initGitHubDb() {
             if (tag == "master")
                 return this.mem.loadConfigAsync(repopath, tag);
 
-            const id = `config-${repopath}-${tag}`;
+            const id = `config-${repopath.toLowerCase()}-${tag}`;
 
             const cache = await getGitHubCacheAsync();
 
@@ -440,7 +440,7 @@ export function initGitHubDb() {
             if (tag == "master")
                 return this.mem.loadPackageAsync(repopath, tag);
 
-            const id = `pkg-${repopath}-${tag}`;
+            const id = `pkg-${repopath.toLowerCase()}-${tag}`;
             const cache = await getGitHubCacheAsync();
 
             try {
