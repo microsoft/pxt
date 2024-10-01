@@ -73,22 +73,22 @@ export async function initAsync(root: HTMLElement, cfg: SimulatorConfig) {
     const simulatorExtensions: pxt.Map<pxt.SimulatorExtensionConfig> = {};
     Object.entries(trgConfig?.packages?.approvedRepoLib || {})
         .map(([k, v]) => ({ k: k, v: v.simx }))
-        .filter(e => !!e.v)
-        .forEach(e => simulatorExtensions[e.k] = {
+        .filter(x => !!x.v)
+        .forEach(x => simulatorExtensions[x.k] = {
             index: "index.html", // default to index.html
             aspectRatio: pxt.appTarget.simulator.aspectRatio || 1.22, // fallback to 1.22
             permanent: true, // default to true
-            ...e.v
+            ...x.v
         });
     // Add in test simulator extensions
     Object.entries(pxt.appTarget?.simulator?.testSimulatorExtensions || {})
         .map(([k, v]) => ({ k: k, v: v as pxt.SimulatorExtensionConfig }))
-        .filter(e => !!e.v)
-        .forEach(e => simulatorExtensions[e.k] = {
+        .filter(x => !!x.v)
+        .forEach(x => simulatorExtensions[x.k] = {
             index: "index.html", // default to index.html
             aspectRatio: pxt.appTarget.simulator.aspectRatio || 1.22, // fallback to 1.22
             permanent: true, // default to true
-            ...e.v
+            ...x.v
         });
 
     let options: pxsim.SimulatorDriverOptions = {
