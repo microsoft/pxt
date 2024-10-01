@@ -611,14 +611,17 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         pxtblockly.contextMenu.setupWorkspaceContextMenu(this.editor);
 
         // set Blockly Colors
-        const blocklyColors = pxt.appTarget.appTheme.blocklyColors;
-        if (blocklyColors) {
-            const theme = this.editor.getTheme();
-            for (const key of Object.keys(blocklyColors)) {
-                theme.setComponentStyle(key, blocklyColors[key]);
+        (async () => {
+            await Blockly.renderManagement.finishQueuedRenders();
+            const blocklyColors = pxt.appTarget.appTheme.blocklyColors;
+            if (blocklyColors) {
+                const theme = this.editor.getTheme();
+                for (const key of Object.keys(blocklyColors)) {
+                    theme.setComponentStyle(key, blocklyColors[key]);
+                }
+                this.editor.setTheme(theme);
             }
-            this.editor.setTheme(theme);
-        }
+        })();
 
         let shouldRestartSim = false;
 
