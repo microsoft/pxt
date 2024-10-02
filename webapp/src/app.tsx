@@ -1696,6 +1696,8 @@ export class ProjectView
             }
             simulator.setDirty();
 
+            await compiler.applyUpgradesAsync();
+
             await this.loadTutorialJresCodeAsync();
             await this.loadTutorialCustomTsAsync();
             await this.loadTutorialTemplateCodeAsync();
