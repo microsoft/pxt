@@ -52,7 +52,11 @@
 			"args": [
 				"serve",
 				"--rebundle",
-				"--noauth"
+				"--noauth",
+				"--hostname",
+				"127.0.0.1",
+				"--backport",
+				"8080"
 			],
 			"cwd": "${workspaceRoot}/../pxt-microbit",
 			"runtimeExecutable": null,

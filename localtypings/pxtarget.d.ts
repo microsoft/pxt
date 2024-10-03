@@ -56,6 +56,19 @@ declare namespace pxt {
         // "acme-corp/pxt-widget": "min:v0.1.2" - auto-upgrade to that version
         // "acme-corp/pxt-widget": "dv:foo,bar" - add "disablesVariant": ["foo", "bar"] to pxt.json
         upgrades?: string[];
+        // This repo's simulator extension configuration
+        simx?: SimulatorExtensionConfig;
+    }
+
+    interface SimulatorExtensionConfig {
+        aspectRatio?: number; // Aspect ratio for the iframe. Default: 1.22.
+        permanent?: boolean; // If true, don't recycle the iframe between runs. Default: true.
+        devUrl?: string; // URL to load for local development. Pass `simxdev` on URL to enable. Default: undefined.
+        index?: string; // The path to the simulator extension's entry point within the repo. Default: "index.html".
+        // backend-only options
+        sha?: string; // The commit to checkout (must exist in the branch/ref). Required.
+        repo?: string; // Actual repo to load simulator extension from. Defaults to key of parent in `approvedRepoLib` map.
+        ref?: string; // The branch of the repo to sync. Default: "gh-pages".
     }
 
     interface ShareConfig {
@@ -267,6 +280,7 @@ declare namespace pxt {
         keymap?: boolean; // when non-empty and autoRun is disabled, this code is run upon simulator first start
 
         // a map of allowed simulator channel to URL to handle specific control messages
+        // DEPRECATED. Use `simx` in targetconfig.json approvedRepoLib instead.
         messageSimulators?: pxt.Map<{
             // the URL to load the simulator, $PARENT_ORIGIN$ will be replaced by the parent
             // origin to validate messages
@@ -277,6 +291,9 @@ declare namespace pxt {
             // don't recycle the iframe between runs
             permanent?: boolean;
         }>;
+        // This is for testing new simulator extensions before adding them to targetconfig.json.
+        // DO NOT SHIP SIMULATOR EXTENSIONS HERE. Add them to targetconfig.json/approvedRepoLib instead.
+        testSimulatorExtensions?: pxt.Map<SimulatorExtensionConfig>;
     }
 
     interface TargetCompileService {
