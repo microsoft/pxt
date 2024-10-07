@@ -611,14 +611,17 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         pxtblockly.contextMenu.setupWorkspaceContextMenu(this.editor);
 
         // set Blockly Colors
-        const blocklyColors = pxt.appTarget.appTheme.blocklyColors;
-        if (blocklyColors) {
-            const theme = this.editor.getTheme();
-            for (const key of Object.keys(blocklyColors)) {
-                theme.setComponentStyle(key, blocklyColors[key]);
+        (async () => {
+            await Blockly.renderManagement.finishQueuedRenders();
+            const blocklyColors = pxt.appTarget.appTheme.blocklyColors;
+            if (blocklyColors) {
+                const theme = this.editor.getTheme();
+                for (const key of Object.keys(blocklyColors)) {
+                    theme.setComponentStyle(key, blocklyColors[key]);
+                }
+                this.editor.setTheme(theme);
             }
-            this.editor.setTheme(theme);
-        }
+        })();
 
         let shouldRestartSim = false;
 
@@ -1514,6 +1517,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (ns == onStartNamespace) {
             extraBlocks.push({
                 name: ts.pxtc.ON_START_TYPE,
+                snippetName: "on start",
                 attributes: {
                     blockId: ts.pxtc.ON_START_TYPE,
                     weight: pxt.appTarget.runtime.onStartWeight || 10,

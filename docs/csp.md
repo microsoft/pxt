@@ -26,17 +26,6 @@ Some additional features of the Microsoft MakeCode curriculum include:
 
 Microsoft is recognized by the College Board as an endorsed provider of curriculum and professional development for AP® Computer Science Principles (AP CSP). Using an Endorsed Provider affords schools access to resources including an AP CSP syllabus pre-approved by the College Board’s AP Course Audit, and officially recognized professional development that prepares teachers to teach AP CSP. This endorsement affirms only that components of Microsoft's offerings are aligned to all the AP Curriculum Framework standards and the AP CSP assessment.
 
-### ~ reminder
-
-#### **Professional Development Workshops - 2024**
-
-There are two free professional development opportunities available this summer to help prepare Educators to teach the AP CS Principles with Microsoft MakeCode course for the 2024-2025 academic year. These professional development workshops will focus on the course's Big Ideas, Learning Objectives and Essential Knowledge skills. Additionally, you will learn how Microsoft MakeCode's curriculum meets the course's learning objectives and prepares students for the AP Exam and Create Performance Task. By attending the training and using Microsoft MakeCode's curriculum, you will be prepared with a syllabus, pacing plan, and lesson plans, PowerPoints, student handouts, and resources for every day of the course. Each session has limited capacity so secure your place by registering for one of the workshops at the links below:
-
-* **[Workshop 1](https://events.teams.microsoft.com/event/068ed173-0075-493a-be29-8d9784b2717f@38dd6634-1031-4c50-a9b4-d16cd9d97d57)** : 📅 June 17th – 21st
-* **[Workshop 2](https://events.teams.microsoft.com/event/ee217aa0-7581-432b-b828-b0972328b25d@38dd6634-1031-4c50-a9b4-d16cd9d97d57)** : 📅 July 22nd - 26th
-
-### ~
-
 ## Course Overview 
 
 Technical Requirements: Students will need access to a computer with an internet connection.
