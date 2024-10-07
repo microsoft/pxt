@@ -649,6 +649,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 Blockly.Events.CLICK,
                 Blockly.Events.VIEWPORT_CHANGE,
                 Blockly.Events.BUBBLE_OPEN,
+                Blockly.Events.THEME_CHANGE,
                 pxtblockly.FIELD_EDITOR_OPEN_EVENT_TYPE
             ];
 
