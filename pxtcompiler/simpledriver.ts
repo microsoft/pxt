@@ -55,6 +55,10 @@ namespace pxt {
         loadPackageAsync(repopath: string, tag: string): Promise<pxt.github.CachedPackage> {
             return this.loadAsync(repopath, tag, "pkg", (r, t) => this.db.loadPackageAsync(r, t));
         }
+
+        loadTutorialMarkdown(repopath: string, tag?: string): Promise<pxt.github.CachedPackage> {
+            return this.loadAsync(repopath, tag, "tutorial", (r, t) => this.db.loadTutorialMarkdown(r, t));
+        }
     }
 
     function pkgOverrideAsync(pkg: pxt.Package) {

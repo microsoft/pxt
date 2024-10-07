@@ -4724,24 +4724,7 @@ export class ProjectView
                         break;
                 }
 
-                let githubTag: string;
-                if (ghid.tag) {
-                    githubTag = ghid.tag;
-                }
-                else {
-                    githubTag = await pxt.github.latestVersionAsync(ghid.slug, config, true);
-                }
-
-                let gh: pxt.github.CachedPackage;
-                if (!githubTag) {
-                    pxt.log(`tutorial github tag not found at ${ghid.fullName}`);
-                    gh = undefined;
-                }
-                else {
-                    ghid.tag = githubTag;
-                    pxt.log(`tutorial ${ghid.fullName} tag: ${githubTag}`);
-                    gh = await pxt.github.downloadPackageAsync(`${ghid.slug}#${ghid.tag}`, config);
-                }
+                let gh = await pxt.github.downloadTutorialMarkdownAsync(path, ghid.tag);
                 pxt.perf.measureEnd("downloadGitHubTutorial");
 
                 // check for cached tutorial info, save into IndexedDB if found
@@ -5846,7 +5829,7 @@ function clearHashChange() {
 
 function saveAsBlocks(): boolean {
     try {
-        return /saveblocks=1/.test(window.location.href) && !!pkg.mainPkg.readFile(pxt.MAIN_BLOCKS)
+        return /save(?:as)?blocks=1/i.test(window.location.href) && !!pkg.mainPkg.readFile(pxt.MAIN_BLOCKS)
     } catch (e) { return false; }
 }
 

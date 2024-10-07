@@ -75,6 +75,23 @@ namespace pxt.github {
         user: User;
     }
 
+    export interface GHTutorialResponse {
+        filename: string;
+        markdownRepo: GHTutorialRepoInfo;
+        dependencies: GHTutorialRepoInfo[];
+    }
+
+    export interface GHTutorialRepoInfo {
+        repo: string;
+        files: pxt.Map<string>;
+        sha: string;
+        fileHash: string;
+
+        subPath?: string;
+        version?: string;
+        latestVersion?: string;
+    }
+
     export let forceProxy = false;
 
     function hasProxy() {
@@ -108,6 +125,7 @@ namespace pxt.github {
         latestVersionAsync(repopath: string, config: PackagesConfig): Promise<string>;
         loadConfigAsync(repopath: string, tag: string): Promise<pxt.PackageConfig>;
         loadPackageAsync(repopath: string, tag: string): Promise<CachedPackage>;
+        loadTutorialMarkdown(repopath: string, tag?: string): Promise<CachedPackage>;
     }
 
     function ghRequestAsync(options: U.HttpRequestOptions) {
@@ -279,6 +297,46 @@ namespace pxt.github {
                         })
                 })
         }
+
+        async loadTutorialMarkdown(repoPath: string, tag?: string) {
+            const tutorialResponse = await downloadMarkdownTutorialInfoAsync(repoPath, tag);
+
+            this.cacheRepo(tutorialResponse.markdownRepo);
+            for (const dep of tutorialResponse.dependencies) {
+                this.cacheRepo(dep);
+            }
+
+            return tutorialResponse.markdownRepo;
+        }
+
+        private cacheRepo(repo: GHTutorialRepoInfo) {
+            let repopath = repo.repo;
+
+            if (repo.subPath) {
+                repopath += "/" + repo.subPath;
+            }
+            let key = repopath
+            key += "/" + repo.sha;
+            this.packages[key] = {
+                files: repo.files
+            };
+
+            if (repo.latestVersion) {
+                this.cacheLatestVersion(repopath, repo.latestVersion);
+            }
+
+            const config = repo.files["pxt.json"];
+
+            if (config) {
+                const alternateConfigKey = key + "/" + (repo.version || "master");
+                this.cacheConfig(key, config);
+                this.cacheConfig(alternateConfigKey, config);
+            }
+        }
+
+        private cacheLatestVersion(repopath: string, version: string) {
+            this.latestVersions[repopath] = version;
+        }
     }
 
     function fallbackDownloadTextAsync(parsed: ParsedRepo, commitid: string, filepath: string) {
@@ -313,6 +371,30 @@ namespace pxt.github {
                 return resp.text
             return fallbackDownloadTextAsync(parsed, commitid, filepath)
         })
+    }
+
+    export async function downloadMarkdownTutorialInfoAsync(repopath: string, tag?: string, noCache?: boolean): Promise<GHTutorialResponse> {
+        const queryParams = new URLSearchParams();
+        if (tag) {
+            queryParams.set("ref", tag);
+        }
+        if (noCache) {
+            queryParams.set("noCache", "1");
+        }
+
+        const apiRoot = pxt.Cloud.apiRoot;
+
+        const queryString = queryParams.toString();
+        let url = `${apiRoot}ghtutorial/${repopath}`;
+        if (queryString) {
+            url += "?" + queryParams;
+        }
+
+        return pxt.U.httpGetJsonAsync(url);
+    }
+
+    export async function downloadTutorialMarkdownAsync(repopath: string, tag?: string) {
+        return db.loadTutorialMarkdown(repopath, tag);
     }
 
     // overriden by client
