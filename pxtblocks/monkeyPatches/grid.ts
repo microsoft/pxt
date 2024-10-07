@@ -63,6 +63,7 @@ export function monkeyPatchGrid() {
 
             imagePattern.setAttribute("width", options.image.width);
             imagePattern.setAttribute("height", options.image.height);
+            imagePattern.setAttribute('patternTransform', 'scale(' + scale + ')');
         }
 
         for (const patternId of patternsToRemove) {
