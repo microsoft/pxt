@@ -401,7 +401,7 @@ namespace pxsim {
                             messageFrame.dataset[FRAME_DATA_MESSAGE_CHANNEL] = messageChannel;
                             messageFrame.dataset[FRAME_ASPECT_RATIO] = aspectRatio + "";
                             pxsim.U.addClass(wrapper, "simmsg")
-                            pxsim.U.addClass(wrapper, "simmsg" + U.sanitizeFileName(messageChannel))
+                            pxsim.U.addClass(wrapper, "simmsg" + U.sanitizeCssName(messageChannel))
                             if (permanent)
                                 messageFrame.dataset[PERMANENT] = "true";
                             this.startFrame(messageFrame);

@@ -312,10 +312,12 @@ namespace pxsim {
             return v;
         }
 
-        // Copied from pxtlib/util.ts
-        export function sanitizeFileName(name: string): string {
-            /* eslint-disable no-control-regex */
-            return name.replace(/[()\\\/.,?*^:<>!;'#$%^&|"@+=«»°{}\[\]¾½¼³²¦¬¤¢£~­¯¸`±\x00-\x1F]/g, '').trim().replace(/\s+/g, '-');
+        export function sanitizeCssName(name: string): string {
+            let sanitized = name.replace(/[^a-zA-Z0-9-_]/g, '_');
+            if (!/^[a-zA-Z_]/.test(sanitized)) {
+                sanitized = 'cls_' + sanitized;
+            }
+            return sanitized;
         }
     }
 
