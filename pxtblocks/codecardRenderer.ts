@@ -100,7 +100,7 @@ export function renderCodeCard(card: pxt.CodeCard, options: CodeCardRenderOption
         }
         if (card.description) {
             const descr = div(ct, 'ui description');
-            const regex = /((?:\.\.\.)|[\!\.\?…])/;
+            const regex = /((?:\.{1,3})|[\!\?…])/;
             const match = regex.exec(card.description);
             let shortenedDescription = card.description + ".";
             if (match) {
