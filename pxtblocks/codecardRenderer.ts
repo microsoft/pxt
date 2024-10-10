@@ -100,7 +100,13 @@ export function renderCodeCard(card: pxt.CodeCard, options: CodeCardRenderOption
         }
         if (card.description) {
             const descr = div(ct, 'ui description');
-            const shortenedDescription = card.description.split('.')[0] + '.';
+            const regex = /((?:\.{1,3})|[\!\?…])/;
+            const match = regex.exec(card.description);
+            let shortenedDescription = card.description + ".";
+            if (match) {
+                const punctuation = match[1];
+                shortenedDescription = card.description.split(punctuation)[0] + punctuation;
+            }
 
             descr.appendChild(document.createTextNode(shortenedDescription));
         }
