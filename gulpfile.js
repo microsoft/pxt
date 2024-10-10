@@ -336,7 +336,7 @@ function runUglify() {
     return Promise.resolve();
 }
 
-function inlineBlocklySourcemaps() {
+async function inlineBlocklySourcemaps() {
     if (process.env.PXT_ENV === 'production') {
         return;
     }
