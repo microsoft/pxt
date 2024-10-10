@@ -499,7 +499,11 @@ ${code}
 
     export function resolveLocalizedMarkdown(ghid: pxt.github.ParsedRepo, files: pxt.Map<string>, fileName?: string): string {
         // if non-default language, find localized file if any
-        const mfn = (fileName || ghid.fileName || "README") + ".md";
+        let mfn = (fileName || ghid.fileName || "README");
+
+        if (!mfn.endsWith(".md")) {
+            mfn += ".md";
+        }
 
         let md: string = undefined;
         const [initialLang, baseLang, initialLangLowerCase] = pxt.Util.normalizeLanguageCode(pxt.Util.userLanguage());
