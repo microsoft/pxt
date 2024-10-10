@@ -3,7 +3,8 @@
 Remove and return the first element from an array.
 
 ```sig
-[""].shift()
+[""].shift();
+[""]._shiftStatement();
 ```
 
 The first element in the array is removed, so the array becomes smaller by one element.
