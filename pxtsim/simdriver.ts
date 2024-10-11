@@ -160,9 +160,13 @@ namespace pxsim {
                 } else {
                     const simUrl = this.getSimUrl();
                     // Ensure we preserve upload target path (/app/<sha>---simulator)
-                    const simPath = simUrl.pathname.replace(/---?.*/, "");
-                    // Construct the path. The "-" element delineates the extension key from the resource name.
-                    const simxPath = [simPath, "simx", key, "-", simx.index].join("/");
+                    let simPath = simUrl.pathname.replace(/---?.*/, "");
+                    // Remove leading and trailing slashes
+                    simPath = simPath.replace(/^\/+|\/+$/, "");
+                    // Construct the path. The "-" element delineates the extension key from the resource name
+                    let simxPath = [simPath, "simx", key, "-", simx.index].join("/");
+                    // Append a leading slash to `simxPath` unless it already has one (if `simPath` was an empty string then it will already have a leading slash)
+                    simxPath = simxPath.startsWith("/") ? simxPath : `/${simxPath}`;
                     simx.url = new URL(simxPath, simUrl.origin).toString();
                 }
 
