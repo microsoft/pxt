@@ -163,7 +163,8 @@ namespace pxsim {
                     const simPath = simUrl.pathname.replace(/---?.*/, "");
                     // Construct the path. The "-" element delineates the extension key from the resource name.
                     const simxPath = [simPath, "simx", key, "-", simx.index].join("/");
-                    simx.url = new URL(simxPath, simUrl.origin).toString();
+                    // Create the fully-qualified URL, preserving the origin by removing all leading slashes
+                    simx.url = new URL(simxPath.replace(/^\/+/, ""), simUrl.origin).toString();
                 }
 
                 // Add the origin to the allowed origins
