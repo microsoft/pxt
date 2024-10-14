@@ -1326,8 +1326,15 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             || this.currFile.isReadonly()
             || pxt.shell.isReadOnly()
             || this.isDebugging();
+
+        const hideForTutorial =
+            this.parent.isTutorial()
+            && this.fileType == "python"
+            && this.parent.state.header.tutorial?.metadata?.flyoutOnly;
+
         return pxt.appTarget.appTheme.monacoToolbox
             && !readOnly
+            && !hideForTutorial
             && (this.fileType == "typescript" || this.fileType == "python");
     }
 
