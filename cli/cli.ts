@@ -2855,6 +2855,7 @@ export function serveAsync(parsed: commandParser.ParsedCommand) {
             browser: parsed.flags["browser"] as string,
             serial: !parsed.flags["noSerial"] && !globalConfig.noSerial,
             noauth: parsed.flags["noauth"] as boolean || false,
+            backport: parsed.flags["backport"] as number || 0,
         }))
 }
 
@@ -6966,6 +6967,11 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
             noauth: {
                 description: "disable localtoken-based authentication",
                 aliases: ["na"],
+            },
+            backport: {
+                description: "port where the locally running backend is listening.",
+                argument: "backport",
+                type: "number",
             }
         }
     }, serveAsync);

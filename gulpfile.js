@@ -336,6 +336,14 @@ function runUglify() {
     return Promise.resolve();
 }
 
+async function inlineBlocklySourcemaps() {
+    if (process.env.PXT_ENV === 'production') {
+        return;
+    }
+
+    return exec("node ./scripts/inlineBlocklySourceMaps.js");
+}
+
 
 
 /********************************************************
@@ -733,7 +741,7 @@ function getMochaExecutable() {
 const buildAll = gulp.series(
     updatestrings,
     maybeUpdateWebappStrings(),
-    gulp.parallel(copyTypescriptServices, copyBlocklyMedia),
+    gulp.parallel(copyTypescriptServices, copyBlocklyMedia, inlineBlocklySourcemaps),
     gulp.parallel(pxtlib, pxtweb),
     gulp.parallel(pxtcompiler, pxtsim, backendutils),
     pxtpy,

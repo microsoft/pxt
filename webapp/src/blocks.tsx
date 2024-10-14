@@ -611,14 +611,17 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         pxtblockly.contextMenu.setupWorkspaceContextMenu(this.editor);
 
         // set Blockly Colors
-        const blocklyColors = pxt.appTarget.appTheme.blocklyColors;
-        if (blocklyColors) {
-            const theme = this.editor.getTheme();
-            for (const key of Object.keys(blocklyColors)) {
-                theme.setComponentStyle(key, blocklyColors[key]);
+        (async () => {
+            await Blockly.renderManagement.finishQueuedRenders();
+            const blocklyColors = pxt.appTarget.appTheme.blocklyColors;
+            if (blocklyColors) {
+                const theme = this.editor.getTheme();
+                for (const key of Object.keys(blocklyColors)) {
+                    theme.setComponentStyle(key, blocklyColors[key]);
+                }
+                this.editor.setTheme(theme);
             }
-            this.editor.setTheme(theme);
-        }
+        })();
 
         let shouldRestartSim = false;
 
@@ -646,6 +649,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 Blockly.Events.CLICK,
                 Blockly.Events.VIEWPORT_CHANGE,
                 Blockly.Events.BUBBLE_OPEN,
+                Blockly.Events.THEME_CHANGE,
                 pxtblockly.FIELD_EDITOR_OPEN_EVENT_TYPE
             ];
 
@@ -1000,6 +1004,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     loadBlocklyAsync() {
         if (!this._loadBlocklyPromise) {
             pxt.perf.measureStart("loadBlockly")
+            pxtblockly.applyMonkeyPatches();
             this._loadBlocklyPromise = pxt.BrowserUtils.loadBlocklyAsync()
                 .then(() => {
                     // Initialize the "Make a function" button
@@ -1076,7 +1081,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 }
                 this.currFile = file;
                 // Clear the search field if a value exists
-                let searchField = document.getElementById('blocklySearchInputField') as HTMLInputElement;
+                let searchField = document.querySelector("input.blocklySearchInput") as HTMLInputElement;
                 if (searchField && searchField.value) {
                     searchField.value = '';
                 }
@@ -1514,6 +1519,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (ns == onStartNamespace) {
             extraBlocks.push({
                 name: ts.pxtc.ON_START_TYPE,
+                snippetName: "on start",
                 attributes: {
                     blockId: ts.pxtc.ON_START_TYPE,
                     weight: pxt.appTarget.runtime.onStartWeight || 10,

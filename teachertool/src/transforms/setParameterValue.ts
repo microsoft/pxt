@@ -36,5 +36,5 @@ export function setParameterValue(instanceId: string, paramName: string, newValu
     const newChecklist = { ...teacherTool.checklist, criteria: newInstanceSet };
 
     setChecklist(newChecklist);
-    setEvalResultOutcome(instanceId, EvaluationStatus.NotStarted);
+    setEvalResultOutcome(instanceId, EvaluationStatus.NotStarted, false);
 }

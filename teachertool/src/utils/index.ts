@@ -80,3 +80,14 @@ export function getReadableBlockString(name: string) {
         return pxt.Util.camelCaseToLowercaseWithSpaces(name);
     }
 }
+
+export function getChecklistHash(checklist: Checklist): string {
+    // We only hash the criteria (not the name), since the name doesn't really matter in our scenarios,
+    // and it could be translated, etc for built-in checklists.
+    return checklist.criteria.length == 0 ? "empty" : pxt.Util.sha256(JSON.stringify(checklist.criteria));
+}
+
+export function getObfuscatedProjectId(projectId: string | undefined): string {
+    // Just to err on the safe side for privacy, don't log the whole share id.
+    return !projectId || projectId?.length <= 5 ? "" : "..." + projectId.slice(-5);
+}

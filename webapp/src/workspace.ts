@@ -748,7 +748,7 @@ export function importAsync(h: Header, text: ScriptText, isCloud = false) {
     return forceSaveAsync(h, text, isCloud)
 }
 
-export function installAsync(h0: InstallHeader, text: ScriptText, dontOverwriteID = false) {
+export async function installAsync(h0: InstallHeader, text: ScriptText, dontOverwriteID = false) {
     U.assert(h0.target == pxt.appTarget.id);
 
     const h = <Header>h0
@@ -762,9 +762,9 @@ export function installAsync(h0: InstallHeader, text: ScriptText, dontOverwriteI
         pxt.shell.setEditorLanguagePref(cfg.preferredEditor);
     }
 
-    return pxt.github.cacheProjectDependenciesAsync(cfg)
-        .then(() => importAsync(h, text))
-        .then(() => h);
+    await pxt.github.cacheProjectDependenciesAsync(cfg)
+    await importAsync(h, text);
+    return h;
 }
 
 export async function renameAsync(h: Header, newName: string): Promise<Header> {

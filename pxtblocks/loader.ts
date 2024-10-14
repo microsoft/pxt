@@ -22,7 +22,6 @@ import { initVariables } from "./builtins/variables";
 import { initOnStart } from "./builtins/misc";
 import { initContextMenu } from "./contextMenu";
 import { renderCodeCard } from "./codecardRenderer";
-import { applyMonkeyPatches } from "./monkeyPatches";
 import { FieldDropdown } from "./fields/field_dropdown";
 import { setDraggableShadowBlocks, setDuplicateOnDragStrategy } from "./plugins/duplicateOnDrag";
 
@@ -588,8 +587,6 @@ let blocklyInitialized = false;
 function init(blockInfo: pxtc.BlocksInfo) {
     if (blocklyInitialized) return;
     blocklyInitialized = true;
-
-    applyMonkeyPatches();
 
     initFieldEditors();
     initContextMenu();

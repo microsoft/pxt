@@ -20,6 +20,7 @@ export * from "./diff";
 export * from "./legacyMutations";
 export * from "./blockDragger";
 export * from "./workspaceSearch";
+export * from "./monkeyPatches";
 
 import * as contextMenu from "./contextMenu";
 import * as external from "./external";

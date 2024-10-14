@@ -88,7 +88,6 @@ interface ChecklistResourceCardProps {
 
 const ChecklistResourceCard: React.FC<ChecklistResourceCardProps> = ({ cardTitle, imageUrl, checklistUrl }) => {
     const onCardClickedAsync = async () => {
-        pxt.tickEvent(Ticks.LoadChecklist, { checklistUrl });
         await loadChecklistAsync(checklistUrl);
     };
     return (
@@ -148,7 +147,7 @@ const GetStarted: React.FC = () => {
     };
 
     const onImportChecklistClicked = () => {
-        pxt.tickEvent(Ticks.ImportChecklist);
+        pxt.tickEvent(Ticks.ImportChecklistOpen);
         showModal({ modal: "import-checklist" } as ImportChecklistOptions);
     };
 
