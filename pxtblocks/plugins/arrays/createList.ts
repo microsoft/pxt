@@ -176,7 +176,7 @@ const LIST_CREATE_MIXIN = {
             }, Blockly.config.bumpDelay);
         }
         if (block.rendered && block instanceof Blockly.BlockSvg) {
-            block.render();
+            block.queueRender();
         }
         Blockly.Events.setGroup(false);
     },

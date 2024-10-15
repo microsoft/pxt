@@ -103,7 +103,7 @@ const FUNCTION_CALL_MIXIN: FunctionCallMixin = {
             newBlock.setShadow(shadowType !== "variables_get");
             if (!this.isInsertionMarker() && newBlock instanceof Blockly.BlockSvg) {
                 newBlock.initSvg();
-                newBlock.render();
+                newBlock.queueRender();
             }
         } finally {
             Blockly.Events.enable();
