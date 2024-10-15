@@ -1330,7 +1330,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         // For python HOC, hide the toolbox (we don't support flyoutOnly mode).
         const hideForTutorial =
             this.parent.isTutorial()
-            && pxt.appTarget.appTheme.legacyTutorial
+            && pxt.BrowserUtils.useOldTutorialLayout()
             && this.fileType == "python"
             && this.parent.state.header.tutorial?.metadata?.flyoutOnly;
 
