@@ -747,7 +747,7 @@ export class WorkspaceHeader extends data.Component<any, WorkspaceHeaderState> {
             this.flyoutWidth = flyout.getBoundingClientRect().width;
         }
 
-        const workspace = document.querySelector('#blocksArea');
+        const workspace = document.querySelector(`#${this.props.workspaceId || "blocksArea"}`);
         if (workspace) {
             this.workspaceWidth = workspace.clientWidth - this.flyoutWidth - 4;
         }

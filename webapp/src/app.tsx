@@ -5034,7 +5034,11 @@ export class ProjectView
             } else {
                 const tc = document.getElementById("tutorialcard");
                 if (tc) {
-                    const flyoutOnly = this.state.editorState?.hasCategories === false || this.state.tutorialOptions?.metadata?.flyoutOnly;
+                    const flyoutOnly =
+                        this.state.editorState?.hasCategories === false
+                        || this.state.tutorialOptions?.metadata?.flyoutOnly
+                        || this.state.tutorialOptions?.metadata?.hideToolbox;
+
                     let headerHeight = 0;
                     if (flyoutOnly) {
                         const headers = document.getElementById("headers");
@@ -5359,7 +5363,7 @@ export class ProjectView
                 {isSidebarTutorial && flyoutOnly && inTutorial && <sidebarTutorial.SidebarTutorialCard ref={ProjectView.tutorialCardId} parent={this} pokeUser={this.state.pokeUserComponent == ProjectView.tutorialCardId} />}
                 {inTutorial && !isTabTutorial && <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
                     {!(isSidebarTutorial && flyoutOnly) && inTutorial && <tutorial.TutorialCard ref={ProjectView.tutorialCardId} parent={this} pokeUser={this.state.pokeUserComponent == ProjectView.tutorialCardId} />}
-                    {flyoutOnly && <tutorial.WorkspaceHeader parent={this} />}
+                    {flyoutOnly && <tutorial.WorkspaceHeader parent={this} workspaceId={this.editor.getId()} />}
                 </div>}
                 <sidepanel.Sidepanel parent={this} inHome={inHome}
                     showKeymap={this.state.keymap && simOpts.keymap}
