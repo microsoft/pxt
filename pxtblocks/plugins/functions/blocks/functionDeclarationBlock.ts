@@ -93,6 +93,9 @@ const FUNCTION_DECLARATION_MIXIN: FunctionDeclarationMixin = {
     },
 
     async focusLastEditorAsync_(this: FunctionDeclarationBlock) {
+        // The argument editor block might still be rendering.
+        // Wait for the render queue to finish so that the centerOnBlock
+        // function is able to correctly position the editor scroll.
         await Blockly.renderManagement.finishQueuedRenders();
 
         if (this.inputList.length > 0) {
