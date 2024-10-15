@@ -1327,8 +1327,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             || pxt.shell.isReadOnly()
             || this.isDebugging();
 
+        // For python HOC, hide the toolbox (we don't support flyoutOnly mode).
         const hideForTutorial =
             this.parent.isTutorial()
+            && pxt.appTarget.appTheme.legacyTutorial
             && this.fileType == "python"
             && this.parent.state.header.tutorial?.metadata?.flyoutOnly;
 
