@@ -122,7 +122,7 @@ const IF_ELSE_MIXIN = {
             }, Blockly.config.bumpDelay);
         }
         if (block.rendered && block instanceof Blockly.BlockSvg) {
-            block.render();
+            block.queueRender();
         }
         this.restoreConnections_();
         Blockly.Events.setGroup(false);

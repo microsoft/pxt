@@ -253,7 +253,7 @@ export function initExpandableBlock(info: pxtc.BlocksInfo, b: Blockly.Block, def
 
         updateButtons();
         if (variableInlineInputs) b.setInputsInline(visibleOptions < inlineInputModeLimit);
-        if (!skipRender) (b as Blockly.BlockSvg).render();
+        if (!skipRender) (b as Blockly.BlockSvg).queueRender();
     }
 
     function addButton(name: string, uri: string, alt: string, delta: number) {

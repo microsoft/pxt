@@ -126,7 +126,7 @@ const FUNCTION_DEFINITION_MIXIN: FunctionDefinitionMixin = {
             newBlock.setShadow(true);
             if (!this.isInsertionMarker() && newBlock instanceof Blockly.BlockSvg) {
                 newBlock.initSvg();
-                newBlock.render();
+                newBlock.queueRender();
             }
         } finally {
             Blockly.Events.enable();
