@@ -993,7 +993,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const m = this.editor.getMetrics();
         b.moveBy(m.viewWidth / 2, m.viewHeight / 3);
         b.initSvg();
-        b.render();
+        b.queueRender();
     }
 
     private _loadBlocklyPromise: Promise<void>;
