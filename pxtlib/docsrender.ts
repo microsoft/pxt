@@ -24,6 +24,7 @@ namespace pxt.docs {
         "activities": "<!-- activities -->",
         "explicitHints": "<!-- hints -->",
         "flyoutOnly": "<!-- flyout -->",
+        "hideToolbox": "<!-- hideToolbox -->",
         "hideIteration": "<!-- iter -->",
         "codeStart": "<!-- start -->",
         "codeStop": "<!-- stop -->",
