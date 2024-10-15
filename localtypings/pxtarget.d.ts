@@ -1197,6 +1197,7 @@ declare namespace pxt.tutorial {
         activities?: boolean; // tutorial consists of activities, then steps. uses `###` for steps
         explicitHints?: boolean; // tutorial expects explicit hints in `#### ~ tutorialhint` format
         flyoutOnly?: boolean; // no categories, display all blocks in flyout
+        hideToolbox?: boolean; // hide the toolbox in the tutorial
         hideIteration?: boolean; // hide step control in tutorial
         diffs?: boolean; // automatically diff snippets
         noDiffs?: boolean; // don't automatically generated diffs

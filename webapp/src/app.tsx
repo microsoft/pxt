@@ -5034,7 +5034,11 @@ export class ProjectView
             } else {
                 const tc = document.getElementById("tutorialcard");
                 if (tc) {
-                    const flyoutOnly = this.state.editorState?.hasCategories === false || this.state.tutorialOptions?.metadata?.flyoutOnly;
+                    const flyoutOnly =
+                        this.state.editorState?.hasCategories === false
+                        || this.state.tutorialOptions?.metadata?.flyoutOnly
+                        || this.state.tutorialOptions?.metadata?.hideToolbox;
+
                     let headerHeight = 0;
                     if (flyoutOnly) {
                         const headers = document.getElementById("headers");
@@ -5257,7 +5261,9 @@ export class ProjectView
         const inEditor = !!this.state.header && !inHome;
         const { lightbox, greenScreen, accessibleBlocks } = this.state;
         const hideTutorialIteration = inTutorial && tutorialOptions.metadata?.hideIteration;
-        const flyoutOnly = this.state.editorState?.hasCategories === false || (inTutorial && tutorialOptions.metadata?.flyoutOnly);
+        const hideToolbox = inTutorial && tutorialOptions.metadata?.hideToolbox;
+        // flyoutOnly has become a de facto css class for styling tutorials (especially minecraft HOC), so keep it if hideToolbox is true, even if flyoutOnly is false.
+        const flyoutOnly = this.state.editorState?.hasCategories === false || (inTutorial && (tutorialOptions.metadata?.flyoutOnly || hideToolbox));
         const { hideEditorToolbar, transparentEditorToolbar } = targetTheme;
         const hideMenuBar = targetTheme.hideMenuBar || hideTutorialIteration || (isTabTutorial && pxt.appTarget.appTheme.embeddedTutorial) || pxt.shell.isTimeMachineEmbed();
         const isHeadless = simOpts && simOpts.headless;
@@ -5308,6 +5314,7 @@ export class ProjectView
             logoWide ? "logo-wide" : "",
             isHeadless ? "headless" : "",
             flyoutOnly ? "flyoutOnly" : "",
+            hideToolbox ? "hideToolbox" : "",
             hideTutorialIteration ? "hideIteration" : "",
             this.editor != this.blocksEditor ? "editorlang-text" : "",
             this.editor == this.textEditor && this.state.errorListState,
@@ -5356,7 +5363,7 @@ export class ProjectView
                 {isSidebarTutorial && flyoutOnly && inTutorial && <sidebarTutorial.SidebarTutorialCard ref={ProjectView.tutorialCardId} parent={this} pokeUser={this.state.pokeUserComponent == ProjectView.tutorialCardId} />}
                 {inTutorial && !isTabTutorial && <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
                     {!(isSidebarTutorial && flyoutOnly) && inTutorial && <tutorial.TutorialCard ref={ProjectView.tutorialCardId} parent={this} pokeUser={this.state.pokeUserComponent == ProjectView.tutorialCardId} />}
-                    {flyoutOnly && <tutorial.WorkspaceHeader parent={this} />}
+                    {flyoutOnly && <tutorial.WorkspaceHeader parent={this} workspaceId={this.editor.getId()} />}
                 </div>}
                 <sidepanel.Sidepanel parent={this} inHome={inHome}
                     showKeymap={this.state.keymap && simOpts.keymap}

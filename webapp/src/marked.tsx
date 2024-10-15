@@ -384,7 +384,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
     // Renders inline blocks, such as "||controller: Controller||".
     private renderInlineBlocks(content: HTMLElement) {
         const { parent } = this.props;
-        const hasCategories = !parent.state.tutorialOptions?.metadata?.flyoutOnly;
+        const hasCategories = !parent.state.tutorialOptions?.metadata?.flyoutOnly && !parent.state.tutorialOptions?.metadata?.hideToolbox;
         const inlineBlocks = pxt.Util.toArray(content.querySelectorAll(`:not(pre) > code`))
             .map((inlineBlock: HTMLElement) => {
                 const text = inlineBlock.innerText;
