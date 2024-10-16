@@ -608,17 +608,21 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
     private setShowSeeMore(autoexpand?: boolean) {
         // compare scrollHeight of inner text with height of card to determine showSeeMore
         const tutorialCard = this.refs['tutorialmessage'] as HTMLElement;
-        let initialCardHeight = this.state.initialCardHeight;
-        if (!initialCardHeight) {
-            initialCardHeight = this.getInteriorHeight(tutorialCard);
-            this.setState({ initialCardHeight });
+        let defaultCardHeight = this.state.initialCardHeight;
+        if (!defaultCardHeight) {
+            defaultCardHeight = this.getInteriorHeight(tutorialCard);
+            this.setState({ initialCardHeight: defaultCardHeight });
         }
 
         let show = false;
-        if (tutorialCard?.firstElementChild?.firstElementChild) {
-            show = initialCardHeight <= tutorialCard.firstElementChild.firstElementChild.scrollHeight;
-            if (show) {
-                if (autoexpand) this.props.parent.setTutorialInstructionsExpanded(true);
+        const contentChild = tutorialCard?.firstElementChild?.firstElementChild;
+        if (contentChild) {
+            // Check if we need to scroll to see full content when at the default card size.
+            // If we do, display the "see more" button, which allows the user to expand the card and see all content without the scrollbar.
+            show = defaultCardHeight <= contentChild.scrollHeight;
+            if (show && autoexpand) {
+                // Expand automatically if autoexpand is set.
+                this.props.parent.setTutorialInstructionsExpanded(true);
             }
         }
         this.setState({ showSeeMore: show });
