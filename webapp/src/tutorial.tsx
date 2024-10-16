@@ -594,18 +594,23 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         evt.stopPropagation();
     }
 
+    private getInteriorHeight(element: HTMLElement) {
+        let height = element?.clientHeight; // Includes padding
+        try {
+            const style = window.getComputedStyle(element);
+            height -= parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
+        } catch (e) {
+            // ignore parse errors, etc...
+        }
+        return height;
+    }
+
     private setShowSeeMore(autoexpand?: boolean) {
         // compare scrollHeight of inner text with height of card to determine showSeeMore
         const tutorialCard = this.refs['tutorialmessage'] as HTMLElement;
         let initialCardHeight = this.state.initialCardHeight;
         if (!initialCardHeight) {
-            initialCardHeight = tutorialCard?.clientHeight; // Includes padding
-            try {
-                const tutorialCardStyle = window.getComputedStyle(tutorialCard);
-                initialCardHeight = initialCardHeight - parseFloat(tutorialCardStyle.paddingTop) - parseFloat(tutorialCardStyle.paddingBottom);
-            } catch (e) {
-                // ignore parse errors, etc...
-            }
+            initialCardHeight = this.getInteriorHeight(tutorialCard);
             this.setState({ initialCardHeight });
         }
 
