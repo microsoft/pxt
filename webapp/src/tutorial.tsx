@@ -394,6 +394,7 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
 interface TutorialCardState {
     showHint?: boolean;
     showSeeMore?: boolean;
+    initialCardHeight?: number;
 }
 
 interface TutorialCardProps extends ISettingsProps {
@@ -402,7 +403,6 @@ interface TutorialCardProps extends ISettingsProps {
 
 export class TutorialCard extends data.Component<TutorialCardProps, TutorialCardState> {
     private prevStep: number;
-    private cardHeight: number;
     private resizeDebouncer: () => void;
 
     public focusInitialized: boolean;
@@ -596,24 +596,27 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
     private setShowSeeMore(autoexpand?: boolean) {
         // compare scrollHeight of inner text with height of card to determine showSeeMore
         const tutorialCard = this.refs['tutorialmessage'] as HTMLElement;
+        let initialCardHeight = this.state.initialCardHeight;
+        if (!initialCardHeight) {
+            initialCardHeight = tutorialCard?.clientHeight; // Includes padding
+            try {
+                const tutorialCardStyle = window.getComputedStyle(tutorialCard);
+                initialCardHeight = initialCardHeight - parseFloat(tutorialCardStyle.paddingTop) - parseFloat(tutorialCardStyle.paddingBottom);
+            } catch (e) {
+                // ignore parse errors, etc...
+            }
+            this.setState({ initialCardHeight });
+        }
+
         let show = false;
-        if (tutorialCard && tutorialCard.firstElementChild && tutorialCard.firstElementChild.firstElementChild) {
-            show = tutorialCard.clientHeight <= tutorialCard.firstElementChild.firstElementChild.scrollHeight;
+        if (tutorialCard?.firstElementChild?.firstElementChild) {
+            show = initialCardHeight <= tutorialCard.firstElementChild.firstElementChild.scrollHeight;
             if (show) {
-                this.cardHeight = tutorialCard.firstElementChild.firstElementChild.scrollHeight;
                 if (autoexpand) this.props.parent.setTutorialInstructionsExpanded(true);
             }
         }
         this.setState({ showSeeMore: show });
         this.props.parent.setEditorOffset();
-    }
-
-    getCardHeight() {
-        return this.cardHeight;
-    }
-
-    getExpandedCardStyle(prop: string) {
-        return { [prop]: `calc(${this.getCardHeight()}px + 2rem)` }
     }
 
     toggleHint(showFullText?: boolean) {
@@ -679,7 +682,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         }
 
         const isRtl = pxt.Util.isUserLanguageRtl();
-        return <div id="tutorialcard" className={`ui ${tutorialStepExpanded ? 'tutorialExpanded' : ''} ${tutorialReady ? 'tutorialReady' : ''} ${this.state.showSeeMore ? 'seemore' : ''}  ${!this.state.showHint ? 'showTooltip' : ''} ${hasHint ? 'hasHint' : ''}`} style={tutorialStepExpanded ? this.getExpandedCardStyle('height') : null} >
+        return <div id="tutorialcard" className={`ui ${tutorialStepExpanded ? 'tutorialExpanded' : ''} ${tutorialReady ? 'tutorialReady' : ''} ${this.state.showSeeMore ? 'seemore' : ''}  ${!this.state.showHint ? 'showTooltip' : ''} ${hasHint ? 'hasHint' : ''} ${tutorialStepExpanded ? 'stepExpanded' : ''}`} >
             {hasHint && this.state.showHint && !showDialog && <div className="mask" role="region" onClick={this.closeHint}></div>}
             <div className='ui buttons'>
                 {hasPrevious ? <sui.Button icon={`${isRtl ? 'right' : 'left'} chevron large`} className={`prevbutton left attached ${!hasPrevious ? 'disabled' : ''}`} text={lf("Back")} textClass="widedesktop only" ariaLabel={lf("Go to the previous step of the tutorial.")} onClick={this.previousTutorialStep} onKeyDown={fireClickOnEnter} /> : undefined}
