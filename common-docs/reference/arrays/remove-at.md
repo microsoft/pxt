@@ -3,8 +3,13 @@
 Remove and return an element from an array at some position.
 
 ```sig
-[""].removeAt(0);
-[""]._removeAtStatement(0);
+[""].removeAt(0)
+```
+
+Remove an element from an array at some position but don't return it.
+
+```sig
+[""]._removeAtStatement(0)
 ```
 
 The size of the array shrinks by one. The element is removed from the array at the position you want. All the other elements after it are moved (shifted) to down to the next lower position. So, an array that has the numbers
@@ -22,6 +27,18 @@ let item = myNumbers.removeAt(2)
 ## Returns
 
 * the element in the array from the position you chose.
+
+### ~reminder
+
+#### **remove At** statement
+
+The ``||arrays:remove at||`` **statement** only removes an element from the array. It doesn't return it.
+
+```block
+["a", "b", "c"]._removeAtStatement(0)
+```
+
+### ~
 
 ## Example
 
