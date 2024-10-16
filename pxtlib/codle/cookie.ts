@@ -15,7 +15,8 @@ namespace pxt.cookie {
   export function getEnv(): string {
     return window.location.hostname === "localhost"
       ? "local"
-      : window.location.hostname.includes("dev")
+      : window.location.hostname.includes("dev") ||
+        window.location.hostname.includes("revised")
       ? "dev"
       : "prd";
   }
