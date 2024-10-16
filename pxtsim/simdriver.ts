@@ -163,7 +163,8 @@ namespace pxsim {
                     const simPath = simUrl.pathname.replace(/---?.*/, "");
                     // Construct the path. The "-" element delineates the extension key from the resource name.
                     const simxPath = [simPath, "simx", key, "-", simx.index].join("/");
-                    simx.url = new URL(simxPath, simUrl.origin).toString();
+                    // Create the fully-qualified URL, preserving the origin by removing all leading slashes
+                    simx.url = new URL(simxPath.replace(/^\/+/, ""), simUrl.origin).toString();
                 }
 
                 // Add the origin to the allowed origins
@@ -393,13 +394,15 @@ namespace pxsim {
                             this.options.simulatorExtensions &&
                             this.options.simulatorExtensions[messageChannel];
 
-                        const startSimulatorExtension = (url: string, permanent: boolean) => {
+                        const startSimulatorExtension = (url: string, permanent: boolean, aspectRatio: number) => {
+                            aspectRatio = aspectRatio || this._runOptions?.aspectRatio || 1.22;
                             let wrapper = this.createFrame(url);
                             this.container.appendChild(wrapper);
                             const messageFrame = wrapper.firstElementChild as HTMLIFrameElement;
                             messageFrame.dataset[FRAME_DATA_MESSAGE_CHANNEL] = messageChannel;
+                            messageFrame.dataset[FRAME_ASPECT_RATIO] = aspectRatio + "";
                             pxsim.U.addClass(wrapper, "simmsg")
-                            pxsim.U.addClass(wrapper, "simmsg" + messageChannel)
+                            pxsim.U.addClass(wrapper, "simmsg" + U.sanitizeCssName(messageChannel))
                             if (permanent)
                                 messageFrame.dataset[PERMANENT] = "true";
                             this.startFrame(messageFrame);
@@ -417,7 +420,7 @@ namespace pxsim {
                                     url.searchParams.set("parentOrigin", encodeURIComponent(this.options.parentOrigin));
                                 if (this.options.userLanguage)
                                     url.searchParams.set("language", encodeURIComponent(this.options.userLanguage));
-                                startSimulatorExtension(url.toString(), simulatorExtension.permanent);
+                                startSimulatorExtension(url.toString(), simulatorExtension.permanent, simulatorExtension.aspectRatio);
                             }
                             // not running the current run, restart
                             else if (messageFrame.dataset['runid'] != this.runId) {
@@ -434,7 +437,7 @@ namespace pxsim {
                                 const url = ((useLocalHost && messageSimulator.localHostUrl) || messageSimulator.url)
                                     .replace("$PARENT_ORIGIN$", encodeURIComponent(this.options.parentOrigin || ""))
                                     .replace("$LANGUAGE$", encodeURIComponent(this.options.userLanguage))
-                                startSimulatorExtension(url, messageSimulator.permanent);
+                                startSimulatorExtension(url, messageSimulator.permanent, messageSimulator.aspectRatio);
                             }
                             // not running the curren run, restart
                             else if (messageFrame.dataset['runid'] != this.runId) {

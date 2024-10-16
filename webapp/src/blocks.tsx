@@ -649,6 +649,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 Blockly.Events.CLICK,
                 Blockly.Events.VIEWPORT_CHANGE,
                 Blockly.Events.BUBBLE_OPEN,
+                Blockly.Events.THEME_CHANGE,
                 pxtblockly.FIELD_EDITOR_OPEN_EVENT_TYPE
             ];
 
@@ -1003,6 +1004,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     loadBlocklyAsync() {
         if (!this._loadBlocklyPromise) {
             pxt.perf.measureStart("loadBlockly")
+            pxtblockly.applyMonkeyPatches();
             this._loadBlocklyPromise = pxt.BrowserUtils.loadBlocklyAsync()
                 .then(() => {
                     // Initialize the "Make a function" button
