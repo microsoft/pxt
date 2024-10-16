@@ -487,21 +487,22 @@ code.lang-filterblocks {
 /*******************************
         See More Button
 *******************************/
-#tutorialcard.seemore {
-    .tutorialsegment > button {
-        flex-grow: 0;
-        position: relative;
-        width: auto;
-        margin: auto;
-        margin-top: -0.75rem;
-        padding: 0.5rem 0.8rem;
-    }
+#tutorialcard.seemore .tutorialsegment > button {
+    flex-grow: 0;
+    position: relative;
+    width: auto;
+    margin: auto;
+    margin-top: -0.75rem;
+    padding: 0.5rem 0.8rem;
 }
 
-.editorlang-text {
-    #tutorialcard.seemore .tutorialsegment > button {
-        margin-right: 1rem;
-    }
+.editorlang-text:not(.hideToolbox) #tutorialcard.seemore .tutorialsegment > button {
+    margin-right: 1rem;
+}
+
+.editorlang-text.hideToolbox #tutorialcard.seemore .tutorialsegment > button {
+    margin-right: unset;
+    margin-left: 1rem;
 }
 
 /*******************************
