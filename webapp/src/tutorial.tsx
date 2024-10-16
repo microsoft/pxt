@@ -20,6 +20,7 @@ import { fireClickOnEnter } from "./util";
 import * as pxtblockly from "../../pxtblocks";
 
 import ISettingsProps = pxt.editor.ISettingsProps;
+import { classList } from "../../react-common/components/util";
 
 
 interface ITutorialBlocks {
@@ -681,8 +682,17 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
             hintOnClick = null;
         }
 
+        const tutorialCardClasses = classList(
+            "ui",
+            tutorialStepExpanded ? 'tutorialExpanded' : undefined,
+            tutorialReady ? 'tutorialReady' : undefined,
+            this.state.showSeeMore ? 'seemore' : undefined,
+            !this.state.showHint ? 'showTooltip' : undefined,
+            hasHint ? 'hasHint' : undefined,
+            tutorialStepExpanded ? 'stepExpanded' : undefined);
+
         const isRtl = pxt.Util.isUserLanguageRtl();
-        return <div id="tutorialcard" className={`ui ${tutorialStepExpanded ? 'tutorialExpanded' : ''} ${tutorialReady ? 'tutorialReady' : ''} ${this.state.showSeeMore ? 'seemore' : ''}  ${!this.state.showHint ? 'showTooltip' : ''} ${hasHint ? 'hasHint' : ''} ${tutorialStepExpanded ? 'stepExpanded' : ''}`} >
+        return <div id="tutorialcard" className={tutorialCardClasses} >
             {hasHint && this.state.showHint && !showDialog && <div className="mask" role="region" onClick={this.closeHint}></div>}
             <div className='ui buttons'>
                 {hasPrevious ? <sui.Button icon={`${isRtl ? 'right' : 'left'} chevron large`} className={`prevbutton left attached ${!hasPrevious ? 'disabled' : ''}`} text={lf("Back")} textClass="widedesktop only" ariaLabel={lf("Go to the previous step of the tutorial.")} onClick={this.previousTutorialStep} onKeyDown={fireClickOnEnter} /> : undefined}
