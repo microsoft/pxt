@@ -504,7 +504,7 @@ export function initGitHubDb() {
                 return this.loadPackageAsync(repo, tag);
             }
 
-            if (existing && Date.now() - existing.cacheTime < GITHUB_TUTORIAL_CACHE_EXPIRATION_MILLIS) {
+            if (existing && !isExpired(existing)) {
                 // don't bother hitting the network if we are within the expiration time
                 return readFromCache();
             }
@@ -513,8 +513,18 @@ export function initGitHubDb() {
 
             const body = tutorialResponse.resp;
 
+            // etag matched, so our cache should be up to date
             if (!body) {
-                // etag matched, so our cache should be up to date
+                // update the cached entry
+                try {
+                    await cache.setAsync({
+                        ...existing,
+                        cacheTime: Date.now()
+                    });
+                }
+                catch (e) {
+                    // ignore
+                }
                 return readFromCache();
             }
 
@@ -522,29 +532,28 @@ export function initGitHubDb() {
             pxt.Util.assert(typeof repo === "object");
 
             // fill up the cache with all of the files, versions, and configs contained in this response
-            await this.cacheReposAsync(body);
-
-            // set a marker in the cache to indicate that we shouldn't need to hit /api/ghtutorial/ again
-            try {
-                await cache.setAsync({
-                    id,
-                    cacheTime: Date.now(),
-                    etag: tutorialResponse.etag
-                });
-            }
-            catch (e) {
-                // ignore cache failures
-                pxt.debug("Failed to cache tutorial for " + repopath);
-            }
+            await this.cacheReposAsync(body, tutorialResponse.etag);
 
             return repo.repo;
         }
 
-        async cacheReposAsync(resp: pxt.github.GHTutorialResponse) {
+        async cacheReposAsync(resp: pxt.github.GHTutorialResponse, etag?: string) {
             if (typeof resp.markdown === "object") {
-                const repo = resp.markdown as { filename: string, repo: pxt.github.GHTutorialRepoInfo };
+                const repoInfo = resp.markdown.repo;
 
-                await this.cacheRepoAsync(repo.repo);
+                const repopath = getRepoPath(repoInfo) + "/" + resp.markdown.filename.replace(".md", "");
+
+                // add a marker to the cache to make sure we don't hit the network again
+                const cache = await getGitHubCacheAsync();
+                await this.cacheTutorialResponseAsync(cache, repopath, repoInfo.version, etag);
+
+                // if this is the latest version of the repo, we can also cache this for
+                // tutorials where the tag is not explicitly set
+                if (repoInfo.version && repoInfo.latestVersion === repoInfo.version) {
+                    await this.cacheTutorialResponseAsync(cache, repopath, undefined, etag);
+                }
+
+                await this.cacheRepoAsync(repoInfo);
             }
             for (const dep of resp.dependencies) {
                 await this.cacheRepoAsync(dep);
@@ -639,6 +648,22 @@ export function initGitHubDb() {
                 pxt.debug(`Failed to cache files for ${repopath}#${tag}`);
             }
         }
+
+        private async cacheTutorialResponseAsync(cache: pxt.BrowserUtils.IDBObjectStoreWrapper<GitHubCacheEntry>, repopath: string, tag?: string, etag?: string) {
+            const id = this.tutorialCacheKey(repopath, tag);
+
+            try {
+                await cache.setAsync({
+                    id,
+                    cacheTime: Date.now(),
+                    etag
+                });
+            }
+            catch (e) {
+                // ignore cache failures
+                pxt.debug("Failed to cache tutorial for " + repopath);
+            }
+        }
     }
 
     function getGitHubCacheAsync() {
@@ -664,8 +689,27 @@ export function initGitHubDb() {
         return repopath.toLowerCase();
     }
 
+    async function purgeExpiredEntriesAsync() {
+        const cache = await getGitHubCacheAsync();
+
+        const entries = await cache.getAllAsync();
+
+        const expired = entries.filter(isExpired);
+
+        if (expired.length) {
+            for (const entry of expired) {
+                await cache.deleteAsync(entry.id);
+            }
+        }
+    }
+
+    function isExpired(entry: GitHubCacheEntry) {
+        return !!entry.cacheTime && Date.now() - entry.cacheTime >= GITHUB_TUTORIAL_CACHE_EXPIRATION_MILLIS;
+    }
+
     if (!/skipgithubcache=1/i.test(window.location.href)) {
         pxt.github.db = new GithubDb();
+        /* await */ purgeExpiredEntriesAsync();
     }
 }
 
