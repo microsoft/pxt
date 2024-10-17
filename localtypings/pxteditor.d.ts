@@ -102,6 +102,7 @@ declare namespace pxt.editor {
         | "editorcontentloaded"
         | "serviceworkerregistered"
         | "runeval"
+        | "precachetutorial"
 
         // package extension messasges
         | ExtInitializeType
@@ -406,6 +407,12 @@ declare namespace pxt.editor {
         title?: string;
         previousProjectHeaderId?: string;
         carryoverPreviousCode?: boolean;
+    }
+
+    export interface PrecacheTutorialRequest extends EditorMessageRequest {
+        action: "precachetutorial";
+        data: pxt.github.GHTutorialResponse;
+        lang?: string;
     }
 
     export interface InfoMessage {

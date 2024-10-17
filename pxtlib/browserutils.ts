@@ -1409,6 +1409,24 @@ namespace pxt.BrowserUtils {
         return `${url}${url.indexOf('?') > 0 ? "&" : "?"}rnd=${Math.random()}`
     }
 
+    export function appendUrlQueryParams(url: string, params: URLSearchParams) {
+        const entries: string[] = [];
+        for (const [key, value] of params.entries()) {
+            entries.push(`${encodeURIComponent(key)}=${encodeURIComponent(value)}`);
+        }
+
+        if (entries.length) {
+            if (url.indexOf("?") !== -1) {
+                url += "&" + entries.join("&");
+            }
+            else {
+                url += "?" + entries.join("&");
+            }
+        }
+
+        return url;
+    }
+
     export function legacyCopyText(element: HTMLInputElement | HTMLTextAreaElement) {
         element.focus();
         element.setSelectionRange(0, 9999);
