@@ -76,8 +76,8 @@ namespace pxt.github {
     }
 
     export interface GHTutorialResponse {
-        filename: string;
-        markdownRepo: GHTutorialRepoInfo;
+        path: string;
+        markdown: string | { filename: string, repo: GHTutorialRepoInfo };
         dependencies: GHTutorialRepoInfo[];
     }
 
@@ -126,6 +126,7 @@ namespace pxt.github {
         loadConfigAsync(repopath: string, tag: string): Promise<pxt.PackageConfig>;
         loadPackageAsync(repopath: string, tag: string): Promise<CachedPackage>;
         loadTutorialMarkdown(repopath: string, tag?: string): Promise<CachedPackage>;
+        cacheReposAsync(response: GHTutorialResponse): Promise<void>;
     }
 
     function ghRequestAsync(options: U.HttpRequestOptions) {
@@ -299,14 +300,26 @@ namespace pxt.github {
         }
 
         async loadTutorialMarkdown(repoPath: string, tag?: string) {
-            const tutorialResponse = await downloadMarkdownTutorialInfoAsync(repoPath, tag);
+            const tutorialResponse = (await downloadMarkdownTutorialInfoAsync(repoPath, tag)).resp;
 
-            this.cacheRepo(tutorialResponse.markdownRepo);
-            for (const dep of tutorialResponse.dependencies) {
+            const repo = tutorialResponse.markdown as { filename: string, repo: GHTutorialRepoInfo };
+
+            pxt.Util.assert(typeof repo === "object");
+
+            await this.cacheReposAsync(tutorialResponse);
+
+            return repo.repo;
+        }
+
+        async cacheReposAsync(resp: GHTutorialResponse) {
+            if (typeof resp.markdown === "object") {
+                const repo = resp.markdown as { filename: string, repo: GHTutorialRepoInfo };
+
+                this.cacheRepo(repo.repo);
+            }
+            for (const dep of resp.dependencies) {
                 this.cacheRepo(dep);
             }
-
-            return tutorialResponse.markdownRepo;
         }
 
         private cacheRepo(repo: GHTutorialRepoInfo) {
@@ -373,24 +386,45 @@ namespace pxt.github {
         })
     }
 
-    export async function downloadMarkdownTutorialInfoAsync(repopath: string, tag?: string, noCache?: boolean): Promise<GHTutorialResponse> {
+    export async function downloadMarkdownTutorialInfoAsync(repopath: string, tag?: string, noCache?: boolean, etag?: string): Promise<{ resp?: GHTutorialResponse, etag?: string }> {
+        let request = pxt.Cloud.apiRequestWithCdnAsync;
         const queryParams = new URLSearchParams();
         if (tag) {
             queryParams.set("ref", tag);
         }
         if (noCache) {
             queryParams.set("noCache", "1");
+            request = pxt.Cloud.privateRequestAsync;
         }
 
-        const apiRoot = pxt.Cloud.apiRoot;
+        let url = `ghtutorial/${repopath}`;
+        url = pxt.BrowserUtils.appendUrlQueryParams(url, queryParams);
 
-        const queryString = queryParams.toString();
-        let url = `${apiRoot}ghtutorial/${repopath}`;
-        if (queryString) {
-            url += "?" + queryParams;
+        const headers: pxt.Map<string> = etag ? { "If-None-Match": etag } : undefined;
+
+        const resp = await request(
+            {
+                url,
+                method: "GET",
+                headers
+            }
+        );
+
+        let body: GHTutorialResponse;
+
+        if (resp.statusCode === 304) {
+            body = undefined;
+        }
+        else {
+            body = resp.json;
         }
 
-        return pxt.U.httpGetJsonAsync(url);
+        return (
+            {
+                resp: body,
+                etag: resp.headers["etag"] as string
+            }
+        );
     }
 
     export async function downloadTutorialMarkdownAsync(repopath: string, tag?: string) {

@@ -4692,7 +4692,7 @@ export class ProjectView
             if (/^\//.test(path)) {
                 filename = title || path.split('/').reverse()[0].replace('-', ' '); // drop any kind of sub-paths
                 pxt.perf.measureStart("downloadMarkdown");
-                const rawMarkdown = await pxt.Cloud.markdownAsync(path);
+                const rawMarkdown = await pxt.Cloud.markdownAsync(path, undefined, undefined, true);
                 pxt.perf.measureEnd("downloadMarkdown");
                 autoChooseBoard = true;
                 markdown = processMarkdown(rawMarkdown);

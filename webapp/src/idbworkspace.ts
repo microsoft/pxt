@@ -14,6 +14,7 @@ interface GitHubCacheEntry {
     config?: pxt.PackageConfig;
     cacheTime?: number;
     version?: string;
+    etag?: string;
 }
 
 const TEXTS_TABLE = "texts";
@@ -492,29 +493,43 @@ export function initGitHubDb() {
 
             const existing = await cache.getAsync(id);
 
-            if (existing && Date.now() - existing.cacheTime < GITHUB_TUTORIAL_CACHE_EXPIRATION_MILLIS) {
+            const readFromCache = async () => {
                 const elements = repopath.split("/");
                 const repo = elements[0] + "/" + elements[1]
 
-                // everything should be in the cache already
+                // everything should be in the cache already, so the latest version
+                // and load package calls should hit the DB rather than the network
                 tag = tag || await this.latestVersionAsync(repo, await pxt.packagesConfigAsync());
 
                 return this.loadPackageAsync(repo, tag);
             }
 
-            const tutorialResponse = await pxt.github.downloadMarkdownTutorialInfoAsync(repopath, tag);
+            if (existing && Date.now() - existing.cacheTime < GITHUB_TUTORIAL_CACHE_EXPIRATION_MILLIS) {
+                // don't bother hitting the network if we are within the expiration time
+                return readFromCache();
+            }
+
+            const tutorialResponse = await pxt.github.downloadMarkdownTutorialInfoAsync(repopath, tag, undefined, existing?.etag);
+
+            const body = tutorialResponse.resp;
+
+            if (!body) {
+                // etag matched, so our cache should be up to date
+                return readFromCache();
+            }
+
+            const repo = body.markdown as { filename: string, repo: pxt.github.GHTutorialRepoInfo };
+            pxt.Util.assert(typeof repo === "object");
 
             // fill up the cache with all of the files, versions, and configs contained in this response
-            await this.cacheRepoAsync(tutorialResponse.markdownRepo);
-            for (const dep of tutorialResponse.dependencies) {
-                await this.cacheRepoAsync(dep);
-            }
+            await this.cacheReposAsync(body);
 
             // set a marker in the cache to indicate that we shouldn't need to hit /api/ghtutorial/ again
             try {
                 await cache.setAsync({
                     id,
-                    cacheTime: Date.now()
+                    cacheTime: Date.now(),
+                    etag: tutorialResponse.etag
                 });
             }
             catch (e) {
@@ -522,7 +537,18 @@ export function initGitHubDb() {
                 pxt.debug("Failed to cache tutorial for " + repopath);
             }
 
-            return tutorialResponse.markdownRepo;
+            return repo.repo;
+        }
+
+        async cacheReposAsync(resp: pxt.github.GHTutorialResponse) {
+            if (typeof resp.markdown === "object") {
+                const repo = resp.markdown as { filename: string, repo: pxt.github.GHTutorialRepoInfo };
+
+                await this.cacheRepoAsync(repo.repo);
+            }
+            for (const dep of resp.dependencies) {
+                await this.cacheRepoAsync(dep);
+            }
         }
 
         private async cacheRepoAsync(repo: pxt.github.GHTutorialRepoInfo) {
