@@ -88,7 +88,7 @@
 }
 
 .tutorial.tutorialExpanded #tutorialcard {
-    max-height: 20rem;
+    max-height: 20rem; // Tightly coupled to `.tutorial.tutorialExpanded #tutorialcard .ui.buttons` max-height.
 }
 
 #root.dimmable.dimmed #tutorialcard.tutorialReady {
@@ -152,6 +152,7 @@ body#docs.tutorial {
 
 .tutorial.tutorialExpanded #tutorialcard .ui.buttons {
     height: 100%;
+    max-height: 19rem; // Tightly coupled to #tutorialcard max-height
 }
 
 #tutorialcard .ui.tutorialsegment {
@@ -492,7 +493,7 @@ code.lang-filterblocks {
     position: relative;
     width: auto;
     margin: auto;
-    margin-top: -0.75rem;
+    margin-top: -0.5rem;
     padding: 0.5rem 0.8rem;
 }
 
