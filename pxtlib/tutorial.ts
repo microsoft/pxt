@@ -148,7 +148,7 @@ namespace pxt.tutorial {
                         m2 = "";
                         break;
                 }
-                code.push(m1 == "python" ? `\n${m2}\n` : `{\n${m2}\n}`);
+                code.push(language === "python" ? `\n${m2}\n` : `{\n${m2}\n}`);
                 idx++
                 return "";
             });
