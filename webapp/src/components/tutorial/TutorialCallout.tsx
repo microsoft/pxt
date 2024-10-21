@@ -30,6 +30,9 @@ export function TutorialCallout(props: TutorialCalloutProps) {
                 setMaxHeight("90vh");
             } else {
                 setBottom("unset");
+
+                const popupBottom = popupRef.current?.getBoundingClientRect().bottom;
+                setTop(popupBottom ? `${popupBottom}px` : "unset");
             }
         }
 
