@@ -13,6 +13,7 @@
 @highlightLineClassColor: #007f00;
 @highlightLineKeywordColor: #0000ff;
 @tutorialCardHeight: 8rem;
+@tutorialCardMaxHeight: 20rem;
 @seeMoreButtonHeight: 4rem;
 @avatarSize: 4.5rem;
 @avatarMargin: @avatarSize + 0.5rem;
@@ -88,7 +89,7 @@
 }
 
 .tutorial.tutorialExpanded #tutorialcard {
-    max-height: 20rem;
+    max-height: @tutorialCardMaxHeight;
 }
 
 #root.dimmable.dimmed #tutorialcard.tutorialReady {
@@ -152,6 +153,7 @@ body#docs.tutorial {
 
 .tutorial.tutorialExpanded #tutorialcard .ui.buttons {
     height: 100%;
+    max-height: calc(@tutorialCardMaxHeight - 1rem);
 }
 
 #tutorialcard .ui.tutorialsegment {
@@ -263,7 +265,7 @@ span.docs.inlinebutton {
 span.docs.inlineblock {
     padding: 0.05rem .2rem;
     padding-bottom: 0.1rem;
-    white-space: nowrap;
+    white-space: break-spaces;
     border-radius: 0;
     border-bottom: 3px solid var(--inline-namespace-color);
     color: black;
@@ -492,7 +494,7 @@ code.lang-filterblocks {
     position: relative;
     width: auto;
     margin: auto;
-    margin-top: -0.75rem;
+    margin-top: -0.5rem;
     padding: 0.5rem 0.8rem;
 }
 
