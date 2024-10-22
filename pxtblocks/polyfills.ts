@@ -1,6 +1,6 @@
 export function applyPolyfills() {
-    if (!Element.prototype.checkVisibility) {
-        Element.prototype.checkVisibility = function checkVisibility(this: Element): boolean {
+    if (!(Element.prototype as any).checkVisibility) {
+        (Element.prototype as any).checkVisibility = function checkVisibility(this: Element): boolean {
             const computedStyle = getComputedStyle(this);
 
             // technically, this should also check for contentVisibility === "auto" and then
@@ -10,7 +10,7 @@ export function applyPolyfills() {
                 computedStyle.opacity === "0" ||
                 computedStyle.visibility === "hidden" ||
                 computedStyle.display === "none" ||
-                computedStyle.contentVisibility === "hidden"
+                (computedStyle as any).contentVisibility === "hidden"
             ) {
                 return false;
             }
