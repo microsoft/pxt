@@ -54,6 +54,14 @@ You can highlight the differences in code between the current step hint and the 
 ### @diffs true
 ```
 
+### Hide Toolbox
+
+For text-based tutorials, you can choose to hide the toolbox altogether. This is done by specifying **@hideToolbox** in the metadata. The default is ``false``.
+
+```
+### @hideToolbox true
+```
+
 ## Special blocks
 
 ### Templates

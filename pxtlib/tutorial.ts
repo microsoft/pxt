@@ -22,6 +22,12 @@ namespace pxt.tutorial {
             simThemeJson
         } = computeBodyMetadata(body);
 
+        // For python HOC, hide the toolbox (we don't support flyoutOnly mode).
+        if (pxt.BrowserUtils.useOldTutorialLayout() && language === "python" && metadata.flyoutOnly) {
+            metadata.flyoutOnly = false;
+            metadata.hideToolbox = true;
+        }
+
         // noDiffs legacy
         if (metadata.diffs === true // enabled in tutorial
             || (metadata.diffs !== false && metadata.noDiffs !== true // not disabled
@@ -142,7 +148,7 @@ namespace pxt.tutorial {
                         m2 = "";
                         break;
                 }
-                code.push(m1 == "python" ? `\n${m2}\n` : `{\n${m2}\n}`);
+                code.push(language === "python" ? `\n${m2}\n` : `{\n${m2}\n}`);
                 idx++
                 return "";
             });
@@ -406,7 +412,7 @@ ${code}
         if (metadata.explicitHints !== undefined
             && pxt.appTarget.appTheme
             && pxt.appTarget.appTheme.tutorialExplicitHints)
-            metadata.explicitHints = true;
+                metadata.explicitHints = true;
 
         return { metadata, body };
     }
