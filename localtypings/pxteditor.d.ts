@@ -1147,6 +1147,7 @@ declare namespace pxt.editor {
 
         // Used with the @tutorialCompleted macro. See docs/writing-docs/tutorials.md for more info
         onTutorialCompleted?: () => void;
+        onMarkdownActivityLoad?: (path: string, title?: string, editorProjectName?: string) => Promise<void>;
 
         // Used with @codeStart, @codeStop metadata (MINECRAFT HOC ONLY)
         onCodeStart?: () => void;

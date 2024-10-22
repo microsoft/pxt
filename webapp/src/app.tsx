@@ -4688,6 +4688,10 @@ export class ProjectView
 
         let markdown: string;
 
+        if (pxt.commands.onMarkdownActivityLoad) {
+            await pxt.commands.onMarkdownActivityLoad(path, title, editorProjectName);
+        }
+
         try {
             if (/^\//.test(path)) {
                 filename = title || path.split('/').reverse()[0].replace('-', ' '); // drop any kind of sub-paths
