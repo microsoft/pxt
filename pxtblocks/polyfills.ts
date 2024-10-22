@@ -27,7 +27,7 @@ export function applyPolyfills() {
             if (options.contentVisibilityAuto != undefined) {
                 checkContentVisibility = !!options.contentVisibilityAuto;
             }
-            
+
             const computedStyle = getComputedStyle(this);
 
             // technically, this should also check for contentVisibility === "auto" and then
