@@ -74,13 +74,6 @@
             color: var(--pxt-page-foreground);
         }
 
-        div[class*="common-menu-dropdown-pane"] {
-            border-radius: 0 0 0.25rem 0.25rem;
-            box-shadow: 0 1px 3px 0 var(--pxt-page-foreground-shadow);
-            background: var(--pxt-page-background);
-            padding: 0.15rem;
-        }
-
         .avatar {
             display: flex;
             align-items: center;
@@ -92,6 +85,28 @@
                 border-radius: 100%;
                 width: 2.5rem;
                 height: 2.5rem;
+            }
+        }
+    }
+
+    div[class~="common-menu-dropdown"] {
+        &:hover {
+            background-color: var(--pxt-headerbar-background-smoke);
+        }
+
+        button[class~="menu-button"] {
+            background-color: var(--pxt-headerbar-background);
+        }
+
+        div[class~="common-menu-dropdown-pane"] {
+            border-radius: 0 0 0.25rem 0.25rem;
+            box-shadow: 0 4px 4px 0 var(--pxt-page-foreground-shadow);
+            background: var(--pxt-page-background);
+            padding: 0.15rem;
+            width: unset !important;
+
+            button[class~="common-menu-dropdown-item"]:hover {
+                background-color: var(--pxt-page-foreground-shadow);
             }
         }
     }

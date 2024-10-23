@@ -59,6 +59,8 @@ export namespace Strings {
     export const ExceedsMax = lf("Exceeds maximum value");
     export const InvalidValue = lf("Invalid value");
     export const InvalidShareLink = lf("Invalid share link");
+    export const Privacy = lf("Privacy");
+    export const TermsOfUse = lf("Terms of Use");
 }
 
 export namespace Ticks {
@@ -95,6 +97,8 @@ export namespace Ticks {
     export const LoadProjectInvalid = "teachertool.loadproject.invalid";
     export const BlockPickerBlockSelected = "teachertool.blockpicker.blockselected";
     export const BlockPickerOpened = "teachertool.blockpicker.opened";
+    export const PrivacyStatementClicked = "teachertool.privacystatement.clicked";
+    export const TermsOfUseClicked = "teachertool.termsofuse.clicked";
 }
 
 namespace Misc {
