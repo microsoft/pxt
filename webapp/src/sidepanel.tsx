@@ -169,6 +169,22 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         const shouldResize = pxt.BrowserUtils.isTabletSize() || this.props.tutorialSimSidebar;
         const editorSidebarHeight = shouldResize ? `${this.state.height}px` : undefined;
 
+        const tutorialContainer = <TutorialContainer
+            parent={parent}
+            tutorialId={tutorialOptions.tutorial}
+            name={tutorialOptions.tutorialName}
+            steps={tutorialOptions.tutorialStepInfo}
+            currentStep={tutorialOptions.tutorialStep}
+            tutorialOptions={tutorialOptions}
+            hideIteration={tutorialOptions.metadata?.hideIteration}
+            hasTemplate={!!tutorialOptions.templateCode}
+            preferredEditor={tutorialOptions.metadata?.preferredEditor}
+            tutorialSimSidebar={this.props.tutorialSimSidebar}
+            hasBeenResized={this.state.resized && shouldResize}
+            onTutorialStepChange={onTutorialStepChange}
+            onTutorialComplete={onTutorialComplete}
+            setParentHeight={newSize => this.setComponentHeight(newSize, false)} />;
+
         return <div id="simulator" className="simulator">
             {!hasSimulator && <div id="boardview" className="headless-sim" role="region" aria-label={lf("Simulator")} tabIndex={-1} />}
             <div id="editorSidebar" className={editorSidebarClassName} style={!this.props.tutorialSimSidebar ? { height: editorSidebarHeight } : undefined}>
@@ -201,31 +217,21 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
             </div>
             {tutorialOptions &&
                 <div className={this.props.tutorialSimSidebar ? "topInstructionsWrapper" : ""}>
-                    <VerticalResizeContainer
-                        id="tutorialWrapper"
-                        className={outerTutorialContainerClassName}
-                        maxHeight="500px"
-                        minHeight="100px"
-                        initialHeight={editorSidebarHeight}
-                        resizeEnabled={shouldResize}
-                        onResizeDrag={this.onResizeDrag}
-                        onResizeEnd={this.onResizeEnd}>
-                        <TutorialContainer
-                            parent={parent}
-                            tutorialId={tutorialOptions.tutorial}
-                            name={tutorialOptions.tutorialName}
-                            steps={tutorialOptions.tutorialStepInfo}
-                            currentStep={tutorialOptions.tutorialStep}
-                            tutorialOptions={tutorialOptions}
-                            hideIteration={tutorialOptions.metadata?.hideIteration}
-                            hasTemplate={!!tutorialOptions.templateCode}
-                            preferredEditor={tutorialOptions.metadata?.preferredEditor}
-                            tutorialSimSidebar={this.props.tutorialSimSidebar}
-                            hasBeenResized={this.state.resized && shouldResize}
-                            onTutorialStepChange={onTutorialStepChange}
-                            onTutorialComplete={onTutorialComplete}
-                            setParentHeight={newSize => this.setComponentHeight(newSize, false)} />
-                    </VerticalResizeContainer>
+                    {shouldResize ?
+                        <VerticalResizeContainer
+                            id="tutorialWrapper"
+                            className={outerTutorialContainerClassName}
+                            maxHeight="500px"
+                            minHeight="100px"
+                            initialHeight={editorSidebarHeight}
+                            resizeEnabled={shouldResize}
+                            onResizeDrag={this.onResizeDrag}
+                            onResizeEnd={this.onResizeEnd}>
+                                {tutorialContainer}
+                        </VerticalResizeContainer> :
+                        <div id="tutorialWrapper" className={outerTutorialContainerClassName}>
+                            {tutorialContainer}
+                        </div>}
                 </div>}
         </div>
     }
