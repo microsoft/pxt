@@ -14,7 +14,7 @@ const betaTag = () => {
     return <div className={css["beta-tag"]}>{lf("Beta")}</div>;
 };
 
-interface HeaderBarProps {}
+interface HeaderBarProps { }
 
 export const HeaderBar: React.FC<HeaderBarProps> = () => {
     const { state: teacherTool } = useContext(AppStateContext);
@@ -151,44 +151,60 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
             <></>
         );
         return (
-            <>
-                <div>
-                    <Button
-                        className={css["feedback-btn"]}
-                        labelClassName="min-sm"
-                        leftIcon="xicon feedback"
-                        title={Strings.GiveFeedback}
-                        label={Strings.GiveFeedback}
-                        onClick={() => {
-                            pxt.tickEvent(Ticks.FeedbackForm);
-                        }}
-                        href="https://aka.ms/teachertool-feedback"
+            <div className={css["user-menu"]}>
+                {teacherTool.userProfile ? (
+                    <MenuDropdown
+                        id="profile-dropdown"
+                        items={items}
+                        label={avatarElem || initialsElem}
+                        title={lf("Profile Settings")}
                     />
-                </div>
-                <div className={css["user-menu"]}>
-                    {teacherTool.userProfile ? (
-                        <MenuDropdown
-                            id="profile-dropdown"
-                            items={items}
-                            label={avatarElem || initialsElem}
-                            title={lf("Profile Settings")}
-                        />
-                    ) : (
-                        <Button
-                            className={classList("inverted", css["sign-in-button"])}
-                            rightIcon="xicon cloud-user"
-                            title={lf("Sign In")}
-                            label={lf("Sign In")}
-                            onClick={() => {
-                                pxt.tickEvent(Ticks.UserMenuSignIn);
-                                showModal({ modal: "sign-in" });
-                            }}
-                        />
-                    )}
-                </div>
-            </>
+                ) : (
+                    <Button
+                        className={classList("inverted", css["sign-in-button"])}
+                        rightIcon="xicon cloud-user"
+                        title={lf("Sign In")}
+                        label={lf("Sign In")}
+                        onClick={() => {
+                            pxt.tickEvent(Ticks.UserMenuSignIn);
+                            showModal({ modal: "sign-in" });
+                        }}
+                    />
+                )}
+            </div>
         );
     }
+
+    const privacyUrl = pxt?.appTarget?.appTheme?.privacyUrl;
+    const termsOfUseUrl = pxt?.appTarget?.appTheme?.termsOfUseUrl;
+
+    const getSettingItems = () => {
+        const items: MenuItem[] = [];
+
+        if (privacyUrl) {
+            items.push({
+                id: "privacy",
+                title: Strings.Privacy,
+                label: Strings.Privacy,
+                onClick: () => pxt.tickEvent(Ticks.PrivacyStatementClicked),
+                href: privacyUrl,
+            });
+        }
+
+        if (termsOfUseUrl) {
+            items.push({
+                id: "termsOfUse",
+                title: Strings.TermsOfUse,
+                label: Strings.TermsOfUse,
+                onClick: () => pxt.tickEvent(Ticks.TermsOfUseClicked),
+                href: termsOfUseUrl,
+            });
+        }
+
+        return items;
+    };
+
+    const settingItems = getSettingItems();
 
     return (
         <MenuBar className={css["header"]} ariaLabel={lf("Header")} role="navigation">
@@ -208,7 +224,27 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
                 </div>
             </div>
 
-            <div className={css["right-menu"]}>{getUserMenu()}</div>
+            <div className={css["right-menu"]}>
+            <div>
+                    <Button
+                        className={css["feedback-btn"]}
+                        labelClassName="min-sm"
+                        leftIcon="xicon feedback"
+                        title={Strings.GiveFeedback}
+                        label={Strings.GiveFeedback}
+                        onClick={() => {
+                            pxt.tickEvent(Ticks.FeedbackForm);
+                        }}
+                        href="https://aka.ms/teachertool-feedback"
+                    />
+                </div>
+                <MenuDropdown
+                    id="settings-dropdown"
+                    items={settingItems}
+                    icon="fas fa-cog large"
+                    title={lf("Settings")} />
+                {getUserMenu()}
+            </div>
         </MenuBar>
     );
 };
