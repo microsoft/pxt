@@ -46,7 +46,10 @@ interface SidepanelProps extends ISettingsProps {
 }
 
 export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
+    protected simRef: HTMLDivElement
     protected simPanelRef: HTMLDivElement;
+    private simResizeObserver?: ResizeObserver;
+    private simPanelResizeObserver?: ResizeObserver;
 
     constructor(props: SidepanelProps) {
         super(props);
@@ -76,12 +79,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
     }
 
     componentDidMount(): void {
-        window.addEventListener('resize', this.updateShouldResize);
         this.updateShouldResize();
-    }
-
-    componentWillUnmount(): void {
-        window.removeEventListener('resize', this.updateShouldResize);
     }
 
     componentDidUpdate(props: SidepanelProps, state: SidepanelState) {
@@ -90,6 +88,16 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         }
 
         this.updateShouldResize();
+    }
+
+    componentWillUnmount(): void {
+        if (this.simResizeObserver && this.simRef) {
+            this.simResizeObserver.unobserve(this.simRef);
+        }
+
+        if (this.simPanelResizeObserver && this.simPanelRef) {
+            this.simPanelResizeObserver.unobserve(this.simPanelRef);
+        }
     }
 
     private updateShouldResize() {
@@ -138,14 +146,24 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
     protected handleSimPanelRef = (c: HTMLDivElement) => {
         this.simPanelRef = c;
         if (c && typeof ResizeObserver !== "undefined") {
-            const observer = new ResizeObserver(() => {
+            this.simPanelResizeObserver = new ResizeObserver(() => {
                 const scrollVisible = c.scrollHeight > c.clientHeight;
                 if (scrollVisible)
                     this.simPanelRef?.classList.remove("invisibleScrollbar");
                 else
                     this.simPanelRef?.classList.add("invisibleScrollbar");
             })
-            observer.observe(c);
+            this.simPanelResizeObserver.observe(c);
+        }
+    }
+
+    protected handleSimRef = (c: HTMLDivElement) => {
+        this.simRef = c;
+        if (c && typeof ResizeObserver !== "undefined") {
+            this.simResizeObserver = new ResizeObserver(() => {
+                window.requestAnimationFrame(this.updateShouldResize);
+            });
+            this.simResizeObserver.observe(c);
         }
     }
 
@@ -219,7 +237,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
             onTutorialComplete={onTutorialComplete}
             setParentHeight={newSize => this.setComponentHeight(newSize, false)} /> : undefined;
 
-        return <div id="simulator" className="simulator">
+        return <div id="simulator" className="simulator" ref={this.handleSimRef}>
             {!hasSimulator && <div id="boardview" className="headless-sim" role="region" aria-label={lf("Simulator")} tabIndex={-1} />}
             <div id="editorSidebar" className={editorSidebarClassName} style={!this.props.tutorialSimSidebar ? { height: editorSidebarHeight } : undefined}>
                 <div className={simContainerClassName}>
