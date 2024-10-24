@@ -169,7 +169,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         const shouldResize = pxt.BrowserUtils.isTabletSize() || this.props.tutorialSimSidebar;
         const editorSidebarHeight = shouldResize ? `${this.state.height}px` : undefined;
 
-        const tutorialContainer = <TutorialContainer
+        const tutorialContainer = tutorialOptions ? <TutorialContainer
             parent={parent}
             tutorialId={tutorialOptions.tutorial}
             name={tutorialOptions.tutorialName}
@@ -183,7 +183,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
             hasBeenResized={this.state.resized && shouldResize}
             onTutorialStepChange={onTutorialStepChange}
             onTutorialComplete={onTutorialComplete}
-            setParentHeight={newSize => this.setComponentHeight(newSize, false)} />;
+            setParentHeight={newSize => this.setComponentHeight(newSize, false)} /> : undefined;
 
         return <div id="simulator" className="simulator">
             {!hasSimulator && <div id="boardview" className="headless-sim" role="region" aria-label={lf("Simulator")} tabIndex={-1} />}
