@@ -192,6 +192,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         );
         const outerTutorialContainerClassName = classList(
             "editor-sidebar",
+            "tutorialWrapper",
             "tutorial-container-outer",
             this.props.tutorialSimSidebar && "topInstructions"
         );
@@ -252,7 +253,6 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                 <div className={this.props.tutorialSimSidebar ? "topInstructionsWrapper" : ""}>
                     {this.state.shouldResize ?
                         <VerticalResizeContainer
-                            id="tutorialWrapper"
                             className={outerTutorialContainerClassName}
                             maxHeight="500px"
                             minHeight="100px"
@@ -262,7 +262,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                             onResizeEnd={this.onResizeEnd}>
                                 {tutorialContainer}
                         </VerticalResizeContainer> :
-                        <div id="tutorialWrapper" className={outerTutorialContainerClassName}>
+                        <div className={outerTutorialContainerClassName}>
                             {tutorialContainer}
                         </div>}
                 </div>}
