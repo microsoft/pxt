@@ -393,6 +393,10 @@ function applyExtensionResult() {
         log(`extension showProgramTooLargeErrorAsync`);
         pxt.commands.showProgramTooLargeErrorAsync = res.showProgramTooLargeErrorAsync;
     }
+    if (res.onMarkdownActivityLoad) {
+        log(`extension onMarkdownActivityLoad`);
+        pxt.commands.onMarkdownActivityLoad = res.onMarkdownActivityLoad;
+    }
 }
 
 export async function initAsync() {

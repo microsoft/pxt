@@ -39,4 +39,5 @@ namespace pxt.commands {
     export let webUsbPairDialogAsync: (pairAsync: () => Promise<boolean>, confirmAsync: (options: any) => Promise<WebUSBPairResult>, implicitlyCalled?: boolean) => Promise<WebUSBPairResult> = undefined;
     export let onTutorialCompleted: () => void = undefined;
     export let workspaceLoadedAsync: () => Promise<void> = undefined;
+    export let onMarkdownActivityLoad: (path: string, title?: string, editorProjectName?: string) => Promise<void> = undefined;
 }
