@@ -104,7 +104,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         const shouldResize = pxt.BrowserUtils.isTabletSize() || this.props.tutorialSimSidebar;
         if (shouldResize != this.state.shouldResize) {
             let height = this.state.height;
-            if (shouldResize && this.state.height === undefined && this.state.lastResizeHeight !== undefined) {
+            if (shouldResize && !this.state.height && this.state.lastResizeHeight) {
                 height = this.state.lastResizeHeight;
             }
 
@@ -219,7 +219,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
             this.props.tutorialSimSidebar && "tutorial-sim"
         );
 
-        const editorSidebarHeight = this.state.shouldResize && this.state.height !== undefined ? `${this.state.height}px` : undefined; // Should we use this regardless of shouldResize?
+        const editorSidebarHeight = this.state.shouldResize && this.state.height ? `${this.state.height}px` : undefined;
 
         const tutorialContainer = tutorialOptions ? <TutorialContainer
             parent={parent}
