@@ -1205,6 +1205,7 @@ declare namespace pxt.tutorial {
         codeStop?: string; // command to run when code stops (MINECRAFT HOC ONLY)
         autoexpandOff?: boolean; // INTERNAL TESTING ONLY
         preferredEditor?: string; // preferred editor for opening the tutorial
+        hideDone?: boolean; // Do not show a "Done" button at the end of the tutorial
     }
 
     interface TutorialBlockConfigEntry {

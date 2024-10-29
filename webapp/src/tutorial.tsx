@@ -674,9 +674,10 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         const currentStep = tutorialStep;
         const maxSteps = tutorialStepInfo.length;
         const hideIteration = metadata && metadata.hideIteration;
+        const hideDone = metadata && metadata.hideDone;
         const hasPrevious = tutorialReady && currentStep != 0 && !hideIteration;
         const hasNext = tutorialReady && currentStep != maxSteps - 1 && !hideIteration;
-        const hasFinish = !lockedEditor && currentStep == maxSteps - 1 && !hideIteration;
+        const hasFinish = !lockedEditor && currentStep == maxSteps - 1 && !hideIteration && !hideDone;
         const hasHint = this.hasHint();
         const tutorialCardContent = stepInfo.headerContentMd;
         const showDialog = stepInfo.showDialog;

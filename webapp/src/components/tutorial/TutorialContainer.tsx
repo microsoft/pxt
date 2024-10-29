@@ -23,6 +23,7 @@ interface TutorialContainerProps {
     hasTemplate?: boolean;
     preferredEditor?: string;
     hasBeenResized?: boolean;
+    hideDone?: boolean;
 
     tutorialOptions?: pxt.tutorial.TutorialOptions; // TODO (shakao) pass in only necessary subset
     tutorialSimSidebar?: boolean;
@@ -37,7 +38,7 @@ const MAX_HEIGHT = 194;
 
 export function TutorialContainer(props: TutorialContainerProps) {
     const { parent, tutorialId, name, steps, hideIteration, hasTemplate,
-        preferredEditor, tutorialOptions, onTutorialStepChange, onTutorialComplete,
+        preferredEditor, tutorialOptions, hideDone, onTutorialStepChange, onTutorialComplete,
         setParentHeight } = props;
     const [ currentStep, setCurrentStep ] = React.useState(props.currentStep || 0);
     const [ stepErrorAttemptCount, setStepErrorAttemptCount ] = React.useState(0);
@@ -49,7 +50,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
 
     const showBack = currentStep !== 0;
     const showNext = currentStep !== steps.length - 1;
-    const showDone = !showNext && !pxt.appTarget.appTheme.lockedEditor && !hideIteration;
+    const isDone = !showNext && !pxt.appTarget.appTheme.lockedEditor && !hideIteration;
     const showImmersiveReader = pxt.appTarget.appTheme.immersiveReader;
     const isHorizontal = props.tutorialSimSidebar || pxt.BrowserUtils.isTabletSize();
 
@@ -237,8 +238,8 @@ export function TutorialContainer(props: TutorialContainerProps) {
 
     const doneButtonLabel = lf("Finish the tutorial.");
     const nextButtonLabel = lf("Go to the next step of the tutorial.");
-    const nextButton = showDone
-        ? <Button icon="check circle" title={doneButtonLabel} ariaLabel={doneButtonLabel} text={lf("Done")} onClick={onTutorialComplete} />
+    const nextButton = isDone
+        ? hideDone ? null : <Button icon="check circle" title={doneButtonLabel} ariaLabel={doneButtonLabel} text={lf("Done")} onClick={onTutorialComplete} />
         : <Button icon="arrow circle right" title={nextButtonLabel} ariaLabel={nextButtonLabel} disabled={!showNext} text={lf("Next")} onClick={() => validateTutorialStep()} />;
 
     const stepCounter = <TutorialStepCounter
@@ -247,6 +248,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
         totalSteps={steps.length}
         title={name}
         isHorizontal={isHorizontal}
+        hideDone={hideDone}
         setTutorialStep={handleStepCounterSetStep}
         onDone={onTutorialComplete} />;
     const hasHint = !!hintMarkdown;
