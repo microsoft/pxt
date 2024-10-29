@@ -59,7 +59,7 @@ export function renderCodeCard(card: pxt.CodeCard, options: CodeCardRenderOption
     if (card.blocksXml) {
         const svg = render(card.blocksXml);
         if (!svg) {
-            console.error("failed to render blocks");
+            pxt.error("failed to render blocks");
             pxt.debug(card.blocksXml);
         } else {
             let holder = div(img, ''); holder.setAttribute('style', 'width:100%; min-height:10em');

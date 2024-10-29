@@ -99,7 +99,7 @@ const variableReporterMixin = {
                     callback: () => {
                         let variableField = this.getField('VAR') as Blockly.FieldVariable;
                         if (!variableField) {
-                          console.log("Tried to get a variable field on the wrong type of block.");
+                          pxt.log("Tried to get a variable field on the wrong type of block.");
                         }
                         variableField.setValue(variable.getId());
                     }

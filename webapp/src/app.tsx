@@ -1929,7 +1929,7 @@ export class ProjectView
                 })();
             } catch (e) {
                 // Failed to decompile, don't propagate exception
-                console.error(`Failed to resolve blockconfig for tutorial: ${header.tutorial.tutorialName}, ${e.message}. md:${blockConfig.md}`);
+                pxt.error(`Failed to resolve blockconfig for tutorial: ${header.tutorial.tutorialName}, ${e.message}. md:${blockConfig.md}`);
             }
 
             for (const block of blocks) {
@@ -1961,7 +1961,7 @@ export class ProjectView
                     blockConfig.blocks.push(entry);
                 } catch (e) {
                     // Failed to resolve block, don't propagate exception
-                    console.error(`Failed to resolve blockconfig for tutorial: ${header.tutorial.tutorialName}. ${e.message}`);
+                    pxt.error(`Failed to resolve blockconfig for tutorial: ${header.tutorial.tutorialName}. ${e.message}`);
                 }
             }
         };
@@ -2000,7 +2000,7 @@ export class ProjectView
         }
         else if (!header.tutorial.templateCode || header.tutorial.templateLoaded) {
             if (header.tutorial.mergeCarryoverCode && header.tutorial.mergeHeaderId) {
-                console.warn(lf("Refusing to carry code between tutorials because the loaded tutorial \"{0}\" does not contain a template code block.", header.tutorial.tutorial));
+                pxt.warn(lf("Refusing to carry code between tutorials because the loaded tutorial \"{0}\" does not contain a template code block.", header.tutorial.tutorial));
             }
             return;
         }
@@ -4141,7 +4141,7 @@ export class ProjectView
 
     getBlocks(): Blockly.Block[] {
         if (!this.isBlocksActive()) {
-            console.error("Trying to get blocks from a non-blocks editor.");
+            pxt.error("Trying to get blocks from a non-blocks editor.");
             throw new Error("Trying to get blocks from a non-blocks editor.");
         }
 
@@ -4150,7 +4150,7 @@ export class ProjectView
 
     getToolboxCategories(advanced?: boolean): pxt.editor.EditorMessageGetToolboxCategoriesResponse {
         if (!this.isBlocksActive()) {
-            console.error("Trying to get blocks info from a non-blocks editor.");
+            pxt.error("Trying to get blocks info from a non-blocks editor.");
             throw new Error("Trying to get blocks info from a non-blocks editor.");
         }
 
@@ -5440,7 +5440,7 @@ function initPacketIO() {
                 }, "*")
             } catch (e) {
                 // data decoding failed, ignore
-                console.debug(`invalid utf8 serial data`, { buf, e })
+                pxt.debug(`invalid utf8 serial data`, { buf, e })
             }
         },
         (type, payload) => {
@@ -5541,7 +5541,7 @@ function assembleCurrent() {
 }
 
 function log(v: any) {
-    console.log(v)
+    pxt.log(v)
 }
 
 // This is for usage from JS console
@@ -5936,7 +5936,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const optsQuery = Util.parseQueryString(window.location.href.toLowerCase());
     if (optsQuery["dbg"] == "1")
-        pxt.debug = console.debug;
+        pxt.debug = pxt.debug;
     pxt.options.light = optsQuery["light"] == "1" || pxt.BrowserUtils.isARM() || pxt.BrowserUtils.isIE();
     if (pxt.options.light) {
         pxsim.U.addClass(document.body, 'light');
@@ -6078,7 +6078,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             })
             let useLang: string = undefined;
             if (/[&?]translate=1/.test(href) && !pxt.BrowserUtils.isIE()) {
-                console.log(`translation mode`);
+                pxt.log(`translation mode`);
                 force = true;
                 pxt.Util.enableLiveLocalizationUpdates();
                 useLang = ts.pxtc.Util.TRANSLATION_LOCALE;

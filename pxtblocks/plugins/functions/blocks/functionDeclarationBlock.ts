@@ -211,7 +211,7 @@ const FUNCTION_DECLARATION_MIXIN: FunctionDeclarationMixin = {
                     });
                     break;
                 default:
-                    console.warn("Unexpected input type on a function mutator root: " + input.type);
+                    pxt.warn("Unexpected input type on a function mutator root: " + input.type);
             }
         }
     },

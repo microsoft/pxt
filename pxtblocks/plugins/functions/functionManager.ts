@@ -46,7 +46,7 @@ export class FunctionManager {
             this._editFunctionExternal(mutation, cb);
         }
         else {
-            console.warn('External function editor must be overriden: Blockly.Functions.editFunctionExternalHandler', mutation, cb);
+            pxt.warn('External function editor must be overriden: Blockly.Functions.editFunctionExternalHandler', mutation, cb);
         }
     }
 }

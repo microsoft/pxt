@@ -82,7 +82,7 @@ export function registerFieldEditor(selector: string, field: FieldCustomConstruc
 
 export function createFieldEditor(selector: string, text: string, params: any): FieldCustom {
     if (registeredFieldEditors[selector] == undefined) {
-        console.error(`Field editor ${selector} not registered`);
+        pxt.error(`Field editor ${selector} not registered`);
         return null;
     }
 

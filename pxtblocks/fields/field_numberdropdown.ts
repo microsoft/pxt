@@ -208,7 +208,7 @@ function parseDropdownOptions(options: FieldTextDropdownOptions): [string, any][
         return result;
     }
     else {
-        console.warn("Could not parse numberdropdown data field");
+        pxt.warn("Could not parse numberdropdown data field");
     }
 
     return [];

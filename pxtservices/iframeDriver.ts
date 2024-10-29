@@ -122,7 +122,7 @@ export abstract class IframeDriver {
                 handler(data);
             }
             catch (e) {
-                console.error(e);
+                pxt.error(e);
             }
         }
     }

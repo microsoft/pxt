@@ -64,7 +64,7 @@ export async function initAsync(root: HTMLElement, cfg: SimulatorConfig) {
                 const originUrl = new URL(origin);
                 parentOrigin = originUrl.origin
             } catch (e) {
-                console.error(`Invalid parent origin: ${origin}`)
+                pxt.error(`Invalid parent origin: ${origin}`)
             }
         }
     }

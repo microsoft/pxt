@@ -1141,7 +1141,7 @@ namespace ts.pxtc.Util {
 
                 return resp.json;
             }, e => {
-                console.log(`failed to load translations from ${url}`)
+                pxt.log(`failed to load translations from ${url}`)
                 return undefined;
             })
         }
@@ -1371,7 +1371,7 @@ namespace ts.pxtc.Util {
 
             const pAll = U.promiseMapAllSeries(stringFiles, (file) => downloadLiveTranslationsAsync(code, file.path)
                 .then(mergeTranslations, e => {
-                    console.log(e.message);
+                    pxt.log(e.message);
                     ++errorCount;
                 })
             );
@@ -1402,7 +1402,7 @@ namespace ts.pxtc.Util {
                     translationsCache()[translationsCacheId] = translations;
                 }
             }, e => {
-                console.error('failed to load localizations')
+                pxt.error('failed to load localizations')
             })
                 .then(() => translations);
         }
@@ -2283,14 +2283,14 @@ namespace ts.pxtc.jsonPatch.tests {
             ];
 
         for (const test of tests) {
-            console.log(test.comment);
+            pxt.log(test.comment);
             const patches = ts.pxtc.jsonPatch.diff(test.obja, test.objb);
             if (deepEqual(patches, test.expected)) {
-                console.log("succeeded");
+                pxt.log("succeeded");
             } else {
-                console.error("FAILED");
-                console.log("got", patches);
-                console.log("exp", test.expected);
+                pxt.error("FAILED");
+                pxt.log("got", patches);
+                pxt.log("exp", test.expected);
             }
         }
     }
@@ -2349,16 +2349,16 @@ namespace ts.pxtc.jsonPatch.tests {
             ];
 
         for (const test of tests) {
-            console.log(test.comment);
+            pxt.log(test.comment);
             ts.pxtc.jsonPatch.patchInPlace(test.obj, test.patches);
             const equal = deepEqual(test.obj, test.expected);
             const succeeded = equal && test.validate ? test.validate(test.obj) : true;
             if (succeeded) {
-                console.log("succeeded");
+                pxt.log("succeeded");
             } else if (test.expected) {
-                console.error("FAILED");
-                console.log("got", test.obj);
-                console.log("exp", test.expected);
+                pxt.error("FAILED");
+                pxt.log("got", test.obj);
+                pxt.log("exp", test.expected);
             }
         }
     }

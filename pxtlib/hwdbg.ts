@@ -41,7 +41,7 @@ namespace pxt.HWDBG {
     export const taggedFalse = taggedSpecialValue(2)
     export const taggedTrue = taggedSpecialValue(16)
 
-    export let postMessage: (msg: pxsim.DebuggerMessage) => void = msg => console.log(msg)
+    export let postMessage: (msg: pxsim.DebuggerMessage) => void = msg => pxt.log(msg)
 
     function clearAsync() {
         isHalted = false
@@ -154,12 +154,12 @@ namespace pxt.HWDBG {
             promises.push(heapExpandAsync(vars[k])
                 .then((r: any) => {
                     vars[k] = r
-                    //console.log("set", k, "to", r, "prev", vars[k], "NOW", vars)
+                    //pxt.log("set", k, "to", r, "prev", vars[k], "NOW", vars)
                 }))
         }
         return Promise.all(promises)
             .then(() => {
-                //console.log("FIN", vars)
+                //pxt.log("FIN", vars)
             })
     }
 
@@ -209,7 +209,7 @@ namespace pxt.HWDBG {
         let bestDelta = Infinity
         for (let b of bb) {
             let delta = addr - b.binAddr
-            // console.log(`${b.line+1}: addr=${b.binAddr} d=${delta}`)
+            // pxt.log(`${b.line+1}: addr=${b.binAddr} d=${delta}`)
             if (delta >= 0 && delta < bestDelta) {
                 bestDelta = delta
                 brkMatch = b
@@ -293,7 +293,7 @@ namespace pxt.HWDBG {
                     procLookup[pdi.idx] = pdi
                 }
                 for (let pdi of compileRes.procDebugInfo) {
-                    //console.log(pdi)
+                    //pxt.log(pdi)
                     for (let ci of pdi.calls) {
                         callInfos[ci.addr + ""] = {
                             from: pdi,
@@ -318,7 +318,7 @@ namespace pxt.HWDBG {
     }
 
     export function handleMessage(msg: pxsim.DebuggerMessage) {
-        console.log("HWDBGMSG", msg)
+        pxt.log("HWDBGMSG", msg)
         if (msg.type != "debugger")
             return
         let stepInto = false

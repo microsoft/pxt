@@ -234,7 +234,7 @@ namespace pxsim {
                     } else {
                         let instIdx = (<PinInstantiationIdx>pinDef.target).pinInstantiationIdx;
                         if (!(!!instPins && instPins[instIdx] !== undefined)) {
-                            console.log(`error: parts no pin found for PinInstantiationIdx: ${instIdx}. (Is the part missing an ArgumentRole or "trackArgs=" annotations?)`);
+                            pxt.log(`error: parts no pin found for PinInstantiationIdx: ${instIdx}. (Is the part missing an ArgumentRole or "trackArgs=" annotations?)`);
                             return undefined;
                         }
                         pinTarget = instPins[instIdx];
@@ -282,13 +282,13 @@ namespace pxsim {
                     fnNms.forEach(fnNm => { if (this.opts.fnArgs[fnNm]) this.opts.fnArgs[fnNm].forEach((targetArg: string) => { callsitesTrackedArgsHash[targetArg] = 1 }); });
                     let callsitesTrackedArgs: string[] = Object.keys(callsitesTrackedArgsHash);
                     if (!(!!callsitesTrackedArgs && !!callsitesTrackedArgs.length)) {
-                        console.log(`error: parts failed to read pin(s) from callsite for: ${fnNms}`);
+                        pxt.log(`error: parts failed to read pin(s) from callsite for: ${fnNms}`);
                         return undefined;
                     }
                     callsitesTrackedArgs.forEach(fnArgsStr => {
                         const fnArgsSplit = fnArgsStr.split(",");
                         if (fnArgsSplit.length != fnAlloc.argumentRoles.length) {
-                            console.log(`error: parts mismatch between number of arguments at callsite (function name: ${fnNms}) vs number of argument roles in part definition (part: ${name}).`);
+                            pxt.log(`error: parts mismatch between number of arguments at callsite (function name: ${fnNms}) vs number of argument roles in part definition (part: ${name}).`);
                             return;
                         }
                         let instPins: PinTarget[] = [];
@@ -352,7 +352,7 @@ namespace pxsim {
             let totalSpaceNeeded = colCounts.map(d => d.colCount).reduce((p, n) => p + n, 0);
             let extraSpace = totalColumnsCount - totalSpaceNeeded;
             if (extraSpace <= 0) {
-                console.log("Not enough breadboard space!");
+                pxt.log("Not enough breadboard space!");
                 //TODO
             }
             let padding = Math.floor(extraSpace / (partsCount - 1 + 2));
@@ -474,7 +474,7 @@ namespace pxsim {
                     return this.opts.getBBCoord(loc);
                 });
                 if (!firstTopAndBot[0] || !firstTopAndBot[1]) {
-                    console.debug(`No more available "${location}" locations!`);
+                    pxt.debug(`No more available "${location}" locations!`);
                     //TODO
                 }
                 let nearTop = visuals.findClosestCoordIdx(nearestCoord, firstTopAndBot) == 0;
@@ -513,12 +513,12 @@ namespace pxsim {
                 return <BBLoc>location;
             } else if (location === "MOSI" || location === "MISO" || location === "SCK") {
                 if (!this.opts.boardDef.spiPins)
-                    console.debug("No SPI pin mappings found!");
+                    pxt.debug("No SPI pin mappings found!");
                 let pin = (<any>this.opts.boardDef.spiPins)[location as string] as string;
                 return { type: "dalboard", pin: pin };
             } else if (location === "SDA" || location === "SCL") {
                 if (!this.opts.boardDef.i2cPins)
-                    console.debug("No I2C pin mappings found!");
+                    pxt.debug("No I2C pin mappings found!");
                 let pin = (<any>this.opts.boardDef.i2cPins)[location as string] as string;
                 return { type: "dalboard", pin: pin };
             } else {
@@ -527,7 +527,7 @@ namespace pxsim {
                 let mbPin = <MicrobitPin>location;
                 let boardPin = this.opts.boardDef.gpioPinMap[mbPin] || mbPin;
                 if (!boardPin) { // this pin is internal
-                    console.debug(`unknown pin location for ${mbPin}`)
+                    pxt.debug(`unknown pin location for ${mbPin}`)
                     return undefined;
                 }
                 return { type: "dalboard", pin: boardPin };
@@ -536,7 +536,7 @@ namespace pxsim {
         private getBoardGroundPin(): string {
             let pin = this.opts.boardDef.groundPins && this.opts.boardDef.groundPins[0] || null;
             if (!pin) {
-                console.debug("No available ground pin on board!");
+                pxt.debug("No available ground pin on board!");
                 //TODO
             }
             return pin;
@@ -544,7 +544,7 @@ namespace pxsim {
         private getBoardThreeVoltPin(): string {
             let pin = this.opts.boardDef.threeVoltPins && this.opts.boardDef.threeVoltPins[0] || null;
             if (!pin) {
-                console.debug("No available 3.3V pin on board!");
+                pxt.debug("No available 3.3V pin on board!");
                 //TODO
             }
             return pin;
@@ -552,7 +552,7 @@ namespace pxsim {
         private getBoardFiveVoltPin(): string {
             let pin = this.opts.boardDef.fiveVoltPins && this.opts.boardDef.fiveVoltPins[0] || null;
             if (!pin) {
-                console.debug("No available 5V pin on board!");
+                pxt.debug("No available 5V pin on board!");
                 //TODO
             }
             return pin;

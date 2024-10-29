@@ -193,7 +193,7 @@ namespace pxsim.visuals {
                     resolve(ctx.getImageData(0, 0, cvs.width, cvs.height));
                 };
                 img.onerror = e => {
-                    console.log(e);
+                    pxt.log(e);
                     resolve(undefined);
                 }
                 img.src = data;
@@ -211,7 +211,7 @@ namespace pxsim.visuals {
         private getPinCoord(pin: string) {
             let boardCoord = this.boardView.getCoord(pin);
             if (!boardCoord) {
-                console.error(`Unable to find coord for pin: ${pin}`);
+                pxt.error(`Unable to find coord for pin: ${pin}`);
                 return undefined;
             }
             return this.fromMBCoord(boardCoord);
@@ -226,7 +226,7 @@ namespace pxsim.visuals {
                 coord = this.getPinCoord(pinNm);
             }
             if (!coord)
-                console.debug("Unknown location: " + name)
+                pxt.debug("Unknown location: " + name)
             return coord;
         }
         public getPinStyle(loc: Loc): PinStyle {

@@ -469,7 +469,7 @@ async function convertIconsToPngAsync(xsg: Document): Promise<void> {
         let href = imageIconCache[svgUri];
         if (!href) {
             href = await pxt.BrowserUtils.encodeToPngAsync(svgUri, { width, height, pixelDensity: 2 });
-            console.log(`HREF: ${href}`);
+            pxt.log(`HREF: ${href}`);
         }
 
         imageIconCache[svgUri] = href;

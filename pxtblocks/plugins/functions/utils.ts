@@ -241,7 +241,7 @@ export function mutateCallersAndDefinition(name: string, ws: Blockly.Workspace, 
         });
         Blockly.Events.setGroup(false);
     } else {
-        console.warn("Attempted to change function " + name + ", but no definition block was found on the workspace");
+        pxt.warn("Attempted to change function " + name + ", but no definition block was found on the workspace");
     }
 }
 

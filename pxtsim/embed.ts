@@ -523,9 +523,9 @@ namespace pxsim {
 
             const serviceWorkerUrl = window.location.href.replace(/---simulator.*$/, "---simserviceworker");
             navigator.serviceWorker.register(serviceWorkerUrl).then(function (registration) {
-                console.log("Simulator ServiceWorker registration successful with scope: ", registration.scope);
+                pxt.log("Simulator ServiceWorker registration successful with scope: ", registration.scope);
             }, function (err) {
-                console.log("Simulator ServiceWorker registration failed: ", err);
+                pxt.log("Simulator ServiceWorker registration failed: ", err);
             });
         }
     }

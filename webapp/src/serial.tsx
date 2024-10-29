@@ -200,7 +200,7 @@ export class Editor extends srceditor.Editor {
         }
         if (this.isVisible) {
             if (this.isCsvView && !this.receivedCsv) {
-                // have not received a csv yet but in csv view; swap back to console.
+                // have not received a csv yet but in csv view; swap back to pxt.
                 this.setCsv(false);
             } else if (!this.isCsvView && !this.receivedLog) {
                 this.setCsv(true);

@@ -770,7 +770,7 @@ namespace pxt.BrowserUtils {
         let md = "...";
         for (let i = 0; i < 16; ++i)
             md += md + Math.random();
-        console.log(`adding entry ${md.length * 2} bytes`);
+        pxt.log(`adding entry ${md.length * 2} bytes`);
         return U.delay(1)
             .then(() => translationDbAsync())
             .then(db => db.setAsync("foobar", Math.random().toString(), null, undefined, md))
@@ -847,7 +847,7 @@ namespace pxt.BrowserUtils {
                 reject(err);
                 return;
             }
-            console.error(new Error(`${this.name} IDBWrapper error for ${op}: ${err.message}`));
+            pxt.error(new Error(`${this.name} IDBWrapper error for ${op}: ${err.message}`));
             reject(err);
             // special case for quota exceeded
             if (err.name == "QuotaExceededError") {
@@ -999,7 +999,7 @@ namespace pxt.BrowserUtils {
             }
             return openAsync()
                 .catch(e => {
-                    console.log(`db: failed to open database, try delete entire store...`)
+                    pxt.log(`db: failed to open database, try delete entire store...`)
                     return IDBWrapper.deleteDatabaseAsync(IndexedDbTranslationDb.dbName())
                         .then(() => openAsync());
                 })
@@ -1050,16 +1050,16 @@ namespace pxt.BrowserUtils {
             return this.db.setAsync(IndexedDbTranslationDb.TABLE, entry)
                 .finally(() => scheduleStorageCleanup()) // schedule a cleanpu
                 .catch((e) => {
-                    console.log(`db: set failed (${e.message}), recycling...`)
+                    pxt.log(`db: set failed (${e.message}), recycling...`)
                     return this.clearAsync();
                 });
         }
 
         clearAsync(): Promise<void> {
             return this.db.deleteAllAsync(IndexedDbTranslationDb.TABLE)
-                .then(() => console.debug(`db: all clean`))
+                .then(() => pxt.debug(`db: all clean`))
                 .catch(e => {
-                    console.error('db: failed to delete all');
+                    pxt.error('db: failed to delete all');
                 })
         }
     }
@@ -1145,7 +1145,7 @@ namespace pxt.BrowserUtils {
             }
             return openAsync()
                 .catch(e => {
-                    console.log(`db: failed to open tutorial info database, try delete entire store...`)
+                    pxt.log(`db: failed to open tutorial info database, try delete entire store...`)
                     return pxt.BrowserUtils.IDBWrapper.deleteDatabaseAsync(TutorialInfoIndexedDb.dbName())
                         .then(() => openAsync());
                 })
@@ -1205,9 +1205,9 @@ namespace pxt.BrowserUtils {
 
         clearAsync(): Promise<void> {
             return this.db.deleteAllAsync(TutorialInfoIndexedDb.TABLE)
-                .then(() => console.debug(`db: all clean`))
+                .then(() => pxt.debug(`db: all clean`))
                 .catch(e => {
-                    console.error('db: failed to delete all');
+                    pxt.error('db: failed to delete all');
                 })
         }
     }

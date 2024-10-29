@@ -19,7 +19,7 @@ namespace ts.pxtc {
         "Math.min": { n: "min", t: ts.SyntaxKind.NumberKeyword, snippet: "min(0, 0)" },
         "Math.max": { n: "max", t: ts.SyntaxKind.NumberKeyword, snippet: "max(0, 0)" },
         "Math.abs": { n: "abs", t: ts.SyntaxKind.NumberKeyword, snippet: "abs(0)" },
-        "console.log": { n: "print", t: ts.SyntaxKind.VoidKeyword, snippet: 'print(":)")' },
+        "pxt.log": { n: "print", t: ts.SyntaxKind.VoidKeyword, snippet: 'print(":)")' },
         ".length": { n: "len", t: ts.SyntaxKind.NumberKeyword },
         ".toLowerCase()": { n: "string.lower", t: ts.SyntaxKind.StringKeyword },
         ".toUpperCase()": { n: "string.upper", t: ts.SyntaxKind.StringKeyword },
@@ -452,7 +452,7 @@ namespace ts.pxtc {
 
             if (isExported(stmt as Declaration)) {
                 if (!stmt.symbol) {
-                    console.warn("no symbol", stmt)
+                    pxt.warn("no symbol", stmt)
                     return;
                 }
                 let qName = getFullName(typechecker, stmt.symbol)
@@ -686,9 +686,9 @@ namespace ts.pxtc.service {
         getNewLine() { return "\n" }
         getCurrentDirectory(): string { return "." }
         getDefaultLibFileName(options: CompilerOptions): string { return "no-default-lib.d.ts" }
-        log(s: string): void { console.log("LOG", s) }
-        trace(s: string): void { console.log("TRACE", s) }
-        error(s: string): void { console.error("ERROR", s) }
+        log(s: string): void { pxt.log("LOG", s) }
+        trace(s: string): void { pxt.log("TRACE", s) }
+        error(s: string): void { pxt.error("ERROR", s) }
         useCaseSensitiveFileNames(): boolean { return true }
 
         // resolveModuleNames?(moduleNames: string[], containingFile: string): ResolvedModule[];
@@ -979,7 +979,7 @@ namespace ts.pxtc.service {
             let res = runConversionsAndCompileUsingService();
             timesToMs(res);
             if (host.opts.target.switches.time)
-                console.log("DIAG-TIME", res.times)
+                pxt.log("DIAG-TIME", res.times)
             return res
         },
 

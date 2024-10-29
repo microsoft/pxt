@@ -1162,7 +1162,7 @@ namespace pxt.py {
                 }
             }
 
-            // TODO inspect type info to rewrite things like console.log, Math.max, etc.
+            // TODO inspect type info to rewrite things like pxt.log, Math.max, etc.
             let [fnExp, fnSup] = emitExp(s.expression)
             let fn = expToStr(fnExp);
 

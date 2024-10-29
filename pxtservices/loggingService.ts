@@ -30,16 +30,16 @@ export const logError = (errorCode: string, message?: any, data: pxt.Map<string 
         ...dataObj,
         errorCode,
     });
-    console.error(timestamp(), errorCode, dataObj);
+    pxt.error(timestamp(), errorCode, dataObj);
 };
 
 export const logInfo = (message: any) => {
-    console.log(timestamp(), message);
+    pxt.log(timestamp(), message);
 };
 
 export const logDebug = (message: any, data?: any) => {
     if (pxt.BrowserUtils.isLocalHost() || pxt.options.debug) {
-        console.log(timestamp(), message, data);
+        pxt.log(timestamp(), message, data);
     }
 };
 

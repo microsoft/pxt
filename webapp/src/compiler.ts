@@ -471,7 +471,7 @@ export function workerOpAsync<T extends keyof pxtc.service.ServiceOps>(op: T, ar
             if (pxt.appTarget.compile.switches.time) {
                 pxt.log(`Worker perf: ${op} ${Date.now() - startTm}ms`)
                 if (res.times)
-                    console.log(res.times)
+                    pxt.log(res.times)
             }
             pxt.debug("worker op done: " + op)
             return res
@@ -679,7 +679,7 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
         }
         catch (e) {
             // Don't fail if the indexeddb fails, but log it
-            console.log("Unable to open API info cache DB");
+            pxt.log("Unable to open API info cache DB");
             return null;
         }
 
@@ -926,7 +926,7 @@ function upgradeFromBlocksAsync(): Promise<UpgradeResult> {
             };
         })
         .catch(e => {
-            console.log(e)
+            pxt.log(e)
             pxt.debug("Block upgrade failed, falling back to TS");
             return upgradeFromTSAsync();
         });
@@ -1176,7 +1176,7 @@ class ApiInfoIndexedDb {
         }
         return openAsync()
             .catch(e => {
-                console.log(`db: failed to open api database, try delete entire store...`)
+                pxt.log(`db: failed to open api database, try delete entire store...`)
                 return pxt.BrowserUtils.IDBWrapper.deleteDatabaseAsync(ApiInfoIndexedDb.dbName())
                     .then(() => openAsync());
             })
@@ -1217,9 +1217,9 @@ class ApiInfoIndexedDb {
 
     clearAsync(): Promise<void> {
         return this.db.deleteAllAsync(ApiInfoIndexedDb.TABLE)
-            .then(() => console.debug(`db: all clean`))
+            .then(() => pxt.debug(`db: all clean`))
             .catch(e => {
-                console.error('db: failed to delete all');
+                pxt.error('db: failed to delete all');
             })
     }
 }

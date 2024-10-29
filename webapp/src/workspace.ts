@@ -671,7 +671,7 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
                 // If this fails for some reason, the history is going to end
                 // up being corrupted. Should we switch to memory db?
                 pxt.reportException(e);
-                console.warn("Unable to update project history", e);
+                pxt.warn("Unable to update project history", e);
             }
         }
 

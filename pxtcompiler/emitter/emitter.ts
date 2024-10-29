@@ -244,7 +244,7 @@ namespace ts.pxtc {
     }
 
     function inspect(n: Node) {
-        console.log(stringKind(n))
+        pxt.log(stringKind(n))
     }
 
     // next free error 9284
@@ -1692,7 +1692,7 @@ ${lbl}: .short 0xffff
             let l = lookupCell(decl)
             recordUse(decl)
             let r = l.load()
-            //console.log("LOADLOC", l.toString(), r.toString())
+            //pxt.log("LOADLOC", l.toString(), r.toString())
             return r
         }
 
@@ -1750,8 +1750,8 @@ ${lbl}: .short 0xffff
                 userError(9208, lf("'this' used outside of a method"))
             let inf = getFunctionInfo(meth)
             if (!inf.thisParameter) {
-                //console.log("get this param,", meth.kind, nodeKey(meth))
-                //console.log("GET", meth)
+                //pxt.log("get this param,", meth.kind, nodeKey(meth))
+                //pxt.log("GET", meth)
                 oops("no this")
             }
             return emitLocalLoad(inf.thisParameter)
@@ -3007,7 +3007,7 @@ ${lbl}: .short 0xffff
             })
 
             proc.args.forEach(l => {
-                //console.log(l.toString(), l.info)
+                //pxt.log(l.toString(), l.info)
                 if (l.isByRefLocal()) {
                     // TODO add C++ support function to do this
                     let tmp = ir.shared(ir.rtcall("pxtrt::mklocRef", []))
@@ -3520,7 +3520,7 @@ ${lbl}: .short 0xffff
             }
 
             //if (info.constantFolded)
-            //    console.log(getDeclName(decl), getSourceFileOfNode(decl).fileName, info.constantFolded.val)
+            //    pxt.log(getDeclName(decl), getSourceFileOfNode(decl).fileName, info.constantFolded.val)
 
             return info.constantFolded
         }
@@ -3668,7 +3668,7 @@ ${lbl}: .short 0xffff
                     case "numops::adds":
                         return v0 + v1;
                     default:
-                        console.log(e)
+                        pxt.log(e)
                         return undefined;
                 }
             }
