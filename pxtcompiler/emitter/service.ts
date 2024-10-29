@@ -19,7 +19,7 @@ namespace ts.pxtc {
         "Math.min": { n: "min", t: ts.SyntaxKind.NumberKeyword, snippet: "min(0, 0)" },
         "Math.max": { n: "max", t: ts.SyntaxKind.NumberKeyword, snippet: "max(0, 0)" },
         "Math.abs": { n: "abs", t: ts.SyntaxKind.NumberKeyword, snippet: "abs(0)" },
-        "pxt.log": { n: "print", t: ts.SyntaxKind.VoidKeyword, snippet: 'print(":)")' },
+        "console.log": { n: "print", t: ts.SyntaxKind.VoidKeyword, snippet: 'print(":)")' },
         ".length": { n: "len", t: ts.SyntaxKind.NumberKeyword },
         ".toLowerCase()": { n: "string.lower", t: ts.SyntaxKind.StringKeyword },
         ".toUpperCase()": { n: "string.upper", t: ts.SyntaxKind.StringKeyword },
