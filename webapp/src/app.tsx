@@ -5012,7 +5012,8 @@ export class ProjectView
     setEditorOffset() {
         if (this.isTutorial()) {
             if (!pxt.BrowserUtils.useOldTutorialLayout()) {
-                const tutorialEl = document?.getElementById("tutorialWrapper");
+                const tutorialElements = document?.getElementsByClassName("tutorialWrapper");
+                const tutorialEl = tutorialElements?.length === 1 ? (tutorialElements[0] as HTMLElement) : undefined;
                 if (tutorialEl && (pxt.BrowserUtils.isTabletSize() || pxt.appTarget.appTheme.tutorialSimSidebarLayout)) {
                     this.setState({ editorOffset: tutorialEl.offsetHeight + "px" });
                 } else {
