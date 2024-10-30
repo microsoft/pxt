@@ -23,7 +23,6 @@ interface TutorialContainerProps {
     hasTemplate?: boolean;
     preferredEditor?: string;
     hasBeenResized?: boolean;
-    hideDone?: boolean;
 
     tutorialOptions?: pxt.tutorial.TutorialOptions; // TODO (shakao) pass in only necessary subset
     tutorialSimSidebar?: boolean;
@@ -38,7 +37,7 @@ const MAX_HEIGHT = 194;
 
 export function TutorialContainer(props: TutorialContainerProps) {
     const { parent, tutorialId, name, steps, hideIteration, hasTemplate,
-        preferredEditor, tutorialOptions, hideDone, onTutorialStepChange, onTutorialComplete,
+        preferredEditor, tutorialOptions, onTutorialStepChange, onTutorialComplete,
         setParentHeight } = props;
     const [ currentStep, setCurrentStep ] = React.useState(props.currentStep || 0);
     const [ stepErrorAttemptCount, setStepErrorAttemptCount ] = React.useState(0);
@@ -236,6 +235,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
         })
     }
 
+    const hideDone = tutorialOptions.metadata?.hideDone;
     const doneButtonLabel = lf("Finish the tutorial.");
     const nextButtonLabel = lf("Go to the next step of the tutorial.");
     const nextButton = isDone

@@ -233,7 +233,6 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
             preferredEditor={tutorialOptions.metadata?.preferredEditor}
             tutorialSimSidebar={this.props.tutorialSimSidebar}
             hasBeenResized={this.state.resized && this.state.shouldResize}
-            hideDone={tutorialOptions.metadata?.hideDone}
             onTutorialStepChange={onTutorialStepChange}
             onTutorialComplete={onTutorialComplete}
             setParentHeight={newSize => this.setComponentHeight(newSize, false)} /> : undefined;
