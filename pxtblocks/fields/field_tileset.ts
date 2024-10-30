@@ -205,7 +205,7 @@ export class FieldTileset extends FieldImages implements FieldCustom {
             }
 
             if (this.sourceBlock_) {
-                console.warn(`Trying to set tile reference to nonexistent tile. Block type: ${this.sourceBlock_.type}, Field name: ${this.name}, Value: ${newValue}`)
+                pxt.warn(`Trying to set tile reference to nonexistent tile. Block type: ${this.sourceBlock_.type}, Field name: ${this.name}, Value: ${newValue}`)
             }
 
             return null;

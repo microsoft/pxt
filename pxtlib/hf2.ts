@@ -195,7 +195,7 @@ namespace pxt.HF2 {
             io.onData = buf => {
                 let tp = buf[0] & HF2_FLAG_MASK
                 let len = buf[0] & 63
-                //console.log(`msg tp=${tp} len=${len}`)
+                //pxt.log(`msg tp=${tp} len=${len}`)
                 let frame = new Uint8Array(len)
                 U.memcpy(frame, 0, buf, 1, len)
                 if (tp & HF2_FLAG_SERIAL_OUT) {

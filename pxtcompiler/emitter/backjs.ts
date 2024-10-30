@@ -455,7 +455,7 @@ function ${id}(s) {
 
         // result in R0
         function emitExpr(e: ir.Expr): void {
-            //console.log(`EMITEXPR ${e.sharingInfo()} E: ${e.toString()}`)
+            //pxt.log(`EMITEXPR ${e.sharingInfo()} E: ${e.toString()}`)
 
             switch (e.exprKind) {
                 case EK.JmpValue:
@@ -607,7 +607,7 @@ function ${id}(s) {
                 write(`${frameRef} = ${id}(s);`)
             }
 
-            //console.log("PROCCALL", topExpr.toString())
+            //pxt.log("PROCCALL", topExpr.toString())
             topExpr.args.forEach((a, i) => {
                 let arg = `arg${i}`
                 if (isLambda) {

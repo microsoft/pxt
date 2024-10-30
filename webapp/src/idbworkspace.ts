@@ -147,7 +147,7 @@ async function migratePouchAsync() {
                 prefix = prefix || getCurrentDBPrefix();
                 break;
             default:
-                console.warn("Unknown database table " + table);
+                pxt.warn("Unknown database table " + table);
                 continue;
         }
 

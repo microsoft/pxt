@@ -18,7 +18,7 @@ export function GetValidator(metadata: CodeValidatorMetadata): CodeValidator {
         case "blocksexistvalidator":
             return new BlocksExistValidator(metadata.properties);
         default:
-            console.error(`Unrecognized validator: ${metadata.validatorType}`);
+            pxt.error(`Unrecognized validator: ${metadata.validatorType}`);
             return null;
     }
 }

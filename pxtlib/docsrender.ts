@@ -1,6 +1,7 @@
 /// <reference path='../localtypings/pxtarget.d.ts' />
 /// <reference path='../localtypings/dompurify.d.ts' />
 /// <reference path="commonutil.ts"/>
+/// <reference path="./logger.ts" />
 
 namespace pxt.docs {
     // eslint-disable-next-line no-var
@@ -1039,7 +1040,7 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
             let r = augmentDocs(a, b).trim()
             c = c.trim()
             if (r != c) {
-                console.log(`*** Template:\n${a}\n*** Input:\n${b}\n*** Expected:\n${c}\n*** Output:\n${r}`)
+                pxt.log(`*** Template:\n${a}\n*** Input:\n${b}\n*** Expected:\n${c}\n*** Output:\n${r}`)
                 throw new Error("augment docs test fail")
             }
         }

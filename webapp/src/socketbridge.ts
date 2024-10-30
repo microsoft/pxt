@@ -18,7 +18,7 @@ function onOOB(v: OOB) {
     if (b) {
         b.onOOB(v)
     } else {
-        console.error("Dropping data for " + v.result.socket)
+        pxt.error("Dropping data for " + v.result.socket)
     }
 }
 

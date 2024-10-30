@@ -72,7 +72,7 @@ export class DebugRunner implements pxsim.protocol.DebugSessionHost {
                         this.initializeWebsocket();
                     }
                     catch (e) {
-                        console.warn(`Connection to server failed, retrying in ${DebugRunner.RETRY_MS} ms`);
+                        pxt.warn(`Connection to server failed, retrying in ${DebugRunner.RETRY_MS} ms`);
                     }
                 }
             }, DebugRunner.RETRY_MS);

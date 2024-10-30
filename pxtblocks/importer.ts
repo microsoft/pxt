@@ -406,7 +406,7 @@ function createBlockFromShadow(shadow: Element) {
 export function patchShadows(root: Element, inShadow: boolean) {
     if (root.tagName === "shadow") {
         if (root.parentElement?.tagName === "xml") {
-            console.warn(`Shadow block of type '${root.getAttribute("type")}' found at top level. Converting to non-shadow block`);
+            pxt.warn(`Shadow block of type '${root.getAttribute("type")}' found at top level. Converting to non-shadow block`);
             pxt.tickEvent(`blocks.import.topLevelShadow`, { blockId: root.getAttribute("type") });
 
             const newBlock = createBlockFromShadow(root);

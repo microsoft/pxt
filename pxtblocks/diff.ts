@@ -72,7 +72,7 @@ function diffWorkspace(oldWs: Blockly.Workspace, newWs: Blockly.Workspace, optio
 
 function logger() {
     const log = pxt.options.debug || (window && /diffdbg=1/.test(window.location.href))
-        ? console.log : (message?: any, ...args: any[]) => { };
+        ? pxt.log : (message?: any, ...args: any[]) => { };
     return log;
 
 }

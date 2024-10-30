@@ -530,7 +530,7 @@ export class EditorDriver extends IframeDriver {
         }
         catch (e) {
             error = e;
-            console.error(e);
+            pxt.error(e);
         }
         finally {
             if (event.response) {

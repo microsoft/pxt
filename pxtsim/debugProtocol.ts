@@ -330,7 +330,7 @@ namespace pxsim.protocol {
 
         public sendResponse(response: DebugProtocol.Response): void {
             if (response.seq > 0) {
-                console.error(`attempt to send more than one response for command ${response.command}`);
+                pxt.error(`attempt to send more than one response for command ${response.command}`);
             } else {
                 this.send('response', response);
             }

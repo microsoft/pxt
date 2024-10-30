@@ -298,7 +298,7 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
                             case "setlanguagerestriction": {
                                 const msg = data as pxt.editor.EditorSetLanguageRestriction;
                                 if (msg.restriction === "no-blocks") {
-                                    console.warn("no-blocks language restriction is not supported");
+                                    pxt.warn("no-blocks language restriction is not supported");
                                     throw new Error("no-blocks language restriction is not supported")
                                 }
                                 return projectView.setLanguageRestrictionAsync(msg.restriction);

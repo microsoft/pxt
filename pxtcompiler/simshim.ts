@@ -203,9 +203,9 @@ namespace pxt {
                 case SK.ClassDeclaration:
                     return emitClassDeclaration(stmt as ts.ClassDeclaration)
             }
-            //console.log("SKIP", pxtc.stringKind(stmt))
+            //pxt.log("SKIP", pxtc.stringKind(stmt))
             //let mod = stmt as ts.ModuleDeclaration
-            //if (mod.name) console.log(mod.name.text)
+            //if (mod.name) pxt.log(mod.name.text)
             /*
             if (mod.name) {
                 let sym = typechecker.getSymbolAtLocation(mod.name)

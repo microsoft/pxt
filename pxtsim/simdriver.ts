@@ -962,7 +962,7 @@ namespace pxsim {
                     msg = 'pause';
                     break;
                 default:
-                    console.debug('unknown command')
+                    pxt.debug('unknown command')
                     return;
             }
 
@@ -1006,7 +1006,7 @@ namespace pxsim {
 
         private handleDebuggerMessage(msg: pxsim.DebuggerMessage) {
             if (msg.subtype !== "trace") {
-                console.log("DBG-MSG", msg.subtype, msg)
+                pxt.log("DBG-MSG", msg.subtype, msg)
             }
 
             // resolve any request
@@ -1043,9 +1043,9 @@ namespace pxsim {
                             let fi = s.funcInfo
                             stackTrace += `   at ${fi.functionName} (${fi.fileName}:${fi.line + 1}:${fi.column + 1})\n`
                         }
-                        if (brk.exceptionMessage) console.error(stackTrace);
+                        if (brk.exceptionMessage) pxt.error(stackTrace);
                     } else {
-                        console.error("debugger: trying to pause from " + this.state);
+                        pxt.error("debugger: trying to pause from " + this.state);
                     }
                     break;
                 }

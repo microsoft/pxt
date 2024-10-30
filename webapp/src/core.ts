@@ -396,13 +396,13 @@ export function apiAsync(path: string, data?: any) {
         Cloud.privatePostAsync(path, data) :
         Cloud.privateGetAsync(path))
         .then(resp => {
-            console.log("*")
-            console.log("*******", path, "--->")
-            console.log("*")
-            console.log(resp)
-            console.log("*")
+            pxt.log("*")
+            pxt.log("*******", path, "--->")
+            pxt.log("*")
+            pxt.log(resp)
+            pxt.log("*")
             return resp
         }, err => {
-            console.log(err.message)
+            pxt.log(err.message)
         })
 }

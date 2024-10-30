@@ -1234,7 +1234,7 @@ namespace pxt {
                     data = JSON.parse(entry.data);
                 }
                 catch (e) {
-                    console.warn("could not parse json data of '" + entry.id + "'");
+                    pxt.warn("could not parse json data of '" + entry.id + "'");
                 }
 
                 const anim: Animation = {

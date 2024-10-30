@@ -79,7 +79,7 @@ namespace pxsim {
 
         print() {
             if (runtime && runtime.refCountingDebug)
-                console.log(`RefObject id:${this.id}`)
+                pxt.log(`RefObject id:${this.id}`)
         }
 
         // render a debug preview string
@@ -144,7 +144,7 @@ namespace pxsim {
 
         print() {
             if (runtime && runtime.refCountingDebug)
-                console.log(`RefRecord id:${this.id} (${this.vtable.name})`)
+                pxt.log(`RefRecord id:${this.id} (${this.vtable.name})`)
         }
     }
 
@@ -179,7 +179,7 @@ namespace pxsim {
 
         print() {
             if (runtime && runtime.refCountingDebug)
-                console.log(`RefAction id:${this.id} len:${this.fields.length}`)
+                pxt.log(`RefAction id:${this.id} len:${this.fields.length}`)
         }
     }
 
@@ -269,7 +269,7 @@ namespace pxsim {
                 r += "\n"
             }
 
-            console.log(r)
+            pxt.log(r)
         }
 
 
@@ -283,7 +283,7 @@ namespace pxsim {
                 csv += `${p.numstops},${p.value},${p.name},${median}\n`
             }
             processPerfCounters(csv)
-            // console.log(csv)
+            // pxt.log(csv)
         }
     }
 
@@ -302,7 +302,7 @@ namespace pxsim {
 
         print() {
             if (runtime && runtime.refCountingDebug)
-                console.log(`RefRefLocal id:${this.id} v:${this.v}`)
+                pxt.log(`RefRefLocal id:${this.id} v:${this.v}`)
         }
     }
 
@@ -342,7 +342,7 @@ namespace pxsim {
 
         print() {
             if (runtime && runtime.refCountingDebug)
-                console.log(`RefMap id:${this.id} size:${this.data.length}`)
+                pxt.log(`RefMap id:${this.id} size:${this.data.length}`)
         }
 
         toAny(): any {
@@ -507,7 +507,7 @@ namespace pxsim {
         export function stclo(a: RefAction, idx: number, v: any) {
             check(0 <= idx && idx < a.fields.length)
             check(a.fields[idx] === null)
-            //console.log(`STCLO [${idx}] = ${v}`)
+            //pxt.log(`STCLO [${idx}] = ${v}`)
             a.fields[idx] = v;
             return a;
         }
