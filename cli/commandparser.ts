@@ -109,7 +109,9 @@ export class CommandParser {
                 const debugFlag = flagName || match[2];
                 if (debugFlag == "debug" || debugFlag == "d" || debugFlag == "dbg") {
                     pxt.options.debug = true;
-                    pxt.debug = console.log;
+                    if (pxt.options.debug) {
+                        pxt.setLogLevel(pxt.LogLevel.Debug);
+                    }
                     pxt.log(`debug mode`);
                     if (!flagName)
                         continue;
