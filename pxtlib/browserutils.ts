@@ -173,6 +173,17 @@ namespace pxt.BrowserUtils {
         return window?.innerWidth > pxt.BREAKPOINT_TABLET;
     }
 
+    export function isInGame(): boolean {
+        const inGame = /inGame=1/i.exec(window.location.href);
+        return !!inGame;
+    }
+
+    export function hasFileAccess(): boolean {
+        const disableForMacIos = pxt.appTarget.appTheme.disableFileAccessinMaciOs && (pxt.BrowserUtils.isMac() || pxt.BrowserUtils.isIOS());
+        const disableForAndroid = pxt.appTarget.appTheme.disableFileAccessinAndroid && pxt.BrowserUtils.isAndroid();
+        return !disableForMacIos && !disableForAndroid;
+
+    }
     export function noSharedLocalStorage(): boolean {
         try {
             return /nosharedlocalstorage/i.test(window.location.href);

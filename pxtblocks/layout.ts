@@ -226,9 +226,7 @@ export function flow(ws: Blockly.WorkspaceSvg, opts?: FlowOptions) {
 }
 
 export function screenshotEnabled(): boolean {
-    const disableForMacIos = pxt.appTarget.appTheme.disableFileAccessinMaciOs && (pxt.BrowserUtils.isMac() || pxt.BrowserUtils.isIOS());
-    const disableForAndriod = pxt.appTarget.appTheme.disableFileAccessinAndroid && pxt.BrowserUtils.isAndroid();
-    return !disableForMacIos && !pxt.BrowserUtils.isIE() && !disableForAndriod;
+    return pxt.BrowserUtils.hasFileAccess() && !pxt.BrowserUtils.isIE();
 }
 
 export function screenshotAsync(ws: Blockly.WorkspaceSvg, pixelDensity?: number, encodeBlocks?: boolean): Promise<string> {
