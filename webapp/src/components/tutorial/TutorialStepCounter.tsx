@@ -38,6 +38,7 @@ export function TutorialStepCounter(props: TutorialStepCounterProps) {
 
     const lastStep = currentStep == totalSteps - 1;
     const stepButtonLabelText = (step: number) => lf("Go to step {0} of {1}", step + 1, totalSteps);
+    const backButtonLabel = lf("Go to the previous step of the tutorial.");
     const nextButtonLabel = lf("Go to the next step of the tutorial.");
     const showNextButton = !lastStep || !props.hideDone;
 
