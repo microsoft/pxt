@@ -762,12 +762,12 @@ export async function compileWithLocalCompileService(extinfo: pxtc.ExtensionInfo
     const resp = await runDockerCompileAsync(extinfo.compileData);
 
     if (resp.hexfile) {
-        console.log("Compile successful");
+        pxt.log("Compile successful");
     }
     else {
-        console.log("Compile failed");
-        console.log(resp.stderr)
-        console.log(resp.stdout)
+        pxt.log("Compile failed");
+        pxt.log(resp.stderr)
+        pxt.log(resp.stdout)
     }
 
     return resp.hexfile && {

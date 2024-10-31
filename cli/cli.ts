@@ -7521,7 +7521,7 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
 
     if (process.env["PXT_DEBUG"]) {
         pxt.options.debug = true;
-        pxt.debug = pxt.log;
+        pxt.setLogLevel(pxt.LogLevel.Debug);
     }
 
     if (process.env["PXT_ASMDEBUG"]) {

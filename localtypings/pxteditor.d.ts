@@ -1120,6 +1120,7 @@ declare namespace pxt.editor {
         blocklyToolbox: ToolboxDefinition;
         monacoToolbox: ToolboxDefinition;
         projectView: IProjectView;
+        showNotification: (msg: string) => void;
     }
 
     export interface IToolboxOptions {
@@ -1152,6 +1153,17 @@ declare namespace pxt.editor {
         // Used with @codeStart, @codeStop metadata (MINECRAFT HOC ONLY)
         onCodeStart?: () => void;
         onCodeStop?: () => void;
+
+        experiments?: Experiment[];
+    }
+
+    export interface Experiment {
+        id: string; // == field in apptheme also assumes image at /static/experiments/ID.png
+        name: string;
+        description: string;
+        feedbackUrl?: string; // allows user to put feedback
+        enableOnline?: boolean; // requires internet connection, disable in offline app
+        onClick?: () => void; // code to run when the experiment is clicked
     }
 
     export interface FieldExtensionOptions {

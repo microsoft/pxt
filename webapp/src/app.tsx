@@ -5858,7 +5858,8 @@ function initExtensionsAsync(): Promise<void> {
     const opts: pxt.editor.ExtensionOptions = {
         blocklyToolbox: blocklyToolbox.getToolboxDefinition(),
         monacoToolbox: monacoToolbox.getToolboxDefinition(),
-        projectView: theEditor
+        projectView: theEditor,
+        showNotification: (msg) => core.infoNotification(msg)
     };
     return pxt.BrowserUtils.loadScriptAsync("editor.js")
         .then(() => pxt.editor.initExtensionsAsync(opts))
@@ -5935,8 +5936,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     const config = pxt.webConfig
 
     const optsQuery = Util.parseQueryString(window.location.href.toLowerCase());
-    if (optsQuery["dbg"] == "1")
-        pxt.debug = pxt.debug;
+    if (optsQuery["dbg"] == "1") {
+        pxt.setLogLevel(pxt.LogLevel.Debug);
+    }
     pxt.options.light = optsQuery["light"] == "1" || pxt.BrowserUtils.isARM() || pxt.BrowserUtils.isIE();
     if (pxt.options.light) {
         pxsim.U.addClass(document.body, 'light');
