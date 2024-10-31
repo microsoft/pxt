@@ -46,7 +46,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
 
     const showBack = currentStep !== 0;
     const showNext = currentStep !== steps.length - 1;
-    const showDone = !showNext && !pxt.appTarget.appTheme.lockedEditor && !hideIteration;
+    const isDone = !showNext && !pxt.appTarget.appTheme.lockedEditor && !hideIteration;
     const showImmersiveReader = pxt.appTarget.appTheme.immersiveReader;
     const isHorizontal = layout === "horizontal";
 
@@ -226,10 +226,11 @@ export function TutorialContainer(props: TutorialContainerProps) {
         })
     }
 
+    const hideDone = tutorialOptions.metadata?.hideDone;
     const doneButtonLabel = lf("Finish the tutorial.");
     const nextButtonLabel = lf("Go to the next step of the tutorial.");
-    const nextButton = showDone
-        ? <Button icon="check circle" title={doneButtonLabel} ariaLabel={doneButtonLabel} text={lf("Done")} onClick={onTutorialComplete} />
+    const nextButton = isDone
+        ? hideDone ? null : <Button icon="check circle" title={doneButtonLabel} ariaLabel={doneButtonLabel} text={lf("Done")} onClick={onTutorialComplete} />
         : <Button icon="arrow circle right" title={nextButtonLabel} ariaLabel={nextButtonLabel} disabled={!showNext} text={lf("Next")} onClick={() => validateTutorialStep()} />;
 
     const stepCounter = <TutorialStepCounter
@@ -237,7 +238,8 @@ export function TutorialContainer(props: TutorialContainerProps) {
         currentStep={visibleStep}
         totalSteps={steps.length}
         title={name}
-        setTutorialStep={handleStepCounterSetStep} />;
+        setTutorialStep={handleStepCounterSetStep}
+        hideDone={hideDone} />;
     const hasHint = !!hintMarkdown;
 
 

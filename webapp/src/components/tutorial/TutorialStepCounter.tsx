@@ -5,6 +5,7 @@ interface TutorialStepCounterProps {
     currentStep: number;
     totalSteps: number;
     title?: string;
+    hideDone?: boolean;
     setTutorialStep: (step: number) => void;
 }
 
@@ -35,9 +36,11 @@ export function TutorialStepCounter(props: TutorialStepCounterProps) {
         setTutorialStep(step);
     }
 
+    const lastStep = currentStep == totalSteps - 1;
     const stepButtonLabelText = (step: number) => lf("Go to step {0} of {1}", step + 1, totalSteps);
     const backButtonLabel = lf("Go to the previous step of the tutorial.");
     const nextButtonLabel = lf("Go to the next step of the tutorial.");
+    const showNextButton = !lastStep || !props.hideDone;
 
     return <div className="tutorial-step-counter">
         <div className="tutorial-step-label">
@@ -65,14 +68,14 @@ export function TutorialStepCounter(props: TutorialStepCounterProps) {
                     label={stepNum === currentStep ? `${stepNum + 1}` : undefined}
                 />
             })}
-            <Button
+            {showNextButton && <Button
                 disabled={currentStep == totalSteps - 1}
                 className="square-button"
                 leftIcon="icon right chevron"
                 onClick={handleNextStep}
                 aria-label={nextButtonLabel}
                 title={nextButtonLabel}
-            />
+            />}
         </div>
     </div>
 }

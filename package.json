@@ -160,6 +160,7 @@
     "test:err": "gulp testerr",
     "test:fmt": "gulp testfmt",
     "test:lang": "gulp testlang",
+    "test:tutorials": "gulp testtutorials",
     "update": "gulp update",
     "watch-streamer": "cd docs/static/streamer && tsc -t es6 --watch",
     "prepare": "cd skillmap && npm install && cd .. && cd authcode && npm install && cd .. && cd multiplayer && npm install && cd .. && cd kiosk && npm install && cd .."

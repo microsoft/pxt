@@ -1145,6 +1145,7 @@ declare namespace pxt.tutorial {
         autoexpandOff?: boolean; // INTERNAL TESTING ONLY
         preferredEditor?: string; // preferred editor for opening the tutorial
         tutorialCodeValidation?: boolean; // enable tutorial validation for this tutorial
+        hideDone?: boolean; // Do not show a "Done" button at the end of the tutorial
     }
 
     interface TutorialRuleStatus {
