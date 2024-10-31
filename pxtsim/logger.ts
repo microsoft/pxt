@@ -1,4 +1,4 @@
-namespace pxt {
+namespace pxsim {
     export interface Logger {
         info(...args: any[]): void;
         log(...args: any[]): void;
@@ -78,7 +78,7 @@ namespace pxt {
         }
     }
 
-    let logger: Logger = new ConsoleLogger();
+    let logger: pxsim.Logger = new pxsim.ConsoleLogger();
 
     export function info(...args: any[]): void {
         logger.info(...args);
@@ -100,7 +100,7 @@ namespace pxt {
         logger.warn(...args);
     }
 
-    export function setLogger(impl: Logger) {
+    export function setLogger(impl: pxsim.Logger) {
         const level = logger?.getLogLevel();
         logger = impl;
         if (level !== undefined) {
@@ -108,7 +108,7 @@ namespace pxt {
         }
     }
 
-    export function setLogLevel(level: LogLevel) {
+    export function setLogLevel(level: pxsim.LogLevel) {
         logger.setLogLevel(level);
     }
 }

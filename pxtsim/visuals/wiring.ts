@@ -467,7 +467,7 @@ namespace pxsim.visuals {
             let startLoc = this.getLocCoord(start);
             let endLoc = this.getLocCoord(end);
             if (!startLoc || !endLoc) {
-                pxt.debug(`unable to allocate wire for ${start} or ${end}`);
+                pxsim.debug(`unable to allocate wire for ${start} or ${end}`);
                 return undefined;
             }
             //let startStyle = this.getPinStyle(start);
