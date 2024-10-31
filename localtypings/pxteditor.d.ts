@@ -1120,7 +1120,7 @@ declare namespace pxt.editor {
         blocklyToolbox: ToolboxDefinition;
         monacoToolbox: ToolboxDefinition;
         projectView: IProjectView;
-        showNotification: (msg) => void;
+        showNotification: (msg: string) => void;
     }
 
     export interface IToolboxOptions {
