@@ -5858,7 +5858,8 @@ function initExtensionsAsync(): Promise<void> {
     const opts: pxt.editor.ExtensionOptions = {
         blocklyToolbox: blocklyToolbox.getToolboxDefinition(),
         monacoToolbox: monacoToolbox.getToolboxDefinition(),
-        projectView: theEditor
+        projectView: theEditor,
+        showNotification: (msg) => core.infoNotification(msg)
     };
     return pxt.BrowserUtils.loadScriptAsync("editor.js")
         .then(() => pxt.editor.initExtensionsAsync(opts))
