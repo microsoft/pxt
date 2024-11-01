@@ -318,17 +318,6 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         this.setState({ sortedAsc: !sortedAsc });
     }
 
-    renderDownloadDialog(fileName: string) {
-        return <>
-            <div>
-                {lf("Your projects were zipped and downloaded successfully!")}
-                <br />
-                <br />
-                {lf("Look for the file {0} on your computer. It might have a number before the .zip if you've downloaded before.", fileName)}
-            </div>
-        </>;
-    }
-
     handleDownloadAsync = async () => {
         pxt.tickEvent("scriptmanager.downloadZip", undefined, { interactiveConsent: true });
 
@@ -435,25 +424,12 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
 
         const zipName = `makecode-${targetNickname}-project-download.zip`
 
+        pxt.BrowserUtils.browserDownloadDataUri(datauri, zipName);
 
         this.setState({
             download: null
         });
 
-        pxt.BrowserUtils.browserDownloadDataUri(datauri, zipName);
-        if (pxt.BrowserUtils.isInGame()) {
-            const downloadJsx = this.renderDownloadDialog(zipName);
-
-            setTimeout(async () => {
-                await core.confirmAsync({
-                    header: lf("Projects Downloaded..."),
-                    jsx: downloadJsx,
-                    hasCloseIcon: true,
-                    hideAgree: true,
-                    className: 'zipdownloaddialog',
-                })
-            }, 2000);
-        }
     }
 
     handleDownloadProgressClose = () => {
