@@ -3,6 +3,7 @@ import { Button } from "../controls/Button";
 import { Card } from "../controls/Card";
 import { LazyImage } from "../controls/LazyImage";
 import { classList } from "../util";
+import { Link } from "../controls/Link";
 
 export interface ExtensionCardProps<U> {
     title: string;
@@ -46,7 +47,7 @@ export const ExtensionCard = <U,>(props: ExtensionCardProps<U>) => {
             <div className="common-extension-card-contents">
                 {!loading && <>
                     {imageUrl && <LazyImage src={imageUrl} alt={title} />}
-                    <div className="common-extension-card-title" id={id + "-title"}>
+                    <div className="common-extension-card-title" id={id + "-title"} title={title}>
                         {title}
                     </div>
                     <div className="common-extension-card-description">
@@ -58,13 +59,13 @@ export const ExtensionCard = <U,>(props: ExtensionCardProps<U>) => {
                         <div className="common-extension-card-extra-content">
                             {showDisclaimer && lf("User-provided extension, not endorsed by Microsoft.")}
                             {learnMoreUrl &&
-                                <Button
+                                <Link
                                     className="link-button"
-                                    label={lf("Learn More")}
-                                    title={lf("Learn More")}
-                                    onClick={() => { }}
                                     href={learnMoreUrl}
-                                />
+                                    target="_blank"
+                                >
+                                    {lf("Learn More")}
+                                </Link>
                             }
                         </div>
                     }
