@@ -429,6 +429,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         this.setState({
             download: null
         });
+
     }
 
     handleDownloadProgressClose = () => {
@@ -529,7 +530,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                 }
                 headerActions.push(<sui.Button key="delete" icon="trash" className="icon red"
                     text={lf("Delete")} textClass="landscape only" title={lf("Delete Project")} onClick={this.handleDelete} />);
-                if (numSelected > 1) {
+                if (numSelected > 1 && pxt.BrowserUtils.hasFileAccess()) {
                     headerActions.push(<sui.Button key="download-zip" icon="download" className="icon"
                         text={lf("Download Zip")} textClass="landscape only" title={lf("Download Zip")} onClick={this.handleDownloadAsync} />);
                 }
