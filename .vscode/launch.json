@@ -17,6 +17,21 @@
 			"console": "integratedTerminal"
 		},
 		{
+			"name": "codegen2 (pxt-bedrock)",
+			"type": "node",
+			"request": "launch",
+			"runtimeArgs": [
+				"run-script",
+				"vscode:debug"
+			],
+			"runtimeExecutable": "npm",
+			"stopOnEntry": false,
+			"sourceMaps": true,
+			"outFiles": [],
+            "localRoot": "${workspaceRoot}/../pxt-bedrock/codegen2",
+			"console": "integratedTerminal"
+		},
+		{
 			"name": "pxt ci (pxt-core)",
 			"type": "node",
 			"request": "launch",

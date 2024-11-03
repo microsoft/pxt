@@ -3507,8 +3507,8 @@ ${lbl}: .short 0xffff
                 return ev;
             if (/^0x[A-Fa-f\d]{2,8}$/.test(ev))
                 return ev;
-            U.userError("enumval only support number literals")
-            return "0"
+            //U.userError("enumval only support number literals")
+            return ev;
         }
 
         function emitFolded(f: Folded) {
@@ -3535,9 +3535,7 @@ ${lbl}: .short 0xffff
                 if (ev == null) {
                     info.constantFolded = constantFold(en.initializer)
                 } else {
-                    const v = parseInt(ev)
-                    if (!isNaN(v))
-                        info.constantFolded = { val: v }
+                    info.constantFolded = { val: ev }
                 }
             } else if (decl.kind == SK.PropertyDeclaration && isStatic(decl) && isReadOnly(decl)) {
                 const pd = decl as PropertyDeclaration

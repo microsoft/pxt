@@ -68,6 +68,8 @@ export interface DropdownProps extends UiProps {
     id?: string;
     onChange?: (v: string) => void;
     onClick?: () => boolean;    // Return 'true' to toggle open/close
+    onShow?: () => void;
+    onHide?: () => void;
 
     titleContent?: React.ReactNode;
     displayAbove?: boolean;
@@ -84,10 +86,12 @@ export interface DropdownState {
 export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
 
     show() {
+        this.props.onShow?.();
         this.setState({ open: true, focus: true });
     }
 
     hide() {
+        this.props.onHide?.();
         this.setState({ open: false });
     }
 
@@ -167,32 +171,52 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
         }
     }
 
+    childFocus = (child: HTMLElement) => {
+        this.setActive(child);
+    }
+    childBlur = (child: HTMLElement) => {
+        this.blur(child);
+    }
+    childClick = (child: HTMLElement) => {
+        this.hide();
+    }
+    childKeyDown = (child: HTMLElement, e: KeyboardEvent, prev: HTMLElement, next: HTMLElement) => {
+        this.navigateToNextElement(e, prev, next);
+    }
+    lastChildKeyDown = (child: HTMLElement, e: KeyboardEvent) => {
+        const charCode = core.keyCodeFromEvent(e);
+        if (!e.shiftKey && charCode === core.TAB_KEY) {
+            this.hide();
+        }
+    }
+
+    UNSAFE_componentWillUpdate(nextProps: Readonly<DropdownProps>, nextState: Readonly<DropdownState>, nextContext: any): void {
+        const children = this.getChildren();
+        for (let i = 0; i < children.length; i++) {
+            const prev = i > 0 ? children[i - 1] as HTMLElement : undefined;
+            const child = children[i] as HTMLElement;
+            const next = i < children.length ? children[i + 1] as HTMLElement : undefined;
+            child.removeEventListener('keydown', (e) => this.childKeyDown(child, e, prev, next));
+            child.removeEventListener('focus', () => this.childFocus(child));
+            child.removeEventListener('blur', () => this.childBlur(child));
+            child.removeEventListener('click', () => this.childClick(child));
+            child.removeEventListener('keydown', (e) => this.lastChildKeyDown(child, e));
+        }        
+    }
+
     componentDidMount() {
         const children = this.getChildren();
         for (let i = 0; i < children.length; i++) {
             const prev = i > 0 ? children[i - 1] as HTMLElement : undefined;
             const child = children[i] as HTMLElement;
             const next = i < children.length ? children[i + 1] as HTMLElement : undefined;
-
-            child.addEventListener('keydown', (e) => {
-                this.navigateToNextElement(e, prev, next);
-            })
-
-            child.addEventListener('focus', (e: FocusEvent) => {
-                this.setActive(child);
-            })
-            child.addEventListener('blur', (e: FocusEvent) => {
-                this.blur(child);
-            })
-
+            child.addEventListener('keydown', (e) => this.childKeyDown(child, e, prev, next));
+            child.addEventListener('focus', (e: FocusEvent) => this.childFocus(child));
+            child.addEventListener('blur', (e: FocusEvent) => this.childBlur(child));
+            child.addEventListener('click', (e) => this.childClick(child));
             if (i == children.length - 1) {
                 // set tab on last child to clear focus
-                child.addEventListener('keydown', (e) => {
-                    const charCode = core.keyCodeFromEvent(e);
-                    if (!e.shiftKey && charCode === core.TAB_KEY) {
-                        this.hide();
-                    }
-                })
+                child.addEventListener('keydown', (e) => this.lastChildKeyDown(child, e));
             }
         }
     }
@@ -204,6 +228,17 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
             const child = children[i] as HTMLElement;
             // On allow tabbing to valid child nodes (ie: no separators or mobile only items)
             child.tabIndex = this.state.open ? 0 : -1;
+            // Set event handlers
+            const prev = i > 0 ? children[i - 1] as HTMLElement : undefined;
+            const next = i < children.length ? children[i + 1] as HTMLElement : undefined;
+            child.addEventListener('keydown', (e) => this.childKeyDown(child, e, prev, next));
+            child.addEventListener('focus', (e: FocusEvent) => this.childFocus(child));
+            child.addEventListener('blur', (e: FocusEvent) => this.childBlur(child));
+            child.addEventListener('click', (e) => this.childClick(child));
+            if (i == children.length - 1) {
+                // set tab on last child to clear focus
+                child.addEventListener('keydown', (e) => this.lastChildKeyDown(child, e));
+            }
         }
 
         // Check if dropdown width exceeds the bounds, add the left class to the menu
