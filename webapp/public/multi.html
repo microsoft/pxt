@@ -71,7 +71,12 @@
                 var hashLeft = ""
                 var hashRight = ""
                 var route = (window.location.hash || "#");
+                // Split using :|: as well as :%7C:
                 var parts = route.replace(/^#/, '').split(':|:', 2);
+                if (parts.length == 1) {
+                    //As some link out conver :|: to :%7C:
+                    parts = route.replace(/^#/, '').split(':%7C:', 2);
+                }
                 updateSrc(left, parts[0]);
                 updateSrc(right, parts[1]);
                 window.history.replaceState('', '', '#')
