@@ -201,7 +201,7 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
             child.removeEventListener('blur', () => this.childBlur(child));
             child.removeEventListener('click', () => this.childClick(child));
             child.removeEventListener('keydown', (e) => this.lastChildKeyDown(child, e));
-        }        
+        }
     }
 
     componentDidMount() {
@@ -450,7 +450,7 @@ export class ExpandableMenu extends UIElement<ExpandableMenuProps, ExpandableMen
                 role="button" />
             {expanded && <div className="expanded-items">
                 {children}
-            </div> }
+            </div>}
         </div>);
     }
 }
@@ -496,7 +496,7 @@ export class Select extends UIElement<SelectProps, SelectState> {
         const { selected } = this.state;
 
         return (<div>
-            { label && `${label} ` }
+            {label && `${label} `}
             <select value={selected} className="ui dropdown" onChange={this.handleOnChange} aria-label={ariaLabel} >
                 {options.map(opt =>
                     opt && <option
@@ -1427,7 +1427,7 @@ class ModalButtonElement extends data.PureComponent<ModalButton, {}> {
             onClick={this.handleClick}
             onKeyDown={fireClickOnEnter}
             ariaLabel={this.props.ariaLabel ? this.props.ariaLabel : this.props.label}
-            title={this.props.title}/>
+            title={this.props.title} />
     }
 }
 
