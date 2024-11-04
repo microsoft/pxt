@@ -17,21 +17,6 @@
 			"console": "integratedTerminal"
 		},
 		{
-			"name": "codegen2 (pxt-bedrock)",
-			"type": "node",
-			"request": "launch",
-			"runtimeArgs": [
-				"run-script",
-				"vscode:debug"
-			],
-			"runtimeExecutable": "npm",
-			"stopOnEntry": false,
-			"sourceMaps": true,
-			"outFiles": [],
-            "localRoot": "${workspaceRoot}/../pxt-bedrock/codegen2",
-			"console": "integratedTerminal"
-		},
-		{
 			"name": "pxt ci (pxt-core)",
 			"type": "node",
 			"request": "launch",
@@ -62,6 +47,27 @@
 				"ci",
 			],
 			"cwd": "${workspaceRoot}/../pxt-microbit",
+			"runtimeExecutable": null,
+			"runtimeArgs": [
+				"--nolazy"
+			],
+			"env": {
+				"NODE_ENV": "development"
+			},
+			"console": "integratedTerminal",
+			"sourceMaps": false,
+			"outFiles": []
+		},
+		{
+			"name": "pxt ci (bedrock)",
+			"type": "node",
+			"request": "launch",
+			"program": "${workspaceRoot}/built/pxt.js",
+			"stopOnEntry": false,
+			"args": [
+				"ci",
+			],
+			"cwd": "${workspaceRoot}/../pxt-bedrock",
 			"runtimeExecutable": null,
 			"runtimeArgs": [
 				"--nolazy"
