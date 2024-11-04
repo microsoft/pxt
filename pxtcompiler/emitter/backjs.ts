@@ -426,7 +426,7 @@ function ${id}(s) {
                     else if (e.data === null) return "null"
                     else if (e.data === undefined) return "undefined"
                     else if (typeof e.data == "number") return e.data + ""
-                    else if (typeof e.data == "string") return e.data
+                    else if (typeof e.data == "string") return `"${e.data}"`
                     else throw oops("invalid data: " + typeof e.data);
                 case EK.PointerLiteral:
                     if (e.ptrlabel()) {
