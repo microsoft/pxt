@@ -242,10 +242,10 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
     }
 
     protected updateGalleryTiles() {
-        const { page, category, galleryOpen } = this.props;
+        const { page, category, galleryOpen, tileset } = this.props;
 
         if (galleryOpen) {
-            this.categoryTiles = this.categories[category].tiles;
+            this.categoryTiles = this.categories[category].tiles.filter(t => t.tileWidth === tileset.tileWidth);
         }
         else {
             this.categoryTiles = this.getCustomTiles().map(([t, i]) => ({ index: i, bitmap: t.bitmap }));
@@ -265,7 +265,8 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
             // For gallery tile, find the category then the page within the category
             const category = this.categories.find(opt => opt.tiles.findIndex(t => t.qualifiedName == tile.id) !== -1);
             if (!category || !category.tiles) return;
-            const page = Math.max(Math.floor(category.tiles.findIndex(t => t.qualifiedName == tile.id) / TILES_PER_PAGE), 0);
+            const filtered = category.tiles.filter(t => t.tileWidth === tileset.tileWidth)
+            const page = Math.max(Math.floor(filtered.findIndex(t => t.qualifiedName == tile.id) / TILES_PER_PAGE), 0);
 
             dispatchSetGalleryOpen(true);
             dispatchChangeTilePaletteCategory(this.categories.indexOf(category) as TileCategory);
@@ -339,7 +340,7 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
     }
 
     protected dropdownHandler = (option: DropdownOption, index: number) => {
-        this.props.dispatchChangeTilePaletteCategory(index);
+        this.props.dispatchChangeTilePaletteCategory(this.categories.indexOf(option as Category));
     }
 
     protected pivotHandler = (option: PivotOption, index: number) => {

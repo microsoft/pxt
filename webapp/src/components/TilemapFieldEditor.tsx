@@ -92,7 +92,25 @@ export class TilemapFieldEditor extends React.Component<TilemapFieldEditorProps,
             this.blocksInfo = options.blocksInfo;
 
             gallery = pxt.sprite.filterItems(pxt.sprite.getGalleryItems(this.blocksInfo, "Image"), ["tile"])
-                .map(g => ({ bitmap: pxt.sprite.getBitmap(this.blocksInfo, g.qName).data(), tags: g.tags, qualifiedName: g.qName, tileWidth: 16 }))
+                .map(g => {
+                    const bitmap = pxt.sprite.getBitmap(this.blocksInfo, g.qName).data();
+                    let tileWidth: number;
+                    if (bitmap.width === 8 || bitmap.width === 32) {
+                        tileWidth = bitmap.width;
+                    }
+                    else {
+                        tileWidth = 16;
+                    }
+
+                    return (
+                        {
+                            bitmap,
+                            tags: g.tags,
+                            qualifiedName: g.qName,
+                            tileWidth
+                        }
+                    );
+                });
         }
 
         this.ref.openAsset(asset, gallery);
