@@ -1593,7 +1593,7 @@ function buildFolderAndBrowserifyAsync(p: string, optional?: boolean, outputName
         .ignore('fs/promises')
         .ignore('path')
         .ignore('os')
-    
+
         b.require('browserify-fs', { expose: 'fs' });
         b.require('os-browserify', { expose: 'os' });
         b.require('path-browserify', { expose: 'path' });
