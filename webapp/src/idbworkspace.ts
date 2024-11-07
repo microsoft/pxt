@@ -110,6 +110,8 @@ async function migratePouchAsync() {
         // format is (prefix-)?tableName--id::rev-guid
         const docId: string = entry._doc_id_rev;
 
+        if (!docId) continue;
+
         const revSeparatorIndex = docId.lastIndexOf("::");
         const rev = parseInt(docId.substring(revSeparatorIndex + 2).split("-")[0]);
 
