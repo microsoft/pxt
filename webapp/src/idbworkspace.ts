@@ -225,18 +225,34 @@ async function migratePrefixesAsync() {
     const previousMajor = currentMajor - 1;
     const previousDbPrefix = previousMajor < 0 ? "" : pxt.appTarget.appTheme.browserDbPrefixes[previousMajor];
     const currentDb = await getCurrentDbAsync();
-
+    const migrationDb = await getMigrationDbAsync();
+    const dummyEntryKey = migrationDbPrefixUpgradeKey(previousDbPrefix, currentDbPrefix, "dummy");
 
     // If headers are already in the new db, migration must have already happened
-    if ((await currentDb.getAllAsync(HEADERS_TABLE)).length) return;
+    if ((await currentDb.getAllAsync(HEADERS_TABLE)).length) {
+        // Check to see if we've populated the migration db. This only applies to older clients
+        // from before we started tracking prefix upgrades in the migration db. Populating this db
+        // should be a one-time operation and is necessary to ensure that reset works correctly
+        // in browsers that loaded the page sometime before the migration fix was released.
+        if (await migrationDb.getAsync(HEADERS_TABLE, dummyEntryKey)) return;
 
-    const prevDb = await getDbAsync(previousDbPrefix);
+        const prevDb = await getDbAsync(previousDbPrefix);
+        await populatePrefixMigrationDb(prevDb, currentDb, HEADERS_TABLE, previousDbPrefix, currentDbPrefix);
+        await populatePrefixMigrationDb(prevDb, currentDb, TEXTS_TABLE, previousDbPrefix, currentDbPrefix);
+    }
+    else {
+        // Copy everything over to the current db
+        const prevDb = await getDbAsync(previousDbPrefix);
 
-    await copyTableEntriesAsync(prevDb, currentDb, HEADERS_TABLE, false, previousDbPrefix, currentDbPrefix);
-    await copyTableEntriesAsync(prevDb, currentDb, TEXTS_TABLE, false, previousDbPrefix, currentDbPrefix);
-    await copyTableEntriesAsync(prevDb, currentDb, SCRIPT_TABLE, false, previousDbPrefix, currentDbPrefix);
-    await copyTableEntriesAsync(prevDb, currentDb, HOSTCACHE_TABLE, false, previousDbPrefix, currentDbPrefix);
-    await copyTableEntriesAsync(prevDb, currentDb, GITHUB_TABLE, false, previousDbPrefix, currentDbPrefix);
+        await copyTableEntriesAsync(prevDb, currentDb, HEADERS_TABLE, false, previousDbPrefix, currentDbPrefix);
+        await copyTableEntriesAsync(prevDb, currentDb, TEXTS_TABLE, false, previousDbPrefix, currentDbPrefix);
+        await copyTableEntriesAsync(prevDb, currentDb, SCRIPT_TABLE, false, previousDbPrefix, currentDbPrefix);
+        await copyTableEntriesAsync(prevDb, currentDb, HOSTCACHE_TABLE, false, previousDbPrefix, currentDbPrefix);
+        await copyTableEntriesAsync(prevDb, currentDb, GITHUB_TABLE, false, previousDbPrefix, currentDbPrefix);
+    }
+
+    // Stick a dummy marker in the migration db to indicate that we did migrate everything
+    await migrationDb.setAsync(HEADERS_TABLE, { id: dummyEntryKey });
 }
 
 let _dbPromises: pxt.Map<Promise<pxt.BrowserUtils.IDBWrapper>> = {};
@@ -283,6 +299,22 @@ async function copyTableEntriesAsync(fromDb: pxt.BrowserUtils.IDBWrapper, toDb: 
 
         if (!existing) {
             await toDb.setAsync(storeName, entry);
+            await migrationDb.setAsync(storeName, {
+                id: key
+            });
+        }
+    }
+}
+
+async function populatePrefixMigrationDb(fromDb: pxt.BrowserUtils.IDBWrapper, toDb: pxt.BrowserUtils.IDBWrapper, storeName: string, fromPrefix: string, toPrefix: string) {
+    const migrationDb = await getMigrationDbAsync();
+
+    for (const entry of await fromDb.getAllAsync<any>(storeName)) {
+        const key = migrationDbPrefixUpgradeKey(fromPrefix, toPrefix, entry.id);
+        if (await migrationDb.getAsync(storeName, key)) continue;
+
+        // If this header id was actually migrated, add an entry for it in the migration db
+        if (await toDb.getAsync(storeName, entry.id)) {
             await migrationDb.setAsync(storeName, {
                 id: key
             });
