@@ -1205,7 +1205,7 @@ namespace pxt {
             await this.loadAsync()
 
             opts.bannedCategories = this.resolveBannedCategories();
-            pxt.debug(`building: ${this.sortedDeps().map(p => p.config.name).join(", ")}`)
+            pxt.debug(`building: ${this.sortedDeps().map(p => p.config?.name).join(", ")}`)
 
             let variants: string[]
 
