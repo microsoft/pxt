@@ -202,19 +202,23 @@ async function migrateOldIndexedDbAsync() {
         await pxt.BrowserUtils.clearTutorialInfoDbAsync();
     });
 
+    const previousDbPrefix = "legacy";
+    const currentDbPrefix = getCurrentDBPrefix() || "default";
+
     try {
         await legacyDb.openAsync();
         const currentDb = await getCurrentDbAsync();
 
-        await copyTableEntriesAsync(legacyDb, currentDb, HEADERS_TABLE, true);
-        await copyTableEntriesAsync(legacyDb, currentDb, TEXTS_TABLE, true);
+        await copyTableEntriesAsync(legacyDb, currentDb, HEADERS_TABLE, true, previousDbPrefix, currentDbPrefix);
+        await copyTableEntriesAsync(legacyDb, currentDb, TEXTS_TABLE, true, previousDbPrefix, currentDbPrefix);
     } catch (e) {
         pxt.reportException(e);
     }
 }
 
 async function migratePrefixesAsync() {
-    if (!getCurrentDBPrefix()) return;
+    const currentDbPrefix = getCurrentDBPrefix();
+    if (!currentDbPrefix) return;
 
     const currentVersion = pxt.semver.parse(pxt.appTarget.versions.target);
     const currentMajor = currentVersion.major;
@@ -222,16 +226,17 @@ async function migratePrefixesAsync() {
     const previousDbPrefix = previousMajor < 0 ? "" : pxt.appTarget.appTheme.browserDbPrefixes[previousMajor];
     const currentDb = await getCurrentDbAsync();
 
+
     // If headers are already in the new db, migration must have already happened
     if ((await currentDb.getAllAsync(HEADERS_TABLE)).length) return;
 
     const prevDb = await getDbAsync(previousDbPrefix);
 
-    await copyTableEntriesAsync(prevDb, currentDb, HEADERS_TABLE, false);
-    await copyTableEntriesAsync(prevDb, currentDb, TEXTS_TABLE, false);
-    await copyTableEntriesAsync(prevDb, currentDb, SCRIPT_TABLE, false);
-    await copyTableEntriesAsync(prevDb, currentDb, HOSTCACHE_TABLE, false);
-    await copyTableEntriesAsync(prevDb, currentDb, GITHUB_TABLE, false);
+    await copyTableEntriesAsync(prevDb, currentDb, HEADERS_TABLE, false, previousDbPrefix, currentDbPrefix);
+    await copyTableEntriesAsync(prevDb, currentDb, TEXTS_TABLE, false, previousDbPrefix, currentDbPrefix);
+    await copyTableEntriesAsync(prevDb, currentDb, SCRIPT_TABLE, false, previousDbPrefix, currentDbPrefix);
+    await copyTableEntriesAsync(prevDb, currentDb, HOSTCACHE_TABLE, false, previousDbPrefix, currentDbPrefix);
+    await copyTableEntriesAsync(prevDb, currentDb, GITHUB_TABLE, false, previousDbPrefix, currentDbPrefix);
 }
 
 let _dbPromises: pxt.Map<Promise<pxt.BrowserUtils.IDBWrapper>> = {};
@@ -267,12 +272,20 @@ async function getDbAsync(prefix = "__default") {
     }
 }
 
-async function copyTableEntriesAsync(fromDb: pxt.BrowserUtils.IDBWrapper, toDb: pxt.BrowserUtils.IDBWrapper, storeName: string, dontOverwrite: boolean) {
+async function copyTableEntriesAsync(fromDb: pxt.BrowserUtils.IDBWrapper, toDb: pxt.BrowserUtils.IDBWrapper, storeName: string, dontOverwrite: boolean, fromPrefix: string, toPrefix: string) {
+    const migrationDb = await getMigrationDbAsync();
+
     for (const entry of await fromDb.getAllAsync<any>(storeName)) {
+        const key = migrationDbPrefixUpgradeKey(fromPrefix, toPrefix, entry.id);
+        if (await migrationDb.getAsync(storeName, key)) continue;
+
         const existing = dontOverwrite && !!(await toDb.getAsync(storeName, entry.id));
 
         if (!existing) {
             await toDb.setAsync(storeName, entry);
+            await migrationDb.setAsync(storeName, {
+                id: key
+            });
         }
     }
 }
@@ -716,6 +729,10 @@ export function initGitHubDb() {
 function migrationDbKey(prefix: string, id: string) {
     return `${prefix}--${id}`;
 };
+
+function migrationDbPrefixUpgradeKey(oldPrefix: string, newPrefix: string, id: string) {
+    return `${oldPrefix}--${newPrefix}--${id}`;
+}
 
 export const provider: WorkspaceProvider = {
     getAsync,
