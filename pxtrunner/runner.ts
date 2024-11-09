@@ -392,11 +392,12 @@ export async function simulateAsync(container: HTMLElement, simOptions: Simulate
         if (msg.command === "restart") {
             runOptions.storedState = getStoredState(simOptions.id)
             simDriver.run(js, runOptions);
-        }
-        if (msg.command == "setstate") {
+        } else if (msg.command === "setstate") {
             if (msg.stateKey) {
                 setStoredState(simOptions.id, msg.stateKey, msg.stateValue)
             }
+        } else if (msg.command === "single") {
+            simDriver.setSingleSimulator();
         }
     };
     if (builtSimJS.breakpoints && simOptions.debug) {
