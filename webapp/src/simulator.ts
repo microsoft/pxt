@@ -14,6 +14,7 @@ interface SimulatorConfig {
     orphanException(brk: pxsim.DebuggerBreakpointMessage): void;
     highlightStatement(stmt: pxtc.LocationInfo, brk?: pxsim.DebuggerBreakpointMessage): boolean;
     restartSimulator(): void;
+    singleSimulator(): void;
     onStateChanged(state: pxsim.SimulatorState): void;
     onSimulatorReady(): void;
     setState(key: string, value: any): void;

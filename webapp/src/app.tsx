@@ -1094,6 +1094,7 @@ export class ProjectView
                 return false;
             },
             restartSimulator: () => this.restartSimulator(),
+            singleSimulator: () => this.singleSimulator(),
             onStateChanged: (state) => {
                 const simStateChanged = () => this.allEditors.forEach((editor) => editor.simStateChanged());
                 switch (state) {
@@ -3762,6 +3763,10 @@ export class ProjectView
 
     isSimulatorRunning(): boolean {
         return this.state.simState == SimState.Running;
+    }
+
+    singleSimulator() {
+        simulator.driver.setSingleSimulator();
     }
 
     restartSimulator() {
