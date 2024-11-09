@@ -29,6 +29,15 @@ declare namespace pxt {
     }
 
     /**
+     * Schema for configuring a package's dependencies
+     */
+    interface PackageDependencySetting {
+        hideAllBlocks?: boolean;         // including recursively included packages
+        // TODO: think more about scenario and more general way to config?
+    }
+
+
+    /**
      * The schema for the pxt.json package files
      */
     interface PackageConfig {
@@ -42,6 +51,7 @@ declare namespace pxt {
         targetVersions?: TargetVersions; // versions of the target/pxt the package was compiled against
         description?: string;
         dependencies: Map<string>;
+        dependenciesSettings?: Map<PackageDependencySetting>;
         license?: string;
         authors?: string[];
         files: string[];
@@ -94,6 +104,7 @@ declare namespace pxt {
         assetPack?: boolean; // if set to true, only the assets of this project will be imported when added as an extension (no code)
         assetPacks?: Map<boolean>; // a map of dependency id to boolean that indicates which dependencies should be imported as asset packs
     }
+
 
     interface PackageExtension {
         // Namespace to add the button under, defaults to package name
