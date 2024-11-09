@@ -131,3 +131,13 @@ A range of 80+ modular "xChips", which includes cores/CPUs, sensors, power, comm
 * [Create your own editor](/target-creation)
 * [Contribute](https://github.com/microsoft/pxt)
 * [Join the MakeCode Forum](http://forum.makecode.com/)
+
+## Target Framework by ctrlX AUTOMATION
+
+A proprietary software automation platform for factory and industrial automation developed Rexroth Bosch company. ctrlX AUTOMATION gives users the flexibility to add new automation functions and updates via app, making automation as easy as using your smartphone.
+
+![Target Framework](/static/targets/ctrlx/target_framework.PNG)
+
+- [Product](https://apps.boschrexroth.com/microsites/ctrlx-automation/en/)
+- [Video](https://youtu.be/ZMOPfMtPEBE?si=5k725YThF4RATRC4&t=526)
+
