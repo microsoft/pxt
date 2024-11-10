@@ -1586,17 +1586,7 @@ function buildFolderAndBrowserifyAsync(p: string, optional?: boolean, outputName
         cwd: p
     }).then(() => {
         const browserify = require('browserify');
-        let b = browserify({
-            noParse: ["fs", "fs/promises", "path", "os"],
-        })
-        .ignore('fs')
-        .ignore('fs/promises')
-        .ignore('path')
-        .ignore('os')
-
-        b.require('browserify-fs', { expose: 'fs' });
-        b.require('os-browserify', { expose: 'os' });
-        b.require('path-browserify', { expose: 'path' });
+        let b = browserify();
 
         nodeutil.allFiles(`built/${outputName}`).forEach((f) => {
             if (f.match(/\.js$/)) {
