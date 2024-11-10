@@ -223,7 +223,7 @@ export async function initAsync(root: HTMLElement, cfg: SimulatorConfig) {
                     cfg.restartSimulator();
                     break;
                 case "single":
-                    // TODO: is this needed?
+                    cfg.singleSimulator();
                     break;
                 case "reload":
                     stop(true);
