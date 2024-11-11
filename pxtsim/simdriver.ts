@@ -801,6 +801,7 @@ namespace pxsim {
 
             if (!this._currentRuntime) return; // nothing to do
 
+            this.singleSimulator = false;
             this.breakpointsSet = false;
 
             // first frame
