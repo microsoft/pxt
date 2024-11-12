@@ -116,7 +116,7 @@ namespace pxsim {
     }
     export interface SimulatorCommandMessage extends SimulatorMessage {
         type: "simulator",
-        command: "modal" | "restart" | "reload" | "setstate" | "focus" | "blur"
+        command: "modal" | "restart" | "reload" | "setstate" | "focus" | "blur" | "single"
         stateKey?: string;
         stateValue?: any;
         header?: string;

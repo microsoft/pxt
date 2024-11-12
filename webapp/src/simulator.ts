@@ -14,6 +14,7 @@ interface SimulatorConfig {
     orphanException(brk: pxsim.DebuggerBreakpointMessage): void;
     highlightStatement(stmt: pxtc.LocationInfo, brk?: pxsim.DebuggerBreakpointMessage): boolean;
     restartSimulator(): void;
+    singleSimulator(): void;
     onStateChanged(state: pxsim.SimulatorState): void;
     onSimulatorReady(): void;
     setState(key: string, value: any): void;
@@ -220,6 +221,9 @@ export async function initAsync(root: HTMLElement, cfg: SimulatorConfig) {
                     break
                 case "restart":
                     cfg.restartSimulator();
+                    break;
+                case "single":
+                    cfg.singleSimulator();
                     break;
                 case "reload":
                     stop(true);
