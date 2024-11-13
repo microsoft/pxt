@@ -126,6 +126,10 @@ namespace pxt.BrowserUtils {
         return hasNavigator() && /Epiphany/i.test(navigator.userAgent);
     }
 
+    export function isChromeOS(): boolean {
+        return hasNavigator() && /cros/i.test(navigator.userAgent);
+    }
+
     export function isTouchEnabled(): boolean {
         return typeof window !== "undefined" &&
             ('ontouchstart' in window                              // works on most browsers
