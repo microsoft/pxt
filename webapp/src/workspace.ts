@@ -1723,23 +1723,24 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
         });
 }
 
-export function resetAsync() {
+export async function resetAsync() {
     allScripts = []
-    return impl.resetAsync()
-        .then(cloudsync.resetAsync)
-        .then(db.destroyAsync)
-        .then(pxt.BrowserUtils.clearTranslationDbAsync)
-        .then(pxt.BrowserUtils.clearTutorialInfoDbAsync)
-        .then(compiler.clearApiInfoDbAsync)
-        .then(() => {
-            pxt.storage.clearLocal();
-            data.clearCache();
-            // keep local token (localhost and electron) on reset
-            if (Cloud.localToken)
-                pxt.storage.setLocal("local_token", Cloud.localToken);
-        })
-        .then(() => syncAsync()) // sync again to notify other tabs
-        .then(() => { });
+
+    await impl.resetAsync();
+    await cloudsync.resetAsync();
+    await db.destroyAsync();
+    await pxt.BrowserUtils.clearTranslationDbAsync();
+    await pxt.BrowserUtils.clearTutorialInfoDbAsync();
+    await compiler.clearApiInfoDbAsync();
+    pxt.storage.clearLocal();
+    data.clearCache();
+
+    // keep local token (localhost and electron) on reset
+    if (Cloud.localToken) {
+        pxt.storage.setLocal("local_token", Cloud.localToken);
+    }
+
+    await syncAsync(); // sync again to notify other tabs
 }
 
 export function loadedAsync() {

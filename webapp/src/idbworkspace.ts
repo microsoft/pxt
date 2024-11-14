@@ -396,6 +396,9 @@ async function resetAsync(): Promise<void> {
     const db = await getCurrentDbAsync();
     await db.deleteAllAsync(TEXTS_TABLE);
     await db.deleteAllAsync(HEADERS_TABLE);
+    await db.deleteAllAsync(SCRIPT_TABLE);
+    await db.deleteAllAsync(HOSTCACHE_TABLE);
+    await db.deleteAllAsync(GITHUB_TABLE);
 }
 
 export async function getObjectStoreAsync<T>(storeName: string) {
