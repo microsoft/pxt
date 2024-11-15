@@ -523,7 +523,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                                 text={lf("New Connected Tab")} title={lf("Open Project in a new tab with a connected simulator")} onClick={this.handleOpenNewLinkedTab} />}
                         </sui.DropdownMenu>
                     </div>);
-                    headerActions.push(<sui.Button key="rename" icon="edit outline" className="icon"
+                    headerActions.push(<sui.Button key="rename" icon="pencil" className="icon"
                         text={lf("Rename")} textClass="landscape only" title={lf("Rename Project")} onClick={this.handleRename} />);
                     headerActions.push(<sui.Button key="clone" icon="clone outline" className="icon"
                         text={lf("Duplicate")} textClass="landscape only" title={lf("Duplicate Project")} onClick={this.handleDuplicate} />);
