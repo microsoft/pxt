@@ -448,28 +448,28 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                     }
 
                     if (hasCategories) {
-                            const isAdvanced = bi?.attributes?.advanced || ns === "arrays";
-                            inlineBlock.classList.add("clickable");
-                            inlineBlock.tabIndex = 0;
-                            inlineBlock.ariaLabel = lf("Toggle the {0} category", ns);
-                            inlineBlock.title = inlineBlock.ariaLabel;
-                            inlineBlock.children[0].append(bi?.attributes?.icon || pxt.toolbox.getNamespaceIcon(ns) || "");
-                            inlineBlock.addEventListener("click", e => {
-                                // need to filter out editors that are currently hidden as we leave toolboxes in dom
-                                const editorSelector = `#maineditor > div:not([style*="display:none"]):not([style*="display: none"])`;
+                        const isAdvanced = bi?.attributes?.advanced || ns === "arrays";
+                        inlineBlock.classList.add("clickable");
+                        inlineBlock.tabIndex = 0;
+                        inlineBlock.ariaLabel = lf("Toggle the {0} category", ns);
+                        inlineBlock.title = inlineBlock.ariaLabel;
+                        inlineBlock.children[0].append(bi?.attributes?.icon || pxt.toolbox.getNamespaceIcon(ns) || "");
+                        inlineBlock.addEventListener("click", e => {
+                            // need to filter out editors that are currently hidden as we leave toolboxes in dom
+                            const editorSelector = `#maineditor > div:not([style*="display:none"]):not([style*="display: none"])`;
 
-                                if (isAdvanced) {
-                                    // toggle advanced open first if it is collapsed.
-                                    const advancedSelector = `${editorSelector} .blocklyTreeRow[data-ns="advancedcollapsed"]`;
-                                    const advancedRow = document.querySelector<HTMLDivElement>(advancedSelector);
-                                    advancedRow?.click();
-                                }
+                            if (isAdvanced) {
+                                // toggle advanced open first if it is collapsed.
+                                const advancedSelector = `${editorSelector} .blocklyTreeRow[data-ns="advancedcollapsed"]`;
+                                const advancedRow = document.querySelector<HTMLDivElement>(advancedSelector);
+                                advancedRow?.click();
+                            }
 
-                                const toolboxSelector = `${editorSelector} .blocklyTreeRow[data-ns="${ns}"]`;
-                                const toolboxRow = document.querySelector<HTMLDivElement>(toolboxSelector);
-                                toolboxRow?.click();
-                            });
-                            inlineBlock.addEventListener("keydown", e => fireClickOnEnter(e as any))
+                            const toolboxSelector = `${editorSelector} .blocklyTreeRow[data-ns="${ns}"]`;
+                            const toolboxRow = document.querySelector<HTMLDivElement>(toolboxSelector);
+                            toolboxRow?.click();
+                        });
+                        inlineBlock.addEventListener("keydown", e => fireClickOnEnter(e as any))
                     }
                 }
             });
