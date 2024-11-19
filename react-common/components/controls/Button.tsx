@@ -2,7 +2,7 @@ import * as React from "react";
 import { classList, ContainerProps, fireClickOnEnter } from "../util";
 
 export interface ButtonViewProps extends ContainerProps {
-    buttonRef?: (ref: HTMLButtonElement) => void;
+    buttonRef?: (ref: HTMLButtonElement | HTMLAnchorElement) => void;
     title: string;
     label?: string | JSX.Element;
     labelClassName?: string;
@@ -14,6 +14,7 @@ export interface ButtonViewProps extends ContainerProps {
     target?: string;
     tabIndex?: number;
     style?: React.CSSProperties;
+    asAnchorElement?: boolean;
 
     /** Miscellaneous aria pass-through props */
     ariaControls?: string;
@@ -53,15 +54,11 @@ export const Button = (props: ButtonProps) => {
         onBlur,
         buttonRef,
         title,
-        label,
-        labelClassName,
-        leftIcon,
-        rightIcon,
         hardDisabled,
         href,
         target,
         tabIndex,
-        children
+        asAnchorElement
     } = props;
 
     let {
@@ -78,44 +75,87 @@ export const Button = (props: ButtonProps) => {
     );
 
     let clickHandler = (ev: React.MouseEvent) => {
-        if (onClick) onClick();
-        if (href) window.open(href, target || "_blank", "noopener,noreferrer")
         ev.stopPropagation();
+
+        if (onClick) {
+            onClick();
+        }
+        if (href) {
+            if (asAnchorElement) {
+                // handled using the href attribute, so don't prevent default
+                return;
+            }
+            window.open(href, target || "_blank", "noopener,noreferrer");
+        }
         ev.preventDefault();
+    }
+
+    const elementProps = {
+        id: id,
+        className: classes,
+        style: style,
+        title: title,
+        ref: buttonRef,
+        onClick: !disabled ? clickHandler : undefined,
+        onKeyDown: onKeydown || fireClickOnEnter,
+        onBlur: onBlur,
+        role: role || (asAnchorElement ? undefined : "button"),
+        tabIndex: tabIndex || (disabled ? -1 : 0),
+        disabled: hardDisabled,
+        "aria-label": ariaLabel,
+        "aria-hidden": ariaHidden,
+        "aria-controls": ariaControls,
+        "aria-expanded": ariaExpanded,
+        "aria-haspopup": ariaHasPopup as any,
+        "aria-posinset": ariaPosInSet,
+        "aria-setsize": ariaSetSize,
+        "aria-describedby": ariaDescribedBy,
+        "aria-selected": ariaSelected,
+        "aria-pressed": ariaPressed,
+    }
+
+    if (asAnchorElement) {
+        return (
+            <a
+                {...elementProps}
+                href={href}
+                target={target || "_blank"}
+                rel="noopener,noreferrer"
+            >
+                <ButtonBody {...props} />
+            </a>
+        );
     }
 
     return (
         <button
-            id={id}
-            className={classes}
-            style={style}
-            title={title}
-            ref={buttonRef}
-            onClick={!disabled ? clickHandler : undefined}
-            onKeyDown={onKeydown || fireClickOnEnter}
-            onBlur={onBlur}
-            role={role || "button"}
-            tabIndex={tabIndex || (disabled ? -1 : 0)}
-            disabled={hardDisabled}
-            aria-label={ariaLabel}
-            aria-hidden={ariaHidden}
-            aria-controls={ariaControls}
-            aria-expanded={ariaExpanded}
-            aria-haspopup={ariaHasPopup as any}
-            aria-posinset={ariaPosInSet}
-            aria-setsize={ariaSetSize}
-            aria-describedby={ariaDescribedBy}
-            aria-selected={ariaSelected}
-            aria-pressed={ariaPressed}>
-                {(leftIcon || rightIcon || label) && (
-                    <span className="common-button-flex">
-                        {leftIcon && <i className={leftIcon} aria-hidden={true}/>}
-                        <span className={classList("common-button-label", labelClassName)}>
-                            {label}
-                        </span>
-                        {rightIcon && <i className={"right " + rightIcon} aria-hidden={true}/>}
-                    </span>)}
-                {children}
+            {...elementProps}
+        >
+            <ButtonBody {...props} />
         </button>
     );
+}
+
+const ButtonBody = (props: ButtonViewProps) => {
+    const {
+        label,
+        labelClassName,
+        leftIcon,
+        rightIcon,
+        children
+    } = props;
+    return (
+        <>
+            {(leftIcon || rightIcon || label) && (
+                <span className="common-button-flex">
+                    {leftIcon && <i className={leftIcon} aria-hidden={true}/>}
+                    <span className={classList("common-button-label", labelClassName)}>
+                        {label}
+                    </span>
+                    {rightIcon && <i className={"right " + rightIcon} aria-hidden={true}/>}
+                </span>
+            )}
+            {children}
+        </>
+    )
 }
