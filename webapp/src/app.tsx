@@ -82,6 +82,7 @@ import { Tour } from "./components/onboarding/Tour";
 import { parseTourStepsAsync } from "./onboarding";
 import { initGitHubDb } from "./idbworkspace";
 import { BlockDefinition, CategoryNameID } from "./toolbox";
+import { MinecraftAuthClient } from "./minecraftAuthClient";
 
 pxt.blocks.requirePxtBlockly = () => pxtblockly as any;
 pxt.blocks.requireBlockly = () => Blockly;
@@ -5940,6 +5941,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     pxt.setupWebConfig((window as any).pxtConfig);
     const config = pxt.webConfig
 
+    auth.overrideAuthClient(() => new MinecraftAuthClient());
+
     const optsQuery = Util.parseQueryString(window.location.href.toLowerCase());
     if (optsQuery["dbg"] == "1") {
         pxt.setLogLevel(pxt.LogLevel.Debug);
@@ -5963,10 +5966,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         pxt.blocks.showBlockIdInTooltip = true;
     }
 
-    initGitHubDb();
-
     pxt.perf.measureStart("setAppTarget");
     pkg.setupAppTarget((window as any).pxtTargetBundle);
+
+    initGitHubDb();
 
     // DO NOT put any async code before this line! The serviceworker must be initialized before
     // the window load event fires

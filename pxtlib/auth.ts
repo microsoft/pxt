@@ -116,6 +116,10 @@ namespace pxt.auth {
         return await setLocalStorageValueAsync(CSRF_TOKEN_KEY, token);
     }
     export async function hasAuthTokenAsync(): Promise<boolean> {
+        if (hasCloudProxyIdentity()) {
+            cachedHasAuthToken = true;
+            return true;
+        }
         return !!(await getAuthTokenAsync());
     }
     async function delAuthTokenAsync(): Promise<void> {
@@ -748,7 +752,14 @@ namespace pxt.auth {
     }
 
     export function hasIdentity(): boolean {
+        if (hasCloudProxyIdentity()) {
+            return true;
+        }
         return !authDisabled && !pxt.BrowserUtils.isPxtElectron() && identityProviders().length > 0;
+    }
+
+    export function hasCloudProxyIdentity(): boolean {
+        return true;
     }
 
     function idpEnabled(idp: pxt.IdentityProviderId): boolean {

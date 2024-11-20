@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en" data-manifest="" data-framework="typescript">
+
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="viewport" content="width=device-width,height=device-height,user-scalable=no,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0" />
+    <style>
+        @import "/blb/semantic.css";
+
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+
+        #logsouter {
+            width: 100%;
+            height: 10rem;
+            border: 0;
+            font-size: 0.6rem;
+            overflow-y: auto;
+        }
+
+        #logs img {
+            max-width:18rem;
+        }
+
+        #iframe {
+            border: 0;
+            flex-grow: 1;
+        }
+
+        .ui.buttons {
+            flex-wrap: wrap;
+        }
+    </style>
+    <script>
+        var projects = [];
+
+        function sendMessage(msg) {
+            console.log('send', msg)
+            appendToLog(`> ${msg.resp.statusCode}`)
+            var editor = document.getElementById("iframe").contentWindow;
+            editor.postMessage(msg, "*")
+        }
+
+        function appendToLog(msg) {
+            var logs = document.getElementById("logs");
+            logs.innerText += msg + "\n";
+            logs.parentElement.scrollTop = logs.parentElement.scrollHeight;
+        }
+
+        function receiveMessage(ev) {
+            var editor = document.getElementById("iframe").contentWindow;
+            var msg = ev.data;
+            console.log('received...')
+            console.log(msg)
+
+            if (msg.action !== "cloudproxy") return;
+
+            if (msg.operation === "user") {
+                appendToLog("GET USER");
+                sendMessage({
+                    type: "pxteditor",
+                    action: "cloudproxy",
+                    operation: "user",
+                    id: msg.id,
+                    success: true,
+                    resp: {
+                        resp: { id: "cloud-proxy-test" },
+                        statusCode: 200,
+                        success: true,
+                        err: undefined
+                    }
+                });
+            }
+            else if (msg.operation === "list") {
+                appendToLog("LIST PROJECTS: [" + projects.map(p => p.id).join(", ") + "]");
+                sendMessage({
+                    type: "pxteditor",
+                    action: "cloudproxy",
+                    operation: "list",
+                    id: msg.id,
+                    success: true,
+                    resp: {
+                        resp: projects.slice(),
+                        statusCode: 200,
+                        success: true,
+                        err: undefined
+                    }
+                });
+            }
+            else if (msg.operation === "get") {
+                appendToLog("GET: " + msg.headerId);
+
+                const existing = projects.find(p => p.id === msg.headerId);
+                if (existing) {
+                    sendMessage({
+                        type: "pxteditor",
+                        action: "cloudproxy",
+                        operation: "get",
+                        id: msg.id,
+                        success: true,
+                        resp: {
+                            resp: existing,
+                            statusCode: 200,
+                            success: true,
+                            err: undefined
+                        }
+                    });
+                }
+                else {
+                    sendMessage({
+                        type: "pxteditor",
+                        action: "cloudproxy",
+                        operation: "get",
+                        id: msg.id,
+                        success: true,
+                        resp: {
+                            statusCode: 404,
+                            success: false,
+                            err: undefined
+                        }
+                    });
+                }
+            }
+            else if (msg.operation === "set") {
+                appendToLog("SET: " + msg.project.id);
+
+                const existingIndex = projects.findIndex(p => p.id === msg.project.id);
+                const existing = projects[existingIndex];
+                if (existing) {
+                    if (existing.version !== msg.project.version) {
+                        // conflict
+                        appendToLog("CONFLICT");
+                        sendMessage({
+                            type: "pxteditor",
+                            action: "cloudproxy",
+                            operation: "list",
+                            id: msg.id,
+                            success: true,
+                            resp: {
+                                statusCode: 409,
+                                success: false,
+                                err: "conflict"
+                            }
+                        });
+                    }
+                    else {
+                        const newProject = {
+                            ...msg.project,
+                            version: Math.random().toString()
+                        }
+                        projects.splice(existingIndex, 1, newProject);
+
+                        sendMessage({
+                            type: "pxteditor",
+                            action: "cloudproxy",
+                            operation: "list",
+                            id: msg.id,
+                            success: true,
+                            resp: {
+                                resp: newProject.version,
+                                statusCode: 200,
+                                success: true,
+                                err: undefined
+                            }
+                        });
+                    }
+                }
+                else {
+                    const newProject = {
+                        ...msg.project,
+                        version: Math.random().toString()
+                    };
+                    projects.push(newProject)
+
+                    sendMessage({
+                        type: "pxteditor",
+                        action: "cloudproxy",
+                        operation: "list",
+                        id: msg.id,
+                        success: true,
+                        resp: {
+                            resp: newProject.version,
+                            statusCode: 200,
+                            success: true,
+                            err: undefined
+                        }
+                    });
+                }
+            }
+        }
+
+        window.addEventListener("message", receiveMessage, false);
+    </script>
+</head>
+<body>
+    <div id="logsouter">
+        <pre id="logs" class="ui"></pre>
+    </div>
+    <iframe id="iframe" src="index.html?ipc=1&inGame=1&nosandbox=1"></iframe>
+</body>
+
+</html>

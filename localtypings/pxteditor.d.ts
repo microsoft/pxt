@@ -103,6 +103,7 @@ declare namespace pxt.editor {
         | "serviceworkerregistered"
         | "runeval"
         | "precachetutorial"
+        | "cloudproxy"
 
         // package extension messasges
         | ExtInitializeType
@@ -1368,6 +1369,89 @@ declare namespace pxt.editor {
     }
 
     type AssetEditorEvent = AssetEditorRequestSaveEvent | AssetEditorReadyEvent;
+
+    type CloudProject = {
+        id: string;
+        shareId?: string;
+        header: string;
+        text: string;
+        version: string;
+    };
+
+    interface BaseCloudProxyRequest extends EditorMessageRequest {
+        action: "cloudproxy";
+        operation: string;
+        response: true;
+    }
+
+    interface CloudProxyUserRequest extends BaseCloudProxyRequest {
+        operation: "user";
+    }
+
+    interface CloudProxyListRequest extends BaseCloudProxyRequest {
+        operation: "list";
+        headerIds?: string[];
+    }
+
+    interface CloudProxyGetRequest extends BaseCloudProxyRequest {
+        operation: "get";
+        headerId: string;
+    }
+
+    interface CloudProxySetRequest extends BaseCloudProxyRequest {
+        operation: "set";
+        project: CloudProject;
+    }
+
+    interface CloudProxyDeleteRequest extends BaseCloudProxyRequest {
+        operation: "delete";
+        headerId: string;
+    }
+
+    type CloudProxyRequest =
+        | CloudProxyUserRequest
+        | CloudProxyListRequest
+        | CloudProxyGetRequest
+        | CloudProxySetRequest
+        | CloudProxyDeleteRequest;
+
+
+    interface BaseCloudProxyResponse extends EditorMessageResponse {
+        action: "cloudproxy";
+        operation: string;
+        resp: pxt.auth.ApiResult<any>;
+    }
+
+    interface CloudProxyUserResponse extends BaseCloudProxyResponse {
+        operation: "user";
+    }
+
+    interface CloudProxyListResponse extends BaseCloudProxyResponse {
+        operation: "list";
+        resp: pxt.auth.ApiResult<CloudProject[]>;
+    }
+
+    interface CloudProxyGetResponse extends BaseCloudProxyResponse {
+        operation: "get";
+        resp: pxt.auth.ApiResult<CloudProject>;
+    }
+
+    interface CloudProxySetResponse extends BaseCloudProxyResponse {
+        operation: "set";
+        resp: pxt.auth.ApiResult<string>;
+    }
+
+    interface CloudProxyDeleteResponse extends BaseCloudProxyResponse {
+        operation: "delete";
+        resp: pxt.auth.ApiResult<string>;
+    }
+
+    type CloudProxyResponse =
+        | CloudProxyUserResponse
+        | CloudProxyListResponse
+        | CloudProxyGetResponse
+        | CloudProxySetResponse
+        | CloudProxyDeleteResponse;
 }
 
 declare namespace pxt.workspace {
