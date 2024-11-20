@@ -32,7 +32,7 @@ namespace pxt.Cloud {
     export function useCdnApi() {
         return pxt.webConfig && !pxt.webConfig.isStatic
             && !BrowserUtils.isLocalHost() && !!pxt.webConfig.cdnUrl
-            && !/nocdn=1/i.test(window.location.href);
+            && (typeof window === "undefined" || !/nocdn=1/i.test(window.location.href));
     }
 
     export function cdnApiUrl(url: string) {
