@@ -5941,8 +5941,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     pxt.setupWebConfig((window as any).pxtConfig);
     const config = pxt.webConfig
 
-    auth.overrideAuthClient(() => new MinecraftAuthClient());
-
     const optsQuery = Util.parseQueryString(window.location.href.toLowerCase());
     if (optsQuery["dbg"] == "1") {
         pxt.setLogLevel(pxt.LogLevel.Debug);
@@ -5970,6 +5968,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     pkg.setupAppTarget((window as any).pxtTargetBundle);
 
     initGitHubDb();
+
+    if (pxt.auth.proxyIdentityThroughIPC()) {
+        auth.overrideAuthClient(() => new MinecraftAuthClient());
+    }
 
     // DO NOT put any async code before this line! The serviceworker must be initialized before
     // the window load event fires

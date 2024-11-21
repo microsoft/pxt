@@ -120,10 +120,7 @@ export class MinecraftAuthClient extends AuthClient {
         else if (path.startsWith("/api/user/project/")) {
             const headerId = path.substring(18);
 
-            if (method === "POST") {
-                return this.setAsync(data) as Promise<pxt.auth.ApiResult<T>>;
-            }
-            else if (method === "GET") {
+            if (method === "GET") {
                 return this.getAsync(headerId) as Promise<pxt.auth.ApiResult<T>>;
             }
         }
@@ -138,18 +135,6 @@ export class MinecraftAuthClient extends AuthClient {
         );
     }
 
-    // public async authCheckAsync(): Promise<pxt.auth.UserProfile | undefined> {
-    //     if (!this.pendingAuthCheck) {
-    //         this.pendingAuthCheck = this.userAsync();
-    //     }
-    //     const user = await this.pendingAuthCheck;
-
-    //     if (user.success) {
-    //         return user.resp;
-    //     }
-    //     return undefined;
-    // }
-
     protected postMessageAsync<U extends pxt.editor.CloudProxyResponse>(message: Partial<pxt.editor.CloudProxyRequest>): Promise<U> {
         return new Promise<U>((resolve, reject) => {
             const toPost = {
@@ -162,6 +147,7 @@ export class MinecraftAuthClient extends AuthClient {
 
             this.pendingMessages[toPost.id] = resolve as any;
 
+            // TODO: send over ipc channel
             window.parent.postMessage(toPost, "*");
         })
     }

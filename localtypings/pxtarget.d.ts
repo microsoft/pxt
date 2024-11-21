@@ -524,6 +524,7 @@ declare namespace pxt {
         timeMachineDiffInterval?: number; // An interval in milliseconds at which to take diffs to store in project history. Defaults to 5 minutes
         timeMachineSnapshotInterval?: number; // An interval in milliseconds at which to take full project snapshots in project history. Defaults to 15 minutes
         adjustBlockContrast?: boolean; // If set to true, all block colors will automatically be adjusted to have a contrast ratio of 4.5 with text
+        ipcIdentityProxy?: boolean; // for use with the in game minecraft experience only. If true, proxies all identity API requests through the ipc channel
     }
 
     interface DownloadDialogTheme {
