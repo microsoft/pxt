@@ -367,11 +367,11 @@ export class FieldGridPicker extends Blockly.FieldDropdown implements FieldCusto
             width: paddingContainer.offsetWidth,
             height: paddingContainer.offsetHeight
         };
-        const windowHeight = window.outerHeight;
+        const windowHeight = window.outerHeight || window.innerHeight;
 
         // Set width
         if (this.width_) {
-            const windowWidth = window.outerWidth;
+            const windowWidth = window.outerWidth || window.innerWidth;
             if (this.width_ > windowWidth) {
                 this.width_ = windowWidth;
             }
