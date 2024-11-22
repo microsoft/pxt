@@ -38,6 +38,7 @@ namespace pxt.commands {
     export let electronDeployAsync: (r: ts.pxtc.CompileResult) => Promise<void> = undefined; // A pointer to the Electron deploy function, so that targets can access it in their extension.ts
     export let webUsbPairDialogAsync: (pairAsync: () => Promise<boolean>, confirmAsync: (options: any) => Promise<WebUSBPairResult>, implicitlyCalled?: boolean) => Promise<WebUSBPairResult> = undefined;
     export let onTutorialCompleted: () => void = undefined;
+    export let postHostMessage: (msg: any /*pxt.editor.EditorMessageRequest*/) => void;
     export let workspaceLoadedAsync: () => Promise<void> = undefined;
     export let onMarkdownActivityLoad: (path: string, title?: string, editorProjectName?: string) => Promise<void> = undefined;
 }

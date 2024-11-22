@@ -390,6 +390,10 @@ function applyExtensionResult() {
         log(`extension tutorial completed`);
         pxt.commands.onTutorialCompleted = res.onTutorialCompleted;
     }
+    if (res.postHostMessage) {
+        log(`extension post host message`);
+        pxt.commands.postHostMessage = res.postHostMessage;
+    }
     if (res.showProgramTooLargeErrorAsync) {
         log(`extension showProgramTooLargeErrorAsync`);
         pxt.commands.showProgramTooLargeErrorAsync = res.showProgramTooLargeErrorAsync;

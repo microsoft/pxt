@@ -335,8 +335,10 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
 /**
  * Sends analytics messages upstream to container if any
  */
+let controllerAnalyticsEnabled = false;
 export function enableControllerAnalytics() {
-    if (!pxt.appTarget.appTheme.allowParentController || !pxt.BrowserUtils.isIFrame()) return;
+    if (controllerAnalyticsEnabled) return;
+    if (!pxt.commands.postHostMessage && (!pxt.appTarget.appTheme.allowParentController || !pxt.BrowserUtils.isIFrame())) return;
 
     const te = pxt.tickEvent;
     pxt.tickEvent = function (id: string, data?: pxt.Map<string | number>): void {
@@ -379,6 +381,8 @@ export function enableControllerAnalytics() {
             data
         })
     }
+
+    controllerAnalyticsEnabled = true;
 }
 
 function sendResponse(request: pxt.editor.EditorMessage, resp: any, success: boolean, error: any) {
@@ -422,6 +426,16 @@ export function postHostMessageAsync(msg: pxt.editor.EditorMessageRequest): Prom
         }
         else {
             window.parent.postMessage(env, "*");
+        }
+
+        // Post to editor extension if it wants these messages.
+        // Note: `postHostMessage` in editor extension does not support responses! Communication on this channel is one-way.
+        if (pxt.commands.postHostMessage) {
+            try {
+                pxt.commands.postHostMessage(msg);
+            } catch (err) {
+                pxt.reportException(err);
+            }
         }
 
         if (!msg.response)

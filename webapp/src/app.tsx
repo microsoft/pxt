@@ -6159,6 +6159,10 @@ document.addEventListener("DOMContentLoaded", async () => {
             return initExtensionsAsync(); // need to happen before cmd init
         }).then(() => cmds.initAsync())
         .then(() => {
+            // After extension cmds init, call pxteditor.enableControllerAnalytics again in case we need to send analytics to the extension
+            pxteditor.enableControllerAnalytics();
+        })
+        .then(() => {
             initPacketIO();
             initSerial();
             initHashchange();

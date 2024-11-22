@@ -1145,6 +1145,8 @@ declare namespace pxt.editor {
         blocklyPatch?: (pkgTargetVersion: string, dom: Element) => void;
         webUsbPairDialogAsync?: (pairAsync: () => Promise<boolean>, confirmAsync: (options: any) => Promise<number>) => Promise<number>;
         mkPacketIOWrapper?: (io: pxt.packetio.PacketIO) => pxt.packetio.PacketIOWrapper;
+        // Post a message to the editor's host application (useful when window.parent.postMessage isn't viable)
+        postHostMessage?: (msg: pxt.editor.EditorMessageRequest) => void;
 
         // Used with the @tutorialCompleted macro. See docs/writing-docs/tutorials.md for more info
         onTutorialCompleted?: () => void;
