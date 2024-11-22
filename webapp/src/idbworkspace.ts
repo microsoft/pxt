@@ -537,9 +537,8 @@ export function initGitHubDb() {
         }
 
         async loadTutorialMarkdown(repopath: string, tag?: string) {
-            if (repopath.indexOf(":") !== -1) {
-                repopath = repopath.split(":").pop();
-            }
+            repopath = pxt.github.normalizeTutorialPath(repopath);
+
             const cache = await getGitHubCacheAsync();
 
             const id = this.tutorialCacheKey(repopath, tag);
