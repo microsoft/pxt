@@ -340,6 +340,33 @@ describe("updateHistory", () => {
     });
 });
 
+
+describe("pxt.github.normalizeTutorialPath", () => {
+    const testPath = "Mojang/EducationContent/computing/unit-2/lesson-1";
+
+    it("should parse repos of the format owner/repo/path/to/file", () => {
+        chai.expect(pxt.github.normalizeTutorialPath(testPath)).equals(testPath);
+    });
+
+    it("should parse repos of the format github:owner/repo/path/to/file", () => {
+        const path = "github:" + testPath;
+        chai.expect(pxt.github.normalizeTutorialPath(path)).equals(testPath);
+    });
+
+    it("should parse repos of the format https://github.com/owner/repo/path/to/file", () => {
+        const path = "https://github.com/" + testPath;
+        chai.expect(pxt.github.normalizeTutorialPath(path)).equals(testPath);
+
+        const path2 = "http://github.com/" + testPath;
+        chai.expect(pxt.github.normalizeTutorialPath(path2)).equals(testPath);
+    });
+
+    it("should parse actual links to markdown files in github", () => {
+        const url = "https://github.com/Mojang/EducationContent/blob/master/computing/unit-2/lesson-1.md";
+        chai.expect(pxt.github.normalizeTutorialPath(url)).equals(testPath);
+    });
+});
+
 function createProjectText(): pxt.workspace.ScriptText {
     // A realistic timeline of project edits
     const dates = [
