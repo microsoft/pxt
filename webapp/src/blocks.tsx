@@ -1,4 +1,4 @@
-/// <reference path="../../localtypings/navigationController.d.ts"/>
+/// <reference path="../../localtypings/blockly-keyboard-experiment.ts"/>
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -17,9 +17,8 @@ import { CreateFunctionDialog } from "./createFunction";
 import { initializeSnippetExtensions } from './snippetBuilder';
 
 import * as pxtblockly from "../../pxtblocks";
-import { NavigationController, Navigation } from "@blockly/keyboard-navigation";
+import { KeyboardNavigation } from '@blockly/keyboard-experiment';
 import { WorkspaceSearch } from "@blockly/plugin-workspace-search";
-
 
 import Util = pxt.Util;
 import { DebuggerToolbox } from "./debuggerToolbox";
@@ -59,7 +58,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     protected highlightedStatement: pxtc.LocationInfo;
 
     // Blockly plugins
-    protected navigationController: NavigationController;
+    protected keyboardNavigation: KeyboardNavigation;
     protected workspaceSearch: WorkspaceSearch;
 
     public nsMap: pxt.Map<toolbox.BlockDefinition[]>;
@@ -523,27 +522,18 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     private initAccessibleBlocks() {
         const enabled = pxt.appTarget.appTheme?.accessibleBlocks;
-        if (enabled && !this.navigationController) {
-            this.navigationController = new NavigationController() as any;
+        if (enabled && !this.keyboardNavigation) {
+            this.keyboardNavigation = new KeyboardNavigation(this.editor);
 
-            this.navigationController.init();
-            this.navigationController.addWorkspace(this.editor);
-
-            (Navigation as any).prototype.focusToolbox = (workspace: Blockly.WorkspaceSvg) => {
-                const toolbox = this.toolbox;
-                if (!toolbox) return;
-                this.focusToolbox();
-                this.navigationController.navigation.resetFlyout(workspace, false);
-                this.navigationController.navigation.setState(workspace, "toolbox");
-            }
-        }
-    }
-
-    public enableAccessibleBlocks(enable: boolean) {
-        if (enable) {
-            this.navigationController.enable(this.editor);
-        } else {
-            this.navigationController.disable(this.editor);
+            // TODO: ask for API for this
+            // Monkey patch to focus the pxt toolbox, needs proper API and perhaps similar temporary hack
+            //(Navigation as any).prototype.focusToolbox = (workspace: Blockly.WorkspaceSvg) => {
+            //    const toolbox = this.toolbox;
+            //    if (!toolbox) return;
+            //    this.focusToolbox();
+            //    this.navigationController.navigation.resetFlyout(workspace, false);
+            //    this.navigationController.navigation.setState(workspace, "toolbox");
+            //}
         }
     }
 
@@ -906,8 +896,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     public moveFocusToFlyout() {
-        if (this.navigationController) {
-            this.navigationController.navigation.focusFlyout(this.editor);
+        if (this.keyboardNavigation) {
+            // TODO: understand purpose, ask for API for this
+            //this.navigationController.navigation.focusFlyout(this.editor);
         }
 
         (this.editor.getInjectionDiv() as HTMLDivElement).focus();
