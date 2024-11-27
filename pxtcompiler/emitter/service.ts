@@ -616,8 +616,6 @@ namespace ts.pxtc {
     }
 
     export function validateBlockString(fn: SymbolInfo, str: string): { result: boolean; message?: string } {
-        // TODO thsparks : Implement.
-
         const compileInfo = pxt.blocks.compileInfo(fn);
         const originalBlockString = fn.attributes.block;
 
