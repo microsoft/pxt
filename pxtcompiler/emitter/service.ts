@@ -614,6 +614,32 @@ namespace ts.pxtc {
             return symbol.name
         return typechecker.getFullyQualifiedName(symbol);
     }
+
+    export function validateBlockString(fn: SymbolInfo, str: string): { result: boolean; message?: string } {
+        // TODO thsparks : Implement.
+
+        const compileInfo = pxt.blocks.compileInfo(fn);
+        const originalBlockString = fn.attributes.block;
+
+        // We update the actual symbol info with the string we're validating,
+        // which allows us to reuse much of the existing code for applying block strings to functions.
+        const errors: string[] = [];
+        fn.attributes.block = pxt.blocks.normalizeBlock(str, err => errors.push(err));
+
+        if (errors.length) {
+            return { result: false, message: errors.join(", ") };
+        }
+
+        // Update the block definition and check if the new compile info matches the old compile info.
+        // If they don't match, we have an error.
+        updateBlockDef(fn.attributes);
+        const updatedCompileInfo = pxt.blocks.compileInfo(fn);
+        if (!pxtc.hasEquivalentParameters(compileInfo, updatedCompileInfo)) {
+            return { result: false, message: `Block string has non-matching arguments. Original: ${originalBlockString}, Testing: ${str}` };
+        }
+
+        return { result: true };
+    }
 }
 
 namespace ts.pxtc.service {
@@ -783,6 +809,10 @@ namespace ts.pxtc.service {
             pos: number;
         };
         apiInfo: () => ApisInfo;
+        validateBlockString: (v: OpArg) => {
+            result?: boolean;
+            message?: string;
+        };
         snippet: (v: OpArg) => string;
         blocksInfo: (v: OpArg) => BlocksInfo;
         apiSearch: (v: OpArg) => SearchInfo[];
@@ -797,6 +827,7 @@ namespace ts.pxtc.service {
         | KsDiagnostic[]
         | { formatted: string; pos: number; }
         | ApisInfo | BlocksInfo | ProjectSearchInfo[]
+        | { result?: boolean; message?: string; }
         | {};
 
     export type OpError = { errorMessage: string };
@@ -998,6 +1029,36 @@ namespace ts.pxtc.service {
             lastApiInfo = internalGetApiInfo(service.getProgram(), host.opts.jres);
             return lastApiInfo.apis;
         },
+
+        validateBlockString: v => {
+            let qName = v.qName;
+            const blockString = v.blockString;
+
+            const missingInputs = [];
+            if (!qName) missingInputs.push("qName");
+            if (!blockString) missingInputs.push("blockString");
+            if (missingInputs.length > 0) {
+                throw new Error(`Invalid input. Missing ${missingInputs.concat(", ")}.`);
+            }
+
+            const apisInfo = operations.apiInfo();
+            if (!apisInfo) {
+                throw new Error("Failed to get API info. Run compile first.");
+            }
+
+            const blockFunction = apisInfo.byQName[qName];
+            if (!blockFunction) {
+                const qNameStart = qName.split(".")[0];
+                return {
+                    result: false,
+                    message: `Failed to find function with qName: ${qName}. Valid qNames: ${JSON.stringify(Object.keys(apisInfo.byQName).filter(k => k.startsWith(qNameStart)))}`
+                };
+            }
+
+            // Parse the block string and compare with the api info
+            return validateBlockString(blockFunction, blockString);
+        },
+
         snippet: v => {
             const o = v.snippet;
             if (!lastApiInfo) return undefined;

@@ -794,7 +794,7 @@ namespace ts.pxtc {
         return apis;
     }
 
-    function hasEquivalentParameters(a: pxt.blocks.BlockCompileInfo, b: pxt.blocks.BlockCompileInfo) {
+    export function hasEquivalentParameters(a: pxt.blocks.BlockCompileInfo, b: pxt.blocks.BlockCompileInfo) {
         if (a.parameters.length != b.parameters.length) {
             pxt.debug(`Localized block has extra or missing parameters`);
             return false;
@@ -1671,6 +1671,8 @@ namespace ts.pxtc.service {
         snippet?: SnippetOptions;
         runtime?: pxt.RuntimeOptions;
         light?: boolean; // in light mode?
+        qName?: string;
+        blockString?: string;
     }
 
     export interface SnippetOptions {

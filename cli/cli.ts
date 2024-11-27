@@ -5074,6 +5074,55 @@ interface AnimationInfo {
 
 
 
+export async function validateTranslatedBlockStringsAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
+    const filePath = parsed.args[0];
+    if (!filePath || !fs.existsSync(filePath)) {
+        U.userError(`File ${filePath} not found`);
+    }
+
+    const translationMap = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+
+    const opts = await prepBuildOptionsAsync(BuildOption.GenDocs);
+    const compileResult = pxtc.service.performOperation("compile", {options: opts});
+    if (pxtc.service.IsOpErr(compileResult)) {
+        U.userError(`Failed to compile the project: ${compileResult.errorMessage}`);
+    }
+
+    const results: { [translationKey: string]: {result: boolean, message?: string}} = {};
+    for (const [translationKey, blockString] of Object.entries(translationMap)) {
+        if (typeof translationKey !== 'string' || typeof blockString !== 'string') {
+            U.userError(`Invalid block string entry found for ${translationKey}: ${blockString}`);
+        }
+        if (translationKey.startsWith("{id:subcategory}")) {
+            // TODO thsparks : any validation to do here?
+            results[translationKey] = { result: true, message: "No validation for subcategories" }
+        } else if (translationKey.startsWith("{id:group}")) {
+            // TODO thsparks : any validation to do here?
+            results[translationKey] = { result: true, message: "No validation for groups" }
+        } else if (translationKey.endsWith("|block")) {
+            const qName = translationKey.replace("|block", "");
+            const validation = pxtc.service.performOperation('validateBlockString', { qName, blockString: (blockString as string) });
+            if (pxtc.service.IsOpErr(validation)) {
+                U.userError(`Failed to validate block string for ${translationKey}: ${validation.errorMessage}`);
+                results[translationKey] = { result: false, message: validation.errorMessage };
+            }
+            else {
+                results[translationKey] = validation as { result: boolean, message?: string }; // TODO thsparks : Why is this cast necessary? Doesn't like referencing actual properties?
+            }
+        } else if (translationKey.indexOf("|param|")) {
+            // TODO thsparks : any validation to do here?
+            results[translationKey] = { result: true, message: "No validation for subcategories" }
+        } else {
+            // TODO thsparks : any validation to do here?
+            results[translationKey] = { result: true, message: "No validation performed" }
+        }
+    }
+
+    pxt.log(JSON.stringify(results, null, 2)); // TODO thsparks : remove formatting when done testing.
+
+    return Promise.resolve();
+}
+
 export function buildJResSpritesAsync(parsed: commandParser.ParsedCommand) {
     ensurePkgDir()
     return loadPkgAsync()
@@ -7395,7 +7444,15 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
         help: "Validate and attempt to fix common pxt.json issues",
     }, validateAndFixPkgConfig);
 
-    advancedCommand("buildshims", "Regenerate shims.d.ts, enums.d.ts", buildShimsAsync)
+    advancedCommand("buildshims", "Regenerate shims.d.ts, enums.d.ts", buildShimsAsync);
+
+    p.defineCommand({
+        name: "validatetranslatedblockstrings",
+        aliases: ["vtbs"],
+        help: "Validate a file of translated block strings",
+        advanced: true,
+        argString: "<file>"
+    }, validateTranslatedBlockStringsAsync);
 
     function simpleCmd(name: string, help: string, callback: (c?: commandParser.ParsedCommand) => Promise<void>, argString?: string, onlineHelp?: boolean): void {
         p.defineCommand({ name, help, onlineHelp, argString }, callback);
