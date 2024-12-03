@@ -18,6 +18,7 @@ export class VerticalFlyout implements Blockly.IFlyout {
 
     constructor(protected options: Blockly.Options) {
         this.dummyWorkspace = new Blockly.WorkspaceSvg(options);
+        this.dummyWorkspace.setVisible(false);
     }
 
     createDom(tagName: string | Blockly.utils.Svg<SVGSVGElement> | Blockly.utils.Svg<SVGGElement>): SVGElement {
