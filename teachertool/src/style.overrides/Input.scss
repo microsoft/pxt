@@ -23,7 +23,7 @@
             padding-left: 0;
 
             &::placeholder {
-                color: var(--pxt-content-accent);
+                color: var(--pxt-content-secondary-foreground);
                 font-style: italic;
             }
         }
