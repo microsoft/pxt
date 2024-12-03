@@ -99,6 +99,7 @@ If you don't need to build the suite of associated webapps (skillmap, multiplaye
 gulp --no-webapps
 ```
 
+You can also used the shortened flag `-n` in place of `--no-webapps`.
 
 ### Icons
 
