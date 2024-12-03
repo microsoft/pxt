@@ -12,7 +12,7 @@ import { dialogAsync, hideDialog } from "./core";
 
 import ISettingsProps = pxt.editor.ISettingsProps;
 import SimState = pxt.editor.SimState;
-import { getStore } from "./state";
+import { getStore, WebappDataComponent } from "./state";
 
 
 const enum View {
@@ -25,7 +25,7 @@ interface EditorToolbarState {
     compileState: "compiling" | "success" | null;
 }
 
-export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarState> {
+export class EditorToolbar extends WebappDataComponent<ISettingsProps, EditorToolbarState> {
     protected compileTimeout: number;
 
     constructor(props: ISettingsProps) {
@@ -354,7 +354,9 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
     }
 
     renderCore() {
-        const { tutorialOptions, projectName, compiling, isSaving, simState, debugging, editorState } = this.props.parent.state;
+        const { tutorialOptions, projectName, compiling, isSaving, simState, editorState } = this.props.parent.state;
+
+        const debugging = this.getWebappState("debugging");
         const header = this.getData(`header:${this.props.parent.state.header.id}`) ?? this.props.parent.state.header;
 
         const targetTheme = pxt.appTarget.appTheme;

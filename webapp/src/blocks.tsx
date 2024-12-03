@@ -35,6 +35,7 @@ import SimState = pxt.editor.SimState;
 
 import { DuplicateOnDragConnectionChecker } from "../../pxtblocks/plugins/duplicateOnDrag";
 import { PathObject } from "../../pxtblocks/plugins/renderer/pathObject";
+import { getStore } from "./state";
 
 
 export class Editor extends toolboxeditor.ToolboxEditor {
@@ -244,7 +245,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     onPageVisibilityChanged(isVisible: boolean) {
         if (!isVisible) return;
-        if (!this.parent.state.debugging) {
+        if (!getStore().debugging) {
             this.highlightStatement(this.highlightedStatement);
         }
     }
@@ -506,7 +507,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         (Blockly as any).WorkspaceAudio.prototype.play = function (name: string, opt_volume?: number) {
             const themeVolume = pxt.appTarget?.appTheme?.blocklySoundVolume;
 
-            if (editor?.parent.state.mute === MuteState.Muted) {
+            if (getStore().mute === MuteState.Muted) {
                 opt_volume = 0;
             }
             else if (themeVolume != undefined) {
@@ -931,7 +932,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (!container) return;
 
         pxt.perf.measureStart("updateToolbox")
-        const debugging = !!this.parent.state.debugging;
+        const debugging = !!getStore().debugging;
         let debuggerToolbox = debugging ? <DebuggerToolbox
                 ref={this.handleDebuggerToolboxRef}
                 parent={this.parent}
@@ -1192,7 +1193,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     updateDebuggerVariables(brk: pxsim.DebuggerBreakpointMessage) {
-        if (!this.parent.state.debugging) return;
+        if (!getStore().debugging) return;
 
         if (this.debuggerToolbox) {
             const visibleVars = Blockly.Variables.allUsedVarModels(this.editor)
@@ -1908,7 +1909,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     updateBreakpoints() {
         if (!this.editor) return; // not loaded yet
 
-        const debugging = !!this.parent.state.debugging;
+        const debugging = !!getStore().debugging;
         const blocks = this.editor.getAllBlocks(false);
         blocks.forEach(block => {
             if (block.previousConnection) {

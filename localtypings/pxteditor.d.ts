@@ -756,6 +756,11 @@ declare namespace pxt.editor {
         // active?: boolean; // is this tab visible at all
         // collapseEditorTools?: boolean;
         // greenScreen?: boolean;
+        // fullscreen?: boolean;
+        // mute?: MuteState;
+        // tracing?: boolean;
+        // debugging?: boolean;
+
         header?: pxt.workspace.Header;
         editorState?: EditorState;
         currFile?: IFile;
@@ -777,17 +782,13 @@ declare namespace pxt.editor {
         hideEditorFloats?: boolean;
         showBlocks?: boolean;
         showParts?: boolean;
-        fullscreen?: boolean;
         showMiniSim?: boolean;
-        mute?: MuteState;
         embedSimView?: boolean;
         editorPosition?: {
             lineNumber: number;
             column: number;
             file: IFile;
         }; // ensure that this line is visible when loading the editor
-        tracing?: boolean;
-        debugging?: boolean;
         debugFirstRun?: boolean;
         bannerVisible?: boolean;
         pokeUserComponent?: string;

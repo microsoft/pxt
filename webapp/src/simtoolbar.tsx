@@ -1,13 +1,12 @@
 /// <reference path="../../built/pxtlib.d.ts" />
 
 import * as React from "react";
-import * as data from "./data";
 import * as sui from "./sui";
 
 import MuteState = pxt.editor.MuteState;
 import SimState = pxt.editor.SimState;
 import ISettingsProps = pxt.editor.ISettingsProps;
-import { getStore } from "./state";
+import { dispatch, getStore, setMuteState, WebappDataComponent } from "./state";
 
 export interface SimulatorProps extends ISettingsProps {
     collapsed?: boolean;
@@ -17,7 +16,7 @@ export interface SimulatorProps extends ISettingsProps {
     showSimulatorSidebar?: () => void;
 }
 
-export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
+export class SimulatorToolbar extends WebappDataComponent<SimulatorProps, {}> {
 
     constructor(props: SimulatorProps) {
         super(props);
@@ -25,8 +24,9 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         }
 
         // iOS requires interactive consent to use audio
-        if (pxt.BrowserUtils.isIOS())
-            this.props.parent.setMute(MuteState.Disabled);
+        if (pxt.BrowserUtils.isIOS()) {
+            dispatch(setMuteState(MuteState.Disabled));
+        }
 
         this.toggleMute = this.toggleMute.bind(this);
         this.restartSimulator = this.restartSimulator.bind(this);
@@ -61,12 +61,13 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
     }
 
     toggleMute() {
-        pxt.tickEvent("simulator.mute", { view: 'computer', muteTo: '' + !this.props.parent.state.mute }, { interactiveConsent: true });
+
+        pxt.tickEvent("simulator.mute", { view: 'computer', muteTo: '' + !getStore().mute }, { interactiveConsent: true });
         this.props.parent.toggleMute();
     }
 
     toggleSimulatorFullscreen() {
-        pxt.tickEvent("simulator.fullscreen", { view: 'computer', fullScreenTo: '' + !this.props.parent.state.fullscreen }, { interactiveConsent: true });
+        pxt.tickEvent("simulator.fullscreen", { view: 'computer', fullScreenTo: '' + !getStore().fullscreen }, { interactiveConsent: true });
         this.props.parent.toggleSimulatorFullscreen();
     }
 
@@ -111,7 +112,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const isRunning = simState == SimState.Running;
         const isStarting = simState == SimState.Starting;
         const isSimulatorPending = simState == SimState.Pending;
-        const isFullscreen = parentState.fullscreen;
+        const isFullscreen = this.getWebappState("fullscreen");
         const inTutorial = !!parentState.tutorialOptions && !!parentState.tutorialOptions.tutorial;
         const isTabTutorial = inTutorial && !pxt.BrowserUtils.useOldTutorialLayout();
         const inCodeEditor = parent.isBlocksActive() || parent.isJavaScriptActive() || parent.isPythonActive();
@@ -119,7 +120,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const run = true;
         const restart = run && !simOpts.hideRestart;
         const debug = targetTheme.debugger && !inTutorial && !pxt.BrowserUtils.isIE() && !pxt.shell.isReadOnly();
-        const debugging = parentState.debugging;
+        const debugging = this.getWebappState("debugging");
         // we need to escape full screen from a tutorial!
         const fullscreen = run && !simOpts.hideFullscreen && !sandbox;
         const audio = run && targetTheme.hasAudio;
@@ -140,16 +141,18 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const simSerialTooltip = lf("Open simulator console");
         const devSerialTooltip = lf("Open device console");
 
+        const mute = this.getWebappState("mute");
+
         const showSerialEditorSection = isFullscreen && (simSerialActive || devSerialActive);
 
         return <aside className={"ui item grid centered simtoolbar" + (sandbox ? "" : " portrait ")} role="complementary" aria-label={lf("Simulator toolbar")}>
             <div className={`ui icon tiny buttons`} style={{ padding: "0" }}>
                 {make && <sui.Button disabled={debugging} icon='configure' className="secondary" title={makeTooltip} onClick={this.openInstructions} />}
-                {run && !targetTheme.bigRunButton && <PlayButton parent={parent} simState={parentState.simState} debugging={parentState.debugging} />}
+                {run && !targetTheme.bigRunButton && <PlayButton parent={parent} simState={parentState.simState} debugging={debugging} />}
                 {fullscreen && <sui.Button key='fullscreenbtn' className="fullscreen-button tablet only hidefullscreen" icon="xicon fullscreen" title={fullscreenTooltip} onClick={this.toggleSimulatorFullscreen} />}
                 {restart && <sui.Button disabled={!runControlsEnabled} key='restartbtn' className={`restart-button`} icon="refresh" title={restartTooltip} onClick={this.restartSimulator} />}
                 {run && debug && <sui.Button disabled={!debugBtnEnabled} key='debugbtn' className={`debug-button ${debugging ? "orange" : ""}`} icon="icon bug" title={debugTooltip} onClick={this.toggleDebug} />}
-                {audio && isTabTutorial && <MuteButton onClick={this.toggleMute} state={parent.state.mute} className="hidefullscreen tutorial"/>}
+                {audio && isTabTutorial && <MuteButton onClick={this.toggleMute} state={mute} className="hidefullscreen tutorial"/>}
                 {collapse && <sui.Button
                     className={`expand-button portrait only editortools-btn hidefullscreen`}
                     icon={`${collapsed ? 'play' : 'stop'}`}
@@ -157,7 +160,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
                 />}
             </div>
             {!isHeadless && <div className={`ui icon tiny buttons computer only`} style={{ padding: "0" }}>
-                {audio && <MuteButton onClick={this.toggleMute} state={parent.state.mute} />}
+                {audio && <MuteButton onClick={this.toggleMute} state={mute} />}
                 {simOpts.keymap && <sui.Button key='keymap' className="keymap-button" icon="keyboard" title={keymapTooltip} onClick={parent.toggleKeymap} />}
             </div>}
             {showSerialEditorSection && <div className={`ui item tiny buttons full-screen-console`}>

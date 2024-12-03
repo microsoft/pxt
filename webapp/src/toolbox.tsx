@@ -13,6 +13,7 @@ import { DeleteConfirmationModal } from "../../react-common/components/extension
 
 import * as Blockly from "blockly";
 import { classList } from "../../react-common/components/util"
+import { WebappDataComponent } from "./state"
 
 export const enum CategoryNameID {
     Loops = "loops",
@@ -123,7 +124,7 @@ export interface ToolboxState {
 
 const MONACO_EDITOR_NAME: string = "monaco";
 
-export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
+export class Toolbox extends WebappDataComponent<ToolboxProps, ToolboxState> {
     private rootElement: HTMLElement;
 
     private selectedItem: CategoryItem;
@@ -300,7 +301,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         // handles full screen sim, where we hide the toolbox via css
         // without re-rendering, which will trigger the animation again
         if ((this.props.editorname == MONACO_EDITOR_NAME && props.editorname != MONACO_EDITOR_NAME)
-            || (props.editorname == MONACO_EDITOR_NAME && props.parent.parent.state.fullscreen)
+            || (props.editorname == MONACO_EDITOR_NAME && this.getWebappState("fullscreen"))
             && this.state.shouldAnimate) {
             pxt.shell.setToolboxAnimation();
             this.setState({ shouldAnimate: false });

@@ -83,7 +83,9 @@ export class HeaderBar extends WebappDataComponent<ISettingsProps, {}> {
     }
 
     protected getView = (): HeaderBarView => {
-        const { home, debugging, tutorialOptions } = this.props.parent.state;
+        const { home, tutorialOptions } = this.props.parent.state;
+        const debugging = this.getWebappState("debugging");
+
         if (home) {
             return "home";
         } else if (pxt.shell.isSandboxMode()) {

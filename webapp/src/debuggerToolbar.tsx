@@ -1,11 +1,11 @@
 import * as React from "react";
 import * as ReactDOM from 'react-dom';
 import * as sui from "./sui";
-import * as data from "./data";
 import * as simulator from "./simulator";
 
 import ISettingsProps = pxt.editor.ISettingsProps;
 import SimState = pxt.editor.SimState;
+import { WebappDataComponent } from "./state";
 
 export interface DebuggerToolbarProps extends ISettingsProps {
     showAdvancedControls: boolean;
@@ -16,7 +16,7 @@ export interface DebuggerToolbarState {
     xPos?: number;
 }
 
-export class DebuggerToolbar extends data.Component<DebuggerToolbarProps, DebuggerToolbarState> {
+export class DebuggerToolbar extends WebappDataComponent<DebuggerToolbarProps, DebuggerToolbarState> {
 
     constructor(props: DebuggerToolbarProps) {
         super(props);
@@ -78,7 +78,7 @@ export class DebuggerToolbar extends data.Component<DebuggerToolbarProps, Debugg
         const simState = parentState.simState;
         const isRunning = simState == SimState.Running;
         const isStarting = simState == SimState.Starting;
-        const isDebugging = parentState.debugging;
+        const isDebugging = this.getWebappState("debugging");
         if (!isDebugging) return <div />;
 
         const isDebuggerRunning = simulator.driver && simulator.driver.state == pxsim.SimulatorState.Running;
@@ -96,7 +96,7 @@ export class DebuggerToolbar extends data.Component<DebuggerToolbarProps, Debugg
         const dbgStepOverTooltip = lf("Step over");
         const dbgStepOutTooltip = lf("Step out");
 
-        const tracing = this.props.parent.state.tracing;
+        const tracing = this.getWebappState("tracing");
         const traceTooltip = tracing ? lf("Disable Slow-Mo") : lf("Slow-Mo")
 
         if (!isDebugging) {

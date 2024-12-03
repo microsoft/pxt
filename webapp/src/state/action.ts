@@ -15,10 +15,34 @@ type SetTabActive = ActionBase & {
     active: boolean;
 }
 
+type SetMuteState = ActionBase & {
+    type: "SET_MUTE_STATE";
+    state: pxt.editor.MuteState;
+}
+
+type SetFullScreen = ActionBase & {
+    type: "SET_FULL_SCREEN";
+    fullscreen: boolean;
+}
+
+type SetTracing = ActionBase & {
+    type: "SET_TRACING";
+    tracing: boolean;
+}
+
+type SetDebugging = ActionBase & {
+    type: "SET_DEBUGGING";
+    debugging: boolean;
+}
+
 export type Action =
     | SetEditorToolsCollapsed
     | SetGreenScreenEnabled
     | SetTabActive
+    | SetMuteState
+    | SetFullScreen
+    | SetTracing
+    | SetDebugging
 
 const setEditorToolsCollapsed = (collapsed: boolean): SetEditorToolsCollapsed => ({
     type: "SET_EDITOR_TOOLS_COLLAPSED",
@@ -35,8 +59,32 @@ const setTabActive = (active: boolean): SetTabActive => ({
     active
 });
 
+const setMuteState = (state: pxt.editor.MuteState): SetMuteState => ({
+    type: "SET_MUTE_STATE",
+    state
+});
+
+const setFullScreen = (fullscreen: boolean): SetFullScreen => ({
+    type: "SET_FULL_SCREEN",
+    fullscreen
+});
+
+const setTracing = (tracing: boolean): SetTracing => ({
+    type: "SET_TRACING",
+    tracing
+});
+
+const setDebugging = (debugging: boolean): SetDebugging => ({
+    type: "SET_DEBUGGING",
+    debugging
+});
+
 export {
     setEditorToolsCollapsed,
     setGreenScreenEnabled,
-    setTabActive
+    setTabActive,
+    setMuteState,
+    setFullScreen,
+    setTracing,
+    setDebugging
 }

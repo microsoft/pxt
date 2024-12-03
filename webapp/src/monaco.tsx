@@ -30,6 +30,7 @@ import IProjectView = pxt.editor.IProjectView;
 import ErrorListState = pxt.editor.ErrorListState;
 
 import * as pxtblockly from "../../pxtblocks";
+import { getStore } from "./state";
 
 const MIN_EDITOR_FONT_SIZE = 10
 const MAX_EDITOR_FONT_SIZE = 40
@@ -763,7 +764,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     saveToTypeScriptAsync() {
         if (this.fileType == pxt.editor.FileType.Python)
-            return this.convertPythonToTypeScriptAsync(this.isDebugging() || this.parent.state.tracing);
+            return this.convertPythonToTypeScriptAsync(this.isDebugging() || getStore().tracing);
         return Promise.resolve(undefined)
     }
 
@@ -2090,7 +2091,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private isDebugging() {
-        return this.parent.state.debugging;
+        return getStore().debugging;
     }
 
     private handleToolboxRef = (c: toolbox.Toolbox) => {

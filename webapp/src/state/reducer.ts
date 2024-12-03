@@ -19,5 +19,25 @@ export const reducer: Reducer<IAppState, Action> = (store, action) => {
                 ...store,
                 active: action.active
             };
+        case "SET_DEBUGGING":
+            return {
+                ...store,
+                debugging: action.debugging
+            };
+        case "SET_FULL_SCREEN":
+            return {
+                ...store,
+                fullscreen: action.fullscreen
+            };
+        case "SET_TRACING":
+            return {
+                ...store,
+                tracing: action.tracing
+            };
+        case "SET_MUTE_STATE":
+            return {
+                ...store,
+                mute: action.state
+            };
     }
 }
