@@ -4,7 +4,7 @@ A *String* is a sequence of characters.
 
 ## #intro
 
-A string type is more complex than a [number](/types/number) or a [boolean](/types/boolean). Along with its characters a string type contains information about its length an it lets you change any of its charaters using an index. Strings can be broken into smaller strings or added on to make larger strings.
+A string type is more complex than a [number](/types/number) or a [boolean](/types/boolean). Along with its characters a string type contains information about its length an it lets you change any of its characters using an index. Strings can be broken into smaller strings or added on to make larger strings.
 
 Strings can contain letters, numbers, punctuation marks, and other special characters. Strings can have characters from different languages too.
 
