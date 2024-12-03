@@ -1,7 +1,6 @@
 /// <reference path="../../built/pxtlib.d.ts" />
 
 import * as React from "react";
-import * as data from "./data";
 import * as sui from "./sui";
 
 import * as auth from "./auth";
@@ -13,11 +12,12 @@ import * as projects from "./projects";
 import * as tutorial from "./tutorial";
 
 import ISettingsProps = pxt.editor.ISettingsProps;
+import { WebappDataComponent } from "./state";
 
 type HeaderBarView = "home" | "editor" | "tutorial" | "tutorial-tab" | "debugging" | "sandbox" | "time-machine";
 const LONGPRESS_DURATION = 750;
 
-export class HeaderBar extends data.Component<ISettingsProps, {}> {
+export class HeaderBar extends WebappDataComponent<ISettingsProps, {}> {
     protected longpressTimer: any;
     protected touchStartTime: number;
 
@@ -219,7 +219,8 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
 
     // TODO: eventually unify these components into one menu
     getSettingsMenu = (view: HeaderBarView) => {
-        const { greenScreen, accessibleBlocks, header } = this.props.parent.state;
+        const greenScreen = this.getWebappState("greenScreen");
+        const { accessibleBlocks, header } = this.props.parent.state;
         switch (view){
             case "home":
                 return <projects.ProjectSettingsMenu parent={this.props.parent} />

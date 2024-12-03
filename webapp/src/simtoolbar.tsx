@@ -7,6 +7,7 @@ import * as sui from "./sui";
 import MuteState = pxt.editor.MuteState;
 import SimState = pxt.editor.SimState;
 import ISettingsProps = pxt.editor.ISettingsProps;
+import { getStore } from "./state";
 
 export interface SimulatorProps extends ISettingsProps {
     collapsed?: boolean;
@@ -70,7 +71,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
     }
 
     toggleSimulatorCollapse() {
-        pxt.tickEvent("simulator.toggleCollapse", { view: 'computer', collapsedTo: '' + !this.props.parent.state.collapseEditorTools }, { interactiveConsent: true });
+        pxt.tickEvent("simulator.toggleCollapse", { view: 'computer', collapsedTo: this.getCollapsedTo() }, { interactiveConsent: true });
         this.props.parent.toggleSimulatorCollapse();
     }
 
@@ -87,8 +88,12 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
     }
 
     takeScreenshot() {
-        pxt.tickEvent("simulator.takescreenshot", { view: 'computer', collapsedTo: '' + !this.props.parent.state.collapseEditorTools }, { interactiveConsent: true });
+        pxt.tickEvent("simulator.takescreenshot", { view: 'computer', collapsedTo: this.getCollapsedTo() }, { interactiveConsent: true });
         this.props.parent.downloadScreenshotAsync();
+    }
+
+    private getCollapsedTo(): string {
+        return '' + !getStore().collapseEditorTools;
     }
 
     renderCore() {

@@ -72,6 +72,8 @@ import ProjectCreationOptions = pxt.editor.ProjectCreationOptions;
 import SimState = pxt.editor.SimState;
 
 
+import { getStore, dispatch, setTabActive, setEditorToolsCollapsed, setGreenScreenEnabled, onWebappStoreChange } from "./state";
+
 declare const zip: any;
 
 import Cloud = pxt.Cloud;
@@ -82,6 +84,7 @@ import { Tour } from "./components/onboarding/Tour";
 import { parseTourStepsAsync } from "./onboarding";
 import { initGitHubDb } from "./idbworkspace";
 import { BlockDefinition, CategoryNameID } from "./toolbox";
+import { WebappAuthComponent } from "./state/webappStore";
 
 pxt.blocks.requirePxtBlockly = () => pxtblockly as any;
 pxt.blocks.requireBlockly = () => Blockly;
@@ -122,7 +125,7 @@ function setEditor(editor: ProjectView) {
 }
 
 export class ProjectView
-    extends auth.Component<IAppProps, IAppState>
+    extends WebappAuthComponent<IAppProps, IAppState>
     implements IProjectView {
     editor: srceditor.Editor;
     editorFile: pkg.File;
@@ -188,12 +191,14 @@ export class ProjectView
         if (isHighContrast) core.setHighContrast(true);
 
         const simcfg = pxt.appTarget.simulator;
+
+        dispatch(setTabActive(document.visibilityState == 'visible' || pxt.BrowserUtils.isElectron() || pxt.appTarget.appTheme.dontSuspendOnVisibility));
+        dispatch(setEditorToolsCollapsed(simcfg.headless));
+
         this.state = {
             showFiles: false,
             home: shouldShowHomeScreen,
-            active: document.visibilityState == 'visible' || pxt.BrowserUtils.isElectron() || pxt.appTarget.appTheme.dontSuspendOnVisibility,
             // don't start collapsed in mobile since we can go fullscreen now
-            collapseEditorTools: simcfg.headless,
             simState: SimState.Stopped,
             autoRun: this.autoRunOnStart(),
             isMultiplayerGame: false,
@@ -399,7 +404,7 @@ export class ProjectView
         }
         const active = pxt.BrowserUtils.isDocumentVisible()
         pxt.debug(`page visibility: ${active}`)
-        this.setState({ active: active });
+        dispatch(setTabActive(active));
         data.invalidate('pkg-git-pull-status');
         data.invalidate('pkg-git-pr');
         data.invalidate('pkg-git-pages')
@@ -667,7 +672,7 @@ export class ProjectView
             return;
         }
 
-        if (pxt.appTarget.simulator?.headless && !this.state.collapseEditorTools) {
+        if (pxt.appTarget.simulator?.headless && !getStore().collapseEditorTools) {
             this.toggleSimulatorCollapse();
         }
 
@@ -940,11 +945,12 @@ export class ProjectView
 
     private autoRunSimulatorDebounced = pxtc.Util.debounce(
         () => {
+            const store = getStore();
             if (Util.now() - this.lastChangeTime < 1000) {
                 pxt.debug(`sim: skip auto, debounced`)
                 return;
             }
-            if (!this.state.active) {
+            if (!store.active) {
                 pxt.debug(`sim: skip blocks auto, !active`)
                 return;
             }
@@ -960,7 +966,7 @@ export class ProjectView
                 pxt.debug(`sim: don't restart when debugging or tracing`)
                 return;
             }
-            if (this.state.collapseEditorTools) {
+            if (store.collapseEditorTools) {
                 pxt.debug(`sim: don't restart when simulator collapsed`);
                 return;
             }
@@ -1055,6 +1061,10 @@ export class ProjectView
     }
 
     public async componentDidMount() {
+        onWebappStoreChange(() => {
+            this.forceUpdate();
+        });
+
         this.allEditors.forEach(e => e.prepare())
         await simulator.initAsync(document.getElementById("boardview"), {
             orphanException: brk => {
@@ -1168,7 +1178,8 @@ export class ProjectView
     }
 
     private updateEditorFileAsync(editorOverride: srceditor.Editor = null) {
-        if (!this.state.active
+        const store = getStore();
+        if (!store.active
             || this.updatingEditorFile
             || this.state.currFile == this.editorFile && !editorOverride) {
             if (this.state.editorPosition && this.editorFile == this.state.editorPosition.file) {
@@ -3607,12 +3618,14 @@ export class ProjectView
 
     toggleSimulatorCollapse() {
         const state = this.state;
-        pxt.tickEvent("simulator.toggleCollapse", { view: 'computer', collapsedTo: '' + !state.collapseEditorTools }, { interactiveConsent: true });
-        if (state.simState == SimState.Stopped && state.collapseEditorTools && !pxt.appTarget.simulator.headless) {
+        const store = getStore();
+
+        pxt.tickEvent("simulator.toggleCollapse", { view: 'computer', collapsedTo: '' + !store.collapseEditorTools }, { interactiveConsent: true });
+        if (state.simState == SimState.Stopped && store.collapseEditorTools && !pxt.appTarget.simulator.headless) {
             this.startStopSimulator();
         }
 
-        if (state.collapseEditorTools) {
+        if (store.collapseEditorTools) {
             this.expandSimulator();
         }
         else {
@@ -3627,13 +3640,13 @@ export class ProjectView
         else {
             this.startSimulator();
         }
-        this.setState({ collapseEditorTools: false });
+        dispatch(setEditorToolsCollapsed(false));
         this.fireResize();
     }
 
     collapseSimulator() {
         simulator.hide(() => {
-            this.setState({ collapseEditorTools: true });
+            dispatch(setEditorToolsCollapsed(true));
             this.fireResize();
         })
     }
@@ -3647,7 +3660,8 @@ export class ProjectView
     }
 
     setSimulatorFullScreen(enabled: boolean) {
-        if (this.state.collapseEditorTools) {
+        const store = getStore();
+        if (store.collapseEditorTools) {
             this.expandSimulator();
         }
         if (!enabled) {
@@ -4888,6 +4902,8 @@ export class ProjectView
     }
 
     async completeTutorialAsync(): Promise<void> {
+        const store = getStore();
+
         pxt.tickEvent("tutorial.finish", { tutorial: this.state.header?.tutorial?.tutorial });
         pxt.tickEvent("tutorial.complete", { tutorial: this.state.header?.tutorial?.tutorial });
         core.showLoading("leavingtutorial", lf("leaving tutorial..."));
@@ -4922,7 +4938,7 @@ export class ProjectView
             return;
         }
 
-        if (this.state.collapseEditorTools && !pxt.appTarget.simulator.headless) {
+        if (store.collapseEditorTools && !pxt.appTarget.simulator.headless) {
             this.expandSimulator();
         }
         this.postTutorialProgress();
@@ -5104,9 +5120,10 @@ export class ProjectView
     }
 
     toggleGreenScreen() {
-        const greenScreenOn = !this.state.greenScreen;
+        const store = getStore();
+        const greenScreenOn = !store.greenScreen;
         pxt.tickEvent("app.greenscreen", { on: greenScreenOn ? 1 : 0 });
-        this.setState({ greenScreen: greenScreenOn });
+        dispatch(setGreenScreenEnabled(greenScreenOn));
     }
 
     toggleAccessibleBlocks() {
@@ -5235,6 +5252,9 @@ export class ProjectView
     renderCore() {
         setEditor(this);
 
+        const greenScreen = this.getWebappState("greenScreen");
+        const collapseEditorTools = this.getWebappState("collapseEditorTools");
+
         //  ${targetTheme.accentColor ? "inverted accent " : ''}
         const targetTheme = pxt.appTarget.appTheme;
         const simOpts = pxt.appTarget.simulator;
@@ -5252,7 +5272,7 @@ export class ProjectView
         const inDebugMode = this.state.debugging;
         const inHome = this.state.home && !sandbox;
         const inEditor = !!this.state.header && !inHome;
-        const { lightbox, greenScreen, accessibleBlocks } = this.state;
+        const { lightbox, accessibleBlocks } = this.state;
         const hideTutorialIteration = inTutorial && tutorialOptions.metadata?.hideIteration;
         const hideToolbox = inTutorial && tutorialOptions.metadata?.hideToolbox;
         // flyoutOnly has become a de facto css class for styling tutorials (especially minecraft HOC), so keep it if hideToolbox is true, even if flyoutOnly is false.
@@ -5265,14 +5285,14 @@ export class ProjectView
         const useSerialEditor = pxt.appTarget.serial && !!pxt.appTarget.serial.useEditor;
         const showSideDoc = sideDocs && this.state.sideDocsLoadUrl && !this.state.sideDocsCollapsed;
         const showCollapseButton = showEditorToolbar && !inHome && !sandbox && !targetTheme.simCollapseInMenu && (!isHeadless || inDebugMode) && !isTabTutorial;
-        const shouldHideEditorFloats = this.state.hideEditorFloats || this.state.collapseEditorTools;
+        const shouldHideEditorFloats = this.state.hideEditorFloats || collapseEditorTools;
         const logoWide = !!targetTheme.logoWide;
         const hwDialog = !sandbox && pxt.hasHwVariants();
         const editorOffset = ((inTutorialExpanded || isTabTutorial) && this.state.editorOffset) ? { top: this.state.editorOffset } : undefined;
         const invertedTheme = targetTheme.invertedMenu && targetTheme.invertedMonaco;
         const isMultiplayerSupported = targetTheme.multiplayer;
         const isMultiplayerGame = this.state.isMultiplayerGame;
-        const collapseIconTooltip = this.state.collapseEditorTools ? lf("Show the simulator") : lf("Hide the simulator");
+        const collapseIconTooltip = collapseEditorTools ? lf("Show the simulator") : lf("Hide the simulator");
         const isApp = cmds.isNativeHost() || pxt.BrowserUtils.isElectron();
         const hc = this.getData<boolean>(auth.HIGHCONTRAST)
 
@@ -5280,7 +5300,7 @@ export class ProjectView
             "ui",
             lightbox ? 'dimmable dimmed' : 'dimmable',
             shouldHideEditorFloats ? "hideEditorFloats" : '',
-            this.state.collapseEditorTools ? "collapsedEditorTools" : '',
+            collapseEditorTools ? "collapsedEditorTools" : '',
             transparentEditorToolbar ? "transparentEditorTools" : '',
             invertedTheme ? 'inverted-theme' : '',
             this.state.fullscreen ? 'fullscreensim' : '',
@@ -5326,7 +5346,7 @@ export class ProjectView
             </div>
         }
         const isRTL = pxt.Util.isUserLanguageRtl();
-        const showRightChevron = (this.state.collapseEditorTools || isRTL) && !(this.state.collapseEditorTools && isRTL); // Collapsed XOR RTL
+        const showRightChevron = (collapseEditorTools || isRTL) && !(collapseEditorTools && isRTL); // Collapsed XOR RTL
         // don't show in sandbox or is blocks editor or previous editor is blocks or assets editor
         const showFileList = !sandbox && !inTutorial && !this.isAssetsActive()
             && !(isBlocks
@@ -5364,7 +5384,7 @@ export class ProjectView
                     showFileList={showFileList}
                     showFullscreenButton={!isHeadless}
                     showHostMultiplayerGameButton={isMultiplayerSupported && isMultiplayerGame}
-                    collapseEditorTools={this.state.collapseEditorTools}
+                    collapseEditorTools={collapseEditorTools}
                     simSerialActive={this.state.simSerialActive}
                     devSerialActive={this.state.deviceSerialActive}
                     showMiniSim={this.showMiniSim}

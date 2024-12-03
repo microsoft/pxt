@@ -753,7 +753,9 @@ declare namespace pxt.editor {
 
     export interface IAppProps { }
     export interface IAppState {
-        active?: boolean; // is this tab visible at all
+        // active?: boolean; // is this tab visible at all
+        // collapseEditorTools?: boolean;
+        // greenScreen?: boolean;
         header?: pxt.workspace.Header;
         editorState?: EditorState;
         currFile?: IFile;
@@ -773,7 +775,6 @@ declare namespace pxt.editor {
         isSaving?: boolean;
         publishing?: boolean;
         hideEditorFloats?: boolean;
-        collapseEditorTools?: boolean;
         showBlocks?: boolean;
         showParts?: boolean;
         fullscreen?: boolean;
@@ -793,7 +794,6 @@ declare namespace pxt.editor {
         flashHint?: boolean;
         editorOffset?: string;
         print?: boolean;
-        greenScreen?: boolean;
         accessibleBlocks?: boolean;
         home?: boolean;
         hasError?: boolean;

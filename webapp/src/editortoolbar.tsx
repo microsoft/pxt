@@ -12,6 +12,7 @@ import { dialogAsync, hideDialog } from "./core";
 
 import ISettingsProps = pxt.editor.ISettingsProps;
 import SimState = pxt.editor.SimState;
+import { getStore } from "./state";
 
 
 const enum View {
@@ -126,7 +127,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
     }
 
     private getCollapsedState(): string {
-        return '' + this.props.parent.state.collapseEditorTools;
+        return '' + !!getStore().collapseEditorTools;
     }
 
     private getHeadlessState(): string {
