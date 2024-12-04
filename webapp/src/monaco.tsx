@@ -12,6 +12,7 @@ import * as pyhelper from "./monacopyhelper";
 import * as simulator from "./simulator";
 import * as toolbox from "./toolbox";
 import * as blocklyFieldView from "./blocklyFieldView";
+import * as workspace from "./workspace";
 import { ViewZoneEditorHost, ModalEditorHost, FieldEditorManager } from "./monacoFieldEditorHost";
 import * as data from "./data";
 
@@ -1327,9 +1328,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             || pxt.shell.isReadOnly()
             || this.isDebugging();
 
+        const { headerId } = getStore();
+        const header = headerId && workspace.getHeader(headerId);
+
         const hideForTutorial =
             this.parent.isTutorial()
-            && this.parent.state.header.tutorial?.metadata?.hideToolbox;
+            && header.tutorial?.metadata?.hideToolbox;
 
         return pxt.appTarget.appTheme.monacoToolbox
             && !readOnly

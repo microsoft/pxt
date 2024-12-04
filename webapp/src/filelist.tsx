@@ -1,7 +1,6 @@
 /// <reference path="../../built/pxtlib.d.ts" />
 
 import * as React from "react";
-import * as data from "./data";
 import * as sui from "./sui";
 import * as pkg from "./package";
 import * as core from "./core";
@@ -9,6 +8,7 @@ import { fireClickOnEnter } from "./util";
 
 import IFile = pxt.editor.IFile;
 import ISettingsProps = pxt.editor.ISettingsProps;
+import { WebappDataComponent } from "./state";
 
 interface FileListState {
     currentFile?: IFile;
@@ -57,7 +57,7 @@ const customFileHeader = (homeUrl: string) => `
 */
 `
 
-export class FileList extends data.Component<ISettingsProps, FileListState> {
+export class FileList extends WebappDataComponent<ISettingsProps, FileListState> {
 
     constructor(props: ISettingsProps) {
         super(props);
@@ -164,7 +164,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
 
     private folderFilesOf(pkg: pkg.EditorPackage, folder: string, files: pkg.File[]): JSX.Element[] {
         const { currentFile } = this.state;
-        const header = this.props.parent.state.header;
+        const header = this.getHeader();
         const topPkg = pkg.isTopLevel();
         const shellReadonly = pxt.shell.isReadOnly();
         const deleteFiles = topPkg && !shellReadonly;
@@ -377,7 +377,9 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
     }
 
     private addCustomBlocksFile() {
-        if (this.props.parent.state.header.githubId || pxt.appTarget.appTheme.addNewTypeScriptFile) {
+        const header = this.getHeader();
+
+        if (header.githubId || pxt.appTarget.appTheme.addNewTypeScriptFile) {
             this.addProjectFile()
             return
         }

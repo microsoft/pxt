@@ -289,10 +289,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     private serializeBlocks(normalize?: boolean): string {
         // store ids when using github
+        const { headerId } = getStore();
+        const header = headerId && workspace.getHeader(headerId);
+
         let xml = pxtblockly.saveWorkspaceXml(this.editor,
             !normalize && this.parent.state
-            && this.parent.state.header
-            && !!this.parent.state.header.githubId);
+            && !!header?.githubId);
         // strip out id, x, y attributes
         if (normalize) xml = xml.replace(/(x|y|id)="[^"]*"/g, '')
         pxt.debug(xml)
@@ -663,6 +665,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.changeCallback();
                 this.markIncomplete = false;
             }
+
+            const { tutorialOptions } = getStore();
+
             if (ev.type == Blockly.Events.CREATE) {
                 let blockId = ev.xml.getAttribute('type');
                 if (blockId == "variables_set") {
@@ -673,10 +678,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     this.updateGrayBlocks();
                 }
                 pxt.tickEvent("blocks.create", { "block": blockId }, { interactiveConsent: true });
-                if (ev.xml.tagName == 'SHADOW')
+                if (ev.xml.tagName == 'SHADOW') {
                     this.cleanUpShadowBlocks();
-                if (!this.parent.state.tutorialOptions || !this.parent.state.tutorialOptions.metadata || !this.parent.state.tutorialOptions.metadata.flyoutOnly)
+                }
+
+                if (!tutorialOptions?.metadata?.flyoutOnly) {
                     this.parent.setState({ hideEditorFloats: false });
+                }
                 workspace.fireEvent({ type: 'create', editor: 'blocks', blockId } as pxt.editor.CreateEvent);
             }
             else if (ev.type == Blockly.Events.VAR_CREATE || ev.type == Blockly.Events.VAR_RENAME || ev.type == Blockly.Events.VAR_DELETE) {
@@ -705,7 +713,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             }
 
             // reset tutorial hint animation on any blockly event
-            if (this.parent.state.tutorialOptions != undefined) {
+            if (tutorialOptions != undefined) {
                 this.parent.pokeUserActivity();
             }
         })
@@ -1289,9 +1297,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         // no toolbox when readonly
         if (pxt.shell.isReadOnly()) return;
 
+        const { tutorialOptions } = getStore();
+
         // Dont show toolbox if we're in tutorial mode and we're not ready
-        if (this.parent.state.tutorialOptions != undefined &&
-            !this.parent.state.tutorialOptions.tutorialReady) {
+        if (tutorialOptions != undefined && !tutorialOptions.tutorialReady) {
             return;
         }
 
@@ -1582,8 +1591,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             return;
         }
 
-        const currTutorialStep = this.parent.state.tutorialOptions?.tutorialStep;
-        const currTutorialStepInfo = currTutorialStep !== undefined ? this.parent.state.tutorialOptions.tutorialStepInfo[currTutorialStep] : undefined;
+        const { tutorialOptions } = getStore();
+
+        const currTutorialStep = tutorialOptions?.tutorialStep;
+        const currTutorialStepInfo = currTutorialStep !== undefined ? tutorialOptions.tutorialStepInfo[currTutorialStep] : undefined;
         const tutorialStepIsDynamic = currTutorialStepInfo?.localBlockConfig?.blocks?.length > 0;
 
         // Dont cache flyout xml for tutorial steps with blockconfig.local sections (because they introduce dynamic blocks), or when translating.
@@ -1778,16 +1789,18 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     return undefined;
                 }
 
+                const { tutorialOptions } = getStore();
+
                 // Check for custom config in scope of the current tutorial step.
-                const currTutorialStep = this.parent.state.tutorialOptions?.tutorialStep;
-                const currTutorialStepInfo = currTutorialStep !== undefined ? this.parent.state.tutorialOptions.tutorialStepInfo[currTutorialStep] : undefined;
+                const currTutorialStep = tutorialOptions?.tutorialStep;
+                const currTutorialStepInfo = currTutorialStep !== undefined ? tutorialOptions.tutorialStepInfo[currTutorialStep] : undefined;
                 if (currTutorialStepInfo?.localBlockConfig?.blocks) {
                     blockXml = getBlockConfigXml(currTutorialStepInfo.localBlockConfig);
                 }
 
                 // Check for custom config in the tutorial's global scope.
-                if (!blockXml && this.parent.state.tutorialOptions?.globalBlockConfig?.blocks) {
-                    blockXml = getBlockConfigXml(this.parent.state.tutorialOptions.globalBlockConfig);
+                if (!blockXml && tutorialOptions?.globalBlockConfig?.blocks) {
+                    blockXml = getBlockConfigXml(tutorialOptions.globalBlockConfig);
                 }
 
                 // Create the block XML from block definition.

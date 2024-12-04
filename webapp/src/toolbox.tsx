@@ -469,7 +469,7 @@ export class Toolbox extends WebappDataComponent<ToolboxProps, ToolboxState> {
         }
 
         const theme = pxt.appTarget.appTheme;
-        const tutorialOptions = parent.parent.state.tutorialOptions;
+        const tutorialOptions = this.getWebappState("tutorialOptions");
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial
         const hasTopBlocks = !!theme.topBlocks && !inTutorial;
         const showToolboxLabel = inTutorial;

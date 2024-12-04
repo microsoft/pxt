@@ -5,6 +5,7 @@ import * as workspace from "./workspace";
 import { fireClickOnEnter } from "./util";
 
 import ISettingsProps = pxt.editor.ISettingsProps;
+import { WebappDataComponent } from "./state";
 
 interface GithubButtonProps extends ISettingsProps {
     className?: string;
@@ -14,7 +15,7 @@ interface GithubButtonState {
     pushPulling?: boolean;
 }
 
-export class GithubButton extends sui.UIElement<GithubButtonProps, GithubButtonState> {
+export class GithubButton extends WebappDataComponent<GithubButtonProps, GithubButtonState> {
     constructor(props: GithubButtonProps) {
         super(props);
         this.state = {};
@@ -34,7 +35,8 @@ export class GithubButton extends sui.UIElement<GithubButtonProps, GithubButtonS
 
     private handleClick(e: React.MouseEvent<HTMLElement>) {
         e.stopPropagation();
-        const { header } = this.props.parent.state;
+        const header = this.getHeader();
+
         if (!header) return;
 
         const { githubId } = header;
@@ -47,7 +49,8 @@ export class GithubButton extends sui.UIElement<GithubButtonProps, GithubButtonS
     }
 
     renderCore() {
-        const header = this.props.parent.state.header;
+        const header = this.getHeader();
+
         if (!header) return <div />;
 
         const { githubId } = header;

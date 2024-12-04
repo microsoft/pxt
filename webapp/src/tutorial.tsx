@@ -18,6 +18,7 @@ import * as pxtblockly from "../../pxtblocks";
 
 import ISettingsProps = pxt.editor.ISettingsProps;
 import { classList } from "../../react-common/components/util";
+import { getStore, WebappDataComponent } from "./state";
 
 
 interface ITutorialBlocks {
@@ -148,16 +149,16 @@ function getUsedBlocksInternalAsync(code: string[], id: string, language?: strin
         });
 }
 
-export class TutorialMenu extends data.Component<ISettingsProps, {}> {
+export class TutorialMenu extends WebappDataComponent<ISettingsProps, {}> {
     protected hasActivities: boolean;
     constructor(props: ISettingsProps) {
         super(props);
-        let tutorialOptions = this.props.parent.state.tutorialOptions;
+        const { tutorialOptions } = getStore();
         this.hasActivities = tutorialOptions && tutorialOptions.tutorialActivityInfo && tutorialOptions.tutorialActivityInfo.length > 1;
     }
 
     renderCore() {
-        let tutorialOptions = this.props.parent.state.tutorialOptions;
+        let tutorialOptions = this.getWebappState("tutorialOptions");
         const tutorialCardContent = tutorialOptions.tutorialStepInfo?.[tutorialOptions.tutorialStep].headerContentMd
         const immersiveReaderEnabled = pxt.appTarget.appTheme.immersiveReader;
 
@@ -185,7 +186,7 @@ interface ITutorialMenuProps extends ISettingsProps {
     className?: string;
 }
 
-export class TutorialMenuItem extends data.Component<ITutorialMenuProps, {}> {
+export class TutorialMenuItem extends WebappDataComponent<ITutorialMenuProps, {}> {
     constructor(props: ITutorialMenuProps) {
         super(props);
 
@@ -193,13 +194,13 @@ export class TutorialMenuItem extends data.Component<ITutorialMenuProps, {}> {
     }
 
     openTutorialStep(step: number) {
-        let options = this.props.parent.state.tutorialOptions;
+        let options = this.getWebappState("tutorialOptions");
         pxt.tickEvent(`tutorial.step`, { tutorial: options.tutorial, step: step }, { interactiveConsent: true });
         this.props.parent.setTutorialStep(step);
     }
 
     renderCore() {
-        const { tutorialReady, tutorialStepInfo, tutorialStep } = this.props.parent.state.tutorialOptions;
+        const { tutorialReady, tutorialStepInfo, tutorialStep } = this.getWebappState("tutorialOptions");
         const currentStep = tutorialStep;
         if (!tutorialReady) return <div />;
 
@@ -256,7 +257,7 @@ export class TutorialMenuItemLink extends data.Component<TutorialMenuItemLinkPro
     }
 }
 
-export class TutorialStepCircle extends data.Component<ITutorialMenuProps, {}> {
+export class TutorialStepCircle extends WebappDataComponent<ITutorialMenuProps, {}> {
     constructor(props: ITutorialMenuProps) {
         super(props);
 
@@ -264,23 +265,23 @@ export class TutorialStepCircle extends data.Component<ITutorialMenuProps, {}> {
     }
 
     handleNextClick = () => {
-        let options = this.props.parent.state.tutorialOptions;
+        let options = this.getWebappState("tutorialOptions");
         this.openTutorialStep(options.tutorialStep + 1);
     }
 
     handlePrevClick = () => {
-        let options = this.props.parent.state.tutorialOptions;
+        let options = this.getWebappState("tutorialOptions");
         this.openTutorialStep(options.tutorialStep - 1);
     }
 
     openTutorialStep(step: number) {
-        let options = this.props.parent.state.tutorialOptions;
+        let options = this.getWebappState("tutorialOptions");
         pxt.tickEvent(`tutorial.step`, { tutorial: options.tutorial, step: step }, { interactiveConsent: true });
         this.props.parent.setTutorialStep(step);
     }
 
     renderCore() {
-        const { tutorialReady, tutorialStepInfo, tutorialStep } = this.props.parent.state.tutorialOptions;
+        const { tutorialReady, tutorialStepInfo, tutorialStep } = this.getWebappState("tutorialOptions");
         const currentStep = tutorialStep;
         const hasPrev = tutorialReady && currentStep != 0;
         const hasNext = tutorialReady && currentStep != tutorialStepInfo.length - 1;
@@ -307,7 +308,7 @@ export interface TutorialHintState {
     showFullText: boolean;
 }
 
-export class TutorialHint extends data.Component<ISettingsProps, TutorialHintState> {
+export class TutorialHint extends WebappDataComponent<ISettingsProps, TutorialHintState> {
     public elementRef: HTMLDivElement;
     protected setRef: (el: HTMLDivElement) => void = (el) => { this.elementRef = el };
 
@@ -320,7 +321,7 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
     }
 
     next() {
-        const options = this.props.parent.state.tutorialOptions;
+        const options = this.getWebappState("tutorialOptions");
         const { tutorialStep, tutorial } = options;
         this.setState({ visible: false });
         const nextStep = tutorialStep + 1;
@@ -340,7 +341,7 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
 
     renderCore() {
         const { visible } = this.state;
-        const options = this.props.parent.state.tutorialOptions;
+        const options = this.getWebappState("tutorialOptions");
         const { tutorialReady, tutorialStepInfo, tutorialStep, tutorialName } = options;
         if (!tutorialReady) return <div />;
 
@@ -399,7 +400,7 @@ interface TutorialCardProps extends ISettingsProps {
     pokeUser?: boolean;
 }
 
-export class TutorialCard extends data.Component<TutorialCardProps, TutorialCardState> {
+export class TutorialCard extends WebappDataComponent<TutorialCardProps, TutorialCardState> {
     private prevStep: number;
     private resizeDebouncer: () => void;
 
@@ -407,7 +408,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
 
     constructor(props: ISettingsProps) {
         super(props);
-        const options = this.props.parent.state.tutorialOptions;
+        const options = this.getWebappState("tutorialOptions");
         this.prevStep = options.tutorialStep;
 
         this.state = {
@@ -431,11 +432,9 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
 
     previousTutorialStep() {
         this.showHint(false); // close hint on new tutorial step
-        let options = this.props.parent.state.tutorialOptions;
+        let options = this.getWebappState("tutorialOptions");
         const currentStep = options.tutorialStep;
         const previousStep = currentStep - 1;
-
-        options.tutorialStep = previousStep;
 
         pxt.tickEvent(`tutorial.previous`, { tutorial: options.tutorial, step: previousStep }, { interactiveConsent: true });
         this.props.parent.setTutorialStep(previousStep);
@@ -443,11 +442,9 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
 
     nextTutorialStep() {
         this.showHint(false); // close hint on new tutorial step
-        let options = this.props.parent.state.tutorialOptions;
+        let options = this.getWebappState("tutorialOptions");
         const currentStep = options.tutorialStep;
         const nextStep = currentStep + 1;
-
-        options.tutorialStep = nextStep;
 
         pxt.tickEvent(`tutorial.next`, { tutorial: options.tutorial, step: nextStep }, { interactiveConsent: true });
         this.props.parent.setTutorialStep(nextStep);
@@ -499,10 +496,10 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
 
     private lastStep = -1;
     componentDidUpdate(prevProps: ISettingsProps, prevState: TutorialCardState) {
-        const options = this.props.parent.state.tutorialOptions;
+        const options = this.getWebappState("tutorialOptions");
         const tutorialCard = this.refs['tutorialmessage'] as HTMLElement;
 
-        const step = this.props.parent.state.tutorialOptions.tutorialStep;
+        const step = options.tutorialStep;
         if (step != this.lastStep) {
             const animationClasses = `fade ${step < this.lastStep ? "right" : "left"} in visible transition animating`;
             tutorialCard.style.animationDuration = '500ms';
@@ -521,18 +518,18 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
     }
 
     private handleResize() {
-        const options = this.props.parent.state.tutorialOptions;
+        const options = this.getWebappState("tutorialOptions");
         this.setShowSeeMore(options.autoexpandStep);
     }
 
     componentDidMount() {
-        this.setShowSeeMore(this.props.parent.state.tutorialOptions.autoexpandStep);
+        this.setShowSeeMore(this.getWebappState("tutorialOptions").autoexpandStep);
         this.resizeDebouncer = pxt.Util.debounce(this.handleResize, 500);
         window.addEventListener('resize', this.resizeDebouncer);
     }
 
     onMarkdownDidRender() {
-        this.setShowSeeMore(this.props.parent.state.tutorialOptions.autoexpandStep);
+        this.setShowSeeMore(this.getWebappState("tutorialOptions").autoexpandStep);
     }
 
     componentWillUnmount() {
@@ -555,14 +552,14 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
     toggleExpanded(ev: React.MouseEvent<HTMLDivElement>) {
         ev.stopPropagation();
         ev.preventDefault();
-        const options = this.props.parent.state.tutorialOptions;
+        const options = this.getWebappState("tutorialOptions");
         const { tutorialStepExpanded } = options;
         this.props.parent.setTutorialInstructionsExpanded(!tutorialStepExpanded);
         return false;
     }
 
     private hasHint() {
-        const options = this.props.parent.state.tutorialOptions;
+        const options = this.getWebappState("tutorialOptions");
         const { tutorialReady, tutorialStepInfo, tutorialStep } = options;
         if (!tutorialReady) return false;
         return !!tutorialStepInfo[tutorialStep].hintContentMd
@@ -570,7 +567,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
     }
 
     private hintOnClick(evt?: any) {
-        const options = this.props.parent.state.tutorialOptions;
+        const options = this.getWebappState("tutorialOptions");
         if (!options) {
             pxt.reportError("tutorial", "leaking hintonclick");
             return;
@@ -641,7 +638,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
 
         const th = this.refs["tutorialhint"] as TutorialHint;
         if (!th) return;
-        const currentStep = this.props.parent.state.tutorialOptions.tutorialStep;
+        const currentStep = this.getWebappState("tutorialOptions").tutorialStep;
 
         if (!visible) {
             if (th.elementRef) th.elementRef.removeEventListener('click', this.expandedHintOnClick);
@@ -652,7 +649,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
             this.setState({ showHint: true });
             this.props.parent.stopPokeUserActivity();
 
-            const options = this.props.parent.state.tutorialOptions;
+            const options = this.getWebappState("tutorialOptions");
             if (!options.tutorialStepInfo[options.tutorialStep].showDialog)
                 document.addEventListener('click', this.closeHint); // add close listener if not modal
             pxt.tickEvent(`tutorial.showhint`, { tutorial: options.tutorial, step: options.tutorialStep });
@@ -662,7 +659,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
     }
 
     renderCore() {
-        const options = this.props.parent.state.tutorialOptions;
+        const options = this.getWebappState("tutorialOptions");
         const { tutorialReady, tutorialStepInfo, tutorialStep, tutorialStepExpanded, metadata } = options;
         if (!tutorialReady) return <div />
         const stepInfo = tutorialStepInfo[tutorialStep];

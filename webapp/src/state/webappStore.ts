@@ -4,17 +4,18 @@ import { Action } from "./action";
 import { ChangeListener, createStore, getSubscribePath, subscribeToStore } from "./dataStore";
 import { reducer } from "./reducer";
 import { IAppState } from "./state";
+import { getHeader } from "../workspace";
 
 export const [getStore, dispatch] = createStore<IAppState, Action>({
-    showFiles: false,
+    // showFiles: false,
     // home: shouldShowHomeScreen,
     // active: document.visibilityState == 'visible' || pxt.BrowserUtils.isElectron() || pxt.appTarget.appTheme.dontSuspendOnVisibility,
     // don't start collapsed in mobile since we can go fullscreen now
     // collapseEditorTools: pxt.appTarget.simulator.headless,
-    simState: pxt.editor.SimState.Stopped,
+    // simState: pxt.editor.SimState.Stopped,
     // autoRun: this.autoRunOnStart(),
-    isMultiplayerGame: false,
-    onboarding: undefined,
+    // isMultiplayerGame: false,
+    // onboarding: undefined,
     mute: pxt.editor.MuteState.Unmuted,
 }, reducer);
 
@@ -28,6 +29,11 @@ export class WebappDataComponent<TProps, TState> extends data.Component<TProps, 
 
         return state.data;
     }
+
+    getHeader() {
+        const headerId = this.getWebappState("headerId");
+        return headerId && getHeader(headerId);
+    }
 }
 
 export class WebappAuthComponent<TProps, TState> extends auth.Component<TProps, TState> {
@@ -35,5 +41,10 @@ export class WebappAuthComponent<TProps, TState> extends auth.Component<TProps, 
         const state = data.getCached(this, getSubscribePath(getStore(), field));
 
         return state.data;
+    }
+
+    getHeader() {
+        const headerId = this.getWebappState("headerId");
+        return headerId && getHeader(headerId);
     }
 }

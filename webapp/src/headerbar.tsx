@@ -41,7 +41,7 @@ export class HeaderBar extends WebappDataComponent<ISettingsProps, {}> {
     }
 
     exitTutorial = () => {
-        const tutorialOptions = this.props.parent.state.tutorialOptions;
+        const tutorialOptions = this.getWebappState("tutorialOptions");
         pxt.tickEvent("menu.exitTutorial", { tutorial: tutorialOptions?.tutorial }, { interactiveConsent: true });
         this.props.parent.exitTutorial();
     }
@@ -83,8 +83,9 @@ export class HeaderBar extends WebappDataComponent<ISettingsProps, {}> {
     }
 
     protected getView = (): HeaderBarView => {
-        const { home, tutorialOptions } = this.props.parent.state;
+        const { home } = this.props.parent.state;
         const debugging = this.getWebappState("debugging");
+        const tutorialOptions = this.getWebappState("tutorialOptions");
 
         if (home) {
             return "home";
@@ -222,7 +223,9 @@ export class HeaderBar extends WebappDataComponent<ISettingsProps, {}> {
     // TODO: eventually unify these components into one menu
     getSettingsMenu = (view: HeaderBarView) => {
         const greenScreen = this.getWebappState("greenScreen");
-        const { accessibleBlocks, header } = this.props.parent.state;
+        const { accessibleBlocks } = this.props.parent.state;
+        const header = this.getHeader();
+
         switch (view){
             case "home":
                 return <projects.ProjectSettingsMenu parent={this.props.parent} />
@@ -239,7 +242,9 @@ export class HeaderBar extends WebappDataComponent<ISettingsProps, {}> {
         const highContrast = this.getData<boolean>(auth.HIGHCONTRAST);
         const view = this.getView();
 
-        const { home, header, tutorialOptions } = this.props.parent.state;
+        const { home } = this.props.parent.state;
+        const header = this.getHeader();
+        const tutorialOptions = this.getWebappState("tutorialOptions");
         const isController = pxt.shell.isControllerMode();
         const isNativeHost = cmds.isNativeHost();
         const hasIdentity = auth.hasIdentity();

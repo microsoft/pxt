@@ -329,7 +329,7 @@ async function resolveConflictAsync(local: Header, remote: Header | null) {
     try {
         if (app.hasEditor()) {
             const editor = await app.getEditorAsync();
-            if (!editor.state.home && editor.state.header?.id === local.id) {
+            if (!editor.state.home && editor.getHeader().id === local.id) {
                 await editor.loadHeaderAsync(newCopyHdr, editor.state.editorState, false);
             }
         }

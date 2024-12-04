@@ -15,6 +15,7 @@ import Cloud = pxt.Cloud;
 import { experiments } from "../../pxteditor";
 
 import ISettingsProps = pxt.editor.ISettingsProps;
+import { getStore } from "./state";
 
 export enum ScriptSearchMode {
     Extensions,
@@ -171,13 +172,13 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
     fetchLocalRepositories(): pxt.workspace.Header[] {
         if (this.state.mode != ScriptSearchMode.Extensions) return [];
         let query = this.state.searchFor;
-        const { header } = this.props.parent.state;
+        const { headerId } = getStore();
 
         let r = workspace.getHeaders()
         if (!/localdependencies=1/i.test(window.location.href))
             r = r.filter(h => !!h.githubId);
-        if (header)
-            r = r.filter(h => h.id != header.id) // don't self-reference
+        if (headerId)
+            r = r.filter(h => h.id != headerId) // don't self-reference
         if (query) {
             query = query.toLocaleLowerCase();
             r = r.filter(h => h.name.toLocaleLowerCase().indexOf(query) > -1) // search filter

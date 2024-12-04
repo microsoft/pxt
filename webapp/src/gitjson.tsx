@@ -20,6 +20,7 @@ import UserInfo = pxt.editor.UserInfo;
 
 import { Accordion } from "../../react-common/components/controls/Accordion";
 import { Button } from "../../react-common/components/controls/Button"
+import { getStore, WebappDataComponent } from "./state"
 
 const MAX_COMMIT_DESCRIPTION_LENGTH = 70;
 
@@ -52,7 +53,7 @@ interface GithubState {
     loadingMessage?: string;
 }
 
-class GithubComponent extends data.Component<GithubProps, GithubState> {
+class GithubComponent extends WebappDataComponent<GithubProps, GithubState> {
     private diffCache: pxt.Map<DiffCache> = {};
 
     constructor(props: GithubProps) {
@@ -112,7 +113,8 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         pxt.tickEvent("github.revertall", { ok: 1 })
         this.setState({ needsCommitMessage: false }); // maybe we no longer do
 
-        const { header } = this.props.parent.state;
+        const header = this.getHeader();
+
         await workspace.revertAllAsync(header);
         await this.props.parent.reloadHeaderAsync()
     }
@@ -175,7 +177,8 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
     }
 
     private async switchProjectToBranchAsync(newBranch: string) {
-        const { header } = this.props.parent.state;
+        const header = this.getHeader();
+
         const gs = this.getGitJson();
         const parsed = this.parsedRepoId()
         header.githubId = parsed.fullName + "#" + newBranch
@@ -343,7 +346,9 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         try {
             const gs = this.getGitJson();
             const newGithubId = await pxt.github.forkRepoAsync(parsed.slug, gs.commit.sha)
-            const { header } = this.props.parent.state;
+
+            const header = this.getHeader();
+
             header.githubId = newGithubId
             gs.repo = header.githubId
             await this.saveGitJsonAsync(gs)
@@ -470,7 +475,8 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         const newVer = pxt.semver.stringify(newv)
         this.showLoading("github.release.new", true, lf("creating release..."));
         try {
-            const { header } = this.props.parent.state;
+            const header = this.getHeader();
+
             if (shouldCacheTutorial) await this.cacheTutorialInfo(header);
             await workspace.bumpAsync(header, newVer)
             pkg.mainPkg.config.version = newVer;
@@ -542,7 +548,8 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
 
     private async maybeReloadAsync() {
         // here, the true state of files is stored in workspace
-        const { header } = this.props.parent.state;
+        const header = this.getHeader();
+
         const files = await workspace.getTextAsync(header.id);
         // save file content from workspace, so they won't get overridden
         pkg.mainEditorPkg().setFiles(files);
@@ -557,9 +564,10 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
 
     async pullAsync() {
         this.showLoading("github.pull", false, lf("pulling changes from GitHub..."));
-        const { header } = this.props.parent.state;
+        const header = this.getHeader();
+
         try {
-            const status = await workspace.pullAsync(this.props.parent.state.header)
+            const status = await workspace.pullAsync(header)
             switch (status) {
                 case workspace.PullStatus.NoSourceControl:
                 case workspace.PullStatus.UpToDate:
@@ -584,13 +592,14 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
     }
 
     parsedRepoId() {
-        const header = this.props.parent.state.header;
+        const header = this.getHeader();
+
         return pxt.github.parseRepoId(header.githubId);
     }
 
     private async commitCoreAsync() {
-        const { parent } = this.props;
-        const { header } = parent.state;
+        const header = this.getHeader();
+
         const repo = header.githubId;
 
         // pull changes and merge; if any conflicts, bail out
@@ -658,7 +667,8 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
     setVisible(b: boolean) {
         if (b === this.state.isVisible) return;
 
-        const { header } = this.props.parent.state
+        const header = this.getHeader();
+
         if (b) {
             data.invalidateHeader("pkg-git-pr", header);
             this.setState({
@@ -696,7 +706,9 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
 - [ ] ${lf("merge once approved")}
 `;
             const id = await pxt.github.createPRFromBranchAsync(gh.slug, "master", gh.tag, title, msg);
-            data.invalidateHeader("pkg-git-pr", this.props.parent.state.header);
+            const header = this.getHeader();
+
+            data.invalidateHeader("pkg-git-pr", header);
             core.infoNotification(lf("Pull request created successfully!", id));
         } catch (e) {
             if (e.statusCode == 422)
@@ -747,7 +759,8 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         if (!gs)
             return <div></div>; // shortcut for projects not using github, should not happen when visible
 
-        const { header } = this.props.parent.state;
+        const header = this.getHeader();
+
         const isBlocksMode = pkg.mainPkg.getPreferredEditor() == pxt.BLOCKS_PROJECT_NAME;
         const diffFiles = this.computeDiffFiles();
         const needsCommit = diffFiles.length > 0;
@@ -1275,14 +1288,16 @@ class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
     }
 
     private scheduleRefreshPullRequestStatus = pxtc.Util.debounce(() => {
-        const header = this.props.parent.props.parent.state.header;
+        const header = this.getHeader();
+
         if (!header) return;
         pkg.invalidatePullRequestStatus(header);
         this.pullRequestStatus();
     }, 10000, false);
 
     private pullRequestStatus() {
-        const header = this.props.parent.props.parent.state.header;
+        const header = this.getHeader();
+
         const pr: pxt.github.PullRequest = this.props.parent.getData("pkg-git-pr:" + header.id)
 
         // schedule a refresh
@@ -1296,7 +1311,8 @@ class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
         e.stopPropagation();
 
         const { githubId } = this.props;
-        const header = this.props.parent.props.parent.state.header;
+        const header = this.getHeader();
+
         const pr: pxt.github.PullRequest = this.props.parent.getData("pkg-git-pr:" + header.id)
         core.promptAsync({
             header: lf("Squash and merge?"),
@@ -1359,6 +1375,11 @@ class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
             </div>}
         </div>
     }
+
+    protected getHeader() {
+        const { headerId } = getStore();
+        return headerId && workspace.getHeader(headerId);
+    }
 }
 
 class ReleaseZone extends sui.StatelessUIElement<GitHubViewProps> {
@@ -1371,7 +1392,8 @@ class ReleaseZone extends sui.StatelessUIElement<GitHubViewProps> {
         pxt.tickEvent("github.releasezone.bump", undefined, { interactiveConsent: true });
         e.stopPropagation();
         const { needsCommit, master } = this.props;
-        const header = this.props.parent.props.parent.state.header;
+        const header = this.getHeader();
+
         if (needsCommit)
             core.confirmAsync({
                 header: lf("Commit your changes..."),
@@ -1394,14 +1416,16 @@ class ReleaseZone extends sui.StatelessUIElement<GitHubViewProps> {
     }
 
     private scheduleRefreshPageStatus = pxtc.Util.debounce(() => {
-        const header = this.props.parent.props.parent.state.header;
+        const header = this.getHeader();
+
         if (!header) return;
         pkg.invalidatePagesStatus(header);
         this.pagesStatus();
     }, 10000, false);
 
     private pagesStatus() {
-        const header = this.props.parent.props.parent.state.header;
+        const header = this.getHeader();
+
         const pages = this.props.parent.getData("pkg-git-pages:" + header.id) as pxt.github.GitHubPagesStatus;
 
         // schedule a refresh
@@ -1460,9 +1484,14 @@ class ReleaseZone extends sui.StatelessUIElement<GitHubViewProps> {
                 </div>}
         </div>
     }
+
+    protected getHeader() {
+        const { headerId } = getStore();
+        return headerId && workspace.getHeader(headerId);
+    }
 }
 
-class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
+class ExtensionZone extends WebappDataComponent<GitHubViewProps, {}> {
     constructor(props: GitHubViewProps) {
         super(props);
         this.handleForkClick = this.handleForkClick.bind(this);
@@ -1483,7 +1512,7 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
 
     renderCore() {
         const { needsToken, githubId, gs, user } = this.props;
-        const header = this.props.parent.props.parent.state.header;
+        const header = this.getHeader();
         const needsLicenseMessage = !needsToken && gs.commit && !gs.commit.tree.tree.some(f =>
             /^LICENSE/.test(f.path.toUpperCase()) || /^COPYING/.test(f.path.toUpperCase()))
         const testurl = header && `${window.location.href.replace(/#.*$/, '')}#testproject:${header.id}`;
@@ -1603,8 +1632,11 @@ const CommitDiffView = (props: CommitViewProps) => {
 
         core.showLoading("github.restore", lf("restoring commit..."));
 
+        const { headerId } = getStore();
+        const header = workspace.getHeader(headerId);
+
         try {
-            await workspace.restoreCommitAsync(parent.props.parent.state.header, commit);
+            await workspace.restoreCommitAsync(header, commit);
             data.invalidate("gh-commits:*");
             await parent.props.parent.reloadHeaderAsync();
         }
@@ -1803,10 +1835,13 @@ export class Editor extends srceditor.Editor {
     }
 
     display() {
-        if (!this.isVisible)
+        if (!this.isVisible) {
             return undefined;
+        }
 
-        const header = this.parent.state.header;
+        const { headerId } = getStore();
+        const header = headerId && workspace.getHeader(headerId);
+
         if (!header || !header.githubId) return undefined;
 
         return <GithubComponent ref={this.handleViewRef} parent={this.parent} />

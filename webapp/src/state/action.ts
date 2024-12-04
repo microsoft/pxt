@@ -35,6 +35,16 @@ type SetDebugging = ActionBase & {
     debugging: boolean;
 }
 
+type SetTutorialOptions = ActionBase & {
+    type: "SET_TUTORIAL_OPTIONS";
+    options: pxt.tutorial.TutorialOptions;
+}
+
+type SetHeaderId = ActionBase & {
+    type: "SET_HEADER_ID";
+    headerId: string;
+}
+
 export type Action =
     | SetEditorToolsCollapsed
     | SetGreenScreenEnabled
@@ -43,6 +53,8 @@ export type Action =
     | SetFullScreen
     | SetTracing
     | SetDebugging
+    | SetTutorialOptions
+    | SetHeaderId
 
 const setEditorToolsCollapsed = (collapsed: boolean): SetEditorToolsCollapsed => ({
     type: "SET_EDITOR_TOOLS_COLLAPSED",
@@ -79,6 +91,16 @@ const setDebugging = (debugging: boolean): SetDebugging => ({
     debugging
 });
 
+const setTutorialOptions = (options: pxt.tutorial.TutorialOptions): SetTutorialOptions => ({
+    type: "SET_TUTORIAL_OPTIONS",
+    options
+});
+
+const setHeaderId = (headerId: string): SetHeaderId => ({
+    type: "SET_HEADER_ID",
+    headerId
+});
+
 export {
     setEditorToolsCollapsed,
     setGreenScreenEnabled,
@@ -86,5 +108,7 @@ export {
     setMuteState,
     setFullScreen,
     setTracing,
-    setDebugging
+    setDebugging,
+    setTutorialOptions,
+    setHeaderId
 }

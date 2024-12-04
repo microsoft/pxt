@@ -3,6 +3,7 @@ import * as srceditor from "./srceditor";
 import * as toolbox from "./toolbox";
 import * as compiler from "./compiler";
 import { getProjectToolboxFilters } from "./package";
+import { getStore } from "./state";
 
 export abstract class ToolboxEditor extends srceditor.Editor {
 
@@ -94,13 +95,15 @@ export abstract class ToolboxEditor extends srceditor.Editor {
                 }
             }
 
+            const { tutorialOptions } = getStore();
+
             // Go through all blocks and apply filter
             this.blockInfo.blocks.forEach(fn => {
                 let ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
 
                 if (fn.attributes.debug && !pxt.options.debug) return;
                 if (fn.attributes.blockHidden) return;
-                if (fn.attributes.deprecated && this.parent.state.tutorialOptions == undefined) return;
+                if (fn.attributes.deprecated && tutorialOptions == undefined) return;
                 if (this.shouldShowBlock(fn.attributes.blockId, ns)) {
                     // Add to search subset
                     searchSubset[fn.attributes.blockId] = true;
@@ -142,7 +145,9 @@ export abstract class ToolboxEditor extends srceditor.Editor {
         let that = this;
 
         function filterNamespaces(namespaces: [string, pxtc.CommentAttrs][]) {
-            return namespaces.filter(([, md]) => !(md.deprecated && that.parent.state.tutorialOptions == undefined) && (isAdvanced ? md.advanced : !md.advanced));
+            const { tutorialOptions } = getStore();
+
+            return namespaces.filter(([, md]) => !(md.deprecated && tutorialOptions == undefined) && (isAdvanced ? md.advanced : !md.advanced));
         }
 
         const namespaces = filterNamespaces(this.getNamespaces()
@@ -256,8 +261,9 @@ export abstract class ToolboxEditor extends srceditor.Editor {
 
     abstractShowFlyout(treeRow: toolbox.ToolboxCategory): boolean {
         const { nameid: ns, name, subns, icon, color, labelLineWidth, blocks } = treeRow;
-        const inTutorial = this.parent.state.tutorialOptions
-            && !!this.parent.state.tutorialOptions.tutorial;
+
+        const { tutorialOptions } = getStore();
+        const inTutorial = !!tutorialOptions?.tutorial;
 
         if (!blocks || !blocks.length) return false;
 

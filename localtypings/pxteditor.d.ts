@@ -760,8 +760,9 @@ declare namespace pxt.editor {
         // mute?: MuteState;
         // tracing?: boolean;
         // debugging?: boolean;
+        // tutorialOptions?: pxt.tutorial.TutorialOptions;
 
-        header?: pxt.workspace.Header;
+        // header?: pxt.workspace.Header;
         editorState?: EditorState;
         currFile?: IFile;
         fileState?: string;
@@ -770,7 +771,6 @@ declare namespace pxt.editor {
         sideDocsCollapsed?: boolean;
         projectName?: string;
         suppressPackageWarning?: boolean;
-        tutorialOptions?: pxt.tutorial.TutorialOptions;
         lightbox?: boolean;
         keymap?: boolean;
         simState?: SimState;

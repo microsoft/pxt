@@ -113,7 +113,9 @@ export class SimulatorToolbar extends WebappDataComponent<SimulatorProps, {}> {
         const isStarting = simState == SimState.Starting;
         const isSimulatorPending = simState == SimState.Pending;
         const isFullscreen = this.getWebappState("fullscreen");
-        const inTutorial = !!parentState.tutorialOptions && !!parentState.tutorialOptions.tutorial;
+
+        const tutorialOptions = this.getWebappState("tutorialOptions");
+        const inTutorial = !!tutorialOptions?.tutorial;
         const isTabTutorial = inTutorial && !pxt.BrowserUtils.useOldTutorialLayout();
         const inCodeEditor = parent.isBlocksActive() || parent.isJavaScriptActive() || parent.isPythonActive();
 

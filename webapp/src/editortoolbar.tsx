@@ -6,6 +6,7 @@ import * as sui from "./sui";
 import * as githubbutton from "./githubbutton";
 import * as cmds from "./cmds"
 import * as identity from "./identity";
+import * as workspace from "./workspace";
 import { ProjectView } from "./app";
 import { userPrefersDownloadFlagSet } from "./webusb";
 import { dialogAsync, hideDialog } from "./core";
@@ -354,10 +355,12 @@ export class EditorToolbar extends WebappDataComponent<ISettingsProps, EditorToo
     }
 
     renderCore() {
-        const { tutorialOptions, projectName, compiling, isSaving, simState, editorState } = this.props.parent.state;
+        const { projectName, compiling, isSaving, simState, editorState } = this.props.parent.state;
 
         const debugging = this.getWebappState("debugging");
-        const header = this.getData(`header:${this.props.parent.state.header.id}`) ?? this.props.parent.state.header;
+        const tutorialOptions = this.getWebappState("tutorialOptions");
+        const headerId = this.getWebappState("headerId");
+        const header = this.getData(`header:${headerId}`) ?? workspace.getHeader(headerId);
 
         const targetTheme = pxt.appTarget.appTheme;
         const isController = pxt.shell.isControllerMode();

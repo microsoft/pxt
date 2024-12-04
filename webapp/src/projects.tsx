@@ -16,6 +16,7 @@ import { fireClickOnEnter } from "./util";
 import IProjectView = pxt.editor.IProjectView;
 import ISettingsProps = pxt.editor.ISettingsProps;
 import UserInfo = pxt.editor.UserInfo;
+import { WebappDataComponent } from "./state";
 
 
 // This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
@@ -558,7 +559,7 @@ interface ProjectsCarouselProps extends ISettingsProps {
 interface ProjectsCarouselState {
 }
 
-export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, ProjectsCarouselState> {
+export class ProjectsCarousel extends WebappDataComponent<ProjectsCarouselProps, ProjectsCarouselState> {
     private prevGalleries: pxt.CodeCard[] = [];
     private hasFetchErrors = false;
     private latestProject: codecard.CodeCardView;
@@ -578,7 +579,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
     }
 
     componentDidMount() {
-        if (this.props.parent.state.header) {
+        if (this.getHeader()) {
             if (this.latestProject && this.latestProject.element) {
                 this.latestProject.element.focus()
             }

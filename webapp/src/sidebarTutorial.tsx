@@ -14,8 +14,8 @@ export class SidebarTutorialHint extends TutorialHint {
     }
 
     renderCore() {
-        const options = this.props.parent.state.tutorialOptions;
-        const { tutorialName, tutorialReady, tutorialStepInfo, tutorialStep, tutorialStepExpanded, metadata } = options;
+        const options = this.getWebappState("tutorialOptions");
+        const { tutorialName, tutorialStepInfo, tutorialStep } = options;
         const stepInfo = tutorialStepInfo[tutorialStep];
         const tutorialHint = stepInfo.hintContentMd;
         const showDialog = stepInfo.showDialog;
@@ -51,7 +51,7 @@ export class SidebarTutorialCard extends TutorialCard {
     }
 
     renderCore() {
-        const options = this.props.parent.state.tutorialOptions;
+        const options = this.getWebappState("tutorialOptions");
         const { tutorialName, tutorialStepInfo, tutorialStep } = options;
         const stepInfo = tutorialStepInfo[tutorialStep];
         const hasHint = !!tutorialStepInfo[tutorialStep].hintContentMd || tutorialStepInfo[tutorialStep].showDialog;

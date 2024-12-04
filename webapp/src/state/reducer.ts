@@ -39,5 +39,15 @@ export const reducer: Reducer<IAppState, Action> = (store, action) => {
                 ...store,
                 mute: action.state
             };
+        case "SET_TUTORIAL_OPTIONS":
+            return {
+                ...store,
+                tutorialOptions: action.options
+            };
+        case "SET_HEADER_ID":
+            return {
+                ...store,
+                headerId: action.headerId
+            };
     }
 }

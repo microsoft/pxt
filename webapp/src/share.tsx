@@ -1,12 +1,14 @@
 import * as React from "react";
 import * as auth from "./auth";
 import * as screenshot from "./screenshot";
+import * as workspace from "./workspace";
 
 import { Modal } from "../../react-common/components/controls/Modal";
 import { Share } from "../../react-common/components/share/Share";
 import { SimRecorderImpl } from "./components/SimRecorder";
 
 import ISettingsProps = pxt.editor.ISettingsProps;
+import { getStore } from "./state";
 
 export enum ShareMode {
     Code,
@@ -76,7 +78,9 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
     }
 
     show(title?: string, kind: "multiplayer" | "vscode" | "share" = "share") {
-        const { header } = this.props.parent.state;
+        const { headerId } = getStore();
+        const header = headerId && workspace.getHeader(headerId);
+
         if (!header) return;
         // TODO investigate why edge does not render well
         // upon hiding dialog, the screen does not redraw properly

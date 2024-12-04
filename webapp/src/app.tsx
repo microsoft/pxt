@@ -72,7 +72,7 @@ import ProjectCreationOptions = pxt.editor.ProjectCreationOptions;
 import SimState = pxt.editor.SimState;
 
 
-import { getStore, dispatch, setTabActive, setEditorToolsCollapsed, setGreenScreenEnabled, onWebappStoreChange, setTracing, setDebugging, setFullScreen, setMuteState } from "./state";
+import { getStore, dispatch, setTabActive, setEditorToolsCollapsed, setGreenScreenEnabled, onWebappStoreChange, setTracing, setDebugging, setFullScreen, setMuteState, setTutorialOptions, setHeaderId } from "./state";
 
 declare const zip: any;
 
@@ -243,7 +243,10 @@ export class ProjectView
     private initSimulatorMessageHandlers() {
         window.addEventListener('message', (ev: MessageEvent) => {
             let msg = ev.data as pxsim.SimulatorMessage;
-            if (!msg || !this.state.header) return;
+
+            const { headerId } = getStore();
+
+            if (!msg || !headerId) return;
 
             if (msg.type === "addextensions") {
                 const exmsg = msg as pxsim.SimulatorAddExtensionsMessage;
@@ -259,7 +262,7 @@ export class ProjectView
                     const pngString = pxt.BrowserUtils.imageDataToPNG(scmsg.data);
                     if (pxt.appTarget.compile.saveAsPNG)
                         this.encodeProjectAsPNGAsync(pngString, false);
-                    screenshot.saveAsync(this.state.header, pngString)
+                    screenshot.saveAsync(workspace.getHeader(headerId), pngString)
                         .then(() => { pxt.debug('screenshot saved') })
                 }
             } else if (msg.type === "recorder") {
@@ -402,7 +405,7 @@ export class ProjectView
             return;
         }
 
-        const { debugging } = getStore();
+        const { debugging, headerId } = getStore();
 
         const active = pxt.BrowserUtils.isDocumentVisible()
         pxt.debug(`page visibility: ${active}`)
@@ -429,13 +432,15 @@ export class ProjectView
             }
         } else if (active) {
             data.invalidate("header:*")
-            let hdrId = this.state.header ? this.state.header.id : '';
-            const inEditor = !this.state.home && hdrId
-            if ((!inEditor && workspace.isHeadersSessionOutdated())
-                || workspace.isHeaderSessionOutdated(this.state.header)) {
+            const inEditor = !this.state.home && headerId;
+            const header = workspace.getHeader(headerId);
+
+            if ((!inEditor && workspace.isHeadersSessionOutdated()) || workspace.isHeaderSessionOutdated(header)) {
                 pxt.debug('workspace: changed, reloading...')
                 await workspace.syncAsync();
-                if (inEditor) { await this.loadHeaderAsync(workspace.getHeader(hdrId), this.state.editorState); }
+                if (inEditor) {
+                    await this.loadHeaderAsync(header, this.state.editorState);
+                }
                 // device scanning restarts in loadheader
             } else if (this.state.resumeOnVisibility) {
                 this.setState({ resumeOnVisibility: false });
@@ -511,7 +516,13 @@ export class ProjectView
     async componentDidUpdate(prevProps: Readonly<IAppProps>, prevState: Readonly<IAppState>) {
         this.saveSettings()
         this.editor.domUpdate();
-        simulator.setState(this.state.header ? this.state.header.editor : '', this.state.tutorialOptions && !!this.state.tutorialOptions.tutorial)
+
+        const tutorialOptions = this.getWebappState("tutorialOptions");
+        const headerId = this.getWebappState("headerId");
+
+        const header = headerId ? workspace.getHeader(headerId) : undefined;
+
+        simulator.setState(header?.editor || '', tutorialOptions && !!tutorialOptions.tutorial)
         if (!this.getWebappState("fullscreen")) {
             this.editor.resize();
         }
@@ -561,7 +572,13 @@ export class ProjectView
     saveProjectAsync(): Promise<void> {
         return this.saveFileAsync()
             .then(() => pkg.mainEditorPkg().buildAssetsAsync())
-            .then(() => this.state.header && workspace.saveAsync(this.state.header))
+            .then(() => {
+                const { headerId } = getStore();
+
+                if (headerId) {
+                    workspace.saveAsync(workspace.getHeader(headerId));
+                }
+            });
     }
 
     saveCurrentSourceAsync(): Promise<void> {
@@ -619,8 +636,12 @@ export class ProjectView
             this.textEditor.giveFocusOnLoading = giveFocusOnLoading;
         }
 
+        const { headerId } = getStore();
+
+        pxt.U.assert(!!headerId, "Trying to open Python with no project loaded");
+
         // switch
-        const header = this.state.header;
+        const header = workspace.getHeader(headerId);
         if (this.isBlocksActive() || header.editor == pxt.BLOCKS_PROJECT_NAME) {
             this.blocksEditor.openPython();
         } else if (this.isJavaScriptActive() || header.editor == pxt.JAVASCRIPT_PROJECT_NAME) {
@@ -685,7 +706,9 @@ export class ProjectView
         else if (this.isAnyEditeableJavaScriptOrPackageActive() || !mainBlocks.content) {
             this.saveFileAsync().then(() => this.textEditor.openBlocks());
         } else {
-            const header = this.state.header;
+            const { headerId } = getStore();
+
+            const header = headerId && workspace.getHeader(headerId);
 
             // Check to see if the last edit happened in monaco
             if (header && header.editor !== pxt.BLOCKS_PROJECT_NAME) {
@@ -725,7 +748,9 @@ export class ProjectView
             await this.saveFileAsync();
             await this.textEditor.openBlocksAsync();
         } else {
-            const header = this.state.header;
+            const { headerId } = getStore();
+
+            const header = headerId && workspace.getHeader(headerId);
 
             // Check to see if the last edit happened in monaco
             if (header && header.editor !== pxt.BLOCKS_PROJECT_NAME) {
@@ -782,15 +807,15 @@ export class ProjectView
 
     openPreviousEditor() {
         this.preserveUndoStack = true;
-        const id = this.state.header.id;
+        const { headerId } = getStore();
         // pop any entry matching this editor
         const e = this.settings.fileHistory[0];
-        if (this.editorFile && e.id == id && e.name == this.editorFile.getName()) {
+        if (this.editorFile && e.id == headerId && e.name == this.editorFile.getName()) {
             this.popFileHistory();
         }
 
         // try to find a history entry within this header
-        const hist = this.settings.fileHistory.find(f => f.id == id)
+        const hist = this.settings.fileHistory.find(f => f.id == headerId)
         if (hist) {
             const f = pkg.mainEditorPkg().lookupFile(hist.name);
             if (f) {
@@ -916,10 +941,11 @@ export class ProjectView
             this.setState({ suppressPackageWarning: true });
             const badPackages = compiler.getPackagesWithErrors();
             if (badPackages.length) {
+                const { headerId } = getStore();
+                const header = workspace.getHeader(headerId);
 
-                const h = this.state.header;
                 const currentVersion = pxt.semver.parse(pxt.appTarget.versions.target);
-                const headerVersion = pxt.semver.parse(h.targetVersion);
+                const headerVersion = pxt.semver.parse(header.targetVersion);
 
                 let openHandler: () => void;
                 if (workspace.isBrowserWorkspace() && currentVersion.major !== headerVersion.major) {
@@ -947,7 +973,7 @@ export class ProjectView
 
     private autoRunSimulatorDebounced = pxtc.Util.debounce(
         () => {
-            const { active, collapseEditorTools, debugging, tracing } = getStore();
+            const { active, collapseEditorTools, debugging, tracing, headerId } = getStore();
             if (Util.now() - this.lastChangeTime < 1000) {
                 pxt.debug(`sim: skip auto, debounced`)
                 return;
@@ -972,7 +998,7 @@ export class ProjectView
                 pxt.debug(`sim: don't restart when simulator collapsed`);
                 return;
             }
-            if (pxt.BrowserUtils.isSkillmapEditor() && !this.state.header) {
+            if (pxt.BrowserUtils.isSkillmapEditor() && !headerId) {
                 pxt.debug(`sim: don't restart when no project is open`);
                 return;
             }
@@ -1068,6 +1094,10 @@ export class ProjectView
         });
 
         this.allEditors.forEach(e => e.prepare())
+
+        const headerId = this.getWebappState("headerId");
+        const header = headerId && workspace.getHeader(headerId);
+
         await simulator.initAsync(document.getElementById("boardview"), {
             orphanException: brk => {
                 // TODO: start debugging session
@@ -1133,7 +1163,7 @@ export class ProjectView
             setState: (k, v) => {
                 pkg.mainEditorPkg().setSimState(k, v)
             },
-            editor: this.state.header ? this.state.header.editor : ''
+            editor: header?.editor || ''
         });
 
         // we now have editors prepared
@@ -1226,6 +1256,8 @@ export class ProjectView
             })
             .then(() => {
                 this.saveFileAsync(); // make sure state is up to date
+                const { headerId } = getStore();
+
                 if (this.editor == this.textEditor || this.editor == this.blocksEditor)
                     this.typecheck();
 
@@ -1233,7 +1265,7 @@ export class ProjectView
                     this.editor.setViewState(this.state.editorPosition);
                     this.setState({ editorPosition: undefined })
                 } else {
-                    const e = this.settings.fileHistory.find(e => e.id == this.state.header.id && e.name == this.editorFile.getName())
+                    const e = this.settings.fileHistory.find(e => e.id == headerId && e.name == this.editorFile.getName())
                     if (e)
                         this.editor.setViewState(e.pos)
                 }
@@ -1279,7 +1311,8 @@ export class ProjectView
             this.shouldTryDecompile = true;
         }
 
-        const header = this.state.header;
+        const { headerId } = getStore();
+        const header = headerId && workspace.getHeader(headerId);
         let isCodeFile = false;
         if (header) {
             const pkgId = fn.epkg && fn.epkg.getPkgId();
@@ -1324,7 +1357,9 @@ export class ProjectView
         let fileName = fn.name;
         let currFile = this.state.currFile.name;
 
-        const header = this.state.header;
+        const { headerId } = getStore();
+        const header = headerId && workspace.getHeader(headerId);
+
         if (fileName != currFile && pxteditor.isBlocks(fn)) {
             // Going from ts/py -> blocks
             pxt.tickEvent("sidebar.showBlocks");
@@ -1421,18 +1456,31 @@ export class ProjectView
     }
 
     setTutorialInstructionsExpanded(value: boolean): void {
-        const tutorialOptions = this.state.tutorialOptions;
-        tutorialOptions.tutorialStepExpanded = value;
-        tutorialOptions.autoexpandStep = value;
-        this.setState(
-            { tutorialOptions: tutorialOptions },
-            () => {
-                if (this.editor == this.blocksEditor)
-                    this.blocksEditor.hideFlyout()
-                else if (this.editor == this.textEditor)
-                    this.textEditor.hideFlyout()
-                this.setEditorOffset();
-            });
+        const { tutorialOptions, headerId } = getStore();
+
+        const newOptions: pxt.tutorial.TutorialOptions = {
+            ...tutorialOptions,
+            tutorialStepExpanded: value,
+            autoexpandStep: value
+        };
+
+        dispatch(setTutorialOptions(newOptions));
+
+        if (headerId) {
+            const header = workspace.getHeader(headerId);
+            if (header.tutorial) {
+                header.tutorial = newOptions;
+            }
+        }
+
+        // FIXME: this might need to happen after the forceupdate
+        if (this.editor == this.blocksEditor) {
+            this.blocksEditor.hideFlyout()
+        }
+        else if (this.editor == this.textEditor) {
+            this.textEditor.hideFlyout()
+        }
+        this.setEditorOffset();
     }
 
     setTutorialStep(step: number) {
@@ -1444,13 +1492,23 @@ export class ProjectView
         let tc = this.refs[ProjectView.tutorialCardId] as tutorial.TutorialCard;
         if (!this.isTutorial()) return;
         if (step > -1) {
-            let tutorialOptions = this.state.tutorialOptions;
-            tutorialOptions.tutorialStep = step;
-            tutorialOptions.tutorialStepExpanded = false;
-            this.setState({ tutorialOptions: tutorialOptions }, () => {
-                this.postTutorialProgress();
-                workspace.saveAsync(this.state.header);
-            });
+            const { tutorialOptions, headerId } = getStore();
+            const newOptions: pxt.tutorial.TutorialOptions = {
+                ...tutorialOptions,
+                tutorialStep: step,
+                tutorialStepExpanded: false
+            };
+
+            dispatch(setTutorialOptions(newOptions));
+
+            const header = workspace.getHeader(headerId);
+            if (header.tutorial) {
+                header.tutorial = newOptions;
+            }
+
+            workspace.saveAsync(header);
+            this.postTutorialProgress();
+
             const showHint = tutorialOptions.tutorialStepInfo[step].showHint;
             if (showHint && tc) this.showTutorialHint();
 
@@ -1465,9 +1523,13 @@ export class ProjectView
     }
 
     protected postTutorialProgress() {
-        const currentStep = this.state.tutorialOptions?.tutorialStep || this.state.header?.tutorialCompleted?.steps || 0;
-        const totalSteps = this.state.tutorialOptions?.tutorialStepInfo?.length || this.state.header?.tutorialCompleted?.steps || 0;
-        const tutorialId = this.state.tutorialOptions?.tutorial || this.state.header?.tutorialCompleted.id
+        const { tutorialOptions, headerId } = getStore();
+
+        const header = headerId && workspace.getHeader(headerId);
+
+        const currentStep = tutorialOptions?.tutorialStep || header?.tutorialCompleted?.steps || 0;
+        const totalSteps = tutorialOptions?.tutorialStepInfo?.length || header?.tutorialCompleted?.steps || 0;
+        const tutorialId = tutorialOptions?.tutorial || header?.tutorialCompleted.id
 
         pxteditor.postHostMessageAsync({
             type: "pxthost",
@@ -1476,44 +1538,53 @@ export class ProjectView
             currentStep,
             totalSteps,
             tutorialId,
-            projectHeaderId: this.state.header?.id,
-            isCompleted: !!this.state.header?.tutorialCompleted
+            projectHeaderId: headerId,
+            isCompleted: !!header?.tutorialCompleted
         } as pxt.editor.EditorMessageTutorialProgressEventRequest)
     }
 
     protected postTutorialLoaded() {
-        const tutorialId = this.state.tutorialOptions?.tutorial || this.state.header?.tutorialCompleted.id
+        const { tutorialOptions, headerId } = getStore();
+        const header = headerId && workspace.getHeader(headerId);
+
+        const tutorialId = tutorialOptions?.tutorial || header?.tutorialCompleted.id
 
         pxteditor.postHostMessageAsync({
             type: "pxthost",
             action: "tutorialevent",
             tutorialEvent: "loaded",
             tutorialId,
-            projectHeaderId: this.state.header.id
+            projectHeaderId: headerId
         } as pxt.editor.EditorMessageTutorialLoadedEventRequest)
     }
 
     protected postTutorialCompleted() {
-        const tutorialId = this.state.tutorialOptions?.tutorial || this.state.header?.tutorialCompleted.id
+        const { tutorialOptions, headerId } = getStore();
+        const header = headerId && workspace.getHeader(headerId);
+
+        const tutorialId = tutorialOptions?.tutorial || header?.tutorialCompleted.id
 
         pxteditor.postHostMessageAsync({
             type: "pxthost",
             action: "tutorialevent",
             tutorialEvent: "completed",
             tutorialId,
-            projectHeaderId: this.state.header.id
+            projectHeaderId: headerId
         } as pxt.editor.EditorMessageTutorialCompletedEventRequest)
     }
 
     protected postTutorialExit() {
-        const tutorialId = this.state.tutorialOptions?.tutorial || this.state.header?.tutorialCompleted.id
+        const { tutorialOptions, headerId } = getStore();
+        const header = headerId && workspace.getHeader(headerId);
+
+        const tutorialId = tutorialOptions?.tutorial || header?.tutorialCompleted.id
 
         pxteditor.postHostMessageAsync({
             type: "pxthost",
             action: "tutorialevent",
             tutorialEvent: "exit",
             tutorialId,
-            projectHeaderId: this.state.header.id
+            projectHeaderId: headerId
         } as pxt.editor.EditorMessageTutorialExitEventRequest)
     }
 
@@ -1539,10 +1610,25 @@ export class ProjectView
                             });
                             this.editor.filterToolbox(tt.showCategories);
                         }
-                        let tutorialOptions = this.state.tutorialOptions;
-                        tutorialOptions.tutorialReady = true;
-                        tutorialOptions.tutorialStepInfo = tt.stepInfo;
-                        this.setState({ tutorialOptions: tutorialOptions }, () => workspace.saveAsync(this.state.header));
+
+                        const { tutorialOptions, headerId } = getStore();
+
+                        const newOptions: pxt.tutorial.TutorialOptions = {
+                            ...tutorialOptions,
+                            tutorialReady: true,
+                            tutorialStepInfo: tt.stepInfo
+                        };
+
+                        dispatch(setTutorialOptions(newOptions));
+
+                        const header = workspace.getHeader(headerId);
+
+                        if (header.tutorial) {
+                            header.tutorial = newOptions;
+                        }
+
+                        workspace.saveAsync(header);
+
                         const showHint = tutorialOptions.tutorialStepInfo[0].showHint;
                         if (showHint) this.showTutorialHint();
                         //else {
@@ -1554,7 +1640,7 @@ export class ProjectView
                         let te = msg as pxsim.TutorialFailedMessage;
                         pxt.reportException(te.message);
                         core.errorNotification(lf("We're having trouble loading this tutorial, please try again later."));
-                        this.setState({ tutorialOptions: undefined });
+                        dispatch(setTutorialOptions(undefined));
                         // Delete the project created for this tutorial
                         let curr = pkg.mainEditorPkg().header
                         curr.isDeleted = true;
@@ -1574,7 +1660,10 @@ export class ProjectView
     ///////////////////////////////////////////////////////////
 
     reloadHeaderAsync() {
-        return this.loadHeaderAsync(this.state.header, this.state.editorState)
+        const { headerId } = getStore();
+        const header = headerId && workspace.getHeader(headerId);
+
+        return this.loadHeaderAsync(header, this.state.editorState)
     }
 
     tryCheckTargetVersionAsync(targetVersion: string): Promise<void> | undefined {
@@ -1709,7 +1798,9 @@ export class ProjectView
             }
             await pkg.loadPkgAsync(h.id);
 
-            if (!this.state || this.state.header != h) {
+            const { headerId } = getStore();
+
+            if (!this.state || !headerId || workspace.getHeader(headerId) != h) {
                 this.showPackageErrorsOnNextTypecheck();
             }
             simulator.setDirty();
@@ -1781,12 +1872,13 @@ export class ProjectView
                 this.shouldTryDecompile = true;
             }
 
+            dispatch(setTutorialOptions(h.tutorial));
+            dispatch(setHeaderId(h.id));
+
             this.setState({
                 home: false,
                 showFiles: h.githubId ? true : false,
                 editorState: editorState,
-                tutorialOptions: h.tutorial,
-                header: h,
                 projectName: h.name,
                 currFile: file,
                 sideDocsLoadUrl: '',
@@ -2712,8 +2804,11 @@ export class ProjectView
     }
 
     private encodeProjectAsPNGAsync(sc: string, showDialog: boolean): Promise<void> {
+        const { headerId } = getStore();
+        const header = workspace.getHeader(headerId);
+
         return this.exportProjectToFileAsync()
-            .then(blob => screenshot.encodeBlobAsync(this.state.header.name, sc, blob))
+            .then(blob => screenshot.encodeBlobAsync(header.name, sc, blob))
             .then(img => {
                 const fn = pkg.genFileName(".png");
                 pxt.BrowserUtils.browserDownloadDataUri(img, fn);
@@ -2809,12 +2904,12 @@ export class ProjectView
         dispatch(setTracing(false));
         dispatch(setFullScreen(false));
         dispatch(setDebugging(false));
+        dispatch(setTutorialOptions(undefined));
+        dispatch(setHeaderId(undefined));
 
         return this.setStateAsync({
             home: home !== undefined ? home : this.state.home,
-            tutorialOptions: undefined,
             editorState: undefined,
-            header: undefined,
             currFile: undefined,
             fileState: undefined
         }).then(() => {
@@ -2833,6 +2928,10 @@ export class ProjectView
         try {
             // Prevent us from stripping out the hash before the reload is complete
             clearHashChange();
+
+            const { headerId } = getStore();
+            const header = headerId && workspace.getHeader(headerId);
+
             // On embedded pages, preserve the loaded project
             if (hash && ((pxt.BrowserUtils.isIFrame() && (hash.cmd === "pub" || hash.cmd === "sandbox")) || hash.cmd == "tutorial")) {
                 location.hash = `#${hash.cmd}:${hash.arg}`;
@@ -2841,7 +2940,7 @@ export class ProjectView
                 location.hash = "#reload";
             }
             // if in editor, reload project
-            else if (this.state?.header && !this.state.header.isDeleted) {
+            else if (header && !header.isDeleted) {
                 location.hash = "#editor"
             }
 
@@ -3225,7 +3324,9 @@ export class ProjectView
     ///////////////////////////////////////////////////////////
 
     saveAndCompile() {
-        if (!this.state.header) return undefined;
+        const { headerId } = getStore();
+
+        if (!headerId) return undefined;
         this.setState({ isSaving: true });
 
         return (this.state.projectName !== lf("Untitled")
@@ -3403,10 +3504,12 @@ export class ProjectView
                 resp.userContextWindow = userContextWindow;
                 resp.downloadFileBaseName = pkg.genFileName("");
                 resp.confirmAsync = core.confirmAsync;
-                let h = this.state.header;
-                if (h) {
-                    resp.headerId = h.id;
+
+                const { headerId } = getStore();
+                if (headerId) {
+                    resp.headerId = headerId;
                 }
+
                 if (pxt.commands.patchCompileResultAsync) {
                     await pxt.commands.patchCompileResultAsync(resp);
                 }
@@ -3504,7 +3607,9 @@ export class ProjectView
     }
 
     async setLanguageRestrictionAsync(restriction: pxt.editor.LanguageRestriction) {
-        if (this.state.header) {
+        const { headerId } = getStore();
+
+        if (headerId) {
             const epkg = pkg.mainEditorPkg();
             const pxtJsonFile = epkg.files["pxt.json"];
             const pxtJson = pxt.Package.parseAndValidConfig(pxtJsonFile?.content);
@@ -3725,7 +3830,9 @@ export class ProjectView
     }
 
     printCode() {
-        if (!this.state.header) return; // no program loaded
+        const { headerId } = getStore();
+
+        if (!headerId) return; // no program loaded
 
         const p = pkg.mainEditorPkg();
         const files = p.getAllFiles();
@@ -4022,7 +4129,10 @@ export class ProjectView
     }
 
     createGitHubRepositoryAsync(): Promise<void> {
-        const { projectName, header } = this.state;
+        const { headerId } = getStore();
+        const header = headerId && workspace.getHeader(headerId);
+
+        const { projectName } = this.state;
         return cloudsync.githubProvider(true).createRepositoryAsync(projectName, header)
             .then(r => r && this.reloadHeaderAsync());
     }
@@ -4414,17 +4524,26 @@ export class ProjectView
     }
 
     hasHeaderBeenPersistentShared() {
-        return !!this.state.header?.pubPermalink;
+        const { headerId } = getStore();
+        const header = headerId && workspace.getHeader(headerId);
+
+        return !!header?.pubPermalink;
     }
 
     getSharePreferenceForHeader() {
-        return this.state.header?.anonymousSharePreference;
+        const { headerId } = getStore();
+        const header = headerId && workspace.getHeader(headerId);
+
+        return header?.anonymousSharePreference;
     }
 
     async saveSharePreferenceForHeaderAsync(anonymousByDefault: boolean) {
-        if (!this.state.header) return;
-        this.state.header.anonymousSharePreference = anonymousByDefault;
-        await workspace.saveAsync(this.state.header);
+        const { headerId } = getStore();
+        const header = headerId && workspace.getHeader(headerId);
+
+        if (!header) return;
+        header.anonymousSharePreference = anonymousByDefault;
+        await workspace.saveAsync(header);
     }
 
     async saveLocalProjectsToCloudAsync(headerIds: string[]): Promise<pxt.Map<string> | undefined> {
@@ -4454,7 +4573,9 @@ export class ProjectView
     }
 
     saveProjectNameAsync(): Promise<void> {
-        if (!this.state.projectName || !this.state.header) return Promise.resolve();
+        const { headerId } = getStore();
+
+        if (!this.state.projectName || !headerId) return Promise.resolve();
 
         try {
             return this.updateHeaderNameAsync(this.state.projectName);
@@ -4479,10 +4600,12 @@ export class ProjectView
         config.name = name;
         return f.setContentAsync(pxt.Package.stringifyConfig(config))
             .then(() => {
-                if (this.state.header)
+                const { headerId } = getStore();
+                if (headerId) {
                     this.setState({
                         projectName: name
-                    })
+                    });
+                }
             });
     }
 
@@ -4518,8 +4641,10 @@ export class ProjectView
     }
 
     showReportAbuse() {
-        const pubId = (this.state.tutorialOptions && this.state.tutorialOptions.tutorialReportId)
-            || (this.state.header && this.state.header.pubCurrent && this.state.header.pubId);
+        const { tutorialOptions, headerId } = getStore();
+        const header = headerId && workspace.getHeader(headerId);
+
+        const pubId = (tutorialOptions?.tutorialReportId) || (header?.pubCurrent && header.pubId);
         dialogs.showReportAbuseAsync(pubId);
     }
 
@@ -4533,7 +4658,10 @@ export class ProjectView
             this.stopSimulator();
         }
 
-        await dialogs.showTurnBackTimeDialogAsync(this.state.header, () => {
+        const { headerId } = getStore();
+        const header = headerId && workspace.getHeader(headerId);
+
+        await dialogs.showTurnBackTimeDialogAsync(header, () => {
             this.reloadHeaderAsync();
             simWasRunning = false;
         });
@@ -4613,7 +4741,10 @@ export class ProjectView
         dispatch(setDebugging(false));
 
         if (this.isTutorial()) {
-            pxt.tickEvent("tutorial.exit.home", { tutorial: this.state.header?.tutorial?.tutorial });
+            const { headerId } = getStore();
+            const header = headerId && workspace.getHeader(headerId);
+
+            pxt.tickEvent("tutorial.exit.home", { tutorial: header?.tutorial?.tutorial });
             this.exitTutorialAsync().finally(() => this.openHome());
         } else if (this.state.projectName !== lf("Untitled")) {
             this.openHome();
@@ -4667,8 +4798,11 @@ export class ProjectView
     }
 
     showRenameProjectDialogAsync(): Promise<boolean> {
+        const { headerId } = getStore();
+        const header = headerId && workspace.getHeader(headerId);
+
         // don't show rename project prompt on github projects
-        if (!this.state.header || this.state.header.githubId)
+        if (!header || header.githubId)
             return Promise.resolve(false);
 
         const opts: core.PromptOptions = {
@@ -4833,18 +4967,21 @@ export class ProjectView
     }
 
     private async startTutorialAsync(tutorialId: string, tutorialTitle?: string, recipe?: boolean, editorProjectName?: string, previousHeaderId?: string, carryoverCode?: boolean): Promise<void> {
+        const { headerId } = getStore();
+        const header = headerId && workspace.getHeader(headerId);
+
         // custom tick for recipe or tutorial "completion". recipes use links in the markdown to
         // progress, so we track when a user "exits" a recipe by loading a new one
-        if (this.state.header?.tutorial?.tutorial) {
-            pxt.tickEvent("recipe.exit", { tutorial: this.state.header?.tutorial?.tutorial, goto: tutorialId });
-            pxt.tickEvent("tutorial.finish", { tutorial: this.state.header?.tutorial?.tutorial });
+        if (header?.tutorial?.tutorial) {
+            pxt.tickEvent("recipe.exit", { tutorial: header?.tutorial?.tutorial, goto: tutorialId });
+            pxt.tickEvent("tutorial.finish", { tutorial: header?.tutorial?.tutorial });
         }
 
         core.hideDialog();
         core.showLoading("tutorial", lf("starting tutorial..."));
         sounds.initTutorial(); // pre load sounds
         // make sure we are in the editor
-        recipe = recipe && !!this.state.header;
+        recipe = recipe && !!header;
 
         try {
             const r = await this.loadActivityFromMarkdownAsync(tutorialId, tutorialTitle, editorProjectName)
@@ -4919,25 +5056,28 @@ export class ProjectView
     }
 
     async completeTutorialAsync(): Promise<void> {
-        const store = getStore();
+        const { headerId, collapseEditorTools, tutorialOptions } = getStore();
+        const header = headerId && workspace.getHeader(headerId);
 
-        pxt.tickEvent("tutorial.finish", { tutorial: this.state.header?.tutorial?.tutorial });
-        pxt.tickEvent("tutorial.complete", { tutorial: this.state.header?.tutorial?.tutorial });
+        pxt.tickEvent("tutorial.finish", { tutorial: header?.tutorial?.tutorial });
+        pxt.tickEvent("tutorial.complete", { tutorial: header?.tutorial?.tutorial });
         core.showLoading("leavingtutorial", lf("leaving tutorial..."));
         this.postTutorialCompleted();
 
         // clear tutorial field
-        const tutorial = this.state.header.tutorial;
-        if (tutorial && !this.state.header.isSkillmapProject) {
+        const tutorial = header.tutorial;
+        if (tutorial && !header.isSkillmapProject) {
             // don't keep track of completion for microtutorials
-            if (this.state.tutorialOptions && this.state.tutorialOptions.tutorialRecipe)
-                this.state.header.tutorialCompleted = undefined;
-            else
-                this.state.header.tutorialCompleted = {
+            if (tutorialOptions?.tutorialRecipe) {
+                header.tutorialCompleted = undefined;
+            }
+            else {
+                header.tutorialCompleted = {
                     id: tutorial.tutorial,
                     steps: tutorial.tutorialStepInfo.length
-                }
-            this.state.header.tutorial = undefined;
+                };
+            }
+            delete header.tutorial;
         }
         const isSkillmap = pxt.BrowserUtils.isSkillmapEditor();
 
@@ -4955,7 +5095,7 @@ export class ProjectView
             return;
         }
 
-        if (store.collapseEditorTools && !pxt.appTarget.simulator.headless) {
+        if (collapseEditorTools && !pxt.appTarget.simulator.headless) {
             this.expandSimulator();
         }
         this.postTutorialProgress();
@@ -4967,7 +5107,10 @@ export class ProjectView
     }
 
     exitTutorial(removeProject?: boolean) {
-        pxt.tickEvent("tutorial.exit", { tutorial: this.state.header?.tutorial?.tutorial });
+        const { headerId } = getStore();
+        const header = headerId && workspace.getHeader(headerId);
+
+        pxt.tickEvent("tutorial.exit", { tutorial: header?.tutorial?.tutorial });
         core.showLoading("leavingtutorial", lf("leaving tutorial..."));
         this.postTutorialExit();
 
@@ -4992,12 +5135,18 @@ export class ProjectView
             core.resetFocus();
 
             dispatch(setTracing(false));
+            dispatch(setTutorialOptions(undefined));
 
             await this.setStateAsync({
-                tutorialOptions: undefined,
                 editorState: undefined
             });
-            if (this.state.header) await workspace.saveAsync(this.state.header);
+
+            const { headerId } = getStore();
+            const header = headerId && workspace.getHeader(headerId);
+
+            if (header) {
+                await workspace.saveAsync(header);
+            }
         }
     }
 
@@ -5007,7 +5156,7 @@ export class ProjectView
     }
 
     isTutorial() {
-        return this.state.tutorialOptions != undefined;
+        return getStore().tutorialOptions != undefined;
     }
 
     onEditorContentLoaded() {
@@ -5050,6 +5199,7 @@ export class ProjectView
     }
 
     setEditorOffset() {
+        const { tutorialOptions } = getStore();
         if (this.isTutorial()) {
             if (!pxt.BrowserUtils.useOldTutorialLayout()) {
                 const tutorialElements = document?.getElementsByClassName("tutorialWrapper");
@@ -5064,8 +5214,8 @@ export class ProjectView
                 if (tc) {
                     const flyoutOnly =
                         this.state.editorState?.hasCategories === false
-                        || this.state.tutorialOptions?.metadata?.flyoutOnly
-                        || this.state.tutorialOptions?.metadata?.hideToolbox;
+                        || tutorialOptions?.metadata?.flyoutOnly
+                        || tutorialOptions?.metadata?.hideToolbox;
 
                     let headerHeight = 0;
                     if (flyoutOnly) {
@@ -5092,9 +5242,11 @@ export class ProjectView
     ///////////////////////////////////////////////////////////
 
     pokeUserActivity() {
-        if (!!this.state.tutorialOptions && !!this.state.tutorialOptions.tutorial) {
+        const { tutorialOptions } = getStore();
+
+        if (tutorialOptions?.tutorial) {
             // animate tutorial hint after some time of user inactivity
-            this.hintManager.pokeUserActivity(ProjectView.tutorialCardId, this.state.tutorialOptions.tutorialStep, this.state.tutorialOptions.tutorialHintCounter);
+            this.hintManager.pokeUserActivity(ProjectView.tutorialCardId, tutorialOptions.tutorialStep, tutorialOptions.tutorialHintCounter);
         }
     }
 
@@ -5111,12 +5263,23 @@ export class ProjectView
     }
 
     private tutorialCardHintCallback() {
-        let tutorialOptions = this.state.tutorialOptions;
-        tutorialOptions.tutorialHintCounter = tutorialOptions.tutorialHintCounter + 1;
+        const { tutorialOptions, headerId } = getStore();
+
+        const newOptions: pxt.tutorial.TutorialOptions = {
+            ...tutorialOptions,
+            tutorialHintCounter: tutorialOptions.tutorialHintCounter + 1,
+        };
+
+        dispatch(setTutorialOptions(newOptions));
+
+        const header = workspace.getHeader(headerId);
+        if (header.tutorial) {
+            header.tutorial = newOptions;
+        }
+
 
         this.setState({
             pokeUserComponent: ProjectView.tutorialCardId,
-            tutorialOptions: tutorialOptions
         });
 
         setTimeout(() => this.clearUserPoke(), 10000);
@@ -5275,6 +5438,9 @@ export class ProjectView
         const collapseEditorTools = this.getWebappState("collapseEditorTools");
         const debugging = this.getWebappState("debugging");
         const fullscreen = this.getWebappState("fullscreen");
+        const headerId = this.getWebappState("headerId");
+
+        const header = headerId && workspace.getHeader(headerId);
 
         //  ${targetTheme.accentColor ? "inverted accent " : ''}
         const targetTheme = pxt.appTarget.appTheme;
@@ -5283,15 +5449,15 @@ export class ProjectView
         const sandbox = pxt.shell.isSandboxMode();
         const isBlocks = !this.editor.isVisible || this.getPreferredEditor() === pxt.BLOCKS_PROJECT_NAME;
         const sideDocs = !(sandbox || targetTheme.hideSideDocs);
-        const tutorialCompleted = !!this.state.header?.tutorialCompleted;
-        const tutorialOptions = tutorialCompleted ? undefined : this.state.tutorialOptions;
+        const tutorialCompleted = !!header?.tutorialCompleted;
+        const tutorialOptions = tutorialCompleted ? undefined : this.getWebappState("tutorialOptions");
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
         const isSidebarTutorial = pxt.appTarget.appTheme.sidebarTutorial;
         const isTabTutorial = inTutorial && !pxt.BrowserUtils.useOldTutorialLayout();
         const inTutorialExpanded = inTutorial && tutorialOptions.tutorialStepExpanded;
         const tutorialSimSidebar = pxt.appTarget.appTheme.tutorialSimSidebarLayout && !pxt.BrowserUtils.isTabletSize();
         const inHome = this.state.home && !sandbox;
-        const inEditor = !!this.state.header && !inHome;
+        const inEditor = !!header && !inHome;
         const { lightbox, accessibleBlocks } = this.state;
         const hideTutorialIteration = inTutorial && tutorialOptions.metadata?.hideIteration;
         const hideToolbox = inTutorial && tutorialOptions.metadata?.hideToolbox;
@@ -5377,7 +5543,7 @@ export class ProjectView
                     <extensionsBrowser.ExtensionsBrowser
                         hideExtensions={this.hidePackageDialog}
                         importExtensionCallback={() => this.showImportFileDialog({ extension: true })}
-                        header={this.state.header}
+                        header={header}
                         reloadHeaderAsync={async () => {
                             await this.reloadHeaderAsync()
                             this.shouldFocusToolbox = !!this.state.accessibleBlocks;
