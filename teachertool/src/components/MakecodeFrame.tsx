@@ -59,7 +59,7 @@ export const MakeCodeFrame: React.FC<IProps> = () => {
     /* eslint-disable @microsoft/sdl/react-iframe-missing-sandbox */
     const frameVisible = !!teacherTool.projectMetadata?.id;
     return (
-        <div className={css["makecode-frame-container"]}>
+        <>
             <iframe
                 id="code-eval-project-view-frame"
                 className={classList(css["makecode-frame"], frameVisible ? undefined : css["invisible"])}
@@ -68,7 +68,7 @@ export const MakeCodeFrame: React.FC<IProps> = () => {
                 ref={handleIFrameRef}
             />
             {!frameVisible && <MakeCodeFramePlaceholder />}
-        </div>
+        </>
     );
     /* eslint-enable @microsoft/sdl/react-iframe-missing-sandbox */
 };
