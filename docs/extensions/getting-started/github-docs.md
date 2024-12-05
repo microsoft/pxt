@@ -1,8 +1,8 @@
 # Adding documentation for GitHub extensions
 
-Extensions hosted on GitHub can provide help pages for blocks/APIs they export. A user can open the help page for a block by right-clicking on it in the editor and selecting "Help".
+Extensions hosted on GitHub can include help pages for blocks/APIs they export. A user can open the help page for a block by right-clicking on it in the editor and selecting "Help".
 
-As with all MakeCode documentation, these pages are written in GitHub Flavored Markdown (with some MakeCode specific extensions). This page will walk you through how to add documentation to an existing MakeCode extension that is hosted in GitHub.
+As with all MakeCode documentation, these pages are written in GitHub Flavored Markdown (with some extended markdown that is specific to MakeCode). This page will walk you through how to add documentation to an existing MakeCode extension that is hosted in GitHub.
 
 ## Step 1: Repo file structure
 
@@ -32,7 +32,7 @@ Help pages for MakeCode blocks typically contain these sections (in order):
 
 ### Title/Description
 
-This should contain a brief description of the functionality of the block/API along with a title for the page. Often, this text can simply be copied from the existing JSDoc for the API in question.
+This should contain a brief description of the functionality of the block/API along with a title for the page. Often, this text can simply be copied from the existing JSDoc of a particular API.
 
 ### Signature
 
@@ -44,7 +44,7 @@ myNamespace.customApi("hello", 1);
 ```
 ````
 
-Note that the contents of the `sig` code block must be valid TypeScript that compiles in order to render properly. If your snippet requires a variable, simply declare the variable above the signature line in the snippet:
+Note that the contents of the `sig` code block must be valid TypeScript that compiles in order for it to render properly. If your snippet requires a variable, simply declare the variable above the signature line in the snippet:
 
 ````markdown
 ```sig
@@ -53,7 +53,7 @@ myInstance.method("whatever");
 ```
 ````
 
-The declaration of the variable will be automatically omitted from the embedded code snippet.
+The declaration of the variable will be automatically omitted from the embedded code snippet when the signature is rendered.
 
 If your block/API has optional parameters, list **all** of the parameters including the optional ones in the signature.
 
@@ -72,7 +72,7 @@ If any parameters require a more detailed description than you can provide in on
 
 ### Example
 
-The Example section of the page should provide an example MakeCode program that demonstrates how to use the block/API being documented. Users will be able to open your examples in the MakeCode editor using the buttons that appear next to the code snippets. For each example, be sure to also give a brief description of the code.
+The _Example_ section of the page should provide an example MakeCode program that demonstrates how to use the block/API being documented. Users will be able to open your examples in the MakeCode editor using the buttons that appear next to the code snippets. For each example, be sure to also give a brief description of the code.
 
 You can specify the language an example is rendered in by using the language tag in the code snippet. For example:
 
@@ -107,7 +107,7 @@ The see also section is an optional section where you can link to related docume
 
 ### Page metadata
 
-Every extension documentation page requires metadata that tells MakeCode which extensions needs to be loaded in order to render the code snippets on the page. At the minimum, this metadata should contain an entry for your own extension in order for any of the snippets to render properly.
+Every extension documentation page requires metadata that tells MakeCode which extension needs to be loaded in order to render the code snippets on the page. At the minimum, this metadata should contain an entry for your own extension in order for any of the snippets to render properly. Extensions are declared in a `package` specification block, typically at the end of the markdown page.
 
 The package metadata follows this format:
 
@@ -123,7 +123,7 @@ Each entry in the `package` code block should be formatted like so:
 <extension-name>=github:<github-username>/<github-repo>
 ```
 
-Extension name in the above snippet should be the name that appears in the `pxt.json` name field of your extension. It's best practice to make sure that this name is always in sync with whatever is in your extension's `pxt.json` file.
+The `<extension-name>` in the above snippet should be the name that appears in the `pxt.json` name field of your extension. It's best practice to make sure that this name always matches what the `name` in your extension's `pxt.json` file is set to.
 
 If your repository contains multiple extensions, add the path to the directory containing the desired extension's `pxt.json` file after the github repo like so:
 
@@ -205,7 +205,7 @@ All documentation files must be included in the `files` entry of the extension's
 
 ## Step 4: Add a comment annotation to the function
 
-Once you have a markdown file added to your extension, it's time to link that page to the function using a comment annotation.
+Once you have a markdown file added to your extension, it's time to link that page to the function using a comment annotation by specifying a "help path".
 
 The annotation should be of the following format:
 
@@ -213,7 +213,7 @@ The annotation should be of the following format:
 //% help=github:my-extension-name/docs/my-custom-block
 ```
 
-The `my-extension-name` in the above snippet should match the name listed in the `name` field of the extension's `pxt.json` file. Also note that the file path does not contain the `.md` file extension.
+The `my-extension-name` in the above snippet should match the name listed in the `name` field of the extension's `pxt.json` file. Also, note that the file path does not contain the `.md` file extension.
 
 ## Step 5: Commit your changes and test
 
@@ -272,6 +272,6 @@ To release your documentation changes, create a new version of your extension.
 
 If you are working using the [makecode CLI](https://github.com/microsoft/pxt-mkc), then simply run `makecode bump` from within the root of your extension's directory.
 
-If you are working from within MakeCode, use the Create Release button that appears in the GitHub settings for your extension.
+If you are working from within MakeCode, use the **Create Release** button that appears in the GitHub settings for your extension.
 
-Otherwise you can push a version manually by changing the version in `pxt.json` and pushin a new tag in your repo of the format `v0.0.0` (where `0.0.0` is replaced with the new version in `pxt.json`)
+Otherwise you can push a version manually by changing the version in `pxt.json` and pushin a new tag in your repo of the format `v0.0.0` (where `0.0.0` is replaced with the new version in `pxt.json`).
