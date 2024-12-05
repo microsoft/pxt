@@ -213,6 +213,20 @@ The annotation should be of the following format:
 //% help=github:my-extension-name/docs/my-custom-block
 ```
 
+This is added to the other annotations and jsDoc for the function or method in your extension's code:
+
+```typescript
+/**
+ * Example function in my example extension.
+ * @param value that is also returned
+ */
+//% block="my custom block %value"
+//% help=github:my-extension-name/docs/my-custom-block
+export function myCustomBlock(number value) {
+   return value
+}
+```
+
 The `my-extension-name` in the above snippet should match the name listed in the `name` field of the extension's `pxt.json` file. Also, note that the file path does not contain the `.md` file extension.
 
 ## Step 5: Commit your changes and test
