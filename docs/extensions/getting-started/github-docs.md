@@ -123,7 +123,7 @@ Each entry in the `package` code block should be formatted like so:
 <extension-name>=github:<github-username>/<github-repo>
 ```
 
-The `<extension-name>` in the above snippet should be the name that appears in the `pxt.json` name field of your extension. It's best practice to make sure that this name always matches what the `name` in your extension's `pxt.json` file is set to.
+The `<extension-name>` in the above snippet should be the name that appears in the `pxt.json` name field of your extension. It's best practice to make sure that this name always matches the `name` set in your extension's `pxt.json` file.
 
 If your repository contains multiple extensions, add the path to the directory containing the desired extension's `pxt.json` file after the github repo like so:
 
