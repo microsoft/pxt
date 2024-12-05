@@ -203,7 +203,7 @@ All documentation files must be included in the `files` entry of the extension's
 
 ```
 
-## Step 4: Add a comment annotation to the function
+## Step 4: Add a comment annotation to the function/block definition
 
 Once you have a markdown file added to your extension, it's time to link that page to the function using a comment annotation by specifying a "help path".
 
