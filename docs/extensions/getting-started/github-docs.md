@@ -289,3 +289,70 @@ If you are working using the [makecode CLI](https://github.com/microsoft/pxt-mkc
 If you are working from within MakeCode, use the **Create Release** button that appears in the GitHub settings for your extension.
 
 Otherwise you can push a version manually by changing the version in `pxt.json` and pushin a new tag in your repo of the format `v0.0.0` (where `0.0.0` is replaced with the new version in `pxt.json`).
+
+## Localization
+
+Extensions can also include separate versions of help documentation to be loaded based on the user's language preferences.
+
+To add localizations to an extension, follow these steps:
+
+1. Create a directory named `_locales` that lives next to the original version of the markdown file
+2. Within the `_locales` directory, create a directory for each language you wish to support that is named using the ISO language code for that language
+3. Add the localized markdown into that ISO language code directory in a file that has the same name as the original file
+4. Add the localized file to the files entry inside the extension's `pxt.json` file
+
+For example, an extension that has localizations in French (fr), Spanish (es), and Mexican Spanish (es-mx) might have a file structure that looks like this:
+
+```
+root/
+├─ pxt.json
+├─ main.ts
+├─ docs/
+    ├─ custom-block1.md
+    ├─ _locales/
+        ├─ fr/
+            ├─ custom-block1.md
+        ├─ es/
+            ├─ custom-block1.md
+        ├─ es-mx/
+            ├─ custom-block1.md
+```
+
+The `pxt.json` file for this extension would look like this:
+
+```json
+{
+    "name": "my-custom-extension",
+    "version": "0.0.1",
+    "description": "",
+    "dependencies": {
+        "device": "*"
+    },
+    "files": [
+        "main.ts",
+        "docs/custom-block1.md",
+        "docs/_locales/fr/custom-block1.md",
+        "docs/_locales/es/custom-block1.md",
+        "docs/_locales/es-mx/custom-block1.md"
+    ],
+    "testFiles": [
+        "test.ts"
+    ],
+    "supportedTargets": [
+        "arcade"
+    ],
+    "preferredEditor": "tsprj"
+}
+
+```
+
+### Localization resolution
+
+If you want to provide one localization for all of the dialects of a given language, you can do so by placing a file in the folder for the parent ISO language code. For example, a file placed in `docs/_locales/es` will cover the language codes for Spain (es), Mexico (es-mx), Puerto Rico (es-pr), etc.
+
+To get an idea of how MakeCode resolves localized files, let's take a look at an example. If a user has their language set to Mexican Spanish (es-mx) and they try to open the help page of a block with markdown that lives at `/docs/custom-block.md`, MakeCode will check the following paths in order and take the first one that matches a file in the extension:
+
+1. `docs/_locales/es-MX/custom-block.md`
+2. `docs/_locales/es-mx/custom-block.md`
+3. `docs/_locales/es/custom-block.md`
+4. `docs/custom-block.md`
