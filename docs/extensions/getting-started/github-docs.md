@@ -215,7 +215,7 @@ The annotation should be of the following format:
 
 This is added to the other annotations and jsDoc for the function or method in your extension's code:
 
-```typescript
+```typescript-ignore
 /**
  * Example function in my example extension.
  * @param value that is also returned
