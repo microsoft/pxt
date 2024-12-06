@@ -1046,10 +1046,10 @@ namespace ts.pxtc.service {
 
             const blockFunction = apisInfo.byQName[qName];
             if (!blockFunction) {
-                const qNameStart = qName.split(".")[0];
+                const qNameParts = qName.split(".");
                 return {
                     result: false,
-                    message: `Failed to find function with qName: ${qName}. Valid qNames: ${JSON.stringify(Object.keys(apisInfo.byQName).filter(k => k.startsWith(qNameStart)))}`
+                    message: `Failed to find function with qName: ${qName}. Valid qNames: ${JSON.stringify(Object.keys(apisInfo.byQName).filter(k => qNameParts.filter(p => k.toLowerCase().indexOf(p.toLowerCase()) !== -1).length > 0))}`
                 };
             }
 
