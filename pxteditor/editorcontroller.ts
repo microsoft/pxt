@@ -338,7 +338,14 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
 let controllerAnalyticsEnabled = false;
 export function enableControllerAnalytics() {
     if (controllerAnalyticsEnabled) return;
-    if (!pxt.commands.postHostMessage && (!pxt.appTarget.appTheme.allowParentController || !pxt.BrowserUtils.isIFrame())) return;
+
+    const hasOnPostHostMessage = !!pxt.commands.onPostHostMessage;
+    const hasAllowParentController = pxt.appTarget.appTheme.allowParentController;
+    const isInsideIFrame = pxt.BrowserUtils.isIFrame();
+
+    if (!(hasOnPostHostMessage || (hasAllowParentController && isInsideIFrame))) {
+        return;
+    }
 
     const te = pxt.tickEvent;
     pxt.tickEvent = function (id: string, data?: pxt.Map<string | number>): void {
@@ -428,11 +435,11 @@ export function postHostMessageAsync(msg: pxt.editor.EditorMessageRequest): Prom
             window.parent.postMessage(env, "*");
         }
 
-        // Post to editor extension if it wants these messages.
-        // Note: `postHostMessage` in editor extension does not support responses! Communication on this channel is one-way.
-        if (pxt.commands.postHostMessage) {
+        // Post to editor extension if it wants to be notified of these messages.
+        // Note this is a one-way notification. Responses are not supported.
+        if (pxt.commands.onPostHostMessage) {
             try {
-                pxt.commands.postHostMessage(msg);
+                pxt.commands.onPostHostMessage(msg);
             } catch (err) {
                 pxt.reportException(err);
             }
