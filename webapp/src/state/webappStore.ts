@@ -12,7 +12,7 @@ export const [getStore, dispatch] = createStore<IAppState, Action>({
     // active: document.visibilityState == 'visible' || pxt.BrowserUtils.isElectron() || pxt.appTarget.appTheme.dontSuspendOnVisibility,
     // don't start collapsed in mobile since we can go fullscreen now
     // collapseEditorTools: pxt.appTarget.simulator.headless,
-    // simState: pxt.editor.SimState.Stopped,
+    simState: pxt.editor.SimState.Stopped,
     // autoRun: this.autoRunOnStart(),
     // isMultiplayerGame: false,
     // onboarding: undefined,

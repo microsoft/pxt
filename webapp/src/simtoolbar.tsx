@@ -108,7 +108,7 @@ export class SimulatorToolbar extends WebappDataComponent<SimulatorProps, {}> {
         const sandbox = pxt.shell.isSandboxMode();
         const make = !sandbox && parentState.showParts && targetTheme.instructions;
 
-        const simState = parentState.simState;
+        const simState = this.getWebappState("simState");
         const isRunning = simState == SimState.Running;
         const isStarting = simState == SimState.Starting;
         const isSimulatorPending = simState == SimState.Pending;
@@ -150,7 +150,7 @@ export class SimulatorToolbar extends WebappDataComponent<SimulatorProps, {}> {
         return <aside className={"ui item grid centered simtoolbar" + (sandbox ? "" : " portrait ")} role="complementary" aria-label={lf("Simulator toolbar")}>
             <div className={`ui icon tiny buttons`} style={{ padding: "0" }}>
                 {make && <sui.Button disabled={debugging} icon='configure' className="secondary" title={makeTooltip} onClick={this.openInstructions} />}
-                {run && !targetTheme.bigRunButton && <PlayButton parent={parent} simState={parentState.simState} debugging={debugging} />}
+                {run && !targetTheme.bigRunButton && <PlayButton parent={parent} simState={simState} debugging={debugging} />}
                 {fullscreen && <sui.Button key='fullscreenbtn' className="fullscreen-button tablet only hidefullscreen" icon="xicon fullscreen" title={fullscreenTooltip} onClick={this.toggleSimulatorFullscreen} />}
                 {restart && <sui.Button disabled={!runControlsEnabled} key='restartbtn' className={`restart-button`} icon="refresh" title={restartTooltip} onClick={this.restartSimulator} />}
                 {run && debug && <sui.Button disabled={!debugBtnEnabled} key='debugbtn' className={`debug-button ${debugging ? "orange" : ""}`} icon="icon bug" title={debugTooltip} onClick={this.toggleDebug} />}

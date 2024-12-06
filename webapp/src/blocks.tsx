@@ -702,7 +702,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             else if (ev.type === pxtblockly.FIELD_EDITOR_OPEN_EVENT_TYPE) {
                 const openEvent = ev as pxtblockly.FieldEditorOpenEvent;
                 if (openEvent.isOpen) {
-                    shouldRestartSim = this.parent.state.simState != SimState.Stopped;
+                    const { simState } = getStore();
+                    shouldRestartSim = simState != SimState.Stopped;
                     this.parent.stopSimulator();
                 }
                 else {

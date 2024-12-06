@@ -49,5 +49,20 @@ export const reducer: Reducer<IAppState, Action> = (store, action) => {
                 ...store,
                 headerId: action.headerId
             };
+        case "SET_AUTO_RUN":
+            return {
+                ...store,
+                autoRun: action.autoRun
+            };
+        case "SET_SIM_STATE":
+            return {
+                ...store,
+                simState: action.state
+            };
+        case "SET_SHOW_MINI_SIM":
+            return {
+                ...store,
+                showMiniSim: action.show
+            };
     }
 }

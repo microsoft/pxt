@@ -45,6 +45,21 @@ type SetHeaderId = ActionBase & {
     headerId: string;
 }
 
+type SetAutoRun = ActionBase & {
+    type: "SET_AUTO_RUN";
+    autoRun: boolean;
+}
+
+type SetSimState = ActionBase & {
+    type: "SET_SIM_STATE";
+    state: pxt.editor.SimState;
+}
+
+type SetShowMiniSim = ActionBase & {
+    type: "SET_SHOW_MINI_SIM";
+    show: boolean;
+}
+
 export type Action =
     | SetEditorToolsCollapsed
     | SetGreenScreenEnabled
@@ -55,6 +70,9 @@ export type Action =
     | SetDebugging
     | SetTutorialOptions
     | SetHeaderId
+    | SetAutoRun
+    | SetSimState
+    | SetShowMiniSim
 
 const setEditorToolsCollapsed = (collapsed: boolean): SetEditorToolsCollapsed => ({
     type: "SET_EDITOR_TOOLS_COLLAPSED",
@@ -101,6 +119,21 @@ const setHeaderId = (headerId: string): SetHeaderId => ({
     headerId
 });
 
+const setAutoRun = (autoRun: boolean): SetAutoRun => ({
+    type: "SET_AUTO_RUN",
+    autoRun
+});
+
+const setSimState = (state: pxt.editor.SimState): SetSimState => ({
+    type: "SET_SIM_STATE",
+    state
+});
+
+const setShowMiniSim = (show: boolean): SetShowMiniSim => ({
+    type: "SET_SHOW_MINI_SIM",
+    show
+});
+
 export {
     setEditorToolsCollapsed,
     setGreenScreenEnabled,
@@ -110,5 +143,8 @@ export {
     setTracing,
     setDebugging,
     setTutorialOptions,
-    setHeaderId
+    setHeaderId,
+    setAutoRun,
+    setSimState,
+    setShowMiniSim
 }

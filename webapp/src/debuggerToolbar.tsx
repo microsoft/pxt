@@ -73,9 +73,7 @@ export class DebuggerToolbar extends WebappDataComponent<DebuggerToolbarProps, D
     }
 
     renderCore() {
-        const parentState = this.props.parent.state;
-
-        const simState = parentState.simState;
+        const simState = this.getWebappState("simState");
         const isRunning = simState == SimState.Running;
         const isStarting = simState == SimState.Starting;
         const isDebugging = this.getWebappState("debugging");

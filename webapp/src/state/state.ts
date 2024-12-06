@@ -5,7 +5,6 @@ export interface IAppState {
 
     headerId?: string;
 
-    // header?: pxt.workspace.Header;
     // editorState?: pxt.editor.EditorState;
     // fileState?: string;
     // currFile?: pxt.editor.IFile;
@@ -17,9 +16,6 @@ export interface IAppState {
     // // is the flyout open? sorta
     // hideEditorFloats?: boolean;
 
-    // showMiniSim?: boolean;
-    // autoRun?: boolean;
-
     // lightbox?: boolean;
     // home?: boolean;
 
@@ -30,7 +26,6 @@ export interface IAppState {
     tutorialOptions?: Readonly<pxt.tutorial.TutorialOptions>;
 
     // embedSimView?: boolean;
-    // simState?: pxt.editor.SimState;
 
     // bannerVisible?: boolean;
 
@@ -58,6 +53,10 @@ export interface IAppState {
     // ==========================================================
     // simulator state
     // ==========================================================
+
+    showMiniSim?: boolean;
+    autoRun?: boolean;
+    simState?: pxt.editor.SimState;
 
     // // are we showing the keyboard controls (arcade)?
     // keymap?: boolean;

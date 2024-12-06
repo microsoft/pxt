@@ -12,6 +12,7 @@ import IProjectView = pxt.editor.IProjectView;
 import ISettingsProps = pxt.editor.ISettingsProps;
 import UserInfo = pxt.editor.UserInfo;
 import SimState = pxt.editor.SimState;
+import { WebappDataComponent } from "./state";
 
 // common menu items -- do not remove
 // lf("About")
@@ -434,7 +435,7 @@ class BlocksMenuItem extends data.Component<ISettingsProps, {}> {
     }
 }
 
-class SandboxMenuItem extends data.Component<ISettingsProps, {}> {
+class SandboxMenuItem extends WebappDataComponent<ISettingsProps, {}> {
     constructor(props: ISettingsProps) {
         super(props);
     }
@@ -450,7 +451,7 @@ class SandboxMenuItem extends data.Component<ISettingsProps, {}> {
 
     renderCore() {
         const active = this.isActive();
-        const isRunning = this.props.parent.state.simState == SimState.Running;
+        const isRunning = this.getWebappState("simState") == SimState.Running;
         const runTooltip = isRunning ? lf("Stop the simulator") : lf("Start the simulator");
 
         return <BaseMenuItemProps className="sim-menuitem" icon={active && isRunning ? "stop" : "play"} text={lf("Simulator")} title={!active ? lf("Show Simulator") : runTooltip} onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} />

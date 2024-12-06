@@ -761,6 +761,9 @@ declare namespace pxt.editor {
         // tracing?: boolean;
         // debugging?: boolean;
         // tutorialOptions?: pxt.tutorial.TutorialOptions;
+        // simState?: SimState;
+        // autoRun?: boolean;
+        // showMiniSim?: boolean;
 
         // header?: pxt.workspace.Header;
         editorState?: EditorState;
@@ -773,8 +776,6 @@ declare namespace pxt.editor {
         suppressPackageWarning?: boolean;
         lightbox?: boolean;
         keymap?: boolean;
-        simState?: SimState;
-        autoRun?: boolean;
         resumeOnVisibility?: boolean;
         compiling?: boolean;
         isSaving?: boolean;
@@ -782,7 +783,6 @@ declare namespace pxt.editor {
         hideEditorFloats?: boolean;
         showBlocks?: boolean;
         showParts?: boolean;
-        showMiniSim?: boolean;
         embedSimView?: boolean;
         editorPosition?: {
             lineNumber: number;

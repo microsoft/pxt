@@ -355,8 +355,9 @@ export class EditorToolbar extends WebappDataComponent<ISettingsProps, EditorToo
     }
 
     renderCore() {
-        const { projectName, compiling, isSaving, simState, editorState } = this.props.parent.state;
+        const { projectName, compiling, isSaving, editorState } = this.props.parent.state;
 
+        const simState = this.getWebappState("simState");
         const debugging = this.getWebappState("debugging");
         const tutorialOptions = this.getWebappState("tutorialOptions");
         const headerId = this.getWebappState("headerId");
