@@ -25,6 +25,8 @@ namespace pxt.perf {
 (function () {
     // Sometimes these aren't initialized, for example in tests. We only care about them
     // doing anything in the browser.
+    if (!pxt.perf.isEnabled)
+        pxt.perf.isEnabled = () => false
     if (!pxt.perf.report)
         pxt.perf.report = () => undefined
     if (!pxt.perf.recordMilestone)
