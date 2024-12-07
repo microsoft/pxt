@@ -5073,52 +5073,140 @@ interface AnimationInfo {
 }
 
 
-
-export async function validateTranslatedBlockStringsAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
-    const filePath = parsed.args[0];
-    if (!filePath || !fs.existsSync(filePath)) {
-        U.userError(`File ${filePath} not found`);
+function validateBlockString(original: string, toValidate: string): { result: boolean; message?: string } {
+    function getResponse(result: boolean, message?: string) {
+        if (!result) {
+            message += ` Original: '${original}', Validate: '${toValidate}'`;
+        }
+        return { result, message };
     }
 
-    const translationMap = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    if (!original && !toValidate) {
+        return getResponse(true, "Empty strings");
+    } else if (!original || !toValidate) {
+        return getResponse(false, "Mis-match empty and non-empty strings.");
+    }
 
-    const opts = await prepBuildOptionsAsync(BuildOption.GenDocs);
-    const compileResult = pxtc.service.performOperation("compile", {options: opts});
-    if (pxtc.service.IsOpErr(compileResult)) {
-        U.userError(`Failed to compile the project: ${compileResult.errorMessage}`);
+    // Split block strings by the optional parameter separator "||" and parse each section separately.
+    const originalParts = original.split("||");
+    const toValidateParts = toValidate.split("||");
+
+    if (originalParts.length !== toValidateParts.length) {
+        return getResponse(false, "Block string has non-matching number of segments.");
+    }
+
+    // Check if we're dealing with % or $ params.
+    // TODO thsparks - use param.ref field to check this.
+    const origHasPercentParams = originalParts.some(p => p.indexOf("%") !== -1);
+    const origHasDollarParams = originalParts.some(p => p.indexOf("$") !== -1);
+    if (origHasPercentParams && origHasDollarParams) {
+        return getResponse(false, "Original block string is invalid (has both % and $ params).");
+    }
+
+    const toValHasPercentParams = toValidateParts.some(p => p.indexOf("%") !== -1);
+    const toValHasDollarParams = toValidateParts.some(p => p.indexOf("$") !== -1);
+    if (toValHasPercentParams && toValHasDollarParams) {
+        return getResponse(false, "Block string is invalid (has both % and $ params).");
+    }
+
+    if (origHasPercentParams !== toValHasPercentParams || origHasDollarParams !== toValHasDollarParams) {
+        return getResponse(false, "Block string parameter styles do not match.");
+    }
+
+
+    // Compare the parameters in each segment.
+    for (let i = 0; i < originalParts.length; i++) {
+        const originalParsed = pxtc.parseBlockDefinition(originalParts[i]);
+        const toValidateParsed = pxtc.parseBlockDefinition(toValidateParts[i]);
+
+        if (originalParsed.parameters?.length != toValidateParsed.parameters?.length) {
+            return getResponse(false, "Block string has non-matching number of parameters.");
+        }
+
+        // For non-ref (%) params, order matters. For ref ($) params it does not.
+        if (origHasPercentParams) {
+            for (let p = 0; p < toValidateParsed.parameters?.length; p++) {
+                if (toValidateParsed.parameters[p].name !== originalParsed.parameters[p].name) {
+                    return getResponse(false, "Block string has non-matching ordered parameters.");
+                }
+            }
+        } else if(toValidateParsed.parameters?.some(p => originalParsed.parameters.filter(op => op.name === p.name).length !== 1)) {
+            return getResponse(false, "Block string has non-matching parameters.");
+        }
+    }
+
+    return { result: true };
+}
+
+export function validateTranslatedBlocks(parsed?: commandParser.ParsedCommand): Promise<void> {
+    const originalFilePath = parsed.args[0];
+    const translatedFilePath = parsed.args[1];
+    const outputFilePath = parsed.args[2]; // Optional
+
+    if (!originalFilePath || !translatedFilePath) {
+        U.userError("Missing required arguments: originalFilePath, translatedFilePath");
+    }
+    if (!fs.existsSync(originalFilePath)) {
+        U.userError(`File ${originalFilePath} not found`);
+    }
+    if (!fs.existsSync(translatedFilePath)) {
+        U.userError(`File ${translatedFilePath} not found`);
+    }
+
+    /**
+     * Takes a key string from a translations file and returns the type of content it refers to (a block, a category, etc...)
+     * Matches pxtc.gendocs key construction
+     */
+    function getKeyType(key: string): "category" | "subcategory" | "group" | "block" | "unknown" {
+        if (key.startsWith("{id:category}")) return "category";
+        if (key.startsWith("{id:subcategory}")) return "subcategory";
+        if (key.startsWith("{id:group}")) return "group";
+        if (key.endsWith("|block")) return "block";
+        return "unknown";
+    }
+
+    const originalMap = JSON.parse(fs.readFileSync(originalFilePath, 'utf8'));
+    const originalKeys = Object.keys(originalMap);
+
+    const translationMap = JSON.parse(fs.readFileSync(translatedFilePath, 'utf8'));
+    const translationKeys = Object.keys(translationMap);
+
+    if (originalKeys.length !== translationKeys.length) {
+        U.userError(`Original and translation files have different number of keys. Original: ${originalKeys.length} Translation: ${translationKeys.length}`);
     }
 
     const results: { [translationKey: string]: {result: boolean, message?: string}} = {};
-    for (const [translationKey, blockString] of Object.entries(translationMap)) {
-        if (typeof translationKey !== 'string' || typeof blockString !== 'string') {
-            U.userError(`Invalid block string entry found for ${translationKey}: ${blockString}`);
+    for (const translationKey of translationKeys) {
+        if (!(translationKey in originalMap)) {
+            results[translationKey] = { result: false, message: `Original string not found for key: ${translationKey}` };
+            continue;
         }
-        if (translationKey.startsWith("{id:subcategory}")) {
-            // TODO thsparks : any validation to do here?
-            results[translationKey] = { result: true, message: "No validation for subcategories" }
-        } else if (translationKey.startsWith("{id:group}")) {
-            // TODO thsparks : any validation to do here?
-            results[translationKey] = { result: true, message: "No validation for groups" }
-        } else if (translationKey.endsWith("|block")) {
-            const qName = translationKey.replace("|block", "");
-            const validation = pxtc.service.performOperation('validateBlockString', { qName, blockString: (blockString as string) });
-            if (pxtc.service.IsOpErr(validation)) {
-                U.userError(`Failed to validate block string for ${translationKey}: ${validation.errorMessage}`);
-                results[translationKey] = { result: false, message: validation.errorMessage };
+
+        const keyType = getKeyType(translationKey);
+        switch (keyType) {
+            case "block": {
+                const translationString = translationMap[translationKey];
+                const originalString = originalMap[translationKey];
+                const validation = validateBlockString(originalString, translationString);
+                results[translationKey] = validation;
+                break;
             }
-            else {
-                results[translationKey] = validation as { result: boolean, message?: string }; // TODO thsparks : Why is this cast necessary? Doesn't like referencing actual properties?
+            case "category":
+            case "subcategory":
+            case "group":
+            case "unknown":
+            default: {
+                results[translationKey] = { result: true, message: `No validation performed for key type: ${keyType}` };
             }
-        } else if (translationKey.indexOf("|param|")) {
-            // TODO thsparks : any validation to do here?
-            results[translationKey] = { result: true, message: "No validation for subcategories" }
-        } else {
-            // TODO thsparks : any validation to do here?
-            results[translationKey] = { result: true, message: "No validation performed" }
         }
     }
 
-    pxt.log(JSON.stringify(results, null, 2)); // TODO thsparks : remove formatting when done testing.
+    if (outputFilePath) {
+        fs.writeFileSync(outputFilePath, JSON.stringify(results, null, 2));
+        pxt.log(`Results written to ${outputFilePath}`);
+    } else {
+        pxt.log(JSON.stringify(results, null, 2));
+    }
 
     return Promise.resolve();
 }
@@ -7447,12 +7535,12 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
     advancedCommand("buildshims", "Regenerate shims.d.ts, enums.d.ts", buildShimsAsync);
 
     p.defineCommand({
-        name: "validatetranslatedblockstrings",
-        aliases: ["vtbs"],
-        help: "Validate a file of translated block strings",
+        name: "validatetranslatedblocks",
+        aliases: ["vtb"],
+        help: "Validate a file of translated block strings against a baseline",
         advanced: true,
-        argString: "<file>"
-    }, validateTranslatedBlockStringsAsync);
+        argString: "<original-file> <translated-file> <output-file>"
+    }, validateTranslatedBlocks);
 
     function simpleCmd(name: string, help: string, callback: (c?: commandParser.ParsedCommand) => Promise<void>, argString?: string, onlineHelp?: boolean): void {
         p.defineCommand({ name, help, onlineHelp, argString }, callback);
