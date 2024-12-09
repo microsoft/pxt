@@ -5092,26 +5092,9 @@ function validateBlockString(original: string, toValidate: string): { original: 
         return getResponse(false, "Block string has non-matching number of segments.");
     }
 
-    // Check if we're dealing with % or $ params.
-    // TODO thsparks - use param.ref field to check this.
-    const origHasPercentParams = originalParts.some(p => p.indexOf("%") !== -1);
-    const origHasDollarParams = originalParts.some(p => p.indexOf("$") !== -1);
-    if (origHasPercentParams && origHasDollarParams) {
-        return getResponse(false, "Original block string is invalid (has both % and $ params).");
-    }
-
-    const toValHasPercentParams = toValidateParts.some(p => p.indexOf("%") !== -1);
-    const toValHasDollarParams = toValidateParts.some(p => p.indexOf("$") !== -1);
-    if (toValHasPercentParams && toValHasDollarParams) {
-        return getResponse(false, "Block string is invalid (has both % and $ params).");
-    }
-
-    if (origHasPercentParams !== toValHasPercentParams || origHasDollarParams !== toValHasDollarParams) {
-        return getResponse(false, "Block string parameter styles do not match.");
-    }
-
-
     // Compare the parameters in each segment.
+    let refParams = false; // $ parameters
+    let nonRefParams = false; // % parameters
     for (let i = 0; i < originalParts.length; i++) {
         const originalParsed = pxtc.parseBlockDefinition(originalParts[i]);
         const toValidateParsed = pxtc.parseBlockDefinition(toValidateParts[i]);
@@ -5120,8 +5103,24 @@ function validateBlockString(original: string, toValidate: string): { original: 
             return getResponse(false, "Block string has non-matching number of parameters.");
         }
 
-        // For non-ref (%) params, order matters. For ref ($) params it does not.
-        if (origHasPercentParams) {
+        refParams = refParams || originalParsed.parameters?.some(p => p.ref);
+        nonRefParams = nonRefParams || originalParsed.parameters?.some(p => !p.ref);
+        if (refParams && nonRefParams) {
+            return getResponse(false, "Original block string has both reference ($) and non-reference (%) parameters.");
+        }
+
+        const validateRefParams = toValidateParsed.parameters?.some(p => p.ref)
+        const validateNonRefParams = toValidateParsed.parameters?.some(p => !p.ref)
+        if (validateRefParams && validateNonRefParams) {
+            // Technically unnecessary to check this (check below would catch it), but it provides a nicer error message.
+            return getResponse(false, "Block string has both reference ($) and non-reference (%) parameters.");
+        }
+        if (validateRefParams !== refParams || validateNonRefParams !== nonRefParams) {
+            return getResponse(false, "Parameter styles do not match.");
+        }
+
+        // For non-ref params, order matters. For ref params, it does not.
+        if (nonRefParams) {
             for (let p = 0; p < toValidateParsed.parameters?.length; p++) {
                 if (toValidateParsed.parameters[p].name !== originalParsed.parameters[p].name) {
                     return getResponse(false, "Block string has non-matching ordered parameters.");
