@@ -2001,25 +2001,16 @@ function shouldEventHideFlyout(ev: Blockly.Events.Abstract) {
 function resolveLocalizedMarkdown(url: string) {
     const editorPackage = pkg.getEditorPkg(pkg.mainPkg);
 
-    const [initialLang, baseLang, initialLangLowerCase] = pxt.Util.normalizeLanguageCode(pxt.Util.userLanguage());
-
     const splitPath = url.split("/");
     const fileName = splitPath.pop();
     const dirName = splitPath.join("/");
 
-    let pathsToTest: string[];
-
-    if (initialLang && baseLang && initialLangLowerCase) {
-        pathsToTest = [
-            `${dirName}/_locales/${initialLang}/${fileName}`,
-            `${dirName}/_locales/${initialLangLowerCase}/${fileName}`,
-            `${dirName}/_locales/${baseLang}/${fileName}`,
-            url
-        ];
-    }
-    else {
-        pathsToTest = [url];
-    }
+    const [initialLang, baseLang, initialLangLowerCase] = pxt.Util.normalizeLanguageCode(pxt.Util.userLanguage());
+    const priorityOrder = [initialLang, initialLangLowerCase, baseLang].filter((lang) => typeof lang === "string")
+    const pathsToTest = [
+        ...priorityOrder.map(lang =>`${dirName}/_locales/${lang}/${fileName}`),
+        url
+    ]
 
     for (const path of pathsToTest) {
         const file = editorPackage.lookupFile(path);
