@@ -5073,12 +5073,9 @@ interface AnimationInfo {
 }
 
 
-function validateBlockString(original: string, toValidate: string): { result: boolean; message?: string } {
+function validateBlockString(original: string, toValidate: string): { original: string; validate: string; result: boolean; message?: string } {
     function getResponse(result: boolean, message?: string) {
-        if (!result) {
-            message += ` Original: '${original}', Validate: '${toValidate}'`;
-        }
-        return { result, message };
+        return { original, validate: toValidate, result, message };
     }
 
     if (!original && !toValidate) {
@@ -5135,7 +5132,7 @@ function validateBlockString(original: string, toValidate: string): { result: bo
         }
     }
 
-    return { result: true };
+    return getResponse(true);
 }
 
 export function validateTranslatedBlocks(parsed?: commandParser.ParsedCommand): Promise<void> {
