@@ -5210,6 +5210,11 @@ export function validateTranslatedBlocks(parsed?: commandParser.ParsedCommand): 
     }
 
     if (outputFilePath) {
+        // Create directories for output file, if needed.
+        const outputDir = path.dirname(outputFilePath);
+        if (!fs.existsSync(outputDir)) {
+            fs.mkdirSync(outputDir, { recursive: true });
+        }
         fs.writeFileSync(outputFilePath, JSON.stringify(results, null, 2));
         pxt.log(`Results written to ${outputFilePath}`);
     } else {
