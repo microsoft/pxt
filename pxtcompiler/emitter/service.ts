@@ -998,7 +998,6 @@ namespace ts.pxtc.service {
             lastApiInfo = internalGetApiInfo(service.getProgram(), host.opts.jres);
             return lastApiInfo.apis;
         },
-
         snippet: v => {
             const o = v.snippet;
             if (!lastApiInfo) return undefined;
