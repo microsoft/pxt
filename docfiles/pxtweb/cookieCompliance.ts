@@ -73,7 +73,7 @@ namespace pxt {
 
         export let startTimeMs: number;
         export let stats: {
-            // name, start, duration
+            // name, start, duration, params
             durations: [string, number, number, Map<string>?][],
             // name, event
             milestones: [string, number, Map<string>?][]
