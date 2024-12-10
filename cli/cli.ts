@@ -5072,10 +5072,20 @@ interface AnimationInfo {
     name: string;
 }
 
-
-function validateBlockString(original: string, toValidate: string): { original: string; validate: string; result: boolean; message?: string } {
+interface TranslationValidationResult {
+    result: boolean;
+    message?: string;
+    original?: string;
+    validate?: string;
+}
+function validateBlockString(original: string, toValidate: string): TranslationValidationResult {
     function getResponse(result: boolean, message?: string) {
-        return { original, validate: toValidate, result, message };
+        return {
+            result,
+            message,
+            original,
+            validate: toValidate
+        };
     }
 
     if (!original && !toValidate) {
@@ -5119,15 +5129,25 @@ function validateBlockString(original: string, toValidate: string): { original: 
             return getResponse(false, "Parameter styles do not match.");
         }
 
-        // For non-ref params, order matters. For ref params, it does not.
-        if (nonRefParams) {
-            for (let p = 0; p < toValidateParsed.parameters?.length; p++) {
-                if (toValidateParsed.parameters[p].name !== originalParsed.parameters[p].name) {
+        for (let p = 0; p < toValidateParsed.parameters?.length; p++) {
+            // For non-ref params, order matters. For ref params, it does not.
+            const toValidateParam = toValidateParsed.parameters[p];
+            let matchParam;
+            if (nonRefParams) {
+                matchParam = originalParsed.parameters[p];
+                if (toValidateParam.name !== matchParam.name) {
                     return getResponse(false, "Block string has non-matching ordered parameters.");
                 }
+            } else {
+                matchParam = originalParsed.parameters.find(op => op.name === toValidateParam.name);
+                if (!matchParam) {
+                    return getResponse(false, "Block string has non-matching parameters.");
+                }
             }
-        } else if(toValidateParsed.parameters?.some(p => originalParsed.parameters.filter(op => op.name === p.name).length !== 1)) {
-            return getResponse(false, "Block string has non-matching parameters.");
+
+            if (toValidateParam.shadowBlockId !== matchParam.shadowBlockId) {
+                return getResponse(false, "Block string has non-matching shadow block IDs.");
+            }
         }
     }
 
@@ -5171,7 +5191,7 @@ export function validateTranslatedBlocks(parsed?: commandParser.ParsedCommand): 
         U.userError(`Original and translation files have different number of keys. Original: ${originalKeys.length} Translation: ${translationKeys.length}`);
     }
 
-    const results: { [translationKey: string]: {result: boolean, message?: string}} = {};
+    const results: { [translationKey: string]: TranslationValidationResult} = {};
     for (const translationKey of translationKeys) {
         if (!(translationKey in originalMap)) {
             results[translationKey] = { result: false, message: `Original string not found for key: ${translationKey}` };
@@ -5179,10 +5199,10 @@ export function validateTranslatedBlocks(parsed?: commandParser.ParsedCommand): 
         }
 
         const keyType = getKeyType(translationKey);
+        const translationString = translationMap[translationKey];
+        const originalString = originalMap[translationKey];
         switch (keyType) {
             case "block": {
-                const translationString = translationMap[translationKey];
-                const originalString = originalMap[translationKey];
                 const validation = validateBlockString(originalString, translationString);
                 results[translationKey] = validation;
                 break;
@@ -5192,7 +5212,12 @@ export function validateTranslatedBlocks(parsed?: commandParser.ParsedCommand): 
             case "group":
             case "unknown":
             default: {
-                results[translationKey] = { result: true, message: `No validation performed for key type: ${keyType}` };
+                results[translationKey] = {
+                    result: true,
+                    message: `No validation performed for key type: ${keyType}`,
+                    original: originalString,
+                    validate: translationString
+                };
             }
         }
     }
