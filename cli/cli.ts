@@ -5178,10 +5178,6 @@ export function validateTranslatedBlocks(parsed?: commandParser.ParsedCommand): 
     const translationMap = JSON.parse(fs.readFileSync(translatedFilePath, 'utf8'));
     const translationKeys = Object.keys(translationMap);
 
-    if (originalKeys.length !== translationKeys.length) {
-        U.userError(`Original and translation files have different number of keys. Original: ${originalKeys.length} Translation: ${translationKeys.length}`);
-    }
-
     const results: { [translationKey: string]: BlockStringValidationResult} = {};
     for (const translationKey of translationKeys) {
         if (!(translationKey in originalMap)) {
