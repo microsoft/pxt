@@ -1,4 +1,4 @@
-/// <reference path="../../localtypings/blockly-keyboard-experiment.ts"/>
+/// <reference path="../../localtypings/blockly-keyboard-experiment.d.ts"/>
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -897,11 +897,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     public moveFocusToFlyout() {
         if (this.keyboardNavigation) {
-            // TODO: understand purpose, ask for API for this
-            //this.navigationController.navigation.focusFlyout(this.editor);
+            this.keyboardNavigation.focusFlyout();
+        } else {
+            // TODO: why does this do this? can we just DOM focus the flyout in all cases?
+            (this.editor.getInjectionDiv() as HTMLDivElement).focus();
         }
-
-        (this.editor.getInjectionDiv() as HTMLDivElement).focus();
     }
 
     renderToolbox(immediate?: boolean) {
