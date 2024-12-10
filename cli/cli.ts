@@ -5072,13 +5072,13 @@ interface AnimationInfo {
     name: string;
 }
 
-interface TranslationValidationResult {
+interface BlockStringValidationResult {
     result: boolean;
     message?: string;
     original?: string;
     validate?: string;
 }
-function validateBlockString(original: string, toValidate: string): TranslationValidationResult {
+function validateBlockString(original: string, toValidate: string): BlockStringValidationResult {
     function getResponse(result: boolean, message?: string) {
         return {
             result,
@@ -5088,6 +5088,7 @@ function validateBlockString(original: string, toValidate: string): TranslationV
         };
     }
 
+    // Check for empty strings. Both empty is fine. One empty and not the other, fail.
     if (!original && !toValidate) {
         return getResponse(true, "Empty strings");
     } else if (!original || !toValidate) {
@@ -5097,22 +5098,26 @@ function validateBlockString(original: string, toValidate: string): TranslationV
     // Split block strings by the optional parameter separator "||" and parse each section separately.
     const originalParts = original.split("||");
     const toValidateParts = toValidate.split("||");
-
     if (originalParts.length !== toValidateParts.length) {
         return getResponse(false, "Block string has non-matching number of segments.");
     }
 
-    // Compare the parameters in each segment.
     let refParams = false; // $ parameters
     let nonRefParams = false; // % parameters
     for (let i = 0; i < originalParts.length; i++) {
         const originalParsed = pxtc.parseBlockDefinition(originalParts[i]);
         const toValidateParsed = pxtc.parseBlockDefinition(toValidateParts[i]);
 
+        // ---------------------
+        // Check parameter count is unchanged
+        // ---------------------
         if (originalParsed.parameters?.length != toValidateParsed.parameters?.length) {
             return getResponse(false, "Block string has non-matching number of parameters.");
         }
 
+        // ---------------------
+        // Check if there has been any mix-ups with reference and non-reference parameters.
+        // ---------------------
         refParams = refParams || originalParsed.parameters?.some(p => p.ref);
         nonRefParams = nonRefParams || originalParsed.parameters?.some(p => !p.ref);
         if (refParams && nonRefParams) {
@@ -5129,6 +5134,9 @@ function validateBlockString(original: string, toValidate: string): TranslationV
             return getResponse(false, "Parameter styles do not match.");
         }
 
+        // ---------------------
+        // Check if anything has been translated when it should not have been.
+        // ---------------------
         for (let p = 0; p < toValidateParsed.parameters?.length; p++) {
             // For non-ref params, order matters. For ref params, it does not.
             const toValidateParam = toValidateParsed.parameters[p];
@@ -5151,6 +5159,7 @@ function validateBlockString(original: string, toValidate: string): TranslationV
         }
     }
 
+    // Passed all checks
     return getResponse(true);
 }
 
@@ -5191,7 +5200,7 @@ export function validateTranslatedBlocks(parsed?: commandParser.ParsedCommand): 
         U.userError(`Original and translation files have different number of keys. Original: ${originalKeys.length} Translation: ${translationKeys.length}`);
     }
 
-    const results: { [translationKey: string]: TranslationValidationResult} = {};
+    const results: { [translationKey: string]: BlockStringValidationResult} = {};
     for (const translationKey of translationKeys) {
         if (!(translationKey in originalMap)) {
             results[translationKey] = { result: false, message: `Original string not found for key: ${translationKey}` };
