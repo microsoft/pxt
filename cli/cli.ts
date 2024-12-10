@@ -5173,7 +5173,6 @@ export function validateTranslatedBlocks(parsed?: commandParser.ParsedCommand): 
     }
 
     const originalMap = JSON.parse(fs.readFileSync(originalFilePath, 'utf8'));
-    const originalKeys = Object.keys(originalMap);
 
     const translationMap = JSON.parse(fs.readFileSync(translatedFilePath, 'utf8'));
     const translationKeys = Object.keys(translationMap);
