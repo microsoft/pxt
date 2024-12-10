@@ -5078,6 +5078,9 @@ interface BlockStringValidationResult {
     original?: string;
     validate?: string;
 }
+/**
+ * Checks for syntax errors in a single block string by comparing against a baseline string for the same block.
+ */
 function validateBlockString(original: string, toValidate: string): BlockStringValidationResult {
     function getResponse(result: boolean, message?: string) {
         return {
@@ -5163,6 +5166,10 @@ function validateBlockString(original: string, toValidate: string): BlockStringV
     return getResponse(true);
 }
 
+/**
+ * Checks for syntax errors in a translated block strings file by comparing against a baseline.
+ * Optionally prints the results to console or sends to a file, if an output file is specified.
+ */
 export function validateTranslatedBlocks(parsed?: commandParser.ParsedCommand): Promise<void> {
     const originalFilePath = parsed.args[0];
     const translatedFilePath = parsed.args[1];
