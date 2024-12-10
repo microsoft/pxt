@@ -713,23 +713,18 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
 
         const mainWorkspace = Blockly.getMainWorkspace() as Blockly.WorkspaceSvg;
         const accessibleBlocksEnabled = mainWorkspace.keyboardAccessibilityMode;
+        // TODO: this doesn't work in the keyboard navigation experiment as the API has changed
         const accessibleBlocksState = accessibleBlocksEnabled
             && (toolbox.props.parent as any).navigationController?.navigation?.getState(mainWorkspace);
-        const keyMap: { [key: string]: number } = {
-            "DOWN": accessibleBlocksEnabled ? 83 : 40, // 'S' || down arrow
-            "UP": accessibleBlocksEnabled ? 87 : 38, // 'W' || up arrow
-            "LEFT": accessibleBlocksEnabled ? 65 : 37, // 'A' || left arrow
-            "RIGHT": accessibleBlocksEnabled ? 68 : 39 // 'D' || right arrow
-        }
 
         const charCode = core.keyCodeFromEvent(e);
         if (!accessibleBlocksEnabled || accessibleBlocksState == "toolbox") {
-            if (charCode == keyMap["DOWN"]) {
+            if (charCode == 40 /* Down arrow key */) {
                 this.nextItem();
-            } else if (charCode == keyMap["UP"]) {
+            } else if (charCode == 38 /* Up arrow key */) {
                 this.previousItem();
-            } else if ((charCode == keyMap["RIGHT"] && !isRtl)
-                || (charCode == keyMap["LEFT"] && isRtl)) {
+            } else if ((charCode == 39 /* Right arrow key */ && !isRtl)
+                || (charCode == 37 /* Left arrow key */ && isRtl)) {
                 // Focus inside flyout
                 toolbox.moveFocusToFlyout();
             } else if (charCode == 27) { // ESCAPE
@@ -739,7 +734,7 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
                 fireClickOnEnter.call(this, e);
             } else if (charCode == core.TAB_KEY
                 || charCode == 37 /* Left arrow key */
-                || charCode == 39 /* Left arrow key */
+                || charCode == 39 /* Right arrow key */
                 || charCode == 17 /* Ctrl Key */
                 || charCode == 16 /* Shift Key */
                 || charCode == 91 /* Cmd Key */) {
@@ -748,8 +743,8 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
                 toolbox.setSearch();
             }
         } else if (accessibleBlocksEnabled && accessibleBlocksState == "flyout"
-            && ((charCode == keyMap["LEFT"] && !isRtl)
-            || (charCode == keyMap["RIGHT"] && isRtl))) {
+            && ((charCode == 37 /* Left arrow key */ && !isRtl)
+            || (charCode == 39 /* Right arrow key */ && isRtl))) {
             this.focusElement();
             e.stopPropagation();
         }
