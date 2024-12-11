@@ -712,13 +712,11 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
         const isRtl = Util.isUserLanguageRtl();
 
         const mainWorkspace = Blockly.getMainWorkspace() as Blockly.WorkspaceSvg;
-        const accessibleBlocksEnabled = mainWorkspace.keyboardAccessibilityMode;
-        // TODO: this doesn't work in the keyboard navigation experiment as the API has changed
-        const accessibleBlocksState = accessibleBlocksEnabled
-            && (toolbox.props.parent as any).navigationController?.navigation?.getState(mainWorkspace);
-
+        // This prevents accidental toolbox navigation while the navigation cursor
+        // is in the flyout. This is needed because the flyout doesn't take the focus.
+        const toolboxNavigationEnabled = !mainWorkspace.keyboardAccessibilityMode;
         const charCode = core.keyCodeFromEvent(e);
-        if (!accessibleBlocksEnabled || accessibleBlocksState == "toolbox") {
+        if (toolboxNavigationEnabled) {
             if (charCode == 40 /* Down arrow key */) {
                 this.nextItem();
             } else if (charCode == 38 /* Up arrow key */) {
@@ -739,14 +737,9 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
                 || charCode == 16 /* Shift Key */
                 || charCode == 91 /* Cmd Key */) {
                 // Escape tab and shift key
-            } else if (!accessibleBlocksEnabled) {
+            } else {
                 toolbox.setSearch();
             }
-        } else if (false && accessibleBlocksEnabled && accessibleBlocksState == "flyout"
-            && ((charCode == 37 /* Left arrow key */ && !isRtl)
-            || (charCode == 39 /* Right arrow key */ && isRtl))) {
-            this.focusElement();
-            e.stopPropagation();
         }
     }
 
