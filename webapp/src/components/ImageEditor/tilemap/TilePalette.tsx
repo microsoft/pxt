@@ -7,12 +7,13 @@ import { dispatchChangeSelectedColor, dispatchChangeBackgroundColor, dispatchSwa
     dispatchShowAlert, dispatchHideAlert } from '../actions/dispatch';
 import { TimelineFrame } from '../TimelineFrame';
 import { Pivot, PivotOption } from '../Pivot';
-import { IconButton } from '../Button';
 import { AlertOption } from '../Alert';
 import { createTile } from '../../../assets';
 
 import { CarouselNav } from "../../../../../react-common/components/controls/CarouselNav";
 import { Dropdown, DropdownItem } from '../../../../../react-common/components/controls/Dropdown';
+import { Button } from '../../../../../react-common/components/controls/Button';
+import { classList } from '../../../../../react-common/components/util';
 
 export interface TilePaletteProps {
     colors: string[];
@@ -187,10 +188,12 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
                     <TimelineFrame
                         frames={[{ bitmap: bg }]}
                         colors={colors} />
-                    <IconButton
-                        iconClass={"ms-Icon ms-Icon--ReturnKey"}
+                    <Button
+                        className="image-editor-button toggle"
+                        leftIcon={"ms-Icon ms-Icon--ReturnKey"}
                         title={lf("Swap the background and foreground colors.")}
-                        toggle={true} />
+                        onClick={this.foregroundBackgroundClickHandler}
+                    />
                 </div>
                 <div className={`tile-palette-swatch wall ${drawingMode == TileDrawingMode.Wall ? 'selected' : ''}`}
                     onClick={this.wallClickHandler}
@@ -215,26 +218,26 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
 
                 { !galleryOpen &&
                     <div className="tile-palette-controls">
-                        <IconButton
+                        <Button
+                            className={classList("image-editor-button", !controlsDisabled && "toggle")}
                             onClick={this.tileEditHandler}
-                            iconClass={"ms-Icon ms-Icon--SingleColumnEdit"}
+                            leftIcon={"ms-Icon ms-Icon--SingleColumnEdit"}
                             title={lf("Edit the selected tile")}
                             disabled={controlsDisabled}
-                            toggle={!controlsDisabled}
                         />
-                        <IconButton
+                        <Button
+                            className={classList("image-editor-button", !controlsDisabled && "toggle")}
                             onClick={this.tileDuplicateHandler}
-                            iconClass={"ms-Icon ms-Icon--Copy"}
+                            leftIcon={"ms-Icon ms-Icon--Copy"}
                             title={lf("Duplicate the selected tile")}
                             disabled={controlsDisabled}
-                            toggle={!controlsDisabled}
                         />
-                        <IconButton
+                        <Button
+                            className={classList("image-editor-button", !controlsDisabled && "toggle")}
                             onClick={this.tileDeleteAlertHandler}
-                            iconClass={"ms-Icon ms-Icon--Delete"}
+                            leftIcon={"ms-Icon ms-Icon--Delete"}
                             title={lf("Delete the selected tile")}
                             disabled={controlsDisabled}
-                            toggle={!controlsDisabled}
                         />
                     </div>
                 }
@@ -245,11 +248,11 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
                     <canvas ref="tile-canvas-surface" className="paint-surface" onMouseDown={this.canvasClickHandler} onTouchStart={this.canvasTouchHandler} role="complementary"></canvas>
                     { showCreateTile &&
                         <div ref="create-tile-ref">
-                            <IconButton
+                            <Button
+                                className="image-editor-button toggle"
                                 onClick={this.tileCreateHandler}
-                                iconClass={"ms-Icon ms-Icon--Add"}
+                                leftIcon={"ms-Icon ms-Icon--Add"}
                                 title={lf("Create a new tile")}
-                                toggle={true}
                             />
                         </div>
                     }
