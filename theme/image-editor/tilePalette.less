@@ -105,45 +105,7 @@
 .tile-canvas-controls {
     width: 100%;
     text-align: center;
-    margin-top: -0.5rem;
-}
-
-.tile-palette-pages {
-    height: 1.75rem;
-    display: inline-block;
-}
-
-.tile-palette-page-arrow {
-    fill: var(--sidebar-icon-inactive-color);
-    stroke: var(--sidebar-icon-inactive-color);
-    stroke-linejoin: round;
-    cursor: pointer;
-
-    transition: fill 0.1s, stroke 0.1s;
-}
-
-.tile-palette-page-dot {
-    fill: var(--sidebar-icon-inactive-color);
-    cursor: pointer;
-    transition: fill 0.1s;
-}
-
-.tile-palette-pages:not(.disabled) {
-    .tile-palette-page-arrow:hover {
-        fill: var(--sidebar-icon-active-color);
-        stroke: var(--sidebar-icon-active-color);
-    }
-
-    .tile-palette-page-dot:hover {
-        fill: var(--sidebar-icon-active-color);
-    }
-}
-
-.tile-palette-pages.disabled {
-    .tile-palette-page-arrow,
-    .tile-palette-page-dot {
-        opacity: 0.5;
-    }
+    margin-top: -0.25rem;
 }
 
 .tile-canvas {
@@ -172,6 +134,34 @@
 .tile-palette-controls-outer {
     height: 2rem;
 }
+
+.tile-canvas-controls .common-carousel-nav {
+    .common-carousel-nav-arrow {
+        color: var(--sidebar-icon-inactive-color);
+        transition: color 0.1s;
+
+        &:hover {
+            color: var(--sidebar-icon-active-color);
+            filter: none;
+        }
+    }
+
+    li .common-button {
+        .common-carousel-nav-button-handle {
+            background-color: var(--sidebar-icon-inactive-color);
+            transition: background-color 0.1s;
+        }
+
+        &:hover {
+            filter: none;
+
+            .common-carousel-nav-button-handle {
+                background-color: var(--sidebar-icon-active-color);
+            }
+        }
+    }
+}
+
 
 
 @media screen and (max-height: 720px) {

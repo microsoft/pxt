@@ -12,6 +12,8 @@ import { IconButton } from '../Button';
 import { AlertOption } from '../Alert';
 import { createTile } from '../../../assets';
 
+import { CarouselNav } from "../../../../../react-common/components/controls/CarouselNav";
+
 export interface TilePaletteProps {
     colors: string[];
     tileset: pxt.TileSet;
@@ -235,7 +237,12 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
                     }
                 </div>
                 <div className="tile-canvas-controls">
-                    { pageControls(totalPages, page, this.pageHandler) }
+                    <CarouselNav
+                        selected={page}
+                        pages={totalPages}
+                        onPageSelected={this.pageHandler}
+                        maxDisplayed={5}
+                    />
                 </div>
             </div>
         </div>;
@@ -511,36 +518,6 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
         return -1;
     }
 }
-
-
-function pageControls(pages: number, selected: number, onClick: (index: number) => void) {
-    const width = 16 + (pages - 1) * 5;
-    const pageMap: boolean[] = [];
-    for (let i = 0; i < pages; i++) pageMap[i] = i === selected;
-
-    return <svg xmlns="http://www.w3.org/2000/svg" viewBox={`0 0 ${width} 10`} className={`tile-palette-pages ${pages < 2 ?  'disabled' : ''}`}>
-        <polygon
-            className="tile-palette-page-arrow"
-            points="1,5 4,3 4,7"
-            onClick={selected ? () => onClick(selected - 1) : undefined} />
-        {
-            pageMap.map((isSelected, index) =>
-                <circle
-                    className="tile-palette-page-dot"
-                    key={index}
-                    cx={8 + index * 5}
-                    cy="5"
-                    r={isSelected ? 2 : 1}
-                    onClick={!isSelected ? () => onClick(index) : undefined}/>
-            )
-        }
-        <polygon
-            className="tile-palette-page-arrow"
-            points={`${width - 1},5 ${width - 4},3 ${width - 4},7`}
-            onClick={(selected < pages - 1) ? () =>  onClick(selected + 1) : undefined} />
-    </svg>
-}
-
 
 function mapStateToProps({ store: { present }, editor }: ImageEditorStore, ownProps: any) {
     let state = (present as TilemapState);
