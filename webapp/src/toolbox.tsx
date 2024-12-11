@@ -720,9 +720,9 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
         const charCode = core.keyCodeFromEvent(e);
         if (!accessibleBlocksEnabled || accessibleBlocksState == "toolbox") {
             if (charCode == 40 /* Down arrow key */) {
-                //this.nextItem();
+                this.nextItem();
             } else if (charCode == 38 /* Up arrow key */) {
-                //this.previousItem();
+                this.previousItem();
             } else if ((charCode == 39 /* Right arrow key */ && !isRtl)
                 || (charCode == 37 /* Left arrow key */ && isRtl)) {
                 // Focus inside flyout

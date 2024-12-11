@@ -523,17 +523,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private initAccessibleBlocks() {
         const enabled = pxt.appTarget.appTheme?.accessibleBlocks;
         if (enabled && !this.keyboardNavigation) {
-            this.keyboardNavigation = new KeyboardNavigation(this.editor);
-
-            // TODO: ask for API for this
-            // Monkey patch to focus the pxt toolbox, needs proper API and perhaps similar temporary hack
-            //(Navigation as any).prototype.focusToolbox = (workspace: Blockly.WorkspaceSvg) => {
-            //    const toolbox = this.toolbox;
-            //    if (!toolbox) return;
-            //    this.focusToolbox();
-            //    this.navigationController.navigation.resetFlyout(workspace, false);
-            //    this.navigationController.navigation.setState(workspace, "toolbox");
-            //}
+            this.keyboardNavigation = new KeyboardNavigation(this.editor, {
+                externalToolbox: {
+                    focus: () => this.focusToolbox()
+                }
+            });
         }
     }
 
