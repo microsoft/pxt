@@ -6,13 +6,13 @@ import { dispatchChangeSelectedColor, dispatchChangeBackgroundColor, dispatchSwa
     dispatchCreateNewTile, dispatchSetGalleryOpen, dispatchOpenTileEditor, dispatchDeleteTile,
     dispatchShowAlert, dispatchHideAlert } from '../actions/dispatch';
 import { TimelineFrame } from '../TimelineFrame';
-import { Dropdown, DropdownOption } from '../Dropdown';
 import { Pivot, PivotOption } from '../Pivot';
 import { IconButton } from '../Button';
 import { AlertOption } from '../Alert';
 import { createTile } from '../../../assets';
 
 import { CarouselNav } from "../../../../../react-common/components/controls/CarouselNav";
+import { Dropdown, DropdownItem } from '../../../../../react-common/components/controls/Dropdown';
 
 export interface TilePaletteProps {
     colors: string[];
@@ -51,7 +51,9 @@ const SCALE = pxt.BrowserUtils.isEdge() ? 25 : 1;
 
 const TILES_PER_PAGE = 16;
 
-interface Category extends DropdownOption {
+interface Category {
+    id: string;
+    text: string;
     tiles: GalleryTile[];
 }
 
@@ -166,6 +168,14 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
         const showCreateTile = !galleryOpen && (totalPages === 1 || page === totalPages - 1);
         const controlsDisabled = galleryOpen || !this.renderedTiles.some(t => !isGalleryTile(t) && t.index === selected);
 
+
+        const dropdownItems: DropdownItem[] = this.categories.filter(c => !!c.tiles.length)
+            .map(cat => ({
+                id: cat.id,
+                title: cat.text,
+                label: cat.text,
+            }));
+
         return <div className="tile-palette">
             <div className="tile-palette-fg-bg">
                 <div className={`tile-palette-swatch fg ${drawingMode == TileDrawingMode.Default ? 'selected' : ''}`} onClick={this.foregroundBackgroundClickHandler} role="button">
@@ -193,7 +203,15 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
             </div>
             <Pivot options={tabs} selected={galleryOpen ? 1 : 0} onChange={this.pivotHandler} />
             <div className="tile-palette-controls-outer">
-                { galleryOpen && <Dropdown onChange={this.dropdownHandler} options={this.categories.filter(c => !!c.tiles.length)} selected={category} /> }
+                { galleryOpen &&
+                    <Dropdown
+                        id="tile-palette-gallery"
+                        className="tile-palette-dropdown"
+                        items={dropdownItems}
+                        onItemSelected={this.dropdownHandler}
+                        selectedId={dropdownItems[category].id}
+                    />
+                }
 
                 { !galleryOpen &&
                     <div className="tile-palette-controls">
@@ -345,8 +363,8 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
         }
     }
 
-    protected dropdownHandler = (option: DropdownOption, index: number) => {
-        this.props.dispatchChangeTilePaletteCategory(index);
+    protected dropdownHandler = (id: string) => {
+        this.props.dispatchChangeTilePaletteCategory(this.categories.filter(c => !!c.tiles.length).findIndex(c => c.id === id));
     }
 
     protected pivotHandler = (option: PivotOption, index: number) => {
