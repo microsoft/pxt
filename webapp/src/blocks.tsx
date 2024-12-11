@@ -1,4 +1,4 @@
-/// <reference path="../../localtypings/blockly-keyboard-experiment.ts"/>
+/// <reference path="../../localtypings/blockly-keyboard-experiment.d.ts"/>
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -523,17 +523,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private initAccessibleBlocks() {
         const enabled = pxt.appTarget.appTheme?.accessibleBlocks;
         if (enabled && !this.keyboardNavigation) {
-            this.keyboardNavigation = new KeyboardNavigation(this.editor);
-
-            // TODO: ask for API for this
-            // Monkey patch to focus the pxt toolbox, needs proper API and perhaps similar temporary hack
-            //(Navigation as any).prototype.focusToolbox = (workspace: Blockly.WorkspaceSvg) => {
-            //    const toolbox = this.toolbox;
-            //    if (!toolbox) return;
-            //    this.focusToolbox();
-            //    this.navigationController.navigation.resetFlyout(workspace, false);
-            //    this.navigationController.navigation.setState(workspace, "toolbox");
-            //}
+            this.keyboardNavigation = new KeyboardNavigation(this.editor, {
+                externalToolbox: {
+                    focus: () => this.focusToolbox()
+                }
+            });
         }
     }
 
@@ -897,11 +891,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     public moveFocusToFlyout() {
         if (this.keyboardNavigation) {
-            // TODO: understand purpose, ask for API for this
-            //this.navigationController.navigation.focusFlyout(this.editor);
+            this.keyboardNavigation.focusFlyout();
+        } else {
+            // TODO: why does this do this? can we just DOM focus the flyout in all cases?
+            (this.editor.getInjectionDiv() as HTMLDivElement).focus();
         }
-
-        (this.editor.getInjectionDiv() as HTMLDivElement).focus();
     }
 
     renderToolbox(immediate?: boolean) {
