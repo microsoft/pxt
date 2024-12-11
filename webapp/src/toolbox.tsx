@@ -453,6 +453,10 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         this.rootElement = c;
     }
 
+    handleFocusCapture = () => {
+        this.props.parent.onToolboxFocusCapture();
+    }
+
     isRtl() {
         const { editorname } = this.props;
         return editorname == 'monaco' ? false : Util.isUserLanguageRtl();
@@ -529,6 +533,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
                 ref={this.handleRootElementRef}
                 className={classes}
                 id={`${editorname}EditorToolbox`}
+                onFocusCapture={this.handleFocusCapture}
             >
                 <ToolboxStyle categories={this.items} />
                 {showToolboxLabel &&

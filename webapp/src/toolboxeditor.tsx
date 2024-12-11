@@ -16,6 +16,11 @@ export abstract class ToolboxEditor extends srceditor.Editor {
     protected extensions: pxt.Package[];
 
     abstract getBlocksForCategory(ns: string, subns?: string): toolbox.BlockDefinition[];
+    /**
+     * Hook to allow us to disable Blockly keyboard navigation when our toolbox is focussed.
+     * Hopefully this won't be necessary when the flyout takes the focus properly.
+     */
+    abstract onToolboxFocusCapture(): void;
 
     protected shouldShowBlock(blockId: string, ns: string, shadow?: boolean) {
         let filters = this.parent.state.editorState && this.parent.state.editorState.filters;
@@ -390,4 +395,5 @@ export abstract class ToolboxEditor extends srceditor.Editor {
             this.toolbox.focus(itemToFocus);
         }
     }
+
 }
