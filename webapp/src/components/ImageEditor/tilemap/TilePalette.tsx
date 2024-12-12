@@ -98,7 +98,6 @@ interface UserTile {
 type RenderedTile = GalleryTile | UserTile
 
 class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
-    protected canvas: HTMLCanvasElement;
     protected renderedTiles: RenderedTile[];
     protected categoryTiles: RenderedTile[];
     protected categories: Category[];
@@ -134,9 +133,7 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
     }
 
     componentDidMount() {
-        this.canvas = this.refs["tile-canvas-surface"] as HTMLCanvasElement;
         this.updateGalleryTiles();
-        this.redrawCanvas();
     }
 
     UNSAFE_componentWillReceiveProps(nextProps: TilePaletteProps) {
@@ -150,7 +147,6 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
 
     componentDidUpdate() {
         this.updateGalleryTiles();
-        this.redrawCanvas();
     }
 
     render() {
@@ -169,6 +165,11 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
         const showCreateTile = !galleryOpen && (totalPages === 1 || page === totalPages - 1);
         const controlsDisabled = galleryOpen || !this.renderedTiles.some(t => !isGalleryTile(t) && t.index === selected);
 
+        const columns = 4;
+        const rows = 4;
+        const startIndex = page * columns * rows;
+
+        const visibleTiles = this.categoryTiles.slice(startIndex, startIndex + columns * rows);
 
         const dropdownItems: DropdownItem[] = this.categories.filter(c => !!c.tiles.length)
             .map(cat => ({
@@ -245,11 +246,20 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
 
             <div className="tile-canvas-outer" onContextMenu={this.preventContextMenu}>
                 <div className="tile-canvas">
-                    <canvas ref="tile-canvas-surface" className="paint-surface" onMouseDown={this.canvasClickHandler} onTouchStart={this.canvasTouchHandler} role="complementary"></canvas>
+                    { visibleTiles.map((tile, index) =>
+                        <TileButton
+                            key={index}
+                            tile={tile.bitmap}
+                            title={lf("Tile {0}", tile)}
+                            colors={colors}
+                            onClick={() => this.handleTileClick(index, false)}
+                            onRightClick={() => this.handleTileClick(index, true)}
+                        />
+                    )}
                     { showCreateTile &&
-                        <div ref="create-tile-ref">
+                        <div className="tile-button-outer" >
                             <Button
-                                className="image-editor-button toggle"
+                                className="image-editor-button add-tile-button toggle"
                                 onClick={this.tileCreateHandler}
                                 leftIcon={"ms-Icon ms-Icon--Add"}
                                 title={lf("Create a new tile")}
@@ -306,63 +316,6 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
 
             dispatchSetGalleryOpen(false);
             dispatchChangeTilePalettePage(page);
-        }
-    }
-
-    protected redrawCanvas() {
-        const columns = 4;
-        const rows = 4;
-        const margin = 1;
-
-        const { tileset, page, selected } = this.props;
-
-        const startIndex = page * columns * rows;
-
-        const width = tileset.tileWidth + margin;
-
-        this.canvas.width = (width * columns + margin) * SCALE;
-        this.canvas.height = (width * rows + margin) * SCALE;
-
-        const context = this.canvas.getContext("2d");
-
-        for (let r = 0; r < rows; r++) {
-            for (let c = 0; c < columns; c++) {
-                const tile = this.categoryTiles[startIndex + r * columns + c];
-
-                if (tile) {
-                    if (!isGalleryTile(tile) && tile.index === selected) {
-                        context.fillStyle = "#ff0000";
-                        context.fillRect(c * width, r * width, width + 1, width + 1);
-                    }
-
-                    context.fillStyle = "#333333";
-                    context.fillRect(c * width + 1, r * width + 1, width - 1, width - 1);
-
-                    this.drawBitmap(pxt.sprite.Bitmap.fromData(tile.bitmap), 1 + c * width, 1 + r * width)
-                }
-            }
-        }
-
-        this.positionCreateTileButton();
-    }
-
-    protected drawBitmap(bitmap: pxt.sprite.Bitmap, x0 = 0, y0 = 0, transparent = true, cellWidth = SCALE, target = this.canvas) {
-        const { colors } = this.props;
-
-        const context = target.getContext("2d");
-        context.imageSmoothingEnabled = false;
-        for (let x = 0; x < bitmap.width; x++) {
-            for (let y = 0; y < bitmap.height; y++) {
-                const index = bitmap.get(x, y);
-
-                if (index) {
-                    context.fillStyle = colors[index];
-                    context.fillRect((x + x0) * cellWidth, (y + y0) * cellWidth, cellWidth, cellWidth);
-                }
-                else {
-                    if (!transparent) context.clearRect((x + x0) * cellWidth, (y + y0) * cellWidth, cellWidth, cellWidth);
-                }
-            }
         }
     }
 
@@ -429,20 +382,9 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
         }
     }
 
-    protected canvasClickHandler = (ev: React.MouseEvent<HTMLCanvasElement>) => {
-        this.handleCanvasClickCore(ev.clientX, ev.clientY, ev.button > 0);
-    }
+    protected handleTileClick(buttonIndex: number, isRightClick: boolean) {
+        const tile = this.renderedTiles[buttonIndex];
 
-    protected canvasTouchHandler = (ev: React.TouchEvent<HTMLCanvasElement>) => {
-        this.handleCanvasClickCore(ev.changedTouches[0].clientX, ev.changedTouches[0].clientY, false);
-    }
-
-    protected handleCanvasClickCore(clientX: number, clientY: number, isRightClick: boolean) {
-        const bounds = this.canvas.getBoundingClientRect();
-        const column = ((clientX - bounds.left) / (bounds.width / 4)) | 0;
-        const row = ((clientY - bounds.top) / (bounds.height / 4)) | 0;
-
-        const tile = this.renderedTiles[row * 4 + column];
         if (tile) {
             let index: number;
             let qname: string;
@@ -481,19 +423,6 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
             options.forEach(opt => {
                 opt.tiles = gallery.filter(t => t.tags.indexOf(opt.id) !== -1 && t.tileWidth === tileset.tileWidth);
             });
-        }
-    }
-
-    protected positionCreateTileButton() {
-        const button = this.refs["create-tile-ref"] as HTMLDivElement;
-
-        if (button) {
-            const column = this.categoryTiles.length % 4;
-            const row = Math.floor(this.categoryTiles.length / 4) % 4;
-
-            button.style.position = "absolute";
-            button.style.left = "calc(" + (column / 4) + " * (100% - 0.5rem) + 0.25rem)";
-            button.style.top = "calc(" + (row / 4) + " * (100% - 0.5rem) + 0.25rem)";
         }
     }
 
@@ -538,6 +467,56 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
 
         return -1;
     }
+}
+
+interface TileButtonProps {
+    tile: pxt.sprite.BitmapData;
+    title: string;
+    onClick: () => void;
+    onRightClick: () => void;
+    colors: string[];
+}
+
+const TileButton = (props: TileButtonProps) => {
+    const { tile, title, onClick, onRightClick, colors } = props;
+
+    const canvasRef = React.useRef<HTMLCanvasElement>();
+
+    React.useEffect(() => {
+        const canvas = canvasRef.current;
+
+        canvas.width = tile.width;
+        canvas.height = tile.height;
+
+        const context = canvas.getContext("2d");
+
+        context.clearRect(0, 0, canvas.width, canvas.height);
+
+        const bitmap = pxt.sprite.Bitmap.fromData(tile);
+
+        for (let x = 0; x < tile.width; x++) {
+            for (let y = 0; y < tile.height; y++) {
+                const index = bitmap.get(x, y);
+
+                if (index) {
+                    context.fillStyle = colors[index];
+                    context.fillRect(x, y, 1, 1);
+                }
+            }
+        }
+    }, [tile, colors])
+
+    return (
+        <div className="tile-button-outer">
+            <Button
+                className="image-editor-button tile-button"
+                title={title}
+                onClick={onClick}
+                onRightClick={onRightClick}
+                label={<canvas ref={canvasRef} />}
+            />
+        </div>
+    )
 }
 
 function mapStateToProps({ store: { present }, editor }: ImageEditorStore, ownProps: any) {
