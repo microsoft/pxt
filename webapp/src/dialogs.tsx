@@ -18,8 +18,17 @@ import { invalidate } from "./data";
 
 import IProjectView = pxt.editor.IProjectView;
 import ImportFileOptions = pxt.editor.ImportFileOptions;
+import { Modal } from "../../react-common/components/controls/Modal";
+import { Feedback } from "../../react-common/components/controls/Feedback";
 
 let dontShowDownloadFlag = false;
+
+export function showFeedbackDialogAsync() {
+    return core.confirmAsync({
+        header: lf("Give Feedback"),
+        jsx: <Feedback/>
+    })
+}
 
 export function showAboutDialogAsync(projectView: IProjectView) {
     const compileService = pxt.appTarget.compileService;

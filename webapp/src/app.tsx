@@ -4497,6 +4497,10 @@ export class ProjectView
         dialogs.showAboutDialogAsync(this);
     }
 
+    showFeedbackDialog(): void {
+        dialogs.showFeedbackDialogAsync();
+    }
+
     async showTurnBackTimeDialogAsync() {
         let simWasRunning = this.isSimulatorRunning();
         if (simWasRunning) {

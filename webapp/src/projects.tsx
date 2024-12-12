@@ -239,6 +239,7 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
         this.showResetDialog = this.showResetDialog.bind(this);
         this.showReportAbuse = this.showReportAbuse.bind(this);
         this.showAboutDialog = this.showAboutDialog.bind(this);
+        this.showFeedbackDialog = this.showFeedbackDialog.bind(this)
         this.signOutGithub = this.signOutGithub.bind(this);
     }
 
@@ -278,6 +279,11 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
         this.props.parent.showAboutDialog();
     }
 
+    showFeedbackDialog() {
+        pxt.tickEvent("home.feedback");
+        this.props.parent.showFeedbackDialog();
+    }
+
     signOutGithub() {
         pxt.tickEvent("home.github.signout");
         this.props.parent.signOutGithub();
@@ -310,6 +316,7 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
             {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...")} onClick={this.showReportAbuse} /> : undefined}
             <sui.Item role="menuitem" icon='sign out' text={lf("Reset")} onClick={this.showResetDialog} />
             <sui.Item role="menuitem" text={lf("About...")} onClick={this.showAboutDialog} />
+            <sui.Item role="menuitem" text={lf("Give Feedback")} onClick={this.showFeedbackDialog} />
             {targetTheme.feedbackUrl ? <a className="ui item" href={targetTheme.feedbackUrl} role="menuitem" title={lf("Give Feedback")} target="_blank" rel="noopener noreferrer" >{lf("Give Feedback")}</a> : undefined}
         </sui.DropdownMenu>;
     }

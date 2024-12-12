@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as http from 'http';
+import * as https from 'https';
 import * as url from 'url';
 import * as querystring from 'querystring';
 import * as nodeutil from './nodeutil';
@@ -949,7 +950,7 @@ export function serveAsync(options: ServeOptions) {
     const wsServerPromise = initSocketServer(serveOptions.wsPort, serveOptions.hostname);
     if (serveOptions.serial)
         initSerialMonitor();
-
+    // https.createServer
     const server = http.createServer(async (req, res) => {
         const error = (code: number, msg: string = null) => {
             res.writeHead(code, { "Content-Type": "text/plain" })
@@ -1362,7 +1363,10 @@ export function serveAsync(options: ServeOptions) {
 
     const serverPromise = new Promise<void>((resolve, reject) => {
         server.on("error", reject);
-        server.listen(serveOptions.port, serveOptions.hostname, () => resolve());
+        server.listen(serveOptions.port, serveOptions.hostname, () => {
+            console.log(`Server listening on port ${serveOptions.port}`);
+            return resolve()
+        });
     });
 
     return Promise.all([wsServerPromise, serverPromise])

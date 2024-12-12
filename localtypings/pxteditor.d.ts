@@ -1047,6 +1047,7 @@ declare namespace pxt.editor {
         showLanguagePicker(): void;
         showShareDialog(title?: string, kind?: "multiplayer" | "vscode" | "share"): void;
         showAboutDialog(): void;
+        showFeedbackDialog(): void;
         showTurnBackTimeDialogAsync(): Promise<void>;
 
         showLoginDialog(continuationHash?: string): void;
