@@ -61,6 +61,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     // Blockly plugins
     protected navigationController: NavigationController;
     protected workspaceSearch: WorkspaceSearch;
+    protected workspaceOutlineButton: pxtblockly.OpenWorkspaceOutlineButton;
 
     public nsMap: pxt.Map<toolbox.BlockDefinition[]>;
 
@@ -557,6 +558,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
+    private initWorkspaceOutline() {
+        if (!this.workspaceOutlineButton) {
+            this.workspaceOutlineButton = new pxtblockly.OpenWorkspaceOutlineButton(this.editor);
+            this.workspaceOutlineButton.init();
+        }
+    }
+
     private reportDeprecatedBlocks() {
         const deprecatedMap: pxt.Map<number> = {};
         let deprecatedBlocksFound = false;
@@ -734,6 +742,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.initWorkspaceSounds();
         this.initAccessibleBlocks();
         this.initWorkspaceSearch();
+        this.initWorkspaceOutline();
         this.setupIntersectionObserver();
         this.resize();
 
@@ -1240,6 +1249,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             : document.getElementById('blocklyToolboxDefinitionFlyout');
         blocklyOptions['toolbox'] = blocklyOptions.toolbox != undefined ?
             blocklyOptions.toolbox : blocklyOptions.readOnly ? undefined : toolbox;
+
         return blocklyOptions;
     }
 
@@ -1260,7 +1270,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 'blockDragger': pxtblockly.BlockDragger,
                 'connectionChecker': DuplicateOnDragConnectionChecker,
                 'flyoutsVerticalToolbox': pxtblockly.VerticalFlyout,
-                'connectionPreviewer': pxtblockly.ConnectionPreviewer
+                'connectionPreviewer': pxtblockly.ConnectionPreviewer,
+                'workspaceOutline': pxtblockly.WorkspaceOutlineFlyout
             },
             move: {
                 scrollbars: true,

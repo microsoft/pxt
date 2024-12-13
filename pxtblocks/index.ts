@@ -7,6 +7,7 @@ export * from "./plugins/renderer";
 export * from "./plugins/flyout";
 export * from "./plugins/newVariableField";
 export * from "./plugins/comments";
+export * from "./plugins/workspaceOutline";
 export * from "./compiler/compiler";
 export * from "./compiler/environment";
 export * from "./loader";
