@@ -5,6 +5,7 @@ import { AssetEditorState, isGalleryAsset } from './store/assetEditorReducerStat
 import { dispatchChangeSelectedAsset } from './actions/dispatch';
 
 import { AssetPreview } from "./assetPreview";
+import { fireClickOnEnter } from "../../util";
 
 
 interface AssetCardProps {
@@ -57,17 +58,25 @@ export class AssetCardView extends React.Component<AssetCardCoreProps> {
         const inGallery = isGalleryAsset(asset);
         const icon = this.getDisplayIconForAsset(asset.type);
         const showIcons = icon || !asset.meta?.displayName;
-        return <div className={`asset-editor-card ${selected ? "selected" : ""}`} onClick={this.clickHandler} role="listitem">
-            <AssetPreview asset={asset} />
-            {showIcons && <div className="asset-editor-card-label">
-                {icon && <div className="asset-editor-card-icon">
-                    <i className={`icon ${icon}`} />
+        return (
+            <div
+                className={`asset-editor-card ${selected ? "selected" : ""}`}
+                onClick={this.clickHandler}
+                role="listitem"
+                tabIndex={0}
+                onKeyDown={fireClickOnEnter}
+            >
+                <AssetPreview asset={asset} />
+                {showIcons && <div className="asset-editor-card-label">
+                    {icon && <div className="asset-editor-card-icon">
+                        <i className={`icon ${icon}`} />
+                    </div>}
+                    {!asset.meta?.displayName && !inGallery && <div className="asset-editor-card-icon warning">
+                        <i className="icon exclamation triangle" />
+                    </div>}
                 </div>}
-                {!asset.meta?.displayName && !inGallery && <div className="asset-editor-card-icon warning">
-                    <i className="icon exclamation triangle" />
-                </div>}
-            </div>}
-        </div>
+            </div>
+        );
     }
 }
 

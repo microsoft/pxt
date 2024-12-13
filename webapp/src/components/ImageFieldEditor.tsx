@@ -8,9 +8,10 @@ import { obtainShortcutLock, releaseShortcutLock } from "./ImageEditor/keyboardS
 import { GalleryTile, setTelemetryFunction } from './ImageEditor/store/imageReducer';
 import { FilterPanel } from './FilterPanel';
 import { fireClickOnEnter } from "../util";
-import { EditorToggle, EditorToggleItem, BasicEditorToggleItem } from "../../../react-common/components/controls/EditorToggle";
+import { EditorToggle } from "../../../react-common/components/controls/EditorToggle";
 import { MusicFieldEditor } from "./MusicFieldEditor";
 import { classList } from "../../../react-common/components/util";
+import { FocusTrap, FocusTrapRegion } from "../../../react-common/components/controls/FocusTrap";
 
 export interface ImageFieldEditorProps {
     singleFrame: boolean;
@@ -18,10 +19,6 @@ export interface ImageFieldEditorProps {
     doneButtonCallback?: () => void;
     hideDoneButton?: boolean;
     includeSpecialTagsInFilter?: boolean;
-}
-
-interface ToggleOption extends BasicEditorToggleItem {
-    view: string;
 }
 
 export interface ImageFieldEditorState {
@@ -34,11 +31,6 @@ export interface ImageFieldEditorState {
     galleryFilter: string;
     editingTile?: boolean;
     hideCloseButton?: boolean;
-}
-
-interface ProjectGalleryItem extends pxt.sprite.GalleryItem {
-    assetType: pxt.AssetType;
-    id: string;
 }
 
 export interface AssetEditorCore {
@@ -63,6 +55,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
     protected userAssets: pxt.Asset[];
     protected shortcutLock: number;
     protected lightMode: boolean;
+    protected imageEditorRegion: HTMLDivElement;
 
     protected get asset() {
         return this.ref?.getAsset();
@@ -148,58 +141,68 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
             toggleOptions.splice(2, 1);
         }
 
-        return <div className={classList("image-editor-wrapper", this.props.isMusicEditor && "music-asset-editor")}>
-            {showHeader && <div className="gallery-editor-header">
-                <div className="image-editor-header-left" />
-                <div className="image-editor-header-center">
-                    <EditorToggle
-                        id="image-editor-toggle"
-                        className="slim tablet-compact"
-                        items={toggleOptions}
-                        selected={toggleOptions.findIndex(i => i.view === currentView)}
-                    />
-                </div>
-                <div className="image-editor-header-right">
-                    <div className={`gallery-filter-button ${this.state.currentView === "gallery" ? '' : "hidden"}`} role="button" onClick={this.toggleFilter} onKeyDown={fireClickOnEnter}>
-                        <div className="gallery-filter-button-icon">
-                            <i className="icon filter" />
-                        </div>
-                        <div className="gallery-filter-button-label">{lf("Filter")}</div>
-                    </div>
-                    {!editingTile && !hideCloseButton && <div className="image-editor-close-button" role="button" onClick={this.onDoneClick}>
-                        <i className="ui icon close"/>
-                    </div>}
-                </div>
-            </div>}
-            <div className="image-editor-gallery-window">
-                <div className="image-editor-gallery-content">
-                    {this.props.isMusicEditor ?
-                        <MusicFieldEditor
-                            ref="image-editor"
-                            onDoneClicked={this.onDoneClick}
-                            hideDoneButton={this.props.hideDoneButton} /> :
-                        <ImageEditor
-                            ref="image-editor"
-                            singleFrame={this.props.singleFrame}
-                            onDoneClicked={this.onDoneClick}
-                            onTileEditorOpenClose={this.onTileEditorOpenClose}
-                            lightMode={this.lightMode}
-                            hideDoneButton={this.props.hideDoneButton}
-                            hideAssetName={!pxt.appTarget?.appTheme?.assetEditor}
+        return (
+            <FocusTrap onEscape={this.onDoneClick} className={classList("image-editor-wrapper", this.props.isMusicEditor && "music-asset-editor")}>
+                {showHeader && <div className="gallery-editor-header">
+                    <div className="image-editor-header-left" />
+                    <div className="image-editor-header-center">
+                        <EditorToggle
+                            id="image-editor-toggle"
+                            className="slim tablet-compact"
+                            items={toggleOptions}
+                            selected={toggleOptions.findIndex(i => i.view === currentView)}
                         />
-                    }
-                    <ImageEditorGallery
-                        items={filteredAssets}
-                        hidden={currentView === "editor"}
-                        onAssetSelected={this.onAssetSelected} />
-                </div>
-                <div className={`filter-panel-gutter ${!filterPanelVisible ? "hidden" : ""}`}>
-                    <div className={`filter-panel-container`}>
-                        <FilterPanel enabledTags={this.state.gallerySelectedTags} tagClickHandler={this.tagClickHandler} clearTags={this.clearFilterTags} tagOptions={allTags}/>
+                    </div>
+                    <div className="image-editor-header-right">
+                        <div className={`gallery-filter-button ${this.state.currentView === "gallery" ? '' : "hidden"}`} role="button" onClick={this.toggleFilter} onKeyDown={fireClickOnEnter}>
+                            <div className="gallery-filter-button-icon">
+                                <i className="icon filter" />
+                            </div>
+                            <div className="gallery-filter-button-label">{lf("Filter")}</div>
+                        </div>
+                        {!editingTile && !hideCloseButton && <div className="image-editor-close-button" role="button" onClick={this.onDoneClick}>
+                            <i className="ui icon close"/>
+                        </div>}
+                    </div>
+                </div>}
+                <div className="image-editor-gallery-window">
+                    <div className="image-editor-gallery-content">
+                        <FocusTrapRegion
+                            divRef={this.handleImageEditorRegionRef}
+                            className="image-editor-region"
+                            enabled={currentView === "editor"}
+                        >
+                            {this.props.isMusicEditor ?
+                                <MusicFieldEditor
+                                    ref="image-editor"
+                                    onDoneClicked={this.onDoneClick}
+                                    hideDoneButton={this.props.hideDoneButton} /> :
+                                <ImageEditor
+                                    ref="image-editor"
+                                    singleFrame={this.props.singleFrame}
+                                    onDoneClicked={this.onDoneClick}
+                                    onTileEditorOpenClose={this.onTileEditorOpenClose}
+                                    lightMode={this.lightMode}
+                                    hideDoneButton={this.props.hideDoneButton}
+                                    hideAssetName={!pxt.appTarget?.appTheme?.assetEditor}
+                                />
+                            }
+                        </FocusTrapRegion>
+                        <ImageEditorGallery
+                            items={filteredAssets}
+                            hidden={currentView === "editor"}
+                            onAssetSelected={this.onAssetSelected}
+                            onEscape={this.onEscapeFromGallery}
+                        />
+                    </div>
+                    <div className={`filter-panel-gutter ${!filterPanelVisible ? "hidden" : ""}`}>
+                        <div className={`filter-panel-container`}>
+                            <FilterPanel enabledTags={this.state.gallerySelectedTags} tagClickHandler={this.tagClickHandler} clearTags={this.clearFilterTags} tagOptions={allTags}/>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
+            </FocusTrap>
+        );
     }
 
     componentDidMount() {
@@ -621,23 +624,44 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
             this.shortcutLock = obtainShortcutLock();
         }
     }
+
+    protected handleImageEditorRegionRef = (ref: HTMLDivElement) => {
+        if (ref) this.imageEditorRegion = ref;
+    }
+
+    protected onEscapeFromGallery = () => {
+        this.setState({
+            currentView: "editor"
+        }, () => {
+            if (this.imageEditorRegion) {
+                this.imageEditorRegion.focus();
+            }
+        })
+    }
 }
 
 interface ImageEditorGalleryProps {
     items?: pxt.Asset[];
     hidden: boolean;
     onAssetSelected: (item: pxt.Asset) => void;
+    onEscape: () => void;
 }
 
 class ImageEditorGallery extends React.Component<ImageEditorGalleryProps, {}> {
     render() {
-        let { items, hidden } = this.props;
+        let { items, hidden, onEscape } = this.props;
 
-        return <div className={`image-editor-gallery ${items && !hidden ? "visible" : ""}`}>
-            {!hidden && items && items.map((item, index) =>
-                <AssetCardView key={index} asset={item} selected={false} onClick={this.clickHandler} />
-            )}
-        </div>
+        return (
+            <FocusTrapRegion
+                className={classList("image-editor-gallery", items && !hidden && "visible")}
+                enabled={!hidden}
+                onEscape={onEscape}
+            >
+                {!hidden && items && items.map((item, index) =>
+                    <AssetCardView key={index} asset={item} selected={false} onClick={this.clickHandler} />
+                )}
+            </FocusTrapRegion>
+        );
     }
 
     clickHandler = (asset: pxt.Asset) => {
