@@ -56,7 +56,7 @@ namespace ts.pxtc {
     function showMsg(t: Token, msg: string) {
         let pos = t.pos
         let ctx = inputForMsg.slice(pos - 20, pos) + "<*>" + inputForMsg.slice(pos, pos + 20)
-        console.log(ctx.replace(/\n/g, "<NL>"), ": L ", t.lineNo, msg)
+        pxt.log(ctx.replace(/\n/g, "<NL>"), ": L ", t.lineNo, msg)
     }
 
     function infixOperatorPrecedence(kind: ts.SyntaxKind) {
@@ -171,7 +171,7 @@ namespace ts.pxtc {
         inputForMsg = input
         let scanner = ts.createScanner(ts.ScriptTarget.Latest, false, ts.LanguageVariant.Standard, input, msg => {
             let pos = scanner.getTextPos()
-            console.log("scanner error", pos, msg.message)
+            pxt.log("scanner error", pos, msg.message)
         })
 
         let tokens: Token[] = []

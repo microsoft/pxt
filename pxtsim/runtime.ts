@@ -148,7 +148,7 @@ namespace pxsim {
             return Promise.all(values.map(v => mapper(v)));
         }
 
-        export  function promiseMapAllSeries<T, V>(values: T[], mapper: (obj: T) => Promise<V>): Promise<V[]> {
+        export function promiseMapAllSeries<T, V>(values: T[], mapper: (obj: T) => Promise<V>): Promise<V[]> {
             return promisePoolAsync(1, values, mapper);
         }
 
@@ -193,7 +193,7 @@ namespace pxsim {
                 }, ms);
             });
 
-            return Promise.race([ promise, timeoutPromise ])
+            return Promise.race([promise, timeoutPromise])
                 .then(output => {
                     // clear any dangling timeout
                     if (res) {
@@ -285,11 +285,13 @@ namespace pxsim {
             return isPxtElectron() || isIpcRenderer();
         }
 
+        export function testLocalhost(url: string): boolean {
+            return /^http:\/\/(?:localhost|127\.0\.0\.1|192\.168\.\d{1,3}\.\d{1,3}|[a-zA-Z0-9.-]+\.local):\d+\/?/.test(url) && !/nolocalhost=1/.test(url);
+        }
+
         export function isLocalHost(): boolean {
             try {
-                return typeof window !== "undefined"
-                    && /^http:\/\/(localhost|127\.0\.0\.1):\d+\//.test(window.location.href)
-                    && !/nolocalhost=1/.test(window.location.href);
+                return typeof window !== "undefined" && testLocalhost(window.location.href);
             } catch (e) { return false; }
         }
 
@@ -308,6 +310,14 @@ namespace pxsim {
                 }
             })
             return v;
+        }
+
+        export function sanitizeCssName(name: string): string {
+            let sanitized = name.replace(/[^a-zA-Z0-9-_]/g, '_');
+            if (!/^[a-zA-Z_]/.test(sanitized)) {
+                sanitized = 'cls_' + sanitized;
+            }
+            return sanitized;
         }
     }
 
@@ -544,7 +554,7 @@ namespace pxsim {
             pause: thread.pause,
             showNumber: (n: number) => {
                 let cb = getResume();
-                console.log("SHOW NUMBER:", n)
+                pxsim.log("SHOW NUMBER:", n)
                 U.nextTick(cb)
             }
         }
@@ -557,9 +567,9 @@ namespace pxsim {
         myRT.control = {
             inBackground: thread.runInBackground,
             createBuffer: BufferMethods.createBuffer,
-            dmesg: (s: string) => console.log("DMESG: " + s),
+            dmesg: (s: string) => pxsim.log("DMESG: " + s),
             deviceDalVersion: () => "sim",
-            __log: (pri: number, s: string) => console.log("LOG: " + s.trim()),
+            __log: (pri: number, s: string) => pxsim.log("LOG: " + s.trim()),
         }
     }
 
@@ -573,7 +583,7 @@ namespace pxsim {
 
     class EventHandler {
         private busy = 0;
-        constructor(public handler: RefAction, public flags: number) {}
+        constructor(public handler: RefAction, public flags: number) { }
 
         async runAsync(eventValue: EventIDType, runtime: Runtime, valueToArgs?: EventValueToActionArgs) {
             // The default behavior can technically be configured in codal, but we always set it to queue if busy
@@ -595,9 +605,9 @@ namespace pxsim {
         }
 
         private async runFiberAsync(eventValue: EventIDType, runtime: Runtime, valueToArgs?: EventValueToActionArgs) {
-            this.busy ++;
+            this.busy++;
             await runtime.runFiberAsync(this.handler, ...(valueToArgs ? valueToArgs(eventValue) : [eventValue]));
-            this.busy --;
+            this.busy--;
         }
     }
 
@@ -678,7 +688,7 @@ namespace pxsim {
                 this._handlers = [new EventHandler(a, flags)];
             }
             else {
-                this._addRemoveLog.push({ act: a, log: LogType.UserSet, flags});
+                this._addRemoveLog.push({ act: a, log: LogType.UserSet, flags });
             }
         }
 
@@ -1425,7 +1435,7 @@ namespace pxsim {
 
             function loop(p: StackFrame) {
                 if (__this.dead) {
-                    console.log("Runtime terminated")
+                    pxsim.log("Runtime terminated")
                     return
                 }
                 U.assert(!__this.loopLock)
@@ -1452,7 +1462,7 @@ namespace pxsim {
                     if (__this.errorHandler)
                         __this.errorHandler(e)
                     else {
-                        console.error("Simulator crashed, no error handler", e.stack)
+                        pxsim.error("Simulator crashed, no error handler", e.stack)
                         const { msg, heap } = getBreakpointMsg(p, p.lastBrkId, userGlobals)
                         injectEnvironmentGlobals(msg, heap);
                         msg.exceptionMessage = e.message

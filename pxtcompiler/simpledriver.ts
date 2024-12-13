@@ -55,6 +55,14 @@ namespace pxt {
         loadPackageAsync(repopath: string, tag: string): Promise<pxt.github.CachedPackage> {
             return this.loadAsync(repopath, tag, "pkg", (r, t) => this.db.loadPackageAsync(r, t));
         }
+
+        loadTutorialMarkdown(repopath: string, tag?: string): Promise<pxt.github.CachedPackage> {
+            return this.loadAsync(repopath, tag, "tutorial", (r, t) => this.db.loadTutorialMarkdown(r, t));
+        }
+
+        cacheReposAsync(resp: pxt.github.GHTutorialResponse) {
+            return this.db.cacheReposAsync(resp);
+        }
     }
 
     function pkgOverrideAsync(pkg: pxt.Package) {
@@ -89,19 +97,19 @@ namespace pxt {
         }
 
         getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<pxtc.HexInfo> {
-            //console.log(`getHexInfoAsync(${extInfo})`);
+            //pxt.log(`getHexInfoAsync(${extInfo})`);
             return Promise.resolve<any>({ hex: ["SKIP"] })
         }
 
         cacheStoreAsync(id: string, val: string): Promise<void> {
-            //console.log(`cacheStoreAsync(${id}, ${val})`)
+            //pxt.log(`cacheStoreAsync(${id}, ${val})`)
             if (callbacks?.cacheSet)
                 return callbacks.cacheSet(id, val)
             return Promise.resolve()
         }
 
         cacheGetAsync(id: string): Promise<string> {
-            //console.log(`cacheGetAsync(${id})`)
+            //pxt.log(`cacheGetAsync(${id})`)
             if (callbacks?.cacheGet)
                 return callbacks.cacheGet(id)
             return Promise.resolve("")
@@ -117,12 +125,12 @@ namespace pxt {
                             })
                         }
                     })
-            //console.log(`downloadPackageAsync(${pkg.id})`)
+            //pxt.log(`downloadPackageAsync(${pkg.id})`)
             return Promise.resolve()
         }
 
         resolveVersionAsync(pkg: pxt.Package): Promise<string> {
-            //console.log(`resolveVersionAsync(${pkg.id})`)
+            //pxt.log(`resolveVersionAsync(${pkg.id})`)
             return Promise.resolve("*")
         }
     }

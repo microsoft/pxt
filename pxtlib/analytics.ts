@@ -44,7 +44,7 @@ namespace pxt.analytics {
             {
                 const prefix = consoleTicks == ConsoleTickOptions.Short ? "" : `${new Date().toLocaleTimeString(undefined, { hour12: false })} - Tick - `;
                 const tickInfo = `${id} ${data ? JSON.stringify(data) : "<no data>"} ${opts ? JSON.stringify(opts) : "<no opts>"}`;
-                console.log(prefix + tickInfo);
+                pxt.log(prefix + tickInfo);
             }
 
             if (te) te(id, data, opts);

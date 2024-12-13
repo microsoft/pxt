@@ -1005,8 +1005,8 @@ ${hexfile.hexPrelude()}
 
             if (userErrors) {
                 //TODO
-                console.log(U.lf("errors in inline assembly"))
-                console.log(userErrors)
+                pxt.log(U.lf("errors in inline assembly"))
+                pxt.log(userErrors)
                 throw new Error(b.errors[0].message)
             } else {
                 throw new Error(b.errors[0].message)

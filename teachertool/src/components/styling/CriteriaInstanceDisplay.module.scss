@@ -20,10 +20,6 @@
             border-radius: 0.5rem;
             border: solid 2px var(--pxt-headerbar-accent-smoke);
         }
-
-        input::placeholder {
-            color: var(--pxt-content-accent);
-        }
     }
 
     .segment-container {
@@ -48,6 +44,19 @@
                 border-radius: 0.5rem;
                 border: solid 1px var(--pxt-page-foreground);
                 padding: 0.4rem;
+
+                .block-readable-name {
+                    .block-name-segment {
+                        margin-left: 0;
+                        margin-right: 0.2rem;
+                        line-height: normal;
+                    }
+                    .block-name-param {
+                        border-radius: 1rem;
+                        padding: 0.2rem 0.4rem;
+                        background-color: var(--pxt-page-dark-shadow);
+                    }
+                }
 
                 &.error {
                     border: solid 1px var(--pxt-error-accent);

@@ -226,7 +226,7 @@ export function flow(ws: Blockly.WorkspaceSvg, opts?: FlowOptions) {
 }
 
 export function screenshotEnabled(): boolean {
-    return !pxt.BrowserUtils.isIE()
+    return pxt.BrowserUtils.hasFileAccess() && !pxt.BrowserUtils.isIE();
 }
 
 export function screenshotAsync(ws: Blockly.WorkspaceSvg, pixelDensity?: number, encodeBlocks?: boolean): Promise<string> {
@@ -467,7 +467,7 @@ async function convertIconsToPngAsync(xsg: Document): Promise<void> {
         let href = imageIconCache[svgUri];
         if (!href) {
             href = await pxt.BrowserUtils.encodeToPngAsync(svgUri, { width, height, pixelDensity: 2 });
-            console.log(`HREF: ${href}`);
+            pxt.log(`HREF: ${href}`);
         }
 
         imageIconCache[svgUri] = href;

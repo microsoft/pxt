@@ -636,10 +636,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     display(): JSX.Element {
         const showErrorList = pxt.appTarget.appTheme.errorList;
-        const isAndroid = pxt.BrowserUtils.isAndroid();
 
         return (
-            <div id="monacoEditorArea" className={`monacoEditorArea ${isAndroid ? "android" : ""}`} style={{ direction: 'ltr' }}>
+            <div id="monacoEditorArea" className={`monacoEditorArea`} style={{ direction: 'ltr' }}>
                 {this.isVisible && <div className={`monacoToolboxDiv ${(this.toolbox && !this.toolbox.state.visible && !this.isDebugging()) ? 'invisible' : ''}`}>
                     <toolbox.Toolbox ref={this.handleToolboxRef} editorname="monaco" parent={this} />
                     <div id="monacoDebuggerToolbox"></div>
@@ -1326,8 +1325,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             || this.currFile.isReadonly()
             || pxt.shell.isReadOnly()
             || this.isDebugging();
+
+        const hideForTutorial =
+            this.parent.isTutorial()
+            && this.parent.state.header.tutorial?.metadata?.hideToolbox;
+
         return pxt.appTarget.appTheme.monacoToolbox
             && !readOnly
+            && !hideForTutorial
             && (this.fileType == "typescript" || this.fileType == "python");
     }
 

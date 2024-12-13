@@ -93,6 +93,10 @@ declare namespace pxt {
         theme?: string | pxt.Map<string>;
         assetPack?: boolean; // if set to true, only the assets of this project will be imported when added as an extension (no code)
         assetPacks?: Map<boolean>; // a map of dependency id to boolean that indicates which dependencies should be imported as asset packs
+        toolboxFilter?: {
+            namespaces: {[index: string]: "visible" | "hidden" | "disabled"},
+            blocks: {[index: string]: "visible" | "hidden" | "disabled"},
+        }
     }
 
     interface PackageExtension {

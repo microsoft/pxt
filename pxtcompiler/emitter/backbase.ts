@@ -283,8 +283,8 @@ ${baseLabel}_nochk:
                     if (bi) {
                         let off = U.lookup(th.stackAtLabel, `__brkp_${bi.id}`)
                         if (off !== this.proc.debugInfo.localsMark) {
-                            console.log(bi)
-                            console.log(th.stackAtLabel)
+                            pxt.log(bi)
+                            pxt.log(th.stackAtLabel)
                             U.oops(`offset doesn't match: ${off} != ${this.proc.debugInfo.localsMark}`)
                         }
                     }
@@ -312,7 +312,7 @@ ${baseLabel}_nochk:
 
             for (let i = 0; i < this.proc.body.length; ++i) {
                 let s = this.proc.body[i]
-                // console.log("STMT", s.toString())
+                // pxt.log("STMT", s.toString())
                 switch (s.stmtKind) {
                     case ir.SK.Expr:
                         this.emitExpr(s.expr)
@@ -320,9 +320,9 @@ ${baseLabel}_nochk:
                     case ir.SK.StackEmpty:
                         if (this.exprStack.length > 0) {
                             for (let stmt of this.proc.body.slice(i - 4, i + 1))
-                                console.log(`PREVSTMT ${stmt.toString().trim()}`)
+                                pxt.log(`PREVSTMT ${stmt.toString().trim()}`)
                             for (let e of this.exprStack)
-                                console.log(`EXPRSTACK ${e.currUses}/${e.totalUses} E: ${e.toString()}`)
+                                pxt.log(`EXPRSTACK ${e.currUses}/${e.totalUses} E: ${e.toString()}`)
                             oops("stack should be empty")
                         }
                         this.write("@stackempty locals")
@@ -387,7 +387,7 @@ ${baseLabel}_nochk:
         private terminate(expr: ir.Expr) {
             assert(expr.exprKind == ir.EK.SharedRef)
             let arg = expr.args[0]
-            // console.log("TERM", arg.sharingInfo(), arg.toString(), this.dumpStack())
+            // pxt.log("TERM", arg.sharingInfo(), arg.toString(), this.dumpStack())
             U.assert(arg.currUses != arg.totalUses)
             // we should have the terminated expression on top
             U.assert(this.exprStack[0] === arg, "term at top")
@@ -407,14 +407,14 @@ ${baseLabel}_nochk:
         }
 
         private validateJmpStack(lbl: ir.Stmt, off = 0) {
-            // console.log("Validate:", off, lbl.lblName, this.dumpStack())
+            // pxt.log("Validate:", off, lbl.lblName, this.dumpStack())
             let currSize = this.exprStack.length - off
             if (lbl.lblStackSize == null) {
                 lbl.lblStackSize = currSize
             } else {
                 if (lbl.lblStackSize != currSize) {
-                    console.log(lbl.lblStackSize, currSize)
-                    console.log(this.dumpStack())
+                    pxt.log(lbl.lblStackSize, currSize)
+                    pxt.log(this.dumpStack())
                     U.oops("stack misaligned at: " + lbl.lblName)
                 }
             }
@@ -542,7 +542,7 @@ ${baseLabel}_nochk:
 
         // result in R0
         private emitExpr(e: ir.Expr): void {
-            //console.log(`EMITEXPR ${e.sharingInfo()} E: ${e.toString()}`)
+            //pxt.log(`EMITEXPR ${e.sharingInfo()} E: ${e.toString()}`)
 
             switch (e.exprKind) {
                 case ir.EK.JmpValue:
@@ -930,8 +930,8 @@ ${baseLabel}_nochk:
             let allArgs = nonRefs.concat(refs)
             for (let r of allArgs) {
                 if (r.currUses != 0 || r.totalUses != 1) {
-                    console.log(r.toString())
-                    console.log(allArgs.map(a => a.toString()))
+                    pxt.log(r.toString())
+                    pxt.log(allArgs.map(a => a.toString()))
                     U.oops(`wrong uses: ${r.currUses} ${r.totalUses}`)
                 }
                 r.currUses = 1

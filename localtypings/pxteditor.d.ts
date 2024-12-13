@@ -75,6 +75,7 @@ declare namespace pxt.editor {
         | "convertcloudprojectstolocal"
         | "setlanguagerestriction"
         | "gettoolboxcategories"
+        | "getblockastext"
 
         | "toggletrace" // EditorMessageToggleTraceRequest
         | "togglehighcontrast"
@@ -101,6 +102,7 @@ declare namespace pxt.editor {
         | "editorcontentloaded"
         | "serviceworkerregistered"
         | "runeval"
+        | "precachetutorial"
 
         // package extension messasges
         | ExtInitializeType
@@ -407,6 +409,12 @@ declare namespace pxt.editor {
         carryoverPreviousCode?: boolean;
     }
 
+    export interface PrecacheTutorialRequest extends EditorMessageRequest {
+        action: "precachetutorial";
+        data: pxt.github.GHTutorialResponse;
+        lang?: string;
+    }
+
     export interface InfoMessage {
         versions: pxt.TargetVersions;
         locale: string;
@@ -453,12 +461,21 @@ declare namespace pxt.editor {
         advanced?: boolean;
     }
 
-    export interface EditorMessageServiceWorkerRegisteredRequest extends EditorMessageRequest {
-        action: "serviceworkerregistered";
-    }
-
     export interface EditorMessageGetToolboxCategoriesResponse {
         categories: pxt.editor.ToolboxCategoryDefinition[];
+    }
+
+    export interface EditorMessageGetBlockAsTextRequest extends EditorMessageRequest {
+        action: "getblockastext";
+        blockId: string;
+    }
+
+    export interface EditorMessageGetBlockAsTextResponse {
+        blockAsText: pxt.editor.BlockAsText | undefined;
+    }
+
+    export interface EditorMessageServiceWorkerRegisteredRequest extends EditorMessageRequest {
+        action: "serviceworkerregistered";
     }
 
     export interface DataStreams<T> {
@@ -997,6 +1014,7 @@ declare namespace pxt.editor {
         // getBlocks(): Blockly.Block[];
         getBlocks(): any[];
         getToolboxCategories(advanced?: boolean): pxt.editor.EditorMessageGetToolboxCategoriesResponse;
+        getBlockAsText(blockId: string): pxt.editor.BlockAsText | undefined;
 
         toggleHighContrast(): void;
         setHighContrast(on: boolean): void;
@@ -1102,6 +1120,7 @@ declare namespace pxt.editor {
         blocklyToolbox: ToolboxDefinition;
         monacoToolbox: ToolboxDefinition;
         projectView: IProjectView;
+        showNotification: (msg: string) => void;
     }
 
     export interface IToolboxOptions {
@@ -1129,10 +1148,22 @@ declare namespace pxt.editor {
 
         // Used with the @tutorialCompleted macro. See docs/writing-docs/tutorials.md for more info
         onTutorialCompleted?: () => void;
+        onMarkdownActivityLoad?: (path: string, title?: string, editorProjectName?: string) => Promise<void>;
 
         // Used with @codeStart, @codeStop metadata (MINECRAFT HOC ONLY)
         onCodeStart?: () => void;
         onCodeStop?: () => void;
+
+        experiments?: Experiment[];
+    }
+
+    export interface Experiment {
+        id: string; // == field in apptheme also assumes image at /static/experiments/ID.png
+        name: string;
+        description: string;
+        feedbackUrl?: string; // allows user to put feedback
+        enableOnline?: boolean; // requires internet connection, disable in offline app
+        onClick?: () => void; // code to run when the experiment is clicked
     }
 
     export interface FieldExtensionOptions {
@@ -1262,6 +1293,15 @@ declare namespace pxt.editor {
          * The Blockly block id used to identify this block.
          */
         blockId?: string;
+    }
+
+    export interface BlockAsText {
+        parts: BlockTextPart[];
+    }
+
+    export interface BlockTextPart {
+        kind: "label" | "break" | "param",
+        content?: string,
     }
 
     interface BaseAssetEditorRequest {

@@ -263,7 +263,7 @@ namespace pxt.diff {
             let aidx = 0
             let oidx = 0
 
-            // console.log(da)
+            // pxt.log(da)
             for (let l of da) {
                 if (l[0] == "+") {
                     aidx++

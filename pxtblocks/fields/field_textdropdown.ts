@@ -240,7 +240,7 @@ function validateOptions(options: Blockly.MenuOption[]) {
         const tuple = options[i];
         if (!Array.isArray(tuple)) {
             foundError = true;
-            console.error(
+            pxt.error(
                 'Invalid option[' +
                 i +
                 ']: Each FieldDropdown option must be an ' +
@@ -249,7 +249,7 @@ function validateOptions(options: Blockly.MenuOption[]) {
             );
         } else if (typeof tuple[1] !== 'string') {
             foundError = true;
-            console.error(
+            pxt.error(
                 'Invalid option[' +
                 i +
                 ']: Each FieldDropdown option id must be ' +
@@ -264,7 +264,7 @@ function validateOptions(options: Blockly.MenuOption[]) {
             typeof tuple[0].src !== 'string'
         ) {
             foundError = true;
-            console.error(
+            pxt.error(
                 'Invalid option[' +
                 i +
                 ']: Each FieldDropdown option must have a ' +
@@ -323,7 +323,7 @@ function parseDropdownOptions(options: FieldTextDropdownOptions): [string, strin
             return result;
         }
         else {
-            console.warn("Could not parse textdropdown data field");
+            pxt.warn("Could not parse textdropdown data field");
         }
     }
 

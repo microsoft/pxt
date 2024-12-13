@@ -671,7 +671,7 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
                 // If this fails for some reason, the history is going to end
                 // up being corrupted. Should we switch to memory db?
                 pxt.reportException(e);
-                console.warn("Unable to update project history", e);
+                pxt.warn("Unable to update project history", e);
             }
         }
 
@@ -748,7 +748,7 @@ export function importAsync(h: Header, text: ScriptText, isCloud = false) {
     return forceSaveAsync(h, text, isCloud)
 }
 
-export function installAsync(h0: InstallHeader, text: ScriptText, dontOverwriteID = false) {
+export async function installAsync(h0: InstallHeader, text: ScriptText, dontOverwriteID = false) {
     U.assert(h0.target == pxt.appTarget.id);
 
     const h = <Header>h0
@@ -762,9 +762,9 @@ export function installAsync(h0: InstallHeader, text: ScriptText, dontOverwriteI
         pxt.shell.setEditorLanguagePref(cfg.preferredEditor);
     }
 
-    return pxt.github.cacheProjectDependenciesAsync(cfg)
-        .then(() => importAsync(h, text))
-        .then(() => h);
+    await pxt.github.cacheProjectDependenciesAsync(cfg)
+    await importAsync(h, text);
+    return h;
 }
 
 export async function renameAsync(h: Header, newName: string): Promise<Header> {
@@ -1723,23 +1723,24 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
         });
 }
 
-export function resetAsync() {
+export async function resetAsync() {
     allScripts = []
-    return impl.resetAsync()
-        .then(cloudsync.resetAsync)
-        .then(db.destroyAsync)
-        .then(pxt.BrowserUtils.clearTranslationDbAsync)
-        .then(pxt.BrowserUtils.clearTutorialInfoDbAsync)
-        .then(compiler.clearApiInfoDbAsync)
-        .then(() => {
-            pxt.storage.clearLocal();
-            data.clearCache();
-            // keep local token (localhost and electron) on reset
-            if (Cloud.localToken)
-                pxt.storage.setLocal("local_token", Cloud.localToken);
-        })
-        .then(() => syncAsync()) // sync again to notify other tabs
-        .then(() => { });
+
+    await impl.resetAsync();
+    await cloudsync.resetAsync();
+    await db.destroyAsync();
+    await pxt.BrowserUtils.clearTranslationDbAsync();
+    await pxt.BrowserUtils.clearTutorialInfoDbAsync();
+    await compiler.clearApiInfoDbAsync();
+    pxt.storage.clearLocal();
+    data.clearCache();
+
+    // keep local token (localhost and electron) on reset
+    if (Cloud.localToken) {
+        pxt.storage.setLocal("local_token", Cloud.localToken);
+    }
+
+    await syncAsync(); // sync again to notify other tabs
 }
 
 export function loadedAsync() {

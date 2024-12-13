@@ -175,6 +175,7 @@ export class FieldSlider extends Blockly.FieldNumber {
 
     protected createSlider() {
         const slider = document.createElement("input");
+        slider.setAttribute('class', 'blocklyFieldSlider');
         slider.type = "range";
         slider.min = this.getMin() + "";
         slider.max = this.getMax() + "";
@@ -247,14 +248,14 @@ Blockly.Css.register(`
     margin-left: 10px;
 }
 
-input[type=range] {
+input[type=range].blocklyFieldSlider {
     -webkit-appearance: none;
     width: 100%;
 }
-input[type=range]:focus {
+input[type=range].blocklyFieldSlider:focus {
     outline: none;
 }
-input[type=range]::-webkit-slider-runnable-track {
+input[type=range].blocklyFieldSlider::-webkit-slider-runnable-track {
     -webkit-appearance: none;
     margin: 8px;
     height: 22px;
@@ -264,7 +265,7 @@ input[type=range]::-webkit-slider-runnable-track {
     margin-bottom: 20px;
     background: var(--blocklyFieldSliderBackgroundColor);
 }
-input[type=range]::-webkit-slider-thumb {
+input[type=range].blocklyFieldSlider::-webkit-slider-thumb {
     -webkit-appearance: none;
     width: 26px;
     height: 26px;
@@ -276,7 +277,7 @@ input[type=range]::-webkit-slider-thumb {
     box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.15);
     cursor: pointer;
 }
-input[type=range]::-moz-range-track {
+input[type=range].blocklyFieldSlider::-moz-range-track {
     margin: 8px;
     height: 22px;
     width: 95%;
@@ -285,7 +286,7 @@ input[type=range]::-moz-range-track {
     margin-bottom: 20px;
     background: #547AB2;
 }
-input[type=range]::-moz-range-thumb {
+input[type=range].blocklyFieldSlider::-moz-range-thumb {
     width: 26px;
     height: 26px;
     margin-top: -1px;

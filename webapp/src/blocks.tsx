@@ -611,14 +611,17 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         pxtblockly.contextMenu.setupWorkspaceContextMenu(this.editor);
 
         // set Blockly Colors
-        const blocklyColors = pxt.appTarget.appTheme.blocklyColors;
-        if (blocklyColors) {
-            const theme = this.editor.getTheme();
-            for (const key of Object.keys(blocklyColors)) {
-                theme.setComponentStyle(key, blocklyColors[key]);
+        (async () => {
+            await Blockly.renderManagement.finishQueuedRenders();
+            const blocklyColors = pxt.appTarget.appTheme.blocklyColors;
+            if (blocklyColors) {
+                const theme = this.editor.getTheme();
+                for (const key of Object.keys(blocklyColors)) {
+                    theme.setComponentStyle(key, blocklyColors[key]);
+                }
+                this.editor.setTheme(theme);
             }
-            this.editor.setTheme(theme);
-        }
+        })();
 
         let shouldRestartSim = false;
 
@@ -646,6 +649,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 Blockly.Events.CLICK,
                 Blockly.Events.VIEWPORT_CHANGE,
                 Blockly.Events.BUBBLE_OPEN,
+                Blockly.Events.THEME_CHANGE,
                 pxtblockly.FIELD_EDITOR_OPEN_EVENT_TYPE
             ];
 
@@ -993,13 +997,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const m = this.editor.getMetrics();
         b.moveBy(m.viewWidth / 2, m.viewHeight / 3);
         b.initSvg();
-        b.render();
+        b.queueRender();
     }
 
     private _loadBlocklyPromise: Promise<void>;
     loadBlocklyAsync() {
         if (!this._loadBlocklyPromise) {
             pxt.perf.measureStart("loadBlockly")
+            pxtblockly.applyMonkeyPatches();
             this._loadBlocklyPromise = pxt.BrowserUtils.loadBlocklyAsync()
                 .then(() => {
                     // Initialize the "Make a function" button
@@ -1029,10 +1034,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                         if (/^github:/.test(url)) {
                             // strip 'github:', add '.md' file extension if necessary
                             url = url.replace(/^github:\/?/, '') + (/\.md$/i.test(url) ? "" : ".md");
-                            const readme = pkg.getEditorPkg(pkg.mainPkg).lookupFile(url);
-                            const readmeContent = readme?.content?.trim();
-                            if (readmeContent) {
-                                this.parent.setSideMarkdown(readmeContent);
+                            const content = resolveLocalizedMarkdown(url);
+                            if (content) {
+                                this.parent.setSideMarkdown(content);
                                 this.parent.setSideDocCollapsed(false);
                             }
                         } else if (/^\//.test(url)) {
@@ -1514,6 +1518,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (ns == onStartNamespace) {
             extraBlocks.push({
                 name: ts.pxtc.ON_START_TYPE,
+                snippetName: "on start",
                 attributes: {
                     blockId: ts.pxtc.ON_START_TYPE,
                     weight: pxt.appTarget.runtime.onStartWeight || 10,
@@ -1996,4 +2001,30 @@ function shouldEventHideFlyout(ev: Blockly.Events.Abstract) {
     }
 
     return true;
+}
+
+function resolveLocalizedMarkdown(url: string) {
+    const editorPackage = pkg.getEditorPkg(pkg.mainPkg);
+
+    const splitPath = url.split("/");
+    const fileName = splitPath.pop();
+    const dirName = splitPath.join("/");
+
+    const [initialLang, baseLang, initialLangLowerCase] = pxt.Util.normalizeLanguageCode(pxt.Util.userLanguage());
+    const priorityOrder = [initialLang, initialLangLowerCase, baseLang].filter((lang) => typeof lang === "string")
+    const pathsToTest = [
+        ...priorityOrder.map(lang =>`${dirName}/_locales/${lang}/${fileName}`),
+        url
+    ]
+
+    for (const path of pathsToTest) {
+        const file = editorPackage.lookupFile(path);
+        const content = file?.content?.trim();
+
+        if (content) {
+            return content;
+        }
+    }
+
+    return undefined;
 }

@@ -849,7 +849,7 @@ namespace pxsim {
             const noteNumber = data[1] || 0;
             const noteFrequency = frequencyFromMidiNoteNumber(noteNumber);
             const velocity = data[2] || 0;
-            //console.log(`midi: cmd ${cmd} channel (-1) ${channel} note ${noteNumber} f ${noteFrequency} v ${velocity}`)
+            //pxsim.log(`midi: cmd ${cmd} channel (-1) ${channel} note ${noteNumber} f ${noteFrequency} v ${velocity}`)
 
             // play drums regardless
             if (cmd == 8 || ((cmd == 9) && (velocity == 0))) { // with MIDI, note on with velocity zero is the same as note off

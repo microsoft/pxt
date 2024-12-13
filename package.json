@@ -1,6 +1,6 @@
 {
   "name": "pxt-core",
-  "version": "10.3.8",
+  "version": "11.3.7",
   "description": "Microsoft MakeCode provides Blocks / JavaScript / Python tools and editors",
   "keywords": [
     "TypeScript",
@@ -164,6 +164,7 @@
     "test:err": "gulp testerr",
     "test:fmt": "gulp testfmt",
     "test:lang": "gulp testlang",
+    "test:tutorials": "gulp testtutorials",
     "update": "gulp update",
     "watch-streamer": "cd docs/static/streamer && tsc -t es6 --watch",
     "prepare": "node ./scripts/npm-prepare.js",

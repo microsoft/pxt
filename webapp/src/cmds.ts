@@ -12,6 +12,7 @@ import * as pxtblockly from "../../pxtblocks";
 
 import ExtensionResult = pxt.editor.ExtensionResult;
 import NativeHostMessage = pxt.editor.NativeHostMessage;
+import { setEditorExtensionExperiments } from "../../pxteditor/experiments";
 
 
 function log(msg: string) {
@@ -392,6 +393,13 @@ function applyExtensionResult() {
     if (res.showProgramTooLargeErrorAsync) {
         log(`extension showProgramTooLargeErrorAsync`);
         pxt.commands.showProgramTooLargeErrorAsync = res.showProgramTooLargeErrorAsync;
+    }
+    if (res.onMarkdownActivityLoad) {
+        log(`extension onMarkdownActivityLoad`);
+        pxt.commands.onMarkdownActivityLoad = res.onMarkdownActivityLoad;
+    }
+    if (res.experiments) {
+        setEditorExtensionExperiments(res.experiments);
     }
 }
 

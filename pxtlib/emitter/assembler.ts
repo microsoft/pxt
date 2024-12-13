@@ -138,7 +138,7 @@ namespace ts.pxtc.assembler {
                             }
                         }
                         if (this.ei.is32bit(this)) {
-                            // console.log(actual + " " + v.toString())
+                            // pxt.log(actual + " " + v.toString())
                             bit32_value = v
                             bit32_actual = actual
                             continue
@@ -152,7 +152,7 @@ namespace ts.pxtc.assembler {
 
                     v = enc.encode(v)
 
-                    // console.log("enc(v) = ",v)
+                    // pxt.log("enc(v) = ",v)
                     if (v == null) return emitErr("argument out of range or mis-aligned", actual);
                     assert((r & v) == 0)
                     r |= v;
@@ -395,9 +395,9 @@ namespace ts.pxtc.assembler {
                     if (mul != 1)
                         this.directiveError(lf("multiplication not supported with saved stacks"));
                     if (this.stackpointers.hasOwnProperty(m[1])) {
-                        // console.log(m[1] + ": " + this.stack + " " + this.stackpointers[m[1]] + " " + m[2])
+                        // pxt.log(m[1] + ": " + this.stack + " " + this.stackpointers[m[1]] + " " + m[2])
                         v = this.ei.wordSize() * this.ei.computeStackOffset(m[1], this.stack - this.stackpointers[m[1]] + parseInt(m[2]))
-                        // console.log(v)
+                        // pxt.log(v)
                     }
                     else
                         this.directiveError(lf("saved stack not found"))
@@ -1441,7 +1441,7 @@ namespace ts.pxtc.assembler {
         if (b.errors.length == 0) {
             oops("ASMTEST: expecting error for: " + asm)
         }
-        // console.log(b.errors[0].message)
+        // pxt.log(b.errors[0].message)
     }
 
     export function tohex(n: number) {
@@ -1465,7 +1465,7 @@ namespace ts.pxtc.assembler {
         b.disablePeepHole = true;
         b.emit(asm);
         if (b.errors.length > 0) {
-            console.debug(b.errors[0].message)
+            pxt.debug(b.errors[0].message)
             oops("ASMTEST: not expecting errors")
         }
 

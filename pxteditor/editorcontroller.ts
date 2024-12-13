@@ -170,7 +170,7 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
                                         })
                                     });
                             }
-case "renderxml": {
+                            case "renderxml": {
                                 const rendermsg = data as pxt.editor.EditorMessageRenderXmlRequest;
                                 return Promise.resolve()
                                     .then(() => {
@@ -202,11 +202,19 @@ case "renderxml": {
                                         resp = results;
                                     });
                             }
-case "gettoolboxcategories": {
+                            case "gettoolboxcategories": {
                                 const msg = data as pxt.editor.EditorMessageGetToolboxCategoriesRequest;
                                 return Promise.resolve()
                                     .then(() => {
                                         resp = projectView.getToolboxCategories(msg.advanced);
+                                    });
+                            }
+                            case "getblockastext": {
+                                const msg = data as pxt.editor.EditorMessageGetBlockAsTextRequest;
+                                return Promise.resolve()
+                                    .then(() => {
+                                        const readableName = projectView.getBlockAsText(msg.blockId);
+                                        resp = { blockAsText: readableName } as pxt.editor.EditorMessageGetBlockAsTextResponse;
                                     });
                             }
                             case "renderpython": {
@@ -290,10 +298,24 @@ case "gettoolboxcategories": {
                             case "setlanguagerestriction": {
                                 const msg = data as pxt.editor.EditorSetLanguageRestriction;
                                 if (msg.restriction === "no-blocks") {
-                                    console.warn("no-blocks language restriction is not supported");
+                                    pxt.warn("no-blocks language restriction is not supported");
                                     throw new Error("no-blocks language restriction is not supported")
                                 }
                                 return projectView.setLanguageRestrictionAsync(msg.restriction);
+                            }
+                            case "precachetutorial": {
+                                const msg = data as pxt.editor.PrecacheTutorialRequest;
+                                const tutorialData = msg.data;
+                                const lang = msg.lang || pxt.Util.userLanguage();
+
+                                return pxt.github.db.cacheReposAsync(tutorialData)
+                                    .then(async () => {
+                                        if (typeof tutorialData.markdown === "string") {
+                                            // the markdown needs to be cached in the translation db
+                                            const db = await pxt.BrowserUtils.translationDbAsync();
+                                            await db.setAsync(lang, tutorialData.path, undefined, undefined, tutorialData.markdown);
+                                        }
+                                    });
                             }
                         }
                         return Promise.resolve();

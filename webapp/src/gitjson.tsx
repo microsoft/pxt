@@ -404,7 +404,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             const stags = pxt.semver.sortLatestTags(tags)
             currv = stags[0];
         } catch (e) {
-            console.log(e)
+            pxt.log(e)
         }
         const v = pxt.semver.parse(currv, "0.0.0")
         const vmajor = pxt.semver.parse(pxt.semver.stringify(v)); vmajor.major++; vmajor.minor = 0; vmajor.patch = 0;

@@ -1205,7 +1205,7 @@ function applyCodeCardAction(projectView: IProjectView, ticSrc: "projects" | "he
             });
             break;
         case "sharedExample":
-            console.log("shared example")
+            pxt.log("shared example")
             let id = pxt.github.normalizeRepoId(url) || pxt.Cloud.parseScriptId(url);
             if (!id) {
                 core.errorNotification(lf("Sorry, the project url looks invalid."));

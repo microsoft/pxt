@@ -193,7 +193,7 @@ export class FieldGridPicker extends Blockly.FieldDropdown implements FieldCusto
                 const xOffset = (this.sourceBlock_.RTL ? -this.tooltipConfig_.xOffset : this.tooltipConfig_.xOffset);
                 const yOffset = this.tooltipConfig_.yOffset;
 
-                Blockly.browserEvents.conditionalBind(menuItem, 'mousemove', this, (e: MouseEvent) => {
+                Blockly.browserEvents.bind(menuItem, 'pointermove', this, (e: PointerEvent) => {
                     if (hasImages) {
                         this.gridTooltip_.style.top = `${e.clientY + yOffset}px`;
                         this.gridTooltip_.style.left = `${e.clientX + xOffset}px`;
@@ -210,7 +210,7 @@ export class FieldGridPicker extends Blockly.FieldDropdown implements FieldCusto
                     tableContainer.setAttribute('aria-activedescendant', menuItem.id);
                 });
 
-                Blockly.browserEvents.conditionalBind(menuItem, 'mouseout', this, (e: MouseEvent) => {
+                Blockly.browserEvents.bind(menuItem, 'pointerout', this, (e: PointerEvent) => {
                     if (hasImages) {
                         // Hide the tooltip
                         this.gridTooltip_.style.visibility = 'hidden';
@@ -367,11 +367,11 @@ export class FieldGridPicker extends Blockly.FieldDropdown implements FieldCusto
             width: paddingContainer.offsetWidth,
             height: paddingContainer.offsetHeight
         };
-        const windowHeight = window.outerHeight;
+        const windowHeight = window.outerHeight || window.innerHeight;
 
         // Set width
         if (this.width_) {
-            const windowWidth = window.outerWidth;
+            const windowWidth = window.outerWidth || window.innerWidth;
             if (this.width_ > windowWidth) {
                 this.width_ = windowWidth;
             }
