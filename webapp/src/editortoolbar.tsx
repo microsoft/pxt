@@ -443,9 +443,6 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
                         <identity.CloudSaveStatus headerId={header.id} />
                     </div>
                 </div>}
-            <div id="feedbackNavArea" role="menubar" className="ui column items">
-                <EditorToolbarFeedbackNav view={this.getViewString(computer)} parent={this.props.parent} />
-            </div>
             <div id="editorToolbarArea" role="menubar" className="ui column items">
                 {showUndoRedo && <div className="ui icon buttons">{this.getUndoRedo(computer)}</div>}
                 {showZoomControls && <div className="ui icon buttons mobile hide">{this.getZoomControl(computer)}</div>}
@@ -659,97 +656,5 @@ class EditorToolbarSaveInput extends React.Component<EditorToolbarSaveInputProps
             (e.target as HTMLInputElement).blur();
             e.stopPropagation();
         }
-    }
-}
-
-interface EditorToolbarFeedbackNavProps {
-    view: string;
-    parent: pxt.editor.IProjectView;
-}
-interface EditorToolbarFeedbackNavState {
-    blocksWithFeedback: Blockly.Block[];
-    isBlocksActive: boolean;
-    currentIndex: number;
-}
-class EditorToolbarFeedbackNav extends React.Component<EditorToolbarFeedbackNavProps, EditorToolbarFeedbackNavState> {
-    constructor(props: EditorToolbarFeedbackNavProps) {
-        super(props);
-
-        this.state = {
-            isBlocksActive: this.props.parent.isBlocksActive(),
-            blocksWithFeedback: [],
-            currentIndex: 0, // TODO thsparks : This is getting set to NaN for some reason, even with this here??
-        }
-    }
-
-    protected handlePrevFeedbackClick = () => {
-        const newIndex = this.state.currentIndex > 0 ? this.state.currentIndex - 1 : this.state.blocksWithFeedback.length - 1;
-        this.setState({ currentIndex: newIndex });
-        this.focusOnBlockAtIndex(newIndex);
-    }
-
-    protected handleNextFeedbackClick = () => {
-        const currentIndex =  isNaN(this.state.currentIndex) ? 0 : this.state.currentIndex;
-        const newIndex = (currentIndex + 1) % this.state.blocksWithFeedback.length;
-        this.setState({ currentIndex: newIndex });
-        this.focusOnBlockAtIndex(newIndex);
-    }
-
-    protected focusOnBlockAtIndex(index: number) {
-        if (!this.props.parent.isBlocksActive()) return;
-
-        const block = this.state.blocksWithFeedback[index];
-        if (block) {
-            (this.props.parent.editor as blocks.Editor).editor.highlightBlock(block.id);
-            (this.props.parent.editor as blocks.Editor).editor.centerOnBlock(block.id);
-
-            block.getIcon(REVIEW_COMMENT_ICON_TYPE)?.setBubbleVisible(true);
-        }
-    }
-
-    protected getBlocksWithFeedback(): Blockly.Block[] {
-        if (!this.props.parent.isBlocksActive()) {
-            return [];
-        }
-
-        return this.props.parent.getBlocks().map(b => b as Blockly.Block).filter(b => !!ReviewCommentIcon.getReviewCommentForBlock(b));
-    }
-
-    protected updateBlocksWithFeedbackList() {
-        const blocksWithFeedback = this.getBlocksWithFeedback();
-        this.setState({ blocksWithFeedback, currentIndex: this.state.currentIndex % blocksWithFeedback.length });
-    }
-
-    componentDidMount() {
-        this.updateBlocksWithFeedbackList();
-    }
-
-    protected shouldUpdate(): boolean {
-        if (this.state.isBlocksActive !== this.props.parent.isBlocksActive()) return true;
-
-        const newBlocksWithFeedback = this.getBlocksWithFeedback();
-        if (newBlocksWithFeedback.length !== this.state.blocksWithFeedback.length) return true;
-        for (const blockId of newBlocksWithFeedback.map(b => b.id)) {
-            if (!this.state.blocksWithFeedback.find(b => b.id === blockId)) return true;
-        }
-
-        return false;
-    }
-
-    componentDidUpdate(prevProps: EditorToolbarFeedbackNavProps) {
-        if (this.shouldUpdate()) {
-            this.updateBlocksWithFeedbackList();
-
-            // Save this so we can tell if it changes.
-            this.setState({ isBlocksActive: this.props.parent.isBlocksActive() });
-        }
-    }
-
-    render() {
-        return this.state.blocksWithFeedback?.length ? (<div className="ui feedback-nav-container">
-                <EditorToolbarButton icon="arrow left" className="editortools-btn" title={lf("Previous Feedback")} onButtonClick={this.handlePrevFeedbackClick} view={this.props.view} />
-                <div className="feedback-nav-text">{lf("Feedback")}</div>
-                <EditorToolbarButton icon="arrow right" className="editortools-btn" title={lf("Next Feedback")} onButtonClick={this.handleNextFeedbackClick} view={this.props.view} />
-        </div>) : null;
     }
 }

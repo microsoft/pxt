@@ -97,6 +97,10 @@ pre {
     overflow: visible;
 }
 
+.hasFeedback #maineditor {
+    right: @feedbackPanelWidth;
+}
+
 /* Editor tools */
 @editorToolsHeight: 10rem;
 @editorToolsCollapsedHeight: 4.7rem;
@@ -183,16 +187,76 @@ pre {
     cursor: pointer;
 }
 
-#feedbackNavArea {
-    margin: auto;
+#feedbackPanel {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: @mainMenuHeight;
+    bottom: 4rem;
+    right: 0;
+    background-color: @filelistBackgroundColor;
+    z-index: @filelistZIndex;
+    font-family: @pageFont !important;
+    border-left: 2px solid #dadaef;
+    width: @feedbackPanelWidth;
 
-    .feedback-nav-container {
+    #feedbackNavArea {
+        margin: auto;
+        padding: 1rem;
+        border-bottom: 1px solid #dadaef;
+        width: 100%;
         display: flex;
-        flex-direction: row;
-        .feedback-nav-text {
-            font-size: 1.2rem;
-            font-weight: 600;
+        justify-content: center;
+
+        .feedback-nav-container {
+            display: flex;
+            flex-direction: row;
+            .feedback-nav-text {
+                font-size: 1.2rem;
+                font-weight: 600;
+                margin: 0.5rem;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+            .feedback-nav-btn {
+                margin: 0 0.5rem;
+                padding: 0.2rem;
+            }
+        }
+    }
+
+    .feedback-comments-area {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        margin-top: 1rem;
+        gap: 1rem;
+        flex-grow: 1;
+
+        .feedback-comment-btn {
             margin: 0.5rem;
+            padding: 0;
+            width: 80%;
+            height: fit-content;
+            background-color: #c7f8ff;
+            border: 1px solid #00b4cc;
+            color: black;
+            border-radius: 0;
+            text-align: start;
+
+            .feedback-comment-header {
+                background-color: #00b4cc;
+                color: white;
+                font-weight: bold;
+                padding: 0.3rem 0.5rem;
+            }
+
+            .feedback-comment-text-area {
+                padding: 0.5rem;
+                text-wrap: auto;
+            }
         }
     }
 }

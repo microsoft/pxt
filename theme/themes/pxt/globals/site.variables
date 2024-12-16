@@ -173,6 +173,7 @@
 @sideBarWidthLarge: 28rem;
 @simulatorWidth: 23rem;
 @simulatorWidthSmall: 20rem;
+@feedbackPanelWidth: 20rem;
 
 /*-------------------
    Background

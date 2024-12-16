@@ -82,6 +82,7 @@ import { Tour } from "./components/onboarding/Tour";
 import { parseTourStepsAsync } from "./onboarding";
 import { initGitHubDb } from "./idbworkspace";
 import { BlockDefinition, CategoryNameID } from "./toolbox";
+import { FeedbackPanel, getBlocksWithFeedback } from "./feedbackPanel";
 
 pxt.blocks.requirePxtBlockly = () => pxtblockly as any;
 pxt.blocks.requireBlockly = () => Blockly;
@@ -5275,6 +5276,7 @@ export class ProjectView
         const collapseIconTooltip = this.state.collapseEditorTools ? lf("Show the simulator") : lf("Hide the simulator");
         const isApp = cmds.isNativeHost() || pxt.BrowserUtils.isElectron();
         const hc = this.getData<boolean>(auth.HIGHCONTRAST)
+        const hasFeedback = getBlocksWithFeedback(this).length > 0;
 
         let rootClassList = [
             "ui",
@@ -5313,6 +5315,7 @@ export class ProjectView
             this.editor == this.textEditor && this.state.errorListState,
             'full-abs',
             pxt.appTarget.appTheme.embeddedTutorial ? "tutorial-embed" : "",
+            hasFeedback ? "hasFeedback" : "",
         ];
         this.rootClasses = rootClassList;
         const rootClasses = sui.cx(rootClassList);
@@ -5380,6 +5383,7 @@ export class ProjectView
                     {showCollapseButton && <sui.Button id='computertogglesim' className={`computer only collapse-button large`} icon={`inverted chevron ${showRightChevron ? 'right' : 'left'}`} title={collapseIconTooltip} onClick={this.toggleSimulatorCollapse} />}
                     {this.allEditors.map(e => e.displayOuter(editorOffset))}
                 </div>
+                {hasFeedback && <FeedbackPanel parent={this} />}
                 {inHome ? <div id="homescreen" className="full-abs">
                     <div className="ui home projectsdialog">
                         <header className="menubar" role="banner">
