@@ -1927,7 +1927,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     onToolboxFocusCapture(): void {
-        this.keyboardNavigation.onExternalToolboxFocused()
+        this.keyboardNavigation.onExternalToolboxFocus()
+    }
+
+    onToolboxBlurCapture(): void {
+        this.keyboardNavigation.onExternalToolboxBlur()
     }
 }
 

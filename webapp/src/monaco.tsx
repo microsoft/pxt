@@ -2123,6 +2123,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     onToolboxFocusCapture(): void {
         // Nothing to do
     }
+
+    onToolboxBlurCapture(): void {
+        // Nothing to do
+    }
 }
 
 export function rangeToSelection(range: monaco.IRange): monaco.Selection {

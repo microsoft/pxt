@@ -12,6 +12,7 @@ declare module "@blockly/keyboard-experiment" {
   class KeyboardNavigation {
    constructor(workspace: WorkspaceSvg, options: IKeyboardNavigationOptions)
    focusFlyout(): void;
-   onExternalToolboxFocused(): void;
+   onExternalToolboxFocus(): void;
+   onExternalToolboxBlur(): void;
   }
 }

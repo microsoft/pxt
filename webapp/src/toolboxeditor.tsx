@@ -21,6 +21,7 @@ export abstract class ToolboxEditor extends srceditor.Editor {
      * Hopefully this won't be necessary when the flyout takes the focus properly.
      */
     abstract onToolboxFocusCapture(): void;
+    abstract onToolboxBlurCapture(): void;
 
     protected shouldShowBlock(blockId: string, ns: string, shadow?: boolean) {
         let filters = this.parent.state.editorState && this.parent.state.editorState.filters;
