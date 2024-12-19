@@ -13,21 +13,21 @@ function reportChanges(criteriaId: string, result: CriteriaResult) {
     const previousResult = teacherTool.evalResults[criteriaId];
     const criteriaInstance = getCriteriaInstanceWithId(teacherTool, criteriaId);
 
-    if (previousResult.result != result.result) {
+    if (previousResult?.result != result?.result) {
         pxt.tickEvent(Ticks.SetEvalResultOutcome, {
             catalogCriteriaId: criteriaInstance?.catalogCriteriaId ?? "",
             newValue: EvaluationStatus[result.result],
             oldValue: previousResult?.result ? EvaluationStatus[previousResult.result] : "",
-            newValueIsManual: result.resultIsManual + "",
+            newValueIsManual: result?.resultIsManual + "",
             oldValueIsManual: previousResult?.resultIsManual + "",
         });
     }
 
-    if (previousResult.notes != result.notes) {
+    if (previousResult?.notes != result?.notes) {
         // Setting notes is debounced so this isn't too noisy.
         pxt.tickEvent(Ticks.SetEvalResultNotes, {
             catalogCriteriaId: criteriaInstance?.catalogCriteriaId ?? "",
-            newLength: result.notes?.length ?? 0,
+            newLength: result?.notes?.length ?? 0,
             oldLength: previousResult?.notes?.length ?? 0,
         });
     }
