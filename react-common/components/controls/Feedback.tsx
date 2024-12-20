@@ -1,11 +1,51 @@
+import { useEffect } from "react"
+
 export const feedbackConfig: any = {
-    feedbackUiType: "Modal",
+    feedbackUiType: "NoSurface",
+    hostPlatform: "IFrame",
     isDisplayed: true,
     isEmailCollectionEnabled: false, // to enable email collection
     isFileUploadEnabled: false, // to enable file upload function
-    isScreenshotEnabled: true, // to enable screenshot
+    isScreenshotEnabled: false, // to enable screenshot
     isScreenRecordingEnabled: false, // to enable screen recording
-    invokeOnDismissOnEsc: true,
+    invokeOnDismissOnEsc: false,
+    isFeedbackForumEnabled: false,
+    isMyFeedbackEnabled: false,
+    isThankYouPageDisabled: true,
+    initialFeedbackType: "Unclassified",
+    scenarioConfig: {
+      isScenarioEnabled: true,
+      scenarioType: "Custom",
+      questionDetails: {
+        questionUiType: "Rating",
+        questionInstruction: {
+          displayedStringInEnglish: "This is a custom Rating Question",
+          displayedString: "This is a custom Rating Question"
+        },
+        questionOptions: [
+          {
+            displayedStringInEnglish: "Option 1",
+            displayedString: "Option 1"
+          },
+          {
+            displayedStringInEnglish: "Option 2",
+            displayedString: "Option 2"
+          },
+          {
+            displayedStringInEnglish: "Option 3",
+            displayedString: "Option 3"
+          },
+          {
+            displayedStringInEnglish: "Option 4",
+            displayedString: "Option 4"
+          },
+          {
+            displayedStringInEnglish: "Option 5",
+            displayedString: "Option 5"
+          }
+        ]
+      }
+    }
 }
 
 export const themeOptions = {
@@ -42,7 +82,8 @@ export const FEEDBACK_FRAME_ID = 'feedback-iframe'
 let feedbackData = initfeedbackOptions
 
 export const feedbackCallbackEventListener = (event: MessageEvent<FeedbackRequestPayloadType>) => {
-  if (event.data) {
+  if (event.data.Event) {
+    console.log("we got an event with data");
     const payload: FeedbackRequestPayloadType = event.data
     switch (payload.Event) {
       case 'InAppFeedbackInitOptions': //This is required to initialise feedback
@@ -106,6 +147,8 @@ const sendFeedbackInitOptions = () => {
   type FeedbackResponsePayloadType = FeedbackResponseEventPayload<any>
   feedbackData.callbackFunctions = undefined
 //   feedbackData.feedbackConfig!.diagnosticsConfig!.attachDiagnostics = undefined
+  console.log("HELLOOOOOO")
+  console.log(feedbackData)
   console.log("got the message to init");
   let response: FeedbackResponsePayloadType = {
     event: 'InAppFeedbackInitOptions',
@@ -116,51 +159,20 @@ const sendFeedbackInitOptions = () => {
   iFrameEle!.contentWindow!.postMessage(response, 'https://admin-ignite.microsoft.com')
 }
 
-// const sendInAppFeedbackScreenshot = () => {
-//   type FeedbackResponsePayloadType = FeedbackResponseEventPayload<any>
-//   const response: FeedbackResponsePayloadType = {
-//     event: 'InAppFeedbackScreenshot',
-//     data: {
-//       providedScreenshotType: 'DynamicallyProvided',
-//       screenshotImageFormat: 'jpeg',
-//       screenshotBase64: SampleImage,
-//     },
-//   }
-//   const iFrameEle = document.getElementById(FEEDBACK_FRAME_ID) as HTMLIFrameElement
-//   iFrameEle!.contentWindow!.postMessage(response, 'https://admin-ignite.microsoft.com')
-// }
-
-// const sendInAppFeedbackGetContextData = () => {
-//   type FeedbackResponsePayloadType = FeedbackResponseEventPayload<any>
-//   const file1 = new File([SampleImage], 'sample file 1.txt', {
-//     type: 'text/plain',
-//   })
-//   const file2 = new File([SampleImage], 'sample file 2.txt', {
-//     type: 'text/plain',
-//   })
-
-//   const response: FeedbackResponsePayloadType = {
-//     event: 'InAppFeedbackGetContextData',
-//     data: [
-//       {
-//         fileName: 'sample file 1.png',
-//         fileType: 'png',
-//         fileDataBase64: SampleImage,
-//       },
-//     ],
-//   }
-//   const iFrameEle = document.getElementById(FEEDBACK_FRAME_ID) as HTMLIFrameElement
-//   iFrameEle!.contentWindow!.postMessage(response, 'https://admin-ignite.microsoft.com')
-// }
-
-
 export const Feedback = () => {
     const appId = 50315;
+
+    useEffect(() => {
+        window.addEventListener('message', feedbackCallbackEventListener)
+        return () => {
+            window.removeEventListener('message', feedbackCallbackEventListener)
+        }
+    }, [])
     return (
         <iframe
         title="feedback-demo"
-        height="600px" // You can change this according to your host app requirement
-        width="400px"  // You can change this according to your host app requirement
+        height="450px" // You can change this according to your host app requirement
+        width="700px"  // You can change this according to your host app requirement
         id={FEEDBACK_FRAME_ID}
         src={`https://admin-ignite.microsoft.com/centrohost?appname=ocvfeedback&feature=host-ocv-inapp-feedback&platform=web&appId=${appId}#/hostedpage`}
         allow="display-capture;" // This is needed if you want to use the native screenshot/screen recording feature
