@@ -91,7 +91,7 @@
     "pngjs": "3.4.0",
     "postcss": "6.0.21",
     "promise.prototype.finally": "^3.1.2",
-    "puppeteer": "13.0.1",
+    "puppeteer": "23.11.1",
     "request": "2.88.0",
     "rimraf": "2.5.4",
     "rtlcss": "2.2.1",
