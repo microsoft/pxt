@@ -1035,10 +1035,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                         if (/^github:/.test(url)) {
                             // strip 'github:', add '.md' file extension if necessary
                             url = url.replace(/^github:\/?/, '') + (/\.md$/i.test(url) ? "" : ".md");
-                            const readme = pkg.getEditorPkg(pkg.mainPkg).lookupFile(url);
-                            const readmeContent = readme?.content?.trim();
-                            if (readmeContent) {
-                                this.parent.setSideMarkdown(readmeContent);
+                            const content = resolveLocalizedMarkdown(url);
+                            if (content) {
+                                this.parent.setSideMarkdown(content);
                                 this.parent.setSideDocCollapsed(false);
                             }
                         } else if (/^\//.test(url)) {
@@ -2003,4 +2002,30 @@ function shouldEventHideFlyout(ev: Blockly.Events.Abstract) {
     }
 
     return true;
+}
+
+function resolveLocalizedMarkdown(url: string) {
+    const editorPackage = pkg.getEditorPkg(pkg.mainPkg);
+
+    const splitPath = url.split("/");
+    const fileName = splitPath.pop();
+    const dirName = splitPath.join("/");
+
+    const [initialLang, baseLang, initialLangLowerCase] = pxt.Util.normalizeLanguageCode(pxt.Util.userLanguage());
+    const priorityOrder = [initialLang, initialLangLowerCase, baseLang].filter((lang) => typeof lang === "string")
+    const pathsToTest = [
+        ...priorityOrder.map(lang =>`${dirName}/_locales/${lang}/${fileName}`),
+        url
+    ]
+
+    for (const path of pathsToTest) {
+        const file = editorPackage.lookupFile(path);
+        const content = file?.content?.trim();
+
+        if (content) {
+            return content;
+        }
+    }
+
+    return undefined;
 }

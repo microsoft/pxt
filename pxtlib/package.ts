@@ -921,7 +921,7 @@ namespace pxt {
         }
 
         /**
-         * Returns localized strings qName -> translation
+         * Returns localized strings qName (+ some additional identification data) -> translation
          */
         packageLocalizationStringsAsync(lang: string): Promise<Map<string>> {
             const targetId = pxt.appTarget.id;

@@ -368,10 +368,10 @@ namespace pxt {
         typeScriptWorkerJs: string; // /beta---tsworker
         pxtVersion: string; // "?",
         pxtRelId: string; // "9e298e8784f1a1d6787428ec491baf1f7a53e8fa",
-        pxtCdnUrl: string; // "https://pxt.azureedge.net/commit/9e2...e8fa/",
-        commitCdnUrl: string; // "https://pxt.azureedge.net/commit/9e2...e8fa/",
-        blobCdnUrl: string; // "https://pxt.azureedge.net/commit/9e2...e8fa/",
-        cdnUrl: string; // "https://pxt.azureedge.net"
+        pxtCdnUrl: string; // "https://cdn.makecode.com/commit/9e2...e8fa/",
+        commitCdnUrl: string; // "https://cdn.makecode.com/commit/9e2...e8fa/",
+        blobCdnUrl: string; // "https://cdn.makecode.com/commit/9e2...e8fa/",
+        cdnUrl: string; // "https://cdn.makecode.com"
         targetUrl: string; // "https://pxt.microbit.org"
         targetVersion: string; // "?",
         targetRelId: string; // "9e298e8784f1a1d6787428ec491baf1f7a53e8fa",

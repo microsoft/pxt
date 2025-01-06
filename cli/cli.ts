@@ -5072,7 +5072,156 @@ interface AnimationInfo {
     name: string;
 }
 
+interface BlockStringValidationResult {
+    result: boolean;
+    message?: string;
+    original?: string;
+    validate?: string;
+}
+/**
+ * Checks for syntax errors in a single block string by comparing against a baseline string for the same block.
+ */
+function validateBlockString(original: string, toValidate: string): BlockStringValidationResult {
+    function getResponse(result: boolean, message?: string) {
+        return {
+            result,
+            message,
+            original,
+            validate: toValidate
+        };
+    }
 
+    // Check for empty strings. Both empty is fine. One empty and not the other, fail.
+    if (!original && !toValidate) {
+        return getResponse(true, "Empty strings");
+    } else if (!original || !toValidate) {
+        return getResponse(false, "Mis-match empty and non-empty strings.");
+    }
+
+    // Split block strings by the optional parameter separator "||" and parse each section separately.
+    const originalParts = original.split("||");
+    const toValidateParts = toValidate.split("||");
+    if (originalParts.length !== toValidateParts.length) {
+        return getResponse(false, "Block string has non-matching number of segments.");
+    }
+
+    for (let i = 0; i < originalParts.length; i++) {
+        const originalParsed = pxtc.parseBlockDefinition(originalParts[i]);
+        const toValidateParsed = pxtc.parseBlockDefinition(toValidateParts[i]);
+
+        // Check if parameter count changed
+        if (originalParsed.parameters?.length != toValidateParsed.parameters?.length) {
+            return getResponse(false, "Block string has non-matching number of parameters.");
+        }
+
+        // Check if anything has been translated when it should not have been.
+        for (let p = 0; p < toValidateParsed.parameters?.length; p++) {
+            // For ref ($) params, order does not matter. For non-ref (%) params, it does.
+            const toValidateParam = toValidateParsed.parameters[p];
+            let matchParam;
+            if (toValidateParam.ref) {
+                matchParam = originalParsed.parameters.find(op => op.ref && op.name === toValidateParam.name);
+                if (!matchParam) {
+                    return getResponse(false, "Block string has non-matching parameters.");
+                }
+            } else {
+                matchParam = originalParsed.parameters[p];
+                if (matchParam.ref || toValidateParam.name !== matchParam.name) {
+                    return getResponse(false, "Block string has non-matching ordered parameters.");
+                }
+            }
+
+            if (toValidateParam.shadowBlockId !== matchParam.shadowBlockId) {
+                return getResponse(false, "Block string has non-matching shadow block IDs.");
+            }
+        }
+    }
+
+    // Passed all checks
+    return getResponse(true);
+}
+
+/**
+ * Checks for syntax errors in a translated block strings file by comparing against a baseline.
+ * Optionally prints the results to console or sends to a file, if an output file is specified.
+ */
+export function validateTranslatedBlocks(parsed?: commandParser.ParsedCommand): Promise<void> {
+    const originalFilePath = parsed.args[0];
+    const translatedFilePath = parsed.args[1];
+    const outputFilePath = parsed.args[2]; // Optional
+
+    if (!originalFilePath || !translatedFilePath) {
+        U.userError("Missing required arguments: originalFilePath, translatedFilePath");
+    }
+    if (!fs.existsSync(originalFilePath)) {
+        U.userError(`File ${originalFilePath} not found`);
+    }
+    if (!fs.existsSync(translatedFilePath)) {
+        U.userError(`File ${translatedFilePath} not found`);
+    }
+
+    /**
+     * Takes a key string from a translations file and returns the type of content it refers to (a block, a category, etc...)
+     * Matches pxtc.gendocs key construction
+     */
+    function getKeyType(key: string): "category" | "subcategory" | "group" | "block" | "unknown" {
+        if (key.startsWith("{id:category}")) return "category";
+        if (key.startsWith("{id:subcategory}")) return "subcategory";
+        if (key.startsWith("{id:group}")) return "group";
+        if (key.endsWith("|block")) return "block";
+        return "unknown";
+    }
+
+    const originalMap = JSON.parse(fs.readFileSync(originalFilePath, 'utf8'));
+
+    const translationMap = JSON.parse(fs.readFileSync(translatedFilePath, 'utf8'));
+    const translationKeys = Object.keys(translationMap);
+
+    const results: { [translationKey: string]: BlockStringValidationResult} = {};
+    for (const translationKey of translationKeys) {
+        if (!(translationKey in originalMap)) {
+            results[translationKey] = { result: false, message: `Original string not found for key: ${translationKey}` };
+            continue;
+        }
+
+        const keyType = getKeyType(translationKey);
+        const translationString = translationMap[translationKey];
+        const originalString = originalMap[translationKey];
+        switch (keyType) {
+            case "block": {
+                const validation = validateBlockString(originalString, translationString);
+                results[translationKey] = validation;
+                break;
+            }
+            case "category":
+            case "subcategory":
+            case "group":
+            case "unknown":
+            default: {
+                results[translationKey] = {
+                    result: true,
+                    message: `No validation performed for key type: ${keyType}`,
+                    original: originalString,
+                    validate: translationString
+                };
+            }
+        }
+    }
+
+    if (outputFilePath) {
+        // Create directories for output file, if needed.
+        const outputDir = path.dirname(outputFilePath);
+        if (!fs.existsSync(outputDir)) {
+            fs.mkdirSync(outputDir, { recursive: true });
+        }
+        fs.writeFileSync(outputFilePath, JSON.stringify(results, null, 2));
+        pxt.log(`Results written to ${outputFilePath}`);
+    } else {
+        pxt.log(JSON.stringify(results, null, 2));
+    }
+
+    return Promise.resolve();
+}
 
 export function buildJResSpritesAsync(parsed: commandParser.ParsedCommand) {
     ensurePkgDir()
@@ -7395,7 +7544,15 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
         help: "Validate and attempt to fix common pxt.json issues",
     }, validateAndFixPkgConfig);
 
-    advancedCommand("buildshims", "Regenerate shims.d.ts, enums.d.ts", buildShimsAsync)
+    advancedCommand("buildshims", "Regenerate shims.d.ts, enums.d.ts", buildShimsAsync);
+
+    p.defineCommand({
+        name: "validatetranslatedblocks",
+        aliases: ["vtb"],
+        help: "Validate a file of translated block strings against a baseline",
+        advanced: true,
+        argString: "<original-file> <translated-file> <output-file>"
+    }, validateTranslatedBlocks);
 
     function simpleCmd(name: string, help: string, callback: (c?: commandParser.ParsedCommand) => Promise<void>, argString?: string, onlineHelp?: boolean): void {
         p.defineCommand({ name, help, onlineHelp, argString }, callback);

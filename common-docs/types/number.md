@@ -4,21 +4,23 @@ An number value.
 
 ### @parent blocks/language
 
-A *Number* is a numeric value that is an integer or a rational number. Numbers are stored in multiple bytes in _floating point_ format. This is so that numbers with a fractional portion can have precise calculations perfomed on them.
+A *Number* is a numeric value that is an integer or a rational number. Numbers are stored in multiple bytes in _floating point_ format. This is so that numbers with a fractional portion can have precise calculations performed on them.
 
 Some examples of different types of number values:
 
-* 67 - positive integer
-* -345 - negative integer
-* 0 - zero
-* 19.43 - floating point
-* -45.245 - negative floating point
-* 0.4567 - fractional floating point
-* 8.23e+21 - floating point with exponent notation
+| Number | Type of value |
+| - | - |
+| 67  | positive integer |
+| -345 | negative integer |
+| 0 | zero |
+| 19.43 | floating point
+| -45.245 | negative floating point |
+| 0.4567 | fractional floating point |
+| 8.23e+21 | floating point with exponent notation |
 
 ### Declare a number variable
 
-You can assign a number to a variable:
+You can [assign](/blocks/variables/assign) a number to a variable:
 
 #### #declareexample
 
