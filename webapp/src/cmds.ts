@@ -390,6 +390,18 @@ function applyExtensionResult() {
         log(`extension tutorial completed`);
         pxt.commands.onTutorialCompleted = res.onTutorialCompleted;
     }
+    if (res.onPostHostMessage) {
+        log(`extension post host message`);
+        pxt.commands.onPostHostMessage = res.onPostHostMessage;
+    }
+    if (res.onPerfMilestone) {
+        log(`extension perf milestone`);
+        pxt.commands.onPerfMilestone = res.onPerfMilestone;
+    }
+    if (res.onPerfMeasurement) {
+        log(`extension perf measurement`);
+        pxt.commands.onPerfMeasurement = res.onPerfMeasurement;
+    }
     if (res.showProgramTooLargeErrorAsync) {
         log(`extension showProgramTooLargeErrorAsync`);
         pxt.commands.showProgramTooLargeErrorAsync = res.showProgramTooLargeErrorAsync;

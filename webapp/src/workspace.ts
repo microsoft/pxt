@@ -21,6 +21,7 @@ import Cloud = pxt.Cloud;
 
 import * as pxtblockly from "../../pxtblocks";
 import { getTextAtTime, HistoryFile } from "../../pxteditor/history";
+import { Milestones } from "./constants";
 
 
 // Avoid importing entire crypto-js
@@ -300,7 +301,7 @@ export function initAsync() {
     return syncAsync()
         .then(state => cleanupBackupsAsync().then(() => state))
         .then(_ => {
-            pxt.perf.recordMilestone("workspace init finished")
+            pxt.perf.recordMilestone(Milestones.WorkspaceInitFinished)
             return _
         })
 }
