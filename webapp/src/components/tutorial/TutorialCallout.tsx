@@ -30,6 +30,10 @@ export function TutorialCallout(props: TutorialCalloutProps) {
                 setMaxHeight("90vh");
             } else {
                 setBottom("unset");
+
+                // Set the top of the hint to the bottom of wrapper div (which aligns to the hint button).
+                const popupBottom = popupRef.current?.getBoundingClientRect().bottom;
+                setTop(popupBottom ? `${popupBottom}px` : "unset");
             }
         }
 

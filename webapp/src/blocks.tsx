@@ -35,6 +35,7 @@ import SimState = pxt.editor.SimState;
 
 import { DuplicateOnDragConnectionChecker } from "../../pxtblocks/plugins/duplicateOnDrag";
 import { PathObject } from "../../pxtblocks/plugins/renderer/pathObject";
+import { Measurements } from "./constants";
 
 
 export class Editor extends toolboxeditor.ToolboxEditor {
@@ -197,7 +198,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (this.delayLoadXml) {
             if (this.loadingXml) return
             pxt.debug(`loading blockly`)
-            pxt.perf.measureStart("domUpdate loadBlockly")
+            pxt.perf.measureStart(Measurements.DomUpdateLoadBlockly)
             this.loadingXml = true
 
             const loadingDimmer = document.createElement("div");
@@ -235,7 +236,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     } catch { }
                     this.loadingXml = false;
                     this.loadingXmlPromise = null;
-                    pxt.perf.measureEnd("domUpdate loadBlockly")
+                    pxt.perf.measureEnd(Measurements.DomUpdateLoadBlockly)
                     // Do Not Remove: This is used by the skillmap
                     this.parent.onEditorContentLoaded();
                 });
@@ -597,7 +598,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private prepareBlockly(forceHasCategories?: boolean) {
-        pxt.perf.measureStart("prepareBlockly")
+        pxt.perf.measureStart(Measurements.PrepareBlockly)
         let blocklyDiv = document.getElementById('blocksEditor');
         if (!blocklyDiv)
             return;
@@ -737,7 +738,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.setupIntersectionObserver();
         this.resize();
 
-        pxt.perf.measureEnd("prepareBlockly")
+        pxt.perf.measureEnd(Measurements.PrepareBlockly)
     }
 
     protected setupIntersectionObserver() {
@@ -930,7 +931,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const container = document.getElementById('debuggerToolbox');
         if (!container) return;
 
-        pxt.perf.measureStart("updateToolbox")
+        pxt.perf.measureStart(Measurements.UpdateToolbox)
         const debugging = !!this.parent.state.debugging;
         let debuggerToolbox = debugging ? <DebuggerToolbox
                 ref={this.handleDebuggerToolboxRef}
@@ -948,7 +949,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.toolbox.show();
         }
         ReactDOM.render(debuggerToolbox, container);
-        pxt.perf.measureEnd("updateToolbox")
+        pxt.perf.measureEnd(Measurements.UpdateToolbox)
     }
 
     showPackageDialog() {
@@ -997,13 +998,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const m = this.editor.getMetrics();
         b.moveBy(m.viewWidth / 2, m.viewHeight / 3);
         b.initSvg();
-        b.render();
+        b.queueRender();
     }
 
     private _loadBlocklyPromise: Promise<void>;
     loadBlocklyAsync() {
         if (!this._loadBlocklyPromise) {
-            pxt.perf.measureStart("loadBlockly")
+            pxt.perf.measureStart(Measurements.LoadBlockly)
             pxtblockly.applyMonkeyPatches();
             this._loadBlocklyPromise = pxt.BrowserUtils.loadBlocklyAsync()
                 .then(() => {
@@ -1034,10 +1035,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                         if (/^github:/.test(url)) {
                             // strip 'github:', add '.md' file extension if necessary
                             url = url.replace(/^github:\/?/, '') + (/\.md$/i.test(url) ? "" : ".md");
-                            const readme = pkg.getEditorPkg(pkg.mainPkg).lookupFile(url);
-                            const readmeContent = readme?.content?.trim();
-                            if (readmeContent) {
-                                this.parent.setSideMarkdown(readmeContent);
+                            const content = resolveLocalizedMarkdown(url);
+                            if (content) {
+                                this.parent.setSideMarkdown(content);
                                 this.parent.setSideDocCollapsed(false);
                             }
                         } else if (/^\//.test(url)) {
@@ -1049,7 +1049,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     this.prepareBlockly();
                 })
                 .then(() => initEditorExtensionsAsync())
-                .then(() => pxt.perf.measureEnd("loadBlockly"))
+                .then(() => pxt.perf.measureEnd(Measurements.LoadBlockly));
         }
         return this._loadBlocklyPromise;
     }
@@ -1284,7 +1284,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     private refreshToolbox() {
         if (!this.blockInfo) return;
-        pxt.perf.measureStart("refreshToolbox")
+        pxt.perf.measureStart(Measurements.RefreshToolbox)
         // no toolbox when readonly
         if (pxt.shell.isReadOnly()) return;
 
@@ -1334,7 +1334,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 refreshBlockly();
             }
         }
-        pxt.perf.measureEnd("refreshToolbox")
+        pxt.perf.measureEnd(Measurements.RefreshToolbox)
     }
 
     filterToolbox(showCategories?: boolean) {
@@ -2002,4 +2002,30 @@ function shouldEventHideFlyout(ev: Blockly.Events.Abstract) {
     }
 
     return true;
+}
+
+function resolveLocalizedMarkdown(url: string) {
+    const editorPackage = pkg.getEditorPkg(pkg.mainPkg);
+
+    const splitPath = url.split("/");
+    const fileName = splitPath.pop();
+    const dirName = splitPath.join("/");
+
+    const [initialLang, baseLang, initialLangLowerCase] = pxt.Util.normalizeLanguageCode(pxt.Util.userLanguage());
+    const priorityOrder = [initialLang, initialLangLowerCase, baseLang].filter((lang) => typeof lang === "string")
+    const pathsToTest = [
+        ...priorityOrder.map(lang =>`${dirName}/_locales/${lang}/${fileName}`),
+        url
+    ]
+
+    for (const path of pathsToTest) {
+        const file = editorPackage.lookupFile(path);
+        const content = file?.content?.trim();
+
+        if (content) {
+            return content;
+        }
+    }
+
+    return undefined;
 }

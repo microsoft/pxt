@@ -1202,6 +1202,7 @@ declare namespace pxt.tutorial {
         activities?: boolean; // tutorial consists of activities, then steps. uses `###` for steps
         explicitHints?: boolean; // tutorial expects explicit hints in `#### ~ tutorialhint` format
         flyoutOnly?: boolean; // no categories, display all blocks in flyout
+        hideToolbox?: boolean; // hide the toolbox in the tutorial
         hideIteration?: boolean; // hide step control in tutorial
         diffs?: boolean; // automatically diff snippets
         noDiffs?: boolean; // don't automatically generated diffs
@@ -1209,6 +1210,7 @@ declare namespace pxt.tutorial {
         codeStop?: string; // command to run when code stops (MINECRAFT HOC ONLY)
         autoexpandOff?: boolean; // INTERNAL TESTING ONLY
         preferredEditor?: string; // preferred editor for opening the tutorial
+        hideDone?: boolean; // Do not show a "Done" button at the end of the tutorial
     }
 
     interface TutorialBlockConfigEntry {

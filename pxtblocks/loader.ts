@@ -24,6 +24,7 @@ import { initContextMenu } from "./contextMenu";
 import { renderCodeCard } from "./codecardRenderer";
 import { FieldDropdown } from "./fields/field_dropdown";
 import { setDraggableShadowBlocks, setDuplicateOnDragStrategy } from "./plugins/duplicateOnDrag";
+import { applyPolyfills } from "./polyfills";
 
 
 interface BlockDefinition {
@@ -134,7 +135,7 @@ function injectBlockDefinition(info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, comp:
     }
 
     if (Blockly.Blocks[fn.attributes.blockId]) {
-        console.error("duplicate block definition: " + id);
+        pxt.error("duplicate block definition: " + id);
         return false;
     }
 
@@ -342,7 +343,7 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
 
         if (fn.attributes.shim === "ENUM_GET" || fn.attributes.shim === "KIND_GET") {
             if (comp.parameters.length > 1 || comp.thisParameter) {
-                console.warn(`Enum blocks may only have 1 parameter but ${fn.attributes.blockId} has ${comp.parameters.length}`);
+                pxt.warn(`Enum blocks may only have 1 parameter but ${fn.attributes.blockId} has ${comp.parameters.length}`);
                 return;
             }
         }
@@ -383,7 +384,7 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
 
                     firstParam = false;
                     if (!pr) {
-                        console.error("block " + fn.attributes.blockId + ": unknown parameter " + part.name + (part.ref ? ` (${part.ref})` : ""));
+                        pxt.error("block " + fn.attributes.blockId + ": unknown parameter " + part.name + (part.ref ? ` (${part.ref})` : ""));
                         return;
                     }
 
@@ -424,7 +425,7 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
                         }
 
                         if (syms.length == 0) {
-                            console.error(`no instances of ${typeInfo.qName} found`)
+                            pxt.error(`no instances of ${typeInfo.qName} found`)
                         }
                         const dd: Blockly.MenuOption[] = syms.map(v => {
                             let k = v.attributes.block || v.attributes.blockId || v.name;
@@ -587,6 +588,8 @@ let blocklyInitialized = false;
 function init(blockInfo: pxtc.BlocksInfo) {
     if (blocklyInitialized) return;
     blocklyInitialized = true;
+
+    applyPolyfills();
 
     initFieldEditors();
     initContextMenu();

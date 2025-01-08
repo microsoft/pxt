@@ -921,7 +921,7 @@ namespace pxt {
         }
 
         /**
-         * Returns localized strings qName -> translation
+         * Returns localized strings qName (+ some additional identification data) -> translation
          */
         packageLocalizationStringsAsync(lang: string): Promise<Map<string>> {
             const targetId = pxt.appTarget.id;
@@ -1205,7 +1205,7 @@ namespace pxt {
             await this.loadAsync()
 
             opts.bannedCategories = this.resolveBannedCategories();
-            pxt.debug(`building: ${this.sortedDeps().map(p => p.config.name).join(", ")}`)
+            pxt.debug(`building: ${this.sortedDeps().map(p => p.config?.name).join(", ")}`)
 
             let variants: string[]
 

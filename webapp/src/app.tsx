@@ -62,6 +62,7 @@ import * as electron from "./electron";
 import * as blocklyFieldView from "./blocklyFieldView";
 import * as pxtblockly from "../../pxtblocks";
 import * as pxteditor from "../../pxteditor";
+import { Measurements, Milestones } from "./constants";
 
 import IAppProps = pxt.editor.IAppProps;
 import IAppState = pxt.editor.IAppState;
@@ -903,7 +904,7 @@ export class ProjectView
     }
 
     private maybeShowPackageErrors(force = false) {
-        pxt.perf.measureStart("maybeShowPackageErrors")
+        pxt.perf.measureStart(Measurements.MaybeShowPackageErrors)
         // Only show in blocks or main.ts
         if (this.state.currFile) {
             const fn = this.state.currFile;
@@ -935,11 +936,11 @@ export class ProjectView
                             this.openHome();
                         }
                     });
-                pxt.perf.measureEnd("maybeShowPackageErrors")
+                pxt.perf.measureEnd(Measurements.MaybeShowPackageErrors)
                 return true;
             }
         }
-        pxt.perf.measureEnd("maybeShowPackageErrors")
+        pxt.perf.measureEnd(Measurements.MaybeShowPackageErrors)
         return false;
     }
 
@@ -1103,6 +1104,7 @@ export class ProjectView
                 return false;
             },
             restartSimulator: () => this.restartSimulator(),
+            singleSimulator: () => this.singleSimulator(),
             onStateChanged: (state) => {
                 const simStateChanged = () => this.allEditors.forEach((editor) => editor.simStateChanged());
                 switch (state) {
@@ -1858,7 +1860,7 @@ export class ProjectView
             return;
         }
 
-        pxt.perf.measureStart("loadTutorial loadBlockly")
+        pxt.perf.measureStart(Measurements.LoadTutorialLoadBlockly)
 
         const t = header.tutorial;
 
@@ -1895,7 +1897,7 @@ export class ProjectView
             core.warningNotification(lf("Could not filter tutorial blocks, displaying full toolbox."))
         }
         finally {
-            pxt.perf.measureEnd("loadTutorial loadBlockly")
+            pxt.perf.measureEnd(Measurements.LoadTutorialLoadBlockly)
         }
     }
 
@@ -1938,7 +1940,7 @@ export class ProjectView
                 })();
             } catch (e) {
                 // Failed to decompile, don't propagate exception
-                console.error(`Failed to resolve blockconfig for tutorial: ${header.tutorial.tutorialName}, ${e.message}. md:${blockConfig.md}`);
+                pxt.error(`Failed to resolve blockconfig for tutorial: ${header.tutorial.tutorialName}, ${e.message}. md:${blockConfig.md}`);
             }
 
             for (const block of blocks) {
@@ -1970,7 +1972,7 @@ export class ProjectView
                     blockConfig.blocks.push(entry);
                 } catch (e) {
                     // Failed to resolve block, don't propagate exception
-                    console.error(`Failed to resolve blockconfig for tutorial: ${header.tutorial.tutorialName}. ${e.message}`);
+                    pxt.error(`Failed to resolve blockconfig for tutorial: ${header.tutorial.tutorialName}. ${e.message}`);
                 }
             }
         };
@@ -2009,7 +2011,7 @@ export class ProjectView
         }
         else if (!header.tutorial.templateCode || header.tutorial.templateLoaded) {
             if (header.tutorial.mergeCarryoverCode && header.tutorial.mergeHeaderId) {
-                console.warn(lf("Refusing to carry code between tutorials because the loaded tutorial \"{0}\" does not contain a template code block.", header.tutorial.tutorial));
+                pxt.warn(lf("Refusing to carry code between tutorials because the loaded tutorial \"{0}\" does not contain a template code block.", header.tutorial.tutorial));
             }
             return;
         }
@@ -2918,7 +2920,7 @@ export class ProjectView
     }
 
     async createProjectAsync(options: ProjectCreationOptions): Promise<void> {
-        pxt.perf.measureStart("createProjectAsync")
+        pxt.perf.measureStart(Measurements.CreateProjectAsync)
         this.setSideDoc(undefined);
         if (!options.prj) options.prj = pxt.appTarget.blocksprj;
         let cfg = pxt.U.clone(options.prj.config);
@@ -3011,7 +3013,7 @@ export class ProjectView
         );
 
         await this.loadHeaderAsync(hd, { filters: options.filters }, false);
-        pxt.perf.measureEnd("createProjectAsync");
+        pxt.perf.measureEnd(Measurements.CreateProjectAsync);
     }
 
     // in multiboard targets, allow use to pick a different board
@@ -3285,7 +3287,7 @@ export class ProjectView
                     this.checkForHwVariant()
                 }, pairAsync)
                 .then(() => {
-                    pxt.perf.recordMilestone("HID bridge init finished")
+                    pxt.perf.recordMilestone(Milestones.HIDBridgeInitFinished)
                 })
             return true
         }
@@ -3773,6 +3775,10 @@ export class ProjectView
         return this.state.simState == SimState.Running;
     }
 
+    singleSimulator() {
+        simulator.driver.setSingleSimulator();
+    }
+
     restartSimulator() {
         const isDebug = this.state.tracing || this.state.debugging;
         if (this.state.simState == SimState.Stopped
@@ -3808,7 +3814,7 @@ export class ProjectView
     }
 
     stopSimulator(unload?: boolean, opts?: pxt.editor.SimulatorStartOptions) {
-        pxt.perf.measureStart("stopSimulator")
+        pxt.perf.measureStart(Measurements.StopSimulator)
         pxt.tickEvent('simulator.stop')
         const clickTrigger = opts && opts.clickTrigger;
         pxt.debug(`sim: stop (autorun ${this.state.autoRun})`)
@@ -3828,7 +3834,7 @@ export class ProjectView
             this.setState({ simState: SimState.Stopped, autoRun: autoRun });
         }
 
-        pxt.perf.measureEnd("stopSimulator")
+        pxt.perf.measureEnd(Measurements.StopSimulator)
     }
 
     suspendSimulator() {
@@ -4160,7 +4166,7 @@ export class ProjectView
 
     getBlocks(): Blockly.Block[] {
         if (!this.isBlocksActive()) {
-            console.error("Trying to get blocks from a non-blocks editor.");
+            pxt.error("Trying to get blocks from a non-blocks editor.");
             throw new Error("Trying to get blocks from a non-blocks editor.");
         }
 
@@ -4169,7 +4175,7 @@ export class ProjectView
 
     getToolboxCategories(advanced?: boolean): pxt.editor.EditorMessageGetToolboxCategoriesResponse {
         if (!this.isBlocksActive()) {
-            console.error("Trying to get blocks info from a non-blocks editor.");
+            pxt.error("Trying to get blocks info from a non-blocks editor.");
             throw new Error("Trying to get blocks info from a non-blocks editor.");
         }
 
@@ -4707,12 +4713,16 @@ export class ProjectView
 
         let markdown: string;
 
+        if (pxt.commands.onMarkdownActivityLoad) {
+            await pxt.commands.onMarkdownActivityLoad(path, title, editorProjectName);
+        }
+
         try {
             if (/^\//.test(path)) {
                 filename = title || path.split('/').reverse()[0].replace('-', ' '); // drop any kind of sub-paths
-                pxt.perf.measureStart("downloadMarkdown");
-                const rawMarkdown = await pxt.Cloud.markdownAsync(path);
-                pxt.perf.measureEnd("downloadMarkdown");
+                pxt.perf.measureStart(Measurements.DownloadMarkdown);
+                const rawMarkdown = await pxt.Cloud.markdownAsync(path, undefined, undefined, true);
+                pxt.perf.measureEnd(Measurements.DownloadMarkdown);
                 autoChooseBoard = true;
                 markdown = processMarkdown(rawMarkdown);
             } else if (scriptId) {
@@ -4728,7 +4738,7 @@ export class ProjectView
             } else if (!!ghid && ghid.owner && ghid.project) {
                 pxt.tickEvent("tutorial.github");
                 pxt.log(`loading tutorial from ${ghid.fullName}`)
-                pxt.perf.measureStart("downloadGitHubTutorial");
+                pxt.perf.measureStart(Measurements.DownloadGitHubTutorial);
                 const config = await pxt.packagesConfigAsync();
 
                 const status = pxt.github.repoStatus(ghid, config);
@@ -4743,25 +4753,8 @@ export class ProjectView
                         break;
                 }
 
-                let githubTag: string;
-                if (ghid.tag) {
-                    githubTag = ghid.tag;
-                }
-                else {
-                    githubTag = await pxt.github.latestVersionAsync(ghid.slug, config, true);
-                }
-
-                let gh: pxt.github.CachedPackage;
-                if (!githubTag) {
-                    pxt.log(`tutorial github tag not found at ${ghid.fullName}`);
-                    gh = undefined;
-                }
-                else {
-                    ghid.tag = githubTag;
-                    pxt.log(`tutorial ${ghid.fullName} tag: ${githubTag}`);
-                    gh = await pxt.github.downloadPackageAsync(`${ghid.slug}#${ghid.tag}`, config);
-                }
-                pxt.perf.measureEnd("downloadGitHubTutorial");
+                let gh = await pxt.github.downloadTutorialMarkdownAsync(path, ghid.tag);
+                pxt.perf.measureEnd(Measurements.DownloadGitHubTutorial);
 
                 // check for cached tutorial info, save into IndexedDB if found
                 if (gh?.files[pxt.TUTORIAL_INFO_FILE]) {
@@ -4893,7 +4886,7 @@ export class ProjectView
     async startActivity(opts: pxt.editor.StartActivityOptions) {
         const { activity, path, editor, title, focus, importOptions, previousProjectHeaderId, carryoverPreviousCode } = opts;
 
-        pxt.perf.measureStart("startActivity");
+        pxt.perf.measureStart(Measurements.StartActivity);
 
         this.textEditor.giveFocusOnLoading = focus;
         switch (activity) {
@@ -4911,7 +4904,7 @@ export class ProjectView
                 break;
         }
 
-        pxt.perf.measureEnd("startActivity")
+        pxt.perf.measureEnd(Measurements.StartActivity);
     }
 
     async completeTutorialAsync(): Promise<void> {
@@ -5006,11 +4999,11 @@ export class ProjectView
         if (this.isTutorial()) {
             pxt.tickEvent("tutorial.editorLoaded")
             this.postTutorialLoaded();
+        }
 
-            pxt.perf.recordMilestone("editorContentLoaded");
-            if (!this.autoRunOnStart()) {
-                pxt.analytics.trackPerformanceReport();
-            }
+        pxt.perf.recordMilestone(Milestones.EditorContentLoaded);
+        if (!this.autoRunOnStart()) {
+            pxt.analytics.trackPerformanceReport();
         }
 
         const msg: pxt.editor.EditorContentLoadedRequest = {
@@ -5044,7 +5037,8 @@ export class ProjectView
     setEditorOffset() {
         if (this.isTutorial()) {
             if (!pxt.BrowserUtils.useOldTutorialLayout()) {
-                const tutorialEl = document?.getElementById("tutorialWrapper");
+                const tutorialElements = document?.getElementsByClassName("tutorialWrapper");
+                const tutorialEl = tutorialElements?.length === 1 ? (tutorialElements[0] as HTMLElement) : undefined;
                 if (tutorialEl && (pxt.BrowserUtils.isTabletSize() || pxt.appTarget.appTheme.tutorialSimSidebarLayout)) {
                     this.setState({ editorOffset: tutorialEl.offsetHeight + "px" });
                 } else {
@@ -5053,7 +5047,11 @@ export class ProjectView
             } else {
                 const tc = document.getElementById("tutorialcard");
                 if (tc) {
-                    const flyoutOnly = this.state.editorState?.hasCategories === false || this.state.tutorialOptions?.metadata?.flyoutOnly;
+                    const flyoutOnly =
+                        this.state.editorState?.hasCategories === false
+                        || this.state.tutorialOptions?.metadata?.flyoutOnly
+                        || this.state.tutorialOptions?.metadata?.hideToolbox;
+
                     let headerHeight = 0;
                     if (flyoutOnly) {
                         const headers = document.getElementById("headers");
@@ -5276,7 +5274,9 @@ export class ProjectView
         const inEditor = !!this.state.header && !inHome;
         const { lightbox, greenScreen, accessibleBlocks } = this.state;
         const hideTutorialIteration = inTutorial && tutorialOptions.metadata?.hideIteration;
-        const flyoutOnly = this.state.editorState?.hasCategories === false || (inTutorial && tutorialOptions.metadata?.flyoutOnly);
+        const hideToolbox = inTutorial && tutorialOptions.metadata?.hideToolbox;
+        // flyoutOnly has become a de facto css class for styling tutorials (especially minecraft HOC), so keep it if hideToolbox is true, even if flyoutOnly is false.
+        const flyoutOnly = this.state.editorState?.hasCategories === false || (inTutorial && (tutorialOptions.metadata?.flyoutOnly || hideToolbox));
         const { hideEditorToolbar, transparentEditorToolbar } = targetTheme;
         const hideMenuBar = targetTheme.hideMenuBar || hideTutorialIteration || (isTabTutorial && pxt.appTarget.appTheme.embeddedTutorial) || pxt.shell.isTimeMachineEmbed();
         const isHeadless = simOpts && simOpts.headless;
@@ -5327,6 +5327,7 @@ export class ProjectView
             logoWide ? "logo-wide" : "",
             isHeadless ? "headless" : "",
             flyoutOnly ? "flyoutOnly" : "",
+            hideToolbox ? "hideToolbox" : "",
             hideTutorialIteration ? "hideIteration" : "",
             this.editor != this.blocksEditor ? "editorlang-text" : "",
             this.editor == this.textEditor && this.state.errorListState,
@@ -5375,7 +5376,7 @@ export class ProjectView
                 {isSidebarTutorial && flyoutOnly && inTutorial && <sidebarTutorial.SidebarTutorialCard ref={ProjectView.tutorialCardId} parent={this} pokeUser={this.state.pokeUserComponent == ProjectView.tutorialCardId} />}
                 {inTutorial && !isTabTutorial && <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
                     {!(isSidebarTutorial && flyoutOnly) && inTutorial && <tutorial.TutorialCard ref={ProjectView.tutorialCardId} parent={this} pokeUser={this.state.pokeUserComponent == ProjectView.tutorialCardId} />}
-                    {flyoutOnly && <tutorial.WorkspaceHeader parent={this} />}
+                    {flyoutOnly && <tutorial.WorkspaceHeader parent={this} workspaceId={this.editor.getId()} />}
                 </div>}
                 <sidepanel.Sidepanel parent={this} inHome={inHome}
                     showKeymap={this.state.keymap && simOpts.keymap}
@@ -5464,7 +5465,7 @@ function initPacketIO() {
                 }, "*")
             } catch (e) {
                 // data decoding failed, ignore
-                console.debug(`invalid utf8 serial data`, { buf, e })
+                pxt.debug(`invalid utf8 serial data`, { buf, e })
             }
         },
         (type, payload) => {
@@ -5565,7 +5566,7 @@ function assembleCurrent() {
 }
 
 function log(v: any) {
-    console.log(v)
+    pxt.log(v)
 }
 
 // This is for usage from JS console
@@ -5865,7 +5866,7 @@ function clearHashChange() {
 
 function saveAsBlocks(): boolean {
     try {
-        return /saveblocks=1/.test(window.location.href) && !!pkg.mainPkg.readFile(pxt.MAIN_BLOCKS)
+        return /save(?:as)?blocks=1/i.test(window.location.href) && !!pkg.mainPkg.readFile(pxt.MAIN_BLOCKS)
     } catch (e) { return false; }
 }
 
@@ -5882,7 +5883,8 @@ function initExtensionsAsync(): Promise<void> {
     const opts: pxt.editor.ExtensionOptions = {
         blocklyToolbox: blocklyToolbox.getToolboxDefinition(),
         monacoToolbox: monacoToolbox.getToolboxDefinition(),
-        projectView: theEditor
+        projectView: theEditor,
+        showNotification: (msg) => core.infoNotification(msg)
     };
     return pxt.BrowserUtils.loadScriptAsync("editor.js")
         .then(() => pxt.editor.initExtensionsAsync(opts))
@@ -5909,6 +5911,12 @@ function initExtensionsAsync(): Promise<void> {
                 if (res.toolboxOptions.monacoToolbox) {
                     monacoToolbox.overrideToolbox(res.toolboxOptions.monacoToolbox);
                 }
+            }
+            if (res.onPerfMilestone) {
+                pxt.perf.onMilestone.subscribe(res.onPerfMilestone);
+            }
+            if (res.onPerfMeasurement) {
+                pxt.perf.onMeasurement.subscribe(res.onPerfMeasurement);
             }
             cmds.setExtensionResult(res);
         });
@@ -5953,14 +5961,15 @@ function filenameForEditor(editor: string): string {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-    pxt.perf.recordMilestone(`DOM loaded`)
+    pxt.perf.recordMilestone(Milestones.DOMLoaded)
 
     pxt.setupWebConfig((window as any).pxtConfig);
     const config = pxt.webConfig
 
     const optsQuery = Util.parseQueryString(window.location.href.toLowerCase());
-    if (optsQuery["dbg"] == "1")
-        pxt.debug = console.debug;
+    if (optsQuery["dbg"] == "1") {
+        pxt.setLogLevel(pxt.LogLevel.Debug);
+    }
     pxt.options.light = optsQuery["light"] == "1" || pxt.BrowserUtils.isARM() || pxt.BrowserUtils.isIE();
     if (pxt.options.light) {
         pxsim.U.addClass(document.body, 'light');
@@ -5982,14 +5991,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     initGitHubDb();
 
-    pxt.perf.measureStart("setAppTarget");
+    pxt.perf.measureStart(Measurements.SetAppTarget);
     pkg.setupAppTarget((window as any).pxtTargetBundle);
 
     // DO NOT put any async code before this line! The serviceworker must be initialized before
     // the window load event fires
     appcache.init(() => theEditor.reloadEditor());
     pxt.setBundledApiInfo((window as any).pxtTargetBundle.apiInfo);
-    pxt.perf.measureEnd("setAppTarget");
+    pxt.perf.measureEnd(Measurements.SetAppTarget);
 
     let theme = pxt.appTarget.appTheme;
     const isControllerIFrame = theme.allowParentController || pxt.shell.isControllerMode()
@@ -6102,7 +6111,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             })
             let useLang: string = undefined;
             if (/[&?]translate=1/.test(href) && !pxt.BrowserUtils.isIE()) {
-                console.log(`translation mode`);
+                pxt.log(`translation mode`);
                 force = true;
                 pxt.Util.enableLiveLocalizationUpdates();
                 useLang = ts.pxtc.Util.TRANSLATION_LOCALE;
@@ -6174,7 +6183,12 @@ document.addEventListener("DOMContentLoaded", async () => {
             if (state)
                 theEditor.setState({ editorState: state });
             return initExtensionsAsync(); // need to happen before cmd init
-        }).then(() => cmds.initAsync())
+        })
+        .then(() => cmds.initAsync())
+        .then(() => {
+            // After extension cmds init, call pxteditor.enableControllerAnalytics again in case we need to send analytics to the extension
+            pxteditor.enableControllerAnalytics();
+        })
         .then(() => {
             initPacketIO();
             initSerial();

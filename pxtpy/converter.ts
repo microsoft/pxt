@@ -1198,7 +1198,7 @@ namespace pxt.py {
             return scope(f);
         }
         catch (e) {
-            console.log(e)
+            pxt.log(e)
             return B.mkStmt(todoComment(`conversion failed for ${(v as any).name || v.kind}`, []));
         }
     }
@@ -2935,9 +2935,9 @@ namespace pxt.py {
             try {
                 lastFile = fn
                 let tokens = pxt.py.lex(src)
-                //console.log(pxt.py.tokensToString(tokens))
+                //pxt.log(pxt.py.tokensToString(tokens))
                 let res = pxt.py.parse(src, sn, tokens)
-                //console.log(pxt.py.dump(stmts))
+                //pxt.log(pxt.py.dump(stmts))
 
                 U.pushRange(diagnostics, res.diagnostics)
 
@@ -2951,7 +2951,7 @@ namespace pxt.py {
                 } as any)
             } catch (e) {
                 // TODO
-                console.log("Parse error", e)
+                pxt.log("Parse error", e)
             }
         }
 
@@ -2962,9 +2962,9 @@ namespace pxt.py {
             for (let m of modules) {
                 try {
                     toTS(m)
-                    // console.log(`after ${currIteration} - ${numUnifies}`)
+                    // pxt.log(`after ${currIteration} - ${numUnifies}`)
                 } catch (e) {
-                    console.log("Conv pass error", e);
+                    pxt.log("Conv pass error", e);
                 }
             }
             if (numUnifies == 0)
@@ -3008,7 +3008,7 @@ namespace pxt.py {
                     .map(unpackInterval)
                     .filter(i => !!i) as pxtc.SourceInterval[]
             } catch (e) {
-                console.log("Conv error", e);
+                pxt.log("Conv error", e);
             }
         }
 

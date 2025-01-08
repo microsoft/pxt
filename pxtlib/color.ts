@@ -17,7 +17,7 @@ namespace pxt {
         }
 
         // We couldn't find one, so just return the original
-        console.warn(`Couldn't find a contrasting background for color ${color}`);
+        pxt.warn(`Couldn't find a contrasting background for color ${color}`);
         return color;
     }
 

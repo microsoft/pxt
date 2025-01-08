@@ -1,0 +1,23 @@
+{
+    "editor": "blocksprj",
+    "title": "Hide Done",
+    "steps": [
+        {
+            "contentMd": "Tutorials can choose to hide the done button on the final step. This metadata is parsed and removed.",
+            "headerContentMd": "Tutorials can choose to hide the done button on the final step. This metadata is parsed and removed."
+        },
+        {
+            "contentMd": "Tutorial parsing for hints, steps, etc should function exactly as before.\n\n```blocks\nlet x = 8;\nlet y = x + 2;\n```",
+            "headerContentMd": "Tutorial parsing for hints, steps, etc should function exactly as before.",
+            "hintContentMd": "```blocks\nlet x = 8;\nlet y = x + 2;\n```"
+        }
+    ],
+    "activities": null,
+    "code": [
+        "{\nlet x = 8;\nlet y = x + 2;\n}",
+        "{\nbasic.showIcon(IconNames.Square)\n}"
+    ],
+    "metadata": {
+        "hideDone": true
+    }
+}

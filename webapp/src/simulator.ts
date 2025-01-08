@@ -6,6 +6,7 @@ import * as coretsx from "./coretsx";
 import * as data from "./data";
 import U = pxt.U
 import { postHostMessageAsync, shouldPostHostMessages } from "../../pxteditor";
+import { Milestones } from "./constants";
 
 
 
@@ -14,6 +15,7 @@ interface SimulatorConfig {
     orphanException(brk: pxsim.DebuggerBreakpointMessage): void;
     highlightStatement(stmt: pxtc.LocationInfo, brk?: pxsim.DebuggerBreakpointMessage): boolean;
     restartSimulator(): void;
+    singleSimulator(): void;
     onStateChanged(state: pxsim.SimulatorState): void;
     onSimulatorReady(): void;
     setState(key: string, value: any): void;
@@ -64,7 +66,7 @@ export async function initAsync(root: HTMLElement, cfg: SimulatorConfig) {
                 const originUrl = new URL(origin);
                 parentOrigin = originUrl.origin
             } catch (e) {
-                console.error(`Invalid parent origin: ${origin}`)
+                pxt.error(`Invalid parent origin: ${origin}`)
             }
         }
     }
@@ -210,7 +212,7 @@ export async function initAsync(root: HTMLElement, cfg: SimulatorConfig) {
             cfg.onStateChanged(state);
         },
         onSimulatorReady: function () {
-            pxt.perf.recordMilestone("simulator ready")
+            pxt.perf.recordMilestone(Milestones.SimulatorReady)
             cfg.onSimulatorReady();
         },
         onSimulatorCommand: (msg: pxsim.SimulatorCommandMessage): void => {
@@ -220,6 +222,9 @@ export async function initAsync(root: HTMLElement, cfg: SimulatorConfig) {
                     break
                 case "restart":
                     cfg.restartSimulator();
+                    break;
+                case "single":
+                    cfg.singleSimulator();
                     break;
                 case "reload":
                     stop(true);

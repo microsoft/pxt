@@ -5,6 +5,7 @@ export interface LinkProps extends ContainerProps {
     href: string;
     target?: "_self" | "_blank" | "_parent" | "_top";
     tabIndex?: number;
+    title?: string;
 }
 
 export const Link = (props: LinkProps) => {
@@ -15,7 +16,8 @@ export const Link = (props: LinkProps) => {
         href,
         target,
         children,
-        tabIndex
+        tabIndex,
+        title
     } = props;
 
     const classes = classList(
@@ -32,7 +34,8 @@ export const Link = (props: LinkProps) => {
             target={target}
             rel={target === "_blank" ? "noopener noreferrer" : ""}
             tabIndex={tabIndex ?? 0}
-            >
+            title={title}
+        >
             {children}
         </a>
     );

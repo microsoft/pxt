@@ -368,6 +368,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         const simOpts = pxt.appTarget.simulator;
         const headless = simOpts.headless;
         const flyoutOnly = editorState && editorState.hasCategories === false;
+        const hideToolbox = tutorial && tutorialOptions.metadata?.hideToolbox;
 
         const disableFileAccessinMaciOs = targetTheme.disableFileAccessinMaciOs && (pxt.BrowserUtils.isIOS() || pxt.BrowserUtils.isMac());
         const disableFileAccessinAndroid = pxt.appTarget.appTheme.disableFileAccessinAndroid && pxt.BrowserUtils.isAndroid();
@@ -386,8 +387,8 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         const running = simState == SimState.Running;
         const starting = simState == SimState.Starting;
 
-        const showUndoRedo = !readOnly && !debugging && !flyoutOnly;
-        const showZoomControls = !flyoutOnly;
+        const showUndoRedo = !readOnly && !debugging && !flyoutOnly && !hideToolbox;
+        const showZoomControls = !flyoutOnly && !hideToolbox;
         const showGithub = !!pxt.appTarget.cloud
             && !!pxt.appTarget.cloud.githubPackages
             && targetTheme.githubEditor

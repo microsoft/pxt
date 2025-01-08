@@ -782,6 +782,8 @@ exports.pxtrunner = gulp.series(
     pxtembed,
 );
 
+exports.pxtweb = pxtweb;
+exports.pxtlib = pxtlib;
 exports.skillmapTest = testSkillmap;
 exports.updatestrings = updatestrings;
 exports.lint = lint

@@ -871,6 +871,11 @@ namespace ts.pxtc.Util {
     export function requestAsync(options: HttpRequestOptions): Promise<HttpResponse> {
         //if (debugHttpRequests)
         //    pxt.debug(`>> ${options.method || "GET"} ${options.url.replace(/[?#].*/, "...")}`); // don't leak secrets in logs
+        const measureParams: pxt.Map<string> = {
+            "url": `${encodeURI(options.url.replace(/[?#].*/, "..."))}`, // don't leak secrets in logs
+            "method": `${options.method || "GET"}`
+        };
+        pxt.perf.measureStart(Measurements.NetworkRequest)
         return httpRequestCoreAsync(options)
             .then(resp => {
                 //if (debugHttpRequests)
@@ -887,6 +892,24 @@ namespace ts.pxtc.Util {
                 if (resp.text && /application\/json/.test(resp.headers["content-type"] as string))
                     resp.json = U.jsonTryParse(resp.text)
                 return resp
+            })
+            .then(resp => {
+                const contentLength = resp.headers["content-length"];
+                if (contentLength) {
+                    measureParams["sizeInBytes"] = `${contentLength}`;
+                } else if (resp.text) {
+                    if (pxt.perf.isEnabled()) {
+                        // only do this work if perf measurement is actually enabled
+                        const encoder = new TextEncoder();
+                        const encoded = encoder.encode(resp.text);
+                        measureParams["sizeInBytes"] = encoded.length + "";
+                    }
+                }
+                measureParams["statusCode"] = `${resp.statusCode}`;
+                return resp
+            })
+            .finally(() => {
+                pxt.perf.measureEnd(Measurements.NetworkRequest, measureParams)
             })
     }
 
@@ -1142,7 +1165,7 @@ namespace ts.pxtc.Util {
 
                 return resp.json;
             }, e => {
-                console.log(`failed to load translations from ${url}`)
+                pxt.log(`failed to load translations from ${url}`)
                 return undefined;
             })
         }
@@ -1372,7 +1395,7 @@ namespace ts.pxtc.Util {
 
             const pAll = U.promiseMapAllSeries(stringFiles, (file) => downloadLiveTranslationsAsync(code, file.path)
                 .then(mergeTranslations, e => {
-                    console.log(e.message);
+                    pxt.log(e.message);
                     ++errorCount;
                 })
             );
@@ -1403,7 +1426,7 @@ namespace ts.pxtc.Util {
                     translationsCache()[translationsCacheId] = translations;
                 }
             }, e => {
-                console.error('failed to load localizations')
+                pxt.error('failed to load localizations')
             })
                 .then(() => translations);
         }
@@ -2004,9 +2027,9 @@ namespace ts.pxtc.BrowserImpl {
     }
 
     export function sha256string(s: string) {
-        pxt.perf.measureStart("sha256buffer")
+        pxt.perf.measureStart(Measurements.Sha256Buffer)
         const res = sha256buffer(Util.toUTF8Array(s));
-        pxt.perf.measureEnd("sha256buffer")
+        pxt.perf.measureEnd(Measurements.Sha256Buffer)
         return res;
     }
 }
@@ -2284,14 +2307,14 @@ namespace ts.pxtc.jsonPatch.tests {
             ];
 
         for (const test of tests) {
-            console.log(test.comment);
+            pxt.log(test.comment);
             const patches = ts.pxtc.jsonPatch.diff(test.obja, test.objb);
             if (deepEqual(patches, test.expected)) {
-                console.log("succeeded");
+                pxt.log("succeeded");
             } else {
-                console.error("FAILED");
-                console.log("got", patches);
-                console.log("exp", test.expected);
+                pxt.error("FAILED");
+                pxt.log("got", patches);
+                pxt.log("exp", test.expected);
             }
         }
     }
@@ -2350,16 +2373,16 @@ namespace ts.pxtc.jsonPatch.tests {
             ];
 
         for (const test of tests) {
-            console.log(test.comment);
+            pxt.log(test.comment);
             ts.pxtc.jsonPatch.patchInPlace(test.obj, test.patches);
             const equal = deepEqual(test.obj, test.expected);
             const succeeded = equal && test.validate ? test.validate(test.obj) : true;
             if (succeeded) {
-                console.log("succeeded");
+                pxt.log("succeeded");
             } else if (test.expected) {
-                console.error("FAILED");
-                console.log("got", test.obj);
-                console.log("exp", test.expected);
+                pxt.error("FAILED");
+                pxt.log("got", test.obj);
+                pxt.log("exp", test.expected);
             }
         }
     }

@@ -4,6 +4,16 @@ This guide describes a simple setup that requires nothing, but a web browser.
 We have another guide, if you want to
 [use command line tools](/extensions/getting-started/vscode).
 
+### ~ hint
+
+#### Making an extension
+
+Watch this overview video on making your own MakeCode extension.
+
+https://youtu.be/XSskpMEHYlo
+
+### ~
+
 ## Step 1: Design blocks in the editor
 
 It is easiest to tinker and design your blocks from the editor itself. 

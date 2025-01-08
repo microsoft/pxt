@@ -429,6 +429,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         this.setState({
             download: null
         });
+
     }
 
     handleDownloadProgressClose = () => {
@@ -522,14 +523,14 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                                 text={lf("New Connected Tab")} title={lf("Open Project in a new tab with a connected simulator")} onClick={this.handleOpenNewLinkedTab} />}
                         </sui.DropdownMenu>
                     </div>);
-                    headerActions.push(<sui.Button key="rename" icon="edit outline" className="icon"
+                    headerActions.push(<sui.Button key="rename" icon="pencil" className="icon"
                         text={lf("Rename")} textClass="landscape only" title={lf("Rename Project")} onClick={this.handleRename} />);
                     headerActions.push(<sui.Button key="clone" icon="clone outline" className="icon"
                         text={lf("Duplicate")} textClass="landscape only" title={lf("Duplicate Project")} onClick={this.handleDuplicate} />);
                 }
                 headerActions.push(<sui.Button key="delete" icon="trash" className="icon red"
                     text={lf("Delete")} textClass="landscape only" title={lf("Delete Project")} onClick={this.handleDelete} />);
-                if (numSelected > 1) {
+                if (numSelected > 1 && pxt.BrowserUtils.hasFileAccess()) {
                     headerActions.push(<sui.Button key="download-zip" icon="download" className="icon"
                         text={lf("Download Zip")} textClass="landscape only" title={lf("Download Zip")} onClick={this.handleDownloadAsync} />);
                 }

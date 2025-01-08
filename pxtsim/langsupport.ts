@@ -79,7 +79,7 @@ namespace pxsim {
 
         print() {
             if (runtime && runtime.refCountingDebug)
-                console.log(`RefObject id:${this.id}`)
+                pxsim.log(`RefObject id:${this.id}`)
         }
 
         // render a debug preview string
@@ -153,7 +153,7 @@ namespace pxsim {
 
         print() {
             if (runtime && runtime.refCountingDebug)
-                console.log(`RefRecord id:${this.id} (${this.vtable.name})`)
+                pxsim.log(`RefRecord id:${this.id} (${this.vtable.name})`)
         }
 
         toDebugString(): string {
@@ -214,7 +214,7 @@ namespace pxsim {
 
         print() {
             if (runtime && runtime.refCountingDebug)
-                console.log(`RefAction id:${this.id} len:${this.fields.length}`)
+                pxsim.log(`RefAction id:${this.id} len:${this.fields.length}`)
         }
     }
 
@@ -304,7 +304,7 @@ namespace pxsim {
                 r += "\n"
             }
 
-            console.log(r)
+            pxsim.log(r)
         }
 
 
@@ -318,7 +318,7 @@ namespace pxsim {
                 csv += `${p.numstops},${p.value},${p.name},${median}\n`
             }
             processPerfCounters(csv)
-            // console.log(csv)
+            // pxsim.log(csv)
         }
     }
 
@@ -337,7 +337,7 @@ namespace pxsim {
 
         print() {
             if (runtime && runtime.refCountingDebug)
-                console.log(`RefRefLocal id:${this.id} v:${this.v}`)
+                pxsim.log(`RefRefLocal id:${this.id} v:${this.v}`)
         }
     }
 
@@ -377,7 +377,7 @@ namespace pxsim {
 
         print() {
             if (runtime && runtime.refCountingDebug)
-                console.log(`RefMap id:${this.id} size:${this.data.length}`)
+                pxsim.log(`RefMap id:${this.id} size:${this.data.length}`)
         }
 
         toDebugString(): string {
@@ -559,7 +559,7 @@ namespace pxsim {
         export function stclo(a: RefAction, idx: number, v: any) {
             check(0 <= idx && idx < a.fields.length)
             check(a.fields[idx] === null)
-            //console.log(`STCLO [${idx}] = ${v}`)
+            //pxsim.log(`STCLO [${idx}] = ${v}`)
             a.fields[idx] = v;
             return a;
         }

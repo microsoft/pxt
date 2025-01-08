@@ -446,6 +446,16 @@ export class EditorDriver extends IframeDriver {
         );
     }
 
+    async precacheTutorial(data: pxt.github.GHTutorialResponse) {
+        await this.sendRequest(
+            {
+                type: "pxteditor",
+                action: "precachetutorial",
+                data
+            } as pxt.editor.PrecacheTutorialRequest
+        );
+    }
+
     addEventListener(event: typeof MessageSentEvent, handler: (ev: pxt.editor.EditorMessage) => void): void;
     addEventListener(event: typeof MessageReceivedEvent, handler: (ev: pxt.editor.EditorMessage) => void): void;
     addEventListener(event: "event", handler: (ev: pxt.editor.EditorMessageEventRequest) => void): void;
@@ -520,7 +530,7 @@ export class EditorDriver extends IframeDriver {
         }
         catch (e) {
             error = e;
-            console.error(e);
+            pxt.error(e);
         }
         finally {
             if (event.response) {

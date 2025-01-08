@@ -102,7 +102,7 @@ namespace pxsim {
         }
 
         print() {
-            //console.log(`RefCollection id:${this.id} refs:${this.refcnt} len:${this.data.length} d0:${this.data[0]}`)
+            //pxsim.log(`RefCollection id:${this.id} refs:${this.refcnt} len:${this.data.length} d0:${this.data[0]}`)
         }
     }
 
@@ -426,7 +426,7 @@ namespace pxsim {
         gcIsStatic() { return this.isStatic }
 
         print() {
-            // console.log(`RefBuffer id:${this.id} refs:${this.refcnt} len:${this.data.length} d0:${this.data[0]}`)
+            // pxsim.log(`RefBuffer id:${this.id} refs:${this.refcnt} len:${this.data.length} d0:${this.data[0]}`)
         }
 
         toDebugString(): string {

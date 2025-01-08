@@ -102,6 +102,7 @@ declare namespace pxt.editor {
         | "editorcontentloaded"
         | "serviceworkerregistered"
         | "runeval"
+        | "precachetutorial"
 
         // package extension messasges
         | ExtInitializeType
@@ -406,6 +407,12 @@ declare namespace pxt.editor {
         title?: string;
         previousProjectHeaderId?: string;
         carryoverPreviousCode?: boolean;
+    }
+
+    export interface PrecacheTutorialRequest extends EditorMessageRequest {
+        action: "precachetutorial";
+        data: pxt.github.GHTutorialResponse;
+        lang?: string;
     }
 
     export interface InfoMessage {
@@ -1113,6 +1120,7 @@ declare namespace pxt.editor {
         blocklyToolbox: ToolboxDefinition;
         monacoToolbox: ToolboxDefinition;
         projectView: IProjectView;
+        showNotification: (msg: string) => void;
     }
 
     export interface IToolboxOptions {
@@ -1150,13 +1158,28 @@ declare namespace pxt.editor {
         notifyProjectSaved?: (header: pxt.workspace.Header) => void;
         onDownloadButtonClick?: () => Promise<void>;
         getDefaultProjectName?: () => string; // If defined, replaces 'Untitled' as the default project name
-    
+        onPostHostMessage?: (msg: pxt.editor.EditorMessageRequest) => void;
+        onPerfMilestone?: (payload: { milestone: string, time: number, params?: Map<string> }) => void;
+        onPerfMeasurement?: (payload: { name: string, start: number, duration: number, params?: Map<string> }) => void;
+
         // Used with the @tutorialCompleted macro. See docs/writing-docs/tutorials.md for more info
         onTutorialCompleted?: () => void;
+        onMarkdownActivityLoad?: (path: string, title?: string, editorProjectName?: string) => Promise<void>;
 
         // Used with @codeStart, @codeStop metadata (MINECRAFT HOC ONLY)
         onCodeStart?: () => void;
         onCodeStop?: () => void;
+
+        experiments?: Experiment[];
+    }
+
+    export interface Experiment {
+        id: string; // == field in apptheme also assumes image at /static/experiments/ID.png
+        name: string;
+        description: string;
+        feedbackUrl?: string; // allows user to put feedback
+        enableOnline?: boolean; // requires internet connection, disable in offline app
+        onClick?: () => void; // code to run when the experiment is clicked
     }
 
     export interface FieldExtensionOptions {

@@ -260,7 +260,7 @@ export const COMMON_FUNCTION_MIXIN = {
 
         if (wasRendered && !this.isInsertionMarker() && this instanceof Blockly.BlockSvg) {
             this.initSvg();
-            this.render();
+            this.queueRender();
         }
     },
 

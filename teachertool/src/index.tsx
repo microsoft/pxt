@@ -39,7 +39,9 @@ window.addEventListener("DOMContentLoaded", () => {
     const optsQuery = pxt.Util.parseQueryString(window.location.href.toLowerCase());
 
     pxt.options.debug = optsQuery["dbg"] == "1";
-    if (pxt.options.debug) pxt.debug = console.debug;
+    if (pxt.options.debug) {
+        pxt.setLogLevel(pxt.LogLevel.Debug);
+    }
 
     if (optsQuery["consoleticks"] == "1" || optsQuery["consoleticks"] == "verbose") {
         pxt.analytics.consoleTicks = pxt.analytics.ConsoleTickOptions.Verbose;

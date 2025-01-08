@@ -12,6 +12,7 @@ import * as pxtblockly from "../../pxtblocks";
 
 import ExtensionResult = pxt.editor.ExtensionResult;
 import NativeHostMessage = pxt.editor.NativeHostMessage;
+import { setEditorExtensionExperiments } from "../../pxteditor/experiments";
 
 
 function log(msg: string) {
@@ -389,6 +390,18 @@ function applyExtensionResult() {
         log(`extension tutorial completed`);
         pxt.commands.onTutorialCompleted = res.onTutorialCompleted;
     }
+    if (res.onPostHostMessage) {
+        log(`extension post host message`);
+        pxt.commands.onPostHostMessage = res.onPostHostMessage;
+    }
+    if (res.onPerfMilestone) {
+        log(`extension perf milestone`);
+        pxt.commands.onPerfMilestone = res.onPerfMilestone;
+    }
+    if (res.onPerfMeasurement) {
+        log(`extension perf measurement`);
+        pxt.commands.onPerfMeasurement = res.onPerfMeasurement;
+    }
     if (res.showProgramTooLargeErrorAsync) {
         log(`extension showProgramTooLargeErrorAsync`);
         pxt.commands.showProgramTooLargeErrorAsync = res.showProgramTooLargeErrorAsync;
@@ -421,6 +434,12 @@ function applyExtensionResult() {
             warningNotification: core.warningNotification,
             errorNotification: core.errorNotification,
         });
+    if (res.onMarkdownActivityLoad) {
+        log(`extension onMarkdownActivityLoad`);
+        pxt.commands.onMarkdownActivityLoad = res.onMarkdownActivityLoad;
+    }
+    if (res.experiments) {
+        setEditorExtensionExperiments(res.experiments);
     }
 }
 

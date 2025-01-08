@@ -13,6 +13,7 @@
 @highlightLineClassColor: #007f00;
 @highlightLineKeywordColor: #0000ff;
 @tutorialCardHeight: 8rem;
+@tutorialCardMaxHeight: 20rem;
 @seeMoreButtonHeight: 4rem;
 @avatarSize: 4.5rem;
 @avatarMargin: @avatarSize + 0.5rem;
@@ -88,7 +89,7 @@
 }
 
 .tutorial.tutorialExpanded #tutorialcard {
-    max-height: 20rem;
+    max-height: @tutorialCardMaxHeight;
 }
 
 #root.dimmable.dimmed #tutorialcard.tutorialReady {
@@ -141,6 +142,10 @@ body#docs.tutorial {
     padding: 0.5rem;
 }
 
+#tutorialcard.stepExpanded {
+    height: auto;
+}
+
 .tutorial #tutorialcard .ui.buttons {
     width: 100%;
     height: calc(@tutorialCardHeight - 1rem);
@@ -148,6 +153,7 @@ body#docs.tutorial {
 
 .tutorial.tutorialExpanded #tutorialcard .ui.buttons {
     height: 100%;
+    max-height: calc(@tutorialCardMaxHeight - 1rem);
 }
 
 #tutorialcard .ui.tutorialsegment {
@@ -259,7 +265,7 @@ span.docs.inlinebutton {
 span.docs.inlineblock {
     padding: 0.05rem .2rem;
     padding-bottom: 0.1rem;
-    white-space: nowrap;
+    white-space: break-spaces;
     border-radius: 0;
     border-bottom: 3px solid var(--inline-namespace-color);
     color: black;
@@ -273,6 +279,15 @@ span.docs.inlineblock {
         color: var(--inline-namespace-color);
         font-style: normal;
         margin-right: 6px;
+    }
+
+    span.image-icon {
+        background-image: var(--image-icon-url);
+        width: 20px;
+        height: 17px;
+        background-size: contain !important;
+        background-repeat: no-repeat !important;
+        display: inline-block;
     }
 
     &.clickable {
@@ -483,21 +498,21 @@ code.lang-filterblocks {
 /*******************************
         See More Button
 *******************************/
-#tutorialcard.seemore {
-    .tutorialsegment > button {
-        flex-grow: 0;
-        position: relative;
-        width: auto;
-        margin: auto;
-        margin-top: -0.75rem;
-        padding: 0.5rem 0.8rem;
-    }
+#tutorialcard.seemore .tutorialsegment > button {
+    flex-grow: 0;
+    position: relative;
+    width: auto;
+    margin: auto;
+    margin-top: -0.5rem;
+    padding: 0.5rem 0.8rem;
 }
 
-.editorlang-text {
-    #tutorialcard.seemore .tutorialsegment > button {
-        margin-right: 1rem;
-    }
+.editorlang-text:not(.hideToolbox) #tutorialcard.seemore .tutorialsegment > button {
+    margin-right: 1rem;
+}
+
+.editorlang-text.hideToolbox #tutorialcard.seemore .tutorialsegment > button {
+    margin-left: 1rem;
 }
 
 /*******************************
@@ -640,6 +655,10 @@ code.lang-filterblocks {
             display: inline-flex;
         }
     }
+}
+
+.hideToolbox #headers #flyoutHeader {
+    display: none;
 }
 
 /*******************************

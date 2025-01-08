@@ -106,6 +106,7 @@ namespace pxsim {
         private runId = '';
         private nextFrameId = 0;
         private frameCounter = 0;
+        private singleSimulator = false;
         private _currentRuntime: pxsim.SimulatorRunMessage;
         private listener: (ev: MessageEvent) => void;
         private traceInterval = 0;
@@ -347,6 +348,10 @@ namespace pxsim {
             }
         }
 
+        public setSingleSimulator(){
+            this.singleSimulator = true
+        }
+
         public postMessage(msg: pxsim.SimulatorMessage, source?: Window, frameID?: string) {
             if (this.hwdbg) {
                 this.hwdbg.postMessage(msg)
@@ -447,11 +452,11 @@ namespace pxsim {
                             isDeferrableBroadcastMessage = true;
                             // start secondary frame if needed
                             const mkcdFrames = frames.filter(frame => !frame.dataset[FRAME_DATA_MESSAGE_CHANNEL]);
-                            if (mkcdFrames.length < 2) {
+                            if (mkcdFrames.length == 0 || mkcdFrames.length == 1 && !this.singleSimulator) {
                                 this.container.appendChild(this.createFrame());
                                 frames = this.simFrames();
                                 // there might be an old frame
-                            } else if (mkcdFrames[1].dataset['runid'] != this.runId) {
+                            } else if (mkcdFrames.length == 2 && mkcdFrames[1].dataset['runid'] != this.runId) {
                                 this.startFrame(mkcdFrames[1]);
                             }
                         }
@@ -796,6 +801,7 @@ namespace pxsim {
 
             if (!this._currentRuntime) return; // nothing to do
 
+            this.singleSimulator = false;
             this.breakpointsSet = false;
 
             // first frame
@@ -962,7 +968,7 @@ namespace pxsim {
                     msg = 'pause';
                     break;
                 default:
-                    console.debug('unknown command')
+                    pxsim.debug('unknown command')
                     return;
             }
 
@@ -1006,7 +1012,7 @@ namespace pxsim {
 
         private handleDebuggerMessage(msg: pxsim.DebuggerMessage) {
             if (msg.subtype !== "trace") {
-                console.log("DBG-MSG", msg.subtype, msg)
+                pxsim.log("DBG-MSG", msg.subtype, msg)
             }
 
             // resolve any request
@@ -1043,9 +1049,9 @@ namespace pxsim {
                             let fi = s.funcInfo
                             stackTrace += `   at ${fi.functionName} (${fi.fileName}:${fi.line + 1}:${fi.column + 1})\n`
                         }
-                        if (brk.exceptionMessage) console.error(stackTrace);
+                        if (brk.exceptionMessage) pxsim.error(stackTrace);
                     } else {
-                        console.error("debugger: trying to pause from " + this.state);
+                        pxsim.error("debugger: trying to pause from " + this.state);
                     }
                     break;
                 }

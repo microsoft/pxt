@@ -582,7 +582,7 @@ namespace pxsim {
             pause: thread.pause,
             showNumber: (n: number) => {
                 let cb = getResume();
-                console.log("SHOW NUMBER:", n)
+                pxsim.log("SHOW NUMBER:", n)
                 U.nextTick(cb)
             }
         }
@@ -595,9 +595,9 @@ namespace pxsim {
         myRT.control = {
             inBackground: thread.runInBackground,
             createBuffer: BufferMethods.createBuffer,
-            dmesg: (s: string) => console.log("DMESG: " + s),
+            dmesg: (s: string) => pxsim.log("DMESG: " + s),
             deviceDalVersion: () => "sim",
-            __log: (pri: number, s: string) => console.log("LOG: " + s.trim()),
+            __log: (pri: number, s: string) => pxsim.log("LOG: " + s.trim()),
         }
     }
 
@@ -1463,7 +1463,7 @@ namespace pxsim {
 
             function loop(p: StackFrame) {
                 if (__this.dead) {
-                    console.log("Runtime terminated")
+                    pxsim.log("Runtime terminated")
                     return
                 }
                 U.assert(!__this.loopLock)
@@ -1490,7 +1490,7 @@ namespace pxsim {
                     if (__this.errorHandler)
                         __this.errorHandler(e)
                     else {
-                        console.error("Simulator crashed, no error handler", e.stack)
+                        pxsim.error("Simulator crashed, no error handler", e.stack)
                         const { msg, heap } = getBreakpointMsg(p, p.lastBrkId, userGlobals)
                         injectEnvironmentGlobals(msg, heap);
                         msg.exceptionMessage = e.message

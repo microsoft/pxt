@@ -59,7 +59,7 @@ export function renderCodeCard(card: pxt.CodeCard, options: CodeCardRenderOption
     if (card.blocksXml) {
         const svg = render(card.blocksXml);
         if (!svg) {
-            console.error("failed to render blocks");
+            pxt.error("failed to render blocks");
             pxt.debug(card.blocksXml);
         } else {
             let holder = div(img, ''); holder.setAttribute('style', 'width:100%; min-height:10em');
@@ -100,7 +100,13 @@ export function renderCodeCard(card: pxt.CodeCard, options: CodeCardRenderOption
         }
         if (card.description) {
             const descr = div(ct, 'ui description');
-            const shortenedDescription = card.description.split('.')[0] + '.';
+            const regex = /((?:\.{1,3})|[\!\?…])/;
+            const match = regex.exec(card.description);
+            let shortenedDescription = card.description + ".";
+            if (match) {
+                const punctuation = match[1];
+                shortenedDescription = card.description.split(punctuation)[0] + punctuation;
+            }
 
             descr.appendChild(document.createTextNode(shortenedDescription));
         }

@@ -25,11 +25,11 @@ export function forEachStatementInput(block: Blockly.Block, cb: (block: Blockly.
 export function printScope(scope: Scope, depth = 0) {
     const declared = Object.keys(scope.declaredVars).map(k => `${k}(${scope.declaredVars[k].id})`).join(",");
     const referenced = scope.referencedVars.join(", ");
-    console.log(`${mkIndent(depth)}SCOPE: ${scope.firstStatement ? scope.firstStatement.type : "TOP-LEVEL"}`)
+    pxt.log(`${mkIndent(depth)}SCOPE: ${scope.firstStatement ? scope.firstStatement.type : "TOP-LEVEL"}`)
     if (declared.length) {
-        console.log(`${mkIndent(depth)}DECS: ${declared}`)
+        pxt.log(`${mkIndent(depth)}DECS: ${declared}`)
     }
-    // console.log(`${mkIndent(depth)}REFS: ${referenced}`)
+    // pxt.log(`${mkIndent(depth)}REFS: ${referenced}`)
     scope.children.forEach(s => printScope(s, depth + 1));
 }
 
