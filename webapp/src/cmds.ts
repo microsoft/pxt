@@ -434,6 +434,7 @@ function applyExtensionResult() {
             warningNotification: core.warningNotification,
             errorNotification: core.errorNotification,
         });
+    }
     if (res.onMarkdownActivityLoad) {
         log(`extension onMarkdownActivityLoad`);
         pxt.commands.onMarkdownActivityLoad = res.onMarkdownActivityLoad;
