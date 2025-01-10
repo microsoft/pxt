@@ -664,8 +664,28 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
                     }
 
                     if (toWrite) {
-                        pxteditor.history.updateHistory(previous.text, toWrite, Date.now(), h.pubVersions || [], diffText, patchText);
+                        pxteditor.history.updateHistory(previous.text, toWrite, Date.now(), h.pubVersions || [], diffText2, patchText2);
                     }
+                    // let toWrite2 = toWrite && { ...toWrite }
+
+                    // {
+                    //     const start = performance.now()
+
+                    //     if (toWrite) {
+                    //         pxteditor.history.updateHistory(previous.text, toWrite, Date.now(), h.pubVersions || [], diffText, patchText);
+                    //     }
+                    //     const time = performance.now() - start;
+                    //     console.log(`DMP TIME: ` + time)
+                    // }
+                    // {
+                    //     const start = performance.now()
+
+                    //     if (toWrite2) {
+                    //         pxteditor.history.updateHistory(previous.text, toWrite2, Date.now(), h.pubVersions || [], diffText2, patchText);
+                    //     }
+                    //     const time = performance.now() - start;
+                    //     console.log(`NEW TIME: ` + time)
+                    // }
                 }
             }
             catch (e) {
@@ -740,8 +760,16 @@ function patchText(patch: unknown, a: string) {
     return differ.patch_apply(patch as any, a)[0]
 }
 
+function diffText2(a: string, b: string) {
+    return pxt.diff.computePatch(a, b);
+}
+
+function patchText2(patch: unknown, a: string) {
+    return pxt.diff.applyPatch(a, patch as any)
+}
+
 export function restoreTextToTime(text: ScriptText, history: HistoryFile, timestamp: number) {
-    return getTextAtTime(text, history, timestamp, patchText);
+    return getTextAtTime(text, history, timestamp, patchText2);
 }
 
 export function importAsync(h: Header, text: ScriptText, isCloud = false) {

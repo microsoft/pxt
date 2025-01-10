@@ -31,8 +31,17 @@ namespace pxt.diff {
         full?: boolean; // don't try to create short diff
     }
 
+    enum DiffOp {
+        Added = 1,
+        Deleted = -1,
+        Unchanged = 0
+    }
+
+    type DiffPart = [DiffOp, string];
+    type PatchPart = [start: number, length: number, text: string] | [start: number, length: number];
+
     // based on An O(ND) Difference Algorithm and Its Variations by EUGENE W. MYERS
-    export function compute(fileA: string, fileB: string, options: DiffOptions = {}): string[] {
+    export function compute(fileA: string, fileB: string, options: DiffOptions = {}): DiffPart[] {
         if (options.ignoreWhitespace) {
             fileA = fileA.replace(/[\r\n]+$/, "")
             fileB = fileB.replace(/[\r\n]+$/, "")
@@ -89,7 +98,7 @@ namespace pxt.diff {
                 break
         }
 
-        const diff: string[] = []
+        const diff: DiffPart[] = []
         let k = endpoint
         for (let D = trace.length - 1; D >= 0; D--) {
             const V = trace[D]
@@ -105,70 +114,19 @@ namespace pxt.diff {
             let y = x - k
             const snakeLen = V[MAX + k] - x
             for (let i = snakeLen - 1; i >= 0; --i)
-                diff.push("  " + b[y + i])
+                diff.push([DiffOp.Unchanged, b[y + i]])
 
             if (nextK == k - 1) {
-                diff.push("- " + a[x - 1])
+                diff.push([DiffOp.Deleted, a[x - 1]])
             } else {
                 if (y > 0)
-                    diff.push("+ " + b[y - 1])
+                    diff.push([DiffOp.Added, b[y - 1]])
             }
             k = nextK
         }
         diff.reverse()
 
-        if (options.context == Infinity || options.full)
-            return diff
-
-        let aline = 1, bline = 1, idx = 0
-        const shortDiff: string[] = []
-        const context = options.context || 3
-        while (idx < diff.length) {
-            let nextIdx = idx
-            while (nextIdx < diff.length && diff[nextIdx][0] == " ")
-                nextIdx++
-            if (nextIdx == diff.length)
-                break
-            const startIdx = nextIdx - context
-            const skip = startIdx - idx
-            if (skip > 0) {
-                aline += skip
-                bline += skip
-                idx = startIdx
-            }
-            const hdPos = shortDiff.length
-            const aline0 = aline, bline0 = bline
-            shortDiff.push("@@") // patched below
-
-            let endIdx = idx
-            let numCtx = 0
-            while (endIdx < diff.length) {
-                if (diff[endIdx][0] == " ") {
-                    numCtx++
-                    if (numCtx > context * 2 + 2) {
-                        endIdx -= context + 2
-                        break
-                    }
-                } else {
-                    numCtx = 0
-                }
-                endIdx++
-            }
-
-            while (idx < endIdx) {
-                shortDiff.push(diff[idx])
-                const c = diff[idx][0]
-                switch (c) {
-                    case "-": aline++; break;
-                    case "+": bline++; break;
-                    case " ": aline++; bline++; break;
-                }
-                idx++
-            }
-            shortDiff[hdPos] = `@@ -${aline0},${aline - aline0} +${bline0},${bline - bline0} @@`
-        }
-
-        return shortDiff
+        return diff;
 
         function computeFor(D: number, V: UArray) {
             for (let k = -D; k <= D; k += 2) {
@@ -189,6 +147,192 @@ namespace pxt.diff {
             }
             return null
         }
+    }
+
+    export function computeFormattedDiff(fileA: string, fileB: string, options: DiffOptions = {}): string[] {
+        const diff = compute(fileA, fileB, options);
+
+        if (options.context == Infinity || options.full) {
+            return diff.map(formatEdit);
+        }
+
+        let aline = 1, bline = 1, idx = 0
+        const shortDiff: string[] = []
+        const context = options.context || 3
+        while (idx < diff.length) {
+            let nextIdx = idx
+            while (nextIdx < diff.length && diff[nextIdx][0] === DiffOp.Unchanged)
+                nextIdx++
+            if (nextIdx == diff.length)
+                break
+            const startIdx = nextIdx - context
+            const skip = startIdx - idx
+            if (skip > 0) {
+                aline += skip
+                bline += skip
+                idx = startIdx
+            }
+            const hdPos = shortDiff.length
+            const aline0 = aline, bline0 = bline
+            shortDiff.push("@@") // patched below
+
+            let endIdx = idx
+            let numCtx = 0
+            while (endIdx < diff.length) {
+                if (diff[endIdx][0] === DiffOp.Unchanged) {
+                    numCtx++
+                    if (numCtx > context * 2 + 2) {
+                        endIdx -= context + 2
+                        break
+                    }
+                } else {
+                    numCtx = 0
+                }
+                endIdx++
+            }
+
+            while (idx < endIdx) {
+                shortDiff.push(formatEdit(diff[idx]))
+                const c = diff[idx][0]
+                switch (c) {
+                    case DiffOp.Deleted: aline++; break;
+                    case DiffOp.Added: bline++; break;
+                    case DiffOp.Unchanged: aline++; bline++; break;
+                }
+                idx++
+            }
+            shortDiff[hdPos] = `@@ -${aline0},${aline - aline0} +${bline0},${bline - bline0} @@`
+        }
+
+        return shortDiff
+    }
+
+    function formatEdit([change, text]: DiffPart): string {
+        let result: string;
+        if (change === DiffOp.Added) {
+            result = "+ ";
+        }
+        else if (change === DiffOp.Deleted) {
+            result = "- ";
+        }
+        else {
+            result = "  ";
+        }
+        return result + text;
+    }
+
+    function diffToPatch(diff: DiffPart[]): PatchPart[] {
+        const result: PatchPart[] = [];
+
+        let textIndex = 0;
+        let currentAddition: string[] = [];
+        let deletionStart = -1;
+        let deletionLength = -1;
+        let prevOp = DiffOp.Unchanged;
+
+        const pushEdit = () => {
+            result.push([deletionStart, deletionLength, currentAddition.join("\n")]);
+            currentAddition = [];
+        };
+
+        const pushDeletion = () => {
+            result.push([deletionStart, deletionLength]);
+        };
+
+        for (let i = 0; i < diff.length; i++) {
+            const [op, line] = diff[i];
+
+            if (op == DiffOp.Unchanged) {
+                if (prevOp === DiffOp.Deleted) {
+                    deletionLength = textIndex - deletionStart;
+                    pushDeletion();
+                }
+                else if (prevOp === DiffOp.Added) {
+                    pushEdit();
+                }
+                textIndex ++;
+            }
+            else if (op === DiffOp.Added) {
+                if (prevOp === DiffOp.Deleted) {
+                    deletionLength = textIndex - deletionStart;
+                }
+                else if (prevOp === DiffOp.Unchanged) {
+                    deletionStart = textIndex;
+                    deletionLength = 0;
+                }
+
+                currentAddition.push(line);
+            }
+            else if (op === DiffOp.Deleted) {
+                if (prevOp === DiffOp.Added) {
+                    pushEdit();
+                }
+                if (prevOp !== DiffOp.Deleted) {
+                    deletionStart = textIndex;
+                }
+
+                textIndex ++;
+            }
+
+            prevOp = op;
+        }
+
+        if (prevOp === DiffOp.Deleted) {
+            deletionLength = (textIndex + 1) - deletionStart;
+            pushDeletion();
+        }
+        else if (prevOp === DiffOp.Added) {
+            pushEdit();
+        }
+
+        return result;
+    }
+
+    export function computePatch(fileA: string, fileB: string): PatchPart[] {
+        const diff = compute(fileA, fileB, { full: true });
+        const patch = diffToPatch(diff);
+
+
+        // if (applyPatch(fileA, patch) !== fileB) {
+        //     console.log(">>>>>>>>>>\n");
+        //     // console.log(fileA);
+        //     // console.log("==========\n");
+        //     // console.log(fileB);
+        //     // console.log("<<<<<<<<<<\n");
+
+
+        //     for (const part of patch) {
+        //         console.log(`[${part[0]} ${part[1]}]`)
+        //         console.log(part[2])
+        //     }
+
+        //     console.log("~~~~~~~~~~~~\n");
+        //     console.log(diff.map(formatEdit).join("\n"))
+        //     console.log("%%%%%%%%%%%%\n");
+        //     console.log(compute(fileB, applyPatch(fileA, patch)).map(formatEdit).join("\n"))
+
+        // }
+
+        return patch
+    }
+
+    export function applyPatch(file: string, patch: PatchPart[]) {
+        let result: string[] = [];
+        let lastIndex = 0;
+
+        const lines = file.split("\n");
+
+        for (const [start, length, line] of patch) {
+            result.push(... lines.slice(lastIndex, start));
+
+            if (line !== undefined) {
+                result.push(...line.split("\n"))
+            }
+            lastIndex = start + length;
+        }
+        result.push(...lines.slice(lastIndex));
+
+        return result.join("\n");
     }
 
     // based on "A Formal Investigation of Diff3" by Sanjeev Khanna, Keshav Kunal, and Benjamin C. Pierce
@@ -265,12 +409,12 @@ namespace pxt.diff {
 
             // pxt.log(da)
             for (let l of da) {
-                if (l[0] == "+") {
+                if (l[0] == DiffOp.Added) {
                     aidx++
-                } else if (l[0] == "-") {
+                } else if (l[0] == DiffOp.Deleted) {
                     ma[oidx] = null
                     oidx++
-                } else if (l[0] == " ") {
+                } else if (l[0] == DiffOp.Unchanged) {
                     ma[oidx] = aidx
                     aidx++
                     oidx++
@@ -331,7 +475,7 @@ namespace pxt.diff {
     }
 
     export function render(fileA: string, fileB: string, options: RenderOptions = {}): HTMLElement {
-        const diffLines = compute(fileA, fileB, options);
+        const diffLines = computeFormattedDiff(fileA, fileB, options);
         if (!diffLines) {
             return pxt.dom.el("div", null, pxtc.Util.lf("Too many differences to render diff."));
         }
@@ -400,7 +544,7 @@ namespace pxt.diff {
     }
 
     function lineDiff(lineA: string, lineB: string): { a: HTMLElement, b: HTMLElement } {
-        const df = compute(lineA.split("").join("\n"), lineB.split("").join("\n"), {
+        const df = computeFormattedDiff(lineA.split("").join("\n"), lineB.split("").join("\n"), {
             context: Infinity
         })
         if (!df) // diff failed

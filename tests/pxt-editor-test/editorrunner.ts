@@ -13,14 +13,14 @@ pxt.appTarget = {
     }
 } as any
 
-const differ = new dmp.diff_match_patch();
+// const differ = new dmp.diff_match_patch();
 
 function diffText(a: string, b: string) {
-    return differ.patch_make(a, b);
+    return pxt.diff.computePatch(a, b);
 }
 
 function patchText(patch: unknown, a: string) {
-    return differ.patch_apply(patch as any, a)[0]
+    return pxt.diff.applyPatch(a, patch as any)
 }
 
 const filename = "main.ts";
@@ -179,8 +179,9 @@ function createTestHistory() {
 const testVersions: pxt.workspace.ScriptText[] = [];
 const words = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.".split(" ");
 
+let prevLines: string[];
 function makeFile() {
-    const numWords = Math.ceil(Math.random() * 40) + 10;
+    const numWords = Math.ceil(Math.random() * 100) + 10;
     let result = "";
 
     for (let i = 0; i < numWords; i++) {
@@ -188,6 +189,26 @@ function makeFile() {
         if (i % 10 === 0) {
             result += "\n"
         }
+    }
+
+    const lines = result.split("\n");
+
+    if (prevLines) {
+        for (let i = 0; i < 3; i++) {
+            lines.splice(
+                Math.floor(Math.random() * (lines.length - 1)),
+                0,
+                prevLines[Math.floor(Math.random() * (prevLines.length - 1))]
+            )
+        }
+    }
+
+    prevLines = lines;
+
+    result = lines.join("\n");
+
+    if (Math.random() < 0.5) {
+        result += "\n";
     }
 
     return result;
