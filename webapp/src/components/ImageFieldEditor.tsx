@@ -657,7 +657,7 @@ class ImageEditorGallery extends React.Component<ImageEditorGalleryProps, {}> {
                 enabled={!hidden}
                 onEscape={onEscape}
             >
-                {!hidden && items && items.map((item, index) =>
+                {!hidden && items?.map((item, index) =>
                     <AssetCardView key={index} asset={item} selected={false} onClick={this.clickHandler} />
                 )}
             </FocusTrapRegion>
