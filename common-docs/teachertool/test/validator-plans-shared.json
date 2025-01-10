@@ -1,16 +1,3 @@
 {
-    "validatorPlans": [
-        {
-            ".desc": "Ask Copilot a question",
-            "name": "ai_question",
-            "threshold": -1,
-            "checks": [
-                {
-                    "validator": "aiQuestion",
-                    "question": "",
-                    "shareId": ""
-                }
-            ]
-        }
-    ]
+    "validatorPlans": []
 }

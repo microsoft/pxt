@@ -1182,14 +1182,14 @@ namespace pxt.BrowserUtils {
         }
 
         setAsync(filename: string, snippets: Map<Map<number>>, code: string[], highlights: Map<Map<number>>, codeValidationMap: Map<Map<string[]>>, branch?: string): Promise<void> {
-            pxt.perf.measureStart("tutorial info db setAsync")
+            pxt.perf.measureStart(Measurements.TutorialInfoDbSetAsync)
             const key = getTutorialInfoKey(filename, branch);
             const hash = getTutorialCodeHash(code);
             return this.setWithHashAsync(filename, snippets, hash, highlights, codeValidationMap);
         }
 
         setWithHashAsync(filename: string, snippets: Map<Map<number>>, hash: string, highlights: Map<Map<number>>, codeValidationMap: Map<Map<string[]>>, branch?: string): Promise<void> {
-            pxt.perf.measureStart("tutorial info db setAsync")
+            pxt.perf.measureStart(Measurements.TutorialInfoDbSetAsync)
             const key = getTutorialInfoKey(filename, branch);
             const blocks: Map<number> = {};
             Object.keys(snippets).forEach(hash => {
@@ -1210,7 +1210,7 @@ namespace pxt.BrowserUtils {
 
             return this.db.setAsync(TutorialInfoIndexedDb.TABLE, entry)
                 .then(() => {
-                    pxt.perf.measureEnd("tutorial info db setAsync")
+                    pxt.perf.measureEnd(Measurements.TutorialInfoDbSetAsync)
                 })
         }
 

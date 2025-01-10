@@ -9,7 +9,7 @@ Access to certain domains is necessary to allow the web editor to reach all the 
 * @homeurl@
 * https://makecode.com
 * https://trg-@targetid@.userpxt.io
-* https://pxt.azureedge.net
+* https://cdn.makecode.com
 * https://api.github.com
 * https://immersivereaderprod.cognitiveservices.azure.com
 

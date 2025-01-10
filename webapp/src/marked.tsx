@@ -12,6 +12,7 @@ import * as pxtblockly from "../../pxtblocks";
 import * as Blockly from "blockly";
 
 import ISettingsProps = pxt.editor.ISettingsProps;
+import { Measurements } from "./constants";
 
 interface MarkedContentProps extends ISettingsProps {
     markdown: string;
@@ -653,7 +654,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
 
         if (!markdown) return;
 
-        pxt.perf.measureStart("renderMarkdown");
+        pxt.perf.measureStart(Measurements.RenderMarkdown);
 
         // replace pre-template in markdown
         markdown = markdown.replace(/@([a-z]+)@/ig, (m, param) => pubinfo[param] || 'unknown macro')
@@ -703,7 +704,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         content.innerHTML = "";
         content.append(...tempDiv.childNodes);
 
-        pxt.perf.measureEnd("renderMarkdown");
+        pxt.perf.measureEnd(Measurements.RenderMarkdown);
     }
 
     componentDidMount() {

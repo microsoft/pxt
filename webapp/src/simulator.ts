@@ -6,6 +6,7 @@ import * as coretsx from "./coretsx";
 import * as data from "./data";
 import U = pxt.U
 import { postHostMessageAsync, shouldPostHostMessages } from "../../pxteditor";
+import { Milestones } from "./constants";
 
 
 
@@ -211,7 +212,7 @@ export async function initAsync(root: HTMLElement, cfg: SimulatorConfig) {
             cfg.onStateChanged(state);
         },
         onSimulatorReady: function () {
-            pxt.perf.recordMilestone("simulator ready")
+            pxt.perf.recordMilestone(Milestones.SimulatorReady)
             cfg.onSimulatorReady();
         },
         onSimulatorCommand: (msg: pxsim.SimulatorCommandMessage): void => {
