@@ -1,5 +1,5 @@
 import * as React from "react";
-import { IconButton } from "./Button";
+import { Button } from "../../../../react-common/components/controls/Button";
 
 interface TimelineFrameProps {
     frames: pxt.sprite.ImageState[];
@@ -47,13 +47,15 @@ export class TimelineFrame extends React.Component<TimelineFrameProps, TimelineF
             <div className="timeline-frame-spacer" />
             {showActions &&
                 <div className="timeline-frame-actions">
-                    <IconButton
-                        iconClass="ms-Icon ms-Icon--Copy"
+                    <Button
+                        className="image-editor-button"
+                        leftIcon="ms-Icon ms-Icon--Copy"
                         title={lf("Duplicate Current Frame")}
                         onClick={duplicateFrame}
                     />
-                    <IconButton
-                        iconClass="ms-Icon ms-Icon--Delete"
+                    <Button
+                        className="image-editor-button"
+                        leftIcon="ms-Icon ms-Icon--Delete"
                         title={lf("Delete Current Frame")}
                         onClick={deleteFrame}
                     />

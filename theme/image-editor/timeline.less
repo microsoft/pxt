@@ -7,6 +7,13 @@
     flex-direction: column;
 }
 
+.image-editor-timeline-frames {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding: 0.4rem 0;
+}
+
 .image-editor-timeline-frame {
     border: 1px var(--sidebar-icon-inactive-color) solid;
     color: var(--sidebar-icon-inactive-color);
@@ -14,7 +21,7 @@
     border-radius: 0.25rem;
     width: 6rem;
     height: 6rem;
-    margin: 0.4rem;
+    margin: 0 0.4rem;
 
     transition: border 0.2s, color 0.2s, background-color 0.2s;
     overflow: hidden;
@@ -124,6 +131,20 @@
 .image-editor-timeline-frame.drop-marker {
     border: 1px var(--sidebar-icon-active-color) dotted;
     background-color: #aeaeae;
+}
+
+.common-button.image-editor-button.add-frame-button {
+    height: 2rem;
+    width: 6rem;
+    margin: 0 0.4rem;
+
+    border: 1px solid var(--sidebar-icon-inactive-color);
+    transition: color 0.1s, border-color 0.1s;
+
+    &:hover {
+        border-color: var(--sidebar-icon-active-color);
+        filter: none;
+    }
 }
 
 /* .timeline-frame-actions */
