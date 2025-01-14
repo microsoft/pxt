@@ -142,6 +142,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.toggleAccessibleBlocks = this.toggleAccessibleBlocks.bind(this);
         this.showResetDialog = this.showResetDialog.bind(this);
         this.showShareDialog = this.showShareDialog.bind(this);
+        this.showFeedbackDialog = this.showFeedbackDialog.bind(this);
         this.showExitAndSaveDialog = this.showExitAndSaveDialog.bind(this);
         this.pair = this.pair.bind(this);
         this.pairBluetooth = this.pairBluetooth.bind(this);
@@ -160,6 +161,11 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
     showShareDialog() {
         pxt.tickEvent("menu.share", undefined, { interactiveConsent: true });
         this.props.parent.showShareDialog();
+    }
+
+    showFeedbackDialog() {
+        pxt.tickEvent("menu.feedback");
+        this.props.parent.showFeedbackDialog();
     }
 
     openSettings() {
@@ -349,7 +355,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             {
                 // we always need a way to clear local storage, regardless if signed in or not
             }
-            {targetTheme.feedbackUrl ? <a className="ui item" href={targetTheme.feedbackUrl} role="menuitem" title={lf("Give Feedback")} target="_blank" rel="noopener noreferrer" >{lf("Give Feedback")}</a> : undefined}
+            {targetTheme.giveFeedback ? <sui.Item role="menuitem" text={lf("Give Feedback")} onClick={this.showFeedbackDialog} /> : undefined}
         </sui.DropdownMenu>;
     }
 }
