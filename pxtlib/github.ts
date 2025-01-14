@@ -299,8 +299,9 @@ namespace pxt.github {
                 })
         }
 
-        async loadTutorialMarkdown(repoPath: string, tag?: string) {
-            const tutorialResponse = (await downloadMarkdownTutorialInfoAsync(repoPath, tag)).resp;
+        async loadTutorialMarkdown(repopath: string, tag?: string) {
+            repopath = normalizeTutorialPath(repopath);
+            const tutorialResponse = (await downloadMarkdownTutorialInfoAsync(repopath, tag)).resp;
 
             const repo = tutorialResponse.markdown as { filename: string, repo: GHTutorialRepoInfo };
 
@@ -1440,5 +1441,35 @@ namespace pxt.github {
             .catch(e => ({
                 status: null
             }))
+    }
+
+    export function normalizeTutorialPath(repopath: string) {
+        // repopath will be one of these three formats:
+        //     1. owner/repo/path/to/file
+        //     2. github:owner/repo/path/to/file
+        //     3. https://github.com/owner/repo/path/to/file
+        //
+        // That third format is not a valid URL (a proper github URL will have /blob/branchname/
+        // in it after the repo) but we used to support it so maintain backwards compatibility
+        if (/^github\:/i.test(repopath)) {
+            repopath = repopath.slice(7)
+        }
+        if (/^https?\:/i.test(repopath)) {
+            const parsed = new URL(repopath);
+
+            // remove the leading slash
+            repopath = parsed.pathname.slice(1);
+
+            // check if this is an actual link to a file in github, for example:
+            //     Mojang/EducationContent/blob/master/computing/unit-2/lesson-1.md
+            //
+            // Note the "/blob/master/" which is not present in example 3 above
+            const fullURLMatch = /^((?:[^\/]+\/){2})blob\/[^\/]+\/(.*)\.md$/.exec(repopath)
+            if (fullURLMatch) {
+                repopath = fullURLMatch[1] + fullURLMatch[2];
+            }
+        }
+
+        return repopath;
     }
 }

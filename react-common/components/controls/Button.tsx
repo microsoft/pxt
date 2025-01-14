@@ -28,6 +28,7 @@ export interface ButtonViewProps extends ContainerProps {
 
 export interface ButtonProps extends ButtonViewProps {
     onClick: () => void;
+    onRightClick?: () => void;
     onBlur?: () => void;
     onKeydown?: (e: React.KeyboardEvent) => void;
 }
@@ -49,6 +50,7 @@ export const Button = (props: ButtonProps) => {
         ariaPressed,
         role,
         onClick,
+        onRightClick,
         onKeydown,
         onBlur,
         buttonRef,
@@ -78,7 +80,8 @@ export const Button = (props: ButtonProps) => {
     );
 
     let clickHandler = (ev: React.MouseEvent) => {
-        if (onClick) onClick();
+        if (onRightClick && ev.button !== 0) onRightClick();
+        else if (onClick) onClick();
         if (href) window.open(href, target || "_blank", "noopener,noreferrer")
         ev.stopPropagation();
         ev.preventDefault();

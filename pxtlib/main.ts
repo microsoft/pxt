@@ -7,16 +7,26 @@
 /// <reference path="tickEvent.ts"/>
 
 namespace pxt.perf {
+    export type EventSource<T> = {
+        subscribe(listener: (payload: T) => void): () => void;
+        //emit(payload: T): void; // not used externally
+    };
+
     // These functions are defined in docfiles/pxtweb/cookieCompliance.ts
+    export declare function isEnabled(): boolean;
     export declare let perfReportLogged: boolean;
     export declare function report(): { milestones: {[index: string]: number}, durations: {[index: string]: number} } | undefined;
-    export declare function recordMilestone(msg: string, time?: number): void;
+    export declare function recordMilestone(msg: string, params?: Map<string>): void;
     export declare function measureStart(name: string): void;
-    export declare function measureEnd(name: string): void;
+    export declare function measureEnd(name: string, params?: Map<string>): void;
+    export declare const onMilestone: EventSource<{ milestone: string, time: number, params?: Map<string> }>;
+    export declare const onMeasurement: EventSource<{ name: string, start: number, duration: number, params?: Map<string> }>;
 }
 (function () {
     // Sometimes these aren't initialized, for example in tests. We only care about them
     // doing anything in the browser.
+    if (!pxt.perf.isEnabled)
+        pxt.perf.isEnabled = () => false
     if (!pxt.perf.report)
         pxt.perf.report = () => undefined
     if (!pxt.perf.recordMilestone)
@@ -258,7 +268,7 @@ namespace pxt {
     }
 
     export function reloadAppTargetVariant(temporary = false) {
-        pxt.perf.measureStart("reloadAppTargetVariant")
+        pxt.perf.measureStart(Measurements.ReloadAppTargetVariant)
         const curr = temporary ? "" : JSON.stringify(appTarget);
         appTarget = U.cloneTargetBundle(savedAppTarget)
         if (appTargetVariant) {
@@ -272,7 +282,7 @@ namespace pxt {
         // check if apptarget changed
         if (!temporary && onAppTargetChanged && curr != JSON.stringify(appTarget))
             onAppTargetChanged();
-        pxt.perf.measureEnd("reloadAppTargetVariant")
+        pxt.perf.measureEnd(Measurements.ReloadAppTargetVariant)
     }
 
     // this is set by compileServiceVariant in pxt.json
@@ -358,10 +368,10 @@ namespace pxt {
         typeScriptWorkerJs: string; // /beta---tsworker
         pxtVersion: string; // "?",
         pxtRelId: string; // "9e298e8784f1a1d6787428ec491baf1f7a53e8fa",
-        pxtCdnUrl: string; // "https://pxt.azureedge.net/commit/9e2...e8fa/",
-        commitCdnUrl: string; // "https://pxt.azureedge.net/commit/9e2...e8fa/",
-        blobCdnUrl: string; // "https://pxt.azureedge.net/commit/9e2...e8fa/",
-        cdnUrl: string; // "https://pxt.azureedge.net"
+        pxtCdnUrl: string; // "https://cdn.makecode.com/commit/9e2...e8fa/",
+        commitCdnUrl: string; // "https://cdn.makecode.com/commit/9e2...e8fa/",
+        blobCdnUrl: string; // "https://cdn.makecode.com/commit/9e2...e8fa/",
+        cdnUrl: string; // "https://cdn.makecode.com"
         targetUrl: string; // "https://pxt.microbit.org"
         targetVersion: string; // "?",
         targetRelId: string; // "9e298e8784f1a1d6787428ec491baf1f7a53e8fa",
