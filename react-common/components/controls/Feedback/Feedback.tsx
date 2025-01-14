@@ -28,9 +28,9 @@ export const Feedback = (props: IFeedbackProps) => {
   }, [])
   return (
     // would like to make it so there is no border on the iframe so the survey looks seamless
-    <Modal title={title} onClose={onClose}>
+    <Modal className="feedback-modal" title={title} onClose={onClose}>
       <iframe
-      title="feedback-demo"
+      title="feedback"
       height="450px" // You can change this according to your host app requirement
       width="550px"  // You can change this according to your host app requirement
       id={frameId}
