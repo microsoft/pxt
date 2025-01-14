@@ -82,6 +82,7 @@ import { Tour } from "./components/onboarding/Tour";
 import { parseTourStepsAsync } from "./onboarding";
 import { initGitHubDb } from "./idbworkspace";
 import { BlockDefinition, CategoryNameID } from "./toolbox";
+import { Feedback, GenericFeedback } from "../../react-common/components/controls/Feedback/Feedback";
 
 pxt.blocks.requirePxtBlockly = () => pxtblockly as any;
 pxt.blocks.requireBlockly = () => Blockly;
@@ -199,6 +200,7 @@ export class ProjectView
             isMultiplayerGame: false,
             onboarding: undefined,
             mute: pxt.editor.MuteState.Unmuted,
+            feedback: false,
         };
         if (!this.settings.editorFontSize) this.settings.editorFontSize = /mobile/i.test(navigator.userAgent) ? 15 : 19;
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
@@ -208,6 +210,7 @@ export class ProjectView
         this.hwDebug = this.hwDebug.bind(this);
         this.hideLightbox = this.hideLightbox.bind(this);
         this.hideOnboarding = this.hideOnboarding.bind(this);
+        this.hideFeedback = this.hideFeedback.bind(this);
         this.openSimSerial = this.openSimSerial.bind(this);
         this.openDeviceSerial = this.openDeviceSerial.bind(this);
         this.openSerial = this.openSerial.bind(this);
@@ -215,6 +218,7 @@ export class ProjectView
         this.toggleSimulatorFullscreen = this.toggleSimulatorFullscreen.bind(this);
         this.toggleSimulatorCollapse = this.toggleSimulatorCollapse.bind(this);
         this.showKeymap = this.showKeymap.bind(this);
+        this.showFeedback = this.showFeedback.bind(this);
         this.toggleKeymap = this.toggleKeymap.bind(this);
         this.showMiniSim = this.showMiniSim.bind(this);
         this.setTutorialStep = this.setTutorialStep.bind(this);
@@ -4498,7 +4502,7 @@ export class ProjectView
     }
 
     showFeedbackDialog(): void {
-        dialogs.showFeedbackDialogAsync();
+        this.showFeedback();
     }
 
     async showTurnBackTimeDialogAsync() {
@@ -5128,6 +5132,18 @@ export class ProjectView
     }
 
     ///////////////////////////////////////////////////////////
+    ////////////             Feedback            /////////////
+    ///////////////////////////////////////////////////////////
+
+    hideFeedback() {
+        this.setState({ feedback: false });
+    }
+
+    showFeedback() {
+        this.setState({ feedback: true });
+    }
+
+    ///////////////////////////////////////////////////////////
     ////////////             Light Box            /////////////
     ///////////////////////////////////////////////////////////
 
@@ -5265,6 +5281,7 @@ export class ProjectView
         const hideMenuBar = targetTheme.hideMenuBar || hideTutorialIteration || (isTabTutorial && pxt.appTarget.appTheme.embeddedTutorial) || pxt.shell.isTimeMachineEmbed();
         const isHeadless = simOpts && simOpts.headless;
         const selectLanguage = targetTheme.selectLanguage;
+        const giveFeedback = targetTheme.giveFeedback;
         const showEditorToolbar = inEditor && !hideEditorToolbar && this.editor.hasEditorToolbar();
         const useSerialEditor = pxt.appTarget.serial && !!pxt.appTarget.serial.useEditor;
         const showSideDoc = sideDocs && this.state.sideDocsLoadUrl && !this.state.sideDocsCollapsed;
@@ -5406,6 +5423,7 @@ export class ProjectView
                 {hwDialog ? <projects.ChooseHwDialog parent={this} ref={this.handleChooseHwDialogRef} /> : undefined}
                 {sandbox || !sharingEnabled ? undefined : <share.ShareEditor parent={this} ref={this.handleShareEditorRef} loading={this.state.publishing} />}
                 {selectLanguage ? <lang.LanguagePicker parent={this} ref={this.handleLanguagePickerRef} /> : undefined}
+                {giveFeedback && this.state.feedback ? <GenericFeedback onClose={this.hideFeedback}/> : undefined}
                 {sandbox ? <container.SandboxFooter parent={this} /> : undefined}
                 {hideMenuBar ? <div id="editorlogo"><a className="poweredbylogo"></a></div> : undefined}
                 {lightbox ? <sui.Dimmer isOpen={true} active={lightbox} portalClassName={'tutorial'} className={'ui modal'}
