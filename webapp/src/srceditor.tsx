@@ -149,6 +149,9 @@ export class Editor implements IEditor {
     focusToolbox(itemToFocus?: string) {
     }
 
+    focusWorkspace() {
+    }
+
     // allows all editors to send exceptions to error list
     onExceptionDetected(exception: pxsim.DebuggerBreakpointMessage) {
         core.warningNotification(lf("Program Error: {0}", exception?.exceptionMessage));

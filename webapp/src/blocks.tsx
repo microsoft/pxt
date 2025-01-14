@@ -44,7 +44,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     loadingXml: boolean;
     loadingXmlPromise: Promise<any>;
     compilationResult: pxtblockly.BlockCompilationResult;
-    isFirstBlocklyLoad = true;
+    isFirstLoad = true;
     functionsDialog: CreateFunctionDialog = null;
 
     showCategories: boolean = true;
@@ -159,6 +159,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             pxt.Util.toArray(document.querySelectorAll(classes)).forEach((el: HTMLElement) => el.style.display = 'none');
             if (this.editor) Blockly.hideChaff();
             if (this.toolbox) this.toolbox.clearExpandedItem();
+            // Update isFirstLoad here to handle when the app switches to JavaScript or Python immediately.
+            this.isFirstLoad = false;
         }
     }
 
@@ -226,7 +228,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
                     this.resize();
                     Blockly.svgResize(this.editor);
-                    this.isFirstBlocklyLoad = false;
+                    this.isFirstLoad = false;
                 }).finally(() => {
                     try {
                         // It's possible Blockly reloads and the loading dimmer is no longer a child of the editorDiv
@@ -320,6 +322,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.updateGrayBlocks();
 
             this.typeScriptSaveable = true;
+
+            if (!this.isFirstLoad) {
+                this.focusWorkspace();
+            }
         } catch (e) {
             pxt.log(e);
             pxtblockly.clearWithoutEvents(this.editor);
@@ -783,6 +789,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 width: window.innerWidth,
                 height: window.innerHeight
             });
+        }
+    }
+
+    focusWorkspace() {
+        if (pxt.appTarget.appTheme?.accessibleBlocks) {
+            (this.editor.getSvgGroup() as SVGElement).focus();
         }
     }
 

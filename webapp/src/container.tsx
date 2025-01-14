@@ -349,7 +349,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
 
 
 interface IBaseMenuItemProps extends ISettingsProps {
-    onClick: () => void;
+    onClick: (e: React.MouseEvent<HTMLElement>) => void;
     isActive: () => boolean;
 
     icon?: string;
@@ -413,7 +413,10 @@ class BlocksMenuItem extends data.Component<ISettingsProps, {}> {
         super(props);
     }
 
-    protected onClick = (): void => {
+    protected onClick = (e: React.MouseEvent<HTMLElement>): void => {
+        // Prevents "enter" from being handled again by Blockly's keyboard
+        // navigation plugin.
+        e.nativeEvent.stopPropagation()
         pxt.tickEvent("menu.blocks", undefined, { interactiveConsent: true });
         this.props.parent.openBlocks();
     }

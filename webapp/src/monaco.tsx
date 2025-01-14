@@ -1167,6 +1167,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
+    focusWorkspace(): void {
+        this.editor.focus();
+    }
+
     undo() {
         if (!this.editor) return;
         this.editor.trigger('keyboard', 'undo', null);

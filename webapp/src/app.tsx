@@ -664,6 +664,7 @@ export class ProjectView
 
         if (this.isBlocksActive()) {
             if (this.state.embedSimView) this.setState({ embedSimView: false });
+            this.editor.focusWorkspace();
             return;
         }
 
