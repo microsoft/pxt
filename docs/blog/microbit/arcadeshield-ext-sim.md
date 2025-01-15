@@ -16,11 +16,14 @@ With the [Arcade shield MakeCode extension for the micro:bit](https://makecode.m
 
 The extension also includes a simulator that lets you see how your game will look on the Arcade shield while you are developing it. The simulator is a great way to test your code without needing to have the Arcade shield connected to your micro:bit.
 
-![MakeCode with shield simulator](/static/blog/microbit/arcadeshield-ext-sim/shieldSim.png)
+![MakeCode with shield simulator](/static/blog/microbit/arcadeshield-ext-sim/shield-sim.png)
 
 ## Plotting the accelerometer
 
 Here's a [MakeCode program](https://makecode.microbit.org/beta/#pub:S82867-73191-89330-76938) that plots the micro:bit's accelerometer values on the Arcade shield display. 
+
+![MakeCode program for plotting accelerometer to shield](/static/blog/microbit/arcadeshield-ext-sim/plot-accelerometer.png)
+
 
 ## Your feedback welcome
 
