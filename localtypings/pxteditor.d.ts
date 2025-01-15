@@ -1149,7 +1149,7 @@ declare namespace pxt.editor {
         onPostHostMessage?: (msg: pxt.editor.EditorMessageRequest) => void;
         onPerfMilestone?: (payload: { milestone: string, time: number, params?: Map<string> }) => void;
         onPerfMeasurement?: (payload: { name: string, start: number, duration: number, params?: Map<string> }) => void;
-    
+
         // Used with the @tutorialCompleted macro. See docs/writing-docs/tutorials.md for more info
         onTutorialCompleted?: () => void;
         onMarkdownActivityLoad?: (path: string, title?: string, editorProjectName?: string) => Promise<void>;

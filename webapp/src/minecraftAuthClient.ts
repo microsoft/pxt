@@ -1,26 +1,106 @@
 import { AuthClient } from "./auth";
 
+interface IPCRenderer {
+    on(event: "responseFromApp", handler: (event: any, message: string) => void): void;
+    sendToHost(messageType: "sendToApp", message: IPCMessage): void;
+}
+
+interface IPCHeader {
+    requestId: string;
+    messagePurpose: "cloud";
+    version: 1;
+}
+
+interface IPCMessage {
+    header: IPCHeader;
+    body:
+    | CloudProxyUserRequest
+    | CloudProxyListRequest
+    | CloudProxyGetRequest
+    | CloudProxySetRequest
+    | CloudProxyDeleteRequest;
+}
+
+interface IPCResponse {
+    header: IPCHeader;
+    body:
+    | CloudProxyUserResponse
+    | CloudProxyListResponse
+    | CloudProxyGetResponse
+    | CloudProxySetResponse
+    | CloudProxyDeleteResponse;
+}
+
+/***************************
+ *        Requests         *
+ ***************************/
+
+interface CloudProxyUserRequest {
+    operation: "user";
+}
+
+interface CloudProxyListRequest {
+    operation: "list";
+    headerIds?: string[];
+}
+
+interface CloudProxyGetRequest {
+    operation: "get";
+    headerId: string;
+}
+
+interface CloudProxySetRequest {
+    operation: "set";
+    project: pxt.editor.CloudProject;
+}
+
+interface CloudProxyDeleteRequest {
+    operation: "delete";
+    headerId: string;
+}
+
+/***************************
+ *        Responses        *
+ ***************************/
+
+interface CloudProxyUserResponse {
+    operation: "user";
+    status: number;
+    resp: string; // a unique string identifying the user
+}
+
+interface CloudProxyListResponse {
+    operation: "list";
+    status: number;
+    resp: pxt.editor.CloudProject[];
+}
+
+interface CloudProxyGetResponse {
+    operation: "get";
+    status: number;
+    resp: pxt.editor.CloudProject;
+}
+
+interface CloudProxySetResponse {
+    operation: "set";
+    status: number;
+    resp: string;
+}
+
+interface CloudProxyDeleteResponse {
+    operation: "delete";
+    status: number;
+    resp: undefined;
+}
 
 export class MinecraftAuthClient extends AuthClient {
     protected pendingMessages: pxt.Map<(response: pxt.editor.CloudProxyResponse) => void> = {};
     protected preferences: pxt.auth.UserPreferences = {};
-
-    private pendingAuthCheck: Promise<pxt.auth.ApiResult<pxt.auth.UserProfile>> = undefined;
+    protected ipc?: IPCRenderer;
 
     constructor() {
         super();
-
-        window.addEventListener("message", ev => {
-            const message = ev.data;
-
-            if (message.action === "cloudproxy") {
-                if (this.pendingMessages[message.id]) {
-                    const response = message as pxt.editor.CloudProxyResponse;
-                    this.pendingMessages[message.id](response);
-                    delete this.pendingMessages[message.id];
-                }
-            }
-        });
+        this.init();
     }
 
     async apiAsync<T = any>(url: string, data?: any, method?: string, authToken?: string): Promise<pxt.auth.ApiResult<T>> {
@@ -136,6 +216,33 @@ export class MinecraftAuthClient extends AuthClient {
     }
 
     protected postMessageAsync<U extends pxt.editor.CloudProxyResponse>(message: Partial<pxt.editor.CloudProxyRequest>): Promise<U> {
+        if (this.ipc) {
+            return this.postMessageToIPC(message);
+        }
+        else {
+            return this.postMessageToParentFrame(message);
+        }
+    }
+
+    protected postMessageToIPC<U extends pxt.editor.CloudProxyResponse>(message: Partial<pxt.editor.CloudProxyRequest>): Promise<U> {
+        return new Promise<U>((resolve, reject) => {
+            const requestId = "cloudproxy-" + crypto.randomUUID();
+            const toSend: IPCMessage = {
+                header: {
+                    requestId: requestId,
+                    messagePurpose: "cloud",
+                    version: 1
+                },
+                body: message as pxt.editor.CloudProxyRequest
+            }
+
+            this.pendingMessages[requestId] = resolve as any;
+
+            this.ipc.sendToHost("sendToApp", toSend);
+        })
+    }
+
+    protected postMessageToParentFrame<U extends pxt.editor.CloudProxyResponse>(message: Partial<pxt.editor.CloudProxyRequest>): Promise<U> {
         return new Promise<U>((resolve, reject) => {
             const toPost = {
                 ...message,
@@ -149,7 +256,62 @@ export class MinecraftAuthClient extends AuthClient {
 
             // TODO: send over ipc channel
             window.parent.postMessage(toPost, "*");
-        })
+        });
+    }
+
+    protected init() {
+        this.ipc = (window as any).ipcRenderer;
+
+        if (!this.ipc) {
+            this.initIFrame();
+            return;
+        }
+
+        this.ipc.on("responseFromApp", (_, message) => {
+            const parsed = pxt.U.jsonTryParse(message) as IPCResponse;
+
+            if (!parsed) return;
+
+            if (parsed.header.messagePurpose !== "cloud") return;
+
+            let resp = parsed.body.resp as any;
+            if (parsed.body.operation === "user") {
+                resp = { id: parsed.body.resp }
+            }
+
+            const response: pxt.editor.CloudProxyResponse = {
+                type: "pxteditor",
+                action: "cloudproxy",
+                id: parsed.header.requestId,
+                operation: parsed.body.operation,
+                success: parsed.body.status === 200,
+                resp: {
+                    statusCode: parsed.body.status,
+                    success: parsed.body.status === 200,
+                    resp: resp,
+                    err: undefined
+                }
+            };
+
+            this.handleResponse(response);
+        });
+    }
+
+    protected initIFrame() {
+        window.addEventListener("message", ev => {
+            const message = ev.data;
+
+            if (message.action === "cloudproxy") {
+                this.handleResponse(message);
+            }
+        });
+    }
+
+    protected handleResponse(response: pxt.editor.CloudProxyResponse) {
+        if (this.pendingMessages[response.id]) {
+            this.pendingMessages[response.id](response);
+            delete this.pendingMessages[response.id];
+        }
     }
 
     protected async listAsync(headerIds?: string[]): Promise<pxt.auth.ApiResult<pxt.editor.CloudProject[]>> {
