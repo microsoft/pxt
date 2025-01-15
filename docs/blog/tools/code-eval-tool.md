@@ -12,8 +12,6 @@ https://youtu.be/7pA2EbG4QPk
 
 More documentation can be found on the [Code Evaluation Tool]([https://makecode.microbit.org/code-eval-tool) page.
 
-Pending docs update? https://github.com/microsoft/pxt-microbit/pull/6039, https://github.com/microsoft/pxt/pull/10316
-
 The Code Evaluation tool has been released as a Beta – meaning that it’s still a work-in-progress. We have ideas on how we could improve it, but we want to hear from you! Please try it out and click on the Give Feedback button to let us know your thoughts - https://makecode.microbit.org/--eval.
 
 Happy Making, Coding, and Evaluating!
