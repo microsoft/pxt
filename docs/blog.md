@@ -1,5 +1,14 @@
 # Microsoft MakeCode Blog
 
+## [Arcade shield extension/simulator for the micro:bit (V2)](/blog/microbit/arcadeshield-ext-sim)
+
+January 16, 2025 by [Thomas Ball](https://github.com/thomasjball)
+
+You can now use Arcade shields for the micro:bit V2 in https://makecode.microbit.org/beta, with simulator support!
+
+**[Continue reading this blog post](/blog/microbit/arcadeshield-ext-sim)**
+
+
 ## [MakeCode for the micro:bit 2024 Update](/blog/microbit/2024-update)
 
 September 4, 2024 by [Jaqster](https://github.com/jaqster)
