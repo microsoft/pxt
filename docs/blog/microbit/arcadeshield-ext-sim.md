@@ -10,9 +10,7 @@ With the [Arcade shield MakeCode extension for the micro:bit](https://makecode.m
 -	**All the micro:bit blocks and APIs** you are used to working with
 -	**New blocks for drawing** to the Arcade shield's display and responding to user input via its buttons and direction-pad (D-pad)
 
-The extension also includes a simulator that lets you see how your code will look on the Arcade shield while you are developing it.
-
-Here's a [MakeCode program](https://makecode.microbit.org/beta/#pub:S82867-73191-89330-76938) that plots the micro:bit's accelerometer values on the Arcade shield display. The accelerometer has three axes: x, y, and z. The program reads the accelerometer values and transforms their range (-1024 to 1024) to the display's vertical range (120 pixels high).  The code stores the previous accelerometer values and draws lines between the current and previous values. When the plot reaches the right edge of the display, the display scrolls to the left to make room for new data.
+The extension also includes a simulator that lets you see how your code will look on the Arcade shield while you are developing it, as shown below. Here's a [MakeCode program](https://makecode.microbit.org/beta/#pub:S82867-73191-89330-76938) that plots the micro:bit's accelerometer values on the Arcade shield display. The accelerometer has three axes: x, y, and z. The program reads the accelerometer values and transforms their range (-1024 to 1024) to the display's vertical range (120 pixels high).  The code stores the previous accelerometer values and draws lines between the current and previous values. When the plot reaches the right edge of the display, the display scrolls to the left to make room for new data.
 
 ![MakeCode program for plotting accelerometer to shield](/static/blog/microbit/arcadeshield-ext-sim/plot-accelerometer.png)
 
