@@ -2,7 +2,7 @@
 
 **Posted on January 16, 2025 by [Thomas Ball](https://github.com/thomasjball)**
 
-The micro:bit V2 has an amazing amount of computational power for a tiny device. In fact, it’s powerful enough to drive a small color display. If you have ever used [MakeCode Arcade](https://arcade.makecode.com/), you may have noticed there are a variety of [Arcade shields](https://makecode.com/blog/microbit/arcade-shield) (also called expansion boards) now commercially available. The micro:bit V2 plugs into the shield, making the combination a retro gaming device:
+The micro:bit V2 has an amazing amount of computational power for a tiny device. In fact, it’s powerful enough to drive a small color display. If you have ever used [MakeCode Arcade](https://arcade.makecode.com/), you may have noticed there are a variety of [Arcade shields](/blog/arcade/arcade-on-microbit-xbox) (also called expansion boards) now commercially available. The micro:bit V2 plugs into the shield, making the combination a retro gaming device:
 
 ![Arcade shields](/static/blog/microbit/arcadeshield-ext-sim/arcadeshields.png)
 
