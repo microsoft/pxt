@@ -18,7 +18,7 @@ Here's a [MakeCode program](https://makecode.microbit.org/beta/#pub:S82867-73191
 
 ## More to come: Micro:bit Apps!
 
-The above example is just the beginning. With the Arcade shield extension, you can do many things with your micro:bit that previously required connecting your micro:bit to a laptop or desktop computer. For example, graduate student [Kier Palin](https://github.com/kierpalin) at [Lancaster University]() developed [MicroData](https://github.com/microbit-app/MicroData), 
+The above example is just the beginning. With the Arcade shield extension, you can do many things with your micro:bit that previously required connecting your micro:bit to a laptop or desktop computer. For example, graduate student [Kier Palin](https://github.com/kierpalin) at [Lancaster University](https://www.lancaster.ac.uk/) in the UK developed [MicroData](https://github.com/microbit-app/MicroData), 
 an app that lets you collect data from the micro:bit's sensors and display it on the Arcade shield, as shown below on actual hardware:
 
 ![MicroData program](/static/blog/microbit/arcadeshield-ext-sim/microdata.png)
