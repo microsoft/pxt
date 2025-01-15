@@ -18,12 +18,12 @@ Here's a [MakeCode program](https://makecode.microbit.org/beta/#pub:S82867-73191
 
 ## More to come: Micro:bit Apps!
 
-The above example is just the beginning. With the Arcade shield extension, you can do many things with your micro:bit that previously required connecting your micro:bit to a laptop or desktop computer. For example, graduate student Kier Palin at Lancaster University developed [MicroData](https://github.com/microbit-app/MicroData), 
-an app that lets you collect data from the micro:bit's sensors and display it on the Arcade shield, as shown below in both the simulator and on the real hardware:
+The above example is just the beginning. With the Arcade shield extension, you can do many things with your micro:bit that previously required connecting your micro:bit to a laptop or desktop computer. For example, graduate student [Kier Palin](https://github.com/kierpalin) at [Lancaster University]() developed [MicroData](https://github.com/microbit-app/MicroData), 
+an app that lets you collect data from the micro:bit's sensors and display it on the Arcade shield, as shown below on actual hardware:
 
 ![MicroData program](/static/blog/microbit/arcadeshield-ext-sim/microdata.png)
 
-You can load the MicroData program into the MakeCode editor by importing the URL https://github.com/microbit-app/MicroData using the Import button at https://makecode.microbit.org/beta.
+You can load the MicroData program into the MakeCode editor by importing the URL https://github.com/microbit-app/MicroData using the **Import** button on (the right side of) https://makecode.microbit.org/beta.
 
 ## Your feedback welcome
 
@@ -31,7 +31,7 @@ We are excited to see what you create with the Arcade shield extension for the m
 
 ## Thanks
 
-Thanks to the MakeCode team for their support in developing the Arcade shield extension for the micro:bit. Special thanks to [Eric Anderson](https://github.com/eanders) and
+Thanks to the MakeCode team for their support in developing the Arcade shield extension for the micro:bit. Special thanks to [Eric Anderson](https://github.com/eanders-ms) for his work on the [simulator extension framework](https://github.com/microsoft/pxt-simx-sample) for MakeCode and for building the Arcade shield simulator.
 
 
 
