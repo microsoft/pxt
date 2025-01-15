@@ -104,6 +104,20 @@ export class MinecraftAuthClient extends AuthClient {
     }
 
     async apiAsync<T = any>(url: string, data?: any, method?: string, authToken?: string): Promise<pxt.auth.ApiResult<T>> {
+        try {
+            return this.apiAsyncCore(url, data, method, authToken);
+        }
+        catch (e) {
+            return {
+                success: false,
+                statusCode: 500,
+                resp: undefined,
+                err: e
+            };
+        }
+    }
+
+    protected async apiAsyncCore<T = any>(url: string, data?: any, method?: string, authToken?: string): Promise<pxt.auth.ApiResult<T>> {
         const match = /((?:\/[^\?\/]+)*)(\?.*)?/.exec(url);
 
         if (!match) {
@@ -244,6 +258,10 @@ export class MinecraftAuthClient extends AuthClient {
 
     protected postMessageToParentFrame<U extends pxt.editor.CloudProxyResponse>(message: Partial<pxt.editor.CloudProxyRequest>): Promise<U> {
         return new Promise<U>((resolve, reject) => {
+            if (window.parent === window) {
+                reject("No IPC renderer and not embeded in iframe");
+                return;
+            }
             const toPost = {
                 ...message,
                 type: "pxthost",
@@ -263,6 +281,7 @@ export class MinecraftAuthClient extends AuthClient {
         this.ipc = (window as any).ipcRenderer;
 
         if (!this.ipc) {
+            pxt.warn("No ipcRenderer detected. Using iframe cloud proxy instead");
             this.initIFrame();
             return;
         }
