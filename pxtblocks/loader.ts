@@ -23,7 +23,7 @@ import { initOnStart } from "./builtins/misc";
 import { initContextMenu } from "./contextMenu";
 import { renderCodeCard } from "./codecardRenderer";
 import { FieldDropdown } from "./fields/field_dropdown";
-import { setDraggableShadowBlocks, setDuplicateOnDragStrategy } from "./plugins/duplicateOnDrag";
+import { setDraggableShadowBlocks, setDuplicateOnDrag, setDuplicateOnDragStrategy } from "./plugins/duplicateOnDrag";
 import { applyPolyfills } from "./polyfills";
 
 
@@ -259,6 +259,11 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
                 } else {
                     i.setCheck("Variable");
                 }
+
+            });
+
+            comp.handlerArgs.forEach(arg => {
+                setDuplicateOnDrag(block.type, "HANDLER_DRAG_PARAM_" + arg.name);
             });
         }
         else {
