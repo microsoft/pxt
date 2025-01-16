@@ -31,7 +31,7 @@ a *micro:bit app* that lets you collect data from the micro:bit's sensors and di
 
 ![MicroData program](/static/blog/microbit/display-shield/microdata.png)
 
-You can load the MicroData app into the MakeCode editor by importing the URL https://github.com/microbit-app/MicroData using the **Import** button on (the right side of) https://makecode.microbit.org/beta.
+You can load the MicroData app into the MakeCode editor by importing the URL https://github.com/microbit-apps/MicroData using the **Import** button on (the right side of) https://makecode.microbit.org/beta.
 
 ## Your feedback welcome
 
