@@ -5,13 +5,15 @@
 
 ## Background
 
-The latest micro:bit has an amazing amount of computational power for a tiny device. In fact, it’s powerful enough to drive a small color display. If you have ever used [MakeCode Arcade](https://arcade.makecode.com/), you may have noticed there are a variety of [Arcade shields](/blog/arcade/arcade-on-microbit-xbox) (also called expansion boards) now commercially available. The micro:bit plugs into the shield, which has a 160x120 color display an extra inputs, making the combination a retro gaming device:
+The latest micro:bit has an amazing amount of computational power for a tiny device. In fact, it’s powerful enough to drive a small color display. If you have ever used [MakeCode Arcade](https://arcade.makecode.com/), you may have noticed there are a variety of [Arcade shields](/blog/arcade/arcade-on-microbit-xbox) (also called expansion boards) now commercially available. The micro:bit plugs into the shield, which has a 160x120 color display and extra inputs, making the combination a retro gaming device:
 
 ![Arcade shields](/static/blog/microbit/display-shield/display-shields.png)
 
 ## Display shield extension
 
-With the [Display shield MakeCode extension for the micro:bit](https://makecode.microbit.org/pkg/microbit-apps/display-shield), you can use any Arcade shield with the beta version of the MakeCode for micro:bit editor (https://makecode.microbit.org/beta). This gives you access to the best of both worlds:
+With the [Display shield MakeCode extension for the micro:bit](https://makecode.microbit.org/pkg/microbit-apps/display-shield), 
+you can use any Arcade shield with the beta version of the MakeCode for micro:bit editor (https://makecode.microbit.org/beta). 
+This gives you access to the best of both worlds:
 -	**All the micro:bit blocks and APIs** you are used to working with
 -	**New blocks for drawing** to the shield's display and responding to user input via its buttons and direction-pad (D-pad)
 We emphasize the name ``Display shield extension`` because the extension is not limited to writing
