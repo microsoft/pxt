@@ -5,7 +5,7 @@
 
 ## Background
 
-The latest micro:bit has an amazing amount of computational power for a tiny device. In fact, it’s powerful enough to drive a small color display. If you have ever used [MakeCode Arcade](https://arcade.makecode.com/), you may have noticed there are a variety of [Arcade shields](/blog/arcade/arcade-on-microbit-xbox) (also called expansion boards) now commercially available. The micro:bit plugs into the shield, which has a 160x120 color display and extra inputs, making the combination a retro gaming device:
+The latest micro:bit has an amazing amount of computational power for a tiny device. In fact, it’s powerful enough to drive a small color display. If you have ever used [MakeCode Arcade](https://arcade.makecode.com/), you may have noticed there are a variety of [Arcade shields](/blog/arcade/arcade-on-microbit-xbox) now commercially available. The micro:bit plugs into the shield, which has a 160x120 color display and extra inputs, making the combination a retro gaming device:
 
 ![Arcade shields](/static/blog/microbit/display-shield/display-shields.png)
 
