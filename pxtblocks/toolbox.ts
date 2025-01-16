@@ -100,7 +100,7 @@ export function createShadowValue(info: pxtc.BlocksInfo, p: pxt.blocks.BlockPara
     const value = document.createElement("value");
     value.setAttribute("name", p.definitionName);
 
-    const isArray = isArrayType(p.type);
+    const isArray = (shadowId === "lists_create_with" || !shadowId) ? isArrayType(p.type) : undefined;
 
     const shadow = document.createElement(((isVariable || isArray) && !parentIsShadow) ? "block" : "shadow");
 
