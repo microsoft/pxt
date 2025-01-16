@@ -1,6 +1,6 @@
 # Display shield extension/simulator for the micro:bit
 
-**Posted on January 16, 2025 by [Thomas Ball](https://github.com/thomasjball)**
+**Posted on January 27, 2025 by [Thomas Ball](https://github.com/thomasjball)**
 
 
 ## Background
