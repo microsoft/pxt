@@ -1,20 +1,26 @@
-.image-editor-button {
-    text-align: center;
+.common-button.image-editor-button {
     line-height: 2rem;
     width: 1.75rem;
     height: 1.75rem;
     border-radius: 0.25rem;
     margin: 0.375rem;
+    padding: 0;
+    min-width: unset;
+    min-height: unset;
 
     transition: color 0.1s;
     color: var(--sidebar-icon-active-color);
+    background: none;
 
-    cursor: pointer;
-    user-select: none;
+    &:focus-visible::after {
+        inset: -1px;
+        outline-color: @inputBorderColorFocus;
+    }
 }
 
-.image-editor-button.toggle, .image-editor-button.disabled {
+.image-editor-button.toggle, .common-button.image-editor-button.disabled {
     color: var(--sidebar-icon-inactive-color);
+    background: none;
 }
 
 .image-editor-button.disabled {

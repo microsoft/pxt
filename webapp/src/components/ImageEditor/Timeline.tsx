@@ -6,6 +6,7 @@ import { dispatchChangeCurrentFrame, dispatchNewFrame, dispatchDuplicateFrame, d
 
 import { TimelineFrame } from "./TimelineFrame";
 import { bindGestureEvents, ClientCoordinates } from "./util";
+import { Button } from "../../../../react-common/components/controls/Button";
 
 interface TimelineProps {
     colors: string[];
@@ -81,9 +82,12 @@ export class TimelineImpl extends React.Component<TimelineProps, TimelineState> 
                                     deleteFrame={this.deleteFrame} />
                             </div>
                         }
-                        <div className="image-editor-timeline-frame collapsed" role="button" onClick={this.newFrame}>
-                            <span className="ms-Icon ms-Icon--Add" />
-                        </div>
+                        <Button
+                            className="image-editor-button add-frame-button toggle"
+                            title={lf("Add new frame")}
+                            onClick={this.newFrame}
+                            leftIcon="ms-Icon ms-Icon--Add"
+                        />
                     </div>
                 </div>
             </div>
