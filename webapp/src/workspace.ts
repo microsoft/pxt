@@ -13,7 +13,6 @@ import * as compiler from "./compiler"
 import * as auth from "./auth"
 import * as cloud from "./cloud"
 
-import * as dmp from "diff-match-patch";
 import * as pxteditor from "../../pxteditor";
 
 import U = pxt.Util;
@@ -664,28 +663,8 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
                     }
 
                     if (toWrite) {
-                        pxteditor.history.updateHistory(previous.text, toWrite, Date.now(), h.pubVersions || [], diffText2, patchText2);
+                        pxteditor.history.updateHistory(previous.text, toWrite, Date.now(), h.pubVersions || [], diffText, patchText);
                     }
-                    // let toWrite2 = toWrite && { ...toWrite }
-
-                    // {
-                    //     const start = performance.now()
-
-                    //     if (toWrite) {
-                    //         pxteditor.history.updateHistory(previous.text, toWrite, Date.now(), h.pubVersions || [], diffText, patchText);
-                    //     }
-                    //     const time = performance.now() - start;
-                    //     console.log(`DMP TIME: ` + time)
-                    // }
-                    // {
-                    //     const start = performance.now()
-
-                    //     if (toWrite2) {
-                    //         pxteditor.history.updateHistory(previous.text, toWrite2, Date.now(), h.pubVersions || [], diffText2, patchText);
-                    //     }
-                    //     const time = performance.now() - start;
-                    //     console.log(`NEW TIME: ` + time)
-                    // }
                 }
             }
             catch (e) {
@@ -750,26 +729,17 @@ function computePath(h: Header) {
 
     return path
 }
-const differ = new dmp.diff_match_patch();
 
 function diffText(a: string, b: string) {
-    return differ.patch_make(a, b);
-}
-
-function patchText(patch: unknown, a: string) {
-    return differ.patch_apply(patch as any, a)[0]
-}
-
-function diffText2(a: string, b: string) {
     return pxt.diff.computePatch(a, b);
 }
 
-function patchText2(patch: unknown, a: string) {
+function patchText(patch: unknown, a: string) {
     return pxt.diff.applyPatch(a, patch as any)
 }
 
 export function restoreTextToTime(text: ScriptText, history: HistoryFile, timestamp: number) {
-    return getTextAtTime(text, history, timestamp, patchText2);
+    return getTextAtTime(text, history, timestamp, patchText);
 }
 
 export function importAsync(h: Header, text: ScriptText, isCloud = false) {

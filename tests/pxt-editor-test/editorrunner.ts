@@ -13,7 +13,7 @@ pxt.appTarget = {
     }
 } as any
 
-// const differ = new dmp.diff_match_patch();
+const differ = new dmp.diff_match_patch();
 
 function diffText(a: string, b: string) {
     return pxt.diff.computePatch(a, b);
@@ -41,6 +41,62 @@ function checkTimestamp(e: pxteditor.history.HistoryEntry, value: number) {
     chai.expect(e.timestamp).to.equal(value);
     chai.expect(e.editorVersion).to.equal(value + "");
 }
+
+function testDiff(textA: string, textB: string) {
+    const dmpPatch = differ.patch_make(textA, textB);
+    const ourPatch = pxt.diff.computePatch(textA, textB);
+
+    const dmpResult = differ.patch_apply(dmpPatch, textA)[0];
+    const ourDmpResult = pxt.diff.applyPatch(textA, dmpPatch as any);
+    const ourPatchResult = pxt.diff.applyPatch(textA, ourPatch);
+
+    chai.expect(ourDmpResult).eq(dmpResult, "did not apply DMP patch correctly");
+    chai.expect(ourPatchResult).eq(textB);
+}
+
+describe("diffing+patching", () => {
+    it("should support the diff-match-patch format", () => {
+        const textA = "Hello, my name is richard. I enjoy things";
+        const textB = "Goodbye, my name is roberta. I dislike things";
+        testDiff(textA, textB);
+    });
+
+    it("should handle new line deletions at the end of the file", () => {
+        const textA = "Hello, \nmy name is roberta.\nI enjoy things\n";
+        const textB = "Goodbye, \nmy name is roberta.\nI dislike things";
+        testDiff(textA, textB);
+    });
+
+    it("should handle new line deletions at the end of the file when there is more than one", () => {
+        const textA = "Hello, \nmy name is roberta.\nI enjoy things\n\n";
+        const textB = "Goodbye, \nmy name is roberta.\nI dislike things\n";
+        testDiff(textA, textB);
+    });
+
+    it("should handle new line deletions at the end of the file", () => {
+        const textA = "Hello, \nmy name is roberta.\nI enjoy things";
+        const textB = "Goodbye, \nmy name is roberta.\nI dislike things\n";
+        testDiff(textA, textB);
+    });
+
+    it("should handle new line additions at the end of the file when there is more than one", () => {
+        const textA = "Hello, \nmy name is roberta.\nI enjoy things\n";
+        const textB = "Goodbye, \nmy name is roberta.\nI dislike things\n\n";
+        testDiff(textA, textB);
+    });
+
+    it("should handle \\n -> \\r\\n", () => {
+        const textA = "Hello, \nmy name is roberta.\nI enjoy things\n";
+        const textB = "Goodbye, \r\nmy name is roberta.\r\nI dislike things\r\n";
+        testDiff(textA, textB);
+    });
+
+    it("should handle \\r\\n -> \\n", () => {
+        const textA = "Hello, \r\nmy name is roberta.\r\nI enjoy things\r\n";
+        const textB = "Goodbye, \nmy name is roberta.\nI dislike things\n";
+        testDiff(textA, textB);
+    });
+});
 
 describe("history", () => {
     it("should create and apply patches", () => {
