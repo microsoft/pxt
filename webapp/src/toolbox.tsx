@@ -147,6 +147,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         this.handleRemoveExtension = this.handleRemoveExtension.bind(this);
         this.deleteExtension = this.deleteExtension.bind(this);
         this.cancelDeleteExtension= this.cancelDeleteExtension.bind(this);
+        this.handleKeyDown = this.handleKeyDown.bind(this);
     }
 
     getElement() {
@@ -264,23 +265,17 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
     }
 
     focus(itemToFocus?: string) {
-        if (!this.rootElement) return;
-        if (this.selectedItem && this.selectedItem.getTreeRow()) {
-            // Focus the selected item
-            const selectedItem = this.selectedItem.props.treeRow;
-            const selectedItemIndex = this.items.indexOf(selectedItem);
-            this.setSelection(selectedItem, selectedItemIndex, true);
-        } else {
-            // Focus first item in the toolbox
-            if (itemToFocus) {
-                for (const item of this.items) {
-                    if (item.nameid === itemToFocus) {
-                        this.setSelection(item, this.items.indexOf(item), true);
-                        return;
-                    }
+        if (itemToFocus) {
+            for (const item of this.items) {
+                if (item.nameid === itemToFocus) {
+                    this.setSelection(item, this.items.indexOf(item), true);
+                    return;
                 }
             }
-            this.selectFirstItem();
+        } else {
+            // If there is not a specific item to focus, the handleCategoryTreeFocus focus
+            // handler will highlight the currently selected item if it exists, else the first item.
+            (this.refs.categoryTree as HTMLDivElement).focus()
         }
     }
 
@@ -461,9 +456,76 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         this.props.parent.onToolboxBlurCapture();
     }
 
+    handleCategoryTreeFocus = (e: React.FocusEvent<HTMLDivElement>) => {
+        // Don't handle focus on a mouse down event when the relatedTarget is null.
+        // Rely on the click handler instead.
+        if (e.relatedTarget) {
+            if (!this.rootElement) return;
+            if (this.selectedItem && this.selectedItem.getTreeRow()) {
+                // 'Focus' the selected item
+                const selectedItem = this.selectedItem.props.treeRow;
+                const selectedItemIndex = this.items.findIndex(item => item.nameid === selectedItem.nameid)
+                this.setSelection(selectedItem, selectedItemIndex, true);
+            } else {
+                // 'Focus' first item in the toolbox
+                this.selectFirstItem();
+            }
+        }
+    }
+
     isRtl() {
         const { editorname } = this.props;
         return editorname == 'monaco' ? false : Util.isUserLanguageRtl();
+    }
+
+    handleKeyDown(e: React.KeyboardEvent<HTMLElement>) {
+        const isRtl = Util.isUserLanguageRtl();
+
+        const charCode = core.keyCodeFromEvent(e);
+        if (charCode == 40 /* Down arrow key */) {
+            this.nextItem();
+        } else if (charCode == 38 /* Up arrow key */) {
+            this.previousItem();
+        } else if ((charCode == 39 /* Right arrow key */ && !isRtl)
+            || (charCode == 37 /* Left arrow key */ && isRtl)) {
+                if (this.selectedTreeRow.nameid !== "addpackage") {
+                    // Focus inside flyout
+                    this.moveFocusToFlyout();
+                }
+        } else if (charCode == 27) { // ESCAPE
+            // Close the flyout
+            this.closeFlyout();
+        } else if (charCode == core.ENTER_KEY || charCode == core.SPACE_KEY) {
+            const {onCategoryClick, treeRow, index} = this.selectedItem.props;
+            if (onCategoryClick) {
+                onCategoryClick(treeRow, index);
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        } else if (charCode == core.TAB_KEY
+            || charCode == 37 /* Left arrow key */
+            || charCode == 39 /* Right arrow key */
+            || charCode == 17 /* Ctrl Key */
+            || charCode == 16 /* Shift Key */
+            || charCode == 91 /* Cmd Key */) {
+            // Escape tab and shift key
+        } else {
+            this.setSearch();
+        }
+    }
+
+    previousItem() {
+        const editorname = this.props.editorname;
+
+        pxt.tickEvent(`${editorname}.toolbox.keyboard.prev"`, undefined, { interactiveConsent: true });
+        this.setPreviousItem();
+    }
+
+    nextItem() {
+        const editorname = this.props.editorname;
+
+        pxt.tickEvent(`${editorname}.toolbox.keyboard.next"`, undefined, { interactiveConsent: true });
+        this.setNextItem();
     }
 
     renderCore() {
@@ -553,7 +615,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
                     />
                 }
                 <div className="blocklyTreeRoot">
-                    <div role="tree">
+                    <div role="tree" tabIndex={0} ref="categoryTree" onFocus={this.handleCategoryTreeFocus} onKeyDown={this.handleKeyDown}>
                         {tryToDeleteNamespace &&
                             <DeleteConfirmationModal
                                 ns={tryToDeleteNamespace}
@@ -564,6 +626,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
                         {hasSearch &&
                             <CategoryItem
                                 key={"search"}
+                                ref="searchCategory"
                                 toolbox={this}
                                 index={index++}
                                 selected={selectedItem == "search"}
@@ -625,10 +688,11 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
                                 />
                             </>
                         }
-                        {showAdvanced &&
+                        {
                             advancedCategories.map(treeRow =>
                                 <CategoryItem
                                     key={treeRow.nameid}
+                                    className={!showAdvanced && "hidden"}
                                     toolbox={this}
                                     index={index++}
                                     selected={selectedItem == treeRow.nameid}
@@ -666,6 +730,7 @@ export interface CategoryItemProps extends TreeRowProps {
     topRowIndex?: number;
     hasDeleteButton?: boolean;
     onDeleteClick?: (ns: string) => void;
+    className?: string;
 }
 
 export interface CategoryItemState {
@@ -682,7 +747,6 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
         }
 
         this.handleClick = this.handleClick.bind(this);
-        this.handleKeyDown = this.handleKeyDown.bind(this);
     }
 
     getTreeRow() {
@@ -717,75 +781,22 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
         e.stopPropagation();
     }
 
-    handleKeyDown(e: React.KeyboardEvent<HTMLElement>) {
-        const { toolbox } = this.props;
-        const isRtl = Util.isUserLanguageRtl();
-
-        const mainWorkspace = Blockly.getMainWorkspace() as Blockly.WorkspaceSvg;
-        // This prevents accidental toolbox navigation while the navigation cursor
-        // is in the flyout. This is needed because the flyout doesn't take the focus.
-        const toolboxNavigationEnabled = !mainWorkspace.keyboardAccessibilityMode;
-        const charCode = core.keyCodeFromEvent(e);
-        if (toolboxNavigationEnabled) {
-            if (charCode == 40 /* Down arrow key */) {
-                this.nextItem();
-            } else if (charCode == 38 /* Up arrow key */) {
-                this.previousItem();
-            } else if ((charCode == 39 /* Right arrow key */ && !isRtl)
-                || (charCode == 37 /* Left arrow key */ && isRtl)) {
-                // Focus inside flyout
-                toolbox.moveFocusToFlyout();
-            } else if (charCode == 27) { // ESCAPE
-                // Close the flyout
-                toolbox.closeFlyout();
-            } else if (charCode == core.ENTER_KEY || charCode == core.SPACE_KEY) {
-                fireClickOnEnter.call(this, e);
-            } else if (charCode == core.TAB_KEY
-                || charCode == 37 /* Left arrow key */
-                || charCode == 39 /* Right arrow key */
-                || charCode == 17 /* Ctrl Key */
-                || charCode == 16 /* Shift Key */
-                || charCode == 91 /* Cmd Key */) {
-                // Escape tab and shift key
-            } else {
-                toolbox.setSearch();
-            }
-        }
-    }
-
-    previousItem() {
-        const { toolbox } = this.props;
-        const editorname = toolbox.props.editorname;
-
-        pxt.tickEvent(`${editorname}.toolbox.keyboard.prev"`, undefined, { interactiveConsent: true });
-        toolbox.setPreviousItem();
-    }
-
-    nextItem() {
-        const { toolbox } = this.props;
-        const editorname = toolbox.props.editorname;
-
-        pxt.tickEvent(`${editorname}.toolbox.keyboard.next"`, undefined, { interactiveConsent: true });
-        toolbox.setNextItem();
-    }
-
-    handleTreeRowRef = (c: TreeRow) => {
+     handleTreeRowRef = (c: TreeRow) => {
         this.treeRowElement = c;
     }
 
     renderCore() {
-        const { toolbox, childrenVisible, hasDeleteButton } = this.props;
+        const { toolbox, childrenVisible, hasDeleteButton, className } = this.props;
         const { selected } = this.state;
 
         return (
-            <TreeItem>
+            <TreeItem className={className}>
                 <TreeRow
                     ref={this.handleTreeRowRef}
                     isRtl={toolbox.isRtl()}
                     {...this.props}
                     selected={selected}
                     onClick={this.handleClick}
-                    onKeyDown={this.handleKeyDown}
                     hasDeleteButton={hasDeleteButton}
                 />
                 <TreeGroup visible={childrenVisible}>
@@ -920,7 +931,6 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
                 ref={this.handleTreeRowRef}
                 className={treeRowClass}
                 style={treeRowStyle}
-                tabIndex={0}
                 data-ns={dataNs}
                 aria-label={lf("Toggle category {0}", rowTitle)}
                 aria-expanded={selected}
@@ -964,14 +974,15 @@ export class TreeSeparator extends data.Component<{}, {}> {
 
 export interface TreeItemProps {
     selected?: boolean;
+    className?: string;
     children?: any;
 }
 
 export class TreeItem extends data.Component<TreeItemProps, {}> {
     renderCore() {
-        const { selected } = this.props;
+        const { selected, className } = this.props;
         return (
-            <div role="treeitem" aria-selected={selected}>
+            <div className={classList(className)} role="treeitem" aria-selected={selected}>
                 {this.props.children}
             </div>
         );
@@ -1039,8 +1050,9 @@ export class ToolboxSearch extends data.Component<ToolboxSearchProps, ToolboxSea
         const { toolbox } = this.props;
         let charCode = (typeof e.which == "number") ? e.which : e.keyCode
         if (charCode === 40 /* Down Key */) {
-            // Select first item in the toolbox
-            toolbox.selectFirstItem();
+            // Focus the toolbox category tree which opens the currently selected
+            // item if one exists, or the first item.
+            (toolbox.refs.categoryTree as HTMLDivElement).focus()
         }
     }
 
@@ -1073,6 +1085,7 @@ export class ToolboxSearch extends data.Component<ToolboxSearchProps, ToolboxSea
                 newState.focusSearch = true;
                 if (hasSearch) newState.selectedItem = 'search';
                 toolbox.setState(newState);
+                toolbox.setSelectedItem(toolbox.refs.searchCategory as CategoryItem)
 
                 this.setState({ searchAccessibilityLabel: searchAccessibilityLabel });
             });

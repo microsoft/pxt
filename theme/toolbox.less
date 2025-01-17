@@ -58,6 +58,16 @@ div.blocklyTreeRoot:focus {
     outline: none;
 }
 
+div.blocklyTreeRoot > div[role="tree"] {
+    // Ensure that outline is shown over search input.
+    position: relative;
+    z-index: 1;
+}
+
+div.blocklyTreeRoot > div[role="tree"]:focus-visible {
+    outline: 3px auto @mainMenuInvertedBackground;
+}
+
 /*******************************
         Toolbox tree row
 *******************************/

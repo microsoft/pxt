@@ -4602,7 +4602,7 @@ export class ProjectView
             extensionsVisible: false
         })
 
-        if (this.state.accessibleBlocks) {
+        if (pxt.appTarget.appTheme.accessibleBlocks) {
             this.editor.focusToolbox(CategoryNameID.Extensions);
         }
     }
@@ -5243,7 +5243,8 @@ export class ProjectView
         const inDebugMode = this.state.debugging;
         const inHome = this.state.home && !sandbox;
         const inEditor = !!this.state.header && !inHome;
-        const { lightbox, greenScreen, accessibleBlocks } = this.state;
+        const { lightbox, greenScreen } = this.state;
+        const accessibleBlocks = pxt.appTarget.appTheme.accessibleBlocks;
         const hideTutorialIteration = inTutorial && tutorialOptions.metadata?.hideIteration;
         const hideToolbox = inTutorial && tutorialOptions.metadata?.hideToolbox;
         // flyoutOnly has become a de facto css class for styling tutorials (especially minecraft HOC), so keep it if hideToolbox is true, even if flyoutOnly is false.
@@ -5332,12 +5333,13 @@ export class ProjectView
                         header={this.state.header}
                         reloadHeaderAsync={async () => {
                             await this.reloadHeaderAsync()
-                            this.shouldFocusToolbox = !!this.state.accessibleBlocks;
+                            this.shouldFocusToolbox = !!accessibleBlocks;
                         }}
                     />
                 }
                 {greenScreen ? <greenscreen.WebCam close={this.toggleGreenScreen} /> : undefined}
-                {accessibleBlocks && <accessibleblocks.AccessibleBlocksInfo />}
+                {/* TODO: Discuss when this onboarding dialog should be shown if accessibleBlocks is enabled by default */}
+                {/* {accessibleBlocks && <accessibleblocks.AccessibleBlocksInfo />} */}
                 {hideMenuBar || inHome ? undefined :
                     <header className="menubar" role="banner">
                         {inEditor ? <accessibility.EditorAccessibilityMenu parent={this} highContrast={hc} /> : undefined}
