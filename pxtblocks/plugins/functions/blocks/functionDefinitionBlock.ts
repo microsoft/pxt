@@ -21,7 +21,7 @@ import { MsgKey } from "../msg";
 import { FunctionManager } from "../functionManager";
 import { COLLAPSE_IMAGE_DATAURI } from "../svgs";
 import { ArgumentReporterBlock } from "./argumentReporterBlocks";
-import { DUPLICATE_ON_DRAG_MUTATION_KEY } from "../../duplicateOnDrag";
+import { DUPLICATE_ON_DRAG_MUTATION_KEY, setDuplicateOnDrag } from "../../duplicateOnDrag";
 
 interface FunctionDefinitionMixin extends CommonFunctionMixin {
     createArgumentReporter_(arg: FunctionArgument): ArgumentReporterBlock;
@@ -204,6 +204,8 @@ Blockly.Blocks[FUNCTION_DEFINITION_BLOCK_TYPE] = {
         }
     },
 };
+
+setDuplicateOnDrag(FUNCTION_DEFINITION_BLOCK_TYPE);
 
 
 function editFunctionCallback(block: CommonFunctionBlock) {
