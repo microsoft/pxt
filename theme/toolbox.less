@@ -58,14 +58,9 @@ div.blocklyTreeRoot:focus {
     outline: none;
 }
 
-div.blocklyTreeRoot > div[role="tree"] {
-    // Ensure that outline is shown over search input.
-    position: relative;
-    z-index: 1;
-}
-
 div.blocklyTreeRoot > div[role="tree"]:focus-visible {
-    outline: 3px auto @mainMenuInvertedBackground;
+    outline: 3px solid black;
+    outline-offset: -3px;
 }
 
 /*******************************

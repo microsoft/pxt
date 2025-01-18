@@ -48,6 +48,14 @@ svg.blocklySvg {
     }
 }
 
+.blocklyWorkspace:focus {
+    outline: none;
+}
+.blocklyWorkspace:focus-visible .blocklyMainBackground {
+    outline: 5px solid black;
+    outline-offset: -5px;
+}
+
 .blocklyMainBackground {
     stroke: none !important;
 }
