@@ -11,16 +11,16 @@ The latest micro:bit has an amazing amount of computational power for a tiny dev
 
 ## Display shield extension
 
-With the [Display shield MakeCode extension for the micro:bit](https://makecode.microbit.org/pkg/microbit-apps/display-shield), 
-you can use any Arcade shield with the beta version of the MakeCode for micro:bit editor (https://makecode.microbit.org/beta). 
+With the [display shield extension for the micro:bit](https://makecode.microbit.org/pkg/microbit-apps/display-shield), 
+you can use any Arcade shield with the beta version of MakeCode for micro:bit (https://makecode.microbit.org/beta). 
 This gives you access to the best of both worlds:
 -	**All the micro:bit blocks and APIs** you are used to working with
 -	**New blocks for drawing** to the shield's display and responding to user input via its buttons and direction-pad (D-pad)
-We emphasize the name ``Display shield extension`` because the extension is not limited to writing
+We emphasize it is a *display shield extension* because the extension is not limited to writing
 games. You can use it to create any kind of program that benefits from a color display and buttons,
 as discussed further below.
 
-The extension also includes a simulator that lets you see how your code will look on the shield's display while you are developing it, as shown below. The following [MakeCode program](https://makecode.microbit.org/beta/#pub:S82867-73191-89330-76938) plots the values of micro:bit's accelerometer, over time from left to right, on the shield's display. The accelerometer has three axes: x, y, and z. The program reads the accelerometer values and transforms their range (-1024 to 1024) to the display's vertical range (120 pixels high).  The code stores the previous accelerometer values and draws lines between the current and previous values. When the plot reaches the right edge of the display, the display scrolls to the left to make room for new data.
+The extension also includes a simulator that lets you see how your code will look on the shield's display while you are developing it, as shown below. The following [MakeCode program](https://makecode.microbit.org/beta/#pub:S82867-73191-89330-76938) plots the values of micro:bit's accelerometer, over time from left to right, on the display shield. The accelerometer has three axes: x, y, and z. The program reads the accelerometer values and transforms their range (-1024 to 1024) to the display's vertical range (120 pixels high).  The code stores the previous accelerometer values and draws lines between the current and previous values. When the plot reaches the right edge of the display, the display scrolls to the left to make room for new data.
 
 ![MakeCode program for plotting accelerometer to shield](/static/blog/microbit/display-shield/plot-accelerometer.png)
 
@@ -35,7 +35,7 @@ You can load the MicroData app into the MakeCode editor by importing the URL htt
 
 ## Your feedback welcome
 
-We are excited to see what you create with the display shield extension for the micro:bit. Please share your projects on the [MakeCode forum](https://forum.makecode.com/). If you find problems or have suggestions for new features, please visit the [Display shield issue tracker](https://github.com/microbit-apps/display-shield/issues).
+We are excited to see what you create with the display shield extension for the micro:bit. Please share your projects on the [MakeCode forum](https://forum.makecode.com/). If you find problems or have suggestions for new features, please visit the [display shield issue tracker](https://github.com/microbit-apps/display-shield/issues).
 
 ## Thanks
 
