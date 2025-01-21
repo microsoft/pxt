@@ -5,7 +5,7 @@
 
 ## Background
 
-The latest micro:bit has an amazing amount of computational power for such a tiny device; in fact, it’s powerful enough to drive a small color display to create quite rich interactive experiences. If you have ever used [MakeCode Arcade](https://arcade.makecode.com/), you may have already seen this - a variety of [Arcade display shield](/blog/arcade/arcade-on-microbit-xbox) accessories are available to buy for the micro:bit. The micro:bit plugs into the shield, which has a 160x120 color display and extra buttons, including a D-pad, making the combination a fun retro gaming device:
+The latest micro:bit has an amazing amount of computational power for such a tiny device; in fact, it’s powerful enough to drive a small color display to create quite rich interactive experiences. If you have ever used [MakeCode Arcade](https://arcade.makecode.com/), you may have already seen this - a variety of [Arcade display shield](/blog/arcade/arcade-on-microbit-xbox) accessories are available for purchase. The micro:bit plugs into the shield, which has a 160x120 color display and extra buttons, including a D-pad, making the combination a fun retro gaming device:
 
 ![Arcade shields](/static/blog/microbit/display-shield/display-shields.png)
 
@@ -14,7 +14,7 @@ The latest micro:bit has an amazing amount of computational power for such a tin
 But the display shield is no longer just for arcade games! With the new micro:bit [display shield extension](https://makecode.microbit.org/pkg/microbit-apps/display-shield),
 you can use any of the existing Arcade display shields with the beta version of MakeCode for micro:bit (https://makecode.microbit.org/beta).
 This gives you access to the best of what were previously two separate systems:
-- **all the micro:bit blocks and APIs** you are used to using in [MakeCode for micro:bit](https://makecode.microbit.org/), and
+- **all the micro:bit blocks and APIs** you are familiar with from [MakeCode for micro:bit](https://makecode.microbit.org/), and
 - **new blocks for drawing** on the shield's display and responding to user input via its **buttons and direction-pad (D-pad)** like you can with [MakeCode Arcade](https://arcade.makecode.com/).
  
 We emphasize it is a *display shield* extension because the extension is not limited to writing
