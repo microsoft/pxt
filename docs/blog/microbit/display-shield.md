@@ -14,7 +14,7 @@ The latest micro:bit has an amazing amount of computational power for such a tin
 But the display shield is no longer just for arcade games! With the new micro:bit [display shield extension](https://makecode.microbit.org/pkg/microbit-apps/display-shield),
 you can use any of the existing Arcade display shields with the beta version of MakeCode for micro:bit (https://makecode.microbit.org/beta).
 This gives you access to the best of what were previously two separate systems:
-- **all the micro:bit blocks and APIs** you are used to using in the [MakeCode for micro:bit](https://https://makecode.microbit.org/#editor) editor, and
+- **all the micro:bit blocks and APIs** you are used to using in [MakeCode for micro:bit](https://makecode.microbit.org/), and
 - **new blocks for drawing** on the shield's display and responding to user input via its **buttons and direction-pad (D-pad)** like you can with [MakeCode Arcade](https://arcade.makecode.com/).
  
 We emphasize it is a *display shield* extension because the extension is not limited to writing
