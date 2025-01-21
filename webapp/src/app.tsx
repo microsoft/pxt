@@ -5963,10 +5963,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         pxt.blocks.showBlockIdInTooltip = true;
     }
 
-    initGitHubDb();
 
     pxt.perf.measureStart("setAppTarget");
     pkg.setupAppTarget((window as any).pxtTargetBundle);
+
+    initGitHubDb();
 
     // DO NOT put any async code before this line! The serviceworker must be initialized before
     // the window load event fires
