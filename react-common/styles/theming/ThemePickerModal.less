@@ -1,0 +1,29 @@
+.theme-preview {
+    display: flex;
+    flex-direction: column;
+
+    .theme-preview-header {
+        flex-grow: 1;
+        width: 100%;
+        font-size: large;
+        background-color: var(--pxt-header-background);
+        color: var(--pxt-header-foreground);
+    }
+
+    .theme-preview-workspace {
+        flex-grow: 3;
+        display: flex;
+        flex-direction: row;
+
+        .theme-preview-toolbox-placholder {
+            flex-grow: 1;
+            background-color: var(--pxt-target-background2);
+            color: var(--pxt-target-foreground2);
+        }
+        .theme-preview-workspace-placholder {
+            flex-grow: 2;
+            background-color: var(--pxt-target-background1);
+            color: var(--pxt-target-foreground1);
+        }
+    }
+}

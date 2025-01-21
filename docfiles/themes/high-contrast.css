@@ -1,0 +1,32 @@
+:root {
+    --pxt-target-background1: #000000;
+    --pxt-target-background2: #000000;
+    --pxt-target-background3: #000000;
+    --pxt-target-foreground1: #FFFFFF;
+    --pxt-target-foreground2: #FFFFFF;
+    --pxt-target-foreground3: #FFFFFF;
+    --pxt-header-background: #000000;
+    --pxt-header-foreground: #FFFFFF;
+    --pxt-target-primary-background: #000000;
+    --pxt-target-primary-foreground: #F8FAFC;
+    --pxt-target-secondary-background: #000000;
+    --pxt-target-secondary-foreground: #F8FAFC;
+    /* --pxt-general-background1: ;
+    --pxt-general-background2: ;
+    --pxt-general-background3: ;
+    --pxt-general-foreground1: ;
+    --pxt-general-foreground2: ;
+    --pxt-general-foreground3: ;
+    --pxt-color-palette-green-background1: ;
+    --pxt-color-palette-green-background2: ;
+    --pxt-color-palette-green-foreground1: ;
+    --pxt-color-palette-green-foreground2: ;
+    --pxt-color-palette-green-hover: ;
+    --pxt-color-palette-green-border: ;
+    --pxt-color-palette-red-background1: ;
+    --pxt-color-palette-red-background2: ;
+    --pxt-color-palette-red-foreground1: ;
+    --pxt-color-palette-red-foreground2: ;
+    --pxt-color-palette-red-hover: ;
+    --pxt-color-palette-red-border: ; */
+}

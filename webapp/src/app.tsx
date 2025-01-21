@@ -47,6 +47,7 @@ import * as user from "./user";
 import * as headerbar from "./headerbar";
 import * as sidepanel from "./sidepanel";
 import * as qr from "./qr";
+import { ThemePickerModal } from "../../react-common/components/theming/ThemePickerModal";
 
 import * as monaco from "./monaco"
 import * as toolboxHelpers from "./toolboxHelpers"
@@ -4530,6 +4531,14 @@ export class ProjectView
         this.languagePicker.show();
     }
 
+    showThemePicker() {
+        this.setState( { themePickerOpen: true });
+    }
+
+    hideThemePicker() {
+        this.setState( { themePickerOpen: false });
+    }
+
     showImportUrlDialog() {
         dialogs.showImportUrlDialogAsync()
             .then((id) => {
@@ -5408,6 +5417,7 @@ export class ProjectView
                 {lightbox ? <sui.Dimmer isOpen={true} active={lightbox} portalClassName={'tutorial'} className={'ui modal'}
                     shouldFocusAfterRender={false} closable={true} onClose={this.hideLightbox} /> : undefined}
                 {this.state.onboarding && <Tour tourSteps={this.state.onboarding} onClose={this.hideOnboarding} />}
+                {this.state.themePickerOpen && <ThemePickerModal onClose={this.hideThemePicker} />}
             </div>
         );
     }

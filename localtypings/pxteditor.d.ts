@@ -805,6 +805,7 @@ declare namespace pxt.editor {
         extensionsVisible?: boolean;
         isMultiplayerGame?: boolean; // Arcade: Does the current project contain multiplayer blocks?
         onboarding?: pxt.tour.BubbleStep[];
+        themePickerOpen?: boolean;
     }
 
     export interface EditorState {
@@ -1045,6 +1046,7 @@ declare namespace pxt.editor {
 
         showReportAbuse(): void;
         showLanguagePicker(): void;
+        showThemePicker(): void;
         showShareDialog(title?: string, kind?: "multiplayer" | "vscode" | "share"): void;
         showAboutDialog(): void;
         showTurnBackTimeDialogAsync(): Promise<void>;
