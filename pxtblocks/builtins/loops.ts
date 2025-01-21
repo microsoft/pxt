@@ -2,6 +2,7 @@
 
 import * as Blockly from "blockly";
 import { installBuiltinHelpInfo, setBuiltinHelpInfo, setHelpResources } from "../help";
+import { setDuplicateOnDrag } from "../plugins/duplicateOnDrag";
 
 export function initLoops() {
     const msg = Blockly.Msg;
@@ -104,6 +105,7 @@ export function initLoops() {
             }
         }
     };
+    setDuplicateOnDrag(pxtControlsForId, "VAR");
 
     // controls_simple_for
     const controlsSimpleForId = "controls_simple_for";
@@ -313,6 +315,7 @@ export function initLoops() {
                 );
             }
         };
+        setDuplicateOnDrag(pxtControlsForOfId, "VAR");
 
         // controls_for_of
         const controlsForOfId = "controls_for_of";
