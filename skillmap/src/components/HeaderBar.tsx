@@ -5,7 +5,8 @@ import * as React from "react";
 
 import { connect } from 'react-redux';
 import { dispatchSaveAndCloseActivity, dispatchShowResetUserModal, dispatchShowLoginModal,
-    dispatchShowUserProfile, dispatchSetUserPreferences, dispatchShowSelectLanguage } from '../actions/dispatch';
+    dispatchShowUserProfile, dispatchSetUserPreferences, dispatchShowSelectLanguage,
+    dispatchShowSelectTheme} from '../actions/dispatch';
 import { SkillMapState } from '../store/reducer';
 import { isLocal, resolvePath, tickEvent } from "../lib/browserUtils";
 
@@ -30,6 +31,7 @@ interface HeaderBarProps {
     dispatchShowUserProfile: () => void;
     dispatchSetUserPreferences: (preferences?: pxt.auth.UserPreferences) => void;
     dispatchShowSelectLanguage: () => void;
+    dispatchShowSelectTheme: () => void;
 }
 
 export class HeaderBarImpl extends React.Component<HeaderBarProps> {
@@ -54,6 +56,16 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
                 }
             })
         }
+
+        items.push({
+            id: "theme",
+            title: lf("Select Theme"),
+            label: lf("Select Theme"),
+            onClick: () => {
+                tickEvent("skillmap.theme");
+                this.props.dispatchShowSelectTheme();
+            }
+        });
 
         // We hide the language option when activities are open to avoid
         // reloading the workspace and losing unsaved work.
@@ -272,7 +284,8 @@ const mapDispatchToProps = {
     dispatchShowLoginModal,
     dispatchShowUserProfile,
     dispatchSetUserPreferences,
-    dispatchShowSelectLanguage
+    dispatchShowSelectLanguage,
+    dispatchShowSelectTheme
 };
 
 export const HeaderBar = connect(mapStateToProps, mapDispatchToProps)(HeaderBarImpl);

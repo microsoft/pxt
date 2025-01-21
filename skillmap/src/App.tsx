@@ -23,7 +23,8 @@ import {
     dispatchSetPageBannerImageUrl,
     dispatchSetPageTheme,
     dispatchSetUserPreferences,
-    dispatchCloseSelectLanguage
+    dispatchCloseSelectLanguage,
+    dispatchCloseSelectTheme
 } from './actions/dispatch';
 import { PageSourceStatus, SkillMapState } from './store/reducer';
 import { HeaderBar } from './components/HeaderBar';
@@ -41,6 +42,7 @@ import { Unsubscribe } from 'redux';
 import { UserProfile } from './components/UserProfile';
 import { ReadyResources, ReadyPromise } from './lib/readyResources';
 import { LanguageSelector } from '../../react-common/components/language/LanguageSelector';
+import { ThemePickerModal } from '../../react-common/components/theming/ThemePickerModal';
 
 /* eslint-disable import/no-unassigned-import */
 import './App.css';
@@ -58,6 +60,7 @@ interface AppProps {
     activityId: string;
     highContrast?: boolean;
     showSelectLanguage: boolean;
+    showSelectTheme: boolean;
     dispatchAddSkillMap: (map: SkillMap) => void;
     dispatchChangeSelectedItem: (mapId?: string, activityId?: string) => void;
     dispatchClearSkillMaps: () => void;
@@ -73,6 +76,7 @@ interface AppProps {
     dispatchSetPageTheme: (theme: SkillGraphTheme) => void;
     dispatchSetUserPreferences: (prefs: pxt.auth.UserPreferences) => void;
     dispatchCloseSelectLanguage: () => void;
+    dispatchCloseSelectTheme: () => void;
 }
 
 interface AppState {
@@ -420,6 +424,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
                     onLanguageChanged={this.changeLanguage}
                     onClose={this.props.dispatchCloseSelectLanguage}
                 />}
+                {this.props.showSelectTheme && <ThemePickerModal onClose={this.props.dispatchCloseSelectTheme} />}
             </div>);
     }
 
@@ -533,7 +538,8 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         signedIn: state.auth.signedIn,
         activityId: state.selectedItem?.activityId,
         highContrast: state.auth.preferences?.highContrast,
-        showSelectLanguage: state.showSelectLanguage
+        showSelectLanguage: state.showSelectLanguage,
+        showSelectTheme: state.showSelectTheme
     };
 }
 interface LocalizationUpdateOptions {
@@ -579,7 +585,8 @@ const mapDispatchToProps = {
     dispatchSetPageTheme,
     dispatchSetUserPreferences,
     dispatchChangeSelectedItem,
-    dispatchCloseSelectLanguage
+    dispatchCloseSelectLanguage,
+    dispatchCloseSelectTheme
 };
 
 const App = connect(mapStateToProps, mapDispatchToProps)(AppImpl);
