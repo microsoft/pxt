@@ -2,6 +2,7 @@ export interface ThemeInfo {
     id: string;
     name: string;
     url: string;
+    cssVariables: { [key: string]: string };
 }
 
 /*
@@ -21,16 +22,42 @@ export class ThemeManager {
         return ThemeManager.instance;
     }
 
+    private async fetchCssFile(url: string): Promise<string> {
+        const response = await fetch(url);
+        if (!response.ok) {
+            pxt.error(`Failed to fetch theme CSS file: ${response.statusText}`);
+            return "";
+        }
+        return response.text();
+    }
+
+    private parseCssVariables(cssText: string) {
+        const cssVars: { [key: string]: string } = {};
+        const varRegex = /--([^:]+):\s*([^;]+);/g;
+        let match;
+        while ((match = varRegex.exec(cssText)) !== null) {
+            cssVars[match[1]] = match[2];
+        }
+        return cssVars;
+    }
+
     private async cacheThemes(force: boolean) {
         if (this.themes && !force) {
             return;
         }
     
         // TODO thsparks : Load from target somehow? Target config?
-        this.themes = [
+        const debugThemeInfo = [
             { id: "light", name: lf("Light"), url: "/docfiles/themes/placeholder.css" },
-            { id: "dark", name: lf("High Contrast"), url: "/docfiles/themes/high-contrast.css" },
+            { id: "dark", name: lf("High Contrast"), url: "/docfiles/themes/high-contrast.css" }
         ]
+
+        this.themes = [];
+        for (const theme of debugThemeInfo) {
+            const cssText = await this.fetchCssFile(theme.url);
+            const cssVars = this.parseCssVariables(cssText);
+            this.themes.push({ ...theme, cssVariables: cssVars });
+        }
     }
     
     /*
@@ -61,4 +88,14 @@ export class ThemeManager {
 
         this.themeLink.href = `${theme.url}`;
     }
+}
+
+export function getThemeAsStyle(theme: ThemeInfo) {
+    const style: React.CSSProperties = {};
+
+    for (const [key, value] of Object.entries(theme.cssVariables)) {
+        (style as any)[`--${key}`] = value;
+    }
+
+    return style;
 }
