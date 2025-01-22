@@ -43,6 +43,10 @@ export const ThemePreview = (props: { theme: ThemeInfo }) => {
                 </div>
                 <div className="theme-preview-footer">
                     <div className="theme-preview-download-button" />
+                    <div className="theme-preview-editor-tools">
+                        <div className="theme-preview-editor-tool-button" />
+                        <div className="theme-preview-editor-tool-button" />
+                    </div>
                 </div>
             </div>
         </div>

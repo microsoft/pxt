@@ -129,8 +129,8 @@
             .theme-preview-footer {
                 display: flex;
                 flex-direction: row;
-                justify-content: start;
-                padding: 0.5rem;
+                justify-content: space-between;
+                padding: 0.3rem 0.5rem;
 
                 width: 100%;
                 background-color: var(--pxt-target-background3);
@@ -139,8 +139,25 @@
 
                 .theme-preview-download-button {
                     width: 20%;
-                    height: 90%;
-                    background-color: var(--pxt-target-primary-background)
+                    height: 0.5rem;
+                    border-radius: 0.1rem;
+                    background-color: var(--pxt-target-primary-background);
+                    border: solid 1px var(--pxt-target-foreground3); // Foreground color from footer
+                }
+
+                .theme-preview-editor-tools {
+                    display: flex;
+                    flex-direction: row;
+                    justify-content: flex-end;
+                    width: 30%;
+
+                    .theme-preview-editor-tool-button {
+                        background-color: var(--pxt-target-secondary-background);
+                        border: solid 1px var(--pxt-target-foreground3); // Foreground color from footer
+                        height: 0.5rem;
+                        width: 0.5rem;
+                        margin-left: 0.2rem;
+                    }
                 }
             }
         }
