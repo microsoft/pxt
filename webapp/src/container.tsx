@@ -414,9 +414,6 @@ class BlocksMenuItem extends data.Component<ISettingsProps, {}> {
     }
 
     protected onClick = (e: React.MouseEvent<HTMLElement>): void => {
-        // Prevents "enter" from being handled again by Blockly's keyboard
-        // navigation plugin.
-        e.nativeEvent.stopPropagation()
         pxt.tickEvent("menu.blocks", undefined, { interactiveConsent: true });
         this.props.parent.openBlocks();
     }

@@ -32,9 +32,6 @@ export class EditorAccessibilityMenu extends data.Component<EditorAccessibilityM
     }
 
     openBlocks(e: React.MouseEvent<HTMLElement>) {
-        // Prevents "enter" from being handled again by Blockly's keyboard
-        // navigation plugin.
-        e.nativeEvent.stopPropagation()
         this.props.parent.openBlocks();
     }
 
