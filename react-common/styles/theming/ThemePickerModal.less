@@ -52,13 +52,15 @@
                     border-right: solid 1px var(--pxt-target-foreground2);
 
                     display: flex;
-                    justify-content: center;
+                    flex-direction: column;
+                    align-items: center;
 
                     .theme-preview-sim {
                         width: 80%;
                         height: 30%;
                         background-color: var(--pxt-target-secondary-background);
                         margin-top: 0.5rem;
+                        border: 1px solid var(--pxt-target-secondary-foreground);
                     }
 
                     .theme-preview-sim-buttons {
@@ -73,6 +75,7 @@
                             background-color: var(--pxt-target-secondary-background);
                             width: 25%;
                             aspect-ratio: 1;
+                            border: 1px solid var(--pxt-target-secondary-foreground);
                         }
                     }
                 }
