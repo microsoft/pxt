@@ -26,7 +26,7 @@ export const ThemePickerModal = (props: ThemePickerModalProps) => {
     }
 
     return (
-        <Modal id="theme-picker-modal" title={lf("Choose a Theme")} onClose={props.onClose}>
+        <Modal id="theme-picker-modal" title={lf("Choose a Theme")} onClose={props.onClose} className="theme-picker-modal">
             <div className="ui cards centered theme-picker" role="list" aria-label={lf("List of available themes")}>
                 {themes && themes.map((theme) => <ThemeCard key={theme.id} theme={theme} onClick={onThemeClicked} />)}
             </div>
