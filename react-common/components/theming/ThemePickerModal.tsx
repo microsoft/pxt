@@ -7,11 +7,22 @@ import { ThemeManager, ThemeInfo, getThemeAsStyle } from "./themeManager";
 export const ThemePreview = (props: { theme: ThemeInfo }) => {
     const { theme } = props;
 
+    const miniLogo = <div className="theme-preview-logo">
+        <div className="theme-preview-logo-row">
+            <div className="theme-preview-logo-square" />
+            <div className="theme-preview-logo-square" />
+        </div>
+        <div className="theme-preview-logo-row">
+            <div className="theme-preview-logo-square" />
+            <div className="theme-preview-logo-square" />
+        </div>
+    </div>;
+
     return (
         <div className="theme-preview-container" style={getThemeAsStyle(theme)}>
             <div className="theme-preview">
                 <div className="theme-preview-header">
-                    <i className="fas fa-th-large" />
+                    {miniLogo}
                     <i className="fas fa-user-circle" />
                 </div>
                 <div className="theme-preview-workspace">
@@ -24,12 +35,9 @@ export const ThemePreview = (props: { theme: ThemeInfo }) => {
                         </div>
                     </div>
                     <div className="theme-preview-toolbox">
-                        {/* <i className="fas fa-window-minimize"></i>
-                        <i className="fas fa-window-minimize"></i>
-                        <i className="fas fa-window-minimize"></i> */}
-                        {/* <hr />
-                        <hr />
-                        <hr /> */}
+                        <hr className="toolbox-divider" />
+                        <hr className="toolbox-divider" />
+                        <hr className="toolbox-divider" />
                     </div>
                     <div className="theme-preview-workspace-content" />
                 </div>
