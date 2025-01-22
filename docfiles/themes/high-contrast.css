@@ -7,10 +7,10 @@
     --pxt-target-foreground3: #FFFFFF;
     --pxt-header-background: #000000;
     --pxt-header-foreground: #FFFFFF;
-    --pxt-target-primary-background: #000000;
-    --pxt-target-primary-foreground: #FFFFFF;
-    --pxt-target-secondary-background: #000000;
-    --pxt-target-secondary-foreground: #FFFFFF;
+    --pxt-primary-background: #000000;
+    --pxt-primary-foreground: #FFFFFF;
+    --pxt-secondary-background: #000000;
+    --pxt-secondary-foreground: #FFFFFF;
     /* --pxt-general-background1: ;
     --pxt-general-background2: ;
     --pxt-general-background3: ;
