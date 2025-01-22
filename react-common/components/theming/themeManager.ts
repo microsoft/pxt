@@ -49,7 +49,8 @@ export class ThemeManager {
         // TODO thsparks : Load from target somehow? Target config?
         const debugThemeInfo = [
             { id: "light", name: lf("Light"), url: "/docfiles/themes/placeholder.css" },
-            { id: "dark", name: lf("High Contrast"), url: "/docfiles/themes/high-contrast.css" }
+            { id: "high-contrast", name: lf("High Contrast"), url: "/docfiles/themes/high-contrast.css" },
+            { id: "arcade-legacy", name: lf("Legacy"), url: "/docfiles/themes/arcade-legacy.css" }
         ]
 
         this.themes = [];

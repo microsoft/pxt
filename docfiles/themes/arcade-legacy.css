@@ -1,15 +1,15 @@
 :root {
-    --pxt-target-background1: #000000;
-    --pxt-target-background2: #000000;
-    --pxt-target-background3: #000000;
-    --pxt-target-foreground1: #FFFFFF;
-    --pxt-target-foreground2: #FFFFFF;
-    --pxt-target-foreground3: #FFFFFF;
-    --pxt-header-background: #000000;
+    --pxt-target-background1: #FEF3E0;
+    --pxt-target-background2: #116E79;
+    --pxt-target-background3: #FEF3E0;
+    --pxt-target-foreground1: #000000;
+    --pxt-target-foreground2: #000000;
+    --pxt-target-foreground3: #000000;
+    --pxt-header-background: #F76820;
     --pxt-header-foreground: #FFFFFF;
-    --pxt-target-primary-background: #000000;
+    --pxt-target-primary-background: #F76820;
     --pxt-target-primary-foreground: #FFFFFF;
-    --pxt-target-secondary-background: #000000;
+    --pxt-target-secondary-background: #028B9B;
     --pxt-target-secondary-foreground: #FFFFFF;
     /* --pxt-general-background1: ;
     --pxt-general-background2: ;

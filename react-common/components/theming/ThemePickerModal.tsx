@@ -8,20 +8,66 @@ export const ThemePreview = (props: { theme: ThemeInfo }) => {
     const { theme } = props;
 
     return (
-        <div className="theme-info-box">
-            <div className="theme-preview-container" style={getThemeAsStyle(theme)}>
-                <div className="theme-preview">
-                    <div className="theme-preview-header">- {/* Intentional dash to show foreground color */}</div>
-                    <div className="theme-preview-workspace">
-                        <div className="theme-preview-toolbox-placholder" />
-                        <div className="theme-preview-workspace-placeholder" />
+        <div className="theme-preview-container" style={getThemeAsStyle(theme)}>
+            <div className="theme-preview">
+                <div className="theme-preview-header">
+                    <i className="fas fa-th-large" />
+                    <i className="fas fa-circle" />
+                </div>
+                <div className="theme-preview-workspace">
+                    <div className="theme-preview-sim-sidebar">
+                        <div className="theme-preview-sim" />
+                        <div className="theme-preview-sim-buttons">
+                            <div className="theme-preview-sim-button" />
+                            <div className="theme-preview-sim-button" />
+                            <div className="theme-preview-sim-button" />
+                        </div>
                     </div>
+                    <div className="theme-preview-toolbox">
+                        {/* <i className="fas fa-window-minimize"></i>
+                        <i className="fas fa-window-minimize"></i>
+                        <i className="fas fa-window-minimize"></i> */}
+                        {/* <hr />
+                        <hr />
+                        <hr /> */}
+                    </div>
+                    <div className="theme-preview-workspace-content" />
+                </div>
+                <div className="theme-preview-footer">
+                    <div className="theme-preview-download-button" />
                 </div>
             </div>
-            <div className="theme-picker-item-name">{theme.name}</div>
         </div>
     );
 };
+
+interface ThemeCardProps {
+    theme: ThemeInfo;
+    onClick?: (theme: ThemeInfo) => void;
+}
+
+export class ThemeCard extends React.Component<ThemeCardProps> {
+    render() {
+        const { onClick, theme } = this.props;
+
+        return (
+            <div key={theme.id} className="theme-picker-item">
+                <Button
+                    className="ui card link card-selected theme-card"
+                    role="listitem"
+                    title={theme.name}
+                    onClick={() => onClick(theme)}
+                    label={
+                        <div className="theme-info-box">
+                            <ThemePreview theme={theme} />
+                            <div className="theme-picker-item-name">{theme.name}</div>
+                        </div>
+                    }
+                />
+            </div>
+        );
+    }
+}
 
 export interface ThemePickerModalProps {
     onClose(): void;
@@ -47,15 +93,8 @@ export const ThemePickerModal = (props: ThemePickerModalProps) => {
 
     return (
         <Modal id="theme-picker-modal" title={lf("Choose a Theme")} onClose={props.onClose}>
-            <div className="theme-picker">
-                {themes &&
-                    themes.map((theme) => (
-                        <div key={theme.id} className="theme-picker-item">
-                            <Button onClick={() => onThemeClicked(theme)} title={theme.name} className="theme-button">
-                                <ThemePreview theme={theme} />
-                            </Button>
-                        </div>
-                    ))}
+            <div className="ui cards centered theme-picker" role="list" aria-label={lf("List of available themes")}>
+                {themes && themes.map((theme) => <ThemeCard key={theme.id} theme={theme} onClick={onThemeClicked} />)}
             </div>
         </Modal>
     );

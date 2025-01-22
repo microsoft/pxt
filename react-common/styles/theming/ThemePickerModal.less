@@ -1,29 +1,114 @@
-.theme-preview {
-    display: flex;
-    flex-direction: column;
-
-    .theme-preview-header {
-        flex-grow: 1;
-        width: 100%;
-        font-size: large;
-        background-color: var(--pxt-header-background);
-        color: var(--pxt-header-foreground);
+.theme-picker {
+    &.ui.cards {
+        gap: 0.5rem;
     }
 
-    .theme-preview-workspace {
-        flex-grow: 3;
-        display: flex;
-        flex-direction: row;
+    .common-button-flex {
+        width: 100%;
+    }
 
-        .theme-preview-toolbox-placholder {
-            flex-grow: 1;
-            background-color: var(--pxt-target-background2);
-            color: var(--pxt-target-foreground2);
+    .theme-info-box {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+
+        .theme-preview-container {
+            display: flex;
+            width: 95%;
+            padding: 0.5rem;
         }
-        .theme-preview-workspace-placholder {
-            flex-grow: 2;
-            background-color: var(--pxt-target-background1);
-            color: var(--pxt-target-foreground1);
+    
+        .theme-preview {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            border: 1px solid var(--pxt-target-primary-background);
+            aspect-ratio: 1.2;
+
+            .theme-preview-header {
+                display: flex;
+                flex-direction: row;
+                justify-content: space-between;
+                padding: 0.5rem;
+
+                width: 100%;
+                background-color: var(--pxt-header-background);
+                color: var(--pxt-header-foreground);
+                border-bottom: solid 1px var(--pxt-header-foreground);
+            }
+        
+            .theme-preview-workspace {
+                width: 100%;
+                flex-grow: 1;
+                display: flex;
+                flex-direction: row;
+
+                .theme-preview-sim-sidebar {
+                    height: 100%;
+                    flex-grow: 1;
+                    background-color: var(--pxt-target-background2);
+                    color: var(--pxt-target-foreground2);
+                    border-right: solid 1px var(--pxt-target-foreground2);
+
+                    display: flex;
+                    justify-content: center;
+
+                    .theme-preview-sim {
+                        width: 80%;
+                        height: 30%;
+                        background-color: var(--pxt-target-secondary-background);
+                        margin-top: 0.5rem;
+                    }
+
+                    .theme-preview-sim-buttons {
+                        width: 80%;
+                        margin-top: 0.3rem;
+
+                        display: flex;
+                        flex-direction: row;
+                        justify-content: space-between;
+
+                        .theme-preview-sim-button {
+                            background-color: var(--pxt-target-secondary-background);
+                            width: 25%;
+                            aspect-ratio: 1;
+                        }
+                    }
+                }
+
+                .theme-preview-toolbox {
+                    height: 100%;
+                    flex-grow: 1;
+                    background-color: var(--pxt-target-background3);
+                    color: var(--pxt-target-foreground3);
+                    border-right: solid 1px var(--pxt-target-foreground3);
+                }
+                .theme-preview-workspace-content {
+                    height: 100%;
+                    flex-grow: 3;
+                    background-color: var(--pxt-target-background1);
+                    color: var(--pxt-target-foreground1);
+                }
+            }
+
+            .theme-preview-footer {
+                display: flex;
+                flex-direction: row;
+                justify-content: start;
+                padding: 0.5rem;
+
+                width: 100%;
+                background-color: var(--pxt-target-background3);
+                color: var(--pxt-target-foreground3);
+                border-top: solid 1px var(--pxt-target-foreground3);
+
+                .theme-preview-download-button {
+                    width: 20%;
+                    height: 90%;
+                    background-color: var(--pxt-target-primary-background)
+                }
+            }
         }
     }
 }
