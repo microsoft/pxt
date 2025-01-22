@@ -12,7 +12,7 @@ export const ThemePreview = (props: { theme: ThemeInfo }) => {
             <div className="theme-preview">
                 <div className="theme-preview-header">
                     <i className="fas fa-th-large" />
-                    <i className="fas fa-circle" />
+                    <i className="fas fa-user-circle" />
                 </div>
                 <div className="theme-preview-workspace">
                     <div className="theme-preview-sim-sidebar">
