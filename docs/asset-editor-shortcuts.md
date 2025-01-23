@@ -63,4 +63,7 @@ These shortcuts are only available in the image and animation editors (not the t
 | **0-9**                            | Select a foreground color from the palette (first ten colors only) |
 | **.**                              | Advance forwards one frame in the current animation |
 | **,**                              | Advance backwards one frame in the current animation |
-
+| **PageDown**                       | Swap the current animation frame with the next frame in the timeline |
+| **PageUp**                         | Swap the current animation frame with the previous frame in the timeline |
+| **shift + PageDown**               | Rotate all frames in the animation forwards one frame |
+| **shift + PageUp**                 | Rotate all frames in the animation backwards one frame |
