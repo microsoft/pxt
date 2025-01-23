@@ -43,4 +43,4 @@ export const dispatchDisableResize = () => ({ type: actions.DISABLE_RESIZE })
 export const dispatchChangeAssetName = (name: string) => ({ type: actions.CHANGE_ASSET_NAME, name });
 
 export const dispatchOpenAsset = (asset: pxt.Asset, keepPast: boolean, gallery?: GalleryTile[]) => ({ type: actions.OPEN_ASSET, asset, keepPast, gallery })
-export const dispatchSetFrames = (frames: pxt.sprite.ImageState[]) => ({ type: actions.SET_FRAMES, frames });
+export const dispatchSetFrames = (frames: pxt.sprite.ImageState[], currentFrame?: number) => ({ type: actions.SET_FRAMES, frames, currentFrame });

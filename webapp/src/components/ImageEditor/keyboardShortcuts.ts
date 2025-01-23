@@ -1,7 +1,7 @@
 
 import { Store } from 'redux';
 import { ImageEditorTool, ImageEditorStore, TilemapState, AnimationState, CursorSize } from './store/imageReducer';
-import { dispatchChangeZoom, dispatchUndoImageEdit, dispatchRedoImageEdit, dispatchChangeImageTool, dispatchSwapBackgroundForeground, dispatchChangeSelectedColor, dispatchImageEdit, dispatchChangeCursorSize} from './actions/dispatch';
+import { dispatchChangeZoom, dispatchUndoImageEdit, dispatchRedoImageEdit, dispatchChangeImageTool, dispatchSwapBackgroundForeground, dispatchChangeSelectedColor, dispatchImageEdit, dispatchChangeCursorSize, dispatchChangeCurrentFrame, dispatchSetFrames} from './actions/dispatch';
 import { mainStore } from './store/imageStore';
 import { EditState, flipEdit, getEditState, outlineEdit, replaceColorEdit, rotateEdit } from './toolDefinitions';
 let store = mainStore;
@@ -60,6 +60,7 @@ function handleUndoRedo(event: KeyboardEvent) {
 
 function overrideBlocklyShortcuts(event: KeyboardEvent) {
     if (event.key === "Backspace" || event.key === "Delete") {
+        handleKeyDown(event);
         event.stopPropagation();
     }
 }
@@ -78,7 +79,7 @@ function handleKeyDown(event: KeyboardEvent) {
         case "e":
             setTool(ImageEditorTool.Erase);
             break;
-        case "h":
+        case "q":
             setTool(ImageEditorTool.Pan);
             break;
         case "b":
@@ -111,11 +112,17 @@ function handleKeyDown(event: KeyboardEvent) {
         case "x":
             swapForegroundBackground();
             break;
-        case "H":
+        case "h":
             flip(false);
             break;
-        case "V":
+        case "v":
             flip(true);
+            break;
+        case "H":
+            flipAllFrames(false);
+            break;
+        case "V":
+            flipAllFrames(true);
             break;
         case "[":
             rotate(false);
@@ -123,21 +130,49 @@ function handleKeyDown(event: KeyboardEvent) {
         case "]":
             rotate(true);
             break;
+        case "{":
+            rotateAllFrames(false);
+            break;
+        case "}":
+            rotateAllFrames(true);
+            break;
         case ">":
             changeCursorSize(true);
             break;
         case "<":
             changeCursorSize(false);
             break;
-
+        case ".":
+            advanceFrame(true);
+            break;
+        case ",":
+            advanceFrame(false);
+            break;
+        case "r":
+            doReplace();
+            break;
+        case "R":
+            doReplaceAllFrames();
+            break;
+        case "ArrowLeft":
+            moveMarqueeSelection(-1, 0, event.shiftKey);
+            break;
+        case "ArrowRight":
+            moveMarqueeSelection(1, 0, event.shiftKey);
+            break;
+        case "ArrowUp":
+            moveMarqueeSelection(0, -1, event.shiftKey);
+            break;
+        case "ArrowDown":
+            moveMarqueeSelection(0, 1, event.shiftKey);
+            break;
+        case "Backspace":
+        case "Delete":
+            deleteSelection(event.shiftKey);
+            break;
     }
 
     const editorState = store.getState().editor;
-
-    if (event.shiftKey && event.code === "KeyR") {
-        replaceColor(editorState.backgroundColor, editorState.selectedColor);
-        return;
-    }
 
     if (!editorState.isTilemap && /^Digit\d$/.test(event.code)) {
         const keyAsNum = +event.code.slice(-1);
@@ -216,10 +251,18 @@ export function flip(vertical: boolean) {
     dispatchAction(dispatchImageEdit(flipped.toImageState()));
 }
 
+export function flipAllFrames(vertical: boolean) {
+    editAllFrames(() => flip(vertical), editState => flipEdit(editState, vertical, false));
+}
+
 export function rotate(clockwise: boolean) {
     const [ editState, type ] = currentEditState();
     const rotated = rotateEdit(editState, clockwise, type === "tilemap", type === "animation");
     dispatchAction(dispatchImageEdit(rotated.toImageState()));
+}
+
+export function rotateAllFrames(clockwise: boolean) {
+    editAllFrames(() => rotate(clockwise), editState => rotateEdit(editState, clockwise, false, true));
 }
 
 export function outline(color: number) {
@@ -235,4 +278,142 @@ export function replaceColor(fromColor: number, toColor: number) {
     const [ editState, type ] = currentEditState();
     const replaced = replaceColorEdit(editState, fromColor, toColor);
     dispatchAction(dispatchImageEdit(replaced.toImageState()));
+}
+
+function doReplace() {
+    const state = store.getState();
+
+    const fromColor = state.editor.backgroundColor;
+    const toColor = state.editor.selectedColor;
+
+    const [ editState ] = currentEditState();
+    const replaced = replaceColorEdit(editState, fromColor, toColor);
+    dispatchAction(dispatchImageEdit(replaced.toImageState()));
+}
+
+function doReplaceAllFrames() {
+    const state = store.getState();
+
+    const fromColor = state.editor.backgroundColor;
+    const toColor = state.editor.selectedColor;
+
+    editAllFrames(doReplace, editState => replaceColorEdit(editState, fromColor, toColor))
+}
+
+export function advanceFrame(forwards: boolean) {
+    const state = store.getState();
+
+    if (state.editor.isTilemap) return;
+
+    const present = state.store.present as AnimationState;
+
+    if (present.frames.length <= 1) return;
+
+    let nextFrame: number;
+    if (forwards) {
+        nextFrame = (present.currentFrame + 1) % present.frames.length;
+    }
+    else {
+        nextFrame = (present.currentFrame + present.frames.length - 1) % present.frames.length;
+    }
+
+    dispatchAction(dispatchChangeCurrentFrame(nextFrame));
+}
+
+function editAllFrames(singleFrameShortcut: () => void, doEdit: (editState: EditState) => EditState) {
+    const state = store.getState();
+
+    if (state.editor.isTilemap) {
+        singleFrameShortcut();
+        return;
+    }
+
+    const present = state.store.present as AnimationState;
+
+    if (present.frames.length === 1) {
+        singleFrameShortcut();
+        return;
+    }
+
+    const current = present.frames[present.currentFrame];
+
+    // if the current frame has a marquee selection, apply that selection
+    // to all frames
+    const hasFloatingLayer = !!current.floating;
+    const layerWidth = current.floating?.bitmap.width;
+    const layerHeight = current.floating?.bitmap.height;
+    const layerX = current.layerOffsetX;
+    const layerY = current.layerOffsetY;
+
+    const newFrames: pxt.sprite.ImageState[] = [];
+
+    for (const frame of present.frames) {
+        const editState = getEditState(frame, false);
+
+        if (hasFloatingLayer) {
+            if (editState.floating?.image) {
+                // check the existing floating layer to see if it matches before
+                // merging down. otherwise non-square rotations might lose
+                // information if they cause the floating layer to go off the canvas
+                if (editState.layerOffsetX !== layerX ||
+                    editState.layerOffsetY !== layerY ||
+                    editState.floating.image.width !== layerWidth ||
+                    editState.floating.image.height !== layerHeight
+                ) {
+                    editState.mergeFloatingLayer();
+                    editState.copyToLayer(layerX, layerY, layerWidth, layerHeight, true);
+                }
+            }
+            else {
+                editState.copyToLayer(layerX, layerY, layerWidth, layerHeight, true);
+            }
+        }
+        else {
+            editState.mergeFloatingLayer();
+        }
+
+        const edited = doEdit(editState);
+        newFrames.push(edited.toImageState());
+    }
+
+    dispatchAction(dispatchSetFrames(newFrames, present.currentFrame));
+}
+
+function moveMarqueeSelection(dx: number, dy: number, allFrames = false) {
+    const [ editState ] = currentEditState();
+
+    if (!editState.floating?.image) return;
+
+    const moveState = (editState: EditState) => {
+        editState.layerOffsetX += dx;
+        editState.layerOffsetY += dy;
+        return editState;
+    };
+
+
+    if (!allFrames) {
+        dispatchAction(dispatchImageEdit(moveState(editState).toImageState()));
+    }
+    else {
+        editAllFrames(() => moveMarqueeSelection(dx, dy), moveState);
+    }
+}
+
+function deleteSelection(allFrames = false) {
+    const [ editState ] = currentEditState();
+
+    if (!editState.floating?.image) return;
+
+    const deleteFloatingLayer = (editState: EditState) => {
+        editState.floating = null;
+        return editState;
+    };
+
+
+    if (!allFrames) {
+        dispatchAction(dispatchImageEdit(deleteFloatingLayer(editState).toImageState()));
+    }
+    else {
+        editAllFrames(() => deleteSelection(), deleteFloatingLayer);
+    }
 }
