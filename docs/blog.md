@@ -2,7 +2,7 @@
 
 ## [Display shield extension/simulator for the micro:bit](/blog/microbit/display-shield)
 
-January 27, 2025 by [Thomas Ball](https://github.com/thomasjball)
+February 3, 2025 by [Thomas Ball](https://github.com/thomasjball)
 
 With the new display shield extension, you can now use Arcade shields for the micro:bit V2 in https://makecode.microbit.org/beta, with simulator support!
 
