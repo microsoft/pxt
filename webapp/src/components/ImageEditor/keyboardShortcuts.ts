@@ -149,10 +149,10 @@ function handleKeyDown(event: KeyboardEvent) {
             advanceFrame(false);
             break;
         case "r":
-            doReplace();
+            doColorReplace();
             break;
         case "R":
-            doReplaceAllFrames();
+            doColorReplaceAllFrames();
             break;
         case "ArrowLeft":
             moveMarqueeSelection(-1, 0, event.shiftKey);
@@ -280,7 +280,7 @@ export function replaceColor(fromColor: number, toColor: number) {
     dispatchAction(dispatchImageEdit(replaced.toImageState()));
 }
 
-function doReplace() {
+function doColorReplace() {
     const state = store.getState();
 
     const fromColor = state.editor.backgroundColor;
@@ -291,13 +291,13 @@ function doReplace() {
     dispatchAction(dispatchImageEdit(replaced.toImageState()));
 }
 
-function doReplaceAllFrames() {
+function doColorReplaceAllFrames() {
     const state = store.getState();
 
     const fromColor = state.editor.backgroundColor;
     const toColor = state.editor.selectedColor;
 
-    editAllFrames(doReplace, editState => replaceColorEdit(editState, fromColor, toColor))
+    editAllFrames(doColorReplace, editState => replaceColorEdit(editState, fromColor, toColor))
 }
 
 export function advanceFrame(forwards: boolean) {
