@@ -148,6 +148,12 @@ function handleKeyDown(event: KeyboardEvent) {
         case ",":
             advanceFrame(false);
             break;
+        case "PageDown":
+            moveFrame(true, event.shiftKey);
+            break;
+        case "PageUp":
+            moveFrame(false, event.shiftKey);
+            break;
         case "r":
             doColorReplace();
             break;
@@ -318,6 +324,43 @@ export function advanceFrame(forwards: boolean) {
     }
 
     dispatchAction(dispatchChangeCurrentFrame(nextFrame));
+}
+
+export function moveFrame(forwards: boolean, allFrames = false) {
+    const state = store.getState();
+
+    if (state.editor.isTilemap) return;
+
+    const present = state.store.present as AnimationState;
+
+    if (present.frames.length <= 1) return;
+
+    let nextFrame: number;
+    if (forwards) {
+        nextFrame = (present.currentFrame + 1) % present.frames.length;
+    }
+    else {
+        nextFrame = (present.currentFrame + present.frames.length - 1) % present.frames.length;
+    }
+
+    const newFrames = present.frames.slice();
+
+
+    if (allFrames) {
+        if (forwards) {
+            newFrames.unshift(newFrames.pop());
+        }
+        else {
+            newFrames.push(newFrames.shift());
+        }
+    }
+    else {
+        const currentFrame = newFrames[present.currentFrame];
+        newFrames.splice(present.currentFrame, 1);
+        newFrames.splice(nextFrame, 0, currentFrame);
+    }
+
+    dispatchAction(dispatchSetFrames(newFrames, nextFrame));
 }
 
 function editAllFrames(singleFrameShortcut: () => void, doEdit: (editState: EditState) => EditState) {

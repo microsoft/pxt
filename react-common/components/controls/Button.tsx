@@ -80,11 +80,18 @@ export const Button = (props: ButtonProps) => {
     );
 
     let clickHandler = (ev: React.MouseEvent) => {
-        if (onRightClick && ev.button !== 0) onRightClick();
-        else if (onClick) onClick();
+        if (onClick) onClick();
         if (href) window.open(href, target || "_blank", "noopener,noreferrer")
         ev.stopPropagation();
         ev.preventDefault();
+    }
+
+    let rightClickHandler = (ev: React.MouseEvent) => {
+        if (onRightClick) {
+            onRightClick();
+            ev.stopPropagation();
+            ev.preventDefault();
+        }
     }
 
     return (
@@ -95,6 +102,7 @@ export const Button = (props: ButtonProps) => {
             title={title}
             ref={buttonRef}
             onClick={!disabled ? clickHandler : undefined}
+            onContextMenu={rightClickHandler}
             onKeyDown={onKeydown || fireClickOnEnter}
             onBlur={onBlur}
             role={role || "button"}
