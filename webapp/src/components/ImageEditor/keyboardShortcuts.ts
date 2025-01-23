@@ -363,30 +363,6 @@ export function moveFrame(forwards: boolean, allFrames = false) {
     dispatchAction(dispatchSetFrames(newFrames, nextFrame));
 }
 
-export function moveAllFrames(forwards: boolean) {
-    const state = store.getState();
-
-    if (state.editor.isTilemap) return;
-
-    const present = state.store.present as AnimationState;
-
-    if (present.frames.length <= 1) return;
-
-    let nextFrame: number;
-    if (forwards) {
-        nextFrame = (present.currentFrame + 1) % present.frames.length;
-    }
-    else {
-        nextFrame = (present.currentFrame + present.frames.length - 1) % present.frames.length;
-    }
-
-    const newFrames = present.frames.slice();
-
-    newFrames
-
-    dispatchAction(dispatchSetFrames(newFrames, nextFrame));
-}
-
 function editAllFrames(singleFrameShortcut: () => void, doEdit: (editState: EditState) => EditState) {
     const state = store.getState();
 
