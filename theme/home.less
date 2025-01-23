@@ -20,7 +20,7 @@
 @heroBannerDotOutlineAtiveColor: rgba(255, 255, 255, .75);
 
 #homescreen {
-    background: lighten(@homeScreenBackground, 10%);
+    background: var(--pxt-neutral-background1);
     z-index: @homeScreenZIndex;
     user-select: none;
 }
@@ -124,7 +124,7 @@
         border: 0;
         width: 100%;
         min-height: 100%;
-        background: @homeScreenBackground;
+        background: var(--pxt-target-background1);
     }
     .ui.segment.gallerysegment {
         background: none;
@@ -148,13 +148,13 @@
 
                 > .view-all-button {
                     margin-left: 1.5em;
-                    color: @primaryColor;
+                    color: var(--pxt-primary-background);
                     font-size: 14px;
                     font-weight: 500;
-                    border-bottom: 1px solid fade(@primaryColor, 0%);
+                    border-bottom: 1px solid var(--pxt-primary-alpha0);
                     transition: border-color 400ms ease;
                     &:hover, &:focus {
-                        border-color: @primaryColor;
+                        border-color: var(--pxt-primary-background);
                     }
                 }
             }
@@ -288,7 +288,7 @@
         .yt-button {
             display: inline-block;
             border-radius: 0.5rem;
-            background-color: @primaryColor;
+            background-color: var(--pxt-primary-background);
         }
         .ui.grid.stackable .actions {
             padding-right: 4rem !important;
@@ -312,7 +312,7 @@
                 transition-duration: 0.1s;
 
                 > .item, > .icon {
-                    background: @homeDetailCardActionBackground;
+                    background: var(--pxt-target-background1);
                     height: 8rem;
                 }
 
@@ -340,7 +340,7 @@
                     transition-duration: 0s;
                 }
                 &:first-child .button.approve {
-                    background-color: @primaryColor;
+                    background-color: var(--pxt-primary-background);
                 }
             }
             .card-action-title {
@@ -447,12 +447,12 @@
     }
     .ui.card:focus {
         border: 2px solid transparent;
-        outline: @homeCardBorderSize solid @homeCardFocusBorderColor !important;
+        outline: @homeCardBorderSize solid var(--pxt-primary-background) !important;
     }
 }
 
 .ui.fullscreen.modal.scriptmanager > .content, .projectsdialog {
-    background: @homeScreenBackground;
+    background: var(--pxt-target-background1);
 }
 
 
@@ -485,8 +485,8 @@
     font-size: @carouselArrowSize / 1.18 !important;
     line-height: 1;
     cursor: pointer;
-    background: @homeScreenBackground;
-    color: @primaryColor;
+    background: var(--pxt-target-background1);
+    color: var(--pxt-primary-background);
     top: 0;
     opacity: 0.7;
     overflow: hidden;
@@ -503,7 +503,7 @@
 }
 
 .carouselarrow:focus {
-    outline: solid 3px @primaryColor;
+    outline: solid 3px var(--pxt-primary-background);
 }
 
 .carouselarrow .icon {
@@ -524,7 +524,7 @@
     .projectsdialog .detailview .actions {
         .card-action {
             > .item, > .icon {
-                background: @homeInvertedDetailCardActionBackground;
+                background: var(--pxt-neutral-background1);
             }
 
             .button.approve {

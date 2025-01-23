@@ -76,7 +76,7 @@
     & > div {
         position: absolute;
         top: 0;
-        background: @primaryColor;
+        background: var(--pxt-primary-background);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -95,7 +95,7 @@
     height: 100%;
     position: relative;
 
-    border-left: solid 2px darken(desaturate(@editorToolsBackground, 60%), 10%);
+    border-left: solid 2px var(--pxt-target-stencil3);
 
     display: flex;
     flex-direction: column;
@@ -111,7 +111,7 @@
     }
 
     .common-treeitem.selected {
-        border-left: solid 2px @primaryColor;
+        border-left: solid 2px var(--pxt-primary-background);
         filter: grayscale(.15) brightness(.85) contrast(1.3);
     }
 

@@ -54,7 +54,7 @@
     margin-left: 0em;
 }
 .tutorial-menuitem > .selected {
-    background-color: @tutorialSelectedMenuColor !important;
+    background-color: var(--pxt-primary-background) !important;
     padding: 1.0rem !important;
     padding-left: 1.3rem !important;
     padding-right: 1.3rem !important;
@@ -258,8 +258,8 @@ span.docs.inlinebutton {
     padding: 0.4rem;
     border-radius: 0.2rem;
     white-space: nowrap;
-    background-color: @primaryColor;
-    color: @white;
+    background-color: var(--pxt-primary-background);
+    color: var(--pxt-primary-foreground);
 }
 
 span.docs.inlineblock {
@@ -315,7 +315,7 @@ code.lang-filterblocks {
     > i, > span {
         display: block;
         margin: 0 auto 0.5em !important;
-        color: @mainMenuTutorialButtons;
+        color: var(--pxt-header-background);
     }
 
     &:hover, &:focus {
@@ -680,8 +680,8 @@ code.lang-filterblocks {
     #sidebar {
         width: 33.3%;
         height: 100%;
-        background-color: @sidebarTutorialColor;
-        color: #3c3c3c;
+        background-color: var(--pxt-target-background2);
+        color: var(--pxt-target-foreground2);
         font-family: @docsPageFont;
         padding: @sidebarPadding / 2 @sidebarPadding;
         overflow-y: auto;

@@ -84,7 +84,7 @@
 }
 .ui.fullscreen.modal {
     > .header {
-        background: @extensionsHeaderBackground;
+        background: var(--pxt-header-background);
         color: @extensionsHeaderColor;
         border-radius: 0;
         display: flex;
@@ -160,11 +160,11 @@
     justify-content: flex-end;
     flex-direction: row;
     height: @mainMenuHeight;
-    background: @extensionsSecondaryBackground;
+    background: var(--pxt-header-background-alpha30);
     padding: 0 1rem;
 
     .divider {
-        border: 0.5px solid @extensionsHeaderBackground;
+        border: 0.5px solid var(--pxt-header-background);
         height: 70%;
         margin: 0.5rem;
         margin-right: 0.75rem;

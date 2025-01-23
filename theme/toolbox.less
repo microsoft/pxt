@@ -4,8 +4,8 @@
 *******************************/
 
 .blocklyToolboxDiv, .monacoToolboxDiv {
-    background: @blocklyToolboxColor !important;
-    color: @blocklyToolboxText;
+    background: var(--pxt-target-background3) !important;
+    color: var(--pxt-target-foreground3);
     overflow-x: visible;
     overflow-y: auto;
     padding-top: 0;
@@ -134,7 +134,7 @@ span.blocklyTreeLabel, text.blocklyText {
     font-weight: 700;
     font-size: 1.2rem;
     padding: .5rem 1rem;
-    border-bottom: 2px solid darken(desaturate(@editorToolsBackground, 60%), 10%);
+    border-bottom: var(--pxt-target-stencil3);
     user-select: none;
 }
 
@@ -176,7 +176,7 @@ span.blocklyTreeLabel, text.blocklyText {
     height: 80px;
     z-index: @blocklyTrashIconZIndex;
     font-size:5rem;
-    color: @trashIconColor;
+    color: var(--pxt-primary-background);
 }
 
 .flyoutOnly #blocklyTrashIcon {

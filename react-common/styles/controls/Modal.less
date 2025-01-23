@@ -59,7 +59,7 @@
 }
 
 .common-modal-body {
-    background-color: @pageBackground;
+    background-color: var(--pxt-neutral-background1);
     min-height: 4rem;
     padding: 1.25rem 1.5rem;
 }
@@ -92,8 +92,8 @@
 }
 
 .fullscreen > .common-modal > .common-modal-header {
-    background-color: @primaryColor;
-    color: white;
+    background-color: var(--pxt-primary-background);
+    color: var(--pxt-primary-foreground);
     margin-bottom: 0;
 
     .common-modal-back {
@@ -123,7 +123,7 @@
 
 .fullscreen > .common-modal > .common-modal-body {
     flex-grow: 1;
-    background-color: @homeScreenBackground;
+    background-color: var(--pxt-target-background1);
     padding: 1rem;
     max-height: unset;
 }

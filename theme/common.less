@@ -109,8 +109,8 @@ pre {
     right: 0;
     z-index: @editorToolsZIndex;
     height: @editorToolsCollapsedHeight;
-    background-color: @editorToolsBackground;
-    border-top: 2px solid darken(desaturate(@editorToolsBackground, 60%), 10%);
+    background-color: var(--pxt-target-background3);
+    border-top: 2px solid var(--pxt-target-stencil3);
 
     display: flex;
     justify-content: space-between;
@@ -199,7 +199,7 @@ pre {
     margin-top: 0;
     margin-bottom: 0;
     right: 0;
-    background-color: @filelistBackgroundColor;
+    background-color: var(--pxt-target-background2);
     z-index: @filelistZIndex;
 }
 
@@ -347,7 +347,7 @@ div.simframe > iframe {
 }
 .menubar .ui.menu.inverted.fixed .ui.item.editor-menuitem .active.item {
     background: none;
-    color: @mainMenuInvertedBackground !important;
+    color: var(--pxt-header-background) !important;
 }
 
 .menubar {
@@ -450,10 +450,10 @@ div.simframe > iframe {
 #root:not(.hc) #editordropdown {
     .menu > .item.selected {
         background: none;
-        color: @mainMenuInvertedBackground !important;
+        color: var(--pxt-header-background) !important;
     }
     &.active, #mainmenu #editordropdown.active:focus {
-        background-color: @editorToggleColor!important;
+        background-color: var(--pxt-neutral-background1)!important;
     }
 }
 
@@ -566,7 +566,7 @@ div.simframe > iframe {
 }
 
 .ui.card .extra.content a.learnmore {
-    color: @lightTextColor;
+    color: var(--pxt-secondary-dark);
 }
 
 /* Popup message */
@@ -875,8 +875,8 @@ Field editors
     background-color: #1da1f2;
 }
 .social-icons a.discourse {
-    color: white;
-    background-color: @primaryColor;
+    color: var(--pxt-primary-foreground);
+    background-color: var(--pxt-primary-background);
 }
 
 /*******************************
@@ -909,7 +909,7 @@ Field editors
     .common-modal > {
         .common-modal-header {
             height: @mainMenuHeight;
-            background-color: @mainMenuInvertedBackground;
+            background-color: var(--pxt-header-background);
             z-index: 202;
             display: flex;
             padding-left: 0rem;
@@ -1211,7 +1211,7 @@ Field editors
 @sidbarActiveTabIconColor: @sidebarSecondaryColor;
 
 #simulator .editor-sidebar {
-    border-right: 2px solid darken(desaturate(@blocklyToolboxColor, 60%), 10%);
+    border-right: 2px solid var(--pxt-neutral-stencil1);
 
     .tab-navigation {
         color: @sidebarSecondaryColor;
@@ -1387,7 +1387,7 @@ p.ui.font.small {
         max-width: 100%;
         min-width: 100%;
         height:100% !important;
-        background-color: @simulatorBackground;
+        background-color: var(--pxt-target-background2);
     }
     #miniSimOverlay {
         display: none;
@@ -1401,12 +1401,12 @@ p.ui.font.small {
         padding-left: 0rem;
         padding-right: 0rem;
 
-        background-color: @fullscreenBackgroundGradientStart;
-        background: @fullscreenBackgroundGradientStart; /* For browsers that do not support gradients */
-        background: -webkit-linear-gradient(@fullscreenBackgroundGradientStart 50%, @fullscreenBackgroundGradientEnd); /* For Safari 5.1 to 6.0 */
-        background: -o-linear-gradient(@fullscreenBackgroundGradientStart 50%, @fullscreenBackgroundGradientEnd); /* For Opera 11.1 to 12.0 */
-        background: -moz-linear-gradient(@fullscreenBackgroundGradientStart 50%, @fullscreenBackgroundGradientEnd); /* For Firefox 3.6 to 15 */
-        background: linear-gradient(@fullscreenBackgroundGradientStart 50%, @fullscreenBackgroundGradientEnd); /* Standard syntax */
+        background-color: var(--pxt-target-background2);
+        background: var(--pxt-target-background2); /* For browsers that do not support gradients TODO thsparks Can we remove this? It always seems to be a gradient between same 2 colors.*/
+        background: -webkit-linear-gradient(var(--pxt-target-background2) 50%, var(--pxt-target-background2)); /* For Safari 5.1 to 6.0 */
+        background: -o-linear-gradient(var(--pxt-target-background2) 50%, var(--pxt-target-background2)); /* For Opera 11.1 to 12.0 */
+        background: -moz-linear-gradient(var(--pxt-target-background2) 50%, var(--pxt-target-background2)); /* For Firefox 3.6 to 15 */
+        background: linear-gradient(var(--pxt-target-background2) 50%, var(--pxt-target-background2)); /* Standard syntax */
     }
     #simulator .hidefullscreen,
     .menubar .ui.item:not(.logo),
@@ -1902,7 +1902,7 @@ p.ui.font.small {
     }
 
     .collapsedEditorTools #downloadArea {
-        background: @editorToolsBackground;
+        background: var(--pxt-target-background3);
     }
 
     .collapsedEditorTools:not(.headless):not(.tabTutorial) #maineditor {
@@ -2230,12 +2230,12 @@ p.ui.font.small {
     padding-bottom: 2em;
     padding-top: @mainMenuHeight;
 
-    background-color: @fullscreenBackgroundGradientStart;
-    background: @fullscreenBackgroundGradientStart; /* For browsers that do not support gradients */
-    background: -webkit-linear-gradient(@fullscreenBackgroundGradientStart 50%, @fullscreenBackgroundGradientEnd); /* For Safari 5.1 to 6.0 */
-    background: -o-linear-gradient(@fullscreenBackgroundGradientStart 50%, @fullscreenBackgroundGradientEnd); /* For Opera 11.1 to 12.0 */
-    background: -moz-linear-gradient(@fullscreenBackgroundGradientStart 50%, @fullscreenBackgroundGradientEnd); /* For Firefox 3.6 to 15 */
-    background: linear-gradient(@fullscreenBackgroundGradientStart 50%, @fullscreenBackgroundGradientEnd); /* Standard syntax */
+    background-color: var(--pxt-target-background2);
+    background: var(--pxt-target-background2); /* For browsers that do not support gradients TODO thsparks Can we remove this? It always seems to be a gradient between same 2 colors.*/
+    background: -webkit-linear-gradient(var(--pxt-target-background2) 50%, var(--pxt-target-background2)); /* For Safari 5.1 to 6.0 */
+    background: -o-linear-gradient(var(--pxt-target-background2) 50%, var(--pxt-target-background2)); /* For Opera 11.1 to 12.0 */
+    background: -moz-linear-gradient(var(--pxt-target-background2) 50%, var(--pxt-target-background2)); /* For Firefox 3.6 to 15 */
+    background: linear-gradient(var(--pxt-target-background2) 50%, var(--pxt-target-background2)); /* Standard syntax */
 }
 
 .simView #maineditor {
@@ -2346,7 +2346,7 @@ div.simframe.ui.embed {
 .ui.menu .signin-button {
     display: flex;
     align-items: center;
-    background-color: @homeScreenBackground;
+    background-color: var(--pxt-target-background1);
     color: black;
     border-radius: 6px;
     height: 3rem;

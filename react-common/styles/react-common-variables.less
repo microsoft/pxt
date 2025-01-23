@@ -16,14 +16,14 @@
 @buttonBackgroundColorDisabled: @commonBackgroundDisabledColor;
 @buttonGrayColor: #e0e1e2;
 
-@buttonMenuTextColor: #ffffff;
-@buttonMenuTextColorInverted: @primaryColor;
+@buttonMenuTextColor: var(--pxt-primary-foreground);
+@buttonMenuTextColorInverted: var(--pxt-primary-background);
 @buttonMenuBackgroundColorInverted: @buttonMenuTextColor;
 @buttonFocusOutlineDarkBackground: @buttonTextColorDarkBackground solid 1px;;
 @buttonFocusOutlineLightBackground: @commonBorderColor solid 1px;
 @buttonMenuBackgroundHoverColor: rgba(0,0,0,.1);
 @buttonMenuBackgroundActiveColor: rgba(0,0,0,.15);
-@buttonLinkColor: #3977b4;
+@buttonLinkColor: var(--pxt-link);
 
 
 /****************************************************
@@ -55,12 +55,12 @@
  *                    Modals                        *
  ****************************************************/
 
-@modalCloseColor: #333333;
-@modalBodyBackgroundColor: #ffffff;
-@modalHeaderBackgroundColor: @modalBodyBackgroundColor;
-@modalFooterBackgroundColor: #f9fafb;
-@modalSeparatorBorder: 1px solid rgba(34, 36, 38, .15);
-@modalOverlayColor: rgba(0, 0, 0, 0.5);
+@modalCloseColor: var(--pxt-neutral-foreground1);
+@modalBodyBackgroundColor: var(--pxt-neutral-background1);
+@modalHeaderBackgroundColor: var(--pxt-neutral-background1);
+@modalFooterBackgroundColor: var(--pxt-neutral-background2);
+@modalSeparatorBorder: 1px solid var(--pxt-neutral-stencil1);
+@modalOverlayColor: var(--pxt-neutral-alpha);
 @modalDimmerZIndex: 1000;
 @modalFullscreenZIndex: @modalDimmerZIndex;
 

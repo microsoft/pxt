@@ -123,7 +123,7 @@
 
 /* Tutorial mode */
 .tutorial .ui.inverted.menu {
-    background: @mainMenuTutorialBackground !important;
+    background: var(--pxt-header-background) !important;
 }
 
 .debugger .ui.inverted.menu {

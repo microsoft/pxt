@@ -154,7 +154,7 @@ a.ui.card:focus,
 }
 
 .ui.card.link.cloudprojectscard {
-    background: @cloudCardBackground!important;
+    background: var(--pxt-secondary-dark) !important;
 
     .header {
         white-space: normal;
@@ -168,7 +168,7 @@ a.ui.card:focus,
 }
 
 .ui.card.link.scriptmanagercard {
-    background: darken(@secondaryColor, 20%) !important;
+    background: var(--pxt-secondary-dark) !important;
 }
 
 

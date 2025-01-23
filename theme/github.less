@@ -17,8 +17,8 @@
 }
 
 #githubEditor {
-    background-color: @githubBackgroundColor;
-    color: @githubTextColor;
+    background-color: var(--pxt-target-background2-light);
+    color: var(--pxt-target-foreground2);
     overflow-x: hidden;
     overflow-y: auto;
     #githubArea {
@@ -68,7 +68,7 @@
         }
 
         .ui.segments.filediff {
-            background: @diffSegmentBackgroundColor;
+            background: var(--pxt-neutral-background1);
         }
 
         .legend > span:not(:first-child) {
@@ -173,25 +173,25 @@
 // inverted style
 .inverted-theme {
     #githubEditor {
-        color: @githubInvertedTextColor;
+        color: var(--pxt-target-background2-light);
         .ui.transparent.segment {
-            border: 1px solid @mainMenuInvertedBackground;
+            border: 1px solid var(--pxt-header-background);
         }
         .ui.basic.button > .ui.text,
         .ui.header {
-            color: @githubInvertedTextColor !important;
+            color: var(--pxt-target-background2-light) !important;
         }
         .ui.items>.link.item {
             .meta, .description {
-                color: @githubInvertedTextColor !important;
+                color: var(--pxt-target-background2-light) !important;
             }
         }
         .diffheader {
-            background: @mainMenuInvertedBackground !important;
+            background: var(--pxt-header-background) !important;
         }
         table.diffview {
             .change code {
-                color: @githubInvertedTextColor !important;
+                color: var(--pxt-target-background2-light) !important;
             }
 
             .diff-added {

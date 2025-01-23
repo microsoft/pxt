@@ -24,10 +24,10 @@
 @greenTextColor: darken(@green, 5);
 @yellowTextColor: #8e6505;
 
-@lightTextColor              : darken(@secondaryColor, 15%);
+// @lightTextColor              : var(--pxt-secondary-dark);
 @invertedUnselectedTextColor : rgba(255, 255, 255, 0.8);
 
-@pageBackground: #ffffff;
+// @pageBackground: var(--pxt-neutral-background1);
 @pageMinWidth: 100%;
 
 /*-------------------
@@ -150,19 +150,19 @@
    Menu
 --------------------*/
 
-@mainMenuBackground: @white;
-@mainMenuInvertedBackground: @black;
-@mainMenuTutorialBackground: @orange;
-@mainMenuTutorialButtons: @mainMenuTutorialBackground;
+// @mainMenuBackground: @white;
+// @mainMenuInvertedBackground: @black;
+// @mainMenuTutorialBackground: @orange; var(--pxt-header-background)
+// @mainMenuTutorialButtons: @mainMenuTutorialBackground; var(--pxt-header-background)
+
+// @tutorialSelectedMenuColor: @primaryColor;
+// @editorToggleColor: white; var(--pxt-neutral-background1)
 
 @mainMenuHeight: 4.0rem;
 @mobileMenuHeight: 3.5rem;
 @sandboxMobileMenuHeight: 3.0rem;
 @thinMenuHeight: 3rem;
 @tutorialEmbedMenuHeight: 2.25rem;
-
-@tutorialSelectedMenuColor: @primaryColor;
-@editorToggleColor: white;
 
 /*-------------------
    Layout
@@ -178,27 +178,27 @@
    Background
 --------------------*/
 
-@simulatorBackground: #fff;
-@editorToolsBackground: @simulatorBackground;
-@blocklySvgColor: #fff;
-@sidebarTutorialColor: @lightGrey;
+// @simulatorBackground: var(--pxt-target-background2);
+// @editorToolsBackground: var(--pxt-target-background2);
+@blocklySvgColor: #F0000F;
+// @sidebarTutorialColor: var(--pxt-target-background2);
 
-@homeScreenBackground: #ecf0f1;
-@cloudCardBackground: @grey;
+// @homeScreenBackground: var(--pxt-target-background1);
+// @cloudCardBackground: @grey; var(--pxt-secondary-dark);
 
 /*-------------------
    Full screen
 --------------------*/
 
-@fullscreenBackgroundGradientStart: @mainMenuInvertedBackground;
-@fullscreenBackgroundGradientEnd: @simulatorBackground;
+// @fullscreenBackgroundGradientStart: var(--pxt-header-background)
+// @fullscreenBackgroundGradientEnd: var(--pxt-target-background2);
 
 /*-------------------
    Extensions
---------------------*/
 
-@extensionsHeaderBackground: @mainMenuInvertedBackground;
-@extensionsSecondaryBackground: fade(@extensionsHeaderBackground, 30%);
+--------------------*/
+// @extensionsHeaderBackground: @mainMenuInvertedBackground; var(--pxt-header-background)
+// @extensionsSecondaryBackground: fade(@extensionsHeaderBackground, 30%); var(--pxt-header-background-alpha30)
 @extensionsBackground: @blocklySvgColor;
 @extensionsHeaderColor: white;
 
@@ -211,37 +211,36 @@
 
 /*-------------------
    Editor
---------------------*/
 
-@blocklyToolboxColor: white;
-@blocklyToolboxText: #575E75;
-@trashIconColor: @primaryColor;
+@blocklyToolboxColor: var(--pxt-target-background3);
+@blocklyToolboxText: var(--pxt-target-foreground3);
+@trashIconColor: var(--pxt-primary-background);
+--------------------*/
 
 /*-------------------
    Serial editor
 --------------------*/
-@serialBackgroundColor: lighten(@simulatorBackground, 2);
-@serialTextColor: @darkTextColor;
-@serialGraphBackground: @lightGrey;
-@serialGraphColor: black;
-@editorCloseColor: black;
-@editorCloseColorHover: darken(@editorCloseColor, 25%);
+// @serialBackgroundColor: var(--pxt-target-background2-light);
+// @serialTextColor: var(--pxt-target-foreground2);
+// @serialGraphBackground: var(--pxt-target-background2);
+// @serialGraphColor: var(--pxt-target-foreground2);
+// @editorCloseColor: var(--pxt-target-foreground2);
 @serialConsoleFont: @blocklyFont;
-@serialConsoleBackground: @simulatorBackground;
+// @serialConsoleBackground: var(--pxt-target-background2);
 
 /*-------------------
    Filelist
 --------------------*/
-@filelistBackgroundColor: @simulatorBackground;
+// @filelistBackgroundColor: var(--pxt-target-background2);
 @filelistHeaderBackground:  rgba(0,0,0,0.05);
 
 /*-------------------
-   Github Diff editor
+   Github Diff editor TODO thsparks - Add To Theming
 --------------------*/
-@githubBackgroundColor: @serialBackgroundColor;
-@githubTextColor: @darkTextColor;
-@githubInvertedTextColor: white;
-@diffSegmentBackgroundColor: @pageBackground;
+// @githubBackgroundColor: var(--pxt-target-background2-light);
+// @githubTextColor: var(--pxt-target-foreground2);
+// @githubInvertedTextColor: var(--pxt-target-background2-light);
+// @diffSegmentBackgroundColor: var(--pxt-neutral-background1);
 @diffRemovedBackground:#ffeef0;
 @diffAddedBackground: #e6ffed;
 @diffMarkerBackground: #f1f8ff;
@@ -282,18 +281,18 @@
 
 @blocklyFont: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
 
-@blocklyScrollbarBackgroundColor: none;
-@blocklyScrollbarColor: #CECDCE;
+// @blocklyScrollbarBackgroundColor: none;
+// @blocklyScrollbarColor: var(--pxt-target-stencil1) #CECDCE;
 @blocklyScrollbarOpacity: 1;
 
 /*-------------------
-   Flyout
+   Flyout TODO thsparks - figure out theming
 --------------------*/
 
 @flyoutLabelColor: white;
 @blocklyFlyoutColor: @grey;
 @blocklyFlyoutColorOpacity: 0.9;
-@blocklyFlyoutButtonColor: @primaryColor;
+// @blocklyFlyoutButtonColor: @primaryColor; var(--pxt-primary-background)
 @monacoFlyoutColor: fade(@blocklyFlyoutColor, 90%);
 @monacoFlyoutBorderColor: fade(@flyoutLabelColor, 40%);
 @monacoFlyoutText: fade(@flyoutLabelColor, 70%);
@@ -307,7 +306,7 @@
 @homeCardBorderSize: 5px;
 @homeCardBorderColor: #e9eef2;
 @homeCardHoverBorderColor: white;
-@homeCardFocusBorderColor: @primaryColor;
+// @homeCardFocusBorderColor: @primaryColor; var(--pxt-primary-background)
 @homeCardColor: @textColor;
 @homeCardMetaColor: @homeCardColor;
 @homeCardHeaderColor: @homeCardColor;
@@ -324,9 +323,9 @@
 @homeDetailViewColor: white;
 @homeDetailCloseColor: white;
 @homeDetailCloseBackground: @grey;
-@homeDetailCardActionBackground: @homeScreenBackground;
+// @homeDetailCardActionBackground: @homeScreenBackground; var(--pxt-target-background1)
 @homeDetailCardActionText: white;
-@homeInvertedDetailCardActionBackground: lighten(@homeScreenBackground, 10%);
+// @homeInvertedDetailCardActionBackground: var(--pxt-neutral-background1);
 @homeHeaderBorderSize: 3px;
 @homeHeaderSelectedBorderColor: white;
 /*-------------------

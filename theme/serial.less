@@ -10,7 +10,7 @@
 --------------------*/
 
 #serialEditor {
-    background-color: @serialBackgroundColor;
+    background-color: var(--pxt-target-background2-light);
 }
 
 #serialArea {
@@ -75,7 +75,7 @@
 #serialArea .ui.segment {
     border: none;
     box-shadow: none;
-    background-color: @serialGraphBackground;
+    background-color: var(--pxt-target-background2);
 }
 
 .serialHeader {
@@ -90,7 +90,7 @@
 
 .serialHeader .ui.header {
     margin: 0 1rem 0 1rem;
-    color: @serialTextColor;
+    color: var(--pxt-target-foreground2);
 }
 
 .serialHeader .leftHeader {
@@ -115,10 +115,10 @@
     margin-top: 0.5rem;
     height: calc(30% - 2.5rem);
     overflow-y: auto;
-    color: @serialTextColor;
-    background-color: @serialConsoleBackground;
+    color: var(--pxt-target-foreground2);
+    background-color: var(--pxt-target-background2);
     border-radius: 5px;
-    border: 1px solid @serialGraphBackground;
+    border: 1px solid var(--pxt-target-background2);
     padding: 0.4rem;
     font-family: @serialConsoleFont;
 }
@@ -198,8 +198,8 @@
 #serialPlaceholder {
     padding: 0.4rem;
     height: 12rem;
-    background-color: @serialGraphBackground;
-    border: 1px solid lighten(@serialGraphBackground, 10.0);
+    background-color: var(--pxt-target-background2);
+    border: 1px solid var(--pxt-target-stencil2);
 }
 
 #serialCharts canvas {
@@ -215,10 +215,10 @@
 
 #serialPreview .label {
     width: 100%;
-    background-color: lighten(@serialGraphBackground, 10.0);
+    background-color: var(--pxt-target-background2-light);
     font-size: 0.85em;
-    border: 10px solid @primaryColor;
-    color: @serialGraphColor;
+    border: 10px solid var(--pxt-primary-background);
+    color: var(--pxt-target-foreground2);
     margin-bottom: 0.4rem;
     > * {
         vertical-align: middle;
@@ -233,8 +233,8 @@
 }
 
 #serialPreview .label:hover {
-    background-color: @serialGraphBackground;
-    border-color: darken(@primaryColor, 10.0);
+    background-color: var(--pxt-target-background2);
+    border-color: var(--pxt-primary-dark);
 }
 
 #serialPreview .label:focus {
@@ -252,7 +252,7 @@
 }
 
 .ui.button.labeled.icon.editorBack {
-    color: @editorCloseColor !important;
+    color: var(--pxt-target-foreground2) !important;
     background: transparent !important;
     padding-left: 2.5em !important;
     .icon {
@@ -262,7 +262,7 @@
 
 .ui.button.editorBack:hover,
     .ui.button.editorBack:focus {
-    color: @editorCloseColorHover;
+    color: var(--pxt-target-foreground2-hover);
 }
 
 div.smoothie-chart-tooltip {

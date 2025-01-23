@@ -48,7 +48,7 @@ export class ThemeManager {
     
         // TODO thsparks : Load from target somehow? pxtarget config? Something like availableLocales in apptarget.apptheme in (used for languages)? Could also include paths there.
         const debugThemeInfo = [
-            { id: "light", name: lf("Light"), url: "/docfiles/themes/placeholder.css" },
+            { id: "light", name: lf("Light"), url: "/docfiles/themes/arcade-light.css" },
             { id: "high-contrast", name: lf("High Contrast"), url: "/docfiles/themes/high-contrast.css" },
             { id: "arcade-legacy", name: lf("Legacy"), url: "/docfiles/themes/arcade-legacy.css" }
         ]

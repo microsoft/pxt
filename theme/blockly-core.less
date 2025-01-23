@@ -142,11 +142,11 @@ i.icon.blocklyTreeButton {
 }
 
 .blocklyFlyoutButton:hover {
-    fill: @blocklyFlyoutButtonColor !important;
+    fill: var(--pxt-primary-background) !important;
 }
 
 .blocklyFlyoutButtonBackground {
-    stroke: @blocklyFlyoutButtonColor !important;
+    stroke: var(--pxt-primary-background) !important;
     stroke-width: 3px !important;
 }
 
@@ -159,17 +159,17 @@ i.icon.blocklyTreeButton {
 }
 
 .blocklyFlyoutLabelText {
-    fill: @flyoutLabelColor !important;
+    fill: var(--pxt-neutral-background1) !important;
     font-size: 1rem;
 }
 
 .blocklyFlyoutHeading .blocklyFlyoutLabelText {
-    fill: @flyoutLabelColor !important;
+    fill: var(--pxt-neutral-background1) !important;
     font-size: 1.5rem;
 }
 
 .blocklyFlyoutLabelText:hover {
-    fill: @flyoutLabelColor !important;
+    fill: var(--pxt-neutral-background1) !important;
 }
 
 .blocklyFlyoutLabelIcon {
@@ -178,7 +178,7 @@ i.icon.blocklyTreeButton {
 }
 
 line.blocklyFlyoutLine {
-    stroke: @flyoutLabelColor;
+    stroke: var(--pxt-neutral-background1);
 }
 
 
@@ -286,17 +286,17 @@ text.blocklyCheckbox {
 *******************************/
 
 .blocklyScrollbarBackground {
-    fill: @blocklyScrollbarBackgroundColor;
+    fill: none;
 }
 
 .blocklyScrollbarHandle {
-    fill: @blocklyScrollbarColor;
+    fill: var(--pxt-target-stencil1);
     opacity: @blocklyScrollbarOpacity;
 }
 
 .blocklyScrollbarBackground:hover+.blocklyScrollbarHandle, .blocklyScrollbarHandle:hover, .blocklyScrollbarBackground:active+.blocklyScrollbarHandle, .blocklyScrollbarHandle:active {
     stroke-width: 3;
-    stroke: @blocklyScrollbarColor;
+    stroke: var(--pxt-target-stencil1);
 }
 
 /*******************************
