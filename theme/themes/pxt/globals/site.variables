@@ -180,7 +180,7 @@
 
 // @simulatorBackground: var(--pxt-target-background2);
 // @editorToolsBackground: var(--pxt-target-background2);
-@blocklySvgColor: #F0000F;
+// @blocklySvgColor: #fff; var(--pxt-target-background1);
 // @sidebarTutorialColor: var(--pxt-target-background2);
 
 // @homeScreenBackground: var(--pxt-target-background1);
@@ -190,7 +190,7 @@
    Full screen
 --------------------*/
 
-// @fullscreenBackgroundGradientStart: var(--pxt-header-background)
+// @fullscreenBackgroundGradientStart: var(--pxt-header-background);
 // @fullscreenBackgroundGradientEnd: var(--pxt-target-background2);
 
 /*-------------------
@@ -199,7 +199,7 @@
 --------------------*/
 // @extensionsHeaderBackground: @mainMenuInvertedBackground; var(--pxt-header-background)
 // @extensionsSecondaryBackground: fade(@extensionsHeaderBackground, 30%); var(--pxt-header-background-alpha30)
-@extensionsBackground: @blocklySvgColor;
+// @extensionsBackground: @blocklySvgColor; var(--pxt-target-background1)
 @extensionsHeaderColor: white;
 
 /*-------------------

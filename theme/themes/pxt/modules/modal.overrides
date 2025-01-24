@@ -80,7 +80,7 @@
 
 .ui.fullscreen.modal,
 .ui.fullscreen.modal > .content {
-    background: @extensionsBackground;
+    background: var(--pxt-target-background1);
 }
 .ui.fullscreen.modal {
     > .header {
