@@ -150,10 +150,10 @@
    Menu
 --------------------*/
 
-// @mainMenuBackground: @white;
-// @mainMenuInvertedBackground: @black;
-// @mainMenuTutorialBackground: @orange; var(--pxt-header-background)
-// @mainMenuTutorialButtons: @mainMenuTutorialBackground; var(--pxt-header-background)
+// @mainMenuBackground: var(--pxt-header-foreground); // @white;
+// @mainMenuInvertedBackground: var(--pxt-header-background); // @black;
+// @mainMenuTutorialBackground: var(--pxt-header-background); // @orange;
+// @mainMenuTutorialButtons: var(--pxt-header-background); // @mainMenuTutorialBackground;
 
 // @tutorialSelectedMenuColor: @primaryColor;
 // @editorToggleColor: white; var(--pxt-neutral-background1)

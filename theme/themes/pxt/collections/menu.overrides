@@ -30,7 +30,7 @@
 }
 
 .menubar .accessibleMenu .ui.item.link.inverted:hover {
-    background: @invertedBackground;
+    background: var(--pxt-header-background);
 }
 
 #mainmenu > .menu > .ui.item:hover > .icon:not(.exit-debugmode-btn) {
