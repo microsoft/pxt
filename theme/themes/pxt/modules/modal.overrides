@@ -85,7 +85,7 @@
 .ui.fullscreen.modal {
     > .header {
         background: var(--pxt-header-background);
-        color: @extensionsHeaderColor;
+        color: var(--pxt-header-foreground);
         border-radius: 0;
         display: flex;
         height: @mainMenuHeight;
@@ -136,7 +136,7 @@
         padding: 1.2rem;
     }
     .ui.button.back-button, .ui.help-button {
-        color: @extensionsHeaderColor !important;
+        color: var(--pxt-header-foreground) !important;
         padding-left: 0 !important;
 
         &:focus, &:hover {

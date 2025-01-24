@@ -200,7 +200,7 @@
 // @extensionsHeaderBackground: @mainMenuInvertedBackground; var(--pxt-header-background)
 // @extensionsSecondaryBackground: fade(@extensionsHeaderBackground, 30%); var(--pxt-header-background-alpha30)
 // @extensionsBackground: @blocklySvgColor; var(--pxt-target-background1)
-@extensionsHeaderColor: white;
+// @extensionsHeaderColor: white; var(--pxt-header-foreground)
 
 /*-------------------
    Side Docs
