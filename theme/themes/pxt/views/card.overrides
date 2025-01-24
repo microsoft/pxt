@@ -150,7 +150,7 @@ a.ui.card:focus,
 }
 
 .ui.card.link.newprojectcard {
-    background: fade(@primaryColor, 90%) !important;
+    background: var(--pxt-primary-alpha90) !important;
 }
 
 .ui.card.link.cloudprojectscard {

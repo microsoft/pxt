@@ -9,7 +9,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: @modalOverlayColor;
+    background-color: var(--pxt-neutral-alpha);
     z-index: @modalDimmerZIndex;
 }
 
@@ -38,7 +38,8 @@
 }
 
 .common-modal-header {
-    background-color: @modalHeaderBackgroundColor;
+    background-color: var(--pxt-neutral-background1);
+    color: var(--pxt-neutral-foreground1);
 
     display: flex;
     font-size: 1.2rem;
@@ -54,18 +55,20 @@
     }
 
     .common-modal-close .common-button .fas {
-        color: @modalCloseColor;
+        color: var(--pxt-neutral-foreground1);
     }
 }
 
 .common-modal-body {
     background-color: var(--pxt-neutral-background1);
+    color: var(--pxt-neutral-foreground1);
     min-height: 4rem;
     padding: 1.25rem 1.5rem;
 }
 
 .common-modal-footer {
-    background-color: @modalFooterBackgroundColor;
+    background-color: var(--pxt-neutral-background2);
+    color: var(--pxt-neutral-foreground2);
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 1rem;
