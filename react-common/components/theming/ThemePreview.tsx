@@ -4,16 +4,7 @@ import { ThemeInfo, getThemeAsStyle } from "./themeManager";
 export const ThemePreview = (props: { theme: ThemeInfo }) => {
     const { theme } = props;
 
-    const miniLogo = <div className="theme-preview-logo">
-        <div className="theme-preview-logo-row">
-            <div className="theme-preview-logo-square" />
-            <div className="theme-preview-logo-square" />
-        </div>
-        <div className="theme-preview-logo-row">
-            <div className="theme-preview-logo-square" />
-            <div className="theme-preview-logo-square" />
-        </div>
-    </div>;
+    const miniLogo = <img className="ui logo" src="./static/Micorsoft_logo_rgb_W-white_D-square.png" alt="Microsoft MakeCode Logo" />;
 
     return (
         <div className="theme-preview-container" style={getThemeAsStyle(theme)}>
