@@ -82,7 +82,7 @@ import { Tour } from "./components/onboarding/Tour";
 import { parseTourStepsAsync } from "./onboarding";
 import { initGitHubDb } from "./idbworkspace";
 import { BlockDefinition, CategoryNameID } from "./toolbox";
-import { Feedback, GenericFeedback } from "../../react-common/components/controls/Feedback/Feedback";
+import { Feedback} from "../../react-common/components/controls/Feedback/Feedback";
 
 pxt.blocks.requirePxtBlockly = () => pxtblockly as any;
 pxt.blocks.requireBlockly = () => Blockly;
@@ -4898,6 +4898,7 @@ export class ProjectView
     async completeTutorialAsync(): Promise<void> {
         pxt.tickEvent("tutorial.finish", { tutorial: this.state.header?.tutorial?.tutorial });
         pxt.tickEvent("tutorial.complete", { tutorial: this.state.header?.tutorial?.tutorial });
+        this.showFeedbackDialog();
         core.showLoading("leavingtutorial", lf("leaving tutorial..."));
         this.postTutorialCompleted();
 
@@ -5423,7 +5424,7 @@ export class ProjectView
                 {hwDialog ? <projects.ChooseHwDialog parent={this} ref={this.handleChooseHwDialogRef} /> : undefined}
                 {sandbox || !sharingEnabled ? undefined : <share.ShareEditor parent={this} ref={this.handleShareEditorRef} loading={this.state.publishing} />}
                 {selectLanguage ? <lang.LanguagePicker parent={this} ref={this.handleLanguagePickerRef} /> : undefined}
-                {giveFeedback && this.state.feedback ? <GenericFeedback onClose={this.hideFeedback}/> : undefined}
+                {giveFeedback && this.state.feedback ? <Feedback onClose={this.hideFeedback} kind="generic"/> : undefined}
                 {sandbox ? <container.SandboxFooter parent={this} /> : undefined}
                 {hideMenuBar ? <div id="editorlogo"><a className="poweredbylogo"></a></div> : undefined}
                 {lightbox ? <sui.Dimmer isOpen={true} active={lightbox} portalClassName={'tutorial'} className={'ui modal'}

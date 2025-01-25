@@ -3,14 +3,41 @@ import { initFeedbackEventListener, removeFeedbackEventListener } from "./Feedba
 import { baseConfig, ratingFeedbackConfig } from "./configs";
 import { Modal } from "../Modal";
 
-interface IFeedbackProps {
+interface IFeedbackModalProps {
   feedbackConfig: any;
   frameId: string;
   title: string;
   onClose: () => void;
 }
 
+interface IFeedbackProps {
+  kind: "generic" | "rating";
+  onClose: () => void;
+}
+
 export const Feedback = (props: IFeedbackProps) => {
+  const { kind, onClose } = props;
+  return (
+    <>
+      {kind === "generic" &&
+        <FeedbackModal
+        feedbackConfig={baseConfig}
+        frameId="menu-feedback-frame"
+        title={lf("Leave Feedback")}
+        onClose={props.onClose}
+      />}
+      {kind === "rating" &&
+        <FeedbackModal
+        feedbackConfig={ratingFeedbackConfig}
+        frameId="activity-feedback-frame"
+        title={lf("Rate this activity")}
+        onClose={props.onClose} />
+      }
+    </>
+  )
+}
+
+export const FeedbackModal = (props: IFeedbackModalProps) => {
   const { feedbackConfig, frameId, title, onClose } = props;
   const appId = 50315;
 
@@ -38,32 +65,5 @@ export const Feedback = (props: IFeedbackProps) => {
       allow="display-capture;" // This is needed if you want to use the native screenshot/screen recording feature
       sandbox="allow-scripts allow-same-origin allow-forms allow-popups" />
     </Modal>
-  )
-}
-
-interface IModalProps {
-  title?: string;
-  onClose: () => void;
-}
-
-export const GenericFeedback = (props: IModalProps) => {
-  return (
-    <Feedback
-        feedbackConfig={baseConfig}
-        frameId="menu-feedback-frame"
-        title={lf("Leave Feedback")}
-        onClose={props.onClose}
-    />
-  )
-}
-
-export const RatingFeedback = (props: IModalProps) => {
-  return (
-    <Feedback
-        feedbackConfig={ratingFeedbackConfig}
-        frameId="activity-feedback-frame"
-        title={lf("Rate this activity")}
-        onClose={props.onClose}
-    />
   )
 }

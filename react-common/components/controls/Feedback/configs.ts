@@ -21,30 +21,33 @@ export const ratingFeedbackConfig: any = {
       questionDetails: {
         questionUiType: "Rating",
         questionInstruction: {
-          displayedStringInEnglish: "This is a custom Rating Question",
-          displayedString: "This is a custom Rating Question"
+          displayedStringInEnglish: "What did you think of this activity?",
+          displayedString: "What did you think of this activity?"
         },
         questionOptions: [
           {
-            displayedStringInEnglish: "Option 1",
-            displayedString: "Option 1"
+            displayedStringInEnglish: "Boring",
+            displayedString: "Boring"
           },
           {
-            displayedStringInEnglish: "Option 2",
-            displayedString: "Option 2"
+            displayedStringInEnglish: "Not fun",
+            displayedString: "Not fun"
           },
           {
-            displayedStringInEnglish: "Option 3",
-            displayedString: "Option 3"
+            displayedStringInEnglish: "Kinda fun",
+            displayedString: "Kinda fun"
           },
           {
-            displayedStringInEnglish: "Option 4",
-            displayedString: "Option 4"
+            displayedStringInEnglish: "Fun",
+            displayedString: "Fun"
           },
           {
-            displayedStringInEnglish: "Option 5",
-            displayedString: "Option 5"
-          }
+            displayedStringInEnglish: "Super fun",
+            displayedString: "Super fun"
+          },
+        ],
+        "questionUiBehaviour": [
+          "CommentNotRequired"
         ]
       }
     }

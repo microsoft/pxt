@@ -47,42 +47,32 @@ export const removeFeedbackEventListener = () => {
 
 const feedbackCallbackEventListener = (event: MessageEvent<FeedbackRequestPayloadType>) => {
 if (event.data.Event) {
-    console.log("we got an event with data");
     const payload: FeedbackRequestPayloadType = event.data
     switch (payload.Event) {
     case 'InAppFeedbackInitOptions': //This is required to initialise feedback
         sendFeedbackInitOptions()
         break
-    case 'InAppFeedbackOnError': //Invoked when an error occurrs on feedback submission
+    case 'InAppFeedbackOnError': //Invoked when an error occurrs on feedback submission - would be nice to log something to the user
         console.log('Error Message: ', payload.EventArgs)
         break
-    case 'InAppFeedbackSetCurrentPage': //To follow the feedback Page number
-        console.log('pageName: ', payload.EventArgs)
-        break
-    case 'InAppFeedbackSetSubmitButtonState': //To follow the feedback Submit Button State
-        console.log('submitState: ', payload.EventArgs)
-        break
-    case 'InAppFeedbackInitializationComplete': //Invoked when feedback form is fully initialised and displays error/warning if any
+    case 'InAppFeedbackInitializationComplete': //Invoked when feedback form is fully initialised and displays error/warning if any - nice to have a log for this
         console.log('InAppFeedbackInitializationComplete: ', payload.EventArgs)
         break
-    case 'InAppFeedbackOnSuccess': //Invoked when feedback submission is successful
+    case 'InAppFeedbackOnSuccess': //Invoked when feedback submission is successful - would be useful to have telemetry/something else on this event
         console.log('InAppFeedbackOnSuccess: ', payload.EventArgs)
         break
-    case 'InAppFeedbackDismissWithResult': //Invoked when feedback is dismissed
+    case 'InAppFeedbackDismissWithResult': //Invoked when feedback is dismissed - the big important one for us to be able to close the feedback modal
         console.log('InAppFeedbackDismissWithResult: ', payload.EventArgs);
         if (feedbackCallbacks.onDismiss) {
             feedbackCallbacks.onDismiss();
         }
-        break
-    case 'InAppFeedbackExtractFeedbackDataForHost': //Invoked when feedback is dismissed
-        console.log('InAppFeedbackExtractFeedbackDataForHost: ', payload.EventArgs)
         break
     }
 }
 }
 
 
-const sendUpdateTheme = () => {
+const sendUpdateTheme = () => { // want to be able to do this, but will wait on this.
     type FeedbackResponsePayloadType = FeedbackResponseEventPayload<any>
     if (currentTheme == 'WindowsDark') {
         currentTheme = 'WindowsLight'
@@ -104,9 +94,6 @@ const sendFeedbackInitOptions = () => {
     type FeedbackResponsePayloadType = FeedbackResponseEventPayload<any>
     feedbackData.callbackFunctions = undefined
     //   feedbackData.feedbackConfig!.diagnosticsConfig!.attachDiagnostics = undefined
-    console.log("HELLOOOOOO")
-    console.log(feedbackData)
-    console.log("got the message to init");
     let response: FeedbackResponsePayloadType = {
         event: 'InAppFeedbackInitOptions',
         data: feedbackData,
