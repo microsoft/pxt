@@ -65,7 +65,6 @@ export const FeedbackModal = (props: IFeedbackModalProps) => {
       width="550px"
       id={frameId}
       src={`${feedbackFrameUrl}/centrohost?appname=ocvfeedback&feature=host-ocv-inapp-feedback&platform=web&appId=${appId}#/hostedpage`}
-      allow="display-capture;" // This is needed if you want to use the native screenshot/screen recording feature
       sandbox="allow-scripts allow-same-origin allow-forms allow-popups" />
     </Modal>
   )
