@@ -53,8 +53,8 @@ namespace pxt.analytics {
 
             if (!data) pxt.aiTrackEvent(id);
             else {
-                const props: Map<string> = { ...defaultProps } || {};
-                const measures: Map<number> = { ...defaultMeasures } || {};
+                const props: Map<string> = { ...defaultProps };
+                const measures: Map<number> = { ...defaultMeasures };
                 Object.keys(data).forEach(k => {
                     if (typeof data[k] == "string") props[k] = <string>data[k];
                     else if (typeof data[k] == "number") measures[k] = <number>data[k];

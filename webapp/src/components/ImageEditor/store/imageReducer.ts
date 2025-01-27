@@ -432,7 +432,7 @@ const animationReducer = (state: AnimationState, action: any): AnimationState =>
             return {
                 ...state,
                 frames: action.frames,
-                currentFrame: 0
+                currentFrame: action.currentFrame || 0
             };
         default:
             return state;

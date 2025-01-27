@@ -3,10 +3,10 @@ import * as React from "react";
 import { connect } from 'react-redux';
 import { ImageEditorStore, AnimationState } from './store/imageReducer';
 import { dispatchChangeInterval, dispatchChangePreviewAnimating, dispatchChangeOverlayEnabled } from './actions/dispatch';
-import { IconButton } from "./Button";
 import { CursorSizes } from "./CursorSizes";
 import { Toggle } from "./Toggle";
 import { flip, rotate } from "./keyboardShortcuts";
+import { Button } from "../../../../react-common/components/controls/Button";
 
 
 export interface TopBarProps {
@@ -41,20 +41,40 @@ export class TopBarImpl extends React.Component<TopBarProps, TopBarState> {
                 </div>
                 <div className="image-editor-seperator"/>
                 <div className="image-transform-group">
-                    <IconButton key="flipv" iconClass="xicon flipvertical" title={lf("Flip vertical")} onClick={this.flipVertical} />
-                    <IconButton key="fliph" iconClass="xicon fliphorizontal" title={lf("Flip horizontal")} onClick={this.flipHorizontal} />
-                    <IconButton key="rotatec" iconClass="xicon rotateright" title={lf("Rotate clockwise")} onClick={this.rotateClockwise} />
-                    <IconButton key="rotatecc" iconClass="xicon rotateleft" title={lf("Rotate counterclockwise")} onClick={this.rotateCounterclockwise} />
+                    <Button
+                        className="image-editor-button"
+                        leftIcon="xicon flipvertical"
+                        title={lf("Flip vertical")}
+                        onClick={this.flipVertical}
+                    />
+                    <Button
+                        className="image-editor-button"
+                        leftIcon="xicon fliphorizontal"
+                        title={lf("Flip horizontal")}
+                        onClick={this.flipHorizontal}
+                    />
+                    <Button
+                        className="image-editor-button"
+                        leftIcon="xicon rotateright"
+                        title={lf("Rotate clockwise")}
+                        onClick={this.rotateClockwise}
+                    />
+                    <Button
+                        className="image-editor-button"
+                        leftIcon="xicon rotateleft"
+                        title={lf("Rotate counterclockwise")}
+                        onClick={this.rotateCounterclockwise}
+                    />
                 </div>
                 <div className="spacer"/>
                 { !singleFrame && <div className="image-editor-seperator"/> }
                 { !singleFrame &&
                     <div className="timeline-controls">
-                        <IconButton
+                        <Button
+                            className="image-editor-button TOGGLE"
                             onClick={this.togglePreviewAnimating}
-                            iconClass={previewAnimating ? "ms-Icon ms-Icon--Stop" : "ms-Icon ms-Icon--Play"}
+                            leftIcon={previewAnimating ? "ms-Icon ms-Icon--Stop" : "ms-Icon ms-Icon--Play"}
                             title={previewAnimating ? lf("Stop Animation Preview") : lf("Play Animation Preview")}
-                            toggle={true}
                         />
                         <div className="image-editor-interval-label image-editor-label">
                             <span className="ms-Icon ms-Icon--Clock" />

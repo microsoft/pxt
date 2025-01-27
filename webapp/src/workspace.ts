@@ -13,7 +13,6 @@ import * as compiler from "./compiler"
 import * as auth from "./auth"
 import * as cloud from "./cloud"
 
-import * as dmp from "diff-match-patch";
 import * as pxteditor from "../../pxteditor";
 
 import U = pxt.Util;
@@ -21,6 +20,7 @@ import Cloud = pxt.Cloud;
 
 import * as pxtblockly from "../../pxtblocks";
 import { getTextAtTime, HistoryFile } from "../../pxteditor/history";
+import { Milestones } from "./constants";
 
 
 // Avoid importing entire crypto-js
@@ -300,7 +300,7 @@ export function initAsync() {
     return syncAsync()
         .then(state => cleanupBackupsAsync().then(() => state))
         .then(_ => {
-            pxt.perf.recordMilestone("workspace init finished")
+            pxt.perf.recordMilestone(Milestones.WorkspaceInitFinished)
             return _
         })
 }
@@ -729,14 +729,13 @@ function computePath(h: Header) {
 
     return path
 }
-const differ = new dmp.diff_match_patch();
 
 function diffText(a: string, b: string) {
-    return differ.patch_make(a, b);
+    return pxt.diff.computePatch(a, b);
 }
 
 function patchText(patch: unknown, a: string) {
-    return differ.patch_apply(patch as any, a)[0]
+    return pxt.diff.applyPatch(a, patch as any)
 }
 
 export function restoreTextToTime(text: ScriptText, history: HistoryFile, timestamp: number) {
