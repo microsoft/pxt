@@ -10,7 +10,9 @@ interface FeedbackResponseEventPayload<T> {
   error?: any
 }
 
-let themeOptions = { // will want to change this based on the target where we live
+// for styling the feedback, we use this object. It is mostly used to change the colors.
+// we'll want to change this based on the target where we live
+let themeOptions = {
     baseTheme: "PublisherLightTheme",
 }
 
@@ -20,6 +22,16 @@ let FEEDBACK_FRAME_ID: string;
 let currentTheme = '';
 let feedbackCallbacks: any;
 
+// the function to initialize the feedback event listener
+// feedbackConfig: needs to be passed in as a prop because the things that
+/**
+ * The function to initialize the feedback event listener
+ * @param {any} feedbackConfig: the feedback config object whose fields are defined in OCV.
+ *  This changes based on what type of feedback we want to collect. Look at configs.ts for more details.
+ * @param {string} frameId: the html id of the actual iframe where the feedback will be displayed
+ * @param {any} [callbacks]: an object of functions that can be called when certain events happen in the feedback modal.
+ *  Needs to be passed in because the callbacks will depend on what the parent wants to react to.
+ */
 export const initFeedbackEventListener = (feedbackConfig: any, frameId: string, callbacks?: any) => {
     window.addEventListener('message', feedbackCallbackEventListener);
     feedbackCallbacks = callbacks;
@@ -32,9 +44,6 @@ export const initFeedbackEventListener = (feedbackConfig: any, frameId: string, 
         isProduction: false,
         themeOptions: themeOptions,
         // telemetry - will likely want this
-        // userId
-        // userData
-    
     }
 
     feedbackData = initfeedbackOptions;
@@ -45,6 +54,11 @@ export const removeFeedbackEventListener = () => {
     window.removeEventListener('message', feedbackCallbackEventListener);
 }
 
+/**
+ * The function that listens for the feedback events.
+ * The events here are the ones that seemed most useful to log or respond to
+ * @param {MessageEvent<FeedbackRequestPayloadType>} event: the event received from OCV
+ */
 const feedbackCallbackEventListener = (event: MessageEvent<FeedbackRequestPayloadType>) => {
 if (event.data.Event) {
     const payload: FeedbackRequestPayloadType = event.data
@@ -71,8 +85,12 @@ if (event.data.Event) {
 }
 }
 
+// ***************** Helper Functions *****************
 
-const sendUpdateTheme = () => { // want to be able to do this, but will wait on this.
+// TODO
+// haven't implemented yet with events, but this will be needed in order to update to high contrast
+// general changes need to be made as well use the correct theme. the windows ones were just the defaults.
+const sendUpdateTheme = () => {
     type FeedbackResponsePayloadType = FeedbackResponseEventPayload<any>
     if (currentTheme == 'WindowsDark') {
         currentTheme = 'WindowsLight'
@@ -89,7 +107,10 @@ const sendUpdateTheme = () => { // want to be able to do this, but will wait on 
     iFrameEle!.contentWindow!.postMessage(response, 'https://admin-ignite.microsoft.com')
 }
 
-//private functions
+
+/**
+ * Actually initializes the feedback session. This is called when the feedback modal opens.
+ */
 const sendFeedbackInitOptions = () => {
     type FeedbackResponsePayloadType = FeedbackResponseEventPayload<any>
     feedbackData.callbackFunctions = undefined
