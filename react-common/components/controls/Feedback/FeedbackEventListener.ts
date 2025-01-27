@@ -1,3 +1,4 @@
+import { appId } from './configs';
 interface FeedbackRequestEventPayload<T> {
   Event: string
   EventArgs: string
@@ -36,7 +37,7 @@ export const initFeedbackEventListener = (feedbackConfig: any, frameId: string, 
     window.addEventListener('message', feedbackCallbackEventListener);
     feedbackCallbacks = callbacks;
     initfeedbackOptions = {
-        appId: 50315,
+        appId: appId,
         ageGroup: "Undefined",
         authenticationType: "Unauthenticated",
         clientName: "MakeCode",

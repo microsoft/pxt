@@ -1,3 +1,5 @@
+export const appId = 50315;
+
 export const baseConfig: any = {
     feedbackUiType: "NoSurface",
     hostPlatform: "IFrame",

@@ -1,6 +1,6 @@
 import { useEffect } from "react"
 import { initFeedbackEventListener, removeFeedbackEventListener } from "./FeedbackEventListener";
-import { baseConfig, ratingFeedbackConfig } from "./configs";
+import { baseConfig, ratingFeedbackConfig, appId } from "./configs";
 import { Modal } from "../Modal";
 
 // both components require onClose because the feedback modal should close when the user clicks the "finish" button
@@ -44,7 +44,6 @@ export const Feedback = (props: IFeedbackProps) => {
 
 export const FeedbackModal = (props: IFeedbackModalProps) => {
   const { feedbackConfig, frameId, title, onClose } = props;
-  const appId = 50315;
 
   const onDismiss = () => {
     onClose();
