@@ -29,14 +29,14 @@ export const Feedback = (props: IFeedbackProps) => {
         feedbackConfig={baseConfig}
         frameId="menu-feedback-frame"
         title={lf("Leave Feedback")}
-        onClose={props.onClose}
+        onClose={onClose}
       />}
       {kind === "rating" &&
         <FeedbackModal
         feedbackConfig={ratingFeedbackConfig}
         frameId="activity-feedback-frame"
         title={lf("Rate this activity")}
-        onClose={props.onClose} />
+        onClose={onClose} />
       }
     </>
   )
