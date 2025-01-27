@@ -897,6 +897,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return blocksArea ? blocksArea.getElementsByClassName('blocklyToolboxDiv')[0] as HTMLDivElement : undefined;
     }
 
+    getToolboxDiv(): HTMLDivElement {
+        return this.getBlocklyToolboxDiv();
+    }
+
     handleToolboxRef = (c: toolbox.Toolbox) => {
         this.toolbox = c;
     }

@@ -777,7 +777,17 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
             this.props.toolbox.setSelectedItem(this);
             if (!toolbox.state.focusSearch && !coretsx.dialogIsShowing()) {
                 this.focusElement();
-                this.scrollElementIntoView({block: this.props.index === 0 || prevProps.selectedIndex < this.props.index ? "end" : "start"});
+                const activeCategoryRect = this.getBoundingClientRect();
+                toolbox.props.parent.getToolboxDiv()
+                const toolboxRect = toolbox.props.parent.getToolboxDiv()?.getBoundingClientRect();
+                if (!toolboxRect) {
+                    return;
+                }
+                if (activeCategoryRect.bottom > toolboxRect.bottom) {
+                    this.scrollElementIntoView({block: "end"});
+                } else if (activeCategoryRect.top < toolboxRect.top) {
+                    this.scrollElementIntoView({block: "start"});
+                }
             }
         }
     }
@@ -788,6 +798,10 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
 
     scrollElementIntoView(options: ScrollIntoViewOptions) {
         this.treeRowElement.scrollIntoView(options);
+    }
+
+    getBoundingClientRect() {
+        return this.treeRowElement.getBoundingClientRect();
     }
 
     handleClick(e: React.MouseEvent<any>) {
@@ -883,6 +897,13 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
 
     scrollIntoView(options: ScrollIntoViewOptions) {
         if (this.treeRow) this.treeRow.scrollIntoView(options);
+    }
+
+    getBoundingClientRect() {
+        if (this.treeRow) {
+            return this.treeRow.getBoundingClientRect();
+        }
+        return undefined;
     }
 
     getProperties() {
