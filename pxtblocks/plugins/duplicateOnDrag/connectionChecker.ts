@@ -1,5 +1,5 @@
 import * as Blockly from "blockly";
-import { shouldDuplicateOnDrag } from "./duplicateOnDrag";
+import { isAllowlistedShadow, shouldDuplicateOnDrag } from "./duplicateOnDrag";
 
 
 const OPPOSITE_TYPE: number[] = [];
@@ -16,7 +16,13 @@ export class DuplicateOnDragConnectionChecker extends Blockly.ConnectionChecker 
 
         const replacedBlock = b.targetBlock();
 
-        if (replacedBlock && shouldDuplicateOnDrag(replacedBlock)) return false;
+        if (
+            replacedBlock &&
+            shouldDuplicateOnDrag(replacedBlock) &&
+            !(replacedBlock.isShadow() && isAllowlistedShadow(replacedBlock))
+        ) {
+            return false;
+        }
 
         return true;
     }
