@@ -12,7 +12,7 @@ interface FeedbackResponseEventPayload<T> {
 }
 
 // for styling the feedback, we use this object. It is mostly used to change the colors.
-// we'll want to change this based on the target where we live
+// we'll want to change this based on the target and whether high contrast is enabled
 let themeOptions = {
     baseTheme: "PublisherLightTheme",
 }

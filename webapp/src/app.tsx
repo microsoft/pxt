@@ -4898,7 +4898,6 @@ export class ProjectView
     async completeTutorialAsync(): Promise<void> {
         pxt.tickEvent("tutorial.finish", { tutorial: this.state.header?.tutorial?.tutorial });
         pxt.tickEvent("tutorial.complete", { tutorial: this.state.header?.tutorial?.tutorial });
-        this.showFeedbackDialog();
         core.showLoading("leavingtutorial", lf("leaving tutorial..."));
         this.postTutorialCompleted();
 
