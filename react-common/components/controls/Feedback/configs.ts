@@ -1,4 +1,5 @@
 export const appId = 50315;
+export const feedbackFrameUrl = 'https://admin-ignite.microsoft.com';
 
 export const baseConfig: any = {
     feedbackUiType: "NoSurface",

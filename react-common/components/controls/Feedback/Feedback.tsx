@@ -1,6 +1,6 @@
 import { useEffect } from "react"
 import { initFeedbackEventListener, removeFeedbackEventListener } from "./FeedbackEventListener";
-import { baseConfig, ratingFeedbackConfig, appId } from "./configs";
+import { baseConfig, ratingFeedbackConfig, appId, feedbackFrameUrl } from "./configs";
 import { Modal } from "../Modal";
 
 // both components require onClose because the feedback modal should close when the user clicks the "finish" button
@@ -64,7 +64,7 @@ export const FeedbackModal = (props: IFeedbackModalProps) => {
       height="450px"
       width="550px"
       id={frameId}
-      src={`https://admin-ignite.microsoft.com/centrohost?appname=ocvfeedback&feature=host-ocv-inapp-feedback&platform=web&appId=${appId}#/hostedpage`}
+      src={`${feedbackFrameUrl}/centrohost?appname=ocvfeedback&feature=host-ocv-inapp-feedback&platform=web&appId=${appId}#/hostedpage`}
       allow="display-capture;" // This is needed if you want to use the native screenshot/screen recording feature
       sandbox="allow-scripts allow-same-origin allow-forms allow-popups" />
     </Modal>

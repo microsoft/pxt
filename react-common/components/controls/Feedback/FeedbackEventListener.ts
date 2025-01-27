@@ -1,4 +1,4 @@
-import { appId } from './configs';
+import { appId, feedbackFrameUrl } from './configs';
 interface FeedbackRequestEventPayload<T> {
   Event: string
   EventArgs: string
@@ -105,7 +105,7 @@ const sendUpdateTheme = () => {
         },
     }
     const iFrameEle = document.getElementById(FEEDBACK_FRAME_ID) as HTMLIFrameElement
-    iFrameEle!.contentWindow!.postMessage(response, 'https://admin-ignite.microsoft.com')
+    iFrameEle!.contentWindow!.postMessage(response, feedbackFrameUrl)
 }
 
 
@@ -115,12 +115,11 @@ const sendUpdateTheme = () => {
 const sendFeedbackInitOptions = () => {
     type FeedbackResponsePayloadType = FeedbackResponseEventPayload<any>
     feedbackData.callbackFunctions = undefined
-    //   feedbackData.feedbackConfig!.diagnosticsConfig!.attachDiagnostics = undefined
     let response: FeedbackResponsePayloadType = {
         event: 'InAppFeedbackInitOptions',
         data: feedbackData,
     }
     response = JSON.parse(JSON.stringify(response))
     const iFrameEle = document.getElementById(FEEDBACK_FRAME_ID) as HTMLIFrameElement
-    iFrameEle!.contentWindow!.postMessage(response, 'https://admin-ignite.microsoft.com')
+    iFrameEle!.contentWindow!.postMessage(response, feedbackFrameUrl)
 }
