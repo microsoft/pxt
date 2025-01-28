@@ -27,10 +27,10 @@ let feedbackCallbacks: any;
 // feedbackConfig: needs to be passed in as a prop because the things that
 /**
  * The function to initialize the feedback event listener
- * @param {any} feedbackConfig: the feedback config object whose fields are defined in OCV.
+ * @param feedbackConfig: the feedback config object whose fields are defined in OCV.
  *  This changes based on what type of feedback we want to collect. Look at configs.ts for more details.
- * @param {string} frameId: the html id of the actual iframe where the feedback will be displayed
- * @param {any} [callbacks]: an object of functions that can be called when certain events happen in the feedback modal.
+ * @param frameId: the html id of the actual iframe where the feedback will be displayed
+ * @param [callbacks]: an object of functions that can be called when certain events happen in the feedback modal.
  *  Needs to be passed in because the callbacks will depend on what the parent wants to react to.
  */
 export const initFeedbackEventListener = (feedbackConfig: any, frameId: string, callbacks?: any) => {
@@ -58,7 +58,7 @@ export const removeFeedbackEventListener = () => {
 /**
  * The function that listens for the feedback events.
  * The events here are the ones that seemed most useful to log or respond to
- * @param {MessageEvent<FeedbackRequestPayloadType>} event: the event received from OCV
+ * @param event: the event received from OCV
  */
 const feedbackCallbackEventListener = (event: MessageEvent<FeedbackRequestPayloadType>) => {
 if (event.data.Event) {
