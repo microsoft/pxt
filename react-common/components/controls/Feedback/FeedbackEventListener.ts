@@ -61,29 +61,29 @@ export const removeFeedbackEventListener = () => {
  * @param event: the event received from OCV
  */
 const feedbackCallbackEventListener = (event: MessageEvent<FeedbackRequestPayloadType>) => {
-if (event.data.Event) {
-    const payload: FeedbackRequestPayloadType = event.data
-    switch (payload.Event) {
-    case 'InAppFeedbackInitOptions': //This is required to initialise feedback
-        sendFeedbackInitOptions()
-        break
-    case 'InAppFeedbackOnError': //Invoked when an error occurrs on feedback submission - would be nice to log something to the user
-        console.log('Error Message: ', payload.EventArgs)
-        break
-    case 'InAppFeedbackInitializationComplete': //Invoked when feedback form is fully initialised and displays error/warning if any - nice to have a log for this
-        console.log('InAppFeedbackInitializationComplete: ', payload.EventArgs)
-        break
-    case 'InAppFeedbackOnSuccess': //Invoked when feedback submission is successful - would be useful to have telemetry/something else on this event
-        console.log('InAppFeedbackOnSuccess: ', payload.EventArgs)
-        break
-    case 'InAppFeedbackDismissWithResult': //Invoked when feedback is dismissed - the big important one for us to be able to close the feedback modal
-        console.log('InAppFeedbackDismissWithResult: ', payload.EventArgs);
-        if (feedbackCallbacks.onDismiss) {
-            feedbackCallbacks.onDismiss();
+    if (event.data.Event) {
+        const payload: FeedbackRequestPayloadType = event.data
+        switch (payload.Event) {
+            case 'InAppFeedbackInitOptions': //This is required to initialise feedback
+                sendFeedbackInitOptions()
+                break
+            case 'InAppFeedbackOnError': //Invoked when an error occurrs on feedback submission - would be nice to log something to the user
+                pxt.warn('Error Message: ', payload.EventArgs)
+                break
+            case 'InAppFeedbackInitializationComplete': //Invoked when feedback form is fully initialised and displays error/warning if any - nice to have a log for this
+                pxt.debug('InAppFeedbackInitializationComplete: ', payload.EventArgs)
+                break
+            case 'InAppFeedbackOnSuccess': //Invoked when feedback submission is successful - would be useful to have telemetry/something else on this event
+                pxt.debug('InAppFeedbackOnSuccess: ', payload.EventArgs)
+                break
+            case 'InAppFeedbackDismissWithResult': //Invoked when feedback is dismissed - the big important one for us to be able to close the feedback modal
+                pxt.debug('InAppFeedbackDismissWithResult: ', payload.EventArgs);
+                if (feedbackCallbacks.onDismiss) {
+                    feedbackCallbacks.onDismiss();
+                }
+                break
         }
-        break
     }
-}
 }
 
 // ***************** Helper Functions *****************
