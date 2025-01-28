@@ -1769,8 +1769,9 @@ namespace pxt {
 
     }
 
-    export function assetEquals(a: Asset, b: Asset) {
+    export function assetEquals(a: Asset, b: Asset): boolean {
         if (a == b) return true;
+        if (!a && b || !b && a) return false;
         if (a.id !== b.id || a.type !== b.type ||
             !U.arrayEquals(a.meta.tags, b.meta.tags) ||
             !U.arrayEquals(a.meta.blockIDs, b.meta.blockIDs) ||
