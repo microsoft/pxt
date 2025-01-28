@@ -61,8 +61,6 @@ export const FeedbackModal = (props: IFeedbackModalProps) => {
     <Modal className="feedback-modal" title={title} onClose={onClose}>
       <iframe
       title="feedback"
-      height="450px"
-      width="550px"
       id={frameId}
       src={`${feedbackFrameUrl}/centrohost?appname=ocvfeedback&feature=host-ocv-inapp-feedback&platform=web&appId=${appId}#/hostedpage`}
       sandbox="allow-scripts allow-same-origin allow-forms allow-popups" />
