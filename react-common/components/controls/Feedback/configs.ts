@@ -25,28 +25,28 @@ export const ratingFeedbackConfig: any = {
         questionUiType: "Rating",
         questionInstruction: {
           displayedStringInEnglish: "What did you think of this activity?",
-          displayedString: "What did you think of this activity?"
+          displayedString: lf("What did you think of this activity?")
         },
         questionOptions: [
           {
             displayedStringInEnglish: "Boring",
-            displayedString: "Boring"
+            displayedString: lf("Boring")
           },
           {
             displayedStringInEnglish: "Not fun",
-            displayedString: "Not fun"
+            displayedString: lf("Not fun")
           },
           {
             displayedStringInEnglish: "Kinda fun",
-            displayedString: "Kinda fun"
+            displayedString: lf("Kinda fun")
           },
           {
             displayedStringInEnglish: "Fun",
-            displayedString: "Fun"
+            displayedString: lf("Fun")
           },
           {
             displayedStringInEnglish: "Super fun",
-            displayedString: "Super fun"
+            displayedString: lf("Super fun")
           },
         ],
         "questionUiBehaviour": [
