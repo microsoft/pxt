@@ -208,18 +208,10 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
     onHomeClicked = () => {
         tickEvent("skillmap.home");
 
-        // relprefix looks like "/beta---", need to chop off the hyphens and slash
-        let rel = pxt.webConfig?.relprefix.substr(0, pxt.webConfig.relprefix.length - 3);
-        if (pxt.appTarget.appTheme.homeUrl && rel) {
-            if (pxt.appTarget.appTheme.homeUrl?.lastIndexOf("/") === pxt.appTarget.appTheme.homeUrl?.length - 1) {
-                rel = rel.substr(1);
-            }
-            window.open(pxt.appTarget.appTheme.homeUrl + rel);
+        const homeUrl = pxt.U.getHomeUrl();
+        if (homeUrl) {
+            window.open(homeUrl);
         }
-        else {
-            window.open(pxt.appTarget.appTheme.homeUrl);
-        }
-
     }
 
     onBugClicked = () => {
