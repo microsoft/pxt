@@ -355,7 +355,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             {
                 // we always need a way to clear local storage, regardless if signed in or not
             }
-            {targetTheme.giveFeedback ? <sui.Item role="menuitem" text={lf("🙂 Give Feedback")} onClick={this.showFeedbackDialog} /> : undefined}
+            {targetTheme.giveFeedback ? <sui.Item role="menuitem" text={`🙂 ${lf("Give Feedback")}`} onClick={this.showFeedbackDialog} /> : undefined}
         </sui.DropdownMenu>;
     }
 }
