@@ -104,8 +104,8 @@ const sendUpdateTheme = () => {
             baseTheme: currentTheme,
         },
     }
-    const iFrameEle = document.getElementById(FEEDBACK_FRAME_ID) as HTMLIFrameElement
-    iFrameEle!.contentWindow!.postMessage(response, feedbackFrameUrl)
+    const iFrameElement = document.getElementById(FEEDBACK_FRAME_ID) as HTMLIFrameElement
+    iFrameElement!.contentWindow!.postMessage(response, feedbackFrameUrl)
 }
 
 
