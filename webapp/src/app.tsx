@@ -84,6 +84,7 @@ import { Tour } from "./components/onboarding/Tour";
 import { parseTourStepsAsync } from "./onboarding";
 import { initGitHubDb } from "./idbworkspace";
 import { BlockDefinition, CategoryNameID } from "./toolbox";
+import { ThemeManager } from "../../react-common/components/theming/themeManager";
 
 pxt.blocks.requirePxtBlockly = () => pxtblockly as any;
 pxt.blocks.requireBlockly = () => Blockly;
@@ -6189,6 +6190,18 @@ document.addEventListener("DOMContentLoaded", async () => {
             initHashchange();
             socketbridge.tryInit();
             electron.initElectron(theEditor);
+        })
+        .then(() => {
+            // Load theme colors
+            // TODO thsparks - Remember user-set themes and check for that setting here.
+            const defaultColorThemeId = pxt.appTarget?.appTheme?.defaultColorTheme;
+            if (defaultColorThemeId) {
+                const themeManager = ThemeManager.getInstance();
+                if (defaultColorThemeId !== themeManager.getActiveThemeId()) {
+                    return themeManager.switchTheme(defaultColorThemeId);
+                }
+            }
+            return Promise.resolve();
         })
         .then(() => {
             const showHome = theEditor.shouldShowHomeScreen();

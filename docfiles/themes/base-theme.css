@@ -1,0 +1,54 @@
+:root {
+    --pxt-target-background1: #f0f0f0;
+    --pxt-target-background1-light: #ffffff;
+    --pxt-target-background2: #f0f0f0;
+    --pxt-target-background2-light: #ffffff;
+    --pxt-target-background3: #f0f0f0;
+    --pxt-target-foreground1: #333333;
+    --pxt-target-foreground1-hover: #555555;
+    --pxt-target-foreground2: #333333;
+    --pxt-target-foreground2-hover: #555555;
+    --pxt-target-foreground3: #333333;
+    --pxt-target-foreground3-hover: #555555;
+    --pxt-target-stencil1: #e1e1e1;
+    --pxt-target-stencil2: #e1e1e1;
+    --pxt-target-stencil3: #e1e1e1;
+    --pxt-header-background: #888888;
+    --pxt-header-background-alpha30: #8888884D;
+    --pxt-header-foreground: #ffffff;
+    --pxt-primary-background: #aaaaaa;
+    --pxt-primary-background-hover: #bbbbbb;
+    --pxt-primary-alpha0: #aaaaaa00;
+    --pxt-primary-alpha90: #aaaaaa5A;
+    --pxt-primary-dark: #888888;
+    --pxt-primary-light: #cccccc;
+    --pxt-primary-foreground: #ffffff;
+    --pxt-secondary-background: #aaaaaa;
+    --pxt-secondary-alpha0: #aaaaaa00;
+    --pxt-secondary-dark: #888888;
+    --pxt-secondary-foreground: #f0f0f0;
+    --pxt-neutral-background1: #ffffff;
+    --pxt-neutral-background2: #f9f9f9;
+    --pxt-neutral-alpha: rgba(0, 0, 0, 0.5);
+    --pxt-neutral-foreground1: rgba(0, 0, 0, 0.85);
+    --pxt-neutral-foreground2: rgba(0, 0, 0, 0.87);
+    --pxt-neutral-stencil1: rgba(136, 136, 136, 0.15);
+    --pxt-link: #666666;
+
+    /*
+    --pxt-neutral-background3: ;
+    --pxt-neutral-foreground3: ;
+    --pxt-color-palette-green-background1: ;
+    --pxt-color-palette-green-background2: ;
+    --pxt-color-palette-green-foreground1: ;
+    --pxt-color-palette-green-foreground2: ;
+    --pxt-color-palette-green-hover: ;
+    --pxt-color-palette-green-border: ;
+    --pxt-color-palette-red-background1: ;
+    --pxt-color-palette-red-background2: ;
+    --pxt-color-palette-red-foreground1: ;
+    --pxt-color-palette-red-foreground2: ;
+    --pxt-color-palette-red-hover: ;
+    --pxt-color-palette-red-border: ;
+    */
+}

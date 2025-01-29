@@ -14,7 +14,7 @@ export const ThemePickerModal = (props: ThemePickerModalProps) => {
 
     React.useEffect(() => {
         async function loadThemes() {
-            const loadedThemes = await themeManager.getThemes();
+            const loadedThemes = await themeManager.getAllThemes();
             setThemes(loadedThemes);
         }
 
