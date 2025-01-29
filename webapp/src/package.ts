@@ -506,7 +506,7 @@ export class EditorPackage {
         const existingTS = this.lookupFile("this/" + pxt.TILEMAP_CODE);
         const existingJRES = this.lookupFile("this/" + pxt.TILEMAP_JRES);
 
-        const jres = this.tilemapProject.getProjectTilesetJRes();
+        const jres = this.tilemapProject.getProjectTilesetJRes(this.files);
 
         if (!existingTS && Object.keys(jres).length === 1) return Promise.resolve();
 

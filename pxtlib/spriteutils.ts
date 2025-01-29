@@ -727,6 +727,19 @@ namespace pxt.sprite {
         pxt.sprite.trimTilemapTileset(result);
     }
 
+    export function isTilemapEmptyOrUnused(asset: ProjectTilemap, project: TilemapProject, projectFiles: pxt.Map<{content: string}>) {
+        const walls = sprite.Bitmap.fromData(asset.data.layers);
+        for (let x = 0; x < asset.data.tilemap.width; x++) {
+            for (let y = 0; y < asset.data.tilemap.height; y++) {
+                if (asset.data.tilemap.get(x, y) || walls.get(x, y)) {
+                    return false;
+                }
+            }
+        }
+
+        return !project.isAssetUsed(asset, projectFiles);
+    }
+
     function imageLiteralPrologue(fileType: "typescript" | "python", templateLiteral = "img"): string {
         let res = '';
         switch (fileType) {

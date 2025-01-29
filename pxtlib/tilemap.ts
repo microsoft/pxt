@@ -208,8 +208,9 @@ namespace pxt {
             return cloned;
         }
 
-        serializeToJRes(allJRes: pxt.Map<JRes | string> = {}): pxt.Map<JRes | string> {
+        serializeToJRes(allJRes: pxt.Map<JRes | string> = {}, filter?: (asset: U) => boolean): pxt.Map<JRes | string> {
             for (const asset of this.assets) {
+                if (filter && !filter(asset)) continue;
                 addAssetToJRes(asset, allJRes);
             }
 
@@ -529,11 +530,19 @@ namespace pxt {
             this.state.tiles.removeByID(id);
         }
 
-        public getProjectTilesetJRes() {
+        public getProjectTilesetJRes(projectFiles?: pxt.Map<{content: string}>) {
             const blob: pxt.Map<any> = {};
 
             this.state.tiles.serializeToJRes(blob);
-            this.state.tilemaps.serializeToJRes(blob);
+
+            // tilemaps are always named assets, so if the user creates a bunch by
+            // accident (e.g. by dragging out blocks) we want to only serialize the ones
+            // that are actually used/nonempty
+            this.state.tilemaps.serializeToJRes(blob, asset => {
+                if (!projectFiles) return true;
+
+                return !pxt.sprite.isTilemapEmptyOrUnused(asset, this, projectFiles)
+            });
 
             blob["*"] = {
                 "mimeType": "image/x-mkcd-f4",
