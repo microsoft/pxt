@@ -292,6 +292,8 @@ function doColorReplace() {
     const fromColor = state.editor.backgroundColor;
     const toColor = state.editor.selectedColor;
 
+    if (fromColor === toColor) return;
+
     const [ editState ] = currentEditState();
     const replaced = replaceColorEdit(editState, fromColor, toColor);
     dispatchAction(dispatchImageEdit(replaced.toImageState()));
@@ -302,6 +304,8 @@ function doColorReplaceAllFrames() {
 
     const fromColor = state.editor.backgroundColor;
     const toColor = state.editor.selectedColor;
+
+    if (fromColor === toColor) return;
 
     editAllFrames(doColorReplace, editState => replaceColorEdit(editState, fromColor, toColor))
 }

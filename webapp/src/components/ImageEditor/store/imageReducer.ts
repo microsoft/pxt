@@ -339,16 +339,33 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
                 }
             };
         default:
+            const prevState = state.store.present;
+            const nextState = state.editor.isTilemap ? tilemapReducer(state.store.present as TilemapState, action) : animationReducer(state.store.present as AnimationState, action);
+
+            let didChange = prevState.kind !== nextState.kind;
+
+            if (!didChange) {
+                if (prevState.kind === "Animation") {
+                    didChange = !animationStateEquals(prevState, nextState as AnimationState);
+                }
+                else {
+                    didChange = !tilemapStateEquals(prevState, nextState as TilemapState);
+                }
+            }
+
+            const nextStore = didChange ?
+                {
+                    ...state.store,
+                    past: [...state.store.past, prevState],
+                    present: nextState,
+                    future: []
+                } : state.store;
+
             return {
                 ...state,
                 editor: editorReducer(state.editor, action, state.store),
-                store: {
-                    ...state.store,
-                    past: [...state.store.past, state.store.present],
-                    present: state.editor.isTilemap ? tilemapReducer(state.store.present as TilemapState, action) : animationReducer(state.store.present as AnimationState, action),
-                    future: []
-                }
-            }
+                store: nextStore
+            };
     }
 }
 
@@ -757,6 +774,48 @@ function initialTilemapStateForAsset(asset: pxt.ProjectTilemap, gallery: Gallery
         tileset: restoreSprites(asset.data.tileset, gallery),
         nextId: asset.data.nextId
     }
+}
+
+function animationStateEquals(a: AnimationState, b: AnimationState) {
+    return a.visible === b.visible &&
+        a.aspectRatioLocked === b.aspectRatioLocked &&
+        a.currentFrame === b.currentFrame &&
+        a.interval === b.interval &&
+        pxt.assetEquals(a.asset, b.asset) &&
+        pxt.U.arrayEquals(a.colors, b.colors, (c, d) => c === d) &&
+        pxt.U.arrayEquals(a.frames, b.frames, (c, d) => imageStateEquals(c, d));
+}
+
+function tilemapStateEquals(a: TilemapState, b: TilemapState) {
+    return a.aspectRatioLocked === b.aspectRatioLocked &&
+        a.nextId === b.nextId &&
+        imageStateEquals(a.tilemap, b.tilemap) &&
+        pxt.assetEquals(a.asset, b.asset) &&
+        pxt.U.arrayEquals(a.colors, b.colors, (c, d) => c === d) &&
+        pxt.sprite.tilesetEquals(a.tileset, b.tileset)
+}
+
+function imageStateEquals(a: pxt.sprite.ImageState, b: pxt.sprite.ImageState) {
+    if (
+        a.layerOffsetX !== b.layerOffsetX ||
+        a.layerOffsetY !== b.layerOffsetY ||
+        !!a.floating !== !!b.floating ||
+        !pxt.sprite.bitmapEquals(a.bitmap, b.bitmap) ||
+        !pxt.U.arrayEquals(a.overlayLayers, b.overlayLayers, pxt.sprite.bitmapEquals)
+    ) {
+        return false;
+    }
+
+    if (a.floating) {
+        if (
+            !pxt.sprite.bitmapEquals(a.floating.bitmap, b.floating.bitmap) ||
+            !pxt.U.arrayEquals(a.floating.overlayLayers, b.floating.overlayLayers, pxt.sprite.bitmapEquals)
+        ) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 
