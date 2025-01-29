@@ -33,7 +33,13 @@
     --pxt-neutral-foreground1: rgba(0, 0, 0, 0.85);
     --pxt-neutral-foreground2: rgba(0, 0, 0, 0.87);
     --pxt-neutral-stencil1: rgba(136, 136, 136, 0.15);
+    --pxt-neutral-button-background: #e0e1e2;
+    --pxt-neutral-button-foreground: #333333;
     --pxt-link: #666666;
+    --pxt-colors-green-background1: #2ecc71;
+    --pxt-colors-green-foreground: #FFFFFF;
+    --pxt-colors-green-hover1: #22be64;
+
 
     /*
     --pxt-neutral-background3: ;

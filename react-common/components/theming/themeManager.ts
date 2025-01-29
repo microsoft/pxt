@@ -1,6 +1,7 @@
 export interface ThemeInfo {
     id: string;
     name: string;
+    overrides?: string;
     colors: { [key: string]: string };
 }
 
@@ -30,7 +31,8 @@ export class ThemeManager {
         const debugThemeFiles = [
             "/docfiles/themes/arcade-light.json",
             "/docfiles/themes/high-contrast.json",
-            "/docfiles/themes/arcade-legacy.json"
+            "/docfiles/themes/arcade-legacy.json",
+            "/docfiles/themes/microbit-light.json"
         ]
 
         this.themes = [];
@@ -40,8 +42,29 @@ export class ThemeManager {
                 pxt.error(`Failed to fetch theme JSON file: ${response.statusText}`);
                 continue;
             }
-            const themeJson = await response.json();
-            this.themes.push(themeJson);
+            const themeData = await response.json();
+            const theme: ThemeInfo = {
+                id: themeData.id,
+                name: themeData.name,
+                colors: themeData.colors
+            };
+
+            for (const overrideFile of themeData.overrideFiles ?? []) {
+                if (!overrideFile) {
+                    // Skip empty override file paths
+                    continue;
+                }
+
+                const overrideStyleResp = await fetch(overrideFile);
+                if (!overrideStyleResp.ok) {
+                    pxt.error(`Failed to fetch override CSS file: ${overrideStyleResp.statusText}`);
+                    continue;
+                }
+                let cssText = await overrideStyleResp.text();
+                theme.overrides = theme.overrides ? `${theme.overrides}\n${cssText}` : cssText;
+            }
+
+            this.themes.push(theme);
         }
     }
 
@@ -69,20 +92,34 @@ export class ThemeManager {
 
         // Programmatically set the CSS variables for the theme
         if (theme) {
-            const themeAsStyle = getThemeAsStyle(theme);
-            for (const [key, value] of Object.entries(themeAsStyle)) {
-                document.documentElement.style.setProperty(key, value);
+            const themeAsStyle = getFullThemeCss(theme);
+            const styleElementId = "theme-override";
+            let styleElement = document.getElementById(styleElementId);
+            if (!styleElement) {
+                styleElement = document.createElement("style");
+                styleElement.id = styleElementId;
+                document.head.appendChild(styleElement);
             }
+
+            // textContent is safer than innerHTML, less vulnerable to XSS
+            styleElement.textContent = `:root { ${themeAsStyle} }`;
         }
     }
 }
 
-export function getThemeAsStyle(theme: ThemeInfo) {
-    const style: React.CSSProperties = {};
+export function getFullThemeCss(theme: ThemeInfo) {
+    let css = "";
 
     for (const [key, value] of Object.entries(theme.colors)) {
-        (style as any)[`--${key}`] = value;
+        css += `--${key}: ${value};\n`;
     }
 
-    return style;
+    if (theme.overrides) {
+        css += `${theme.overrides}\n`;
+    }
+
+    // Sanitize the CSS
+    css = DOMPurify.sanitize(css);
+
+    return css;
 }

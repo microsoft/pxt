@@ -1,14 +1,27 @@
-import { ThemeInfo, getThemeAsStyle } from "./themeManager";
+import * as React from "react";
+import { ThemeInfo, getFullThemeCss } from "./themeManager";
+import { classList } from "../util";
 
 // Programmatically generate a preview of the theme using theme colors.
 export const ThemePreview = (props: { theme: ThemeInfo }) => {
     const { theme } = props;
+    const styleRef = React.useRef<HTMLStyleElement | null>(null);
+    const uniqueClassName = `theme-preview-${theme.id}`;
 
     const miniLogo = <img className="ui logo" src="./static/Micorsoft_logo_rgb_W-white_D-square.png" alt="Microsoft MakeCode Logo" />;
 
+    React.useEffect(() => {
+        if (styleRef?.current) {
+            const themeCss = getFullThemeCss(theme);
+            // Set textContent instead of innerHTML to avoid XSS
+            styleRef.current.textContent = `.${uniqueClassName} { ${themeCss} }`;
+        }
+    }, [theme]);
+
     return (
-        <div className="theme-preview-container" style={getThemeAsStyle(theme)}>
-            <div className="theme-preview">
+        <div className="theme-preview-container">
+            <style ref={styleRef} />
+            <div className={classList("theme-preview", uniqueClassName)}>
                 <div className="theme-preview-header">
                     {miniLogo}
                     <i className="fas fa-user-circle" />
