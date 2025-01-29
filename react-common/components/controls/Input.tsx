@@ -69,6 +69,10 @@ export const Input = (props: InputProps) => {
 
     let container: HTMLDivElement;
 
+    React.useEffect(() => {
+        setValue(initialValue || "");
+    }, [initialValue]);
+
     const handleContainerRef = (ref: HTMLDivElement) => {
         if (!ref) return;
         container = ref;
@@ -137,7 +141,7 @@ export const Input = (props: InputProps) => {
             onBlur(value);
         }
         if (!preserveValueOnBlur) {
-            setValue(undefined);
+            setValue("");
         }
     }
 
