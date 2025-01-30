@@ -8,8 +8,9 @@
 
 namespace pxt.perf {
     export type EventSource<T> = {
-        subscribe(listener: (payload: T) => void): () => void;
-        //emit(payload: T): void; // not used externally
+        subscribe(listener: (ev: T) => void): () => void;
+        //emit(ev: T): void; // not used externally
+        //forEach(listener: (ev: T) => void): void; // not used externally
     };
 
     // These functions are defined in docfiles/pxtweb/cookieCompliance.ts
@@ -19,8 +20,11 @@ namespace pxt.perf {
     export declare function recordMilestone(msg: string, params?: Map<string>): void;
     export declare function measureStart(name: string): void;
     export declare function measureEnd(name: string, params?: Map<string>): void;
-    export declare const onMilestone: EventSource<{ milestone: string, time: number, params?: Map<string> }>;
-    export declare const onMeasurement: EventSource<{ name: string, start: number, duration: number, params?: Map<string> }>;
+    export declare let measurementThresholdMs: number;
+    export declare const stats: {
+        milestones: EventSource<{ milestone: string, time: number, params?: Map<string> }>;
+        durations: EventSource<{ name: string, start: number, duration: number, params?: Map<string> }>;
+    };
 }
 (function () {
     // Sometimes these aren't initialized, for example in tests. We only care about them

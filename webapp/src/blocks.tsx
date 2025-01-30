@@ -236,7 +236,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     } catch { }
                     this.loadingXml = false;
                     this.loadingXmlPromise = null;
-                    pxt.perf.measureEnd(Measurements.DomUpdateLoadBlockly)
+                    pxt.perf.measureEnd(Measurements.DomUpdateLoadBlockly, { projectHeaderId: this.parent.state.header?.id });
                     // Do Not Remove: This is used by the skillmap
                     this.parent.onEditorContentLoaded();
                 });
