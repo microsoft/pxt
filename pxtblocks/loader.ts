@@ -25,6 +25,7 @@ import { renderCodeCard } from "./codecardRenderer";
 import { FieldDropdown } from "./fields/field_dropdown";
 import { setDraggableShadowBlocks, setDuplicateOnDrag, setDuplicateOnDragStrategy } from "./plugins/duplicateOnDrag";
 import { applyPolyfills } from "./polyfills";
+import { initCopyPaste } from "./copyPaste";
 
 
 interface BlockDefinition {
@@ -607,6 +608,7 @@ function init(blockInfo: pxtc.BlocksInfo) {
     initText();
     initComments();
     initTooltip();
+    initCopyPaste();
 }
 
 
