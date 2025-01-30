@@ -1,5 +1,5 @@
+/// <reference path="../../../../localtypings/ocv.d.ts" />
 import { appId, feedbackFrameUrl } from './configs';
-import { FeedbackAgeGroup, FeedbackAuthenticationType, IFeedbackCallbackFunctions, IFeedbackConfig, IFeedbackInitOptions, IThemeOptions } from './types';
 interface FeedbackRequestEventPayload<T> {
   Event: string
   EventArgs: string
@@ -14,12 +14,12 @@ interface FeedbackResponseEventPayload<T> {
 
 // for styling the feedback, we use this object. It is mostly used to change the colors.
 // we'll want to change this based on the target and whether high contrast is enabled
-let themeOptions: IThemeOptions = {
+let themeOptions: ocv.IThemeOptions = {
     baseTheme: "PublisherLightTheme",
 }
 
-let initfeedbackOptions: IFeedbackInitOptions;
-let feedbackCallbacks: IFeedbackCallbackFunctions;
+let initfeedbackOptions: ocv.IFeedbackInitOptions;
+let feedbackCallbacks: ocv.IFeedbackCallbackFunctions;
 let feedbackData: any;
 let FEEDBACK_FRAME_ID: string;
 let currentTheme = '';
@@ -34,13 +34,13 @@ let currentTheme = '';
  * @param [callbacks]: an object of functions that can be called when certain events happen in the feedback modal.
  *  Needs to be passed in because the callbacks will depend on what the parent wants to react to.
  */
-export const initFeedbackEventListener = (feedbackConfig: IFeedbackConfig, frameId: string, callbacks?: IFeedbackCallbackFunctions) => {
+export const initFeedbackEventListener = (feedbackConfig: ocv.IFeedbackConfig, frameId: string, callbacks?: ocv.IFeedbackCallbackFunctions) => {
     window.addEventListener('message', feedbackCallbackEventListener);
     feedbackCallbacks = callbacks;
     initfeedbackOptions = {
         appId: appId,
-        ageGroup: FeedbackAgeGroup.Undefined,
-        authenticationType: FeedbackAuthenticationType.Unauthenticated,
+        ageGroup: ocv.FeedbackAgeGroup.Undefined,
+        authenticationType: ocv.FeedbackAuthenticationType.Unauthenticated,
         clientName: "MakeCode",
         feedbackConfig: feedbackConfig,
         isProduction: false,

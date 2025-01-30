@@ -1,13 +1,13 @@
+/// <reference path="../../../../localtypings/ocv.d.ts" />
 import { useEffect } from "react"
 import { initFeedbackEventListener, removeFeedbackEventListener } from "./FeedbackEventListener";
 import { baseConfig, ratingFeedbackConfig, appId, feedbackFrameUrl } from "./configs";
 import { Modal } from "../Modal";
-import { IFeedbackConfig } from "./types";
 
 // both components require onClose because the feedback modal should close when the user clicks the "finish" button
 // this would not happen if the EventListener did not have a callback to close the modal
 interface IFeedbackModalProps {
-  feedbackConfig: IFeedbackConfig;
+  feedbackConfig: ocv.IFeedbackConfig;
   frameId: string;
   title: string;
   onClose: () => void;

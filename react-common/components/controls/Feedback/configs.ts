@@ -1,11 +1,11 @@
-import { FeedbackHostPlatformType, FeedbackUiType, IFeedbackConfig, InAppFeedbackQuestionUiBehaviour, InAppFeedbackQuestionUiType, InAppFeedbackScenarioType } from "./types";
+/// <reference path="../../../../localtypings/ocv.d.ts" />
 
 export const appId = 50315;
 export const feedbackFrameUrl = 'https://admin-ignite.microsoft.com';
 
-export const baseConfig: IFeedbackConfig = {
-    feedbackUiType: FeedbackUiType.NoSurface,
-    hostPlatform: FeedbackHostPlatformType.IFrame,
+export const baseConfig: ocv.IFeedbackConfig = {
+    feedbackUiType: ocv.FeedbackUiType.NoSurface,
+    hostPlatform: ocv.FeedbackHostPlatformType.IFrame,
     isDisplayed: true,
     isEmailCollectionEnabled: false,
     isFileUploadEnabled: false,
@@ -17,14 +17,14 @@ export const baseConfig: IFeedbackConfig = {
     isThankYouPageDisabled: false,
 }
 
-export const ratingFeedbackConfig: IFeedbackConfig = {
+export const ratingFeedbackConfig: ocv.IFeedbackConfig = {
     ...baseConfig,
-    initialFeedbackType: "Unclassified",
+    initialFeedbackType: ocv.FeedbackType.Unclassified,
     scenarioConfig: {
       isScenarioEnabled: true,
-      scenarioType: InAppFeedbackScenarioType.Custom,
+      scenarioType: ocv.InAppFeedbackScenarioType.Custom,
       questionDetails: {
-        questionUiType: InAppFeedbackQuestionUiType.Rating,
+        questionUiType: ocv.InAppFeedbackQuestionUiType.Rating,
         questionInstruction: {
           displayedStringInEnglish: "What did you think of this activity?",
           displayedString: lf("What did you think of this activity?")
@@ -52,7 +52,7 @@ export const ratingFeedbackConfig: IFeedbackConfig = {
           },
         ],
         "questionUiBehaviour": [
-          InAppFeedbackQuestionUiBehaviour.CommentNotRequired
+          ocv.InAppFeedbackQuestionUiBehaviour.CommentNotRequired
         ]
       }
     }
