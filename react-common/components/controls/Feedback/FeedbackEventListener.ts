@@ -1,4 +1,5 @@
 import { appId, feedbackFrameUrl } from './configs';
+import { FeedbackAgeGroup, FeedbackAuthenticationType, IFeedbackCallbackFunctions, IFeedbackConfig, IFeedbackInitOptions, IThemeOptions } from './types';
 interface FeedbackRequestEventPayload<T> {
   Event: string
   EventArgs: string
@@ -13,15 +14,15 @@ interface FeedbackResponseEventPayload<T> {
 
 // for styling the feedback, we use this object. It is mostly used to change the colors.
 // we'll want to change this based on the target and whether high contrast is enabled
-let themeOptions = {
+let themeOptions: IThemeOptions = {
     baseTheme: "PublisherLightTheme",
 }
 
-let initfeedbackOptions: any;
+let initfeedbackOptions: IFeedbackInitOptions;
+let feedbackCallbacks: IFeedbackCallbackFunctions;
 let feedbackData: any;
 let FEEDBACK_FRAME_ID: string;
 let currentTheme = '';
-let feedbackCallbacks: any;
 
 // the function to initialize the feedback event listener
 // feedbackConfig: needs to be passed in as a prop because the things that
@@ -33,13 +34,13 @@ let feedbackCallbacks: any;
  * @param [callbacks]: an object of functions that can be called when certain events happen in the feedback modal.
  *  Needs to be passed in because the callbacks will depend on what the parent wants to react to.
  */
-export const initFeedbackEventListener = (feedbackConfig: any, frameId: string, callbacks?: any) => {
+export const initFeedbackEventListener = (feedbackConfig: IFeedbackConfig, frameId: string, callbacks?: IFeedbackCallbackFunctions) => {
     window.addEventListener('message', feedbackCallbackEventListener);
     feedbackCallbacks = callbacks;
     initfeedbackOptions = {
         appId: appId,
-        ageGroup: "Undefined",
-        authenticationType: "Unauthenticated",
+        ageGroup: FeedbackAgeGroup.Undefined,
+        authenticationType: FeedbackAuthenticationType.Unauthenticated,
         clientName: "MakeCode",
         feedbackConfig: feedbackConfig,
         isProduction: false,
@@ -114,10 +115,10 @@ const sendUpdateTheme = () => {
  */
 const sendFeedbackInitOptions = () => {
     type FeedbackResponsePayloadType = FeedbackResponseEventPayload<any>
-    feedbackData.callbackFunctions = undefined
+    initfeedbackOptions.callbackFunctions = undefined
     let response: FeedbackResponsePayloadType = {
         event: 'InAppFeedbackInitOptions',
-        data: feedbackData,
+        data: initfeedbackOptions,
     }
     response = JSON.parse(JSON.stringify(response))
     const iFrameElement = document.getElementById(FEEDBACK_FRAME_ID) as HTMLIFrameElement

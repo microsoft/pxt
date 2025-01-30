@@ -1,28 +1,30 @@
+import { FeedbackHostPlatformType, FeedbackUiType, IFeedbackConfig, InAppFeedbackQuestionUiBehaviour, InAppFeedbackQuestionUiType, InAppFeedbackScenarioType } from "./types";
+
 export const appId = 50315;
 export const feedbackFrameUrl = 'https://admin-ignite.microsoft.com';
 
-export const baseConfig: any = {
-    feedbackUiType: "NoSurface",
-    hostPlatform: "IFrame",
+export const baseConfig: IFeedbackConfig = {
+    feedbackUiType: FeedbackUiType.NoSurface,
+    hostPlatform: FeedbackHostPlatformType.IFrame,
     isDisplayed: true,
-    isEmailCollectionEnabled: false, // to enable email collection
-    isFileUploadEnabled: false, // to enable file upload function
-    isScreenshotEnabled: false, // to enable screenshot
-    isScreenRecordingEnabled: false, // to enable screen recording
+    isEmailCollectionEnabled: false,
+    isFileUploadEnabled: false,
+    isScreenshotEnabled: false,
+    isScreenRecordingEnabled: false,
     invokeOnDismissOnEsc: false,
     isFeedbackForumEnabled: false,
     isMyFeedbackEnabled: false,
     isThankYouPageDisabled: false,
 }
 
-export const ratingFeedbackConfig: any = {
+export const ratingFeedbackConfig: IFeedbackConfig = {
     ...baseConfig,
     initialFeedbackType: "Unclassified",
     scenarioConfig: {
       isScenarioEnabled: true,
-      scenarioType: "Custom",
+      scenarioType: InAppFeedbackScenarioType.Custom,
       questionDetails: {
-        questionUiType: "Rating",
+        questionUiType: InAppFeedbackQuestionUiType.Rating,
         questionInstruction: {
           displayedStringInEnglish: "What did you think of this activity?",
           displayedString: lf("What did you think of this activity?")
@@ -50,7 +52,7 @@ export const ratingFeedbackConfig: any = {
           },
         ],
         "questionUiBehaviour": [
-          "CommentNotRequired"
+          InAppFeedbackQuestionUiBehaviour.CommentNotRequired
         ]
       }
     }
