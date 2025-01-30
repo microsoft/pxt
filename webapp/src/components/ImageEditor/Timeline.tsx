@@ -32,6 +32,8 @@ export class TimelineImpl extends React.Component<TimelineProps, TimelineState> 
     protected frameScroller: HTMLDivElement;
     protected scrollOffset = 0;
     protected dragEnd = false;
+    protected animHandler: any;
+    protected lastTimestamp: number;
 
     constructor(props: TimelineProps) {
         super(props);
@@ -99,6 +101,7 @@ export class TimelineImpl extends React.Component<TimelineProps, TimelineState> 
 
         let last: number;
         let isScroll = false;
+        let offsetY = 0;
         bindGestureEvents(this.frameScroller, {
             onClick: coord => {
                 this.dragEnd = false;
@@ -107,11 +110,18 @@ export class TimelineImpl extends React.Component<TimelineProps, TimelineState> 
                 last = coord.clientY;
                 pxt.BrowserUtils.addClass(this.frameScroller, "scrolling");
 
-                const parent = this.frameScroller.getBoundingClientRect();
-                const scrollY = coord.clientY - parent.top;
+                let index = -1;
 
-                const unit = this.frameScroller.firstElementChild.getBoundingClientRect().height;
-                const index = Math.floor(scrollY / unit);
+                for (let i = 0; i < this.frameScroller.childElementCount; i++) {
+                    const el = this.frameScroller.children.item(i);
+
+                    const rect = el.getBoundingClientRect();
+                    if (coord.clientY >= rect.top && coord.clientY <= rect.bottom) {
+                        index = i;
+                        offsetY = coord.clientY - rect.top;
+                        break;
+                    }
+                }
 
                 isScroll = index !== this.props.currentFrame;
             },
@@ -137,7 +147,7 @@ export class TimelineImpl extends React.Component<TimelineProps, TimelineState> 
                     }
                 }
                 else {
-                    this.updateDragDrop(coord);
+                    this.updateDragDrop(coord, offsetY);
                 }
             },
             onDragEnd: () => {
@@ -204,12 +214,59 @@ export class TimelineImpl extends React.Component<TimelineProps, TimelineState> 
         else dispatchNewFrame();
     }
 
-    protected updateDragDrop(coord: ClientCoordinates) {
-        const parent = this.frameScroller.getBoundingClientRect();
-        const scrollY = coord.clientY - parent.top;
+    protected updateDragDrop(coord: ClientCoordinates, offsetY: number) {
+        if (this.animHandler) {
+            cancelAnimationFrame(this.animHandler);
+            this.animHandler = undefined;
+        }
+        else {
+            this.lastTimestamp = undefined;
+        }
 
-        const unit = this.frameScroller.firstElementChild.getBoundingClientRect().height;
+        const parent = this.frameScroller.getBoundingClientRect();
+        const scrollY = coord.clientY - parent.top - offsetY;
+
+        const buttonBBox = this.frameScroller.lastElementChild.getBoundingClientRect().height
+        const unit = (parent.height - buttonBBox) / this.props.frames.length;
         const index = Math.floor(scrollY / unit);
+
+        const SCROLL_RANGE = 80;
+        const MIN_SPEED_DY = 100;
+        const MAX_SPEED_DY = 500;
+
+        const container = this.frameScroller.parentElement.getBoundingClientRect();
+        const maxScroll = parent.height - container.height;
+
+        if (maxScroll > 0) {
+            if (Math.abs(container.top - coord.clientY) < SCROLL_RANGE) {
+                this.animHandler = requestAnimationFrame(timestamp => {
+                    if (!this.state.isMovingFrame || this.frameScroller.parentElement.scrollTop <= 0) return;
+
+                    const dt = timestamp - (this.lastTimestamp || timestamp);
+                    this.lastTimestamp = timestamp;
+
+                    const scale = 1 - (Math.abs(container.top - coord.clientY) / SCROLL_RANGE);
+
+                    const dy = (MIN_SPEED_DY + scale * (MAX_SPEED_DY - MIN_SPEED_DY)) * (dt / 1000);
+                    this.frameScroller.parentElement.scrollTop = Math.max(0, this.frameScroller.parentElement.scrollTop - dy);
+                    this.updateDragDrop(coord, offsetY);
+                });
+            }
+            else if (Math.abs(container.bottom - coord.clientY) < SCROLL_RANGE) {
+                this.animHandler = requestAnimationFrame(timestamp => {
+                    if (!this.state.isMovingFrame || this.frameScroller.parentElement.scrollTop >= maxScroll) return;
+
+                    const dt = timestamp - (this.lastTimestamp || timestamp);
+                    this.lastTimestamp = timestamp;
+
+                    const scale = 1 - (Math.abs(container.bottom - coord.clientY) / SCROLL_RANGE);
+
+                    const dy = (MIN_SPEED_DY + scale * (MAX_SPEED_DY - MIN_SPEED_DY)) * (dt / 1000);
+                    this.frameScroller.parentElement.scrollTop = Math.min(maxScroll, this.frameScroller.parentElement.scrollTop + dy);
+                    this.updateDragDrop(coord, offsetY);
+                });
+            }
+        }
 
         if (!this.state.isMovingFrame) {
             this.setState({
@@ -221,7 +278,9 @@ export class TimelineImpl extends React.Component<TimelineProps, TimelineState> 
             const floating = this.refs["floating-frame"] as HTMLDivElement;
             floating.style.top = scrollY + "px";
 
-            this.setState({ dropPreviewIndex: index });
+            if (this.state.dropPreviewIndex !== index) {
+                this.setState({ dropPreviewIndex: index });
+            }
         }
     }
 }
