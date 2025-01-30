@@ -1,9 +1,7 @@
 {
     "id": "arcade-light",
     "name": "Arcade Light",
-    "overrideFiles": [
-        ""
-    ],
+    "overrideFiles": [],
     "colors": {
         "pxt-target-background1": "#F8FAFC",
         "pxt-target-background1-light": "#ffffff",
@@ -32,6 +30,7 @@
         "pxt-secondary-background": "#5D4FBA",
         "pxt-secondary-alpha0": "#5D4FBA00",
         "pxt-secondary-dark": "#372E75",
+        "pxt-secondary-light": "#7569c4",
         "pxt-secondary-foreground": "#F8FAFC",
         "pxt-neutral-background1": "#FFFFFF",
         "pxt-neutral-background2": "#F9FAFB",

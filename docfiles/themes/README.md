@@ -37,7 +37,8 @@ Colors:
 | pxt-primary-foreground        | Download Button Fg         |
 | pxt-secondary-background      | Zoom & Under-Sim Buttons   |
 | pxt-secondary-alpha0          | Zoom & Under-Sim Buttons 0% Opacity |
-| pxt-secondary-dark            | Cloud Projects Card        |
+| pxt-secondary-dark            |                            |
+| pxt-secondary-light           | Cloud Projects Card        |
 | pxt-secondary-foreground      |                            |
 | pxt-neutral-background1       | Modal Header & Body Bkg    |
 | pxt-neutral-background2       | Modal Footer Bkg           |

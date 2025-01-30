@@ -154,7 +154,7 @@ a.ui.card:focus,
 }
 
 .ui.card.link.cloudprojectscard {
-    background: var(--pxt-secondary-dark) !important;
+    background: var(--pxt-secondary-light) !important;
 
     .header {
         white-space: normal;

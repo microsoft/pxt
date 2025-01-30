@@ -32,6 +32,7 @@
         "pxt-secondary-background": "#000000",
         "pxt-secondary-alpha0": "#00000000",
         "pxt-secondary-dark": "#000000",
+        "pxt-secondary-light": "#000000",
         "pxt-secondary-foreground": "#FFFFFF",
         "pxt-neutral-background1": "#000000",
         "pxt-neutral-background2": "#000000",

@@ -1,9 +1,7 @@
 {
     "id": "arcade-legacy",
     "name": "Arcade Legacy",
-    "overrideFiles": [
-        ""
-    ],
+    "overrideFiles": [],
     "colors": {
         "pxt-target-background1": "#FEF3E0",
         "pxt-target-background1-light": "#ffffff",
@@ -32,6 +30,7 @@
         "pxt-secondary-background": "#028B9B",
         "pxt-secondary-alpha0": "#028B9B00",
         "pxt-secondary-dark": "#005D6A",
+        "pxt-secondary-light": "#58afba",
         "pxt-secondary-foreground": "#FFFFFF",
         "pxt-neutral-background1": "#FFFFFF",
         "pxt-neutral-background2": "#F9FAFB",
