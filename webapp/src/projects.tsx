@@ -90,7 +90,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
     }
 
     chgHeader(hdr: pxt.workspace.Header) {
-        pxt.tickEvent("projects.header");
+        pxt.tickEvent("projects.header", { projectHeaderId: hdr?.id });
         core.showLoading("changeheader", lf("loading..."));
         this.props.parent.loadHeaderAsync(hdr)
             .catch(e => {

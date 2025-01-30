@@ -1146,6 +1146,7 @@ declare namespace pxt.editor {
         webUsbPairDialogAsync?: (pairAsync: () => Promise<boolean>, confirmAsync: (options: any) => Promise<number>) => Promise<number>;
         mkPacketIOWrapper?: (io: pxt.packetio.PacketIO) => pxt.packetio.PacketIOWrapper;
         onPostHostMessage?: (msg: pxt.editor.EditorMessageRequest) => void;
+        perfMeasurementThresholdMs?: number;
         onPerfMilestone?: (payload: { milestone: string, time: number, params?: Map<string> }) => void;
         onPerfMeasurement?: (payload: { name: string, start: number, duration: number, params?: Map<string> }) => void;
     

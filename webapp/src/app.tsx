@@ -2774,7 +2774,7 @@ export class ProjectView
     }
 
     private editorLoaded() {
-        pxt.tickEvent('app.editor');
+        pxt.tickEvent('app.editor', { projectHeaderId: this.state.header?.id });
     }
 
     unloadProjectAsync(home?: boolean) {
@@ -4982,7 +4982,8 @@ export class ProjectView
             this.postTutorialLoaded();
         }
 
-        pxt.perf.recordMilestone(Milestones.EditorContentLoaded);
+        pxt.perf.recordMilestone(Milestones.EditorContentLoaded, { projectHeaderId: this.state.header?.id });
+
         if (!this.autoRunOnStart()) {
             pxt.analytics.trackPerformanceReport();
         }
@@ -5893,11 +5894,14 @@ function initExtensionsAsync(): Promise<void> {
                     monacoToolbox.overrideToolbox(res.toolboxOptions.monacoToolbox);
                 }
             }
+            if (typeof res.perfMeasurementThresholdMs === "number") {
+                pxt.perf.measurementThresholdMs = res.perfMeasurementThresholdMs;
+            }
             if (res.onPerfMilestone) {
-                pxt.perf.onMilestone.subscribe(res.onPerfMilestone);
+                pxt.perf.stats.milestones.subscribe(res.onPerfMilestone);
             }
             if (res.onPerfMeasurement) {
-                pxt.perf.onMeasurement.subscribe(res.onPerfMeasurement);
+                pxt.perf.stats.durations.subscribe(res.onPerfMeasurement);
             }
             cmds.setExtensionResult(res);
         });
