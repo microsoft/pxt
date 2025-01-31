@@ -1951,9 +1951,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     protected pasteCallback = () => {
         const data = getCopyData();
-        if (!data) return false;
-
-        if (!data.data || !this.editor) return false;
+        if (!data?.data || !this.editor) return false;
 
         this.pasteAsync(data);
         return true;
@@ -1993,7 +1991,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 left + width / 2,
                 top + height / 2
             );
-            return !!!Blockly.clipboard.paste(copyData, copyWorkspace, centerCoords);
+            return !!Blockly.clipboard.paste(copyData, copyWorkspace, centerCoords);
         };
 
         if (data.version !== 1) {
