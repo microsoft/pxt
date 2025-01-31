@@ -1,9 +1,7 @@
 {
     "id": "high-contrast",
     "name": "High Contrast",
-    "overrideFiles": [
-        ""
-    ],
+    "overrideFiles": [],
     "colors": {
         "pxt-target-background1": "#000000",
         "pxt-target-background1-light": "#000000",
