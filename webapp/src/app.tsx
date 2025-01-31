@@ -3653,6 +3653,7 @@ export class ProjectView
         }
         if (enabled) {
             document.addEventListener('keydown', this.closeOnEscape);
+            simulator.driver.focus();
         } else {
             document.removeEventListener('keydown', this.closeOnEscape);
         }
