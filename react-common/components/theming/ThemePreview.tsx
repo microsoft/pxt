@@ -6,7 +6,8 @@ import { classList } from "../util";
 export const ThemePreview = (props: { theme: ThemeInfo }) => {
     const { theme } = props;
     const styleRef = React.useRef<HTMLStyleElement | null>(null);
-    const uniqueClassName = `theme-preview-${theme.id}`;
+    const uniqueContainerClassName = `theme-preview-container-${theme.id}`;
+    const uniqueInnerClassName = `theme-preview-${theme.id}`; // Useful for override css adjusting previews
 
     const miniLogo = <img className="ui logo" src="./static/Micorsoft_logo_rgb_W-white_D-square.png" alt="Microsoft MakeCode Logo" />;
 
@@ -14,14 +15,14 @@ export const ThemePreview = (props: { theme: ThemeInfo }) => {
         if (styleRef?.current) {
             const themeCss = getFullThemeCss(theme);
             // Set textContent instead of innerHTML to avoid XSS
-            styleRef.current.textContent = `.${uniqueClassName} { ${themeCss} }`;
+            styleRef.current.textContent = `.${uniqueContainerClassName} { ${themeCss} }`;
         }
     }, [theme]);
 
     return (
-        <div className="theme-preview-container">
+        <div className={classList("theme-preview-container", uniqueContainerClassName)}>
             <style ref={styleRef} />
-            <div className={classList("theme-preview", uniqueClassName)}>
+            <div className={classList("theme-preview", uniqueInnerClassName)}>
                 <div className="theme-preview-header">
                     {miniLogo}
                     <i className="fas fa-user-circle" />

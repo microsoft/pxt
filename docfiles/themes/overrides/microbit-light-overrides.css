@@ -8,6 +8,6 @@
     color: var(--pxt-colors-green-background1) !important;
 }
 
-.theme-preview-sim-button {
+.theme-preview-microbit-light .theme-preview-sim-button {
     background-color: var(--pxt-neutral-button-background) !important;
 }
