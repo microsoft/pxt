@@ -412,6 +412,6 @@
 /*---------------------------
    Teaching Bubble
 ----------------------------*/
-@teachingBubbleBackgroundColor: @blue;
-@teachingBubbleTextColor: @white;
-@teachingBubbleStepsColor: @lightGrey;
+@teachingBubbleBackgroundColor: var(--pxt-header-background);
+@teachingBubbleTextColor: var(--pxt-header-foreground);
+@teachingBubbleStepsColor: var(--pxt-target-background1);
