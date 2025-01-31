@@ -3651,7 +3651,7 @@ export class ProjectView
         if (this.state.collapseEditorTools) {
             this.expandSimulator();
         }
-        if (!enabled) {
+        if (enabled) {
             document.addEventListener('keydown', this.closeOnEscape);
             simulator.driver.focus();
         } else {
