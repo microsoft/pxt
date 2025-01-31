@@ -45,7 +45,8 @@ Colors:
 | pxt-tertiary-foreground       | Tour bubbles, additional btns fg |
 | pxt-neutral-background1       | Modal Header & Body Bkg    |
 | pxt-neutral-background2       | Modal Footer Bkg           |
-| pxt-neutral-alpha             |                            |
+| pxt-neutral-alpha05           | 5% opacity fade            |
+| pxt-neutral-alpha50           | 50% opacity fade           |
 | pxt-neutral-foreground1       | Modal Header & Body Fg     |
 | pxt-neutral-foreground2       | Modal Footer Fg            |
 | pxt-neutral-stencil1          | Modal Horizontal Lines     |

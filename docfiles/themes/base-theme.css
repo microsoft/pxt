@@ -1,6 +1,7 @@
 :root {
     --pxt-target-background1: #f0f0f0;
     --pxt-target-background1-light: #ffffff;
+    --pxt-target-background1-dark: #dedede;
     --pxt-target-background2: #f0f0f0;
     --pxt-target-background2-light: #ffffff;
     --pxt-target-background3: #f0f0f0;
@@ -33,7 +34,8 @@
     --pxt-tertiary-foreground: #ffffff;
     --pxt-neutral-background1: #ffffff;
     --pxt-neutral-background2: #f9f9f9;
-    --pxt-neutral-alpha: rgba(0, 0, 0, 0.5);
+    --pxt-neutral-alpha05: rgba(0, 0, 0, 0.05);
+    --pxt-neutral-alpha50: rgba(0, 0, 0, 0.5);
     --pxt-neutral-foreground1: rgba(0, 0, 0, 0.85);
     --pxt-neutral-foreground2: rgba(0, 0, 0, 0.87);
     --pxt-neutral-stencil1: rgba(136, 136, 136, 0.15);

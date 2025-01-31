@@ -5,6 +5,7 @@
     "colors": {
         "pxt-target-background1": "#FEF3E0",
         "pxt-target-background1-light": "#ffffff",
+        "pxt-target-background1-dark": "#dedede",
         "pxt-target-background2": "#B1E1DA",
         "pxt-target-background2-light": "#b8e4dd",
         "pxt-target-background3": "#FEF3E0",
@@ -38,7 +39,8 @@
         "pxt-tertiary-foreground": "#FFFFFF",
         "pxt-neutral-background1": "#FFFFFF",
         "pxt-neutral-background2": "#F9FAFB",
-        "pxt-neutral-alpha": "rgba(0, 0, 0, 0.5)",
+        "pxt-neutral-alpha05": "rgba(0, 0, 0, 0.05)",
+        "pxt-neutral-alpha50": "rgba(0, 0, 0, 0.5)",
         "pxt-neutral-foreground1": " rgba(0,0,0,.85) ",
         "pxt-neutral-foreground2": "rgba(0,0,0,.87)",
         "pxt-neutral-stencil1": "rgba(34, 36, 38, .15)",
