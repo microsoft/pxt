@@ -1,15 +1,52 @@
 /// <reference path="../../../../localtypings/ocv.d.ts" />
 import { appId, feedbackFrameUrl } from './configs';
-interface FeedbackRequestEventPayload<T> {
-  Event: string
-  EventArgs: string
-}
-type FeedbackRequestPayloadType = FeedbackRequestEventPayload<any>
 
-interface FeedbackResponseEventPayload<T> {
-  event: string
-  data: T
-  error?: any
+type FeedbackRequestEventArgsType = FeedbackInitOptionsEventPayload | FeedbackErrorEventPayload | FeedbackInitializationCompleteEventPayload | FeedbackOnSuccessEventPayload | FeedbackDismissWithResultEventPayload;
+
+interface FeedbackInitOptionsEventPayload {
+    EventArgs: undefined
+}
+
+interface FeedbackErrorEventPayload {
+    EventArgs: {
+        errorMessage: string
+    }
+}
+
+interface FeedbackInitializationCompleteEventPayload {
+    EventArgs: {
+        errorMessages: string[],
+        warningMessages: string[],
+        status: string
+    }
+}
+
+interface FeedbackOnSuccessEventPayload {
+    EventArgs: {
+        clientFeedbackId: string
+    }
+}
+
+interface FeedbackDismissWithResultEventPayload {
+    EventArgs: {
+        isSuccess: boolean
+    }
+}
+
+type FeedbackRequestEventType = 'InAppFeedbackInitOptions' | 'InAppFeedbackOnError' | 'InAppFeedbackInitializationComplete' | 'InAppFeedbackOnSuccess' | 'InAppFeedbackDismissWithResult';
+
+type FeedbackRequestPayloadType = {
+    Event: FeedbackRequestEventType
+    EventArgs: FeedbackRequestEventArgsType
+}
+
+type FeedbackResponseEventType = 'InAppFeedbackInitOptions' | 'OnFeedbackHostAppThemeChanged';
+
+type FeedbackResponseDataType = ocv.IThemeOptions | ocv.IFeedbackInitOptions;
+
+type FeedbackResponsePayloadType = {
+  event: FeedbackResponseEventType
+  data: FeedbackResponseDataType
 }
 
 // for styling the feedback, we use this object. It is mostly used to change the colors.
@@ -20,7 +57,6 @@ let themeOptions: ocv.IThemeOptions = {
 
 let initfeedbackOptions: ocv.IFeedbackInitOptions;
 let feedbackCallbacks: ocv.IFeedbackCallbackFunctions;
-let feedbackData: any;
 let FEEDBACK_FRAME_ID: string;
 let currentTheme = '';
 
@@ -48,7 +84,6 @@ export const initFeedbackEventListener = (feedbackConfig: ocv.IFeedbackConfig, f
         // telemetry - will likely want this
     }
 
-    feedbackData = initfeedbackOptions;
     FEEDBACK_FRAME_ID = frameId;
 }
 
@@ -93,7 +128,6 @@ const feedbackCallbackEventListener = (event: MessageEvent<FeedbackRequestPayloa
 // haven't implemented yet with events, but this will be needed in order to update to high contrast
 // general changes need to be made as well use the correct theme. the windows ones were just the defaults.
 const sendUpdateTheme = () => {
-    type FeedbackResponsePayloadType = FeedbackResponseEventPayload<any>
     if (currentTheme == 'WindowsDark') {
         currentTheme = 'WindowsLight'
     } else {
@@ -114,8 +148,6 @@ const sendUpdateTheme = () => {
  * Actually initializes the feedback session. This is called when the feedback modal opens.
  */
 const sendFeedbackInitOptions = () => {
-    type FeedbackResponsePayloadType = FeedbackResponseEventPayload<any>
-    initfeedbackOptions.callbackFunctions = undefined
     let response: FeedbackResponsePayloadType = {
         event: 'InAppFeedbackInitOptions',
         data: initfeedbackOptions,
