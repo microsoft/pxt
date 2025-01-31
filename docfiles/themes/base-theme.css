@@ -28,6 +28,9 @@
     --pxt-secondary-dark: #767676;
     --pxt-secondary-light: #9a9a9a;
     --pxt-secondary-foreground: #f0f0f0;
+    --pxt-tertiary-background: #909090;
+    --pxt-tertiary-alpha50: #90909032;
+    --pxt-tertiary-foreground: #ffffff;
     --pxt-neutral-background1: #ffffff;
     --pxt-neutral-background2: #f9f9f9;
     --pxt-neutral-alpha: rgba(0, 0, 0, 0.5);

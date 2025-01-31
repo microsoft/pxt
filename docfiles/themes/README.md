@@ -40,6 +40,9 @@ Colors:
 | pxt-secondary-dark            |                            |
 | pxt-secondary-light           | Cloud Projects Card        |
 | pxt-secondary-foreground      |                            |
+| pxt-tertiary-background       | Tour bubbles, additional btns   |
+| pxt-tertiary-alpha50          | 50% Opacity                |
+| pxt-tertiary-foreground       | Tour bubbles, additional btns fg |
 | pxt-neutral-background1       | Modal Header & Body Bkg    |
 | pxt-neutral-background2       | Modal Footer Bkg           |
 | pxt-neutral-alpha             |                            |
