@@ -89,3 +89,26 @@ export function openWorkspaceSearch() {
         _openWorkspaceSearch();
     }
 }
+
+type ShortcutHandler = (workspace: Blockly.Workspace, e: Event) => boolean;
+
+let _handleCopy: ShortcutHandler;
+let _handleCut: ShortcutHandler;
+let _handlePaste: ShortcutHandler;
+
+export function setCopyPaste(copy: ShortcutHandler, cut: ShortcutHandler, paste: ShortcutHandler) {
+    _handleCopy = copy;
+    _handleCut = cut;
+    _handlePaste = paste;
+}
+
+export function getCopyPasteHandlers() {
+    if (_handleCopy) {
+        return {
+            copy: _handleCopy,
+            cut: _handleCut,
+            paste: _handlePaste
+        };
+    }
+    return null;
+}

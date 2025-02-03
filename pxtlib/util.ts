@@ -871,6 +871,11 @@ namespace ts.pxtc.Util {
     export function requestAsync(options: HttpRequestOptions): Promise<HttpResponse> {
         //if (debugHttpRequests)
         //    pxt.debug(`>> ${options.method || "GET"} ${options.url.replace(/[?#].*/, "...")}`); // don't leak secrets in logs
+        const measureParams: pxt.Map<string> = {
+            "url": `${encodeURI(options.url.replace(/[?#].*/, "..."))}`, // don't leak secrets in logs
+            "method": `${options.method || "GET"}`
+        };
+        pxt.perf.measureStart(Measurements.NetworkRequest)
         return httpRequestCoreAsync(options)
             .then(resp => {
                 //if (debugHttpRequests)
@@ -887,6 +892,24 @@ namespace ts.pxtc.Util {
                 if (resp.text && /application\/json/.test(resp.headers["content-type"] as string))
                     resp.json = U.jsonTryParse(resp.text)
                 return resp
+            })
+            .then(resp => {
+                const contentLength = resp.headers["content-length"];
+                if (contentLength) {
+                    measureParams["sizeInBytes"] = `${contentLength}`;
+                } else if (resp.text) {
+                    if (pxt.perf.isEnabled()) {
+                        // only do this work if perf measurement is actually enabled
+                        const encoder = new TextEncoder();
+                        const encoded = encoder.encode(resp.text);
+                        measureParams["sizeInBytes"] = encoded.length + "";
+                    }
+                }
+                measureParams["statusCode"] = `${resp.statusCode}`;
+                return resp
+            })
+            .finally(() => {
+                pxt.perf.measureEnd(Measurements.NetworkRequest, measureParams)
             })
     }
 
@@ -1810,6 +1833,27 @@ namespace ts.pxtc.Util {
     export function fromUTF8Array(s: Uint8Array) {
         return (new TextDecoder()).decode(s);
     }
+
+    export function getHomeUrl() {
+        // relprefix looks like "/beta---", need to chop off the hyphens and slash
+        let rel = pxt.webConfig?.relprefix.substr(0, pxt.webConfig.relprefix.length - 3);
+        if (pxt.appTarget.appTheme.homeUrl && rel) {
+            if (pxt.appTarget.appTheme.homeUrl?.lastIndexOf("/") === pxt.appTarget.appTheme.homeUrl?.length - 1) {
+                rel = rel.substr(1);
+            }
+            return pxt.appTarget.appTheme.homeUrl + rel;
+        }
+        else {
+            return pxt.appTarget.appTheme.homeUrl;
+        }
+    }
+
+    export function isExperienceSupported(experienceId: string) {
+        const supportedExps = pxt.appTarget?.appTheme?.supportedExperiences?.map((e) => e.toLocaleLowerCase());
+        const cleanedExpId = experienceId.toLocaleLowerCase();
+        const isSupported = supportedExps?.includes(cleanedExpId) ?? false;
+        return isSupported;
+    }
 }
 
 namespace ts.pxtc.BrowserImpl {
@@ -2003,9 +2047,9 @@ namespace ts.pxtc.BrowserImpl {
     }
 
     export function sha256string(s: string) {
-        pxt.perf.measureStart("sha256buffer")
+        pxt.perf.measureStart(Measurements.Sha256Buffer)
         const res = sha256buffer(Util.toUTF8Array(s));
-        pxt.perf.measureEnd("sha256buffer")
+        pxt.perf.measureEnd(Measurements.Sha256Buffer)
         return res;
     }
 }

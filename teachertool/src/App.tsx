@@ -19,12 +19,14 @@ import { SignedOutPanel } from "./components/SignedOutPanel";
 import * as authClient from "./services/authClient";
 import { ErrorCode } from "./types/errorCode";
 import { loadProjectMetadataAsync } from "./transforms/loadProjectMetadataAsync";
-import { Ticks } from "./constants";
+import { Constants, Ticks } from "./constants";
+import { UnsupportedExperienceModal } from "react-common/components/experiences/UnsupportedExperienceModal";
 
 export const App = () => {
     const { state, dispatch } = useContext(AppStateContext);
     const [inited, setInited] = useState(false);
     const [authCheckComplete, setAuthCheckComplete] = useState(false);
+    const [isSupported, setIsSupported] = useState<Boolean | undefined>(undefined);
 
     const ready = usePromise(AppStateReady, false);
 
@@ -74,11 +76,15 @@ export const App = () => {
         checkAuthAsync();
     }, []);
 
+    useEffect(() => {
+        setIsSupported(pxt.U.isExperienceSupported(Constants.ExperienceId));
+    }, []);
+
     return !inited || !authCheckComplete ? (
         <div className="ui active dimmer">
             <div className="ui large main loader msft"></div>
         </div>
-    ) : (
+    ) : isSupported ? (
         <>
             <HeaderBar />
             {state.userProfile ? <MainPanel /> : <SignedOutPanel />}
@@ -89,5 +95,7 @@ export const App = () => {
             <Toasts />
             <ScreenReaderAnnouncer />
         </>
+    ) : (
+        <UnsupportedExperienceModal />
     );
 };

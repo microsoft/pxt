@@ -109,6 +109,10 @@ class HorizontalRuleMenuItem extends Blockly.MenuItem {
     getId(): string {
         return this.element_.id;
     }
+
+    isEnabled(): boolean {
+        return false;
+    }
 }
 
 Blockly.Css.register(`

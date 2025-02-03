@@ -62,6 +62,7 @@ import * as electron from "./electron";
 import * as blocklyFieldView from "./blocklyFieldView";
 import * as pxtblockly from "../../pxtblocks";
 import * as pxteditor from "../../pxteditor";
+import { Measurements, Milestones } from "./constants";
 
 import IAppProps = pxt.editor.IAppProps;
 import IAppState = pxt.editor.IAppState;
@@ -901,7 +902,7 @@ export class ProjectView
     }
 
     private maybeShowPackageErrors(force = false) {
-        pxt.perf.measureStart("maybeShowPackageErrors")
+        pxt.perf.measureStart(Measurements.MaybeShowPackageErrors)
         // Only show in blocks or main.ts
         if (this.state.currFile) {
             const fn = this.state.currFile;
@@ -933,11 +934,11 @@ export class ProjectView
                             this.openHome();
                         }
                     });
-                pxt.perf.measureEnd("maybeShowPackageErrors")
+                pxt.perf.measureEnd(Measurements.MaybeShowPackageErrors)
                 return true;
             }
         }
-        pxt.perf.measureEnd("maybeShowPackageErrors")
+        pxt.perf.measureEnd(Measurements.MaybeShowPackageErrors)
         return false;
     }
 
@@ -1853,7 +1854,7 @@ export class ProjectView
             return;
         }
 
-        pxt.perf.measureStart("loadTutorial loadBlockly")
+        pxt.perf.measureStart(Measurements.LoadTutorialLoadBlockly)
 
         const t = header.tutorial;
 
@@ -1890,7 +1891,7 @@ export class ProjectView
             core.warningNotification(lf("Could not filter tutorial blocks, displaying full toolbox."))
         }
         finally {
-            pxt.perf.measureEnd("loadTutorial loadBlockly")
+            pxt.perf.measureEnd(Measurements.LoadTutorialLoadBlockly)
         }
     }
 
@@ -2776,7 +2777,7 @@ export class ProjectView
     }
 
     private editorLoaded() {
-        pxt.tickEvent('app.editor');
+        pxt.tickEvent('app.editor', { projectHeaderId: this.state.header?.id });
     }
 
     unloadProjectAsync(home?: boolean) {
@@ -2913,7 +2914,7 @@ export class ProjectView
     }
 
     async createProjectAsync(options: ProjectCreationOptions): Promise<void> {
-        pxt.perf.measureStart("createProjectAsync")
+        pxt.perf.measureStart(Measurements.CreateProjectAsync)
         this.setSideDoc(undefined);
         if (!options.prj) options.prj = pxt.appTarget.blocksprj;
         let cfg = pxt.U.clone(options.prj.config);
@@ -3006,7 +3007,7 @@ export class ProjectView
         );
 
         await this.loadHeaderAsync(hd, { filters: options.filters }, false);
-        pxt.perf.measureEnd("createProjectAsync");
+        pxt.perf.measureEnd(Measurements.CreateProjectAsync);
     }
 
     // in multiboard targets, allow use to pick a different board
@@ -3280,7 +3281,7 @@ export class ProjectView
                     this.checkForHwVariant()
                 }, pairAsync)
                 .then(() => {
-                    pxt.perf.recordMilestone("HID bridge init finished")
+                    pxt.perf.recordMilestone(Milestones.HIDBridgeInitFinished)
                 })
             return true
         }
@@ -3653,7 +3654,7 @@ export class ProjectView
         if (this.state.collapseEditorTools) {
             this.expandSimulator();
         }
-        if (!enabled) {
+        if (enabled) {
             document.addEventListener('keydown', this.closeOnEscape);
             simulator.driver.focus();
         } else {
@@ -3807,7 +3808,7 @@ export class ProjectView
     }
 
     stopSimulator(unload?: boolean, opts?: pxt.editor.SimulatorStartOptions) {
-        pxt.perf.measureStart("stopSimulator")
+        pxt.perf.measureStart(Measurements.StopSimulator)
         pxt.tickEvent('simulator.stop')
         const clickTrigger = opts && opts.clickTrigger;
         pxt.debug(`sim: stop (autorun ${this.state.autoRun})`)
@@ -3827,7 +3828,7 @@ export class ProjectView
             this.setState({ simState: SimState.Stopped, autoRun: autoRun });
         }
 
-        pxt.perf.measureEnd("stopSimulator")
+        pxt.perf.measureEnd(Measurements.StopSimulator)
     }
 
     suspendSimulator() {
@@ -4703,9 +4704,9 @@ export class ProjectView
         try {
             if (/^\//.test(path)) {
                 filename = title || path.split('/').reverse()[0].replace('-', ' '); // drop any kind of sub-paths
-                pxt.perf.measureStart("downloadMarkdown");
+                pxt.perf.measureStart(Measurements.DownloadMarkdown);
                 const rawMarkdown = await pxt.Cloud.markdownAsync(path, undefined, undefined, true);
-                pxt.perf.measureEnd("downloadMarkdown");
+                pxt.perf.measureEnd(Measurements.DownloadMarkdown);
                 autoChooseBoard = true;
                 markdown = processMarkdown(rawMarkdown);
             } else if (scriptId) {
@@ -4721,7 +4722,7 @@ export class ProjectView
             } else if (!!ghid && ghid.owner && ghid.project) {
                 pxt.tickEvent("tutorial.github");
                 pxt.log(`loading tutorial from ${ghid.fullName}`)
-                pxt.perf.measureStart("downloadGitHubTutorial");
+                pxt.perf.measureStart(Measurements.DownloadGitHubTutorial);
                 const config = await pxt.packagesConfigAsync();
 
                 const status = pxt.github.repoStatus(ghid, config);
@@ -4737,7 +4738,7 @@ export class ProjectView
                 }
 
                 let gh = await pxt.github.downloadTutorialMarkdownAsync(path, ghid.tag);
-                pxt.perf.measureEnd("downloadGitHubTutorial");
+                pxt.perf.measureEnd(Measurements.DownloadGitHubTutorial);
 
                 // check for cached tutorial info, save into IndexedDB if found
                 if (gh?.files[pxt.TUTORIAL_INFO_FILE]) {
@@ -4869,7 +4870,7 @@ export class ProjectView
     async startActivity(opts: pxt.editor.StartActivityOptions) {
         const { activity, path, editor, title, focus, importOptions, previousProjectHeaderId, carryoverPreviousCode } = opts;
 
-        pxt.perf.measureStart("startActivity");
+        pxt.perf.measureStart(Measurements.StartActivity);
 
         this.textEditor.giveFocusOnLoading = focus;
         switch (activity) {
@@ -4887,7 +4888,7 @@ export class ProjectView
                 break;
         }
 
-        pxt.perf.measureEnd("startActivity")
+        pxt.perf.measureEnd(Measurements.StartActivity);
     }
 
     async completeTutorialAsync(): Promise<void> {
@@ -4982,11 +4983,12 @@ export class ProjectView
         if (this.isTutorial()) {
             pxt.tickEvent("tutorial.editorLoaded")
             this.postTutorialLoaded();
+        }
 
-            pxt.perf.recordMilestone("editorContentLoaded");
-            if (!this.autoRunOnStart()) {
-                pxt.analytics.trackPerformanceReport();
-            }
+        pxt.perf.recordMilestone(Milestones.EditorContentLoaded, { projectHeaderId: this.state.header?.id });
+
+        if (!this.autoRunOnStart()) {
+            pxt.analytics.trackPerformanceReport();
         }
 
         const msg: pxt.editor.EditorContentLoadedRequest = {
@@ -5887,6 +5889,15 @@ function initExtensionsAsync(): Promise<void> {
                     monacoToolbox.overrideToolbox(res.toolboxOptions.monacoToolbox);
                 }
             }
+            if (typeof res.perfMeasurementThresholdMs === "number") {
+                pxt.perf.measurementThresholdMs = res.perfMeasurementThresholdMs;
+            }
+            if (res.onPerfMilestone) {
+                pxt.perf.stats.milestones.subscribe(res.onPerfMilestone);
+            }
+            if (res.onPerfMeasurement) {
+                pxt.perf.stats.durations.subscribe(res.onPerfMeasurement);
+            }
             cmds.setExtensionResult(res);
         });
 }
@@ -5930,7 +5941,7 @@ function filenameForEditor(editor: string): string {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-    pxt.perf.recordMilestone(`DOM loaded`)
+    pxt.perf.recordMilestone(Milestones.DOMLoaded)
 
     pxt.setupWebConfig((window as any).pxtConfig);
     const config = pxt.webConfig
@@ -5958,16 +5969,17 @@ document.addEventListener("DOMContentLoaded", async () => {
         pxt.blocks.showBlockIdInTooltip = true;
     }
 
-    initGitHubDb();
 
-    pxt.perf.measureStart("setAppTarget");
+    pxt.perf.measureStart(Measurements.SetAppTarget);
     pkg.setupAppTarget((window as any).pxtTargetBundle);
+
+    initGitHubDb();
 
     // DO NOT put any async code before this line! The serviceworker must be initialized before
     // the window load event fires
     appcache.init(() => theEditor.reloadEditor());
     pxt.setBundledApiInfo((window as any).pxtTargetBundle.apiInfo);
-    pxt.perf.measureEnd("setAppTarget");
+    pxt.perf.measureEnd(Measurements.SetAppTarget);
 
     let theme = pxt.appTarget.appTheme;
     const isControllerIFrame = theme.allowParentController || pxt.shell.isControllerMode()
@@ -6152,7 +6164,12 @@ document.addEventListener("DOMContentLoaded", async () => {
             if (state)
                 theEditor.setState({ editorState: state });
             return initExtensionsAsync(); // need to happen before cmd init
-        }).then(() => cmds.initAsync())
+        })
+        .then(() => cmds.initAsync())
+        .then(() => {
+            // After extension cmds init, call pxteditor.enableControllerAnalytics again in case we need to send analytics to the extension
+            pxteditor.enableControllerAnalytics();
+        })
         .then(() => {
             initPacketIO();
             initSerial();

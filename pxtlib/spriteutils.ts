@@ -211,18 +211,9 @@ namespace pxt.sprite {
         }
 
         equals(other: TilemapData) {
-            if (!(this.tilemap.equals(other.tilemap)
-                && this.tileset.tileWidth == other.tileset.tileWidth
-                && this.tileset.tiles.length == other.tileset.tiles.length
-                && bitmapEquals(this.layers, other.layers))) {
-                    return false;
-            }
-
-            for (let i = 0; i < this.tileset.tiles.length; i++) {
-                if (!assetEquals(this.tileset.tiles[i], other.tileset.tiles[i])) return false;
-            }
-
-            return true;
+            return this.tilemap.equals(other.tilemap) &&
+                tilesetEquals(this.tileset, other.tileset) &&
+                bitmapEquals(this.layers, other.layers);
         }
     }
 
@@ -736,6 +727,19 @@ namespace pxt.sprite {
         pxt.sprite.trimTilemapTileset(result);
     }
 
+    export function isTilemapEmptyOrUnused(asset: ProjectTilemap, project: TilemapProject, projectFiles: pxt.Map<{content: string}>) {
+        const walls = sprite.Bitmap.fromData(asset.data.layers);
+        for (let x = 0; x < asset.data.tilemap.width; x++) {
+            for (let y = 0; y < asset.data.tilemap.height; y++) {
+                if (asset.data.tilemap.get(x, y) || walls.get(x, y)) {
+                    return false;
+                }
+            }
+        }
+
+        return !project.isAssetUsed(asset, projectFiles);
+    }
+
     function imageLiteralPrologue(fileType: "typescript" | "python", templateLiteral = "img"): string {
         let res = '';
         switch (fileType) {
@@ -803,6 +807,11 @@ namespace pxt.sprite {
 
     export function bitmapEquals(a: pxt.sprite.BitmapData, b: pxt.sprite.BitmapData) {
         return pxt.sprite.Bitmap.fromData(a).equals(pxt.sprite.Bitmap.fromData(b));
+    }
+
+    export function tilesetEquals(a: TileSet, b: TileSet) {
+        return a.tileWidth === b.tileWidth &&
+            pxt.U.arrayEquals(a.tiles, b.tiles, assetEquals);
     }
 
     export function tileWidthToTileScale(tileWidth: number) {

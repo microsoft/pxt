@@ -2,7 +2,6 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { ImageEditorStore } from './store/imageReducer';
 import { dispatchHideAlert } from './actions/dispatch';
-import { IconButton } from "./Button";
 
 export interface AlertOption {
     label: string;

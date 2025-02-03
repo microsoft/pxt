@@ -6,6 +6,7 @@ import * as pxtblockly from "../../pxtblocks";
 
 import U = pxt.Util;
 import { postHostMessageAsync, shouldPostHostMessages } from "../../pxteditor";
+import { Measurements } from "./constants";
 
 function setDiagnostics(operation: "compile" | "decompile" | "typecheck", diagnostics: pxtc.KsDiagnostic[], sourceMap?: pxtc.SourceInterval[]) {
     let mainPkg = pkg.mainEditorPkg();
@@ -1199,7 +1200,7 @@ class ApiInfoIndexedDb {
     }
 
     setAsync(pack: pkg.EditorPackage, apis: pxt.PackageApiInfo): Promise<void> {
-        pxt.perf.measureStart("compiler db setAsync")
+        pxt.perf.measureStart(Measurements.CompilerDbSetAsync)
         const key = getPackageKey(pack);
         const hash = getPackageHash(pack);
 
@@ -1211,7 +1212,7 @@ class ApiInfoIndexedDb {
 
         return this.db.setAsync(ApiInfoIndexedDb.TABLE, entry)
             .then(() => {
-                pxt.perf.measureEnd("compiler db setAsync")
+                pxt.perf.measureEnd(Measurements.CompilerDbSetAsync)
             })
     }
 

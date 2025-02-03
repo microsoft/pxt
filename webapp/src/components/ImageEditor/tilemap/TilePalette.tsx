@@ -6,11 +6,14 @@ import { dispatchChangeSelectedColor, dispatchChangeBackgroundColor, dispatchSwa
     dispatchCreateNewTile, dispatchSetGalleryOpen, dispatchOpenTileEditor, dispatchDeleteTile,
     dispatchShowAlert, dispatchHideAlert } from '../actions/dispatch';
 import { TimelineFrame } from '../TimelineFrame';
-import { Dropdown, DropdownOption } from '../Dropdown';
 import { Pivot, PivotOption } from '../Pivot';
-import { IconButton } from '../Button';
 import { AlertOption } from '../Alert';
 import { createTile } from '../../../assets';
+
+import { CarouselNav } from "../../../../../react-common/components/controls/CarouselNav";
+import { Dropdown, DropdownItem } from '../../../../../react-common/components/controls/Dropdown';
+import { Button } from '../../../../../react-common/components/controls/Button';
+import { classList } from '../../../../../react-common/components/util';
 
 export interface TilePaletteProps {
     colors: string[];
@@ -49,7 +52,9 @@ const SCALE = pxt.BrowserUtils.isEdge() ? 25 : 1;
 
 const TILES_PER_PAGE = 16;
 
-interface Category extends DropdownOption {
+interface Category {
+    id: string;
+    text: string;
     tiles: GalleryTile[];
 }
 
@@ -93,7 +98,6 @@ interface UserTile {
 type RenderedTile = GalleryTile | UserTile
 
 class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
-    protected canvas: HTMLCanvasElement;
     protected renderedTiles: RenderedTile[];
     protected categoryTiles: RenderedTile[];
     protected categories: Category[];
@@ -129,9 +133,7 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
     }
 
     componentDidMount() {
-        this.canvas = this.refs["tile-canvas-surface"] as HTMLCanvasElement;
         this.updateGalleryTiles();
-        this.redrawCanvas();
     }
 
     UNSAFE_componentWillReceiveProps(nextProps: TilePaletteProps) {
@@ -145,7 +147,6 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
 
     componentDidUpdate() {
         this.updateGalleryTiles();
-        this.redrawCanvas();
     }
 
     render() {
@@ -164,6 +165,19 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
         const showCreateTile = !galleryOpen && (totalPages === 1 || page === totalPages - 1);
         const controlsDisabled = galleryOpen || !this.renderedTiles.some(t => !isGalleryTile(t) && t.index === selected);
 
+        const columns = 4;
+        const rows = 4;
+        const startIndex = page * columns * rows;
+
+        const visibleTiles = this.categoryTiles.slice(startIndex, startIndex + columns * rows);
+
+        const dropdownItems: DropdownItem[] = this.categories.filter(c => !!c.tiles.length)
+            .map(cat => ({
+                id: cat.id,
+                title: cat.text,
+                label: cat.text,
+            }));
+
         return <div className="tile-palette">
             <div className="tile-palette-fg-bg">
                 <div className={`tile-palette-swatch fg ${drawingMode == TileDrawingMode.Default ? 'selected' : ''}`} onClick={this.foregroundBackgroundClickHandler} role="button">
@@ -175,10 +189,12 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
                     <TimelineFrame
                         frames={[{ bitmap: bg }]}
                         colors={colors} />
-                    <IconButton
-                        iconClass={"ms-Icon ms-Icon--ReturnKey"}
+                    <Button
+                        className="image-editor-button toggle"
+                        leftIcon={"ms-Icon ms-Icon--ReturnKey"}
                         title={lf("Swap the background and foreground colors.")}
-                        toggle={true} />
+                        onClick={this.foregroundBackgroundClickHandler}
+                    />
                 </div>
                 <div className={`tile-palette-swatch wall ${drawingMode == TileDrawingMode.Wall ? 'selected' : ''}`}
                     onClick={this.wallClickHandler}
@@ -191,30 +207,38 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
             </div>
             <Pivot options={tabs} selected={galleryOpen ? 1 : 0} onChange={this.pivotHandler} />
             <div className="tile-palette-controls-outer">
-                { galleryOpen && <Dropdown onChange={this.dropdownHandler} options={this.categories.filter(c => !!c.tiles.length)} selected={category} /> }
+                { galleryOpen &&
+                    <Dropdown
+                        id="tile-palette-gallery"
+                        className="tile-palette-dropdown"
+                        items={dropdownItems}
+                        onItemSelected={this.dropdownHandler}
+                        selectedId={dropdownItems[category].id}
+                    />
+                }
 
                 { !galleryOpen &&
                     <div className="tile-palette-controls">
-                        <IconButton
+                        <Button
+                            className={classList("image-editor-button", !controlsDisabled && "toggle")}
                             onClick={this.tileEditHandler}
-                            iconClass={"ms-Icon ms-Icon--SingleColumnEdit"}
+                            leftIcon={"ms-Icon ms-Icon--SingleColumnEdit"}
                             title={lf("Edit the selected tile")}
                             disabled={controlsDisabled}
-                            toggle={!controlsDisabled}
                         />
-                        <IconButton
+                        <Button
+                            className={classList("image-editor-button", !controlsDisabled && "toggle")}
                             onClick={this.tileDuplicateHandler}
-                            iconClass={"ms-Icon ms-Icon--Copy"}
+                            leftIcon={"ms-Icon ms-Icon--Copy"}
                             title={lf("Duplicate the selected tile")}
                             disabled={controlsDisabled}
-                            toggle={!controlsDisabled}
                         />
-                        <IconButton
+                        <Button
+                            className={classList("image-editor-button", !controlsDisabled && "toggle")}
                             onClick={this.tileDeleteAlertHandler}
-                            iconClass={"ms-Icon ms-Icon--Delete"}
+                            leftIcon={"ms-Icon ms-Icon--Delete"}
                             title={lf("Delete the selected tile")}
                             disabled={controlsDisabled}
-                            toggle={!controlsDisabled}
                         />
                     </div>
                 }
@@ -222,20 +246,34 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
 
             <div className="tile-canvas-outer" onContextMenu={this.preventContextMenu}>
                 <div className="tile-canvas">
-                    <canvas ref="tile-canvas-surface" className="paint-surface" onMouseDown={this.canvasClickHandler} onTouchStart={this.canvasTouchHandler} role="complementary"></canvas>
+                    { visibleTiles.map((tile, index) =>
+                        <TileButton
+                            key={index}
+                            tile={tile.bitmap}
+                            title={lf("Tile {0}", tile)}
+                            colors={colors}
+                            onClick={() => this.handleTileClick(index, false)}
+                            onRightClick={() => this.handleTileClick(index, true)}
+                        />
+                    )}
                     { showCreateTile &&
-                        <div ref="create-tile-ref">
-                            <IconButton
+                        <div className="tile-button-outer" >
+                            <Button
+                                className="image-editor-button add-tile-button toggle"
                                 onClick={this.tileCreateHandler}
-                                iconClass={"ms-Icon ms-Icon--Add"}
+                                leftIcon={"ms-Icon ms-Icon--Add"}
                                 title={lf("Create a new tile")}
-                                toggle={true}
                             />
                         </div>
                     }
                 </div>
                 <div className="tile-canvas-controls">
-                    { pageControls(totalPages, page, this.pageHandler) }
+                    <CarouselNav
+                        selected={page}
+                        pages={totalPages}
+                        onPageSelected={this.pageHandler}
+                        maxDisplayed={5}
+                    />
                 </div>
             </div>
         </div>;
@@ -281,65 +319,8 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
         }
     }
 
-    protected redrawCanvas() {
-        const columns = 4;
-        const rows = 4;
-        const margin = 1;
-
-        const { tileset, page, selected } = this.props;
-
-        const startIndex = page * columns * rows;
-
-        const width = tileset.tileWidth + margin;
-
-        this.canvas.width = (width * columns + margin) * SCALE;
-        this.canvas.height = (width * rows + margin) * SCALE;
-
-        const context = this.canvas.getContext("2d");
-
-        for (let r = 0; r < rows; r++) {
-            for (let c = 0; c < columns; c++) {
-                const tile = this.categoryTiles[startIndex + r * columns + c];
-
-                if (tile) {
-                    if (!isGalleryTile(tile) && tile.index === selected) {
-                        context.fillStyle = "#ff0000";
-                        context.fillRect(c * width, r * width, width + 1, width + 1);
-                    }
-
-                    context.fillStyle = "#333333";
-                    context.fillRect(c * width + 1, r * width + 1, width - 1, width - 1);
-
-                    this.drawBitmap(pxt.sprite.Bitmap.fromData(tile.bitmap), 1 + c * width, 1 + r * width)
-                }
-            }
-        }
-
-        this.positionCreateTileButton();
-    }
-
-    protected drawBitmap(bitmap: pxt.sprite.Bitmap, x0 = 0, y0 = 0, transparent = true, cellWidth = SCALE, target = this.canvas) {
-        const { colors } = this.props;
-
-        const context = target.getContext("2d");
-        context.imageSmoothingEnabled = false;
-        for (let x = 0; x < bitmap.width; x++) {
-            for (let y = 0; y < bitmap.height; y++) {
-                const index = bitmap.get(x, y);
-
-                if (index) {
-                    context.fillStyle = colors[index];
-                    context.fillRect((x + x0) * cellWidth, (y + y0) * cellWidth, cellWidth, cellWidth);
-                }
-                else {
-                    if (!transparent) context.clearRect((x + x0) * cellWidth, (y + y0) * cellWidth, cellWidth, cellWidth);
-                }
-            }
-        }
-    }
-
-    protected dropdownHandler = (option: DropdownOption, index: number) => {
-        this.props.dispatchChangeTilePaletteCategory(index);
+    protected dropdownHandler = (id: string) => {
+        this.props.dispatchChangeTilePaletteCategory(this.categories.filter(c => !!c.tiles.length).findIndex(c => c.id === id));
     }
 
     protected pivotHandler = (option: PivotOption, index: number) => {
@@ -401,20 +382,9 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
         }
     }
 
-    protected canvasClickHandler = (ev: React.MouseEvent<HTMLCanvasElement>) => {
-        this.handleCanvasClickCore(ev.clientX, ev.clientY, ev.button > 0);
-    }
+    protected handleTileClick(buttonIndex: number, isRightClick: boolean) {
+        const tile = this.renderedTiles[buttonIndex];
 
-    protected canvasTouchHandler = (ev: React.TouchEvent<HTMLCanvasElement>) => {
-        this.handleCanvasClickCore(ev.changedTouches[0].clientX, ev.changedTouches[0].clientY, false);
-    }
-
-    protected handleCanvasClickCore(clientX: number, clientY: number, isRightClick: boolean) {
-        const bounds = this.canvas.getBoundingClientRect();
-        const column = ((clientX - bounds.left) / (bounds.width / 4)) | 0;
-        const row = ((clientY - bounds.top) / (bounds.height / 4)) | 0;
-
-        const tile = this.renderedTiles[row * 4 + column];
         if (tile) {
             let index: number;
             let qname: string;
@@ -453,19 +423,6 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
             options.forEach(opt => {
                 opt.tiles = gallery.filter(t => t.tags.indexOf(opt.id) !== -1 && t.tileWidth === tileset.tileWidth);
             });
-        }
-    }
-
-    protected positionCreateTileButton() {
-        const button = this.refs["create-tile-ref"] as HTMLDivElement;
-
-        if (button) {
-            const column = this.categoryTiles.length % 4;
-            const row = Math.floor(this.categoryTiles.length / 4) % 4;
-
-            button.style.position = "absolute";
-            button.style.left = "calc(" + (column / 4) + " * (100% - 0.5rem) + 0.25rem)";
-            button.style.top = "calc(" + (row / 4) + " * (100% - 0.5rem) + 0.25rem)";
         }
     }
 
@@ -512,35 +469,55 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
     }
 }
 
-
-function pageControls(pages: number, selected: number, onClick: (index: number) => void) {
-    const width = 16 + (pages - 1) * 5;
-    const pageMap: boolean[] = [];
-    for (let i = 0; i < pages; i++) pageMap[i] = i === selected;
-
-    return <svg xmlns="http://www.w3.org/2000/svg" viewBox={`0 0 ${width} 10`} className={`tile-palette-pages ${pages < 2 ?  'disabled' : ''}`}>
-        <polygon
-            className="tile-palette-page-arrow"
-            points="1,5 4,3 4,7"
-            onClick={selected ? () => onClick(selected - 1) : undefined} />
-        {
-            pageMap.map((isSelected, index) =>
-                <circle
-                    className="tile-palette-page-dot"
-                    key={index}
-                    cx={8 + index * 5}
-                    cy="5"
-                    r={isSelected ? 2 : 1}
-                    onClick={!isSelected ? () => onClick(index) : undefined}/>
-            )
-        }
-        <polygon
-            className="tile-palette-page-arrow"
-            points={`${width - 1},5 ${width - 4},3 ${width - 4},7`}
-            onClick={(selected < pages - 1) ? () =>  onClick(selected + 1) : undefined} />
-    </svg>
+interface TileButtonProps {
+    tile: pxt.sprite.BitmapData;
+    title: string;
+    onClick: () => void;
+    onRightClick: () => void;
+    colors: string[];
 }
 
+const TileButton = (props: TileButtonProps) => {
+    const { tile, title, onClick, onRightClick, colors } = props;
+
+    const canvasRef = React.useRef<HTMLCanvasElement>();
+
+    React.useEffect(() => {
+        const canvas = canvasRef.current;
+
+        canvas.width = tile.width;
+        canvas.height = tile.height;
+
+        const context = canvas.getContext("2d");
+
+        context.clearRect(0, 0, canvas.width, canvas.height);
+
+        const bitmap = pxt.sprite.Bitmap.fromData(tile);
+
+        for (let x = 0; x < tile.width; x++) {
+            for (let y = 0; y < tile.height; y++) {
+                const index = bitmap.get(x, y);
+
+                if (index) {
+                    context.fillStyle = colors[index];
+                    context.fillRect(x, y, 1, 1);
+                }
+            }
+        }
+    }, [tile, colors])
+
+    return (
+        <div className="tile-button-outer">
+            <Button
+                className="image-editor-button tile-button"
+                title={title}
+                onClick={onClick}
+                onRightClick={onRightClick}
+                label={<canvas ref={canvasRef} />}
+            />
+        </div>
+    )
+}
 
 function mapStateToProps({ store: { present }, editor }: ImageEditorStore, ownProps: any) {
     let state = (present as TilemapState);

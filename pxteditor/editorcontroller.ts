@@ -335,8 +335,17 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
 /**
  * Sends analytics messages upstream to container if any
  */
+let controllerAnalyticsEnabled = false;
 export function enableControllerAnalytics() {
-    if (!pxt.appTarget.appTheme.allowParentController || !pxt.BrowserUtils.isIFrame()) return;
+    if (controllerAnalyticsEnabled) return;
+
+    const hasOnPostHostMessage = !!pxt.commands.onPostHostMessage;
+    const hasAllowParentController = pxt.appTarget.appTheme.allowParentController;
+    const isInsideIFrame = pxt.BrowserUtils.isIFrame();
+
+    if (!(hasOnPostHostMessage || (hasAllowParentController && isInsideIFrame))) {
+        return;
+    }
 
     const te = pxt.tickEvent;
     pxt.tickEvent = function (id: string, data?: pxt.Map<string | number>): void {
@@ -379,6 +388,8 @@ export function enableControllerAnalytics() {
             data
         })
     }
+
+    controllerAnalyticsEnabled = true;
 }
 
 function sendResponse(request: pxt.editor.EditorMessage, resp: any, success: boolean, error: any) {
@@ -422,6 +433,16 @@ export function postHostMessageAsync(msg: pxt.editor.EditorMessageRequest): Prom
         }
         else {
             window.parent.postMessage(env, "*");
+        }
+
+        // Post to editor extension if it wants to be notified of these messages.
+        // Note this is a one-way notification. Responses are not supported.
+        if (pxt.commands.onPostHostMessage) {
+            try {
+                pxt.commands.onPostHostMessage(env);
+            } catch (err) {
+                pxt.reportException(err);
+            }
         }
 
         if (!msg.response)
