@@ -5282,7 +5282,7 @@ export class ProjectView
         const hideMenuBar = targetTheme.hideMenuBar || hideTutorialIteration || (isTabTutorial && pxt.appTarget.appTheme.embeddedTutorial) || pxt.shell.isTimeMachineEmbed();
         const isHeadless = simOpts && simOpts.headless;
         const selectLanguage = targetTheme.selectLanguage;
-        const giveFeedback = targetTheme.giveFeedback;
+        const feedbackEnabled = targetTheme.feedbackEnabled;
         const showEditorToolbar = inEditor && !hideEditorToolbar && this.editor.hasEditorToolbar();
         const useSerialEditor = pxt.appTarget.serial && !!pxt.appTarget.serial.useEditor;
         const showSideDoc = sideDocs && this.state.sideDocsLoadUrl && !this.state.sideDocsCollapsed;
@@ -5424,7 +5424,7 @@ export class ProjectView
                 {hwDialog ? <projects.ChooseHwDialog parent={this} ref={this.handleChooseHwDialogRef} /> : undefined}
                 {sandbox || !sharingEnabled ? undefined : <share.ShareEditor parent={this} ref={this.handleShareEditorRef} loading={this.state.publishing} />}
                 {selectLanguage ? <lang.LanguagePicker parent={this} ref={this.handleLanguagePickerRef} /> : undefined}
-                {giveFeedback && this.state.feedback.showing ? <Feedback onClose={this.hideFeedback} kind={this.state.feedback.kind}/> : undefined}
+                {feedbackEnabled && this.state.feedback.showing ? <Feedback onClose={this.hideFeedback} kind={this.state.feedback.kind}/> : undefined}
                 {sandbox ? <container.SandboxFooter parent={this} /> : undefined}
                 {hideMenuBar ? <div id="editorlogo"><a className="poweredbylogo"></a></div> : undefined}
                 {lightbox ? <sui.Dimmer isOpen={true} active={lightbox} portalClassName={'tutorial'} className={'ui modal'}

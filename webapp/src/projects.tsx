@@ -316,7 +316,7 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
             {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...")} onClick={this.showReportAbuse} /> : undefined}
             <sui.Item role="menuitem" icon='sign out' text={lf("Reset")} onClick={this.showResetDialog} />
             <sui.Item role="menuitem" text={lf("About...")} onClick={this.showAboutDialog} />
-            {targetTheme.giveFeedback ? <sui.Item role="menuitem" icon="comment" text={lf("Give Feedback")} onClick={this.showFeedbackDialog} /> : undefined}
+            {targetTheme.feedbackEnabled ? <sui.Item role="menuitem" icon="comment" text={lf("Give Feedback")} onClick={this.showFeedbackDialog} /> : undefined}
         </sui.DropdownMenu>;
     }
 }
