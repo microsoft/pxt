@@ -899,7 +899,6 @@ function upgradeFromBlocksAsync(): Promise<UpgradeResult> {
 
             const xml = Blockly.utils.xml.textToDom(text);
             pxtblockly.domToWorkspaceNoEvents(xml, ws);
-            pxtblockly.upgradeTilemapsInWorkspace(ws, pxt.react.getTilemapProject());
             const upgradedXml = pxtblockly.workspaceToDom(ws);
             patchedFiles[pxt.MAIN_BLOCKS] = Blockly.Xml.domToText(upgradedXml);
 

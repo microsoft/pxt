@@ -238,28 +238,46 @@ export function needsTilemapUpgrade(ws: Blockly.Workspace) {
     return !!allTiles.length;
 }
 
-export function upgradeTilemapsInWorkspace(ws: Blockly.Workspace, proj: pxt.TilemapProject) {
-    const allTiles = ws.getVariablesOfType(pxt.sprite.BLOCKLY_TILESET_TYPE).map(model => pxt.sprite.legacy.blocklyVariableToTile(model.name));
-    if (!allTiles.length) return;
+export function updateTilemapXml(dom: Element, proj: pxt.TilemapProject) {
+    let needsUpgrade = false;
 
-    try {
-        Blockly.Events.disable();
-        let customMapping: pxt.Tile[] = [];
+    const upgradedTileMapping: pxt.Map<pxt.Tile> = {};
 
-        for (const tile of allTiles) {
-            if (tile.qualifiedName) {
-                customMapping[tile.projectId] = proj.resolveTile(tile.qualifiedName);
+    for (const element of dom.children) {
+        if (element.tagName.toLowerCase() === "variables") {
+            const toRemove: Element[] = [];
+
+            for (const variable of element.children) {
+                if (variable.getAttribute("type") === pxt.sprite.BLOCKLY_TILESET_TYPE) {
+                    needsUpgrade = true;
+                    const varName = variable.textContent;
+                    const parsed = pxt.sprite.legacy.blocklyVariableToTile(varName);
+                    if (!parsed.qualifiedName) {
+                        const oldId = "myTiles.tile" + parsed.projectId;
+                        const newTile = proj.createNewTile(parsed.data, oldId);
+                        upgradedTileMapping[oldId] = newTile
+                    }
+                    toRemove.push(variable);
+                }
             }
-            else if (tile.data) {
-                customMapping[tile.projectId] = proj.createNewTile(tile.data, "myTiles.tile" + tile.projectId);
+
+            for (const variable of toRemove) {
+                variable.remove();
             }
-            deleteTilesetTileIfExists(ws, tile);
         }
+    }
 
-        const tilemaps = getAllBlocksWithTilemaps(ws);
+    if (!needsUpgrade) return;
 
-        for (const tilemap of tilemaps) {
-            const legacy = pxt.sprite.legacy.decodeTilemap(tilemap.ref.getInitText(), "typescript");
+    for (const field of dom.getElementsByTagName("field")) {
+        const value = field.textContent;
+
+        const trimmed = value.trim();
+        if (upgradedTileMapping[trimmed]) {
+            field.textContent = pxt.getTSReferenceForAsset(upgradedTileMapping[trimmed]);
+        }
+        else if (trimmed.startsWith(`tiles.createTilemap(`)) {
+            const legacy = pxt.sprite.legacy.decodeTilemap(value, "typescript");
 
             const mapping: pxt.Tile[] = [];
 
@@ -268,7 +286,7 @@ export function upgradeTilemapsInWorkspace(ws: Blockly.Workspace, proj: pxt.Tile
                     tileWidth: legacy.tileset.tileWidth,
                     tiles: legacy.tileset.tiles.map((t, index) => {
                         if (t.projectId != null) {
-                            return customMapping[t.projectId];
+                            return upgradedTileMapping["myTiles.tile" + t.projectId];
                         }
                         if (!mapping[index]) {
                             mapping[index] = proj.resolveTile(t.qualifiedName)
@@ -280,18 +298,11 @@ export function upgradeTilemapsInWorkspace(ws: Blockly.Workspace, proj: pxt.Tile
                 legacy.layers
             );
 
-            tilemap.ref.setValue(pxt.sprite.encodeTilemap(newData, "typescript"));
-        }
+            const [id] = proj.createNewTilemapFromData(newData);
+            const asset = proj.lookupAsset(pxt.AssetType.Tilemap, id);
 
-        const tilesets = getAllBlocksWithTilesets(ws);
-
-        for (const tileset of tilesets) {
-            // Force a re-render. getSize() will rerender if necessary
-            tileset.ref.doValueUpdate_(tileset.ref.getValue());
-            tileset.ref.getSize();
+            field.textContent = pxt.getTSReferenceForAsset(asset);
         }
-    } finally {
-        Blockly.Events.enable();
     }
 }
 

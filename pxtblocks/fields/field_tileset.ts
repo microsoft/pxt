@@ -193,14 +193,18 @@ export class FieldTileset extends FieldImages implements FieldCustom {
             if (newValue) {
                 const project = pxt.react.getTilemapProject();
                 const match = /^\s*assets\s*\.\s*tile\s*`([^`]*)`\s*$/.exec(newValue);
+                let tile: pxt.Tile;
 
                 if (match) {
-                    const tile = project.lookupAssetByName(pxt.AssetType.Tile, match[1]);
+                    tile = project.lookupAssetByName(pxt.AssetType.Tile, match[1]);
+                }
+                else if (newValue.startsWith(pxt.sprite.TILE_NAMESPACE)) {
+                    tile = project.lookupAsset(pxt.AssetType.Tile, newValue.trim());
+                }
 
-                    if (tile) {
-                        this.localTile = tile;
-                        return newValue;
-                    }
+                if (tile) {
+                    this.localTile = tile;
+                    return pxt.getTSReferenceForAsset(tile, false);
                 }
             }
 
