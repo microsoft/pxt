@@ -16,7 +16,7 @@ interface IFeedbackModalProps {
 // right now, there are two kinds of feedback that I think could be valuable for our targets
 // generic and rating feedback, but we will likely want to expand this
 interface IFeedbackProps {
-  kind: "generic" | "rating";
+  kind: ocv.FeedbackKind;
   onClose: () => void;
 }
 

@@ -281,7 +281,7 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
 
     showFeedbackDialog() {
         pxt.tickEvent("home.feedback");
-        this.props.parent.showFeedbackDialog();
+        this.props.parent.showFeedbackDialog("generic");
     }
 
     signOutGithub() {

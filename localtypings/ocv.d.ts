@@ -1,4 +1,7 @@
 declare namespace ocv {
+
+    type FeedbackKind = "generic" | "rating";
+
     const enum FeedbackAgeGroup {
         Undefined = "Undefined",
         MinorWithoutParentalConsent = "MinorWithoutParentalConsent",

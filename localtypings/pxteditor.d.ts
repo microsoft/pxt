@@ -1,6 +1,7 @@
 /// <reference path="../built/pxtlib.d.ts" />
 /// <reference path="./projectheader.d.ts" />
 /// <reference path="./validatorPlan.d.ts" />
+/// <reference path="./ocv.d.ts" />
 
 declare namespace pxt.editor {
     export interface EditorMessage {
@@ -751,6 +752,11 @@ declare namespace pxt.editor {
         cmd?: string;
     }
 
+    export interface FeedbackState {
+        showing: boolean;
+        kind?: ocv.FeedbackKind;
+    }
+
     export interface IAppProps { }
     export interface IAppState {
         active?: boolean; // is this tab visible at all
@@ -805,7 +811,7 @@ declare namespace pxt.editor {
         extensionsVisible?: boolean;
         isMultiplayerGame?: boolean; // Arcade: Does the current project contain multiplayer blocks?
         onboarding?: pxt.tour.BubbleStep[];
-        feedback?: boolean;
+        feedback?: FeedbackState;
     }
 
     export interface EditorState {
@@ -1048,7 +1054,7 @@ declare namespace pxt.editor {
         showLanguagePicker(): void;
         showShareDialog(title?: string, kind?: "multiplayer" | "vscode" | "share"): void;
         showAboutDialog(): void;
-        showFeedbackDialog(): void;
+        showFeedbackDialog(kind: ocv.FeedbackKind): void;
         showTurnBackTimeDialogAsync(): Promise<void>;
 
         showLoginDialog(continuationHash?: string): void;

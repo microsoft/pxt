@@ -165,7 +165,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
 
     showFeedbackDialog() {
         pxt.tickEvent("menu.feedback");
-        this.props.parent.showFeedbackDialog();
+        this.props.parent.showFeedbackDialog("generic");
     }
 
     openSettings() {

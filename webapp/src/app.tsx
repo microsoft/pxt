@@ -201,7 +201,7 @@ export class ProjectView
             isMultiplayerGame: false,
             onboarding: undefined,
             mute: pxt.editor.MuteState.Unmuted,
-            feedback: false,
+            feedback: {showing: false, kind: "generic"} // state that tracks if the feedback modal is showing and what kind
         };
         if (!this.settings.editorFontSize) this.settings.editorFontSize = /mobile/i.test(navigator.userAgent) ? 15 : 19;
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
@@ -4502,8 +4502,8 @@ export class ProjectView
         dialogs.showAboutDialogAsync(this);
     }
 
-    showFeedbackDialog(): void {
-        this.showFeedback();
+    showFeedbackDialog(kind: ocv.FeedbackKind): void {
+        this.showFeedback(kind);
     }
 
     async showTurnBackTimeDialogAsync() {
@@ -5137,11 +5137,11 @@ export class ProjectView
     ///////////////////////////////////////////////////////////
 
     hideFeedback() {
-        this.setState({ feedback: false });
+        this.setState({ feedback: {...this.state.feedback, showing: false } });
     }
 
-    showFeedback() {
-        this.setState({ feedback: true });
+    showFeedback(kind: ocv.FeedbackKind) {
+        this.setState({ feedback: { showing: true, kind } });
     }
 
     ///////////////////////////////////////////////////////////
@@ -5424,7 +5424,7 @@ export class ProjectView
                 {hwDialog ? <projects.ChooseHwDialog parent={this} ref={this.handleChooseHwDialogRef} /> : undefined}
                 {sandbox || !sharingEnabled ? undefined : <share.ShareEditor parent={this} ref={this.handleShareEditorRef} loading={this.state.publishing} />}
                 {selectLanguage ? <lang.LanguagePicker parent={this} ref={this.handleLanguagePickerRef} /> : undefined}
-                {giveFeedback && this.state.feedback ? <Feedback onClose={this.hideFeedback} kind="generic"/> : undefined}
+                {giveFeedback && this.state.feedback.showing ? <Feedback onClose={this.hideFeedback} kind={this.state.feedback.kind}/> : undefined}
                 {sandbox ? <container.SandboxFooter parent={this} /> : undefined}
                 {hideMenuBar ? <div id="editorlogo"><a className="poweredbylogo"></a></div> : undefined}
                 {lightbox ? <sui.Dimmer isOpen={true} active={lightbox} portalClassName={'tutorial'} className={'ui modal'}
