@@ -58,7 +58,6 @@ let themeOptions: ocv.IThemeOptions = {
 let initfeedbackOptions: ocv.IFeedbackInitOptions;
 let feedbackCallbacks: ocv.IFeedbackCallbackFunctions;
 let FEEDBACK_FRAME_ID: string;
-let currentTheme = '';
 
 // the function to initialize the feedback event listener
 // feedbackConfig: needs to be passed in as a prop because the things that
@@ -132,7 +131,8 @@ const getIFrameAndSend = (payload: FeedbackResponsePayloadType, url: string) => 
 // haven't implemented yet with events, but this will be needed in order to update to high contrast
 // general changes need to be made as well use the correct theme. the windows ones were just the defaults.
 const sendUpdateTheme = () => {
-    if (currentTheme == 'WindowsDark') {
+    let currentTheme = themeOptions.baseTheme;
+    if (currentTheme === 'WindowsDark') {
         currentTheme = 'WindowsLight'
     } else {
         currentTheme = 'WindowsDark'
@@ -143,6 +143,7 @@ const sendUpdateTheme = () => {
             baseTheme: currentTheme,
         },
     }
+    themeOptions.baseTheme = currentTheme;
     getIFrameAndSend(response, feedbackFrameUrl);
 }
 
