@@ -124,6 +124,12 @@ const feedbackCallbackEventListener = (event: MessageEvent<FeedbackRequestPayloa
 
 // ***************** Helper Functions *****************
 
+const getIFrameAndSend = (payload: FeedbackResponsePayloadType, url: string) => {
+    const iFrameElement = document.getElementById(FEEDBACK_FRAME_ID) as HTMLIFrameElement
+    if (iFrameElement) {
+        iFrameElement.contentWindow!.postMessage(payload, feedbackFrameUrl);
+    }
+}
 // TODO
 // haven't implemented yet with events, but this will be needed in order to update to high contrast
 // general changes need to be made as well use the correct theme. the windows ones were just the defaults.
@@ -139,8 +145,7 @@ const sendUpdateTheme = () => {
             baseTheme: currentTheme,
         },
     }
-    const iFrameElement = document.getElementById(FEEDBACK_FRAME_ID) as HTMLIFrameElement
-    iFrameElement!.contentWindow!.postMessage(response, feedbackFrameUrl)
+    getIFrameAndSend(response, feedbackFrameUrl);
 }
 
 
@@ -152,7 +157,5 @@ const sendFeedbackInitOptions = () => {
         event: 'InAppFeedbackInitOptions',
         data: initfeedbackOptions,
     }
-    response = JSON.parse(JSON.stringify(response))
-    const iFrameElement = document.getElementById(FEEDBACK_FRAME_ID) as HTMLIFrameElement
-    iFrameElement!.contentWindow!.postMessage(response, feedbackFrameUrl)
+    getIFrameAndSend(response, feedbackFrameUrl);
 }
