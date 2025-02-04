@@ -31,7 +31,10 @@ export function domToWorkspaceNoEvents(dom: Element, workspace: Blockly.Workspac
     let newBlockIds: string[] = [];
     patchCommentIds(dom);
     patchShadows(dom, false);
-    updateTilemapXml(dom, pxt.react.getTilemapProject());
+
+    if (pxt.react.getTilemapProject) {
+        updateTilemapXml(dom, pxt.react.getTilemapProject());
+    }
 
     try {
         Blockly.Events.disable();
