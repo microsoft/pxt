@@ -114,9 +114,7 @@ const feedbackCallbackEventListener = (event: MessageEvent<FeedbackRequestPayloa
                 break
             case 'InAppFeedbackDismissWithResult': //Invoked when feedback is dismissed - the big important one for us to be able to close the feedback modal
                 pxt.debug('InAppFeedbackDismissWithResult: ', payload.EventArgs);
-                if (feedbackCallbacks.onDismiss) {
-                    feedbackCallbacks.onDismiss();
-                }
+                feedbackCallbacks?.onDismiss?.();
                 break
         }
     }
