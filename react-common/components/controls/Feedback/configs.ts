@@ -1,7 +1,5 @@
 /// <reference path="../../../../localtypings/ocv.d.ts" />
 
-export const appId = 50315;
-export const feedbackFrameUrl = 'https://admin-ignite.microsoft.com';
 
 export const baseConfig: ocv.IFeedbackConfig = {
     feedbackUiType: ocv.FeedbackUiType.NoSurface,

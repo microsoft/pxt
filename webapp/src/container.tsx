@@ -319,6 +319,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         const showPairDevice = pxt.usb.isEnabled;
 
         const showCenterDivider = targetTheme.selectLanguage || targetTheme.highContrast || showGreenScreen || githubUser;
+        const showFeedbackOption = targetTheme.feedbackEnabled && targetTheme.ocvAppId && targetTheme.ocvFrameUrl;
 
         const simCollapseText = headless ? lf("Toggle the File Explorer") : lf("Toggle the simulator");
 
@@ -355,7 +356,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             {
                 // we always need a way to clear local storage, regardless if signed in or not
             }
-            {targetTheme.feedbackEnabled ? <sui.Item role="menuitem" icon="comment" text={lf("Give Feedback")} onClick={this.showFeedbackDialog} /> : undefined}
+            {showFeedbackOption ? <sui.Item role="menuitem" icon="comment" text={lf("Give Feedback")} onClick={this.showFeedbackDialog} /> : undefined}
         </sui.DropdownMenu>;
     }
 }

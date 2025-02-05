@@ -1,5 +1,4 @@
 /// <reference path="../../../../localtypings/ocv.d.ts" />
-import { appId, feedbackFrameUrl } from './configs';
 
 type FeedbackRequestEventArgsType = FeedbackInitOptionsEventPayload | FeedbackErrorEventPayload | FeedbackInitializationCompleteEventPayload | FeedbackOnSuccessEventPayload | FeedbackDismissWithResultEventPayload;
 
@@ -73,7 +72,7 @@ export const initFeedbackEventListener = (feedbackConfig: ocv.IFeedbackConfig, f
     window.addEventListener('message', feedbackCallbackEventListener);
     feedbackCallbacks = callbacks;
     initfeedbackOptions = {
-        appId: appId,
+        appId: pxt.appTarget.appTheme.ocvAppId,
         ageGroup: ocv.FeedbackAgeGroup.Undefined,
         authenticationType: ocv.FeedbackAuthenticationType.Unauthenticated,
         clientName: "MakeCode",
@@ -121,10 +120,10 @@ const feedbackCallbackEventListener = (event: MessageEvent<FeedbackRequestPayloa
 
 // ***************** Helper Functions *****************
 
-const getIFrameAndSend = (payload: FeedbackResponsePayloadType, url: string) => {
+const getIFrameAndSend = (payload: FeedbackResponsePayloadType) => {
     const iFrameElement = document.getElementById(FEEDBACK_FRAME_ID) as HTMLIFrameElement
     if (iFrameElement) {
-        iFrameElement.contentWindow!.postMessage(payload, feedbackFrameUrl);
+        iFrameElement.contentWindow!.postMessage(payload, pxt.appTarget.appTheme.ocvFrameUrl);
     }
 }
 // TODO
@@ -144,7 +143,7 @@ const sendUpdateTheme = () => {
         },
     }
     themeOptions.baseTheme = currentTheme;
-    getIFrameAndSend(response, feedbackFrameUrl);
+    getIFrameAndSend(response);
 }
 
 
@@ -156,5 +155,5 @@ const sendFeedbackInitOptions = () => {
         event: 'InAppFeedbackInitOptions',
         data: initfeedbackOptions,
     }
-    getIFrameAndSend(response, feedbackFrameUrl);
+    getIFrameAndSend(response);
 }

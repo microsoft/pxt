@@ -1,7 +1,7 @@
 /// <reference path="../../../../localtypings/ocv.d.ts" />
 import { useEffect } from "react"
 import { initFeedbackEventListener, removeFeedbackEventListener } from "./FeedbackEventListener";
-import { baseConfig, ratingFeedbackConfig, appId, feedbackFrameUrl } from "./configs";
+import { baseConfig, ratingFeedbackConfig } from "./configs";
 import { Modal } from "../Modal";
 
 // both components require onClose because the feedback modal should close when the user clicks the "finish" button
@@ -63,7 +63,7 @@ export const FeedbackModal = (props: IFeedbackModalProps) => {
       <iframe
       title="feedback"
       id={frameId}
-      src={`${feedbackFrameUrl}/centrohost?appname=ocvfeedback&feature=host-ocv-inapp-feedback&platform=web&appId=${appId}#/hostedpage`}
+      src={`${pxt.appTarget.appTheme.ocvFrameUrl}/centrohost?appname=ocvfeedback&feature=host-ocv-inapp-feedback&platform=web&appId=${pxt.appTarget.appTheme.ocvAppId}#/hostedpage`}
       sandbox="allow-scripts allow-same-origin allow-forms allow-popups" />
     </Modal>
   )
