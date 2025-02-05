@@ -555,18 +555,30 @@ div.simframe > iframe {
 
 /* code card */
 
-.ui.card .image pre {
-    margin-left:0.5rem;
-    margin-right:0.5rem;
-    color: #000;
-    font-size:0.7rem;
-    white-space: pre-wrap;
-    max-height: 10rem;
-    overflow-y: hidden;
-}
+// Include #root to add specificity and take precedence over default semantic ui styling without using !important.
+#root .ui.card {
+    background-color: var(--pxt-neutral-background1);
+    .extra.content a.learnmore {
+        color: var(--pxt-link);
+    }
 
-.ui.card .extra.content a.learnmore {
-    color: var(--pxt-link);
+    &.link.buttoncard .header {
+        color: var(--pxt-secondary-foreground);
+    }
+
+    .content .header {
+        color: var(--pxt-neutral-foreground1);
+    }
+
+    .image pre {
+        margin-left:0.5rem;
+        margin-right:0.5rem;
+        color: #000;
+        font-size:0.7rem;
+        white-space: pre-wrap;
+        max-height: 10rem;
+        overflow-y: hidden;
+    }
 }
 
 /* Popup message */
@@ -2477,7 +2489,7 @@ button.ui.button.hostmultiplayergame-button {
         margin-bottom: 14px;
         border-radius: @homeCardBorderRadius;
         color: @homeCardColor;
-        border: @homeCardBorderSize solid @homeCardBorderColor !important;
+        border: @homeCardBorderSize solid var(--pxt-neutral-stencil1) !important;
         background-color: @homeCardBackgroundColor;
 
         button {

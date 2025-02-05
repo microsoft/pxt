@@ -301,33 +301,33 @@
    Home
 --------------------*/
 
-@homeHeaderColor: @textColor;
+// @homeHeaderColor: var(--pxt-primary-foreground); // @textColor;
 @homeCardBorderRadius: 0px;
 @homeCardBorderSize: 5px;
-@homeCardBorderColor: #e9eef2;
-@homeCardHoverBorderColor: white;
+@homeCardBorderColor: var(--pxt-neutral-stencil2); // #e9eef2
+@homeCardHoverBorderColor: var(--pxt-neutral-stencil3); // white;
 // @homeCardFocusBorderColor: @primaryColor; var(--pxt-primary-background)
-@homeCardColor: @textColor;
+@homeCardColor: var(--pxt-neutral-foreground1); // @textColor;
 @homeCardMetaColor: @homeCardColor;
 @homeCardHeaderColor: @homeCardColor;
 @homeFooterColor: @homeCardColor;
 
 @homeCardImageBorderRadius: 0;
-@homeCardBackgroundColor: white;
-@homeCardHoverBackgroundColor: darken(@homeCardBackgroundColor, 5%);
+@homeCardBackgroundColor: var(--pxt-neutral-background1); // white
+@homeCardHoverBackgroundColor: var(--pxt-neutral-background2); // darken(@homeCardBackgroundColor, 5%);
 
 /* Detail view */
 @homeSelectedCardBorderSize: @homeCardBorderSize*2;
-@homeSelectedCardBorderColor: white;
-@homeDetailViewBackground: darken(@grey, 20%);
-@homeDetailViewColor: white;
-@homeDetailCloseColor: white;
-@homeDetailCloseBackground: @grey;
+@homeSelectedCardBorderColor: var(--pxt-neutral-stencil3); // white
+@homeDetailViewBackground: var(--pxt-neutral-background3); // darken(@grey, 20%);
+@homeDetailViewColor: var(--pxt-neutral-foreground3); // white;
+@homeDetailCloseColor: var(--pxt-neutral-foreground3); // white;
+@homeDetailCloseBackground: var(--pxt-neutral-background3); // @grey;
 // @homeDetailCardActionBackground: @homeScreenBackground; var(--pxt-target-background1)
-@homeDetailCardActionText: white;
+@homeDetailCardActionText: var(--pxt-neutral-foreground3); // white;
 // @homeInvertedDetailCardActionBackground: var(--pxt-neutral-background1);
 @homeHeaderBorderSize: 3px;
-@homeHeaderSelectedBorderColor: white;
+@homeHeaderSelectedBorderColor: var(--pxt-neutral-stencil3); // white;
 /*-------------------
    Tutorial
 --------------------*/

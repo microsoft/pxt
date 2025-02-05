@@ -137,14 +137,10 @@
             margin: 0;
             padding-left: @carouselArrowSize;
             font-size: 20px;
-            color: @homeHeaderColor;
+            color: var(--pxt-neutral-foreground1); // @homeHeaderColor;
             &.myproject-header {
                 cursor: pointer;
                 outline: none;
-
-                &:focus, &:hover {
-                    color: fade(@homeHeaderColor, 80%);
-                }
 
                 > .view-all-button {
                     margin-left: 1.5em;

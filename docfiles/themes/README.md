@@ -43,13 +43,17 @@ Colors:
 | pxt-tertiary-background       | Tour bubbles, additional btns   |
 | pxt-tertiary-alpha50          | 50% Opacity                |
 | pxt-tertiary-foreground       | Tour bubbles, additional btns fg |
-| pxt-neutral-background1       | Modal Header & Body Bkg    |
+| pxt-neutral-background1       | Modal Header & Body Bkg, Code Card Bkg |
 | pxt-neutral-background2       | Modal Footer Bkg           |
+| pxt-neutral-background3       | Expanded code card bkg     |
 | pxt-neutral-alpha05           | 5% opacity fade            |
 | pxt-neutral-alpha50           | 50% opacity fade           |
 | pxt-neutral-foreground1       | Modal Header & Body Fg     |
 | pxt-neutral-foreground2       | Modal Footer Fg            |
+| pxt-neutral-foreground3       | Expanded code card Fg      |
 | pxt-neutral-stencil1          | Modal Horizontal Lines     |
+| pxt-neutral-stencil2          | Code Card Border           |
+| pxt-neutral-stencil3          | Expanded code card border  |
 | pxt-neutral-button-background | Unthemed Buttons Bkg       |
 | pxt-neutral-button-foreground | Unthemed Buttons Fg        |
 | pxt-link                      | Link Text                  |
