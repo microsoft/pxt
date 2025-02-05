@@ -91,10 +91,13 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
         this.setState({ open: false });
     }
 
-    toggle() {
+    toggle(focusFirst?: boolean) {
         if (this.state.open) {
             this.hide();
         } else {
+            if (focusFirst) {
+                this.focusFirst = true;
+            }
             this.show();
         }
     }
@@ -104,7 +107,7 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
         el.focus();
     }
 
-    private blur(el: HTMLElement) {
+    private setInactive(el: HTMLElement) {
         if (this.isActive(el)) {
             pxt.BrowserUtils.removeClass(el, "active");
         }
@@ -127,8 +130,8 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
             const child = menu.childNodes[i] as HTMLElement;
             // Remove separators
             if (pxt.BrowserUtils.containsClass(child, "divider")) continue;
-            // Check if item is intended for mobile only views
-            if (pxt.BrowserUtils.containsClass(child, "mobile") && !pxt.BrowserUtils.isMobile()) continue;
+            // Check if item is visible. Some items are intended for mobile only views.
+            if (!child.offsetParent) continue;
             children.push(child);
         }
         return children;
@@ -139,61 +142,17 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
         return menu.contains(document.activeElement);
     }
 
-    private navigateToNextElement = (e: KeyboardEvent, prev: HTMLElement, next: HTMLElement) => {
-        const dropdown = this.refs["dropdown"] as HTMLElement;
-        const charCode = core.keyCodeFromEvent(e);
-        const current = e.currentTarget as HTMLElement;
-        if (charCode === 40 /* Down arrow */) {
-            e.preventDefault();
-            e.stopPropagation();
-            if (next) {
-                this.focus(next);
-            }
-        } else if (charCode === 38 /* Up arrow */) {
-            e.preventDefault();
-            e.stopPropagation();
-            if (prev) {
-                this.focus(prev);
-            } else {
-                // Prev is undefined, go to dropdown
-                dropdown.focus();
-                this.setState({ open: false });
-            }
-        } else if (charCode === core.SPACE_KEY || charCode === core.ENTER_KEY) {
-            // Trigger click
-            e.preventDefault();
-            e.stopPropagation();
-            current.click();
+    handleFocusCapture = (e: React.FocusEvent<HTMLDivElement>) => {
+        const target = e.target as HTMLElement;
+        if (target && this.getChildren().includes(target)) {
+            this.setActive(target);
         }
     }
 
-    componentDidMount() {
-        const children = this.getChildren();
-        for (let i = 0; i < children.length; i++) {
-            const prev = i > 0 ? children[i - 1] as HTMLElement : undefined;
-            const child = children[i] as HTMLElement;
-            const next = i < children.length ? children[i + 1] as HTMLElement : undefined;
-
-            child.addEventListener('keydown', (e) => {
-                this.navigateToNextElement(e, prev, next);
-            })
-
-            child.addEventListener('focus', (e: FocusEvent) => {
-                this.setActive(child);
-            })
-            child.addEventListener('blur', (e: FocusEvent) => {
-                this.blur(child);
-            })
-
-            if (i == children.length - 1) {
-                // set tab on last child to clear focus
-                child.addEventListener('keydown', (e) => {
-                    const charCode = core.keyCodeFromEvent(e);
-                    if (!e.shiftKey && charCode === core.TAB_KEY) {
-                        this.hide();
-                    }
-                })
-            }
+    handleBlurCapture = (e: React.FocusEvent<HTMLDivElement>) => {
+        const target = e.target as HTMLElement;
+        if (target && this.getChildren().includes(target)) {
+            this.setInactive(target);
         }
     }
 
@@ -298,14 +257,48 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
 
     private focusFirst: boolean;
     private handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+        const dropdown = this.refs["dropdown"] as HTMLElement;
+        const children = this.getChildren();
+        const activeElementIndex = children.findIndex(el => this.isActive(el));
+        const activeChild = children[activeElementIndex];
+        const prev = activeElementIndex > 0 ? children[activeElementIndex - 1] as HTMLElement : undefined;
+        const next = activeElementIndex < children.length ? children[activeElementIndex + 1] as HTMLElement : undefined;
         const charCode = core.keyCodeFromEvent(e);
-        if (charCode === 40 /* Down arrow key */) {
+        if (charCode === 40 /* Down arrow */) {
             e.preventDefault();
-            this.focusFirst = true;
-            this.show();
+            e.stopPropagation();
+            // Show dropdown menu if not open
+            if (!this.state.open) {
+                this.focusFirst = true;
+                this.show();
+            }
+            if (next) {
+                this.focus(next);
+            }
+        } else if (charCode === 38 /* Up arrow */) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (prev) {
+                this.focus(prev);
+            } else {
+                // Prev is undefined, go to dropdown
+                dropdown.focus();
+                this.hide();
+            }
         } else if (charCode === core.SPACE_KEY || charCode === core.ENTER_KEY) {
+            // Trigger click on menu item or dropdown
             e.preventDefault();
-            this.toggle();
+            e.stopPropagation();
+            if (activeChild) {
+                activeChild.click();
+            } else {
+                this.toggle(true);
+            }
+        } else if (activeElementIndex === children.length - 1 && !e.shiftKey && charCode === core.TAB_KEY) {
+            if (activeChild) {
+                this.setInactive(activeChild)
+            }
+            this.hide();
         }
     }
 
@@ -351,6 +344,8 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
                 onKeyDown={this.handleKeyDown}
                 onFocus={this.handleFocus}
                 onBlur={this.handleBlur}
+                onBlurCapture={this.handleBlurCapture}
+                onFocusCapture={this.handleFocusCapture}
                 tabIndex={0}
             >
                 {titleContent ? titleContent : genericContent(this.props)}
