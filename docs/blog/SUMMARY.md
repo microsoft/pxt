@@ -1,6 +1,7 @@
 # Microsoft MakeCode Blog
 
 * [Blog](/blog)
+    * [Display shield extension/simulator for the micro:bit](/blog/microbit/display-shield)
     * [MakeCode Code Evaluation Tool Beta](/blog/tools/code-eval-tool)
     * [MakeCode for the micro:bit 2024 Update](/blog/microbit/2024-update)
     * [MakeCode Arcade - now more ways to play!](/blog/arcade/arcade-on-microbit-xbox)
