@@ -175,6 +175,7 @@ namespace ts.pxtc.decompiler {
         value: OutputNode;
         shadowType?: string;
         shadowMutation?: pxt.Map<string>;
+        emitShadowOnly?: boolean;
     }
 
     interface MutationChild {
@@ -3929,6 +3930,10 @@ ${output}</xml>`;
     }
 
     function shouldEmitShadowOnly(n: ValueNode) {
+        if (n.emitShadowOnly !== undefined) {
+            return n.emitShadowOnly;
+        }
+
         let emitShadowOnly = false;
 
         if (n.value.kind === "expr") {
@@ -3948,10 +3953,21 @@ ${output}</xml>`;
                     case "logic_boolean":
                     case "text":
                         emitShadowOnly = !n.shadowType;
-                        break
+                        break;
+                }
+            }
+
+            if (emitShadowOnly && value.inputs) {
+                for (const input of value.inputs) {
+                    if (!shouldEmitShadowOnly(input)) {
+                        emitShadowOnly = false;
+                        break;
+                    }
                 }
             }
         }
+
+        n.emitShadowOnly = emitShadowOnly;
 
         return emitShadowOnly;
     }
