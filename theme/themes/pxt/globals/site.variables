@@ -30,6 +30,17 @@
 // @pageBackground: var(--pxt-neutral-background1);
 @pageMinWidth: 100%;
 
+
+/*-------------------
+   Semantic UI Dependencies
+--------------------*/
+
+// These less vars cannot be set to css vars because semanticui uses transform functions on them behind the scenes,
+// but we should not use them. Instead, we should use our css theming variables.
+// They've all been set to overtly strange values to make it obvious that they should not be used.
+
+@linkColor : hotpink; // We should use var(--pxt-link) instead.
+
 /*-------------------
      Fonts
 --------------------*/
@@ -50,7 +61,6 @@
    Links
 --------------------*/
 
-@linkColor           : hotpink; // This var has to remain for semanticui, but we should not use it. We should use var(--pxt-link) instead.
 @linkHoverUnderline  : underline;
 
 /*-------------------
