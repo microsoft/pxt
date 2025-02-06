@@ -57,6 +57,7 @@ Colors:
 | pxt-neutral-button-background | Unthemed Buttons Bkg       |
 | pxt-neutral-button-foreground | Unthemed Buttons Fg        |
 | pxt-link                      | Link Text                  |
+| pxt-link-hover                | Link Text Hover            |
 | pxt-colors-green-background1  | OK Buttons, etc...         |
 | pxt-colors-green-foreground1  | OK Buttons, etc...         |
 | pxt-colors-green-hover1       | OK Button Hover, etc...    |

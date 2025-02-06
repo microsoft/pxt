@@ -50,7 +50,7 @@
    Links
 --------------------*/
 
-@linkColor           : #3977b4;
+@linkColor           : hotpink; // This var has to remain for semanticui, but we should not use it. We should use var(--pxt-link) instead.
 @linkHoverUnderline  : underline;
 
 /*-------------------
@@ -64,14 +64,14 @@
    Form Input
 ---------------*/
 
-@inputPlaceholderColor: lighten(@inputColor, 45);
-@inputPlaceholderFocusColor: lighten(@inputColor, 35);
+// @inputPlaceholderColor: lighten(@inputColor, 45);
+// @inputPlaceholderFocusColor: lighten(@inputColor, 35);
 
 /*-------------------
      Neutral Text
 --------------------*/
 
-@invertedLightTextColor      : rgba(255, 255, 255, 0.9);
+// @invertedLightTextColor      : rgba(255, 255, 255, 0.9);
 
 /*******************************
              States
