@@ -150,7 +150,7 @@ a.ui.card:focus,
 }
 
 .ui.card.link.newprojectcard {
-    background: var(--pxt-primary-alpha90) !important;
+    background: var(--pxt-primary-background) !important;
 }
 
 .ui.card.link.cloudprojectscard {
