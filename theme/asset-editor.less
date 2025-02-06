@@ -72,7 +72,7 @@
 .asset-editor-gallery-tab {
     height: 3rem;
     background-color: @assetUnselected;
-    color: darken(@grey, 20%);
+    color: var(--pxt-neutral-foreground1);
     padding: .7em 2em .85em;
     font-size: 1rem;
     font-weight: 600;
@@ -85,7 +85,7 @@
 .asset-editor-gallery-tab.selected {
     background-color: transparent;
     border-bottom-color: var(--pxt-target-background1);
-    color: @black;
+    color: var(--pxt-target-foreground1);
 }
 .asset-editor-card-list {
     width: 100%;
@@ -216,7 +216,7 @@
     cursor: pointer;
 
     &:hover {
-        background-color: darken(@assetTypeButton, 5%);
+        background-color: var(--pxt-secondary-dark);
     }
 
     i.icon {

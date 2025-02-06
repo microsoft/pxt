@@ -390,13 +390,13 @@
 /*-------------------
    Asset Editor
 -------------------*/
-@assetSidebarBorder: #c6c6c6;
-@assetSidebarButton: #f8f8f8;
-@assetSidebarButtonHover: #dedede;
-@assetTopbarBorder: #c6c6c6;
+@assetSidebarBorder: var(--pxt-neutral-stencil1); // #c6c6c6;
+// @assetSidebarButton: #f8f8f8; Unused?
+// @assetSidebarButtonHover: #dedede; Unused?
+@assetTopbarBorder: var(--pxt-neutral-stencil1); // #c6c6c6;
 @assetPreviewBackground: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10px' height='10px'%3E%3Crect x='0' y='0' width='10px' height='10px' fill='white'%3E%3C/rect%3E%3Crect x='0' y='0' width='5px' height='5px' fill='%23dedede'%3E%3C/rect%3E%3Crect x='5' y='5' width='5px' height='5px' fill='%23dedede'%3E%3C/rect%3E%3C/svg%3E");
-@assetUnselected: #e3ddd0;
-@assetTypeButton: @teal;
+@assetUnselected: var(--pxt-neutral-alpha05);
+@assetTypeButton: var(--pxt-secondary-background);
 
 /*---------------------------
    Extensions
