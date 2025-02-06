@@ -22,10 +22,10 @@
 @lightGrey: #d9d9d9;
 
 @greenTextColor: darken(@green, 5);
-@yellowTextColor: #8e6505;
+// @yellowTextColor: #8e6505; (Unused)
 
 // @lightTextColor              : var(--pxt-secondary-dark);
-@invertedUnselectedTextColor : rgba(255, 255, 255, 0.8);
+// @invertedUnselectedTextColor : rgba(255, 255, 255, 0.8); (Unused)
 
 // @pageBackground: var(--pxt-neutral-background1);
 @pageMinWidth: 100%;
@@ -90,8 +90,8 @@
 @useCustomScrollbars: false;
 @customScrollbarWidth: 10px;
 
-@thumbBackground: rgba(0, 0, 0, 0.25);
-@thumbInvertedBackground: rgba(255, 255, 255, 0.25);
+// @thumbBackground: rgba(0, 0, 0, 0.25); (Unused)
+// @thumbInvertedBackground: rgba(255, 255, 255, 0.25); (Unused)
 
 /*******************************
      PXT Variables
