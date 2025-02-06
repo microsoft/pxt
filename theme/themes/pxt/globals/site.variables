@@ -242,7 +242,7 @@
    Filelist
 --------------------*/
 // @filelistBackgroundColor: var(--pxt-target-background2);
-@filelistHeaderBackground:  rgba(0,0,0,0.05);
+// @filelistHeaderBackground:  var(--pxt-neutral-alpha05);
 
 /*-------------------
    Github Diff editor TODO thsparks - Add To Theming
