@@ -250,7 +250,6 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
 
     toggleHighContrast() {
         pxt.tickEvent("home.togglecontrast", undefined, { interactiveConsent: true });
-        this.hide();
         core.toggleHighContrast();
     }
 
