@@ -42,10 +42,18 @@ pre {
 }
 
 /* Override Semantic UI */
-a.ui, a.common-link {
+
+body.main a {
     color: var(--pxt-link);
     &:hover {
         color: var(--pxt-link-hover);
+    }
+}
+
+body.main .ui.list > .item a.header {
+    color: var(--pxt-link) !important; // override !important in semantic ui
+    &:hover {
+        color: var(--pxt-link-hover) !important;
     }
 }
 
