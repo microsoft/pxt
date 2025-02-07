@@ -310,13 +310,13 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
         const aria = {
             'role': role || 'combobox',
             'aria-disabled': disabled,
-            'aria-haspopup': !!disabled,
+            'aria-haspopup': !disabled,
             'aria-expanded': open
         }
         const menuAria = {
             'role': 'menu',
             'aria-label': lf("Dropdown menu {0}", title),
-            'aria-hidden': !!open
+            'aria-hidden': !open
         }
         const classes = cx([
             'ui',
