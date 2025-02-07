@@ -52,6 +52,15 @@
         "pxt-link-hover": "#1b19ff",
         "pxt-colors-green-background1": "#00FF00",
         "pxt-colors-green-foreground": "#000000",
-        "pxt-colors-green-hover1": "#00FF00"
+        "pxt-colors-green-hover": "#00FF00",
+        "pxt-colors-green-alpha50": "#00FF0032",
+        "pxt-colors-red-background1": "#880000",
+        "pxt-colors-red-foreground": "#FFFFFF",
+        "pxt-colors-red-hover": "#440000",
+        "pxt-colors-red-alpha50": "#88000032",
+        "pxt-colors-yellow-background1": "#00FFFF",
+        "pxt-colors-yellow-foreground": "#000000",
+        "pxt-colors-yellow-hover": "#00FFFF",
+        "pxt-colors-yellow-alpha50": "#00FFFF32"
     }
 }

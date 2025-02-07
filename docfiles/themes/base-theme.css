@@ -49,7 +49,16 @@
     --pxt-link-hover: #333333;
     --pxt-colors-green-background1: #2ecc71;
     --pxt-colors-green-foreground: #FFFFFF;
-    --pxt-colors-green-hover1: #22be64;
+    --pxt-colors-green-hover: #22be64;
+    --pxt-colors-green-alpha50: #2ecc7132;
+    --pxt-colors-red-background1: #a80000;
+    --pxt-colors-red-foreground: #FFFFFF;
+    --pxt-colors-red-hover: #8f0000;
+    --pxt-colors-red-alpha50: #a8000032;
+    --pxt-colors-yellow-background1: #c0a000;
+    --pxt-colors-yellow-foreground: #FFFFFF;
+    --pxt-colors-yellow-hover: rgb(153, 132, 0);
+    --pxt-colors-yellow-alpha50: #c0a00032;
 
     /*
     --pxt-neutral-background3: ;

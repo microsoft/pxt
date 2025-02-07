@@ -60,4 +60,13 @@ Colors:
 | pxt-link-hover                | Link Text Hover            |
 | pxt-colors-green-background1  | OK Buttons, etc...         |
 | pxt-colors-green-foreground1  | OK Buttons, etc...         |
-| pxt-colors-green-hover1       | OK Button Hover, etc...    |
+| pxt-colors-green-hover        | OK Button Hover, etc...    |
+| pxt-colors-green-alpha50      | Git add coloring           |
+| pxt-colors-red-background1    | Scary Buttons Bkg          |
+| pxt-colors-red-foreground     |                            |
+| pxt-colors-red-hover          |                            |
+| pxt-colors-red-alpha50        | Git add coloring           |
+| pxt-colors-yellow-background1 | Warn Buttons Bkg           |
+| pxt-colors-yellow-foreground  |                            |
+| pxt-colors-yellow-hover       |                            |
+| pxt-colors-yellow-alpha50     |                            |
