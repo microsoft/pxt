@@ -296,16 +296,16 @@
 @blocklyScrollbarOpacity: 1;
 
 /*-------------------
-   Flyout TODO thsparks - figure out theming
+   Flyout
 --------------------*/
 
-@flyoutLabelColor: white;
-@blocklyFlyoutColor: @grey;
-@blocklyFlyoutColorOpacity: 0.9;
+// @flyoutLabelColor: white; (unused except to support other color vars)
+@blocklyFlyoutColor: var(--pxt-neutral-background3); // @grey;
+@blocklyFlyoutColorOpacity: 0.95; // 0.9
 // @blocklyFlyoutButtonColor: @primaryColor; var(--pxt-primary-background)
-@monacoFlyoutColor: fade(@blocklyFlyoutColor, 90%);
-@monacoFlyoutBorderColor: fade(@flyoutLabelColor, 40%);
-@monacoFlyoutText: fade(@flyoutLabelColor, 70%);
+@monacoFlyoutColor: var(--pxt-neutral-background3); // fade(@blocklyFlyoutColor, 90%);
+@monacoFlyoutBorderColor: var(--pxt-neutral-stencil3); // fade(@flyoutLabelColor, 40%);
+@monacoFlyoutText: var(--pxt-neutral-foreground3); // rgb(0, 26, 255); // fade(@flyoutLabelColor, 70%);
 
 /*-------------------
    Home
