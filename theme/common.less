@@ -751,20 +751,20 @@ div.simframe > iframe {
         .close {
             &:hover, &:focus {
                 cursor: pointer;
-                color: darken(@bannerContrastColor, 25%);
+                color: var(--pxt-neutral-hover1);
             }
         }
     }
 }
 
 #notificationBanner.default {
-    background-color: @bannerBackgroundColor;
-    color: @bannerContrastColor;
-    outline: 2px solid @bannerContrastColor;
+    background-color: var(--pxt-neutral-background1);
+    color: var(--pxt-neutral-foreground1);
+    outline: 2px solid var(--pxt-neutral-stencil1);
     a.link {
-        color: @bannerLinkColor;
+        color: var(--pxt-link);
         &:hover, &:focus {
-            color: darken(@bannerLinkColor, 10%);
+            color: var(--pxt-link-hover);
         }
     }
 }

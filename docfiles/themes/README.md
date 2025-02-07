@@ -51,6 +51,7 @@ Colors:
 | pxt-neutral-foreground1       | Modal Header & Body Fg     |
 | pxt-neutral-foreground2       | Modal Footer Fg            |
 | pxt-neutral-foreground3       | Expanded code card Fg      |
+| pxt-neutral-hover1            |                            |
 | pxt-neutral-stencil1          | Modal Horizontal Lines     |
 | pxt-neutral-stencil2          | Code Card Border           |
 | pxt-neutral-stencil3          | Expanded code card border  |

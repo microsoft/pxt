@@ -40,6 +40,7 @@
     --pxt-neutral-foreground1: rgba(0, 0, 0, 0.85);
     --pxt-neutral-foreground2: rgba(0, 0, 0, 0.87);
     --pxt-neutral-foreground3: #000000;
+    --pxt-neutral-hover1: #cccccc;
     --pxt-neutral-stencil1: rgba(136, 136, 136, 0.15);
     --pxt-neutral-stencil2: #e9eef2;
     --pxt-neutral-stencil3: #000000;

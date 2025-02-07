@@ -342,17 +342,17 @@
    Tutorial
 --------------------*/
 
-@tutorialSegmentBackground: #f8f8f9;
-@tutorialSegmentColor: @textColor;
+@tutorialSegmentBackground: var(--pxt-neutral-background2);
+@tutorialSegmentColor: var(--pxt-neutral-foreground2);
 @tutorialSimframeMargin: -2rem;
 
 /*-------------------
     Banner
 -------------------*/
 @bannerHeight: 2rem;
-@bannerBackgroundColor: black;
-@bannerContrastColor: white;
-@bannerLinkColor: #3eb1d0;
+// @bannerBackgroundColor: var(--pxt-neutral-background1);
+// @bannerContrastColor: var(--pxt-neutral-foreground1);
+// @bannerLinkColor: var(--pxt-link);
 
 
 /*-------------------
