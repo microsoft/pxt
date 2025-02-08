@@ -389,13 +389,13 @@
 @errorListHeight: 16em;
 @errorListHeaderHeight: 3.5em;
 @errorListInnerHeight: (@errorListHeight - @errorListHeaderHeight);
-@errorListMessageHoverColor: rgba(0, 0, 0, 0.1);
-@errorListBorderColor: #e5e5e5;
-@errorListEven: rgba(0, 0, 0, 0.03);
-@errorListDebugSuggestionColor: rgb(52, 84, 209); // TODO: maybe change to display color based on editor
-@errorListInvertedEven: rgba(255, 255, 255, 0.03);
-@errorListInvertedTextColor: white;
-@errorListInvertedMessageHoverColor: rgba(255, 255, 255, 0.1);
+@errorListMessageHoverColor: var(--pxt-neutral-alpha20);
+@errorListBorderColor: var(--pxt-neutral-stencil1);
+@errorListEven: var(--pxt-neutral-alpha05);
+@errorListDebugSuggestionColor: var(--pxt-tertiary-background);
+// @errorListInvertedEven: rgba(255, 255, 255, 0.03);
+// @errorListInvertedTextColor: white;
+// @errorListInvertedMessageHoverColor: rgba(255, 255, 255, 0.1);
 
 /*-------------------
    Asset Editor

@@ -47,6 +47,7 @@ Colors:
 | pxt-neutral-background2       | Modal Footer Bkg           |
 | pxt-neutral-background3       | Expanded code card bkg     |
 | pxt-neutral-alpha05           | 5% opacity fade            |
+| pxt-neutral-alpha20           | 20% opacity fade           |
 | pxt-neutral-alpha50           | 50% opacity fade           |
 | pxt-neutral-foreground1       | Modal Header & Body Fg     |
 | pxt-neutral-foreground2       | Modal Footer Fg            |

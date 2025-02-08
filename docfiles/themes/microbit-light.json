@@ -42,6 +42,7 @@
         "pxt-neutral-background2": "#F9FAFB",
         "pxt-neutral-background3": "#617374",
         "pxt-neutral-alpha05": "rgba(0, 0, 0, 0.05)",
+        "pxt-neutral-alpha20": "rgba(0, 0, 0, 0.2)",
         "pxt-neutral-alpha50": "rgba(0, 0, 0, 0.5)",
         "pxt-neutral-foreground1": "rgba(0,0,0,.85)",
         "pxt-neutral-foreground2": "rgba(0,0,0,.87)",
