@@ -46,6 +46,11 @@
     --pxt-neutral-stencil3: #000000;
     --pxt-neutral-button-background: #e0e1e2;
     --pxt-neutral-button-foreground: #333333;
+    --pxt-variant-foreground1: #9932cc;
+    --pxt-variant-foreground2: #ff7f50;
+    --pxt-variant-foreground3: #00ced1;
+    --pxt-variant-foreground4: #663905;
+    --pxt-variant-foreground5: #0000ff;
     --pxt-link: #666666;
     --pxt-link-hover: #333333;
     --pxt-colors-green-background1: #2ecc71;

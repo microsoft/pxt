@@ -369,18 +369,18 @@
     Debugger
 -------------------*/
 // TODO: Chance this for the color we want for variables in the debugger.
-@debugNumberVariable: darkorchid;
-@debugStringVariable: coral;
-@debugBooleanVariable: darkturquoise;
-@debugArrayVariable: #663905;
-@debugSpriteVariable: blue;
+@debugNumberVariable: var(--pxt-variant-foreground1);
+@debugStringVariable: var(--pxt-variant-foreground2);
+@debugBooleanVariable: var(--pxt-variant-foreground3);
+@debugArrayVariable: var(--pxt-variant-foreground4);
+@debugSpriteVariable: var(--pxt-variant-foreground5);
 
-@debugVariableOdd: #fafafa;
-@debugVariableEven: #f0f0f0;
-@debugVariableFrozen: #eee;
+// @debugVariableOdd: var(--pxt-neutral-background1);
+// @debugVariableEven: var(--pxt-neutral-background3);
+// @debugVariableFrozen: var(--pxt-neutral-background2);
 
-@DebuggerBackgroundPrimaryColor: #e67e22;
-@DebuggerBackgroundSecondaryColor: lightgreen;
+@DebuggerBackgroundPrimaryColor: var(--pxt-primary-background);
+@DebuggerBackgroundSecondaryColor: var(--pxt-secondary-background);
 
 
 /*-------------------

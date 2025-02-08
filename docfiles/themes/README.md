@@ -57,6 +57,11 @@ Colors:
 | pxt-neutral-stencil3          | Expanded code card border  |
 | pxt-neutral-button-background | Unthemed Buttons Bkg       |
 | pxt-neutral-button-foreground | Unthemed Buttons Fg        |
+| pxt-variant-foreground1       | Debugger Text              |
+| pxt-variant-foreground2       | Debugger Text              |
+| pxt-variant-foreground3       | Debugger Text              |
+| pxt-variant-foreground4       | Debugger Text              |
+| pxt-variant-foreground5       | Debugger Text              |
 | pxt-link                      | Link Text                  |
 | pxt-link-hover                | Link Text Hover            |
 | pxt-colors-green-background1  | OK Buttons, etc...         |
