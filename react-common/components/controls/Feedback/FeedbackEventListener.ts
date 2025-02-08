@@ -48,10 +48,12 @@ type FeedbackResponsePayloadType = {
   data: FeedbackResponseDataType
 }
 
+const defaultTheme = "PublisherLightTheme";
+const highContrastTheme = "PublisherDarkTheme";
 // for styling the feedback, we use this object. It is mostly used to change the colors.
 // we'll want to change this based on the target and whether high contrast is enabled
 let themeOptions: ocv.IThemeOptions = {
-    baseTheme: "PublisherLightTheme",
+    baseTheme: defaultTheme,
 }
 
 let initfeedbackOptions: ocv.IFeedbackInitOptions;
@@ -81,7 +83,6 @@ export const initFeedbackEventListener = (feedbackConfig: ocv.IFeedbackConfig, f
         themeOptions: themeOptions,
         // telemetry - will likely want this
     }
-
     FEEDBACK_FRAME_ID = frameId;
 }
 
@@ -129,17 +130,17 @@ const getIFrameAndSend = (payload: FeedbackResponsePayloadType) => {
 // TODO
 // haven't implemented yet with events, but this will be needed in order to update to high contrast
 // general changes need to be made as well use the correct theme. the windows ones were just the defaults.
-const sendUpdateTheme = () => {
+export const sendUpdateFeedbackTheme = (highContrastOn: boolean) => {
     let currentTheme = themeOptions.baseTheme;
-    if (currentTheme === 'WindowsDark') {
-        currentTheme = 'WindowsLight'
-    } else {
-        currentTheme = 'WindowsDark'
+    if (currentTheme === defaultTheme && highContrastOn) {
+        currentTheme = highContrastTheme;
+    } else if (currentTheme === highContrastTheme && !highContrastOn) {
+        currentTheme = defaultTheme;
     }
     const response: FeedbackResponsePayloadType = {
         event: 'OnFeedbackHostAppThemeChanged',
         data: {
-            baseTheme: currentTheme,
+            baseTheme: currentTheme
         },
     }
     themeOptions.baseTheme = currentTheme;
