@@ -49,7 +49,7 @@ type FeedbackResponsePayloadType = {
 }
 
 const defaultTheme = "PublisherLightTheme";
-const highContrastTheme = "PublisherDarkTheme";
+const highContrastTheme = "TeamsHighContrastV2";
 // for styling the feedback, we use this object. It is mostly used to change the colors.
 // we'll want to change this based on the target and whether high contrast is enabled
 let themeOptions: ocv.IThemeOptions = {
@@ -127,9 +127,7 @@ const getIFrameAndSend = (payload: FeedbackResponsePayloadType) => {
         iFrameElement.contentWindow!.postMessage(payload, pxt.appTarget.appTheme.ocvFrameUrl);
     }
 }
-// TODO
-// haven't implemented yet with events, but this will be needed in order to update to high contrast
-// general changes need to be made as well use the correct theme. the windows ones were just the defaults.
+
 export const sendUpdateFeedbackTheme = (highContrastOn: boolean) => {
     let currentTheme = themeOptions.baseTheme;
     if (currentTheme === defaultTheme && highContrastOn) {
