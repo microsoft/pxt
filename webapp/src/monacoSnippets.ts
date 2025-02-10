@@ -558,7 +558,7 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
         };
         _cachedBuiltinCategories[CategoryNameID.Extensions] = {
             name: pxt.toolbox.addPackageTitle(),
-            nameid: 'addpackage',
+            nameid: CategoryNameID.Extensions,
             blocks: [],
             custom: true,
             customClick: (theEditor: monaco.Editor) => {

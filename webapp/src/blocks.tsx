@@ -323,8 +323,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.cleanXmlForWorkspace(xml);
             pxtblockly.domToWorkspaceNoEvents(xml, this.editor);
 
-            pxtblockly.upgradeTilemapsInWorkspace(this.editor, pxt.react.getTilemapProject());
-
             this.initLayout(xml);
             this.editor.clearUndo();
             this.reportDeprecatedBlocks();
