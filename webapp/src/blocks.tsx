@@ -43,6 +43,7 @@ interface CopyDataEntry {
     coord: Blockly.utils.Coordinate;
     workspaceId: string;
     targetVersion: string;
+    headerId: string;
 }
 
 
@@ -477,7 +478,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             pxtblockly.external.setPromptTranslateBlock(dialogs.promptTranslateBlock);
         }
 
-        pxtblockly.external.setCopyPaste(copy, cut, this.pasteCallback);
+        pxtblockly.external.setCopyPaste(copy, cut, this.pasteCallback, this.copyPrecondition, this.pastePrecondition);
     }
 
     private initBlocklyToolbox() {
@@ -1949,7 +1950,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     protected pasteCallback = () => {
         const data = getCopyData();
-        if (!data?.data || !this.editor) return false;
+        if (!data?.data || !this.editor || !this.canPasteData(data)) return false;
 
         this.pasteAsync(data);
         return true;
@@ -2032,6 +2033,44 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
 
         doPaste();
+    }
+
+    protected copyPrecondition = (scope: Blockly.ContextMenuRegistry.Scope) => {
+        const workspace = scope.block?.workspace || scope.comment?.workspace;
+
+        if (!workspace || workspace !== this.editor) {
+            return "hidden";
+        }
+
+        return "enabled";
+    }
+
+    protected pastePrecondition = (scope: Blockly.ContextMenuRegistry.Scope) => {
+        if (scope.workspace !== this.editor) return "hidden";
+
+        const data = getCopyData();
+
+        if (!data || !this.canPasteData(data)) {
+            return "disabled";
+        }
+
+        return "enabled";
+    }
+
+    protected canPasteData(data: CopyDataEntry): boolean {
+        const header = pkg.mainEditorPkg().header;
+
+        if (!header) {
+            return false;
+        }
+        else if (data.headerId === header.id) {
+            return true;
+        }
+        else if (header.tutorial && !header.tutorialCompleted) {
+            return false;
+        }
+
+        return true;
     }
 }
 
@@ -2147,7 +2186,8 @@ function copy(workspace: Blockly.WorkspaceSvg, e: Event) {
         saveCopyData(
             copyData,
             copyCoords,
-            copyWorkspace
+            copyWorkspace,
+            pkg.mainEditorPkg().header.id
         );
     }
 
@@ -2165,7 +2205,8 @@ function cut(workspace: Blockly.WorkspaceSvg, e: Event) {
         saveCopyData(
             copyData,
             copyCoords,
-            copyWorkspace
+            copyWorkspace,
+            pkg.mainEditorPkg().header.id
         );
         selected.checkAndDelete();
         return true;
@@ -2182,7 +2223,8 @@ function cut(workspace: Blockly.WorkspaceSvg, e: Event) {
         saveCopyData(
             copyData,
             copyCoords,
-            copyWorkspace
+            copyWorkspace,
+            pkg.mainEditorPkg().header.id
         );
         selected.dispose();
         return true;
@@ -2193,14 +2235,16 @@ function cut(workspace: Blockly.WorkspaceSvg, e: Event) {
 function saveCopyData(
     data: Blockly.ICopyData,
     coord: Blockly.utils.Coordinate,
-    workspace: Blockly.Workspace
+    workspace: Blockly.Workspace,
+    headerId: string
 ) {
     const entry: CopyDataEntry = {
         version: 1,
         data,
         coord,
         workspaceId: workspace.id,
-        targetVersion: pxt.appTarget.versions.target
+        targetVersion: pxt.appTarget.versions.target,
+        headerId
     };
 
     pxt.storage.setLocal(
