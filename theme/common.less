@@ -41,11 +41,29 @@ pre {
     tab-size: 4;
 }
 
-/* Override Semantic UI */
 /*
+--- Override Semantic UI ---
+
 These include body.main to add specificity so they will
 take precedence over default semantic ui styling without using !important.
+
 */
+
+body.main .ui.button.primary {
+    background-color: var(--pxt-primary-background);
+    color: var(--pxt-primary-foreground);
+    &:hover {
+        background-color: var(--pxt-primary-background-hover);
+    }
+}
+
+body.main .ui.button.secondary {
+    background-color: var(--pxt-secondary-background);
+    color: var(--pxt-secondary-foreground);
+    &:hover {
+        background-color: var(--pxt-secondary-background-hover);
+    }
+}
 
 body.main a {
     color: var(--pxt-link);

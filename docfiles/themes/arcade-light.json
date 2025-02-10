@@ -28,6 +28,7 @@
         "pxt-primary-light": "#a098d7",
         "pxt-primary-foreground": "#FFFFFF",
         "pxt-secondary-background": "#5D4FBA",
+        "pxt-secondary-background-hover": "#483c9a",
         "pxt-secondary-alpha0": "#5D4FBA00",
         "pxt-secondary-alpha50": "#5D4FBA32",
         "pxt-secondary-dark": "#372E75",

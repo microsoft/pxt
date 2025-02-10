@@ -36,6 +36,7 @@ Colors:
 | pxt-primary-light             |                            |
 | pxt-primary-foreground        | Download Button Fg         |
 | pxt-secondary-background      | Zoom & Under-Sim Buttons   |
+| pxt-secondary-background-hover | Zoom & Under-Sim Buttons   |
 | pxt-secondary-alpha0          | Zoom & Under-Sim Buttons 0% Opacity |
 | pxt-secondary-dark            |                            |
 | pxt-secondary-light           | Cloud Projects Card        |
