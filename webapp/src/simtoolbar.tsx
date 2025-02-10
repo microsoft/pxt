@@ -119,7 +119,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const fullscreen = run && !simOpts.hideFullscreen && !sandbox;
         const audio = run && targetTheme.hasAudio;
         const isHeadless = simOpts.headless;
-        const screenshot = !!targetTheme.simScreenshot;
+        const screenshot = !!targetTheme.simScreenshot && !pxt.shell.isTimeMachineEmbed();
         const screenshotClass = !!parentState.screenshoting ? "loading" : "";
         const debugBtnEnabled = !isStarting && !isSimulatorPending && inCodeEditor;
         const runControlsEnabled = !debugging && !isStarting && !isSimulatorPending;
