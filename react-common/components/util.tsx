@@ -111,7 +111,7 @@ export function findNextFocusableElement(elements: HTMLElement[], focusedIndex: 
             index += increment;
         }
     }
-    return findNextFocusableElement(elements, focusedIndex, index, forward);
+    return findNextFocusableElement(elements, focusedIndex, index, forward, isFocusable);
 }
 
 export function isFocusable(e: HTMLElement) {
