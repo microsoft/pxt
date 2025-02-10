@@ -411,13 +411,13 @@
 /*---------------------------
    Extensions
 ----------------------------*/
-@extensionTagBackgroundColor: #AAAAAA;
-@extensionTagColor: #444444;
+@extensionTagBackgroundColor: var(--pxt-neutral-alpha20);
+@extensionTagColor: var(--pxt-neutral-foreground1);
 
 /*---------------------------
    Cloud Status
 ----------------------------*/
-@cloudStatusColor: @grey;
+@cloudStatusColor: var(--pxt-tertiary-background);
 
 /*---------------------------
    Teaching Bubble

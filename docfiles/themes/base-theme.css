@@ -34,7 +34,7 @@
     --pxt-tertiary-foreground: #ffffff;
     --pxt-neutral-background1: #ffffff;
     --pxt-neutral-background2: #f9f9f9;
-    --pxt-neutral-background3: #ffffff;
+    --pxt-neutral-background3: #4e5758;
     --pxt-neutral-alpha05: rgba(0, 0, 0, 0.05);
     --pxt-neutral-alpha20: rgba(0, 0, 0, 0.2);
     --pxt-neutral-alpha50: rgba(0, 0, 0, 0.5);
@@ -44,7 +44,7 @@
     --pxt-neutral-hover1: #cccccc;
     --pxt-neutral-stencil1: rgba(136, 136, 136, 0.15);
     --pxt-neutral-stencil2: #e9eef2;
-    --pxt-neutral-stencil3: #000000;
+    --pxt-neutral-stencil3: #FFFFFF;
     --pxt-neutral-button-background: #e0e1e2;
     --pxt-neutral-button-foreground: #333333;
     --pxt-variant-foreground1: #9932cc;

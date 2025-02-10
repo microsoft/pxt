@@ -1011,7 +1011,8 @@ Field editors
 
 .extensions-browser {
     position: absolute;
-    background-color: @white;
+    background-color: var(--pxt-neutral-background1);
+    color: var(--pxt-neutral-foreground1);
     width: 100%;
     min-height: 100%;
     z-index: 200;
@@ -1024,7 +1025,7 @@ Field editors
         gap: 1rem;
         padding-top: 2rem;
         padding-bottom: 2rem;
-        background-color: #E5E5E5;
+        background-color: var(--pxt-neutral-alpha05);
 
         .common-input-wrapper {
             width: 70%;
@@ -1059,7 +1060,7 @@ Field editors
         gap: .8rem;
 
         .importButtonLink {
-            color: @blue;
+            color: var(--pxt-link);
             cursor: pointer;
         }
 
@@ -1081,7 +1082,7 @@ Field editors
             padding-bottom: 1.5rem;
 
             .link {
-                color: @blue;
+                color: var(--pxt-link);
                 cursor: pointer;
             }
 
@@ -1128,7 +1129,7 @@ Field editors
     }
 
     .extension-tag {
-        border: .1rem solid @extensionTagBackgroundColor;
+        border: .1rem solid @extensionTagColor;
         padding: .6rem 1.25rem;
         border-radius: 1.6rem;
         cursor: pointer;
