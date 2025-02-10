@@ -4,7 +4,8 @@ import { flow, screenshotAsync, screenshotEnabled, setCollapsedAll } from "../la
 import { openWorkspaceSearch } from "../external";
 
 // Lower weight is higher in context menu
-enum WorkspaceContextWeight {
+export enum WorkspaceContextWeight {
+    Paste = 10,
     DeleteAll = 20,
     FormatCode = 30,
     CollapseBlocks = 40,
