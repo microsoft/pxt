@@ -38,10 +38,12 @@ Colors:
 | pxt-secondary-background      | Zoom & Under-Sim Buttons   |
 | pxt-secondary-background-hover | Zoom & Under-Sim Buttons   |
 | pxt-secondary-alpha0          | Zoom & Under-Sim Buttons 0% Opacity |
+| pxt-secondary-alpha0          | Zoom & Under-Sim Buttons 50% Opacity |
 | pxt-secondary-dark            |                            |
 | pxt-secondary-light           | Cloud Projects Card        |
 | pxt-secondary-foreground      |                            |
 | pxt-tertiary-background       | Tour bubbles, additional btns   |
+| pxt-tertiary-alpha20          | 20% Opacity                |
 | pxt-tertiary-alpha50          | 50% Opacity                |
 | pxt-tertiary-foreground       | Tour bubbles, additional btns fg |
 | pxt-neutral-background1       | Modal Header & Body Bkg, Code Card Bkg |
