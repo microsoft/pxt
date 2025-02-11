@@ -1,8 +1,8 @@
 @import "./react-common-breakpoints.less";
 
-@commonTextColor: rgb(50, 49, 48);
-@commonBorderColor: rgb(96, 94, 92);
-@commonBackgroundDisabledColor: rgb(243, 242, 241);
+@commonTextColor: var(--pxt-neutral-button-foreground);
+@commonBorderColor: var(--pxt-neutral-stencil1);
+@commonBackgroundDisabledColor: var(--pxt-neutral-background2);
 
 @defaultFont: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 
@@ -11,18 +11,18 @@
  ****************************************************/
 
 @buttonTextColorLightBackground: @commonTextColor;
-@buttonTextColorDarkBackground: @white;
-@buttonBackgroundColor: @white;
+@buttonTextColorDarkBackground: var(--pxt-neutral-background1);
+@buttonBackgroundColor: var(--pxt-neutral-background1);
 @buttonBackgroundColorDisabled: @commonBackgroundDisabledColor;
-@buttonGrayColor: #e0e1e2;
+@buttonGrayColor: var(--pxt-neutral-button-background);
 
 @buttonMenuTextColor: var(--pxt-primary-foreground);
 @buttonMenuTextColorInverted: var(--pxt-primary-background);
 @buttonMenuBackgroundColorInverted: @buttonMenuTextColor;
-@buttonFocusOutlineDarkBackground: @buttonTextColorDarkBackground solid 1px;;
+@buttonFocusOutlineDarkBackground: @buttonTextColorDarkBackground solid 1px;
 @buttonFocusOutlineLightBackground: @commonBorderColor solid 1px;
-@buttonMenuBackgroundHoverColor: rgba(0,0,0,.1);
-@buttonMenuBackgroundActiveColor: rgba(0,0,0,.15);
+@buttonMenuBackgroundHoverColor: var(--pxt-neutral-alpha05);
+@buttonMenuBackgroundActiveColor: var(--pxt-neutral-alpha20);
 @buttonLinkColor: var(--pxt-link);
 
 
@@ -35,21 +35,9 @@
  *                DraggableGraph                     *
  ****************************************************/
 
-@draggableGraphHandleColor: #ffffff;
-@draggableGraphPointColor: #E63022;
-
-
-/****************************************************
- *                    Dropdowns                      *
- ****************************************************/
-
-
-/****************************************************
- *                DraggableGraph                     *
- ****************************************************/
-
-@draggableGraphPathColor: #E63022;
-@draggableGraphPointColor: #E63022;
+@draggableGraphHandleColor: var(--pxt-neutral-background1);
+@draggableGraphPointColor: var(--pxt-primary-background);
+@draggableGraphPathColor: var(--pxt-primary-background);
 
 /****************************************************
  *                    Modals                        *
