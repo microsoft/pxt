@@ -358,6 +358,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
 
         const targetTheme = pxt.appTarget.appTheme;
         const isController = pxt.shell.isControllerMode();
+        const isTimeMachineEmbed = pxt.shell.isTimeMachineEmbed();
         const readOnly = pxt.shell.isReadOnly();
         const tutorial = tutorialOptions ? tutorialOptions.tutorial : false;
         const simOpts = pxt.appTarget.simulator;
@@ -425,10 +426,10 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
                     </div>
                 </div>}
                 {/* TODO clean this; make it just getCompileButton, and set the buttons fontsize to 0 / the icon itself back to normal to just hide text */}
-                {!headless && <div className="ui item portrait hide">
+                {!headless && !isTimeMachineEmbed && <div className="ui item portrait hide">
                     {compileBtn && this.getCompileButton(computer)}
                 </div>}
-                {!headless && <div className="ui portrait only">
+                {!headless && !isTimeMachineEmbed && <div className="ui portrait only">
                     {compileBtn && this.getCompileButton(mobile)}
                 </div>}
             </div>
