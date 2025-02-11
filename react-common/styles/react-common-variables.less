@@ -73,11 +73,11 @@
 @inputTextColor: @commonTextColor;
 @inputTextColorDisabled: var(--pxt-neutral-foreground3);
 @inputBorderColor: var(--pxt-neutral-stencil1);
-@inputBorderColorFocus: rgb(0, 120, 212);
+@inputBorderColorFocus: var(--pxt-focus-border);
 @inputBackgroundColor: var(--pxt-neutral-background1);
 @inputBackgroundColorDisabled: @commonBackgroundDisabledColor;
-@inputButtonColor: rgb(0, 120, 212);
-@inputButtonColorHover: rgb(3, 33, 60);
+@inputButtonColor: var(--pxt-tertiary-background);
+@inputButtonColorHover: var(--pxt-tertiary-background-hover);
 
 /****************************************************
  *                  Textarea                        *
@@ -85,7 +85,7 @@
 
 @textareaTextColor: @commonTextColor;
 @textareaBorderColor: @inputBorderColor;
-@textareaBorderColorFocus: rgb(0, 120, 212);
+@textareaBorderColorFocus: var(--pxt-focus-border);
 @textareaBackgroundColor: var(--pxt-neutral-background1);
 @textareaBackgroundColorDisabled: @commonBackgroundDisabledColor;
 
@@ -93,22 +93,23 @@
  *              EditorToggle                        *
  ****************************************************/
 
-@editorToggleBackgroundColor: rgba(52,73,94,.8);
-@editorToggleBorderColor: rgba(52,73,94,.2);
+@editorToggleBackgroundColor: var(--pxt-neutral-alpha50);
+@editorToggleBorderColor: var(--pxt-neutral-alpha20);
 @editorToggleBorderWidth: 3px;
 
 /****************************************************
  *                RadioButtonGroup                  *
  ****************************************************/
 
-@radioButtonIconBackground: #eaeaea;
-@radioButtonIconBackgroundChecked: #ffffff;
-@radioButtonIconColor: #333333;
-@radioButtonIconColorChecked: #E63022;
-@radioButtonIconBorder: #A6A6A6;
+@radioButtonIconBackground: var(--pxt-neutral-button-background);
+@radioButtonIconBackgroundChecked: var(--pxt-neutral-background1);
+@radioButtonIconColor: var(--pxt-neutral-button-foreground);
+@radioButtonIconColorChecked: var(--pxt-primary-background);
+@radioButtonIconBorder: var(--pxt-neutral-stencil1);
 
 /****************************************************
  *                 High Contrast                    *
+ *    TODO thsparks- Remove these with HC theme     *
  ****************************************************/
 
 @highContrastTextColor: #ffffff;
@@ -127,13 +128,13 @@
  *                   Progress Bar                   *
  ****************************************************/
 
-@progressBarBorder: #7D7D7D;
-@progressBarUnfilledColor: #EEE;
-@progressBarFilledColor: #5874e1;
+@progressBarBorder: var(--pxt-neutral-stencil1);
+@progressBarUnfilledColor: var(--pxt-neutral-background1);
+@progressBarFilledColor: var(--pxt-tertiary-background);
 
 
 /****************************************************
  *                     Tree View                    *
  ****************************************************/
 
- @treeitemBackgroundColor: #ffffff;
+ @treeitemBackgroundColor: var(--pxt-neutral-background1);

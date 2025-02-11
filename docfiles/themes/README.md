@@ -43,6 +43,7 @@ Colors:
 | pxt-secondary-light           | Cloud Projects Card        |
 | pxt-secondary-foreground      |                            |
 | pxt-tertiary-background       | Tour bubbles, additional btns   |
+| pxt-tertiary-background-hover |                            |
 | pxt-tertiary-alpha20          | 20% Opacity                |
 | pxt-tertiary-alpha50          | 50% Opacity                |
 | pxt-tertiary-foreground       | Tour bubbles, additional btns fg |
@@ -68,6 +69,7 @@ Colors:
 | pxt-variant-foreground5       | Debugger Text              |
 | pxt-link                      | Link Text                  |
 | pxt-link-hover                | Link Text Hover            |
+| pxt-focus-border              | Border for focused elements |
 | pxt-colors-green-background1  | OK Buttons, etc...         |
 | pxt-colors-green-foreground1  | OK Buttons, etc...         |
 | pxt-colors-green-hover        | OK Button Hover, etc...    |

@@ -31,6 +31,7 @@
     --pxt-secondary-light: #9a9a9a;
     --pxt-secondary-foreground: #f0f0f0;
     --pxt-tertiary-background: #909090;
+    --pxt-tertiary-background-hover: "#777777";
     --pxt-tertiary-alpha20: #90909033;
     --pxt-tertiary-alpha50: #9090907F;
     --pxt-tertiary-foreground: #ffffff;
@@ -49,8 +50,9 @@
     --pxt-neutral-stencil3: #FFFFFF;
     --pxt-neutral-button-background: #e0e1e2;
     --pxt-neutral-button-foreground: #333333;
-    --pxt-link: #666666;
-    --pxt-link-hover: #333333;
+    --pxt-link: #3977B4;
+    --pxt-link-hover: #204467;
+    --pxt-focus-border: #0078D4;
     --pxt-colors-purple-background1: #9932cc;
     --pxt-colors-orange-background1: #ff7f50;
     --pxt-colors-brown-background1: #663905;
