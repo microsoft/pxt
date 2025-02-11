@@ -1206,6 +1206,14 @@ namespace pxt {
             return clone;
         }
 
+        saveGallerySnapshot() {
+            return this.gallery;
+        }
+
+        loadGallerySnapshot(snapshot: AssetSnapshot) {
+            this.gallery = snapshot;
+        }
+
         protected generateImage(entry: JRes, type: AssetType.Image): ProjectImage;
         protected generateImage(entry: JRes, type: AssetType.Tile): Tile;
         protected generateImage(entry: JRes, type: AssetType.Image | AssetType.Tile): ProjectImage | Tile {
