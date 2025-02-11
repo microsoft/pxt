@@ -1,7 +1,9 @@
 {
     "id": "high-contrast",
     "name": "High Contrast",
-    "overrideFiles": [],
+    "overrideFiles": [
+        "/docfiles/themes/overrides/high-contrast-overrides.css"
+    ],
     "colors": {
         "pxt-target-background1": "#000000",
         "pxt-target-background1-light": "#000000",
