@@ -5,21 +5,25 @@
     "colors": {
         "pxt-target-background1": "#F8FAFC",
         "pxt-target-background1-light": "#ffffff",
-        "pxt-target-background2": "#F8FAFC",
-        "pxt-target-background2-light": "#ffffff",
-        "pxt-target-background3": "#F8FAFC",
         "pxt-target-foreground1": "#000000",
         "pxt-target-foreground1-hover": "#333333",
+        "pxt-target-stencil1": "#e1e1e1",
+
+        "pxt-target-background2": "#F8FAFC",
+        "pxt-target-background2-light": "#ffffff",
         "pxt-target-foreground2": "#000000",
         "pxt-target-foreground2-hover": "#333333",
+        "pxt-target-stencil2": "#e1e1e1",
+
+        "pxt-target-background3": "#F8FAFC",
         "pxt-target-foreground3": "#000000",
         "pxt-target-foreground3-hover": "#333333",
-        "pxt-target-stencil1": "#e1e1e1",
-        "pxt-target-stencil2": "#e1e1e1",
         "pxt-target-stencil3": "#e1e1e1",
+
         "pxt-header-background": "#116E79",
         "pxt-header-background-alpha30": "#116E791E",
         "pxt-header-foreground": "#FFFFFF",
+
         "pxt-primary-background": "#5D4FBA",
         "pxt-primary-background-hover": "#4d3eb1",
         "pxt-primary-alpha0": "#5D4FBA00",
@@ -27,6 +31,7 @@
         "pxt-primary-dark": "#372E75",
         "pxt-primary-light": "#a098d7",
         "pxt-primary-foreground": "#FFFFFF",
+
         "pxt-secondary-background": "#5D4FBA",
         "pxt-secondary-background-hover": "#483c9a",
         "pxt-secondary-alpha0": "#5D4FBA00",
@@ -34,31 +39,39 @@
         "pxt-secondary-dark": "#372E75",
         "pxt-secondary-light": "#7569c4",
         "pxt-secondary-foreground": "#F8FAFC",
+
         "pxt-tertiary-background": "#116E79",
         "pxt-tertiary-background-hover": "#0b454c",
         "pxt-tertiary-alpha20": "#116E7933",
         "pxt-tertiary-alpha50": "#116E797F",
         "pxt-tertiary-foreground": "#FFFFFF",
+
         "pxt-neutral-background1": "#FFFFFF",
+        "pxt-neutral-foreground1": "rgba(0,0,0,.85)",
+        "pxt-neutral-hover1": "#cccccc",
+        "pxt-neutral-stencil1": "rgba(34, 74, 114, 0.15)",
+
         "pxt-neutral-background2": "#F9FAFB",
+        "pxt-neutral-foreground2": "rgba(0,0,0,.87)",
+        "pxt-neutral-hover2": "#e0e0e0",
+        "pxt-neutral-stencil2": "#e9eef2",
+
         "pxt-neutral-background3": "#4e5758",
+        "pxt-neutral-foreground3": "#FFFFFF",
+        "pxt-neutral-hover3": "#363c3d",
+        "pxt-neutral-stencil3": "#FFFFFF",
+
         "pxt-neutral-alpha05": "rgba(0, 0, 0, 0.05)",
         "pxt-neutral-alpha20": "rgba(0, 0, 0, 0.2)",
         "pxt-neutral-alpha50": "rgba(0, 0, 0, 0.5)",
-        "pxt-neutral-foreground1": "rgba(0,0,0,.85)",
-        "pxt-neutral-foreground2": "rgba(0,0,0,.87)",
-        "pxt-neutral-foreground3": "#FFFFFF",
-        "pxt-neutral-hover1": "#cccccc",
-        "pxt-neutral-hover2": "#e0e0e0",
-        "pxt-neutral-hover3": "#363c3d",
-        "pxt-neutral-stencil1": "rgba(34, 74, 114, 0.15)",
-        "pxt-neutral-stencil2": "#e9eef2",
-        "pxt-neutral-stencil3": "#FFFFFF",
+
         "pxt-neutral-button-background": "#e0e1e2",
         "pxt-neutral-button-foreground": "#323130",
+
         "pxt-link": "#3977B4",
         "pxt-link-hover": "#204467",
         "pxt-focus-border": "#0078D4",
+
         "pxt-colors-purple-background": "#5D4FBA",
         "pxt-colors-purple-foreground": "#FFFFFF",
         "pxt-colors-purple-hover": "#483c9a",

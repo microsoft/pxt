@@ -13,17 +13,17 @@ Colors:
 |-------------------------------|----------------------------|
 | pxt-target-background1        | Blockly Workspace Bkg      |
 | pxt-target-background1-light  |                            |
-| pxt-target-background2        | Sim Sidebar Bkg            |
-| pxt-target-background2-light  |                            |
-| pxt-target-background3        | Toolbox & Bottom Bar Bkg   |
 | pxt-target-foreground1        | Blockly Workspace Fg       |
 | pxt-target-foreground1-hover  |                            |
+| pxt-target-stencil1           | Outlines for Blockly Workspace   |
+| pxt-target-background2        | Sim Sidebar Bkg            |
+| pxt-target-background2-light  |                            |
 | pxt-target-foreground2        | Sim Sidebar Fg             |
 | pxt-target-foreground2-hover  |                            |
+| pxt-target-stencil2           | Outlines for Sim Sidebar  |
+| pxt-target-background3        | Toolbox & Bottom Bar Bkg   |
 | pxt-target-foreground3        | Toolbox & Bottom Bar Fg    |
 | pxt-target-foreground3-hover  |                            |
-| pxt-target-stencil1           | Outlines for Blockly Workspace   |
-| pxt-target-stencil2           | Outlines for Sim Sidebar  |
 | pxt-target-stencil3           | Outlines for Toolbox & Bottom Bar     |
 | pxt-header-background         | Header Bar Bkg             |
 | pxt-header-background-alpha30 | Header Bar Bkg 30% Opacity |
@@ -48,27 +48,22 @@ Colors:
 | pxt-tertiary-alpha50          | 50% Opacity                |
 | pxt-tertiary-foreground       | Tour bubbles, additional btns fg |
 | pxt-neutral-background1       | Modal Header & Body Bkg, Code Card Bkg |
+| pxt-neutral-foreground1       | Modal Header & Body Fg     |
+| pxt-neutral-hover1            |                            |
+| pxt-neutral-stencil1          | Modal Horizontal Lines     |
 | pxt-neutral-background2       | Modal Footer Bkg           |
+| pxt-neutral-foreground2       | Modal Footer Fg            |
+| pxt-neutral-hover2            |                            |
+| pxt-neutral-stencil2          | Code Card Border           |
 | pxt-neutral-background3       | Expanded code card bkg     |
+| pxt-neutral-foreground3       | Expanded code card Fg      |
+| pxt-neutral-hover3            |                            |
+| pxt-neutral-stencil3          | Expanded code card border  |
 | pxt-neutral-alpha05           | 5% opacity fade            |
 | pxt-neutral-alpha20           | 20% opacity fade           |
 | pxt-neutral-alpha50           | 50% opacity fade           |
-| pxt-neutral-foreground1       | Modal Header & Body Fg     |
-| pxt-neutral-foreground2       | Modal Footer Fg            |
-| pxt-neutral-foreground3       | Expanded code card Fg      |
-| pxt-neutral-hover1            |                            |
-| pxt-neutral-hover2            |                            |
-| pxt-neutral-hover3            |                            |
-| pxt-neutral-stencil1          | Modal Horizontal Lines     |
-| pxt-neutral-stencil2          | Code Card Border           |
-| pxt-neutral-stencil3          | Expanded code card border  |
 | pxt-neutral-button-background | Unthemed Buttons Bkg       |
 | pxt-neutral-button-foreground | Unthemed Buttons Fg        |
-| pxt-variant-foreground1       | Debugger Text              |
-| pxt-variant-foreground2       | Debugger Text              |
-| pxt-variant-foreground3       | Debugger Text              |
-| pxt-variant-foreground4       | Debugger Text              |
-| pxt-variant-foreground5       | Debugger Text              |
 | pxt-link                      | Link Text                  |
 | pxt-link-hover                | Link Text Hover            |
 | pxt-focus-border              | Border for focused elements |

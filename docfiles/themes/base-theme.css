@@ -2,21 +2,25 @@
     --pxt-target-background1: #f0f0f0;
     --pxt-target-background1-light: #ffffff;
     --pxt-target-background1-dark: #dedede;
-    --pxt-target-background2: #f0f0f0;
-    --pxt-target-background2-light: #ffffff;
-    --pxt-target-background3: #f0f0f0;
     --pxt-target-foreground1: #333333;
     --pxt-target-foreground1-hover: #555555;
+    --pxt-target-stencil1: #e1e1e1;
+
+    --pxt-target-background2: #f0f0f0;
+    --pxt-target-background2-light: #ffffff;
     --pxt-target-foreground2: #333333;
     --pxt-target-foreground2-hover: #555555;
+    --pxt-target-stencil2: #e1e1e1;
+
+    --pxt-target-background3: #f0f0f0;
     --pxt-target-foreground3: #333333;
     --pxt-target-foreground3-hover: #555555;
-    --pxt-target-stencil1: #e1e1e1;
-    --pxt-target-stencil2: #e1e1e1;
     --pxt-target-stencil3: #e1e1e1;
+
     --pxt-header-background: #888888;
     --pxt-header-background-alpha30: #8888884D;
     --pxt-header-foreground: #ffffff;
+
     --pxt-primary-background: #aaaaaa;
     --pxt-primary-background-hover: #bbbbbb;
     --pxt-primary-alpha0: #aaaaaa00;
@@ -24,37 +28,46 @@
     --pxt-primary-dark: #888888;
     --pxt-primary-light: #cccccc;
     --pxt-primary-foreground: #ffffff;
+
     --pxt-secondary-background: #aaaaaa;
     --pxt-secondary-background-hover: #bbbbbb;
     --pxt-secondary-alpha0: #aaaaaa00;
     --pxt-secondary-dark: #767676;
     --pxt-secondary-light: #9a9a9a;
     --pxt-secondary-foreground: #f0f0f0;
+
     --pxt-tertiary-background: #909090;
     --pxt-tertiary-background-hover: "#777777";
     --pxt-tertiary-alpha20: #90909033;
     --pxt-tertiary-alpha50: #9090907F;
     --pxt-tertiary-foreground: #ffffff;
+
     --pxt-neutral-background1: #ffffff;
+    --pxt-neutral-foreground1: rgba(0, 0, 0, 0.85);
+    --pxt-neutral-hover1: #cccccc;
+    --pxt-neutral-stencil1: rgba(136, 136, 136, 0.15);
+
     --pxt-neutral-background2: #f9f9f9;
+    --pxt-neutral-foreground2: rgba(0, 0, 0, 0.87);
+    --pxt-neutral-hover2: #e0e0e0;
+    --pxt-neutral-stencil2: #e9eef2;
+
     --pxt-neutral-background3: #4e5758;
+    --pxt-neutral-foreground3: #000000;
+    --pxt-neutral-hover3: #363c3d;
+    --pxt-neutral-stencil3: #FFFFFF;
+
     --pxt-neutral-alpha05: rgba(0, 0, 0, 0.05);
     --pxt-neutral-alpha20: rgba(0, 0, 0, 0.2);
     --pxt-neutral-alpha50: rgba(0, 0, 0, 0.5);
-    --pxt-neutral-foreground1: rgba(0, 0, 0, 0.85);
-    --pxt-neutral-foreground2: rgba(0, 0, 0, 0.87);
-    --pxt-neutral-foreground3: #000000;
-    --pxt-neutral-hover1: #cccccc;
-    --pxt-neutral-hover2: #e0e0e0;
-    --pxt-neutral-hover3: #363c3d;
-    --pxt-neutral-stencil1: rgba(136, 136, 136, 0.15);
-    --pxt-neutral-stencil2: #e9eef2;
-    --pxt-neutral-stencil3: #FFFFFF;
+
     --pxt-neutral-button-background: #e0e1e2;
     --pxt-neutral-button-foreground: #333333;
+
     --pxt-link: #3977B4;
     --pxt-link-hover: #204467;
     --pxt-focus-border: #0078D4;
+
     --pxt-colors-purple-background: #9932cc;
     --pxt-colors-purple-foreground: #FFFFFF;
     --pxt-colors-purple-hover: #7a28a3;
@@ -82,21 +95,4 @@
     --pxt-colors-yellow-foreground: #FFFFFF;
     --pxt-colors-yellow-hover: rgb(153, 132, 0);
     --pxt-colors-yellow-alpha50: #c0a0007F;
-
-    /*
-    --pxt-neutral-background3: ;
-    --pxt-neutral-foreground3: ;
-    --pxt-color-palette-green-background1: ;
-    --pxt-color-palette-green-background2: ;
-    --pxt-color-palette-green-foreground1: ;
-    --pxt-color-palette-green-foreground2: ;
-    --pxt-color-palette-green-hover: ;
-    --pxt-color-palette-green-border: ;
-    --pxt-color-palette-red-background1: ;
-    --pxt-color-palette-red-background2: ;
-    --pxt-color-palette-red-foreground1: ;
-    --pxt-color-palette-red-foreground2: ;
-    --pxt-color-palette-red-hover: ;
-    --pxt-color-palette-red-border: ;
-    */
 }
