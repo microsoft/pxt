@@ -59,7 +59,7 @@ export const FocusList = (props: FocusListProps) => {
 
     const isFocusable = (e: HTMLElement) => {
         return e.getAttribute("data-isfocusable") === "true"
-            && !!e.offsetParent;
+            && e.offsetParent !== null;
     }
 
     const onKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
