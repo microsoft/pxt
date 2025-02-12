@@ -102,7 +102,7 @@ export class ThemeManager {
             }
 
             // textContent is safer than innerHTML, less vulnerable to XSS
-            styleElement.textContent = `:root { ${themeAsStyle} }`;
+            styleElement.textContent = `.pxt-theme-root { ${themeAsStyle} }`;
         }
     }
 }

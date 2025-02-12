@@ -57,6 +57,8 @@ Colors:
 | pxt-neutral-foreground2       | Modal Footer Fg            |
 | pxt-neutral-foreground3       | Expanded code card Fg      |
 | pxt-neutral-hover1            |                            |
+| pxt-neutral-hover2            |                            |
+| pxt-neutral-hover3            |                            |
 | pxt-neutral-stencil1          | Modal Horizontal Lines     |
 | pxt-neutral-stencil2          | Code Card Border           |
 | pxt-neutral-stencil3          | Expanded code card border  |
@@ -70,6 +72,18 @@ Colors:
 | pxt-link                      | Link Text                  |
 | pxt-link-hover                | Link Text Hover            |
 | pxt-focus-border              | Border for focused elements |
+| pxt-colors-purple-background1 | Purple color               |
+| pxt-colors-purple-foreground  | Fg for purple controls     |
+| pxt-colors-purple-hover       |                            |
+| pxt-colors-orange-background1 | Orange color               |
+| pxt-colors-orange-foreground  | Fg for orange controls     |
+| pxt-colors-orange-hover       |                            |
+| pxt-colors-brown-background1  | Brown color                |
+| pxt-colors-brown-foreground   | Fg for brown controls      |
+| pxt-colors-brown-hover        |                            |
+| pxt-colors-blue-background1   | Blue color                 |
+| pxt-colors-blue-foreground    | Fg for blue controls       |
+| pxt-colors-blue-hover         |                            |
 | pxt-colors-green-background1  | OK Buttons, etc...         |
 | pxt-colors-green-foreground1  | OK Buttons, etc...         |
 | pxt-colors-green-hover        | OK Button Hover, etc...    |
