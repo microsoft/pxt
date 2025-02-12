@@ -255,8 +255,8 @@
 @diffAddedBackground: var(--pxt-colors-green-alpha50); // #e6ffed;
 @diffMarkerBackground: var(--pxt-neutral-background1); //#f1f8ff;
 @diffMarkerColor: var(--pxt-neutral-foreground1); //rgba(27,31,35,.7);
-@diffInvertedRemovedBackground: var(--pxt-colors-red-background1); // #ff5050;
-@diffInvertedAddedBackground: var(--pxt-colors-green-background1); // #10a010;
+@diffInvertedRemovedBackground: var(--pxt-colors-red-background); // #ff5050;
+@diffInvertedAddedBackground: var(--pxt-colors-green-background); // #10a010;
 @diffInvertedMarkerBackground: var(--pxt-neutral-background3); // #666;
 @diffInvertedUnchangedBackground: var(--pxt-neutral-background1); // #1e1e1e;
 @diffInvertedMarkerColor: var(--pxt-neutral-foreground1); // #ccc;
@@ -272,7 +272,7 @@
 @diffUpdateInlineAddedOutline: 1px solid var(--pxt-neutral-stencil3); // #ccc
 
 @conflictBorderColor: var(--pxt-colors-yellow-hover); // orange;
-@conflictHeaderBackgroundColor: var(--pxt-colors-yellow-background1); // lighten(@conflictBorderColor, 30);
+@conflictHeaderBackgroundColor: var(--pxt-colors-yellow-background); // lighten(@conflictBorderColor, 30);
 @conflictHeaderColor: var(pxt-neutral-background3); // black;
 
 /*-------------------
@@ -369,11 +369,11 @@
     Debugger
 -------------------*/
 // TODO: Chance this for the color we want for variables in the debugger.
-@debugNumberVariable: var(--pxt-colors-purple-background1);
-@debugStringVariable: var(--pxt-colors-orange-background1);
-@debugBooleanVariable: var(--pxt-colors-green-background1);
-@debugArrayVariable: var(--pxt-colors-brown-background1);
-@debugSpriteVariable: var(--pxt-colors-blue-background1);
+@debugNumberVariable: var(--pxt-colors-purple-background);
+@debugStringVariable: var(--pxt-colors-orange-background);
+@debugBooleanVariable: var(--pxt-colors-green-background);
+@debugArrayVariable: var(--pxt-colors-brown-background);
+@debugSpriteVariable: var(--pxt-colors-blue-background);
 
 // @debugVariableOdd: var(--pxt-neutral-background1);
 // @debugVariableEven: var(--pxt-neutral-background3);
