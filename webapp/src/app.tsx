@@ -2914,6 +2914,18 @@ export class ProjectView
             });
     }
 
+    newProjectMaybeWithProjectCreationOptions(firstProject: boolean) {
+        if (pxt.appTarget.appTheme.nameProjectFirst || pxt.appTarget.appTheme.chooseLanguageRestrictionOnNewProject) {
+            this.askForProjectCreationOptionsAsync()
+                .then(projectSettings => {
+                    const { name, languageRestriction } = projectSettings
+                    this.newProject({ name, languageRestriction, firstProject });
+                })
+        } else {
+            this.newProject({ firstProject });
+        }
+    }
+
     async createProjectAsync(options: ProjectCreationOptions): Promise<void> {
         pxt.perf.measureStart(Measurements.CreateProjectAsync)
         this.setSideDoc(undefined);

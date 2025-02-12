@@ -625,19 +625,6 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
         return headers;
     }
 
-    newProject(firstProject?: boolean) {
-        pxt.tickEvent("projects.new", undefined, { interactiveConsent: true });
-        if (pxt.appTarget.appTheme.nameProjectFirst || pxt.appTarget.appTheme.chooseLanguageRestrictionOnNewProject) {
-            this.props.parent.askForProjectCreationOptionsAsync()
-                .then(projectSettings => {
-                    const { name, languageRestriction } = projectSettings
-                    this.props.parent.newProject({ name, languageRestriction, firstProject });
-                })
-        } else {
-            this.props.parent.newProject({ firstProject });
-        }
-    }
-
     showScriptManager() {
         pxt.tickEvent("projects.showscriptmanager", undefined, { interactiveConsent: true });
         this.props.parent.showScriptManager();
@@ -768,7 +755,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
             const isFirstProject = (!headers || headers?.length == 0);
             return <carousel.Carousel tickId="myprojects" bleedPercent={20}>
                 {showNewProject && <div role="button" className="ui card link buttoncard newprojectcard" title={lf("Creates a new empty project")}
-                    onClick={() => this.newProject(isFirstProject)} onKeyDown={fireClickOnEnter} >
+                    onClick={() => this.props.parent.newProjectMaybeWithProjectCreationOptions(isFirstProject)} onKeyDown={fireClickOnEnter} >
                     <div className="content">
                         <sui.Icon icon="huge add circle" />
                         <span className="header">{lf("New Project")}</span>

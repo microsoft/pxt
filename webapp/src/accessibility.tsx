@@ -106,7 +106,9 @@ export class HomeAccessibilityMenu extends data.Component<HomeAccessibilityMenuP
 
     newProject() {
         pxt.tickEvent("accmenu.home.new", undefined, { interactiveConsent: true });
-        this.props.parent.newProject();
+        const headers = this.getData(`headers:`);
+        const firstProject = (!headers || headers?.length == 0);
+        this.props.parent.newProjectMaybeWithProjectCreationOptions(firstProject)
     }
 
     importProjectDialog() {
