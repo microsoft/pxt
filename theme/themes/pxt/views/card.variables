@@ -2,8 +2,8 @@
     User Variable Overrides
 *******************************/
 
-@solidBorderColor: #e9eef2;
-@hoverBorderColor: #169CDF;
+@solidBorderColor: var(--pxt-color76);
+@hoverBorderColor: var(--pxt-color77);
 
 @borderWidth: 2px;
 @borderRadius: 0.5rem;
@@ -21,5 +21,5 @@
 
 /* PXT specific */
 @exampleCardFullHeight: false;
-@exampleCardFullHeightBackground: rgba(0,0,0,.75);
-@exampleCardFullHeightColor: white;
+@exampleCardFullHeightBackground: var(--pxt-color78);
+@exampleCardFullHeightColor: var(--pxt-color78);

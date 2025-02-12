@@ -33,7 +33,7 @@
             table:last-child thead {
                 position: sticky;
                 top: -0.75rem;
-                box-shadow: inset 0 2px 0 #ddd, inset 0 -2px 0 #ddd;
+                box-shadow: inset 0 2px 0 var(--pxt-color172), inset 0 -2px 0 var(--pxt-color172);
             }
         }
 
@@ -135,7 +135,7 @@
         margin-top: 1em;
         text-align: right;
         border-spacing: 2px;
-        border-color: grey;
+        border-color: var(--pxt-color172);
     }
 
     thead {
@@ -147,10 +147,10 @@
     }
 
     tbody tr.odd {
-        background: #f2f2f2;
+        background: var(--pxt-color173);
     }
     td, th {
-        border: 1px solid #ddd;
+        border: 1px solid var(--pxt-color173);
         padding: 8px;
         min-width: 8ch;
     }
@@ -179,7 +179,7 @@
 #serialCharts .seriallabel,
 #serialPlaceholder .seriallabel {
     padding: 5px 10px 5px 10px;
-    color: #000;
+    color: var(--pxt-color173);
     width: auto;
     border-radius: 20px;
     margin: 5px;
@@ -187,7 +187,7 @@
 }
 
 #serialCharts .seriallabel {
-    border: 1px solid black;
+    border: 1px solid var(--pxt-color173);
 }
 
 #serialPlaceholder .seriallabel {
@@ -266,11 +266,11 @@
 }
 
 div.smoothie-chart-tooltip {
-    background: #444;
+    background: var(--pxt-color174);
     padding: 1em;
     margin-top: 20px;
     font-family: consolas;
-    color: white;
+    color: var(--pxt-color174);
     font-size: 0.8rem;
     pointer-events: none;
 }

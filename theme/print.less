@@ -12,7 +12,7 @@
     blockquote:first-line,
     li:first-line {
         background: transparent !important;
-        color: #000 !important;
+        color: var(--pxt-color172) !important;
         box-shadow: none !important;
         text-shadow: none !important;
         overflow: visible !important;
@@ -24,7 +24,7 @@
     /* bigger fonts */
     body {
         color: #000 !important; /* explicit colors */
-        background: #fff !important;
+        background: var(--pxt-color172) !important;
         font-size: 12pt;
         line-height: 1.3;
         position: inherit !important;
@@ -50,7 +50,7 @@
         }
         /* links */
         a:link, a:visited {
-            color: #000;
+            color: var(--pxt-color172);
             font-weight: bolder;
             text-decoration: none;
         }
@@ -67,7 +67,7 @@
         /* messages */
         .ui.message {
             background: none !important;
-            color: black !important;
+            color: var(--pxt-color172) !important;
             box-shadow: none !important;
         }
         /* images */
@@ -82,14 +82,14 @@
         /* inline blocks*/
         span.docs.inlineblock {
             background: none !important;
-            border: black 2px solid !important;
+            border: var(--pxt-color172) 2px solid !important;
         }
         /* avatar */
         .avatar .avatar-image, .avatar .ui.compact.message::after {
             display: none !important;
         }
         .avatar .ui.compact.message {
-            border: black 2px solid !important;
+            border: var(--pxt-color172) 2px solid !important;
         }
     }
 
@@ -105,37 +105,37 @@
     svg, .pxt-renderer.classic-theme {
         .blocklyPath {
             stroke-width: 3px !important;
-            stroke: black !important;
-            fill: white !important;
+            stroke: var(--pxt-color172) !important;
+            fill: var(--pxt-color172) !important;
         }
         .blocklyBlockBackground, .blocklyLedOff {
             stroke-width: 2px !important;
-            stroke: black !important;
-            fill: white !important;
+            stroke: var(--pxt-color172) !important;
+            fill: var(--pxt-color172) !important;
         }
         .blocklyText, .blocklyDropdownText {
-            fill: black !important;
+            fill: var(--pxt-color172) !important;
         }
         .blocklyLedOn {
             stroke-width: 2px !important;
-            stroke: black !important;
-            fill: black !important;
+            stroke: var(--pxt-color172) !important;
+            fill: var(--pxt-color172) !important;
         }
         .blocklyOutlinePath,
         .blocklyFieldRect.blocklyDropdownRect {
             stroke-width: 2px !important;
-            stroke: black !important;
+            stroke: var(--pxt-color172) !important;
             fill: transparent !important;
         }
         /* comments */
         .blocklyCommentRect,
         .blocklyUneditableComment {
-            fill: white !important;
-            stroke: black !important;
+            fill: var(--pxt-color172) !important;
+            stroke: var(--pxt-color172) !important;
             stroke-width: 1px;
         }
         .blocklyUneditableMinimalBody {
-            fill: white !important;
+            fill: var(--pxt-color172) !important;
         }
         .blocklyCommentTextarea {
             overflow: hidden !important;
@@ -144,10 +144,10 @@
             display: none !important;
         }
         .blocklyToggleRect {
-            fill: white !important;
+            fill: var(--pxt-color172) !important;
         }
         .blocklyText.blocklyToggleText {
-            fill: black !important;
+            fill: var(--pxt-color172) !important;
         }
     }
 

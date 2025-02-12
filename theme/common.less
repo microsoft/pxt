@@ -91,7 +91,7 @@ body.main.pxt-theme-root {
         .image pre {
             margin-left:0.5rem;
             margin-right:0.5rem;
-            color: #000;
+            color: var(--pxt-color91);
             font-size:0.7rem;
             white-space: pre-wrap;
             max-height: 10rem;
@@ -101,7 +101,7 @@ body.main.pxt-theme-root {
 
     // Colors
     .blue {
-        color: var(--pxt-colors-blue-background1);
+        color: var(--pxt-colors-blue-background);
     }
 
     .gray, .grey {
@@ -109,27 +109,27 @@ body.main.pxt-theme-root {
     }
 
     .green, .positive {
-        color: var(--pxt-colors-green-background1);
+        color: var(--pxt-colors-green-background);
     }
 
     .orange {
-        color: var(--pxt-colors-orange-background1);
+        color: var(--pxt-colors-orange-background);
     }
 
     .purple, .violet {
-        color: var(--pxt-colors-purple-background1);
+        color: var(--pxt-colors-purple-background);
     }
 
     .red, .negative {
-        color: var(--pxt-colors-red-background1);
+        color: var(--pxt-colors-red-background);
     }
 
     .teal {
-        color: var(--pxt-colors-teal-background1);
+        color: var(--pxt-colors-teal-background);
     }
 
     .yellow {
-        color: var(--pxt-colors-yellow-background1);
+        color: var(--pxt-colors-yellow-background);
     }
 
     button, .ui.button, .common-button {
@@ -194,13 +194,13 @@ body.main.pxt-theme-root {
         }
 
         &.blue {
-            background-color: var(--pxt-colors-blue-background1);
+            background-color: var(--pxt-colors-blue-background);
             color: var(--pxt-colors-blue-foreground);
-            border-color: var(--pxt-colors-blue-background1);
+            border-color: var(--pxt-colors-blue-background);
 
             &.inverted {
                 background-color: var(--pxt-colors-blue-foreground);
-                color: var(--pxt-colors-blue-background1);
+                color: var(--pxt-colors-blue-background);
             }
     
             &:hover {
@@ -234,13 +234,13 @@ body.main.pxt-theme-root {
         }
 
         &.green, &.positive {
-            background-color: var(--pxt-colors-green-background1);
+            background-color: var(--pxt-colors-green-background);
             color: var(--pxt-colors-green-foreground);
-            border-color: var(--pxt-colors-green-background1);
+            border-color: var(--pxt-colors-green-background);
 
             &.inverted {
                 background-color: var(--pxt-colors-green-foreground);
-                color: var(--pxt-colors-green-background1);
+                color: var(--pxt-colors-green-background);
             }
     
             &:hover {
@@ -255,13 +255,13 @@ body.main.pxt-theme-root {
 
         &.orange {
             /* TODO thsparks : Check if these should be changed to primary, secondary, tertiary, etc... */
-            background-color: var(--pxt-colors-orange-background1);
+            background-color: var(--pxt-colors-orange-background);
             color: var(--pxt-colors-orange-foreground);
-            border-color: var(--pxt-colors-orange-background1);
+            border-color: var(--pxt-colors-orange-background);
 
             &.inverted {
                 background-color: var(--pxt-colors-orange-foreground);
-                color: var(--pxt-colors-orange-background1);
+                color: var(--pxt-colors-orange-background);
             }
     
             &:hover {
@@ -276,13 +276,13 @@ body.main.pxt-theme-root {
 
         &.purple, &.violet {
             /* TODO thsparks : Check if these should be changed to primary, secondary, tertiary, etc... */
-            background-color: var(--pxt-colors-purple-background1);
+            background-color: var(--pxt-colors-purple-background);
             color: var(--pxt-colors-purple-foreground);
-            border-color: var(--pxt-colors-purple-background1);
+            border-color: var(--pxt-colors-purple-background);
 
             &.inverted {
                 background-color: var(--pxt-colors-purple-foreground);
-                color: var(--pxt-colors-purple-background1);
+                color: var(--pxt-colors-purple-background);
             }
     
             &:hover {
@@ -296,13 +296,13 @@ body.main.pxt-theme-root {
         }
 
         &.red, &.negative {
-            background-color: var(--pxt-colors-red-background1);
+            background-color: var(--pxt-colors-red-background);
             color: var(--pxt-colors-red-foreground);
-            border-color: var(--pxt-colors-red-background1);
+            border-color: var(--pxt-colors-red-background);
 
             &.inverted {
                 background-color: var(--pxt-colors-red-foreground);
-                color: var(--pxt-colors-red-background1);
+                color: var(--pxt-colors-red-background);
             }
     
             &:hover {
@@ -316,13 +316,13 @@ body.main.pxt-theme-root {
         }
 
         &.teal {
-            background-color: var(--pxt-colors-teal-background1);
+            background-color: var(--pxt-colors-teal-background);
             color: var(--pxt-colors-teal-foreground);
-            border-color: var(--pxt-colors-teal-background1);
+            border-color: var(--pxt-colors-teal-background);
 
             &.inverted {
                 background-color: var(--pxt-colors-teal-foreground);
-                color: var(--pxt-colors-teal-background1);
+                color: var(--pxt-colors-teal-background);
             }
 
             &:hover {
@@ -336,13 +336,13 @@ body.main.pxt-theme-root {
         }
 
         &.yellow {
-            background-color: var(--pxt-colors-yellow-background1);
+            background-color: var(--pxt-colors-yellow-background);
             color: var(--pxt-colors-yellow-foreground);
-            border-color: var(--pxt-colors-yellow-background1);
+            border-color: var(--pxt-colors-yellow-background);
 
             &.inverted {
                 background-color: var(--pxt-colors-yellow-foreground);
-                color: var(--pxt-colors-yellow-background1);
+                color: var(--pxt-colors-yellow-background);
             }
     
             &:hover {
@@ -594,7 +594,7 @@ body.main.pxt-theme-root {
 }
 
 .simulator .ui.embed .icon.xicon::after {
-    background: rgba(0,0,0,.3);
+    background: var(--pxt-color92);
     transition: opacity .25s ease;
 }
 
@@ -721,8 +721,8 @@ div.simframe > iframe {
 
 /* active toggle */
 .ui.item.editor-menuitem .active ~ .item.toggle {
-    box-shadow: 2px 0 0 rgba(0,0,0,.1)!important;
-    background: #fff!important;
+    box-shadow: 2px 0 0 var(--pxt-color93)!important;
+    background: var(--pxt-color93)!important;
 }
 
 #editortoggle > .link {
@@ -813,7 +813,7 @@ div.simframe > iframe {
     font-family: @segoeUIFont;
     font-size: 18px;
     font-weight: 700;
-    color: #fff;
+    color: var(--pxt-color93);
     margin-left: 1rem;
     margin-bottom: 1px;
 }
@@ -875,7 +875,7 @@ div.simframe > iframe {
     .image pre {
         margin-left:0.5rem;
         margin-right:0.5rem;
-        color: #000;
+        color: var(--pxt-color93);
         font-size:0.7rem;
         white-space: pre-wrap;
         max-height: 10rem;
@@ -1088,7 +1088,7 @@ Avatar
     left: -1em;
     bottom: auto;
     border-width: 0px 1em 0.7em 0;
-    border-color: rgba(0, 0, 0, 0) #EEE;
+    border-color: var(--pxt-color94) var(--pxt-color95);
     content: '';
     position: absolute;
     border-style: solid;
@@ -1108,7 +1108,7 @@ Avatar
 /* Simulator effects */
 @keyframes glow {
     to {
-         outline-color: yellow;
+         outline-color: var(--pxt-color96);
     }
 }
 
@@ -1160,7 +1160,7 @@ Avatar
 
 // clashes with highlighted typescript code snippets
 svg .highlight {
-    border-bottom: 2px solid #FFC107;
+    border-bottom: 2px solid var(--pxt-color97);
 }
 
 /* Modulator */
@@ -1181,12 +1181,12 @@ Field editors
 *******************************/
 
 .social-icons a.facebook {
-    color: white;
-    background-color: #3b5998;
+    color: var(--pxt-color97);
+    background-color: var(--pxt-color98);
 }
 .social-icons a.twitter {
-    color: white;
-    background-color: #1da1f2;
+    color: var(--pxt-color98);
+    background-color: var(--pxt-color98);
 }
 .social-icons a.discourse {
     color: var(--pxt-primary-foreground);
@@ -1712,7 +1712,7 @@ p.ui.font.small {
     #boardview {
         position: relative;
         height:100%;
-        background-color: white;
+        background-color: var(--pxt-color98);
         padding-top: 1rem;
         padding-bottom: 4.5rem;
         padding-left: 0rem;
@@ -1807,7 +1807,7 @@ p.ui.font.small {
     }
 
     i.green.icon {
-        color: rgba(0,0,0,.6)!important;
+        color: var(--pxt-color99)!important;
     }
 
     #boardview.headless-sim {
@@ -1902,8 +1902,8 @@ p.ui.font.small {
 }
 
 .download-callout {
-    background-color: #EAE7FF;
-    color: #4C309D;
+    background-color: var(--pxt-color100);
+    color: var(--pxt-color101);
     border-radius: 1em;
     padding: 1em;
     position: relative;
@@ -1935,7 +1935,7 @@ p.ui.font.small {
 }
 
 .download-device-name {
-    color: #4C309D;
+    color: var(--pxt-color101);
 }
 
 .header>.header-inline-icon ~ .header-title {
@@ -2541,7 +2541,7 @@ p.ui.font.small {
     bottom: 0;
     overflow-y: hidden;
 
-    background-color: white;
+    background-color: var(--pxt-color101);
     padding-left: 2em;
     padding-right: 2em;
     padding-bottom: 2em;
@@ -2664,7 +2664,7 @@ div.simframe.ui.embed {
     display: flex;
     align-items: center;
     background-color: var(--pxt-target-background1);
-    color: black;
+    color: var(--pxt-color101);
     border-radius: 6px;
     height: 3rem;
     padding: 0 .6rem;
@@ -2680,8 +2680,8 @@ div.simframe.ui.embed {
     }
 
     &:focus {
-        border: 3px solid #fff;
-        outline: 1px ridge #000;
+        border: 3px solid var(--pxt-color101);
+        outline: 1px ridge var(--pxt-color101);
     }
 }
 
@@ -2753,24 +2753,24 @@ button.ui.button.hostmultiplayergame-button {
         background-size: 75%;
 
         &.player-1 {
-            border-color: #FF0000;
+            border-color: var(--pxt-color101);
             // TODO: what to use for background color? just leave as default white?
             // background-color: #FF00001A;
             // !importants here as we have to override hc nulling background properties
             background-image: var(--multiplayer-presence-icon-1) !important;
         }
         &.player-2 {
-            border-color: #0038FF;
+            border-color: var(--pxt-color102);
             // background-color: #0038FF1A;
             background-image: var(--multiplayer-presence-icon-2) !important;
         }
         &.player-3 {
-            border-color: #FF9A14;
+            border-color: var(--pxt-color103);
             // background-color: #FF9A141A;
             background-image: var(--multiplayer-presence-icon-3) !important;
         }
         &.player-4 {
-            border-color: #4DA64D;
+            border-color: var(--pxt-color104);
             // background-color: #4DA64D1A;
             background-image: var(--multiplayer-presence-icon-4) !important;
         }
@@ -2815,7 +2815,7 @@ button.ui.button.hostmultiplayergame-button {
         }
 
         p.warning {
-            background-color: #F5BC5F;
+            background-color: var(--pxt-color105);
             padding: 6px;
         }
 
@@ -2895,7 +2895,7 @@ button.ui.button.hostmultiplayergame-button {
 /** language modal **/
 #langmodal {
     #availablelocales .langoption .header {
-        color: #4c4ca6;
+        color: var(--pxt-color105);
     }
 
     #langmodalfooter {
@@ -2923,7 +2923,7 @@ button.ui.button.hostmultiplayergame-button {
 .blocks-editor-field-overlay {
     position: absolute;
     z-index: @blocklyWidgetDivZIndex;
-    background-color: rgba(0, 0, 0, 0.4)
+    background-color: var(--pxt-color106)
 }
 
 a.ui.link {
@@ -2957,7 +2957,7 @@ p.ui.small {
 
 select.ui.dropdown {
     &:focus, &:active {
-        outline: 1px dotted #212121;
+        outline: 1px dotted var(--pxt-color107);
         outline: 5px auto -webkit-focus-ring-color;
     }
 
@@ -2972,7 +2972,7 @@ select.ui.dropdown {
 
 .ui.modal.auto-save-disabled-warning {
     .header {
-        background-color: #F5BC5F;
+        background-color: var(--pxt-color107);
     }
 }
 

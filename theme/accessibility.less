@@ -10,18 +10,18 @@
           Accessibility
 *******************************/
 
-@accessibleMenuBackground: rgba(255,255,255,.9);
-@accessibleMenuColor: #387894;
+@accessibleMenuBackground: var(--pxt-color79);
+@accessibleMenuColor: var(--pxt-color80);
 
 /* Main menu focus */
 #mainmenu .ui.item:focus {
-    background: rgba(0, 0, 0, 0.1);
+    background: var(--pxt-color80);
     outline: none;
 }
 
 /* Toggle focus */
 #mainmenu .editor-menuitem .ui.item:focus {
-    background: rgba(0,0,0,0.1) !important;
+    background: var(--pxt-color81) !important;
 }
 
 .ui.item:focus, .ui.button:focus {
@@ -60,7 +60,7 @@
     }
     .ui.item.link:focus {
         top: 20em !important;
-        box-shadow: 3px 3px 5px #aaa;
+        box-shadow: 3px 3px 5px var(--pxt-color82);
         border-radius: 0px !important;
     }
 }

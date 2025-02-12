@@ -13,27 +13,27 @@
 @import 'alert';
 
 :root {
-    --editor-bg-color: #1e1e1e;
+    --editor-bg-color: var(--pxt-color39);
 
-    --sidebar-bg-color: #252526;
-    --sidebar-header-bg-color: #3c3c3c;
-    --sidebar-header-text-color: #cccccc;
+    --sidebar-bg-color: var(--pxt-color40);
+    --sidebar-header-bg-color: var(--pxt-color41);
+    --sidebar-header-text-color: var(--pxt-color42);
 
-    --editing-tools-bg-color: #333333;
-    --sidebar-icon-inactive-color: #adadad;
-    --sidebar-icon-active-color: #ffffff;
-    --sidebar-label-color: #adadad;
-    --input-text-color: #5d5d5d;
+    --editing-tools-bg-color: var(--pxt-color42);
+    --sidebar-icon-inactive-color: var(--pxt-color43);
+    --sidebar-icon-active-color: var(--pxt-color43);
+    --sidebar-label-color: var(--pxt-color43);
+    --input-text-color: var(--pxt-color44);
 
-    --filter-panel-bg-color: #333333;
-    --filter-panel-text-color: #ffffff;
-    --filter-panel-label-color: #adadad;
+    --filter-panel-bg-color: var(--pxt-color44);
+    --filter-panel-text-color: var(--pxt-color44);
+    --filter-panel-label-color: var(--pxt-color44);
 
-    --navigator-viewport-color: #ff0000;
-    --wall-color: #e95153;
+    --navigator-viewport-color: var(--pxt-color45);
+    --wall-color: var(--pxt-color46);
 
-    --map-button-bg-color: #3c3c3c;
-    --map-button-icon-color: #cccccc;
+    --map-button-bg-color: var(--pxt-color46);
+    --map-button-icon-color: var(--pxt-color46);
 
     --eyedropper: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Cstyle type='text/css'%3E.icon-canvas-transparent%7Bopacity:0;fill:%23F6F6F6;%7D .icon-vs-out%7Bfill:%23F6F6F6;%7D .icon-vs-bg%7Bfill:%23424242;%7D%3C/style%3E%3Cpath class='icon-canvas-transparent' d='M16 15.978h-16v-16h16v16z' id='canvas'/%3E%3Cpath class='icon-vs-out' d='M15.241 4.652l-1.481 1.481.835.835-3.085 3.085-.762-.762-5.168 5.17-3.596 1.539-1.959-1.959 1.349-3.742 5.19-5.191-.645-.646 3.085-3.085.835.835 1.481-1.481c.431-.431 1-.678 1.616-.731h.461c.661.054 1.298.331 1.77.802 1.082 1.084 1.114 2.81.074 3.85z' id='outline'/%3E%3Cpath class='icon-vs-bg' d='M9.467 7.932l.612.613-5.071 5.072-2.795 1.198-1.032-1.032 1.057-2.936 5.072-5.072.585.585v.003l-4.356 4.356 1.569 1.569 4.355-4.356h.004zm4.995-6.422c-.667-.664-1.777-.729-2.435-.072l-2.188 2.189-.836-.835-.174.174-1.497 1.497 4.177 4.177 1.671-1.671-.835-.835 2.189-2.189c.658-.658.592-1.768-.072-2.435z' id='iconBg'/%3E%3C/svg%3E") 2 16, copy;
   }
@@ -98,8 +98,8 @@
 
 .gallery-editor-header {
     height: 3rem;
-    background-color: #4B7BEC;
-    border: 2px solid #4067b3;
+    background-color: var(--pxt-color46);
+    border: 2px solid var(--pxt-color47);
     border-bottom: none;
     display: flex;
     flex-shrink: 0;
@@ -148,10 +148,10 @@
     top: 0.3rem;
     right: 1rem;
 
-    border: 2px solid #4067b3;
+    border: 2px solid var(--pxt-color47);
     border-radius: 8px;
-    color: #4B7BEC;
-    background-color: #ffffff;
+    color: var(--pxt-color47);
+    background-color: var(--pxt-color47);
     font-family: @pageFont;
     padding-left: 1rem;
     padding-right: 1rem;
@@ -164,15 +164,15 @@
     }
 
     ::-webkit-scrollbar-track {
-        background: #3c3c3c;
+        background: var(--pxt-color47);
     }
 
     ::-webkit-scrollbar-thumb {
-        background: #adadad;
+        background: var(--pxt-color47);
     }
 
     ::-webkit-scrollbar-thumb:hover {
-        background: #979797;
+        background: var(--pxt-color48);
     }
 }
 
@@ -183,8 +183,8 @@
     display: flex;
     padding: 0 1em;
     border-radius: 5px;
-    background-color: white;
-    color: #4b7bec;
+    background-color: var(--pxt-color48);
+    color: var(--pxt-color48);
     align-items: center;
     user-select: none;
 }

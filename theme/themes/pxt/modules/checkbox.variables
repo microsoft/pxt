@@ -2,4 +2,4 @@
     User Variable Overrides
 *******************************/
 
-@handleBoxShadow: 0 1px 2px 0 rgba(34, 36, 38, 0.5), 0px 0px 0px 1px rgba(34, 36, 38, 0.5) inset;
+@handleBoxShadow: 0 1px 2px 0 var(--pxt-color74), 0px 0px 0px 1px var(--pxt-color74) inset;

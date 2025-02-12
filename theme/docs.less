@@ -5,30 +5,30 @@
 *******************************/
 
 /* Background and foreground */
-@docsBackgroundColor: white;
-@docsTextColor: #333;
+@docsBackgroundColor: var(--pxt-color107);
+@docsTextColor: var(--pxt-color108);
 @docsLineHeight: 1.7;
 
 /* Text color */
 @docsHeadingColor: @docsTextColor;
 
 /* Link color */
-@docsLinkColor: #3977b4;
+@docsLinkColor: var(--pxt-color109);
 
 /* Code segment */
-@docsSegmentBackgroundColor: #f7f7f7;
-@docsSegmentBackgroundColorValid: #edf9ef;
-@docsSegmentBackgroundColorInvalid: #fbf3f4;
+@docsSegmentBackgroundColor: var(--pxt-color110);
+@docsSegmentBackgroundColorValid: var(--pxt-color111);
+@docsSegmentBackgroundColorInvalid: var(--pxt-color112);
 
 /* Card */
-@docsCardBackgroundColor: white;
+@docsCardBackgroundColor: var(--pxt-color112);
 @docsCardColor: @docsTextColor;
 @docsCardHeaderColor: @docsTextColor;
 @docsCardContentColor: @docsTextColor;
-@docsCardImageBackgroundColor: rgba(0, 0, 0, .05);
+@docsCardImageBackgroundColor: var(--pxt-color113);
 
-@docsCardBorderColor: #e9eef2;
-@docsCardHoverBorderColor: #1dacf4;
+@docsCardBorderColor: var(--pxt-color113);
+@docsCardHoverBorderColor: var(--pxt-color114);
 
 #docs .footer,
 #docs .topbar,
@@ -42,7 +42,7 @@
 
 .docs.ui.menu.sidebar {
     border: none;
-    border-right: 1px solid rgba(34,36,38,.15);
+    border-right: 1px solid var(--pxt-color114);
 }
 
 #docs {
@@ -144,10 +144,10 @@
     }
 
     .invalid i.icon {
-        color: #a31515;
+        color: var(--pxt-color115);
     }
     .valid i.icon {
-        color: #008000;
+        color: var(--pxt-color116);
     }
 
     .avatar .ui.message {
@@ -208,12 +208,12 @@
 
     /* Breadcrumb */
     .ui.breadcrumb .divider {
-        color: black;
+        color: var(--pxt-color116);
     }
 
     /* Buttons */
     .ui.primary.button p {
-        color: white;
+        color: var(--pxt-color116);
     }
 
     #sidedocs-back-button {
@@ -224,18 +224,18 @@
     }
 
     #sidedocs-back-button.disabled {
-        color: #aeaeae;
+        color: var(--pxt-color116);
         cursor: not-allowed;
     }
     table {
         border-collapse: collapse;
     }
     table tr th, table tr td {
-        border: 1px solid #333;
+        border: 1px solid var(--pxt-color116);
         padding: 6px 13px;
     }
     table tr:nth-child(2n) {
-        background-color: #f8f8f8;
+        background-color: var(--pxt-color117);
     }
 
     /* Warning Message Box */
@@ -287,32 +287,32 @@
         margin-bottom: 0;
 
         a.item {
-            color: rgb(22, 83, 130, 1.0);
+            color: var(--pxt-color118);
 
             i.icon {
                 width: auto;
                 padding: 0 .25em !important;
-                color: rgba(0, 0, 0, .6);
+                color: var(--pxt-color119);
             }
 
             &:hover, &:focus {
                 i.icon {
-                    color: rgba(0, 0, 0, 0.8);
+                    color: var(--pxt-color120);
                 }
             }
         }
 
         .divider {
-            border-top: 1px solid rgba(0, 0, 0, 0.3);
-            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            border-top: 1px solid var(--pxt-color121);
+            border-bottom: 1px solid var(--pxt-color121);
         }
 
         .ui.divided.horizontal.list > .item:not(:first-child) {
-            border-left: 1px solid rgba(0, 0, 0, .4);
+            border-left: 1px solid var(--pxt-color122);
         }
 
         span.item {
-            color: rgba(0, 0, 0, .6);
+            color: var(--pxt-color122);
         }
 
         span.item, img {
@@ -329,29 +329,29 @@
         }
         &.inverted {
             a.item {
-                color: rgba(114, 163, 211, 1.0);
+                color: var(--pxt-color123);
 
                 i.icon {
-                    color: rgba(255, 255, 255, .6);
+                    color: var(--pxt-color124);
                 }
 
                 &:hover, &:focus {
                     i.icon {
-                        color: rgba(255, 255, 255, 0.8);
+                        color: var(--pxt-color125);
                     }
                 }
             }
             .divider {
-                border-top: 1px solid rgba(255, 255, 255, 0.3);
-                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                border-top: 1px solid var(--pxt-color126);
+                border-bottom: 1px solid var(--pxt-color127);
             }
 
             .ui.divided.horizontal.list > .item:not(:first-child) {
-                border-left: 1px solid rgba(255, 255, 255, .4);
+                border-left: 1px solid var(--pxt-color128);
             }
 
             span.item {
-                color: rgba(255, 255, 255, .6);
+                color: var(--pxt-color128);
             }
         }
     }
@@ -380,7 +380,7 @@
     span.docs.inlineblock {
         border-bottom: 3px solid var(--inline-namespace-color);
         border-radius: 0;
-        color: black;
+        color: var(--pxt-color128);
         font-weight: 600;
         background-color: transparent;
         padding-bottom: 0.1rem;
@@ -388,7 +388,7 @@
 }
 
 .ui.sidebar.menu.docs {
-    background: #EFEFEF;
+    background: var(--pxt-color129);
     padding-left: 0.5em;
 
     /* Sidebar TOC */

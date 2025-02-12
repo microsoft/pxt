@@ -2,5 +2,5 @@
          Site Overrides
 *******************************/
 
-@placeholderBackground: rgba(0, 0, 0, 0.1);
-@hoverPlaceholderBackground: rgba(0, 0, 0, 0.1);
+@placeholderBackground: var(--pxt-color75);
+@hoverPlaceholderBackground: var(--pxt-color75);
