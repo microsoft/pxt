@@ -201,6 +201,9 @@ export class FieldTileset extends FieldImages implements FieldCustom {
                 else if (newValue.startsWith(pxt.sprite.TILE_NAMESPACE)) {
                     tile = project.lookupAsset(pxt.AssetType.Tile, newValue.trim());
                 }
+                else {
+                    tile = project.lookupAssetByName(pxt.AssetType.Tile, newValue.trim());
+                }
 
                 if (tile) {
                     this.localTile = tile;
