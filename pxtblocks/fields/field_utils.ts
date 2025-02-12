@@ -469,8 +469,6 @@ export function getAssetSaveState(asset: pxt.Asset) {
 }
 
 
-// TODO: we shouldn't keep duplicating the assets every time we paste into
-// the same project
 export function loadAssetFromSaveState(serialized: AssetSaveState) {
     let newId = serialized.assetId;
     serialized.jres = inflateJRes(serialized.jres);
@@ -499,14 +497,21 @@ export function loadAssetFromSaveState(serialized: AssetSaveState) {
 
         const tempAsset = tempProject.lookupAsset(serialized.assetType, serialized.assetId);
 
-        // asset equals checks this field, so copy it over to the temp asset
-        tempAsset.meta.blockIDs = existing.meta.blockIDs;
-
-        if (pxt.assetEquals(tempAsset, existing)) {
+        if (pxt.assetEquals(tempAsset, existing, true)) {
             return existing;
         }
         else {
-            // the asset ids collided! remap the id in the jres before loading
+            // the asset ids collided! first try to find another asset in the
+            // project that has the same value. for example, if the same code
+            // is copy/pasted multiple times then we will have already created
+            // a new asset for this code
+            const valueMatch = globalProject.lookupAssetByValue(tempAsset.type, tempAsset);
+
+            if (valueMatch) {
+                return valueMatch;
+            }
+
+            // no existing asset, so remap the id in the jres before loading
             // it in the project. in the case of a tilemap, we only need to
             // remap the tilemap id because loadTilemapJRes automatically remaps
             // tile ids and resolves duplicates
@@ -515,8 +520,8 @@ export function loadAssetFromSaveState(serialized: AssetSaveState) {
             const [key, entry] = findEntryInJres(serialized.jres, serialized.assetId);
             delete serialized.jres[key];
 
-            // tilemap ids don't have namespaces
             if (serialized.assetType === "tilemap") {
+                // tilemap ids don't have namespaces
                 entry.id = newId;
                 serialized.jres[newId] = entry;
             }

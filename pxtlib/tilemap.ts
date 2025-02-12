@@ -197,6 +197,15 @@ namespace pxt {
             return undefined;
         }
 
+        getByValue(toFind: U) {
+            for (const asset of this.assets) {
+                if (assetEquals(toFind, asset, true)) {
+                    return asset;
+                }
+            }
+            return undefined;
+        }
+
         isIDTaken(id: string) {
             return !!this.takenNames[id];
         }
@@ -894,6 +903,16 @@ namespace pxt {
         public lookupAssetByName(assetType: AssetType, name: string): Asset;
         public lookupAssetByName(assetType: AssetType, name: string) {
             return getAssetCollection(this.state, assetType).getByDisplayName(name);
+        }
+
+        public lookupAssetByValue(assetType: AssetType.Image, toFind: ProjectImage): ProjectImage;
+        public lookupAssetByValue(assetType: AssetType.Tile, toFind: Tile): Tile;
+        public lookupAssetByValue(assetType: AssetType.Tilemap, toFind: ProjectTilemap): ProjectTilemap;
+        public lookupAssetByValue(assetType: AssetType.Animation, toFind: Animation): Animation;
+        public lookupAssetByValue(assetType: AssetType.Song, toFind: Song): Song;
+        public lookupAssetByValue(assetType: AssetType, toFind: Asset): Asset;
+        public lookupAssetByValue(assetType: AssetType, toFind: Asset) {
+            return getAssetCollection(this.state, assetType).getByValue(toFind);
         }
 
         public getAssets(type: AssetType.Image): ProjectImage[];
@@ -1786,15 +1805,17 @@ namespace pxt {
 
     }
 
-    export function assetEquals(a: Asset, b: Asset): boolean {
+    export function assetEquals(a: Asset, b: Asset, valueOnly = false): boolean {
         if (a == b) return true;
-        if (!a && b || !b && a) return false;
-        if (a.id !== b.id || a.type !== b.type ||
-            !U.arrayEquals(a.meta.tags, b.meta.tags) ||
-            !U.arrayEquals(a.meta.blockIDs, b.meta.blockIDs) ||
-            a.meta.displayName !== b.meta.displayName
-        )
-            return false;
+        if (!a && b || !b && a || a.type !== b.type) return false;
+        if (!valueOnly) {
+            if (a.id !== b.id ||
+                !U.arrayEquals(a.meta.tags, b.meta.tags) ||
+                !U.arrayEquals(a.meta.blockIDs, b.meta.blockIDs) ||
+                a.meta.displayName !== b.meta.displayName
+            )
+                return false;
+        }
 
         switch (a.type) {
             case AssetType.Image:
