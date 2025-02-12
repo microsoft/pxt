@@ -52,22 +52,6 @@ take precedence over default semantic ui styling without using !important.
 */
 
 body.main.pxt-theme-root {
-    .ui.button.primary {
-        background-color: var(--pxt-primary-background);
-        color: var(--pxt-primary-foreground);
-        &:hover {
-            background-color: var(--pxt-primary-background-hover);
-        }
-    }
-
-    .ui.button.secondary {
-        background-color: var(--pxt-secondary-background);
-        color: var(--pxt-secondary-foreground);
-        &:hover {
-            background-color: var(--pxt-secondary-background-hover);
-        }
-    }
-
     a {
         color: var(--pxt-link);
         &:hover {
@@ -117,136 +101,257 @@ body.main.pxt-theme-root {
 
     // Colors
     .blue {
-        background-color: var(--pxt-colors-blue-background1);
-        color: var(--pxt-colors-blue-foreground);
-
-        &.inverted {
-            background-color: var(--pxt-colors-blue-foreground);
-            color: var(--pxt-colors-blue-background1);
-        }
-
-        &:hover {
-            background-color: var(--pxt-colors-blue-hover);
-
-            &.inverted {
-                background-color: var(--pxt-colors-blue-foreground);
-                color: var(--pxt-colors-blue-hover);
-            }
-        }
+        color: var(--pxt-colors-blue-background1);
     }
 
     .gray, .grey {
-        background-color: var(--pxt-neutral-background3);
-        color: var(--pxt-neutral-foreground3);
-
-        &.inverted {
-            background-color: var(--pxt-neutral-foreground3);
-            color: var(--pxt-neutral-background3);
-        }
-
-        &:hover {
-            background-color: var(--pxt-neutral-hover3);
-
-            &.inverted {
-                background-color: var(--pxt-neutral-foreground3);
-                color: var(--pxt-neutral-hover3);
-            }
-        }
+        color: var(--pxt-neutral-background3);
     }
 
     .green, .positive {
-        background-color: var(--pxt-colors-green-background1);
-        color: var(--pxt-colors-green-foreground);
-
-        &.inverted {
-            background-color: var(--pxt-colors-green-foreground);
-            color: var(--pxt-colors-green-background1);
-        }
-
-        &:hover {
-            background-color: var(--pxt-colors-green-hover);
-
-            &.inverted {
-                background-color: var(--pxt-colors-green-foreground);
-                color: var(--pxt-colors-green-hover);
-            }
-        }
+        color: var(--pxt-colors-green-background1);
     }
 
     .orange {
-        /* TODO thsparks : Check if these should be changed to primary, secondary, tertiary, etc... */
-        background-color: var(--pxt-colors-orange-background1);
-        color: var(--pxt-colors-orange-foreground);
-
-        &.inverted {
-            background-color: var(--pxt-colors-orange-foreground);
-            color: var(--pxt-colors-orange-background1);
-        }
-
-        &:hover {
-            background-color: var(--pxt-colors-orange-hover);
-
-            &.inverted {
-                background-color: var(--pxt-colors-orange-foreground);
-                color: var(--pxt-colors-orange-hover);
-            }
-        }
+        color: var(--pxt-colors-orange-background1);
     }
 
-    .purple {
-        /* TODO thsparks : Check if these should be changed to primary, secondary, tertiary, etc... */
-        background-color: var(--pxt-colors-purple-background1);
-        color: var(--pxt-colors-purple-foreground);
-
-        &.inverted {
-            background-color: var(--pxt-colors-purple-foreground);
-            color: var(--pxt-colors-purple-background1);
-        }
-
-        &:hover {
-            background-color: var(--pxt-colors-purple-hover);
-
-            &.inverted {
-                background-color: var(--pxt-colors-purple-foreground);
-                color: var(--pxt-colors-purple-hover);
-            }
-        }
+    .purple, .violet {
+        color: var(--pxt-colors-purple-background1);
     }
 
     .red, .negative {
-        background-color: var(--pxt-colors-red-background1);
-        color: var(--pxt-colors-red-foreground);
+        color: var(--pxt-colors-red-background1);
+    }
 
-        &.inverted {
-            background-color: var(--pxt-colors-red-foreground);
-            color: var(--pxt-colors-red-background1);
-        }
-
-        &:hover {
-            background-color: var(--pxt-colors-red-hover);
-
-            &.inverted {
-                background-color: var(--pxt-colors-red-foreground);
-                color: var(--pxt-colors-red-hover);
-            }
-        }
+    .teal {
+        color: var(--pxt-colors-teal-background1);
     }
 
     .yellow {
-        background-color: var(--pxt-colors-yellow-background1);
-        color: var(--pxt-colors-yellow-foreground);
+        color: var(--pxt-colors-yellow-background1);
+    }
 
-        &.inverted {
-            background-color: var(--pxt-colors-yellow-foreground);
-            color: var(--pxt-colors-yellow-background1);
+    button, .ui.button, .common-button {
+        &.primary {
+            background-color: var(--pxt-primary-background);
+            color: var(--pxt-primary-foreground);
+            border-color: var(--pxt-primary-background);
+    
+            &.inverted {
+                background-color: var(--pxt-primary-foreground);
+                color: var(--pxt-primary-background);
+            }
+    
+            &:hover {
+                background-color: var(--pxt-primary-background-hover);
+    
+                &.inverted {
+                    background-color: var(--pxt-primary-foreground);
+                    color: var(--pxt-primary-background-hover);
+                }
+            }
+        }
+    
+        &.secondary {
+            background-color: var(--pxt-secondary-background);
+            color: var(--pxt-secondary-foreground);
+            border-color: var(--pxt-secondary-background);
+    
+            &.inverted {
+                background-color: var(--pxt-secondary-foreground);
+                color: var(--pxt-secondary-background);
+            }
+    
+            &:hover {
+                background-color: var(--pxt-secondary-background-hover);
+    
+                &.inverted {
+                    background-color: var(--pxt-secondary-foreground);
+                    color: var(--pxt-secondary-background-hover);
+                }
+            }
+        }
+    
+        &.tertiary {
+            background-color: var(--pxt-tertiary-background);
+            color: var(--pxt-tertiary-foreground);
+            border-color: var(--pxt-tertiary-background);
+    
+            &.inverted {
+                background-color: var(--pxt-tertiary-foreground);
+                color: var(--pxt-tertiary-background);
+            }
+    
+            &:hover {
+                background-color: var(--pxt-tertiary-background-hover);
+    
+                &.inverted {
+                    background-color: var(--pxt-tertiary-foreground);
+                    color: var(--pxt-tertiary-background-hover);
+                }
+            }
         }
 
-        &:hover {
-            background-color: var(--pxt-colors-yellow-hover);
+        &.blue {
+            background-color: var(--pxt-colors-blue-background1);
+            color: var(--pxt-colors-blue-foreground);
+            border-color: var(--pxt-colors-blue-background1);
+
+            &.inverted {
+                background-color: var(--pxt-colors-blue-foreground);
+                color: var(--pxt-colors-blue-background1);
+            }
+    
+            &:hover {
+                background-color: var(--pxt-colors-blue-hover);
+    
+                &.inverted {
+                    background-color: var(--pxt-colors-blue-foreground);
+                    color: var(--pxt-colors-blue-hover);
+                }
+            }
+        }
+    
+        &.gray, &.grey {
+            background-color: var(--pxt-neutral-background3);
+            color: var(--pxt-neutral-foreground3);
+            border-color: var(--pxt-neutral-background3);
+
+            &.inverted {
+                background-color: var(--pxt-neutral-foreground3);
+                color: var(--pxt-neutral-background3);
+            }
+    
+            &:hover {
+                background-color: var(--pxt-neutral-hover3);
+    
+                &.inverted {
+                    background-color: var(--pxt-neutral-foreground3);
+                    color: var(--pxt-neutral-hover3);
+                }
+            }
+        }
+
+        &.green, &.positive {
+            background-color: var(--pxt-colors-green-background1);
+            color: var(--pxt-colors-green-foreground);
+            border-color: var(--pxt-colors-green-background1);
+
+            &.inverted {
+                background-color: var(--pxt-colors-green-foreground);
+                color: var(--pxt-colors-green-background1);
+            }
+    
+            &:hover {
+                background-color: var(--pxt-colors-green-hover);
+    
+                &.inverted {
+                    background-color: var(--pxt-colors-green-foreground);
+                    color: var(--pxt-colors-green-hover);
+                }
+            }
+        }
+
+        &.orange {
+            /* TODO thsparks : Check if these should be changed to primary, secondary, tertiary, etc... */
+            background-color: var(--pxt-colors-orange-background1);
+            color: var(--pxt-colors-orange-foreground);
+            border-color: var(--pxt-colors-orange-background1);
+
+            &.inverted {
+                background-color: var(--pxt-colors-orange-foreground);
+                color: var(--pxt-colors-orange-background1);
+            }
+    
+            &:hover {
+                background-color: var(--pxt-colors-orange-hover);
+    
+                &.inverted {
+                    background-color: var(--pxt-colors-orange-foreground);
+                    color: var(--pxt-colors-orange-hover);
+                }
+            }
+        }
+
+        &.purple, &.violet {
+            /* TODO thsparks : Check if these should be changed to primary, secondary, tertiary, etc... */
+            background-color: var(--pxt-colors-purple-background1);
+            color: var(--pxt-colors-purple-foreground);
+            border-color: var(--pxt-colors-purple-background1);
+
+            &.inverted {
+                background-color: var(--pxt-colors-purple-foreground);
+                color: var(--pxt-colors-purple-background1);
+            }
+    
+            &:hover {
+                background-color: var(--pxt-colors-purple-hover);
+    
+                &.inverted {
+                    background-color: var(--pxt-colors-purple-foreground);
+                    color: var(--pxt-colors-purple-hover);
+                }
+            }
+        }
+
+        &.red, &.negative {
+            background-color: var(--pxt-colors-red-background1);
+            color: var(--pxt-colors-red-foreground);
+            border-color: var(--pxt-colors-red-background1);
+
+            &.inverted {
+                background-color: var(--pxt-colors-red-foreground);
+                color: var(--pxt-colors-red-background1);
+            }
+    
+            &:hover {
+                background-color: var(--pxt-colors-red-hover);
+    
+                &.inverted {
+                    background-color: var(--pxt-colors-red-foreground);
+                    color: var(--pxt-colors-red-hover);
+                }
+            }
+        }
+
+        &.teal {
+            background-color: var(--pxt-colors-teal-background1);
+            color: var(--pxt-colors-teal-foreground);
+            border-color: var(--pxt-colors-teal-background1);
+
+            &.inverted {
+                background-color: var(--pxt-colors-teal-foreground);
+                color: var(--pxt-colors-teal-background1);
+            }
+
+            &:hover {
+                background-color: var(--pxt-colors-teal-hover);
+
+                &.inverted {
+                    background-color: var(--pxt-colors-teal-foreground);
+                    color: var(--pxt-colors-teal-hover);
+                }
+            }
+        }
+
+        &.yellow {
+            background-color: var(--pxt-colors-yellow-background1);
+            color: var(--pxt-colors-yellow-foreground);
+            border-color: var(--pxt-colors-yellow-background1);
 
             &.inverted {
                 background-color: var(--pxt-colors-yellow-foreground);
-                color: var(--pxt-colors-yellow-hover);
+                color: var(--pxt-colors-yellow-background1);
+            }
+    
+            &:hover {
+                background-color: var(--pxt-colors-yellow-hover);
+    
+                &.inverted {
+                    background-color: var(--pxt-colors-yellow-foreground);
+                    color: var(--pxt-colors-yellow-hover);
+                }
             }
         }
     }

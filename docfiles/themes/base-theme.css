@@ -75,6 +75,9 @@
     --pxt-colors-red-foreground: #FFFFFF;
     --pxt-colors-red-hover: #8f0000;
     --pxt-colors-red-alpha50: #a800007F;
+    --pxt-colors-teal-background1: #008272;
+    --pxt-colors-teal-foreground: #FFFFFF;
+    --pxt-colors-teal-hover: #004f45;
     --pxt-colors-yellow-background1: #c0a000;
     --pxt-colors-yellow-foreground: #FFFFFF;
     --pxt-colors-yellow-hover: rgb(153, 132, 0);
