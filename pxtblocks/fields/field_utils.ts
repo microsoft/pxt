@@ -32,6 +32,14 @@ export interface PXTBlockData {
     fieldData: pxt.Map<string>;
 }
 
+export interface AssetSaveState {
+    version: number;
+    assetType: pxt.AssetType;
+    jres: pxt.Map<pxt.JRes>;
+    assetId: string;
+}
+
+
 export namespace svg {
     export function hasClass(el: SVGElement, cls: string): boolean {
         return pxt.BrowserUtils.containsClass(el, cls);
@@ -283,18 +291,18 @@ export function updateTilemapXml(dom: Element, proj: pxt.TilemapProject) {
 
             const newData = new pxt.sprite.TilemapData(
                 legacy.tilemap, {
-                    tileWidth: legacy.tileset.tileWidth,
-                    tiles: legacy.tileset.tiles.map((t, index) => {
-                        if (t.projectId != null) {
-                            return upgradedTileMapping["myTiles.tile" + t.projectId];
-                        }
-                        if (!mapping[index]) {
-                            mapping[index] = proj.resolveTile(t.qualifiedName)
-                        }
+                tileWidth: legacy.tileset.tileWidth,
+                tiles: legacy.tileset.tiles.map((t, index) => {
+                    if (t.projectId != null) {
+                        return upgradedTileMapping["myTiles.tile" + t.projectId];
+                    }
+                    if (!mapping[index]) {
+                        mapping[index] = proj.resolveTile(t.qualifiedName)
+                    }
 
-                        return mapping[index];
-                    })
-                },
+                    return mapping[index];
+                })
+            },
                 legacy.layers
             );
 
@@ -416,6 +424,115 @@ export function getTemporaryAssets(workspace: Blockly.Workspace, type: pxt.Asset
     }
 }
 
+export function getAssetSaveState(asset: pxt.Asset) {
+    const serialized: AssetSaveState = {
+        version: 1,
+        assetType: asset.type,
+        assetId: asset.id,
+        jres: {}
+    };
+
+    const project = pxt.react.getTilemapProject();
+    if (asset.type === pxt.AssetType.Tilemap) {
+        const jres = project.getProjectTilesetJRes();
+
+        for (const key of Object.keys(jres)) {
+            if (key === "*") continue;
+            const entry = jres[key];
+            if (entry.mimeType === pxt.TILEMAP_MIME_TYPE) {
+                if (entry.id !== asset.id) {
+                    delete jres[key];
+                }
+            }
+            else {
+                const id = addDotToNamespace(jres["*"].namespace) + key;
+
+                if (!asset.data.tileset.tiles.some(tile => tile.id === id)) {
+                    delete jres[key];
+                }
+            }
+        }
+
+        serialized.jres = jres;
+    }
+    else {
+        const jres = asset.type === pxt.AssetType.Tile ?
+            project.getProjectTilesetJRes() :
+            project.getProjectAssetsJRes();
+
+        serialized.jres["*"] = jres["*"];
+        const [key, entry] = findEntryInJres(jres, asset.id);
+        serialized.jres[key] = entry;
+    }
+
+    return serialized;
+}
+
+export function loadAssetFromSaveState(serialized: AssetSaveState) {
+    const globalProject = pxt.react.getTilemapProject();
+    const tempProject = new pxt.TilemapProject();
+
+    // if this is a tilemap, we need the gallery populated in case
+    // there are gallery tiles in the tileset
+    tempProject.loadGallerySnapshot(globalProject.saveGallerySnapshot());
+
+    if (serialized.assetType === "tilemap" || serialized.assetType === "tile") {
+        tempProject.loadTilemapJRes(serialized.jres);
+    }
+    else {
+        tempProject.loadAssetsJRes(serialized.jres);
+    }
+
+    const tempAsset = tempProject.lookupAsset(serialized.assetType, serialized.assetId);
+    const existing = globalProject.lookupAsset(serialized.assetType, serialized.assetId);
+
+    let newId = serialized.assetId;
+
+    // if this id is already in the project, we need to check to see
+    // if it's the same as what we're loading. if it isn't, we'll need
+    // to create new assets
+
+    // TODO: we shouldn't keep duplicating the assets every time we paste into
+    // the same project
+    if (existing) {
+        tempAsset.meta.blockIDs = existing.meta.blockIDs
+        if (pxt.assetEquals(tempAsset, existing)) {
+            return existing;
+        }
+        else {
+            // remap the id in the jres before loading it in the project
+            newId = globalProject.generateNewID(serialized.assetType);
+
+            const [key, entry] = findEntryInJres(serialized.jres, serialized.assetId);
+            delete serialized.jres[key];
+
+            // tilemap ids don't have namespaces
+            if (serialized.assetType === "tilemap") {
+                entry.id = newId;
+                serialized.jres[newId] = entry;
+            }
+            else {
+                const [namespace, key] = newId.split(".");
+                if (addDotToNamespace(namespace) !== addDotToNamespace(serialized.jres["*"].namespace)) {
+                    entry.namespace = addDotToNamespace(namespace);
+                }
+                entry.id = newId;
+                serialized.jres[key] = entry;
+            }
+        }
+    }
+
+
+    if (serialized.assetType === "tilemap" || serialized.assetType === "tile") {
+        globalProject.loadTilemapJRes(serialized.jres, true);
+    }
+    else {
+        globalProject.loadAssetsJRes(serialized.jres);
+    }
+
+    return globalProject.lookupAsset(serialized.assetType, newId);
+}
+
 export const FIELD_EDITOR_OPEN_EVENT_TYPE = "field_editor_open";
 
 export class FieldEditorOpenEvent extends Blockly.Events.UiBase {
@@ -495,4 +612,44 @@ export function deleteBlockDataForField(block: Blockly.Block, field: string) {
     const blockData = getBlockData(block);
     delete blockData.fieldData[field];
     setBlockData(block, blockData);
+}
+
+function addDotToNamespace(namespace: string) {
+    if (namespace.endsWith(".")) {
+        return namespace;
+    }
+    return namespace + ".";
+}
+
+function findEntryInJres(jres: pxt.Map<any>, assetId: string): [string, any] {
+    const defaultNamespace = jres["*"].namespace;
+
+    for (const key of Object.keys(jres)) {
+        if (key === "*") continue;
+
+        const entry = jres[key];
+        let id: string;
+
+        if (entry.id) {
+            if (entry.namespace) {
+                id = addDotToNamespace(entry.namespace) + entry.id;
+            }
+            else {
+                id = entry.id;
+            }
+        }
+        else if (entry.namespace) {
+            id = addDotToNamespace(entry.namespace) + key;
+        }
+        else {
+            id = addDotToNamespace(defaultNamespace) + key;
+        }
+
+        if (id === assetId) {
+            return [key, jres[key]];
+        }
+    }
+
+    // should never happen
+    return undefined;
 }
