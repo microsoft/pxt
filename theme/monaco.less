@@ -38,17 +38,17 @@
 
 /* Monaco Editor Line number colors, changed from the default light theme */
 .monaco-editor.vs .line-numbers {
-    color: var(--pxt-color169) !important;
+    color: #2c3e50 !important;
 }
 
 /* Monaco Editor Line number background, changed from the default light theme */
 .monaco-editor.vs .margin-view-overlays.monaco-editor-background {
-    background: var(--pxt-color169) !important;
+    background: rgba(0, 0, 0, 0.05) !important;
 }
 
 /* Monaco Editor Current line highlighting, only needed for the light theme */
 .monaco-editor.vs .current-line {
-	background: var(--pxt-color170) !important;
+	background: rgba(0, 0, 255, 0.1) !important;
 }
 
 /* Monaco Editor Suggest Widget, styling */
@@ -57,17 +57,17 @@
     z-index: @monacoSuggestZIndex !important;
 }
 .monaco-list-row.focused {
-    background-color:var(--pxt-color170) !important;
-    color: var(--pxt-color170) !important;
+    background-color:#0078D7 !important;
+    color: #fff !important;
 }
 .monaco-editor.vs .suggest-widget:not(.frozen) .monaco-list .monaco-list-row .monaco-highlighted-label .highlight {
-    color: var(--pxt-color170) !important;
+    color: #0078D7 !important;
 }
 .monaco-editor.vs .suggest-widget:not(.frozen) .monaco-list .monaco-list-row.focused .monaco-highlighted-label .highlight {
-    color: var(--pxt-color170) !important;
+    color: #fff !important;
 }
 .monaco-editor.vs .suggest-widget .details > .monaco-scrollable-element > .body > .type, .monaco-editor .suggest-widget .monaco-list .monaco-list-row .type-label {
-    color: var(--pxt-color170) !important;
+    color: #FFB900 !important;
 }
 
 /* Monaco Editor Rename Widget: default positioning causes scroll with transparent editor toolbar, so we reposition */
@@ -82,8 +82,8 @@
 
 /* Monaco Editor Main tokens */
 .monaco-editor .highlight-statement {
-    background-color: var(--pxt-color171);
-    color: var(--pxt-color171) !important;
+    background-color: #b8b8fd;
+    color: black !important;
 }
 
 /* Monaco Toolbox */
@@ -147,7 +147,7 @@
         -ms-user-select: none;
         -webkit-user-select: none;
         user-select: none;
-        color: var(--pxt-color171);
+        color: white;
         font-size: 15px;
 
         .monacoFlyoutHeadingIcon {
@@ -238,8 +238,8 @@
         .argName {
             font-family: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
             font-weight: 600;
-            background: var(--pxt-color172);
-            color: var(--pxt-color172);
+            background: rgba(0,0,0,0.3);
+            color: #fff;
             padding: 0 .5rem;
             display: inline-block;
             border-radius: 0.8rem;
@@ -324,7 +324,7 @@
 }
 
 .monacoFlyoutHeading .monacoFlyoutHeadingText {
-    color: var(--pxt-color172);
+    color: white;
     vertical-align: middle !important;
 }
 .monacoFlyoutHeadingText {
@@ -336,7 +336,7 @@
 }
 .monacoFlyoutLabelLine {
     border: none;
-    border-top: 1px dotted var(--pxt-color172);
+    border-top: 1px dotted white;
     height:1px;
 }
 
@@ -366,7 +366,7 @@
     width: initial !important;
 }
 .monaco-editor.vs-dark .error-view-zone {
-    color:var(--pxt-color172);
+    color:white;
 }
 .monaco-editor .error-view-zone .marker-widget {
     border-radius: 2px !important;

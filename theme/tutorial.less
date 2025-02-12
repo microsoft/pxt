@@ -5,13 +5,13 @@
 /* Reference import */
 @import (reference) "semantic.less";
 
-@inlineBlockColor: var(--pxt-color226);
-@highlightLineBackground: var(--pxt-color227);
-@highlightLineColor: var(--pxt-color227);
-@highlightLineStringColor: var(--pxt-color228);
-@highlightLineNumberColor: var(--pxt-color229);
-@highlightLineClassColor: var(--pxt-color229);
-@highlightLineKeywordColor: var(--pxt-color230);
+@inlineBlockColor: #D83B01;
+@highlightLineBackground: #fcfc90;
+@highlightLineColor: #000;
+@highlightLineStringColor: #bf0000;
+@highlightLineNumberColor: #007f00;
+@highlightLineClassColor: #007f00;
+@highlightLineKeywordColor: #0000ff;
 @tutorialCardHeight: 8rem;
 @tutorialCardMaxHeight: 20rem;
 @seeMoreButtonHeight: 4rem;
@@ -40,7 +40,7 @@
 
 /* Tutorial Mode */
 .menubar .ui.menu .item.tutorial-menuitem {
-    background: var(--pxt-color231) !important;
+    background: rgba(27, 28, 29, 0.3) !important;
     margin: 0.45rem;
     padding: 0.45rem;
     border-radius: 0.5rem !important;
@@ -50,7 +50,7 @@
     margin-right: 0.4em;
 }
 .menubar .ui.menu .item.tutorial-menuitem > .label {
-    background: var(--pxt-color231);
+    background: white;
     margin-left: 0em;
 }
 .tutorial-menuitem > .selected {
@@ -268,7 +268,7 @@ span.docs.inlineblock {
     white-space: break-spaces;
     border-radius: 0;
     border-bottom: 3px solid var(--inline-namespace-color);
-    color: var(--pxt-color231);
+    color: black;
     font-weight: 600;
     background-color: transparent;
     font-family: @blocklyFont !important;
@@ -337,7 +337,7 @@ code.lang-filterblocks {
     top: 50%;
     transform: translateY(-50%);
     font-size: 22.5px !important;
-    color: var(--pxt-color231); // match menubutton color
+    color: white; // match menubutton color
     border-radius: 50%;
     transform-style: preserve-3d;
 
@@ -345,7 +345,7 @@ code.lang-filterblocks {
     --bubble-pulse-size: 30px;
 
     &.flash {
-        border: 2px solid fade(var(--pxt-color231), 70%) !important;
+        border: 2px solid fade(white, 70%) !important;
 
         &:before {
             content: "";
@@ -408,7 +408,7 @@ code.lang-filterblocks {
     background: @white;
     z-index: @tutorialLightboxCardZIndex;
     border: 8px solid @blue;
-    box-shadow: 0px 0px 8px 1px var(--pxt-color231);
+    box-shadow: 0px 0px 8px 1px rgba(0, 0, 0, .3);
 }
 
 .tutorialhint:before,
@@ -564,7 +564,7 @@ code.lang-filterblocks {
 
 #mainmenu .immersive-reader-button:focus,
 #mainmenu .immersive-reader-button:hover {
-    background-color: var(--pxt-color232)!important;
+    background-color: #00000059!important;
     filter: brightness(0.8);
 }
 
@@ -574,7 +574,7 @@ code.lang-filterblocks {
     height: 2.8rem;
     background-repeat: no-repeat;
     background-size: 60%;
-    background-color: var(--pxt-color233);
+    background-color: #f9fafb;
     background-position: center;
     box-shadow: none;
     transition: none;
@@ -590,7 +590,7 @@ code.lang-filterblocks {
     background-image: @immersiveReaderIcon;
     background-repeat: no-repeat;
     background-size: contain;
-    background-color: var(--pxt-color233);
+    background-color: #f9fafb;
     background-position: center;
     background-size: 60%;
     filter: brightness(0.8);

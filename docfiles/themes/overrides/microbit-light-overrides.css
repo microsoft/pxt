@@ -5,7 +5,7 @@
 
 /* Lots of specificity to override another !important rule */
 #simulator #editorSidebar .simtoolbar .ui.icon.tiny.buttons .ui.button.play-button.play .icon.play {
-    color: var(--pxt-colors-green-background) !important;
+    color: var(--pxt-colors-green-background1) !important;
 }
 
 .theme-preview-microbit-light .theme-preview-sim-button {

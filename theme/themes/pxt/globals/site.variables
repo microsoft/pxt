@@ -6,20 +6,20 @@
 *******************************/
 
 @primaryColor: @pink;
-@secondaryColor: var(--pxt-color60);
+@secondaryColor: rgba(0, 0, 0, 0.55);
 @docsHue: 257;
 
-@red:var(--pxt-color61);
-@orange:var(--pxt-color62);
-@yellow:var(--pxt-color63);
-@green:var(--pxt-color64);
-@teal:var(--pxt-color65);
-@blue:var(--pxt-color66);
-@purple:var(--pxt-color67);
-@pink:var(--pxt-color68);
-@brown:var(--pxt-color69);
-@grey:var(--pxt-color70);
-@lightGrey: var(--pxt-color71);
+@red:#A80000;
+@orange:#D83B01;
+@yellow:#FFB900;
+@green:#107C10;
+@teal:#008272;
+@blue:#0078D7;
+@purple:#5C2D91;
+@pink:#E2008C;
+@brown:#00BCF2;
+@grey:#505050;
+@lightGrey: #d9d9d9;
 
 @greenTextColor: darken(@green, 5);
 // @yellowTextColor: #8e6505; (Unused)
@@ -255,8 +255,8 @@
 @diffAddedBackground: var(--pxt-colors-green-alpha50); // #e6ffed;
 @diffMarkerBackground: var(--pxt-neutral-background1); //#f1f8ff;
 @diffMarkerColor: var(--pxt-neutral-foreground1); //rgba(27,31,35,.7);
-@diffInvertedRemovedBackground: var(--pxt-colors-red-background); // #ff5050;
-@diffInvertedAddedBackground: var(--pxt-colors-green-background); // #10a010;
+@diffInvertedRemovedBackground: var(--pxt-colors-red-background1); // #ff5050;
+@diffInvertedAddedBackground: var(--pxt-colors-green-background1); // #10a010;
 @diffInvertedMarkerBackground: var(--pxt-neutral-background3); // #666;
 @diffInvertedUnchangedBackground: var(--pxt-neutral-background1); // #1e1e1e;
 @diffInvertedMarkerColor: var(--pxt-neutral-foreground1); // #ccc;
@@ -272,7 +272,7 @@
 @diffUpdateInlineAddedOutline: 1px solid var(--pxt-neutral-stencil3); // #ccc
 
 @conflictBorderColor: var(--pxt-colors-yellow-hover); // orange;
-@conflictHeaderBackgroundColor: var(--pxt-colors-yellow-background); // lighten(@conflictBorderColor, 30);
+@conflictHeaderBackgroundColor: var(--pxt-colors-yellow-background1); // lighten(@conflictBorderColor, 30);
 @conflictHeaderColor: var(pxt-neutral-background3); // black;
 
 /*-------------------
@@ -358,10 +358,10 @@
 /*-------------------
     Greenscreen
 -------------------*/
-@greenScreenColor: var(--pxt-color72);
-@greenScreenBlockColor: var(--pxt-color72); // loops category typically uses green
+@greenScreenColor: #00ff00;
+@greenScreenBlockColor: #107c10; // loops category typically uses green
                                    // keep in sync with pxtarget blocks color changes
-@greenScreenGreen: var(--pxt-color73); // a green that does not get erased by chromekey
+@greenScreenGreen: #005d51; // a green that does not get erased by chromekey
 
 
 
@@ -369,11 +369,11 @@
     Debugger
 -------------------*/
 // TODO: Chance this for the color we want for variables in the debugger.
-@debugNumberVariable: var(--pxt-colors-purple-background);
-@debugStringVariable: var(--pxt-colors-orange-background);
-@debugBooleanVariable: var(--pxt-colors-green-background);
-@debugArrayVariable: var(--pxt-colors-brown-background);
-@debugSpriteVariable: var(--pxt-colors-blue-background);
+@debugNumberVariable: var(--pxt-colors-purple-background1);
+@debugStringVariable: var(--pxt-colors-orange-background1);
+@debugBooleanVariable: var(--pxt-colors-green-background1);
+@debugArrayVariable: var(--pxt-colors-brown-background1);
+@debugSpriteVariable: var(--pxt-colors-blue-background1);
 
 // @debugVariableOdd: var(--pxt-neutral-background1);
 // @debugVariableEven: var(--pxt-neutral-background3);

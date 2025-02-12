@@ -3,5 +3,5 @@
 *******************************/
 
 @inputFocusColor: @blue;
-@inputBorder: 1px var(--pxt-color58) solid;
-@inputFocusBorderColor: var(--pxt-color59);
+@inputBorder: 1px #919197 solid;
+@inputFocusBorderColor: #4F98C9;

@@ -15,9 +15,9 @@
 @homeDetailViewSelectedCardZIndex: @homeDetailViewZIndex+1; /* Show the card arrow above the detail view */
 @homeFooterZIndex: @homeCarouselArrowZIndex+1;
 
-@heroBannerGradientColor: var(--pxt-color150);
-@heroBannerDotOutlineColor: var(--pxt-color150);
-@heroBannerDotOutlineAtiveColor: var(--pxt-color151);
+@heroBannerGradientColor: rgba(0,0,0,1);
+@heroBannerDotOutlineColor: rgba(0, 0, 0, .4);
+@heroBannerDotOutlineAtiveColor: rgba(255, 255, 255, .75);
 
 #homescreen {
     background: var(--pxt-neutral-background1);
@@ -54,7 +54,7 @@
         }
         .getting-started-header {
             font-size: 50px;
-            text-shadow: -1px 0 var(--pxt-color152), 0 1px var(--pxt-color152), 1px 0 var(--pxt-color152), 0 -1px var(--pxt-color152);
+            text-shadow: -1px 0 rgb(87, 87, 87), 0 1px rgb(87, 87, 87), 1px 0 rgb(87, 87, 87), 0 -1px rgb(87, 87, 87);
         }
     }
     .ui.segment.getting-started-segment.hero {
@@ -110,7 +110,7 @@
             width: 40rem;
             top: 0;
             left: 0;
-            background: linear-gradient(to right, @heroBannerGradientColor 0%, var(--pxt-color152) 100%);
+            background: linear-gradient(to right, @heroBannerGradientColor 0%, rgba(0, 0, 0, 0) 100%);
         }
     }
 
@@ -221,13 +221,13 @@
             pointer-events: none;
         }
         .ui.card:after {
-            border-color: var(--pxt-color153);
+            border-color: rgba(46, 255, 46, 0);
             border-top-color: @homeCardBackgroundColor;
             border-width: 10px;
             margin-left: -10px;
         }
         .ui.card:before {
-            border-color: var(--pxt-color154);
+            border-color: rgba(255, 255, 255, 0);
             border-top-color: @homeSelectedCardBorderColor;
             border-width: 17px;
             margin-left: -17px;
@@ -271,7 +271,7 @@
             position: absolute;
             pointer-events: none;
             top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(90deg, @homeDetailViewBackground, var(--pxt-color155));
+            background: linear-gradient(90deg, @homeDetailViewBackground, rgba(0,0,0,0));
         }
         .header {
             font-size: 20px;
@@ -415,7 +415,7 @@
         > .closeIcon .remove.icon:hover, > .closeIcon .remove.icon:focus {
             opacity: 1;
             transform: scale(1.1, 1.1);
-            box-shadow: 0 0 0 3px var(--pxt-color156);
+            box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.35);
         }
     }
 }
@@ -430,7 +430,7 @@
         .ui.image, .ui.imagewrapper, .content {
             border-radius: @homeCardImageBorderRadius !important;
             .tags {
-                color:var(--pxt-color157);
+                color:#717171;
                 font-size: 1rem;
             }
         }

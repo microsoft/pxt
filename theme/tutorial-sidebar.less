@@ -6,16 +6,16 @@
 @tutorialSecondaryColor: @sidebarSecondaryColor;
 @tutorialBarForegroundColor: @tutorialPrimaryColor;
 @tutorialBarBackgroundColor: @tutorialSecondaryColor;
-@tutorialGrayOffset: var(--pxt-color221);
-@tutorialDarkGray: var(--pxt-color221);
+@tutorialGrayOffset: #CECDCE;
+@tutorialDarkGray: #767676;
 
-@tutorialLinkColor: var(--pxt-color222);
-@tutorialLinkHoverColor: var(--pxt-color223);
-@tutorialHintForegroundColor: var(--pxt-color224);
-@tutorialHintBackgroundColor: var(--pxt-color225);
+@tutorialLinkColor: #0064BF;
+@tutorialLinkHoverColor: #003C94;
+@tutorialHintForegroundColor: #1A6771;
+@tutorialHintBackgroundColor: #CEFFF5;
 
-@tutorialTabletButtonColor: var(--pxt-color226);
-@tutorialTabletSimulatorButtonColor: var(--pxt-color226);
+@tutorialTabletButtonColor: #f3f3f3;
+@tutorialTabletSimulatorButtonColor: rgba(0, 0, 0, 0.05);
 @tutorialTabletStepCounterWidth: 16rem;
 
 @tutorialHintMaskZIndex: -1; // Below tutorial pane
@@ -85,7 +85,7 @@
     width: calc(~'100% - 1rem');
     bottom: 0rem;
     pointer-events: none;
-    background-image: linear-gradient(to bottom, var(--pxt-color226), @white);
+    background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0), @white);
 }
 
 .tutorial-replace-code + .tutorial-scroll-gradient {
@@ -197,7 +197,7 @@
         background: darken(@tutorialSecondaryColor, 10%);
 
         &.current {
-            color: var(--pxt-color226);
+            color: white;
             background: @tutorialPrimaryColor;
             width: 2rem;
             height: 2rem;
@@ -324,7 +324,7 @@
         width: 1.5rem;
         height: 1.5rem;
         color: @white;
-        background-color: var(--pxt-color226);
+        background-color: #000;
         border-radius: 50%;
 
         i.icon {

@@ -7,8 +7,8 @@
 
 @import (reference) "semantic.less";
 
-@blocklyLightTextColor: var(--pxt-color130);
-@blocklyDarkTextColor: var(--pxt-color130);
+@blocklyLightTextColor: #fff;
+@blocklyDarkTextColor: #575E75;
 @fieldNoteSelectedColor: yellowgreen;
 
 ////// Note Editor Field ////////
@@ -26,17 +26,17 @@
         top: 0px;
         border-bottom-left-radius: 3px;
         border-bottom-right-radius: 3px;
-        background-color: var(--pxt-color130);
+        background-color: white;
         z-index: @noteEditorWhiteKey;
     }
 
     .blocklyNote.black {
-        background-color: var(--pxt-color130);
+        background-color: black;
         z-index: @noteEditorBlackKey;
     }
 
     .blocklyNote:hover {
-        background-color: var(--pxt-color130) !important;
+        background-color: yellow !important;
     }
 
     .blocklyNote.selected {
@@ -45,7 +45,7 @@
 
     .blocklyNoteLabel {
         border: solid 0.5px;
-        color: var(--pxt-color130);
+        color: white;
         display: inline-block;
         line-height: normal;
         position: absolute;
@@ -58,7 +58,7 @@
         border: solid 0.5px;
         border-top: 0;
         cursor: pointer;
-        color: var(--pxt-color130);
+        color: white;
         display: inline-block;
         font-weight: bold;
         line-height: normal;
@@ -72,7 +72,7 @@
         text-overflow: ellipsis;
         width: 70px;
         display: inline-block;
-        color: var(--pxt-color130);
+        color: white;
         font-size: 12px;
     }
 }
@@ -83,7 +83,7 @@
 
 .blocklyGridPickerPadder {
     outline: none;
-    box-shadow: 0px 0px 8px 1px var(--pxt-color131)
+    box-shadow: 0px 0px 8px 1px rgba(0, 0, 0, .3)
 }
 
 .blocklyWidgetDiv .blocklyGridPickerRow {
@@ -115,20 +115,20 @@
 }
 
 .blocklyWidgetDiv .blocklyGridPickerMenu .goog-menuitem {
-    background: var(--pxt-color131);
+    background: white;
     cursor: pointer;
     min-width: unset;
 }
 
 .blocklyWidgetDiv .blocklyGridPickerMenu .goog-menuitem-highlight, .blocklyWidgetDiv .blocklyGridPickerMenu .goog-menuitem-hover {
-    background: var(--pxt-color132);
-    box-shadow: 0px 0px 0px 4px var(--pxt-color132);
+    background: #d6e9f8;
+    box-shadow: 0px 0px 0px 4px rgba(255, 255, 255, 0.2);
 }
 
 .blocklyWidgetDiv .blocklyGridPickerMenu .goog-option {
-    border: solid 1px var(--pxt-color132);
+    border: solid 1px black;
     border-radius: 4px;
-    color: var(--pxt-color132);
+    color: #fff;
     font-size: 12pt;
     font-weight: bold;
     display: table-cell;
@@ -142,7 +142,7 @@
 }
 
 .blocklyWidgetDiv .blocklyGridPickerMenu .goog-menuitem-content {
-    color: var(--pxt-color132);
+    color: #fff;
     font-size: 13px;
     font-family: @pageFont;
 }
@@ -178,27 +178,27 @@
 .ui.input input.blocklyGridPickerSearchBar {
     background: none;
     border: none;
-    color: var(--pxt-color132);
+    color: white;
 }
 
 .ui.input input.blocklyGridPickerSearchBar::placeholder {
-    color: var(--pxt-color132);
+    color: white;
 }
 
 .ui.input input.blocklyGridPickerSearchBar::-webkit-input-placeholder {
-    color: var(--pxt-color132);
+    color: white;
 }
 
 .ui.input input.blocklyGridPickerSearchBar::-moz-placeholder {
-    color: var(--pxt-color132);
+    color: white;
 }
 
 .ui.input input.blocklyGridPickerSearchBar:-ms-input-placeholder {
-    color: var(--pxt-color132);
+    color: white;
 }
 
 .ui.input input.blocklyGridPickerSearchBar:-moz-placeholder {
-    color: var(--pxt-color132);
+    color: white;
 }
 
 ////// Toggle Editor Field ////////
@@ -208,18 +208,18 @@
 
 .blocklyToggle .blocklyToggleCircle, .blocklyToggle .blocklyToggleRect {
     stroke-width: 1px;
-    stroke: var(--pxt-color132);
+    stroke: grey;
     stroke-opacity: 0.4;
 }
 .blocklyToggle.blocklyToggleOn .blocklyToggleCircle, .blocklyToggle.blocklyToggleOn .blocklyToggleRect {
-    fill: var(--pxt-color133);
+    fill: #4DDc64;
 }
 .blocklyToggle.blocklyToggleOff .blocklyToggleCircle, .blocklyToggle.blocklyToggleOff .blocklyToggleRect {
-    fill: var(--pxt-color134);
+    fill: #95a5a6;
 }
 .blocklyToggle.blocklyToggleOnBreakpoint polygon {
-    fill: var(--pxt-color135);
-    stroke: var(--pxt-color135);
+    fill: #E80D00;
+    stroke: #fff;
     stroke-width: 12px !important;
     stroke-opacity: 1;
     stroke-linecap: round;
@@ -227,7 +227,7 @@
     cursor: pointer;
 }
 .blocklyToggle.blocklyToggleOffBreakpoint polygon {
-    fill: var(--pxt-color135);
+    fill: #333;
     stroke: 0px;
     cursor: pointer;
 }
@@ -237,7 +237,7 @@
     cursor: pointer;
 }
 .blocklyToggle.blocklyToggleOff ~ .blocklyText.blocklyToggleText {
-    fill: var(--pxt-color135);
+    fill: white;
 }
 
 ////// RGB Color picker ////////
@@ -260,15 +260,15 @@
 #custom-content .blocklyLightboxDiv {
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
-    background-color: var(--pxt-color135);
+    background-color: rgba(0, 0, 0, 0.55);
     z-index: 993;
 }
 
 .blocklyCanvasOverlayOuter {
     padding: 0.5rem;
     margin: 0.1rem;
-    background: var(--pxt-color135);
-    border: solid 2px var(--pxt-color135);
+    background: #249ca3;
+    border: solid 2px #249ca3;
     border-top-left-radius: 1rem;
     border-top-right-radius: 1rem;
     border-bottom-left-radius: 0;
@@ -277,17 +277,17 @@
 
 .blocklyCanvasOverlayDiv {
     cursor: none;
-    background-color: var(--pxt-color136);
+    background-color: rgba(255, 255, 255, 0.9);
     z-index: 10000;
     position: relative;
     overflow: hidden;
-    border: solid 5px var(--pxt-color136);
+    border: solid 5px #333333;
 
     clip-path: polygon(0% 4px, 4px 0%, calc(100% - 2px) 0%, 100% 4px,
     100% calc(100% - 2px), calc(100% - 2px) 100%, 4px 100%, 0 calc(100% - 2px));
 
     .cross-x, .cross-y {
-        background-color: var(--pxt-color136);
+        background-color: #575E75;
         position: absolute;
     }
     .cross-x {
@@ -303,7 +303,7 @@
     }
     .label {
         position: absolute;
-        color: var(--pxt-color136);
+        color: #575E75;
         font-size: 100%;
         white-space: nowrap;
     }
@@ -315,11 +315,11 @@
     border: none;
     width: 100%;
     text-align: center;
-    border-top: 1px solid var(--pxt-color137);
+    border-top: 1px solid #ddd;
     padding-top: 5px;
     cursor: pointer;
 }
 
 .positionEyedropper:hover {
-    background: var(--pxt-color137);
+    background: #eee;
 }

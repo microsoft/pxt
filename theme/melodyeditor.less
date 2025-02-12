@@ -39,7 +39,7 @@
 
 .melody-editor-div {
     height: 100%;
-    background-color: var(--pxt-color158);
+    background-color: #4f0643;
 }
 
 .melody-content-div {
@@ -64,7 +64,7 @@
     overflow-y: scroll;
     overflow-x: hidden;
     padding: 0.75rem;
-    background: var(--pxt-color158);
+    background: #4f0643;
     max-height: 350px;
 }
 
@@ -74,7 +74,7 @@
     border-radius: 4px;
     transition: box-shadow .1s;
     cursor: pointer;
-    background-color: var(--pxt-color159);
+    background-color: #dcdcdc;
 
     width: 100%;
     margin-bottom: 0.75rem;
@@ -89,9 +89,9 @@
 .melody-editor-button.left-button {
     flex-grow: 1;
     border-radius: 4px 0 0 4px;
-    border-left: 1px var(--pxt-color159) solid;
-    border-bottom: 1px var(--pxt-color159) solid;
-    border-top: 1px var(--pxt-color159) solid;
+    border-left: 1px #ffffff solid;
+    border-bottom: 1px #ffffff solid;
+    border-top: 1px #ffffff solid;
     padding-left: 0.5rem;
     padding-right: 0.3rem;
 }
@@ -100,21 +100,21 @@
     min-width: 2.75rem;
     padding-left: 0.3rem;
     border-radius: 0 4px 4px 0;
-    border-left: 1px solid var(--pxt-color159);
-    border-right: 1px var(--pxt-color159) solid;
-    border-bottom: 1px var(--pxt-color159) solid;
-    border-top: 1px var(--pxt-color159) solid;
+    border-left: 1px solid #4f0643;
+    border-right: 1px #ffffff solid;
+    border-bottom: 1px #ffffff solid;
+    border-top: 1px #ffffff solid;
 }
 
 .melody-editor-button {
-    background-color: var(--pxt-color159);
-    color: var(--pxt-color160);
+    background-color: #dcdcdc;
+    color: rgb(0, 0, 0, 0.6);
 
     transition: color .1s, background-color .1s;
 }
 .melody-editor-button:hover {
-    background-color: var(--pxt-color161);
-    color: var(--pxt-color162);
+    background-color: #cacbcd;
+    color: rgb(0, 0, 0, 0.8);
 }
 
 .melody-editor-button.right-button .icon {
@@ -130,8 +130,8 @@
     margin: 0px !important;
     height: 28px;
     width: 70px;
-    color: var(--pxt-color162);
-    background-color: var(--pxt-color162);
+    color: white;
+    background-color: #e30fc0;
     border: none;
     border-radius: 2px;
     -webkit-transition-duration: 0.1s; /* Safari */
@@ -140,8 +140,8 @@
 }
 
 .melody-confirm-button:hover {
-    background-color: var(--pxt-color163);
-    border: 1px solid var(--pxt-color163);
+    background-color: #9e0986;
+    border: 1px solid #e30fc0;
 }
 
 .melody-confirm-button:focus {
@@ -157,7 +157,7 @@
 }
 
 .melody-editor-field-icon {
-    fill: var(--pxt-color163);
+    fill: white;
     font-family: "Icons";
     font-size: 19px;
 }
@@ -168,11 +168,11 @@
 }
 
 .melody-gallery-button-hover {
-    box-shadow: 0px 0px 0px 4px var(--pxt-color164);
+    box-shadow: 0px 0px 0px 4px rgba(255, 255, 255, .2);
 }
 
 .melody-gallery-button:active {
-    box-shadow: 0px 0px 0px 6px var(--pxt-color164);
+    box-shadow: 0px 0px 0px 6px rgba(255, 255, 255, .2);
 }
 
 #melody-tempo-input {
@@ -193,8 +193,8 @@
     height: 28px;
     width: 120px;
     display: inline-block;
-    color: var(--pxt-color164);
-    background-color: var(--pxt-color165);
+    color: white;
+    background-color: #7f8c8d;
     border: none;
     border-radius: 2px;
     -webkit-transition-duration: 0.1s; /* Safari */
@@ -202,8 +202,8 @@
 }
 
 #melody-play-button:hover {
-    background-color: var(--pxt-color166);
-    border: 1px solid var(--pxt-color166);
+    background-color: #525a5b;
+    border: 1px solid #7f8c8d;
 }
 
 #melody-play-button:focus {
@@ -227,7 +227,7 @@
     width: 9px;
     height: 23px;
     margin: 0.5px;
-    border: 1px solid var(--pxt-color167);
+    border: 1px solid rgba(0, 0, 0, .2);
 }
 
 .left-edge {
@@ -253,48 +253,48 @@
 .pxt-renderer.classic-theme g.blocklyEditableText > &,
 .pxt-renderer.classic-theme g.blocklyNonEditableText > & {
     .melody-red {
-        fill: var(--pxt-color167);
-        background: var(--pxt-color167);
+        fill: #A80000;
+        background: #A80000;
     }
 
     .melody-orange {
-        fill: var(--pxt-color167);
-        background: var(--pxt-color167);
+        fill: #D83B01;
+        background: #D83B01;
     }
 
     .melody-yellow {
-        fill: var(--pxt-color167);
-        background: var(--pxt-color167);
+        fill: #FFB900;
+        background: #FFB900;
     }
 
     .melody-green {
-        fill: var(--pxt-color167);
-        background: var(--pxt-color167);
+        fill: #107C10;
+        background: #107C10;
     }
 
     .melody-teal {
-        fill: var(--pxt-color167);
-        background: var(--pxt-color167);
+        fill: #008272;
+        background: #008272;
     }
 
     .melody-blue {
-        fill: var(--pxt-color167);
-        background: var(--pxt-color167);
+        fill: #0078D7;
+        background: #0078D7;
     }
 
     .melody-violet {
-        fill: var(--pxt-color168);
-        background: var(--pxt-color168);
+        fill: #B4009E;
+        background: #B4009E;
     }
 
     .melody-purple {
-        fill: var(--pxt-color168);
-        background: var(--pxt-color168);
+        fill: #5C2D91;
+        background: #5C2D91;
     }
 
     .melody-default {
-        fill: var(--pxt-color168);
-        background: var(--pxt-color168);
+        fill: #DCDCDC;
+        background: #DCDCDC;
     }
 }
 

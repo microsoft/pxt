@@ -9,40 +9,40 @@
         High Contrast
 *******************************/
 
-@selected: var(--pxt-color144);
-@disabled: var(--pxt-color145);
-@hyperlink: var(--pxt-color146);
+@selected: yellow;
+@disabled: #3ff23f;
+@hyperlink: #807FFF;
 
 /* Messages */
 #msg .hc {
-    background-color: var(--pxt-color146) !important;
-    border: 1px solid var(--pxt-color146) !important;
+    background-color: black !important;
+    border: 1px solid white !important;
     border-radius: 0em;
-    color: var(--pxt-color146) !important;
+    color: white !important;
 }
 
-@HCRootBackground: var(--pxt-color146);
-@HCblocklySvgColor: var(--pxt-color146);
-@HCsimulatorBackground: var(--pxt-color146);
-@HCblocklySvgColor: var(--pxt-color146);
+@HCRootBackground: black;
+@HCblocklySvgColor: black;
+@HCsimulatorBackground: black;
+@HCblocklySvgColor: black;
 
-@HCmainMenuBackground: var(--pxt-color146);
-@HCmainMenuTextColor: var(--pxt-color146);
-@HCmainMenuInverseTextColor: var(--pxt-color146);
+@HCmainMenuBackground: white;
+@HCmainMenuTextColor: black;
+@HCmainMenuInverseTextColor: white;
 
-@HCblocklyToolboxColor: var(--pxt-color146);
-@HCblocklyTreeLabelColor: var(--pxt-color146);
-@HCblocklyTreeLabelSelectedColor: var(--pxt-color146);
+@HCblocklyToolboxColor: black;
+@HCblocklyTreeLabelColor: white;
+@HCblocklyTreeLabelSelectedColor: white;
 
-@HCeditorToolsBackground: var(--pxt-color146);
+@HCeditorToolsBackground: black;
 
-@HCbackground: var(--pxt-color146);
-@HCtextColor: var(--pxt-color146);
+@HCbackground: black;
+@HCtextColor: white;
 
-@HChomeScreenBackground: var(--pxt-color146);
+@HChomeScreenBackground: black;
 
-@HCaccessibleMenuBackground: var(--pxt-color146);
-@HCaccessibleMenuColor: var(--pxt-color146);
+@HCaccessibleMenuBackground: black;
+@HCaccessibleMenuColor: white;
 
 .hc {
 
@@ -146,7 +146,7 @@
         background: none !important;
 
         span.argName {
-            border: 1px solid var(--pxt-color147);
+            border: 1px solid rgba(255, 255, 255, .7);
         }
     }
 
@@ -532,7 +532,7 @@
     }
 
     .ui.image~.content {
-        background: var(--pxt-color147) !important;
+        background: rgba(0,0,0,.75) !important;
     }
 
     .ui.form .content .description {
@@ -571,7 +571,7 @@
 
     #winAppError {
         img {
-            background-color: var(--pxt-color147);
+            background-color: white;
         }
         #winAppErrorMsg {
             color: @HCtextColor;
@@ -981,7 +981,7 @@
     .modals .ui.button.immersive-reader-button,
     #mainmenu .immersive-reader-button.ui.item,
     #simulator .editor-sidebar .immersive-reader-button.ui.item {
-        border: 1px solid var(--pxt-color147)!important;
+        border: 1px solid #fff!important;
         background-image: @immersiveReaderLightIcon !important;
         background-repeat: no-repeat !important;
         background-size: 80% !important;
@@ -994,7 +994,7 @@
     #mainmenu .immersive-reader-button.ui.item:hover,
     #simulator .editor-sidebar .immersive-reader-button.ui.item:focus,
     #simulator .editor-sidebar .immersive-reader-button.ui.item:hover {
-        background-color: var(--pxt-color147) !important;
+        background-color: white !important;
         background-image: @immersiveReaderIcon !important;
         background-repeat: no-repeat !important;
         background-size: 80% !important;
@@ -1043,10 +1043,10 @@
                 border-bottom: 1px solid @HCtextColor !important;
             }
             .diff-removed, code.ch-removed {
-                border: 2px dashed var(--pxt-color148) !important;
+                border: 2px dashed #900 !important;
             }
             .diff-added, code.ch-added {
-                border: 2px dotted var(--pxt-color149) !important;
+                border: 2px dotted #090 !important;
             }
         }
     }
