@@ -468,39 +468,48 @@ export function getAssetSaveState(asset: pxt.Asset) {
     return serialized;
 }
 
+
+// TODO: we shouldn't keep duplicating the assets every time we paste into
+// the same project
 export function loadAssetFromSaveState(serialized: AssetSaveState) {
-    const globalProject = pxt.react.getTilemapProject();
-    const tempProject = new pxt.TilemapProject();
-
-    // if this is a tilemap, we need the gallery populated in case
-    // there are gallery tiles in the tileset
-    tempProject.loadGallerySnapshot(globalProject.saveGallerySnapshot());
-
-    if (serialized.assetType === "tilemap" || serialized.assetType === "tile") {
-        tempProject.loadTilemapJRes(serialized.jres);
-    }
-    else {
-        tempProject.loadAssetsJRes(serialized.jres);
-    }
-
-    const tempAsset = tempProject.lookupAsset(serialized.assetType, serialized.assetId);
-    const existing = globalProject.lookupAsset(serialized.assetType, serialized.assetId);
-
     let newId = serialized.assetId;
+    serialized.jres = inflateJRes(serialized.jres);
+
+    const globalProject = pxt.react.getTilemapProject();
+    const existing = globalProject.lookupAsset(serialized.assetType, serialized.assetId);
 
     // if this id is already in the project, we need to check to see
     // if it's the same as what we're loading. if it isn't, we'll need
     // to create new assets
-
-    // TODO: we shouldn't keep duplicating the assets every time we paste into
-    // the same project
     if (existing) {
-        tempAsset.meta.blockIDs = existing.meta.blockIDs
+        // load the jres into a throwaway project so that we don't pollute
+        // the actual one
+        const tempProject = new pxt.TilemapProject();
+
+        // if this is a tilemap, we need the gallery populated in case
+        // there are gallery tiles in the tileset
+        tempProject.loadGallerySnapshot(globalProject.saveGallerySnapshot());
+
+        if (serialized.assetType === "tilemap" || serialized.assetType === "tile") {
+            tempProject.loadTilemapJRes(serialized.jres);
+        }
+        else {
+            tempProject.loadAssetsJRes(serialized.jres);
+        }
+
+        const tempAsset = tempProject.lookupAsset(serialized.assetType, serialized.assetId);
+
+        // asset equals checks this field, so copy it over to the temp asset
+        tempAsset.meta.blockIDs = existing.meta.blockIDs;
+
         if (pxt.assetEquals(tempAsset, existing)) {
             return existing;
         }
         else {
-            // remap the id in the jres before loading it in the project
+            // the asset ids collided! remap the id in the jres before loading
+            // it in the project. in the case of a tilemap, we only need to
+            // remap the tilemap id because loadTilemapJRes automatically remaps
+            // tile ids and resolves duplicates
             newId = globalProject.generateNewID(serialized.assetType);
 
             const [key, entry] = findEntryInJres(serialized.jres, serialized.assetId);
@@ -652,4 +661,30 @@ function findEntryInJres(jres: pxt.Map<any>, assetId: string): [string, any] {
 
     // should never happen
     return undefined;
+}
+
+// simply replaces the string entries with objects; doesn't do a full inflate like pxt.inflateJRes
+function inflateJRes(jres: pxt.Map<pxt.JRes | string>): pxt.Map<pxt.JRes> {
+    const meta = jres["*"] as pxt.JRes;
+    const result: pxt.Map<pxt.JRes> = {
+        "*": meta
+    };
+
+    for (const key of Object.keys(jres)) {
+        if (key === "*") continue;
+
+        const entry = jres[key];
+        if (typeof entry === "string") {
+            result[key] = {
+                id: undefined,
+                data: entry,
+                mimeType: meta.mimeType
+            }
+        }
+        else {
+            result[key] = entry;
+        }
+    }
+
+    return result;
 }
