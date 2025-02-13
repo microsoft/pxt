@@ -1,17 +1,20 @@
 .pxt-theme-root {
     --pxt-target-background1: #f0f0f0;
     --pxt-target-foreground1: #333333;
-    --pxt-target-foreground1-hover: #555555;
+    --pxt-target-background-hover1: #d7d7d7;
+    --pxt-target-foreground-hover1: #1a1a1a;
     --pxt-target-stencil1: #e1e1e1;
 
     --pxt-target-background2: #f0f0f0;
     --pxt-target-foreground2: #333333;
-    --pxt-target-foreground2-hover: #555555;
+    --pxt-target-background-hover2: #d7d7d7;
+    --pxt-target-foreground-hover2: #1a1a1a;
     --pxt-target-stencil2: #e1e1e1;
 
     --pxt-target-background3: #f0f0f0;
     --pxt-target-foreground3: #333333;
-    --pxt-target-foreground3-hover: #555555;
+    --pxt-target-background-hover3: #d7d7d7;
+    --pxt-target-foreground-hover3: #1a1a1a;
     --pxt-target-stencil3: #e1e1e1;
 
     --pxt-header-background: #888888;

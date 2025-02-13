@@ -13,14 +13,17 @@ Colors:
 |-------------------------------|----------------------------|
 | pxt-target-background1        | Blockly Workspace Bkg      |
 | pxt-target-foreground1        | Blockly Workspace Fg       |
+| pxt-target-background-hover1  |                            |
 | pxt-target-foreground1-hover  |                            |
 | pxt-target-stencil1           | Outlines for Blockly Workspace   |
 | pxt-target-background2        | Sim Sidebar Bkg            |
 | pxt-target-foreground2        | Sim Sidebar Fg             |
+| pxt-target-background-hover2  |                            |
 | pxt-target-foreground2-hover  |                            |
 | pxt-target-stencil2           | Outlines for Sim Sidebar  |
 | pxt-target-background3        | Toolbox & Bottom Bar Bkg   |
 | pxt-target-foreground3        | Toolbox & Bottom Bar Fg    |
+| pxt-target-background-hover3  |                            |
 | pxt-target-foreground3-hover  |                            |
 | pxt-target-stencil3           | Outlines for Toolbox & Bottom Bar     |
 | pxt-header-background         | Header Bar Bkg             |

@@ -7,17 +7,20 @@
     "colors": {
         "pxt-target-background1": "#ECF0F1",
         "pxt-target-foreground1": "#000000",
-        "pxt-target-foreground1-hover": "#333333",
+        "pxt-target-background-hover1": "#cfd9db",
+        "pxt-target-foreground-hover1": "#000000",
         "pxt-target-stencil1": "#e1e1e1",
 
         "pxt-target-background2": "#FDFDFF",
         "pxt-target-foreground2": "#000000",
-        "pxt-target-foreground2-hover": "#333333",
+        "pxt-target-background-hover2": "#cacaff",
+        "pxt-target-foreground-hover2": "#000000",
         "pxt-target-stencil2": "#e1e1e1",
 
         "pxt-target-background3": "#FFFFFF",
         "pxt-target-foreground3": "#000000",
-        "pxt-target-foreground3-hover": "#333333",
+        "pxt-target-background-hover3": "#e6e6e6",
+        "pxt-target-foreground-hover3": "#000000",
         "pxt-target-stencil3": "#e1e1e1",
 
         "pxt-header-background": "#3454D1",
