@@ -230,7 +230,7 @@
 /*-------------------
    Serial editor
 --------------------*/
-// @serialBackgroundColor: var(--pxt-target-background2-light);
+// @serialBackgroundColor: var(--pxt-target-background2);
 // @serialTextColor: var(--pxt-target-foreground2);
 // @serialGraphBackground: var(--pxt-target-background2);
 // @serialGraphColor: var(--pxt-target-foreground2);
@@ -247,9 +247,9 @@
 /*-------------------
    Github Diff editor
 --------------------*/
-// @githubBackgroundColor: var(--pxt-target-background2-light);
+// @githubBackgroundColor: var(--pxt-target-background2);
 // @githubTextColor: var(--pxt-target-foreground2);
-// @githubInvertedTextColor: var(--pxt-target-background2-light);
+// @githubInvertedTextColor: var(--pxt-target-background2);
 // @diffSegmentBackgroundColor: var(--pxt-neutral-background1);
 @diffRemovedBackground: var(--pxt-colors-red-alpha50); // #ffeef0;
 @diffAddedBackground: var(--pxt-colors-green-alpha50); // #e6ffed;

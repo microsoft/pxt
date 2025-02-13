@@ -1,13 +1,10 @@
 :root {
     --pxt-target-background1: #f0f0f0;
-    --pxt-target-background1-light: #ffffff;
-    --pxt-target-background1-dark: #dedede;
     --pxt-target-foreground1: #333333;
     --pxt-target-foreground1-hover: #555555;
     --pxt-target-stencil1: #e1e1e1;
 
     --pxt-target-background2: #f0f0f0;
-    --pxt-target-background2-light: #ffffff;
     --pxt-target-foreground2: #333333;
     --pxt-target-foreground2-hover: #555555;
     --pxt-target-stencil2: #e1e1e1;

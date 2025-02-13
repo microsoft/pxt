@@ -12,12 +12,10 @@ Colors:
 | Key                           | Description                |
 |-------------------------------|----------------------------|
 | pxt-target-background1        | Blockly Workspace Bkg      |
-| pxt-target-background1-light  |                            |
 | pxt-target-foreground1        | Blockly Workspace Fg       |
 | pxt-target-foreground1-hover  |                            |
 | pxt-target-stencil1           | Outlines for Blockly Workspace   |
 | pxt-target-background2        | Sim Sidebar Bkg            |
-| pxt-target-background2-light  |                            |
 | pxt-target-foreground2        | Sim Sidebar Fg             |
 | pxt-target-foreground2-hover  |                            |
 | pxt-target-stencil2           | Outlines for Sim Sidebar  |

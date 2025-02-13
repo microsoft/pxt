@@ -6,13 +6,11 @@
     ],
     "colors": {
         "pxt-target-background1": "#000000",
-        "pxt-target-background1-light": "#000000",
         "pxt-target-foreground1": "#FFFFFF",
         "pxt-target-foreground1-hover": "#cccccc",
         "pxt-target-stencil1": "#FFFFFF",
 
         "pxt-target-background2": "#000000",
-        "pxt-target-background2-light": "#000000",
         "pxt-target-foreground2": "#FFFFFF",
         "pxt-target-foreground2-hover": "#cccccc",
         "pxt-target-stencil2": "#FFFFFF",
