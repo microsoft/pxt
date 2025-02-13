@@ -1611,7 +1611,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 // Cache blocks xml list for later
                 this.flyoutBlockXmlCache[cacheKey] = this.flyoutXmlList;
             }
-            this.showFlyoutInternal_(this.flyoutXmlList, cacheKey);
+            this.showFlyoutInternal_(this.flyoutXmlList, cachable && cacheKey);
         }
     }
 
