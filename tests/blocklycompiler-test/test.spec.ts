@@ -63,6 +63,7 @@ pxt.webConfig = {
     runUrl: undefined,
     docsUrl: undefined,
     isStatic: undefined,
+    ocvEnabled: undefined,
 };
 
 class BlocklyCompilerTestHost implements pxt.Host {
