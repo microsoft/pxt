@@ -2914,13 +2914,11 @@ export class ProjectView
             });
     }
 
-    newProjectMaybeWithProjectCreationOptions(firstProject: boolean) {
+    async newUserCreatedProject(firstProject: boolean): Promise<void> {
         if (pxt.appTarget.appTheme.nameProjectFirst || pxt.appTarget.appTheme.chooseLanguageRestrictionOnNewProject) {
-            this.askForProjectCreationOptionsAsync()
-                .then(projectSettings => {
-                    const { name, languageRestriction } = projectSettings
-                    this.newProject({ name, languageRestriction, firstProject });
-                })
+            const projectSettings = await this.askForProjectCreationOptionsAsync()
+            const { name, languageRestriction } = projectSettings
+            this.newProject({ name, languageRestriction, firstProject });
         } else {
             this.newProject({ firstProject });
         }

@@ -755,7 +755,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
             const isFirstProject = (!headers || headers?.length == 0);
             return <carousel.Carousel tickId="myprojects" bleedPercent={20}>
                 {showNewProject && <div role="button" className="ui card link buttoncard newprojectcard" title={lf("Creates a new empty project")}
-                    onClick={() => this.props.parent.newProjectMaybeWithProjectCreationOptions(isFirstProject)} onKeyDown={fireClickOnEnter} >
+                    onClick={() => this.props.parent.newUserCreatedProject(isFirstProject)} onKeyDown={fireClickOnEnter} >
                     <div className="content">
                         <sui.Icon icon="huge add circle" />
                         <span className="header">{lf("New Project")}</span>
