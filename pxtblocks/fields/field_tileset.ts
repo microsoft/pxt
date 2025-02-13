@@ -3,7 +3,7 @@
 import * as Blockly from "blockly";
 import { FieldImageDropdownOptions } from "./field_imagedropdown";
 import { FieldImages } from "./field_images";
-import { FieldCustom, getAllReferencedTiles, bitmapToImageURI, needsTilemapUpgrade } from "./field_utils";
+import { FieldCustom, getAllReferencedTiles, bitmapToImageURI, needsTilemapUpgrade, getAssetSaveState, loadAssetFromSaveState } from "./field_utils";
 
 export interface ImageJSON {
     src: string;
@@ -268,6 +268,39 @@ export class FieldTileset extends FieldImages implements FieldCustom {
     protected assetChangeListener = () => {
        this.doValueUpdate_(this.getValue());
        this.forceRerender();
+    }
+
+    saveState(_doFullSerialization?: boolean) {
+        let asset = this.localTile || this.selectedOption_?.[2];
+        const project = pxt.react.getTilemapProject();
+
+        if (!asset) {
+            const value = this.getValue();
+
+            const parsedTsReference = pxt.parseAssetTSReference(value);
+            if (parsedTsReference) {
+                asset = project.lookupAssetByName(pxt.AssetType.Tile, parsedTsReference.name);
+            }
+
+            if (!asset) {
+                asset = project.lookupAsset(pxt.AssetType.Tile, value);
+            }
+        }
+        if (asset?.isProjectTile) {
+            return getAssetSaveState(asset)
+        }
+        return super.saveState(_doFullSerialization);
+    }
+
+    loadState(state: any) {
+        if (typeof state === "string") {
+            super.loadState(state);
+            return;
+        }
+
+        const asset = loadAssetFromSaveState(state);
+        this.localTile = asset as pxt.Tile;
+        super.loadState(pxt.getTSReferenceForAsset(asset));
     }
 }
 

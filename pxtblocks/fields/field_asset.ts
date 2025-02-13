@@ -4,7 +4,7 @@ import * as Blockly from "blockly";
 
 import svg = pxt.svgUtil;
 import { FieldBase } from "./field_base";
-import { getTemporaryAssets, getTilesReferencedByTilesets, setMelodyEditorOpen, workspaceToScreenCoordinates, bitmapToImageURI, tilemapToImageURI, songToDataURI, setBlockDataForField } from "./field_utils";
+import { getTemporaryAssets, getTilesReferencedByTilesets, setMelodyEditorOpen, workspaceToScreenCoordinates, bitmapToImageURI, tilemapToImageURI, songToDataURI, setBlockDataForField, loadAssetFromSaveState, getAssetSaveState } from "./field_utils";
 
 export interface FieldAssetEditorOptions {
     initWidth?: string;
@@ -66,6 +66,27 @@ export abstract class FieldAssetEditor<U extends FieldAssetEditorOptions, V exte
         this.parseValueText(newValue);
         this.redrawPreview();
         return this.getValueText();
+    }
+
+    saveState(_doFullSerialization?: boolean) {
+        if (this.asset && !this.isTemporaryAsset()) {
+            return getAssetSaveState(this.asset);
+        }
+        else {
+            return super.saveState(_doFullSerialization);
+        }
+    }
+
+    loadState(state: any) {
+        if (typeof state === "string") {
+            super.loadState(state);
+            return;
+        }
+
+        const asset = loadAssetFromSaveState(state);
+        super.loadState(pxt.getTSReferenceForAsset(asset));
+        this.asset = asset;
+        this.setBlockData(this.asset.id);
     }
 
     showEditor_() {
