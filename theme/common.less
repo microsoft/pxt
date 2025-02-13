@@ -51,6 +51,27 @@ take precedence over default semantic ui styling without using !important.
 
 */
 
+// Set background, foreground, hover, and inverted colors for a button
+.buttonVariant(@bg; @fg; @hoverBg) {
+    background-color: @bg;
+    color: @fg;
+    border-color: @bg;
+
+    &.inverted {
+        background-color: @fg;
+        color: @bg;
+    }
+
+    &:hover {
+        background-color: @hoverBg;
+
+        &.inverted {
+            background-color: @fg;
+            color: @hoverBg;
+        }
+    }
+}
+
 body.main.pxt-theme-root {
     a {
         color: var(--pxt-link);
@@ -105,7 +126,7 @@ body.main.pxt-theme-root {
     }
 
     .gray, .grey {
-        color: var(--pxt-neutral-background3);
+        color: var(--pxt-neutral-button-background);
     }
 
     .green, .positive {
@@ -132,27 +153,7 @@ body.main.pxt-theme-root {
         color: var(--pxt-colors-yellow-background);
     }
 
-    button, .ui.button, .common-button {
-        .buttonVariant(@bg; @fg; @hoverBg) {
-            background-color: @bg;
-            color: @fg;
-            border-color: @bg;
-
-            &.inverted {
-                background-color: @fg;
-                color: @bg;
-            }
-
-            &:hover {
-                background-color: @hoverBg;
-
-                &.inverted {
-                    background-color: @fg;
-                    color: @hoverBg;
-                }
-            }
-        }
-
+    .ui.button, .common-button {
         &.primary {
             .buttonVariant(
                 var(--pxt-primary-background),
@@ -187,9 +188,9 @@ body.main.pxt-theme-root {
 
         &.gray, &.grey {
             .buttonVariant(
-                var(--pxt-neutral-background3),
-                var(--pxt-neutral-foreground3),
-                var(--pxt-neutral-hover3)
+                var(--pxt-neutral-button-background),
+                var(--pxt-neutral-button-foreground),
+                var(--pxt-neutral-button-background-hover)
             );
         }
 

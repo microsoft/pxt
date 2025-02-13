@@ -65,6 +65,7 @@
 
         "pxt-neutral-button-background": "#e0e1e2",
         "pxt-neutral-button-foreground": "#323130",
+        "pxt-neutral-button-background-hover": "#c6c8c9",
 
         "pxt-link": "#3977B4",
         "pxt-link-hover": "#204467",
