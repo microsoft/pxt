@@ -216,7 +216,7 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
         if (!options.buttons) options.buttons = [];
         options.buttons.push({
             label: options.disagreeLbl || lf("Cancel"),
-            className: (options.disagreeClass || "cancel gray"),
+            className: (options.disagreeClass || "cancel neutral"),
             icon: options.disagreeIcon || "cancel"
         })
     }

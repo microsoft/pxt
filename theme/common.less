@@ -112,11 +112,25 @@ body.main.pxt-theme-root {
         .image pre {
             margin-left:0.5rem;
             margin-right:0.5rem;
-            color: #000;
+            color: var(--pxt-neutral-foreground1);
             font-size:0.7rem;
             white-space: pre-wrap;
             max-height: 10rem;
             overflow-y: hidden;
+        }
+    }
+
+    .coredialog, .modal {
+        background-color: var(--pxt-neutral-background1);
+        color: var(--pxt-neutral-foreground1);
+
+        > .content,
+        > .header,
+        > .actions,
+        > .closeIcon,
+        > .closeIcon .close {
+            background-color: var(--pxt-neutral-background1);
+            color: var(--pxt-neutral-foreground1);
         }
     }
 
@@ -125,7 +139,7 @@ body.main.pxt-theme-root {
         color: var(--pxt-colors-blue-background);
     }
 
-    .gray, .grey {
+    .gray, .grey, .neutral {
         color: var(--pxt-neutral-button-background);
     }
 
@@ -191,7 +205,7 @@ body.main.pxt-theme-root {
             );
         }
 
-        &.gray, &.grey {
+        &.gray, &.grey, &.neutral {
             .buttonVariant(
                 var(--pxt-neutral-button-background),
                 var(--pxt-neutral-button-foreground),
