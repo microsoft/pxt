@@ -133,226 +133,112 @@ body.main.pxt-theme-root {
     }
 
     button, .ui.button, .common-button {
+        .buttonVariant(@bg; @fg; @hoverBg) {
+            background-color: @bg;
+            color: @fg;
+            border-color: @bg;
+
+            &.inverted {
+                background-color: @fg;
+                color: @bg;
+            }
+
+            &:hover {
+                background-color: @hoverBg;
+
+                &.inverted {
+                    background-color: @fg;
+                    color: @hoverBg;
+                }
+            }
+        }
+
         &.primary {
-            background-color: var(--pxt-primary-background);
-            color: var(--pxt-primary-foreground);
-            border-color: var(--pxt-primary-background);
-    
-            &.inverted {
-                background-color: var(--pxt-primary-foreground);
-                color: var(--pxt-primary-background);
-            }
-    
-            &:hover {
-                background-color: var(--pxt-primary-background-hover);
-    
-                &.inverted {
-                    background-color: var(--pxt-primary-foreground);
-                    color: var(--pxt-primary-background-hover);
-                }
-            }
+            .buttonVariant(
+                var(--pxt-primary-background),
+                var(--pxt-primary-foreground),
+                var(--pxt-primary-background-hover)
+            );
         }
-    
+
         &.secondary {
-            background-color: var(--pxt-secondary-background);
-            color: var(--pxt-secondary-foreground);
-            border-color: var(--pxt-secondary-background);
-    
-            &.inverted {
-                background-color: var(--pxt-secondary-foreground);
-                color: var(--pxt-secondary-background);
-            }
-    
-            &:hover {
-                background-color: var(--pxt-secondary-background-hover);
-    
-                &.inverted {
-                    background-color: var(--pxt-secondary-foreground);
-                    color: var(--pxt-secondary-background-hover);
-                }
-            }
+            .buttonVariant(
+                var(--pxt-secondary-background),
+                var(--pxt-secondary-foreground),
+                var(--pxt-secondary-background-hover)
+            );
         }
-    
+
         &.tertiary {
-            background-color: var(--pxt-tertiary-background);
-            color: var(--pxt-tertiary-foreground);
-            border-color: var(--pxt-tertiary-background);
-    
-            &.inverted {
-                background-color: var(--pxt-tertiary-foreground);
-                color: var(--pxt-tertiary-background);
-            }
-    
-            &:hover {
-                background-color: var(--pxt-tertiary-background-hover);
-    
-                &.inverted {
-                    background-color: var(--pxt-tertiary-foreground);
-                    color: var(--pxt-tertiary-background-hover);
-                }
-            }
+            .buttonVariant(
+                var(--pxt-tertiary-background),
+                var(--pxt-tertiary-foreground),
+                var(--pxt-tertiary-background-hover)
+            );
         }
 
         &.blue {
-            background-color: var(--pxt-colors-blue-background);
-            color: var(--pxt-colors-blue-foreground);
-            border-color: var(--pxt-colors-blue-background);
-
-            &.inverted {
-                background-color: var(--pxt-colors-blue-foreground);
-                color: var(--pxt-colors-blue-background);
-            }
-    
-            &:hover {
-                background-color: var(--pxt-colors-blue-hover);
-    
-                &.inverted {
-                    background-color: var(--pxt-colors-blue-foreground);
-                    color: var(--pxt-colors-blue-hover);
-                }
-            }
+            .buttonVariant(
+                var(--pxt-colors-blue-background),
+                var(--pxt-colors-blue-foreground),
+                var(--pxt-colors-blue-hover)
+            );
         }
-    
-        &.gray, &.grey {
-            background-color: var(--pxt-neutral-background3);
-            color: var(--pxt-neutral-foreground3);
-            border-color: var(--pxt-neutral-background3);
 
-            &.inverted {
-                background-color: var(--pxt-neutral-foreground3);
-                color: var(--pxt-neutral-background3);
-            }
-    
-            &:hover {
-                background-color: var(--pxt-neutral-background-hover3);
-    
-                &.inverted {
-                    background-color: var(--pxt-neutral-foreground3);
-                    color: var(--pxt-neutral-background-hover3);
-                }
-            }
+        &.gray, &.grey {
+            .buttonVariant(
+                var(--pxt-neutral-background3),
+                var(--pxt-neutral-foreground3),
+                var(--pxt-neutral-hover3)
+            );
         }
 
         &.green, &.positive {
-            background-color: var(--pxt-colors-green-background);
-            color: var(--pxt-colors-green-foreground);
-            border-color: var(--pxt-colors-green-background);
-
-            &.inverted {
-                background-color: var(--pxt-colors-green-foreground);
-                color: var(--pxt-colors-green-background);
-            }
-    
-            &:hover {
-                background-color: var(--pxt-colors-green-hover);
-    
-                &.inverted {
-                    background-color: var(--pxt-colors-green-foreground);
-                    color: var(--pxt-colors-green-hover);
-                }
-            }
+            .buttonVariant(
+                var(--pxt-colors-green-background),
+                var(--pxt-colors-green-foreground),
+                var(--pxt-colors-green-hover)
+            );
         }
 
         &.orange {
-            /* TODO thsparks : Check if these should be changed to primary, secondary, tertiary, etc... */
-            background-color: var(--pxt-colors-orange-background);
-            color: var(--pxt-colors-orange-foreground);
-            border-color: var(--pxt-colors-orange-background);
-
-            &.inverted {
-                background-color: var(--pxt-colors-orange-foreground);
-                color: var(--pxt-colors-orange-background);
-            }
-    
-            &:hover {
-                background-color: var(--pxt-colors-orange-hover);
-    
-                &.inverted {
-                    background-color: var(--pxt-colors-orange-foreground);
-                    color: var(--pxt-colors-orange-hover);
-                }
-            }
+            .buttonVariant(
+                var(--pxt-colors-orange-background),
+                var(--pxt-colors-orange-foreground),
+                var(--pxt-colors-orange-hover)
+            );
         }
 
         &.purple, &.violet {
-            /* TODO thsparks : Check if these should be changed to primary, secondary, tertiary, etc... */
-            background-color: var(--pxt-colors-purple-background);
-            color: var(--pxt-colors-purple-foreground);
-            border-color: var(--pxt-colors-purple-background);
-
-            &.inverted {
-                background-color: var(--pxt-colors-purple-foreground);
-                color: var(--pxt-colors-purple-background);
-            }
-    
-            &:hover {
-                background-color: var(--pxt-colors-purple-hover);
-    
-                &.inverted {
-                    background-color: var(--pxt-colors-purple-foreground);
-                    color: var(--pxt-colors-purple-hover);
-                }
-            }
+            .buttonVariant(
+                var(--pxt-colors-purple-background),
+                var(--pxt-colors-purple-foreground),
+                var(--pxt-colors-purple-hover)
+            );
         }
 
         &.red, &.negative {
-            background-color: var(--pxt-colors-red-background);
-            color: var(--pxt-colors-red-foreground);
-            border-color: var(--pxt-colors-red-background);
-
-            &.inverted {
-                background-color: var(--pxt-colors-red-foreground);
-                color: var(--pxt-colors-red-background);
-            }
-    
-            &:hover {
-                background-color: var(--pxt-colors-red-hover);
-    
-                &.inverted {
-                    background-color: var(--pxt-colors-red-foreground);
-                    color: var(--pxt-colors-red-hover);
-                }
-            }
+            .buttonVariant(
+                var(--pxt-colors-red-background),
+                var(--pxt-colors-red-foreground),
+                var(--pxt-colors-red-hover)
+            );
         }
 
         &.teal {
-            background-color: var(--pxt-colors-teal-background);
-            color: var(--pxt-colors-teal-foreground);
-            border-color: var(--pxt-colors-teal-background);
-
-            &.inverted {
-                background-color: var(--pxt-colors-teal-foreground);
-                color: var(--pxt-colors-teal-background);
-            }
-
-            &:hover {
-                background-color: var(--pxt-colors-teal-hover);
-
-                &.inverted {
-                    background-color: var(--pxt-colors-teal-foreground);
-                    color: var(--pxt-colors-teal-hover);
-                }
-            }
+            .buttonVariant(
+                var(--pxt-colors-teal-background),
+                var(--pxt-colors-teal-foreground),
+                var(--pxt-colors-teal-hover)
+            );
         }
 
         &.yellow {
-            background-color: var(--pxt-colors-yellow-background);
-            color: var(--pxt-colors-yellow-foreground);
-            border-color: var(--pxt-colors-yellow-background);
-
-            &.inverted {
-                background-color: var(--pxt-colors-yellow-foreground);
-                color: var(--pxt-colors-yellow-background);
-            }
-    
-            &:hover {
-                background-color: var(--pxt-colors-yellow-hover);
-    
-                &.inverted {
-                    background-color: var(--pxt-colors-yellow-foreground);
-                    color: var(--pxt-colors-yellow-hover);
-                }
-            }
+            .buttonVariant(
+                var(--pxt-colors-yellow-background),
+                var(--pxt-colors-yellow-foreground),
+                var(--pxt-colors-yellow-hover)
+            );
         }
     }
 }
