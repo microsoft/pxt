@@ -44,17 +44,17 @@
 
     --pxt-neutral-background1: #ffffff;
     --pxt-neutral-foreground1: rgba(0, 0, 0, 0.85);
-    --pxt-neutral-hover1: #cccccc;
+    --pxt-neutral-background-hover1: #cccccc;
     --pxt-neutral-stencil1: rgba(136, 136, 136, 0.15);
 
     --pxt-neutral-background2: #f9f9f9;
     --pxt-neutral-foreground2: rgba(0, 0, 0, 0.87);
-    --pxt-neutral-hover2: #e0e0e0;
+    --pxt-neutral-background-hover2: #e0e0e0;
     --pxt-neutral-stencil2: #e9eef2;
 
     --pxt-neutral-background3: #4e5758;
     --pxt-neutral-foreground3: #000000;
-    --pxt-neutral-hover3: #363c3d;
+    --pxt-neutral-background-hover3: #363c3d;
     --pxt-neutral-stencil3: #FFFFFF;
 
     --pxt-neutral-alpha05: rgba(0, 0, 0, 0.05);

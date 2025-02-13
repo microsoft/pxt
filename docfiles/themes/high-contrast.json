@@ -50,17 +50,17 @@
 
         "pxt-neutral-background1": "#000000",
         "pxt-neutral-foreground1": "#FFFFFF",
-        "pxt-neutral-hover1": "#000000",
+        "pxt-neutral-background-hover1": "#000000",
         "pxt-neutral-stencil1": "#FFFFFF",
 
         "pxt-neutral-background2": "#000000",
         "pxt-neutral-foreground2": "#FFFFFF",
-        "pxt-neutral-hover2": "#000000",
+        "pxt-neutral-background-hover2": "#000000",
         "pxt-neutral-stencil2": "#FFFFFF",
 
         "pxt-neutral-background3": "#000000",
         "pxt-neutral-foreground3": "#FFFFFF",
-        "pxt-neutral-hover3": "#000000",
+        "pxt-neutral-background-hover3": "#000000",
         "pxt-neutral-stencil3": "#FFFFFF",
 
         "pxt-neutral-alpha05": "rgba(255, 255, 255, 0.05)",
