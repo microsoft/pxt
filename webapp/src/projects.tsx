@@ -160,7 +160,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                     </div>
                     <div className="column right aligned" style={{ zIndex: 1 }}>
                         {pxt.appTarget.compile || (pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing) ?
-                            <sui.Button key="import" icon="upload" className="import-dialog-btn" textClass="landscape only" text={lf("Import")} title={lf("Import a project")} onClick={this.importProject} /> : undefined}
+                            <sui.Button key="import" icon="upload" className="import-dialog-btn gray" textClass="landscape only" text={lf("Import")} title={lf("Import a project")} onClick={this.importProject} /> : undefined}
                     </div>
                 </div>
                 <div className="content">

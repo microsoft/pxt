@@ -154,6 +154,11 @@ body.main.pxt-theme-root {
     }
 
     .ui.button, .common-button {
+
+        // Semantic ui sometimes sets the background image to a faint gradient.
+        // We don't want that, so we override it here.
+        background-image: none;
+
         &.primary {
             .buttonVariant(
                 var(--pxt-primary-background),
