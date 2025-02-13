@@ -68,27 +68,32 @@ Colors:
 | pxt-colors-purple-background1 | Purple color               |
 | pxt-colors-purple-foreground  | Fg for purple buttons      |
 | pxt-colors-purple-hover       |                            |
+| pxt-colors-purple-alpha10     | 10% Opacity purple color   |
 | pxt-colors-orange-background1 | Orange color               |
 | pxt-colors-orange-foreground  | Fg for orange buttons      |
 | pxt-colors-orange-hover       |                            |
+| pxt-colors-orange-alpha10     | 10% Opacity orange color   |
 | pxt-colors-brown-background1  | Brown color                |
 | pxt-colors-brown-foreground   | Fg for brown buttons       |
 | pxt-colors-brown-hover        |                            |
+| pxt-colors-brown-alpha10      | 10% Opacity brown color    |
 | pxt-colors-blue-background1   | Blue color                 |
 | pxt-colors-blue-foreground    | Fg for blue buttons        |
 | pxt-colors-blue-hover         |                            |
+| pxt-colors-blue-alpha10       | 10% Opacity blue color     |
 | pxt-colors-green-background1  | OK Buttons, etc...         |
 | pxt-colors-green-foreground1  | OK Buttons, etc...         |
 | pxt-colors-green-hover        | OK Button Hover, etc...    |
-| pxt-colors-green-alpha50      | Git add coloring           |
+| pxt-colors-green-alpha10      | 10% Opacity green color    |
 | pxt-colors-red-background1    | Scary Buttons Bkg          |
 | pxt-colors-red-foreground     |                            |
 | pxt-colors-red-hover          |                            |
-| pxt-colors-red-alpha50        | Git add coloring           |
+| pxt-colors-red-alpha10        | 10% Opacity red color      |
 | pxt-colors-teal-background1   | Teal Color                 |
 | pxt-colors-teal-foreground    | Fg for teal buttons        |
 | pxt-colors-teal-hover         |                            |
+| pxt-colors-teal-alpha10       | 10% Opacity teal color     |
 | pxt-colors-yellow-background1 | Warn Buttons Bkg           |
 | pxt-colors-yellow-foreground  |                            |
 | pxt-colors-yellow-hover       |                            |
-| pxt-colors-yellow-alpha50     |                            |
+| pxt-colors-yellow-alpha10     | 10% Opacity yellow color   |

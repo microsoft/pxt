@@ -251,8 +251,8 @@
 // @githubTextColor: var(--pxt-target-foreground2);
 // @githubInvertedTextColor: var(--pxt-target-background2);
 // @diffSegmentBackgroundColor: var(--pxt-neutral-background1);
-@diffRemovedBackground: var(--pxt-colors-red-alpha50); // #ffeef0;
-@diffAddedBackground: var(--pxt-colors-green-alpha50); // #e6ffed;
+@diffRemovedBackground: var(--pxt-colors-red-alpha10); // #ffeef0;
+@diffAddedBackground: var(--pxt-colors-green-alpha10); // #e6ffed;
 @diffMarkerBackground: var(--pxt-neutral-background1); //#f1f8ff;
 @diffMarkerColor: var(--pxt-neutral-foreground1); //rgba(27,31,35,.7);
 @diffInvertedRemovedBackground: var(--pxt-colors-red-background); // #ff5050;
@@ -263,11 +263,11 @@
 @diffLineNumberColor: var(--pxt-neutral-foreground2); // rgba(27, 31, 35, .3);
 @diffInvertedLineNumberColor: var(--pxt-neutral-background1); // #ddd;
 // @diffTokenDarkenRatio: 10%;
-@diffRemovedTokenBackground: var(--pxt-colors-red-alpha50); // Layers overtop of existing alpha50 bkg, so it's slightly darker // darken(@diffRemovedBackground, @diffTokenDarkenRatio);
-@diffAddedTokenBackground: var(--pxt-colors-green-alpha50); // Layers overtop of existing alpha50 bkg, so it's slightly darker // darken(@diffAddedBackground, @diffTokenDarkenRatio);
+@diffRemovedTokenBackground: var(--pxt-colors-red-alpha10); // Layers overtop of existing alpha10 bkg, so it's slightly darker // darken(@diffRemovedBackground, @diffTokenDarkenRatio);
+@diffAddedTokenBackground: var(--pxt-colors-green-alpha10); // Layers overtop of existing alpha10 bkg, so it's slightly darker // darken(@diffAddedBackground, @diffTokenDarkenRatio);
 @diffInvertedRemovedTokenBackground: var(--pxt-colors-red-hover); // darken(@diffInvertedRemovedBackground, @diffTokenDarkenRatio);
 @diffInvertedAddedTokenBackground: var(--pxt-colors-green-hover); // darken(@diffInvertedAddedBackground, @diffTokenDarkenRatio);
-@diffUpdateAddedBackground: var(--pxt-colors-yellow-alpha50); // #fcfc90;
+@diffUpdateAddedBackground: var(--pxt-colors-yellow-alpha10); // #fcfc90;
 @diffUpdateAddedTokenBackground: var(--pxt-colors-yellow-hover); // darken(@diffUpdateAddedBackground, @diffTokenDarkenRatio);
 @diffUpdateInlineAddedOutline: 1px solid var(--pxt-neutral-stencil3); // #ccc
 

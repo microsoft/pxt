@@ -69,28 +69,40 @@
     --pxt-colors-purple-background: #9932cc;
     --pxt-colors-purple-foreground: #FFFFFF;
     --pxt-colors-purple-hover: #7a28a3;
+    --pxt-colors-purple-alpha10: #9932cc19;
+
     --pxt-colors-orange-background: #ff7f50;
     --pxt-colors-orange-foreground: #FFFFFF;
     --pxt-colors-orange-hover: #ff5a1d;
+    --pxt-colors-orange-alpha10: #ff7f5019;
+
     --pxt-colors-brown-background: #663905;
     --pxt-colors-brown-foreground: #FFFFFF;
     --pxt-colors-brown-hover: #351e03;
+    --pxt-colors-brown-alpha10:  #66390519;
+
     --pxt-colors-blue-background: #0000ff;
     --pxt-colors-blue-foreground: #FFFFFF;
     --pxt-colors-blue-hover: #0000cc;
+    --pxt-colors-blue-alpha10:   #0000ff19;
+
     --pxt-colors-green-background: #2ecc71;
     --pxt-colors-green-foreground: #FFFFFF;
     --pxt-colors-green-hover: #22be64;
-    --pxt-colors-green-alpha50: #2ecc717F;
+    --pxt-colors-green-alpha10:  #2ecc7119;
+
     --pxt-colors-red-background: #a80000;
     --pxt-colors-red-foreground: #FFFFFF;
     --pxt-colors-red-hover: #8f0000;
-    --pxt-colors-red-alpha50: #a800007F;
+    --pxt-colors-red-alpha10:    #a8000019;
+
     --pxt-colors-teal-background: #008272;
     --pxt-colors-teal-foreground: #FFFFFF;
     --pxt-colors-teal-hover: #004f45;
+    --pxt-colors-teal-alpha10:   #00827219;
+
     --pxt-colors-yellow-background: #c0a000;
     --pxt-colors-yellow-foreground: #FFFFFF;
     --pxt-colors-yellow-hover: rgb(153, 132, 0);
-    --pxt-colors-yellow-alpha50: #c0a0007F;
+    --pxt-colors-yellow-alpha10: #c0a00019;
 }
