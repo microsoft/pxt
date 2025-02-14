@@ -142,7 +142,8 @@
 
 .monacoFlyout {
     font-family: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
-    background: @monacoFlyoutColor;
+    background: var(--pxt-neutral-background3);
+    color: var(--pxt-neutral-foreground3);
     opacity: @blocklyFlyoutColorOpacity;
     border-top-right-radius: 8px;
     border-bottom-right-radius: 8px;
@@ -157,7 +158,7 @@
         -ms-user-select: none;
         -webkit-user-select: none;
         user-select: none;
-        color: white;
+        color: var(--pxt-neutral-foreground3);
         font-size: 15px;
 
         .monacoFlyoutHeadingIcon {
@@ -172,14 +173,14 @@
         }
     }
     .monacoBlock {
-        color: @monacoFlyoutText;
-        border-bottom: 1px solid @monacoFlyoutBorderColor;
+        color: var(--pxt-neutral-foreground3);
+        border-bottom: 1px solid var(--pxt-neutral-stencil3);
 
         .monacoDraggableBlock {
             width: 100%;
             margin-bottom: 0.75rem;
             border-radius: 0.25rem;
-            color: @white;
+            color: var(--pxt-neutral-foreground3);
             padding: .25rem 0.75rem;
             cursor: pointer;
             display: inline-block;
@@ -205,7 +206,7 @@
 
             span.docs {
                 display: block; /* enable as needed */
-                color: @white;
+                color: var(--pxt-neutral-foreground3);
                 font-size: 70%;
                 max-width: 22rem;
             }
@@ -235,7 +236,7 @@
 
             .blockHelp {
                 float: right;
-                color: @white;
+                color: var(--pxt-neutral-foreground3);
 
                 i {
                     font-size: 1.25rem;
@@ -248,8 +249,8 @@
         .argName {
             font-family: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
             font-weight: 600;
-            background: rgba(0,0,0,0.3);
-            color: #fff;
+            background: var(--pxt-neutral-alpha20);
+            color: var(--pxt-neutral-foreground3);
             padding: 0 .5rem;
             display: inline-block;
             border-radius: 0.8rem;
@@ -273,8 +274,8 @@
             display: none;
         }
         &.expand {
-            color: @white;
-            border-color: @white;
+            color: var(--pxt-neutral-foreground3);
+            border-color: var(--pxt-neutral-stencil3);
             border-width: 4px 0px 4px 4px;
             border-style: solid;
             cursor: grab;
@@ -286,7 +287,7 @@
             }
 
             .blockHandle {
-                border-color: @white;
+                border-color: var(--pxt-neutral-foreground3);
                 border-width: 4px 4px 4px 0px;
                 border-style: solid;
             }
@@ -304,7 +305,8 @@
             width: 2rem;
             right: -0.9rem;
             border-radius: 0 1rem 1rem 0;
-            background: @monacoFlyoutColor;
+            background: var(--pxt-neutral-background3);
+            color: var(--pxt-neutral-foreground3);
             opacity: @blocklyFlyoutColorOpacity;
 
             i.bars {
@@ -334,7 +336,7 @@
 }
 
 .monacoFlyoutHeading .monacoFlyoutHeadingText {
-    color: white;
+    color: var(--pxt-neutral-foreground3);
     vertical-align: middle !important;
 }
 .monacoFlyoutHeadingText {
@@ -346,14 +348,14 @@
 }
 .monacoFlyoutLabelLine {
     border: none;
-    border-top: 1px dotted white;
+    border-top: 1px dotted var(--pxt-neutral-stencil3);
     height:1px;
 }
 
 #monacoDraggingBlock {
     position: absolute;
     padding: 0.6rem;
-    color: @white;
+    color: var(--pxt-neutral-foreground3);
     border-radius: 0.25rem;
     pointer-events: none;
     touch-action: none;
@@ -376,7 +378,7 @@
     width: initial !important;
 }
 .monaco-editor.vs-dark .error-view-zone {
-    color:white;
+    color: var(--pxt-neutral-foreground3);
 }
 .monaco-editor .error-view-zone .marker-widget {
     border-radius: 2px !important;
