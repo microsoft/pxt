@@ -1,0 +1,4 @@
+.image-editor-change-name .image-editor-input {
+    /* The textbox background matches the footer of the image editor, so add a border */
+    border: 1px solid var(--pxt-neutral-stencil2);
+}

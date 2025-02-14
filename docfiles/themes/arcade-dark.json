@@ -2,7 +2,9 @@
     "id": "arcade-dark",
     "name": "Arcade Dark",
     "monacoBaseTheme": "vs-dark",
-    "overrideFiles": [],
+    "overrideFiles": [
+        "/docfiles/themes/overrides/arcade-dark-overrides.css"
+    ],
     "colors": {
         "pxt-target-background1": "#1b1a19",
         "pxt-target-foreground1": "#f3f2f1",
