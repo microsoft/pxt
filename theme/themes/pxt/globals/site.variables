@@ -301,7 +301,7 @@
 
 // @flyoutLabelColor: white; (unused except to support other color vars)
 @blocklyFlyoutColor: var(--pxt-neutral-background3); // @grey;
-@blocklyFlyoutColorOpacity: 0.95; // 0.9
+@blocklyFlyoutColorOpacity: 0.9;
 // @blocklyFlyoutButtonColor: @primaryColor; var(--pxt-primary-background)
 // @monacoFlyoutColor: var(--pxt-neutral-background3); // fade(@blocklyFlyoutColor, 90%);
 // @monacoFlyoutBorderColor: var(--pxt-neutral-stencil3); // fade(@flyoutLabelColor, 40%);
