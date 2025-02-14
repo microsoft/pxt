@@ -6,8 +6,8 @@
     outline: none;
     border: none;
     vertical-align: middle;
-    color: @buttonTextColorLightBackground;
-    background: @buttonBackgroundColor;
+    color: var(--pxt-neutral-button-foreground);
+    background: var(--pxt-neutral-background1);
     font-family: @pageFont;
     margin: 0 0.25rem 0 0;
     padding: 0.8rem 2rem 0.95rem;
@@ -60,9 +60,9 @@
 .common-button.disabled.green.inverted
  {
     cursor: default;
-    background-color: @buttonBackgroundColorDisabled;
-    color: @buttonTextColorLightBackground;
-    border: @buttonBackgroundColorDisabled;
+    background-color: var(--pxt-neutral-background3);
+    color: var(--pxt-neutral-button-foreground);
+    border: var(--pxt-neutral-background3);
 }
 
 .common-button.menu-button.disabled {
@@ -113,7 +113,7 @@
 .common-button.menu-button {
     background: none;
     border: none;
-    color: @buttonMenuTextColor;
+    color: var(--pxt-primary-foreground);
     height: 100%;
     padding: 0em 1rem 0rem;
     margin: 0;
@@ -126,17 +126,17 @@
 }
 
 .common-button.menu-button:hover {
-    background: @buttonMenuBackgroundHoverColor;
+    background: var(--pxt-neutral-alpha05);
 }
 
 .common-button.menu-button:active {
-    background: @buttonMenuBackgroundActiveColor;
+    background: var(--pxt-neutral-alpha20);
 }
 
 .common-button.menu-button.inverted,
 .common-button.menu-button.inverted:hover  {
-    background: @buttonMenuBackgroundColorInverted;
-    color: @buttonMenuTextColorInverted;
+    background: var(--pxt-primary-foreground);
+    color: var(--pxt-primary-background);
 }
 
 .common-button.text-only, .common-button.inverted.text-only {
@@ -157,7 +157,7 @@ a.common-button.menu-button {
     background: none;
     border: none;
     padding: 0;
-    color: @buttonLinkColor;
+    color: var(--pxt-link);
 }
 
 .common-button.link-button:hover {
@@ -177,7 +177,7 @@ a.common-button.menu-button {
 }
 
 .common-button.link-button.kiosk {
-    color: @commonTextColor;
+    color: var(--pxt-neutral-button-foreground);
 }
 
 

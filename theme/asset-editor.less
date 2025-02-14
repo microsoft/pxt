@@ -8,7 +8,7 @@
 .asset-editor-sidebar {
     width: @blocklyRowWidthWide;
     height: 100%;
-    border-right: 1px solid @assetSidebarBorder;
+    border-right: 1px solid var(--pxt-neutral-stencil1);
     overflow-y: auto;
     z-index: 1;
 }
@@ -29,7 +29,7 @@
     display: flex;
     padding: 0.25rem 0.5rem;
     border-radius: 0.25rem;
-    background-color: @assetUnselected;
+    background-color: var(--pxt-neutral-alpha05);
 
     i {
         width: 1.5rem;
@@ -42,7 +42,7 @@
     width: ~"calc(@{blocklyRowWidthWide} - 2rem)";
     height: ~"calc(@{blocklyRowWidthWide} - 2rem)";
     margin: 0.5rem 0;
-    background-color: @assetUnselected;
+    background-color: var(--pxt-neutral-alpha05);
 
     .asset-editor-preview {
         border: 2px solid @black;
@@ -71,7 +71,7 @@
 
 .asset-editor-gallery-tab {
     height: 3rem;
-    background-color: @assetUnselected;
+    background-color: var(--pxt-neutral-alpha05);
     color: var(--pxt-neutral-foreground1);
     padding: .7em 2em .85em;
     font-size: 1rem;
@@ -194,7 +194,7 @@
 .create-new.disabled,
 .create-new.disabled:hover {
     cursor: not-allowed;
-    background-color: @assetUnselected;
+    background-color: var(--pxt-neutral-alpha05);
 }
 
 .asset-editor-create-options {
@@ -214,7 +214,7 @@
     margin-bottom: 1rem;
     color: @white;
     font-weight: 700;
-    background-color: @assetTypeButton;
+    background-color: var(--pxt-secondary-background);
     cursor: pointer;
 
     &:hover {

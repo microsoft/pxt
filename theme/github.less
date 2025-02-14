@@ -199,7 +199,7 @@
                 background: var(--pxt-colors-green-background) !important;
 
                 .ch-added {
-                    background: @diffInvertedAddedTokenBackground !important;
+                    background: var(--pxt-colors-green-hover) !important;
                 }
             }
 
@@ -207,22 +207,22 @@
                 background: var(--pxt-colors-red-background) !important;
 
                 .ch-removed {
-                    background: @diffInvertedRemovedTokenBackground !important;
+                    background: var(--pxt-colors-red-hover) !important;
                 }
             }
 
             .diff-unchanged {
-                background: @diffInvertedUnchangedBackground !important;
+                background: var(--pxt-neutral-background1) !important;
             }
 
             .line-a,
             .line-b {
-                color: @diffInvertedLineNumberColor !important;
+                color: var(--pxt-neutral-background1) !important;
             }
 
             .diff-marker {
-                background: @diffInvertedMarkerBackground !important;
-                color: @diffInvertedMarkerColor !important;
+                background: var(--pxt-neutral-background3) !important;
+                color: var(--pxt-neutral-foreground1) !important;
             }
         }
     }

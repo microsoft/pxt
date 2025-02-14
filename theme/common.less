@@ -1317,16 +1317,16 @@ Field editors
     }
 
     .extension-tag {
-        border: .1rem solid @extensionTagColor;
+        border: .1rem solid var(--pxt-neutral-foreground1);
         padding: .6rem 1.25rem;
         border-radius: 1.6rem;
         cursor: pointer;
-        color: @extensionTagColor;
+        color: var(--pxt-neutral-foreground1);
         background-color: inherit;
     }
 
     .extension-tag:hover {
-        background-color: @extensionTagBackgroundColor;
+        background-color: var(--pxt-neutral-alpha20);
     }
 
     .extension-tag.selected {
@@ -1784,7 +1784,7 @@ p.ui.font.small {
 }
 
 .cloudstatusarea {
-    color: @cloudStatusColor;
+    color: var(--pxt-tertiary-background);
     align-self: center;
     display: flex;
 
@@ -1801,7 +1801,7 @@ p.ui.font.small {
     }
 
     .ui.loader:after {
-        border-top-color: @cloudStatusColor;
+        border-top-color: var(--pxt-tertiary-background);
     }
 }
 
@@ -2714,9 +2714,9 @@ button.ui.button.hostmultiplayergame-button {
         margin-right: 14px;
         margin-bottom: 14px;
         border-radius: @homeCardBorderRadius;
-        color: @homeCardColor;
+        color: var(--pxt-neutral-foreground1);
         border: @homeCardBorderSize solid var(--pxt-neutral-stencil1) !important;
-        background-color: @homeCardBackgroundColor;
+        background-color: var(--pxt-neutral-background1);
 
         button {
             margin: 0;

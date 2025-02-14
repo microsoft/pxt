@@ -8,8 +8,8 @@
     height: 2rem;
     align-items: stretch;
     border-radius: 2px;
-    border: 1px solid @inputBorderColor;
-    background: @inputBackgroundColor;
+    border: 1px solid var(--pxt-neutral-stencil1);
+    background: var(--pxt-neutral-background1);
     font-size: 16px;
 }
 
@@ -18,7 +18,7 @@
     content: "";
     position: absolute;
     inset: -1px;
-    border: 2px solid @inputBorderColorFocus;
+    border: 2px solid var(--pxt-focus-border);
     border-radius: 2px;
     pointer-events: none;
 }
@@ -27,7 +27,7 @@
     width: 100%;
     min-width: 0;
     padding: 0 0.5rem;
-    color: @inputTextColor;
+    color: var(--pxt-neutral-button-foreground);
     border: none;
     outline: 0;
     background: none transparent;
@@ -62,13 +62,13 @@
     }
 
     & > .common-button {
-        color: @inputButtonColor;
+        color: var(--pxt-tertiary-background);
         padding: 0;
         margin: 0;
         border-radius: 0;
 
         &:hover {
-            color: @inputButtonColorHover;
+            color: var(--pxt-tertiary-background-hover);
         }
     }
 }
@@ -84,14 +84,14 @@
 .common-input-wrapper.disabled {
     .common-input-group {
         cursor: default;
-        border: 1px solid @inputBackgroundColorDisabled;
-        background: @inputBackgroundColorDisabled;
+        border: 1px solid var(--pxt-neutral-background3);
+        background: var(--pxt-neutral-background3);
     }
 
     .common-input,
     .common-input-label,
     i {
-        color: @inputTextColorDisabled;
+        color: var(--pxt-neutral-foreground3);
     }
 }
 

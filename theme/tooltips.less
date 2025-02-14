@@ -5,8 +5,8 @@
 
 .pxt-tooltip {
     color: @white;
-    background-color: @tooltipBackground !important;
-    border: 1px solid @tooltipBorder !important;
+    background-color: var(--pxt-primary-background) !important;
+    border: 1px solid var(--pxt-primary-dark) !important;
     padding: .75rem 1rem !important;
     font-size: 1rem !important;
     line-height: 1.25rem !important;
@@ -15,22 +15,22 @@
 .pxt-tooltip {
     &.place-top {
         &:after {
-            border-top-color: @tooltipBorder !important;
+            border-top-color: var(--pxt-primary-dark) !important;
         }
     }
     &.place-bottom {
         &:after {
-            border-bottom-color: @tooltipBorder !important;
+            border-bottom-color: var(--pxt-primary-dark) !important;
         }
     }
     &.place-left {
         &:after {
-            border-left-color: @tooltipBorder !important;
+            border-left-color: var(--pxt-primary-dark) !important;
         }
     }
     &.place-right {
         &:after {
-            border-right-color: @tooltipBorder !important;
+            border-right-color: var(--pxt-primary-dark) !important;
         }
     }
 }

@@ -7,8 +7,8 @@
     display: flex;
     align-items: stretch;
     border-radius: 2px;
-    border: 1px solid @textareaBorderColor;
-    background: @textareaBackgroundColor;
+    border: 1px solid var(--pxt-neutral-stencil1);
+    background: var(--pxt-neutral-background1);
 }
 
 .common-textarea-group:focus::after,
@@ -16,7 +16,7 @@
     content: "";
     position: absolute;
     inset: -1px;
-    border: 2px solid @textareaBorderColorFocus;
+    border: 2px solid var(--pxt-focus-border);
     border-radius: 2px;
     pointer-events: none;
 }
@@ -25,7 +25,7 @@
     width: 100%;
     min-width: 0;
     padding: 0.5rem;
-    color: @textareaTextColor;
+    color: var(--pxt-neutral-button-foreground);
     border: none;
     outline: 0;
     background: none transparent;
@@ -57,8 +57,8 @@
 .common-textarea-wrapper.disabled {
     .common-textarea-group {
         cursor: default;
-        border: 1px solid @textareaBackgroundColorDisabled;
-        background: @textareaBackgroundColorDisabled;
+        border: 1px solid var(--pxt-neutral-background3);
+        background: var(--pxt-neutral-background3);
     }
 }
 

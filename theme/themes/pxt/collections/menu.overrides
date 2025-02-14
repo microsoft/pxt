@@ -92,7 +92,7 @@
     .menu > .link.item.icon:focus {
         background: var(--pxt-neutral-alpha05);
         color: @invertedHoverColor;
-        border: @homeHeaderBorderSize solid @homeHeaderSelectedBorderColor;
+        border: @homeHeaderBorderSize solid var(--pxt-neutral-stencil3);
         outline: 1px ridge black;
     }
 }
@@ -127,5 +127,5 @@
 }
 
 .debugger .ui.inverted.menu {
-    background: @DebuggerBackgroundPrimaryColor !important;
+    background: var(--pxt-primary-background) !important;
 }

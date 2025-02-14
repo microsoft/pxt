@@ -10,17 +10,17 @@
  *                    Buttons                       *
  ****************************************************/
 
-@buttonTextColorLightBackground: @commonTextColor;
+@buttonTextColorLightBackground: var(--pxt-neutral-button-foreground);
 @buttonTextColorDarkBackground: var(--pxt-neutral-background1);
 @buttonBackgroundColor: var(--pxt-neutral-background1);
-@buttonBackgroundColorDisabled: @commonBackgroundDisabledColor;
+@buttonBackgroundColorDisabled: var(--pxt-neutral-background3);
 @buttonGrayColor: var(--pxt-neutral-button-background);
 
 @buttonMenuTextColor: var(--pxt-primary-foreground);
 @buttonMenuTextColorInverted: var(--pxt-primary-background);
-@buttonMenuBackgroundColorInverted: @buttonMenuTextColor;
-@buttonFocusOutlineDarkBackground: @buttonTextColorDarkBackground solid 1px;
-@buttonFocusOutlineLightBackground: @commonBorderColor solid 1px;
+@buttonMenuBackgroundColorInverted: var(--pxt-primary-foreground);
+@buttonFocusOutlineDarkBackground: var(--pxt-neutral-background1) solid 1px;
+@buttonFocusOutlineLightBackground: var(--pxt-neutral-stencil1) solid 1px;
 @buttonMenuBackgroundHoverColor: var(--pxt-neutral-alpha05);
 @buttonMenuBackgroundActiveColor: var(--pxt-neutral-alpha20);
 @buttonLinkColor: var(--pxt-link);
@@ -51,18 +51,18 @@
  *                    Checkboxes                    *
  ****************************************************/
 
-@checkboxFocusOutline: @commonBorderColor solid 1px;
+@checkboxFocusOutline: var(--pxt-neutral-stencil1) solid 1px;
 
 /****************************************************
  *                    Inputs                        *
  ****************************************************/
 
-@inputTextColor: @commonTextColor;
+@inputTextColor: var(--pxt-neutral-button-foreground);
 @inputTextColorDisabled: var(--pxt-neutral-foreground3);
 @inputBorderColor: var(--pxt-neutral-stencil1);
 @inputBorderColorFocus: var(--pxt-focus-border);
 @inputBackgroundColor: var(--pxt-neutral-background1);
-@inputBackgroundColorDisabled: @commonBackgroundDisabledColor;
+@inputBackgroundColorDisabled: var(--pxt-neutral-background3);
 @inputButtonColor: var(--pxt-tertiary-background);
 @inputButtonColorHover: var(--pxt-tertiary-background-hover);
 
@@ -70,11 +70,11 @@
  *                  Textarea                        *
  ****************************************************/
 
-@textareaTextColor: @commonTextColor;
-@textareaBorderColor: @inputBorderColor;
+@textareaTextColor: var(--pxt-neutral-button-foreground);
+@textareaBorderColor: var(--pxt-neutral-stencil1);
 @textareaBorderColorFocus: var(--pxt-focus-border);
 @textareaBackgroundColor: var(--pxt-neutral-background1);
-@textareaBackgroundColorDisabled: @commonBackgroundDisabledColor;
+@textareaBackgroundColorDisabled: var(--pxt-neutral-background3);
 
 /****************************************************
  *              EditorToggle                        *

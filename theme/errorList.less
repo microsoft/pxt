@@ -5,7 +5,7 @@
     position: relative;
     max-height: @errorListHeight;
     min-height: @errorListHeight;
-    border-top: 2px @errorListBorderColor solid;
+    border-top: 2px var(--pxt-neutral-stencil1) solid;
 
     *:focus {
         outline: none;
@@ -72,11 +72,11 @@
                 color: @textColor;
 
                 &:hover, &:focus {
-                    background-color: @errorListMessageHoverColor !important;
+                    background-color: var(--pxt-neutral-alpha20) !important;
                 }
 
                 &:nth-child(even):not(:hover) {
-                    background-color: @errorListEven;
+                    background-color: var(--pxt-neutral-alpha05);
                 }
 
                 &.stackframe {
@@ -91,7 +91,7 @@
             width: fit-content;
             padding-top: 0.5em;
             margin-right: 0.5em;
-            color: @errorListDebugSuggestionColor;
+            color: var(--pxt-tertiary-background);
             cursor: pointer;
 
             &:hover, &:focus {
@@ -111,7 +111,7 @@
     min-height: unset;
 
     &:hover {
-        background-color: @errorListMessageHoverColor;
+        background-color: var(--pxt-neutral-alpha20);
     }
 }
 

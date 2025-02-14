@@ -9,11 +9,11 @@
 
 @soundPreviewBackgroundColor: var(--pxt-neutral-background2);
 @soundPreviewBaselineColor: var(--pxt-neutral-alpha50);
-@soundPreviewStaticWaveColor: @soundPreviewBaselineColor;
-@soundPreviewAnimatedWaveColor: @soundEffectHeaderColor;
+@soundPreviewStaticWaveColor: var(--pxt-neutral-alpha50);
+@soundPreviewAnimatedWaveColor: var(--pxt-primary-background);
 
 @soundGalleryBackgroundColor: var(--pxt-colors-purple-background);
-@soundGalleryWaveColor: @soundEffectHeaderColor;
+@soundGalleryWaveColor: var(--pxt-primary-background);
 
 
 /****************************************************
@@ -61,7 +61,7 @@
     justify-content: center;
     align-items: center;
 
-    background-color: @soundEffectHeaderColor;
+    background-color: var(--pxt-primary-background);
 
     & > .common-button {
         position: absolute;
@@ -149,7 +149,7 @@
  .sound-preview {
     height: 8rem;
     padding: 0 2.5rem;
-    background: @soundPreviewBackgroundColor;
+    background: var(--pxt-neutral-background2);
 
     display: flex;
     justify-content: center;
@@ -166,14 +166,14 @@
     overflow: hidden;
     padding: 0;
     border-radius: 2rem;
-    background: @soundPlayButtonBackground;
+    background: var(--pxt-neutral-button-foreground);
     position: absolute;
     right: 0;
     margin-top: -1.5rem;
 
     .fas.fa-play, .fas.fa-stop {
         margin: 0 0 0 0.25rem;
-        color: @soundPlayButtonForeground;
+        color: var(--pxt-neutral-button-background);
     }
 
     .fas.fa-stop {
@@ -186,15 +186,15 @@
 }
 
 .sound-preview-baseline {
-    stroke: @soundPreviewBaselineColor;
+    stroke: var(--pxt-neutral-alpha50);
 }
 
 .sound-preview-static-wave {
-    stroke: @soundPreviewStaticWaveColor;
+    stroke: var(--pxt-neutral-alpha50);
 }
 
 .sound-preview-animated-wave {
-    stroke: @soundPreviewAnimatedWaveColor;
+    stroke: var(--pxt-primary-background);
 }
 
 
@@ -208,7 +208,7 @@
     top: -100%;
     width: 100%;
     transition: top 0.25s ease;
-    background: @soundGalleryBackgroundColor;
+    background: var(--pxt-colors-purple-background);
     padding: 1rem;
     overflow-y: auto;
 }
@@ -261,5 +261,5 @@
 
 
 .sound-gallery-preview-wave {
-    stroke: @soundGalleryWaveColor;
+    stroke: var(--pxt-primary-background);
 }

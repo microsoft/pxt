@@ -18,7 +18,7 @@ table.diffview {
         background: var(--pxt-colors-green-alpha10) !important;
 
         .ch-added {
-            background: @diffAddedTokenBackground;
+            background: var(--pxt-colors-green-alpha10);
             font-weight: bold;
         }
     }
@@ -27,7 +27,7 @@ table.diffview {
         background: var(--pxt-colors-red-alpha10);
 
         .ch-removed {
-            background: @diffRemovedTokenBackground;
+            background: var(--pxt-colors-red-alpha10);
         }
     }
 
@@ -41,13 +41,13 @@ table.diffview {
     }
 
     tr.conflict {
-        border-left: 2px solid @conflictBorderColor;
-        border-right: 2px solid @conflictBorderColor;
+        border-left: 2px solid var(--pxt-colors-yellow-hover);
+        border-right: 2px solid var(--pxt-colors-yellow-hover);
     }
     tr.conflict.header {
-        border-top: 2px solid @conflictBorderColor;
-        border-bottom: 2px solid @conflictBorderColor;
-        background-color: @conflictHeaderBackgroundColor;
+        border-top: 2px solid var(--pxt-colors-yellow-hover);
+        border-bottom: 2px solid var(--pxt-colors-yellow-hover);
+        background-color: var(--pxt-colors-yellow-background);
     }
     tr.conflict.header td {
         color: @conflictHeaderColor;
@@ -58,14 +58,14 @@ table.diffview {
     }
 
     tr.conflict.footer {
-        border-bottom: 2px solid @conflictBorderColor;
+        border-bottom: 2px solid var(--pxt-colors-yellow-hover);
     }
 
     .line-a,
     .line-b {
         width: 3em;
         text-align: right;
-        color: @diffLineNumberColor;
+        color: var(--pxt-neutral-foreground2);
     }
 
     .marker {
@@ -91,10 +91,10 @@ table.diffview {
 
 table.diffview.update {
     .diff-added {
-        background: @diffUpdateAddedBackground !important;
+        background: var(--pxt-colors-yellow-alpha10) !important;
     
         .ch-added {
-            background: @diffUpdateAddedTokenBackground;
+            background: var(--pxt-colors-yellow-hover);
             outline: @diffUpdateInlineAddedOutline;
             font-weight: bold;
         }

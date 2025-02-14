@@ -228,9 +228,9 @@
 @homeCardBorderColor: var(--pxt-neutral-stencil2); // #e9eef2
 @homeCardHoverBorderColor: var(--pxt-neutral-stencil3); // white;
 @homeCardColor: var(--pxt-neutral-foreground1); 
-@homeCardMetaColor: @homeCardColor;
-@homeCardHeaderColor: @homeCardColor;
-@homeFooterColor: @homeCardColor;
+@homeCardMetaColor: var(--pxt-neutral-foreground1);
+@homeCardHeaderColor: var(--pxt-neutral-foreground1);
+@homeFooterColor: var(--pxt-neutral-foreground1);
 
 @homeCardImageBorderRadius: 0;
 @homeCardBackgroundColor: var(--pxt-neutral-background1); // white
