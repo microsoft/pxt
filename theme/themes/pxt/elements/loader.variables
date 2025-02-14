@@ -6,7 +6,5 @@
 @loaderAngle: 5deg;
 @loaderAnimation: loader-pxt;
 
-@loaderLineColor: var(--pxt-primary-background);
-@invertedLoaderLineColor: var(--pxt-primary-light);
 
 @large   : 200px;

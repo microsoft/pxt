@@ -177,21 +177,8 @@
 /*-------------------
    Github Diff editor
 --------------------*/
-@diffInvertedMarkerBackground: var(--pxt-neutral-background3); // #666;
-@diffInvertedUnchangedBackground: var(--pxt-neutral-background1); // #1e1e1e;
-@diffInvertedMarkerColor: var(--pxt-neutral-foreground1); // #ccc;
-@diffLineNumberColor: var(--pxt-neutral-foreground2); // rgba(27, 31, 35, .3);
-@diffInvertedLineNumberColor: var(--pxt-neutral-background1); // #ddd;
-@diffRemovedTokenBackground: var(--pxt-colors-red-alpha10); // Layers overtop of existing alpha10 bkg, so it's slightly darker
-@diffAddedTokenBackground: var(--pxt-colors-green-alpha10); // Layers overtop of existing alpha10 bkg, so it's slightly darker
-@diffInvertedRemovedTokenBackground: var(--pxt-colors-red-hover);
-@diffInvertedAddedTokenBackground: var(--pxt-colors-green-hover);
-@diffUpdateAddedBackground: var(--pxt-colors-yellow-alpha10); // #fcfc90;
-@diffUpdateAddedTokenBackground: var(--pxt-colors-yellow-hover);
 @diffUpdateInlineAddedOutline: 1px solid var(--pxt-neutral-stencil3); // #ccc
 
-@conflictBorderColor: var(--pxt-colors-yellow-hover); // orange;
-@conflictHeaderBackgroundColor: var(--pxt-colors-yellow-background); // lighten(@conflictBorderColor, 30);
 @conflictHeaderColor: var(pxt-neutral-background3); // black;
 
 /*-------------------
@@ -216,7 +203,6 @@
    Flyout
 --------------------*/
 
-@blocklyFlyoutColor: var(--pxt-neutral-background3); 
 @blocklyFlyoutColorOpacity: 0.9;
 
 /*-------------------
@@ -225,27 +211,12 @@
 
 @homeCardBorderRadius: 0px;
 @homeCardBorderSize: 5px;
-@homeCardBorderColor: var(--pxt-neutral-stencil2); // #e9eef2
-@homeCardHoverBorderColor: var(--pxt-neutral-stencil3); // white;
-@homeCardColor: var(--pxt-neutral-foreground1); 
-@homeCardMetaColor: var(--pxt-neutral-foreground1);
-@homeCardHeaderColor: var(--pxt-neutral-foreground1);
-@homeFooterColor: var(--pxt-neutral-foreground1);
 
 @homeCardImageBorderRadius: 0;
-@homeCardBackgroundColor: var(--pxt-neutral-background1); // white
-@homeCardHoverBackgroundColor: var(--pxt-neutral-background2); // darken(@homeCardBackgroundColor, 5%);
 
 /* Detail view */
 @homeSelectedCardBorderSize: @homeCardBorderSize*2;
-@homeSelectedCardBorderColor: var(--pxt-neutral-stencil3); // white
-@homeDetailViewBackground: var(--pxt-neutral-background3); // darken(@grey, 20%);
-@homeDetailViewColor: var(--pxt-neutral-foreground3); // white;
-@homeDetailCloseColor: var(--pxt-neutral-foreground3); // white;
-@homeDetailCloseBackground: var(--pxt-neutral-background3); 
-@homeDetailCardActionText: var(--pxt-neutral-foreground3); // white;
 @homeHeaderBorderSize: 3px;
-@homeHeaderSelectedBorderColor: var(--pxt-neutral-stencil3); // white;
 /*-------------------
    Tutorial
 --------------------*/
@@ -268,19 +239,6 @@
 
 
 
-/*-------------------
-    Debugger
--------------------*/
-// TODO: Chance this for the color we want for variables in the debugger.
-@debugNumberVariable: var(--pxt-colors-purple-background);
-@debugStringVariable: var(--pxt-colors-orange-background);
-@debugBooleanVariable: var(--pxt-colors-green-background);
-@debugArrayVariable: var(--pxt-colors-brown-background);
-@debugSpriteVariable: var(--pxt-colors-blue-background);
-
-
-@DebuggerBackgroundPrimaryColor: var(--pxt-primary-background);
-@DebuggerBackgroundSecondaryColor: var(--pxt-secondary-background);
 
 
 /*-------------------
@@ -289,33 +247,8 @@
 @errorListHeight: 16em;
 @errorListHeaderHeight: 3.5em;
 @errorListInnerHeight: (@errorListHeight - @errorListHeaderHeight);
-@errorListMessageHoverColor: var(--pxt-neutral-alpha20);
-@errorListBorderColor: var(--pxt-neutral-stencil1);
-@errorListEven: var(--pxt-neutral-alpha05);
-@errorListDebugSuggestionColor: var(--pxt-tertiary-background);
 
 /*-------------------
    Asset Editor
 -------------------*/
-@assetSidebarBorder: var(--pxt-neutral-stencil1); // #c6c6c6;
 @assetPreviewBackground: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10px' height='10px'%3E%3Crect x='0' y='0' width='10px' height='10px' fill='white'%3E%3C/rect%3E%3Crect x='0' y='0' width='5px' height='5px' fill='%23dedede'%3E%3C/rect%3E%3Crect x='5' y='5' width='5px' height='5px' fill='%23dedede'%3E%3C/rect%3E%3C/svg%3E");
-@assetUnselected: var(--pxt-neutral-alpha05);
-@assetTypeButton: var(--pxt-secondary-background);
-
-/*---------------------------
-   Extensions
-----------------------------*/
-@extensionTagBackgroundColor: var(--pxt-neutral-alpha20);
-@extensionTagColor: var(--pxt-neutral-foreground1);
-
-/*---------------------------
-   Cloud Status
-----------------------------*/
-@cloudStatusColor: var(--pxt-tertiary-background);
-
-/*---------------------------
-   Teaching Bubble
-----------------------------*/
-@teachingBubbleBackgroundColor: var(--pxt-header-background);
-@teachingBubbleTextColor: var(--pxt-header-foreground);
-@teachingBubbleStepsColor: var(--pxt-target-background1);

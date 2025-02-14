@@ -83,6 +83,8 @@
 
 #mainmenu.ui.link.inverted.menu,
 #mainmenu.ui.inverted.menu {
+    background-color: var(--pxt-header-background);
+
     .menu > .dropdown.item,
     .menu > .link.item.icon {
         border: @homeHeaderBorderSize solid transparent;
