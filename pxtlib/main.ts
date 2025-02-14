@@ -395,6 +395,7 @@ namespace pxt {
         teachertoolUrl?: string; // "/beta---eval"
         isStatic?: boolean;
         verprefix?: string; // "v1"
+        ocvEnabled?: boolean;
     }
 
     export function localWebConfig() {
@@ -418,7 +419,8 @@ namespace pxt {
             simUrl: "/sim/simulator.html",
             simserviceworkerUrl: "/simulatorserviceworker.js",
             simworkerconfigUrl: "/sim/workerConfig.js",
-            partsUrl: "/sim/siminstructions.html"
+            partsUrl: "/sim/siminstructions.html",
+            ocvEnabled: true,
         }
         return r
     }
