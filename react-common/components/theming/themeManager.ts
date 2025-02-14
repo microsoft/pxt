@@ -2,7 +2,13 @@ export interface ThemeInfo {
     id: string;
     name: string;
     overrides?: string;
+    monacoBaseTheme?: string; // https://code.visualstudio.com/docs/getstarted/themes
     colors: { [key: string]: string };
+}
+
+export interface ThemeChangeSubscriber {
+    subscriberId: string;
+    onThemeChange: () => void;
 }
 
 /*
@@ -12,6 +18,7 @@ export class ThemeManager {
     private static instance: ThemeManager;
     private themes: ThemeInfo[];
     private activeTheme: ThemeInfo;
+    private subscribers: ThemeChangeSubscriber[];
 
     private constructor() {} // private to ensure singleton
 
@@ -46,6 +53,7 @@ export class ThemeManager {
             const theme: ThemeInfo = {
                 id: themeData.id,
                 name: themeData.name,
+                monacoBaseTheme: themeData.monacoBaseTheme,
                 colors: themeData.colors
             };
 
@@ -68,8 +76,8 @@ export class ThemeManager {
         }
     }
 
-    public getActiveThemeId(): string {
-        return this.activeTheme?.id;
+    public getActiveTheme(): Readonly<ThemeInfo> {
+        return this.activeTheme;
     }
 
     public async getAllThemes(): Promise<ThemeInfo[]> {
@@ -81,7 +89,7 @@ export class ThemeManager {
     }
     
     public async switchTheme(themeId: string) {
-        if (themeId === this.getActiveThemeId()) {
+        if (themeId === this.getActiveTheme()?.id) {
             return;
         }
 
@@ -103,7 +111,30 @@ export class ThemeManager {
 
             // textContent is safer than innerHTML, less vulnerable to XSS
             styleElement.textContent = `.pxt-theme-root { ${themeAsStyle} }`;
+
+            this.activeTheme = theme;
+            this.notifySubscribers();
         }
+    }
+
+    public subscribe(subscriberId: string, onThemeChange: () => void) {
+        if (this.subscribers?.some(s => s.subscriberId === subscriberId)) {
+            return;
+        }
+
+        if (!this.subscribers) {
+            this.subscribers = [];
+        }
+
+        this.subscribers.push({ subscriberId, onThemeChange });
+    }
+
+    public unsubscribe(subscriberId: string) {
+        this.subscribers = this.subscribers.filter(s => s.subscriberId !== subscriberId);
+    }
+
+    private notifySubscribers() {
+        this.subscribers.forEach(s => s.onThemeChange());
     }
 }
 

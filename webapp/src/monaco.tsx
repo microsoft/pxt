@@ -30,6 +30,7 @@ import IProjectView = pxt.editor.IProjectView;
 import ErrorListState = pxt.editor.ErrorListState;
 
 import * as pxtblockly from "../../pxtblocks";
+import { ThemeChangeSubscriber, ThemeManager } from "../../react-common/components/theming/themeManager";
 
 const MIN_EDITOR_FONT_SIZE = 10
 const MAX_EDITOR_FONT_SIZE = 40
@@ -390,6 +391,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.onUserPreferencesChanged = this.onUserPreferencesChanged.bind(this);
 
         data.subscribe(this.userPreferencesSubscriber, auth.HIGHCONTRAST);
+
+        ThemeManager.getInstance()?.subscribe("monaco", () => this.onUserPreferencesChanged());
     }
 
     onUserPreferencesChanged() {
@@ -747,8 +750,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
 
         const colors = pxt.appTarget.appTheme.monacoColors || {};
+        const baseTheme: monaco.editor.BuiltinTheme = hc
+            ? "hc-black"
+            : (ThemeManager.getInstance()?.getActiveTheme()?.monacoBaseTheme as monaco.editor.BuiltinTheme) ?? (inverted ? "vs-dark" : "vs");
         monaco.editor.defineTheme('pxtTheme', {
-            base: hc ? 'hc-black' : (inverted ? 'vs-dark' : 'vs'), // can also be vs-dark or hc-black
+            base: baseTheme,
             inherit: true, // can also be false to completely replace the builtin rules
             rules: rules,
             colors: hc ? {} : colors
@@ -2109,15 +2115,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     protected getEditorColor() {
-        if (pxt.appTarget.appTheme.monacoColors && pxt.appTarget.appTheme.monacoColors["editor.background"]) {
-            return pxt.appTarget.appTheme.monacoColors["editor.background"]
-        }
-        else if (pxt.appTarget.appTheme.invertedMonaco) {
-            return "#1e1e1e"
-        }
-        else {
-            return "#ffffff"
-        }
+        // Editor color is set to var(--pxt-target-background1), which can change.
+        // This is not ideal, but just return empty for now.
+        return "";
     }
 }
 

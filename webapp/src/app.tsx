@@ -6197,7 +6197,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             const defaultColorThemeId = pxt.appTarget?.appTheme?.defaultColorTheme;
             if (defaultColorThemeId) {
                 const themeManager = ThemeManager.getInstance();
-                if (defaultColorThemeId !== themeManager.getActiveThemeId()) {
+                if (defaultColorThemeId !== themeManager.getActiveTheme()?.id) {
                     return themeManager.switchTheme(defaultColorThemeId);
                 }
             }

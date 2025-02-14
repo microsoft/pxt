@@ -1,6 +1,7 @@
 {
     "id": "high-contrast",
     "name": "High Contrast",
+    "monacoBaseTheme": "hc-black",
     "overrideFiles": [
         "/docfiles/themes/overrides/high-contrast-overrides.css"
     ],
