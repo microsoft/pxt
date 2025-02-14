@@ -15,7 +15,7 @@ table.diffview {
     }
 
     .diff-added {
-        background: @diffAddedBackground !important;
+        background: var(--pxt-colors-green-alpha10) !important;
 
         .ch-added {
             background: @diffAddedTokenBackground;
@@ -24,7 +24,7 @@ table.diffview {
     }
 
     .diff-removed {
-        background: @diffRemovedBackground;
+        background: var(--pxt-colors-red-alpha10);
 
         .ch-removed {
             background: @diffRemovedTokenBackground;
@@ -32,8 +32,8 @@ table.diffview {
     }
 
     .diff-marker {
-        background: @diffMarkerBackground;
-        color: @diffMarkerColor
+        background: var(--pxt-neutral-background1);
+        color: var(--pxt-neutral-foreground1);
     }
 
     .diff-marker td {

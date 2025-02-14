@@ -5,8 +5,6 @@
      User Global Variables
 *******************************/
 
-@primaryColor: @pink;
-@secondaryColor: rgba(0, 0, 0, 0.55);
 @docsHue: 257;
 
 @red:#A80000;
@@ -166,13 +164,6 @@
 @sidedocsButtonsTop: (@mainMenuHeight + 1rem);
 @sidedocsButtonsRight: 4.25rem;
 
-/*-------------------
-   Editor
-
-@blocklyToolboxColor: var(--pxt-target-background3);
-@blocklyToolboxText: var(--pxt-target-foreground3);
-@trashIconColor: var(--pxt-primary-background);
---------------------*/
 
 /*-------------------
    Serial editor
@@ -186,23 +177,17 @@
 /*-------------------
    Github Diff editor
 --------------------*/
-@diffRemovedBackground: var(--pxt-colors-red-alpha10); // #ffeef0;
-@diffAddedBackground: var(--pxt-colors-green-alpha10); // #e6ffed;
-@diffMarkerBackground: var(--pxt-neutral-background1); //#f1f8ff;
-@diffMarkerColor: var(--pxt-neutral-foreground1); //rgba(27,31,35,.7);
-@diffInvertedRemovedBackground: var(--pxt-colors-red-background); // #ff5050;
-@diffInvertedAddedBackground: var(--pxt-colors-green-background); // #10a010;
 @diffInvertedMarkerBackground: var(--pxt-neutral-background3); // #666;
 @diffInvertedUnchangedBackground: var(--pxt-neutral-background1); // #1e1e1e;
 @diffInvertedMarkerColor: var(--pxt-neutral-foreground1); // #ccc;
 @diffLineNumberColor: var(--pxt-neutral-foreground2); // rgba(27, 31, 35, .3);
 @diffInvertedLineNumberColor: var(--pxt-neutral-background1); // #ddd;
-@diffRemovedTokenBackground: var(--pxt-colors-red-alpha10); // Layers overtop of existing alpha10 bkg, so it's slightly darker // darken(@diffRemovedBackground, @diffTokenDarkenRatio);
-@diffAddedTokenBackground: var(--pxt-colors-green-alpha10); // Layers overtop of existing alpha10 bkg, so it's slightly darker // darken(@diffAddedBackground, @diffTokenDarkenRatio);
-@diffInvertedRemovedTokenBackground: var(--pxt-colors-red-hover); // darken(@diffInvertedRemovedBackground, @diffTokenDarkenRatio);
-@diffInvertedAddedTokenBackground: var(--pxt-colors-green-hover); // darken(@diffInvertedAddedBackground, @diffTokenDarkenRatio);
+@diffRemovedTokenBackground: var(--pxt-colors-red-alpha10); // Layers overtop of existing alpha10 bkg, so it's slightly darker
+@diffAddedTokenBackground: var(--pxt-colors-green-alpha10); // Layers overtop of existing alpha10 bkg, so it's slightly darker
+@diffInvertedRemovedTokenBackground: var(--pxt-colors-red-hover);
+@diffInvertedAddedTokenBackground: var(--pxt-colors-green-hover);
 @diffUpdateAddedBackground: var(--pxt-colors-yellow-alpha10); // #fcfc90;
-@diffUpdateAddedTokenBackground: var(--pxt-colors-yellow-hover); // darken(@diffUpdateAddedBackground, @diffTokenDarkenRatio);
+@diffUpdateAddedTokenBackground: var(--pxt-colors-yellow-hover);
 @diffUpdateInlineAddedOutline: 1px solid var(--pxt-neutral-stencil3); // #ccc
 
 @conflictBorderColor: var(--pxt-colors-yellow-hover); // orange;

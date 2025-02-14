@@ -59,7 +59,7 @@
   left: 50%;
   transform: translate(-50%, 0);
 
-  background: @background;
+  background: var(--pxt-neutral-background1);
   border: @border;
   box-shadow: @boxShadow;
   transform-origin: @transformOrigin;

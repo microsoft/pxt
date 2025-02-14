@@ -90,7 +90,7 @@
 
     .menu > .dropdown.item:focus,
     .menu > .link.item.icon:focus {
-        background: @invertedHoverBackground;
+        background: var(--pxt-neutral-alpha05);
         color: @invertedHoverColor;
         border: @homeHeaderBorderSize solid @homeHeaderSelectedBorderColor;
         outline: 1px ridge black;
