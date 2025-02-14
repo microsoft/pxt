@@ -395,7 +395,7 @@ namespace pxt {
         teachertoolUrl?: string; // "/beta---eval"
         isStatic?: boolean;
         verprefix?: string; // "v1"
-        ocvEnabled: boolean;
+        ocvEnabled?: boolean;
     }
 
     export function localWebConfig() {
