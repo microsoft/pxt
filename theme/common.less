@@ -44,7 +44,7 @@ pre {
 /*
 --- Override Semantic UI ---
 
-TODO thsparks : Move this to its own file
+TODO thsparks : Move this to its own file, probably in react-common
 
 The body.main.pxt-theme-root adds specificity so they will
 take precedence over default semantic ui styling without using !important.
@@ -78,6 +78,12 @@ body.main.pxt-theme-root {
         &:hover {
             color: var(--pxt-link-hover);
         }
+    }
+
+    .ui.label {
+        background-color: var(--pxt-neutral-background3);
+        color: var(--pxt-neutral-foreground3);
+        border-color: var(--pxt-neutral-stencil3);
     }
 
     .ui.list > .item a.header {
