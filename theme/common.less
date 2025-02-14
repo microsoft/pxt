@@ -55,7 +55,7 @@ take precedence over default semantic ui styling without using !important.
 .buttonVariant(@bg; @fg; @hoverBg) {
     background-color: @bg;
     color: @fg;
-    border-color: @bg;
+    border: 1px solid @bg;
 
     &.inverted {
         background-color: @fg;
@@ -95,6 +95,11 @@ body.main.pxt-theme-root {
 
     .ui.icon.menu .item {
         color: var(--pxt-neutral-foreground1);
+    }
+
+    .ui.input > input {
+        background-color: var(--pxt-neutral-background2);
+        color: var(--pxt-neutral-foreground2);
     }
 
     .ui.card {
