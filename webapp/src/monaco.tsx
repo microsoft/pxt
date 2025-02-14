@@ -30,7 +30,7 @@ import IProjectView = pxt.editor.IProjectView;
 import ErrorListState = pxt.editor.ErrorListState;
 
 import * as pxtblockly from "../../pxtblocks";
-import { ThemeChangeSubscriber, ThemeManager } from "../../react-common/components/theming/themeManager";
+import { ThemeManager } from "../../react-common/components/theming/themeManager";
 
 const MIN_EDITOR_FONT_SIZE = 10
 const MAX_EDITOR_FONT_SIZE = 40

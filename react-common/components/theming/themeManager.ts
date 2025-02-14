@@ -6,7 +6,7 @@ export interface ThemeInfo {
     colors: { [key: string]: string };
 }
 
-export interface ThemeChangeSubscriber {
+interface ThemeChangeSubscriber {
     subscriberId: string;
     onThemeChange: () => void;
 }
@@ -39,7 +39,8 @@ export class ThemeManager {
             "/docfiles/themes/arcade-light.json",
             "/docfiles/themes/high-contrast.json",
             "/docfiles/themes/arcade-legacy.json",
-            "/docfiles/themes/microbit-light.json"
+            "/docfiles/themes/arcade-dark.json",
+            "/docfiles/themes/microbit-light.json",
         ]
 
         this.themes = [];
