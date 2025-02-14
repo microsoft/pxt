@@ -22,12 +22,8 @@
 @lightGrey: #d9d9d9;
 
 @greenTextColor: darken(@green, 5);
-// @yellowTextColor: #8e6505; (Unused)
 
-// @lightTextColor              : var(--pxt-secondary-dark);
-// @invertedUnselectedTextColor : rgba(255, 255, 255, 0.8); (Unused)
 
-// @pageBackground: var(--pxt-neutral-background1);
 @pageMinWidth: 100%;
 
 
@@ -40,6 +36,8 @@
 // They've all been set to overtly strange values to make it obvious that they should not be used.
 
 @linkColor : hotpink; // We should use var(--pxt-link) instead.
+@primaryColor        : #FF00FF;
+@secondaryColor      : #00FF00;
 
 /*-------------------
      Fonts
@@ -70,19 +68,6 @@
 @tallEditorBreakpoint: 44rem;
 @thinEditorBreakpoint: 50rem;
 
-/*--------------
-   Form Input
----------------*/
-
-// @inputPlaceholderColor: lighten(@inputColor, 45);
-// @inputPlaceholderFocusColor: lighten(@inputColor, 35);
-
-/*-------------------
-     Neutral Text
---------------------*/
-
-// @invertedLightTextColor      : rgba(255, 255, 255, 0.9);
-
 /*******************************
              States
 *******************************/
@@ -100,8 +85,6 @@
 @useCustomScrollbars: false;
 @customScrollbarWidth: 10px;
 
-// @thumbBackground: rgba(0, 0, 0, 0.25); (Unused)
-// @thumbInvertedBackground: rgba(255, 255, 255, 0.25); (Unused)
 
 /*******************************
      PXT Variables
@@ -160,14 +143,6 @@
    Menu
 --------------------*/
 
-// @mainMenuBackground: var(--pxt-header-foreground); // @white;
-// @mainMenuInvertedBackground: var(--pxt-header-background); // @black;
-// @mainMenuTutorialBackground: var(--pxt-header-background); // @orange;
-// @mainMenuTutorialButtons: var(--pxt-header-background); // @mainMenuTutorialBackground;
-
-// @tutorialSelectedMenuColor: @primaryColor;
-// @editorToggleColor: white; var(--pxt-neutral-background1)
-
 @mainMenuHeight: 4.0rem;
 @mobileMenuHeight: 3.5rem;
 @sandboxMobileMenuHeight: 3.0rem;
@@ -183,34 +158,6 @@
 @sideBarWidthLarge: 28rem;
 @simulatorWidth: 23rem;
 @simulatorWidthSmall: 20rem;
-
-/*-------------------
-   Background
---------------------*/
-
-// @simulatorBackground: var(--pxt-target-background2);
-// @editorToolsBackground: var(--pxt-target-background2);
-// @blocklySvgColor: #fff; var(--pxt-target-background1);
-// @sidebarTutorialColor: var(--pxt-target-background2);
-
-// @homeScreenBackground: var(--pxt-target-background1);
-// @cloudCardBackground: @grey; var(--pxt-secondary-dark);
-
-/*-------------------
-   Full screen
---------------------*/
-
-// @fullscreenBackgroundGradientStart: var(--pxt-header-background);
-// @fullscreenBackgroundGradientEnd: var(--pxt-target-background2);
-
-/*-------------------
-   Extensions
-
---------------------*/
-// @extensionsHeaderBackground: @mainMenuInvertedBackground; var(--pxt-header-background)
-// @extensionsSecondaryBackground: fade(@extensionsHeaderBackground, 30%); var(--pxt-header-background-alpha30)
-// @extensionsBackground: @blocklySvgColor; var(--pxt-target-background1)
-// @extensionsHeaderColor: white; var(--pxt-header-foreground)
 
 /*-------------------
    Side Docs
@@ -230,27 +177,15 @@
 /*-------------------
    Serial editor
 --------------------*/
-// @serialBackgroundColor: var(--pxt-target-background2);
-// @serialTextColor: var(--pxt-target-foreground2);
-// @serialGraphBackground: var(--pxt-target-background2);
-// @serialGraphColor: var(--pxt-target-foreground2);
-// @editorCloseColor: var(--pxt-target-foreground2);
 @serialConsoleFont: @blocklyFont;
-// @serialConsoleBackground: var(--pxt-target-background2);
 
 /*-------------------
    Filelist
 --------------------*/
-// @filelistBackgroundColor: var(--pxt-target-background2);
-// @filelistHeaderBackground:  var(--pxt-neutral-alpha05);
 
 /*-------------------
    Github Diff editor
 --------------------*/
-// @githubBackgroundColor: var(--pxt-target-background2);
-// @githubTextColor: var(--pxt-target-foreground2);
-// @githubInvertedTextColor: var(--pxt-target-background2);
-// @diffSegmentBackgroundColor: var(--pxt-neutral-background1);
 @diffRemovedBackground: var(--pxt-colors-red-alpha10); // #ffeef0;
 @diffAddedBackground: var(--pxt-colors-green-alpha10); // #e6ffed;
 @diffMarkerBackground: var(--pxt-neutral-background1); //#f1f8ff;
@@ -262,7 +197,6 @@
 @diffInvertedMarkerColor: var(--pxt-neutral-foreground1); // #ccc;
 @diffLineNumberColor: var(--pxt-neutral-foreground2); // rgba(27, 31, 35, .3);
 @diffInvertedLineNumberColor: var(--pxt-neutral-background1); // #ddd;
-// @diffTokenDarkenRatio: 10%;
 @diffRemovedTokenBackground: var(--pxt-colors-red-alpha10); // Layers overtop of existing alpha10 bkg, so it's slightly darker // darken(@diffRemovedBackground, @diffTokenDarkenRatio);
 @diffAddedTokenBackground: var(--pxt-colors-green-alpha10); // Layers overtop of existing alpha10 bkg, so it's slightly darker // darken(@diffAddedBackground, @diffTokenDarkenRatio);
 @diffInvertedRemovedTokenBackground: var(--pxt-colors-red-hover); // darken(@diffInvertedRemovedBackground, @diffTokenDarkenRatio);
@@ -291,33 +225,24 @@
 
 @blocklyFont: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
 
-// @blocklyScrollbarBackgroundColor: none;
-// @blocklyScrollbarColor: var(--pxt-target-stencil1) #CECDCE;
 @blocklyScrollbarOpacity: 1;
 
 /*-------------------
    Flyout
 --------------------*/
 
-// @flyoutLabelColor: white; (unused except to support other color vars)
-@blocklyFlyoutColor: var(--pxt-neutral-background3); // @grey;
+@blocklyFlyoutColor: var(--pxt-neutral-background3); 
 @blocklyFlyoutColorOpacity: 0.9;
-// @blocklyFlyoutButtonColor: @primaryColor; var(--pxt-primary-background)
-// @monacoFlyoutColor: var(--pxt-neutral-background3); // fade(@blocklyFlyoutColor, 90%);
-// @monacoFlyoutBorderColor: var(--pxt-neutral-stencil3); // fade(@flyoutLabelColor, 40%);
-// @monacoFlyoutText: var(--pxt-neutral-foreground3); // rgb(0, 26, 255); // fade(@flyoutLabelColor, 70%);
 
 /*-------------------
    Home
 --------------------*/
 
-// @homeHeaderColor: var(--pxt-primary-foreground); // @textColor;
 @homeCardBorderRadius: 0px;
 @homeCardBorderSize: 5px;
 @homeCardBorderColor: var(--pxt-neutral-stencil2); // #e9eef2
 @homeCardHoverBorderColor: var(--pxt-neutral-stencil3); // white;
-// @homeCardFocusBorderColor: @primaryColor; var(--pxt-primary-background)
-@homeCardColor: var(--pxt-neutral-foreground1); // @textColor;
+@homeCardColor: var(--pxt-neutral-foreground1); 
 @homeCardMetaColor: @homeCardColor;
 @homeCardHeaderColor: @homeCardColor;
 @homeFooterColor: @homeCardColor;
@@ -332,27 +257,20 @@
 @homeDetailViewBackground: var(--pxt-neutral-background3); // darken(@grey, 20%);
 @homeDetailViewColor: var(--pxt-neutral-foreground3); // white;
 @homeDetailCloseColor: var(--pxt-neutral-foreground3); // white;
-@homeDetailCloseBackground: var(--pxt-neutral-background3); // @grey;
-// @homeDetailCardActionBackground: @homeScreenBackground; var(--pxt-target-background1)
+@homeDetailCloseBackground: var(--pxt-neutral-background3); 
 @homeDetailCardActionText: var(--pxt-neutral-foreground3); // white;
-// @homeInvertedDetailCardActionBackground: var(--pxt-neutral-background1);
 @homeHeaderBorderSize: 3px;
 @homeHeaderSelectedBorderColor: var(--pxt-neutral-stencil3); // white;
 /*-------------------
    Tutorial
 --------------------*/
 
-// @tutorialSegmentBackground: var(--pxt-neutral-background2);
-// @tutorialSegmentColor: var(--pxt-neutral-foreground2);
 @tutorialSimframeMargin: -2rem;
 
 /*-------------------
     Banner
 -------------------*/
 @bannerHeight: 2rem;
-// @bannerBackgroundColor: var(--pxt-neutral-background1);
-// @bannerContrastColor: var(--pxt-neutral-foreground1);
-// @bannerLinkColor: var(--pxt-link);
 
 
 /*-------------------
@@ -375,9 +293,6 @@
 @debugArrayVariable: var(--pxt-colors-brown-background);
 @debugSpriteVariable: var(--pxt-colors-blue-background);
 
-// @debugVariableOdd: var(--pxt-neutral-background1);
-// @debugVariableEven: var(--pxt-neutral-background3);
-// @debugVariableFrozen: var(--pxt-neutral-background2);
 
 @DebuggerBackgroundPrimaryColor: var(--pxt-primary-background);
 @DebuggerBackgroundSecondaryColor: var(--pxt-secondary-background);
@@ -393,17 +308,11 @@
 @errorListBorderColor: var(--pxt-neutral-stencil1);
 @errorListEven: var(--pxt-neutral-alpha05);
 @errorListDebugSuggestionColor: var(--pxt-tertiary-background);
-// @errorListInvertedEven: rgba(255, 255, 255, 0.03);
-// @errorListInvertedTextColor: white;
-// @errorListInvertedMessageHoverColor: rgba(255, 255, 255, 0.1);
 
 /*-------------------
    Asset Editor
 -------------------*/
 @assetSidebarBorder: var(--pxt-neutral-stencil1); // #c6c6c6;
-// @assetSidebarButton: #f8f8f8; Unused?
-// @assetSidebarButtonHover: #dedede; Unused?
-// @assetTopbarBorder: var(--pxt-neutral-stencil1); // #c6c6c6;
 @assetPreviewBackground: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10px' height='10px'%3E%3Crect x='0' y='0' width='10px' height='10px' fill='white'%3E%3C/rect%3E%3Crect x='0' y='0' width='5px' height='5px' fill='%23dedede'%3E%3C/rect%3E%3Crect x='5' y='5' width='5px' height='5px' fill='%23dedede'%3E%3C/rect%3E%3C/svg%3E");
 @assetUnselected: var(--pxt-neutral-alpha05);
 @assetTypeButton: var(--pxt-secondary-background);

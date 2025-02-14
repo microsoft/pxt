@@ -1,6 +1,3 @@
 /*******************************
     User Variable Overrides
 *******************************/
-
-// @background: @mainMenuBackground; var(--pxt-neutral-background1)
-// @invertedBackground: @mainMenuInvertedBackground; var(--pxt-header-background)

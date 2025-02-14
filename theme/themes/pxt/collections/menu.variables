@@ -6,6 +6,6 @@
 @invertedActiveBackground: @strongTransparentBlack;
 /* PXT Variables */
 
-@background: var(--pxt-neutral-background1); // @mainMenuBackground
-@invertedBackground: var(--pxt-header-background); // @mainMenuInvertedBackground
+@background: var(--pxt-neutral-background1);
+@invertedBackground: var(--pxt-header-background);
 @mainMenuMinHeight: @mainMenuHeight;
