@@ -85,8 +85,8 @@
 }
 .ui.fullscreen.modal {
     > .header {
-        background: var(--pxt-header-background);
-        color: var(--pxt-header-foreground);
+        background-color: var(--pxt-header-background) !important;
+        color: var(--pxt-header-foreground) !important;
         border-radius: 0;
         display: flex;
         height: @mainMenuHeight;
