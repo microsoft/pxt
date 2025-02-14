@@ -64,9 +64,9 @@
         "pxt-neutral-stencil3": "#3b3a39",
         "pxt-neutral-background3-alpha90": "#1b1a19E5",
 
-        "pxt-neutral-alpha05": "rgba(243, 242, 241, 0.05)",
-        "pxt-neutral-alpha20": "rgba(243, 242, 241, 0.2)",
-        "pxt-neutral-alpha50": "rgba(243, 242, 241, 0.5)",
+        "pxt-neutral-alpha05": "rgba(255, 255, 255, 0.05)",
+        "pxt-neutral-alpha20": "rgba(255, 255, 255, 0.2)",
+        "pxt-neutral-alpha50": "rgba(255, 255, 255, 0.5)",
 
         "pxt-neutral-button-background": "#323130",
         "pxt-neutral-button-foreground": "#f3f2f1",
