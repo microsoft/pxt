@@ -81,6 +81,7 @@
 .ui.fullscreen.modal,
 .ui.fullscreen.modal > .content {
     background: var(--pxt-target-background1);
+    color: var(--pxt-target-foreground1);
 }
 .ui.fullscreen.modal {
     > .header {
@@ -161,6 +162,7 @@
     flex-direction: row;
     height: @mainMenuHeight;
     background: var(--pxt-header-background-alpha30);
+    color: var(--pxt-header-foreground-alpha30);
     padding: 0 1rem;
 
     .divider {

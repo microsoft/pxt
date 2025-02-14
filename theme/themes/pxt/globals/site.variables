@@ -342,8 +342,8 @@
    Tutorial
 --------------------*/
 
-@tutorialSegmentBackground: var(--pxt-neutral-background2);
-@tutorialSegmentColor: var(--pxt-neutral-foreground2);
+// @tutorialSegmentBackground: var(--pxt-neutral-background2);
+// @tutorialSegmentColor: var(--pxt-neutral-foreground2);
 @tutorialSimframeMargin: -2rem;
 
 /*-------------------

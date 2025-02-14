@@ -151,10 +151,12 @@ a.ui.card:focus,
 
 .ui.card.link.newprojectcard {
     background: var(--pxt-primary-background) !important;
+    color: var(--pxt-primary-foreground) !important;
 }
 
 .ui.card.link.cloudprojectscard {
     background: var(--pxt-secondary-light) !important;
+    background: var(--pxt-secondary-foreground) !important;
 
     .header {
         white-space: normal;
@@ -169,6 +171,7 @@ a.ui.card:focus,
 
 .ui.card.link.scriptmanagercard {
     background: var(--pxt-secondary-dark) !important;
+    background: var(--pxt-secondary-foreground) !important;
 }
 
 
