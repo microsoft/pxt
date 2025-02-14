@@ -81,7 +81,13 @@ export const initFeedbackEventListener = (feedbackConfig: ocv.IFeedbackConfig, f
         feedbackConfig: feedbackConfig,
         isProduction: false,
         themeOptions: themeOptions,
-        // telemetry - will likely want this
+        telemetry: {
+            featureArea: pxt.appTarget.id,
+            browser: pxt.BrowserUtils.browser(),
+            browserVersion: pxt.BrowserUtils.browserVersion(),
+            platform: pxt.BrowserUtils.os(),
+            feedbackOrigin: frameId
+        }
     }
     FEEDBACK_FRAME_ID = frameId;
 }
