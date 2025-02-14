@@ -22,8 +22,8 @@
         "pxt-target-foreground-hover3": "#ffffff",
         "pxt-target-stencil3": "#3b3a39",
 
-        "pxt-header-background": "#323130",
-        "pxt-header-background-alpha30": "#3231304D",
+        "pxt-header-background": "#2d2d30",
+        "pxt-header-background-alpha30": "#2d2d304D",
         "pxt-header-foreground": "#ffffff",
 
         "pxt-primary-background": "#0078d4",
@@ -72,48 +72,48 @@
         "pxt-neutral-button-foreground": "#f3f2f1",
         "pxt-neutral-button-background-hover": "#292828",
 
-        "pxt-link": "#0078d4",
-        "pxt-link-hover": "#005a9e",
+        "pxt-link": "#3a96dd",
+        "pxt-link-hover": "#1a73e8",
         "pxt-focus-border": "#ffffff",
 
-        "pxt-colors-purple-background": "#5c2d91",
+        "pxt-colors-purple-background": "#8e44ad",
         "pxt-colors-purple-foreground": "#ffffff",
-        "pxt-colors-purple-hover": "#4b2578",
-        "pxt-colors-purple-alpha10": "#5c2d9119",
+        "pxt-colors-purple-hover": "#732d91",
+        "pxt-colors-purple-alpha10": "#8e44ad19",
 
-        "pxt-colors-orange-background": "#d83b01",
+        "pxt-colors-orange-background": "#e67e22",
         "pxt-colors-orange-foreground": "#ffffff",
-        "pxt-colors-orange-hover": "#a4262c",
-        "pxt-colors-orange-alpha10": "#d83b0119",
+        "pxt-colors-orange-hover": "#d35400",
+        "pxt-colors-orange-alpha10": "#e67e2219",
 
         "pxt-colors-brown-background": "#8e562e",
         "pxt-colors-brown-foreground": "#ffffff",
         "pxt-colors-brown-hover": "#7a4c2a",
         "pxt-colors-brown-alpha10": "#8e562e19",
 
-        "pxt-colors-blue-background": "#0078d4",
+        "pxt-colors-blue-background": "#3498db",
         "pxt-colors-blue-foreground": "#ffffff",
-        "pxt-colors-blue-hover": "#005a9e",
-        "pxt-colors-blue-alpha10": "#0078d419",
+        "pxt-colors-blue-hover": "#2980b9",
+        "pxt-colors-blue-alpha10": "#3498db19",
 
-        "pxt-colors-green-background": "#107c10",
+        "pxt-colors-green-background": "#27ae60",
         "pxt-colors-green-foreground": "#ffffff",
-        "pxt-colors-green-hover": "#0b6a0b",
-        "pxt-colors-green-alpha10": "#107c1019",
+        "pxt-colors-green-hover": "#1e8449",
+        "pxt-colors-green-alpha10": "#27ae6019",
 
-        "pxt-colors-red-background": "#d13438",
+        "pxt-colors-red-background": "#e74c3c",
         "pxt-colors-red-foreground": "#ffffff",
-        "pxt-colors-red-hover": "#a4262c",
-        "pxt-colors-red-alpha10": "#d1343819",
+        "pxt-colors-red-hover": "#c0392b",
+        "pxt-colors-red-alpha10": "#e74c3c19",
 
-        "pxt-colors-teal-background": "#038387",
+        "pxt-colors-teal-background": "#1abc9c",
         "pxt-colors-teal-foreground": "#ffffff",
-        "pxt-colors-teal-hover": "#026666",
-        "pxt-colors-teal-alpha10": "#03838719",
+        "pxt-colors-teal-hover": "#16a085",
+        "pxt-colors-teal-alpha10": "#1abc9c19",
 
-        "pxt-colors-yellow-background": "#fce100",
+        "pxt-colors-yellow-background": "#f1c40f",
         "pxt-colors-yellow-foreground": "#000000",
-        "pxt-colors-yellow-hover": "#f3cc00",
-        "pxt-colors-yellow-alpha10": "#fce10019"
+        "pxt-colors-yellow-hover": "#f39c12",
+        "pxt-colors-yellow-alpha10": "#f1c40f19"
     }
 }
