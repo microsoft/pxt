@@ -66,6 +66,7 @@
         "pxt-neutral-stencil3": "#FFFFFF",
         "pxt-neutral-background3-alpha90": "#000000E5",
 
+        "pxt-neutral-alpha0": "rgba(255, 255, 255, 0)",
         "pxt-neutral-alpha05": "rgba(255, 255, 255, 0.05)",
         "pxt-neutral-alpha20": "rgba(255, 255, 255, 0.2)",
         "pxt-neutral-alpha50": "rgba(255, 255, 255, 0.5)",

@@ -55,10 +55,6 @@
             padding: @carouselArrowSize;
             margin-top: 70px;
         }
-        .getting-started-header {
-            font-size: 50px;
-            text-shadow: -1px 0 rgb(87, 87, 87), 0 1px rgb(87, 87, 87), 1px 0 rgb(87, 87, 87), 0 -1px rgb(87, 87, 87);
-        }
     }
     .ui.segment.getting-started-segment.hero {
         -webkit-transition: background-image 0.5s ease-in;
@@ -275,7 +271,7 @@
             position: absolute;
             pointer-events: none;
             top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(90deg, var(--pxt-neutral-background3), rgba(0,0,0,0));
+            background: linear-gradient(90deg, var(--pxt-neutral-background3), var(--pxt-neutral-alpha0));
         }
         .header {
             font-size: 20px;
@@ -435,7 +431,7 @@
         .ui.image, .ui.imagewrapper, .content {
             border-radius: @homeCardImageBorderRadius !important;
             .tags {
-                color:#717171;
+                color:var(--pxt-neutral-foreground2);
                 font-size: 1rem;
             }
         }

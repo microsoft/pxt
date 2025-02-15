@@ -60,6 +60,7 @@ Colors:
 | pxt-neutral-foreground3       | Expanded code card Fg      |
 | pxt-neutral-hover3            |                            |
 | pxt-neutral-stencil3          | Expanded code card border  |
+| pxt-neutral-alpha0            | 0% opacity fade            |
 | pxt-neutral-alpha05           | 5% opacity fade            |
 | pxt-neutral-alpha20           | 20% opacity fade           |
 | pxt-neutral-alpha50           | 50% opacity fade           |
