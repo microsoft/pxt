@@ -59,7 +59,7 @@ body.main.pxt-theme-root {
         color: var(--pxt-neutral-foreground2);
     }
 
-    .ui.card {
+    .ui.card, .ui.cards .card {
         background-color: var(--pxt-neutral-background1);
         color: var(--pxt-neutral-foreground1);
         &:hover, &:focus {
@@ -74,8 +74,14 @@ body.main.pxt-theme-root {
             color: var(--pxt-secondary-foreground);
         }
 
-        .content .header {
-            color: var(--pxt-neutral-foreground1);
+        .content {
+            .header {
+                color: var(--pxt-neutral-foreground1);
+            }
+    
+            .description {
+                color: var(--pxt-neutral-alpha50);
+            }
         }
 
         .image pre {
