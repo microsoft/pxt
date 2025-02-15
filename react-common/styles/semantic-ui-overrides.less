@@ -1,0 +1,233 @@
+
+/*
+--- Override Semantic UI ---
+
+This file overrides the default semantic ui theming with our own theme variables.
+
+*/
+
+// Mixin allows easy setting for background, foreground, hover, and inverted colors for a button
+.buttonVariant(@bg; @fg; @hoverBg) {
+    background-color: @bg;
+    color: @fg;
+    border: 1px solid @bg;
+
+    &.inverted {
+        background-color: @fg;
+        color: @bg;
+    }
+
+    &:hover {
+        background-color: @hoverBg;
+
+        &.inverted {
+            background-color: @fg;
+            color: @hoverBg;
+        }
+    }
+}
+
+// The body.main.pxt-theme-root adds specificity so they will
+// take precedence over default semantic ui styling without using !important.
+body.main.pxt-theme-root {
+    a {
+        color: var(--pxt-link);
+        &:hover {
+            color: var(--pxt-link-hover);
+        }
+    }
+
+    .ui.label {
+        background-color: var(--pxt-neutral-background1);
+        color: var(--pxt-neutral-foreground1);
+        border-color: var(--pxt-neutral-stencil1);
+    }
+
+    .ui.list > .item a.header {
+        color: var(--pxt-link) !important; // override !important in semantic ui
+        &:hover {
+            color: var(--pxt-link-hover) !important;
+        }
+    }
+
+    .ui.icon.menu .item {
+        color: var(--pxt-neutral-foreground1);
+    }
+
+    .ui.input > input {
+        background-color: var(--pxt-neutral-background2);
+        color: var(--pxt-neutral-foreground2);
+    }
+
+    .ui.card {
+        background-color: var(--pxt-neutral-background1);
+        color: var(--pxt-neutral-foreground1);
+        &:hover, &:focus {
+            background-color: var(--pxt-neutral-background1);
+        }
+
+        .extra.content a.learnmore {
+            color: var(--pxt-link);
+        }
+
+        &.link.buttoncard .header {
+            color: var(--pxt-secondary-foreground);
+        }
+
+        .content .header {
+            color: var(--pxt-neutral-foreground1);
+        }
+
+        .image pre {
+            margin-left:0.5rem;
+            margin-right:0.5rem;
+            color: var(--pxt-neutral-foreground1);
+            font-size:0.7rem;
+            white-space: pre-wrap;
+            max-height: 10rem;
+            overflow-y: hidden;
+        }
+    }
+
+    .coredialog, .modal {
+        background-color: var(--pxt-neutral-background1);
+        color: var(--pxt-neutral-foreground1);
+
+        > .content,
+        > .header,
+        > .actions,
+        > .closeIcon,
+        > .closeIcon .close {
+            background-color: var(--pxt-neutral-background1);
+            color: var(--pxt-neutral-foreground1);
+        }
+    }
+
+    // Colors
+    .blue {
+        color: var(--pxt-colors-blue-background);
+    }
+
+    .gray, .grey, .neutral {
+        color: var(--pxt-neutral-button-background);
+    }
+
+    .green, .positive {
+        color: var(--pxt-colors-green-background);
+    }
+
+    .orange {
+        color: var(--pxt-colors-orange-background);
+    }
+
+    .purple, .violet {
+        color: var(--pxt-colors-purple-background);
+    }
+
+    .red, .negative {
+        color: var(--pxt-colors-red-background);
+    }
+
+    .teal {
+        color: var(--pxt-colors-teal-background);
+    }
+
+    .yellow {
+        color: var(--pxt-colors-yellow-background);
+    }
+
+    .ui.button, .common-button {
+
+        // Semantic ui sometimes sets the background image to a faint gradient.
+        // We don't want that, so we override it here.
+        background-image: none;
+
+        &.primary {
+            .buttonVariant(
+                var(--pxt-primary-background),
+                var(--pxt-primary-foreground),
+                var(--pxt-primary-background-hover)
+            );
+        }
+
+        &.secondary {
+            .buttonVariant(
+                var(--pxt-secondary-background),
+                var(--pxt-secondary-foreground),
+                var(--pxt-secondary-background-hover)
+            );
+        }
+
+        &.tertiary {
+            .buttonVariant(
+                var(--pxt-tertiary-background),
+                var(--pxt-tertiary-foreground),
+                var(--pxt-tertiary-background-hover)
+            );
+        }
+
+        &.blue {
+            .buttonVariant(
+                var(--pxt-colors-blue-background),
+                var(--pxt-colors-blue-foreground),
+                var(--pxt-colors-blue-hover)
+            );
+        }
+
+        &.gray, &.grey, &.neutral {
+            .buttonVariant(
+                var(--pxt-neutral-button-background),
+                var(--pxt-neutral-button-foreground),
+                var(--pxt-neutral-button-background-hover)
+            );
+        }
+
+        &.green, &.positive {
+            .buttonVariant(
+                var(--pxt-colors-green-background),
+                var(--pxt-colors-green-foreground),
+                var(--pxt-colors-green-hover)
+            );
+        }
+
+        &.orange {
+            .buttonVariant(
+                var(--pxt-colors-orange-background),
+                var(--pxt-colors-orange-foreground),
+                var(--pxt-colors-orange-hover)
+            );
+        }
+
+        &.purple, &.violet {
+            .buttonVariant(
+                var(--pxt-colors-purple-background),
+                var(--pxt-colors-purple-foreground),
+                var(--pxt-colors-purple-hover)
+            );
+        }
+
+        &.red, &.negative {
+            .buttonVariant(
+                var(--pxt-colors-red-background),
+                var(--pxt-colors-red-foreground),
+                var(--pxt-colors-red-hover)
+            );
+        }
+
+        &.teal {
+            .buttonVariant(
+                var(--pxt-colors-teal-background),
+                var(--pxt-colors-teal-foreground),
+                var(--pxt-colors-teal-hover)
+            );
+        }
+
+        &.yellow {
+            .buttonVariant(
+                var(--pxt-colors-yellow-background),
+                var(--pxt-colors-yellow-foreground),
+                var(--pxt-colors-yellow-hover)
+            );
+        }
+    }
+}
