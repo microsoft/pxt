@@ -228,6 +228,7 @@ export class ProjectView
         this.initSimulatorMessageHandlers();
         this.showThemePicker = this.showThemePicker.bind(this);
         this.hideThemePicker = this.hideThemePicker.bind(this);
+        this.updateThemePreference = this.updateThemePreference.bind(this);
 
         // add user hint IDs and callback to hint manager
         if (pxt.BrowserUtils.useOldTutorialLayout()) this.hintManager.addHint(ProjectView.tutorialCardId, this.tutorialCardHintCallback.bind(this));
@@ -1135,6 +1136,9 @@ export class ProjectView
         // subscribe to user preference changes (for simulator or non-render subscriptions)
         data.subscribe(this.highContrastSubscriber, auth.HIGHCONTRAST);
         data.subscribe(this.cloudStatusSubscriber, `${cloud.HEADER_CLOUDSTATE}:*`);
+
+        // Subscribe to theme changes so we can update the user preference
+        ThemeManager.getInstance().subscribe("webapp", this.updateThemePreference);
     }
 
     public componentWillUnmount() {
@@ -5101,7 +5105,7 @@ export class ProjectView
     }
 
     ///////////////////////////////////////////////////////////
-    ////////////         High contrast            /////////////
+    ////////////            Theming               /////////////
     ///////////////////////////////////////////////////////////
 
     toggleHighContrast() {
@@ -5134,6 +5138,14 @@ export class ProjectView
 
     setBannerVisible(b: boolean) {
         this.setState({ bannerVisible: b });
+    }
+
+    private updateThemePreference() {
+        const newThemeId = ThemeManager.getInstance().getActiveTheme()?.id;
+
+        if (newThemeId) {
+            auth.setThemePrefAsync(newThemeId);
+        }
     }
 
     ///////////////////////////////////////////////////////////
@@ -6193,12 +6205,18 @@ document.addEventListener("DOMContentLoaded", async () => {
         })
         .then(() => {
             // Load theme colors
-            // TODO thsparks - Remember user-set themes and check for that setting here.
-            const defaultColorThemeId = pxt.appTarget?.appTheme?.defaultColorTheme;
-            if (defaultColorThemeId) {
+
+            // TODO thsparks : Also check for HC and override? But maybe better to do that in ThemeManager itself...
+
+            let initialTheme = data.getData<string>(auth.THEMEID);
+            if (!initialTheme) {
+                initialTheme = pxt.appTarget?.appTheme?.defaultColorTheme;
+            }
+
+            if (initialTheme) {
                 const themeManager = ThemeManager.getInstance();
-                if (defaultColorThemeId !== themeManager.getActiveTheme()?.id) {
-                    return themeManager.switchTheme(defaultColorThemeId);
+                if (initialTheme !== themeManager.getActiveTheme()?.id) {
+                    return themeManager.switchTheme(initialTheme);
                 }
             }
             return Promise.resolve();
