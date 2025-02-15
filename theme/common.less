@@ -684,12 +684,22 @@ div.simframe > iframe {
 }
 
 #root:not(.hc) #editordropdown {
-    .menu > .item.selected {
-        background: none;
-        color: var(--pxt-header-background) !important;
+    .menu {
+        background-color: var(--pxt-neutral-background1) !important;
+
+        > .item {
+            background: none;
+            color: var(--pxt-neutral-foreground1) !important;
+
+            &:hover {
+                background: var(--pxt-neutral-background-hover1) !important;
+            }
+        }
     }
+
     &.active, #mainmenu #editordropdown.active:focus {
-        background-color: var(--pxt-neutral-background1)!important;
+        background-color: var(--pxt-header-foreground) !important;
+        color: var(--pxt-header-background) !important;
     }
 }
 
