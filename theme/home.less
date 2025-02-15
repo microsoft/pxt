@@ -15,8 +15,10 @@
 @homeDetailViewSelectedCardZIndex: @homeDetailViewZIndex+1; /* Show the card arrow above the detail view */
 @homeFooterZIndex: @homeCarouselArrowZIndex+1;
 
+// Fade looks odd as anything other than black, so it's intentionally hardcoded separate from the theme.
+// Active dot color is also hardcoded for contrast, but non-active outline color and fill color can still be themed.
 @heroBannerGradientColor: rgba(0,0,0,1);
-@heroBannerDotOutlineColor: rgba(0, 0, 0, .4);
+@heroBannerDotOutlineColor: var(--pxt-neutral-alpha50);
 @heroBannerDotOutlineAtiveColor: rgba(255, 255, 255, .75);
 
 #homescreen {
@@ -418,7 +420,7 @@
         > .closeIcon .remove.icon:hover, > .closeIcon .remove.icon:focus {
             opacity: 1;
             transform: scale(1.1, 1.1);
-            box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.35);
+            box-shadow: 0 0 0 3px var(--pxt-neutral-alpha20);
         }
     }
 }
