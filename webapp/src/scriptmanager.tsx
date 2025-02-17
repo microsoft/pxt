@@ -536,7 +536,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                 }
                 headerActions.push(<div key="divider" className="divider"></div>);
             }
-            headerActions.push(<sui.Button key="view" icon={view == 'grid' ? 'th list' : 'grid layout'} className="icon"
+            headerActions.push(<sui.Button key="view" icon={view == 'grid' ? 'th list' : 'grid layout'} className="icon neutral"
                 title={`${view == 'grid' ? lf("List view") : lf("Grid view")}`} onClick={this.handleSwitchView} />)
         }
 
@@ -571,7 +571,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                                     role="menuitem"
                                     text={dropdownLabel}
                                     title={lf("Sort by dropdown")}
-                                    className={classList("inline button", darkTheme && "inverted")}
+                                    className={classList("inline button neutral", darkTheme && "inverted")}
                                     displayLeft
                                     disabled={sortedBySearch}
                                 >
@@ -595,7 +595,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                                 <sui.Button
                                     role="menuitem"
                                     icon={`arrow ${(sortedAsc && !sortedBySearch) ? 'up' : 'down'}`}
-                                    className={`${darkTheme ? 'inverted' : ''}`}
+                                    className={`neutral ${darkTheme ? 'inverted' : ''}`}
                                     onClick={this.handleSwitchSortDirection}
                                     title={lf("Switch sort order to {0}", !sortedAsc ? lf("ascending") : lf("descending"))}
                                     disabled={sortedBySearch}
