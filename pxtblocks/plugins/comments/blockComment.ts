@@ -402,7 +402,7 @@ export class CommentIcon extends Blockly.icons.Icon {
             );
         }
 
-        return undefined;
+        return new Blockly.utils.Coordinate(16, 16);
     }
 
     private clearSavedOffsetData() {

@@ -558,7 +558,7 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
         };
         _cachedBuiltinCategories[CategoryNameID.Extensions] = {
             name: pxt.toolbox.addPackageTitle(),
-            nameid: 'addpackage',
+            nameid: CategoryNameID.Extensions,
             blocks: [],
             custom: true,
             customClick: (theEditor: monaco.Editor) => {
@@ -566,6 +566,7 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                 theEditor.showPackageDialog();
                 return true;
             },
+            onlyTriggerOnClick: true,
             attributes: {
                 advanced: false,
                 weight: -1,

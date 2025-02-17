@@ -2805,7 +2805,6 @@ function renderDocs(builtPackaged: string, localDir: string) {
     }
     pxt.log(`All docs written.`);
 }
-
 export function serveAsync(parsed: commandParser.ParsedCommand) {
     // always use a cloud build
     // in most cases, the user machine is not properly setup to
@@ -2864,6 +2863,7 @@ export function serveAsync(parsed: commandParser.ParsedCommand) {
             serial: !parsed.flags["noSerial"] && !globalConfig.noSerial,
             noauth: parsed.flags["noauth"] as boolean || false,
             backport: parsed.flags["backport"] as number || 0,
+            https: parsed.flags["https"] as boolean || false,
         }))
 }
 
@@ -7129,7 +7129,8 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
                 description: "port where the locally running backend is listening.",
                 argument: "backport",
                 type: "number",
-            }
+            },
+            https: { description: "use https protocol instead of http"}
         }
     }, serveAsync);
 

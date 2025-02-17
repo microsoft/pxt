@@ -1,6 +1,7 @@
 /// <reference path="../built/pxtlib.d.ts" />
 /// <reference path="./projectheader.d.ts" />
 /// <reference path="./validatorPlan.d.ts" />
+/// <reference path="./ocv.d.ts" />
 
 declare namespace pxt.editor {
     export interface EditorMessage {
@@ -751,6 +752,11 @@ declare namespace pxt.editor {
         cmd?: string;
     }
 
+    export interface FeedbackState {
+        showing: boolean;
+        kind?: ocv.FeedbackKind;
+    }
+
     export interface IAppProps { }
     export interface IAppState {
         active?: boolean; // is this tab visible at all
@@ -805,6 +811,7 @@ declare namespace pxt.editor {
         extensionsVisible?: boolean;
         isMultiplayerGame?: boolean; // Arcade: Does the current project contain multiplayer blocks?
         onboarding?: pxt.tour.BubbleStep[];
+        feedback?: FeedbackState;
         themePickerOpen?: boolean;
     }
 
@@ -920,6 +927,7 @@ declare namespace pxt.editor {
 
         newEmptyProject(name?: string, documentation?: string, preferredEditor?: string): void;
         newProject(options?: pxt.editor.ProjectCreationOptions): void;
+        newUserCreatedProject(firstProject: boolean): Promise<void>;
         createProjectAsync(options: pxt.editor.ProjectCreationOptions): Promise<void>;
         importExampleAsync(options: ExampleImportOptions): Promise<void>;
         showScriptManager(): void;
@@ -1049,6 +1057,7 @@ declare namespace pxt.editor {
         showThemePicker(): void;
         showShareDialog(title?: string, kind?: "multiplayer" | "vscode" | "share"): void;
         showAboutDialog(): void;
+        showFeedbackDialog(kind: ocv.FeedbackKind): void;
         showTurnBackTimeDialogAsync(): Promise<void>;
 
         showLoginDialog(continuationHash?: string): void;
@@ -1148,6 +1157,7 @@ declare namespace pxt.editor {
         webUsbPairDialogAsync?: (pairAsync: () => Promise<boolean>, confirmAsync: (options: any) => Promise<number>) => Promise<number>;
         mkPacketIOWrapper?: (io: pxt.packetio.PacketIO) => pxt.packetio.PacketIOWrapper;
         onPostHostMessage?: (msg: pxt.editor.EditorMessageRequest) => void;
+        perfMeasurementThresholdMs?: number;
         onPerfMilestone?: (payload: { milestone: string, time: number, params?: Map<string> }) => void;
         onPerfMeasurement?: (payload: { name: string, start: number, duration: number, params?: Map<string> }) => void;
     

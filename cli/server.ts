@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as http from 'http';
+import * as https from 'https';
 import * as url from 'url';
 import * as querystring from 'querystring';
 import * as nodeutil from './nodeutil';
@@ -13,6 +14,7 @@ import { promisify } from "util";
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
+import { SecureContextOptions } from 'tls';
 
 const userProjectsDirName = "projects";
 
@@ -804,6 +806,7 @@ export interface ServeOptions {
     serial?: boolean;
     noauth?: boolean;
     backport?: number;
+    https?: boolean;
 }
 
 // can use http://localhost:3232/streams/nnngzlzxslfu for testing
@@ -949,8 +952,7 @@ export function serveAsync(options: ServeOptions) {
     const wsServerPromise = initSocketServer(serveOptions.wsPort, serveOptions.hostname);
     if (serveOptions.serial)
         initSerialMonitor();
-
-    const server = http.createServer(async (req, res) => {
+    const reqListener: http.RequestListener = async (req, res) => {
         const error = (code: number, msg: string = null) => {
             res.writeHead(code, { "Content-Type": "text/plain" })
             res.end(msg || "Error " + code)
@@ -1351,7 +1353,10 @@ export function serveAsync(options: ServeOptions) {
                 });
         }
         return
-    });
+    };
+    const canUseHttps = serveOptions.https && process.env["HTTPS_KEY"] && process.env["HTTPS_CERT"];
+    const httpsServerOptions: SecureContextOptions = {cert: process.env["HTTPS_CERT"], key: process.env["HTTPS_KEY"]};
+    const server = canUseHttps ? https.createServer(httpsServerOptions, reqListener) : http.createServer(reqListener);
 
     // if user has a server.js file, require it
     const serverjs = path.resolve(path.join(root, 'built', 'server.js'))
@@ -1362,12 +1367,16 @@ export function serveAsync(options: ServeOptions) {
 
     const serverPromise = new Promise<void>((resolve, reject) => {
         server.on("error", reject);
-        server.listen(serveOptions.port, serveOptions.hostname, () => resolve());
+        server.listen(serveOptions.port, serveOptions.hostname, () => {
+            console.log(`Server listening on port ${serveOptions.port}`);
+            return resolve()
+        });
     });
 
     return Promise.all([wsServerPromise, serverPromise])
         .then(() => {
-            const start = `http://${serveOptions.hostname}:${serveOptions.port}/#local_token=${options.localToken}&wsport=${serveOptions.wsPort}`;
+            const protocol = canUseHttps ? "https" : "http";
+            const start = `${protocol}://${serveOptions.hostname}:${serveOptions.port}/#local_token=${options.localToken}&wsport=${serveOptions.wsPort}`;
             console.log(`---------------------------------------------`);
             console.log(``);
             console.log(`To launch the editor, open this URL:`);

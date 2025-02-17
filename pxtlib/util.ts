@@ -1224,6 +1224,7 @@ namespace ts.pxtc.Util {
         "fr-CA": { englishName: "French (Canada)", localizedName: "Français (Canada)" },
         "ga-IE": { englishName: "Irish", localizedName: "Gaeilge" },
         "gl": { englishName: "Galician", localizedName: "galego" },
+        "gn": { englishName: "Guarani", localizedName: "Avañe'ẽ" },
         "gu-IN": { englishName: "Gujarati", localizedName: "ગુજરાતી" },
         "haw": { englishName: "Hawaiian", localizedName: "ʻŌlelo Hawaiʻi" },
         "hi": { englishName: "Hindi", localizedName: "हिन्दी" },
@@ -1832,6 +1833,27 @@ namespace ts.pxtc.Util {
 
     export function fromUTF8Array(s: Uint8Array) {
         return (new TextDecoder()).decode(s);
+    }
+
+    export function getHomeUrl() {
+        // relprefix looks like "/beta---", need to chop off the hyphens and slash
+        let rel = pxt.webConfig?.relprefix.substr(0, pxt.webConfig.relprefix.length - 3);
+        if (pxt.appTarget.appTheme.homeUrl && rel) {
+            if (pxt.appTarget.appTheme.homeUrl?.lastIndexOf("/") === pxt.appTarget.appTheme.homeUrl?.length - 1) {
+                rel = rel.substr(1);
+            }
+            return pxt.appTarget.appTheme.homeUrl + rel;
+        }
+        else {
+            return pxt.appTarget.appTheme.homeUrl;
+        }
+    }
+
+    export function isExperienceSupported(experienceId: string) {
+        const supportedExps = pxt.appTarget?.appTheme?.supportedExperiences?.map((e) => e.toLocaleLowerCase());
+        const cleanedExpId = experienceId.toLocaleLowerCase();
+        const isSupported = supportedExps?.includes(cleanedExpId) ?? false;
+        return isSupported;
     }
 }
 
