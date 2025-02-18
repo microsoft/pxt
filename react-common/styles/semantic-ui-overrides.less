@@ -54,20 +54,6 @@ body.main.pxt-theme-root {
         color: var(--pxt-neutral-foreground1);
     }
 
-    .ui.menu .dropdown.item .menu {
-        background: var(--pxt-neutral-background1);
-        color: var(--pxt-neutral-foreground1);
-        box-shadow: 0 1px 3px 0 var(--pxt-neutral-alpha05);
-
-        .item {
-            color: var(--pxt-neutral-foreground1) !important; // override !important in semantic ui
-
-            &:hover {
-                background: var(--pxt-neutral-background-hover1) !important;
-            }
-        }
-    }
-
     .ui.card, .ui.cards .card {
         background-color: var(--pxt-neutral-background1);
         color: var(--pxt-neutral-foreground1);
@@ -123,6 +109,32 @@ body.main.pxt-theme-root {
         th.positive, tr.postive {
             color: var(--pxt-neutral-foreground1);
             background: var(--pxt-neutral-background1);
+        }
+    }
+
+    [data-tooltip]:after, [data-tooltip]:before {
+        background: var(--pxt-neutral-background1);
+        color: var(--pxt-neutral-foreground1);
+    }
+
+
+    .ui.dropdown .menu {
+        background: var(--pxt-neutral-background1);
+        color: var(--pxt-neutral-foreground1);
+        box-shadow: 0 1px 3px 0 var(--pxt-neutral-alpha05);
+
+        .item {
+            color: var(--pxt-neutral-foreground1) !important; // override !important in semantic ui
+
+            &:hover, &:focus {
+                background: var(--pxt-neutral-background-hover1) !important;
+                color: var(--pxt-neutral-foreground1) !important;
+            }
+        }
+
+        .divider {
+            background: var(--pxt-neutral-background1);
+            border-top: 1px solid var(--pxt-neutral-stencil1);
         }
     }
 
