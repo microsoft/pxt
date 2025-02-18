@@ -68,9 +68,10 @@
         "pxt-neutral-alpha20": "rgba(0, 0, 0, 0.2)",
         "pxt-neutral-alpha50": "rgba(0, 0, 0, 0.5)",
 
-        "pxt-neutral-button-background": "#e0e1e2",
-        "pxt-neutral-button-foreground": "#323130",
-        "pxt-neutral-button-background-hover": "#c6c8c9",
+        "pxt-neutral-button-background": "#F8F8F8",
+        "pxt-neutral-button-foreground": "rgba(0,0,0,.85)",
+        "pxt-neutral-button-background-hover": "#DFDFDF",
+        "pxt-neutral-button-stencil": "#919191",
 
         "pxt-link": "#3977B4",
         "pxt-link-hover": "#204467",

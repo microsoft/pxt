@@ -66,6 +66,8 @@ Colors:
 | pxt-neutral-alpha50           | 50% opacity fade           |
 | pxt-neutral-button-background | Unthemed Buttons Bkg       |
 | pxt-neutral-button-foreground | Unthemed Buttons Fg        |
+| pxt-neutral-button-background-hover | Unthemed Buttons Hover Bkg |
+| pxt-neutral-button-stencil    | Unthemed Buttons Stencil   |
 | pxt-neutral-background3-alpha90 |                          |
 | pxt-link                      | Link Text                  |
 | pxt-link-hover                | Link Text Hover            |
