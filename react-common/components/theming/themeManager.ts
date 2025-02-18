@@ -1,23 +1,15 @@
-export interface ThemeInfo {
-    id: string;
-    name: string;
-    overrides?: string;
-    monacoBaseTheme?: string; // https://code.visualstudio.com/docs/getstarted/themes
-    colors: { [key: string]: string };
-}
-
 interface ThemeChangeSubscriber {
     subscriberId: string;
-    onThemeChange: () => void;
+    onColorThemeChange: () => void;
 }
 
 /*
  * Singleton class to handle theming operations, like loading and switching themes.
+ * Using singleton to simplify subscribers and alerting.
 */
 export class ThemeManager {
     private static instance: ThemeManager;
-    private themes: ThemeInfo[];
-    private activeTheme: ThemeInfo;
+    private currentTheme: pxt.ColorThemeInfo;
     private subscribers: ThemeChangeSubscriber[];
 
     private constructor() {} // private to ensure singleton
@@ -29,64 +21,12 @@ export class ThemeManager {
         return ThemeManager.instance;
     }
 
-    private async cacheThemes(force: boolean) {
-        if (this.themes && !force) {
-            return;
-        }
-    
-        // TODO thsparks : Load from target somehow? pxtarget config? Something like availableLocales in apptarget.apptheme in (used for languages)? Could also include paths there.
-        const debugThemeFiles = [
-            "/docfiles/themes/arcade-light.json",
-            "/docfiles/themes/high-contrast.json",
-            "/docfiles/themes/arcade-legacy.json",
-            "/docfiles/themes/arcade-dark.json",
-            "/docfiles/themes/microbit-light.json",
-        ]
-
-        this.themes = [];
-        for (const themeFile of debugThemeFiles) {
-            const response = await fetch(themeFile);
-            if (!response.ok) {
-                pxt.error(`Failed to fetch theme JSON file: ${response.statusText}`);
-                continue;
-            }
-            const themeData = await response.json();
-            const theme: ThemeInfo = {
-                id: themeData.id,
-                name: themeData.name,
-                monacoBaseTheme: themeData.monacoBaseTheme,
-                colors: themeData.colors
-            };
-
-            for (const overrideFile of themeData.overrideFiles ?? []) {
-                if (!overrideFile) {
-                    // Skip empty override file paths
-                    continue;
-                }
-
-                const overrideStyleResp = await fetch(overrideFile);
-                if (!overrideStyleResp.ok) {
-                    pxt.error(`Failed to fetch override CSS file: ${overrideStyleResp.statusText}`);
-                    continue;
-                }
-                let cssText = await overrideStyleResp.text();
-                theme.overrides = theme.overrides ? `${theme.overrides}\n${cssText}` : cssText;
-            }
-
-            this.themes.push(theme);
-        }
+    public getCurrentColorTheme(): Readonly<pxt.ColorThemeInfo> {
+        return this.currentTheme;
     }
 
-    public getActiveTheme(): Readonly<ThemeInfo> {
-        return this.activeTheme;
-    }
-
-    public async getAllThemes(): Promise<ThemeInfo[]> {
-        if (!this.themes) {
-            await this.cacheThemes(false);
-        }
-    
-        return this.themes;
+    public getAllColorThemes(): pxt.ColorThemeInfo[] {
+        return pxt.appTarget?.colorThemeMap ? Object.values(pxt.appTarget.colorThemeMap) : [];
     }
 
     // This is a workaround to ensure we still get all the special-case high-contrast styling
@@ -108,19 +48,16 @@ export class ThemeManager {
         setBodyClass(isHighContrast, "hc");
     }
 
-    public async switchTheme(themeId: string) {
-        if (themeId === this.getActiveTheme()?.id) {
+    public async switchColorTheme(themeId: string) {
+        if (themeId === this.getCurrentColorTheme()?.id) {
             return;
         }
 
-        if (!this.themes) {
-            await this.cacheThemes(false);
-        }
-        const theme = this.themes.find(t => t.id === themeId);
+        const theme = pxt.appTarget?.colorThemeMap?.[themeId];
 
         // Programmatically set the CSS variables for the theme
         if (theme) {
-            const themeAsStyle = getFullThemeCss(theme);
+            const themeAsStyle = getFullColorThemeCss(theme);
             const styleElementId = "theme-override";
             let styleElement = document.getElementById(styleElementId);
             if (!styleElement) {
@@ -134,12 +71,12 @@ export class ThemeManager {
 
             this.performHighContrastWorkaround(themeId);
 
-            this.activeTheme = theme;
+            this.currentTheme = theme;
             this.notifySubscribers();
         }
     }
 
-    public subscribe(subscriberId: string, onThemeChange: () => void) {
+    public subscribe(subscriberId: string, onColorThemeChange: () => void) {
         if (this.subscribers?.some(s => s.subscriberId === subscriberId)) {
             return;
         }
@@ -148,7 +85,7 @@ export class ThemeManager {
             this.subscribers = [];
         }
 
-        this.subscribers.push({ subscriberId, onThemeChange });
+        this.subscribers.push({ subscriberId, onColorThemeChange });
     }
 
     public unsubscribe(subscriberId: string) {
@@ -156,19 +93,19 @@ export class ThemeManager {
     }
 
     private notifySubscribers() {
-        this.subscribers.forEach(s => s.onThemeChange());
+        this.subscribers.forEach(s => s.onColorThemeChange());
     }
 }
 
-export function getFullThemeCss(theme: ThemeInfo) {
+export function getFullColorThemeCss(theme: pxt.ColorThemeInfo) {
     let css = "";
 
     for (const [key, value] of Object.entries(theme.colors)) {
         css += `--${key}: ${value};\n`;
     }
 
-    if (theme.overrides) {
-        css += `${theme.overrides}\n`;
+    if (theme.overrideCss) {
+        css += `${theme.overrideCss}\n`;
     }
 
     // Sanitize the CSS

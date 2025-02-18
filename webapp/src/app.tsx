@@ -5160,7 +5160,7 @@ export class ProjectView
     }
 
     private updateThemePreference() {
-        const newThemeId = ThemeManager.getInstance().getActiveTheme()?.id;
+        const newThemeId = ThemeManager.getInstance().getCurrentColorTheme()?.id;
 
         if (newThemeId) {
             auth.setThemePrefAsync(newThemeId);
@@ -6255,8 +6255,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
             if (initialTheme) {
                 const themeManager = ThemeManager.getInstance();
-                if (initialTheme !== themeManager.getActiveTheme()?.id) {
-                    return themeManager.switchTheme(initialTheme);
+                if (initialTheme !== themeManager.getCurrentColorTheme()?.id) {
+                    return themeManager.switchColorTheme(initialTheme);
                 }
             }
             return Promise.resolve();

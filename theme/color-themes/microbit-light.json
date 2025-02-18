@@ -2,7 +2,7 @@
     "id": "microbit-light",
     "name": "Micro:bit Light",
     "overrideFiles": [
-        "/docfiles/themes/overrides/microbit-light-overrides.css"
+        "/overrides/microbit-light-overrides.css"
     ],
     "colors": {
         "pxt-target-background1": "#ECF0F1",

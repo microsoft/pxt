@@ -3,7 +3,7 @@
     "name": "High Contrast",
     "monacoBaseTheme": "hc-black",
     "overrideFiles": [
-        "/docfiles/themes/overrides/high-contrast-overrides.css"
+        "/overrides/high-contrast-overrides.css"
     ],
     "colors": {
         "pxt-target-background1": "#000000",
