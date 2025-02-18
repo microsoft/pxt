@@ -428,6 +428,7 @@ declare namespace pxt {
         blockIcons?: Map<string | number>;
         blocklyColors?: pxt.Map<string>; // Overrides for the styles in the workspace Blockly.Theme.ComponentStyle
         defaultColorTheme?: string; // default color theme id for the editor
+        highContrastColorTheme?: string; // theme id for high contrast mode
         socialOptions?: SocialOptions; // show social icons in share dialog, options like twitter handle and org handle
         noReloadOnUpdate?: boolean; // do not notify the user or reload the page when a new app cache is downloaded
         appPathNames?: string[]; // Authorized URL paths in embedded apps, all other paths will display a warning banner

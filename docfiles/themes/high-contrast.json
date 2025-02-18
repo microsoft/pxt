@@ -1,5 +1,5 @@
 {
-    "id": "high-contrast",
+    "id": "pxt-high-contrast",
     "name": "High Contrast",
     "monacoBaseTheme": "hc-black",
     "overrideFiles": [

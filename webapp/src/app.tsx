@@ -6241,12 +6241,16 @@ document.addEventListener("DOMContentLoaded", async () => {
         })
         .then(() => {
             // Load theme colors
-
-            // TODO thsparks : Also check for HC and override? But maybe better to do that in ThemeManager itself...
-
             let initialTheme = data.getData<string>(auth.THEMEID);
             if (!initialTheme) {
                 initialTheme = pxt.appTarget?.appTheme?.defaultColorTheme;
+            }
+
+            // We have a legacy preference stored if the user has enabled high contrast.
+            // Respect it here by switching to the hc color theme.
+            const hcEnabled = data.getData<boolean>(auth.HIGHCONTRAST);
+            if (hcEnabled) {
+                initialTheme = pxt.appTarget?.appTheme?.highContrastColorTheme;
             }
 
             if (initialTheme) {

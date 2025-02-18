@@ -88,7 +88,26 @@ export class ThemeManager {
     
         return this.themes;
     }
-    
+
+    // This is a workaround to ensure we still get all the special-case high-contrast styling
+    // until we fully support high contrast via color themes (requires a lot of overrides).
+    // TODO : this should be removed once we do fully support it.
+    private performHighContrastWorkaround(themeId: string) {
+        let setBodyClass = (add:boolean, className: string) => {
+            const body = document.body;
+            const hasClass = document.body.classList.contains(className)
+            if (!add && hasClass) {
+                body.classList.remove(className);
+            } else if (add && !hasClass) {
+                body.classList.add(className);
+            }
+        }
+
+        const isHighContrast = themeId && themeId === pxt.appTarget?.appTheme?.highContrastColorTheme;
+        setBodyClass(isHighContrast, "high-contrast");
+        setBodyClass(isHighContrast, "hc");
+    }
+
     public async switchTheme(themeId: string) {
         if (themeId === this.getActiveTheme()?.id) {
             return;
@@ -112,6 +131,8 @@ export class ThemeManager {
 
             // textContent is safer than innerHTML, less vulnerable to XSS
             styleElement.textContent = `.pxt-theme-root { ${themeAsStyle} }`;
+
+            this.performHighContrastWorkaround(themeId);
 
             this.activeTheme = theme;
             this.notifySubscribers();
