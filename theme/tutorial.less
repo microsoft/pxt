@@ -40,7 +40,7 @@
 
 /* Tutorial Mode */
 .menubar .ui.menu .item.tutorial-menuitem {
-    background: rgba(27, 28, 29, 0.3) !important;
+    background: var(--pxt-neutral-alpha20) !important;
     margin: 0.45rem;
     padding: 0.45rem;
     border-radius: 0.5rem !important;
@@ -50,7 +50,8 @@
     margin-right: 0.4em;
 }
 .menubar .ui.menu .item.tutorial-menuitem > .label {
-    background: white;
+    background: var(--pxt-neutral-background1);
+    color: var(--pxt-neutral-foreground1);
     margin-left: 0em;
 }
 .tutorial-menuitem > .selected {
@@ -269,7 +270,7 @@ span.docs.inlineblock {
     white-space: break-spaces;
     border-radius: 0;
     border-bottom: 3px solid var(--inline-namespace-color);
-    color: black;
+    color: var(--pxt-neutral-foreground1);
     font-weight: 600;
     background-color: transparent;
     font-family: @blocklyFont !important;
@@ -300,10 +301,6 @@ span.docs.inlineblock {
     }
 }
 
-.hc span.docs.inlineblock {
-    color: @white;
-}
-
 code.lang-filterblocks {
     display: none;
 }
@@ -321,10 +318,10 @@ code.lang-filterblocks {
     }
 
     &:hover, &:focus {
-        background-color: var(--pxt-target-background1); // TODO thsparks - check this?
+        background-color: var(--pxt-target-background1);
 
         > i, > span, > i.orange {
-            color: @black !important;
+            color: var(--pxt-neutral-foreground1) !important;
         }
     }
 }
@@ -339,7 +336,7 @@ code.lang-filterblocks {
     top: 50%;
     transform: translateY(-50%);
     font-size: 22.5px !important;
-    color: white; // match menubutton color
+    color: var(--pxt-neutral-background1); // match menubutton color
     border-radius: 50%;
     transform-style: preserve-3d;
 
@@ -347,7 +344,7 @@ code.lang-filterblocks {
     --bubble-pulse-size: 30px;
 
     &.flash {
-        border: 2px solid fade(white, 70%) !important;
+        border: 2px solid var(--pxt-neutral-stencil1) !important;
 
         &:before {
             content: "";
@@ -407,10 +404,11 @@ code.lang-filterblocks {
     right: 2rem;
     padding: 10px 26px;
     border-radius: 1.2rem;
-    background: @white;
+    background: var(--pxt-neutral-background1);
+    color: var(--pxt-neutral-foreground1);
     z-index: @tutorialLightboxCardZIndex;
-    border: 8px solid @blue;
-    box-shadow: 0px 0px 8px 1px rgba(0, 0, 0, .3);
+    border: 8px solid var(--pxt-colors-blue-background);
+    box-shadow: 0px 0px 8px 1px var(--pxt-neutral-alpha20);
 }
 
 .tutorialhint:before,
@@ -423,7 +421,7 @@ code.lang-filterblocks {
     top: -24px;
     bottom: auto;
     border: 16px solid;
-    border-color: transparent @blue transparent transparent;
+    border-color: transparent var(--pxt-colors-blue-background) transparent transparent;
     transform: rotateZ(-135deg);
 }
 
@@ -479,8 +477,8 @@ code.lang-filterblocks {
 
 .avatar-container .tooltip ,
 .avatar-container .tooltip:before {
-    background-color: @blue;
-    color: @white;
+    background-color: var(--pxt-colors-blue-background);
+    color: var(--pxt-colors-blue-foreground);
 }
 
 .avatar-container .tooltip:before {
@@ -564,6 +562,7 @@ code.lang-filterblocks {
     background-image: @immersiveReaderIcon;
 }
 
+// TODO : Can't theme immersive reader without different versions of the reader icon
 #mainmenu .immersive-reader-button:focus,
 #mainmenu .immersive-reader-button:hover {
     background-color: #00000059!important;
@@ -571,7 +570,7 @@ code.lang-filterblocks {
 }
 
 .modals .ui.button.immersive-reader-button {
-    background-image: @immersiveReaderIcon;
+    background-image: @immersiveReaderIcon !important;
     width: 2rem;
     height: 2.8rem;
     background-repeat: no-repeat;
@@ -610,7 +609,7 @@ code.lang-filterblocks {
 }
 
 .progresscircle path {
-    stroke: @white;
+    stroke: var(--pxt-neutral-background1);
     fill: none;
     stroke-linecap: round;
 }
@@ -622,7 +621,7 @@ code.lang-filterblocks {
     display: flex;
     position: relative;
     height: @workspaceHeaderHeight;
-    color: @white;
+    color: var(--pxt-neutral-background1);
     z-index: @simulatorZIndex;
 
     #headerToolbar {
