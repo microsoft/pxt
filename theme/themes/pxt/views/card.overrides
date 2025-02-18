@@ -81,7 +81,7 @@
 }
 
 .ui.card.file.positive, .ui.card.file.positive:focus {
-    border-color: @green;
+    border-color: var(--pxt-colors-green-background);
 }
 
 .ui.card.file.warning {

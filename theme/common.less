@@ -291,7 +291,7 @@ pre {
 }
 
 .simulator .ui.embed .icon.xicon:hover:before {
-    color: @green;
+    color: var(--pxt-colors-green-background);
 }
 
 .simulator .ui.embed .icon.xicon:hover:after {
@@ -1087,7 +1087,7 @@ Field editors
     }
 
     .extension-card:hover {
-        border: @blue .15rem solid;
+        border: var(--pxt-focus-border) .15rem solid;
     }
 
     .extension-tags {
@@ -1112,14 +1112,14 @@ Field editors
     }
 
     .extension-tag.selected {
-        background-color: @blue;
-        border-color: @blue;
+        background-color: var(--pxt-focus-border);
+        border-color: var(--pxt-focus-border);
         color: @white
     }
 
     .extension-tag:focus::after  {
         border: .05rem;
-        border-color: @blue;
+        border-color: var(--pxt-focus-border);
         border-radius: 1.6rem;
     }
 
@@ -1131,7 +1131,7 @@ Field editors
         }
 
         .common-button.selected {
-            border-bottom: 2px solid @blue;
+            border-bottom: 2px solid var(--pxt-focus-border);
             font-weight: 600;
         }
     }
@@ -1224,9 +1224,9 @@ Field editors
         Editor Sidebar
 *******************************/
 
-@sidebarPrimaryColor: @teal;
-@sidebarSecondaryColor: @blue;
-@sidbarActiveTabIconColor: @sidebarSecondaryColor;
+@sidebarPrimaryColor: var(--pxt-colors-blue-background);
+@sidebarSecondaryColor: var(--pxt-focus-border);
+@sidbarActiveTabIconColor: var(--pxt-focus-border);
 
 #simulator .editor-sidebar {
     border-right: 2px solid var(--pxt-neutral-stencil1);
