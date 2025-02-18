@@ -195,10 +195,14 @@ export function clear() {
 }
 
 export function someEnabled(): boolean {
-    return all().some(experiment => isEnabled(experiment));
+    // HACK: (usability testing) only used by the experiment warning banner
+    return false;
+    //return all().some(experiment => isEnabled(experiment));
 }
 
 export function isEnabled(experiment: Experiment | string): boolean {
+    // HACK: (usability testing) always enable accessible blocks
+    if ((typeof experiment === "string" ? experiment : experiment.id) === "accessibleBlocks") return true;
     return !!pxt.storage.getLocal(key(experiment));
 }
 
