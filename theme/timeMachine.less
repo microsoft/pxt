@@ -7,7 +7,8 @@
     right: 0;
     position: absolute;
     z-index: @modalFullscreenZIndex + 1;
-    background-color: white;
+    background-color: var(--pxt-neutral-background1);
+    color: var(--pxt-neutral-foreground1);
 }
 
 .time-machine-header {
@@ -15,7 +16,8 @@
     width: 100%;
     display: grid;
     grid-template-columns: 1fr 2fr 1fr;
-    background-color: @teal;
+    background-color: var(--pxt-colors-teal-background);
+    color: var(--pxt-colors-teal-foreground);
     flex-shrink: 0;
 
     .common-button {
@@ -45,7 +47,7 @@
     align-items: center;
 
     .time-machine-label {
-        color: white;
+        color: var(--pxt-colors-teal-foreground);
         margin-right: 1rem;
         text-wrap: nowrap;
         text-overflow: ellipsis;
