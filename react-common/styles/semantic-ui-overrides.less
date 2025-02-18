@@ -108,10 +108,21 @@ body.main.pxt-theme-root {
     }
 
     .ui.table {
-        th, tr, i,
-        th.positive, tr.postive {
+        color: var(--pxt-neutral-foreground1);
+        background: var(--pxt-neutral-background1);
+
+        th, tr, i {
             color: var(--pxt-neutral-foreground1);
             background: var(--pxt-neutral-background1);
+
+            &.positive {
+                color: var(--pxt-colors-green-background) !important;
+                background: var(--pxt-colors-green-alpha10) !important;
+
+                i {
+                    background: none !important;
+                }
+            }
         }
     }
 
