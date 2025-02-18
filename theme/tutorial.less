@@ -343,7 +343,7 @@ code.lang-filterblocks {
     border-radius: 50%;
     transform-style: preserve-3d;
 
-    --bubble-pulse-color: @blue;
+    --bubble-pulse-color: var(--pxt-colors-blue-background);
     --bubble-pulse-size: 30px;
 
     &.flash {
@@ -366,12 +366,12 @@ code.lang-filterblocks {
 }
 
 // use two css variables to customize as needed:
-// * --bubble-pulse-color, the color to use for the pulse; default: @blue
+// * --bubble-pulse-color, the color to use for the pulse; default: var(--pxt-colors-blue-background)
 // * --bubble-pulse-radius, the radius for the pulse; default: 30
 @keyframes bubble-pulse-animation {
     0% { }
-    20% { box-shadow: 0 0 0 0 var(--bubble-pulse-color, @blue); }
-    100% { box-shadow: 0 0  ~'calc(var(--bubble-pulse-size, 30) * 3 / 4)' var(--bubble-pulse-size, 30) var(--bubble-pulse-color, @blue); }
+    20% { box-shadow: 0 0 0 0 var(--bubble-pulse-color, var(--pxt-colors-blue-background)); }
+    100% { box-shadow: 0 0  ~'calc(var(--bubble-pulse-size, 30) * 3 / 4)' var(--bubble-pulse-size, 30) var(--bubble-pulse-color, var(--pxt-colors-blue-background)); }
 }
 
 /*******************************

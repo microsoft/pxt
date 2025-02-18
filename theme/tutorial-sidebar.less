@@ -2,20 +2,20 @@
 @tutorialFontSize: 1.125rem;
 @tutorialTitleFontSize: 1.5rem;
 
-@tutorialPrimaryColor: @sidebarPrimaryColor;
-@tutorialSecondaryColor: @sidebarSecondaryColor;
+@tutorialPrimaryColor: var(--pxt-colors-blue-background);
+@tutorialSecondaryColor: var(--pxt-colors-blue-background);
 @tutorialBarForegroundColor: @tutorialPrimaryColor;
 @tutorialBarBackgroundColor: @tutorialSecondaryColor;
-@tutorialGrayOffset: #CECDCE;
-@tutorialDarkGray: #767676;
+@tutorialGrayOffset: var(--pxt-neutral-background2);
+@tutorialDarkGray: var(--pxt-neutral-background3);
 
-@tutorialLinkColor: #0064BF;
-@tutorialLinkHoverColor: #003C94;
-@tutorialHintForegroundColor: #1A6771;
-@tutorialHintBackgroundColor: #CEFFF5;
+@tutorialLinkColor: var(--pxt-link);
+@tutorialLinkHoverColor: var(--pxt-link-hover);
+@tutorialHintForegroundColor: var(--pxt-colors-teal-background);
+@tutorialHintBackgroundColor: var(--pxt-colors-teal-foreground);
 
-@tutorialTabletButtonColor: #f3f3f3;
-@tutorialTabletSimulatorButtonColor: rgba(0, 0, 0, 0.05);
+@tutorialTabletButtonColor: var(--pxt-neutral-button-background);
+@tutorialTabletSimulatorButtonColor: var(--pxt-neutral-alpha05);
 @tutorialTabletStepCounterWidth: 16rem;
 
 @tutorialHintMaskZIndex: -1; // Below tutorial pane
@@ -194,10 +194,10 @@
         width: 1rem;
         height: 1rem;
         // buttons before selected step
-        background: darken(@tutorialSecondaryColor, 10%);
+        background: var(--pxt-colors-blue-background-hover);
 
         &.current {
-            color: white;
+            color: var(--pxt-colors-blue-foreground);
             background: @tutorialPrimaryColor;
             width: 2rem;
             height: 2rem;
@@ -259,8 +259,8 @@
     }
 
     .ui.button:hover, .ui.button:focus {
-        background: darken(@tutorialPrimaryColor, 5%);
-        color: @white;
+        background: var(--pxt-colors-blue-background-hover);
+        color: var(--pxt-colors-blue-foreground);
     }
 }
 
