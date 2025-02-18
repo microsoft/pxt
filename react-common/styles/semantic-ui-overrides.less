@@ -189,35 +189,151 @@ body.main.pxt-theme-root {
     // Colors
     .blue {
         color: var(--pxt-colors-blue-background);
+        
+        &.inverted {
+            color: var(--pxt-colors-blue-background) !important;
+            background-color: var(--pxt-colors-blue-foreground) !important;
+        }
     }
 
     .gray, .grey, .neutral {
         color: var(--pxt-neutral-button-background);
+        &.inverted {
+            color: var(--pxt-neutral-button-background) !important;
+            background-color: var(--pxt-neutral-button-foreground) !important;
+        }
     }
 
     .green, .positive {
         color: var(--pxt-colors-green-background);
+        &.inverted {
+            color: var(--pxt-colors-green-background) !important;
+            background-color: var(--pxt-colors-green-foreground) !important;
+        }
     }
 
     .orange {
         color: var(--pxt-colors-orange-background);
+        &.inverted {
+            color: var(--pxt-colors-orange-background) !important;
+            background-color: var(--pxt-colors-orange-foreground) !important;
+        }
     }
 
     .purple, .violet {
         color: var(--pxt-colors-purple-background);
+        &.inverted {
+            color: var(--pxt-colors-purple-background) !important;
+            background-color: var(--pxt-colors-purple-foreground) !important;
+        }
     }
 
     .red, .negative {
         color: var(--pxt-colors-red-background);
+        &.inverted {
+            color: var(--pxt-colors-red-background) !important;
+            background-color: var(--pxt-colors-red-foreground) !important;
+        }
     }
 
     .teal {
         color: var(--pxt-colors-teal-background);
+        &.inverted {
+            color: var(--pxt-colors-teal-background) !important;
+            background-color: var(--pxt-colors-teal-foreground) !important;
+        }
     }
 
     .yellow {
         color: var(--pxt-colors-yellow-background);
+        &.inverted {
+            color: var(--pxt-colors-yellow-background) !important;
+            background-color: var(--pxt-colors-yellow-foreground) !important;
+        }
     }
+
+    .ui.label {
+        &.blue {
+            background-color: var(--pxt-colors-blue-background) !important; // SUI uses important here, so we need to as well.
+            color: var(--pxt-colors-blue-foreground) !important;
+
+            &.inverted {
+                background-color: var(--pxt-colors-blue-foreground) !important;
+                color: var(--pxt-colors-blue-background) !important;
+            }
+        }
+
+        .gray, .grey, .neutral {
+            background-color: var(--pxt-neutral-button-backgroundbackground) !important;
+            color: var(--pxt-neutral-button-background-foreground) !important;
+
+            &.inverted {
+                background-color: var(--pxt-neutral-button-background-foreground) !important;
+                color: var(--pxt-neutral-button-background-background) !important;
+            }
+        }
+    
+        .green, .positive {
+            background-color: var(--pxt-colors-green-background) !important;
+            color: var(--pxt-colors-green-foreground) !important;
+
+            &.inverted {
+                background-color: var(--pxt-colors-green-foreground) !important;
+                color: var(--pxt-colors-green-background) !important;
+            }
+        }
+    
+        .orange {
+            background-color: var(--pxt-colors-orange-background) !important;
+            color: var(--pxt-colors-orange-foreground) !important;
+
+            &.inverted {
+                background-color: var(--pxt-colors-orange-foreground) !important;
+                color: var(--pxt-colors-orange-background) !important;
+            }
+        }
+    
+        .purple, .violet {
+            background-color: var(--pxt-colors-purple-background) !important;
+            color: var(--pxt-colors-purple-foreground) !important;
+
+            &.inverted {
+                background-color: var(--pxt-colors-purple-foreground) !important;
+                color: var(--pxt-colors-purple-background) !important;
+            }
+        }
+    
+        .red, .negative {
+            background-color: var(--pxt-colors-red-background) !important;
+            color: var(--pxt-colors-red-foreground) !important;
+
+            &.inverted {
+                background-color: var(--pxt-colors-red-foreground) !important;
+                color: var(--pxt-colors-red-background) !important;
+            }
+        }
+    
+        .teal {
+            background-color: var(--pxt-colors-teal-background) !important;
+            color: var(--pxt-colors-teal-foreground) !important;
+
+            &.inverted {
+                background-color: var(--pxt-colors-teal-foreground) !important;
+                color: var(--pxt-colors-teal-background) !important;
+            }
+        }
+    
+        .yellow {
+            background-color: var(--pxt-colors-yellow-background) !important;
+            color: var(--pxt-colors-yellow-foreground) !important;
+
+            &.inverted {
+                background-color: var(--pxt-colors-yellow-foreground) !important;
+                color: var(--pxt-colors-yellow-background) !important;
+            }
+        }
+    }
+
 
     .ui.button, .common-button {
 
