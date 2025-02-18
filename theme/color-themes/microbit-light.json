@@ -32,13 +32,10 @@
         "pxt-primary-alpha0": "#6633cc00",
         "pxt-primary-alpha90": "#6633cc5A",
         "pxt-primary-dark": "#5229A3",
-        "pxt-primary-light": "#A38FCC",
         "pxt-primary-foreground": "#FFFFFF",
 
         "pxt-secondary-background": "#3454D1",
         "pxt-secondary-background-hover": "#2742ab",
-        "pxt-secondary-alpha0": "#3454D100",
-        "pxt-secondary-alpha50": "#3454D17F",
         "pxt-secondary-dark": "#2a47b8",
         "pxt-secondary-light": "#516DD8",
         "pxt-secondary-foreground": "#FFFFFF",
@@ -46,7 +43,6 @@
         "pxt-tertiary-background": "#3454D1",
         "pxt-tertiary-background-hover": "#2742ab",
         "pxt-tertiary-alpha20": "#3454D133",
-        "pxt-tertiary-alpha50": "#3454D17F",
         "pxt-tertiary-foreground": "#FFFFFF",
 
         "pxt-neutral-background1": "#FFFFFF",

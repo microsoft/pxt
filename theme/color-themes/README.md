@@ -34,19 +34,15 @@ Colors:
 | pxt-primary-alpha0            | Download Button 0% Opacity |
 | pxt-primary-alpha90           | Download Button 90% Opacity |
 | pxt-primary-dark              | Hardware Button Bkg        |
-| pxt-primary-light             |                            |
 | pxt-primary-foreground        | Download Button Fg         |
 | pxt-secondary-background      | Zoom & Under-Sim Buttons   |
 | pxt-secondary-background-hover | Zoom & Under-Sim Buttons   |
-| pxt-secondary-alpha0          | Zoom & Under-Sim Buttons 0% Opacity |
-| pxt-secondary-alpha0          | Zoom & Under-Sim Buttons 50% Opacity |
 | pxt-secondary-dark            |                            |
 | pxt-secondary-light           | Cloud Projects Card        |
 | pxt-secondary-foreground      |                            |
 | pxt-tertiary-background       | Tour bubbles, additional btns   |
 | pxt-tertiary-background-hover |                            |
 | pxt-tertiary-alpha20          | 20% Opacity                |
-| pxt-tertiary-alpha50          | 50% Opacity                |
 | pxt-tertiary-foreground       | Tour bubbles, additional btns fg |
 | pxt-neutral-background1       | Modal Header & Body Bkg, Code Card Bkg |
 | pxt-neutral-foreground1       | Modal Header & Body Fg     |
