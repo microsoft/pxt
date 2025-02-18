@@ -312,7 +312,6 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
 
         return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("Settings")} className="item icon more-dropdown-menuitem" ref={ref => this.dropdown = ref}>
             {targetTheme.selectLanguage && <sui.Item icon='xicon globe' role="menuitem" text={lf("Language")} onClick={this.showLanguagePicker} />}
-            {targetTheme.highContrast && <sui.Item role="menuitem" text={highContrast ? lf("High Contrast Off") : lf("High Contrast On")} onClick={this.toggleHighContrast} />}
             <sui.Item role="menuitem" text={lf("Select Theme")} onClick={this.showThemePicker} />
             {githubUser && <div className="ui divider"></div>}
             {githubUser && <div className="ui item" title={lf("Unlink {0} from GitHub", githubUser.name)} role="menuitem" onClick={this.signOutGithub}>

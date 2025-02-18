@@ -346,8 +346,6 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             {showSimCollapse ? <sui.Item role="menuitem" icon='toggle right' text={simCollapseText} onClick={this.toggleCollapse} /> : undefined}
             <div className="ui divider"></div>
             {targetTheme.selectLanguage ? <sui.Item icon='xicon globe' role="menuitem" text={lf("Language")} onClick={this.showLanguagePicker} /> : undefined}
-            {targetTheme.highContrast ? <sui.Item role="menuitem" text={highContrast ? lf("TODO REMOVE High Contrast Off") : lf("TODO REMOVE High Contrast On")} onClick={this.toggleHighContrast} /> : undefined}
-            { /* TODO thsparks - remove HC above and possibly add targetTheme setting? */ }
             <sui.Item role="menuitem" text={lf("Select Theme")} onClick={this.showThemePicker} />
             {targetTheme.accessibleBlocks ? <sui.Item role="menuitem" text={accessibleBlocks ? lf("Accessible Blocks Off") : lf("Accessible Blocks On")} onClick={this.toggleAccessibleBlocks} /> : undefined}
             {showGreenScreen ? <sui.Item role="menuitem" text={greenScreen ? lf("Green Screen Off") : lf("Green Screen On")} onClick={this.toggleGreenScreen} /> : undefined}
