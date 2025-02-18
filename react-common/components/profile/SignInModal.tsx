@@ -77,7 +77,7 @@ export const SignInModal = (props: SignInModalProps) => {
                             return (
                                 <Button
                                     key={index}
-                                    className='tertiary inverted provider'
+                                    className='provider'
                                     onClick={() => onSignIn(provider, rememberMe)}
                                     title={title}
                                     ariaLabel={title}
