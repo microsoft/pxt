@@ -597,6 +597,7 @@ declare namespace pxt {
         versions: TargetVersions;        // @derived
         apiInfo?: Map<PackageApiInfo>;
         tutorialInfo?: Map<BuiltTutorialInfo>; // hash of tutorial code mapped to prebuilt info for each tutorial
+        colorThemeMap?: Map<ColorThemeInfo>; // Color theme id mapped to color theme info
     }
 
     interface BuiltTutorialInfo {
@@ -610,6 +611,14 @@ declare namespace pxt {
     interface PackageApiInfo {
         sha: string;
         apis: ts.pxtc.ApisInfo;
+    }
+
+    interface ColorThemeInfo {
+        id: string;
+        name: string;
+        overrideCss?: string;
+        monacoBaseTheme?: string; // https://code.visualstudio.com/docs/getstarted/themes
+        colors: { [key: string]: string };
     }
 
     interface ServiceWorkerEvent {

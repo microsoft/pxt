@@ -49,6 +49,7 @@ import './App.css';
 
 // TODO: this file needs to read colors from the target
 import './arcade.css';
+import { ThemeManager } from 'react-common/components/theming/themeManager';
 
 /* eslint-enable import/no-unassigned-import */
 interface AppProps {
@@ -61,6 +62,7 @@ interface AppProps {
     highContrast?: boolean;
     showSelectLanguage: boolean;
     showSelectTheme: boolean;
+    colorThemeId: string;
     dispatchAddSkillMap: (map: SkillMap) => void;
     dispatchChangeSelectedItem: (mapId?: string, activityId?: string) => void;
     dispatchClearSkillMaps: () => void;
@@ -353,6 +355,20 @@ class AppImpl extends React.Component<AppProps, AppState> {
         }
     }
 
+    protected initColorThemeAsync = async () => {
+        // Load theme colors
+        let initialTheme = this.props.highContrast ?
+                    pxt.appTarget?.appTheme?.highContrastColorTheme :
+                    this.props.colorThemeId ?? pxt.appTarget?.appTheme?.defaultColorTheme;
+
+        if (initialTheme) {
+            const themeManager = ThemeManager.getInstance();
+            if (initialTheme !== themeManager.getCurrentColorTheme()?.id) {
+                await themeManager.switchColorTheme(initialTheme);
+            }
+        }
+    }
+
     protected onMakeCodeFrameLoaded = async (sendMessageAsync: (message: any) => Promise<any>) => {
         this.readyPromise.setSendMessageAsync(sendMessageAsync);
     }
@@ -366,6 +382,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
 
         await authClient.authCheckAsync();
         await this.initLocalizationAsync();
+        await this.initColorThemeAsync();
         await this.parseHashAsync();
         this.readyPromise.setAppMounted();
 
@@ -539,7 +556,8 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         activityId: state.selectedItem?.activityId,
         highContrast: state.auth.preferences?.highContrast,
         showSelectLanguage: state.showSelectLanguage,
-        showSelectTheme: state.showSelectTheme
+        showSelectTheme: state.showSelectTheme,
+        colorThemeId: state.colorThemeId,
     };
 }
 interface LocalizationUpdateOptions {

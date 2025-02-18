@@ -1,12 +1,11 @@
 
 import * as React from "react";
 import { Button } from "../controls/Button";
-import { ThemeInfo } from "./themeManager";
 import { ThemePreview } from "./ThemePreview";
 
 interface ThemeCardProps {
-    theme: ThemeInfo;
-    onClick?: (theme: ThemeInfo) => void;
+    theme: pxt.ColorThemeInfo;
+    onClick?: (theme: pxt.ColorThemeInfo) => void;
 }
 
 export class ThemeCard extends React.Component<ThemeCardProps> {

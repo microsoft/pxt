@@ -1,9 +1,9 @@
 import * as React from "react";
-import { ThemeInfo, getFullThemeCss } from "./themeManager";
+import { getFullColorThemeCss } from "./themeManager";
 import { classList } from "../util";
 
 // Programmatically generate a preview of the theme using theme colors.
-export const ThemePreview = (props: { theme: ThemeInfo }) => {
+export const ThemePreview = (props: { theme: pxt.ColorThemeInfo }) => {
     const { theme } = props;
     const styleRef = React.useRef<HTMLStyleElement | null>(null);
     const uniqueContainerClassName = `theme-preview-container-${theme.id}`;
@@ -13,7 +13,7 @@ export const ThemePreview = (props: { theme: ThemeInfo }) => {
 
     React.useEffect(() => {
         if (styleRef?.current) {
-            const themeCss = getFullThemeCss(theme);
+            const themeCss = getFullColorThemeCss(theme);
             // Set textContent instead of innerHTML to avoid XSS
             styleRef.current.textContent = `.${uniqueContainerClassName} { ${themeCss} }`;
         }

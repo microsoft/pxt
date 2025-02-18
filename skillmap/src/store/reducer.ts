@@ -31,6 +31,7 @@ export interface SkillMapState {
     readyResources?: ReadyResources;
     showSelectLanguage?: boolean;
     showSelectTheme?: boolean;
+    colorThemeId?: string;
 }
 
 export interface EditorViewState {

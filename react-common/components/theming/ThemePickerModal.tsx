@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Modal } from "../controls/Modal";
-import { ThemeManager, ThemeInfo } from "./themeManager";
+import { ThemeManager } from "./themeManager";
 import { ThemeCard } from "./ThemeCard";
 
 export interface ThemePickerModalProps {
@@ -10,19 +10,19 @@ export const ThemePickerModal = (props: ThemePickerModalProps) => {
     const {} = props;
     const themeManager = ThemeManager.getInstance();
 
-    const [themes, setThemes] = React.useState<ThemeInfo[]>(undefined);
+    const [themes, setThemes] = React.useState<pxt.ColorThemeInfo[]>(undefined);
 
     React.useEffect(() => {
         async function loadThemes() {
-            const loadedThemes = await themeManager.getAllThemes();
+            const loadedThemes = await themeManager.getAllColorThemes();
             setThemes(loadedThemes);
         }
 
         loadThemes();
     }, []);
 
-    function onThemeClicked(theme: ThemeInfo) {
-        themeManager.switchTheme(theme.id);
+    function onThemeClicked(theme: pxt.ColorThemeInfo) {
+        themeManager.switchColorTheme(theme.id);
     }
 
     return (
