@@ -29,12 +29,12 @@
         "pxt-primary-background": "#6633cc",
         "pxt-primary-background-hover": "#5C2EB8",
         "pxt-primary-alpha0": "#6633cc00",
-        "pxt-primary-dark": "#5229A3",
+        "pxt-primary-accent": "#5229A3",
         "pxt-primary-foreground": "#FFFFFF",
 
         "pxt-secondary-background": "#3454D1",
         "pxt-secondary-background-hover": "#2742ab",
-        "pxt-secondary-light": "#516DD8",
+        "pxt-secondary-accent": "#516DD8",
         "pxt-secondary-foreground": "#FFFFFF",
 
         "pxt-tertiary-background": "#3454D1",

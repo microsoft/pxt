@@ -155,7 +155,7 @@ a.ui.card:focus,
 }
 
 .ui.card.link.cloudprojectscard {
-    background: var(--pxt-secondary-light) !important;
+    background: var(--pxt-secondary-accent) !important;
     color: var(--pxt-secondary-foreground) !important;
 
     .header {

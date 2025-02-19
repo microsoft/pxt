@@ -31,11 +31,11 @@ Colors:
 | pxt-primary-background        | Download Button Bkg        |
 | pxt-primary-background-hover  | Download Button Hover      |
 | pxt-primary-alpha0            | Download Button 0% Opacity |
-| pxt-primary-dark              | Hardware Button Bkg        |
+| pxt-primary-accent              | Hardware Button Bkg        |
 | pxt-primary-foreground        | Download Button Fg         |
 | pxt-secondary-background      | Zoom & Under-Sim Buttons   |
 | pxt-secondary-background-hover | Zoom & Under-Sim Buttons   |
-| pxt-secondary-light           | Cloud Projects Card        |
+| pxt-secondary-accent           | Cloud Projects Card        |
 | pxt-secondary-foreground      |                            |
 | pxt-tertiary-background       | Tour bubbles, additional btns   |
 | pxt-tertiary-background-hover |                            |
