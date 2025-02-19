@@ -31,6 +31,7 @@ export interface SkillMapState {
     readyResources?: ReadyResources;
     showSelectLanguage?: boolean;
     showSelectTheme?: boolean;
+    colorThemeId?: string;
 }
 
 export interface EditorViewState {
@@ -79,18 +80,18 @@ const initialState: SkillMapState = {
         completedTags: {}
     },
     theme: {
-        backgroundColor: "var(--body-background-color)",
-        pathColor: "#BFBFBF",
-        strokeColor: "#000000",
-        rewardNodeColor: "var(--primary-color)",
-        rewardNodeForeground: "#000000",
-        unlockedNodeColor: "var(--secondary-color)",
-        unlockedNodeForeground: "#000000",
-        lockedNodeColor: "#BFBFBF",
-        lockedNodeForeground: "#000000",
-        completedNodeColor: "var(--secondary-color)",
-        completedNodeForeground: "#000000",
-        selectedStrokeColor: "var(--hover-color)",
+        backgroundColor: "var(--pxt-target-background1)",
+        pathColor: "var(--pxt-neutral-background1)",
+        strokeColor: "var(--pxt-target-foreground1)",
+        rewardNodeColor: "var(--pxt-primary-background)",
+        rewardNodeForeground: "var(--pxt-primary-foreground)",
+        unlockedNodeColor: "var(--pxt-secondary-background)",
+        unlockedNodeForeground: "var(--pxt-secondary-foreground)",
+        lockedNodeColor: "var(--pxt-neutral-background1)",
+        lockedNodeForeground: "var(--pxt-neutral-foreground1)",
+        completedNodeColor: "var(--pxt-secondary-background)",
+        completedNodeForeground: "var(--pxt-secondary-foreground)",
+        selectedStrokeColor: "var(--pxt-secondary-background)",
         pathOpacity: 0.5,
     },
     maps: {},
@@ -442,6 +443,11 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
         case actions.GRANT_SKILLMAP_BADGE:
             return {
                 ...state
+            }
+        case actions.SET_THEME_ID:
+            return {
+                ...state,
+                colorThemeId: action.themeId
             }
         default:
             return state

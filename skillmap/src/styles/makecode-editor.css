@@ -14,7 +14,8 @@
     position: absolute;
     width: 100%;
     height: 100%;
-    background-color: var(--body-background-color);
+    background-color: var(--pxt-target-background1);
+    color: var(--pxt-target-foreground1);
     z-index: var(--frame-loader-zindex);
     text-align: center;
     display: flex;

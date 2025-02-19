@@ -114,7 +114,8 @@ export function getFullColorThemeCss(theme: pxt.ColorThemeInfo) {
     }
 
     // Sanitize the CSS
-    css = DOMPurify.sanitize(css);
+    // TODO thsparks - get this working in skillmap somehow...
+    // css = DOMPurify.sanitize(css);
 
     return css;
 }

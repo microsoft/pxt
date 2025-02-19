@@ -72,7 +72,8 @@
     height: 100%;
     display: flex;
     align-items: center;
-    background-color: var(--body-background-color);
+    background-color: var(--pxt-target-background1);
+    color: var(--pxt-target-foreground1)
 }
 
 .carousel-arrow.right {

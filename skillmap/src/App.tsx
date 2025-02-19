@@ -24,7 +24,8 @@ import {
     dispatchSetPageTheme,
     dispatchSetUserPreferences,
     dispatchCloseSelectLanguage,
-    dispatchCloseSelectTheme
+    dispatchCloseSelectTheme,
+    dispatchSetThemeId
 } from './actions/dispatch';
 import { PageSourceStatus, SkillMapState } from './store/reducer';
 import { HeaderBar } from './components/HeaderBar';
@@ -47,8 +48,7 @@ import { ThemePickerModal } from '../../react-common/components/theming/ThemePic
 /* eslint-disable import/no-unassigned-import */
 import './App.css';
 
-// TODO: this file needs to read colors from the target
-import './arcade.css';
+import { ThemeManager } from 'react-common/components/theming/themeManager';
 
 /* eslint-enable import/no-unassigned-import */
 interface AppProps {
@@ -61,6 +61,7 @@ interface AppProps {
     highContrast?: boolean;
     showSelectLanguage: boolean;
     showSelectTheme: boolean;
+    colorThemeId: string;
     dispatchAddSkillMap: (map: SkillMap) => void;
     dispatchChangeSelectedItem: (mapId?: string, activityId?: string) => void;
     dispatchClearSkillMaps: () => void;
@@ -77,6 +78,7 @@ interface AppProps {
     dispatchSetUserPreferences: (prefs: pxt.auth.UserPreferences) => void;
     dispatchCloseSelectLanguage: () => void;
     dispatchCloseSelectTheme: () => void;
+    dispatchSetThemeId: (themeId: string) => void;
 }
 
 interface AppState {
@@ -92,10 +94,12 @@ class AppImpl extends React.Component<AppProps, AppState> {
     protected unsubscribeChangeListener: Unsubscribe | undefined;
     protected loadedUser: UserState | undefined;
     protected readyPromise: ReadyPromise;
+    protected themeManager: ThemeManager;
 
     constructor(props: any) {
         super(props);
         this.changeLanguage = this.changeLanguage.bind(this);
+        this.changeTheme = this.changeTheme.bind(this);
 
         this.state = {
             cloudSyncCheckHasFinished: false,
@@ -105,6 +109,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
 
         window.addEventListener("hashchange", this.handleHashChange);
         this.cloudSyncCheckAsync();
+        this.themeManager = ThemeManager.getInstance(document);
     }
 
     protected ready = (): Promise<ReadyResources> => this.readyPromise.promise();
@@ -353,6 +358,19 @@ class AppImpl extends React.Component<AppProps, AppState> {
         }
     }
 
+    protected initColorTheme() {
+        // Load theme colors
+        let initialTheme = this.props.highContrast ?
+                    pxt.appTarget?.appTheme?.highContrastColorTheme :
+                    this.props.colorThemeId ?? pxt.appTarget?.appTheme?.defaultColorTheme;
+
+        if (initialTheme) {
+            if (initialTheme !== this.themeManager.getCurrentColorTheme()?.id) {
+                this.themeManager.switchColorTheme(initialTheme);
+            }
+        }
+    }
+
     protected onMakeCodeFrameLoaded = async (sendMessageAsync: (message: any) => Promise<any>) => {
         this.readyPromise.setSendMessageAsync(sendMessageAsync);
     }
@@ -366,6 +384,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
 
         await authClient.authCheckAsync();
         await this.initLocalizationAsync();
+        this.initColorTheme();
         await this.parseHashAsync();
         this.readyPromise.setAppMounted();
 
@@ -400,6 +419,13 @@ class AppImpl extends React.Component<AppProps, AppState> {
         authClient.setLanguagePreference(langId).then(() => location.reload());
     }
 
+    changeTheme(theme: pxt.ColorThemeInfo) {
+        pxt.tickEvent(`skillmap.menu.theme.changetheme`, { theme: theme.id });
+        this.themeManager.switchColorTheme(theme.id);
+        this.props.dispatchSetThemeId(theme.id);
+        this.props.dispatchSetUserPreferences({ themeId: theme.id });
+    }
+
     render() {
         const { skillMaps, activityOpen, backgroundImageUrl, theme } = this.props;
         const { error, showingSyncLoader, forcelang } = this.state;
@@ -424,7 +450,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
                     onLanguageChanged={this.changeLanguage}
                     onClose={this.props.dispatchCloseSelectLanguage}
                 />}
-                {this.props.showSelectTheme && <ThemePickerModal onClose={this.props.dispatchCloseSelectTheme} />}
+                {this.props.showSelectTheme && this.themeManager && <ThemePickerModal themes={this.themeManager.getAllColorThemes()} onThemeClicked={this.changeTheme} onClose={this.props.dispatchCloseSelectTheme} />}
             </div>);
     }
 
@@ -539,7 +565,8 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         activityId: state.selectedItem?.activityId,
         highContrast: state.auth.preferences?.highContrast,
         showSelectLanguage: state.showSelectLanguage,
-        showSelectTheme: state.showSelectTheme
+        showSelectTheme: state.showSelectTheme,
+        colorThemeId: state.colorThemeId,
     };
 }
 interface LocalizationUpdateOptions {
@@ -586,7 +613,8 @@ const mapDispatchToProps = {
     dispatchSetUserPreferences,
     dispatchChangeSelectedItem,
     dispatchCloseSelectLanguage,
-    dispatchCloseSelectTheme
+    dispatchCloseSelectTheme,
+    dispatchSetThemeId,
 };
 
 const App = connect(mapStateToProps, mapDispatchToProps)(AppImpl);

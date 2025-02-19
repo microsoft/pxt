@@ -2,25 +2,22 @@
     --black: #000;
     --white: #fff;
 
-    --primary-color: #AA278F;
-    --secondary-color: #EAC6EB;
-    --tertiary-color: #850A6B;
+    --primary-color: var(--pxt-primary-background);
+    --secondary-color: var(--pxt-secondary-background);
+    --tertiary-color: var(--pxt-tertiary-background);
 
     --hover-color: var(--secondary-color);
     --active-color: var(--tertiary-color);
     --inactive-color: var(--secondary-color);
-    --inactive-hover-color: #6e6e6e;
+    --inactive-hover-color: var(--pxt-secondary-background-hover);
 
-    --invert-active-color: #fff;
-    --invert-hover-text-color: #850A6B;
-
-    --body-background-color: #F9F9F9;
-    --default-card-color: #CCC;
-    --card-hover-color: #BFBFBF;
-    --card-border-color: #e9eef2;
-    --dropdown-hover-color: #CCC;
-    --inverted-text-color: var(--white);
-    --subtitle-text-color: #6e6e6e;
+    --body-background-color: var(--pxt-target-background1);
+    --default-card-color: var(--pxt-neutral-background1);
+    --card-hover-color: var(--pxt-neutral-background1-hover);
+    --card-border-color: var(--pxt-neutral-stencil1);
+    --dropdown-hover-color: var(--pxt-neutral-background1);
+    --inverted-text-color: var(--pxt-neutral-background1);
+    --subtitle-text-color: var(--pxt-neutral-background3);
 
     --header-height: 4rem;
     --header-padding-top: 1rem;
@@ -51,7 +48,8 @@ body {
     font-family: var(--body-font-family);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    background-color: var(--body-background-color);
+    background-color: var(--pxt-target-background1);
+    color: var(--pxt-target-foreground1);
     overflow: hidden;
 }
 
@@ -87,7 +85,8 @@ code {
 
 /* HEADER BAR */
 .header {
-    background-color: var(--tertiary-color);
+    background-color: var(--pxt-header-background);
+    color: var(--pxt-header-foreground);
 
     height: var(--header-height);
     max-height: var(--header-height);
@@ -119,7 +118,7 @@ code {
 .header .brand:before {
     position: relative;
     height: 1.5rem;
-    border-left: 2px solid #fff;
+    border-left: 2px solid var(--pxt-header-foreground);
     content: " ";
 }
 
@@ -139,8 +138,8 @@ code {
 
 .user-menu .header-button.sign-in {
     border-radius: 6px;
-    background-color: var(--body-background-color);
-    color: #393939;
+    background-color: var(--pxt-target-background1);
+    color: var(--pxt-target-foreground1);
     height: 80%;
     margin: .5rem;
     margin-right: 1rem;
@@ -168,7 +167,7 @@ code {
 }
 
 .user-menu .avatar img {
-    border: solid 2px white;
+    border: solid 2px var(--pxt-header-foreground);
     border-radius: 100%;
     width: 2.5rem;
     height: 2.5rem;
@@ -205,7 +204,7 @@ code {
 }
 
 .header-button {
-    color: var(--invert-active-color);
+    color: var(--pxt-header-foreground);
     height: 100%;
     padding: var(--header-padding-top) 0.5rem;
     font-size: 1.2rem;
@@ -235,7 +234,7 @@ code {
 }
 
 .header-button:hover, .header-dropdown:hover {
-    background-color: rgba(0,0,0,.1);
+    background-color: var(--pxt-neutral-alpha10);
 }
 
 .header-button:hover>i,
@@ -265,8 +264,8 @@ code {
     height: 2.5rem;
     width: 2.5rem;
     border-radius: 100%;
-    border: solid 2px white;
-    background-color: #028B9B;
+    border: solid 2px var(--pxt-colors-teal-foreground);
+    background-color: var(--pxt-colors-teal-background);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -279,7 +278,8 @@ code {
 
 /* TOP BANNER */
 .banner {
-    background-color:  var(--secondary-color);
+    background-color: var(--pxt-secondary-background);
+    color: var(--pxt-secondary-foreground);
 
     display: flex;
     align-items: center;
@@ -288,7 +288,8 @@ code {
 }
 
 .banner-card {
-    background-color: var(--primary-color);
+    background-color: var(--pxt-primary-background);
+    color: var(--pxt-primery-foreground);
 
     min-width: 24rem;
     width: 60%;
@@ -334,7 +335,7 @@ code {
 .skill-map-error {
     text-align: center;
     margin-top: 2rem;
-    color: red;
+    color: var(--pxt-colors-red-background);
 }
 
 /* SPECIFIC MODAL STYLES */

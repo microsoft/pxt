@@ -5,7 +5,8 @@
     width: 20rem;
     margin: 1rem;
     z-index: var(--above-graph-zindex);
-    background-color: var(--body-background-color);
+    background-color: var(--pxt-target-background1);
+    color: var(--pxt-target-foreground1);
 }
 
 /* Preview Image */
@@ -17,8 +18,9 @@
     align-items: center;
     overflow: hidden;
     text-align: center;
-    background-color: var(--primary-color);
-    border: 1px solid #000;
+    background-color: var(--pxt-primary-background);
+    color: var(--pxt-primary-foreground);
+    border: 1px solid var(--pxt-primary-foreground);
 }
 
 .info-panel-image img {
@@ -26,7 +28,7 @@
 }
 
 .info-panel-image i {
-    color: var(--white);
+    color: var(--pxt-primary-foreground);
     font-size: 5rem;
     line-height: 5rem;
     vertical-align: top;
@@ -111,7 +113,8 @@
 
 .info-panel .sign-in-button.inverted {
     width: 100%;
-    background-color: var(--body-background-color);
+    background-color: var(--pxt-target-background1);
+    color: var(--pxt-target-foreground1);
 }
 
 .info-panel .actions {
@@ -124,7 +127,8 @@
 }
 
 .info-panel .actions .common-button.inverted {
-    background-color: var(--body-background-color);
+    background-color: var(--pxt-target-background1);
+    color: var(--pxt-target-foreground1);
 }
 
 .locked.action-button,
