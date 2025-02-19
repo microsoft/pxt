@@ -235,7 +235,7 @@ export class ProjectView
         this.initSimulatorMessageHandlers();
         this.showThemePicker = this.showThemePicker.bind(this);
         this.hideThemePicker = this.hideThemePicker.bind(this);
-        this.changeTheme = this.changeTheme.bind(this);
+        this.setColorTheme = this.setColorTheme.bind(this);
 
         // add user hint IDs and callback to hint manager
         if (pxt.BrowserUtils.useOldTutorialLayout()) this.hintManager.addHint(ProjectView.tutorialCardId, this.tutorialCardHintCallback.bind(this));
@@ -5159,9 +5159,13 @@ export class ProjectView
         this.setState({ bannerVisible: b });
     }
 
-    private changeTheme(theme: pxt.ColorThemeInfo) {
-        pxt.tickEvent("app.changetheme", { theme: theme.id });
-        this.themeManager.switchColorTheme(theme.id);
+    setColorTheme(colorThemeId: string) {
+        if (this.themeManager.getCurrentColorTheme()?.id === colorThemeId) {
+            return;
+        }
+
+        pxt.tickEvent("app.setcolortheme", { theme: colorThemeId });
+        this.themeManager.switchColorTheme(colorThemeId);
         this.updateThemePreference();
     }
 
@@ -5471,7 +5475,7 @@ export class ProjectView
                 {lightbox ? <sui.Dimmer isOpen={true} active={lightbox} portalClassName={'tutorial'} className={'ui modal'}
                     shouldFocusAfterRender={false} closable={true} onClose={this.hideLightbox} /> : undefined}
                 {this.state.onboarding && <Tour tourSteps={this.state.onboarding} onClose={this.hideOnboarding} />}
-                {this.state.themePickerOpen && <ThemePickerModal themes={this.themeManager.getAllColorThemes()} onThemeClicked={this.changeTheme} onClose={this.hideThemePicker} />}
+                {this.state.themePickerOpen && <ThemePickerModal themes={this.themeManager.getAllColorThemes()} onThemeClicked={theme => this.setColorTheme(theme?.id)} onClose={this.hideThemePicker} />}
             </div>
         );
     }

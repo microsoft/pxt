@@ -170,15 +170,14 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
     }
 
     protected updateTheme() {
-        if (!this.ref?.contentDocument) return;
-
-        const skillmapColorTheme = ThemeManager.getInstance(document).getCurrentColorTheme()?.id;
-        const iframeTheme = ThemeManager.getInstance(this.ref.contentDocument).getCurrentColorTheme()?.id;
-
-        if (skillmapColorTheme !== iframeTheme) {
-            // TODO - handle through a proper iframe message.
-            ThemeManager.getInstance(this.ref.contentDocument).switchColorTheme(skillmapColorTheme);
-        }
+        const colorThemeId = ThemeManager.getInstance(document).getCurrentColorTheme()?.id;
+        this.sendMessageAsync (
+            {
+                type: "pxteditor",
+                action: "setcolortheme",
+                colorThemeId
+            } as pxt.editor.EditorMessageSetColorThemeRequest
+        );
     }
 
     protected onMessageReceived = (event: MessageEvent) => {
