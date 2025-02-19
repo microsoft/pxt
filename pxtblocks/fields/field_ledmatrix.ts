@@ -142,7 +142,7 @@ export class FieldMatrix extends Blockly.Field implements FieldCustom {
                 break;
             }
             case "Escape": {
-                (Blockly.getMainWorkspace() as Blockly.WorkspaceSvg).markFocused();
+                (this.sourceBlock_.workspace as Blockly.WorkspaceSvg).markFocused();
                 return;
             }
             default: {
@@ -238,8 +238,10 @@ export class FieldMatrix extends Blockly.Field implements FieldCustom {
             }
 
             this.fieldGroup_.replaceChild(this.elt, this.fieldGroup_.firstChild);
-            this.elt.addEventListener("keydown", this.keyHandler.bind(this));
-            this.elt.addEventListener("blur", this.blurHandler.bind(this));
+            if (!this.sourceBlock_.isInFlyout) {
+                this.elt.addEventListener("keydown", this.keyHandler.bind(this));
+                this.elt.addEventListener("blur", this.blurHandler.bind(this));
+            }
         }
     }
 
