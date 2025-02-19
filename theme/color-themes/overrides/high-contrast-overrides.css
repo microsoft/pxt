@@ -1,8 +1,8 @@
 /* TODO */
 .common-button {
-    color: var(--pxt-neutral-button-foreground) !important;
-    background: var(--pxt-neutral-button-background) !important;
-    border-color: var(--pxt-neutral-button-foreground) !important;
+    color: var(--pxt-neutral-foreground2) !important;
+    background: var(--pxt-neutral-background2) !important;
+    border-color: var(--pxt-neutral-foreground2) !important;
 }
 
 .common-button:hover, .common-button:focus {

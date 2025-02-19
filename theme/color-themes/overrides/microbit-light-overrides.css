@@ -1,5 +1,5 @@
 .simtoolbar .ui.icon.tiny.buttons .ui.button {
-    background-color: var(--pxt-neutral-button-background);
+    background-color: var(--pxt-neutral-background2);
     color: rgba(0,0,0,.6);
 }
 
@@ -9,5 +9,5 @@
 }
 
 .theme-preview-microbit-light .theme-preview-sim-button {
-    background-color: var(--pxt-neutral-button-background) !important;
+    background-color: var(--pxt-neutral-background2) !important;
 }
