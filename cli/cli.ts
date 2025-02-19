@@ -2153,6 +2153,7 @@ function buildReactAppAsync(app: string, parsed: commandParser.ParsedCommand, op
             if (!opts.expandedPxtTarget) {
                 // read pxtarget.json, save into 'pxtTargetBundle' global variable
                 let cfg = readLocalPxTarget();
+                updateColorThemes(cfg);
                 nodeutil.writeFileSync(`${appRoot}/public/blb/target.js`, "// eslint-disable-next-line \n" + targetJsPrefix + JSON.stringify(cfg));
             } else {
                 nodeutil.cp("built/target.js", `${appRoot}/public/blb`);
