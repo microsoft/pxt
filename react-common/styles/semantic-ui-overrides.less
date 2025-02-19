@@ -7,7 +7,7 @@ This file overrides the default semantic ui theming with our own theme variables
 */
 
 // Mixin allows easy setting for background, foreground, hover, and inverted colors for a button
-.buttonVariant(@bg; @fg; @hoverBg) {
+.buttonVariant(@bg; @fg; @hoverBg, @hoverFg) {
     background: @bg;
     color: @fg;
     border: 1px solid @bg;
@@ -22,9 +22,10 @@ This file overrides the default semantic ui theming with our own theme variables
         filter: none;
 
         background-color: @hoverBg;
+        color: @hoverFg;
 
         &.inverted {
-            background-color: @fg;
+            background-color: @hoverFg;
             color: @hoverBg;
         }
     }
@@ -142,7 +143,7 @@ body.pxt-theme-root {
 
             &:hover, &:focus {
                 background: var(--pxt-neutral-background-hover1) !important;
-                color: var(--pxt-neutral-foreground1) !important;
+                color: var(--pxt-neutral-foreground-hover1) !important;
             }
         }
 
@@ -349,7 +350,8 @@ body.pxt-theme-root {
             .buttonVariant(
                 var(--pxt-primary-background),
                 var(--pxt-primary-foreground),
-                var(--pxt-primary-background-hover)
+                var(--pxt-primary-background-hover),
+                var(--pxt-primary-foreground-hover),
             );
         }
 
@@ -357,7 +359,8 @@ body.pxt-theme-root {
             .buttonVariant(
                 var(--pxt-secondary-background),
                 var(--pxt-secondary-foreground),
-                var(--pxt-secondary-background-hover)
+                var(--pxt-secondary-background-hover),
+                var(--pxt-secondary-foreground-hover)
             );
         }
 
@@ -365,7 +368,8 @@ body.pxt-theme-root {
             .buttonVariant(
                 var(--pxt-tertiary-background),
                 var(--pxt-tertiary-foreground),
-                var(--pxt-tertiary-background-hover)
+                var(--pxt-tertiary-background-hover),
+                var(--pxt-tertiary-foreground-hover)
             );
         }
 
@@ -373,7 +377,8 @@ body.pxt-theme-root {
             .buttonVariant(
                 var(--pxt-colors-blue-background),
                 var(--pxt-colors-blue-foreground),
-                var(--pxt-colors-blue-hover)
+                var(--pxt-colors-blue-hover),
+                var(--pxt-colors-blue-foreground)
             );
         }
 
@@ -381,7 +386,8 @@ body.pxt-theme-root {
             .buttonVariant(
                 var(--pxt-neutral-background2),
                 var(--pxt-neutral-foreground2),
-                var(--pxt-neutral-background-hover2)
+                var(--pxt-neutral-background-hover2),
+                var(--pxt-neutral-foreground-hover2)
             );
         }
 
@@ -389,7 +395,8 @@ body.pxt-theme-root {
             .buttonVariant(
                 var(--pxt-colors-green-background),
                 var(--pxt-colors-green-foreground),
-                var(--pxt-colors-green-hover)
+                var(--pxt-colors-green-hover),
+                var(--pxt-colors-green-foreground)
             );
         }
 
@@ -397,7 +404,8 @@ body.pxt-theme-root {
             .buttonVariant(
                 var(--pxt-colors-orange-background),
                 var(--pxt-colors-orange-foreground),
-                var(--pxt-colors-orange-hover)
+                var(--pxt-colors-orange-hover),
+                var(--pxt-colors-orange-foreground)
             );
         }
 
@@ -405,7 +413,8 @@ body.pxt-theme-root {
             .buttonVariant(
                 var(--pxt-colors-purple-background),
                 var(--pxt-colors-purple-foreground),
-                var(--pxt-colors-purple-hover)
+                var(--pxt-colors-purple-hover),
+                var(--pxt-colors-purple-foreground)
             );
         }
 
@@ -413,7 +422,8 @@ body.pxt-theme-root {
             .buttonVariant(
                 var(--pxt-colors-red-background),
                 var(--pxt-colors-red-foreground),
-                var(--pxt-colors-red-hover)
+                var(--pxt-colors-red-hover),
+                var(--pxt-colors-red-foreground)
             );
         }
 
@@ -421,7 +431,8 @@ body.pxt-theme-root {
             .buttonVariant(
                 var(--pxt-colors-teal-background),
                 var(--pxt-colors-teal-foreground),
-                var(--pxt-colors-teal-hover)
+                var(--pxt-colors-teal-hover),
+                var(--pxt-colors-teal-foreground)
             );
         }
 
@@ -429,7 +440,8 @@ body.pxt-theme-root {
             .buttonVariant(
                 var(--pxt-colors-yellow-background),
                 var(--pxt-colors-yellow-foreground),
-                var(--pxt-colors-yellow-hover)
+                var(--pxt-colors-yellow-hover),
+                var(--pxt-colors-yellow-foreground)
             );
         }
     }
