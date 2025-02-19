@@ -30,7 +30,6 @@ Colors:
 | pxt-header-foreground         | Header Bar Fg              |
 | pxt-primary-background        | Download Button Bkg        |
 | pxt-primary-background-hover  | Download Button Hover      |
-| pxt-primary-alpha0            | Download Button 0% Opacity |
 | pxt-primary-accent              | Hardware Button Bkg        |
 | pxt-primary-foreground        | Download Button Fg         |
 | pxt-secondary-background      | Zoom & Under-Sim Buttons   |
