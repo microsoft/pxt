@@ -24,8 +24,8 @@
     --pxt-header-stencil: #ffffff;
 
     --pxt-primary-background: #aaaaaa;
-    --pxt-primary-foreground: #ffffff;
     --pxt-primary-background-hover: #bbbbbb;
+    --pxt-primary-foreground: #ffffff;
     --pxt-primary-foreground-hover: #ffffff;
     --pxt-primary-accent: #888888;
 
@@ -36,8 +36,8 @@
     --pxt-secondary-accent: #9a9a9a;
 
     --pxt-tertiary-background: #909090;
-    --pxt-tertiary-foreground: #ffffff;
     --pxt-tertiary-background-hover: "#777777";
+    --pxt-tertiary-foreground: #ffffff;
     --pxt-tertiary-foreground-hover: #ffffff;
     --pxt-tertiary-accent: #9a9a9a;
 
