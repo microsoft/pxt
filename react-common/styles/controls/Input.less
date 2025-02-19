@@ -66,14 +66,15 @@
         pointer-events: none;
     }
 
-    & > .common-button {
-        color: var(--pxt-tertiary-background);
+    & > button.common-button {
+        color: var(--pxt-neutral-foreground2) !important;
+        background: none !important;
         padding: 0;
         margin: 0;
         border-radius: 0;
 
         &:hover {
-            color: var(--pxt-tertiary-background-hover);
+            opacity: 0.8;
         }
     }
 }
