@@ -18,19 +18,16 @@
     --pxt-target-stencil3: #e1e1e1;
 
     --pxt-header-background: #888888;
-    --pxt-header-background-alpha30: #8888884D;
     --pxt-header-foreground: #ffffff;
 
     --pxt-primary-background: #aaaaaa;
     --pxt-primary-background-hover: #bbbbbb;
     --pxt-primary-alpha0: #aaaaaa00;
-    --pxt-primary-alpha90: #aaaaaa5A;
     --pxt-primary-dark: #888888;
     --pxt-primary-foreground: #ffffff;
 
     --pxt-secondary-background: #aaaaaa;
     --pxt-secondary-background-hover: #bbbbbb;
-    --pxt-secondary-dark: #767676;
     --pxt-secondary-light: #9a9a9a;
     --pxt-secondary-foreground: #f0f0f0;
 

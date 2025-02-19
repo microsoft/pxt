@@ -170,7 +170,7 @@ a.ui.card:focus,
 }
 
 .ui.card.link.scriptmanagercard {
-    background-color: var(--pxt-secondary-dark) !important;
+    background-color: var(--pxt-secondary-background) !important;
     color: var(--pxt-secondary-foreground) !important;
 }
 

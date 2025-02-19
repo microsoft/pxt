@@ -27,17 +27,14 @@ Colors:
 | pxt-target-foreground3-hover  |                            |
 | pxt-target-stencil3           | Outlines for Toolbox & Bottom Bar     |
 | pxt-header-background         | Header Bar Bkg             |
-| pxt-header-background-alpha30 | Header Bar Bkg 30% Opacity |
 | pxt-header-foreground         | Header Bar Fg              |
 | pxt-primary-background        | Download Button Bkg        |
 | pxt-primary-background-hover  | Download Button Hover      |
 | pxt-primary-alpha0            | Download Button 0% Opacity |
-| pxt-primary-alpha90           | Download Button 90% Opacity |
 | pxt-primary-dark              | Hardware Button Bkg        |
 | pxt-primary-foreground        | Download Button Fg         |
 | pxt-secondary-background      | Zoom & Under-Sim Buttons   |
 | pxt-secondary-background-hover | Zoom & Under-Sim Buttons   |
-| pxt-secondary-dark            |                            |
 | pxt-secondary-light           | Cloud Projects Card        |
 | pxt-secondary-foreground      |                            |
 | pxt-tertiary-background       | Tour bubbles, additional btns   |

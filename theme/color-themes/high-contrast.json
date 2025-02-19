@@ -25,19 +25,16 @@
         "pxt-target-stencil3": "#FFFFFF",
 
         "pxt-header-background": "#000000",
-        "pxt-header-background-alpha30": "#0000001E",
         "pxt-header-foreground": "#FFFFFF",
 
         "pxt-primary-background": "#000000",
         "pxt-primary-background-hover": "#000000",
         "pxt-primary-alpha0": "#00000000",
-        "pxt-primary-alpha90": "#0000005A",
         "pxt-primary-dark": "#000000",
         "pxt-primary-foreground": "#FFFFFF",
 
         "pxt-secondary-background": "#000000",
         "pxt-secondary-background-hover": "#000000",
-        "pxt-secondary-dark": "#000000",
         "pxt-secondary-light": "#000000",
         "pxt-secondary-foreground": "#FFFFFF",
 

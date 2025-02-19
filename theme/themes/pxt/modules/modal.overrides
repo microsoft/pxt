@@ -161,8 +161,8 @@
     justify-content: flex-end;
     flex-direction: row;
     height: @mainMenuHeight;
-    background: var(--pxt-header-background-alpha30);
-    color: var(--pxt-header-foreground-alpha30);
+    background: var(--pxt-neutral-alpha20);
+    color: var(--pxt-header-foreground);
     padding: 0 1rem;
 
     .divider {
