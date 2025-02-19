@@ -33,33 +33,33 @@ Colors:
 | pxt-tertiary-accent           |                            |
 | pxt-target-background1        | Blockly Workspace Bkg      |
 | pxt-target-foreground1        | Blockly Workspace Fg       |
-| pxt-target-background-hover1  |                            |
+| pxt-target-background1-hover  |                            |
 | pxt-target-foreground1-hover  |                            |
 | pxt-target-stencil1           | Outlines for Blockly Workspace   |
 | pxt-target-background2        | Sim Sidebar Bkg            |
 | pxt-target-foreground2        | Sim Sidebar Fg             |
-| pxt-target-background-hover2  |                            |
+| pxt-target-background2-hover  |                            |
 | pxt-target-foreground2-hover  |                            |
 | pxt-target-stencil2           | Outlines for Sim Sidebar  |
 | pxt-target-background3        | Toolbox & Bottom Bar Bkg   |
 | pxt-target-foreground3        | Toolbox & Bottom Bar Fg    |
-| pxt-target-background-hover3  |                            |
+| pxt-target-background3-hover  |                            |
 | pxt-target-foreground3-hover  |                            |
 | pxt-target-stencil3           | Outlines for Toolbox & Bottom Bar     |
 | pxt-neutral-background1       | Modal Header & Body Bkg, Code Card Bkg |
 | pxt-neutral-foreground1       | Modal Header & Body Fg     |
-| pxt-neutral-background-hover1 |                            |
-| pxt-neutral-foreground-hover1 |                            |
+| pxt-neutral-background1-hover |                            |
+| pxt-neutral-foreground1-hover |                            |
 | pxt-neutral-stencil1          | Modal Horizontal Lines     |
 | pxt-neutral-background2       | Modal Footer Bkg           |
 | pxt-neutral-foreground2       | Modal Footer Fg            |
-| pxt-neutral-background-hover2 |                            |
-| pxt-neutral-foreground-hover2 |                            |
+| pxt-neutral-background2-hover |                            |
+| pxt-neutral-foreground2-hover |                            |
 | pxt-neutral-stencil2          | Code Card Border           |
 | pxt-neutral-background3       | Expanded code card bkg     |
 | pxt-neutral-foreground3       | Expanded code card Fg      |
-| pxt-neutral-background-hover3 |                            |
-| pxt-neutral-foreground-hover3 |                            |
+| pxt-neutral-background3-hover |                            |
+| pxt-neutral-foreground3-hover |                            |
 | pxt-neutral-stencil3          | Expanded code card border  |
 | pxt-neutral-background3-alpha90 | Needed for monaco toolbox |
 | pxt-neutral-alpha0            | 0% opacity fade            |

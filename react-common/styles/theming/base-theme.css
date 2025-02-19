@@ -25,38 +25,38 @@
 
     --pxt-target-background1: #f0f0f0;
     --pxt-target-foreground1: #333333;
-    --pxt-target-background-hover1: #d7d7d7;
-    --pxt-target-foreground-hover1: #1a1a1a;
+    --pxt-target-background1-hover: #d7d7d7;
+    --pxt-target-foreground1-hover: #1a1a1a;
     --pxt-target-stencil1: #e1e1e1;
 
     --pxt-target-background2: #f0f0f0;
     --pxt-target-foreground2: #333333;
-    --pxt-target-background-hover2: #d7d7d7;
-    --pxt-target-foreground-hover2: #1a1a1a;
+    --pxt-target-background2-hover: #d7d7d7;
+    --pxt-target-foreground2-hover: #1a1a1a;
     --pxt-target-stencil2: #e1e1e1;
 
     --pxt-target-background3: #f0f0f0;
     --pxt-target-foreground3: #333333;
-    --pxt-target-background-hover3: #d7d7d7;
-    --pxt-target-foreground-hover3: #1a1a1a;
+    --pxt-target-background3-hover: #d7d7d7;
+    --pxt-target-foreground3-hover: #1a1a1a;
     --pxt-target-stencil3: #e1e1e1;
 
     --pxt-neutral-background1: #ffffff;
     --pxt-neutral-foreground1: rgba(0, 0, 0, 0.85);
-    --pxt-neutral-background-hover1: #cccccc;
-    --pxt-neutral-foreground-hover1: rgba(0, 0, 0, 0.85);
+    --pxt-neutral-background1-hover: #cccccc;
+    --pxt-neutral-foreground1-hover: rgba(0, 0, 0, 0.85);
     --pxt-neutral-stencil1: rgba(136, 136, 136, 0.15);
 
     --pxt-neutral-background2: #F8F8F8;
     --pxt-neutral-foreground2: rgba(0,0,0,.85);
-    --pxt-neutral-background-hover2: #DFDFDF;
-    --pxt-neutral-foreground-hover2: rgba(0,0,0,.85);
+    --pxt-neutral-background2-hover: #DFDFDF;
+    --pxt-neutral-foreground2-hover: rgba(0,0,0,.85);
     --pxt-neutral-stencil2: #e9eef2;
 
     --pxt-neutral-background3: #4e5758;
     --pxt-neutral-foreground3: #FFFFFF;
-    --pxt-neutral-background-hover3: #363c3d;
-    --pxt-neutral-foreground3-hover3: #FFFFFF;
+    --pxt-neutral-background3-hover: #363c3d;
+    --pxt-neutral-foreground3-hover: #FFFFFF;
     --pxt-neutral-stencil3: #FFFFFF;
     --pxt-neutral-background3-alpha90: #4E5758E5; /* Needed for monaco toolbox */
 
