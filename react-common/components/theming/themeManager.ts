@@ -1,24 +1,29 @@
+/// <reference path='../../../localtypings/dompurify.d.ts' />
+
 interface ThemeChangeSubscriber {
     subscriberId: string;
     onColorThemeChange: () => void;
 }
 
 /*
- * Singleton class to handle theming operations, like loading and switching themes.
- * Using singleton to simplify subscribers and alerting.
+ * Class to handle theming operations, like loading and switching themes.
+ * Each instance can manage themes for a specific document.
 */
 export class ThemeManager {
-    private static instance: ThemeManager;
+    private static instances: Map<Document, ThemeManager> = new Map();
     private currentTheme: pxt.ColorThemeInfo;
     private subscribers: ThemeChangeSubscriber[];
+    private document: Document;
 
-    private constructor() {} // private to ensure singleton
+    private constructor(doc: Document) {
+        this.document = doc;
+    }
 
-    public static getInstance(): ThemeManager {
-        if (!ThemeManager.instance) {
-            ThemeManager.instance = new ThemeManager();
+    public static getInstance(doc: Document = document): ThemeManager {
+        if (!ThemeManager.instances.has(doc)) {
+            ThemeManager.instances.set(doc, new ThemeManager(doc));
         }
-        return ThemeManager.instance;
+        return ThemeManager.instances.get(doc);
     }
 
     public getCurrentColorTheme(): Readonly<pxt.ColorThemeInfo> {
@@ -34,8 +39,8 @@ export class ThemeManager {
     // TODO : this should be removed once we do fully support it.
     private performHighContrastWorkaround(themeId: string) {
         let setBodyClass = (add:boolean, className: string) => {
-            const body = document.body;
-            const hasClass = document.body.classList.contains(className)
+            const body = this.document.body;
+            const hasClass = body.classList.contains(className);
             if (!add && hasClass) {
                 body.classList.remove(className);
             } else if (add && !hasClass) {
@@ -48,7 +53,7 @@ export class ThemeManager {
         setBodyClass(isHighContrast, "hc");
     }
 
-    public async switchColorTheme(themeId: string) {
+    public switchColorTheme(themeId: string) {
         if (themeId === this.getCurrentColorTheme()?.id) {
             return;
         }
@@ -59,11 +64,11 @@ export class ThemeManager {
         if (theme) {
             const themeAsStyle = getFullColorThemeCss(theme);
             const styleElementId = "theme-override";
-            let styleElement = document.getElementById(styleElementId);
+            let styleElement = this.document.getElementById(styleElementId);
             if (!styleElement) {
-                styleElement = document.createElement("style");
+                styleElement = this.document.createElement("style");
                 styleElement.id = styleElementId;
-                document.head.appendChild(styleElement);
+                this.document.head.appendChild(styleElement);
             }
 
             // textContent is safer than innerHTML, less vulnerable to XSS
@@ -93,7 +98,7 @@ export class ThemeManager {
     }
 
     private notifySubscribers() {
-        this.subscribers.forEach(s => s.onColorThemeChange());
+        this.subscribers?.forEach(s => s.onColorThemeChange());
     }
 }
 

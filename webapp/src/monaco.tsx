@@ -392,7 +392,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         data.subscribe(this.userPreferencesSubscriber, auth.HIGHCONTRAST);
 
-        ThemeManager.getInstance()?.subscribe("monaco", () => this.onUserPreferencesChanged());
+        ThemeManager.getInstance(document)?.subscribe("monaco", () => this.onUserPreferencesChanged());
     }
 
     onUserPreferencesChanged() {
@@ -752,7 +752,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const colors = pxt.appTarget.appTheme.monacoColors || {};
         const baseTheme: monaco.editor.BuiltinTheme = hc
             ? "hc-black"
-            : (ThemeManager.getInstance()?.getCurrentColorTheme()?.monacoBaseTheme as monaco.editor.BuiltinTheme) ?? (inverted ? "vs-dark" : "vs");
+            : (ThemeManager.getInstance(document)?.getCurrentColorTheme()?.monacoBaseTheme as monaco.editor.BuiltinTheme) ?? (inverted ? "vs-dark" : "vs");
         monaco.editor.defineTheme('pxtTheme', {
             base: baseTheme,
             inherit: true, // can also be false to completely replace the builtin rules

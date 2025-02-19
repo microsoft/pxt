@@ -167,6 +167,8 @@ export class ProjectView
     private pendingImport: pxt.Util.DeferredPromise<void>;
     private shouldFocusToolbox: boolean;
 
+    private themeManager: ThemeManager;
+
     private highContrastSubscriber: data.DataSubscriber = {
         subscriptions: [],
         onDataChanged: () => {
@@ -189,6 +191,7 @@ export class ProjectView
         this.settings = JSON.parse(pxt.storage.getLocal("editorSettings") || "{}")
         const shouldShowHomeScreen = this.shouldShowHomeScreen();
         const isHighContrast = /hc=(\w+)/.test(window.location.href) || (window.matchMedia?.('(forced-colors: active)')?.matches);
+        this.themeManager = ThemeManager.getInstance(document);
         if (isHighContrast) core.setHighContrast(true);
 
         const simcfg = pxt.appTarget.simulator;
@@ -232,7 +235,7 @@ export class ProjectView
         this.initSimulatorMessageHandlers();
         this.showThemePicker = this.showThemePicker.bind(this);
         this.hideThemePicker = this.hideThemePicker.bind(this);
-        this.updateThemePreference = this.updateThemePreference.bind(this);
+        this.changeTheme = this.changeTheme.bind(this);
 
         // add user hint IDs and callback to hint manager
         if (pxt.BrowserUtils.useOldTutorialLayout()) this.hintManager.addHint(ProjectView.tutorialCardId, this.tutorialCardHintCallback.bind(this));
@@ -1140,9 +1143,6 @@ export class ProjectView
         // subscribe to user preference changes (for simulator or non-render subscriptions)
         data.subscribe(this.highContrastSubscriber, auth.HIGHCONTRAST);
         data.subscribe(this.cloudStatusSubscriber, `${cloud.HEADER_CLOUDSTATE}:*`);
-
-        // Subscribe to theme changes so we can update the user preference
-        ThemeManager.getInstance().subscribe("webapp", this.updateThemePreference);
     }
 
     public componentWillUnmount() {
@@ -5159,8 +5159,14 @@ export class ProjectView
         this.setState({ bannerVisible: b });
     }
 
+    private changeTheme(theme: pxt.ColorThemeInfo) {
+        pxt.tickEvent("app.changetheme", { theme: theme.id });
+        this.themeManager.switchColorTheme(theme.id);
+        this.updateThemePreference();
+    }
+
     private updateThemePreference() {
-        const newThemeId = ThemeManager.getInstance().getCurrentColorTheme()?.id;
+        const newThemeId = this.themeManager.getCurrentColorTheme()?.id;
 
         if (newThemeId) {
             auth.setThemePrefAsync(newThemeId);
@@ -5465,7 +5471,7 @@ export class ProjectView
                 {lightbox ? <sui.Dimmer isOpen={true} active={lightbox} portalClassName={'tutorial'} className={'ui modal'}
                     shouldFocusAfterRender={false} closable={true} onClose={this.hideLightbox} /> : undefined}
                 {this.state.onboarding && <Tour tourSteps={this.state.onboarding} onClose={this.hideOnboarding} />}
-                {this.state.themePickerOpen && <ThemePickerModal onClose={this.hideThemePicker} />}
+                {this.state.themePickerOpen && <ThemePickerModal themes={this.themeManager.getAllColorThemes()} onThemeClicked={this.changeTheme} onClose={this.hideThemePicker} />}
             </div>
         );
     }
@@ -6254,7 +6260,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
 
             if (initialTheme) {
-                const themeManager = ThemeManager.getInstance();
+                const themeManager = ThemeManager.getInstance(document);
                 if (initialTheme !== themeManager.getCurrentColorTheme()?.id) {
                     return themeManager.switchColorTheme(initialTheme);
                 }
