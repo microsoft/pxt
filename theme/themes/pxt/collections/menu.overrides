@@ -92,7 +92,7 @@
 
     .menu > .dropdown.item:focus,
     .menu > .link.item.icon:focus {
-        background: var(--pxt-neutral-alpha05);
+        background: var(--pxt-neutral-alpha10);
         color: @invertedHoverColor;
         border: @homeHeaderBorderSize solid var(--pxt-neutral-stencil3);
         outline: 1px ridge black;
