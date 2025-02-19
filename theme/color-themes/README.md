@@ -11,21 +11,6 @@ This folder contains shared themes for pxt apps.
 Colors:
 | Key                           | Description                |
 |-------------------------------|----------------------------|
-| pxt-target-background1        | Blockly Workspace Bkg      |
-| pxt-target-foreground1        | Blockly Workspace Fg       |
-| pxt-target-background-hover1  |                            |
-| pxt-target-foreground1-hover  |                            |
-| pxt-target-stencil1           | Outlines for Blockly Workspace   |
-| pxt-target-background2        | Sim Sidebar Bkg            |
-| pxt-target-foreground2        | Sim Sidebar Fg             |
-| pxt-target-background-hover2  |                            |
-| pxt-target-foreground2-hover  |                            |
-| pxt-target-stencil2           | Outlines for Sim Sidebar  |
-| pxt-target-background3        | Toolbox & Bottom Bar Bkg   |
-| pxt-target-foreground3        | Toolbox & Bottom Bar Fg    |
-| pxt-target-background-hover3  |                            |
-| pxt-target-foreground3-hover  |                            |
-| pxt-target-stencil3           | Outlines for Toolbox & Bottom Bar     |
 | pxt-header-background         | Header Bar Bkg             |
 | pxt-header-foreground         | Header Bar Fg              |
 | pxt-header-background-hover   |                            |
@@ -46,6 +31,21 @@ Colors:
 | pxt-tertiary-foreground       | Tour bubbles, additional btns fg |
 | pxt-tertiary-foreground-hover |                            |
 | pxt-tertiary-accent           |                            |
+| pxt-target-background1        | Blockly Workspace Bkg      |
+| pxt-target-foreground1        | Blockly Workspace Fg       |
+| pxt-target-background-hover1  |                            |
+| pxt-target-foreground1-hover  |                            |
+| pxt-target-stencil1           | Outlines for Blockly Workspace   |
+| pxt-target-background2        | Sim Sidebar Bkg            |
+| pxt-target-foreground2        | Sim Sidebar Fg             |
+| pxt-target-background-hover2  |                            |
+| pxt-target-foreground2-hover  |                            |
+| pxt-target-stencil2           | Outlines for Sim Sidebar  |
+| pxt-target-background3        | Toolbox & Bottom Bar Bkg   |
+| pxt-target-foreground3        | Toolbox & Bottom Bar Fg    |
+| pxt-target-background-hover3  |                            |
+| pxt-target-foreground3-hover  |                            |
+| pxt-target-stencil3           | Outlines for Toolbox & Bottom Bar     |
 | pxt-neutral-background1       | Modal Header & Body Bkg, Code Card Bkg |
 | pxt-neutral-foreground1       | Modal Header & Body Fg     |
 | pxt-neutral-hover1            |                            |

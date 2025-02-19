@@ -6,24 +6,6 @@
         "/overrides/high-contrast-overrides.css"
     ],
     "colors": {
-        "pxt-target-background1": "#000000",
-        "pxt-target-foreground1": "#FFFFFF",
-        "pxt-target-background-hover1": "#000000",
-        "pxt-target-foreground-hover1": "#cccccc",
-        "pxt-target-stencil1": "#FFFFFF",
-
-        "pxt-target-background2": "#000000",
-        "pxt-target-foreground2": "#FFFFFF",
-        "pxt-target-background-hover2": "#000000",
-        "pxt-target-foreground-hover2": "#cccccc",
-        "pxt-target-stencil2": "#FFFFFF",
-
-        "pxt-target-background3": "#000000",
-        "pxt-target-foreground3": "#FFFFFF",
-        "pxt-target-background-hover3": "#000000",
-        "pxt-target-foreground-hover3": "#cccccc",
-        "pxt-target-stencil3": "#FFFFFF",
-
         "pxt-header-background": "#000000",
         "pxt-header-foreground": "#FFFFFF",
         "pxt-header-background-hover": "#000000",
@@ -47,6 +29,24 @@
         "pxt-tertiary-background-hover": "#000000",
         "pxt-tertiary-foreground-hover": "#FFFFFF",
         "pxt-tertiary-accent": "#000000",
+
+        "pxt-target-background1": "#000000",
+        "pxt-target-foreground1": "#FFFFFF",
+        "pxt-target-background-hover1": "#000000",
+        "pxt-target-foreground-hover1": "#cccccc",
+        "pxt-target-stencil1": "#FFFFFF",
+
+        "pxt-target-background2": "#000000",
+        "pxt-target-foreground2": "#FFFFFF",
+        "pxt-target-background-hover2": "#000000",
+        "pxt-target-foreground-hover2": "#cccccc",
+        "pxt-target-stencil2": "#FFFFFF",
+
+        "pxt-target-background3": "#000000",
+        "pxt-target-foreground3": "#FFFFFF",
+        "pxt-target-background-hover3": "#000000",
+        "pxt-target-foreground-hover3": "#cccccc",
+        "pxt-target-stencil3": "#FFFFFF",
 
         "pxt-neutral-background1": "#000000",
         "pxt-neutral-foreground1": "#FFFFFF",
