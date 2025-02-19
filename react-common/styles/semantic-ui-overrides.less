@@ -7,7 +7,7 @@ This file overrides the default semantic ui theming with our own theme variables
 */
 
 // Mixin allows easy setting for background, foreground, hover, and inverted colors for a button
-.buttonVariant(@bg; @fg; @hoverBg, @hoverFg) {
+.buttonVariant(@bg; @fg; @hoverBg; @hoverFg) {
     background: @bg;
     color: @fg;
     border: 1px solid @bg;
@@ -351,7 +351,7 @@ body.pxt-theme-root {
                 var(--pxt-primary-background),
                 var(--pxt-primary-foreground),
                 var(--pxt-primary-background-hover),
-                var(--pxt-primary-foreground-hover),
+                var(--pxt-primary-foreground-hover)
             );
         }
 
