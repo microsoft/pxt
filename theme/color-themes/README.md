@@ -28,17 +28,24 @@ Colors:
 | pxt-target-stencil3           | Outlines for Toolbox & Bottom Bar     |
 | pxt-header-background         | Header Bar Bkg             |
 | pxt-header-foreground         | Header Bar Fg              |
+| pxt-header-background-hover   |                            |
+| pxt-header-foreground-hover   |                            |
+| pxt-header-stencil            |                            |
 | pxt-primary-background        | Download Button Bkg        |
 | pxt-primary-background-hover  | Download Button Hover      |
-| pxt-primary-accent              | Hardware Button Bkg        |
+| pxt-primary-accent            | Hardware Button Bkg        |
 | pxt-primary-foreground        | Download Button Fg         |
+| pxt-primary-foreground-hover  |                            |
 | pxt-secondary-background      | Zoom & Under-Sim Buttons   |
-| pxt-secondary-background-hover | Zoom & Under-Sim Buttons   |
-| pxt-secondary-accent           | Cloud Projects Card        |
+| pxt-secondary-background-hover| Zoom & Under-Sim Buttons   |
+| pxt-secondary-accent          | Cloud Projects Card        |
 | pxt-secondary-foreground      |                            |
+| pxt-secondary-foreground-hover|                            |
 | pxt-tertiary-background       | Tour bubbles, additional btns   |
 | pxt-tertiary-background-hover |                            |
 | pxt-tertiary-foreground       | Tour bubbles, additional btns fg |
+| pxt-tertiary-foreground-hover |                            |
+| pxt-tertiary-accent           |                            |
 | pxt-neutral-background1       | Modal Header & Body Bkg, Code Card Bkg |
 | pxt-neutral-foreground1       | Modal Header & Body Fg     |
 | pxt-neutral-hover1            |                            |
@@ -56,6 +63,9 @@ Colors:
 | pxt-neutral-alpha20           | 20% opacity fade           |
 | pxt-neutral-alpha50           | 50% opacity fade           |
 | pxt-neutral-background3-alpha90 |                          |
+| pxt-neutral-foreground-hover1 |                            |
+| pxt-neutral-foreground-hover2 |                            |
+| pxt-neutral-foreground3-hover3|                            |
 | pxt-link                      | Link Text                  |
 | pxt-link-hover                | Link Text Hover            |
 | pxt-focus-border              | Border for focused elements |
