@@ -39,7 +39,6 @@ Colors:
 | pxt-secondary-foreground      |                            |
 | pxt-tertiary-background       | Tour bubbles, additional btns   |
 | pxt-tertiary-background-hover |                            |
-| pxt-tertiary-alpha20          | 20% Opacity                |
 | pxt-tertiary-foreground       | Tour bubbles, additional btns fg |
 | pxt-neutral-background1       | Modal Header & Body Bkg, Code Card Bkg |
 | pxt-neutral-foreground1       | Modal Header & Body Fg     |
