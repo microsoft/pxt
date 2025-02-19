@@ -244,6 +244,7 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
         else {
             this.updateCursorLocation(coord);
             this.startEdit(!!isRightClick);
+            this.updateEdit(this.cursorLocation[0], this.cursorLocation[1]);
         }
     }
 
