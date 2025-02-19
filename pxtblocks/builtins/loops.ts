@@ -122,7 +122,8 @@ export function initLoops() {
                     {
                         "type": "field_variable",
                         "name": "VAR",
-                        "variable": controlsSimpleForDef.block["variable"]
+                        "variable": controlsSimpleForDef.block["variable"],
+                        "variableTypes": [""],
                         // Please note that most multilingual characters
                         // cannot be used as variable name at this point.
                         // Translate or decide the default variable name
@@ -328,7 +329,8 @@ export function initLoops() {
                         {
                             "type": "field_variable",
                             "name": "VAR",
-                            "variable": controlsForOfDef.block["variable"]
+                            "variable": controlsForOfDef.block["variable"],
+                            "variableTypes": [""],
                             // Please note that most multilingual characters
                             // cannot be used as variable name at this point.
                             // Translate or decide the default variable name
