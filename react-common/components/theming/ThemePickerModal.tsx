@@ -15,7 +15,7 @@ export const ThemePickerModal = (props: ThemePickerModalProps) => {
             className="theme-picker-modal"
         >
             <div
-                className="ui cards centered theme-picker"
+                className="theme-picker"
                 role="list"
                 aria-label={lf("List of available themes")}
             >

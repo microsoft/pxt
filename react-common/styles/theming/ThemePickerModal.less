@@ -1,152 +1,172 @@
-.theme-picker-modal > .common-modal {
+.theme-picker-modal>.common-modal {
     width: 80%;
     max-width: 60rem;
 }
 
 .theme-picker {
-    &.ui.cards {
-        gap: 0.5rem;
-    }
+    display: flex;
+    flex-direction: row;
+    gap: 0.5rem;
+    justify-content: space-around;
+    align-items: center;
+    width: 100%;
+    flex-wrap: wrap;
 
     .common-button-flex {
         width: 100%;
     }
 
-    .theme-info-box {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        padding: 0.5rem;
+    .theme-card {
+        width: 18rem;
+        height: unset;
+        background-color: var(--pxt-neutral-background1);
+        color: var(--pxt-neutral-foreground1);
+        border: 1px solid var(--pxt-neutral-stencil1);
 
-        .theme-preview-container {
-            display: flex;
-            width: 95%;
-            padding: 0.5rem;
+        &:hover {
+            border: 1px solid var(--pxt-focus-border);
+            cursor: pointer;
+            background-color: var(--pxt-neutral-stencil1);
         }
-    
-        .theme-preview {
+
+        .theme-info-box {
             display: flex;
             flex-direction: column;
             align-items: center;
-            width: 100%;
-            border: 1px solid var(--pxt-primary-background);
-            aspect-ratio: 1.2;
+            padding: 0 0 0.2rem 0;
 
-            .theme-preview-header {
+
+            .theme-preview-container {
                 display: flex;
-                flex-direction: row;
-                justify-content: space-between;
+                width: 95%;
                 padding: 0.5rem;
-
-                width: 100%;
-                background-color: var(--pxt-header-background);
-                color: var(--pxt-header-foreground);
-                border-bottom: solid 1px var(--pxt-header-foreground);
-
-                .logo {
-                    width: 1rem;
-                    height: 1rem;
-                }
-            }
-        
-            .theme-preview-workspace {
-                width: 100%;
-                flex-grow: 1;
-                display: flex;
-                flex-direction: row;
-
-                .theme-preview-sim-sidebar {
-                    height: 100%;
-                    flex-grow: 1;
-                    background-color: var(--pxt-target-background2);
-                    color: var(--pxt-target-foreground2);
-                    border-right: solid 1px var(--pxt-target-foreground2);
-
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-
-                    .theme-preview-sim {
-                        width: 80%;
-                        aspect-ratio: 1;
-                        background-color: var(--pxt-secondary-background);
-                        margin-top: 0.5rem;
-                        border: 1px solid var(--pxt-target-foreground2); // Foreground color from sidebar
-                    }
-
-                    .theme-preview-sim-buttons {
-                        width: 80%;
-                        margin-top: 0.3rem;
-
-                        display: flex;
-                        flex-direction: row;
-                        justify-content: space-between;
-
-                        .theme-preview-sim-button {
-                            background-color: var(--pxt-secondary-background);
-                            width: 25%;
-                            aspect-ratio: 1;
-                            border: 1px solid var(--pxt-target-foreground2); // Foreground color from sidebar
-                        }
-                    }
-                }
-
-                .theme-preview-toolbox {
-                    height: 100%;
-                    flex-grow: 1;
-                    background-color: var(--pxt-target-background3);
-                    color: var(--pxt-target-foreground3);
-                    border-right: solid 1px var(--pxt-target-foreground3);
-
-                    display: flex;
-                    flex-direction: column;
-
-                    .toolbox-divider {
-                        height: 1px;
-                        border: 0;
-                        border-top: solid 1px var(--pxt-target-foreground3);
-                        margin: 1.5rem 0.1rem 0 0.1rem;
-                    }
-                }
-                .theme-preview-workspace-content {
-                    height: 100%;
-                    flex-grow: 3;
-                    background-color: var(--pxt-target-background1);
-                    color: var(--pxt-target-foreground1);
-                }
             }
 
-            .theme-preview-footer {
+            .theme-preview {
                 display: flex;
-                flex-direction: row;
-                justify-content: space-between;
-                padding: 0.3rem 0.5rem;
-
+                flex-direction: column;
+                align-items: center;
                 width: 100%;
-                background-color: var(--pxt-target-background3);
-                color: var(--pxt-target-foreground3);
-                border-top: solid 1px var(--pxt-target-foreground3);
+                border: 1px solid var(--pxt-primary-background);
+                aspect-ratio: 1.2;
 
-                .theme-preview-download-button {
-                    width: 20%;
-                    height: 0.5rem;
-                    border-radius: 0.1rem;
-                    background-color: var(--pxt-primary-background);
-                    border: solid 1px var(--pxt-target-foreground3); // Foreground color from footer
-                }
-
-                .theme-preview-editor-tools {
+                .theme-preview-header {
                     display: flex;
                     flex-direction: row;
-                    justify-content: flex-end;
-                    width: 30%;
+                    justify-content: space-between;
+                    padding: 0.5rem;
 
-                    .theme-preview-editor-tool-button {
-                        background-color: var(--pxt-secondary-background);
-                        border: solid 1px var(--pxt-target-foreground3); // Foreground color from footer
+                    width: 100%;
+                    background-color: var(--pxt-header-background);
+                    color: var(--pxt-header-foreground);
+                    border-bottom: solid 1px var(--pxt-header-foreground);
+
+                    .logo {
+                        width: 1rem;
+                        height: 1rem;
+                    }
+                }
+
+                .theme-preview-workspace {
+                    width: 100%;
+                    flex-grow: 1;
+                    display: flex;
+                    flex-direction: row;
+
+                    .theme-preview-sim-sidebar {
+                        height: 100%;
+                        flex-grow: 1;
+                        background-color: var(--pxt-target-background2);
+                        color: var(--pxt-target-foreground2);
+                        border-right: solid 1px var(--pxt-target-foreground2);
+
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+
+                        .theme-preview-sim {
+                            width: 80%;
+                            aspect-ratio: 1;
+                            background-color: var(--pxt-secondary-background);
+                            margin-top: 0.5rem;
+                            border: 1px solid var(--pxt-target-foreground2); // Foreground color from sidebar
+                        }
+
+                        .theme-preview-sim-buttons {
+                            width: 80%;
+                            margin-top: 0.3rem;
+
+                            display: flex;
+                            flex-direction: row;
+                            justify-content: space-between;
+
+                            .theme-preview-sim-button {
+                                background-color: var(--pxt-secondary-background);
+                                width: 25%;
+                                aspect-ratio: 1;
+                                border: 1px solid var(--pxt-target-foreground2); // Foreground color from sidebar
+                            }
+                        }
+                    }
+
+                    .theme-preview-toolbox {
+                        height: 100%;
+                        flex-grow: 1;
+                        background-color: var(--pxt-target-background3);
+                        color: var(--pxt-target-foreground3);
+                        border-right: solid 1px var(--pxt-target-foreground3);
+
+                        display: flex;
+                        flex-direction: column;
+
+                        .toolbox-divider {
+                            height: 1px;
+                            border: 0;
+                            border-top: solid 1px var(--pxt-target-foreground3);
+                            margin: 1.5rem 0.1rem 0 0.1rem;
+                        }
+                    }
+
+                    .theme-preview-workspace-content {
+                        height: 100%;
+                        flex-grow: 3;
+                        background-color: var(--pxt-target-background1);
+                        color: var(--pxt-target-foreground1);
+                    }
+                }
+
+                .theme-preview-footer {
+                    display: flex;
+                    flex-direction: row;
+                    justify-content: space-between;
+                    padding: 0.3rem 0.5rem;
+
+                    width: 100%;
+                    background-color: var(--pxt-target-background3);
+                    color: var(--pxt-target-foreground3);
+                    border-top: solid 1px var(--pxt-target-foreground3);
+
+                    .theme-preview-download-button {
+                        width: 20%;
                         height: 0.5rem;
-                        width: 0.5rem;
-                        margin-left: 0.2rem;
+                        border-radius: 0.1rem;
+                        background-color: var(--pxt-primary-background);
+                        border: solid 1px var(--pxt-target-foreground3); // Foreground color from footer
+                    }
+
+                    .theme-preview-editor-tools {
+                        display: flex;
+                        flex-direction: row;
+                        justify-content: flex-end;
+                        width: 30%;
+
+                        .theme-preview-editor-tool-button {
+                            background-color: var(--pxt-secondary-background);
+                            border: solid 1px var(--pxt-target-foreground3); // Foreground color from footer
+                            height: 0.5rem;
+                            width: 0.5rem;
+                            margin-left: 0.2rem;
+                        }
                     }
                 }
             }

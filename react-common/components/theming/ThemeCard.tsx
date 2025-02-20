@@ -1,7 +1,6 @@
-
 import * as React from "react";
-import { Button } from "../controls/Button";
 import { ThemePreview } from "./ThemePreview";
+import { Card } from "../controls/Card";
 
 interface ThemeCardProps {
     theme: pxt.ColorThemeInfo;
@@ -13,20 +12,17 @@ export class ThemeCard extends React.Component<ThemeCardProps> {
         const { onClick, theme } = this.props;
 
         return (
-            <div key={theme.id} className="theme-picker-item">
-                <Button
-                    className="ui card link card-selected theme-card"
-                    role="listitem"
-                    title={theme.name}
-                    onClick={() => onClick(theme)}
-                    label={
-                        <div className="theme-info-box">
-                            <ThemePreview theme={theme} />
-                            <div className="theme-picker-item-name">{theme.name}</div>
-                        </div>
-                    }
-                />
-            </div>
+            <Card
+                className="theme-card"
+                role="listitem"
+                key={theme.id}
+                onClick={() => onClick(theme)}
+            >
+                <div className="theme-info-box">
+                    <ThemePreview theme={theme} />
+                    <div className="theme-picker-item-name">{theme.name}</div>
+                </div>
+            </Card>
         );
     }
 }
