@@ -3,12 +3,13 @@ import * as Blockly from "blockly";
 import { openHelpUrl } from "../external";
 
 // Lower weight is higher in context menu
-enum BlockContextWeight {
+export enum BlockContextWeight {
     Duplicate = 10,
+    Copy = 15,
     AddComment = 20,
     ExpandCollapse = 30,
     DeleteBlock = 40,
-    Help = 50
+    Help = 50,
 }
 
 export function registerBlockitems() {

@@ -2917,6 +2917,16 @@ export class ProjectView
             });
     }
 
+    async newUserCreatedProject(firstProject: boolean): Promise<void> {
+        if (pxt.appTarget.appTheme.nameProjectFirst || pxt.appTarget.appTheme.chooseLanguageRestrictionOnNewProject) {
+            const projectSettings = await this.askForProjectCreationOptionsAsync()
+            const { name, languageRestriction } = projectSettings
+            this.newProject({ name, languageRestriction, firstProject });
+        } else {
+            this.newProject({ firstProject });
+        }
+    }
+
     async createProjectAsync(options: ProjectCreationOptions): Promise<void> {
         pxt.perf.measureStart(Measurements.CreateProjectAsync)
         this.setSideDoc(undefined);
@@ -5277,7 +5287,7 @@ export class ProjectView
         const hideMenuBar = targetTheme.hideMenuBar || hideTutorialIteration || (isTabTutorial && pxt.appTarget.appTheme.embeddedTutorial) || pxt.shell.isTimeMachineEmbed();
         const isHeadless = simOpts && simOpts.headless;
         const selectLanguage = targetTheme.selectLanguage;
-        const feedbackEnabled = targetTheme.feedbackEnabled && targetTheme.ocvFrameUrl && targetTheme.ocvAppId;
+        const feedbackEnabled = pxt.webConfig.ocvEnabled && targetTheme.feedbackEnabled && targetTheme.ocvFrameUrl && targetTheme.ocvAppId;
         const showEditorToolbar = inEditor && !hideEditorToolbar && this.editor.hasEditorToolbar();
         const useSerialEditor = pxt.appTarget.serial && !!pxt.appTarget.serial.useEditor;
         const showSideDoc = sideDocs && this.state.sideDocsLoadUrl && !this.state.sideDocsCollapsed;

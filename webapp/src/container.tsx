@@ -12,6 +12,7 @@ import IProjectView = pxt.editor.IProjectView;
 import ISettingsProps = pxt.editor.ISettingsProps;
 import UserInfo = pxt.editor.UserInfo;
 import SimState = pxt.editor.SimState;
+import { sendUpdateFeedbackTheme } from "../../react-common/components/controls/Feedback/FeedbackEventListener";
 
 // common menu items -- do not remove
 // lf("About")
@@ -295,6 +296,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         const isController = pxt.shell.isControllerMode();
         const disableFileAccessinMaciOs = targetTheme.disableFileAccessinMaciOs && (pxt.BrowserUtils.isIOS() || pxt.BrowserUtils.isMac())
         const disableFileAccessinAndroid = pxt.appTarget.appTheme.disableFileAccessinAndroid && pxt.BrowserUtils.isAndroid();
+        sendUpdateFeedbackTheme(highContrast);
 
         const headless = pxt.appTarget.simulator?.headless;
         const showHome = !targetTheme.lockedEditor && !isController && auth.hasIdentity();
@@ -313,7 +315,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         const showPairDevice = pxt.usb.isEnabled;
 
         const showCenterDivider = targetTheme.selectLanguage || targetTheme.highContrast || showGreenScreen || githubUser;
-        const showFeedbackOption = targetTheme.feedbackEnabled && targetTheme.ocvAppId && targetTheme.ocvFrameUrl;
+        const showFeedbackOption = pxt.webConfig.ocvEnabled && targetTheme.feedbackEnabled && targetTheme.ocvAppId && targetTheme.ocvFrameUrl;
 
         const simCollapseText = headless ? lf("Toggle the File Explorer") : lf("Toggle the simulator");
 
