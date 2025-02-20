@@ -8,9 +8,24 @@ export interface ThemePickerModalProps {
 }
 export const ThemePickerModal = (props: ThemePickerModalProps) => {
     return (
-        <Modal id="theme-picker-modal" title={lf("Choose a Theme")} onClose={props.onClose} className="theme-picker-modal">
-            <div className="ui cards centered theme-picker" role="list" aria-label={lf("List of available themes")}>
-                {props.themes && props.themes.map((theme) => <ThemeCard key={theme.id} theme={theme} onClick={props.onThemeClicked} />)}
+        <Modal 
+            id="theme-picker-modal" 
+            title={lf("Choose a Theme")}
+            onClose={props.onClose}
+            className="theme-picker-modal"
+        >
+            <div
+                className="ui cards centered theme-picker"
+                role="list"
+                aria-label={lf("List of available themes")}
+            >
+                {props.themes && props.themes.map(theme => 
+                    <ThemeCard
+                        key={theme.id}
+                        theme={theme}
+                        onClick={props.onThemeClicked}
+                    />
+                )}
             </div>
         </Modal>
     );
