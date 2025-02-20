@@ -122,6 +122,12 @@ code {
     content: " ";
 }
 
+.header .common-button.menu-button.inverted,
+.header .common-button.menu-button.inverted:hover  {
+    background: var(--pxt-header-foreground);
+    color: var(--pxt-header-background);
+}
+
 .ui.item.logo .name {
     margin-left: 1rem;
     margin-bottom: 1px;

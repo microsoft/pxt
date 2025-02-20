@@ -444,11 +444,6 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
             return {
                 ...state
             }
-        case actions.SET_THEME_ID:
-            return {
-                ...state,
-                colorThemeId: action.themeId
-            }
         default:
             return state
     }

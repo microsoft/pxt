@@ -24,8 +24,7 @@ import {
     dispatchSetPageTheme,
     dispatchSetUserPreferences,
     dispatchCloseSelectLanguage,
-    dispatchCloseSelectTheme,
-    dispatchSetThemeId
+    dispatchCloseSelectTheme
 } from './actions/dispatch';
 import { PageSourceStatus, SkillMapState } from './store/reducer';
 import { HeaderBar } from './components/HeaderBar';
@@ -61,7 +60,6 @@ interface AppProps {
     highContrast?: boolean;
     showSelectLanguage: boolean;
     showSelectTheme: boolean;
-    colorThemeId: string;
     dispatchAddSkillMap: (map: SkillMap) => void;
     dispatchChangeSelectedItem: (mapId?: string, activityId?: string) => void;
     dispatchClearSkillMaps: () => void;
@@ -78,7 +76,6 @@ interface AppProps {
     dispatchSetUserPreferences: (prefs: pxt.auth.UserPreferences) => void;
     dispatchCloseSelectLanguage: () => void;
     dispatchCloseSelectTheme: () => void;
-    dispatchSetThemeId: (themeId: string) => void;
 }
 
 interface AppState {
@@ -358,11 +355,12 @@ class AppImpl extends React.Component<AppProps, AppState> {
         }
     }
 
-    protected initColorTheme() {
+    protected async initColorThemeAsync() {
         // Load theme colors
+        const prefThemeId = await authClient.getColorThemeIdAsync();
         let initialTheme = this.props.highContrast ?
                     pxt.appTarget?.appTheme?.highContrastColorTheme :
-                    this.props.colorThemeId ?? pxt.appTarget?.appTheme?.defaultColorTheme;
+                    prefThemeId ?? pxt.appTarget?.appTheme?.defaultColorTheme;
 
         if (initialTheme) {
             if (initialTheme !== this.themeManager.getCurrentColorTheme()?.id) {
@@ -384,7 +382,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
 
         await authClient.authCheckAsync();
         await this.initLocalizationAsync();
-        this.initColorTheme();
+        await this.initColorThemeAsync();
         await this.parseHashAsync();
         this.readyPromise.setAppMounted();
 
@@ -422,7 +420,6 @@ class AppImpl extends React.Component<AppProps, AppState> {
     changeTheme(theme: pxt.ColorThemeInfo) {
         pxt.tickEvent(`skillmap.menu.theme.changetheme`, { theme: theme.id });
         this.themeManager.switchColorTheme(theme.id);
-        this.props.dispatchSetThemeId(theme.id);
         this.props.dispatchSetUserPreferences({ themeId: theme.id });
     }
 
@@ -614,7 +611,6 @@ const mapDispatchToProps = {
     dispatchChangeSelectedItem,
     dispatchCloseSelectLanguage,
     dispatchCloseSelectTheme,
-    dispatchSetThemeId,
 };
 
 const App = connect(mapStateToProps, mapDispatchToProps)(AppImpl);

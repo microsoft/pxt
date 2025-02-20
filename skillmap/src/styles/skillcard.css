@@ -106,8 +106,8 @@
 
 /* SKILL CARD DISPLAY (FRONT) */
 .skill-card-display {
-    color: var(--inverted-text-color);
-    background-color: var(--primary-color);
+    color: var(--pxt-primary-foreground);
+    background-color: var(--pxt-primary-background);
     justify-content: flex-end;
 }
 
@@ -155,7 +155,8 @@
 
 /* SKILL CARD INFO (BACK) */
 .skill-card-info {
-    background-color: var(--white);
+    background-color: var(--pxt-neutral-background1);
+    color: var(--pxt-neutral-foreground1);
     padding: 0.5rem;
     transform: rotateX(180deg);
 }
