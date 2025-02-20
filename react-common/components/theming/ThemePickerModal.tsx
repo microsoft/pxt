@@ -8,7 +8,7 @@ export interface ThemePickerModalProps {
 }
 export const ThemePickerModal = (props: ThemePickerModalProps) => {
     return (
-        <Modal 
+        <Modal
             id="theme-picker-modal" 
             title={lf("Choose a Theme")}
             onClose={props.onClose}
