@@ -58,7 +58,6 @@ export function installHelpResources(id: string, name: string, tooltip: any, url
 
     block.init = function () {
         old.call(this);
-        let block = this;
         setHelpResources(this, id, name, tooltip, url, colour, colourSecondary, colourTertiary);
     }
 }
