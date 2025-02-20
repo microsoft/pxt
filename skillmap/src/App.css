@@ -1,24 +1,4 @@
 :root {
-    --black: #000;
-    --white: #fff;
-
-    --primary-color: var(--pxt-primary-background);
-    --secondary-color: var(--pxt-secondary-background);
-    --tertiary-color: var(--pxt-tertiary-background);
-
-    --hover-color: var(--secondary-color);
-    --active-color: var(--tertiary-color);
-    --inactive-color: var(--secondary-color);
-    --inactive-hover-color: var(--pxt-secondary-background-hover);
-
-    --body-background-color: var(--pxt-target-background1);
-    --default-card-color: var(--pxt-neutral-background1);
-    --card-hover-color: var(--pxt-neutral-background1-hover);
-    --card-border-color: var(--pxt-neutral-stencil1);
-    --dropdown-hover-color: var(--pxt-neutral-background1);
-    --inverted-text-color: var(--pxt-neutral-background1);
-    --subtitle-text-color: var(--pxt-neutral-background3);
-
     --header-height: 4rem;
     --header-padding-top: 1rem;
 
@@ -34,8 +14,8 @@
     --graph-backround-zindex: 10;
     --above-graph-zindex: 20;
 
-    --high-contrast-text: var(--white);
-    --high-contrast-background: var(--black);
+    --high-contrast-text: #fff;
+    --high-contrast-background: #000;
     --high-contrast-highlight: #ffff00;
     --high-contrast-focus-outline: 2px solid var(--high-contrast-highlight);
     --high-contrast-hyperlink: #807FFF;
@@ -92,7 +72,6 @@ code {
     max-height: var(--header-height);
     display: flex;
     align-items: center;
-    color: var(--inverted-text-color);
     flex-grow: 0;
     flex-shrink: 0;
 
@@ -295,12 +274,11 @@ code {
 
 .banner-card {
     background-color: var(--pxt-primary-background);
-    color: var(--pxt-primery-foreground);
+    color: var(--pxt-primary-foreground);
 
     min-width: 24rem;
     width: 60%;
     display: flex;
-    color: var(--inverted-text-color);
 }
 
 .banner-card > i {
@@ -324,7 +302,7 @@ code {
 
 .banner-info i, .banner-info i:hover {
     margin-left: 0.5rem;
-    color: var(--inverted-text-color);
+    color: var(--pxt-primary-foreground);
     font-size: 1.2rem;
     vertical-align: top;
     text-decoration: none;

@@ -37,9 +37,9 @@
  }
 
 .makecode-frame-loader-bar {
-    --progress-bar-filled-color: var(--primary-color);
+    --progress-bar-filled-color: var(--pxt-primary-background);
     --progress-bar-unfilled-color: transparency;
-    --progress-bar-border-color: var(--black);
+    --progress-bar-border-color: var(--pxt-primary-foreground);
     width: 10rem;
     height: 1.5rem;
     margin-bottom: 1rem;
