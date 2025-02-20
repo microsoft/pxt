@@ -49,7 +49,7 @@
 
         "pxt-neutral-background1": "#FFFFFF",
         "pxt-neutral-foreground1": "rgba(0,0,0,.85)",
-        "pxt-neutral-background1-hover": "#cccccc",
+        "pxt-neutral-background1-hover": "#e6e6e6",
         "pxt-neutral-foreground1-hover": "rgba(0,0,0,.85)",
         "pxt-neutral-stencil1": "rgba(34, 74, 114, 0.15)",
 
