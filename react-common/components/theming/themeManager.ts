@@ -38,19 +38,13 @@ export class ThemeManager {
     // until we fully support high contrast via color themes (requires a lot of overrides).
     // TODO : this should be removed once we do fully support it.
     private performHighContrastWorkaround(themeId: string) {
-        let setBodyClass = (add:boolean, className: string) => {
-            const body = this.document.body;
-            const hasClass = body.classList.contains(className);
-            if (!add && hasClass) {
-                body.classList.remove(className);
-            } else if (add && !hasClass) {
-                body.classList.add(className);
-            }
+        if (themeId && themeId === pxt.appTarget?.appTheme?.highContrastColorTheme) {
+            this.document.body.classList.add("high-contrast");
+            this.document.body.classList.add("hc");
+        } else {
+            this.document.body.classList.remove("high-contrast");
+            this.document.body.classList.remove("hc");
         }
-
-        const isHighContrast = themeId && themeId === pxt.appTarget?.appTheme?.highContrastColorTheme;
-        setBodyClass(isHighContrast, "high-contrast");
-        setBodyClass(isHighContrast, "hc");
     }
 
     public switchColorTheme(themeId: string) {
