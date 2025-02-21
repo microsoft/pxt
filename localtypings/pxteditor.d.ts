@@ -926,6 +926,7 @@ declare namespace pxt.editor {
 
         newEmptyProject(name?: string, documentation?: string, preferredEditor?: string): void;
         newProject(options?: pxt.editor.ProjectCreationOptions): void;
+        newUserCreatedProject(firstProject: boolean): Promise<void>;
         createProjectAsync(options: pxt.editor.ProjectCreationOptions): Promise<void>;
         importExampleAsync(options: ExampleImportOptions): Promise<void>;
         showScriptManager(): void;
