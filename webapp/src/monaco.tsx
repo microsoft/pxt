@@ -816,6 +816,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return false;
     }
 
+    getToolboxDiv(): HTMLElement | undefined {
+        const monacoArea = document.getElementById('monacoEditorArea');
+        if (!monacoArea) return undefined;
+        return monacoArea.getElementsByClassName('monacoToolboxDiv')[0] as HTMLElement;
+    }
+
     resize(e?: Event) {
         let monacoArea = document.getElementById('monacoEditorArea');
         if (!monacoArea) return;
