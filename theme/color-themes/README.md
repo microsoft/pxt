@@ -19,7 +19,7 @@ The broad categories are:
 | Header        | Basically just the header bar colors. | Header bar |
 | Primary       | Used to indicate most important actions. | Download Button |
 | Secondary     | Used to indicate secondary actions. | Zoom buttons |
-| Tertiary      | Used to indicate additional actions (secondary/tertiary is often arbitrary, based on what looks nice). | Editor tour buttons |
+| Tertiary      | Used to indicate additional actions (secondary/tertiary is often arbitrary, based on what looks nice). | Editor tour bubbles |
 | Target1       | A target-specific set of subtle colors. | Blockly workspace |
 | Target2       | Additional target-specific set of subtle colors. | Sim sidebar |
 | Target3       | Additional target-specific set of subtle colors. | Toolbox |

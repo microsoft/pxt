@@ -131,15 +131,15 @@ a.ui.card:focus,
 /* New project card */
 
 .ui.card.link.buttoncard {
-    border: @borderWidth solid @solidBorderColor;
+    border: @borderWidth solid var(--pxt-neutral-foreground1);
     text-align: center;
-    color: @white;
+    color: var(--pxt-neutral-foreground1);
     font-size: 18pt;
     .content {
         height: 12rem;
     }
     .header {
-        color: @white;
+        color: var(--pxt-neutral-foreground1);
         font-size: 14pt !important;
         margin-top: 1rem !important;
     }
@@ -152,6 +152,10 @@ a.ui.card:focus,
 .ui.card.link.newprojectcard {
     background: var(--pxt-primary-background) !important;
     color: var(--pxt-primary-foreground) !important;
+
+    .header {
+        color: var(--pxt-primary-foreground) !important;
+    }
 }
 
 .ui.card.link.cloudprojectscard {
@@ -160,6 +164,7 @@ a.ui.card:focus,
 
     .header {
         white-space: normal;
+        color: var(--pxt-secondary-foreground) !important;
     }
 }
 
