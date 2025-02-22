@@ -139,24 +139,33 @@ body.pxt-theme-root {
     }
 
 
-    .ui.menu .dropdown.item .menu, .ui.dropdown .menu {
+    .ui.menu {
         background: var(--pxt-neutral-background1);
         color: var(--pxt-neutral-foreground1);
-        box-shadow: 0 1px 3px 0 var(--pxt-neutral-alpha10);
 
-        .item {
-            color: var(--pxt-neutral-foreground1) !important; // override !important in semantic ui
+        .dropdown.item .menu, .ui.dropdown .menu {
+            background: var(--pxt-neutral-background1);
+            color: var(--pxt-neutral-foreground1);
+            box-shadow: 0 1px 3px 0 var(--pxt-neutral-alpha10);
 
-            &:hover, &:focus {
-                background: var(--pxt-neutral-background1-hover) !important;
-                color: var(--pxt-neutral-foreground1-hover) !important;
+            .item {
+                color: var(--pxt-neutral-foreground1) !important; // override !important in semantic ui
+
+                &:hover, &:focus {
+                    background: var(--pxt-neutral-background1-hover) !important;
+                    color: var(--pxt-neutral-foreground1-hover) !important;
+                }
+            }
+
+            .divider {
+                background: none;
+                border-top: 1px solid var(--pxt-neutral-stencil1);
             }
         }
+    }
 
-        .divider {
-            background: none;
-            border-top: 1px solid var(--pxt-neutral-stencil1);
-        }
+    .ui.menu .item.disabled, .ui.menu .item.disabled:hover {
+        color: var(--pxt-neutral-alpha20) !important;
     }
 
     .ui.form .field label {
