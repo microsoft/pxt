@@ -5174,6 +5174,13 @@ export class ProjectView
 
         if (newThemeId) {
             auth.setThemePrefAsync(newThemeId);
+
+            // Disable high contrast preference (separate from theme pref) if the new theme is not high contrast.
+            // This is only needed while we transition from not having themes to having them. In time, the
+            // auth.HIGHCONTRAST preference can be phased out in favor of the themeId preference.
+            if (!this.themeManager.isHighContrast(newThemeId) && data.getData<boolean>(auth.HIGHCONTRAST)) {
+                auth.setHighContrastPrefAsync(false);
+            }
         }
     }
 

@@ -34,11 +34,15 @@ export class ThemeManager {
         return pxt.appTarget?.colorThemeMap ? Object.values(pxt.appTarget.colorThemeMap) : [];
     }
 
+    public isHighContrast(themeId: string) {
+        return themeId && themeId === pxt.appTarget?.appTheme?.highContrastColorTheme;
+    }
+
     // This is a workaround to ensure we still get all the special-case high-contrast styling
     // until we fully support high contrast via color themes (requires a lot of overrides).
     // TODO : this should be removed once we do fully support it.
     private performHighContrastWorkaround(themeId: string) {
-        if (themeId && themeId === pxt.appTarget?.appTheme?.highContrastColorTheme) {
+        if (this.isHighContrast(themeId)) {
             this.document.body.classList.add("high-contrast");
             this.document.body.classList.add("hc");
         } else {
