@@ -25,6 +25,12 @@ namespace ts.pxtc {
         options.noImplicitAny = true;
         options.noImplicitReturns = true;
         options.allowUnreachableCode = true;
+        options.declaration = true;
+
+        for (const [key, value] of Object.entries(opts?.tsCompileOptions ?? {})) {
+            options[key] = value;
+        }
+
         return options
     }
 
