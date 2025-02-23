@@ -163,6 +163,17 @@ export function getCached(component: DataSubscriber, path: string): DataFetchRes
     return getDataWithStatus(path);
 }
 
+export function useVirtualCache() {
+    const [state, setState] = React.useState(0)
+    const componentRef = React.useRef<DataSubscriber>({
+        subscriptions: [],
+        onDataChanged: (path: string) => setState(v => v+1)
+    })
+    React.useEffect(() => () => unsubscribe(componentRef.current), [])
+    unsubscribe(componentRef.current)
+    return (path: string) => getCached(componentRef.current, path)
+}
+
 //
 // Public interface
 //
