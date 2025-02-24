@@ -392,17 +392,19 @@ function inflateMetadata(section: MarkdownSection): PageMetadata {
         bannerImageUrl: section.attributes["bannerurl"],
         alternateSources: parseList(section.attributes["alternatesources"]),
         theme: {
+            /* Many of these remain hard-coded because their interaction with the fixed
+            background image is more important than the main site theme */
             backgroundColor: tertiary || "var(--pxt-target-background1)",
-            pathColor: primary || "var(--pxt-target-foreground1)",
-            strokeColor: "var(--pxt-target-foreground1)",
+            pathColor: primary || "#BFBFBF",
+            strokeColor: "#000000",
             rewardNodeColor: highlight || "var(--pxt-primary-background)",
-            rewardNodeForeground: highlight ? getContrastingColor(highlight) : "var(--pxt-primary-foreground)",
+            rewardNodeForeground: highlight ? getContrastingColor(highlight) : "#000000",
             unlockedNodeColor: unlockedNodeColor || secondary || "var(--pxt-secondary-background)",
-            unlockedNodeForeground: (unlockedNodeColor || secondary) ? getContrastingColor(unlockedNodeColor || secondary) : "var(--pxt-secondary-foreground)",
-            lockedNodeColor: lockedNodeColor || primary || "var(--pxt-neutral-background3)",
-            lockedNodeForeground: (lockedNodeColor || primary) ? getContrastingColor(lockedNodeColor || primary) : "var(--pxt-neutral-foreground3)",
+            unlockedNodeForeground: (unlockedNodeColor || secondary) ? getContrastingColor(unlockedNodeColor || secondary) : "#000000",
+            lockedNodeColor: lockedNodeColor || primary || "#BFBFBF",
+            lockedNodeForeground: (lockedNodeColor || primary) ? getContrastingColor(lockedNodeColor || primary) : "#000000",
             completedNodeColor: completedNodeColor || secondary || "var(--pxt-secondary-background)",
-            completedNodeForeground: (completedNodeColor || secondary) ? getContrastingColor(completedNodeColor || secondary) : "var(--pxt-secondary-foreground)",
+            completedNodeForeground: (completedNodeColor || secondary) ? getContrastingColor(completedNodeColor || secondary) : "#000000",
             selectedStrokeColor: highlight || "var(--pxt-primary-background)",
             pathOpacity: 0.5,
         }
