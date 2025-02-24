@@ -2,6 +2,7 @@ import * as core from "./core";
 import * as data from "./data";
 import * as cloud from "./cloud";
 import * as workspace from "./workspace";
+import { MinecraftAuthClient } from "./minecraftAuthClient";
 
 /**
  * Virtual API keys
@@ -35,7 +36,7 @@ export class Component<TProps, TState> extends data.Component<TProps, TState> {
     }
 }
 
-class AuthClient extends pxt.auth.AuthClient {
+export class AuthClient extends pxt.auth.AuthClient {
     protected async onSignedIn(): Promise<void> {
         const state = await pxt.auth.getUserStateAsync();
         core.infoNotification(lf("Signed in: {0}", pxt.auth.userName(state.profile)));
@@ -151,18 +152,23 @@ function initVirtualApi() {
 }
 
 let authClientPromise: Promise<AuthClient>;
+let authClientFactory = () => new AuthClient();
 
 async function clientAsync(): Promise<AuthClient | undefined> {
     if (!pxt.auth.hasIdentity()) { return undefined; }
     if (authClientPromise) return authClientPromise;
     authClientPromise = new Promise<AuthClient>(async (resolve, reject) => {
-        const cli = new AuthClient();
+        const cli = authClientFactory();
         await cli.initAsync();
         await cli.authCheckAsync();
         await cli.initialUserPreferencesAsync();
         resolve(cli as AuthClient);
     });
     return authClientPromise;
+}
+
+export function overrideAuthClient(factory: () => AuthClient) {
+    authClientFactory = factory;
 }
 
 export function hasIdentity(): boolean {
