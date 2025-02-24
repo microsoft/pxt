@@ -93,6 +93,15 @@ interface CloudProxyDeleteResponse {
     resp: undefined;
 }
 
+interface DriveDBEntry {
+    id: string;
+    driveItemId: string;
+}
+
+const DRIVE_ID_DB_NAME = "__minecraft_userdriveid"
+const DRIVE_ID_TABLE = "userdrive";
+const DRIVE_ID_KEYPATH = "id";
+
 export class MinecraftAuthClient extends AuthClient {
     protected pendingMessages: pxt.Map<(response: pxt.editor.CloudProxyResponse) => void> = {};
     protected preferences: pxt.auth.UserPreferences = {};
@@ -188,7 +197,6 @@ export class MinecraftAuthClient extends AuthClient {
             );
         }
         else if (path === "/api/user/project") {
-
             if (method === "GET") {
                 // LIST
                 let headerIds: string[];
@@ -339,6 +347,12 @@ export class MinecraftAuthClient extends AuthClient {
             headerIds
         });
 
+        if (resp.resp.success) {
+            for (const project of resp.resp.resp) {
+                await this.updateProjectDriveId(project);
+            }
+        }
+
         return resp.resp;
     }
 
@@ -348,10 +362,17 @@ export class MinecraftAuthClient extends AuthClient {
             headerId
         });
 
+        if (resp.resp.success) {
+            await this.updateProjectDriveId(resp.resp.resp);
+        }
+
         return resp.resp;
     }
 
     protected async setAsync(project: pxt.editor.CloudProject): Promise<pxt.auth.ApiResult<string>> {
+        const id = await this.lookupProjectDriveId(project.id);
+        project.driveItemId = id;
+
         const resp = await this.postMessageAsync<pxt.editor.CloudProxySetResponse>({
             operation: "set",
             project
@@ -367,5 +388,33 @@ export class MinecraftAuthClient extends AuthClient {
 
         return resp.resp;
     }
+
+    protected async updateProjectDriveId(project: pxt.editor.CloudProject) {
+        if (!project.driveItemId) return;
+
+        const db = getUserDriveDb();
+        await db.openAsync();
+
+        await db.setAsync(DRIVE_ID_TABLE, {
+            id: project.id,
+            driveItemId: project.driveItemId
+        } as DriveDBEntry);
+    }
+
+    protected async lookupProjectDriveId(headerId: string) {
+        const db = getUserDriveDb();
+        await db.openAsync();
+
+        const entry = await db.getAsync<DriveDBEntry>(DRIVE_ID_TABLE, headerId);
+        return entry?.driveItemId;
+    }
 }
 
+function getUserDriveDb() {
+    const db = new pxt.BrowserUtils.IDBWrapper(DRIVE_ID_DB_NAME, 1, (ev, r) => {
+        const db = r.result as IDBDatabase;
+        db.createObjectStore(DRIVE_ID_TABLE, { keyPath: DRIVE_ID_KEYPATH });
+    });
+
+    return db;
+}

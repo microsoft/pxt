@@ -1389,6 +1389,9 @@ declare namespace pxt.editor {
         header: string;
         text: string;
         version: string;
+
+        // minecraft specific
+        driveItemId?: string;
     };
 
     interface BaseCloudProxyRequest extends EditorMessageRequest {
