@@ -76,7 +76,7 @@ export class EditorAccessibilityMenu extends data.Component<EditorAccessibilityM
             <sui.Item className={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="xicon js" text={lf("Skip to JavaScript editor")} onClick={this.openJavaScript} />
             {targetTheme.python ? <sui.Item className={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="xicon python" text={lf("Skip to Python editor")} onClick={this.openPython} /> : undefined}
             {targetTheme.selectLanguage ? <sui.Item className={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="xicon globe" text={lf("Select Language")} onClick={this.showLanguagePicker} /> : undefined}
-            {targetTheme.defaultColorTheme ? <sui.Item className={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" text={lf("Select Theme")} onClick={this.showThemePicker} /> : undefined}
+            {targetTheme.defaultColorTheme ? <sui.Item className={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="paint brush" text={lf("Select Theme")} onClick={this.showThemePicker} /> : undefined}
             {hasHome ? <sui.Item className={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="home" text={lf("Go Home")} onClick={this.goHome} /> : undefined}
         </div>;
     }
@@ -145,7 +145,7 @@ export class HomeAccessibilityMenu extends data.Component<HomeAccessibilityMenuP
             <sui.Item className={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="add circle" text={lf("New Project")} onClick={this.newProject} />
             <sui.Item className={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="upload" text={lf("Import Project")} onClick={this.importProjectDialog} />
             {targetTheme.selectLanguage ? <sui.Item className={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="xicon globe" text={lf("Select Language")} onClick={this.showLanguagePicker} /> : undefined}
-            {targetTheme.defaultColorTheme ? <sui.Item className={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" text={("Select Theme")} onClick={this.showThemePicker} /> : undefined}
+            {targetTheme.defaultColorTheme ? <sui.Item className={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="paint brush" text={("Select Theme")} onClick={this.showThemePicker} /> : undefined}
         </div>;
     }
 }
