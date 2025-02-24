@@ -1080,6 +1080,17 @@ Field editors
 
     .import-button>.common-button {
         padding: .8rem 1rem .95rem;
+
+        background-color: var(--pxt-neutral-background1) !important;
+        color: var(--pxt-neutral-foreground1) !important;
+
+        /* Add some additional contrast against bkg */
+        box-shadow: 0 1px var(--pxt-neutral-stencil1) !important;
+
+        &:hover {
+            background-color: var(--pxt-neutral-background1-hover) !important;
+            color: var(--pxt-neutral-foreground1-hover) !important;
+        }
     }
 
     .extension-grid {
@@ -1129,7 +1140,14 @@ Field editors
         width: 100%;
 
         .common-button {
-            border: 2px solid @white;
+            border: 2px solid var(--pxt-neutral-stencil1);
+            background-color: var(--pxt-neutral-background1);
+            color: var(--pxt-neutral-foreground1);
+
+            &:hover {
+                background-color: var(--pxt-neutral-background1-hover);
+                color: var(--pxt-neutral-foreground1-hover);
+            }
         }
 
         .common-button.selected {
@@ -1142,6 +1160,7 @@ Field editors
         overflow-y: auto;
         padding: 0rem;
     }
+
     .extension-grid {
         overflow-y: auto;
         overflow-x: hidden;

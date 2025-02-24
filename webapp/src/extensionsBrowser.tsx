@@ -585,7 +585,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                                     title={(lf("Import File"))}
                                     label={(lf("Import File"))}
                                     leftIcon="fas fa-upload"
-                                    className="gray"
+                                    className="neutral"
                                     onClick={importExtension}
                                 />
                             </div>
