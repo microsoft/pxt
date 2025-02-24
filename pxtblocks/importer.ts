@@ -3,7 +3,7 @@
 import * as Blockly from "blockly";
 import { blockSymbol, buildinBlockStatements, hasArrowFunction, initializeAndInject } from "./loader";
 import { extensionBlocklyPatch } from "./external";
-import { FieldBase } from "./fields";
+import { FieldBase, updateTilemapXml } from "./fields";
 
 export interface BlockSnippet {
     target: string; // pxt.appTarget.id
@@ -31,6 +31,11 @@ export function domToWorkspaceNoEvents(dom: Element, workspace: Blockly.Workspac
     let newBlockIds: string[] = [];
     patchCommentIds(dom);
     patchShadows(dom, false);
+
+    if (pxt.react.getTilemapProject) {
+        updateTilemapXml(dom, pxt.react.getTilemapProject());
+    }
+
     try {
         Blockly.Events.disable();
         newBlockIds = Blockly.Xml.domToWorkspace(dom, workspace);

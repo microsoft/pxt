@@ -37,6 +37,15 @@ import { DuplicateOnDragConnectionChecker } from "../../pxtblocks/plugins/duplic
 import { PathObject } from "../../pxtblocks/plugins/renderer/pathObject";
 import { Measurements } from "./constants";
 
+interface CopyDataEntry {
+    version: 1;
+    data: Blockly.ICopyData;
+    coord: Blockly.utils.Coordinate;
+    workspaceId: string;
+    targetVersion: string;
+    headerId: string;
+}
+
 
 export class Editor extends toolboxeditor.ToolboxEditor {
     editor: Blockly.WorkspaceSvg;
@@ -236,7 +245,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     } catch { }
                     this.loadingXml = false;
                     this.loadingXmlPromise = null;
-                    pxt.perf.measureEnd(Measurements.DomUpdateLoadBlockly)
+                    pxt.perf.measureEnd(Measurements.DomUpdateLoadBlockly, { projectHeaderId: this.parent.state.header?.id });
                     // Do Not Remove: This is used by the skillmap
                     this.parent.onEditorContentLoaded();
                 });
@@ -313,8 +322,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             const xml = Blockly.utils.xml.textToDom(text);
             this.cleanXmlForWorkspace(xml);
             pxtblockly.domToWorkspaceNoEvents(xml, this.editor);
-
-            pxtblockly.upgradeTilemapsInWorkspace(this.editor, pxt.react.getTilemapProject());
 
             this.initLayout(xml);
             this.editor.clearUndo();
@@ -470,6 +477,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (pxt.Util.isTranslationMode()) {
             pxtblockly.external.setPromptTranslateBlock(dialogs.promptTranslateBlock);
         }
+
+        pxtblockly.external.setCopyPaste(copy, cut, this.pasteCallback, this.copyPrecondition, this.pastePrecondition);
     }
 
     private initBlocklyToolbox() {
@@ -1602,7 +1611,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 // Cache blocks xml list for later
                 this.flyoutBlockXmlCache[cacheKey] = this.flyoutXmlList;
             }
-            this.showFlyoutInternal_(this.flyoutXmlList, cacheKey);
+            this.showFlyoutInternal_(this.flyoutXmlList, cachable && cacheKey);
         }
     }
 
@@ -1938,6 +1947,131 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.removeBreakpointFromEvent(block.id)
         }
     }
+
+    protected pasteCallback = () => {
+        const data = getCopyData();
+        if (!data?.data || !this.editor || !this.canPasteData(data)) return false;
+
+        this.pasteAsync(data);
+        return true;
+    }
+
+    protected async pasteAsync(data: CopyDataEntry) {
+        const copyData = data.data;
+        const copyWorkspace = this.editor;
+        const copyCoords = copyWorkspace.id === data.workspaceId ? data.coord : undefined;
+
+        // this pasting code is adapted from Blockly/core/shortcut_items.ts
+        const doPaste = () => {
+            if (!copyCoords) {
+                // If we don't have location data about the original copyable, let the
+                // paster determine position.
+                return !!Blockly.clipboard.paste(copyData, copyWorkspace);
+            }
+
+            const { left, top, width, height } = copyWorkspace
+                .getMetricsManager()
+                .getViewMetrics(true);
+            const viewportRect = new Blockly.utils.Rect(
+                top,
+                top + height,
+                left,
+                left + width
+            );
+
+            if (viewportRect.contains(copyCoords.x, copyCoords.y)) {
+                // If the original copyable is inside the viewport, let the paster
+                // determine position.
+                return !!Blockly.clipboard.paste(copyData, copyWorkspace);
+            }
+
+            // Otherwise, paste in the middle of the viewport.
+            const centerCoords = new Blockly.utils.Coordinate(
+                left + width / 2,
+                top + height / 2
+            );
+            return !!Blockly.clipboard.paste(copyData, copyWorkspace, centerCoords);
+        };
+
+        if (data.version !== 1) {
+            await core.confirmAsync({
+                header: lf("Paste Error"),
+                body: lf("The code you are pasting comes from an incompatible version of the editor."),
+                hideCancel: true
+            });
+
+            return;
+        }
+
+        if (copyData.paster === Blockly.clipboard.BlockPaster.TYPE) {
+            const typeCounts: {[index: string]: number} = (copyData as any).typeCounts;
+
+            for (const blockType of Object.keys(typeCounts)) {
+                if (!Blockly.Blocks[blockType]) {
+                    await core.confirmAsync({
+                        header: lf("Paste Error"),
+                        body: lf("The code that you're trying to paste contains blocks that aren't available in the current project. If pasting from another project, make sure that you have installed all of the necessary extensions and try again."),
+                        hideCancel: true
+                    });
+
+                    return;
+                }
+            }
+        }
+
+        if (data.targetVersion !== pxt.appTarget.versions.target) {
+            const result = await core.confirmAsync({
+                header: lf("Paste Warning"),
+                body: lf("The code you're trying to paste is from a different version of Microsoft MakeCode. Pasting it may cause issues with your current project. Are you sure you want to continue?"),
+                agreeLbl: lf("Paste Anyway"),
+                agreeClass: "red"
+            });
+
+            if (result !== 1) {
+                return;
+            }
+        }
+
+        doPaste();
+    }
+
+    protected copyPrecondition = (scope: Blockly.ContextMenuRegistry.Scope) => {
+        const workspace = scope.block?.workspace || scope.comment?.workspace;
+
+        if (!workspace || workspace !== this.editor) {
+            return "hidden";
+        }
+
+        return "enabled";
+    }
+
+    protected pastePrecondition = (scope: Blockly.ContextMenuRegistry.Scope) => {
+        if (scope.workspace !== this.editor) return "hidden";
+
+        const data = getCopyData();
+
+        if (!data || !this.canPasteData(data)) {
+            return "disabled";
+        }
+
+        return "enabled";
+    }
+
+    protected canPasteData(data: CopyDataEntry): boolean {
+        const header = pkg.mainEditorPkg().header;
+
+        if (!header) {
+            return false;
+        }
+        else if (data.headerId === header.id) {
+            return true;
+        }
+        else if (header.tutorial && !header.tutorialCompleted) {
+            return false;
+        }
+
+        return true;
+    }
 }
 
 function forEachImageField(workspace: Blockly.Workspace, cb: (asset: pxtblockly.FieldAssetEditor<any, any>) => void) {
@@ -2028,4 +2162,106 @@ function resolveLocalizedMarkdown(url: string) {
     }
 
     return undefined;
+}
+
+// adapted from Blockly/core/shortcut_items.ts
+function copy(workspace: Blockly.WorkspaceSvg, e: Event) {
+    // Prevent the default copy behavior, which may beep or otherwise indicate
+    // an error due to the lack of a selection.
+    e.preventDefault();
+    workspace.hideChaff();
+    const selected = Blockly.common.getSelected();
+    if (!selected || !Blockly.isCopyable(selected)) return false;
+
+    const copyData = selected.toCopyData();
+    const copyWorkspace =
+        selected.workspace instanceof Blockly.WorkspaceSvg
+            ? selected.workspace
+            : workspace;
+    const copyCoords = Blockly.isDraggable(selected)
+        ? selected.getRelativeToSurfaceXY()
+        : null;
+
+    if (copyData) {
+        saveCopyData(
+            copyData,
+            copyCoords,
+            copyWorkspace,
+            pkg.mainEditorPkg().header.id
+        );
+    }
+
+    return !!copyData;
+}
+
+// adapted from Blockly/core/shortcut_items.ts
+function cut(workspace: Blockly.WorkspaceSvg, e: Event) {
+    const selected = Blockly.common.getSelected();
+
+    if (selected instanceof Blockly.BlockSvg) {
+        const copyData = selected.toCopyData();
+        const copyWorkspace = workspace;
+        const copyCoords = selected.getRelativeToSurfaceXY();
+        saveCopyData(
+            copyData,
+            copyCoords,
+            copyWorkspace,
+            pkg.mainEditorPkg().header.id
+        );
+        selected.checkAndDelete();
+        return true;
+    } else if (
+        Blockly.isDeletable(selected) &&
+        selected.isDeletable() &&
+        Blockly.isCopyable(selected)
+    ) {
+        const copyData = selected.toCopyData();
+        const copyWorkspace = workspace;
+        const copyCoords = Blockly.isDraggable(selected)
+            ? selected.getRelativeToSurfaceXY()
+            : null;
+        saveCopyData(
+            copyData,
+            copyCoords,
+            copyWorkspace,
+            pkg.mainEditorPkg().header.id
+        );
+        selected.dispose();
+        return true;
+    }
+    return false;
+}
+
+function saveCopyData(
+    data: Blockly.ICopyData,
+    coord: Blockly.utils.Coordinate,
+    workspace: Blockly.Workspace,
+    headerId: string
+) {
+    const entry: CopyDataEntry = {
+        version: 1,
+        data,
+        coord,
+        workspaceId: workspace.id,
+        targetVersion: pxt.appTarget.versions.target,
+        headerId
+    };
+
+    pxt.storage.setLocal(
+        copyDataKey(),
+        JSON.stringify(entry)
+    );
+}
+
+function getCopyData(): CopyDataEntry | undefined {
+    const data = pxt.storage.getLocal(copyDataKey());
+
+    if (data) {
+        return pxt.U.jsonTryParse(data);
+    }
+    return undefined;
+}
+
+function copyDataKey() {
+    return "copyData";
 }

@@ -1,5 +1,21 @@
 # Microsoft MakeCode Blog
 
+## [Display shield extension/simulator for the micro:bit](/blog/microbit/display-shield)
+
+February 3, 2025 by [Thomas Ball](https://github.com/thomasjball)
+
+With the new display shield extension, you can now use Arcade shields for the micro:bit V2 in https://makecode.microbit.org/beta, with simulator support!
+
+**[Continue reading this blog post](/blog/microbit/display-shield)**
+
+## [MakeCode Code Evaluation Tool Beta](/blog/tools/code-eval-tool)
+
+January 14th, 2025 by [Jaqster](https://github.com/jaqster)
+
+The year 2025 is already off to a great start with the Beta release of a new tool for Teachers! **MakeCode Code Evaluation** is an online tool for teachers to help them understand and evaluate student programs.
+
+**[Continue reading this blog post](/blog/tools/code-eval-tool)**
+
 ## [MakeCode for the micro:bit 2024 Update](/blog/microbit/2024-update)
 
 September 4, 2024 by [Jaqster](https://github.com/jaqster)

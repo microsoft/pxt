@@ -810,8 +810,8 @@ namespace pxsim {
                 let wrapper = this.createFrame();
                 this.container.appendChild(wrapper);
                 frame = wrapper.firstElementChild as HTMLIFrameElement;
-            } else // reuse simulator
-                this.startFrame(frame);
+            }
+            this.startFrame(frame);
 
             this.debuggingFrame = frame.id;
 

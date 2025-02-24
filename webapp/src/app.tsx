@@ -84,6 +84,7 @@ import { parseTourStepsAsync } from "./onboarding";
 import { initGitHubDb } from "./idbworkspace";
 import { BlockDefinition, CategoryNameID } from "./toolbox";
 import { MinecraftAuthClient } from "./minecraftAuthClient";
+import { Feedback} from "../../react-common/components/controls/Feedback/Feedback";
 
 pxt.blocks.requirePxtBlockly = () => pxtblockly as any;
 pxt.blocks.requireBlockly = () => Blockly;
@@ -201,6 +202,7 @@ export class ProjectView
             isMultiplayerGame: false,
             onboarding: undefined,
             mute: pxt.editor.MuteState.Unmuted,
+            feedback: {showing: false, kind: "generic"} // state that tracks if the feedback modal is showing and what kind
         };
         if (!this.settings.editorFontSize) this.settings.editorFontSize = /mobile/i.test(navigator.userAgent) ? 15 : 19;
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
@@ -210,6 +212,7 @@ export class ProjectView
         this.hwDebug = this.hwDebug.bind(this);
         this.hideLightbox = this.hideLightbox.bind(this);
         this.hideOnboarding = this.hideOnboarding.bind(this);
+        this.hideFeedback = this.hideFeedback.bind(this);
         this.openSimSerial = this.openSimSerial.bind(this);
         this.openDeviceSerial = this.openDeviceSerial.bind(this);
         this.openSerial = this.openSerial.bind(this);
@@ -217,6 +220,7 @@ export class ProjectView
         this.toggleSimulatorFullscreen = this.toggleSimulatorFullscreen.bind(this);
         this.toggleSimulatorCollapse = this.toggleSimulatorCollapse.bind(this);
         this.showKeymap = this.showKeymap.bind(this);
+        this.showFeedback = this.showFeedback.bind(this);
         this.toggleKeymap = this.toggleKeymap.bind(this);
         this.showMiniSim = this.showMiniSim.bind(this);
         this.setTutorialStep = this.setTutorialStep.bind(this);
@@ -2775,7 +2779,7 @@ export class ProjectView
     }
 
     private editorLoaded() {
-        pxt.tickEvent('app.editor');
+        pxt.tickEvent('app.editor', { projectHeaderId: this.state.header?.id });
     }
 
     unloadProjectAsync(home?: boolean) {
@@ -2909,6 +2913,16 @@ export class ProjectView
                     this.showOnboarding();
                 }
             });
+    }
+
+    async newUserCreatedProject(firstProject: boolean): Promise<void> {
+        if (pxt.appTarget.appTheme.nameProjectFirst || pxt.appTarget.appTheme.chooseLanguageRestrictionOnNewProject) {
+            const projectSettings = await this.askForProjectCreationOptionsAsync()
+            const { name, languageRestriction } = projectSettings
+            this.newProject({ name, languageRestriction, firstProject });
+        } else {
+            this.newProject({ firstProject });
+        }
     }
 
     async createProjectAsync(options: ProjectCreationOptions): Promise<void> {
@@ -3652,7 +3666,7 @@ export class ProjectView
         if (this.state.collapseEditorTools) {
             this.expandSimulator();
         }
-        if (!enabled) {
+        if (enabled) {
             document.addEventListener('keydown', this.closeOnEscape);
             simulator.driver.focus();
         } else {
@@ -4499,6 +4513,10 @@ export class ProjectView
         dialogs.showAboutDialogAsync(this);
     }
 
+    showFeedbackDialog(kind: ocv.FeedbackKind): void {
+        this.showFeedback(kind);
+    }
+
     async showTurnBackTimeDialogAsync() {
         let simWasRunning = this.isSimulatorRunning();
         if (simWasRunning) {
@@ -4983,7 +5001,8 @@ export class ProjectView
             this.postTutorialLoaded();
         }
 
-        pxt.perf.recordMilestone(Milestones.EditorContentLoaded);
+        pxt.perf.recordMilestone(Milestones.EditorContentLoaded, { projectHeaderId: this.state.header?.id });
+
         if (!this.autoRunOnStart()) {
             pxt.analytics.trackPerformanceReport();
         }
@@ -5126,6 +5145,18 @@ export class ProjectView
     }
 
     ///////////////////////////////////////////////////////////
+    ////////////             Feedback            /////////////
+    ///////////////////////////////////////////////////////////
+
+    hideFeedback() {
+        this.setState({ feedback: {...this.state.feedback, showing: false } });
+    }
+
+    showFeedback(kind: ocv.FeedbackKind) {
+        this.setState({ feedback: { showing: true, kind } });
+    }
+
+    ///////////////////////////////////////////////////////////
     ////////////             Light Box            /////////////
     ///////////////////////////////////////////////////////////
 
@@ -5263,6 +5294,7 @@ export class ProjectView
         const hideMenuBar = targetTheme.hideMenuBar || hideTutorialIteration || (isTabTutorial && pxt.appTarget.appTheme.embeddedTutorial) || pxt.shell.isTimeMachineEmbed();
         const isHeadless = simOpts && simOpts.headless;
         const selectLanguage = targetTheme.selectLanguage;
+        const feedbackEnabled = pxt.webConfig.ocvEnabled && targetTheme.feedbackEnabled && targetTheme.ocvFrameUrl && targetTheme.ocvAppId;
         const showEditorToolbar = inEditor && !hideEditorToolbar && this.editor.hasEditorToolbar();
         const useSerialEditor = pxt.appTarget.serial && !!pxt.appTarget.serial.useEditor;
         const showSideDoc = sideDocs && this.state.sideDocsLoadUrl && !this.state.sideDocsCollapsed;
@@ -5404,6 +5436,7 @@ export class ProjectView
                 {hwDialog ? <projects.ChooseHwDialog parent={this} ref={this.handleChooseHwDialogRef} /> : undefined}
                 {sandbox || !sharingEnabled ? undefined : <share.ShareEditor parent={this} ref={this.handleShareEditorRef} loading={this.state.publishing} />}
                 {selectLanguage ? <lang.LanguagePicker parent={this} ref={this.handleLanguagePickerRef} /> : undefined}
+                {feedbackEnabled && this.state.feedback.showing ? <Feedback onClose={this.hideFeedback} kind={this.state.feedback.kind}/> : undefined}
                 {sandbox ? <container.SandboxFooter parent={this} /> : undefined}
                 {hideMenuBar ? <div id="editorlogo"><a className="poweredbylogo"></a></div> : undefined}
                 {lightbox ? <sui.Dimmer isOpen={true} active={lightbox} portalClassName={'tutorial'} className={'ui modal'}
@@ -5894,11 +5927,14 @@ function initExtensionsAsync(): Promise<void> {
                     monacoToolbox.overrideToolbox(res.toolboxOptions.monacoToolbox);
                 }
             }
+            if (typeof res.perfMeasurementThresholdMs === "number") {
+                pxt.perf.measurementThresholdMs = res.perfMeasurementThresholdMs;
+            }
             if (res.onPerfMilestone) {
-                pxt.perf.onMilestone.subscribe(res.onPerfMilestone);
+                pxt.perf.stats.milestones.subscribe(res.onPerfMilestone);
             }
             if (res.onPerfMeasurement) {
-                pxt.perf.onMeasurement.subscribe(res.onPerfMeasurement);
+                pxt.perf.stats.durations.subscribe(res.onPerfMeasurement);
             }
             cmds.setExtensionResult(res);
         });
@@ -5970,6 +6006,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (optsQuery["tooltipblockids"] == "1") {
         pxt.blocks.showBlockIdInTooltip = true;
     }
+
 
     pxt.perf.measureStart(Measurements.SetAppTarget);
     pkg.setupAppTarget((window as any).pxtTargetBundle);

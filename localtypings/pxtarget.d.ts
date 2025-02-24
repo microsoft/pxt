@@ -441,6 +441,7 @@ declare namespace pxt {
         browserDbPrefixes?: { [majorVersion: number]: string }; // Prefix used when storing projects in the DB to allow side-by-side projects of different major versions
         editorVersionPaths?: { [majorVersion: number]: string }; // A map of major editor versions to their corresponding paths (alpha, v1, etc.)
         experiments?: string[]; // list of experiment ids, also enables this feature
+        supportedExperiences?: string[]; // list of supported "experiences" (separate CRAs, like code eval)
         chooseBoardOnNewProject?: boolean; // when multiple boards are support, show board dialog on "new project"
         bluetoothUartConsole?: boolean; // pair with BLE UART services and pipe console output
         bluetoothUartFilters?: { name?: string; namePrefix?: string; }[]; // device name prefix -- required
@@ -525,6 +526,9 @@ declare namespace pxt {
         timeMachineSnapshotInterval?: number; // An interval in milliseconds at which to take full project snapshots in project history. Defaults to 15 minutes
         adjustBlockContrast?: boolean; // If set to true, all block colors will automatically be adjusted to have a contrast ratio of 4.5 with text
         ipcIdentityProxy?: boolean; // for use with the in game minecraft experience only. If true, proxies all identity API requests through the ipc channel
+        feedbackEnabled?: boolean; // allow feedback to be shown on a target
+        ocvAppId?: number; // the app id needed to attach to the OCV service
+        ocvFrameUrl?: string; // the base url for the OCV service
     }
 
     interface DownloadDialogTheme {

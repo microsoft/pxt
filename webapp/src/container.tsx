@@ -12,6 +12,7 @@ import IProjectView = pxt.editor.IProjectView;
 import ISettingsProps = pxt.editor.ISettingsProps;
 import UserInfo = pxt.editor.UserInfo;
 import SimState = pxt.editor.SimState;
+import { sendUpdateFeedbackTheme } from "../../react-common/components/controls/Feedback/FeedbackEventListener";
 
 // common menu items -- do not remove
 // lf("About")
@@ -142,6 +143,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.toggleAccessibleBlocks = this.toggleAccessibleBlocks.bind(this);
         this.showResetDialog = this.showResetDialog.bind(this);
         this.showShareDialog = this.showShareDialog.bind(this);
+        this.showFeedbackDialog = this.showFeedbackDialog.bind(this);
         this.showExitAndSaveDialog = this.showExitAndSaveDialog.bind(this);
         this.pair = this.pair.bind(this);
         this.pairBluetooth = this.pairBluetooth.bind(this);
@@ -160,6 +162,11 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
     showShareDialog() {
         pxt.tickEvent("menu.share", undefined, { interactiveConsent: true });
         this.props.parent.showShareDialog();
+    }
+
+    showFeedbackDialog() {
+        pxt.tickEvent("menu.feedback");
+        this.props.parent.showFeedbackDialog("generic");
     }
 
     openSettings() {
@@ -295,6 +302,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         const isController = pxt.shell.isControllerMode();
         const disableFileAccessinMaciOs = targetTheme.disableFileAccessinMaciOs && (pxt.BrowserUtils.isIOS() || pxt.BrowserUtils.isMac())
         const disableFileAccessinAndroid = pxt.appTarget.appTheme.disableFileAccessinAndroid && pxt.BrowserUtils.isAndroid();
+        sendUpdateFeedbackTheme(highContrast);
 
         const headless = pxt.appTarget.simulator?.headless;
         const showHome = !targetTheme.lockedEditor && !isController && auth.hasIdentity();
@@ -313,6 +321,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         const showPairDevice = pxt.usb.isEnabled;
 
         const showCenterDivider = targetTheme.selectLanguage || targetTheme.highContrast || showGreenScreen || githubUser;
+        const showFeedbackOption = pxt.webConfig.ocvEnabled && targetTheme.feedbackEnabled && targetTheme.ocvAppId && targetTheme.ocvFrameUrl;
 
         const simCollapseText = headless ? lf("Toggle the File Explorer") : lf("Toggle the simulator");
 
@@ -349,7 +358,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             {
                 // we always need a way to clear local storage, regardless if signed in or not
             }
-            {targetTheme.feedbackUrl ? <a className="ui item" href={targetTheme.feedbackUrl} role="menuitem" title={lf("Give Feedback")} target="_blank" rel="noopener noreferrer" >{lf("Give Feedback")}</a> : undefined}
+            {showFeedbackOption ? <sui.Item role="menuitem" icon="comment" text={lf("Give Feedback")} onClick={this.showFeedbackDialog} /> : undefined}
         </sui.DropdownMenu>;
     }
 }

@@ -439,7 +439,7 @@ export function postHostMessageAsync(msg: pxt.editor.EditorMessageRequest): Prom
         // Note this is a one-way notification. Responses are not supported.
         if (pxt.commands.onPostHostMessage) {
             try {
-                pxt.commands.onPostHostMessage(msg);
+                pxt.commands.onPostHostMessage(env);
             } catch (err) {
                 pxt.reportException(err);
             }

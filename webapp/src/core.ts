@@ -14,6 +14,7 @@ import { pushNotificationMessage } from "../../react-common/components/Notificat
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
 import { Milestones } from "./constants";
+import { sendUpdateFeedbackTheme } from "../../react-common/components/controls/Feedback/FeedbackEventListener";
 
 export type Component<S, T> = data.Component<S, T>;
 
@@ -338,6 +339,7 @@ export function toggleHighContrast() {
     setHighContrast(!getHighContrastOnce())
 }
 export async function setHighContrast(on: boolean) {
+    sendUpdateFeedbackTheme(on);
     await auth.setHighContrastPrefAsync(on);
 }
 

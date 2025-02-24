@@ -461,7 +461,7 @@ export function decompiledDiffAsync(oldTs: string, oldResp: pxtc.CompileResult, 
     log(newXml);
 
     // compute diff of typescript sources
-    const diffLines = pxt.diff.compute(oldTs, newTs, {
+    const diffLines = pxt.diff.computeFormattedDiff(oldTs, newTs, {
         ignoreWhitespace: true,
         full: true
     });
