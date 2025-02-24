@@ -61,6 +61,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     showCategories: boolean = true;
     breakpointsByBlock: pxt.Map<number>; // Map block id --> breakpoint ID
     breakpointsSet: number[]; // the IDs of the breakpoints set.
+    currentFlyoutKey: string;
 
     private errorChangesListeners: pxt.Map<(errors: pxtblockly.BlockDiagnostic[]) => void> = {};
     protected intersectionObserver: IntersectionObserver;
@@ -665,6 +666,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
             if (shouldEventHideFlyout(ev)) {
                 this.hideFlyout();
+            }
+
+            if (ev.type === "var_create") {
+                if (this.currentFlyoutKey === "variables" && this.editor.getFlyout()?.isVisible()) {
+                    // refresh the flyout when a new variable is created
+                    this.showVariablesFlyout();
+                }
             }
 
             if ((ignoredChanges.indexOf(ev.type) === -1)
@@ -1696,6 +1704,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private showFlyoutInternal_(xmlList: Element[], flyoutName: string = "default") {
+        this.currentFlyoutKey = flyoutName;
         const flyout = this.editor.getFlyout() as pxtblockly.VerticalFlyout;
         flyout.show(xmlList, flyoutName);
         flyout.scrollToStart();
