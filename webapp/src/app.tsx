@@ -47,6 +47,7 @@ import * as user from "./user";
 import * as headerbar from "./headerbar";
 import * as sidepanel from "./sidepanel";
 import * as qr from "./qr";
+import { ThemePickerModal } from "../../react-common/components/theming/ThemePickerModal";
 
 import * as monaco from "./monaco"
 import * as toolboxHelpers from "./toolboxHelpers"
@@ -84,6 +85,7 @@ import { parseTourStepsAsync } from "./onboarding";
 import { initGitHubDb } from "./idbworkspace";
 import { BlockDefinition, CategoryNameID } from "./toolbox";
 import { Feedback} from "../../react-common/components/controls/Feedback/Feedback";
+import { ThemeManager } from "../../react-common/components/theming/themeManager";
 
 pxt.blocks.requirePxtBlockly = () => pxtblockly as any;
 pxt.blocks.requireBlockly = () => Blockly;
@@ -165,6 +167,8 @@ export class ProjectView
     private pendingImport: pxt.Util.DeferredPromise<void>;
     private shouldFocusToolbox: boolean;
 
+    private themeManager: ThemeManager;
+
     private highContrastSubscriber: data.DataSubscriber = {
         subscriptions: [],
         onDataChanged: () => {
@@ -187,6 +191,7 @@ export class ProjectView
         this.settings = JSON.parse(pxt.storage.getLocal("editorSettings") || "{}")
         const shouldShowHomeScreen = this.shouldShowHomeScreen();
         const isHighContrast = /hc=(\w+)/.test(window.location.href) || (window.matchMedia?.('(forced-colors: active)')?.matches);
+        this.themeManager = ThemeManager.getInstance(document);
         if (isHighContrast) core.setHighContrast(true);
 
         const simcfg = pxt.appTarget.simulator;
@@ -228,6 +233,9 @@ export class ProjectView
         this.setEditorOffset = this.setEditorOffset.bind(this);
         this.resetTutorialTemplateCode = this.resetTutorialTemplateCode.bind(this);
         this.initSimulatorMessageHandlers();
+        this.showThemePicker = this.showThemePicker.bind(this);
+        this.hideThemePicker = this.hideThemePicker.bind(this);
+        this.setColorTheme = this.setColorTheme.bind(this);
 
         // add user hint IDs and callback to hint manager
         if (pxt.BrowserUtils.useOldTutorialLayout()) this.hintManager.addHint(ProjectView.tutorialCardId, this.tutorialCardHintCallback.bind(this));
@@ -4548,6 +4556,14 @@ export class ProjectView
         this.languagePicker.show();
     }
 
+    showThemePicker() {
+        this.setState( { themePickerOpen: true });
+    }
+
+    hideThemePicker() {
+        this.setState( { themePickerOpen: false });
+    }
+
     showImportUrlDialog() {
         dialogs.showImportUrlDialogAsync()
             .then((id) => {
@@ -5108,7 +5124,7 @@ export class ProjectView
     }
 
     ///////////////////////////////////////////////////////////
-    ////////////         High contrast            /////////////
+    ////////////            Theming               /////////////
     ///////////////////////////////////////////////////////////
 
     toggleHighContrast() {
@@ -5141,6 +5157,31 @@ export class ProjectView
 
     setBannerVisible(b: boolean) {
         this.setState({ bannerVisible: b });
+    }
+
+    setColorTheme(colorThemeId: string) {
+        if (this.themeManager.getCurrentColorTheme()?.id === colorThemeId) {
+            return;
+        }
+
+        pxt.tickEvent("app.setcolortheme", { theme: colorThemeId });
+        this.themeManager.switchColorTheme(colorThemeId);
+        this.updateThemePreference();
+    }
+
+    private updateThemePreference() {
+        const newThemeId = this.themeManager.getCurrentColorTheme()?.id;
+
+        if (newThemeId) {
+            auth.setThemePrefAsync(newThemeId);
+
+            // Disable high contrast preference (separate from theme pref) if the new theme is not high contrast.
+            // This is only needed while we transition from not having themes to having them. In time, the
+            // auth.HIGHCONTRAST preference can be phased out in favor of the themeId preference.
+            if (!this.themeManager.isHighContrast(newThemeId) && data.getData<boolean>(auth.HIGHCONTRAST)) {
+                auth.setHighContrastPrefAsync(false);
+            }
+        }
     }
 
     ///////////////////////////////////////////////////////////
@@ -5441,6 +5482,7 @@ export class ProjectView
                 {lightbox ? <sui.Dimmer isOpen={true} active={lightbox} portalClassName={'tutorial'} className={'ui modal'}
                     shouldFocusAfterRender={false} closable={true} onClose={this.hideLightbox} /> : undefined}
                 {this.state.onboarding && <Tour tourSteps={this.state.onboarding} onClose={this.hideOnboarding} />}
+                {this.state.themePickerOpen && <ThemePickerModal themes={this.themeManager.getAllColorThemes()} onThemeClicked={theme => this.setColorTheme(theme?.id)} onClose={this.hideThemePicker} />}
             </div>
         );
     }
@@ -6213,6 +6255,28 @@ document.addEventListener("DOMContentLoaded", async () => {
             initHashchange();
             socketbridge.tryInit();
             electron.initElectron(theEditor);
+        })
+        .then(() => {
+            // Load theme colors
+            let initialTheme = data.getData<string>(auth.THEMEID);
+            if (!initialTheme) {
+                initialTheme = pxt.appTarget?.appTheme?.defaultColorTheme;
+            }
+
+            // We have a legacy preference stored if the user has enabled high contrast.
+            // Respect it here by switching to the hc color theme.
+            const hcEnabled = data.getData<boolean>(auth.HIGHCONTRAST);
+            if (hcEnabled) {
+                initialTheme = pxt.appTarget?.appTheme?.highContrastColorTheme;
+            }
+
+            if (initialTheme) {
+                const themeManager = ThemeManager.getInstance(document);
+                if (initialTheme !== themeManager.getCurrentColorTheme()?.id) {
+                    return themeManager.switchColorTheme(initialTheme);
+                }
+            }
+            return Promise.resolve();
         })
         .then(() => {
             const showHome = theEditor.shouldShowHomeScreen();

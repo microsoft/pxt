@@ -4,7 +4,7 @@
 }
 
 .common-menu-dropdown > .menu-button.expanded {
-    background: @buttonMenuBackgroundActiveColor;
+    background: var(--pxt-neutral-alpha20);
 }
 
 .common-menu-dropdown-pane {
@@ -16,7 +16,8 @@
         list-style: none;
         margin: 0;
         padding: 0;
-        background: @menuDropdownPaneBackground;
+        background: var(--pxt-neutral-background1);
+        color: var(--pxt-neutral-foreground1);
     }
 
     li {
@@ -30,6 +31,10 @@
     width: 100%;
     margin: 0;
     padding: 1rem;
+
+    &:hover {
+        background-color: var(--pxt-neutral-alpha10);
+    }
 }
 
 .common-menu-dropdown-item.common-button:focus::after {

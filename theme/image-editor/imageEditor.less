@@ -13,6 +13,7 @@
 @import 'alert';
 
 :root {
+    // TODO : Integrate with theme
     --editor-bg-color: #1e1e1e;
 
     --sidebar-bg-color: #252526;
@@ -303,8 +304,8 @@
     display: flex;
     align-items: center;
     padding: 0 2rem;
-    background-color: @green;
-    color: @white;
+    background-color: var(--pxt-colors-green-background);
+    color: var(--pxt-colors-green-foreground);
     cursor: pointer;
     user-select: none;
     margin: 0;
@@ -312,11 +313,13 @@
 }
 
 .common-button.image-editor-confirm:hover {
-    background-color: darken(@green, 5%);
+    background-color: var(--pxt-colors-green-background-hover);
+    color: var(--pxt-colors-green-foreground);
 }
 
 .common-button.image-editor-confirm:active {
-    background-color: darken(@green, 10%);
+    background-color: var(--pxt-colors-green-background-hover);
+    color: var(--pxt-colors-green-foreground);
 }
 
 .image-editor.editing-tile {

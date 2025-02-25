@@ -5,7 +5,8 @@ import * as React from "react";
 
 import { connect } from 'react-redux';
 import { dispatchSaveAndCloseActivity, dispatchShowResetUserModal, dispatchShowLoginModal,
-    dispatchShowUserProfile, dispatchSetUserPreferences, dispatchShowSelectLanguage } from '../actions/dispatch';
+    dispatchShowUserProfile, dispatchSetUserPreferences, dispatchShowSelectLanguage,
+    dispatchShowSelectTheme} from '../actions/dispatch';
 import { SkillMapState } from '../store/reducer';
 import { isLocal, resolvePath, tickEvent } from "../lib/browserUtils";
 
@@ -30,6 +31,7 @@ interface HeaderBarProps {
     dispatchShowUserProfile: () => void;
     dispatchSetUserPreferences: (preferences?: pxt.auth.UserPreferences) => void;
     dispatchShowSelectLanguage: () => void;
+    dispatchShowSelectTheme: () => void;
 }
 
 export class HeaderBarImpl extends React.Component<HeaderBarProps> {
@@ -38,21 +40,15 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
         const items: MenuItem[] = [];
 
         if (this.props.preferences) {
-            const highContrast = this.props.preferences?.highContrast;
             items.push({
-                id: "highcontrast",
-                title: highContrast ? lf("High Contrast Off") : lf("High Contrast On"),
-                label: highContrast ? lf("High Contrast Off") : lf("High Contrast On"),
+                id: "theme",
+                title: lf("Select Theme"),
+                label: lf("Select Theme"),
                 onClick: () => {
-                    const newHighContrastPref = !this.props.preferences.highContrast;
-                    tickEvent("skillmap.highcontrast", { on: newHighContrastPref ? 1 : 0});
-                    authClient.setHighContrastPrefAsync(newHighContrastPref);
-                    this.props.dispatchSetUserPreferences({
-                        ...this.props.preferences,
-                        highContrast: newHighContrastPref
-                    })
+                    tickEvent("skillmap.theme");
+                    this.props.dispatchShowSelectTheme();
                 }
-            })
+            });
         }
 
         // We hide the language option when activities are open to avoid
@@ -264,7 +260,8 @@ const mapDispatchToProps = {
     dispatchShowLoginModal,
     dispatchShowUserProfile,
     dispatchSetUserPreferences,
-    dispatchShowSelectLanguage
+    dispatchShowSelectLanguage,
+    dispatchShowSelectTheme
 };
 
 export const HeaderBar = connect(mapStateToProps, mapDispatchToProps)(HeaderBarImpl);

@@ -2,7 +2,7 @@
     width: 18rem;
     height: 20rem;
     border-radius: 0.5rem;
-    border: 1px solid @inputBorderColor;
+    border: 1px solid var(--pxt-neutral-stencil1);
     transition: border 0.1s ease;
     position: relative;
 
@@ -16,13 +16,13 @@
     cursor: pointer;
 
     &:hover {
-        border: 1px solid @inputBorderColorFocus;
+        border: 1px solid var(--pxt-focus-border);
     }
 }
 
 .common-card-label {
-    color: @white;
-    background-color: @orange;
+    color: var(--pxt-primary-foreground);
+    background-color: var(--pxt-primary-background);
     
     border-top-left-radius: 0.25rem;
     border-bottom-left-radius: 0.25rem;
@@ -34,7 +34,7 @@
     padding: 0.5rem 0.5rem 0.25rem 0.5rem;
     min-width: 5rem;
     font-size: 16px;
-    border-color: darken(@orange, 10%);
+    border-color: var(--pxt-primary-accent);
 }
 
 .common-card-label::after {

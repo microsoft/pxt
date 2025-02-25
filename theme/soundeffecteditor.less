@@ -1,19 +1,7 @@
-/****************************************************
- *                    Variables                      *
- ****************************************************/
 
-@soundEffectHeaderColor: #E63022;
 
-@soundPlayButtonBackground: #333333;
-@soundPlayButtonForeground: #ffffff;
 
-@soundPreviewBackgroundColor: #fbe2d6;
-@soundPreviewBaselineColor: #888888;
-@soundPreviewStaticWaveColor: @soundPreviewBaselineColor;
-@soundPreviewAnimatedWaveColor: @soundEffectHeaderColor;
 
-@soundGalleryBackgroundColor: #481041;
-@soundGalleryWaveColor: @soundEffectHeaderColor;
 
 
 /****************************************************
@@ -29,7 +17,8 @@
     box-shadow: 0 0 3px ~"rgb(0 0 0 / 30%)";
     overflow: hidden;
     border-radius: 0.25rem;
-    background-color: @white;
+    background-color: var(--pxt-neutral-background1);
+    color: var(--pxt-neutral-foreground1);
     display: flex;
     flex-direction: column;
     user-select: none;
@@ -64,12 +53,13 @@
     justify-content: center;
     align-items: center;
 
-    background-color: @soundEffectHeaderColor;
+    background-color: var(--pxt-primary-background);
 
     & > .common-button {
         position: absolute;
         right: 0;
         top: 0;
+        border: none;
     }
 }
 
@@ -96,7 +86,7 @@
 
 .frequency-graph {
     padding-top: 0.5rem;
-    border-bottom: 1px solid #dedede;
+    border-bottom: 1px solid var(--pxt-neutral-stencil2);
 }
 
 .dropdown-and-label {
@@ -108,7 +98,7 @@
 
 .sound-graph-container {
     margin-top: 0.5rem;
-    border: 1px solid #dedede;
+    border: 1px solid var(--pxt-neutral-stencil2);
 }
 
 .sound-label {
@@ -148,7 +138,7 @@
  .sound-preview {
     height: 8rem;
     padding: 0 2.5rem;
-    background: @soundPreviewBackgroundColor;
+    background: var(--pxt-neutral-background2);
 
     display: flex;
     justify-content: center;
@@ -165,14 +155,15 @@
     overflow: hidden;
     padding: 0;
     border-radius: 2rem;
-    background: @soundPlayButtonBackground;
+    background-color: var(--pxt-neutral-foreground2);
+    color: var(--pxt-neutral-background2);
     position: absolute;
     right: 0;
     margin-top: -1.5rem;
 
     .fas.fa-play, .fas.fa-stop {
         margin: 0 0 0 0.25rem;
-        color: @soundPlayButtonForeground;
+        color: var(--pxt-neutral-background2);
     }
 
     .fas.fa-stop {
@@ -185,15 +176,15 @@
 }
 
 .sound-preview-baseline {
-    stroke: @soundPreviewBaselineColor;
+    stroke: var(--pxt-neutral-alpha50);
 }
 
 .sound-preview-static-wave {
-    stroke: @soundPreviewStaticWaveColor;
+    stroke: var(--pxt-neutral-alpha50);
 }
 
 .sound-preview-animated-wave {
-    stroke: @soundPreviewAnimatedWaveColor;
+    stroke: var(--pxt-primary-background);
 }
 
 
@@ -207,7 +198,7 @@
     top: -100%;
     width: 100%;
     transition: top 0.25s ease;
-    background: @soundGalleryBackgroundColor;
+    background: var(--pxt-colors-purple-background);
     padding: 1rem;
     overflow-y: auto;
 }
@@ -260,5 +251,5 @@
 
 
 .sound-gallery-preview-wave {
-    stroke: @soundGalleryWaveColor;
+    stroke: var(--pxt-primary-background);
 }
