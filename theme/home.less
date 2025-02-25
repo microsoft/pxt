@@ -102,6 +102,11 @@
                 border-color: @heroBannerDotOutlineAtiveColor;
                 background-color: transparent;
             }
+
+            &:focus {
+                box-shadow: 0 0 0 calc(@homeHeaderBorderSize + 1px) @homeHeaderSelectedBorderColor;
+                outline: 1px ridge black;
+            }
         }
 
         .gradient-overlay {
