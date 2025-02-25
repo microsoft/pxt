@@ -141,6 +141,12 @@ export async function getBadgeStateAsync(): Promise<pxt.auth.UserBadgeState | un
     }
 }
 
+export async function getColorThemeIdAsync(): Promise<string | undefined> {
+    const cli = await clientAsync();
+    const prefs = await cli?.userPreferencesAsync();
+    return prefs?.themeId;
+}
+
 export async function userPreferencesAsync(): Promise<pxt.auth.UserPreferences | undefined> {
     const cli = await clientAsync();
     if (cli) {

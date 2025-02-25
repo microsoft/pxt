@@ -1,0 +1,473 @@
+
+/*
+--- Override Semantic UI ---
+
+This file overrides the default semantic ui theming with our own theme variables.
+
+*/
+
+// Mixin allows easy setting for background, foreground, hover, and inverted colors for a button
+.buttonVariant(@bg; @fg; @hoverBg; @hoverFg; @border) {
+    background: @bg;
+    color: @fg;
+    border: 1px solid @border;
+
+    &.inverted {
+        background-color: @fg;
+        color: @bg;
+    }
+
+    &:hover, &:focus {
+        // Semantic UI darkens background using a filter, which isn't necessary when we have a hover color.
+        filter: none;
+
+        background-color: @hoverBg;
+        color: @hoverFg;
+
+        &.inverted {
+            background-color: @hoverFg;
+            color: @hoverBg;
+        }
+    }
+}
+
+// The body.pxt-theme-root adds specificity so they will
+// take precedence over default semantic ui styling without using !important.
+body.pxt-theme-root {
+    a {
+        color: var(--pxt-link);
+        &:hover {
+            color: var(--pxt-link-hover);
+        }
+    }
+
+    .ui.label {
+        background-color: var(--pxt-neutral-background1);
+        color: var(--pxt-neutral-foreground1);
+        border-color: var(--pxt-neutral-stencil1);
+    }
+
+    .ui.list > .item a.header {
+        color: var(--pxt-link) !important; // override !important in semantic ui
+        &:hover {
+            color: var(--pxt-link-hover) !important;
+        }
+    }
+
+    .ui.icon.menu .item {
+        color: var(--pxt-neutral-foreground1);
+    }
+
+    .ui.card, .ui.cards .card {
+        background-color: var(--pxt-neutral-background1);
+        color: var(--pxt-neutral-foreground1);
+        &:hover, &:focus {
+            background-color: var(--pxt-neutral-background1-hover);
+            color: var(--pxt-neutral-foreground1-hover);
+        }
+
+        .extra.content a.learnmore {
+            color: var(--pxt-link);
+        }
+
+        &.link.buttoncard .header {
+            color: var(--pxt-neutral-foreground1);
+        }
+
+        .content {
+            .header {
+                color: var(--pxt-neutral-foreground1);
+            }
+    
+            .description {
+                color: var(--pxt-neutral-alpha50);
+            }
+        }
+
+        .image pre {
+            margin-left:0.5rem;
+            margin-right:0.5rem;
+            color: var(--pxt-neutral-foreground1);
+            font-size:0.7rem;
+            white-space: pre-wrap;
+            max-height: 10rem;
+            overflow-y: hidden;
+        }
+    }
+
+    .coredialog, .modal {
+        background-color: var(--pxt-neutral-background1);
+        color: var(--pxt-neutral-foreground1);
+
+        > .content,
+        > .header,
+        > .actions,
+        > .closeIcon,
+        > .closeIcon .close {
+            background-color: var(--pxt-neutral-background1);
+            color: var(--pxt-neutral-foreground1);
+        }
+    }
+
+    .ui.table {
+        color: var(--pxt-neutral-foreground1);
+        background: var(--pxt-neutral-background1);
+
+        th, tr, i {
+            color: var(--pxt-neutral-foreground1);
+            background: var(--pxt-neutral-background1);
+
+            &.positive {
+                color: var(--pxt-colors-green-background) !important;
+                background: var(--pxt-colors-green-alpha10) !important;
+
+                i {
+                    background: none !important;
+                }
+            }
+        }
+    }
+
+    .ui.header {
+        color: var(--pxt-neutral-foreground1);
+    }
+
+    [data-tooltip]:after, [data-tooltip]:before {
+        background: var(--pxt-neutral-background1);
+        color: var(--pxt-neutral-foreground1);
+    }
+
+
+    .ui.menu {
+        background: var(--pxt-neutral-background1);
+        color: var(--pxt-neutral-foreground1);
+
+        .dropdown.item .menu, .ui.dropdown .menu {
+            background: var(--pxt-neutral-background1);
+            color: var(--pxt-neutral-foreground1);
+            box-shadow: 0 1px 3px 0 var(--pxt-neutral-alpha10);
+
+            .item {
+                color: var(--pxt-neutral-foreground1) !important; // override !important in semantic ui
+
+                &:hover, &:focus {
+                    background: var(--pxt-neutral-background1-hover) !important;
+                    color: var(--pxt-neutral-foreground1-hover) !important;
+                }
+            }
+
+            .divider {
+                background: none;
+                border-top: 1px solid var(--pxt-neutral-stencil1);
+            }
+        }
+    }
+
+    .ui.menu .item.disabled, .ui.menu .item.disabled:hover {
+        color: var(--pxt-neutral-alpha20) !important;
+    }
+
+    .ui.form .field label {
+        color: var(--pxt-neutral-foreground2);
+    }
+
+    .ui.input {
+        background: none;
+        color: var(--pxt-neutral-foreground2);
+
+        input {
+            -webkit-tap-highlight-color: transparent;
+            background: var(--pxt-neutral-background2);
+            border: 1px solid var(--pxt-neutral-stencil2);
+            color: var(--pxt-neutral-foreground2);
+
+            &::-webkit-input-placeholder,
+            &::-moz-placeholder,
+            &::-ms-input-placeholder {
+                color: var(--pxt-neutral-alpha50);
+            }
+
+            &:active, &:focus {
+                border-color: var(--pxt-neutral-alpha50);
+                background: var(--pxt-neutral-background1);
+                color: var(--pxt-neutral-foreground1);
+            }
+
+            &::selection {
+                color: var(--pxt-neutral-foreground1);
+            }
+        }
+
+        &.down input {
+            border-color: var(--pxt-neutral-alpha50);
+            background: var(--pxt-neutral-background1);
+            color: var(--pxt-neutral-foreground1);
+        }
+    }
+
+    // Colors
+    .blue {
+        color: var(--pxt-colors-blue-background);
+        
+        &.inverted {
+            color: var(--pxt-colors-blue-background) !important;
+            background-color: var(--pxt-colors-blue-foreground) !important;
+        }
+    }
+
+    .gray, .grey, .neutral {
+        color: var(--pxt-neutral-background2);
+        &.inverted {
+            color: var(--pxt-neutral-background2) !important;
+            background-color: var(--pxt-neutral-foreground2) !important;
+        }
+    }
+
+    .green, .positive {
+        color: var(--pxt-colors-green-background);
+        &.inverted {
+            color: var(--pxt-colors-green-background) !important;
+            background-color: var(--pxt-colors-green-foreground) !important;
+        }
+    }
+
+    .orange {
+        color: var(--pxt-colors-orange-background);
+        &.inverted {
+            color: var(--pxt-colors-orange-background) !important;
+            background-color: var(--pxt-colors-orange-foreground) !important;
+        }
+    }
+
+    .purple, .violet {
+        color: var(--pxt-colors-purple-background);
+        &.inverted {
+            color: var(--pxt-colors-purple-background) !important;
+            background-color: var(--pxt-colors-purple-foreground) !important;
+        }
+    }
+
+    .red, .negative {
+        color: var(--pxt-colors-red-background);
+        &.inverted {
+            color: var(--pxt-colors-red-background) !important;
+            background-color: var(--pxt-colors-red-foreground) !important;
+        }
+    }
+
+    .teal {
+        color: var(--pxt-colors-teal-background);
+        &.inverted {
+            color: var(--pxt-colors-teal-background) !important;
+            background-color: var(--pxt-colors-teal-foreground) !important;
+        }
+    }
+
+    .yellow {
+        color: var(--pxt-colors-yellow-background);
+        &.inverted {
+            color: var(--pxt-colors-yellow-background) !important;
+            background-color: var(--pxt-colors-yellow-foreground) !important;
+        }
+    }
+
+    .ui.label {
+        &.blue {
+            background-color: var(--pxt-colors-blue-background) !important; // SUI uses important here, so we need to as well.
+            color: var(--pxt-colors-blue-foreground) !important;
+
+            &.inverted {
+                background-color: var(--pxt-colors-blue-foreground) !important;
+                color: var(--pxt-colors-blue-background) !important;
+            }
+        }
+
+        &.gray, &.grey, &.neutral {
+            background-color: var(--pxt-neutral-backgroundbackground2) !important;
+            color: var(--pxt-neutral-background-foreground2) !important;
+
+            &.inverted {
+                background-color: var(--pxt-neutral-background-foreground2) !important;
+                color: var(--pxt-neutral-background-background2) !important;
+            }
+        }
+
+        &.green, &.positive {
+            background-color: var(--pxt-colors-green-background) !important;
+            color: var(--pxt-colors-green-foreground) !important;
+
+            &.inverted {
+                background-color: var(--pxt-colors-green-foreground) !important;
+                color: var(--pxt-colors-green-background) !important;
+            }
+        }
+
+        &.orange {
+            background-color: var(--pxt-colors-orange-background) !important;
+            color: var(--pxt-colors-orange-foreground) !important;
+
+            &.inverted {
+                background-color: var(--pxt-colors-orange-foreground) !important;
+                color: var(--pxt-colors-orange-background) !important;
+            }
+        }
+
+        &.purple, &.violet {
+            background-color: var(--pxt-colors-purple-background) !important;
+            color: var(--pxt-colors-purple-foreground) !important;
+
+            &.inverted {
+                background-color: var(--pxt-colors-purple-foreground) !important;
+                color: var(--pxt-colors-purple-background) !important;
+            }
+        }
+
+        &.red, &.negative {
+            background-color: var(--pxt-colors-red-background) !important;
+            color: var(--pxt-colors-red-foreground) !important;
+
+            &.inverted {
+                background-color: var(--pxt-colors-red-foreground) !important;
+                color: var(--pxt-colors-red-background) !important;
+            }
+        }
+
+        &.teal {
+            background-color: var(--pxt-colors-teal-background) !important;
+            color: var(--pxt-colors-teal-foreground) !important;
+
+            &.inverted {
+                background-color: var(--pxt-colors-teal-foreground) !important;
+                color: var(--pxt-colors-teal-background) !important;
+            }
+        }
+
+        &.yellow {
+            background-color: var(--pxt-colors-yellow-background) !important;
+            color: var(--pxt-colors-yellow-foreground) !important;
+
+            &.inverted {
+                background-color: var(--pxt-colors-yellow-foreground) !important;
+                color: var(--pxt-colors-yellow-background) !important;
+            }
+        }
+    }
+
+
+    .ui.button, .common-button {
+
+        // Semantic ui sometimes sets the background image to a faint gradient.
+        // We don't want that, so we override it here.
+        background-image: none;
+
+        &.primary {
+            .buttonVariant(
+                var(--pxt-primary-background),
+                var(--pxt-primary-foreground),
+                var(--pxt-primary-background-hover),
+                var(--pxt-primary-foreground-hover),
+                var(--pxt-primary-background)
+            );
+        }
+
+        &.secondary {
+            .buttonVariant(
+                var(--pxt-secondary-background),
+                var(--pxt-secondary-foreground),
+                var(--pxt-secondary-background-hover),
+                var(--pxt-secondary-foreground-hover),
+                var(--pxt-secondary-background)
+            );
+        }
+
+        &.tertiary {
+            .buttonVariant(
+                var(--pxt-tertiary-background),
+                var(--pxt-tertiary-foreground),
+                var(--pxt-tertiary-background-hover),
+                var(--pxt-tertiary-foreground-hover),
+                var(--pxt-tertiary-background)
+            );
+        }
+
+        &.blue {
+            .buttonVariant(
+                var(--pxt-colors-blue-background),
+                var(--pxt-colors-blue-foreground),
+                var(--pxt-colors-blue-hover),
+                var(--pxt-colors-blue-foreground),
+                var(--pxt-colors-blue-background)
+            );
+        }
+
+        &.gray, &.grey, &.neutral {
+            .buttonVariant(
+                var(--pxt-neutral-background2),
+                var(--pxt-neutral-foreground2),
+                var(--pxt-neutral-background2-hover),
+                var(--pxt-neutral-foreground2-hover),
+                var(--pxt-neutral-stencil2)
+            );
+        }
+
+        &.green, &.positive {
+            .buttonVariant(
+                var(--pxt-colors-green-background),
+                var(--pxt-colors-green-foreground),
+                var(--pxt-colors-green-hover),
+                var(--pxt-colors-green-foreground),
+                var(--pxt-colors-green-background)
+            );
+        }
+
+        &.orange {
+            .buttonVariant(
+                var(--pxt-colors-orange-background),
+                var(--pxt-colors-orange-foreground),
+                var(--pxt-colors-orange-hover),
+                var(--pxt-colors-orange-foreground),
+                var(--pxt-colors-orange-background)
+            );
+        }
+
+        &.purple, &.violet {
+            .buttonVariant(
+                var(--pxt-colors-purple-background),
+                var(--pxt-colors-purple-foreground),
+                var(--pxt-colors-purple-hover),
+                var(--pxt-colors-purple-foreground),
+                var(--pxt-colors-purple-background)
+            );
+        }
+
+        &.red, &.negative {
+            .buttonVariant(
+                var(--pxt-colors-red-background),
+                var(--pxt-colors-red-foreground),
+                var(--pxt-colors-red-hover),
+                var(--pxt-colors-red-foreground),
+                var(--pxt-colors-red-background)
+            );
+        }
+
+        &.teal {
+            .buttonVariant(
+                var(--pxt-colors-teal-background),
+                var(--pxt-colors-teal-foreground),
+                var(--pxt-colors-teal-hover),
+                var(--pxt-colors-teal-foreground),
+                var(--pxt-colors-teal-background)
+            );
+        }
+
+        &.yellow {
+            .buttonVariant(
+                var(--pxt-colors-yellow-background),
+                var(--pxt-colors-yellow-foreground),
+                var(--pxt-colors-yellow-hover),
+                var(--pxt-colors-yellow-foreground),
+                var(--pxt-colors-yellow-background)
+            );
+        }
+    }
+}

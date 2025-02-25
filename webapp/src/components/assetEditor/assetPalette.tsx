@@ -226,7 +226,7 @@ export const AssetPalette = (props: AssetPaletteProps) => {
     ];
 
     const nameActions: ModalAction[] = [
-        { label: lf("Done"), onClick: onNameDone, className: 'teal palette-done-button', disabled: invalidName }
+        { label: lf("Done"), onClick: onNameDone, className: 'tertiary palette-done-button', disabled: invalidName }
     ];
 
     const deleteActions: ModalAction[] = [

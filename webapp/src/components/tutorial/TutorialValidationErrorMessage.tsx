@@ -64,7 +64,7 @@ export function TutorialValidationErrorMessage(
                         <div className="tutorial-validation-error-controls">
                             {hintsExist && (
                                 <Button
-                                    className="teal"
+                                    className="tertiary"
                                     leftIcon="fas fa-lightbulb"
                                     onClick={onShowHintClicked}
                                     title={showHintLabel}
@@ -73,7 +73,7 @@ export function TutorialValidationErrorMessage(
                                 />
                             )}
                             <Button
-                                className="teal inverted"
+                                className="tertiary inverted"
                                 leftIcon="fas fa-arrow-circle-right"
                                 onClick={props.onContinueClicked}
                                 title={continueAnywayLabel}

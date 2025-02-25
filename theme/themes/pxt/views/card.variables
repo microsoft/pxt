@@ -2,14 +2,11 @@
     User Variable Overrides
 *******************************/
 
-@solidBorderColor: #e9eef2;
-@hoverBorderColor: #169CDF;
-
 @borderWidth: 2px;
 @borderRadius: 0.5rem;
 
-@border: @borderWidth solid @solidBorderColor;
-@linkHoverBorder: @borderWidth solid @hoverBorderColor;
+@border: @borderWidth solid var(--pxt-neutral-foreground1);
+@linkHoverBorder: @borderWidth solid var(--pxt-focus-border);
 
 @boxShadow: none;
 @linkHoverBoxShadow: @boxShadow;

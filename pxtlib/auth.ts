@@ -55,6 +55,7 @@ namespace pxt.auth {
     export type UserPreferences = {
         language?: string;
         highContrast?: boolean;
+        themeId?: string;
         reader?: string;
         skillmap?: UserSkillmapState;
         badges?: UserBadgeState;
@@ -62,8 +63,9 @@ namespace pxt.auth {
     };
 
     export const DEFAULT_USER_PREFERENCES: () => UserPreferences = () => ({
-        highContrast: false,
         language: pxt.appTarget.appTheme.defaultLocale,
+        highContrast: false,
+        themeId: pxt.appTarget.appTheme.defaultColorTheme,
         reader: "",
         skillmap: { mapProgress: {}, completedTags: {} },
         email: false

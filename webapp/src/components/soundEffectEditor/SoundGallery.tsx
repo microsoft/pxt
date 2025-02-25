@@ -80,7 +80,6 @@ const SoundGalleryEntry = (props: SoundGalleryItemProps) => {
                 <path
                     className="sound-gallery-preview-wave"
                     d={pxt.assets.renderSoundPath(sound, width, height)}
-                    stroke="grey"
                     strokeWidth="2"
                     fill="none"/>
             </svg>

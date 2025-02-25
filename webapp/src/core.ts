@@ -15,6 +15,7 @@ import Cloud = pxt.Cloud;
 import Util = pxt.Util;
 import { Milestones } from "./constants";
 import { sendUpdateFeedbackTheme } from "../../react-common/components/controls/Feedback/FeedbackEventListener";
+import { ThemeManager } from "../../react-common/components/theming/themeManager";
 
 export type Component<S, T> = data.Component<S, T>;
 
@@ -217,7 +218,7 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
         if (!options.buttons) options.buttons = [];
         options.buttons.push({
             label: options.disagreeLbl || lf("Cancel"),
-            className: (options.disagreeClass || "cancel"),
+            className: (options.disagreeClass || "cancel neutral"),
             icon: options.disagreeIcon || "cancel"
         })
     }
@@ -333,7 +334,14 @@ export const ENTER_KEY = 13;
 export const SPACE_KEY = 32;
 
 export function getHighContrastOnce(): boolean {
-    return data.getData<boolean>(auth.HIGHCONTRAST) || false
+    // User preference gets priority over theme setting.
+    if (data.getData<boolean>(auth.HIGHCONTRAST)) {
+        return true;
+    }
+
+    const themeManager = ThemeManager.getInstance(document);
+    const currentTheme = themeManager.getCurrentColorTheme();
+    return themeManager.isHighContrast(currentTheme?.id);
 }
 export function toggleHighContrast() {
     setHighContrast(!getHighContrastOnce())

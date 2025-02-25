@@ -42,10 +42,10 @@
 
     .square-button {
         background-color: @music-editor-header-color;
-        color: white;
+        color: @music-editor-header-foreground;
 
         &.disabled {
-            color: white;
+            color: @music-editor-header-foreground;
             background-color: @music-editor-header-color;
             opacity: 0.5;
         }
@@ -62,7 +62,7 @@
     align-items: center;
 
     .common-button.menu-button {
-        color: black;
+        color: var(--pxt-neutral-foreground1);
         height: 2rem;
         padding: 0.1rem;
 

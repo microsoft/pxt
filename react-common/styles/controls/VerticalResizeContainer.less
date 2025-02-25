@@ -1,14 +1,14 @@
 .cursor-resize {
     cursor: ns-resize !important;
     #editorSidebar::after {
-        background-color: @green;
+        background-color: var(--pxt-colors-green-background);
     }
 }
 
 .vertical-resize-container {
     &::after {
         content: "";
-        background-color: darken(desaturate(@editorToolsBackground, 60%), 10%);
+        background-color: var(--pxt-target-stencil3);
         position: absolute;
         bottom: 0;
         width: 100%;

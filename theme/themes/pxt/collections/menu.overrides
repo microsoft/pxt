@@ -30,7 +30,7 @@
 }
 
 .menubar .accessibleMenu .ui.item.link.inverted:hover {
-    background: @invertedBackground;
+    background: var(--pxt-header-background);
 }
 
 #mainmenu > .menu > .ui.item:hover > .icon:not(.exit-debugmode-btn) {
@@ -83,6 +83,8 @@
 
 #mainmenu.ui.link.inverted.menu,
 #mainmenu.ui.inverted.menu {
+    background-color: var(--pxt-header-background);
+
     .menu > .dropdown.item,
     .menu > .link.item.icon {
         border: @homeHeaderBorderSize solid transparent;
@@ -90,9 +92,9 @@
 
     .menu > .dropdown.item:focus,
     .menu > .link.item.icon:focus {
-        background: @invertedHoverBackground;
+        background: var(--pxt-neutral-alpha10);
         color: @invertedHoverColor;
-        border: @homeHeaderBorderSize solid @homeHeaderSelectedBorderColor;
+        border: @homeHeaderBorderSize solid var(--pxt-neutral-stencil3);
         outline: 1px ridge black;
     }
 }
@@ -123,9 +125,9 @@
 
 /* Tutorial mode */
 .tutorial .ui.inverted.menu {
-    background: @mainMenuTutorialBackground !important;
+    background: var(--pxt-header-background) !important;
 }
 
 .debugger .ui.inverted.menu {
-    background: @DebuggerBackgroundPrimaryColor !important;
+    background: var(--pxt-primary-background) !important;
 }

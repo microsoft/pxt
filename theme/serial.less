@@ -10,7 +10,8 @@
 --------------------*/
 
 #serialEditor {
-    background-color: @serialBackgroundColor;
+    background-color: var(--pxt-target-background2);
+    color: var(--pxt-target-foreground2);
 }
 
 #serialArea {
@@ -33,7 +34,7 @@
             table:last-child thead {
                 position: sticky;
                 top: -0.75rem;
-                box-shadow: inset 0 2px 0 #ddd, inset 0 -2px 0 #ddd;
+                box-shadow: inset 0 2px 0 var(--pxt-neutral-alpha10), inset 0 -2px 0 var(--pxt-neutral-alpha10);
             }
         }
 
@@ -75,7 +76,8 @@
 #serialArea .ui.segment {
     border: none;
     box-shadow: none;
-    background-color: @serialGraphBackground;
+    background-color: var(--pxt-target-background2);
+    color: var(--pxt-target-foreground2);
 }
 
 .serialHeader {
@@ -90,7 +92,7 @@
 
 .serialHeader .ui.header {
     margin: 0 1rem 0 1rem;
-    color: @serialTextColor;
+    color: var(--pxt-target-foreground2);
 }
 
 .serialHeader .leftHeader {
@@ -115,10 +117,10 @@
     margin-top: 0.5rem;
     height: calc(30% - 2.5rem);
     overflow-y: auto;
-    color: @serialTextColor;
-    background-color: @serialConsoleBackground;
+    color: var(--pxt-target-foreground2);
+    background-color: var(--pxt-target-background2);
     border-radius: 5px;
-    border: 1px solid @serialGraphBackground;
+    border: 1px solid var(--pxt-target-background2);
     padding: 0.4rem;
     font-family: @serialConsoleFont;
 }
@@ -135,7 +137,7 @@
         margin-top: 1em;
         text-align: right;
         border-spacing: 2px;
-        border-color: grey;
+        border-color: var(--pxt-neutral-alpha50);
     }
 
     thead {
@@ -143,14 +145,16 @@
     }
 
     tbody tr, thead tr {
-        background: @white;
+        background: var(--pxt-neutral-background1);
+        color: var(--pxt-neutral-foreground1);
     }
 
     tbody tr.odd {
-        background: #f2f2f2;
+        background: var(--pxt-neutral-background2);
+        color: var(--pxt-neutral-foreground2);
     }
     td, th {
-        border: 1px solid #ddd;
+        border: 1px solid var(--pxt-neutral-stencil1);
         padding: 8px;
         min-width: 8ch;
     }
@@ -179,7 +183,7 @@
 #serialCharts .seriallabel,
 #serialPlaceholder .seriallabel {
     padding: 5px 10px 5px 10px;
-    color: #000;
+    color: var(--pxt-target-foreground2);
     width: auto;
     border-radius: 20px;
     margin: 5px;
@@ -187,7 +191,7 @@
 }
 
 #serialCharts .seriallabel {
-    border: 1px solid black;
+    border: 1px solid var(--pxt-target-foreground2);
 }
 
 #serialPlaceholder .seriallabel {
@@ -198,8 +202,11 @@
 #serialPlaceholder {
     padding: 0.4rem;
     height: 12rem;
-    background-color: @serialGraphBackground;
-    border: 1px solid lighten(@serialGraphBackground, 10.0);
+    border: 1px solid var(--pxt-neutral-stencil2);
+
+    /* Background and foreground hard-coded until foreground number colors are theme-able */
+    background-color: #d9d9d9;
+    color: #000000;
 }
 
 #serialCharts canvas {
@@ -215,10 +222,10 @@
 
 #serialPreview .label {
     width: 100%;
-    background-color: lighten(@serialGraphBackground, 10.0);
+    background-color: var(--pxt-target-background2);
     font-size: 0.85em;
-    border: 10px solid @primaryColor;
-    color: @serialGraphColor;
+    border: 10px solid var(--pxt-tertiary-background);
+    color: var(--pxt-target-foreground2);
     margin-bottom: 0.4rem;
     > * {
         vertical-align: middle;
@@ -233,8 +240,7 @@
 }
 
 #serialPreview .label:hover {
-    background-color: @serialGraphBackground;
-    border-color: darken(@primaryColor, 10.0);
+    opacity: 0.8;
 }
 
 #serialPreview .label:focus {
@@ -252,7 +258,7 @@
 }
 
 .ui.button.labeled.icon.editorBack {
-    color: @editorCloseColor !important;
+    color: var(--pxt-target-foreground2) !important;
     background: transparent !important;
     padding-left: 2.5em !important;
     .icon {
@@ -262,15 +268,15 @@
 
 .ui.button.editorBack:hover,
     .ui.button.editorBack:focus {
-    color: @editorCloseColorHover;
+    color: var(--pxt-target-foreground2-hover);
 }
 
 div.smoothie-chart-tooltip {
-    background: #444;
+    background: var(--pxt-neutral-background3);
     padding: 1em;
     margin-top: 20px;
     font-family: consolas;
-    color: white;
+    color: var(--pxt-neutral-foreground3);
     font-size: 0.8rem;
     pointer-events: none;
 }

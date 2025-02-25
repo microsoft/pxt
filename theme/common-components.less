@@ -14,7 +14,7 @@
     width: 0.75rem;
     margin-left: 1.25rem;
     margin-top: -0.25rem;
-    background-color: @red;
+    background-color: var(--pxt-colors-red-background);
     border-radius: 50%;
     animation: notification-glow 5s infinite ease-in-out;
 }
@@ -35,7 +35,7 @@
 }
 
 @keyframes notification-glow {
-    0%, 50% { box-shadow: 0 0 0.12rem -0.12rem @red; }
-    10%, 40% { box-shadow: 0 0 0.12rem 0rem @red; }
-    25% { box-shadow: 0 0 0.12rem 0.12rem @white; }
+    0%, 50% { box-shadow: 0 0 0.12rem -0.12rem var(--pxt-colors-red-background); }
+    10%, 40% { box-shadow: 0 0 0.12rem 0rem var(--pxt-colors-red-background); }
+    25% { box-shadow: 0 0 0.12rem 0.12rem var(--pxt-primary-foreground); }
 }

@@ -231,7 +231,7 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
                     className="asset-editor-button"
                     leftIcon="icon trash"
                     onClick={this.showDeleteModal} />}
-                <Button className="teal asset-palette-button"
+                <Button className="tertiary asset-palette-button"
                     label={lf("Colors")}
                     title={lf("Open the color palette")}
                     ariaLabel={lf("Open the color palette")}

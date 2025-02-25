@@ -161,7 +161,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                     </div>
                     <div className="column right aligned" style={{ zIndex: 1 }}>
                         {pxt.appTarget.compile || (pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing) ?
-                            <sui.Button key="import" icon="upload" className="import-dialog-btn" textClass="landscape only" text={lf("Import")} title={lf("Import a project")} onClick={this.importProject} /> : undefined}
+                            <sui.Button key="import" icon="upload" className="import-dialog-btn neutral" textClass="landscape only" text={lf("Import")} title={lf("Import a project")} onClick={this.importProject} /> : undefined}
                     </div>
                 </div>
                 <div className="content">
@@ -237,6 +237,7 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
 
         this.showLanguagePicker = this.showLanguagePicker.bind(this);
         this.toggleHighContrast = this.toggleHighContrast.bind(this);
+        this.showThemePicker = this.showThemePicker.bind(this);
         this.showResetDialog = this.showResetDialog.bind(this);
         this.showReportAbuse = this.showReportAbuse.bind(this);
         this.showAboutDialog = this.showAboutDialog.bind(this);
@@ -252,6 +253,11 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
     toggleHighContrast() {
         pxt.tickEvent("home.togglecontrast", undefined, { interactiveConsent: true });
         core.toggleHighContrast();
+    }
+
+    showThemePicker() {
+        pxt.tickEvent("home.showthemepicker", undefined, { interactiveConsent: true });
+        this.props.parent.showThemePicker();
     }
 
     toggleGreenScreen() {
@@ -306,7 +312,7 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
 
         return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("Settings")} className="item icon more-dropdown-menuitem" ref={ref => this.dropdown = ref}>
             {targetTheme.selectLanguage && <sui.Item icon='xicon globe' role="menuitem" text={lf("Language")} onClick={this.showLanguagePicker} />}
-            {targetTheme.highContrast && <sui.Item role="menuitem" text={highContrast ? lf("High Contrast Off") : lf("High Contrast On")} onClick={this.toggleHighContrast} />}
+            <sui.Item role="menuitem" icon="paint brush" text={lf("Select Theme")} onClick={this.showThemePicker} />
             {githubUser && <div className="ui divider"></div>}
             {githubUser && <div className="ui item" title={lf("Unlink {0} from GitHub", githubUser.name)} role="menuitem" onClick={this.signOutGithub}>
                 <div className="avatar" role="presentation">

@@ -90,14 +90,12 @@ export const SoundPreview = (props: SoundPreviewProps) => {
             <path
                 className="sound-preview-baseline"
                 d={`M ${0} ${height / 2} h ${width}`} fill="none"
-                stroke="grey"
                 strokeWidth="2px" />
             <path
                 ref={handlePreviewPathRef}
                 className="sound-preview-static-wave"
                 d={pxt.assets.renderSoundPath(sound, width, height)}
                 fill="none"
-                stroke="grey"
                 strokeWidth="4px"
                 strokeLinejoin="round"/>
             <path
@@ -105,7 +103,6 @@ export const SoundPreview = (props: SoundPreviewProps) => {
                 className="sound-preview-animated-wave"
                 d=""
                 fill="none"
-                stroke="#E63022"
                 strokeWidth="6px"
                 strokeLinejoin="round"/>
             <rect x="-2" y="0" width="1" height="100%" fill="grey"/>

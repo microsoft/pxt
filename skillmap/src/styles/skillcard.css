@@ -12,7 +12,8 @@
     right: -2rem;
     width: 2rem;
     height: 0.75rem;
-    background-color: var(--primary-color);
+    background-color: var(--pxt-primary-background);
+    color: var(--pxt-primary-foreground);
     z-index: 1;
 }
 .carousel-item.linked:last-child:after {
@@ -61,7 +62,7 @@
 }
 
 .selected .skill-card {
-    border-color: var(--active-color);
+    border-color: var(--pxt-tertiary-background);
     transform: rotateX(180deg);
 }
 
@@ -96,23 +97,25 @@
 }
 
 .skill-card:not(.locked):hover .skill-card-display {
-    background-color: var(--active-color);
+    background-color: var(--pxt-tertiary-background);
 }
 
 .skill-card:not(.locked):hover .skill-card-image {
-    background-color: var(--card-hover-color);
+    background-color: var(--pxt-neutral-background1-hover);
+    color: var(--pxt-neutral-foreground1-hover);
 }
 
 
 /* SKILL CARD DISPLAY (FRONT) */
 .skill-card-display {
-    color: var(--inverted-text-color);
-    background-color: var(--primary-color);
+    color: var(--pxt-primary-foreground);
+    background-color: var(--pxt-primary-background);
     justify-content: flex-end;
 }
 
 .skill-card-image {
-    background-color: var(--default-card-color);
+    background-color: var(--pxt-neutral-background1);
+    color: var(--pxt-neutral-foreground1);
     overflow: hidden;
     display: flex;
     justify-content: center;
@@ -150,12 +153,13 @@
 .skill-card-tags div {
     margin-right: 0.25rem;
     padding: 0 0.25rem;
-    border: 1px solid var(--inverted-text-color);
+    border: 1px solid var(--pxt-primary-foreground);
 }
 
 /* SKILL CARD INFO (BACK) */
 .skill-card-info {
-    background-color: var(--white);
+    background-color: var(--pxt-neutral-background1);
+    color: var(--pxt-neutral-foreground1);
     padding: 0.5rem;
     transform: rotateX(180deg);
 }
@@ -177,8 +181,8 @@
 }
 
 .skill-card-button {
-    color: var(--active-color);
-    border: 1px solid var(--active-color);
+    color: var(--pxt-tertiary-background);
+    border: 1px solid var(--pxt-tertiary-background);
     padding: 0.5rem;
     margin-top: 0.5rem;
     font-size: 1.2rem;
@@ -190,21 +194,22 @@
 
 .skill-card-button:hover,
 .skill-card-button-icon:hover {
-    background-color: var(--hover-color);
+    background-color: var(--pxt-secondary-background);
+    color: var(--pxt-secondary-foreground);
 }
 
 .skill-card-button-icon {
-    color: var(--active-color);
-    border: 1px solid var(--active-color);
+    color: var(--pxt-tertiary-background);
+    border: 1px solid var(--pxt-tertiary-background);
     border-right: none;
     padding: 0.5rem;
 }
 
 .locked .skill-card-button,
 .locked .skill-card-button:hover {
-    color: var(--inactive-color);
+    color: var(--pxt-secondary-background);
     background-color: transparent;
-    border-color: var(--inactive-color);
+    border-color: var(--pxt-secondary-background);
     cursor: default;
 }
 
@@ -217,10 +222,10 @@
 }
 
 .circular-label {
-    background: var(--active-color);
+    background: var(--pxt-tertiary-background);
     padding: 0.2rem 0.3rem;
     font-size: 0.75rem;
-    color: var(--inverted-text-color);
+    color: var(--pxt-tertiary-foreground);
     border-radius: 1.5rem;
     vertical-align: middle;
     margin-right: 0.25rem;
@@ -249,8 +254,8 @@
     margin-right: 3rem;
     border-radius: 50%;
 
-    color: var(--inverted-text-color);
-    background-color: var(--primary-color);
+    color: var(--pxt-primary-foreground);
+    background-color: var(--pxt-primary-background);
 }
 
 .end-card i {
@@ -268,7 +273,8 @@
     left: -1.5rem;
     width: 2.5rem;
     height: 0.75rem;
-    background-color: var(--primary-color);
+    background-color: var(--pxt-primary-background);
+    color: var(--pxt-primary-foreground);
 }
 
 .end-card.spin i {

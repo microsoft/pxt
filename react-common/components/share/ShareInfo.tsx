@@ -421,7 +421,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
                             </div>
                             <div className="project-share-actions">
                                 <div className="project-share-social">
-                                    <Button className="square-button gray embed mobile-portrait-hidden"
+                                    <Button className="square-button neutral embed mobile-portrait-hidden"
                                         title={lf("Show embed code")}
                                         leftIcon="fas fa-code"
                                         onClick={handleEmbedClick} />
@@ -447,7 +447,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
                                         heading={lf("Share on WhatsApp")} />
                                     {
                                         pxt.appTarget?.appTheme?.shareToKiosk &&
-                                            <Button className="square-button gray mobile-portrait-hidden"
+                                            <Button className="square-button neutral mobile-portrait-hidden"
                                             title={lf("Share to MakeCode Arcade Kiosk")}
                                             leftIcon={"xicon kiosk"}
                                             onClick={handleKioskClick} />

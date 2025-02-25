@@ -32,7 +32,7 @@
 .graph-activity:focus-within .focus-outline {
     stroke-width: 4px;
     fill: transparent;
-    stroke: blue;
+    stroke: var(--pxt-focus-border);
 }
 
 .common-button.graph-node-button {

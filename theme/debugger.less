@@ -49,7 +49,7 @@
             padding-right: 10px;
         }
         .separator-after {
-            border-right: 1px solid #dddddd;
+            border-right: 1px solid var(--pxt-neutral-stencil1);
         }
     }
 }
@@ -57,9 +57,10 @@
 /* Debugger toolbar handle */
 .ui.item.dbg-handle {
     cursor: move;
-    background: #7F8C8D !important;
+    background: var(--pxt-neutral-background3) !important;
+    color: var(--pxt-neutral-foreground3) !important;
     .icon {
-        color: white;
+        color: var(--pxt-neutral-foreground3);
     }
 }
 
@@ -69,15 +70,15 @@
     white-space: pre;
 }
 .ui.item.dbg-btn .icon.blue {
-    color: #0078D7!important;
+    color: var(--pxt-colors-blue-background) !important;
 }
 
 .ui.item.dbg-btn .icon.red {
-    color: #F6876D !important;
+    color: var(--pxt-colors-red-background) !important;
 }
 
 .ui.button.dbg-btn .icon.green {
-    color: #87D282 !important;
+    color: var(--pxt-colors-green-background) !important;
 }
 
 .ui.compact.menu .dbg-btn.dbg-trace {
@@ -85,28 +86,28 @@
 }
 
 .ui.compact.menu .dbg-btn.dbg-trace.tracing {
-    background-color: @orange;
+    background-color: var(--pxt-primary-background);
 
     .icon {
-        color: @white;
+        color: var(--pxt-primary-foreground);
     }
 }
 
 .ui.compact.menu .dbg-btn.dbg-trace.tracing:hover {
-    background-color: darken(@orange, 10%);
+    background-color: var(--pxt-primary-accent);
 
     .icon {
-        color: darken(@white, 5%);
+        color: var(--pxt-primary-foreground);
     }
 }
 
 .ui.item.link.dbg-btn.dbg-exit {
-    background-color: #cccccc;
-    color: rgb(255, 21, 0);
+    background-color: var(--pxt-colors-red-foreground1);
+    color: var(--pxt-colors-red-background);
 }
 
 .ui.item.link.dbg-btn.disabled {
-    color: rgba(40, 40, 40, .3);
+    color: var(--pxt-neutral-foreground1);
 }
 
 /* Debugger variables view */
@@ -119,14 +120,14 @@
         border: none;
         font-family: @pageFont;
         font-size: larger;
-        color: black;
+        color: var(--pxt-neutral-foreground1);
     }
     .ui.variableTablePlaceholder {
         padding: 1rem;
         border: none;
         font-family: @pageFont;
         font-size: larger;
-        color: rgba(40, 40, 40, .3);
+        color: var(--pxt-neutral-foreground1);
     }
 }
 .ui.segment.debugvariables {
@@ -168,19 +169,19 @@
         white-space: nowrap;
     }
     .varval.number {
-        color: @debugNumberVariable;
+        color: var(--pxt-colors-purple-background);
     }
     .varval.string {
-        color: @debugStringVariable
+        color: var(--pxt-colors-orange-background)
     }
     .varval.boolean {
-        color: @debugBooleanVariable;
+        color: var(--pxt-colors-green-background);
     }
     .varval.array {
-        color: @debugArrayVariable;
+        color: var(--pxt-colors-brown-background);
     }
     .varval.Sprite {
-        color: @debugSpriteVariable;
+        color: var(--pxt-colors-blue-background);
     }
     .previousval {
         text-decoration: line-through;
@@ -194,9 +195,9 @@
 
 .debugger-preview {
     position: fixed;
-    background-color: white;
-    color: black;
-    border: solid 1px black;
+    background-color: var(--pxt-neutral-background1);
+    color: var(--pxt-neutral-foreground1);
+    border: solid 1px var(--pxt-neutral-foreground1);
     padding: 0.25rem;
 
     -webkit-touch-callout: text; /* iOS Safari */
@@ -213,8 +214,8 @@
 // When the preview appears, the text is selected so that the user can copy it.
 // Hide the selection formatting because it makes it look like the text can be edited
 .debugger-preview::selection {
-    color: black;
-    background-color: white;
+    color: var(--pxt-neutral-foreground1);
+    background-color: var(--pxt-neutral-background1);
 }
 
 .debugging .ui.segment.debugvariables {
@@ -224,18 +225,22 @@
 }
 
 .ui.segment.debugvariables:not(.frozen) .item:nth-child(even) {
-    background-color: @debugVariableEven;
+    background-color: var(--pxt-neutral-background1);
+    color: var(--pxt-neutral-foreground1);
 }
 .ui.segment.debugvariables:not(.frozen) .item:nth-child(odd) {
-    background-color: @debugVariableOdd;
+    background-color: var(--pxt-neutral-background2);
+    color: var(--pxt-neutral-foreground2);
 }
 
 .ui.segment.debugvariables.frozen {
-    background: @debugVariableFrozen;
+    background-color: var(--pxt-neutral-background3);
+    color: var(--pxt-neutral-foreground3);
 }
 /* sim overlay */
 div.simframe div.pause-overlay {
-    background:black;
+    background:var(--pxt-neutral-foreground1);
+    color: var(--pxt-neutral-background1);
     opacity: 0.01;
     left: 0;
     top: 0;

@@ -427,6 +427,8 @@ declare namespace pxt {
         blockColors?: Map<string>; // block namespace colors, used for build in categories
         blockIcons?: Map<string | number>;
         blocklyColors?: pxt.Map<string>; // Overrides for the styles in the workspace Blockly.Theme.ComponentStyle
+        defaultColorTheme?: string; // default color theme id for the editor
+        highContrastColorTheme?: string; // theme id for high contrast mode
         socialOptions?: SocialOptions; // show social icons in share dialog, options like twitter handle and org handle
         noReloadOnUpdate?: boolean; // do not notify the user or reload the page when a new app cache is downloaded
         appPathNames?: string[]; // Authorized URL paths in embedded apps, all other paths will display a warning banner
@@ -595,6 +597,7 @@ declare namespace pxt {
         versions: TargetVersions;        // @derived
         apiInfo?: Map<PackageApiInfo>;
         tutorialInfo?: Map<BuiltTutorialInfo>; // hash of tutorial code mapped to prebuilt info for each tutorial
+        colorThemeMap?: Map<ColorThemeInfo>; // Color theme id mapped to color theme info
     }
 
     interface BuiltTutorialInfo {
@@ -608,6 +611,14 @@ declare namespace pxt {
     interface PackageApiInfo {
         sha: string;
         apis: ts.pxtc.ApisInfo;
+    }
+
+    interface ColorThemeInfo {
+        id: string;
+        name: string;
+        overrideCss?: string;
+        monacoBaseTheme?: string; // https://code.visualstudio.com/docs/getstarted/themes
+        colors: { [key: string]: string };
     }
 
     interface ServiceWorkerEvent {

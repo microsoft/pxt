@@ -7,9 +7,9 @@
     display: block;
     box-sizing: border-box;
 
-    color: @inputTextColor;
-    background-color: @inputBackgroundColor;
-    border: 1px solid @inputBorderColor;
+    color: var(--pxt-neutral-foreground1);
+    background-color: var(--pxt-neutral-background1);
+    border: 1px solid var(--pxt-neutral-stencil1);
 
     min-width: 10rem;
     border-radius: 2px;
@@ -33,7 +33,7 @@
     }
 
     &:focus {
-        border: 1px solid @inputBorderColorFocus;
+        border: 1px solid var(--pxt-focus-border);
     }
 }
 

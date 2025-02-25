@@ -6,17 +6,17 @@
     flex-direction: row;
     height: 100%;
 
-    --header-text-color: #000000;
-    --profile-portrait-border-color: #ffffff;
-    --profile-username-color: #999999;
-    --background-color: #fef3e0;
-    --avatar-initials-background-color: #028B9B;
-    --avatar-initials-text-color: #ffffff;
-    --user-pane-border-color: #e4dbca;
-    --notification-background-color: #ffffff;
-    --notification-icon-background-color: #ffffff;
-    --notification-icon-color: #000000;
-    --badge-list-subtitle-color: #aba9a5;
+    --header-text-color: var(--pxt-target-foreground1);
+    --profile-portrait-border-color: var(--pxt-target-stencil1);
+    --profile-username-color: var(--pxt-target-foreground1);
+    --background-color: var(--pxt-target-background1);
+    --avatar-initials-background-color: var(--pxt-secondary-background);
+    --avatar-initials-text-color: var(--pxt-target-foreground1);
+    --user-pane-border-color: var(--pxt-target-stencil1);
+    --notification-background-color: var(--pxt-target-background2);
+    --notification-icon-background-color: var(--pxt-target-background1);
+    --notification-icon-color: var(--pxt-target-foreground1);
+    --badge-list-subtitle-color: var(--pxt-neutral-alpha50);
     --body-font-family: "Share Tech Mono", Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
 }
 
@@ -103,7 +103,7 @@
 
 .profile-notification {
     width: 100%;
-    border: solid 1px black;
+    border: solid 1px var(--pxt-target-stencil1);
     position: relative;
     border-radius: 1rem;
     padding: 1rem;
@@ -127,7 +127,7 @@
 .profile-notification .profile-notification-icon {
     width: 3.25rem;
     height: 3.25rem;
-    border: solid 1px black;
+    border: solid 1px var(--pxt-target-stencil1);
     border-radius: 50%;
     position: absolute;
     top: -1.625rem;
@@ -397,6 +397,9 @@
                 width: 100%;
                 margin: 0;
                 padding: 0.8rem 2.5rem;
+                background-color: var(--pxt-neutral-background1);
+                color: var(--pxt-neutral-foreground1);
+                border: solid 1px var(--pxt-neutral-foreground1);
 
                 .label {
                     display: flex;
