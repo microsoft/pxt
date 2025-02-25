@@ -1,6 +1,7 @@
 {
     "id": "pxt-high-contrast",
     "name": "High Contrast",
+    "weight": 100,
     "monacoBaseTheme": "hc-black",
     "overrideFiles": [
         "/overrides/high-contrast-overrides.css"
