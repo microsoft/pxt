@@ -65,20 +65,24 @@ const FUNCTION_DEFINITION_MIXIN: FunctionDefinitionMixin = {
     afterWorkspaceLoad: function(this: FunctionDefinitionBlock) {
         for (const input of this.inputList) {
             if (input.type !== Blockly.inputs.inputTypes.VALUE) continue;
-            const target = input.connection?.targetBlock();
+            const argument = this.arguments_.find(a => a.id === input.name);
 
-            if (target?.isShadow() && target.mutationToDom) {
-                const mutation = target.mutationToDom();
+            if (!argument) continue;
 
-                if (mutation.getAttribute(DUPLICATE_ON_DRAG_MUTATION_KEY)) {
-                    target.setShadow(false);
-                }
+            let target = input.connection.targetBlock();
+
+            if (!target) {
+                this.populateArgument_(argument, null, input);
+                target = input.connection.targetBlock();
             }
-            const shadowDom = input.connection && input.getShadowDom();
 
-            if (isVariableBlockType(shadowDom?.getAttribute("type"))) {
-                input.setShadowDom(null);
+            target.setFieldValue(argument.name, "VALUE");
+
+            if (target.isShadow()) {
+                target.setShadow(false);
             }
+
+            input.setShadowDom(null);
         }
     },
 
