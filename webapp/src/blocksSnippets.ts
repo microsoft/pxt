@@ -83,7 +83,7 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                     </value>
                     <value name="LIST">
                         <block type="variables_get">
-                            <field name="VAR">list</field>
+                            <field name="VAR">${lf("{id:var}list")}</field>
                         </block>
                     </value>
                 </block>`

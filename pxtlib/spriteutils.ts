@@ -806,6 +806,8 @@ namespace pxt.sprite {
     }
 
     export function bitmapEquals(a: pxt.sprite.BitmapData, b: pxt.sprite.BitmapData) {
+        if (a === b) return true;
+        else if (!a && b || !b && a) return false;
         return pxt.sprite.Bitmap.fromData(a).equals(pxt.sprite.Bitmap.fromData(b));
     }
 
