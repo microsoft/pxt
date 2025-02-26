@@ -395,6 +395,12 @@ namespace pxt {
         teachertoolUrl?: string; // "/beta---eval"
         isStatic?: boolean;
         verprefix?: string; // "v1"
+        ocv?: OcvConfig;
+    }
+
+    export interface OcvConfig {
+        appId: number;
+        iframeEndpoint: string;
     }
 
     export function localWebConfig() {

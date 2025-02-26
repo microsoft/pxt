@@ -83,7 +83,7 @@ import { Tour } from "./components/onboarding/Tour";
 import { parseTourStepsAsync } from "./onboarding";
 import { initGitHubDb } from "./idbworkspace";
 import { BlockDefinition, CategoryNameID } from "./toolbox";
-import { Feedback} from "../../react-common/components/controls/Feedback/Feedback";
+import { FeedbackModal } from "../../react-common/components/controls/Feedback/Feedback";
 
 pxt.blocks.requirePxtBlockly = () => pxtblockly as any;
 pxt.blocks.requireBlockly = () => Blockly;
@@ -5283,7 +5283,7 @@ export class ProjectView
         const hideMenuBar = targetTheme.hideMenuBar || hideTutorialIteration || (isTabTutorial && pxt.appTarget.appTheme.embeddedTutorial) || pxt.shell.isTimeMachineEmbed();
         const isHeadless = simOpts && simOpts.headless;
         const selectLanguage = targetTheme.selectLanguage;
-        const feedbackEnabled = targetTheme.feedbackEnabled && targetTheme.ocvFrameUrl && targetTheme.ocvAppId;
+        const feedbackEnabled = pxt.webConfig.ocv?.appId && pxt.webConfig.ocv?.iframeEndpoint;
         const showEditorToolbar = inEditor && !hideEditorToolbar && this.editor.hasEditorToolbar();
         const useSerialEditor = pxt.appTarget.serial && !!pxt.appTarget.serial.useEditor;
         const showSideDoc = sideDocs && this.state.sideDocsLoadUrl && !this.state.sideDocsCollapsed;
@@ -5425,7 +5425,7 @@ export class ProjectView
                 {hwDialog ? <projects.ChooseHwDialog parent={this} ref={this.handleChooseHwDialogRef} /> : undefined}
                 {sandbox || !sharingEnabled ? undefined : <share.ShareEditor parent={this} ref={this.handleShareEditorRef} loading={this.state.publishing} />}
                 {selectLanguage ? <lang.LanguagePicker parent={this} ref={this.handleLanguagePickerRef} /> : undefined}
-                {feedbackEnabled && this.state.feedback.showing ? <Feedback onClose={this.hideFeedback} kind={this.state.feedback.kind}/> : undefined}
+                {feedbackEnabled && this.state.feedback.showing ? <FeedbackModal onClose={this.hideFeedback} kind={this.state.feedback.kind}/> : undefined}
                 {sandbox ? <container.SandboxFooter parent={this} /> : undefined}
                 {hideMenuBar ? <div id="editorlogo"><a className="poweredbylogo"></a></div> : undefined}
                 {lightbox ? <sui.Dimmer isOpen={true} active={lightbox} portalClassName={'tutorial'} className={'ui modal'}

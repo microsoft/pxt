@@ -74,7 +74,7 @@ export const initFeedbackEventListener = (feedbackConfig: ocv.IFeedbackConfig, f
     window.addEventListener('message', feedbackCallbackEventListener);
     feedbackCallbacks = callbacks;
     initfeedbackOptions = {
-        appId: pxt.appTarget.appTheme.ocvAppId,
+        appId: pxt.webConfig.ocv?.appId,
         ageGroup: ocv.FeedbackAgeGroup.Undefined,
         authenticationType: ocv.FeedbackAuthenticationType.Unauthenticated,
         clientName: "MakeCode",
@@ -130,7 +130,7 @@ const feedbackCallbackEventListener = (event: MessageEvent<FeedbackRequestPayloa
 const getIFrameAndSend = (payload: FeedbackResponsePayloadType) => {
     const iFrameElement = document.getElementById(FEEDBACK_FRAME_ID) as HTMLIFrameElement
     if (iFrameElement) {
-        iFrameElement.contentWindow!.postMessage(payload, pxt.appTarget.appTheme.ocvFrameUrl);
+        iFrameElement.contentWindow!.postMessage(payload, pxt.webConfig.ocv?.iframeEndpoint);
     }
 }
 

@@ -6,48 +6,53 @@ import { Modal } from "../Modal";
 
 // both components require onClose because the feedback modal should close when the user clicks the "finish" button
 // this would not happen if the EventListener did not have a callback to close the modal
-interface IFeedbackModalProps {
-  feedbackConfig: ocv.IFeedbackConfig;
+interface IFeedbackProps  {
+  kind: ocv.FeedbackKind;
   frameId: string;
-  title: string;
-  onClose: () => void;
+  onClose?: () => void;
 }
 
 // right now, there are two kinds of feedback that I think could be valuable for our targets
 // generic and rating feedback, but we will likely want to expand this
-interface IFeedbackProps {
+interface IFeedbackModalProps {
   kind: ocv.FeedbackKind;
   onClose: () => void;
 }
 
 // Wrapper component of the feedback modal so kind can determine what feedback actually shows in the modal
-export const Feedback = (props: IFeedbackProps) => {
+export const FeedbackModal = (props: IFeedbackModalProps) => {
   const { kind, onClose } = props;
+  const title = kind === "generic" ? lf("Leave Feedback") : lf("Rate this activity");
+
   return (
-    <>
-      {kind === "generic" &&
-        <FeedbackModal
-        feedbackConfig={baseConfig}
-        frameId="menu-feedback-frame"
-        title={lf("Leave Feedback")}
-        onClose={onClose}
-      />}
-      {kind === "rating" &&
-        <FeedbackModal
-        feedbackConfig={ratingFeedbackConfig}
-        frameId="activity-feedback-frame"
-        title={lf("Rate this activity")}
-        onClose={onClose} />
-      }
-    </>
+    <Modal className="feedback-modal" title={title} onClose={onClose}>
+      <>
+        {kind === "generic" &&
+          <Feedback
+          kind={kind}
+          frameId="menu-feedback-frame"
+          onClose={onClose}
+        />}
+        {kind === "rating" &&
+          <Feedback
+          kind={kind}
+          frameId="activity-feedback-frame"
+          onClose={onClose} />
+        }
+      </>
+    </Modal>
   )
 }
 
-export const FeedbackModal = (props: IFeedbackModalProps) => {
-  const { feedbackConfig, frameId, title, onClose } = props;
+export const Feedback = (props: IFeedbackProps) => {
+  const { kind, frameId } = props;
+
+  const feedbackConfig = kind === "generic" ? baseConfig : ratingFeedbackConfig;
 
   const onDismiss = () => {
-    onClose();
+    if (props.onClose) {
+      props.onClose();
+    }
   }
 
   let callbacks = { onDismiss };
@@ -59,12 +64,10 @@ export const FeedbackModal = (props: IFeedbackModalProps) => {
     }
   }, [])
   return (
-    <Modal className="feedback-modal" title={title} onClose={onClose}>
       <iframe
       title="feedback"
       id={frameId}
-      src={`${pxt.appTarget.appTheme.ocvFrameUrl}/centrohost?appname=ocvfeedback&feature=host-ocv-inapp-feedback&platform=web&appId=${pxt.appTarget.appTheme.ocvAppId}#/hostedpage`}
+      src={`${pxt.webConfig.ocv?.iframeEndpoint}/centrohost?appname=ocvfeedback&feature=host-ocv-inapp-feedback&platform=web&appId=${pxt.webConfig.ocv?.appId}#/hostedpage`}
       sandbox="allow-scripts allow-same-origin allow-forms allow-popups" />
-    </Modal>
   )
 }
