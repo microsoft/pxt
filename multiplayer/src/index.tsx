@@ -49,7 +49,7 @@ window.addEventListener("DOMContentLoaded", () => {
         const wc = pxt.webConfig as any;
 
         for (const key of Object.keys(wc)) {
-            if (wc[key]?.startsWith("/") && wc[key]?.indexOf("worker") == -1) {
+            if (typeof wc[key] === "string" && wc[key]?.startsWith("/") && wc[key]?.indexOf("worker") == -1) {
                 wc[key] = `http://localhost:3232${wc[key]}`;
             }
         }
