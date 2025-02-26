@@ -1067,7 +1067,7 @@ namespace ts.pxtc.assembler {
             return r
         }
 
-        public getSource(clean: boolean, numStmts = 1, flashSize = 0) {
+        public getSource(clean: boolean, numStmts = 1, flashUsableEnd = 0) {
             let lenPrev = 0
             let size = (lbl: string) => {
                 let curr = this.labels[lbl] || lenPrev
@@ -1081,18 +1081,18 @@ namespace ts.pxtc.assembler {
             let lenVtables = size("_vtables_end")
             let lenLiterals = size("_literals_end")
             let lenAllCode = lenPrev
-            let totalSize = (lenTotal + this.baseOffset) & 0xffffff
+            let totalEnd = (lenTotal + this.baseOffset - 1) & 0xffffff
 
-            if (flashSize && totalSize > flashSize) {
-                const e = new Error(lf("program too big by {0} bytes!", totalSize - flashSize));
+            if (flashUsableEnd && totalEnd >= flashUsableEnd) {
+                const e = new Error(lf("program too big by {0} bytes!", totalEnd - flashUsableEnd));
                 (e as any).ksErrorCode = 9283;
                 throw e;
             }
 
-            flashSize = flashSize || 128 * 1024
+            flashUsableEnd = flashUsableEnd || 128 * 1024
             let totalInfo = lf("; total bytes: {0} ({1}% of {2}k flash with {3} free)",
-                totalSize, (100 * totalSize / flashSize).toFixed(1), (flashSize / 1024).toFixed(1),
-                flashSize - totalSize)
+                totalEnd, (100 * totalEnd / flashUsableEnd).toFixed(1), (flashUsableEnd / 1024).toFixed(1),
+                flashUsableEnd - totalEnd)
             let res =
                 // ARM-specific
                 lf("; generated code sizes (bytes): {0} (incl. {1} user, {2} helpers, {3} vtables, {4} lits); src size {5}\n",

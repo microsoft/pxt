@@ -1021,7 +1021,7 @@ ${hexfile.hexPrelude()}
 
         src = `; Interface tables: ${bin.itFullEntries}/${bin.itEntries} (${Math.round(100 * bin.itFullEntries / bin.itEntries)}%)\n` +
             `; Virtual methods: ${bin.numVirtMethods} / ${bin.numMethods}\n` +
-            b.getSource(!peepDbg, bin.numStmts, target.flashEnd);
+            b.getSource(!peepDbg, bin.numStmts, target.flashUsableEnd);
 
         throwAssemblerErrors(b)
 
