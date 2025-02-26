@@ -2651,6 +2651,30 @@ button.ui.button.hostmultiplayergame-button {
     }
 }
 
+#blocks-editor-field-div,
+.sound-effect-editor-widget {
+    // Header colors are hard-coded for field editors, so hard-code the toggle
+    // colors as well to ensure good contrast.
+    .common-editor-toggle {
+        border: 3px solid rgba(52, 73, 94, .2);
+        background: rgba(52, 73, 94, .4);
+
+        .common-editor-toggle-item {
+            &> .common-button {
+                color: #fff;
+            }
+
+            &.selected > .common-button {
+                color: #323130;
+            }
+        }
+
+        .common-editor-toggle-handle {
+            background: #fff;
+        }
+    }
+}
+
 .blocks-editor-field-overlay {
     position: absolute;
     z-index: @blocklyWidgetDivZIndex;
