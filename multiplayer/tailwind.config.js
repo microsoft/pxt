@@ -6,11 +6,11 @@ module.exports = {
         extend: {
             /* TODO multiplayer : How does high contrast work? */
             colors: {
-                "primary-color": "var(--primary-color)",
-                "secondary-color": "var(--secondary-color)",
-                "tertiary-color": "var(--tertiary-color)",
-                "inactive-color": "var(--inactive-color)",
-                "body-background-color": "var(--body-background-color);",
+                "primary-color": "var(--pxt-primary-background)",
+                "secondary-color": "var(--pxt-secondary-background)",
+                "tertiary-color": "var(--pxt-tertiary-background)",
+                "inactive-color": "var(--pxt-neutral-background3)",
+                "body-background-color": "var(--pxt-neutral-background1);",
                 white: "var(--white)",
                 slot: {
                     0: "rgb(var(--slot-0-color))", // empty slot
