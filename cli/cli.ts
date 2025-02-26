@@ -2308,6 +2308,7 @@ function updateColorThemes(cfg: pxt.TargetBundle) {
         const theme: pxt.ColorThemeInfo = {
             id: themeData.id,
             name: themeData.name,
+            weight: themeData.weight,
             monacoBaseTheme: themeData.monacoBaseTheme,
             colors: themeData.colors
         };
