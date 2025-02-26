@@ -6225,6 +6225,28 @@ document.addEventListener("DOMContentLoaded", async () => {
             });
         })
         .then(() => {
+            // Load theme colors
+            let initialTheme = data.getData<string>(auth.THEMEID);
+            if (!initialTheme) {
+                initialTheme = pxt.appTarget?.appTheme?.defaultColorTheme;
+            }
+
+            // We have a legacy preference stored if the user has enabled high contrast.
+            // Respect it here by switching to the hc color theme.
+            const hcEnabled = data.getData<boolean>(auth.HIGHCONTRAST);
+            if (hcEnabled) {
+                initialTheme = pxt.appTarget?.appTheme?.highContrastColorTheme;
+            }
+
+            if (initialTheme) {
+                const themeManager = ThemeManager.getInstance(document);
+                if (initialTheme !== themeManager.getCurrentColorTheme()?.id) {
+                    return themeManager.switchColorTheme(initialTheme);
+                }
+            }
+            return Promise.resolve();
+        })
+        .then(() => {
             pxt.BrowserUtils.initTheme();
             theme = pxteditor.experiments.syncTheme();
             // editor messages need to be enabled early, in case workspace provider is IFrame
@@ -6255,28 +6277,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             initHashchange();
             socketbridge.tryInit();
             electron.initElectron(theEditor);
-        })
-        .then(() => {
-            // Load theme colors
-            let initialTheme = data.getData<string>(auth.THEMEID);
-            if (!initialTheme) {
-                initialTheme = pxt.appTarget?.appTheme?.defaultColorTheme;
-            }
-
-            // We have a legacy preference stored if the user has enabled high contrast.
-            // Respect it here by switching to the hc color theme.
-            const hcEnabled = data.getData<boolean>(auth.HIGHCONTRAST);
-            if (hcEnabled) {
-                initialTheme = pxt.appTarget?.appTheme?.highContrastColorTheme;
-            }
-
-            if (initialTheme) {
-                const themeManager = ThemeManager.getInstance(document);
-                if (initialTheme !== themeManager.getCurrentColorTheme()?.id) {
-                    return themeManager.switchColorTheme(initialTheme);
-                }
-            }
-            return Promise.resolve();
         })
         .then(() => {
             const showHome = theEditor.shouldShowHomeScreen();

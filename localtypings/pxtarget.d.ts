@@ -614,11 +614,12 @@ declare namespace pxt {
     }
 
     interface ColorThemeInfo {
-        id: string;
-        name: string;
-        overrideCss?: string;
-        monacoBaseTheme?: string; // https://code.visualstudio.com/docs/getstarted/themes
-        colors: { [key: string]: string };
+        id: string; // Unique identifier
+        name: string; // Human-readable name
+        weight?: number; // Lower weights appear first in theme list, no value = go to end
+        overrideCss?: string; // Special css to apply for the theme
+        monacoBaseTheme?: string; // Theme for monaco editor, see https://code.visualstudio.com/docs/getstarted/themes
+        colors: { [key: string]: string }; // Values for theme variables
     }
 
     interface ServiceWorkerEvent {

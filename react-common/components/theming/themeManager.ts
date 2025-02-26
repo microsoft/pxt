@@ -31,7 +31,16 @@ export class ThemeManager {
     }
 
     public getAllColorThemes(): pxt.ColorThemeInfo[] {
-        return pxt.appTarget?.colorThemeMap ? Object.values(pxt.appTarget.colorThemeMap) : [];
+        const allThemes = pxt.appTarget?.colorThemeMap ? Object.values(pxt.appTarget.colorThemeMap) : [];
+        return allThemes.sort((a, b) => {
+            // Lower weight at the front.
+            if (a.weight !== b.weight) {
+                return (a.weight ?? Infinity) - (b.weight ?? Infinity);
+            }
+            else {
+                return a.id.localeCompare(b.id);
+            }
+        });
     }
 
     public isHighContrast(themeId: string) {
