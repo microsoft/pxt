@@ -27,17 +27,19 @@ export const FeedbackModal = (props: IFeedbackModalProps) => {
   return (
     <Modal className="feedback-modal" title={title} onClose={onClose}>
       <>
-        {kind === "generic" &&
+        { kind === "generic" &&
           <Feedback
-          kind={kind}
-          frameId="menu-feedback-frame"
-          onClose={onClose}
-        />}
-        {kind === "rating" &&
+            kind={kind}
+            frameId="menu-feedback-frame"
+            onClose={onClose}
+          />
+        }
+        { kind === "rating" &&
           <Feedback
-          kind={kind}
-          frameId="activity-feedback-frame"
-          onClose={onClose} />
+            kind={kind}
+            frameId="activity-feedback-frame"
+            onClose={onClose}
+          />
         }
       </>
     </Modal>
