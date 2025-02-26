@@ -478,10 +478,46 @@ interface CallerChange {
     shadows: SerializedShadow[];
 }
 
+
+interface MutateFunctionEventJson extends Blockly.Events.AbstractEventJson {
+    definition: string;
+    callers: CallerChange[];
+    oldMutation: string;
+    newMutation: string;
+    descendantChanges: DescendantChange[];
+}
+
 class MutateFunctionEvent extends Blockly.Events.Abstract {
     isBlank: boolean;
 
     type = "pxt_mutate_function"
+
+    static fromJson(
+        json: MutateFunctionEventJson,
+        workspace: Blockly.Workspace,
+        event?: any,
+    ) {
+        event = super.fromJson(
+            json,
+            workspace,
+            event || new MutateFunctionEvent(
+                json.definition,
+                json.callers,
+                json.oldMutation,
+                json.newMutation,
+                json.descendantChanges
+            )
+        );
+
+        const existing = event as MutateFunctionEvent;
+        existing.definition = json.definition;
+        existing.callers = json.callers;
+        existing.oldMutation = json.oldMutation;
+        existing.newMutation = json.newMutation;
+        existing.descendantChanges = json.descendantChanges;
+
+        return event;
+    }
 
     constructor(
         protected definition: string,
@@ -491,6 +527,18 @@ class MutateFunctionEvent extends Blockly.Events.Abstract {
         protected descendantChanges: DescendantChange[]
     ) {
         super();
+    }
+
+    toJson(): MutateFunctionEventJson {
+        return {
+            type: this.type,
+            group: this.group,
+            definition: this.definition,
+            callers: this.callers,
+            oldMutation: this.oldMutation,
+            newMutation: this.newMutation,
+            descendantChanges: this.descendantChanges
+        }
     }
 
     run(forward: boolean) {
@@ -554,8 +602,6 @@ class MutateFunctionEvent extends Blockly.Events.Abstract {
                 targetConnection.connect(newBlock.outputConnection);
             }
         }
-
-        (def as unknown as Blockly.BlockSvg).queueRender();
 
         Blockly.Events.enable();
     }
