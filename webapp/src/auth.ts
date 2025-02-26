@@ -15,10 +15,12 @@ export const LOGGED_IN = `${MODULE}:${FIELD_LOGGED_IN}`;
 const USER_PREF_MODULE = "user-pref";
 const FIELD_USER_PREFERENCES = "preferences";
 const FIELD_HIGHCONTRAST = "high-contrast";
+const FIELD_THEMEID = "themeId";
 const FIELD_LANGUAGE = "language";
 const FIELD_READER = "reader";
 export const USER_PREFERENCES = `${USER_PREF_MODULE}:${FIELD_USER_PREFERENCES}`
 export const HIGHCONTRAST = `${USER_PREF_MODULE}:${FIELD_HIGHCONTRAST}`
+export const THEMEID = `${USER_PREF_MODULE}:${FIELD_THEMEID}`
 export const LANGUAGE = `${USER_PREF_MODULE}:${FIELD_LANGUAGE}`
 export const READER = `${USER_PREF_MODULE}:${FIELD_READER}`
 export const HAS_USED_CLOUD = "has-used-cloud"; // Key into local storage to see if this computer has logged in before
@@ -61,6 +63,7 @@ class AuthClient extends pxt.auth.AuthClient {
             switch (op.path.join('/')) {
                 case "language": data.invalidate(LANGUAGE); break;
                 case "highContrast": data.invalidate(HIGHCONTRAST); break;
+                case "themeId": data.invalidate(THEMEID); break;
                 case "reader": data.invalidate(READER); break;
             }
         }
@@ -111,6 +114,7 @@ class AuthClient extends pxt.auth.AuthClient {
             // Identity not available, read from local storage
             switch (path) {
                 case HIGHCONTRAST: return /^true$/i.test(pxt.storage.getLocal(HIGHCONTRAST));
+                case THEMEID: return pxt.storage.getLocal(THEMEID);
                 case LANGUAGE: return pxt.storage.getLocal(LANGUAGE);
                 case READER: return pxt.storage.getLocal(READER);
             }
@@ -126,6 +130,7 @@ class AuthClient extends pxt.auth.AuthClient {
             switch (field) {
                 case FIELD_USER_PREFERENCES: return { ...state.preferences };
                 case FIELD_HIGHCONTRAST: return state.preferences?.highContrast ?? pxt.auth.DEFAULT_USER_PREFERENCES().highContrast;
+                case FIELD_THEMEID: return state.preferences?.themeId ?? pxt.auth.DEFAULT_USER_PREFERENCES().themeId;
                 case FIELD_LANGUAGE: return state.preferences?.language ?? pxt.auth.DEFAULT_USER_PREFERENCES().language;
                 case FIELD_READER: return state.preferences?.reader ?? pxt.auth.DEFAULT_USER_PREFERENCES().reader;
             }
@@ -230,6 +235,21 @@ export async function setHighContrastPrefAsync(highContrast: boolean): Promise<v
         // Identity not available, save this setting locally
         pxt.storage.setLocal(HIGHCONTRAST, highContrast.toString());
         data.invalidate(HIGHCONTRAST);
+    }
+}
+
+export async function setThemePrefAsync(themeId: string): Promise<void> {
+    const cli = await clientAsync();
+    if (cli) {
+        await cli.patchUserPreferencesAsync({
+            op: 'replace',
+            path: ['themeId'],
+            value: themeId
+        });
+    } else {
+        // Identity not available, save this setting locally
+        pxt.storage.setLocal(THEMEID, themeId);
+        data.invalidate(THEMEID);
     }
 }
 

@@ -5,8 +5,6 @@
      User Global Variables
 *******************************/
 
-@primaryColor: @pink;
-@secondaryColor: rgba(0, 0, 0, 0.55);
 @docsHue: 257;
 
 @red:#A80000;
@@ -22,13 +20,22 @@
 @lightGrey: #d9d9d9;
 
 @greenTextColor: darken(@green, 5);
-@yellowTextColor: #8e6505;
 
-@lightTextColor              : darken(@secondaryColor, 15%);
-@invertedUnselectedTextColor : rgba(255, 255, 255, 0.8);
 
-@pageBackground: #ffffff;
 @pageMinWidth: 100%;
+
+
+/*-------------------
+   Semantic UI Dependencies
+--------------------*/
+
+// These less vars cannot be set to css vars because semanticui uses transform functions on them behind the scenes,
+// but we should not use them. Instead, we should use our css theming variables.
+// They've all been set to overtly strange values to make it obvious that they should not be used.
+
+@linkColor : hotpink; // We should use var(--pxt-link) instead.
+@primaryColor        : #FF00FF;
+@secondaryColor      : #00FF00;
 
 /*-------------------
      Fonts
@@ -50,7 +57,6 @@
    Links
 --------------------*/
 
-@linkColor           : #3977b4;
 @linkHoverUnderline  : underline;
 
 /*-------------------
@@ -59,19 +65,6 @@
 
 @tallEditorBreakpoint: 44rem;
 @thinEditorBreakpoint: 50rem;
-
-/*--------------
-   Form Input
----------------*/
-
-@inputPlaceholderColor: lighten(@inputColor, 45);
-@inputPlaceholderFocusColor: lighten(@inputColor, 35);
-
-/*-------------------
-     Neutral Text
---------------------*/
-
-@invertedLightTextColor      : rgba(255, 255, 255, 0.9);
 
 /*******************************
              States
@@ -90,8 +83,6 @@
 @useCustomScrollbars: false;
 @customScrollbarWidth: 10px;
 
-@thumbBackground: rgba(0, 0, 0, 0.25);
-@thumbInvertedBackground: rgba(255, 255, 255, 0.25);
 
 /*******************************
      PXT Variables
@@ -150,19 +141,11 @@
    Menu
 --------------------*/
 
-@mainMenuBackground: @white;
-@mainMenuInvertedBackground: @black;
-@mainMenuTutorialBackground: @orange;
-@mainMenuTutorialButtons: @mainMenuTutorialBackground;
-
 @mainMenuHeight: 4.0rem;
 @mobileMenuHeight: 3.5rem;
 @sandboxMobileMenuHeight: 3.0rem;
 @thinMenuHeight: 3rem;
 @tutorialEmbedMenuHeight: 2.25rem;
-
-@tutorialSelectedMenuColor: @primaryColor;
-@editorToggleColor: white;
 
 /*-------------------
    Layout
@@ -175,96 +158,28 @@
 @simulatorWidthSmall: 20rem;
 
 /*-------------------
-   Background
---------------------*/
-
-@simulatorBackground: #fff;
-@editorToolsBackground: @simulatorBackground;
-@blocklySvgColor: #fff;
-@sidebarTutorialColor: @lightGrey;
-
-@homeScreenBackground: #ecf0f1;
-@cloudCardBackground: @grey;
-
-/*-------------------
-   Full screen
---------------------*/
-
-@fullscreenBackgroundGradientStart: @mainMenuInvertedBackground;
-@fullscreenBackgroundGradientEnd: @simulatorBackground;
-
-/*-------------------
-   Extensions
---------------------*/
-
-@extensionsHeaderBackground: @mainMenuInvertedBackground;
-@extensionsSecondaryBackground: fade(@extensionsHeaderBackground, 30%);
-@extensionsBackground: @blocklySvgColor;
-@extensionsHeaderColor: white;
-
-/*-------------------
    Side Docs
 --------------------*/
 
 @sidedocsButtonsTop: (@mainMenuHeight + 1rem);
 @sidedocsButtonsRight: 4.25rem;
 
-/*-------------------
-   Editor
---------------------*/
-
-@blocklyToolboxColor: white;
-@blocklyToolboxText: #575E75;
-@trashIconColor: @primaryColor;
 
 /*-------------------
    Serial editor
 --------------------*/
-@serialBackgroundColor: lighten(@simulatorBackground, 2);
-@serialTextColor: @darkTextColor;
-@serialGraphBackground: @lightGrey;
-@serialGraphColor: black;
-@editorCloseColor: black;
-@editorCloseColorHover: darken(@editorCloseColor, 25%);
 @serialConsoleFont: @blocklyFont;
-@serialConsoleBackground: @simulatorBackground;
 
 /*-------------------
    Filelist
 --------------------*/
-@filelistBackgroundColor: @simulatorBackground;
-@filelistHeaderBackground:  rgba(0,0,0,0.05);
 
 /*-------------------
    Github Diff editor
 --------------------*/
-@githubBackgroundColor: @serialBackgroundColor;
-@githubTextColor: @darkTextColor;
-@githubInvertedTextColor: white;
-@diffSegmentBackgroundColor: @pageBackground;
-@diffRemovedBackground:#ffeef0;
-@diffAddedBackground: #e6ffed;
-@diffMarkerBackground: #f1f8ff;
-@diffMarkerColor: rgba(27,31,35,.7);
-@diffInvertedRemovedBackground:#ff5050;
-@diffInvertedAddedBackground: #10a010;
-@diffInvertedMarkerBackground: #666;
-@diffInvertedUnchangedBackground: #1e1e1e;
-@diffInvertedMarkerColor: #ccc;
-@diffLineNumberColor: rgba(27, 31, 35, .3);
-@diffInvertedLineNumberColor: #ddd;
-@diffTokenDarkenRatio: 10%;
-@diffRemovedTokenBackground:darken(@diffRemovedBackground, @diffTokenDarkenRatio);
-@diffAddedTokenBackground: darken(@diffAddedBackground, @diffTokenDarkenRatio);
-@diffInvertedRemovedTokenBackground:darken(@diffInvertedRemovedBackground, @diffTokenDarkenRatio);
-@diffInvertedAddedTokenBackground: darken(@diffInvertedAddedBackground, @diffTokenDarkenRatio);
-@diffUpdateAddedBackground: #fcfc90;
-@diffUpdateAddedTokenBackground: darken(@diffUpdateAddedBackground, @diffTokenDarkenRatio);
-@diffUpdateInlineAddedOutline: 1px solid #ccc;
+@diffUpdateInlineAddedOutline: 1px solid var(--pxt-neutral-stencil3); // #ccc
 
-@conflictBorderColor: orange;
-@conflictHeaderBackgroundColor: lighten(@conflictBorderColor, 30);
-@conflictHeaderColor: black;
+@conflictHeaderColor: var(pxt-neutral-background3); // black;
 
 /*-------------------
    Blockly
@@ -282,68 +197,36 @@
 
 @blocklyFont: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
 
-@blocklyScrollbarBackgroundColor: none;
-@blocklyScrollbarColor: #CECDCE;
 @blocklyScrollbarOpacity: 1;
 
 /*-------------------
    Flyout
 --------------------*/
 
-@flyoutLabelColor: white;
-@blocklyFlyoutColor: @grey;
 @blocklyFlyoutColorOpacity: 0.9;
-@blocklyFlyoutButtonColor: @primaryColor;
-@monacoFlyoutColor: fade(@blocklyFlyoutColor, 90%);
-@monacoFlyoutBorderColor: fade(@flyoutLabelColor, 40%);
-@monacoFlyoutText: fade(@flyoutLabelColor, 70%);
 
 /*-------------------
    Home
 --------------------*/
 
-@homeHeaderColor: @textColor;
 @homeCardBorderRadius: 0px;
 @homeCardBorderSize: 5px;
-@homeCardBorderColor: #e9eef2;
-@homeCardHoverBorderColor: white;
-@homeCardFocusBorderColor: @primaryColor;
-@homeCardColor: @textColor;
-@homeCardMetaColor: @homeCardColor;
-@homeCardHeaderColor: @homeCardColor;
-@homeFooterColor: @homeCardColor;
 
 @homeCardImageBorderRadius: 0;
-@homeCardBackgroundColor: white;
-@homeCardHoverBackgroundColor: darken(@homeCardBackgroundColor, 5%);
 
 /* Detail view */
 @homeSelectedCardBorderSize: @homeCardBorderSize*2;
-@homeSelectedCardBorderColor: white;
-@homeDetailViewBackground: darken(@grey, 20%);
-@homeDetailViewColor: white;
-@homeDetailCloseColor: white;
-@homeDetailCloseBackground: @grey;
-@homeDetailCardActionBackground: @homeScreenBackground;
-@homeDetailCardActionText: white;
-@homeInvertedDetailCardActionBackground: lighten(@homeScreenBackground, 10%);
 @homeHeaderBorderSize: 3px;
-@homeHeaderSelectedBorderColor: white;
 /*-------------------
    Tutorial
 --------------------*/
 
-@tutorialSegmentBackground: #f8f8f9;
-@tutorialSegmentColor: @textColor;
 @tutorialSimframeMargin: -2rem;
 
 /*-------------------
     Banner
 -------------------*/
 @bannerHeight: 2rem;
-@bannerBackgroundColor: black;
-@bannerContrastColor: white;
-@bannerLinkColor: #3eb1d0;
 
 
 /*-------------------
@@ -356,22 +239,6 @@
 
 
 
-/*-------------------
-    Debugger
--------------------*/
-// TODO: Chance this for the color we want for variables in the debugger.
-@debugNumberVariable: darkorchid;
-@debugStringVariable: coral;
-@debugBooleanVariable: darkturquoise;
-@debugArrayVariable: #663905;
-@debugSpriteVariable: blue;
-
-@debugVariableOdd: #fafafa;
-@debugVariableEven: #f0f0f0;
-@debugVariableFrozen: #eee;
-
-@DebuggerBackgroundPrimaryColor: #e67e22;
-@DebuggerBackgroundSecondaryColor: lightgreen;
 
 
 /*-------------------
@@ -380,39 +247,8 @@
 @errorListHeight: 16em;
 @errorListHeaderHeight: 3.5em;
 @errorListInnerHeight: (@errorListHeight - @errorListHeaderHeight);
-@errorListMessageHoverColor: rgba(0, 0, 0, 0.1);
-@errorListBorderColor: #e5e5e5;
-@errorListEven: rgba(0, 0, 0, 0.03);
-@errorListDebugSuggestionColor: rgb(52, 84, 209); // TODO: maybe change to display color based on editor
-@errorListInvertedEven: rgba(255, 255, 255, 0.03);
-@errorListInvertedTextColor: white;
-@errorListInvertedMessageHoverColor: rgba(255, 255, 255, 0.1);
 
 /*-------------------
    Asset Editor
 -------------------*/
-@assetSidebarBorder: #c6c6c6;
-@assetSidebarButton: #f8f8f8;
-@assetSidebarButtonHover: #dedede;
-@assetTopbarBorder: #c6c6c6;
 @assetPreviewBackground: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10px' height='10px'%3E%3Crect x='0' y='0' width='10px' height='10px' fill='white'%3E%3C/rect%3E%3Crect x='0' y='0' width='5px' height='5px' fill='%23dedede'%3E%3C/rect%3E%3Crect x='5' y='5' width='5px' height='5px' fill='%23dedede'%3E%3C/rect%3E%3C/svg%3E");
-@assetUnselected: #e3ddd0;
-@assetTypeButton: @teal;
-
-/*---------------------------
-   Extensions
-----------------------------*/
-@extensionTagBackgroundColor: #AAAAAA;
-@extensionTagColor: #444444;
-
-/*---------------------------
-   Cloud Status
-----------------------------*/
-@cloudStatusColor: @grey;
-
-/*---------------------------
-   Teaching Bubble
-----------------------------*/
-@teachingBubbleBackgroundColor: @blue;
-@teachingBubbleTextColor: @white;
-@teachingBubbleStepsColor: @lightGrey;

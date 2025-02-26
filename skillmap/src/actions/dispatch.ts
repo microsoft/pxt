@@ -37,6 +37,8 @@ export const dispatchShowUserProfile = () => ({ type: actions.SHOW_USER_PROFILE 
 export const dispatchCloseUserProfile = () => ({ type: actions.HIDE_USER_PROFILE });
 export const dispatchShowSelectLanguage = () => ({ type: actions.SHOW_SELECT_LANGUAGE });
 export const dispatchCloseSelectLanguage = () => ({ type: actions.HIDE_SELECT_LANGUAGE });
+export const dispatchShowSelectTheme = () => ({ type: actions.SHOW_SELECT_THEME });
+export const dispatchCloseSelectTheme = () => ({ type: actions.HIDE_SELECT_THEME });
 
 export const dispatchSetShareStatus = (headerId?: string, projectName?: string, data?: ShareData) =>  ({ type: actions.SET_SHARE_STATUS, headerId, projectName, data });
 export const dispatchSetCloudStatus = (headerId: string, status: string) => ({ type: actions.SET_CLOUD_STATUS, headerId, status });

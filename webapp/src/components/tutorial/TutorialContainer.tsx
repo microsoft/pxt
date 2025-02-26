@@ -223,7 +223,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
     let modalActions: ModalButton[] = [{ label: lf("Ok"), onclick: onModalClose,
         icon: "arrow circle right", className: "green" }];
 
-    if (showBack) modalActions.unshift({ label: lf("Back"), onclick: tutorialStepBack,
+    if (showBack) modalActions.unshift({ label: lf("Back"), onclick: tutorialStepBack, className: "neutral",
         icon: "arrow circle left", disabled: !showBack, labelPosition: "left" })
 
     if (showImmersiveReader) {

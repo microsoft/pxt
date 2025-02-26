@@ -141,7 +141,7 @@ function PlayerMenu(
         <div>
             <div className="tw-px-[50%]">{menu}</div>
             <Button
-                className="tw-rounded-full tw-m-0 tw-p-0"
+                className="tw-rounded-full tw-m-0 tw-p-0 !tw-bg-white"
                 hardDisabled={!menu}
                 label={
                     <div

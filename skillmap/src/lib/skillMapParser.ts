@@ -392,18 +392,20 @@ function inflateMetadata(section: MarkdownSection): PageMetadata {
         bannerImageUrl: section.attributes["bannerurl"],
         alternateSources: parseList(section.attributes["alternatesources"]),
         theme: {
-            backgroundColor: tertiary || "var(--body-background-color)",
+            /* Many of these remain hard-coded because their interaction with the fixed
+            background image is more important than the main site theme */
+            backgroundColor: tertiary || "var(--pxt-target-background1)",
             pathColor: primary || "#BFBFBF",
             strokeColor: "#000000",
-            rewardNodeColor: highlight || "var(--primary-color)",
+            rewardNodeColor: highlight || "var(--pxt-primary-background)",
             rewardNodeForeground: highlight ? getContrastingColor(highlight) : "#000000",
-            unlockedNodeColor: unlockedNodeColor || secondary || "var(--secondary-color)",
+            unlockedNodeColor: unlockedNodeColor || secondary || "var(--pxt-secondary-background)",
             unlockedNodeForeground: (unlockedNodeColor || secondary) ? getContrastingColor(unlockedNodeColor || secondary) : "#000000",
             lockedNodeColor: lockedNodeColor || primary || "#BFBFBF",
             lockedNodeForeground: (lockedNodeColor || primary) ? getContrastingColor(lockedNodeColor || primary) : "#000000",
-            completedNodeColor: completedNodeColor || secondary || "var(--secondary-color)",
+            completedNodeColor: completedNodeColor || secondary || "var(--pxt-secondary-background)",
             completedNodeForeground: (completedNodeColor || secondary) ? getContrastingColor(completedNodeColor || secondary) : "#000000",
-            selectedStrokeColor: highlight || "var(--primary-color)",
+            selectedStrokeColor: highlight || "var(--pxt-primary-background)",
             pathOpacity: 0.5,
         }
     }
