@@ -204,7 +204,7 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
         if (document.activeElement instanceof HTMLElement && document.activeElement !== this.refs["canvas-bounds"]) {
             document.activeElement.blur();
         }
-        (this.refs["canvas-bounds"] as HTMLDivElement).focus();
+        this.focus();
 
         if (this.isColorSelect()) {
             this.selectCanvasColor(coord, isRightClick);
@@ -230,6 +230,7 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
 
     onDragStart(coord: ClientCoordinates, isRightClick?: boolean): void {
         this.hasInteracted = true
+        this.focus();
         if (this.touchesResize(coord.clientX, coord.clientY)) {
             this.isResizing = true;
         }
@@ -243,10 +244,12 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
         else {
             this.updateCursorLocation(coord);
             this.startEdit(!!isRightClick);
+            this.updateEdit(this.cursorLocation[0], this.cursorLocation[1]);
         }
     }
 
     onDragMove(coord: ClientCoordinates): void {
+        this.focus();
         if (this.isPanning() && this.lastPanX != undefined && this.lastPanY != undefined) {
             this.panX += this.lastPanX - coord.clientX;
             this.panY += this.lastPanY - coord.clientY;
@@ -1090,6 +1093,10 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
         this.editState.layerOffsetY = 0;
 
         this.props.dispatchImageEdit(this.editState.toImageState());
+    }
+
+    protected focus() {
+        (this.refs["canvas-bounds"] as HTMLDivElement).focus();
     }
 }
 
