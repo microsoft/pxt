@@ -527,9 +527,6 @@ declare namespace pxt {
         timeMachineDiffInterval?: number; // An interval in milliseconds at which to take diffs to store in project history. Defaults to 5 minutes
         timeMachineSnapshotInterval?: number; // An interval in milliseconds at which to take full project snapshots in project history. Defaults to 15 minutes
         adjustBlockContrast?: boolean; // If set to true, all block colors will automatically be adjusted to have a contrast ratio of 4.5 with text
-        feedbackEnabled?: boolean; // allow feedback to be shown on a target
-        ocvAppId?: number; // the app id needed to attach to the OCV service
-        ocvFrameUrl?: string; // the base url for the OCV service
     }
 
     interface DownloadDialogTheme {
