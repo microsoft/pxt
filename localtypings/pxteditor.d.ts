@@ -104,6 +104,7 @@ declare namespace pxt.editor {
         | "serviceworkerregistered"
         | "runeval"
         | "precachetutorial"
+        | "setcolorthemebyid"
         | "setcolortheme"
 
         // package extension messasges
@@ -511,9 +512,14 @@ declare namespace pxt.editor {
         body?: any;
     }
 
+    export interface EditorMessageSetColorThemeByIdRequest extends EditorMessageRequest {
+        action: "setcolorthemebyid";
+        colorThemeId: string;
+    }
+
     export interface EditorMessageSetColorThemeRequest extends EditorMessageRequest {
         action: "setcolortheme";
-        colorThemeId: string;
+        colorTheme: pxt.ColorThemeInfo;
     }
 
     /**
@@ -1100,7 +1106,8 @@ declare namespace pxt.editor {
         hasHeaderBeenPersistentShared(): boolean;
         getSharePreferenceForHeader(): boolean;
         saveSharePreferenceForHeaderAsync(anonymousByDefault: boolean): Promise<void>;
-        setColorTheme(colorThemeId: string): void;
+        setColorThemeById(colorThemeId: string): void;
+        setColorTheme(theme: pxt.ColorThemeInfo): void;
     }
 
     export interface IHexFileImporter {

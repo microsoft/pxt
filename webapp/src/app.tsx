@@ -235,6 +235,7 @@ export class ProjectView
         this.initSimulatorMessageHandlers();
         this.showThemePicker = this.showThemePicker.bind(this);
         this.hideThemePicker = this.hideThemePicker.bind(this);
+        this.setColorThemeById = this.setColorThemeById.bind(this);
         this.setColorTheme = this.setColorTheme.bind(this);
 
         // add user hint IDs and callback to hint manager
@@ -400,7 +401,7 @@ export class ProjectView
         // Only show the start screen if there are no initial projects requested
         // (e.g. from the URL hash or from controller mode)
         const skipStartScreen = pxt.appTarget.appTheme.allowParentController
-            || pxt.shell.isControllerMode()
+            || (pxt.shell.isControllerMode() && !pxt.shell.isNoProject())
             || /^#editor/.test(window.location.hash);
         return !isSandbox && !skipStartScreen && !isProjectRelatedHash(hash);
     }
@@ -5159,14 +5160,18 @@ export class ProjectView
         this.setState({ bannerVisible: b });
     }
 
-    setColorTheme(colorThemeId: string) {
+    setColorThemeById(colorThemeId: string) {
         if (this.themeManager.getCurrentColorTheme()?.id === colorThemeId) {
             return;
         }
 
-        pxt.tickEvent("app.setcolortheme", { theme: colorThemeId });
+        pxt.tickEvent("app.setcolorthemebyid", { theme: colorThemeId });
         this.themeManager.switchColorTheme(colorThemeId);
         this.updateThemePreference();
+    }
+
+    setColorTheme(colorTheme: pxt.ColorThemeInfo) {
+        this.themeManager.loadTheme(colorTheme);
     }
 
     private updateThemePreference() {
@@ -5482,7 +5487,7 @@ export class ProjectView
                 {lightbox ? <sui.Dimmer isOpen={true} active={lightbox} portalClassName={'tutorial'} className={'ui modal'}
                     shouldFocusAfterRender={false} closable={true} onClose={this.hideLightbox} /> : undefined}
                 {this.state.onboarding && <Tour tourSteps={this.state.onboarding} onClose={this.hideOnboarding} />}
-                {this.state.themePickerOpen && <ThemePickerModal themes={this.themeManager.getAllColorThemes()} onThemeClicked={theme => this.setColorTheme(theme?.id)} onClose={this.hideThemePicker} />}
+                {this.state.themePickerOpen && <ThemePickerModal themes={this.themeManager.getAllColorThemes()} onThemeClicked={theme => this.setColorThemeById(theme?.id)} onClose={this.hideThemePicker} />}
             </div>
         );
     }
@@ -6241,7 +6246,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             if (initialTheme) {
                 const themeManager = ThemeManager.getInstance(document);
                 if (initialTheme !== themeManager.getCurrentColorTheme()?.id) {
-                    return themeManager.switchColorTheme(initialTheme);
+                    themeManager.switchColorTheme(initialTheme);
                 }
             }
             return Promise.resolve();

@@ -62,30 +62,35 @@ export class ThemeManager {
 
     public switchColorTheme(themeId: string) {
         if (themeId === this.getCurrentColorTheme()?.id) {
-            return;
+            return true;
         }
 
         const theme = pxt.appTarget?.colorThemeMap?.[themeId];
 
         // Programmatically set the CSS variables for the theme
-        if (theme) {
-            const themeAsStyle = getFullColorThemeCss(theme);
-            const styleElementId = "theme-override";
-            let styleElement = this.document.getElementById(styleElementId);
-            if (!styleElement) {
-                styleElement = this.document.createElement("style");
-                styleElement.id = styleElementId;
-                this.document.head.appendChild(styleElement);
-            }
+        return this.loadTheme(theme);
+    }
 
-            // textContent is safer than innerHTML, less vulnerable to XSS
-            styleElement.textContent = `.pxt-theme-root { ${themeAsStyle} }`;
+    public loadTheme(theme: pxt.ColorThemeInfo) {
+        if (!theme) return false;
 
-            this.performHighContrastWorkaround(themeId);
-
-            this.currentTheme = theme;
-            this.notifySubscribers();
+        const themeAsStyle = getFullColorThemeCss(theme);
+        const styleElementId = "theme-override";
+        let styleElement = this.document.getElementById(styleElementId);
+        if (!styleElement) {
+            styleElement = this.document.createElement("style");
+            styleElement.id = styleElementId;
+            this.document.head.appendChild(styleElement);
         }
+
+        // textContent is safer than innerHTML, less vulnerable to XSS
+        styleElement.textContent = `.pxt-theme-root { ${themeAsStyle} }`;
+
+        this.performHighContrastWorkaround(theme.id);
+
+        this.currentTheme = theme;
+        this.notifySubscribers();
+        return true;
     }
 
     public subscribe(subscriberId: string, onColorThemeChange: () => void) {

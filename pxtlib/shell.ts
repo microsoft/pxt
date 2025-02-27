@@ -83,7 +83,7 @@ namespace pxt.shell {
 
     export function isControllerMode() {
         init();
-        return layoutType == EditorLayoutType.Controller;
+        return layoutType == EditorLayoutType.Controller || controllerMode != ControllerMode.None;
     }
 
     export function getControllerMode() {

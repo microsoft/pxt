@@ -616,6 +616,12 @@ const teacherTool = createWebappTasks("teachertool");
 const tutorialTool = createWebappTasks("tutorialtool");
 
 /********************************************************
+                      Tutorial Tool
+*********************************************************/
+
+const themeBuilder = createWebappTasks("themebuilder");
+
+/********************************************************
                  Webapp build wrappers
 *********************************************************/
 
@@ -629,7 +635,7 @@ const maybeUpdateWebappStrings = () => {
 
 const maybeBuildWebapps = () => {
     if (!shouldBuildWebapps()) return noop;
-    return gulp.parallel(skillmap, authcode, multiplayer, kiosk, teacherTool, tutorialTool);
+    return gulp.parallel(skillmap, authcode, multiplayer, kiosk, teacherTool, tutorialTool, themeBuilder);
 }
 
 /********************************************************
@@ -812,6 +818,7 @@ exports.watchCli = initWatchCli;
 exports.testlanguageservice = testlanguageservice;
 exports.onlinelearning = onlinelearning;
 exports.tt = teacherTool;
+exports.tb = themeBuilder;
 exports.icons = buildSVGIcons;
 exports.testhelpers = testhelpers;
 exports.testpxteditor = testpxteditor;

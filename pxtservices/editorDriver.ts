@@ -456,12 +456,22 @@ export class EditorDriver extends IframeDriver {
         );
     }
 
-    async setColorTheme(colorThemeId: string) {
+    async setColorThemeById(colorThemeId: string) {
+        await this.sendRequest (
+            {
+                type: "pxteditor",
+                action: "setcolorthemebyid",
+                colorThemeId
+            } as pxt.editor.EditorMessageSetColorThemeByIdRequest
+        );
+    }
+
+    async setColorTheme(colorTheme: pxt.ColorThemeInfo) {
         await this.sendRequest (
             {
                 type: "pxteditor",
                 action: "setcolortheme",
-                colorThemeId
+                colorTheme
             } as pxt.editor.EditorMessageSetColorThemeRequest
         );
     }
