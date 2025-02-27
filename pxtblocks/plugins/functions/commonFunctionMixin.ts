@@ -146,14 +146,11 @@ export const COMMON_FUNCTION_MIXIN = {
     createAllInputs_: function (this: CommonFunctionBlock) {
         let hasTitle = false;
         let hasName = false;
-        let hasCollapseIcon = false;
         this.inputList.forEach(function (i) {
             if (i.name == "function_title") {
                 hasTitle = true;
             } else if (i.name == "function_name") {
                 hasName = true;
-            } else if (i.name == "function_collapse") {
-                hasCollapseIcon = true;
             }
         });
 
@@ -180,6 +177,10 @@ export const COMMON_FUNCTION_MIXIN = {
             this.addFunctionLabel_(this.getName());
         }
 
+        this.updateArgumentInputs_();
+    },
+
+    updateArgumentInputs_(this: CommonFunctionBlock) {
         // remove deleted arguments
         for (const input of this.inputList) {
             if (input.type !== Blockly.inputs.inputTypes.VALUE) continue;
@@ -225,7 +226,7 @@ export const COMMON_FUNCTION_MIXIN = {
         }
 
         // If collapse button present, move after arguments
-        if (hasCollapseIcon) {
+        if (this.inputList.some(i => i.name === "function_collapse")) {
             this.moveInputBefore("function_collapse", null);
         }
 

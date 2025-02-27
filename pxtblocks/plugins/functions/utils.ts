@@ -549,7 +549,7 @@ class MutateFunctionEvent extends Blockly.Events.Abstract {
         Blockly.Events.disable();
 
         def.domToMutation(mutation);
-        def.createAllInputs_();
+        def.updateArgumentInputs_();
         def.afterWorkspaceLoad();
 
         for (const change of this.callers) {
