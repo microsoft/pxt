@@ -14,7 +14,9 @@ let sum = add(1, 2);
 
 ### ~ hint
 
-For the @boardname@, you must specify a [type](/javascript/types) for each function parameter. 
+#### Parameter types
+
+You must specify a [type](/javascript/types) for each function parameter. 
 
 ### ~ 
 
