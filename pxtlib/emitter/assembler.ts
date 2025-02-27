@@ -1084,7 +1084,7 @@ namespace ts.pxtc.assembler {
             let totalEnd = (lenTotal + this.baseOffset - 1) & 0xffffff
 
             if (flashUsableEnd && totalEnd >= flashUsableEnd) {
-                const e = new Error(lf("program too big by {0} bytes!", totalEnd - flashUsableEnd));
+                const e = new Error(lf("program too big by {0} bytes!", totalEnd - flashUsableEnd + 1));
                 (e as any).ksErrorCode = 9283;
                 throw e;
             }

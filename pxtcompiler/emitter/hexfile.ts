@@ -1019,9 +1019,11 @@ ${hexfile.hexPrelude()}
         let b = mkProcessorFile(target)
         b.emit(src);
 
+        let flashUsableEnd = target.flashUsableEnd ? target.flashUsableEnd : target.flashEnd
+
         src = `; Interface tables: ${bin.itFullEntries}/${bin.itEntries} (${Math.round(100 * bin.itFullEntries / bin.itEntries)}%)\n` +
             `; Virtual methods: ${bin.numVirtMethods} / ${bin.numMethods}\n` +
-            b.getSource(!peepDbg, bin.numStmts, target.flashUsableEnd);
+            b.getSource(!peepDbg, bin.numStmts, flashUsableEnd);
 
         throwAssemblerErrors(b)
 
