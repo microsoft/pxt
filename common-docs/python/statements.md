@@ -1,6 +1,6 @@
 # Statements
 
-The following Python statements are supported for the @boardname@:
+The following Python statements are supported:
 
 ## Variable declarations
 

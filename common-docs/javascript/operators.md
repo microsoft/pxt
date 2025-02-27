@@ -1,6 +1,6 @@
 # Operators
 
-The following JavaScript operators are supported for the @boardname@.
+The following JavaScript operators are supported:
 
 ## Assignment, arithmetic and bitwise
 

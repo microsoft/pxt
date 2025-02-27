@@ -1,15 +1,17 @@
 # Call a function
 
-The simplest way to get started in Python with your @boardname@ is to
-call one of the @boardname@'s built-in Python functions. Just like how Blocks
-are organized into categories/drawers, the @boardname@ functions are organized by
-namespaces, with names corresponding to the drawer names.
+The simplest way to get started in Python is to
+call one of the built-in Python functions. Just like how Blocks
+are organized into categories/drawers, functions are organized by
+namespaces too, with names corresponding to the drawer names.
 
 ```python-ignore
 Math.abs(-1)
 ```
 
 ### ~ hint
+
+#### Functions in a namespace
 
 If you want to see all functions available in the `Math` namespace, simply type `Math`
 followed by `.` and a list of all the functions will appear. 

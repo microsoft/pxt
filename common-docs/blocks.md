@@ -3,7 +3,8 @@
 ### @description Language constructs for the Block editor.
 
 ## #blocksbase
-Blocks snap into each other to define the program that your @boardname@ will run.
+
+Blocks snap into each other to define the program that will run.
 Blocks can be event (buttons, shake, ...) or need to be snapped into an event to run.
 The [on-start](/blocks/on-start) event runs first.
 

@@ -36,6 +36,8 @@ doSomething(); // THIS LINE WILL NEVER EXECUTE!
 
 ### ~hint
 
+#### No 'empty' statements
+
 To avoid this problem, we don't allow a program to contain an empty statement, such as shown above. 
 If you really want an empty statement, you need to use curly braces to delimit an empty statement block:
 ```typescript-ignore

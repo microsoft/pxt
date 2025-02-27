@@ -1,7 +1,7 @@
 # Types
 
 A *type* refers to a class of data and the operations permitted on that class of data. 
-The following built-in types are supported for the @boardname@:
+The following built-in types are supported:
 
 ## Basic (primitive) types #primitives
 

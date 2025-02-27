@@ -96,7 +96,7 @@ The default value of `lastName` disappears in the type, only leaving behind the 
 Handler functions are functions that take some action when an event or change of state occurs. Usually, some other code saves, or registers, the handler function in a variable in order to call
 it at a later time. When an event happens, like a new input value or an elapsed timer, the handler is called to run a response action.
 
-As an example, the `Thermal` class will check for changes in temperature and run a registered handler when the temperature drops to a set thershold:
+As an example, the `Thermal` class will check for changes in temperature and run a registered handler when the temperature drops to a set threshold:
 
 ```python-ignore
 # the handler function when it's cold...
@@ -122,9 +122,9 @@ thermal.whenCold(whenCold)
 thermal.checkCold()
 ```
 
-## Lamda Functions
+## Lambda Functions
 
-Lamda functions serve as a kind of shortcut to return a result of an expression. A lamda is often saved to a variable and then used like a function to return the expression result:
+Lambda functions serve as a kind of shortcut to return a result of an expression. A lambda is often saved to a variable and then used like a function to return the expression result:
 
 ```python-ignore
 def square(x):
