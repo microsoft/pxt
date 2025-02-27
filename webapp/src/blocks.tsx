@@ -980,7 +980,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     showFunctionsFlyout() {
-        this.showFlyoutInternal_(pxtblockly.createFunctionsFlyoutCategory(this.editor), "functions");
+        this.showFlyoutInternal_(pxtblockly.createFunctionsFlyoutCategory(this.editor), "functions", true);
     }
 
     getViewState() {
@@ -1619,7 +1619,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 // Cache blocks xml list for later
                 this.flyoutBlockXmlCache[cacheKey] = this.flyoutXmlList;
             }
-            this.showFlyoutInternal_(this.flyoutXmlList, cachable && cacheKey);
+            this.showFlyoutInternal_(this.flyoutXmlList, cachable && cacheKey, !cachable);
         }
     }
 
@@ -1703,10 +1703,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.showFlyoutInternal_(this.flyoutXmlList);
     }
 
-    private showFlyoutInternal_(xmlList: Element[], flyoutName: string = "default") {
+    private showFlyoutInternal_(xmlList: Element[], flyoutName: string = "default", skipCache = false) {
         this.currentFlyoutKey = flyoutName;
         const flyout = this.editor.getFlyout() as pxtblockly.VerticalFlyout;
-        flyout.show(xmlList, flyoutName);
+        flyout.show(xmlList, skipCache ? undefined : flyoutName);
         flyout.scrollToStart();
     }
 
