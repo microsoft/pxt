@@ -94,6 +94,12 @@
                             flex-grow: 1;
                         }
                     }
+
+                    .theme-color-button {
+                        border: 1px solid var(--pxt-neutral-foreground1);
+                        width: 2rem;
+                        height: 1rem;
+                    }
                 }
             }
         }

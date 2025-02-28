@@ -6,6 +6,7 @@ import { Button } from "react-common/components/controls/Button";
 import { toggleColorHighlight } from "../transforms/toggleColorHighlight";
 import { classList } from "react-common/components/util";
 import { setColorValue } from "../transforms/setColorValue";
+import { DraggableColorPicker } from "./DraggableColorPicker";
 
 export interface ThemeColorSetterProps {
     key?: string;
@@ -16,13 +17,18 @@ export const ThemeColorSetter = (props: ThemeColorSetterProps) => {
     const { state } = React.useContext(AppStateContext);
     const { editingTheme } = state;
     const { key, colorId, className } = props;
+    const [ color, setColor ] = React.useState<string>(editingTheme?.colors[colorId] || "#000000");
+    const [ colorPickerOpen, setColorPickerOpen ] = React.useState<boolean>(false);
     const [isHighlighted, setIsHighlighted] = React.useState<boolean>(false);
 
     React.useEffect(() => {
         setIsHighlighted(!!state.colorsToHighlight?.includes(colorId));
     }, [state.colorsToHighlight]);
 
-    const color = editingTheme?.colors[colorId];
+    React.useEffect(() => {
+        setColor(editingTheme?.colors[colorId] || "#000000");
+    }, [editingTheme?.colors[colorId], colorId]);
+
     if (!color) return null;
     return (
         <div key={key} className={className}>
@@ -40,12 +46,18 @@ export const ThemeColorSetter = (props: ThemeColorSetterProps) => {
                 onBlur={value => setColorValue(colorId, value)}
                 onEnterKey={value => setColorValue(colorId, value)}
             />
-            <input
-                type="color"
+            <Button
                 className={css["theme-color-button"]}
-                value={color}
-                onChange={e => setColorValue(colorId, e.target.value)}
+                style={{ backgroundColor: color }}
+                onClick={() => setColorPickerOpen(!colorPickerOpen)}
+                title={lf("Open color picker")}
             />
+            {colorPickerOpen && <DraggableColorPicker
+                color={color}
+                className="theme-color-picker"
+                onClose={() => setColorPickerOpen(false)}
+                onChange={c => setColorValue(colorId, c)}
+            />}
         </div>
     );
 };

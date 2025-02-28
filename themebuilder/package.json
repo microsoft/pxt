@@ -10,6 +10,7 @@
     "jsonpath": "^1.1.1",
     "nanoid": "^4.0.2",
     "qrcode.react": "^3.1.0",
+    "react-color": "^2.19.3",
     "react-scripts": "5.0.1",
     "react-to-print": "^2.15.1",
     "sass": "^1.70.0",
@@ -36,6 +37,7 @@
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@types/react": "file:../node_modules/@types/react",
+    "@types/react-color": "^3.0.13",
     "@types/react-dom": "file:../node_modules/@types/react-dom",
     "html-webpack-plugin": "^5.5.0",
     "node-polyfill-webpack-plugin": "^2.0.1",

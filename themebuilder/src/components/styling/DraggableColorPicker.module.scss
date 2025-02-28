@@ -1,0 +1,29 @@
+.draggable-color-picker {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    background-color: var(--pxt-neutral-background2);
+    color: var(--pxt-neutral-foreground2);
+    box-shadow: 0 0 2px 2px var(--pxt-neutral-alpha10);
+
+    .control-bar {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+
+        button[class*="common-button"] {
+            padding: 0;
+        }
+
+        i {
+            font-size: 16px;
+            margin: 0;
+            padding: 0.2rem 0.5rem;
+        }
+    }
+}
