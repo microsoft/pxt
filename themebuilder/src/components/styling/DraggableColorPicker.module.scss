@@ -22,6 +22,7 @@
         .drag-handle {
             flex-grow: 1;
             cursor: grab;
+            padding-left: 2rem; // fudge centering
         }
 
         button[class*="common-button"] {
