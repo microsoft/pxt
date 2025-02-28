@@ -1,7 +1,6 @@
 import * as React from "react";
-import { useContext } from "react";
 import css from "./styling/HeaderBar.module.scss";
-import { Button } from "react-common/components/controls/Button";
+import { useContext } from "react";
 import { MenuBar } from "react-common/components/controls/MenuBar";
 import { AppStateContext } from "../state/appStateContext";
 import { Ticks } from "../constants";
@@ -9,12 +8,15 @@ import { UserAvatarDropdown } from "react-common/components/profile/UserAvatarDr
 import { SignInButton } from "react-common/components/profile/SignInButton";
 import { logoutAsync } from "../services/authClient";
 import { showModal } from "../state/actions";
-import { exportTheme } from "../services/fileSystemService";
+import { MenuDropdown, MenuItem } from "react-common/components/controls/MenuDropdown";
+import { DraggableColorPicker } from "./DraggableColorPicker";
+import { setColorOfHighlight } from "../transforms/setColorOfHighlight";
 
 interface HeaderBarProps {}
 
 export const HeaderBar: React.FC<HeaderBarProps> = () => {
     const { state } = useContext(AppStateContext);
+    const [showHighlightColorPicker, setShowHighlightColorPicker] = React.useState(false);
 
     const appTheme = pxt.appTarget?.appTheme;
 
@@ -87,11 +89,27 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
         }
     };
 
-    const exportClicked = () => {
-        if (!state.editingTheme) return;
-
-        exportTheme(state.editingTheme);
+    function handleHighlightColorChanged(color: string) {
+        setColorOfHighlight(color);
     }
+
+    function getInitialColorPickerPosition() {
+        const rect = document.querySelector(".settings-menu")?.getBoundingClientRect();
+        return {
+            x: rect ? rect.left - 205 : 0,
+            y: rect ? rect.top + 5 : 0,
+        };
+    }
+
+    const settingsItems: MenuItem[] = [
+        {
+            id: "set-highlight-color",
+            title: lf("Set Highlight Color"),
+            label: lf("Set Highlight Color"),
+            onClick: () => setShowHighlightColorPicker(!showHighlightColorPicker),
+            leftIcon: "fas fa-search",
+        },
+    ];
 
     return (
         <MenuBar className={css["header"]} ariaLabel={lf("Header")} role="navigation">
@@ -101,35 +119,34 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
             </div>
 
             <div className={css["right-menu"]}>
-                <Button
-                    className="menu-button"
-                    leftIcon="fas fa-download large"
-                    title={lf("Export Theme")}
-                    onClick={exportClicked} />
+                <MenuDropdown items={settingsItems} title={"Settings"} icon="fas fa-cog" className="settings-menu" />
                 <ProfileMenu />
             </div>
+            {showHighlightColorPicker && (
+                <DraggableColorPicker
+                    color={state.highlightBackground}
+                    onChange={handleHighlightColorChanged}
+                    onClose={() => setShowHighlightColorPicker(false)}
+                    initialPosition={getInitialColorPickerPosition()}
+                />
+            )}
         </MenuBar>
     );
 };
-
 
 const ProfileMenu: React.FC = () => {
     const { state, dispatch } = useContext(AppStateContext);
 
     return (
         <>
-            {state.userProfile &&
+            {state.userProfile && (
                 <UserAvatarDropdown
                     userProfile={state.userProfile}
                     title={lf("Your Profile")}
                     onSignOutClick={() => logoutAsync()}
                 />
-            }
-            {!state.userProfile &&
-                <SignInButton
-                    onSignInClick={() => dispatch(showModal({ modal: "signin"}))}
-                />
-            }
+            )}
+            {!state.userProfile && <SignInButton onSignInClick={() => dispatch(showModal({ modal: "signin" }))} />}
         </>
-    )
-}
+    );
+};

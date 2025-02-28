@@ -28,6 +28,12 @@ type SetColorsToHighlight = ActionBase & {
     colors: string[];
 };
 
+type SetHighlightColor = ActionBase & {
+    type: "SET_HIGHLIGHT_COLOR";
+    fg: string;
+    bg: string;
+};
+
 type SetUserProfile = ActionBase & {
     type: "SET_USER_PROFILE";
     profile: pxt.auth.UserProfile;
@@ -55,6 +61,7 @@ export type Action =
     | SetFrameTheme
     | SetEditingTheme
     | SetColorsToHighlight
+    | SetHighlightColor
     | SetUserProfile
     | ClearUserProfile
     | HideModal
@@ -85,6 +92,12 @@ const setColorsToHighlight = (colors: string[]): SetColorsToHighlight => ({
     colors,
 });
 
+const setHighlightColor = (fg: string, bg: string): SetHighlightColor => ({
+    type: "SET_HIGHLIGHT_COLOR",
+    fg,
+    bg
+});
+
 const setUserProfile = (profile: pxt.auth.UserProfile): SetUserProfile => ({
     type: "SET_USER_PROFILE",
     profile
@@ -108,6 +121,7 @@ export {
     setFrameTheme,
     setEditingTheme,
     setColorsToHighlight,
+    setHighlightColor,
     setUserProfile,
     clearUserProfile,
     hideModal,

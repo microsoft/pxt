@@ -5,7 +5,7 @@ import { setCurrentFrameTheme } from "./setCurrentFrameTheme";
 
 export function highlightColor(colorId: string) {
     const { state, dispatch } = stateAndDispatch();
-    const { editingTheme, highlightColor } = state;
+    const { editingTheme, highlightBackground: highlightColor } = state;
 
     if (editingTheme) {
         const newTheme = { ...editingTheme, colors: { ...editingTheme.colors, [colorId]: highlightColor } };

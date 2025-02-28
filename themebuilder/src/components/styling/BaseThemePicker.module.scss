@@ -1,0 +1,9 @@
+.base-theme-picker-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+
+    .base-theme-picker-label {
+        width: fit-content;
+    }
+}

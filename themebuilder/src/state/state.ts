@@ -7,9 +7,11 @@ export type AppState = {
     userProfile?: pxt.auth.UserProfile;
     modal?: ModalOptions;
     colorsToHighlight?: string[];
-    highlightColor: string;
+    highlightBackground: string;
+    highlightForeground: string;
 };
 
 export const initialAppState: AppState = {
-    highlightColor: "hotpink"
+    highlightBackground: "#FE3ED4",
+    highlightForeground: "#000000"
 };

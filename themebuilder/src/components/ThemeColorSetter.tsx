@@ -51,7 +51,7 @@ export const ThemeColorSetter = (props: ThemeColorSetterProps) => {
         <div key={key} className={className}>
             <Button
                 className={classList(css["highlight-color-button"], isHighlighted ? css["highlighted"] : undefined)}
-                style={isHighlighted ? { borderColor: state.highlightColor, color: state.highlightColor } : undefined}
+                style={isHighlighted ? { borderColor: state.highlightForeground, color: state.highlightForeground, background: state.highlightBackground } : undefined}
                 leftIcon="fas fa-search"
                 title={lf("Highlight color")}
                 onClick={() => toggleColorHighlight(colorId)}

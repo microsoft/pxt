@@ -29,6 +29,13 @@ export default function reducer(state: AppState, action: Action): AppState {
                 colorsToHighlight: action.colors
             };
         }
+        case "SET_HIGHLIGHT_COLOR": {
+            return {
+                ...state,
+                highlightBackground: action.bg,
+                highlightForeground: action.fg
+            };
+        }
         case "SET_USER_PROFILE": {
             return {
                 ...state,

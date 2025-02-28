@@ -5,6 +5,10 @@ import { AppStateContext } from "../state/appStateContext";
 import { setThemeName } from "../transforms/setThemeName";
 import { getColorHeirarchy } from "../utils/colorUtils";
 import { ThemeColorFamily } from "./ThemeColorFamily";
+import { BaseThemePicker } from "./BaseThemePicker";
+import { exportTheme } from "../services/fileSystemService";
+import { Button } from "react-common/components/controls/Button";
+import { classList } from "react-common/components/util";
 
 export const ThemeEditorPane = () => {
     const { state } = React.useContext(AppStateContext);
@@ -15,8 +19,17 @@ export const ThemeEditorPane = () => {
     }, [state.editingTheme?.colors]);
     const baseColorIds = Object.keys(colorHeirarchy);
 
+    function handleSaveClicked() {
+        if (!editingTheme) return;
+        exportTheme(editingTheme);
+    }
+
     return (
         <div className={css["theme-editor-container"]}>
+            <div className={css["theme-editor-header"]}>
+                <BaseThemePicker className={css["base-picker"]} />
+                <Button className={classList(css["save-button"])} leftIcon="fas fa-save" title={lf("Save Theme")} onClick={handleSaveClicked} />
+            </div>
             <Input
                 className={css["theme-name-input"]}
                 label={lf("Theme Name")}
