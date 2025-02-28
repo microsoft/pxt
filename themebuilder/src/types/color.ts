@@ -1,8 +1,13 @@
-import { BlobOptions } from "buffer";
+export type RgbaColor = {
+    r: number;
+    g: number;
+    b: number;
+    a: number;
+}
 
 export class Color {
     value: string;
-    private parsedColor: { r: number, g: number, b: number, a: number } | null = null;
+    private parsedColor: RgbaColor | null = null;
 
     constructor(value: string) {
         this.value = value;
@@ -15,7 +20,7 @@ export class Color {
         const newR = Math.min(255, Math.max(0, r + Math.round(255 * factor)));
         const newG = Math.min(255, Math.max(0, g + Math.round(255 * factor)));
         const newB = Math.min(255, Math.max(0, b + Math.round(255 * factor)));
-        return new Color(this.rgbToHex(newR, newG, newB));
+        return new Color(this.rgbaToHex(newR, newG, newB, a));
     }
 
     // Method to get a darkened color
@@ -25,7 +30,7 @@ export class Color {
         const newR = Math.min(255, Math.max(0, r + Math.round(255 * factor)));
         const newG = Math.min(255, Math.max(0, g + Math.round(255 * factor)));
         const newB = Math.min(255, Math.max(0, b + Math.round(255 * factor)));
-        return new Color(this.rgbToHex(newR, newG, newB));
+        return new Color(this.rgbaToHex(newR, newG, newB, a));
     }
 
     // Method to get a version of this color with a different alpha
@@ -36,7 +41,7 @@ export class Color {
 
     toHex(): string {
         const { r, g, b, a } = this.getParsedColor();
-        return this.rgbToHex(r, g, b);
+        return this.rgbaToHex(r, g, b, a);
     }
 
     toRgba(): string {
@@ -55,14 +60,14 @@ export class Color {
         return this.getLuminance() < 127;
     }
 
-    private getParsedColor(): { r: number, g: number, b: number, a: number } {
+    getParsedColor(): RgbaColor {
         if (!this.parsedColor) {
             this.parsedColor = this.parseColor();
         }
         return this.parsedColor;
     }
 
-    private parseColor(): { r: number, g: number, b: number, a: number } {
+    private parseColor(): RgbaColor {
         let r = 0, g = 0, b = 0, a = 1;
 
         if (this.value.startsWith('#')) {
@@ -80,7 +85,7 @@ export class Color {
                 throw new Error('Invalid hex color format');
             }
         } else if (this.value.startsWith('rgb')) {
-            const rgb = this.value.match(/\d+/g);
+            const rgb = this.value.match(/([\d\.]+)/g);
             if (rgb && rgb.length >= 3) {
                 r = parseInt(rgb[0]);
                 g = parseInt(rgb[1]);
@@ -98,8 +103,13 @@ export class Color {
         return { r, g, b, a };
     }
 
-    // Utility method to convert RGB to hex
-    private rgbToHex(r: number, g: number, b: number): string {
-        return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase()}`;
+    // Utility method to convert RGBA to hex
+    private rgbaToHex(r: number, g: number, b: number, a: number = 1): string {
+        const alphaHex = Math.round(a * 255).toString(16).padStart(2, '0').toUpperCase();
+        const rgbHex = ((1 << 24) + (r << 16) + (g << 8) + b)
+            .toString(16)
+            .slice(1)
+            .toUpperCase();
+        return `#${rgbHex}${alphaHex}`;
     }
 }

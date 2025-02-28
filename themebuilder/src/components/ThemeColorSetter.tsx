@@ -7,6 +7,7 @@ import { toggleColorHighlight } from "../transforms/toggleColorHighlight";
 import { classList } from "react-common/components/util";
 import { setColorValue } from "../transforms/setColorValue";
 import { DraggableColorPicker } from "./DraggableColorPicker";
+import { Color } from "../types/color";
 
 export interface ThemeColorSetterProps {
     key?: string;
@@ -17,7 +18,7 @@ export const ThemeColorSetter = (props: ThemeColorSetterProps) => {
     const { state } = React.useContext(AppStateContext);
     const { editingTheme } = state;
     const { key, colorId, className } = props;
-    const [ color, setColor ] = React.useState<string>(editingTheme?.colors[colorId] || "#000000");
+    const [ color, setColor ] = React.useState<Color>(new Color("#000000"));
     const [ colorPickerOpen, setColorPickerOpen ] = React.useState<boolean>(false);
     const [isHighlighted, setIsHighlighted] = React.useState<boolean>(false);
     const openPickerButtonRef = React.useRef<HTMLButtonElement | null>(null);
@@ -30,7 +31,8 @@ export const ThemeColorSetter = (props: ThemeColorSetterProps) => {
     }, [state.colorsToHighlight]);
 
     React.useEffect(() => {
-        setColor(editingTheme?.colors[colorId] || "#000000");
+        const parsedColor = new Color(editingTheme?.colors[colorId] || "#000000");
+        setColor(parsedColor);
     }, [editingTheme?.colors[colorId], colorId]);
 
     function getColorPickerPosition() {
@@ -57,19 +59,20 @@ export const ThemeColorSetter = (props: ThemeColorSetterProps) => {
             <Input
                 className={css["theme-color-input"]}
                 label={colorId}
-                initialValue={color}
+                initialValue={color.toHex()}
                 onBlur={value => setColorValue(colorId, value)}
                 onEnterKey={value => setColorValue(colorId, value)}
+                readOnly={true}
             />
             <Button
                 className={css["theme-color-button"]}
-                style={{ backgroundColor: color }}
+                style={{ backgroundColor: color.toHex() }}
                 onClick={() => setColorPickerOpen(!colorPickerOpen)}
                 title={lf("Open color picker")}
                 buttonRef={setOpenPickerButtonRef}
             />
             {colorPickerOpen && <DraggableColorPicker
-                color={color}
+                color={color.toHex()}
                 className="theme-color-picker"
                 onClose={() => setColorPickerOpen(false)}
                 onChange={c => setColorValue(colorId, c)}

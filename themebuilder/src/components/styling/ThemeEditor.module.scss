@@ -19,10 +19,9 @@
         .theme-color-family-root {
             display: flex;
             flex-direction: row;
-            gap: 0.5rem;
             align-items: flex-start;
             justify-content: space-between;
-            padding: 0 1rem;
+            padding: 0 1rem 0 0.5rem;
             width: 100%;
 
             &:nth-child(odd) {
@@ -60,34 +59,35 @@
                     flex-direction: row;
                     justify-content: space-between;
                     align-items: center;
-                    padding: 0 1rem;
+                    padding: 0;
                     height: 4rem;
-        
+
                     .highlight-color-button {
                         padding: 0.3rem 0.2rem;
                         border: 1px solid var(--pxt-neutral-foreground1);
-    
+                        margin: 0 1rem 0 0.5rem;
+
                         i {
                             margin: 0;
                             padding: 0;
                         }
-    
+
                         .highlighted {
                             border-width: 2px;
                             // Color set programmatically
                         }
                     }
-        
+
                     .theme-color-input {
                         flex-grow: 1;
                         display: flex;
                         flex-direction: row;
                         align-items: center;
-        
+
                         label[class*="common-input-label"] {
                             width: 33%;
                         }
-        
+
                         div[class*="common-input-group"] {
                             margin: 1rem;
                             flex-grow: 1;
