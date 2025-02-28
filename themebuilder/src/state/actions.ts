@@ -18,6 +18,16 @@ type SetFrameTheme = ActionBase & {
     theme: pxt.ColorThemeInfo;
 };
 
+type SetEditingTheme = ActionBase & {
+    type: "SET_EDITING_THEME";
+    theme: pxt.ColorThemeInfo;
+}
+
+type SetColorsToHighlight = ActionBase & {
+    type: "SET_COLORS_TO_HIGHLIGHT";
+    colors: string[];
+};
+
 type SetUserProfile = ActionBase & {
     type: "SET_USER_PROFILE";
     profile: pxt.auth.UserProfile;
@@ -43,6 +53,8 @@ type ShowModal = ActionBase & {
 export type Action =
     | SetTargetConfig
     | SetFrameTheme
+    | SetEditingTheme
+    | SetColorsToHighlight
     | SetUserProfile
     | ClearUserProfile
     | HideModal
@@ -62,6 +74,16 @@ const setFrameTheme = (theme: pxt.ColorThemeInfo): SetFrameTheme => ({
     type: "SET_FRAME_THEME",
     theme,
 })
+
+const setEditingTheme = (theme: pxt.ColorThemeInfo): SetEditingTheme => ({
+    type: "SET_EDITING_THEME",
+    theme,
+});
+
+const setColorsToHighlight = (colors: string[]): SetColorsToHighlight => ({
+    type: "SET_COLORS_TO_HIGHLIGHT",
+    colors,
+});
 
 const setUserProfile = (profile: pxt.auth.UserProfile): SetUserProfile => ({
     type: "SET_USER_PROFILE",
@@ -84,6 +106,8 @@ const showModal = (modalOptions: ModalOptions): ShowModal => ({
 export {
     setTargetConfig,
     setFrameTheme,
+    setEditingTheme,
+    setColorsToHighlight,
     setUserProfile,
     clearUserProfile,
     hideModal,

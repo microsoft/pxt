@@ -2,11 +2,14 @@ import { ModalOptions } from "../types/modalOptions";
 
 export type AppState = {
     targetConfig?: pxt.TargetConfig;
-    theme?: pxt.ColorThemeInfo;
+    frameTheme?: pxt.ColorThemeInfo; // Theme actually being sent to the iframe (may contain temporary highlights, etc...)
+    editingTheme?: pxt.ColorThemeInfo; // Theme being edited
     userProfile?: pxt.auth.UserProfile;
     modal?: ModalOptions;
+    colorsToHighlight?: string[];
+    highlightColor: string;
 };
 
 export const initialAppState: AppState = {
-
+    highlightColor: "hotpink"
 };

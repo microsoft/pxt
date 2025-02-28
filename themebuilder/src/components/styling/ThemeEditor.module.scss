@@ -17,38 +17,89 @@
         flex-direction: column;
         gap: 1rem;
 
-        .theme-color-wrapper {
-            width: 100%;
+        .theme-color-family-root {
             display: flex;
-            flex-direction: row;
-            justify-content: space-between;
-            align-items: center;
+            flex-direction: column;
             gap: 0.5rem;
+            align-items: flex-start;
+            justify-content: space-between;
             padding: 0 1rem;
+            width: 100%;
 
             &:nth-child(odd) {
-                background-color: var(--pxt-neutral-alpha10);
+                background-color: var(--pxt-neutral-stencil1);
             }
 
-            .theme-color-input {
-                flex-grow: 1;
+            .expand-collapse-button {
+                background: none;
+                margin: 0;
+                padding: 0.2rem 0.5rem;
+                width: 2rem;
+
+                i {
+                    margin: 0;
+                    padding: 0 0.8rem 0 0;
+                }
+
+                &:hover {
+                    background-color: var(--pxt-neutral-alpha20);
+                }
+            }
+
+
+            .theme-color-family-base-row {
+                width: 100%;
                 display: flex;
                 flex-direction: row;
                 align-items: center;
-
-                label[class*="common-input-label"] {
-                    width: 33%;
-                }
-
-                div[class*="common-input-group"] {
-                    margin: 1rem;
-                    flex-grow: 1;
-                }
+                justify-content: space-between;
             }
 
-            // .theme-color-button {
-            //     margin-left: 1rem;
-            // }
-        };
+            .derived-color-set {
+                width: 100%;
+                margin-left: 2rem;
+            }
+
+            .theme-color-setter {
+                width: 100%;
+                display: flex;
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+                gap: 0.5rem;
+                padding: 0 1rem;
+    
+                .highlight-color-button {
+                    padding: 0.3rem 0.2rem;
+                    border: 1px solid var(--pxt-neutral-foreground1);
+
+                    i {
+                        margin: 0;
+                        padding: 0;
+                    }
+
+                    .highlighted {
+                        border-width: 2px;
+                        // Color set programmatically
+                    }
+                }
+    
+                .theme-color-input {
+                    flex-grow: 1;
+                    display: flex;
+                    flex-direction: row;
+                    align-items: center;
+    
+                    label[class*="common-input-label"] {
+                        width: 33%;
+                    }
+    
+                    div[class*="common-input-group"] {
+                        margin: 1rem;
+                        flex-grow: 1;
+                    }
+                }
+            };
+        }
     }
 }

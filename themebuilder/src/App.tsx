@@ -8,7 +8,7 @@ import { setTargetConfig } from "./state/actions";
 import { EditorPanel } from "./components/EditorPanel";
 import { authCheckAsync } from "./services/authClient";
 import { ThemeManager } from "react-common/components/theming/themeManager";
-import { setCurrentFrameTheme } from "./transforms/setCurrentFrameTheme";
+import { setCurrentEditingTheme } from "./transforms/setCurrentEditingTheme";
 
 export const App = () => {
     const { state, dispatch } = useContext(AppStateContext);
@@ -47,7 +47,7 @@ export const App = () => {
             if (ready && inited) {
                 // This is here just in case this finishes after initialization is complete.
                 // The useEffect that normally sets this will have already run and won't have had the theme.
-                setCurrentFrameTheme(themeManager.getCurrentColorTheme());
+                setCurrentEditingTheme(themeManager.getCurrentColorTheme());
             }
         }
     }, []);
@@ -58,7 +58,7 @@ export const App = () => {
             const themeManager = ThemeManager.getInstance(document);
             const currentTheme = themeManager.getCurrentColorTheme();
             if (currentTheme) {
-                setCurrentFrameTheme(currentTheme);
+                setCurrentEditingTheme(currentTheme);
             }
         }
     }, [ready, inited])

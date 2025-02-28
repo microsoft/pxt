@@ -14,7 +14,19 @@ export default function reducer(state: AppState, action: Action): AppState {
         case "SET_FRAME_THEME": {
             return {
                 ...state,
-                theme: action.theme,
+                frameTheme: action.theme,
+            };
+        }
+        case "SET_EDITING_THEME": {
+            return {
+                ...state,
+                editingTheme: action.theme,
+            };
+        }
+        case "SET_COLORS_TO_HIGHLIGHT": {
+            return {
+                ...state,
+                colorsToHighlight: action.colors
             };
         }
         case "SET_USER_PROFILE": {
