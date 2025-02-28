@@ -9,6 +9,7 @@ import { UserAvatarDropdown } from "react-common/components/profile/UserAvatarDr
 import { SignInButton } from "react-common/components/profile/SignInButton";
 import { logoutAsync } from "../services/authClient";
 import { showModal } from "../state/actions";
+import { exportTheme } from "../services/fileSystemService";
 
 interface HeaderBarProps {}
 
@@ -86,21 +87,26 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
         }
     };
 
+    const exportClicked = () => {
+        if (!state.editingTheme) return;
+
+        exportTheme(state.editingTheme);
+    }
+
     return (
         <MenuBar className={css["header"]} ariaLabel={lf("Header")} role="navigation">
-            <div className={css["left-menu"]}>
+            <div className={css["left-menu"]} onClick={onHomeClicked}>
                 {getOrganizationLogo()}
                 {getTargetLogo()}
             </div>
 
             <div className={css["right-menu"]}>
-                <ProfileMenu />
                 <Button
                     className="menu-button"
-                    leftIcon="fas fa-home large"
-                    title={lf("Open the MakeCode editor")}
-                    onClick={onHomeClicked}
-                />
+                    leftIcon="fas fa-download large"
+                    title={lf("Export Theme")}
+                    onClick={exportClicked} />
+                <ProfileMenu />
             </div>
         </MenuBar>
     );
