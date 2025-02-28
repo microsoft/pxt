@@ -8,6 +8,9 @@
     background-color: var(--pxt-neutral-background2);
     color: var(--pxt-neutral-foreground2);
     box-shadow: 0 0 2px 2px var(--pxt-neutral-alpha10);
+    border-radius: 0.5rem;
+    top: 0;
+    left: 0;
 
     .control-bar {
         display: flex;
@@ -15,6 +18,11 @@
         align-items: center;
         justify-content: space-between;
         width: 100%;
+
+        .drag-handle {
+            flex-grow: 1;
+            cursor: grab;
+        }
 
         button[class*="common-button"] {
             padding: 0;

@@ -20,6 +20,10 @@ export const ThemeColorSetter = (props: ThemeColorSetterProps) => {
     const [ color, setColor ] = React.useState<string>(editingTheme?.colors[colorId] || "#000000");
     const [ colorPickerOpen, setColorPickerOpen ] = React.useState<boolean>(false);
     const [isHighlighted, setIsHighlighted] = React.useState<boolean>(false);
+    const openPickerButtonRef = React.useRef<HTMLButtonElement | null>(null);
+    const setOpenPickerButtonRef = React.useCallback((el: HTMLButtonElement | null) => {
+        openPickerButtonRef.current = el;
+    }, []);
 
     React.useEffect(() => {
         setIsHighlighted(!!state.colorsToHighlight?.includes(colorId));
@@ -28,6 +32,17 @@ export const ThemeColorSetter = (props: ThemeColorSetterProps) => {
     React.useEffect(() => {
         setColor(editingTheme?.colors[colorId] || "#000000");
     }, [editingTheme?.colors[colorId], colorId]);
+
+    function getColorPickerPosition() {
+        if (!openPickerButtonRef.current) return { x: 0, y: 0 };
+
+        const rect = openPickerButtonRef.current.getBoundingClientRect();
+        return {
+             // intentionally moving a tad to the left and up from the button.
+            x: rect.left - 5,
+            y: rect.top - 5,
+        };
+    }
 
     if (!color) return null;
     return (
@@ -51,12 +66,14 @@ export const ThemeColorSetter = (props: ThemeColorSetterProps) => {
                 style={{ backgroundColor: color }}
                 onClick={() => setColorPickerOpen(!colorPickerOpen)}
                 title={lf("Open color picker")}
+                buttonRef={setOpenPickerButtonRef}
             />
             {colorPickerOpen && <DraggableColorPicker
                 color={color}
                 className="theme-color-picker"
                 onClose={() => setColorPickerOpen(false)}
                 onChange={c => setColorValue(colorId, c)}
+                initialPosition={getColorPickerPosition()}
             />}
         </div>
     );
