@@ -1,8 +1,7 @@
-import { stateAndDispatch } from "../state";
 import { Color } from "../types/color";
 
 function getHoverColor(color: Color): Color {
-    return color.isDarkColor() ? color.getLightened(1.2) : color.getDarkened(1.2);
+    return color.isDarkColor() ? color.getLightened(1.05) : color.getDarkened(1.05);
 }
 
 function getForegroundColor(color: Color): Color {
@@ -15,7 +14,7 @@ function getForegroundHoverColor(color: Color): Color {
 }
 
 function getStencilColor(color: Color): Color {
-    return color.isDarkColor() ? color.getLightened(1.8) : color.getDarkened(1.8);
+    return color.isDarkColor() ? color.getLightened(1.2) : color.getDarkened(1.2);
 }
 
 function getAlphaColor(color: Color, alpha: number): Color {
@@ -23,9 +22,8 @@ function getAlphaColor(color: Color, alpha: number): Color {
 }
 
 function getAccentColor(color: Color): Color {
-    return color.isDarkColor() ? color.getLightened(1.5) : color.getDarkened(1.5);
+    return color.isDarkColor() ? color.getLightened(1.3) : color.getDarkened(1.3);
 }
-
 
 // This could probably be done with some clever regex but there were a bunch of special cases
 // and it was taking too long. This is simpler for now.
