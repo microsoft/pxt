@@ -15,11 +15,10 @@
 
         display: flex;
         flex-direction: column;
-        gap: 1rem;
 
         .theme-color-family-root {
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
             gap: 0.5rem;
             align-items: flex-start;
             justify-content: space-between;
@@ -32,9 +31,10 @@
 
             .expand-collapse-button {
                 background: none;
-                margin: 0;
                 padding: 0.2rem 0.5rem;
                 width: 2rem;
+                height: 2rem;
+                margin: 1rem 0 0 0; // 1 rem centers the button with respect to first row (height 4rem).
 
                 i {
                     margin: 0;
@@ -46,60 +46,56 @@
                 }
             }
 
-
-            .theme-color-family-base-row {
-                width: 100%;
+            .color-setters {
                 display: flex;
-                flex-direction: row;
+                flex-direction: column;
                 align-items: center;
-                justify-content: space-between;
-            }
-
-            .derived-color-set {
-                width: 100%;
-                margin-left: 2rem;
-            }
-
-            .theme-color-setter {
-                width: 100%;
-                display: flex;
-                flex-direction: row;
-                justify-content: space-between;
-                align-items: center;
+                justify-content: flex-start;
                 gap: 0.5rem;
-                padding: 0 1rem;
-    
-                .highlight-color-button {
-                    padding: 0.3rem 0.2rem;
-                    border: 1px solid var(--pxt-neutral-foreground1);
+                width: 100%;
 
-                    i {
-                        margin: 0;
-                        padding: 0;
-                    }
-
-                    .highlighted {
-                        border-width: 2px;
-                        // Color set programmatically
-                    }
-                }
-    
-                .theme-color-input {
-                    flex-grow: 1;
+                .theme-color-setter {
+                    width: 100%;
                     display: flex;
                     flex-direction: row;
+                    justify-content: space-between;
                     align-items: center;
+                    gap: 0.5rem;
+                    padding: 0 1rem;
+                    height: 4rem;
+        
+                    .highlight-color-button {
+                        padding: 0.3rem 0.2rem;
+                        border: 1px solid var(--pxt-neutral-foreground1);
     
-                    label[class*="common-input-label"] {
-                        width: 33%;
+                        i {
+                            margin: 0;
+                            padding: 0;
+                        }
+    
+                        .highlighted {
+                            border-width: 2px;
+                            // Color set programmatically
+                        }
                     }
-    
-                    div[class*="common-input-group"] {
-                        margin: 1rem;
+        
+                    .theme-color-input {
                         flex-grow: 1;
+                        display: flex;
+                        flex-direction: row;
+                        align-items: center;
+        
+                        label[class*="common-input-label"] {
+                            width: 33%;
+                        }
+        
+                        div[class*="common-input-group"] {
+                            margin: 1rem;
+                            flex-grow: 1;
+                        }
                     }
                 }
-            };
+            }
         }
     }
 }

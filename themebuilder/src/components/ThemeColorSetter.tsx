@@ -10,11 +10,12 @@ import { setColorValue } from "../transforms/setColorValue";
 export interface ThemeColorSetterProps {
     key?: string;
     colorId: string;
+    className?: string;
 }
 export const ThemeColorSetter = (props: ThemeColorSetterProps) => {
     const { state } = React.useContext(AppStateContext);
     const { editingTheme } = state;
-    const { key, colorId } = props;
+    const { key, colorId, className } = props;
     const [isHighlighted, setIsHighlighted] = React.useState<boolean>(false);
 
     React.useEffect(() => {
@@ -24,7 +25,7 @@ export const ThemeColorSetter = (props: ThemeColorSetterProps) => {
     const color = editingTheme?.colors[colorId];
     if (!color) return null;
     return (
-        <div key={key} className={css["theme-color-setter"]}>
+        <div key={key} className={className}>
             <Button
                 className={classList(css["highlight-color-button"], isHighlighted ? css["highlighted"] : undefined)}
                 style={isHighlighted ? { borderColor: state.highlightColor, color: state.highlightColor } : undefined}
