@@ -10,6 +10,7 @@ import { exportTheme } from "../services/fileSystemService";
 import { Button } from "react-common/components/controls/Button";
 import { classList } from "react-common/components/util";
 import * as auth from "../services/authClient";
+import { ThemeManager } from "react-common/components/theming/themeManager";
 
 export interface SaveState {
     icon: string;
@@ -44,9 +45,17 @@ export const ThemeEditorPane = () => {
         exportTheme(editingTheme);
     }
 
+    // TODO thsparks : this should go into a service or transform
     async function handleSaveToProfileClicked() {
         if (!editingTheme) return;
-        const success = await auth.addCustomColorThemeAsync(editingTheme);
+
+        // Don't allow overwriting built-in themes
+        const builtinThemes = ThemeManager.getInstance(document).getAllColorThemes() || [];
+        let success = false;
+        if (!builtinThemes.find(t => t.id === editingTheme.id)) {
+            success = await auth.addCustomColorThemeAsync(editingTheme);
+        }
+
         if (success) {
             setTemporarySaveIcon(
                 {
