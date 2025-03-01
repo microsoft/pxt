@@ -90,3 +90,59 @@ export async function loginAsync(
 export async function authTokenAsync(): Promise<string | undefined> {
     return await pxt.auth.getAuthTokenAsync();
 }
+
+export async function addCustomColorThemeAsync(theme: pxt.ColorThemeInfo): Promise<boolean> {
+    const cli = await clientAsync();
+    if (cli) {
+        const prefs = await cli.userPreferencesAsync();
+        if (!prefs) return false;
+
+        const themes: pxt.ColorThemeInfo[] = prefs.customColorThemes?.themes ?? [];
+        if (themes.some(t => t.id === theme.id)) {
+            pxt.error(lf("A theme with this ID already exists"));
+            return false;
+        }
+        themes.push(theme);
+        return setCustomColorThemesAsync(themes);
+    }
+    // Not supported without sign-in
+    return false;
+}
+
+export async function removeCustomColorThemeAsync(themeId: string): Promise<boolean> {
+    const cli = await clientAsync();
+    if (cli) {
+        const prefs = await cli.userPreferencesAsync();
+        if (!prefs) return false;
+
+        const themes: pxt.ColorThemeInfo[] = prefs.customColorThemes?.themes ?? [];
+        const newThemes = themes.filter(t => t.id !== themeId);
+        return setCustomColorThemesAsync(newThemes);
+    }
+    // Not supported without sign-in
+    return false;
+}
+
+export async function setCustomColorThemesAsync(themes: pxt.ColorThemeInfo[]): Promise<boolean> {
+    const cli = await clientAsync();
+    if (cli) {
+        const result = await cli.patchUserPreferencesAsync({
+            op: 'replace',
+            path: ['customColorThemes'],
+            value: { themes }
+        });
+        return true; // todo thsparks : result.success but it seems to be false even when it works?
+    }
+    // Not supported without sign-in
+    return false;
+}
+
+export async function getCustomColorThemesAsync(): Promise<pxt.ColorThemeInfo[]> {
+    const cli = await clientAsync();
+    if (cli) {
+        const prefs = await cli.userPreferencesAsync();
+        return prefs?.customColorThemes?.themes ?? [];
+    }
+    // Not supported without sign-in
+    return [];
+}

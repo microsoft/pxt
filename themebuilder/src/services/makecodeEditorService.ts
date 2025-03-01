@@ -38,6 +38,6 @@ export async function setHighContrastAsync(on: boolean) {
 
 export async function sendThemeAsync(theme: pxt.ColorThemeInfo) {
     if (driver) {
-        driver.setColorTheme(theme)
+        driver.setColorTheme(theme, false);
     }
 }

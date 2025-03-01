@@ -44,6 +44,10 @@ namespace pxt.auth {
         badges: Badge[];
     }
 
+    export type CustomColorThemesState = {
+        themes: pxt.ColorThemeInfo[];
+    }
+
     export type SetPrefResult = {
         success: boolean;
         res: UserPreferences;
@@ -56,6 +60,7 @@ namespace pxt.auth {
         language?: string;
         highContrast?: boolean;
         themeId?: string;
+        customColorThemes?: CustomColorThemesState;
         reader?: string;
         skillmap?: UserSkillmapState;
         badges?: UserBadgeState;

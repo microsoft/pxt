@@ -15,7 +15,11 @@
             padding-top: 0;
         }
 
-        .save-button {
+        .export-button {
+            transition: all 0.2s ease-in-out;
+        }
+
+        .header-icon-button {
             padding: 1rem;
             border: 1px solid var(--pxt-neutral-foreground1);
 

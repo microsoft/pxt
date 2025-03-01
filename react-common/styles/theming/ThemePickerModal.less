@@ -177,6 +177,31 @@
                     }
                 }
             }
+
+            .theme-footer {
+                display: flex;
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+
+                .theme-picker-item-name {
+                    flex-grow: 1;
+                    padding: 0.5rem 0.8rem;
+                    text-align: center;
+                }
+
+                .remove-theme-button {
+                    position: absolute;
+                    padding: 0.3rem;
+                    right: 1rem;
+
+                    i {
+                        margin: 0;
+                        padding: 0;
+                        line-height: 1;
+                    }
+                }
+            }
         }
     }
 }

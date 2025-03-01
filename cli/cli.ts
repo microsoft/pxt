@@ -2310,7 +2310,8 @@ function updateColorThemes(cfg: pxt.TargetBundle) {
             name: themeData.name,
             weight: themeData.weight,
             monacoBaseTheme: themeData.monacoBaseTheme,
-            colors: themeData.colors
+            colors: themeData.colors,
+            isCustom: false
         };
 
         for (const overrideFile of themeData.overrideFiles ?? []) {

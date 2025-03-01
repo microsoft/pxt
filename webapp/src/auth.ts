@@ -16,11 +16,13 @@ const USER_PREF_MODULE = "user-pref";
 const FIELD_USER_PREFERENCES = "preferences";
 const FIELD_HIGHCONTRAST = "high-contrast";
 const FIELD_THEMEID = "themeId";
+const FIELD_CUSTOMCOLORTHEMES = "customColorThemes";
 const FIELD_LANGUAGE = "language";
 const FIELD_READER = "reader";
 export const USER_PREFERENCES = `${USER_PREF_MODULE}:${FIELD_USER_PREFERENCES}`
 export const HIGHCONTRAST = `${USER_PREF_MODULE}:${FIELD_HIGHCONTRAST}`
 export const THEMEID = `${USER_PREF_MODULE}:${FIELD_THEMEID}`
+export const CUSTOM_COLOR_THEMES = `${USER_PREF_MODULE}:${FIELD_CUSTOMCOLORTHEMES}`
 export const LANGUAGE = `${USER_PREF_MODULE}:${FIELD_LANGUAGE}`
 export const READER = `${USER_PREF_MODULE}:${FIELD_READER}`
 export const HAS_USED_CLOUD = "has-used-cloud"; // Key into local storage to see if this computer has logged in before
@@ -64,6 +66,7 @@ class AuthClient extends pxt.auth.AuthClient {
                 case "language": data.invalidate(LANGUAGE); break;
                 case "highContrast": data.invalidate(HIGHCONTRAST); break;
                 case "themeId": data.invalidate(THEMEID); break;
+                case "customColorThemes": data.invalidate(CUSTOM_COLOR_THEMES); break;
                 case "reader": data.invalidate(READER); break;
             }
         }
@@ -102,7 +105,7 @@ class AuthClient extends pxt.auth.AuthClient {
         return null;
     }
 
-    public static userPreferencesHandler(path: string): pxt.auth.UserPreferences | boolean | string {
+    public static userPreferencesHandler(path: string): pxt.auth.UserPreferences | boolean | string | pxt.auth.CustomColorThemesState  {
         const cli = pxt.auth.client();
         const state = pxt.auth.cachedUserState;
         if (cli && state) {
@@ -122,7 +125,7 @@ class AuthClient extends pxt.auth.AuthClient {
         return null;
     }
 
-    private static internalUserPreferencesHandler(path: string): pxt.auth.UserPreferences | boolean | string {
+    private static internalUserPreferencesHandler(path: string): pxt.auth.UserPreferences | boolean | string | pxt.auth.CustomColorThemesState {
         const cli = pxt.auth.client();
         const state = pxt.auth.cachedUserState;
         if (cli && state) {
@@ -131,6 +134,7 @@ class AuthClient extends pxt.auth.AuthClient {
                 case FIELD_USER_PREFERENCES: return { ...state.preferences };
                 case FIELD_HIGHCONTRAST: return state.preferences?.highContrast ?? pxt.auth.DEFAULT_USER_PREFERENCES().highContrast;
                 case FIELD_THEMEID: return state.preferences?.themeId ?? pxt.auth.DEFAULT_USER_PREFERENCES().themeId;
+                case FIELD_CUSTOMCOLORTHEMES: return state.preferences?.customColorThemes ?? pxt.auth.DEFAULT_USER_PREFERENCES().customColorThemes;
                 case FIELD_LANGUAGE: return state.preferences?.language ?? pxt.auth.DEFAULT_USER_PREFERENCES().language;
                 case FIELD_READER: return state.preferences?.reader ?? pxt.auth.DEFAULT_USER_PREFERENCES().reader;
             }
@@ -251,6 +255,48 @@ export async function setThemePrefAsync(themeId: string): Promise<void> {
         pxt.storage.setLocal(THEMEID, themeId);
         data.invalidate(THEMEID);
     }
+}
+
+export async function addCustomColorThemeAsync(theme: pxt.ColorThemeInfo): Promise<boolean> {
+    const cli = await clientAsync();
+    if (cli) {
+        const prefs = await cli.userPreferencesAsync();
+        const themes: pxt.ColorThemeInfo[] = prefs.customColorThemes?.themes ?? [];
+        if (themes.some(t => t.id === theme.id)) {
+            pxt.error(lf("A theme with this ID already exists"));
+            return false;
+        }
+        themes.push(theme);
+        return setCustomColorThemesAsync(themes);
+    }
+    // Not supported without sign-in
+    return false;
+}
+
+export async function removeCustomColorThemeAsync(themeId: string): Promise<boolean> {
+    const cli = await clientAsync();
+    if (cli) {
+        const prefs = await cli.userPreferencesAsync();
+        const themes: pxt.ColorThemeInfo[] = prefs.customColorThemes?.themes ?? [];
+        const newThemes = themes.filter(t => t.id !== themeId);
+        return setCustomColorThemesAsync(newThemes);
+    }
+    // Not supported without sign-in
+    return false;
+}
+
+export async function setCustomColorThemesAsync(themes: pxt.ColorThemeInfo[]): Promise<boolean> {
+    const cli = await clientAsync();
+    if (cli) {
+        const result = await cli.patchUserPreferencesAsync({
+            op: 'replace',
+            path: ['customColorThemes'],
+            value: { themes }
+        });
+        return true; // todo thsparks : result.success but it seems to be false even when it works?
+    }
+    // Not supported without sign-in
+    return false;
 }
 
 export async function setLanguagePrefAsync(lang: string): Promise<void> {

@@ -5170,8 +5170,12 @@ export class ProjectView
         this.updateThemePreference();
     }
 
-    setColorTheme(colorTheme: pxt.ColorThemeInfo) {
+    setColorTheme(colorTheme: pxt.ColorThemeInfo, savePref?: boolean) {
         this.themeManager.loadTheme(colorTheme);
+
+        if (savePref) {
+            this.updateThemePreference();
+        }
     }
 
     private updateThemePreference() {
@@ -5187,6 +5191,26 @@ export class ProjectView
                 auth.setHighContrastPrefAsync(false);
             }
         }
+    }
+
+    private getColorThemes() {
+        const builtInThemes = this.themeManager.getAllColorThemes();
+        const userThemeState = data.getData<pxt.auth.CustomColorThemesState>(auth.CUSTOM_COLOR_THEMES);
+        const userThemes = userThemeState?.themes;
+        let themes = [...builtInThemes];
+        if (userThemes) {
+            // Inefficient but I'm in a rush and we're talking < 100 here.
+            for (const theme of userThemes) {
+                themes = themes.filter(t => t.id !== theme.id);
+                theme.isCustom = true;
+                themes.push(theme);
+            }
+        }
+        return themes;
+    }
+
+    async removeCustomColorTheme(themeId: string): Promise<boolean> {
+        return auth.removeCustomColorThemeAsync(themeId);
     }
 
     ///////////////////////////////////////////////////////////
@@ -5487,7 +5511,12 @@ export class ProjectView
                 {lightbox ? <sui.Dimmer isOpen={true} active={lightbox} portalClassName={'tutorial'} className={'ui modal'}
                     shouldFocusAfterRender={false} closable={true} onClose={this.hideLightbox} /> : undefined}
                 {this.state.onboarding && <Tour tourSteps={this.state.onboarding} onClose={this.hideOnboarding} />}
-                {this.state.themePickerOpen && <ThemePickerModal themes={this.themeManager.getAllColorThemes()} onThemeClicked={theme => this.setColorThemeById(theme?.id)} onClose={this.hideThemePicker} />}
+                {this.state.themePickerOpen && <ThemePickerModal
+                    themes={this.getColorThemes()}
+                    onThemeClicked={theme => this.setColorTheme(theme, true)}
+                    onClose={this.hideThemePicker}
+                    onRemoveThemeClicked={(theme) => this.removeCustomColorTheme(theme.id)}
+                />}
             </div>
         );
     }

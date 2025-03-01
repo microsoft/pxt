@@ -520,6 +520,7 @@ declare namespace pxt.editor {
     export interface EditorMessageSetColorThemeRequest extends EditorMessageRequest {
         action: "setcolortheme";
         colorTheme: pxt.ColorThemeInfo;
+        savePref?: boolean;
     }
 
     /**
@@ -1107,7 +1108,7 @@ declare namespace pxt.editor {
         getSharePreferenceForHeader(): boolean;
         saveSharePreferenceForHeaderAsync(anonymousByDefault: boolean): Promise<void>;
         setColorThemeById(colorThemeId: string): void;
-        setColorTheme(theme: pxt.ColorThemeInfo): void;
+        setColorTheme(theme: pxt.ColorThemeInfo, savePref?: boolean): void;
     }
 
     export interface IHexFileImporter {

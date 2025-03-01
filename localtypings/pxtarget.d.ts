@@ -619,6 +619,7 @@ declare namespace pxt {
         weight?: number; // Lower weights appear first in theme list, no value = go to end
         overrideCss?: string; // Special css to apply for the theme
         monacoBaseTheme?: string; // Theme for monaco editor, see https://code.visualstudio.com/docs/getstarted/themes
+        isCustom?: boolean; // Whether or not this theme is custom (vs built-in)
         colors: { [key: string]: string }; // Values for theme variables
     }
 

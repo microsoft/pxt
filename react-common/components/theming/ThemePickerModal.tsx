@@ -4,6 +4,7 @@ import { ThemeCard } from "./ThemeCard";
 export interface ThemePickerModalProps {
     themes: pxt.ColorThemeInfo[];
     onThemeClicked(them: pxt.ColorThemeInfo): void;
+    onRemoveThemeClicked?(theme: pxt.ColorThemeInfo): void;
     onClose(): void;
 }
 export const ThemePickerModal = (props: ThemePickerModalProps) => {
@@ -24,6 +25,7 @@ export const ThemePickerModal = (props: ThemePickerModalProps) => {
                         key={theme.id}
                         theme={theme}
                         onClick={props.onThemeClicked}
+                        onRemoveClicked={props.onRemoveThemeClicked}
                     />
                 )}
             </div>
