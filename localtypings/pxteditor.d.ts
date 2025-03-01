@@ -825,6 +825,7 @@ declare namespace pxt.editor {
         isMultiplayerGame?: boolean; // Arcade: Does the current project contain multiplayer blocks?
         onboarding?: pxt.tour.BubbleStep[];
         feedback?: FeedbackState;
+        availableColorThemes?: pxt.ColorThemeInfo[];
         themePickerOpen?: boolean;
     }
 

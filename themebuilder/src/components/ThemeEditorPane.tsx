@@ -93,7 +93,6 @@ export const ThemeEditorPane = () => {
             <Input
                 className={css["theme-name-input"]}
                 label={lf("Theme Name")}
-                onBlur={setThemeName}
                 onEnterKey={setThemeName}
                 initialValue={editingTheme?.name}
             />

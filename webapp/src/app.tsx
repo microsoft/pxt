@@ -181,6 +181,11 @@ export class ProjectView
         onDataChanged: (path) => this.onCloudStatusChanged(path)
     }
 
+    private customColorThemesSubscriber: data.DataSubscriber = {
+        subscriptions: [],
+        onDataChanged: () => this.refreshAvailableColorThemes()
+    }
+
     // component ID strings
     static readonly tutorialCardId = "tutorialcard";
 
@@ -235,6 +240,7 @@ export class ProjectView
         this.initSimulatorMessageHandlers();
         this.showThemePicker = this.showThemePicker.bind(this);
         this.hideThemePicker = this.hideThemePicker.bind(this);
+        this.refreshAvailableColorThemes = this.refreshAvailableColorThemes.bind(this);
         this.setColorThemeById = this.setColorThemeById.bind(this);
         this.setColorTheme = this.setColorTheme.bind(this);
 
@@ -1136,6 +1142,8 @@ export class ProjectView
             editor: this.state.header ? this.state.header.editor : ''
         });
 
+        this.refreshAvailableColorThemes();
+
         // we now have editors prepared
         this.forceUpdate();
         // start blockly load
@@ -1144,11 +1152,13 @@ export class ProjectView
         // subscribe to user preference changes (for simulator or non-render subscriptions)
         data.subscribe(this.highContrastSubscriber, auth.HIGHCONTRAST);
         data.subscribe(this.cloudStatusSubscriber, `${cloud.HEADER_CLOUDSTATE}:*`);
+        data.subscribe(this.customColorThemesSubscriber, auth.CUSTOM_COLOR_THEMES);
     }
 
     public componentWillUnmount() {
         data.unsubscribe(this.highContrastSubscriber);
         data.unsubscribe(this.cloudStatusSubscriber);
+        data.unsubscribe(this.customColorThemesSubscriber);
     }
 
     // Add an error guard for the entire application
@@ -4558,11 +4568,16 @@ export class ProjectView
     }
 
     showThemePicker() {
-        this.setState( { themePickerOpen: true });
+        this.setState({ themePickerOpen: true });
     }
 
     hideThemePicker() {
-        this.setState( { themePickerOpen: false });
+        this.setState({ themePickerOpen: false });
+    }
+
+    refreshAvailableColorThemes() {
+        const allThemes = this.getColorThemes();
+        this.setState({ availableColorThemes: allThemes });
     }
 
     showImportUrlDialog() {
@@ -5210,7 +5225,9 @@ export class ProjectView
     }
 
     async removeCustomColorTheme(themeId: string): Promise<boolean> {
-        return auth.removeCustomColorThemeAsync(themeId);
+        const result = await auth.removeCustomColorThemeAsync(themeId);
+        this.refreshAvailableColorThemes();
+        return result;
     }
 
     ///////////////////////////////////////////////////////////
@@ -5512,7 +5529,7 @@ export class ProjectView
                     shouldFocusAfterRender={false} closable={true} onClose={this.hideLightbox} /> : undefined}
                 {this.state.onboarding && <Tour tourSteps={this.state.onboarding} onClose={this.hideOnboarding} />}
                 {this.state.themePickerOpen && <ThemePickerModal
-                    themes={this.getColorThemes()}
+                    themes={this.state.availableColorThemes}
                     onThemeClicked={theme => this.setColorTheme(theme, true)}
                     onClose={this.hideThemePicker}
                     onRemoveThemeClicked={(theme) => this.removeCustomColorTheme(theme.id)}
@@ -6274,8 +6291,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 
             if (initialTheme) {
                 const themeManager = ThemeManager.getInstance(document);
+
+                const buildInThemes = themeManager.getAllColorThemes();
+                const customThemes = auth.userPreferences().customColorThemes?.themes;
+                const allThemes = [...buildInThemes, ...(customThemes || [])];
+                const theme = allThemes.find(t => t.id === initialTheme);
+
                 if (initialTheme !== themeManager.getCurrentColorTheme()?.id) {
-                    themeManager.switchColorTheme(initialTheme);
+                    themeManager.loadTheme(theme);
                 }
             }
             return Promise.resolve();
