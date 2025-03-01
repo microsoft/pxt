@@ -93,6 +93,12 @@ const derivationMap: {[baseId: string]: DerivationInfo[]} = {
         { colorId: "pxt-neutral-stencil3", deriveFrom: (c) => getStencilColor(c) },
         { colorId: "pxt-neutral-background3-alpha90", deriveFrom: (c) => getAlphaColor(c, 0.9) },
     ],
+    "pxt-neutral-base": [
+        { colorId: "pxt-neutral-alpha0", deriveFrom: (c) => getAlphaColor(c, 0) },
+        { colorId: "pxt-neutral-alpha10", deriveFrom: (c) => getAlphaColor(c, 0.1) },
+        { colorId: "pxt-neutral-alpha20", deriveFrom: (c) => getAlphaColor(c, 0.2) },
+        { colorId: "pxt-neutral-alpha50", deriveFrom: (c) => getAlphaColor(c, 0.5) },
+    ],
     "pxt-colors-purple-background": [
         { colorId: "pxt-colors-purple-foreground", deriveFrom: (c) => getForegroundColor(c) },
         { colorId: "pxt-colors-purple-hover", deriveFrom: (c) => getHoverColor(c) },
