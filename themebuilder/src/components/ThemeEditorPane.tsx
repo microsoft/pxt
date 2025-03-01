@@ -93,7 +93,8 @@ export const ThemeEditorPane = () => {
             <Input
                 className={css["theme-name-input"]}
                 label={lf("Theme Name")}
-                onEnterKey={setThemeName}
+                onChange={setThemeName}
+                preserveValueOnBlur={true}
                 initialValue={editingTheme?.name}
             />
             <div className={css["theme-colors-list"]}>

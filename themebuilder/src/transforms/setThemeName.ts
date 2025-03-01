@@ -1,6 +1,5 @@
 import { stateAndDispatch } from "../state";
 import { setCurrentEditingTheme } from "./setCurrentEditingTheme";
-import { setCurrentFrameTheme } from "./setCurrentFrameTheme";
 
 export function setThemeName(name: string) {
     const { state } = stateAndDispatch();
