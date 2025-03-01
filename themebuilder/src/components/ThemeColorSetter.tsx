@@ -18,9 +18,12 @@ export const ThemeColorSetter = (props: ThemeColorSetterProps) => {
     const { state } = React.useContext(AppStateContext);
     const { editingTheme } = state;
     const { key, colorId, className } = props;
-    const [ color, setColor ] = React.useState<Color>(new Color("#000000"));
-    const [ colorPickerOpen, setColorPickerOpen ] = React.useState<boolean>(false);
+
+    const [color, setColor] = React.useState<Color>(new Color("#000000"));
+    const [colorPickerOpen, setColorPickerOpen] = React.useState<boolean>(false);
     const [isHighlighted, setIsHighlighted] = React.useState<boolean>(false);
+    const [readableColorName, setReadableColorName] = React.useState<string | undefined>(undefined);
+
     const openPickerButtonRef = React.useRef<HTMLButtonElement | null>(null);
     const setOpenPickerButtonRef = React.useCallback((el: HTMLButtonElement | null) => {
         openPickerButtonRef.current = el;
@@ -34,6 +37,20 @@ export const ThemeColorSetter = (props: ThemeColorSetterProps) => {
         const parsedColor = new Color(editingTheme?.colors[colorId] || "#000000");
         setColor(parsedColor);
     }, [editingTheme?.colors[colorId], colorId]);
+
+    React.useEffect(() => {
+        let readableName = colorId;
+        if (readableName.startsWith("pxt-")) {
+            readableName = readableName.substring(4); // Remove pxt prefix
+        }
+        if (readableName.startsWith("colors-")) {
+            readableName = readableName.substring(7); // Remove colors prefix
+        }
+        readableName = readableName.replace(/-/g, " "); // Replace dashes with spaces
+        readableName = readableName.replace(/\b\w/g, char => char.toUpperCase()); // Capitalize the first letter of each word
+        readableName = readableName.replace(/([A-Za-z])(\d)/g, "$1 $2"); // Add spaces before numbers
+        setReadableColorName(readableName);
+    }, [props.colorId]);
 
     function getColorPickerPosition() {
         if (!openPickerButtonRef.current) return { x: 0, y: 0 };
@@ -58,7 +75,7 @@ export const ThemeColorSetter = (props: ThemeColorSetterProps) => {
             />
             <Input
                 className={css["theme-color-input"]}
-                label={colorId}
+                label={readableColorName || colorId}
                 initialValue={color.toHex()}
                 onBlur={value => setColorValue(colorId, value)}
                 onEnterKey={value => setColorValue(colorId, value)}
