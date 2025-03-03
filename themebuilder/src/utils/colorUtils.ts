@@ -1,7 +1,7 @@
 import { Color } from "../types/color";
 
 function getHoverColor(color: Color): Color {
-    return color.isDarkColor() ? color.getLightened(1.05) : color.getDarkened(1.05);
+    return color.isDarkColor() ? color.getLightened(1.08) : color.getDarkened(1.08);
 }
 
 function getForegroundColor(color: Color): Color {
@@ -22,7 +22,7 @@ function getAlphaColor(color: Color, alpha: number): Color {
 }
 
 function getAccentColor(color: Color): Color {
-    return color.isDarkColor() ? color.getLightened(1.3) : color.getDarkened(1.3);
+    return color.isDarkColor() ? color.getLightened(1.2) : color.getDarkened(1.2);
 }
 
 // This could probably be done with some clever regex but there were a bunch of special cases
