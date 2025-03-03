@@ -6293,7 +6293,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 const themeManager = ThemeManager.getInstance(document);
 
                 const buildInThemes = themeManager.getAllColorThemes();
-                const customThemes = auth.userPreferences().customColorThemes?.themes;
+                const customThemes = auth.userPreferences()?.customColorThemes?.themes;
                 const allThemes = [...buildInThemes, ...(customThemes || [])];
                 const theme = allThemes.find(t => t.id === initialTheme);
 
