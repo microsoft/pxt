@@ -5,100 +5,20 @@ import { AppStateContext } from "../state/appStateContext";
 import { setThemeName } from "../transforms/setThemeName";
 import { getColorHeirarchy } from "../utils/colorUtils";
 import { ThemeColorFamily } from "./ThemeColorFamily";
-import { BaseThemePicker } from "./BaseThemePicker";
-import { exportTheme } from "../services/fileSystemService";
-import { Button } from "react-common/components/controls/Button";
-import { classList } from "react-common/components/util";
-import * as auth from "../services/authClient";
-import { ThemeManager } from "react-common/components/theming/themeManager";
-
-export interface SaveState {
-    icon: string;
-    bgColor: string;
-    fgColor: string;
-}
+import { ThemeEditorToolbar } from "./ThemeEditorToolbar";
 
 export const ThemeEditorPane = () => {
-    const defaultSaveState = {
-        icon: "fas fa-save",
-        bgColor: "var(--pxt-neutral-background1)",
-        fgColor: "var(--pxt-neutral-foreground1)",
-    };
     const { state } = React.useContext(AppStateContext);
     const { editingTheme } = state;
-    const [saveState, setSaveState] = React.useState<SaveState>(defaultSaveState);
 
     const colorHeirarchy: { [baseColorId: string]: string[] } = React.useMemo(() => {
         return state.editingTheme?.colors ? getColorHeirarchy(Object.keys(state.editingTheme.colors)) : {};
     }, [state.editingTheme?.colors]);
     const baseColorIds = Object.keys(colorHeirarchy);
 
-    function setTemporarySaveIcon(state: SaveState, timeoutMs: number) {
-        setSaveState(state);
-        setTimeout(() => {
-            setSaveState(defaultSaveState);
-        }, timeoutMs);
-    }
-
-    function handleDownloadClicked() {
-        if (!editingTheme) return;
-        exportTheme(editingTheme);
-    }
-
-    // TODO thsparks : this should go into a service or transform
-    async function handleSaveToProfileClicked() {
-        if (!editingTheme) return;
-
-        // Don't allow overwriting built-in themes
-        const builtinThemes = ThemeManager.getInstance(document).getAllColorThemes() || [];
-        let success = false;
-        if (!builtinThemes.find(t => t.id === editingTheme.id)) {
-            success = await auth.addCustomColorThemeAsync(editingTheme);
-        }
-
-        if (success) {
-            setTemporarySaveIcon(
-                {
-                    icon: "fas fa-check",
-                    bgColor: "var(--pxt-colors-green-background)",
-                    fgColor: "var(--pxt-colors-green-foreground)",
-                },
-                2000
-            );
-        } else {
-            setTemporarySaveIcon(
-                {
-                    icon: "fas fa-exclamation-triangle",
-                    bgColor: "var(--pxt-colors-red-background)",
-                    fgColor: "var(--pxt-colors-red-foreground)",
-                },
-                2000
-            );
-        }
-    }
-
     return (
         <div className={css["theme-editor-container"]}>
-            <div className={css["theme-editor-header"]}>
-                <BaseThemePicker className={css["base-picker"]} />
-                <Button
-                    className={classList(css["export-button"], css["header-icon-button"])}
-                    leftIcon={saveState.icon}
-                    title={lf("Save Theme to Profile")}
-                    onClick={handleSaveToProfileClicked}
-                    style={{
-                        backgroundColor: saveState.bgColor,
-                        color: saveState.fgColor,
-                        borderColor: saveState.fgColor,
-                    }}
-                />
-                <Button
-                    className={classList(css["save-button"], css["header-icon-button"])}
-                    leftIcon="fas fa-file-export"
-                    title={lf("Download Theme As File")}
-                    onClick={handleDownloadClicked}
-                />
-            </div>
+            <ThemeEditorToolbar />
             <Input
                 className={css["theme-name-input"]}
                 label={lf("Theme Name")}

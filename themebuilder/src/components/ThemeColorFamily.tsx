@@ -5,12 +5,11 @@ import { Button } from "react-common/components/controls/Button";
 import { classList } from "react-common/components/util";
 
 export interface ThemeColorFamilyProps {
-    key: string;
     baseColorId: string;
     derivedColorIds: string[];
 }
 export const ThemeColorFamily = (props: ThemeColorFamilyProps) => {
-    const { key, baseColorId, derivedColorIds } = props;
+    const { baseColorId, derivedColorIds } = props;
     const [expanded, setExpanded] = React.useState<boolean>(false);
 
     function toggleExpanded() {
@@ -21,7 +20,7 @@ export const ThemeColorFamily = (props: ThemeColorFamilyProps) => {
     // when expanded. Basically expand button is on the left, then the full row list is to the right but
     // only has one row when collapsed (the base row) and has multiple rows when expanded.
     return (
-        <div className={css["theme-color-family-root"]} key={key}>
+        <div className={css["theme-color-family-root"]}>
             <Button
                 onClick={toggleExpanded}
                 className={css["expand-collapse-button"]}
