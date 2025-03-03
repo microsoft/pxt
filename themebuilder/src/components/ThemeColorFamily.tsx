@@ -21,12 +21,12 @@ export const ThemeColorFamily = (props: ThemeColorFamilyProps) => {
     // only has one row when collapsed (the base row) and has multiple rows when expanded.
     return (
         <div className={css["theme-color-family-root"]}>
-            <Button
+            {derivedColorIds.length > 0 ? <Button
                 onClick={toggleExpanded}
                 className={css["expand-collapse-button"]}
                 title={expanded ? lf("Collapse Derived Colors") : lf("Expand Derived Colors")}
                 leftIcon={expanded ? "fas fa-caret-down" : "fas fa-caret-right"}
-            />
+            /> : <div className={css["expand-collapse-button-placeholder"]} />}
             <div className={css["color-setters"]}>
                 <ThemeColorSetter colorId={baseColorId} className={classList(css["theme-color-setter"], css["base-color-setter"])}/>
                 {expanded && derivedColorIds.map(colorId => (

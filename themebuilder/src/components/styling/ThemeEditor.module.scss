@@ -53,7 +53,7 @@
                 background-color: var(--pxt-neutral-stencil1);
             }
 
-            .expand-collapse-button {
+            .expand-collapse-button, .expand-collapse-button-placeholder {
                 background: none;
                 padding: 0.2rem 0.5rem;
                 width: 2rem;
@@ -64,10 +64,10 @@
                     margin: 0;
                     padding: 0 0.8rem 0 0;
                 }
+            }
 
-                &:hover {
-                    background-color: var(--pxt-neutral-alpha20);
-                }
+            .expand-collapse-button:hover {
+                background-color: var(--pxt-neutral-alpha20);
             }
 
             .color-setters {
