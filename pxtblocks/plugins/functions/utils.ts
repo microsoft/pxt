@@ -15,6 +15,7 @@ import { FunctionManager } from "./functionManager";
 import { MsgKey } from "./msg";
 import { newFunctionMutation } from "./blocks/functionDeclarationBlock";
 import { FunctionDefinitionBlock } from "./blocks/functionDefinitionBlock";
+import { FunctionCallBlock, SerializedShadow } from "./blocks/functionCallBlocks";
 
 export type StringMap<T> = { [index: string]: T };
 
@@ -181,71 +182,60 @@ function incrementNameSuffix(name: string) {
 export function mutateCallersAndDefinition(name: string, ws: Blockly.Workspace, mutation: Element) {
     const definitionBlock = getDefinition(name, ws);
     if (definitionBlock) {
-        const callers = getCallers(name, definitionBlock.workspace);
-        callers.push(definitionBlock);
-        Blockly.Events.setGroup(true);
-        callers.forEach(function (caller) {
-            const oldMutationDom = caller.mutationToDom();
-            const oldMutation = oldMutationDom && Blockly.Xml.domToText(oldMutationDom);
-            caller.domToMutation(mutation);
-            const newMutationDom = caller.mutationToDom();
-            const newMutation = newMutationDom && Blockly.Xml.domToText(newMutationDom);
+        const oldMutation = definitionBlock.mutationToDom();
+        const oldArgNamesToIds = getArgMap(oldMutation, false);
+        const idsToNewArgNames = getArgMap(mutation, true);
 
-            if (oldMutation != newMutation) {
-                // Fire a mutation event to force the block to update.
-                Blockly.Events.fire(new Blockly.Events.BlockChange(caller, "mutation", null, oldMutation, newMutation));
+        const changedDescendants: DescendantChange[] = [];
 
-                // For the definition, we also need to update all arguments that are
-                // used inside the function.
-                if (caller.id == definitionBlock.id) {
-                    // First, build a map of oldArgName -> argId from the old mutation,
-                    // and a map of argId -> newArgName from the new mutation.
-                    const oldArgNamesToIds = getArgMap(oldMutationDom, false);
-                    const idsToNewArgNames = getArgMap(newMutationDom, true);
+        for (const block of definitionBlock.getDescendants(false)) {
+            if (!isFunctionArgumentReporter(block)) continue;
 
-                    // Then, go through all descendants of the function definition and
-                    // look for argument reporters to update.
-                    definitionBlock.getDescendants(false).forEach(function (d) {
-                        if (!isFunctionArgumentReporter(d)) {
-                            return;
-                        }
+            const oldName = block.getFieldValue("VALUE");
+            const oldArgId = oldArgNamesToIds[oldName];
+            const newName = idsToNewArgNames[oldArgId];
 
-                        // Find the argument ID corresponding to this old argument name.
-                        let argName = d.getFieldValue("VALUE");
-                        let argId = oldArgNamesToIds[argName];
+            // no change
+            if (oldName === newName) continue;
 
-                        // This argument reporter must belong to a different block. For example,
-                        // a block with handlerStatement=1 and draggableParameters=reporter
-                        if (argId === undefined) {
-                            return;
-                        }
+            const targetBlockId = block.outputConnection.targetBlock().id;
+            const targetInputName = block.outputConnection.targetConnection.getParentInput().name;
 
-                        if (!idsToNewArgNames[argId]) {
-                            // That arg ID no longer exists on the new mutation, delete this
-                            // arg reporter.
-                            d.dispose(true);
-                        } else if (idsToNewArgNames[argId] !== argName) {
-                            // That arg ID still exists, but the name was changed, so update
-                            // this reporter's display text.
-                            d.setFieldValue(idsToNewArgNames[argId], "VALUE");
-                        }
-                    });
-                } else {
-                    // For the callers, we need to bump blocks that were connected to any
-                    // argument that has since been deleted.
-                    setTimeout(function () {
-                        caller.bumpNeighbours();
-                    }, Blockly.config.bumpDelay);
-                }
-            }
-        });
-        Blockly.Events.setGroup(false);
+            changedDescendants.push({
+                id: block.id,
+                type: block.type,
+                oldName,
+                newName,
+                targetBlockId,
+                targetInputName,
+            });
+        }
+
+        const callerChanges = getCallers(name, definitionBlock.workspace)
+            .map(caller => ({
+                id: caller.id,
+                oldMutation: Blockly.utils.xml.domToText(caller.mutationToDom()),
+                shadows: (caller as FunctionCallBlock).serializeChangedInputs(mutation)
+            } as CallerChange))
+
+        const change = new MutateFunctionEvent(
+            definitionBlock.id,
+            callerChanges,
+            Blockly.Xml.domToText(oldMutation),
+            Blockly.Xml.domToText(mutation),
+            changedDescendants
+        );
+
+        change.workspaceId = ws.id;
+
+        change.run(true);
+        Blockly.Events.fire(change);
     } else {
         pxt.warn("Attempted to change function " + name + ", but no definition block was found on the workspace");
     }
 }
 
-function getArgMap(mutation: Element, inverse: boolean) {
+export function getArgMap(mutation: Element, inverse: boolean) {
     const map: StringMap<string> = {};
     for (let i = 0; i < mutation.childNodes.length; ++i) {
         const arg = mutation.childNodes[i] as Element;
@@ -471,4 +461,148 @@ export function isVariableBlockType(type: string) {
             return true;
     }
     return false;
+}
+
+interface DescendantChange {
+    id: string;
+    type: string;
+    oldName: string;
+    newName?: string;
+    targetBlockId: string;
+    targetInputName: string;
+}
+
+interface CallerChange {
+    id: string;
+    oldMutation: string;
+    shadows: SerializedShadow[];
+}
+
+
+interface MutateFunctionEventJson extends Blockly.Events.AbstractEventJson {
+    definition: string;
+    callers: CallerChange[];
+    oldMutation: string;
+    newMutation: string;
+    descendantChanges: DescendantChange[];
+}
+
+class MutateFunctionEvent extends Blockly.Events.Abstract {
+    isBlank: boolean;
+
+    type = "pxt_mutate_function"
+
+    static fromJson(
+        json: MutateFunctionEventJson,
+        workspace: Blockly.Workspace,
+        event?: any,
+    ) {
+        event = super.fromJson(
+            json,
+            workspace,
+            event || new MutateFunctionEvent(
+                json.definition,
+                json.callers,
+                json.oldMutation,
+                json.newMutation,
+                json.descendantChanges
+            )
+        );
+
+        const existing = event as MutateFunctionEvent;
+        existing.definition = json.definition;
+        existing.callers = json.callers;
+        existing.oldMutation = json.oldMutation;
+        existing.newMutation = json.newMutation;
+        existing.descendantChanges = json.descendantChanges;
+
+        return event;
+    }
+
+    constructor(
+        protected definition: string,
+        protected callers: CallerChange[],
+        protected oldMutation: string,
+        protected newMutation: string,
+        protected descendantChanges: DescendantChange[]
+    ) {
+        super();
+    }
+
+    toJson(): MutateFunctionEventJson {
+        return {
+            type: this.type,
+            group: this.group,
+            definition: this.definition,
+            callers: this.callers,
+            oldMutation: this.oldMutation,
+            newMutation: this.newMutation,
+            descendantChanges: this.descendantChanges
+        }
+    }
+
+    run(forward: boolean) {
+        const ws = this.getEventWorkspace_();
+        const mutation = Blockly.utils.xml.textToDom(forward ? this.newMutation : this.oldMutation);
+        const def = ws.getBlockById(this.definition) as FunctionDefinitionBlock;
+
+        Blockly.Events.disable();
+
+        def.domToMutation(mutation);
+        def.updateArgumentInputs_();
+        def.afterWorkspaceLoad();
+
+        for (const change of this.callers) {
+            const caller = ws.getBlockById(change.id);
+
+            if (forward) {
+                caller.domToMutation(mutation);
+            }
+            else {
+                caller.domToMutation(Blockly.utils.xml.textToDom(change.oldMutation));
+
+                for (const inputChange of change.shadows) {
+                    if (inputChange.connectedBlock) {
+                        const block = ws.getBlockById(inputChange.connectedBlock);
+                        caller.getInput(inputChange.inputName).connection.connect(block.outputConnection);
+                    }
+                    else {
+                        caller.getInput(inputChange.inputName).connection.setShadowState(inputChange.connectedShadow);
+                    }
+                }
+            }
+        }
+
+        for (const change of this.descendantChanges) {
+            if (change.newName) {
+                const block = ws.getBlockById(change.id);
+                block.setFieldValue("VALUE", forward ? change.newName : change.oldName);
+            }
+            else if (forward) {
+                const block = ws.getBlockById(change.id);
+
+                if (block) {
+                    block.dispose();
+                }
+            }
+            else {
+                const newBlock = ws.newBlock(change.type, change.id) as Blockly.BlockSvg;
+                newBlock.setFieldValue(change.oldName, "VALUE");
+                newBlock.initSvg();
+                const target = ws.getBlockById(change.targetBlockId);
+
+                const targetConnection = target.getInput(change.targetInputName).connection;
+
+                const toBeReplaced = targetConnection.targetBlock();
+                if (toBeReplaced) {
+                    if (!toBeReplaced.isShadow()) {
+                        toBeReplaced.dispose();
+                    }
+                }
+                targetConnection.connect(newBlock.outputConnection);
+            }
+        }
+
+        Blockly.Events.enable();
+    }
 }
