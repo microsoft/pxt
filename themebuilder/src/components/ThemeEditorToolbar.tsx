@@ -3,7 +3,7 @@ import * as auth from "../services/authClient";
 import css from "./styling/ThemeEditor.module.scss";
 import { AppStateContext } from "../state/appStateContext";
 import { BaseThemePicker } from "./BaseThemePicker";
-import { exportTheme } from "../services/fileSystemService";
+import { exportTheme, importThemeFromFileAsync } from "../services/fileSystemService";
 import { Button } from "react-common/components/controls/Button";
 import { classList } from "react-common/components/util";
 import { ThemeManager } from "react-common/components/theming/themeManager";
@@ -21,6 +21,7 @@ export const ThemeEditorToolbar = () => {
         fgColor: "var(--pxt-neutral-foreground1)",
     };
     const { state } = React.useContext(AppStateContext);
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
     const { editingTheme } = state;
     const [saveState, setSaveState] = React.useState<SaveState>(defaultSaveState);
 
@@ -34,6 +35,13 @@ export const ThemeEditorToolbar = () => {
     function handleDownloadClicked() {
         if (!editingTheme) return;
         exportTheme(editingTheme);
+    }
+
+    function handleImportFromFile(event: React.ChangeEvent<HTMLInputElement>) {
+        const file = event.target.files?.[0];
+        if (file) {
+            importThemeFromFileAsync(file);
+        }
     }
 
     async function handleSaveToProfileClicked() {
@@ -80,6 +88,21 @@ export const ThemeEditorToolbar = () => {
                     color: saveState.fgColor,
                     borderColor: saveState.fgColor,
                 }}
+            />
+            {/* The button triggers a hidden file input to open the file browser */}
+            <Button
+                className={classList(css["import-button"], css["toolbar-icon-button"])}
+                title={lf("Import Theme From File")}
+                leftIcon="fas fa-file-import"
+                onClick={() => fileInputRef?.current?.click()}
+            />
+            <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                onChange={handleImportFromFile}
+                aria-label={lf("Select Theme From File")}
+                accept=".json"
             />
             <Button
                 className={classList(css["save-button"], css["toolbar-icon-button"])}
