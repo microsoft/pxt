@@ -1081,10 +1081,10 @@ namespace ts.pxtc.assembler {
             let lenVtables = size("_vtables_end")
             let lenLiterals = size("_literals_end")
             let lenAllCode = lenPrev
-            let totalEnd = (lenTotal + this.baseOffset - 1) & 0xffffff
+            let totalEnd = (lenTotal + this.baseOffset) & 0xffffff
 
-            if (flashUsableEnd && totalEnd >= flashUsableEnd) {
-                const e = new Error(lf("program too big by {0} bytes!", totalEnd - flashUsableEnd + 1));
+            if (flashUsableEnd && totalEnd > flashUsableEnd) {
+                const e = new Error(lf("program too big by {0} bytes!", totalEnd - flashUsableEnd));
                 (e as any).ksErrorCode = 9283;
                 throw e;
             }
