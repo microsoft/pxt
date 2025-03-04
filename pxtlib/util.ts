@@ -1855,6 +1855,11 @@ namespace ts.pxtc.Util {
         const isSupported = supportedExps?.includes(cleanedExpId) ?? false;
         return isSupported;
     }
+
+    export function ocvEnabled() {
+        return pxt.webConfig.ocv?.appId && pxt.webConfig.ocv?.iframeEndpoint;
+    }
+
 }
 
 namespace ts.pxtc.BrowserImpl {
