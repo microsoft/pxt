@@ -42,8 +42,8 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
         if (this.props.preferences) {
             items.push({
                 id: "theme",
-                title: lf("Select Theme"),
-                label: lf("Select Theme"),
+                title: lf("Theme"),
+                label: lf("Theme"),
                 onClick: () => {
                     tickEvent("skillmap.theme");
                     this.props.dispatchShowSelectTheme();
