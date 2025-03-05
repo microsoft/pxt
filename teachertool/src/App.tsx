@@ -83,7 +83,7 @@ export const App = () => {
     }, []);
 
     async function initColorThemeAsync() {
-        // We don't currently support switching themes in multiplayer, so just load the default.
+        // We don't currently support switching themes in code eval, so just load the default.
         const themeId = pxt.appTarget?.appTheme?.defaultColorTheme;
 
         if (themeId) {
