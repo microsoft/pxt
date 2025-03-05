@@ -21,6 +21,7 @@ import { ErrorCode } from "./types/errorCode";
 import { loadProjectMetadataAsync } from "./transforms/loadProjectMetadataAsync";
 import { Constants, Ticks } from "./constants";
 import { UnsupportedExperienceModal } from "react-common/components/experiences/UnsupportedExperienceModal";
+import { ThemeManager } from "react-common/components/theming/themeManager";
 
 export const App = () => {
     const { state, dispatch } = useContext(AppStateContext);
@@ -36,6 +37,7 @@ export const App = () => {
                 const cfg = await downloadTargetConfigAsync();
                 dispatch(Actions.setTargetConfig(cfg || {}));
                 pxt.BrowserUtils.initTheme();
+                await initColorThemeAsync();
 
                 // Load catalog and validator plans into state.
                 await loadCatalogAsync();
@@ -79,6 +81,18 @@ export const App = () => {
     useEffect(() => {
         setIsSupported(pxt.U.isExperienceSupported(Constants.ExperienceId));
     }, []);
+
+    async function initColorThemeAsync() {
+        // We don't currently support switching themes in multiplayer, so just load the default.
+        const themeId = pxt.appTarget?.appTheme?.defaultColorTheme;
+
+        if (themeId) {
+            const themeManager = ThemeManager.getInstance(document);
+            if (themeId !== themeManager.getCurrentColorTheme()?.id) {
+                themeManager.switchColorTheme(themeId);
+            }
+        }
+    }
 
     return !inited || !authCheckComplete ? (
         <div className="ui active dimmer">
