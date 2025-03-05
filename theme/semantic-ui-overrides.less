@@ -8,25 +8,27 @@ This file overrides the default semantic ui theming with our own theme variables
 
 // Mixin allows easy setting for background, foreground, hover, and inverted colors for a button
 .buttonVariant(@bg; @fg; @hoverBg; @hoverFg; @border) {
-    background: @bg;
-    color: @fg;
-    border: 1px solid @border;
-
-    &.inverted {
-        background-color: @fg;
-        color: @bg;
-    }
-
-    &:hover, &:focus {
-        // Semantic UI darkens background using a filter, which isn't necessary when we have a hover color.
-        filter: none;
-
-        background-color: @hoverBg;
-        color: @hoverFg;
-
+    &:not(.disabled) {
+        background: @bg;
+        color: @fg;
+        border: 1px solid @border;
+    
         &.inverted {
-            background-color: @hoverFg;
-            color: @hoverBg;
+            background-color: @fg;
+            color: @bg;
+        }
+    
+        &:hover, &:focus {
+            // Semantic UI darkens background using a filter, which isn't necessary when we have a hover color.
+            filter: none;
+    
+            background-color: @hoverBg;
+            color: @hoverFg;
+    
+            &.inverted {
+                background-color: @hoverFg;
+                color: @hoverBg;
+            }
         }
     }
 }
