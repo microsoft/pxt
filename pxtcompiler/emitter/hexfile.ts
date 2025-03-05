@@ -1015,9 +1015,14 @@ ${hexfile.hexPrelude()}
     }
 
     let peepDbg = false
-    export function assemble(target: CompileTarget, bin: Binary, src: string) {
+    export function assemble(target: CompileTarget, bin: Binary, src: string, cres: CompileResult) {
         let b = mkProcessorFile(target)
         b.emit(src);
+
+        // TODO: given cres.configData, we can look up to see if either of the following is set
+        // - CFG_SETTINGS_SIZE_DEFL
+        // - CFG_SETTINGS_SIZE
+        // with the second taking priority over the first
 
         src = `; Interface tables: ${bin.itFullEntries}/${bin.itEntries} (${Math.round(100 * bin.itFullEntries / bin.itEntries)}%)\n` +
             `; Virtual methods: ${bin.numVirtMethods} / ${bin.numMethods}\n` +
@@ -1127,7 +1132,7 @@ __flash_checksums:
         }
         const prefix = opts.extinfo.outputPrefix || ""
         bin.writeFile(prefix + pxtc.BINARY_ASM, src)
-        const res = assemble(opts.target, bin, src)
+        const res = assemble(opts.target, bin, src, cres)
         if (res.thumbFile.commPtr)
             bin.commSize = res.thumbFile.commPtr - hexfile.getCommBase()
         if (res.src)
