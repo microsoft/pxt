@@ -149,8 +149,8 @@ a.ui.card:focus,
     border: @linkHoverBorder;
 }
 
-.ui.card.link.newprojectcard {
-    background: var(--pxt-primary-background) !important;
+.gallerysegment .ui.card.link.newprojectcard {
+    background-color: var(--pxt-primary-background) !important;
     color: var(--pxt-primary-foreground) !important;
 
     .header {
@@ -158,8 +158,8 @@ a.ui.card:focus,
     }
 }
 
-.ui.card.link.cloudprojectscard {
-    background: var(--pxt-secondary-accent) !important;
+.gallerysegment .ui.card.link.cloudprojectscard {
+    background-color: var(--pxt-secondary-accent) !important;
     color: var(--pxt-secondary-foreground) !important;
 
     .header {
