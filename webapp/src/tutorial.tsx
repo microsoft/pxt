@@ -367,7 +367,7 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
             let actions: sui.ModalButton[] = [];
             if (immersiveReaderEnabled) {
                 actions.push({
-                    className: "immersive-reader-button",
+                    className: "immersive-reader-button neutral",
                     onclick: async () => { await ImmersiveReader.launchImmersiveReaderAsync(fullText, options) },
                     ariaLabel: lf("Launch Immersive Reader"),
                     title: lf("Launch Immersive Reader")
