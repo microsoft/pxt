@@ -360,7 +360,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
         const prefThemeId = await authClient.getColorThemeIdAsync();
         let initialTheme = this.props.highContrast
             ? pxt.appTarget?.appTheme?.highContrastColorTheme
-            : prefThemeId && this.themeManager.isKnownTheme(prefThemeId)
+            : (prefThemeId && this.themeManager.isKnownTheme(prefThemeId))
                 ? prefThemeId
                 : pxt.appTarget?.appTheme?.defaultColorTheme;
 

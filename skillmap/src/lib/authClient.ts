@@ -143,7 +143,7 @@ export async function getBadgeStateAsync(): Promise<pxt.auth.UserBadgeState | un
 
 export async function getColorThemeIdAsync(): Promise<string | undefined> {
     const prefs = await userPreferencesAsync();
-    if(prefs) {
+    if (prefs) {
         return prefs?.colorThemeIds?.[pxt.appTarget.id];
     }
 }
