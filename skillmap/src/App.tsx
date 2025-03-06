@@ -422,6 +422,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
     changeTheme(theme: pxt.ColorThemeInfo) {
         pxt.tickEvent(`skillmap.menu.theme.changetheme`, { theme: theme.id });
         this.themeManager.switchColorTheme(theme.id);
+        authClient.setColorThemeIdAsync(theme.id);
     }
 
     render() {
