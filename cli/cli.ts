@@ -2647,6 +2647,7 @@ async function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
         delete targetlight.compile.compilerExtension;
     const targetlightjson = nodeutil.stringify(targetlight);
     nodeutil.writeFileSync("built/targetlight.json", targetlightjson)
+    nodeutil.writeFileSync("built/targetlight.js", targetJsPrefix + targetlightjson)
     nodeutil.writeFileSync("built/sim.webmanifest", nodeutil.stringify(webmanifest))
 
     console.log("target.json built.");
