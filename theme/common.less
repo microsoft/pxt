@@ -258,6 +258,19 @@ pre {
     width: 100% !important;
     margin: 0;
     margin-top: 1rem;
+
+    background: var(--pxt-primary-background);
+    color: var(--pxt-primary-foreground);
+
+    .item, .link.item {
+        color: var(--pxt-primary-foreground) !important; // override !important in semantic ui
+        border-radius: inherit;
+
+        &:hover, &:focus {
+            background: var(--pxt-primary-background-hover) !important;
+            color: var(--pxt-primary-foreground-hover) !important;
+        }
+    }
 }
 
 .filemenu .nested.item {
