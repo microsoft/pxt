@@ -5440,7 +5440,7 @@ export class ProjectView
                     showSerialButtons={useSerialEditor}
                     showFileList={showFileList}
                     showFullscreenButton={!isHeadless}
-                    showHostMultiplayerGameButton={isMultiplayerSupported && isMultiplayerGame}
+                    isMultiplayerGame={isMultiplayerSupported && isMultiplayerGame}
                     collapseEditorTools={this.state.collapseEditorTools}
                     simSerialActive={this.state.simSerialActive}
                     devSerialActive={this.state.deviceSerialActive}
