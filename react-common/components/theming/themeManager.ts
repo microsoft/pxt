@@ -31,7 +31,7 @@ export class ThemeManager {
     }
 
     public isKnownTheme(themeId: string): boolean {
-        return pxt.appTarget.colorThemeMap && themeId in pxt.appTarget.colorThemeMap;
+        return !!pxt.appTarget?.colorThemeMap?.[themeId];
     }
 
     public getAllColorThemes(): pxt.ColorThemeInfo[] {
