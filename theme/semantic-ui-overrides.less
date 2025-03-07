@@ -115,6 +115,7 @@ body.pxt-theme-root {
     .ui.table {
         color: var(--pxt-neutral-foreground1);
         background: var(--pxt-neutral-background1);
+        border: 1px solid var(--pxt-neutral-alpha20);
 
         th, tr, i {
             color: var(--pxt-neutral-foreground1);
@@ -128,6 +129,20 @@ body.pxt-theme-root {
                     background: none !important;
                 }
             }
+        }
+
+        tr, th {
+            border-bottom: 1px solid var(--pxt-neutral-alpha10);
+        }
+
+        tr td {
+            border-top: 1px solid var(--pxt-neutral-alpha10);
+        }
+
+        td:nth-child(2),
+        tfoot:not(.full-width) th:nth-child(2),
+        thead:not(.full-width) th:nth-child(2) {
+            border-left: 1px solid var(--pxt-neutral-alpha10);
         }
     }
 
