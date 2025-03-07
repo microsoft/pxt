@@ -1019,8 +1019,8 @@ ${hexfile.hexPrelude()}
         let b = mkProcessorFile(target)
         b.emit(src);
 
-        let settingsSizeDefault = cres.configData.find(ce => ce.name === "CFG_SETTINGS_SIZE_DEFL")
-        let settingsSize = cres.configData.find(ce => ce.name === "CFG_SETTINGS_SIZE")
+        let settingsSizeDefault = cres.configData.find(ce => ce.name === "SETTINGS_SIZE_DEFL")
+        let settingsSize = cres.configData.find(ce => ce.name === "SETTINGS_SIZE")
         let actualSettingsSize = settingsSize ? settingsSize.value : settingsSizeDefault ? settingsSizeDefault.value : 0
 
         let flashUsableEnd = (target.flashUsableEnd ? target.flashUsableEnd : target.flashEnd) - actualSettingsSize
