@@ -12,14 +12,14 @@ Arrays are flexible, they can grow and shrink in size. You can add and remove it
 
 An array is created by making a list of items.
 
-```block
+```blocks
 let scores = [9, 8, 3, 5, 6, 8];
 ```
 Here the array automatically becomes an array of [numbers](/types/number) because it was created with items that are numbers.
 
 You can use different types, like [string](/types/string).
 
-```block
+```blocks
 let directions = ["East", "North", "South", "West"];
 ```
 
@@ -33,7 +33,7 @@ let scores: number[] = [];
 
 When an item is added to an array it becomes an _element_ of the array. Array elements are found using an _index_. This is the position in the array of the element, or the element's _order_ in the array. The positions in an array begin with the index of `0`. The first place in the array is `0`, the second place is `1`, and so on.
 
-```block
+```blocks
 let scores = [9, 8, 3, 5, 6, 8];
 let firstScore= scores[0];
 let secondScore = scores[1];
@@ -42,7 +42,7 @@ let secondScore = scores[1];
 
 Arrays always have a length. The last element of an array has an index that is _length of array - 1_. Indexes begin with `0` so the last element's index is one less than the array length.
 
-```block
+```blocks
 let directions = ["East", "North", "South", "West"];
 let count = directions.length;
 ```
@@ -53,7 +53,7 @@ Arrays are a very useful way to collect and organize information. There are more
 
 Here's an example using [**insertAt**](/reference/arrays/insert-at) to insert a number into the middle of an array.
 
-```block
+```blocks
 let scores = [8, 5, 9, 3, 2, 4];
 scores.insertAt(3, 1);
 ```

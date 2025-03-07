@@ -5,17 +5,24 @@ import {
     FUNCTION_CALL_OUTPUT_BLOCK_TYPE,
     FUNCTION_DEFINITION_BLOCK_TYPE,
 } from "../constants";
-import { getDefinition, getShadowBlockInfoFromType_, isVariableBlockType, mutateCallersAndDefinition } from "../utils";
+import { getArgMap, getDefinition, getShadowBlockInfoFromType_, isVariableBlockType, mutateCallersAndDefinition } from "../utils";
 import { MsgKey } from "../msg";
+
+export interface SerializedShadow {
+    inputName: string;
+    connectedShadow?: any;
+    connectedBlock?: string;
+}
 
 interface FunctionCallMixin extends CommonFunctionMixin {
     attachShadow_(input: Blockly.Input, typeName: string): void;
     buildShadowDom_(argumentType: string): Element;
     onchange(event: Blockly.Events.Abstract): void;
     afterWorkspaceLoad(): void;
+    serializeChangedInputs(newMutation: Element): SerializedShadow[];
 }
 
-type FunctionCallBlock = CommonFunctionBlock & FunctionCallMixin;
+export type FunctionCallBlock = CommonFunctionBlock & FunctionCallMixin;
 
 const FUNCTION_CALL_MIXIN: FunctionCallMixin = {
     ...COMMON_FUNCTION_MIXIN,
@@ -188,6 +195,34 @@ const FUNCTION_CALL_MIXIN: FunctionCallMixin = {
             }
         }
     },
+    serializeChangedInputs(this: FunctionCallBlock, newMutation: Element) {
+        const out: SerializedShadow[] = [];
+
+        const newIdToArg = getArgMap(newMutation, true);
+
+        for (const argument of this.arguments_) {
+            if (newIdToArg[argument.id]) continue;
+
+            const connection = this.getInput(argument.id).connection;
+
+            const targetBlock = connection.targetBlock() as Blockly.BlockSvg;
+
+            if (targetBlock.isShadow()) {
+                out.push({
+                    inputName: argument.id,
+                    connectedShadow: connection.getShadowState(true)
+                });
+            }
+            else {
+                out.push({
+                    inputName: argument.id,
+                    connectedBlock: targetBlock.id
+                });
+            }
+        }
+
+        return out;
+    }
 };
 
 Blockly.Blocks[FUNCTION_CALL_BLOCK_TYPE] = {
