@@ -370,7 +370,7 @@ namespace ts.pxtc {
             checkFuns();
             return
 
-
+            // TODO: read in the top of flash
             function readPointers(s: string) {
                 let step = opts.shortPointers ? 4 : 8
                 while (s.length >= step) {

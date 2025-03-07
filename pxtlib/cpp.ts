@@ -1090,6 +1090,8 @@ namespace pxt.cpp {
         if (compile.uf2Family)
             pxtConfig += `#define PXT_UF2_FAMILY ${compile.uf2Family}\n`
 
+        // TODO: C++ generation for adding in top of flash from CODAL
+        // TODO: do we need a special include to get the TOP_OF_FLASH from codal?
         res.generatedFiles[sourcePath + "pointers.cpp"] = includesInc + protos.finish() + abiInc +
             pointerIncPre + pointersInc + "\nPXT_SHIMS_END\n"
         res.generatedFiles[sourcePath + "pxtconfig.h"] = pxtConfig
