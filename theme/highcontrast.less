@@ -125,9 +125,15 @@
         .blocklyTreeSelected span.blocklyTreeLabel {
             color: @HCblocklyTreeLabelSelectedColor;
         }
+        .blocklyTreeRow:not(.blocklyTreeSelected) {
+            background-color: @HCblocklyToolboxColor !important;
+            .blocklyTreeIcon, .blocklyTreeLabel {
+                color: @HCblocklyTreeLabelColor !important;
+            }
+        }
         .blocklyTreeRow:not(.blocklyTreeSelected):hover,
         .blocklyTreeRow:not(.blocklyTreeSelected):focus {
-            background-color: lighten(@HCblocklyToolboxColor, 25.0);
+            background-color: lighten(@HCblocklyToolboxColor, 25.0) !important;
         }
     }
 

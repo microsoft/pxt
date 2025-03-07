@@ -235,7 +235,7 @@ export class ProjectView
         this.initSimulatorMessageHandlers();
         this.showThemePicker = this.showThemePicker.bind(this);
         this.hideThemePicker = this.hideThemePicker.bind(this);
-        this.setColorTheme = this.setColorTheme.bind(this);
+        this.setColorThemeById = this.setColorThemeById.bind(this);
 
         // add user hint IDs and callback to hint manager
         if (pxt.BrowserUtils.useOldTutorialLayout()) this.hintManager.addHint(ProjectView.tutorialCardId, this.tutorialCardHintCallback.bind(this));
@@ -5159,14 +5159,17 @@ export class ProjectView
         this.setState({ bannerVisible: b });
     }
 
-    setColorTheme(colorThemeId: string) {
+    setColorThemeById(colorThemeId: string, savePreference: boolean) {
         if (this.themeManager.getCurrentColorTheme()?.id === colorThemeId) {
             return;
         }
 
-        pxt.tickEvent("app.setcolortheme", { theme: colorThemeId });
+        pxt.tickEvent("app.setcolortheme", { theme: colorThemeId, savePreference: `${savePreference}` });
         this.themeManager.switchColorTheme(colorThemeId);
-        this.updateThemePreference();
+
+        if (savePreference) {
+            this.updateThemePreference();
+        }
     }
 
     private updateThemePreference() {
@@ -5482,7 +5485,7 @@ export class ProjectView
                 {lightbox ? <sui.Dimmer isOpen={true} active={lightbox} portalClassName={'tutorial'} className={'ui modal'}
                     shouldFocusAfterRender={false} closable={true} onClose={this.hideLightbox} /> : undefined}
                 {this.state.onboarding && <Tour tourSteps={this.state.onboarding} onClose={this.hideOnboarding} />}
-                {this.state.themePickerOpen && <ThemePickerModal themes={this.themeManager.getAllColorThemes()} onThemeClicked={theme => this.setColorTheme(theme?.id)} onClose={this.hideThemePicker} />}
+                {this.state.themePickerOpen && <ThemePickerModal themes={this.themeManager.getAllColorThemes()} onThemeClicked={theme => this.setColorThemeById(theme?.id, true)} onClose={this.hideThemePicker} />}
             </div>
         );
     }
@@ -6226,8 +6229,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         })
         .then(() => {
             // Load theme colors
-            let initialTheme = data.getData<string>(auth.THEMEID);
-            if (!initialTheme) {
+            const themeManager = ThemeManager.getInstance(document);
+            const initialThemePrefs = data.getData<pxt.auth.ColorThemeIdsState>(auth.COLOR_THEME_IDS);
+            let initialTheme = initialThemePrefs?.[pxt.appTarget.id];
+            if (!initialTheme || !themeManager.isKnownTheme(initialTheme)) {
                 initialTheme = pxt.appTarget?.appTheme?.defaultColorTheme;
             }
 
@@ -6238,11 +6243,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                 initialTheme = pxt.appTarget?.appTheme?.highContrastColorTheme;
             }
 
-            if (initialTheme) {
-                const themeManager = ThemeManager.getInstance(document);
-                if (initialTheme !== themeManager.getCurrentColorTheme()?.id) {
-                    return themeManager.switchColorTheme(initialTheme);
-                }
+            if (initialTheme && initialTheme !== themeManager.getCurrentColorTheme()?.id) {
+                return themeManager.switchColorTheme(initialTheme);
             }
             return Promise.resolve();
         })

@@ -358,9 +358,11 @@ class AppImpl extends React.Component<AppProps, AppState> {
     protected async initColorThemeAsync() {
         // Load theme colors
         const prefThemeId = await authClient.getColorThemeIdAsync();
-        let initialTheme = this.props.highContrast ?
-                    pxt.appTarget?.appTheme?.highContrastColorTheme :
-                    prefThemeId ?? pxt.appTarget?.appTheme?.defaultColorTheme;
+        let initialTheme = this.props.highContrast
+            ? pxt.appTarget?.appTheme?.highContrastColorTheme
+            : (prefThemeId && this.themeManager.isKnownTheme(prefThemeId))
+                ? prefThemeId
+                : pxt.appTarget?.appTheme?.defaultColorTheme;
 
         if (initialTheme) {
             if (initialTheme !== this.themeManager.getCurrentColorTheme()?.id) {
@@ -420,7 +422,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
     changeTheme(theme: pxt.ColorThemeInfo) {
         pxt.tickEvent(`skillmap.menu.theme.changetheme`, { theme: theme.id });
         this.themeManager.switchColorTheme(theme.id);
-        this.props.dispatchSetUserPreferences({ themeId: theme.id });
+        authClient.setColorThemeIdAsync(theme.id);
     }
 
     render() {

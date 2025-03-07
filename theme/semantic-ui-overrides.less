@@ -8,25 +8,27 @@ This file overrides the default semantic ui theming with our own theme variables
 
 // Mixin allows easy setting for background, foreground, hover, and inverted colors for a button
 .buttonVariant(@bg; @fg; @hoverBg; @hoverFg; @border) {
-    background: @bg;
-    color: @fg;
-    border: 1px solid @border;
-
-    &.inverted {
-        background-color: @fg;
-        color: @bg;
-    }
-
-    &:hover, &:focus {
-        // Semantic UI darkens background using a filter, which isn't necessary when we have a hover color.
-        filter: none;
-
-        background-color: @hoverBg;
-        color: @hoverFg;
-
+    &:not(.disabled) {
+        background-color: @bg;
+        color: @fg;
+        border: 1px solid @border;
+    
         &.inverted {
-            background-color: @hoverFg;
-            color: @hoverBg;
+            background-color: @fg;
+            color: @bg;
+        }
+    
+        &:hover, &:focus {
+            // Semantic UI darkens background using a filter, which isn't necessary when we have a hover color.
+            filter: none;
+    
+            background-color: @hoverBg;
+            color: @hoverFg;
+    
+            &.inverted {
+                background-color: @hoverFg;
+                color: @hoverBg;
+            }
         }
     }
 }
@@ -103,7 +105,8 @@ body.pxt-theme-root {
         > .header,
         > .actions,
         > .closeIcon,
-        > .closeIcon .close {
+        > .closeIcon .close,
+        > .content > .ui.items > .item > .content > .description {
             background-color: var(--pxt-neutral-background1);
             color: var(--pxt-neutral-foreground1);
         }
@@ -136,7 +139,6 @@ body.pxt-theme-root {
         background: var(--pxt-neutral-background1);
         color: var(--pxt-neutral-foreground1);
     }
-
 
     .ui.menu {
         background: var(--pxt-neutral-background1);
@@ -203,6 +205,10 @@ body.pxt-theme-root {
             background: var(--pxt-neutral-background1);
             color: var(--pxt-neutral-foreground1);
         }
+    }
+
+    .ui.raised.segment, .ui.raised.segments {
+        box-shadow: 0 2px 4px 0 var(--pxt-neutral-alpha10),0 2px 10px 0 var(--pxt-neutral-alpha10);
     }
 
     // Colors
@@ -283,12 +289,12 @@ body.pxt-theme-root {
         }
 
         &.gray, &.grey, &.neutral {
-            background-color: var(--pxt-neutral-backgroundbackground2) !important;
-            color: var(--pxt-neutral-background-foreground2) !important;
+            background-color: var(--pxt-neutral-background2) !important;
+            color: var(--pxt-neutral-foreground2) !important;
 
             &.inverted {
-                background-color: var(--pxt-neutral-background-foreground2) !important;
-                color: var(--pxt-neutral-background-background2) !important;
+                background-color: var(--pxt-neutral-foreground2) !important;
+                color: var(--pxt-neutral-background2) !important;
             }
         }
 

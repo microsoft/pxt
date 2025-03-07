@@ -174,7 +174,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
         this.sendMessageAsync (
             {
                 type: "pxteditor",
-                action: "setcolortheme",
+                action: "setcolorthemebyid",
                 colorThemeId
             } as pxt.editor.EditorMessageSetColorThemeRequest
         );
