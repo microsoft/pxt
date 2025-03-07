@@ -1019,11 +1019,11 @@ ${hexfile.hexPrelude()}
         let b = mkProcessorFile(target)
         b.emit(src);
 
-        // TODO: given cres.configData, we can look up to see if either of the following is set
-        // - CFG_SETTINGS_SIZE_DEFL
-        // - CFG_SETTINGS_SIZE
-        // with the second taking priority over the first
-        let flashUsableEnd = target.flashUsableEnd ? target.flashUsableEnd : target.flashEnd
+        let settingsSizeDefault = cres.configData.find(ce => ce.name === "CFG_SETTINGS_SIZE_DEFL")
+        let settingsSize = cres.configData.find(ce => ce.name === "CFG_SETTINGS_SIZE")
+        let actualSettingsSize = settingsSize ? settingsSize.value : settingsSizeDefault ? settingsSizeDefault.value : 0
+
+        let flashUsableEnd = (target.flashUsableEnd ? target.flashUsableEnd : target.flashEnd) - actualSettingsSize
 
         src = `; Interface tables: ${bin.itFullEntries}/${bin.itEntries} (${Math.round(100 * bin.itFullEntries / bin.itEntries)}%)\n` +
             `; Virtual methods: ${bin.numVirtMethods} / ${bin.numMethods}\n` +
