@@ -111,15 +111,13 @@ export function createCustomArgumentEditor(typeName: string, ws: Blockly.Workspa
 }
 
 function createCustomArgumentBlock(blockType: string, typeName: string, ws: Blockly.Workspace) {
-    const block = Blockly.utils.xml.createElement("block");
-    block.setAttribute("type", blockType);
-
+    const block = ws.newBlock(blockType);
     const mutation = Blockly.utils.xml.createElement("mutation");
     mutation.setAttribute("typename", typeName);
 
-    block.appendChild(mutation);
+    block.domToMutation(mutation);
 
-    return Blockly.Xml.domToBlock(block, ws);
+    return block;
 }
 
 export function findLegalName(name: string, ws: Blockly.Workspace, block?: CommonFunctionBlock) {

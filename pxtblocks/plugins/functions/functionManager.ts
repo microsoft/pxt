@@ -23,7 +23,7 @@ export class FunctionManager {
     }
 
     setIconForType(typeName: string, icon: string) {
-        this.typeIcons[icon] = typeName;
+        this.typeIcons[typeName] = icon;
     }
 
     setArgumentNameForType(typeName: string, name: string) {
