@@ -196,11 +196,11 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         this.compile();
     }
 
-    protected onHwDownloadClick = () => {
+    protected onFileDownloadClick = async () => {
         // Matching the tick in the call to compile() above for historical reasons
         pxt.tickEvent("editortools.download", { collapsed: this.getCollapsedState() }, { interactiveConsent: true });
         pxt.tickEvent("editortools.downloadasfile", { collapsed: this.getCollapsedState() }, { interactiveConsent: true });
-        (this.props.parent as ProjectView).compile(true);
+        await (this.props.parent as ProjectView).saveProjectToFileAsync();
     }
 
     protected onPairClick = () => {
@@ -344,7 +344,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
                 {showUsbNotSupportedHint && <sui.Item role="menuitem" icon={usbIcon} text={lf("Connect Device")} tabIndex={-1} onClick={this.onCannotPairClick} />}
                 {webUSBSupported && (packetioConnecting || packetioConnected) && <sui.Item role="menuitem" icon={usbIcon} text={lf("Disconnect")} tabIndex={-1} onClick={this.onDisconnectClick} />}
                 {boards && <sui.Item role="menuitem" icon="microchip" text={hardwareMenuText} tabIndex={-1} onClick={this.onHwItemClick} />}
-                <sui.Item role="menuitem" icon="xicon file-download" text={downloadMenuText} tabIndex={-1} onClick={this.onHwDownloadClick} />
+                <sui.Item role="menuitem" icon="xicon file-download" text={downloadMenuText} tabIndex={-1} onClick={this.onFileDownloadClick} />
                 {downloadHelp && <sui.Item role="menuitem" icon="help circle" text={lf("Help")} tabIndex={-1} onClick={this.onHelpClick} />}
             </sui.DropdownMenu>
         )
