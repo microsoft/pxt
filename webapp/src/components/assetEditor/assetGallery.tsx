@@ -121,7 +121,7 @@ class AssetGalleryImpl extends React.Component<AssetGalleryProps, AssetGallerySt
             <AssetTopbar />
             <div className={`asset-editor-card-list ${view !== GalleryView.User ? "hidden" : ""}`}>
                 <AssetCardList assets={filterAssets(userAssets, isBlocksProject)}>
-                    <Button className="create-new inverted"
+                    <Button className="create-new"
                         disabled={disableCreateButton}
                         leftIcon="icon huge add circle"
                         title={lf("Create a new asset")}
@@ -142,7 +142,7 @@ class AssetGalleryImpl extends React.Component<AssetGalleryProps, AssetGallerySt
                     this.assetCreateOptions.map((opt, i) => {
                         return <Button
                             key={i}
-                            className="asset-editor-create-button inverted"
+                            className="asset-editor-create-button"
                             leftIcon={`icon ${opt.icon}`}
                             label={opt.label}
                             title={lf("Create a new {0} asset", opt.label)}
