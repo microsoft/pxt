@@ -71,6 +71,7 @@ namespace ts.pxtc {
                 codeStartAddr: undefined,
                 elfInfo: undefined,
                 espInfo: undefined,
+                bottomFlashAddr: 0
             }
         }
 
@@ -82,6 +83,10 @@ namespace ts.pxtc {
 
         export function getStartAddress() {
             return ctx.codeStartAddrPadded
+        }
+
+        export function getBottomFlashAddress() {
+            return ctx.bottomFlashAddr
         }
 
         // utility function
@@ -1032,7 +1037,8 @@ ${hexfile.hexPrelude()}
         let settingsSize = cres.configData.find(ce => ce.name === "SETTINGS_SIZE")
         let actualSettingsSize = settingsSize ? settingsSize.value : settingsSizeDefault ? settingsSizeDefault.value : 0
 
-        let flashUsableEnd = (target.flashUsableEnd ? target.flashUsableEnd : target.flashEnd) - actualSettingsSize
+        const bottomFlashAddr = hexfile.getBottomFlashAddress()
+        let flashUsableEnd = (bottomFlashAddr > 0 ? bottomFlashAddr : target.flashUsableEnd ? target.flashUsableEnd : target.flashEnd) - actualSettingsSize
 
         src = `; Interface tables: ${bin.itFullEntries}/${bin.itEntries} (${Math.round(100 * bin.itFullEntries / bin.itEntries)}%)\n` +
             `; Virtual methods: ${bin.numVirtMethods} / ${bin.numMethods}\n` +
