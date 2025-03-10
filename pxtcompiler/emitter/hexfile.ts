@@ -226,9 +226,9 @@ namespace ts.pxtc {
                         if (hasMarker(drom.data, off)) {
                             found = true
                             off += marker.length
-                            const ptroff = off
                             ctx.bottomFlashAddr = pxt.HF2.read32(drom.data, off)
                             off += 4
+                            const ptroff = off
                             for (let ptr of extInfo.vmPointers || []) {
                                 if (ptr == "0") continue
                                 ptr = ptr.replace(/^&/, "")
@@ -279,9 +279,7 @@ namespace ts.pxtc {
                 ctx.jmpStartAddr = jmpIdx / 2
                 ctx.jmpStartIdx = -1
 
-                // TODO: make this part of readPointers?
-                let step = opts.shortPointers ? 4 : 8
-                const hexb = hexlines[0].slice(jmpIdx + 32, step)
+                const hexb = hexlines[0].slice(jmpIdx + 32, jmpIdx + 40)
                 ctx.bottomFlashAddr = parseInt(swapBytes(hexb), 16)
 
                 let ptrs = hexlines[0].slice(jmpIdx + 40, jmpIdx + 40 + funs.length * 8 + 16)
@@ -356,10 +354,12 @@ namespace ts.pxtc {
 
                 // random magic number, which marks the beginning of the array of function pointers in the .hex file
                 // it is defined in pxt-microbit-core
+                // TODO: would be nice to use pointerListMarker
                 m = /^:10....000108010842424242010801083ED8E98D/.exec(hexlines[i])
                 if (m) {
                     ctx.jmpStartAddr = lastAddr
                     ctx.jmpStartIdx = i
+                    console.log(`ctx.jmpStartAddr ${ctx.jmpStartAddr}, ${ctx.jmpStartIdx}`)
                 }
             }
 
@@ -377,13 +377,20 @@ namespace ts.pxtc {
                 let m = /^:..(....)00(.{4,})/.exec(hexlines[i]);
                 if (!m) continue;
 
+                if (i === ctx.jmpStartIdx + 1) {
+                    let hexb = m[2].slice(0, 8)
+                    ctx.bottomFlashAddr = parseInt(swapBytes(hexb), 16)
+                    console.log(`ctx.bottomFlashAddr ${swapBytes(m[2])} ${ctx.bottomFlashAddr}`)
+                    continue
+                }
+
                 readPointers(m[2])
                 if (funs.length == 0) break
             }
+            ctx.jmpStartIdx++
 
             checkFuns();
             return
-
 
             function readPointers(s: string) {
                 let step = opts.shortPointers ? 4 : 8
