@@ -87,6 +87,73 @@ import { BlockDefinition, CategoryNameID } from "./toolbox";
 import { FeedbackModal } from "../../react-common/components/controls/Feedback/Feedback";
 import { ThemeManager } from "../../react-common/components/theming/themeManager";
 
+const originalPromise = Promise;
+
+declare global {
+    interface Window {
+        Promise: PromiseConstructor;
+    }
+}
+
+window.Promise = function <T>(executor: (resolve: (value?: T | PromiseLike<T>) => void, reject: (reason?: any) => void) => void): Promise<T> {
+    // Wrap the original executor function to introduce delay
+    const wrappedExecutor = (resolve: (value?: T | PromiseLike<T>) => void, reject: (reason?: any) => void) => {
+        const delayedResolve = (value?: T | PromiseLike<T>) => {
+            setTimeout(() => {
+                console.log("Resolving promise with delay...");
+                resolve(value);  // Resolving using the built-in resolve
+            }, 10 + Math.random() * 100); // 10ms delay
+        };
+
+        const delayedReject = (reason?: any) => {
+            setTimeout(() => {
+                console.log("Rejecting promise with delay...");
+                reject(reason);  // Rejecting using the built-in reject
+            }, 10 + Math.random() * 100); // 10ms delay
+        };
+
+        // Execute the original executor with the delayed resolve/reject functions
+        executor(delayedResolve, delayedReject);
+    };
+
+    // Explicitly use the original `Promise` constructor to preserve its functionality
+    return new originalPromise<T>(wrappedExecutor);
+} as any;
+
+// Ensure static methods (resolve, reject, etc.) still point to the original Promise methods
+Object.defineProperty(window.Promise, 'resolve', {
+    value: function <T>(value: T | PromiseLike<T>): Promise<T> {
+        const delay = 10 + Math.random() * 100; // Random delay between 0 and 100ms
+        console.log(`Resolving with random delay of ${delay}ms`);
+        return new originalPromise<T>((resolve) => {
+            setTimeout(() => resolve(value), delay);  // Delay resolve with a random time
+        });
+    },
+    writable: false,
+    configurable: false,
+});
+
+Object.defineProperty(window.Promise, 'reject', {
+    value: originalPromise.reject,
+    writable: false,
+    configurable: false,
+});
+
+Object.defineProperty(window.Promise, 'all', {
+    value: originalPromise.all,
+    writable: false,
+    configurable: false,
+});
+
+Object.defineProperty(window.Promise, 'race', {
+    value: originalPromise.race,
+    writable: false,
+    configurable: false,
+});
+
+console.log(Promise.resolve("Test"));
+console.log(Promise.resolve());
+
 pxt.blocks.requirePxtBlockly = () => pxtblockly as any;
 pxt.blocks.requireBlockly = () => Blockly;
 pxt.blocks.registerFieldEditor = (selector, proto, validator) => pxtblockly.registerFieldEditor(selector, proto, validator);
