@@ -6,7 +6,7 @@ import * as React from "react";
 import { connect } from 'react-redux';
 import { dispatchSaveAndCloseActivity, dispatchShowResetUserModal, dispatchShowLoginModal,
     dispatchShowUserProfile, dispatchSetUserPreferences, dispatchShowSelectLanguage,
-    dispatchShowSelectTheme} from '../actions/dispatch';
+    dispatchShowSelectTheme, dispatchShowFeedback } from '../actions/dispatch';
 import { SkillMapState } from '../store/reducer';
 import { isLocal, resolvePath, tickEvent } from "../lib/browserUtils";
 
@@ -32,6 +32,7 @@ interface HeaderBarProps {
     dispatchSetUserPreferences: (preferences?: pxt.auth.UserPreferences) => void;
     dispatchShowSelectLanguage: () => void;
     dispatchShowSelectTheme: () => void;
+    dispatchShowFeedback: () => void;
 }
 
 export class HeaderBarImpl extends React.Component<HeaderBarProps> {
@@ -77,6 +78,15 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
             })
         }
 
+        if (pxt.U.ocvEnabled()) {
+            items.push({
+                id: "feedback",
+                title: lf("Give Feedback"),
+                label: lf("Give Feedback"),
+                onClick: this.onFeedbackClicked
+            });
+        }
+
         if (!this.props.activityOpen) {
             items.push({
                 id: "reset",
@@ -116,14 +126,6 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
 
     protected getHelpItems(): MenuItem[] {
         const items: MenuItem[] = [];
-        if (this.props.activityOpen) {
-            items.push({
-                id: "feedback",
-                title: lf("Feedback"),
-                label: lf("Feedback"),
-                onClick: this.onBugClicked
-            });
-        }
         return items;
     }
 
@@ -210,9 +212,9 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
         }
     }
 
-    onBugClicked = () => {
+    onFeedbackClicked = () => {
         tickEvent("skillmap.bugreport");
-        (window as any).usabilla_live?.("click");
+        this.props.dispatchShowFeedback();
     }
 
     onLogoutClicked = async () => {
@@ -261,7 +263,8 @@ const mapDispatchToProps = {
     dispatchShowUserProfile,
     dispatchSetUserPreferences,
     dispatchShowSelectLanguage,
-    dispatchShowSelectTheme
+    dispatchShowSelectTheme,
+    dispatchShowFeedback
 };
 
 export const HeaderBar = connect(mapStateToProps, mapDispatchToProps)(HeaderBarImpl);

@@ -2,8 +2,8 @@
 
 
 export const baseConfig: ocv.IFeedbackConfig = {
-    feedbackUiType: ocv.FeedbackUiType.NoSurface,
-    hostPlatform: ocv.FeedbackHostPlatformType.IFrame,
+    feedbackUiType: "NoSurface",
+    hostPlatform: "IFrame",
     isDisplayed: true,
     isEmailCollectionEnabled: false,
     isFileUploadEnabled: false,
@@ -49,15 +49,15 @@ export const createRatingQuestions = () => {
 
 export const ratingFeedbackConfig: ocv.IFeedbackConfig = {
     ...baseConfig,
-    initialFeedbackType: ocv.FeedbackType.Unclassified,
+    initialFeedbackType: "Unclassified",
     scenarioConfig: {
       isScenarioEnabled: true,
-      scenarioType: ocv.InAppFeedbackScenarioType.Custom,
+      scenarioType: "Custom",
       questionDetails: {
-        questionUiType: ocv.InAppFeedbackQuestionUiType.Rating,
+        questionUiType: "Rating",
         ...createRatingQuestions(),
         "questionUiBehaviour": [
-          ocv.InAppFeedbackQuestionUiBehaviour.CommentNotRequired
+          "CommentNotRequired"
         ]
       }
     }
