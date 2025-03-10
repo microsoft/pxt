@@ -13,3 +13,17 @@
 .barcharticon {
     filter: invert(1);
 }
+
+/* Image Editor */
+.image-editor-topbar, .image-editor-bottombar, .image-editor-sidebar {
+    background: var(--pxt-neutral-background1) !important;
+}
+.image-editor-tool-buttons {
+    background: none !important;
+}
+.image-editor-color-buttons .image-editor-button {
+    border: 1px solid var(--pxt-neutral-foreground1);
+}
+.image-editor-canvas, .image-editor-canvas:hover, .image-editor-canvas:focus {
+    outline: none !important;
+}
