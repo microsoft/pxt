@@ -51,6 +51,8 @@ namespace ts.pxtc {
             jmpStartAddr: number;
             jmpStartIdx: number;
 
+            bottomFlashAddr: number;
+
             elfInfo: pxt.elf.Info;
             espInfo: pxt.esp.Image;
         }
@@ -220,6 +222,8 @@ namespace ts.pxtc {
                             found = true
                             off += marker.length
                             const ptroff = off
+                            ctx.bottomFlashAddr = pxt.HF2.read32(drom.data, off)
+                            off += 4
                             for (let ptr of extInfo.vmPointers || []) {
                                 if (ptr == "0") continue
                                 ptr = ptr.replace(/^&/, "")
@@ -270,7 +274,12 @@ namespace ts.pxtc {
                 ctx.jmpStartAddr = jmpIdx / 2
                 ctx.jmpStartIdx = -1
 
-                let ptrs = hexlines[0].slice(jmpIdx + 32, jmpIdx + 32 + funs.length * 8 + 16)
+                // TODO: make this part of readPointers?
+                let step = opts.shortPointers ? 4 : 8
+                const hexb = hexlines[0].slice(jmpIdx + 32, step)
+                ctx.bottomFlashAddr = parseInt(swapBytes(hexb), 16)
+
+                let ptrs = hexlines[0].slice(jmpIdx + 40, jmpIdx + 40 + funs.length * 8 + 16)
                 readPointers(ptrs)
                 checkFuns()
                 return
