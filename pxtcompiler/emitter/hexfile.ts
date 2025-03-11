@@ -341,6 +341,7 @@ namespace ts.pxtc {
                 m = /^:..(....)00/.exec(hexlines[i])
                 if (m) {
                     let newAddr = parseInt(upperAddr + m[1], 16)
+                    // TODO: UGH - we need to get flashUsableEnd computed before this
                     if (!opts.flashUsableEnd && lastAddr && newAddr - lastAddr > 64 * 1024)
                         hitEnd()
                     if (opts.flashUsableEnd && newAddr >= opts.flashUsableEnd)
@@ -378,9 +379,9 @@ namespace ts.pxtc {
                 if (!m) continue;
 
                 if (i === ctx.jmpStartIdx + 1) {
-                    let hexb = m[2].slice(0, 8)
-                    ctx.bottomFlashAddr = parseInt(swapBytes(hexb), 16)
-                    console.log(`ctx.bottomFlashAddr ${swapBytes(m[2])} ${ctx.bottomFlashAddr}`)
+                    let hexb = swapBytes(m[2]).slice(0, 8)
+                    ctx.bottomFlashAddr = parseInt(hexb, 16)
+                    console.log(`ctx.bottomFlashAddr ${hexb} ${ctx.bottomFlashAddr}`)
                     continue
                 }
 
