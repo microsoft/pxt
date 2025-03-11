@@ -510,7 +510,7 @@ namespace pxt.BrowserUtils {
         return outputCanvas.toDataURL("image/png");
     }
 
-    const MAX_SCREENSHOT_SIZE = 1e6; // max 1Mb
+    const MAX_SCREENSHOT_SIZE = 10e6; // max 10Mb
     export function encodeToPngAsync(dataUri: string,
         options?: {
             width?: number,
