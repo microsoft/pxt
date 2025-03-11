@@ -381,7 +381,7 @@ namespace ts.pxtc {
                 if (i === ctx.jmpStartIdx + 1) {
                     let hexb = swapBytes(m[2]).slice(0, 8)
                     ctx.bottomFlashAddr = parseInt(hexb, 16)
-                    console.log(`ctx.bottomFlashAddr ${hexb} ${ctx.bottomFlashAddr}`)
+                    console.log(`ctx.bottomFlashAddr ${m[2]} ${hexb} ${ctx.bottomFlashAddr}`)
                     continue
                 }
 
