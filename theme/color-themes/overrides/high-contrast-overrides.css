@@ -1,7 +1,7 @@
 /* TODO */
 .common-button {
     color: var(--pxt-neutral-foreground2) !important;
-    background: var(--pxt-neutral-background2) !important;
+    background-color: var(--pxt-neutral-background2) !important;
     border-color: var(--pxt-neutral-foreground2) !important;
 }
 
