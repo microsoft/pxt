@@ -159,7 +159,7 @@ a.ui.card:focus,
 }
 
 .gallerysegment .ui.card.link.cloudprojectscard {
-    background-color: var(--pxt-secondary-accent) !important;
+    background-color: var(--pxt-secondary-background) !important;
     color: var(--pxt-secondary-foreground) !important;
 
     .header {
