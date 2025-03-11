@@ -1,7 +1,6 @@
-/* TODO */
 .common-button {
     color: var(--pxt-neutral-foreground2) !important;
-    background: var(--pxt-neutral-background2) !important;
+    background-color: var(--pxt-neutral-background2) !important;
     border-color: var(--pxt-neutral-foreground2) !important;
 }
 
@@ -12,4 +11,43 @@
 
 .barcharticon {
     filter: invert(1);
+}
+
+/* Image Editor */
+.image-editor-topbar, .image-editor-bottombar, .image-editor-sidebar {
+    background: var(--pxt-neutral-background1) !important;
+}
+.image-editor-tool-buttons {
+    background: none !important;
+}
+.image-editor-button,
+.image-editor-input,
+.image-editor-confirm {
+    border: 1px solid var(--pxt-neutral-foreground1);
+}
+.image-editor-canvas, .image-editor-canvas:hover, .image-editor-canvas:focus {
+    outline: none !important;
+}
+.cursor-button {
+    /* remove margin since we now have a border around the cursor buttons and it looks better centered */
+    margin-right: 0;
+}
+
+/* Toolbox */
+.pxtToolbox:not(.invertedToolbox) span.blocklyTreeLabel {
+    color: var(--pxt-target-foreground3);
+}
+
+.pxtToolbox:not(.invertedToolbox) .blocklyTreeSelected span.blocklyTreeLabel,
+.pxtToolbox:not(.invertedToolbox) .blocklyTreeSelected span.blocklyTreeIcon {
+    color: var(--pxt-target-foreground3);
+}
+
+.pxtToolbox:not(.invertedToolbox) .blocklyTreeRow:not(.blocklyTreeSelected) .blocklyTreeLabel {
+    color: var(--pxt-target-foreground3) !important;
+}
+
+.pxtToolbox:not(.invertedToolbox) .blocklyTreeRow:not(.blocklyTreeSelected):hover,
+.pxtToolbox:not(.invertedToolbox) .blocklyTreeRow:not(.blocklyTreeSelected):focus {
+    background-color: #404040 !important;
 }

@@ -118,36 +118,6 @@
     }
 
     /* Toolbox */
-    .pxtToolbox:not(.invertedToolbox) {
-        span.blocklyTreeLabel {
-            color: @HCblocklyTreeLabelColor;
-        }
-        .blocklyTreeSelected span.blocklyTreeLabel {
-            color: @HCblocklyTreeLabelSelectedColor;
-        }
-        .blocklyTreeRow:not(.blocklyTreeSelected) {
-            background-color: @HCblocklyToolboxColor !important;
-            .blocklyTreeIcon, .blocklyTreeLabel {
-                color: @HCblocklyTreeLabelColor !important;
-            }
-        }
-        .blocklyTreeRow:not(.blocklyTreeSelected):hover,
-        .blocklyTreeRow:not(.blocklyTreeSelected):focus {
-            background-color: lighten(@HCblocklyToolboxColor, 25.0) !important;
-        }
-    }
-
-    .pxtToolbox {
-        .blocklyTreeRow:not(.blocklyTreeSelected) {
-            background-color: @HCblocklyToolboxColor !important;
-        }
-    }
-
-    .toolbox-title {
-        background-color: @HCbackground;
-        color: @HCtextColor;
-    }
-
     #monacoEditor .monacoDraggableBlock {
         background: none !important;
 
