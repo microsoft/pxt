@@ -634,6 +634,21 @@ div.simframe > iframe {
     position: relative;
 }
 
+.hw-button.ui.dropdown .menu  {
+    background: var(--pxt-neutral-background1);
+    color: var(--pxt-neutral-foreground1);
+    border: 1px solid var(--pxt-neutral-stencil1);
+
+    & > .item {
+        color: var(--pxt-neutral-foreground1);
+
+        &:hover, &:focus {
+            background: var(--pxt-neutral-background1-hover);
+            color: var(--pxt-neutral-foreground1-hover);
+        }
+    }
+}
+
 .ui.button:hover,
 .ui.button:focus {
     filter: grayscale(.15) brightness(.85) contrast(1.3);
