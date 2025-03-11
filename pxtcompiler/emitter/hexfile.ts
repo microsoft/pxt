@@ -379,13 +379,13 @@ namespace ts.pxtc {
                 if (!m) continue;
 
                 if (i === ctx.jmpStartIdx + 1) {
-                    let hexb = swapBytes(m[2]).slice(0, 8)
+                    let step = opts.shortPointers ? 4 : 8
+                    let hexb = swapBytes(m[2]).slice(0, step)
                     ctx.bottomFlashAddr = parseInt(hexb, 16)
                     console.log(`ctx.bottomFlashAddr ${m[2]} ${hexb} ${ctx.bottomFlashAddr}`)
-                    continue
-                }
-
-                readPointers(m[2])
+                    readPointers(m[2].slice(step))
+                } else
+                    readPointers(m[2])
                 if (funs.length == 0) break
             }
             ctx.jmpStartIdx++
