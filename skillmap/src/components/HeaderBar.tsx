@@ -213,7 +213,7 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
     }
 
     onFeedbackClicked = () => {
-        tickEvent("skillmap.bugreport");
+        tickEvent("skillmap.feedbackclicked");
         this.props.dispatchShowFeedback();
     }
 
