@@ -46,7 +46,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
         anonymousShareByDefault,
         setAnonymousSharePreference,
         isMultiplayerGame,
-        kind,
+        kind = "share",
         onClose,
     } = props;
     const [ name, setName ] = React.useState(projectName);

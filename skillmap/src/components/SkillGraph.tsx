@@ -20,7 +20,7 @@ export interface SkillGraphProps {
     width: number;
     height: number;
 
-    // Skill map
+    // Skillmap
     map: SkillMap;
     user: UserState;
     selectedActivityId?: string;

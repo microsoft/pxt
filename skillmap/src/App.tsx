@@ -24,7 +24,9 @@ import {
     dispatchSetPageTheme,
     dispatchSetUserPreferences,
     dispatchCloseSelectLanguage,
-    dispatchCloseSelectTheme
+    dispatchCloseSelectTheme,
+    dispatchShowFeedback,
+    dispatchCloseFeedback
 } from './actions/dispatch';
 import { PageSourceStatus, SkillMapState } from './store/reducer';
 import { HeaderBar } from './components/HeaderBar';
@@ -48,6 +50,7 @@ import { ThemePickerModal } from '../../react-common/components/theming/ThemePic
 import './App.css';
 
 import { ThemeManager } from 'react-common/components/theming/themeManager';
+import { FeedbackModal } from 'react-common/components/controls/Feedback/Feedback';
 
 /* eslint-enable import/no-unassigned-import */
 interface AppProps {
@@ -60,6 +63,7 @@ interface AppProps {
     highContrast?: boolean;
     showSelectLanguage: boolean;
     showSelectTheme: boolean;
+    showFeedback: boolean;
     dispatchAddSkillMap: (map: SkillMap) => void;
     dispatchChangeSelectedItem: (mapId?: string, activityId?: string) => void;
     dispatchClearSkillMaps: () => void;
@@ -76,6 +80,8 @@ interface AppProps {
     dispatchSetUserPreferences: (prefs: pxt.auth.UserPreferences) => void;
     dispatchCloseSelectLanguage: () => void;
     dispatchCloseSelectTheme: () => void;
+    dispatchShowFeedback: () => void;
+    dispatchCloseFeedback: () => void;
 }
 
 interface AppState {
@@ -429,6 +435,8 @@ class AppImpl extends React.Component<AppProps, AppState> {
         const { skillMaps, activityOpen, backgroundImageUrl, theme } = this.props;
         const { error, showingSyncLoader, forcelang } = this.state;
         const maps = Object.keys(skillMaps).map((id: string) => skillMaps[id]);
+        const feedbackEnabled = pxt.U.ocvEnabled();
+
         return (<div className={`app-container ${pxt.appTarget.id}`}>
                 <HeaderBar />
                 {showingSyncLoader && <div className={"makecode-frame-loader"}>
@@ -450,6 +458,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
                     onClose={this.props.dispatchCloseSelectLanguage}
                 />}
                 {this.props.showSelectTheme && this.themeManager && <ThemePickerModal themes={this.themeManager.getAllColorThemes()} onThemeClicked={this.changeTheme} onClose={this.props.dispatchCloseSelectTheme} />}
+                { feedbackEnabled && this.props.showFeedback && <FeedbackModal kind="rating" onClose={this.props.dispatchCloseFeedback} />}
             </div>);
     }
 
@@ -566,6 +575,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         showSelectLanguage: state.showSelectLanguage,
         showSelectTheme: state.showSelectTheme,
         colorThemeId: state.colorThemeId,
+        showFeedback: state.showFeedback,
     };
 }
 interface LocalizationUpdateOptions {
@@ -613,6 +623,8 @@ const mapDispatchToProps = {
     dispatchChangeSelectedItem,
     dispatchCloseSelectLanguage,
     dispatchCloseSelectTheme,
+    dispatchShowFeedback,
+    dispatchCloseFeedback,
 };
 
 const App = connect(mapStateToProps, mapDispatchToProps)(AppImpl);

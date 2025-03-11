@@ -74,9 +74,9 @@ export const initFeedbackEventListener = (feedbackConfig: ocv.IFeedbackConfig, f
     window.addEventListener('message', feedbackCallbackEventListener);
     feedbackCallbacks = callbacks;
     initfeedbackOptions = {
-        appId: pxt.webConfig.ocv?.appId,
-        ageGroup: ocv.FeedbackAgeGroup.Undefined,
-        authenticationType: ocv.FeedbackAuthenticationType.Unauthenticated,
+        appId: pxt.webConfig?.ocv?.appId,
+        ageGroup: "Undefined",
+        authenticationType: "Unauthenticated",
         clientName: "MakeCode",
         feedbackConfig: feedbackConfig,
         isProduction: false,
@@ -130,7 +130,7 @@ const feedbackCallbackEventListener = (event: MessageEvent<FeedbackRequestPayloa
 const getIFrameAndSend = (payload: FeedbackResponsePayloadType) => {
     const iFrameElement = document.getElementById(FEEDBACK_FRAME_ID) as HTMLIFrameElement
     if (iFrameElement) {
-        iFrameElement.contentWindow!.postMessage(payload, pxt.webConfig.ocv?.iframeEndpoint);
+        iFrameElement.contentWindow!.postMessage(payload, pxt.webConfig?.ocv?.iframeEndpoint);
     }
 }
 

@@ -7353,10 +7353,10 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
         name: "buildskillmap",
         aliases: ["skillmap"],
         advanced: true,
-        help: "Serves the skill map webapp",
+        help: "Serves the skillmap webapp",
         flags: {
             serve: {
-                description: "Serve the skill map locally after building (npm start)"
+                description: "Serve the skillmap locally after building (npm start)"
             },
             docs: {
                 description: "Path to local docs folder to copy into skillmap",

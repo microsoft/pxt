@@ -1857,7 +1857,7 @@ namespace ts.pxtc.Util {
     }
 
     export function ocvEnabled() {
-        return pxt.webConfig.ocv?.appId && pxt.webConfig.ocv?.iframeEndpoint;
+        return pxt.webConfig?.ocv?.appId && pxt.webConfig?.ocv?.iframeEndpoint;
     }
 
 }

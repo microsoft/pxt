@@ -60,7 +60,7 @@ export const Feedback = (props: IFeedbackProps) => {
           <iframe
           title="feedback"
           id={frameId}
-          src={`${pxt.webConfig.ocv?.iframeEndpoint}/centrohost?appname=ocvfeedback&feature=host-ocv-inapp-feedback&platform=web&appId=${pxt.webConfig.ocv?.appId}#/hostedpage`}
+          src={`${pxt.webConfig?.ocv?.iframeEndpoint}/centrohost?appname=ocvfeedback&feature=host-ocv-inapp-feedback&platform=web&appId=${pxt.webConfig?.ocv?.appId}#/hostedpage`}
           sandbox="allow-scripts allow-same-origin allow-forms allow-popups" />
       }
     </>
