@@ -223,6 +223,15 @@ pre {
     -o-transition: opacity 0.2s; /* Opera */
     transition: opacity 0.2s;
     transition-timing-function: linear;
+
+    .debug-button.active,
+    .mute-button.active {
+        background-color: var(--pxt-secondary-accent);
+
+        &:focus, &:hover {
+            filter: none;
+        }
+    }
 }
 
 #downloadArea {
@@ -1438,7 +1447,7 @@ p.ui.font.small {
 }
 
 /*******************************
-        fuyllscreensim
+        fullscreensim
 *******************************/
 .fullscreensim {
     z-index: @aboveEverythingZIndex;

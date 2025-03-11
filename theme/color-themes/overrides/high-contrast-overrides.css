@@ -13,6 +13,15 @@
     filter: invert(1);
 }
 
+/* Sim toolbar */
+#simulator .editor-sidebar .simtoolbar .debug-button.active,
+#simulator .editor-sidebar .simtoolbar .debug-button.active:hover,
+#simulator .editor-sidebar .simtoolbar .debug-button.active:hover i {
+    /* Make active state more apparent by inverting the colors */
+    background: var(--pxt-neutral-foreground2) !important;
+    color: var(--pxt-neutral-background2) !important;
+}
+
 /* Image Editor */
 .image-editor-topbar, .image-editor-bottombar, .image-editor-sidebar {
     background: var(--pxt-neutral-background1) !important;
