@@ -221,7 +221,7 @@ export const TimeMachine = (props: TimeMachineProps) => {
     let queryParams = [
         "timeMachine",
         "controller",
-        "skillsMap",
+        "skillmap",
         "noproject",
         "nocookiebanner",
     ];

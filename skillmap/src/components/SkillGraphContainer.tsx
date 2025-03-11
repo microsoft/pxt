@@ -86,7 +86,7 @@ export class SkillGraphContainerImpl extends React.Component<SkillGraphContainer
 
         return <div className="skill-graph-wrapper">
             <div className={`skill-graph-content ${useBackground ? "has-background" : ""}`}>
-                <MenuBar className="skill-graph-activities" ariaLabel={lf("Skill Map")}>
+                <MenuBar className="skill-graph-activities" ariaLabel={lf("Skillmap")}>
                     <svg viewBox={`-${widthDiff + padding} -${heightDiff + padding} ${width + padding * 2} ${height + padding * 2}`} preserveAspectRatio="xMidYMid meet">
                         {graphs.map((el, i) => {
                             translateY += el.height;
@@ -110,7 +110,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
 
     const props = ownProps as SkillGraphContainerProps
 
-    // Compute graph layout, update size of skill map
+    // Compute graph layout, update size of skillmap
     const graphs = props.maps.map(el => getGraph(el));
     const width = graphs?.length ? graphs.map(el => el.width).reduce((prev, curr) => Math.max(prev, curr)) : 0;
     const height = graphs?.length ? graphs.map(el => el.height).reduce((prev, curr) => prev + curr) : 0;
