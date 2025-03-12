@@ -81,6 +81,13 @@ export class CodeCardView extends data.Component<CodeCardProps, CodeCardState> {
             card.onClick(e);
         } : undefined;
 
+        const keydownHandler = (e: React.KeyboardEvent) => {
+            const charCode = (typeof e.which == "number") ? e.which : e.keyCode;
+            if (charCode === /*enter*/13 || charCode === /*space*/32) {
+                clickHandler(e);
+            }
+        }
+
         const imageUrl = card.imageUrl || (card.youTubeId ? `https://img.youtube.com/vi/${card.youTubeId}/0.jpg` : undefined);
 
         // these header-derived properties must be taken from the virtual API system, not the props. Otherwise
@@ -95,9 +102,18 @@ export class CodeCardView extends data.Component<CodeCardProps, CodeCardState> {
         const ariaLabel = card.ariaLabel || card.title || card.shortName || name;
 
         const style = card.style || "card"
-        const cardDiv = <div className={`ui ${style} ${color} ${card.onClick ? "link" : ''} ${className ? className : ''}`}
-            role={card.role} aria-selected={card.role === "option" ? "true" : undefined} aria-label={ariaLabel} title={card.title}
-            onClick={clickHandler} tabIndex={card.onClick ? card.tabIndex || 0 : null} onKeyDown={card.onClick ? fireClickOnEnter : null}>
+
+        const renderButton = (content: JSX.Element) => {
+            return (<div className={`ui ${style} ${color} ${card.onClick ? "link" : ''} ${className ? className : ''}`}
+                role={card.role} aria-selected={card.role === "option" ? "true" : undefined} aria-label={ariaLabel} title={card.title}
+                onClick={clickHandler} tabIndex={card.onClick ? card.tabIndex || 0 : null} onKeyDown={keydownHandler}>{content}</div>)
+        }
+        const renderLink = (content: JSX.Element) => {
+            return (<a href={url} className={`ui ${style} ${color} link ${className ? className : ''}`}
+                aria-label={ariaLabel} title={card.title}>{content}</a>)
+        }
+
+        const cardContent = <>
             {card.header ?
                 <div key="header" className={"ui content " + (card.responsive ? " tall desktop only" : "")}>
                     {card.header}
@@ -169,12 +185,12 @@ export class CodeCardView extends data.Component<CodeCardProps, CodeCardState> {
                             {lf("Feedback")}
                         </a> : undefined}
                 </div> : undefined}
-        </div>;
+        </>;
 
         if (!card.onClick && url) {
-            return <a href={url}>{cardDiv}</a>;
+            return (renderLink(cardContent))
         } else {
-            return (cardDiv)
+            return (renderButton(cardContent))
         }
     }
 }

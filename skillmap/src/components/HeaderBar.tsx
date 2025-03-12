@@ -6,7 +6,7 @@ import * as React from "react";
 import { connect } from 'react-redux';
 import { dispatchSaveAndCloseActivity, dispatchShowResetUserModal, dispatchShowLoginModal,
     dispatchShowUserProfile, dispatchSetUserPreferences, dispatchShowSelectLanguage,
-    dispatchShowSelectTheme} from '../actions/dispatch';
+    dispatchShowSelectTheme, dispatchShowFeedback } from '../actions/dispatch';
 import { SkillMapState } from '../store/reducer';
 import { isLocal, resolvePath, tickEvent } from "../lib/browserUtils";
 
@@ -32,6 +32,7 @@ interface HeaderBarProps {
     dispatchSetUserPreferences: (preferences?: pxt.auth.UserPreferences) => void;
     dispatchShowSelectLanguage: () => void;
     dispatchShowSelectTheme: () => void;
+    dispatchShowFeedback: () => void;
 }
 
 export class HeaderBarImpl extends React.Component<HeaderBarProps> {
@@ -42,8 +43,8 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
         if (this.props.preferences) {
             items.push({
                 id: "theme",
-                title: lf("Select Theme"),
-                label: lf("Select Theme"),
+                title: lf("Theme"),
+                label: lf("Theme"),
                 onClick: () => {
                     tickEvent("skillmap.theme");
                     this.props.dispatchShowSelectTheme();
@@ -75,6 +76,15 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
                     window.open(this.reportAbuseUrl);
                 }
             })
+        }
+
+        if (pxt.U.ocvEnabled()) {
+            items.push({
+                id: "feedback",
+                title: lf("Give Feedback"),
+                label: lf("Give Feedback"),
+                onClick: this.onFeedbackClicked
+            });
         }
 
         if (!this.props.activityOpen) {
@@ -116,14 +126,6 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
 
     protected getHelpItems(): MenuItem[] {
         const items: MenuItem[] = [];
-        if (this.props.activityOpen) {
-            items.push({
-                id: "feedback",
-                title: lf("Feedback"),
-                label: lf("Feedback"),
-                onClick: this.onBugClicked
-            });
-        }
         return items;
     }
 
@@ -163,7 +165,7 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
         return <div className="user-menu">
             {signedIn
             ?  <MenuDropdown id="profile-dropdown" items={items} label={avatarElem || initialsElem} title={lf("Profile Settings")}/>
-             : <Button className="menu-button inverted" rightIcon="xicon cloud-user" title={lf("Sign In")} label={lf("Sign In")} onClick={ () => {
+             : <Button className="menu-button" rightIcon="xicon cloud-user" title={lf("Sign In")} label={lf("Sign In")} onClick={ () => {
                 pxt.tickEvent(`skillmap.usermenu.signin`);
                 this.props.dispatchShowLoginModal();
             }}/>}
@@ -210,9 +212,9 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
         }
     }
 
-    onBugClicked = () => {
-        tickEvent("skillmap.bugreport");
-        (window as any).usabilla_live?.("click");
+    onFeedbackClicked = () => {
+        tickEvent("skillmap.feedbackclicked");
+        this.props.dispatchShowFeedback();
     }
 
     onLogoutClicked = async () => {
@@ -261,7 +263,8 @@ const mapDispatchToProps = {
     dispatchShowUserProfile,
     dispatchSetUserPreferences,
     dispatchShowSelectLanguage,
-    dispatchShowSelectTheme
+    dispatchShowSelectTheme,
+    dispatchShowFeedback
 };
 
 export const HeaderBar = connect(mapStateToProps, mapDispatchToProps)(HeaderBarImpl);

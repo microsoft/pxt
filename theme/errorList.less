@@ -55,21 +55,21 @@
         overflow-y: auto;
 
         .exceptionMessage {
-            color: @textColor;
+            color: var(--pxt-target-foreground1);
             padding: 0.5em 1em;
             width: 70%;
         }
 
         // errors
         .ui.selection.list {
-            color: @textColor;
+            color: var(--pxt-target-foreground1);
             cursor: pointer;
             margin: 0;
 
             .item {
                 border-radius: unset;
                 padding: 0.5em 1em;
-                color: @textColor;
+                color: var(--pxt-target-foreground1);
 
                 &:hover, &:focus {
                     background-color: var(--pxt-neutral-alpha20) !important;

@@ -136,7 +136,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
         if (editorUrl.charAt(editorUrl.length - 1) === "/" && !isLocal()) {
             url = editorUrl.substr(0, editorUrl.length - 1);
         }
-        url += `?controller=1&skillsMap=1&noproject=1&nocookiebanner=1&ws=browser${forcelang ? `?forcelang=${forcelang}` : ""}`;
+        url += `?controller=1&skillmap=1&noproject=1&nocookiebanner=1&ws=browser${forcelang ? `?forcelang=${forcelang}` : ""}`;
 
         /* eslint-disable @microsoft/sdl/react-iframe-missing-sandbox */
         return <div className="makecode-frame-outer" style={{ display: activityId ? "block" : "none" }}>
@@ -174,7 +174,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
         this.sendMessageAsync (
             {
                 type: "pxteditor",
-                action: "setcolortheme",
+                action: "setcolorthemebyid",
                 colorThemeId
             } as pxt.editor.EditorMessageSetColorThemeRequest
         );

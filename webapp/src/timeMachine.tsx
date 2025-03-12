@@ -7,6 +7,7 @@ import { hideDialog, warningNotification } from "./core";
 import { FocusTrap } from "../../react-common/components/controls/FocusTrap";
 import { classList } from "../../react-common/components/util";
 import { HistoryFile, applySnapshot, patchConfigEditorVersion } from "../../pxteditor/history";
+import { ThemeManager } from "../../react-common/components/theming/themeManager";
 
 import ScriptText = pxt.workspace.ScriptText;
 
@@ -151,6 +152,18 @@ export const TimeMachine = (props: TimeMachineProps) => {
 
         importProject.current = loadProject;
 
+        // Sync iframe theme with main theme.
+        const themeManager = ThemeManager.getInstance(document);
+        const currentTheme = themeManager.getCurrentColorTheme();
+        if (currentTheme) {
+            sendMessageAsync({
+                type: "pxteditor",
+                action: "setcolorthemebyid",
+                colorThemeId: currentTheme.id,
+                savePreference: false
+            } as pxt.editor.EditorMessageSetColorThemeRequest);
+        }
+
         window.addEventListener("message", onMessageReceived);
         return () => {
             window.removeEventListener("message", onMessageReceived);
@@ -221,7 +234,7 @@ export const TimeMachine = (props: TimeMachineProps) => {
     let queryParams = [
         "timeMachine",
         "controller",
-        "skillsMap",
+        "skillmap",
         "noproject",
         "nocookiebanner",
     ];

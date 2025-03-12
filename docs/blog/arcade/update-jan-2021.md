@@ -144,7 +144,7 @@ For those of you paying close attention, you may have noticed a new "Game Maker 
 
 We are experimenting with a new format for tutorials where there are a series of tutorial activities which build upon each other through progressive levels of difficulty. This helps provide a bit more guidance to students on a recommended progression path It also helps keep individual tutorials shorter.
 
-![Skills map](/static/blog/arcade/update-jan-2021/skills-map.png)
+![Skillmap](/static/blog/arcade/update-jan-2021/skills-map.png)
 
 Right now we have 2 learning paths available in the Game Maker Guide – Design a Space Explorer game, and Learn to Make a Platformer. Students must complete a sequence of tutorials in order – once they complete a tutorial, the next tutorial in the series unlocks.
 

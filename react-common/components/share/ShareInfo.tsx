@@ -14,6 +14,7 @@ import { MultiplayerConfirmation } from "./MultiplayerConfirmation";
 import { addGameToKioskAsync } from "./Kiosk";
 import { pushNotificationMessage } from "../Notification";
 import { classList } from "../util";
+import { Link } from "../controls/Link";
 
 const vscodeDevUrl = "https://insiders.vscode.dev/makecode/"
 
@@ -45,12 +46,12 @@ export const ShareInfo = (props: ShareInfoProps) => {
         anonymousShareByDefault,
         setAnonymousSharePreference,
         isMultiplayerGame,
-        kind,
+        kind = "share",
         onClose,
     } = props;
     const [ name, setName ] = React.useState(projectName);
     const [ thumbnailUri, setThumbnailUri ] = React.useState(screenshotUri);
-    const [ shareState, setShareState ] = React.useState<"share" | "gifrecord" | "publish" | "publishing">("share");
+    const [ shareState, setShareState ] = React.useState<"share" | "gifrecord" | "publish" | "publish-vscode" | "publishing">("share");
     const [ shareData, setShareData ] = React.useState<ShareData>();
     const [ embedState, setEmbedState ] = React.useState<"none" | "code" | "editor" | "simulator">("none");
     const [ showQRCode, setShowQRCode ] = React.useState(false);
@@ -62,7 +63,9 @@ export const ShareInfo = (props: ShareInfoProps) => {
 
     const { simScreenshot, simGif } = pxt.appTarget.appTheme;
     const showSimulator = (simScreenshot || simGif) && !!simRecorder;
-    const showDescription = shareState !== "publish";
+    const prePublish = shareState === "share" || shareState === "publishing";
+    const isPublished = shareState === "publish" || shareState === "publish-vscode";
+    const showDescription = !isPublished;
     let qrCodeButtonRef: HTMLButtonElement;
     let inputRef: HTMLInputElement;
     let kioskInputRef: HTMLInputElement;
@@ -101,7 +104,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
         let publishedShareData = await publishAsync(name, thumbnailUri, isAnonymous);
         setShareData(publishedShareData);
         if (!publishedShareData?.error) {
-            setShareState("publish");
+            setShareState("publish-vscode");
 
             pxt.tickEvent(`share.openInVscode`);
             window.open(vscodeDevUrl + publishedShareData.url.split("/").pop(), "_blank");
@@ -315,9 +318,8 @@ export const ShareInfo = (props: ShareInfoProps) => {
         if (setAnonymousSharePreference) setAnonymousSharePreference(!newValue);
     }
 
-    const prePublish = shareState === "share" || shareState === "publishing";
-
-    const inputTitle = prePublish ? lf("Project Title") : lf("Project Link")
+    const inputTitle = prePublish ? lf("Project Title") :
+        (shareState === "publish-vscode" ? lf("Share Successful") : lf("Project Link"));
 
     return <>
         <div className="project-share-info">
@@ -329,7 +331,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
                              <div className="common-spinner" />
                         </div>
                     }
-                    {shareState !== "publish" &&
+                    {!isPublished &&
                         <Button
                             className="link-button"
                             title={lf("Update project thumbnail")}
@@ -339,7 +341,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
                 </div>
             }
             <div className="project-share-content">
-                {(prePublish || shareState === "publish") && <>
+                {(prePublish || isPublished) && <>
                     <div className="project-share-title project-share-label" id="share-input-title">
                         {inputTitle}
                     </div>
@@ -401,7 +403,20 @@ export const ShareInfo = (props: ShareInfoProps) => {
                             }
                         </div>
                     </>}
-
+                    {shareState === "publish-vscode" &&
+                        <div className="project-share-vscode">
+                            <div>
+                                {lf("Success! Your browser should automatically redirect youClick the button below to open your project in VS Code.")}
+                            </div>
+                            <Link
+                                className="common-button secondary"
+                                href={vscodeDevUrl + shareData.url.split("/").pop()}
+                                target="_blank"
+                            >
+                                {lf("Open vscode.dev")}
+                            </Link>
+                    </div>
+                    }
                     {shareState === "publish" &&
                         <div className="project-share-data">
                             <div className="common-input-attached-button">

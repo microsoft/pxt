@@ -143,59 +143,14 @@ export const COMMON_FUNCTION_MIXIN = {
         this.inputList = newInputList;
     },
 
-    disconnectOldBlocks_: function (this: CommonFunctionBlock) {
-        // Remove old stuff
-        let connectionMap: ConnectionMap = {};
-        for (let i = 0, input; (input = this.inputList[i]); i++) {
-            if (input.name !== "STACK" && input.connection) {
-                let target = input.connection.targetBlock();
-                let saveInfo = {
-                    shadow: input.connection.getShadowDom(),
-                    block: target,
-                };
-                connectionMap[input.name] = saveInfo;
-
-                // Remove the shadow DOM, then disconnect the block. Otherwise a shadow
-                // block will respawn instantly, and we'd have to remove it when we remove
-                // the input.
-                input.connection.setShadowDom(null);
-                if (input.connection.targetConnection) {
-                    input.connection.disconnect();
-                }
-            }
-        }
-        return connectionMap;
-    },
-
-    deleteShadows_: function (this: CommonFunctionBlock, connectionMap: ConnectionMap) {
-        // Get rid of all of the old shadow blocks if they aren't connected.
-        if (connectionMap) {
-            for (let id in connectionMap) {
-                let saveInfo = connectionMap[id];
-                if (saveInfo) {
-                    const block = saveInfo["block"];
-                    if (block?.isShadow()) {
-                        if (!block.isDeadOrDying()) {
-                            block.dispose(false);
-                        }
-                        delete connectionMap[id];
-                    }
-                }
-            }
-        }
-    },
-
-    createAllInputs_: function (this: CommonFunctionBlock, connectionMap?: ConnectionMap) {
+    createAllInputs_: function (this: CommonFunctionBlock) {
         let hasTitle = false;
         let hasName = false;
-        let hasCollapseIcon = false;
         this.inputList.forEach(function (i) {
             if (i.name == "function_title") {
                 hasTitle = true;
             } else if (i.name == "function_name") {
                 hasName = true;
-            } else if (i.name == "function_collapse") {
-                hasCollapseIcon = true;
             }
         });
 
@@ -222,25 +177,56 @@ export const COMMON_FUNCTION_MIXIN = {
             this.addFunctionLabel_(this.getName());
         }
 
-        // Create arguments.
-        let self = this;
-        this.arguments_.forEach(function (arg) {
-            // For custom types, the parameter type is appended to the UUID in the
-            // input name. This is needed to retrieve the function signature from the
-            // block inputs when the declaration block is modified.
-            let input = self.appendValueInput(arg.id);
+        this.updateArgumentInputs_();
+    },
+
+    updateArgumentInputs_(this: CommonFunctionBlock) {
+        // remove deleted arguments
+        for (const input of this.inputList) {
+            if (input.type !== Blockly.inputs.inputTypes.VALUE) continue;
+            if (!this.arguments_.some(a => a.id === input.name)) {
+
+                if (this.type === FUNCTION_DEFINITION_BLOCK_TYPE) {
+                    const target = input.connection.targetBlock();
+                    if (target) target.dispose();
+                }
+                this.removeInput(input.name);
+            }
+        }
+
+        // create and reorder inputs
+        let inputIndex = this.inputList.findIndex(i => i.type === Blockly.inputs.inputTypes.VALUE);
+        if (inputIndex === -1) {
+            inputIndex = this.inputList.length;
+        }
+        for (const arg of this.arguments_) {
+            let input = this.inputList.find(i => i.name === arg.id);
+            const newInput = !input;
+
+            if (newInput) {
+                input = this.appendValueInput(arg.id)
+            }
+
+            if (this.inputList.indexOf(input) !== inputIndex) {
+                this.moveInputBefore(input.name, this.inputList[inputIndex + 1]?.name);
+            }
+
             if (isCustomType(arg.type)) {
                 input.setCheck(arg.type);
-            } else {
+            }
+            else {
                 input.setCheck(arg.type.charAt(0).toUpperCase() + arg.type.slice(1));
             }
-            if (!self.isInsertionMarker()) {
-                self.populateArgument_(arg, connectionMap, input);
+
+            if (!this.isInsertionMarker() && newInput) {
+                this.populateArgument_(arg, undefined, input);
             }
-        });
+
+            inputIndex++;
+        }
 
         // If collapse button present, move after arguments
-        if (hasCollapseIcon) {
+        if (this.inputList.some(i => i.name === "function_collapse")) {
             this.moveInputBefore("function_collapse", null);
         }
 
@@ -252,11 +238,8 @@ export const COMMON_FUNCTION_MIXIN = {
 
     updateDisplay_: function (this: CommonFunctionBlock) {
         let wasRendered = this.rendered;
-        let connectionMap = this.disconnectOldBlocks_();
-        this.removeValueInputs_();
 
-        this.createAllInputs_(connectionMap);
-        this.deleteShadows_(connectionMap);
+        this.createAllInputs_();
 
         if (wasRendered && !this.isInsertionMarker() && this instanceof Blockly.BlockSvg) {
             this.initSvg();

@@ -307,12 +307,12 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
         const githubUser = !hasIdentity && this.getData("github:user") as UserInfo;
         const reportAbuse = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing;
         const showDivider = targetTheme.selectLanguage || targetTheme.highContrast || githubUser;
-        const showFeedbackOption = pxt.webConfig.ocvEnabled && targetTheme.feedbackEnabled && targetTheme.ocvFrameUrl && targetTheme.ocvAppId;
+        const showFeedbackOption = pxt.U.ocvEnabled();
         sendUpdateFeedbackTheme(highContrast);
 
         return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("Settings")} className="item icon more-dropdown-menuitem" ref={ref => this.dropdown = ref}>
             {targetTheme.selectLanguage && <sui.Item icon='xicon globe' role="menuitem" text={lf("Language")} onClick={this.showLanguagePicker} />}
-            <sui.Item role="menuitem" icon="paint brush" text={lf("Select Theme")} onClick={this.showThemePicker} />
+            <sui.Item role="menuitem" icon="paint brush" text={lf("Theme")} onClick={this.showThemePicker} />
             {githubUser && <div className="ui divider"></div>}
             {githubUser && <div className="ui item" title={lf("Unlink {0} from GitHub", githubUser.name)} role="menuitem" onClick={this.signOutGithub}>
                 <div className="avatar" role="presentation">

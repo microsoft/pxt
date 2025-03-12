@@ -6,7 +6,6 @@
 @tutorialSecondaryColor: var(--pxt-colors-blue-background);
 @tutorialBarForegroundColor: @tutorialPrimaryColor;
 @tutorialBarBackgroundColor: @tutorialSecondaryColor;
-@tutorialDarkGray: var(--pxt-neutral-background3);
 
 @tutorialLinkColor: var(--pxt-link);
 @tutorialLinkHoverColor: var(--pxt-link-hover);
@@ -74,6 +73,8 @@
 
     .lang-block .ui.segment.raised, .lang-blocks .ui.segment.raised, .ui.segment.raised.codewidget {
         overflow-x: auto;
+        background: var(--pxt-neutral-background2);
+        color: var(--pxt-neutral-foreground2);
 
         code, code.hljs {
             white-space: pre;
@@ -170,7 +171,7 @@
     user-select: none;
     cursor: default;
     font-size: 1rem;
-    color: @tutorialDarkGray;
+    color: var(--pxt-neutral-foreground1);
 }
 
 .tutorial-step-title {
@@ -501,7 +502,7 @@
 }
 
 /*******************************
-      Skill Map Embed View
+      Skillmap Embed View
 *******************************/
 
 .tabTutorial.tutorial-embed {
@@ -578,7 +579,6 @@
         float: right;
         border: 2px solid var(--pxt-neutral-stencil1);
         margin-left: 1.5rem;
-        background: @white; // Cannot theme properly until we have a way to theme the immersive reader icon
     }
 }
 

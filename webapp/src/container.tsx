@@ -327,7 +327,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         const showPairDevice = pxt.usb.isEnabled;
 
         const showCenterDivider = targetTheme.selectLanguage || targetTheme.highContrast || showGreenScreen || githubUser;
-        const showFeedbackOption = pxt.webConfig.ocvEnabled && targetTheme.feedbackEnabled && targetTheme.ocvAppId && targetTheme.ocvFrameUrl;
+        const showFeedbackOption = pxt.U.ocvEnabled();
 
         const simCollapseText = headless ? lf("Toggle the File Explorer") : lf("Toggle the simulator");
 
@@ -346,7 +346,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             {showSimCollapse ? <sui.Item role="menuitem" icon='toggle right' text={simCollapseText} onClick={this.toggleCollapse} /> : undefined}
             <div className="ui divider"></div>
             {targetTheme.selectLanguage ? <sui.Item icon='xicon globe' role="menuitem" text={lf("Language")} onClick={this.showLanguagePicker} /> : undefined}
-            <sui.Item role="menuitem" icon="paint brush" text={lf("Select Theme")} onClick={this.showThemePicker} />
+            <sui.Item role="menuitem" icon="paint brush" text={lf("Theme")} onClick={this.showThemePicker} />
             {targetTheme.accessibleBlocks ? <sui.Item role="menuitem" text={accessibleBlocks ? lf("Accessible Blocks Off") : lf("Accessible Blocks On")} onClick={this.toggleAccessibleBlocks} /> : undefined}
             {showGreenScreen ? <sui.Item role="menuitem" text={greenScreen ? lf("Green Screen Off") : lf("Green Screen On")} onClick={this.toggleGreenScreen} /> : undefined}
             {docItems && renderDocItems(this.props.parent, docItems, "setting-docs-item mobile only inherit")}

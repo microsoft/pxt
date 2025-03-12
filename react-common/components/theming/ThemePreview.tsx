@@ -9,7 +9,7 @@ export const ThemePreview = (props: { theme: pxt.ColorThemeInfo }) => {
     const uniqueContainerClassName = `theme-preview-container-${theme.id}`;
     const uniqueInnerClassName = `theme-preview-${theme.id}`; // Useful for override css adjusting previews
 
-    const miniLogo = <img className="logo" src="./static/logo/Microsoft_logo_rgb_W-white_D-square.png" alt="Microsoft MakeCode Logo" />;
+    const miniLogo = <img className="logo" src="/static/logo/Microsoft_logo_rgb_W-white_D-square.png" alt="Microsoft MakeCode Logo" />;
 
     React.useEffect(() => {
         if (styleRef?.current) {

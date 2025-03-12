@@ -523,7 +523,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                             />}
                             {showOpenBeta && <codecard.CodeCardView
                                 ariaLabel={lf("Open the next version of the editor")}
-                                role="button"
+                                role="link"
                                 key={'beta'}
                                 className="beta"
                                 icon="lab ui cardimage"

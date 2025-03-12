@@ -223,6 +223,15 @@ pre {
     -o-transition: opacity 0.2s; /* Opera */
     transition: opacity 0.2s;
     transition-timing-function: linear;
+
+    .debug-button.active,
+    .mute-button.active {
+        background-color: var(--pxt-secondary-accent);
+
+        &:focus, &:hover {
+            filter: none;
+        }
+    }
 }
 
 #downloadArea {
@@ -258,6 +267,19 @@ pre {
     width: 100% !important;
     margin: 0;
     margin-top: 1rem;
+
+    background: var(--pxt-primary-background);
+    color: var(--pxt-primary-foreground);
+
+    .item, .link.item {
+        color: var(--pxt-primary-foreground) !important; // override !important in semantic ui
+        border-radius: inherit;
+
+        &:hover, &:focus {
+            background: var(--pxt-primary-background-hover) !important;
+            color: var(--pxt-primary-foreground-hover) !important;
+        }
+    }
 }
 
 .filemenu .nested.item {
@@ -619,6 +641,21 @@ div.simframe > iframe {
 .ui.button.hw-button > .icon.caret {
     /* Fixes an error in some webkit browsers where icons get repositioned on hover */
     position: relative;
+}
+
+.hw-button.ui.dropdown .menu  {
+    background: var(--pxt-neutral-background1);
+    color: var(--pxt-neutral-foreground1);
+    border: 1px solid var(--pxt-neutral-stencil1);
+
+    & > .item {
+        color: var(--pxt-neutral-foreground1);
+
+        &:hover, &:focus {
+            background: var(--pxt-neutral-background1-hover);
+            color: var(--pxt-neutral-foreground1-hover);
+        }
+    }
 }
 
 .ui.button:hover,
@@ -1410,7 +1447,7 @@ p.ui.font.small {
 }
 
 /*******************************
-        fuyllscreensim
+        fullscreensim
 *******************************/
 .fullscreensim {
     z-index: @aboveEverythingZIndex;

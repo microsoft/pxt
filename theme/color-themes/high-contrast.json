@@ -68,10 +68,12 @@
         "pxt-neutral-stencil3": "#FFFFFF",
         "pxt-neutral-background3-alpha90": "#000000E5",
 
+        "pxt-neutral-base": "rgba(255, 255, 255, 1)",
         "pxt-neutral-alpha0": "rgba(255, 255, 255, 0)",
         "pxt-neutral-alpha10": "rgba(255, 255, 255, 0.1)",
         "pxt-neutral-alpha20": "rgba(255, 255, 255, 0.2)",
         "pxt-neutral-alpha50": "rgba(255, 255, 255, 0.5)",
+        "pxt-neutral-alpha80": "rgba(255, 255, 255, 0.8)",
 
         "pxt-link": "#807FFF",
         "pxt-link-hover": "#1b19ff",

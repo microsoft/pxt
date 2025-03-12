@@ -137,7 +137,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
             case "activity":
                 return lf("Start Activity")
             case "map":
-                return lf("Start Skill Map")
+                return lf("Start Skillmap")
             case "editor":
                 return lf("Keep Building")
             case "tutorial":
