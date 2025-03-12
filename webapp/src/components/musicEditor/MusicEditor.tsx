@@ -5,7 +5,7 @@ import { isPlaying, updatePlaybackSongAsync, stopPlayback } from "./playback";
 import { PlaybackControls } from "./PlaybackControls";
 import { ScrollableWorkspace } from "./ScrollableWorkspace";
 import { GridResolution, TrackSelector } from "./TrackSelector";
-import { addNoteToTrack, changeSongLength, editNoteEventLength, fillDrums, findPreviousNoteEvent, findNoteEventAtPosition, findSelectedRange, noteToRow, removeNoteFromTrack, rowToNote, selectNoteEventsInRange, unselectAllNotes, applySelection as applySelectionMove, deleteSelectedNotes, applySelection, removeNoteAtRowFromTrack, isBassClefNote, doesSongUseBassClef } from "./utils";
+import { addNoteToTrack, changeSongLength, editNoteEventLength, fillDrums, findPreviousNoteEvent, findNoteEventAtPosition, findSelectedRange, noteToRow, removeNoteFromTrack, rowToNote, selectNoteEventsInRange, unselectAllNotes, applySelection as applySelectionMove, deleteSelectedNotes, applySelection, removeNoteAtRowFromTrack, isBassClefNote, doesSongUseBassClef, findNoteEventsOverlappingRange } from "./utils";
 
 export interface MusicEditorProps {
     asset: pxt.Song;
@@ -367,27 +367,63 @@ export const MusicEditor = (props: MusicEditorProps) => {
 
         // First, check if we are erasing
         if (eraserActive) {
-            for (let i = 0; i < currentSong.tracks.length; i++) {
-                if (hideTracksActive && i !== selectedTrack) continue;
+            if (end.row > 11 || end.row < 0) return;
+            const prev = dragState.current.dragEnd || end;
+            dragState.current.dragEnd = end;
 
-                const track = currentSong.tracks[i];
-                const instrument = track.instrument;
-                const existingEvent = findPreviousNoteEvent(currentSong, i, end.exactTick);
+            let editSong = currentSong;
+            let didEdit = false;
 
-                const isAtCoord = (note: pxt.assets.music.Note) => {
-                    const isBassClef = isBassClefNote(instrument.octave, note, isDrumTrack);
+            // interpolate from previous drag location
+            const y0 = (11 - prev.row) + (prev.isBassClef ? 12 : 0);
+            const y1 = (11 - end.row) + (end.isBassClef ? 12 : 0);
 
-                    if (isBassClef !== end.isBassClef) return false;
+            pxt.Util.bresenhamLine(
+                prev.tick, y0,
+                end.tick, y1,
+                (tick, y) => {
+                    const coord: WorkspaceClickCoordinate = {
+                        tick,
+                        exactTick: tick,
+                        isBassClef: y >= 12,
+                        row: 11 - (y % 12)
+                    }
 
-                    return noteToRow(instrument.octave, note, isDrumTrack) === end.row;
-                }
+                    for (let i = 0; i < currentSong.tracks.length; i++) {
+                        if (hideTracksActive && i !== selectedTrack) continue;
 
-                if (existingEvent?.startTick === end.exactTick || existingEvent?.endTick > end.exactTick) {
-                    if (existingEvent.notes.some(isAtCoord)) {
-                        updateSong(removeNoteAtRowFromTrack(currentSong, i, end.row, end.isBassClef, existingEvent.startTick), false);
+                        const track = currentSong.tracks[i];
+                        const instrument = track.instrument;
+                        const isDrums = !!track.drums;
+
+                        const isAtCoord = (note: pxt.assets.music.Note) => {
+                            const isBassClef = isBassClefNote(instrument.octave, note, isDrums);
+
+                            if (isBassClef !== coord.isBassClef) return false;
+
+                            return noteToRow(instrument.octave, note, isDrums) === coord.row;
+                        }
+
+                        for (const existingEvent of findNoteEventsOverlappingRange(currentSong, i, coord.exactTick - 1, coord.exactTick + 1)) {
+                            if (existingEvent.notes.some(isAtCoord)) {
+                                editSong = removeNoteAtRowFromTrack(
+                                    editSong,
+                                    i,
+                                    coord.row,
+                                    coord.isBassClef,
+                                    existingEvent.startTick
+                                )
+                                didEdit = true;
+                            }
+                        }
                     }
                 }
+            )
+
+            if (didEdit) {
+                updateSong(editSong, false);
             }
+
             return;
         }
 
@@ -396,7 +432,12 @@ export const MusicEditor = (props: MusicEditorProps) => {
         dragState.current.dragEnd = end;
 
         if (!!dragState.current.original.tracks[selectedTrack].drums) {
-            updateSong(fillDrums(dragState.current.original, selectedTrack, start.row, start.tick, end.tick, gridTicks), false);
+            updateSong(
+                fillDrums(
+                    dragState.current.original, selectedTrack, start.row, start.isBassClef, start.tick, end.tick, gridTicks
+                ),
+                false
+            );
             return;
         }
 

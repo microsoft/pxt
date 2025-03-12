@@ -228,9 +228,10 @@ function setNoteEventLength(notes: pxt.assets.music.NoteEvent[], startTick: numb
     return res.filter(e => !!e);
 }
 
-export function fillDrums(song: pxt.assets.music.Song, trackIndex: number, row: number, startTick: number, endTick: number, tickSpacing: number) {
+export function fillDrums(song: pxt.assets.music.Song, trackIndex: number, row: number, isBassClef: boolean, startTick: number, endTick: number, tickSpacing: number) {
+    const note = rowToNote(0, row, isBassClef, true);
     for (let i = startTick; i < endTick; i += tickSpacing) {
-        song = addNoteToTrack(song, trackIndex, { note: row, enharmonicSpelling: "normal" }, i, i + 1)
+        song = addNoteToTrack(song, trackIndex, { note: note.note, enharmonicSpelling: "normal" }, i, i + 1)
     }
     return song;
 }
@@ -259,6 +260,22 @@ export function findPreviousNoteEvent(song: pxt.assets.music.Song, trackIndex: n
     }
 
     return lastNote;
+}
+
+export function findNoteEventsOverlappingRange(song: pxt.assets.music.Song, trackIndex: number, startTick: number, endTick: number) {
+    const track = song.tracks[trackIndex];
+
+    const result: pxt.assets.music.NoteEvent[] = [];
+    for (const note of track.notes) {
+        if (!(note.endTick < startTick || note.startTick > endTick)) {
+            result.push(note);
+        }
+        else if (note.startTick > endTick) {
+            break;
+        }
+    }
+
+    return result;
 }
 
 export function findNextNoteEvent(song: pxt.assets.music.Song, trackIndex: number, tick: number) {
