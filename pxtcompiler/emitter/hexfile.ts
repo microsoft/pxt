@@ -360,7 +360,6 @@ namespace ts.pxtc {
                 if (m) {
                     ctx.jmpStartAddr = lastAddr
                     ctx.jmpStartIdx = i
-                    console.log(`ctx.jmpStartAddr ${ctx.jmpStartAddr}, ${ctx.jmpStartIdx}`)
                 }
             }
 
@@ -382,7 +381,7 @@ namespace ts.pxtc {
                     let step = opts.shortPointers ? 4 : 8
                     let hexb = swapBytes(m[2].slice(0, step))
                     ctx.bottomFlashAddr = parseInt(hexb, 16)
-                    console.log(`ctx.bottomFlashAddr ${m[2]} ${hexb} ${ctx.bottomFlashAddr}`)
+                    console.log(`ctx.bottomFlashAddr ${hexb}`)
                     readPointers(m[2].slice(step))
                 } else
                     readPointers(m[2])
