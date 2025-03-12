@@ -143,6 +143,10 @@ namespace pxt.BrowserUtils {
         return isPxtElectron() || isIpcRenderer();
     }
 
+    export function isArcade() {
+        return pxt.appTarget.id === "arcade";
+    }
+
     declare let Windows: any;
     export let isWinRT = () => typeof (Windows as any) !== "undefined";
 

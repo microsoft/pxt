@@ -225,6 +225,13 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
             case "notimpl":
                 modalBody = lf("WebUSB is not supported by this browser; please check for updates.");
                 break;
+            default:
+                if (pxt.BrowserUtils.isArcade()) {
+                    modalBody = lf("WebUSB device not detected. Select your device in the 'Choose Hardware' menu option and try to connect again.");
+                } else {
+                    modalBody = lf("WebUSB device not detected. Make sure your device is connected to your computer and try again.");
+                }
+                break;
         }
 
         dialogAsync({
