@@ -386,10 +386,9 @@ namespace ts.pxtc {
                 } else {
                     readPointers(m[2])
                 }
-                
+
                 if (funs.length == 0) break
             }
-            ctx.jmpStartIdx++
 
             checkFuns();
             return
