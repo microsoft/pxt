@@ -276,29 +276,39 @@ export const MusicEditor = (props: MusicEditorProps) => {
             }
         }
         else {
+            let editSong = currentSong;
+            let didEdit = false;
             for (let i = 0; i < currentSong.tracks.length; i++) {
                 if (hideTracksActive && i !== selectedTrack) continue;
 
-                const existingEvent = findPreviousNoteEvent(currentSong, i, coord.tick);
-                const closestToClickEvent = findPreviousNoteEvent(currentSong, i, coord.exactTick);
+                const track = currentSong.tracks[i];
+                const instrument = track.instrument;
+                const isDrums = !!track.drums;
 
-                let clickedTick: number;
-                let clickedEvent: pxt.assets.music.NoteEvent;
+                const isAtCoord = (note: pxt.assets.music.Note) => {
+                    const isBassClef = isBassClefNote(instrument.octave, note, isDrums);
 
-                if (closestToClickEvent?.startTick === coord.exactTick && closestToClickEvent.notes.some(isAtCoord)) {
-                    clickedTick = coord.exactTick;
-                    clickedEvent = closestToClickEvent;
-                }
-                else if (existingEvent?.startTick === coord.tick && existingEvent.notes.some(isAtCoord)) {
-                    clickedTick = coord.tick;
-                    clickedEvent = existingEvent;
+                    if (isBassClef !== coord.isBassClef) return false;
+
+                    return noteToRow(instrument.octave, note, isDrums) === coord.row;
                 }
 
-                if (clickedEvent?.startTick === clickedTick || clickedEvent?.endTick > clickedTick) {
-                    if (clickedEvent.notes.some(isAtCoord)) {
-                        updateSong(removeNoteAtRowFromTrack(currentSong, i, coord.row, coord.isBassClef, clickedEvent.startTick), false);
+                for (const existingEvent of findNoteEventsOverlappingRange(currentSong, i, coord.exactTick - 1, coord.exactTick + 1)) {
+                    if (existingEvent.notes.some(isAtCoord)) {
+                        editSong = removeNoteAtRowFromTrack(
+                            editSong,
+                            i,
+                            coord.row,
+                            coord.isBassClef,
+                            existingEvent.startTick
+                        )
+                        didEdit = true;
                     }
                 }
+            }
+
+            if (didEdit) {
+                updateSong(editSong, false);
             }
             return;
         }

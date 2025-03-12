@@ -1860,6 +1860,7 @@ namespace ts.pxtc.Util {
         return pxt.webConfig.ocv?.appId && pxt.webConfig.ocv?.iframeEndpoint;
     }
 
+    // https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
     export function bresenhamLine(x0: number, y0: number, x1: number, y1: number, handler: (x: number, y: number) => void) {
         const dx = x1 - x0;
         const dy = y1 - y0;
