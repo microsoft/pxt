@@ -8,16 +8,21 @@ This file overrides the default semantic ui theming with our own theme variables
 
 // Mixin allows easy setting for background, foreground, hover, and inverted colors for a button
 .buttonVariant(@bg; @fg; @hoverBg; @hoverFg; @border) {
+    background-color: @bg;
+    color: @fg;
+    border: 1px solid @border;
+
+    &.inverted {
+        background-color: @fg;
+        color: @bg;
+    }
+
+    &.disabled {
+        filter: grayscale(100%) brightness(80%);
+        opacity: 0.7;
+    }
+
     &:not(.disabled) {
-        background-color: @bg;
-        color: @fg;
-        border: 1px solid @border;
-    
-        &.inverted {
-            background-color: @fg;
-            color: @bg;
-        }
-    
         &:hover, &:focus {
             // Semantic UI darkens background using a filter, which isn't necessary when we have a hover color.
             filter: none;
@@ -229,6 +234,38 @@ body.pxt-theme-root {
 
     .ui.raised.segment, .ui.raised.segments {
         box-shadow: 0 2px 4px 0 var(--pxt-neutral-alpha10),0 2px 10px 0 var(--pxt-neutral-alpha10);
+    }
+
+    .ui.toggle.checkbox {
+        label {
+            color: var(--pxt-neutral-foreground1);
+            &:hover, &:focus {
+                color: var(--pxt-neutral-foreground1-hover);
+            }
+        }
+
+        input {
+            border: 1px solid var(--pxt-neutral-stencil1);
+
+            & ~ .box:before, 
+            & ~ label:before {
+                border: 1px solid var(--pxt-neutral-stencil1);
+            }
+        }
+
+        input:checked {
+            border: 1px solid var(--pxt-neutral-stencil1);
+
+            & ~ label {
+                color: var(--pxt-neutral-foreground1) !important;
+            }
+
+            & ~ .box:before, 
+            & ~ label:before {
+                border: 1px solid var(--pxt-neutral-stencil1);
+                background-color: var(--pxt-primary-background) !important;
+            }
+        }
     }
 
     // Colors
