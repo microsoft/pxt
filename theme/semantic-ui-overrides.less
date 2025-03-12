@@ -236,6 +236,38 @@ body.pxt-theme-root {
         box-shadow: 0 2px 4px 0 var(--pxt-neutral-alpha10),0 2px 10px 0 var(--pxt-neutral-alpha10);
     }
 
+    .ui.toggle.checkbox {
+        label {
+            color: var(--pxt-neutral-foreground1);
+            &:hover, &:focus {
+                color: var(--pxt-neutral-foreground1-hover);
+            }
+        }
+
+        input {
+            border: 1px solid var(--pxt-neutral-stencil1);
+
+            & ~ .box:before, 
+            & ~ label:before {
+                border: 1px solid var(--pxt-neutral-stencil1);
+            }
+        }
+
+        input:checked {
+            border: 1px solid var(--pxt-neutral-stencil1);
+
+            & ~ label {
+                color: var(--pxt-neutral-foreground1) !important;
+            }
+
+            & ~ .box:before, 
+            & ~ label:before {
+                border: 1px solid var(--pxt-neutral-stencil1);
+                background-color: var(--pxt-primary-background) !important;
+            }
+        }
+    }
+
     // Colors
     .blue {
         color: var(--pxt-colors-blue-background);
