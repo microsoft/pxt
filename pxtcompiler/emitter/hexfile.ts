@@ -383,8 +383,10 @@ namespace ts.pxtc {
                     ctx.bottomFlashAddr = parseInt(hexb, 16)
                     console.log(`ctx.bottomFlashAddr ${hexb}`)
                     readPointers(m[2].slice(step))
-                } else
+                } else {
                     readPointers(m[2])
+                }
+                
                 if (funs.length == 0) break
             }
             ctx.jmpStartIdx++
