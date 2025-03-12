@@ -1045,6 +1045,7 @@ declare namespace pxt.editor {
         isEmbedSimActive(): boolean;
         isBlocksActive(): boolean;
         isJavaScriptActive(): boolean;
+        isTextSourceCodeEditorActive(): boolean;
         isPythonActive(): boolean;
         isAssetsActive(): boolean;
 
@@ -1168,7 +1169,7 @@ declare namespace pxt.editor {
         perfMeasurementThresholdMs?: number;
         onPerfMilestone?: (payload: { milestone: string, time: number, params?: Map<string> }) => void;
         onPerfMeasurement?: (payload: { name: string, start: number, duration: number, params?: Map<string> }) => void;
-    
+
         // Used with the @tutorialCompleted macro. See docs/writing-docs/tutorials.md for more info
         onTutorialCompleted?: () => void;
         onMarkdownActivityLoad?: (path: string, title?: string, editorProjectName?: string) => Promise<void>;

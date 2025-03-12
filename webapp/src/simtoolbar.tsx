@@ -109,7 +109,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const isFullscreen = parentState.fullscreen;
         const inTutorial = !!parentState.tutorialOptions && !!parentState.tutorialOptions.tutorial;
         const isTabTutorial = inTutorial && !pxt.BrowserUtils.useOldTutorialLayout();
-        const inCodeEditor = parent.isBlocksActive() || parent.isJavaScriptActive() || parent.isPythonActive();
+        const inCodeEditor = parent.isBlocksActive() || parent.isTextSourceCodeEditorActive() || parent.isPythonActive();
 
         const run = true;
         const restart = run && !simOpts.hideRestart;
