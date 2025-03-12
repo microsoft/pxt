@@ -1045,7 +1045,7 @@ declare namespace pxt.editor {
         isEmbedSimActive(): boolean;
         isBlocksActive(): boolean;
         isJavaScriptActive(): boolean;
-        isJavaScriptEditorActive(): boolean;
+        isTextSourceCodeEditorActive(): boolean;
         isPythonActive(): boolean;
         isAssetsActive(): boolean;
 

@@ -602,9 +602,9 @@ export class ProjectView
             && this.editorFile && this.editorFile.name == pxt.ASSETS_FILE;
     }
 
-    isJavaScriptEditorActive() {
+    isTextSourceCodeEditorActive() {
         return !this.state.embedSimView && this.editor == this.textEditor
-            && this.editorFile && !this.isPythonActive();
+            && this.editorFile && /(\.ts|\.py)$/.test(this.editorFile.name);
     }
 
     private isAnyEditeableJavaScriptOrPackageActive(): boolean {
