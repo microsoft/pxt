@@ -1,7 +1,8 @@
 /// <reference path="../../../../localtypings/ocv.d.ts" />
 
 
-export const baseConfig: ocv.IFeedbackConfig = {
+export const getBaseConfig = (): ocv.IFeedbackConfig => {
+  return {
     feedbackUiType: "NoSurface",
     hostPlatform: "IFrame",
     isDisplayed: true,
@@ -13,6 +14,7 @@ export const baseConfig: ocv.IFeedbackConfig = {
     isFeedbackForumEnabled: false,
     isMyFeedbackEnabled: false,
     isThankYouPageDisabled: false,
+  }
 }
 
 export const createRatingQuestions = () => {
@@ -47,8 +49,9 @@ export const createRatingQuestions = () => {
 }
 
 
-export const ratingFeedbackConfig: ocv.IFeedbackConfig = {
-    ...baseConfig,
+export const getRatingFeedbackConfig = (): ocv.IFeedbackConfig => {
+  return {
+    ...getBaseConfig(),
     initialFeedbackType: "Unclassified",
     scenarioConfig: {
       isScenarioEnabled: true,
@@ -61,4 +64,5 @@ export const ratingFeedbackConfig: ocv.IFeedbackConfig = {
         ]
       }
     }
+  }
 }
