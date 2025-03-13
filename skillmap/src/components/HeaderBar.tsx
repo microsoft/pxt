@@ -81,8 +81,8 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
         if (pxt.U.ocvEnabled()) {
             items.push({
                 id: "feedback",
-                title: lf("Give Feedback"),
-                label: lf("Give Feedback"),
+                title: lf("Feedback"),
+                label: lf("Feedback"),
                 onClick: this.onFeedbackClicked
             });
         }
