@@ -51,6 +51,8 @@ namespace ts.pxtc {
             jmpStartAddr: number;
             jmpStartIdx: number;
 
+            topFlashAddr: number;
+
             elfInfo: pxt.elf.Info;
             espInfo: pxt.esp.Image;
         }
@@ -69,6 +71,7 @@ namespace ts.pxtc {
                 codeStartAddr: undefined,
                 elfInfo: undefined,
                 espInfo: undefined,
+                topFlashAddr: 0
             }
         }
 
@@ -80,6 +83,10 @@ namespace ts.pxtc {
 
         export function getStartAddress() {
             return ctx.codeStartAddrPadded
+        }
+
+        export function getTopFlashAddress() {
+            return ctx.topFlashAddr
         }
 
         // utility function
@@ -219,6 +226,8 @@ namespace ts.pxtc {
                         if (hasMarker(drom.data, off)) {
                             found = true
                             off += marker.length
+                            ctx.topFlashAddr = pxt.HF2.read32(drom.data, off)
+                            off += 4
                             const ptroff = off
                             for (let ptr of extInfo.vmPointers || []) {
                                 if (ptr == "0") continue
@@ -270,7 +279,10 @@ namespace ts.pxtc {
                 ctx.jmpStartAddr = jmpIdx / 2
                 ctx.jmpStartIdx = -1
 
-                let ptrs = hexlines[0].slice(jmpIdx + 32, jmpIdx + 32 + funs.length * 8 + 16)
+                const hexb = hexlines[0].slice(jmpIdx + 32, jmpIdx + 40)
+                ctx.topFlashAddr = parseInt(swapBytes(hexb), 16)
+
+                let ptrs = hexlines[0].slice(jmpIdx + 40, jmpIdx + 40 + funs.length * 8 + 16)
                 readPointers(ptrs)
                 checkFuns()
                 return
@@ -329,6 +341,7 @@ namespace ts.pxtc {
                 m = /^:..(....)00/.exec(hexlines[i])
                 if (m) {
                     let newAddr = parseInt(upperAddr + m[1], 16)
+                    // TODO: UGH - we need to get flashUsableEnd computed before this
                     if (!opts.flashUsableEnd && lastAddr && newAddr - lastAddr > 64 * 1024)
                         hitEnd()
                     if (opts.flashUsableEnd && newAddr >= opts.flashUsableEnd)
@@ -342,6 +355,7 @@ namespace ts.pxtc {
 
                 // random magic number, which marks the beginning of the array of function pointers in the .hex file
                 // it is defined in pxt-microbit-core
+                // TODO: would be nice to use pointerListMarker
                 m = /^:10....000108010842424242010801083ED8E98D/.exec(hexlines[i])
                 if (m) {
                     ctx.jmpStartAddr = lastAddr
@@ -363,13 +377,20 @@ namespace ts.pxtc {
                 let m = /^:..(....)00(.{4,})/.exec(hexlines[i]);
                 if (!m) continue;
 
-                readPointers(m[2])
+                if (i === ctx.jmpStartIdx + 1) {
+                    let step = opts.shortPointers ? 4 : 8
+                    let hexb = swapBytes(m[2].slice(0, step))
+                    ctx.topFlashAddr = parseInt(hexb, 16)
+                    readPointers(m[2].slice(step))
+                } else {
+                    readPointers(m[2])
+                }
+
                 if (funs.length == 0) break
             }
 
             checkFuns();
             return
-
 
             function readPointers(s: string) {
                 let step = opts.shortPointers ? 4 : 8
@@ -1015,11 +1036,16 @@ ${hexfile.hexPrelude()}
     }
 
     let peepDbg = false
-    export function assemble(target: CompileTarget, bin: Binary, src: string) {
+    export function assemble(target: CompileTarget, bin: Binary, src: string, cres: CompileResult) {
         let b = mkProcessorFile(target)
         b.emit(src);
 
-        let flashUsableEnd = target.flashUsableEnd ? target.flashUsableEnd : target.flashEnd
+        let settingsSizeDefault = cres.configData.find(ce => ce.name === "SETTINGS_SIZE_DEFL")
+        let settingsSize = cres.configData.find(ce => ce.name === "SETTINGS_SIZE")
+        let actualSettingsSize = settingsSize ? settingsSize.value : settingsSizeDefault ? settingsSizeDefault.value : 0
+
+        const topFlashAddr = hexfile.getTopFlashAddress()
+        let flashUsableEnd = (topFlashAddr > 0 ? topFlashAddr : target.flashUsableEnd ? target.flashUsableEnd : target.flashEnd) - actualSettingsSize
 
         src = `; Interface tables: ${bin.itFullEntries}/${bin.itEntries} (${Math.round(100 * bin.itFullEntries / bin.itEntries)}%)\n` +
             `; Virtual methods: ${bin.numVirtMethods} / ${bin.numMethods}\n` +
@@ -1129,7 +1155,7 @@ __flash_checksums:
         }
         const prefix = opts.extinfo.outputPrefix || ""
         bin.writeFile(prefix + pxtc.BINARY_ASM, src)
-        const res = assemble(opts.target, bin, src)
+        const res = assemble(opts.target, bin, src, cres)
         if (res.thumbFile.commPtr)
             bin.commSize = res.thumbFile.commPtr - hexfile.getCommBase()
         if (res.src)
