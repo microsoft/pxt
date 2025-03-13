@@ -227,9 +227,10 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
                 break;
             default:
                 if (pxt.BrowserUtils.isArcade()) {
-                    modalBody = lf("WebUSB device not detected. Select your device in the 'Choose Hardware' menu option and try to connect again.");
+                    this.onHwItemClick();
+                    return;
                 } else {
-                    modalBody = lf("WebUSB device not detected. Make sure your device is connected to your computer and try again.");
+                    modalBody = lf("WebUSB device not detected. Make sure your device is connected and try again.");
                 }
                 break;
         }
