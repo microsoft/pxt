@@ -65,7 +65,15 @@ body.pxt-theme-root {
         color: var(--pxt-neutral-foreground1);
     }
 
-    .ui.card, .ui.cards .card {
+    i.ui.card.icon {
+        /*
+            There is a card class used in tutorials to get a id-card icon, but it conflicts with the
+            card class used for code cards, so we need some special-casing to avoid conflicts.
+        */
+        border: none;
+    }
+
+    .ui.card:not(.icon), .ui.cards .card:not(.icon) {
         background-color: var(--pxt-neutral-background1);
         color: var(--pxt-neutral-foreground1);
         border-color: var(--pxt-neutral-stencil1);
