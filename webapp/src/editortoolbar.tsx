@@ -200,7 +200,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         // Matching the tick in the call to compile() above for historical reasons
         pxt.tickEvent("editortools.download", { collapsed: this.getCollapsedState() }, { interactiveConsent: true });
         pxt.tickEvent("editortools.downloadasfile", { collapsed: this.getCollapsedState() }, { interactiveConsent: true });
-        await (this.props.parent as ProjectView).saveProjectToFileAsync();
+        (this.props.parent as ProjectView).compile();
     }
 
     protected onPairClick = () => {
