@@ -211,6 +211,12 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
     protected onCannotPairClick = async () => {
         pxt.tickEvent("editortools.pairunsupported", undefined, { interactiveConsent: true });
         const reasonUnsupported = await pxt.usb.getReasonUnavailable();
+
+        if (!reasonUnsupported && pxt.BrowserUtils.isArcade() && !pxt.getActiveHwVariant()) {
+            this.onHwItemClick()
+            return;
+        }
+
         let modalBody: string;
         switch (reasonUnsupported) {
             case "security":
@@ -224,6 +230,9 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
                 break;
             case "notimpl":
                 modalBody = lf("WebUSB is not supported by this browser; please check for updates.");
+                break;
+            default:
+                modalBody = lf("WebUSB should be supported, but we're having trouble. Please try refreshing the page.");
                 break;
         }
 
