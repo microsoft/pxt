@@ -161,7 +161,7 @@ namespace pxt.BrowserUtils {
 
     export function isSkillmapEditor(): boolean {
         try {
-            return /skill(?:s?)Map=1/.test(window.location.href);
+            return /skill(?:s?)map=1/i.test(window.location.href);
         } catch (e) { return false; }
     }
 
