@@ -339,6 +339,10 @@ namespace pxt {
             })
     }
 
+    export function getActiveHwVariant(): string {
+        return hwVariant
+    }
+
     export interface PxtOptions {
         debug?: boolean;
         light?: boolean; // low resource device
