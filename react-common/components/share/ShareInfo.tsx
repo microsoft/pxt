@@ -16,7 +16,7 @@ import { pushNotificationMessage } from "../Notification";
 import { classList } from "../util";
 import { Link } from "../controls/Link";
 
-const vscodeDevUrl = "https://vscode.dev/makecode/"
+const vscodeDevUrl = "https://vscode.dev/edu/makecode/"
 
 export interface ShareInfoProps {
     projectName: string;
