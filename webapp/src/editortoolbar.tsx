@@ -227,7 +227,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
                 modalBody = lf("WebUSB is not supported by this browser; please check for updates.");
                 break;
             default:
-                modalBody = lf("WebUSB should be supported, but we're having trouble. Please try refreshing the page.");
+                modalBody = lf("Unable to connect to WebUSB. Please try refreshing the page.");
                 break;
         }
 
