@@ -38,7 +38,7 @@ export const Workspace = (props: WorkspaceProps) => {
             ev.preventDefault();
             workspaceRef.focus();
             const coord = coordinateToWorkspaceCoordinate(ev, workspaceRef, song, gridTicks);
-            if (coord.tick >= 0 && coord.row >= 0 && coord.row < 12) {
+            if (eraserActive || coord.tick >= 0 && coord.row >= 0 && coord.row < 12) {
                 setDragStart(coord);
             }
         };
@@ -55,6 +55,7 @@ export const Workspace = (props: WorkspaceProps) => {
                     if (!isDragging) {
                         setIsDragging(true);
                         onWorkspaceDragStart();
+                        onWorkspaceDrag(dragStart, dragStart);
                     }
                     onWorkspaceDrag(dragStart, coord);
                 }
@@ -83,15 +84,18 @@ export const Workspace = (props: WorkspaceProps) => {
 
         workspaceRef.onpointerup = ev => {
             setDragStart(null);
+            const coord = coordinateToWorkspaceCoordinate(ev, workspaceRef, song, gridTicks);
+            const isInBounds = coord.tick >= 0 && coord.row >= 0 && coord.row < 12;
+
             if (isDragging) {
+                if (isInBounds) {
+                    onWorkspaceDrag(dragStart, coord);
+                }
                 onWorkspaceDragEnd();
                 setIsDragging(false);
             }
-            else {
-                const coord = coordinateToWorkspaceCoordinate(ev, workspaceRef, song, gridTicks);
-                if (coord.tick >= 0 && coord.row >= 0 && coord.row < 12) {
-                    onWorkspaceClick(coord, ev.ctrlKey);
-                }
+            else if (isInBounds) {
+                onWorkspaceClick(coord, ev.ctrlKey);
             }
         };
     }, [cursorLocation, dragStart, isDragging, onWorkspaceDrag, onWorkspaceDragEnd, onWorkspaceDragStart])
@@ -141,10 +145,12 @@ export const Workspace = (props: WorkspaceProps) => {
 
     const songInfo = pxt.assets.music.getSongInfo(song);
 
+    const svgWidth = workspaceWidth(song.measures, song.beatsPerMeasure) + 20;
+
     return <svg
         xmlns="http://www.w3.org/2000/svg"
         className={classList("music-workspace", eraserActive && "erasing")}
-        viewBox={`0 0 ${workspaceWidth(song.measures, song.beatsPerMeasure) + 20} ${height}`}
+        viewBox={`0 0 ${svgWidth} ${height}`}
         aria-label={lf("Music Workspace")}
         tabIndex={0}
         onKeyDown={onKeydown}
@@ -171,6 +177,14 @@ export const Workspace = (props: WorkspaceProps) => {
                     <feMergeNode in="SourceGraphic" />
                 </feMerge>
             </filter>
+        <rect
+            x="0"
+            y="0"
+            width={svgWidth}
+            height={height}
+            fill="#FFFFFF"
+            opacity={0}
+        />
         <Staff
             {...songInfo}
             top={0}

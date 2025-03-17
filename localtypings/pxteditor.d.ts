@@ -104,7 +104,7 @@ declare namespace pxt.editor {
         | "serviceworkerregistered"
         | "runeval"
         | "precachetutorial"
-        | "setcolortheme"
+        | "setcolorthemebyid"
 
         // package extension messasges
         | ExtInitializeType
@@ -512,8 +512,9 @@ declare namespace pxt.editor {
     }
 
     export interface EditorMessageSetColorThemeRequest extends EditorMessageRequest {
-        action: "setcolortheme";
+        action: "setcolorthemebyid";
         colorThemeId: string;
+        savePreference?: boolean;
     }
 
     /**
@@ -1044,6 +1045,7 @@ declare namespace pxt.editor {
         isEmbedSimActive(): boolean;
         isBlocksActive(): boolean;
         isJavaScriptActive(): boolean;
+        isTextSourceCodeEditorActive(): boolean;
         isPythonActive(): boolean;
         isAssetsActive(): boolean;
 
@@ -1100,7 +1102,7 @@ declare namespace pxt.editor {
         hasHeaderBeenPersistentShared(): boolean;
         getSharePreferenceForHeader(): boolean;
         saveSharePreferenceForHeaderAsync(anonymousByDefault: boolean): Promise<void>;
-        setColorTheme(colorThemeId: string): void;
+        setColorThemeById(colorThemeId: string, savePreference: boolean): void;
     }
 
     export interface IHexFileImporter {
@@ -1167,7 +1169,7 @@ declare namespace pxt.editor {
         perfMeasurementThresholdMs?: number;
         onPerfMilestone?: (payload: { milestone: string, time: number, params?: Map<string> }) => void;
         onPerfMeasurement?: (payload: { name: string, start: number, duration: number, params?: Map<string> }) => void;
-    
+
         // Used with the @tutorialCompleted macro. See docs/writing-docs/tutorials.md for more info
         onTutorialCompleted?: () => void;
         onMarkdownActivityLoad?: (path: string, title?: string, editorProjectName?: string) => Promise<void>;

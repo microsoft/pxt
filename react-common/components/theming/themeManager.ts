@@ -30,6 +30,10 @@ export class ThemeManager {
         return this.currentTheme;
     }
 
+    public isKnownTheme(themeId: string): boolean {
+        return !!pxt.appTarget?.colorThemeMap?.[themeId];
+    }
+
     public getAllColorThemes(): pxt.ColorThemeInfo[] {
         const allThemes = pxt.appTarget?.colorThemeMap ? Object.values(pxt.appTarget.colorThemeMap) : [];
         return allThemes.sort((a, b) => {

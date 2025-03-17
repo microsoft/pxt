@@ -8,10 +8,10 @@
     margin: 0 2rem;
     padding: 0.5rem;
     width: calc(~'100% - 4rem');
-    background-color: @white;
+    background-color: var(--pxt-neutral-background1);
+    color: var(--pxt-neutral-foreground1);
     border-radius: 0.25rem;
-    opacity: 0.95;
-    border: 1px solid @teal;
+    border: 1px solid var(--pxt-colors-teal-background);
     z-index: 1;
 }
 
@@ -20,7 +20,7 @@
     top: 0.5rem;
     right: 0.5rem;
     margin: 0;
-    color: @white;
+    color: var(--pxt-neutral-foreground1);
     cursor: pointer;
 }
 
@@ -50,10 +50,10 @@
     margin: 0.25rem;
     padding: 0 0.75rem;
     line-height: 2rem;
-    border: 1px solid darken(@teal, 10%);
+    border: 1px solid var(--pxt-colors-teal-alpha10);
     border-radius: 0.25rem;
-    background-color: @teal;
-    color: @white;
+    background-color: var(--pxt-colors-teal-background);
+    color: var(--pxt-colors-teal-foreground);
     text-transform: uppercase;
 }
 
@@ -73,7 +73,7 @@
     top: 5.5rem;
 
     .close {
-        color: @teal;
+        color: var(--pxt-colors-teal-background);
     }
 }
 

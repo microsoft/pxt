@@ -562,10 +562,9 @@ code.lang-filterblocks {
     background-image: @immersiveReaderIcon;
 }
 
-// TODO : Can't theme immersive reader without different versions of the reader icon
 #mainmenu .immersive-reader-button:focus,
 #mainmenu .immersive-reader-button:hover {
-    background-color: #00000059!important;
+    background-color: var(--pxt-neutral-alpha50);
     filter: brightness(0.8);
 }
 
@@ -575,7 +574,6 @@ code.lang-filterblocks {
     height: 2.8rem;
     background-repeat: no-repeat;
     background-size: 60%;
-    background-color: #f9fafb;
     background-position: center;
     box-shadow: none;
     transition: none;
@@ -591,7 +589,6 @@ code.lang-filterblocks {
     background-image: @immersiveReaderIcon;
     background-repeat: no-repeat;
     background-size: contain;
-    background-color: #f9fafb;
     background-position: center;
     background-size: 60%;
     filter: brightness(0.8);
@@ -723,7 +720,7 @@ code.lang-filterblocks {
 }
 
 /**
- * CSS for embedded tutorial used in the skills map
+ * CSS for embedded tutorial used in the skillmap
  */
 .tutorial.tutorial-embed {
     #simulator .editor-sidebar, #maineditor, &.sideDocs #sidedocs, .simView #simulators {
@@ -865,7 +862,7 @@ code.lang-filterblocks {
     }
 
     /**
-    * CSS for embedded tutorial used in the skills map
+    * CSS for embedded tutorial used in the skillmap
     */
     .tutorial.tutorial-embed {
         #simulator .editor-sidebar {

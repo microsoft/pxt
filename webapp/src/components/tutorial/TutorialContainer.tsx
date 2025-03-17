@@ -228,7 +228,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
 
     if (showImmersiveReader) {
         modalActions.push({
-            className: "immersive-reader-button",
+            className: "immersive-reader-button neutral",
             onclick: async () => { await launchImmersiveReaderAsync(currentStepInfo.contentMd, tutorialOptions) },
             ariaLabel: lf("Launch Immersive Reader"),
             title: lf("Launch Immersive Reader")

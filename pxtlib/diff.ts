@@ -301,7 +301,21 @@ namespace pxt.diff {
     }
 
     export function computePatch(fileA: string, fileB: string): Patch[] {
-        const diff = compute(fileA, fileB, { full: true });
+        const diff = compute(fileA, fileB, { full: true, maxDiffSize: 2048 });
+
+        // if diff is null, it means compute bailed out because the diff was too
+        // big. return a trivial patch that overwrites the contents of fileA with
+        // fileB
+        if (!diff) {
+            return [
+                {
+                    start1: 0,
+                    length1: fileA.length,
+                    diffs: [[DiffOp.Added, fileB]]
+                }
+            ];
+        }
+
         const patch = diffToPatch(diff);
 
         return patch

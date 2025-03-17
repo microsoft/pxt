@@ -84,7 +84,7 @@ import { Tour } from "./components/onboarding/Tour";
 import { parseTourStepsAsync } from "./onboarding";
 import { initGitHubDb } from "./idbworkspace";
 import { BlockDefinition, CategoryNameID } from "./toolbox";
-import { Feedback} from "../../react-common/components/controls/Feedback/Feedback";
+import { FeedbackModal } from "../../react-common/components/controls/Feedback/Feedback";
 import { ThemeManager } from "../../react-common/components/theming/themeManager";
 
 pxt.blocks.requirePxtBlockly = () => pxtblockly as any;
@@ -235,7 +235,7 @@ export class ProjectView
         this.initSimulatorMessageHandlers();
         this.showThemePicker = this.showThemePicker.bind(this);
         this.hideThemePicker = this.hideThemePicker.bind(this);
-        this.setColorTheme = this.setColorTheme.bind(this);
+        this.setColorThemeById = this.setColorThemeById.bind(this);
 
         // add user hint IDs and callback to hint manager
         if (pxt.BrowserUtils.useOldTutorialLayout()) this.hintManager.addHint(ProjectView.tutorialCardId, this.tutorialCardHintCallback.bind(this));
@@ -600,6 +600,11 @@ export class ProjectView
     isAssetsActive(): boolean {
         return !this.state.embedSimView && this.editor == this.assetEditor
             && this.editorFile && this.editorFile.name == pxt.ASSETS_FILE;
+    }
+
+    isTextSourceCodeEditorActive() {
+        return !this.state.embedSimView && this.editor == this.textEditor
+            && this.editorFile && /(\.ts|\.py)$/.test(this.editorFile.name);
     }
 
     private isAnyEditeableJavaScriptOrPackageActive(): boolean {
@@ -5159,14 +5164,17 @@ export class ProjectView
         this.setState({ bannerVisible: b });
     }
 
-    setColorTheme(colorThemeId: string) {
+    setColorThemeById(colorThemeId: string, savePreference: boolean) {
         if (this.themeManager.getCurrentColorTheme()?.id === colorThemeId) {
             return;
         }
 
-        pxt.tickEvent("app.setcolortheme", { theme: colorThemeId });
+        pxt.tickEvent("app.setcolortheme", { theme: colorThemeId, savePreference: `${savePreference}` });
         this.themeManager.switchColorTheme(colorThemeId);
-        this.updateThemePreference();
+
+        if (savePreference) {
+            this.updateThemePreference();
+        }
     }
 
     private updateThemePreference() {
@@ -5334,7 +5342,7 @@ export class ProjectView
         const hideMenuBar = targetTheme.hideMenuBar || hideTutorialIteration || (isTabTutorial && pxt.appTarget.appTheme.embeddedTutorial) || pxt.shell.isTimeMachineEmbed();
         const isHeadless = simOpts && simOpts.headless;
         const selectLanguage = targetTheme.selectLanguage;
-        const feedbackEnabled = pxt.webConfig.ocvEnabled && targetTheme.feedbackEnabled && targetTheme.ocvFrameUrl && targetTheme.ocvAppId;
+        const feedbackEnabled = pxt.U.ocvEnabled();
         const showEditorToolbar = inEditor && !hideEditorToolbar && this.editor.hasEditorToolbar();
         const useSerialEditor = pxt.appTarget.serial && !!pxt.appTarget.serial.useEditor;
         const showSideDoc = sideDocs && this.state.sideDocsLoadUrl && !this.state.sideDocsCollapsed;
@@ -5437,7 +5445,7 @@ export class ProjectView
                     showSerialButtons={useSerialEditor}
                     showFileList={showFileList}
                     showFullscreenButton={!isHeadless}
-                    showHostMultiplayerGameButton={isMultiplayerSupported && isMultiplayerGame}
+                    isMultiplayerGame={isMultiplayerSupported && isMultiplayerGame}
                     collapseEditorTools={this.state.collapseEditorTools}
                     simSerialActive={this.state.simSerialActive}
                     devSerialActive={this.state.deviceSerialActive}
@@ -5476,13 +5484,13 @@ export class ProjectView
                 {hwDialog ? <projects.ChooseHwDialog parent={this} ref={this.handleChooseHwDialogRef} /> : undefined}
                 {sandbox || !sharingEnabled ? undefined : <share.ShareEditor parent={this} ref={this.handleShareEditorRef} loading={this.state.publishing} />}
                 {selectLanguage ? <lang.LanguagePicker parent={this} ref={this.handleLanguagePickerRef} /> : undefined}
-                {feedbackEnabled && this.state.feedback.showing ? <Feedback onClose={this.hideFeedback} kind={this.state.feedback.kind}/> : undefined}
+                {feedbackEnabled && this.state.feedback.showing ? <FeedbackModal onClose={this.hideFeedback} kind={this.state.feedback.kind}/> : undefined}
                 {sandbox ? <container.SandboxFooter parent={this} /> : undefined}
                 {hideMenuBar ? <div id="editorlogo"><a className="poweredbylogo"></a></div> : undefined}
                 {lightbox ? <sui.Dimmer isOpen={true} active={lightbox} portalClassName={'tutorial'} className={'ui modal'}
                     shouldFocusAfterRender={false} closable={true} onClose={this.hideLightbox} /> : undefined}
                 {this.state.onboarding && <Tour tourSteps={this.state.onboarding} onClose={this.hideOnboarding} />}
-                {this.state.themePickerOpen && <ThemePickerModal themes={this.themeManager.getAllColorThemes()} onThemeClicked={theme => this.setColorTheme(theme?.id)} onClose={this.hideThemePicker} />}
+                {this.state.themePickerOpen && <ThemePickerModal themes={this.themeManager.getAllColorThemes()} onThemeClicked={theme => this.setColorThemeById(theme?.id, true)} onClose={this.hideThemePicker} />}
             </div>
         );
     }
@@ -6226,8 +6234,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         })
         .then(() => {
             // Load theme colors
-            let initialTheme = data.getData<string>(auth.THEMEID);
-            if (!initialTheme) {
+            const themeManager = ThemeManager.getInstance(document);
+            const initialThemePrefs = data.getData<pxt.auth.ColorThemeIdsState>(auth.COLOR_THEME_IDS);
+            let initialTheme = initialThemePrefs?.[pxt.appTarget.id];
+            if (!initialTheme || !themeManager.isKnownTheme(initialTheme)) {
                 initialTheme = pxt.appTarget?.appTheme?.defaultColorTheme;
             }
 
@@ -6238,11 +6248,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                 initialTheme = pxt.appTarget?.appTheme?.highContrastColorTheme;
             }
 
-            if (initialTheme) {
-                const themeManager = ThemeManager.getInstance(document);
-                if (initialTheme !== themeManager.getCurrentColorTheme()?.id) {
-                    return themeManager.switchColorTheme(initialTheme);
-                }
+            if (initialTheme && initialTheme !== themeManager.getCurrentColorTheme()?.id) {
+                return themeManager.switchColorTheme(initialTheme);
             }
             return Promise.resolve();
         })

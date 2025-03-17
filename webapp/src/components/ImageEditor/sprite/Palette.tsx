@@ -62,7 +62,7 @@ class PaletteImpl extends React.Component<PaletteProps,{}> {
                         key={index}
                         className={classList("image-editor-button", index === 0 && "checkerboard")}
                         title={colorTooltip(index, color)}
-                        style={index === 0 ? null : { backgroundColor: color }}
+                        style={index === 0 ? null : { "--preview-color": color } as React.CSSProperties}
                         onClick={() => this.props.dispatchChangeSelectedColor(index)}
                         onRightClick={() => this.props.dispatchChangeBackgroundColor(index)}
                     />

@@ -29,7 +29,7 @@ interface SidepanelProps extends ISettingsProps {
     showSerialButtons?: boolean;
     showFileList?: boolean;
     showFullscreenButton?: boolean;
-    showHostMultiplayerGameButton?: boolean;
+    isMultiplayerGame?: boolean;
     collapseEditorTools?: boolean;
     simSerialActive?: boolean;
     deviceSerialActive?: boolean;
@@ -197,12 +197,17 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
     }
 
     renderCore() {
-        const { parent, inHome, showKeymap, showSerialButtons, showFileList, showFullscreenButton, showHostMultiplayerGameButton,
+        const { parent, inHome, showKeymap, showSerialButtons, showFileList, showFullscreenButton, isMultiplayerGame,
             collapseEditorTools, simSerialActive, deviceSerialActive, tutorialOptions,
             handleHardwareDebugClick, onTutorialStepChange, onTutorialComplete } = this.props;
 
         const hasSimulator = !pxt.appTarget.simulator?.headless;
-        const showOpenInVscodeButton = parent.isJavaScriptActive() && pxt.appTarget?.appTheme?.showOpenInVscode;
+        const showOpenInVscodeButton = parent.isJavaScriptActive()
+            && pxt.appTarget?.appTheme?.showOpenInVscode
+            && !pxt.shell.isTimeMachineEmbed();
+
+        const showHostMultiplayerGameButton = isMultiplayerGame
+            && !pxt.shell.isTimeMachineEmbed();
 
         const simContainerClassName = classList(
             "simulator-container",
