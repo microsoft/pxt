@@ -212,11 +212,6 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         pxt.tickEvent("editortools.pairunsupported", undefined, { interactiveConsent: true });
         const reasonUnsupported = await pxt.usb.getReasonUnavailable();
 
-        if (!reasonUnsupported && pxt.BrowserUtils.isArcade() && !pxt.getActiveHwVariant()) {
-            this.onHwItemClick()
-            return;
-        }
-
         let modalBody: string;
         switch (reasonUnsupported) {
             case "security":
@@ -284,9 +279,11 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
 
         const boards = pxt.appTarget.simulator && !!pxt.appTarget.simulator.dynamicBoardDefinition;
         const editorSupportsWebUSB = pxt.appTarget?.compile?.webUSB;
+        const hardwareVariantSelected = (pxt.appTarget.alwaysMultiVariant || !pxt.appTarget.variants || !!(pxt.getActiveHwVariant()))
         const webUSBSupported = pxt.usb.isEnabled && editorSupportsWebUSB;
         const showUsbNotSupportedHint = editorSupportsWebUSB
             && !pxt.usb.isEnabled
+            && hardwareVariantSelected
             && pxt.shell.getControllerMode() !== pxt.shell.ControllerMode.App
             && !pxt.BrowserUtils.isPxtElectron()
             && (pxt.BrowserUtils.isChromiumEdge() || pxt.BrowserUtils.isChrome());
