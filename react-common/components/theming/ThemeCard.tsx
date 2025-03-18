@@ -9,6 +9,8 @@ interface ThemeCardProps {
 export const ThemeCard = (props: ThemeCardProps) => {
     const { onClick, theme } = props;
 
+    const themeName = pxt.Util.rlf(`{id:color-theme-name}${theme.name}`);
+
     return (
         <Card
             className="theme-card"
@@ -20,7 +22,7 @@ export const ThemeCard = (props: ThemeCardProps) => {
         >
             <div className="theme-info-box">
                 <ThemePreview theme={theme} />
-                <div className="theme-picker-item-name">{theme.name}</div>
+                <div className="theme-picker-item-name">{themeName}</div>
             </div>
         </Card>
     );

@@ -1946,6 +1946,18 @@ ${gcards.map(gcard => `[${gcard.name}](${gcard.url})`).join(',\n')}
                 targetStrings[`{id:hardware-description}${opt.description}`] = opt.description;
         }
     }
+
+    const themeFiles = getThemeFilePaths();
+    for(const themePath of themeFiles) {
+        if (nodeutil.fileExistsSync(themePath)) {
+            const theme = nodeutil.readJson(themePath);
+            const name = theme["name"];
+            if (name) {
+                targetStrings[`{id:color-theme-name}${name}`] = name;
+            }
+        }
+    }
+
     // extract strings from editor
     ["editor", "fieldeditors", "cmds"]
         .filter(d => nodeutil.existsDirSync(d))
@@ -2284,14 +2296,13 @@ function updateTOC(cfg: pxt.TargetBundle) {
     }
 }
 
-function updateColorThemes(cfg: pxt.TargetBundle) {
-    pxt.log("Loading color themes...");
-
+function getThemeFilePaths() {
     const sharedThemeFiles = fs.existsSync("node_modules/pxt-core/theme/color-themes")
-        ? nodeutil
-              .allFiles("node_modules/pxt-core/theme/color-themes", { maxDepth: 1, includeDirs: false })
-              .filter((f) => /\.json$/i.test(f))
-        : [];
+    ? nodeutil
+          .allFiles("node_modules/pxt-core/theme/color-themes", { maxDepth: 1, includeDirs: false })
+          .filter((f) => /\.json$/i.test(f))
+    : [];
+
     const targetThemeFiles = fs.existsSync("theme/color-themes")
         ? nodeutil
             .allFiles("theme/color-themes", { maxDepth: 1, includeDirs: false })
@@ -2299,7 +2310,12 @@ function updateColorThemes(cfg: pxt.TargetBundle) {
         : [];
 
     // Target takes precedence, so include those at the end (will overwrite shared themes)
-    const themeFiles = sharedThemeFiles.concat(targetThemeFiles);
+    return sharedThemeFiles.concat(targetThemeFiles);
+}
+
+function updateColorThemes(cfg: pxt.TargetBundle) {
+    pxt.log("Loading color themes...");
+    const themeFiles = getThemeFilePaths();
 
     for (const themeFile of themeFiles) {
         const themeFileDir = path.dirname(themeFile);
