@@ -614,6 +614,7 @@ declare namespace pxt {
         id: string; // Unique identifier
         name: string; // Human-readable name
         weight?: number; // Lower weights appear first in theme list, no value = go to end
+        legacyBlockColors?: boolean; // If true, do not adjust block colors to improve contrast
         overrideCss?: string; // Special css to apply for the theme
         monacoBaseTheme?: string; // Theme for monaco editor, see https://code.visualstudio.com/docs/getstarted/themes
         colors: { [key: string]: string }; // Values for theme variables

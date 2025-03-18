@@ -1,5 +1,6 @@
 namespace pxt.toolbox {
     const cachedAccessibleColors: pxt.Map<string> = {};
+    let useAutoAccessibleColors: boolean = undefined;
 
     export const blockColors: Map<number | string> = {
         loops: '#107c10',
@@ -201,13 +202,17 @@ namespace pxt.toolbox {
         return rgb;
     }
 
+    export function setUseAutoAccessibleColors(use: boolean) {
+        useAutoAccessibleColors = use;
+    }
+
     /**
      * Calculates an accessible background color assuming a foreground color of white and
      * caches the result. Does not clear the cache, but this shouldn't be much of a memory
      * concern since we only cache colors that are used in the toolbox.
      */
     export function getAccessibleBackground(color: string) {
-        if (!pxt.appTarget?.appTheme?.adjustBlockContrast) return color;
+        if (!useAutoAccessibleColors && !pxt.appTarget?.appTheme?.adjustBlockContrast) return color;
 
         if (!cachedAccessibleColors[color]) {
             cachedAccessibleColors[color] = pxt.getWhiteContrastingBackground(color);

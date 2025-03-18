@@ -86,6 +86,7 @@ export class ThemeManager {
             styleElement.textContent = `.pxt-theme-root { ${themeAsStyle} }`;
 
             this.performHighContrastWorkaround(themeId);
+            pxt.toolbox.setUseAutoAccessibleColors(!theme.legacyBlockColors);
 
             this.currentTheme = theme;
             this.notifySubscribers();
