@@ -315,9 +315,10 @@ function localhostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
         method: "POST",
         data: resp,
         allowHttpErrors: true // To prevent "Network request failed" warning in case of error. We're not actually doing network requests in localhost scenarios
-    }).then(r => {
+    }).then(async r => {
         if (r.statusCode !== 200) {
             core.errorNotification(lf("There was a problem, please try again"));
+            await browserDownloadDeployCoreAsync(resp);
         } else if (r.json["boardCount"] === 0) {
             core.warningNotification(lf("Please connect your {0} to your computer and try again", pxt.appTarget.appTheme.boardName));
         }
