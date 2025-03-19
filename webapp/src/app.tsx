@@ -5171,30 +5171,34 @@ export class ProjectView
         }
 
         pxt.tickEvent("app.setcolortheme", { theme: colorThemeId, savePreference: `${savePreference}` });
-        this.themeManager.switchColorTheme(colorThemeId);
 
+        // When a theme is applied, css changes happen immediately, but other changes (like block colors)
+        // require a reload. We set the preference before applying the theme to minimize the time between
+        // the css updates and the reload. Otherwise, it looks like the theme is applied and the reload
+        // happens on a delay.
         if (savePreference) {
-            await this.updateThemePreference();
+            await this.updateThemePreference(colorThemeId);
         }
 
-        // Themes can change block colors, so we need to reload.
-        if (oldTheme?.legacyBlockColors !== this.themeManager.getCurrentColorTheme()?.legacyBlockColors) {
+        this.themeManager.switchColorTheme(colorThemeId);
+
+        // We can only reload if the preference is saved.
+        // Otherwise, the new theme will get lost on reload.
+        if (savePreference) {
             this.reloadEditor();
         }
     }
 
-    private async updateThemePreference() {
-        const newThemeId = this.themeManager.getCurrentColorTheme()?.id;
+    private async updateThemePreference(newThemeId: string) {
+        if (!newThemeId) return;
 
-        if (newThemeId) {
-            await auth.setThemePrefAsync(newThemeId);
+        await auth.setThemePrefAsync(newThemeId);
 
-            // Disable high contrast preference (separate from theme pref) if the new theme is not high contrast.
-            // This is only needed while we transition from not having themes to having them. In time, the
-            // auth.HIGHCONTRAST preference can be phased out in favor of the themeId preference.
-            if (!this.themeManager.isHighContrast(newThemeId) && data.getData<boolean>(auth.HIGHCONTRAST)) {
-                await auth.setHighContrastPrefAsync(false);
-            }
+        // Disable high contrast preference (separate from theme pref) if the new theme is not high contrast.
+        // This is only needed while we transition from not having themes to having them. In time, the
+        // auth.HIGHCONTRAST preference can be phased out in favor of the themeId preference.
+        if (!this.themeManager.isHighContrast(newThemeId) && data.getData<boolean>(auth.HIGHCONTRAST)) {
+            await auth.setHighContrastPrefAsync(false);
         }
     }
 
