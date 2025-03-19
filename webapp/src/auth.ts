@@ -256,7 +256,7 @@ export async function setThemePrefAsync(themeId: string): Promise<void> {
     } else {
         // Identity not available, save this setting locally
         const currentPrefsStr = pxt.storage.getLocal(COLOR_THEME_IDS);
-        const currentPrefs = pxt.U.jsonTryParse(JSON.parse(currentPrefsStr)) as pxt.auth.ColorThemeIdsState ?? {};
+        const currentPrefs = currentPrefsStr ? pxt.U.jsonTryParse(JSON.parse(currentPrefsStr)) as pxt.auth.ColorThemeIdsState ?? {} : {};
         const newColorThemePref = {
             ...currentPrefs,
             [targetId]: themeId
