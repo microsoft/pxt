@@ -5172,20 +5172,15 @@ export class ProjectView
 
         pxt.tickEvent("app.setcolortheme", { theme: colorThemeId, savePreference: `${savePreference}` });
 
-        // When a theme is applied, css changes happen immediately, but other changes (like block colors)
-        // require a reload. We set the preference before applying the theme to minimize the time between
-        // the css updates and the reload. Otherwise, it looks like the theme is applied and the reload
-        // happens on a delay.
         if (savePreference) {
+            // Update pref first to avoid apparent delay between immediate css updates and reload.
             await this.updateThemePreference(colorThemeId);
-        }
+            this.themeManager.switchColorTheme(colorThemeId);
 
-        this.themeManager.switchColorTheme(colorThemeId);
-
-        // We can only reload if the preference is saved.
-        // Otherwise, the new theme will get lost on reload.
-        if (savePreference) {
+            // We can only reload if the preference is saved. Otherwise, the new theme will get lost on reload.
             this.reloadEditor();
+        } else {
+            this.themeManager.switchColorTheme(colorThemeId);
         }
     }
 
