@@ -90,16 +90,39 @@
 
         .action {
             margin: 1rem 0;
+            a:focus-visible, button:focus-visible {
+                outline-width: 4px !important;
+                outline-style: solid;
+                outline-color: var(--pxt-neutral-stencil3);
+            }
         }
 
-        .dots button {
-            transition: background-color 0.5s;
-            border: 2px solid @heroBannerDotOutlineColor;
-            margin-right: 1.25rem;
+        .dots {
+            align-self: flex-start;
+            border-radius: 50px;
+            line-height: 0;
+            margin-top: 8px;
 
-            &.active {
-                border-color: @heroBannerDotOutlineAtiveColor;
-                background-color: transparent;
+            &:focus-visible {
+                outline-width: 3px !important;
+                outline-style: solid;
+                outline-color: white;
+                outline-offset: 4px;
+            }
+
+            button {
+                transition: background-color 0.5s;
+                border: 2px solid @heroBannerDotOutlineColor;
+                margin-right: 1.25rem;
+
+                &.active {
+                    border-color: @heroBannerDotOutlineAtiveColor;
+                    background-color: transparent;
+                }
+
+                &:last-child {
+                    margin-right: 0px;
+                }
             }
         }
 
@@ -152,6 +175,12 @@
                     &:hover, &:focus {
                         border-color: var(--pxt-primary-background);
                     }
+                    &:focus-visible {
+                        outline-width: @homeCardBorderSize !important;
+                        outline-style: solid;
+                        outline-color: var(--pxt-primary-background);
+                        outline-offset: 2px;
+                    }
                 }
             }
         }
@@ -173,6 +202,12 @@
     .import-dialog-btn {
         position: relative;
         z-index: 1; /* Move up so it's above the carousel container that has an offset margin */
+        &:focus-visible {
+            outline-width: @homeCardBorderSize !important;
+            outline-style: solid;
+            outline-color: var(--pxt-primary-background);
+            outline-offset: 2px;
+        }
     }
     /* Footer, Privary, Terms of Use */
     .homefooter {
@@ -350,8 +385,7 @@
                 transform: translateX(-50%) translateY(-50%);
                 pointer-events: none;
             }
-            .card-action:hover,
-            .card-action:focus-within {
+            .card-action:hover {
                 cursor: pointer;
                 border-color: @white;
                 .ui.button {
@@ -449,7 +483,9 @@
     }
     .ui.card:focus {
         border: 2px solid transparent;
-        outline: @homeCardBorderSize solid var(--pxt-primary-background) !important;
+        outline-width: @homeCardBorderSize !important;
+        outline-style: solid;
+        outline-color: var(--pxt-primary-background);
     }
 }
 

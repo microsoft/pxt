@@ -350,6 +350,7 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
 
     protected handleRefreshCard = (backwards?: boolean) => {
         pxt.debug(`next hero carousel`);
+
         if (this.prevGalleries?.length) {
             const cardIndex = this.state.cardIndex;
             const nextOffset = backwards ? this.prevGalleries.length - 1 : 1;
@@ -527,6 +528,8 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
         return <div className="ui segment getting-started-segment hero"
             style={{ backgroundImage: encodedBkgd }}
             onKeyDown={this.onKeyDown}
+            role="region"
+            aria-label={lf("Banner")}
             onPointerDown={this.onPointerDown} onTouchStart={this.onTouchstart}
             onPointerUp={this.onPointerUp} onTouchEnd={this.onTouchEnd}
         >
@@ -549,9 +552,9 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
                         this.handleCardClick
                     )}
                 </div>}
-                {isGallery && <div key="cards" className="dots">
+                {isGallery && <div key="cards" className="dots" tabIndex={0} role="group" aria-label={lf("Carousel controls")}>
                     {cards.map((card, i) => <button key={"dot" + i} className={`ui button empty circular label  clear ${i === cardIndex && "active"}`}
-                        onClick={handleSetCard(i)} aria-label={lf("View {0} hero image", card.title || card.name)} title={lf("View {0} hero image", card.title || card.name)}>
+                        onClick={handleSetCard(i)} aria-label={lf("View {0} hero image", card.title || card.name)} tabIndex={-1} title={lf("View {0} hero image", card.title || card.name)}>
                     </button>)}
                 </div>}
             </div>
