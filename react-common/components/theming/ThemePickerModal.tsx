@@ -3,7 +3,7 @@ import { ThemeCard } from "./ThemeCard";
 
 export interface ThemePickerModalProps {
     themes: pxt.ColorThemeInfo[];
-    onThemeClicked(them: pxt.ColorThemeInfo): void;
+    onThemeClicked(theme: pxt.ColorThemeInfo): void;
     onClose(): void;
 }
 export const ThemePickerModal = (props: ThemePickerModalProps) => {
