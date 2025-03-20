@@ -36,7 +36,47 @@ export class PxtWorkspaceSearch extends WorkspaceSearch {
 }
 
 Blockly.Css.register(`
+.blockly-ws-search {
+    background: var(--pxt-neutral-background1);
+    color: var(--pxt-neutral-foreground1);
+    border: solid var(--pxt-neutral-alpha50) 1px;
+    border-top: none;
+    border-right: none;
+    box-shadow: 0px 2px 15px var(--pxt-neutral-alpha50);
+}
+
+.blockly-ws-search input {
+    -webkit-tap-highlight-color: transparent;
+    background: var(--pxt-neutral-background1);
+    color: var(--pxt-neutral-foreground1);
+    border: none;
+}
+
+.blockly-ws-search input::-webkit-input-placeholder {
+    color: var(--pxt-neutral-alpha50);
+}
+
+.blockly-ws-search input::-moz-placeholder {
+    color: var(--pxt-neutral-alpha50);
+}
+
+.blockly-ws-search input::-ms-input-placeholder {
+    color: var(--pxt-neutral-alpha50);
+}
+
+.blockly-ws-search input:active,
+.blockly-ws-search input:focus {
+    border-color: var(--pxt-neutral-alpha50);
+    background: var(--pxt-neutral-background1);
+    color: var(--pxt-neutral-foreground1);
+}
+
+.blockly-ws-search input::selection {
+    color: var(--pxt-neutral-foreground1);
+}
+
 .blockly-ws-search button {
     padding-left: 6px;
     padding-right: 6px;
+    color: var(--pxt-neutral-foreground1);
 }`);
