@@ -351,7 +351,10 @@ export const ShareInfo = (props: ShareInfoProps) => {
                             className="name-input"
                             initialValue={name}
                             placeholder={lf("Name your project")}
-                            onChange={setName} />
+                            onChange={setName}
+                            onBlur={setName}
+                            onEnterKey={setName}
+                            preserveValueOnBlur={true} />
                         {isLoggedIn && hasProjectBeenPersistentShared && <Checkbox
                             id="persistent-share-checkbox"
                             label={lf("Update existing share link for this project")}
