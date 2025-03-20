@@ -234,8 +234,10 @@ export class ProjectView
         this.resetTutorialTemplateCode = this.resetTutorialTemplateCode.bind(this);
         this.initSimulatorMessageHandlers();
         this.showThemePicker = this.showThemePicker.bind(this);
+        this.handleThemeClicked = this.handleThemeClicked.bind(this);
         this.hideThemePicker = this.hideThemePicker.bind(this);
         this.setColorThemeById = this.setColorThemeById.bind(this);
+        this.updateThemePreference = this.updateThemePreference.bind(this);
 
         // add user hint IDs and callback to hint manager
         if (pxt.BrowserUtils.useOldTutorialLayout()) this.hintManager.addHint(ProjectView.tutorialCardId, this.tutorialCardHintCallback.bind(this));
@@ -2828,7 +2830,7 @@ export class ProjectView
             .then(() => { })
     }
 
-    reloadEditor() {
+    reloadEditor(addParams?: pxt.Map<string>) {
         try {
             // Prevent us from stripping out the hash before the reload is complete
             clearHashChange();
@@ -2844,21 +2846,31 @@ export class ProjectView
                 location.hash = "#editor"
             }
 
+            let paramsChanged = false;
+            const currentParams = new URLSearchParams(location.search);
+            if (addParams) {
+                Object.keys(addParams).forEach(k => currentParams.set(k, addParams[k]));
+                paramsChanged= true;
+            }
+
             if (pxt.BrowserUtils.isIFrame() && !pxt.BrowserUtils.getCookieLang()) {
-                // Include language in the refreshed page to persist refreshes
+                // Include language & color theme in the refreshed page to persist refreshes
                 // when cookies not allowed
                 const lang = pxt.Util.userLanguage();
-                const params = new URLSearchParams(location.search);
-                params.set("lang", lang);
-                const hcParamSet = !!params.get("hc");
+                currentParams.set("lang", lang);
+                const hcParamSet = !!currentParams.get("hc");
                 const hc = !!core.getHighContrastOnce();
                 if (hc != hcParamSet) {
-                    if (hc) params.set("hc", "1");
-                    else params.delete("hc");
+                    if (hc) currentParams.set("hc", "1");
+                    else currentParams.delete("hc");
                 }
-                location.search = params.toString();
+                paramsChanged= true;
+            }
+
+            if (paramsChanged) {
                 // .reload refreshes without hitting server so it loses the params,
                 // so have to navigate directly
+                location.search = currentParams.toString();
                 location.assign(location.toString());
             } else {
                 location.reload();
@@ -4565,6 +4577,11 @@ export class ProjectView
         this.setState( { themePickerOpen: true });
     }
 
+    async handleThemeClicked(theme: pxt.ColorThemeInfo) {
+        await this.setColorThemeById(theme?.id, true);
+        this.hideThemePicker();
+    }
+
     hideThemePicker() {
         this.setState( { themePickerOpen: false });
     }
@@ -5178,7 +5195,8 @@ export class ProjectView
             this.themeManager.switchColorTheme(colorThemeId);
 
             // We can only reload if the preference is saved. Otherwise, the new theme will get lost on reload.
-            this.reloadEditor();
+            const colorParam = {["colorthemeid"]: colorThemeId};
+            this.reloadEditor(colorParam);
         } else {
             this.themeManager.switchColorTheme(colorThemeId);
         }
@@ -5495,7 +5513,7 @@ export class ProjectView
                 {lightbox ? <sui.Dimmer isOpen={true} active={lightbox} portalClassName={'tutorial'} className={'ui modal'}
                     shouldFocusAfterRender={false} closable={true} onClose={this.hideLightbox} /> : undefined}
                 {this.state.onboarding && <Tour tourSteps={this.state.onboarding} onClose={this.hideOnboarding} />}
-                {this.state.themePickerOpen && <ThemePickerModal themes={this.themeManager.getAllColorThemes()} onThemeClicked={theme => this.setColorThemeById(theme?.id, true)} onClose={this.hideThemePicker} />}
+                {this.state.themePickerOpen && <ThemePickerModal themes={this.themeManager.getAllColorThemes()} onThemeClicked={this.handleThemeClicked} onClose={this.hideThemePicker} />}
             </div>
         );
     }
@@ -6038,6 +6056,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     pxt.setupWebConfig((window as any).pxtConfig);
     const config = pxt.webConfig
 
+    let colorThemeOverrideId: string = undefined;
     const optsQuery = Util.parseQueryString(window.location.href.toLowerCase());
     if (optsQuery["dbg"] == "1") {
         pxt.setLogLevel(pxt.LogLevel.Debug);
@@ -6059,6 +6078,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     if (optsQuery["tooltipblockids"] == "1") {
         pxt.blocks.showBlockIdInTooltip = true;
+    }
+    if (optsQuery["colorthemeid"]) {
+        colorThemeOverrideId = optsQuery["colorthemeid"];
     }
 
 
@@ -6240,6 +6262,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         .then(() => {
             // Load theme colors
             const themeManager = ThemeManager.getInstance(document);
+
+            if (colorThemeOverrideId && themeManager.isKnownTheme(colorThemeOverrideId)) {
+                return themeManager.switchColorTheme(colorThemeOverrideId);
+            }
+
             const initialThemePrefs = data.getData<pxt.auth.ColorThemeIdsState>(auth.COLOR_THEME_IDS);
             let initialTheme = initialThemePrefs?.[pxt.appTarget.id];
             if (!initialTheme || !themeManager.isKnownTheme(initialTheme)) {
