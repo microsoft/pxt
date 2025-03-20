@@ -257,10 +257,10 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                             {pxt.options.debug && <Button key="hwdebugbtn" className="tertiary" icon="xicon chip" text={"Dev Debug"} onClick={handleHardwareDebugClick} />}
                         </div>
                         <div className="ui item grid centered portrait hide hidefullscreen">
-                            {showOpenInVscodeButton && <Button className={"tertiary hostmultiplayergame-button"} icon={"icon share"} text={lf("Open in VS Code")} ariaLabel={lf("Open in Visual Studio Code for Web")} onClick={this.onOpenInVSCodeClick} />}
+                            {showOpenInVscodeButton && <Button className={"secondary hostmultiplayergame-button"} icon={"icon share"} text={lf("Open in VS Code")} ariaLabel={lf("Open in Visual Studio Code for Web")} onClick={this.onOpenInVSCodeClick} />}
                         </div>
                         <div className="ui item grid centered portrait hide hidefullscreen">
-                            {showHostMultiplayerGameButton && <Button className={"tertiary hostmultiplayergame-button"} icon={"xicon multiplayer"} text={lf("Host multiplayer game")} ariaLabel={lf("Host multiplayer game")} onClick={this.onHostMultiplayerGameClick} />}
+                            {showHostMultiplayerGameButton && <Button className={"secondary hostmultiplayergame-button"} icon={"xicon multiplayer"} text={lf("Host multiplayer game")} ariaLabel={lf("Host multiplayer game")} onClick={this.onHostMultiplayerGameClick} />}
                         </div>
                         {showSerialButtons && <div id="serialPreview" className="ui editorFloat portrait hide hidefullscreen">
                             <serialindicator.SerialIndicator ref="simIndicator" isSim={true} onClick={this.handleSimSerialClick} parent={parent} />
