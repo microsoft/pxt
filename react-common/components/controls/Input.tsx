@@ -59,7 +59,7 @@ export const Input = (props: InputProps) => {
         onBlur,
         onOptionSelected,
         handleInputRef,
-        preserveValueOnBlur,
+        preserveValueOnBlur = true,
         options
     } = props;
 
