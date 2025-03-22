@@ -25,25 +25,25 @@ These posts on our forum always made us very sad 😞. So, we decided to do some
 
 Orange isn't for everyone. And although I love the original Arcade orange color scheme, it isn't the most accessible in terms of color contrast for visually impaired users. So, we've added support for themes – now users can select from among 4 different color themes including a high contrast theme to help improve accessibility and add a touch of personalization! To set your theme, click on the Settings menu and select Theme.
 
-<Themes.png>
+![Theme selection](/static/blog/arcade/update-mar-2025/themes.png)
 
 As part of our theming overhaul, some of you may have noticed that we also updated the Arcade font family to a more accessible/readable font.
 
-<Fonts.png>
+![New fonts](/static/blog/arcade/update-mar-2025/fonts.png)
 
 And we've improved the color contrast for nested blocks of the same color with a lighter border to make them more readable.
 
-<OldNested.png>
+![Older nested blocks](/static/blog/arcade/update-mar-2025/old-nested.png)
 
 ### Old nested block borders
 
-<NewNested.png>
+![Newer nested blocks](/static/blog/arcade/update-mar-2025/new-nested.png)
 
 ### New nested block borders
 
 And we've improved the accessibility of our tutorials for color blind and vision impaired users by changing the block name color highlighting to include the icon and improve color contrast readability.
 
-<TutorialUpdates.png>
+![tutorial updates](/static/blog/arcade/update-mar-2025/tutorial-updates.png)
 
 ## Editor Tour
 
