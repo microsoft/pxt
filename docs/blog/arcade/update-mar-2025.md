@@ -55,7 +55,7 @@ There is a lot going on in the Arcade code editor, and it can be overwhelming fo
 
 We are so happy to see MakeCode Arcade going global! We have support for 5 new languages in this release – Arabic, Dutch, Irish, Italian and Korean! Big, big THANK YOU to all the volunteers who have helped localize MakeCode and bring coding to students around the world. If you would like to help translate or proofread translations, learn how to get involved at https://makecode.com/translate. 
 
-<EditorLanguages.png>
+![Editor languages](/static/blog/arcade/update-mar-2025/editor-languages.png)
 
 ## Blocks Copy/Paste
 
@@ -67,13 +67,13 @@ This feature is a real delighter for me. Now, you can copy chunks of code across
 
 With the popularity of the animation blocks, we've decided to pull them out of the Advanced section of the Toolbox and make them more discoverable for users.
 
-<Toolbox.png>
+![Animation toolbox category](/static/blog/arcade/update-mar-2025/toolbox.png)
 
 ## Keyboard input
 
 This was a request of many of the AP CS Principles teachers who are using Arcade to teach user input and output. Now, for users on a computer, the Ask for String and Ask for Number blocks will use the system keyboard input by default, instead of the game controller input making it much easier to enter long responses. If you download your game onto a handheld Arcade device, or click on the on-screen game controls, then the input will revert to using the game controller buttons.
 
-<Keyboard input.gif>
+<Keyboard-input.gif>
 
 ## Open in Visual Studio Code Online
 
