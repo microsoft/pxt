@@ -79,7 +79,7 @@ export const ThemeColorSetter = (props: ThemeColorSetterProps) => {
                 initialValue={color.toHex()}
                 onBlur={value => setColorValue(colorId, value)}
                 onEnterKey={value => setColorValue(colorId, value)}
-                readOnly={true}
+                preserveValueOnBlur={true}
             />
             <Button
                 className={css["theme-color-button"]}
