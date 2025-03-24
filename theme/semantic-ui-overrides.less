@@ -54,10 +54,16 @@ body.pxt-theme-root {
         border-color: var(--pxt-neutral-stencil1);
     }
 
-    .ui.list > .item a.header {
-        color: var(--pxt-link) !important; // override !important in semantic ui
-        &:hover {
-            color: var(--pxt-link-hover) !important;
+    .ui.list > .item {
+        .description {
+            color: var(--pxt-neutral-alpha80);
+        }
+
+        a.header {
+            color: var(--pxt-link) !important; // override !important in semantic ui
+            &:hover {
+                color: var(--pxt-link-hover) !important;
+            }
         }
     }
 
