@@ -99,7 +99,7 @@ namespace pxt {
                             }
                         }
 
-                        currentKey = keyMatch[1].toLowerCase();
+                        currentKey = keyMatch[1].trim().toLowerCase();
                         currentValue = keyMatch[2];
                     }
                     else if (currentKey) {

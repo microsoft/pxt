@@ -319,12 +319,12 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
                             }
                             case "setcolorthemebyid": {
                                 const msg = data as pxt.editor.EditorMessageSetColorThemeByIdRequest;
-                                projectView.setColorThemeById(msg.colorThemeId);
+                                projectView.setColorThemeById(msg.colorThemeId, !!msg.savePreference);
                                 return Promise.resolve();
                             }
                             case "setcolortheme": {
                                 const msg = data as pxt.editor.EditorMessageSetColorThemeRequest;
-                                projectView.setColorTheme(msg.colorTheme, msg.savePref);
+                                projectView.setColorTheme(msg.colorTheme, msg.savePreference);
                                 return Promise.resolve();
                             }
                         }

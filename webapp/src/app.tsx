@@ -609,6 +609,11 @@ export class ProjectView
             && this.editorFile && this.editorFile.name == pxt.ASSETS_FILE;
     }
 
+    isTextSourceCodeEditorActive() {
+        return !this.state.embedSimView && this.editor == this.textEditor
+            && this.editorFile && /(\.ts|\.py)$/.test(this.editorFile.name);
+    }
+
     private isAnyEditeableJavaScriptOrPackageActive(): boolean {
         return this.editor == this.textEditor
             && this.editorFile && !this.editorFile.isReadonly() && /(\.ts|pxt.json)$/.test(this.editorFile.name);
@@ -2785,9 +2790,7 @@ export class ProjectView
     ///////////////////////////////////////////////////////////
 
     openHome() {
-        const hasHome = !pxt.shell.isControllerMode()
-            && !pxt.appTarget.appTheme.lockedEditor;
-        if (!hasHome) return;
+        if (!pxt.shell.hasHomeScreen()) return;
 
         this.unloadProjectAsync(true)
     }
@@ -3790,8 +3793,7 @@ export class ProjectView
             case SimState.Running:
                 return false; // already reunning
         }
-        const hasHome = !pxt.shell.isControllerMode();
-        if (!hasHome) return true;
+        if (!pxt.shell.hasHomeScreen()) return true;
         return !this.state.home;
     }
 
@@ -4630,7 +4632,9 @@ export class ProjectView
         });
     }
 
-    showExitAndSaveDialog() {
+    showExitAndSaveDialog() {;
+        if (!pxt.shell.hasHomeScreen()) return;
+
         this.setState({ debugging: false })
         if (this.isTutorial()) {
             pxt.tickEvent("tutorial.exit.home", { tutorial: this.state.header?.tutorial?.tutorial });
@@ -5175,20 +5179,23 @@ export class ProjectView
         this.setState({ bannerVisible: b });
     }
 
-    setColorThemeById(colorThemeId: string) {
+    setColorThemeById(colorThemeId: string, savePreference: boolean) {
         if (this.themeManager.getCurrentColorTheme()?.id === colorThemeId) {
             return;
         }
 
-        pxt.tickEvent("app.setcolorthemebyid", { theme: colorThemeId });
+        pxt.tickEvent("app.setcolorthemebyid", { theme: colorThemeId, savePreference: `${savePreference}` });
         this.themeManager.switchColorTheme(colorThemeId);
-        this.updateThemePreference();
+
+        if (savePreference) {
+            this.updateThemePreference();
+        }
     }
 
-    setColorTheme(colorTheme: pxt.ColorThemeInfo, savePref?: boolean) {
+    setColorTheme(colorTheme: pxt.ColorThemeInfo, savePreference?: boolean) {
         this.themeManager.loadTheme(colorTheme);
 
-        if (savePref) {
+        if (savePreference) {
             this.updateThemePreference();
         }
     }
@@ -5483,7 +5490,7 @@ export class ProjectView
                     showSerialButtons={useSerialEditor}
                     showFileList={showFileList}
                     showFullscreenButton={!isHeadless}
-                    showHostMultiplayerGameButton={isMultiplayerSupported && isMultiplayerGame}
+                    isMultiplayerGame={isMultiplayerSupported && isMultiplayerGame}
                     collapseEditorTools={this.state.collapseEditorTools}
                     simSerialActive={this.state.simSerialActive}
                     devSerialActive={this.state.deviceSerialActive}
@@ -6277,8 +6284,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         })
         .then(() => {
             // Load theme colors
-            let initialTheme = data.getData<string>(auth.THEMEID);
-            if (!initialTheme) {
+            const themeManager = ThemeManager.getInstance(document);
+            const initialThemePrefs = data.getData<pxt.auth.ColorThemeIdsState>(auth.COLOR_THEME_IDS);
+            let initialTheme = initialThemePrefs?.[pxt.appTarget.id];
+            if (!initialTheme || !themeManager.isKnownTheme(initialTheme)) {
                 initialTheme = pxt.appTarget?.appTheme?.defaultColorTheme;
             }
 
@@ -6292,9 +6301,9 @@ document.addEventListener("DOMContentLoaded", async () => {
             if (initialTheme) {
                 const themeManager = ThemeManager.getInstance(document);
 
-                const buildInThemes = themeManager.getAllColorThemes();
+                const builtInThemes = themeManager.getAllColorThemes();
                 const customThemes = auth.userPreferences()?.customColorThemes?.themes;
-                const allThemes = [...buildInThemes, ...(customThemes || [])];
+                const allThemes = [...builtInThemes, ...(customThemes || [])];
                 const theme = allThemes.find(t => t.id === initialTheme);
 
                 if (initialTheme !== themeManager.getCurrentColorTheme()?.id) {

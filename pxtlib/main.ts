@@ -229,13 +229,15 @@ namespace pxt {
         appTarget = replaceCdnUrlsInJsonBlob(appTarget);
 
         // patch icons in bundled packages
-        Object.keys(appTarget.bundledpkgs).forEach(pkgid => {
-            const res = appTarget.bundledpkgs[pkgid];
-            // path config before storing
-            const config = JSON.parse(res[pxt.CONFIG_NAME]) as pxt.PackageConfig;
-            if (config.icon) config.icon = pxt.BrowserUtils.patchCdn(config.icon);
-            res[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(config);
-        })
+        if (appTarget.bundledpkgs) {
+            Object.keys(appTarget.bundledpkgs).forEach(pkgid => {
+                const res = appTarget.bundledpkgs[pkgid];
+                // path config before storing
+                const config = JSON.parse(res[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+                if (config.icon) config.icon = pxt.BrowserUtils.patchCdn(config.icon);
+                res[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(config);
+            });
+        }
 
         // patch any pre-configured query url appTheme overrides
         if (typeof window !== 'undefined') {
@@ -335,6 +337,10 @@ namespace pxt {
                     return true
                 return !cfg.experimentalHw
             })
+    }
+
+    export function getActiveHwVariant(): string {
+        return hwVariant
     }
 
     export interface PxtOptions {

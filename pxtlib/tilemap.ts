@@ -1018,38 +1018,45 @@ namespace pxt {
                 const isProject = dep.id === "this";
                 const images = this.readImages(dep.parseJRes(), isProject);
 
-                for (const image of images) {
-                    image.meta.package = dep.id;
-                    if (image.type === AssetType.Tile) {
+                for (const toAdd of images) {
+                    toAdd.meta.package = dep.id;
+                    if (toAdd.type === AssetType.Tile) {
                         if (isProject) {
-                            this.state.tiles.add(image);
+                            this.state.tiles.add(toAdd);
                         }
                         else {
-                            this.gallery.tiles.add(image);
+                            this.gallery.tiles.add(toAdd);
                         }
                     }
-                    else if (image.type === AssetType.Image) {
+                    else if (toAdd.type === AssetType.Image) {
                         if (isProject) {
-                            this.state.images.add(image);
+                            this.state.images.add(toAdd);
                         }
                         else {
-                            this.gallery.images.add(image);
+                            this.gallery.images.add(toAdd);
                         }
                     }
-                    else if (image.type === AssetType.Animation) {
+                    else if (toAdd.type === AssetType.Animation) {
                         if (isProject) {
-                            this.state.animations.add(image);
+                            this.state.animations.add(toAdd);
                         }
                         else {
-                            this.gallery.animations.add(image);
+                            this.gallery.animations.add(toAdd);
                         }
                     }
                     else {
                         if (isProject) {
-                            this.state.songs.add(image);
+                            // there was a bug at one point that caused songs to be erroneously serialized
+                            // with ids in the myImages namespace. if that's the case here, remap the id to
+                            // the correct namespace before loading it
+                            const IMAGE_NAMESPACE = pxt.sprite.IMAGES_NAMESPACE + ".";
+                            if (toAdd.id.startsWith(IMAGE_NAMESPACE)) {
+                                toAdd.id = toAdd.id.replace(IMAGE_NAMESPACE, pxt.sprite.SONG_NAMESPACE + ".");
+                            }
+                            this.state.songs.add(toAdd);
                         }
                         else {
-                            this.gallery.songs.add(image);
+                            this.gallery.songs.add(toAdd);
                         }
                     }
                 }

@@ -44,6 +44,13 @@ namespace pxt.auth {
         badges: Badge[];
     }
 
+    /**
+     * Mapping of target id to preferred color theme id.
+     */
+    export type ColorThemeIdsState = {
+        [targetId: string]: string;
+    }
+
     export type CustomColorThemesState = {
         themes: pxt.ColorThemeInfo[];
     }
@@ -59,7 +66,7 @@ namespace pxt.auth {
     export type UserPreferences = {
         language?: string;
         highContrast?: boolean;
-        themeId?: string;
+        colorThemeIds?: ColorThemeIdsState;
         customColorThemes?: CustomColorThemesState;
         reader?: string;
         skillmap?: UserSkillmapState;
@@ -70,7 +77,7 @@ namespace pxt.auth {
     export const DEFAULT_USER_PREFERENCES: () => UserPreferences = () => ({
         language: pxt.appTarget.appTheme.defaultLocale,
         highContrast: false,
-        themeId: pxt.appTarget.appTheme.defaultColorTheme,
+        colorThemeIds: {}, // Will lookup pxt.appTarget.appTheme.defaultColorTheme for active target
         reader: "",
         skillmap: { mapProgress: {}, completedTags: {} },
         email: false

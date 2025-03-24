@@ -32,6 +32,7 @@ export interface SkillMapState {
     showSelectLanguage?: boolean;
     showSelectTheme?: boolean;
     colorThemeId?: string;
+    showFeedback?: boolean;
 }
 
 export interface EditorViewState {
@@ -443,6 +444,16 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
         case actions.GRANT_SKILLMAP_BADGE:
             return {
                 ...state
+            }
+        case actions.SHOW_FEEDBACK:
+            return {
+                ...state,
+                showFeedback: true
+            }
+        case actions.HIDE_FEEDBACK:
+            return {
+                ...state,
+                showFeedback: false
             }
         default:
             return state

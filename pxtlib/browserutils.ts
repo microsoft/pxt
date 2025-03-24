@@ -161,7 +161,7 @@ namespace pxt.BrowserUtils {
 
     export function isSkillmapEditor(): boolean {
         try {
-            return /skill(?:s?)Map=1/.test(window.location.href);
+            return /skill(?:s?)map=1/i.test(window.location.href);
         } catch (e) { return false; }
     }
 
@@ -510,7 +510,7 @@ namespace pxt.BrowserUtils {
         return outputCanvas.toDataURL("image/png");
     }
 
-    const MAX_SCREENSHOT_SIZE = 1e6; // max 1Mb
+    const MAX_SCREENSHOT_SIZE = 10e6; // max 10Mb
     export function encodeToPngAsync(dataUri: string,
         options?: {
             width?: number,

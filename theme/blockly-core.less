@@ -180,7 +180,7 @@ i.icon.blocklyTreeButton {
 }
 
 line.blocklyFlyoutLine {
-    stroke: var(--pxt-neutral-stencil3);
+    stroke: var(--pxt-neutral-foreground3);
 }
 
 
@@ -306,8 +306,10 @@ text.blocklyCheckbox {
 *******************************/
 
 .blocklyWidgetDiv .blocklyContextMenu {
-    border: 1px solid rgba(34,36,38,.15);
-    box-shadow: 0 1px 2px 0 rgba(34,36,38,.15) !important;
+    background: var(--pxt-neutral-background1);
+    color: var(--pxt-neutral-foreground1);
+    border: 1px solid var(--pxt-neutral-stencil1);
+    box-shadow: 0 1px 2px 0 var(--pxt-neutral-alpha20) !important;
     padding: 0 !important;
 }
 
@@ -315,12 +317,15 @@ text.blocklyCheckbox {
     margin: 0 !important;
     padding: .92857143em 1.14285714em !important;
     font: normal 13px @pageFont !important;
+    background: var(--pxt-neutral-background1);
+    color: var(--pxt-neutral-foreground1);
 }
 
 .blocklyWidgetDiv .blocklyContextMenu .goog-menuitem-highlight, .blocklyWidgetDiv .blocklyContextMenu .goog-menuitem-hover {
     border: none !important;
     padding: .92857143em 1.14285714em !important;
-    background: rgba(0,0,0,.05) !important;
+    background: var(--pxt-neutral-background1-hover) !important;
+    color: var(--pxt-neutral-foreground1-hover);
 }
 
 /*******************************

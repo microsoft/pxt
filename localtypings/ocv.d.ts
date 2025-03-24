@@ -2,14 +2,13 @@ declare namespace ocv {
 
     type FeedbackKind = "generic" | "rating";
 
-    const enum FeedbackAgeGroup {
-        Undefined = "Undefined",
-        MinorWithoutParentalConsent = "MinorWithoutParentalConsent",
-        MinorWithParentalConsent = "MinorWithParentalConsent",
-        NotAdult = "NotAdult",
-        Adult = "Adult",
-        MinorNoParentalConsentRequired = "MinorNoParentalConsentRequired"
-    }
+    type FeedbackAgeGroup =
+        | "Undefined"
+        | "MinorWithoutParentalConsent"
+        | "MinorWithParentalConsent"
+        | "NotAdult"
+        | "Adult"
+        | "MinorNoParentalConsentRequired";
     
     interface IFeedbackCallbackFunctions {
         attachDiagnosticsLogs?: (diagnosticsUploadId: string, diagnosticsEndpoint: string) => void;
@@ -21,26 +20,12 @@ declare namespace ocv {
         setSubmitButtonState?: (isEnabled: boolean) => void;
     }
     
-    const enum FeedbackAuthenticationType {
-        MSA = "MSA",
-        AAD = "AAD",
-        Unauthenticated = "Unauthenticated"
-    }
 
-    const enum FeedbackType {
-        Smile = "Smile",
-        Frown = "Frown",
-        Idea = "Idea",
-        Unclassified = "Unclassified",
-        Survey = "Survey"
-    }
+    type FeedbackAuthenticationType = "MSA" | "AAD" | "Unauthenticated";
 
-    const enum FeedbackPolicyValue {
-        Enabled = "Enabled",
-        Disabled = "Disabled",
-        NotConfigured = "Not Configured",
-        NotApplicable = "Not Applicable"
-    }
+    type FeedbackType = "Smile" | "Frown" | "Idea" | "Unclassified" | "Survey";
+
+    type FeedbackPolicyValue = "Enabled" | "Disabled" | "Not Configured" | "Not Applicable";
     
     interface IThemeOptions {
         isFluentV9?: boolean;
@@ -68,79 +53,63 @@ declare namespace ocv {
         themeOptions?: IThemeOptions;
     }
     
-    const enum FeedbackUiType {
-        SidePane = "SidePane",// Default: Used for side pane/detail view
-        Modal = "Modal",// Used for modal view
-        CallOut = "CallOut",// Used for inscreen pop up dialogue
-        IFrameWithinSidePane = "IFrameWithinSidePane",// Same as side pane but used inside an iframe
-        IFrameWithinModal = "IFrameWithinModal",// Same as modal but used inside an iframe
-        IFrameWithinCallOut = "IFrameWithinCallOut",// Same as callout but used inside an iframe
-        NoSurface = "NoSurface",// Used when the surface is provided by the host app
-        NoSurfaceWithoutTitle = "NoSurfaceWithoutTitle"
-    }
+    type FeedbackUiType =
+        | "SidePane"
+        | "Modal"
+        | "CallOut"
+        | "IFrameWithinSidePane"
+        | "IFrameWithinModal"
+        | "IFrameWithinCallOut"
+        | "NoSurface"
+        | "NoSurfaceWithoutTitle";
+
+
+    type FeedbackHostPlatformType =
+        | "Windows"
+        | "iOS"
+        | "Android"
+        | "WacTaskPane"
+        | "MacOS"
+        | "Web"
+        | "IFrame";
+
+    type FeedbackHostEventName = "InAppFeedback_HostEvent_SubmitClicked" | "InAppFeedback_HostEvent_BackClicked";
+
+    type InitializationStatus = "Success" | "Error" | "Warning";
+
+    type InAppFeedbackQuestionUiType =
+        | "DropDown"
+        | "MultiSelect"
+        | "Rating"
+        | "SingleSelect"
+        | "SingleSelectHorizontal";
     
-    const enum FeedbackHostPlatformType {
-        Windows = "Windows",
-        IOS = "iOS",
-        Android = "Android",
-        WacTaskPane = "WacTaskPane",
-        MacOS = "MacOS",
-        Web = "Web",
-        IFrame = "IFrame"
-    }
+    type InAppFeedbackScenarioType =
+        | "FeatureArea"
+        | "ResponsibleAI"
+        | "Experience"
+        | "ProductSatisfaction"
+        | "CrashImpact"
+        | "Custom"
+        | "AIThumbsDown"
+        | "AIThumbsUp"
+        | "AIError"
+        | "PromptSuggestion";
 
-    const enum FeedbackHostEventName {
-        SubmitClicked = "InAppFeedback_HostEvent_SubmitClicked",
-        BackClicked = "InAppFeedback_HostEvent_BackClicked"
-    }
+    type InAppFeedbackQuestionUiBehaviour =
+        | "QuestionNotRequired"
+        | "CommentNotRequired"
+        | "CommentRequiredWithLastOption";
 
-    const enum InitializationStatus {
-        Success = "Success",
-        Error = "Error",
-        Warning = "Warning"
-    }
+    type FeedbackAttachmentOrigin = "Application" | "User";
 
-    const enum InAppFeedbackQuestionUiType {
-        DropDown = "DropDown",
-        MultiSelect = "MultiSelect",
-        Rating = "Rating",
-        SingleSelect = "SingleSelect",
-        SingleSelectHorizontal = "SingleSelectHorizontal"
-    }
-    
-    const enum InAppFeedbackScenarioType {
-        FeatureArea = "FeatureArea",
-        ResponsibleAI = "ResponsibleAI",
-        Experience = "Experience",
-        ProductSatisfaction = "ProductSatisfaction",
-        CrashImpact = "CrashImpact",// CrashImpact is of type Survey
-        Custom = "Custom",
-        AIThumbsDown = "AIThumbsDown",
-        AIThumbsUp = "AIThumbsUp",
-        AIError = "AIError",
-        PromptSuggestion = "PromptSuggestion"
-    }
-
-    const enum InAppFeedbackQuestionUiBehaviour {
-        QuestionNotRequired = "QuestionNotRequired",
-        CommentNotRequired = "CommentNotRequired",
-        CommentRequiredWithLastOption = "CommentRequiredWithLastOption"
-    }
-
-    const enum FeedbackAttachmentOrigin {
-        Application = "Application",
-        User = "User"
-    }
-
-    const enum FeedbackEntryPoint {
-        Header = "Header",
-        Footer = "Footer",
-        Backstage = "Backstage",
-        HelpMenu = "Help Menu",
-        Canvas = "Canvas",
-        Chat = "Chat"
-    }
-    
+    type FeedbackEntryPoint =
+        | "Header"
+        | "Footer"
+        | "Backstage"
+        | "Help Menu"
+        | "Canvas"
+        | "Chat";
     interface InitializationResult {
         status: InitializationStatus;
         /**

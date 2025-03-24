@@ -111,4 +111,8 @@ namespace pxt.shell {
     export function setToolboxAnimation(): void {
         pxt.storage.setLocal("toolboxanimation", "1");
     }
+
+    export function hasHomeScreen(): boolean {
+        return !pxt.shell.isControllerMode() && !pxt.appTarget.appTheme.lockedEditor;
+    }
 }
