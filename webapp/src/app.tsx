@@ -2781,9 +2781,7 @@ export class ProjectView
     ///////////////////////////////////////////////////////////
 
     openHome() {
-        const hasHome = !pxt.shell.isControllerMode()
-            && !pxt.appTarget.appTheme.lockedEditor;
-        if (!hasHome) return;
+        if (!pxt.shell.hasHomeScreen()) return;
 
         this.unloadProjectAsync(true)
     }
@@ -3796,8 +3794,7 @@ export class ProjectView
             case SimState.Running:
                 return false; // already reunning
         }
-        const hasHome = !pxt.shell.isControllerMode();
-        if (!hasHome) return true;
+        if (!pxt.shell.hasHomeScreen()) return true;
         return !this.state.home;
     }
 
@@ -4636,7 +4633,9 @@ export class ProjectView
         });
     }
 
-    showExitAndSaveDialog() {
+    showExitAndSaveDialog() {;
+        if (!pxt.shell.hasHomeScreen()) return;
+
         this.setState({ debugging: false })
         if (this.isTutorial()) {
             pxt.tickEvent("tutorial.exit.home", { tutorial: this.state.header?.tutorial?.tutorial });

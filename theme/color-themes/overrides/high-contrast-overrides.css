@@ -9,7 +9,13 @@
     z-index: 1;
 }
 
-.barcharticon {
+/* 
+ * Inverted image colors
+ */
+.barcharticon,
+.blockly-ws-search-next-btn,
+.blockly-ws-search-previous-btn,
+.blockly-ws-search-close-btn {
     filter: invert(1);
 }
 

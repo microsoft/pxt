@@ -1,5 +1,13 @@
 # Microsoft MakeCode Blog
 
+## [MakeCode Arcade 2025 Update](/blog/arcade/update-mar-2025)
+
+March 24th, 2025 by [Jaqster](https://github.com/jaqster)
+
+Wow, I can't believe it's been 2 years since we shipped an update to MakeCode Arcade! We had over 800 open issues and many pending features...
+
+**[Continue reading this blog post](/blog/arcade/update-mar-2025)**
+
 ## [Display shield extension/simulator for the micro:bit](/blog/microbit/display-shield)
 
 February 3, 2025 by [Thomas Ball](https://github.com/thomasjball)
