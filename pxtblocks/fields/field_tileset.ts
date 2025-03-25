@@ -96,9 +96,10 @@ export class FieldTileset extends FieldImages implements FieldCustom {
     }
 
     getValue() {
+        const project = pxt.react.getTilemapProject();
         if (this.selectedOption_) {
             let tile = this.selectedOption_[2];
-            tile = pxt.react.getTilemapProject().lookupAsset(tile.type, tile.id);
+            tile = project.lookupAsset(tile.type, tile.id);
 
             if (!tile) {
                 // This shouldn't happen
@@ -109,12 +110,23 @@ export class FieldTileset extends FieldImages implements FieldCustom {
         }
         const v = super.getValue();
 
-        // If the user decompiled from JavaScript, then they might have passed an image literal
-        // instead of the qualified name of a tile. The decompiler strips out the "img" part
-        // so we need to add it back
-        if (typeof v === "string" && v.indexOf(".") === -1 && v.indexOf(`\``) === -1) {
-            return `img\`${v}\``
+        if (typeof v === "string") {
+            if (v.indexOf(".") !== -1) {
+                // Possibly a qualified name like myTiles.tile1
+                const tile = project.lookupAsset(pxt.AssetType.Tile, v);
+                if (tile) {
+                    return pxt.getTSReferenceForAsset(tile);
+                }
+            }
+
+            // If not a qualified name, it's either an image literal or an asset reference like assets.tile`name`
+            if (v.indexOf(`\``) === -1) {
+                // If the user decompiled from JavaScript, the decompiler strips out the "img" part
+                // so we need to add it back
+                return `img\`${v}\``
+            }
         }
+
         return v;
     }
 
