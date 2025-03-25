@@ -48,6 +48,8 @@ function registerCut() {
             return oldCut.preconditionFn(workspace);
         },
         callback(workspace, e, shortcut) {
+            clearSystemClipboard();
+
             const handler = getCopyPasteHandlers()?.cut;
 
             if (handler) {
@@ -169,6 +171,8 @@ function registerPasteContextMenu() {
 }
 
 const copy = (workspace: Blockly.WorkspaceSvg, e: Event, shortcut?: Blockly.ShortcutRegistry.KeyboardShortcut) => {
+    clearSystemClipboard();
+
     const handler = getCopyPasteHandlers()?.copy;
 
     if (handler) {
@@ -186,4 +190,15 @@ const paste = (workspace: Blockly.WorkspaceSvg, e: Event, shortcut?: Blockly.Sho
     }
 
     return oldPaste.callback(workspace, e, shortcut);
+}
+
+function clearSystemClipboard() {
+    // We do this when we copy otherwise paste will trigger a Blockly paste via
+    // the shortcut but also a paste event that's handled by the code that loads
+    // a file, which is unexpected when you've copied a block.
+    try {
+        navigator.clipboard.writeText("");
+    } catch (e) {
+        // Best effort, swallow permission errors.
+    }
 }
