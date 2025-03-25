@@ -58,7 +58,7 @@
     #monacoEditor .blocklyTreeRow,
     #monacoEditor .monacoDraggableBlock {
         &:focus, &:hover {
-            outline: 2px solid @selected !important;
+            outline: @editorFocusBorderSize solid @selected !important;
         }
     }
 
@@ -91,6 +91,16 @@
         }
     }
 
+    #editortoggle .active.item {
+        transition: none;
+        &:focus {
+            box-shadow: inset 0 0 0 6px @HCbackground !important;
+        }
+        >.icon {
+            color: @HCbackground !important;
+        }
+    }
+
     @media all and (pointer:coarse) { /* If touch screen */
         *[tabindex='0'],
         *[tabindex*='d1'],
@@ -102,7 +112,7 @@
         #monacoEditor .blocklyTreeRow,
         #monacoEditor .monacoDraggableBlock {
             &:focus, &:hover {
-                outline: 1px solid transparent !important;
+                outline: @editorFocusBorderSize solid transparent !important;
             }
         }
     }
@@ -356,7 +366,7 @@
 
         &:focus, &:hover {
             color: @HCtextColor !important;
-            border-color: @selected !important;
+            outline: @editorFocusBorderSize solid @selected;
             background: @HCbackground !important;
 
             i, span {
@@ -645,6 +655,10 @@
         border: 10px solid @HCtextColor !important;
         &:hover {
             border-color: darken(@HCtextColor, 10.0) !important;
+        }
+        &:focus {
+            outline: 3px solid @selected !important;
+            outline-offset: -15px;
         }
     }
 

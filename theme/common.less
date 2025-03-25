@@ -234,6 +234,10 @@ pre {
     }
 }
 
+.editor-sidebar .simtoolbar .ui.button:focus-visible {
+    outline: @editorFocusBorderSize solid var(--pxt-secondary-accent);
+}
+
 #downloadArea {
     margin: unset;
 
@@ -247,6 +251,13 @@ pre {
         background-color: var(--pxt-primary-background-hover) !important;
         color: var(--pxt-primary-foreground-hover) !important;
     }
+}
+
+#downloadArea .button:focus-visible,
+#editortools .button:focus-visible
+{
+    outline: @editorFocusBorderSize solid var(--pxt-primary-background);
+    outline-offset: 2px;
 }
 
 #editorToolbarArea {
@@ -275,7 +286,7 @@ pre {
         color: var(--pxt-primary-foreground) !important; // override !important in semantic ui
         border-radius: inherit;
 
-        &:hover, &:focus {
+        &:hover {
             background: var(--pxt-primary-background-hover) !important;
             color: var(--pxt-primary-foreground-hover) !important;
         }
@@ -373,7 +384,7 @@ div.simframe > iframe {
 .menubar .ui.menu.fixed .ui.item.editor-menuitem .item.link:hover {
     background: none;
 }
-.menubar .ui.menu.fixed .ui.item.editor-menuitem .item:not(.active) {
+.menubar .ui.menu.fixed .ui.item.editor-menuitem .item:not(.active) * {
     opacity: 0.8;
 }
 .menubar .ui.menu.inverted.fixed .ui.item.editor-menuitem .active.item {
@@ -461,6 +472,15 @@ div.simframe > iframe {
     .toggle.dropdown-attached {
         border-top-right-radius: 0!important;
         border-bottom-right-radius: 0!important;
+    }
+
+    .base-menuitem:focus-visible {
+        outline: 3px solid white;
+        outline-offset: -5px;
+    }
+
+    .base-menuitem.active:focus-visible {
+        outline-color: var(--pxt-target-stencil1);
     }
 }
 
@@ -708,6 +728,9 @@ div.simframe > iframe {
     left: -21px;
     top: calc(~'40% - 2.4rem');
     height: calc(~'20% + 0.8rem');
+    &:focus-visible {
+        outline: @editorFocusBorderSize solid  var(--pxt-primary-background);
+    }
 }
 
 .collapsedEditorTools #computertogglesim,
@@ -1295,6 +1318,11 @@ Field editors
         color: @sidbarActiveTabIconColor;
         background-color: @sidebarPrimaryColor;
     }
+}
+
+#serialPreview .label:focus {
+    outline: 3px solid var(--pxt-tertiary-background) !important;
+    outline-offset: -15px;
 }
 
 /*******************************

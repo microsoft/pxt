@@ -217,6 +217,12 @@
 /* Detail view */
 @homeSelectedCardBorderSize: @homeCardBorderSize*2;
 @homeHeaderBorderSize: 3px;
+
+/*-------------------
+   Editor
+--------------------*/
+@editorFocusBorderSize: 4px;
+
 /*-------------------
    Tutorial
 --------------------*/
