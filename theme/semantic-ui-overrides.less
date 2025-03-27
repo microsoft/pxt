@@ -54,10 +54,16 @@ body.pxt-theme-root {
         border-color: var(--pxt-neutral-stencil1);
     }
 
-    .ui.list > .item a.header {
-        color: var(--pxt-link) !important; // override !important in semantic ui
-        &:hover {
-            color: var(--pxt-link-hover) !important;
+    .ui.list > .item {
+        .description {
+            color: var(--pxt-neutral-alpha80);
+        }
+
+        a.header {
+            color: var(--pxt-link) !important; // override !important in semantic ui
+            &:hover {
+                color: var(--pxt-link-hover) !important;
+            }
         }
     }
 
@@ -212,9 +218,9 @@ body.pxt-theme-root {
 
         input {
             -webkit-tap-highlight-color: transparent;
-            background: var(--pxt-neutral-background2);
-            border: 1px solid var(--pxt-neutral-stencil2);
-            color: var(--pxt-neutral-foreground2);
+            background: var(--pxt-neutral-background1);
+            border: 1px solid var(--pxt-neutral-stencil1);
+            color: var(--pxt-neutral-foreground1);
 
             &::-webkit-input-placeholder,
             &::-moz-placeholder,
@@ -238,6 +244,13 @@ body.pxt-theme-root {
             background: var(--pxt-neutral-background1);
             color: var(--pxt-neutral-foreground1);
         }
+    }
+
+    .ui.segment {
+        background: var(--pxt-neutral-background1);
+        color: var(--pxt-neutral-foreground1);
+        border: 1px solid var(--pxt-neutral-stencil1);
+        box-shadow: 0 1px 2px 0 var(--pxt-neutral-alpha10);
     }
 
     .ui.raised.segment, .ui.raised.segments {

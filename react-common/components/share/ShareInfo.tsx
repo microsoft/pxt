@@ -16,7 +16,7 @@ import { pushNotificationMessage } from "../Notification";
 import { classList } from "../util";
 import { Link } from "../controls/Link";
 
-const vscodeDevUrl = "https://vscode.dev/makecode/"
+const vscodeDevUrl = "https://vscode.dev/edu/makecode/"
 
 export interface ShareInfoProps {
     projectName: string;
@@ -351,7 +351,10 @@ export const ShareInfo = (props: ShareInfoProps) => {
                             className="name-input"
                             initialValue={name}
                             placeholder={lf("Name your project")}
-                            onChange={setName} />
+                            onChange={setName}
+                            onBlur={setName}
+                            onEnterKey={setName}
+                            preserveValueOnBlur={true} />
                         {isLoggedIn && hasProjectBeenPersistentShared && <Checkbox
                             id="persistent-share-checkbox"
                             label={lf("Update existing share link for this project")}

@@ -78,7 +78,7 @@ Blockly.Css.register(`
 }
 
 .functioneditor i.argumentEditorTypeIcon {
-    color: var(--pxt-primary-foreground);
+    color: var(--pxt-target-foreground1);
     position: absolute;
     width: 24px;
     height: 24px;
