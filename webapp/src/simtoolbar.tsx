@@ -119,7 +119,6 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const fullscreen = run && !simOpts.hideFullscreen && !sandbox;
         const audio = run && targetTheme.hasAudio;
         const isHeadless = simOpts.headless;
-        const hideSim = simOpts.hideSim;
         const screenshot = !!targetTheme.simScreenshot;
         const screenshotClass = !!parentState.screenshoting ? "loading" : "";
         const debugBtnEnabled = !isStarting && !isSimulatorPending && inCodeEditor;
@@ -139,7 +138,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const showSerialEditorSection = isFullscreen && (simSerialActive || devSerialActive);
 
         return <aside className={"ui item grid centered simtoolbar" + (sandbox ? "" : " portrait ")} role="complementary" aria-label={lf("Simulator toolbar")}>
-            {!hideSim && <div className={`ui icon tiny buttons`} style={{ padding: "0" }}>
+            <div className={`ui icon tiny buttons`} style={{ padding: "0" }}>
                 {make && <sui.Button disabled={debugging} icon='configure' className="secondary" title={makeTooltip} onClick={this.openInstructions} />}
                 {run && !targetTheme.bigRunButton && <PlayButton parent={parent} simState={parentState.simState} debugging={parentState.debugging} />}
                 {fullscreen && <sui.Button key='fullscreenbtn' className="fullscreen-button tablet only hidefullscreen" icon="xicon fullscreen" title={fullscreenTooltip} onClick={this.toggleSimulatorFullscreen} />}
@@ -151,8 +150,8 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
                     icon={`${collapsed ? 'play' : 'stop'}`}
                     title={collapseIconTooltip} onClick={this.toggleSimulatorCollapse}
                 />}
-            </div>}
-            {!isHeadless && !hideSim && <div className={`ui icon tiny buttons computer only`} style={{ padding: "0" }}>
+            </div>
+            {!isHeadless && <div className={`ui icon tiny buttons computer only`} style={{ padding: "0" }}>
                 {audio && <MuteButton onClick={this.toggleMute} state={parent.state.mute} />}
                 {simOpts.keymap && <sui.Button key='keymap' className="keymap-button" icon="keyboard" title={keymapTooltip} onClick={parent.toggleKeymap} />}
             </div>}
@@ -170,7 +169,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
                     onClick={this.openDeviceSerial}
                 />}
             </div>}
-            {!isHeadless && !hideSim && <div className={`ui icon tiny buttons computer only`} style={{ padding: "0" }}>
+            {!isHeadless && <div className={`ui icon tiny buttons computer only`} style={{ padding: "0" }}>
                 {screenshot && <sui.Button disabled={!isRunning} key='screenshotbtn' className={`screenshot-button ${screenshotClass}`} icon={`icon camera left`} title={screenshotTooltip} onClick={this.takeScreenshot} />}
                 {fullscreen && <sui.Button key='fullscreenbtn' className={`fullscreen-button`} icon={`xicon ${isFullscreen ? 'fullscreencollapse' : 'fullscreen'}`} title={fullscreenTooltip} onClick={this.toggleSimulatorFullscreen} />}
             </div>}

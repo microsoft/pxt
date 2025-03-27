@@ -216,7 +216,6 @@ Each target has one board (plus optional parts).
         autoRun?: boolean;          // automatically run program after a change to its code
         stopOnChange?: boolean;     // stop execution when user changes code
         headless?: boolean;         // whether simulator should still run while collapsed
-        hideSim?: boolean;          // whether the simulator should be rendered
         
         // buttons and parts
         hideRestart?: boolean;      // hide the restart button 
