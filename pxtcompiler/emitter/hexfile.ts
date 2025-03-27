@@ -346,7 +346,6 @@ namespace ts.pxtc {
                             let step = opts.shortPointers ? 4 : 8
                             let hexb = swapBytes(n[2].slice(0, step))
                             ctx.topFlashAddr = parseInt(hexb, 16)
-                            console.log("GOT topFlashAddress =", ctx.topFlashAddr)
                         }
                     }
                     let newAddr = parseInt(upperAddr + m[1], 16)
@@ -358,7 +357,6 @@ namespace ts.pxtc {
                     if (opts.flashUsableEnd) {
                         let realUsableEnd = getFlashUsableEnd(target,cres)
                         if (newAddr >= realUsableEnd) {
-                            console.log("OVER LIMIT")
                             hitEnd()
                         }
                     }
