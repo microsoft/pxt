@@ -1595,7 +1595,6 @@ function buildFolderAndBrowserifyAsync(p: string, optional?: boolean, outputName
     }).then(() => {
         const browserify = require('browserify');
         let b = browserify();
-
         nodeutil.allFiles(`built/${outputName}`).forEach((f) => {
             if (f.match(/\.js$/)) {
                 b.add(f);
