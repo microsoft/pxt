@@ -123,7 +123,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
 
     protected showSimulator = () => {
         this.props.showMiniSim(false);
-        simulator.driver?.focus();
+        simulator.driver.focus();
     }
 
     protected handleSimSerialClick = () => {

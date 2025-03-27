@@ -290,7 +290,7 @@ export class ProjectView
                         slot: 1,
                         connected: true,
                     };
-                    simulator.driver?.postMessage(playerOneConnectedMsg);
+                    simulator.driver.postMessage(playerOneConnectedMsg);
                 }
             }
         }, false);
@@ -1073,7 +1073,7 @@ export class ProjectView
                 this.editor?.onExceptionDetected(brk)
             },
             highlightStatement: (stmt, brk) => {
-                if (this.state.debugging && !simulator.driver?.areBreakpointsSet() && brk && !brk.exceptionMessage) {
+                if (this.state.debugging && !simulator.driver.areBreakpointsSet() && brk && !brk.exceptionMessage) {
                     // The simulator has paused on the first statement, so we need to send the breakpoints
                     // and then step to get to the actual first breakpoint
                     let breakpoints: number[];
@@ -1085,7 +1085,7 @@ export class ProjectView
                     }
 
                     breakpoints = breakpoints || [];
-                    simulator.driver?.setBreakpoints(breakpoints);
+                    simulator.driver.setBreakpoints(breakpoints);
 
                     if (breakpoints.indexOf(brk.breakpointId) === -1) {
                         if (!this.state.debugFirstRun) {
@@ -1670,7 +1670,7 @@ export class ProjectView
         pxt.debug(`loading ${h.id} (pxt v${h.targetVersion})`);
         this.stopSimulator(true);
         if (pxt.appTarget.simulator && pxt.appTarget.simulator.aspectRatio)
-            simulator.driver?.preload(pxt.appTarget.simulator.aspectRatio);
+            simulator.driver.preload(pxt.appTarget.simulator.aspectRatio);
         this.clearSerial()
         this.firstRun = true
         // clear caches in all editors -> compiler.newProjectAsync
@@ -2688,7 +2688,7 @@ export class ProjectView
 
         // make sure simulator is ready
         this.setState({ screenshoting: true });
-        simulator.driver?.postMessage({ type: "screenshot" } as pxsim.SimulatorScreenshotMessage);
+        simulator.driver.postMessage({ type: "screenshot" } as pxsim.SimulatorScreenshotMessage);
 
         return Util.promiseTimeout(1000, this.requestScreenshotPromise = new Promise<string>((resolve, reject) => {
             this.pushScreenshotHandler(msg => resolve(pxt.BrowserUtils.imageDataToPNG(msg.data, 3)));
@@ -3574,7 +3574,7 @@ export class ProjectView
             default:
                 this.maybeShowPackageErrors(true);
                 this.startSimulator(opts);
-                if (opts && opts.clickTrigger) simulator.driver?.focus();
+                if (opts && opts.clickTrigger) simulator.driver.focus();
                 break;
         }
     }
@@ -3662,7 +3662,7 @@ export class ProjectView
         }
         if (!enabled) {
             document.addEventListener('keydown', this.closeOnEscape);
-            simulator.driver?.focus();
+            simulator.driver.focus();
         } else {
             document.removeEventListener('keydown', this.closeOnEscape);
         }
@@ -3785,9 +3785,9 @@ export class ProjectView
             || this.debugOptionsChanged()) {
             this.startSimulator();
         } else {
-            simulator.driver?.restart(); // fast restart
+            simulator.driver.restart(); // fast restart
         }
-        simulator.driver?.focus()
+        simulator.driver.focus()
         if (!isDebug) {
             this.blocksEditor.clearBreakpoints();
         }
@@ -3810,7 +3810,7 @@ export class ProjectView
     debugOptionsChanged() {
         const { debugging, tracing } = this.state;
 
-        return (!!debugging != simulator.driver?.isDebug()) || (!!tracing != simulator.driver?.isTracing())
+        return (!!debugging != simulator.driver.isDebug()) || (!!tracing != simulator.driver.isTracing())
     }
 
     stopSimulator(unload?: boolean, opts?: pxt.editor.SimulatorStartOptions) {
@@ -3823,7 +3823,7 @@ export class ProjectView
             this.runToken = null
         }
 
-        if (this.isSimulatorRunning() || unload && simulator.driver?.state !== pxsim.SimulatorState.Unloaded) {
+        if (this.isSimulatorRunning() || unload && simulator.driver.state !== pxsim.SimulatorState.Unloaded) {
             simulator.stop(unload);
         }
 
@@ -3976,7 +3976,7 @@ export class ProjectView
                             this.textEditor.setBreakpointsMap(resp.breakpoints, resp.procCallLocations);
                             if (!cancellationToken.isCancelled()) {
                                 // running state is set by the simulator once the iframe is loaded
-                                this.setState({ showParts: simulator.driver?.hasParts() })
+                                this.setState({ showParts: simulator.driver.hasParts() })
                             } else {
                                 pxt.debug(`sim: cancelled 2`)
                                 simulator.stop();
@@ -4008,7 +4008,7 @@ export class ProjectView
         const w = window.open(url, pxt.appTarget.id + hd.id);
         if (w) {
             pxt.log(`dependent editor window registered`)
-            simulator.driver?.registerDependentEditor(w);
+            simulator.driver.registerDependentEditor(w);
         }
     }
 
@@ -4031,15 +4031,15 @@ export class ProjectView
     hwDebug() {
         pxt.tickEvent("menu.debug.hw")
         let start = Promise.resolve()
-        if (this.state.simState != SimState.Running || !simulator.driver?.isDebug())
+        if (this.state.simState != SimState.Running || !simulator.driver.isDebug())
             start = this.runSimulator({ debug: true })
         return start.then(() => {
-            simulator.driver?.setHwDebugger({
+            simulator.driver.setHwDebugger({
                 postMessage: (msg) => {
                     pxt.HWDBG.handleMessage(msg as pxsim.DebuggerMessage)
                 }
             })
-            pxt.HWDBG.postMessage = (msg) => simulator.driver?.handleHwDebuggerMsg(msg)
+            pxt.HWDBG.postMessage = (msg) => simulator.driver.handleHwDebuggerMsg(msg)
             return Promise.all([
                 compiler.compileAsync({ debug: true, native: true }),
                 pxt.packetio.initAsync()
@@ -6276,7 +6276,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         ipcRenderer.on('responseFromApp', (event: any, message: any) => {
             // IPC renderer sends a string, we need to convert to an object to send to the simulator iframe
             try {
-                simulator.driver?.postMessage(JSON.parse(message));
+                simulator.driver.postMessage(JSON.parse(message));
             } catch (e) {
 
             }
