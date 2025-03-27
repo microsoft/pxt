@@ -13,7 +13,7 @@ import Cloud = pxt.Cloud;
 import Util = pxt.Util;
 import { TimeMachine } from "./timeMachine";
 import { fireClickOnEnter } from "./util";
-import { pairAsync } from "./cmds";
+import { pairUiAsync } from "./cmds";
 import { invalidate } from "./data";
 
 import IProjectView = pxt.editor.IProjectView;
@@ -752,8 +752,8 @@ export function renderBrowserDownloadInstructions(saveonly?: boolean, redeploy?:
 
     const onPairClicked = async () => {
         core.hideDialog();
-        const successfulPairing = await pairAsync(true);
-        if (redeploy && successfulPairing)
+        const pairingStatus = await pairUiAsync();
+        if (redeploy && pairingStatus === pxt.commands.WebUSBPairResult.Success)
             await redeploy();
     }
 

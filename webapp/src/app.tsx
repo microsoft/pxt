@@ -3223,8 +3223,8 @@ export class ProjectView
             );
     }
 
-    pairAsync(): Promise<boolean> {
-        return cmds.pairAsync();
+    pairUiAsync(): Promise<pxt.commands.WebUSBPairResult> {
+        return cmds.pairUiAsync();
     }
 
     ///////////////////////////////////////////////////////////
@@ -3266,7 +3266,7 @@ export class ProjectView
         const variants = pxt.getHwVariants()
         if (variants.length == 0)
             return false
-        let pairAsync = () => cmds.pairAsync()
+        let pairAsync = () => cmds.pairUiAsync()
             .then(() => {
                 this.checkForHwVariant()
             }, err => {

@@ -277,7 +277,7 @@ export async function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.comma
             // TODO: slightly different flow vs implicit, as this is in a 'half paired' state?
             // Ideally, we should be including this in the pairing webusb.tsx pairing dialog flow
             // directly instead of deferring it all the way here.
-            await pairAsync();
+            await pairUiAsync();
             return hidDeployCoreAsync(resp, d);
         } else if (e.message === "timeout") {
             pxt.tickEvent("hid.flash.timeout");
@@ -512,7 +512,7 @@ export async function maybeReconnectAsync(pairIfDeviceNotFound = false, skipIfCo
                 return true;
             } catch (e) {
                 if (e.type == "devicenotfound") {
-                    return !!pairIfDeviceNotFound && pairAsync();
+                    return !!pairIfDeviceNotFound && pairUiAsync();
                 } else if (e.type == "inittimeout") {
                     pxt.tickEvent("hid.flash.inittimeout");
                     await showReconnectDeviceInstructionsAsync(core.confirmAsync);
@@ -522,11 +522,12 @@ export async function maybeReconnectAsync(pairIfDeviceNotFound = false, skipIfCo
         } finally {
             reconnectPromise = undefined;
         }
-    })();
+    })().then(res => res === pxt.commands.WebUSBPairResult.Success);
     return reconnectPromise;
 }
 
-export async function pairAsync(implicitlyCalled?: boolean): Promise<boolean> {
+
+export async function pairUiAsync(implicitlyCalled?: boolean): Promise<pxt.commands.WebUSBPairResult> {
     pxt.tickEvent("cmds.pair")
     const res = await pxt.commands.webUsbPairDialogAsync(
         pxt.usb.pairAsync,
@@ -538,19 +539,15 @@ export async function pairAsync(implicitlyCalled?: boolean): Promise<boolean> {
         case pxt.commands.WebUSBPairResult.Success:
             try {
                 await maybeReconnectAsync(false, true);
-                return true;
             } catch (e) {
                 // Device
                 core.infoNotification(lf("Oops, connection failed."));
-                return false;
+                return pxt.commands.WebUSBPairResult.Failed;
             }
         case pxt.commands.WebUSBPairResult.Failed:
             core.infoNotification(lf("Oops, no device was paired."));
-            return false;
-        case pxt.commands.WebUSBPairResult.UserRejected:
-            // User exited pair flow intentionally
-            return false;
     }
+    return res;
 
 }
 

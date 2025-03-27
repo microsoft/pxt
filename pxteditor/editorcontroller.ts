@@ -258,7 +258,7 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
                                     .then(() => projectView.printCode());
                             }
                             case "pair": {
-                                return projectView.pairAsync().then(() => {});
+                                return projectView.pairUiAsync().then(() => {});
                             }
                             case "info": {
                                 return Promise.resolve()

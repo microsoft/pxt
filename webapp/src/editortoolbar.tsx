@@ -48,10 +48,10 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         this.props.parent.updateHeaderName(name);
     }
 
-    compile(view?: string) {
+    compile(view?: string, saveOnly?: boolean) {
         this.setState({ compileState: "compiling" });
         pxt.tickEvent("editortools.download", { view: view, collapsed: this.getCollapsedState() }, { interactiveConsent: true });
-        this.props.parent.compile();
+        this.props.parent.compile(saveOnly);
     }
 
     saveFile(view?: string) {
@@ -187,13 +187,18 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
 
     protected onDownloadButtonClick = async () => {
         pxt.tickEvent("editortools.downloadbutton", { collapsed: this.getCollapsedState() }, { interactiveConsent: true });
+        let pairResult = pxt.commands.WebUSBPairResult.Success;
         if (this.shouldShowPairingDialogOnDownload()
             && !pxt.packetio.isConnected()
             && !pxt.packetio.isConnecting()
         ) {
-            await cmds.pairAsync(true);
+            pairResult = await cmds.pairUiAsync(true);
         }
-        this.compile();
+        if (pairResult === pxt.commands.WebUSBPairResult.Success) {
+            this.compile(undefined, false);
+        } else if (pairResult === pxt.commands.WebUSBPairResult.DownloadOnly) {
+            this.compile(undefined, true);
+        }
     }
 
     protected onFileDownloadClick = async () => {
@@ -205,7 +210,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
 
     protected onPairClick = () => {
         pxt.tickEvent("editortools.pair", undefined, { interactiveConsent: true });
-        this.props.parent.pairAsync();
+        this.props.parent.pairUiAsync();
     }
 
     protected onCannotPairClick = async () => {

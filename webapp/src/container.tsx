@@ -241,7 +241,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
 
     pair() {
         pxt.tickEvent("menu.pair");
-        this.props.parent.pairAsync();
+        this.props.parent.pairUiAsync();
     }
 
     pairBluetooth() {
