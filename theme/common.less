@@ -235,7 +235,7 @@ pre {
 }
 
 .editor-sidebar .simtoolbar .ui.button:focus-visible {
-    outline: @editorFocusBorderSize solid var(--pxt-secondary-accent);
+    outline: @editorFocusBorderSize solid var(--pxt-focus-border);
 }
 
 #downloadArea {
@@ -256,7 +256,7 @@ pre {
 #downloadArea .button:focus-visible,
 #editortools .button:focus-visible
 {
-    outline: @editorFocusBorderSize solid var(--pxt-primary-background);
+    outline: @editorFocusBorderSize solid var(--pxt-focus-border);
     outline-offset: 2px;
 }
 
@@ -713,6 +713,10 @@ div.simframe > iframe {
     &:focus {
       opacity: 1;
     }
+
+    &:focus-visible {
+        outline: @editorFocusBorderSize solid  var(--pxt-focus-border);
+    }
 }
 #computertogglesim,
 #sidedocstoggle {
@@ -728,9 +732,6 @@ div.simframe > iframe {
     left: -21px;
     top: calc(~'40% - 2.4rem');
     height: calc(~'20% + 0.8rem');
-    &:focus-visible {
-        outline: @editorFocusBorderSize solid  var(--pxt-primary-background);
-    }
 }
 
 .collapsedEditorTools #computertogglesim,
@@ -1321,7 +1322,7 @@ Field editors
 }
 
 #serialPreview .label:focus {
-    outline: 3px solid var(--pxt-tertiary-background) !important;
+    outline: 3px solid var(--pxt-focus-border) !important;
     outline-offset: -15px;
 }
 
