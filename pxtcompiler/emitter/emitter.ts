@@ -3507,7 +3507,10 @@ ${lbl}: .short 0xffff
                 return ev;
             if (/^0x[A-Fa-f\d]{2,8}$/.test(ev))
                 return ev;
-            //U.userError("enumval only support number literals")
+            if (!opts.unfetteredInitializers) {
+                U.userError("enumval only support number literals")
+                return "0";
+            }
             return ev;
         }
 
