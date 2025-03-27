@@ -986,7 +986,7 @@ export class ProjectView
         this.saveFileAsync(); // don't wait for saving to backend store to finish before typechecking
         const state = this.editor.snapshotState()
         compiler.typecheckAsync()
-            .then(async cr => {
+            .then(cr => {
                 const end = Util.now();
                 // if typecheck is slow (>10s)
                 // and it happened more than 2 times,
@@ -1669,10 +1669,12 @@ export class ProjectView
     private async internalLoadHeaderAsync(h: pxt.workspace.Header, editorState?: pxt.editor.EditorState): Promise<void> {
         pxt.debug(`loading ${h.id} (pxt v${h.targetVersion})`);
         this.stopSimulator(true);
-        if (pxt.appTarget.simulator && pxt.appTarget.simulator.aspectRatio)
+        if (pxt.appTarget.simulator && pxt.appTarget.simulator.aspectRatio) {
             simulator.driver.preload(pxt.appTarget.simulator.aspectRatio);
-        this.clearSerial()
-        this.firstRun = true
+        }
+
+        this.clearSerial();
+        this.firstRun = true;
         // clear caches in all editors -> compiler.newProjectAsync
         this.allEditors.forEach(editor => editor.clearCaches());
         // always start simulator once at least if autoRun is enabled
@@ -2506,7 +2508,7 @@ export class ProjectView
             this.hintManager.clearViewedHints();
 
             return this.createProjectAsync({
-                name: lf("untitled"),
+                name: "untitled",
                 tutorial: options,
                 preferredEditor: editor,
                 dependencies
