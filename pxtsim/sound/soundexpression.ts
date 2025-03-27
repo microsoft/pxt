@@ -587,7 +587,7 @@ namespace pxsim.codal.music {
     }
 
     function delayAsync(millis: number): Promise<void> {
-        return new Promise(resolve => timers.setTimeout(resolve, millis));
+        return new Promise(resolve => setTimeout(resolve, millis));
     }
 
     function constrain(val: number, min: number, max: number) {

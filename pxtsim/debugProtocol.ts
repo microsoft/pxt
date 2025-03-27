@@ -350,8 +350,8 @@ namespace pxsim.protocol {
             if (cb) {
                 this._pendingRequests[request.seq] = cb;
 
-                const timer = timers.setTimeout(() => {
-                    timers.clearTimeout(timer);
+                const timer = setTimeout(() => {
+                    clearTimeout(timer);
                     const clb = this._pendingRequests[request.seq];
                     if (clb) {
                         delete this._pendingRequests[request.seq];

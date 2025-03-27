@@ -11,34 +11,6 @@ namespace pxsim {
         MESSAGE_BUS_LISTENER_IMMEDIATE = 192
     }
 
-    export namespace timers {
-        function globalSpace(): any {
-            try { return global; } catch { }
-            try { return window; } catch { }
-            throw new Error("no global object found");
-        }
-        export let setTimeoutFn: (handler: () => any, timeout?: number) => any;
-        export let setIntervalFn: (handler: () => any, timeout?: number) => any;
-        export let clearTimeoutFn: (id: any) => void;
-        export let clearIntervalFn: (id: any) => void;
-        export function setTimeout(handler: () => any, timeout?: number): any {
-            if (!setTimeoutFn) setTimeoutFn = globalSpace().setTimeout;
-            return setTimeoutFn(handler, timeout);
-        }
-        export function setInterval(handler: () => any, timeout?: number): any {
-            if (!setIntervalFn) setIntervalFn = globalSpace().setInterval;
-            return setIntervalFn(handler, timeout);
-        }
-        export function clearTimeout(id: any): void {
-            if (!clearTimeoutFn) clearTimeoutFn = globalSpace().clearTimeout;
-            clearTimeoutFn(id);
-        }
-        export function clearInterval(id: any): void {
-            if (!clearIntervalFn) clearIntervalFn = globalSpace().clearInterval;
-            clearIntervalFn(id);
-        }
-    }
-
     export namespace U {
         // Keep these helpers unified with pxtlib/browserutils.ts
         export function containsClass(el: SVGElement | HTMLElement, classes: string) {
@@ -150,7 +122,7 @@ namespace pxsim {
         export async function delay<T>(duration: number, value?: T): Promise<T> {
             // eslint-disable-next-line
             const output = await value;
-            await new Promise<void>(resolve => timers.setTimeout(() => resolve(), duration));
+            await new Promise<void>(resolve => setTimeout(() => resolve(), duration));
             return output;
         }
 
@@ -167,7 +139,7 @@ namespace pxsim {
                     if (!immediate) func.apply(context, args);
                 };
                 let callNow = immediate && !timeout;
-                if (!timeout) timeout = timers.setTimeout(later, wait);
+                if (!timeout) timeout = setTimeout(later, wait);
                 if (callNow) func.apply(context, args);
             };
         }
@@ -214,9 +186,9 @@ namespace pxsim {
 
             const timeoutPromise: Promise<T> = new Promise((resolve, reject) => {
                 res = resolve;
-                timeoutId = timers.setTimeout(() => {
+                timeoutId = setTimeout(() => {
                     res = undefined;
-                    timers.clearTimeout(timeoutId);
+                    clearTimeout(timeoutId);
                     reject(msg || `Promise timed out after ${ms}ms`);
                 }, ms);
             });
@@ -225,7 +197,7 @@ namespace pxsim {
                 .then(output => {
                     // clear any dangling timeout
                     if (res) {
-                        timers.clearTimeout(timeoutId);
+                        clearTimeout(timeoutId);
                         res();
                     }
                     return <T>output;
@@ -520,7 +492,7 @@ namespace pxsim {
         private debouncedPostAll = () => {
             const nowtime = Date.now();
             if (nowtime - this.lastSerialTime > MIN_MESSAGE_WAIT_MS) {
-                timers.clearTimeout(this.serialTimeout);
+                clearTimeout(this.serialTimeout);
                 if (this.messages.length) {
                     Runtime.postMessage(<any>{
                         type: 'bulkserial',
@@ -533,7 +505,7 @@ namespace pxsim {
                 }
             }
             else {
-                this.serialTimeout = timers.setTimeout(this.debouncedPostAll, 50);
+                this.serialTimeout = setTimeout(this.debouncedPostAll, 50);
             }
         }
     }
@@ -1122,7 +1094,7 @@ namespace pxsim {
 
         restart() {
             this.kill();
-            timers.setTimeout(() =>
+            setTimeout(() =>
                 pxsim.Runtime.postMessage(<pxsim.SimulatorCommandMessage>{
                     type: "simulator",
                     command: "restart"
@@ -1147,14 +1119,14 @@ namespace pxsim {
             if (this.recording || !this.running) return;
 
             this.recording = true;
-            this.recordingTimer = timers.setInterval(() => this.postFrame(), 66);
+            this.recordingTimer = setInterval(() => this.postFrame(), 66);
             this.recordingLastImageData = undefined;
             this.recordingWidth = width;
         }
 
         stopRecording() {
             if (!this.recording) return;
-            if (this.recordingTimer) timers.clearInterval(this.recordingTimer);
+            if (this.recordingTimer) clearInterval(this.recordingTimer);
             this.recording = false;
             this.recordingTimer = 0;
             this.recordingLastImageData = undefined;
@@ -1316,7 +1288,7 @@ namespace pxsim {
                     lastYield = now
                     s.pc = pc;
                     s.r0 = r0;
-                    timers.setTimeout(loopForSchedule(s), yieldDelay)
+                    setTimeout(loopForSchedule(s), yieldDelay)
                     return true
                 }
                 return false
@@ -1656,7 +1628,7 @@ namespace pxsim {
             }
 
             // eslint-disable-next-line
-            const entryPoint = msg.entryPointFn ? msg.entryPointFn(evalIface) : msg.code && eval(msg.code)(evalIface);
+            const entryPoint = msg.code && eval(msg.code)(evalIface);
 
             this.run = (cb) => topCall(entryPoint, cb)
             this.getResume = () => {
@@ -1740,7 +1712,7 @@ namespace pxsim {
         startIdle() {
             // schedules handlers to run every 20ms
             if (this.idleTimer === undefined) {
-                this.idleTimer = timers.setInterval(() => {
+                this.idleTimer = setInterval(() => {
                     if (!this.running || this.pausedOnBreakpoint) return;
                     const bus = this.board.bus;
                     if (bus)
@@ -1751,7 +1723,7 @@ namespace pxsim {
 
         stopIdle() {
             if (this.idleTimer !== undefined) {
-                timers.clearInterval(this.idleTimer);
+                clearInterval(this.idleTimer);
                 this.idleTimer = undefined;
             }
         }
@@ -1772,7 +1744,7 @@ namespace pxsim {
                     this.timeoutsScheduled.splice(idx, 1)
                 fn();
             }
-            to.id = timers.setTimeout(removeAndExecute, timeout);
+            to.id = setTimeout(removeAndExecute, timeout);
             this.timeoutsScheduled.push(to);
             return to.id;
         }
@@ -1781,7 +1753,7 @@ namespace pxsim {
         pauseScheduled() {
             this.pausedOnBreakpoint = true;
             this.timeoutsScheduled.forEach(ts => {
-                timers.clearTimeout(ts.id);
+                clearTimeout(ts.id);
                 let elapsed = U.now() - ts.timestampCall;
                 let timeRemaining = ts.totalRuntime - elapsed;
 
@@ -1823,7 +1795,7 @@ namespace pxsim {
             if (this.thumbnailRecordingIntervalRef || this.lastThumbnailTime && this.lastInteractionTime - this.lastThumbnailTime < 1000) return;
             this.thumbnailFrames = [];
 
-            this.thumbnailRecordingIntervalRef = timers.setInterval(async () => {
+            this.thumbnailRecordingIntervalRef = setInterval(async () => {
                 const imageData = await this.board.screenshotAsync();
 
                 if (this.thumbnailFrames.length && isImageDataEqual(imageData, this.thumbnailFrames[this.thumbnailFrames.length - 1])) {
@@ -1833,7 +1805,7 @@ namespace pxsim {
                 this.thumbnailFrames.push(imageData);
 
                 if (Date.now() - this.lastInteractionTime > 10000 || this.thumbnailFrames.length > 30) {
-                    timers.clearInterval(this.thumbnailRecordingIntervalRef);
+                    clearInterval(this.thumbnailRecordingIntervalRef);
                     this.thumbnailRecordingIntervalRef = undefined;
 
                     this.lastThumbnailTime = Date.now();

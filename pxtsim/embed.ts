@@ -14,7 +14,6 @@ namespace pxsim {
         partDefinitions?: Map<PartDefinition>
         fnArgs?: any;
         code: string;
-        entryPointFn?: (iface: any) => void;
         mute?: boolean;
         highContrast?: boolean;
         light?: boolean;
@@ -348,7 +347,7 @@ namespace pxsim {
         }
 
         if (delay)
-            timers.setTimeout(p, delay);
+            setTimeout(p, delay);
         else p();
     }
 
