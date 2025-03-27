@@ -3538,7 +3538,13 @@ ${lbl}: .short 0xffff
                 if (ev == null) {
                     info.constantFolded = constantFold(en.initializer)
                 } else {
-                    info.constantFolded = { val: ev }
+                    if (!opts.unfetteredInitializers) {
+                        const v = parseInt(ev)
+                        if (!isNaN(v))
+                            info.constantFolded = { val: v }
+                    } else {
+                        info.constantFolded = { val: ev }
+                    }
                 }
             } else if (decl.kind == SK.PropertyDeclaration && isStatic(decl) && isReadOnly(decl)) {
                 const pd = decl as PropertyDeclaration
