@@ -991,8 +991,8 @@ namespace ts.pxtc {
                     optstarget = enabled.target
                 }
             }
-
-            hexfile.setupFor(optstarget, extinfo || emptyExtInfo());
+             
+            hexfile.setupFor(optstarget, extinfo || emptyExtInfo(), res);
             hexfile.setupInlineAssembly(opts);
         }
 

@@ -170,7 +170,7 @@ namespace ts.pxtc {
         // see PXT_EXPORTData
         const pointerListMarker = "0108010842424242010801083ed8e98d"
 
-        export function setupFor(opts: CompileTarget, extInfo: ExtensionInfo) {
+        export function setupFor(opts: CompileTarget, extInfo: ExtensionInfo, cres: CompileResult) {
             ctx = cachedCtxs.find(c => c.sha == extInfo.sha)
 
             if (ctx)
@@ -340,12 +340,28 @@ namespace ts.pxtc {
                 }
                 m = /^:..(....)00/.exec(hexlines[i])
                 if (m) {
+                    if (ctx.jmpStartIdx >= 0 && ctx.jmpStartIdx + 1 == i) {
+                        let n = /^:..(....)00(.{4,})/.exec(hexlines[i]);
+                        if (n) {
+                            let step = opts.shortPointers ? 4 : 8
+                            let hexb = swapBytes(n[2].slice(0, step))
+                            ctx.topFlashAddr = parseInt(hexb, 16)
+                            console.log("GOT topFlashAddress =", ctx.topFlashAddr)
+                        }
+                    }
                     let newAddr = parseInt(upperAddr + m[1], 16)
-                    // TODO: UGH - we need to get flashUsableEnd computed before this
-                    if (!opts.flashUsableEnd && lastAddr && newAddr - lastAddr > 64 * 1024)
+
+                    if (!opts.flashUsableEnd && lastAddr && newAddr - lastAddr > 64 * 1024) {
+                        // the above check is sort of odd - not clear why this case is here
                         hitEnd()
-                    if (opts.flashUsableEnd && newAddr >= opts.flashUsableEnd)
-                        hitEnd()
+                    }
+                    if (opts.flashUsableEnd) {
+                        let realUsableEnd = getFlashUsableEnd(target,cres)
+                        if (newAddr >= realUsableEnd) {
+                            console.log("OVER LIMIT")
+                            hitEnd()
+                        }
+                    }
                     lastIdx = i
                     lastAddr = newAddr
                 }
@@ -378,9 +394,8 @@ namespace ts.pxtc {
                 if (!m) continue;
 
                 if (i === ctx.jmpStartIdx + 1) {
+                    // skip over the flash top address
                     let step = opts.shortPointers ? 4 : 8
-                    let hexb = swapBytes(m[2].slice(0, step))
-                    ctx.topFlashAddr = parseInt(hexb, 16)
                     readPointers(m[2].slice(step))
                 } else {
                     readPointers(m[2])
@@ -1035,21 +1050,26 @@ ${hexfile.hexPrelude()}
         }
     }
 
-    let peepDbg = false
-    export function assemble(target: CompileTarget, bin: Binary, src: string, cres: CompileResult) {
-        let b = mkProcessorFile(target)
-        b.emit(src);
-
+    // compute the real top of flash
+    export function getFlashUsableEnd(target: CompileTarget, cres: CompileResult) {
+        // check if settings size is set
         let settingsSizeDefault = cres.configData.find(ce => ce.name === "SETTINGS_SIZE_DEFL")
         let settingsSize = cres.configData.find(ce => ce.name === "SETTINGS_SIZE")
         let actualSettingsSize = settingsSize ? settingsSize.value : settingsSizeDefault ? settingsSizeDefault.value : 0
 
         const topFlashAddr = hexfile.getTopFlashAddress()
-        let flashUsableEnd = (topFlashAddr > 0 ? topFlashAddr : target.flashUsableEnd ? target.flashUsableEnd : target.flashEnd) - actualSettingsSize
+        return (topFlashAddr > 0 ? topFlashAddr : target.flashUsableEnd ? target.flashUsableEnd : target.flashEnd) - actualSettingsSize
+    }
+
+    let peepDbg = false
+    export function assemble(target: CompileTarget, bin: Binary, src: string, cres: CompileResult) {
+        let b = mkProcessorFile(target)
+        b.emit(src);
+
 
         src = `; Interface tables: ${bin.itFullEntries}/${bin.itEntries} (${Math.round(100 * bin.itFullEntries / bin.itEntries)}%)\n` +
             `; Virtual methods: ${bin.numVirtMethods} / ${bin.numMethods}\n` +
-            b.getSource(!peepDbg, bin.numStmts, flashUsableEnd);
+            b.getSource(!peepDbg, bin.numStmts, getFlashUsableEnd(target, cres));
 
         throwAssemblerErrors(b)
 
@@ -1262,7 +1282,7 @@ __flash_checksums:
         const opts0 = U.flatClone(opts)
         // normally, this would already have been done, but if the main variant
         // is disabled, another variant may be set up
-        hexfile.setupFor(opts.target, opts.extinfo || emptyExtInfo())
+        hexfile.setupFor(opts.target, opts.extinfo || emptyExtInfo(), cres)
         assembleAndPatch(src, bin, opts, cres)
         if (!cres.builtVariants) {
             cres.builtVariants = [];
@@ -1277,12 +1297,12 @@ __flash_checksums:
                     localOpts.extinfo = other.extinfo
                     other.target.isNative = true
                     localOpts.target = other.target
-                    hexfile.setupFor(localOpts.target, localOpts.extinfo)
+                    hexfile.setupFor(localOpts.target, localOpts.extinfo, cres)
                     assembleAndPatch(src, bin, localOpts, cres)
                     cres.builtVariants.push(other.extinfo?.appVariant);
                 }
             } finally {
-                hexfile.setupFor(opts0.target, opts0.extinfo)
+                hexfile.setupFor(opts0.target, opts0.extinfo, cres)
             }
     }
 

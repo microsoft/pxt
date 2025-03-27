@@ -401,6 +401,7 @@ namespace pxt.webBluetooth {
             this.hex = hex;
             const uf2 = ts.pxtc.UF2.newBlockFile();
             ts.pxtc.UF2.writeHex(uf2, this.hex.split(/\r?\n/));
+            // TODO: update this to get correct usable end
             const flashUsableEnd = pxt.appTarget.compile.flashUsableEnd;
             this.bin = ts.pxtc.UF2.toBin(U.stringToUint8Array(ts.pxtc.UF2.serializeFile(uf2)), flashUsableEnd).buf;
             this.debug(`bin bytes ${this.bin.length}`)
