@@ -324,7 +324,7 @@ const HERO_BANNER_DELAY = 9000; // 9 seconds per card
 class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
     protected prevGalleries: pxt.CodeCard[];
     protected static fetchedImages: pxt.Map<HTMLImageElement> = {};
-    protected carouselTimeout: number = undefined;
+    protected carouselTimeout: ReturnType<typeof setTimeout> = undefined;
     protected dragStartX: number;
 
     constructor(props: ProjectsCarouselProps) {
