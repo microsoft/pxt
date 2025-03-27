@@ -1053,9 +1053,12 @@ ${hexfile.hexPrelude()}
     // compute the real top of flash
     export function getFlashUsableEnd(target: CompileTarget, cres: CompileResult) {
         // check if settings size is set
-        let settingsSizeDefault = cres.configData.find(ce => ce.name === "SETTINGS_SIZE_DEFL")
-        let settingsSize = cres.configData.find(ce => ce.name === "SETTINGS_SIZE")
-        let actualSettingsSize = settingsSize ? settingsSize.value : settingsSizeDefault ? settingsSizeDefault.value : 0
+        let actualSettingsSize = 0
+        if (cres.configData) {
+            let settingsSizeDefault = cres.configData.find(ce => ce.name === "SETTINGS_SIZE_DEFL")
+            let settingsSize = cres.configData.find(ce => ce.name === "SETTINGS_SIZE")
+            actualSettingsSize = settingsSize ? settingsSize.value : settingsSizeDefault ? settingsSizeDefault.value : 0
+        }
 
         const topFlashAddr = hexfile.getTopFlashAddress()
         return (topFlashAddr > 0 ? topFlashAddr : target.flashUsableEnd ? target.flashUsableEnd : target.flashEnd) - actualSettingsSize
