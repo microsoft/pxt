@@ -423,18 +423,12 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         }
 
         return <div id="editortools" className="ui" role="region" aria-label={lf("Editor toolbar")}>
-            <div id="downloadArea" role="menubar" className="ui column items">{headless &&
-                <div className="ui item">
-                    <div className="ui icon large buttons">
-                        {compileBtn && <EditorToolbarButton icon={downloadIcon} className={`primary large download-button mobile tablet hide ${downloadButtonClasses}`} title={compileTooltip} onButtonClick={this.compile} view='computer' />}
-                    </div>
+            <div id="downloadArea" role="menubar" className="ui column items">
+                {compileBtn && <div className="ui item portrait hide">
+                    {this.getCompileButton(computer)}
                 </div>}
-                {/* TODO clean this; make it just getCompileButton, and set the buttons fontsize to 0 / the icon itself back to normal to just hide text */}
-                {!headless && <div className="ui item portrait hide">
-                    {compileBtn && this.getCompileButton(computer)}
-                </div>}
-                {!headless && <div className="ui portrait only">
-                    {compileBtn && this.getCompileButton(mobile)}
+                {compileBtn && <div className="ui portrait only">
+                    {this.getCompileButton(mobile)}
                 </div>}
             </div>
             {(showProjectRename || showGithub || identity.CloudSaveStatus.wouldRender(header.id)) &&
