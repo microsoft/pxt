@@ -992,7 +992,7 @@ namespace ts.pxtc {
                 }
             }
 
-            hexfile.setupFor(optstarget, extinfo || emptyExtInfo());
+            hexfile.setupFor(optstarget, extinfo || emptyExtInfo(), res);
             hexfile.setupInlineAssembly(opts);
         }
 
