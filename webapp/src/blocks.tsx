@@ -881,7 +881,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     <div id="blocksEditor"></div>
                     <toolbox.ToolboxTrashIcon flyoutOnly={flyoutOnly} />
                 </div>
-                {showErrorList && <ErrorList isInBlocksEditor={true} listenToBlockErrorChanges={this.listenToBlockErrorChanges}
+                {showErrorList && <ErrorList parent={this.parent} isInBlocksEditor={true} listenToBlockErrorChanges={this.listenToBlockErrorChanges}
                     onSizeChange={this.onErrorListResize} />}
             </div>
         )

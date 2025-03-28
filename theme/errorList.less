@@ -31,7 +31,7 @@
         }
 
         .countBubble {
-            margin-left: 1em;
+            margin: 0 1em;
         }
 
         &:hover > .toggleButton > i , &:focus > .toggleButton > i{
@@ -112,5 +112,73 @@
 
     &:hover {
         background-color: var(--pxt-neutral-alpha20);
+    }
+}
+
+// AI Help Button & Content
+// Style for the "Help me understand" button
+#error-help-button {
+    margin: 0;
+    padding: 0.5rem 1rem;
+}
+
+// Style for the explanation field
+.errorList .explanation {
+    margin: 1rem 1rem 0;
+    padding: 1rem;
+    background-color: var(--pxt-neutral-alpha10);
+    border: 1px solid var(--pxt-neutral-stencil1);
+    border-radius: 4px;
+    color: var(--pxt-target-foreground1);
+    font-size: 0.95em;
+    line-height: 1.5;
+
+    // Add subtle animation for the text
+    animation: fadeIn 0.5s ease-in-out;
+
+    .common-spinner {
+        margin-top: 0.5rem;
+        font-size: 1.5em;
+    }
+
+    &:before {
+        content: "💡";
+        font-size: 1.2em;
+        margin-right: 0.2rem;
+    }
+}
+
+// Style for the explanation field
+.errorList .loading-text {
+    margin: 1rem 1rem 0;
+    padding: 0.5rem;
+    background-color: var(--pxt-neutral-alpha10);
+    border: 1px solid var(--pxt-neutral-stencil1);
+    border-radius: 4px;
+    color: var(--pxt-target-foreground1);
+    font-size: 0.95em;
+    line-height: 1.5;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    // Add subtle animation for the text
+    animation: fadeIn 0.5s ease-in-out;
+
+    .common-spinner {
+        margin-top: 0.5rem;
+        font-size: 1.5em;
+    }
+}
+
+// Keyframes for fade-in animation
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
     }
 }
