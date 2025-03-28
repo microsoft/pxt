@@ -15,7 +15,7 @@ These shortcuts allow you to quickly switch between the tools in the editor.
 | **u**          | Rectangle tool |
 | **c**          | Circle tool |
 | **m**          | Marquee tool |
-| **h**          | Pan tool |
+| **q**          | Pan tool |
 | **space**      | Temporarily enter pan mode (release space to return to previous tool) |
 | **alt**        | Temporarily enter eyedropper mode (release alt to return to previous tool)
 
@@ -40,16 +40,17 @@ These shortcuts are used to perform advanced edit operations on sprites or tilem
 
 Each of these shortcuts are affected by the marquee tool.
 If a portion of the asset is selected by the marquee tool, then the shortcut transformation will only apply to the selected area.
+If editing an animation, add the **shift** key to the shortcut to affect all frames at once.
 
 | Shortcut       | Description |
 | -------------- | ----------- |
-| **shift + h**  | Flip horizontally |
-| **shift + v**  | Flip vertically |
+| **Arrow Key**  | Move marquee tool selection by one pixel |
+| **backspace**  | Delete current marquee tool selection |
+| **h**          | Flip horizontally |
+| **v**          | Flip vertically |
 | **]**          | Rotate clockwise |
 | **[**          | Rotate counterclockwise |
-| **Arrow Key**  | Move marquee tool selection by one pixel |
-| **shift + r**  | Replace all instances of selected background color/tile with selected foreground color/tile |
-| **backspace**  | Delete current marquee tool selection |
+| **r**          | Replace all instances of selected background color/tile with selected foreground color/tile |
 
 
 ## Image/Animation editor-only shortcuts
@@ -60,4 +61,9 @@ These shortcuts are only available in the image and animation editors (not the t
 | ---------------------------------- | ----------- |
 | **shift + 1-9** or **shift + a-f** | Outline the current image with the color in the palette corresponding to the selected number. For example, **shift + f** will outline with color number 15 (black) |
 | **0-9**                            | Select a foreground color from the palette (first ten colors only) |
-
+| **.**                              | Advance forwards one frame in the current animation |
+| **,**                              | Advance backwards one frame in the current animation |
+| **PageDown**                       | Swap the current animation frame with the next frame in the timeline |
+| **PageUp**                         | Swap the current animation frame with the previous frame in the timeline |
+| **shift + PageDown**               | Rotate all frames in the animation forwards one frame |
+| **shift + PageUp**                 | Rotate all frames in the animation backwards one frame |

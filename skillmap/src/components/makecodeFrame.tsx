@@ -12,6 +12,7 @@ import '../styles/makecode-editor.css'
 /* eslint-enable import/no-unassigned-import, import/no-internal-modules */
 import { ShareData } from "react-common/components/share/Share";
 import { ProgressBar } from "react-common/components/controls/ProgressBar";
+import { ThemeManager } from "react-common/components/theming/themeManager";
 interface MakeCodeFrameProps {
     save: boolean;
     mapId: string;
@@ -71,6 +72,8 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
             loadPercent: 0,
             pendingShare: false
         };
+
+        this.updateTheme = this.updateTheme.bind(this);
     }
 
     UNSAFE_componentWillReceiveProps(nextProps: MakeCodeFrameProps) {
@@ -81,6 +84,10 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
                 on: nextProps.highContrast
             }  as pxt.editor.EditorMessageSetHighContrastRequest);
         }
+    }
+
+    componentDidMount(): void {
+        ThemeManager.getInstance(document).subscribe("skillmapframe", this.updateTheme);
     }
 
     async componentDidUpdate() {
@@ -129,7 +136,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
         if (editorUrl.charAt(editorUrl.length - 1) === "/" && !isLocal()) {
             url = editorUrl.substr(0, editorUrl.length - 1);
         }
-        url += `?controller=1&skillsMap=1&noproject=1&nocookiebanner=1&ws=browser${forcelang ? `?forcelang=${forcelang}` : ""}`;
+        url += `?controller=1&skillmap=1&noproject=1&nocookiebanner=1&ws=browser${forcelang ? `?forcelang=${forcelang}` : ""}`;
 
         /* eslint-disable @microsoft/sdl/react-iframe-missing-sandbox */
         return <div className="makecode-frame-outer" style={{ display: activityId ? "block" : "none" }}>
@@ -160,6 +167,18 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
 
     protected handleFrameReload = () => {
         this.setState({frameState: "loading"})
+    }
+
+    protected updateTheme() {
+        const colorThemeId = ThemeManager.getInstance(document).getCurrentColorTheme()?.id;
+        this.sendMessageAsync (
+            {
+                type: "pxteditor",
+                action: "setcolorthemebyid",
+                colorThemeId,
+                savePreference: true
+            } as pxt.editor.EditorMessageSetColorThemeRequest
+        );
     }
 
     protected onMessageReceived = (event: MessageEvent) => {

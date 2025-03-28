@@ -211,7 +211,7 @@ namespace pxt.docs {
                     return true
                 }
             }
-            if (d.filepath && !!m.path && d.filepath.indexOf(m.path) == 0) {
+            if (d.filepath && !!m.path && d.filepath == m.path) {
                 tocPath.push(m)
                 return true
             }

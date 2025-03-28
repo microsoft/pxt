@@ -19,12 +19,15 @@ import { SignedOutPanel } from "./components/SignedOutPanel";
 import * as authClient from "./services/authClient";
 import { ErrorCode } from "./types/errorCode";
 import { loadProjectMetadataAsync } from "./transforms/loadProjectMetadataAsync";
-import { Ticks } from "./constants";
+import { Constants, Ticks } from "./constants";
+import { UnsupportedExperienceModal } from "react-common/components/experiences/UnsupportedExperienceModal";
+import { ThemeManager } from "react-common/components/theming/themeManager";
 
 export const App = () => {
     const { state, dispatch } = useContext(AppStateContext);
     const [inited, setInited] = useState(false);
     const [authCheckComplete, setAuthCheckComplete] = useState(false);
+    const [isSupported, setIsSupported] = useState<Boolean | undefined>(undefined);
 
     const ready = usePromise(AppStateReady, false);
 
@@ -34,6 +37,7 @@ export const App = () => {
                 const cfg = await downloadTargetConfigAsync();
                 dispatch(Actions.setTargetConfig(cfg || {}));
                 pxt.BrowserUtils.initTheme();
+                await initColorThemeAsync();
 
                 // Load catalog and validator plans into state.
                 await loadCatalogAsync();
@@ -74,11 +78,27 @@ export const App = () => {
         checkAuthAsync();
     }, []);
 
+    useEffect(() => {
+        setIsSupported(pxt.U.isExperienceSupported(Constants.ExperienceId));
+    }, []);
+
+    async function initColorThemeAsync() {
+        // We don't currently support switching themes in code eval, so just load the default.
+        const themeId = pxt.appTarget?.appTheme?.defaultColorTheme;
+
+        if (themeId) {
+            const themeManager = ThemeManager.getInstance(document);
+            if (themeId !== themeManager.getCurrentColorTheme()?.id) {
+                themeManager.switchColorTheme(themeId);
+            }
+        }
+    }
+
     return !inited || !authCheckComplete ? (
         <div className="ui active dimmer">
             <div className="ui large main loader msft"></div>
         </div>
-    ) : (
+    ) : isSupported ? (
         <>
             <HeaderBar />
             {state.userProfile ? <MainPanel /> : <SignedOutPanel />}
@@ -89,5 +109,7 @@ export const App = () => {
             <Toasts />
             <ScreenReaderAnnouncer />
         </>
+    ) : (
+        <UnsupportedExperienceModal />
     );
 };

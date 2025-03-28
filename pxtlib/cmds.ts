@@ -40,6 +40,7 @@ namespace pxt.commands {
     export let webUsbPairDialogAsync: (pairAsync: () => Promise<boolean>, confirmAsync: (options: any) => Promise<WebUSBPairResult>, implicitlyCalled?: boolean) => Promise<WebUSBPairResult> = undefined;
     export let onTutorialCompleted: () => void = undefined;
     export let onPostHostMessage: (msg: any /*pxt.editor.EditorMessageRequest*/) => void;
+    export let perfMeasurementThresholdMs: number = undefined;
     export let onPerfMilestone: (payload: { milestone: string, time: number, params?: Map<string> }) => void = undefined;
     export let onPerfMeasurement: (payload: { name: string, start: number, duration: number, params?: Map<string> }) => void = undefined;
     export let workspaceLoadedAsync: () => Promise<void> = undefined;

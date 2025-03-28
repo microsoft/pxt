@@ -28,6 +28,7 @@ export interface ButtonViewProps extends ContainerProps {
 
 export interface ButtonProps extends ButtonViewProps {
     onClick: () => void;
+    onRightClick?: () => void;
     onBlur?: () => void;
     onKeydown?: (e: React.KeyboardEvent) => void;
 }
@@ -49,6 +50,7 @@ export const Button = (props: ButtonProps) => {
         ariaPressed,
         role,
         onClick,
+        onRightClick,
         onKeydown,
         onBlur,
         buttonRef,
@@ -84,6 +86,14 @@ export const Button = (props: ButtonProps) => {
         ev.preventDefault();
     }
 
+    let rightClickHandler = (ev: React.MouseEvent) => {
+        if (onRightClick) {
+            onRightClick();
+            ev.stopPropagation();
+            ev.preventDefault();
+        }
+    }
+
     return (
         <button
             id={id}
@@ -92,6 +102,7 @@ export const Button = (props: ButtonProps) => {
             title={title}
             ref={buttonRef}
             onClick={!disabled ? clickHandler : undefined}
+            onContextMenu={rightClickHandler}
             onKeyDown={onKeydown || fireClickOnEnter}
             onBlur={onBlur}
             role={role || "button"}

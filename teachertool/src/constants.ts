@@ -103,6 +103,7 @@ export namespace Ticks {
 
 namespace Misc {
     export const LearnMoreLink = "https://makecode.microbit.org/teachertool"; // TODO: Replace with golink or aka.ms link
+    export const ExperienceId = "code-eval";
 }
 
 export const Constants = Object.assign(Misc, { Strings, Ticks });

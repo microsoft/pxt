@@ -8,8 +8,9 @@
 
 namespace pxt.perf {
     export type EventSource<T> = {
-        subscribe(listener: (payload: T) => void): () => void;
-        //emit(payload: T): void; // not used externally
+        subscribe(listener: (ev: T) => void): () => void;
+        //emit(ev: T): void; // not used externally
+        //forEach(listener: (ev: T) => void): void; // not used externally
     };
 
     // These functions are defined in docfiles/pxtweb/cookieCompliance.ts
@@ -19,8 +20,11 @@ namespace pxt.perf {
     export declare function recordMilestone(msg: string, params?: Map<string>): void;
     export declare function measureStart(name: string): void;
     export declare function measureEnd(name: string, params?: Map<string>): void;
-    export declare const onMilestone: EventSource<{ milestone: string, time: number, params?: Map<string> }>;
-    export declare const onMeasurement: EventSource<{ name: string, start: number, duration: number, params?: Map<string> }>;
+    export declare let measurementThresholdMs: number;
+    export declare const stats: {
+        milestones: EventSource<{ milestone: string, time: number, params?: Map<string> }>;
+        durations: EventSource<{ name: string, start: number, duration: number, params?: Map<string> }>;
+    };
 }
 (function () {
     // Sometimes these aren't initialized, for example in tests. We only care about them
@@ -225,13 +229,15 @@ namespace pxt {
         appTarget = replaceCdnUrlsInJsonBlob(appTarget);
 
         // patch icons in bundled packages
-        Object.keys(appTarget.bundledpkgs).forEach(pkgid => {
-            const res = appTarget.bundledpkgs[pkgid];
-            // path config before storing
-            const config = JSON.parse(res[pxt.CONFIG_NAME]) as pxt.PackageConfig;
-            if (config.icon) config.icon = pxt.BrowserUtils.patchCdn(config.icon);
-            res[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(config);
-        })
+        if (appTarget.bundledpkgs) {
+            Object.keys(appTarget.bundledpkgs).forEach(pkgid => {
+                const res = appTarget.bundledpkgs[pkgid];
+                // path config before storing
+                const config = JSON.parse(res[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+                if (config.icon) config.icon = pxt.BrowserUtils.patchCdn(config.icon);
+                res[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(config);
+            });
+        }
 
         // patch any pre-configured query url appTheme overrides
         if (typeof window !== 'undefined') {
@@ -333,6 +339,10 @@ namespace pxt {
             })
     }
 
+    export function getActiveHwVariant(): string {
+        return hwVariant
+    }
+
     export interface PxtOptions {
         debug?: boolean;
         light?: boolean; // low resource device
@@ -391,6 +401,12 @@ namespace pxt {
         teachertoolUrl?: string; // "/beta---eval"
         isStatic?: boolean;
         verprefix?: string; // "v1"
+        ocv?: OcvConfig;
+    }
+
+    export interface OcvConfig {
+        appId: number;
+        iframeEndpoint: string;
     }
 
     export function localWebConfig() {
@@ -414,7 +430,7 @@ namespace pxt {
             simUrl: "/sim/simulator.html",
             simserviceworkerUrl: "/simulatorserviceworker.js",
             simworkerconfigUrl: "/sim/workerConfig.js",
-            partsUrl: "/sim/siminstructions.html"
+            partsUrl: "/sim/siminstructions.html",
         }
         return r
     }

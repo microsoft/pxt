@@ -204,7 +204,7 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
         if (document.activeElement instanceof HTMLElement && document.activeElement !== this.refs["canvas-bounds"]) {
             document.activeElement.blur();
         }
-        (this.refs["canvas-bounds"] as HTMLDivElement).focus();
+        this.focus();
 
         if (this.isColorSelect()) {
             this.selectCanvasColor(coord, isRightClick);
@@ -230,6 +230,7 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
 
     onDragStart(coord: ClientCoordinates, isRightClick?: boolean): void {
         this.hasInteracted = true
+        this.focus();
         if (this.touchesResize(coord.clientX, coord.clientY)) {
             this.isResizing = true;
         }
@@ -243,10 +244,12 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
         else {
             this.updateCursorLocation(coord);
             this.startEdit(!!isRightClick);
+            this.updateEdit(this.cursorLocation[0], this.cursorLocation[1]);
         }
     }
 
     onDragMove(coord: ClientCoordinates): void {
+        this.focus();
         if (this.isPanning() && this.lastPanX != undefined && this.lastPanY != undefined) {
             this.panX += this.lastPanX - coord.clientX;
             this.panY += this.lastPanY - coord.clientY;
@@ -291,34 +294,6 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
 
         this.hasInteracted = true;
 
-        if (this.shouldHandleCanvasShortcut() && this.editState?.floating?.image) {
-            let moved = false;
-
-            switch (ev.key) {
-                case 'ArrowLeft':
-                    this.editState.layerOffsetX = Math.max(this.editState.layerOffsetX - 1, -this.editState.floating.image.width);
-                    moved = true;
-                    break;
-                case 'ArrowUp':
-                    this.editState.layerOffsetY = Math.max(this.editState.layerOffsetY - 1, -this.editState.floating.image.height);
-                    moved = true;
-                    break;
-                case 'ArrowRight':
-                    this.editState.layerOffsetX = Math.min(this.editState.layerOffsetX + 1, this.editState.width);
-                    moved = true;
-                    break;
-                case 'ArrowDown':
-                    this.editState.layerOffsetY = Math.min(this.editState.layerOffsetY + 1, this.editState.height);
-                    moved = true;
-                    break;
-            }
-
-            if (moved) {
-                this.props.dispatchImageEdit(this.editState.toImageState());
-                ev.preventDefault();
-            }
-        }
-
         if (!ev.repeat) {
             // prevent blockly's ctrl+c / ctrl+v handler
             if ((ev.ctrlKey || ev.metaKey) && (ev.key === 'c' || ev.key === 'v')) {
@@ -333,11 +308,6 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
             if (ev.key == "Escape" && this.editState?.floating?.image && this.shouldHandleCanvasShortcut()) {
                 // TODO: If there isn't currently a marqueed selection, escape should save and close the field editor
                 this.cancelSelection();
-                ev.preventDefault();
-            }
-
-            if ((ev.key === "Backspace" || ev.key === "Delete") && this.editState?.floating?.image && this.shouldHandleCanvasShortcut()) {
-                this.deleteSelection();
                 ev.preventDefault();
             }
 
@@ -983,11 +953,6 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
         this.props.dispatchImageEdit(this.editState.toImageState());
     }
 
-    protected deleteSelection() {
-        this.editState.floating = null;
-        this.props.dispatchImageEdit(this.editState.toImageState());
-    }
-
     protected cloneCanvasStyle(base: HTMLCanvasElement, target: HTMLCanvasElement) {
         target.style.position = base.style.position;
         target.style.width = base.style.width;
@@ -1128,6 +1093,10 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
         this.editState.layerOffsetY = 0;
 
         this.props.dispatchImageEdit(this.editState.toImageState());
+    }
+
+    protected focus() {
+        (this.refs["canvas-bounds"] as HTMLDivElement).focus();
     }
 }
 

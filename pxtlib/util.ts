@@ -1225,6 +1225,7 @@ namespace ts.pxtc.Util {
         "fr-CA": { englishName: "French (Canada)", localizedName: "Français (Canada)" },
         "ga-IE": { englishName: "Irish", localizedName: "Gaeilge" },
         "gl": { englishName: "Galician", localizedName: "galego" },
+        "gn": { englishName: "Guarani", localizedName: "Avañe'ẽ" },
         "gu-IN": { englishName: "Gujarati", localizedName: "ગુજરાતી" },
         "haw": { englishName: "Hawaiian", localizedName: "ʻŌlelo Hawaiʻi" },
         "hi": { englishName: "Hindi", localizedName: "हिन्दी" },
@@ -1833,6 +1834,64 @@ namespace ts.pxtc.Util {
 
     export function fromUTF8Array(s: Uint8Array) {
         return (new TextDecoder()).decode(s);
+    }
+
+    export function getHomeUrl() {
+        // relprefix looks like "/beta---", need to chop off the hyphens and slash
+        let rel = pxt.webConfig?.relprefix.substr(0, pxt.webConfig.relprefix.length - 3);
+        if (pxt.appTarget.appTheme.homeUrl && rel) {
+            if (pxt.appTarget.appTheme.homeUrl?.lastIndexOf("/") === pxt.appTarget.appTheme.homeUrl?.length - 1) {
+                rel = rel.substr(1);
+            }
+            return pxt.appTarget.appTheme.homeUrl + rel;
+        }
+        else {
+            return pxt.appTarget.appTheme.homeUrl;
+        }
+    }
+
+    export function isExperienceSupported(experienceId: string) {
+        const supportedExps = pxt.appTarget?.appTheme?.supportedExperiences?.map((e) => e.toLocaleLowerCase());
+        const cleanedExpId = experienceId.toLocaleLowerCase();
+        const isSupported = supportedExps?.includes(cleanedExpId) ?? false;
+        return isSupported;
+    }
+
+    export function ocvEnabled() {
+        return pxt.webConfig?.ocv?.appId && pxt.webConfig?.ocv?.iframeEndpoint;
+    }
+
+    // https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
+    export function bresenhamLine(x0: number, y0: number, x1: number, y1: number, handler: (x: number, y: number) => void) {
+        const dx = x1 - x0;
+        const dy = y1 - y0;
+
+        if (dx === 0) {
+            const startY = dy >= 0 ? y0 : y1;
+            const endY = dy >= 0 ? y1 : y0;
+            for (let y = startY; y <= endY; y++) {
+                handler(x0, y);
+            }
+            return;
+        }
+
+        const xStep = dx > 0 ? 1 : -1;
+        const yStep = dy > 0 ? 1 : -1;
+        const dErr = Math.abs(dy / dx);
+
+        let err = 0;
+        let y = y0;
+        for (let x = x0; xStep > 0 ? x <= x1 : x >= x1; x += xStep) {
+            handler(x, y);
+            err += dErr;
+            while (err >= 0.5) {
+                if (yStep > 0 ? y <= y1 : y >= y1) {
+                    handler(x, y);
+                }
+                y += yStep;
+                err -= 1;
+            }
+        }
     }
 }
 

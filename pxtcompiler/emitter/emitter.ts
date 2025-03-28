@@ -2729,12 +2729,17 @@ ${lbl}: .short 0xffff
                             let mask = bin.usedChars
                             let buf = ""
                             let incl = ""
-                            for (let pos = 0; pos < data.length; pos += chsz) {
-                                let charcode = data.charCodeAt(pos) + (data.charCodeAt(pos + 1) << 8)
-                                if (charcode < 128 || (mask[charcode >> 5] & (1 << (charcode & 31)))) {
-                                    buf += data.slice(pos, pos + chsz)
-                                    incl += charcode + ", "
+                            if (opts.target.isNative) {
+                                for (let pos = 0; pos < data.length; pos += chsz) {
+                                    let charcode = data.charCodeAt(pos) + (data.charCodeAt(pos + 1) << 8)
+                                    if (charcode < 128 || (mask[charcode >> 5] & (1 << (charcode & 31)))) {
+                                        buf += data.slice(pos, pos + chsz)
+                                        incl += charcode + ", "
+                                    }
                                 }
+                            }
+                            else {
+                                buf = data;
                             }
                             s = U.toHex(U.stringToUint8Array(buf))
                         }

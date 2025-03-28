@@ -195,11 +195,11 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         this.compile();
     }
 
-    protected onHwDownloadClick = () => {
+    protected onFileDownloadClick = async () => {
         // Matching the tick in the call to compile() above for historical reasons
         pxt.tickEvent("editortools.download", { collapsed: this.getCollapsedState() }, { interactiveConsent: true });
         pxt.tickEvent("editortools.downloadasfile", { collapsed: this.getCollapsedState() }, { interactiveConsent: true });
-        (this.props.parent as ProjectView).compile(true);
+        (this.props.parent as ProjectView).compile();
     }
 
     protected onPairClick = () => {
@@ -210,6 +210,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
     protected onCannotPairClick = async () => {
         pxt.tickEvent("editortools.pairunsupported", undefined, { interactiveConsent: true });
         const reasonUnsupported = await pxt.usb.getReasonUnavailable();
+
         let modalBody: string;
         switch (reasonUnsupported) {
             case "security":
@@ -223,6 +224,9 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
                 break;
             case "notimpl":
                 modalBody = lf("WebUSB is not supported by this browser; please check for updates.");
+                break;
+            default:
+                modalBody = lf("Unable to connect to WebUSB. Please try refreshing the page.");
                 break;
         }
 
@@ -274,9 +278,11 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
 
         const boards = pxt.appTarget.simulator && !!pxt.appTarget.simulator.dynamicBoardDefinition;
         const editorSupportsWebUSB = pxt.appTarget?.compile?.webUSB;
+        const hardwareVariantSelected = (pxt.appTarget.alwaysMultiVariant || !pxt.appTarget.variants || !!(pxt.getActiveHwVariant()))
         const webUSBSupported = pxt.usb.isEnabled && editorSupportsWebUSB;
         const showUsbNotSupportedHint = editorSupportsWebUSB
             && !pxt.usb.isEnabled
+            && hardwareVariantSelected
             && pxt.shell.getControllerMode() !== pxt.shell.ControllerMode.App
             && !pxt.BrowserUtils.isPxtElectron()
             && (pxt.BrowserUtils.isChromiumEdge() || pxt.BrowserUtils.isChrome());
@@ -348,7 +354,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
                 {showUsbNotSupportedHint && <sui.Item role="menuitem" icon={usbIcon} text={lf("Connect Device")} tabIndex={-1} onClick={this.onCannotPairClick} />}
                 {webUSBSupported && (packetioConnecting || packetioConnected) && <sui.Item role="menuitem" icon={usbIcon} text={lf("Disconnect")} tabIndex={-1} onClick={this.onDisconnectClick} />}
                 {boards && <sui.Item role="menuitem" icon="microchip" text={hardwareMenuText} tabIndex={-1} onClick={this.onHwItemClick} />}
-                {!extMenuItems && <sui.Item role="menuitem" icon="xicon file-download" text={downloadMenuText} tabIndex={-1} onClick={this.onHwDownloadClick} />}
+                {!extMenuItems && <sui.Item role="menuitem" icon="xicon file-download" text={downloadMenuText} tabIndex={-1} onClick={this.onFileDownloadClick} />}
                 {extMenuItems.map((props, index) => <sui.Item key={"ext" + index} role="menuitem" tabIndex={-1} {...props} />)}
                 {downloadHelp && <sui.Item role="menuitem" icon="help circle" text={lf("Help")} tabIndex={-1} onClick={this.onHelpClick} />}
             </sui.DropdownMenu>
@@ -363,6 +369,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
 
         const targetTheme = pxt.appTarget.appTheme;
         const isController = pxt.shell.isControllerMode();
+        const isTimeMachineEmbed = pxt.shell.isTimeMachineEmbed();
         const readOnly = pxt.shell.isReadOnly();
         const tutorial = tutorialOptions ? tutorialOptions.tutorial : false;
         const simOpts = pxt.appTarget.simulator;

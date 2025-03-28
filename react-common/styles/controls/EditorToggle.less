@@ -5,8 +5,8 @@
 .common-editor-toggle {
     position: relative;
     border-radius: 0.2rem;
-    border: @editorToggleBorderWidth solid @editorToggleBorderColor;
-    background: @editorToggleBackgroundColor;
+    border: @editorToggleBorderWidth solid var(--pxt-neutral-alpha10);
+    background: var(--pxt-neutral-alpha20);
     display: flex;
     flex-direction: row;
 }
@@ -26,18 +26,18 @@
         & > .common-button {
             padding: 0;
             width: 100%;
-            border-left: 1px solid @editorToggleBorderColor;
-            border-right: 1px solid @editorToggleBorderColor;
+            border-left: 1px solid var(--pxt-neutral-alpha10);
+            border-right: 1px solid var(--pxt-neutral-alpha10);
         }
 
         .common-menu-dropdown-pane {
-            border-top: 1px solid @editorToggleBorderColor;
+            border-top: 1px solid var(--pxt-neutral-alpha10);
         }
     }
 
     & > .common-button {
         background: none;
-        color: @buttonTextColorDarkBackground;
+        color: var(--pxt-neutral-foreground1);
         transition: color .25s;
         margin: 0;
         width: 100%;
@@ -60,12 +60,12 @@
 
         & > .common-button {
             border-right: none;
-            color: @buttonTextColorLightBackground;
+            color: var(--pxt-neutral-foreground2);
         }
     }
 
     & > .common-button {
-        color: @buttonTextColorLightBackground;
+        color: var(--pxt-neutral-foreground2);
     }
 }
 
@@ -75,7 +75,8 @@
 
  .common-editor-toggle-handle {
     position: absolute;
-    background: white;
+    background: var(--pxt-neutral-background2);
+    color: var(--pxt-neutral-foreground2);
     width: 33%;
     height: 100%;
     transition: margin-left .25s, width .25s;

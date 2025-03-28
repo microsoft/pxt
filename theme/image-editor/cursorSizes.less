@@ -3,13 +3,21 @@
     display: flex;
     flex-direction: row;
     margin: auto;
+    text-align: center;
 }
 
 .cursor-button {
     border-radius: 1px;
-    background-color: var(--sidebar-icon-inactive-color);
+    background-color: var(--sidebar-icon-active-color);
     margin-right: 0.25rem;
     transition: background-color 0.1s;
+    vertical-align: middle;
+    display: inline-block;
+    margin-top: -0.25rem;
+}
+
+.toggle .cursor-button {
+    background-color: var(--sidebar-icon-inactive-color);
 }
 
 .cursor-button-outer {
@@ -17,24 +25,21 @@
     width: 1.5rem;
 }
 
-.cursor-button-outer:hover .cursor-button, .cursor-button-outer.selected .cursor-button {
+.common-button:hover .cursor-button {
     background-color: var(--sidebar-icon-active-color);
 }
 
 .cursor-button.small {
-    margin-top: 0.75rem;
     width: 0.5rem;
     height: 0.5rem;
 }
 
 .cursor-button.medium {
-    margin-top: 0.625rem;
     width: 0.75rem;
     height: 0.75rem;
 }
 
 .cursor-button.large {
-    margin-top: 0.5rem;
     width: 1rem;
     height: 1rem;
 }

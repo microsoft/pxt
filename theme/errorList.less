@@ -5,7 +5,7 @@
     position: relative;
     max-height: @errorListHeight;
     min-height: @errorListHeight;
-    border-top: 2px @errorListBorderColor solid;
+    border-top: 2px var(--pxt-neutral-stencil1) solid;
 
     *:focus {
         outline: none;
@@ -55,28 +55,28 @@
         overflow-y: auto;
 
         .exceptionMessage {
-            color: @textColor;
+            color: var(--pxt-target-foreground1);
             padding: 0.5em 1em;
             width: 70%;
         }
 
         // errors
         .ui.selection.list {
-            color: @textColor;
+            color: var(--pxt-target-foreground1);
             cursor: pointer;
             margin: 0;
 
             .item {
                 border-radius: unset;
                 padding: 0.5em 1em;
-                color: @textColor;
+                color: var(--pxt-target-foreground1);
 
                 &:hover, &:focus {
-                    background-color: @errorListMessageHoverColor !important;
+                    background-color: var(--pxt-neutral-alpha20) !important;
                 }
 
                 &:nth-child(even):not(:hover) {
-                    background-color: @errorListEven;
+                    background-color: var(--pxt-neutral-alpha10);
                 }
 
                 &.stackframe {
@@ -91,7 +91,7 @@
             width: fit-content;
             padding-top: 0.5em;
             margin-right: 0.5em;
-            color: @errorListDebugSuggestionColor;
+            color: var(--pxt-tertiary-background);
             cursor: pointer;
 
             &:hover, &:focus {
@@ -111,33 +111,6 @@
     min-height: unset;
 
     &:hover {
-        background-color: @errorListMessageHoverColor;
-    }
-}
-
-.inverted-theme .errorList {
-    .errorListHeader {
-        color: @errorListInvertedTextColor;
-    }
-
-    .errorListInner {
-        .exceptionMessage {
-            color: @errorListInvertedTextColor;
-        }
-        .ui.selection.list {
-            color: @errorListInvertedTextColor;
-
-            .item {
-                color: @errorListInvertedTextColor;
-
-                &:hover, &:focus {
-                    background-color: @errorListInvertedMessageHoverColor !important;
-                }
-
-                &:nth-child(even):not(:hover) {
-                    background-color: @errorListInvertedEven;
-                }
-            }
-        }
+        background-color: var(--pxt-neutral-alpha20);
     }
 }

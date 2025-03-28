@@ -74,7 +74,7 @@ export class RewardActionsImpl extends React.Component<RewardActionsProps> {
                         tabIndex={-1}
                         ariaPosInSet={3}
                         ariaSetSize={3}
-                        className="teal"
+                        className="tertiary"
                         onClick={dispatchShowLoginModal}
                         label={lf("Sign in to Save")}
                         title={lf("Sign in to Save")}

@@ -774,25 +774,25 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                 <div className="ui serialHeader">
                     <div className="leftHeaderWrapper">
                         <div className="leftHeader">
-                            <sui.Button title={lf("Go back")} icon="arrow left" text={lf("Go back")} textClass="landscape only" tabIndex={0} onClick={this.goBack} onKeyDown={fireClickOnEnter} />
+                            <sui.Button title={lf("Go back")} icon="arrow left" className="neutral" text={lf("Go back")} textClass="landscape only" tabIndex={0} onClick={this.goBack} onKeyDown={fireClickOnEnter} />
                         </div>
                     </div>
                     <div className="rightHeader">
                         <sui.Button icon={`${hasissue ? "exclamation circle" : haspull ? "long arrow alternate down" : "check"}`}
-                            className={haspull === true ? "positive" : ""}
+                            className={haspull === true ? "positive" : "neutral"}
                             text={lf("Pull changes")} title={lf("Pull changes from GitHub to get your code up-to-date.")} onClick={this.handlePullClick} onKeyDown={fireClickOnEnter} />
                         {!isBlocksMode && isOwner &&
                             <sui.Link className="ui item button desktop only" icon="user plus" href={`https://github.com/${githubId.slug}/settings/collaboration`} target="_blank" title={lf("Invite others to contributes to this GitHub repository.")} />}
-                        <sui.Link className="ui button" icon="external alternate" href={url} title={lf("Open repository in GitHub.")} target="_blank" onKeyDown={fireClickOnEnter} />
+                        <sui.Link className="ui button neutral" icon="external alternate" href={url} title={lf("Open repository in GitHub.")} target="_blank" onKeyDown={fireClickOnEnter} />
                     </div>
                 </div>
                 <MessageComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />
                 <div className="ui form">
                     {showPrResolved &&
-                        <sui.Link href={pr.url} role="button" className="ui tiny basic button create-pr"
+                        <sui.Link href={pr.url} role="button" className="ui tiny neutral button create-pr"
                             target="_blank" text={lf("Pull request (#{0})", pr.number)} icon="external alternate" />}
                     {showPrCreate &&
-                        <sui.Button className="tiny basic create-pr" text={lf("Create pull request")} onClick={this.handlePullRequest} />
+                        <sui.Button className="tiny neutral create-pr" text={lf("Create pull request")} onClick={this.handlePullRequest} />
                     }
                     <h3 className="header">
                         <i className="large github icon" />
@@ -809,7 +809,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                 </div>
                 <div className="ui serialHeader">
                     <div className="rightHeader">
-                        {user && <sui.Button className="ui button" icon="fas fa-sign-out-alt" text={lf("Disconnect GitHub")} title={lf("Log out of GitHub")} onClick={this.handleSignoutGithub} onKeyDown={fireClickOnEnter} />}
+                        {user && <sui.Button className="ui button neutral" icon="fas fa-sign-out-alt" text={lf("Disconnect GitHub")} title={lf("Log out of GitHub")} onClick={this.handleSignoutGithub} onKeyDown={fireClickOnEnter} />}
                     </div>
                 </div>
             </div>
@@ -835,7 +835,7 @@ class DiffView extends sui.StatelessUIElement<DiffViewProps> {
     }
 
     private lineDiff(lineA: string, lineB: string): { a: JSX.Element, b: JSX.Element } {
-        const df = pxt.diff.compute(lineA.split("").join("\n"), lineB.split("").join("\n"), {
+        const df = pxt.diff.computeFormattedDiff(lineA.split("").join("\n"), lineB.split("").join("\n"), {
             context: Infinity
         })
         if (!df) // diff failed
@@ -896,7 +896,7 @@ class DiffView extends sui.StatelessUIElement<DiffViewProps> {
             return <div key={`difffile${cacheKey}${f.name}`} className="ui segments filediff">
                 <div className="ui segment diffheader">
                     {(!blocksMode || f.name != pxt.MAIN_BLOCKS) && <span>{f.name}</span>}
-                    {!!cache.revert && <sui.Button className="small" icon="undo" text={lf("Revert")}
+                    {!!cache.revert && <sui.Button className="small neutral" icon="undo" text={lf("Revert")}
                         ariaLabel={lf("Revert file")} title={lf("Revert file")}
                         textClass={"landscape only"} onClick={cache.revert} />}
                     {jsxEls.legendJSX}
@@ -966,7 +966,7 @@ class DiffView extends sui.StatelessUIElement<DiffViewProps> {
         let diffJSX: JSX.Element;
         if (!content) {
             // the xml payload needs to be decompiled
-            diffJSX = <div className="ui basic segment">{lf("Your blocks were updated. Go back to the editor to view the changes.")}</div>
+            diffJSX = <div className="ui neutral segment">{lf("Your blocks were updated. Go back to the editor to view the changes.")}</div>
         } else {
             // if the xml is completed reconstructed,
             // bail off to decompiled diffs
@@ -1014,7 +1014,7 @@ ${content}
             "+": "diff-added",
             "-": "diff-removed",
         }
-        const diffLines = pxt.diff.compute(baseContent, content, { ignoreWhitespace: !!ignoreWhitespace })
+        const diffLines = pxt.diff.computeFormattedDiff(baseContent, content, { ignoreWhitespace: !!ignoreWhitespace })
         if (!diffLines) {
             pxt.tickEvent("github.diff.toobig");
             return {
@@ -1149,7 +1149,7 @@ ${content}
         return diffFiles.length ? <div className="ui section">
             <div className={`ui ${invertedTheme ? "inverted " : ""} diffheader segment`}>
                 {lf("There are local changes.")}
-                {allowRevert && <sui.Button className="small" icon="undo" text={lf("Revert all")}
+                {allowRevert && <sui.Button className="small neutral" icon="undo" text={lf("Revert all")}
                     ariaLabel={lf("Revert all changes")} title={lf("Revert all changes")}
                     textClass={"landscape only"} onClick={this.revertAllFiles} />}
             </div>
@@ -1427,7 +1427,7 @@ class ReleaseZone extends sui.StatelessUIElement<GitHubViewProps> {
             <h2 className="ui header">{lf("Release zone")}</h2>
             {!needsCommit && !tag && <div className="ui field">
                 <sui.Button
-                    className="basic"
+                    className="neutral"
                     text={lf("Create release")}
                     inverted={inverted}
                     onClick={this.handleBumpClick}
@@ -1445,7 +1445,7 @@ class ReleaseZone extends sui.StatelessUIElement<GitHubViewProps> {
                 </div>}
             {hasPages &&
                 <div className="ui field">
-                    <sui.Link className="basic button"
+                    <sui.Link className="neutral button"
                         href={pages.html_url}
                         inverted={inverted}
                         loading={pagesBuilding}
@@ -1493,7 +1493,7 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
         return <div className={`ui transparent ${inverted ? 'inverted' : ''} segment`}>
             <h2 className="ui header">{lf("Extension zone")}</h2>
             <div className="ui field">
-                <sui.Link className="basic button"
+                <sui.Link className="neutral button"
                     href={testurl}
                     inverted={inverted}
                     text={lf("Test Extension")}
@@ -1504,7 +1504,7 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
                 </span>
             </div>
             {showFork && <div className="ui field">
-                <sui.Button className="basic" text={lf("Fork repository")}
+                <sui.Button className="neutral" text={lf("Fork repository")}
                     onClick={this.handleForkClick}
                     inverted={inverted}
                     onKeyDown={fireClickOnEnter} />
@@ -1514,7 +1514,7 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
                 </span>
             </div>}
             {needsLicenseMessage && <div className={`ui field`}>
-                <sui.Link className="basic button"
+                <sui.Link className="neutral button"
                     href={`https://github.com/${githubId.slug}/community/license/new?branch=${githubId.tag}&template=mit`}
                     inverted={inverted}
                     text={lf("Add license")}
@@ -1525,7 +1525,7 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
                 </span>
             </div>}
             <div className="ui field">
-                <sui.Button className="basic" text={lf("Save for offline")}
+                <sui.Button className="neutral" text={lf("Save for offline")}
                     onClick={this.handleSaveClick}
                     inverted={inverted}
                     onKeyDown={fireClickOnEnter} />
@@ -1709,7 +1709,7 @@ class HistoryZone extends sui.UIElement<GitHubViewProps, HistoryState> {
         return <div className={`ui transparent ${inverted ? 'inverted' : ''} segment history-zone`}>
             <h2 className="ui header">{lf("History")}</h2>
             {(loading || !expanded) && <div className="ui field">
-                <sui.Button loading={loading} className="basic" text={lf("View commits")}
+                <sui.Button loading={loading} className="neutral" text={lf("View commits")}
                     onClick={this.handleLoadClick}
                     inverted={inverted}
                     onKeyDown={fireClickOnEnter} />

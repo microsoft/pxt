@@ -2,10 +2,6 @@
   --black: #000;
   --white: #fff;
 
-  --primary-color: #E77038;
-  --secondary-color: #ffeb9a;
-  --tertiary-color: #E77038;
-
   --header-height: 4rem;
   --header-padding-top: 1rem;
 
@@ -29,19 +25,19 @@ code {
   font-family: var(--body-font-family);
 }
 .common-button.primary {
-  background: var(--primary-color);
-  color: #fff;
-  border: 1px solid var(--primary-color);
+  background: var(--pxt-primary-background);
+  color: var(--pxt-primary-foreground);
+  border: 1px solid var(--pxt-primary-background);
 }
 .common-button.secondary {
-  background: var(--secondary-color);
-  color: #fff;
-  border: 1px solid var(--secondary-color);
+  background: var(--pxt-secondary-background);
+  color: var(--pxt-secondary-foreground);
+  border: 1px solid var(--pxt-secondary-background);
 }
 .common-button.tertiary {
-  background: var(--tertiary-color);
-  color: #fff;
-  border: 1px solid var(--tertiary-color);
+  background: var(--pxt-tertiary-background);
+  color: var(--pxt-tertiary-foreground);
+  border: 1px solid var(--pxt-tertiary-background);
 }
 
 img.pixel-art-image {

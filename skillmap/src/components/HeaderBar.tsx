@@ -5,7 +5,8 @@ import * as React from "react";
 
 import { connect } from 'react-redux';
 import { dispatchSaveAndCloseActivity, dispatchShowResetUserModal, dispatchShowLoginModal,
-    dispatchShowUserProfile, dispatchSetUserPreferences, dispatchShowSelectLanguage } from '../actions/dispatch';
+    dispatchShowUserProfile, dispatchSetUserPreferences, dispatchShowSelectLanguage,
+    dispatchShowSelectTheme, dispatchShowFeedback } from '../actions/dispatch';
 import { SkillMapState } from '../store/reducer';
 import { isLocal, resolvePath, tickEvent } from "../lib/browserUtils";
 
@@ -30,6 +31,8 @@ interface HeaderBarProps {
     dispatchShowUserProfile: () => void;
     dispatchSetUserPreferences: (preferences?: pxt.auth.UserPreferences) => void;
     dispatchShowSelectLanguage: () => void;
+    dispatchShowSelectTheme: () => void;
+    dispatchShowFeedback: () => void;
 }
 
 export class HeaderBarImpl extends React.Component<HeaderBarProps> {
@@ -38,21 +41,15 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
         const items: MenuItem[] = [];
 
         if (this.props.preferences) {
-            const highContrast = this.props.preferences?.highContrast;
             items.push({
-                id: "highcontrast",
-                title: highContrast ? lf("High Contrast Off") : lf("High Contrast On"),
-                label: highContrast ? lf("High Contrast Off") : lf("High Contrast On"),
+                id: "theme",
+                title: lf("Theme"),
+                label: lf("Theme"),
                 onClick: () => {
-                    const newHighContrastPref = !this.props.preferences.highContrast;
-                    tickEvent("skillmap.highcontrast", { on: newHighContrastPref ? 1 : 0});
-                    authClient.setHighContrastPrefAsync(newHighContrastPref);
-                    this.props.dispatchSetUserPreferences({
-                        ...this.props.preferences,
-                        highContrast: newHighContrastPref
-                    })
+                    tickEvent("skillmap.theme");
+                    this.props.dispatchShowSelectTheme();
                 }
-            })
+            });
         }
 
         // We hide the language option when activities are open to avoid
@@ -79,6 +76,15 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
                     window.open(this.reportAbuseUrl);
                 }
             })
+        }
+
+        if (pxt.U.ocvEnabled()) {
+            items.push({
+                id: "feedback",
+                title: lf("Feedback"),
+                label: lf("Feedback"),
+                onClick: this.onFeedbackClicked
+            });
         }
 
         if (!this.props.activityOpen) {
@@ -120,14 +126,6 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
 
     protected getHelpItems(): MenuItem[] {
         const items: MenuItem[] = [];
-        if (this.props.activityOpen) {
-            items.push({
-                id: "feedback",
-                title: lf("Feedback"),
-                label: lf("Feedback"),
-                onClick: this.onBugClicked
-            });
-        }
         return items;
     }
 
@@ -167,7 +165,7 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
         return <div className="user-menu">
             {signedIn
             ?  <MenuDropdown id="profile-dropdown" items={items} label={avatarElem || initialsElem} title={lf("Profile Settings")}/>
-             : <Button className="menu-button inverted" rightIcon="xicon cloud-user" title={lf("Sign In")} label={lf("Sign In")} onClick={ () => {
+             : <Button className="menu-button" rightIcon="xicon cloud-user" title={lf("Sign In")} label={lf("Sign In")} onClick={ () => {
                 pxt.tickEvent(`skillmap.usermenu.signin`);
                 this.props.dispatchShowLoginModal();
             }}/>}
@@ -208,23 +206,15 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
     onHomeClicked = () => {
         tickEvent("skillmap.home");
 
-        // relprefix looks like "/beta---", need to chop off the hyphens and slash
-        let rel = pxt.webConfig?.relprefix.substr(0, pxt.webConfig.relprefix.length - 3);
-        if (pxt.appTarget.appTheme.homeUrl && rel) {
-            if (pxt.appTarget.appTheme.homeUrl?.lastIndexOf("/") === pxt.appTarget.appTheme.homeUrl?.length - 1) {
-                rel = rel.substr(1);
-            }
-            window.open(pxt.appTarget.appTheme.homeUrl + rel);
+        const homeUrl = pxt.U.getHomeUrl();
+        if (homeUrl) {
+            window.open(homeUrl);
         }
-        else {
-            window.open(pxt.appTarget.appTheme.homeUrl);
-        }
-
     }
 
-    onBugClicked = () => {
-        tickEvent("skillmap.bugreport");
-        (window as any).usabilla_live?.("click");
+    onFeedbackClicked = () => {
+        tickEvent("skillmap.feedbackclicked");
+        this.props.dispatchShowFeedback();
     }
 
     onLogoutClicked = async () => {
@@ -272,7 +262,9 @@ const mapDispatchToProps = {
     dispatchShowLoginModal,
     dispatchShowUserProfile,
     dispatchSetUserPreferences,
-    dispatchShowSelectLanguage
+    dispatchShowSelectLanguage,
+    dispatchShowSelectTheme,
+    dispatchShowFeedback
 };
 
 export const HeaderBar = connect(mapStateToProps, mapDispatchToProps)(HeaderBarImpl);

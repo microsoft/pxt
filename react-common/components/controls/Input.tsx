@@ -59,7 +59,7 @@ export const Input = (props: InputProps) => {
         onBlur,
         onOptionSelected,
         handleInputRef,
-        preserveValueOnBlur,
+        preserveValueOnBlur = true,
         options
     } = props;
 
@@ -68,6 +68,10 @@ export const Input = (props: InputProps) => {
     const [filter] = React.useState(props.filter ? new RegExp(props.filter) : undefined);
 
     let container: HTMLDivElement;
+
+    React.useEffect(() => {
+        setValue(initialValue || "");
+    }, [initialValue]);
 
     const handleContainerRef = (ref: HTMLDivElement) => {
         if (!ref) return;
@@ -137,7 +141,7 @@ export const Input = (props: InputProps) => {
             onBlur(value);
         }
         if (!preserveValueOnBlur) {
-            setValue(undefined);
+            setValue("");
         }
     }
 

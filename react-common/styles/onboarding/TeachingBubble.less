@@ -14,7 +14,7 @@
     width: 100%;
     height: 100%;
     z-index: @modalDimmerZIndex;
-    box-shadow: 0 0 0 99999px @modalOverlayColor;
+    box-shadow: 0 0 0 99999px var(--pxt-neutral-alpha20);
     border-radius: 0.5rem;
 }
 
@@ -30,8 +30,8 @@
     position: fixed;
     max-width: 25rem;
     min-width: 18.75rem;
-    background: @teachingBubbleBackgroundColor;
-    color: @teachingBubbleTextColor;
+    background: var(--pxt-tertiary-background);
+    color: var(--pxt-tertiary-foreground);
     box-shadow: 0 0 0 0.1rem;
     border-radius: 0.5rem;
     padding: 1rem;
@@ -40,10 +40,10 @@
     .common-button {
 
         &:focus {
-            outline: .1rem solid @teachingBubbleTextColor;
+            outline: .1rem solid var(--pxt-tertiary-foreground);
             filter: grayscale(.15) brightness(.85) contrast(1.3);
         }
-        &.primary:focus::after, &:focus::after {
+        &.tertiary:focus::after, &:focus::after {
             outline: none;
         }
     }
@@ -54,7 +54,7 @@
     width: 0;
     height: 0;
     z-index: @modalDimmerZIndex + 1;
-    color: @teachingBubbleBackgroundColor;
+    color: var(--pxt-tertiary-background);
 }
 
 .teaching-bubble-arrow-outline {
@@ -62,7 +62,7 @@
     width: 0;
     height: 0;
     z-index: @modalDimmerZIndex;
-    color: @teachingBubbleTextColor;
+    color: var(--pxt-tertiary-foreground);
 }
 
 .teaching-bubble-content {
@@ -81,21 +81,26 @@
 
     .teaching-bubble-steps {
         font-size: .9rem;
-        color: @teachingBubbleStepsColor;
+        color: var(--pxt-tertiary-foreground);
     }
 
-    .common-button.primary {
+    .common-button.tertiary {
         padding: .25rem .5rem;
         margin: 0 .5rem 0 0;
-        border: .1rem solid @teachingBubbleTextColor;
-        background: @teachingBubbleBackgroundColor;
-        color: @teachingBubbleTextColor;
+        border: .1rem solid var(--pxt-tertiary-foreground);
+        background: var(--pxt-tertiary-background);
+        color: var(--pxt-tertiary-foreground);
 
         &.inverted {
             margin-right: 0;
-            background: @teachingBubbleTextColor;
-            color: @teachingBubbleBackgroundColor;
+            background: var(--pxt-tertiary-foreground);
+            color: var(--pxt-tertiary-background);
         }
+    }
+
+    .common-button:focus-visible {
+        outline: 2px solid var(--pxt-tertiary-foreground);
+        outline-offset: 3px;
     }
 
     &.no-steps {
@@ -109,7 +114,7 @@
     top: 0.5rem;
     padding: 0.5rem 0 0.25rem 0;
     background: transparent;
-    color: @teachingBubbleTextColor;
+    color: var(--pxt-tertiary-foreground);
     margin: 0;
 
     i.right {

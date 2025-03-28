@@ -29,7 +29,7 @@ interface SidepanelProps extends ISettingsProps {
     showSerialButtons?: boolean;
     showFileList?: boolean;
     showFullscreenButton?: boolean;
-    showHostMultiplayerGameButton?: boolean;
+    isMultiplayerGame?: boolean;
     collapseEditorTools?: boolean;
     simSerialActive?: boolean;
     deviceSerialActive?: boolean;
@@ -197,12 +197,17 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
     }
 
     renderCore() {
-        const { parent, inHome, showKeymap, showSerialButtons, showFileList, showFullscreenButton, showHostMultiplayerGameButton,
+        const { parent, inHome, showKeymap, showSerialButtons, showFileList, showFullscreenButton, isMultiplayerGame,
             collapseEditorTools, simSerialActive, deviceSerialActive, tutorialOptions,
             handleHardwareDebugClick, onTutorialStepChange, onTutorialComplete } = this.props;
 
         const hasSimulator = !pxt.appTarget.simulator?.headless;
-        const showOpenInVscodeButton = parent.isJavaScriptActive() && pxt.appTarget?.appTheme?.showOpenInVscode;
+        const showOpenInVscodeButton = parent.isJavaScriptActive()
+            && pxt.appTarget?.appTheme?.showOpenInVscode
+            && !pxt.shell.isTimeMachineEmbed();
+
+        const showHostMultiplayerGameButton = isMultiplayerGame
+            && !pxt.shell.isTimeMachineEmbed();
 
         const simContainerClassName = classList(
             "simulator-container",
@@ -249,13 +254,13 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                         <simtoolbar.SimulatorToolbar parent={parent} collapsed={collapseEditorTools} simSerialActive={simSerialActive} devSerialActive={deviceSerialActive} showSimulatorSidebar={this.tryShowSimulator} />
                         {showKeymap && <keymap.Keymap parent={parent} />}
                         <div className="ui item portrait hide hidefullscreen">
-                            {pxt.options.debug && <Button key="hwdebugbtn" className="teal" icon="xicon chip" text={"Dev Debug"} onClick={handleHardwareDebugClick} />}
+                            {pxt.options.debug && <Button key="hwdebugbtn" className="tertiary" icon="xicon chip" text={"Dev Debug"} onClick={handleHardwareDebugClick} />}
                         </div>
                         <div className="ui item grid centered portrait hide hidefullscreen">
-                            {showOpenInVscodeButton && <Button className={"teal hostmultiplayergame-button"} icon={"icon share"} text={lf("Open in VS Code")} ariaLabel={lf("Open in Visual Studio Code for Web")} onClick={this.onOpenInVSCodeClick} />}
+                            {showOpenInVscodeButton && <Button className={"secondary hostmultiplayergame-button"} icon={"icon share"} text={lf("Open in VS Code")} ariaLabel={lf("Open in Visual Studio Code for Web")} onClick={this.onOpenInVSCodeClick} />}
                         </div>
                         <div className="ui item grid centered portrait hide hidefullscreen">
-                            {showHostMultiplayerGameButton && <Button className={"teal hostmultiplayergame-button"} icon={"xicon multiplayer"} text={lf("Host multiplayer game")} ariaLabel={lf("Host multiplayer game")} onClick={this.onHostMultiplayerGameClick} />}
+                            {showHostMultiplayerGameButton && <Button className={"secondary hostmultiplayergame-button"} icon={"xicon multiplayer"} text={lf("Host multiplayer game")} ariaLabel={lf("Host multiplayer game")} onClick={this.onHostMultiplayerGameClick} />}
                         </div>
                         {showSerialButtons && <div id="serialPreview" className="ui editorFloat portrait hide hidefullscreen">
                             <serialindicator.SerialIndicator ref="simIndicator" isSim={true} onClick={this.handleSimSerialClick} parent={parent} />

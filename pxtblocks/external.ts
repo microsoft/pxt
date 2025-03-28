@@ -89,3 +89,33 @@ export function openWorkspaceSearch() {
         _openWorkspaceSearch();
     }
 }
+
+type ShortcutHandler = (workspace: Blockly.Workspace, e: Event) => boolean;
+type PreconditionFn = (scope: Blockly.ContextMenuRegistry.Scope) => "enabled" | "disabled" | "hidden";
+
+let _handleCopy: ShortcutHandler;
+let _handleCut: ShortcutHandler;
+let _handlePaste: ShortcutHandler;
+let _copyPre: PreconditionFn;
+let _pastePre: PreconditionFn;
+
+export function setCopyPaste(copy: ShortcutHandler, cut: ShortcutHandler, paste: ShortcutHandler, copyPrecondition: PreconditionFn, pastePrecondition: PreconditionFn ) {
+    _handleCopy = copy;
+    _handleCut = cut;
+    _handlePaste = paste;
+    _copyPre = copyPrecondition;
+    _pastePre = pastePrecondition;
+}
+
+export function getCopyPasteHandlers() {
+    if (_handleCopy) {
+        return {
+            copy: _handleCopy,
+            cut: _handleCut,
+            paste: _handlePaste,
+            copyPrecondition: _copyPre,
+            pastePrecondition: _pastePre,
+        };
+    }
+    return null;
+}
