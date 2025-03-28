@@ -114,7 +114,10 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
                 {(loadingHelp || explanation) && (
                     explanation ? (
                         <div className="explanation">
-                        {explanation}
+                            <span className="explanation-icon" role="img" aria-label={lf("light bulb")}>💡</span>
+                            <div className="explanation-text">
+                                {explanation}
+                            </div>
                         </div>
                     ) : (
                         <div className="loading-text">

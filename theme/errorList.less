@@ -132,16 +132,22 @@
     color: var(--pxt-target-foreground1);
     font-size: 0.95em;
     line-height: 1.5;
+    display: flex;
+    align-items: center;
+
+    .explanation-icon {
+        font-size: 1.2em;
+        margin-right: 0.6rem;
+        flex-shrink: 0;
+    }
+
+    .explanation-text {
+        flex: 1;
+    }
 
     .common-spinner {
         margin-top: 0.5rem;
         font-size: 1.5em;
-    }
-
-    &:before {
-        content: "💡";
-        font-size: 1.2em;
-        margin-right: 0.2rem;
     }
 }
 
