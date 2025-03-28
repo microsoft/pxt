@@ -111,6 +111,12 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
         el.focus();
     }
 
+    private blur(el: HTMLElement) {
+        if (this.isActive(el)) {
+            pxt.BrowserUtils.removeClass(el, "active");
+        }
+    }
+
     private setInactive(el: HTMLElement) {
         if (this.isActive(el)) {
             pxt.BrowserUtils.removeClass(el, "active");
@@ -144,6 +150,34 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
     isChildFocused() {
         const menu = this.refs["menu"] as HTMLElement;
         return menu.contains(document.activeElement);
+    }
+
+    private navigateToNextElement = (e: KeyboardEvent, prev: HTMLElement, next: HTMLElement) => {
+        const dropdown = this.refs["dropdown"] as HTMLElement;
+        const charCode = core.keyCodeFromEvent(e);
+        const current = e.currentTarget as HTMLElement;
+        if (charCode === 40 /* Down arrow */) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (next) {
+                this.focus(next);
+            }
+        } else if (charCode === 38 /* Up arrow */) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (prev) {
+                this.focus(prev);
+            } else {
+                // Prev is undefined, go to dropdown
+                dropdown.focus();
+                this.setState({ open: false });
+            }
+        } else if (charCode === core.SPACE_KEY || charCode === core.ENTER_KEY) {
+            // Trigger click
+            e.preventDefault();
+            e.stopPropagation();
+            current.click();
+        }
     }
 
     handleFocusCapture = (e: React.FocusEvent<HTMLDivElement>) => {
@@ -201,6 +235,7 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
             // On allow tabbing to valid child nodes (ie: no separators or mobile only items)
             child.tabIndex = this.state.open ? 0 : -1;
             // Set event handlers
+
             const prev = i > 0 ? children[i - 1] as HTMLElement : undefined;
             const next = i < children.length ? children[i + 1] as HTMLElement : undefined;
             child.addEventListener('keydown', (e) => this.childKeyDown(child, e, prev, next));
