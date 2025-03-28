@@ -1141,6 +1141,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         let diags = tsfile.diagnostics.filter(d => d.category == ts.pxtc.DiagnosticCategory.Error);
         let sourceMap = this.compilationResult.sourceMap;
 
+        const tsBlockErrors: pxtblockly.BlockDiagnostic[] = [];
         diags.filter(diag => diag.category == ts.pxtc.DiagnosticCategory.Error).forEach(diag => {
             let bid = pxtblockly.findBlockIdByLine(sourceMap, { start: diag.line, length: 0 });
             if (bid) {
@@ -1149,6 +1150,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     let txt = ts.pxtc.flattenDiagnosticMessageText(diag.messageText, "\n");
                     b.setWarningText(txt, pxtblockly.PXT_WARNING_ID);
                     setHighlightWarningAsync(b, true);
+
+                    tsBlockErrors.push({
+                        blockId: bid,
+                        message: txt
+                    });
                 }
             }
         })
@@ -1163,7 +1169,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 }
             }
         })
-        this.onBlockErrorChanges(this.compilationResult.diagnostics);
+        this.onBlockErrorChanges([...tsBlockErrors, ...this.compilationResult.diagnostics]);
         this.setBreakpointsFromBlocks();
     }
 
