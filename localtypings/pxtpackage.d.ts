@@ -174,6 +174,7 @@ declare namespace pxt {
         actionIcon?: string; // icon to override default icon on the action button
         time?: number;
         url?: string;
+        shareUrl?: string;
         learnMoreUrl?: string;
         buyUrl?: string;
         feedbackUrl?: string;
