@@ -1852,7 +1852,7 @@ namespace pxsim {
 
         if (expectedType) {
             if (value === null || value === undefined) {
-                throwNullTypeError(value, expectedType);
+                throwTypeError(pxsim.localization.lf("Expected type {0} but received {1}. Did you forget to assign a variable?", expectedType, value + ""));
             }
             else {
                 throwTypeError(pxsim.localization.lf("Type {0} is not assignable to type {1}", typename, expectedType))
@@ -1861,12 +1861,6 @@ namespace pxsim {
         else {
             throwTypeError(pxsim.localization.lf("Cannot access properties on {0}", typename));
         }
-    }
-
-    export function throwNullTypeError(value: any, expectedType: string) {
-        throwTypeError(
-            pxsim.localization.lf("Expected type {0} but received {1}. Did you forget to assign a variable?", expectedType, value + "")
-        );
     }
 
     export function setParentMuteState(state: "muted" | "unmuted" | "disabled") {
