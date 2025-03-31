@@ -1575,11 +1575,13 @@ namespace pxsim {
                 return vt2 && vt.classNo <= vt2.classNo && vt2.classNo <= vt.lastSubtypeNo;
             }
 
-            function failedCast(v: any) {
+            function failedCast(v: any, expectedType?: VTable) {
                 // TODO generate the right panic codes
-                if ((pxsim as any).control && (pxsim as any).control.dmesgValue)
+                if ((pxsim as any).control && (pxsim as any).control.dmesgValue) {
                     (pxsim as any).control.dmesgValue(v)
-                oops("failed cast on " + v)
+                }
+
+                throwFailedCastError(v, expectedType?.name);
             }
 
             function buildResume(s: StackFrame, retPC: number) {
@@ -1817,6 +1819,54 @@ namespace pxsim {
                 }
             }, 66) as any
         }
+    }
+
+    export function throwUserException(message: string) {
+        throw new Error(message);
+    }
+
+    export function throwTypeError(message: string) {
+        throwUserException(
+            pxsim.localization.lf("TypeError: {0}", message)
+        );
+    }
+
+    export function throwFailedCastError(value: any, expectedType?: string) {
+        let typename: string;
+        const vtable = (value as RefRecord)?.vtable;
+        if (vtable) {
+            typename = vtable.name;
+        }
+        else if (value instanceof RefCollection) {
+            typename = "Array";
+        }
+        else if (value instanceof RefBuffer) {
+            typename = "Buffer";
+        }
+        else if (value instanceof RefAction) {
+            typename = "function";
+        }
+        else {
+            typename = typeof value;
+        }
+
+        if (expectedType) {
+            if (value === null || value === undefined) {
+                throwNullTypeError(value, expectedType);
+            }
+            else {
+                throwTypeError(pxsim.localization.lf("Type {0} is not assignable to type {1}", typename, expectedType))
+            }
+        }
+        else {
+            throwTypeError(pxsim.localization.lf("Cannot access properties on {0}", typename));
+        }
+    }
+
+    export function throwNullTypeError(value: any, expectedType: string) {
+        throwTypeError(
+            pxsim.localization.lf("Expected type {0} but received {1}. Did you forget to assign a variable?", expectedType, value + "")
+        );
     }
 
     export function setParentMuteState(state: "muted" | "unmuted" | "disabled") {
