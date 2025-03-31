@@ -1832,6 +1832,37 @@ namespace pxsim {
     }
 
     export function throwFailedCastError(value: any, expectedType?: string) {
+        const typename = getType(value);
+
+        if (expectedType) {
+            if (value === null || value === undefined) {
+                throwTypeError(pxsim.localization.lf("Expected type {0} but received type {1}. Did you forget to assign a variable?", expectedType, typename));
+            }
+            else {
+                throwTypeError(pxsim.localization.lf("Expected type {0} but received type {1}", expectedType, typename))
+            }
+        }
+        else {
+            throwTypeError(pxsim.localization.lf("Cannot read properties of {0}", typename));
+        }
+    }
+
+    export function throwFailedPropertyAccessError(value: any, propertyName?: string) {
+        const typename = getType(value);
+
+        if (propertyName) {
+            throwTypeError(pxsim.localization.lf("Cannot read properties of {0} (reading '{1}')", typename, propertyName));
+        }
+        else {
+            throwTypeError(pxsim.localization.lf("Cannot read properties of {0}", typename));
+        }
+    }
+
+    export function throwNullUndefinedAsObjectError() {
+        throwTypeError(pxsim.localization.lf("Cannot convert undefined or null to object"));
+    }
+
+    function getType(value: any) {
         let typename: string;
         const vtable = (value as RefRecord)?.vtable;
         if (vtable) {
@@ -1855,18 +1886,7 @@ namespace pxsim {
         else {
             typename = typeof value;
         }
-
-        if (expectedType) {
-            if (value === null || value === undefined) {
-                throwTypeError(pxsim.localization.lf("Expected type {0} but received type {1}. Did you forget to assign a variable?", expectedType, typename));
-            }
-            else {
-                throwTypeError(pxsim.localization.lf("Expected type {0} but received type {1}", expectedType, typename))
-            }
-        }
-        else {
-            throwTypeError(pxsim.localization.lf("Cannot access properties on {0}", typename));
-        }
+        return typename;
     }
 
     export function setParentMuteState(state: "muted" | "unmuted" | "disabled") {
