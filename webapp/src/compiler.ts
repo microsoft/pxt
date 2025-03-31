@@ -548,29 +548,36 @@ export function snippetAsync(qName: string, python?: boolean): Promise<string> {
     }));
 }
 
-export async function typecheckAsync(): Promise<pxtc.CompileResult> {
+export async function typecheckAsync(): Promise<pxtc.CompileResult | null> {
     const epkg = pkg.mainEditorPkg();
     const isFirstTypeCheck = !firstTypecheck;
+
     const p = (async () => {
         try {
             await epkg.buildAssetsAsync();
+
             const opts = await pkg.mainPkg.getCompileOptionsAsync();
-            // show errors in all top-level code
-            opts.testMode = true;
+            opts.testMode = true; // show errors in all top-level code
+
             await workerOpAsync("setOptions", { options: opts });
+
             const r = await workerOpAsync("allDiags", {});
             setDiagnostics("typecheck", r.diagnostics, r.sourceMap);
+
             if (isFirstTypeCheck) {
                 refreshLanguageServiceApisInfo();
-                await ensureApisInfoAsync();
             }
+            await ensureApisInfoAsync();
             return r;
         } catch (e) {
-            catchUserErrorAndSetDiags(null);
-            return undefined;
+            return catchUserErrorAndSetDiags(null)(e);
         }
     })();
-    if (isFirstTypeCheck) firstTypecheck = p;
+
+    if (isFirstTypeCheck) {
+        firstTypecheck = p;
+    }
+
     return p;
 }
 
