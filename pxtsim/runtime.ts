@@ -1852,10 +1852,10 @@ namespace pxsim {
 
         if (expectedType) {
             if (value === null || value === undefined) {
-                throwTypeError(pxsim.localization.lf("Expected type {0} but received {1}. Did you forget to assign a variable?", expectedType, value + ""));
+                throwTypeError(pxsim.localization.lf("Expected type {0} but received type {1}. Did you forget to assign a variable?", expectedType, typename));
             }
             else {
-                throwTypeError(pxsim.localization.lf("Type {0} is not assignable to type {1}", typename, expectedType))
+                throwTypeError(pxsim.localization.lf("Expected type {0} but received type {1}", expectedType, typename))
             }
         }
         else {
