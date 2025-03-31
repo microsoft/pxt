@@ -653,6 +653,7 @@ namespace pxsim {
         }
 
         export function runInBackground(a: RefAction) {
+            typeCheck(a);
             runtime.runFiberAsync(a);
         }
 
@@ -662,10 +663,14 @@ namespace pxsim {
                     .then(() => U.delay(20))
                     .then(loop);
             }
-            pxtrt.nullCheck(a)
+            typeCheck(a);
             loop()
         }
     }
 
-
+    export function typeCheck(a: RefAction) {
+        if (!(a instanceof RefAction)) {
+            throwFailedCastError(a, "function");
+        }
+    }
 }
