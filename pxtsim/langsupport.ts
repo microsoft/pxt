@@ -668,7 +668,7 @@ namespace pxsim {
         }
 
         export function typeCheck(a: RefAction) {
-            if (!(a instanceof RefAction)) {
+            if (!a || !(a instanceof RefAction) && !(a as any).info) {
                 throwFailedCastError(a, "function");
             }
         }

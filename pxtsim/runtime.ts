@@ -1837,6 +1837,12 @@ namespace pxsim {
         if (vtable) {
             typename = vtable.name;
         }
+        else if (value === null) {
+            typename = "null";
+        }
+        else if (value === undefined) {
+            typename = "undefined";
+        }
         else if (value instanceof RefCollection) {
             typename = "Array";
         }
