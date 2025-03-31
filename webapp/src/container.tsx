@@ -121,7 +121,7 @@ export interface SettingsMenuState {
     greenScreen?: boolean;
     accessibleBlocks?: boolean;
     showShare?: boolean;
-    extDownloadMenuItems?: sui.MenuItem[];
+    extDownloadMenuItems?: sui.ItemProps[];
 }
 
 export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenuState> {
@@ -355,7 +355,19 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             {showSimCollapse ? <sui.Item role="menuitem" icon='toggle right' text={simCollapseText} onClick={this.toggleCollapse} /> : undefined}
             {showDownloadMenuItems && <>
                 <div className="ui divider" />
-                {this.state.extDownloadMenuItems.map((props, index) => <sui.Item key={"ext" + index} role="menuitem" tabIndex={-1} {...props} />)}
+                {this.state.extDownloadMenuItems.map((props, index) => (
+                    <sui.Item
+                        key={index}
+                        role="menuitem"
+                        tabIndex={-1}
+                        {...props}
+                        onClick={(e) => {
+                            props.onClick?.(e);
+                            this.dropdown?.setInactive(e.currentTarget)
+                            this.dropdown?.hide();
+                        }}
+                    />
+                ))}
             </>}
             <div className="ui divider"></div>
             {targetTheme.selectLanguage ? <sui.Item icon='xicon globe' role="menuitem" text={lf("Language")} onClick={this.showLanguagePicker} /> : undefined}

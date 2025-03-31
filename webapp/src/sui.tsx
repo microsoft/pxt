@@ -111,25 +111,19 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
         el.focus();
     }
 
-    private blur(el: HTMLElement) {
+    setInactive(el: HTMLElement) {
         if (this.isActive(el)) {
             pxt.BrowserUtils.removeClass(el, "active");
         }
     }
 
-    private setInactive(el: HTMLElement) {
-        if (this.isActive(el)) {
-            pxt.BrowserUtils.removeClass(el, "active");
-        }
-    }
-
-    private setActive(el: HTMLElement) {
+    setActive(el: HTMLElement) {
         if (!this.isActive(el)) {
             pxt.BrowserUtils.addClass(el, "active");
         }
     }
 
-    private isActive(el: HTMLElement) {
+    isActive(el: HTMLElement) {
         return el && pxt.BrowserUtils.containsClass(el, "active");
     }
 
@@ -152,34 +146,6 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
         return menu.contains(document.activeElement);
     }
 
-    private navigateToNextElement = (e: KeyboardEvent, prev: HTMLElement, next: HTMLElement) => {
-        const dropdown = this.refs["dropdown"] as HTMLElement;
-        const charCode = core.keyCodeFromEvent(e);
-        const current = e.currentTarget as HTMLElement;
-        if (charCode === 40 /* Down arrow */) {
-            e.preventDefault();
-            e.stopPropagation();
-            if (next) {
-                this.focus(next);
-            }
-        } else if (charCode === 38 /* Up arrow */) {
-            e.preventDefault();
-            e.stopPropagation();
-            if (prev) {
-                this.focus(prev);
-            } else {
-                // Prev is undefined, go to dropdown
-                dropdown.focus();
-                this.setState({ open: false });
-            }
-        } else if (charCode === core.SPACE_KEY || charCode === core.ENTER_KEY) {
-            // Trigger click
-            e.preventDefault();
-            e.stopPropagation();
-            current.click();
-        }
-    }
-
     handleFocusCapture = (e: React.FocusEvent<HTMLDivElement>) => {
         const target = e.target as HTMLElement;
         if (target && this.getChildren().includes(target)) {
@@ -194,39 +160,6 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
         }
     }
 
-    childFocus = (child: HTMLElement) => {
-        this.setActive(child);
-    }
-    childBlur = (child: HTMLElement) => {
-        this.blur(child);
-    }
-    childClick = (child: HTMLElement) => {
-        this.hide();
-    }
-    childKeyDown = (child: HTMLElement, e: KeyboardEvent, prev: HTMLElement, next: HTMLElement) => {
-        this.navigateToNextElement(e, prev, next);
-    }
-    lastChildKeyDown = (child: HTMLElement, e: KeyboardEvent) => {
-        const charCode = core.keyCodeFromEvent(e);
-        if (!e.shiftKey && charCode === core.TAB_KEY) {
-            this.hide();
-        }
-    }
-
-    UNSAFE_componentWillUpdate(nextProps: Readonly<DropdownProps>, nextState: Readonly<DropdownState>, nextContext: any): void {
-        const children = this.getChildren();
-        for (let i = 0; i < children.length; i++) {
-            const prev = i > 0 ? children[i - 1] as HTMLElement : undefined;
-            const child = children[i] as HTMLElement;
-            const next = i < children.length ? children[i + 1] as HTMLElement : undefined;
-            child.removeEventListener('keydown', (e) => this.childKeyDown(child, e, prev, next));
-            child.removeEventListener('focus', () => this.childFocus(child));
-            child.removeEventListener('blur', () => this.childBlur(child));
-            child.removeEventListener('click', () => this.childClick(child));
-            child.removeEventListener('keydown', (e) => this.lastChildKeyDown(child, e));
-        }
-    }
-
     componentDidUpdate(prevProps: DropdownProps, prevState: DropdownState) {
         // Remove active from all menu items on any update
         const children = this.getChildren();
@@ -234,18 +167,6 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
             const child = children[i] as HTMLElement;
             // On allow tabbing to valid child nodes (ie: no separators or mobile only items)
             child.tabIndex = this.state.open ? 0 : -1;
-            // Set event handlers
-
-            const prev = i > 0 ? children[i - 1] as HTMLElement : undefined;
-            const next = i < children.length ? children[i + 1] as HTMLElement : undefined;
-            child.addEventListener('keydown', (e) => this.childKeyDown(child, e, prev, next));
-            child.addEventListener('focus', (e: FocusEvent) => this.childFocus(child));
-            child.addEventListener('blur', (e: FocusEvent) => this.childBlur(child));
-            child.addEventListener('click', (e) => this.childClick(child));
-            if (i == children.length - 1) {
-                // set tab on last child to clear focus
-                child.addEventListener('keydown', (e) => this.lastChildKeyDown(child, e));
-            }
         }
 
         // Check if dropdown width exceeds the bounds, add the left class to the menu
@@ -495,7 +416,7 @@ export class ExpandableMenu extends UIElement<ExpandableMenuProps, ExpandableMen
                 role="button" />
             {expanded && <div className="expanded-items">
                 {children}
-            </div>}
+            </div> }
         </div>);
     }
 }
@@ -541,7 +462,7 @@ export class Select extends UIElement<SelectProps, SelectState> {
         const { selected } = this.state;
 
         return (<div>
-            {label && `${label} `}
+            { label && `${label} ` }
             <select value={selected} className="ui dropdown" onChange={this.handleOnChange} aria-label={ariaLabel} >
                 {options.map(opt =>
                     opt && <option
@@ -1472,7 +1393,7 @@ class ModalButtonElement extends data.PureComponent<ModalButton, {}> {
             onClick={this.handleClick}
             onKeyDown={fireClickOnEnter}
             ariaLabel={this.props.ariaLabel ? this.props.ariaLabel : this.props.label}
-            title={this.props.title} />
+            title={this.props.title}/>
     }
 }
 
