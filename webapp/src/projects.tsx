@@ -1009,19 +1009,31 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         return () => onClick(scr, action);
     }
 
-    handleOpenForumUrlInEditor() {
+    async handleOpenForumUrlInEditor() {
         pxt.tickEvent('projects.actions.forum', undefined, { interactiveConsent: true });
-        const { url } = this.props;
-        pxt.discourse.extractSharedIdFromPostUrl(url)
-            .then(projectId => {
-                // if we have a projectid, load it
-                if (projectId)
-                    window.location.hash = "pub:" + projectId; // triggers reload
-                else {
-                    core.warningNotification(lf("Oops, we could not find the program in the forum."));
-                }
-            })
-            .catch(core.handleNetworkError)
+        const { url, scr } = this.props;
+
+        let projectId: string;
+        if (scr?.shareUrl) {
+            projectId = pxt.Cloud.parseScriptId(scr.shareUrl);
+        }
+
+        if (!projectId) {
+            try {
+                projectId = await pxt.discourse.extractSharedIdFromPostUrl(url);
+            }
+            catch (e) {
+                core.handleNetworkError(e);
+                return;
+            }
+        }
+
+        if (projectId) {
+            window.location.hash = "pub:" + projectId; // triggers reload
+        }
+        else {
+            core.warningNotification(lf("Oops, we could not find the program in the forum."));
+        }
     }
 
     isYouTubeOnline(): boolean {
