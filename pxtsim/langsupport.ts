@@ -666,11 +666,11 @@ namespace pxsim {
             typeCheck(a);
             loop()
         }
-    }
 
-    export function typeCheck(a: RefAction) {
-        if (!(a instanceof RefAction)) {
-            throwFailedCastError(a, "function");
+        export function typeCheck(a: RefAction) {
+            if (!(a instanceof RefAction)) {
+                throwFailedCastError(a, "function");
+            }
         }
     }
 }
