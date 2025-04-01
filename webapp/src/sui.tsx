@@ -264,7 +264,7 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
         const { closeOnItemClick } = this.props;
         const el = e.target as HTMLElement;
         const itemEl = el.closest(".item") as HTMLElement;
-    
+
         if (closeOnItemClick && itemEl) {
             this.setInactive(itemEl);
             // Let the item's onClick run before closing the menu
@@ -273,7 +273,7 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
             e.stopPropagation();
         }
     }
-   
+
     private focusFirst: boolean;
     private handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
         const dropdown = this.refs["dropdown"] as HTMLElement;
