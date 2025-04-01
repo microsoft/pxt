@@ -265,7 +265,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         const targetTheme = pxt.appTarget.appTheme;
         const { compiling, isSaving } = this.props.parent.state;
         const { compileState } = this.state;
-        const compileTooltip = lf("Download your code to {0}", targetTheme.boardName);
+        const compileTooltip = lf("Download your code to the {0}", targetTheme.boardName);
 
         let downloadText: string;
         if (compileState === "success") {
