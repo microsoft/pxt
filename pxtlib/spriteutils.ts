@@ -248,7 +248,7 @@ namespace pxt.sprite {
     export function decodeTilemap(literal: string, fileType: "typescript" | "python", proj: TilemapProject): TilemapData {
         literal = Util.htmlUnescape(literal).trim();
 
-        if (!literal.trim()) {
+        if (!literal.trim() || literal.indexOf("(") === -1) {
             return null;
         }
 
