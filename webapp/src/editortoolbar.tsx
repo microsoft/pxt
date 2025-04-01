@@ -25,6 +25,7 @@ interface EditorToolbarState {
 
 export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarState> {
     protected compileTimeout: number;
+    compileBtnDropdown: sui.DropdownMenu;
 
     constructor(props: ISettingsProps) {
         super(props);
@@ -349,7 +350,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         // Add the ... menu
         const usbIcon = pxt.appTarget.appTheme.downloadDialogTheme?.deviceIcon || "usb";
         el.push(
-            <sui.DropdownMenu key="downloadmenu" role="menuitem" icon={`${downloadButtonIcon} horizontal ${hwIconClasses}`} title={lf("Download options")} className={`${hwIconClasses} right attached editortools-btn hw-button button`} dataTooltip={tooltip} displayAbove={true} displayRight={displayRight} onShow={
+            <sui.DropdownMenu key="downloadmenu" role="menuitem" icon={`${downloadButtonIcon} horizontal ${hwIconClasses}`} title={lf("Download options")} className={`${hwIconClasses} right attached editortools-btn hw-button button`} dataTooltip={tooltip} displayAbove={true} displayRight={displayRight} ref={ref => this.compileBtnDropdown = ref} onShow={
                 () => this.forceUpdate() // force update to refresh extMenuItems
             }>
                 {webUSBSupported && !packetioConnected && <sui.Item role="menuitem" icon={usbIcon} text={lf("Connect Device")} tabIndex={-1} onClick={this.onPairClick} />}
@@ -357,7 +358,12 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
                 {webUSBSupported && (packetioConnecting || packetioConnected) && <sui.Item role="menuitem" icon={usbIcon} text={lf("Disconnect")} tabIndex={-1} onClick={this.onDisconnectClick} />}
                 {boards && <sui.Item role="menuitem" icon="microchip" text={hardwareMenuText} tabIndex={-1} onClick={this.onHwItemClick} />}
                 {!extMenuItems && <sui.Item role="menuitem" icon="xicon file-download" text={downloadMenuText} tabIndex={-1} onClick={this.onFileDownloadClick} />}
-                {extMenuItems.map((props, index) => <sui.Item key={"ext" + index} role="menuitem" tabIndex={-1} {...props} />)}
+                {extMenuItems.map((props, index) => <sui.Item key={"ext" + index} role="menuitem" tabIndex={-1} {...props} onClick={(e) => {
+                    props.onClick?.(e);
+                    this.compileBtnDropdown?.setInactive(e.currentTarget);
+                    this.compileBtnDropdown?.hide();
+                }}
+                />)}
                 {downloadHelp && <sui.Item role="menuitem" icon="help circle" text={lf("Help")} tabIndex={-1} onClick={this.onHelpClick} />}
             </sui.DropdownMenu>
         )

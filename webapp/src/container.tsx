@@ -357,7 +357,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
                         {...props}
                         onClick={(e) => {
                             props.onClick?.(e);
-                            this.dropdown?.setInactive(e.currentTarget)
+                            this.dropdown?.setInactive(e.currentTarget);
                             this.dropdown?.hide();
                         }}
                     />
