@@ -355,7 +355,7 @@ namespace ts.pxtc {
                         hitEnd()
                     }
                     if (opts.flashUsableEnd) {
-                        let realUsableEnd = getFlashUsableEnd(target,cres)
+                        let realUsableEnd = getFlashUsableEnd(opts,cres)
                         if (newAddr >= realUsableEnd) {
                             hitEnd()
                         }
@@ -1049,7 +1049,7 @@ ${hexfile.hexPrelude()}
     }
 
     // compute the real top of flash
-    export function getFlashUsableEnd(target: CompileTarget, cres: CompileResult) {
+    function getFlashUsableEnd(target: CompileTarget, cres: CompileResult) {
         // check if settings size is set
         let actualSettingsSize = 0
         if (cres.configData) {
