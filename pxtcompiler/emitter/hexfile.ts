@@ -1294,7 +1294,6 @@ __flash_checksums:
         if (otherVariants.length)
             try {
                 for (let other of otherVariants) {
-                    console.log(`variant ${other.extinfo.sha}`)
                     const localOpts = U.flatClone(opts0)
                     localOpts.extinfo = other.extinfo
                     other.target.isNative = true
