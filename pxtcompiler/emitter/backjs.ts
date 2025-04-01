@@ -493,16 +493,19 @@ function ${id}(s) {
             }
         }
 
+        function vTableRef(info: ClassInfo) {
+            return `${info.id}_VT`
+        }
+
         function checkSubtype(info: ClassInfo, r0 = "r0") {
-            const vt = `${info.id}_VT`
-            return `checkSubtype(${r0}, ${vt})`
+            return `checkSubtype(${r0}, ${vTableRef(info)})`
         }
 
         function emitInstanceOf(info: ClassInfo, tp: string, r0 = "r0") {
             if (tp == "bool")
                 write(`r0 = ${checkSubtype(info)};`)
             else if (tp == "validate") {
-                write(`if (!${checkSubtype(info, r0)}) failedCast(${r0});`)
+                write(`if (!${checkSubtype(info, r0)}) failedCast(${r0}, ${vTableRef(info)});`)
             } else {
                 U.oops()
             }
