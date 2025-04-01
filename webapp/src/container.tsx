@@ -121,7 +121,6 @@ export interface SettingsMenuState {
     greenScreen?: boolean;
     accessibleBlocks?: boolean;
     showShare?: boolean;
-    extDownloadMenuItems?: sui.ItemProps[];
 }
 
 export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenuState> {
@@ -277,12 +276,6 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.props.parent.signOutGithub();
     }
 
-    onDropdownShow = () => {
-        // Ensure dropdown always has the editor's most up-to-date menu items
-        const extDownloadMenuItems = pxt.commands.getDownloadMenuItems?.() || [];
-        this.setState({ extDownloadMenuItems });
-    }
-
     UNSAFE_componentWillReceiveProps(nextProps: SettingsMenuProps) {
         const newState: SettingsMenuState = {};
         if (nextProps.greenScreen !== undefined) {
@@ -302,7 +295,6 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             || this.state.accessibleBlocks != nextState.accessibleBlocks
             || this.state.showShare != nextState.showShare
             || nextProps.inBlocks !== this.props.inBlocks
-            || !!nextState.extDownloadMenuItems?.length
     }
 
     renderCore() {
@@ -338,9 +330,11 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         const showFeedbackOption = pxt.U.ocvEnabled();
 
         const simCollapseText = headless ? lf("Toggle the File Explorer") : lf("Toggle the simulator");
-        const showDownloadMenuItems = headless && !!this.state.extDownloadMenuItems;
+        const extDownloadMenuItems = pxt.commands.getDownloadMenuItems?.() || [];
 
-        return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("Settings")} className="item icon more-dropdown-menuitem" ref={ref => this.dropdown = ref} onShow={this.onDropdownShow}>
+        return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("Settings")} className="item icon more-dropdown-menuitem" ref={ref => this.dropdown = ref} onShow={
+            () => this.forceUpdate() // force update to refresh extDownloadMenuItems
+        }>
             {showHome && <sui.Item className="mobile only inherit" role="menuitem" icon="home" title={lf("Home")} text={lf("Home")} ariaLabel={lf("Home screen")} onClick={this.showExitAndSaveDialog} />}
             {showShare && <sui.Item className="mobile only inherit" role="menuitem" icon="share alternate" title={lf("Publish your game to create a shareable link")} text={lf("Share")} ariaLabel={lf("Share Project")} onClick={this.showShareDialog} />}
             {(showHome || showShare) && <div className="ui divider mobile only inherit" />}
@@ -353,9 +347,9 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             {!isController ? <sui.Item role="menuitem" icon="trash" text={lf("Delete Project")} onClick={this.removeProject} /> : undefined}
             {targetTheme.timeMachine ? <sui.Item role="menuitem" icon="history" text={lf("Version History")} onClick={this.showTurnBackTimeDialog} /> : undefined}
             {showSimCollapse ? <sui.Item role="menuitem" icon='toggle right' text={simCollapseText} onClick={this.toggleCollapse} /> : undefined}
-            {showDownloadMenuItems && <>
+            {!!extDownloadMenuItems.length && <>
                 <div className="ui divider" />
-                {this.state.extDownloadMenuItems.map((props, index) => (
+                {extDownloadMenuItems.map((props, index) => (
                     <sui.Item
                         key={index}
                         role="menuitem"

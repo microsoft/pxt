@@ -349,7 +349,9 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         // Add the ... menu
         const usbIcon = pxt.appTarget.appTheme.downloadDialogTheme?.deviceIcon || "usb";
         el.push(
-            <sui.DropdownMenu key="downloadmenu" role="menuitem" icon={`${downloadButtonIcon} horizontal ${hwIconClasses}`} title={lf("Download options")} className={`${hwIconClasses} right attached editortools-btn hw-button button`} dataTooltip={tooltip} displayAbove={true} displayRight={displayRight}>
+            <sui.DropdownMenu key="downloadmenu" role="menuitem" icon={`${downloadButtonIcon} horizontal ${hwIconClasses}`} title={lf("Download options")} className={`${hwIconClasses} right attached editortools-btn hw-button button`} dataTooltip={tooltip} displayAbove={true} displayRight={displayRight} onShow={
+                () => this.forceUpdate() // force update to refresh extMenuItems
+            }>
                 {webUSBSupported && !packetioConnected && <sui.Item role="menuitem" icon={usbIcon} text={lf("Connect Device")} tabIndex={-1} onClick={this.onPairClick} />}
                 {showUsbNotSupportedHint && <sui.Item role="menuitem" icon={usbIcon} text={lf("Connect Device")} tabIndex={-1} onClick={this.onCannotPairClick} />}
                 {webUSBSupported && (packetioConnecting || packetioConnected) && <sui.Item role="menuitem" icon={usbIcon} text={lf("Disconnect")} tabIndex={-1} onClick={this.onDisconnectClick} />}
@@ -372,8 +374,6 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         const isTimeMachineEmbed = pxt.shell.isTimeMachineEmbed();
         const readOnly = pxt.shell.isReadOnly();
         const tutorial = tutorialOptions ? tutorialOptions.tutorial : false;
-        const simOpts = pxt.appTarget.simulator;
-        const headless = simOpts.headless;
         const flyoutOnly = editorState && editorState.hasCategories === false;
         const hideToolbox = tutorial && tutorialOptions.metadata?.hideToolbox;
 
@@ -388,8 +388,9 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
             && !targetTheme.hideProjectRename && !debugging;
         const showProjectRenameReadonly = false; // always allow renaming, even for github projects
         const compile = pxt.appTarget.compile;
-        const compileBtn = !!pxt.commands.onDownloadButtonClick || (compile.hasHex || compile.saveAsPNG || compile.useUF2);
-        const compileTooltip = lf("Download your code to {0}", targetTheme.boardName);
+        const compilesToDownloadableFile = compile.hasHex || compile.saveAsPNG || compile.useUF2;
+        const hasCompileButtonOverride = !!pxt.commands.onDownloadButtonClick;
+        const showCompileBtn = !isTimeMachineEmbed && (compilesToDownloadableFile || hasCompileButtonOverride);
         const compileLoading = !!compiling;
         const running = simState == SimState.Running;
         const starting = simState == SimState.Starting;
@@ -401,8 +402,6 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
             && targetTheme.githubEditor
             && !pxt.BrowserUtils.isPxtElectron()
             && !readOnly && !isController && !debugging && !tutorial;
-
-        const downloadIcon = pxt.appTarget.appTheme.downloadIcon || "download";
 
         const bigRunButtonTooltip = (() => {
             switch (simState) {
@@ -431,10 +430,10 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
 
         return <div id="editortools" className="ui" role="region" aria-label={lf("Editor toolbar")}>
             <div id="downloadArea" role="menubar" className="ui column items">
-                {compileBtn && <div className="ui item portrait hide">
+                {showCompileBtn && <div className="ui item portrait hide">
                     {this.getCompileButton(computer)}
                 </div>}
-                {compileBtn && <div className="ui portrait only">
+                {showCompileBtn && <div className="ui portrait only">
                     {this.getCompileButton(mobile)}
                 </div>}
             </div>

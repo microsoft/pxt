@@ -1284,7 +1284,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
         const isFullscreen = size == 'fullscreen';
         const showBack = isFullscreen && !!closeIcon;
 
-        const resolvedHeader = header ? header : headerFn ? headerFn() : undefined;
+        const resolvedHeader = headerFn ? headerFn() : header ? header : undefined;
 
         const classes = cx([
             'ui',
