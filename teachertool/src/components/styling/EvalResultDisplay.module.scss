@@ -154,9 +154,9 @@
         .result-toolbar-button {
             opacity: 1 !important;
 
-            .disabled {
+            &.disabled {
                 border: 1px solid var(--pxt-button-secondary-accent) !important;
-                opacity: 0.8 !important;
+                opacity: 0.7 !important;
             }
         }
     }
