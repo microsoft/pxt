@@ -332,7 +332,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         const simCollapseText = headless ? lf("Toggle the File Explorer") : lf("Toggle the simulator");
         const extDownloadMenuItems = pxt.commands.getDownloadMenuItems?.() || [];
 
-        return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("Settings")} className="item icon more-dropdown-menuitem" ref={ref => this.dropdown = ref} onShow={
+        return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("Settings")} className="item icon more-dropdown-menuitem" ref={ref => this.dropdown = ref} closeOnItemClick={true} onShow={
             () => this.forceUpdate() // force update to refresh extDownloadMenuItems
         }>
             {showHome && <sui.Item className="mobile only inherit" role="menuitem" icon="home" title={lf("Home")} text={lf("Home")} ariaLabel={lf("Home screen")} onClick={this.showExitAndSaveDialog} />}
@@ -349,19 +349,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             {showSimCollapse ? <sui.Item role="menuitem" icon='toggle right' text={simCollapseText} onClick={this.toggleCollapse} /> : undefined}
             {!!extDownloadMenuItems.length && <>
                 <div className="ui divider" />
-                {extDownloadMenuItems.map((props, index) => (
-                    <sui.Item
-                        key={index}
-                        role="menuitem"
-                        tabIndex={-1}
-                        {...props}
-                        onClick={(e) => {
-                            props.onClick?.(e);
-                            this.dropdown?.setInactive(e.currentTarget);
-                            this.dropdown?.hide();
-                        }}
-                    />
-                ))}
+                {extDownloadMenuItems.map((props, index) => <sui.Item key={index} role="menuitem" tabIndex={-1} {...props} />)}
             </>}
             <div className="ui divider"></div>
             {targetTheme.selectLanguage ? <sui.Item icon='xicon globe' role="menuitem" text={lf("Language")} onClick={this.showLanguagePicker} /> : undefined}

@@ -76,6 +76,7 @@ export interface DropdownProps extends UiProps {
     displayRight?: boolean;
     displayLeft?: boolean;
     dataTooltip?: string;
+    closeOnItemClick?: boolean;
 }
 
 export interface DropdownState {
@@ -259,6 +260,20 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
         e.stopPropagation();
     }
 
+    private handleItemClick = (e: React.MouseEvent) => {
+        const { closeOnItemClick } = this.props;
+        const el = e.target as HTMLElement;
+        const itemEl = el.closest(".item") as HTMLElement;
+    
+        if (closeOnItemClick && itemEl) {
+            this.setInactive(itemEl);
+            // Let the item's onClick run before closing the menu
+            setTimeout(() => this.hide(), 0);
+        } else {
+            e.stopPropagation();
+        }
+    }
+   
     private focusFirst: boolean;
     private handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
         const dropdown = this.refs["dropdown"] as HTMLElement;
@@ -358,7 +373,7 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
                 <div ref="menu" {...menuAria} className={menuClasses}
                     role="menu"
                     onMouseDown={this.captureMouseEvent}
-                    onClick={this.captureMouseEvent}
+                    onClick={this.handleItemClick}
                 >
                     {children}
                 </div>
