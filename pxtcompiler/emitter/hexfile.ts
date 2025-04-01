@@ -355,7 +355,7 @@ namespace ts.pxtc {
                         hitEnd()
                     }
                     if (opts.flashUsableEnd) {
-                        let realUsableEnd = getFlashUsableEnd(target,cres)
+                        let realUsableEnd = getFlashUsableEnd(opts,cres)
                         if (newAddr >= realUsableEnd) {
                             hitEnd()
                         }
@@ -1049,7 +1049,7 @@ ${hexfile.hexPrelude()}
     }
 
     // compute the real top of flash
-    export function getFlashUsableEnd(target: CompileTarget, cres: CompileResult) {
+    function getFlashUsableEnd(target: CompileTarget, cres: CompileResult) {
         // check if settings size is set
         let actualSettingsSize = 0
         if (cres.configData) {
@@ -1294,6 +1294,7 @@ __flash_checksums:
         if (otherVariants.length)
             try {
                 for (let other of otherVariants) {
+                    console.log(`variant ${other.extinfo.sha}`)
                     const localOpts = U.flatClone(opts0)
                     localOpts.extinfo = other.extinfo
                     other.target.isNative = true
