@@ -1302,6 +1302,7 @@ namespace pxt {
             opts.jres = this.getJRes()
             const functionOpts = pxt.appTarget.runtime && pxt.appTarget.runtime.functionsOptions;
             opts.allowedArgumentTypes = functionOpts && functionOpts.extraFunctionEditorTypes && functionOpts.extraFunctionEditorTypes.map(info => info.typeName).concat("number", "boolean", "string");
+            opts.unfetteredInitializers = pxt.appTarget.compile?.unfetteredInitializers;
 
             for (const dep of this.sortedDeps()) {
                 dep.patchAppTargetPalette();

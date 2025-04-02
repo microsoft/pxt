@@ -1499,7 +1499,7 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
     show = () => {
         pxt.tickEvent('newprojectdialog.show', undefined, { interactiveConsent: false });
         this.setState({
-            name: "",
+            name: pxt.commands.getDefaultProjectName?.() || "",
             emoji: "",
             visible: true,
             languageRestriction: pxt.editor.LanguageRestriction.Standard

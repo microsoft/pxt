@@ -406,6 +406,35 @@ function applyExtensionResult() {
         log(`extension showProgramTooLargeErrorAsync`);
         pxt.commands.showProgramTooLargeErrorAsync = res.showProgramTooLargeErrorAsync;
     }
+    if (res.getDefaultProjectName) {
+        log(`extension getDefaultProjectName`);
+        pxt.commands.getDefaultProjectName = res.getDefaultProjectName;
+    }
+    if (res.getDownloadMenuItems) {
+        log(`extension getDownloadMenuItems`);
+        pxt.commands.getDownloadMenuItems = res.getDownloadMenuItems;
+    }
+    if (res.notifyProjectSaved) {
+        log(`extension notifyProjectSaved`);
+        pxt.commands.notifyProjectSaved = res.notifyProjectSaved;
+    }
+    if (res.notifyProjectCompiled) {
+        log(`extension notifyProjectCompiled`);
+        pxt.commands.notifyProjectCompiled = res.notifyProjectCompiled;
+    }
+    if (res.onDownloadButtonClick) {
+        log(`extension onDownloadButtonClick`);
+        pxt.commands.onDownloadButtonClick = res.onDownloadButtonClick;
+    }
+
+    if (res.initAsync) {
+        res.initAsync({
+            confirmAsync: core.confirmAsync,
+            infoNotification: core.infoNotification,
+            warningNotification: core.warningNotification,
+            errorNotification: core.errorNotification,
+        });
+    }
     if (res.onMarkdownActivityLoad) {
         log(`extension onMarkdownActivityLoad`);
         pxt.commands.onMarkdownActivityLoad = res.onMarkdownActivityLoad;
@@ -475,6 +504,7 @@ export async function initAsync() {
         log(`deploy: electron`);
         pxt.commands.deployCoreAsync = electron.driveDeployAsync;
         pxt.commands.electronDeployAsync = electron.driveDeployAsync;
+        pxt.commands.electronFileDeployAsync = electron.deployFilesAsync;
     } else if (webUSBSupported) {
         log(`deploy: webusb`);
         pxt.commands.deployCoreAsync = hidDeployCoreAsync;
