@@ -39,6 +39,8 @@
             .close-button {
                 height: 100%;
                 padding: 0 1rem;
+                background-color: var(--pxt-neutral-background1);
+                color: var(--pxt-neutral-foreground1);
 
                 i {
                     font-size: 1.3rem;
@@ -65,7 +67,7 @@
             button[class*="common-accordion-header-outer"] {
                 background-color: var(--pxt-tertiary-background);
                 color: var(--pxt-tertiary-foreground);
-                border-bottom: 1px solid var(--pxt-tertiary-foreground);
+                border-bottom: 1px solid var(--pxt-neutral-background1);
                 font-size: 1.2rem;
                 padding: 0.5rem 0.95rem;
             }
@@ -85,6 +87,10 @@
 
                 &:last-child {
                     border-bottom: none;
+                }
+
+                &[class*="disabled"] {
+                    border-color: var(--pxt-neutral-alpha20) !important
                 }
 
                 .catalog-item-label {
