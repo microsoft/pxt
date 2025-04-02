@@ -1830,6 +1830,9 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
             if (extraType.label) {
                 targetStrings[`{id:type}${extraType.label}`] = extraType.label;
             }
+            else {
+                targetStrings[`{id:type}${extraType.typeName}`] = extraType.typeName;
+            }
 
             if (extraType.defaultName) {
                 targetStrings[`{id:var}${extraType.defaultName}`] = extraType.defaultName;
