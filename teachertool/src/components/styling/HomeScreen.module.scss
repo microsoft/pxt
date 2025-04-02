@@ -6,8 +6,8 @@ div.page {
     display: flex;
     flex-direction: column;
     gap: $pageGutter;
-    background-color: var(--pxt-page-background);
-    color: var(--pxt-page-foreground);
+    background-color: var(--pxt-neutral-background1);
+    color: var(--pxt-neutral-foreground1);
 
     h1 {
         font-size: 1.75rem;
@@ -90,23 +90,23 @@ div.page {
         }
 
         &.newChecklist {
-            background-color: var(--pxt-button-primary-background);
-            color: var(--pxt-button-primary-foreground);
+            background-color: var(--pxt-primary-background);
+            color: var(--pxt-primary-foreground);
 
             &:focus-visible::after {
-                outline-color: var(--pxt-button-primary-foreground);
+                outline-color: var(--pxt-primary-foreground);
             }
         }
         &.importChecklist {
-            background-color: var(--pxt-headerbar-background);
-            color: var(--pxt-button-primary-foreground);
+            background-color: var(--pxt-secondary-background);
+            color: var(--pxt-secondary-foreground);
 
             &:focus-visible::after {
-                outline-color: var(--pxt-button-primary-foreground);
+                outline-color: var(--pxt-secondary-foreground);
             }
         }
         &.loadingGradient {
-            background: linear-gradient(45deg, var(--pxt-content-background), var(--pxt-content-foreground));
+            background: linear-gradient(45deg, var(--pxt-target-background1), var(--pxt-tertiary-background));
             opacity: 0.2;
             background-size: 400% 200%;
             animation: loading 3s ease infinite;
@@ -130,11 +130,11 @@ div.page {
             background-size: 100% 100%;
             background-repeat: no-repeat;
             grid-area: 1 / 1 / 2 / 5;
-            border: 1px solid var(--pxt-content-background);
+            border: 1px solid var(--pxt-target-background1);
 
             .checklistResourceCardTitle {
-                background-color: rgba(228, 231, 241, 0.9);
-                color: var(--pxt-page-foreground);
+                background-color: var(--pxt-neutral-background1);
+                color: var(--pxt-neutral-foreground1);
             }
         }
     }
@@ -165,7 +165,7 @@ div.page {
     div[class*="swiper-button-next"] {
         height: 100%;
         top: 0;
-        background-color: var(--pxt-page-background);
+        background-color: var(--pxt-neutral-background1);
         filter: opacity(0.75);
         padding: 10px;
         width: fit-content;
@@ -182,7 +182,7 @@ div.page {
 
         &::after {
             transform: scale(0.9);
-            color: var(--pxt-headerbar-background);
+            color: var(--pxt-header-background);
             font-weight: bolder;
         }
     }

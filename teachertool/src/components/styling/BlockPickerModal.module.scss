@@ -1,7 +1,7 @@
 .block-picker-modal {
     div[class="common-modal"] {
         // category color is overridden in BlockPicker javascript
-        --category-color: var(--pxt-content-secondary-foreground);
+        --category-color: var(--pxt-neutral-background3);
 
         height: 80vh;
 
@@ -11,7 +11,7 @@
             padding: 0;
     
             .bottom-border {
-                border-bottom: 2px solid var(--pxt-content-accent);
+                border-bottom: 2px solid var(--pxt-target-background1-hover);
             }
     
             .loading-container {

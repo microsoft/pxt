@@ -28,7 +28,7 @@
     flex-direction: row;
 
     .splitter {
-        background-color: var(--pxt-content-accent);
+        background-color: var(--pxt-target-stencil1);
         width: 1px;
 
         .splitter-inner {
@@ -42,7 +42,7 @@
             z-index: 1;
 
             &:hover {
-                background-color: var(--pxt-content-foreground);
+                background-color: var(--pxt-target-background1-hover);
                 transition: background-color 0.2s ease;
                 transition-delay: 0.2s;
             }
@@ -55,7 +55,7 @@
 
     .splitter {
         flex: 0 0 1px;
-        background-color: var(--pxt-headerbar-background);
+        background-color: var(--pxt-header-background);
         height: 5px;
         cursor: ns-resize;
     }

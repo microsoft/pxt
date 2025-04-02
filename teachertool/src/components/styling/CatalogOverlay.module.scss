@@ -5,9 +5,8 @@
     width: 100%;
     height: 100%;
     z-index: 49; // Above everything except toasts
-    background-color: var(--pxt-page-dark-shadow);
-
-    color: var(--pxt-page-foreground);
+    background-color: var(--pxt-neutral-alpha50);
+    color: var(--pxt-neutral-foreground1);
 
     display: flex;
     justify-content: center;
@@ -16,7 +15,7 @@
     .catalog-content-container {
         width: 95%;
         height: 95%;
-        background-color: var(--pxt-page-background);
+        background-color: var(--pxt-neutral-background1);
         border-radius: .285rem; // Match modal
         display: flex;
         flex-direction: column;
@@ -28,7 +27,7 @@
             justify-content: space-between;
             align-items: center;
             width: 100%;
-            border-bottom: 1px solid var(--pxt-content-accent);
+            border-bottom: 1px solid var(--pxt-neutral-stencil1);
             height: 4rem;
 
             .title {
@@ -64,9 +63,9 @@
             }
 
             button[class*="common-accordion-header-outer"] {
-                background-color: var(--pxt-content-foreground);
-                color: var(--pxt-content-background);
-                border-bottom: 1px solid var(--pxt-content-accent);
+                background-color: var(--pxt-tertiary-background);
+                color: var(--pxt-tertiary-foreground);
+                border-bottom: 1px solid var(--pxt-tertiary-foreground);
                 font-size: 1.2rem;
                 padding: 0.5rem 0.95rem;
             }
@@ -74,9 +73,15 @@
             .catalog-item {
                 width: 100%;
                 padding: 1.25rem 1.5rem 1.25rem 1rem;
-                border-bottom: 1px solid var(--pxt-content-accent);
+                border-bottom: 1px solid var(--pxt-target-stencil1);
                 flex-shrink: 0;
                 margin: 0;
+                background-color: var(--pxt-neutral-background1);
+                color: var(--pxt-neutral-foreground1);
+
+                &:hover {
+                    background-color: var(--pxt-neutral-background1-hover);
+                }
 
                 &:last-child {
                     border-bottom: none;
@@ -106,7 +111,7 @@
                         }
 
                         .recently-added-indicator {
-                            color: var(--pxt-success-accent);
+                            color: var(--pxt-colors-green-background);
                         }
                     }
                 }

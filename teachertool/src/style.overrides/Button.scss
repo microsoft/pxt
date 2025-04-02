@@ -8,33 +8,33 @@
 }
 
 .common-button.primary {
-    background: var(--pxt-button-primary-background);
-    color: var(--pxt-button-primary-foreground);
-    border: 1px solid var(--pxt-button-primary-accent);
+    background: var(--pxt-primary-background);
+    color: var(--pxt-primary-foreground);
+    border: 1px solid var(--pxt-primary-accent);
 }
 
 .common-button.secondary {
-    background: var(--pxt-page-background);
+    background: var(--pxt-neutral-background1);
     color: var(--pxt-page-color);
-    border: 1px solid var(--pxt-button-secondary-accent);
+    border: 1px solid var(--pxt-neutral-foreground1);
     &:focus-visible::after {
-        outline: solid 1px var(--pxt-button-secondary-accent);
+        outline: solid 1px var(--pxt-neutral-foreground1);
     }
 }
 
 .common-button.inline:not(.disabled) {
-    background-color: var(--pxt-page-background);
-    color: var(--pxt-content-foreground);
-    border: solid 1px var(--pxt-content-accent);
+    background-color: var(--pxt-neutral-background1);
+    color: var(--pxt-tertiary-background);
+    border: solid 1px var(--pxt-target-background1-hover);
     &:hover {
         filter: none;
-        background-color: var(--pxt-headerbar-background-glass);
+        background-color: var(--pxt-neutral-alpha10);
     }
     &:active {
         filter: brightness(.80) contrast(1.3);
     }
     &:focus-visible::after {
-        outline: solid 1px var(--pxt-content-foreground);
+        outline: solid 1px var(--pxt-tertiary-background);
     }
 }
 
@@ -44,7 +44,7 @@
 
 .rounded > .common-button.common-dropdown-button {
     border-radius: 1rem;
-    border: solid 1px var(--pxt-page-foreground);
+    border: solid 1px var(--pxt-neutral-foreground1);
 
     .common-button-flex {
         padding: 0.65rem;
@@ -63,15 +63,15 @@
         border: none !important;
 
         .common-button-label {
-            border-bottom: 1px solid var(--pxt-page-foreground);
+            border-bottom: 1px solid var(--pxt-neutral-foreground1);
         }
     }
 }
 
 .fail > .common-button.common-dropdown-button {
-    border: 3px solid var(--pxt-warning);
+    border: 3px solid var(--pxt-colors-yellow-background);
 }
 
 .pass > .common-button.common-dropdown-button {
-    border: 3px solid var(--pxt-success-accent);
+    border: 3px solid var(--pxt-colors-green-hover);
 }
