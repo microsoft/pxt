@@ -92,6 +92,14 @@ namespace pxsim {
             return o;
         }
 
+        static fromAny(o: any): any {
+            if (!o) return o;
+            if (o instanceof RefObject) return o; // already a Ref* object
+            if (Array.isArray(o)) return RefCollection.fromAny(o);
+            if (typeof o === "object") return RefRecord.fromAny(o);
+            return o; // number, string, boolean, null, undefined, etc...
+        }
+
         static toDebugString(o: any): string {
             if (o === null) return "null";
             if (o === undefined) return "undefined;"
@@ -102,6 +110,7 @@ namespace pxsim {
                 return o.vtable.name;
             }
             if (o.toDebugString) return o.toDebugString();
+            if (o.vtable && o.vtable.name) return o.vtable.name;
             if (typeof o == "string") return JSON.stringify(o);
             return o.toString();
         }
@@ -145,6 +154,32 @@ namespace pxsim {
         print() {
             if (runtime && runtime.refCountingDebug)
                 pxsim.log(`RefRecord id:${this.id} (${this.vtable.name})`)
+        }
+
+        toDebugString(): string {
+            let s = "RefRecord: {"
+            const keys = Object.keys(this.fields)
+            for (let i = 0; i < keys.length; ++i) {
+                if (i > 0) s += ", "
+                s += keys[i] + ": " + RefObject.toDebugString(this.fields[keys[i]])
+            }
+            return s + "}";
+        }
+
+        toAny(): any {
+            const r: any = {};
+            for (let k of Object.keys(this.fields)) {
+                r[k] = RefObject.toAny(this.fields[k]);
+            }
+            return r;
+        }
+
+        static fromAny(o: any): RefRecord {
+            const r = new RefRecord();
+            for (let k of Object.keys(o)) {
+                r.fields[k] = RefObject.fromAny(o[k]);
+            }
+            return r;
         }
     }
 
@@ -345,11 +380,28 @@ namespace pxsim {
                 pxsim.log(`RefMap id:${this.id} size:${this.data.length}`)
         }
 
+        toDebugString(): string {
+            let s = "RefMap: {"
+            for (let i = 0; i < this.data.length; ++i) {
+                if (i > 0) s += ", "
+                s += this.data[i].key + ": " + RefObject.toDebugString(this.data[i].val)
+            }
+            return s + "}";
+        }
+
         toAny(): any {
             const r: any = {};
             this.data.forEach(d => {
                 r[d.key] = RefObject.toAny(d.val);
             })
+            return r;
+        }
+
+        static fromAny(o: any): RefMap {
+            const r = new RefMap();
+            for (let k of Object.keys(o)) {
+                r.data.push({ key: k, val: RefObject.fromAny(o[k]) })
+            }
             return r;
         }
     }
@@ -531,6 +583,9 @@ namespace pxsim {
         }
 
         export function mapGetByString(map: RefMap, key: string) {
+            if (!map) {
+                throwFailedPropertyAccessError(map, key);
+            }
             key += ""
             if (map instanceof RefRecord) {
                 let r = map as RefRecord
@@ -544,8 +599,14 @@ namespace pxsim {
         }
 
         export function mapDeleteByString(map: RefMap, key: string) {
-            if (!(map instanceof RefMap))
-                pxtrt.panic(923)
+            if (map === undefined || map === null) {
+                throwNullUndefinedAsObjectError();
+            }
+
+            if (!(map instanceof RefMap)) {
+                throwFailedCastError(map, "object");
+            }
+
             let i = map.findIdx(key);
             if (i >= 0)
                 map.data.splice(i, 1)
@@ -556,6 +617,9 @@ namespace pxsim {
         export const mapGetGeneric = mapGetByString
 
         export function mapSetByString(map: RefMap, key: string, val: any) {
+            if (!map) {
+                throwFailedPropertyAccessError(map, key);
+            }
             key += ""
             if (map instanceof RefRecord) {
                 let r = map as RefRecord
@@ -574,6 +638,9 @@ namespace pxsim {
         }
 
         export function keysOf(v: RefMap) {
+            if (v === undefined || v === null) {
+                throwNullUndefinedAsObjectError();
+            }
             let r = new RefCollection()
             if (v instanceof RefMap)
                 for (let k of v.data) {
@@ -653,6 +720,7 @@ namespace pxsim {
         }
 
         export function runInBackground(a: RefAction) {
+            typeCheck(a);
             runtime.runFiberAsync(a);
         }
 
@@ -662,10 +730,14 @@ namespace pxsim {
                     .then(() => U.delay(20))
                     .then(loop);
             }
-            pxtrt.nullCheck(a)
+            typeCheck(a);
             loop()
         }
+
+        export function typeCheck(a: RefAction) {
+            if (!a || !(a instanceof RefAction) && !(a as any).info) {
+                throwFailedCastError(a, "function");
+            }
+        }
     }
-
-
 }

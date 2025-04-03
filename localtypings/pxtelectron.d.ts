@@ -6,6 +6,7 @@ declare namespace pxt.electron {
         banned?: string[];
         timeStamp?: string; // In the format of (new Date()).toISOString()
         isDriveDeployBanned?: boolean;
+        isFileDeployBanned?: boolean;
     }
 
     export const enum UpdateStatus {
@@ -50,6 +51,12 @@ declare namespace pxt.electron {
         configData?: any[];
     }
 
+    // Request to deploy files to a specified location
+    export interface FileDeployRequest {
+        location: string; // id for location to attempt to deploy to
+        files: pxt.Map<string>; // Files to write, key is filename in subpath, value is b64 file content
+    }
+
     // The object that gets injected into the window
     export interface PxtElectron {
         onTelemetry: (handler: (ev: TelemetryEvent) => void) => void; // Registers a handler to invoke when the app shell requests a telemetry event to be sent to AI.
@@ -57,11 +64,13 @@ declare namespace pxt.electron {
         onUpdateStatus: (handler: (st: UpdateStatus) => void) => void; // Registers a handler to invoke when the app shell replies with the current update status.
         onCriticalUpdateFailed: (handler: () => void) => void; // Registers a handler to invoke when the app shell notifies us that a critical update has failed.
         onDriveDeployResult: (handler: (isSuccess: boolean) => void) => void; // Registers a handler to invoke when the app shell replies with the result of the last drive deploy attempt.
+        onFileDeployResult: (handler: (isSuccess: boolean) => void) => void; // Registers a handler to invoke when the app shell replies with the result of the last file deploy attempt.
 
         sendUpdateStatusCheck: () => void; // Asks the app shell about the current update status. The answer will come as a separate, asynchronous message.
         sendQuit: () => void; // Asks the app shell to quit.
         sendOpenDevTools: () => void; // Asks the app shell to open dev tools.
         sendDriveDeploy: (compileResult: CompileResult) => void; // Asks the app to deploy the program to the device via USB file copy.
+        sendFileDeploy: (files: FileDeployRequest) => void // Asks the app to deploy the given files to a known folder.
         versions: VersionInfo; // Various versions for telemetry base properties
     }
 }

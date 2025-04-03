@@ -1683,9 +1683,17 @@ namespace pxt {
         const tmWidth = bytes[1] | (bytes[2] << 8);
         const tmHeight = bytes[3] | (bytes[4] << 8);
 
+        const tiles: Tile[] = jres.tileset.map(id => (resolveTile && resolveTile(id)) || { id } as any);
+        let tileWidth = bytes[0];
+
+        if (!tileWidth) {
+            tileWidth = tiles.length && tiles.find(t => t.bitmap?.width)?.bitmap.width;
+        }
+        tileWidth = tileWidth || 16;
+
         const tileset: TileSet = {
-            tileWidth: bytes[0],
-            tiles: jres.tileset.map(id => (resolveTile && resolveTile(id)) || { id } as any)
+            tileWidth,
+            tiles
         };
 
         const tilemapStart = 5;

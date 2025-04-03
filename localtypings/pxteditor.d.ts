@@ -1148,9 +1148,17 @@ declare namespace pxt.editor {
         monacoToolbox?: ToolboxDefinition;
     }
 
+    export interface ExtensionInitOptions {
+        confirmAsync: (options: any) => Promise<number>;
+        infoNotification: (msg: string) => void;
+        warningNotification: (msg: string) => void;
+        errorNotification: (msg: string) => void;
+    }
+
     export interface ExtensionResult {
         hexFileImporters?: IHexFileImporter[];
         resourceImporters?: IResourceImporter[];
+        initAsync?: (opts: ExtensionInitOptions) => Promise<void>;
         beforeCompile?: () => void;
         patchCompileResultAsync?: (r: pxtc.CompileResult) => Promise<void>;
         deployAsync?: (r: pxtc.CompileResult) => Promise<void>;
@@ -1165,6 +1173,11 @@ declare namespace pxt.editor {
         blocklyPatch?: (pkgTargetVersion: string, dom: Element) => void;
         webUsbPairDialogAsync?: (pairAsync: () => Promise<boolean>, confirmAsync: (options: any) => Promise<number>) => Promise<number>;
         mkPacketIOWrapper?: (io: pxt.packetio.PacketIO) => pxt.packetio.PacketIOWrapper;
+        getDownloadMenuItems?: () => any[]; /* sui.ItemProps[] */
+        notifyProjectCompiled?: (headerId: string, compileResult: pxtc.CompileResult) => void;
+        notifyProjectSaved?: (header: pxt.workspace.Header) => void;
+        onDownloadButtonClick?: () => Promise<void>;
+        getDefaultProjectName?: () => string; // If defined, replaces 'Untitled' as the default project name
         onPostHostMessage?: (msg: pxt.editor.EditorMessageRequest) => void;
         perfMeasurementThresholdMs?: number;
         onPerfMilestone?: (payload: { milestone: string, time: number, params?: Map<string> }) => void;

@@ -24,6 +24,9 @@ export function initFunctions() {
     msg.FUNCTIONS_DEFAULT_STRING_ARG_NAME = lf("text");
     msg.FUNCTIONS_DEFAULT_NUMBER_ARG_NAME = lf("num");
     msg.FUNCTIONS_DEFAULT_CUSTOM_ARG_NAME = lf("arg");
+    msg.FUNCTION_FLYOUT_LABEL = lf("Your Functions");
+    msg.FUNCTIONS_CREATE_CALL_OPTION = lf("Create 'call {0}'", "%1");
+    msg.FUNCTIONS_DEFNORETURN_TITLE = lf("function");
     msg.PROCEDURES_HUE = pxt.toolbox.getNamespaceColor("functions");
     msg.REPORTERS_HUE = pxt.toolbox.getNamespaceColor("variables");
 

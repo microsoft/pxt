@@ -1575,11 +1575,13 @@ namespace pxsim {
                 return vt2 && vt.classNo <= vt2.classNo && vt2.classNo <= vt.lastSubtypeNo;
             }
 
-            function failedCast(v: any) {
+            function failedCast(v: any, expectedType?: VTable) {
                 // TODO generate the right panic codes
-                if ((pxsim as any).control && (pxsim as any).control.dmesgValue)
+                if ((pxsim as any).control && (pxsim as any).control.dmesgValue) {
                     (pxsim as any).control.dmesgValue(v)
-                oops("failed cast on " + v)
+                }
+
+                throwFailedCastError(v, expectedType?.name);
             }
 
             function buildResume(s: StackFrame, retPC: number) {
@@ -1817,6 +1819,74 @@ namespace pxsim {
                 }
             }, 66) as any
         }
+    }
+
+    export function throwUserException(message: string) {
+        throw new Error(message);
+    }
+
+    export function throwTypeError(message: string) {
+        throwUserException(
+            pxsim.localization.lf("TypeError: {0}", message)
+        );
+    }
+
+    export function throwFailedCastError(value: any, expectedType?: string) {
+        const typename = getType(value);
+
+        if (expectedType) {
+            if (value === null || value === undefined) {
+                throwTypeError(pxsim.localization.lf("Expected type {0} but received type {1}. Did you forget to assign a variable?", expectedType, typename));
+            }
+            else {
+                throwTypeError(pxsim.localization.lf("Expected type {0} but received type {1}", expectedType, typename))
+            }
+        }
+        else {
+            throwTypeError(pxsim.localization.lf("Cannot read properties of {0}", typename));
+        }
+    }
+
+    export function throwFailedPropertyAccessError(value: any, propertyName?: string) {
+        const typename = getType(value);
+
+        if (propertyName) {
+            throwTypeError(pxsim.localization.lf("Cannot read properties of {0} (reading '{1}')", typename, propertyName));
+        }
+        else {
+            throwTypeError(pxsim.localization.lf("Cannot read properties of {0}", typename));
+        }
+    }
+
+    export function throwNullUndefinedAsObjectError() {
+        throwTypeError(pxsim.localization.lf("Cannot convert undefined or null to object"));
+    }
+
+    function getType(value: any) {
+        let typename: string;
+        const vtable = (value as RefRecord)?.vtable;
+        if (vtable) {
+            typename = vtable.name;
+        }
+        else if (value === null) {
+            typename = "null";
+        }
+        else if (value === undefined) {
+            typename = "undefined";
+        }
+        else if (value instanceof RefCollection) {
+            typename = "Array";
+        }
+        else if (value instanceof RefBuffer) {
+            typename = "Buffer";
+        }
+        else if (value instanceof RefAction) {
+            typename = "function";
+        }
+        else {
+            typename = typeof value;
+        }
+        return typename;
     }
 
     export function setParentMuteState(state: "muted" | "unmuted" | "disabled") {
