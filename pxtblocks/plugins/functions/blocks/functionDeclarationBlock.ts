@@ -104,7 +104,7 @@ const FUNCTION_DECLARATION_MIXIN: FunctionDeclarationMixin = {
                 const workspace = this.workspace;
 
                 if (workspace instanceof Blockly.WorkspaceSvg) {
-                    workspace.centerOnBlock(this.id);
+                    workspace.centerOnBlock(this.id, true);
                 }
                 newInput.fieldRow[0].showEditor();
             } else if (newInput.type == Blockly.inputs.inputTypes.VALUE) {
@@ -112,7 +112,7 @@ const FUNCTION_DECLARATION_MIXIN: FunctionDeclarationMixin = {
                 const target = newInput.connection!.targetBlock()!;
                 const workspace = target.workspace;
                 if (workspace instanceof Blockly.WorkspaceSvg) {
-                    workspace.centerOnBlock(target.id);
+                    workspace.centerOnBlock(target.id, true);
                 }
                 target.getField("TEXT")!.showEditor();
             }
