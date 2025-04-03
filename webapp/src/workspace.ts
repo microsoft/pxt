@@ -1273,52 +1273,61 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
     }
 
     // we need to keep the old cfg to maintain the github id -> local workspace id
-    const oldCfg = pxt.Package.parseAndValidConfig(files[pxt.CONFIG_NAME])
+    const localConfig = pxt.Package.parseAndValidConfig(files[pxt.CONFIG_NAME])
     const cfgText = await downloadAsync(pxt.CONFIG_NAME)
-    let cfg = pxt.Package.parseAndValidConfig(cfgText);
+    let pulledConfig = pxt.Package.parseAndValidConfig(cfgText);
     // invalid cfg
-    if (!cfg) {
+    if (!pulledConfig) {
         if (hd) // not importing
             U.userError(lf("Invalid pxt.json file."));
         pxt.debug(`github: reconstructing pxt.json`)
-        cfg = pxt.diff.reconstructConfig(parsed, files, commit, pxt.appTarget.blocksprj || pxt.appTarget.tsprj);
+        pulledConfig = pxt.diff.reconstructConfig(parsed, files, commit, pxt.appTarget.blocksprj || pxt.appTarget.tsprj);
         if (parsed.fileName && parsed.project)
             // add root folder as reference when creating nested project
-            cfg.dependencies[parsed.project] = `github:${parsed.slug}`
-        files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
+            pulledConfig.dependencies[parsed.project] = `github:${parsed.slug}`
+        files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(pulledConfig);
     }
     // patch the github references back to local workspaces
-    if (oldCfg) {
+    if (localConfig) {
         let ghupdated = 0;
-        Object.keys(cfg.dependencies)
-            // find github references that are also in the original version
-            .filter(k => /^github:/.test(cfg.dependencies[k]) && oldCfg.dependencies[k])
-            .forEach(k => {
-                const gid = pxt.github.parseRepoId(cfg.dependencies[k]);
-                if (gid) {
-                    const wks = oldCfg.dependencies[k];
-                    cfg.dependencies[k] = wks;
-                    ghupdated++;
+
+        for (const dep of Object.keys(pulledConfig.dependencies)) {
+            if (!(/^github:/.test(pulledConfig.dependencies[dep]) && localConfig.dependencies[dep])) {
+                continue;
+            }
+            const gid = pxt.github.parseRepoId(pulledConfig.dependencies[dep]);
+            if (gid) {
+                const wks = localConfig.dependencies[dep];
+                pulledConfig.dependencies[dep] = wks;
+                ghupdated++;
+            }
+        }
+
+        if (ghupdated) {
+            // merge in any locally added dependencies
+            for (const dep of Object.keys(localConfig.dependencies)) {
+                if (!pulledConfig.dependencies[dep]) {
+                    pulledConfig.dependencies[dep] = localConfig.dependencies[dep];
                 }
-            })
-        if (ghupdated)
-            files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
+            }
+            files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(pulledConfig);
+        }
     }
 
-    for (const fn of pxt.allPkgFiles(cfg).slice(1))
+    for (const fn of pxt.allPkgFiles(pulledConfig).slice(1))
         await downloadAsync(fn)
 
-    if (!cfg.name) {
-        cfg.name = parsed.fileName && parsed.project
+    if (!pulledConfig.name) {
+        pulledConfig.name = parsed.fileName && parsed.project
             // when creating nested project, mangle name
             ? `${parsed.project}-${parsed.fileName}`
             : (parsed.project || parsed.fullName)
-        cfg.name = cfg.name.replace(/pxt-/ig, '')
+        pulledConfig.name = pulledConfig.name.replace(/pxt-/ig, '')
             .replace(/\//g, '-')
             .replace(/-+/, "-")
             .replace(/[^\w\-]/g, "")
         if (!justJSON)
-            files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
+            files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(pulledConfig);
     }
 
     if (!justJSON) {
@@ -1340,12 +1349,12 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
      * If the repo was last opened in this target, use that version number in the header;
      * otherwise, use current target version to avoid mismatched updates.
      */
-    const targetVersionToUse = (cfg.targetVersions?.targetId === pxt.appTarget.id && cfg.targetVersions.target) ?
-        cfg.targetVersions.target : pxt.appTarget.versions.target;
+    const targetVersionToUse = (pulledConfig.targetVersions?.targetId === pxt.appTarget.id && pulledConfig.targetVersions.target) ?
+        pulledConfig.targetVersions.target : pxt.appTarget.versions.target;
 
     if (!hd) {
         hd = await installAsync({
-            name: cfg.name,
+            name: pulledConfig.name,
             githubId: repo,
             pubId: "",
             pubCurrent: false,
@@ -1355,7 +1364,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
             targetVersion: targetVersionToUse,
         }, files)
     } else {
-        hd.name = cfg.name
+        hd.name = pulledConfig.name
         await forceSaveAsync(hd, files)
     }
 
