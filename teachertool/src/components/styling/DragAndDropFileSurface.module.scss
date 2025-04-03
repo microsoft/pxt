@@ -5,9 +5,9 @@
     justify-content: center;
     position: relative;
 
-    background-color: var(--pxt-content-background);
+    background-color: var(--pxt-neutral-background1);
     border-radius: 0.5rem;
-    border: 1px dashed var(--pxt-content-secondary-foreground);
+    border: 1px dashed var(--pxt-neutral-foreground1);
 
     padding: 2rem;
     min-height: 30vh;
@@ -17,7 +17,7 @@
         flex-direction: column;
         align-items: center;
 
-        color: var(--pxt-content-secondary-foreground);
+        color: var(--pxt-neutral-alpha80);
         font-size: 2rem;
         font-weight: 600;
 

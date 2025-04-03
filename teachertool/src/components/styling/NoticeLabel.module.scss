@@ -1,6 +1,6 @@
 .notice-label-background {
-    border-color: var(--pxt-content-foreground);
-    background-color: var(--pxt-content-background);
+    border-color: var(--pxt-target-foreground1);
+    background-color: var(--pxt-target-background1);
     border-radius: 0.3rem;
 
     .notice-label-container {
@@ -13,26 +13,26 @@
     }
 
     .error-notice-label-container {
-        border-color: rgba(red, 0.2);
-        background-color: rgba(red, 0.2);
+        border-color: var(--pxt-colors-red-background);
+        background-color: var(--pxt-colors-red-alpha10);
         justify-content: flex-start;
     }
 
     .warning-notice-label-container {
-        border-color: rgba(orange, 0.4);
-        background-color: rgba(orange, 0.4);
+        border-color: var(--pxt-colors-yellow-background);
+        background-color: var(--pxt-colors-yellow-alpha10);
         justify-content: flex-start;
     }
 
     .info-notice-label-container {
-        border-color: rgba(blue, 0.2);
-        background-color: rgba(blue, 0.2);
+        border-color: var(--pxt-colors-blue-background);
+        background-color: var(--pxt-colors-blue-alpha10);
         justify-content: flex-start;
     }
 
     .neutral-notice-label-container {
-        border-color: rgba(black, 0.1);
-        background-color: rgba(black, 0.1);
+        border-color: var(--pxt-neutral-foreground1);
+        background-color: var(--pxt-neutral-foreground1);
         align-content: center;
         justify-content: center;
     }

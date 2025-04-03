@@ -33,7 +33,7 @@
     }
 
     &[class~="disabled"] {
-        border: 1px solid var(--pxt-button-secondary-accent) !important;
+        border: 1px solid var(--pxt-neutral-alpha80) !important;
     }
 
     @container (inline-size < 645px) {
@@ -112,9 +112,9 @@
         position: relative;
         width: 100%;
         padding: 0.5rem;
-        border: 1px solid var(--pxt-error);
+        border: 1px solid var(--pxt-colors-red-background);
         border-radius: 1rem;
-        background-color: var(--pxt-error-background);
+        background-color: var(--pxt-colors-red-alpha10);
         gap: 0.5rem;
 
         .error-info-container {
@@ -154,16 +154,16 @@
         .result-toolbar-button {
             opacity: 1 !important;
 
-            .disabled {
-                border: 1px solid var(--pxt-button-secondary-accent) !important;
-                opacity: 0.8 !important;
+            &.disabled {
+                border: 1px solid var(--pxt-neutral-alpha80) !important;
+                opacity: 0.7 !important;
             }
         }
     }
 }
 
 .separator {
-    border-bottom: solid 1px var(--pxt-content-accent);
+    border-bottom: solid 1px var(--pxt-target-background1-hover);
     margin-top: 0.5rem;
     width: 100%; // For non-webkit browsers
     width: -webkit-fill-available; // Webkit browsers
