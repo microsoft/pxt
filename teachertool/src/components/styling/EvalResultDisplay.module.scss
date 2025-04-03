@@ -112,9 +112,9 @@
         position: relative;
         width: 100%;
         padding: 0.5rem;
-        border: 1px solid var(--pxt-colors-red-background);
+        border: 1px solid var(--pxt-error);
         border-radius: 1rem;
-        background-color: var(--pxt-colors-red-alpha10);
+        background-color: var(--pxt-error-alpha10);
         gap: 0.5rem;
 
         .error-info-container {
