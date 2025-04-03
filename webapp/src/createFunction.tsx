@@ -87,7 +87,7 @@ export class CreateFunctionDialog extends data.Component<ISettingsProps, CreateF
         functionBeingEdited.domToMutation(initialMutation);
         functionBeingEdited.initSvg();
         functionBeingEdited.render();
-        functionEditorWorkspace.centerOnBlock(functionBeingEdited.id);
+        functionEditorWorkspace.centerOnBlock(functionBeingEdited.id, true);
 
         functionEditorWorkspace.addChangeListener(() => {
             const { functionBeingEdited } = this.state;
