@@ -435,7 +435,7 @@ function createFunctionCallbackFactory_(workspace: Blockly.WorkspaceSvg) {
                 block.scheduleSnapAndBump();
             }
 
-            workspace.centerOnBlock(block.id);
+            workspace.centerOnBlock(block.id, true);
             Blockly.Events.setGroup(false);
 
             setTimeout(() => {
