@@ -687,6 +687,7 @@ async function bumpAsync(parsed?: commandParser.ParsedCommand) {
                     owner,
                     repo,
                 }))
+                .then((prUrl) => nodeutil.switchBranchAsync(currBranchName).then(() => prUrl))
                 .then((prUrl) => console.log(`Created PR: ${prUrl}`))
         } else {
             return Promise.resolve()
@@ -715,6 +716,7 @@ async function bumpAsync(parsed?: commandParser.ParsedCommand) {
                     owner,
                     repo,
                 }))
+                .then((prUrl) => nodeutil.switchBranchAsync(currBranchName).then(() => prUrl))
                 .then((prUrl) => console.log(`Created PR: ${prUrl}`))
         } else {
             return Promise.resolve()

@@ -257,6 +257,14 @@ export async function createBranchAsync(branchName: string) {
     });
 }
 
+export async function switchBranchAsync(branchName: string) {
+    await spawnAsync({
+        cmd: "git",
+        args: ["checkout", branchName],
+        silent: true,
+    });
+}
+
 export async function npmVersionBumpAsync(
     bumpType: "patch" | "minor" | "major" | "prepatch"
 ): Promise<string> {
