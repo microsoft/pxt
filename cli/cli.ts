@@ -31,6 +31,15 @@ import * as crowdin from './crowdin';
 import * as youtube from './youtube';
 import { SUB_WEBAPPS } from './subwebapp';
 
+const Reset = "\x1b[0m";
+const Bright = "\x1b[1m";
+const FgRed = "\x1b[31m";
+const FgGreen = "\x1b[32m";
+const FgYellow = "\x1b[33m";
+const FgBlue = "\x1b[34m";
+const FgMagenta = "\x1b[35m";
+const FgCyan = "\x1b[36m";
+
 const rimraf: (f: string, opts: any, cb: (err: Error, res: any) => void) => void = require('rimraf');
 
 pxt.docs.requireDOMSanitizer = () => require("sanitize-html");
@@ -582,13 +591,12 @@ function updateAsync() {
         .then(() => nodeutil.runNpmAsync("install"));
 }
 
-function justBumpPkgAsync() {
+function justBumpPkgAsync(bumpType: "patch" | "major" | "minor" | string): Promise<string> {
     ensurePkgDir()
     return nodeutil.needsGitCleanAsync()
         .then(() => mainPkg.loadAsync())
         .then(() => {
-            let v = pxt.semver.parse(mainPkg.config.version)
-            v.patch++
+            let v = pxt.semver.bump(pxt.semver.parse(mainPkg.config.version), bumpType);
             return queryAsync("New version", pxt.semver.stringify(v))
         })
         .then(nv => {
@@ -597,7 +605,7 @@ function justBumpPkgAsync() {
             mainPkg.saveConfig()
         })
         .then(() => nodeutil.runGitAsync("commit", "-a", "-m", mainPkg.config.version))
-        .then(() => nodeutil.runGitAsync("tag", "v" + mainPkg.config.version))
+        .then(() => nodeutil.runGitAsync("tag", "v" + mainPkg.config.version).then(() => mainPkg.config.version))
 }
 
 function tagReleaseAsync(parsed: commandParser.ParsedCommand) {
@@ -644,26 +652,93 @@ function tagReleaseAsync(parsed: commandParser.ParsedCommand) {
         })
 }
 
-function bumpAsync(parsed?: commandParser.ParsedCommand) {
+async function bumpAsync(parsed?: commandParser.ParsedCommand) {
     const bumpPxt = parsed && parsed.flags["update"];
     const upload = parsed && parsed.flags["upload"];
+    let pr = parsed && parsed.flags["pr"];
+    let newver = parsed && parsed.flags["version"] as string;
+    if (!newver) newver = "patch";
+
+    let currBranchName = "";
+    let token = "";
+    let user = "";
+    let owner = "";
+    let repo = "";
+    let branchProtected = false;
+
+    try {
+        currBranchName = await nodeutil.getCurrentBranchNameAsync();
+        token = await nodeutil.getGitHubTokenAsync();
+        user = await nodeutil.getGitHubUserAsync(token);
+        ({ owner, repo } = await nodeutil.getGitHubOwnerAndRepoAsync());
+        branchProtected = await nodeutil.isBranchProtectedAsync(token, owner, repo, currBranchName);
+        if (branchProtected) {
+            console.log(`${FgYellow}Branch ${currBranchName} is protected; creating a pull request instead of pushing directly.${Reset}`);
+        }
+    } catch (e) {
+        console.warn(`${FgYellow}Unable to determine branch protection status.${Reset}`, e.message);
+    }
+
     if (fs.existsSync(pxt.CONFIG_NAME)) {
         if (upload) throw U.userError("upload only supported on targets");
 
-        return Promise.resolve()
-            .then(() => nodeutil.runGitAsync("pull"))
-            .then(() => justBumpPkgAsync())
-            .then(() => nodeutil.runGitAsync("push", "--tags"))
-            .then(() => nodeutil.runGitAsync("push"))
+        if (pr || branchProtected) {
+            const newBranchName = `${user}/pxt-bump-${nodeutil.timestamp()}`;
+            return Promise.resolve()
+                .then(() => nodeutil.needsGitCleanAsync())
+                .then(() => nodeutil.runGitAsync("pull"))
+                .then(() => nodeutil.createBranchAsync(newBranchName))
+                .then(() => justBumpPkgAsync(newver))
+                .then((version) => nodeutil.gitPushAsync().then(() => version))
+                .then((version) => nodeutil.createPullRequestAsync({
+                    title: `[pxt-cli] Bump version to ${version}`,
+                    body: "",
+                    head: newBranchName,
+                    base: currBranchName,
+                    token,
+                    owner,
+                    repo,
+                }))
+                .then((prUrl) => nodeutil.switchBranchAsync(currBranchName).then(() => prUrl))
+                .then((prUrl) => console.log(`${FgGreen}PR created: ${prUrl}${Reset}`))
+        } else {
+            return Promise.resolve()
+                .then(() => nodeutil.runGitAsync("pull"))
+                .then(() => justBumpPkgAsync(newver))
+                .then(() => nodeutil.runGitAsync("push", "--tags"))
+                .then(() => nodeutil.runGitAsync("push"))
+        }
     }
     else if (fs.existsSync("pxtarget.json"))
-        return Promise.resolve()
-            .then(() => nodeutil.runGitAsync("pull"))
-            .then(() => bumpPxt ? bumpPxtCoreDepAsync().then(() => nodeutil.runGitAsync("push")) : Promise.resolve())
-            .then(() => nodeutil.runNpmAsync("version", "patch"))
-            .then(() => nodeutil.runGitAsync("push", "--tags"))
-            .then(() => nodeutil.runGitAsync("push"))
-            .then(() => upload ? uploadTaggedTargetAsync() : Promise.resolve())
+        if (pr || branchProtected) {
+            const newBranchName = `${user}/pxt-bump-${nodeutil.timestamp()}`;
+            return Promise.resolve()
+                .then(() => nodeutil.needsGitCleanAsync())
+                .then(() => nodeutil.runGitAsync("pull"))
+                .then(() => nodeutil.createBranchAsync(newBranchName))
+                .then(() => bumpPxt ? bumpPxtCoreDepAsync() : Promise.resolve())
+                .then(() => nodeutil.npmVersionBumpAsync(newver))
+                .then((version) => nodeutil.gitPushAsync().then(() => version))
+                .then((version) => nodeutil.createPullRequestAsync({
+                    title: `[pxt-cli] Bump version to ${version}`,
+                    body: "",
+                    head: newBranchName,
+                    base: currBranchName,
+                    token,
+                    owner,
+                    repo,
+                }))
+                .then((prUrl) => nodeutil.switchBranchAsync(currBranchName).then(() => prUrl))
+                .then((prUrl) => console.log(`${FgGreen}PR created: ${prUrl}${Reset}`))
+        } else {
+            return Promise.resolve()
+                .then(() => nodeutil.runGitAsync("pull"))
+                .then(() => bumpPxt ? bumpPxtCoreDepAsync().then(() => nodeutil.runGitAsync("push")) : Promise.resolve())
+                .then(() => nodeutil.runNpmAsync("version", newver))
+                .then(() => nodeutil.runGitAsync("push", "--tags"))
+                .then(() => nodeutil.runGitAsync("push"))
+                .then(() => upload ? uploadTaggedTargetAsync() : Promise.resolve())
+        }
     else {
         throw U.userError("Couldn't find package or target JSON file; nothing to bump")
     }
@@ -7016,7 +7091,13 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
         onlineHelp: true,
         flags: {
             update: { description: "(package only) Updates pxt-core reference to the latest release" },
-            upload: { description: "(package only) Upload after bumping" }
+            upload: { description: "(package only) Upload after bumping" },
+            pr: { description: "Create a pull request after bumping rather than push changes directly" },
+            version: {
+                description: "Which part of the version to bump, or a complete version number to assign. Defaults to 'patch'",
+                type: "string",
+                possibleValues: ["patch", "minor", "major", /^\d+\.\d+\.\d+$/]
+            },
         }
     }, bumpAsync);
 
