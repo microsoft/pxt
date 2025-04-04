@@ -597,7 +597,7 @@ function justBumpPkgAsync(): Promise<string> {
             mainPkg.saveConfig()
         })
         .then(() => nodeutil.runGitAsync("commit", "-a", "-m", mainPkg.config.version))
-        .then(() => nodeutil.runGitAsync("tag", "v" + mainPkg.config.version) && mainPkg.config.version)
+        .then(() => nodeutil.runGitAsync("tag", "v" + mainPkg.config.version).then(() => mainPkg.config.version))
 }
 
 function tagReleaseAsync(parsed: commandParser.ParsedCommand) {
@@ -671,13 +671,13 @@ async function bumpAsync(parsed?: commandParser.ParsedCommand) {
         if (upload) throw U.userError("upload only supported on targets");
 
         if (isBranchProtected) {
-            const newBranchName = `${user}/bump-${nodeutil.timestamp()}`;
+            const newBranchName = `${user}/pxt-bump-${nodeutil.timestamp()}`;
             return Promise.resolve()
                 .then(() => nodeutil.needsGitCleanAsync())
                 .then(() => nodeutil.runGitAsync("pull"))
                 .then(() => nodeutil.createBranchAsync(newBranchName))
                 .then(() => justBumpPkgAsync())
-                .then((version) => nodeutil.gitPushAsync() && version)
+                .then((version) => nodeutil.gitPushAsync().then(() => version))
                 .then((version) => nodeutil.createPullRequestAsync({
                     title: `[pxt-cli] Bump version to ${version}`,
                     body: "",
@@ -698,14 +698,14 @@ async function bumpAsync(parsed?: commandParser.ParsedCommand) {
     }
     else if (fs.existsSync("pxtarget.json"))
         if (isBranchProtected) {
-            const newBranchName = `${user}/bump-${nodeutil.timestamp()}`;
+            const newBranchName = `${user}/pxt-bump-${nodeutil.timestamp()}`;
             return Promise.resolve()
                 .then(() => nodeutil.needsGitCleanAsync())
-                //.then(() => nodeutil.runGitAsync("pull"))
+                .then(() => nodeutil.runGitAsync("pull"))
                 .then(() => nodeutil.createBranchAsync(newBranchName))
                 .then(() => bumpPxt ? bumpPxtCoreDepAsync() : Promise.resolve())
                 .then(() => nodeutil.npmVersionBumpAsync("prepatch"))
-                .then((version) => nodeutil.gitPushAsync() && version)
+                .then((version) => nodeutil.gitPushAsync().then(() => version))
                 .then((version) => nodeutil.createPullRequestAsync({
                     title: `[pxt-cli] Bump version to ${version}`,
                     body: "",
