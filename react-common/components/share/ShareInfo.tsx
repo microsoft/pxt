@@ -409,7 +409,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
                     {shareState === "publish-vscode" &&
                         <div className="project-share-vscode">
                             <div>
-                                {lf("Success! Your browser should automatically redirect youClick the button below to open your project in VS Code.")}
+                                {lf("🎉 All set! Your project is launching in VS Code. If it doesn't open soon, just click the button below!")}
                             </div>
                             <Link
                                 className="common-button secondary"
