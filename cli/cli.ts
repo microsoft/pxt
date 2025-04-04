@@ -647,6 +647,7 @@ function tagReleaseAsync(parsed: commandParser.ParsedCommand) {
 async function bumpAsync(parsed?: commandParser.ParsedCommand) {
     const bumpPxt = parsed && parsed.flags["update"];
     const upload = parsed && parsed.flags["upload"];
+    let pr = parsed && parsed.flags["pr"];
 
     let currBranchName = "";
     let token = "";
@@ -665,12 +666,10 @@ async function bumpAsync(parsed?: commandParser.ParsedCommand) {
         console.warn("Unable to determine branch protection status.", e.message);
     }
 
-    isBranchProtected = true; // temp
-
     if (fs.existsSync(pxt.CONFIG_NAME)) {
         if (upload) throw U.userError("upload only supported on targets");
 
-        if (isBranchProtected) {
+        if (pr || isBranchProtected) {
             const newBranchName = `${user}/pxt-bump-${nodeutil.timestamp()}`;
             return Promise.resolve()
                 .then(() => nodeutil.needsGitCleanAsync())
@@ -698,14 +697,14 @@ async function bumpAsync(parsed?: commandParser.ParsedCommand) {
         }
     }
     else if (fs.existsSync("pxtarget.json"))
-        if (isBranchProtected) {
+        if (pr || isBranchProtected) {
             const newBranchName = `${user}/pxt-bump-${nodeutil.timestamp()}`;
             return Promise.resolve()
                 .then(() => nodeutil.needsGitCleanAsync())
                 .then(() => nodeutil.runGitAsync("pull"))
                 .then(() => nodeutil.createBranchAsync(newBranchName))
                 .then(() => bumpPxt ? bumpPxtCoreDepAsync() : Promise.resolve())
-                .then(() => nodeutil.npmVersionBumpAsync("prepatch"))
+                .then(() => nodeutil.npmVersionBumpAsync("patch"))
                 .then((version) => nodeutil.gitPushAsync().then(() => version))
                 .then((version) => nodeutil.createPullRequestAsync({
                     title: `[pxt-cli] Bump version to ${version}`,
@@ -7079,7 +7078,8 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
         onlineHelp: true,
         flags: {
             update: { description: "(package only) Updates pxt-core reference to the latest release" },
-            upload: { description: "(package only) Upload after bumping" }
+            upload: { description: "(package only) Upload after bumping" },
+            pr: { description: "Create a pull request after bumping rather than push changes directly" },
         }
     }, bumpAsync);
 
