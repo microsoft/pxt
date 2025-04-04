@@ -262,7 +262,7 @@ export async function npmVersionBumpAsync(
 ): Promise<string> {
     const output = await spawnWithPipeAsync({
         cmd: addCmd("npm"),
-        args: ["version", bumpType, "--message", "\"chore: bump version to %s\""],
+        args: ["version", bumpType, "--preid=dev", "--message", "\"chore: bump version to %s\""],
         cwd: ".",
         silent: true,
     });
