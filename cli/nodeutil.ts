@@ -389,7 +389,8 @@ export function timestamp(date = new Date()): string {
     const dd = String(date.getUTCDate()).padStart(2, "0");
     const hh = String(date.getUTCHours()).padStart(2, "0");
     const min = String(date.getUTCMinutes()).padStart(2, "0");
-    return `${yyyy}${mm}${dd}-${hh}${min}`;
+    const sec = String(date.getUTCSeconds()).padStart(2, "0");
+    return `${yyyy}${mm}${dd}-${hh}${min}${sec}`;
 }
 
 function nodeHttpRequestAsync(options: Util.HttpRequestOptions): Promise<Util.HttpResponse> {
