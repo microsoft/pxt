@@ -343,7 +343,7 @@ export async function isDirectPushAllowedAsync(
     }
 
     const data = await res.json;
-    
+
     const requiresPR = !!data.protection?.required_pull_request_reviews;
     const hasPushRestrictions = !!data.protection?.restrictions;
 
