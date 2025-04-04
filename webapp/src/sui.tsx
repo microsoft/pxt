@@ -313,8 +313,8 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
             'role': role || 'combobox',
             'aria-disabled': disabled,
             'aria-haspopup': !disabled,
-            'aria-expanded': open
-        }
+            ...(role !== 'option' && { 'aria-expanded': open }) // Exclude aria-expanded when the dropdown is an option
+            }
         const menuAria = {
             'role': 'menu',
             'aria-label': lf("Dropdown menu {0}", title),
