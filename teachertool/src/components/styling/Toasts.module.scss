@@ -26,7 +26,7 @@
     color: var(--pxt-neutral-foreground1);
 
     &.success {
-        border-color: var(--pxt-colors-green-background);
+        border-color: var(--pxt-success);
     }
 
     &.info {
@@ -34,11 +34,11 @@
     }
 
     &.warning {
-        border-color: var(--pxt-colors-yellow-background);
+        border-color: var(--pxt-warning);
     }
 
     &.error {
-        border-color: var(--pxt-colors-red-background);
+        border-color: var(--pxt-error);
     }
 
     .toast-content {
@@ -48,7 +48,7 @@
         font-size: 1.125rem;
 
         &.success {
-            background-color: var(--pxt-colors-green-alpha10);
+            background-color: var(--pxt-success-alpha10);
         }
 
         &.info {
@@ -56,11 +56,11 @@
         }
 
         &.warning {
-            background-color: var(--pxt-colors-yellow-alpha10);
+            background-color: var(--pxt-warning-alpha10);
         }
 
         &.error {
-            background-color: var(--pxt-colors-red-alpha10);
+            background-color: var(--pxt-error-alpha10);
         }
 
         .icon-container {
@@ -73,8 +73,8 @@
             height: 1.75rem;
 
             &.success {
-                background-color: var(--pxt-colors-green-background);
-                color: var(--pxt-colors-green-foreground);
+                background-color: var(--pxt-success);
+                color: var(--pxt-success-foreground);
             }
 
             &.info {
@@ -83,13 +83,13 @@
             }
 
             &.warning {
-                background-color: var(--pxt-colors-yellow-background);
-                color: var(--pxt-colors-yellow-foreground);
+                background-color: var(--pxt-warning);
+                color: var(--pxt-warning-foreground);
             }
 
             &.error {
-                background-color: var(--pxt-colors-red-background);
-                color: var(--pxt-colors-red-foreground);
+                background-color: var(--pxt-error);
+                color: var(--pxt-error-foreground);
             }
         }
 
@@ -135,7 +135,7 @@
 
     .slider-container {
         &.success {
-            background-color: var(--pxt-colors-green-alpha10);
+            background-color: var(--pxt-success-alpha10);
         }
 
         &.info {
@@ -143,11 +143,11 @@
         }
 
         &.warning {
-            background-color: var(--pxt-colors-yellow-alpha10);
+            background-color: var(--pxt-warning-alpha10);
         }
 
         &.error {
-            background-color: var(--pxt-colors-red-alpha10);
+            background-color: var(--pxt-error-alpha10);
         }
 
         .slider {
@@ -155,7 +155,7 @@
             transition: all 0.2s linear;
     
             &.success {
-                background-color: var(--pxt-colors-green-background);
+                background-color: var(--pxt-success);
             }
 
             &.info {
@@ -163,11 +163,11 @@
             }
 
             &.warning {
-                background-color: var(--pxt-colors-yellow-background);
+                background-color: var(--pxt-warning);
             }
 
             &.error {
-                background-color: var(--pxt-colors-red-background);
+                background-color: var(--pxt-error);
             }
         }
     }

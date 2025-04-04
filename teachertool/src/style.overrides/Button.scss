@@ -72,10 +72,10 @@
     }
     
     .fail > .common-button.common-dropdown-button {
-        border: 3px solid var(--pxt-colors-yellow-background);
+        border: 3px solid var(--pxt-warning);
     }
     
     .pass > .common-button.common-dropdown-button {
-        border: 3px solid var(--pxt-colors-green-hover);
+        border: 3px solid var(--pxt-success);
     }
 }
