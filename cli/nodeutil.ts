@@ -63,13 +63,13 @@ export function readResAsync(g: events.EventEmitter) {
 
 export function spawnAsync(opts: SpawnOptions) {
     opts.pipe = false
-    // https://nodejs.org/en/blog/vulnerability/april-2024-security-releases-2
-    if (os.platform() === "win32" && typeof opts.shell === "undefined") opts.shell = true
     return spawnWithPipeAsync(opts)
         .then(() => { })
 }
 
 export function spawnWithPipeAsync(opts: SpawnOptions) {
+    // https://nodejs.org/en/blog/vulnerability/april-2024-security-releases-2
+    if (os.platform() === "win32" && typeof opts.shell === "undefined") opts.shell = true
     if (opts.pipe === undefined) opts.pipe = true
     let info = opts.cmd + " " + opts.args.join(" ")
     if (opts.cwd && opts.cwd != ".") info = "cd " + opts.cwd + "; " + info
@@ -174,6 +174,224 @@ export function needsGitCleanAsync() {
         })
 }
 
+export async function getDefaultBranchAsync(): Promise<string> {
+    const b = await gitInfoAsync(["symbolic-ref", "--short", "refs/remotes/origin/HEAD"], undefined, true);
+    if (!b)
+        throw Util.userError("no git remote branch found");
+    return b.replace(/^origin\//, "");
+}
+
+export async function getCurrentBranchNameAsync(): Promise<string> {
+    const b = await gitInfoAsync(["rev-parse", "--abbrev-ref", "HEAD"], undefined, true);
+    if (!b)
+        throw Util.userError("no git local branch found");
+    return b;
+}
+
+export async function getGitHubTokenAsync(): Promise<string> {
+    const input = Buffer.from("protocol=https\nhost=github.com\n\n", "utf8");
+
+    const outputBuf = await spawnWithPipeAsync({
+        cmd: "git",
+        args: ["credential", "fill"],
+        input: input.toString(),
+        silent: true
+    });
+
+    const output = outputBuf.toString("utf8").trim();
+    const lines = output.split("\n");
+    const creds: Record<string, string> = {};
+    for (const line of lines) {
+        const [key, ...rest] = line.split("=");
+        creds[key] = rest.join("=");
+    }
+
+    if (creds.password) {
+        return creds.password;
+    } else {
+        throw Util.userError("No GitHub credentials found via git credential helper.");
+    }
+}
+
+export async function getGitHubUserAsync(token: string): Promise<string> {
+    const res = await Util.httpRequestCoreAsync({
+        url: "https://api.github.com/user",
+        method: "GET",
+        headers: {
+            Authorization: `token ${token}`,
+        }
+    });
+
+    if (res.statusCode !== 200) {
+        throw Util.userError(`Failed to get GitHub username: ${res.statusCode} ${res.text}`);
+    }
+
+    const data = await res.json;
+    return data.login;
+}
+
+export async function getGitHubOwnerAndRepoAsync(): Promise<{ owner: string; repo: string }> {
+    const remoteUrl = await gitInfoAsync(["config", "--get", "remote.origin.url"], undefined, true);
+    if (!remoteUrl) {
+        throw Util.userError("No remote origin URL found");
+    }
+    const match = remoteUrl.match(/github\.com[:\/](.+?)\/(.+?)(\.git)?$/);
+    if (!match) {
+        throw Util.userError("Invalid remote origin URL: " + remoteUrl);
+    }
+    const owner = match[1];
+    const repo = match[2];
+    return { owner, repo };
+}
+
+export async function createBranchAsync(branchName: string) {
+    await spawnAsync({
+        cmd: "git",
+        args: ["checkout", "-b", branchName],
+        silent: true,
+    });
+    await spawnAsync({
+        cmd: "git",
+        args: ["push", "--set-upstream", "origin", branchName],
+        silent: true,
+    });
+}
+
+export async function npmVersionBumpAsync(
+    bumpType: "patch" | "minor" | "major" | "prepatch"
+): Promise<string> {
+    const output = await spawnWithPipeAsync({
+        cmd: addCmd("npm"),
+        args: ["version", bumpType, "--message", "\"chore: bump version to %s\""],
+        cwd: ".",
+        silent: true,
+    });
+    return output.toString("utf8").trim();
+}
+
+export function gitPushAsync(followTags: boolean = true) {
+    const args = ["push"];
+    if (followTags) args.push("--follow-tags");
+    args.push("origin", "HEAD");
+    return spawnAsync({
+        cmd: "git",
+        args,
+        cwd: ".",
+        silent: true,
+    });
+}
+
+export async function createPullRequestAsync(opts: {
+    token: string,
+    owner: string,
+    repo: string,
+    title: string,
+    head: string,
+    base: string,
+    body: string
+}): Promise<string> {
+    const { token, owner, repo, title, head, base, body } = opts;
+    const res = await Util.httpRequestCoreAsync({
+        url: `https://api.github.com/repos/${owner}/${repo}/pulls`,
+        method: "POST",
+        headers: {
+            Authorization: `token ${token}`,
+            "Accept": "application/vnd.github+json",
+            "Content-Type": "application/json",
+        },
+        data: {
+            title,
+            head,
+            base,
+            body,
+        },
+    });
+
+    if (res.statusCode !== 201) {
+        throw Util.userError(`Failed to create pull request: ${res.statusCode} ${res.text}`);
+    }
+
+    const data = await res.json;
+    return data.html_url as string;
+}
+
+export async function isDirectPushAllowedAsync(
+    token: string,
+    owner: string,
+    repo: string,
+    branch: string
+): Promise<boolean> {
+    const res = await Util.httpRequestCoreAsync({
+        url: `https://api.github.com/repos/${owner}/${repo}/branches/${encodeURIComponent(branch)}`,
+        method: "GET",
+        headers: {
+            Authorization: `token ${token}`,
+            "Accept": "application/vnd.github+json"
+        }
+    });
+
+    if (res.statusCode !== 200) {
+        throw Util.userError(`Failed to get branch info: ${res.statusCode} ${res.text}`);
+    }
+
+    const data = await res.json;
+    
+    const requiresPR = !!data.protection?.required_pull_request_reviews;
+    const hasPushRestrictions = !!data.protection?.restrictions;
+
+    return !(requiresPR || hasPushRestrictions);
+}
+
+export async function detectBaseBranchAsync(): Promise<string | undefined> {
+    // Get current branch name
+    const currentBranchBuf = await spawnWithPipeAsync({
+        cmd: "git",
+        args: ["rev-parse", "--abbrev-ref", "HEAD"],
+        pipe: true,
+        silent: true,
+    });
+    const currentBranch = currentBranchBuf.toString("utf8").trim();
+
+    const branchesBuf = await spawnWithPipeAsync({
+        cmd: "git",
+        args: ["for-each-ref", "--format='%(refname:short)'", "refs/heads/"],
+        pipe: true,
+        silent: true,
+    });
+
+    const allBranches = branchesBuf
+        .toString("utf8")
+        .trim()
+        .split("\n")
+        .map(b => b.trim())
+        .filter(b => b && b !== currentBranch);
+
+    for (const branch of allBranches) {
+        try {
+            await spawnWithPipeAsync({
+                cmd: "git",
+                args: ["merge-base", "--is-ancestor", branch, "HEAD"],
+                pipe: true,
+                silent: true,
+            });
+            return branch;
+        } catch {
+            // not an ancestor
+        }
+    }
+
+    return undefined;
+}
+
+export function timestamp(date = new Date()): string {
+    const yyyy = date.getUTCFullYear();
+    const mm = String(date.getUTCMonth() + 1).padStart(2, "0");
+    const dd = String(date.getUTCDate()).padStart(2, "0");
+    const hh = String(date.getUTCHours()).padStart(2, "0");
+    const min = String(date.getUTCMinutes()).padStart(2, "0");
+    return `${yyyy}${mm}${dd}-${hh}${min}`;
+}
+
 function nodeHttpRequestAsync(options: Util.HttpRequestOptions): Promise<Util.HttpResponse> {
     let isHttps = false
 
@@ -228,15 +446,18 @@ function nodeHttpRequestAsync(options: Util.HttpRequestOptions): Promise<Util.Ht
 
             resolve(readResAsync(g).then(buf => {
                 let text: string = null
+                let json: any = null
                 try {
                     text = buf.toString("utf8")
+                    json = JSON.parse(text)
                 } catch (e) {
                 }
                 let resp: Util.HttpResponse = {
                     statusCode: res.statusCode,
                     headers: res.headers,
                     buffer: buf,
-                    text: text
+                    text: text,
+                    json: json,
                 }
                 return resp;
             }))
