@@ -31,6 +31,15 @@ import * as crowdin from './crowdin';
 import * as youtube from './youtube';
 import { SUB_WEBAPPS } from './subwebapp';
 
+const Reset = "\x1b[0m";
+const Bright = "\x1b[1m";
+const FgRed = "\x1b[31m";
+const FgGreen = "\x1b[32m";
+const FgYellow = "\x1b[33m";
+const FgBlue = "\x1b[34m";
+const FgMagenta = "\x1b[35m";
+const FgCyan = "\x1b[36m";
+
 const rimraf: (f: string, opts: any, cb: (err: Error, res: any) => void) => void = require('rimraf');
 
 pxt.docs.requireDOMSanitizer = () => require("sanitize-html");
@@ -661,9 +670,12 @@ async function bumpAsync(parsed?: commandParser.ParsedCommand) {
         token = await nodeutil.getGitHubTokenAsync();
         user = await nodeutil.getGitHubUserAsync(token);
         ({ owner, repo } = await nodeutil.getGitHubOwnerAndRepoAsync());
-        branchProtected = await nodeutil.isDirectPushAllowedAsync(token, owner, repo, currBranchName)
+        branchProtected = await nodeutil.isDirectPushAllowedAsync(token, owner, repo, currBranchName);
+        if (branchProtected) {
+            console.log(`${FgYellow}Branch ${currBranchName} is protected; creating a pull request instead of pushing directly.${Reset}`);
+        }
     } catch (e) {
-        console.warn("Unable to determine branch protection status.", e.message);
+        console.warn(`${FgYellow}Unable to determine branch protection status.${Reset}`, e.message);
     }
 
     if (fs.existsSync(pxt.CONFIG_NAME)) {
@@ -687,7 +699,7 @@ async function bumpAsync(parsed?: commandParser.ParsedCommand) {
                     repo,
                 }))
                 .then((prUrl) => nodeutil.switchBranchAsync(currBranchName).then(() => prUrl))
-                .then((prUrl) => console.log(`Created PR: ${prUrl}`))
+                .then((prUrl) => console.log(`${FgGreen}PR created: ${prUrl}${Reset}`))
         } else {
             return Promise.resolve()
                 .then(() => nodeutil.runGitAsync("pull"))
@@ -716,7 +728,7 @@ async function bumpAsync(parsed?: commandParser.ParsedCommand) {
                     repo,
                 }))
                 .then((prUrl) => nodeutil.switchBranchAsync(currBranchName).then(() => prUrl))
-                .then((prUrl) => console.log(`Created PR: ${prUrl}`))
+                .then((prUrl) => console.log(`${FgGreen}PR created: ${prUrl}${Reset}`))
         } else {
             return Promise.resolve()
                 .then(() => nodeutil.runGitAsync("pull"))

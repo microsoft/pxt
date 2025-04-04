@@ -347,7 +347,7 @@ export async function isDirectPushAllowedAsync(
     const requiresPR = !!data.protection?.required_pull_request_reviews;
     const hasPushRestrictions = !!data.protection?.restrictions;
 
-    return !(requiresPR || hasPushRestrictions);
+    return requiresPR || hasPushRestrictions;
 }
 
 export function timestamp(date = new Date()): string {
