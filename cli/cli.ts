@@ -31,6 +31,15 @@ import * as crowdin from './crowdin';
 import * as youtube from './youtube';
 import { SUB_WEBAPPS } from './subwebapp';
 
+const Reset = "\x1b[0m";
+const Bright = "\x1b[1m";
+const FgRed = "\x1b[31m";
+const FgGreen = "\x1b[32m";
+const FgYellow = "\x1b[33m";
+const FgBlue = "\x1b[34m";
+const FgMagenta = "\x1b[35m";
+const FgCyan = "\x1b[36m";
+
 const rimraf: (f: string, opts: any, cb: (err: Error, res: any) => void) => void = require('rimraf');
 
 pxt.docs.requireDOMSanitizer = () => require("sanitize-html");
@@ -384,21 +393,11 @@ function pxtFileList(pref: string) {
 }
 
 function checkIfTaggedCommitAsync() {
-    let currentCommit: string;
-
-    return nodeutil.gitInfoAsync(["rev-parse", "HEAD"])
+    return nodeutil.gitInfoAsync(["tag", "--points-at", "HEAD"])
         .then(info => {
-            currentCommit = info.trim();
-            return nodeutil.gitInfoAsync(["ls-remote", "--tags"], undefined, true)
-        })
-        .then(info => {
-            const tagCommits = info.split("\n")
-                .map(line => {
-                    const match = /^([a-fA-F0-9]+)\s+refs\/tags\/v\d+\.\d+\.\d+\^\{\}$/.exec(line);
-                    return match && match[1]
-                });
-
-            return tagCommits.some(t => t === currentCommit)
+            return info
+                .split("\n")
+                .some(tag => /^v\d+\.\d+\.\d+$/.test(tag.trim()));
         });
 }
 
@@ -406,7 +405,7 @@ let readJson = nodeutil.readJson;
 
 async function ciAsync() {
     forceCloudBuild = true;
-    const buildInfo = ciBuildInfo();
+    const buildInfo = await ciBuildInfoAsync();
     pxt.log(`ci build using ${buildInfo.ci}`);
     if (!buildInfo.tag)
         buildInfo.tag = "";
@@ -582,22 +581,17 @@ function updateAsync() {
         .then(() => nodeutil.runNpmAsync("install"));
 }
 
-function justBumpPkgAsync() {
+async function justBumpPkgAsync(bumpType: "patch" | "major" | "minor" | string, tagCommit: boolean = true): Promise<string> {
     ensurePkgDir()
-    return nodeutil.needsGitCleanAsync()
-        .then(() => mainPkg.loadAsync())
-        .then(() => {
-            let v = pxt.semver.parse(mainPkg.config.version)
-            v.patch++
-            return queryAsync("New version", pxt.semver.stringify(v))
-        })
-        .then(nv => {
-            let v = pxt.semver.parse(nv)
-            mainPkg.config.version = pxt.semver.stringify(v)
-            mainPkg.saveConfig()
-        })
-        .then(() => nodeutil.runGitAsync("commit", "-a", "-m", mainPkg.config.version))
-        .then(() => nodeutil.runGitAsync("tag", "v" + mainPkg.config.version))
+    await nodeutil.needsGitCleanAsync();
+    await mainPkg.loadAsync();
+    const curVer = pxt.semver.parse(mainPkg.config.version);
+    const newVer = pxt.semver.bump(curVer, bumpType);
+    mainPkg.config.version = await queryAsync("New version", pxt.semver.stringify(newVer));
+    mainPkg.saveConfig();
+    await nodeutil.runGitAsync("commit", "-a", "-m", mainPkg.config.version);
+    if (tagCommit) { await nodeutil.runGitAsync("tag", "v" + mainPkg.config.version); }
+    return mainPkg.config.version;
 }
 
 function tagReleaseAsync(parsed: commandParser.ParsedCommand) {
@@ -644,26 +638,93 @@ function tagReleaseAsync(parsed: commandParser.ParsedCommand) {
         })
 }
 
-function bumpAsync(parsed?: commandParser.ParsedCommand) {
+async function bumpAsync(parsed?: commandParser.ParsedCommand) {
     const bumpPxt = parsed && parsed.flags["update"];
     const upload = parsed && parsed.flags["upload"];
+    let pr = parsed && parsed.flags["pr"];
+    let bumpType = parsed && parsed.flags["version"] as string;
+    if (!bumpType) bumpType = "patch";
+
+    let currBranchName = "";
+    let token = "";
+    let user = "";
+    let owner = "";
+    let repo = "";
+    let branchProtected = false;
+
+    try {
+        currBranchName = await nodeutil.getCurrentBranchNameAsync();
+        token = await nodeutil.getGitHubTokenAsync();
+        user = await nodeutil.getGitHubUserAsync(token);
+        ({ owner, repo } = await nodeutil.getGitHubOwnerAndRepoAsync());
+        branchProtected = await nodeutil.isBranchProtectedAsync(token, owner, repo, currBranchName);
+        if (branchProtected) {
+            console.log(`${FgYellow}Branch ${currBranchName} is protected; creating a pull request instead of pushing directly.${Reset}`);
+        }
+    } catch (e) {
+        console.warn(`${FgYellow}Unable to determine branch protection status.${Reset}`, e.message);
+    }
+
     if (fs.existsSync(pxt.CONFIG_NAME)) {
         if (upload) throw U.userError("upload only supported on targets");
 
-        return Promise.resolve()
-            .then(() => nodeutil.runGitAsync("pull"))
-            .then(() => justBumpPkgAsync())
-            .then(() => nodeutil.runGitAsync("push", "--tags"))
-            .then(() => nodeutil.runGitAsync("push"))
+        if (pr || branchProtected) {
+            const newBranchName = `${user}/pxt-bump-${nodeutil.timestamp()}`;
+            return Promise.resolve()
+                .then(() => nodeutil.needsGitCleanAsync())
+                .then(() => nodeutil.runGitAsync("pull"))
+                .then(() => nodeutil.createBranchAsync(newBranchName))
+                .then(() => justBumpPkgAsync(bumpType, false)) // don't tag when creating a PR
+                .then((version) => nodeutil.gitPushAsync().then(() => version))
+                .then((version) => nodeutil.createPullRequestAsync({
+                    title: `[pxt-cli] bump version to ${version}`,
+                    body: "",
+                    head: newBranchName,
+                    base: currBranchName,
+                    token,
+                    owner,
+                    repo,
+                }))
+                .then((prUrl) => nodeutil.switchBranchAsync(currBranchName).then(() => prUrl))
+                .then((prUrl) => console.log(`${FgGreen}PR created: ${prUrl}${Reset}`))
+        } else {
+            return Promise.resolve()
+                .then(() => nodeutil.runGitAsync("pull"))
+                .then(() => justBumpPkgAsync(bumpType))
+                .then(() => nodeutil.runGitAsync("push", "--follow-tags"))
+                .then(() => nodeutil.runGitAsync("push"))
+        }
     }
     else if (fs.existsSync("pxtarget.json"))
-        return Promise.resolve()
-            .then(() => nodeutil.runGitAsync("pull"))
-            .then(() => bumpPxt ? bumpPxtCoreDepAsync().then(() => nodeutil.runGitAsync("push")) : Promise.resolve())
-            .then(() => nodeutil.runNpmAsync("version", "patch"))
-            .then(() => nodeutil.runGitAsync("push", "--tags"))
-            .then(() => nodeutil.runGitAsync("push"))
-            .then(() => upload ? uploadTaggedTargetAsync() : Promise.resolve())
+        if (pr || branchProtected) {
+            const newBranchName = `${user}/pxt-bump-${nodeutil.timestamp()}`;
+            return Promise.resolve()
+                .then(() => nodeutil.needsGitCleanAsync())
+                .then(() => nodeutil.runGitAsync("pull"))
+                .then(() => nodeutil.createBranchAsync(newBranchName))
+                .then(() => bumpPxt ? bumpPxtCoreDepAsync() : Promise.resolve())
+                .then(() => nodeutil.npmVersionBumpAsync(bumpType, false)) // don't tag when creating a PR
+                .then((version) => nodeutil.gitPushAsync().then(() => version))
+                .then((version) => nodeutil.createPullRequestAsync({
+                    title: `[pxt-cli] bump version to ${version}`,
+                    body: "",
+                    head: newBranchName,
+                    base: currBranchName,
+                    token,
+                    owner,
+                    repo,
+                }))
+                .then((prUrl) => nodeutil.switchBranchAsync(currBranchName).then(() => prUrl))
+                .then((prUrl) => console.log(`${FgGreen}PR created: ${prUrl}${Reset}`))
+        } else {
+            return Promise.resolve()
+                .then(() => nodeutil.runGitAsync("pull"))
+                .then(() => bumpPxt ? bumpPxtCoreDepAsync().then(() => nodeutil.runGitAsync("push")) : Promise.resolve())
+                .then(() => nodeutil.runNpmAsync("version", bumpType))
+                .then(() => nodeutil.runGitAsync("push", "--follow-tags"))
+                .then(() => nodeutil.runGitAsync("push"))
+                .then(() => upload ? uploadTaggedTargetAsync() : Promise.resolve())
+        }
     else {
         throw U.userError("Couldn't find package or target JSON file; nothing to bump")
     }
@@ -686,11 +747,11 @@ function uploadTaggedTargetAsync() {
             internalBuildTargetAsync()
                 .then(() => internalCheckDocsAsync(true))
                 .then(() => info))
-        .then(info => {
+        .then(async info => {
             const repoSlug = "microsoft/pxt-" + pxt.appTarget.id
             setCiBuildInfo(info[0], info[1], info[2], repoSlug)
             process.env['PXT_RELEASE_REPO'] = "https://git:" + pxt.github.token + "@github.com/" + repoSlug + "-built"
-            let v = pkgVersion()
+            let v = await pkgVersionAsync()
             pxt.log("uploading " + v)
             return uploadCoreAsync({
                 label: "v" + v,
@@ -702,9 +763,9 @@ function uploadTaggedTargetAsync() {
         })
 }
 
-function pkgVersion() {
+async function pkgVersionAsync() {
     let ver = readJson("package.json")["version"]
-    const info = ciBuildInfo()
+    const info = await ciBuildInfoAsync()
     if (!info.tag)
         ver += "-" + (info.commit ? info.commit.slice(0, 6) : "local")
     return ver
@@ -719,11 +780,11 @@ function targetFileList() {
     return lst;
 }
 
-function uploadTargetAsync(label: string) {
+async function uploadTargetAsync(label: string) {
     return uploadCoreAsync({
         label,
         fileList: pxtFileList("node_modules/pxt-core/").concat(targetFileList()),
-        pkgversion: pkgVersion(),
+        pkgversion: await pkgVersionAsync(),
         fileContent: {}
     })
 }
@@ -813,7 +874,7 @@ function gitUploadAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
                         console.log(r.filename + ": OK," + r.size + " " + r.hash)
                     }))
         })
-        .then(() => {
+        .then(async () => {
             let roottree: Map<GitEntry> = {}
             let get = (tree: GitTree, path: string): GitEntry => {
                 let subt = U.lookup(tree, path)
@@ -836,7 +897,7 @@ function gitUploadAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
                 let e = lookup(roottree, fn)
                 e.hash = uplReqs[fn].hash
             }
-            const info = ciBuildInfo()
+            const info = await ciBuildInfoAsync()
             let data: CommitInfo = {
                 message: "Upload from " + info.commitUrl,
                 parents: [],
@@ -852,7 +913,7 @@ function gitUploadAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
         })
 }
 
-function uploadToGitRepoAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
+async function uploadToGitRepoAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
     let label = opts.label
     if (!label) {
         console.log('no label; skip release upload');
@@ -909,7 +970,7 @@ function uploadToGitRepoAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
         cwd: trgPath,
         args: cred.concat(args)
     })
-    const info = ciBuildInfo()
+    const info = await ciBuildInfoAsync()
     return Promise.resolve()
         .then(() => {
             if (fs.existsSync(trgPath)) {
@@ -1642,9 +1703,9 @@ function isLocalBuild() {
     return !(isTravis() || isGithubAction() || isAzurePipelines());
 }
 
-function ciBuildInfo(): CiBuildInfo {
+async function ciBuildInfoAsync(): Promise<CiBuildInfo> {
     if (isTravis()) return travisInfo();
-    else if (isGithubAction()) return githubActionInfo();
+    else if (isGithubAction()) return await githubActionInfoAsync();
     else if (isAzurePipelines()) return travisInfo(); // azure pipelines uses same info
     else {
         // local build
@@ -1672,7 +1733,7 @@ function ciBuildInfo(): CiBuildInfo {
         }
     }
 
-    function githubActionInfo(): CiBuildInfo {
+    async function githubActionInfoAsync(): Promise<CiBuildInfo> {
         // https://help.github.com/en/actions/automating-your-workflow-with-github-actions/using-environment-variables#default-environment-variables
         const repoSlug = process.env.GITHUB_REPOSITORY;
         const commit = process.env.GITHUB_SHA;
@@ -1680,9 +1741,10 @@ function ciBuildInfo(): CiBuildInfo {
         // branch build refs/heads/...
         // tag build res/tags/...
         const branch = ref.replace(/^refs\/(heads|tags)\//, '');
-        const tag = /^refs\/tags\//.test(ref) ? branch : undefined;
-        const eventName = process.env.GITHUB_EVENT_NAME;
+        const isTagPush = /^refs\/tags\//.test(ref);
+        const tag = isTagPush ? branch : await nodeutil.getLocalTagPointingAtHeadAsync();
 
+        const eventName = process.env.GITHUB_EVENT_NAME;
         pxt.log(`event name: ${eventName}`);
 
         // PR: not on master or not a release number
@@ -2638,7 +2700,7 @@ async function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
     const compressedBuiltInfo = compressApiInfo(builtInfo);
     cfg.apiInfo = compressedBuiltInfo;
 
-    const info = ciBuildInfo()
+    const info = await ciBuildInfoAsync()
     cfg.versions = {
         branch: info.branch,
         tag: info.tag,
@@ -4133,7 +4195,7 @@ function copyCommonFiles() {
 
 function getCachedAsync(url: string, path: string) {
     return (readFileAsync(path, "utf8") as Promise<string>)
-        .then(v => v, (e: any) => {
+        .then(v => v, (e: any): any => {
             //console.log(`^^^ fetch ${id} ${Date.now() - start}ms`)
             return null
         })
@@ -7016,7 +7078,13 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
         onlineHelp: true,
         flags: {
             update: { description: "(package only) Updates pxt-core reference to the latest release" },
-            upload: { description: "(package only) Upload after bumping" }
+            upload: { description: "(package only) Upload after bumping" },
+            pr: { description: "Create a pull request after bumping rather than push changes directly" },
+            version: {
+                description: "Which part of the version to bump, or a complete version number to assign. Defaults to 'patch'",
+                type: "string",
+                possibleValues: ["patch", "minor", "major", /^\d+\.\d+\.\d+$/]
+            },
         }
     }, bumpAsync);
 

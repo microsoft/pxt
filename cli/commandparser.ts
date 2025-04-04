@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-for-in-array */
+import * as nodeutil from './nodeutil';
 
 const MaxColumns = 100;
 const argRegex = /^(-+)?(.+)$/;
@@ -11,7 +12,7 @@ export interface CommandFlag {
     argument?: string;
     type?: FlagType;
     aliases?: string[];
-    possibleValues?: string[];
+    possibleValues?: (string | RegExp)[];
     deprecated?: boolean;
     hidden?: boolean;
 
@@ -130,7 +131,7 @@ export class CommandParser {
                 }
             }
             else if (currentFlag) {
-                if (currentFlagDef.possibleValues && currentFlagDef.possibleValues.length && currentFlagDef.possibleValues.indexOf(match[2]) === -1) {
+                if (currentFlagDef.possibleValues && currentFlagDef.possibleValues.length && !nodeutil.matchesAny(match[2], currentFlagDef.possibleValues)) {
                     pxt.U.userError(`Unknown value for flag '${currentFlag}', '${match[2]}'`);
                 }
 
@@ -203,7 +204,7 @@ export class CommandParser {
                 if (def.hidden) continue;
 
                 if (def.possibleValues && def.possibleValues.length) {
-                    usage += ` [${dash(flag)} ${def.possibleValues.join("|")}]`
+                    usage += ` [${dash(flag)} ${def.possibleValues.map(v => v.toString()).join("|")}]`
                 }
                 else if (def.argument) {
                     usage += ` [${dash(flag)} ${def.argument}]`
@@ -240,7 +241,7 @@ export class CommandParser {
 
             if (def.argument) {
                 if (def.possibleValues && def.possibleValues.length) {
-                    usage += ` <${def.possibleValues.join("|")}>`;
+                    usage += ` <${def.possibleValues.map(v => v.toString()).join("|")}>`;
                 }
                 else {
                     usage += def.type && def.type === "number" ? " <number>" : " <value>"
