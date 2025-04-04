@@ -350,47 +350,6 @@ export async function isDirectPushAllowedAsync(
     return !(requiresPR || hasPushRestrictions);
 }
 
-export async function detectBaseBranchAsync(): Promise<string | undefined> {
-    // Get current branch name
-    const currentBranchBuf = await spawnWithPipeAsync({
-        cmd: "git",
-        args: ["rev-parse", "--abbrev-ref", "HEAD"],
-        pipe: true,
-        silent: true,
-    });
-    const currentBranch = currentBranchBuf.toString("utf8").trim();
-
-    const branchesBuf = await spawnWithPipeAsync({
-        cmd: "git",
-        args: ["for-each-ref", "--format='%(refname:short)'", "refs/heads/"],
-        pipe: true,
-        silent: true,
-    });
-
-    const allBranches = branchesBuf
-        .toString("utf8")
-        .trim()
-        .split("\n")
-        .map(b => b.trim())
-        .filter(b => b && b !== currentBranch);
-
-    for (const branch of allBranches) {
-        try {
-            await spawnWithPipeAsync({
-                cmd: "git",
-                args: ["merge-base", "--is-ancestor", branch, "HEAD"],
-                pipe: true,
-                silent: true,
-            });
-            return branch;
-        } catch {
-            // not an ancestor
-        }
-    }
-
-    return undefined;
-}
-
 export function timestamp(date = new Date()): string {
     const yyyy = date.getUTCFullYear();
     const mm = String(date.getUTCMonth() + 1).padStart(2, "0");
