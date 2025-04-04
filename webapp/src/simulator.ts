@@ -140,7 +140,10 @@ export async function initAsync(root: HTMLElement, cfg: SimulatorConfig) {
                     el.style.animationDuration = '';
 
                     if (completeHandler) completeHandler();
-                    pxsim.U.remove(el);
+
+                    if (el.parentElement) {
+                        pxsim.U.remove(el);
+                    }
                 })
             }
         },
