@@ -405,7 +405,7 @@ let readJson = nodeutil.readJson;
 
 async function ciAsync() {
     forceCloudBuild = true;
-    const buildInfo = ciBuildInfo();
+    const buildInfo = await ciBuildInfoAsync();
     pxt.log(`ci build using ${buildInfo.ci}`);
     if (!buildInfo.tag)
         buildInfo.tag = "";
@@ -747,11 +747,11 @@ function uploadTaggedTargetAsync() {
             internalBuildTargetAsync()
                 .then(() => internalCheckDocsAsync(true))
                 .then(() => info))
-        .then(info => {
+        .then(async info => {
             const repoSlug = "microsoft/pxt-" + pxt.appTarget.id
             setCiBuildInfo(info[0], info[1], info[2], repoSlug)
             process.env['PXT_RELEASE_REPO'] = "https://git:" + pxt.github.token + "@github.com/" + repoSlug + "-built"
-            let v = pkgVersion()
+            let v = await pkgVersionAsync()
             pxt.log("uploading " + v)
             return uploadCoreAsync({
                 label: "v" + v,
@@ -763,9 +763,9 @@ function uploadTaggedTargetAsync() {
         })
 }
 
-function pkgVersion() {
+async function pkgVersionAsync() {
     let ver = readJson("package.json")["version"]
-    const info = ciBuildInfo()
+    const info = await ciBuildInfoAsync()
     if (!info.tag)
         ver += "-" + (info.commit ? info.commit.slice(0, 6) : "local")
     return ver
@@ -780,11 +780,11 @@ function targetFileList() {
     return lst;
 }
 
-function uploadTargetAsync(label: string) {
+async function uploadTargetAsync(label: string) {
     return uploadCoreAsync({
         label,
         fileList: pxtFileList("node_modules/pxt-core/").concat(targetFileList()),
-        pkgversion: pkgVersion(),
+        pkgversion: await pkgVersionAsync(),
         fileContent: {}
     })
 }
@@ -874,7 +874,7 @@ function gitUploadAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
                         console.log(r.filename + ": OK," + r.size + " " + r.hash)
                     }))
         })
-        .then(() => {
+        .then(async () => {
             let roottree: Map<GitEntry> = {}
             let get = (tree: GitTree, path: string): GitEntry => {
                 let subt = U.lookup(tree, path)
@@ -897,7 +897,7 @@ function gitUploadAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
                 let e = lookup(roottree, fn)
                 e.hash = uplReqs[fn].hash
             }
-            const info = ciBuildInfo()
+            const info = await ciBuildInfoAsync()
             let data: CommitInfo = {
                 message: "Upload from " + info.commitUrl,
                 parents: [],
@@ -913,7 +913,7 @@ function gitUploadAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
         })
 }
 
-function uploadToGitRepoAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
+async function uploadToGitRepoAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
     let label = opts.label
     if (!label) {
         console.log('no label; skip release upload');
@@ -970,7 +970,7 @@ function uploadToGitRepoAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
         cwd: trgPath,
         args: cred.concat(args)
     })
-    const info = ciBuildInfo()
+    const info = await ciBuildInfoAsync()
     return Promise.resolve()
         .then(() => {
             if (fs.existsSync(trgPath)) {
@@ -1703,9 +1703,9 @@ function isLocalBuild() {
     return !(isTravis() || isGithubAction() || isAzurePipelines());
 }
 
-function ciBuildInfo(): CiBuildInfo {
+async function ciBuildInfoAsync(): Promise<CiBuildInfo> {
     if (isTravis()) return travisInfo();
-    else if (isGithubAction()) return githubActionInfo();
+    else if (isGithubAction()) return await githubActionInfoAsync();
     else if (isAzurePipelines()) return travisInfo(); // azure pipelines uses same info
     else {
         // local build
@@ -1733,7 +1733,7 @@ function ciBuildInfo(): CiBuildInfo {
         }
     }
 
-    function githubActionInfo(): CiBuildInfo {
+    async function githubActionInfoAsync(): Promise<CiBuildInfo> {
         // https://help.github.com/en/actions/automating-your-workflow-with-github-actions/using-environment-variables#default-environment-variables
         const repoSlug = process.env.GITHUB_REPOSITORY;
         const commit = process.env.GITHUB_SHA;
@@ -1741,9 +1741,10 @@ function ciBuildInfo(): CiBuildInfo {
         // branch build refs/heads/...
         // tag build res/tags/...
         const branch = ref.replace(/^refs\/(heads|tags)\//, '');
-        const tag = /^refs\/tags\//.test(ref) ? branch : undefined;
-        const eventName = process.env.GITHUB_EVENT_NAME;
+        const isTagPush = /^refs\/tags\//.test(ref);
+        const tag = isTagPush ? branch : await nodeutil.getLocalTagPointingAtHeadAsync();
 
+        const eventName = process.env.GITHUB_EVENT_NAME;
         pxt.log(`event name: ${eventName}`);
 
         // PR: not on master or not a release number
@@ -2699,7 +2700,7 @@ async function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
     const compressedBuiltInfo = compressApiInfo(builtInfo);
     cfg.apiInfo = compressedBuiltInfo;
 
-    const info = ciBuildInfo()
+    const info = await ciBuildInfoAsync()
     cfg.versions = {
         branch: info.branch,
         tag: info.tag,
@@ -4194,7 +4195,7 @@ function copyCommonFiles() {
 
 function getCachedAsync(url: string, path: string) {
     return (readFileAsync(path, "utf8") as Promise<string>)
-        .then(v => v, (e: any) => {
+        .then(v => v, (e: any): any => {
             //console.log(`^^^ fetch ${id} ${Date.now() - start}ms`)
             return null
         })

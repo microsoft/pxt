@@ -265,6 +265,22 @@ export async function switchBranchAsync(branchName: string) {
     });
 }
 
+export async function getLocalTagPointingAtHeadAsync(): Promise<string | undefined> {
+    try {
+        const output = await spawnWithPipeAsync({
+            cmd: "git",
+            args: ["tag", "--points-at", "HEAD"],
+            silent: true,
+        });
+        const result = output.toString("utf-8").trim();
+        const tags = result.split("\n").map(t => t.trim()).filter(Boolean);
+        const versionTag = tags.find(t => /^v\d+\.\d+\.\d+$/.test(t));
+        return versionTag;
+    } catch (e) {
+        return undefined;
+    }
+}
+
 export async function npmVersionBumpAsync(
     bumpType: "patch" | "minor" | "major" | string, tagCommit: boolean = true
 ): Promise<string> {
