@@ -1,0 +1,30 @@
+name: Tag Version on Bump Commit
+
+on:
+  workflow_call:
+
+jobs:
+  tag-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Tag commit if it's a version bump
+        run: |
+          git fetch --tags
+          COMMIT_SHA="${{ github.sha }}"
+          COMMIT_MSG=$(git log -1 --pretty=%s "$COMMIT_SHA")
+          if [[ "$COMMIT_MSG" =~ \[pxt-cli\]\ Bump\ version\ to\ v([0-9]+\.[0-9]+\.[0-9]+) ]]; then
+            VERSION="v${BASH_REMATCH[1]}"
+            if git rev-parse "$VERSION" >/dev/null 2>&1; then
+              echo "::warning::Tag $VERSION already exists — skipping tagging."
+            else
+              echo "Tagging commit $COMMIT_SHA with $VERSION"
+              git tag "$VERSION" "$COMMIT_SHA"
+              git push origin "$VERSION"
+            fi
+          else
+            echo "No bump commit found — skipping tag."
+          fi

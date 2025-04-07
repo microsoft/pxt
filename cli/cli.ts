@@ -591,21 +591,17 @@ function updateAsync() {
         .then(() => nodeutil.runNpmAsync("install"));
 }
 
-function justBumpPkgAsync(bumpType: "patch" | "major" | "minor" | string): Promise<string> {
+async function justBumpPkgAsync(bumpType: "patch" | "major" | "minor" | string, tagCommit: boolean = true): Promise<string> {
     ensurePkgDir()
-    return nodeutil.needsGitCleanAsync()
-        .then(() => mainPkg.loadAsync())
-        .then(() => {
-            let v = pxt.semver.bump(pxt.semver.parse(mainPkg.config.version), bumpType);
-            return queryAsync("New version", pxt.semver.stringify(v))
-        })
-        .then(nv => {
-            let v = pxt.semver.parse(nv)
-            mainPkg.config.version = pxt.semver.stringify(v)
-            mainPkg.saveConfig()
-        })
-        .then(() => nodeutil.runGitAsync("commit", "-a", "-m", mainPkg.config.version))
-        .then(() => nodeutil.runGitAsync("tag", "v" + mainPkg.config.version).then(() => mainPkg.config.version))
+    await nodeutil.needsGitCleanAsync();
+    await mainPkg.loadAsync();
+    const curVer = pxt.semver.parse(mainPkg.config.version);
+    const newVer = pxt.semver.bump(curVer, bumpType);
+    mainPkg.config.version = await queryAsync("New version", pxt.semver.stringify(newVer));
+    mainPkg.saveConfig();
+    await nodeutil.runGitAsync("commit", "-a", "-m", mainPkg.config.version);
+    if (tagCommit) { await nodeutil.runGitAsync("tag", "v" + mainPkg.config.version); }
+    return mainPkg.config.version;
 }
 
 function tagReleaseAsync(parsed: commandParser.ParsedCommand) {
@@ -656,8 +652,8 @@ async function bumpAsync(parsed?: commandParser.ParsedCommand) {
     const bumpPxt = parsed && parsed.flags["update"];
     const upload = parsed && parsed.flags["upload"];
     let pr = parsed && parsed.flags["pr"];
-    let newver = parsed && parsed.flags["version"] as string;
-    if (!newver) newver = "patch";
+    let bumpType = parsed && parsed.flags["version"] as string;
+    if (!bumpType) bumpType = "patch";
 
     let currBranchName = "";
     let token = "";
@@ -688,7 +684,7 @@ async function bumpAsync(parsed?: commandParser.ParsedCommand) {
                 .then(() => nodeutil.needsGitCleanAsync())
                 .then(() => nodeutil.runGitAsync("pull"))
                 .then(() => nodeutil.createBranchAsync(newBranchName))
-                .then(() => justBumpPkgAsync(newver))
+                .then(() => justBumpPkgAsync(bumpType, false)) // don't tag when creating a PR
                 .then((version) => nodeutil.gitPushAsync().then(() => version))
                 .then((version) => nodeutil.createPullRequestAsync({
                     title: `[pxt-cli] Bump version to ${version}`,
@@ -704,8 +700,8 @@ async function bumpAsync(parsed?: commandParser.ParsedCommand) {
         } else {
             return Promise.resolve()
                 .then(() => nodeutil.runGitAsync("pull"))
-                .then(() => justBumpPkgAsync(newver))
-                .then(() => nodeutil.runGitAsync("push", "--tags"))
+                .then(() => justBumpPkgAsync(bumpType))
+                .then(() => nodeutil.runGitAsync("push", "--follow-tags"))
                 .then(() => nodeutil.runGitAsync("push"))
         }
     }
@@ -717,7 +713,7 @@ async function bumpAsync(parsed?: commandParser.ParsedCommand) {
                 .then(() => nodeutil.runGitAsync("pull"))
                 .then(() => nodeutil.createBranchAsync(newBranchName))
                 .then(() => bumpPxt ? bumpPxtCoreDepAsync() : Promise.resolve())
-                .then(() => nodeutil.npmVersionBumpAsync(newver))
+                .then(() => nodeutil.npmVersionBumpAsync(bumpType, false)) // don't tag when creating a PR
                 .then((version) => nodeutil.gitPushAsync().then(() => version))
                 .then((version) => nodeutil.createPullRequestAsync({
                     title: `[pxt-cli] Bump version to ${version}`,
@@ -734,8 +730,8 @@ async function bumpAsync(parsed?: commandParser.ParsedCommand) {
             return Promise.resolve()
                 .then(() => nodeutil.runGitAsync("pull"))
                 .then(() => bumpPxt ? bumpPxtCoreDepAsync().then(() => nodeutil.runGitAsync("push")) : Promise.resolve())
-                .then(() => nodeutil.runNpmAsync("version", newver))
-                .then(() => nodeutil.runGitAsync("push", "--tags"))
+                .then(() => nodeutil.runNpmAsync("version", bumpType))
+                .then(() => nodeutil.runGitAsync("push", "--follow-tags"))
                 .then(() => nodeutil.runGitAsync("push"))
                 .then(() => upload ? uploadTaggedTargetAsync() : Promise.resolve())
         }

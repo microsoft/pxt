@@ -8,10 +8,13 @@ on:
       - 'master'
 
 jobs:
+  tag-bump-commit:
+    uses: ./.github/workflows/tag-bump-commit.yml
+
   build:
     name: buildpush
-
     runs-on: ubuntu-latest
+    needs: tag-bump-commit
 
     steps:
       - uses: actions/checkout@main

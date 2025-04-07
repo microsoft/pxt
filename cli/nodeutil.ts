@@ -266,15 +266,31 @@ export async function switchBranchAsync(branchName: string) {
 }
 
 export async function npmVersionBumpAsync(
-    bumpType: "patch" | "minor" | "major" | string
+    bumpType: "patch" | "minor" | "major" | string, tagCommit: boolean = true
 ): Promise<string> {
     const output = await spawnWithPipeAsync({
         cmd: addCmd("npm"),
-        args: ["version", bumpType, "--message", "\"chore: bump version to %s\""],
+        args: ["version", bumpType, "--message", "\"chore: bump version to %s\"", "--git-tag-version", tagCommit ? "true" : "false"],
         cwd: ".",
         silent: true,
     });
-    return output.toString("utf8").trim();
+    const ver = output.toString("utf8").trim();
+    // If not tagging, the `npm version` command will not commit the change to package.json, so we need to do it manually
+    if (!tagCommit) {
+        await spawnAsync({
+            cmd: "git",
+            args: ["add", "package.json"],
+            cwd: ".",
+            silent: true,
+        });
+        await spawnAsync({
+            cmd: "git",
+            args: ["commit", "-m", `chore: bump version to ${ver}`],
+            cwd: ".",
+            silent: true,
+        });
+    }
+    return ver;
 }
 
 export function gitPushAsync(followTags: boolean = true) {
