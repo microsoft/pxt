@@ -393,21 +393,11 @@ function pxtFileList(pref: string) {
 }
 
 function checkIfTaggedCommitAsync() {
-    let currentCommit: string;
-
-    return nodeutil.gitInfoAsync(["rev-parse", "HEAD"])
+    return nodeutil.gitInfoAsync(["tag", "--points-at", "HEAD"])
         .then(info => {
-            currentCommit = info.trim();
-            return nodeutil.gitInfoAsync(["ls-remote", "--tags"], undefined, true)
-        })
-        .then(info => {
-            const tagCommits = info.split("\n")
-                .map(line => {
-                    const match = /^([a-fA-F0-9]+)\s+refs\/tags\/v\d+\.\d+\.\d+\^\{\}$/.exec(line);
-                    return match && match[1]
-                });
-
-            return tagCommits.some(t => t === currentCommit)
+            return info
+                .split("\n")
+                .some(tag => /^v\d+\.\d+\.\d+$/.test(tag.trim()));
         });
 }
 
