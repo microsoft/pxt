@@ -19,11 +19,12 @@ jobs:
       - name: Tag commit if it's a version bump
         shell: bash
         run: |
+          shopt -s nocasematch
           git fetch --tags
           COMMIT_SHA="${{ github.sha }}"
           COMMIT_MSG=$(git log -1 --pretty=%s "$COMMIT_SHA")
           echo "Commit message: $COMMIT_MSG"
-          if [[ "$COMMIT_MSG" =~ \[pxt-cli\]\ Bump\ version\ to\ v([0-9]+\.[0-9]+\.[0-9]+) ]]; then
+          if [[ "$COMMIT_MSG" =~ \[pxt-cli\]\ bump\ version\ to\ v([0-9]+\.[0-9]+\.[0-9]+) ]]; then
             VERSION="v${BASH_REMATCH[1]}"
             if git rev-parse "$VERSION" >/dev/null 2>&1; then
               echo "::warning::Tag $VERSION already exists — skipping tagging."
