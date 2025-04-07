@@ -687,7 +687,7 @@ async function bumpAsync(parsed?: commandParser.ParsedCommand) {
                 .then(() => justBumpPkgAsync(bumpType, false)) // don't tag when creating a PR
                 .then((version) => nodeutil.gitPushAsync().then(() => version))
                 .then((version) => nodeutil.createPullRequestAsync({
-                    title: `[pxt-cli] Bump version to ${version}`,
+                    title: `[pxt-cli] bump version to ${version}`,
                     body: "",
                     head: newBranchName,
                     base: currBranchName,
@@ -716,7 +716,7 @@ async function bumpAsync(parsed?: commandParser.ParsedCommand) {
                 .then(() => nodeutil.npmVersionBumpAsync(bumpType, false)) // don't tag when creating a PR
                 .then((version) => nodeutil.gitPushAsync().then(() => version))
                 .then((version) => nodeutil.createPullRequestAsync({
-                    title: `[pxt-cli] Bump version to ${version}`,
+                    title: `[pxt-cli] bump version to ${version}`,
                     body: "",
                     head: newBranchName,
                     base: currBranchName,
