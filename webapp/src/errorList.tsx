@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import * as sui from "./sui";
+import * as blocks from "./blocks";
 import { fireClickOnEnter } from "./util";
 
 import * as pxtblockly from "../../pxtblocks";
@@ -12,11 +13,18 @@ type GroupedError = {
     index: number
 };
 
+// TODO thsparks : Move into a different file?
+export type BlockError = {
+    blockId: string;
+    message: string;
+}
+
 export interface ErrorListProps {
+    parent: pxt.editor.IProjectView; // TODO thsparks : Do we need the full parent?
     isInBlocksEditor: boolean;
     onSizeChange?: (state: pxt.editor.ErrorListState) => void;
     listenToErrorChanges?: (key: string, onErrorChanges: (errors: pxtc.KsDiagnostic[]) => void) => void;
-    listenToBlockErrorChanges?: (key: string, onErrorChanges: (errors: pxtblockly.BlockDiagnostic[]) => void) => void;
+    listenToBlockErrorChanges?: (key: string, onErrorChanges: (errors: BlockError[]) => void) => void;
     listenToExceptionChanges?: (handlerKey: string, handler: (exception: pxsim.DebuggerBreakpointMessage, locations: pxtc.LocationInfo[]) => void) => void,
     goToError?: (errorLocation: pxtc.LocationInfo) => void;
     startDebugger?: () => void;
@@ -26,7 +34,7 @@ export interface ErrorListState {
     errors?: pxtc.KsDiagnostic[],
     exception?: pxsim.DebuggerBreakpointMessage,
     callLocations?: pxtc.LocationInfo[],
-    blockErrors?: pxtblockly.BlockDiagnostic[]
+    blockErrors?: BlockError[]
 }
 
 export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
@@ -150,7 +158,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
 
         const grouped = groupErrors(errors);
         return <div className="ui selection list">
-            {grouped.map((e, index) => <ErrorListItem key={errorKey(e.error)} index={index} error={e} revealError={this.onErrorMessageClick} />)}
+            {grouped.map((e, index) => <ErrorListItem key={errorKey(e.error)} index={index} error={e} onClick={() => this.onErrorMessageClick(e.error, index)} />)}
         </div>
     }
 
@@ -163,37 +171,42 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
 
                     if (!location) return null;
 
-                    return <ErrorListItem key={index} index={index} stackframe={sf} location={location} revealError={this.onErrorMessageClick} />
+                    return <ErrorListItem key={index} index={index} stackframe={sf} location={location} onClick={() => this.onErrorMessageClick(location, index)} />
                 })}
             </div>
         </div>;
     }
 
-    listBlockErrors(blockErrors: pxtblockly.BlockDiagnostic[]) {
+    listBlockErrors(blockErrors: BlockError[]) {
         return <div className="ui selection list">
-            {(blockErrors || []).map((e, i) => <ErrorListItem index={i} key={`${i}-${e}`} blockError={e} />)}
+            {(blockErrors || []).map((e, i) => <ErrorListItem index={i} key={`${i}-${e}`} blockError={e} onClick={(() => this.focusOnBlock(e.blockId))} />)}
         </div>
+    }
+
+    focusOnBlock(blockId: string) {
+        if(!this.props.parent.isBlocksActive()) return;
+
+        // TODO thsparks : This should probably be moved out into an editor function (maybe one each editor implements itself).
+        const blocksEditor = this.props.parent.editor as blocks.Editor;
+        blocksEditor?.editor?.centerOnBlock(blockId);
     }
 }
 
 interface ErrorListItemProps {
     index: number;
-    revealError?: (location: pxtc.LocationInfo, index: number) => void;
+    onClick?: () => void;
     error?: GroupedError;
     stackframe?: pxsim.StackFrameInfo;
     location?: pxtc.LocationInfo;
-    blockError?: pxtblockly.BlockDiagnostic;
+    blockError?: BlockError;
 }
 
 interface ErrorListItemState {
 }
 
-
 class ErrorListItem extends React.Component<ErrorListItemProps, ErrorListItemState> {
     constructor(props: ErrorListItemProps) {
-        super(props)
-
-        this.onErrorListItemClick = this.onErrorListItemClick.bind(this)
+        super(props);
     }
 
     render() {
@@ -205,17 +218,12 @@ class ErrorListItem extends React.Component<ErrorListItemProps, ErrorListItemSta
         const errorCount = (stackframe || blockError) ? 1 : error.count;
 
         return <div className={`item ${stackframe ? 'stackframe' : ''}`} role="button"
-            onClick={!blockError ? this.onErrorListItemClick : undefined}
+            onClick={this.props.onClick}
             onKeyDown={fireClickOnEnter}
             aria-label={lf("Go to {0}: {1}", stackframe ? '' : 'error', message)}
             tabIndex={0}>
             {message} {(errorCount <= 1) ? null : <div className="ui gray circular label countBubble">{errorCount}</div>}
         </div>
-    }
-
-    onErrorListItemClick() {
-        const location = this.props.stackframe ? this.props.location : this.props.error.error
-        this.props.revealError(location, this.props.index)
     }
 }
 

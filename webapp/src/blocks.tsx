@@ -23,7 +23,7 @@ import { WorkspaceSearch } from "@blockly/plugin-workspace-search";
 
 import Util = pxt.Util;
 import { DebuggerToolbox } from "./debuggerToolbox";
-import { ErrorList } from "./errorList";
+import { BlockError, ErrorList } from "./errorList";
 import { resolveExtensionUrl } from "./extensionManager";
 import { experiments, initEditorExtensionsAsync } from "../../pxteditor";
 
@@ -63,7 +63,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     breakpointsSet: number[]; // the IDs of the breakpoints set.
     currentFlyoutKey: string;
 
-    private errorChangesListeners: pxt.Map<(errors: pxtblockly.BlockDiagnostic[]) => void> = {};
+    private errorChangesListeners: pxt.Map<(errors: BlockError[]) => void> = {};
     protected intersectionObserver: IntersectionObserver;
 
     protected debuggerToolbox: DebuggerToolbox;
@@ -881,7 +881,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     <div id="blocksEditor"></div>
                     <toolbox.ToolboxTrashIcon flyoutOnly={flyoutOnly} />
                 </div>
-                {showErrorList && <ErrorList isInBlocksEditor={true} listenToBlockErrorChanges={this.listenToBlockErrorChanges}
+                {showErrorList && <ErrorList parent={this.parent} isInBlocksEditor={true} listenToBlockErrorChanges={this.listenToBlockErrorChanges}
                     onSizeChange={this.onErrorListResize} />}
             </div>
         )
@@ -891,11 +891,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.parent.fireResize();
     }
 
-    listenToBlockErrorChanges(handlerKey: string, handler: (errors: pxtblockly.BlockDiagnostic[]) => void) {
+    listenToBlockErrorChanges(handlerKey: string, handler: (errors: BlockError[]) => void) {
         this.errorChangesListeners[handlerKey] = handler;
     }
 
-    private onBlockErrorChanges(errors: pxtblockly.BlockDiagnostic[]) {
+    private onBlockErrorChanges(errors: BlockError[]) {
         for (let listener of pxt.U.values(this.errorChangesListeners)) {
             listener(errors)
         }
@@ -1138,6 +1138,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (!tsfile || !tsfile.diagnostics) return;
 
         // only show errors
+        const allErrors: BlockError[] = [];
         let diags = tsfile.diagnostics.filter(d => d.category == ts.pxtc.DiagnosticCategory.Error);
         let sourceMap = this.compilationResult.sourceMap;
 
@@ -1149,6 +1150,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     let txt = ts.pxtc.flattenDiagnosticMessageText(diag.messageText, "\n");
                     b.setWarningText(txt, pxtblockly.PXT_WARNING_ID);
                     setHighlightWarningAsync(b, true);
+                    allErrors.push({
+                        blockId: bid,
+                        message: txt,
+                    })
                 }
             }
         })
@@ -1160,10 +1165,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 if (b) {
                     b.setWarningText(d.message, pxtblockly.PXT_WARNING_ID);
                     setHighlightWarningAsync(b, true);
+                    allErrors.push({
+                        blockId: d.blockId,
+                        message: d.message,
+                    })
                 }
             }
         })
-        this.onBlockErrorChanges(this.compilationResult.diagnostics);
+        this.onBlockErrorChanges(allErrors);
         this.setBreakpointsFromBlocks();
     }
 
