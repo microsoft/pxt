@@ -4,17 +4,17 @@ on:
     outputs:
       is_merged_pr:
         description: "Whether the current push came from a merged PR"
-        value: ${{ jobs.check.outputs.is_merged_pr }}
+        value: ${{ jobs.check-pr.outputs.is_merged_pr }}
 
 jobs:
-  check:
+  check-pr:
     runs-on: ubuntu-latest
     outputs:
-      is_merged_pr: ${{ steps.set-output.outputs.is_merged_pr }}
+      is_merged_pr: ${{ steps.check-pr.outputs.is_merged_pr }}
     steps:
       - name: Check if this commit is from a merged PR
         id: check-pr
-        uses: actions/github-script@main
+        uses: actions/github-script@v7
         with:
           script: |
             const commitSha = context.sha;
@@ -26,6 +26,3 @@ jobs:
 
             const mergedPr = prs.find(pr => pr.merged_at !== null);
             core.setOutput("is_merged_pr", mergedPr ? "true" : "false");
-
-      - id: set-output
-        run: echo "is_merged_pr=${{ steps.check-pr.outputs.is_merged_pr }}" >> $GITHUB_OUTPUT
