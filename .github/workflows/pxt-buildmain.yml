@@ -7,6 +7,9 @@ on:
       - 'main'
   create:
 
+permissions:
+  contents: write
+
 jobs:
   tag-bump-commit:
     uses: ./.github/workflows/tag-bump-commit.yml
