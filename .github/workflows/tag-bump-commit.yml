@@ -17,10 +17,12 @@ jobs:
           fetch-depth: 0
 
       - name: Tag commit if it's a version bump
+        shell: bash
         run: |
           git fetch --tags
           COMMIT_SHA="${{ github.sha }}"
           COMMIT_MSG=$(git log -1 --pretty=%s "$COMMIT_SHA")
+          echo "Commit message: $COMMIT_MSG"
           if [[ "$COMMIT_MSG" =~ \[pxt-cli\]\ Bump\ version\ to\ v([0-9]+\.[0-9]+\.[0-9]+) ]]; then
             VERSION="v${BASH_REMATCH[1]}"
             if git rev-parse "$VERSION" >/dev/null 2>&1; then

@@ -23,6 +23,6 @@ jobs:
               repo: context.repo.repo,
               commit_sha: commitSha
             });
-
+            console.log("Found PRs:", prs);
             const mergedPr = prs.find(pr => pr.merged_at !== null);
             core.setOutput("is_merged_pr", mergedPr ? "true" : "false");
