@@ -19,7 +19,6 @@ jobs:
       - name: Tag commit if it's a version bump
         shell: bash
         run: |
-          shopt -s nocasematch
           git fetch --tags
           COMMIT_SHA="${{ github.sha }}"
           COMMIT_MSG=$(git log -1 --pretty=%s "$COMMIT_SHA")
