@@ -21,6 +21,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@main
+        with:
+          fetch-depth: 0
+          fetch-tags: true
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@main
         with:
