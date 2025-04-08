@@ -53,7 +53,7 @@ jobs:
     outputs:
       did_tag: false
     steps:
-      - run: echo "No tag because PR wasn't merged."
+      - run: echo "No tag because not a PR merge."
 
   return:
     runs-on: ubuntu-latest
