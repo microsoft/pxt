@@ -2,9 +2,8 @@ name: pxt-buildmain
 
 on:
   push:
-    branches:
-      - 'master'
-      - 'main'
+    tags:
+      - 'v*.*.*' # Run workflow when any new semver-formatted tag is pushed (not on branch updates or tag re-pushes)
 
 permissions:
   contents: write
@@ -32,7 +31,7 @@ jobs:
           sudo apt-get install xvfb
           sudo npm install -g pxt
           npm install
-      - name: npm test
+      - name: npm test (and possibly publish to npm registry)
         run: |
           npm test
         env:
