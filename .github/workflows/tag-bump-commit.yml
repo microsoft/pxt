@@ -5,7 +5,7 @@ on:
     outputs:
       did_tag:
         description: 'Whether a tag was created'
-        value: ${{ jobs.tag-version.outputs.did_tag }}
+        value: ${{ jobs.return.outputs.did_tag }}
 
 jobs:
   check-merge:
@@ -45,3 +45,20 @@ jobs:
             echo "No bump commit found — skipping tag."
           fi
           echo "did_tag=$TAGGED" >> "$GITHUB_OUTPUT"
+
+  not-tag-version:
+    needs: check-merge
+    if: needs.check-merge.outputs.is_merged_pr == 'false'
+    runs-on: ubuntu-latest
+    outputs:
+      did_tag: false
+    steps:
+      - run: echo "No tag because PR wasn't merged."
+
+  return:
+    runs-on: ubuntu-latest
+    needs: [tag-version, not-tag-version]
+    outputs:
+      did_tag: ${{ needs.tag-version.outputs.did_tag || 'false' }}
+    steps:
+      - run: echo "Returning did_tag = ${{ needs.tag-version.outputs.did_tag || 'false' }}"
