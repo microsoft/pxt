@@ -3,7 +3,7 @@ name: pxt-buildmain
 on:
   push:
     tags:
-      - 'v*.*.*' # Run workflow when any new semver-formatted tag is pushed (not on branch updates or tag re-pushes)
+      - 'v*' # Run workflow when any new semver-ish tag is pushed (not on branch updates or tag re-pushes)
 
 jobs:
   build:
