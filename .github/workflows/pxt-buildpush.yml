@@ -11,8 +11,14 @@ permissions:
   contents: write
 
 jobs:
+  filter-vtags:
+    name: filter-vtags
+    runs-on: ubuntu-latest
+    if: github.ref_type != 'tag' || !matches(github.ref_name, '^v[0-9]')
+
   tag-bump-commit:
     uses: ./.github/workflows/tag-bump-commit.yml
+    needs: filter-vtags
 
   buildpush:
     name: buildpush
