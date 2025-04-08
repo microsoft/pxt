@@ -7082,6 +7082,7 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
             pr: { description: "Create a pull request after bumping rather than push changes directly" },
             version: {
                 description: "Which part of the version to bump, or a complete version number to assign. Defaults to 'patch'",
+                argument: "version",
                 type: "string",
                 possibleValues: ["patch", "minor", "major", /^\d+\.\d+\.\d+$/]
             },
