@@ -1,21 +1,19 @@
-import { MonacoFieldEditor, TextEdit, MonacoFieldEditorHost } from "./monacoFieldEditor";
-
 const fieldEditorId = "image-editor";
 
-export class MonacoReactFieldEditor<U> implements MonacoFieldEditor {
-    private resolver: (edit: TextEdit) => void;
+export class MonacoReactFieldEditor<U> implements pxt.editor.MonacoFieldEditor {
+    private resolver: (edit: pxt.editor.TextEdit) => void;
     private rejecter: (err?: any) => void;
 
     protected fileType: pxt.editor.FileType;
     protected editrange: monaco.Range;
-    protected host: MonacoFieldEditorHost;
+    protected host: pxt.editor.MonacoFieldEditorHost;
     protected fv: pxt.react.FieldEditorView<U>;
 
     getId() {
         return fieldEditorId;
     }
 
-    showEditorAsync(fileType: pxt.editor.FileType, editrange: monaco.Range, host: MonacoFieldEditorHost): Promise<TextEdit> {
+    showEditorAsync(fileType: pxt.editor.FileType, editrange: monaco.Range, host: pxt.editor.MonacoFieldEditorHost): Promise<pxt.editor.TextEdit> {
         this.fileType = fileType;
         this.editrange = editrange;
         this.host = host;
