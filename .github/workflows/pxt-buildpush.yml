@@ -52,7 +52,9 @@ jobs:
     if: always() && needs.tag-bump-commit.outputs.did_tag == 'true'
     steps:
       - name: Trigger repository_dispatch for pxt-buildvtag
-        uses: peter-evans/repository-dispatch@v3
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          event-type: bump-commit-tagged
+        run: |
+          curl -X POST https://api.github.com/repos/${{ github.repository }}/dispatches \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            -d '{"event_type":"bump-commit-tagged"}'

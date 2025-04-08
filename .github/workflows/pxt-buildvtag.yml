@@ -5,7 +5,7 @@ on:
     tags:
       - 'v*' # Run workflow when any new semver-ish tag is pushed
   repository_dispatch:
-    types: [bump-commit-tagged] # Triggered by the pxt-buildpush workflow if it tags the commit
+    #types: [bump-commit-tagged] # Triggered by the pxt-buildpush workflow if it tags the commit
 
 jobs:
   build:
