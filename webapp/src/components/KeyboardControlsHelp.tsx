@@ -1,0 +1,176 @@
+import * as React from "react";
+import { getActionShortcut, SHORTCUT_NAMES } from "../shortcut_formatting";
+
+const KeyboardControlsHelp = () => {
+    const ref = React.useRef<HTMLElement>(null);
+    React.useEffect(() => {
+        ref.current?.focus()
+    }, []);
+    const ctrl = lf("Ctrl");
+    const cmd = pxt.BrowserUtils.isMac() ? "⌘" : ctrl;
+    const optionOrCtrl = pxt.BrowserUtils.isMac() ? "⌥" : ctrl;
+    const contextMenuRow = <Row name={lf("Open context menu")} shortcuts={[SHORTCUT_NAMES.MENU]} />
+    const cleanUpRow = <Row name={lf("Workspace: Format code")} shortcuts={[SHORTCUT_NAMES.CLEAN_UP]} />
+    const orAsJoiner = lf("or")
+    const enterOrSpace = { shortcuts: [[lf("Enter")], [lf("Space")]], joiner: orAsJoiner}
+    const editOrConfirmRow = <Row name={lf("Edit or confirm")} {...enterOrSpace} />
+    return (
+        <aside id="keyboardnavhelp" aria-label={lf("Keyboard Controls")} ref={ref} tabIndex={0}>
+            <h2>{lf("Keyboard Controls")}</h2>
+            <table>
+                <tbody>
+                    <Row name={lf("Show/hide shortcut help")} shortcuts={[SHORTCUT_NAMES.LIST_SHORTCUTS]} />
+                    <Row name={lf("Jump to region")} shortcuts={[[cmd, "U"]]} />
+                    <Row name={lf("Block and toolbox navigation")} shortcuts={[SHORTCUT_NAMES.UP, SHORTCUT_NAMES.DOWN, SHORTCUT_NAMES.LEFT, SHORTCUT_NAMES.RIGHT]} />
+                    <Row name={lf("Toolbox or insert")} shortcuts={[SHORTCUT_NAMES.TOOLBOX, SHORTCUT_NAMES.INSERT]} joiner={orAsJoiner} />
+                    {editOrConfirmRow}
+                    <Row name={lf("Move mode")} shortcuts={[["M"]]} >
+                        <br /><span className="hint">{lf("Move with arrow keys")}</span>
+                        <br /><span className="hint">{lf("Hold {0} for free movement", optionOrCtrl)}</span>
+                    </Row>
+                    <Row name={lf("Copy / paste")} shortcuts={[SHORTCUT_NAMES.COPY, SHORTCUT_NAMES.PASTE]} joiner="/" />
+                    {cleanUpRow}
+                    {contextMenuRow}
+                </tbody>
+            </table>
+            <h3>{lf("Editor Overview")}</h3>
+            <table>
+                <tbody>
+                    <Row name={lf("Move between menus, simulator and the workspace")} shortcuts={[[lf("Tab")], [lf("Shift"), lf("Tab")]]} joiner="row"/>
+                    <Row name={lf("Jump to region")} shortcuts={[[cmd, "U"]]} />
+                    <Row name={lf("Exit")} shortcuts={[SHORTCUT_NAMES.EXIT]} />
+                    <Row name={lf("Toolbox")} shortcuts={[SHORTCUT_NAMES.TOOLBOX]} />
+                    <Row name={lf("Toolbox: Move in and out of categories")} shortcuts={[SHORTCUT_NAMES.LEFT, SHORTCUT_NAMES.RIGHT]} />
+                    <Row name={lf("Toolbox: Navigate categories or blocks")} shortcuts={[SHORTCUT_NAMES.UP, SHORTCUT_NAMES.DOWN]} />
+                    <Row name={lf("Toolbox: Insert block")} {...enterOrSpace} />
+                    <Row name={lf("Workspace: Select workspace")} shortcuts={[["W"]]} />
+                    {cleanUpRow}
+                </tbody>
+            </table>
+            <h3>{lf("Edit Blocks")}</h3>
+            <table>
+                <tbody>
+                    <Row name={lf("Move in and out of a block")} shortcuts={[SHORTCUT_NAMES.LEFT, SHORTCUT_NAMES.RIGHT]} />
+                    {editOrConfirmRow}
+                    <Row name={lf("Cancel or exit")} shortcuts={[SHORTCUT_NAMES.EXIT]} />
+                    <Row name={lf("Insert block at current position")} shortcuts={[SHORTCUT_NAMES.INSERT]} />
+                    <Row name={lf("Copy")} shortcuts={[SHORTCUT_NAMES.COPY]} />
+                    <Row name={lf("Paste")} shortcuts={[SHORTCUT_NAMES.PASTE]} />
+                    <Row name={lf("Cut")} shortcuts={[SHORTCUT_NAMES.CUT]} />
+                    <Row name={lf("Delete")} shortcuts={[SHORTCUT_NAMES.DELETE, [lf("Backspace")]]} joiner={orAsJoiner} />
+                    <Row name={lf("Undo")} shortcuts={[SHORTCUT_NAMES.UNDO]} />
+                    <Row name={lf("Redo")} shortcuts={[SHORTCUT_NAMES.REDO]} />
+                    {contextMenuRow}
+                </tbody>
+            </table>
+            <h3>{lf("Moving Blocks")}</h3>
+            <table>
+                <tbody>
+                    <Row name={lf("Move mode")} shortcuts={[["M"]]} />
+                    <Row name={lf("Move mode: Move to new position")} shortcuts={[SHORTCUT_NAMES.UP, SHORTCUT_NAMES.DOWN, SHORTCUT_NAMES.LEFT, SHORTCUT_NAMES.RIGHT]} />
+                    <Row name={lf("Move mode: Free movement")}>
+                        {lf("Hold {0} and press arrow keys", optionOrCtrl)}
+                    </Row>
+                    <Row name={lf("Move mode: Confirm")} {...enterOrSpace} />
+                    <Row name={lf("Move mode: Cancel")} shortcuts={[SHORTCUT_NAMES.EXIT]} />
+                    <Row name={lf("Disconnect blocks")} shortcuts={[SHORTCUT_NAMES.DISCONNECT]} />
+                </tbody>
+            </table>
+        </aside>
+    );
+}
+
+const Shortcut = ({ keys }: { keys: string[] }) => {
+    const joiner = pxt.BrowserUtils.isMac() ? " " : " + "
+    return (
+        <span className="shortcut">
+            {keys.reduce((acc, key) => {
+                return acc.length === 0
+                    ? [...acc,  <Key key={key} value={key} />]
+                    : [...acc, joiner, <Key key={key} value={key} />]
+            }, [])}
+        </span>
+    );
+}
+
+interface RowProps {
+    name: string;
+    shortcuts?: Array<string | string[]>;
+    joiner?: string;
+    children?: React.ReactNode;
+}
+
+const Row = ({ name, shortcuts = [], joiner, children}: RowProps) => {
+    const shortcutElements = shortcuts.map((s, idx) => {
+        if (typeof s === "string") {
+            // Pull keys from shortcut registry.
+            return <Shortcut key={idx} keys={getActionShortcut(s)} />
+        } else {
+            // Display keys as specified.
+            return <Shortcut key={idx} keys={s} />
+        }
+    })
+    return joiner === "row" ? (
+        <>
+            <tr>
+                <td width="50%" rowSpan={shortcuts.length}>{name}</td>
+                <td width="50%">
+                    {shortcutElements[0]}
+                </td>
+            </tr>
+            {shortcutElements.map((el, idx) => idx === 0
+                ? undefined
+                : (<tr key={idx}>
+                        <td width="50%">
+                            {el}
+                        </td>
+                    </tr>))}
+        </>
+    ) : (
+        <tr>
+            <td width="50%">{name}</td>
+            <td width="50%">
+                {shortcutElements.reduce((acc, shortcut) => {
+                    return acc.length === 0
+                        ? [...acc,  shortcut]
+                        : [...acc, joiner ? ` ${joiner} ` : " ", shortcut]
+                }, [])}
+                {children}
+                <br />
+            </td>
+        </tr>
+    )
+}
+
+const Key = ({ value }: { value: string }) => {
+    let aria;
+    switch (value) {
+        case "↑": {
+            aria = lf("Up Arrow");
+            break;
+        }
+        case "↓": {
+            aria = lf("Down Arrow");
+            break;
+        }
+        case "←": {
+            aria = lf("Left Arrow");
+            break;
+        }
+        case "→": {
+            aria = lf("Right Arrow");
+            break;
+        }
+        case "⌘": {
+            aria = lf("Command");
+            break;
+        }
+        case "⌥": {
+            aria = lf("Option");
+            break;
+        }
+    }
+    return <span className="key" aria-label={aria}>{lf("{0}", value)}</span>
+}
+
+export default KeyboardControlsHelp;

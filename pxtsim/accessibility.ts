@@ -13,6 +13,9 @@ namespace pxsim.accessibility {
         if (e.key === "Escape") {
             e.preventDefault();
             return "escape"
+        } else if (e.key === "/" && meta) {
+            e.preventDefault();
+            return "togglekeyboardcontrolshelp";
         } else if (e.key === "b" && meta) {
             e.preventDefault();
             return "navigateregions"

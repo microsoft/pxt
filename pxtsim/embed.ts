@@ -75,7 +75,7 @@ namespace pxsim {
         url: string;
     }
 
-    export type SimulatorAction = "escape" | "navigateregions";
+    export type SimulatorAction = "escape" | "navigateregions" | "togglekeyboardcontrolshelp";
 
     export interface SimulatorActionMessage extends SimulatorMessage {
         action: SimulatorAction;
