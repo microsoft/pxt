@@ -1,0 +1,30 @@
+name: Whether the tag is a semver tag
+on:
+  workflow_call:
+    outputs:
+      is_vtag:
+        description: 'Whether the tag is a semver tag'
+        value: ${{ jobs.filter-vtags.outputs.is_vtag }}
+
+jobs:
+  filter-vtags:
+    runs-on: ubuntu-latest
+    outputs:
+      is_vtag: ${{ steps.set-output.outputs.is_vtag }}
+    steps:
+      - name: Check tag pattern
+        id: check-tag
+        run: |
+          if [[ "${GITHUB_REF_TYPE}" == "tag" && "${GITHUB_REF_NAME}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Semver tag detected: ${GITHUB_REF_NAME}"
+            echo "true" > is_vtag.txt
+          else
+            echo "Not a semver tag; continuing."
+            echo "false" > is_vtag.txt
+          fi
+
+      - name: Set output
+        id: set-output
+        run: |
+          IS_VTAG=$(cat is_vtag.txt)
+          echo "is_vtag=$IS_VTAG" >> "$GITHUB_OUTPUT"

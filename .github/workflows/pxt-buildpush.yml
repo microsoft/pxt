@@ -12,16 +12,12 @@ permissions:
 
 jobs:
   filter-vtags:
-    name: filter-vtags
-    runs-on: ubuntu-latest
-    # Only run this job if the push is not a tag, or if the tag is not a version tag
-    if: github.ref_type != 'tag' || !matches(github.ref_name, '^v[0-9]+\\.[0-9]+\\.[0-9]+$')
-    steps:
-      - run: ": > /dev/null"
+    uses: ./.github/workflows/is-vtag.yml
 
   tag-bump-commit:
     uses: ./.github/workflows/tag-bump-commit.yml
     needs: filter-vtags
+    if: needs.filter-vtags.outputs.is_vtag == 'false'
 
   buildpush:
     name: buildpush
