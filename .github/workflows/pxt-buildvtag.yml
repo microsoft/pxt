@@ -1,9 +1,11 @@
-name: pxt-buildmain
+name: pxt-buildvtag
 
 on:
   push:
     tags:
-      - 'v*' # Run workflow when any new semver-ish tag is pushed (not on branch updates or tag re-pushes)
+      - 'v*' # Run workflow when any new semver-ish tag is pushed
+  repository_dispatch:
+    types: [bump-commit-tagged] # Triggered by the pxt-buildpush workflow if it tags the commit
 
 jobs:
   build:
