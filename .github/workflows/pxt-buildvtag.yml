@@ -4,14 +4,11 @@ on:
   push:
     tags:
       - 'v*' # Run workflow when any new semver-ish tag is pushed
-  repository_dispatch:
-    #types: [bump-commit-tagged] # Triggered by the pxt-buildpush workflow if it tags the commit
 
 jobs:
-  build:
+  buildvtag:
     name: buildvtag
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@main
         with:
