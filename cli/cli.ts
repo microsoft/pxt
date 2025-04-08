@@ -450,7 +450,7 @@ async function ciAsync() {
 
     function npmPublishAsync() {
         if (!npmPublish) return Promise.resolve();
-        return nodeutil.runNpmAsync("publish");
+        return nodeutil.runNpmAsync("publish", "--loglevel", "verbose");
     }
 
     let pkg = readJson("package.json")
