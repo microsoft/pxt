@@ -58,6 +58,7 @@ jobs:
   return:
     runs-on: ubuntu-latest
     needs: [tag-version, not-tag-version]
+    if: always()
     outputs:
       did_tag: ${{ needs.tag-version.outputs.did_tag || 'false' }}
     steps:
