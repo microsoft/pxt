@@ -14,7 +14,8 @@ jobs:
   filter-vtags:
     name: filter-vtags
     runs-on: ubuntu-latest
-    if: github.ref_type != 'tag' || !matches(github.ref_name, '^v[0-9]')
+    # Only run this job if the push is not a tag, or if the tag is not a version tag
+    if: github.ref_type != 'tag' || !matches(github.ref_name, '^v[0-9]+\\.[0-9]+\\.[0-9]+$')
 
   tag-bump-commit:
     uses: ./.github/workflows/tag-bump-commit.yml
