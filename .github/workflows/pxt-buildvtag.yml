@@ -6,10 +6,14 @@ on:
       - 'v*' # Run workflow when any new semver-ish tag is pushed
 
 jobs:
+  filter-vtags:
+    uses: ./.github/workflows/is-vtag.yml
+
   buildvtag:
     name: buildvtag
     # Only run this job if the push is a version tag
-    if: matches(github.ref_name, '^v[0-9]+\\.[0-9]+\\.[0-9]+$')
+    needs: filter-vtags
+    if: needs.filter-vtags.outputs.is_vtag == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@main
