@@ -9,7 +9,7 @@ on:
 
 jobs:
   build:
-    name: buildmain
+    name: buildvtag
     runs-on: ubuntu-latest
 
     steps:
