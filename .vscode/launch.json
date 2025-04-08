@@ -24,6 +24,8 @@
 			"stopOnEntry": false,
 			"args": [
 				"bump",
+				"--version",
+				"patch"
 			],
 			"cwd": "${workspaceRoot}",
 			"runtimeExecutable": null,
