@@ -141,7 +141,6 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.showThemePicker = this.showThemePicker.bind(this);
         this.toggleHighContrast = this.toggleHighContrast.bind(this);
         this.toggleGreenScreen = this.toggleGreenScreen.bind(this);
-        this.toggleAccessibleBlocks = this.toggleAccessibleBlocks.bind(this);
         this.showResetDialog = this.showResetDialog.bind(this);
         this.showShareDialog = this.showShareDialog.bind(this);
         this.showFeedbackDialog = this.showFeedbackDialog.bind(this);
@@ -226,11 +225,6 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
     toggleGreenScreen() {
         pxt.tickEvent("menu.togglegreenscreen", undefined, { interactiveConsent: true });
         this.props.parent.toggleGreenScreen();
-    }
-
-    toggleAccessibleBlocks() {
-        pxt.tickEvent("menu.toggleaccessibleblocks", undefined, { interactiveConsent: true });
-        this.props.parent.toggleAccessibleBlocks();
     }
 
     showResetDialog() {
@@ -354,7 +348,6 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             <div className="ui divider"></div>
             {targetTheme.selectLanguage ? <sui.Item icon='xicon globe' role="menuitem" text={lf("Language")} onClick={this.showLanguagePicker} /> : undefined}
             <sui.Item role="menuitem" icon="paint brush" text={lf("Theme")} onClick={this.showThemePicker} />
-            {targetTheme.accessibleBlocks ? <sui.Item role="menuitem" text={accessibleBlocks ? lf("Accessible Blocks Off") : lf("Accessible Blocks On")} onClick={this.toggleAccessibleBlocks} /> : undefined}
             {showGreenScreen ? <sui.Item role="menuitem" text={greenScreen ? lf("Green Screen Off") : lf("Green Screen On")} onClick={this.toggleGreenScreen} /> : undefined}
             {docItems && renderDocItems(this.props.parent, docItems, "setting-docs-item mobile only inherit")}
             {githubUser ? <div className="ui divider"></div> : undefined}
@@ -378,7 +371,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
 
 
 interface IBaseMenuItemProps extends ISettingsProps {
-    onClick: () => void;
+    onClick: (e: React.MouseEvent<HTMLElement>) => void;
     isActive: () => boolean;
 
     icon?: string;
@@ -443,7 +436,7 @@ class BlocksMenuItem extends data.Component<ISettingsProps, {}> {
         super(props);
     }
 
-    protected onClick = (): void => {
+    protected onClick = (e: React.MouseEvent<HTMLElement>): void => {
         pxt.tickEvent("menu.blocks", undefined, { interactiveConsent: true });
         this.props.parent.openBlocks();
     }

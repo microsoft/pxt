@@ -28,6 +28,11 @@ export class EditorAccessibilityMenu extends data.Component<EditorAccessibilityM
         this.showLanguagePicker = this.showLanguagePicker.bind(this);
         this.showThemePicker = this.showThemePicker.bind(this);
         this.goHome = this.goHome.bind(this);
+        this.openBlocks = this.openBlocks.bind(this);
+    }
+
+    openBlocks(e: React.MouseEvent<HTMLElement>) {
+        this.props.parent.openBlocks();
     }
 
     openJavaScript() {
@@ -73,6 +78,7 @@ export class EditorAccessibilityMenu extends data.Component<EditorAccessibilityM
         const hasHome = !pxt.shell.isControllerMode();
 
         return <div className="ui accessibleMenu borderless fixed menu" role="menubar">
+            {targetTheme.accessibleBlocks ? <sui.Item className={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="xicon blocks" text={lf("Skip to Blocks workspace")} onClick={this.openBlocks} /> : undefined}
             <sui.Item className={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="xicon js" text={lf("Skip to JavaScript editor")} onClick={this.openJavaScript} />
             {targetTheme.python ? <sui.Item className={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="xicon python" text={lf("Skip to Python editor")} onClick={this.openPython} /> : undefined}
             {targetTheme.selectLanguage ? <sui.Item className={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="xicon globe" text={lf("Select Language")} onClick={this.showLanguagePicker} /> : undefined}

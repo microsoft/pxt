@@ -246,7 +246,7 @@ export class VerticalFlyout implements Blockly.IFlyout {
     }
 }
 
-class CachedFlyout extends Blockly.VerticalFlyout {
+export class CachedFlyout extends Blockly.VerticalFlyout {
     protected def: Element[];
     protected buttonListeners: Blockly.browserEvents.Data[] = [];
 

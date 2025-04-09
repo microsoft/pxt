@@ -19,14 +19,14 @@ export class ConstantProvider extends Blockly.zelos.ConstantProvider {
     /**
      * Color of the glow outline around highlighted blocks.
      */
-    HIGHLIGHT_GLOW_COLOUR = '#FFF200';
+    HIGHLIGHT_GLOW_COLOUR = '#ffa200';
 
     ERROR_HIGHLIGHT_GLOW_COLOR = '#FF0000';
 
     /**
      * The width of the glow outline around highlighted blocks.
      */
-    HIGHLIGHT_GLOW_SIZE = 1.1;
+    HIGHLIGHT_GLOW_SIZE = 0.5;
 
     /**
      * Radius of SVG path for ellipses in collapsed blocks.
@@ -62,6 +62,16 @@ export class ConstantProvider extends Blockly.zelos.ConstantProvider {
 
         this.embossFilterOverride = this.createOutline(defs, "blocklyBubbleEmbossGlowFilter")
         this.embossFilterId = this.embossFilterOverride.id
+
+        if (injectionDivIfIsParent) {
+            // If this renderer is for the parent workspace, add CSS variables scoped
+            // to the injection div referencing the created patterns so that CSS can
+            // apply the patterns to any element in the injection div.
+            injectionDivIfIsParent.style.setProperty(
+              '--blocklySelectedGlowFilter',
+              `url(#${this.highlightOutlineFilterId})`,
+            );
+        }
     }
 
     dispose(): void {

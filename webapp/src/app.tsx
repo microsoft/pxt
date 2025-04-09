@@ -687,6 +687,9 @@ export class ProjectView
 
         if (this.isBlocksActive()) {
             if (this.state.embedSimView) this.setState({ embedSimView: false });
+            // This timeout prevents key events from being handled by Blockly's keyboard
+            // navigation plugin prematurely.
+            setTimeout(() => {this.editor.focusWorkspace()}, 0)
             return;
         }
 
@@ -2807,7 +2810,7 @@ export class ProjectView
         this.stopSimulator(true); // don't keep simulator around
         this.showKeymap(false); // close keymap if open
         cmds.disconnectAsync(); // turn off any kind of logging
-        if (this.editor) this.editor.unloadFileAsync();
+        if (this.editor) this.editor.unloadFileAsync(home);
         this.extensions.unload();
         this.editorFile = undefined;
 
@@ -4661,7 +4664,7 @@ export class ProjectView
             extensionsVisible: false
         })
 
-        if (this.state.accessibleBlocks) {
+        if (pxt.appTarget.appTheme.accessibleBlocks) {
             this.editor.focusToolbox(CategoryNameID.Extensions);
         }
     }
@@ -5170,16 +5173,6 @@ export class ProjectView
         this.setState({ greenScreen: greenScreenOn });
     }
 
-    toggleAccessibleBlocks() {
-        this.setAccessibleBlocks(!this.state.accessibleBlocks);
-    }
-
-    setAccessibleBlocks(enabled: boolean) {
-        pxt.tickEvent("app.accessibleblocks", { on: enabled ? 1 : 0 });
-        // this.blocksEditor.enableAccessibleBlocks(enabled);
-        this.setState({ accessibleBlocks: enabled })
-    }
-
     setBannerVisible(b: boolean) {
         this.setState({ bannerVisible: b });
     }
@@ -5353,7 +5346,8 @@ export class ProjectView
         const inDebugMode = this.state.debugging;
         const inHome = this.state.home && !sandbox;
         const inEditor = !!this.state.header && !inHome;
-        const { lightbox, greenScreen, accessibleBlocks } = this.state;
+        const { lightbox, greenScreen } = this.state;
+        const accessibleBlocks = pxt.appTarget.appTheme.accessibleBlocks;
         const hideTutorialIteration = inTutorial && tutorialOptions.metadata?.hideIteration;
         const hideToolbox = inTutorial && tutorialOptions.metadata?.hideToolbox;
         // flyoutOnly has become a de facto css class for styling tutorials (especially minecraft HOC), so keep it if hideToolbox is true, even if flyoutOnly is false.
@@ -5443,12 +5437,13 @@ export class ProjectView
                         header={this.state.header}
                         reloadHeaderAsync={async () => {
                             await this.reloadHeaderAsync()
-                            this.shouldFocusToolbox = !!this.state.accessibleBlocks;
+                            this.shouldFocusToolbox = !!accessibleBlocks;
                         }}
                     />
                 }
                 {greenScreen ? <greenscreen.WebCam close={this.toggleGreenScreen} /> : undefined}
-                {accessibleBlocks && <accessibleblocks.AccessibleBlocksInfo />}
+                {/* TODO: Discuss when this onboarding dialog should be shown if accessibleBlocks is enabled by default */}
+                {/* {accessibleBlocks && <accessibleblocks.AccessibleBlocksInfo />} */}
                 {hideMenuBar || inHome ? undefined :
                     <header className="menubar" role="banner">
                         {inEditor ? <accessibility.EditorAccessibilityMenu parent={this} highContrast={hc} /> : undefined}

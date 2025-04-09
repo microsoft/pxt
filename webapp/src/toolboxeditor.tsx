@@ -390,4 +390,5 @@ export abstract class ToolboxEditor extends srceditor.Editor {
             this.toolbox.focus(itemToFocus);
         }
     }
+
 }
