@@ -73,8 +73,7 @@ export class MonacoTilemapEditor extends MonacoReactFieldEditor<pxt.ProjectTilem
     protected resultToText(asset: pxt.ProjectTilemap): string {
         const project = pxt.react.getTilemapProject();
         project.pushUndo();
-        pxt.patchTemporaryAsset(this.editing, asset, project);
-
+        asset = pxt.patchTemporaryAsset(this.editing, asset, project);
         pxt.sprite.updateTilemapReferencesFromResult(project, asset);
 
         if (this.isTilemapLiteral) {
