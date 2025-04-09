@@ -17,7 +17,7 @@ import { CreateFunctionDialog } from "./createFunction";
 import { initializeSnippetExtensions } from './snippetBuilder';
 
 import * as pxtblockly from "../../pxtblocks";
-import { NavigationController, Navigation } from "@blockly/keyboard-navigation";
+// import { NavigationController, Navigation } from "@blockly/keyboard-navigation";
 import { WorkspaceSearch } from "@blockly/plugin-workspace-search";
 
 
@@ -70,7 +70,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     protected highlightedStatement: pxtc.LocationInfo;
 
     // Blockly plugins
-    protected navigationController: NavigationController;
+    // protected navigationController: NavigationController;
     protected workspaceSearch: WorkspaceSearch;
 
     public nsMap: pxt.Map<toolbox.BlockDefinition[]>;
@@ -161,7 +161,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     setVisible(v: boolean) {
         super.setVisible(v);
         this.isVisible = v;
-        let classes = '#blocksEditor .blocklyToolboxDiv, #blocksEditor .blocklyWidgetDiv, #blocksEditor .blocklyToolboxDiv';
+        let classes = '#blocksEditor .blocklyToolbox, #blocksEditor .blocklyWidgetDiv, #blocksEditor .blocklyToolbox';
         if (this.isVisible) {
             pxt.Util.toArray(document.querySelectorAll(classes)).forEach((el: HTMLElement) => el.style.display = '');
             // Fire a resize event since the toolbox may have changed width and height.
@@ -532,31 +532,31 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         };
     }
 
-    private initAccessibleBlocks() {
-        const enabled = pxt.appTarget.appTheme?.accessibleBlocks;
-        if (enabled && !this.navigationController) {
-            this.navigationController = new NavigationController() as any;
+    // private initAccessibleBlocks() {
+    //     const enabled = pxt.appTarget.appTheme?.accessibleBlocks;
+    //     if (enabled && !this.navigationController) {
+    //         this.navigationController = new NavigationController() as any;
 
-            this.navigationController.init();
-            this.navigationController.addWorkspace(this.editor);
+    //         this.navigationController.init();
+    //         this.navigationController.addWorkspace(this.editor);
 
-            (Navigation as any).prototype.focusToolbox = (workspace: Blockly.WorkspaceSvg) => {
-                const toolbox = this.toolbox;
-                if (!toolbox) return;
-                this.focusToolbox();
-                this.navigationController.navigation.resetFlyout(workspace, false);
-                this.navigationController.navigation.setState(workspace, "toolbox");
-            }
-        }
-    }
+    //         (Navigation as any).prototype.focusToolbox = (workspace: Blockly.WorkspaceSvg) => {
+    //             const toolbox = this.toolbox;
+    //             if (!toolbox) return;
+    //             this.focusToolbox();
+    //             this.navigationController.navigation.resetFlyout(workspace, false);
+    //             this.navigationController.navigation.setState(workspace, "toolbox");
+    //         }
+    //     }
+    // }
 
-    public enableAccessibleBlocks(enable: boolean) {
-        if (enable) {
-            this.navigationController.enable(this.editor);
-        } else {
-            this.navigationController.disable(this.editor);
-        }
-    }
+    // public enableAccessibleBlocks(enable: boolean) {
+    //     if (enable) {
+    //         this.navigationController.enable(this.editor);
+    //     } else {
+    //         this.navigationController.disable(this.editor);
+    //     }
+    // }
 
     private initWorkspaceSearch() {
         if (pxt.appTarget.appTheme.workspaceSearch && !this.workspaceSearch) {
@@ -750,7 +750,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.initPrompts();
         this.initBlocklyToolbox();
         this.initWorkspaceSounds();
-        this.initAccessibleBlocks();
+        // this.initAccessibleBlocks();
         this.initWorkspaceSearch();
         this.setupIntersectionObserver();
         this.resize();
@@ -912,7 +912,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     getBlocklyToolboxDiv(): HTMLDivElement {
         const blocksArea = this.getBlocksAreaDiv();
-        return blocksArea ? blocksArea.getElementsByClassName('blocklyToolboxDiv')[0] as HTMLDivElement : undefined;
+        return blocksArea ? blocksArea.getElementsByClassName('blocklyToolbox')[0] as HTMLDivElement : undefined;
     }
 
     handleToolboxRef = (c: toolbox.Toolbox) => {
@@ -924,9 +924,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     public moveFocusToFlyout() {
-        if (this.navigationController) {
-            this.navigationController.navigation.focusFlyout(this.editor);
-        }
+        // if (this.navigationController) {
+        //     this.navigationController.navigation.focusFlyout(this.editor);
+        // }
 
         (this.editor.getInjectionDiv() as HTMLDivElement).focus();
     }
@@ -976,7 +976,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     showVariablesFlyout() {
-        this.showFlyoutInternal_(Blockly.Variables.flyoutCategory(this.editor), "variables");
+        this.showFlyoutInternal_(Blockly.Variables.flyoutCategory(this.editor, true), "variables");
     }
 
     showFunctionsFlyout() {
@@ -1264,7 +1264,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         if (this.debuggerToolbox) {
             const visibleVars = Blockly.Variables.allUsedVarModels(this.editor)
-                .map((variable: Blockly.VariableModel) => pxtc.escapeIdentifier(variable.name));
+                .map((variable: Blockly.VariableModel) => pxtc.escapeIdentifier(variable.getName()));
 
             this.debuggerToolbox.setBreakpoint(brk, visibleVars);
         }

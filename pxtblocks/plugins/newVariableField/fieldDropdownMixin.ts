@@ -40,7 +40,7 @@ export function showEditorMixin(this: Blockly.FieldDropdown, e?: MouseEvent) {
             return label;
         })();
 
-        const menuItem = new Blockly.MenuItem(content, value);
+        const menuItem = new Blockly.MenuItem(content, value as string);
         menuItem.setRole(Blockly.utils.aria.Role.OPTION);
         menuItem.setRightToLeft(block.RTL);
         menuItem.setCheckable(true);

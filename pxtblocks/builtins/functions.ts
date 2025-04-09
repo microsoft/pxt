@@ -240,123 +240,7 @@ export function initFunctions() {
     };
     installBuiltinHelpInfo(functionReturnId);
 
-    Blockly.Procedures.flyoutCategory = function (workspace: Blockly.WorkspaceSvg) {
-        let xmlList: HTMLElement[] = [];
-
-        if (!pxt.appTarget.appTheme.hideFlyoutHeadings) {
-            // Add the Heading label
-            let headingLabel = createFlyoutHeadingLabel(lf("Functions"),
-                pxt.toolbox.getNamespaceColor('functions'),
-                pxt.toolbox.getNamespaceIcon('functions'),
-                'blocklyFlyoutIconfunctions');
-            xmlList.push(headingLabel);
-        }
-
-        const newFunction = lf("Make a Function...");
-        const newFunctionTitle = lf("New function name:");
-
-        // Add the "Make a function" button
-        let button = Blockly.utils.xml.createElement('button');
-        button.setAttribute('text', newFunction);
-        button.setAttribute('callbackKey', 'CREATE_FUNCTION');
-
-        let createFunction = (name: string) => {
-            /**
-             * Create matching definition block.
-             * <xml>
-             *   <block type="procedures_defreturn" x="10" y="20">
-             *     <field name="NAME">test</field>
-             *   </block>
-             * </xml>
-             */
-            let topBlock = workspace.getTopBlocks(true)[0];
-            let x = 10, y = 10;
-            if (topBlock) {
-                let xy = topBlock.getRelativeToSurfaceXY();
-                x = xy.x + (Blockly as any).SNAP_RADIUS * (topBlock.RTL ? -1 : 1);
-                y = xy.y + (Blockly as any).SNAP_RADIUS * 2;
-            }
-            let xml = Blockly.utils.xml.createElement('xml');
-            let block = Blockly.utils.xml.createElement('block');
-            block.setAttribute('type', 'procedures_defnoreturn');
-            block.setAttribute('x', String(x));
-            block.setAttribute('y', String(y));
-            let field = Blockly.utils.xml.createElement('field');
-            field.setAttribute('name', 'NAME');
-            field.appendChild(document.createTextNode(name));
-            block.appendChild(field);
-            xml.appendChild(block);
-            let newBlockIds = domToWorkspaceNoEvents(xml, workspace);
-            // Close flyout and highlight block
-            Blockly.hideChaff();
-            let newBlock = workspace.getBlockById(newBlockIds[0]) as Blockly.BlockSvg;
-            newBlock.select();
-            // Center on the new block so we know where it is
-            workspace.centerOnBlock(newBlock.id, true);
-        }
-
-        workspace.registerButtonCallback('CREATE_FUNCTION', function (button) {
-            let promptAndCheckWithAlert = (defaultName: string) => {
-                Blockly.dialog.prompt(newFunctionTitle, defaultName, function (newFunc) {
-                    pxt.tickEvent('blocks.makeafunction');
-                    // Merge runs of whitespace.  Strip leading and trailing whitespace.
-                    // Beyond this, all names are legal.
-                    if (newFunc) {
-                        newFunc = newFunc.replace(/[\s\xa0]+/g, ' ').replace(/^ | $/g, '');
-                        if (newFunc == newFunction) {
-                            // Ok, not ALL names are legal...
-                            newFunc = null;
-                        }
-                    }
-                    if (newFunc) {
-                        if (workspace.getVariable(newFunc)) {
-                            Blockly.dialog.alert(Blockly.Msg.VARIABLE_ALREADY_EXISTS.replace('%1',
-                                newFunc.toLowerCase()),
-                                function () {
-                                    promptAndCheckWithAlert(newFunc);  // Recurse
-                                });
-                        }
-                        else if (!Blockly.Procedures.isNameUsed(newFunc, workspace)) {
-                            Blockly.dialog.alert(Blockly.Msg.PROCEDURE_ALREADY_EXISTS.replace('%1',
-                                newFunc.toLowerCase()),
-                                function () {
-                                    promptAndCheckWithAlert(newFunc);  // Recurse
-                                });
-                        }
-                        else {
-                            createFunction(newFunc);
-                        }
-                    }
-                });
-            };
-            promptAndCheckWithAlert('doSomething');
-        });
-        xmlList.push(button as HTMLElement);
-
-        function populateProcedures(procedureList: any, templateName: any) {
-            for (let i = 0; i < procedureList.length; i++) {
-                let name = procedureList[i][0];
-                let args = procedureList[i][1];
-                // <block type="procedures_callnoreturn" gap="16">
-                //   <field name="NAME">name</field>
-                // </block>
-                let block = Blockly.utils.xml.createElement('block');
-                block.setAttribute('type', templateName);
-                block.setAttribute('gap', '16');
-                block.setAttribute('colour', pxt.toolbox.getNamespaceColor('functions'));
-                let field = Blockly.utils.xml.createElement('field')
-                field.textContent = name;
-                field.setAttribute('name', 'NAME');
-                block.appendChild(field);
-                xmlList.push(block as HTMLElement);
-            }
-        }
-
-        let tuple = Blockly.Procedures.allProcedures(workspace);
-        populateProcedures(tuple[0], 'procedures_callnoreturn');
-
-        return xmlList;
-    }
+    Blockly.Procedures.flyoutCategory = flyoutCategory;
 
     // Configure function editor argument icons
     const iconsMap: pxt.Map<string> = {
@@ -554,4 +438,126 @@ function initReturnStatement(b: Blockly.Block) {
 
             }, false))
     }
+}
+
+function flyoutCategory(workspace: Blockly.WorkspaceSvg, useXml: false): Blockly.utils.toolbox.FlyoutItemInfo[];
+function flyoutCategory(workspace: Blockly.WorkspaceSvg, useXml: true): Element[];
+function flyoutCategory(workspace: Blockly.WorkspaceSvg, useXml: boolean): Element[] | Blockly.utils.toolbox.FlyoutItemInfo[] {
+    if (!useXml) return [];
+
+    let xmlList: Element[] = [];
+
+    if (!pxt.appTarget.appTheme.hideFlyoutHeadings) {
+        // Add the Heading label
+        let headingLabel = createFlyoutHeadingLabel(lf("Functions"),
+            pxt.toolbox.getNamespaceColor('functions'),
+            pxt.toolbox.getNamespaceIcon('functions'),
+            'blocklyFlyoutIconfunctions');
+        xmlList.push(headingLabel);
+    }
+
+    const newFunction = lf("Make a Function...");
+    const newFunctionTitle = lf("New function name:");
+
+    // Add the "Make a function" button
+    let button = Blockly.utils.xml.createElement('button');
+    button.setAttribute('text', newFunction);
+    button.setAttribute('callbackKey', 'CREATE_FUNCTION');
+
+    let createFunction = (name: string) => {
+        /**
+         * Create matching definition block.
+         * <xml>
+         *   <block type="procedures_defreturn" x="10" y="20">
+         *     <field name="NAME">test</field>
+         *   </block>
+         * </xml>
+         */
+        let topBlock = workspace.getTopBlocks(true)[0];
+        let x = 10, y = 10;
+        if (topBlock) {
+            let xy = topBlock.getRelativeToSurfaceXY();
+            x = xy.x + (Blockly as any).SNAP_RADIUS * (topBlock.RTL ? -1 : 1);
+            y = xy.y + (Blockly as any).SNAP_RADIUS * 2;
+        }
+        let xml = Blockly.utils.xml.createElement('xml');
+        let block = Blockly.utils.xml.createElement('block');
+        block.setAttribute('type', 'procedures_defnoreturn');
+        block.setAttribute('x', String(x));
+        block.setAttribute('y', String(y));
+        let field = Blockly.utils.xml.createElement('field');
+        field.setAttribute('name', 'NAME');
+        field.appendChild(document.createTextNode(name));
+        block.appendChild(field);
+        xml.appendChild(block);
+        let newBlockIds = domToWorkspaceNoEvents(xml, workspace);
+        // Close flyout and highlight block
+        Blockly.hideChaff();
+        let newBlock = workspace.getBlockById(newBlockIds[0]) as Blockly.BlockSvg;
+        newBlock.select();
+        // Center on the new block so we know where it is
+        workspace.centerOnBlock(newBlock.id, true);
+    }
+
+    workspace.registerButtonCallback('CREATE_FUNCTION', function (button) {
+        let promptAndCheckWithAlert = (defaultName: string) => {
+            Blockly.dialog.prompt(newFunctionTitle, defaultName, function (newFunc) {
+                pxt.tickEvent('blocks.makeafunction');
+                // Merge runs of whitespace.  Strip leading and trailing whitespace.
+                // Beyond this, all names are legal.
+                if (newFunc) {
+                    newFunc = newFunc.replace(/[\s\xa0]+/g, ' ').replace(/^ | $/g, '');
+                    if (newFunc == newFunction) {
+                        // Ok, not ALL names are legal...
+                        newFunc = null;
+                    }
+                }
+                if (newFunc) {
+                    if (workspace.getVariable(newFunc)) {
+                        Blockly.dialog.alert(Blockly.Msg.VARIABLE_ALREADY_EXISTS.replace('%1',
+                            newFunc.toLowerCase()),
+                            function () {
+                                promptAndCheckWithAlert(newFunc);  // Recurse
+                            });
+                    }
+                    else if (!Blockly.Procedures.isNameUsed(newFunc, workspace)) {
+                        Blockly.dialog.alert(Blockly.Msg.PROCEDURE_ALREADY_EXISTS.replace('%1',
+                            newFunc.toLowerCase()),
+                            function () {
+                                promptAndCheckWithAlert(newFunc);  // Recurse
+                            });
+                    }
+                    else {
+                        createFunction(newFunc);
+                    }
+                }
+            });
+        };
+        promptAndCheckWithAlert('doSomething');
+    });
+    xmlList.push(button as HTMLElement);
+
+    function populateProcedures(procedureList: any, templateName: any) {
+        for (let i = 0; i < procedureList.length; i++) {
+            let name = procedureList[i][0];
+            let args = procedureList[i][1];
+            // <block type="procedures_callnoreturn" gap="16">
+            //   <field name="NAME">name</field>
+            // </block>
+            let block = Blockly.utils.xml.createElement('block');
+            block.setAttribute('type', templateName);
+            block.setAttribute('gap', '16');
+            block.setAttribute('colour', pxt.toolbox.getNamespaceColor('functions'));
+            let field = Blockly.utils.xml.createElement('field')
+            field.textContent = name;
+            field.setAttribute('name', 'NAME');
+            block.appendChild(field);
+            xmlList.push(block as HTMLElement);
+        }
+    }
+
+    let tuple = Blockly.Procedures.allProcedures(workspace);
+    populateProcedures(tuple[0], 'procedures_callnoreturn');
+
+    return xmlList;
 }

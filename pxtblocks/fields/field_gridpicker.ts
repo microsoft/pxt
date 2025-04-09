@@ -2,6 +2,7 @@
 
 import * as Blockly from "blockly";
 import { FieldCustom, FieldCustomDropdownOptions, parseColour } from "./field_utils";
+import { FieldBase } from "./field_base";
 
 export interface FieldGridPickerToolTipConfig {
     yOffset?: number;
@@ -417,9 +418,9 @@ export class FieldGridPicker extends Blockly.FieldDropdown implements FieldCusto
     private getAnchorDimensions_() {
         const boundingBox = this.getScaledBBox() as any;
         if (this.sourceBlock_.RTL) {
-            boundingBox.right += Blockly.FieldDropdown.CHECKMARK_OVERHANG;
+            boundingBox.right += FieldBase.CHECKMARK_OVERHANG;
         } else {
-            boundingBox.left -= Blockly.FieldDropdown.CHECKMARK_OVERHANG;
+            boundingBox.left -= FieldBase.CHECKMARK_OVERHANG;
         }
         return boundingBox;
     };

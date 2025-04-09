@@ -107,7 +107,7 @@ export function saveWorkspaceXml(ws: Blockly.Workspace, keepIds?: boolean): stri
 // FieldKind and FieldUserEnum
 export function workspaceToDom(workspace: Blockly.Workspace, keepIds?: boolean): Element {
     const xml = Blockly.Xml.workspaceToDom(workspace, keepIds);
-    const variables = Blockly.Xml.variablesToDom(workspace.getAllVariables());
+    const variables = Blockly.Xml.variablesToDom(workspace.getVariableMap().getAllVariables());
 
     const existingVariables = getDirectChildren(xml, "variables");
     for (const v of existingVariables) {
