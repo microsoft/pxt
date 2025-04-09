@@ -1961,8 +1961,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
 
         function variableIsAssigned(name: string, editor: Blockly.WorkspaceSvg) {
-            const varModel = editor.getVariable(name);
-            const varUses = varModel && editor.getVariableUsesById(varModel.getId());
+            const varModel = editor.getVariableMap().getVariable(name);
+            const varUses = varModel && Blockly.Variables.getVariableUsesById(editor, varModel.getId());
             return varUses && varUses.some(b => b.type == "variables_set" || b.type == "variables_change");
         }
     }

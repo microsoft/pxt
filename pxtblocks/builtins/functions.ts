@@ -513,7 +513,7 @@ function flyoutCategory(workspace: Blockly.WorkspaceSvg, useXml: boolean): Eleme
                     }
                 }
                 if (newFunc) {
-                    if (workspace.getVariable(newFunc)) {
+                    if (workspace.getVariableMap().getVariable(newFunc)) {
                         Blockly.dialog.alert(Blockly.Msg.VARIABLE_ALREADY_EXISTS.replace('%1',
                             newFunc.toLowerCase()),
                             function () {

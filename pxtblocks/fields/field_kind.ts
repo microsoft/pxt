@@ -119,7 +119,7 @@ function createMenuGenerator(opts: pxtc.KindInfo): Blockly.MenuGeneratorFunction
         const sourceBlock = that.getSourceBlock();
 
         if (sourceBlock?.workspace && !sourceBlock.isInFlyout) {
-            const options = sourceBlock.workspace.getVariablesOfType(kindType(opts.name));
+            const options = sourceBlock.workspace.getVariableMap().getVariablesOfType(kindType(opts.name));
             options.forEach(model => {
                 res.push([model.getName(), model.getName()]);
             });
