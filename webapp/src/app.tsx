@@ -80,6 +80,7 @@ import Util = pxt.Util;
 import { HintManager } from "./hinttooltip";
 import { mergeProjectCode, appendTemporaryAssets } from "./mergeProjects";
 import { Tour } from "./components/onboarding/Tour";
+import { NavigateRegionsOverlay } from "./components/NavigateRegionsOverlay";
 import { parseTourStepsAsync } from "./onboarding";
 import { initGitHubDb } from "./idbworkspace";
 import { BlockDefinition, CategoryNameID } from "./toolbox";
@@ -5248,6 +5249,21 @@ export class ProjectView
     }
 
     ///////////////////////////////////////////////////////////
+    ////////////             Navigate regions     /////////////
+    ///////////////////////////////////////////////////////////
+
+    hideNavigateRegions() {
+        this.setState({ navigateRegions: false });
+    }
+
+    showNavigateRegions() {
+        const dialog = Array.from(document.querySelectorAll("[role=dialog]")).find(dialog => (dialog as any).checkVisibility());
+        if (!dialog) {
+            this.setState(state => state.home ? state : { navigateRegions: true })
+        }
+    }
+
+    ///////////////////////////////////////////////////////////
     ////////////             Key map              /////////////
     ///////////////////////////////////////////////////////////
 
@@ -5507,6 +5523,7 @@ export class ProjectView
                 {lightbox ? <sui.Dimmer isOpen={true} active={lightbox} portalClassName={'tutorial'} className={'ui modal'}
                     shouldFocusAfterRender={false} closable={true} onClose={this.hideLightbox} /> : undefined}
                 {this.state.onboarding && <Tour tourSteps={this.state.onboarding} onClose={this.hideOnboarding} />}
+                {accessibleBlocks && this.state.navigateRegions && <NavigateRegionsOverlay parent={this}/>}
                 {this.state.themePickerOpen && <ThemePickerModal themes={this.themeManager.getAllColorThemes()} onThemeClicked={theme => this.setColorThemeById(theme?.id, true)} onClose={this.hideThemePicker} />}
             </div>
         );
