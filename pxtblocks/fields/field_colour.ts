@@ -90,7 +90,7 @@ export class FieldColorNumber extends FieldColour implements FieldCustom {
         return this.value_;
     }
 
-        /**
+    /**
      * Defines whether this field should take up the full block or not.
      *
      * @returns True if this field should take up the full block. False otherwise.
@@ -101,8 +101,8 @@ export class FieldColorNumber extends FieldColour implements FieldCustom {
 
         const constants = this.getConstants();
         return (
-        this.blockIsSimpleReporter() &&
-        Boolean(constants?.FIELD_COLOUR_FULL_BLOCK)
+            this.blockIsSimpleReporter() &&
+            Boolean(constants?.FIELD_COLOUR_FULL_BLOCK)
         );
     }
 
