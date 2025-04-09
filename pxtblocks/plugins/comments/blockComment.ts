@@ -225,6 +225,18 @@ export class CommentIcon extends Blockly.icons.Icon {
         this.setBubbleVisible(this.bubbleVisiblity);
     }
 
+    // TODO: switch our custom comment position serialization
+    // to use setBubbleLocation and getBubbleLocation instead
+    setBubbleLocation(location: Blockly.utils.Coordinate) {
+
+    }
+
+    // TODO: switch our custom comment position serialization
+    // to use setBubbleLocation and getBubbleLocation instead
+    getBubbleLocation(): Blockly.utils.Coordinate | undefined {
+        return undefined
+    }
+
     override onClick(): void {
         super.onClick();
         this.setBubbleVisible(!this.bubbleIsVisible());
