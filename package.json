@@ -61,7 +61,7 @@
     "npm": ">=8.0.0"
   },
   "dependencies": {
-    "@blockly/field-colour": "5.0.5",
+    "@blockly/field-colour": "5.0.12",
     "@blockly/keyboard-navigation": "0.6.5",
     "@blockly/plugin-workspace-search": "9.1.0",
     "@crowdin/crowdin-api-client": "^1.33.0",
@@ -179,6 +179,6 @@
     "update": "gulp update",
     "watch-streamer": "cd docs/static/streamer && tsc -t es6 --watch",
     "prepare": "node ./scripts/npm-prepare.js",
-    "postinstall": "node ./scripts/patchUglifyify.js"
+    "postinstall": "node ./scripts/patchUglifyify.js && node ./scripts/patchBlocklyFieldColour.js"
   }
 }
