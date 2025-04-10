@@ -1,6 +1,5 @@
 /// <reference path="../../localtypings/monaco.d.ts" />
 
-import { MonacoFieldEditor, MonacoFieldEditorDefinition, MonacoFieldEditorHost, TextEdit } from "../../pxteditor";
 import * as compiler from "./compiler";
 import * as pkg from "./package";
 
@@ -11,7 +10,7 @@ interface OwnedRange {
     id: number;
 }
 
-export class ViewZoneEditorHost implements MonacoFieldEditorHost, monaco.editor.IViewZone {
+export class ViewZoneEditorHost implements pxt.editor.MonacoFieldEditorHost, monaco.editor.IViewZone {
     domNode: HTMLDivElement;
     afterLineNumber: number;
     heightInPx = 520;
@@ -26,7 +25,7 @@ export class ViewZoneEditorHost implements MonacoFieldEditorHost, monaco.editor.
 
     suppressMouseDown = false;
 
-    constructor(protected fe: MonacoFieldEditor, protected range: monaco.Range, protected model: monaco.editor.IModel) {
+    constructor(protected fe: pxt.editor.MonacoFieldEditor, protected range: monaco.Range, protected model: monaco.editor.IModel) {
         this.afterLineNumber = range.endLineNumber;
 
         const outer = document.createElement("div");
@@ -52,7 +51,7 @@ export class ViewZoneEditorHost implements MonacoFieldEditorHost, monaco.editor.
         return this.content;
     }
 
-    showAsync(fileType: pxt.editor.FileType, editor: monaco.editor.IStandaloneCodeEditor): Promise<TextEdit> {
+    showAsync(fileType: pxt.editor.FileType, editor: monaco.editor.IStandaloneCodeEditor): Promise<pxt.editor.TextEdit> {
         this.fileType = fileType;
         this.editor = editor;
         return compiler.getBlocksAsync()
@@ -132,10 +131,10 @@ export class ViewZoneEditorHost implements MonacoFieldEditorHost, monaco.editor.
     }
 }
 
-export class ModalEditorHost implements MonacoFieldEditorHost {
+export class ModalEditorHost implements pxt.editor.MonacoFieldEditorHost {
     protected blocks: pxtc.BlocksInfo;
 
-    constructor(protected fe: MonacoFieldEditor, protected range: monaco.Range, protected model: monaco.editor.IModel) {
+    constructor(protected fe: pxt.editor.MonacoFieldEditor, protected range: monaco.Range, protected model: monaco.editor.IModel) {
     }
 
     contentDiv(): HTMLDivElement {
@@ -164,7 +163,7 @@ export class ModalEditorHost implements MonacoFieldEditorHost {
         return this.package().host().readFile(pkg.mainPkg, filename);
     }
 
-    showAsync(fileType: pxt.editor.FileType, editor: monaco.editor.IStandaloneCodeEditor): Promise<TextEdit> {
+    showAsync(fileType: pxt.editor.FileType, editor: monaco.editor.IStandaloneCodeEditor): Promise<pxt.editor.TextEdit> {
         return compiler.getBlocksAsync()
             .then(bi => {
                 this.blocks = bi;
@@ -179,7 +178,7 @@ export class ModalEditorHost implements MonacoFieldEditorHost {
 }
 
 export class FieldEditorManager implements monaco.languages.FoldingRangeProvider {
-    protected fieldEditors: MonacoFieldEditorDefinition[] = [];
+    protected fieldEditors: pxt.editor.MonacoFieldEditorDefinition[] = [];
     protected decorations: pxt.Map<string[]> = {};
     protected liveRanges: OwnedRange[] = [];
     protected fieldEditorsEnabled = true;
@@ -213,7 +212,7 @@ export class FieldEditorManager implements monaco.languages.FoldingRangeProvider
         }
     }
 
-    addFieldEditor(definition: MonacoFieldEditorDefinition) {
+    addFieldEditor(definition: pxt.editor.MonacoFieldEditorDefinition) {
         for (const f of this.fieldEditors) {
             if (f.id === definition.id) return;
         }
