@@ -1,9 +1,10 @@
 /// <reference path="../../../../localtypings/ocv.d.ts" />
 
 
-export const baseConfig: ocv.IFeedbackConfig = {
-    feedbackUiType: ocv.FeedbackUiType.NoSurface,
-    hostPlatform: ocv.FeedbackHostPlatformType.IFrame,
+export const getBaseConfig = (): ocv.IFeedbackConfig => {
+  return {
+    feedbackUiType: "NoSurface",
+    hostPlatform: "IFrame",
     isDisplayed: true,
     isEmailCollectionEnabled: false,
     isFileUploadEnabled: false,
@@ -13,6 +14,7 @@ export const baseConfig: ocv.IFeedbackConfig = {
     isFeedbackForumEnabled: false,
     isMyFeedbackEnabled: false,
     isThankYouPageDisabled: false,
+  }
 }
 
 export const createRatingQuestions = () => {
@@ -47,18 +49,20 @@ export const createRatingQuestions = () => {
 }
 
 
-export const ratingFeedbackConfig: ocv.IFeedbackConfig = {
-    ...baseConfig,
-    initialFeedbackType: ocv.FeedbackType.Unclassified,
+export const getRatingFeedbackConfig = (): ocv.IFeedbackConfig => {
+  return {
+    ...getBaseConfig(),
+    initialFeedbackType: "Unclassified",
     scenarioConfig: {
       isScenarioEnabled: true,
-      scenarioType: ocv.InAppFeedbackScenarioType.Custom,
+      scenarioType: "Custom",
       questionDetails: {
-        questionUiType: ocv.InAppFeedbackQuestionUiType.Rating,
+        questionUiType: "Rating",
         ...createRatingQuestions(),
         "questionUiBehaviour": [
-          ocv.InAppFeedbackQuestionUiBehaviour.CommentNotRequired
+          "CommentNotRequired"
         ]
       }
     }
+  }
 }

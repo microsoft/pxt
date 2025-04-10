@@ -15,6 +15,7 @@ import Cloud = pxt.Cloud;
 import Util = pxt.Util;
 import { Milestones } from "./constants";
 import { sendUpdateFeedbackTheme } from "../../react-common/components/controls/Feedback/FeedbackEventListener";
+import { ThemeManager } from "../../react-common/components/theming/themeManager";
 
 export type Component<S, T> = data.Component<S, T>;
 
@@ -178,6 +179,7 @@ export interface PromptOptions extends ConfirmOptions {
     placeholder?: string;
     onInputChanged?: (newValue?: string) => void;
     onInputValidation?: (newValue?: string) => string; // return error if any
+    forceUpdate?: (forceUpdate: () => void) => void; // pass the forceUpdate function to the caller, for multi-step dialogs
 }
 
 export interface DialogOptions {
@@ -188,7 +190,8 @@ export interface DialogOptions {
     disagreeIcon?: string;
     logos?: string[];
     className?: string;
-    header: string;
+    header?: string;
+    headerFn?: () => string; // dynamic header, for multi-step dialogs
     headerIcon?: string;
     body?: string;
     jsx?: JSX.Element;
@@ -197,15 +200,19 @@ export interface DialogOptions {
     size?: "" | "small" | "fullscreen" | "large" | "mini" | "tiny"; // defaults to "small"
     onLoaded?: (_: HTMLElement) => void;
     buttons?: sui.ModalButton[];
+    buttonsFn?: () => sui.ModalButton[];
     timeout?: number;
     modalContext?: string;
     hasCloseIcon?: boolean;
     helpUrl?: string;
     bigHelpButton?: boolean;
+    bigHelpLabel?: string;
+    bigHelpTitle?: string;
     confirmationText?: string;      // Display a text input the user must type to confirm.
     confirmationCheckbox?: string;  // Display a checkbox the user must check to confirm.
     confirmationGranted?: boolean;
     onClose?: () => void;
+    nonEscapable?: boolean; // if true, the dialog cannot be closed by pressing ESC or clicking outside of it
 }
 
 export function dialogAsync(options: DialogOptions): Promise<void> {
@@ -217,7 +224,7 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
         if (!options.buttons) options.buttons = [];
         options.buttons.push({
             label: options.disagreeLbl || lf("Cancel"),
-            className: (options.disagreeClass || "cancel"),
+            className: (options.disagreeClass || "cancel neutral"),
             icon: options.disagreeIcon || "cancel"
         })
     }
@@ -226,8 +233,8 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
             options.buttons.unshift({
                 className: "dialog-help-large help",
                 urlButton: true,
-                label: lf("Help"),
-                title: lf("Help"),
+                label: options.bigHelpLabel ? options.bigHelpLabel : lf("Help"),
+                title: options.bigHelpTitle ? options.bigHelpTitle : lf("Help"),
                 url: options.helpUrl
             });
         }
@@ -333,7 +340,14 @@ export const ENTER_KEY = 13;
 export const SPACE_KEY = 32;
 
 export function getHighContrastOnce(): boolean {
-    return data.getData<boolean>(auth.HIGHCONTRAST) || false
+    // User preference gets priority over theme setting.
+    if (data.getData<boolean>(auth.HIGHCONTRAST)) {
+        return true;
+    }
+
+    const themeManager = ThemeManager.getInstance(document);
+    const currentTheme = themeManager.getCurrentColorTheme();
+    return themeManager.isHighContrast(currentTheme?.id);
 }
 export function toggleHighContrast() {
     setHighContrast(!getHighContrastOnce())

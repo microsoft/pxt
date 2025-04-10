@@ -1127,6 +1127,7 @@ namespace ts.pxtc.Util {
                 case "xml": return "application/xml";
                 case "m4a": return "audio/m4a";
                 case "mp3": return "audio/mp3";
+                case "wasm": return "application/wasm";
                 default: return "application/octet-stream";
             }
         else return "application/octet-stream";
@@ -1854,6 +1855,43 @@ namespace ts.pxtc.Util {
         const cleanedExpId = experienceId.toLocaleLowerCase();
         const isSupported = supportedExps?.includes(cleanedExpId) ?? false;
         return isSupported;
+    }
+
+    export function ocvEnabled() {
+        return pxt.webConfig?.ocv?.appId && pxt.webConfig?.ocv?.iframeEndpoint;
+    }
+
+    // https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
+    export function bresenhamLine(x0: number, y0: number, x1: number, y1: number, handler: (x: number, y: number) => void) {
+        const dx = x1 - x0;
+        const dy = y1 - y0;
+
+        if (dx === 0) {
+            const startY = dy >= 0 ? y0 : y1;
+            const endY = dy >= 0 ? y1 : y0;
+            for (let y = startY; y <= endY; y++) {
+                handler(x0, y);
+            }
+            return;
+        }
+
+        const xStep = dx > 0 ? 1 : -1;
+        const yStep = dy > 0 ? 1 : -1;
+        const dErr = Math.abs(dy / dx);
+
+        let err = 0;
+        let y = y0;
+        for (let x = x0; xStep > 0 ? x <= x1 : x >= x1; x += xStep) {
+            handler(x, y);
+            err += dErr;
+            while (err >= 0.5) {
+                if (yStep > 0 ? y <= y1 : y >= y1) {
+                    handler(x, y);
+                }
+                y += yStep;
+                err -= 1;
+            }
+        }
     }
 }
 

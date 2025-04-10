@@ -1830,6 +1830,9 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
             if (extraType.label) {
                 targetStrings[`{id:type}${extraType.label}`] = extraType.label;
             }
+            else {
+                targetStrings[`{id:type}${extraType.typeName}`] = extraType.typeName;
+            }
 
             if (extraType.defaultName) {
                 targetStrings[`{id:var}${extraType.defaultName}`] = extraType.defaultName;
@@ -1946,6 +1949,18 @@ ${gcards.map(gcard => `[${gcard.name}](${gcard.url})`).join(',\n')}
                 targetStrings[`{id:hardware-description}${opt.description}`] = opt.description;
         }
     }
+
+    const themeFiles = getThemeFilePaths();
+    for(const themePath of themeFiles) {
+        if (nodeutil.fileExistsSync(themePath)) {
+            const theme = nodeutil.readJson(themePath);
+            const name = theme["name"];
+            if (name) {
+                targetStrings[`{id:color-theme-name}${name}`] = name;
+            }
+        }
+    }
+
     // extract strings from editor
     ["editor", "fieldeditors", "cmds"]
         .filter(d => nodeutil.existsDirSync(d))
@@ -2153,6 +2168,7 @@ function buildReactAppAsync(app: string, parsed: commandParser.ParsedCommand, op
             if (!opts.expandedPxtTarget) {
                 // read pxtarget.json, save into 'pxtTargetBundle' global variable
                 let cfg = readLocalPxTarget();
+                updateColorThemes(cfg);
                 nodeutil.writeFileSync(`${appRoot}/public/blb/target.js`, "// eslint-disable-next-line \n" + targetJsPrefix + JSON.stringify(cfg));
             } else {
                 nodeutil.cp("built/target.js", `${appRoot}/public/blb`);
@@ -2169,6 +2185,7 @@ function buildReactAppAsync(app: string, parsed: commandParser.ParsedCommand, op
 
             nodeutil.cp("targetconfig.json", `${appRoot}/public/blb`);
             nodeutil.cp("node_modules/pxt-core/built/pxtlib.js", `${appRoot}/public/blb`);
+            nodeutil.cp("node_modules/pxt-core/built/web/pxtrcdeps.js", `${appRoot}/public/blb`);
             if (opts.includePxtSim) {
                 nodeutil.cp("node_modules/pxt-core/built/pxtsim.js", `${appRoot}/public/blb`);
                 nodeutil.cp("node_modules/pxt-core/built/web/worker.js", `${appRoot}/public/blb`);
@@ -2282,6 +2299,75 @@ function updateTOC(cfg: pxt.TargetBundle) {
     }
 }
 
+function getThemeFilePaths() {
+    const sharedThemeFiles = fs.existsSync("node_modules/pxt-core/theme/color-themes")
+    ? nodeutil
+          .allFiles("node_modules/pxt-core/theme/color-themes", { maxDepth: 1, includeDirs: false })
+          .filter((f) => /\.json$/i.test(f))
+    : [];
+
+    const targetThemeFiles = fs.existsSync("theme/color-themes")
+        ? nodeutil
+            .allFiles("theme/color-themes", { maxDepth: 1, includeDirs: false })
+            .filter((f) => /\.json$/i.test(f))
+        : [];
+
+    // Target takes precedence, so include those at the end (will overwrite shared themes)
+    return sharedThemeFiles.concat(targetThemeFiles);
+}
+
+function updateColorThemes(cfg: pxt.TargetBundle) {
+    pxt.log("Loading color themes...");
+    const themeFiles = getThemeFilePaths();
+
+    for (const themeFile of themeFiles) {
+        const themeFileDir = path.dirname(themeFile);
+        const fileData = fs.readFileSync(themeFile, "utf8");
+        const themeData = JSON.parse(fileData);
+        const theme: pxt.ColorThemeInfo = {
+            id: themeData.id,
+            name: themeData.name,
+            weight: themeData.weight,
+            monacoBaseTheme: themeData.monacoBaseTheme,
+            colors: themeData.colors
+        };
+
+        for (const overrideFile of themeData.overrideFiles ?? []) {
+            if (!overrideFile) {
+                // Skip empty entries
+                continue;
+            }
+
+            // Strip leading slashes, convert \ to /, and lowercase the path
+            const combinedPath = path.join(themeFileDir, overrideFile);
+            let cssText = fs.readFileSync(combinedPath, "utf8");
+            theme.overrideCss = theme.overrideCss ? `${theme.overrideCss}\n${cssText}` : cssText;
+        }
+
+        if (!cfg.colorThemeMap) {
+            cfg.colorThemeMap = {};
+        }
+
+        if (cfg.colorThemeMap[theme.id]) {
+            // Only overwrite specified fields
+            // This allows target themes to be built off of shared base themes and only specify certain changes.
+            const existingTheme = cfg.colorThemeMap[theme.id];
+            cfg.colorThemeMap[theme.id] = {
+                ...existingTheme,
+                ...theme,
+                colors: {
+                    ...existingTheme.colors,
+                    ...theme.colors
+                }
+            };
+        } else {
+            cfg.colorThemeMap[theme.id] = theme;
+        }
+
+        pxt.log(`Loaded theme ${theme.id}`);
+    }
+}
+
 function rebundleAsync() {
     return buildTargetCoreAsync({ quick: true })
         .then(() => buildSimAsync());
@@ -2355,6 +2441,7 @@ async function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
     let cfg = readLocalPxTarget()
     updateDefaultProjects(cfg);
     updateTOC(cfg);
+    updateColorThemes(cfg);
 
     cfg.bundledpkgs = {}
     pxt.setAppTarget(cfg);
@@ -2579,6 +2666,7 @@ async function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
         delete targetlight.compile.compilerExtension;
     const targetlightjson = nodeutil.stringify(targetlight);
     nodeutil.writeFileSync("built/targetlight.json", targetlightjson)
+    nodeutil.writeFileSync("built/targetlight.js", targetJsPrefix + targetlightjson)
     nodeutil.writeFileSync("built/sim.webmanifest", nodeutil.stringify(webmanifest))
 
     console.log("target.json built.");
@@ -7284,10 +7372,10 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
         name: "buildskillmap",
         aliases: ["skillmap"],
         advanced: true,
-        help: "Serves the skill map webapp",
+        help: "Serves the skillmap webapp",
         flags: {
             serve: {
-                description: "Serve the skill map locally after building (npm start)"
+                description: "Serve the skillmap locally after building (npm start)"
             },
             docs: {
                 description: "Path to local docs folder to copy into skillmap",

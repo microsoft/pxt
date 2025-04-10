@@ -8,14 +8,14 @@
         width: 100%;
         font-weight: bold;
         margin-bottom: 0.1rem;
-        border-bottom: 1px solid var(--pxt-content-foreground);
+        border-bottom: 1px solid var(--pxt-tertiary-background);
         padding: 0.2rem 0.5rem;
     }
 
     .checklist-criteria {
         width: 100%;
         padding: 0.2rem 0.5rem;
-        border-bottom: 1px solid var(--pxt-content-accent);
+        border-bottom: 1px solid var(--pxt-target-stencil1);
 
         &:last-child {
             border-bottom: none;

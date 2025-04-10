@@ -261,6 +261,7 @@ declare namespace pxt {
         stopOnChange?: boolean;
         emptyRunCode?: string; // when non-empty and autoRun is disabled, this code is run upon simulator first start
         hideRestart?: boolean;
+        hideRun?: boolean;
         // moved to theme
         // moved to theme
         // debugger?: boolean;
@@ -427,6 +428,8 @@ declare namespace pxt {
         blockColors?: Map<string>; // block namespace colors, used for build in categories
         blockIcons?: Map<string | number>;
         blocklyColors?: pxt.Map<string>; // Overrides for the styles in the workspace Blockly.Theme.ComponentStyle
+        defaultColorTheme?: string; // default color theme id for the editor
+        highContrastColorTheme?: string; // theme id for high contrast mode
         socialOptions?: SocialOptions; // show social icons in share dialog, options like twitter handle and org handle
         noReloadOnUpdate?: boolean; // do not notify the user or reload the page when a new app cache is downloaded
         appPathNames?: string[]; // Authorized URL paths in embedded apps, all other paths will display a warning banner
@@ -526,9 +529,6 @@ declare namespace pxt {
         timeMachineSnapshotInterval?: number; // An interval in milliseconds at which to take full project snapshots in project history. Defaults to 15 minutes
         adjustBlockContrast?: boolean; // If set to true, all block colors will automatically be adjusted to have a contrast ratio of 4.5 with text
         ipcIdentityProxy?: boolean; // for use with the in game minecraft experience only. If true, proxies all identity API requests through the ipc channel
-        feedbackEnabled?: boolean; // allow feedback to be shown on a target
-        ocvAppId?: number; // the app id needed to attach to the OCV service
-        ocvFrameUrl?: string; // the base url for the OCV service
     }
 
     interface DownloadDialogTheme {
@@ -596,6 +596,7 @@ declare namespace pxt {
         versions: TargetVersions;        // @derived
         apiInfo?: Map<PackageApiInfo>;
         tutorialInfo?: Map<BuiltTutorialInfo>; // hash of tutorial code mapped to prebuilt info for each tutorial
+        colorThemeMap?: Map<ColorThemeInfo>; // Color theme id mapped to color theme info
     }
 
     interface BuiltTutorialInfo {
@@ -609,6 +610,15 @@ declare namespace pxt {
     interface PackageApiInfo {
         sha: string;
         apis: ts.pxtc.ApisInfo;
+    }
+
+    interface ColorThemeInfo {
+        id: string; // Unique identifier
+        name: string; // Human-readable name
+        weight?: number; // Lower weights appear first in theme list, no value = go to end
+        overrideCss?: string; // Special css to apply for the theme
+        monacoBaseTheme?: string; // Theme for monaco editor, see https://code.visualstudio.com/docs/getstarted/themes
+        colors: { [key: string]: string }; // Values for theme variables
     }
 
     interface ServiceWorkerEvent {
@@ -766,6 +776,7 @@ declare namespace ts.pxtc {
         utf8?: boolean;
         switches: CompileSwitches;
         deployDrives?: string; // partial name of drives where the .hex file should be copied
+        fileDeployPaths?: pxt.Map<string>; // Path IDs => path for file deployments
         deployFileMarker?: string;
         shortPointers?: boolean; // set to true for 16 bit pointers
         flashCodeAlign?: number; // defaults to 1k
@@ -788,6 +799,7 @@ declare namespace ts.pxtc {
         debugMode?: boolean; // set dynamically, not in config
         compilerExtension?: string; // JavaScript code to load in compiler
         shimRenames?: pxt.Map<string>;
+        unfetteredInitializers?: boolean; // removes isNumericLiteral check on default argument values
     }
 
     type BlockContentPart = BlockLabel | BlockParameter | BlockImage;
@@ -1115,6 +1127,7 @@ declare namespace ts.pxtc {
 
         /* @internal */
         ignoreFileResolutionErrors?: boolean; // ignores triple-slash directive errors; debug only
+        unfetteredInitializers?: boolean; // removes isNumericLiteral check on default argument values
     }
 
     interface BuiltSimJsInfo {

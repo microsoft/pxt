@@ -229,13 +229,15 @@ namespace pxt {
         appTarget = replaceCdnUrlsInJsonBlob(appTarget);
 
         // patch icons in bundled packages
-        Object.keys(appTarget.bundledpkgs).forEach(pkgid => {
-            const res = appTarget.bundledpkgs[pkgid];
-            // path config before storing
-            const config = JSON.parse(res[pxt.CONFIG_NAME]) as pxt.PackageConfig;
-            if (config.icon) config.icon = pxt.BrowserUtils.patchCdn(config.icon);
-            res[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(config);
-        })
+        if (appTarget.bundledpkgs) {
+            Object.keys(appTarget.bundledpkgs).forEach(pkgid => {
+                const res = appTarget.bundledpkgs[pkgid];
+                // path config before storing
+                const config = JSON.parse(res[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+                if (config.icon) config.icon = pxt.BrowserUtils.patchCdn(config.icon);
+                res[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(config);
+            });
+        }
 
         // patch any pre-configured query url appTheme overrides
         if (typeof window !== 'undefined') {
@@ -337,6 +339,10 @@ namespace pxt {
             })
     }
 
+    export function getActiveHwVariant(): string {
+        return hwVariant
+    }
+
     export interface PxtOptions {
         debug?: boolean;
         light?: boolean; // low resource device
@@ -395,7 +401,12 @@ namespace pxt {
         teachertoolUrl?: string; // "/beta---eval"
         isStatic?: boolean;
         verprefix?: string; // "v1"
-        ocvEnabled?: boolean;
+        ocv?: OcvConfig;
+    }
+
+    export interface OcvConfig {
+        appId: number;
+        iframeEndpoint: string;
     }
 
     export function localWebConfig() {
@@ -420,7 +431,6 @@ namespace pxt {
             simserviceworkerUrl: "/simulatorserviceworker.js",
             simworkerconfigUrl: "/sim/workerConfig.js",
             partsUrl: "/sim/siminstructions.html",
-            ocvEnabled: true,
         }
         return r
     }

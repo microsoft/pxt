@@ -6,8 +6,8 @@
     outline: none;
     border: none;
     vertical-align: middle;
-    color: @buttonTextColorLightBackground;
-    background: @buttonBackgroundColor;
+    color: var(--pxt-neutral-foreground2);
+    background: var(--pxt-neutral-background2);
     font-family: @pageFont;
     margin: 0 0.25rem 0 0;
     padding: 0.8rem 2rem 0.95rem;
@@ -38,89 +38,6 @@
 }
 
 /****************************************************
- *                  Color Variants                   *
- ****************************************************/
-
-.common-button.primary {
-    background: @primaryColor;
-    color: @buttonTextColorDarkBackground;
-    border: 1px solid @primaryColor;
-}
-
-.common-button.secondary {
-    background: @secondaryColor;
-    color: @buttonTextColorDarkBackground;
-    border: 1px solid @secondaryColor;
-}
-
-.common-button.teal {
-    background: @teal;
-    color: @buttonTextColorDarkBackground;
-    border: 1px solid @teal;
-}
-
-.common-button.blue {
-    background: @blue;
-    color: @buttonTextColorDarkBackground;
-    border: 1px solid @blue;
-}
-
-.common-button.orange {
-    background: @orange;
-    color: @buttonTextColorDarkBackground;
-    border: 1px solid @orange;
-}
-
-.common-button.red {
-    background: @red;
-    color: @buttonTextColorDarkBackground;
-    border: 1px solid @red;
-}
-
-.common-button.green {
-    background: @green;
-    color: @buttonTextColorDarkBackground;
-    border: 1px solid @green;
-}
-
-.common-button.gray, .common-button.grey {
-    background: @buttonGrayColor;
-    color: @buttonTextColorLightBackground;
-    border: 1px solid @buttonGrayColor;
-}
-
-.common-button.primary.inverted {
-    background: @buttonTextColorDarkBackground;
-    color: @primaryColor;
-}
-
-.common-button.teal.inverted {
-    background: @buttonTextColorDarkBackground;
-    color: @teal;
-}
-
-.common-button.blue.inverted {
-    background: @buttonTextColorDarkBackground;
-    color: @blue;
-}
-
-.common-button.orange.inverted {
-    background: @buttonTextColorDarkBackground;
-    color: @orange;
-}
-
-.common-button.red.inverted {
-    background: @buttonTextColorDarkBackground;
-    color: @red;
-}
-
-.common-button.green.inverted {
-    background: @buttonTextColorDarkBackground;
-    color: @green;
-}
-
-
-/****************************************************
  *                Disabled Buttons                  *
  ****************************************************/
 
@@ -143,9 +60,9 @@
 .common-button.disabled.green.inverted
  {
     cursor: default;
-    background-color: @buttonBackgroundColorDisabled;
-    color: @buttonTextColorLightBackground;
-    border: @buttonBackgroundColorDisabled;
+    background-color: var(--pxt-neutral-background3);
+    color: var(--pxt-neutral-foreground3);
+    border: var(--pxt-neutral-background3);
 }
 
 .common-button.menu-button.disabled {
@@ -196,7 +113,7 @@
 .common-button.menu-button {
     background: none;
     border: none;
-    color: @buttonMenuTextColor;
+    color: var(--pxt-primary-foreground);
     height: 100%;
     padding: 0em 1rem 0rem;
     margin: 0;
@@ -209,17 +126,17 @@
 }
 
 .common-button.menu-button:hover {
-    background: @buttonMenuBackgroundHoverColor;
+    background: var(--pxt-neutral-alpha10);
 }
 
 .common-button.menu-button:active {
-    background: @buttonMenuBackgroundActiveColor;
+    background: var(--pxt-neutral-alpha20);
 }
 
 .common-button.menu-button.inverted,
 .common-button.menu-button.inverted:hover  {
-    background: @buttonMenuBackgroundColorInverted;
-    color: @buttonMenuTextColorInverted;
+    background: var(--pxt-primary-foreground);
+    color: var(--pxt-primary-background);
 }
 
 .common-button.text-only, .common-button.inverted.text-only {
@@ -240,7 +157,7 @@ a.common-button.menu-button {
     background: none;
     border: none;
     padding: 0;
-    color: @buttonLinkColor;
+    color: var(--pxt-link);
 }
 
 .common-button.link-button:hover {
@@ -260,7 +177,8 @@ a.common-button.menu-button {
 }
 
 .common-button.link-button.kiosk {
-    color: @commonTextColor;
+    background-color: var(--pxt-neutral-background2);
+    color: var(--pxt-neutral-foreground2);
 }
 
 
@@ -337,32 +255,32 @@ a.common-button.menu-button {
 
 .common-button.facebook {
     background: #4267B2;
-    color: @buttonTextColorDarkBackground;
+    color: #FFFFFF;
 }
 
 .common-button.twitter {
     background: #1DA1F2;
-    color: @buttonTextColorDarkBackground;
+    color: #FFFFFF;
 }
 
 .common-button.discourse {
     background: #333333;
-    color: @buttonTextColorDarkBackground;
+    color: #FFFFFF;
 }
 
 .common-button.device-share {
-    background: #333333;
-    color: @buttonTextColorDarkBackground;
+    background: var(--pxt-neutral-foreground2);
+    color: var(--pxt-neutral-background2);
 }
 
 .common-button.whatsapp {
     background: #59CE72;
-    color: @buttonTextColorDarkBackground;
+    color: #FFFFFF;
 }
 
 .common-button.microsoft-teams {
     background: #35258F;
-    color: @buttonTextColorDarkBackground;
+    color: #FFFFFF;
 }
 
 /****************************************************
@@ -372,7 +290,7 @@ a.common-button.menu-button {
 .high-contrast, .hc {
     .common-button {
         color: @highContrastTextColor !important;
-        background: @highContrastBackgroundColor !important;
+        background-color: @highContrastBackgroundColor !important;
         border-color: @highContrastTextColor !important;
 
         &:hover, &:focus {

@@ -24,6 +24,9 @@ export function initFunctions() {
     msg.FUNCTIONS_DEFAULT_STRING_ARG_NAME = lf("text");
     msg.FUNCTIONS_DEFAULT_NUMBER_ARG_NAME = lf("num");
     msg.FUNCTIONS_DEFAULT_CUSTOM_ARG_NAME = lf("arg");
+    msg.FUNCTION_FLYOUT_LABEL = lf("Your Functions");
+    msg.FUNCTIONS_CREATE_CALL_OPTION = lf("Create 'call {0}'", "%1");
+    msg.FUNCTIONS_DEFNORETURN_TITLE = lf("function");
     msg.PROCEDURES_HUE = pxt.toolbox.getNamespaceColor("functions");
     msg.REPORTERS_HUE = pxt.toolbox.getNamespaceColor("variables");
 
@@ -289,7 +292,7 @@ export function initFunctions() {
             let newBlock = workspace.getBlockById(newBlockIds[0]) as Blockly.BlockSvg;
             newBlock.select();
             // Center on the new block so we know where it is
-            workspace.centerOnBlock(newBlock.id);
+            workspace.centerOnBlock(newBlock.id, true);
         }
 
         workspace.registerButtonCallback('CREATE_FUNCTION', function (button) {

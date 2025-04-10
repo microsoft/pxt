@@ -12,6 +12,7 @@ import { setDeepLinks, setTargetConfig } from "./state/actions";
 import { cleanupJoinCode, cleanupShareCode } from "./util";
 import { joinGameAsync, hostGameAsync, visibilityChanged } from "./epics";
 import { useVisibilityChange } from "./hooks";
+import { ThemeManager } from "react-common/components/theming/themeManager";
 
 // eslint-disable-next-line import/no-unassigned-import
 import "./App.css";
@@ -43,6 +44,17 @@ function App() {
             .then(() => setAuthCheckComplete(true))
             .catch(() => setAuthCheckComplete(true));
     }, [setAuthCheckComplete]);
+
+    useEffect(() => {
+        // We don't currently support switching themes in multiplayer, so just load the default.
+        const themeId = pxt.appTarget?.appTheme?.defaultColorTheme;
+        if (themeId) {
+            const themeManager = ThemeManager.getInstance(document);
+            if (themeId !== themeManager.getCurrentColorTheme()?.id) {
+                themeManager.switchColorTheme(themeId);
+            }
+        }
+    });
 
     const parseUrlParams = useCallback(() => {
         let params: URLSearchParams | undefined = undefined;

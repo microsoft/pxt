@@ -340,7 +340,7 @@ _start_${name}:
         vmsource += "\n; The end.\n"
         bin.writeFile(BINARY_ASM, vmsource)
 
-        let res = assemble(opts.target, bin, vmsource)
+        let res = assemble(opts.target, bin, vmsource, cres)
 
         const srcmap = res.thumbFile.getSourceMap()
         const encodedSrcMap = encodeSourceMap(srcmap)

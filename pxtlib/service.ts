@@ -260,6 +260,7 @@ namespace ts.pxtc {
         sourceMap?: SourceInterval[];
         globalNames?: pxt.Map<SymbolInfo>;
         builtVariants?: string[];
+        fileSystem?: pxt.Map<string>;
     }
 
     export interface Breakpoint extends LocationInfo {
@@ -481,7 +482,7 @@ namespace ts.pxtc {
                     combinedProperties: []
                 }
                 ex.attributes.block =
-                    isGet ? U.lf("%{0} %property", paramName) :
+                    isGet ? `%${paramName} %property`:
                         isSet ? U.lf("set %{0} %property to %{1}", paramName, paramValue) :
                             U.lf("change %{0} %property by %{1}", paramName, paramValue)
                 updateBlockDef(ex.attributes)

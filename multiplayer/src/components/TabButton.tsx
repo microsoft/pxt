@@ -22,7 +22,7 @@ export default function Render(props: {
                 }
                 style={{
                     borderColor: props.selected
-                        ? "var(--primary-color)"
+                        ? "var(--pxt-primary-background)"
                         : "transparent",
                 }}
             ></div>

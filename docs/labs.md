@@ -16,8 +16,8 @@ preferably under the MIT License.
 
 A icon-based, simpler editor for K-3 for the micro:bit V2:
 
-- [Editor](https://aka.ms/m9)
-- [GitHub](https://github.com/microsoft/microcode)
+- [Editor](https://microbit-apps.github.io/microcode-classic/docs/manual)
+- [GitHub](https://github.com/microbit-apps/microcode-classic)
 
 ## Maker
 

@@ -1,6 +1,3 @@
 /*******************************
     User Variable Overrides
 *******************************/
-
-@background: @mainMenuBackground;
-@invertedBackground: @mainMenuInvertedBackground;

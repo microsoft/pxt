@@ -61,6 +61,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     showCategories: boolean = true;
     breakpointsByBlock: pxt.Map<number>; // Map block id --> breakpoint ID
     breakpointsSet: number[]; // the IDs of the breakpoints set.
+    currentFlyoutKey: string;
 
     private errorChangesListeners: pxt.Map<(errors: pxtblockly.BlockDiagnostic[]) => void> = {};
     protected intersectionObserver: IntersectionObserver;
@@ -667,6 +668,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.hideFlyout();
             }
 
+            if (ev.type === "var_create") {
+                if (this.currentFlyoutKey === "variables" && this.editor.getFlyout()?.isVisible()) {
+                    // refresh the flyout when a new variable is created
+                    this.showVariablesFlyout();
+                }
+            }
+
             if ((ignoredChanges.indexOf(ev.type) === -1)
                 || this.markIncomplete) {
                 this.changeCallback();
@@ -972,7 +980,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     showFunctionsFlyout() {
-        this.showFlyoutInternal_(pxtblockly.createFunctionsFlyoutCategory(this.editor), "functions");
+        this.showFlyoutInternal_(pxtblockly.createFunctionsFlyoutCategory(this.editor), "functions", true);
     }
 
     getViewState() {
@@ -1173,22 +1181,73 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 if (brk) {
                     const b = this.editor.getBlockById(bid) as Blockly.BlockSvg;
                     b.setWarningText(brk ? brk.exceptionMessage : undefined, pxtblockly.PXT_WARNING_ID);
-                    // ensure highlight is in the screen when a breakpoint info is available
-                    // TODO: make warning mode look good
-                    // b.setHighlightWarning(brk && !!brk.exceptionMessage);
-                    const p = b.getRelativeToSurfaceXY();
-                    const c = b.getHeightWidth();
-                    const s = this.editor.scale;
-                    const m = this.editor.getMetrics();
-                    // don't center if block is still on the screen
-                    const marginx = 4;
-                    const marginy = 4;
-                    if (p.x * s < m.viewLeft + marginx
-                        || (p.x + c.width) * s > m.viewLeft + m.viewWidth - marginx
-                        || p.y * s < m.viewTop + marginy
-                        || (p.y + c.height) * s > m.viewTop + m.viewHeight - marginy) {
-                        // move the block towards the center
-                        this.editor.centerOnBlock(bid);
+
+                    // scroll the workspace so that the block is visible. if the block is too tall or too wide
+                    // to fit in the workspace view, then try to align it with the left/top edge of the block
+                    const xy = b.getRelativeToSurfaceXY();
+                    const scale = this.editor.scale;
+                    const metrics = this.editor.getMetrics();
+
+                    // this margin is in screen pixels
+                    const margin = 20;
+
+                    let scrollX = metrics.viewLeft;
+                    let scrollY = metrics.viewTop;
+
+                    const blockWidth = b.width * scale + margin * 2;
+                    const blockHeight = b.height * scale + margin * 2;
+
+                    // in RTL workspaces, the x coordinate for the block is the right side
+                    const blockLeftEdge = this.editor.RTL ? (xy.x - b.width) * scale - margin : xy.x * scale - margin;
+                    const blockRightEdge = blockLeftEdge + blockWidth;
+
+                    const blockTopEdge = xy.y * scale - margin;
+                    const blockBottomEdge = blockTopEdge + blockHeight;
+
+                    const viewBottom = metrics.viewTop + metrics.viewHeight;
+                    const viewRight = metrics.viewLeft + metrics.viewWidth;
+
+                    if (metrics.viewTop > blockTopEdge) {
+                        scrollY = blockTopEdge;
+                    }
+                    else if (viewBottom < blockBottomEdge) {
+                        if (blockHeight > metrics.viewHeight) {
+                            scrollY = blockTopEdge;
+                        }
+                        else {
+                            scrollY = blockBottomEdge - metrics.viewHeight;
+                        }
+                    }
+
+                    if (this.editor.RTL) {
+                        // for RTL, we want to align to the right edge
+                        if (viewRight < blockRightEdge) {
+                            scrollX = blockRightEdge - metrics.viewWidth;
+                        }
+                        else if (metrics.viewLeft > blockLeftEdge) {
+                            if (blockWidth > metrics.viewWidth) {
+                                scrollX = blockRightEdge - metrics.viewWidth;
+                            }
+                            else {
+                                scrollX = blockLeftEdge;
+                            }
+                        }
+                    }
+                    else if (metrics.viewLeft > blockLeftEdge) {
+                        scrollX = blockLeftEdge;
+                    }
+                    else if (viewRight < blockRightEdge) {
+                        if (blockWidth > metrics.viewWidth) {
+                            scrollX = blockLeftEdge;
+                        }
+                        else {
+                            scrollX = blockRightEdge - metrics.viewWidth;
+                        }
+                    }
+
+                    if (scrollX !== metrics.viewLeft || scrollY !== metrics.scrollTop) {
+                        // scroll coordinates are negative
+                        this.editor.scroll(-scrollX, -scrollY);
                     }
                 }
                 return true;
@@ -1611,7 +1670,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 // Cache blocks xml list for later
                 this.flyoutBlockXmlCache[cacheKey] = this.flyoutXmlList;
             }
-            this.showFlyoutInternal_(this.flyoutXmlList, cachable && cacheKey);
+            this.showFlyoutInternal_(this.flyoutXmlList, cachable && cacheKey, !cachable);
         }
     }
 
@@ -1695,9 +1754,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.showFlyoutInternal_(this.flyoutXmlList);
     }
 
-    private showFlyoutInternal_(xmlList: Element[], flyoutName: string = "default") {
+    private showFlyoutInternal_(xmlList: Element[], flyoutName: string = "default", skipCache = false) {
+        this.currentFlyoutKey = flyoutName;
         const flyout = this.editor.getFlyout() as pxtblockly.VerticalFlyout;
-        flyout.show(xmlList, flyoutName);
+        flyout.show(xmlList, skipCache ? undefined : flyoutName);
         flyout.scrollToStart();
     }
 
@@ -1948,29 +2008,23 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
-    protected pasteCallback = () => {
+    protected pasteCallback = (workspace: Blockly.Workspace, ev: Event) => {
         const data = getCopyData();
         if (!data?.data || !this.editor || !this.canPasteData(data)) return false;
 
-        this.pasteAsync(data);
+        this.pasteAsync(data, ev.type === "pointerdown" ? ev as PointerEvent : undefined);
         return true;
     }
 
-    protected async pasteAsync(data: CopyDataEntry) {
+    protected async pasteAsync(data: CopyDataEntry, ev?: PointerEvent) {
         const copyData = data.data;
         const copyWorkspace = this.editor;
         const copyCoords = copyWorkspace.id === data.workspaceId ? data.coord : undefined;
 
         // this pasting code is adapted from Blockly/core/shortcut_items.ts
         const doPaste = () => {
-            if (!copyCoords) {
-                // If we don't have location data about the original copyable, let the
-                // paster determine position.
-                return !!Blockly.clipboard.paste(copyData, copyWorkspace);
-            }
-
-            const { left, top, width, height } = copyWorkspace
-                .getMetricsManager()
+            const metricsManager = copyWorkspace.getMetricsManager();
+            const { left, top, width, height } = metricsManager
                 .getViewMetrics(true);
             const viewportRect = new Blockly.utils.Rect(
                 top,
@@ -1979,7 +2033,21 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 left + width
             );
 
-            if (viewportRect.contains(copyCoords.x, copyCoords.y)) {
+            if (ev) {
+                // if we have a pointer event, then paste at that location
+                const injectionDivBBox = copyWorkspace.getInjectionDiv().getBoundingClientRect();
+                const pixelViewport = metricsManager.getViewMetrics();
+                const workspaceSvgOffset = metricsManager.getAbsoluteMetrics();
+
+                const offsetX = ((ev.clientX - injectionDivBBox.left - workspaceSvgOffset.left) / pixelViewport.width);
+                const offsetY = ((ev.clientY - injectionDivBBox.top - workspaceSvgOffset.top) / pixelViewport.height);
+
+                const contextMenuCoords = new Blockly.utils.Coordinate(left + offsetX * width, top + offsetY * height);
+
+                return !!Blockly.clipboard.paste(copyData, copyWorkspace, contextMenuCoords);
+            }
+
+            if (copyCoords && viewportRect.contains(copyCoords.x, copyCoords.y)) {
                 // If the original copyable is inside the viewport, let the paster
                 // determine position.
                 return !!Blockly.clipboard.paste(copyData, copyWorkspace);

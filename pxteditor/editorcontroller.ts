@@ -317,6 +317,11 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
                                         }
                                     });
                             }
+                            case "setcolorthemebyid": {
+                                const msg = data as pxt.editor.EditorMessageSetColorThemeRequest;
+                                projectView.setColorThemeById(msg.colorThemeId, !!msg.savePreference);
+                                return Promise.resolve();
+                            }
                         }
                         return Promise.resolve();
                     });

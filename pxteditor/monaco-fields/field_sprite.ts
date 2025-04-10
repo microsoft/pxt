@@ -1,5 +1,5 @@
 import { MonacoReactFieldEditor } from "./field_react";
-import { MonacoFieldEditorDefinition, registerMonacoFieldEditor } from "./monacoFieldEditor";
+import { registerMonacoFieldEditor } from "./monacoFieldEditor";
 
 const fieldEditorId = "image-editor";
 
@@ -76,7 +76,7 @@ function createFakeAsset(bitmap: pxt.sprite.Bitmap): pxt.ProjectImage {
     }
 }
 
-export const spriteEditorDefinition: MonacoFieldEditorDefinition = {
+export const spriteEditorDefinition: pxt.editor.MonacoFieldEditorDefinition = {
     id: fieldEditorId,
     foldMatches: true,
     glyphCssClass: "sprite-editor-glyph sprite-focus-hover",

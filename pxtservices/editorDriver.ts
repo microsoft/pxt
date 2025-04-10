@@ -456,6 +456,17 @@ export class EditorDriver extends IframeDriver {
         );
     }
 
+    async setColorTheme(colorThemeId: string, savePreference: boolean) {
+        await this.sendRequest (
+            {
+                type: "pxteditor",
+                action: "setcolorthemebyid",
+                colorThemeId,
+                savePreference
+            } as pxt.editor.EditorMessageSetColorThemeRequest
+        );
+    }
+
     addEventListener(event: typeof MessageSentEvent, handler: (ev: pxt.editor.EditorMessage) => void): void;
     addEventListener(event: typeof MessageReceivedEvent, handler: (ev: pxt.editor.EditorMessage) => void): void;
     addEventListener(event: "event", handler: (ev: pxt.editor.EditorMessageEventRequest) => void): void;

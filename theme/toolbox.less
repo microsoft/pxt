@@ -4,8 +4,8 @@
 *******************************/
 
 .blocklyToolboxDiv, .monacoToolboxDiv {
-    background: @blocklyToolboxColor !important;
-    color: @blocklyToolboxText;
+    background: var(--pxt-target-background3) !important;
+    color: var(--pxt-target-foreground3);
     overflow-x: visible;
     overflow-y: auto;
     padding-top: 0;
@@ -31,7 +31,8 @@ span.blocklyTreeIcon {
 }
 
 .blocklyToolboxDiv.blocklyToolboxDeleting {
-    background: lighten(@red, 10%) !important;
+    background: var(--pxt-colors-red-background) !important;
+    filter: brightness(1.2) saturate(0.8);
 }
 
 .monacoToolboxDiv.invisible {
@@ -72,11 +73,11 @@ div.blocklyTreeRow {
 }
 
 div.blocklyTreeRow:not(.blocklyTreeSelected):hover {
-    background-color: #e4e4e4;
+    background-color: var(--pxt-target-background3-hover);
 }
 
 div.blocklyTreeSeparator {
-    border-bottom: solid #e5e5e5 1px;
+    border-bottom: solid var(--pxt-target-stencil3) 1px;
     height: 0;
     margin: 5px 0;
 }
@@ -119,11 +120,13 @@ span.blocklyTreeLabel, text.blocklyText {
 *******************************/
 
 .blocklyTreeSelected .blocklyTreeLabel {
-    color: #fff;
+    // Has to contrast with block colors
+    color: var(--pxt-target-background3);
 }
 
 .blocklyTreeSelected .blocklyTreeIcon {
-    color: #fff;
+    // Has to contrast with block colors
+    color: var(--pxt-target-background3);
 }
 
 /*******************************
@@ -134,7 +137,7 @@ span.blocklyTreeLabel, text.blocklyText {
     font-weight: 700;
     font-size: 1.2rem;
     padding: .5rem 1rem;
-    border-bottom: 2px solid darken(desaturate(@editorToolsBackground, 60%), 10%);
+    border-bottom: var(--pxt-target-stencil3);
     user-select: none;
 }
 
@@ -176,7 +179,7 @@ span.blocklyTreeLabel, text.blocklyText {
     height: 80px;
     z-index: @blocklyTrashIconZIndex;
     font-size:5rem;
-    color: @trashIconColor;
+    color: var(--pxt-primary-background);
 }
 
 .flyoutOnly #blocklyTrashIcon {
@@ -264,7 +267,7 @@ div.blocklyTreeIcon span {
 }
 
 .blocklyTreeRow:not(.blocklyTreeSelected):focus {
-    background-color: #e4e4e4;
+    background-color: var(--pxt-target-background3-hover);
 }
 
 /*******************************
@@ -276,14 +279,14 @@ div.blocklyTreeIcon span {
     }
 
     div.blocklyTreeRow.blocklyTreeSelected .blocklyTreeIcon {
-        color: #fff;
+        color: var(--pxt-target-background3);
     }
 }
 
 .invertedToolbox .blocklyTreeRoot {
     div.blocklyTreeRow {
         background-color: var(--block-meta-color);
-        color: #fff;
+        color: var(--pxt-primary-foreground);
     }
 
     div.blocklyTreeRow.blocklyTreeSelected {
@@ -292,7 +295,7 @@ div.blocklyTreeIcon span {
 
     div.blocklyTreeRow:hover {
         background-color: var(--block-faded-color);
-        color: #fff;
+        color: var(--pxt-primary-foreground);
     }
 }
 
@@ -307,7 +310,7 @@ div.blocklyTreeIcon span {
 
     div.blocklyTreeRow.blocklyTreeSelected {
         background-color: var(--block-meta-color);
-        color: #fff;
+        color: var(--pxt-primary-foreground);
     }
 }
 
