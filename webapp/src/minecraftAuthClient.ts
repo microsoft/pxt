@@ -1,4 +1,5 @@
-import { AuthClient } from "./auth";
+import { AuthClient, OFFLINE } from "./auth";
+import * as data from "./data";
 
 interface IPCRenderer {
     on(event: "responseFromApp", handler: (event: any, message: string) => void): void;
@@ -114,7 +115,16 @@ export class MinecraftAuthClient extends AuthClient {
 
     async apiAsync<T = any>(url: string, data?: any, method?: string, authToken?: string): Promise<pxt.auth.ApiResult<T>> {
         try {
-            return this.apiAsyncCore(url, data, method, authToken);
+            const result = await this.apiAsyncCore(url, data, method, authToken);
+
+            const offline = result?.statusCode === 503;
+
+            if (pxt.auth.cachedAuthOffline !== offline) {
+                pxt.auth.cachedAuthOffline = offline;
+                data.invalidate(OFFLINE);
+            }
+
+            return result;
         }
         catch (e) {
             return {

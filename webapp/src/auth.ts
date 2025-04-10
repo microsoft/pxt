@@ -10,8 +10,10 @@ import { MinecraftAuthClient } from "./minecraftAuthClient";
 const MODULE = "auth";
 const FIELD_USER_PROFILE = "profile";
 const FIELD_LOGGED_IN = "logged-in";
+const FIELD_OFFLINE = "offline";
 export const USER_PROFILE = `${MODULE}:${FIELD_USER_PROFILE}`;
 export const LOGGED_IN = `${MODULE}:${FIELD_LOGGED_IN}`;
+export const OFFLINE = `${MODULE}:${FIELD_OFFLINE}`;
 
 const USER_PREF_MODULE = "user-pref";
 const FIELD_USER_PREFERENCES = "preferences";
@@ -99,6 +101,7 @@ export class AuthClient extends pxt.auth.AuthClient {
         switch (field) {
             case FIELD_USER_PROFILE: return hasToken ? { ...state?.profile } : null;
             case FIELD_LOGGED_IN: return hasToken && state?.profile != null;
+            case FIELD_OFFLINE: return pxt.auth.cachedAuthOffline;
         }
         return null;
     }
@@ -182,6 +185,10 @@ export function hasIdentity(): boolean {
 
 export function loggedIn(): boolean {
     return data.getData<boolean>(LOGGED_IN);
+}
+
+export function isOffline(): boolean {
+    return data.getData<boolean>(OFFLINE);
 }
 
 export function userProfile(): pxt.auth.UserProfile {

@@ -104,6 +104,7 @@ namespace pxt.auth {
     // Last known auth token state. This is provided as a convenience for legacy methods that cannot be made async.
     // Preference hasAuthTokenAsync() over taking a dependency on this cached value.
     export let cachedHasAuthToken = false;
+    export let cachedAuthOffline = false;
 
     async function setLocalStorageValueAsync(key: string, value: string | undefined): Promise<void> {
         if (!!value)

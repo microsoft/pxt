@@ -168,7 +168,7 @@ export class CloudTempMetadata {
         const h = workspace.getHeader(this.headerId);
         if (!h || !h.cloudUserId)
             return undefined;
-        if (!auth.loggedIn())
+        if (!auth.loggedIn() || auth.isOffline())
             return pxt.cloud.cloudStatus["offline"];
         if (this._syncStartTime > 0)
             return pxt.cloud.cloudStatus["syncing"];

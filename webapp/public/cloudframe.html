@@ -36,6 +36,7 @@
     </style>
     <script>
         var projects = [];
+        var offline = false;
         restoreFromLocalStore();
 
         function sendMessage(msg) {
@@ -69,6 +70,23 @@
             console.log(msg)
 
             if (msg.action !== "cloudproxy") return;
+
+            if (offline) {
+                sendMessage({
+                    type: "pxteditor",
+                    action: "cloudproxy",
+                    operation: msg.operation,
+                    id: msg.id,
+                    success: false,
+                    resp: {
+                        resp: undefined,
+                        statusCode: 503,
+                        success: false,
+                        err: "offline"
+                    }
+                });
+                return;
+            }
 
             if (msg.operation === "user") {
                 appendToLog("GET USER");
@@ -234,12 +252,33 @@
                 projects.push(parsed);
                 saveToLocalStore();
             });
+
+            document.getElementById("deleteprojects").addEventListener("click", () => {
+                projects = [];
+                saveToLocalStore();
+            });
+
+            var toggle = document.getElementById("toggleoffline");
+            toggle.addEventListener("click", () => {
+                offline = !offline;
+
+                if (offline) {
+                    toggle.textContent = "Go online"
+                }
+                else {
+                    toggle.textContent = "Go offline"
+                }
+            });
         })
 
     </script>
 </head>
 <body>
-    <button id="addproject">Add cloud project</button>
+    <div style="display: flex;">
+        <button id="addproject">Add cloud project</button>
+        <button id="deleteprojects">Delete cloud projects</button>
+        <button id="toggleoffline">Go offline</button>
+    </div>
     <div id="logsouter">
         <pre id="logs" class="ui"></pre>
     </div>
