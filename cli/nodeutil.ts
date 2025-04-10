@@ -189,12 +189,10 @@ export async function getCurrentBranchNameAsync(): Promise<string> {
 }
 
 export async function getGitHubTokenAsync(): Promise<string> {
-    const input = Buffer.from("protocol=https\nhost=github.com\n\n", "utf8");
-
     const outputBuf = await spawnWithPipeAsync({
         cmd: "git",
         args: ["credential", "fill"],
-        input: input.toString(),
+        input: "protocol=https\nhost=github.com\n\n",
         silent: true
     });
 
