@@ -70,6 +70,10 @@ async function listAsync(hdrs?: Header[]): Promise<Header[]> {
                 header.cloudVersion = proj.version;
                 return header;
             });
+
+            if (!hdrs) {
+
+            }
             pxt.tickEvent(`identity.cloudApi.list.success`, { count: headers.length });
             resolve(headers);
         } else {
@@ -421,8 +425,9 @@ async function syncAsyncInternal(opts: SyncAsyncOptions): Promise<pxt.workspace.
 
         async function syncOneUp(local: Header): Promise<void> {
             const projShorthand = shortName(local);
+            let cloudCurrent = local.cloudCurrent && (!fullSync || remoteHeaders.some(h => h.id === local.id))
             try {
-                if (!local.cloudCurrent) {
+                if (!cloudCurrent) {
                     if (local.isDeleted) {
                         // Deleted local project, push to cloud
                         const res = await toCloud(local, null);
