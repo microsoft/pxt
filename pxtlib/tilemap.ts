@@ -154,6 +154,12 @@ namespace pxt {
                 const existing = this.lookupByID(id);
 
                 if (!assetEquals(existing, newValue)) {
+                    if (!validateAsset(newValue) && validateAsset(existing)) {
+                        pxt.warn("Refusing to overwrite asset with invalid version");
+                        pxt.tickEvent("assets.invalidAssetOverwrite", { assetType: newValue.type });
+                        return existing;
+                    }
+
                     this.removeByID(id);
                     asset = this.add(newValue);
                     this.notifyListener(newValue.internalID);
@@ -1948,6 +1954,69 @@ namespace pxt {
         return getShortIDCore(asset.type, asset.id);
     }
 
+    export function validateAsset(asset: pxt.Asset) {
+        if (!asset) return false;
+
+        switch (asset.type) {
+            case AssetType.Image:
+            case AssetType.Tile:
+                return validateImageAsset(asset as ProjectImage | Tile);
+            case AssetType.Tilemap:
+                return validateTilemap(asset as ProjectTilemap);
+            case AssetType.Animation:
+                return validateAnimation(asset as Animation)
+            case AssetType.Song:
+                return validateSong(asset as Song);
+        }
+    }
+
+    function validateImageAsset(asset: ProjectImage | Tile) {
+        if (!asset.bitmap) return false;
+
+        return validateBitmap(sprite.Bitmap.fromData(asset.bitmap));
+    }
+
+    function validateTilemap(tilemap: ProjectTilemap) {
+        if (
+            !tilemap.data ||
+            !tilemap.data.tilemap ||
+            !tilemap.data.tileset ||
+            !tilemap.data.tileset.tileWidth ||
+            !tilemap.data.tileset.tiles?.length ||
+            !tilemap.data.layers
+        ) {
+            return false;
+        }
+
+        return validateBitmap(sprite.Bitmap.fromData(tilemap.data.layers)) &&
+            validateBitmap(tilemap.data.tilemap);
+    }
+
+    function validateAnimation(animation: Animation) {
+        if (!animation.frames?.length || animation.interval <= 0) {
+            return false;
+        }
+
+        return !animation.frames.some(frame => !validateBitmap(sprite.Bitmap.fromData(frame)));
+    }
+
+    function validateBitmap(bitmap: sprite.Bitmap) {
+        return bitmap.width > 0 &&
+            bitmap.height > 0 &&
+            !Number.isNaN(bitmap.x0) &&
+            !Number.isNaN(bitmap.y0) &&
+            bitmap.data().data.length === bitmap.dataLength();
+    }
+
+    function validateSong(song: Song) {
+        return song.song &&
+            song.song.ticksPerBeat > 0 &&
+            song.song.beatsPerMeasure > 0 &&
+            song.song.measures > 0 &&
+            song.song.beatsPerMinute > 0 &&
+            !!song.song.tracks;
+    }
+
     function getShortIDCore(assetType: pxt.AssetType, id: string, allowNoPrefix = false) {
         let prefix: string;
         switch (assetType) {
@@ -2060,12 +2129,6 @@ namespace pxt {
                 tags: jres.tags
             }
         }
-    }
-
-
-    function set16Bit(buf: Uint8ClampedArray, offset: number, value: number) {
-        buf[offset] = value & 0xff;
-        buf[offset + 1] = (value >> 8) & 0xff;
     }
 
     function read16Bit(buf: Uint8ClampedArray, offset: number) {
