@@ -14,6 +14,7 @@ import * as os from 'os';
 import * as path from 'path';
 import * as child_process from 'child_process';
 import { promisify } from "util";
+import chalk from 'chalk';
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
@@ -30,15 +31,6 @@ import * as gitfs from './gitfs';
 import * as crowdin from './crowdin';
 import * as youtube from './youtube';
 import { SUB_WEBAPPS } from './subwebapp';
-
-const Reset = "\x1b[0m";
-const Bright = "\x1b[1m";
-const FgRed = "\x1b[31m";
-const FgGreen = "\x1b[32m";
-const FgYellow = "\x1b[33m";
-const FgBlue = "\x1b[34m";
-const FgMagenta = "\x1b[35m";
-const FgCyan = "\x1b[36m";
 
 const rimraf: (f: string, opts: any, cb: (err: Error, res: any) => void) => void = require('rimraf');
 
@@ -644,6 +636,7 @@ async function bumpAsync(parsed?: commandParser.ParsedCommand) {
     let pr = parsed && parsed.flags["pr"];
     let bumpType = parsed && parsed.flags["version"] as string;
     if (!bumpType) bumpType = "patch";
+    if (bumpType.startsWith("v")) bumpType = bumpType = bumpType.slice(1);
 
     let currBranchName = "";
     let token = "";
@@ -659,14 +652,14 @@ async function bumpAsync(parsed?: commandParser.ParsedCommand) {
         ({ owner, repo } = await nodeutil.getGitHubOwnerAndRepoAsync());
         branchProtected = await nodeutil.isBranchProtectedAsync(token, owner, repo, currBranchName);
         if (branchProtected) {
-            console.log(`${FgYellow}Branch ${currBranchName} is protected; creating a pull request instead of pushing directly.${Reset}`);
+            console.log(chalk.yellow(`Branch ${currBranchName} is protected; creating a pull request instead of pushing directly.`));
         }
     } catch (e) {
-        console.warn(`${FgYellow}Unable to determine branch protection status.${Reset}`, e.message);
+        console.warn(chalk.yellow("Unable to determine branch protection status."), e.message);
     }
 
     if (fs.existsSync(pxt.CONFIG_NAME)) {
-        if (upload) throw U.userError("upload only supported on targets");
+        if (upload) U.userError("upload only supported on targets");
 
         if (pr || branchProtected) {
             const newBranchName = `${user}/pxt-bump-${nodeutil.timestamp()}`;
@@ -686,7 +679,7 @@ async function bumpAsync(parsed?: commandParser.ParsedCommand) {
                     repo,
                 }))
                 .then((prUrl) => nodeutil.switchBranchAsync(currBranchName).then(() => prUrl))
-                .then((prUrl) => console.log(`${FgGreen}PR created: ${prUrl}${Reset}`))
+                .then((prUrl) => console.log(`${chalk.green('PR created:')} ${chalk.green.underline(prUrl)}`))
         } else {
             return Promise.resolve()
                 .then(() => nodeutil.runGitAsync("pull"))
@@ -715,7 +708,7 @@ async function bumpAsync(parsed?: commandParser.ParsedCommand) {
                     repo,
                 }))
                 .then((prUrl) => nodeutil.switchBranchAsync(currBranchName).then(() => prUrl))
-                .then((prUrl) => console.log(`${FgGreen}PR created: ${prUrl}${Reset}`))
+                .then((prUrl) => console.log(`${chalk.green('PR created:')} ${chalk.green.underline(prUrl)}`))
         } else {
             return Promise.resolve()
                 .then(() => nodeutil.runGitAsync("pull"))
@@ -726,7 +719,7 @@ async function bumpAsync(parsed?: commandParser.ParsedCommand) {
                 .then(() => upload ? uploadTaggedTargetAsync() : Promise.resolve())
         }
     else {
-        throw U.userError("Couldn't find package or target JSON file; nothing to bump")
+        U.userError("Couldn't find package or target JSON file; nothing to bump")
     }
 }
 
@@ -978,7 +971,7 @@ async function uploadToGitRepoAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) 
                 if (cfg.indexOf("url = " + repoUrl) > 0) {
                     return gitAsync(["pull", "--depth=3"])
                 } else {
-                    throw U.userError(trgPath + " already exists; please remove it")
+                    U.userError(trgPath + " already exists; please remove it")
                 }
             } else {
                 return nodeutil.spawnAsync({
@@ -4317,7 +4310,7 @@ function testDirAsync(parsed: commandParser.ParsedCommand) {
         } else {
             let start = Date.now()
             if (currBase != ti.base) {
-                throw U.userError("Base directory: " + ti.base + " not found.")
+                U.userError("Base directory: " + ti.base + " not found.")
             } else {
                 let tsf = findTestFile()
                 let files = mainPkg.config.files
@@ -7084,7 +7077,7 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
                 description: "Which part of the version to bump, or a complete version number to assign. Defaults to 'patch'",
                 argument: "version",
                 type: "string",
-                possibleValues: ["patch", "minor", "major", /^\d+\.\d+\.\d+$/]
+                possibleValues: ["patch", "minor", "major", /^v?\d+\.\d+\.\d+$/]
             },
         }
     }, bumpAsync);

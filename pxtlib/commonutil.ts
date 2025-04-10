@@ -239,7 +239,7 @@ namespace ts.pxtc.Util {
             d.getFullYear(), d.getMonth() + 1, d.getDate(), d.getHours(), d.getMinutes(), d.getSeconds())
     }
 
-    export function userError(msg: string): Error {
+    export function userError(msg: string): never {
         let e = new Error(msg);
         (<any>e).isUserError = true;
         throw e

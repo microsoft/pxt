@@ -177,14 +177,14 @@ export function needsGitCleanAsync() {
 export async function getDefaultBranchAsync(): Promise<string> {
     const b = await gitInfoAsync(["symbolic-ref", "--short", "refs/remotes/origin/HEAD"], undefined, true);
     if (!b)
-        throw Util.userError("no git remote branch found");
+        Util.userError("no git remote branch found");
     return b.replace(/^origin\//, "");
 }
 
 export async function getCurrentBranchNameAsync(): Promise<string> {
     const b = await gitInfoAsync(["rev-parse", "--abbrev-ref", "HEAD"], undefined, true);
     if (!b)
-        throw Util.userError("no git local branch found");
+        Util.userError("no git local branch found");
     return b;
 }
 
@@ -209,7 +209,7 @@ export async function getGitHubTokenAsync(): Promise<string> {
     if (creds.password) {
         return creds.password;
     } else {
-        throw Util.userError("No GitHub credentials found via git credential helper.");
+        Util.userError("No GitHub credentials found via git credential helper.");
     }
 }
 
@@ -223,7 +223,7 @@ export async function getGitHubUserAsync(token: string): Promise<string> {
     });
 
     if (res.statusCode !== 200) {
-        throw Util.userError(`Failed to get GitHub username: ${res.statusCode} ${res.text}`);
+        Util.userError(`Failed to get GitHub username: ${res.statusCode} ${res.text}`);
     }
 
     const data = await res.json;
@@ -233,11 +233,11 @@ export async function getGitHubUserAsync(token: string): Promise<string> {
 export async function getGitHubOwnerAndRepoAsync(): Promise<{ owner: string; repo: string }> {
     const remoteUrl = await gitInfoAsync(["config", "--get", "remote.origin.url"], undefined, true);
     if (!remoteUrl) {
-        throw Util.userError("No remote origin URL found");
+        Util.userError("No remote origin URL found");
     }
     const match = remoteUrl.match(/github\.com[:\/](.+?)\/(.+?)(\.git)?$/);
     if (!match) {
-        throw Util.userError("Invalid remote origin URL: " + remoteUrl);
+        Util.userError("Invalid remote origin URL: " + remoteUrl);
     }
     const owner = match[1];
     const repo = match[2];
@@ -348,7 +348,7 @@ export async function createPullRequestAsync(opts: {
     });
 
     if (res.statusCode !== 201) {
-        throw Util.userError(`Failed to create pull request: ${res.statusCode} ${res.text}`);
+        Util.userError(`Failed to create pull request: ${res.statusCode} ${res.text}`);
     }
 
     const data = await res.json;
@@ -371,7 +371,7 @@ export async function isBranchProtectedAsync(
     });
 
     if (res.statusCode !== 200) {
-        throw Util.userError(`Failed to get branch info: ${res.statusCode} ${res.text}`);
+        Util.userError(`Failed to get branch info: ${res.statusCode} ${res.text}`);
     }
 
     const data = await res.json;
