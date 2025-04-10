@@ -636,7 +636,7 @@ async function bumpAsync(parsed?: commandParser.ParsedCommand) {
     let pr = parsed && parsed.flags["pr"];
     let bumpType = parsed && parsed.flags["version"] as string;
     if (!bumpType) bumpType = "patch";
-    if (bumpType.startsWith("v")) bumpType = bumpType = bumpType.slice(1);
+    if (bumpType.startsWith("v")) bumpType = bumpType.slice(1);
 
     let currBranchName = "";
     let token = "";
