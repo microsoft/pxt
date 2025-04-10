@@ -14,7 +14,7 @@ import * as os from 'os';
 import * as path from 'path';
 import * as child_process from 'child_process';
 import { promisify } from "util";
-import chalk from 'chalk';
+const chalk = require('chalk');
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
