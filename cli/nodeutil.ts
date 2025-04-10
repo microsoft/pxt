@@ -73,7 +73,7 @@ export function spawnWithPipeAsync(opts: SpawnOptions) {
     if (opts.pipe === undefined) opts.pipe = true
     let info = opts.cmd + " " + opts.args.join(" ")
     if (opts.cwd && opts.cwd != ".") info = "cd " + opts.cwd + "; " + info
-    console.log("[run] " + info)
+    //console.log("[run] " + info) // uncomment for debugging, but it can potentially leak secrets so do not check in
     return new Promise<Buffer>((resolve, reject) => {
         let ch = child_process.spawn(opts.cmd, opts.args, {
             cwd: opts.cwd,
