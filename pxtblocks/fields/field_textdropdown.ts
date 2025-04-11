@@ -95,7 +95,13 @@ export class BaseFieldTextDropdown extends Blockly.FieldTextInput {
         const options = this.getOptions(false);
         this.selectedMenuItem = null;
         for (let i = 0; i < options.length; i++) {
-            const [label, value] = options[i];
+            const option = options[i];
+            if (option === Blockly.FieldDropdown.SEPARATOR) {
+                // menu.addChild(new Blockly.MenuSeparator);
+                continue;
+            }
+
+            const [label, value] = option;
             const content = (() => {
                 if (typeof label === 'object') {
                     // Convert ImageProperties to an HTMLImageElement.

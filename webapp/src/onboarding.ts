@@ -10,14 +10,14 @@ function getTargetMap(target: string): querySelector {
             targetQuery: "#boardview",
         },
         "toolbox": {
-            targetQuery: ".blocklyToolboxDiv",
+            targetQuery: ".blocklyToolbox",
         },
         "monaco toolbox": {
             targetQuery: ".monacoToolboxDiv",
         },
         "workspace": {
             targetQuery: "#blocksEditor", // includes the toolbox
-            sansQuery: ".blocklyToolboxDiv",
+            sansQuery: ".blocklyToolbox",
             sansLocation: pxt.tour.BubbleLocation.Left
         },
         "monaco workspace": {

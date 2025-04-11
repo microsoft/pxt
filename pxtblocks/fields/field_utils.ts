@@ -219,7 +219,7 @@ function deleteTilesetTileIfExists(ws: Blockly.Workspace, tile: pxt.sprite.legac
     const existing = ws.getVariablesOfType(pxt.sprite.BLOCKLY_TILESET_TYPE);
 
     for (const model of existing) {
-        if (parseInt(model.name.substr(0, model.name.indexOf(";"))) === tile.projectId) {
+        if (parseInt(model.getName().substr(0, model.getName().indexOf(";"))) === tile.projectId) {
             ws.deleteVariableById(model.getId());
             break;
         }
@@ -242,7 +242,7 @@ export function getAllBlocksWithTilesets(ws: Blockly.Workspace): FieldEditorRefe
 }
 
 export function needsTilemapUpgrade(ws: Blockly.Workspace) {
-    const allTiles = ws.getVariablesOfType(pxt.sprite.BLOCKLY_TILESET_TYPE).map(model => pxt.sprite.legacy.blocklyVariableToTile(model.name));
+    const allTiles = ws.getVariablesOfType(pxt.sprite.BLOCKLY_TILESET_TYPE).map(model => pxt.sprite.legacy.blocklyVariableToTile(model.getName()));
     return !!allTiles.length;
 }
 

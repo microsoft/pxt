@@ -138,7 +138,7 @@ export function findLegalName(name: string, ws: Blockly.Workspace, block?: Commo
 function namesInUse(ws: Blockly.Workspace, exceptBlock?: Blockly.Block, exceptFuncId?: string) {
     const usedNames: StringMap<boolean> = {};
     ws.getAllVariables().forEach(function (v) {
-        usedNames[v.name] = true;
+        usedNames[v.getName()] = true;
     });
     ws.getAllBlocks(false).forEach(function (b) {
         const block = b as CommonFunctionBlock;

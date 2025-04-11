@@ -20,11 +20,13 @@ export class FieldTsExpression extends Blockly.FieldTextInput implements FieldCu
         if (this.sourceBlock_.isEditable()) {
             pxt.BrowserUtils.addClass(group, 'blocklyEditableText');
             pxt.BrowserUtils.removeClass(group, 'blocklyGreyExpressionBlockText');
-            (this.fieldGroup_ as any).style.cursor = this.CURSOR;
+            // https://github.com/google/blockly/pull/8648
+            // (this.fieldGroup_ as any).style.cursor = this.CURSOR;
         } else {
             pxt.BrowserUtils.addClass(group, 'blocklyGreyExpressionBlockText');
             pxt.BrowserUtils.removeClass(group, 'blocklyEditableText');
-            (this.fieldGroup_ as any).style.cursor = '';
+            // https://github.com/google/blockly/pull/8648
+            // (this.fieldGroup_ as any).style.cursor = '';
         }
     }
 

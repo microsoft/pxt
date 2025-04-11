@@ -1,6 +1,7 @@
 /// <reference path="../../built/pxtlib.d.ts" />
 
 import * as Blockly from "blockly";
+import { IVariableState } from "blockly";
 import { prompt } from "../external";
 import { FieldDropdown } from "./field_dropdown";
 
@@ -59,8 +60,8 @@ function createMenuGenerator(opts: pxtc.EnumInfo): () => [string, string][] {
             const options = this.sourceBlock_.workspace.getVariablesOfType(opts.name);
             options.forEach(model => {
                 // The format of the name is 10mem where "10" is the value and "mem" is the enum member
-                const withoutValue = model.name.replace(/^\d+/, "")
-                res.push([withoutValue, model.name]);
+                const withoutValue = model.getName().replace(/^\d+/, "")
+                res.push([withoutValue, model.getName()]);
             });
         } else {
             // Can't create variables from within the flyout, so we just have to fake it
@@ -108,13 +109,13 @@ function promptAndCreateEnum(ws: Blockly.Workspace, opts: pxtc.EnumInfo, message
     }, { placeholder: opts.promptHint });
 }
 
-function parseName(model: Blockly.VariableModel): [string, number] {
-    const match = /^(\d+)([^0-9].*)$/.exec(model.name);
+function parseName(model: Blockly.IVariableModel<IVariableState>): [string, number] {
+    const match = /^(\d+)([^0-9].*)$/.exec(model.getName());
 
     if (match) {
         return [match[2], parseInt(match[1])];
     }
-    return [model.name, -1];
+    return [model.getName(), -1];
 }
 
 function getMembersForEnum(ws: Blockly.Workspace, enumName: string): [string, number][] {
@@ -167,7 +168,7 @@ function getVariableNameForMember(ws: Blockly.Workspace, enumName: string, membe
         for (let i = 0; i < existing.length; i++) {
             const [name,] = parseName(existing[i]);
             if (name === memberName) {
-                return existing[i].name;
+                return existing[i].getName();
             }
         }
     }

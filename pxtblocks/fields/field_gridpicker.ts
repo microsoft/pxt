@@ -132,7 +132,7 @@ export class FieldGridPicker extends Blockly.FieldDropdown implements FieldCusto
             const value = (options[i] as any)[1]; // Language-neutral value.
 
             const menuItem = document.createElement('div');
-            menuItem.className = 'goog-menuitem goog-option';
+            menuItem.className = 'blocklyMenuItem goog-option';
             menuItem.setAttribute('id', ':' + i); // For aria-activedescendant
             menuItem.setAttribute('role', 'menuitem');
             menuItem.style.userSelect = 'none';
@@ -140,7 +140,7 @@ export class FieldGridPicker extends Blockly.FieldDropdown implements FieldCusto
             menuItem.setAttribute('data-value', value);
 
             const menuItemContent = document.createElement('div');
-            menuItemContent.setAttribute('class', 'goog-menuitem-content');
+            menuItemContent.setAttribute('class', 'blocklyMenuItemContent');
             menuItemContent.title = content['alt'] || content;
             menuItemContent.setAttribute('data-value', value);
 
@@ -206,7 +206,7 @@ export class FieldGridPicker extends Blockly.FieldDropdown implements FieldCusto
                         this.gridTooltip_.style.display = title ? '' : 'none';
                     }
 
-                    pxt.BrowserUtils.addClass(menuItem, 'goog-menuitem-highlight');
+                    pxt.BrowserUtils.addClass(menuItem, 'blocklyMenuItemHighlight');
                     tableContainer.setAttribute('aria-activedescendant', menuItem.id);
                 });
 
@@ -217,7 +217,7 @@ export class FieldGridPicker extends Blockly.FieldDropdown implements FieldCusto
                         this.gridTooltip_.style.display = 'none';
                     }
 
-                    pxt.BrowserUtils.removeClass(menuItem, 'goog-menuitem-highlight');
+                    pxt.BrowserUtils.removeClass(menuItem, 'blocklyMenuItemHighlight');
                     tableContainer.removeAttribute('aria-activedescendant');
                 });
             } else {
@@ -231,12 +231,12 @@ export class FieldGridPicker extends Blockly.FieldDropdown implements FieldCusto
                             this.buttonClick_(e);
                         } else {
                             // Clear all current hovers.
-                            const currentHovers = tableContainer.getElementsByClassName('goog-menuitem-highlight');
+                            const currentHovers = tableContainer.getElementsByClassName('blocklyMenuItemHighlight');
                             for (let i = 0; i < currentHovers.length; i++) {
-                                pxt.BrowserUtils.removeClass(currentHovers[i] as HTMLElement, 'goog-menuitem-highlight');
+                                pxt.BrowserUtils.removeClass(currentHovers[i] as HTMLElement, 'blocklyMenuItemHighlight');
                             }
                             // Set hover on current item
-                            pxt.BrowserUtils.addClass(menuItem, 'goog-menuitem-highlight');
+                            pxt.BrowserUtils.addClass(menuItem, 'blocklyMenuItemHighlight');
 
                             this.updateSelectedBar_(content, value);
                         }
@@ -322,12 +322,12 @@ export class FieldGridPicker extends Blockly.FieldDropdown implements FieldCusto
                 let rowLength = menuItemsDom[row].childNodes.length
                 for (let col = 0; col < rowLength; ++col) {
                     const menuItem = menuItemsDom[row].childNodes[col] as HTMLElement
-                    pxt.BrowserUtils.removeClass(menuItem, "goog-menuitem-highlight");
+                    pxt.BrowserUtils.removeClass(menuItem, "blocklyMenuItemHighlight");
                     pxt.BrowserUtils.removeClass(menuItem, "goog-option-selected");
                 }
             }
             let firstItem = menuItemsDom[0].childNodes[0] as HTMLElement;
-            firstItem.className += " goog-menuitem-highlight"
+            firstItem.className += " blocklyMenuItemHighlight"
         }
     }
 
@@ -416,10 +416,11 @@ export class FieldGridPicker extends Blockly.FieldDropdown implements FieldCusto
 
     private getAnchorDimensions_() {
         const boundingBox = this.getScaledBBox() as any;
+        const checkmarkOverhang = 25;
         if (this.sourceBlock_.RTL) {
-            boundingBox.right += Blockly.FieldDropdown.CHECKMARK_OVERHANG;
+            boundingBox.right += checkmarkOverhang;
         } else {
-            boundingBox.left -= Blockly.FieldDropdown.CHECKMARK_OVERHANG;
+            boundingBox.left -= checkmarkOverhang;
         }
         return boundingBox;
     };

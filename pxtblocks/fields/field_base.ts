@@ -75,10 +75,11 @@ export abstract class FieldBase<U> extends Blockly.Field implements FieldCustom 
 
     protected getAnchorDimensions() {
         const boundingBox = this.getScaledBBox() as any;
+        const checkmarkOverhang = 25;
         if (this.sourceBlock_.RTL) {
-            boundingBox.right += Blockly.FieldDropdown.CHECKMARK_OVERHANG;
+            boundingBox.right += checkmarkOverhang;
         } else {
-            boundingBox.left -= Blockly.FieldDropdown.CHECKMARK_OVERHANG;
+            boundingBox.left -= checkmarkOverhang;
         }
         return boundingBox;
     };

@@ -96,7 +96,7 @@ const variableReporterMixin = {
             for (const variable of variablesList) {
                 const option = {
                     enabled: !this.workspace.options.readOnly,
-                    text: variable.name,
+                    text: variable.getName(),
                     callback: () => {
                         let variableField = this.getField('VAR') as Blockly.FieldVariable;
                         if (!variableField) {

@@ -21,7 +21,13 @@ export function showEditorMixin(this: Blockly.FieldDropdown, e?: MouseEvent) {
     }
 
     for (let i = 0; i < options.length; i++) {
-        const [label, value] = options[i];
+        const option = options[i];
+        if (option === Blockly.FieldDropdown.SEPARATOR) {
+          //menu.addChild(new Blockly.MenuSeparator);
+          continue;
+        }
+
+        const [label, value] = option;
 
         if (value === "SEPARATOR") {
             const menuItem = new HorizontalRuleMenuItem("");

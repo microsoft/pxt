@@ -164,7 +164,7 @@ export function all(): Experiment[] {
         {
             id: "accessibleBlocks",
             name: lf("Accessible Blocks"),
-            description: lf("Use the WASD keys to move and modify blocks."),
+            description: lf("Use the arrow keys to move and modify blocks."),
             feedbackUrl: "https://github.com/microsoft/pxt/issues/6850"
         },
         {

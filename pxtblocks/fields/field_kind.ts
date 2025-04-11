@@ -4,6 +4,7 @@ import * as Blockly from "blockly";
 import { getAllFields } from "./field_utils";
 import { prompt } from "../external";
 import { FieldDropdown } from "./field_dropdown";
+import { IVariableState } from "blockly";
 
 export class FieldKind extends FieldDropdown {
     constructor(private opts: pxtc.KindInfo) {
@@ -22,8 +23,8 @@ export class FieldKind extends FieldDropdown {
         }
         else if (value === "RENAME") {
             const ws = this.sourceBlock_.workspace;
-            const toRename = ws.getVariable(this.value_, kindType(this.opts.name))
-            const oldName = toRename.name;
+            const toRename = ws.getVariableMap().getVariable(this.value_, kindType(this.opts.name))
+            const oldName = toRename.getName();
 
             if (this.opts.initialMembers.indexOf(oldName) !== -1) {
                 Blockly.dialog.alert(lf("The built-in {0} '{1}' cannot be renamed. Try creating a new kind instead!", this.opts.memberName, oldName));
@@ -48,7 +49,7 @@ export class FieldKind extends FieldDropdown {
         else if (value === "DELETE") {
             const ws = this.sourceBlock_.workspace;
             const toDelete = ws.getVariable(this.value_, kindType(this.opts.name));
-            const varName = toDelete.name;
+            const varName = toDelete.getName();
 
             if (this.opts.initialMembers.indexOf(varName) !== -1) {
                 Blockly.dialog.alert(lf("The built-in {0} '{1}' cannot be deleted.", this.opts.memberName, varName));
@@ -121,7 +122,7 @@ function createMenuGenerator(opts: pxtc.KindInfo): Blockly.MenuGeneratorFunction
         if (sourceBlock?.workspace && !sourceBlock.isInFlyout) {
             const options = sourceBlock.workspace.getVariablesOfType(kindType(opts.name));
             options.forEach(model => {
-                res.push([model.name, model.name]);
+                res.push([model.getName(), model.getName()]);
             });
         } else {
             // Can't create variables from within the flyout, so we just have to fake it
@@ -194,8 +195,7 @@ function promptAndCreateKind(ws: Blockly.Workspace, opts: pxtc.KindInfo, message
 }
 
 interface RenameOptions extends pxtc.KindInfo {
-    toRename: Blockly.VariableModel;
-}
+    toRename: Blockly.IVariableModel<IVariableState>;}
 
 function promptAndRenameKind(ws: Blockly.Workspace, opts: RenameOptions, message: string, cb: (newValue: string) => void) {
     const responseHandler = (response: string) => {
@@ -210,7 +210,7 @@ function promptAndRenameKind(ws: Blockly.Workspace, opts: RenameOptions, message
 function getExistingKindMembers(ws: Blockly.Workspace, kindName: string): string[] {
     const existing = ws.getVariablesOfType(kindType(kindName));
     if (existing && existing.length) {
-        return existing.map(m => m.name);
+        return existing.map(m => m.getName());
     }
     else {
         return [];

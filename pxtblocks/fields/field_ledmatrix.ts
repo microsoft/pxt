@@ -352,6 +352,8 @@ export class FieldMatrix extends Blockly.Field implements FieldCustom {
             // Clear event listeners and selection used for keyboard navigation.
             this.removeKeyboardFocusHandlers();
             this.clearSelection();
+            // This enables keyboard navigation in the Blockly workspace if not focused already.
+            (this.sourceBlock_.workspace as Blockly.WorkspaceSvg).markFocused();
         }, false));
     }
 
