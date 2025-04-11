@@ -7,6 +7,7 @@ export class MonacoSongEditor extends MonacoReactFieldEditor<pxt.Song> {
     protected isPython: boolean;
     protected isAsset: boolean;
     protected text: string;
+    protected editing: pxt.Asset;
 
     protected textToValue(text: string): pxt.Song {
         this.isPython = text.indexOf("`") === -1
@@ -14,12 +15,13 @@ export class MonacoSongEditor extends MonacoReactFieldEditor<pxt.Song> {
 
         const match = pxt.parseAssetTSReference(text);
         if (match) {
-            const { type, name: matchedName } = match;
+            const { name: matchedName } = match;
             const name = matchedName.trim();
             const project = pxt.react.getTilemapProject();
             this.isAsset = true;
             const asset = project.lookupAssetByName(pxt.AssetType.Song, name);
             if (asset) {
+                this.editing = asset;
                 return asset;
             }
             else {
@@ -28,6 +30,8 @@ export class MonacoSongEditor extends MonacoReactFieldEditor<pxt.Song> {
                 if (name && !project.isNameTaken(pxt.AssetType.Song, name) && pxt.validateAssetName(name)) {
                     newAsset.meta.displayName = name;
                 }
+
+                this.editing = newAsset;
 
                 return newAsset;
             }
@@ -39,18 +43,24 @@ export class MonacoSongEditor extends MonacoReactFieldEditor<pxt.Song> {
             const contents = hexLiteralMatch[1].trim();
 
             if (contents) {
-                return createFakeAsset(pxt.assets.music.decodeSongFromHex(contents));
+                this.editing = createFakeAsset(pxt.assets.music.decodeSongFromHex(contents));
+            }
+            else {
+                this.editing = createFakeAsset(pxt.assets.music.getEmptySong(2));
             }
 
-            return createFakeAsset(pxt.assets.music.getEmptySong(2));
+            return this.editing;
         }
 
         return undefined; // never
     }
 
     protected resultToText(result: pxt.Song): string {
+        const project = pxt.react.getTilemapProject();
+        project.pushUndo();
+
+        result = pxt.patchTemporaryAsset(this.editing, result, project) as pxt.Song;
         if (result.meta?.displayName) {
-            const project = pxt.react.getTilemapProject();
             if (this.isAsset || project.lookupAsset(result.type, result.id)) {
                 result = project.updateAsset(result)
             } else {

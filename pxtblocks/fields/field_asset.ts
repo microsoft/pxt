@@ -264,7 +264,7 @@ export abstract class FieldAssetEditor<U extends FieldAssetEditorOptions, V exte
     }
 
     protected onFieldEditorHide(fv: pxt.react.FieldEditorView<pxt.Asset>) {
-        const result = fv.getResult();
+        let result = fv.getResult();
         const project = pxt.react.getTilemapProject();
 
         if (this.asset.type === pxt.AssetType.Song) {
@@ -275,15 +275,10 @@ export abstract class FieldAssetEditor<U extends FieldAssetEditorOptions, V exte
             const old = this.getValue();
             if (pxt.assetEquals(this.asset, result)) return;
 
-            const oldId = isTemporaryAsset(this.asset) ? null : this.asset.id;
-            let newId = isTemporaryAsset(result) ? null : result.id;
+            result = pxt.patchTemporaryAsset(this.asset, result, project);
 
-            if (!oldId && newId === this.sourceBlock_.id) {
-                // The temporary assets we create just use the block id as the id; give it something
-                // a little nicer
-                result.id = project.generateNewID(result.type);
-                newId = result.id;
-            }
+            const oldId = isTemporaryAsset(this.asset) ? null : this.asset.id;
+            const newId = isTemporaryAsset(result) ? null : result.id;
 
             this.pendingEdit = true;
 
@@ -551,6 +546,10 @@ export abstract class FieldAssetEditor<U extends FieldAssetEditorOptions, V exte
 
     protected isFullscreen() {
         return true;
+    }
+
+    protected temporaryAssetId() {
+        return this.sourceBlock_.id + "_" + this.name;
     }
 }
 

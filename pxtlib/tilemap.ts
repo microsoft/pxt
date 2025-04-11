@@ -1709,6 +1709,10 @@ namespace pxt {
 
     export function cloneAsset<U extends Asset>(asset: U): U {
         asset.meta = Object.assign({}, asset.meta);
+        if (asset.meta.temporaryInfo) {
+            asset.meta.temporaryInfo = Object.assign({}, asset.meta.temporaryInfo);
+        }
+
         switch (asset.type) {
             case AssetType.Tile:
             case AssetType.Image:
@@ -2086,5 +2090,22 @@ namespace pxt {
             case AssetType.Tilemap: return snapshot.tilemaps;
             case AssetType.Song: return snapshot.songs;
         }
+    }
+
+    export function patchTemporaryAsset(oldValue: pxt.Asset, newValue: pxt.Asset, project: TilemapProject) {
+        if (!oldValue || assetEquals(oldValue, newValue)) return newValue;
+
+        newValue = cloneAsset(newValue);
+        const wasTemporary = !oldValue.meta.displayName;
+        const isTemporary = !newValue.meta.displayName;
+
+        // if we went from being temporary to no longer being temporary,
+        // make sure we replace the junk id with a new value
+        if (wasTemporary && !isTemporary) {
+            newValue.id = project.generateNewID(newValue.type);
+            newValue.internalID = project.getNewInternalId();
+        }
+
+        return newValue;
     }
 }
