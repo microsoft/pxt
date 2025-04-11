@@ -7,7 +7,7 @@ export class ConnectionPreviewer extends Blockly.InsertionMarkerPreviewer {
     protected draggedConnectionIndicator: SVGElement;
     protected staticConnection: Blockly.RenderedConnection;
 
-    previewReplacement(draggedConn: Blockly.RenderedConnection, staticConn: Blockly.RenderedConnection, replacedBlock: Blockly.BlockSvg): void {
+    previewReplacement(draggedConn: Blockly.RenderedConnection, staticConn: Blockly.RenderedConnection, replacedBlock: Blockly.BlockSvg, mouseDriven: boolean = false): void {
         super.previewReplacement(draggedConn, staticConn, replacedBlock);
         if (!this.connectionLine) {
             this.connectionLine = Blockly.utils.dom.createSvgElement(
@@ -44,9 +44,9 @@ export class ConnectionPreviewer extends Blockly.InsertionMarkerPreviewer {
 
         const len = Math.sqrt(dx * dx + dy * dy);
         // When the indicators are overlapping, we hide the line
-        if (len < radius * 2 + 1) {
+        if (len < radius * 2 + 1 || !mouseDriven) {
             Blockly.utils.dom.addClass(this.connectionLine, "hidden");
-        } else {
+        } else if (mouseDriven) {
             Blockly.utils.dom.removeClass(this.connectionLine, "hidden");
             this.connectionLine.setAttribute("x1", String(offset.x + Math.cos(atan) * radius));
             this.connectionLine.setAttribute("y1", String(offset.y + Math.sin(atan) * radius));
