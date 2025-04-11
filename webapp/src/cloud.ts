@@ -76,7 +76,11 @@ async function listAsync(hdrs?: Header[]): Promise<Header[]> {
             }
             pxt.tickEvent(`identity.cloudApi.list.success`, { count: headers.length });
             resolve(headers);
-        } else {
+        }
+        else if (result.statusCode === 404) {
+            resolve([]);
+        }
+        else {
             pxt.tickEvent(`identity.cloudApi.list.failed`);
             reject(result.err);
         }

@@ -124,9 +124,12 @@ export class MinecraftAuthClient extends AuthClient {
                 data.invalidate(OFFLINE);
             }
 
+            console.log(JSON.stringify(result));
+
             return result;
         }
         catch (e) {
+            console.log(`ERROR`, e)
             return {
                 success: false,
                 statusCode: 500,
@@ -154,6 +157,8 @@ export class MinecraftAuthClient extends AuthClient {
                 method = "GET";
             }
         }
+
+        console.log(`API: ${url} ${data} ${method}`)
 
         if (path === "/api/user") {
             if (method === "DELETE") {
