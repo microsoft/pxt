@@ -150,6 +150,7 @@ export function splitSvg(svg: SVGSVGElement, ws: Blockly.WorkspaceSvg, emPixels:
         // clear transform, remove other group
         parentSvg.removeAttribute("transform");
         otherSvg.parentNode.removeChild(otherSvg);
+        const ariaLabel = `${svgclone.querySelector('g text').textContent.trim()} block`;
         // patch size
         blockSvg.setAttribute("transform", `translate(${translate.x}, ${translate.y})`)
         const width = (size.width / emPixels) + "em";
@@ -159,6 +160,7 @@ export function splitSvg(svg: SVGSVGElement, ws: Blockly.WorkspaceSvg, emPixels:
         svgclone.style.height = height;
         svgclone.setAttribute("width", width);
         svgclone.setAttribute("height", height);
+        svgclone.setAttribute("aria-label", ariaLabel)
         div.appendChild(svgclone);
     }
 
