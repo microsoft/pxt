@@ -1,6 +1,6 @@
 .criteria-table {
     width: 100%;
-    border: 1px solid var(--pxt-content-accent);
+    border: 1px solid var(--pxt-target-background1);
     border-radius: 0.5rem;
     overflow: hidden;
     margin-bottom: 1rem;
@@ -13,7 +13,7 @@
         display: flex;
         align-items: center;
         width: 100%;
-        border-bottom: 1px solid var(--pxt-content-accent);
+        border-bottom: 1px solid var(--pxt-target-background1);
     }
 
     .criteria-display-cell {
@@ -23,7 +23,7 @@
         justify-content: center;
         text-align: left;
         padding: 0.5rem 0.5rem 0.5rem 0.7rem;
-        border-right: 1px solid var(--pxt-content-accent);
+        border-right: 1px solid var(--pxt-target-background1);
     }
 
     .criteria-action-menu-cell {
@@ -52,7 +52,7 @@
         .delete-criteria-button {
             width: 100%;
             height: 100%;
-            background-color: var(--pxt-content-background);
+            background-color: var(--pxt-target-background1);
             opacity: 0; // Need opacity-based hiding (rather than display) for transitions
             transition: background-color 0.1s ease, opacity 0.1s ease;
             color: var(--black);
@@ -61,7 +61,7 @@
             border-radius: 0;
 
             &:hover {
-                background-color: var(--pxt-content-accent);
+                background-color: var(--pxt-target-background1-hover);
             }
 
             &:focus {
@@ -71,7 +71,7 @@
 
         &:hover,
         &:focus {
-            background-color: var(--pxt-content-background);
+            background-color: var(--pxt-target-background1);
 
             .delete-criteria-button {
                 opacity: 1;

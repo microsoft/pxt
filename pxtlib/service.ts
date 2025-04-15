@@ -260,6 +260,7 @@ namespace ts.pxtc {
         sourceMap?: SourceInterval[];
         globalNames?: pxt.Map<SymbolInfo>;
         builtVariants?: string[];
+        fileSystem?: pxt.Map<string>;
     }
 
     export interface Breakpoint extends LocationInfo {

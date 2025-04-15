@@ -235,6 +235,7 @@ function updatestrings() {
         "pxtpy",
         "pxtsim",
         "webapp/src",
+        "react-common"
     ], true);
 }
 

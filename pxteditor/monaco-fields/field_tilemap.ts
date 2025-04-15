@@ -1,11 +1,12 @@
 import { MonacoReactFieldEditor } from "./field_react";
-import { MonacoFieldEditorDefinition, registerMonacoFieldEditor } from "./monacoFieldEditor";
+import { registerMonacoFieldEditor } from "./monacoFieldEditor";
 
 const fieldEditorId = "tilemap-editor";
 
 export class MonacoTilemapEditor extends MonacoReactFieldEditor<pxt.ProjectTilemap> {
     protected isTilemapLiteral: boolean;
     protected tilemapLiteral: string;
+    protected editing: pxt.Asset;
 
     protected textToValue(text: string): pxt.ProjectTilemap {
         const tm = this.readTilemap(text);
@@ -13,6 +14,7 @@ export class MonacoTilemapEditor extends MonacoReactFieldEditor<pxt.ProjectTilem
         const project = pxt.react.getTilemapProject();
         pxt.sprite.addMissingTilemapTilesAndReferences(project, tm);
 
+        this.editing = tm;
         return tm;
     }
 
@@ -31,7 +33,7 @@ export class MonacoTilemapEditor extends MonacoReactFieldEditor<pxt.ProjectTilem
                     // If the user is still typing, they might try to open the editor on an incomplete tilemap
                 }
                 return null;
-                }
+            }
         }
 
         this.isTilemapLiteral = true;
@@ -71,7 +73,7 @@ export class MonacoTilemapEditor extends MonacoReactFieldEditor<pxt.ProjectTilem
     protected resultToText(asset: pxt.ProjectTilemap): string {
         const project = pxt.react.getTilemapProject();
         project.pushUndo();
-
+        asset = pxt.patchTemporaryAsset(this.editing, asset, project) as pxt.ProjectTilemap;
         pxt.sprite.updateTilemapReferencesFromResult(project, asset);
 
         if (this.isTilemapLiteral) {
@@ -139,7 +141,7 @@ function createFakeAsset(data: pxt.sprite.TilemapData): pxt.ProjectTilemap {
     }
 }
 
-export const tilemapEditorDefinition: MonacoFieldEditorDefinition = {
+export const tilemapEditorDefinition: pxt.editor.MonacoFieldEditorDefinition = {
     id: fieldEditorId,
     foldMatches: true,
     alwaysBuildOnClose: true,

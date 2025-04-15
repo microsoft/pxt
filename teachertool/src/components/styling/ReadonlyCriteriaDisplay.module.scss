@@ -16,13 +16,13 @@
         .param-segment {
             display: inline-block;
             border-radius: 0.5rem;
-            border: 1px solid var(--pxt-page-foreground);
+            border: 1px solid var(--pxt-neutral-foreground1);
             padding: 0.2rem 0.5rem;
             margin-right: 0.3rem;
         }
     }
 
     .criteria-description {
-        color: var(--pxt-page-foreground-light);
+        color: var(--pxt-neutral-alpha80);
     }
 }

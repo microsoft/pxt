@@ -1181,22 +1181,73 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 if (brk) {
                     const b = this.editor.getBlockById(bid) as Blockly.BlockSvg;
                     b.setWarningText(brk ? brk.exceptionMessage : undefined, pxtblockly.PXT_WARNING_ID);
-                    // ensure highlight is in the screen when a breakpoint info is available
-                    // TODO: make warning mode look good
-                    // b.setHighlightWarning(brk && !!brk.exceptionMessage);
-                    const p = b.getRelativeToSurfaceXY();
-                    const c = b.getHeightWidth();
-                    const s = this.editor.scale;
-                    const m = this.editor.getMetrics();
-                    // don't center if block is still on the screen
-                    const marginx = 4;
-                    const marginy = 4;
-                    if (p.x * s < m.viewLeft + marginx
-                        || (p.x + c.width) * s > m.viewLeft + m.viewWidth - marginx
-                        || p.y * s < m.viewTop + marginy
-                        || (p.y + c.height) * s > m.viewTop + m.viewHeight - marginy) {
-                        // move the block towards the center
-                        this.editor.centerOnBlock(bid);
+
+                    // scroll the workspace so that the block is visible. if the block is too tall or too wide
+                    // to fit in the workspace view, then try to align it with the left/top edge of the block
+                    const xy = b.getRelativeToSurfaceXY();
+                    const scale = this.editor.scale;
+                    const metrics = this.editor.getMetrics();
+
+                    // this margin is in screen pixels
+                    const margin = 20;
+
+                    let scrollX = metrics.viewLeft;
+                    let scrollY = metrics.viewTop;
+
+                    const blockWidth = b.width * scale + margin * 2;
+                    const blockHeight = b.height * scale + margin * 2;
+
+                    // in RTL workspaces, the x coordinate for the block is the right side
+                    const blockLeftEdge = this.editor.RTL ? (xy.x - b.width) * scale - margin : xy.x * scale - margin;
+                    const blockRightEdge = blockLeftEdge + blockWidth;
+
+                    const blockTopEdge = xy.y * scale - margin;
+                    const blockBottomEdge = blockTopEdge + blockHeight;
+
+                    const viewBottom = metrics.viewTop + metrics.viewHeight;
+                    const viewRight = metrics.viewLeft + metrics.viewWidth;
+
+                    if (metrics.viewTop > blockTopEdge) {
+                        scrollY = blockTopEdge;
+                    }
+                    else if (viewBottom < blockBottomEdge) {
+                        if (blockHeight > metrics.viewHeight) {
+                            scrollY = blockTopEdge;
+                        }
+                        else {
+                            scrollY = blockBottomEdge - metrics.viewHeight;
+                        }
+                    }
+
+                    if (this.editor.RTL) {
+                        // for RTL, we want to align to the right edge
+                        if (viewRight < blockRightEdge) {
+                            scrollX = blockRightEdge - metrics.viewWidth;
+                        }
+                        else if (metrics.viewLeft > blockLeftEdge) {
+                            if (blockWidth > metrics.viewWidth) {
+                                scrollX = blockRightEdge - metrics.viewWidth;
+                            }
+                            else {
+                                scrollX = blockLeftEdge;
+                            }
+                        }
+                    }
+                    else if (metrics.viewLeft > blockLeftEdge) {
+                        scrollX = blockLeftEdge;
+                    }
+                    else if (viewRight < blockRightEdge) {
+                        if (blockWidth > metrics.viewWidth) {
+                            scrollX = blockLeftEdge;
+                        }
+                        else {
+                            scrollX = blockRightEdge - metrics.viewWidth;
+                        }
+                    }
+
+                    if (scrollX !== metrics.viewLeft || scrollY !== metrics.scrollTop) {
+                        // scroll coordinates are negative
+                        this.editor.scroll(-scrollX, -scrollY);
                     }
                 }
                 return true;

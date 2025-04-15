@@ -261,6 +261,7 @@ declare namespace pxt {
         stopOnChange?: boolean;
         emptyRunCode?: string; // when non-empty and autoRun is disabled, this code is run upon simulator first start
         hideRestart?: boolean;
+        hideRun?: boolean;
         // moved to theme
         // moved to theme
         // debugger?: boolean;
@@ -774,6 +775,7 @@ declare namespace ts.pxtc {
         utf8?: boolean;
         switches: CompileSwitches;
         deployDrives?: string; // partial name of drives where the .hex file should be copied
+        fileDeployPaths?: pxt.Map<string>; // Path IDs => path for file deployments
         deployFileMarker?: string;
         shortPointers?: boolean; // set to true for 16 bit pointers
         flashCodeAlign?: number; // defaults to 1k
@@ -796,6 +798,7 @@ declare namespace ts.pxtc {
         debugMode?: boolean; // set dynamically, not in config
         compilerExtension?: string; // JavaScript code to load in compiler
         shimRenames?: pxt.Map<string>;
+        unfetteredInitializers?: boolean; // removes isNumericLiteral check on default argument values
     }
 
     type BlockContentPart = BlockLabel | BlockParameter | BlockImage;
@@ -1123,6 +1126,7 @@ declare namespace ts.pxtc {
 
         /* @internal */
         ignoreFileResolutionErrors?: boolean; // ignores triple-slash directive errors; debug only
+        unfetteredInitializers?: boolean; // removes isNumericLiteral check on default argument values
     }
 
     interface BuiltSimJsInfo {

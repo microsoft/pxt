@@ -244,7 +244,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
 
         return <div id="simulator" className="simulator" ref={this.handleSimRef}>
             {!hasSimulator && <div id="boardview" className="headless-sim" role="region" aria-label={lf("Simulator")} tabIndex={-1} />}
-            <div id="editorSidebar" className={editorSidebarClassName} style={!this.props.tutorialSimSidebar ? { height: editorSidebarHeight } : undefined}>
+            {hasSimulator && <div id="editorSidebar" className={editorSidebarClassName} style={!this.props.tutorialSimSidebar ? { height: editorSidebarHeight } : undefined}>
                 <div className={simContainerClassName}>
                     <div className={`ui items simPanel ${showHostMultiplayerGameButton ? "multiplayer-preview" : ""}`} ref={this.handleSimPanelRef}>
                         <div id="boardview" className="ui vertical editorFloat" role="region" aria-label={lf("Simulator")} tabIndex={inHome ? -1 : 0} />
@@ -271,7 +271,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                         {showFullscreenButton && <div id="miniSimOverlay" role="button" title={lf("Open in fullscreen")} onClick={this.handleSimOverlayClick} />}
                     </div>
                 </div>
-            </div>
+            </div>}
             {tutorialOptions &&
                 <div className={this.props.tutorialSimSidebar ? "topInstructionsWrapper" : ""}>
                     {this.state.shouldResize ?
