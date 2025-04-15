@@ -2,6 +2,7 @@ import * as core from "./core";
 import * as data from "./data";
 import * as cloud from "./cloud";
 import * as workspace from "./workspace";
+import { MinecraftAuthClient } from "./minecraftAuthClient";
 
 /**
  * Virtual API keys
@@ -9,8 +10,10 @@ import * as workspace from "./workspace";
 const MODULE = "auth";
 const FIELD_USER_PROFILE = "profile";
 const FIELD_LOGGED_IN = "logged-in";
+const FIELD_OFFLINE = "offline";
 export const USER_PROFILE = `${MODULE}:${FIELD_USER_PROFILE}`;
 export const LOGGED_IN = `${MODULE}:${FIELD_LOGGED_IN}`;
+export const OFFLINE = `${MODULE}:${FIELD_OFFLINE}`;
 
 const USER_PREF_MODULE = "user-pref";
 const FIELD_USER_PREFERENCES = "preferences";
@@ -37,7 +40,7 @@ export class Component<TProps, TState> extends data.Component<TProps, TState> {
     }
 }
 
-class AuthClient extends pxt.auth.AuthClient {
+export class AuthClient extends pxt.auth.AuthClient {
     protected async onSignedIn(): Promise<void> {
         const state = await pxt.auth.getUserStateAsync();
         core.infoNotification(lf("Signed in: {0}", pxt.auth.userName(state.profile)));
@@ -98,6 +101,7 @@ class AuthClient extends pxt.auth.AuthClient {
         switch (field) {
             case FIELD_USER_PROFILE: return hasToken ? { ...state?.profile } : null;
             case FIELD_LOGGED_IN: return hasToken && state?.profile != null;
+            case FIELD_OFFLINE: return pxt.auth.cachedAuthOffline;
         }
         return null;
     }
@@ -156,12 +160,13 @@ function initVirtualApi() {
 }
 
 let authClientPromise: Promise<AuthClient>;
+let authClientFactory = () => new AuthClient();
 
 async function clientAsync(): Promise<AuthClient | undefined> {
     if (!pxt.auth.hasIdentity()) { return undefined; }
     if (authClientPromise) return authClientPromise;
     authClientPromise = new Promise<AuthClient>(async (resolve, reject) => {
-        const cli = new AuthClient();
+        const cli = authClientFactory();
         await cli.initAsync();
         await cli.authCheckAsync();
         await cli.initialUserPreferencesAsync();
@@ -170,12 +175,20 @@ async function clientAsync(): Promise<AuthClient | undefined> {
     return authClientPromise;
 }
 
+export function overrideAuthClient(factory: () => AuthClient) {
+    authClientFactory = factory;
+}
+
 export function hasIdentity(): boolean {
     return pxt.auth.hasIdentity();
 }
 
 export function loggedIn(): boolean {
     return data.getData<boolean>(LOGGED_IN);
+}
+
+export function isOffline(): boolean {
+    return data.getData<boolean>(OFFLINE);
 }
 
 export function userProfile(): pxt.auth.UserProfile {
