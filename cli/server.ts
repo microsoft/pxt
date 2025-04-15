@@ -1295,8 +1295,9 @@ export function serveAsync(options: ServeOptions) {
         }
 
         if (/simulator\.html/.test(pathname)) {
-            // "/simulator.html/simx/microbit-apps/display-shield/-/index.html"
 
+            // check for simx urls, e.g.:
+            //     /simulator.html/simx/microbit-apps/display-shield/-/index.html
             if (/simulator\.html\/simx\//.test(pathname)) {
                 res.writeHead(302, { location: `https://trg-${pxt.appTarget.id}.userpxt.io/simx${pathname.split("simx").pop()}` });
             }
