@@ -949,7 +949,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                     break;
                 case "forumUrl":
                     icon = "comments"
-                    ariaLabel = lf("Open MakeCode forum");
+                    ariaLabel = lf("Open Microsoft MakeCode forum");
                     break;
                 case "forumExample":
                     icon = "pencil"
