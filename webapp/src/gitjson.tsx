@@ -786,7 +786,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                                 icon="user plus"
                                 href={`https://github.com/${githubId.slug}/settings/collaboration`}
                                 target="_blank"
-                                title={lf("Invite others to contributes to this GitHub repository.")}
+                                title={lf("Invite others to contribute to this GitHub repository.")}
                             />
                         }
                         <sui.Button icon={`${hasissue ? "exclamation circle" : haspull ? "long arrow alternate down" : "check"}`}
