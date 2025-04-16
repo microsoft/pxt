@@ -881,7 +881,7 @@ General Public License.
 863. dashjs 4.4.0 (https://www.npmjs.com/package/dashjs/v/4.4.0)
 864. @fortawesome/fontawesome-free 5.15.4 (https://www.npmjs.com/package/@fortawesome/fontawesome-free/v/5.15.4)
 865. @blockly/plugin-workspace-search 4.0.10 (https://www.npmjs.com/package/@blockly/plugin-workspace-search/v/4.0.10)
-866. @blockly/keyboard-navigation 0.1.18 (https://www.npmjs.com/package/@blockly/keyboard-navigation/v/0.1.18)
+866. @blockly/keyboard-experiment 0.0.1 (https://www.npmjs.com/package/@blockly/keyboard-experiment/v/0.0.1)
 
 
 
@@ -28749,7 +28749,7 @@ to represent the company, product, or service to which they refer.**
 END OF @blockly/plugin-workspace-search 4.0.10 NOTICES AND INFORMATION
 
 
-%% @blockly/keyboard-navigation 0.1.18 NOTICES AND INFORMATION BEGIN HERE (https://www.npmjs.com/package/@blockly/keyboard-navigation/v/0.1.18)
+%% @blockly/keyboard-experiment 0.0.1 NOTICES AND INFORMATION BEGIN HERE (https://www.npmjs.com/package/@blockly/keyboard-experiment/v/0.0.1)
 =========================================
 
                                  Apache License
@@ -28954,4 +28954,4 @@ END OF @blockly/plugin-workspace-search 4.0.10 NOTICES AND INFORMATION
    See the License for the specific language governing permissions and
    limitations under the License.
 =========================================
-END OF @blockly/keyboard-navigation 0.1.18 NOTICES AND INFORMATION
+END OF @blockly/keyboard-experiment 0.0.1 NOTICES AND INFORMATION

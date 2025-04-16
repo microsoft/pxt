@@ -62,7 +62,7 @@
   },
   "dependencies": {
     "@blockly/field-colour": "5.0.5",
-    "@blockly/keyboard-navigation": "0.6.5",
+    "@blockly/keyboard-experiment": "file:blockly-keyboard-experiment-0.0.6.tgz",
     "@blockly/plugin-workspace-search": "9.1.0",
     "@crowdin/crowdin-api-client": "^1.33.0",
     "@fortawesome/fontawesome-free": "^5.15.4",
@@ -72,7 +72,7 @@
     "@zip.js/zip.js": "2.4.20",
     "adm-zip": "^0.5.12",
     "axios": "^1.6.8",
-    "blockly": "11.2.1",
+    "blockly": "12.0.0-beta.4",
     "browserify": "17.0.0",
     "chai": "^3.5.0",
     "chalk": "^4.1.2",
@@ -152,6 +152,14 @@
     "smoothie": "1.35.0",
     "typescript": "4.8.3",
     "uglifyify": "5.0.2"
+  },
+  "overrides": {
+    "@blockly/field-colour": {
+      "blockly": "^12.0.0-beta.4"
+    },
+    "@blockly/plugin-workspace-search": {
+      "blockly": "^12.0.0-beta.4"
+    }
   },
   "scripts": {
     "build": "gulp",

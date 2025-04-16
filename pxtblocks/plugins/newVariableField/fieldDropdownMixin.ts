@@ -21,7 +21,13 @@ export function showEditorMixin(this: Blockly.FieldDropdown, e?: MouseEvent) {
     }
 
     for (let i = 0; i < options.length; i++) {
-        const [label, value] = options[i];
+        const option = options[i];
+        if (option === Blockly.FieldDropdown.SEPARATOR) {
+          //menu.addChild(new Blockly.MenuSeparator);
+          continue;
+        }
+
+        const [label, value] = option;
 
         if (value === "SEPARATOR") {
             const menuItem = new HorizontalRuleMenuItem("");
@@ -52,14 +58,15 @@ export function showEditorMixin(this: Blockly.FieldDropdown, e?: MouseEvent) {
         }
     }
 
+    if (!this.menu_) return;
     if (e && typeof e.clientX === 'number') {
-        this.menu_!.openingCoords = new Blockly.utils.Coordinate(e.clientX, e.clientY);
+        this.menu_.openingCoords = new Blockly.utils.Coordinate(e.clientX, e.clientY);
     } else {
-        this.menu_!.openingCoords = null;
+        this.menu_.openingCoords = null;
     }
 
     Blockly.DropDownDiv.clearContent();
-    const menuElement = this.menu_!.render(Blockly.DropDownDiv.getContentDiv());
+    const menuElement = this.menu_.render(Blockly.DropDownDiv.getContentDiv());
     Blockly.utils.dom.addClass(menuElement, 'blocklyDropdownMenu');
 
 
@@ -71,19 +78,15 @@ export function showEditorMixin(this: Blockly.FieldDropdown, e?: MouseEvent) {
 
     Blockly.DropDownDiv.showPositionedByField(this, this.dropdownDispose_.bind(this));
 
+    Blockly.DropDownDiv.getContentDiv().style.height = `${this.menu_.getSize().height}px`;
+
     // Focusing needs to be handled after the menu is rendered and positioned.
     // Otherwise it will cause a page scroll to get the misplaced menu in
     // view. See issue #1329.
     this.menu_!.focus();
 
-    if (selectedMenuItem) {
-        this.menu_!.setHighlighted(selectedMenuItem);
-        Blockly.utils.style.scrollIntoContainerView(
-            selectedMenuItem.getElement()!,
-            Blockly.DropDownDiv.getContentDiv(),
-            true,
-        );
-    }
+    // @ts-expect-error accessing private field from mixin
+    this.menu_.setHighlighted(this.selectedMenuItem);
 
     this.applyColour();
 }

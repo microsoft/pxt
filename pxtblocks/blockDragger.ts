@@ -4,13 +4,15 @@ export class BlockDragger extends Blockly.dragging.Dragger {
     onDrag(e: PointerEvent, totalDelta: Blockly.utils.Coordinate): void {
         super.onDrag(e, totalDelta);
 
-        const blocklyToolboxDiv = document.getElementsByClassName('blocklyToolboxDiv')[0] as HTMLElement;
+        const blocklyToolboxDiv = document.getElementsByClassName('blocklyToolbox')[0] as HTMLElement;
         const blocklyTreeRoot = document.getElementsByClassName('blocklyTreeRoot')[0] as HTMLElement
             || document.getElementsByClassName('blocklyFlyout')[0] as HTMLElement;
         const trashIcon = document.getElementById("blocklyTrashIcon");
         if (blocklyTreeRoot && trashIcon) {
+            const rect = blocklyTreeRoot.getBoundingClientRect()
             const distance = calculateDistance(blocklyTreeRoot.getBoundingClientRect(), e.clientX);
-            if (distance < 200) {
+            const isMouseDrag = Blockly.Gesture.inProgress();
+            if ((isMouseDrag && distance < 200) || (!isMouseDrag && isOverlappingRect(rect, e.clientX))) {
                 const opacity = distance / 200;
                 trashIcon.style.opacity = `${1 - opacity}`;
                 trashIcon.style.display = 'block';
@@ -31,7 +33,7 @@ export class BlockDragger extends Blockly.dragging.Dragger {
     onDragEnd(e: PointerEvent): void {
         super.onDragEnd(e);
 
-        const blocklyToolboxDiv = document.getElementsByClassName('blocklyToolboxDiv')[0] as HTMLElement;
+        const blocklyToolboxDiv = document.getElementsByClassName('blocklyToolbox')[0] as HTMLElement;
         const blocklyTreeRoot = document.getElementsByClassName('blocklyTreeRoot')[0] as HTMLElement
             || document.getElementsByClassName('blocklyFlyout')[0] as HTMLElement;
         const trashIcon = document.getElementById("blocklyTrashIcon");
@@ -45,4 +47,8 @@ export class BlockDragger extends Blockly.dragging.Dragger {
 
 function calculateDistance(elemBounds: DOMRect, mouseX: number) {
     return Math.abs(mouseX - (elemBounds.left + (elemBounds.width / 2)));
+}
+
+function isOverlappingRect(elemBounds: DOMRect, mouseX: number) {
+    return (mouseX - (elemBounds.left + (elemBounds.width))) < 0;
 }

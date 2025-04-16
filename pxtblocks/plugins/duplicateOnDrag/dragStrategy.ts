@@ -5,6 +5,7 @@
  */
 
 import * as Blockly from "blockly";
+import { ConnectionPreviewer } from "../renderer";
 
 import { DUPLICATE_ON_DRAG_MUTATION_KEY, isAllowlistedShadow, shouldDuplicateOnDrag } from "./duplicateOnDrag";
 import eventUtils = Blockly.Events;
@@ -276,10 +277,14 @@ export class DuplicateOnDragStrategy implements Blockly.IDragStrategy {
                 local.type,
             )
         ) {
-            this.connectionPreviewer!.previewReplacement(
+            // Cast to the ConnectionPreviewer class used to pass the mouseDriven bool.
+            // This is used to prevent incorrect connection lines when using the keyboard
+            // to move blocks.
+            (this.connectionPreviewer as ConnectionPreviewer)!.previewReplacement(
                 local,
                 neighbour,
                 neighbour.targetBlock()!,
+                true
             );
             return;
         }

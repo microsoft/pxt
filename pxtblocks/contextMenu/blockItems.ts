@@ -24,8 +24,16 @@ export function registerBlockitems() {
     registerHelp();
 
     // Fix the weights of the builtin options we do use
-    Blockly.ContextMenuRegistry.registry.getItem("blockDelete").weight = BlockContextWeight.DeleteBlock;
-    Blockly.ContextMenuRegistry.registry.getItem("blockComment").weight = BlockContextWeight.AddComment;
+    // Defensiveness due to action changes in the keyboard navigation plugin.
+    // Needs revisiting when actions are final.
+    const blockDelete = Blockly.ContextMenuRegistry.registry.getItem("blockDelete");
+    if (blockDelete) {
+        blockDelete.weight = BlockContextWeight.DeleteBlock;
+    }
+    const blockComment = Blockly.ContextMenuRegistry.registry.getItem("blockComment");
+    if (blockComment) {
+        blockComment.weight = BlockContextWeight.AddComment;
+    }
 }
 
 /**

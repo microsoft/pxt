@@ -1,9 +1,10 @@
 /// <reference path="../../built/pxtlib.d.ts" />
 
 import * as Blockly from "blockly";
+// Import from updated version that correctly extends Blockly.Field
+// after changes in Blockly v12.0.0-beta.3.
+import { FieldColour } from "./blockly_field_colour";
 import { FieldCustom, FieldCustomOptions } from "./field_utils";
-
-import { FieldColour } from "@blockly/field-colour";
 
 /**
      * The value modes:
@@ -101,6 +102,23 @@ export class FieldColorNumber extends FieldColour implements FieldCustom {
 
     getColours_(): string[] {
         return this.colours_;
+    }
+
+    // Copy from field_colour.ts and override protected method to be public.
+    /**
+     * Defines whether this field should take up the full block or not.
+     *
+     * @returns True if this field should take up the full block. False otherwise.
+     */
+    override isFullBlockField(): boolean {
+        const block = this.getSourceBlock();
+        if (!block) throw new Blockly.UnattachedFieldError();
+
+        const constants = this.getConstants();
+        return (
+        this.blockIsSimpleReporter() &&
+        Boolean(constants?.FIELD_COLOUR_FULL_BLOCK)
+        );
     }
 
     override applyColour() {

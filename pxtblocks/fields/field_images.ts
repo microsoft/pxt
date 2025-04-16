@@ -38,6 +38,7 @@ export class FieldImages extends FieldImageDropdown implements FieldCustom {
         Blockly.DropDownDiv.clearContent();
         // Populate the drop-down with the icons for this field.
         let dropdownDiv = Blockly.DropDownDiv.getContentDiv();
+        dropdownDiv.classList.add('imageDropdownDiv');
         let contentDiv = document.createElement('div');
         // Accessibility properties
         contentDiv.setAttribute('role', 'menu');
@@ -120,6 +121,8 @@ export class FieldImages extends FieldImageDropdown implements FieldCustom {
 
     // Update color (deselect) on dropdown hide
     protected onHideCallback() {
+        let dropdownDiv = Blockly.DropDownDiv.getContentDiv() as HTMLElement;
+        dropdownDiv.classList.remove('imageDropdownDiv');
         let source = this.sourceBlock_ as Blockly.BlockSvg;
         if (source?.isShadow()) {
             source.setColour(this.savedPrimary_);

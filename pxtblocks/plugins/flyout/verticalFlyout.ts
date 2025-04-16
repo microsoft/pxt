@@ -246,7 +246,7 @@ export class VerticalFlyout implements Blockly.IFlyout {
     }
 }
 
-class CachedFlyout extends Blockly.VerticalFlyout {
+export class CachedFlyout extends Blockly.VerticalFlyout {
     protected def: Element[];
     protected buttonListeners: Blockly.browserEvents.Data[] = [];
 
@@ -301,7 +301,10 @@ class CachedFlyout extends Blockly.VerticalFlyout {
             ),
         );
 
-        this.buttons_.push(button);
+        // TODO: This whole function is no longer called due to
+        // https://github.com/google/blockly/pull/8601
+        // This is why buttons in the flyout currently look odd.
+        // this.buttons_.push(button);
 
         Blockly.FlyoutButton.TEXT_MARGIN_X = textMarginX;
         Blockly.FlyoutButton.TEXT_MARGIN_Y = textMarginY;

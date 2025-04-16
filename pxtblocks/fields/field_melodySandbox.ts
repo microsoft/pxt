@@ -94,6 +94,8 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends Blockly.Fie
 
             setMelodyEditorOpen(this.sourceBlock_, false);
         });
+
+        Blockly.DropDownDiv.getContentDiv().style.height = 'unset';
     }
 
     getValue() {

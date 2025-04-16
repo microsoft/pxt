@@ -31,7 +31,7 @@
 /* blocklyMainWorkspaceScrollbar: 20 */
 /* blocklyFlyoutScrollbar: 30 */
 /* blocklyBlockDragSurface: 50 */
-/* blocklyToolboxDiv: 40 -- so blocks go over toolbox when dragging */
+/* blocklyToolbox: 40 -- so blocks go over toolbox when dragging */
 
 @blocklyTrashIconZIndex: @blocklyToolboxZIndex+1; /* Above toolbox */
 @blocklyAddPackgeZIndex: @blocklyToolboxZIndex+1; /* Above toolbox */
