@@ -280,9 +280,7 @@ export class FieldNote extends Blockly.FieldNumber implements FieldCustom {
             `width: ${pianoWidth}px;
             height: ${pianoHeight}px;`
         );
-        const contentDiv = Blockly.DropDownDiv.getContentDiv();
-        contentDiv.appendChild(pianoDiv);
-        contentDiv.style.height = "";
+        Blockly.DropDownDiv.getContentDiv().appendChild(pianoDiv);
 
         // render note label
         this.noteLabel = createStyledDiv(

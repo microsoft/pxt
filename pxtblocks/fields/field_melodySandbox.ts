@@ -77,8 +77,6 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends Blockly.Fie
         pxt.BrowserUtils.addClass(contentDiv, "melody-content-div");
         pxt.BrowserUtils.addClass(contentDiv.parentElement, "melody-editor-dropdown");
 
-        contentDiv.style.height = "";
-
         this.gallery = new pxtmelody.MelodyGallery();
         this.renderEditor(contentDiv);
 

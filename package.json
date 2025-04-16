@@ -154,13 +154,13 @@
   },
   "overrides": {
     "@blockly/field-colour": {
-      "blockly": "^12.0.0-beta.3"
+      "blockly": "^12.0.0-beta.4"
     },
     "@blockly/plugin-workspace-search": {
-      "blockly": "^12.0.0-beta.3"
+      "blockly": "^12.0.0-beta.4"
     },
     "@blockly/keyboard-navigation": {
-      "blockly": "^12.0.0-beta.3"
+      "blockly": "^12.0.0-beta.4"
     }
   },
   "scripts": {
