@@ -63,6 +63,9 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
             props.listenToBlockErrorChanges("errorList", this.onBlockErrorsChanged)
         } else {
             props.listenToErrorChanges("errorList", this.onErrorsChanged);
+        }
+
+        if (props.listenToExceptionChanges) {
             props.listenToExceptionChanges("errorList", this.onExceptionDetected);
         }
     }
@@ -72,10 +75,10 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         const errorsAvailable = !!errors?.length || !!exception || !!blockErrors?.length;
         const collapseTooltip = lf("Collapse Error List");
 
-        const errorListContent = !isCollapsed ? (this.props.isInBlocksEditor ? this.listBlockErrors(blockErrors)
-            : (exception ? this.generateStackTraces(exception) : this.getCompilerErrors(errors))) : undefined;
+        const errorListContent = !isCollapsed ? (exception ? this.generateStackTraces(exception)
+            : (this.props.isInBlocksEditor ? this.listBlockErrors(blockErrors) : this.getCompilerErrors(errors))) : undefined;
 
-        const errorCount = this.props.isInBlocksEditor ? blockErrors.length : exception ? 1 : errors.length;
+        const errorCount = exception ? 1 : this.props.isInBlocksEditor ? blockErrors.length : errors.length;
 
         return (
             <div className={`errorList ${isCollapsed ? 'errorListSummary' : ''} ${this.props.isInBlocksEditor ? 'errorListBlocks' : ''}`} hidden={!errorsAvailable}>
@@ -121,8 +124,10 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
     }
 
     onErrorMessageClick(e: pxtc.LocationInfo, index: number) {
-        pxt.tickEvent('errorlist.goto', { errorIndex: index }, { interactiveConsent: true });
-        this.props.goToError(e)
+        if (this.props.goToError) {
+            pxt.tickEvent('errorlist.goto', { errorIndex: index }, { interactiveConsent: true });
+            this.props.goToError(e);
+        }
     }
 
     onErrorsChanged(errors: pxtc.KsDiagnostic[]) {
@@ -167,9 +172,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
             <div className="exceptionMessage">{pxt.Util.rlf(exception.exceptionMessage)}</div>
             <div className="ui selection list">
                 {(exception.stackframes || []).map((sf, index) => {
-                    const location = this.state.callLocations[sf.callLocationId];
-
-                    if (!location) return null;
+                    const location = this.state.callLocations?.[sf.callLocationId];
 
                     return <ErrorListItem key={index} index={index} stackframe={sf} location={location} onClick={() => this.onErrorMessageClick(location, index)} />
                 })}
@@ -231,8 +234,12 @@ function errorMessageStringWithLineNumber(error: pxtc.KsDiagnostic) {
     return lf("Line {0}: {1}", error.endLine ? error.endLine + 1 : error.line + 1, error.messageText);
 }
 
-function stackFrameMessageStringWithLineNumber(stackframe: pxsim.StackFrameInfo, location: pxtc.LocationInfo) {
-    return lf("at {0} (line {1})", stackframe.funcInfo.functionName, location.line + 1);
+function stackFrameMessageStringWithLineNumber(stackframe: pxsim.StackFrameInfo, location?: pxtc.LocationInfo) {
+    if (!location) {
+        return lf("at {0}", stackframe.funcInfo.functionName);
+    } else {
+        return lf("at {0} (line {1})", stackframe.funcInfo.functionName, location.line + 1);
+    }
 }
 
 function groupErrors(errors: pxtc.KsDiagnostic[]) {

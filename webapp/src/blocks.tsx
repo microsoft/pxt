@@ -64,6 +64,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     currentFlyoutKey: string;
 
     private errorChangesListeners: pxt.Map<(errors: BlockError[]) => void> = {};
+    private exceptionChangesListeners: pxt.Map<(exception: pxsim.DebuggerBreakpointMessage, locations: pxtc.LocationInfo[]) => void> = {};
     protected intersectionObserver: IntersectionObserver;
 
     protected debuggerToolbox: DebuggerToolbox;
@@ -79,6 +80,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         super(parent);
 
         this.listenToBlockErrorChanges = this.listenToBlockErrorChanges.bind(this)
+        this.listenToExceptionChanges = this.listenToExceptionChanges.bind(this)
         this.onErrorListResize = this.onErrorListResize.bind(this)
     }
     setBreakpointsMap(breakpoints: pxtc.Breakpoint[], procCallLocations: pxtc.LocationInfo[]): void {
@@ -881,7 +883,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     <div id="blocksEditor"></div>
                     <toolbox.ToolboxTrashIcon flyoutOnly={flyoutOnly} />
                 </div>
-                {showErrorList && <ErrorList parent={this.parent} isInBlocksEditor={true} listenToBlockErrorChanges={this.listenToBlockErrorChanges}
+                {showErrorList && <ErrorList
+                    parent={this.parent}
+                    isInBlocksEditor={true}
+                    listenToBlockErrorChanges={this.listenToBlockErrorChanges}
+                    listenToExceptionChanges={this.listenToExceptionChanges}
                     onSizeChange={this.onErrorListResize} />}
             </div>
         )
@@ -898,6 +904,16 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private onBlockErrorChanges(errors: BlockError[]) {
         for (let listener of pxt.U.values(this.errorChangesListeners)) {
             listener(errors)
+        }
+    }
+
+    listenToExceptionChanges(handlerKey: string, handler: (exception: pxsim.DebuggerBreakpointMessage, locations: pxtc.LocationInfo[]) => void) {
+        this.exceptionChangesListeners[handlerKey] = handler;
+    }
+
+    public onExceptionDetected(exception: pxsim.DebuggerBreakpointMessage) {
+        for (let listener of pxt.U.values(this.exceptionChangesListeners)) {
+            listener(exception, undefined);
         }
     }
 
