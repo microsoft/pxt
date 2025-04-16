@@ -35,6 +35,7 @@ import SimState = pxt.editor.SimState;
 import { DuplicateOnDragConnectionChecker } from "../../pxtblocks/plugins/duplicateOnDrag";
 import { PathObject } from "../../pxtblocks/plugins/renderer/pathObject";
 import { Measurements } from "./constants";
+import { flow } from "../../pxtblocks";
 
 interface CopyDataEntry {
     version: 1;
@@ -562,6 +563,17 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.editor.getSvgGroup().addEventListener("blur", () => {
                 delete focusRingDiv.dataset.focused;
             })
+
+            const cleanUpWorkspace = Blockly.ShortcutRegistry.registry.getRegistry()["clean_up_workspace"];
+            Blockly.ShortcutRegistry.registry.unregister(cleanUpWorkspace.name);
+            Blockly.ShortcutRegistry.registry.register({
+                ...cleanUpWorkspace,
+                keyCodes: [Blockly.ShortcutRegistry.registry.createSerializedKey(cleanUpWorkspace.keyCodes[0] as number, null)],
+                callback: (workspace) => {
+                    flow(workspace, { useViewWidth: true });
+                    return true
+                }
+            });
         }
     }
 
