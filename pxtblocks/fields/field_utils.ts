@@ -684,3 +684,8 @@ function inflateJRes(jres: pxt.Map<pxt.JRes | string>): pxt.Map<pxt.JRes> {
 
     return result;
 }
+
+export function clearDropDownDiv() {
+    Blockly.DropDownDiv.clearContent();
+    Blockly.DropDownDiv.getContentDiv().style.height = "";
+}

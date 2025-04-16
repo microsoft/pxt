@@ -1,7 +1,7 @@
 /// <reference path="../../built/pxtlib.d.ts" />
 
 import * as Blockly from "blockly";
-import { FieldCustomOptions, FieldCustom, parseColour } from "./field_utils";
+import { FieldCustomOptions, FieldCustom, parseColour, clearDropDownDiv } from "./field_utils";
 
 enum Note {
     C = 262,
@@ -250,7 +250,7 @@ export class FieldNote extends Blockly.FieldNumber implements FieldCustom {
 
         // If there is an existing drop-down someone else owns, hide it immediately and clear it.
         Blockly.DropDownDiv.hideWithoutAnimation();
-        Blockly.DropDownDiv.clearContent();
+        clearDropDownDiv();
 
         const isMobile = pxt.BrowserUtils.isMobile() || pxt.BrowserUtils.isIOS();
         // invoke FieldTextInputs showeditor, so we can set quiet explicitly / not have a pop up dialogue
@@ -280,7 +280,9 @@ export class FieldNote extends Blockly.FieldNumber implements FieldCustom {
             `width: ${pianoWidth}px;
             height: ${pianoHeight}px;`
         );
-        Blockly.DropDownDiv.getContentDiv().appendChild(pianoDiv);
+        const contentDiv = Blockly.DropDownDiv.getContentDiv();
+        contentDiv.appendChild(pianoDiv);
+        contentDiv.style.height = "";
 
         // render note label
         this.noteLabel = createStyledDiv(
