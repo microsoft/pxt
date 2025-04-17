@@ -23,7 +23,7 @@ import { WorkspaceSearch } from "@blockly/plugin-workspace-search";
 
 import Util = pxt.Util;
 import { DebuggerToolbox } from "./debuggerToolbox";
-import { BlockError, ErrorList } from "./errorList";
+import { ErrorDisplayInfo, ErrorList } from "./errorList";
 import { resolveExtensionUrl } from "./extensionManager";
 import { experiments, initEditorExtensionsAsync } from "../../pxteditor";
 
@@ -46,6 +46,10 @@ interface CopyDataEntry {
     headerId: string;
 }
 
+interface BlockError {
+    blockId: string;
+    message: string;
+}
 
 export class Editor extends toolboxeditor.ToolboxEditor {
     editor: Blockly.WorkspaceSvg;
@@ -63,8 +67,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     breakpointsSet: number[]; // the IDs of the breakpoints set.
     currentFlyoutKey: string;
 
-    private errorChangesListeners: pxt.Map<(errors: BlockError[]) => void> = {};
-    private exceptionChangesListeners: pxt.Map<(exception: pxsim.DebuggerBreakpointMessage, locations: pxtc.LocationInfo[]) => void> = {};
+    private errorListeners: pxt.Map<(errors: ErrorDisplayInfo[]) => void> = {};
     protected intersectionObserver: IntersectionObserver;
 
     protected debuggerToolbox: DebuggerToolbox;
@@ -79,9 +82,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     constructor(parent: IProjectView) {
         super(parent);
 
-        this.listenToBlockErrorChanges = this.listenToBlockErrorChanges.bind(this)
-        this.listenToExceptionChanges = this.listenToExceptionChanges.bind(this)
+        this.listenToErrors = this.listenToErrors.bind(this)
         this.onErrorListResize = this.onErrorListResize.bind(this)
+        this.getDisplayInfoForBlockError = this.getDisplayInfoForBlockError.bind(this)
+        this.getDisplayInfoForException = this.getDisplayInfoForException.bind(this)
     }
     setBreakpointsMap(breakpoints: pxtc.Breakpoint[], procCallLocations: pxtc.LocationInfo[]): void {
         if (!breakpoints || !this.compilationResult) return;
@@ -884,10 +888,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     <toolbox.ToolboxTrashIcon flyoutOnly={flyoutOnly} />
                 </div>
                 {showErrorList && <ErrorList
-                    parent={this.parent}
-                    isInBlocksEditor={true}
-                    listenToBlockErrorChanges={this.listenToBlockErrorChanges}
-                    listenToExceptionChanges={this.listenToExceptionChanges}
+                    listenToErrors={this.listenToErrors}
                     onSizeChange={this.onErrorListResize} />}
             </div>
         )
@@ -897,24 +898,45 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.parent.fireResize();
     }
 
-    listenToBlockErrorChanges(handlerKey: string, handler: (errors: BlockError[]) => void) {
-        this.errorChangesListeners[handlerKey] = handler;
+    listenToErrors(handlerKey: string, handler: (errors: ErrorDisplayInfo[]) => void) {
+        this.errorListeners[handlerKey] = handler;
     }
 
     private onBlockErrorChanges(errors: BlockError[]) {
-        for (let listener of pxt.U.values(this.errorChangesListeners)) {
-            listener(errors)
+        const displayInfo = errors.map(this.getDisplayInfoForBlockError);
+        for (let listener of pxt.U.values(this.errorListeners)) {
+            listener(displayInfo);
         }
-    }
-
-    listenToExceptionChanges(handlerKey: string, handler: (exception: pxsim.DebuggerBreakpointMessage, locations: pxtc.LocationInfo[]) => void) {
-        this.exceptionChangesListeners[handlerKey] = handler;
     }
 
     public onExceptionDetected(exception: pxsim.DebuggerBreakpointMessage) {
-        for (let listener of pxt.U.values(this.exceptionChangesListeners)) {
-            listener(exception, undefined);
+        const displayInfo: ErrorDisplayInfo = this.getDisplayInfoForException(exception);
+        for (let listener of pxt.U.values(this.errorListeners)) {
+            listener([displayInfo]);
         }
+    }
+
+    private getDisplayInfoForBlockError(error: BlockError): ErrorDisplayInfo {
+        return {
+            message: error.message,
+            onClick: () => this.editor.centerOnBlock(error.blockId)
+        }
+    }
+
+    // TODO thsparks - maybe move this into the errorList but keep ErrorDisplayInfo abstraction.
+    private getDisplayInfoForException(exception: pxsim.DebuggerBreakpointMessage): ErrorDisplayInfo {
+        const message = pxt.Util.rlf(exception.exceptionMessage);
+        const childItems: ErrorDisplayInfo[] = exception.stackframes?.map(frame => {
+            return {
+                message: lf("at {0}", frame.funcInfo.functionName),
+                // TODO thsparks : Can I get the block id from the frame for an onClick?
+            };
+        }) ?? undefined;
+
+        return {
+            message,
+            childItems
+        };
     }
 
     getBlocksAreaDiv() {
