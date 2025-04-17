@@ -22,7 +22,7 @@ import { DebuggerToolbox } from "./debuggerToolbox";
 import { amendmentToInsertSnippet, listenForEditAmendments, createLineReplacementPyAmendment } from "./monacoEditAmendments";
 
 import { MonacoFlyout } from "./monacoFlyout";
-import { ErrorList, ErrorDisplayInfo as ErrorDisplayInfo } from "./errorList";
+import { ErrorList, ErrorDisplayInfo as ErrorDisplayInfo, StackFrameDisplayInfo } from "./errorList";
 import * as auth from "./auth";
 import * as pxteditor from "../../pxteditor";
 
@@ -685,7 +685,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private getDisplayInfoForException(exception: pxsim.DebuggerBreakpointMessage): ErrorDisplayInfo {
         const message = pxt.Util.rlf(exception.exceptionMessage);
 
-        const childItems: ErrorDisplayInfo[] = exception.stackframes?.map(frame => {
+        const stackFrames: StackFrameDisplayInfo[] = exception.stackframes?.map(frame => {
             const location = this.callLocations[frame.callLocationId];
             if (!location) return undefined;
             return {
@@ -696,7 +696,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         return {
             message,
-            childItems
+            stackFrames
         };
     }
 

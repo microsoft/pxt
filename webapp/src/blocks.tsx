@@ -23,7 +23,7 @@ import { WorkspaceSearch } from "@blockly/plugin-workspace-search";
 
 import Util = pxt.Util;
 import { DebuggerToolbox } from "./debuggerToolbox";
-import { ErrorDisplayInfo, ErrorList } from "./errorList";
+import { ErrorDisplayInfo, ErrorList, StackFrameDisplayInfo } from "./errorList";
 import { resolveExtensionUrl } from "./extensionManager";
 import { experiments, initEditorExtensionsAsync } from "../../pxteditor";
 
@@ -926,7 +926,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     // TODO thsparks - maybe move this into the errorList but keep ErrorDisplayInfo abstraction.
     private getDisplayInfoForException(exception: pxsim.DebuggerBreakpointMessage): ErrorDisplayInfo {
         const message = pxt.Util.rlf(exception.exceptionMessage);
-        const childItems: ErrorDisplayInfo[] = exception.stackframes?.map(frame => {
+        const stackFrames: StackFrameDisplayInfo[] = exception.stackframes?.map(frame => {
             return {
                 message: lf("at {0}", frame.funcInfo.functionName),
                 // TODO thsparks : Can I get the block id from the frame for an onClick?
@@ -935,7 +935,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         return {
             message,
-            childItems
+            stackFrames
         };
     }
 

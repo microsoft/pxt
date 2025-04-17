@@ -11,9 +11,14 @@ type GroupedError = {
     index: number
 };
 
+export type StackFrameDisplayInfo = {
+    message: string,
+    onClick?: () => void,
+}
+
 export type ErrorDisplayInfo = {
     message: string,
-    childItems?: ErrorDisplayInfo[],
+    stackFrames?: StackFrameDisplayInfo[],
     onClick?: () => void
 };
 
@@ -110,6 +115,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
 interface ErrorListItemProps {
     index: number;
     errorGroup: GroupedError;
+    className?: string;
 }
 
 interface ErrorListItemState {
@@ -121,32 +127,33 @@ class ErrorListItem extends React.Component<ErrorListItemProps, ErrorListItemSta
     }
 
     render() {
-        const { errorGroup } = this.props
+        const { className, errorGroup } = this.props
         const error = errorGroup.error;
 
         const message = error.message;
 
-        return error.childItems ? (
-            <div>
+        return error.stackFrames ? (
+            <div className={className}>
                 <div className="exceptionMessage"
                     onClick={error.onClick}
                     onKeyDown={error.onClick ? fireClickOnEnter : undefined}
                     aria-label={error.message}
-                    tabIndex={error.onClick ? 0 : -1}>
+                    tabIndex={0}
+                    role={error.onClick ? "button" : undefined}>
                     {error.message}
                 </div>
                 <div className="ui selection list">
-                    {(error.childItems).map((childErr, index) => {
+                    {(error.stackFrames).map((childErr, index) => {
                         const errGrp = {error: childErr, count: 1, index: 0};
-                        return <ErrorListItem key={index} index={index} errorGroup={errGrp} />
+                        return <ErrorListItem key={index} index={index} errorGroup={errGrp} className="stackframe"/>
                     })}
                 </div>
             </div>
         ) : (
-            <div className={`item ${error.childItems ? 'stackframe' : ''}`} role="button"
+            <div className={classList("item", className)} role="button"
                 onClick={error.onClick}
                 onKeyDown={fireClickOnEnter}
-                aria-label={lf("Go to {0}: {1}", error.childItems ? '' : 'error', message)}
+                aria-label={lf("Go to {0}: {1}", error.stackFrames ? '' : 'error', message)}
                 tabIndex={0}>
                 {message} {(errorGroup.count <= 1) ? null : <div className="ui gray circular label countBubble">{errorGroup.count}</div>}
             </div>
@@ -177,7 +184,7 @@ function groupErrors(errors: ErrorDisplayInfo[]): GroupedError[] {
 
 function getErrorKey(error: ErrorDisplayInfo): string {
     let key = error.message;
-    for (const child of error.childItems || []) {
+    for (const child of error.stackFrames || []) {
         key += getErrorKey(child);
     }
     return key;
