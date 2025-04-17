@@ -113,7 +113,7 @@ export class FieldScopedValueSelector extends Blockly.FieldLabel implements Fiel
                 if (!variable) continue;
                 //if (this.types.includes(variable.type)) {
                 {
-                    return this.setValue(variable.name);
+                    return this.setValue(variable.getName());
                 }
                 continue;
             }
