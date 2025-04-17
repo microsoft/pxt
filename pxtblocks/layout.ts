@@ -129,6 +129,7 @@ export function splitSvg(svg: SVGSVGElement, ws: Blockly.WorkspaceSvg, emPixels:
         blocki: number,
         size: { height: number, width: number },
         translate: { x: number, y: number },
+        ariaLabel?: string,
         itemClass?: string
     ) {
         const svgclone = svg.cloneNode(true) as SVGSVGElement;
@@ -150,7 +151,6 @@ export function splitSvg(svg: SVGSVGElement, ws: Blockly.WorkspaceSvg, emPixels:
         // clear transform, remove other group
         parentSvg.removeAttribute("transform");
         otherSvg.parentNode.removeChild(otherSvg);
-        const ariaLabel = `${svgclone.querySelector('g text').textContent.trim()} block`;
         // patch size
         blockSvg.setAttribute("transform", `translate(${translate.x}, ${translate.y})`)
         const width = (size.width / emPixels) + "em";
@@ -165,7 +165,7 @@ export function splitSvg(svg: SVGSVGElement, ws: Blockly.WorkspaceSvg, emPixels:
     }
 
     comments.forEach((comment, commenti) => extract('blocklyBubbleCanvas', 'blocklyBlockCanvas',
-        commenti, comment.getSize(), { x: 0, y: 0 }, "blocklyComment"));
+        commenti, comment.getSize(), { x: 0, y: 0 }, lf("blockly comment"), "blocklyComment"));
     blocks.forEach((block, blocki) => {
         const size = block.getHeightWidth();
         const translate = { x: 0, y: 0 };
@@ -173,8 +173,9 @@ export function splitSvg(svg: SVGSVGElement, ws: Blockly.WorkspaceSvg, emPixels:
             size.height += emPixels;
             translate.y += emPixels;
         }
+        const label = block.toString();
         extract('blocklyBlockCanvas', 'blocklyBubbleCanvas',
-            blocki, size, translate)
+            blocki, size, translate, `${label} blocks`)
     });
     return div;
 }
