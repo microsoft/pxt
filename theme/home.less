@@ -387,13 +387,16 @@
             }
             .card-action:hover {
                 cursor: pointer;
-                border-color: @white;
+                border-color: var(--pxt-focus-border);
                 .ui.button {
                     filter: none;
                 }
                 .ui.button:first-child:hover {
                     z-index: auto;
                 }
+            }
+            .card-action:focus-within {
+                border-color: var(--pxt-focus-border);
             }
             .card-action:hover {
                 transform: scale(1.1);
