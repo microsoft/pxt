@@ -52,7 +52,6 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         const { startDebugger } = this.props;
         const { isCollapsed, errors } = this.state;
         const errorsAvailable = !!errors?.length;
-        const collapseTooltip = lf("Collapse Error List");
 
         const groupedErrors = groupErrors(errors);
         const errorListContent = !isCollapsed ? groupedErrors.map((e, i) => <ErrorListItem errorGroup={e} index={i} key={`errorlist_error_${i}`}/> ) : undefined;
