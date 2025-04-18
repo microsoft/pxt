@@ -366,7 +366,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private highlightDecorations: string[] = [];
     private highlightedBreakpoint: number;
     private editAmendmentsListener: monaco.IDisposable | undefined;
-    private errorListeners: pxt.Map<(errors: ErrorDisplayInfo[]) => void> = {};
+    private errors: ErrorDisplayInfo[] = [];
     private callLocations: pxtc.LocationInfo[];
 
     private userPreferencesSubscriber: data.DataSubscriber = {
@@ -383,7 +383,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         super(parent);
 
         this.setErrorListState = this.setErrorListState.bind(this);
-        this.listenToErrors = this.listenToErrors.bind(this);
         this.getDisplayInfoForException = this.getDisplayInfoForException.bind(this);
         this.goToError = this.goToError.bind(this);
         this.startDebugger = this.startDebugger.bind(this);
@@ -656,29 +655,21 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                             parent={this.parent} />
                     </div>
                     {showErrorList && <ErrorList onSizeChange={this.setErrorListState}
-                        listenToErrors={this.listenToErrors}
+                        errors={this.errors}
                         startDebugger={this.startDebugger} />}
                 </div>
             </div>
         )
     }
 
-    listenToErrors(handlerKey: string, handler: (errors: ErrorDisplayInfo[]) => void) {
-        this.errorListeners[handlerKey] = handler;
-    }
-
     public onExceptionDetected(exception: pxsim.DebuggerBreakpointMessage) {
         const exceptionDisplayInfo: ErrorDisplayInfo = this.getDisplayInfoForException(exception);
-        for (let listener of pxt.U.values(this.errorListeners)) {
-            listener([exceptionDisplayInfo]);
-        }
+        this.errors = [exceptionDisplayInfo];
     }
 
     private onErrorChanges(errors: pxtc.KsDiagnostic[]) {
         const errorDisplayInfo: ErrorDisplayInfo[] = errors.map(this.getDisplayInfoForError);
-        for (let listener of pxt.U.values(this.errorListeners)) {
-            listener(errorDisplayInfo);
-        }
+        this.errors = errorDisplayInfo;
     }
 
     // TODO thsparks - maybe move this into the errorList but keep ErrorDisplayInfo abstraction.

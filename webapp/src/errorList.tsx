@@ -24,12 +24,11 @@ export type ErrorDisplayInfo = {
 
 export interface ErrorListProps {
     onSizeChange?: (state: pxt.editor.ErrorListState) => void;
-    listenToErrors?: (key: string, onErrors: (errors: ErrorDisplayInfo[]) => void) => void;
+    errors: ErrorDisplayInfo[];
     startDebugger?: () => void;
 }
 export interface ErrorListState {
     isCollapsed: boolean,
-    errors?: ErrorDisplayInfo[],
 }
 
 export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
@@ -38,19 +37,31 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         super(props);
 
         this.state = {
-            isCollapsed: true,
-            errors: []
+            isCollapsed: true
         }
 
         this.onCollapseClick = this.onCollapseClick.bind(this);
-        this.onErrorsChanged = this.onErrorsChanged.bind(this);
+    }
 
-        props.listenToErrors("errorList", this.onErrorsChanged);
+    componentDidUpdate(prevProps: Readonly<ErrorListProps>, prevState: Readonly<ErrorListState>, snapshot?: any): void {
+        // Auto-expand if there are new errors
+        if (this.props.errors.length > 0 && this.state.isCollapsed) {
+            let shouldExpand = this.props.errors.length > prevProps.errors.length;
+
+            if (!shouldExpand) {
+                // Compare errors to see if there are new ones
+                shouldExpand = this.props.errors.some(e => !prevProps.errors.some(prev => getErrorKey(e) === getErrorKey(prev)));
+            }
+
+            if (shouldExpand) {
+                this.setState({ isCollapsed: false }, this.onDisplayStateChange);
+            }
+        }
     }
 
     render() {
-        const { startDebugger } = this.props;
-        const { isCollapsed, errors } = this.state;
+        const { startDebugger, errors } = this.props;
+        const { isCollapsed } = this.state;
         const errorsAvailable = !!errors?.length;
 
         const groupedErrors = groupErrors(errors);
@@ -80,7 +91,8 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
     }
 
     onDisplayStateChange() {
-        const { errors, isCollapsed } = this.state;
+        const { errors } = this.props;
+        const { isCollapsed } = this.state;
         // notify parent on possible size change so siblings (monaco)
         // can resize if needed
 
@@ -98,16 +110,14 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
     }
 
     onCollapseClick() {
-        pxt.tickEvent('errorlist.collapse', null, { interactiveConsent: true })
+        if (this.state.isCollapsed) {
+            pxt.tickEvent('errorlist.expand', null, { interactiveConsent: true })
+        } else {
+            pxt.tickEvent('errorlist.collapse', null, { interactiveConsent: true })
+        }
+
         this.setState({
             isCollapsed: !this.state.isCollapsed
-        }, this.onDisplayStateChange);
-    }
-
-    onErrorsChanged(errors: ErrorDisplayInfo[]) {
-        this.setState({
-            errors,
-            isCollapsed: errors?.length == 0 || this.state.isCollapsed,
         }, this.onDisplayStateChange);
     }
 }
@@ -183,9 +193,5 @@ function groupErrors(errors: ErrorDisplayInfo[]): GroupedError[] {
 }
 
 function getErrorKey(error: ErrorDisplayInfo): string {
-    let key = error.message;
-    for (const child of error.stackFrames || []) {
-        key += getErrorKey(child);
-    }
-    return key;
+    return error.message + (error.stackFrames ? error.stackFrames.map(f => f.message).join('') : '');
 }

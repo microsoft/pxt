@@ -67,8 +67,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     breakpointsSet: number[]; // the IDs of the breakpoints set.
     currentFlyoutKey: string;
 
-    private errorListeners: pxt.Map<(errors: ErrorDisplayInfo[]) => void> = {};
     protected intersectionObserver: IntersectionObserver;
+    private errors: ErrorDisplayInfo[] = [];
 
     protected debuggerToolbox: DebuggerToolbox;
     protected highlightedStatement: pxtc.LocationInfo;
@@ -82,7 +82,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     constructor(parent: IProjectView) {
         super(parent);
 
-        this.listenToErrors = this.listenToErrors.bind(this)
         this.onErrorListResize = this.onErrorListResize.bind(this)
         this.getDisplayInfoForBlockError = this.getDisplayInfoForBlockError.bind(this)
         this.getDisplayInfoForException = this.getDisplayInfoForException.bind(this)
@@ -888,7 +887,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     <toolbox.ToolboxTrashIcon flyoutOnly={flyoutOnly} />
                 </div>
                 {showErrorList && <ErrorList
-                    listenToErrors={this.listenToErrors}
+                    errors={this.errors}
                     onSizeChange={this.onErrorListResize} />}
             </div>
         )
@@ -898,22 +897,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.parent.fireResize();
     }
 
-    listenToErrors(handlerKey: string, handler: (errors: ErrorDisplayInfo[]) => void) {
-        this.errorListeners[handlerKey] = handler;
-    }
-
     private onBlockErrorChanges(errors: BlockError[]) {
         const displayInfo = errors.map(this.getDisplayInfoForBlockError);
-        for (let listener of pxt.U.values(this.errorListeners)) {
-            listener(displayInfo);
-        }
+        this.errors = displayInfo;
     }
 
     public onExceptionDetected(exception: pxsim.DebuggerBreakpointMessage) {
         const displayInfo: ErrorDisplayInfo = this.getDisplayInfoForException(exception);
-        for (let listener of pxt.U.values(this.errorListeners)) {
-            listener([displayInfo]);
-        }
+        this.errors = [displayInfo];
     }
 
     private getDisplayInfoForBlockError(error: BlockError): ErrorDisplayInfo {
