@@ -44,8 +44,6 @@ Are you going to ISTE in San Antonio this year? If so, make sure to add the [Mak
 
 The Computer Science Teachers Association (CSTA) annual conference is one not to miss!  In Cleveland this year, there will be many high-quality learning and networking opportunities available for CS Education, including MakeCode sessions! Learn more about the event [here](https://conference.csteachers.org/event/CSTA2025/summary).
 
-<MakeCode APCSP banner.png>
-
 **July 14 - 18**
 **AP Computer Science Principles**
 
