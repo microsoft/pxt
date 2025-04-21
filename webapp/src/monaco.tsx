@@ -672,7 +672,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.errors = errorDisplayInfo;
     }
 
-    // TODO thsparks - maybe move this into the errorList but keep ErrorDisplayInfo abstraction.
     private getDisplayInfoForException(exception: pxsim.DebuggerBreakpointMessage): ErrorDisplayInfo {
         const message = pxt.Util.rlf(exception.exceptionMessage);
 
@@ -691,7 +690,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         };
     }
 
-    // TODO thsparks - maybe move this into the errorList but keep ErrorDisplayInfo abstraction.
     private getDisplayInfoForError(error: pxtc.KsDiagnostic): ErrorDisplayInfo {
         const message = lf("Line {0}: {1}", error.endLine ? error.endLine + 1 : error.line + 1, error.messageText);
         return {
