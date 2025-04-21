@@ -193,5 +193,8 @@ function groupErrors(errors: ErrorDisplayInfo[]): GroupedError[] {
 }
 
 function getErrorKey(error: ErrorDisplayInfo): string {
-    return JSON.stringify(error);
+    return JSON.stringify({
+        message: error.message,
+        stackFrames: error.stackFrames
+    });
 }
