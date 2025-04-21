@@ -173,6 +173,7 @@ export function splitSvg(svg: SVGSVGElement, ws: Blockly.WorkspaceSvg, emPixels:
             size.height += emPixels;
             translate.y += emPixels;
         }
+        // use the block string for the most descriptive aria-label
         const label = block.toString();
         extract('blocklyBlockCanvas', 'blocklyBubbleCanvas',
             blocki, size, translate, `${label} blocks`)
