@@ -2,7 +2,7 @@
 
 import * as Blockly from "blockly";
 import { FieldImageDropdown, FieldImageDropdownOptions } from "./field_imagedropdown";
-import { FieldCustom } from "./field_utils";
+import { clearDropDownDiv, FieldCustom } from "./field_utils";
 
 export interface FieldImagesOptions extends FieldImageDropdownOptions {
     sort?: boolean;
@@ -35,7 +35,7 @@ export class FieldImages extends FieldImageDropdown implements FieldCustom {
         let sourceBlock = this.sourceBlock_ as Blockly.BlockSvg;
         // If there is an existing drop-down someone else owns, hide it immediately and clear it.
         Blockly.DropDownDiv.hideWithoutAnimation();
-        Blockly.DropDownDiv.clearContent();
+        clearDropDownDiv();
         // Populate the drop-down with the icons for this field.
         let dropdownDiv = Blockly.DropDownDiv.getContentDiv();
         let contentDiv = document.createElement('div');

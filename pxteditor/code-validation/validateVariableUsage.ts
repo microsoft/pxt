@@ -26,7 +26,7 @@ export function validateVariableUsage({
 
         const varsUsed = block.getVarModels();
         for (const varModel of varsUsed ?? []) {
-            const varName = varModel.name;
+            const varName = varModel.getName();
             if (!name || varName === name) {
                 if (block.type === "variables_set" || block.type === "variables_change") {
                     // Variable created

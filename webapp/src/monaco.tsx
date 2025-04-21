@@ -1626,7 +1626,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
-    showFieldEditor(range: monaco.Range, fe: pxteditor.MonacoFieldEditor, viewZoneHeight: number, buildAfter: boolean) {
+    showFieldEditor(range: monaco.Range, fe: pxt.editor.MonacoFieldEditor, viewZoneHeight: number, buildAfter: boolean) {
         if (this.feWidget) {
             this.feWidget.close();
         }
