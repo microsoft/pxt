@@ -786,6 +786,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                                 icon="user plus"
                                 href={`https://github.com/${githubId.slug}/settings/collaboration`}
                                 target="_blank"
+                                onKeyDown={fireClickOnEnter}
                                 title={lf("Invite others to contribute to this GitHub repository.")}
                             />
                         }
