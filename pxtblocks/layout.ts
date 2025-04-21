@@ -129,6 +129,7 @@ export function splitSvg(svg: SVGSVGElement, ws: Blockly.WorkspaceSvg, emPixels:
         blocki: number,
         size: { height: number, width: number },
         translate: { x: number, y: number },
+        ariaLabel?: string,
         itemClass?: string
     ) {
         const svgclone = svg.cloneNode(true) as SVGSVGElement;
@@ -159,11 +160,12 @@ export function splitSvg(svg: SVGSVGElement, ws: Blockly.WorkspaceSvg, emPixels:
         svgclone.style.height = height;
         svgclone.setAttribute("width", width);
         svgclone.setAttribute("height", height);
+        svgclone.setAttribute("aria-label", ariaLabel)
         div.appendChild(svgclone);
     }
 
     comments.forEach((comment, commenti) => extract('blocklyBubbleCanvas', 'blocklyBlockCanvas',
-        commenti, comment.getSize(), { x: 0, y: 0 }, "blocklyComment"));
+        commenti, comment.getSize(), { x: 0, y: 0 }, lf("blockly comment"), "blocklyComment"));
     blocks.forEach((block, blocki) => {
         const size = block.getHeightWidth();
         const translate = { x: 0, y: 0 };
@@ -171,8 +173,10 @@ export function splitSvg(svg: SVGSVGElement, ws: Blockly.WorkspaceSvg, emPixels:
             size.height += emPixels;
             translate.y += emPixels;
         }
+        // use the block string for the most descriptive aria-label
+        const label = block.toString();
         extract('blocklyBlockCanvas', 'blocklyBubbleCanvas',
-            blocki, size, translate)
+            blocki, size, translate, `${label} blocks`)
     });
     return div;
 }

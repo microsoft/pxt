@@ -61,7 +61,7 @@
     "npm": ">=8.0.0"
   },
   "dependencies": {
-    "@blockly/field-colour": "5.0.5",
+    "@blockly/field-colour": "5.0.12",
     "@blockly/keyboard-navigation": "0.6.5",
     "@blockly/plugin-workspace-search": "9.1.0",
     "@crowdin/crowdin-api-client": "^1.33.0",
@@ -72,7 +72,7 @@
     "@zip.js/zip.js": "2.4.20",
     "adm-zip": "^0.5.12",
     "axios": "^1.6.8",
-    "blockly": "11.2.1",
+    "blockly": "12.0.0-beta.4",
     "browserify": "17.0.0",
     "chai": "^3.5.0",
     "chalk": "^4.1.2",
@@ -153,6 +153,17 @@
     "typescript": "4.8.3",
     "uglifyify": "5.0.2"
   },
+  "overrides": {
+    "@blockly/field-colour": {
+      "blockly": "^12.0.0-beta.4"
+    },
+    "@blockly/plugin-workspace-search": {
+      "blockly": "^12.0.0-beta.4"
+    },
+    "@blockly/keyboard-navigation": {
+      "blockly": "^12.0.0-beta.4"
+    }
+  },
   "scripts": {
     "build": "gulp",
     "test": "gulp travis",
@@ -169,6 +180,6 @@
     "update": "gulp update",
     "watch-streamer": "cd docs/static/streamer && tsc -t es6 --watch",
     "prepare": "node ./scripts/npm-prepare.js",
-    "postinstall": "node ./scripts/patchUglifyify.js"
+    "postinstall": "node ./scripts/patchUglifyify.js && node ./scripts/patchBlocklyFieldColour.js"
   }
 }

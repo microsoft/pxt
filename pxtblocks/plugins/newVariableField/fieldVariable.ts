@@ -40,7 +40,7 @@ export class FieldVariable extends Blockly.FieldVariable {
             const id = menuItem.getValue();
             if (id === FieldVariable.CREATE_VARIABLE_ID) {
                 Blockly.Variables.createVariableButtonHandler(this.sourceBlock_.workspace, name => {
-                    const newVar = this.sourceBlock_.workspace.getVariable(name);
+                    const newVar = this.sourceBlock_.workspace.getVariableMap().getVariable(name);
 
                     if (newVar) {
                         this.setValue(newVar.getId());

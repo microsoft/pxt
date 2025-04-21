@@ -5176,7 +5176,7 @@ export class ProjectView
 
     setAccessibleBlocks(enabled: boolean) {
         pxt.tickEvent("app.accessibleblocks", { on: enabled ? 1 : 0 });
-        this.blocksEditor.enableAccessibleBlocks(enabled);
+        // this.blocksEditor.enableAccessibleBlocks(enabled);
         this.setState({ accessibleBlocks: enabled })
     }
 
