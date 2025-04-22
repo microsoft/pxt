@@ -277,14 +277,10 @@ export class DuplicateOnDragStrategy implements Blockly.IDragStrategy {
                 local.type,
             )
         ) {
-            // Cast to the ConnectionPreviewer class used to pass the mouseDriven bool.
-            // This is used to prevent incorrect connection lines when using the keyboard
-            // to move blocks.
-            (this.connectionPreviewer as ConnectionPreviewer)!.previewReplacement(
+            this.connectionPreviewer!.previewReplacement(
                 local,
                 neighbour,
                 neighbour.targetBlock()!,
-                true
             );
             return;
         }
