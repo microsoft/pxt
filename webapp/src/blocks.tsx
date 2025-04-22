@@ -897,20 +897,23 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.parent.fireResize();
     }
 
+    onExceptionDetected(exception: pxsim.DebuggerBreakpointMessage) {
+        const displayInfo: ErrorDisplayInfo = this.getDisplayInfoForException(exception);
+        this.errors = [displayInfo];
+    }
+
     private onBlockErrorChanges(errors: BlockError[]) {
         const displayInfo = errors.map(this.getDisplayInfoForBlockError);
         this.errors = displayInfo;
     }
 
-    public onExceptionDetected(exception: pxsim.DebuggerBreakpointMessage) {
-        const displayInfo: ErrorDisplayInfo = this.getDisplayInfoForException(exception);
-        this.errors = [displayInfo];
-    }
-
     private getDisplayInfoForBlockError(error: BlockError): ErrorDisplayInfo {
         return {
             message: error.message,
-            onClick: () => this.editor.centerOnBlock(error.blockId)
+            onClick: () => {
+                // Block is already highlighted, just center it.
+                this.editor.centerOnBlock(error.blockId);
+            }
         }
     }
 
