@@ -43,25 +43,25 @@ class CollabClient {
     sessOverReason: SessionOverReason | undefined;
     receivedJoinMessageInTimeHandler: ((a: any) => void) | undefined;
 
-    constructor() {}
+    constructor() { }
 
     destroy() {
         try {
             this.sock?.close();
             this.sock = undefined;
-        } catch (e) {}
+        } catch (e) { }
     }
 
     private sendMessage(msg: Protocol.Message | Buffer) {
-        if (msg instanceof Buffer) {
-            this.sock?.send(msg, {}, (err: any) => {
-                if (err) pxt.log("Error sending message. " + err.toString());
-            });
-        } else {
-            const payload = JSON.stringify(msg, jsonReplacer);
-            this.sock?.send(payload, {}, (err: any) => {
-                if (err) pxt.log("Error sending message. " + err.toString());
-            });
+        try {
+            if (msg instanceof Buffer) {
+                this.sock?.send(msg);
+            } else {
+                const payload = JSON.stringify(msg, jsonReplacer);
+                this.sock?.send(payload);
+            }
+        } catch (e) {
+            pxt.error("Error sending message", e);
         }
     }
 

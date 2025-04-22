@@ -63,21 +63,25 @@ class GameClient {
     receivedJoinMessageInTimeHandler: ((a: any) => void) | undefined;
     paused: boolean = false;
 
-    constructor() {}
+    constructor() { }
 
     destroy() {
         try {
             this.sock?.close();
             this.sock = undefined;
-        } catch (e) {}
+        } catch (e) { }
     }
 
     private sendMessage(msg: Protocol.Message | Buffer) {
-        if (msg instanceof Buffer) {
-            this.sock?.send(msg, {}, () => {});
-        } else {
-            const payload = JSON.stringify(msg);
-            this.sock?.send(payload, {}, () => {});
+        try {
+            if (msg instanceof Buffer) {
+                this.sock?.send(msg);
+            } else {
+                const payload = JSON.stringify(msg);
+                this.sock?.send(payload);
+            }
+        } catch (e) {
+            pxt.error("Error sending message", e);
         }
     }
 
