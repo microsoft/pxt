@@ -917,16 +917,48 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private getDisplayInfoForException(exception: pxsim.DebuggerBreakpointMessage): ErrorDisplayInfo {
         const message = pxt.Util.rlf(exception.exceptionMessage);
         const stackFrames: StackFrameDisplayInfo[] = exception.stackframes?.map(frame => {
+            const locInfo = frame.funcInfo as pxtc.FunctionLocationInfo;
+            if (!locInfo?.functionName) {
+                return undefined;
+            }
+
+            const blockId = this.compilationResult ? pxtblockly.findBlockIdByLine(this.compilationResult.sourceMap, { start: locInfo.line, length: locInfo.endLine - locInfo.line }) : undefined;
+            if (!blockId) {
+                return undefined;
+            }
+
+            // Get human-readable block text
+            const block = this.editor.getBlockById(blockId);
+            if (!block) {
+                return undefined;
+            }
+            const blockText = this.getBlockText(block);
+
             return {
-                message: lf("at {0}", frame.funcInfo.functionName),
-                // TODO thsparks : Can I get the block id from the frame for an onClick?
+                message: blockText ? lf("at the '{0}' block", blockText) : lf("at {0}", locInfo.functionName),
+                onClick: () => this.highlightStatement(locInfo, exception)
             };
-        }) ?? undefined;
+        }).filter(f => !!f) ?? undefined;
 
         return {
             message,
             stackFrames
         };
+    }
+
+    private getBlockText(block: Blockly.BlockSvg): string {
+        const fieldValues = [];
+        for (const input of block.inputList) {
+            if (input.fieldRow.length > 0) {
+                for (const field of input.fieldRow) {
+                    const text = field.getText();
+                    if (text) {
+                        fieldValues.push(text);
+                    }
+                }
+            }
+        }
+        return fieldValues.join(" ");
     }
 
     getBlocksAreaDiv() {
