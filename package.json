@@ -62,7 +62,7 @@
   },
   "dependencies": {
     "@blockly/field-colour": "5.0.12",
-    "@blockly/keyboard-experiment": "file:blockly-keyboard-experiment-0.0.6.tgz",
+    "@blockly/keyboard-experiment": "0.0.7",
     "@blockly/plugin-workspace-search": "9.1.0",
     "@crowdin/crowdin-api-client": "^1.33.0",
     "@fortawesome/fontawesome-free": "^5.15.4",
