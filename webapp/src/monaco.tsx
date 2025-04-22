@@ -1487,6 +1487,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     unloadFileAsync(): Promise<void> {
         if (this.toolbox)
             this.toolbox.clearSearch();
+        this.errors = [];
         if (this.currFile && this.currFile.getName() == "this/" + pxt.CONFIG_NAME) {
             // Reload the header if a change was made to the config file: pxt.json
             return this.parent.reloadHeaderAsync();

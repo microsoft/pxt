@@ -940,7 +940,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
             return {
                 message: blockText ? lf("at the '{0}' block", blockText) : lf("at {0}", locInfo.functionName),
-                onClick: () => this.highlightStatement(locInfo, exception)
+                onClick: () => {
+                    this.clearHighlightedStatements();
+                    this.highlightStatement(locInfo, exception);
+                }
             };
         }).filter(f => !!f) ?? undefined;
 
@@ -1178,6 +1181,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     unloadFileAsync(): Promise<void> {
         this.delayLoadXml = undefined;
+        this.errors = [];
         if (this.toolbox) this.toolbox.clearSearch();
         return Promise.resolve();
     }
