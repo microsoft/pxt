@@ -2129,7 +2129,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         // This is not ideal, but just return empty for now.
         return "";
     }
-
 }
 
 export function rangeToSelection(range: monaco.IRange): monaco.Selection {
@@ -2180,7 +2179,6 @@ class ShowKeyboardWidget implements monaco.editor.IOverlayWidget {
     protected touchHandler = () => {
         this.editor.focus();
     }
-
 }
 
 function createIndent(length: number) {

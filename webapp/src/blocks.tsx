@@ -969,7 +969,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const blocklyToolboxDiv = this.getBlocklyToolboxDiv();
         const blocklyToolbox = <div className="blocklyToolboxCategoryGroup" tabIndex={-1} onFocus={this.handleToolboxContentsFocusCapture}>
             <toolbox.Toolbox ref={this.handleToolboxRef} editorname="blocks" parent={this} />
-                {<div id="debuggerToolbox"></div>}
+            {<div id="debuggerToolbox"></div>}
         </div>;
         Util.assert(!!blocklyToolboxDiv);
         ReactDOM.render(blocklyToolbox, blocklyToolboxDiv);
