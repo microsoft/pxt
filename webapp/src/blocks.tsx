@@ -770,7 +770,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.initPrompts();
         this.initBlocklyToolbox();
         this.initWorkspaceSounds();
-        // this.initAccessibleBlocks();
+        this.initAccessibleBlocks();
         this.initWorkspaceSearch();
         this.setupIntersectionObserver();
         this.resize();
