@@ -46,11 +46,6 @@ interface CopyDataEntry {
     headerId: string;
 }
 
-interface BlockError {
-    blockId: string;
-    message: string;
-}
-
 export class Editor extends toolboxeditor.ToolboxEditor {
     editor: Blockly.WorkspaceSvg;
     currFile: pkg.File;
@@ -902,17 +897,23 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.errors = [displayInfo];
     }
 
-    private onBlockErrorChanges(errors: BlockError[]) {
-        const displayInfo = errors.map(this.getDisplayInfoForBlockError);
-        this.errors = displayInfo;
+    private onBlockErrorChanges(errors: ErrorDisplayInfo[]) {
+        this.errors = errors;
     }
 
-    private getDisplayInfoForBlockError(error: BlockError): ErrorDisplayInfo {
+    private getDisplayInfoForBlockError(blockId: string, message: string): ErrorDisplayInfo {
         return {
-            message: error.message,
+            message: message,
             onClick: () => {
-                // Block is already highlighted, just center it.
-                this.editor.centerOnBlock(error.blockId);
+                // Block may already be highlighted, so we want to set highlighted directly to true
+                // as opposed to using `highlightBlock`, which toggles.
+                const block = this.editor.getBlockById(blockId);
+                if (!block) {
+                    return;
+                }
+
+                block.setHighlighted(true);
+                this.editor.centerOnBlock(blockId);
             }
         }
     }
@@ -1201,7 +1202,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (!tsfile || !tsfile.diagnostics) return;
 
         // only show errors
-        const allErrors: BlockError[] = [];
+        const errorDisplayInfo: ErrorDisplayInfo[] = [];
         let diags = tsfile.diagnostics.filter(d => d.category == ts.pxtc.DiagnosticCategory.Error);
         let sourceMap = this.compilationResult.sourceMap;
 
@@ -1213,10 +1214,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     let txt = ts.pxtc.flattenDiagnosticMessageText(diag.messageText, "\n");
                     b.setWarningText(txt, pxtblockly.PXT_WARNING_ID);
                     setHighlightWarningAsync(b, true);
-                    allErrors.push({
-                        blockId: bid,
-                        message: txt,
-                    })
+                    errorDisplayInfo.push(this.getDisplayInfoForBlockError(bid, txt));
                 }
             }
         })
@@ -1228,14 +1226,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 if (b) {
                     b.setWarningText(d.message, pxtblockly.PXT_WARNING_ID);
                     setHighlightWarningAsync(b, true);
-                    allErrors.push({
-                        blockId: d.blockId,
-                        message: d.message,
-                    })
+                    errorDisplayInfo.push(this.getDisplayInfoForBlockError(d.blockId, d.message));
                 }
             }
         })
-        this.onBlockErrorChanges(allErrors);
+        this.onBlockErrorChanges(errorDisplayInfo);
         this.setBreakpointsFromBlocks();
     }
 
