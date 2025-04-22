@@ -4,4 +4,12 @@
     margin: 0;
     padding: 0;
     border: none;
+
+    &.invisible {
+        // We should not use display: none here because it messes up blocks rendering when we
+        // request block images from the iframe.
+        visibility: hidden;
+        width: 0;
+        height: 0;
+    }
 }

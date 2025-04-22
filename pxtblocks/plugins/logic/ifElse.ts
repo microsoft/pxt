@@ -64,57 +64,46 @@ const IF_ELSE_MIXIN = {
      */
     restoreConnections_: function (this: IfElseBlock) {
         for (let i = 1; i <= this.elseifCount_; i++) {
-            this.valueConnections_[i]?.reconnect(this, 'IF' + i);
+            this.reconnectValueConnection_(i, this.valueConnections_);
             this.statementConnections_[i]?.reconnect(this, 'DO' + i);
         }
         if (this.getInput('ELSE')) this.elseStatementConnection_?.reconnect(this, 'ELSE');
     },
     addElse_: function (this: IfElseBlock) {
-        this.storeConnections_();
         const update = () => {
             this.elseCount_++;
         };
         this.update_(update);
-        this.restoreConnections_();
+
     },
     removeElse_: function (this: IfElseBlock) {
-        this.storeConnections_();
         const update = () => {
             this.elseCount_--;
         };
         this.update_(update);
-        this.restoreConnections_();
     },
     addElseIf_: function (this: IfElseBlock) {
-        this.storeConnections_();
         const update = () => {
             this.elseifCount_++;
         };
         this.update_(update);
-        this.restoreConnections_();
     },
     removeElseIf_: function (this: IfElseBlock, arg: number) {
-        this.storeConnections_(arg);
         const update = () => {
             this.elseifCount_--;
         };
-        this.update_(update);
-        this.restoreConnections_();
+        this.update_(update, arg);
     },
-    update_: function (this: IfElseBlock, update: () => void) {
+    update_: function (this: IfElseBlock, update: () => void, arg?: number) {
         Blockly.Events.setGroup(true);
+        this.storeConnections_(arg);
         const block = this;
         const oldMutationDom = block.mutationToDom();
         const oldMutation = oldMutationDom && Blockly.Xml.domToText(oldMutationDom);
-        // Switch off rendering while the source block is rebuilt.
-        const savedRendered = block.rendered;
-        block.rendered = false;
         // Update the mutation
         if (update) update.call(this);
         // Allow the source block to rebuild itself.
         this.updateShape_();
-        // Restore rendering and show the changes.
-        block.rendered = savedRendered;
         // Mutation may have added some elements that need initializing.
         if (block instanceof Blockly.BlockSvg) {
             block.initSvg();
@@ -133,8 +122,9 @@ const IF_ELSE_MIXIN = {
             }, Blockly.config.bumpDelay);
         }
         if (block.rendered && block instanceof Blockly.BlockSvg) {
-            block.render();
+            block.queueRender();
         }
+        this.restoreConnections_();
         Blockly.Events.setGroup(false);
     },
     /**
@@ -166,20 +156,21 @@ const IF_ELSE_MIXIN = {
             }(i);
             this.appendValueInput('IF' + i)
                 .setCheck('Boolean')
-                .appendField(Blockly.Msg.CONTROLS_IF_MSG_ELSEIF);
+                .appendField(Blockly.Msg.CONTROLS_IF_MSG_ELSEIF)
+                .setShadowDom(createShadowDom());
             this.appendDummyInput('IFTITLE' + i)
                 .appendField(Blockly.Msg.CONTROLS_IF_MSG_THEN);
             this.appendDummyInput('IFBUTTONS' + i)
                 .appendField(
                     new Blockly.FieldImage(this.REMOVE_IMAGE_DATAURI, 24, 24, "*", removeElseIf, false))
-                .setAlign(Blockly.ALIGN_RIGHT);
+                .setAlign(Blockly.inputs.Align.RIGHT);
             this.appendStatementInput('DO' + i);
         }
         if (this.elseCount_) {
             this.appendDummyInput('ELSETITLE')
                 .appendField(Blockly.Msg.CONTROLS_IF_MSG_ELSE);
             this.appendDummyInput('ELSEBUTTONS')
-                .setAlign(Blockly.ALIGN_RIGHT)
+                .setAlign(Blockly.inputs.Align.RIGHT)
                 .appendField(
                     new Blockly.FieldImage(this.REMOVE_IMAGE_DATAURI, 24, 24, "*", this.removeElse_.bind(this), false));
             this.appendStatementInput('ELSE');
@@ -235,12 +226,37 @@ const IF_ELSE_MIXIN = {
     reconnectChildBlocks_: function (this: IfElseBlock, valueConnections: Blockly.Connection[], statementConnections: Blockly.Connection[],
         elseStatementConnection: Blockly.Connection) {
         for (let i = 1; i <= this.elseifCount_; i++) {
-            valueConnections[i]?.reconnect(this, 'IF' + i);
+            this.reconnectValueConnection_(i, valueConnections);
             statementConnections[i]?.reconnect(this, 'DO' + i);
         }
         elseStatementConnection?.reconnect(this, 'ELSE');
+    },
+
+    reconnectValueConnection_: function (this: IfElseBlock, i: number, valueConnections: Blockly.Connection[]) {
+        const shadow = this.getInput('IF' + i)?.connection.targetBlock();
+
+        if (valueConnections[i]) {
+            valueConnections[i].reconnect(this, 'IF' + i);
+            // Sometimes reconnect leaves behind orphaned shadow blocks behind. If
+            // that happens, clean it up
+            if (shadow && !shadow.getParent()) {
+                shadow.dispose();
+            }
+        }
     }
 };
+
+function createShadowDom() {
+    const shadow = document.createElement("shadow");
+    shadow.setAttribute("type", "logic_boolean");
+
+    const field = document.createElement("field");
+    field.setAttribute("name", "BOOL");
+    field.textContent = "FALSE";
+
+    shadow.appendChild(field);
+    return shadow;
+}
 
 Blockly.Blocks["controls_if"] = {
     ...IF_ELSE_MIXIN,

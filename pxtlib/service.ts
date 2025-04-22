@@ -260,6 +260,7 @@ namespace ts.pxtc {
         sourceMap?: SourceInterval[];
         globalNames?: pxt.Map<SymbolInfo>;
         builtVariants?: string[];
+        fileSystem?: pxt.Map<string>;
     }
 
     export interface Breakpoint extends LocationInfo {
@@ -481,7 +482,7 @@ namespace ts.pxtc {
                     combinedProperties: []
                 }
                 ex.attributes.block =
-                    isGet ? U.lf("%{0} %property", paramName) :
+                    isGet ? `%${paramName} %property`:
                         isSet ? U.lf("set %{0} %property to %{1}", paramName, paramValue) :
                             U.lf("change %{0} %property by %{1}", paramName, paramValue)
                 updateBlockDef(ex.attributes)
@@ -509,22 +510,22 @@ namespace ts.pxtc {
             if (s.attributes.shim === "ENUM_GET" && s.attributes.enumName && s.attributes.blockId) {
                 let didFail = false;
                 if (enumsByName[s.attributes.enumName]) {
-                    console.warn(`Enum block ${s.attributes.blockId} trying to overwrite enum ${s.attributes.enumName}`);
+                    pxt.warn(`Enum block ${s.attributes.blockId} trying to overwrite enum ${s.attributes.enumName}`);
                     didFail = true;
                 }
 
                 if (!s.attributes.enumMemberName) {
-                    console.warn(`Enum block ${s.attributes.blockId} should specify enumMemberName`);
+                    pxt.warn(`Enum block ${s.attributes.blockId} should specify enumMemberName`);
                     didFail = true;
                 }
 
                 if (!s.attributes.enumPromptHint) {
-                    console.warn(`Enum block ${s.attributes.blockId} should specify enumPromptHint`);
+                    pxt.warn(`Enum block ${s.attributes.blockId} should specify enumPromptHint`);
                     didFail = true;
                 }
 
                 if (!s.attributes.enumInitialMembers || !s.attributes.enumInitialMembers.length) {
-                    console.warn(`Enum block ${s.attributes.blockId} should specify enumInitialMembers`);
+                    pxt.warn(`Enum block ${s.attributes.blockId} should specify enumInitialMembers`);
                     didFail = true;
                 }
 
@@ -550,7 +551,7 @@ namespace ts.pxtc {
                 const kindNamespace = s.attributes.kindNamespace || s.attributes.blockNamespace || s.namespace;
 
                 if (kindsByName[kindNamespace]) {
-                    console.warn(`More than one block defined for kind ${kindNamespace}`);
+                    pxt.warn(`More than one block defined for kind ${kindNamespace}`);
                     continue;
                 }
 
@@ -834,7 +835,7 @@ namespace ts.pxtc {
         return r;
     }
 
-    const numberAttributes = ["weight", "imageLiteral", "topblockWeight", "inlineInputModeLimit"]
+    const numberAttributes = ["weight", "imageLiteral", "gridLiteral", "topblockWeight", "inlineInputModeLimit"]
     const booleanAttributes = [
         "advanced",
         "handlerStatement",
@@ -1339,7 +1340,7 @@ namespace ts.pxtc {
             }
         }
 
-        //console.log(hexDump(buf), blk)
+        //pxt.log(hexDump(buf), blk)
 
         return blk
     }
@@ -1540,7 +1541,7 @@ namespace ts.pxtc {
         }
 
         export function readBytesFromFile(f: BlockFile, addr: number, length: number): Uint8Array {
-            //console.log(`read @${addr} len=${length}`)
+            //pxt.log(`read @${addr} len=${length}`)
             let needAddr = addr >> 8
             let bl: Uint8Array
             if (needAddr == f.currPtr)

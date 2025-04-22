@@ -496,6 +496,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
     }
 
     const categoryNames = getCategoryNames();
+    const showImportFile = pxt.BrowserUtils.hasFileAccess();
 
     return (
         <Modal
@@ -577,16 +578,18 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                                 }
                             </div>
                         }
-                        <div className="import-button">
-                            <Button
-                                ariaLabel={(lf("Open file from your computer"))}
-                                title={(lf("Import File"))}
-                                label={(lf("Import File"))}
-                                leftIcon="fas fa-upload"
-                                className="gray"
-                                onClick={importExtension}
-                            />
-                        </div>
+                        {showImportFile &&
+                            <div className="import-button">
+                                <Button
+                                    ariaLabel={(lf("Open file from your computer"))}
+                                    title={(lf("Import File"))}
+                                    label={(lf("Import File"))}
+                                    leftIcon="fas fa-upload"
+                                    className="neutral"
+                                    onClick={importExtension}
+                                />
+                            </div>
+                        }
                     </div>
                     {displayMode == ExtensionView.Search &&
                         <>

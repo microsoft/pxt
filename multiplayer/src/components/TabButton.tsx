@@ -17,7 +17,9 @@ export default function Render(props: {
             <div
                 className={"tw-mx-1 tw-border-b-2 tw-rounded-sm tw-ease-linear tw-duration-[75ms]"}
                 style={{
-                    borderColor: props.selected ? "var(--primary-color)" : "transparent",
+                    borderColor: props.selected
+                        ? "var(--pxt-primary-background)"
+                        : "transparent",
                 }}
             ></div>
         </div>

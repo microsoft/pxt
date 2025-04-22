@@ -115,6 +115,7 @@ export class FieldSlider extends Blockly.FieldNumber {
 
         Blockly.DropDownDiv.hideWithoutAnimation();
         Blockly.DropDownDiv.clearContent();
+        Blockly.DropDownDiv.getContentDiv().style.height = "";
 
         const contentDiv = Blockly.DropDownDiv.getContentDiv();
 
@@ -175,10 +176,30 @@ export class FieldSlider extends Blockly.FieldNumber {
 
     protected createSlider() {
         const slider = document.createElement("input");
+        slider.setAttribute('class', 'blocklyFieldSlider');
         slider.type = "range";
         slider.min = this.getMin() + "";
         slider.max = this.getMax() + "";
         slider.value = this.getValue() + "";
+
+        let color: string;
+
+        if (this.sourceBlock_ instanceof Blockly.BlockSvg) {
+            // If the block color is white, grab from the parent block instead
+            if (this.sourceBlock_.getColour() === "#ffffff") {
+                if (this.sourceBlock_.getParent()) {
+                    color = this.sourceBlock_.getParent().getColourTertiary();
+                }
+            }
+            else {
+                color = this.sourceBlock_.getColourTertiary();
+            }
+        }
+
+        if (color) {
+            slider.setAttribute("style", `--blocklyFieldSliderBackgroundColor: ${color}`);
+        }
+
         if (!Number.isNaN(this.step_)) {
             slider.step = this.step_ + "";
         }
@@ -212,6 +233,9 @@ export class FieldSlider extends Blockly.FieldNumber {
 Blockly.fieldRegistry.register('field_slider', FieldSlider);
 
 Blockly.Css.register(`
+:root {
+    --blocklyFieldSliderBackgroundColor: #547AB2;
+}
 .blocklyFieldSliderLabel {
     font-family: "Helvetica Neue", "Segoe UI", Helvetica, sans-serif;
     font-size: 0.65rem;
@@ -225,14 +249,14 @@ Blockly.Css.register(`
     margin-left: 10px;
 }
 
-input[type=range] {
+input[type=range].blocklyFieldSlider {
     -webkit-appearance: none;
     width: 100%;
 }
-input[type=range]:focus {
+input[type=range].blocklyFieldSlider:focus {
     outline: none;
 }
-input[type=range]::-webkit-slider-runnable-track {
+input[type=range].blocklyFieldSlider::-webkit-slider-runnable-track {
     -webkit-appearance: none;
     margin: 8px;
     height: 22px;
@@ -240,9 +264,9 @@ input[type=range]::-webkit-slider-runnable-track {
     outline: none;
     border-radius: 11px;
     margin-bottom: 20px;
-    background: #547AB2;
+    background: var(--blocklyFieldSliderBackgroundColor);
 }
-input[type=range]::-webkit-slider-thumb {
+input[type=range].blocklyFieldSlider::-webkit-slider-thumb {
     -webkit-appearance: none;
     width: 26px;
     height: 26px;
@@ -254,7 +278,7 @@ input[type=range]::-webkit-slider-thumb {
     box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.15);
     cursor: pointer;
 }
-input[type=range]::-moz-range-track {
+input[type=range].blocklyFieldSlider::-moz-range-track {
     margin: 8px;
     height: 22px;
     width: 95%;
@@ -263,7 +287,7 @@ input[type=range]::-moz-range-track {
     margin-bottom: 20px;
     background: #547AB2;
 }
-input[type=range]::-moz-range-thumb {
+input[type=range].blocklyFieldSlider::-moz-range-thumb {
     width: 26px;
     height: 26px;
     margin-top: -1px;

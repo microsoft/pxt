@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-for-in-array */
+import * as nodeutil from './nodeutil';
 
 const MaxColumns = 100;
 const argRegex = /^(-+)?(.+)$/;
@@ -11,8 +12,9 @@ export interface CommandFlag {
     argument?: string;
     type?: FlagType;
     aliases?: string[];
-    possibleValues?: string[];
+    possibleValues?: (string | RegExp)[];
     deprecated?: boolean;
+    hidden?: boolean;
 
 }
 
@@ -108,7 +110,9 @@ export class CommandParser {
                 const debugFlag = flagName || match[2];
                 if (debugFlag == "debug" || debugFlag == "d" || debugFlag == "dbg") {
                     pxt.options.debug = true;
-                    pxt.debug = console.log;
+                    if (pxt.options.debug) {
+                        pxt.setLogLevel(pxt.LogLevel.Debug);
+                    }
                     pxt.log(`debug mode`);
                     if (!flagName)
                         continue;
@@ -127,7 +131,7 @@ export class CommandParser {
                 }
             }
             else if (currentFlag) {
-                if (currentFlagDef.possibleValues && currentFlagDef.possibleValues.length && currentFlagDef.possibleValues.indexOf(match[2]) === -1) {
+                if (currentFlagDef.possibleValues && currentFlagDef.possibleValues.length && !nodeutil.matchesAny(match[2], currentFlagDef.possibleValues)) {
                     pxt.U.userError(`Unknown value for flag '${currentFlag}', '${match[2]}'`);
                 }
 
@@ -197,8 +201,10 @@ export class CommandParser {
         if (c.flags) {
             for (const flag in c.flags) {
                 const def = c.flags[flag];
+                if (def.hidden) continue;
+
                 if (def.possibleValues && def.possibleValues.length) {
-                    usage += ` [${dash(flag)} ${def.possibleValues.join("|")}]`
+                    usage += ` [${dash(flag)} ${def.possibleValues.map(v => v.toString()).join("|")}]`
                 }
                 else if (def.argument) {
                     usage += ` [${dash(flag)} ${def.argument}]`
@@ -227,7 +233,7 @@ export class CommandParser {
         let maxWidth = 0;
         for (const flag in c.flags) {
             const def = c.flags[flag];
-            if (def.deprecated) continue;
+            if (def.deprecated || def.hidden) continue;
             let usage = dash(flag);
             if (def.aliases && def.aliases.length) {
                 usage += " " + def.aliases.map(dash).join(" ");
@@ -235,7 +241,7 @@ export class CommandParser {
 
             if (def.argument) {
                 if (def.possibleValues && def.possibleValues.length) {
-                    usage += ` <${def.possibleValues.join("|")}>`;
+                    usage += ` <${def.possibleValues.map(v => v.toString()).join("|")}>`;
                 }
                 else {
                     usage += def.type && def.type === "number" ? " <number>" : " <value>"

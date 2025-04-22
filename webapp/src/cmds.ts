@@ -12,6 +12,8 @@ import * as pxtblockly from "../../pxtblocks";
 
 import ExtensionResult = pxt.editor.ExtensionResult;
 import NativeHostMessage = pxt.editor.NativeHostMessage;
+import { setEditorExtensionExperiments } from "../../pxteditor/experiments";
+import { registerMonacoFieldEditor } from "../../pxteditor";
 
 
 function log(msg: string) {
@@ -135,6 +137,33 @@ function showUploadInstructionsAsync(
     }).then(() => { });
 }
 
+export function showReconnectDeviceInstructionsAsync(
+    confirmAsync: (options: core.PromptOptions) => Promise<number>
+): Promise<void> {
+    const boardName = pxt.appTarget.appTheme.boardName || lf("device");
+    const helpUrl = pxt.appTarget.appTheme.usbDocs;
+    const jsx = webusb.renderDisconnectDeviceDialog();
+    return confirmAsync({
+        header: lf("{0} Connection failed...", boardName),
+        jsx,
+        hasCloseIcon: true,
+        hideAgree: true,
+        helpUrl,
+        bigHelpButton: true,
+        className: 'downloaddialog',
+        buttons: [
+            {
+                label: lf("Done"),
+                className: "primary",
+                onclick: () => {
+                    pxt.tickEvent('downloaddialog.done')
+                    core.hideDialog();
+                }
+            },
+        ]
+    }).then(() => { });
+}
+
 export function nativeHostPostMessageFunction(): (msg: NativeHostMessage) => void {
     const webkit = (<any>window).webkit;
     if (webkit
@@ -145,6 +174,9 @@ export function nativeHostPostMessageFunction(): (msg: NativeHostMessage) => voi
     const android = (<any>window).android;
     if (android && android.postMessage)
         return msg => android.postMessage(JSON.stringify(msg));
+    if (pxt.shell.getControllerMode() === pxt.shell.ControllerMode.App) {
+        return msg => window.parent.postMessage(msg, "*");
+    }
     return undefined;
 }
 
@@ -258,6 +290,9 @@ export async function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.comma
             // device is locked or used by another tab
             pxt.tickEvent("hid.flash.devicelocked");
             log(`error: device locked`);
+        } else if (e.type == "inittimeout") {
+            pxt.tickEvent("hid.flash.inittimeout");
+            await showReconnectDeviceInstructionsAsync(core.confirmAsync);
         } else {
             pxt.tickEvent("hid.flash.error");
             log(`hid error ${e.message}`)
@@ -356,9 +391,62 @@ function applyExtensionResult() {
         log(`extension tutorial completed`);
         pxt.commands.onTutorialCompleted = res.onTutorialCompleted;
     }
+    if (res.onPostHostMessage) {
+        log(`extension post host message`);
+        pxt.commands.onPostHostMessage = res.onPostHostMessage;
+    }
+    if (res.onPerfMilestone) {
+        log(`extension perf milestone`);
+        pxt.commands.onPerfMilestone = res.onPerfMilestone;
+    }
+    if (res.onPerfMeasurement) {
+        log(`extension perf measurement`);
+        pxt.commands.onPerfMeasurement = res.onPerfMeasurement;
+    }
     if (res.showProgramTooLargeErrorAsync) {
         log(`extension showProgramTooLargeErrorAsync`);
         pxt.commands.showProgramTooLargeErrorAsync = res.showProgramTooLargeErrorAsync;
+    }
+    if (res.getDefaultProjectName) {
+        log(`extension getDefaultProjectName`);
+        pxt.commands.getDefaultProjectName = res.getDefaultProjectName;
+    }
+    if (res.getDownloadMenuItems) {
+        log(`extension getDownloadMenuItems`);
+        pxt.commands.getDownloadMenuItems = res.getDownloadMenuItems;
+    }
+    if (res.notifyProjectSaved) {
+        log(`extension notifyProjectSaved`);
+        pxt.commands.notifyProjectSaved = res.notifyProjectSaved;
+    }
+    if (res.notifyProjectCompiled) {
+        log(`extension notifyProjectCompiled`);
+        pxt.commands.notifyProjectCompiled = res.notifyProjectCompiled;
+    }
+    if (res.onDownloadButtonClick) {
+        log(`extension onDownloadButtonClick`);
+        pxt.commands.onDownloadButtonClick = res.onDownloadButtonClick;
+    }
+
+    if (res.initAsync) {
+        res.initAsync({
+            confirmAsync: core.confirmAsync,
+            infoNotification: core.infoNotification,
+            warningNotification: core.warningNotification,
+            errorNotification: core.errorNotification,
+        });
+    }
+    if (res.onMarkdownActivityLoad) {
+        log(`extension onMarkdownActivityLoad`);
+        pxt.commands.onMarkdownActivityLoad = res.onMarkdownActivityLoad;
+    }
+    if (res.experiments) {
+        setEditorExtensionExperiments(res.experiments);
+    }
+    if (res.monacoFieldEditors) {
+        for (const def of res.monacoFieldEditors) {
+            registerMonacoFieldEditor(def.id, def);
+        }
     }
 }
 
@@ -394,7 +482,7 @@ export async function initAsync() {
     // check if webUSB is available and usable
     if ((pxt.appTarget?.compile?.isNative || pxt.appTarget?.compile?.hasHex) && !pxt.BrowserUtils.isPxtElectron()) {
         // TODO: WebUSB is currently disabled in electron app, but should be supported.
-        if (pxt.usb.isAvailable() && pxt.appTarget?.compile?.webUSB) {
+        if (pxt.shell.getControllerMode() !== pxt.shell.ControllerMode.App && pxt.usb.isAvailable() && pxt.appTarget?.compile?.webUSB) {
             log(`enabled webusb`);
             pxt.usb.setEnabled(true);
             pxt.packetio.mkPacketIOAsync = pxt.usb.mkWebUSBHIDPacketIOAsync;
@@ -422,6 +510,7 @@ export async function initAsync() {
         log(`deploy: electron`);
         pxt.commands.deployCoreAsync = electron.driveDeployAsync;
         pxt.commands.electronDeployAsync = electron.driveDeployAsync;
+        pxt.commands.electronFileDeployAsync = electron.deployFilesAsync;
     } else if (webUSBSupported) {
         log(`deploy: webusb`);
         pxt.commands.deployCoreAsync = hidDeployCoreAsync;
@@ -458,8 +547,12 @@ export async function maybeReconnectAsync(pairIfDeviceNotFound = false, skipIfCo
                 await wrapper.reconnectAsync();
                 return true;
             } catch (e) {
-                if (e.type == "devicenotfound")
+                if (e.type == "devicenotfound") {
                     return !!pairIfDeviceNotFound && pairAsync();
+                } else if (e.type == "inittimeout") {
+                    pxt.tickEvent("hid.flash.inittimeout");
+                    await showReconnectDeviceInstructionsAsync(core.confirmAsync);
+                }
                 throw e;
             }
         } finally {

@@ -3,10 +3,16 @@
 import { runValidatorPlan } from "./code-validation/runValidatorPlan";
 import IProjectView = pxt.editor.IProjectView;
 
+import { IFrameEmbeddedClient } from "../pxtservices/iframeEmbeddedClient";
+import { saveProjectAsync } from "./projectImport";
+
 const pendingRequests: pxt.Map<{
     resolve: (res?: pxt.editor.EditorMessageResponse | PromiseLike<pxt.editor.EditorMessageResponse>) => void;
     reject: (err: any) => void;
 }> = {};
+
+let iframeClient: IFrameEmbeddedClient;
+
 /**
  * Binds incoming window messages to the project view.
  * Requires the "allowParentController" flag in the pxtarget.json/appTheme object.
@@ -17,14 +23,13 @@ const pendingRequests: pxt.Map<{
  * Some commands may be async, use the ``id`` field to correlate to the original request.
  */
 export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) {
-    const allowEditorMessages = (pxt.appTarget.appTheme.allowParentController || pxt.shell.isControllerMode())
-        && pxt.BrowserUtils.isIFrame();
+    const allowEditorMessages = pxt.appTarget.appTheme.allowParentController || pxt.shell.isControllerMode();
     const allowExtensionMessages = pxt.appTarget.appTheme.allowPackageExtensions;
     const allowSimTelemetry = pxt.appTarget.appTheme.allowSimulatorTelemetry;
 
     if (!allowEditorMessages && !allowExtensionMessages && !allowSimTelemetry) return;
 
-    window.addEventListener("message", (msg: MessageEvent) => {
+    const handleMessage = (msg: MessageEvent) => {
         const data = msg.data as pxt.editor.EditorMessage;
         if (!data || !/^pxt(host|editor|pkgext|sim)$/.test(data.type)) return false;
 
@@ -61,7 +66,7 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
                     return getEditorAsync().then(projectView => {
                         const req = data as pxt.editor.EditorMessageRequest;
                         pxt.debug(`pxteditor: ${req.action}`);
-                        switch (req.action.toLowerCase()) {
+                        switch (req.action.toLowerCase() as pxt.editor.EditorMessageRequest["action"]) {
                             case "switchjavascript": return Promise.resolve().then(() => projectView.openJavaScript());
                             case "switchpython": return Promise.resolve().then(() => projectView.openPython());
                             case "switchblocks": return Promise.resolve().then(() => projectView.openBlocks());
@@ -72,6 +77,7 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
                             case "closeflyout": return Promise.resolve().then(() => projectView.closeFlyout());
                             case "unloadproject": return Promise.resolve().then(() => projectView.unloadProjectAsync());
                             case "saveproject": return projectView.saveProjectAsync();
+                            case "compile": return projectView.compile();
                             case "redo": return Promise.resolve()
                                 .then(() => {
                                     const editor = projectView.editor;
@@ -106,6 +112,16 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
                                         filters: load.filters,
                                         searchBar: load.searchBar
                                     }));
+                            }
+                            case "importexternalproject": {
+                                const importExternal = data as pxt.editor.EditorMessageImportExternalProjectRequest
+                                return saveProjectAsync(importExternal.project)
+                                    .then(importId => {
+                                        const importUrl = location.origin + location.pathname + `#embedimport:${importId}`;
+                                        resp = {
+                                            importUrl
+                                        } as Partial<pxt.editor.EditorMessageImportExternalProjectResponse>
+                                    });
                             }
                             case "openheader": {
                                 const open = data as pxt.editor.EditorMessageOpenHeaderRequest;
@@ -154,6 +170,26 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
                                         })
                                     });
                             }
+                            case "renderxml": {
+                                const rendermsg = data as pxt.editor.EditorMessageRenderXmlRequest;
+                                return Promise.resolve()
+                                    .then(() => {
+                                        const r = projectView.renderXml(rendermsg);
+                                        return r.resultXml.then((svg: any) => {
+                                            resp = svg.xml;
+                                        })
+                                    });
+                            }
+                            case "renderbyblockid": {
+                                const rendermsg = data as pxt.editor.EditorMessageRenderByBlockIdRequest;
+                                return Promise.resolve()
+                                    .then(() => projectView.renderByBlockIdAsync(rendermsg))
+                                    .then(r => {
+                                        return r.resultXml.then((svg: any) => {
+                                            resp = svg.xml;
+                                        })
+                                    });
+                            }
                             case "runeval": {
                                 const evalmsg = data as pxt.editor.EditorMessageRunEvalRequest;
                                 const plan = evalmsg.validatorPlan;
@@ -163,7 +199,22 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
                                         const blocks = projectView.getBlocks();
                                         return runValidatorPlan(blocks, plan, planLib)})
                                     .then (results => {
-                                        resp = { result: results };
+                                        resp = results;
+                                    });
+                            }
+                            case "gettoolboxcategories": {
+                                const msg = data as pxt.editor.EditorMessageGetToolboxCategoriesRequest;
+                                return Promise.resolve()
+                                    .then(() => {
+                                        resp = projectView.getToolboxCategories(msg.advanced);
+                                    });
+                            }
+                            case "getblockastext": {
+                                const msg = data as pxt.editor.EditorMessageGetBlockAsTextRequest;
+                                return Promise.resolve()
+                                    .then(() => {
+                                        const readableName = projectView.getBlockAsText(msg.blockId);
+                                        resp = { blockAsText: readableName } as pxt.editor.EditorMessageGetBlockAsTextResponse;
                                     });
                             }
                             case "renderpython": {
@@ -247,10 +298,29 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
                             case "setlanguagerestriction": {
                                 const msg = data as pxt.editor.EditorSetLanguageRestriction;
                                 if (msg.restriction === "no-blocks") {
-                                    console.warn("no-blocks language restriction is not supported");
+                                    pxt.warn("no-blocks language restriction is not supported");
                                     throw new Error("no-blocks language restriction is not supported")
                                 }
                                 return projectView.setLanguageRestrictionAsync(msg.restriction);
+                            }
+                            case "precachetutorial": {
+                                const msg = data as pxt.editor.PrecacheTutorialRequest;
+                                const tutorialData = msg.data;
+                                const lang = msg.lang || pxt.Util.userLanguage();
+
+                                return pxt.github.db.cacheReposAsync(tutorialData)
+                                    .then(async () => {
+                                        if (typeof tutorialData.markdown === "string") {
+                                            // the markdown needs to be cached in the translation db
+                                            const db = await pxt.BrowserUtils.translationDbAsync();
+                                            await db.setAsync(lang, tutorialData.path, undefined, undefined, tutorialData.markdown);
+                                        }
+                                    });
+                            }
+                            case "setcolorthemebyid": {
+                                const msg = data as pxt.editor.EditorMessageSetColorThemeRequest;
+                                projectView.setColorThemeById(msg.colorThemeId, !!msg.savePreference);
+                                return Promise.resolve();
                             }
                         }
                         return Promise.resolve();
@@ -262,14 +332,25 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
         }
 
         return true;
-    }, false)
+    };
+
+    iframeClient = new IFrameEmbeddedClient(handleMessage);
 }
 
 /**
  * Sends analytics messages upstream to container if any
  */
+let controllerAnalyticsEnabled = false;
 export function enableControllerAnalytics() {
-    if (!pxt.appTarget.appTheme.allowParentController || !pxt.BrowserUtils.isIFrame()) return;
+    if (controllerAnalyticsEnabled) return;
+
+    const hasOnPostHostMessage = !!pxt.commands.onPostHostMessage;
+    const hasAllowParentController = pxt.appTarget.appTheme.allowParentController;
+    const isInsideIFrame = pxt.BrowserUtils.isIFrame();
+
+    if (!(hasOnPostHostMessage || (hasAllowParentController && isInsideIFrame))) {
+        return;
+    }
 
     const te = pxt.tickEvent;
     pxt.tickEvent = function (id: string, data?: pxt.Map<string | number>): void {
@@ -312,17 +393,26 @@ export function enableControllerAnalytics() {
             data
         })
     }
+
+    controllerAnalyticsEnabled = true;
 }
 
 function sendResponse(request: pxt.editor.EditorMessage, resp: any, success: boolean, error: any) {
     if (request.response) {
-        window.parent.postMessage({
+        const toSend = {
             type: request.type,
             id: request.id,
             resp,
             success,
             error
-        }, "*");
+        };
+
+        if (iframeClient) {
+            iframeClient.postMessage(toSend)
+        }
+        else {
+            window.parent.postMessage(toSend, "*");
+        }
     }
 }
 
@@ -342,7 +432,24 @@ export function postHostMessageAsync(msg: pxt.editor.EditorMessageRequest): Prom
         env.id = ts.pxtc.Util.guidGen();
         if (msg.response)
             pendingRequests[env.id] = { resolve, reject };
-        window.parent.postMessage(env, "*");
+
+        if (iframeClient) {
+            iframeClient.postMessage(env);
+        }
+        else {
+            window.parent.postMessage(env, "*");
+        }
+
+        // Post to editor extension if it wants to be notified of these messages.
+        // Note this is a one-way notification. Responses are not supported.
+        if (pxt.commands.onPostHostMessage) {
+            try {
+                pxt.commands.onPostHostMessage(env);
+            } catch (err) {
+                pxt.reportException(err);
+            }
+        }
+
         if (!msg.response)
             resolve(undefined)
     })

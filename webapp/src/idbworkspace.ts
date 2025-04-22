@@ -8,12 +8,25 @@ interface StoredText {
     _rev: string;
 };
 
+interface GitHubCacheEntry {
+    id: string;
+    package?: pxt.github.CachedPackage;
+    config?: pxt.PackageConfig;
+    cacheTime?: number;
+    version?: string;
+    etag?: string;
+}
+
 const TEXTS_TABLE = "texts";
 const HEADERS_TABLE = "headers";
 const KEYPATH = "id";
 export const SCRIPT_TABLE = "script";
 export const GITHUB_TABLE = "github";
 export const HOSTCACHE_TABLE = "hostcache";
+
+// this is the expiration time for cached latest versions of repos and
+// calls to /api/ghtutorial
+const GITHUB_TUTORIAL_CACHE_EXPIRATION_MILLIS = 60 * 60 * 1000;
 
 let _migrationPromise: Promise<void>;
 async function performMigrationsAsync() {
@@ -74,6 +87,14 @@ async function checkIfPouchDbExistsAsync() {
     return result;
 }
 
+interface MigrationEntry {
+    prefix?: string;
+    table: string;
+    id: string;
+    rev: number;
+    entry: any;
+}
+
 async function migratePouchAsync() {
     if (!await checkIfPouchDbExistsAsync()) return;
 
@@ -83,12 +104,16 @@ async function migratePouchAsync() {
     const entries = await oldDb.getAllAsync<any>(POUCH_OBJECT_STORE);
     const alreadyMigratedList = await getMigrationDbAsync();
 
+    const toMigrate: MigrationEntry[] = [];
+
     for (const entry of entries) {
-        // format is (prefix-)?tableName--id::rev
+        // format is (prefix-)?tableName--id::rev-guid
         const docId: string = entry._doc_id_rev;
 
+        if (!docId) continue;
+
         const revSeparatorIndex = docId.lastIndexOf("::");
-        const rev = docId.substring(revSeparatorIndex + 2);
+        const rev = parseInt(docId.substring(revSeparatorIndex + 2).split("-")[0]);
 
         const tableSeparatorIndex = docId.indexOf("--");
         let table = docId.substring(0, tableSeparatorIndex);
@@ -124,13 +149,38 @@ async function migratePouchAsync() {
                 prefix = prefix || getCurrentDBPrefix();
                 break;
             default:
-                console.warn("Unknown database table " + table);
+                pxt.warn("Unknown database table " + table);
                 continue;
         }
 
         if (await alreadyMigratedList.getAsync(table, migrationDbKey(prefix, id))) {
             continue;
         }
+
+        // PouchDB sometimes keeps around multiple entries for the same doc. Favor
+        // the one with the highest revision number
+        const existing = toMigrate.find(
+            m => m.id === id && m.prefix === prefix && m.table === table
+        );
+        if (existing) {
+            if (existing.rev < rev) {
+                existing.rev = rev;
+                existing.entry = entry;
+            }
+            continue;
+        }
+
+        toMigrate.push({
+            id,
+            table,
+            prefix,
+            rev,
+            entry,
+        });
+    }
+
+    for (const m of toMigrate) {
+        const { prefix, table, id, entry } = m;
 
         await alreadyMigratedList.setAsync(table, { id: migrationDbKey(prefix, id) });
 
@@ -154,36 +204,57 @@ async function migrateOldIndexedDbAsync() {
         await pxt.BrowserUtils.clearTutorialInfoDbAsync();
     });
 
+    const previousDbPrefix = "legacy";
+    const currentDbPrefix = getCurrentDBPrefix() || "default";
+
     try {
         await legacyDb.openAsync();
         const currentDb = await getCurrentDbAsync();
 
-        await copyTableEntriesAsync(legacyDb, currentDb, HEADERS_TABLE, true);
-        await copyTableEntriesAsync(legacyDb, currentDb, TEXTS_TABLE, true);
+        await copyTableEntriesAsync(legacyDb, currentDb, HEADERS_TABLE, true, previousDbPrefix, currentDbPrefix);
+        await copyTableEntriesAsync(legacyDb, currentDb, TEXTS_TABLE, true, previousDbPrefix, currentDbPrefix);
     } catch (e) {
         pxt.reportException(e);
     }
 }
 
 async function migratePrefixesAsync() {
-    if (!getCurrentDBPrefix()) return;
+    const currentDbPrefix = getCurrentDBPrefix();
+    if (!currentDbPrefix) return;
 
     const currentVersion = pxt.semver.parse(pxt.appTarget.versions.target);
     const currentMajor = currentVersion.major;
     const previousMajor = currentMajor - 1;
     const previousDbPrefix = previousMajor < 0 ? "" : pxt.appTarget.appTheme.browserDbPrefixes[previousMajor];
     const currentDb = await getCurrentDbAsync();
+    const migrationDb = await getMigrationDbAsync();
+    const dummyEntryKey = migrationDbPrefixUpgradeKey(previousDbPrefix, currentDbPrefix, "dummy");
 
     // If headers are already in the new db, migration must have already happened
-    if ((await currentDb.getAllAsync(HEADERS_TABLE)).length) return;
+    if ((await currentDb.getAllAsync(HEADERS_TABLE)).length) {
+        // Check to see if we've populated the migration db. This only applies to older clients
+        // from before we started tracking prefix upgrades in the migration db. Populating this db
+        // should be a one-time operation and is necessary to ensure that reset works correctly
+        // in browsers that loaded the page sometime before the migration fix was released.
+        if (await migrationDb.getAsync(HEADERS_TABLE, dummyEntryKey)) return;
 
-    const prevDb = await getDbAsync(previousDbPrefix);
+        const prevDb = await getDbAsync(previousDbPrefix);
+        await populatePrefixMigrationDb(prevDb, currentDb, HEADERS_TABLE, previousDbPrefix, currentDbPrefix);
+        await populatePrefixMigrationDb(prevDb, currentDb, TEXTS_TABLE, previousDbPrefix, currentDbPrefix);
+    }
+    else {
+        // Copy everything over to the current db
+        const prevDb = await getDbAsync(previousDbPrefix);
 
-    await copyTableEntriesAsync(prevDb, currentDb, HEADERS_TABLE, false);
-    await copyTableEntriesAsync(prevDb, currentDb, TEXTS_TABLE, false);
-    await copyTableEntriesAsync(prevDb, currentDb, SCRIPT_TABLE, false);
-    await copyTableEntriesAsync(prevDb, currentDb, HOSTCACHE_TABLE, false);
-    await copyTableEntriesAsync(prevDb, currentDb, GITHUB_TABLE, false);
+        await copyTableEntriesAsync(prevDb, currentDb, HEADERS_TABLE, false, previousDbPrefix, currentDbPrefix);
+        await copyTableEntriesAsync(prevDb, currentDb, TEXTS_TABLE, false, previousDbPrefix, currentDbPrefix);
+        await copyTableEntriesAsync(prevDb, currentDb, SCRIPT_TABLE, false, previousDbPrefix, currentDbPrefix);
+        await copyTableEntriesAsync(prevDb, currentDb, HOSTCACHE_TABLE, false, previousDbPrefix, currentDbPrefix);
+        await copyTableEntriesAsync(prevDb, currentDb, GITHUB_TABLE, false, previousDbPrefix, currentDbPrefix);
+    }
+
+    // Stick a dummy marker in the migration db to indicate that we did migrate everything
+    await migrationDb.setAsync(HEADERS_TABLE, { id: dummyEntryKey });
 }
 
 let _dbPromises: pxt.Map<Promise<pxt.BrowserUtils.IDBWrapper>> = {};
@@ -219,12 +290,36 @@ async function getDbAsync(prefix = "__default") {
     }
 }
 
-async function copyTableEntriesAsync(fromDb: pxt.BrowserUtils.IDBWrapper, toDb: pxt.BrowserUtils.IDBWrapper, storeName: string, dontOverwrite: boolean) {
+async function copyTableEntriesAsync(fromDb: pxt.BrowserUtils.IDBWrapper, toDb: pxt.BrowserUtils.IDBWrapper, storeName: string, dontOverwrite: boolean, fromPrefix: string, toPrefix: string) {
+    const migrationDb = await getMigrationDbAsync();
+
     for (const entry of await fromDb.getAllAsync<any>(storeName)) {
+        const key = migrationDbPrefixUpgradeKey(fromPrefix, toPrefix, entry.id);
+        if (await migrationDb.getAsync(storeName, key)) continue;
+
         const existing = dontOverwrite && !!(await toDb.getAsync(storeName, entry.id));
 
         if (!existing) {
             await toDb.setAsync(storeName, entry);
+            await migrationDb.setAsync(storeName, {
+                id: key
+            });
+        }
+    }
+}
+
+async function populatePrefixMigrationDb(fromDb: pxt.BrowserUtils.IDBWrapper, toDb: pxt.BrowserUtils.IDBWrapper, storeName: string, fromPrefix: string, toPrefix: string) {
+    const migrationDb = await getMigrationDbAsync();
+
+    for (const entry of await fromDb.getAllAsync<any>(storeName)) {
+        const key = migrationDbPrefixUpgradeKey(fromPrefix, toPrefix, entry.id);
+        if (await migrationDb.getAsync(storeName, key)) continue;
+
+        // If this header id was actually migrated, add an entry for it in the migration db
+        if (await toDb.getAsync(storeName, entry.id)) {
+            await migrationDb.setAsync(storeName, {
+                id: key
+            });
         }
     }
 }
@@ -250,6 +345,7 @@ async function listAsync(): Promise<pxt.workspace.Header[]> {
 async function getAsync(h: Header): Promise<pxt.workspace.File> {
     const db = await getCurrentDbAsync();
     const res = await db.getAsync<StoredText>(TEXTS_TABLE, h.id);
+    if (!res) return undefined;
     return {
         header: h,
         text: res.files,
@@ -313,6 +409,9 @@ async function resetAsync(): Promise<void> {
     const db = await getCurrentDbAsync();
     await db.deleteAllAsync(TEXTS_TABLE);
     await db.deleteAllAsync(HEADERS_TABLE);
+    await db.deleteAllAsync(SCRIPT_TABLE);
+    await db.deleteAllAsync(HOSTCACHE_TABLE);
+    await db.deleteAllAsync(GITHUB_TABLE);
 }
 
 export async function getObjectStoreAsync<T>(storeName: string) {
@@ -361,16 +460,37 @@ export function initGitHubDb() {
         // in memory cache
         private mem = new pxt.github.MemoryGithubDb();
 
-        latestVersionAsync(repopath: string, config: pxt.PackagesConfig): Promise<string> {
-            return this.mem.latestVersionAsync(repopath, config)
+        async latestVersionAsync(repopath: string, config: pxt.PackagesConfig): Promise<string> {
+            repopath = repopath.toLowerCase();
+
+            const cache = await getGitHubCacheAsync();
+
+            const id = this.latestVersionCacheKey(repopath);
+
+            try {
+                const entry = await cache.getAsync(id);
+
+                if (entry && Date.now() - entry.cacheTime < GITHUB_TUTORIAL_CACHE_EXPIRATION_MILLIS) {
+                    return entry.version;
+                }
+            }
+            catch (e) {
+            }
+
+            const version = await this.mem.latestVersionAsync(repopath, config);
+
+            await this.cacheLatestVersionAsync(cache, repopath, version);
+
+            return version;
         }
 
         async loadConfigAsync(repopath: string, tag: string): Promise<pxt.PackageConfig> {
+            repopath = repopath.toLowerCase()
             // don't cache master
             if (tag == "master")
                 return this.mem.loadConfigAsync(repopath, tag);
 
-            const id = `config-${repopath}-${tag}`;
+            const id =  this.configCacheKey(repopath, tag);
 
             const cache = await getGitHubCacheAsync();
 
@@ -382,20 +502,14 @@ export function initGitHubDb() {
                 pxt.debug(`github offline cache miss ${id}`);
                 const config = await this.mem.loadConfigAsync(repopath, tag);
 
-                try {
-                    await cache.setAsync({
-                        id,
-                        config
-                    })
-                }
-                catch (e) {
-                }
+                await this.cachePackageConfigAsync(cache, repopath, tag, config);
 
                 return config;
             }
         }
 
         async loadPackageAsync(repopath: string, tag: string): Promise<pxt.github.CachedPackage> {
+            repopath = repopath.toLowerCase()
             if (!tag) {
               pxt.debug(`dep: default to master`)
               tag = "master"
@@ -404,7 +518,7 @@ export function initGitHubDb() {
             if (tag == "master")
                 return this.mem.loadPackageAsync(repopath, tag);
 
-            const id = `pkg-${repopath}-${tag}`;
+            const id = this.packageCacheKey(repopath, tag);
             const cache = await getGitHubCacheAsync();
 
             try {
@@ -416,34 +530,248 @@ export function initGitHubDb() {
                 pxt.debug(`github offline cache miss ${id}`);
                 const p = await this.mem.loadPackageAsync(repopath, tag);
 
-                try {
-                    await cache.setAsync({
-                        id,
-                        package: p
-                    })
-                }
-                catch (e) {
-                }
+                await this.cachePackageAsync(cache, repopath, tag, p);
 
                 return p;
+            }
+        }
+
+        async loadTutorialMarkdown(repopath: string, tag?: string) {
+            repopath = pxt.github.normalizeTutorialPath(repopath);
+
+            const cache = await getGitHubCacheAsync();
+
+            const id = this.tutorialCacheKey(repopath, tag);
+
+            const existing = await cache.getAsync(id);
+
+            const readFromCache = async () => {
+                const elements = repopath.split("/");
+                const repo = elements[0] + "/" + elements[1]
+
+                // everything should be in the cache already, so the latest version
+                // and load package calls should hit the DB rather than the network
+                tag = tag || await this.latestVersionAsync(repo, await pxt.packagesConfigAsync());
+
+                return this.loadPackageAsync(repo, tag);
+            }
+
+            if (existing && !isExpired(existing)) {
+                // don't bother hitting the network if we are within the expiration time
+                return readFromCache();
+            }
+
+            const tutorialResponse = await pxt.github.downloadMarkdownTutorialInfoAsync(repopath, tag, undefined, existing?.etag);
+
+            const body = tutorialResponse.resp;
+
+            // etag matched, so our cache should be up to date
+            if (!body) {
+                // update the cached entry
+                try {
+                    await cache.setAsync({
+                        ...existing,
+                        cacheTime: Date.now()
+                    });
+                }
+                catch (e) {
+                    // ignore
+                }
+                return readFromCache();
+            }
+
+            const repo = body.markdown as { filename: string, repo: pxt.github.GHTutorialRepoInfo };
+            pxt.Util.assert(typeof repo === "object");
+
+            // fill up the cache with all of the files, versions, and configs contained in this response
+            await this.cacheReposAsync(body, tutorialResponse.etag);
+
+            return repo.repo;
+        }
+
+        async cacheReposAsync(resp: pxt.github.GHTutorialResponse, etag?: string) {
+            if (typeof resp.markdown === "object") {
+                const repoInfo = resp.markdown.repo;
+
+                const repopath = getRepoPath(repoInfo) + "/" + resp.markdown.filename.replace(".md", "");
+
+                // add a marker to the cache to make sure we don't hit the network again
+                const cache = await getGitHubCacheAsync();
+                await this.cacheTutorialResponseAsync(cache, repopath, repoInfo.version, etag);
+
+                // if this is the latest version of the repo, we can also cache this for
+                // tutorials where the tag is not explicitly set
+                if (repoInfo.version && repoInfo.latestVersion === repoInfo.version) {
+                    await this.cacheTutorialResponseAsync(cache, repopath, undefined, etag);
+                }
+
+                await this.cacheRepoAsync(repoInfo);
+            }
+            for (const dep of resp.dependencies) {
+                await this.cacheRepoAsync(dep);
+            }
+        }
+
+        private async cacheRepoAsync(repo: pxt.github.GHTutorialRepoInfo) {
+            const repopath = getRepoPath(repo);
+
+            if (await isRepoBannedAsync(repopath, repo.version)) {
+                return;
+            }
+
+            const cache = await getGitHubCacheAsync();
+
+            // cache the latest version of the repo so that we don't re-fetch it later
+            if (repo.latestVersion) {
+                await this.cacheLatestVersionAsync(cache, repopath, repo.latestVersion);
+            }
+
+            // if this download is tied to a version, also cache the files and config
+            if (repo.version) {
+                await this.cachePackageAsync(cache, repopath, repo.version, { files: repo.files });
+
+                if (repo.files[pxt.CONFIG_NAME]) {
+                    const config = pxt.Package.parseAndValidConfig(repo.files[pxt.CONFIG_NAME]);
+                    await this.cachePackageConfigAsync(cache, repopath, repo.version, config);
+                }
+            }
+        }
+
+        private configCacheKey(repopath: string, tag?: string) {
+            return `config-${repopath.toLowerCase()}-${tag}`;
+        }
+
+        private packageCacheKey(repopath: string, tag?: string) {
+            return `pkg-${repopath.toLowerCase()}-${tag}`;
+        }
+
+        private tutorialCacheKey(repopath: string, tag?: string) {
+            return `tutorial-${repopath.toLowerCase()}-${tag}`;
+        }
+
+        private latestVersionCacheKey(repopath: string) {
+            return `version-${repopath.toLowerCase()}`;
+        }
+
+        private async cacheLatestVersionAsync(cache: pxt.BrowserUtils.IDBObjectStoreWrapper<GitHubCacheEntry>, repopath: string, version: string) {
+            const id = this.latestVersionCacheKey(repopath);
+
+            try {
+                await cache.setAsync({
+                    id,
+                    version,
+                    cacheTime: Date.now()
+                })
+            }
+            catch (e) {
+                // ignore cache failures
+                pxt.debug("Failed to cache latest version for " + repopath);
+            }
+        }
+
+        private async cachePackageConfigAsync(cache: pxt.BrowserUtils.IDBObjectStoreWrapper<GitHubCacheEntry>, repopath: string, tag: string, config: pxt.PackageConfig) {
+            const id = this.configCacheKey(repopath, tag);
+
+            try {
+                await cache.setAsync({
+                    id,
+                    config,
+                    cacheTime: Date.now()
+                })
+            }
+            catch (e) {
+                // ignore cache failures
+                pxt.debug(`Failed to cache config for ${repopath}#${tag}`);
+            }
+        }
+
+        private async cachePackageAsync(cache: pxt.BrowserUtils.IDBObjectStoreWrapper<GitHubCacheEntry>, repopath: string, tag: string, cachedPackage: pxt.github.CachedPackage) {
+            const id = this.packageCacheKey(repopath, tag);
+
+            try {
+                await cache.setAsync({
+                    id,
+                    package: cachedPackage,
+                    cacheTime: Date.now()
+                })
+            }
+            catch (e) {
+                // ignore cache failures
+                pxt.debug(`Failed to cache files for ${repopath}#${tag}`);
+            }
+        }
+
+        private async cacheTutorialResponseAsync(cache: pxt.BrowserUtils.IDBObjectStoreWrapper<GitHubCacheEntry>, repopath: string, tag?: string, etag?: string) {
+            const id = this.tutorialCacheKey(repopath, tag);
+
+            try {
+                await cache.setAsync({
+                    id,
+                    cacheTime: Date.now(),
+                    etag
+                });
+            }
+            catch (e) {
+                // ignore cache failures
+                pxt.debug("Failed to cache tutorial for " + repopath);
             }
         }
     }
 
     function getGitHubCacheAsync() {
-        return getObjectStoreAsync<{
-            id: string;
-            package?: pxt.github.CachedPackage;
-            config?: pxt.PackageConfig;
-        }>(GITHUB_TABLE)
+        return getObjectStoreAsync<GitHubCacheEntry>(GITHUB_TABLE)
     }
 
-    pxt.github.db = new GithubDb();
+    async function isRepoBannedAsync(repopath: string, tag?: string) {
+        if (tag) repopath += "#" + tag;
+
+        const parsed = pxt.github.parseRepoId(repopath);
+        const packagesConfig = await pxt.packagesConfigAsync();
+
+        return pxt.github.repoStatus(parsed, packagesConfig) === pxt.github.GitRepoStatus.Banned;
+    }
+
+    function getRepoPath(repo: pxt.github.GHTutorialRepoInfo) {
+        let repopath = repo.repo;
+
+        if (repo.subPath) {
+            repopath += "/" + repo.subPath;
+        }
+
+        return repopath.toLowerCase();
+    }
+
+    async function purgeExpiredEntriesAsync() {
+        const cache = await getGitHubCacheAsync();
+
+        const entries = await cache.getAllAsync();
+
+        const expired = entries.filter(isExpired);
+
+        if (expired.length) {
+            for (const entry of expired) {
+                await cache.deleteAsync(entry.id);
+            }
+        }
+    }
+
+    function isExpired(entry: GitHubCacheEntry) {
+        return !!entry.cacheTime && Date.now() - entry.cacheTime >= GITHUB_TUTORIAL_CACHE_EXPIRATION_MILLIS;
+    }
+
+    if (!/skipgithubcache=1/i.test(window.location.href)) {
+        pxt.github.db = new GithubDb();
+        /* await */ purgeExpiredEntriesAsync();
+    }
 }
 
 function migrationDbKey(prefix: string, id: string) {
     return `${prefix}--${id}`;
 };
+
+function migrationDbPrefixUpgradeKey(oldPrefix: string, newPrefix: string, id: string) {
+    return `${oldPrefix}--${newPrefix}--${id}`;
+}
 
 export const provider: WorkspaceProvider = {
     getAsync,

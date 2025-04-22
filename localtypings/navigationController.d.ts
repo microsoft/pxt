@@ -13,6 +13,7 @@ declare module '@blockly/keyboard-navigation' {
     class Navigation {
         resetFlyout(workspace: WorkspaceSvg, shouldHide: boolean): void;
         setState(workspace: WorkspaceSvg, state: BlocklyNavigationState): void;
+        focusFlyout(workspace: WorkspaceSvg): void;
     }
 
     type BlocklyNavigationState = "workspace" | "toolbox" | "flyout";

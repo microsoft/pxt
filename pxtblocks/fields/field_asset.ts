@@ -4,7 +4,7 @@ import * as Blockly from "blockly";
 
 import svg = pxt.svgUtil;
 import { FieldBase } from "./field_base";
-import { getTemporaryAssets, getTilesReferencedByTilesets, setMelodyEditorOpen, workspaceToScreenCoordinates, bitmapToImageURI, tilemapToImageURI, songToDataURI, setBlockDataForField } from "./field_utils";
+import { getTemporaryAssets, getTilesReferencedByTilesets, setMelodyEditorOpen, workspaceToScreenCoordinates, bitmapToImageURI, tilemapToImageURI, songToDataURI, setBlockDataForField, loadAssetFromSaveState, getAssetSaveState } from "./field_utils";
 
 export interface FieldAssetEditorOptions {
     initWidth?: string;
@@ -66,6 +66,27 @@ export abstract class FieldAssetEditor<U extends FieldAssetEditorOptions, V exte
         this.parseValueText(newValue);
         this.redrawPreview();
         return this.getValueText();
+    }
+
+    saveState(_doFullSerialization?: boolean) {
+        if (this.asset && !this.isTemporaryAsset()) {
+            return getAssetSaveState(this.asset);
+        }
+        else {
+            return super.saveState(_doFullSerialization);
+        }
+    }
+
+    loadState(state: any) {
+        if (typeof state === "string") {
+            super.loadState(state);
+            return;
+        }
+
+        const asset = loadAssetFromSaveState(state);
+        super.loadState(pxt.getTSReferenceForAsset(asset));
+        this.asset = asset;
+        this.setBlockData(this.asset.id);
     }
 
     showEditor_() {
@@ -243,7 +264,7 @@ export abstract class FieldAssetEditor<U extends FieldAssetEditorOptions, V exte
     }
 
     protected onFieldEditorHide(fv: pxt.react.FieldEditorView<pxt.Asset>) {
-        const result = fv.getResult();
+        let result = fv.getResult();
         const project = pxt.react.getTilemapProject();
 
         if (this.asset.type === pxt.AssetType.Song) {
@@ -254,15 +275,10 @@ export abstract class FieldAssetEditor<U extends FieldAssetEditorOptions, V exte
             const old = this.getValue();
             if (pxt.assetEquals(this.asset, result)) return;
 
-            const oldId = isTemporaryAsset(this.asset) ? null : this.asset.id;
-            let newId = isTemporaryAsset(result) ? null : result.id;
+            result = pxt.patchTemporaryAsset(this.asset, result, project);
 
-            if (!oldId && newId === this.sourceBlock_.id) {
-                // The temporary assets we create just use the block id as the id; give it something
-                // a little nicer
-                result.id = project.generateNewID(result.type);
-                newId = result.id;
-            }
+            const oldId = isTemporaryAsset(this.asset) ? null : this.asset.id;
+            const newId = isTemporaryAsset(result) ? null : result.id;
 
             this.pendingEdit = true;
 
@@ -530,6 +546,10 @@ export abstract class FieldAssetEditor<U extends FieldAssetEditorOptions, V exte
 
     protected isFullscreen() {
         return true;
+    }
+
+    protected temporaryAssetId() {
+        return this.sourceBlock_.id + "_" + this.name;
     }
 }
 

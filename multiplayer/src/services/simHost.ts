@@ -349,11 +349,12 @@ export async function simulateAsync(
         if (msg.command === "restart") {
             runOptions.storedState = getStoredState(runOpts);
             driver.run(js, runOptions);
-        }
-        if (msg.command == "setstate") {
+        } else if (msg.command === "setstate") {
             if (msg.stateKey) {
                 setStoredState(runOpts, msg.stateKey, msg.stateValue);
             }
+        } else if (msg.command === "single") {
+            driver.setSingleSimulator();
         }
     };
     if (builtSimJS.breakpoints) {

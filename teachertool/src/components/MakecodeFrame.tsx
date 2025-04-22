@@ -1,22 +1,25 @@
 /// <reference path="../../../localtypings/pxteditor.d.ts" />
 
 import css from "./styling/MakeCodeFrame.module.scss";
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { setEditorRef } from "../services/makecodeEditorService";
 import { AppStateContext } from "../state/appStateContext";
 import { getEditorUrl } from "../utils";
+import { classList } from "react-common/components/util";
+import { MakeCodeFramePlaceholder } from "./MakecodeFramePlaceholder";
 
 interface IProps {}
 
 export const MakeCodeFrame: React.FC<IProps> = () => {
     const { state: teacherTool } = useContext(AppStateContext);
+    const [frameId, setFrameId] = useState(pxt.Util.guidGen());
+    const [frameUrl, setFrameUrl] = useState("");
+    const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
-    // Clear iframe state when the iframe url is changed
     useEffect(() => {
-        if (!teacherTool.projectMetadata?.id) {
-            setEditorRef(undefined);
-        }
-    }, [teacherTool.projectMetadata?.id]);
+        const newUrl = createIFrameUrl(teacherTool.projectMetadata?.id || "");
+        setFrameUrl(newUrl);
+    }, [frameId, teacherTool.projectMetadata?.id]);
 
     function createIFrameUrl(shareId: string): string {
         const editorUrl: string = pxt.BrowserUtils.isLocalHost()
@@ -27,24 +30,45 @@ export const MakeCodeFrame: React.FC<IProps> = () => {
         if (editorUrl.charAt(editorUrl.length - 1) === "/" && !pxt.BrowserUtils.isLocalHost()) {
             url = editorUrl.substr(0, editorUrl.length - 1);
         }
-        url += `?controller=1&teachertool=1&readonly=1&ws=mem&nocookiebanner=1#pub:${shareId}`;
+        const shareSection = shareId ? `#pub:${shareId}` : "";
+
+        // check for dbg and consoletick flags and pass them through to the iframe if present.
+        let additionalFlags = "";
+        if (pxt.options.debug) {
+            additionalFlags += "&dbg=1";
+        }
+        if (pxt.analytics.consoleTicks) {
+            additionalFlags += "&consoleticks=1";
+        }
+
+        url += `?controller=1&teachertool=1&readonly=1&ws=mem&nocookiebanner=1&frameid=${frameId}${shareSection}${additionalFlags}`;
         return url;
     }
 
-    const handleIFrameRef = (el: HTMLIFrameElement | null) => {
+    function handleIFrameRef(el: HTMLIFrameElement | null) {
+        iframeRef.current = el;
         if (el) {
-            setEditorRef(el);
+            setEditorRef(el, forceIFrameReload);
         }
-    };
+    }
+
+    function forceIFrameReload() {
+        setFrameId(pxt.Util.guidGen());
+    }
 
     /* eslint-disable @microsoft/sdl/react-iframe-missing-sandbox */
-    return teacherTool.projectMetadata ? (
-        <iframe
-            className={css["makecode-frame"]}
-            src={createIFrameUrl(teacherTool.projectMetadata.id)}
-            title={"title"}
-            ref={handleIFrameRef}
-        />
-    ) : null;
+    const frameVisible = !!teacherTool.projectMetadata?.id;
+    return (
+        <>
+            <iframe
+                id="code-eval-project-view-frame"
+                className={classList(css["makecode-frame"], frameVisible ? undefined : css["invisible"])}
+                src={frameUrl}
+                title={"title"}
+                ref={handleIFrameRef}
+            />
+            {!frameVisible && <MakeCodeFramePlaceholder />}
+        </>
+    );
     /* eslint-enable @microsoft/sdl/react-iframe-missing-sandbox */
 };

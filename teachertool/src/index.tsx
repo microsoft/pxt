@@ -36,8 +36,18 @@ function enableAnalytics() {
 window.addEventListener("DOMContentLoaded", () => {
     const bundle = (window as any).pxtTargetBundle as pxt.TargetBundle;
 
-    pxt.options.debug = /dbg=1/i.test(window.location.href);
-    if (pxt.options.debug) pxt.debug = console.debug;
+    const optsQuery = pxt.Util.parseQueryString(window.location.href.toLowerCase());
+
+    pxt.options.debug = optsQuery["dbg"] == "1";
+    if (pxt.options.debug) {
+        pxt.setLogLevel(pxt.LogLevel.Debug);
+    }
+
+    if (optsQuery["consoleticks"] == "1" || optsQuery["consoleticks"] == "verbose") {
+        pxt.analytics.consoleTicks = pxt.analytics.ConsoleTickOptions.Verbose;
+    } else if (optsQuery["consoleticks"] == "2" || optsQuery["consoleticks"] == "short") {
+        pxt.analytics.consoleTicks = pxt.analytics.ConsoleTickOptions.Short;
+    }
 
     pxt.setupWebConfig((window as any).pxtConfig || pxt.webConfig);
     pxt.setAppTarget(bundle);

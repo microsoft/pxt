@@ -18,6 +18,9 @@ import * as pxtblockly from "../../pxtblocks";
 import IProjectView = pxt.editor.IProjectView;
 import UserInfo = pxt.editor.UserInfo;
 
+import { Accordion } from "../../react-common/components/controls/Accordion";
+import { Button } from "../../react-common/components/controls/Button"
+
 const MAX_COMMIT_DESCRIPTION_LENGTH = 70;
 
 interface DiffFile {
@@ -401,7 +404,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             const stags = pxt.semver.sortLatestTags(tags)
             currv = stags[0];
         } catch (e) {
-            console.log(e)
+            pxt.log(e)
         }
         const v = pxt.semver.parse(currv, "0.0.0")
         const vmajor = pxt.semver.parse(pxt.semver.stringify(v)); vmajor.major++; vmajor.minor = 0; vmajor.patch = 0;
@@ -771,31 +774,40 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                 <div className="ui serialHeader">
                     <div className="leftHeaderWrapper">
                         <div className="leftHeader">
-                            <sui.Button title={lf("Go back")} icon="arrow left" text={lf("Go back")} textClass="landscape only" tabIndex={0} onClick={this.goBack} onKeyDown={fireClickOnEnter} />
+                            <sui.Button title={lf("Go back")} icon="arrow left" className="neutral" text={lf("Go back")} textClass="landscape only" tabIndex={0} onClick={this.goBack} onKeyDown={fireClickOnEnter} />
                         </div>
                     </div>
                     <div className="rightHeader">
+                        <sui.Link className="ui button neutral" icon="external alternate" href={url} title={lf("Open repository in GitHub.")} target="_blank" onKeyDown={fireClickOnEnter} />
+                        {!isBlocksMode &&
+                            isOwner &&
+                            <sui.Link
+                                className="ui item button desktop only"
+                                icon="user plus"
+                                href={`https://github.com/${githubId.slug}/settings/collaboration`}
+                                target="_blank"
+                                onKeyDown={fireClickOnEnter}
+                                title={lf("Invite others to contribute to this GitHub repository.")}
+                            />
+                        }
                         <sui.Button icon={`${hasissue ? "exclamation circle" : haspull ? "long arrow alternate down" : "check"}`}
-                            className={haspull === true ? "positive" : ""}
+                            className={haspull === true ? "positive" : "neutral"}
                             text={lf("Pull changes")} title={lf("Pull changes from GitHub to get your code up-to-date.")} onClick={this.handlePullClick} onKeyDown={fireClickOnEnter} />
-                        {!isBlocksMode && isOwner &&
-                            <sui.Link className="ui item button desktop only" icon="user plus" href={`https://github.com/${githubId.slug}/settings/collaboration`} target="_blank" title={lf("Invite others to contributes to this GitHub repository.")} />}
-                        <sui.Link className="ui button" icon="external alternate" href={url} title={lf("Open repository in GitHub.")} target="_blank" onKeyDown={fireClickOnEnter} />
                     </div>
                 </div>
                 <MessageComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />
                 <div className="ui form">
                     {showPrResolved &&
-                        <sui.Link href={pr.url} role="button" className="ui tiny basic button create-pr"
+                        <sui.Link href={pr.url} role="button" className="ui tiny neutral button create-pr"
                             target="_blank" text={lf("Pull request (#{0})", pr.number)} icon="external alternate" />}
                     {showPrCreate &&
-                        <sui.Button className="tiny basic create-pr" text={lf("Create pull request")} onClick={this.handlePullRequest} />
+                        <sui.Button className="tiny neutral create-pr" text={lf("Create pull request")} onClick={this.handlePullRequest} />
                     }
-                    <h3 className="header">
+                    <h2 className="header">
                         <i className="large github icon" />
                         <span className="repo-name">{githubId.fullName}</span>
                         <span onClick={this.handleBranchClick} onKeyDown={fireClickOnEnter} tabIndex={0} role="button" className="repo-branch">{"#" + githubId.tag}<i className="dropdown icon" /></span>
-                    </h3>
+                    </h2>
                     {needsCommit && <CommmitComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
                     {showPrResolved && !needsCommit && <PullRequestZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
                     {diffFiles && <DiffView parent={this} diffFiles={diffFiles} cacheKey={gs.commit.sha} allowRevert={true} showWhitespaceDiff={true} blocksMode={isBlocksMode} showConflicts={true} />}
@@ -806,7 +818,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                 </div>
                 <div className="ui serialHeader">
                     <div className="rightHeader">
-                        {user && <sui.Button className="ui button" icon="fas fa-sign-out-alt" text={lf("Disconnect GitHub")} title={lf("Log out of GitHub")} onClick={this.handleSignoutGithub} onKeyDown={fireClickOnEnter} />}
+                        {user && <sui.Button className="ui button neutral" icon="fas fa-sign-out-alt" text={lf("Disconnect GitHub")} title={lf("Log out of GitHub")} onClick={this.handleSignoutGithub} onKeyDown={fireClickOnEnter} />}
                     </div>
                 </div>
             </div>
@@ -832,7 +844,7 @@ class DiffView extends sui.StatelessUIElement<DiffViewProps> {
     }
 
     private lineDiff(lineA: string, lineB: string): { a: JSX.Element, b: JSX.Element } {
-        const df = pxt.diff.compute(lineA.split("").join("\n"), lineB.split("").join("\n"), {
+        const df = pxt.diff.computeFormattedDiff(lineA.split("").join("\n"), lineB.split("").join("\n"), {
             context: Infinity
         })
         if (!df) // diff failed
@@ -893,7 +905,7 @@ class DiffView extends sui.StatelessUIElement<DiffViewProps> {
             return <div key={`difffile${cacheKey}${f.name}`} className="ui segments filediff">
                 <div className="ui segment diffheader">
                     {(!blocksMode || f.name != pxt.MAIN_BLOCKS) && <span>{f.name}</span>}
-                    {!!cache.revert && <sui.Button className="small" icon="undo" text={lf("Revert")}
+                    {!!cache.revert && <sui.Button className="small neutral" icon="undo" text={lf("Revert")}
                         ariaLabel={lf("Revert file")} title={lf("Revert file")}
                         textClass={"landscape only"} onClick={cache.revert} />}
                     {jsxEls.legendJSX}
@@ -963,7 +975,7 @@ class DiffView extends sui.StatelessUIElement<DiffViewProps> {
         let diffJSX: JSX.Element;
         if (!content) {
             // the xml payload needs to be decompiled
-            diffJSX = <div className="ui basic segment">{lf("Your blocks were updated. Go back to the editor to view the changes.")}</div>
+            diffJSX = <div className="ui neutral segment">{lf("Your blocks were updated. Go back to the editor to view the changes.")}</div>
         } else {
             // if the xml is completed reconstructed,
             // bail off to decompiled diffs
@@ -1011,7 +1023,7 @@ ${content}
             "+": "diff-added",
             "-": "diff-removed",
         }
-        const diffLines = pxt.diff.compute(baseContent, content, { ignoreWhitespace: !!ignoreWhitespace })
+        const diffLines = pxt.diff.computeFormattedDiff(baseContent, content, { ignoreWhitespace: !!ignoreWhitespace })
         if (!diffLines) {
             pxt.tickEvent("github.diff.toobig");
             return {
@@ -1146,7 +1158,7 @@ ${content}
         return diffFiles.length ? <div className="ui section">
             <div className={`ui ${invertedTheme ? "inverted " : ""} diffheader segment`}>
                 {lf("There are local changes.")}
-                {allowRevert && <sui.Button className="small" icon="undo" text={lf("Revert all")}
+                {allowRevert && <sui.Button className="small neutral" icon="undo" text={lf("Revert all")}
                     ariaLabel={lf("Revert all changes")} title={lf("Revert all changes")}
                     textClass={"landscape only"} onClick={this.revertAllFiles} />}
             </div>
@@ -1421,10 +1433,10 @@ class ReleaseZone extends sui.StatelessUIElement<GitHubViewProps> {
         const pagesBuilding = pages && pages.status == "building";
         const inverted = !!pxt.appTarget.appTheme.invertedGitHub;
         return <div className={`ui transparent ${inverted ? 'inverted' : ''} segment`}>
-            <div className="ui header">{lf("Release zone")}</div>
+            <h2 className="ui header">{lf("Release zone")}</h2>
             {!needsCommit && !tag && <div className="ui field">
                 <sui.Button
-                    className="basic"
+                    className="neutral"
                     text={lf("Create release")}
                     inverted={inverted}
                     onClick={this.handleBumpClick}
@@ -1442,7 +1454,7 @@ class ReleaseZone extends sui.StatelessUIElement<GitHubViewProps> {
                 </div>}
             {hasPages &&
                 <div className="ui field">
-                    <sui.Link className="basic button"
+                    <sui.Link className="neutral button"
                         href={pages.html_url}
                         inverted={inverted}
                         loading={pagesBuilding}
@@ -1488,9 +1500,9 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
 
         const inverted = !!pxt.appTarget.appTheme.invertedGitHub;
         return <div className={`ui transparent ${inverted ? 'inverted' : ''} segment`}>
-            <div className="ui header">{lf("Extension zone")}</div>
+            <h2 className="ui header">{lf("Extension zone")}</h2>
             <div className="ui field">
-                <sui.Link className="basic button"
+                <sui.Link className="neutral button"
                     href={testurl}
                     inverted={inverted}
                     text={lf("Test Extension")}
@@ -1501,7 +1513,7 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
                 </span>
             </div>
             {showFork && <div className="ui field">
-                <sui.Button className="basic" text={lf("Fork repository")}
+                <sui.Button className="neutral" text={lf("Fork repository")}
                     onClick={this.handleForkClick}
                     inverted={inverted}
                     onKeyDown={fireClickOnEnter} />
@@ -1511,7 +1523,7 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
                 </span>
             </div>}
             {needsLicenseMessage && <div className={`ui field`}>
-                <sui.Link className="basic button"
+                <sui.Link className="neutral button"
                     href={`https://github.com/${githubId.slug}/community/license/new?branch=${githubId.tag}&template=mit`}
                     inverted={inverted}
                     text={lf("Add license")}
@@ -1522,7 +1534,7 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
                 </span>
             </div>}
             <div className="ui field">
-                <sui.Button className="basic" text={lf("Save for offline")}
+                <sui.Button className="neutral" text={lf("Save for offline")}
                     onClick={this.handleSaveClick}
                     inverted={inverted}
                     onKeyDown={fireClickOnEnter} />
@@ -1539,118 +1551,138 @@ interface CommitViewProps {
     parent: GithubComponent;
     githubId: pxt.github.ParsedRepo;
     commit: pxt.github.CommitInfo;
-    expanded: boolean;
-    onClick?: (e: React.MouseEvent<HTMLDivElement>) => void;
 }
 
-interface CommitViewState {
-    diffFiles?: DiffFile[];
-    loading?: boolean;
+const CommitView = (props: CommitViewProps) => {
+    const { commit } = props;
+    const date = new Date(Date.parse(commit.author.date));
+
+    return (
+        <Accordion.Item noChevron={true} className="commit-view">
+            <Accordion.Header className="commit-view-header">
+                <div className="commit-time">
+                    <span>{date.toLocaleTimeString()}</span>
+                </div>
+                <div className="description">{commit.message}</div>
+            </Accordion.Header>
+            <Accordion.Panel>
+                <CommitDiffView {...props} />
+            </Accordion.Panel>
+        </Accordion.Item>
+    );
 }
 
-class CommitView extends sui.UIElement<CommitViewProps, CommitViewState> {
-    constructor(props: CommitViewProps) {
-        super(props);
-        this.handleRestore = this.handleRestore.bind(this);
-    }
+const CommitDiffView = (props: CommitViewProps) => {
+    const { parent, githubId, commit } = props;
+    const [diffFiles, setDiffFiles] = React.useState<DiffFile[]>();
+    const [loading, setLoading] = React.useState(false);
 
-    private loadDiffFilesAsync() {
-        // load commit and compute markdown
-        const { githubId, commit } = this.props;
-        this.setState({ loading: true });
-        pxt.github.getCommitAsync(githubId.slug, commit.sha)
-            .then(cmt => this.computeDiffAsync(cmt))
-            .then(dfs => this.setState({ diffFiles: dfs }))
-            .finally(() => this.setState({ loading: false }))
-    }
+    React.useEffect(() => {
+        if (loading) return () => {};
 
-    private computeDiffAsync(commit: pxt.github.Commit): Promise<DiffFile[]> {
-        const { githubId } = this.props;
-        const files = pkg.mainEditorPkg().sortedFiles();
-        const oldFiles: pxt.Map<string> = {};
+        setLoading(true);
+        let cancelled = false;
+        (async () => {
+            try {
+                const commitData = await pxt.github.getCommitAsync(githubId.slug, commit.sha);
+                if (cancelled) return;
+                const diffs = await computeDiffAsync(commitData, githubId);
+                if (cancelled) return;
+                setDiffFiles(diffs);
+            }
+            finally {
+                setLoading(false);
+            }
+        })();
 
-        return Promise.all(
-            files.map(p => {
-                const path = p.name;
-                const oldEnt = pxt.github.lookupFile(githubId, commit, path);
-                if (!oldEnt) return Promise.resolve();
-                return pxt.github.downloadTextAsync(githubId.fullName, commit.sha, path)
-                    .then(content => { oldFiles[path] = content; });
-            }))
-            .then(() => files.map(p => {
-                const path = p.name;
-                const oldContent = oldFiles[path];
-                const isBlocks = /\.blocks$/.test(path);
-                const newContent = p.publishedContent();
-                const hasChanges = oldContent !== newContent;
-                if (!hasChanges) return undefined;
-                const df: DiffFile = {
-                    file: p,
-                    name: p.name,
-                    gitFile: oldContent,
-                    editorFile: newContent
-                }
-                if (isBlocks && pxtblockly.needsDecompiledDiff(oldContent, newContent)) {
-                    const vpn = p.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME);
-                    const virtualNewFile = files.find(ff => ff.name == vpn);
-                    const virtualOldContent = oldFiles[vpn];
-                    if (virtualNewFile && virtualOldContent) {
-                        df.tsEditorFile = virtualNewFile.publishedContent();
-                        df.tsGitFile = virtualOldContent;
-                    }
-                }
-                return df;
-            })).then(diffs => diffs.filter(df => !!df));
-    }
+        return () => cancelled = true;
+    }, [commit.sha, githubId.slug]);
 
-    handleRestore(e: React.MouseEvent<HTMLElement>) {
-        e.stopPropagation();
-        pxt.tickEvent("github.restore", undefined, { interactiveConsent: true })
-        const { commit } = this.props;
-        core.confirmAsync({
+    const onRestoreClick = React.useCallback(async () => {
+        pxt.tickEvent("github.restore", undefined, { interactiveConsent: true });
+
+        const response = await core.confirmAsync({
             header: lf("Would you like to restore this commit?"),
             body: lf("You will restore your project to the point in time when this commit was made. Don't worry, you can undo this action by restoring to the previous commit."),
             agreeLbl: lf("Restore"),
             agreeClass: "green",
-        }).then(r => {
-            if (!r) return;
-            core.showLoading("github.restore", lf("restoring commit..."))
-            workspace.restoreCommitAsync(this.props.parent.props.parent.state.header, commit)
-                .then(() => {
-                    data.invalidate("gh-commits:*");
-                    return this.props.parent.props.parent.reloadHeaderAsync();
-                })
-                .finally(() => core.hideLoading("github.restore"))
+        });
+
+        if (!response) return;
+
+        core.showLoading("github.restore", lf("restoring commit..."));
+
+        try {
+            await workspace.restoreCommitAsync(parent.props.parent.state.header, commit);
+            data.invalidate("gh-commits:*");
+            await parent.props.parent.reloadHeaderAsync();
+        }
+        finally {
+            core.hideLoading("github.restore");
+        }
+    }, [commit, githubId, parent]);
+
+    return (
+        <>
+            <Button
+                className="restore-button"
+                label={loading ? <div className="common-spinner" /> : lf("Restore")}
+                title={loading ? lf("Loading...") : lf("Restore")}
+                disabled={loading}
+                onClick={onRestoreClick}
+            />
+            <div className="ui inverted segment">{lf("Comparing selected commit with local files")}</div>
+            {diffFiles && <DiffView parent={parent} blocksMode={false} diffFiles={diffFiles} cacheKey={commit.sha} /> }
+        </>
+    );
+}
+
+async function computeDiffAsync(commit: pxt.github.Commit, githubId: pxt.github.ParsedRepo): Promise<DiffFile[]> {
+    const files = pkg.mainEditorPkg().sortedFiles();
+    const oldFiles: pxt.Map<string> = {};
+
+    await Promise.all(
+        files.map(p => {
+            const path = p.name;
+            const oldEnt = pxt.github.lookupFile(githubId, commit, path);
+            if (!oldEnt) return Promise.resolve();
+            return pxt.github.downloadTextAsync(githubId.fullName, commit.sha, path)
+                .then(content => { oldFiles[path] = content; });
         })
-        return false;
+    );
+
+    const diffs: DiffFile[] = [];
+
+    for (const p of files) {
+        const path = p.name;
+        const oldContent = oldFiles[path];
+        const isBlocks = /\.blocks$/.test(path);
+        const newContent = p.publishedContent();
+        const hasChanges = oldContent !== newContent;
+        if (!hasChanges) continue;
+        const df: DiffFile = {
+            file: p,
+            name: p.name,
+            gitFile: oldContent,
+            editorFile: newContent
+        }
+        if (isBlocks && pxtblockly.needsDecompiledDiff(oldContent, newContent)) {
+            const vpn = p.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME);
+            const virtualNewFile = files.find(ff => ff.name == vpn);
+            const virtualOldContent = oldFiles[vpn];
+            if (virtualNewFile && virtualOldContent) {
+                df.tsEditorFile = virtualNewFile.publishedContent();
+                df.tsGitFile = virtualOldContent;
+            }
+        }
+        diffs.push(df);
     }
 
-    renderCore() {
-        const { parent, commit, expanded, onClick } = this.props;
-        const { diffFiles, loading } = this.state;
-        const date = new Date(Date.parse(commit.author.date));
-
-        if (expanded && !diffFiles && !loading)
-            this.loadDiffFilesAsync();
-
-        return <div className={`ui item link`} role="button" onClick={onClick} onKeyDown={fireClickOnEnter}>
-            <div className="content">
-                {expanded && <sui.Button loading={loading} className="right floated" text={lf("Restore")} onClick={this.handleRestore} onKeyDown={fireClickOnEnter} />}
-                <div className="meta">
-                    <span>{date.toLocaleTimeString()}</span>
-                </div>
-                <div className="description">{commit.message}</div>
-                {expanded && diffFiles && <div className="ui inverted segment">{lf("Comparing selected commit with local files")}</div>}
-                {expanded && diffFiles && <DiffView parent={parent} blocksMode={false} diffFiles={diffFiles} cacheKey={commit.sha} />}
-            </div>
-        </div>
-    }
+    return diffs;
 }
 
 interface HistoryState {
     expanded?: boolean;
-    selectedCommit?: pxt.github.CommitInfo;
-    selectedDay?: string;
 }
 
 class HistoryZone extends sui.UIElement<GitHubViewProps, HistoryState> {
@@ -1662,12 +1694,12 @@ class HistoryZone extends sui.UIElement<GitHubViewProps, HistoryState> {
     handleLoadClick() {
         pxt.tickEvent("github.history.load", undefined, { interactiveConsent: true });
         const { expanded } = this.state;
-        this.setState({ expanded: !expanded, selectedCommit: undefined, selectedDay: undefined })
+        this.setState({ expanded: !expanded })
     }
 
     renderCore() {
         const { githubId, gs, parent } = this.props;
-        const { selectedCommit, expanded, selectedDay } = this.state;
+        const { expanded } = this.state;
         const inverted = !!pxt.appTarget.appTheme.invertedGitHub;
         const commits = expanded &&
             this.getData(`gh-commits:${githubId.slug}#${gs.commit.sha}`) as pxt.github.CommitInfo[];
@@ -1683,10 +1715,10 @@ class HistoryZone extends sui.UIElement<GitHubViewProps, HistoryState> {
                 dcommit.push(commit);
             })
 
-        return <div className={`ui transparent ${inverted ? 'inverted' : ''} segment`}>
-            <div className="ui header">{lf("History")}</div>
+        return <div className={`ui transparent ${inverted ? 'inverted' : ''} segment history-zone`}>
+            <h2 className="ui header">{lf("History")}</h2>
             {(loading || !expanded) && <div className="ui field">
-                <sui.Button loading={loading} className="basic" text={lf("View commits")}
+                <sui.Button loading={loading} className="neutral" text={lf("View commits")}
                     onClick={this.handleLoadClick}
                     inverted={inverted}
                     onKeyDown={fireClickOnEnter} />
@@ -1695,40 +1727,35 @@ class HistoryZone extends sui.UIElement<GitHubViewProps, HistoryState> {
                     {sui.helpIconLink("/github/history", lf("Learn more about history of commits."))}
                 </span>
             </div>}
-            {commits && <div className="ui items">
-                {Object.keys(days).map(day =>
-                    <div role="button" className="ui link item"
-                        key={"commitday" + day}
-                        onClick={e => {
-                            e.stopPropagation();
-                            pxt.tickEvent("github.history.selectday");
-                            this.setState({ selectedDay: selectedDay === day ? undefined : day, selectedCommit: undefined });
-                        }}
-                        onKeyDown={fireClickOnEnter}>
-                        <div className="content">
-                            <div className="ui header">{day}
+            {commits && <div className="history-list">
+                <Accordion>
+                    {Object.keys(days).map(day =>
+                        <Accordion.Item className="commit-day" key={"commitday" + day} noChevron={true}>
+                            <Accordion.Header className="commit-day-header">
+                                <span className="commit-day-label">
+                                    {day}
+                                </span>
                                 <div className="ui label button">
                                     <i className="long arrow alternate up icon"></i> {days[day].length}
                                 </div>
-                            </div>
-                            {day === selectedDay &&
-                                <div className="ui divided items">
-                                    {days[day].map(commit => <CommitView
-                                        key={'commit' + commit.sha}
-                                        onClick={e => {
-                                            e.stopPropagation();
-                                            pxt.tickEvent("github.history.selectcommit", undefined, { interactiveConsent: true })
-                                            const { selectedCommit } = this.state;
-                                            this.setState({ selectedCommit: commit == selectedCommit ? undefined : commit })
-                                        }}
-                                        commit={commit}
-                                        parent={parent}
-                                        githubId={githubId}
-                                        expanded={selectedCommit === commit}
-                                    />)}
-                                </div>}
-                        </div>
-                    </div>)}
+                            </Accordion.Header>
+                            <Accordion.Panel>
+                                <div className="commit-list">
+                                    <Accordion>
+                                        {days[day].map(commit =>
+                                            <CommitView
+                                                key={'commit' + commit.sha}
+                                                commit={commit}
+                                                parent={parent}
+                                                githubId={githubId}
+                                            />
+                                        )}
+                                    </Accordion>
+                                </div>
+                            </Accordion.Panel>
+                        </Accordion.Item>
+                    )}
+                </Accordion>
             </div>}
         </div>
     }

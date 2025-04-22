@@ -59,7 +59,7 @@
   left: 50%;
   transform: translate(-50%, 0);
 
-  background: @background;
+  background: var(--pxt-neutral-background1);
   border: @border;
   box-shadow: @boxShadow;
   transform-origin: @transformOrigin;
@@ -80,12 +80,13 @@
 
 .ui.fullscreen.modal,
 .ui.fullscreen.modal > .content {
-    background: @extensionsBackground;
+    background: var(--pxt-target-background1);
+    color: var(--pxt-target-foreground1);
 }
 .ui.fullscreen.modal {
     > .header {
-        background: @extensionsHeaderBackground;
-        color: @extensionsHeaderColor;
+        background-color: var(--pxt-header-background) !important;
+        color: var(--pxt-header-foreground) !important;
         border-radius: 0;
         display: flex;
         height: @mainMenuHeight;
@@ -136,7 +137,7 @@
         padding: 1.2rem;
     }
     .ui.button.back-button, .ui.help-button {
-        color: @extensionsHeaderColor !important;
+        color: var(--pxt-header-foreground) !important;
         padding-left: 0 !important;
 
         &:focus, &:hover {
@@ -145,17 +146,27 @@
     }
 }
 
+.ui.modal .ui.button:focus {
+    outline: 1px solid @white;
+    outline-offset: -7px;
+}
+
+.ui.modal .ui.button.approve.secondary:focus {
+    background: rgba(0,0,0,0.75);
+}
+
 .header-actions {
     display: flex;
     align-items: center;
     justify-content: flex-end;
     flex-direction: row;
     height: @mainMenuHeight;
-    background: @extensionsSecondaryBackground;
+    background: var(--pxt-neutral-alpha20);
+    color: var(--pxt-header-foreground);
     padding: 0 1rem;
 
     .divider {
-        border: 0.5px solid @extensionsHeaderBackground;
+        border: 0.5px solid var(--pxt-header-background);
         height: 70%;
         margin: 0.5rem;
         margin-right: 0.75rem;
@@ -163,16 +174,15 @@
     }
 
     .ui.button {
-        background-color: @white;
-        color: @blue;
-        border: 1px solid @white;
+        background-color: var(--pxt-colors-blue-foreground);
+        color: var(--pxt-colors-blue-background);
+        border: 1px solid var(--pxt-colors-blue-foreground);
     }
     .ui.button:focus, .ui.button:hover {
-        background-color: @white;
-        border-color: darken(@white, 30%);
+        color: var(--pxt-colors-blue-hover);
     }
     .ui.button.red {
-        color: @red;
+        color: var(--pxt-colors-red-background);
     }
 }
 

@@ -109,7 +109,7 @@ namespace pxt.py {
             return
         nextToken++
         skipTokens()
-        // console.log(`TOK: ${tokenToString(peekToken())}`)
+        // pxt.log(`TOK: ${tokenToString(peekToken())}`)
     }
 
     // next error: see "next free error" in "converter.ts"

@@ -426,6 +426,7 @@ function ${id}(s) {
                     else if (e.data === null) return "null"
                     else if (e.data === undefined) return "undefined"
                     else if (typeof e.data == "number") return e.data + ""
+                    else if (typeof e.data == "string") return `"${e.data}"`
                     else throw oops("invalid data: " + typeof e.data);
                 case EK.PointerLiteral:
                     if (e.ptrlabel()) {
@@ -455,7 +456,7 @@ function ${id}(s) {
 
         // result in R0
         function emitExpr(e: ir.Expr): void {
-            //console.log(`EMITEXPR ${e.sharingInfo()} E: ${e.toString()}`)
+            //pxt.log(`EMITEXPR ${e.sharingInfo()} E: ${e.toString()}`)
 
             switch (e.exprKind) {
                 case EK.JmpValue:
@@ -493,16 +494,19 @@ function ${id}(s) {
             }
         }
 
+        function vTableRef(info: ClassInfo) {
+            return `${info.id}_VT`
+        }
+
         function checkSubtype(info: ClassInfo, r0 = "r0") {
-            const vt = `${info.id}_VT`
-            return `checkSubtype(${r0}, ${vt})`
+            return `checkSubtype(${r0}, ${vTableRef(info)})`
         }
 
         function emitInstanceOf(info: ClassInfo, tp: string, r0 = "r0") {
             if (tp == "bool")
                 write(`r0 = ${checkSubtype(info)};`)
             else if (tp == "validate") {
-                write(`if (!${checkSubtype(info, r0)}) failedCast(${r0});`)
+                write(`if (!${checkSubtype(info, r0)}) failedCast(${r0}, ${vTableRef(info)});`)
             } else {
                 U.oops()
             }
@@ -607,7 +611,7 @@ function ${id}(s) {
                 write(`${frameRef} = ${id}(s);`)
             }
 
-            //console.log("PROCCALL", topExpr.toString())
+            //pxt.log("PROCCALL", topExpr.toString())
             topExpr.args.forEach((a, i) => {
                 let arg = `arg${i}`
                 if (isLambda) {

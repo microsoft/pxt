@@ -70,6 +70,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         this.handleOpen = this.handleOpen.bind(this);
         this.handleOpenNewTab = this.handleOpenNewTab.bind(this);
         this.handleOpenNewLinkedTab = this.handleOpenNewLinkedTab.bind(this);
+        this.handleRename = this.handleRename.bind(this);
         this.handleDuplicate = this.handleDuplicate.bind(this);
         this.handleSwitchView = this.handleSwitchView.bind(this);
         this.handleSearch = this.handleSearch.bind(this);
@@ -188,10 +189,32 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         this.props.parent.openNewTab(header, true);
     }
 
-    handleDuplicate() {
-        pxt.tickEvent("scriptmanager.dup", undefined, { interactiveConsent: true });
+    async handleRename() {
+        pxt.tickEvent("scriptmanager.rename", undefined, { interactiveConsent: true });
         const header = this.getSelectedHeader();
         // Prompt for the new project name
+        const opts: core.PromptOptions = {
+            header: lf("Choose a new name for your project"),
+            agreeLbl: lf("Rename"),
+            agreeClass: "green approve positive",
+            initialValue: header.name,
+            placeholder: lf("Enter your project name here"),
+            size: "tiny"
+        };
+        const newName = await core.promptAsync(opts);
+        if (newName === null)
+            return false; // null means cancelled
+
+        const clonedHeader = await workspace.renameAsync(header, newName);
+        await workspace.saveAsync(clonedHeader);
+        this.setState({ selected: {} });
+        return true;
+    }
+
+    async handleDuplicate() {
+        pxt.tickEvent("scriptmanager.dup", undefined, { interactiveConsent: true });
+        const header = this.getSelectedHeader();
+        // Prompt for the new project nam_e
         const opts: core.PromptOptions = {
             header: lf("Choose a new name for your project"),
             agreeLbl: lf("Duplicate"),
@@ -201,24 +224,19 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
             placeholder: lf("Enter your project name here"),
             size: "tiny"
         };
-        return core.promptAsync(opts).then(res => {
-            if (res === null)
-                return false; // null means cancelled
-            let id: string;
-            return workspace.duplicateAsync(header, res)
-                .then(clonedHeader => {
-                    id = this.getId(clonedHeader);
-                    return workspace.saveAsync(clonedHeader);
-                })
-                .then(() => {
-                    data.invalidate(`headers:${this.state.searchFor}`);
-                    this.setState({ selected: {}, markedNew: { [id]: 1 }, sortedBy: 'time', sortedAsc: false });
-                    setTimeout(() => {
-                        this.setState({ markedNew: {} });
-                    }, 5 * 1000);
-                    return true;
-                });
-        });
+        const newName = await core.promptAsync(opts);
+        if (newName === null)
+            return false; // null means cancelled
+        let id: string;
+        const clonedHeader = await workspace.duplicateAsync(header, newName);
+        id = this.getId(clonedHeader);
+        await workspace.saveAsync(clonedHeader);
+        data.invalidate(`headers:${this.state.searchFor}`);
+        this.setState({ selected: {}, markedNew: { [id]: 1 }, sortedBy: 'time', sortedAsc: false });
+        setTimeout(() => {
+            this.setState({ markedNew: {} });
+        }, 5 * 1000);
+        return true;
     }
 
     handleSwitchView() {
@@ -411,6 +429,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         this.setState({
             download: null
         });
+
     }
 
     handleDownloadProgressClose = () => {
@@ -492,30 +511,32 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
             const numSelected = Object.keys(selected).length
             if (numSelected > 0) {
                 if (numSelected == 1) {
-                    const openBtn = <sui.Button key="edit" icon="edit outline" className="icon"
+                    const openBtn = <sui.Button key="edit" icon="edit outline" className="icon neutral"
                         text={lf("Open")} textClass="landscape only" title={lf("Open Project")} onClick={this.handleOpen} />;
                     if (!openNewTab)
                         headerActions.push(openBtn);
                     else headerActions.push(<div className="ui buttons">{openBtn}
-                        <sui.DropdownMenu className="floating button" icon="dropdown">
+                        <sui.DropdownMenu className="floating button neutral" icon="dropdown">
                             <sui.Item key="editnewtab" icon="external alternate" className="icon"
                                 text={lf("New Tab")} title={lf("Open Project in a new tab")} onClick={this.handleOpenNewTab} />
                             {openDependent && <sui.Item key="editnewlinkedtab" icon="external alternate" className="icon"
                                 text={lf("New Connected Tab")} title={lf("Open Project in a new tab with a connected simulator")} onClick={this.handleOpenNewLinkedTab} />}
                         </sui.DropdownMenu>
                     </div>);
-                    headerActions.push(<sui.Button key="clone" icon="clone outline" className="icon"
+                    headerActions.push(<sui.Button key="rename" icon="pencil" className="icon neutral"
+                        text={lf("Rename")} textClass="landscape only" title={lf("Rename Project")} onClick={this.handleRename} />);
+                    headerActions.push(<sui.Button key="clone" icon="clone outline" className="icon neutral"
                         text={lf("Duplicate")} textClass="landscape only" title={lf("Duplicate Project")} onClick={this.handleDuplicate} />);
                 }
                 headerActions.push(<sui.Button key="delete" icon="trash" className="icon red"
                     text={lf("Delete")} textClass="landscape only" title={lf("Delete Project")} onClick={this.handleDelete} />);
-                if (numSelected > 1) {
-                    headerActions.push(<sui.Button key="download-zip" icon="download" className="icon"
+                if (numSelected > 1 && pxt.BrowserUtils.hasFileAccess()) {
+                    headerActions.push(<sui.Button key="download-zip" icon="download" className="icon neutral"
                         text={lf("Download Zip")} textClass="landscape only" title={lf("Download Zip")} onClick={this.handleDownloadAsync} />);
                 }
                 headerActions.push(<div key="divider" className="divider"></div>);
             }
-            headerActions.push(<sui.Button key="view" icon={view == 'grid' ? 'th list' : 'grid layout'} className="icon"
+            headerActions.push(<sui.Button key="view" icon={view == 'grid' ? 'th list' : 'grid layout'} className="icon neutral"
                 title={`${view == 'grid' ? lf("List view") : lf("Grid view")}`} onClick={this.handleSwitchView} />)
         }
 
@@ -550,7 +571,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                                     role="menuitem"
                                     text={dropdownLabel}
                                     title={lf("Sort by dropdown")}
-                                    className={classList("inline button", darkTheme && "inverted")}
+                                    className={classList("inline button neutral", darkTheme && "inverted")}
                                     displayLeft
                                     disabled={sortedBySearch}
                                 >
@@ -574,7 +595,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                                 <sui.Button
                                     role="menuitem"
                                     icon={`arrow ${(sortedAsc && !sortedBySearch) ? 'up' : 'down'}`}
-                                    className={`${darkTheme ? 'inverted' : ''}`}
+                                    className={`neutral ${darkTheme ? 'inverted' : ''}`}
                                     onClick={this.handleSwitchSortDirection}
                                     title={lf("Switch sort order to {0}", !sortedAsc ? lf("ascending") : lf("descending"))}
                                     disabled={sortedBySearch}

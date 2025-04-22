@@ -56,7 +56,7 @@ namespace pxt {
             if (pxt.github.isGithubId(fullVers)) {
                 const repoInfo = pxt.github.parseRepoId(fullVers);
                 const packagesConfig = await pxt.packagesConfigAsync()
-                const gitRepo = await pxt.github.repoAsync(repoInfo.fullName, packagesConfig)    // Make sure repo exists and is whitelisted
+                const gitRepo = await pxt.github.repoAsync(repoInfo.fullName, packagesConfig)    // Make sure repo exists and is allowlisted
                 return gitRepo ? await pxt.github.pkgConfigAsync(repoInfo.fullName, repoInfo.tag, packagesConfig) : null
             } else if (fullVers.startsWith("workspace:")) {
                 // It's a local package
@@ -921,7 +921,7 @@ namespace pxt {
         }
 
         /**
-         * Returns localized strings qName -> translation
+         * Returns localized strings qName (+ some additional identification data) -> translation
          */
         packageLocalizationStringsAsync(lang: string): Promise<Map<string>> {
             const targetId = pxt.appTarget.id;
@@ -936,7 +936,7 @@ namespace pxt {
             if (pxt.Util.liveLocalizationEnabled() && this.id != "this" && pxt.appTarget.bundledpkgs[this.id]) {
                 pxt.debug(`loading live translations for ${this.id}`)
                 return Promise.all(filenames.map(
-                    fn => pxt.Util.downloadLiveTranslationsAsync(lang, `${targetId}/${fn}-strings.json`, theme.crowdinBranch)
+                    fn => pxt.Util.downloadLiveTranslationsAsync(lang, `${targetId}/${fn}-strings.json`)
                         .then(tr => {
                             if (tr && Object.keys(tr).length) {
                                 Util.jsonMergeFrom(r, tr);
@@ -1167,42 +1167,45 @@ namespace pxt {
                 }
                 const prevVariant = pxt.appTargetVariant
 
-                if (variant)
-                    pxt.setAppTargetVariant(variant, { temporary: true })
+                if (variant) {
+                    pxt.setAppTargetVariant(variant, { temporary: true });
+                }
+
+                let einfo: pxtc.ExtensionInfo;
 
                 try {
-                    let einfo = cpp.getExtensionInfo(this)
+                    res.target = pxt.appTarget.compile;
+                    einfo = cpp.getExtensionInfo(this)
                     if (!shimsGenerated && (einfo.shimsDTS || einfo.enumsDTS)) {
                         shimsGenerated = true
                         if (einfo.shimsDTS) generateFile("shims.d.ts", einfo.shimsDTS)
                         if (einfo.enumsDTS) generateFile("enums.d.ts", einfo.enumsDTS)
                     }
-
-                    const inf = target.isNative ? await this.host().getHexInfoAsync(einfo) : null
-
-                    einfo = U.flatClone(einfo)
-                    if (!target.keepCppFiles) {
-                        delete einfo.compileData;
-                        delete einfo.generatedFiles;
-                        delete einfo.extensionFiles;
-                    }
-                    einfo.hexinfo = inf
-
-                    res.extinfo = einfo
-                    res.target = pxt.appTarget.compile
-
                 } finally {
-                    if (variant)
+                    if (variant) {
                         pxt.setAppTargetVariant(prevVariant, { temporary: true })
+                    }
                 }
 
+                einfo.appVariant = variant;
+
+                const inf = target.isNative ? await this.host().getHexInfoAsync(einfo) : null
+
+                einfo = U.flatClone(einfo)
+                if (!target.keepCppFiles) {
+                    delete einfo.compileData;
+                    delete einfo.generatedFiles;
+                    delete einfo.extensionFiles;
+                }
+                einfo.hexinfo = inf
+                res.extinfo = einfo
                 return res
             }
 
             await this.loadAsync()
 
             opts.bannedCategories = this.resolveBannedCategories();
-            pxt.debug(`building: ${this.sortedDeps().map(p => p.config.name).join(", ")}`)
+            pxt.debug(`building: ${this.sortedDeps().map(p => p.config?.name).join(", ")}`)
 
             let variants: string[]
 
@@ -1226,25 +1229,31 @@ namespace pxt {
 
 
             let ext: pxtc.ExtensionInfo = null
-            for (let v of variants) {
-                if (ext)
-                    pxt.debug(`building for ${v}`)
-                const etarget = await fillExtInfoAsync(v)
-                const einfo = etarget.extinfo
-                einfo.appVariant = v
-                einfo.outputPrefix = variants.length == 1 || !v ? "" : v + "-"
-                if (ext) {
-                    opts.otherMultiVariants.push(etarget)
-                } else {
-                    etarget.target.isNative = opts.target.isNative;
-                    opts.target = etarget.target;
+            await Promise.all(
+                variants.map(
+                    async v => {
+                        if (ext) {
+                            pxt.debug(`building for ${v}`);
+                        }
+                        const etarget = await fillExtInfoAsync(v);
+                        const einfo = etarget.extinfo;
+                        einfo.appVariant = v;
+                        einfo.outputPrefix = variants.length == 1 || !v ? "" : v + "-";
+                        if (ext) {
+                            opts.otherMultiVariants.push(etarget);
+                        }
+                        else {
+                            etarget.target.isNative = opts.target.isNative;
+                            opts.target = etarget.target;
 
-                    ext = einfo
-                    opts.otherMultiVariants = []
-                }
-            }
+                            ext = einfo;
+                            opts.otherMultiVariants = [];
+                        }
+                    }
+                )
+            );
+
             opts.extinfo = ext
-
             opts.target.preferredEditor = this.getPreferredEditor();
 
             const noFileEmbed = appTarget.compile.shortPointers ||
@@ -1293,6 +1302,7 @@ namespace pxt {
             opts.jres = this.getJRes()
             const functionOpts = pxt.appTarget.runtime && pxt.appTarget.runtime.functionsOptions;
             opts.allowedArgumentTypes = functionOpts && functionOpts.extraFunctionEditorTypes && functionOpts.extraFunctionEditorTypes.map(info => info.typeName).concat("number", "boolean", "string");
+            opts.unfetteredInitializers = pxt.appTarget.compile?.unfetteredInitializers;
 
             for (const dep of this.sortedDeps()) {
                 dep.patchAppTargetPalette();

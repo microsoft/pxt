@@ -16,7 +16,7 @@ import { MsgKey } from "../msg";
 
 interface FunctionDeclarationMixin extends CommonFunctionMixin {
     createArgumentEditor_(argumentType: string, displayName: string): Blockly.Block;
-    focusLastEditor_(): void;
+    focusLastEditorAsync_(): void;
     removeFieldCallback(field: Blockly.Field): void;
     addParam_(typeName: string, defaultName: string): void;
     addBooleanExternal(): void;
@@ -83,7 +83,7 @@ const FUNCTION_DECLARATION_MIXIN: FunctionDeclarationMixin = {
             newBlock.setShadow(true);
             if (!this.isInsertionMarker() && newBlock instanceof Blockly.BlockSvg) {
                 newBlock.initSvg();
-                newBlock.render();
+                newBlock.queueRender();
             }
         } finally {
             Blockly.Events.enable();
@@ -92,22 +92,27 @@ const FUNCTION_DECLARATION_MIXIN: FunctionDeclarationMixin = {
         return newBlock;
     },
 
-    focusLastEditor_(this: FunctionDeclarationBlock) {
+    async focusLastEditorAsync_(this: FunctionDeclarationBlock) {
+        // The argument editor block might still be rendering.
+        // Wait for the render queue to finish so that the centerOnBlock
+        // function is able to correctly position the editor scroll.
+        await Blockly.renderManagement.finishQueuedRenders();
+
         if (this.inputList.length > 0) {
             let newInput = this.inputList[this.inputList.length - 2];
-            if (newInput.type == Blockly.inputTypes.DUMMY) {
+            if (newInput.type == Blockly.inputs.inputTypes.DUMMY) {
                 const workspace = this.workspace;
 
                 if (workspace instanceof Blockly.WorkspaceSvg) {
-                    workspace.centerOnBlock(this.id);
+                    workspace.centerOnBlock(this.id, true);
                 }
                 newInput.fieldRow[0].showEditor();
-            } else if (newInput.type == Blockly.inputTypes.VALUE) {
+            } else if (newInput.type == Blockly.inputs.inputTypes.VALUE) {
                 // Inspect the argument editor.
                 const target = newInput.connection!.targetBlock()!;
                 const workspace = target.workspace;
                 if (workspace instanceof Blockly.WorkspaceSvg) {
-                    workspace.centerOnBlock(target.id);
+                    workspace.centerOnBlock(target.id, true);
                 }
                 target.getField("TEXT")!.showEditor();
             }
@@ -157,7 +162,7 @@ const FUNCTION_DECLARATION_MIXIN: FunctionDeclarationMixin = {
             type: typeName,
         });
         this.updateDisplay_();
-        this.focusLastEditor_();
+        /* await */ this.focusLastEditorAsync_();
     },
 
     addBooleanExternal(this: FunctionDeclarationBlock) {
@@ -187,15 +192,15 @@ const FUNCTION_DECLARATION_MIXIN: FunctionDeclarationMixin = {
         for (let i = 1; i < this.inputList.length; i++) {
             const input = this.inputList[i];
             switch (input.type) {
-                case Blockly.inputTypes.STATEMENT:
+                case Blockly.inputs.inputTypes.STATEMENT:
                     // Nothing to save
                     break;
-                case Blockly.inputTypes.DUMMY:
+                case Blockly.inputs.inputTypes.DUMMY:
                     // This is the function name text input. Previously stored in the text
                     // attribute (now deprecated), so we check both text and value
                     this.name_ = input.fieldRow[0].getValue() || input.fieldRow[0].getText();
                     break;
-                case Blockly.inputTypes.VALUE:
+                case Blockly.inputs.inputTypes.VALUE:
                     // Inspect the argument editor to add the argument to our mutation.
                     const target = input.connection!.targetBlock() as ArgumentEditorBlock;
 
@@ -206,7 +211,7 @@ const FUNCTION_DECLARATION_MIXIN: FunctionDeclarationMixin = {
                     });
                     break;
                 default:
-                    console.warn("Unexpected input type on a function mutator root: " + input.type);
+                    pxt.warn("Unexpected input type on a function mutator root: " + input.type);
             }
         }
     },

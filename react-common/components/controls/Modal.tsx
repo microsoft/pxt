@@ -3,6 +3,7 @@ import * as ReactDOM from "react-dom";
 import { classList, ContainerProps } from "../util";
 import { Button } from "./Button";
 import { FocusTrap } from "./FocusTrap";
+import { Link } from "./Link";
 
 export interface ModalAction {
     label: string;
@@ -86,19 +87,22 @@ export const Modal = (props: ModalProps) => {
                 </div>
                 {fullscreen && helpUrl &&
                     <div className="common-modal-help">
-                        <Button
-                            className="menu-button"
+                        <Link
+                            className="common-button menu-button"
                             title={lf("Help on {0} dialog", title)}
                             href={props.helpUrl}
-                            onClick={() => {}}
-                            rightIcon="fas fa-question"
-                        />
+                            target="_blank"
+                        >
+                            <span className="common-button-flex">
+                                <i className="fas fa-question" aria-hidden={true}/>
+                            </span>
+                        </Link>
                     </div>
                 }
                 {!fullscreen && !hideDismissButton &&
                     <div className="common-modal-close">
                         <Button
-                            className="menu-button inverted"
+                            className="menu-button"
                             onClick={closeClickHandler}
                             title={lf("Close")}
                             rightIcon="fas fa-times-circle"

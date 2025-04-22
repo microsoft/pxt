@@ -23,7 +23,7 @@ const VARIABLES_GET_REPORTER_MIXIN = {
         if (xmlElement.hasAttribute(DUPLICATE_ON_DRAG_MUTATION_KEY)) {
             this.duplicateOnDrag_ = xmlElement.getAttribute(DUPLICATE_ON_DRAG_MUTATION_KEY).toLowerCase() === "true";
             if (this.pathObject) {
-                (this.pathObject as PathObject).setHasDottedOutllineOnHover(this.duplicateOnDrag_);
+                (this.pathObject as PathObject).setHasDottedOutlineOnHover(this.duplicateOnDrag_);
             }
         }
     },
@@ -39,7 +39,8 @@ Blockly.defineBlocksWithJsonArray([
           {
             "type": "field_variable",
             "name": "VAR",
-            "variable": "%{BKY_VARIABLES_DEFAULT_NAME}"
+            "variable": "%{BKY_VARIABLES_DEFAULT_NAME}",
+            "variableTypes": [""],
           }
         ],
         "output": null,

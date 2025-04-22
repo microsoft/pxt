@@ -5,6 +5,9 @@ import { AppStateContext } from "../state/appStateContext";
 import { classList } from "react-common/components/util";
 import { Input } from "react-common/components/controls/Input";
 import { loadProjectMetadataAsync } from "../transforms/loadProjectMetadataAsync";
+import { Strings, Ticks } from "../constants";
+import { getChecklistHash, makeToast } from "../utils";
+import { showToast } from "../transforms/showToast";
 
 interface IProps {}
 
@@ -13,6 +16,7 @@ export const ShareLinkInput: React.FC<IProps> = () => {
     const { projectMetadata } = teacherTool;
     const [text, setText] = useState("");
     const [iconVisible, setIconVisible] = useState(false);
+    const [inputRef, setInputRef] = useState<HTMLInputElement>();
 
     useEffect(() => {
         const shareId = pxt.Cloud.parseScriptId(text);
@@ -25,7 +29,14 @@ export const ShareLinkInput: React.FC<IProps> = () => {
 
     const onEnterKey = useCallback(() => {
         const shareId = pxt.Cloud.parseScriptId(text);
-        if (!!shareId && !(shareId === projectMetadata?.shortid || shareId === projectMetadata?.persistId)) {
+        if (!shareId) {
+            pxt.tickEvent(Ticks.LoadProjectInvalid);
+            showToast(makeToast("error", Strings.InvalidShareLink));
+            return;
+        }
+
+        if (shareId !== projectMetadata?.shortid && shareId !== projectMetadata?.persistId) {
+            pxt.tickEvent(Ticks.LoadProjectFromInput, { checklistHash: getChecklistHash(teacherTool.checklist) });
             loadProjectMetadataAsync(text, shareId);
         }
     }, [text, projectMetadata?.shortid, projectMetadata?.persistId]);
@@ -44,8 +55,10 @@ export const ShareLinkInput: React.FC<IProps> = () => {
                 onChange={onTextChange}
                 onEnterKey={onEnterKey}
                 onIconClick={onEnterKey}
+                onFocus={() => inputRef?.select()}
                 preserveValueOnBlur={true}
                 autoComplete={false}
+                handleInputRef={setInputRef}
             ></Input>
         </div>
     );

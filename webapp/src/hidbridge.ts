@@ -38,7 +38,7 @@ function onOOB(v: OOB) {
     if (b) {
         b.onOOB(v)
     } else {
-        console.error("Dropping data for " + v.result.path)
+        pxt.error("Dropping data for " + v.result.path)
     }
 }
 

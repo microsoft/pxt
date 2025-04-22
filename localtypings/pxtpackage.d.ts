@@ -12,8 +12,6 @@ declare namespace pxt {
         targetId?: string;
         targetWebsite?: string;
         pxt?: string;
-        pxtCrowdinBranch?: string;
-        targetCrowdinBranch?: string;
         tag?: string;
         branch?: string;
         commits?: string; // URL
@@ -78,6 +76,7 @@ declare namespace pxt {
             corePackage?: string;
             includeDirs?: string[];
             excludePrefix?: string[];
+            compileServiceVariant?: string;
         };
         features?: string[];
         hidden?: boolean; // hide package from package selection dialog
@@ -94,6 +93,10 @@ declare namespace pxt {
         theme?: string | pxt.Map<string>;
         assetPack?: boolean; // if set to true, only the assets of this project will be imported when added as an extension (no code)
         assetPacks?: Map<boolean>; // a map of dependency id to boolean that indicates which dependencies should be imported as asset packs
+        toolboxFilter?: {
+            namespaces: {[index: string]: "visible" | "hidden" | "disabled"},
+            blocks: {[index: string]: "visible" | "hidden" | "disabled"},
+        }
     }
 
     interface PackageExtension {
@@ -171,6 +174,7 @@ declare namespace pxt {
         actionIcon?: string; // icon to override default icon on the action button
         time?: number;
         url?: string;
+        shareUrl?: string;
         learnMoreUrl?: string;
         buyUrl?: string;
         feedbackUrl?: string;

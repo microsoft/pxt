@@ -1,10 +1,11 @@
 /// <reference path="../../built/pxtlib.d.ts" />
 
 import * as Blockly from "blockly";
-import { FieldCustom, FieldCustomOptions } from "./field_utils";
+import { clearDropDownDiv, FieldCustom, FieldCustomOptions } from "./field_utils";
 
 export interface FieldTextDropdownOptions extends FieldCustomOptions {
-    values: any;
+    values?: string;
+    data?: string;
 }
 
 export class BaseFieldTextDropdown extends Blockly.FieldTextInput {
@@ -38,6 +39,21 @@ export class BaseFieldTextDropdown extends Blockly.FieldTextInput {
 
         if (!this.dropDownOpen_) this.showDropdown_();
         Blockly.Touch.clearTouchIdentifier();
+    }
+
+    override doValueUpdate_(newValue: string) {
+        if (
+            newValue?.length > 1 &&
+            newValue.charAt(0) === newValue.charAt(newValue.length - 1) &&
+            (
+                newValue.charAt(0) === "'" ||
+                newValue.charAt(0) === '"'
+            )
+        ) {
+            newValue = newValue.slice(1, newValue.length - 1)
+        }
+
+        super.doValueUpdate_(newValue);
     }
 
     getOptions(useCache?: boolean): Blockly.MenuOption[] {
@@ -90,7 +106,7 @@ export class BaseFieldTextDropdown extends Blockly.FieldTextInput {
                 }
                 return label;
             })();
-            const menuItem = new Blockly.MenuItem(content, value);
+            const menuItem = new Blockly.MenuItem(content, value as string);
             menuItem.setRole(Blockly.utils.aria.Role.OPTION);
             menuItem.setRightToLeft(block.RTL);
             menuItem.setCheckable(true);
@@ -116,7 +132,7 @@ export class BaseFieldTextDropdown extends Blockly.FieldTextInput {
         }
 
         // Remove any pre-existing elements in the dropdown.
-        Blockly.DropDownDiv.clearContent();
+        clearDropDownDiv();
         // Element gets created in render.
         const menuElement = this.menu_!.render(Blockly.DropDownDiv.getContentDiv());
         Blockly.utils.dom.addClass(menuElement, 'blocklyDropdownMenu');
@@ -155,6 +171,17 @@ export class BaseFieldTextDropdown extends Blockly.FieldTextInput {
             this.size_.height / 2 -
             this.getConstants().FIELD_DROPDOWN_SVG_ARROW_SIZE / 2);
 
+        if (this.sourceBlock_.RTL && this.textElement_) {
+            const constants = this.getConstants();
+            const contentWidth = Blockly.utils.dom.getFastTextWidth(
+                this.textElement_,
+                constants!.FIELD_TEXT_FONTSIZE,
+                constants!.FIELD_TEXT_FONTWEIGHT,
+                constants!.FIELD_TEXT_FONTFAMILY,
+              );
+            this.positionTextElement_(-arrowWidth, contentWidth)
+        }
+
         this.size_.width += arrowWidth;
     }
 
@@ -172,7 +199,7 @@ export class BaseFieldTextDropdown extends Blockly.FieldTextInput {
             : 0;
         const textPadding = this.getConstants()!.FIELD_DROPDOWN_SVG_ARROW_PADDING;
         const svgArrowSize = this.getConstants()!.FIELD_DROPDOWN_SVG_ARROW_SIZE;
-        const arrowX = block.RTL ? xPadding : x + textPadding;
+        const arrowX = block.RTL ? (xPadding / 2) : x + textPadding;
         this.svgArrow.setAttribute(
             'transform',
             'translate(' + arrowX + ',' + y + ')',
@@ -213,7 +240,7 @@ function validateOptions(options: Blockly.MenuOption[]) {
         const tuple = options[i];
         if (!Array.isArray(tuple)) {
             foundError = true;
-            console.error(
+            pxt.error(
                 'Invalid option[' +
                 i +
                 ']: Each FieldDropdown option must be an ' +
@@ -222,7 +249,7 @@ function validateOptions(options: Blockly.MenuOption[]) {
             );
         } else if (typeof tuple[1] !== 'string') {
             foundError = true;
-            console.error(
+            pxt.error(
                 'Invalid option[' +
                 i +
                 ']: Each FieldDropdown option id must be ' +
@@ -237,7 +264,7 @@ function validateOptions(options: Blockly.MenuOption[]) {
             typeof tuple[0].src !== 'string'
         ) {
             foundError = true;
-            console.error(
+            pxt.error(
                 'Invalid option[' +
                 i +
                 ']: Each FieldDropdown option must have a ' +
@@ -257,6 +284,57 @@ export class FieldTextDropdown extends BaseFieldTextDropdown implements FieldCus
     public isFieldCustom_ = true;
 
     constructor(text: string, options: FieldTextDropdownOptions, opt_validator?: Blockly.FieldValidator) {
-        super(text, options.values, opt_validator);
+        super(text, parseDropdownOptions(options), opt_validator);
     }
+}
+
+function parseDropdownOptions(options: FieldTextDropdownOptions): [string, string][] {
+    if (options.values) {
+        return options.values.split(",").map(v => [v, v]);
+    }
+    else if (options.data) {
+        let result: [string, string][];
+        try {
+            const data = JSON.parse(options.data);
+            if (Array.isArray(data) && data.length) {
+                if (isStringArray(data)) {
+                    result = data.map(v => [v, v]);
+                }
+                else {
+                    let foundError = false;
+                    for (const value of data) {
+                        if (!Array.isArray(value) || value.length !== 2 || !isStringArray(value)) {
+                            foundError = true;
+                            break;
+                        }
+                    }
+
+                    if (!foundError) {
+                        result = data;
+                    }
+                }
+            }
+        }
+        catch (e) {
+            // parse error
+        }
+
+        if (result) {
+            return result;
+        }
+        else {
+            pxt.warn("Could not parse textdropdown data field");
+        }
+    }
+
+    return [];
+}
+
+function isStringArray(arr: any[]): arr is string[] {
+    for (const val of arr) {
+        if (typeof val !== "string") {
+            return false;
+        }
+    }
+    return true;
 }

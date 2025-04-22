@@ -3,6 +3,14 @@
 namespace pxsim {
     const MIN_MESSAGE_WAIT_MS = 200;
     let tracePauseMs = 0;
+
+    enum MessageListenerFlags {
+        MESSAGE_BUS_LISTENER_REENTRANT = 8,
+        MESSAGE_BUS_LISTENER_QUEUE_IF_BUSY = 16,
+        MESSAGE_BUS_LISTENER_DROP_IF_BUSY = 32,
+        MESSAGE_BUS_LISTENER_IMMEDIATE = 192
+    }
+
     export namespace U {
         // Keep these helpers unified with pxtlib/browserutils.ts
         export function containsClass(el: SVGElement | HTMLElement, classes: string) {
@@ -140,7 +148,7 @@ namespace pxsim {
             return Promise.all(values.map(v => mapper(v)));
         }
 
-        export  function promiseMapAllSeries<T, V>(values: T[], mapper: (obj: T) => Promise<V>): Promise<V[]> {
+        export function promiseMapAllSeries<T, V>(values: T[], mapper: (obj: T) => Promise<V>): Promise<V[]> {
             return promisePoolAsync(1, values, mapper);
         }
 
@@ -185,7 +193,7 @@ namespace pxsim {
                 }, ms);
             });
 
-            return Promise.race([ promise, timeoutPromise ])
+            return Promise.race([promise, timeoutPromise])
                 .then(output => {
                     // clear any dangling timeout
                     if (res) {
@@ -277,11 +285,13 @@ namespace pxsim {
             return isPxtElectron() || isIpcRenderer();
         }
 
+        export function testLocalhost(url: string): boolean {
+            return /^http:\/\/(?:localhost|127\.0\.0\.1|192\.168\.\d{1,3}\.\d{1,3}|[a-zA-Z0-9.-]+\.local):\d+\/?/.test(url) && !/nolocalhost=1/.test(url);
+        }
+
         export function isLocalHost(): boolean {
             try {
-                return typeof window !== "undefined"
-                    && /^http:\/\/(localhost|127\.0\.0\.1):\d+\//.test(window.location.href)
-                    && !/nolocalhost=1/.test(window.location.href);
+                return typeof window !== "undefined" && testLocalhost(window.location.href);
             } catch (e) { return false; }
         }
 
@@ -300,6 +310,14 @@ namespace pxsim {
                 }
             })
             return v;
+        }
+
+        export function sanitizeCssName(name: string): string {
+            let sanitized = name.replace(/[^a-zA-Z0-9-_]/g, '_');
+            if (!/^[a-zA-Z_]/.test(sanitized)) {
+                sanitized = 'cls_' + sanitized;
+            }
+            return sanitized;
         }
     }
 
@@ -536,7 +554,7 @@ namespace pxsim {
             pause: thread.pause,
             showNumber: (n: number) => {
                 let cb = getResume();
-                console.log("SHOW NUMBER:", n)
+                pxsim.log("SHOW NUMBER:", n)
                 U.nextTick(cb)
             }
         }
@@ -549,9 +567,9 @@ namespace pxsim {
         myRT.control = {
             inBackground: thread.runInBackground,
             createBuffer: BufferMethods.createBuffer,
-            dmesg: (s: string) => console.log("DMESG: " + s),
+            dmesg: (s: string) => pxsim.log("DMESG: " + s),
             deviceDalVersion: () => "sim",
-            __log: (pri: number, s: string) => console.log("LOG: " + s.trim()),
+            __log: (pri: number, s: string) => pxsim.log("LOG: " + s.trim()),
         }
     }
 
@@ -563,13 +581,43 @@ namespace pxsim {
 
     export type EventIDType = number | string;
 
+    class EventHandler {
+        private busy = 0;
+        constructor(public handler: RefAction, public flags: number) { }
+
+        async runAsync(eventValue: EventIDType, runtime: Runtime, valueToArgs?: EventValueToActionArgs) {
+            // The default behavior can technically be configured in codal, but we always set it to queue if busy
+            const flags = this.flags || MessageListenerFlags.MESSAGE_BUS_LISTENER_QUEUE_IF_BUSY;
+
+            if (flags === MessageListenerFlags.MESSAGE_BUS_LISTENER_IMMEDIATE) {
+                U.userError("MESSAGE_BUS_LISTENER_IMMEDIATE is not supported!");
+                return;
+            }
+
+            if (flags === MessageListenerFlags.MESSAGE_BUS_LISTENER_QUEUE_IF_BUSY) {
+                return this.runFiberAsync(eventValue, runtime, valueToArgs);
+            }
+            else if (flags === MessageListenerFlags.MESSAGE_BUS_LISTENER_DROP_IF_BUSY && this.busy) {
+                return;
+            }
+
+            void this.runFiberAsync(eventValue, runtime, valueToArgs);
+        }
+
+        private async runFiberAsync(eventValue: EventIDType, runtime: Runtime, valueToArgs?: EventValueToActionArgs) {
+            this.busy++;
+            await runtime.runFiberAsync(this.handler, ...(valueToArgs ? valueToArgs(eventValue) : [eventValue]));
+            this.busy--;
+        }
+    }
+
     export class EventQueue {
         max: number = 5;
         events: EventIDType[] = [];
         private awaiters: ((v?: any) => void)[] = [];
         private lock: boolean;
-        private _handlers: RefAction[] = [];
-        private _addRemoveLog: { act: RefAction, log: LogType }[] = [];
+        private _handlers: EventHandler[] = [];
+        private _addRemoveLog: { act: RefAction, log: LogType, flags: number }[] = [];
 
         constructor(public runtime: Runtime, private valueToArgs?: EventValueToActionArgs) { }
 
@@ -596,66 +644,75 @@ namespace pxsim {
                 return Promise.resolve()
         }
 
-        private poke(): Promise<void> {
+        private async poke(): Promise<void> {
             this.lock = true;
             let events = this.events;
             // all events will be processed by concurrent promisified code below, so start afresh
             this.events = []
+
             // in order semantics for events and handlers
-            return U.promiseMapAllSeries(events, (value) => {
-                return U.promiseMapAllSeries(this.handlers, (handler) => {
-                    return this.runtime.runFiberAsync(handler, ...(this.valueToArgs ? this.valueToArgs(value) : [value]))
-                })
-            }).then(() => {
-                // if some events arrived while processing above then keep processing
-                if (this.events.length > 0) {
-                    return this.poke()
-                } else {
-                    this.lock = false
-                    // process the log (synchronous)
-                    this._addRemoveLog.forEach(l => {
-                        if (l.log === LogType.BackAdd) { this.addHandler(l.act) }
-                        else if (l.log === LogType.BackRemove) { this.removeHandler(l.act) }
-                        else this.setHandler(l.act)
-                    });
-                    this._addRemoveLog = [];
-                    return Promise.resolve()
+            for (const value of events) {
+                for (const handler of this.handlers) {
+                    await handler.runAsync(value, this.runtime, this.valueToArgs);
                 }
-            })
+            }
+
+            // if some events arrived while processing above then keep processing
+            if (this.events.length > 0) {
+                return this.poke()
+            }
+            else {
+                this.lock = false
+                // process the log (synchronous)
+                for (const logger of this._addRemoveLog) {
+                    if (logger.log === LogType.BackAdd) {
+                        this.addHandler(logger.act, logger.flags)
+                    }
+                    else if (logger.log === LogType.BackRemove) {
+                        this.removeHandler(logger.act)
+                    }
+                    else {
+                        this.setHandler(logger.act, logger.flags)
+                    }
+                }
+                this._addRemoveLog = [];
+            }
         }
 
         get handlers() {
             return this._handlers;
         }
 
-        setHandler(a: RefAction) {
+        setHandler(a: RefAction, flags = 0) {
             if (!this.lock) {
-                this._handlers = [a];
-            } else {
-                this._addRemoveLog.push({ act: a, log: LogType.UserSet });
+                this._handlers = [new EventHandler(a, flags)];
+            }
+            else {
+                this._addRemoveLog.push({ act: a, log: LogType.UserSet, flags });
             }
         }
 
-        addHandler(a: RefAction) {
+        addHandler(a: RefAction, flags = 0) {
             if (!this.lock) {
-                let index = this._handlers.indexOf(a)
                 // only add if new, just like CODAL
-                if (index == -1) {
-                    this._handlers.push(a);
+                if (!this._handlers.some(h => h.handler === a)) {
+                    this._handlers.push(new EventHandler(a, flags));
                 }
-            } else {
-                this._addRemoveLog.push({ act: a, log: LogType.BackAdd });
+            }
+            else {
+                this._addRemoveLog.push({ act: a, log: LogType.BackAdd, flags });
             }
         }
 
         removeHandler(a: RefAction) {
             if (!this.lock) {
-                let index = this._handlers.indexOf(a)
+                let index = this._handlers.findIndex(h => h.handler === a)
                 if (index != -1) {
                     this._handlers.splice(index, 1)
                 }
-            } else {
-                this._addRemoveLog.push({ act: a, log: LogType.BackRemove });
+            }
+            else {
+                this._addRemoveLog.push({ act: a, log: LogType.BackRemove, flags: 0 });
             }
         }
 
@@ -1152,6 +1209,7 @@ namespace pxsim {
             let userGlobals: string[];
             let __this = this // ex
             this.traceDisabled = !!msg.traceDisabled;
+            const yieldDelay = msg.yieldDelay !== undefined ? msg.yieldDelay : 5;
 
             // this is passed to generated code
             const evalIface = {
@@ -1230,7 +1288,7 @@ namespace pxsim {
                     lastYield = now
                     s.pc = pc;
                     s.r0 = r0;
-                    setTimeout(loopForSchedule(s), 5)
+                    setTimeout(loopForSchedule(s), yieldDelay)
                     return true
                 }
                 return false
@@ -1352,7 +1410,7 @@ namespace pxsim {
                         if (dbgHeap) {
                             const v = dbgHeap[vmsg.variablesReference];
                             if (v !== undefined)
-                                vars = dumpHeap(v, dbgHeap, vmsg.fields);
+                                vars = dumpHeap(v, dbgHeap, vmsg.fields, undefined, vmsg.includeAll);
                         }
                         Runtime.postMessage(<pxsim.VariablesMessage>{
                             type: "debugger",
@@ -1377,7 +1435,7 @@ namespace pxsim {
 
             function loop(p: StackFrame) {
                 if (__this.dead) {
-                    console.log("Runtime terminated")
+                    pxsim.log("Runtime terminated")
                     return
                 }
                 U.assert(!__this.loopLock)
@@ -1404,7 +1462,7 @@ namespace pxsim {
                     if (__this.errorHandler)
                         __this.errorHandler(e)
                     else {
-                        console.error("Simulator crashed, no error handler", e.stack)
+                        pxsim.error("Simulator crashed, no error handler", e.stack)
                         const { msg, heap } = getBreakpointMsg(p, p.lastBrkId, userGlobals)
                         injectEnvironmentGlobals(msg, heap);
                         msg.exceptionMessage = e.message
@@ -1517,11 +1575,13 @@ namespace pxsim {
                 return vt2 && vt.classNo <= vt2.classNo && vt2.classNo <= vt.lastSubtypeNo;
             }
 
-            function failedCast(v: any) {
+            function failedCast(v: any, expectedType?: VTable) {
                 // TODO generate the right panic codes
-                if ((pxsim as any).control && (pxsim as any).control.dmesgValue)
+                if ((pxsim as any).control && (pxsim as any).control.dmesgValue) {
                     (pxsim as any).control.dmesgValue(v)
-                oops("failed cast on " + v)
+                }
+
+                throwFailedCastError(v, expectedType?.name);
             }
 
             function buildResume(s: StackFrame, retPC: number) {
@@ -1759,6 +1819,74 @@ namespace pxsim {
                 }
             }, 66) as any
         }
+    }
+
+    export function throwUserException(message: string) {
+        throw new Error(message);
+    }
+
+    export function throwTypeError(message: string) {
+        throwUserException(
+            pxsim.localization.lf("TypeError: {0}", message)
+        );
+    }
+
+    export function throwFailedCastError(value: any, expectedType?: string) {
+        const typename = getType(value);
+
+        if (expectedType) {
+            if (value === null || value === undefined) {
+                throwTypeError(pxsim.localization.lf("Expected type {0} but received type {1}. Did you forget to assign a variable?", expectedType, typename));
+            }
+            else {
+                throwTypeError(pxsim.localization.lf("Expected type {0} but received type {1}", expectedType, typename))
+            }
+        }
+        else {
+            throwTypeError(pxsim.localization.lf("Cannot read properties of {0}", typename));
+        }
+    }
+
+    export function throwFailedPropertyAccessError(value: any, propertyName?: string) {
+        const typename = getType(value);
+
+        if (propertyName) {
+            throwTypeError(pxsim.localization.lf("Cannot read properties of {0} (reading '{1}')", typename, propertyName));
+        }
+        else {
+            throwTypeError(pxsim.localization.lf("Cannot read properties of {0}", typename));
+        }
+    }
+
+    export function throwNullUndefinedAsObjectError() {
+        throwTypeError(pxsim.localization.lf("Cannot convert undefined or null to object"));
+    }
+
+    function getType(value: any) {
+        let typename: string;
+        const vtable = (value as RefRecord)?.vtable;
+        if (vtable) {
+            typename = vtable.name;
+        }
+        else if (value === null) {
+            typename = "null";
+        }
+        else if (value === undefined) {
+            typename = "undefined";
+        }
+        else if (value instanceof RefCollection) {
+            typename = "Array";
+        }
+        else if (value instanceof RefBuffer) {
+            typename = "Buffer";
+        }
+        else if (value instanceof RefAction) {
+            typename = "function";
+        }
+        else {
+            typename = typeof value;
+        }
+        return typename;
     }
 
     export function setParentMuteState(state: "muted" | "unmuted" | "disabled") {

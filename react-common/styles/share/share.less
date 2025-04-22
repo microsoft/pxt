@@ -10,7 +10,8 @@
 .project-share-simulator {
     flex: 1;
     height: 100%;
-    background-color: @simulatorBackground;
+    background-color: var(--pxt-target-background2);
+    color: var(--pxt-target-foreground2);
 
     #shareLoanedSimulator {
         position: relative;
@@ -45,8 +46,8 @@
         }
 
         .project-share-error {
-            background-color: @red;
-            color: @white;
+            background-color: var(--pxt-colors-red-background);
+            color: var(--pxt-colors-red-foreground);
             padding: 0.5rem;
             border-radius: 0.5rem;
         }
@@ -69,7 +70,7 @@
 }
 
 #project-share-dropdown {
-    color: @primaryColor;
+    color: var(--pxt-primary-background);
 }
 
 .project-share-thumbnail {
@@ -150,6 +151,7 @@
     margin-top: 1rem;
     position: relative;
     margin-bottom: 2rem;
+    justify-content: space-between;
 }
 
 .project-share-social {
@@ -158,6 +160,10 @@
     flex-grow: 1;
     flex-wrap: wrap;
     gap: 0.5rem;
+
+    .common-button.neutral {
+        border: 1px solid var(--pxt-neutral-alpha20) !important;
+    }
 }
 
 .project-share-text {
@@ -175,6 +181,12 @@
 .project-share-data .common-input-attached-button .common-button {
     width: 10rem;
     padding: .8rem 1rem .95rem;
+}
+
+.project-share-vscode {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
 }
 
 .qrcode-image {
@@ -311,6 +323,12 @@
 @media @tabletAndBelow {
     .gif-recorder-content .thumbnail-controls {
         padding: 0 2rem;
+    }
+
+    .common-button.square-button.embed.gray.mobile-portrait-hidden {
+        // important is need for color to override semantic ui's use of important
+        color: var(--pxt-neutral-foreground2) !important;
+        background: var(--pxt-neutral-background2);
     }
 }
 

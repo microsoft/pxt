@@ -25,7 +25,7 @@
         transform: scaleX(-1);
     }
 
-    #maineditor, #simulator .editor-sidebar, .blocklyToolboxDiv, svg.blocklySvg,
+    #maineditor, #simulator .editor-sidebar, .blocklyToolbox, svg.blocklySvg,
     .monaco-editor, .monaco-editor .margin, .monaco-editor .monaco-editor-background,
     .monacoToolboxDiv, #simulator .editor-sidebar .tutorial-container-outer.active, .tutorial-container-outer {
         background-image: none !important;
@@ -41,7 +41,8 @@
     .monaco-editor .lines-content, .monaco-editor .view-line, .monaco-editor .view-lines {
 
         > span {
-            background: @editorToolsBackground;
+            background: var(--pxt-target-background3);
+            color: var(--pxt-target-foreground3);
         }
     }
 

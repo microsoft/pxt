@@ -51,6 +51,8 @@ namespace ts.pxtc {
             jmpStartAddr: number;
             jmpStartIdx: number;
 
+            topFlashAddr: number;
+
             elfInfo: pxt.elf.Info;
             espInfo: pxt.esp.Image;
         }
@@ -69,6 +71,7 @@ namespace ts.pxtc {
                 codeStartAddr: undefined,
                 elfInfo: undefined,
                 espInfo: undefined,
+                topFlashAddr: 0
             }
         }
 
@@ -80,6 +83,10 @@ namespace ts.pxtc {
 
         export function getStartAddress() {
             return ctx.codeStartAddrPadded
+        }
+
+        export function getTopFlashAddress() {
+            return ctx.topFlashAddr
         }
 
         // utility function
@@ -163,7 +170,7 @@ namespace ts.pxtc {
         // see PXT_EXPORTData
         const pointerListMarker = "0108010842424242010801083ed8e98d"
 
-        export function setupFor(opts: CompileTarget, extInfo: ExtensionInfo) {
+        export function setupFor(opts: CompileTarget, extInfo: ExtensionInfo, cres: CompileResult) {
             ctx = cachedCtxs.find(c => c.sha == extInfo.sha)
 
             if (ctx)
@@ -219,6 +226,8 @@ namespace ts.pxtc {
                         if (hasMarker(drom.data, off)) {
                             found = true
                             off += marker.length
+                            ctx.topFlashAddr = pxt.HF2.read32(drom.data, off)
+                            off += 4
                             const ptroff = off
                             for (let ptr of extInfo.vmPointers || []) {
                                 if (ptr == "0") continue
@@ -270,7 +279,10 @@ namespace ts.pxtc {
                 ctx.jmpStartAddr = jmpIdx / 2
                 ctx.jmpStartIdx = -1
 
-                let ptrs = hexlines[0].slice(jmpIdx + 32, jmpIdx + 32 + funs.length * 8 + 16)
+                const hexb = hexlines[0].slice(jmpIdx + 32, jmpIdx + 40)
+                ctx.topFlashAddr = parseInt(swapBytes(hexb), 16)
+
+                let ptrs = hexlines[0].slice(jmpIdx + 40, jmpIdx + 40 + funs.length * 8 + 16)
                 readPointers(ptrs)
                 checkFuns()
                 return
@@ -328,11 +340,26 @@ namespace ts.pxtc {
                 }
                 m = /^:..(....)00/.exec(hexlines[i])
                 if (m) {
+                    if (ctx.jmpStartIdx >= 0 && ctx.jmpStartIdx + 1 == i) {
+                        let n = /^:..(....)00(.{4,})/.exec(hexlines[i]);
+                        if (n) {
+                            let step = opts.shortPointers ? 4 : 8
+                            let hexb = swapBytes(n[2].slice(0, step))
+                            ctx.topFlashAddr = parseInt(hexb, 16)
+                        }
+                    }
                     let newAddr = parseInt(upperAddr + m[1], 16)
-                    if (!opts.flashUsableEnd && lastAddr && newAddr - lastAddr > 64 * 1024)
+
+                    if (!opts.flashUsableEnd && lastAddr && newAddr - lastAddr > 64 * 1024) {
+                        // the above check is sort of odd - not clear why this case is here
                         hitEnd()
-                    if (opts.flashUsableEnd && newAddr >= opts.flashUsableEnd)
-                        hitEnd()
+                    }
+                    if (opts.flashUsableEnd) {
+                        let realUsableEnd = getFlashUsableEnd(opts,cres)
+                        if (newAddr >= realUsableEnd) {
+                            hitEnd()
+                        }
+                    }
                     lastIdx = i
                     lastAddr = newAddr
                 }
@@ -342,6 +369,7 @@ namespace ts.pxtc {
 
                 // random magic number, which marks the beginning of the array of function pointers in the .hex file
                 // it is defined in pxt-microbit-core
+                // TODO: would be nice to use pointerListMarker
                 m = /^:10....000108010842424242010801083ED8E98D/.exec(hexlines[i])
                 if (m) {
                     ctx.jmpStartAddr = lastAddr
@@ -363,13 +391,19 @@ namespace ts.pxtc {
                 let m = /^:..(....)00(.{4,})/.exec(hexlines[i]);
                 if (!m) continue;
 
-                readPointers(m[2])
+                if (i === ctx.jmpStartIdx + 1) {
+                    // skip over the flash top address
+                    let step = opts.shortPointers ? 4 : 8
+                    readPointers(m[2].slice(step))
+                } else {
+                    readPointers(m[2])
+                }
+
                 if (funs.length == 0) break
             }
 
             checkFuns();
             return
-
 
             function readPointers(s: string) {
                 let step = opts.shortPointers ? 4 : 8
@@ -1005,8 +1039,8 @@ ${hexfile.hexPrelude()}
 
             if (userErrors) {
                 //TODO
-                console.log(U.lf("errors in inline assembly"))
-                console.log(userErrors)
+                pxt.log(U.lf("errors in inline assembly"))
+                pxt.log(userErrors)
                 throw new Error(b.errors[0].message)
             } else {
                 throw new Error(b.errors[0].message)
@@ -1014,14 +1048,29 @@ ${hexfile.hexPrelude()}
         }
     }
 
+    // compute the real top of flash
+    function getFlashUsableEnd(target: CompileTarget, cres: CompileResult) {
+        // check if settings size is set
+        let actualSettingsSize = 0
+        if (cres.configData) {
+            let settingsSizeDefault = cres.configData.find(ce => ce.name === "SETTINGS_SIZE_DEFL")
+            let settingsSize = cres.configData.find(ce => ce.name === "SETTINGS_SIZE")
+            actualSettingsSize = settingsSize ? settingsSize.value : settingsSizeDefault ? settingsSizeDefault.value : 0
+        }
+
+        const topFlashAddr = hexfile.getTopFlashAddress()
+        return (topFlashAddr > 0 ? topFlashAddr : target.flashUsableEnd ? target.flashUsableEnd : target.flashEnd) - actualSettingsSize
+    }
+
     let peepDbg = false
-    export function assemble(target: CompileTarget, bin: Binary, src: string) {
+    export function assemble(target: CompileTarget, bin: Binary, src: string, cres: CompileResult) {
         let b = mkProcessorFile(target)
         b.emit(src);
 
+
         src = `; Interface tables: ${bin.itFullEntries}/${bin.itEntries} (${Math.round(100 * bin.itFullEntries / bin.itEntries)}%)\n` +
             `; Virtual methods: ${bin.numVirtMethods} / ${bin.numMethods}\n` +
-            b.getSource(!peepDbg, bin.numStmts, target.flashEnd);
+            b.getSource(!peepDbg, bin.numStmts, getFlashUsableEnd(target, cres));
 
         throwAssemblerErrors(b)
 
@@ -1127,7 +1176,7 @@ __flash_checksums:
         }
         const prefix = opts.extinfo.outputPrefix || ""
         bin.writeFile(prefix + pxtc.BINARY_ASM, src)
-        const res = assemble(opts.target, bin, src)
+        const res = assemble(opts.target, bin, src, cres)
         if (res.thumbFile.commPtr)
             bin.commSize = res.thumbFile.commPtr - hexfile.getCommBase()
         if (res.src)
@@ -1234,7 +1283,7 @@ __flash_checksums:
         const opts0 = U.flatClone(opts)
         // normally, this would already have been done, but if the main variant
         // is disabled, another variant may be set up
-        hexfile.setupFor(opts.target, opts.extinfo || emptyExtInfo())
+        hexfile.setupFor(opts.target, opts.extinfo || emptyExtInfo(), cres)
         assembleAndPatch(src, bin, opts, cres)
         if (!cres.builtVariants) {
             cres.builtVariants = [];
@@ -1249,12 +1298,12 @@ __flash_checksums:
                     localOpts.extinfo = other.extinfo
                     other.target.isNative = true
                     localOpts.target = other.target
-                    hexfile.setupFor(localOpts.target, localOpts.extinfo)
+                    hexfile.setupFor(localOpts.target, localOpts.extinfo, cres)
                     assembleAndPatch(src, bin, localOpts, cres)
                     cres.builtVariants.push(other.extinfo?.appVariant);
                 }
             } finally {
-                hexfile.setupFor(opts0.target, opts0.extinfo)
+                hexfile.setupFor(opts0.target, opts0.extinfo, cres)
             }
     }
 

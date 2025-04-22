@@ -231,7 +231,7 @@ namespace pxt.esp {
             res[23] = 0 // disable digest
         }
 
-        // console.log("reparsed\n" + parseBuffer(res).segments.map(segToString).join("\n") + "\n")
+        // pxt.log("reparsed\n" + parseBuffer(res).segments.map(segToString).join("\n") + "\n")
 
         return res
     }

@@ -2,7 +2,7 @@
 
 import * as Blockly from "blockly";
 import { FieldCustom, FieldCustomDropdownOptions } from "./field_utils";
-import { BaseFieldTextDropdown, FieldTextDropdown } from "./field_textdropdown";
+import { BaseFieldTextDropdown, FieldTextDropdown, FieldTextDropdownOptions } from "./field_textdropdown";
 
 // common time options -- do not remove
 // lf("100 ms")
@@ -108,7 +108,12 @@ class BaseFieldNumberDropdown extends BaseFieldTextDropdown {
             return null;
         }
         // Get the value in range.
-        n = Math.min(Math.max(n, this.min_), this.max_);
+        if (this.min_ !== undefined) {
+            n = Math.max(n, this.min_);
+        }
+        if (this.max_ !== undefined) {
+            n = Math.min(n, this.max_);
+        }
         // Round to nearest multiple of precision.
         if (this.precision_ && isFinite(n)) {
             n = Math.round(n / this.precision_) * this.precision_;
@@ -121,7 +126,7 @@ class BaseFieldNumberDropdown extends BaseFieldTextDropdown {
     }
 }
 
-export interface FieldNumberDropdownOptions extends FieldCustomDropdownOptions {
+export interface FieldNumberDropdownOptions extends FieldTextDropdownOptions {
     min?: number;
     max?: number;
     precision?: any;
@@ -131,7 +136,7 @@ export class FieldNumberDropdown extends BaseFieldNumberDropdown implements Fiel
     public isFieldCustom_ = true;
 
     constructor(value: number | string, options: FieldNumberDropdownOptions, opt_validator?: Blockly.FieldValidator) {
-        super(value, options.data, options.min, options.max, options.precision, opt_validator);
+        super(value, parseDropdownOptions(options), options.min, options.max, options.precision, opt_validator);
     }
 
     getOptions() {
@@ -150,4 +155,75 @@ export class FieldNumberDropdown extends BaseFieldNumberDropdown implements Fiel
         }
         return newOptions;
     }
+}
+
+function parseDropdownOptions(options: FieldTextDropdownOptions): [string, any][] {
+    let result: [string, number][];
+    if (options.values) {
+        const parsed: [string, number][] = [];
+        const data = options.values.split(",");
+
+        let foundError = false;
+        for (const entry of data) {
+            const parsedValue = parseFloat(entry);
+
+            if (Number.isNaN(parsedValue)) {
+                foundError = true;
+                break;
+            }
+            parsed.push([entry, parsedValue]);
+        }
+
+        if (!foundError) {
+            result = parsed;
+        }
+    }
+    else if (options.data) {
+        try {
+            const data = JSON.parse(options.data);
+            if (Array.isArray(data) && data.length) {
+                if (isNumberArray(data)) {
+                    return data.map(d => ["" + d, d]);
+                }
+                else {
+                    let foundError = false;
+                    for (const value of data) {
+                        if (
+                            !Array.isArray(value) ||
+                            typeof value[0] !== "string" ||
+                            typeof value[1] !== "number"
+                        ) {
+                            foundError = true;
+                            break;
+                        }
+                    }
+
+                    if (!foundError) {
+                        result = data;
+                    }
+                }
+            }
+        }
+        catch (e) {
+            // parse error
+        }
+    }
+
+    if (result) {
+        return result;
+    }
+    else {
+        pxt.warn("Could not parse numberdropdown data field");
+    }
+
+    return [];
+}
+
+function isNumberArray(arr: any[]): arr is number[] {
+    for (const val of arr) {
+        if (typeof val !== "number") {
+            return false;
+        }
+    }
+    return true;
 }

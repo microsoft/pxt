@@ -1,18 +1,14 @@
-import { stateAndDispatch } from "../state";
 import { showModal } from "./showModal";
-import * as Actions from "../state/actions";
+import { ConfirmationModalOptions } from "../types/modalOptions";
 
 export async function confirmAsync(title: string, message: string): Promise<boolean> {
-    const { dispatch } = stateAndDispatch();
     return new Promise<boolean>(resolve => {
-        dispatch(
-            Actions.setConfirmationOptions({
-                title,
-                message,
-                onCancel: () => resolve(false),
-                onContinue: () => resolve(true),
-            })
-        );
-        showModal("confirmation");
+        showModal({
+            modal: "confirmation",
+            title,
+            message,
+            onCancel: () => resolve(false),
+            onContinue: () => resolve(true),
+        } as ConfirmationModalOptions);
     });
 }

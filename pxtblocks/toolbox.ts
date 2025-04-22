@@ -48,7 +48,7 @@ export function isArrayType(type: string): string {
     }
 }
 
-export function createShadowValue(info: pxtc.BlocksInfo, p: pxt.blocks.BlockParameter, shadowId?: string, defaultV?: string): Element {
+export function createShadowValue(info: pxtc.BlocksInfo, p: pxt.blocks.BlockParameter, shadowId?: string, defaultV?: string, parentIsShadow?: boolean, maxRecursion = 0): Element {
     defaultV = defaultV || p.defaultValue;
     shadowId = shadowId || p.shadowBlockId;
     if (!shadowId && p.range) shadowId = "math_number_minmax";
@@ -100,9 +100,9 @@ export function createShadowValue(info: pxtc.BlocksInfo, p: pxt.blocks.BlockPara
     const value = document.createElement("value");
     value.setAttribute("name", p.definitionName);
 
-    const isArray = isArrayType(p.type);
+    const isArray = (shadowId === "lists_create_with" || !shadowId) ? isArrayType(p.type) : undefined;
 
-    const shadow = document.createElement(isVariable || isArray ? "block" : "shadow");
+    const shadow = document.createElement(((isVariable || isArray) && !parentIsShadow) ? "block" : "shadow");
 
     value.appendChild(shadow);
 
@@ -209,6 +209,22 @@ export function createShadowValue(info: pxtc.BlocksInfo, p: pxt.blocks.BlockPara
         shadow.appendChild(mut);
     }
 
+    if (maxRecursion) {
+        const allShadows = pxt.Util.toArray(value.getElementsByTagName("shadow"));
+        for (const shadow of allShadows) {
+            if (!shadow.innerHTML) {
+                const shadowSymbol = info.blocks.find(s => s.attributes.blockId === shadow.getAttribute("type"));
+                if (shadowSymbol) {
+                    const shadowXml = createToolboxBlock(info, shadowSymbol, pxt.blocks.compileInfo(shadowSymbol), true, maxRecursion - 1);
+                    while (shadowXml.firstChild) {
+                        shadow.appendChild(shadowXml.firstChild.cloneNode(true));
+                        shadowXml.firstChild.remove();
+                    }
+                }
+            }
+        }
+    }
+
     return value;
 }
 
@@ -287,7 +303,7 @@ export function createFlyoutGap(gap: number) {
     return sep;
 }
 
-export function createToolboxBlock(info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, comp: pxt.blocks.BlockCompileInfo): HTMLElement {
+export function createToolboxBlock(info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, comp: pxt.blocks.BlockCompileInfo, isShadow = false, maxRecursion = 0): HTMLElement {
     let parent: HTMLElement;
     let parentInput: HTMLElement;
 
@@ -296,7 +312,7 @@ export function createToolboxBlock(info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, c
 
         if (parentFn) {
             const parentInfo = pxt.blocks.compileInfo(parentFn);
-            parent = createToolboxBlock(info, parentFn, parentInfo);
+            parent = createToolboxBlock(info, parentFn, parentInfo, isShadow);
 
             if (fn.attributes.toolboxParentArgument) {
                 parentInput = parent.querySelector(`value[name=${fn.attributes.toolboxParentArgument}]`);
@@ -337,7 +353,7 @@ export function createToolboxBlock(info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, c
     //
     // toolbox update
     //
-    let block = document.createElement(parent ? "shadow" : "block");
+    let block = document.createElement((parent || isShadow) ? "shadow" : "block");
     block.setAttribute("type", fn.attributes.blockId);
     if (fn.attributes.blockGap)
         block.setAttribute("gap", fn.attributes.blockGap);
@@ -351,12 +367,12 @@ export function createToolboxBlock(info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, c
         let shadowId = t.shadowBlockId;
         let defaultValue = t.defaultValue;
 
-        if (!isFixedInstance && !shadowId) {
+        if (!isFixedInstance && (!shadowId || shadowId === "variables_get")) {
             shadowId = "variables_get";
             defaultValue = defaultValue || t.definitionName;
         }
 
-        const inputOrField = createShadowValue(info, t, shadowId, defaultValue);
+        const inputOrField = createShadowValue(info, t, shadowId, defaultValue, isShadow, maxRecursion);
 
         if (inputOrField) {
             block.appendChild(inputOrField);
@@ -380,7 +396,7 @@ export function createToolboxBlock(info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, c
                 || pr.shadowBlockId
                 || pr.defaultValue)
             .forEach(pr => {
-                const inputOrField = createShadowValue(info, pr);
+                const inputOrField = createShadowValue(info, pr, undefined, undefined, isShadow, maxRecursion);
                 if (inputOrField) {
                     block.appendChild(inputOrField);
                 }

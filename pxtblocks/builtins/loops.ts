@@ -2,6 +2,7 @@
 
 import * as Blockly from "blockly";
 import { installBuiltinHelpInfo, setBuiltinHelpInfo, setHelpResources } from "../help";
+import { setDuplicateOnDrag } from "../plugins/duplicateOnDrag";
 
 export function initLoops() {
     const msg = Blockly.Msg;
@@ -104,6 +105,7 @@ export function initLoops() {
             }
         }
     };
+    setDuplicateOnDrag(pxtControlsForId, "VAR");
 
     // controls_simple_for
     const controlsSimpleForId = "controls_simple_for";
@@ -120,7 +122,8 @@ export function initLoops() {
                     {
                         "type": "field_variable",
                         "name": "VAR",
-                        "variable": controlsSimpleForDef.block["variable"]
+                        "variable": controlsSimpleForDef.block["variable"],
+                        "variableTypes": [""],
                         // Please note that most multilingual characters
                         // cannot be used as variable name at this point.
                         // Translate or decide the default variable name
@@ -177,8 +180,8 @@ export function initLoops() {
          * @param {!Array} options List of menu options to add to.
          * @this Blockly.Block
          */
-        customContextMenu: function (options: any[]) {
-            if (!this.isCollapsed() && !this.inDebugWorkspace()) {
+        customContextMenu: function (this: Blockly.BlockSvg, options: any[]) {
+            if (!this.isCollapsed() && !(this.workspace?.options?.readOnly)) {
                 let option: any = { enabled: true };
                 let name = this.getField('VAR').getText();
                 option.text = lf("Create 'get {0}'", name);
@@ -313,6 +316,7 @@ export function initLoops() {
                 );
             }
         };
+        setDuplicateOnDrag(pxtControlsForOfId, "VAR");
 
         // controls_for_of
         const controlsForOfId = "controls_for_of";
@@ -325,7 +329,8 @@ export function initLoops() {
                         {
                             "type": "field_variable",
                             "name": "VAR",
-                            "variable": controlsForOfDef.block["variable"]
+                            "variable": controlsForOfDef.block["variable"],
+                            "variableTypes": [""],
                             // Please note that most multilingual characters
                             // cannot be used as variable name at this point.
                             // Translate or decide the default variable name

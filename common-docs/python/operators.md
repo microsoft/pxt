@@ -1,6 +1,6 @@
 # Operators
 
-The following Python operators are supported for the @boardname@.
+The following Python operators are supported:
 
 ## Assignment, arithmetic and bitwise
 

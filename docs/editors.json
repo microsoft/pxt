@@ -78,7 +78,7 @@
         "name": "Adafruit Circuit Playground Express BETA",
         "title": "MakeCode for Circuit Playground",
         "url": "https://makecode.adafruit.com/beta",
-        "icon": "https://pxt.azureedge.net/blob/1215b9ef46d3e04bc9923a1a333d92db92eb5419/static/logo.square.black.svg",
+        "icon": "https://cdn.makecode.com/blob/1215b9ef46d3e04bc9923a1a333d92db92eb5419/static/logo.square.black.svg",
         "styles": {
             "primary": "#1c1f2b",
             "menu": "#FB48C7",

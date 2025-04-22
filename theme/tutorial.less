@@ -13,6 +13,7 @@
 @highlightLineClassColor: #007f00;
 @highlightLineKeywordColor: #0000ff;
 @tutorialCardHeight: 8rem;
+@tutorialCardMaxHeight: 20rem;
 @seeMoreButtonHeight: 4rem;
 @avatarSize: 4.5rem;
 @avatarMargin: @avatarSize + 0.5rem;
@@ -39,7 +40,7 @@
 
 /* Tutorial Mode */
 .menubar .ui.menu .item.tutorial-menuitem {
-    background: rgba(27, 28, 29, 0.3) !important;
+    background: var(--pxt-neutral-alpha20) !important;
     margin: 0.45rem;
     padding: 0.45rem;
     border-radius: 0.5rem !important;
@@ -49,11 +50,12 @@
     margin-right: 0.4em;
 }
 .menubar .ui.menu .item.tutorial-menuitem > .label {
-    background: white;
+    background: var(--pxt-neutral-background1);
+    color: var(--pxt-neutral-foreground1);
     margin-left: 0em;
 }
 .tutorial-menuitem > .selected {
-    background-color: @tutorialSelectedMenuColor !important;
+    background-color: var(--pxt-primary-background) !important;
     padding: 1.0rem !important;
     padding-left: 1.3rem !important;
     padding-right: 1.3rem !important;
@@ -88,7 +90,7 @@
 }
 
 .tutorial.tutorialExpanded #tutorialcard {
-    max-height: 20rem;
+    max-height: @tutorialCardMaxHeight;
 }
 
 #root.dimmable.dimmed #tutorialcard.tutorialReady {
@@ -130,7 +132,8 @@ body#docs.tutorial {
     padding: 0;
     border: 0;
     border-radius: 0px;
-    background: @tutorialSegmentBackground;
+    background: var(--pxt-neutral-background2);
+    color: var(--pxt-neutral-foreground2);
 }
 
 #tutorialcard .ui.tutorialsegment svg {
@@ -141,6 +144,10 @@ body#docs.tutorial {
     padding: 0.5rem;
 }
 
+#tutorialcard.stepExpanded {
+    height: auto;
+}
+
 .tutorial #tutorialcard .ui.buttons {
     width: 100%;
     height: calc(@tutorialCardHeight - 1rem);
@@ -148,6 +155,7 @@ body#docs.tutorial {
 
 .tutorial.tutorialExpanded #tutorialcard .ui.buttons {
     height: 100%;
+    max-height: calc(@tutorialCardMaxHeight - 1rem);
 }
 
 #tutorialcard .ui.tutorialsegment {
@@ -172,7 +180,7 @@ body#docs.tutorial {
 .tutorialhint p,
 .tutorial-callout p {
     line-height: 1.4em !important;
-    color: @tutorialSegmentColor;
+    color: var(--pxt-neutral-foreground2);
 }
 
 .tutorial #tutorialcard .tutorialmessage {
@@ -252,18 +260,38 @@ span.docs.inlinebutton {
     padding: 0.4rem;
     border-radius: 0.2rem;
     white-space: nowrap;
-    background-color: @primaryColor;
-    color: @white;
+    background-color: var(--pxt-primary-background);
+    color: var(--pxt-primary-foreground);
 }
 
 span.docs.inlineblock {
     padding: 0.05rem .2rem;
-    border-radius: .2rem;
-    white-space: nowrap;
-    background-color: @inlineBlockColor;
-    color: @white;
+    padding-bottom: 0.1rem;
+    white-space: break-spaces;
+    border-radius: 0;
+    border-bottom: 3px solid var(--inline-namespace-color);
+    color: var(--pxt-neutral-foreground1);
+    font-weight: 600;
+    background-color: transparent;
     font-family: @blocklyFont !important;
     font-size: 1em !important;
+
+    i {
+        font-family: 'Icons';
+        color: var(--inline-namespace-color);
+        font-style: normal;
+        margin-right: 6px;
+    }
+
+    span.image-icon {
+        background-image: var(--image-icon-url);
+        width: 20px;
+        height: 17px;
+        background-size: contain !important;
+        background-repeat: no-repeat !important;
+        display: inline-block;
+    }
+
     &.clickable {
         cursor: pointer;
 
@@ -279,20 +307,21 @@ code.lang-filterblocks {
 
 #tutorialcard .prevbutton,
 #tutorialcard .nextbutton {
-    background: @tutorialSegmentBackground;
+    background: var(--pxt-neutral-background2);
+    color: var(--pxt-neutral-foreground2);
     z-index: 2;
 
     > i, > span {
         display: block;
         margin: 0 auto 0.5em !important;
-        color: @mainMenuTutorialButtons;
+        color: var(--pxt-header-background);
     }
 
     &:hover, &:focus {
-        background-color: @lightGrey;
+        background-color: var(--pxt-target-background1);
 
         > i, > span, > i.orange {
-            color: @black !important;
+            color: var(--pxt-neutral-foreground1) !important;
         }
     }
 }
@@ -307,15 +336,15 @@ code.lang-filterblocks {
     top: 50%;
     transform: translateY(-50%);
     font-size: 22.5px !important;
-    color: white; // match menubutton color
+    color: var(--pxt-neutral-background1); // match menubutton color
     border-radius: 50%;
     transform-style: preserve-3d;
 
-    --bubble-pulse-color: @blue;
+    --bubble-pulse-color: var(--pxt-colors-blue-background);
     --bubble-pulse-size: 30px;
 
     &.flash {
-        border: 2px solid fade(white, 70%) !important;
+        border: 2px solid var(--pxt-neutral-stencil1) !important;
 
         &:before {
             content: "";
@@ -334,12 +363,12 @@ code.lang-filterblocks {
 }
 
 // use two css variables to customize as needed:
-// * --bubble-pulse-color, the color to use for the pulse; default: @blue
+// * --bubble-pulse-color, the color to use for the pulse; default: var(--pxt-colors-blue-background)
 // * --bubble-pulse-radius, the radius for the pulse; default: 30
 @keyframes bubble-pulse-animation {
     0% { }
-    20% { box-shadow: 0 0 0 0 var(--bubble-pulse-color, @blue); }
-    100% { box-shadow: 0 0  ~'calc(var(--bubble-pulse-size, 30) * 3 / 4)' var(--bubble-pulse-size, 30) var(--bubble-pulse-color, @blue); }
+    20% { box-shadow: 0 0 0 0 var(--bubble-pulse-color, var(--pxt-colors-blue-background)); }
+    100% { box-shadow: 0 0  ~'calc(var(--bubble-pulse-size, 30) * 3 / 4)' var(--bubble-pulse-size, 30) var(--bubble-pulse-color, var(--pxt-colors-blue-background)); }
 }
 
 /*******************************
@@ -375,10 +404,11 @@ code.lang-filterblocks {
     right: 2rem;
     padding: 10px 26px;
     border-radius: 1.2rem;
-    background: @white;
+    background: var(--pxt-neutral-background1);
+    color: var(--pxt-neutral-foreground1);
     z-index: @tutorialLightboxCardZIndex;
-    border: 8px solid @blue;
-    box-shadow: 0px 0px 8px 1px rgba(0, 0, 0, .3);
+    border: 8px solid var(--pxt-colors-blue-background);
+    box-shadow: 0px 0px 8px 1px var(--pxt-neutral-alpha20);
 }
 
 .tutorialhint:before,
@@ -391,7 +421,7 @@ code.lang-filterblocks {
     top: -24px;
     bottom: auto;
     border: 16px solid;
-    border-color: transparent @blue transparent transparent;
+    border-color: transparent var(--pxt-colors-blue-background) transparent transparent;
     transform: rotateZ(-135deg);
 }
 
@@ -447,8 +477,8 @@ code.lang-filterblocks {
 
 .avatar-container .tooltip ,
 .avatar-container .tooltip:before {
-    background-color: @blue;
-    color: @white;
+    background-color: var(--pxt-colors-blue-background);
+    color: var(--pxt-colors-blue-foreground);
 }
 
 .avatar-container .tooltip:before {
@@ -468,21 +498,21 @@ code.lang-filterblocks {
 /*******************************
         See More Button
 *******************************/
-#tutorialcard.seemore {
-    .tutorialsegment > button {
-        flex-grow: 0;
-        position: relative;
-        width: auto;
-        margin: auto;
-        margin-top: -0.75rem;
-        padding: 0.5rem 0.8rem;
-    }
+#tutorialcard.seemore .tutorialsegment > button {
+    flex-grow: 0;
+    position: relative;
+    width: auto;
+    margin: auto;
+    margin-top: -0.5rem;
+    padding: 0.5rem 0.8rem;
 }
 
-.editorlang-text {
-    #tutorialcard.seemore .tutorialsegment > button {
-        margin-right: 1rem;
-    }
+.editorlang-text:not(.hideToolbox) #tutorialcard.seemore .tutorialsegment > button {
+    margin-right: 1rem;
+}
+
+.editorlang-text.hideToolbox #tutorialcard.seemore .tutorialsegment > button {
+    margin-left: 1rem;
 }
 
 /*******************************
@@ -534,17 +564,16 @@ code.lang-filterblocks {
 
 #mainmenu .immersive-reader-button:focus,
 #mainmenu .immersive-reader-button:hover {
-    background-color: #00000059!important;
+    background-color: var(--pxt-neutral-alpha50);
     filter: brightness(0.8);
 }
 
 .modals .ui.button.immersive-reader-button {
-    background-image: @immersiveReaderIcon;
+    background-image: @immersiveReaderIcon !important;
     width: 2rem;
     height: 2.8rem;
     background-repeat: no-repeat;
     background-size: 60%;
-    background-color: #f9fafb;
     background-position: center;
     box-shadow: none;
     transition: none;
@@ -560,7 +589,6 @@ code.lang-filterblocks {
     background-image: @immersiveReaderIcon;
     background-repeat: no-repeat;
     background-size: contain;
-    background-color: #f9fafb;
     background-position: center;
     background-size: 60%;
     filter: brightness(0.8);
@@ -578,7 +606,7 @@ code.lang-filterblocks {
 }
 
 .progresscircle path {
-    stroke: @white;
+    stroke: var(--pxt-neutral-background1);
     fill: none;
     stroke-linecap: round;
 }
@@ -590,7 +618,7 @@ code.lang-filterblocks {
     display: flex;
     position: relative;
     height: @workspaceHeaderHeight;
-    color: @white;
+    color: var(--pxt-neutral-background1);
     z-index: @simulatorZIndex;
 
     #headerToolbar {
@@ -627,6 +655,10 @@ code.lang-filterblocks {
     }
 }
 
+.hideToolbox #headers #flyoutHeader {
+    display: none;
+}
+
 /*******************************
         Sidebar Tutorial
 *******************************/
@@ -646,8 +678,8 @@ code.lang-filterblocks {
     #sidebar {
         width: 33.3%;
         height: 100%;
-        background-color: @sidebarTutorialColor;
-        color: #3c3c3c;
+        background-color: var(--pxt-target-background2);
+        color: var(--pxt-target-foreground2);
         font-family: @docsPageFont;
         padding: @sidebarPadding / 2 @sidebarPadding;
         overflow-y: auto;
@@ -688,7 +720,7 @@ code.lang-filterblocks {
 }
 
 /**
- * CSS for embedded tutorial used in the skills map
+ * CSS for embedded tutorial used in the skillmap
  */
 .tutorial.tutorial-embed {
     #simulator .editor-sidebar, #maineditor, &.sideDocs #sidedocs, .simView #simulators {
@@ -830,7 +862,7 @@ code.lang-filterblocks {
     }
 
     /**
-    * CSS for embedded tutorial used in the skills map
+    * CSS for embedded tutorial used in the skillmap
     */
     .tutorial.tutorial-embed {
         #simulator .editor-sidebar {

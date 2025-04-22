@@ -49,8 +49,8 @@ export class ConstantProvider extends Blockly.zelos.ConstantProvider {
     ellipses = this.makeEllipses();
 
 
-    override createDom(svg: SVGElement, tagName: string, selector: string): void {
-        super.createDom(svg, tagName, selector);
+    override createDom(svg: SVGElement, tagName: string, selector: string, injectionDivIfIsParent?: HTMLElement,): void {
+        super.createDom(svg, tagName, selector, injectionDivIfIsParent);
 
         const defs = Blockly.utils.dom.createSvgElement(Blockly.utils.Svg.DEFS, {}, svg);
 
@@ -257,5 +257,45 @@ export class ConstantProvider extends Blockly.zelos.ConstantProvider {
         );
 
         return highlightOutlineFilter;
+    }
+
+    override shapeFor(connection: Blockly.RenderedConnection) {
+        let checks = connection.getCheck();
+        if (!checks && connection.targetConnection) {
+            checks = connection.targetConnection.getCheck();
+        }
+        switch (connection.type) {
+            case Blockly.ConnectionType.INPUT_VALUE:
+            case Blockly.ConnectionType.OUTPUT_VALUE:
+                // The default zelos renderer just inherits the shape from
+                // the parent if it's set. Instead, respect the type checks.
+                // outputShape = connection.getSourceBlock().getOutputShape();
+                // if (outputShape !== null) {
+                //     switch (outputShape) {
+                //         case this.SHAPES.HEXAGONAL:
+                //             return this.HEXAGONAL!;
+                //         case this.SHAPES.ROUND:
+                //             return this.ROUNDED!;
+                //         case this.SHAPES.SQUARE:
+                //             return this.SQUARED!;
+                //     }
+                // }
+                // Includes doesn't work in IE.
+                if (checks && checks.includes('Boolean')) {
+                    return this.HEXAGONAL!;
+                }
+                if (checks && checks.includes('Number')) {
+                    return this.ROUNDED!;
+                }
+                if (checks && checks.includes('String')) {
+                    return this.ROUNDED!;
+                }
+                return this.ROUNDED!;
+            case Blockly.ConnectionType.PREVIOUS_STATEMENT:
+            case Blockly.ConnectionType.NEXT_STATEMENT:
+                return this.NOTCH!;
+            default:
+                throw Error('Unknown type');
+        }
     }
 }

@@ -13,6 +13,7 @@
 @import 'alert';
 
 :root {
+    // TODO : Integrate with theme
     --editor-bg-color: #1e1e1e;
 
     --sidebar-bg-color: #252526;
@@ -90,12 +91,19 @@
     overflow: hidden;
 }
 
+.image-editor-region {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
 .gallery-editor-header {
     height: 3rem;
     background-color: #4B7BEC;
     border: 2px solid #4067b3;
     border-bottom: none;
     display: flex;
+    flex-shrink: 0;
 }
 
 .image-editor-header-left,
@@ -292,22 +300,26 @@
     max-width: 120px;
 }
 
-.image-editor-confirm {
+.common-button.image-editor-confirm {
     display: flex;
     align-items: center;
     padding: 0 2rem;
-    background-color: @green;
-    color: @white;
+    background-color: var(--pxt-colors-green-background);
+    color: var(--pxt-colors-green-foreground);
     cursor: pointer;
     user-select: none;
+    margin: 0;
+    border-radius: 0;
 }
 
-.image-editor-confirm:hover {
-    background-color: darken(@green, 5%);
+.common-button.image-editor-confirm:hover {
+    background-color: var(--pxt-colors-green-hover);
+    color: var(--pxt-colors-green-foreground);
 }
 
-.image-editor-confirm:active {
-    background-color: darken(@green, 10%);
+.common-button.image-editor-confirm:active {
+    background-color: var(--pxt-colors-green-hover);
+    color: var(--pxt-colors-green-foreground);
 }
 
 .image-editor.editing-tile {

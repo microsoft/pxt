@@ -185,8 +185,8 @@ function beautifyText(content: string): string {
     }
 }
 
+const IMMERSIVE_READER_ID = "immReaderToken";
 function getTokenAsync(): Promise<ImmersiveReaderToken> {
-    const IMMERSIVE_READER_ID = "immReader";
     const storedTokenString = pxt.storage.getLocal(IMMERSIVE_READER_ID);
     const cachedToken: ImmersiveReaderToken = pxt.Util.jsonTryParse(storedTokenString);
 
@@ -212,7 +212,7 @@ function getTokenAsync(): Promise<ImmersiveReaderToken> {
     }
 }
 
-export function launchImmersiveReader(content: string, tutorialOptions: pxt.tutorial.TutorialOptions) {
+export async function launchImmersiveReaderAsync(content: string, tutorialOptions: pxt.tutorial.TutorialOptions) {
     pxt.tickEvent("immersiveReader.launch", {tutorial: tutorialOptions.tutorial, tutorialStep: tutorialOptions.tutorialStep});
 
     const userReaderPref = data.getData<string>(auth.READER) || ""
@@ -235,19 +235,17 @@ export function launchImmersiveReader(content: string, tutorialOptions: pxt.tuto
         preferences: userReaderPref
     }
 
-    getTokenAsync().then(res =>{
-        return testConnectionAsync(res);
-    }).then(res => {
-        if (Cloud.isOnline()) {
-            const launchStart = pxt.Util.now();
-            return ImmersiveReader.launchAsync(res.token, res.subdomain, tutorialData, options).then(res => {
-                const elapsed = pxt.Util.now() - launchStart;
-                pxt.tickEvent("immersiveReader.launch.finished", {elapsed: elapsed})
-            })
-        } else {
-            return Promise.reject(new Error("offline"));
+    try {
+        let res = await getTokenAsync();
+        await testConnectionAsync();
+        if (!Cloud.isOnline()) {
+            throw new Error("offline");
         }
-    }).catch(e => {
+        const launchStart = pxt.Util.now();
+        await ImmersiveReader.launchAsync(res.token, res.subdomain, tutorialData, options)
+        const elapsed = pxt.Util.now() - launchStart;
+        pxt.tickEvent("immersiveReader.launch.finished", {elapsed: elapsed})
+    } catch (e) {
         if (e.isOffline) {
             core.warningNotification(lf("Immersive Reader cannot be used offline"));
         } else {
@@ -258,6 +256,8 @@ export function launchImmersiveReader(content: string, tutorialOptions: pxt.tuto
                 }
                 case "token":
                 default: {
+                    // If the token is invalid, remove it from storage
+                    pxt.storage.removeLocal(IMMERSIVE_READER_ID);
                     core.warningNotification(lf("Immersive Reader could not be launched"));
                     if (typeof e == "string") {
                         pxt.tickEvent("immersiveReader.error", {message: e});
@@ -270,10 +270,11 @@ export function launchImmersiveReader(content: string, tutorialOptions: pxt.tuto
         }
         pxt.reportException(e);
         ImmersiveReader.close();
-    });
+    };
 
-    function testConnectionAsync(token: ImmersiveReaderToken): Promise<ImmersiveReaderToken> {
-        return pxt.Cloud.privateGetAsync("ping", true).then(() => {return token});
+    async function testConnectionAsync() {
+        // Will throw an exception here if there is an error we are not expecting
+        return pxt.Cloud.privateGetAsync("ping", true);
     }
 }
 
@@ -284,12 +285,12 @@ interface ImmersiveReaderProps {
 }
 
 export class ImmersiveReaderButton extends data.Component<ImmersiveReaderProps, {}> {
-    private buttonClickHandler = () => {
-        launchImmersiveReader(this.props.content, this.props.tutorialOptions);
+    private buttonClickHandler = async () => {
+        await launchImmersiveReaderAsync(this.props.content, this.props.tutorialOptions);
     }
 
     render() {
-        return <div className='immersive-reader-button ui item' onClick={this.buttonClickHandler}
+        return <div className='immersive-reader-button ui item neutral' onClick={this.buttonClickHandler}
             aria-label={lf("Launch Immersive Reader")} role="button" onKeyDown={fireClickOnEnter} tabIndex={0}
             title={lf("Launch Immersive Reader")}/>
     }

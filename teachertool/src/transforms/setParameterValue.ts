@@ -1,8 +1,10 @@
 import { logDebug, logError } from "../services/loggingService";
 import { stateAndDispatch } from "../state";
 import { getCriteriaInstanceWithId } from "../state/helpers";
+import { EvaluationStatus } from "../types/criteria";
 import { ErrorCode } from "../types/errorCode";
-import { setRubric } from "./setRubric";
+import { setEvalResultOutcome } from "./setEvalResultOutcome";
+import { setChecklist } from "./setChecklist";
 
 export function setParameterValue(instanceId: string, paramName: string, newValue: any) {
     const { state: teacherTool } = stateAndDispatch();
@@ -28,10 +30,11 @@ export function setParameterValue(instanceId: string, paramName: string, newValu
         ...oldCriteriaInstance,
         params: oldCriteriaInstance.params?.map(p => (p.name === paramName ? newParam : p)),
     };
-    const newInstanceSet = teacherTool.rubric.criteria.map(c =>
+    const newInstanceSet = teacherTool.checklist.criteria.map(c =>
         c.instanceId === instanceId ? newCriteriaInstance : c
     );
-    const newRubric = { ...teacherTool.rubric, criteria: newInstanceSet };
+    const newChecklist = { ...teacherTool.checklist, criteria: newInstanceSet };
 
-    setRubric(newRubric);
+    setChecklist(newChecklist);
+    setEvalResultOutcome(instanceId, EvaluationStatus.NotStarted, false);
 }

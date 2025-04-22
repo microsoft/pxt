@@ -2,6 +2,44 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
+			"name": "codegen (pxt-bedrock)",
+			"type": "node",
+			"request": "launch",
+			"runtimeArgs": [
+				"run-script",
+				"vscode:debug"
+			],
+			"runtimeExecutable": "npm",
+			"stopOnEntry": false,
+			"sourceMaps": true,
+			"outFiles": [],
+            "localRoot": "${workspaceRoot}/../pxt-bedrock/codegen",
+			"console": "integratedTerminal"
+		},
+		{
+			"name": "pxt bump (pxt-core)",
+			"type": "node",
+			"request": "launch",
+			"program": "${workspaceRoot}/built/pxt.js",
+			"stopOnEntry": false,
+			"args": [
+				"bump",
+				"--version",
+				"patch"
+			],
+			"cwd": "${workspaceRoot}",
+			"runtimeExecutable": null,
+			"runtimeArgs": [
+				"--nolazy"
+			],
+			"env": {
+				"NODE_ENV": "development"
+			},
+			"console": "integratedTerminal",
+			"sourceMaps": false,
+			"outFiles": []
+		},
+		{
 			"name": "pxt ci (pxt-core)",
 			"type": "node",
 			"request": "launch",
@@ -44,6 +82,49 @@
 			"outFiles": []
 		},
 		{
+			"name": "pxt serve (minecraft)",
+			"type": "node",
+			"request": "launch",
+			"program": "${workspaceRoot}/built/pxt.js",
+			"stopOnEntry": false,
+			"args": [
+				"serve",
+				"--noauth"
+			],
+			"cwd": "${workspaceRoot}/../pxt-minecraft",
+			"runtimeExecutable": null,
+			"runtimeArgs": [
+				"--nolazy"
+			],
+			"env": {
+				"NODE_ENV": "development"
+			},
+			"console": "integratedTerminal",
+			"sourceMaps": false,
+			"outFiles": []
+		},
+		{
+			"name": "pxt ci (bedrock)",
+			"type": "node",
+			"request": "launch",
+			"program": "${workspaceRoot}/built/pxt.js",
+			"stopOnEntry": false,
+			"args": [
+				"ci",
+			],
+			"cwd": "${workspaceRoot}/../pxt-bedrock",
+			"runtimeExecutable": null,
+			"runtimeArgs": [
+				"--nolazy"
+			],
+			"env": {
+				"NODE_ENV": "development"
+			},
+			"console": "integratedTerminal",
+			"sourceMaps": false,
+			"outFiles": []
+		},
+		{
 			"name": "pxt serve (microbit)",
 			"type": "node",
 			"request": "launch",
@@ -52,7 +133,11 @@
 			"args": [
 				"serve",
 				"--rebundle",
-				"--noauth"
+				"--noauth",
+				"--hostname",
+				"127.0.0.1",
+				"--backport",
+				"8080"
 			],
 			"cwd": "${workspaceRoot}/../pxt-microbit",
 			"runtimeExecutable": null,
@@ -78,6 +163,28 @@
 				"--noauth"
 			],
 			"cwd": "${workspaceRoot}/../pxt-arcade",
+			"runtimeExecutable": null,
+			"runtimeArgs": [
+				"--nolazy"
+			],
+			"env": {
+				"NODE_ENV": "development"
+			},
+			"console": "integratedTerminal",
+			"sourceMaps": false,
+			"outFiles": []
+		},
+		{
+			"name": "pxt serve (bedrock)",
+			"type": "node",
+			"request": "launch",
+			"program": "${workspaceRoot}/built/pxt.js",
+			"stopOnEntry": false,
+			"args": [
+				"serve",
+				"--debug"
+			],
+			"cwd": "${workspaceRoot}/../pxt-bedrock",
 			"runtimeExecutable": null,
 			"runtimeArgs": [
 				"--nolazy"

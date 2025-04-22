@@ -8,6 +8,12 @@ export function initOnStart() {
     const onStartDef = pxt.blocks.getBlockDefinition(ts.pxtc.ON_START_TYPE);
     Blockly.Blocks[ts.pxtc.ON_START_TYPE] = {
         init: function () {
+            let colorOverride = pxt.appTarget.runtime?.onStartColor;
+
+            if (colorOverride) {
+                colorOverride = pxt.toolbox.getAccessibleBackground(colorOverride);
+            }
+
             this.jsonInit({
                 "message0": onStartDef.block["message0"],
                 "args0": [
@@ -19,7 +25,7 @@ export function initOnStart() {
                         "name": "HANDLER"
                     }
                 ],
-                "colour": (pxt.appTarget.runtime ? pxt.appTarget.runtime.onStartColor : '') || pxt.toolbox.getNamespaceColor('loops')
+                "colour": colorOverride || pxt.toolbox.getNamespaceColor('loops')
             });
 
             setHelpResources(this,
@@ -27,7 +33,7 @@ export function initOnStart() {
                 onStartDef.name,
                 onStartDef.tooltip,
                 onStartDef.url,
-                String((pxt.appTarget.runtime ? pxt.appTarget.runtime.onStartColor : '') || pxt.toolbox.getNamespaceColor('loops')),
+                colorOverride || pxt.toolbox.getNamespaceColor('loops'),
                 undefined, undefined,
                 pxt.appTarget.runtime ? pxt.appTarget.runtime.onStartUnDeletable : false
             );

@@ -340,7 +340,7 @@ _start_${name}:
         vmsource += "\n; The end.\n"
         bin.writeFile(BINARY_ASM, vmsource)
 
-        let res = assemble(opts.target, bin, vmsource)
+        let res = assemble(opts.target, bin, vmsource, cres)
 
         const srcmap = res.thumbFile.getSourceMap()
         const encodedSrcMap = encodeSourceMap(srcmap)
@@ -370,7 +370,7 @@ _start_${name}:
             let keys = Object.keys(pc)
             keys.sort((a, b) => pc[b] - pc[a])
             for (let k of keys.slice(0, 50)) {
-                console.log(`${k}  ${pc[k]}`)
+                pxt.log(`${k}  ${pc[k]}`)
             }
         }
 
@@ -418,7 +418,7 @@ _start_${name}:
         const immMax = (1 << 23) - 1
 
         if (pxt.options.debug)
-            console.log("EMIT", proc.toString())
+            pxt.log("EMIT", proc.toString())
 
         emitAll()
         resText = ""
@@ -509,7 +509,7 @@ _start_${name}:
             }
             else {
                 let idx = cell.index + currTmps.length
-                //console.log(proc.locals.length, currTmps.length, cell.index)
+                //pxt.log(proc.locals.length, currTmps.length, cell.index)
                 assert(!final || idx < numLoc, "cell#" + idx)
                 assert(idx >= 0, "cell#" + idx)
                 return (`loc ${argDepth + idx}`)
@@ -592,13 +592,13 @@ _start_${name}:
                 case EK.SharedRef:
                     let arg = e.args[0]
                     if (!arg.currUses || arg.currUses >= arg.totalUses) {
-                        console.log(arg.sharingInfo())
+                        pxt.log(arg.sharingInfo())
                         U.assert(false)
                     }
                     arg.currUses++
                     let idx = currTmps.indexOf(arg)
                     if (idx < 0) {
-                        console.log(currTmps, arg)
+                        pxt.log(currTmps, arg)
                         assert(false)
                     }
                     write(`ldloc ${idx + argDepth}` + (arg.currUses == arg.totalUses ? " ; LAST" : ""))
@@ -618,7 +618,7 @@ _start_${name}:
 
         // result in R0
         function emitExpr(e: ir.Expr): void {
-            //console.log(`EMITEXPR ${e.sharingInfo()} E: ${e.toString()}`)
+            //pxt.log(`EMITEXPR ${e.sharingInfo()} E: ${e.toString()}`)
 
             switch (e.exprKind) {
                 case EK.JmpValue:
@@ -665,7 +665,7 @@ _start_${name}:
                     }
                 if (idx < 0) {
                     if (final) {
-                        console.log(arg, currTmps)
+                        pxt.log(arg, currTmps)
                         assert(false, "missed tmp")
                     }
                     idx = currTmps.length
@@ -745,7 +745,7 @@ _start_${name}:
             if (calledProc && calledProc.inlineBody) {
                 const inlined = calledProc.inlineSelf(topExpr.args)
                 if (pxt.options.debug) {
-                    console.log("INLINE", topExpr.toString(), "->", inlined.toString())
+                    pxt.log("INLINE", topExpr.toString(), "->", inlined.toString())
                 }
                 return emitExpr(inlined)
             }

@@ -45,7 +45,7 @@ const ToastNotification: React.FC<IToastNotificationProps> = ({ toast }) => {
 
     return (
         <div className={classList(css["toast"], css[toast.type], toast.className)}>
-            <div className={css["toast-content"]}>
+            <div className={classList(css["toast-content"], css[toast.type])}>
                 {!toast.hideIcon && (
                     <div className={classList(css["icon-container"], css[toast.type])}>
                         {toast.icon ?? icons[toast.type]}
@@ -68,7 +68,7 @@ const ToastNotification: React.FC<IToastNotificationProps> = ({ toast }) => {
                 )}
             </div>
             {toast.timeoutMs && (
-                <div>
+                <div className={classList(css["slider-container"], css[toast.type])}>
                     <div
                         ref={sliderRef}
                         className={classList(css["slider"], css[toast.type])}

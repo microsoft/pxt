@@ -105,7 +105,8 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
         if (view === "time-machine") {
             return <></>;
         }
-        return <div className="ui item logo organization">
+
+        return <div className="ui item logo organization" role="presentation">
             {targetTheme.organizationWideLogo || targetTheme.organizationLogo
                 ? <img className={`ui logo ${view !== "home" ? "mobile hide" : ""}`} src={targetTheme.organizationWideLogo || targetTheme.organizationLogo} alt={lf("{0} Logo", targetTheme.organization)} />
                 : <span className="name">{targetTheme.organization}</span>}
@@ -117,8 +118,14 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
         if (view === "time-machine") {
             return <></>;
         }
+
+        const shouldLinkHome = pxt.shell.hasHomeScreen() && view !== "home";
+
+        const role = shouldLinkHome ? "menuitem" : "presentation";
+        const onClickHandler = shouldLinkHome ? this.brandIconClick : undefined;
+
         // TODO: "sandbox" view components are temporary share page layout
-        return <div aria-label={lf("{0} Logo", targetTheme.boardName)} role="menuitem" className={`ui item logo brand ${view !== "sandbox" && view !== "home" ? "mobile hide" : ""}`} onClick={this.brandIconClick}>
+        return <div aria-label={lf("{0} Logo", targetTheme.boardName)} role={role} className={`ui item logo brand ${view !== "sandbox" && view !== "home" ? "mobile hide" : ""}`} onClick={onClickHandler}>
             {targetTheme.useTextLogo
             ? [ <span className="name" key="org-name">{targetTheme.organizationText}</span>,
                 <span className="name-short" key="org-name-short">{targetTheme.organizationShortText || targetTheme.organizationText}</span> ]
@@ -178,7 +185,7 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
                             break;
                     }
                 } else {
-                    return <div className="ui item link editor-menuitem">
+                    return <div className="ui item link editor-menuitem" role="menuitem">
                         <container.EditorSelector parent={this.props.parent} sandbox={view === "sandbox"} python={targetTheme.python} languageRestriction={languageRestriction} headless={pxt.appTarget.simulator?.headless} />
                     </div>
                 }

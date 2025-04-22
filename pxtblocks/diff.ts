@@ -72,7 +72,7 @@ function diffWorkspace(oldWs: Blockly.Workspace, newWs: Blockly.Workspace, optio
 
 function logger() {
     const log = pxt.options.debug || (window && /diffdbg=1/.test(window.location.href))
-        ? console.log : (message?: any, ...args: any[]) => { };
+        ? pxt.log : (message?: any, ...args: any[]) => { };
     return log;
 
 }
@@ -324,7 +324,7 @@ function diffWorkspaceNoEvents(oldWs: Blockly.Workspace, newWs: Blockly.Workspac
     }
 
     function forceRender(b: Blockly.Block) {
-        b.rendered = false;
+        // b.rendered = false;
         b.inputList.forEach(i => i.fieldRow.forEach(f => {
             f.init();
 
@@ -404,7 +404,7 @@ function diffWorkspaceNoEvents(oldWs: Blockly.Workspace, newWs: Blockly.Workspac
         if (options.statementsOnly) {
             // mark all nested reporters as unmodified
             (b.inputList || [])
-                .map(input => input.type == Blockly.inputTypes.VALUE && input.connection && input.connection.targetBlock())
+                .map(input => input.type == Blockly.inputs.inputTypes.VALUE && input.connection && input.connection.targetBlock())
                 .filter(argBlock => !!argBlock)
                 .forEach(argBlock => unmodified(argBlock))
         }
@@ -461,7 +461,7 @@ export function decompiledDiffAsync(oldTs: string, oldResp: pxtc.CompileResult, 
     log(newXml);
 
     // compute diff of typescript sources
-    const diffLines = pxt.diff.compute(oldTs, newTs, {
+    const diffLines = pxt.diff.computeFormattedDiff(oldTs, newTs, {
         ignoreWhitespace: true,
         full: true
     });

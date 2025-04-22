@@ -85,7 +85,7 @@ export const DragAndDropFileSurface: React.FC<DragAndDropFileSurfaceProps> = ({ 
                         ref={fileInputRef}
                         className="hidden"
                         onChange={handleFileFromBrowse}
-                        aria-label={Strings.SelectRubricFile}
+                        aria-label={Strings.SelectChecklistFile}
                         accept=".json"
                     />
                 </div>

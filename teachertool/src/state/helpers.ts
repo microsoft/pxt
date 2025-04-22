@@ -1,10 +1,11 @@
 import { logError } from "../services/loggingService";
 import { CatalogCriteria, CriteriaInstance } from "../types/criteria";
 import { ErrorCode } from "../types/errorCode";
-import { Rubric } from "../types/rubric";
+import { Checklist } from "../types/checklist";
 import { stateAndDispatch } from "./appStateContext";
 import { AppState } from "./state";
 import { Strings } from "../constants";
+import { CriteriaParameter } from "../types/criteriaParameters";
 
 export function getCatalogCriteriaWithId(id: string): CatalogCriteria | undefined {
     const { state } = stateAndDispatch();
@@ -12,7 +13,12 @@ export function getCatalogCriteriaWithId(id: string): CatalogCriteria | undefine
 }
 
 export function getCriteriaInstanceWithId(state: AppState, id: string): CriteriaInstance | undefined {
-    return state.rubric.criteria.find(c => c.instanceId === id);
+    return state.checklist.criteria.find(c => c.instanceId === id);
+}
+
+export function getParameterDefinition(catalogCriteriaId: string, paramName: string): CriteriaParameter | undefined {
+    const catalogCriteria = getCatalogCriteriaWithId(catalogCriteriaId);
+    return catalogCriteria?.params?.find(p => p.name === paramName);
 }
 
 export function getParameterValue(state: AppState, instanceId: string, paramName: string): string | undefined {
@@ -34,18 +40,18 @@ export function verifyCriteriaInstanceIntegrity(instance: CriteriaInstance) {
     }
 }
 
-export function verifyRubricIntegrity(rubric: Rubric): {
+export function verifyChecklistIntegrity(checklist: Checklist): {
     valid: boolean;
     validCriteria: CriteriaInstance[];
     invalidCriteria: CriteriaInstance[];
 } {
-    if (!rubric || !rubric.criteria) {
+    if (!checklist || !checklist.criteria) {
         return { valid: false, validCriteria: [], invalidCriteria: [] };
     }
 
     const validCriteria: CriteriaInstance[] = [];
     const invalidCriteria: CriteriaInstance[] = [];
-    for (const criteria of rubric.criteria) {
+    for (const criteria of checklist.criteria) {
         try {
             verifyCriteriaInstanceIntegrity(criteria);
             validCriteria.push(criteria);
@@ -61,8 +67,8 @@ export function isProjectLoaded(state: AppState): boolean {
     return !!state.projectMetadata;
 }
 
-export function isRubricLoaded(state: AppState): boolean {
-    return !!(state.rubric.criteria.length || state.rubric.name);
+export function isChecklistLoaded(state: AppState): boolean {
+    return !!state.checklist.criteria.length;
 }
 
 export function getSafeProjectName(state: AppState): string | undefined {
@@ -71,21 +77,10 @@ export function getSafeProjectName(state: AppState): string | undefined {
     }
 }
 
-export function getSafeRubricName(state: AppState): string | undefined {
-    return state.rubric.name || Strings.UntitledRubric;
+export function getSafeChecklistName(state: AppState): string | undefined {
+    return state.checklist.name || Strings.UntitledChecklist;
 }
 
-export function getSelectableCatalogCriteria(state: AppState): CatalogCriteria[] {
-    const usedCatalogCriteria = state.rubric.criteria.map(c => c.catalogCriteriaId) ?? [];
-
-    // Return a criteria as selectable if it has parameters (so it can be used multiple times in a rubric)
-    // or if it has not yet been used in the active rubric.
-    return (
-        state.catalog?.filter(
-            catalogCriteria =>
-                ((catalogCriteria.params && catalogCriteria.params.length > 0) ||
-                    !usedCatalogCriteria.includes(catalogCriteria.id)) &&
-                !catalogCriteria.hideInCatalog
-        ) ?? []
-    );
+export function getCatalogCriteria(state: AppState): CatalogCriteria[] {
+    return state.catalog?.filter(c => !c.hideInCatalog) ?? [];
 }

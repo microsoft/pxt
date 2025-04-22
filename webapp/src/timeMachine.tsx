@@ -6,7 +6,8 @@ import { Button } from "../../react-common/components/controls/Button";
 import { hideDialog, warningNotification } from "./core";
 import { FocusTrap } from "../../react-common/components/controls/FocusTrap";
 import { classList } from "../../react-common/components/util";
-import { HistoryFile, applySnapshot } from "../../pxteditor/history";
+import { HistoryFile, applySnapshot, patchConfigEditorVersion } from "../../pxteditor/history";
+import { ThemeManager } from "../../react-common/components/theming/themeManager";
 
 import ScriptText = pxt.workspace.ScriptText;
 
@@ -151,6 +152,18 @@ export const TimeMachine = (props: TimeMachineProps) => {
 
         importProject.current = loadProject;
 
+        // Sync iframe theme with main theme.
+        const themeManager = ThemeManager.getInstance(document);
+        const currentTheme = themeManager.getCurrentColorTheme();
+        if (currentTheme) {
+            sendMessageAsync({
+                type: "pxteditor",
+                action: "setcolorthemebyid",
+                colorThemeId: currentTheme.id,
+                savePreference: false
+            } as pxt.editor.EditorMessageSetColorThemeRequest);
+        }
+
         window.addEventListener("message", onMessageReceived);
         return () => {
             window.removeEventListener("message", onMessageReceived);
@@ -221,10 +234,15 @@ export const TimeMachine = (props: TimeMachineProps) => {
     let queryParams = [
         "timeMachine",
         "controller",
-        "skillsMap",
+        "skillmap",
         "noproject",
-        "nocookiebanner"
+        "nocookiebanner",
     ];
+
+    const localToken = pxt.storage.getLocal("local_token");
+    if (localToken) {
+        queryParams.push(`local_token=${localToken}`);
+    }
 
     if (pxt.appTarget?.appTheme.timeMachineQueryParams) {
         queryParams = queryParams.concat(pxt.appTarget.appTheme.timeMachineQueryParams);
@@ -338,7 +356,7 @@ async function getTextAtTimestampAsync(text: ScriptText, history: HistoryFile, t
 
     if (time.kind === "snapshot") {
         const snapshot = history.snapshots.find(s => s.timestamp === time.timestamp)
-        return patchPxtJson(applySnapshot(text, snapshot.text), snapshot.editorVersion);
+        return patchConfigEditorVersion(applySnapshot(text, snapshot.text), snapshot.editorVersion);
     }
     else if (time.kind === "share") {
         const share = history.shares.find(s => s.timestamp === time.timestamp);
@@ -351,39 +369,7 @@ async function getTextAtTimestampAsync(text: ScriptText, history: HistoryFile, t
         };
     }
 
-    let currentText = text;
-
-    for (let i = 0; i < history.entries.length; i++) {
-        const index = history.entries.length - 1 - i;
-        const entry = history.entries[index];
-        currentText = workspace.applyDiff(currentText, entry);
-        if (entry.timestamp === time.timestamp) {
-            const version = index > 0 ? history.entries[index - 1].editorVersion : entry.editorVersion;
-            return patchPxtJson(currentText, version)
-        }
-    }
-
-    return { files: currentText, editorVersion };
-}
-
-function patchPxtJson(text: ScriptText, editorVersion: string): Project {
-    text = {...text};
-
-    // Attempt to update the version in pxt.json
-    try {
-        const config = JSON.parse(text[pxt.CONFIG_NAME]) as pxt.PackageConfig;
-        if (config.targetVersions) {
-            config.targetVersions.target = editorVersion;
-        }
-        text[pxt.CONFIG_NAME] = JSON.stringify(config, null, 4);
-    }
-    catch (e) {
-    }
-
-    return {
-        files: text,
-        editorVersion
-    };
+    return workspace.restoreTextToTime(text, history, time.timestamp);
 }
 
 function formatTime(time: number) {
@@ -394,21 +380,31 @@ function formatTime(time: number) {
 }
 
 function formatDate(time: number) {
+    const oneDay = 1000 * 60 * 60 * 24;
+
     const now = new Date();
     const nowYear = now.getFullYear();
     const nowMonth = now.getMonth();
     const nowDay = now.getDate();
 
-    const date = new Date(time);
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    const day = date.getDate();
+    const today = new Date(nowYear, nowMonth, nowDay);
+    const yesterday = new Date(today.getTime() - oneDay);
+    const oneWeekAgo = new Date(today.getTime() - oneDay * 7);
 
-    const diff = Date.now() - time;
-    const oneDay = 1000 * 60 * 60 * 24;
+    const editTime = new Date(time);
+    const editDay = new Date(editTime.getFullYear(), editTime.getMonth(), editTime.getDate());
 
-    if (year !== nowYear) {
-        return date.toLocaleDateString(
+    if (time >= today.getTime()) {
+        return lf("Today");
+    }
+    else if (time >= yesterday.getTime()) {
+        return lf("Yesterday")
+    }
+    else if (time >= oneWeekAgo.getTime()) {
+        return lf("{0} days ago", Math.floor((today.getTime() - editDay.getTime()) / oneDay));
+    }
+    else if (editDay.getFullYear() !== today.getFullYear()) {
+        return editTime.toLocaleDateString(
             pxt.U.userLanguage(),
             {
                 year: "numeric",
@@ -417,17 +413,8 @@ function formatDate(time: number) {
             }
         );
     }
-    else if (nowMonth === month && nowDay === day) {
-        return lf("Today");
-    }
-    else if (diff < oneDay * 2) {
-        return lf("Yesterday")
-    }
-    else if (diff < oneDay * 8) {
-        return lf("{0} days ago", Math.floor(diff / oneDay))
-    }
     else {
-        return date.toLocaleDateString(
+        return editTime.toLocaleDateString(
             pxt.U.userLanguage(),
             {
                 month: "short",
@@ -471,14 +458,7 @@ function getTimelineEntries(history: HistoryFile): TimelineEntry[] {
 
     const createTimeEntry = (timestamp: number, kind: "snapshot" | "diff" | "share") => {
         const date = new Date(timestamp);
-        const key = new Date(date.toLocaleDateString(
-            pxt.U.userLanguage(),
-            {
-                year: "numeric",
-                month: "numeric",
-                day: "numeric"
-            }
-        )).getTime();
+        const key = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
 
         if (!buckets[key]) {
             buckets[key] = [];

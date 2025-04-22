@@ -6,6 +6,7 @@ interface TutorialStepCounterProps {
     totalSteps: number;
     title?: string;
     isHorizontal?: boolean;
+    hideDone?: boolean;
     setTutorialStep: (step: number) => void;
     onDone: () => void;
 }
@@ -42,6 +43,7 @@ export function TutorialStepCounter(props: TutorialStepCounterProps) {
 
     const lastStep = currentStep == totalSteps - 1;
     const nextButtonTitle = lastStep ? lf("Finish the tutorial.") : lf("Go to the next step of the tutorial.");
+    const showNextButton = !lastStep || !props.hideDone;
 
     return <div className="tutorial-step-counter">
         <div className="tutorial-step-label">
@@ -68,13 +70,13 @@ export function TutorialStepCounter(props: TutorialStepCounterProps) {
                     label={stepNum === currentStep ? `${stepNum + 1}` : undefined}
                 />
             })}
-            <Button
+            {showNextButton && <Button
                 className={props.isHorizontal ? "ui button counter-next-button" : "square-button"}
                 leftIcon={`icon ${lastStep ? "check" : props.isHorizontal ? "arrow circle right" : "right chevron"}`}
                 onClick={lastStep ? props.onDone : handleNextStep}
                 aria-label={nextButtonTitle}
                 title={nextButtonTitle}
-                label={props.isHorizontal ? lastStep ? lf("Done") : lf("Next") : ""} />
+                label={props.isHorizontal ? lastStep ? lf("Done") : lf("Next") : ""} />}
         </div>
     </div>
 }

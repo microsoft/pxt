@@ -1,12 +1,25 @@
 # GitHub Teacher Verification Instructions
 
-To access certain curriculum resources, you must have a verified [GitHub Teacher](https://education.github.com/teachers) account. This helps ensure that curriculum solutions and answer keys are protected. The process of obtaining a GitHub Teacher account is free and includes other benefits. Learn more at https://education.github.com/teachers.
+To access certain curriculum resources, you must have a verified [GitHub Teacher](https://education.github.com/teachers) account. This helps ensure that curriculum solutions and answer keys stay protected. 
+
+The process of obtaining a GitHub Teacher account is free and includes other benefits. Learn more at https://education.github.com/teachers.
+
+### ~ reminder
+
+#### Verification Survey
+
+For teachers who have gone through this process, we would love to hear from you! The Microsoft and GitHub Education teams are working to improve this process. Please consider filling out this short survey to share your experiences, thoughts, and suggestions with us! -- **[Take the survey here](https://forms.office.com/r/cb5sXHpVVz)**.
+
+### ~
 
 ## Create a GitHub Teacher Account
 
+https://youtu.be/XYErnMTILEQ
+
 ### Sign up for a GitHub account
 
-If you don’t already have one, create a GitHub Account. Go to https://github.com/signup and use your educator email account.
+If you don’t already have one, create a GitHub Account.<br/>
+Go to https://github.com/signup and use your educator email account.
 
 ![GitHub signup](/static/github-teacher/github-signup.png)
 
@@ -14,7 +27,9 @@ If you don’t already have one, create a GitHub Account. Go to https://github.c
 
 ### 1. Verify your account
 
-After creating your account, you will see a prompt to verify yourself as an Educator. Continue the verification and select “Apply for your GitHub teacher benefits”. Alternatively, you can verify your account and bypass the benifits selection at: https://education.github.com/discount_requests/teacher_application.
+After creating your account, you will see a prompt to verify yourself as an Educator. Continue the verification and select “Apply for your GitHub teacher benefits”. 
+
+Alternatively, you can verify your account and bypass the benifits selection at: https://education.github.com/discount_requests/teacher_application.
 
 ![Apply for teacher benefits](/static/github-teacher/teacher-benefits-signup.png)
 
@@ -28,7 +43,7 @@ Fill out your school information in the form and upload proof of your school aff
 
 * It won’t verify me, what can I do?
 
->GitHub has successfully verified the academic affiliation of more than one hundred thousand educators worldwide - we are confident we can do the same for you! If you are unable to be verified, make sure to address all of the specific reasons presented to you by the app.
+>GitHub has successfully verified the academic affiliation of more than one hundred thousand educators worldwide - we are confident they can do the same for you! If you are unable to be verified, make sure to address all of the specific reasons presented to you by the app.
 
 * I don’t have a **.edu** email address, can I still get verified?
 
@@ -40,8 +55,10 @@ Fill out your school information in the form and upload proof of your school aff
 
 * I don’t have a GitHub account and don’t use GitHub for anything else. Can I get verified without creating a GitHub account?
 
->Sorry, no :-(. But non-programmers can benefit from having a GitHub account! Please visit https://education.github.com/teachers to learn more.
+>Sorry, no :-(. But non-programmers can benefit from having a free GitHub account! Please visit https://education.github.com/teachers to learn more.
 
 * I'm still having issues, how can I get help?
 
 >Try posting your question to the [GitHub Education Community Forum](https://github.com/orgs/community/discussions/categories/github-education). There are many people who can help you there! If there is a technical issue, or there is incorrect school information listed, please contact [GitHub Education Support](https://support.github.com/request/education).
+
+>Additionally, feel free to post inside the [Educator Lounge](https://forum.makecode.com/c/educators-lounge/24) on the MakeCode forum. Our team may be able to help you expedite the process if you are under time constraints.

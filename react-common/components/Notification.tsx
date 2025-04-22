@@ -55,7 +55,7 @@ export class Notification extends React.Component<NotificationProps, Notificatio
             switch (kind) {
                 case 'err': cls = 'red inverted segment'; break;
                 case 'warn': cls = 'orange inverted segment'; break;
-                case 'info': cls = 'teal inverted segment'; break;
+                case 'info': cls = 'blue inverted segment'; break;
                 case 'compile': cls = 'ignored info message'; break;
             }
             return <div key={`${id}`} id={`${kind}msg`} className={`ui ${hc} ${cls}`}>{text}</div>

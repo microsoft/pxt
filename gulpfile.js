@@ -48,6 +48,7 @@ const cli = () => compileTsProject("cli", "built", true);
 const webapp = () => compileTsProject("webapp", "built", true);
 const reactCommon = () => compileTsProject("react-common", "built/react-common", true);
 const pxtblocks = () => compileTsProject("pxtblocks", "built/pxtblocks", true);
+const pxtservices = () => compileTsProject("pxtservices", "built/pxtservices", true);
 
 const pxtapp = () => gulp.src([
     "node_modules/lzma/src/lzma_worker-min.js",
@@ -101,6 +102,13 @@ const buildpxtjs = () => gulp.src([
     `))
     .pipe(gulp.dest("built"));
 
+const pxtrcdeps = () => gulp.src([
+    "node_modules/dompurify/dist/purify.min.js",
+])
+    .pipe(concat("pxtrcdeps.js"))
+    .pipe(gulp.dest("built/web"));
+
+
 const copySubappsConfig = () => gulp.src("cli/webapps-config.json")
     .pipe(gulp.dest("built"));
 
@@ -118,10 +126,10 @@ function initWatch() {
         pxtlib,
         gulp.parallel(pxtcompiler, pxtsim, backendutils),
         pxtpy,
-        gulp.parallel(pxtblocks, pxteditor),
+        gulp.parallel(pxtblocks, pxteditor, pxtservices),
         gulp.parallel(pxtrunner, cli, pxtcommon),
         gulp.parallel(updatestrings, browserifyEmbed),
-        gulp.parallel(pxtjs, pxtdts, pxtapp, pxtworker, pxtembed),
+        gulp.parallel(pxtjs, pxtdts, pxtapp, pxtworker, pxtembed, pxtrcdeps),
         targetjs,
         reactCommon,
         webapp,
@@ -139,6 +147,7 @@ function initWatch() {
 
     gulp.watch("./pxtpy/**/*", gulp.series(pxtpy, ...tasks.slice(3)));
     gulp.watch("./pxtblocks/**/*", gulp.series(pxtblocks, ...tasks.slice(4)));
+    gulp.watch("./pxtservices/**/*", gulp.series(pxtservices, ...tasks.slice(4)));
 
     gulp.watch("./pxteditor/**/*", gulp.series(pxteditor, ...tasks.slice(4)));
 
@@ -219,12 +228,14 @@ function updatestrings() {
     return buildStrings("built/strings.json", [
         "cli",
         "pxtblocks",
+        "pxtservices",
         "pxtcompiler",
         "pxteditor",
         "pxtlib",
         "pxtpy",
         "pxtsim",
         "webapp/src",
+        "react-common"
     ], true);
 }
 
@@ -333,6 +344,14 @@ function runUglify() {
     return Promise.resolve();
 }
 
+async function inlineBlocklySourcemaps() {
+    if (process.env.PXT_ENV === 'production') {
+        return;
+    }
+
+    return exec("node ./scripts/inlineBlocklySourceMaps.js");
+}
+
 
 
 /********************************************************
@@ -437,6 +456,10 @@ const buildSVGIcons = () => {
     })
 }
 
+const copyBlocklyMedia = () =>
+    gulp.src("node_modules/blockly/media/*")
+    .pipe(gulp.dest("webapp/public/blockly/media"))
+
 
 
 /********************************************************
@@ -532,7 +555,7 @@ function createWebappTasks(root, outname) {
                         .pipe(concat(`${outname}.html`))
                         .pipe(gulp.dest("webapp/public")));
 
-    const result = gulp.series(cleanWebapp, buildWebapp, gulp.series(copyWebappCss, copyWebappJs, copyWebappHtml));
+    const result = gulp.series(cleanWebapp, pxtrcdeps, buildWebapp, gulp.series(copyWebappCss, copyWebappJs, copyWebappHtml));
 
     exports[outname] = result;
 
@@ -588,6 +611,12 @@ const kiosk = createWebappTasks("kiosk");
 const teacherTool = createWebappTasks("teachertool");
 
 /********************************************************
+                      Tutorial Tool
+*********************************************************/
+
+const tutorialTool = createWebappTasks("tutorialtool");
+
+/********************************************************
                  Webapp build wrappers
 *********************************************************/
 
@@ -601,7 +630,7 @@ const maybeUpdateWebappStrings = () => {
 
 const maybeBuildWebapps = () => {
     if (!shouldBuildWebapps()) return noop;
-    return gulp.parallel(skillmap, authcode, multiplayer, kiosk, teacherTool);
+    return gulp.parallel(skillmap, authcode, multiplayer, kiosk, teacherTool, tutorialTool);
 }
 
 /********************************************************
@@ -610,8 +639,9 @@ const maybeBuildWebapps = () => {
 
 const lintWithEslint = () => Promise.all(
     ["cli", "pxtblocks", "pxteditor", "pxtlib", "pxtcompiler",
-        "pxtpy", "pxtrunner", "pxtsim", "webapp",
-        "docfiles/pxtweb", "skillmap", "authcode", "multiplayer"/*, "kiosk"*/, "teachertool", "docs/static/streamer"].map(dirname =>
+        "pxtpy", "pxtrunner", "pxtsim", "webapp", "pxtservices",
+        "docfiles/pxtweb", "skillmap", "authcode",
+        "multiplayer"/*, "kiosk"*/, "teachertool", "docs/static/streamer"].map(dirname =>
             exec(`node node_modules/eslint/bin/eslint.js -c .eslintrc.js --ext .ts,.tsx ./${dirname}/`, true)))
     .then(() => console.log("linted"))
 const lint = lintWithEslint
@@ -719,14 +749,14 @@ function getMochaExecutable() {
 const buildAll = gulp.series(
     updatestrings,
     maybeUpdateWebappStrings(),
-    copyTypescriptServices,
+    gulp.parallel(copyTypescriptServices, copyBlocklyMedia, inlineBlocklySourcemaps),
     gulp.parallel(pxtlib, pxtweb),
     gulp.parallel(pxtcompiler, pxtsim, backendutils),
     pxtpy,
-    gulp.parallel(pxteditor, pxtblocks),
+    gulp.parallel(pxteditor, pxtblocks, pxtservices),
     gulp.parallel(pxtrunner, cli, pxtcommon),
     browserifyEmbed,
-    gulp.parallel(pxtjs, pxtdts, pxtapp, pxtworker, pxtembed),
+    gulp.parallel(pxtjs, pxtdts, pxtapp, pxtworker, pxtembed, pxtrcdeps),
     targetjs,
     reactCommon,
     gulp.parallel(buildcss, buildSVGIcons),
@@ -747,12 +777,21 @@ exports.clean = clean;
 exports.build = buildAll;
 
 exports.webapp = gulp.series(
-    gulp.parallel(reactCommon, pxtblocks, pxteditor),
+    gulp.parallel(reactCommon, pxtblocks, pxteditor, pxtservices),
     webapp,
     browserifyWebapp,
     browserifyAssetEditor
 )
 
+exports.pxtrunner = gulp.series(
+    gulp.parallel(reactCommon, pxtblocks, pxteditor, pxtservices),
+    pxtrunner,
+    browserifyEmbed,
+    pxtembed,
+);
+
+exports.pxtweb = pxtweb;
+exports.pxtlib = pxtlib;
 exports.skillmapTest = testSkillmap;
 exports.updatestrings = updatestrings;
 exports.lint = lint
@@ -777,6 +816,7 @@ exports.tt = teacherTool;
 exports.icons = buildSVGIcons;
 exports.testhelpers = testhelpers;
 exports.testpxteditor = testpxteditor;
+exports.reactCommon = reactCommon;
 exports.cli = gulp.series(
     gulp.parallel(pxtlib, pxtweb),
     gulp.parallel(pxtcompiler, pxtsim, backendutils),

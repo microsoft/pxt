@@ -1,8 +1,5 @@
 @import "./react-common-breakpoints.less";
 
-@commonTextColor: rgb(50, 49, 48);
-@commonBorderColor: rgb(96, 94, 92);
-@commonBackgroundDisabledColor: rgb(243, 242, 241);
 
 @defaultFont: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 
@@ -10,114 +7,29 @@
  *                    Buttons                       *
  ****************************************************/
 
-@buttonTextColorLightBackground: @commonTextColor;
-@buttonTextColorDarkBackground: @white;
-@buttonBackgroundColor: @white;
-@buttonBackgroundColorDisabled: @commonBackgroundDisabledColor;
-@buttonGrayColor: #e0e1e2;
 
-@buttonMenuTextColor: #ffffff;
-@buttonMenuTextColorInverted: @primaryColor;
-@buttonMenuBackgroundColorInverted: @buttonMenuTextColor;
-@buttonFocusOutlineDarkBackground: @buttonTextColorDarkBackground solid 1px;;
-@buttonFocusOutlineLightBackground: @commonBorderColor solid 1px;
-@buttonMenuBackgroundHoverColor: rgba(0,0,0,.1);
-@buttonMenuBackgroundActiveColor: rgba(0,0,0,.15);
-@buttonLinkColor: #3977b4;
-
-
-/****************************************************
- *                    Dropdowns                      *
- ****************************************************/
-
-
-/****************************************************
- *                DraggableGraph                     *
- ****************************************************/
-
-@draggableGraphHandleColor: #ffffff;
-@draggableGraphPointColor: #E63022;
-
-
-/****************************************************
- *                    Dropdowns                      *
- ****************************************************/
-
-
-/****************************************************
- *                DraggableGraph                     *
- ****************************************************/
-
-@draggableGraphPathColor: #E63022;
-@draggableGraphPointColor: #E63022;
+@buttonFocusOutlineDarkBackground: var(--pxt-neutral-background1) solid 1px;
+@buttonFocusOutlineLightBackground: var(--pxt-neutral-stencil1) solid 1px;
 
 /****************************************************
  *                    Modals                        *
  ****************************************************/
 
-@modalCloseColor: #333333;
-@modalBodyBackgroundColor: #ffffff;
-@modalHeaderBackgroundColor: @modalBodyBackgroundColor;
-@modalFooterBackgroundColor: #f9fafb;
-@modalSeparatorBorder: 1px solid rgba(34, 36, 38, .15);
-@modalOverlayColor: rgba(0, 0, 0, 0.5);
+@modalSeparatorBorder: 1px solid var(--pxt-neutral-stencil1);
 @modalDimmerZIndex: 1000;
 @modalFullscreenZIndex: @modalDimmerZIndex;
-
-
-/****************************************************
- *                 MenuDropdowns                    *
- ****************************************************/
-
-@menuDropdownPaneBackground: #ffffff;
-
 
 /****************************************************
  *                    Checkboxes                    *
  ****************************************************/
 
-@checkboxFocusOutline: @commonBorderColor solid 1px;
-
-/****************************************************
- *                    Inputs                        *
- ****************************************************/
-
-@inputTextColor: @commonTextColor;
-@inputTextColorDisabled: rgb(161, 159, 157);
-@inputBorderColor: rgba(34,36,38,.15);
-@inputBorderColorFocus: rgb(0, 120, 212);
-@inputBackgroundColor: #ffffff;
-@inputBackgroundColorDisabled: @commonBackgroundDisabledColor;
-@inputButtonColor: rgb(0, 120, 212);
-@inputButtonColorHover: rgb(3, 33, 60);
-
-/****************************************************
- *                  Textarea                        *
- ****************************************************/
-
-@textareaTextColor: @commonTextColor;
-@textareaBorderColor: @inputBorderColor;
-@textareaBorderColorFocus: rgb(0, 120, 212);
-@textareaBackgroundColor: #ffffff;
-@textareaBackgroundColorDisabled: @commonBackgroundDisabledColor;
+@checkboxFocusOutline: var(--pxt-neutral-stencil1) solid 1px;
 
 /****************************************************
  *              EditorToggle                        *
  ****************************************************/
 
-@editorToggleBackgroundColor: rgba(52,73,94,.4);
-@editorToggleBorderColor: rgba(52,73,94,.2);
 @editorToggleBorderWidth: 3px;
-
-/****************************************************
- *                RadioButtonGroup                  *
- ****************************************************/
-
-@radioButtonIconBackground: #eaeaea;
-@radioButtonIconBackgroundChecked: #ffffff;
-@radioButtonIconColor: #333333;
-@radioButtonIconColorChecked: #E63022;
-@radioButtonIconBorder: #A6A6A6;
 
 /****************************************************
  *                 High Contrast                    *
@@ -133,19 +45,3 @@
  *                 Extension Card                   *
  ****************************************************/
 @loadingAnimation: linear-gradient(-45deg, #ffffff46, #f3f3f350, #dee2ff6e, #f1f1f149);
-
-
-/****************************************************
- *                   Progress Bar                   *
- ****************************************************/
-
-@progressBarBorder: #7D7D7D;
-@progressBarUnfilledColor: #EEE;
-@progressBarFilledColor: #5874e1;
-
-
-/****************************************************
- *                     Tree View                    *
- ****************************************************/
-
- @treeitemBackgroundColor: #ffffff;

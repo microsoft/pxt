@@ -134,6 +134,12 @@ namespace pxsim.visuals {
             this.boardView.highlightPin(pinNm);
         }
 
+        public removeEventListeners() {
+            if (this.boardView.removeEventListeners) {
+                this.boardView.removeEventListeners();
+            }
+        }
+
         public highlightBreadboardPin(rowCol: BBLoc) {
             this.breadboard.highlightLoc(rowCol);
         }
@@ -187,7 +193,7 @@ namespace pxsim.visuals {
                     resolve(ctx.getImageData(0, 0, cvs.width, cvs.height));
                 };
                 img.onerror = e => {
-                    console.log(e);
+                    pxsim.log(e);
                     resolve(undefined);
                 }
                 img.src = data;
@@ -205,7 +211,7 @@ namespace pxsim.visuals {
         private getPinCoord(pin: string) {
             let boardCoord = this.boardView.getCoord(pin);
             if (!boardCoord) {
-                console.error(`Unable to find coord for pin: ${pin}`);
+                pxsim.error(`Unable to find coord for pin: ${pin}`);
                 return undefined;
             }
             return this.fromMBCoord(boardCoord);
@@ -220,7 +226,7 @@ namespace pxsim.visuals {
                 coord = this.getPinCoord(pinNm);
             }
             if (!coord)
-                console.debug("Unknown location: " + name)
+                pxsim.debug("Unknown location: " + name)
             return coord;
         }
         public getPinStyle(loc: Loc): PinStyle {

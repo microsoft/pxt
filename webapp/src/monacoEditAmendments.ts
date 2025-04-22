@@ -78,8 +78,8 @@ function scanForEditAmendment(e: monaco.editor.IModelContentChangedEvent): EditA
     let textAndAmendment = change.text.split(amendmentMarker)
     if (textAndAmendment.length != 2) {
         // Useful for debugging:
-        // console.error("Incorrect text ammendment: ")
-        // console.dir(change)
+        // pxt.error("Incorrect text ammendment: ")
+        // pxt.dir(change)
         return null
     }
     let preText = textAndAmendment[0]
@@ -87,8 +87,8 @@ function scanForEditAmendment(e: monaco.editor.IModelContentChangedEvent): EditA
     let amendment = pxt.U.jsonTryParse(amendmentStr) as EditAmendment
     if (!amendment) {
         // Useful for debugging:
-        // console.error("Incorrect text ammendment JSON: ")
-        // console.dir(amendmentStr)
+        // pxt.error("Incorrect text ammendment JSON: ")
+        // pxt.dir(amendmentStr)
         return null
     }
     return Object.assign({

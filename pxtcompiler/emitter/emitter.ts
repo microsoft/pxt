@@ -244,7 +244,7 @@ namespace ts.pxtc {
     }
 
     function inspect(n: Node) {
-        console.log(stringKind(n))
+        pxt.log(stringKind(n))
     }
 
     // next free error 9284
@@ -992,7 +992,7 @@ namespace ts.pxtc {
                 }
             }
 
-            hexfile.setupFor(optstarget, extinfo || emptyExtInfo());
+            hexfile.setupFor(optstarget, extinfo || emptyExtInfo(), res);
             hexfile.setupInlineAssembly(opts);
         }
 
@@ -1692,7 +1692,7 @@ ${lbl}: .short 0xffff
             let l = lookupCell(decl)
             recordUse(decl)
             let r = l.load()
-            //console.log("LOADLOC", l.toString(), r.toString())
+            //pxt.log("LOADLOC", l.toString(), r.toString())
             return r
         }
 
@@ -1750,8 +1750,8 @@ ${lbl}: .short 0xffff
                 userError(9208, lf("'this' used outside of a method"))
             let inf = getFunctionInfo(meth)
             if (!inf.thisParameter) {
-                //console.log("get this param,", meth.kind, nodeKey(meth))
-                //console.log("GET", meth)
+                //pxt.log("get this param,", meth.kind, nodeKey(meth))
+                //pxt.log("GET", meth)
                 oops("no this")
             }
             return emitLocalLoad(inf.thisParameter)
@@ -1914,7 +1914,14 @@ ${lbl}: .short 0xffff
                     return emitCallCore(node, node, [], null, decl as any, node.expression)
                 } else {
                     let idx = fieldIndex(node)
-                    return ir.op(EK.FieldAccess, [emitExpr(node.expression)], idx)
+                    const fld = getFieldInfo(idx.classInfo, idx.name)
+                    const attrs = parseComments(fld);
+                    if (attrs.shim) {
+                        // Reading a shimmed property
+                        return emitShim(fld, decl, [node.expression])
+                    } else {
+                        return ir.op(EK.FieldAccess, [emitExpr(node.expression)], idx)
+                    }
                 }
             } else if (isClassFunction(decl) || decl.kind == SK.MethodSignature) {
                 // TODO this is now supported in runtime; can be probably relaxed (by using GetAccessor code path above)
@@ -2124,10 +2131,10 @@ ${lbl}: .short 0xffff
             return m
         }
 
-        function emitShim(decl: Declaration, node: Node, args: Expression[]): ir.Expr {
+        function emitShim(decl: Declaration, node: Node, args: Expression[], shimOverride: string = null): ir.Expr {
             let attrs = parseComments(decl)
             let hasRet = !(typeOf(node).flags & TypeFlags.Void)
-            let nm = attrs.shim
+            let nm = shimOverride || attrs.shim
 
             if (nm.indexOf('(') >= 0) {
                 let parse = /(.*)\((.*)\)$/.exec(nm)
@@ -2219,7 +2226,7 @@ ${lbl}: .short 0xffff
                             }
                             args.push(irToNode(expr))
                         } else {
-                            if (!isNumericLiteral(prm.initializer)) {
+                            if (!opts.unfetteredInitializers && !isNumericLiteral(prm.initializer)) {
                                 userError(9212, lf("only numbers, null, true and false supported as default arguments"))
                             }
                             args.push(prm.initializer)
@@ -2421,7 +2428,12 @@ ${lbl}: .short 0xffff
                 }
 
                 if (attrs.shim && !hasShimDummy(decl)) {
-                    return emitShim(decl, node, args);
+                    let shimOverride: string = undefined;
+                    if (node.kind === SK.PropertyAccessExpression && args.length > 1) {
+                        // Assigning a value to a shimmed property, append "_set" to the shim name.
+                        shimOverride = attrs.shim + "_set";
+                    }
+                    return emitShim(decl, node, args, shimOverride);
                 } else if (attrs.helper) {
                     let syms = checker.getSymbolsInScope(node, SymbolFlags.Module)
                     let helperStmt: Statement
@@ -2717,12 +2729,17 @@ ${lbl}: .short 0xffff
                             let mask = bin.usedChars
                             let buf = ""
                             let incl = ""
-                            for (let pos = 0; pos < data.length; pos += chsz) {
-                                let charcode = data.charCodeAt(pos) + (data.charCodeAt(pos + 1) << 8)
-                                if (charcode < 128 || (mask[charcode >> 5] & (1 << (charcode & 31)))) {
-                                    buf += data.slice(pos, pos + chsz)
-                                    incl += charcode + ", "
+                            if (opts.target.isNative) {
+                                for (let pos = 0; pos < data.length; pos += chsz) {
+                                    let charcode = data.charCodeAt(pos) + (data.charCodeAt(pos + 1) << 8)
+                                    if (charcode < 128 || (mask[charcode >> 5] & (1 << (charcode & 31)))) {
+                                        buf += data.slice(pos, pos + chsz)
+                                        incl += charcode + ", "
+                                    }
                                 }
+                            }
+                            else {
+                                buf = data;
                             }
                             s = U.toHex(U.stringToUint8Array(buf))
                         }
@@ -3007,7 +3024,7 @@ ${lbl}: .short 0xffff
             })
 
             proc.args.forEach(l => {
-                //console.log(l.toString(), l.info)
+                //pxt.log(l.toString(), l.info)
                 if (l.isByRefLocal()) {
                     // TODO add C++ support function to do this
                     let tmp = ir.shared(ir.rtcall("pxtrt::mklocRef", []))
@@ -3329,8 +3346,21 @@ ${lbl}: .short 0xffff
                 } else if (decl && (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment || isSlowField(decl))) {
                     proc.emitExpr(emitCallCore(trg, trg, [src], null, decl as FunctionLikeDeclaration))
                 } else {
-                    let trg2 = emitExpr(trg)
-                    proc.emitExpr(ir.op(EK.Store, [trg2, emitExpr(src)]))
+                    for (;;) {
+                        if (trg.kind === SK.PropertyAccessExpression) {
+                            const idx = fieldIndex(trg as PropertyAccessExpression)
+                            const fld = getFieldInfo(idx.classInfo, idx.name)
+                            const attrs = parseComments(fld);
+                            if (attrs.shim) {
+                                // Reading a shimmed property
+                                proc.emitExpr(emitCallCore(trg, trg, [src], null, decl as FunctionLikeDeclaration))
+                                break;
+                            }
+                        }
+                        let trg2 = emitExpr(trg)
+                        proc.emitExpr(ir.op(EK.Store, [trg2, emitExpr(src)]))
+                        break;
+                    }
                 }
             } else if (trg.kind == SK.ElementAccessExpression) {
                 proc.emitExpr(emitIndexedAccess(trg as ElementAccessExpression, src))
@@ -3482,8 +3512,11 @@ ${lbl}: .short 0xffff
                 return ev;
             if (/^0x[A-Fa-f\d]{2,8}$/.test(ev))
                 return ev;
-            U.userError("enumval only support number literals")
-            return "0"
+            if (!opts.unfetteredInitializers) {
+                U.userError("enumval only support number literals")
+                return "0";
+            }
+            return ev;
         }
 
         function emitFolded(f: Folded) {
@@ -3510,9 +3543,13 @@ ${lbl}: .short 0xffff
                 if (ev == null) {
                     info.constantFolded = constantFold(en.initializer)
                 } else {
-                    const v = parseInt(ev)
-                    if (!isNaN(v))
-                        info.constantFolded = { val: v }
+                    if (!opts.unfetteredInitializers) {
+                        const v = parseInt(ev)
+                        if (!isNaN(v))
+                            info.constantFolded = { val: v }
+                    } else {
+                        info.constantFolded = { val: ev }
+                    }
                 }
             } else if (decl.kind == SK.PropertyDeclaration && isStatic(decl) && isReadOnly(decl)) {
                 const pd = decl as PropertyDeclaration
@@ -3520,7 +3557,7 @@ ${lbl}: .short 0xffff
             }
 
             //if (info.constantFolded)
-            //    console.log(getDeclName(decl), getSourceFileOfNode(decl).fileName, info.constantFolded.val)
+            //    pxt.log(getDeclName(decl), getSourceFileOfNode(decl).fileName, info.constantFolded.val)
 
             return info.constantFolded
         }
@@ -3668,7 +3705,7 @@ ${lbl}: .short 0xffff
                     case "numops::adds":
                         return v0 + v1;
                     default:
-                        console.log(e)
+                        pxt.log(e)
                         return undefined;
                 }
             }

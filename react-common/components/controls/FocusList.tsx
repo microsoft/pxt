@@ -1,5 +1,5 @@
 import * as React from "react";
-import { ContainerProps } from "../util";
+import { ContainerProps, findNextFocusableElement } from "../util";
 
 export interface FocusListProps extends ContainerProps {
     role: string;
@@ -59,38 +59,7 @@ export const FocusList = (props: FocusListProps) => {
 
     const isFocusable = (e: HTMLElement) => {
         return e.getAttribute("data-isfocusable") === "true"
-            && getComputedStyle(e).display !== "none";
-    }
-
-    const firstFocusableElement = () => {
-        return focusableElements.find(e => isFocusable(e))
-    }
-
-    const lastFocusableElement = () => {
-        for (let i = 0; i < focusableElements.length; i++) {
-            if (isFocusable(focusableElements[focusableElements.length - 1 - i])) {
-                return focusableElements[focusableElements.length - 1 - i];
-            }
-        }
-
-        return focusableElements[0];
-    }
-
-    const nextFocusableElement = (index: number, forwards: boolean) => {
-        let current: HTMLElement
-        for (let i = 1; i < focusableElements.length; i++) {
-            if (forwards) {
-                current = focusableElements[(index + i) % focusableElements.length];
-            }
-            else {
-                current = focusableElements[(index + focusableElements.length - i) % focusableElements.length];
-            }
-
-            if (isFocusable(current)) {
-                return current;
-            }
-        }
-        return focusableElements[0];
+            && e.offsetParent !== null;
     }
 
     const onKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
@@ -120,31 +89,31 @@ export const FocusList = (props: FocusListProps) => {
         }
         else if (e.key === (useUpAndDownArrowKeys ? "ArrowDown" : "ArrowRight")) {
             if (index === focusableElements.length - 1 || target === focusList) {
-                focus(firstFocusableElement());
+                focus(findNextFocusableElement(focusableElements, index, 0, true, isFocusable));
             }
             else {
-                focus(nextFocusableElement(index, true));
+                focus(findNextFocusableElement(focusableElements, index, index + 1, true, isFocusable));
             }
             e.preventDefault();
             e.stopPropagation();
         }
         else if (e.key === (useUpAndDownArrowKeys ? "ArrowUp" : "ArrowLeft")) {
             if (index === 0 || target === focusList) {
-                focus(lastFocusableElement());
+                focus(findNextFocusableElement(focusableElements, index, focusableElements.length - 1, false, isFocusable));
             }
             else {
-                focus(nextFocusableElement(index, false));
+                focus(findNextFocusableElement(focusableElements, index, index - 1, false, isFocusable));
             }
             e.preventDefault();
             e.stopPropagation();
         }
         else if (e.key === "Home") {
-            focus(firstFocusableElement());
+            focus(findNextFocusableElement(focusableElements, index, 0, true, isFocusable));
             e.preventDefault();
             e.stopPropagation();
         }
         else if (e.key === "End") {
-            focus(lastFocusableElement());
+            focus(findNextFocusableElement(focusableElements, index, focusableElements.length - 1, true, isFocusable));
             e.preventDefault();
             e.stopPropagation();
         }

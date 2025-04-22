@@ -1,4 +1,3 @@
-import { logDebug } from "../services/loggingService";
 import { stateAndDispatch } from "../state";
 import * as Actions from "../state/actions";
 import { TabName } from "../types";

@@ -4,10 +4,12 @@
     align-items: center;
 
     .common-spinner {
-        position: absolute;
         width: 60px;
         height: 60px;
+    }
 
+    .loading-element {
+        position: absolute;
         opacity: 1;
         transition: opacity 0.3s ease;
     }
@@ -28,7 +30,7 @@
 }
 
 .common-lazy-image-wrapper.loaded {
-    .common-spinner {
+    .loading-element {
         opacity: 0;
     }
 
@@ -42,7 +44,7 @@
 }
 
 .common-lazy-image-wrapper.error {
-    .common-spinner {
+    .loading-element {
         opacity: 0;
     }
 

@@ -32,23 +32,33 @@
         Monaco Editor
 *******************************/
 
+.monaco-editor {
+    background-color: var(--pxt-target-background1) !important;
+    color: var(--pxt-target-foreground1) !important;
+
+    .monaco-editor-background, .margin {
+        background-color: var(--pxt-target-background1) !important;
+        color: var(--pxt-target-foreground1) !important;
+    }
+}
+
 .monaco-editor .monaco-scrollable-element.editor-scrollable {
     margin-left: .5rem;
 }
 
 /* Monaco Editor Line number colors, changed from the default light theme */
 .monaco-editor.vs .line-numbers {
-    color: #2c3e50 !important;
+    color: var(--pxt-target-foreground1) !important;
 }
 
 /* Monaco Editor Line number background, changed from the default light theme */
 .monaco-editor.vs .margin-view-overlays.monaco-editor-background {
-    background: rgba(0, 0, 0, 0.05) !important;
+    background: var(--pxt-neutral-alpha10) !important;
 }
 
 /* Monaco Editor Current line highlighting, only needed for the light theme */
 .monaco-editor.vs .current-line {
-	background: rgba(0, 0, 255, 0.1) !important;
+	background: var(--pxt-colors-blue-alpha10) !important;
 }
 
 /* Monaco Editor Suggest Widget, styling */
@@ -57,17 +67,17 @@
     z-index: @monacoSuggestZIndex !important;
 }
 .monaco-list-row.focused {
-    background-color:#0078D7 !important;
-    color: #fff !important;
+    background-color: var(--pxt-colors-blue-background) !important;
+    color: var(--pxt-colors-blue-foreground) !important;
 }
 .monaco-editor.vs .suggest-widget:not(.frozen) .monaco-list .monaco-list-row .monaco-highlighted-label .highlight {
-    color: #0078D7 !important;
+    color: var(--pxt-colors-blue-background) !important;
 }
 .monaco-editor.vs .suggest-widget:not(.frozen) .monaco-list .monaco-list-row.focused .monaco-highlighted-label .highlight {
-    color: #fff !important;
+    color: var(--pxt-colors-blue-foreground) !important;
 }
 .monaco-editor.vs .suggest-widget .details > .monaco-scrollable-element > .body > .type, .monaco-editor .suggest-widget .monaco-list .monaco-list-row .type-label {
-    color: #FFB900 !important;
+    color: var(--pxt-colors-orange-background) !important;
 }
 
 /* Monaco Editor Rename Widget: default positioning causes scroll with transparent editor toolbar, so we reposition */
@@ -82,8 +92,8 @@
 
 /* Monaco Editor Main tokens */
 .monaco-editor .highlight-statement {
-    background-color: #b8b8fd;
-    color: black !important;
+    background-color: var(--pxt-target-background1-hover);
+    color: var(--pxt-target-foreground1-hover) !important;
 }
 
 /* Monaco Toolbox */
@@ -132,7 +142,8 @@
 
 .monacoFlyout {
     font-family: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
-    background: @monacoFlyoutColor;
+    background: var(--pxt-neutral-background3-alpha90);
+    color: var(--pxt-neutral-foreground3);
     border-top-right-radius: 8px;
     border-bottom-right-radius: 8px;
     z-index: @monacoFlyoutZIndex;
@@ -146,7 +157,7 @@
         -ms-user-select: none;
         -webkit-user-select: none;
         user-select: none;
-        color: white;
+        color: var(--pxt-neutral-foreground3);
         font-size: 15px;
 
         .monacoFlyoutHeadingIcon {
@@ -161,14 +172,14 @@
         }
     }
     .monacoBlock {
-        color: @monacoFlyoutText;
-        border-bottom: 1px solid @monacoFlyoutBorderColor;
+        color: var(--pxt-neutral-foreground3);
+        border-bottom: 1px solid var(--pxt-neutral-stencil3);
 
         .monacoDraggableBlock {
             width: 100%;
             margin-bottom: 0.75rem;
             border-radius: 0.25rem;
-            color: @white;
+            color: var(--pxt-neutral-foreground3);
             padding: .25rem 0.75rem;
             cursor: pointer;
             display: inline-block;
@@ -194,7 +205,7 @@
 
             span.docs {
                 display: block; /* enable as needed */
-                color: @white;
+                color: var(--pxt-neutral-foreground3);
                 font-size: 70%;
                 max-width: 22rem;
             }
@@ -224,7 +235,7 @@
 
             .blockHelp {
                 float: right;
-                color: @white;
+                color: var(--pxt-neutral-foreground3);
 
                 i {
                     font-size: 1.25rem;
@@ -237,8 +248,8 @@
         .argName {
             font-family: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
             font-weight: 600;
-            background: rgba(0,0,0,0.3);
-            color: #fff;
+            background: var(--pxt-neutral-alpha20);
+            color: var(--pxt-neutral-foreground3);
             padding: 0 .5rem;
             display: inline-block;
             border-radius: 0.8rem;
@@ -262,8 +273,8 @@
             display: none;
         }
         &.expand {
-            color: @white;
-            border-color: @white;
+            color: var(--pxt-neutral-foreground3);
+            border-color: var(--pxt-neutral-stencil3);
             border-width: 4px 0px 4px 4px;
             border-style: solid;
             cursor: grab;
@@ -275,7 +286,7 @@
             }
 
             .blockHandle {
-                border-color: @white;
+                border-color: var(--pxt-neutral-foreground3);
                 border-width: 4px 4px 4px 0px;
                 border-style: solid;
             }
@@ -293,7 +304,8 @@
             width: 2rem;
             right: -0.9rem;
             border-radius: 0 1rem 1rem 0;
-            background: @monacoFlyoutColor;
+            background: var(--pxt-neutral-background3-alpha90);
+            color: var(--pxt-neutral-foreground3);
 
             i.bars {
                 display: block;
@@ -322,7 +334,7 @@
 }
 
 .monacoFlyoutHeading .monacoFlyoutHeadingText {
-    color: white;
+    color: var(--pxt-neutral-foreground3);
     vertical-align: middle !important;
 }
 .monacoFlyoutHeadingText {
@@ -334,14 +346,14 @@
 }
 .monacoFlyoutLabelLine {
     border: none;
-    border-top: 1px dotted white;
+    border-top: 1px dotted var(--pxt-neutral-stencil3);
     height:1px;
 }
 
 #monacoDraggingBlock {
     position: absolute;
     padding: 0.6rem;
-    color: @white;
+    color: var(--pxt-neutral-foreground3);
     border-radius: 0.25rem;
     pointer-events: none;
     touch-action: none;
@@ -364,7 +376,7 @@
     width: initial !important;
 }
 .monaco-editor.vs-dark .error-view-zone {
-    color:white;
+    color: var(--pxt-neutral-foreground3);
 }
 .monaco-editor .error-view-zone .marker-widget {
     border-radius: 2px !important;
@@ -376,18 +388,6 @@
 .monaco-editor .parameter-hints-widget {
     flex-direction: row !important;
     z-index: @monacoHintsZIndex !important;
-}
-
-#monacoEditorArea.android {
-    .monaco-editor .editor-widget {
-        display: none !important;
-        visibility: hidden !important;
-    }
-
-    // on android, the cursor / text area overlay gets offset
-    textarea.inputarea {
-        margin-left: .5rem;
-    }
 }
 
 .line-numbers {

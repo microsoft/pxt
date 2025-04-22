@@ -28,11 +28,13 @@ export function initContextMenu() {
 }
 
 export function setupWorkspaceContextMenu(workspace: Blockly.WorkspaceSvg) {
+    try {
+        Blockly.ContextMenuItems.registerCommentOptions();
+    }
+    catch (e) {
+        // will throw if already registered. ignore
+    }
     workspace.configureContextMenu = (options, e) => {
-        if (workspace.options.comments && !workspace.options.readOnly) {
-            options.unshift(Blockly.ContextMenu.workspaceCommentOption(workspace, e))
-        }
-
         onWorkspaceContextMenu(workspace, options);
     };
 }

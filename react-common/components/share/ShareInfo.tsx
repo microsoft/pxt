@@ -14,8 +14,9 @@ import { MultiplayerConfirmation } from "./MultiplayerConfirmation";
 import { addGameToKioskAsync } from "./Kiosk";
 import { pushNotificationMessage } from "../Notification";
 import { classList } from "../util";
+import { Link } from "../controls/Link";
 
-const vscodeDevUrl = "https://insiders.vscode.dev/makecode/"
+const vscodeDevUrl = "https://vscode.dev/edu/makecode/"
 
 export interface ShareInfoProps {
     projectName: string;
@@ -32,6 +33,7 @@ export interface ShareInfoProps {
     onClose: () => void;
 }
 
+
 export const ShareInfo = (props: ShareInfoProps) => {
     const {
         projectName,
@@ -44,12 +46,12 @@ export const ShareInfo = (props: ShareInfoProps) => {
         anonymousShareByDefault,
         setAnonymousSharePreference,
         isMultiplayerGame,
-        kind,
+        kind = "share",
         onClose,
     } = props;
     const [ name, setName ] = React.useState(projectName);
     const [ thumbnailUri, setThumbnailUri ] = React.useState(screenshotUri);
-    const [ shareState, setShareState ] = React.useState<"share" | "gifrecord" | "publish" | "publishing">("share");
+    const [ shareState, setShareState ] = React.useState<"share" | "gifrecord" | "publish" | "publish-vscode" | "publishing">("share");
     const [ shareData, setShareData ] = React.useState<ShareData>();
     const [ embedState, setEmbedState ] = React.useState<"none" | "code" | "editor" | "simulator">("none");
     const [ showQRCode, setShowQRCode ] = React.useState(false);
@@ -61,7 +63,9 @@ export const ShareInfo = (props: ShareInfoProps) => {
 
     const { simScreenshot, simGif } = pxt.appTarget.appTheme;
     const showSimulator = (simScreenshot || simGif) && !!simRecorder;
-    const showDescription = shareState !== "publish";
+    const prePublish = shareState === "share" || shareState === "publishing";
+    const isPublished = shareState === "publish" || shareState === "publish-vscode";
+    const showDescription = !isPublished;
     let qrCodeButtonRef: HTMLButtonElement;
     let inputRef: HTMLInputElement;
     let kioskInputRef: HTMLInputElement;
@@ -100,7 +104,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
         let publishedShareData = await publishAsync(name, thumbnailUri, isAnonymous);
         setShareData(publishedShareData);
         if (!publishedShareData?.error) {
-            setShareState("publish");
+            setShareState("publish-vscode");
 
             pxt.tickEvent(`share.openInVscode`);
             window.open(vscodeDevUrl + publishedShareData.url.split("/").pop(), "_blank");
@@ -314,21 +318,20 @@ export const ShareInfo = (props: ShareInfoProps) => {
         if (setAnonymousSharePreference) setAnonymousSharePreference(!newValue);
     }
 
-    const prePublish = shareState === "share" || shareState === "publishing";
-
-    const inputTitle = prePublish ? lf("Project Title") : lf("Project Link")
+    const inputTitle = prePublish ? lf("Project Title") :
+        (shareState === "publish-vscode" ? lf("Share Successful") : lf("Project Link"));
 
     return <>
         <div className="project-share-info">
             {showSimulator && shareState !== "gifrecord" &&
                 <div className="project-share-thumbnail">
                     {thumbnailUri
-                        ? <img src={thumbnailUri} />
+                        ? <img src={thumbnailUri} alt={lf("Preview of your code running on the simulator")} aria-label={lf("Simulator preview")}/>
                         : <div className="project-thumbnail-placeholder">
                              <div className="common-spinner" />
                         </div>
                     }
-                    {shareState !== "publish" &&
+                    {!isPublished &&
                         <Button
                             className="link-button"
                             title={lf("Update project thumbnail")}
@@ -338,7 +341,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
                 </div>
             }
             <div className="project-share-content">
-                {(prePublish || shareState === "publish") && <>
+                {(prePublish || isPublished) && <>
                     <div className="project-share-title project-share-label" id="share-input-title">
                         {inputTitle}
                     </div>
@@ -348,7 +351,10 @@ export const ShareInfo = (props: ShareInfoProps) => {
                             className="name-input"
                             initialValue={name}
                             placeholder={lf("Name your project")}
-                            onChange={setName} />
+                            onChange={setName}
+                            onBlur={setName}
+                            onEnterKey={setName}
+                            preserveValueOnBlur={true} />
                         {isLoggedIn && hasProjectBeenPersistentShared && <Checkbox
                             id="persistent-share-checkbox"
                             label={lf("Update existing share link for this project")}
@@ -400,12 +406,26 @@ export const ShareInfo = (props: ShareInfoProps) => {
                             }
                         </div>
                     </>}
-
+                    {shareState === "publish-vscode" &&
+                        <div className="project-share-vscode">
+                            <div>
+                                {lf("🎉 All set! Your project is launching in VS Code. If it doesn't open soon, just click the button below!")}
+                            </div>
+                            <Link
+                                className="common-button secondary"
+                                href={vscodeDevUrl + shareData.url.split("/").pop()}
+                                target="_blank"
+                            >
+                                {lf("Open vscode.dev")}
+                            </Link>
+                    </div>
+                    }
                     {shareState === "publish" &&
                         <div className="project-share-data">
                             <div className="common-input-attached-button">
                                 <Input
                                     ariaDescribedBy="share-input-title"
+                                    ariaLabel={lf("Your shareable project link")}
                                     handleInputRef={handleInputRef}
                                     initialValue={shareData.url}
                                     readOnly={true}
@@ -419,7 +439,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
                             </div>
                             <div className="project-share-actions">
                                 <div className="project-share-social">
-                                    <Button className="square-button gray embed mobile-portrait-hidden"
+                                    <Button className="square-button neutral embed mobile-portrait-hidden"
                                         title={lf("Show embed code")}
                                         leftIcon="fas fa-code"
                                         onClick={handleEmbedClick} />
@@ -445,7 +465,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
                                         heading={lf("Share on WhatsApp")} />
                                     {
                                         pxt.appTarget?.appTheme?.shareToKiosk &&
-                                            <Button className="square-button gray mobile-portrait-hidden"
+                                            <Button className="square-button neutral mobile-portrait-hidden"
                                             title={lf("Share to MakeCode Arcade Kiosk")}
                                             leftIcon={"xicon kiosk"}
                                             onClick={handleKioskClick} />
@@ -462,7 +482,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
                                     className="menu-button project-qrcode"
                                     buttonRef={handleQRCodeButtonRef}
                                     title={lf("Show QR Code")}
-                                    label={<img className="qrcode-image" src={shareData?.qr} />}
+                                    label={<img className="qrcode-image" src={shareData?.qr} alt={lf("QR code to access your project")} aria-label={lf("Project share link QR code")}/>}
                                     onClick={handleQRCodeClick}
                                 />
                             </div>
@@ -475,7 +495,8 @@ export const ShareInfo = (props: ShareInfoProps) => {
                             selected={embedOptions.findIndex(i => i.name === embedState)} />
                         <Textarea readOnly={true}
                             rows={5}
-                            initialValue={shareData?.embed[embedState]} />
+                            initialValue={shareData?.embed[embedState]}
+                            ariaLabel={lf("Embed code textarea")} />
                     </div>}
                     {kioskState &&
                         <div>
@@ -511,9 +532,9 @@ export const ShareInfo = (props: ShareInfoProps) => {
             </div>
 
             {showQRCode &&
-                <Modal title={lf("QR Code")} onClose={handleQRCodeModalClose}>
+                <Modal title={lf("QR Code")} onClose={handleQRCodeModalClose} ariaLabel={lf("QR Code modal")} >
                     <div className="qrcode-modal-body">
-                        <img className="qrcode-image" src={shareData?.qr} />
+                        <img className="qrcode-image" src={shareData?.qr} alt={lf("QR code to access your project")} aria-label={lf("Project share link QR code enlarged")} />
                     </div>
                 </Modal>
             }

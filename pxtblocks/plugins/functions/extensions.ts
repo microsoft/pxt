@@ -52,13 +52,14 @@ function inlineSvgs(this: InlineSvgsExtensionBlock) {
 const contextMenuEditMixin = {
     customContextMenu: function (this: Blockly.Block, menuOptions: any[]) {
         const gtdOption = {
-            enabled: true, // FIXME: !this.inDebugWorkspace(),
+            enabled: !(this.workspace?.options?.readOnly),
             text: Blockly.Msg[MsgKey.FUNCTIONS_GO_TO_DEFINITION_OPTION],
             callback: () => {
                 const functionName = this.getField("function_name")!.getText();
                 const definition = getDefinition(functionName, this.workspace);
-                if (definition && this.workspace instanceof Blockly.WorkspaceSvg)
-                    this.workspace.centerOnBlock(definition.id);
+                if (definition && this.workspace instanceof Blockly.WorkspaceSvg) {
+                    this.workspace.centerOnBlock(definition.id, true);
+                }
             },
         };
         menuOptions.push(gtdOption);
@@ -86,7 +87,7 @@ const variableReporterMixin = {
         };
         options.unshift(renameOption);
         if (!this.isInFlyout) {
-            const variablesList = this.workspace.getVariablesOfType('');
+            const variablesList = this.workspace.getVariableMap().getVariablesOfType('');
             // FIXME (riknoll): Probably need to make a custom field to make this work again
             // if (variablesList.length > 0) {
             //     const separator = { separator: true };
@@ -95,11 +96,11 @@ const variableReporterMixin = {
             for (const variable of variablesList) {
                 const option = {
                     enabled: !this.workspace.options.readOnly,
-                    text: variable.name,
+                    text: variable.getName(),
                     callback: () => {
                         let variableField = this.getField('VAR') as Blockly.FieldVariable;
                         if (!variableField) {
-                          console.log("Tried to get a variable field on the wrong type of block.");
+                          pxt.log("Tried to get a variable field on the wrong type of block.");
                         }
                         variableField.setValue(variable.getId());
                     }

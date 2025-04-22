@@ -14,7 +14,8 @@
         "templateStrings.ts",
         "classHandlerParameter.ts",
         "globals.ts",
-        "spritekind.ts"
+        "spritekind.ts",
+        "decompilerShadowAlias.ts"
     ],
     "public": true,
     "dependencies": {},

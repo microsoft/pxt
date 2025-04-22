@@ -1,0 +1,31 @@
+.criteria-feedback-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+
+    .label {
+        margin-right: 0.5rem;
+    }
+
+    .rate-buttons {
+        display: flex;
+        flex-direction: row;
+
+        .feedback-button {
+            padding: 0.1rem;
+            border-radius: 100%;
+            background-color: transparent;
+            color: var(--pxt-neutral-foreground1);
+            border: none;
+            font-size: 1rem;
+
+            &:not([class~="disabled"]):hover {
+                font-size: 1.2rem;
+            }
+
+            i {
+                margin: 0;
+            }
+        }
+    }
+}

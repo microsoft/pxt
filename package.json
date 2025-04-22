@@ -1,6 +1,6 @@
 {
   "name": "pxt-core",
-  "version": "10.0.13",
+  "version": "11.4.7",
   "description": "Microsoft MakeCode provides Blocks / JavaScript / Python tools and editors",
   "keywords": [
     "TypeScript",
@@ -61,33 +61,38 @@
     "npm": ">=8.0.0"
   },
   "dependencies": {
-    "@blockly/keyboard-navigation": "0.5.4",
-    "@blockly/plugin-workspace-search": "8.0.9",
+    "@blockly/field-colour": "5.0.12",
+    "@blockly/keyboard-navigation": "0.6.5",
+    "@blockly/plugin-workspace-search": "9.1.0",
+    "@crowdin/crowdin-api-client": "^1.33.0",
     "@fortawesome/fontawesome-free": "^5.15.4",
     "@microsoft/applicationinsights-web": "^2.8.11",
     "@microsoft/immersive-reader-sdk": "1.1.0",
     "@types/diff-match-patch": "^1.0.32",
     "@zip.js/zip.js": "2.4.20",
-    "blockly": "10.4.1",
-    "browserify": "16.2.3",
+    "adm-zip": "^0.5.12",
+    "axios": "^1.6.8",
+    "blockly": "12.0.0-beta.4",
+    "browserify": "17.0.0",
     "chai": "^3.5.0",
+    "chalk": "^4.1.2",
     "cssnano": "4.1.10",
     "dashjs": "^4.4.0",
     "diff-match-patch": "^1.0.5",
     "dompurify": "2.0.17",
     "faye-websocket": "0.11.1",
-    "karma": "6.3.10",
+    "karma": "6.4.4",
     "karma-chai": "0.1.0",
-    "karma-chrome-launcher": "3.1.0",
+    "karma-chrome-launcher": "3.2.0",
     "karma-mocha": "2.0.1",
     "less": "3.13.1",
     "lzma": "2.3.2",
     "marked": "0.3.19",
-    "mocha": "5.1.0",
+    "mocha": "8.4.0",
     "pngjs": "3.4.0",
     "postcss": "6.0.21",
     "promise.prototype.finally": "^3.1.2",
-    "puppeteer": "13.0.1",
+    "puppeteer": "23.11.1",
     "request": "2.88.0",
     "rimraf": "2.5.4",
     "rtlcss": "2.2.1",
@@ -101,6 +106,7 @@
   },
   "devDependencies": {
     "@microsoft/eslint-plugin-sdl": "^0.1.5",
+    "@types/adm-zip": "^0.5.5",
     "@types/chai": "4.0.6",
     "@types/fuse": "2.5.2",
     "@types/highlight.js": "9.12.2",
@@ -118,8 +124,8 @@
     "@types/web-bluetooth": "0.0.4",
     "@typescript-eslint/eslint-plugin": "^4.20.0",
     "@typescript-eslint/parser": "^4.20.0",
-    "@vusion/webfonts-generator": "^0.7.1",
-    "crypto-js": "^3.1.9-1",
+    "@vusion/webfonts-generator": "0.8.0",
+    "crypto-js": "4.2.0",
     "envify": "4.1.0",
     "eslint": "^7.23.0",
     "eslint-plugin-import": "^2.22.1",
@@ -147,6 +153,17 @@
     "typescript": "4.8.3",
     "uglifyify": "5.0.2"
   },
+  "overrides": {
+    "@blockly/field-colour": {
+      "blockly": "^12.0.0-beta.4"
+    },
+    "@blockly/plugin-workspace-search": {
+      "blockly": "^12.0.0-beta.4"
+    },
+    "@blockly/keyboard-navigation": {
+      "blockly": "^12.0.0-beta.4"
+    }
+  },
   "scripts": {
     "build": "gulp",
     "test": "gulp travis",
@@ -159,9 +176,10 @@
     "test:err": "gulp testerr",
     "test:fmt": "gulp testfmt",
     "test:lang": "gulp testlang",
+    "test:tutorials": "gulp testtutorials",
     "update": "gulp update",
     "watch-streamer": "cd docs/static/streamer && tsc -t es6 --watch",
     "prepare": "node ./scripts/npm-prepare.js",
-    "postinstall": "node ./scripts/patchUglifyify.js"
+    "postinstall": "node ./scripts/patchUglifyify.js && node ./scripts/patchBlocklyFieldColour.js"
   }
 }

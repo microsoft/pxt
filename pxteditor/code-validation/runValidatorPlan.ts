@@ -8,8 +8,9 @@ import { validateBlocksInSetExist } from "./validateBlocksInSetExist";
 import { validateBlockCommentsExist } from "./validateCommentsExist";
 import { validateSpecificBlockCommentsExist } from "./validateSpecificBlockCommentsExist";
 import { getNestedChildBlocks } from "./getNestedChildBlocks";
+import { validateVariableUsage } from "./validateVariableUsage";
 
-export function runValidatorPlan(usedBlocks: Blockly.Block[], plan: pxt.blocks.ValidatorPlan, planLib: pxt.blocks.ValidatorPlan[]): boolean {
+export function runValidatorPlan(usedBlocks: Blockly.Block[], plan: pxt.blocks.ValidatorPlan, planLib: pxt.blocks.ValidatorPlan[]): pxt.blocks.EvaluationResult {
     const startTime = Date.now();
     let checksSucceeded = 0;
     let successfulBlocks: Blockly.Block[] = [];
@@ -32,10 +33,16 @@ export function runValidatorPlan(usedBlocks: Blockly.Block[], plan: pxt.blocks.V
             case "blockFieldValueExists":
                 [successfulBlocks, checkPassed] = [...runBlockFieldValueExistsValidation(usedBlocks, check as pxt.blocks.BlockFieldValueExistsCheck)];
                 break;
+            case "variableUsage":
+                [successfulBlocks, checkPassed] = [...runVariableUsageValidation(usedBlocks, check as pxt.blocks.VariableUsageValidatorCheck)];
+                break;
             default:
                 pxt.debug(`Unrecognized validator: ${check.validator}`);
-                checkPassed = false;
-                break;
+                pxt.tickEvent("validation.unrecognized_validator", { validator: check.validator });
+                return {
+                    executionSuccess: false,
+                    executionErrorMsg: lf("Unrecognized evaluation rule")
+                };
         }
 
         if (checkPassed && check.childValidatorPlans) {
@@ -61,7 +68,10 @@ export function runValidatorPlan(usedBlocks: Blockly.Block[], plan: pxt.blocks.V
         passed: `${passed}`,
     });
 
-    return passed;
+    return {
+        result: passed,
+        executionSuccess: true
+    };
 }
 
 function runBlocksExistValidation(usedBlocks: Blockly.Block[], inputs: pxt.blocks.BlocksExistValidatorCheck): [Blockly.Block[], boolean] {
@@ -103,4 +113,20 @@ function runBlockFieldValueExistsValidation(usedBlocks: Blockly.Block[], inputs:
         specifiedBlock: inputs.blockType
     });
     return  [blockResults.successfulBlocks, blockResults.passed];
+}
+
+function runVariableUsageValidation(usedBlocks: Blockly.Block[], inputs: pxt.blocks.VariableUsageValidatorCheck): [Blockly.Block[], boolean] {
+    const blockResults = validateVariableUsage({
+        usedBlocks,
+        count: inputs.count,
+        name: inputs.name
+    });
+
+    // Flatten the map of passing variable definition blocks
+    const passingVarDefinitions: Blockly.Block[] = [];
+    for (const blocks of blockResults.passingVarDefinitions.values()) {
+        passingVarDefinitions.push(...blocks);
+    }
+
+    return [passingVarDefinitions, blockResults.passed];
 }

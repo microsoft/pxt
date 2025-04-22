@@ -8,9 +8,9 @@
 @import "TrackSelector";
 @import "Workspace";
 
-@music-editor-background-color: #fff;
-@music-editor-header-color: #e30fc0;
-@music-editor-header-border-color: #c10da3;
+@music-editor-header-color: #e30fc0; // Matches block color
+@music-editor-header-border-color: #c10da3; // Matches block color
+@music-editor-header-foreground: @white;
 
 .music-field-editor {
     height: 100%;
@@ -18,7 +18,8 @@
 }
 
 .music-editor {
-    background: @music-editor-background-color;
+    background: var(--pxt-neutral-background1);
+    color: var(--pxt-neutral-foreground1);
     height: 100%;
     display: flex;
     flex-direction: column;

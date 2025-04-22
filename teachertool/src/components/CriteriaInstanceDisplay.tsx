@@ -1,13 +1,19 @@
-import { getCatalogCriteriaWithId } from "../state/helpers";
+import css from "./styling/CriteriaInstanceDisplay.module.scss";
+import { getCatalogCriteriaWithId, getParameterDefinition } from "../state/helpers";
 import { CriteriaInstance, CriteriaParameterValue } from "../types/criteria";
 import { logDebug } from "../services/loggingService";
 import { setParameterValue } from "../transforms/setParameterValue";
 import { classList } from "react-common/components/util";
 import { splitCriteriaTemplate } from "../utils";
-// eslint-disable-next-line import/no-internal-modules
-import css from "./styling/CriteriaInstanceDisplay.module.scss";
-import { useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import { Input } from "react-common/components/controls/Input";
+import { Button } from "react-common/components/controls/Button";
+import { AppStateContext } from "../state/appStateContext";
+import { Strings, Ticks } from "../constants";
+import { showModal } from "../transforms/showModal";
+import { BlockPickerOptions } from "../types/modalOptions";
+import { validateParameterValue } from "../utils/validateParameterValue";
+import { loadBlockAsText } from "../transforms/loadReadableBlockName";
 
 interface InlineInputSegmentProps {
     initialValue: string;
@@ -23,14 +29,36 @@ const InlineInputSegment: React.FC<InlineInputSegmentProps> = ({
     shouldExpand,
     numeric,
 }) => {
-    const [isEmpty, setIsEmpty] = useState(!initialValue);
+    const [errorMessage, setErrorMessage] = useState(initialValue ? "" : Strings.ValueRequired);
+    const paramDefinition = useMemo(() => getParameterDefinition(instance.catalogCriteriaId, param.name), [param]);
+
+    useEffect(() => {
+        if (!paramDefinition) {
+            return;
+        }
+
+        // We still allow some invalid values to be set on the parameter so the user can see what they typed
+        // and the associated error.
+        // Without this, we risk erroring too soon (i.e. typing in first digit of number with min > 10),
+        // losing the user's input (which could be long), or desynchronizing the UI from the state.
+        // It will still be blocked via a separate check when the user tries to evaluate the criteria.
+        const paramValidation = validateParameterValue(paramDefinition, initialValue);
+        if (!paramValidation.valid) {
+            setErrorMessage(paramValidation.message ?? Strings.InvalidValue);
+        } else {
+            setErrorMessage("");
+        }
+    }, [initialValue]);
 
     function onChange(newValue: string) {
-        setIsEmpty(!newValue);
+        if (!newValue) {
+            setErrorMessage(Strings.ValueRequired);
+        }
+
         setParameterValue(instance.instanceId, param.name, newValue);
     }
 
-    const tooltip = isEmpty ? lf("{0}: value required", param.name) : param.name;
+    const tooltip = errorMessage ? `${param.name}: ${errorMessage}` : param.name;
     return (
         <div title={tooltip} className={css["inline-input-wrapper"]}>
             <Input
@@ -38,18 +66,125 @@ const InlineInputSegment: React.FC<InlineInputSegmentProps> = ({
                     css["inline-input"],
                     numeric ? css["number-input"] : css["string-input"],
                     shouldExpand ? css["long"] : undefined,
-                    isEmpty ? css["error"] : undefined
+                    errorMessage ? css["error"] : undefined
                 )}
-                icon={isEmpty ? "fas fa-exclamation-triangle" : undefined}
+                icon={errorMessage ? "fas fa-exclamation-triangle" : undefined}
                 initialValue={initialValue}
                 onChange={onChange}
                 preserveValueOnBlur={true}
                 placeholder={numeric ? "0" : param.name}
                 title={tooltip}
                 autoComplete={false}
-                type={numeric ? "number" : "text"}
+                filter={numeric ? "[0-9]{1,2}" : undefined}
             />
         </div>
+    );
+};
+
+interface ReadableBlockNameProps {
+    blockId: string;
+}
+const ReadableBlockName: React.FC<ReadableBlockNameProps> = ({ blockId }) => {
+    const { state: teacherTool } = useContext(AppStateContext);
+    const [blockAsText, setBlockAsText] = useState<pxt.editor.BlockAsText | undefined>(undefined);
+
+    useEffect(() => {
+        async function updateReadableName(blockId: string | undefined) {
+            let blockReadableName: pxt.editor.BlockAsText | undefined;
+            if (blockId) {
+                blockReadableName = blockId ? await loadBlockAsText(blockId) : undefined;
+            }
+
+            if (blockReadableName) {
+                setBlockAsText(blockReadableName);
+            } else if (!teacherTool.toolboxCategories) {
+                // If teacherTool.toolboxCategories has not loaded yet, we may get the readable component later once it loads.
+                // Show a spinner (handled below).
+                setBlockAsText(undefined);
+            } else {
+                // TeacherTool.toolboxCategories has loaded and we still don't have a readable component.
+                // We won't be able to get it, so fallback to the id.
+                setBlockAsText({ parts: [{ kind: "label", content: blockId }] });
+            }
+        }
+
+        updateReadableName(blockId);
+    }, [blockId, teacherTool.toolboxCategories]);
+
+    const readableComponent = blockAsText?.parts.map((part, i) => {
+        let content = "";
+        if (part.kind === "param") {
+            // Mask default values like "hello!" with generic "value"
+            // This is done to reduce confusion about what is actually being checked.
+            content = lf("value");
+        } else if (part.kind === "label" && part.content) {
+            content = part.content;
+        }
+
+        return (
+            <span
+                key={`block-name-part-${i}`}
+                className={classList(
+                    css["block-name-segment"],
+                    part.kind === "param" ? css["block-name-param"] : css["block-name-label"]
+                )}
+            >
+                {content}
+            </span>
+        );
+    });
+
+    return (
+        <span className={css["block-readable-name"]}>{readableComponent || <div className="common-spinner" />}</span>
+    );
+};
+
+interface BlockInputSegmentProps {
+    instance: CriteriaInstance;
+    param: CriteriaParameterValue;
+}
+interface BlockData {
+    category: pxt.editor.ToolboxCategoryDefinition;
+    block: pxt.editor.ToolboxBlockDefinition;
+}
+const BlockInputSegment: React.FC<BlockInputSegmentProps> = ({ instance, param }) => {
+    const { state: teacherTool } = useContext(AppStateContext);
+
+    function handleClick() {
+        pxt.tickEvent(Ticks.BlockPickerOpened, { criteriaCatalogId: instance.catalogCriteriaId });
+        showModal({
+            modal: "block-picker",
+            criteriaInstanceId: instance.instanceId,
+            paramName: param.name,
+        } as BlockPickerOptions);
+    }
+
+    const blockData = useMemo<BlockData | undefined>(() => {
+        if (!param.value || !teacherTool.toolboxCategories) {
+            return undefined;
+        }
+
+        // Scan all categories and find the block with the matching id
+        for (const category of Object.values(teacherTool.toolboxCategories)) {
+            const block = category.blocks?.find(b => b.blockId === param.value);
+            if (block) {
+                return { category, block };
+            }
+        }
+        return undefined;
+    }, [param.value, teacherTool.toolboxCategories]);
+
+    const style = blockData ? { backgroundColor: blockData.category.color, color: "white" } : undefined;
+    const blockDisplay = param.value ? <ReadableBlockName blockId={param.value} /> : param.name;
+    return (
+        <Button
+            label={blockDisplay}
+            className={classList(css["block-input-btn"], param.value ? undefined : css["error"])}
+            onClick={handleClick}
+            title={param.value ? Strings.SelectBlock : `${Strings.SelectBlock}: ${Strings.ValueRequired}`}
+            leftIcon={param.value ? undefined : "fas fa-exclamation-triangle"}
+            style={style}
+        />
     );
 };
 
@@ -75,8 +210,7 @@ export const CriteriaInstanceDisplay: React.FC<CriteriaInstanceDisplayProps> = (
         }
 
         if (paramDef.type === "block") {
-            // TODO
-            return null;
+            return <BlockInputSegment param={paramInstance} instance={criteriaInstance} />;
         } else {
             return (
                 <InlineInputSegment
@@ -108,7 +242,10 @@ export const CriteriaInstanceDisplay: React.FC<CriteriaInstanceDisplayProps> = (
                     </span>
                 ))}
             </div>
-            <div className={css["criteria-description"]}>{catalogCriteria.description}</div>
+            <div className={classList(css["criteria-description"], "no-print")}>{catalogCriteria.description}</div>
+            <div className={classList(css["criteria-description"], css["for-print"], "only-print")}>
+                {catalogCriteria.description}
+            </div>
         </div>
     ) : null;
 };

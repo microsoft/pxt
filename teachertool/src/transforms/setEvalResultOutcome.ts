@@ -1,13 +1,16 @@
 import { stateAndDispatch } from "../state";
-import * as Actions from "../state/actions";
 import { EvaluationStatus } from "../types/criteria";
+import { setEvalResult } from "./setEvalResult";
 
-export function setEvalResultOutcome(criteriaId: string, result: EvaluationStatus) {
-    const { state: teacherTool, dispatch } = stateAndDispatch();
+// This will set the outcome for a given criteria instance id. If result is undefined, it will clear it.
+export function setEvalResultOutcome(criteriaId: string, result: EvaluationStatus, isManual: boolean) {
+    const { state: teacherTool } = stateAndDispatch();
 
     const newCriteriaEvalResult = {
         ...teacherTool.evalResults[criteriaId],
         result,
+        resultIsManual: isManual,
     };
-    dispatch(Actions.setEvalResult(criteriaId, newCriteriaEvalResult));
+
+    setEvalResult(criteriaId, newCriteriaEvalResult);
 }

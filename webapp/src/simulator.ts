@@ -3,8 +3,10 @@
 
 import * as core from "./core";
 import * as coretsx from "./coretsx";
+import * as data from "./data";
 import U = pxt.U
 import { postHostMessageAsync, shouldPostHostMessages } from "../../pxteditor";
+import { Milestones } from "./constants";
 
 
 
@@ -13,6 +15,7 @@ interface SimulatorConfig {
     orphanException(brk: pxsim.DebuggerBreakpointMessage): void;
     highlightStatement(stmt: pxtc.LocationInfo, brk?: pxsim.DebuggerBreakpointMessage): boolean;
     restartSimulator(): void;
+    singleSimulator(): void;
     onStateChanged(state: pxsim.SimulatorState): void;
     onSimulatorReady(): void;
     setState(key: string, value: any): void;
@@ -36,7 +39,7 @@ export function setTranslations(translations: pxt.Map<string>) {
     }
 }
 
-export function init(root: HTMLElement, cfg: SimulatorConfig) {
+export async function initAsync(root: HTMLElement, cfg: SimulatorConfig) {
     if (!root) return;
     pxsim.U.clear(root);
     const simulatorsDiv = document.createElement('div');
@@ -47,6 +50,8 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
     debuggerDiv.id = 'debugger';
     debuggerDiv.className = 'ui item landscape only';
     root.appendChild(debuggerDiv);
+
+    const trgConfig = await data.getAsync<pxt.TargetConfig>("target-config:")
 
     const nestedEditorSim = /nestededitorsim=1/i.test(window.location.href);
     const mpRole = /[\&\?]mp=(server|client)/i.exec(window.location.href)?.[1]?.toLowerCase();
@@ -61,10 +66,32 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
                 const originUrl = new URL(origin);
                 parentOrigin = originUrl.origin
             } catch (e) {
-                console.error(`Invalid parent origin: ${origin}`)
+                pxt.error(`Invalid parent origin: ${origin}`)
             }
         }
     }
+
+    // Map simulator extensions from approved repos
+    const simulatorExtensions: pxt.Map<pxt.SimulatorExtensionConfig> = {};
+    Object.entries(trgConfig?.packages?.approvedRepoLib || {})
+        .map(([k, v]) => ({ k: k, v: v.simx }))
+        .filter(x => !!x.v)
+        .forEach(x => simulatorExtensions[x.k] = {
+            index: "index.html", // default to index.html
+            aspectRatio: pxt.appTarget.simulator.aspectRatio || 1.22, // fallback to 1.22
+            permanent: true, // default to true
+            ...x.v
+        });
+    // Add in test simulator extensions
+    Object.entries(pxt.appTarget?.simulator?.testSimulatorExtensions || {})
+        .map(([k, v]) => ({ k: k, v: v as pxt.SimulatorExtensionConfig }))
+        .filter(x => !!x.v)
+        .forEach(x => simulatorExtensions[x.k] = {
+            index: "index.html", // default to index.html
+            aspectRatio: pxt.appTarget.simulator.aspectRatio || 1.22, // fallback to 1.22
+            permanent: true, // default to true
+            ...x.v
+        });
 
     let options: pxsim.SimulatorDriverOptions = {
         restart: () => cfg.restartSimulator(),
@@ -185,7 +212,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
             cfg.onStateChanged(state);
         },
         onSimulatorReady: function () {
-            pxt.perf.recordMilestone("simulator ready")
+            pxt.perf.recordMilestone(Milestones.SimulatorReady)
             cfg.onSimulatorReady();
         },
         onSimulatorCommand: (msg: pxsim.SimulatorCommandMessage): void => {
@@ -195,6 +222,9 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
                     break
                 case "restart":
                     cfg.restartSimulator();
+                    break;
+                case "single":
+                    cfg.singleSimulator();
                     break;
                 case "reload":
                     stop(true);
@@ -240,7 +270,9 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
         nestedEditorSim,
         parentOrigin,
         mpRole,
-        messageSimulators: pxt.appTarget?.simulator?.messageSimulators
+        messageSimulators: pxt.appTarget?.simulator?.messageSimulators,
+        simulatorExtensions,
+        userLanguage: pxt.Util.userLanguage()
     };
     driver = new pxsim.SimulatorDriver(document.getElementById('simulators'), options);
     config = cfg

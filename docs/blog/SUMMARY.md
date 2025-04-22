@@ -1,6 +1,11 @@
 # Microsoft MakeCode Blog
 
 * [Blog](/blog)
+    * [Summer 2025 – MakeCode Professional Development](/blog/csp/summer-pd-2025)
+    * [MakeCode Arcade 2025 Update](/blog/arcade/update-mar-2025)
+    * [Display shield extension/simulator for the micro:bit](/blog/microbit/display-shield)
+    * [MakeCode Code Evaluation Tool Beta](/blog/tools/code-eval-tool)
+    * [MakeCode for the micro:bit 2024 Update](/blog/microbit/2024-update)
     * [MakeCode Arcade - now more ways to play!](/blog/arcade/arcade-on-microbit-xbox)
     * [MakeCode Minecraft 2023 Update](/blog/minecraft/2023-release)
     * [MakeCode Clever Integration Released!](/blog/clever-release)

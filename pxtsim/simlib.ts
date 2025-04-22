@@ -71,16 +71,18 @@ namespace pxsim {
             return this.queues[key];
         }
 
-        listen(id: EventIDType, evid: EventIDType, handler: RefAction) {
+        listen(id: EventIDType, evid: EventIDType, handler: RefAction, flags = 0) {
             // special handle for idle, start the idle timeout
             if (id == this.schedulerID && evid == this.idleEventID)
                 this.runtime.startIdle();
 
             let q = this.start(id, evid, this.backgroundHandlerFlag, true);
-            if (this.backgroundHandlerFlag)
-                q.addHandler(handler);
-            else
-                q.setHandler(handler);
+            if (this.backgroundHandlerFlag) {
+                q.addHandler(handler, flags);
+            }
+            else {
+                q.setHandler(handler, flags);
+            }
             this.backgroundHandlerFlag = false;
         }
 
@@ -847,7 +849,7 @@ namespace pxsim {
             const noteNumber = data[1] || 0;
             const noteFrequency = frequencyFromMidiNoteNumber(noteNumber);
             const velocity = data[2] || 0;
-            //console.log(`midi: cmd ${cmd} channel (-1) ${channel} note ${noteNumber} f ${noteFrequency} v ${velocity}`)
+            //pxsim.log(`midi: cmd ${cmd} channel (-1) ${channel} note ${noteNumber} f ${noteFrequency} v ${velocity}`)
 
             // play drums regardless
             if (cmd == 8 || ((cmd == 9) && (velocity == 0))) { // with MIDI, note on with velocity zero is the same as note off
@@ -1089,6 +1091,7 @@ namespace pxsim.visuals {
         getCoord(pinNm: string): Coord;
         getPinDist(): number;
         highlightPin(pinNm: string): void;
+        removeEventListeners?(): void;
     }
 
     //expects rgb from 0,255, gives h in [0,360], s in [0, 100], l in [0, 100]

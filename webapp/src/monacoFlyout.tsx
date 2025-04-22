@@ -5,7 +5,9 @@ import * as toolbox from "./toolbox";
 import * as workspace from "./workspace";
 import * as data from "./data";
 import * as auth from "./auth";
+import * as pxtblockly from "../../pxtblocks";
 import { HELP_IMAGE_URI } from "../../pxteditor";
+import { getBlockAsText } from "./toolboxHelpers";
 
 import ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -251,40 +253,27 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
 
     protected getBlockDescription(block: toolbox.BlockDefinition, params: pxtc.ParameterDesc[]): JSX.Element[] {
         let description = [];
-        let compileInfo = pxt.blocks.compileInfo(block as pxtc.SymbolInfo)
-        let parts = block.attributes._def && block.attributes._def.parts;
+        let compileInfo = pxt.blocks.compileInfo(block as pxtc.SymbolInfo);
         let name = block.qName || block.name;
         const isPython = this.props.fileType == pxt.editor.FileType.Python;
 
-        if (parts) {
-            if (params &&
-                parts.filter((p: any) => p.kind == "param").length > params.length) {
-                // add empty param when first argument is "this"
-                params.unshift(null);
-            }
-            parts.forEach((part, i) => {
+        const blockAsText = getBlockAsText(block, params, isPython);
+        if (blockAsText?.parts?.length) {
+            blockAsText.parts?.forEach((part, i) => {
                 switch (part.kind) {
                     case "label":
-                        description.push(<span key={name + i}>{part.text}</span>);
+                        description.push(<span key={name + i}>{part.content}</span>);
                         break;
                     case "break":
                         description.push(<span key={name + i}>{" "}</span>);
                         break;
                     case "param":
-                        let actualParam = compileInfo?.definitionNameToParam[part.name];
-                        let val = actualParam?.defaultValue
-                            || part.varName
-                            || actualParam?.actualName
-                            || part.name
-                        if (isPython && actualParam?.defaultValue) {
-                            val = pxtc.tsSnippetToPySnippet(val);
-                        }
-                        description.push(<span className="argName" key={name + i}>{val}</span>);
+                        description.push(<span className="argName" key={name + i}>{part.content}</span>);
                         break;
                 }
-            })
+            });
         } else {
-            // if no blockdef found, use the snippet name
+            // if no parts found, use the snippet name
             description.push(<span key={name}>{this.getSnippetName(block) || block.name}</span>)
         }
 
@@ -351,9 +340,13 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
 
         const snippet = isPython ? block.pySnippet : block.snippet;
         const params = block.parameters;
-        const blockColor = block.attributes.color || color;
+        const blockColor = pxt.toolbox.getAccessibleBackground(block.attributes.color || color);
         const blockDescription = this.getBlockDescription(block, params ? params.slice() : null);
-        const helpUrl = block.attributes.help;
+        const helpUrl = pxt.blocks.getHelpUrl(block as pxtc.SymbolInfo);
+
+        const openHelp = () => {
+            pxtblockly.external.openHelpUrl(helpUrl);
+        };
 
         const qName = this.getQName(block) || this.getSnippetName(block);
         const selected = qName == this.state.selectedBlock;
@@ -385,9 +378,11 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
                 <div className="description">{description}</div>
                 <div className="signature">
                     <span>{snippet ? snippet : `${qName}(${params ? params.map(p => `${p.name}`).join(", ") : ""})`}</span>
-                    {helpUrl && <a className="blockHelp" href={`/reference/${helpUrl}`} target="_blank" rel="noopener noreferrer" role="button">
-                        <i className="question circle outline icon" aria-label={lf("Open documentation")}></i>
-                    </a>}
+                    {helpUrl &&
+                        <a className="blockHelp" role="button" onClick={openHelp}>
+                            <i className="question circle outline icon" aria-label={lf("Open documentation")}></i>
+                        </a>
+                    }
                 </div>
                 {params && <div className="params">
                     {params.map((p, i) => {
@@ -404,7 +399,7 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
 
     renderCore() {
         const { name, ns, color, icon, groups } = this.state;
-        const rgb = pxt.toolbox.convertColor(color || (ns && pxt.toolbox.getNamespaceColor(ns)) || "255");
+        const rgb = pxt.toolbox.getAccessibleBackground(pxt.toolbox.convertColor(color || (ns && pxt.toolbox.getNamespaceColor(ns)) || "255"));
         const iconClass = `blocklyTreeIcon${icon ? (ns || icon).toLowerCase() : "Default"}`.replace(/\s/g, "");
         return <div id="monacoFlyoutWidget" className="monacoFlyout" style={this.getFlyoutStyle()}>
             <div id="monacoFlyoutWrapper" onScroll={this.scrollHandler} onWheel={this.wheelHandler} role="list">

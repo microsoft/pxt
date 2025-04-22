@@ -1,53 +1,29 @@
 import * as Blockly from "blockly";
 import { createFlyoutGroupLabel, createFlyoutHeadingLabel, mkVariableFieldBlock } from "../toolbox";
 import { installBuiltinHelpInfo, setBuiltinHelpInfo } from "../help";
-import { provider } from "../constants";
 
 export function initVariables() {
-    // We only give types to "special" variables like enum members and we don't
-    // want those showing up in the variable dropdown so filter the variables
-    // that show up to only ones that have an empty type
-    (Blockly.FieldVariable.prototype as any).getVariableTypes_ = () => [""];
-
     let varname = lf("{id:var}item");
-    Blockly.Variables.flyoutCategory = function (workspace: Blockly.WorkspaceSvg) {
-        let xmlList: HTMLElement[] = [];
+    Blockly.Variables.flyoutCategory = flyoutCategory;
 
-        if (!pxt.appTarget.appTheme.hideFlyoutHeadings) {
-            // Add the Heading label
-            let headingLabel = createFlyoutHeadingLabel(lf("Variables"),
-                pxt.toolbox.getNamespaceColor('variables'),
-                pxt.toolbox.getNamespaceIcon('variables'));
-            xmlList.push(headingLabel);
-        }
-
-        let button = document.createElement('button') as HTMLElement;
-        button.setAttribute('text', lf("Make a Variable..."));
-        button.setAttribute('callbackKey', 'CREATE_VARIABLE');
-
-        workspace.registerButtonCallback('CREATE_VARIABLE', function (button) {
-            Blockly.Variables.createVariableButtonHandler(button.getTargetWorkspace());
-        });
-
-        xmlList.push(button);
-
-        let blockList = Blockly.Variables.flyoutCategoryBlocks(workspace) as HTMLElement[];
-        xmlList = xmlList.concat(blockList);
-        return xmlList;
-    };
     Blockly.Variables.flyoutCategoryBlocks = function (workspace) {
-        let variableModelList = workspace.getVariablesOfType('');
+        let variableModelList = workspace.getVariableMap().getVariablesOfType('');
 
         let xmlList: HTMLElement[] = [];
         if (variableModelList.length > 0) {
             let mostRecentVariable = variableModelList[variableModelList.length - 1];
-            variableModelList.sort(Blockly.VariableModel.compareByName);
+            variableModelList.sort(Blockly.Variables.compareByName);
             // variables getters first
             for (let i = 0; i < variableModelList.length; i++) {
                 const variable = variableModelList[i];
                 if (Blockly.Blocks['variables_get']) {
-
-                    let block = mkVariableFieldBlock("variables_get", variable.getId(), variable.type, variable.name, false);
+                    const block = mkVariableFieldBlock(
+                        "variables_get",
+                        variable.getId(),
+                        variable.getType(),
+                        variable.getName(),
+                        false
+                    );
                     block.setAttribute("gap", "8");
                     xmlList.push(block);
                 }
@@ -60,7 +36,13 @@ export function initVariables() {
 
             if (Blockly.Blocks['variables_change']) {
                 let gap = Blockly.Blocks['variables_get'] ? 20 : 8;
-                let block = mkVariableFieldBlock("variables_change", mostRecentVariable.getId(), mostRecentVariable.type, mostRecentVariable.name, false);
+                const block = mkVariableFieldBlock(
+                    "variables_change",
+                    mostRecentVariable.getId(),
+                    mostRecentVariable.getType(),
+                    mostRecentVariable.getName(),
+                    false
+                );
                 block.setAttribute("gap", gap + "")
                 {
                     let value = Blockly.utils.xml.createElement('value');
@@ -78,7 +60,13 @@ export function initVariables() {
             }
             if (Blockly.Blocks['variables_set']) {
                 let gap = Blockly.Blocks['variables_change'] ? 8 : 24;
-                let block = mkVariableFieldBlock("variables_set", mostRecentVariable.getId(), mostRecentVariable.type, mostRecentVariable.name, false);
+                const block = mkVariableFieldBlock(
+                    "variables_set",
+                    mostRecentVariable.getId(),
+                    mostRecentVariable.getType(),
+                    mostRecentVariable.getName(),
+                    false
+                );
                 block.setAttribute("gap", gap + "")
                 {
                     let value = Blockly.utils.xml.createElement('value');
@@ -103,7 +91,31 @@ export function initVariables() {
     const variablesGetId = "variables_get";
     const variablesGetDef = pxt.blocks.getBlockDefinition(variablesGetId);
     msg.VARIABLES_GET_CREATE_SET = variablesGetDef.block["VARIABLES_GET_CREATE_SET"];
-    installBuiltinHelpInfo(variablesGetId);
+    Blockly.Blocks[variablesGetId] = {
+        init: function() {
+            this.jsonInit(
+                {
+                    "type": "variables_get",
+                    "message0": "%1",
+                    "args0": [
+                        {
+                            "type": "field_variable",
+                            "name": "VAR",
+                            "variable": "%{BKY_VARIABLES_DEFAULT_NAME}",
+                            "variableTypes": [""],
+                        },
+                    ],
+                    "output": null,
+                    "style": "variable_blocks",
+                    "helpUrl": "%{BKY_VARIABLES_GET_HELPURL}",
+                    "tooltip": "%{BKY_VARIABLES_GET_TOOLTIP}",
+                    "extensions": ["contextMenu_variableSetterGetter"],
+                }
+            );
+
+            setBuiltinHelpInfo(this, variablesGetId);
+        }
+    };
 
     const variablesReporterGetId = "variables_get_reporter";
     installBuiltinHelpInfo(variablesReporterGetId);
@@ -120,7 +132,36 @@ export function initVariables() {
     msg.VARIABLES_SET = variablesSetDef.block["VARIABLES_SET"];
     msg.VARIABLES_DEFAULT_NAME = varname;
     msg.VARIABLES_SET_CREATE_GET = lf("Create 'get %1'");
-    installBuiltinHelpInfo(variablesSetId);
+    Blockly.Blocks[variablesSetId] = {
+        init: function() {
+            this.jsonInit(
+                {
+                    "type": "variables_set",
+                    "message0": "%{BKY_VARIABLES_SET}",
+                    "args0": [
+                    {
+                        "type": "field_variable",
+                        "name": "VAR",
+                        "variable": "%{BKY_VARIABLES_DEFAULT_NAME}",
+                        "variableTypes": [""],
+                    },
+                    {
+                        "type": "input_value",
+                        "name": "VALUE",
+                    },
+                    ],
+                    "previousStatement": null,
+                    "nextStatement": null,
+                    "style": "variable_blocks",
+                    "tooltip": "%{BKY_VARIABLES_SET_TOOLTIP}",
+                    "helpUrl": "%{BKY_VARIABLES_SET_HELPURL}",
+                    "extensions": ["contextMenu_variableSetterGetter"],
+                }
+            );
+
+            setBuiltinHelpInfo(this, variablesSetId);
+        }
+    };
 
     // pxt variables_change
     const variablesChangeId = "variables_change";
@@ -133,7 +174,8 @@ export function initVariables() {
                     {
                         "type": "field_variable",
                         "name": "VAR",
-                        "variable": varname
+                        "variable": varname,
+                        "variableTypes": [""]
                     },
                     {
                         "type": "input_value",
@@ -154,8 +196,8 @@ export function initVariables() {
          * @param {!Array} options List of menu options to add to.
          * @this Blockly.Block
          */
-        customContextMenu: function (options: any[]) {
-            if (!(this.inDebugWorkspace())) {
+        customContextMenu: function (this: Blockly.BlockSvg, options: any[]) {
+            if (!(this.workspace?.options?.readOnly)) {
                 let option: any = {
                     enabled: this.workspace.remainingCapacity() > 0
                 };
@@ -181,3 +223,31 @@ export function initVariables() {
     // Rename variable dialog
     msg.RENAME_VARIABLE_TITLE = lf("Rename all '%1' variables to:");
 }
+
+function flyoutCategory(workspace: Blockly.WorkspaceSvg, useXml: false): Blockly.utils.toolbox.FlyoutItemInfo[];
+function flyoutCategory(workspace: Blockly.WorkspaceSvg, useXml: true): Element[];
+function flyoutCategory(workspace: Blockly.WorkspaceSvg, useXml: boolean): Element[] | Blockly.utils.toolbox.FlyoutItemInfo[] {
+    let xmlList: HTMLElement[] = [];
+
+    if (!pxt.appTarget.appTheme.hideFlyoutHeadings) {
+        // Add the Heading label
+        const headingLabel = createFlyoutHeadingLabel(lf("Variables"),
+            pxt.toolbox.getNamespaceColor('variables'),
+            pxt.toolbox.getNamespaceIcon('variables'));
+        xmlList.push(headingLabel);
+    }
+
+    const button = document.createElement('button') as HTMLElement;
+    button.setAttribute('text', lf("Make a Variable..."));
+    button.setAttribute('callbackKey', 'CREATE_VARIABLE');
+
+    workspace.registerButtonCallback('CREATE_VARIABLE', function (button) {
+        Blockly.Variables.createVariableButtonHandler(button.getTargetWorkspace());
+    });
+
+    xmlList.push(button);
+
+    const blockList = Blockly.Variables.flyoutCategoryBlocks(workspace) as HTMLElement[];
+    xmlList = xmlList.concat(blockList);
+    return xmlList;
+};

@@ -1,6 +1,7 @@
-import { ModalType, ToastWithId, TabName, ProjectData, ConfirmationModalOptions } from "../types";
+import { ToastWithId, TabName, ProjectData, UserFeedback } from "../types";
 import { CatalogCriteria, CriteriaResult } from "../types/criteria";
-import { Rubric } from "../types/rubric";
+import { ModalOptions } from "../types/modalOptions";
+import { Checklist } from "../types/checklist";
 
 // Changes to app state are performed by dispatching actions to the reducer
 type ActionBase = {
@@ -50,19 +51,19 @@ type SetCatalog = ActionBase & {
     catalog: CatalogCriteria[] | undefined;
 };
 
-type SetRubric = ActionBase & {
-    type: "SET_RUBRIC";
-    rubric: Rubric;
+type SetCatalogOpen = ActionBase & {
+    type: "SET_CATALOG_OPEN";
+    open: boolean;
 };
 
-type SetConfirmationOptions = ActionBase & {
-    type: "SET_CONFIRMATION_OPTIONS";
-    options: ConfirmationModalOptions | undefined;
+type SetChecklist = ActionBase & {
+    type: "SET_CHECKLIST";
+    checklist: Checklist;
 };
 
 type ShowModal = ActionBase & {
     type: "SHOW_MODAL";
-    modal: ModalType;
+    modalOptions: ModalOptions;
 };
 
 type HideModal = ActionBase & {
@@ -79,9 +80,9 @@ type SetActiveTab = ActionBase & {
     tabName: TabName;
 };
 
-type SetAutorun = ActionBase & {
-    type: "SET_AUTORUN";
-    autorun: boolean;
+type SetRunOnLoad = ActionBase & {
+    type: "SET_RUN_ON_LOAD";
+    runOnLoad: boolean;
 };
 
 type SetEvalResultsBatch = ActionBase & {
@@ -91,6 +92,33 @@ type SetEvalResultsBatch = ActionBase & {
 
 type ClearAllEvalResultNotes = ActionBase & {
     type: "CLEAR_ALL_EVAL_RESULT_NOTES";
+};
+
+type SetToolboxCategories = ActionBase & {
+    type: "SET_TOOLBOX_CATEGORIES";
+    categories: pxt.Map<pxt.editor.ToolboxCategoryDefinition>;
+};
+
+type SetBlockImageUri = ActionBase & {
+    type: "SET_BLOCK_IMAGE_URI";
+    blockId: string;
+    imageUri: string;
+};
+
+type SetScreenReaderAnnouncement = ActionBase & {
+    type: "SET_SCREEN_READER_ANNOUNCEMENT";
+    announcement: string;
+};
+
+type SetUserProfile = ActionBase & {
+    type: "SET_USER_PROFILE";
+    profile: pxt.auth.UserProfile | undefined;
+};
+
+type SetUserFeedback = ActionBase & {
+    type: "SET_USER_FEEDBACK";
+    criteriaInstanceId: string;
+    userFeedback: UserFeedback;
 };
 
 /**
@@ -108,13 +136,18 @@ export type Action =
     | SetEvalResultsBatch
     | SetTargetConfig
     | SetCatalog
-    | SetRubric
-    | SetConfirmationOptions
+    | SetCatalogOpen
+    | SetChecklist
     | ShowModal
     | HideModal
     | SetValidatorPlans
     | SetActiveTab
-    | SetAutorun;
+    | SetRunOnLoad
+    | SetToolboxCategories
+    | SetBlockImageUri
+    | SetScreenReaderAnnouncement
+    | SetUserProfile
+    | SetUserFeedback;
 
 /**
  * Action creators
@@ -159,19 +192,19 @@ const setCatalog = (catalog: CatalogCriteria[] | undefined): SetCatalog => ({
     catalog,
 });
 
-const setRubric = (rubric: Rubric): SetRubric => ({
-    type: "SET_RUBRIC",
-    rubric,
+const setCatalogOpen = (open: boolean): SetCatalogOpen => ({
+    type: "SET_CATALOG_OPEN",
+    open,
 });
 
-const setConfirmationOptions = (options: ConfirmationModalOptions | undefined): SetConfirmationOptions => ({
-    type: "SET_CONFIRMATION_OPTIONS",
-    options,
+const setChecklist = (checklist: Checklist): SetChecklist => ({
+    type: "SET_CHECKLIST",
+    checklist,
 });
 
-const showModal = (modal: ModalType): ShowModal => ({
+const showModal = (modalOptions: ModalOptions): ShowModal => ({
     type: "SHOW_MODAL",
-    modal,
+    modalOptions,
 });
 
 const hideModal = (): HideModal => ({
@@ -188,9 +221,9 @@ const setActiveTab = (tabName: TabName): SetActiveTab => ({
     tabName,
 });
 
-const setAutorun = (autorun: boolean): SetAutorun => ({
-    type: "SET_AUTORUN",
-    autorun,
+const setRunOnLoad = (runOnLoad: boolean): SetRunOnLoad => ({
+    type: "SET_RUN_ON_LOAD",
+    runOnLoad,
 });
 
 const setEvalResultsBatch = (criteriaResults: pxt.Map<CriteriaResult>): SetEvalResultsBatch => ({
@@ -200,6 +233,33 @@ const setEvalResultsBatch = (criteriaResults: pxt.Map<CriteriaResult>): SetEvalR
 
 const clearAllEvalResultNotes = (): ClearAllEvalResultNotes => ({
     type: "CLEAR_ALL_EVAL_RESULT_NOTES",
+});
+
+const setToolboxCategories = (categories: pxt.Map<pxt.editor.ToolboxCategoryDefinition>): SetToolboxCategories => ({
+    type: "SET_TOOLBOX_CATEGORIES",
+    categories,
+});
+
+const setBlockImageUri = (blockId: string, imageUri: string): SetBlockImageUri => ({
+    type: "SET_BLOCK_IMAGE_URI",
+    blockId,
+    imageUri,
+});
+
+const setScreenReaderAnnouncement = (announcement: string): SetScreenReaderAnnouncement => ({
+    type: "SET_SCREEN_READER_ANNOUNCEMENT",
+    announcement,
+});
+
+const setUserProfile = (profile: pxt.auth.UserProfile | undefined): SetUserProfile => ({
+    type: "SET_USER_PROFILE",
+    profile,
+});
+
+const setUserFeedback = (criteriaInstanceId: string, userFeedback: UserFeedback): SetUserFeedback => ({
+    type: "SET_USER_FEEDBACK",
+    criteriaInstanceId,
+    userFeedback,
 });
 
 export {
@@ -213,11 +273,16 @@ export {
     setEvalResultsBatch,
     setTargetConfig,
     setCatalog,
-    setRubric,
-    setConfirmationOptions,
+    setCatalogOpen,
+    setChecklist,
     showModal,
     hideModal,
     setValidatorPlans,
     setActiveTab,
-    setAutorun,
+    setRunOnLoad,
+    setToolboxCategories,
+    setBlockImageUri,
+    setScreenReaderAnnouncement,
+    setUserProfile,
+    setUserFeedback,
 };

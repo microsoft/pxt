@@ -154,15 +154,10 @@ const LIST_CREATE_MIXIN = {
         const block = this;
         const oldMutationDom = block.mutationToDom();
         const oldMutation = oldMutationDom && Blockly.Xml.domToText(oldMutationDom);
-        // Switch off rendering while the source block is rebuilt.
-        const savedRendered = block.rendered;
-        block.rendered = false;
         // Update the mutation
         if (update) update.call(this);
         // Allow the source block to rebuild itself.
         this.updateShape_();
-        // Restore rendering and show the changes.
-        block.rendered = savedRendered;
         // Mutation may have added some elements that need initializing.
         if (block instanceof Blockly.BlockSvg) {
             block.initSvg();
@@ -181,7 +176,7 @@ const LIST_CREATE_MIXIN = {
             }, Blockly.config.bumpDelay);
         }
         if (block.rendered && block instanceof Blockly.BlockSvg) {
-            block.render();
+            block.queueRender();
         }
         Blockly.Events.setGroup(false);
     },

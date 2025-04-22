@@ -1,6 +1,5 @@
 /// <reference path="../built/pxtlib.d.ts" />
 import * as Blockly from "blockly";
-import { WorkspaceSearch } from "@blockly/plugin-workspace-search";
 import { optionalDummyInputPrefix, optionalInputWithFieldPrefix, provider } from "./constants";
 import { initExpandableBlock, initVariableArgsBlock, appendMutation } from "./composableMutations";
 import { addMutation, MutatingBlock, MutatorTypes } from "./legacyMutations";
@@ -23,8 +22,10 @@ import { initVariables } from "./builtins/variables";
 import { initOnStart } from "./builtins/misc";
 import { initContextMenu } from "./contextMenu";
 import { renderCodeCard } from "./codecardRenderer";
-import { applyMonkeyPatches } from "./monkeyPatches";
 import { FieldDropdown } from "./fields/field_dropdown";
+import { setDraggableShadowBlocks, setDuplicateOnDrag, setDuplicateOnDragStrategy } from "./plugins/duplicateOnDrag";
+import { applyPolyfills } from "./polyfills";
+import { initCopyPaste } from "./copyPaste";
 
 
 interface BlockDefinition {
@@ -101,14 +102,13 @@ export function blockSymbol(type: string): pxtc.SymbolInfo {
 export function injectBlocks(blockInfo: pxtc.BlocksInfo): pxtc.SymbolInfo[] {
     cachedBlockInfo = blockInfo;
 
-    // FIXME (riknoll): This relies on Blockly's custom dragging support (coming in v11)
-    // Blockly.pxtBlocklyUtils.whitelistDraggableBlockTypes(blockInfo.blocks.filter(fn => fn.attributes.duplicateShadowOnDrag).map(fn => fn.attributes.blockId));
+   setDraggableShadowBlocks(blockInfo.blocks.filter(fn => fn.attributes.duplicateShadowOnDrag).map(fn => fn.attributes.blockId));
 
     // inject Blockly with all block definitions
     return blockInfo.blocks
         .map(fn => {
             const comp = pxt.blocks.compileInfo(fn);
-            const block = createToolboxBlock(blockInfo, fn, comp);
+            const block = createToolboxBlock(blockInfo, fn, comp, false, 2);
 
             if (fn.attributes.blockBuiltin) {
                 pxt.Util.assert(!!builtinBlocks()[fn.attributes.blockId]);
@@ -136,7 +136,7 @@ function injectBlockDefinition(info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, comp:
     }
 
     if (Blockly.Blocks[fn.attributes.blockId]) {
-        console.error("duplicate block definition: " + id);
+        pxt.error("duplicate block definition: " + id);
         return false;
     }
 
@@ -204,7 +204,8 @@ function isSubtype(apis: pxtc.ApisInfo, specific: string, general: string) {
 
 function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, comp: pxt.blocks.BlockCompileInfo) {
     const ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
-    const instance = fn.kind == pxtc.SymbolKind.Method || fn.kind == pxtc.SymbolKind.Property;
+    let instance = fn.kind == pxtc.SymbolKind.Method || fn.kind == pxtc.SymbolKind.Property;
+    if (typeof fn.isInstance === "boolean" && !fn.attributes?.defaultInstance) instance = fn.isInstance;
     const nsinfo = info.apis.byQName[ns];
     const color =
         // blockNamespace overrides color on block
@@ -217,7 +218,9 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
     const helpUrl = pxt.blocks.getHelpUrl(fn);
     if (helpUrl) block.setHelpUrl(helpUrl)
 
-    block.setColour(color);
+    setDuplicateOnDragStrategy(block);
+
+    block.setColour(typeof color === "string" ? pxt.toolbox.getAccessibleBackground(color) : color);
     let blockShape = provider.SHAPES.ROUND;
     if (fn.retType == "boolean") {
         blockShape = provider.SHAPES.HEXAGONAL;
@@ -258,6 +261,11 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
                 } else {
                     i.setCheck("Variable");
                 }
+
+            });
+
+            comp.handlerArgs.forEach(arg => {
+                setDuplicateOnDrag(block.type, "HANDLER_DRAG_PARAM_" + arg.name);
             });
         }
         else {
@@ -271,7 +279,7 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
     appendMutation(block, {
         mutationToDom: (el: Element) => {
             block.inputList.forEach(input => {
-                input.fieldRow.forEach((fieldRow: FieldCustom) => {
+                input.fieldRow.forEach((fieldRow: FieldCustom & Blockly.Field) => {
                     if (fieldRow.isFieldCustom_ && fieldRow.saveOptions) {
                         const getOptions = fieldRow.saveOptions();
                         if (getOptions) {
@@ -284,7 +292,7 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
         },
         domToMutation: (saved: Element) => {
             block.inputList.forEach(input => {
-                input.fieldRow.forEach((fieldRow: FieldCustom) => {
+                input.fieldRow.forEach((fieldRow: FieldCustom & Blockly.Field) => {
                     if (fieldRow.isFieldCustom_ && fieldRow.restoreOptions) {
                         const options = JSON.parse(saved.getAttribute(`customfield`));
                         if (options) {
@@ -341,7 +349,7 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
 
         if (fn.attributes.shim === "ENUM_GET" || fn.attributes.shim === "KIND_GET") {
             if (comp.parameters.length > 1 || comp.thisParameter) {
-                console.warn(`Enum blocks may only have 1 parameter but ${fn.attributes.blockId} has ${comp.parameters.length}`);
+                pxt.warn(`Enum blocks may only have 1 parameter but ${fn.attributes.blockId} has ${comp.parameters.length}`);
                 return;
             }
         }
@@ -382,7 +390,7 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
 
                     firstParam = false;
                     if (!pr) {
-                        console.error("block " + fn.attributes.blockId + ": unknown parameter " + part.name + (part.ref ? ` (${part.ref})` : ""));
+                        pxt.error("block " + fn.attributes.blockId + ": unknown parameter " + part.name + (part.ref ? ` (${part.ref})` : ""));
                         return;
                     }
 
@@ -423,7 +431,7 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
                         }
 
                         if (syms.length == 0) {
-                            console.error(`no instances of ${typeInfo.qName} found`)
+                            pxt.error(`no instances of ${typeInfo.qName} found`)
                         }
                         const dd: Blockly.MenuOption[] = syms.map(v => {
                             let k = v.attributes.block || v.attributes.blockId || v.name;
@@ -508,7 +516,7 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
                 if (hasInput(inputName)) return;
 
                 input = block.appendValueInput(inputName);
-                input.setAlign(Blockly.ALIGN_LEFT);
+                input.setAlign(Blockly.inputs.Align.LEFT);
             }
             else if (expanded) {
                 const prefix = hasParameter ? optionalInputWithFieldPrefix : optionalDummyInputPrefix;
@@ -587,7 +595,7 @@ function init(blockInfo: pxtc.BlocksInfo) {
     if (blocklyInitialized) return;
     blocklyInitialized = true;
 
-    applyMonkeyPatches();
+    applyPolyfills();
 
     initFieldEditors();
     initContextMenu();
@@ -601,6 +609,7 @@ function init(blockInfo: pxtc.BlocksInfo) {
     initText();
     initComments();
     initTooltip();
+    initCopyPaste();
 }
 
 
@@ -822,12 +831,12 @@ export function setVarFieldValue(block: Blockly.Block, fieldName: string, newNam
 
     // Check for an existing model with this name; otherwise we'll create
     // a second variable with the same name and it will show up twice in the UI
-    const vars = block.workspace.getAllVariables();
+    const vars = block.workspace.getVariableMap().getAllVariables();
     let foundIt = false;
     if (vars && vars.length) {
         for (let v = 0; v < vars.length; v++) {
             const model = vars[v];
-            if (model.name === newName) {
+            if (model.getName() === newName) {
                 varField.setValue(model.getId());
                 foundIt = true;
             }
@@ -836,133 +845,7 @@ export function setVarFieldValue(block: Blockly.Block, fieldName: string, newNam
     if (!foundIt) {
         varField.initModel();
         const model = varField.getVariable();
-        model.name = newName;
+        model.setName(newName);
         varField.setValue(model.getId());
     }
 }
-
-export class PxtWorkspaceSearch extends WorkspaceSearch {
-
-}
-
-// FIXME (riknoll): This probably needs to be re-implemented
-
-// export class PxtWorkspaceSearch extends WorkspaceSearch {
-//     protected createDom_() {
-//         super.createDom_();
-//         this.addEvent_(this.workspace_.getInjectionDiv(), "click", this, (e: any) => {
-//             if (this.htmlDiv_.style.display == "flex" && !this.htmlDiv_.contains(e.target)) {
-//                 this.close()
-//             }
-//         });
-//     }
-
-//     /**
-//      * onKeyDown_ is a private method in WorkspaceSearch, overwrite it to allow searching backwards.
-//      * https://github.com/microsoft/pxt-arcade/issues/5716
-//      */
-//     onKeyDown_(e: KeyboardEvent) {
-//         if (e.key === 'Escape') {
-//             this.close();
-//         } else if (e.key === 'Enter') {
-//             if (e.shiftKey) {
-//                 this.previous();
-//             } else {
-//                 this.next();
-//             }
-//         }
-//     }
-
-//     protected highlightSearchGroup_(blocks: Blockly.BlockSvg[]) {
-//         blocks.forEach((block) => {
-//             const blockPath = block.pathObject.svgPath;
-//             Blockly.utils.dom.addClass(blockPath, 'blockly-ws-search-highlight-pxt');
-//         });
-//     }
-
-//     protected unhighlightSearchGroup_(blocks: Blockly.BlockSvg[]) {
-//         blocks.forEach((block) => {
-//             const blockPath = block.pathObject.svgPath;
-//             Blockly.utils.dom.removeClass(blockPath, 'blockly-ws-search-highlight-pxt');
-//         });
-//     }
-
-//     /**
-//      * https://github.com/google/blockly-samples/blob/master/plugins/workspace-search/src/WorkspaceSearch.js#L633
-//      *
-//      * Modified to center offscreen blocks.
-//      */
-//     protected scrollToVisible_(block: Blockly.BlockSvg) {
-//         if (!this.workspace_.isMovable()) {
-//             // Cannot scroll to block in a non-movable workspace.
-//             return;
-//         }
-//         // XY is in workspace coordinates.
-//         const xy = block.getRelativeToSurfaceXY();
-//         const scale = this.workspace_.scale;
-
-//         // Block bounds in pixels relative to the workspace origin (0,0 is centre).
-//         const width = block.width * scale;
-//         const height = block.height * scale;
-//         const top = xy.y * scale;
-//         const bottom = (xy.y + block.height) * scale;
-//         // In RTL the block's position is the top right of the block, not top left.
-//         const left = this.workspace_.RTL ? xy.x * scale - width : xy.x * scale;
-//         const right = this.workspace_.RTL ? xy.x * scale : xy.x * scale + width;
-
-//         const metrics = this.workspace_.getMetrics();
-
-//         let targetLeft = metrics.viewLeft;
-//         const overflowLeft = left < metrics.viewLeft;
-//         const overflowRight = right > metrics.viewLeft + metrics.viewWidth;
-//         const wideBlock = width > metrics.viewWidth;
-
-//         if ((!wideBlock && overflowLeft) || (wideBlock && !this.workspace_.RTL)) {
-//             // Scroll to show left side of block
-//             targetLeft = left;
-//         } else if ((!wideBlock && overflowRight) ||
-//             (wideBlock && this.workspace_.RTL)) {
-//             // Scroll to show right side of block
-//             targetLeft = right - metrics.viewWidth;
-//         }
-
-//         let targetTop = metrics.viewTop;
-//         const overflowTop = top < metrics.viewTop;
-//         const overflowBottom = bottom > metrics.viewTop + metrics.viewHeight;
-//         const tallBlock = height > metrics.viewHeight;
-
-//         if (overflowTop || (tallBlock && overflowBottom)) {
-//             // Scroll to show top of block
-//             targetTop = top;
-//         } else if (overflowBottom) {
-//             // Scroll to show bottom of block
-//             targetTop = bottom - metrics.viewHeight;
-//         }
-//         if (targetLeft !== metrics.viewLeft || targetTop !== metrics.viewTop) {
-//             const activeEl = document.activeElement as HTMLElement;
-//             if (wideBlock || tallBlock) {
-//                 this.workspace_.scroll(-targetLeft, -targetTop);
-//             } else {
-//                 this.workspace_.centerOnBlock(block.id);
-//             }
-
-//             if (activeEl) {
-//                 // Blockly.WidgetDiv.hide called in scroll is taking away focus.
-//                 // TODO: Review setFocused call in Blockly.WidgetDiv.hide.
-//                 activeEl.focus();
-//             }
-//         }
-//     }
-
-//     open() {
-//         super.open();
-//         this.inputElement_.select();
-//         Blockly.utils.dom.addClass(this.workspace_.getInjectionDiv(), 'blockly-ws-searching');
-//     }
-
-//     close() {
-//         super.close();
-//         Blockly.utils.dom.removeClass(this.workspace_.getInjectionDiv(), 'blockly-ws-searching');
-//     }
-
-// }

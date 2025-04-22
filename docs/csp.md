@@ -28,12 +28,12 @@ Microsoft is recognized by the College Board as an endorsed provider of curricul
 
 ### ~ reminder
 
-#### **Professional Development Workshops - 2024**
+#### Professional Development Workshops - 2025
 
-There are two free professional development opportunities available this summer to help prepare Educators to teach the AP CS Principles with Microsoft MakeCode course for the 2024-2025 academic year. These professional development workshops will focus on the course's Big Ideas, Learning Objectives and Essential Knowledge skills. Additionally, you will learn how Microsoft MakeCode's curriculum meets the course's learning objectives and prepares students for the AP Exam and Create Performance Task. By attending the training and using Microsoft MakeCode's curriculum, you will be prepared with a syllabus, pacing plan, and lesson plans, PowerPoints, student handouts, and resources for every day of the course. Each session has limited capacity so secure your place by registering for one of the workshops at the links below:
+We will be offering free online training this summer to help prepare Educators to teach the AP CS Principles with Microsoft MakeCode course for the 2025-2026 academic year. These professional development workshops will focus on the course's Big Ideas, Learning Objectives and Essential Knowledge skills. Additionally, participants will gain familiarity with the Microsoft MakeCode Arcade programming interface, and understand how the curriculum prepares students for the AP Exam and Create Performance Task. By attending the training and using the MakeCode curriculum, Educators will be prepared with a syllabus, pacing plan, lesson plan, PowerPoint presentations, student handouts and resources for every day of the course. Register for one of the sessions below. Each session has limited capacity:
 
-* **[Workshop 1](https://events.teams.microsoft.com/event/068ed173-0075-493a-be29-8d9784b2717f@38dd6634-1031-4c50-a9b4-d16cd9d97d57)** : 📅 June 17th – 21st
-* **[Workshop 2](https://events.teams.microsoft.com/event/ee217aa0-7581-432b-b828-b0972328b25d@38dd6634-1031-4c50-a9b4-d16cd9d97d57)** : 📅 July 22nd - 26th
+* [Workshop 1](https://events.teams.microsoft.com/event/1118b9b2-723c-4eeb-a694-28aa35b8dc09@74ce1499-dbf1-452c-a18f-ed42467a4990): June 16th - 20th
+* [Workshop 2](https://events.teams.microsoft.com/event/20af7ced-66e3-4b1b-80c6-994d008cbf2f@74ce1499-dbf1-452c-a18f-ed42467a4990): July 14th - 18th
 
 ### ~
 

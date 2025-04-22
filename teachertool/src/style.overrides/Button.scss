@@ -1,73 +1,81 @@
 // Overrides for react-common/styles/controls/Button.less
-
-.common-button {
-    &:active {
-        filter: grayscale(.20) brightness(.80) contrast(1.3);
+#root {
+    .common-button {
+        &:active {
+            filter: grayscale(.20) brightness(.80) contrast(1.3);
+        }
+        margin: 0;
     }
-}
-
-.common-button.primary {
-    background: var(--pxt-button-primary-background);
-    color: var(--pxt-button-primary-foreground);
-    border: 1px solid var(--pxt-button-primary-accent);
-}
-
-.common-button.secondary {
-    background: var(--pxt-page-background);
-    color: var(--pxt-page-color);
-    border: 1px solid var(--pxt-button-secondary-accent);
-    &:focus-visible::after {
-        outline: solid 1px var(--pxt-button-secondary-accent);
+    
+    .common-button.primary {
+        background: var(--pxt-primary-background);
+        color: var(--pxt-primary-foreground);
+        border: 1px solid var(--pxt-primary-accent);
     }
-}
-
-.common-button.inline:not(.disabled) {
-    background-color: var(--pxt-page-background);
-    color: var(--pxt-content-foreground);
-    border: solid 1px var(--pxt-content-accent);
-    &:hover {
+    
+    .common-button.secondary {
+        background: var(--pxt-neutral-background1);
+        color: var(--pxt-page-color);
+        border: 1px solid var(--pxt-neutral-foreground1);
+        &:focus-visible::after {
+            outline: solid 1px var(--pxt-neutral-foreground1);
+        }
+    }
+    
+    .common-button.inline:not(.disabled) {
+        background-color: var(--pxt-neutral-background1);
+        color: var(--pxt-tertiary-background);
+        border: solid 1px var(--pxt-target-background1-hover);
+        &:hover {
+            filter: none;
+            background-color: var(--pxt-neutral-alpha10);
+        }
+        &:active {
+            filter: brightness(.80) contrast(1.3);
+        }
+        &:focus-visible::after {
+            outline: solid 1px var(--pxt-tertiary-background);
+        }
+    }
+    
+    .common-button.disabled {
+        background: var(--pxt-neutral-alpha10);
+        color: var(--pxt-neutral-alpha80);
+        border-color: var(--pxt-neutral-alpha80);
         filter: none;
-        background-color: var(--pxt-headerbar-background-glass);
     }
-    &:active {
-        filter: brightness(.80) contrast(1.3);
-    }
-    &:focus-visible::after {
-        outline: solid 1px var(--pxt-content-foreground);
-    }
-}
-
-.common-button.disabled {
-    opacity: 0.8;
-}
-
-.rounded > .common-button.common-dropdown-button {
-    border-radius: 1rem;
-    border: solid 1px var(--pxt-page-foreground);
-
-    .common-button-flex {
-        padding: 0.75rem;
-    }
-
-    @media print {
-        i {
-            display: none;
+    
+    .rounded > .common-button.common-dropdown-button {
+        border-radius: 1rem;
+        border: solid 1px var(--pxt-neutral-foreground1);
+    
+        .common-button-flex {
+            padding: 0.65rem;
+            display: flex;
+            align-items: center;
+            height: 100%;
         }
-
-        text-align: center;
-        padding-right: 8px;
-        border: none;
-
-        .common-button-label {
-            border-bottom: 1px solid var(--pxt-page-foreground);
+    
+        @media print {
+            i {
+                display: none;
+            }
+    
+            text-align: center;
+            padding-right: 8px;
+            border: none !important;
+    
+            .common-button-label {
+                border-bottom: 1px solid var(--pxt-neutral-foreground1);
+            }
         }
     }
-}
-
-.fail > .common-button.common-dropdown-button {
-    background-color: var(--pxt-warning);
-}
-
-.pass > .common-button.common-dropdown-button {
-    background-color: var(--pxt-success);
+    
+    .fail > .common-button.common-dropdown-button {
+        border: 3px solid var(--pxt-warning);
+    }
+    
+    .pass > .common-button.common-dropdown-button {
+        border: 3px solid var(--pxt-success);
+    }
 }

@@ -1,13 +1,10 @@
 import * as Blockly from "blockly";
-import { DuplicateOnDragBlockDragger } from "./plugins/duplicateOnDrag";
 
-/**
- * The following patch to blockly is to add the Trash icon on top of the toolbox,
- * the trash icon should only show when a user drags a block that is already in the workspace.
- */
-export class BlockDragger extends DuplicateOnDragBlockDragger {
-    drag(e: PointerEvent, currentDragDeltaXY: Blockly.utils.Coordinate): void {
-        const blocklyToolboxDiv = document.getElementsByClassName('blocklyToolboxDiv')[0] as HTMLElement;
+export class BlockDragger extends Blockly.dragging.Dragger {
+    onDrag(e: PointerEvent, totalDelta: Blockly.utils.Coordinate): void {
+        super.onDrag(e, totalDelta);
+
+        const blocklyToolboxDiv = document.getElementsByClassName('blocklyToolbox')[0] as HTMLElement;
         const blocklyTreeRoot = document.getElementsByClassName('blocklyTreeRoot')[0] as HTMLElement
             || document.getElementsByClassName('blocklyFlyout')[0] as HTMLElement;
         const trashIcon = document.getElementById("blocklyTrashIcon");
@@ -29,12 +26,12 @@ export class BlockDragger extends DuplicateOnDragBlockDragger {
                 if (blocklyToolboxDiv) pxt.BrowserUtils.removeClass(blocklyToolboxDiv, 'blocklyToolboxDeleting');
             }
         }
-        return super.drag(e, currentDragDeltaXY);
     }
 
-    endDrag(e: PointerEvent, currentDragDeltaXY: Blockly.utils.Coordinate): void {
-        super.endDrag(e, currentDragDeltaXY);
-        const blocklyToolboxDiv = document.getElementsByClassName('blocklyToolboxDiv')[0] as HTMLElement;
+    onDragEnd(e: PointerEvent): void {
+        super.onDragEnd(e);
+
+        const blocklyToolboxDiv = document.getElementsByClassName('blocklyToolbox')[0] as HTMLElement;
         const blocklyTreeRoot = document.getElementsByClassName('blocklyTreeRoot')[0] as HTMLElement
             || document.getElementsByClassName('blocklyFlyout')[0] as HTMLElement;
         const trashIcon = document.getElementById("blocklyTrashIcon");

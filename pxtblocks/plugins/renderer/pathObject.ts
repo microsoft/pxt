@@ -74,7 +74,54 @@ export class PathObject extends Blockly.zelos.PathObject {
         }
     }
 
-    setHasDottedOutllineOnHover(enabled: boolean) {
+    override applyColour(block: Blockly.BlockSvg): void {
+        super.applyColour(block);
+
+        if (block.outputConnection) {
+            let didSetStroke = false;
+
+            const parent = block.getParent();
+            if (parent) {
+                // On very dark shadow blocks, make the border a little bit brighter
+                // to contrast with the parent better
+                if (block.isShadow()) {
+                    const parentBorder = parent.style.colourTertiary;
+                    const rgb = Blockly.utils.colour.hexToRgb(parentBorder);
+                    const luminance = calculateLuminance(rgb);
+                    if (luminance < 0.15) {
+                        this.svgPath.setAttribute('stroke', Blockly.utils.colour.blend("#ffffff", parentBorder, 0.3));
+                        didSetStroke = true;
+                    }
+                }
+                else {
+                    const parentColor = parent.style.colourPrimary;
+                    const childColor = block.style.colourPrimary;
+
+                    // If the parent and child block are the same color, either lighten or darken
+                    // the color to help it contrast better
+                    if (parentColor === childColor) {
+                        const blendFactor = 0.6;
+                        const darkerBorder = Blockly.utils.colour.blend("#0000000", childColor, blendFactor);
+                        const lighterBorder = Blockly.utils.colour.blend("#ffffff", childColor, blendFactor);
+
+                        if (pxt.contrastRatio(darkerBorder, parentColor) > pxt.contrastRatio(lighterBorder, parentColor)) {
+                            this.svgPath.setAttribute('stroke', darkerBorder);
+                        }
+                        else {
+                            this.svgPath.setAttribute('stroke', lighterBorder);
+                        }
+                        didSetStroke = true;
+                    }
+                }
+            }
+
+            if (!didSetStroke) {
+                this.svgPath.setAttribute('stroke', block.style.colourTertiary);
+            }
+        }
+    }
+
+    setHasDottedOutlineOnHover(enabled: boolean) {
         this.hasDottedOutlineOnHover = enabled;
 
         if (enabled) {
@@ -125,6 +172,10 @@ export class PathObject extends Blockly.zelos.PathObject {
             this.updateHighlighted(true);
         }
     }
+}
+
+function calculateLuminance(rgb: number[]) {
+    return ((0.2126 * rgb[0]) + (0.7152 * rgb[1]) + (0.0722 * rgb[2])) / 255;
 }
 
 Blockly.Css.register(`

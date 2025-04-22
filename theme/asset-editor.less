@@ -8,7 +8,7 @@
 .asset-editor-sidebar {
     width: @blocklyRowWidthWide;
     height: 100%;
-    border-right: 1px solid @assetSidebarBorder;
+    border-right: 1px solid var(--pxt-neutral-stencil1);
     overflow-y: auto;
     z-index: 1;
 }
@@ -29,7 +29,7 @@
     display: flex;
     padding: 0.25rem 0.5rem;
     border-radius: 0.25rem;
-    background-color: @assetUnselected;
+    background-color: var(--pxt-neutral-alpha10);
 
     i {
         width: 1.5rem;
@@ -42,10 +42,10 @@
     width: ~"calc(@{blocklyRowWidthWide} - 2rem)";
     height: ~"calc(@{blocklyRowWidthWide} - 2rem)";
     margin: 0.5rem 0;
-    background-color: @assetUnselected;
+    background-color: var(--pxt-neutral-alpha10);
 
     .asset-editor-preview {
-        border: 2px solid @black;
+        border: 2px solid var(--pxt-target-foreground1);
     }
 }
 
@@ -66,26 +66,26 @@
     width: 100%;
     display: flex;
     flex-direction: row;
-    border-bottom: 1px solid @assetTopbarBorder;
+    border-bottom: 1px solid var(--pxt-neutral-stencil1);
 }
 
 .asset-editor-gallery-tab {
     height: 3rem;
-    background-color: @assetUnselected;
-    color: @grey;
+    background-color: var(--pxt-neutral-alpha10);
+    color: var(--pxt-neutral-foreground1);
     padding: .7em 2em .85em;
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
-    border-color: @assetTopbarBorder;
+    border-color: var(--pxt-neutral-stencil1);
     border-style: solid;
     border-width: 0 1px 1px 0;
 }
 
 .asset-editor-gallery-tab.selected {
     background-color: transparent;
-    border-bottom-color: @blocklySvgColor;
-    color: @black;
+    border-bottom-color: var(--pxt-target-background1);
+    color: var(--pxt-target-foreground1);
 }
 .asset-editor-card-list {
     width: 100%;
@@ -107,8 +107,8 @@
     margin: 1rem 0 0 1rem;
     cursor: pointer;
 
-    border: solid 1px @black;
-    background: @white;
+    border: solid 1px var(--pxt-target-foreground1);
+    background: var(--pxt-neutral-background1);
 }
 
 .asset-editor-card.selected {
@@ -116,8 +116,7 @@
 }
 
 .asset-editor-card.empty-card {
-    background-color: #000000;
-    opacity: 0.05;
+    background-color: var(--pxt-neutral-alpha10);
     border: none;
 }
 
@@ -133,7 +132,8 @@
     width: 2rem;
     line-height: 2rem;
     text-align: center;
-    background: @white;
+    background: var(--pxt-neutral-background1);
+    color: var(--pxt-neutral-foreground1);
     margin-right: 0.25rem;
 
     i { margin: 0; }
@@ -169,12 +169,12 @@
 
 .asset-editor-button {
     flex: 1;
-    box-shadow: inset 0 0 0 1px rgba(34,36,38,.15), inset 0 -0.3em 0 0 rgba(34,36,38,.15);
+    box-shadow: inset 0 0 0 1px var(--pxt-neutral-alpha20), inset 0 -0.3em 0 0 var(--pxt-neutral-alpha20);
 }
 
 .create-new.common-button {
-    color: @white;
-    background-color: @green;
+    color: var(--pxt-colors-green-foreground);
+    background-color: var(--pxt-colors-green-background);
     font-weight: 700;
     display: flex;
     flex-direction: column;
@@ -187,13 +187,14 @@
     }
 }
 .create-new:hover {
-    background-color: darken(@green, 10%);
+    background-color: var(--pxt-colors-green-hover);
+    color: var(--pxt-colors-green-foreground);
 }
 
 .create-new.disabled,
 .create-new.disabled:hover {
     cursor: not-allowed;
-    background-color: @assetUnselected;
+    background-color: var(--pxt-neutral-alpha10);
 }
 
 .asset-editor-create-options {
@@ -211,13 +212,14 @@
     height: 10rem;
     width: 10rem;
     margin-bottom: 1rem;
-    color: @white;
+    color: var(--pxt-secondary-foreground);
     font-weight: 700;
-    background-color: @assetTypeButton;
+    background-color: var(--pxt-secondary-background);
     cursor: pointer;
 
     &:hover {
-        background-color: darken(@assetTypeButton, 5%);
+        background-color: var(--pxt-secondary-background-hover);
+        color: var(--pxt-secondary-foreground-hover);
     }
 
     i.icon {
@@ -253,7 +255,7 @@ i.fa-palette {
     &.disabled {
         background: none;
         border: none;
-        color: @grey;
+        color: var(--pxt-neutral-background3);
     }
 }
 
@@ -267,7 +269,7 @@ i.fa-palette {
         &.disabled {
             background: none;
             border: none;
-            color: @grey;
+            color: var(--pxt-neutral-background3);
             &:focus::after {
                 outline: none;
             }
@@ -295,10 +297,10 @@ i.fa-palette {
 
 .palette-apply-button.common-button.disabled.green,
 .palette-done-button.common-button.disabled.teal {
-    background-color: @grey;
-    color: @white;
+    background-color: var(--pxt-neutral-background3);
+    color: var(--pxt-neutral-foreground3);
 }
 
 .invalid-palette-name {
-    color: @red;
+    color: var(--pxt-colors-red-background);
 }

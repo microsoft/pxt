@@ -15,49 +15,96 @@ export function patchBlocksFromOldWorkspace(blockInfo: ts.pxtc.BlocksInfo, oldWs
     const newWs = loadWorkspaceXml(newXml, true);
     // position blocks
     alignBlocks(blockInfo, oldWs, newWs);
-    // inject disabled blocks
-    return injectDisabledBlocks(oldWs, newWs);
-}
 
-function injectDisabledBlocks(oldWs: Blockly.Workspace, newWs: Blockly.Workspace): string {
+    // inject disabled blocks
     const oldDom = workspaceToDom(oldWs, true);
     const newDom = workspaceToDom(newWs, true);
-    pxt.Util.toArray(oldDom.childNodes)
-        .filter((n: ChildNode) => n.nodeType == Node.ELEMENT_NODE && (n as Element).localName == "block" && (<Element>n).getAttribute("disabled") == "true")
-        .filter((n: Element) => !!Blockly.Blocks[n.getAttribute("type")])
-        .forEach(n => newDom.appendChild(newDom.ownerDocument.importNode(n, true)));
-    const updatedXml = Blockly.Xml.domToText(newDom);
-    return updatedXml;
+
+    for (const child of oldDom.childNodes) {
+        if (
+            !pxt.BrowserUtils.isElement(child) ||
+            child.localName !== "block" ||
+            child.getAttribute("disabled") !== "true"
+        ) {
+            continue;
+        }
+
+        newDom.appendChild(newDom.ownerDocument.importNode(child, true));
+    }
+
+    return Blockly.Xml.domToText(newDom);
 }
 
-function alignBlocks(blockInfo: ts.pxtc.BlocksInfo, oldWs: Blockly.Workspace, newWs: Blockly.Workspace) {
+function alignBlocks(blockInfo: ts.pxtc.BlocksInfo, oldWs: Blockly.Workspace, newWs: Blockly.Workspace): void {
     let env: Environment;
-    let newBlocks: pxt.Map<Blockly.Block[]>; // support for multiple events with similar name
-    oldWs.getTopBlocks(false).filter(ob => ob.isEnabled())
-        .forEach(ob => {
-            const otp = ob.getRelativeToSurfaceXY();
-            if (otp && otp.x != 0 && otp.y != 0) {
-                if (!env) {
-                    env = mkEnv(oldWs, blockInfo);
-                    newBlocks = {};
-                    newWs.getTopBlocks(false).forEach(b => {
-                        const nkey = callKey(env, b);
-                        const nbs = newBlocks[nkey] || [];
-                        nbs.push(b);
-                        newBlocks[nkey] = nbs;
-                    });
-                }
-                const oldKey = callKey(env, ob);
-                const newBlock = (newBlocks[oldKey] || []).shift();
+    let keyToBlocks: pxt.Map<Blockly.Block[]>; // support for multiple events with similar name
+    const oldTopBlocks = oldWs.getTopBlocks(false).filter(ob => ob.isEnabled());
+    const newTopBlocks = newWs.getTopBlocks(false);
 
-                // FIXME: I don't think we're really supposed to edit the block coordinate this way
-                if (newBlock) {
-                    const coord = newBlock.getRelativeToSurfaceXY();
-                    coord.x = otp.x;
-                    coord.y = otp.y;
-                }
+    let textToComments: pxt.Map<Blockly.comments.WorkspaceComment[]>;
+    const oldComments = oldWs.getTopComments(false);
+    const newComments = newWs.getTopComments(false);
+
+    for (const oldBlock of oldTopBlocks) {
+        const oldPosition = oldBlock.getRelativeToSurfaceXY();
+        if (!(oldPosition && oldPosition.x != 0 && oldPosition.y != 0)) continue;
+
+        if (!env) {
+            env = mkEnv(oldWs, blockInfo);
+            keyToBlocks = {};
+            for (const newBlock of newTopBlocks) {
+                const newBlockKey = callKey(env, newBlock);
+                const keyBlockList = keyToBlocks[newBlockKey] || [];
+                keyBlockList.push(newBlock);
+                keyToBlocks[newBlockKey] = keyBlockList;
             }
-        })
+        }
+        const oldBlockKey = callKey(env, oldBlock);
+        const newBlock = (keyToBlocks[oldBlockKey] || []).shift();
+
+        // FIXME: I don't think we're really supposed to edit the block coordinate this way
+        if (newBlock) {
+            const coord = newBlock.getRelativeToSurfaceXY();
+            coord.x = oldPosition.x;
+            coord.y = oldPosition.y;
+        }
+    }
+
+    for (const oldComment of oldComments) {
+        const oldPosition = oldComment.getRelativeToSurfaceXY();
+
+        if (!(oldPosition && oldPosition.x != 0 && oldPosition.y != 0)) continue;
+
+        if (!textToComments) {
+            textToComments = {};
+            for (const newComment of newComments) {
+                const text = normalizeCommentText(newComment.getText());
+                const keyCommentList = textToComments[text] || [];
+                keyCommentList.push(newComment);
+                textToComments[text] = keyCommentList;
+            }
+        }
+
+        const text = normalizeCommentText(oldComment.getText());
+        const newComment = (textToComments[text] || []).shift();
+
+        if (newComment) {
+            const oldSize = oldComment.getSize();
+            // Restore the old comment text because sometimes the compile/decompile loop
+            // can alter the whitespace a bit
+            newComment.setText(oldComment.getText());
+            newComment.setSize(oldSize);
+
+            const coord = newComment.getRelativeToSurfaceXY();
+            coord.x = oldPosition.x;
+            coord.y = oldPosition.y;
+        }
+    }
+}
+
+function normalizeCommentText(text: string) {
+    text = text.replace(/\n/g, "");
+    return text.trim();
 }
 
 declare function unescape(escapeUri: string): string;
@@ -67,7 +114,7 @@ declare function unescape(escapeUri: string): string;
  * of blocks / comments to get as getTopBlock(true)/getTopComment(true)
  */
 export function splitSvg(svg: SVGSVGElement, ws: Blockly.WorkspaceSvg, emPixels: number = 18): Element {
-    const comments = ws.getTopComments(true) as Blockly.WorkspaceCommentSvg[];
+    const comments = ws.getTopComments(true) as Blockly.comments.RenderedWorkspaceComment[];
     const blocks = ws.getTopBlocks(true) as Blockly.BlockSvg[];
     // don't split for a single block
     if (comments.length + blocks.length < 2)
@@ -82,6 +129,7 @@ export function splitSvg(svg: SVGSVGElement, ws: Blockly.WorkspaceSvg, emPixels:
         blocki: number,
         size: { height: number, width: number },
         translate: { x: number, y: number },
+        ariaLabel?: string,
         itemClass?: string
     ) {
         const svgclone = svg.cloneNode(true) as SVGSVGElement;
@@ -112,11 +160,12 @@ export function splitSvg(svg: SVGSVGElement, ws: Blockly.WorkspaceSvg, emPixels:
         svgclone.style.height = height;
         svgclone.setAttribute("width", width);
         svgclone.setAttribute("height", height);
+        svgclone.setAttribute("aria-label", ariaLabel)
         div.appendChild(svgclone);
     }
 
     comments.forEach((comment, commenti) => extract('blocklyBubbleCanvas', 'blocklyBlockCanvas',
-        commenti, comment.getHeightWidth(), { x: 0, y: 0 }, "blocklyComment"));
+        commenti, comment.getSize(), { x: 0, y: 0 }, lf("blockly comment"), "blocklyComment"));
     blocks.forEach((block, blocki) => {
         const size = block.getHeightWidth();
         const translate = { x: 0, y: 0 };
@@ -124,18 +173,20 @@ export function splitSvg(svg: SVGSVGElement, ws: Blockly.WorkspaceSvg, emPixels:
             size.height += emPixels;
             translate.y += emPixels;
         }
+        // use the block string for the most descriptive aria-label
+        const label = block.toString();
         extract('blocklyBlockCanvas', 'blocklyBubbleCanvas',
-            blocki, size, translate)
+            blocki, size, translate, `${label} blocks`)
     });
     return div;
 }
 
 export function verticalAlign(ws: Blockly.WorkspaceSvg, emPixels: number) {
     let y = 0
-    let comments = ws.getTopComments(true) as Blockly.WorkspaceCommentSvg[];
+    let comments = ws.getTopComments(true) as Blockly.comments.RenderedWorkspaceComment[];
     comments.forEach(comment => {
         comment.moveBy(0, y)
-        y += comment.getHeightWidth().height
+        y += comment.getSize().height
         y += emPixels; //buffer
     })
     let blocks = ws.getTopBlocks(true) as Blockly.BlockSvg[];
@@ -165,21 +216,21 @@ export function flow(ws: Blockly.WorkspaceSvg, opts?: FlowOptions) {
 
             // Only use the width if in portrait, otherwise the blocks are too spread out
             if (metrics.viewHeight > metrics.viewWidth) {
-                flowBlocks(ws.getTopComments(true) as Blockly.WorkspaceCommentSvg[], ws.getTopBlocks(true) as Blockly.BlockSvg[], undefined, metrics.viewWidth)
+                flowBlocks(ws.getTopComments(true) as Blockly.comments.RenderedWorkspaceComment[], ws.getTopBlocks(true) as Blockly.BlockSvg[], undefined, metrics.viewWidth)
                 ws.scroll(marginx, marginy);
                 return;
             }
         }
-        flowBlocks(ws.getTopComments(true) as Blockly.WorkspaceCommentSvg[], ws.getTopBlocks(true) as Blockly.BlockSvg[], opts.ratio);
+        flowBlocks(ws.getTopComments(true) as Blockly.comments.RenderedWorkspaceComment[], ws.getTopBlocks(true) as Blockly.BlockSvg[], opts.ratio);
     }
     else {
-        flowBlocks(ws.getTopComments(true) as Blockly.WorkspaceCommentSvg[], ws.getTopBlocks(true) as Blockly.BlockSvg[]);
+        flowBlocks(ws.getTopComments(true) as Blockly.comments.RenderedWorkspaceComment[], ws.getTopBlocks(true) as Blockly.BlockSvg[]);
     }
     ws.scroll(marginx, marginy);
 }
 
 export function screenshotEnabled(): boolean {
-    return !pxt.BrowserUtils.isIE()
+    return pxt.BrowserUtils.hasFileAccess() && !pxt.BrowserUtils.isIE();
 }
 
 export function screenshotAsync(ws: Blockly.WorkspaceSvg, pixelDensity?: number, encodeBlocks?: boolean): Promise<string> {
@@ -271,7 +322,7 @@ export function cleanUpBlocklySvg(svg: SVGElement): SVGElement {
 
     // In order to get the Blockly comment's text area to serialize properly they have to have names
     const parser = new DOMParser();
-    pxt.U.toArray(svg.querySelectorAll('.blocklyCommentTextarea'))
+    pxt.U.toArray(svg.querySelectorAll('.blocklyTextarea'))
         .forEach(el => {
             const dom = parser.parseFromString(
                 '<!doctype html><body>' + pxt.docs.html2Quote((el as any).value),
@@ -282,9 +333,9 @@ export function cleanUpBlocklySvg(svg: SVGElement): SVGElement {
     return svg;
 }
 
-export function blocklyToSvgAsync(sg: SVGElement, x: number, y: number, width: number, height: number, scale?: number): Promise<BlockSvg> {
+export async function blocklyToSvgAsync(sg: SVGElement, x: number, y: number, width: number, height: number, scale?: number): Promise<BlockSvg> {
     if (!sg.childNodes[0])
-        return Promise.resolve<BlockSvg>(undefined);
+        return undefined;
 
     sg.removeAttribute("width");
     sg.removeAttribute("height");
@@ -296,7 +347,7 @@ export function blocklyToSvgAsync(sg: SVGElement, x: number, y: number, width: n
     const xmlString = serializeNode(sg)
         .replace(/^\s*<svg[^>]+>/i, '')
         .replace(/<\/svg>\s*$/i, '') // strip out svg tag
-    const svgXml = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="${XLINK_NAMESPACE}" width="${renderWidth}" height="${renderHeight}" viewBox="${x} ${y} ${width} ${height}" class="pxt-renderer classic-theme">${xmlString}</svg>`;
+    const svgXml = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="${XLINK_NAMESPACE}" width="${renderWidth}" height="${renderHeight}" viewBox="${x} ${y} ${width} ${height}" class="pxt-renderer classic-theme injectionDiv">${xmlString}</svg>`;
     const xsg = new DOMParser().parseFromString(svgXml, "image/svg+xml");
 
     const cssLink = xsg.createElementNS("http://www.w3.org/1999/xhtml", "style");
@@ -304,30 +355,29 @@ export function blocklyToSvgAsync(sg: SVGElement, x: number, y: number, width: n
     const customCssHref = (document.getElementById(`style-${isRtl ? 'rtl' : ''}blockly.css`) as HTMLLinkElement).href;
     const semanticCssHref = pxt.Util.toArray(document.head.getElementsByTagName("link"))
         .filter(l => pxt.Util.endsWith(l.getAttribute("href"), "semantic.css"))[0].href;
-    return Promise.all([pxt.BrowserUtils.loadAjaxAsync(customCssHref), pxt.BrowserUtils.loadAjaxAsync(semanticCssHref)])
-        .then((customCss) => {
-            const blocklySvg = pxt.Util.toArray(document.head.querySelectorAll("style"))
-                .filter((el: HTMLStyleElement) => /\.blocklySvg/.test(el.innerText))[0] as HTMLStyleElement;
-            // Custom CSS injected directly into the DOM by Blockly
-            customCss.unshift((document.getElementById(`blockly-common-style`) as HTMLLinkElement)?.innerText || "");
-            customCss.unshift((document.getElementById(`blockly-renderer-style-pxt-classic`) as HTMLLinkElement)?.innerText || "");
-            // CSS may contain <, > which need to be stored in CDATA section
-            const cssString = (blocklySvg ? blocklySvg.innerText : "") + '\n\n' + customCss.map(el => el + '\n\n');
-            cssLink.appendChild(xsg.createCDATASection(cssString));
-            xsg.documentElement.insertBefore(cssLink, xsg.documentElement.firstElementChild);
 
-            return expandImagesAsync(xsg)
-                .then(() => convertIconsToPngAsync(xsg))
-                .then(() => {
-                    return <BlockSvg>{
-                        width: renderWidth,
-                        height: renderHeight,
-                        svg: serializeNode(xsg).replace('<style xmlns="http://www.w3.org/1999/xhtml">', '<style>'),
-                        xml: documentToSvg(xsg),
-                        css: cssString
-                    };
-                });
-        })
+    const customCss = await Promise.all([pxt.BrowserUtils.loadAjaxAsync(customCssHref), pxt.BrowserUtils.loadAjaxAsync(semanticCssHref)]);
+
+    const blocklySvg = pxt.Util.toArray(document.head.querySelectorAll("style"))
+        .filter((el: HTMLStyleElement) => /\.blocklySvg/.test(el.innerText))[0] as HTMLStyleElement;
+    // Custom CSS injected directly into the DOM by Blockly
+    customCss.unshift((document.getElementById(`blockly-common-style`) as HTMLLinkElement)?.innerText || "");
+    customCss.unshift((document.getElementById(`blockly-renderer-style-pxt-classic`) as HTMLLinkElement)?.innerText || "");
+    // CSS may contain <, > which need to be stored in CDATA section
+    const cssString = (blocklySvg ? blocklySvg.innerText : "") + '\n\n' + customCss.map(el => el + '\n\n');
+    cssLink.appendChild(xsg.createCDATASection(cssString));
+    xsg.documentElement.insertBefore(cssLink, xsg.documentElement.firstElementChild);
+
+    await expandImagesAsync(xsg);
+    await convertIconsToPngAsync(xsg);
+
+    return <BlockSvg>{
+        width: renderWidth,
+        height: renderHeight,
+        svg: serializeNode(xsg).replace('<style xmlns="http://www.w3.org/1999/xhtml">', '<style>'),
+        xml: documentToSvg(xsg),
+        css: cssString
+    };
 }
 
 export function documentToSvg(xsg: Node): string {
@@ -337,69 +387,100 @@ export function documentToSvg(xsg: Node): string {
 }
 
 let imageXLinkCache: pxt.Map<string>;
-function expandImagesAsync(xsg: Document): Promise<void> {
+async function expandImagesAsync(xsg: Document): Promise<void> {
     if (!imageXLinkCache) imageXLinkCache = {};
 
-    const images = xsg.getElementsByTagName("image")
-    const p = pxt.Util.toArray(images)
+    const images = pxt.Util.toArray(xsg.getElementsByTagName("image"))
+    const xlinkedImages = images
         .filter(image => {
             const href = image.getAttributeNS(XLINK_NAMESPACE, "href");
             return href && !/^data:/.test(href);
-        })
-        .map(img => img as unknown as HTMLImageElement)
-        .map((image: HTMLImageElement) => {
-            const href = image.getAttributeNS(XLINK_NAMESPACE, "href");
-            let dataUri = imageXLinkCache[href];
-            return (dataUri ? Promise.resolve(imageXLinkCache[href])
-                : pxt.BrowserUtils.loadImageAsync(image.getAttributeNS(XLINK_NAMESPACE, "href"))
-                    .then((img: HTMLImageElement) => {
-                        const cvs = document.createElement("canvas") as HTMLCanvasElement;
-                        const ctx = cvs.getContext("2d");
-                        let w = img.width
-                        let h = img.height
-                        cvs.width = w;
-                        cvs.height = h;
-                        ctx.drawImage(img, 0, 0, w, h, 0, 0, cvs.width, cvs.height);
-                        imageXLinkCache[href] = dataUri = cvs.toDataURL("image/png");
-                        return dataUri;
-                    }).catch(e => {
-                        // ignore load error
-                        pxt.debug(`svg render: failed to load ${href}`);
-                        return "";
-                    }))
-                .then(href => { image.setAttributeNS(XLINK_NAMESPACE, "href", href); })
         });
-    return Promise.all(p).then(() => { })
+
+    for (const image of xlinkedImages) {
+        const href = image.getAttributeNS(XLINK_NAMESPACE, "href");
+        let dataUri = imageXLinkCache[href];
+
+        if (!dataUri) {
+            try {
+                const img = await pxt.BrowserUtils.loadImageAsync(image.getAttributeNS(XLINK_NAMESPACE, "href"));
+                const cvs = document.createElement("canvas") as HTMLCanvasElement;
+                const ctx = cvs.getContext("2d");
+                let w = img.width
+                let h = img.height
+                cvs.width = w;
+                cvs.height = h;
+                ctx.drawImage(img, 0, 0, w, h, 0, 0, cvs.width, cvs.height);
+                dataUri = cvs.toDataURL("image/png");
+                imageXLinkCache[href] = dataUri;
+            }
+            catch (e) {
+                // ignore load error
+                pxt.debug(`svg render: failed to load ${href}`);
+                dataUri = "";
+            }
+        }
+        image.setAttributeNS(XLINK_NAMESPACE, "href", href);
+    }
+
+    const linkedSvgImages = images
+        .filter(image => /^\/.*.svg$/.test(image.getAttribute("href")));
+
+    for (const image of linkedSvgImages) {
+        const svgUri = image.getAttribute("href");
+
+        // Don't love hard coding these icon values, but the comment icons set their
+        // width/height using CSS so there isn't a great means of detecting it
+        let width = 24;
+        let height = 24;
+        if (image.hasAttribute("width") && image.hasAttribute("height")) {
+            width = parseInt(image.getAttribute("width").replace(/[^0-9]/g, ""));
+            height = parseInt(image.getAttribute("height").replace(/[^0-9]/g, ""));
+        }
+        else if (image.classList.contains("blocklyResizeHandle")) {
+            width = 12;
+            height = 12;
+        }
+
+        let href = imageXLinkCache[svgUri];
+        if (!href) {
+            href = await pxt.BrowserUtils.encodeToPngAsync(svgUri, { width, height, pixelDensity: 2 });
+        }
+
+        imageXLinkCache[svgUri] = href;
+        image.setAttribute("href", href);
+    }
 }
 
 let imageIconCache: pxt.Map<string>;
-function convertIconsToPngAsync(xsg: Document): Promise<void> {
+async function convertIconsToPngAsync(xsg: Document): Promise<void> {
     if (!imageIconCache) imageIconCache = {};
 
-    if (!pxt.BrowserUtils.isEdge()) return Promise.resolve();
+    if (!pxt.BrowserUtils.isEdge()) {
+        return;
+    }
 
-    const images = xsg.getElementsByTagName("image")
-    const p = pxt.Util.toArray(images)
-        .filter(image => /^data:image\/svg\+xml/.test(image.getAttributeNS(XLINK_NAMESPACE, "href")))
-        .map(img => img as unknown as HTMLImageElement)
-        .map((image: HTMLImageElement) => {
-            const svgUri = image.getAttributeNS(XLINK_NAMESPACE, "href");
-            const width = parseInt(image.getAttribute("width").replace(/[^0-9]/g, ""));
-            const height = parseInt(image.getAttribute("height").replace(/[^0-9]/g, ""));
-            let pngUri = imageIconCache[svgUri];
+    const images = pxt.Util.toArray(xsg.getElementsByTagName("image"))
+        .filter(image => /^data:image\/svg\+xml/.test(image.getAttributeNS(XLINK_NAMESPACE, "href")));
 
-            return (pngUri ? Promise.resolve(pngUri)
-                : pxt.BrowserUtils.encodeToPngAsync(svgUri, { width, height, pixelDensity: 2 }))
-                .then(href => {
-                    imageIconCache[svgUri] = href;
-                    image.setAttributeNS(XLINK_NAMESPACE, "href", href);
-                })
-        });
-    return Promise.all(p).then(() => { })
+    for (const image of images) {
+        const svgUri = image.getAttributeNS(XLINK_NAMESPACE, "href");
+        const width = parseInt(image.getAttribute("width").replace(/[^0-9]/g, ""));
+        const height = parseInt(image.getAttribute("height").replace(/[^0-9]/g, ""));
+
+        let href = imageIconCache[svgUri];
+        if (!href) {
+            href = await pxt.BrowserUtils.encodeToPngAsync(svgUri, { width, height, pixelDensity: 2 });
+            pxt.log(`HREF: ${href}`);
+        }
+
+        imageIconCache[svgUri] = href;
+        image.setAttributeNS(XLINK_NAMESPACE, "href", href);
+    }
 }
 
 interface Formattable {
-    value: Blockly.BlockSvg | Blockly.WorkspaceCommentSvg;
+    value: Blockly.BlockSvg | Blockly.comments.RenderedWorkspaceComment;
     children?: Formattable[];
     width: number;
     height: number;
@@ -409,7 +490,7 @@ interface Formattable {
     y?: number;
 }
 
-function flowBlocks(comments: Blockly.WorkspaceCommentSvg[], blocks: Blockly.BlockSvg[], ratio: number = 1.62, maxWidth?: number) {
+function flowBlocks(comments: Blockly.comments.RenderedWorkspaceComment[], blocks: Blockly.BlockSvg[], ratio: number = 1.62, maxWidth?: number) {
     // Margin between blocks and their comments
     const innerGroupMargin = 13;
 
@@ -417,7 +498,7 @@ function flowBlocks(comments: Blockly.WorkspaceCommentSvg[], blocks: Blockly.Blo
     const outerGroupMargin = 45;
 
     const groups: Formattable[] = [];
-    const commentMap: pxt.Map<Blockly.WorkspaceCommentSvg> = {};
+    const commentMap: pxt.Map<Blockly.comments.RenderedWorkspaceComment> = {};
 
     comments.forEach(comment => {
         const ref: string = (comment as any).data;
@@ -562,7 +643,7 @@ function flowBlocks(comments: Blockly.WorkspaceCommentSvg[], blocks: Blockly.Blo
     }
 }
 
-function formattable(entity: Blockly.BlockSvg | Blockly.WorkspaceCommentSvg): Formattable {
-    const hw = entity.getHeightWidth();
+function formattable(entity: Blockly.BlockSvg | Blockly.comments.RenderedWorkspaceComment): Formattable {
+    const hw = entity instanceof Blockly.BlockSvg ? entity.getHeightWidth() : entity.getSize();
     return { value: entity, height: hw.height, width: hw.width }
 }

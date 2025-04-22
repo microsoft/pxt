@@ -2,20 +2,18 @@
 @tutorialFontSize: 1.125rem;
 @tutorialTitleFontSize: 1.5rem;
 
-@tutorialPrimaryColor: @sidebarPrimaryColor;
-@tutorialSecondaryColor: @sidebarSecondaryColor;
+@tutorialPrimaryColor: var(--pxt-colors-blue-background);
+@tutorialSecondaryColor: var(--pxt-colors-blue-background);
 @tutorialBarForegroundColor: @tutorialPrimaryColor;
 @tutorialBarBackgroundColor: @tutorialSecondaryColor;
-@tutorialGrayOffset: #CECDCE;
-@tutorialDarkGray: #767676;
 
-@tutorialLinkColor: #0064BF;
-@tutorialLinkHoverColor: #003C94;
-@tutorialHintForegroundColor: #1A6771;
-@tutorialHintBackgroundColor: #CEFFF5;
+@tutorialLinkColor: var(--pxt-link);
+@tutorialLinkHoverColor: var(--pxt-link-hover);
+@tutorialHintForegroundColor: var(--pxt-colors-teal-background);
+@tutorialHintBackgroundColor: var(--pxt-colors-teal-alpha10);
 
-@tutorialTabletButtonColor: #f3f3f3;
-@tutorialTabletSimulatorButtonColor: rgba(0, 0, 0, 0.05);
+@tutorialTabletButtonColor: var(--pxt-neutral-background2);
+@tutorialTabletSimulatorButtonColor: var(--pxt-neutral-alpha10);
 @tutorialTabletStepCounterWidth: 16rem;
 
 @tutorialHintMaskZIndex: -1; // Below tutorial pane
@@ -30,15 +28,18 @@
 *******************************/
 
 #simulator .editor-sidebar .tutorial-container-outer.active {
-    background-color: @white;
+    background-color: var(--pxt-neutral-background1);
+    color: var(--pxt-neutral-foreground1);
 }
 
 .tutorial-container-outer {
-    background-color: @white !important;
+    background-color: var(--pxt-neutral-background1) !important;
+    color: var(--pxt-neutral-foreground1)!important;
 }
 
 .tutorial-content-bkg {
-    background-color: @white;
+    background-color: var(--pxt-neutral-background1);
+    color: var(--pxt-neutral-foreground1);
     padding: 0.5rem 1rem;
 }
 
@@ -72,6 +73,8 @@
 
     .lang-block .ui.segment.raised, .lang-blocks .ui.segment.raised, .ui.segment.raised.codewidget {
         overflow-x: auto;
+        background: var(--pxt-neutral-background2);
+        color: var(--pxt-neutral-foreground2);
 
         code, code.hljs {
             white-space: pre;
@@ -85,7 +88,7 @@
     width: calc(~'100% - 1rem');
     bottom: 0rem;
     pointer-events: none;
-    background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0), @white);
+    background-image: linear-gradient(to bottom, var(--pxt-neutral-alpha0), var(--pxt-neutral-background1));
 }
 
 .tutorial-replace-code + .tutorial-scroll-gradient {
@@ -101,7 +104,7 @@
 }
 
 .tutorial-controls {
-    border-top: 2px solid @tutorialGrayOffset;
+    border-top: 2px solid var(--pxt-neutral-alpha50);
     margin-top: 1rem;
 }
 
@@ -159,8 +162,8 @@
 
 .tutorial-step-counter {
     padding: 0.5rem 1rem;
-    border-bottom: 2px solid @tutorialGrayOffset;
-    background: @white;
+    border-bottom: 2px solid var(--pxt-neutral-stencil1);
+    background: var(--pxt-neutral-background1);
 }
 
 .tutorial-step-label {
@@ -168,7 +171,7 @@
     user-select: none;
     cursor: default;
     font-size: 1rem;
-    color: @tutorialDarkGray;
+    color: var(--pxt-neutral-foreground1);
 }
 
 .tutorial-step-title {
@@ -194,18 +197,21 @@
         width: 1rem;
         height: 1rem;
         // buttons before selected step
-        background: darken(@tutorialSecondaryColor, 10%);
+        background: var(--pxt-colors-blue-background);
+        opacity: 0.6;
 
         &.current {
-            color: white;
-            background: @tutorialPrimaryColor;
+            opacity: 1;
+            color: var(--pxt-colors-blue-foreground);
+            background: var(--pxt-colors-blue-background);
             width: 2rem;
             height: 2rem;
             user-select: none;
 
             ~ .circle-button {
                 // buttons after selected step
-                background: @tutorialGrayOffset;
+                background: var(--pxt-neutral-alpha50);
+                opacity: 1;
             }
         }
     }
@@ -259,8 +265,8 @@
     }
 
     .ui.button:hover, .ui.button:focus {
-        background: darken(@tutorialPrimaryColor, 5%);
-        color: @white;
+        background: var(--pxt-colors-blue-hover);
+        color: var(--pxt-colors-blue-foreground);
     }
 }
 
@@ -496,7 +502,7 @@
 }
 
 /*******************************
-      Skill Map Embed View
+      Skillmap Embed View
 *******************************/
 
 .tabTutorial.tutorial-embed {
@@ -571,7 +577,7 @@
 .tabTutorial {
     .immersive-reader-button.ui.item {
         float: right;
-        border: 2px solid @tutorialGrayOffset;
+        border: 2px solid var(--pxt-neutral-stencil1);
         margin-left: 1.5rem;
     }
 }
@@ -588,7 +594,8 @@
     max-width: 60%;
     min-width: 18.75rem;
     max-height: 70%;
-    background: @white;
+    background: var(--pxt-neutral-background1);
+    color: var(--pxt-neutral-foreground1);
     box-shadow: 0 0rem 0.5rem;
     border-radius: 0.5rem;
     z-index: 40;
@@ -771,7 +778,7 @@
                 margin-left: 0;
             }
         }
-        
+
         .counter-previous-button .icon {
             margin: 0;
         }
@@ -993,7 +1000,7 @@
 /* Desktop Only */
 @media only screen and (min-width: @largestTabletScreen) {
     #root.tabTutorial:not(.fullscreensim, .greenscreen) {
-        #simulator .editor-sidebar:not(.topInstructions) {
+        #simulator .editor-sidebar:not(.topInstructions):not(.tutorial-sim) {
             bottom: 0;
         }
 
@@ -1018,7 +1025,7 @@
             padding-top: 1rem;
         }
     }
-    
+
     /* Short Desktop Only */
     @media (max-height: @tallEditorBreakpoint) {
         #root.tabTutorial:not(.fullscreensim) {
@@ -1045,7 +1052,7 @@
 
     .topInstructionsWrapper {
         .topInstructionsSettings();
-        
+
         .tutorial-callout {
             right: unset;
             top: unset;

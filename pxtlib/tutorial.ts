@@ -13,6 +13,7 @@ namespace pxt.tutorial {
         const {
             code,
             templateCode,
+            templateLanguage,
             editor,
             language,
             jres,
@@ -20,6 +21,12 @@ namespace pxt.tutorial {
             customTs,
             simThemeJson
         } = computeBodyMetadata(body);
+
+        // For python HOC, hide the toolbox (we don't support flyoutOnly mode).
+        if (pxt.BrowserUtils.useOldTutorialLayout() && language === "python" && metadata.flyoutOnly) {
+            metadata.flyoutOnly = false;
+            metadata.hideToolbox = true;
+        }
 
         // noDiffs legacy
         if (metadata.diffs === true // enabled in tutorial
@@ -51,6 +58,7 @@ namespace pxt.tutorial {
             activities,
             code,
             templateCode,
+            templateLanguage,
             metadata,
             language,
             jres,
@@ -63,7 +71,7 @@ namespace pxt.tutorial {
     }
 
     export function getMetadataRegex(): RegExp {
-        return /``` *(sim|block|blocks|filterblocks|spy|ghost|typescript|ts|js|javascript|template|python|jres|assetjson|customts|simtheme)\s*\n([\s\S]*?)\n```/gmi;
+        return /``` *(sim|block|blocks|filterblocks|spy|ghost|typescript|ts|js|javascript|template|python|jres|assetjson|customts|simtheme|python-template|ts-template|typescript-template|js-template|javascript-template)\s*\n([\s\S]*?)\n```/gmi;
     }
 
     function computeBodyMetadata(body: string) {
@@ -74,6 +82,7 @@ namespace pxt.tutorial {
         let jres: string;
         let code: string[] = [];
         let templateCode: string;
+        let templateLanguage: string;
         let language: string;
         let idx = 0;
         let assetJson: string;
@@ -109,6 +118,22 @@ namespace pxt.tutorial {
                     case "template":
                         templateCode = m2;
                         break;
+                    case "python-template":
+                        if (!checkTutorialEditor(pxt.PYTHON_PROJECT_NAME))
+                            return undefined;
+                        templateCode = m2;
+                        templateLanguage = "python";
+                        language = "python";
+                        break;
+                    case "ts-template":
+                    case "typescript-template":
+                    case "js-template":
+                    case "javascript-template":
+                        if (!checkTutorialEditor(pxt.JAVASCRIPT_PROJECT_NAME))
+                            return undefined;
+                        templateCode = m2;
+                        templateLanguage = "typescript";
+                        break;
                     case "jres":
                         jres = m2;
                         break;
@@ -123,7 +148,7 @@ namespace pxt.tutorial {
                         m2 = "";
                         break;
                 }
-                code.push(m1 == "python" ? `\n${m2}\n` : `{\n${m2}\n}`);
+                code.push(language === "python" ? `\n${m2}\n` : `{\n${m2}\n}`);
                 idx++
                 return "";
             });
@@ -132,6 +157,7 @@ namespace pxt.tutorial {
         return {
             code,
             templateCode,
+            templateLanguage,
             editor,
             language,
             jres,
@@ -386,7 +412,7 @@ ${code}
         if (metadata.explicitHints !== undefined
             && pxt.appTarget.appTheme
             && pxt.appTarget.appTheme.tutorialExplicitHints)
-            metadata.explicitHints = true;
+                metadata.explicitHints = true;
 
         return { metadata, body };
     }
@@ -443,6 +469,7 @@ ${code}
             tutorialCode: tutorialInfo.code,
             tutorialRecipe: !!recipe,
             templateCode: tutorialInfo.templateCode,
+            templateLanguage: tutorialInfo.templateLanguage,
             autoexpandStep: tutorialInfo.metadata?.autoexpandOff ? false : true,
             metadata: tutorialInfo.metadata,
             language: tutorialInfo.language,
@@ -478,7 +505,11 @@ ${code}
 
     export function resolveLocalizedMarkdown(ghid: pxt.github.ParsedRepo, files: pxt.Map<string>, fileName?: string): string {
         // if non-default language, find localized file if any
-        const mfn = (fileName || ghid.fileName || "README") + ".md";
+        let mfn = (fileName || ghid.fileName || "README");
+
+        if (!mfn.endsWith(".md")) {
+            mfn += ".md";
+        }
 
         let md: string = undefined;
         const [initialLang, baseLang, initialLangLowerCase] = pxt.Util.normalizeLanguageCode(pxt.Util.userLanguage());

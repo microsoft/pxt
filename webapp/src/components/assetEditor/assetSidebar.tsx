@@ -95,12 +95,16 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
 
         const project = pxt.react.getTilemapProject();
         project.pushUndo();
+        result = pxt.patchTemporaryAsset(this.props.asset, result, project);
+
+        if (result.meta.displayName) {
+            result = project.updateAsset(result);
+        }
+
         if (!this.props.asset.meta?.displayName && result.meta.temporaryInfo) {
             getBlocksEditor().updateTemporaryAsset(result);
             pkg.mainEditorPkg().lookupFile(`this/${pxt.MAIN_BLOCKS}`).setContentAsync(getBlocksEditor().getCurrentSource());
         }
-
-        if (result.meta.displayName) project.updateAsset(result);
 
         this.props.dispatchChangeGalleryView(GalleryView.User);
         this.updateAssets().then(() => simulator.setDirty());
@@ -231,7 +235,7 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
                     className="asset-editor-button"
                     leftIcon="icon trash"
                     onClick={this.showDeleteModal} />}
-                <Button className="teal asset-palette-button"
+                <Button className="tertiary asset-palette-button"
                     label={lf("Colors")}
                     title={lf("Open the color palette")}
                     ariaLabel={lf("Open the color palette")}

@@ -61,9 +61,9 @@ namespace pxt.worker {
         let worker = new Worker(workerFile)
         let iface = wrap(v => worker.postMessage(v))
         worker.onmessage = ev => {
-            pxt.perf.measureStart("webworker recvHandler")
+            pxt.perf.measureStart(Measurements.WebworkerRecvHandler)
             iface.recvHandler(ev.data)
-            pxt.perf.measureEnd("webworker recvHandler")
+            pxt.perf.measureEnd(Measurements.WebworkerRecvHandler)
         }
         return iface
     }

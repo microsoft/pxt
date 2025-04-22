@@ -17,7 +17,7 @@ import { CreateFunctionDialog } from "./createFunction";
 import { initializeSnippetExtensions } from './snippetBuilder';
 
 import * as pxtblockly from "../../pxtblocks";
-import { NavigationController, Navigation } from "@blockly/keyboard-navigation";
+// import { NavigationController, Navigation } from "@blockly/keyboard-navigation";
 import { WorkspaceSearch } from "@blockly/plugin-workspace-search";
 
 
@@ -25,7 +25,7 @@ import Util = pxt.Util;
 import { DebuggerToolbox } from "./debuggerToolbox";
 import { ErrorList } from "./errorList";
 import { resolveExtensionUrl } from "./extensionManager";
-import { initEditorExtensionsAsync } from "../../pxteditor";
+import { experiments, initEditorExtensionsAsync } from "../../pxteditor";
 
 
 import IProjectView = pxt.editor.IProjectView;
@@ -35,6 +35,16 @@ import SimState = pxt.editor.SimState;
 
 import { DuplicateOnDragConnectionChecker } from "../../pxtblocks/plugins/duplicateOnDrag";
 import { PathObject } from "../../pxtblocks/plugins/renderer/pathObject";
+import { Measurements } from "./constants";
+
+interface CopyDataEntry {
+    version: 1;
+    data: Blockly.ICopyData;
+    coord: Blockly.utils.Coordinate;
+    workspaceId: string;
+    targetVersion: string;
+    headerId: string;
+}
 
 
 export class Editor extends toolboxeditor.ToolboxEditor {
@@ -51,6 +61,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     showCategories: boolean = true;
     breakpointsByBlock: pxt.Map<number>; // Map block id --> breakpoint ID
     breakpointsSet: number[]; // the IDs of the breakpoints set.
+    currentFlyoutKey: string;
 
     private errorChangesListeners: pxt.Map<(errors: pxtblockly.BlockDiagnostic[]) => void> = {};
     protected intersectionObserver: IntersectionObserver;
@@ -59,7 +70,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     protected highlightedStatement: pxtc.LocationInfo;
 
     // Blockly plugins
-    protected navigationController: NavigationController;
+    // protected navigationController: NavigationController;
     protected workspaceSearch: WorkspaceSearch;
 
     public nsMap: pxt.Map<toolbox.BlockDefinition[]>;
@@ -150,7 +161,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     setVisible(v: boolean) {
         super.setVisible(v);
         this.isVisible = v;
-        let classes = '#blocksEditor .blocklyToolboxDiv, #blocksEditor .blocklyWidgetDiv, #blocksEditor .blocklyToolboxDiv';
+        let classes = '#blocksEditor .blocklyToolbox, #blocksEditor .blocklyWidgetDiv, #blocksEditor .blocklyToolbox';
         if (this.isVisible) {
             pxt.Util.toArray(document.querySelectorAll(classes)).forEach((el: HTMLElement) => el.style.display = '');
             // Fire a resize event since the toolbox may have changed width and height.
@@ -197,7 +208,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (this.delayLoadXml) {
             if (this.loadingXml) return
             pxt.debug(`loading blockly`)
-            pxt.perf.measureStart("domUpdate loadBlockly")
+            pxt.perf.measureStart(Measurements.DomUpdateLoadBlockly)
             this.loadingXml = true
 
             const loadingDimmer = document.createElement("div");
@@ -235,7 +246,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     } catch { }
                     this.loadingXml = false;
                     this.loadingXmlPromise = null;
-                    pxt.perf.measureEnd("domUpdate loadBlockly")
+                    pxt.perf.measureEnd(Measurements.DomUpdateLoadBlockly, { projectHeaderId: this.parent.state.header?.id });
                     // Do Not Remove: This is used by the skillmap
                     this.parent.onEditorContentLoaded();
                 });
@@ -244,7 +255,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     onPageVisibilityChanged(isVisible: boolean) {
         if (!isVisible) return;
-        this.highlightStatement(this.highlightedStatement);
+        if (!this.parent.state.debugging) {
+            this.highlightStatement(this.highlightedStatement);
+        }
     }
 
     isDropdownDivVisible(): boolean {
@@ -311,9 +324,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.cleanXmlForWorkspace(xml);
             pxtblockly.domToWorkspaceNoEvents(xml, this.editor);
 
-            pxtblockly.upgradeTilemapsInWorkspace(this.editor, pxt.react.getTilemapProject());
-
-            this.initLayout();
+            this.initLayout(xml);
             this.editor.clearUndo();
             this.reportDeprecatedBlocks();
             this.updateGrayBlocks();
@@ -338,58 +349,70 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         dom.querySelectorAll("block[deletable], shadow[deletable]").forEach(b => { b.removeAttribute("deletable") });
     }
 
-    private initLayout() {
-        let needsLayout = false;
-        let flyoutOnly = !this.editor.getToolbox() && this.editor.getFlyout();
+    private initLayout(xml: Element) {
+        const flyoutOnly = !this.editor.getToolbox() && this.editor.getFlyout();
+
+        if (!flyoutOnly) {
+            // If the blocks file has no location info (e.g. it's from the decompiler), format the code.
+            let needsLayout = false;
+            for (const child of xml.childNodes) {
+                if (!pxt.BrowserUtils.isElement(child)) continue;
+                if (child.localName !== "block" && child.localName !== "comment") continue;
+
+                const x = child.getAttribute("x") ?? "10";
+                const y = child.getAttribute("y") ?? "10";
+
+                if (x === "10" && y === "10") {
+                    needsLayout = true;
+                    break;
+                }
+            }
+
+            if (needsLayout) {
+                pxtblockly.flow(this.editor, { useViewWidth: true });
+                return;
+            }
+        }
 
         let minDistanceFromOrigin: number;
-        let closestToOrigin: Blockly.utils.Rect;
+        let closestToOrigin: Blockly.utils.Coordinate;
 
-        (this.editor.getTopComments(false) as Blockly.WorkspaceCommentSvg[]).forEach(b => {
-            const bounds = b.getBoundingRectangle();
+        for (const comment of this.editor.getTopComments(false) as Blockly.comments.RenderedWorkspaceComment[]) {
+            const coord = comment.getRelativeToSurfaceXY();
 
-            const distanceFromOrigin = Math.sqrt(bounds.left * bounds.left + bounds.top * bounds.top);
-
-            if (minDistanceFromOrigin === undefined || distanceFromOrigin < minDistanceFromOrigin) {
-                closestToOrigin = bounds;
-                minDistanceFromOrigin = distanceFromOrigin;
-            }
-
-            needsLayout = needsLayout || (bounds.left == 10 && bounds.top == 10);
-        });
-        let blockPositions: { left: number, top: number }[] = [];
-        (this.editor.getTopBlocks(false) as Blockly.BlockSvg[]).forEach(b => {
-            const bounds = b.getBoundingRectangle()
-
-            const distanceFromOrigin = Math.sqrt(bounds.left * bounds.left + bounds.top * bounds.top);
+            const distanceFromOrigin = Math.sqrt(coord.x * coord.x + coord.y * coord.y);
 
             if (minDistanceFromOrigin === undefined || distanceFromOrigin < minDistanceFromOrigin) {
-                closestToOrigin = bounds;
+                closestToOrigin = coord;
                 minDistanceFromOrigin = distanceFromOrigin;
             }
-
-            const isOverlapping = !!blockPositions.find(b => b.left === bounds.left && b.top === bounds.top)
-            needsLayout = needsLayout || isOverlapping;
-
-            blockPositions.push(bounds)
-        });
-
-        if (needsLayout && !flyoutOnly) {
-            // If the blocks file has no location info (e.g. it's from the decompiler), format the code.
-            pxtblockly.flow(this.editor, { useViewWidth: true });
         }
-        else {
-            if (closestToOrigin) {
-                // Otherwise translate the blocks so that they are positioned on the top left
-                this.editor.getTopComments(false).forEach(c => c.moveBy(-closestToOrigin.left, -closestToOrigin.top));
-                this.editor.getTopBlocks(false).forEach(b => b.moveBy(-closestToOrigin.left, -closestToOrigin.top));
+
+        for (const block of this.editor.getTopBlocks(false)) {
+            const coord = block.getRelativeToSurfaceXY();
+
+            const distanceFromOrigin = Math.sqrt(coord.x * coord.x + coord.y * coord.y);
+
+            if (minDistanceFromOrigin === undefined || distanceFromOrigin < minDistanceFromOrigin) {
+                closestToOrigin = coord;
+                minDistanceFromOrigin = distanceFromOrigin;
             }
-            this.editor.scrollX = 10;
-            this.editor.scrollY = 10;
-
-            // Forces scroll to take effect
-            this.editor.resizeContents();
         }
+
+        if (closestToOrigin) {
+            // Otherwise translate the blocks so that they are positioned on the top left
+            for (const comment of this.editor.getTopComments(false) as Blockly.comments.RenderedWorkspaceComment[]) {
+                comment.moveBy(-closestToOrigin.x, -closestToOrigin.y);
+            }
+            for (const block of this.editor.getTopBlocks(false)) {
+                block.moveBy(-closestToOrigin.x, -closestToOrigin.y);
+            }
+        }
+        this.editor.scrollX = 10;
+        this.editor.scrollY = 10;
+
+        // Forces scroll to take effect
+        this.editor.resizeContents();
     }
 
     private initPrompts() {
@@ -455,6 +478,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (pxt.Util.isTranslationMode()) {
             pxtblockly.external.setPromptTranslateBlock(dialogs.promptTranslateBlock);
         }
+
+        pxtblockly.external.setCopyPaste(copy, cut, this.pasteCallback, this.copyPrecondition, this.pastePrecondition);
     }
 
     private initBlocklyToolbox() {
@@ -507,36 +532,39 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         };
     }
 
-    private initAccessibleBlocks() {
-        const enabled = pxt.appTarget.appTheme?.accessibleBlocks;
-        if (enabled && !this.navigationController) {
-            this.navigationController = new NavigationController() as any;
+    // private initAccessibleBlocks() {
+    //     const enabled = pxt.appTarget.appTheme?.accessibleBlocks;
+    //     if (enabled && !this.navigationController) {
+    //         this.navigationController = new NavigationController() as any;
 
-            this.navigationController.init();
-            this.navigationController.addWorkspace(this.editor);
+    //         this.navigationController.init();
+    //         this.navigationController.addWorkspace(this.editor);
 
-            (Navigation as any).prototype.focusToolbox = (workspace: Blockly.WorkspaceSvg) => {
-                const toolbox = this.toolbox;
-                if (!toolbox) return;
-                this.focusToolbox();
-                this.navigationController.navigation.resetFlyout(workspace, false);
-                this.navigationController.navigation.setState(workspace, "toolbox");
-            }
-        }
-    }
+    //         (Navigation as any).prototype.focusToolbox = (workspace: Blockly.WorkspaceSvg) => {
+    //             const toolbox = this.toolbox;
+    //             if (!toolbox) return;
+    //             this.focusToolbox();
+    //             this.navigationController.navigation.resetFlyout(workspace, false);
+    //             this.navigationController.navigation.setState(workspace, "toolbox");
+    //         }
+    //     }
+    // }
 
-    public enableAccessibleBlocks(enable: boolean) {
-        if (enable) {
-            this.navigationController.enable(this.editor);
-        } else {
-            this.navigationController.disable(this.editor);
-        }
-    }
+    // public enableAccessibleBlocks(enable: boolean) {
+    //     if (enable) {
+    //         this.navigationController.enable(this.editor);
+    //     } else {
+    //         this.navigationController.disable(this.editor);
+    //     }
+    // }
 
     private initWorkspaceSearch() {
         if (pxt.appTarget.appTheme.workspaceSearch && !this.workspaceSearch) {
             this.workspaceSearch = new pxtblockly.PxtWorkspaceSearch(this.editor);
             this.workspaceSearch.init();
+            pxtblockly.external.setOpenWorkspaceSearch(() => {
+                this.workspaceSearch.open();
+            });
         }
     }
 
@@ -580,7 +608,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private prepareBlockly(forceHasCategories?: boolean) {
-        pxt.perf.measureStart("prepareBlockly")
+        pxt.perf.measureStart(Measurements.PrepareBlockly)
         let blocklyDiv = document.getElementById('blocksEditor');
         if (!blocklyDiv)
             return;
@@ -594,14 +622,17 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         pxtblockly.contextMenu.setupWorkspaceContextMenu(this.editor);
 
         // set Blockly Colors
-        const blocklyColors = pxt.appTarget.appTheme.blocklyColors;
-        if (blocklyColors) {
-            const theme = this.editor.getTheme();
-            for (const key of Object.keys(blocklyColors)) {
-                theme.setComponentStyle(key, blocklyColors[key]);
+        (async () => {
+            await Blockly.renderManagement.finishQueuedRenders();
+            const blocklyColors = pxt.appTarget.appTheme.blocklyColors;
+            if (blocklyColors) {
+                const theme = this.editor.getTheme();
+                for (const key of Object.keys(blocklyColors)) {
+                    theme.setComponentStyle(key, blocklyColors[key]);
+                }
+                this.editor.setTheme(theme);
             }
-            this.editor.setTheme(theme);
-        }
+        })();
 
         let shouldRestartSim = false;
 
@@ -629,11 +660,19 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 Blockly.Events.CLICK,
                 Blockly.Events.VIEWPORT_CHANGE,
                 Blockly.Events.BUBBLE_OPEN,
+                Blockly.Events.THEME_CHANGE,
                 pxtblockly.FIELD_EDITOR_OPEN_EVENT_TYPE
             ];
 
-            if (ev.type !== "var_create" && ev.type !== "marker_move") {
+            if (shouldEventHideFlyout(ev)) {
                 this.hideFlyout();
+            }
+
+            if (ev.type === "var_create") {
+                if (this.currentFlyoutKey === "variables" && this.editor.getFlyout()?.isVisible()) {
+                    // refresh the flyout when a new variable is created
+                    this.showVariablesFlyout();
+                }
             }
 
             if ((ignoredChanges.indexOf(ev.type) === -1)
@@ -711,12 +750,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.initPrompts();
         this.initBlocklyToolbox();
         this.initWorkspaceSounds();
-        this.initAccessibleBlocks();
+        // this.initAccessibleBlocks();
         this.initWorkspaceSearch();
         this.setupIntersectionObserver();
         this.resize();
 
-        pxt.perf.measureEnd("prepareBlockly")
+        pxt.perf.measureEnd(Measurements.PrepareBlockly)
     }
 
     protected setupIntersectionObserver() {
@@ -873,7 +912,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     getBlocklyToolboxDiv(): HTMLDivElement {
         const blocksArea = this.getBlocksAreaDiv();
-        return blocksArea ? blocksArea.getElementsByClassName('blocklyToolboxDiv')[0] as HTMLDivElement : undefined;
+        return blocksArea ? blocksArea.getElementsByClassName('blocklyToolbox')[0] as HTMLDivElement : undefined;
     }
 
     handleToolboxRef = (c: toolbox.Toolbox) => {
@@ -885,13 +924,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     public moveFocusToFlyout() {
-        // TODO: Add accessible blocks plugin from Blockly
-    }
+        // if (this.navigationController) {
+        //     this.navigationController.navigation.focusFlyout(this.editor);
+        // }
 
-    focusToolbox() {
-        if (this.toolbox) {
-            this.toolbox.focus();
-        }
+        (this.editor.getInjectionDiv() as HTMLDivElement).focus();
     }
 
     renderToolbox(immediate?: boolean) {
@@ -911,9 +948,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const container = document.getElementById('debuggerToolbox');
         if (!container) return;
 
-        pxt.perf.measureStart("updateToolbox")
+        pxt.perf.measureStart(Measurements.UpdateToolbox)
         const debugging = !!this.parent.state.debugging;
-        let debuggerToolbox = debugging ? <DebuggerToolbox ref={this.handleDebuggerToolboxRef} parent={this.parent} apis={this.blockInfo.apis.byQName} /> : <div />;
+        let debuggerToolbox = debugging ? <DebuggerToolbox
+                ref={this.handleDebuggerToolboxRef}
+                parent={this.parent}
+                apis={this.blockInfo.apis.byQName}
+                showCallStack={experiments.isEnabled("advancedBlockDebugger")}
+            /> : <div />;
 
         if (debugging) {
             this.toolbox.hide();
@@ -924,7 +966,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.toolbox.show();
         }
         ReactDOM.render(debuggerToolbox, container);
-        pxt.perf.measureEnd("updateToolbox")
+        pxt.perf.measureEnd(Measurements.UpdateToolbox)
     }
 
     showPackageDialog() {
@@ -934,11 +976,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     showVariablesFlyout() {
-        this.showFlyoutInternal_(Blockly.Variables.flyoutCategory(this.editor), "variables");
+        this.showFlyoutInternal_(Blockly.Variables.flyoutCategory(this.editor, true), "variables");
     }
 
     showFunctionsFlyout() {
-        this.showFlyoutInternal_(pxtblockly.createFunctionsFlyoutCategory(this.editor), "functions");
+        this.showFlyoutInternal_(pxtblockly.createFunctionsFlyoutCategory(this.editor), "functions", true);
     }
 
     getViewState() {
@@ -973,13 +1015,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const m = this.editor.getMetrics();
         b.moveBy(m.viewWidth / 2, m.viewHeight / 3);
         b.initSvg();
-        b.render();
+        b.queueRender();
     }
 
     private _loadBlocklyPromise: Promise<void>;
     loadBlocklyAsync() {
         if (!this._loadBlocklyPromise) {
-            pxt.perf.measureStart("loadBlockly")
+            pxt.perf.measureStart(Measurements.LoadBlockly)
+            pxtblockly.applyMonkeyPatches();
             this._loadBlocklyPromise = pxt.BrowserUtils.loadBlocklyAsync()
                 .then(() => {
                     // Initialize the "Make a function" button
@@ -1009,10 +1052,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                         if (/^github:/.test(url)) {
                             // strip 'github:', add '.md' file extension if necessary
                             url = url.replace(/^github:\/?/, '') + (/\.md$/i.test(url) ? "" : ".md");
-                            const readme = pkg.getEditorPkg(pkg.mainPkg).lookupFile(url);
-                            const readmeContent = readme?.content?.trim();
-                            if (readmeContent) {
-                                this.parent.setSideMarkdown(readmeContent);
+                            const content = resolveLocalizedMarkdown(url);
+                            if (content) {
+                                this.parent.setSideMarkdown(content);
                                 this.parent.setSideDocCollapsed(false);
                             }
                         } else if (/^\//.test(url)) {
@@ -1024,7 +1066,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     this.prepareBlockly();
                 })
                 .then(() => initEditorExtensionsAsync())
-                .then(() => pxt.perf.measureEnd("loadBlockly"))
+                .then(() => pxt.perf.measureEnd(Measurements.LoadBlockly));
         }
         return this._loadBlocklyPromise;
     }
@@ -1056,7 +1098,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 }
                 this.currFile = file;
                 // Clear the search field if a value exists
-                let searchField = document.getElementById('blocklySearchInputField') as HTMLInputElement;
+                let searchField = document.querySelector("input.blocklySearchInput") as HTMLInputElement;
                 if (searchField && searchField.value) {
                     searchField.value = '';
                 }
@@ -1089,8 +1131,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         // clear previous warnings on non-disabled blocks
         this.editor.getAllBlocks(false).filter(b => b.isEnabled()).forEach((b: Blockly.BlockSvg) => {
-            b.setWarningText(null);
-            setHighlightWarning(b, false);
+            b.setWarningText(null, pxtblockly.PXT_WARNING_ID);
+            setHighlightWarningAsync(b, false);
         });
         let tsfile = file && file.epkg && file.epkg.files[file.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME)];
         if (!tsfile || !tsfile.diagnostics) return;
@@ -1105,8 +1147,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 let b = this.editor.getBlockById(bid) as Blockly.BlockSvg;
                 if (b) {
                     let txt = ts.pxtc.flattenDiagnosticMessageText(diag.messageText, "\n");
-                    b.setWarningText(txt);
-                    setHighlightWarning(b, true);
+                    b.setWarningText(txt, pxtblockly.PXT_WARNING_ID);
+                    setHighlightWarningAsync(b, true);
                 }
             }
         })
@@ -1116,8 +1158,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 let b = this.editor.getBlockById(d.blockId) as Blockly.BlockSvg;
 
                 if (b) {
-                    b.setWarningText(d.message);
-                    setHighlightWarning(b, true);
+                    b.setWarningText(d.message, pxtblockly.PXT_WARNING_ID);
+                    setHighlightWarningAsync(b, true);
                 }
             }
         })
@@ -1138,23 +1180,74 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.editor.highlightBlock(bid);
                 if (brk) {
                     const b = this.editor.getBlockById(bid) as Blockly.BlockSvg;
-                    b.setWarningText(brk ? brk.exceptionMessage : undefined);
-                    // ensure highlight is in the screen when a breakpoint info is available
-                    // TODO: make warning mode look good
-                    // b.setHighlightWarning(brk && !!brk.exceptionMessage);
-                    const p = b.getRelativeToSurfaceXY();
-                    const c = b.getHeightWidth();
-                    const s = this.editor.scale;
-                    const m = this.editor.getMetrics();
-                    // don't center if block is still on the screen
-                    const marginx = 4;
-                    const marginy = 4;
-                    if (p.x * s < m.viewLeft + marginx
-                        || (p.x + c.width) * s > m.viewLeft + m.viewWidth - marginx
-                        || p.y * s < m.viewTop + marginy
-                        || (p.y + c.height) * s > m.viewTop + m.viewHeight - marginy) {
-                        // move the block towards the center
-                        this.editor.centerOnBlock(bid);
+                    b.setWarningText(brk ? brk.exceptionMessage : undefined, pxtblockly.PXT_WARNING_ID);
+
+                    // scroll the workspace so that the block is visible. if the block is too tall or too wide
+                    // to fit in the workspace view, then try to align it with the left/top edge of the block
+                    const xy = b.getRelativeToSurfaceXY();
+                    const scale = this.editor.scale;
+                    const metrics = this.editor.getMetrics();
+
+                    // this margin is in screen pixels
+                    const margin = 20;
+
+                    let scrollX = metrics.viewLeft;
+                    let scrollY = metrics.viewTop;
+
+                    const blockWidth = b.width * scale + margin * 2;
+                    const blockHeight = b.height * scale + margin * 2;
+
+                    // in RTL workspaces, the x coordinate for the block is the right side
+                    const blockLeftEdge = this.editor.RTL ? (xy.x - b.width) * scale - margin : xy.x * scale - margin;
+                    const blockRightEdge = blockLeftEdge + blockWidth;
+
+                    const blockTopEdge = xy.y * scale - margin;
+                    const blockBottomEdge = blockTopEdge + blockHeight;
+
+                    const viewBottom = metrics.viewTop + metrics.viewHeight;
+                    const viewRight = metrics.viewLeft + metrics.viewWidth;
+
+                    if (metrics.viewTop > blockTopEdge) {
+                        scrollY = blockTopEdge;
+                    }
+                    else if (viewBottom < blockBottomEdge) {
+                        if (blockHeight > metrics.viewHeight) {
+                            scrollY = blockTopEdge;
+                        }
+                        else {
+                            scrollY = blockBottomEdge - metrics.viewHeight;
+                        }
+                    }
+
+                    if (this.editor.RTL) {
+                        // for RTL, we want to align to the right edge
+                        if (viewRight < blockRightEdge) {
+                            scrollX = blockRightEdge - metrics.viewWidth;
+                        }
+                        else if (metrics.viewLeft > blockLeftEdge) {
+                            if (blockWidth > metrics.viewWidth) {
+                                scrollX = blockRightEdge - metrics.viewWidth;
+                            }
+                            else {
+                                scrollX = blockLeftEdge;
+                            }
+                        }
+                    }
+                    else if (metrics.viewLeft > blockLeftEdge) {
+                        scrollX = blockLeftEdge;
+                    }
+                    else if (viewRight < blockRightEdge) {
+                        if (blockWidth > metrics.viewWidth) {
+                            scrollX = blockLeftEdge;
+                        }
+                        else {
+                            scrollX = blockRightEdge - metrics.viewWidth;
+                        }
+                    }
+
+                    if (scrollX !== metrics.viewLeft || scrollY !== metrics.scrollTop) {
+                        // scroll coordinates are negative
+                        this.editor.scroll(-scrollX, -scrollY);
                     }
                 }
                 return true;
@@ -1171,7 +1264,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         if (this.debuggerToolbox) {
             const visibleVars = Blockly.Variables.allUsedVarModels(this.editor)
-                .map((variable: Blockly.VariableModel) => pxtc.escapeIdentifier(variable.name));
+                .map((variable: Blockly.VariableModel) => pxtc.escapeIdentifier(variable.getName()));
 
             this.debuggerToolbox.setBreakpoint(brk, visibleVars);
         }
@@ -1248,7 +1341,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 minScale: .2,
                 scaleSpeed: 1.5,
                 startScale: pxt.BrowserUtils.isMobile() ? 0.7 : 0.9,
-                pinch: true
+                pinch: true,
+                wheel: true
             },
             rtl: Util.isUserLanguageRtl()
         };
@@ -1258,7 +1352,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     private refreshToolbox() {
         if (!this.blockInfo) return;
-        pxt.perf.measureStart("refreshToolbox")
+        pxt.perf.measureStart(Measurements.RefreshToolbox)
         // no toolbox when readonly
         if (pxt.shell.isReadOnly()) return;
 
@@ -1308,7 +1402,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 refreshBlockly();
             }
         }
-        pxt.perf.measureEnd("refreshToolbox")
+        pxt.perf.measureEnd(Measurements.RefreshToolbox)
     }
 
     filterToolbox(showCategories?: boolean) {
@@ -1493,6 +1587,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (ns == onStartNamespace) {
             extraBlocks.push({
                 name: ts.pxtc.ON_START_TYPE,
+                snippetName: "on start",
                 attributes: {
                     blockId: ts.pxtc.ON_START_TYPE,
                     weight: pxt.appTarget.runtime.onStartWeight || 10,
@@ -1575,7 +1670,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 // Cache blocks xml list for later
                 this.flyoutBlockXmlCache[cacheKey] = this.flyoutXmlList;
             }
-            this.showFlyoutInternal_(this.flyoutXmlList, cacheKey);
+            this.showFlyoutInternal_(this.flyoutXmlList, cachable && cacheKey, !cachable);
         }
     }
 
@@ -1659,9 +1754,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.showFlyoutInternal_(this.flyoutXmlList);
     }
 
-    private showFlyoutInternal_(xmlList: Element[], flyoutName: string = "default") {
+    private showFlyoutInternal_(xmlList: Element[], flyoutName: string = "default", skipCache = false) {
+        this.currentFlyoutKey = flyoutName;
         const flyout = this.editor.getFlyout() as pxtblockly.VerticalFlyout;
-        flyout.show(xmlList, flyoutName);
+        flyout.show(xmlList, skipCache ? undefined : flyoutName);
         flyout.scrollToStart();
     }
 
@@ -1764,7 +1860,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
                 // Create the block XML from block definition.
                 if (!blockXml) {
-                    blockXml = pxtblockly.createToolboxBlock(this.blockInfo, fn, comp);
+                    blockXml = pxtblockly.createToolboxBlock(this.blockInfo, fn, comp, shadow);
 
                     if (fn.attributes.optionalVariableArgs && fn.attributes.toolboxVariableArgs) {
                         const handlerArgs = comp.handlerArgs;
@@ -1865,8 +1961,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
 
         function variableIsAssigned(name: string, editor: Blockly.WorkspaceSvg) {
-            const varModel = editor.getVariable(name);
-            const varUses = varModel && editor.getVariableUsesById(varModel.getId());
+            const varModel = editor.getVariableMap().getVariable(name);
+            const varUses = varModel && Blockly.Variables.getVariableUsesById(editor, varModel.getId());
             return varUses && varUses.some(b => b.type == "variables_set" || b.type == "variables_change");
         }
     }
@@ -1911,6 +2007,139 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.removeBreakpointFromEvent(block.id)
         }
     }
+
+    protected pasteCallback = (workspace: Blockly.Workspace, ev: Event) => {
+        const data = getCopyData();
+        if (!data?.data || !this.editor || !this.canPasteData(data)) return false;
+
+        this.pasteAsync(data, ev.type === "pointerdown" ? ev as PointerEvent : undefined);
+        return true;
+    }
+
+    protected async pasteAsync(data: CopyDataEntry, ev?: PointerEvent) {
+        const copyData = data.data;
+        const copyWorkspace = this.editor;
+        const copyCoords = copyWorkspace.id === data.workspaceId ? data.coord : undefined;
+
+        // this pasting code is adapted from Blockly/core/shortcut_items.ts
+        const doPaste = () => {
+            const metricsManager = copyWorkspace.getMetricsManager();
+            const { left, top, width, height } = metricsManager
+                .getViewMetrics(true);
+            const viewportRect = new Blockly.utils.Rect(
+                top,
+                top + height,
+                left,
+                left + width
+            );
+
+            if (ev) {
+                // if we have a pointer event, then paste at that location
+                const injectionDivBBox = copyWorkspace.getInjectionDiv().getBoundingClientRect();
+                const pixelViewport = metricsManager.getViewMetrics();
+                const workspaceSvgOffset = metricsManager.getAbsoluteMetrics();
+
+                const offsetX = ((ev.clientX - injectionDivBBox.left - workspaceSvgOffset.left) / pixelViewport.width);
+                const offsetY = ((ev.clientY - injectionDivBBox.top - workspaceSvgOffset.top) / pixelViewport.height);
+
+                const contextMenuCoords = new Blockly.utils.Coordinate(left + offsetX * width, top + offsetY * height);
+
+                return !!Blockly.clipboard.paste(copyData, copyWorkspace, contextMenuCoords);
+            }
+
+            if (copyCoords && viewportRect.contains(copyCoords.x, copyCoords.y)) {
+                // If the original copyable is inside the viewport, let the paster
+                // determine position.
+                return !!Blockly.clipboard.paste(copyData, copyWorkspace);
+            }
+
+            // Otherwise, paste in the middle of the viewport.
+            const centerCoords = new Blockly.utils.Coordinate(
+                left + width / 2,
+                top + height / 2
+            );
+            return !!Blockly.clipboard.paste(copyData, copyWorkspace, centerCoords);
+        };
+
+        if (data.version !== 1) {
+            await core.confirmAsync({
+                header: lf("Paste Error"),
+                body: lf("The code you are pasting comes from an incompatible version of the editor."),
+                hideCancel: true
+            });
+
+            return;
+        }
+
+        if (copyData.paster === Blockly.clipboard.BlockPaster.TYPE) {
+            const typeCounts: {[index: string]: number} = (copyData as any).typeCounts;
+
+            for (const blockType of Object.keys(typeCounts)) {
+                if (!Blockly.Blocks[blockType]) {
+                    await core.confirmAsync({
+                        header: lf("Paste Error"),
+                        body: lf("The code that you're trying to paste contains blocks that aren't available in the current project. If pasting from another project, make sure that you have installed all of the necessary extensions and try again."),
+                        hideCancel: true
+                    });
+
+                    return;
+                }
+            }
+        }
+
+        if (data.targetVersion !== pxt.appTarget.versions.target) {
+            const result = await core.confirmAsync({
+                header: lf("Paste Warning"),
+                body: lf("The code you're trying to paste is from a different version of Microsoft MakeCode. Pasting it may cause issues with your current project. Are you sure you want to continue?"),
+                agreeLbl: lf("Paste Anyway"),
+                agreeClass: "red"
+            });
+
+            if (result !== 1) {
+                return;
+            }
+        }
+
+        doPaste();
+    }
+
+    protected copyPrecondition = (scope: Blockly.ContextMenuRegistry.Scope) => {
+        const workspace = scope.block?.workspace || scope.comment?.workspace;
+
+        if (!workspace || workspace !== this.editor) {
+            return "hidden";
+        }
+
+        return "enabled";
+    }
+
+    protected pastePrecondition = (scope: Blockly.ContextMenuRegistry.Scope) => {
+        if (scope.workspace !== this.editor) return "hidden";
+
+        const data = getCopyData();
+
+        if (!data || !this.canPasteData(data)) {
+            return "disabled";
+        }
+
+        return "enabled";
+    }
+
+    protected canPasteData(data: CopyDataEntry): boolean {
+        const header = pkg.mainEditorPkg().header;
+
+        if (!header) {
+            return false;
+        }
+        else if (data.headerId === header.id) {
+            return true;
+        }
+        else if (header.tutorial && !header.tutorialCompleted) {
+            return false;
+        }
+
+        return true;
+    }
 }
 
 function forEachImageField(workspace: Blockly.Workspace, cb: (asset: pxtblockly.FieldAssetEditor<any, any>) => void) {
@@ -1936,9 +2165,13 @@ function clearTemporaryAssetBlockData(workspace: Blockly.Workspace) {
     forEachImageField(workspace, field => field.clearTemporaryAssetData());
 }
 
-function setHighlightWarning(block: Blockly.BlockSvg, enabled: boolean) {
+async function setHighlightWarningAsync(block: Blockly.BlockSvg, enabled: boolean) {
     (block.pathObject as PathObject).setHasError(enabled);
     block.setHighlighted(enabled);
+    if (enabled) {
+        await Blockly.renderManagement.finishQueuedRenders();
+        (block.pathObject as PathObject).resizeHighlight();
+    }
 }
 
 function isBreakpointSet(block: Blockly.BlockSvg) {
@@ -1954,4 +2187,149 @@ function fixHighlight(block: Blockly.BlockSvg) {
     if (connectedTo) {
         fixHighlight(connectedTo);
     }
+}
+
+function shouldEventHideFlyout(ev: Blockly.Events.Abstract) {
+    if (ev.type === "var_create" || ev.type === "marker_move") {
+        return false;
+    }
+
+    // If a block is selected when the user clicks on a flyout button (e.g. "Make a Variable"),
+    // a selected event will fire unselecting the block before the var_create event is fired.
+    // Make sure we don't close the flyout in the case where a block is simply being unselected.
+    if (ev.type === "selected") {
+        if (!(ev as Blockly.Events.Selected).newElementId) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+function resolveLocalizedMarkdown(url: string) {
+    const editorPackage = pkg.getEditorPkg(pkg.mainPkg);
+
+    const splitPath = url.split("/");
+    const fileName = splitPath.pop();
+    const dirName = splitPath.join("/");
+
+    const [initialLang, baseLang, initialLangLowerCase] = pxt.Util.normalizeLanguageCode(pxt.Util.userLanguage());
+    const priorityOrder = [initialLang, initialLangLowerCase, baseLang].filter((lang) => typeof lang === "string")
+    const pathsToTest = [
+        ...priorityOrder.map(lang =>`${dirName}/_locales/${lang}/${fileName}`),
+        url
+    ]
+
+    for (const path of pathsToTest) {
+        const file = editorPackage.lookupFile(path);
+        const content = file?.content?.trim();
+
+        if (content) {
+            return content;
+        }
+    }
+
+    return undefined;
+}
+
+// adapted from Blockly/core/shortcut_items.ts
+function copy(workspace: Blockly.WorkspaceSvg, e: Event) {
+    // Prevent the default copy behavior, which may beep or otherwise indicate
+    // an error due to the lack of a selection.
+    e.preventDefault();
+    workspace.hideChaff();
+    const selected = Blockly.common.getSelected();
+    if (!selected || !Blockly.isCopyable(selected)) return false;
+
+    const copyData = selected.toCopyData();
+    const copyWorkspace =
+        selected.workspace instanceof Blockly.WorkspaceSvg
+            ? selected.workspace
+            : workspace;
+    const copyCoords = Blockly.isDraggable(selected)
+        ? selected.getRelativeToSurfaceXY()
+        : null;
+
+    if (copyData) {
+        saveCopyData(
+            copyData,
+            copyCoords,
+            copyWorkspace,
+            pkg.mainEditorPkg().header.id
+        );
+    }
+
+    return !!copyData;
+}
+
+// adapted from Blockly/core/shortcut_items.ts
+function cut(workspace: Blockly.WorkspaceSvg, e: Event) {
+    const selected = Blockly.common.getSelected();
+
+    if (selected instanceof Blockly.BlockSvg) {
+        const copyData = selected.toCopyData();
+        const copyWorkspace = workspace;
+        const copyCoords = selected.getRelativeToSurfaceXY();
+        saveCopyData(
+            copyData,
+            copyCoords,
+            copyWorkspace,
+            pkg.mainEditorPkg().header.id
+        );
+        selected.checkAndDelete();
+        return true;
+    } else if (
+        Blockly.isDeletable(selected) &&
+        selected.isDeletable() &&
+        Blockly.isCopyable(selected)
+    ) {
+        const copyData = selected.toCopyData();
+        const copyWorkspace = workspace;
+        const copyCoords = Blockly.isDraggable(selected)
+            ? selected.getRelativeToSurfaceXY()
+            : null;
+        saveCopyData(
+            copyData,
+            copyCoords,
+            copyWorkspace,
+            pkg.mainEditorPkg().header.id
+        );
+        selected.dispose();
+        return true;
+    }
+    return false;
+}
+
+function saveCopyData(
+    data: Blockly.ICopyData,
+    coord: Blockly.utils.Coordinate,
+    workspace: Blockly.Workspace,
+    headerId: string
+) {
+    const entry: CopyDataEntry = {
+        version: 1,
+        data,
+        coord,
+        workspaceId: workspace.id,
+        targetVersion: pxt.appTarget.versions.target,
+        headerId
+    };
+
+    pxt.storage.setLocal(
+        copyDataKey(),
+        JSON.stringify(entry)
+    );
+}
+
+function getCopyData(): CopyDataEntry | undefined {
+    const data = pxt.storage.getLocal(copyDataKey());
+
+    if (data) {
+        return pxt.U.jsonTryParse(data);
+    }
+    return undefined;
+}
+
+function copyDataKey() {
+    return "copyData";
 }

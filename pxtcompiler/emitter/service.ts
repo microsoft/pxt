@@ -29,7 +29,6 @@ namespace ts.pxtc {
         "control.createBuffer": { n: "bytearray", t: ts.SyntaxKind.Unknown },
         "control.createBufferFromArray": { n: "bytes", t: ts.SyntaxKind.Unknown },
         "!!": { n: "bool", t: ts.SyntaxKind.BooleanKeyword },
-        "Array.indexOf": { n: "Array.index", t: ts.SyntaxKind.Unknown },
         "Array.push": { n: "Array.append", t: ts.SyntaxKind.Unknown },
         "parseInt": { n: "int", t: ts.SyntaxKind.NumberKeyword, snippet: 'int("0")' },
         "_py.range": { n: "range", t: ts.SyntaxKind.Unknown, snippet: 'range(4)' }
@@ -205,6 +204,7 @@ namespace ts.pxtc {
                 pkg,
                 pkgs,
                 extendsTypes,
+                isStatic: decl.modifiers?.some(m => m.kind === SyntaxKind.StaticKeyword),
                 retType:
                     stmt.kind == SyntaxKind.Constructor ? "void" :
                         kind == SymbolKind.Module ? "" :
@@ -452,7 +452,7 @@ namespace ts.pxtc {
 
             if (isExported(stmt as Declaration)) {
                 if (!stmt.symbol) {
-                    console.warn("no symbol", stmt)
+                    pxt.warn("no symbol", stmt)
                     return;
                 }
                 let qName = getFullName(typechecker, stmt.symbol)
@@ -686,9 +686,9 @@ namespace ts.pxtc.service {
         getNewLine() { return "\n" }
         getCurrentDirectory(): string { return "." }
         getDefaultLibFileName(options: CompilerOptions): string { return "no-default-lib.d.ts" }
-        log(s: string): void { console.log("LOG", s) }
-        trace(s: string): void { console.log("TRACE", s) }
-        error(s: string): void { console.error("ERROR", s) }
+        log(s: string): void { pxt.log("LOG", s) }
+        trace(s: string): void { pxt.log("TRACE", s) }
+        error(s: string): void { pxt.error("ERROR", s) }
         useCaseSensitiveFileNames(): boolean { return true }
 
         // resolveModuleNames?(moduleNames: string[], containingFile: string): ResolvedModule[];
@@ -979,7 +979,7 @@ namespace ts.pxtc.service {
             let res = runConversionsAndCompileUsingService();
             timesToMs(res);
             if (host.opts.target.switches.time)
-                console.log("DIAG-TIME", res.times)
+                pxt.log("DIAG-TIME", res.times)
             return res
         },
 
@@ -1020,6 +1020,10 @@ namespace ts.pxtc.service {
             const { apis } = lastApiInfo;
             const blocksInfo = blocksInfoOp(apis, bannedCategories);
             const checker = service && service.getProgram().getTypeChecker();
+            // needed for blocks that have parent wraps like music.play(...)
+            // with this snippet call, we are dragging a block from the toolbox,
+            // so we want to include the parent snippet
+            const includeParentSnippet = true;
             const snippetContext = {
                 apis,
                 blocksInfo,
@@ -1027,6 +1031,7 @@ namespace ts.pxtc.service {
                 bannedCategories,
                 screenSize,
                 checker,
+                includeParentSnippet
             }
             const snippetNode = getSnippet(snippetContext, fn, n as FunctionLikeDeclaration, isPython)
             const snippet = snippetStringify(snippetNode)
@@ -1253,6 +1258,7 @@ namespace ts.pxtc.service {
         host.opts.fileSystem = prevFS
         for (let k of Object.keys(newFS))
             host.setFile(k, newFS[k]) // update version numbers
+        res.fileSystem = U.flatClone(newFS)
         if (res.diagnostics.length == 0) {
             host.opts.skipPxtModulesEmit = false
             host.opts.skipPxtModulesTSC = false
@@ -1270,6 +1276,7 @@ namespace ts.pxtc.service {
             let ts2asm = compile(host.opts, service)
             res = {
                 sourceMap: res.sourceMap,
+                fileSystem: res.fileSystem,
                 ...ts2asm,
             }
             if (res.needsFullRecompile || ((!res.success || res.diagnostics.length) && host.opts.clearIncrBuildAndRetryOnError)) {

@@ -2,18 +2,171 @@
     height: 100%;
     padding: 1rem;
     overflow: auto;
+    container-type: inline-size;
+}
+
+.checklist-control-tray {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+.control-button {
+    margin: 0;
+    padding: 0 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    line-height: 2rem;
+
+    span[class~="common-button-flex"] {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+
+    i[class~="fas"] {
+        margin: 0;
+        width: auto;
+        height: auto;
+        font-size: unset;
+    }
+
+    &[class~="disabled"] {
+        border: 1px solid var(--pxt-neutral-alpha80) !important;
+    }
+
+    @container (inline-size < 645px) {
+        &:not([class~="common-button"][class~="primary"]) {
+            span[class~="common-button-label"] {
+                display: none !important;
+            }
+        }
+    }
+}
+
+.checklist-name-input {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+
+    div[class~="common-input-group"] {
+        flex-grow: 1;
+        height: unset;
+    }
+
+    input[class~="common-input"] {
+        // Need !important to override react-common/common-input-group's font-size specificity
+        font-size: 1.5rem !important;
+        font-weight: 500;
+        margin: 0;
+        margin-top: 1px;
+    }
+}
+
+.edit-checklist-name-button {
+    margin: 0;
+    padding: 0;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 0.25rem;
+    font-size: 1rem;
+}
+
+.results-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
+    justify-content: flex-start;
+    width: 100%; // For non-webkit browsers
+    width: -webkit-fill-available; // Webkit browsers
+    padding: 0.5rem;
 }
 
 .specific-criteria-result {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding-left: 0.5rem;
-    padding-bottom: 0.5rem;
-    margin-top: 0.5rem;
+    justify-content: flex-start;
+    width: 100%; // For non-webkit browsers
+    width: -webkit-fill-available; // Webkit browsers
     min-height: 9rem;
-    border-bottom: solid 1px var(--pxt-content-accent);
-    break-inside: avoid;
+    gap: 0.5rem;
+
+    .loading-display {
+        padding-top: 0;
+        flex-grow: 1;
+    }
+
+    .criteria-feedback {
+        align-self: flex-end;
+    }
+
+    .result-error {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-start;
+        position: relative;
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid var(--pxt-error);
+        border-radius: 1rem;
+        background-color: var(--pxt-error-alpha10);
+        gap: 0.5rem;
+
+        .error-info-container {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: space-between;
+            overflow: hidden;
+
+            .error-title {
+                font-weight: 600;
+            }
+
+            .error-details {
+                font-weight: 500;
+            }
+        }
+
+        .dismiss-button {
+            position: absolute;
+            top: 0.6rem;
+            right: 0.1rem;
+            background-color: transparent;
+            border-radius: 100%;
+            margin: 0;
+            padding: 0;
+
+            i:hover {
+                scale: 1.1;
+            }
+        }
+    }
+
+    &:focus-within,
+    &:hover,
+    &:focus {
+        .result-toolbar-button {
+            opacity: 1 !important;
+
+            &.disabled {
+                border: 1px solid var(--pxt-neutral-alpha80) !important;
+                opacity: 0.7 !important;
+            }
+        }
+    }
+}
+
+.separator {
+    border-bottom: solid 1px var(--pxt-target-background1-hover);
+    margin-top: 0.5rem;
+    width: 100%; // For non-webkit browsers
+    width: -webkit-fill-available; // Webkit browsers
 }
 
 .result-details {
@@ -21,9 +174,9 @@
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    margin: 0.2rem 0;
     width: 100%;
     height: 50%;
+    gap: 0.5rem;
 
     .display-string {
         font-weight: 500;
@@ -33,6 +186,31 @@
     }
 }
 
+.result-toolbar-tray {
+    display: flex;
+    flex-direction: row;
+    justify-content: right;
+    gap: 0.5rem;
+}
+
+.result-toolbar-button {
+    // Need opacity-based hiding (rather than display) for transitions
+    // Need !important to override common-button's opacity in disabled state
+    opacity: 0 !important;
+
+    span[class~="common-button-label"] {
+        display: none;
+    }
+}
+
+.result-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-self: flex-start;
+    margin-top: 0.5rem;
+}
+
 .result-notes {
     display: flex;
     flex-direction: column;
@@ -40,18 +218,24 @@
     justify-content: flex-end;
     width: 100%;
     min-height: 5.5rem;
-    margin-top: 0.25rem;
+    gap: 0.5rem;
 
     .notes-container {
         width: 100%;
+        max-width: 100%;
         font-weight: 600;
+
+        &.for-print {
+            font-weight: normal;
+            white-space: pre-wrap;
+        }
     }
 
-    div[class*="common-input-wrapper"] {
+    div[class~="common-input-wrapper"] {
         width: 100%;
         font-weight: 500;
 
-        div[class*="common-input-group"] {
+        div[class~="common-input-group"] {
             min-height: 3rem;
             max-height: 5rem;
             border-radius: 0.5rem;
@@ -70,12 +254,18 @@
 .header {
     display: flex;
     flex-direction: row;
+    gap: 0.5rem;
     justify-content: space-between;
     padding: 0.5rem 0;
-    border-bottom: solid 1px var(--pxt-content-accent);
-    // height: 2.625rem;
 
-    .rubric-name {
+    .checklist-name {
+        display: flex;
+        flex-direction: row;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 0.5rem;
+        flex-grow: 1;
+
         h2 {
             font-size: 1.5rem;
             font-weight: 500;
@@ -87,8 +277,8 @@
     .project-details {
         display: flex;
         flex-direction: row;
-        align-items: center;
-        justify-content: center;
+        align-items: flex-end;
+        justify-content: flex-start;
 
         h3 {
             margin: 0;
@@ -111,20 +301,8 @@
     }
 }
 
-@media print {
-    .no-print {
-        display: none !important;
-    }
-
-    .specific-criteria-result {
-        min-height: 5.5rem;
-    }
-
-    .result-notes {
-        height: 7rem;
-    }
-
-    .result-notes.no-print {
-        height: 1rem;
-    }
+.footer {
+    display: flex;
+    flex-direction: column;
+    margin-top: 0.5rem;
 }

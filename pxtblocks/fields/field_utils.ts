@@ -5,7 +5,7 @@ import { FieldMusicEditor } from "./field_musiceditor";
 import { FieldSpriteEditor } from "./field_sprite";
 import { FieldTileset } from "./field_tileset";
 
-export interface FieldCustom extends Blockly.Field {
+export interface FieldCustom {
     isFieldCustom_: boolean;
     saveOptions?(): pxt.Map<string | number | boolean>;
     restoreOptions?(map: pxt.Map<string | number | boolean>): void;
@@ -23,7 +23,7 @@ export interface FieldCustomDropdownOptions extends FieldCustomOptions {
 }
 
 export interface FieldCustomConstructor {
-    new(text: string, options: FieldCustomOptions, validator?: Function): FieldCustom;
+    new(text: string, options: FieldCustomOptions, validator?: Function): FieldCustom & Blockly.Field;
 }
 
 // Parsed format of data stored in the .data attribute of blocks
@@ -31,6 +31,14 @@ export interface PXTBlockData {
     commentRefs: string[];
     fieldData: pxt.Map<string>;
 }
+
+export interface AssetSaveState {
+    version: number;
+    assetType: pxt.AssetType;
+    jres: pxt.Map<pxt.JRes>;
+    assetId: string;
+}
+
 
 export namespace svg {
     export function hasClass(el: SVGElement, cls: string): boolean {
@@ -207,17 +215,6 @@ export function songToDataURI(song: pxt.assets.music.Song, width: number, height
     return canvas.toDataURL();
 }
 
-function deleteTilesetTileIfExists(ws: Blockly.Workspace, tile: pxt.sprite.legacy.LegacyTileInfo) {
-    const existing = ws.getVariablesOfType(pxt.sprite.BLOCKLY_TILESET_TYPE);
-
-    for (const model of existing) {
-        if (parseInt(model.name.substr(0, model.name.indexOf(";"))) === tile.projectId) {
-            ws.deleteVariableById(model.getId());
-            break;
-        }
-    }
-}
-
 export interface FieldEditorReference<U extends Blockly.Field> {
     block: Blockly.Block;
     field: string;
@@ -234,64 +231,77 @@ export function getAllBlocksWithTilesets(ws: Blockly.Workspace): FieldEditorRefe
 }
 
 export function needsTilemapUpgrade(ws: Blockly.Workspace) {
-    const allTiles = ws.getVariablesOfType(pxt.sprite.BLOCKLY_TILESET_TYPE).map(model => pxt.sprite.legacy.blocklyVariableToTile(model.name));
+    const allTiles = ws.getVariableMap()
+        .getVariablesOfType(pxt.sprite.BLOCKLY_TILESET_TYPE)
+        .map(model => pxt.sprite.legacy.blocklyVariableToTile(model.getName()));
     return !!allTiles.length;
 }
 
-export function upgradeTilemapsInWorkspace(ws: Blockly.Workspace, proj: pxt.TilemapProject) {
-    const allTiles = ws.getVariablesOfType(pxt.sprite.BLOCKLY_TILESET_TYPE).map(model => pxt.sprite.legacy.blocklyVariableToTile(model.name));
-    if (!allTiles.length) return;
+export function updateTilemapXml(dom: Element, proj: pxt.TilemapProject) {
+    let needsUpgrade = false;
 
-    try {
-        Blockly.Events.disable();
-        let customMapping: pxt.Tile[] = [];
+    const upgradedTileMapping: pxt.Map<pxt.Tile> = {};
 
-        for (const tile of allTiles) {
-            if (tile.qualifiedName) {
-                customMapping[tile.projectId] = proj.resolveTile(tile.qualifiedName);
+    for (const element of dom.children) {
+        if (element.tagName.toLowerCase() === "variables") {
+            const toRemove: Element[] = [];
+
+            for (const variable of element.children) {
+                if (variable.getAttribute("type") === pxt.sprite.BLOCKLY_TILESET_TYPE) {
+                    needsUpgrade = true;
+                    const varName = variable.textContent;
+                    const parsed = pxt.sprite.legacy.blocklyVariableToTile(varName);
+                    if (!parsed.qualifiedName) {
+                        const oldId = "myTiles.tile" + parsed.projectId;
+                        const newTile = proj.createNewTile(parsed.data, oldId);
+                        upgradedTileMapping[oldId] = newTile
+                    }
+                    toRemove.push(variable);
+                }
             }
-            else if (tile.data) {
-                customMapping[tile.projectId] = proj.createNewTile(tile.data, "myTiles.tile" + tile.projectId);
+
+            for (const variable of toRemove) {
+                variable.remove();
             }
-            deleteTilesetTileIfExists(ws, tile);
         }
+    }
 
-        const tilemaps = getAllBlocksWithTilemaps(ws);
+    if (!needsUpgrade) return;
 
-        for (const tilemap of tilemaps) {
-            const legacy = pxt.sprite.legacy.decodeTilemap(tilemap.ref.getInitText(), "typescript");
+    for (const field of dom.getElementsByTagName("field")) {
+        const value = field.textContent;
+
+        const trimmed = value.trim();
+        if (upgradedTileMapping[trimmed]) {
+            field.textContent = pxt.getTSReferenceForAsset(upgradedTileMapping[trimmed]);
+        }
+        else if (trimmed.startsWith(`tiles.createTilemap(`)) {
+            const legacy = pxt.sprite.legacy.decodeTilemap(value, "typescript");
 
             const mapping: pxt.Tile[] = [];
 
             const newData = new pxt.sprite.TilemapData(
                 legacy.tilemap, {
-                    tileWidth: legacy.tileset.tileWidth,
-                    tiles: legacy.tileset.tiles.map((t, index) => {
-                        if (t.projectId != null) {
-                            return customMapping[t.projectId];
-                        }
-                        if (!mapping[index]) {
-                            mapping[index] = proj.resolveTile(t.qualifiedName)
-                        }
+                tileWidth: legacy.tileset.tileWidth,
+                tiles: legacy.tileset.tiles.map((t, index) => {
+                    if (t.projectId != null) {
+                        return upgradedTileMapping["myTiles.tile" + t.projectId];
+                    }
+                    if (!mapping[index]) {
+                        mapping[index] = proj.resolveTile(t.qualifiedName)
+                    }
 
-                        return mapping[index];
-                    })
-                },
+                    return mapping[index];
+                })
+            },
                 legacy.layers
             );
 
-            tilemap.ref.setValue(pxt.sprite.encodeTilemap(newData, "typescript"));
-        }
+            const [id] = proj.createNewTilemapFromData(newData);
+            const asset = proj.lookupAsset(pxt.AssetType.Tilemap, id);
 
-        const tilesets = getAllBlocksWithTilesets(ws);
-
-        for (const tileset of tilesets) {
-            // Force a re-render. getSize() will rerender if necessary
-            tileset.ref.doValueUpdate_(tileset.ref.getValue());
-            tileset.ref.getSize();
+            field.textContent = pxt.getTSReferenceForAsset(asset);
         }
-    } finally {
-        Blockly.Events.enable();
     }
 }
 
@@ -405,6 +415,129 @@ export function getTemporaryAssets(workspace: Blockly.Workspace, type: pxt.Asset
     }
 }
 
+export function getAssetSaveState(asset: pxt.Asset) {
+    const serialized: AssetSaveState = {
+        version: 1,
+        assetType: asset.type,
+        assetId: asset.id,
+        jres: {}
+    };
+
+    const project = pxt.react.getTilemapProject();
+    if (asset.type === pxt.AssetType.Tilemap) {
+        const jres = project.getProjectTilesetJRes();
+
+        for (const key of Object.keys(jres)) {
+            if (key === "*") continue;
+            const entry = jres[key];
+            if (entry.mimeType === pxt.TILEMAP_MIME_TYPE) {
+                if (entry.id !== asset.id) {
+                    delete jres[key];
+                }
+            }
+            else {
+                const id = addDotToNamespace(jres["*"].namespace) + key;
+
+                if (!asset.data.tileset.tiles.some(tile => tile.id === id)) {
+                    delete jres[key];
+                }
+            }
+        }
+
+        serialized.jres = jres;
+    }
+    else {
+        const jres = asset.type === pxt.AssetType.Tile ?
+            project.getProjectTilesetJRes() :
+            project.getProjectAssetsJRes();
+
+        serialized.jres["*"] = jres["*"];
+        const [key, entry] = findEntryInJres(jres, asset.id);
+        serialized.jres[key] = entry;
+    }
+
+    return serialized;
+}
+
+
+export function loadAssetFromSaveState(serialized: AssetSaveState) {
+    let newId = serialized.assetId;
+    serialized.jres = inflateJRes(serialized.jres);
+
+    const globalProject = pxt.react.getTilemapProject();
+    const existing = globalProject.lookupAsset(serialized.assetType, serialized.assetId);
+
+    // if this id is already in the project, we need to check to see
+    // if it's the same as what we're loading. if it isn't, we'll need
+    // to create new assets
+    if (existing) {
+        // load the jres into a throwaway project so that we don't pollute
+        // the actual one
+        const tempProject = new pxt.TilemapProject();
+
+        // if this is a tilemap, we need the gallery populated in case
+        // there are gallery tiles in the tileset
+        tempProject.loadGallerySnapshot(globalProject.saveGallerySnapshot());
+
+        if (serialized.assetType === "tilemap" || serialized.assetType === "tile") {
+            tempProject.loadTilemapJRes(serialized.jres);
+        }
+        else {
+            tempProject.loadAssetsJRes(serialized.jres);
+        }
+
+        const tempAsset = tempProject.lookupAsset(serialized.assetType, serialized.assetId);
+
+        if (pxt.assetEquals(tempAsset, existing, true)) {
+            return existing;
+        }
+        else {
+            // the asset ids collided! first try to find another asset in the
+            // project that has the same value. for example, if the same code
+            // is copy/pasted multiple times then we will have already created
+            // a new asset for this code
+            const valueMatch = globalProject.lookupAssetByValue(tempAsset.type, tempAsset);
+
+            if (valueMatch) {
+                return valueMatch;
+            }
+
+            // no existing asset, so remap the id in the jres before loading
+            // it in the project. in the case of a tilemap, we only need to
+            // remap the tilemap id because loadTilemapJRes automatically remaps
+            // tile ids and resolves duplicates
+            newId = globalProject.generateNewID(serialized.assetType);
+
+            const [key, entry] = findEntryInJres(serialized.jres, serialized.assetId);
+            delete serialized.jres[key];
+
+            if (serialized.assetType === "tilemap") {
+                // tilemap ids don't have namespaces
+                entry.id = newId;
+                serialized.jres[newId] = entry;
+            }
+            else {
+                const [namespace, key] = newId.split(".");
+                if (addDotToNamespace(namespace) !== addDotToNamespace(serialized.jres["*"].namespace)) {
+                    entry.namespace = addDotToNamespace(namespace);
+                }
+                entry.id = newId;
+                serialized.jres[key] = entry;
+            }
+        }
+    }
+
+
+    if (serialized.assetType === "tilemap" || serialized.assetType === "tile") {
+        globalProject.loadTilemapJRes(serialized.jres, true);
+    }
+    else {
+        globalProject.loadAssetsJRes(serialized.jres);
+    }
+
+    return globalProject.lookupAsset(serialized.assetType, newId);
+}
+
 export const FIELD_EDITOR_OPEN_EVENT_TYPE = "field_editor_open";
 
 export class FieldEditorOpenEvent extends Blockly.Events.UiBase {
@@ -478,4 +611,81 @@ export function setBlockDataForField(block: Blockly.Block, field: string, data: 
 
 export function getBlockDataForField(block: Blockly.Block, field: string) {
     return getBlockData(block).fieldData[field];
+}
+
+export function deleteBlockDataForField(block: Blockly.Block, field: string) {
+    const blockData = getBlockData(block);
+    delete blockData.fieldData[field];
+    setBlockData(block, blockData);
+}
+
+function addDotToNamespace(namespace: string) {
+    if (namespace.endsWith(".")) {
+        return namespace;
+    }
+    return namespace + ".";
+}
+
+function findEntryInJres(jres: pxt.Map<any>, assetId: string): [string, any] {
+    const defaultNamespace = jres["*"].namespace;
+
+    for (const key of Object.keys(jres)) {
+        if (key === "*") continue;
+
+        const entry = jres[key];
+        let id: string;
+
+        if (entry.id) {
+            if (entry.namespace) {
+                id = addDotToNamespace(entry.namespace) + entry.id;
+            }
+            else {
+                id = entry.id;
+            }
+        }
+        else if (entry.namespace) {
+            id = addDotToNamespace(entry.namespace) + key;
+        }
+        else {
+            id = addDotToNamespace(defaultNamespace) + key;
+        }
+
+        if (id === assetId) {
+            return [key, jres[key]];
+        }
+    }
+
+    // should never happen
+    return undefined;
+}
+
+// simply replaces the string entries with objects; doesn't do a full inflate like pxt.inflateJRes
+function inflateJRes(jres: pxt.Map<pxt.JRes | string>): pxt.Map<pxt.JRes> {
+    const meta = jres["*"] as pxt.JRes;
+    const result: pxt.Map<pxt.JRes> = {
+        "*": meta
+    };
+
+    for (const key of Object.keys(jres)) {
+        if (key === "*") continue;
+
+        const entry = jres[key];
+        if (typeof entry === "string") {
+            result[key] = {
+                id: undefined,
+                data: entry,
+                mimeType: meta.mimeType
+            }
+        }
+        else {
+            result[key] = entry;
+        }
+    }
+
+    return result;
+}
+
+export function clearDropDownDiv() {
+    Blockly.DropDownDiv.clearContent();
+    Blockly.DropDownDiv.getContentDiv().style.height = "";
 }

@@ -45,6 +45,7 @@ export class FieldMatrix extends Blockly.Field implements FieldCustom {
     private elt: SVGSVGElement;
 
     private currentDragState_: boolean;
+    private selected: number[] | undefined = undefined;
 
     constructor(text: string, params: any, validator?: Blockly.FieldValidator) {
         super(text, validator);
@@ -80,17 +81,121 @@ export class FieldMatrix extends Blockly.Field implements FieldCustom {
             this.scale = 0.9;
     }
 
+    private keyHandler(e: KeyboardEvent) {
+        if (!this.selected) {
+            return
+        }
+        const [x, y] = this.selected;
+        const ctrlCmd = pxt.BrowserUtils.isMac() ? e.metaKey : e.ctrlKey;
+        switch(e.code) {
+            case "KeyW":
+            case "ArrowUp": {
+                if (y !== 0) {
+                    this.selected = [x, y - 1]
+                }
+                break;
+            }
+            case "KeyS":
+            case "ArrowDown": {
+                if (y !== this.cells[0].length - 1) {
+                    this.selected = [x, y + 1]
+                }
+                break;
+            }
+            case "KeyA":
+            case "ArrowLeft": {
+                if (x !== 0) {
+                    this.selected = [x - 1, y]
+                } else if (y !== 0){
+                    this.selected = [this.matrixWidth - 1, y - 1]
+                }
+                break;
+            }
+            case "KeyD":
+            case "ArrowRight": {
+                if (x !== this.cells.length - 1) {
+                    this.selected = [x + 1, y]
+                } else if (y !== this.matrixHeight - 1) {
+                    this.selected = [0, y + 1]
+                }
+                break;
+            }
+            case "Home": {
+                if (ctrlCmd) {
+                    this.selected = [0, 0]
+                } else {
+                    this.selected = [0, y]
+                }
+                break;
+            }
+            case "End": {
+                if (ctrlCmd) {
+                    this.selected = [this.matrixWidth - 1, this.matrixHeight - 1]
+                } else {
+                    this.selected = [this.matrixWidth - 1, y]
+                }
+                break;
+            }
+            case "Enter":
+            case "Space": {
+                this.toggleRect(x, y, !this.cellState[x][y]);
+                break;
+            }
+            case "Escape": {
+                (this.sourceBlock_.workspace as Blockly.WorkspaceSvg).markFocused();
+                return;
+            }
+            default: {
+                return
+            }
+        }
+        const [newX, newY] = this.selected;
+        this.setFocusIndicator(this.cells[newX][newY], this.cellState[newX][newY]);
+        this.elt.setAttribute('aria-activedescendant', `${this.sourceBlock_.id}:${newX}${newY}`);
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    private clearSelection() {
+        if (this.selected) {
+            this.setFocusIndicator();
+            this.selected = undefined;
+        }
+        this.elt.removeAttribute('aria-activedescendant');
+    }
+
+    private removeKeyboardFocusHandlers() {
+        this.elt.removeEventListener("keydown", this.keyHandler)
+        this.elt.removeEventListener("blur", this.blurHandler)
+    }
+
+    private blurHandler() {
+        this.removeKeyboardFocusHandlers();
+        this.clearSelection();
+    }
+
+    private setFocusIndicator(cell?: SVGRectElement, ledOn?: boolean) {
+        this.cells.forEach(cell => cell.forEach(cell => cell.nextElementSibling.firstElementChild.classList.remove("selectedLedOn", "selectedLedOff")));
+        if (cell) {
+            const className = ledOn ? "selectedLedOn" : "selectedLedOff"
+            cell.nextElementSibling.firstElementChild.classList.add(className);
+        }
+    }
+
     /**
      * Show the inline free-text editor on top of the text.
      * @private
      */
     showEditor_() {
-        // Intentionally left empty
+        this.selected = [0, 0];
+        this.setFocusIndicator(this.cells[0][0], this.cellState[0][0])
+        this.elt.setAttribute('aria-activedescendant', this.sourceBlock_.id + ":00");
+        this.elt.focus();
     }
 
     private initMatrix() {
         if (!this.sourceBlock_.isInsertionMarker()) {
-            this.elt = pxsim.svg.parseString(`<svg xmlns="http://www.w3.org/2000/svg" id="field-matrix" />`);
+            this.elt = pxsim.svg.parseString(`<svg xmlns="http://www.w3.org/2000/svg" id="field-matrix" class="blocklyMatrix" tabindex="-1" role="grid" aria-label="${lf("LED grid")}" />`);
 
             // Initialize the matrix that holds the state
             for (let i = 0; i < this.matrixWidth; i++) {
@@ -104,9 +209,10 @@ export class FieldMatrix extends Blockly.Field implements FieldCustom {
             this.restoreStateFromString();
 
             // Create the cells of the matrix that is displayed
-            for (let i = 0; i < this.matrixWidth; i++) {
-                for (let j = 0; j < this.matrixHeight; j++) {
-                    this.createCell(i, j);
+            for (let y = 0; y < this.matrixHeight; y++) {
+                const row = this.createRow()
+                for (let x = 0; x < this.matrixWidth; x++) {
+                    this.createCell(x, y, row);
                 }
             }
 
@@ -132,6 +238,10 @@ export class FieldMatrix extends Blockly.Field implements FieldCustom {
             }
 
             this.fieldGroup_.replaceChild(this.elt, this.fieldGroup_.firstChild);
+            if (!this.sourceBlock_.isInFlyout) {
+                this.elt.addEventListener("keydown", this.keyHandler.bind(this));
+                this.elt.addEventListener("blur", this.blurHandler.bind(this));
+            }
         }
     }
 
@@ -164,14 +274,36 @@ export class FieldMatrix extends Blockly.Field implements FieldCustom {
         ev.preventDefault();
     }
 
-    private createCell(x: number, y: number) {
+    public updateEditable() {
+        let group = this.fieldGroup_;
+        if (!this.EDITABLE || !group) {
+            return;
+        }
+
+        if (this.sourceBlock_.isEditable()) {
+            this.fieldGroup_.setAttribute("cursor", "pointer");
+        } else {
+            this.fieldGroup_.removeAttribute("cursor");
+        }
+
+        super.updateEditable();
+    }
+
+    private createRow() {
+        return pxsim.svg.child(this.elt, "g", { 'role': 'row' });
+    }
+
+    private createCell(x: number, y: number, row: SVGElement) {
         const tx = this.scale * x * (FieldMatrix.CELL_WIDTH + FieldMatrix.CELL_HORIZONTAL_MARGIN) + FieldMatrix.CELL_HORIZONTAL_MARGIN + this.getYAxisWidth();
         const ty = this.scale * y * (FieldMatrix.CELL_WIDTH + FieldMatrix.CELL_VERTICAL_MARGIN) + FieldMatrix.CELL_VERTICAL_MARGIN;
 
-        const cellG = pxsim.svg.child(this.elt, "g", { transform: `translate(${tx} ${ty})` }) as SVGGElement;
+        const cellG = pxsim.svg.child(row, "g", { transform: `translate(${tx} ${ty})`, 'role': 'gridcell' });
         const cellRect = pxsim.svg.child(cellG, "rect", {
+            'id': `${this.sourceBlock_.id}:${x}${y}`, // For aria-activedescendant
             'class': `blocklyLed${this.cellState[x][y] ? 'On' : 'Off'}`,
-            'cursor': 'pointer',
+            'aria-label': lf("LED"),
+            'role': 'switch',
+            'aria-checked': this.cellState[x][y].toString(),
             width: this.scale * FieldMatrix.CELL_WIDTH, height: this.scale * FieldMatrix.CELL_WIDTH,
             fill: this.getColor(x, y),
             'data-x': x,
@@ -179,15 +311,31 @@ export class FieldMatrix extends Blockly.Field implements FieldCustom {
             rx: Math.max(2, this.scale * FieldMatrix.CELL_CORNER_RADIUS) }) as SVGRectElement;
         this.cells[x][y] = cellRect;
 
+        // Borders and box-shadow do not work in this context and outlines do not follow border-radius.
+        // Stroke is harder to manage given the difference in stroke for an LED when it is on vs off.
+        // This foreignObject/div is used to create a focus indicator for the LED when selected via keyboard navigation.
+        const foreignObject = pxsim.svg.child(cellG, "foreignObject", {
+            transform: 'translate(-4, -4)',
+            width: this.scale * FieldMatrix.CELL_WIDTH + 8,
+            height: this.scale * FieldMatrix.CELL_WIDTH + 8,
+        });
+        foreignObject.style.pointerEvents = "none";
+        const div = document.createElement("div");
+        div.classList.add("blocklyLedFocusIndicator");
+        div.style.borderRadius = `${Math.max(2, this.scale * FieldMatrix.CELL_CORNER_RADIUS)}px`;
+        foreignObject.append(div);
+
         if ((this.sourceBlock_.workspace as any).isFlyout) return;
 
         pxsim.pointerEvents.down.forEach(evid => cellRect.addEventListener(evid, (ev: MouseEvent) => {
+            if (!this.sourceBlock_.isEditable()) return;
+
             const svgRoot = (this.sourceBlock_ as Blockly.BlockSvg).getSvgRoot();
             this.currentDragState_ = !this.cellState[x][y];
 
             // select and hide chaff
             Blockly.hideChaff();
-            (this.sourceBlock_ as Blockly.BlockSvg).select();
+            Blockly.common.setSelected(this.sourceBlock_ as Blockly.BlockSvg);
 
             this.toggleRect(x, y);
             pxsim.pointerEvents.down.forEach(evid => svgRoot.addEventListener(evid, this.dontHandleMouseEvent_));
@@ -201,15 +349,20 @@ export class FieldMatrix extends Blockly.Field implements FieldCustom {
 
             ev.stopPropagation();
             ev.preventDefault();
+            // Clear event listeners and selection used for keyboard navigation.
+            this.removeKeyboardFocusHandlers();
+            this.clearSelection();
         }, false));
     }
 
-    private toggleRect = (x: number, y: number) => {
-        this.cellState[x][y] = this.currentDragState_;
+    private toggleRect = (x: number, y: number, value?: boolean) => {
+        this.cellState[x][y] = value ?? this.currentDragState_;
         this.updateValue();
     }
 
     private handleRootMouseMoveListener = (ev: MouseEvent) => {
+        if (!this.sourceBlock_.isEditable()) return;
+
         let clientX;
         let clientY;
         if ((ev as any).changedTouches && (ev as any).changedTouches.length == 1) {
@@ -244,6 +397,7 @@ export class FieldMatrix extends Blockly.Field implements FieldCustom {
         cellRect.setAttribute("fill", this.getColor(x, y));
         cellRect.setAttribute("fill-opacity", this.getOpacity(x, y));
         cellRect.setAttribute('class', `blocklyLed${this.cellState[x][y] ? 'On' : 'Off'}`);
+        cellRect.setAttribute("aria-checked", this.cellState[x][y].toString());
     }
 
     setValue(newValue: string | number, restoreState = true) {
@@ -269,10 +423,9 @@ export class FieldMatrix extends Blockly.Field implements FieldCustom {
             this.initMatrix();
         }
 
-
         // The height and width must be set by the render function
         this.size_.height = this.scale * Number(this.matrixHeight) * (FieldMatrix.CELL_WIDTH + FieldMatrix.CELL_VERTICAL_MARGIN) + FieldMatrix.CELL_VERTICAL_MARGIN * 2 + FieldMatrix.BOTTOM_MARGIN + this.getXAxisHeight()
-        this.size_.width = this.scale * Number(this.matrixWidth) * (FieldMatrix.CELL_WIDTH + FieldMatrix.CELL_HORIZONTAL_MARGIN) + this.getYAxisWidth();
+        this.size_.width = this.scale * Number(this.matrixWidth) * (FieldMatrix.CELL_WIDTH + FieldMatrix.CELL_HORIZONTAL_MARGIN) + FieldMatrix.CELL_HORIZONTAL_MARGIN + this.getYAxisWidth();
     }
 
     // The return value of this function is inserted in the code
@@ -348,3 +501,31 @@ function removeQuotes(str: string) {
     }
     return str;
 }
+
+Blockly.Css.register(`
+.blocklyMatrix:focus-visible {
+    outline: none;
+}
+
+.blocklyMatrix .blocklyLedFocusIndicator {
+    border: 4px solid transparent;
+    height: 100%;
+}
+
+.blocklyMatrix .blocklyLedFocusIndicator.selectedLedOn,
+.blocklyMatrix .blocklyLedFocusIndicator.selectedLedOff {
+    border-color: white;
+    transform: translateZ(0);
+}
+
+.blocklyMatrix .blocklyLedFocusIndicator.selectedLedOn:after {
+    content: "";
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border: 2px solid black;
+    border-radius: inherit;
+}
+`)

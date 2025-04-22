@@ -1,5 +1,43 @@
 # Microsoft MakeCode Blog
 
+## [Summer 2025 – MakeCode Professional Development](/blog/csp/summer-pd-2025)
+
+April showers bring May flowers. For many of us, we are on the home stretch of the academic year already! Which is a good time to start planning for summer training and professional development opportunities.
+
+**[Continue reading this blog post](/blog/csp/summer-pd-2025)**
+
+## [MakeCode Arcade 2025 Update](/blog/arcade/update-mar-2025)
+
+March 24th, 2025 by [Jaqster](https://github.com/jaqster)
+
+Wow, I can't believe it's been 2 years since we shipped an update to MakeCode Arcade! We had over 800 open issues and many pending features...
+
+**[Continue reading this blog post](/blog/arcade/update-mar-2025)**
+
+## [Display shield extension/simulator for the micro:bit](/blog/microbit/display-shield)
+
+February 3, 2025 by [Thomas Ball](https://github.com/thomasjball)
+
+With the new display shield extension, you can now use Arcade shields for the micro:bit V2 in https://makecode.microbit.org/beta, with simulator support!
+
+**[Continue reading this blog post](/blog/microbit/display-shield)**
+
+## [MakeCode Code Evaluation Tool Beta](/blog/tools/code-eval-tool)
+
+January 14th, 2025 by [Jaqster](https://github.com/jaqster)
+
+The year 2025 is already off to a great start with the Beta release of a new tool for Teachers! **MakeCode Code Evaluation** is an online tool for teachers to help them understand and evaluate student programs.
+
+**[Continue reading this blog post](/blog/tools/code-eval-tool)**
+
+## [MakeCode for the micro:bit 2024 Update](/blog/microbit/2024-update)
+
+September 4, 2024 by [Jaqster](https://github.com/jaqster)
+
+Today we are releasing our annual update for [MakeCode for the micro:bit](https://makecode.microbit.org). This year we have been focusing on some core foundational and infrastructure-level work...
+
+**[Continue reading this blog post](/blog/microbit/2024-update)**
+
 ## [MakeCode Arcade - now more ways to play!](/blog/arcade/arcade-on-microbit-xbox)
 
 November 6th, 2023 by [Jaqster](https://github.com/jaqster)

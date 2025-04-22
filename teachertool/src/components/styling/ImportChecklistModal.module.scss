@@ -1,0 +1,21 @@
+.import-checklist-modal {
+    div[class*="common-modal-body"] {
+        background-color: var(--pxt-neutral-background1);
+        color: var(--pxt-neutral-foreground1);
+        justify-content: center;
+    }
+
+    .import-checklist {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+
+        .checklist-preview-container {
+            max-height: 50vh;
+            overflow-y: auto;
+            border: 2px solid var(--pxt-tertiary-background);
+            border-radius: 0.3rem;
+            background-color: var(--pxt-neutral-alpha10);
+        }
+    }
+}

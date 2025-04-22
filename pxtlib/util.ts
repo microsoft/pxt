@@ -871,6 +871,11 @@ namespace ts.pxtc.Util {
     export function requestAsync(options: HttpRequestOptions): Promise<HttpResponse> {
         //if (debugHttpRequests)
         //    pxt.debug(`>> ${options.method || "GET"} ${options.url.replace(/[?#].*/, "...")}`); // don't leak secrets in logs
+        const measureParams: pxt.Map<string> = {
+            "url": `${encodeURI(options.url.replace(/[?#].*/, "..."))}`, // don't leak secrets in logs
+            "method": `${options.method || "GET"}`
+        };
+        pxt.perf.measureStart(Measurements.NetworkRequest)
         return httpRequestCoreAsync(options)
             .then(resp => {
                 //if (debugHttpRequests)
@@ -887,6 +892,24 @@ namespace ts.pxtc.Util {
                 if (resp.text && /application\/json/.test(resp.headers["content-type"] as string))
                     resp.json = U.jsonTryParse(resp.text)
                 return resp
+            })
+            .then(resp => {
+                const contentLength = resp.headers["content-length"];
+                if (contentLength) {
+                    measureParams["sizeInBytes"] = `${contentLength}`;
+                } else if (resp.text) {
+                    if (pxt.perf.isEnabled()) {
+                        // only do this work if perf measurement is actually enabled
+                        const encoder = new TextEncoder();
+                        const encoded = encoder.encode(resp.text);
+                        measureParams["sizeInBytes"] = encoded.length + "";
+                    }
+                }
+                measureParams["statusCode"] = `${resp.statusCode}`;
+                return resp
+            })
+            .finally(() => {
+                pxt.perf.measureEnd(Measurements.NetworkRequest, measureParams)
             })
     }
 
@@ -1104,6 +1127,7 @@ namespace ts.pxtc.Util {
                 case "xml": return "application/xml";
                 case "m4a": return "audio/m4a";
                 case "mp3": return "audio/mp3";
+                case "wasm": return "application/wasm";
                 default: return "application/octet-stream";
             }
         else return "application/octet-stream";
@@ -1120,14 +1144,13 @@ namespace ts.pxtc.Util {
         return f() + f() + "-" + f() + "-4" + f().slice(-3) + "-" + f() + "-" + f() + f() + f();
     }
 
-    export function downloadLiveTranslationsAsync(lang: string, filename: string, branch?: string, etag?: string): Promise<pxt.Map<string>> {
+    export function downloadLiveTranslationsAsync(lang: string, filename: string, etag?: string): Promise<pxt.Map<string>> {
         // hitting the cloud
         function downloadFromCloudAsync(strings?: pxt.Map<string>) {
-            pxt.debug(`downloading translations for ${lang} ${filename} ${branch || ""}`);
+            pxt.debug(`downloading translations for ${lang} ${filename}`);
             let host = pxt.BrowserUtils.isLocalHost() || pxt.webConfig.isStatic ? "https://makecode.com/api/" : ""
-            // https://pxt.io/api/translations?filename=strings.json&lang=pl&approved=true&branch=v0
+            // https://pxt.io/api/translations?filename=strings.json&lang=pl&approved=true
             let url = `${host}translations?lang=${encodeURIComponent(lang)}&filename=${encodeURIComponent(filename)}&approved=true`;
-            if (branch) url += '&branch=' + encodeURIComponent(branch);
             const headers: pxt.Map<string> = {};
             if (etag && !pxt.Cloud.useCdnApi()) headers["If-None-Match"] = etag;
             return (host ? requestAsync : pxt.Cloud.apiRequestWithCdnAsync)({ url, headers }).then(resp => {
@@ -1136,20 +1159,20 @@ namespace ts.pxtc.Util {
                     // store etag and translations
                     etag = resp.headers["etag"] as string || "";
                     return pxt.BrowserUtils.translationDbAsync()
-                        .then(db => db.setAsync(lang, filename, branch, etag, resp.json || strings))
+                        .then(db => db.setAsync(lang, filename, etag, resp.json || strings))
                         .then(() => resp.json || strings);
                 }
 
                 return resp.json;
             }, e => {
-                console.log(`failed to load translations from ${url}`)
+                pxt.log(`failed to load translations from ${url}`)
                 return undefined;
             })
         }
 
         // check for cache
         return pxt.BrowserUtils.translationDbAsync()
-            .then(db => db.getAsync(lang, filename, branch))
+            .then(db => db.getAsync(lang, filename))
             .then((entry: pxt.BrowserUtils.ITranslationDbEntry) => {
                 // if cached, return immediately
                 if (entry) {
@@ -1200,7 +1223,9 @@ namespace ts.pxtc.Util {
         "fo": { englishName: "Faroese", localizedName: "føroyskt" },
         "fr": { englishName: "French", localizedName: "Français" },
         "fr-CA": { englishName: "French (Canada)", localizedName: "Français (Canada)" },
+        "ga-IE": { englishName: "Irish", localizedName: "Gaeilge" },
         "gl": { englishName: "Galician", localizedName: "galego" },
+        "gn": { englishName: "Guarani", localizedName: "Avañe'ẽ" },
         "gu-IN": { englishName: "Gujarati", localizedName: "ગુજરાતી" },
         "haw": { englishName: "Hawaiian", localizedName: "ʻŌlelo Hawaiʻi" },
         "hi": { englishName: "Hindi", localizedName: "हिन्दी" },
@@ -1278,8 +1303,6 @@ namespace ts.pxtc.Util {
         targetId: string;
         baseUrl: string;
         code: string;
-        pxtBranch: string;
-        targetBranch: string;
         force?: boolean;
     }
 
@@ -1287,8 +1310,6 @@ namespace ts.pxtc.Util {
         const {
             targetId,
             baseUrl,
-            pxtBranch,
-            targetBranch,
             force,
         } = opts;
         let { code } = opts;
@@ -1303,8 +1324,7 @@ namespace ts.pxtc.Util {
         pxt.debug(`loc: ${code}`);
 
         const liveUpdateStrings = pxt.Util.liveLocalizationEnabled()
-        return downloadTranslationsAsync(targetId, baseUrl, code,
-            pxtBranch, targetBranch, liveUpdateStrings,
+        return downloadTranslationsAsync(targetId, baseUrl, code, liveUpdateStrings,
             ts.pxtc.Util.TranslationsKind.Editor)
             .then((translations) => {
                 if (translations) {
@@ -1315,8 +1335,7 @@ namespace ts.pxtc.Util {
 
                 // Download api translations
                 return ts.pxtc.Util.downloadTranslationsAsync(
-                    targetId, baseUrl, code,
-                    pxtBranch, targetBranch, liveUpdateStrings,
+                    targetId, baseUrl, code, liveUpdateStrings,
                     ts.pxtc.Util.TranslationsKind.Apis)
                     .then(trs => {
                         if (trs)
@@ -1332,7 +1351,7 @@ namespace ts.pxtc.Util {
         SkillMap
     }
 
-    export function downloadTranslationsAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live: boolean, translationKind?: TranslationsKind): Promise<pxt.Map<string>> {
+    export function downloadTranslationsAsync(targetId: string, baseUrl: string, code: string, live: boolean, translationKind?: TranslationsKind): Promise<pxt.Map<string>> {
         translationKind = translationKind || TranslationsKind.Editor;
         code = normalizeLanguageCode(code)[0];
         if (code === "en-US" || code === "en") // shortcut
@@ -1343,22 +1362,22 @@ namespace ts.pxtc.Util {
             return Promise.resolve(translationsCache()[translationsCacheId]);
         }
 
-        let stringFiles: { branch: string, staticName: string, path: string }[];
+        let stringFiles: { staticName: string, path: string }[];
         switch (translationKind) {
             case TranslationsKind.Editor:
                 stringFiles = [
-                    { branch: pxtBranch, staticName: "strings.json", path: "strings.json" },
-                    { branch: targetBranch, staticName: "target-strings.json", path: targetId + "/target-strings.json" },
+                    { staticName: "strings.json", path: "strings.json" },
+                    { staticName: "target-strings.json", path: targetId + "/target-strings.json" },
                 ];
                 break;
             case TranslationsKind.Sim:
-                stringFiles = [{ branch: targetBranch, staticName: "sim-strings.json", path: targetId + "/sim-strings.json" }];
+                stringFiles = [{ staticName: "sim-strings.json", path: targetId + "/sim-strings.json" }];
                 break;
             case TranslationsKind.Apis:
-                stringFiles = [{ branch: targetBranch, staticName: "bundled-strings.json", path: targetId + "/bundled-strings.json" }];
+                stringFiles = [{ staticName: "bundled-strings.json", path: targetId + "/bundled-strings.json" }];
                 break;
             case TranslationsKind.SkillMap:
-                stringFiles = [{ branch: targetBranch, staticName: "skillmap-strings.json", path: "/skillmap-strings.json" }];
+                stringFiles = [{ staticName: "skillmap-strings.json", path: "/skillmap-strings.json" }];
                 break;
         }
         let translations: pxt.Map<string>;
@@ -1375,9 +1394,9 @@ namespace ts.pxtc.Util {
         if (live) {
             let errorCount = 0;
 
-            const pAll = U.promiseMapAllSeries(stringFiles, (file) => downloadLiveTranslationsAsync(code, file.path, file.branch)
+            const pAll = U.promiseMapAllSeries(stringFiles, (file) => downloadLiveTranslationsAsync(code, file.path)
                 .then(mergeTranslations, e => {
-                    console.log(e.message);
+                    pxt.log(e.message);
                     ++errorCount;
                 })
             );
@@ -1391,7 +1410,7 @@ namespace ts.pxtc.Util {
                 if (errorCount === stringFiles.length || !translations) {
                     // Retry with non-live translations by setting live to false
                     pxt.tickEvent("translations.livetranslationsfailed");
-                    return downloadTranslationsAsync(targetId, baseUrl, code, pxtBranch, targetBranch, false, translationKind);
+                    return downloadTranslationsAsync(targetId, baseUrl, code, false, translationKind);
                 }
 
                 return Promise.resolve(translations);
@@ -1408,7 +1427,7 @@ namespace ts.pxtc.Util {
                     translationsCache()[translationsCacheId] = translations;
                 }
             }, e => {
-                console.error('failed to load localizations')
+                pxt.error('failed to load localizations')
             })
                 .then(() => translations);
         }
@@ -1424,6 +1443,14 @@ namespace ts.pxtc.Util {
 
     export function uncapitalize(n: string): string {
         return (n || "").split(/(?=[A-Z])/g).join(" ").toLowerCase();
+    }
+
+    export function camelCaseToLowercaseWithSpaces(n: string) {
+        return n.replace(/([A-Z])/gm, ' $1').toLocaleLowerCase().trim();
+    }
+
+    export function snakeCaseToLowercaseWithSpaces(n: string) {
+        return n.replace(/_/g, ' ').toLocaleLowerCase().trim();
     }
 
     export function range(len: number) {
@@ -1808,6 +1835,64 @@ namespace ts.pxtc.Util {
     export function fromUTF8Array(s: Uint8Array) {
         return (new TextDecoder()).decode(s);
     }
+
+    export function getHomeUrl() {
+        // relprefix looks like "/beta---", need to chop off the hyphens and slash
+        let rel = pxt.webConfig?.relprefix.substr(0, pxt.webConfig.relprefix.length - 3);
+        if (pxt.appTarget.appTheme.homeUrl && rel) {
+            if (pxt.appTarget.appTheme.homeUrl?.lastIndexOf("/") === pxt.appTarget.appTheme.homeUrl?.length - 1) {
+                rel = rel.substr(1);
+            }
+            return pxt.appTarget.appTheme.homeUrl + rel;
+        }
+        else {
+            return pxt.appTarget.appTheme.homeUrl;
+        }
+    }
+
+    export function isExperienceSupported(experienceId: string) {
+        const supportedExps = pxt.appTarget?.appTheme?.supportedExperiences?.map((e) => e.toLocaleLowerCase());
+        const cleanedExpId = experienceId.toLocaleLowerCase();
+        const isSupported = supportedExps?.includes(cleanedExpId) ?? false;
+        return isSupported;
+    }
+
+    export function ocvEnabled() {
+        return pxt.webConfig?.ocv?.appId && pxt.webConfig?.ocv?.iframeEndpoint;
+    }
+
+    // https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
+    export function bresenhamLine(x0: number, y0: number, x1: number, y1: number, handler: (x: number, y: number) => void) {
+        const dx = x1 - x0;
+        const dy = y1 - y0;
+
+        if (dx === 0) {
+            const startY = dy >= 0 ? y0 : y1;
+            const endY = dy >= 0 ? y1 : y0;
+            for (let y = startY; y <= endY; y++) {
+                handler(x0, y);
+            }
+            return;
+        }
+
+        const xStep = dx > 0 ? 1 : -1;
+        const yStep = dy > 0 ? 1 : -1;
+        const dErr = Math.abs(dy / dx);
+
+        let err = 0;
+        let y = y0;
+        for (let x = x0; xStep > 0 ? x <= x1 : x >= x1; x += xStep) {
+            handler(x, y);
+            err += dErr;
+            while (err >= 0.5) {
+                if (yStep > 0 ? y <= y1 : y >= y1) {
+                    handler(x, y);
+                }
+                y += yStep;
+                err -= 1;
+            }
+        }
+    }
 }
 
 namespace ts.pxtc.BrowserImpl {
@@ -2001,9 +2086,9 @@ namespace ts.pxtc.BrowserImpl {
     }
 
     export function sha256string(s: string) {
-        pxt.perf.measureStart("sha256buffer")
+        pxt.perf.measureStart(Measurements.Sha256Buffer)
         const res = sha256buffer(Util.toUTF8Array(s));
-        pxt.perf.measureEnd("sha256buffer")
+        pxt.perf.measureEnd(Measurements.Sha256Buffer)
         return res;
     }
 }
@@ -2281,14 +2366,14 @@ namespace ts.pxtc.jsonPatch.tests {
             ];
 
         for (const test of tests) {
-            console.log(test.comment);
+            pxt.log(test.comment);
             const patches = ts.pxtc.jsonPatch.diff(test.obja, test.objb);
             if (deepEqual(patches, test.expected)) {
-                console.log("succeeded");
+                pxt.log("succeeded");
             } else {
-                console.error("FAILED");
-                console.log("got", patches);
-                console.log("exp", test.expected);
+                pxt.error("FAILED");
+                pxt.log("got", patches);
+                pxt.log("exp", test.expected);
             }
         }
     }
@@ -2347,16 +2432,16 @@ namespace ts.pxtc.jsonPatch.tests {
             ];
 
         for (const test of tests) {
-            console.log(test.comment);
+            pxt.log(test.comment);
             ts.pxtc.jsonPatch.patchInPlace(test.obj, test.patches);
             const equal = deepEqual(test.obj, test.expected);
             const succeeded = equal && test.validate ? test.validate(test.obj) : true;
             if (succeeded) {
-                console.log("succeeded");
+                pxt.log("succeeded");
             } else if (test.expected) {
-                console.error("FAILED");
-                console.log("got", test.obj);
-                console.log("exp", test.expected);
+                pxt.error("FAILED");
+                pxt.log("got", test.obj);
+                pxt.log("exp", test.expected);
             }
         }
     }

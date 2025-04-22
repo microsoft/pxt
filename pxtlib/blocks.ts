@@ -126,7 +126,8 @@ namespace pxt.blocks {
             handlerArgs: []
         };
 
-        const instance = (fn.kind == ts.pxtc.SymbolKind.Method || fn.kind == ts.pxtc.SymbolKind.Property) && !fn.attributes.defaultInstance;
+        let instance = (fn.kind == ts.pxtc.SymbolKind.Method || fn.kind == ts.pxtc.SymbolKind.Property) && !fn.attributes.defaultInstance && !fn.isStatic;
+        if (typeof fn.isInstance === "boolean" && !fn.attributes?.defaultInstance) instance = fn.isInstance;
         const hasBlockDef = !!fn.attributes._def;
         const defParameters = hasBlockDef ? fn.attributes._def.parameters.slice(0) : undefined;
         const optionalStart = hasBlockDef ? defParameters.length : (fn.parameters ? fn.parameters.length : 0);
@@ -151,10 +152,10 @@ namespace pxt.blocks {
             const defName = def.name;
             const isVar = !def.shadowBlockId || def.shadowBlockId === "variables_get";
 
-            let defaultValue: string;
+            let defaultValue = fn.attributes.paramDefl[defName] || fn.attributes.paramDefl["this"];
 
             if (isVar) {
-                defaultValue = def.varName || fn.attributes.paramDefl[defName] || fn.attributes.paramDefl["this"];
+                defaultValue = def.varName || defaultValue;
             }
 
             res.thisParameter = {

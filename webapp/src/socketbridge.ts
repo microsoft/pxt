@@ -1,6 +1,5 @@
 import Cloud = pxt.Cloud;
 import U = pxt.Util;
-import { isNativeHost } from "./cmds";
 
 let iface: pxt.worker.Iface
 let bridgeBySocket: pxt.Map<TCPSocket> = {}
@@ -19,7 +18,7 @@ function onOOB(v: OOB) {
     if (b) {
         b.onOOB(v)
     } else {
-        console.error("Dropping data for " + v.result.socket)
+        pxt.error("Dropping data for " + v.result.socket)
     }
 }
 

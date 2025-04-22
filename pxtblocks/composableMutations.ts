@@ -253,7 +253,7 @@ export function initExpandableBlock(info: pxtc.BlocksInfo, b: Blockly.Block, def
 
         updateButtons();
         if (variableInlineInputs) b.setInputsInline(visibleOptions < inlineInputModeLimit);
-        if (!skipRender) (b as Blockly.BlockSvg).render();
+        if (!skipRender) (b as Blockly.BlockSvg).queueRender();
     }
 
     function addButton(name: string, uri: string, alt: string, delta: number) {
@@ -345,9 +345,29 @@ export function initExpandableBlock(info: pxtc.BlocksInfo, b: Blockly.Block, def
         Blockly.Events.disable();
 
         try {
-            const nb = Blockly.Xml.domToBlock(shadow, b.workspace);
-            if (nb) {
-                input.connection.connect(nb.outputConnection);
+            let newBlock: Blockly.Block;
+            if (!b.initialized) {
+                // use domToBlockInternal so that we don't trigger a render while
+                // the block is still being initialized
+                newBlock = Blockly.Xml.domToBlockInternal(shadow, b.workspace);
+
+                // we don't know at this time whether the parent block is an insertion marker
+                // or not. doing this check lets us clean up the block in the case that it is,
+                // though we get an annoying flicker
+                setTimeout(() => {
+                    if (newBlock.isInsertionMarker()) {
+                        Blockly.Events.disable();
+                        newBlock.dispose();
+                        Blockly.Events.enable();
+                    }
+                })
+            }
+            else {
+                newBlock = Blockly.Xml.domToBlock(shadow, b.workspace);
+            }
+
+            if (newBlock) {
+                input.connection.connect(newBlock.outputConnection);
             }
         } catch (e) { }
 
