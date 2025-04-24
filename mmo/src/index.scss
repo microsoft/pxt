@@ -1,0 +1,94 @@
+:root {
+    --black: #000;
+    --white: #fff;
+
+    --header-height: 4rem;
+    --header-padding-top: 1rem;
+
+    --body-font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+        "Noto Color Emoji";
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: var(--body-font-family);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background: linear-gradient(180deg, rgba(24, 47, 64, 1) 0%, rgba(255, 255, 255, 1) 73%);
+}
+
+code {
+    font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
+}
+
+.common-button {
+    font-family: var(--body-font-family);
+}
+
+.common-button.primary {
+    background: var(--pxt-primary-background);
+    color: var(--pxt-primary-foreground);
+    border: 1px solid var(--pxt-primary-background);
+}
+
+.common-button.secondary {
+    background: var(--pxt-secondary-background);
+    color: var(--pxt-secondary-foreground);
+    border: 1px solid var(--pxt-secondary-background);
+}
+
+.common-button.tertiary {
+    background: var(--pxt-tertiary-background);
+    color: var(--pxt-tertiary-foreground);
+    border: 1px solid var(--pxt-tertiary-background);
+}
+
+img.pixel-art-image {
+    image-rendering: optimizeSpeed;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: optimize-contrast;
+    image-rendering: pixelated;
+    -ms-interpolation-mode: nearest-neighbor;
+
+    object-fit: contain;
+    height: auto;
+}
+
+#root {
+    width: 100%;
+    height: 100%;
+}
+
+#root > div {
+    width: 100%;
+    height: 100%;
+}
+
+.app-container {
+    height: 100%;
+    width: 100%;
+}
+
+::-webkit-scrollbar {
+    width: 14px;
+    height: 14px;
+    background-color: rgba(255, 255, 255, 0);
+    cursor: initial;
+}
+
+::-webkit-scrollbar-thumb {
+    height: 0;
+    border: 2px solid rgba(255, 255, 255, 0);
+    border-radius: 99px;
+    background-clip: padding-box;
+    background-color: rgb(206, 205, 206);
+    cursor: initial;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    border-width: 1px;
+    cursor: initial;
+}

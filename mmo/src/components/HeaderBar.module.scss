@@ -1,0 +1,155 @@
+.header {
+    background-color: var(--pxt-header-background);
+    color: var(--pxt-header-foreground);
+    display: flex;
+    flex-direction: row;
+    height: 4rem;
+    align-items: center;
+    justify-content: space-between;
+    flex-grow: 0;
+    flex-shrink: 0;
+    z-index: var(--above-frame-zindex);
+
+    .left-menu,
+    .right-menu {
+        display: flex;
+        align-items: center;
+        height: 100%;
+    }
+
+    .org {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+
+        .logo {
+            height: 1.4rem;
+            margin: 0 1rem;
+        }
+    }
+
+    .brand {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+
+        &:before {
+            height: 1.5rem;
+            border-left: 2px solid var(--pxt-header-foreground);
+            content: " ";
+        }
+
+        .logo {
+            height: 1.1rem;
+            margin: 0 1rem;
+        }
+    }
+
+    .centered-panel {
+        position: absolute;
+        justify-content: center;
+        align-items: center;
+        display: flex;
+        width: 100%;
+
+        div.app-title {
+            position: relative;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.25rem;
+            text-align: center;
+        }
+    }
+
+    .user-menu {
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+
+        .sign-in-button {
+            height: 80%;
+            margin: 0.5rem 1rem !important;
+            padding: 0.6rem;
+            color: var(--pxt-neutral-foreground1);
+        }
+
+        .avatar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+
+            img {
+                border: solid 2px white;
+                border-radius: 100%;
+                width: 2.5rem;
+                height: 2.5rem;
+            }
+        }
+    }
+
+    div[class~="common-menu-dropdown"] {
+        &:hover {
+            background-color: var(--pxt-headerbar-background-smoke);
+        }
+
+        button[class~="menu-button"] {
+            background-color: var(--pxt-header-background);
+            color: var(--pxt-header-foreground);
+        }
+
+        div[class~="common-menu-dropdown-pane"] {
+            border-radius: 0 0 0.25rem 0.25rem;
+            box-shadow: 0 4px 4px 0 var(--pxt-neutral-alpha10);
+            background: var(--pxt-neutral-background1);
+            color: var(--pxt-neutral-foreground1);
+            padding: 0.15rem;
+            width: unset !important;
+
+            button[class~="common-menu-dropdown-item"]:hover {
+                background-color: var(--pxt-neutral-alpha10);
+            }
+        }
+    }
+}
+
+.beta-tag {
+    text-transform: uppercase;
+    position: absolute;
+    top: 3px;
+    right: -50px;
+    background-color: var(--pxt-header-foreground);
+    color: var(--pxt-header-background);
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: bold;
+}
+
+.feedback-btn {
+    background: var(--pxt-header-foreground);
+    color: var(--pxt-header-foreground);
+    margin: 0;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.5rem;
+    font-size: medium;
+    line-height: 2rem;
+
+    i {
+        font-size: larger;
+    }
+
+    &[class~="common-button"] {
+        background-color: var(--pxt-header-background);
+        color: var(--pxt-header-foreground);
+
+        :hover {
+            background-color: var(--pxt-headerbar-background-smoke);
+        }
+    }
+
+    [class~="common-button-label"] {
+        margin-left: 0.3rem;
+    }
+}

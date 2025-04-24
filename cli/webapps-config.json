@@ -30,6 +30,12 @@
             "localServeEndpoint": "multiplayer"
         },
         {
+            "name": "mmo",
+            "buildCss": false,
+            "localServeWebConfigUrl": true,
+            "localServeEndpoint": "mmo"
+        },
+        {
             "name": "authcode",
             "buildCss": true,
             "localServeWebConfigUrl": true
