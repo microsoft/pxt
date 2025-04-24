@@ -4,6 +4,7 @@ export interface CodeCardRenderOptions {
     hideHeader?: boolean;
     shortName?: boolean;
     role?: string;
+    cardCategory?: string;
 }
 
 export function renderCodeCard(card: pxt.CodeCard, options: CodeCardRenderOptions = {}): HTMLElement {
