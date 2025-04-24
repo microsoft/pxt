@@ -33,7 +33,7 @@ const FocusTrapInner = (props: FocusTrapProps) => {
         dontRestoreFocus
     } = props;
 
-    let container: HTMLDivElement;
+    const containerRef = React.useRef<HTMLDivElement | null>(null);
     const previouslyFocused = React.useRef<Element>(document.activeElement);
     const [stoleFocus, setStoleFocus] = React.useState(false);
 
@@ -48,16 +48,17 @@ const FocusTrapInner = (props: FocusTrapProps) => {
     }, [])
 
     const getElements = React.useCallback(() => {
+        console.log("getting elements");
         let all = nodeListToArray(
-            includeOutsideTabOrder ? container.querySelectorAll(`[tabindex]`) :
-            container.querySelectorAll(`[tabindex]:not([tabindex="-1"])`)
+            includeOutsideTabOrder ? containerRef.current?.querySelectorAll(`[tabindex]`) :
+            containerRef.current?.querySelectorAll(`[tabindex]:not([tabindex="-1"])`)
         );
 
         if (regions.length) {
             const regionElements: pxt.Map<Element> = {};
 
             for (const region of regions) {
-                const el = container.querySelector(`[data-focus-trap-region="${region.id}"]`);
+                const el = containerRef.current?.querySelector(`[data-focus-trap-region="${region.id}"]`);
 
                 if (el) {
                     regionElements[region.id] = el;
@@ -98,10 +99,10 @@ const FocusTrapInner = (props: FocusTrapProps) => {
 
     const handleRef = React.useCallback((ref: HTMLDivElement) => {
         if (!ref) return;
-        container = ref;
+        containerRef.current = ref;
 
         if (!dontStealFocus && !stoleFocus && !ref.contains(document.activeElement) && getElements().length) {
-            container.focus();
+            containerRef.current.focus();
 
             // Only steal focus once
             setStoleFocus(true);
@@ -109,7 +110,7 @@ const FocusTrapInner = (props: FocusTrapProps) => {
     }, [getElements, dontStealFocus, stoleFocus]);
 
     const onKeyDown = React.useCallback((e: React.KeyboardEvent) => {
-        if (!container) return;
+        if (!containerRef.current) return;
 
         const moveFocus = (forward: boolean, goToEnd: boolean) => {
             const focusable = getElements();
@@ -150,7 +151,7 @@ const FocusTrapInner = (props: FocusTrapProps) => {
             if (regions.length) {
                 for (const region of regions) {
                     if (!region.onEscape) continue;
-                    const regionElement = container.querySelector(`[data-focus-trap-region="${region.id}"]`);
+                    const regionElement = containerRef.current?.querySelector(`[data-focus-trap-region="${region.id}"]`);
                     if (regionElement?.contains(document.activeElement)) {
                         foundHandler = true;
                         region.onEscape();
