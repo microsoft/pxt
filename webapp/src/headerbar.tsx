@@ -79,7 +79,7 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
     onPlayWithFriendsClick = (evt: any) => {
         evt.preventDefault();
         pxt.tickEvent("menu.playwithfriends", undefined, { interactiveConsent: true });
-        window.open(pxt.multiplayer.SHORT_LINK(), "_blank");
+        window.open(pxt.multiplayer.SHORT_LINK("multiplayer"), "_blank");
     }
 
     protected getView = (): HeaderBarView => {
