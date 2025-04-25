@@ -1,5 +1,5 @@
 namespace pxt.multiplayer {
-    export type ServiceType = "multiplayer" | "mmo";
+    export type ServiceType = "multiplayer" | "plato";
     enum MultiplayerDevBackendType {
         PROD,
         STAGING,
@@ -9,47 +9,47 @@ namespace pxt.multiplayer {
 
     export const ABSOLUTE_LINKS = {
         PROD_BETA: "https://arcade.makecode.com/beta--multiplayer",
-        PROD_BETA_MMO: "https://arcade.makecode.com/beta--mmo",
+        PROD_BETA_PLATO: "https://arcade.makecode.com/beta--plato",
         STAGING_BETA: "https://arcade.staging.pxt.io/beta--multiplayer",
-        STAGING_BETA_MMO: "https://arcade.staging.pxt.io/beta--mmo",
+        STAGING_BETA_PLATO: "https://arcade.staging.pxt.io/beta--plato",
         LOCAL: "http://localhost:3000",
     };
 
     export const RELATIVE_LINKS = {
         PROD: "/--multiplayer",
-        PROD_MMO: "/--mmo",
+        PROD_PLATO: "/--plato",
         BETA: "/beta--multiplayer",
-        BETA_MMO: "/beta--mmo",
+        BETA_PLATO: "/beta--plato",
     };
 
     export const SHORT_LINKS = {
         PROD: "https://aka.ms/a9",
-        PROD_MMO: "https://aka.ms/a9mmo",
+        PROD_PLATO: "https://aka.ms/a9plato",
         PROD_BETA: "https://aka.ms/a9b",
-        PROD_BETA_MMO: "https://aka.ms/a9bmmo",
+        PROD_BETA_PLATO: "https://aka.ms/a9bplato",
         STAGING: "https://aka.ms/a9s",
-        STAGING_MMO: "https://aka.ms/a9smmo",
+        STAGING_PLATO: "https://aka.ms/a9splato",
         STAGING_BETA: "https://aka.ms/a9sb",
-        STAGING_BETA_MMO: "https://aka.ms/a9sbmmo",
+        STAGING_BETA_PLATO: "https://aka.ms/a9sbplato",
     };
 
     export const RELATIVE_LINK = (serviceType: ServiceType) => {
         switch (serviceType) {
-            case "mmo": {
+            case "plato": {
                 if (pxt.BrowserUtils.isLocalHostDev()) {
                     switch (MULTIPLAYER_DEV_BACKEND_TYPE) {
                         case MultiplayerDevBackendType.PROD:
-                            return ABSOLUTE_LINKS.PROD_BETA_MMO;
+                            return ABSOLUTE_LINKS.PROD_BETA_PLATO;
                         case MultiplayerDevBackendType.STAGING:
-                            return ABSOLUTE_LINKS.STAGING_BETA_MMO;
+                            return ABSOLUTE_LINKS.STAGING_BETA_PLATO;
                         case MultiplayerDevBackendType.LOCAL:
                             return ABSOLUTE_LINKS.LOCAL;
                     }
                 }
                 if (window.location.pathname.startsWith("/beta")) {
-                    return RELATIVE_LINKS.BETA_MMO;
+                    return RELATIVE_LINKS.BETA_PLATO;
                 } else {
-                    return RELATIVE_LINKS.PROD_MMO;
+                    return RELATIVE_LINKS.PROD_PLATO;
                 }
             }
             case "multiplayer": {
@@ -76,13 +76,13 @@ namespace pxt.multiplayer {
 
     export const SHORT_LINK = (serviceType: ServiceType) => {
         switch (serviceType) {
-            case "mmo": {
+            case "plato": {
                 if (pxt.BrowserUtils.isLocalHostDev()) {
                     switch (MULTIPLAYER_DEV_BACKEND_TYPE) {
                         case MultiplayerDevBackendType.PROD:
-                            return SHORT_LINKS.PROD_BETA_MMO;
+                            return SHORT_LINKS.PROD_BETA_PLATO;
                         case MultiplayerDevBackendType.STAGING:
-                            return SHORT_LINKS.STAGING_BETA_MMO;
+                            return SHORT_LINKS.STAGING_BETA_PLATO;
                         case MultiplayerDevBackendType.LOCAL:
                             return ABSOLUTE_LINKS.LOCAL;
                     }
@@ -90,16 +90,16 @@ namespace pxt.multiplayer {
 
                 if (window.location.host.endsWith(".staging.pxt.io")) {
                     if (window.location.pathname.startsWith("/beta")) {
-                        return SHORT_LINKS.STAGING_BETA_MMO;
+                        return SHORT_LINKS.STAGING_BETA_PLATO;
                     } else {
-                        return SHORT_LINKS.STAGING_MMO;
+                        return SHORT_LINKS.STAGING_PLATO;
                     }
                 }
 
                 if (window.location.pathname.startsWith("/beta")) {
-                    return SHORT_LINKS.PROD_BETA_MMO;
+                    return SHORT_LINKS.PROD_BETA_PLATO;
                 } else {
-                    return SHORT_LINKS.PROD_MMO;
+                    return SHORT_LINKS.PROD_PLATO;
                 }
             }
             case "multiplayer": {

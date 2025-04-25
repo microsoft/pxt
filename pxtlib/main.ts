@@ -397,7 +397,7 @@ namespace pxt {
         skillmapUrl?: string; // "/beta---skillmap"
         authcodeUrl?: string; // "/beta---authcode"
         multiplayerUrl?: string; // "/beta---multiplayer"
-        mmoUrl?: string; // "/beta---mmo"
+        platoUrl?: string; // "/beta---plato"
         kioskUrl?: string; // "/beta---kiosk"
         teachertoolUrl?: string; // "/beta---eval"
         isStatic?: boolean;

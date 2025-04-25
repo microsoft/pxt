@@ -47,13 +47,7 @@ function App() {
     }, [ready, authCheckComplete]);
 
     useEffect(() => {
-        if (ready && authCheckComplete && authStatus === "signed-out" && !modalOptions) {
-            showModal({ type: "sign-in" });
-        }
-    }, [ready, authCheckComplete, authStatus, modalOptions]);
-
-    useEffect(() => {
-        // We don't currently support switching themes in mmo, so just load the default.
+        // We don't currently support switching themes in plato, so just load the default.
         const themeId = pxt.appTarget?.appTheme?.defaultColorTheme;
         if (themeId) {
             const themeManager = ThemeManager.getInstance(document);

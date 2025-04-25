@@ -16,7 +16,7 @@ import { notifyDisconnected, setPresenceAsync, playerJoinedAsync, playerLeftAsyn
 import * as CollabTransforms from "@/transforms/collab";
 import { jsonReplacer, jsonReviver } from "@/utils";
 
-const COLLAB_HOST_PROD = "https://mmo.makecode.com";
+const COLLAB_HOST_PROD = "https://plato.makecode.com";
 const COLLAB_HOST_STAGING = "https://dev.multiplayer.staging.pxt.io";
 const COLLAB_HOST_LOCALHOST = "http://localhost:8082";
 const COLLAB_HOST_DEV = COLLAB_HOST_LOCALHOST;

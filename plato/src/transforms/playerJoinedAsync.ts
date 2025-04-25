@@ -1,11 +1,10 @@
 import { stateAndDispatch } from "@/state";
 import { showToast } from "@/state/actions";
-import { simDriver } from "@/services/simHost";
-import { makeToast } from "@/components/Toaster";
-import { getUserValue } from "@/types";
 import { Strings } from "@/constants";
+import { getUserValue } from "@/types";
+import { makeToast } from "@/components/Toaster";
 
-export async function playerLeftAsync(clientId: string) {
+export async function playerJoinedAsync(clientId: string) {
     const { state, dispatch } = stateAndDispatch();
     try {
         const user = state.presence.users.find(u => u.id === clientId);
@@ -15,17 +14,17 @@ export async function playerLeftAsync(clientId: string) {
                 showToast(
                     makeToast({
                         type: "info",
-                        text: Strings.PlayerLeftFmt(name),
+                        text: Strings.PlayerJoinedFmt(name),
                         timeoutMs: 5000,
                     })
                 )
             );
             /*
             simDriver()?.postMessage({
-                type: "arcade-mmo",
+                type: "arcade-plato",
                 content: "Connection",
                 slot: user.slot,
-                connected: false,
+                connected: true,
             } as SimMultiplayer.MultiplayerConnectionMessage);
              */
         }

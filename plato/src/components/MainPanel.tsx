@@ -1,13 +1,12 @@
 import css from "./MainPanel.module.scss";
 import { useContext, useEffect } from "react";
 import { AppStateContext } from "@/state/Context";
-import { showModal } from "@/transforms";
-import { Button } from "react-common/components/controls/Button";
 import { classList } from "react-common/components/util";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
+import { Strings } from "@/constants";
+import { showModal } from "@/transforms";
 
 interface ActionCardProps {
-    title: string;
     description: string;
     buttonLabel: string;
     classes?: string;
@@ -15,7 +14,6 @@ interface ActionCardProps {
 }
 
 function ActionCard({
-    title,
     description,
     buttonLabel,
     classes,
@@ -37,23 +35,20 @@ function ActionCards() {
     return (
         <div className={css["action-cards"]}>
             <ActionCard
-                title="Host a Game"
-                description="Start a new game and invite your friends to join."
-                buttonLabel="Host"
+                description={Strings.HostGameDescription}
+                buttonLabel={Strings.HostGameLabel}
                 classes={css["host"]}
                 onClick={() => { }}
             />
             <ActionCard
-                title="Join a Game"
-                description="Enter the game code to join an existing game."
-                buttonLabel="Join"
+                description={Strings.JoinGameDescription}
+                buttonLabel={Strings.JoinGameLabel}
                 classes={css["join"]}
                 onClick={() => { }}
             />
             <ActionCard
-                title="Build a Game"
-                description="Create your own game in MakeCode Arcade."
-                buttonLabel="Build"
+                description={Strings.BuildGameDescription}
+                buttonLabel={Strings.BuildGameLabel}
                 classes={css["build"]}
                 onClick={() => { }}
             />
@@ -64,8 +59,7 @@ function ActionCards() {
 function GalleryCarousel() {
     return (
         <div className={css["gallery-carousel"]}>
-            <h2>Gallery</h2>
-            <p>Check out the latest games and creations from our community.</p>
+            <p className={css["gallery-title"]}>{Strings.GameGalleryTitle}</p>
             {/* Placeholder for carousel */}
             <div className={css["carousel"]}>[Carousel Placeholder]</div>
         </div>
@@ -74,7 +68,15 @@ function GalleryCarousel() {
 
 export function MainPanel() {
     const { state } = useContext(AppStateContext);
-    const { authStatus, netMode, clientRole } = state;
+    const { authStatus, netMode, clientRole, modalOptions } = state;
+
+    useEffect(() => {
+        // For now just show the sign-in modal if not signed in.
+        // Later we can improve the signed-out experience.
+        if (authStatus !== "signed-in" && !modalOptions) {
+            showModal({ type: "sign-in" });
+        }
+    }, [authStatus, modalOptions]);
 
     if (authStatus !== "signed-in") {
         return null;
@@ -84,6 +86,7 @@ export function MainPanel() {
         return (
             <div className={css["main-panel"]}>
                 <ActionCards />
+                <GalleryCarousel />
             </div>
         );
     }

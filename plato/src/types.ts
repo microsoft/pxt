@@ -66,7 +66,7 @@ export type ModalOptions = ShowSignInModalOptions;
 
 export namespace SimMessages {
     type MessageBase = {
-        type: "arcade-mmo";
+        type: "arcade-plato";
         origin?: "server" | "client";
         broadcast?: boolean;
     };

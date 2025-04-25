@@ -30,10 +30,10 @@
             "localServeEndpoint": "multiplayer"
         },
         {
-            "name": "mmo",
+            "name": "plato",
             "buildCss": false,
             "localServeWebConfigUrl": true,
-            "localServeEndpoint": "mmo"
+            "localServeEndpoint": "plato"
         },
         {
             "name": "authcode",
