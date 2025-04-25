@@ -4,7 +4,7 @@ import { Action } from "./actions";
 export function reducer(state: AppState, action: Action): AppState {
     switch (action.type) {
         case "SET_USER_PROFILE": {
-            return { ...state, userProfile: action.payload.profile };
+            return { ...state, userProfile: action.payload.profile, authStatus: !!action.payload.profile?.id ? "signed-in" : "signed-out" };
         }
         case "SET_CLIENT_ROLE": {
             return { ...state, clientRole: action.payload.clientRole };

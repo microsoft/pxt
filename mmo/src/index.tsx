@@ -9,7 +9,7 @@ import ReactDOM from "react-dom";
 import App from "@/components/App";
 import { AppStateProvider } from "@/state/Context";
 import { Ticks } from "@/constants";
-import "./index.scss";
+import "./global.scss";
 
 function enableAnalytics() {
     pxt.analytics.enable(pxt.Util.userLanguage());

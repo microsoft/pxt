@@ -11,7 +11,8 @@ import * as authClient from "../services/authClient";
 import { classList } from "react-common/components/util";
 
 const betaTag = () => {
-    return <div className={css["beta-tag"]}>{lf("Beta")}</div>;
+    return <div className={css["beta-tag"]}>{lf("Experimental!")}</div>;
+    //return null;
 };
 
 interface HeaderBarProps {}
@@ -71,14 +72,14 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
                 onClick={onBrandIconClick}
             >
                 {appTheme.useTextLogo ? (
-                    [
-                        <span className={css["name"]} key="org-name">
+                    <>
+                        <span className={classList(css["name"], "min-2sm")}>
                             {appTheme.organizationText}
-                        </span>,
-                        <span className={css["name-short"]} key="org-name-short">
+                        </span>
+                        <span className={classList(css["name-short"], "max-2sm")}>
                             {appTheme.organizationShortText || appTheme.organizationText}
-                        </span>,
-                    ]
+                        </span>
+                    </>
                 ) : appTheme.logo || appTheme.portraitLogo ? (
                     <>
                         {appTheme.logo && (
@@ -125,7 +126,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
 
     function getUserMenu() {
         const items: MenuItem[] = [];
-        if (state.userProfile) {
+        if (state.authStatus === "signed-in") {
             items.push({
                 id: "signout",
                 title: lf("Sign Out"),
@@ -152,7 +153,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
         );
         return (
             <div className={css["user-menu"]}>
-                {state.userProfile ? (
+                {state.authStatus === "signed-in" ? (
                     <MenuDropdown
                         id="profile-dropdown"
                         items={items}

@@ -6,7 +6,7 @@ import { ToastWithId } from "@/components/Toaster";
  */
 
 type SetUserProfile = ActionBase<"SET_USER_PROFILE", { profile?: pxt.auth.UserProfile }>;
-type SetClientRole = ActionBase<"SET_CLIENT_ROLE", { clientRole?: ClientRole }>;
+type SetClientRole = ActionBase<"SET_CLIENT_ROLE", { clientRole: ClientRole }>;
 type SetNetMode = ActionBase<"SET_NET_MODE", { mode: NetMode }>;
 type SetCollabInfo = ActionBase<"SET_COLLAB_INFO", { collabInfo: CollabInfo }>;
 type ShowToast = ActionBase<"SHOW_TOAST", { toast: ToastWithId }>;
@@ -38,7 +38,7 @@ export const setUserProfile = (profile?: pxt.auth.UserProfile): SetUserProfile =
     type: "SET_USER_PROFILE",
     payload: { profile },
 });
-export const setClientRole = (clientRole?: ClientRole): SetClientRole => ({
+export const setClientRole = (clientRole: ClientRole): SetClientRole => ({
     type: "SET_CLIENT_ROLE",
     payload: { clientRole },
 });

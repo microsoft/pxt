@@ -1,6 +1,6 @@
 export namespace Strings {
-    export const AppTitle = lf("Arcade MMO");
-    export const AppTitleShort = lf("Arcade MMO");
+    export const AppTitle = lf("Play Together");
+    export const AppTitleShort = lf("Play Together");
     export const WelcomeUserFmt = (name: string) => lf("Welcome {0}!", name);
     export const MissingName = lf("(Anonymous User)");
     export const PlayerJoinedFmt = (name: string) => lf("{0} joined", name);
@@ -8,6 +8,8 @@ export namespace Strings {
     export const Privacy = lf("Privacy");
     export const TermsOfUse = lf("Terms of Use");
     export const Settings = lf("Settings");
+    export const SignInMessage = lf("Sign in to Play Together");
+    export const SignUpMessage = lf("Sign up to Play Together");
 }
 
 export namespace Ticks {

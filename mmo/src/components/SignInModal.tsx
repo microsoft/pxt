@@ -3,6 +3,7 @@ import { AppStateContext } from "@/state/Context";
 import { SignInModal as RCSignInModal } from "react-common/components/profile/SignInModal";
 import { dismissModal } from "@/transforms/dismissModal";
 import * as authClient from "@/services/authClient";
+import { Strings } from "@/constants";
 
 export function SignInModal() {
     const { state } = useContext(AppStateContext);
@@ -15,8 +16,8 @@ export function SignInModal() {
                 // modal will hide when the user profile is set after loginAsync completes.
             }}
             dialogMessages={{
-                signInMessage: lf("Sign in to use MakeCode Arcade MMO."),
-                signUpMessage: lf("Sign up to use MakeCode Arcade MMO."),
+                signInMessage: Strings.SignInMessage,
+                signUpMessage: Strings.SignUpMessage,
             }}
             hideDismissButton={true}
         />

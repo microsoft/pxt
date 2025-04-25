@@ -12,10 +12,14 @@ class AuthClient extends pxt.auth.AuthClient {
     }
     protected async onUserProfileChanged(): Promise<void> {
         const state = await pxt.auth.getUserStateAsync();
-        if (state?.profile) {
-            pxt.auth.generateUserProfilePicDataUrl(state.profile);
+        let { profile } = state || {};
+        if (profile && !Object.keys(profile)) {
+            profile = undefined;
         }
-        await setUserProfileAsync(state.profile);
+        if (profile) {
+            pxt.auth.generateUserProfilePicDataUrl(profile);
+        }
+        await setUserProfileAsync(profile);
     }
     protected onUserPreferencesChanged(diff: ts.pxtc.jsonPatch.PatchOperation[]): Promise<void> {
         return Promise.resolve();

@@ -14,7 +14,7 @@ export type AppState = {
     netMode: NetMode;
     authStatus: AuthStatus;
     userProfile?: pxt.auth.UserProfile;
-    clientRole?: ClientRole;
+    clientRole: ClientRole;
     collabInfo?: CollabInfo;
     modalType?: ModalType;
     modalOptions?: ModalOptions;
@@ -25,6 +25,7 @@ export type AppState = {
 export const initialAppState: AppState = {
     netMode: "init",
     authStatus: "unknown",
+    clientRole: "none",
     toasts: [],
     presence: defaultPresence,
 };

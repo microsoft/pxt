@@ -1,20 +1,23 @@
 import css from "./App.module.scss";
 import { useCallback, useContext, useEffect, useState } from "react";
-import { AppStateContext } from "@/state/Context";
+import { AppStateContext, AppStateReady } from "@/state/Context";
 import { Loading } from "@/components/Loading";
-import { SignedOutPage } from "@/components/SignedOutPage";
-import { SignedInPage } from "@/components/SignedInPage";
+import { MainPanel } from "@/components/MainPanel";
 import { HeaderBar } from "@/components/HeaderBar";
 import { SignInModal } from "@/components/SignInModal";
 import { Toaster } from "@/components/Toaster";
 import * as authClient from "@/services/authClient";
 import { classlist, cleanupJoinCode, cleanupShareCode } from "@/utils";
+import { usePromise } from "@/hooks/usePromise";
 import { ThemeManager } from "react-common/components/theming/themeManager";
+import { showModal } from "@/transforms";
 
 function App() {
     const { state, dispatch } = useContext(AppStateContext);
-    const { authStatus } = state;
+    const { authStatus, modalOptions } = state;
     const [authCheckComplete, setAuthCheckComplete] = useState(false);
+
+    const ready = usePromise(AppStateReady, false);
 
     useEffect(() => {
         /*
@@ -34,11 +37,20 @@ function App() {
 
     useEffect(() => {
         // On mount, check if user is signed in
-        authClient
-            .authCheckAsync()
-            .then(() => setAuthCheckComplete(true))
-            .catch(() => setAuthCheckComplete(true));
-    }, [setAuthCheckComplete]);
+        if (ready && !authCheckComplete) {
+            // Check if the user is signed in
+            authClient
+                .authCheckAsync()
+                .then(() => setAuthCheckComplete(true))
+                .catch(() => setAuthCheckComplete(true));
+        }
+    }, [ready, authCheckComplete]);
+
+    useEffect(() => {
+        if (ready && authCheckComplete && authStatus === "signed-out" && !modalOptions) {
+            showModal({ type: "sign-in" });
+        }
+    }, [ready, authCheckComplete, authStatus, modalOptions]);
 
     useEffect(() => {
         // We don't currently support switching themes in mmo, so just load the default.
@@ -52,30 +64,32 @@ function App() {
     }, []);
 
     const parseUrlParams = useCallback(() => {
-        let params: URLSearchParams | undefined = undefined;
-        if (window.location.hash[1] === "?") {
-            // After sign in the params are in the hash. This may be a bug in pxt.auth.
-            params = new URLSearchParams(window.location.hash.substr(1));
-        } else {
-            params = new URLSearchParams(window.location.search);
+        if (ready) {
+            let params: URLSearchParams | undefined = undefined;
+            if (window.location.hash[1] === "?") {
+                // After sign in the params are in the hash. This may be a bug in pxt.auth.
+                params = new URLSearchParams(window.location.hash.substr(1));
+            } else {
+                params = new URLSearchParams(window.location.search);
+            }
+            let shareCodeParam = params.get("host") ?? undefined;
+            let joinCodeParam = params.get("join") ?? undefined;
+            shareCodeParam = cleanupShareCode(shareCodeParam);
+            joinCodeParam = cleanupJoinCode(joinCodeParam);
+            //dispatch(setDeepLinks(shareCodeParam, joinCodeParam));
         }
-        let shareCodeParam = params.get("host") ?? undefined;
-        let joinCodeParam = params.get("join") ?? undefined;
-        shareCodeParam = cleanupShareCode(shareCodeParam);
-        joinCodeParam = cleanupJoinCode(joinCodeParam);
-        //dispatch(setDeepLinks(shareCodeParam, joinCodeParam));
-    }, [dispatch]);
+    }, [ready, dispatch]);
 
     useEffect(() => {
         // Once we know the user's auth status, parse the URL
-        if (authCheckComplete) {
+        if (ready && authCheckComplete) {
             parseUrlParams();
         }
-    }, [authCheckComplete, parseUrlParams]);
+    }, [ready, authCheckComplete, parseUrlParams]);
 
     /*
     useEffect(() => {
-        if (authCheckComplete && (shareCode || joinCode)) {
+        if (ready && authCheckComplete && (shareCode || joinCode)) {
             // If the user is signed in, follow the deep links
             if (authStatus === "signed-in") {
                 if (shareCode) {
@@ -91,7 +105,7 @@ function App() {
                 dispatch(setDeepLinks(undefined, undefined));
             }
         }
-    }, [dispatch, authStatus, shareCode, joinCode, authCheckComplete]);
+    }, [ready, dispatch, authStatus, shareCode, joinCode, authCheckComplete]);
     */
     return (
         <div className={classlist(`${pxt.appTarget.id}`, css["app"])}>
@@ -99,8 +113,7 @@ function App() {
             {authCheckComplete && (
                 <>
                     <HeaderBar />
-                    {authStatus === "signed-out" && <SignedOutPage />}
-                    {authStatus === "signed-in" && <SignedInPage />}
+                    <MainPanel />
                 </>
             )}
             <SignInModal />
