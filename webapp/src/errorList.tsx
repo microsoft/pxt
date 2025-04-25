@@ -163,7 +163,7 @@ class ErrorListItem extends React.Component<ErrorListItemProps, ErrorListItemSta
             <div className={classList("item", className)} role="button"
                 onClick={error.onClick}
                 onKeyDown={fireClickOnEnter}
-                aria-label={lf("Go to {0}: {1}", error.stackFrames ? '' : 'error', message)}
+                aria-label={lf("Go to error: {0}", message)}
                 tabIndex={0}>
                 {message} {(errorGroup.count <= 1) ? null : <div className="ui gray circular label countBubble">{errorGroup.count}</div>}
             </div>
