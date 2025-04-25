@@ -1338,6 +1338,7 @@ declare namespace pxt.tour {
         location: BubbleLocation;
         sansQuery?: string; // Use this to exclude an element from the cutout
         sansLocation?: BubbleLocation; // relative location of element to exclude
+        onStepBegin?: () => void;
     }
     const enum BubbleLocation {
         Above,

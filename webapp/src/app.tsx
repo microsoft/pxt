@@ -5246,8 +5246,11 @@ export class ProjectView
 
     async showOnboarding() {
         const tourSteps: pxt.tour.BubbleStep[] = await parseTourStepsAsync(pxt.appTarget.appTheme?.tours?.editor)
-        this.setState({ onboarding: tourSteps })
+        this.showTour(tourSteps);
+    }
 
+    async showTour(steps: pxt.tour.BubbleStep[]) {
+        this.setState({ onboarding: steps });
     }
 
     ///////////////////////////////////////////////////////////

@@ -4,6 +4,7 @@ import * as React from "react";
 import * as sui from "./sui";
 import { fireClickOnEnter } from "./util";
 import { classList } from "../../react-common/components/util";
+import { ErrorHelpButton, ErrorHelpResponse } from "./components/errorHelpButton";
 
 type GroupedError = {
     error: ErrorDisplayInfo,
@@ -24,8 +25,10 @@ export type ErrorDisplayInfo = {
 
 export interface ErrorListProps {
     onSizeChange?: (state: pxt.editor.ErrorListState) => void;
+    parent: pxt.editor.IProjectView;
     errors: ErrorDisplayInfo[];
     startDebugger?: () => void;
+    onHelpResponse?: (response: ErrorHelpResponse) => void;
 }
 export interface ErrorListState {
     isCollapsed: boolean,
@@ -41,6 +44,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         }
 
         this.onCollapseClick = this.onCollapseClick.bind(this);
+        this.handleHelpResponse = this.handleHelpResponse.bind(this);
     }
 
     componentDidUpdate(prevProps: Readonly<ErrorListProps>, prevState: Readonly<ErrorListState>, snapshot?: any): void {
@@ -59,8 +63,14 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         }
     }
 
+    handleHelpResponse = (response: ErrorHelpResponse) => {
+        if (this.props.onHelpResponse) {
+            this.props.onHelpResponse(response);
+        }
+    }
+
     render() {
-        const { startDebugger, errors } = this.props;
+        const { startDebugger, errors, onHelpResponse } = this.props;
         const { isCollapsed } = this.state;
         const errorsAvailable = !!errors?.length;
 
@@ -74,7 +84,10 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
                 <div className="errorListHeader" role="button" aria-label={lf("{0} error list", isCollapsed ? lf("Expand") : lf("Collapse"))} onClick={this.onCollapseClick} onKeyDown={fireClickOnEnter} tabIndex={0}>
                     <h4>{lf("Problems")}</h4>
                     <div className="ui red circular label countBubble">{errorCount}</div>
-                    <div className="toggleButton"><sui.Icon icon={`chevron ${isCollapsed ? 'up' : 'down'}`} /></div>
+                    {onHelpResponse && <ErrorHelpButton parent={this.props.parent} errors={errors} onHelpResponse={this.handleHelpResponse} />}
+                    <div className="toggleButton">
+                        <sui.Icon icon={`chevron ${isCollapsed ? "up" : "down"}`} />
+                    </div>
                 </div>
                 {!isCollapsed && <div className="errorListInner">
                     {canDebug && <div className="debuggerSuggestion" role="button" onClick={this.props.startDebugger} onKeyDown={fireClickOnEnter} tabIndex={0}>

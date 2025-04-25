@@ -1056,6 +1056,7 @@ declare namespace pxt.editor {
         showLightbox(): void;
         hideLightbox(): void;
         showOnboarding(): void;
+        showTour(steps: pxt.tour.BubbleStep[]): void;
         hideOnboarding(): void;
         showKeymap(show: boolean): void;
         toggleKeymap(): void;

@@ -36,6 +36,7 @@ import SimState = pxt.editor.SimState;
 import { DuplicateOnDragConnectionChecker } from "../../pxtblocks/plugins/duplicateOnDrag";
 import { PathObject } from "../../pxtblocks/plugins/renderer/pathObject";
 import { Measurements } from "./constants";
+import { ErrorHelpResponse } from "./components/errorHelpButton";
 
 interface CopyDataEntry {
     version: 1;
@@ -78,6 +79,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         super(parent);
 
         this.onErrorListResize = this.onErrorListResize.bind(this)
+        this.handleErrorHelp = this.handleErrorHelp.bind(this)
         this.getDisplayInfoForBlockError = this.getDisplayInfoForBlockError.bind(this)
         this.getDisplayInfoForException = this.getDisplayInfoForException.bind(this)
     }
@@ -297,12 +299,17 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return this.serializeBlocks();
     }
 
-    private serializeBlocks(normalize?: boolean): string {
+    getWorkspaceXmlWithIds(): string {
+        const xml = this.serializeBlocks(false, true);
+        return xml;
+    }
+
+    private serializeBlocks(normalize?: boolean, forceKeepIds?: boolean): string {
         // store ids when using github
-        let xml = pxtblockly.saveWorkspaceXml(this.editor,
-            !normalize && this.parent.state
+        let xml = pxtblockly.saveWorkspaceXml(this.editor, forceKeepIds ||
+            (!normalize && this.parent.state
             && this.parent.state.header
-            && !!this.parent.state.header.githubId);
+            && !!this.parent.state.header.githubId));
         // strip out id, x, y attributes
         if (normalize) xml = xml.replace(/(x|y|id)="[^"]*"/g, '')
         pxt.debug(xml)
@@ -883,6 +890,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 </div>
                 {showErrorList && <ErrorList
                     errors={this.errors}
+                    parent={this.parent}
+                    onHelpResponse={this.handleErrorHelp}
                     onSizeChange={this.onErrorListResize} />}
             </div>
         )
@@ -920,52 +929,54 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     private getDisplayInfoForException(exception: pxsim.DebuggerBreakpointMessage): ErrorDisplayInfo {
         const message = pxt.Util.rlf(exception.exceptionMessage);
-        const stackFrames: StackFrameDisplayInfo[] = exception.stackframes?.map(frame => {
+        const stackFrames: StackFrameDisplayInfo[] = [];
+        for (const frame of exception.stackframes ?? []) {
             const locInfo = frame.funcInfo as pxtc.FunctionLocationInfo;
             if (!locInfo?.functionName) {
-                return undefined;
+                continue;
             }
 
             const blockId = this.compilationResult ? pxtblockly.findBlockIdByLine(this.compilationResult.sourceMap, { start: locInfo.line, length: locInfo.endLine - locInfo.line }) : undefined;
             if (!blockId) {
-                return undefined;
+                continue;
             }
 
             // Get human-readable block text
             const block = this.editor.getBlockById(blockId);
             if (!block) {
-                return undefined;
+                continue;
             }
-            const blockText = this.getBlockText(block);
+            const blockText = pxtblockly.getBlockText(block);
 
-            return {
+            stackFrames.push({
                 message: blockText ? lf("at the '{0}' block", blockText) : lf("at {0}", locInfo.functionName),
                 onClick: () => {
-                    this.clearHighlightedStatements();
-                    this.highlightStatement(locInfo, exception);
+                    this.editor.centerOnBlock(blockId);
+                    const tourSteps = [
+                            {
+                                title: lf("Error Explanation"),
+                                description: lf("Here's some presumably helpful text. This is just a placeholder."),
+                                targetQuery: `g[data-id="${blockId}"]`,
+                                location: pxt.tour.BubbleLocation.Right,
+                                // sansQuery?: string; // Use this to exclude an element from the cutout
+                                // sansLocation?: BubbleLocation; // relative location of element to exclude
+                            } as pxt.tour.BubbleStep
+                        ];
+                    this.parent.showTour(tourSteps);
                 }
-            };
-        }).filter(f => !!f) ?? undefined;
+            });
+        }
 
         return {
             message,
-            stackFrames
+            stackFrames: stackFrames.length > 0 ? stackFrames : undefined,
         };
     }
 
-    private getBlockText(block: Blockly.BlockSvg): string {
-        const fieldValues = [];
-        for (const input of block.inputList) {
-            if (input.fieldRow.length > 0) {
-                for (const field of input.fieldRow) {
-                    const text = field.getText();
-                    if (text) {
-                        fieldValues.push(text);
-                    }
-                }
-            }
+    private handleErrorHelp(helpResponse: ErrorHelpResponse) {
+        if (helpResponse.explanationAsTour) {
+            this.parent.showTour(helpResponse.explanationAsTour);
         }
-        return fieldValues.join(" ");
     }
 
     getBlocksAreaDiv() {

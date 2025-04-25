@@ -35,11 +35,13 @@ export const Tour = (props: TourProps) => {
 
     const onNext = () => {
         pxt.tickEvent("tour.next", data());
+        const nextStep = currentStep + 1;
         setCurrentStep(currentStep + 1);
     };
 
     const onBack = () => {
         pxt.tickEvent("tour.back", data());
+        const prevStep = currentStep - 1;
         setCurrentStep(currentStep - 1);
     };
 

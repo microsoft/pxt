@@ -57,16 +57,21 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
     }
 
     useEffect(() => {
+        if (props.targetContent.onStepBegin) {
+            props.targetContent.onStepBegin();
+        }
         positionBubbleAndCutout();
         setStepsVisibility();
         window.addEventListener("resize", positionBubbleAndCutout);
         return () => {
             window.removeEventListener("resize", positionBubbleAndCutout);
         }
-    }, [stepNumber]);
+    }, [stepNumber, targetContent]);
 
     const setStepsVisibility = () => {
         const steps = document.querySelector(".teaching-bubble-steps") as HTMLElement;
+        if (!steps) return;
+
         if (stepNumber > totalSteps || totalSteps === 1) {
             steps.style.visibility = "hidden";
         } else {
@@ -362,7 +367,7 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
     );
 
     return ReactDOM.createPortal(<FocusTrap className={classes} onEscape={onClose}>
-        {stepNumber === totalSteps + 1 && <Confetti />}
+        {/* {stepNumber === totalSteps + 1 && <Confetti />} */}
         <div className="teaching-bubble-cutout" />
         <div className="teaching-bubble-arrow" />
         <div className="teaching-bubble-arrow-outline" />
