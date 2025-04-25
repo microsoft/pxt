@@ -196,7 +196,7 @@ namespace pxt.sprite {
 
         constructor(public tilemap: Tilemap, public tileset: TileSet, public layers: BitmapData) {}
 
-        cloneData() {
+        cloneData(includeEditorData = false) {
             const tm = this.tilemap.copy();
             const tileset: TileSet = {
                 tileWidth: this.tileset.tileWidth,
@@ -207,7 +207,17 @@ namespace pxt.sprite {
             }
             const layers = Bitmap.fromData(this.layers).copy().data();
 
-            return new TilemapData(tm, tileset, layers);
+            const result = new TilemapData(tm, tileset, layers);
+
+            if (includeEditorData) {
+                result.nextId = this.nextId;
+                result.projectReferences = this.projectReferences?.slice();
+                result.tileOrder = this.tileOrder?.slice();
+                result.editedTiles = this.editedTiles?.slice();
+                result.deletedTiles = this.deletedTiles?.slice();
+            }
+
+            return result;
         }
 
         equals(other: TilemapData) {
