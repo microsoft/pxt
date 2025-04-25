@@ -30,6 +30,7 @@ export interface ButtonProps extends ButtonViewProps {
     onClick: () => void;
     onRightClick?: () => void;
     onBlur?: () => void;
+    onFocus?: () => void;
     onKeydown?: (e: React.KeyboardEvent) => void;
 }
 
@@ -53,6 +54,7 @@ export const Button = (props: ButtonProps) => {
         onRightClick,
         onKeydown,
         onBlur,
+        onFocus,
         buttonRef,
         title,
         label,
@@ -105,6 +107,7 @@ export const Button = (props: ButtonProps) => {
             onContextMenu={rightClickHandler}
             onKeyDown={onKeydown || fireClickOnEnter}
             onBlur={onBlur}
+            onFocus={onFocus}
             role={role || "button"}
             tabIndex={tabIndex || (disabled ? -1 : 0)}
             disabled={hardDisabled}
