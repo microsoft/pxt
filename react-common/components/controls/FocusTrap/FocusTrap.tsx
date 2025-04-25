@@ -48,7 +48,6 @@ const FocusTrapInner = (props: FocusTrapProps) => {
     }, [])
 
     const getElements = React.useCallback(() => {
-        console.log("getting elements");
         let all = nodeListToArray(
             includeOutsideTabOrder ? containerRef.current?.querySelectorAll(`[tabindex]`) :
             containerRef.current?.querySelectorAll(`[tabindex]:not([tabindex="-1"])`)
