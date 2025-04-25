@@ -219,7 +219,7 @@ async function blockTestAsync(name: string) {
         plugins: {
             // 'blockDragger': pxtblockly.BlockDragger,
             'connectionChecker': DuplicateOnDragConnectionChecker,
-            'flyoutsVerticalToolbox': pxtblockly.VerticalFlyout
+            'flyoutsVerticalToolbox': pxtblockly.CachingFlyout
         },
         move: {
             scrollbars: true,
