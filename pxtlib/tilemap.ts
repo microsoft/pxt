@@ -142,9 +142,9 @@ namespace pxt {
 
         getSnapshot(filter?: (asset: U) => boolean) {
             if (filter) {
-                return this.assets.filter(a => filter(a)).map(cloneAsset);
+                return this.assets.filter(a => filter(a)).map(a => cloneAsset(a));
             }
-            return this.assets.map(cloneAsset);
+            return this.assets.map(a => cloneAsset(a));
         }
 
         update(id: string, newValue: U) {
@@ -1713,7 +1713,7 @@ namespace pxt {
         return new pxt.sprite.TilemapData(tilemap, tileset, layers);
     }
 
-    export function cloneAsset<U extends Asset>(asset: U): U {
+    export function cloneAsset<U extends Asset>(asset: U, includeEditorData = false): U {
         asset.meta = Object.assign({}, asset.meta);
         if (asset.meta.temporaryInfo) {
             asset.meta.temporaryInfo = Object.assign({}, asset.meta.temporaryInfo);
@@ -1734,7 +1734,7 @@ namespace pxt {
             case AssetType.Tilemap:
                 return {
                     ...asset,
-                    data: (asset as ProjectTilemap).data.cloneData()
+                    data: (asset as ProjectTilemap).data.cloneData(includeEditorData)
                 };
             case AssetType.Song:
                 return {
@@ -2158,7 +2158,7 @@ namespace pxt {
     export function patchTemporaryAsset(oldValue: pxt.Asset, newValue: pxt.Asset, project: TilemapProject) {
         if (!oldValue || assetEquals(oldValue, newValue)) return newValue;
 
-        newValue = cloneAsset(newValue);
+        newValue = cloneAsset(newValue, true);
         const wasTemporary = !oldValue.meta.displayName;
         const isTemporary = !newValue.meta.displayName;
 
