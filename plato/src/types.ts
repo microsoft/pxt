@@ -52,7 +52,7 @@ export const defaultPresence: Presence = {
     users: [],
 };
 
-export type ModalType = "sign-in";
+export type ModalType = "sign-in" | "host-or-join-game";
 
 export type ShowModalBase = {
     type: ModalType;
@@ -62,7 +62,12 @@ export type ShowSignInModalOptions = ShowModalBase & {
     type: "sign-in";
 };
 
-export type ModalOptions = ShowSignInModalOptions;
+export type ShowHostOrJoinGameModalOptions = ShowModalBase & {
+    type: "host-or-join-game";
+    tab: "host" | "join";
+};
+
+export type ModalOptions = ShowSignInModalOptions | ShowHostOrJoinGameModalOptions;
 
 export namespace SimMessages {
     type MessageBase = {

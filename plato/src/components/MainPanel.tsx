@@ -38,13 +38,17 @@ function ActionCards() {
                 description={Strings.HostGameDescription}
                 buttonLabel={Strings.HostGameLabel}
                 classes={css["host"]}
-                onClick={() => { }}
+                onClick={() => {
+                    showModal({ type: "host-or-join-game", tab: "host" });
+                }}
             />
             <ActionCard
                 description={Strings.JoinGameDescription}
                 buttonLabel={Strings.JoinGameLabel}
                 classes={css["join"]}
-                onClick={() => { }}
+                onClick={() => {
+                    showModal({ type: "host-or-join-game", tab: "join" });
+                }}
             />
             <ActionCard
                 description={Strings.BuildGameDescription}

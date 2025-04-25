@@ -11,6 +11,7 @@ import { classlist, cleanupJoinCode, cleanupShareCode } from "@/utils";
 import { usePromise } from "@/hooks/usePromise";
 import { ThemeManager } from "react-common/components/theming/themeManager";
 import { showModal } from "@/transforms";
+import { HostOrJoinModal } from "./HostOrJoinModal";
 
 function App() {
     const { state, dispatch } = useContext(AppStateContext);
@@ -111,6 +112,7 @@ function App() {
                 </>
             )}
             <SignInModal />
+            <HostOrJoinModal />
             <Toaster />
         </div>
     );
