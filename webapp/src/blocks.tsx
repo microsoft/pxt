@@ -913,7 +913,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 }
 
                 block.setHighlighted(true);
-                this.editor.centerOnBlock(blockId);
+                this.editor.centerOnBlock(blockId, true);
             }
         }
     }
