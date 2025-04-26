@@ -16,7 +16,9 @@ export namespace Strings {
     export const JoinGameLabel = lf("Join");
     export const BuildGameDescription = lf("Create your own game in MakeCode Arcade.");
     export const BuildGameLabel = lf("Build");
-    export const GameGalleryTitle = lf("Games");
+    export const GameGalleryTitle = lf("Game Gallery");
+    export const SignIn = lf("Sign in");
+    export const SignUp = lf("Sign up");
 }
 
 export namespace Ticks {

@@ -21,7 +21,7 @@
     justify-content: center;
     width: 16rem;
     height: 16rem;
-    padding: 1rem;
+    padding: 1.5rem 1rem;
     margin: 0.5rem;
     border-radius: 1.5rem;
     color: white;
@@ -30,34 +30,44 @@
     &.host {
         background-color: #3279FF;
     }
+
     &.join {
         background-color: #46CBB0;
     }
+
     &.build {
         background-color: #B82DAE;
     }
-}
 
-.action-card-icon {
-    font-size: 2rem;
-    margin-bottom: 0.5rem;
-}
+    .label {
+        font-size: 3rem;
+        font-weight: bold;
+        letter-spacing: 0.1rem;
+        text-transform: uppercase;
+        margin: 0;
+    }
 
-.action-card-title {
-    font-size: 1.5rem;
-    font-weight: bold;
-}
+    .icon {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        flex-grow: 1;
+        margin: 0;
 
-.action-card-description {
-    font-size: 1rem;
-}
+        i {
+            font-size: 4rem;
+            margin: 0;
+            width: auto;
+            line-height: initial;
+        }
+    }
 
-.action-card-label {
-    font-size: 3rem;
-    font-weight: bold;
-    letter-spacing: 0.1rem;
-    margin-top: 0.5rem;
-    text-transform: uppercase;
+    .description {
+        font-size: 1rem;
+        margin: 0;
+    }
+
 }
 
 .gallery-carousel {

@@ -33,9 +33,10 @@ export function HostOrJoinModal() {
             <div className={css["content"]}>
                 {tab === "host" ? (
                     <>
+                        <div className={css["description"]}>Enter the share link:</div>
                         <Input
                             className={css["host-input"]}
-                            placeholder={lf("Enter share link or share code")}
+                            placeholder={lf("https://makecode.com/_XXXXXXXXX")}
                         />
                         <Button
                             className={css["button"]}
@@ -46,14 +47,15 @@ export function HostOrJoinModal() {
                             className={css["link"]}
                             href="/plato#host-game"
                             target="_blank">
-                            {lf("How do I get a share code or link?")}
+                            {lf("How do I get a share link?")}
                         </Link>
                     </>
                 ) : (
                     <>
+                        <div className={css["description"]}>Enter the game code:</div>
                         <Input
                             className={css["join-input"]}
-                            placeholder={lf("Enter game code")}
+                            placeholder={lf("ABC 123")}
                         />
                         <Button
                             className={css["button"]}

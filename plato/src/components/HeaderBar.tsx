@@ -12,12 +12,9 @@ import { classList } from "react-common/components/util";
 
 const betaTag = () => {
     return <div className={css["beta-tag"]}>{lf("Experimental!")}</div>;
-    //return null;
 };
 
-interface HeaderBarProps {}
-
-export const HeaderBar: React.FC<HeaderBarProps> = () => {
+export function HeaderBar() {
     const { state } = useContext(AppStateContext);
 
     const appTheme = pxt.appTarget?.appTheme;

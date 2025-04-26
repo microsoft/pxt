@@ -75,6 +75,11 @@
         border: 1px solid #1779C5;
         input {
             text-align: center;
+            text-transform: uppercase;
+
+            &::placeholder {
+                text-transform: none;
+            }
         }
     }
 

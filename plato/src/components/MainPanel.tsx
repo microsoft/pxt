@@ -9,6 +9,7 @@ import { showModal } from "@/transforms";
 interface ActionCardProps {
     description: string;
     buttonLabel: string;
+    icon?: string;
     classes?: string;
     onClick: () => void;
 }
@@ -16,6 +17,7 @@ interface ActionCardProps {
 function ActionCard({
     description,
     buttonLabel,
+    icon,
     classes,
     onClick
 }: ActionCardProps) {
@@ -25,8 +27,11 @@ function ActionCard({
             whileTap={{ scale: 1.02 }}
             transition={{ type: "spring", stiffness: 400, damping: 15, mass: 0.75 }}
             role="button" tabIndex={1} className={classList(css["action-card"], classes)} onClick={onClick}>
-            <p className={css["action-card-label"]}>{buttonLabel}</p>
-            <p className={css["action-card-description"]}>{description}</p>
+            <p className={css["label"]}>{buttonLabel}</p>
+            <span className={css["icon"]}>
+                <i className={icon} />
+            </span>
+            <p className={css["description"]}>{description}</p>
         </motion.div>
     );
 }
@@ -37,6 +42,7 @@ function ActionCards() {
             <ActionCard
                 description={Strings.HostGameDescription}
                 buttonLabel={Strings.HostGameLabel}
+                icon="fas fa-gamepad"
                 classes={css["host"]}
                 onClick={() => {
                     showModal({ type: "host-or-join-game", tab: "host" });
@@ -45,6 +51,7 @@ function ActionCards() {
             <ActionCard
                 description={Strings.JoinGameDescription}
                 buttonLabel={Strings.JoinGameLabel}
+                icon="fas fa-plug"
                 classes={css["join"]}
                 onClick={() => {
                     showModal({ type: "host-or-join-game", tab: "join" });
@@ -53,6 +60,7 @@ function ActionCards() {
             <ActionCard
                 description={Strings.BuildGameDescription}
                 buttonLabel={Strings.BuildGameLabel}
+                icon="fas fa-tools"
                 classes={css["build"]}
                 onClick={() => { }}
             />

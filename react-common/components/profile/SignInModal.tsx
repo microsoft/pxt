@@ -9,18 +9,23 @@ import { Modal } from "../controls/Modal"
 export interface SignInModalProps {
     onSignIn: (provider: pxt.AppCloudProvider, rememberMe: boolean) => Promise<void>
     onClose: () => void
+    className?: string
     hideDismissButton?: boolean
     appMessage?: string
     dialogMessages?: {
         signInMessage?: string
         signUpMessage?: string
-    }
+    },
+    titles?: {
+        signInTitle?: string | React.ReactNode
+        signUpTitle?: string | React.ReactNode
+    },
     resolvePath?: (path: string) => string
     mode?: "signin" | "signup"
 }
 
 export const SignInModal = (props: SignInModalProps) => {
-    const { onSignIn, onClose, appMessage, dialogMessages, hideDismissButton } = props
+    const { onSignIn, onClose, appMessage, dialogMessages, hideDismissButton, className } = props
     const { signInMessage, signUpMessage } = dialogMessages || {
         signInMessage: lf("Sign in to save your progress and access your work anytime, anywhere."),
         signUpMessage: lf("Join now to save your progress and access your work anytime, anywhere.")
@@ -30,7 +35,7 @@ export const SignInModal = (props: SignInModalProps) => {
     const [rememberMe, setRememberMe] = React.useState(false)
     const [mode, setMode] = React.useState(props.mode ?? "signin")
 
-    const titleText = React.useMemo(() => (mode === "signin" ? lf("Sign in") : lf("Sign up")), [mode])
+    const title = React.useMemo(() => (mode === "signin" ? props.titles?.signInTitle ?? lf("Sign in") : props.titles?.signUpTitle ?? lf("Sign up")), [mode, props.titles])
     const headerText = React.useMemo(
         () => (mode === "signin" ? signInMessage : signUpMessage),
         [mode, signInMessage, signUpMessage]
@@ -62,7 +67,7 @@ export const SignInModal = (props: SignInModalProps) => {
     )
 
     return (
-        <Modal title={titleText} onClose={onClose} hideDismissButton={hideDismissButton}>
+        <Modal title={title} onClose={onClose} hideDismissButton={hideDismissButton} className={className}>
             <div className='signin-form'>
                 <div className='signin-header'>
                     {appMessage ? appMessage : undefined} {headerText}

@@ -1,3 +1,4 @@
+import css from "./SignInModal.module.scss";
 import { useContext } from "react";
 import { AppStateContext } from "@/state/Context";
 import { SignInModal as RCSignInModal } from "react-common/components/profile/SignInModal";
@@ -10,6 +11,7 @@ export function SignInModal() {
 
     return state.modalOptions?.type === "sign-in" ? (
         <RCSignInModal
+            className={css["sign-in-modal"]}
             onClose={dismissModal}
             onSignIn={async (provider, rememberMe) => {
                 await authClient.loginAsync(provider.id, rememberMe);
@@ -18,6 +20,18 @@ export function SignInModal() {
             dialogMessages={{
                 signInMessage: Strings.SignInMessage,
                 signUpMessage: Strings.SignUpMessage,
+            }}
+            titles={{
+                signInTitle: (
+                    <>
+                        <span className={css["title"]}>{Strings.SignIn}</span>
+                    </>
+                ),
+                signUpTitle: (
+                    <>
+                        <span className={css["title"]}>{Strings.SignUp}</span>
+                    </>
+                ),
             }}
             hideDismissButton={true}
         />
