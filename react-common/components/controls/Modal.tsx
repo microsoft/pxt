@@ -21,7 +21,7 @@ export interface ModalAction {
 }
 
 export interface ModalProps extends ContainerProps {
-    title: string;
+    title: string | React.ReactNode;
     leftIcon?: string;
     helpUrl?: string
     ariaDescribedBy?: string;
