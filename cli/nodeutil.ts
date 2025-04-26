@@ -360,7 +360,7 @@ export async function isBranchProtectedAsync(
     branch: string
 ): Promise<boolean> {
     const res = await Util.httpRequestCoreAsync({
-        url: `https://api.github.com/repos/${owner}/${repo}/branches/${encodeURIComponent(branch)}`,
+        url: `https://api.github.com/repos/${owner}/${repo}/branches/${encodeURIComponent(branch)}/protection`,
         method: "GET",
         headers: {
             Authorization: `token ${token}`,
@@ -369,15 +369,14 @@ export async function isBranchProtectedAsync(
     });
 
     if (res.statusCode !== 200) {
-        Util.userError(`Failed to get branch info: ${res.statusCode} ${res.text}`);
+        Util.userError(`Failed to get branch protection info: ${res.statusCode} ${res.text}`);
     }
 
     const data = await res.json;
 
-    const requiresPR = !!data.protection?.required_pull_request_reviews;
-    const hasPushRestrictions = !!data.protection?.restrictions;
+    const requiresPR = !!data.required_pull_request_reviews;
 
-    return requiresPR || hasPushRestrictions;
+    return requiresPR;
 }
 
 export function timestamp(date = new Date()): string {
