@@ -70,9 +70,7 @@ export function HeaderBar() {
             >
                 {appTheme.useTextLogo ? (
                     <>
-                        <span className={classList(css["name"], "min-2sm")}>
-                            {appTheme.organizationText}
-                        </span>
+                        <span className={classList(css["name"], "min-2sm")}>{appTheme.organizationText}</span>
                         <span className={classList(css["name-short"], "max-2sm")}>
                             {appTheme.organizationShortText || appTheme.organizationText}
                         </span>
@@ -233,4 +231,4 @@ export function HeaderBar() {
             </div>
         </MenuBar>
     );
-};
+}

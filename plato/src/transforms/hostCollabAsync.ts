@@ -1,7 +1,8 @@
 import * as collabClient from "@/services/collabClient";
 import { stateAndDispatch } from "@/state";
-import { dismissToast, setNetMode, setCollabInfo, showToast, setClientRole } from "@/state/actions";
+import { dismissToast, setNetMode, setCollabInfo, showToast, setViewState } from "@/state/actions";
 import { makeToast } from "@/components/Toaster";
+import { initialHostViewState } from "@/state/state";
 
 export async function hostCollabAsync() {
     const { dispatch } = stateAndDispatch();
@@ -27,7 +28,7 @@ export async function hostCollabAsync() {
                     })
                 )
             );
-            dispatch(setClientRole("host"));
+            dispatch(setViewState(initialHostViewState));
             dispatch(setCollabInfo(hostResult));
             dispatch(setNetMode("connected"));
         } else {

@@ -19,6 +19,14 @@ export namespace Strings {
     export const GameGalleryTitle = lf("Game Gallery");
     export const SignIn = lf("Sign in");
     export const SignUp = lf("Sign up");
+    export const SignOut = lf("Sign out");
+    export const Join = lf("Join");
+    export const Host = lf("Host");
+    export const Build = lf("Build");
+    export const JoinGame = lf("Join Game");
+    export const HostGame = lf("Host Game");
+    export const BuildGame = lf("Build Game");
+    export const EnterGameCode = lf("Enter the game code:");
 }
 
 export namespace Ticks {

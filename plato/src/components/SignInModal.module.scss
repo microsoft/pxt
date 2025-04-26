@@ -2,17 +2,12 @@
     div[class~="common-modal"] {
         border-radius: 1.5rem;
 
-        div[class~="common-modal-header"] {
-        }
-
         div[class~="common-modal-body"] {
-            background-color: #F4F0EC;
+            background-color: #f4f0ec;
 
             div[class~="signin-body"] {
-                
                 button[class~="provider"] {
                     border-radius: 1rem;
-
                 }
             }
         }

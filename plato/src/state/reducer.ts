@@ -4,10 +4,11 @@ import { Action } from "./actions";
 export function reducer(state: AppState, action: Action): AppState {
     switch (action.type) {
         case "SET_USER_PROFILE": {
-            return { ...state, userProfile: action.payload.profile, authStatus: !!action.payload.profile?.id ? "signed-in" : "signed-out" };
-        }
-        case "SET_CLIENT_ROLE": {
-            return { ...state, clientRole: action.payload.clientRole };
+            return {
+                ...state,
+                userProfile: action.payload.profile,
+                authStatus: !!action.payload.profile?.id ? "signed-in" : "signed-out",
+            };
         }
         case "SET_NET_MODE": {
             return { ...state, netMode: action.payload.mode };
@@ -36,10 +37,33 @@ export function reducer(state: AppState, action: Action): AppState {
                 modalOptions: undefined,
             };
         }
-        case "SET_PRESENCE": {
+        case "SET_VIEW_STATE": {
+            if (!action.payload.viewState) {
+                return {
+                    ...state,
+                    viewState: undefined,
+                };
+            }
             return {
                 ...state,
-                presence: { ...state.presence },
+                viewState: {
+                    ...action.payload.viewState,
+                },
+            };
+        }
+        case "SET_PRESENCE": {
+            const { viewState } = state;
+            if (!viewState) {
+                return state;
+            }
+            return {
+                ...state,
+                viewState: {
+                    ...viewState,
+                    presence: {
+                        ...action.payload.presence,
+                    },
+                },
             };
         }
     }

@@ -4,7 +4,9 @@ import { AppStateContext } from "@/state/Context";
 import { classList } from "react-common/components/util";
 import { motion } from "framer-motion";
 import { Strings } from "@/constants";
-import { showModal } from "@/transforms";
+import { showModal, hostNewGameAsync } from "@/transforms";
+import { HostView } from "@/components/HostView";
+import { getClientRole } from "@/state/helpers";
 
 interface ActionCardProps {
     description: string;
@@ -14,19 +16,17 @@ interface ActionCardProps {
     onClick: () => void;
 }
 
-function ActionCard({
-    description,
-    buttonLabel,
-    icon,
-    classes,
-    onClick
-}: ActionCardProps) {
+function ActionCard({ description, buttonLabel, icon, classes, onClick }: ActionCardProps) {
     return (
         <motion.div
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 1.02 }}
             transition={{ type: "spring", stiffness: 400, damping: 15, mass: 0.75 }}
-            role="button" tabIndex={1} className={classList(css["action-card"], classes)} onClick={onClick}>
+            role="button"
+            tabIndex={1}
+            className={classList(css["action-card"], classes)}
+            onClick={onClick}
+        >
             <p className={css["label"]}>{buttonLabel}</p>
             <span className={css["icon"]}>
                 <i className={icon} />
@@ -44,8 +44,8 @@ function ActionCards() {
                 buttonLabel={Strings.HostGameLabel}
                 icon="fas fa-gamepad"
                 classes={css["host"]}
-                onClick={() => {
-                    showModal({ type: "host-or-join-game", tab: "host" });
+                onClick={async () => {
+                    await hostNewGameAsync();
                 }}
             />
             <ActionCard
@@ -54,7 +54,7 @@ function ActionCards() {
                 icon="fas fa-plug"
                 classes={css["join"]}
                 onClick={() => {
-                    showModal({ type: "host-or-join-game", tab: "join" });
+                    showModal({ type: "join-game" });
                 }}
             />
             <ActionCard
@@ -62,7 +62,7 @@ function ActionCards() {
                 buttonLabel={Strings.BuildGameLabel}
                 icon="fas fa-tools"
                 classes={css["build"]}
-                onClick={() => { }}
+                onClick={() => {}}
             />
         </div>
     );
@@ -79,8 +79,10 @@ function GalleryCarousel() {
 }
 
 export function MainPanel() {
-    const { state } = useContext(AppStateContext);
-    const { authStatus, netMode, clientRole, modalOptions } = state;
+    const context = useContext(AppStateContext);
+    const { state } = context;
+    const { authStatus, modalOptions } = state;
+    const clientRole = getClientRole(context);
 
     useEffect(() => {
         // For now just show the sign-in modal if not signed in.
@@ -94,11 +96,19 @@ export function MainPanel() {
         return null;
     }
 
-    if (netMode === "init" && clientRole === "none") {
+    if (clientRole === "none") {
         return (
             <div className={css["main-panel"]}>
                 <ActionCards />
                 <GalleryCarousel />
+            </div>
+        );
+    }
+
+    if (clientRole === "host") {
+        return (
+            <div className={css["main-panel"]}>
+                <HostView />
             </div>
         );
     }

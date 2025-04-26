@@ -12,8 +12,8 @@
             margin: 0;
             padding: 0;
             border: none;
-            padding: .75rem 0;
-            background-color: #F4F0EC;
+            padding: 0.75rem 0;
+            background-color: #f4f0ec;
 
             div[class~="common-modal-title"] {
                 margin: 0;
@@ -32,26 +32,25 @@
 .header {
     display: flex;
     justify-content: row;
-    gap: .25rem;
+    gap: 0.25rem;
     align-items: center;
     color: var(--color-white);
     font-size: 24px;
     font-weight: bold;
-    padding: 0 .75rem;
+    padding: 0 1.5rem;
 
     .tab {
         border-radius: 1rem;
         font-weight: bold;
         font-size: large;
         text-transform: uppercase;
-        background-color: #F4F0EC;
+        background-color: #f4f0ec;
 
         &.active {
-            background-color: color.adjust(#F4F0EC, $lightness: -10%);
-            color: #0C5CB4;
+            background-color: color.adjust(#f4f0ec, $lightness: -10%);
+            color: #0c5cb4;
             font-weight: bold;
         }
-
     }
 }
 
@@ -67,12 +66,12 @@
     .host-input {
         width: 100%;
         border-radius: 1rem;
-        border: 1px solid #1779C5;
+        border: 1px solid #1779c5;
     }
 
     .join-input {
         border-radius: 1rem;
-        border: 1px solid #1779C5;
+        border: 1px solid #1779c5;
         input {
             text-align: center;
             text-transform: uppercase;
@@ -85,7 +84,7 @@
 
     .button {
         width: 12rem;
-        background-color: #1779C5;
+        background-color: #1779c5;
         color: white;
         border-radius: 1rem;
         font-weight: bold;
@@ -93,9 +92,8 @@
     }
 
     .link {
-        color: #1779C5;
+        color: #1779c5;
         text-decoration: underline;
         cursor: pointer;
     }
-
 }

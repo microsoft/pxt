@@ -14,12 +14,13 @@ export const AppStateReady: Promise<boolean> = new Promise(resolve => {
 });
 
 // Never cache `state` and `dispatch`. They can and will be updated frequently.
-export function stateAndDispatch() {
+export function stateAndDispatch(context?: AppStateContextProps): AppStateContextProps {
     if (!(state && dispatch)) throw new Error("AppStateContext not ready");
+    if (context) return context;
     return { state, dispatch };
 }
 
-type AppStateContextProps = {
+export type AppStateContextProps = {
     state: AppState;
     dispatch: React.Dispatch<Action>;
 };

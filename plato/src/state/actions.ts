@@ -1,18 +1,19 @@
 import { ActionBase, ClientRole, ModalOptions, NetMode, CollabInfo, Presence } from "@/types";
 import { ToastWithId } from "@/components/Toaster";
+import { ViewState } from "./state";
 
 /**
  * Action Types
  */
 
 type SetUserProfile = ActionBase<"SET_USER_PROFILE", { profile?: pxt.auth.UserProfile }>;
-type SetClientRole = ActionBase<"SET_CLIENT_ROLE", { clientRole: ClientRole }>;
 type SetNetMode = ActionBase<"SET_NET_MODE", { mode: NetMode }>;
 type SetCollabInfo = ActionBase<"SET_COLLAB_INFO", { collabInfo: CollabInfo }>;
 type ShowToast = ActionBase<"SHOW_TOAST", { toast: ToastWithId }>;
 type DismissToast = ActionBase<"DISMISS_TOAST", { toastId: string }>;
 type ShowModal = ActionBase<"SHOW_MODAL", { modalOptions: ModalOptions }>;
 type DismissModal = ActionBase<"DISMISS_MODAL">;
+type SetViewState = ActionBase<"SET_VIEW_STATE", { viewState?: ViewState }>;
 type SetPresence = ActionBase<"SET_PRESENCE", { presence: Presence }>;
 
 /**
@@ -21,13 +22,13 @@ type SetPresence = ActionBase<"SET_PRESENCE", { presence: Presence }>;
 
 export type Action =
     | SetUserProfile
-    | SetClientRole
     | SetNetMode
     | SetCollabInfo
     | ShowToast
     | DismissToast
     | ShowModal
     | DismissModal
+    | SetViewState
     | SetPresence;
 
 /**
@@ -37,10 +38,6 @@ export type Action =
 export const setUserProfile = (profile?: pxt.auth.UserProfile): SetUserProfile => ({
     type: "SET_USER_PROFILE",
     payload: { profile },
-});
-export const setClientRole = (clientRole: ClientRole): SetClientRole => ({
-    type: "SET_CLIENT_ROLE",
-    payload: { clientRole },
 });
 export const setNetMode = (mode: NetMode): SetNetMode => ({
     type: "SET_NET_MODE",
@@ -65,6 +62,10 @@ export const showModal = (modalOptions: ModalOptions): ShowModal => ({
 export const dismissModal = (): DismissModal => ({
     type: "DISMISS_MODAL",
     payload: {},
+});
+export const setViewState = (viewState: ViewState | undefined): SetViewState => ({
+    type: "SET_VIEW_STATE",
+    payload: { viewState },
 });
 export const setPresence = (presence: Presence): SetPresence => ({
     type: "SET_PRESENCE",
