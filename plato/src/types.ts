@@ -28,7 +28,7 @@ export type CollabInfo = {
     initialState?: string;
 };
 
-export type CollabJoinResult = Partial<CollabInfo> & NetResult;
+export type CollabJoinResult = CollabInfo & NetResult;
 
 export type UserInfo = {
     id: string;

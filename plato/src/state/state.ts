@@ -21,24 +21,23 @@ export type AppState = {
     toasts: ToastWithId[];
 };
 
-export type ViewStateBase = {
+export type NetStateBase = {
     type: string;
     presence: Presence;
+    joinCode?: string;
 };
 
-export type HostViewState = ViewStateBase & {
+export type HostNetState = NetStateBase & {
     type: "host";
     shareCode?: string;
-    gameCode?: string;
-    gameCodeExpiresAt?: number;
 };
 
-export type GuestViewState = ViewStateBase & {
+export type GuestNetState = NetStateBase & {
     type: "guest";
     shareCode?: string;
 };
 
-export type ViewState = HostViewState | GuestViewState;
+export type ViewState = HostNetState | GuestNetState;
 
 export const initialAppState: AppState = {
     netMode: "init",
@@ -46,12 +45,12 @@ export const initialAppState: AppState = {
     toasts: [],
 };
 
-export const initialHostViewState: HostViewState = {
+export const initialHostViewState: HostNetState = {
     type: "host",
     presence: defaultPresence,
 };
 
-export const initialGuestViewState: GuestViewState = {
+export const initialGuestViewState: GuestNetState = {
     type: "guest",
     presence: defaultPresence,
 };

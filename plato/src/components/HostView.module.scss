@@ -1,0 +1,99 @@
+@use "sass:color";
+
+//$primary-color: #3279ff;
+$primary-background: #1470FF;
+$primary-text: #E3E5FF;
+$secondary-background: #57A8FF;
+$secondary-text: #E3E5FF;
+
+.host-view {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    width: 95%;
+    height: 95%;
+    color: $primary-text;
+    background-color: #FFFFFF22;
+    border-radius: 1.5rem;
+
+    .controls {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        flex: 1;
+        padding: 1rem 1rem;
+
+        p.label {
+            font-size: large;
+            font-weight: bold;
+            padding: 0;
+            margin: 0 0 0.5rem 0;
+        }
+
+        div.share-link {
+            display: flex;
+            gap: 0.5rem;
+            width: 100%;
+
+            div.share-link {
+                div[class~="common-input-group"] {
+                    width: 100%;
+                    border: 1px solid #717171;
+                }
+            }
+
+            button.load {
+                font-weight: bold;
+                border-radius: 1rem;
+                height: 2rem;
+                padding: 0 1.5rem;
+                color: $primary-text;
+                background-color: $primary-background;
+            }
+        }
+
+        div.join-code-group {
+            display: flex;
+            gap: 0.5rem;
+            width: 100%;
+
+            div.join-code {
+                font-size: x-large;
+                font-weight: bold;
+                font-family: source code pro, monospace;
+                background-color: #ffffff22;
+                border-radius: 1rem;
+                padding: 0.5rem 1rem;
+                user-select: text;
+            }
+
+            button.copy {
+                font-weight: bold;
+                border-radius: 1rem;
+                padding: 0 1.5rem;
+                color: $secondary-text;
+                background-color: $secondary-background;
+            }
+            button.copy-link {
+                font-weight: bold;
+                border-radius: 1rem;
+                padding: 0 1.5rem;
+                color: $secondary-text;
+                background-color: $secondary-background;
+            }
+
+        }
+    }
+
+    .presence {
+        display: flex;
+        height: 100%;
+        flex: 1;
+    }
+
+    .sim {
+        display: flex;
+        height: 100%;
+        flex: 1;
+    }
+}
