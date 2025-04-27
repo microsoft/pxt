@@ -74,8 +74,8 @@ $page-text: white;
                     background-color: #ffffff22;
                     border: 2px solid #00000044;
                     border-radius: 1rem;
-                    padding: 0.5rem 1rem;
-                    user-select: text;
+                    padding: 0.25rem 2rem;
+                    white-space: nowrap;
                     cursor: pointer;
 
                     &:hover {

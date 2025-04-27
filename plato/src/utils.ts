@@ -1,3 +1,5 @@
+import { NameAdjectives, NameNouns } from "@/constants";
+
 export function isLocalhost(): boolean {
     return window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
 }
@@ -71,4 +73,14 @@ export function cleanupShareCode(shareCode: string | undefined): string | undefi
     } catch {}
     if (!shareCode) return undefined;
     return pxt.Cloud.parseScriptId(shareCode);
+}
+
+export function randomElement<T>(arr: T[]): T {
+    return arr[Math.floor(Math.random() * arr.length)];
+}
+
+export function generateRandomName(): string {
+    const adjective = randomElement(NameAdjectives);
+    const noun = randomElement(NameNouns);
+    return lf("{id:adjective,noun}{0} {1}", adjective, noun);
 }

@@ -1,5 +1,5 @@
 import { stateAndDispatch } from "@/state";
-import { showToast, setNetState } from "@/state/actions";
+import { showToast, setNetState, dismissAllToasts } from "@/state/actions";
 import { Ticks } from "@/constants";
 import { GameOverReason } from "@/types";
 import { makeToast } from "@/components/Toaster";
@@ -7,6 +7,7 @@ import { makeToast } from "@/components/Toaster";
 export function notifyDisconnected(reason?: GameOverReason) {
     const { dispatch } = stateAndDispatch();
     try {
+        dispatch(dismissAllToasts());
         dispatch(setNetState(undefined));
         switch (reason) {
             case "kicked":

@@ -1,11 +1,11 @@
 import * as collabClient from "@/services/collabClient";
 import { stateAndDispatch } from "@/state";
-import { setNetState } from "@/state/actions";
+import { setNetState, dismissAllToasts } from "@/state/actions";
 import { initialHostNetState } from "@/state/state";
 import { makeToast } from "@/components/Toaster";
 import { showToast, dismissToast } from ".";
 
-export async function hostNewGameAsync() {
+export async function hostNewGameAsync(initialKv: Map<string, string>) {
     const { dispatch } = stateAndDispatch();
     const connectingToast = makeToast({
         type: "info",
@@ -14,9 +14,10 @@ export async function hostNewGameAsync() {
     });
 
     try {
+        dispatch(dismissAllToasts());
         showToast(connectingToast);
         dispatch(setNetState(initialHostNetState));
-        const hostResult = await collabClient.hostCollabAsync();
+        const hostResult = await collabClient.hostCollabAsync(initialKv);
 
         if (!hostResult.success) {
             showToast(makeToast({

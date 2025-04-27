@@ -1,5 +1,7 @@
-//import { getCollabCanvas } from "../../services/collabCanvas";
+import { stateAndDispatch } from "@/state";
+import { setNetState } from "@/state/actions";
 
 export function connected(clientId: string) {
-    //getCollabCanvas().addPlayerSprite(clientId, 0, 0, 0);
+    const { dispatch } = stateAndDispatch();
+    dispatch(setNetState({ clientId }));
 }

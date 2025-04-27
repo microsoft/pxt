@@ -122,7 +122,7 @@ class CollabClient {
         }
     };
 
-    public async connectAsync(ticket: string) {
+    public async connectAsync(ticket: string, initialKv: Map<string, string>) {
         return new Promise<void>((resolve, reject) => {
             const joinTimeout = setTimeout(() => {
                 reject("Timed out connecting to collab server");
@@ -161,12 +161,13 @@ class CollabClient {
                     type: "connect",
                     ticket,
                     version: Protocol.VERSION,
+                    initialKv,
                 } as Protocol.ConnectMessage);
             });
         });
     }
 
-    public async hostCollabAsync(): Promise<CollabJoinResult> {
+    public async hostCollabAsync(initialKv: Map<string, string>): Promise<CollabJoinResult> {
         try {
             const authToken = await authClient.authTokenAsync();
 
@@ -188,7 +189,7 @@ class CollabClient {
 
             if (!collabInfo?.joinTicket) throw new Error("Collab server did not return a join ticket");
 
-            await this.connectAsync(collabInfo.joinTicket!);
+            await this.connectAsync(collabInfo.joinTicket!, initialKv);
 
             return {
                 ...collabInfo,
@@ -203,7 +204,7 @@ class CollabClient {
         }
     }
 
-    public async joinCollabAsync(joinCode: string): Promise<CollabJoinResult> {
+    public async joinCollabAsync(joinCode: string, initialKv: Map<string, string>): Promise<CollabJoinResult> {
         try {
             joinCode = encodeURIComponent(joinCode);
 
@@ -227,7 +228,7 @@ class CollabClient {
 
             if (!collabInfo?.joinTicket) throw new Error("Collab server did not return a join ticket");
 
-            await this.connectAsync(collabInfo.joinTicket!);
+            await this.connectAsync(collabInfo.joinTicket!, initialKv);
 
             return {
                 ...collabInfo,
@@ -355,17 +356,17 @@ function destroyCollabClient() {
     _collabClient = undefined;
 }
 
-export async function hostCollabAsync(): Promise<CollabJoinResult> {
+export async function hostCollabAsync(initialKv: Map<string, string>): Promise<CollabJoinResult> {
     destroyCollabClient();
     const collabClient = ensureCollabClient();
-    const collabInfo = await collabClient.hostCollabAsync();
+    const collabInfo = await collabClient.hostCollabAsync(initialKv);
     return collabInfo;
 }
 
-export async function joinCollabAsync(joinCode: string): Promise<CollabJoinResult> {
+export async function joinCollabAsync(joinCode: string, initialKv: Map<string, string>): Promise<CollabJoinResult> {
     destroyCollabClient();
     const collabClient = ensureCollabClient();
-    const collabInfo = await collabClient.joinCollabAsync(joinCode);
+    const collabInfo = await collabClient.joinCollabAsync(joinCode, initialKv);
     return collabInfo;
 }
 

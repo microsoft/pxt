@@ -14,8 +14,7 @@ import { showModal } from "@/transforms";
 import { JoinModal } from "./JoinModal";
 
 function App() {
-    const { state, dispatch } = useContext(AppStateContext);
-    const { authStatus, modalOptions } = state;
+    const { dispatch } = useContext(AppStateContext);
     const [authCheckComplete, setAuthCheckComplete] = useState(false);
 
     const ready = usePromise(AppStateReady, false);

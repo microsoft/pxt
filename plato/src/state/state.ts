@@ -14,7 +14,7 @@ export type AppState = {
     //netMode: NetMode;
     authStatus: AuthStatus;
     userProfile?: pxt.auth.UserProfile;
-    netState?: NetState;
+    netState?: Partial<NetState>;
     collabInfo?: CollabInfo;
     modalType?: ModalType;
     modalOptions?: ModalOptions;
@@ -25,6 +25,7 @@ export type NetStateBase = {
     type: string;
     presence: Presence;
     joinCode?: string;
+    clientId?: string;
 };
 
 export type HostNetState = NetStateBase & {

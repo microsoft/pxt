@@ -1,11 +1,9 @@
 import css from "./HostView.module.scss";
 import { useContext } from "react";
 import { AppStateContext } from "@/state/Context";
-import { HostNetState } from "@/state/state";
-import { getClientRole } from "@/state/helpers";
+import { getHostNetState } from "@/state/helpers";
 import { Input } from "react-common/components/controls/Input";
 import { Button } from "react-common/components/controls/Button";
-import { Link } from "react-common/components/controls/Link";
 import { classlist, debounce } from "@/utils";
 import { showToast } from "@/transforms";
 import { makeToast } from "./Toaster";
@@ -15,12 +13,13 @@ import { setNetState } from "@/state/actions";
 export function HostView() {
     const context = useContext(AppStateContext);
     const { state, dispatch } = context;
-    const clientRole = getClientRole(context);
-    const netState = state.netState as HostNetState;
+    const netState = getHostNetState(context);
 
-    if (clientRole !== "host" || !netState || netState.type !== "host") {
+    if (!netState) {
         return null;
     }
+
+    const { presence } = netState;
 
     const debounceCopyJoinCode = debounce(() => {
         if (!netState.joinCode) return;
@@ -80,8 +79,8 @@ export function HostView() {
                 <div className={css["leave-group"]}>
                     <Button
                         className={css["exit"]}
-                        label={lf("Exit Game")}
-                        title={lf("Exit Game")}
+                        label={lf("End Game")}
+                        title={lf("End Game")}
                         onClick={() => {
                             collabClient.collabOver("ended");
                             dispatch(setNetState(undefined));
@@ -91,6 +90,17 @@ export function HostView() {
             </div>
             <div className={classlist(css["panel"], css["presence"])}>
                 <p className={css["label"]}>{lf("Players")}</p>
+                <div className={css["presence-list"]}>
+                    {presence.users.map((p) => (
+                        <div key={p.id} className={css["presence-item"]}>
+                            {p.kv && p.kv.has("name") ? (
+                                <span className={css["name"]}>{p.kv.get("name")}</span>
+                            ) : (
+                                <span className={css["name"]}>{p.id}</span>
+                            )}
+                        </div>
+                    ))}
+                </div>
             </div>
             <div className={classlist(css["panel"], css["sim"])}>
             </div>

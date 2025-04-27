@@ -7,6 +7,7 @@ import { Strings } from "@/constants";
 import { showModal, hostNewGameAsync } from "@/transforms";
 import { HostView } from "@/components/HostView";
 import { getClientRole } from "@/state/helpers";
+import { generateRandomName } from "@/utils";
 
 interface ActionCardProps {
     description: string;
@@ -45,7 +46,9 @@ function ActionCards() {
                 icon="fas fa-gamepad"
                 classes={css["host"]}
                 onClick={async () => {
-                    await hostNewGameAsync();
+                    const initialKv = new Map<string, string>();
+                    initialKv.set("name", generateRandomName());
+                    await hostNewGameAsync(initialKv);
                 }}
             />
             <ActionCard

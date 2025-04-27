@@ -19,6 +19,12 @@ export function reducer(state: AppState, action: Action): AppState {
                 toasts: state.toasts.filter(t => t.id !== action.payload.toastId),
             };
         }
+        case "DISMISS_ALL_TOASTS": {
+            return {
+                ...state,
+                toasts: [],
+            };
+        }
         case "SHOW_MODAL": {
             return {
                 ...state,
@@ -40,11 +46,15 @@ export function reducer(state: AppState, action: Action): AppState {
             }
             if (!state.netState?.type && !action.payload.netState.type) {
                 // If netState has no type, then incoming must have one.
-                return state;
+                return {
+                    ...state,
+                    netState: undefined,
+                };
             }
             return {
                 ...state,
                 netState: {
+                    ...state.netState,
                     ...action.payload.netState,
                 },
             };
