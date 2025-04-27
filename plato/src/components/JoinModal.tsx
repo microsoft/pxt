@@ -43,7 +43,7 @@ export function JoinModal() {
                     onClick={() => {}}
                 />
                 <Link className={css["link"]} href="/plato#join-game" target="_blank">
-                    {lf("How do I get a game code?")}
+                    {lf("How do I get a join code?")}
                 </Link>
             </div>
         </Modal>

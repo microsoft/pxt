@@ -1,5 +1,5 @@
 import css from "./HostView.module.scss";
-import { useContext } from "react";
+import { useContext, useMemo } from "react";
 import { AppStateContext } from "@/state/Context";
 import { getHostNetState } from "@/state/helpers";
 import { Input } from "react-common/components/controls/Input";
@@ -9,20 +9,43 @@ import { showToast } from "@/transforms";
 import { makeToast } from "./Toaster";
 import * as collabClient from "@/services/collabClient";
 import { setNetState } from "@/state/actions";
+import { Strings } from "@/constants";
+
+
+type Player = {
+    id: string;
+    name: string;
+    isHost: boolean;
+    isMe: boolean;
+};
 
 export function HostView() {
     const context = useContext(AppStateContext);
     const { state, dispatch } = context;
     const netState = getHostNetState(context);
 
-    if (!netState) {
-        return null;
-    }
+    const presence = useMemo(() => {
+        if (!netState) return { users: [] };
+        return netState.presence;
+    }, [netState]);
 
-    const { presence } = netState;
+    const players: Player[] = useMemo(() => {
+        if (!netState) return [];
+        return presence.users.sort((a, b) => a.slot - b.slot).map((u) => ({
+            id: u.id,
+            name: u.kv?.get("name") || lf(Strings.MissingName),
+            isHost: u.slot === 1,
+            isMe: u.id === netState.clientId,
+        }));
+    }, [presence, netState]);
 
-    const debounceCopyJoinCode = debounce(() => {
-        if (!netState.joinCode) return;
+    const joinCode = useMemo(() => {
+        if (!netState) return "";
+        return netState.joinCode || "------";
+    }, [netState]);
+
+    const debounceCopyJoinCode = useMemo(() => debounce(() => {
+        if (!netState || !netState.joinCode) return;
         navigator.clipboard.writeText(netState.joinCode).then(() => {
             showToast(makeToast({
                 type: "info",
@@ -33,7 +56,11 @@ export function HostView() {
         }, () => {
             // Failure
         });
-    }, 250);
+    }, 250), [netState]);
+
+    if (!netState) {
+        return null;
+    }
 
     return (
         <div className={css["host-view"]}>
@@ -55,9 +82,12 @@ export function HostView() {
                 <p></p>
                 <p className={css["label"]}>{lf("Join Code")}<i className={classlist(css["help"], "fas fa-question-circle")} onClick={() => { }}></i></p>
                 <div className={css["join-code-group"]}>
-                    <div className={css["join-code"]} onClick={() => debounceCopyJoinCode()}>
-                        {netState.joinCode ?? "------"}
-                    </div>
+                    <Button
+                        className={css["join-code"]}
+                        label={joinCode}
+                        title={lf("Join Code")}
+                        onClick={() => debounceCopyJoinCode()}
+                    />
                     <Button
                         className={css["copy"]}
                         label={lf("Copy Code")}
@@ -90,14 +120,18 @@ export function HostView() {
             </div>
             <div className={classlist(css["panel"], css["presence"])}>
                 <p className={css["label"]}>{lf("Players")}</p>
-                <div className={css["presence-list"]}>
-                    {presence.users.map((p) => (
-                        <div key={p.id} className={css["presence-item"]}>
-                            {p.kv && p.kv.has("name") ? (
-                                <span className={css["name"]}>{p.kv.get("name")}</span>
-                            ) : (
-                                <span className={css["name"]}>{p.id}</span>
-                            )}
+                <div className={css["players"]}>
+                    {players.map((p) => (
+                        <div key={p.id} className={css["player"]}>
+                            <span className={css["name"]}>{p.name}</span>
+                            {p.isHost && <span className={css["host"]}>{lf("host")}</span>}
+                            {p.isMe && <span className={css["me"]}>{lf("me")}</span>}
+                            <Button
+                                className={css["actions"]}
+                                title={lf("Actions")}
+                                leftIcon="fas fa-ellipsis-v"
+                                onClick={() => { }}
+                            />
                         </div>
                     ))}
                 </div>

@@ -66,15 +66,15 @@ $page-text: white;
                 gap: 0.5rem;
                 width: 100%;
 
-                div.join-code {
+                button.join-code {
                     font-size: x-large;
                     font-weight: bold;
                     font-family: OCRA, OCRB, 'Roboto Mono', monospace;
                     color: #ffffffcc;
                     background-color: #ffffff22;
-                    border: 2px solid #00000044;
+                    border: 2px solid #ffffffcc;
                     border-radius: 1rem;
-                    padding: 0.25rem 2rem;
+                    padding: 0.25rem 1.5rem;
                     white-space: nowrap;
                     cursor: pointer;
 
@@ -120,12 +120,59 @@ $page-text: white;
         }
 
         &.presence {
+            div.players {
+                display: flex;
+                flex-direction: column;
+                color: #ffffffcc;
 
+                :first-child {
+                    border-top-left-radius: 99px;
+                    border-bottom-left-radius: 99px;
+                }
+
+                :last-child {
+                    border-top-right-radius: 99px;
+                    border-bottom-right-radius: 99px;
+                }
+
+                div.player {
+                    display: flex;
+                    flex-direction: row;
+                    gap: 1px;
+
+                    span.name {
+                        flex: 1;
+                        font-weight: bold;
+                        padding: 0.1rem 0.75rem;
+                        background-color: #ffffff22;
+                    }
+
+                    span.host {
+                        background-color: rgba($primary-background, 0.75);
+                        padding: 0.1rem 0.75rem;
+                    }
+
+                    span.me {
+                        background-color: rgba($secondary-background, 0.75);
+                        padding: 0.1rem 0.75rem;
+                    }
+
+                    button.actions {
+                        color: #ffffffcc;
+                        padding: 0;
+                        margin: 0;
+                        background-color: #ffffff22;
+
+                        span, i {
+                            background-color: transparent;
+                        }
+
+                    }
+                }
+            }
         }
 
-        &.sim {
-
-        }
+        &.sim {}
 
     }
 }

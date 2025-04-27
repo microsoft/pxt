@@ -124,6 +124,11 @@ class CollabClient {
 
     public async connectAsync(ticket: string, initialKv: Map<string, string>) {
         return new Promise<void>((resolve, reject) => {
+            if (initialKv.size > 32) {
+                reject("Initial client kv size too large");
+                destroyCollabClient();
+                return;
+            }
             const joinTimeout = setTimeout(() => {
                 reject("Timed out connecting to collab server");
                 destroyCollabClient();
@@ -254,7 +259,7 @@ class CollabClient {
 
     private async recvJoinedMessageAsync(msg: Protocol.JoinedMessage) {
         pxt.debug(`Server said we're joined as "${msg.role}" in slot "${msg.slot}"`);
-        const { role, clientId, sessKv } = msg;
+        const { role, clientId, kv, sessKv } = msg;
 
         this.clientRole = role;
         this.clientId = clientId;
@@ -444,6 +449,7 @@ namespace Protocol {
         role: ClientRole;
         slot: number;
         clientId: string;
+        kv: Map<string, string>;
         sessKv: Map<string, string>;
     };
 

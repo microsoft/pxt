@@ -25,7 +25,6 @@ export type CollabInfo = {
     joinCode?: string;
     joinTicket?: string;
     slot?: number;
-    initialState?: string;
 };
 
 export type CollabJoinResult = CollabInfo & NetResult;

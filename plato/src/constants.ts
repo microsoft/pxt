@@ -12,7 +12,7 @@ export namespace Strings {
     export const SignUpMessage = lf("Sign up to Play Together");
     export const HostGameDescription = lf("Start a new game and invite your friends to join.");
     export const HostGameLabel = lf("Host");
-    export const JoinGameDescription = lf("Enter a game code to join an existing game.");
+    export const JoinGameDescription = lf("Enter a Join Code to join an existing game.");
     export const JoinGameLabel = lf("Join");
     export const BuildGameDescription = lf("Create your own game in MakeCode Arcade.");
     export const BuildGameLabel = lf("Build");
@@ -26,7 +26,7 @@ export namespace Strings {
     export const JoinGame = lf("Join Game");
     export const HostGame = lf("Host Game");
     export const BuildGame = lf("Build Game");
-    export const EnterGameCode = lf("Enter the game code:");
+    export const EnterGameCode = lf("Enter the Join Code");
 }
 
 export namespace Ticks {
