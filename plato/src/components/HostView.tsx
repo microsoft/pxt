@@ -6,6 +6,7 @@ import { getClientRole } from "@/state/helpers";
 import { Input } from "react-common/components/controls/Input";
 import { Button } from "react-common/components/controls/Button";
 import { Link } from "react-common/components/controls/Link";
+import { classlist } from "@/utils";
 
 export function HostView() {
     const context = useContext(AppStateContext);
@@ -19,12 +20,12 @@ export function HostView() {
 
     return (
         <div className={css["host-view"]}>
-            <div className={css["controls"]}>
+            <div className={classlist(css["panel"], css["controls"])}>
                 <p className={css["label"]}>{lf("Game Link")}<i className="fas fa-question-circle" onClick={() => { }}></i></p>
                 <div className={css["share-link"]}>
                     <Input
                         className={css["share-link"]}
-                        placeholder="https://makecode.com/<share-code>"
+                        placeholder="Paste your game link here"
                     />
                     <Button
                         className={css["load"]}
@@ -33,6 +34,7 @@ export function HostView() {
                         onClick={() => { }}
                     />
                 </div>
+                <p></p>
                 <p></p>
                 <p className={css["label"]}>{lf("Join Code")}<i className="fas fa-question-circle" onClick={() => { }}></i></p>
                 <div className={css["join-code-group"]}>
@@ -47,16 +49,16 @@ export function HostView() {
                     />
                     <Button
                         className={css["copy-link"]}
-                        label={lf("Copy URL")}
-                        title={lf("Copy URL")}
+                        label={lf("Copy Join Link")}
+                        title={lf("Copy Join Link")}
                         onClick={() => { }}
                     />
                 </div>
             </div>
-            <div className={css["presence"]}>
+            <div className={classlist(css["panel"], css["presence"])}>
                 {lf("Presence")}
             </div>
-            <div className={css["sim"]}>
+            <div className={classlist(css["panel"], css["sim"])}>
                 {lf("Sim")}
             </div>
         </div>

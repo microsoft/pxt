@@ -1,99 +1,109 @@
 @use "sass:color";
 
 //$primary-color: #3279ff;
-$primary-background: #1470FF;
-$primary-text: #E3E5FF;
-$secondary-background: #57A8FF;
-$secondary-text: #E3E5FF;
+$page-background: #FFFFFF22;
+$primary-background: #22c55e;
+$primary-text: white;
+$secondary-background: #0ea5e9;
+$secondary-text: white;
+$page-text: white;
 
 .host-view {
     display: flex;
     flex-direction: row;
+    gap: 1rem;
     align-items: flex-start;
     width: 95%;
     height: 95%;
-    color: $primary-text;
-    background-color: #FFFFFF22;
-    border-radius: 1.5rem;
 
-    .controls {
+    .panel {
         display: flex;
         flex-direction: column;
         height: 100%;
         flex: 1;
         padding: 1rem 1rem;
+        color: $page-text;
+        background-color: $page-background;
+        border-radius: 1.5rem;
+    
+        &.controls {
 
-        p.label {
-            font-size: large;
-            font-weight: bold;
-            padding: 0;
-            margin: 0 0 0.5rem 0;
-        }
-
-        div.share-link {
-            display: flex;
-            gap: 0.5rem;
-            width: 100%;
-
+            p.label {
+                font-size: large;
+                font-weight: bold;
+                padding: 0;
+                margin: 0 0 0.5rem 0;
+            }
+    
             div.share-link {
-                div[class~="common-input-group"] {
-                    width: 100%;
-                    border: 1px solid #717171;
+                display: flex;
+                gap: 0.5rem;
+                width: 100%;
+    
+                div.share-link {
+                    div[class~="common-input-group"] {
+                        width: 100%;
+                        border: 1px solid #717171;
+                    }
+                }
+    
+                button.load {
+                    font-weight: bold;
+                    border-radius: 1rem;
+                    height: 2rem;
+                    padding: 0 1.5rem;
+                    color: $primary-text;
+                    background-color: $primary-background;
                 }
             }
-
-            button.load {
-                font-weight: bold;
-                border-radius: 1rem;
-                height: 2rem;
-                padding: 0 1.5rem;
-                color: $primary-text;
-                background-color: $primary-background;
+    
+            div.join-code-group {
+                display: flex;
+                gap: 0.5rem;
+                width: 100%;
+    
+                div.join-code {
+                    font-size: x-large;
+                    font-weight: bold;
+                    font-family: OCRA, OCRB, 'Roboto Mono', monospace;
+                    color: #000000aa;
+                    background-color: #fde047;
+                    border: 2px solid #00000044;
+                    border-radius: 1rem;
+                    padding: 0.5rem 1rem;
+                    user-select: text;
+                }
+    
+                button.copy {
+                    font-weight: bold;
+                    border-radius: 1rem;
+                    padding: 0 1.5rem;
+                    color: $secondary-text;
+                    background-color: $secondary-background;
+                }
+    
+                button.copy-link {
+                    font-weight: bold;
+                    border-radius: 1rem;
+                    padding: 0 1.5rem;
+                    color: $secondary-text;
+                    background-color: $secondary-background;
+                }
+    
             }
         }
-
-        div.join-code-group {
+    
+        &.presence {
             display: flex;
-            gap: 0.5rem;
-            width: 100%;
-
-            div.join-code {
-                font-size: x-large;
-                font-weight: bold;
-                font-family: source code pro, monospace;
-                background-color: #ffffff22;
-                border-radius: 1rem;
-                padding: 0.5rem 1rem;
-                user-select: text;
-            }
-
-            button.copy {
-                font-weight: bold;
-                border-radius: 1rem;
-                padding: 0 1.5rem;
-                color: $secondary-text;
-                background-color: $secondary-background;
-            }
-            button.copy-link {
-                font-weight: bold;
-                border-radius: 1rem;
-                padding: 0 1.5rem;
-                color: $secondary-text;
-                background-color: $secondary-background;
-            }
-
+            height: 100%;
+            flex: 1;
         }
-    }
-
-    .presence {
-        display: flex;
-        height: 100%;
-        flex: 1;
-    }
-
-    .sim {
-        display: flex;
-        height: 100%;
-        flex: 1;
+    
+        &.sim {
+            display: flex;
+            height: 100%;
+            flex: 1;
+        }
+    
     }
 }
