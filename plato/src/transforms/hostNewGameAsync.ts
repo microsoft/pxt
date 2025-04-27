@@ -1,7 +1,7 @@
 import * as collabClient from "@/services/collabClient";
 import { stateAndDispatch } from "@/state";
-import { setViewState } from "@/state/actions";
-import { initialHostViewState } from "@/state/state";
+import { setNetState } from "@/state/actions";
+import { initialHostNetState } from "@/state/state";
 import { makeToast } from "@/components/Toaster";
 import { showToast, dismissToast } from ".";
 
@@ -15,7 +15,7 @@ export async function hostNewGameAsync() {
 
     try {
         showToast(connectingToast);
-        dispatch(setViewState(initialHostViewState));
+        dispatch(setNetState(initialHostNetState));
         const hostResult = await collabClient.hostCollabAsync();
 
         if (!hostResult.success) {
@@ -24,7 +24,7 @@ export async function hostNewGameAsync() {
                 text: lf("Connection failed."),
                 timeoutMs: 5000,
             }));
-            dispatch(setViewState(undefined));
+            dispatch(setNetState(undefined));
             return;
         }
 
@@ -35,13 +35,13 @@ export async function hostNewGameAsync() {
         }));
 
         const { state } = stateAndDispatch();
-        dispatch(setViewState({
-            ...state.viewState!,
+        dispatch(setNetState({
+            ...state.netState!,
             joinCode: hostResult.joinCode,
         }));
 
     } catch {
-        dispatch(setViewState(undefined));
+        dispatch(setNetState(undefined));
     } finally {
         dismissToast(connectingToast.id);
     }

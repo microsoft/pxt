@@ -113,5 +113,15 @@ export function MainPanel() {
         );
     }
 
+    if (clientRole === "guest") {
+        return (
+            <div className={css["main-panel"]}>
+                <p>guest view</p>
+            </div>
+        );
+    }
+
+    debugger;
+
     return null;
 }

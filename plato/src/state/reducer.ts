@@ -10,12 +10,6 @@ export function reducer(state: AppState, action: Action): AppState {
                 authStatus: !!action.payload.profile?.id ? "signed-in" : "signed-out",
             };
         }
-        case "SET_NET_MODE": {
-            return { ...state, netMode: action.payload.mode };
-        }
-        case "SET_COLLAB_INFO": {
-            return { ...state, collabInfo: action.payload.collabInfo };
-        }
         case "SHOW_TOAST": {
             return { ...state, toasts: [...state.toasts, action.payload.toast] };
         }
@@ -37,29 +31,33 @@ export function reducer(state: AppState, action: Action): AppState {
                 modalOptions: undefined,
             };
         }
-        case "SET_VIEW_STATE": {
-            if (!action.payload.viewState) {
+        case "SET_NET_STATE": {
+            if (!action.payload.netState) {
                 return {
                     ...state,
-                    viewState: undefined,
+                    netState: undefined,
                 };
             }
-            return {
-                ...state,
-                viewState: {
-                    ...action.payload.viewState,
-                },
-            };
-        }
-        case "SET_PRESENCE": {
-            const { viewState } = state;
-            if (!viewState) {
+            if (!state.netState?.type && !action.payload.netState.type) {
+                // If netState has no type, then incoming must have one.
                 return state;
             }
             return {
                 ...state,
-                viewState: {
-                    ...viewState,
+                netState: {
+                    ...action.payload.netState,
+                },
+            };
+        }
+        case "SET_PRESENCE": {
+            const { netState } = state;
+            if (!netState) {
+                return state;
+            }
+            return {
+                ...state,
+                netState: {
+                    ...netState,
                     presence: {
                         ...action.payload.presence,
                     },

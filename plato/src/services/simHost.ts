@@ -1,6 +1,6 @@
 //import { gameOver } from "./gameClient";
 import { stateAndDispatch } from "../state";
-import { setNetMode } from "../state/actions";
+import { setNetState } from "../state/actions";
 
 let _mainPkg: pxt.MainPackage;
 let mainPkg = (reset?: boolean) => {
@@ -415,7 +415,7 @@ export async function buildSimJsInfo(runOpts: RunOptions): Promise<pxtc.BuiltSim
     if (compileResult.diagnostics?.length > 0) {
         pxt.error("Diagnostics", compileResult.diagnostics);
         const { dispatch } = stateAndDispatch();
-        dispatch(setNetMode("init"));
+        //dispatch(setNetMode("init"));
         //gameOver("compile-failed");
     }
 

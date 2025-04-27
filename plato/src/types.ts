@@ -9,7 +9,7 @@ export type ActionBase<Type extends string, Payload = unknown> = {
     payload: Payload;
 };
 
-export type NetMode = "init" | "connecting" | "connected";
+//export type NetMode = "init" | "connecting" | "connected";
 export type ClientRole = "host" | "guest" | "none";
 export type GameMode = "lobby" | "playing";
 export type SessionOverReason = "kicked" | "ended" | "left" | "full" | "rejected" | "not-found";

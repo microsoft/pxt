@@ -1,19 +1,17 @@
-import { ActionBase, ClientRole, ModalOptions, NetMode, CollabInfo, Presence } from "@/types";
+import { ActionBase, ModalOptions, CollabInfo, Presence } from "@/types";
 import { ToastWithId } from "@/components/Toaster";
-import { ViewState } from "./state";
+import { NetState } from "./state";
 
 /**
  * Action Types
  */
 
 type SetUserProfile = ActionBase<"SET_USER_PROFILE", { profile?: pxt.auth.UserProfile }>;
-type SetNetMode = ActionBase<"SET_NET_MODE", { mode: NetMode }>;
-type SetCollabInfo = ActionBase<"SET_COLLAB_INFO", { collabInfo: CollabInfo }>;
 type ShowToast = ActionBase<"SHOW_TOAST", { toast: ToastWithId }>;
 type DismissToast = ActionBase<"DISMISS_TOAST", { toastId: string }>;
 type ShowModal = ActionBase<"SHOW_MODAL", { modalOptions: ModalOptions }>;
 type DismissModal = ActionBase<"DISMISS_MODAL">;
-type SetViewState = ActionBase<"SET_VIEW_STATE", { viewState?: ViewState }>;
+type SetNetState = ActionBase<"SET_NET_STATE", { netState?: NetState }>;
 type SetPresence = ActionBase<"SET_PRESENCE", { presence: Presence }>;
 
 /**
@@ -22,13 +20,11 @@ type SetPresence = ActionBase<"SET_PRESENCE", { presence: Presence }>;
 
 export type Action =
     | SetUserProfile
-    | SetNetMode
-    | SetCollabInfo
     | ShowToast
     | DismissToast
     | ShowModal
     | DismissModal
-    | SetViewState
+    | SetNetState
     | SetPresence;
 
 /**
@@ -38,14 +34,6 @@ export type Action =
 export const setUserProfile = (profile?: pxt.auth.UserProfile): SetUserProfile => ({
     type: "SET_USER_PROFILE",
     payload: { profile },
-});
-export const setNetMode = (mode: NetMode): SetNetMode => ({
-    type: "SET_NET_MODE",
-    payload: { mode },
-});
-export const setCollabInfo = (collabInfo: CollabInfo): SetCollabInfo => ({
-    type: "SET_COLLAB_INFO",
-    payload: { collabInfo },
 });
 export const showToast = (toast: ToastWithId): ShowToast => ({
     type: "SHOW_TOAST",
@@ -63,9 +51,9 @@ export const dismissModal = (): DismissModal => ({
     type: "DISMISS_MODAL",
     payload: {},
 });
-export const setViewState = (viewState: ViewState | undefined): SetViewState => ({
-    type: "SET_VIEW_STATE",
-    payload: { viewState },
+export const setNetState = (netState: NetState | undefined): SetNetState => ({
+    type: "SET_NET_STATE",
+    payload: { netState },
 });
 export const setPresence = (presence: Presence): SetPresence => ({
     type: "SET_PRESENCE",

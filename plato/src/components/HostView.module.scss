@@ -25,28 +25,32 @@ $page-text: white;
         color: $page-text;
         background-color: $page-background;
         border-radius: 1.5rem;
-    
+
+        p.label {
+            font-size: large;
+            font-weight: bold;
+            padding: 0;
+            margin: 0 0 0.5rem 0;
+
+            i.help {
+                cursor: pointer;
+            }
+        }
+
         &.controls {
 
-            p.label {
-                font-size: large;
-                font-weight: bold;
-                padding: 0;
-                margin: 0 0 0.5rem 0;
-            }
-    
             div.share-link {
                 display: flex;
                 gap: 0.5rem;
                 width: 100%;
-    
+
                 div.share-link {
                     div[class~="common-input-group"] {
                         width: 100%;
                         border: 1px solid #717171;
                     }
                 }
-    
+
                 button.load {
                     font-weight: bold;
                     border-radius: 1rem;
@@ -56,24 +60,33 @@ $page-text: white;
                     background-color: $primary-background;
                 }
             }
-    
+
             div.join-code-group {
                 display: flex;
                 gap: 0.5rem;
                 width: 100%;
-    
+
                 div.join-code {
                     font-size: x-large;
                     font-weight: bold;
                     font-family: OCRA, OCRB, 'Roboto Mono', monospace;
-                    color: #000000aa;
-                    background-color: #fde047;
+                    color: #ffffffcc;
+                    background-color: #ffffff22;
                     border: 2px solid #00000044;
                     border-radius: 1rem;
                     padding: 0.5rem 1rem;
                     user-select: text;
+                    cursor: pointer;
+
+                    &:hover {
+                        filter: grayscale(.15) brightness(.85) contrast(1.3);
+                    }
+
+                    &:active {
+                        filter: grayscale(.2) brightness(.8) contrast(1.3);
+                    }
                 }
-    
+
                 button.copy {
                     font-weight: bold;
                     border-radius: 1rem;
@@ -81,7 +94,7 @@ $page-text: white;
                     color: $secondary-text;
                     background-color: $secondary-background;
                 }
-    
+
                 button.copy-link {
                     font-weight: bold;
                     border-radius: 1rem;
@@ -89,21 +102,30 @@ $page-text: white;
                     color: $secondary-text;
                     background-color: $secondary-background;
                 }
-    
+            }
+
+            div.me-group {
+                flex: 1;
+            }
+
+            div.leave-group {
+                button.exit {
+                    color: white;
+                    font-weight: bold;
+                    background-color: #f43f5e;
+                    border-radius: 1rem;
+                    width: 100%;
+                }
             }
         }
-    
+
         &.presence {
-            display: flex;
-            height: 100%;
-            flex: 1;
+
         }
-    
+
         &.sim {
-            display: flex;
-            height: 100%;
-            flex: 1;
+
         }
-    
+
     }
 }

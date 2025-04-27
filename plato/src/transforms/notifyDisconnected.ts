@@ -1,5 +1,5 @@
 import { stateAndDispatch } from "@/state";
-import { showToast, setNetMode } from "@/state/actions";
+import { showToast, setNetState } from "@/state/actions";
 import { Ticks } from "@/constants";
 import { GameOverReason } from "@/types";
 import { makeToast } from "@/components/Toaster";
@@ -7,7 +7,7 @@ import { makeToast } from "@/components/Toaster";
 export function notifyDisconnected(reason?: GameOverReason) {
     const { dispatch } = stateAndDispatch();
     try {
-        dispatch(setNetMode("init"));
+        dispatch(setNetState(undefined));
         switch (reason) {
             case "kicked":
                 pxt.tickEvent(Ticks.Disconnected_Kicked);

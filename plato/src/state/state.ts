@@ -1,5 +1,5 @@
 import {
-    NetMode,
+    //NetMode,
     ClientRole,
     AuthStatus,
     CollabInfo,
@@ -11,10 +11,10 @@ import {
 import { ToastWithId } from "@/components/Toaster";
 
 export type AppState = {
-    netMode: NetMode;
+    //netMode: NetMode;
     authStatus: AuthStatus;
     userProfile?: pxt.auth.UserProfile;
-    viewState?: ViewState;
+    netState?: NetState;
     collabInfo?: CollabInfo;
     modalType?: ModalType;
     modalOptions?: ModalOptions;
@@ -37,20 +37,20 @@ export type GuestNetState = NetStateBase & {
     shareCode?: string;
 };
 
-export type ViewState = HostNetState | GuestNetState;
+export type NetState = HostNetState | GuestNetState;
 
 export const initialAppState: AppState = {
-    netMode: "init",
+    //netMode: "init",
     authStatus: "unknown",
     toasts: [],
 };
 
-export const initialHostViewState: HostNetState = {
+export const initialHostNetState: HostNetState = {
     type: "host",
     presence: defaultPresence,
 };
 
-export const initialGuestViewState: GuestNetState = {
+export const initialGuestNetState: GuestNetState = {
     type: "guest",
     presence: defaultPresence,
 };
