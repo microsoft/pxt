@@ -150,10 +150,10 @@ class ErrorListItem extends React.Component<ErrorListItemProps, ErrorListItemSta
                 onClick={error.onClick}
                 title={lf("Go to error: {0}", error.message)}
                 aria-label={lf("Go to error: {0}", error.message)}>
-                <>
-                    {error.message}
+                <div>
+                    <span>{error.message}</span>
                     {(errorGroup.count <= 1) ? null : <div className="ui gray circular label countBubble">{errorGroup.count}</div>}
-                </>
+                </div>
             </Button>
         ) : (
              <div className={topRowClass} aria-label={error.message} tabIndex={0}>
