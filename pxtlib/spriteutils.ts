@@ -145,7 +145,7 @@ namespace pxt.sprite {
             }
         }
 
-        dataLength() {
+        protected dataLength() {
             return Math.ceil(this.width * this.height / 2);
         }
     }
@@ -179,7 +179,7 @@ namespace pxt.sprite {
             this.buf[index] = value;
         }
 
-        dataLength() {
+        protected dataLength() {
             return this.width * this.height;
         }
     }
