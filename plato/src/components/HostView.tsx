@@ -93,14 +93,14 @@ export function HostView() {
                     />
                     <Button
                         className={css["copy"]}
-                        label={lf("Copy Code")}
-                        title={lf("Copy Code")}
+                        label={lf("Copy")}
+                        title={lf("Copy")}
                         onClick={() => debounceCopyJoinCode()}
                     />
                     <Button
                         className={css["copy-link"]}
-                        label={lf("Copy Join Link")}
-                        title={lf("Copy Join Link")}
+                        label={lf("Copy Link")}
+                        title={lf("Copy Link")}
                         onClick={() => {}}
                     />
                 </div>
@@ -127,8 +127,8 @@ export function HostView() {
                     {players.map(p => (
                         <div key={p.id} className={css["player"]}>
                             <span className={css["name"]}>{p.name}</span>
-                            {p.isHost && <span className={css["host"]}>{lf("host")}</span>}
-                            {p.isMe && <span className={css["me"]}>{lf("me")}</span>}
+                            {p.isHost && <span className={classList(css["pill"], css["host"])}>{lf("host")}</span>}
+                            {p.isMe && <span className={classList(css["pill"], css["me"])}>{lf("me")}</span>}
                             <Button
                                 className={css["actions"]}
                                 title={lf("Actions")}

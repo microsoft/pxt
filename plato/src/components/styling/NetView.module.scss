@@ -130,6 +130,12 @@ $page-text: white;
                     flex-direction: row;
                     gap: 4px;
 
+                    span.pill {
+                        height: 1.75rem;
+                        padding: 0.1rem 0.75rem;
+                        border-radius: 0.5rem;
+                    }
+
                     span.name {
                         flex: 1;
                         justify-items: center;
@@ -139,14 +145,10 @@ $page-text: white;
 
                     span.host {
                         background-color: rgba($primary-background, 0.75);
-                        border-radius: 0.5rem;
-                        padding: 0.1rem 0.75rem;
                     }
 
                     span.me {
                         background-color: rgba($secondary-background, 0.75);
-                        border-radius: 0.5rem;
-                        padding: 0.1rem 0.75rem;
                     }
 
                     button.actions {
@@ -155,6 +157,7 @@ $page-text: white;
                         margin: 0;
                         background-color: #ffffff22;
                         border-radius: 0.5rem;
+                        height: 1.75rem;
 
                         span,
                         i {
