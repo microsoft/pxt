@@ -4,6 +4,7 @@ import * as React from "react";
 import * as sui from "./sui";
 import { fireClickOnEnter } from "./util";
 import { classList } from "../../react-common/components/util";
+import { Button } from "../../react-common/components/controls/Button";
 
 type GroupedError = {
     error: ErrorDisplayInfo,
@@ -145,15 +146,15 @@ class ErrorListItem extends React.Component<ErrorListItemProps, ErrorListItemSta
         const topRowClass = hasStack ? "exceptionMessage" : classList("item", className);
 
         const itemHeaderRow = isInteractive ? (
-            <div className={topRowClass}
+            <Button className={topRowClass}
                 onClick={error.onClick}
-                onKeyDown={fireClickOnEnter}
-                aria-label={lf("Go to error: {0}", error.message)}
-                tabIndex={0}
-                role="button">
-                {error.message}
-                {(errorGroup.count <= 1) ? null : <div className="ui gray circular label countBubble">{errorGroup.count}</div>}
-            </div>
+                title={lf("Go to error: {0}", error.message)}
+                aria-label={lf("Go to error: {0}", error.message)}>
+                <>
+                    {error.message}
+                    {(errorGroup.count <= 1) ? null : <div className="ui gray circular label countBubble">{errorGroup.count}</div>}
+                </>
+            </Button>
         ) : (
              <div className={topRowClass} aria-label={error.message} tabIndex={0}>
                 {error.message}
