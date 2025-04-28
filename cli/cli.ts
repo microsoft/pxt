@@ -395,7 +395,8 @@ function checkIfTaggedCommitAsync() {
 
 let readJson = nodeutil.readJson;
 
-async function ciAsync() {
+async function ciAsync(parsed?: commandParser.ParsedCommand) {
+    const intentToPublish = parsed && parsed.flags["publish"];
     forceCloudBuild = true;
     const buildInfo = await ciBuildInfoAsync();
     pxt.log(`ci build using ${buildInfo.ci}`);
@@ -406,7 +407,7 @@ async function ciAsync() {
 
     const { tag, branch, pullRequest } = buildInfo
     const atok = process.env.NPM_ACCESS_TOKEN
-    const npmPublish = /^v\d+\.\d+\.\d+$/.exec(tag) && atok;
+    const npmPublish = (intentToPublish || /^v\d+\.\d+\.\d+$/.exec(tag)) && atok;
 
     if (npmPublish) {
         let npmrc = path.join(process.env.HOME, ".npmrc")
@@ -7431,7 +7432,12 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
     p.defineCommand({
         name: "ci",
         help: "run automated build in a continuous integration environment",
-        aliases: ["travis", "githubactions", "buildci"]
+        aliases: ["travis", "githubactions", "buildci"],
+        flags: {
+            "publish": {
+                description: "publish to npm regardless of whether this is a tagged release",
+            },
+        }
     }, ciAsync);
     advancedCommand("uploadfile", "upload file under <CDN>/files/PATH", uploadFileAsync, "<path>");
     advancedCommand("service", "simulate a query to web worker", serviceAsync, "<operation>");
