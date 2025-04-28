@@ -8,10 +8,6 @@ export function isNgrok(): boolean {
     return window.location.hostname.includes(".ngrok.");
 }
 
-export function classlist(...args: (string | boolean | undefined)[]): string {
-    return args.filter(Boolean).join(" ");
-}
-
 export async function delayAsync(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
 }

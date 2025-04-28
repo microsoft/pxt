@@ -1,4 +1,4 @@
-import css from "./SignInModal.module.scss";
+import css from "./styling/SignInModal.module.scss";
 import { useContext } from "react";
 import { AppStateContext } from "@/state/Context";
 import { SignInModal as RCSignInModal } from "react-common/components/profile/SignInModal";

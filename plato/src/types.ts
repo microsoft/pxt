@@ -51,6 +51,13 @@ export const defaultPresence: Presence = {
     users: [],
 };
 
+export type ViewPlayer = {
+    id: string;
+    name: string;
+    isHost: boolean;
+    isMe: boolean;
+};
+
 export type ModalType = "sign-in" | "join-game";
 
 export type ShowModalBase = {

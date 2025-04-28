@@ -1,4 +1,4 @@
-import css from "./Loading.module.scss";
+import css from "./styling/Loading.module.scss";
 
 export function Loading() {
     return <div className={css.loading}>Loading...</div>;

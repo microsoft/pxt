@@ -1,9 +1,9 @@
 import css from "./Toaster.module.scss";
 import { useCallback, useContext, useEffect, useState, useRef } from "react";
+import { classList } from "react-common/components/util";
 import { AppStateContext } from "@/state/Context";
 import { AnimatePresence, motion } from "framer-motion";
 import { dismissToast } from "@/state/actions";
-import { classlist } from "@/utils";
 import { ToastWithId, ToastType } from "./types";
 
 const icons: { [type in ToastType]: string } = {
@@ -18,6 +18,7 @@ const SLIDER_DELAY_MS = 300;
 interface IToastNotificationProps {
     toast: ToastWithId;
 }
+
 const ToastNotification: React.FC<IToastNotificationProps> = ({ toast }) => {
     const { dispatch } = useContext(AppStateContext);
     const [sliderActive, setSliderActive] = useState(false);
@@ -44,24 +45,24 @@ const ToastNotification: React.FC<IToastNotificationProps> = ({ toast }) => {
     }, [sliderActive]);
 
     return (
-        <div className={classlist(css["toast"], css[toast.type], toast.className)}>
+        <div className={classList(css["toast"], css[toast.type], toast.className)}>
             <div className={css["toast-content"]}>
                 {!toast.hideIcon && (
-                    <div className={classlist(css["icon-container"], css[toast.type])}>
+                    <div className={classList(css["icon-container"], css[toast.type])}>
                         {toast.icon ?? icons[toast.type]}
                     </div>
                 )}
                 {toast.iconJsx && (
-                    <div className={classlist(css["icon-container"], css[toast.type])}>{toast.iconJsx}</div>
+                    <div className={classList(css["icon-container"], css[toast.type])}>{toast.iconJsx}</div>
                 )}
                 <div className={css["text-container"]}>
-                    {toast.text && <div className={classlist(css["text"], "tt-toast-text")}>{toast.text}</div>}
+                    {toast.text && <div className={classList(css["text"], "tt-toast-text")}>{toast.text}</div>}
                     {toast.detail && <div className={css["detail"]}>{toast.detail}</div>}
                     {toast.jsx && <div>{toast.jsx}</div>}
                 </div>
                 {!toast.hideDismissBtn && !toast.showSpinner && (
                     <div className={css["dismiss-btn"]} onClick={handleDismissClicked}>
-                        <i className={classlist("far fa-times-circle", css["icon"])} />
+                        <i className={classList("far fa-times-circle", css["icon"])} />
                     </div>
                 )}
                 {toast.showSpinner && (
@@ -74,7 +75,7 @@ const ToastNotification: React.FC<IToastNotificationProps> = ({ toast }) => {
                 <div>
                     <div
                         ref={sliderRef}
-                        className={classlist(css["slider"], css[toast.type])}
+                        className={classList(css["slider"], css[toast.type])}
                         style={{
                             width: sliderWidth(),
                             transitionDuration: `${toast.timeoutMs}ms`,
@@ -90,7 +91,7 @@ export function Toaster() {
     const { state } = useContext(AppStateContext);
 
     return (
-        <div className={classlist(css["toast-container"])}>
+        <div className={classList(css["toast-container"])}>
             <AnimatePresence>
                 {state.toasts.map(item => (
                     <motion.div

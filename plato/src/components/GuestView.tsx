@@ -1,22 +1,21 @@
 import css from "./styling/NetView.module.scss";
+import * as collabClient from "@/services/collabClient";
 import { useContext, useMemo } from "react";
 import { AppStateContext } from "@/state/Context";
-import { getHostNetState } from "@/state/helpers";
-import { Input } from "react-common/components/controls/Input";
-import { Button } from "react-common/components/controls/Button";
 import { classList } from "react-common/components/util";
-import { debounce } from "@/utils";
-import { showToast } from "@/transforms";
-import { makeToast } from "./Toaster";
-import * as collabClient from "@/services/collabClient";
-import { setNetState } from "@/state/actions";
-import { Strings } from "@/constants";
+import { getGuestNetState } from "@/state/helpers";
 import { ViewPlayer } from "@/types";
+import { Strings } from "@/constants";
+import { debounce } from "@/utils";
+import { makeToast } from "./Toaster";
+import { showToast } from "@/transforms";
+import { Button } from "react-common/components/controls/Button";
+import { setNetState } from "@/state/actions";
 
-export function HostView() {
+export function GuestView() {
     const context = useContext(AppStateContext);
     const { state, dispatch } = context;
-    const netState = getHostNetState(context);
+    const netState = getGuestNetState(context);
 
     const presence = useMemo(() => {
         if (!netState) return { users: [] };
@@ -59,21 +58,6 @@ export function HostView() {
     return (
         <div className={css["view"]}>
             <div className={classList(css["panel"], css["controls"])}>
-                <p className={css["label"]}>{lf("Game Link")}<i className={classList(css["help"], "fas fa-question-circle")} onClick={() => { }}></i></p>
-                <div className={css["share-link"]}>
-                    <Input
-                        className={css["share-link"]}
-                        placeholder="Paste your game link here"
-                    />
-                    <Button
-                        className={css["load"]}
-                        label={lf("Load")}
-                        title={lf("Load")}
-                        onClick={() => { }}
-                    />
-                </div>
-                <p></p>
-                <p></p>
                 <p className={css["label"]}>{lf("Join Code")}<i className={classList(css["help"], "fas fa-question-circle")} onClick={() => { }}></i></p>
                 <div className={css["join-code-group"]}>
                     <Button
@@ -103,10 +87,10 @@ export function HostView() {
                 <div className={css["leave-group"]}>
                     <Button
                         className={css["exit"]}
-                        label={lf("End Game")}
-                        title={lf("End Game")}
-                        onClick={() => {
-                            collabClient.collabOver("ended");
+                        label={lf("Leave Game")}
+                        title={lf("Leave Game")}
+                        onClick={async () => {
+                            await collabClient.leaveCollabAsync("left");
                             dispatch(setNetState(undefined));
                         }}
                     />

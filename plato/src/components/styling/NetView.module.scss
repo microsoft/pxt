@@ -8,7 +8,7 @@ $secondary-background: #0ea5e9;
 $secondary-text: white;
 $page-text: white;
 
-.host-view {
+.view {
     display: flex;
     flex-direction: row;
     gap: 1rem;
@@ -125,35 +125,27 @@ $page-text: white;
                 flex-direction: column;
                 color: #ffffffcc;
 
-                :first-child {
-                    border-top-left-radius: 99px;
-                    border-bottom-left-radius: 99px;
-                }
-
-                :last-child {
-                    border-top-right-radius: 99px;
-                    border-bottom-right-radius: 99px;
-                }
-
                 div.player {
                     display: flex;
                     flex-direction: row;
-                    gap: 1px;
+                    gap: 4px;
 
                     span.name {
                         flex: 1;
+                        justify-items: center;
                         font-weight: bold;
                         padding: 0.1rem 0.75rem;
-                        background-color: #ffffff22;
                     }
 
                     span.host {
                         background-color: rgba($primary-background, 0.75);
+                        border-radius: 0.5rem;
                         padding: 0.1rem 0.75rem;
                     }
 
                     span.me {
                         background-color: rgba($secondary-background, 0.75);
+                        border-radius: 0.5rem;
                         padding: 0.1rem 0.75rem;
                     }
 
@@ -162,11 +154,15 @@ $page-text: white;
                         padding: 0;
                         margin: 0;
                         background-color: #ffffff22;
+                        border-radius: 0.5rem;
 
                         span, i {
                             background-color: transparent;
                         }
 
+                        i {
+                            margin: 0;
+                        }
                     }
                 }
             }

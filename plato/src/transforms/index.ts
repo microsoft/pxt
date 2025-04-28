@@ -9,3 +9,4 @@ export { dismissToast } from "./dismissToast";
 export { playerJoinedAsync } from "./playerJoinedAsync";
 export { playerLeftAsync } from "./playerLeftAsync";
 export { hostNewGameAsync } from "./hostNewGameAsync";
+export { joinGameAsync } from "./joinGameAsync";

@@ -1,4 +1,4 @@
-import css from "./App.module.scss";
+import css from "./styling/App.module.scss";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { AppStateContext, AppStateReady } from "@/state/Context";
 import { Loading } from "@/components/Loading";
@@ -7,10 +7,10 @@ import { HeaderBar } from "@/components/HeaderBar";
 import { SignInModal } from "@/components/SignInModal";
 import { Toaster } from "@/components/Toaster";
 import * as authClient from "@/services/authClient";
-import { classlist, cleanupJoinCode, cleanupShareCode } from "@/utils";
+import { cleanupJoinCode, cleanupShareCode } from "@/utils";
 import { usePromise } from "@/hooks/usePromise";
 import { ThemeManager } from "react-common/components/theming/themeManager";
-import { showModal } from "@/transforms";
+import { classList } from "react-common/components/util";
 import { JoinModal } from "./JoinModal";
 
 function App() {
@@ -102,7 +102,7 @@ function App() {
     }, [ready, dispatch, authStatus, shareCode, joinCode, authCheckComplete]);
     */
     return (
-        <div className={classlist(`${pxt.appTarget.id}`, css["app"])}>
+        <div className={classList(`${pxt.appTarget.id}`, css["app"])}>
             {!authCheckComplete && <Loading />}
             {authCheckComplete && (
                 <>

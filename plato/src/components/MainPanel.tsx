@@ -1,4 +1,4 @@
-import css from "./MainPanel.module.scss";
+import css from "./styling/MainPanel.module.scss";
 import { useContext, useEffect } from "react";
 import { AppStateContext } from "@/state/Context";
 import { classList } from "react-common/components/util";
@@ -6,8 +6,10 @@ import { motion } from "framer-motion";
 import { Strings } from "@/constants";
 import { showModal, hostNewGameAsync } from "@/transforms";
 import { HostView } from "@/components/HostView";
+import { GuestView } from "@/components/GuestView";
 import { getClientRole } from "@/state/helpers";
 import { generateRandomName } from "@/utils";
+import { setNetState } from "@/state/actions";
 
 interface ActionCardProps {
     description: string;
@@ -83,7 +85,7 @@ function GalleryCarousel() {
 
 export function MainPanel() {
     const context = useContext(AppStateContext);
-    const { state } = context;
+    const { state, dispatch } = context;
     const { authStatus, modalOptions } = state;
     const clientRole = getClientRole(context);
 
@@ -119,12 +121,14 @@ export function MainPanel() {
     if (clientRole === "guest") {
         return (
             <div className={css["main-panel"]}>
-                <p>guest view</p>
+                <GuestView />
             </div>
         );
     }
 
+    // Should never happen
     debugger;
+    dispatch(setNetState(undefined));
 
     return null;
 }

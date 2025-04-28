@@ -1,19 +1,20 @@
-import css from "./JoinModal.module.scss";
-import { useContext, useMemo, useState } from "react";
+import css from "./styling/JoinModal.module.scss";
+import { useContext, useRef } from "react";
 import { AppStateContext } from "@/state/Context";
 import { Button } from "react-common/components/controls/Button";
 import { Link } from "react-common/components/controls/Link";
 import { Input } from "react-common/components/controls/Input";
 import { Modal } from "react-common/components/controls/Modal";
-import { dismissModal, showModal } from "@/transforms";
+import { dismissModal, joinGameAsync } from "@/transforms";
 import { JoinGameModalOptions } from "@/types";
-import { classlist } from "@/utils";
+import { cleanupJoinCode, generateRandomName } from "@/utils";
 import { Strings } from "@/constants";
 
 export function JoinModal() {
     const { state } = useContext(AppStateContext);
     let { modalOptions } = state;
     modalOptions = modalOptions as JoinGameModalOptions;
+    const inputRef = useRef<HTMLInputElement>(null);
 
     if (!modalOptions || modalOptions.type !== "join-game") {
         return null;
@@ -35,12 +36,24 @@ export function JoinModal() {
         >
             <div className={css["content"]}>
                 <div className={css["description"]}>{Strings.EnterGameCode}</div>
-                <Input className={css["join-input"]} placeholder={lf("A1B2C3")} />
+                <Input className={css["join-input"]} placeholder={lf("A1B2C3")} handleInputRef={inputRef} />
                 <Button
                     className={css["button"]}
                     label={Strings.JoinGame}
                     title={Strings.JoinGame}
-                    onClick={() => {}}
+                    onClick={async () => {
+                        const initialKv = new Map<string, string>();
+                        initialKv.set("name", generateRandomName());
+                        const joinCode = cleanupJoinCode(inputRef.current?.value);
+                        if (joinCode) {
+                            dismissModal();
+                            await joinGameAsync(joinCode, initialKv);
+                        } else {
+                            if (inputRef.current) {
+                                inputRef.current.value = "";
+                            }
+                        }
+                    }}
                 />
                 <Link className={css["link"]} href="/plato#join-game" target="_blank">
                     {lf("How do I get a join code?")}
