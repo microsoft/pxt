@@ -395,7 +395,8 @@ function checkIfTaggedCommitAsync() {
 
 let readJson = nodeutil.readJson;
 
-async function ciAsync() {
+async function ciAsync(parsed?: commandParser.ParsedCommand) {
+    const intentToPublish = parsed && parsed.flags["publish"];
     forceCloudBuild = true;
     const buildInfo = await ciBuildInfoAsync();
     pxt.log(`ci build using ${buildInfo.ci}`);
@@ -406,7 +407,7 @@ async function ciAsync() {
 
     const { tag, branch, pullRequest } = buildInfo
     const atok = process.env.NPM_ACCESS_TOKEN
-    const npmPublish = /^v\d+\.\d+\.\d+$/.exec(tag) && atok;
+    const npmPublish = (intentToPublish || /^v\d+\.\d+\.\d+$/.exec(tag)) && atok;
 
     if (npmPublish) {
         let npmrc = path.join(process.env.HOME, ".npmrc")
@@ -634,6 +635,7 @@ async function bumpAsync(parsed?: commandParser.ParsedCommand) {
     const bumpPxt = parsed && parsed.flags["update"];
     const upload = parsed && parsed.flags["upload"];
     let pr = parsed && parsed.flags["pr"];
+    let nopr = parsed && parsed.flags["nopr"];
     let bumpType = parsed && parsed.flags["version"] as string;
     if (!bumpType) bumpType = "patch";
     if (bumpType.startsWith("v")) bumpType = bumpType.slice(1);
@@ -652,16 +654,24 @@ async function bumpAsync(parsed?: commandParser.ParsedCommand) {
         ({ owner, repo } = await nodeutil.getGitHubOwnerAndRepoAsync());
         branchProtected = await nodeutil.isBranchProtectedAsync(token, owner, repo, currBranchName);
         if (branchProtected) {
-            console.log(chalk.yellow(`Branch ${currBranchName} is protected; creating a pull request instead of pushing directly.`));
+            console.log(chalk.yellow(`Branch ${currBranchName} is protected.`));
+            pr = true;
         }
     } catch (e) {
         console.warn(chalk.yellow("Unable to determine branch protection status."), e.message);
     }
 
-    if (fs.existsSync(pxt.CONFIG_NAME)) {
-        if (upload) U.userError("upload only supported on targets");
+    if (nopr) {
+        pr = false;
+    }
 
-        if (pr || branchProtected) {
+    if (fs.existsSync(pxt.CONFIG_NAME)) {
+        if (upload) {
+            U.userError("upload only supported on targets");
+        }
+
+        if (pr) {
+            console.log("Bumping via pull request.");
             const newBranchName = `${user}/pxt-bump-${nodeutil.timestamp()}`;
             return Promise.resolve()
                 .then(() => nodeutil.needsGitCleanAsync())
@@ -681,6 +691,7 @@ async function bumpAsync(parsed?: commandParser.ParsedCommand) {
                 .then((prUrl) => nodeutil.switchBranchAsync(currBranchName).then(() => prUrl))
                 .then((prUrl) => console.log(`${chalk.green('PR created:')} ${chalk.green.underline(prUrl)}`))
         } else {
+            console.log("Bumping via direct push.");
             return Promise.resolve()
                 .then(() => nodeutil.runGitAsync("pull"))
                 .then(() => justBumpPkgAsync(bumpType))
@@ -7078,7 +7089,8 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
         flags: {
             update: { description: "(package only) Updates pxt-core reference to the latest release" },
             upload: { description: "(package only) Upload after bumping" },
-            pr: { description: "Create a pull request after bumping rather than push changes directly" },
+            pr: { description: "Bump via pull request rather than direct push" },
+            nopr: { description: "Bump via direct push rather than pull request (overrides --pr)" },
             version: {
                 description: "Which part of the version to bump, or a complete version number to assign. Defaults to 'patch'",
                 argument: "version",
@@ -7420,7 +7432,12 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
     p.defineCommand({
         name: "ci",
         help: "run automated build in a continuous integration environment",
-        aliases: ["travis", "githubactions", "buildci"]
+        aliases: ["travis", "githubactions", "buildci"],
+        flags: {
+            "publish": {
+                description: "publish to npm regardless of whether this is a tagged release",
+            },
+        }
     }, ciAsync);
     advancedCommand("uploadfile", "upload file under <CDN>/files/PATH", uploadFileAsync, "<path>");
     advancedCommand("service", "simulate a query to web worker", serviceAsync, "<operation>");

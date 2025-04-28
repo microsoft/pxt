@@ -29,9 +29,9 @@ jobs:
           sudo apt-get install xvfb
           sudo npm install -g pxt
           npm install
-      - name: npm test (and possibly publish to npm registry)
+      - name: npm test:publish
         run: |
-          npm test
+          npm test:publish
         env:
           CROWDIN_KEY: ${{ secrets.CROWDIN_KEY }}
           PXT_ACCESS_TOKEN: ${{ secrets.PXT_ACCESS_TOKEN }}
