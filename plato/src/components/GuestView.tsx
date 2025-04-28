@@ -5,7 +5,7 @@ import { AppStateContext } from "@/state/Context";
 import { classList } from "react-common/components/util";
 import { getGuestNetState } from "@/state/helpers";
 import { ViewPlayer } from "@/types";
-import { Strings } from "@/constants";
+import { Keys, Strings } from "@/constants";
 import { debounce } from "@/utils";
 import { makeToast } from "./Toaster";
 import { showToast } from "@/transforms";
@@ -24,12 +24,14 @@ export function GuestView() {
 
     const players: ViewPlayer[] = useMemo(() => {
         if (!netState) return [];
-        return presence.users.sort((a, b) => a.slot - b.slot).map((u) => ({
-            id: u.id,
-            name: u.kv?.get("name") || Strings.MissingName,
-            isHost: u.slot === 1,
-            isMe: u.id === netState.clientId,
-        }));
+        return presence.users
+            .sort((a, b) => a.slot - b.slot)
+            .map(u => ({
+                id: u.id,
+                name: u.kv?.get(Keys.Name) || Strings.MissingName,
+                isHost: u.slot === 1,
+                isMe: u.id === netState.clientId,
+            }));
     }, [presence, netState]);
 
     const joinCode = useMemo(() => {
@@ -37,19 +39,28 @@ export function GuestView() {
         return netState.joinCode || "------";
     }, [netState]);
 
-    const debounceCopyJoinCode = useMemo(() => debounce(() => {
-        if (!netState || !netState.joinCode) return;
-        navigator.clipboard.writeText(netState.joinCode).then(() => {
-            showToast(makeToast({
-                type: "info",
-                icon: "✔️",
-                text: lf("Join code copied to clipboard"),
-                timeoutMs: 2000,
-            }));
-        }, () => {
-            // Failure
-        });
-    }, 250), [netState]);
+    const debounceCopyJoinCode = useMemo(
+        () =>
+            debounce(() => {
+                if (!netState || !netState.joinCode) return;
+                navigator.clipboard.writeText(netState.joinCode).then(
+                    () => {
+                        showToast(
+                            makeToast({
+                                type: "info",
+                                icon: "✔️",
+                                text: lf("Join code copied to clipboard"),
+                                timeoutMs: 2000,
+                            })
+                        );
+                    },
+                    () => {
+                        // Failure
+                    }
+                );
+            }, 250),
+        [netState]
+    );
 
     if (!netState) {
         return null;
@@ -58,7 +69,10 @@ export function GuestView() {
     return (
         <div className={css["view"]}>
             <div className={classList(css["panel"], css["controls"])}>
-                <p className={css["label"]}>{lf("Join Code")}<i className={classList(css["help"], "fas fa-question-circle")} onClick={() => { }}></i></p>
+                <p className={css["label"]}>
+                    {lf("Join Code")}
+                    <i className={classList(css["help"], "fas fa-question-circle")} onClick={() => {}}></i>
+                </p>
                 <div className={css["join-code-group"]}>
                     <Button
                         className={css["join-code"]}
@@ -76,7 +90,7 @@ export function GuestView() {
                         className={css["copy-link"]}
                         label={lf("Copy Join Link")}
                         title={lf("Copy Join Link")}
-                        onClick={() => { }}
+                        onClick={() => {}}
                     />
                 </div>
                 <p></p>
@@ -99,7 +113,7 @@ export function GuestView() {
             <div className={classList(css["panel"], css["presence"])}>
                 <p className={css["label"]}>{lf("Players")}</p>
                 <div className={css["players"]}>
-                    {players.map((p) => (
+                    {players.map(p => (
                         <div key={p.id} className={css["player"]}>
                             <span className={css["name"]}>{p.name}</span>
                             {p.isHost && <span className={css["host"]}>{lf("host")}</span>}
@@ -108,14 +122,13 @@ export function GuestView() {
                                 className={css["actions"]}
                                 title={lf("Actions")}
                                 leftIcon="fas fa-ellipsis-v"
-                                onClick={() => { }}
+                                onClick={() => {}}
                             />
                         </div>
                     ))}
                 </div>
             </div>
-            <div className={classList(css["panel"], css["sim"])}>
-            </div>
+            <div className={classList(css["panel"], css["sim"])}></div>
         </div>
-    )
+    );
 }

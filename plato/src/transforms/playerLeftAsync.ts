@@ -4,7 +4,7 @@ import { showToast } from "@/state/actions";
 import { simDriver } from "@/services/simHost";
 import { makeToast } from "@/components/Toaster";
 import { getUserValue } from "@/types";
-import { Strings } from "@/constants";
+import { Keys, Strings } from "@/constants";
 
 export async function playerLeftAsync(clientId: string) {
     const { state, dispatch } = stateAndDispatch();
@@ -12,7 +12,7 @@ export async function playerLeftAsync(clientId: string) {
         const presence = getPresence();
         const user = presence?.users.find(u => u.id === clientId);
         if (user) {
-            const name = getUserValue(user, "name", Strings.MissingName)!;
+            const name = getUserValue(user, Keys.Name, Strings.MissingName)!;
             dispatch(
                 showToast(
                     makeToast({

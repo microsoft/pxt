@@ -3,12 +3,12 @@ import { useContext, useEffect } from "react";
 import { AppStateContext } from "@/state/Context";
 import { classList } from "react-common/components/util";
 import { motion } from "framer-motion";
-import { Strings } from "@/constants";
+import { Keys, Strings } from "@/constants";
 import { showModal, hostNewGameAsync } from "@/transforms";
 import { HostView } from "@/components/HostView";
 import { GuestView } from "@/components/GuestView";
 import { getClientRole } from "@/state/helpers";
-import { generateRandomName } from "@/utils";
+import { generateRandomName, randomInt } from "@/utils";
 import { setNetState } from "@/state/actions";
 
 interface ActionCardProps {
@@ -48,9 +48,11 @@ function ActionCards() {
                 icon="fas fa-gamepad"
                 classes={css["host"]}
                 onClick={async () => {
-                    const initialKv = new Map<string, string>();
-                    initialKv.set("name", generateRandomName());
-                    await hostNewGameAsync(initialKv);
+                    const initialUserKv = new Map<string, string>();
+                    initialUserKv.set(Keys.Name, generateRandomName());
+                    const initialSessKv = new Map<string, string>();
+                    initialSessKv.set(Keys.Seed, "" + randomInt(0, 1000000));
+                    await hostNewGameAsync(initialSessKv, initialUserKv);
                 }}
             />
             <ActionCard

@@ -5,7 +5,7 @@ import { initialHostNetState } from "@/state/state";
 import { makeToast } from "@/components/Toaster";
 import { showToast, dismissToast } from ".";
 
-export async function hostNewGameAsync(initialKv: Map<string, string>) {
+export async function hostNewGameAsync(initialSessKv: Map<string, string>, initialUserKv: Map<string, string>) {
     const { dispatch } = stateAndDispatch();
     const connectingToast = makeToast({
         type: "info",
@@ -17,30 +17,35 @@ export async function hostNewGameAsync(initialKv: Map<string, string>) {
         dispatch(dismissAllToasts());
         showToast(connectingToast);
         dispatch(setNetState(initialHostNetState));
-        const hostResult = await collabClient.hostCollabAsync(initialKv);
+        const hostResult = await collabClient.hostCollabAsync(initialSessKv, initialUserKv);
 
         if (!hostResult.success) {
-            showToast(makeToast({
-                type: "error",
-                text: lf("Connection failed."),
-                timeoutMs: 5000,
-            }));
+            showToast(
+                makeToast({
+                    type: "error",
+                    text: lf("Connection failed."),
+                    timeoutMs: 5000,
+                })
+            );
             dispatch(setNetState(undefined));
             return;
         }
 
-        showToast(makeToast({
-            type: "success",
-            text: lf("Connected!"),
-            timeoutMs: 5000,
-        }));
+        showToast(
+            makeToast({
+                type: "success",
+                text: lf("Connected!"),
+                timeoutMs: 5000,
+            })
+        );
 
         const { state } = stateAndDispatch();
-        dispatch(setNetState({
-            ...state.netState!,
-            joinCode: hostResult.joinCode,
-        }));
-
+        dispatch(
+            setNetState({
+                ...state.netState!,
+                joinCode: hostResult.joinCode,
+            })
+        );
     } catch {
         dispatch(setNetState(undefined));
     } finally {

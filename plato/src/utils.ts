@@ -80,3 +80,7 @@ export function generateRandomName(): string {
     const noun = randomElement(NameNouns);
     return lf("{id:adjective,noun}{0} {1}", adjective, noun);
 }
+
+export function randomInt(min: number, max: number): number {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}

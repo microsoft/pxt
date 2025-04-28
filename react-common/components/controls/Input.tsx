@@ -23,6 +23,7 @@ export interface InputProps extends ControlProps {
     preserveValueOnBlur?: boolean;
     options?: pxt.Map<string>;
     filter?: string;
+    maxLength?: number;
 
     onChange?: (newValue: string) => void;
     onEnterKey?: (value: string) => void;
@@ -52,6 +53,7 @@ export const Input = (props: InputProps) => {
         readOnly,
         autoComplete,
         selectOnClick,
+        maxLength,
         onChange,
         onEnterKey,
         onIconClick,
@@ -195,6 +197,7 @@ export const Input = (props: InputProps) => {
                     autoCapitalize={autoComplete ? "" : "off"}
                     spellCheck={autoComplete}
                     disabled={disabled}
+                    maxLength={maxLength}
                     ref={handleInputRef} />
                 {icon && (onIconClick
                     ? <Button

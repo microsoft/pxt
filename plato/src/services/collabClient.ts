@@ -43,13 +43,13 @@ class CollabClient {
     sessOverReason: SessionOverReason | undefined;
     receivedJoinMessageInTimeHandler: ((a: any) => void) | undefined;
 
-    constructor() {}
+    constructor() { }
 
     destroy() {
         try {
             this.sock?.close();
             this.sock = undefined;
-        } catch (e) {}
+        } catch (e) { }
     }
 
     private sendMessage(msg: Protocol.Message | Buffer) {
@@ -125,7 +125,7 @@ class CollabClient {
     public async connectAsync(ticket: string, initialKv: Map<string, string>) {
         return new Promise<void>((resolve, reject) => {
             if (initialKv.size > 32) {
-                reject("Initial client kv size too large");
+                reject("Initial user kv size too large");
                 destroyCollabClient();
                 return;
             }
@@ -172,7 +172,7 @@ class CollabClient {
         });
     }
 
-    public async hostCollabAsync(initialKv: Map<string, string>): Promise<CollabJoinResult> {
+    public async hostCollabAsync(initialSessKv: Map<string, string>, initialUserKv: Map<string, string>): Promise<CollabJoinResult> {
         try {
             const authToken = await authClient.authTokenAsync();
 
@@ -181,6 +181,10 @@ class CollabClient {
                 headers: {
                     Authorization: "mkcd " + authToken,
                 },
+                body: JSON.stringify({
+                    sessKv: initialSessKv,
+                }, jsonReplacer),
+                method: "POST",
             });
 
             if (hostRes.status !== HTTP_OK) {
@@ -194,7 +198,7 @@ class CollabClient {
 
             if (!collabInfo?.joinTicket) throw new Error("Collab server did not return a join ticket");
 
-            await this.connectAsync(collabInfo.joinTicket!, initialKv);
+            await this.connectAsync(collabInfo.joinTicket!, initialUserKv);
 
             return {
                 ...collabInfo,
@@ -209,7 +213,7 @@ class CollabClient {
         }
     }
 
-    public async joinCollabAsync(joinCode: string, initialKv: Map<string, string>): Promise<CollabJoinResult> {
+    public async joinCollabAsync(joinCode: string, initialUserKv: Map<string, string>): Promise<CollabJoinResult> {
         try {
             joinCode = encodeURIComponent(joinCode);
 
@@ -220,6 +224,7 @@ class CollabClient {
                 headers: {
                     Authorization: "mkcd " + authToken,
                 },
+                method: "POST",
             });
 
             if (joinRes.status !== HTTP_OK) {
@@ -233,7 +238,7 @@ class CollabClient {
 
             if (!collabInfo?.joinTicket) throw new Error("Collab server did not return a join ticket");
 
-            await this.connectAsync(collabInfo.joinTicket!, initialKv);
+            await this.connectAsync(collabInfo.joinTicket!, initialUserKv);
 
             return {
                 ...collabInfo,
@@ -361,10 +366,10 @@ function destroyCollabClient() {
     _collabClient = undefined;
 }
 
-export async function hostCollabAsync(initialKv: Map<string, string>): Promise<CollabJoinResult> {
+export async function hostCollabAsync(initialSessKv: Map<string, string>, initialUserKv: Map<string, string>): Promise<CollabJoinResult> {
     destroyCollabClient();
     const collabClient = ensureCollabClient();
-    const collabInfo = await collabClient.hostCollabAsync(initialKv);
+    const collabInfo = await collabClient.hostCollabAsync(initialSessKv, initialUserKv);
     return collabInfo;
 }
 

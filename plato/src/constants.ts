@@ -47,6 +47,13 @@ export namespace Ticks {
     export const Disconnected_Unknown = "plato.disconnected.unknown";
 }
 
+export namespace Keys {
+    export const Prefix = "_:";
+    export const Name = Prefix + "name";
+    export const Icon = Prefix + "icon";
+    export const Seed = Prefix + "seed";
+}
+
 export const NameAdjectives = [
     lf("Brave"),
     lf("Zippy"),

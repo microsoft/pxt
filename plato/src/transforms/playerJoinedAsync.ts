@@ -1,7 +1,7 @@
 import { stateAndDispatch } from "@/state";
 import { getPresence } from "@/state/helpers";
 import { showToast } from "@/state/actions";
-import { Strings } from "@/constants";
+import { Keys, Strings } from "@/constants";
 import { getUserValue } from "@/types";
 import { makeToast } from "@/components/Toaster";
 
@@ -11,7 +11,7 @@ export async function playerJoinedAsync(clientId: string) {
         const presence = getPresence();
         const user = presence?.users.find(u => u.id === clientId);
         if (user) {
-            const name = getUserValue(user, "name", Strings.MissingName)!;
+            const name = getUserValue(user, Keys.Name, Strings.MissingName)!;
             dispatch(
                 showToast(
                     makeToast({

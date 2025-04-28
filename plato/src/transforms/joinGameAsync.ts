@@ -16,27 +16,33 @@ export async function joinGameAsync(joinCode: string, initialKv: Map<string, str
     try {
         dispatch(dismissAllToasts());
         showToast(connectingToast);
-        dispatch(setNetState({
-            ...initialGuestNetState,
-            joinCode,
-        }));
+        dispatch(
+            setNetState({
+                ...initialGuestNetState,
+                joinCode,
+            })
+        );
         const hostResult = await collabClient.joinCollabAsync(joinCode, initialKv);
 
         if (!hostResult.success) {
-            showToast(makeToast({
-                type: "error",
-                text: lf("Connection failed."),
-                timeoutMs: 5000,
-            }));
+            showToast(
+                makeToast({
+                    type: "error",
+                    text: lf("Connection failed."),
+                    timeoutMs: 5000,
+                })
+            );
             dispatch(setNetState(undefined));
             return;
         }
 
-        showToast(makeToast({
-            type: "success",
-            text: lf("Connected!"),
-            timeoutMs: 5000,
-        }));
+        showToast(
+            makeToast({
+                type: "success",
+                text: lf("Connected!"),
+                timeoutMs: 5000,
+            })
+        );
 
         /*
         const { state } = stateAndDispatch();
@@ -45,7 +51,6 @@ export async function joinGameAsync(joinCode: string, initialKv: Map<string, str
             joinCode: hostResult.joinCode,
         }));
         */
-
     } catch {
         dispatch(setNetState(undefined));
     } finally {

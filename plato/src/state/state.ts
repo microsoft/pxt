@@ -1,11 +1,4 @@
-import {
-    AuthStatus,
-    CollabInfo,
-    ModalType,
-    ModalOptions,
-    Presence,
-    defaultPresence,
-} from "@/types";
+import { AuthStatus, CollabInfo, ModalType, ModalOptions, Presence, defaultPresence } from "@/types";
 import { ToastWithId } from "@/components/Toaster";
 
 export type AppState = {

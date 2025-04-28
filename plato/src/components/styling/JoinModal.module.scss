@@ -72,9 +72,14 @@
     .join-input {
         border-radius: 1rem;
         border: 1px solid #1779c5;
-        input {
+
+        input[class~="common-input"] {
             text-align: center;
             text-transform: uppercase;
+            font-family: "Share Tech Mono", monospace;
+            font-weight: bold;
+            font-size: x-large;
+            width: 10rem;
 
             &::placeholder {
                 text-transform: none;
