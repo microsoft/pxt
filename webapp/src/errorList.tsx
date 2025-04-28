@@ -144,6 +144,7 @@ class ErrorListItem extends React.Component<ErrorListItemProps, ErrorListItemSta
         const isInteractive = !!error.onClick;
         const hasStack = !!error.stackFrames && error.stackFrames.length > 0;
         const topRowClass = hasStack ? "exceptionMessage" : classList("item", className);
+        const errorCounter = (errorGroup.count <= 1) ? null : <div className="ui gray circular label countBubble">{errorGroup.count}</div>;
 
         const itemHeaderRow = isInteractive ? (
             <Button className={topRowClass}
@@ -152,13 +153,13 @@ class ErrorListItem extends React.Component<ErrorListItemProps, ErrorListItemSta
                 aria-label={lf("Go to error: {0}", error.message)}>
                 <div>
                     <span>{error.message}</span>
-                    {(errorGroup.count <= 1) ? null : <div className="ui gray circular label countBubble">{errorGroup.count}</div>}
+                    {errorCounter}
                 </div>
             </Button>
         ) : (
              <div className={topRowClass} aria-label={error.message} tabIndex={0}>
-                {error.message}
-                {(errorGroup.count <= 1) ? null : <div className="ui gray circular label countBubble">{errorGroup.count}</div>}
+                <span>{error.message}</span>
+                {errorCounter}
             </div>
         );
 
