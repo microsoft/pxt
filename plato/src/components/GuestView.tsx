@@ -26,7 +26,7 @@ export function GuestView() {
         if (!netState) return [];
         return presence.users.sort((a, b) => a.slot - b.slot).map((u) => ({
             id: u.id,
-            name: u.kv?.get("name") || lf(Strings.MissingName),
+            name: u.kv?.get("name") || Strings.MissingName,
             isHost: u.slot === 1,
             isMe: u.id === netState.clientId,
         }));
