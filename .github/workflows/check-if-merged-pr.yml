@@ -50,5 +50,5 @@ jobs:
         shell: bash
         run: |
           echo "Parsing result: ${{ steps.check-pr.outputs.result }}"
-          echo "::set-output name=is_merged_pr::$(echo '${{ steps.check-pr.outputs.result }}' | jq -r '.is_merged_pr')"
-          echo "::set-output name=pr_head_sha::$(echo '${{ steps.check-pr.outputs.result }}' | jq -r '.pr_head_sha')"
+          echo "is_merged_pr=$(jq -r '.is_merged_pr' <<< '${{ steps.check-pr.outputs.result }}')" >> $GITHUB_OUTPUT
+          echo "pr_head_sha=$(jq -r '.pr_head_sha' <<< '${{ steps.check-pr.outputs.result }}')" >> $GITHUB_OUTPUT
