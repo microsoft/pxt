@@ -700,7 +700,8 @@ async function bumpAsync(parsed?: commandParser.ParsedCommand) {
         }
     }
     else if (fs.existsSync("pxtarget.json"))
-        if (pr || branchProtected) {
+        if (pr) {
+            console.log("Bumping via pull request.");
             const newBranchName = `${user}/pxt-bump-${nodeutil.timestamp()}`;
             return Promise.resolve()
                 .then(() => nodeutil.needsGitCleanAsync())
@@ -721,6 +722,7 @@ async function bumpAsync(parsed?: commandParser.ParsedCommand) {
                 .then((prUrl) => nodeutil.switchBranchAsync(currBranchName).then(() => prUrl))
                 .then((prUrl) => console.log(`${chalk.green('PR created:')} ${chalk.green.underline(prUrl)}`))
         } else {
+            console.log("Bumping via direct push.");
             return Promise.resolve()
                 .then(() => nodeutil.runGitAsync("pull"))
                 .then(() => bumpPxt ? bumpPxtCoreDepAsync().then(() => nodeutil.runGitAsync("push")) : Promise.resolve())
