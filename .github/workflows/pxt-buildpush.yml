@@ -17,23 +17,23 @@ jobs:
   tag-bump-commit:
     uses: ./.github/workflows/tag-bump-commit.yml
     needs: filter-vtags
-    if: needs.filter-vtags.outputs.is_vtag == 'false'
+    if: fromJSON(needs.filter-vtags.outputs.is_vtag || 'false') == false
 
   buildpush:
     name: buildpush
     runs-on: ubuntu-latest
     needs: tag-bump-commit
-    if: always() && needs.tag-bump-commit.outputs.did_tag == 'false'
+    if: always() && fromJSON(needs.tag-bump-commit.outputs.did_tag || 'false') == false
     steps:
       - uses: actions/checkout@main
         with:
           fetch-depth: 0
           fetch-tags: true
 
-      - name: Use Node.js ${{ matrix.node-version }}
+      - name: Use Node.js
         uses: actions/setup-node@main
         with:
-          node-version: '16.x'
+          node-version: 18.x
 
       - name: npm install
         run: |
@@ -55,21 +55,24 @@ jobs:
     name: buildvtag
     runs-on: ubuntu-latest
     needs: tag-bump-commit
-    if: always() && needs.tag-bump-commit.outputs.did_tag == 'true'
+    if: always() && fromJSON(needs.tag-bump-commit.outputs.did_tag || 'false') == true
     steps:
       - uses: actions/checkout@main
         with:
           fetch-depth: 0
           fetch-tags: true
-      - name: Use Node.js ${{ matrix.node-version }}
+
+      - name: Use Node.js
         uses: actions/setup-node@main
         with:
-          node-version: '16.x'
+          node-version: 18.x
+
       - name: npm install
         run: |
           sudo apt-get install xvfb
           sudo npm install -g pxt
           npm install
+
       - name: npm run test:publish
         run: |
           npm run test:publish

@@ -13,6 +13,10 @@ jobs:
     outputs:
       is_vtag: ${{ steps.check-tag.outputs.is_vtag }}
     steps:
+      - name: Inputs
+        run: |
+          echo "GITHUB_REF_TYPE=${GITHUB_REF_TYPE}"
+          echo "GITHUB_REF_NAME=${GITHUB_REF_NAME}"
       - name: Check tag pattern
         id: check-tag
         run: |
@@ -21,3 +25,5 @@ jobs:
           else
             echo "is_vtag=false" >> "$GITHUB_OUTPUT"
           fi
+      - name: Outputs
+        run: echo "Step output is_vtag = ${{ steps.check-tag.outputs.is_vtag }}"
