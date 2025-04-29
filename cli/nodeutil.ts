@@ -360,7 +360,7 @@ export async function isBranchProtectedAsync(
     branch: string
 ): Promise<boolean> {
     const res = await Util.httpRequestCoreAsync({
-        url: `https://api.github.com/repos/${owner}/${repo}/branches/${encodeURIComponent(branch)}/protection`,
+        url: `https://api.github.com/repos/${owner}/${repo}/branches/${encodeURIComponent(branch)}`,
         method: "GET",
         headers: {
             Authorization: `token ${token}`,
@@ -374,7 +374,7 @@ export async function isBranchProtectedAsync(
 
     const data = await res.json;
 
-    const requiresPR = !!data.required_pull_request_reviews;
+    const requiresPR = data.protected;
 
     return requiresPR;
 }
