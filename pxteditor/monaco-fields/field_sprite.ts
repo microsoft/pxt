@@ -7,7 +7,6 @@ export class MonacoSpriteEditor extends MonacoReactFieldEditor<pxt.ProjectImage>
     protected isPython: boolean;
     protected isAsset: boolean;
     protected template: string;
-    protected editing: pxt.Asset;
 
     protected textToValue(text: string): pxt.ProjectImage {
         this.isPython = text.indexOf("`") === -1
@@ -15,13 +14,12 @@ export class MonacoSpriteEditor extends MonacoReactFieldEditor<pxt.ProjectImage>
 
         const match = pxt.parseAssetTSReference(text);
         if (match) {
-            const { name: matchedName } = match;
+            const { type, name: matchedName } = match;
             const name = matchedName.trim();
             const project = pxt.react.getTilemapProject();
             this.isAsset = true;
             const asset = project.lookupAssetByName(pxt.AssetType.Image, name);
             if (asset) {
-                this.editing = asset;
                 return asset;
             }
             else {
@@ -31,23 +29,16 @@ export class MonacoSpriteEditor extends MonacoReactFieldEditor<pxt.ProjectImage>
                     newAsset.meta.displayName = name;
                 }
 
-                this.editing = newAsset;
-
                 return newAsset;
             }
         }
 
-        this.editing = createFakeAsset(pxt.sprite.imageLiteralToBitmap(text, this.template));
-
-        return this.editing;
+        return createFakeAsset(pxt.sprite.imageLiteralToBitmap(text, this.template));
     }
 
     protected resultToText(result: pxt.ProjectImage): string {
-        const project = pxt.react.getTilemapProject();
-        project.pushUndo();
-        result = pxt.patchTemporaryAsset(this.editing, result, project) as pxt.ProjectImage;
-
         if (result.meta?.displayName) {
+            const project = pxt.react.getTilemapProject();
             if (this.isAsset || project.lookupAsset(result.type, result.id)) {
                 result = project.updateAsset(result)
             } else {

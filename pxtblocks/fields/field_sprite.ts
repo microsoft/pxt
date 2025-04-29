@@ -70,7 +70,7 @@ export class FieldSpriteEditor extends FieldAssetEditor<FieldSpriteEditorOptions
 
         const newAsset: pxt.ProjectImage = {
             internalID: -1,
-            id: this.temporaryAssetId(),
+            id: this.sourceBlock_.id,
             type: pxt.AssetType.Image,
             jresData: pxt.sprite.base64EncodeBitmap(data),
             meta: {
