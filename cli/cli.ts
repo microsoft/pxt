@@ -455,7 +455,7 @@ async function ciAsync(parsed?: commandParser.ParsedCommand) {
         const isTaggedCommit = await checkIfTaggedCommitAsync();
         pxt.log(`is tagged commit: ${isTaggedCommit}`);
         await npmPublishAsync();
-        if (branch === "master" && isTaggedCommit) {
+        if (branch === "master" && (intentToPublish || isTaggedCommit)) {
             if (uploadDocs) {
                 await buildWebStringsAsync();
                 await crowdin.uploadBuiltStringsAsync("built/webstrings.json");
