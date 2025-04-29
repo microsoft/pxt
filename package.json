@@ -50,6 +50,7 @@
     "built/tests/blocksrunner.js",
     "built/tests/blockssetup.js",
     "scripts/patchUglifyify.js",
+    "scripts/patchBlocklyFieldColour.js",
     "docfiles",
     "theme",
     "common-docs",
