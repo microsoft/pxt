@@ -27,6 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       did_tag: ${{ steps.tag-op.outputs.did_tag }}
+      tag: ${{ steps.tag-op.outputs.tag }}
     steps:
       - uses: actions/checkout@v3
         with:
@@ -60,6 +61,7 @@ jobs:
               echo "==> Tagging $COMMIT_SHA with $VERSION"
               git tag "$VERSION" "$COMMIT_SHA"
               git push origin "$VERSION"
+              echo "tag=$VERSION" >> "$GITHUB_OUTPUT"
               TAGGED=true
             fi
           else
@@ -86,3 +88,4 @@ jobs:
       did_tag: ${{ needs.tag-version.outputs.did_tag || false }}
     steps:
       - run: echo "Returning did_tag = ${{ needs.tag-version.outputs.did_tag || false }}"
+      - run: echo "Returning tag = ${{ needs.tag-version.outputs.tag || '' }}"
