@@ -1,5 +1,6 @@
 import { Socket } from "engine.io-client";
 import { SmartBuffer } from "smart-buffer";
+import EventEmitter from "eventemitter3";
 import * as authClient from "./authClient";
 import {
     CollabInfo,
@@ -11,10 +12,12 @@ import {
     HTTP_SESSION_FULL,
     HTTP_INTERNAL_SERVER_ERROR,
     HTTP_IM_A_TEAPOT,
+    ViewPlayer,
 } from "@/types";
 import { notifyDisconnected, setPresenceAsync, playerJoinedAsync, playerLeftAsync } from "@/transforms";
 import * as CollabTransforms from "@/transforms/collab";
 import { jsonReplacer, jsonReviver } from "@/utils";
+import { Keys, Strings } from "@/constants";
 
 const COLLAB_HOST_PROD = "https://plato.makecode.com";
 const COLLAB_HOST_STAGING = "https://dev.multiplayer.staging.pxt.io";
@@ -34,6 +37,21 @@ export type CollabPlayer = {
     clientId: string;
     kv: Map<string, string>;
 };
+
+type Events = {
+    "service-created": () => void;
+    "service-destroyed": () => void;
+    "joined": (role: ClientRole, clientId: string, slot: number, kv: Map<string, string>, sessKv: Map<string, string>) => void;
+    "presence": (presence: Presence) => void;
+    "player-joined": (clientId: string) => void;
+    "player-left": (clientId: string) => void;
+    "set-player-value": (key: string, value: string, clientId: string) => void;
+    "del-player-value": (key: string, clientId: string) => void;
+    "set-session-value": (key: string, value: string, clientId: string) => void;
+    "del-session-value": (key: string, clientId: string) => void;
+};
+
+const emitter = new EventEmitter<Events>();
 
 class CollabClient {
     sock: Socket | undefined;
@@ -262,61 +280,89 @@ class CollabClient {
         this.sock?.close();
     }
 
+    //==========================================================
+    // Message Handlers
+
     private async recvJoinedMessageAsync(msg: Protocol.JoinedMessage) {
         pxt.debug(`Server said we're joined as "${msg.role}" in slot "${msg.slot}"`);
-        const { role, clientId, kv, sessKv } = msg;
+        const { role, clientId, slot, kv, sessKv } = msg;
 
         this.clientRole = role;
         this.clientId = clientId;
 
-        CollabTransforms.connected(clientId);
-        CollabTransforms.recvSetSessionState(sessKv);
+        emitter.emit("joined", role, clientId, slot, kv, sessKv);
+
+        //CollabTransforms.connected(clientId);
+        //CollabTransforms.recvSetSessionState(sessKv);
     }
 
     private async recvPresenceMessageAsync(msg: Protocol.PresenceMessage) {
         pxt.debug("Server sent presence");
-        await setPresenceAsync(msg.presence);
-        CollabTransforms.recvPresence(msg.presence);
+        const { presence } = msg;
+
+        emitter.emit("presence", presence);
+
+        //await setPresenceAsync(msg.presence);
+        //CollabTransforms.recvPresence(msg.presence);
     }
 
     private async recvPlayerJoinedMessageAsync(msg: Protocol.PlayerJoinedMessage) {
         pxt.debug("Server sent player joined");
-        if (this.clientRole === "host") {
-            //await this.sendCurrentScreenAsync(); // Workaround for server sometimes not sending the current screen to new players. Needs debugging.
-        }
-        await playerJoinedAsync(msg.clientId);
-        CollabTransforms.recvPlayerJoined(msg.clientId);
+        const { clientId } = msg;
+
+        emitter.emit("player-joined", clientId);
+
+        //await playerJoinedAsync(msg.clientId);
+        //CollabTransforms.recvPlayerJoined(msg.clientId);
     }
 
     private async recvPlayerLeftMessageAsync(msg: Protocol.PlayerLeftMessage) {
-        pxt.debug("Server sent player joined");
-        await playerLeftAsync(msg.clientId);
-        CollabTransforms.recvPlayerLeft(msg.clientId);
+        pxt.debug("Server sent player left");
+        const { clientId } = msg;
+
+        emitter.emit("player-left", clientId);
+
+        //await playerLeftAsync(msg.clientId);
+        //CollabTransforms.recvPlayerLeft(msg.clientId);
     }
 
     private async recvSetPlayerValueMessageAsync(reader: SmartBuffer) {
         //pxt.debug(`Recv set player value: ${msg.key} = ${msg.value}`);
         const { key, value, clientId } = Protocol.Binary.unpackSetPlayerValueMessage(reader);
-        CollabTransforms.recvSetPlayerValue(key, value, clientId);
+
+        emitter.emit("set-player-value", key, value, clientId);
+
+        //CollabTransforms.recvSetPlayerValue(key, value, clientId);
     }
 
     private async recvDelPlayerValueMessageAsync(reader: SmartBuffer) {
         //pxt.debug(`Recv del player value: ${msg.key}`);
         const { key, clientId } = Protocol.Binary.unpackDelPlayerValueMessage(reader);
-        CollabTransforms.recvDelPlayerValue(key, clientId);
+
+        emitter.emit("del-player-value", key, clientId);
+
+        //CollabTransforms.recvDelPlayerValue(key, clientId);
     }
 
     private async recvSetSessionValueMessageAsync(reader: SmartBuffer) {
         //pxt.debug(`Recv set session value: ${msg.key} = ${msg.value}`);
         const { key, value, clientId } = Protocol.Binary.unpackSetSessionValueMessage(reader);
-        CollabTransforms.recvSetSessionValue(key, value, clientId);
+
+        emitter.emit("set-session-value", key, value, clientId);
+
+        //CollabTransforms.recvSetSessionValue(key, value, clientId);
     }
 
     private async recvDelSessionValueMessageAsync(reader: SmartBuffer) {
         //pxt.debug(`Recv del session value: ${msg.key}`);
         const { key, clientId } = Protocol.Binary.unpackDelSessionValueMessage(reader);
-        CollabTransforms.recvDelSessionValue(key, clientId);
+
+        emitter.emit("del-session-value", key, clientId);
+
+        //CollabTransforms.recvDelSessionValue(key, clientId);
     }
+
+    //==========================================================
 
     public kickPlayer(clientId: string) {
         const msg: Protocol.KickPlayerMessage = {
@@ -357,6 +403,7 @@ let _collabClient: CollabClient | undefined;
 function ensureCollabClient(): CollabClient {
     if (!_collabClient) {
         _collabClient = new CollabClient();
+        emitter.emit("service-created");
     }
     return _collabClient;
 }
@@ -364,6 +411,7 @@ function ensureCollabClient(): CollabClient {
 function destroyCollabClient() {
     _collabClient?.destroy();
     _collabClient = undefined;
+    emitter.emit("service-destroyed");
 }
 
 export async function hostCollabAsync(initialSessKv: Map<string, string>, initialUserKv: Map<string, string>): Promise<CollabJoinResult> {
@@ -423,6 +471,63 @@ export function getClientId() {
 export function destroy() {
     destroyCollabClient();
 }
+
+//=============================================================================
+// PlayerPresence - Sync External Store
+// (for use with React's useSyncExternalStore)
+
+type PlayerPresenceEvents = {
+    "player-joined": (playerId: string) => void;
+    "player-left": (playerId: string) => void;
+};
+
+class PlayerPresenceStore {
+    private listeners: EventEmitter<PlayerPresenceEvents> = new EventEmitter();
+    private _players: ViewPlayer[] = [];
+    public players(): ViewPlayer[] {
+        return this._players;
+    }
+    public player(id: string): ViewPlayer | undefined {
+        return this._players.find(p => p.id === id);
+    }
+    constructor() {
+        emitter.on("service-created", () => {
+            this._players.forEach(p => this.listeners.emit("player-left", p.id));
+            this._players = [];
+        });
+        emitter.on("service-destroyed", () => {
+            this._players.forEach(p => this.listeners.emit("player-left", p.id));
+            this._players = [];
+        });
+        emitter.on("presence", (presence: Presence) => {
+            const joined = presence.users.filter(p => !this._players.some(p2 => p2.id === p.id))
+                .map(p => ({
+                    id: p.id,
+                    slot: p.slot,
+                    name: p.kv?.get(Keys.Name) || Strings.MissingName,
+                    isHost: p.slot === 1,
+                    isMe: p.id === _collabClient?.clientId,
+                }));
+            const left = this._players.filter(p => !presence.users.some(p2 => p2.id === p.id));
+            this._players = this._players.filter(p => !left.some(p2 => p2.id === p.id));
+            this._players.push(...joined);
+            left.forEach(p => this.listeners.emit("player-left", p.id));
+            joined.forEach(p => this.listeners.emit("player-joined", p.id));
+        });
+    }
+    public on = (ev: "player-joined" | "player-left", callback: () => void): (() => void) => {
+        this.listeners.on(ev, callback);
+        return () => {
+            this.listeners.off(ev, callback);
+        };
+    };
+
+    public getSnapshot = (): ViewPlayer[] => {
+        return this._players;
+    };
+};
+
+export const playerPresenceStore = new PlayerPresenceStore();
 
 //=============================================================================
 // Network Messages
