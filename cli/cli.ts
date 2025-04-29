@@ -397,6 +397,7 @@ let readJson = nodeutil.readJson;
 
 async function ciAsync(parsed?: commandParser.ParsedCommand) {
     const intentToPublish = parsed && parsed.flags["publish"];
+    const tagOverride = parsed && parsed.flags["tag"] as string;
     forceCloudBuild = true;
     const buildInfo = await ciBuildInfoAsync();
     pxt.log(`ci build using ${buildInfo.ci}`);
@@ -405,17 +406,21 @@ async function ciAsync(parsed?: commandParser.ParsedCommand) {
     if (!buildInfo.branch)
         buildInfo.branch = "local"
 
-    const { tag, branch, pullRequest } = buildInfo
+    let { tag, branch, pullRequest } = buildInfo
+    if (tagOverride) {
+        tag = tagOverride;
+        pxt.log(`overriding tag to ${tag}`);
+    }
     const atok = process.env.NPM_ACCESS_TOKEN
     const npmPublish = (intentToPublish || /^v\d+\.\d+\.\d+$/.exec(tag)) && atok;
 
     if (npmPublish) {
         let npmrc = path.join(process.env.HOME, ".npmrc")
-        console.log(`setting up ${npmrc} for publish`)
+        pxt.log(`setting up ${npmrc} for publish`)
         let cfg = "//registry.npmjs.org/:_authToken=" + atok + "\n"
         fs.writeFileSync(npmrc, cfg)
     } else if (intentToPublish) {
-        console.log("not publishing, no tag or access token")
+        pxt.log("not publishing, no tag or access token")
     }
 
     process.env["PXT_ENV"] = "production";
@@ -7441,6 +7446,11 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
             "publish": {
                 description: "publish to npm regardless of whether this is a tagged release",
             },
+            "tag": {
+                description: "override the default tag name",
+                type: "string",
+                argument: "tag"
+            }
         }
     }, ciAsync);
     advancedCommand("uploadfile", "upload file under <CDN>/files/PATH", uploadFileAsync, "<path>");
