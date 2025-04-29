@@ -411,9 +411,11 @@ async function ciAsync(parsed?: commandParser.ParsedCommand) {
 
     if (npmPublish) {
         let npmrc = path.join(process.env.HOME, ".npmrc")
-        pxt.log(`setting up ${npmrc}`)
+        console.log(`setting up ${npmrc} for publish`)
         let cfg = "//registry.npmjs.org/:_authToken=" + atok + "\n"
         fs.writeFileSync(npmrc, cfg)
+    } else if (intentToPublish) {
+        console.log("not publishing, no tag or access token")
     }
 
     process.env["PXT_ENV"] = "production";
