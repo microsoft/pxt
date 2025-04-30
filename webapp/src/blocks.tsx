@@ -490,7 +490,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             pxtblockly.external.setPromptTranslateBlock(dialogs.promptTranslateBlock);
         }
 
-        pxtblockly.external.setCopyPaste(copy, cut, this.pasteCallback, this.copyPrecondition, this.pastePrecondition);
+        // Disable clipboard overwrite (initCopyPaste) when accessible blocks enabled.
+        if (!data.getData<boolean>(auth.ACCESSIBLE_BLOCKS)) {
+            pxtblockly.external.setCopyPaste(copy, cut, this.pasteCallback, this.copyPrecondition, this.pastePrecondition);
+        }
     }
 
     private initBlocklyToolbox() {

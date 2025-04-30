@@ -8,7 +8,7 @@ let oldCut: Blockly.ShortcutRegistry.KeyboardShortcut;
 let oldPaste: Blockly.ShortcutRegistry.KeyboardShortcut;
 
 export function initCopyPaste() {
-    if (oldCopy) return;
+    if (oldCopy || !getCopyPasteHandlers()) return;
 
     const shortcuts = Blockly.ShortcutRegistry.registry.getRegistry()
 
