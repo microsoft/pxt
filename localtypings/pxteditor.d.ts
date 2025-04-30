@@ -2,6 +2,7 @@
 /// <reference path="./projectheader.d.ts" />
 /// <reference path="./validatorPlan.d.ts" />
 /// <reference path="./ocv.d.ts" />
+/// <reference path="./monaco.d.ts" />
 
 declare namespace pxt.editor {
     export interface EditorMessage {
@@ -1157,9 +1158,17 @@ declare namespace pxt.editor {
         monacoToolbox?: ToolboxDefinition;
     }
 
+    export interface ExtensionInitOptions {
+        confirmAsync: (options: any) => Promise<number>;
+        infoNotification: (msg: string) => void;
+        warningNotification: (msg: string) => void;
+        errorNotification: (msg: string) => void;
+    }
+
     export interface ExtensionResult {
         hexFileImporters?: IHexFileImporter[];
         resourceImporters?: IResourceImporter[];
+        initAsync?: (opts: ExtensionInitOptions) => Promise<void>;
         beforeCompile?: () => void;
         patchCompileResultAsync?: (r: pxtc.CompileResult) => Promise<void>;
         deployAsync?: (r: pxtc.CompileResult) => Promise<void>;
@@ -1174,6 +1183,11 @@ declare namespace pxt.editor {
         blocklyPatch?: (pkgTargetVersion: string, dom: Element) => void;
         webUsbPairDialogAsync?: (pairAsync: () => Promise<boolean>, confirmAsync: (options: any) => Promise<number>) => Promise<number>;
         mkPacketIOWrapper?: (io: pxt.packetio.PacketIO) => pxt.packetio.PacketIOWrapper;
+        getDownloadMenuItems?: () => any[]; /* sui.ItemProps[] */
+        notifyProjectCompiled?: (headerId: string, compileResult: pxtc.CompileResult) => void;
+        notifyProjectSaved?: (header: pxt.workspace.Header) => void;
+        onDownloadButtonClick?: () => Promise<void>;
+        getDefaultProjectName?: () => string; // If defined, replaces 'Untitled' as the default project name
         onPostHostMessage?: (msg: pxt.editor.EditorMessageRequest) => void;
         perfMeasurementThresholdMs?: number;
         onPerfMilestone?: (payload: { milestone: string, time: number, params?: Map<string> }) => void;
@@ -1188,6 +1202,7 @@ declare namespace pxt.editor {
         onCodeStop?: () => void;
 
         experiments?: Experiment[];
+        monacoFieldEditors?: MonacoFieldEditorDefinition[];
     }
 
     export interface Experiment {
@@ -1401,6 +1416,47 @@ declare namespace pxt.editor {
     }
 
     type AssetEditorEvent = AssetEditorRequestSaveEvent | AssetEditorReadyEvent;
+
+    export interface TextEdit {
+        range: monaco.Range;
+        replacement: string;
+    }
+
+    export interface MonacoFieldEditorHost {
+        contentDiv(): HTMLDivElement;
+        getText(range: monaco.Range): string;
+        blocksInfo(): pxtc.BlocksInfo;
+
+        package(): pxt.MainPackage;
+        writeFileAsync(filename: string, content: string): Promise<void>;
+        readFile(filename: string): string;
+    }
+
+    export interface MonacoFieldEditor {
+        getId(): string;
+        showEditorAsync(fileType: pxt.editor.FileType, editrange: monaco.Range, host: MonacoFieldEditorHost): Promise<TextEdit>;
+        onClosed(): void;
+        dispose(): void;
+    }
+
+    export interface MonacoFieldEditorDefinition {
+        id: string;
+        matcher: MonacoFindArguments;
+        foldMatches?: boolean;
+        alwaysBuildOnClose?: boolean;
+        glyphCssClass?: string;
+        weight?: number; // higher weight will override lower weight when on same line
+        proto: { new(): MonacoFieldEditor };
+        heightInPixels?: number;
+    }
+
+    export interface MonacoFindArguments {
+        searchString: string;
+        isRegex: boolean;
+        matchWholeWord: boolean;
+        matchCase: boolean;
+        validateRange?: (range: monaco.Range, model: monaco.editor.ITextModel) => monaco.Range;
+    }
 }
 
 declare namespace pxt.workspace {

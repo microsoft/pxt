@@ -1,6 +1,6 @@
 {
   "name": "pxt-core",
-  "version": "11.4.3",
+  "version": "11.4.17",
   "description": "Microsoft MakeCode provides Blocks / JavaScript / Python tools and editors",
   "keywords": [
     "TypeScript",
@@ -50,6 +50,7 @@
     "built/tests/blocksrunner.js",
     "built/tests/blockssetup.js",
     "scripts/patchUglifyify.js",
+    "scripts/patchBlocklyFieldColour.js",
     "docfiles",
     "theme",
     "common-docs",
@@ -61,7 +62,7 @@
     "npm": ">=8.0.0"
   },
   "dependencies": {
-    "@blockly/field-colour": "5.0.5",
+    "@blockly/field-colour": "5.0.12",
     "@blockly/keyboard-navigation": "0.6.5",
     "@blockly/plugin-workspace-search": "9.1.0",
     "@crowdin/crowdin-api-client": "^1.33.0",
@@ -72,9 +73,10 @@
     "@zip.js/zip.js": "2.4.20",
     "adm-zip": "^0.5.12",
     "axios": "^1.6.8",
-    "blockly": "11.2.1",
+    "blockly": "12.0.0-beta.4",
     "browserify": "17.0.0",
     "chai": "^3.5.0",
+    "chalk": "^4.1.2",
     "cssnano": "4.1.10",
     "dashjs": "^4.4.0",
     "diff-match-patch": "^1.0.5",
@@ -150,11 +152,24 @@
     "redux": "4.2.0",
     "smoothie": "1.35.0",
     "typescript": "4.8.3",
-    "uglifyify": "5.0.2"
+    "uglifyify": "5.0.2",
+    "yargs": "^17.7.2"
+  },
+  "overrides": {
+    "@blockly/field-colour": {
+      "blockly": "^12.0.0-beta.4"
+    },
+    "@blockly/plugin-workspace-search": {
+      "blockly": "^12.0.0-beta.4"
+    },
+    "@blockly/keyboard-navigation": {
+      "blockly": "^12.0.0-beta.4"
+    }
   },
   "scripts": {
     "build": "gulp",
     "test": "gulp travis",
+    "test:publish": "gulp travis --publish",
     "clean": "gulp clean",
     "lint": "gulp lint",
     "start": "gulp",
@@ -168,6 +183,6 @@
     "update": "gulp update",
     "watch-streamer": "cd docs/static/streamer && tsc -t es6 --watch",
     "prepare": "node ./scripts/npm-prepare.js",
-    "postinstall": "node ./scripts/patchUglifyify.js"
+    "postinstall": "node ./scripts/patchUglifyify.js && node ./scripts/patchBlocklyFieldColour.js"
   }
 }

@@ -130,6 +130,8 @@
 @pyIcon: data-uri(@pyIconUrl);
 @jsIconUrl: "../docs/static/icons/js.svg";
 @jsIcon: data-uri(@jsIconUrl);
+@tsIconUrl: "../docs/static/icons/ts-logo-512.svg";
+@tsIcon: data-uri(@tsIconUrl);
 @immersiveReaderUrl: "../docs/static/icons/immersive-reader.svg";
 @immersiveReaderIcon: data-uri(@immersiveReaderUrl);
 @immersiveReaderLightUrl: "../docs/static/icons/immersive-reader-light.svg";
@@ -217,6 +219,12 @@
 /* Detail view */
 @homeSelectedCardBorderSize: @homeCardBorderSize*2;
 @homeHeaderBorderSize: 3px;
+
+/*-------------------
+   Editor
+--------------------*/
+@editorFocusBorderSize: 4px;
+
 /*-------------------
    Tutorial
 --------------------*/

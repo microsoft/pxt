@@ -1295,8 +1295,17 @@ export function serveAsync(options: ServeOptions) {
         }
 
         if (/simulator\.html/.test(pathname)) {
-            // Special handling for missing simulator: redirect to the live sim
-            res.writeHead(302, { location: `https://trg-${pxt.appTarget.id}.userpxt.io/---simulator` });
+
+            // check for simx urls, e.g.:
+            //     /simulator.html/simx/microbit-apps/display-shield/-/index.html
+            if (/simulator\.html\/simx\//.test(pathname)) {
+                res.writeHead(302, { location: `https://trg-${pxt.appTarget.id}.userpxt.io/simx${pathname.split("simx").pop()}` });
+            }
+            else {
+                // Special handling for missing simulator: redirect to the live sim
+                res.writeHead(302, { location: `https://trg-${pxt.appTarget.id}.userpxt.io/---simulator` });
+            }
+
             res.end();
             return;
         }

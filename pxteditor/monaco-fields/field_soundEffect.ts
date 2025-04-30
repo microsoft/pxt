@@ -1,5 +1,5 @@
 import { MonacoReactFieldEditor } from "./field_react";
-import { MonacoFieldEditorDefinition, registerMonacoFieldEditor } from "./monacoFieldEditor";
+import { registerMonacoFieldEditor } from "./monacoFieldEditor";
 
 const fieldEditorId = "soundeffect-editor";
 
@@ -205,7 +205,7 @@ function defaultSound(): pxt.assets.Sound {
     }
 }
 
-export const soundEditorDefinition: MonacoFieldEditorDefinition = {
+export const soundEditorDefinition: pxt.editor.MonacoFieldEditorDefinition = {
     id: fieldEditorId,
     foldMatches: true,
     glyphCssClass: "fas fa-music sprite-focus-hover",

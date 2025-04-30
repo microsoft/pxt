@@ -778,12 +778,21 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                         </div>
                     </div>
                     <div className="rightHeader">
+                        <sui.Link className="ui button neutral" icon="external alternate" href={url} title={lf("Open repository in GitHub.")} target="_blank" onKeyDown={fireClickOnEnter} />
+                        {!isBlocksMode &&
+                            isOwner &&
+                            <sui.Link
+                                className="ui item button desktop only"
+                                icon="user plus"
+                                href={`https://github.com/${githubId.slug}/settings/collaboration`}
+                                target="_blank"
+                                onKeyDown={fireClickOnEnter}
+                                title={lf("Invite others to contribute to this GitHub repository.")}
+                            />
+                        }
                         <sui.Button icon={`${hasissue ? "exclamation circle" : haspull ? "long arrow alternate down" : "check"}`}
                             className={haspull === true ? "positive" : "neutral"}
                             text={lf("Pull changes")} title={lf("Pull changes from GitHub to get your code up-to-date.")} onClick={this.handlePullClick} onKeyDown={fireClickOnEnter} />
-                        {!isBlocksMode && isOwner &&
-                            <sui.Link className="ui item button desktop only" icon="user plus" href={`https://github.com/${githubId.slug}/settings/collaboration`} target="_blank" title={lf("Invite others to contributes to this GitHub repository.")} />}
-                        <sui.Link className="ui button neutral" icon="external alternate" href={url} title={lf("Open repository in GitHub.")} target="_blank" onKeyDown={fireClickOnEnter} />
                     </div>
                 </div>
                 <MessageComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />
@@ -794,11 +803,11 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                     {showPrCreate &&
                         <sui.Button className="tiny neutral create-pr" text={lf("Create pull request")} onClick={this.handlePullRequest} />
                     }
-                    <h3 className="header">
+                    <h2 className="header">
                         <i className="large github icon" />
                         <span className="repo-name">{githubId.fullName}</span>
                         <span onClick={this.handleBranchClick} onKeyDown={fireClickOnEnter} tabIndex={0} role="button" className="repo-branch">{"#" + githubId.tag}<i className="dropdown icon" /></span>
-                    </h3>
+                    </h2>
                     {needsCommit && <CommmitComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
                     {showPrResolved && !needsCommit && <PullRequestZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
                     {diffFiles && <DiffView parent={this} diffFiles={diffFiles} cacheKey={gs.commit.sha} allowRevert={true} showWhitespaceDiff={true} blocksMode={isBlocksMode} showConflicts={true} />}

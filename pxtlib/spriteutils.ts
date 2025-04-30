@@ -145,7 +145,7 @@ namespace pxt.sprite {
             }
         }
 
-        protected dataLength() {
+        dataLength() {
             return Math.ceil(this.width * this.height / 2);
         }
     }
@@ -179,7 +179,7 @@ namespace pxt.sprite {
             this.buf[index] = value;
         }
 
-        protected dataLength() {
+        dataLength() {
             return this.width * this.height;
         }
     }
@@ -196,7 +196,7 @@ namespace pxt.sprite {
 
         constructor(public tilemap: Tilemap, public tileset: TileSet, public layers: BitmapData) {}
 
-        cloneData() {
+        cloneData(includeEditorData = false) {
             const tm = this.tilemap.copy();
             const tileset: TileSet = {
                 tileWidth: this.tileset.tileWidth,
@@ -207,7 +207,17 @@ namespace pxt.sprite {
             }
             const layers = Bitmap.fromData(this.layers).copy().data();
 
-            return new TilemapData(tm, tileset, layers);
+            const result = new TilemapData(tm, tileset, layers);
+
+            if (includeEditorData) {
+                result.nextId = this.nextId;
+                result.projectReferences = this.projectReferences?.slice();
+                result.tileOrder = this.tileOrder?.slice();
+                result.editedTiles = this.editedTiles?.slice();
+                result.deletedTiles = this.deletedTiles?.slice();
+            }
+
+            return result;
         }
 
         equals(other: TilemapData) {
@@ -248,7 +258,7 @@ namespace pxt.sprite {
     export function decodeTilemap(literal: string, fileType: "typescript" | "python", proj: TilemapProject): TilemapData {
         literal = Util.htmlUnescape(literal).trim();
 
-        if (!literal.trim()) {
+        if (!literal.trim() || literal.indexOf("(") === -1) {
             return null;
         }
 

@@ -80,7 +80,7 @@ export class FieldAnimationEditor extends FieldAssetEditor<FieldAnimationOptions
             const frames = parseImageArrayString(text, this.params.taggedTemplate);
 
             if (frames && frames.length) {
-                const id = this.sourceBlock_.id;
+                const id = this.temporaryAssetId();
 
                 const newAnimation: pxt.Animation = {
                     internalID: -1,
@@ -97,7 +97,7 @@ export class FieldAnimationEditor extends FieldAssetEditor<FieldAnimationOptions
                 if (asset) return asset;
         }
 
-        const id = this.sourceBlock_.id;
+        const id = this.temporaryAssetId();
         const bitmap = new pxt.sprite.Bitmap(this.params.initWidth, this.params.initHeight).data()
 
         const newAnimation: pxt.Animation = {

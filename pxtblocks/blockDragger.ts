@@ -4,7 +4,7 @@ export class BlockDragger extends Blockly.dragging.Dragger {
     onDrag(e: PointerEvent, totalDelta: Blockly.utils.Coordinate): void {
         super.onDrag(e, totalDelta);
 
-        const blocklyToolboxDiv = document.getElementsByClassName('blocklyToolboxDiv')[0] as HTMLElement;
+        const blocklyToolboxDiv = document.getElementsByClassName('blocklyToolbox')[0] as HTMLElement;
         const blocklyTreeRoot = document.getElementsByClassName('blocklyTreeRoot')[0] as HTMLElement
             || document.getElementsByClassName('blocklyFlyout')[0] as HTMLElement;
         const trashIcon = document.getElementById("blocklyTrashIcon");
@@ -31,7 +31,7 @@ export class BlockDragger extends Blockly.dragging.Dragger {
     onDragEnd(e: PointerEvent): void {
         super.onDragEnd(e);
 
-        const blocklyToolboxDiv = document.getElementsByClassName('blocklyToolboxDiv')[0] as HTMLElement;
+        const blocklyToolboxDiv = document.getElementsByClassName('blocklyToolbox')[0] as HTMLElement;
         const blocklyTreeRoot = document.getElementsByClassName('blocklyTreeRoot')[0] as HTMLElement
             || document.getElementsByClassName('blocklyFlyout')[0] as HTMLElement;
         const trashIcon = document.getElementById("blocklyTrashIcon");

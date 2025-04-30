@@ -107,16 +107,16 @@ function compileWorkspace(e: Environment, w: Blockly.Workspace, blockInfo: pxtc.
 
         const stmtsEnums: pxt.blocks.JsNode[] = [];
         e.enums.forEach(info => {
-            const models = w.getVariablesOfType(info.name);
+            const models = w.getVariableMap().getVariablesOfType(info.name);
             if (models && models.length) {
                 const members: [string, number][] = models.map(m => {
-                    const match = /^(\d+)([^0-9].*)$/.exec(m.name);
+                    const match = /^(\d+)([^0-9].*)$/.exec(m.getName());
                     if (match) {
                         return [match[2], parseInt(match[1])] as [string, number];
                     }
                     else {
                         // Someone has been messing with the XML...
-                        return [m.name, -1] as [string, number];
+                        return [m.getName(), -1] as [string, number];
                     }
                 });
 
@@ -156,9 +156,9 @@ function compileWorkspace(e: Environment, w: Blockly.Workspace, blockInfo: pxtc.
         });
 
         e.kinds.forEach(info => {
-            const models = w.getVariablesOfType("KIND_" + info.name);
+            const models = w.getVariableMap().getVariablesOfType("KIND_" + info.name);
             if (models && models.length) {
-                const userDefined = models.map(m => m.name).filter(n => info.initialMembers.indexOf(n) === -1);
+                const userDefined = models.map(m => m.getName()).filter(n => info.initialMembers.indexOf(n) === -1);
 
                 if (userDefined.length) {
                     stmtsEnums.push(pxt.blocks.mkGroup([

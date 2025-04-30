@@ -137,8 +137,8 @@ export function findLegalName(name: string, ws: Blockly.Workspace, block?: Commo
 
 function namesInUse(ws: Blockly.Workspace, exceptBlock?: Blockly.Block, exceptFuncId?: string) {
     const usedNames: StringMap<boolean> = {};
-    ws.getAllVariables().forEach(function (v) {
-        usedNames[v.name] = true;
+    ws.getVariableMap().getAllVariables().forEach(function (v) {
+        usedNames[v.getName()] = true;
     });
     ws.getAllBlocks(false).forEach(function (b) {
         const block = b as CommonFunctionBlock;
@@ -435,7 +435,7 @@ function createFunctionCallbackFactory_(workspace: Blockly.WorkspaceSvg) {
                 block.scheduleSnapAndBump();
             }
 
-            workspace.centerOnBlock(block.id);
+            workspace.centerOnBlock(block.id, true);
             Blockly.Events.setGroup(false);
 
             setTimeout(() => {
@@ -574,7 +574,7 @@ class MutateFunctionEvent extends Blockly.Events.Abstract {
         for (const change of this.descendantChanges) {
             if (change.newName) {
                 const block = ws.getBlockById(change.id);
-                block.setFieldValue("VALUE", forward ? change.newName : change.oldName);
+                block.setFieldValue(forward ? change.newName : change.oldName, "VALUE");
             }
             else if (forward) {
                 const block = ws.getBlockById(change.id);

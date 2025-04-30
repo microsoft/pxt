@@ -350,6 +350,7 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
 
     protected handleRefreshCard = (backwards?: boolean) => {
         pxt.debug(`next hero carousel`);
+
         if (this.prevGalleries?.length) {
             const cardIndex = this.state.cardIndex;
             const nextOffset = backwards ? this.prevGalleries.length - 1 : 1;
@@ -527,6 +528,8 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
         return <div className="ui segment getting-started-segment hero"
             style={{ backgroundImage: encodedBkgd }}
             onKeyDown={this.onKeyDown}
+            role="region"
+            aria-label={lf("Banner")}
             onPointerDown={this.onPointerDown} onTouchStart={this.onTouchstart}
             onPointerUp={this.onPointerUp} onTouchEnd={this.onTouchEnd}
         >
@@ -549,9 +552,9 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
                         this.handleCardClick
                     )}
                 </div>}
-                {isGallery && <div key="cards" className="dots">
+                {isGallery && <div key="cards" className="dots" tabIndex={0} role="group" aria-label={lf("Carousel controls")}>
                     {cards.map((card, i) => <button key={"dot" + i} className={`ui button empty circular label  clear ${i === cardIndex && "active"}`}
-                        onClick={handleSetCard(i)} aria-label={lf("View {0} hero image", card.title || card.name)} title={lf("View {0} hero image", card.title || card.name)}>
+                        onClick={handleSetCard(i)} aria-label={lf("View {0} hero image", card.title || card.name)} tabIndex={-1} title={lf("View {0} hero image", card.title || card.name)}>
                     </button>)}
                 </div>}
             </div>
@@ -723,6 +726,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                                 tallCard={hasTags}
                                 tutorialStep={scr.tutorialStep}
                                 tutorialLength={scr.tutorialLength}
+                                selected={!scr.directOpen ? selectedIndex === index : undefined}
                             />
                         )}
                     </carousel.Carousel>
@@ -816,6 +820,7 @@ interface ProjectsCodeCardProps extends pxt.CodeCard {
     id?: string;
     index?: number;
     tallCard?: boolean;
+    selected?: boolean;
     onCardClick: (e: any, scr: any, index?: number, id?: string) => void;
     onLabelClick?: (e: any, scr: any, index?: number, id?: string) => void;
 }
@@ -838,7 +843,7 @@ export class ProjectsCodeCard extends sui.StatelessUIElement<ProjectsCodeCardPro
     }
 
     renderCore() {
-        let { scr, onCardClick, onLabelClick, onClick, cardType, imageUrl, className, ...rest } = this.props;
+        let { scr, onCardClick, onLabelClick, onClick, cardType, imageUrl, className, selected, ...rest } = this.props;
 
         className = className || "";
         // compute icon
@@ -857,7 +862,7 @@ export class ProjectsCodeCard extends sui.StatelessUIElement<ProjectsCodeCardPro
                 className = 'file ' + className;
         }
         return <codecard.CodeCardView role="button" className={className} imageUrl={imageUrl} cardType={cardType} {...rest} onClick={this.handleClick}
-            onLabelClicked={onLabelClick ? this.handleLabelClick : undefined} />
+            onLabelClicked={onLabelClick ? this.handleLabelClick : undefined} selected={selected} />
     }
 }
 
@@ -927,6 +932,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
     protected getActionIcon(onClick: any, type: pxt.CodeCardType, editor?: pxt.CodeCardEditorType, actionIcon?: string): JSX.Element {
         const { youTubeId, youTubePlaylistId } = this.props;
         let icon = "file text";
+        let ariaLabel = lf("Open code editor");
         if (actionIcon) {
             icon = actionIcon;
         } else {
@@ -945,18 +951,24 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                     break;
                 case "forumUrl":
                     icon = "comments"
+                    ariaLabel = lf("Open Microsoft MakeCode forum");
                     break;
                 case "forumExample":
                     icon = "pencil"
                     break;
                 case "template":
                 default:
-                    if (youTubeId || youTubePlaylistId) icon = "youtube";
+                    if (youTubeId || youTubePlaylistId) {
+                        icon = "youtube";
+                        ariaLabel = lf("Open YouTube video");
+                    } else {
+                        ariaLabel = lf("Open instructions");
+                    }
                     break;
             }
         }
         return this.isLink(type) && type != "forumExample" // TODO (shakao)  migrate forumurl to otherAction json in md
-            ? <sui.Link role="presentation" className="link button attached" icon={icon} href={this.getUrl()} target="_blank" tabIndex={-1} />
+            ? <sui.Link role="link" className="link button attached" icon={icon} href={this.getUrl()} target="_blank" tabIndex={-1} ariaLabel={ariaLabel}/>
             : <sui.Item role="presentation" className="button attached" icon={icon} onClick={onClick} tabIndex={-1} />
     }
 
@@ -1009,19 +1021,31 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         return () => onClick(scr, action);
     }
 
-    handleOpenForumUrlInEditor() {
+    async handleOpenForumUrlInEditor() {
         pxt.tickEvent('projects.actions.forum', undefined, { interactiveConsent: true });
-        const { url } = this.props;
-        pxt.discourse.extractSharedIdFromPostUrl(url)
-            .then(projectId => {
-                // if we have a projectid, load it
-                if (projectId)
-                    window.location.hash = "pub:" + projectId; // triggers reload
-                else {
-                    core.warningNotification(lf("Oops, we could not find the program in the forum."));
-                }
-            })
-            .catch(core.handleNetworkError)
+        const { url, scr } = this.props;
+
+        let projectId: string;
+        if (scr?.shareUrl) {
+            projectId = pxt.Cloud.parseScriptId(scr.shareUrl);
+        }
+
+        if (!projectId) {
+            try {
+                projectId = await pxt.discourse.extractSharedIdFromPostUrl(url);
+            }
+            catch (e) {
+                core.handleNetworkError(e);
+                return;
+            }
+        }
+
+        if (projectId) {
+            window.location.hash = "pub:" + projectId; // triggers reload
+        }
+        else {
+            core.warningNotification(lf("Oops, we could not find the program in the forum."));
+        }
     }
 
     isYouTubeOnline(): boolean {
@@ -1484,7 +1508,7 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
     show = () => {
         pxt.tickEvent('newprojectdialog.show', undefined, { interactiveConsent: false });
         this.setState({
-            name: "",
+            name: pxt.commands.getDefaultProjectName?.() || "",
             emoji: "",
             visible: true,
             languageRestriction: pxt.editor.LanguageRestriction.Standard

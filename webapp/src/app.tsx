@@ -181,6 +181,11 @@ export class ProjectView
         onDataChanged: (path) => this.onCloudStatusChanged(path)
     }
 
+    private headerChangeSubscriber: data.DataSubscriber = {
+        subscriptions: [],
+        onDataChanged: (path) => this.onHeaderChanged(path)
+    }
+
     private customColorThemesSubscriber: data.DataSubscriber = {
         subscriptions: [],
         onDataChanged: () => this.refreshAvailableColorThemes()
@@ -1005,7 +1010,7 @@ export class ProjectView
         this.saveFileAsync(); // don't wait for saving to backend store to finish before typechecking
         const state = this.editor.snapshotState()
         compiler.typecheckAsync()
-            .then(resp => {
+            .then(cr => {
                 const end = Util.now();
                 // if typecheck is slow (>10s)
                 // and it happened more than 2 times,
@@ -1026,6 +1031,10 @@ export class ProjectView
                 }
 
                 this.maybeShowPackageErrors();
+
+                if (cr.success && pxt.commands.notifyProjectCompiled) {
+                    pxt.commands.notifyProjectCompiled(this.state.header.id, cr);
+                }
             });
     })
 
@@ -1157,12 +1166,14 @@ export class ProjectView
         // subscribe to user preference changes (for simulator or non-render subscriptions)
         data.subscribe(this.highContrastSubscriber, auth.HIGHCONTRAST);
         data.subscribe(this.cloudStatusSubscriber, `${cloud.HEADER_CLOUDSTATE}:*`);
+        data.subscribe(this.headerChangeSubscriber, "header:*");
         data.subscribe(this.customColorThemesSubscriber, auth.CUSTOM_COLOR_THEMES);
     }
 
     public componentWillUnmount() {
         data.unsubscribe(this.highContrastSubscriber);
         data.unsubscribe(this.cloudStatusSubscriber);
+        data.unsubscribe(this.headerChangeSubscriber);
         data.unsubscribe(this.customColorThemesSubscriber);
     }
 
@@ -2951,7 +2962,7 @@ export class ProjectView
         this.setSideDoc(undefined);
         if (!options.prj) options.prj = pxt.appTarget.blocksprj;
         let cfg = pxt.U.clone(options.prj.config);
-        cfg.name = options.name || lf("Untitled");
+        cfg.name = options.name || pxt.commands.getDefaultProjectName?.() || lf("Untitled");
         cfg.documentation = options.documentation;
         let files: pxt.workspace.ScriptText = Util.clone(options.prj.files)
         if (options.filesOverride) {
@@ -3849,7 +3860,7 @@ export class ProjectView
             this.runToken = null
         }
 
-        if (this.isSimulatorRunning() || unload && simulator.driver?.state !== pxsim.SimulatorState.Unloaded) {
+        if (this.isSimulatorRunning() || unload && simulator.driver.state !== pxsim.SimulatorState.Unloaded) {
             simulator.stop(unload);
         }
 
@@ -3914,6 +3925,16 @@ export class ProjectView
                 ...msg,
                 type: "pxteditor"
             });
+        }
+    }
+
+    onHeaderChanged(path: string) {
+        const parts = path.split("header:");
+        if (parts.length < 2) return;
+        const headerId = parts[1];
+        if (headerId !== this.state.header?.id) return;
+        if (pxt.commands.notifyProjectSaved) {
+            pxt.commands.notifyProjectSaved(this.state.header);
         }
     }
 
@@ -5171,7 +5192,7 @@ export class ProjectView
 
     setAccessibleBlocks(enabled: boolean) {
         pxt.tickEvent("app.accessibleblocks", { on: enabled ? 1 : 0 });
-        this.blocksEditor.enableAccessibleBlocks(enabled);
+        // this.blocksEditor.enableAccessibleBlocks(enabled);
         this.setState({ accessibleBlocks: enabled })
     }
 

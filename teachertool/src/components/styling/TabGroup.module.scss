@@ -2,37 +2,37 @@
     display: flex;
     flex-direction: row;
     justify-content: flex-start;
-    background-color: var(--pxt-content-background);
-    color: var(--pxt-content-foreground);
+    background-color: var(--pxt-target-background1);
+    color: var(--pxt-tertiary-background);
 
     button[class*="common-button"] {
         transition: background-color 0.1s;
-        color: var(--pxt-content-foreground);
-        background-color: var(--pxt-content-background);
+        color: var(--pxt-tertiary-background);
+        background-color: var(--pxt-target-background1);
         border: none;
-        border-right: solid 1px var(--pxt-content-accent);
+        border-right: solid 1px var(--pxt-target-stencil1);
         border-radius: 0;
         margin: 0;
         padding: 0 0.75rem;
     
         &:hover {
-            background-color: var(--pxt-page-background);
+            background-color: var(--pxt-neutral-background1);
             filter: none;
         }
 
         &:focus-visible::after {
-            outline: solid 1px var(--pxt-content-foreground);
+            outline: solid 1px var(--pxt-tertiary-background);
         }
 
         &[class*="tt-tabgroup-tab-active"] {
-            background-color: var(--pxt-page-background);
+            background-color: var(--pxt-neutral-background1);
             &:hover {
                 filter: none;
             }
         }
 
         &[class*="disabled"] {
-            color: var(--pxt-headerbar-accent-smoke);
+            color: var(--pxt-neutral-alpha20);
 
             &:hover {
                 background-color: inherit;

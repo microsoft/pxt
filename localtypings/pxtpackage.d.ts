@@ -174,6 +174,7 @@ declare namespace pxt {
         actionIcon?: string; // icon to override default icon on the action button
         time?: number;
         url?: string;
+        shareUrl?: string;
         learnMoreUrl?: string;
         buyUrl?: string;
         feedbackUrl?: string;
@@ -183,6 +184,7 @@ declare namespace pxt {
         otherActions?: CodeCardAction[];
         directOpen?: boolean; // skip the details view, directly do the card action
         projectId?: string; // the project's header ID
+        selected?: boolean; // for carousels, gives context if the card is selected and  therefore expanded
 
         header?: string;
 
