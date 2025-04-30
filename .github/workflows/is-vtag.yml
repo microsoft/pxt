@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       is_vtag: ${{ steps.check-tag.outputs.is_vtag }}
+      tag: ${{ steps.check-tag.outputs.tag }}
     steps:
       - name: Inputs
         run: |
@@ -22,8 +23,9 @@ jobs:
         run: |
           if [[ "${GITHUB_REF_TYPE}" == "tag" && "${GITHUB_REF_NAME}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "is_vtag=true" >> "$GITHUB_OUTPUT"
+            echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
           else
             echo "is_vtag=false" >> "$GITHUB_OUTPUT"
           fi
       - name: Outputs
-        run: echo "Step output is_vtag = ${{ steps.check-tag.outputs.is_vtag }}"
+        run: echo "Step output is_vtag = ${{ steps.check-tag.outputs.is_vtag }}" && echo "Step output tag = ${{ steps.check-tag.outputs.tag }}"

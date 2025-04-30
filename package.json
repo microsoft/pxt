@@ -1,6 +1,6 @@
 {
   "name": "pxt-core",
-  "version": "11.4.14",
+  "version": "11.4.17",
   "description": "Microsoft MakeCode provides Blocks / JavaScript / Python tools and editors",
   "keywords": [
     "TypeScript",
@@ -50,6 +50,7 @@
     "built/tests/blocksrunner.js",
     "built/tests/blockssetup.js",
     "scripts/patchUglifyify.js",
+    "scripts/patchBlocklyFieldColour.js",
     "docfiles",
     "theme",
     "common-docs",
