@@ -98,6 +98,7 @@ const derivationMap: {[baseId: string]: DerivationInfo[]} = {
         { colorId: "pxt-neutral-alpha10", deriveFrom: (c) => getAlphaColor(c, 0.1) },
         { colorId: "pxt-neutral-alpha20", deriveFrom: (c) => getAlphaColor(c, 0.2) },
         { colorId: "pxt-neutral-alpha50", deriveFrom: (c) => getAlphaColor(c, 0.5) },
+        { colorId: "pxt-neutral-alpha80", deriveFrom: (c) => getAlphaColor(c, 0.8) },
     ],
     "pxt-colors-purple-background": [
         { colorId: "pxt-colors-purple-foreground", deriveFrom: (c) => getForegroundColor(c) },
@@ -139,6 +140,9 @@ const derivationMap: {[baseId: string]: DerivationInfo[]} = {
         { colorId: "pxt-colors-yellow-hover", deriveFrom: (c) => getHoverColor(c) },
         { colorId: "pxt-colors-yellow-alpha10", deriveFrom: (c) => getAlphaColor(c, 0.1) },
     ],
+    "pxt-link": [
+        { colorId: "pxt-link-hover", deriveFrom: (c) => getHoverColor(c) },
+    ]
 };
 
 export function getColorHeirarchy(colorIds: string[]): { [key: string]: string[] } {
