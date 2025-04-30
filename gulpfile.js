@@ -9,9 +9,11 @@ const concat = require("gulp-concat");
 const header = require("gulp-header");
 const replace = require("gulp-replace");
 const ju = require("./jakeutil");
+const yargs = require('yargs');
 
 const exec = ju.exec;
 const rimraf = ju.rimraf;
+const argv = yargs.argv;
 
 const isWin32 = os.platform() === "win32";
 
@@ -186,7 +188,7 @@ const targetjs = () => exec("node built/pxt.js buildtarget", true);
 
 const buildcss = () => exec("node built/pxt.js buildcss", true);
 
-const pxtTravis = () => exec("node built/pxt.js travis", true);
+const pxtTravis = () => exec(`node built/pxt.js travis ${argv.publish ? "--publish" : ""}`, true);
 
 function compileTsProject(dirname, destination, useOutdir, filename) {
     if (!destination) destination = "built";
