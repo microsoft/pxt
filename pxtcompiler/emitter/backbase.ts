@@ -925,10 +925,16 @@ ${baseLabel}_nochk:
         }
 
         private clearArgs(nonRefs: ir.Expr[], refs: ir.Expr[]) {
-            let numArgs = nonRefs.length + refs.length
+            const allArgs: ir.Expr[] = [];
 
-            let allArgs = nonRefs.concat(refs)
-            for (let r of allArgs) {
+            // dedupe args
+            for (const arg of nonRefs.concat(refs)) {
+                if (allArgs.indexOf(arg) === -1) {
+                    allArgs.push(arg);
+                }
+            }
+
+            for (const r of allArgs) {
                 if (r.currUses != 0 || r.totalUses != 1) {
                     pxt.log(r.toString())
                     pxt.log(allArgs.map(a => a.toString()))
