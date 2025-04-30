@@ -115,6 +115,10 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends Blockly.Fie
         else return this.getValue();
     }
 
+    getFieldDescription(): string {
+        return lf("melody");
+    }
+
     // This will be run when the field is created (i.e. when it appears on the workspace)
     protected onInit() {
         this.render_();

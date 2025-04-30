@@ -136,6 +136,10 @@ export abstract class FieldAssetEditor<U extends FieldAssetEditorOptions, V exte
         }
     }
 
+    getFieldDescription(): string {
+        return this.asset?.meta?.displayName || this.getAssetType().toString();
+    }
+
     protected showEditorFullscreen(editorKind: string, params: any) {
         const fv = pxt.react.getFieldEditorView(editorKind, this.asset, params);
 
