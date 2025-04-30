@@ -116,7 +116,8 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends Blockly.Fie
     }
 
     getFieldDescription(): string {
-        return lf("melody");
+        const melodyString = this.melody.getStringRepresentation()?.replace(/-/g, "")?.trim();
+        return melodyString || lf("empty");
     }
 
     // This will be run when the field is created (i.e. when it appears on the workspace)
