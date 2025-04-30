@@ -18,7 +18,10 @@ export function getBlockText(block: Blockly.BlockSvg): string {
       // Check if this input has a connected block
       if (input.connection && input.connection.targetBlock()) {
         const connectedBlock = input.connection.targetBlock();
-        fieldValues.push(`[${getBlockText(connectedBlock as Blockly.BlockSvg)}]`);
+        const innerBlockText = getBlockText(connectedBlock as Blockly.BlockSvg);
+        if (innerBlockText) {
+          fieldValues.push(`[${innerBlockText}]`);
+        }
       }
     }
   }
