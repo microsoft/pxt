@@ -4,6 +4,8 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import * as Blockly from "blockly";
 import * as pkg from "./package";
+import * as data from "./data";
+import * as auth from "./auth";
 import * as core from "./core";
 import * as toolboxeditor from "./toolboxeditor"
 import * as compiler from "./compiler"
@@ -549,7 +551,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private initAccessibleBlocks() {
-        const enabled = pxt.appTarget.appTheme?.accessibleBlocks;
+        const enabled = data.getData<boolean>(auth.ACCESSIBLE_BLOCKS)
         if (enabled && !this.keyboardNavigation) {
             this.keyboardNavigation = new KeyboardNavigation(this.editor);
 
@@ -841,7 +843,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     focusWorkspace() {
-        if (pxt.appTarget.appTheme?.accessibleBlocks) {
+        const accessibleBlocksEnabled = data.getData<boolean>(auth.ACCESSIBLE_BLOCKS)
+        if (accessibleBlocksEnabled) {
             (this.editor.getSvgGroup() as SVGElement).focus();
         }
     }

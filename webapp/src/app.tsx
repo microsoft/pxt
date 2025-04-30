@@ -38,7 +38,6 @@ import * as make from "./make";
 import * as blocklyToolbox from "./blocksSnippets";
 import * as monacoToolbox from "./monacoSnippets";
 import * as greenscreen from "./greenscreen";
-import * as accessibleblocks from "./accessibleblocks";
 import * as socketbridge from "./socketbridge";
 import * as webusb from "./webusb";
 import * as auth from "./auth";
@@ -4664,7 +4663,7 @@ export class ProjectView
             extensionsVisible: false
         })
 
-        if (pxt.appTarget.appTheme.accessibleBlocks) {
+        if (this.getData<boolean>(auth.ACCESSIBLE_BLOCKS)) {
             this.editor.focusToolbox(CategoryNameID.Extensions);
         }
     }
@@ -5173,6 +5172,11 @@ export class ProjectView
         this.setState({ greenScreen: greenScreenOn });
     }
 
+    async toggleAccessibleBlocks() {
+        await core.toggleAccessibleBlocks()
+        this.reloadEditor();
+    }
+
     setBannerVisible(b: boolean) {
         this.setState({ bannerVisible: b });
     }
@@ -5347,7 +5351,7 @@ export class ProjectView
         const inHome = this.state.home && !sandbox;
         const inEditor = !!this.state.header && !inHome;
         const { lightbox, greenScreen } = this.state;
-        const accessibleBlocks = pxt.appTarget.appTheme.accessibleBlocks;
+        const accessibleBlocks = this.getData<boolean>(auth.ACCESSIBLE_BLOCKS)
         const hideTutorialIteration = inTutorial && tutorialOptions.metadata?.hideIteration;
         const hideToolbox = inTutorial && tutorialOptions.metadata?.hideToolbox;
         // flyoutOnly has become a de facto css class for styling tutorials (especially minecraft HOC), so keep it if hideToolbox is true, even if flyoutOnly is false.
@@ -5442,8 +5446,6 @@ export class ProjectView
                     />
                 }
                 {greenScreen ? <greenscreen.WebCam close={this.toggleGreenScreen} /> : undefined}
-                {/* TODO: Discuss when this onboarding dialog should be shown if accessibleBlocks is enabled by default */}
-                {/* {accessibleBlocks && <accessibleblocks.AccessibleBlocksInfo />} */}
                 {hideMenuBar || inHome ? undefined :
                     <header className="menubar" role="banner">
                         {inEditor ? <accessibility.EditorAccessibilityMenu parent={this} highContrast={hc} /> : undefined}

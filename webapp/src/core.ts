@@ -357,6 +357,13 @@ export async function setHighContrast(on: boolean) {
     await auth.setHighContrastPrefAsync(on);
 }
 
+export async function toggleAccessibleBlocks() {
+    await setAccessibleBlocks(!data.getData<boolean>(auth.ACCESSIBLE_BLOCKS));
+}
+export async function setAccessibleBlocks(on: boolean) {
+    await auth.setAccessibleBlocksPrefAsync(on);
+}
+
 export async function setLanguage(lang: string) {
     pxt.BrowserUtils.setCookieLang(lang);
     pxt.Util.setUserLanguage(lang);

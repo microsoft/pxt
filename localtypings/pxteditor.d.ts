@@ -1036,6 +1036,7 @@ declare namespace pxt.editor {
         toggleHighContrast(): void;
         setHighContrast(on: boolean): void;
         toggleGreenScreen(): void;
+        toggleAccessibleBlocks(): void;
         launchFullEditor(): void;
         resetWorkspace(): void;
 
