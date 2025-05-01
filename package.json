@@ -1,6 +1,6 @@
 {
   "name": "pxt-core",
-  "version": "11.4.7",
+  "version": "11.4.17",
   "description": "Microsoft MakeCode provides Blocks / JavaScript / Python tools and editors",
   "keywords": [
     "TypeScript",
@@ -50,6 +50,7 @@
     "built/tests/blocksrunner.js",
     "built/tests/blockssetup.js",
     "scripts/patchUglifyify.js",
+    "scripts/patchBlocklyFieldColour.js",
     "docfiles",
     "theme",
     "common-docs",
@@ -151,7 +152,8 @@
     "redux": "4.2.0",
     "smoothie": "1.35.0",
     "typescript": "4.8.3",
-    "uglifyify": "5.0.2"
+    "uglifyify": "5.0.2",
+    "yargs": "^17.7.2"
   },
   "overrides": {
     "@blockly/field-colour": {
@@ -167,6 +169,7 @@
   "scripts": {
     "build": "gulp",
     "test": "gulp travis",
+    "test:publish": "gulp travis --publish",
     "clean": "gulp clean",
     "lint": "gulp lint",
     "start": "gulp",

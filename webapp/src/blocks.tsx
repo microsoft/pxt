@@ -211,7 +211,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             if (this.loadingXml) return
             pxt.debug(`loading blockly`)
             pxt.perf.measureStart(Measurements.DomUpdateLoadBlockly)
-            this.loadingXml = true
+            this.loadingXml = true;
+
+            const flyout = this.editor.getFlyout() as pxtblockly.CachingFlyout;
+            flyout.clearBlockCache();
 
             const loadingDimmer = document.createElement("div");
             loadingDimmer.className = "ui active dimmer";
@@ -1101,6 +1104,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (!this._loadBlocklyPromise) {
             pxt.perf.measureStart(Measurements.LoadBlockly)
             pxtblockly.applyMonkeyPatches();
+            pxtblockly.registerFlyoutInflaters();
             this._loadBlocklyPromise = pxt.BrowserUtils.loadBlocklyAsync()
                 .then(() => {
                     // Initialize the "Make a function" button
@@ -1410,7 +1414,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             plugins: {
                 'blockDragger': pxtblockly.BlockDragger,
                 'connectionChecker': DuplicateOnDragConnectionChecker,
-                'flyoutsVerticalToolbox': pxtblockly.VerticalFlyout,
+                'flyoutsVerticalToolbox': pxtblockly.CachingFlyout,
                 'connectionPreviewer': pxtblockly.ConnectionPreviewer
             },
             move: {
@@ -1838,8 +1842,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     private showFlyoutInternal_(xmlList: Element[], flyoutName: string = "default", skipCache = false) {
         this.currentFlyoutKey = flyoutName;
-        const flyout = this.editor.getFlyout() as pxtblockly.VerticalFlyout;
-        flyout.show(xmlList, skipCache ? undefined : flyoutName);
+        const flyout = this.editor.getFlyout();
+        flyout.show(xmlList);
         flyout.scrollToStart();
     }
 

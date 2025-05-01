@@ -699,14 +699,14 @@ export class Editor extends srceditor.Editor {
                         </div>
                     </div>
                     <div className="rightHeader">
-                        <sui.Button title={lf("Save raw text")} className="ui icon neutral button editorExport csv-hide" ariaLabel={lf("Save raw text")} onClick={this.downloadRawText}>
-                            <sui.Icon icon="copy" />
-                        </sui.Button>
+                        <span className="ui small header">{this.isSim ? lf("Simulator") : lf("Device")}</span>
+                        <StartPauseButton ref={this.handleStartPauseRef} active={this.active} toggle={this.toggleRecording} />
                         <sui.Button title={lf("Export data")} className="ui icon blue button editorExport" ariaLabel={lf("Export data")} onClick={this.downloadConsoleCSV}>
                             <sui.Icon icon="download" />
                         </sui.Button>
-                        <StartPauseButton ref={this.handleStartPauseRef} active={this.active} toggle={this.toggleRecording} />
-                        <span className="ui small header">{this.isSim ? lf("Simulator") : lf("Device")}</span>
+                        <sui.Button title={lf("Save raw text")} className="ui icon neutral button editorExport csv-hide" ariaLabel={lf("Save raw text")} onClick={this.downloadRawText}>
+                            <sui.Icon icon="copy" />
+                        </sui.Button>
                     </div>
                 </div>
                 {this.charts?.length == 0 && <div id="serialPlaceholder" className="ui segment">
