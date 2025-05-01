@@ -1060,6 +1060,7 @@ function fillCodeCardAsync(c: JQuery, cards: pxt.CodeCard[], options: CodeCardRe
         let cd = document.createElement("div")
         cd.className = "card-list";
         cd.setAttribute("role", "list")
+        cd.setAttribute("aria-label", options.cardCategory || lf("Content cards"));
         cards.forEach(card => {
             // patch card url with version if necessary, we don't do this in the editor because that goes through the backend and passes the targetVersion then
             const mC = /^\/(v\d+)/.exec(card.url);
@@ -1119,7 +1120,7 @@ function renderNextCodeCardAsync(cls: string, options: ClientRenderOptions): Pro
     }
 
     if (options.snippetReplaceParent) $el = $el.parent();
-    return fillCodeCardAsync($el, cards, { hideHeader: true })
+    return fillCodeCardAsync($el, cards, { hideHeader: true, cardCategory: options.hexName })
         .then(() => pxt.U.delay(1, renderNextCodeCardAsync(cls, options)));
 }
 
