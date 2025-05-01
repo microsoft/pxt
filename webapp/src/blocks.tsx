@@ -577,7 +577,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             Blockly.ShortcutRegistry.registry.unregister(cleanUpWorkspace.name);
             Blockly.ShortcutRegistry.registry.register({
                 ...cleanUpWorkspace,
-                keyCodes: [Blockly.ShortcutRegistry.registry.createSerializedKey(cleanUpWorkspace.keyCodes[0] as number, null)],
+                // The default key is 'c' to "clean up workspace". Use 'f' instead to align with "format code".
+                keyCodes: [Blockly.ShortcutRegistry.registry.createSerializedKey(Blockly.utils.KeyCodes.F, null)],
                 callback: (workspace) => {
                     flow(workspace, { useViewWidth: true });
                     return true
