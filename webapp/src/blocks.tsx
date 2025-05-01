@@ -936,7 +936,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             if (!block) {
                 return undefined;
             }
-            const blockText = this.getBlockText(block);
+
+            let blockText = pxtblockly.getBlockText(block);
+            if (blockText.length > 100) {
+                blockText = blockText.substring(0, 97) + "...";
+            }
 
             return {
                 message: blockText ? lf("at the '{0}' block", blockText) : lf("at {0}", locInfo.functionName),
@@ -951,21 +955,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             message,
             stackFrames
         };
-    }
-
-    private getBlockText(block: Blockly.BlockSvg): string {
-        const fieldValues = [];
-        for (const input of block.inputList) {
-            if (input.fieldRow.length > 0) {
-                for (const field of input.fieldRow) {
-                    const text = field.getText();
-                    if (text) {
-                        fieldValues.push(text);
-                    }
-                }
-            }
-        }
-        return fieldValues.join(" ");
     }
 
     getBlocksAreaDiv() {
