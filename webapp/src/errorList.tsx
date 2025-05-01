@@ -5,6 +5,7 @@ import * as sui from "./sui";
 import { fireClickOnEnter } from "./util";
 import { classList } from "../../react-common/components/util";
 import { ErrorHelpButton, ErrorHelpResponse } from "./components/errorHelpButton";
+import { Button } from "../../react-common/components/controls/Button";
 
 type GroupedError = {
     error: ErrorDisplayInfo,
@@ -153,18 +154,31 @@ class ErrorListItem extends React.Component<ErrorListItemProps, ErrorListItemSta
         const { className, errorGroup } = this.props
         const error = errorGroup.error;
 
-        const message = error.message;
+        const isInteractive = !!error.onClick;
+        const hasStack = !!error.stackFrames && error.stackFrames.length > 0;
+        const topRowClass = hasStack ? "exceptionMessage" : classList("item", className);
+        const errorCounter = (errorGroup.count <= 1) ? null : <div className="ui gray circular label countBubble">{errorGroup.count}</div>;
 
-        return error.stackFrames ? (
-            <div className={className}>
-                <div className="exceptionMessage"
-                    onClick={error.onClick}
-                    onKeyDown={error.onClick ? fireClickOnEnter : undefined}
-                    aria-label={error.message}
-                    tabIndex={0}
-                    role={error.onClick ? "button" : undefined}>
-                    {error.message}
+        const itemHeaderRow = isInteractive ? (
+            <Button className={topRowClass}
+                onClick={error.onClick}
+                title={lf("Go to error: {0}", error.message)}
+                aria-label={lf("Go to error: {0}", error.message)}>
+                <div>
+                    <span>{error.message}</span>
+                    {errorCounter}
                 </div>
+            </Button>
+        ) : (
+             <div className={topRowClass} aria-label={error.message} tabIndex={0}>
+                <span>{error.message}</span>
+                {errorCounter}
+            </div>
+        );
+
+        return !hasStack ? itemHeaderRow : (
+            <div className={className}>
+                {itemHeaderRow}
                 <div className="ui selection list">
                     {(error.stackFrames).map((childErr, index) => {
                         const errGrp = {error: childErr, count: 1, index: 0};
@@ -172,15 +186,7 @@ class ErrorListItem extends React.Component<ErrorListItemProps, ErrorListItemSta
                     })}
                 </div>
             </div>
-        ) : (
-            <div className={classList("item", className)} role="button"
-                onClick={error.onClick}
-                onKeyDown={fireClickOnEnter}
-                aria-label={lf("Go to {0}: {1}", error.stackFrames ? '' : 'error', message)}
-                tabIndex={0}>
-                {message} {(errorGroup.count <= 1) ? null : <div className="ui gray circular label countBubble">{errorGroup.count}</div>}
-            </div>
-        );
+        )
     }
 }
 

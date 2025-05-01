@@ -272,6 +272,10 @@ export class FieldSoundEffect extends FieldBase<FieldSoundEffectParams> {
         this.size_.width = TOTAL_WIDTH + X_PADDING;
     }
 
+    getFieldDescription(): string {
+        return lf("sound effect");
+    }
+
     protected updateSiblingBlocks(sound: pxt.assets.Sound) {
         this.setNumberInputValue(this.options.durationInputName, sound.duration);
         this.setNumberInputValue(this.options.startFrequencyInputName, sound.startFrequency);

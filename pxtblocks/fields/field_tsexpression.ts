@@ -38,6 +38,10 @@ export class FieldTsExpression extends Blockly.FieldTextInput implements FieldCu
         return this.pythonMode ? pxt.Util.lf("<python code>") : this.getValue();
     }
 
+    getFieldDescription(): string {
+        return this.pythonMode ? pxt.Util.lf("<python code>") : pxt.Util.lf("<typescript code>");
+    }
+
     applyColour() {
         if (this.sourceBlock_ && this.getConstants()?.FULL_BLOCK_FIELDS) {
             if (this.borderRect_) {

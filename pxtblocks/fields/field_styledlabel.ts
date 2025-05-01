@@ -14,6 +14,10 @@ export class FieldStyledLabel extends Blockly.FieldLabel implements FieldCustom 
     constructor(value: string, options?: StyleOptions, opt_validator?: Function) {
         super(value, getClass(options));
     }
+
+    getFieldDescription(): string {
+        return this.getText();
+    }
 }
 
 function getClass(options?: StyleOptions) {

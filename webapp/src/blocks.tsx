@@ -917,65 +917,51 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return {
             message: message,
             onClick: () => {
-                // Block may already be highlighted, so we want to set highlighted directly to true
-                // as opposed to using `highlightBlock`, which toggles.
-                const block = this.editor.getBlockById(blockId);
-                if (!block) {
-                    return;
-                }
-
-                block.setHighlighted(true);
-                this.editor.centerOnBlock(blockId);
+                this.clearHighlightedStatements();
+                this.editor.highlightBlock(blockId);
+                this.editor.centerOnBlock(blockId, true);
             }
         }
     }
-
     private getDisplayInfoForException(exception: pxsim.DebuggerBreakpointMessage): ErrorDisplayInfo {
         const message = pxt.Util.rlf(exception.exceptionMessage);
-        const stackFrames: StackFrameDisplayInfo[] = [];
-        for (const frame of exception.stackframes ?? []) {
+        const stackFrames: StackFrameDisplayInfo[] = exception.stackframes?.map(frame => {
             const locInfo = frame.funcInfo as pxtc.FunctionLocationInfo;
             if (!locInfo?.functionName) {
-                continue;
+                return undefined;
             }
 
             const blockId = this.compilationResult ? pxtblockly.findBlockIdByLine(this.compilationResult.sourceMap, { start: locInfo.line, length: locInfo.endLine - locInfo.line }) : undefined;
             if (!blockId) {
-                continue;
+                return undefined;
             }
 
             // Get human-readable block text
             const block = this.editor.getBlockById(blockId);
             if (!block) {
-                continue;
+                return undefined;
             }
-            const blockText = pxtblockly.getBlockText(block);
 
-            stackFrames.push({
+            let blockText = pxtblockly.getBlockText(block);
+            if (blockText.length > 100) {
+                blockText = blockText.substring(0, 97) + "...";
+            }
+
+            return {
                 message: blockText ? lf("at the '{0}' block", blockText) : lf("at {0}", locInfo.functionName),
                 onClick: () => {
-                    this.editor.centerOnBlock(blockId);
-                    const tourSteps = [
-                            {
-                                title: lf("Error Explanation"),
-                                description: lf("Here's some presumably helpful text. This is just a placeholder."),
-                                targetQuery: `g[data-id="${blockId}"]`,
-                                location: pxt.tour.BubbleLocation.Right,
-                                // sansQuery?: string; // Use this to exclude an element from the cutout
-                                // sansLocation?: BubbleLocation; // relative location of element to exclude
-                            } as pxt.tour.BubbleStep
-                        ];
-                    this.parent.showTour(tourSteps);
+                    this.clearHighlightedStatements();
+                    this.editor.highlightBlock(blockId);
+                    this.editor.centerOnBlock(blockId, true);
                 }
-            });
-        }
+            };
+        }).filter(f => !!f) ?? undefined;
 
         return {
             message,
-            stackFrames: stackFrames.length > 0 ? stackFrames : undefined,
+            stackFrames
         };
     }
-
     private handleErrorHelp(helpResponse: ErrorHelpResponse) {
         if (helpResponse.explanationAsTour) {
             this.parent.showTour(helpResponse.explanationAsTour);
