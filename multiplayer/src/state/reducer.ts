@@ -34,7 +34,6 @@ export default function reducer(state: AppState, action: Action): AppState {
                     gameState: undefined,
                     gameMetadata: undefined,
                     gamePaused: undefined,
-                    collabInfo: undefined,
                     presence: { ...defaultPresence },
                     modal: undefined,
                     modalOpts: undefined,
@@ -48,14 +47,6 @@ export default function reducer(state: AppState, action: Action): AppState {
                 gameState: {
                     ...state.gameState,
                     ...action.gameInfo,
-                },
-            };
-        }
-        case "SET_COLLAB_INFO": {
-            return {
-                ...state,
-                collabInfo: {
-                    ...action.collabInfo,
                 },
             };
         }
@@ -86,7 +77,6 @@ export default function reducer(state: AppState, action: Action): AppState {
                 playerSlot: undefined,
                 gameState: undefined,
                 gameMetadata: undefined,
-                collabInfo: undefined,
             };
         }
         case "SET_GAME_MODE": {

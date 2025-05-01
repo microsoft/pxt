@@ -7,7 +7,6 @@ import {
     ModalType,
     GameMetadata,
     ClientRole,
-    CollabInfo,
 } from "../types";
 
 export type AppState = {
@@ -20,7 +19,6 @@ export type AppState = {
     gameState: GameState | undefined;
     gameMetadata: GameMetadata | undefined;
     gamePaused: boolean | undefined;
-    collabInfo: CollabInfo | undefined;
     toasts: ToastWithId[];
     presence: Presence;
     modal: ModalType | undefined;
@@ -39,7 +37,6 @@ export type AppState = {
             | undefined;
     };
     targetConfig: pxt.TargetConfig | undefined;
-    collabMode: boolean; // ?collab=1 in URL
 };
 
 export const initialAppState: AppState = {
@@ -52,7 +49,6 @@ export const initialAppState: AppState = {
     gameState: undefined,
     gameMetadata: undefined,
     gamePaused: undefined,
-    collabInfo: undefined,
     toasts: [],
     presence: { ...defaultPresence },
     modal: undefined,
@@ -61,5 +57,4 @@ export const initialAppState: AppState = {
     deepLinks: {},
     reactions: {},
     targetConfig: undefined,
-    collabMode: /[?|&]collab=1/i.test(window.location.href),
 };

@@ -16,7 +16,7 @@ import {
     GameOverReason,
     GameJoinResult,
     HTTP_OK,
-    HTTP_SESSION_FULL,
+    HTTP_GAME_FULL,
     HTTP_INTERNAL_SERVER_ERROR,
     HTTP_IM_A_TEAPOT,
     SimKey,
@@ -24,7 +24,7 @@ import {
     IconType,
 } from "../types";
 import {
-    notifyDisconnected,
+    notifyGameDisconnected,
     setGameModeAsync,
     setPresenceAsync,
     setReactionAsync,
@@ -63,25 +63,21 @@ class GameClient {
     receivedJoinMessageInTimeHandler: ((a: any) => void) | undefined;
     paused: boolean = false;
 
-    constructor() { }
+    constructor() {}
 
     destroy() {
         try {
             this.sock?.close();
             this.sock = undefined;
-        } catch (e) { }
+        } catch (e) {}
     }
 
     private sendMessage(msg: Protocol.Message | Buffer) {
-        try {
-            if (msg instanceof Buffer) {
-                this.sock?.send(msg);
-            } else {
-                const payload = JSON.stringify(msg);
-                this.sock?.send(payload);
-            }
-        } catch (e) {
-            pxt.error("Error sending message", e);
+        if (msg instanceof Buffer) {
+            this.sock?.send(msg, {}, () => {});
+        } else {
+            const payload = JSON.stringify(msg);
+            this.sock?.send(payload, {}, () => {});
         }
     }
 
@@ -182,7 +178,7 @@ class GameClient {
                 });
                 this.sock?.on("close", () => {
                     pxt.debug("socket disconnected");
-                    notifyDisconnected(this.gameOverReason);
+                    notifyGameDisconnected(this.gameOverReason);
                     clearTimeout(joinTimeout);
                     resolve();
                 });
@@ -270,7 +266,7 @@ class GameClient {
                 success: !this.gameOverReason,
                 statusCode: this.gameOverReason
                     ? this.gameOverReason === "full"
-                        ? HTTP_SESSION_FULL
+                        ? HTTP_GAME_FULL
                         : HTTP_IM_A_TEAPOT
                     : joinRes.status,
             };

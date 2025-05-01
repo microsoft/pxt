@@ -1,6 +1,5 @@
 import { nanoid } from "nanoid";
 import {
-    ActionBase,
     GameInfo,
     GameMode,
     Toast,
@@ -10,8 +9,12 @@ import {
     ModalType,
     GameMetadata,
     ClientRole,
-    CollabInfo,
 } from "../types";
+
+// Changes to app state are performed by dispatching actions to the reducer
+type ActionBase = {
+    type: string;
+};
 
 /**
  * Actions
@@ -30,11 +33,6 @@ type SetClientRole = ActionBase & {
 type SetNetMode = ActionBase & {
     type: "SET_NET_MODE";
     mode: NetMode;
-};
-
-type SetCollabInfo = ActionBase & {
-    type: "SET_COLLAB_INFO";
-    collabInfo: CollabInfo | undefined;
 };
 
 type SetGameInfo = ActionBase & {
@@ -145,7 +143,6 @@ export type Action =
     | SetClientRole
     | SetNetMode
     | SetGameInfo
-    | SetCollabInfo
     | SetGameMetadata
     | SetGameId
     | SetPlayerSlot
@@ -192,11 +189,6 @@ export const setNetMode = (mode: NetMode): SetNetMode => ({
 export const setGameInfo = (gameInfo: GameInfo): SetGameInfo => ({
     type: "SET_GAME_INFO",
     gameInfo,
-});
-
-export const setCollabInfo = (collabInfo: CollabInfo): SetCollabInfo => ({
-    type: "SET_COLLAB_INFO",
-    collabInfo,
 });
 
 export const setGameMetadata = (gameMetadata: GameMetadata): SetGameMetadata => ({

@@ -1,9 +1,9 @@
 import * as gameClient from "../services/gameClient";
 import { dispatch } from "../state";
 import { dismissToast, setNetMode, setGameInfo, showToast, setClientRole } from "../state/actions";
-import { HTTP_SESSION_FULL, HTTP_SESSION_NOT_FOUND } from "../types";
+import { HTTP_GAME_FULL, HTTP_GAME_NOT_FOUND } from "../types";
 import { cleanupJoinCode } from "../util";
-import { notifyDisconnected } from ".";
+import { notifyGameDisconnected } from ".";
 
 export async function joinGameAsync(joinCode: string | undefined) {
     joinCode = cleanupJoinCode(joinCode);
@@ -40,10 +40,10 @@ export async function joinGameAsync(joinCode: string | undefined) {
             dispatch(setGameInfo(joinResult));
             dispatch(setNetMode("connected"));
         } else {
-            if (joinResult.statusCode === HTTP_SESSION_NOT_FOUND) {
-                notifyDisconnected("not-found");
+            if (joinResult.statusCode === HTTP_GAME_NOT_FOUND) {
+                notifyGameDisconnected("not-found");
                 dispatch(setNetMode("init"));
-            } else if (joinResult.statusCode === HTTP_SESSION_FULL) {
+            } else if (joinResult.statusCode === HTTP_GAME_FULL) {
                 // notification handled by gameClient
                 dispatch(setNetMode("init"));
             } else {
