@@ -905,14 +905,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return {
             message: message,
             onClick: () => {
-                // Block may already be highlighted, so we want to set highlighted directly to true
-                // as opposed to using `highlightBlock`, which toggles.
-                const block = this.editor.getBlockById(blockId);
-                if (!block) {
-                    return;
-                }
-
-                block.setHighlighted(true);
+                this.clearHighlightedStatements();
+                this.editor.highlightBlock(blockId);
                 this.editor.centerOnBlock(blockId, true);
             }
         }
@@ -946,7 +940,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 message: blockText ? lf("at the '{0}' block", blockText) : lf("at {0}", locInfo.functionName),
                 onClick: () => {
                     this.clearHighlightedStatements();
-                    this.highlightStatement(locInfo, exception);
+                    this.editor.highlightBlock(blockId);
+                    this.editor.centerOnBlock(blockId, true);
                 }
             };
         }).filter(f => !!f) ?? undefined;
