@@ -726,6 +726,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                                 tallCard={hasTags}
                                 tutorialStep={scr.tutorialStep}
                                 tutorialLength={scr.tutorialLength}
+                                selected={!scr.directOpen ? selectedIndex === index : undefined}
                             />
                         )}
                     </carousel.Carousel>
@@ -819,6 +820,7 @@ interface ProjectsCodeCardProps extends pxt.CodeCard {
     id?: string;
     index?: number;
     tallCard?: boolean;
+    selected?: boolean;
     onCardClick: (e: any, scr: any, index?: number, id?: string) => void;
     onLabelClick?: (e: any, scr: any, index?: number, id?: string) => void;
 }
@@ -841,7 +843,7 @@ export class ProjectsCodeCard extends sui.StatelessUIElement<ProjectsCodeCardPro
     }
 
     renderCore() {
-        let { scr, onCardClick, onLabelClick, onClick, cardType, imageUrl, className, ...rest } = this.props;
+        let { scr, onCardClick, onLabelClick, onClick, cardType, imageUrl, className, selected, ...rest } = this.props;
 
         className = className || "";
         // compute icon
@@ -860,7 +862,7 @@ export class ProjectsCodeCard extends sui.StatelessUIElement<ProjectsCodeCardPro
                 className = 'file ' + className;
         }
         return <codecard.CodeCardView role="button" className={className} imageUrl={imageUrl} cardType={cardType} {...rest} onClick={this.handleClick}
-            onLabelClicked={onLabelClick ? this.handleLabelClick : undefined} />
+            onLabelClicked={onLabelClick ? this.handleLabelClick : undefined} selected={selected} />
     }
 }
 
@@ -930,6 +932,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
     protected getActionIcon(onClick: any, type: pxt.CodeCardType, editor?: pxt.CodeCardEditorType, actionIcon?: string): JSX.Element {
         const { youTubeId, youTubePlaylistId } = this.props;
         let icon = "file text";
+        let ariaLabel = lf("Open code editor");
         if (actionIcon) {
             icon = actionIcon;
         } else {
@@ -948,18 +951,24 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                     break;
                 case "forumUrl":
                     icon = "comments"
+                    ariaLabel = lf("Open Microsoft MakeCode forum");
                     break;
                 case "forumExample":
                     icon = "pencil"
                     break;
                 case "template":
                 default:
-                    if (youTubeId || youTubePlaylistId) icon = "youtube";
+                    if (youTubeId || youTubePlaylistId) {
+                        icon = "youtube";
+                        ariaLabel = lf("Open YouTube video");
+                    } else {
+                        ariaLabel = lf("Open instructions");
+                    }
                     break;
             }
         }
         return this.isLink(type) && type != "forumExample" // TODO (shakao)  migrate forumurl to otherAction json in md
-            ? <sui.Link role="presentation" className="link button attached" icon={icon} href={this.getUrl()} target="_blank" tabIndex={-1} />
+            ? <sui.Link role="link" className="link button attached" icon={icon} href={this.getUrl()} target="_blank" tabIndex={-1} ariaLabel={ariaLabel}/>
             : <sui.Item role="presentation" className="button attached" icon={icon} onClick={onClick} tabIndex={-1} />
     }
 

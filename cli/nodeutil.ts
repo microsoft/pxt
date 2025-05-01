@@ -369,15 +369,14 @@ export async function isBranchProtectedAsync(
     });
 
     if (res.statusCode !== 200) {
-        Util.userError(`Failed to get branch info: ${res.statusCode} ${res.text}`);
+        Util.userError(`Failed to get branch protection info: ${res.statusCode} ${res.text}`);
     }
 
     const data = await res.json;
 
-    const requiresPR = !!data.protection?.required_pull_request_reviews;
-    const hasPushRestrictions = !!data.protection?.restrictions;
+    const requiresPR = data.protected;
 
-    return requiresPR || hasPushRestrictions;
+    return requiresPR;
 }
 
 export function timestamp(date = new Date()): string {

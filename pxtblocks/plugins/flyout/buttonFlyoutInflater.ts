@@ -4,6 +4,15 @@ import { FlyoutButton } from "./flyoutButton";
 const BUTTON_TYPE = "button";
 
 export class ButtonFlyoutInflater extends Blockly.ButtonFlyoutInflater {
+    static register() {
+        Blockly.registry.register(
+            Blockly.registry.Type.FLYOUT_INFLATER,
+            BUTTON_TYPE,
+            ButtonFlyoutInflater,
+            true,
+        );
+    }
+
     load(state: object, flyout: Blockly.IFlyout): Blockly.FlyoutItem {
         const button = new FlyoutButton(
             flyout.getWorkspace(),
@@ -16,14 +25,3 @@ export class ButtonFlyoutInflater extends Blockly.ButtonFlyoutInflater {
         return new Blockly.FlyoutItem(button, BUTTON_TYPE, true);
     }
 }
-
-Blockly.registry.unregister(
-    Blockly.registry.Type.FLYOUT_INFLATER,
-    BUTTON_TYPE,
-);
-
-Blockly.registry.register(
-    Blockly.registry.Type.FLYOUT_INFLATER,
-    BUTTON_TYPE,
-    ButtonFlyoutInflater,
-);
