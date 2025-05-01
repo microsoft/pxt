@@ -17,8 +17,8 @@ export function getBlockText(block: Blockly.BlockSvg): string {
                     continue;
                 }
 
-                const text = (field as FieldCustom & Blockly.Field).isFieldCustom_
-                    ? (field as any).getFieldDescription()
+                const text = (field as FieldCustom & Blockly.Field).getFieldDescription
+                    ? (field as FieldCustom & Blockly.Field).getFieldDescription()
                     : field.getText();
 
                 if (text) {

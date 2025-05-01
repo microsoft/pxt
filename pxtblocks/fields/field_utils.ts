@@ -13,7 +13,7 @@ export interface FieldCustom {
     /**
      * Returns a human-readable description of the field's current value.
      */
-    getFieldDescription(): string;
+    getFieldDescription?(): string;
 }
 
 export interface FieldCustomOptions {
