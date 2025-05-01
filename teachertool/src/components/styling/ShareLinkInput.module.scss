@@ -4,10 +4,10 @@
     align-items: center;
     height: 3.625rem;
     min-height: 3.625rem;
-    background-color: var(--pxt-content-background);
-    color: var(--pxt-content-foreground);
+    background-color: var(--pxt-target-background1);
+    color: var(--pxt-target-foreground1);
     padding: 0 1rem 0 1rem;
-    border-top: solid 1px var(--pxt-content-accent);
+    border-top: solid 1px var(--pxt-target-stencil1);
 
     div[class*="common-input-wrapper"] {
         width: 100%;
@@ -18,7 +18,8 @@
             }
 
             i {
-                background-color: var(--pxt-content-background);
+                background-color: var(--pxt-neutral-alpha10);
+                color: var(--pxt-target-foreground1);
                 border-radius: 99px;
                 width: 1.5rem;
                 height: 1.5rem;
@@ -31,8 +32,7 @@
                 &::before {
                     font-size: 1rem;
                     line-height: 1.5rem;
-                    color: var(--pxt-content-foreground);
-                    filter: saturate(0%);
+                    color: var(--pxt-neutral-alpha80);
                 }
             }
         }

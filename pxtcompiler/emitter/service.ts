@@ -1258,6 +1258,7 @@ namespace ts.pxtc.service {
         host.opts.fileSystem = prevFS
         for (let k of Object.keys(newFS))
             host.setFile(k, newFS[k]) // update version numbers
+        res.fileSystem = U.flatClone(newFS)
         if (res.diagnostics.length == 0) {
             host.opts.skipPxtModulesEmit = false
             host.opts.skipPxtModulesTSC = false
@@ -1275,6 +1276,7 @@ namespace ts.pxtc.service {
             let ts2asm = compile(host.opts, service)
             res = {
                 sourceMap: res.sourceMap,
+                fileSystem: res.fileSystem,
                 ...ts2asm,
             }
             if (res.needsFullRecompile || ((!res.success || res.diagnostics.length) && host.opts.clearIncrBuildAndRetryOnError)) {

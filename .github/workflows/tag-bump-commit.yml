@@ -1,0 +1,91 @@
+name: Tag version on merged bump commit
+
+on:
+  workflow_call:
+    outputs:
+      did_tag:
+        description: 'Whether a tag was created'
+        value: ${{ jobs.return.outputs.did_tag }}
+
+jobs:
+  check-merge:
+    uses: ./.github/workflows/check-if-merged-pr.yml
+
+  check-merge-outputs:
+    needs: check-merge
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: check-merge outputs
+        run: |
+          echo "is_merged_pr = '${{ needs.check-merge.outputs.is_merged_pr }}'"
+          echo "pr_head_sha = '${{ needs.check-merge.outputs.pr_head_sha }}'"
+
+  tag-version:
+    needs: check-merge
+    if: fromJSON(needs.check-merge.outputs.is_merged_pr || 'false') == true
+    runs-on: ubuntu-latest
+    outputs:
+      did_tag: ${{ steps.tag-op.outputs.did_tag }}
+      tag: ${{ steps.tag-op.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Tag commit if it's a version bump
+        id: tag-op
+        shell: bash
+        run: |
+          set -euxo pipefail
+
+          COMMIT_SHA="${{ github.sha }}"
+          echo "==> Current merge commit SHA: $COMMIT_SHA"
+
+          echo "==> Fetching commit message..."
+          COMMIT_MSG=$(git log -1 --pretty=%s "$COMMIT_SHA")
+          echo "==> Commit message: '$COMMIT_MSG'"
+
+          TAGGED=false
+
+          # Check if commit matches bump pattern and PR#
+          if [[ "$COMMIT_MSG" =~ \[pxt-cli\]\ bump\ version\ to\ v([0-9]+\.[0-9]+\.[0-9]+)\ \(\#[0-9]+\) ]]; then
+            VERSION="v${BASH_REMATCH[1]}"
+            echo "==> Detected bump version: $VERSION"
+
+            # Check if tag already exists
+            if git rev-parse "$VERSION" >/dev/null 2>&1; then
+              echo "::warning::Tag $VERSION already exists — skipping tagging."
+            else
+              echo "==> Tagging $COMMIT_SHA with $VERSION"
+              git tag "$VERSION" "$COMMIT_SHA"
+              git push origin "$VERSION"
+              echo "tag=$VERSION" >> "$GITHUB_OUTPUT"
+              TAGGED=true
+            fi
+          else
+            echo "==> No merged bump commit detected — skipping tag creation."
+          fi
+
+          echo "==> did_tag=$TAGGED"
+          echo "did_tag=$TAGGED" >> "$GITHUB_OUTPUT"
+
+  not-tag-version:
+    needs: check-merge
+    if: fromJSON(needs.check-merge.outputs.is_merged_pr || 'false') == false
+    runs-on: ubuntu-latest
+    outputs:
+      did_tag: false
+    steps:
+      - run: echo "No tag because not a PR merge."
+
+  return:
+    runs-on: ubuntu-latest
+    needs: [tag-version, not-tag-version]
+    if: always()
+    outputs:
+      did_tag: ${{ needs.tag-version.outputs.did_tag || false }}
+    steps:
+      - run: echo "Returning did_tag = ${{ needs.tag-version.outputs.did_tag || false }}"
+      - run: echo "Returning tag = ${{ needs.tag-version.outputs.tag || '' }}"

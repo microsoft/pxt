@@ -1,13 +1,19 @@
 /// <reference path="../../built/pxtlib.d.ts" />
 
 import * as Blockly from "blockly";
-import { FieldCustom, FieldCustomDropdownOptions, parseColour } from "./field_utils";
+import { clearDropDownDiv, FieldCustom, FieldCustomDropdownOptions, parseColour } from "./field_utils";
 import { FieldDropdown } from "./field_dropdown";
 
 export interface FieldImageDropdownOptions extends FieldCustomDropdownOptions {
     columns?: string;
     maxRows?: string;
     width?: string;
+}
+
+type ButtonRow = {
+    height: number;
+    width: number;
+    items: Blockly.MenuOption[];
 }
 
 export class FieldImageDropdown extends FieldDropdown implements FieldCustom {
@@ -48,77 +54,127 @@ export class FieldImageDropdown extends FieldDropdown implements FieldCustom {
         }
         // If there is an existing drop-down someone else owns, hide it immediately and clear it.
         Blockly.DropDownDiv.hideWithoutAnimation();
-        Blockly.DropDownDiv.clearContent();
+        clearDropDownDiv();
         // Populate the drop-down with the icons for this field.
         let dropdownDiv = Blockly.DropDownDiv.getContentDiv() as HTMLElement;
         let contentDiv = document.createElement('div');
         // Accessibility properties
         contentDiv.setAttribute('role', 'menu');
         contentDiv.setAttribute('aria-haspopup', 'true');
+        contentDiv.classList.add("blocklyMenu", "blocklyDropdownMenu");
+
+        const rows: ButtonRow[] = [];
+        let currentRow: ButtonRow = {
+            height: 0,
+            width: 0,
+            items: [],
+        };
+
+        const BUTTON_MARGIN = 8;
+
         const options = this.getOptions();
-        let maxButtonHeight: number = 0;
+
+        const columnButtonWidth = this.columns_ ? ((this.width_ / this.columns_) - BUTTON_MARGIN) : 0;
+
+        // do a first pass to calculate the rows
         for (let i = 0; i < options.length; i++) {
-            let content = (options[i] as any)[0]; // Human-readable text or image.
-            const value = (options[i] as any)[1]; // Language-neutral value.
-            // Icons with the type property placeholder take up space but don't have any functionality
-            // Use for special-case layouts
-            if (content.type == 'placeholder') {
-                let placeholder = document.createElement('span');
-                placeholder.setAttribute('class', 'blocklyDropDownPlaceholder');
-                placeholder.style.width = content.width + 'px';
-                placeholder.style.height = content.height + 'px';
-                contentDiv.appendChild(placeholder);
-                continue;
+            const content = (options[i] as any)[0];
+
+            let buttonWidth = content.width;
+            let buttonHeight = content.height;
+
+            if (content.type != "placeholder" && this.columns_) {
+                buttonWidth = columnButtonWidth;
+                buttonHeight = columnButtonWidth;
             }
-            let button = document.createElement('button');
-            button.setAttribute('id', ':' + i); // For aria-activedescendant
-            button.setAttribute('role', 'menuitem');
-            button.setAttribute('class', 'blocklyDropDownButton');
-            button.title = content.alt;
-            let buttonSize = content.height;
-            if (this.columns_) {
-                buttonSize = ((this.width_ / this.columns_) - 8);
-                button.style.width = buttonSize + 'px';
-                button.style.height = buttonSize + 'px';
-            } else {
-                button.style.width = content.width + 'px';
-                button.style.height = content.height + 'px';
+
+            if (currentRow.height && (currentRow.width + buttonWidth + BUTTON_MARGIN > this.width_)) {
+                rows.push(currentRow);
+                currentRow = {
+                    width: buttonWidth + BUTTON_MARGIN,
+                    height: buttonHeight + BUTTON_MARGIN,
+                    items: [options[i]]
+                };
             }
-            if (buttonSize > maxButtonHeight) {
-                maxButtonHeight = buttonSize;
+            else {
+                currentRow.width += buttonWidth + BUTTON_MARGIN;
+                currentRow.height = Math.max(currentRow.height, buttonHeight + BUTTON_MARGIN);
+                currentRow.items.push(options[i]);
             }
-            let backgroundColor = this.backgroundColour_;
-            if (value == this.getValue()) {
-                // This icon is selected, show it in a different colour
-                backgroundColor = (this.sourceBlock_ as Blockly.BlockSvg).getColourTertiary();
-                button.setAttribute('aria-selected', 'true');
-            }
-            button.style.backgroundColor = backgroundColor;
-            button.style.borderColor = this.borderColour_;
-            Blockly.browserEvents.bind(button, 'click', this, this.buttonClick_);
-            Blockly.browserEvents.bind(button, 'mouseover', this, () => {
-                button.setAttribute('class', 'blocklyDropDownButton blocklyDropDownButtonHover');
-                contentDiv.setAttribute('aria-activedescendant', button.id);
-            });
-            Blockly.browserEvents.bind(button, 'mouseout', this, () => {
-                button.setAttribute('class', 'blocklyDropDownButton');
-                contentDiv.removeAttribute('aria-activedescendant');
-            });
-            let buttonImg = document.createElement('img');
-            buttonImg.src = content.src;
-            //buttonImg.alt = icon.alt;
-            // Upon click/touch, we will be able to get the clicked element as e.target
-            // Store a data attribute on all possible click targets so we can match it to the icon.
-            button.setAttribute('data-value', value);
-            buttonImg.setAttribute('data-value', value);
-            button.appendChild(buttonImg);
-            contentDiv.appendChild(button);
         }
-        contentDiv.style.width = this.width_ + 'px';
+
+        rows.push(currentRow);
+
+        // now create the actual row elements
+        let descendantIndex = 0;
+        for (const row of rows) {
+            const rowDiv = document.createElement("div");
+            rowDiv.style.width = row.width + "px";
+            rowDiv.style.height = row.height + "px";
+            contentDiv.appendChild(rowDiv);
+            for (const option of row.items) {
+                let content = (option as any)[0]; // Human-readable text or image.
+                const value = (option as any)[1]; // Language-neutral value.
+                // Icons with the type property placeholder take up space but don't have any functionality
+                // Use for special-case layouts
+                if (content.type == 'placeholder') {
+                    let placeholder = document.createElement('span');
+                    placeholder.setAttribute('class', 'blocklyDropDownPlaceholder');
+                    placeholder.style.width = content.width + 'px';
+                    placeholder.style.height = row.height + 'px';
+                    rowDiv.appendChild(placeholder);
+                    continue;
+                }
+
+                const button = document.createElement('button');
+                button.setAttribute('id', ':' + descendantIndex++); // For aria-activedescendant
+                button.setAttribute('role', 'menuitem');
+                button.setAttribute('class', 'blocklyDropDownButton');
+                button.title = content.alt;
+
+                button.style.width = (columnButtonWidth || content.width) + 'px';
+                button.style.height = row.height + 'px';
+
+                let backgroundColor = this.backgroundColour_;
+                if (value == this.getValue()) {
+                    // This icon is selected, show it in a different colour
+                    backgroundColor = (this.sourceBlock_ as Blockly.BlockSvg).getColourTertiary();
+                    button.setAttribute('aria-selected', 'true');
+                }
+                button.style.backgroundColor = backgroundColor;
+                button.style.borderColor = this.borderColour_;
+                Blockly.browserEvents.bind(button, 'click', this, this.buttonClick_);
+                Blockly.browserEvents.bind(button, 'mouseover', this, () => {
+                    button.setAttribute('class', 'blocklyDropDownButton blocklyDropDownButtonHover');
+                    contentDiv.setAttribute('aria-activedescendant', button.id);
+                });
+                Blockly.browserEvents.bind(button, 'mouseout', this, () => {
+                    button.setAttribute('class', 'blocklyDropDownButton');
+                    contentDiv.removeAttribute('aria-activedescendant');
+                });
+                let buttonImg = document.createElement('img');
+                buttonImg.src = content.src;
+                //buttonImg.alt = icon.alt;
+                // Upon click/touch, we will be able to get the clicked element as e.target
+                // Store a data attribute on all possible click targets so we can match it to the icon.
+                button.setAttribute('data-value', value);
+                buttonImg.setAttribute('data-value', value);
+                button.appendChild(buttonImg);
+                rowDiv.appendChild(button);
+            }
+        }
+
         dropdownDiv.appendChild(contentDiv);
         if (this.maxRows_) {
             // Limit the number of rows shown, but add a partial next row to indicate scrolling
-            dropdownDiv.style.maxHeight = (this.maxRows_ + 0.4) * (maxButtonHeight + 8) + 'px';
+            const totalHeight = sumRowHeight(rows);
+            let maxHeight = sumRowHeight(rows.slice(0, this.maxRows_));
+
+            if (rows.length > this.maxRows_) {
+                maxHeight += 0.4 * (rows[this.maxRows_].height)
+            }
+            dropdownDiv.style.maxHeight = maxHeight + 'px';
+            dropdownDiv.style.height = totalHeight + 'px';
         }
 
         if (pxt.BrowserUtils.isFirefox()) {
@@ -177,6 +233,10 @@ export class FieldImageDropdown extends FieldDropdown implements FieldCustom {
             this.borderRect_.setAttribute('fill', this.savedPrimary_);
         }
     };
+}
+
+function sumRowHeight(arr: ButtonRow[]) {
+    return arr.reduce((accumulator, current) => accumulator + current.height, 0);
 }
 
 Blockly.Css.register(`

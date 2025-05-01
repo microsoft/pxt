@@ -330,8 +330,11 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         const showFeedbackOption = pxt.U.ocvEnabled();
 
         const simCollapseText = headless ? lf("Toggle the File Explorer") : lf("Toggle the simulator");
+        const extDownloadMenuItems = pxt.commands.getDownloadMenuItems?.() || [];
 
-        return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("Settings")} className="item icon more-dropdown-menuitem" ref={ref => this.dropdown = ref}>
+        return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("Settings")} className="item icon more-dropdown-menuitem" ref={ref => this.dropdown = ref} closeOnItemClick={true} onShow={
+            () => this.forceUpdate() // force update to refresh extDownloadMenuItems
+        }>
             {showHome && <sui.Item className="mobile only inherit" role="menuitem" icon="home" title={lf("Home")} text={lf("Home")} ariaLabel={lf("Home screen")} onClick={this.showExitAndSaveDialog} />}
             {showShare && <sui.Item className="mobile only inherit" role="menuitem" icon="share alternate" title={lf("Publish your game to create a shareable link")} text={lf("Share")} ariaLabel={lf("Share Project")} onClick={this.showShareDialog} />}
             {(showHome || showShare) && <div className="ui divider mobile only inherit" />}
@@ -344,6 +347,10 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             {!isController ? <sui.Item role="menuitem" icon="trash" text={lf("Delete Project")} onClick={this.removeProject} /> : undefined}
             {targetTheme.timeMachine ? <sui.Item role="menuitem" icon="history" text={lf("Version History")} onClick={this.showTurnBackTimeDialog} /> : undefined}
             {showSimCollapse ? <sui.Item role="menuitem" icon='toggle right' text={simCollapseText} onClick={this.toggleCollapse} /> : undefined}
+            {!!extDownloadMenuItems.length && <>
+                <div className="ui divider" />
+                {extDownloadMenuItems.map((props, index) => <sui.Item key={index} role="menuitem" tabIndex={-1} {...props} />)}
+            </>}
             <div className="ui divider"></div>
             {targetTheme.selectLanguage ? <sui.Item icon='xicon globe' role="menuitem" text={lf("Language")} onClick={this.showLanguagePicker} /> : undefined}
             <sui.Item role="menuitem" icon="paint brush" text={lf("Theme")} onClick={this.showThemePicker} />
@@ -378,6 +385,7 @@ interface IBaseMenuItemProps extends ISettingsProps {
     text?: string;
     title?: string;
     className?: string;
+    ariaLabel?: string;
 }
 
 class BaseMenuItemProps extends data.Component<IBaseMenuItemProps, {}> {
@@ -387,8 +395,8 @@ class BaseMenuItemProps extends data.Component<IBaseMenuItemProps, {}> {
 
     renderCore() {
         const active = this.props.isActive();
-        return <sui.Item className={`base-menuitem ${this.props.className} ${active ? "selected" : ""}`} role="option" textClass="landscape only"
-            text={this.props.text} icon={this.props.icon} active={active} onClick={this.props.onClick} title={this.props.title} />
+        return <sui.Item className={`base-menuitem ${this.props.className} ${active ? "selected" : ""}`} role="menuitem" textClass="landscape only"
+            text={this.props.text} icon={this.props.icon} active={active} onClick={this.props.onClick} title={this.props.title} ariaLabel={this.props.ariaLabel} />
     }
 }
 
@@ -407,7 +415,7 @@ class JavascriptMenuItem extends data.Component<ISettingsProps, {}> {
     }
 
     renderCore() {
-        return <BaseMenuItemProps className="javascript-menuitem" icon="xicon js" text="JavaScript" title={lf("Convert code to JavaScript")} onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} />
+        return <BaseMenuItemProps className="javascript-menuitem" icon="xicon js" text="JavaScript" title={lf("Convert code to JavaScript")} onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} ariaLabel={lf("Convert code to JavaScript")}/>
     }
 }
 
@@ -426,7 +434,7 @@ class PythonMenuItem extends data.Component<ISettingsProps, {}> {
     }
 
     renderCore() {
-        return <BaseMenuItemProps className="python-menuitem" icon="xicon python" text="Python" title={lf("Convert code to Python")} onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} />
+        return <BaseMenuItemProps className="python-menuitem" icon="xicon python" text="Python" title={lf("Convert code to Python")} onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} ariaLabel={lf("Convert code to Python")} />
     }
 }
 
@@ -445,7 +453,7 @@ class BlocksMenuItem extends data.Component<ISettingsProps, {}> {
     }
 
     renderCore() {
-        return <BaseMenuItemProps className="blocks-menuitem" icon="xicon blocks" text={lf("Blocks")} title={lf("Convert code to Blocks")} onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} />
+        return <BaseMenuItemProps className="blocks-menuitem" icon="xicon blocks" text={lf("Blocks")} title={lf("Convert code to Blocks")} onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} ariaLabel={lf("Convert code to Blocks")}/>
     }
 }
 
@@ -540,12 +548,12 @@ export class EditorSelector extends data.Component<IEditorSelectorProps, {}> {
         }
 
         return (
-            <div id="editortoggle" className={`ui grid padded ${(pyOnly || tsOnly) ? "one-language" : ""}`} role="listbox" aria-orientation="horizontal" aria-label={lf("Editor toggle")}>
+            <div id="editortoggle" className={`ui grid padded ${(pyOnly || tsOnly) ? "one-language" : ""}`} role="menubar" aria-orientation="horizontal" aria-label={lf("Editor toggle")}>
                 {showSandbox && <SandboxMenuItem parent={parent} />}
                 {showBlocks && <BlocksMenuItem parent={parent} />}
                 {textLanguage}
                 {secondTextLanguage}
-                {showDropdown && <sui.DropdownMenu id="editordropdown" role="option" icon="chevron down" rightIcon title={lf("Select code editor language")} className={`item button attached right ${dropdownActive ? "active" : ""}`}>
+                {showDropdown && <sui.DropdownMenu id="editordropdown" role="menuitem" icon="chevron down" rightIcon title={lf("Select code editor language")} className={`item button attached right ${dropdownActive ? "active" : ""}`}>
                     <JavascriptMenuItem parent={parent} />
                     <PythonMenuItem parent={parent} />
                 </sui.DropdownMenu>}

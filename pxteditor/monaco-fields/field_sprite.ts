@@ -1,5 +1,5 @@
 import { MonacoReactFieldEditor } from "./field_react";
-import { MonacoFieldEditorDefinition, registerMonacoFieldEditor } from "./monacoFieldEditor";
+import { registerMonacoFieldEditor } from "./monacoFieldEditor";
 
 const fieldEditorId = "image-editor";
 
@@ -7,6 +7,7 @@ export class MonacoSpriteEditor extends MonacoReactFieldEditor<pxt.ProjectImage>
     protected isPython: boolean;
     protected isAsset: boolean;
     protected template: string;
+    protected editing: pxt.Asset;
 
     protected textToValue(text: string): pxt.ProjectImage {
         this.isPython = text.indexOf("`") === -1
@@ -14,12 +15,13 @@ export class MonacoSpriteEditor extends MonacoReactFieldEditor<pxt.ProjectImage>
 
         const match = pxt.parseAssetTSReference(text);
         if (match) {
-            const { type, name: matchedName } = match;
+            const { name: matchedName } = match;
             const name = matchedName.trim();
             const project = pxt.react.getTilemapProject();
             this.isAsset = true;
             const asset = project.lookupAssetByName(pxt.AssetType.Image, name);
             if (asset) {
+                this.editing = asset;
                 return asset;
             }
             else {
@@ -29,16 +31,23 @@ export class MonacoSpriteEditor extends MonacoReactFieldEditor<pxt.ProjectImage>
                     newAsset.meta.displayName = name;
                 }
 
+                this.editing = newAsset;
+
                 return newAsset;
             }
         }
 
-        return createFakeAsset(pxt.sprite.imageLiteralToBitmap(text, this.template));
+        this.editing = createFakeAsset(pxt.sprite.imageLiteralToBitmap(text, this.template));
+
+        return this.editing;
     }
 
     protected resultToText(result: pxt.ProjectImage): string {
+        const project = pxt.react.getTilemapProject();
+        project.pushUndo();
+        result = pxt.patchTemporaryAsset(this.editing, result, project) as pxt.ProjectImage;
+
         if (result.meta?.displayName) {
-            const project = pxt.react.getTilemapProject();
             if (this.isAsset || project.lookupAsset(result.type, result.id)) {
                 result = project.updateAsset(result)
             } else {
@@ -76,7 +85,7 @@ function createFakeAsset(bitmap: pxt.sprite.Bitmap): pxt.ProjectImage {
     }
 }
 
-export const spriteEditorDefinition: MonacoFieldEditorDefinition = {
+export const spriteEditorDefinition: pxt.editor.MonacoFieldEditorDefinition = {
     id: fieldEditorId,
     foldMatches: true,
     glyphCssClass: "sprite-editor-glyph sprite-focus-hover",

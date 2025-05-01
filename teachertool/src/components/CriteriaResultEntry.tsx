@@ -105,6 +105,7 @@ const CriteriaResultToolbarTray: React.FC<{ criteriaId: string }> = ({ criteriaI
         }
     }
 
+    const evalDisabled = !isProjectLoaded(teacherTool);
     return (
         <div className={classList(css["result-toolbar-tray"], "no-print")}>
             <Button
@@ -114,11 +115,11 @@ const CriteriaResultToolbarTray: React.FC<{ criteriaId: string }> = ({ criteriaI
                 onClick={handleDeleteClickedAsync}
             />
             <Button
-                className={classList("secondary", css["control-button"], css["result-toolbar-button"])}
+                className={classList("secondary", css["control-button"], css["result-toolbar-button"], evalDisabled ? css["disabled"] : "")}
                 rightIcon="fas fa-play"
                 title={Strings.Evaluate}
                 onClick={handleEvaluateClickedAsync}
-                disabled={!isProjectLoaded(teacherTool)}
+                disabled={evalDisabled}
             />
         </div>
     );

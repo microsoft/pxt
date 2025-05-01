@@ -3,7 +3,6 @@ import * as pkg from "./package";
 import * as srceditor from "./srceditor"
 import * as sui from "./sui";
 import * as core from "./core";
-import * as data from "./data";
 
 import Util = pxt.Util;
 import { fireClickOnEnter } from "./util";
@@ -121,6 +120,13 @@ export class Editor extends srceditor.Editor {
         this.save(true);
     }
 
+    private applyPropertyCheckbox = (option: pxt.PxtJsonOption, checked: boolean) => {
+        if (option.type === "checkbox") {
+            (this.config as any)[option.property] = checked;
+            this.save(true);
+        }
+    }
+
     private handleNameInputRef = (c: sui.Input) => {
         this.nameInput = c;
     }
@@ -137,6 +143,8 @@ export class Editor extends srceditor.Editor {
         pkg.allEditorPkgs().map(ep => ep.getKsPkg())
             .filter(dep => !!dep && dep.isLoaded && !!dep.config && !!dep.config.yotta && !!dep.config.yotta.userConfigs)
             .forEach(dep => userConfigs = userConfigs.concat(dep.config.yotta.userConfigs));
+
+        const pxtJsonOptions = pxt.appTarget.appTheme?.pxtJsonOptions || [];
 
         return (
             <div className="ui content">
@@ -156,6 +164,14 @@ export class Editor extends srceditor.Editor {
                             uc={uc}
                             isUserConfigActive={this.isUserConfigActive}
                             applyUserConfig={this.applyUserConfig} />
+                    )}
+                    {pxtJsonOptions.map(option =>
+                        <sui.Checkbox
+                            key={option.property}
+                            inputLabel={pxt.Util.rlf(`{id:setting}${option.label}`)}
+                            checked={!!c?.[option.property as keyof pxt.PackageConfig]}
+                            onChange={value => this.applyPropertyCheckbox(option, value)}
+                        />
                     )}
                     <sui.Field>
                         <sui.Button text={lf("Save")} className={`green ${this.isSaving ? 'disabled' : ''}`} onClick={this.saveOnClick} />
@@ -218,33 +234,15 @@ interface UserConfigCheckboxProps {
     applyUserConfig: (uc: pxt.CompilationConfig) => void;
 }
 
-class UserConfigCheckbox extends data.Component<UserConfigCheckboxProps, {}> {
-    constructor(props: UserConfigCheckboxProps) {
-        super(props);
-        this.state = {
-        }
-        this.isUserConfigActive = this.isUserConfigActive.bind(this);
-        this.applyUserConfig = this.applyUserConfig.bind(this);
-    }
+const UserConfigCheckbox = (props: UserConfigCheckboxProps) => {
+    const { uc, isUserConfigActive, applyUserConfig } = props;
 
-    isUserConfigActive() {
-        const { applyUserConfig, isUserConfigActive, uc } = this.props;
-        return isUserConfigActive(uc);
-    }
-
-    applyUserConfig() {
-        const { applyUserConfig, isUserConfigActive, uc } = this.props;
-        applyUserConfig(uc);
-    }
-
-    renderCore() {
-        const { uc } = this.props;
-        const isChecked = this.isUserConfigActive();
-
-        return <sui.Checkbox
+    return (
+        <sui.Checkbox
             key={`userconfig-${uc.description}`}
             inputLabel={pxt.Util.rlf(uc.description)}
-            checked={isChecked}
-            onChange={this.applyUserConfig} />
-    }
-}
+            checked={isUserConfigActive(uc)}
+            onChange={() => applyUserConfig(uc)}
+        />
+    )
+};

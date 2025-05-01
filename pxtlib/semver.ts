@@ -137,6 +137,28 @@ namespace pxt.semver {
         return v;
     }
 
+    export function bump(v: Version, bumpType: "patch" | "minor" | "major" | string): Version {
+        let newVer: Version = parse(stringify(v));
+        switch (bumpType) {
+            case "major":
+                newVer.major++;
+                newVer.minor = 0;
+                newVer.patch = 0;
+                break;
+            case "minor":
+                newVer.minor++;
+                newVer.patch = 0;
+                break;
+            case "patch":
+                newVer.patch++;
+                break;
+            default:
+                newVer = pxt.semver.parse(bumpType);
+                break;
+        }
+        return newVer;
+    }
+
     export function test() {
         pxt.log("Test semver")
         let d = [

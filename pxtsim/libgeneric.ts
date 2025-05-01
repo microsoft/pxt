@@ -23,6 +23,15 @@ namespace pxsim {
             return this.data.map(v => RefObject.toAny(v));
         }
 
+        static fromAny(arr: any[], deep: boolean = true) {
+            const r = new RefCollection();
+            if (deep)
+                r.data = arr.map(v => RefObject.fromAny(v));
+            else
+                r.data = arr.slice(0);
+            return r;
+        }
+
         toDebugString(): string {
             let s = "[";
             for (let i = 0; i < this.data.length; ++i) {
@@ -107,36 +116,36 @@ namespace pxsim {
         }
 
         export function length(c: RefCollection) {
-            pxtrt.nullCheck(c)
+            typeCheck(c)
             return c.getLength();
         }
 
         export function setLength(c: RefCollection, x: number) {
-            pxtrt.nullCheck(c)
+            typeCheck(c)
             c.setLength(x);
         }
 
 
         export function push(c: RefCollection, x: any) {
-            pxtrt.nullCheck(c)
+            typeCheck(c)
             c.push(x);
         }
 
         export function pop(c: RefCollection, x: any) {
-            pxtrt.nullCheck(c)
+            typeCheck(c)
             let ret = c.pop();
             // no decr() since we're returning it
             return ret;
         }
 
         export function getAt(c: RefCollection, x: number) {
-            pxtrt.nullCheck(c)
+            typeCheck(c)
             let tmp = c.getAt(x);
             return tmp;
         }
 
         export function removeAt(c: RefCollection, x: number) {
-            pxtrt.nullCheck(c)
+            typeCheck(c)
             if (!c.isValidIndex(x))
                 return;
             // no decr() since we're returning it
@@ -144,28 +153,34 @@ namespace pxsim {
         }
 
         export function insertAt(c: RefCollection, x: number, y: number) {
-            pxtrt.nullCheck(c)
+            typeCheck(c)
             c.insertAt(x, y);
         }
 
         export function setAt(c: RefCollection, x: number, y: any) {
-            pxtrt.nullCheck(c)
+            typeCheck(c)
             c.setAt(x, y);
         }
 
         export function indexOf(c: RefCollection, x: any, start: number) {
-            pxtrt.nullCheck(c)
+            typeCheck(c)
             return c.indexOf(x, start)
         }
 
         export function removeElement(c: RefCollection, x: any) {
-            pxtrt.nullCheck(c)
+            typeCheck(c)
             let idx = indexOf(c, x, 0);
             if (idx >= 0) {
                 removeAt(c, idx);
                 return 1;
             }
             return 0;
+        }
+
+        export function typeCheck(c: RefCollection) {
+            if (!(c instanceof RefCollection)) {
+                throwFailedCastError(c, "Array");
+            }
         }
     }
 
@@ -319,31 +334,36 @@ namespace pxsim {
         }
 
         export function toNumber(s: string) {
+            typeCheck(s);
             return parseFloat(s);
         }
 
         // TODO check edge-conditions
 
         export function concat(a: string, b: string) {
+            typeCheck(a);
             return (a + b);
         }
 
         export function substring(s: string, i: number, j: number) {
-            pxtrt.nullCheck(s)
+            typeCheck(s);
             return (s.slice(i, i + j));
         }
 
         export function equals(s1: string, s2: string) {
+            typeCheck(s1);
             return s1 == s2;
         }
 
         export function compare(s1: string, s2: string) {
+            typeCheck(s1);
             if (s1 == s2) return 0;
             if (s1 < s2) return -1;
             return 1;
         }
 
         export function compareDecr(s1: string, s2: string) {
+            typeCheck(s1);
             if (s1 == s2) {
                 return 0;
             }
@@ -352,43 +372,52 @@ namespace pxsim {
         }
 
         export function length(s: string) {
+            typeCheck(s);
             return s.length
         }
 
         export function substr(s: string, start: number, length?: number) {
+            typeCheck(s);
             return (s.substr(start, length));
         }
 
         function inRange(s: string, i: number) {
-            pxtrt.nullCheck(s)
+            typeCheck(s)
             return 0 <= i && i < s.length
         }
 
         export function charAt(s: string, i: number) {
+            typeCheck(s);
             return (s.charAt(i));
         }
 
         export function charCodeAt(s: string, i: number) {
-            pxtrt.nullCheck(s)
+            typeCheck(s)
             return inRange(s, i) ? s.charCodeAt(i) : 0;
         }
 
         export function indexOf(s: string, searchValue: string, start?: number) {
-            pxtrt.nullCheck(s);
+            typeCheck(s);
             if (searchValue == null) return -1;
             return s.indexOf(searchValue, start);
         }
 
         export function lastIndexOf(s: string, searchValue: string, start?: number) {
-            pxtrt.nullCheck(s);
+            typeCheck(s);
             if (searchValue == null) return -1;
             return s.lastIndexOf(searchValue, start);
         }
 
         export function includes(s: string, searchValue: string, start?: number) {
-            pxtrt.nullCheck(s);
+            typeCheck(s);
             if (searchValue == null) return false;
             return s.includes(searchValue, start);
+        }
+
+        export function typeCheck(s: string) {
+            if (typeof s !== "string") {
+                throwFailedCastError(s, "string");
+            }
         }
     }
 
@@ -486,6 +515,7 @@ namespace pxsim {
         }
 
         export function getNumber(buf: RefBuffer, fmt: NumberFormat, offset: number) {
+            typeCheck(buf);
             let inf = fmtInfo(fmt)
             if (inf.isFloat) {
                 let subarray = buf.data.buffer.slice(offset, offset + inf.size)
@@ -513,6 +543,7 @@ namespace pxsim {
         }
 
         export function setNumber(buf: RefBuffer, fmt: NumberFormat, offset: number, r: number) {
+            typeCheck(buf);
             let inf = fmtInfo(fmt)
             if (inf.isFloat) {
                 let arr = new Uint8Array(inf.size)
@@ -540,6 +571,7 @@ namespace pxsim {
         }
 
         export function createBufferFromHex(hex: string) {
+            String_.typeCheck(hex);
             let r = createBuffer(hex.length >> 1)
             for (let i = 0; i < hex.length; i += 2)
                 r.data[i >> 1] = parseInt(hex.slice(i, i + 2), 16)
@@ -548,29 +580,33 @@ namespace pxsim {
         }
 
         export function isReadOnly(buf: RefBuffer) {
-            return buf.isStatic
+            typeCheck(buf);
+            return buf.isStatic;
         }
 
         export function getBytes(buf: RefBuffer) {
+            typeCheck(buf);
             // not sure if this is any useful...
             return buf.data;
         }
 
         function inRange(buf: RefBuffer, off: number) {
-            pxtrt.nullCheck(buf)
             return 0 <= off && off < buf.data.length
         }
 
         export function getUint8(buf: RefBuffer, off: number) {
+            typeCheck(buf);
             return getByte(buf, off);
         }
 
         export function getByte(buf: RefBuffer, off: number) {
+            typeCheck(buf);
             if (inRange(buf, off)) return buf.data[off]
             else return 0;
         }
 
         export function setUint8(buf: RefBuffer, off: number, v: number) {
+            typeCheck(buf);
             setByte(buf, off, v);
         }
 
@@ -579,6 +615,7 @@ namespace pxsim {
         }
 
         export function setByte(buf: RefBuffer, off: number, v: number) {
+            typeCheck(buf);
             if (inRange(buf, off)) {
                 checkWrite(buf)
                 buf.data[off] = v
@@ -586,10 +623,12 @@ namespace pxsim {
         }
 
         export function length(buf: RefBuffer) {
+            typeCheck(buf);
             return buf.data.length
         }
 
         export function fill(buf: RefBuffer, value: number, offset: number = 0, length: number = -1) {
+            typeCheck(buf);
             if (offset < 0 || offset > buf.data.length)
                 return;
             if (length < 0)
@@ -601,6 +640,7 @@ namespace pxsim {
         }
 
         export function slice(buf: RefBuffer, offset: number, length: number) {
+            typeCheck(buf);
             offset = Math.min(buf.data.length, offset);
             if (length < 0)
                 length = buf.data.length;
@@ -609,6 +649,7 @@ namespace pxsim {
         }
 
         export function toHex(buf: RefBuffer): string {
+            typeCheck(buf);
             const hex = "0123456789abcdef";
             let res = "";
             for (let i = 0; i < buf.data.length; ++i) {
@@ -619,6 +660,7 @@ namespace pxsim {
         }
 
         export function toString(buf: RefBuffer): string {
+            typeCheck(buf);
             return U.fromUTF8Array(buf.data);
         }
 
@@ -634,6 +676,7 @@ namespace pxsim {
         const INT_MIN = -0x80000000;
 
         export function shift(buf: RefBuffer, offset: number, start: number, len: number) {
+            typeCheck(buf);
             if (len < 0) len = buf.data.length - start;
             if (start < 0 || start + len > buf.data.length || start + len < start
                 || len == 0 || offset == 0 || offset == INT_MIN) return;
@@ -656,6 +699,7 @@ namespace pxsim {
         }
 
         export function rotate(buf: RefBuffer, offset: number, start: number, len: number) {
+            typeCheck(buf);
             if (len < 0) len = buf.data.length - start;
 
             if (start < 0 || start + len > buf.data.length || start + len < start
@@ -688,6 +732,8 @@ namespace pxsim {
         }
 
         export function write(buf: RefBuffer, dstOffset: number, src: RefBuffer, srcOffset = 0, length = -1) {
+            typeCheck(buf);
+            typeCheck(src);
             if (length < 0)
                 length = src.data.length;
 
@@ -702,11 +748,18 @@ namespace pxsim {
             checkWrite(buf)
             memmove(buf.data, dstOffset, src.data, srcOffset, length)
         }
+
+        export function typeCheck(buf: RefBuffer) {
+            if (!(buf instanceof RefBuffer)) {
+                throwFailedCastError(buf, "Buffer");
+            }
+        }
     }
 }
 
 namespace pxsim.control {
     export function createBufferFromUTF8(str: string) {
+        String_.typeCheck(str);
         return new pxsim.RefBuffer(U.toUTF8Array(str));
     }
 }

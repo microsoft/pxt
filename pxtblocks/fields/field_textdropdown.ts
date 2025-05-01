@@ -1,7 +1,7 @@
 /// <reference path="../../built/pxtlib.d.ts" />
 
 import * as Blockly from "blockly";
-import { FieldCustom, FieldCustomOptions } from "./field_utils";
+import { clearDropDownDiv, FieldCustom, FieldCustomOptions } from "./field_utils";
 
 export interface FieldTextDropdownOptions extends FieldCustomOptions {
     values?: string;
@@ -106,7 +106,7 @@ export class BaseFieldTextDropdown extends Blockly.FieldTextInput {
                 }
                 return label;
             })();
-            const menuItem = new Blockly.MenuItem(content, value);
+            const menuItem = new Blockly.MenuItem(content, value as string);
             menuItem.setRole(Blockly.utils.aria.Role.OPTION);
             menuItem.setRightToLeft(block.RTL);
             menuItem.setCheckable(true);
@@ -132,7 +132,7 @@ export class BaseFieldTextDropdown extends Blockly.FieldTextInput {
         }
 
         // Remove any pre-existing elements in the dropdown.
-        Blockly.DropDownDiv.clearContent();
+        clearDropDownDiv();
         // Element gets created in render.
         const menuElement = this.menu_!.render(Blockly.DropDownDiv.getContentDiv());
         Blockly.utils.dom.addClass(menuElement, 'blocklyDropdownMenu');

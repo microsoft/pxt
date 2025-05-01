@@ -49,8 +49,8 @@ export class ConstantProvider extends Blockly.zelos.ConstantProvider {
     ellipses = this.makeEllipses();
 
 
-    override createDom(svg: SVGElement, tagName: string, selector: string): void {
-        super.createDom(svg, tagName, selector);
+    override createDom(svg: SVGElement, tagName: string, selector: string, injectionDivIfIsParent?: HTMLElement,): void {
+        super.createDom(svg, tagName, selector, injectionDivIfIsParent);
 
         const defs = Blockly.utils.dom.createSvgElement(Blockly.utils.Svg.DEFS, {}, svg);
 

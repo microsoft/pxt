@@ -4,6 +4,9 @@ import * as Blockly from "blockly";
 import { FieldCustom, getBlockDataForField, setBlockDataForField } from "./field_utils";
 
 export abstract class FieldBase<U> extends Blockly.Field implements FieldCustom {
+    // todo: this was removed in blockly v12
+    static CHECKMARK_OVERHANG = 25;
+
     isFieldCustom_: true;
     SERIALIZABLE = true;
     options: U;
@@ -76,9 +79,9 @@ export abstract class FieldBase<U> extends Blockly.Field implements FieldCustom 
     protected getAnchorDimensions() {
         const boundingBox = this.getScaledBBox() as any;
         if (this.sourceBlock_.RTL) {
-            boundingBox.right += Blockly.FieldDropdown.CHECKMARK_OVERHANG;
+            boundingBox.right += FieldBase.CHECKMARK_OVERHANG;
         } else {
-            boundingBox.left -= Blockly.FieldDropdown.CHECKMARK_OVERHANG;
+            boundingBox.left -= FieldBase.CHECKMARK_OVERHANG;
         }
         return boundingBox;
     };

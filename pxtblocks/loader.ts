@@ -204,7 +204,8 @@ function isSubtype(apis: pxtc.ApisInfo, specific: string, general: string) {
 
 function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, comp: pxt.blocks.BlockCompileInfo) {
     const ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
-    const instance = fn.kind == pxtc.SymbolKind.Method || fn.kind == pxtc.SymbolKind.Property;
+    let instance = fn.kind == pxtc.SymbolKind.Method || fn.kind == pxtc.SymbolKind.Property;
+    if (typeof fn.isInstance === "boolean" && !fn.attributes?.defaultInstance) instance = fn.isInstance;
     const nsinfo = info.apis.byQName[ns];
     const color =
         // blockNamespace overrides color on block
@@ -278,7 +279,7 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
     appendMutation(block, {
         mutationToDom: (el: Element) => {
             block.inputList.forEach(input => {
-                input.fieldRow.forEach((fieldRow: FieldCustom) => {
+                input.fieldRow.forEach((fieldRow: FieldCustom & Blockly.Field) => {
                     if (fieldRow.isFieldCustom_ && fieldRow.saveOptions) {
                         const getOptions = fieldRow.saveOptions();
                         if (getOptions) {
@@ -291,7 +292,7 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
         },
         domToMutation: (saved: Element) => {
             block.inputList.forEach(input => {
-                input.fieldRow.forEach((fieldRow: FieldCustom) => {
+                input.fieldRow.forEach((fieldRow: FieldCustom & Blockly.Field) => {
                     if (fieldRow.isFieldCustom_ && fieldRow.restoreOptions) {
                         const options = JSON.parse(saved.getAttribute(`customfield`));
                         if (options) {
@@ -830,12 +831,12 @@ export function setVarFieldValue(block: Blockly.Block, fieldName: string, newNam
 
     // Check for an existing model with this name; otherwise we'll create
     // a second variable with the same name and it will show up twice in the UI
-    const vars = block.workspace.getAllVariables();
+    const vars = block.workspace.getVariableMap().getAllVariables();
     let foundIt = false;
     if (vars && vars.length) {
         for (let v = 0; v < vars.length; v++) {
             const model = vars[v];
-            if (model.name === newName) {
+            if (model.getName() === newName) {
                 varField.setValue(model.getId());
                 foundIt = true;
             }
@@ -844,7 +845,7 @@ export function setVarFieldValue(block: Blockly.Block, fieldName: string, newNam
     if (!foundIt) {
         varField.initModel();
         const model = varField.getVariable();
-        model.name = newName;
+        model.setName(newName);
         varField.setValue(model.getId());
     }
 }

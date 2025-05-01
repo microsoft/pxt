@@ -30,6 +30,7 @@ import { FieldMusicEditor } from "./field_musiceditor";
 import { FieldSoundEffect } from "./field_sound_effect";
 import { FieldAutoComplete } from "./field_autocomplete";
 import { FieldColorWheel } from "./field_colorwheel";
+import { FieldScopedValueSelector } from "./field_scopedvalueselector";
 
 interface FieldEditorOptions {
     field: FieldCustomConstructor;
@@ -66,6 +67,7 @@ export function initFieldEditors() {
     registerFieldEditor('melody', FieldCustomMelody);
     registerFieldEditor('soundeffect', FieldSoundEffect);
     registerFieldEditor('autocomplete', FieldAutoComplete);
+    registerFieldEditor('scopedvalueselector', FieldScopedValueSelector);
     if (pxt.appTarget.appTheme?.songEditor) {
         registerFieldEditor('musiceditor', FieldMusicEditor);
     }
@@ -80,7 +82,7 @@ export function registerFieldEditor(selector: string, field: FieldCustomConstruc
     }
 }
 
-export function createFieldEditor(selector: string, text: string, params: any): FieldCustom {
+export function createFieldEditor(selector: string, text: string, params: any): FieldCustom & Blockly.Field {
     if (registeredFieldEditors[selector] == undefined) {
         pxt.error(`Field editor ${selector} not registered`);
         return null;

@@ -59,8 +59,8 @@ body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     font-family: var(--pxt-page-font);
-    background: var(--pxt-page-background);
-    color: var(--pxt-page-foreground);
+    background: var(--pxt-neutral-background1);
+    color: var(--pxt-neutral-foreground1);
     line-height: 1.5;
     margin: 0;
     padding: 0;
@@ -306,8 +306,9 @@ $widescreenMonitorBreakpoint: 1920px;
     padding: 0 1rem;
     margin-right: 1rem;
     pointer-events: none;
-    border: 4px solid var(--pxt-button-primary-accent);
-    background-color: var(--pxt-button-primary-foreground);
+    border: 4px solid var(--pxt-primary-accent);
+    background-color: var(--pxt-primary-foreground);
+    color: var(--pxt-primary-background);
 }
 
 /*******************************/

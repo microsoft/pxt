@@ -115,6 +115,7 @@ export class FieldSlider extends Blockly.FieldNumber {
 
         Blockly.DropDownDiv.hideWithoutAnimation();
         Blockly.DropDownDiv.clearContent();
+        Blockly.DropDownDiv.getContentDiv().style.height = "";
 
         const contentDiv = Blockly.DropDownDiv.getContentDiv();
 

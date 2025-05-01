@@ -25,6 +25,7 @@ export class PathObject extends Blockly.zelos.PathObject {
                 const constants = this.constants as ConstantProvider;
                 const filterId = this.hasError ? constants.errorOutlineFilterId : constants.highlightOutlineFilterId;
                 this.svgPathHighlighted = this.svgPath.cloneNode(true) as SVGElement;
+                this.svgPathHighlighted.classList.add('pxtRendererHighlight');
                 this.svgPathHighlighted.setAttribute('fill', 'none');
                 this.svgPathHighlighted.setAttribute(
                     'filter',
@@ -186,5 +187,8 @@ Blockly.Css.register(`
     stroke-dasharray: 2;
     stroke: white;
     stroke-width: 2;
+}
+.blocklyDisabledPattern>.blocklyPath.pxtRendererHighlight {
+    fill: none;
 }
 `)
