@@ -487,7 +487,7 @@ namespace ts.pxtc.ir {
         }
     }
 
-    function inlineSubst(e: Expr): Expr {
+    function inlineSubst(e: Expr, isRtCallArg?: boolean): Expr {
         e = Expr.clone(e)
         switch (e.exprKind) {
             case EK.PointerLiteral:
@@ -495,13 +495,19 @@ namespace ts.pxtc.ir {
                 return e
             case EK.RuntimeCall:
                 for (let i = 0; i < e.args.length; ++i)
-                    e.args[i] = inlineSubst(e.args[i])
+                    e.args[i] = inlineSubst(e.args[i], true);
                 return e
             case EK.CellRef:
                 const cell = e.data as Cell
                 if (cell.repl) {
-                    cell.replUses++
-                    return cell.repl
+                    if (cell.repl.exprKind === EK.CellRef && isRtCallArg) {
+                        // cellRefs can't be reused as arguments to runtime calls because
+                        // it will trip up the usage counting that takes place in
+                        // ProctoAssembler.clearArgs()
+                        return Expr.clone(cell.repl);
+                    }
+                    cell.replUses++;
+                    return cell.repl;
                 }
                 return e
             case EK.FieldAccess:

@@ -726,6 +726,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                                 tallCard={hasTags}
                                 tutorialStep={scr.tutorialStep}
                                 tutorialLength={scr.tutorialLength}
+                                selected={!scr.directOpen ? selectedIndex === index : undefined}
                             />
                         )}
                     </carousel.Carousel>
@@ -819,6 +820,7 @@ interface ProjectsCodeCardProps extends pxt.CodeCard {
     id?: string;
     index?: number;
     tallCard?: boolean;
+    selected?: boolean;
     onCardClick: (e: any, scr: any, index?: number, id?: string) => void;
     onLabelClick?: (e: any, scr: any, index?: number, id?: string) => void;
 }
@@ -841,7 +843,7 @@ export class ProjectsCodeCard extends sui.StatelessUIElement<ProjectsCodeCardPro
     }
 
     renderCore() {
-        let { scr, onCardClick, onLabelClick, onClick, cardType, imageUrl, className, ...rest } = this.props;
+        let { scr, onCardClick, onLabelClick, onClick, cardType, imageUrl, className, selected, ...rest } = this.props;
 
         className = className || "";
         // compute icon
@@ -860,7 +862,7 @@ export class ProjectsCodeCard extends sui.StatelessUIElement<ProjectsCodeCardPro
                 className = 'file ' + className;
         }
         return <codecard.CodeCardView role="button" className={className} imageUrl={imageUrl} cardType={cardType} {...rest} onClick={this.handleClick}
-            onLabelClicked={onLabelClick ? this.handleLabelClick : undefined} />
+            onLabelClicked={onLabelClick ? this.handleLabelClick : undefined} selected={selected} />
     }
 }
 

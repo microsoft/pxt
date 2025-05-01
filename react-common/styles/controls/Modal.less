@@ -54,8 +54,16 @@
         padding-bottom: 1.25rem;
     }
 
+    .common-modal-close {
+        border: 1px solid transparent;
+    }
+
     .common-modal-close .common-button .fas {
         color: var(--pxt-neutral-foreground1);
+    }
+
+    .common-modal-close:focus-within {
+        border: 1px solid var(--pxt-focus-border);
     }
 }
 
@@ -108,6 +116,10 @@
         .common-button.men .fas {
 
         }
+    }
+
+    .common-modal-back:focus-within {
+        border: 1px, solid var(--pxt-focus-border);
     }
 
     .common-modal-help {
