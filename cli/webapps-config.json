@@ -4,7 +4,7 @@
             "name": "kiosk",
             "buildCss": false,
             "localServeWebConfigUrl": false,
-            "localServeEndpoint": "temp"
+            "localServeEndpoint": "kiosk"
         },
         {
             "name": "teachertool",
@@ -38,7 +38,7 @@
             "name": "themebuilder",
             "buildCss": false,
             "localServeWebConfigUrl": false,
-            "localServeEndpoint": "kiosk"
+            "localServeEndpoint": "tb"
         }
     ]
 }

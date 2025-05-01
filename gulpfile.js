@@ -604,7 +604,7 @@ const multiplayer = createWebappTasks("multiplayer");
                       Kiosk
 *********************************************************/
 
-const kiosk = createWebappTasks("kiosk", "temp");
+const kiosk = createWebappTasks("kiosk");
 
 /********************************************************
                       Teacher Tool
@@ -622,7 +622,7 @@ const tutorialTool = createWebappTasks("tutorialtool");
                       Tutorial Tool
 *********************************************************/
 
-const themeBuilder = createWebappTasks("themebuilder", "kiosk");
+const themeBuilder = createWebappTasks("themebuilder");
 
 /********************************************************
                  Webapp build wrappers
