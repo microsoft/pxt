@@ -1,4 +1,5 @@
 import * as React from "react";
+import * as Blockly from "blockly";
 import { classList, ControlProps } from "../util";
 
 import { Button } from "./Button";
@@ -30,6 +31,45 @@ export interface InputProps extends ControlProps {
     onFocus?: (value: string) => void;
     onBlur?: (value: string) => void;
     onOptionSelected?: (value: string) => void;
+}
+
+/**
+ * Top-level Blockly handlers for escape and enter interfere with standard 
+ * keyboard controls for navigating dropdowns. This temporarily suspends
+ * them.
+ * 
+ * @returns a callback to restore previous handlers, as useEffect expects
+ */
+const suspendBlocklyKeyHandlers = (onEscape: () => void) => {
+    const closeDropdownShortcut = "close_dropdown";
+    const selectDropdownShortcut = "select_dropdown";
+
+    const closeDropdownHandler: Blockly.ShortcutRegistry.KeyboardShortcut = {
+        name: closeDropdownShortcut,
+        allowCollision: true,
+        callback() {
+            onEscape();
+            return true;
+        },
+        keyCodes: [27],
+    };
+
+    const selectDropdownHandler: Blockly.ShortcutRegistry.KeyboardShortcut = {
+        name: selectDropdownShortcut,
+        allowCollision: true,
+        callback() {
+            return true;
+        },
+        keyCodes: [13],
+    };
+
+    Blockly.ShortcutRegistry.registry.register(closeDropdownHandler);
+    Blockly.ShortcutRegistry.registry.register(selectDropdownHandler);
+
+    return () => {
+        Blockly.ShortcutRegistry.registry.unregister(closeDropdownShortcut);
+        Blockly.ShortcutRegistry.registry.unregister(selectDropdownShortcut);
+    }
 }
 
 export const Input = (props: InputProps) => {
@@ -73,6 +113,17 @@ export const Input = (props: InputProps) => {
         setValue(initialValue || "");
     }, [initialValue]);
 
+    React.useEffect(() => {
+        if (expanded) {
+            return suspendBlocklyKeyHandlers(() => 
+                {
+                    setExpanded(false);
+                    document.getElementById(id)?.focus();
+                });
+        }
+        return undefined;
+    },[expanded]);
+
     const handleContainerRef = (ref: HTMLDivElement) => {
         if (!ref) return;
         container = ref;
@@ -108,13 +159,21 @@ export const Input = (props: InputProps) => {
                 e.preventDefault();
                 onEnterKey(value);
             }
-        } else if (options && expanded && e.key === "ArrowDown") {
-            document.getElementById(getDropdownOptionId(Object.values(options)[0]))?.focus();
+        } else if (options && e.key === "ArrowDown") {
+            if (expanded) {
+                document.getElementById(getDropdownOptionId(Object.values(options)[0]))?.focus();
+            } else {
+                expandButtonClickHandler();
+            }
             e.preventDefault();
             e.stopPropagation();
         } else if (options && expanded && e.key === "ArrowUp") {
             const optionVals = Object.values(options);
             document.getElementById(getDropdownOptionId(optionVals[optionVals.length - 1]))?.focus();
+            e.preventDefault();
+            e.stopPropagation();
+        } else if (options && expanded && e.key === "Escape") {
+            expandButtonClickHandler();
             e.preventDefault();
             e.stopPropagation();
         }
@@ -212,6 +271,7 @@ export const Input = (props: InputProps) => {
                         ariaHasPopup="listbox"
                         ariaExpanded={expanded}
                         ariaLabel={ariaLabel}
+                        tabIndex={-1}
                         onClick={expandButtonClickHandler} />}
             </div>
             {expanded &&
