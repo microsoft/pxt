@@ -424,7 +424,14 @@ async function expandImagesAsync(xsg: Document): Promise<void> {
     }
 
     const linkedSvgImages = images
-        .filter(image => /^\/.*.svg$/.test(image.getAttribute("href")));
+        .filter(image => {
+            const href = image.getAttribute("href");
+            return href.endsWith(".svg") &&
+                (
+                    href.startsWith("/") ||
+                    href.startsWith(pxt.webConfig.cdnUrl)
+                );
+        });
 
     for (const image of linkedSvgImages) {
         const svgUri = image.getAttribute("href");
