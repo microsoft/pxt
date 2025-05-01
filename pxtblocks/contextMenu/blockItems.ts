@@ -1,7 +1,6 @@
 /// <reference path="../../built/pxtlib.d.ts" />
 import * as Blockly from "blockly";
 import { openHelpUrl } from "../external";
-import { getBlockText } from "../getBlockText";
 
 // Lower weight is higher in context menu
 export enum BlockContextWeight {
@@ -23,24 +22,6 @@ export function registerBlockitems() {
     registerDuplicate();
     registerCollapseExpandBlock();
     registerHelp();
-
-    // TODO : Remove - this is just temporary to easily view block strings while testing
-    const tempDisplayBlockText: Blockly.ContextMenuRegistry.RegistryItem = {
-        displayText(scope: Blockly.ContextMenuRegistry.Scope) {
-            return getBlockText(scope.block);
-        },
-        preconditionFn(scope: Blockly.ContextMenuRegistry.Scope) {
-            return "enabled";
-        },
-        callback(scope: Blockly.ContextMenuRegistry.Scope) {
-            const blockText = getBlockText(scope.block);
-            console.log(blockText);
-        },
-        scopeType: Blockly.ContextMenuRegistry.ScopeType.BLOCK,
-        id: 'tempDisplayBlockText',
-        weight: 1,
-    };
-    Blockly.ContextMenuRegistry.registry.register(tempDisplayBlockText);
 
     // Fix the weights of the builtin options we do use
     Blockly.ContextMenuRegistry.registry.getItem("blockDelete").weight = BlockContextWeight.DeleteBlock;
