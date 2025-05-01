@@ -4,10 +4,6 @@ export function setupDragAndDrop(r: HTMLElement,
     draggedUri: (uri: string) => void
 ) {
     r.addEventListener('paste', function (e: ClipboardEvent) {
-        // FIXME: Sidestep conflicts with keyboard nav paste in the editor.
-        if (document.location.hash !== "") {
-            return;
-        }
         if (e.clipboardData) {
             // has file?
             let files = pxt.Util.toArray<File>(e.clipboardData.files).filter(filter)

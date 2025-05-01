@@ -915,9 +915,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             <div className="blocksAndErrorList">
                 <div className="blocksEditorOuter">
                     <div id="blocksEditor"></div>
-                    {/* This does not integrate well with MakeCode, but is useful for blockly
-                     keyboard navigation testing / evaluation purposes. */}
-                    <div id="shortcuts"></div>
                     <toolbox.ToolboxTrashIcon flyoutOnly={flyoutOnly} />
                 </div>
                 {showErrorList && <ErrorList isInBlocksEditor={true} listenToBlockErrorChanges={this.listenToBlockErrorChanges}
