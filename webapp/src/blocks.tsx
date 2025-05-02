@@ -2016,6 +2016,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const data = getCopyData();
         if (!data?.data || !this.editor || !this.canPasteData(data)) return false;
 
+        // Prevent a clipboard API paste event which can result in a file load
+        // or confusing error about unsupported file types.
+        ev.preventDefault();
+
         this.pasteAsync(data, ev.type === "pointerdown" ? ev as PointerEvent : undefined);
         return true;
     }
