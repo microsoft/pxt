@@ -5,6 +5,7 @@ import { countOptionals, getFunctionName, getInputTargetBlock, getLoopVariableFi
 import { getDefinition } from "../plugins/functions";
 import { CommonFunctionBlock } from "../plugins/functions/commonFunctionMixin";
 import { PXT_WARNING_ID } from "./compiler";
+import { DRAGGABLE_PARAM_INPUT_PREFIX } from "../loader";
 
 interface DeclaredVariable {
     name: string;
@@ -669,7 +670,7 @@ function getCBParameters(b: Blockly.Block, stdfun: StdFunc, e: Environment): Dec
         for (let i = 0; i < stdfun.comp.handlerArgs.length; i++) {
             const arg = stdfun.comp.handlerArgs[i];
             let varName: string;
-            const varBlock = getInputTargetBlock(e, b, "HANDLER_DRAG_PARAM_" + arg.name) as Blockly.Block;
+            const varBlock = getInputTargetBlock(e, b, DRAGGABLE_PARAM_INPUT_PREFIX + arg.name) as Blockly.Block;
 
             if (stdfun.attrs.draggableParameters === "reporter") {
                 varName = varBlock && varBlock.getFieldValue("VALUE");
