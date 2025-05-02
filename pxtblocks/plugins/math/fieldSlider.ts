@@ -54,6 +54,10 @@ export class FieldSlider extends Blockly.FieldNumber {
         this.step_ = parseFloat(step) || undefined;
     }
 
+    getFieldDescription(): string {
+        return this.getValue() + "";
+    }
+
     // Mostly the same as FieldNumber, but doesn't constrain min and max
     protected override doClassValidation_(newValue?: any): number {
         if (newValue === null) {

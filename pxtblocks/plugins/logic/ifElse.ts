@@ -1,5 +1,6 @@
 import * as Blockly from "blockly";
 import { InlineSvgsExtensionBlock } from "../functions";
+import { FieldImageNoText } from "../../fields/field_imagenotext";
 
 
 type IfElseMixinType = typeof IF_ELSE_MIXIN;
@@ -162,7 +163,7 @@ const IF_ELSE_MIXIN = {
                 .appendField(Blockly.Msg.CONTROLS_IF_MSG_THEN);
             this.appendDummyInput('IFBUTTONS' + i)
                 .appendField(
-                    new Blockly.FieldImage(this.REMOVE_IMAGE_DATAURI, 24, 24, "*", removeElseIf, false))
+                    new FieldImageNoText(this.REMOVE_IMAGE_DATAURI, 24, 24, "*", removeElseIf, false))
                 .setAlign(Blockly.inputs.Align.RIGHT);
             this.appendStatementInput('DO' + i);
         }
@@ -172,7 +173,7 @@ const IF_ELSE_MIXIN = {
             this.appendDummyInput('ELSEBUTTONS')
                 .setAlign(Blockly.inputs.Align.RIGHT)
                 .appendField(
-                    new Blockly.FieldImage(this.REMOVE_IMAGE_DATAURI, 24, 24, "*", this.removeElse_.bind(this), false));
+                    new FieldImageNoText(this.REMOVE_IMAGE_DATAURI, 24, 24, "*", this.removeElse_.bind(this), false));
             this.appendStatementInput('ELSE');
         }
         if (this.getInput('ADDBUTTON')) this.removeInput('ADDBUTTON');
@@ -189,7 +190,7 @@ const IF_ELSE_MIXIN = {
         }();
         this.appendDummyInput('ADDBUTTON')
             .appendField(
-                new Blockly.FieldImage(this.ADD_IMAGE_DATAURI, 24, 24, "*", addElseIf, false));
+                new FieldImageNoText(this.ADD_IMAGE_DATAURI, 24, 24, "*", addElseIf, false));
     },
     /**
      * Reconstructs the block with all child blocks attached.

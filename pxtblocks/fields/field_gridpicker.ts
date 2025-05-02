@@ -296,6 +296,10 @@ export class FieldGridPicker extends Blockly.FieldDropdown implements FieldCusto
         return newValue;
     }
 
+    getFieldDescription(): string {
+        return this.getValue();
+    }
+
     /**
      * Closes the gridpicker.
      */

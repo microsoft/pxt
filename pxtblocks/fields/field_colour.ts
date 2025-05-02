@@ -90,6 +90,11 @@ export class FieldColorNumber extends FieldColour implements FieldCustom {
         return this.value_;
     }
 
+    getFieldDescription(): string {
+        const value = this.getValue();
+        return value ? lf("color ${0}", value) : lf("color");
+    }
+
     /**
      * Defines whether this field should take up the full block or not.
      *
