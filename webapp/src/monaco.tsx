@@ -22,7 +22,7 @@ import { DebuggerToolbox } from "./debuggerToolbox";
 import { amendmentToInsertSnippet, listenForEditAmendments, createLineReplacementPyAmendment } from "./monacoEditAmendments";
 
 import { MonacoFlyout } from "./monacoFlyout";
-import { ErrorList, ErrorDisplayInfo as ErrorDisplayInfo, StackFrameDisplayInfo } from "./errorList";
+import { ErrorList, ErrorDisplayInfo, StackFrameDisplayInfo } from "./errorList";
 import * as auth from "./auth";
 import * as pxteditor from "../../pxteditor";
 

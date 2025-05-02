@@ -316,7 +316,7 @@ export class FieldTileset extends FieldImages implements FieldCustom {
     }
 
     getFieldDescription(): string {
-        return lf("tileset");
+        return lf("tile");
     }
 }
 

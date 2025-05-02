@@ -79,9 +79,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         super(parent);
 
         this.onErrorListResize = this.onErrorListResize.bind(this)
-        this.handleErrorHelp = this.handleErrorHelp.bind(this)
         this.getDisplayInfoForBlockError = this.getDisplayInfoForBlockError.bind(this)
         this.getDisplayInfoForException = this.getDisplayInfoForException.bind(this)
+        this.handleErrorHelp = this.handleErrorHelp.bind(this)
     }
     setBreakpointsMap(breakpoints: pxtc.Breakpoint[], procCallLocations: pxtc.LocationInfo[]): void {
         if (!breakpoints || !this.compilationResult) return;
@@ -923,6 +923,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             }
         }
     }
+
     private getDisplayInfoForException(exception: pxsim.DebuggerBreakpointMessage): ErrorDisplayInfo {
         const message = pxt.Util.rlf(exception.exceptionMessage);
         const stackFrames: StackFrameDisplayInfo[] = exception.stackframes?.map(frame => {
@@ -2084,6 +2085,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     protected pasteCallback = (workspace: Blockly.Workspace, ev: Event) => {
         const data = getCopyData();
         if (!data?.data || !this.editor || !this.canPasteData(data)) return false;
+
+        // Prevent a clipboard API paste event which can result in a file load
+        // or confusing error about unsupported file types.
+        ev.preventDefault();
 
         this.pasteAsync(data, ev.type === "pointerdown" ? ev as PointerEvent : undefined);
         return true;
