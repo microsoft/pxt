@@ -978,16 +978,19 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     // This modification is required to workaround the fact that cached blocks are not disposed in MakeCode.
     private isFlyoutItemDisposed(node: Blockly.ASTNode) {
         const sourceBlock = node.getSourceBlock();
-        if (sourceBlock?.disposed || sourceBlock?.hasDisabledReason(HIDDEN_CLASS_NAME)) {
-          return true;
+        if (
+            sourceBlock?.disposed ||
+            sourceBlock?.hasDisabledReason(HIDDEN_CLASS_NAME)
+        ) {
+            return true;
         }
         const location = node.getLocation();
         if (location instanceof Blockly.FlyoutButton) {
-          // No nice way to tell for a button. In Blockly v12 we could use getSvgGroup().
-          return (location as any).svgGroup.parentNode === null;
+            // No nice way to tell for a button. In Blockly v12 we could use getSvgGroup().
+            return (location as any).svgGroup.parentNode === null;
         }
         return false;
-      }
+    }
 
     // Modified from blockly-keyboard-experimentation plugin
     // https://github.com/google/blockly-keyboard-experimentation/blob/main/src/navigation.ts
