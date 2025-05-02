@@ -966,8 +966,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     public moveFocusToFlyout() {
         if (this.keyboardNavigation) {
-            const flyout = this.editor.getFlyout();
-            const element = (flyout as any).svgGroup_ as SVGElement;
+            const flyout = this.editor.getFlyout() as pxtblockly.CachingFlyout;;
+            const element = flyout.getFlyoutElement();
             element?.focus();
             this.defaultFlyoutCursorIfNeeded(flyout);
         }

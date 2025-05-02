@@ -9,4 +9,8 @@ export class CachingFlyout extends Blockly.VerticalFlyout {
             inflater.clearCache();
         }
     }
+
+    getFlyoutElement(): SVGElement {
+        return this.svgGroup_
+    }
 }
