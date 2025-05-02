@@ -13,18 +13,19 @@ namespace pxt.cookie {
   }
 
   export function getEnv(): string {
-    return window.location.hostname === "localhost"
+    const splitedHostNames = window.location.hostname.split(".");
+    return splitedHostNames.includes("localhost")
       ? "local"
-      : window.location.hostname.includes("dev") ||
-        window.location.hostname.includes("revised")
+      : splitedHostNames.includes("dev") || splitedHostNames.includes("revised") || splitedHostNames.includes("ver")
       ? "dev"
       : "prd";
   }
 
-  export function getCookieName(name: string): string {
+  export function getCookieName(name: string): string { 
     if (window.location.hostname === "localhost") {
       return `${name}_localhost_local`;
     }
+    // hostname example: "makecode.2v8p.aidt.me"
     const tenant = window.location.hostname.split(".")[1];
     return `${name}_${tenant}_${getEnv()}`;
   }
