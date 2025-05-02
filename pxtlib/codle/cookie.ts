@@ -21,7 +21,7 @@ namespace pxt.cookie {
       : "prd";
   }
 
-  export function getCookieName(name: string): string { 
+  export function getCookieName(name: string): string {
     if (window.location.hostname === "localhost") {
       return `${name}_localhost_local`;
     }
