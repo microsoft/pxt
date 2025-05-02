@@ -89,8 +89,8 @@ export class ErrorHelpButton extends React.Component<
 
         console.log("AI response", response);
 
-        // If the response contains any leading or trailing ` characters, remove them
-        response = response.trim().replace(/^`+|`+$/g, "");
+        // If the response contains markdown code "fencing" (i.e. ```json <my json> ```), remove it
+        response = response.trim().replace(/^`{3,}(?:\w+)?\s*|`{3,}$/g, "");
 
         const parsedResponse = pxt.Util.jsonTryParse(
             response

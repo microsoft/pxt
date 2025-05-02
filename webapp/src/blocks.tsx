@@ -962,6 +962,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             stackFrames
         };
     }
+
     private handleErrorHelp(helpResponse: ErrorHelpResponse) {
         if (helpResponse.explanationAsTour) {
             this.parent.showTour(helpResponse.explanationAsTour);
