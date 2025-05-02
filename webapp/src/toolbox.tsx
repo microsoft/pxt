@@ -453,7 +453,11 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         // Rely on the click handler instead.
         if (e.target === this.refs.categoryTree) {
             if (!this.rootElement) return;
-            if (this.selectedIndex && this.selectedTreeRow) {
+            if (this.selectedIndex !== undefined && this.selectedTreeRow) {
+                if (this.selectedTreeRow === this.selectedItem.props.treeRow) {
+                    // The flyout is already open with appropriate content.
+                    return;
+                }
                 // 'Focus' the selected item
                 this.setSelection(this.selectedTreeRow, this.selectedIndex, true);
             } else {

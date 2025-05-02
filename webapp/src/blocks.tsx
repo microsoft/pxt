@@ -39,6 +39,7 @@ import { PathObject } from "../../pxtblocks/plugins/renderer/pathObject";
 import { Measurements } from "./constants";
 import { flow } from "../../pxtblocks";
 import { HIDDEN_CLASS_NAME } from "../../pxtblocks/plugins/flyout/blockInflater";
+import { FlyoutButton } from "../../pxtblocks/plugins/flyout/flyoutButton";
 
 interface CopyDataEntry {
     version: 1;
@@ -985,9 +986,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             return true;
         }
         const location = node.getLocation();
-        if (location instanceof Blockly.FlyoutButton) {
-            // No nice way to tell for a button. In Blockly v12 we could use getSvgGroup().
-            return (location as any).svgGroup.parentNode === null;
+        if (location instanceof FlyoutButton) {
+            return location.isDisposed();
         }
         return false;
     }
