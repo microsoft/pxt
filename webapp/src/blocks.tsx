@@ -562,7 +562,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (enabled && !this.keyboardNavigation) {
             this.keyboardNavigation = new KeyboardNavigation(this.editor);
 
-            const injectionDiv = document.getElementById('blocksEditor');
+            const injectionDiv = document.getElementById("blocksEditor");
             injectionDiv.classList.add("accessibleBlocks");
             const focusRingDiv = injectionDiv.appendChild(document.createElement("div"))
             focusRingDiv.className = "blocklyWorkspaceFocusRingLayer";
