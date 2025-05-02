@@ -273,12 +273,38 @@ export function toSvgAsync(ws: Blockly.WorkspaceSvg, pixelDensity: number): Prom
     if (!ws)
         return Promise.resolve<{ width: number; height: number; xml: string; }>(undefined);
 
-    const metrics = ws.getBlocksBoundingBox();
+    const viewbox = ws.getBlocksBoundingBox();
     const sg = ws.getParentSvg().cloneNode(true) as SVGElement;
     cleanUpBlocklySvg(sg);
 
-    let width = metrics.right - metrics.left;
-    let height = metrics.bottom - metrics.top;
+    // getBlocksBoundingBox doesn't include any expanded blocks comments, so
+    // do a pass to expand the bounding box if any are present
+    for (const block of ws.getAllBlocks()) {
+        if (block.hasIcon(Blockly.icons.IconType.COMMENT)) {
+            const icon = block.getIcon(Blockly.icons.IconType.COMMENT);
+            const bubbleLocation = icon.getBubbleLocation();
+
+            if (!bubbleLocation) continue;
+
+            const bubbleSize = icon.getBubbleSize();
+            viewbox.left = Math.min(bubbleLocation.x, viewbox.left);
+            viewbox.top = Math.min(bubbleLocation.y, viewbox.top);
+            viewbox.right = Math.max(bubbleLocation.x + bubbleSize.width, viewbox.right);
+            viewbox.bottom = Math.max(bubbleLocation.y + bubbleSize.height, viewbox.bottom);
+        }
+    }
+
+    // add 1 pixel of padding to the edges because sometimes the border
+    // of blocks/comments get slightly cut off
+    const PADDING = 1;
+
+    viewbox.left -= PADDING;
+    viewbox.top -= PADDING;
+    viewbox.right += PADDING;
+    viewbox.bottom += PADDING;
+
+    let width = viewbox.right - viewbox.left;
+    let height = viewbox.bottom - viewbox.top;
     let scale = 1;
 
     const area = width * height * Math.pow(pixelDensity, 2);
@@ -286,7 +312,7 @@ export function toSvgAsync(ws: Blockly.WorkspaceSvg, pixelDensity: number): Prom
         scale = Math.sqrt(MAX_AREA / area);
     }
 
-    return blocklyToSvgAsync(sg, metrics.left, metrics.top, width, height, scale);
+    return blocklyToSvgAsync(sg, viewbox.left, viewbox.top, width, height, scale);
 }
 
 export function serializeNode(sg: Node): string {
@@ -424,7 +450,14 @@ async function expandImagesAsync(xsg: Document): Promise<void> {
     }
 
     const linkedSvgImages = images
-        .filter(image => /^\/.*.svg$/.test(image.getAttribute("href")));
+        .filter(image => {
+            const href = image.getAttribute("href");
+            return href.endsWith(".svg") &&
+                (
+                    href.startsWith("/") ||
+                    href.startsWith(pxt.webConfig.cdnUrl)
+                );
+        });
 
     for (const image of linkedSvgImages) {
         const svgUri = image.getAttribute("href");
