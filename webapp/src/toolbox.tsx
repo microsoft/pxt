@@ -512,14 +512,14 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
     previousItem() {
         const editorname = this.props.editorname;
 
-        pxt.tickEvent(`${editorname}.toolbox.keyboard.prev"`, undefined, { interactiveConsent: true });
+        pxt.tickEvent(`${editorname}.toolbox.keyboard.prev`, undefined, { interactiveConsent: true });
         this.setPreviousItem();
     }
 
     nextItem() {
         const editorname = this.props.editorname;
 
-        pxt.tickEvent(`${editorname}.toolbox.keyboard.next"`, undefined, { interactiveConsent: true });
+        pxt.tickEvent(`${editorname}.toolbox.keyboard.next`, undefined, { interactiveConsent: true });
         this.setNextItem();
     }
 
