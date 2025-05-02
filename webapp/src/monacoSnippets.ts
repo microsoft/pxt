@@ -254,13 +254,145 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                     retType: "number"
                 },
                 {
+                    name: "Math.sqrt",
+                    snippetName: "sqrt",
+                    snippet: `Math.sqrt(4)`,
+                    pySnippet: `Math.sqrt(4)`,
+                    attributes: {
+                        weight: 60,
+                        blockId: "math_js_sqrt",
+                        jsDoc: lf("Returns the square root of the number")
+                    },
+                    retType: "number"
+                },
+                {
+                    name: "Math.sin",
+                    snippetName: "sin",
+                    snippet: `Math.sin(0)`,
+                    pySnippet: `Math.sin(0)`,
+                    attributes: {
+                        weight: 59,
+                        blockId: "math_js_sin",
+                        jsDoc: lf("Returns the sine of the number")
+                    },
+                    retType: "number"
+                },
+                {
+                    name: "Math.cos",
+                    snippetName: "cos",
+                    snippet: `Math.cos(0)`,
+                    pySnippet: `Math.cos(0)`,
+                    attributes: {
+                        weight: 58,
+                        blockId: "math_js_cos",
+                        jsDoc: lf("Returns the cosine of the number")
+                    },
+                    retType: "number"
+                },
+                {
+                    name: "Math.tan",
+                    snippetName: "tan",
+                    snippet: `Math.tan(0)`,
+                    pySnippet: `Math.tan(0)`,
+                    attributes: {
+                        weight: 57,
+                        blockId: "math_js_tan",
+                        jsDoc: lf("Returns the tangent of the number")
+                    },
+                    retType: "number"
+                },
+                {
+                    name: "Math.asin",
+                    snippetName: "asin",
+                    snippet: `Math.asin(0)`,
+                    pySnippet: `Math.asin(0)`,
+                    attributes: {
+                        weight: 56,
+                        blockId: "math_js_asin",
+                        jsDoc: lf("Returns the arcsine of the number")
+                    },
+                    retType: "number"
+                },
+                {
+                    name: "Math.acos",
+                    snippetName: "acos",
+                    snippet: `Math.acos(0)`,
+                    pySnippet: `Math.acos(0)`,
+                    attributes: {
+                        weight: 55,
+                        blockId: "math_js_acos",
+                        jsDoc: lf("Returns the arccosine of the number")
+                    },
+                    retType: "number"
+                },
+                {
+                    name: "Math.atan2",
+                    snippetName: "atan2",
+                    snippet: `Math.atan2(0, 0)`,
+                    pySnippet: `Math.atan2(0, 0)`,
+                    attributes: {
+                        weight: 54,
+                        blockId: "math_js_atan2",
+                        jsDoc: lf("Returns the angle in radians from the point (0, 0) to the point (x, y), where y is the first argument passed to the function and x is the second argument passed to the function")
+                    },
+                    retType: "number"
+                },
+                {
+                    name: "Math.round",
+                    snippetName: "round",
+                    snippet: `Math.round(1.2)`,
+                    pySnippet: `Math.round(1.2)`,
+                    attributes: {
+                        weight: 53,
+                        blockId: "math_js_round",
+                        jsDoc: lf("Returns the integer closest to the number")
+                    },
+                    retType: "number"
+                },
+                {
+                    name: "Math.ceil",
+                    snippetName: "ceil",
+                    snippet: `Math.ceil(1.2)`,
+                    pySnippet: `Math.ceil(1.2)`,
+                    attributes: {
+                        weight: 52,
+                        blockId: "math_js_ceil",
+                        jsDoc: lf("Returns the integer closest to the number, but always rounds in the positive direction")
+                    },
+                    retType: "number"
+                },
+                {
+                    name: "Math.floor",
+                    snippetName: "floor",
+                    snippet: `Math.floor(1.2)`,
+                    pySnippet: `Math.floor(1.2)`,
+                    attributes: {
+                        weight: 51,
+                        blockId: "math_js_floor",
+                        jsDoc: lf("Returns the integer closest to the number, but always rounds in the negative direction")
+                    },
+                    retType: "number"
+                },
+                {
+                    name: "Math.trunc",
+                    snippetName: "trunc",
+                    snippet: `Math.trunc(1.2)`,
+                    pySnippet: `int(1.2)`,
+                    attributes: {
+                        weight: 50.5,
+                        blockId: "math_js_trunc",
+                        jsDoc: lf("Removes the decimal component of a number and returns an integer")
+                    },
+                    retType: "number"
+                },
+                {
                     name: "randint",
                     snippetName: "randint",
                     snippet: `randint(0, 10)`,
                     pySnippetName: `randint`,
                     pySnippet: `randint(0, 10)`,
                     attributes: {
-                        weight: 65,
+                        weight: 40,
                         blockId: "device_random",
                         jsDoc: lf("Returns a random number between min and max")
                     },
