@@ -5,7 +5,6 @@
  */
 
 import * as Blockly from "blockly";
-import { ConnectionPreviewer } from "../renderer";
 
 import { DUPLICATE_ON_DRAG_MUTATION_KEY, isAllowlistedShadow, shouldDuplicateOnDrag } from "./duplicateOnDrag";
 import eventUtils = Blockly.Events;
