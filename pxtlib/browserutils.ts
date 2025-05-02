@@ -511,7 +511,7 @@ namespace pxt.BrowserUtils {
     }
 
     const MAX_SCREENSHOT_SIZE = 10e6; // max 10Mb
-    export function encodeToPngAsync(dataUri: string,
+    export function encodeToPngAsync(uri: string,
         options?: {
             width?: number,
             height?: number,
@@ -556,8 +556,21 @@ namespace pxt.BrowserUtils {
             img.onerror = ev => {
                 pxt.reportError("png", "png rendering failed");
                 resolve(undefined)
+            };
+
+            try {
+                const url = new URL(uri);
+
+                if ((url.protocol === "http:" || url.protocol === "https:") && url.host !== window.location.host) {
+                    img.setAttribute("crossOrigin", "anonymous");
+                }
             }
-            img.src = dataUri;
+            catch (e) {
+                // might fail on localhost or if it's a relative path. safe to
+                // ignore that exception
+            }
+
+            img.src = uri;
         })
     }
 
