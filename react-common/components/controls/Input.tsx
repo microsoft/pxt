@@ -51,7 +51,7 @@ const suspendBlocklyKeyHandlers = (onEscape: () => void) => {
             onEscape();
             return true;
         },
-        keyCodes: [27],
+        keyCodes: [27 /* Escape */],
     };
 
     const selectDropdownHandler: Blockly.ShortcutRegistry.KeyboardShortcut = {
@@ -60,7 +60,7 @@ const suspendBlocklyKeyHandlers = (onEscape: () => void) => {
         callback() {
             return true;
         },
-        keyCodes: [13],
+        keyCodes: [13 /* Enter */],
     };
 
     Blockly.ShortcutRegistry.registry.register(closeDropdownHandler);
@@ -119,10 +119,11 @@ export const Input = (props: InputProps) => {
                 {
                     setExpanded(false);
                     document.getElementById(id)?.focus();
-                });
+                }
+            );
         }
         return undefined;
-    },[expanded]);
+    }, [expanded]);
 
     const handleContainerRef = (ref: HTMLDivElement) => {
         if (!ref) return;
