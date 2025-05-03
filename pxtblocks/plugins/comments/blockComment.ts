@@ -234,6 +234,9 @@ export class CommentIcon extends Blockly.icons.Icon {
     // TODO: switch our custom comment position serialization
     // to use setBubbleLocation and getBubbleLocation instead
     getBubbleLocation(): Blockly.utils.Coordinate | undefined {
+        if (this.bubbleIsVisible()) {
+            return this.textInputBubble.getRelativeToSurfaceXY();
+        }
         return undefined
     }
 

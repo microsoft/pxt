@@ -7,4 +7,8 @@ export class FieldTextInput extends Blockly.FieldTextInput implements FieldCusto
     constructor(value: string, options: FieldCustomOptions, opt_validator?: Blockly.FieldValidator) {
         super(value, opt_validator);
     }
+
+    getFieldDescription(): string {
+        return this.getValue();
+    }
 }
