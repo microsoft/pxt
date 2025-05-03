@@ -1210,6 +1210,15 @@ namespace pxt.github {
             return null
 
         for (const upgr of rules) {
+            const gh = /^gh:(.*)/.exec(upgr)
+            if (gh) {
+                const parsed = parseRepoId(gh[1])
+                const repo_s = stringifyRepo(parsed)
+                pxt.debug(`upgrading ${id} to ${repo_s}}`)
+                const np : string = upgradedPackageReference(cfg, repo_s)
+                if (np) return np 
+                else return repo_s
+            }
             const m = /^min:(.*)/.exec(upgr)
             const minV = m && pxt.semver.tryParse(m[1]);
             if (minV) {
