@@ -481,7 +481,8 @@ function renderSignaturesAsync(options: ClientRenderOptions): Promise<void> {
         let cjs = r.compileProgram;
         if (!cjs) return;
         let file = cjs.getSourceFile(pxt.MAIN_TS);
-        let info = decompileCallInfo(file.statements[0]);
+        let [mainStatement, ...aliasStatements] = file.statements
+        let info = decompileCallInfo(mainStatement);
         if (!info || !r.apiInfo) return;
         const symbolInfo = r.apiInfo.byQName[info.qName];
         if (!symbolInfo) return;
@@ -497,6 +498,22 @@ function renderSignaturesAsync(options: ClientRenderOptions): Promise<void> {
         const pySig = pxt.appTarget?.appTheme?.python && ts.pxtc.service.displayStringForSymbol(symbolInfo, /** python **/ true, r.apiInfo).split("\n")[1];
         const py: JQuery = pySig && $('<code class="lang-python highlight"/>').text(pySig);
         if (options.snippetReplaceParent) c = c.parent();
+
+        // add alias svgs
+        let svgs = $('<div style="display:flex;flex-direction:column;gap:1em;" />').append(s);
+        svgs = aliasStatements.reduce((parentElement, statement) => {
+            let aliasInfo = decompileCallInfo(statement);
+            if (!aliasInfo) return parentElement;
+            const aliasSymbolInfo = r.apiInfo.byQName[aliasInfo.qName];
+            if (!aliasSymbolInfo) return parentElement;
+            if (aliasSymbolInfo.attributes.blockAliasFor !== info.qName) return parentElement;
+            let aliasBlock = Blockly.Blocks[aliasSymbolInfo.attributes.blockId];
+            let aliasXml = aliasBlock?.codeCard?.blocksXml || undefined;
+            const aliasBlocksHtml = aliasXml ? render(aliasXml) : r.compileBlocks?.success ? r.blocksSvg : undefined;
+            const aliasSvg = aliasBlocksHtml ? $(aliasBlocksHtml as HTMLElement) : undefined;
+            return parentElement.append(aliasSvg);
+        }, svgs);
+
         // add an html widge that allows to translate the block
         if (pxt.Util.isTranslationMode()) {
             const trs = $('<div class="ui segment" />');
@@ -507,7 +524,7 @@ function renderSignaturesAsync(options: ClientRenderOptions): Promise<void> {
                 trs.append($('<div class="ui message">').text(symbolInfo.attributes.jsDoc));
             trs.insertAfter(c);
         }
-        fillWithWidget(options, c, js, py, s, r, { showJs: true, showPy: true, hideGutter: true });
+        fillWithWidget(options, c, js, py, svgs, r, { showJs: true, showPy: true, hideGutter: true });
     }, { package: options.package, snippetMode: true, aspectRatio: options.blocksAspectRatio, assets: options.assetJSON });
 }
 
