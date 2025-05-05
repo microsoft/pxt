@@ -158,7 +158,6 @@ function showConnectDeviceDialogAsync(confirmAsync: ConfirmAsync) {
     );
 
     return showPairStepAsync({
-        hideClose: true,
         confirmAsync,
         jsxd,
         buttonLabel: lf("Next"),
