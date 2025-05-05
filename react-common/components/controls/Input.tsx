@@ -1,5 +1,4 @@
 import * as React from "react";
-import * as Blockly from "blockly";
 import { classList, ControlProps } from "../util";
 
 import { Button } from "./Button";
