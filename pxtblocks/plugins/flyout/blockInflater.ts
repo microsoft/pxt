@@ -1,6 +1,6 @@
 import * as Blockly from "blockly";
 
-const HIDDEN_CLASS_NAME = "pxtFlyoutHidden";
+export const HIDDEN_CLASS_NAME = "pxtFlyoutHidden";
 
 export class MultiFlyoutRecyclableBlockInflater extends Blockly.BlockFlyoutInflater {
     protected keyToBlock: Map<string, Blockly.BlockSvg> = new Map();
@@ -43,6 +43,7 @@ export class MultiFlyoutRecyclableBlockInflater extends Blockly.BlockFlyoutInfla
         this.blockToKey.set(block, key);
 
         block.removeClass(HIDDEN_CLASS_NAME);
+        block.setDisabledReason(false, HIDDEN_CLASS_NAME);
         return block;
     }
 
@@ -72,6 +73,7 @@ export class MultiFlyoutRecyclableBlockInflater extends Blockly.BlockFlyoutInfla
         const xy = block.getRelativeToSurfaceXY();
         block.moveBy(-xy.x, -xy.y);
         block.addClass(HIDDEN_CLASS_NAME);
+        block.setDisabledReason(true, HIDDEN_CLASS_NAME);
         const key = this.blockToKey.get(block);
         this.keyToBlock.set(key, block);
         this.removeListeners(block.id);
