@@ -5,7 +5,7 @@ import { makeToast } from "@/components/Toaster";
 import { showToast, dismissToast } from ".";
 import { initialGuestNetState } from "@/state/state";
 
-export async function joinGameAsync(joinCode: string, initialKv: Map<string, string>): Promise<void> {
+export async function joinGameAsync(joinCode: string): Promise<void> {
     const { dispatch } = stateAndDispatch();
     const connectingToast = makeToast({
         type: "info",
@@ -22,7 +22,7 @@ export async function joinGameAsync(joinCode: string, initialKv: Map<string, str
                 joinCode,
             })
         );
-        const hostResult = await collabClient.joinCollabAsync(joinCode, initialKv);
+        const hostResult = await collabClient.joinCollabAsync(joinCode);
 
         if (!hostResult.success) {
             showToast(

@@ -5,7 +5,7 @@ import { initialHostNetState } from "@/state/state";
 import { makeToast } from "@/components/Toaster";
 import { showToast, dismissToast } from ".";
 
-export async function hostNewGameAsync(initialSessKv: Map<string, string>, initialUserKv: Map<string, string>) {
+export async function hostNewGameAsync() {
     const { dispatch } = stateAndDispatch();
     const connectingToast = makeToast({
         type: "info",
@@ -17,7 +17,7 @@ export async function hostNewGameAsync(initialSessKv: Map<string, string>, initi
         dispatch(dismissAllToasts());
         showToast(connectingToast);
         dispatch(setNetState(initialHostNetState));
-        const hostResult = await collabClient.hostCollabAsync(initialSessKv, initialUserKv);
+        const hostResult = await collabClient.hostCollabAsync();
 
         if (!hostResult.success) {
             showToast(

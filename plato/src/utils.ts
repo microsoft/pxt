@@ -27,21 +27,70 @@ export function debounce<F extends (...args: Parameters<F>) => ReturnType<F>>(fu
     return debounced;
 }
 
-export function jsonReplacer(_key: any, value: any) {
+const TYPE_KEY = "__@type" as const;
+
+type SerializedValue =
+    | { [TYPE_KEY]: "Map"; value: [any, any][] }
+    | { [TYPE_KEY]: "Set"; value: any[] }
+    | { [TYPE_KEY]: "Date"; value: string }
+//| { [TYPE_KEY]: "RegExp"; value: string }
+
+export function jsonReplacer(_key: string, value: any): any {
     if (value instanceof Map) {
         return {
-            [".dataType"]: "Map",
-            value: Array.from(value.entries()),
-        };
-    } else {
-        return value;
+            [TYPE_KEY]: "Map",
+            value: Array.from(value.entries()).map(
+                ([k, v]) => [k, jsonReplacer("", v)] as [any, any]
+            ),
+        } satisfies SerializedValue;
     }
+    if (value instanceof Set) {
+        return {
+            [TYPE_KEY]: "Set",
+            value: Array.from(value.values()).map(v => jsonReplacer("", v)),
+        } satisfies SerializedValue;
+    }
+    if (value instanceof Date) {
+        return {
+            [TYPE_KEY]: "Date",
+            value: value.toISOString(),
+        } satisfies SerializedValue;
+    }
+    /*
+    if (value instanceof RegExp) {
+        return {
+            [TYPE_KEY]: "RegExp",
+            value: value.toString(),
+        } satisfies SerializedValue;
+    }
+    */
+    return value;
 }
 
-export function jsonReviver(_key: any, value: any) {
-    if (typeof value === "object" && value !== null) {
-        if (value[".dataType"] === "Map") {
-            return new Map(value.value);
+export function jsonReviver(_key: string, value: any): any {
+    if (typeof value === "object" && value !== null && TYPE_KEY in value) {
+        const type = value[TYPE_KEY];
+        switch (type) {
+            case "Map":
+                if (Array.isArray(value.value)) {
+                    return new Map(value.value.map(([k, v]: [any, any]) => [k, jsonReviver("", v)]));
+                }
+                break;
+            case "Set":
+                if (Array.isArray(value.value)) {
+                    return new Set(value.value.map((v: any) => jsonReviver("", v)));
+                }
+                break;
+            case "Date":
+                return new Date(value.value);
+            /*
+            case "RegExp":
+                const match = /^\/(.*)\/([gimsuy]*)$/.exec(value.value);
+                if (match) {
+                    return new RegExp(match[1], match[2]);
+                }
+                break;
+            */
         }
     }
     return value;
@@ -53,7 +102,7 @@ export function cleanupJoinCode(joinCode: string | undefined): string | undefine
         if (url.searchParams.has("join")) {
             joinCode = url.searchParams.get("join") ?? undefined;
         }
-    } catch {}
+    } catch { }
     if (!joinCode) return undefined;
     joinCode = joinCode.toUpperCase().replace(/[^A-Z0-9]/g, "");
     if (joinCode.length !== 6) return undefined;
@@ -66,7 +115,7 @@ export function cleanupShareCode(shareCode: string | undefined): string | undefi
         if (url.searchParams.has("host")) {
             shareCode = url.searchParams.get("host") ?? undefined;
         }
-    } catch {}
+    } catch { }
     if (!shareCode) return undefined;
     return pxt.Cloud.parseScriptId(shareCode);
 }

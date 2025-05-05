@@ -42,13 +42,7 @@ type Events = {
     "service-created": () => void;
     "service-destroyed": () => void;
     "joined": (role: ClientRole, clientId: string, slot: number, kv: Map<string, string>, sessKv: Map<string, string>) => void;
-    "presence": (presence: Presence) => void;
-    "player-joined": (clientId: string) => void;
-    "player-left": (clientId: string) => void;
-    "set-player-value": (key: string, value: string, clientId: string) => void;
-    "del-player-value": (key: string, clientId: string) => void;
-    "set-session-value": (key: string, value: string, clientId: string) => void;
-    "del-session-value": (key: string, clientId: string) => void;
+    "kv": (op: "set" | "del" | "sub" | "uns", key: string, val?: string) => void;
 };
 
 const emitter = new EventEmitter<Events>();
@@ -91,6 +85,7 @@ class CollabClient {
             const reader = SmartBuffer.fromBuffer(Buffer.from(payload));
             const type = reader.readUInt16LE();
             switch (type) {
+                /*
                 case Protocol.Binary.MessageType.SetPlayerValue:
                     return await this.recvSetPlayerValueMessageAsync(reader);
                 case Protocol.Binary.MessageType.DelPlayerValue:
@@ -99,6 +94,7 @@ class CollabClient {
                     return await this.recvSetSessionValueMessageAsync(reader);
                 case Protocol.Binary.MessageType.DelSessionValue:
                     return await this.recvDelSessionValueMessageAsync(reader);
+                */
             }
         } else if (typeof payload === "string") {
             //-------------------------------------------------
@@ -108,12 +104,8 @@ class CollabClient {
             switch (msg.type) {
                 case "joined":
                     return await this.recvJoinedMessageAsync(msg);
-                case "presence":
-                    return await this.recvPresenceMessageAsync(msg);
-                case "player-joined":
-                    return await this.recvPlayerJoinedMessageAsync(msg);
-                case "player-left":
-                    return await this.recvPlayerLeftMessageAsync(msg);
+                case "kv":
+                    return await this.recvKVStoreMessageAsync(msg);
             }
         } else {
             throw new Error(`Unknown payload: ${payload}`);
@@ -140,13 +132,8 @@ class CollabClient {
         }
     };
 
-    public async connectAsync(ticket: string, initialKv: Map<string, string>) {
+    public async connectAsync(ticket: string) {
         return new Promise<void>((resolve, reject) => {
-            if (initialKv.size > 32) {
-                reject("Initial user kv size too large");
-                destroyCollabClient();
-                return;
-            }
             const joinTimeout = setTimeout(() => {
                 reject("Timed out connecting to collab server");
                 destroyCollabClient();
@@ -184,13 +171,12 @@ class CollabClient {
                     type: "connect",
                     ticket,
                     version: Protocol.VERSION,
-                    initialKv,
                 } as Protocol.ConnectMessage);
             });
         });
     }
 
-    public async hostCollabAsync(initialSessKv: Map<string, string>, initialUserKv: Map<string, string>): Promise<CollabJoinResult> {
+    public async hostCollabAsync(): Promise<CollabJoinResult> {
         try {
             const authToken = await authClient.authTokenAsync();
 
@@ -199,9 +185,6 @@ class CollabClient {
                 headers: {
                     Authorization: "mkcd " + authToken,
                 },
-                body: JSON.stringify({
-                    sessKv: initialSessKv,
-                }, jsonReplacer),
                 method: "POST",
             });
 
@@ -216,7 +199,7 @@ class CollabClient {
 
             if (!collabInfo?.joinTicket) throw new Error("Collab server did not return a join ticket");
 
-            await this.connectAsync(collabInfo.joinTicket!, initialUserKv);
+            await this.connectAsync(collabInfo.joinTicket!);
 
             return {
                 ...collabInfo,
@@ -231,7 +214,7 @@ class CollabClient {
         }
     }
 
-    public async joinCollabAsync(joinCode: string, initialUserKv: Map<string, string>): Promise<CollabJoinResult> {
+    public async joinCollabAsync(joinCode: string): Promise<CollabJoinResult> {
         try {
             joinCode = encodeURIComponent(joinCode);
 
@@ -256,7 +239,7 @@ class CollabClient {
 
             if (!collabInfo?.joinTicket) throw new Error("Collab server did not return a join ticket");
 
-            await this.connectAsync(collabInfo.joinTicket!, initialUserKv);
+            await this.connectAsync(collabInfo.joinTicket!);
 
             return {
                 ...collabInfo,
@@ -296,70 +279,11 @@ class CollabClient {
         //CollabTransforms.recvSetSessionState(sessKv);
     }
 
-    private async recvPresenceMessageAsync(msg: Protocol.PresenceMessage) {
-        pxt.debug("Server sent presence");
-        const { presence } = msg;
+    private async recvKVStoreMessageAsync(msg: Protocol.KVStoreMessage) {
+        pxt.debug(`Server sent KV store message: ${msg.op} (${msg.key})`);
+        const { op, key, val } = msg;
 
-        emitter.emit("presence", presence);
-
-        //await setPresenceAsync(msg.presence);
-        //CollabTransforms.recvPresence(msg.presence);
-    }
-
-    private async recvPlayerJoinedMessageAsync(msg: Protocol.PlayerJoinedMessage) {
-        pxt.debug("Server sent player joined");
-        const { clientId } = msg;
-
-        emitter.emit("player-joined", clientId);
-
-        //await playerJoinedAsync(msg.clientId);
-        //CollabTransforms.recvPlayerJoined(msg.clientId);
-    }
-
-    private async recvPlayerLeftMessageAsync(msg: Protocol.PlayerLeftMessage) {
-        pxt.debug("Server sent player left");
-        const { clientId } = msg;
-
-        emitter.emit("player-left", clientId);
-
-        //await playerLeftAsync(msg.clientId);
-        //CollabTransforms.recvPlayerLeft(msg.clientId);
-    }
-
-    private async recvSetPlayerValueMessageAsync(reader: SmartBuffer) {
-        //pxt.debug(`Recv set player value: ${msg.key} = ${msg.value}`);
-        const { key, value, clientId } = Protocol.Binary.unpackSetPlayerValueMessage(reader);
-
-        emitter.emit("set-player-value", key, value, clientId);
-
-        //CollabTransforms.recvSetPlayerValue(key, value, clientId);
-    }
-
-    private async recvDelPlayerValueMessageAsync(reader: SmartBuffer) {
-        //pxt.debug(`Recv del player value: ${msg.key}`);
-        const { key, clientId } = Protocol.Binary.unpackDelPlayerValueMessage(reader);
-
-        emitter.emit("del-player-value", key, clientId);
-
-        //CollabTransforms.recvDelPlayerValue(key, clientId);
-    }
-
-    private async recvSetSessionValueMessageAsync(reader: SmartBuffer) {
-        //pxt.debug(`Recv set session value: ${msg.key} = ${msg.value}`);
-        const { key, value, clientId } = Protocol.Binary.unpackSetSessionValueMessage(reader);
-
-        emitter.emit("set-session-value", key, value, clientId);
-
-        //CollabTransforms.recvSetSessionValue(key, value, clientId);
-    }
-
-    private async recvDelSessionValueMessageAsync(reader: SmartBuffer) {
-        //pxt.debug(`Recv del session value: ${msg.key}`);
-        const { key, clientId } = Protocol.Binary.unpackDelSessionValueMessage(reader);
-
-        emitter.emit("del-session-value", key, clientId);
-
-        //CollabTransforms.recvDelSessionValue(key, clientId);
+        emitter.emit("kv", op, key, val);
     }
 
     //==========================================================
@@ -377,24 +301,14 @@ class CollabClient {
         destroyCollabClient();
     }
 
-    public setPlayerValue(key: string, value: string) {
-        const buff = Protocol.Binary.packSetPlayerValueMessage(key, value);
-        this.sendMessage(buff);
-    }
-
-    public delPlayerValue(key: string) {
-        const buff = Protocol.Binary.packDelPlayerValueMessage(key);
-        this.sendMessage(buff);
-    }
-
-    public setSessionValue(key: string, value: string) {
-        const buff = Protocol.Binary.packSetSessionValueMessage(key, value);
-        this.sendMessage(buff);
-    }
-
-    public delSessionValue(key: string) {
-        const buff = Protocol.Binary.packDelSessionValueMessage(key);
-        this.sendMessage(buff);
+    public kvOp(op: "set" | "del" | "sub" | "uns", key: string, val?: string) {
+        const msg: Protocol.KVStoreMessage = {
+            type: "kv",
+            op,
+            key,
+            val,
+        };
+        this.sendMessage(msg);
     }
 }
 
@@ -414,17 +328,17 @@ function destroyCollabClient() {
     emitter.emit("service-destroyed");
 }
 
-export async function hostCollabAsync(initialSessKv: Map<string, string>, initialUserKv: Map<string, string>): Promise<CollabJoinResult> {
+export async function hostCollabAsync(): Promise<CollabJoinResult> {
     destroyCollabClient();
     const collabClient = ensureCollabClient();
-    const collabInfo = await collabClient.hostCollabAsync(initialSessKv, initialUserKv);
+    const collabInfo = await collabClient.hostCollabAsync();
     return collabInfo;
 }
 
-export async function joinCollabAsync(joinCode: string, initialKv: Map<string, string>): Promise<CollabJoinResult> {
+export async function joinCollabAsync(joinCode: string): Promise<CollabJoinResult> {
     destroyCollabClient();
     const collabClient = ensureCollabClient();
-    const collabInfo = await collabClient.joinCollabAsync(joinCode, initialKv);
+    const collabInfo = await collabClient.joinCollabAsync(joinCode);
     return collabInfo;
 }
 
@@ -444,24 +358,9 @@ export function collabOver(reason: SessionOverReason) {
     collabClient?.collabOver(reason);
 }
 
-export function setPlayerValue(key: string, value: string) {
+export function kvOp(op: "set" | "del" | "sub" | "uns", key: string, val?: string) {
     const collabClient = ensureCollabClient();
-    collabClient?.setPlayerValue(key, value);
-}
-
-export function delPlayerValue(key: string) {
-    const collabClient = ensureCollabClient();
-    collabClient?.delPlayerValue(key);
-}
-
-export function setSessionValue(key: string, value: string) {
-    const collabClient = ensureCollabClient();
-    collabClient?.setSessionValue(key, value);
-}
-
-export function delSessionValue(key: string) {
-    const collabClient = ensureCollabClient();
-    collabClient?.delSessionValue(key);
+    collabClient?.kvOp(op, key, val);
 }
 
 export function getClientId() {
@@ -499,20 +398,22 @@ class PlayerPresenceStore {
             this._players.forEach(p => this.listeners.emit("player-left", p.id));
             this._players = [];
         });
-        emitter.on("presence", (presence: Presence) => {
-            const joined = presence.users.filter(p => !this._players.some(p2 => p2.id === p.id))
-                .map(p => ({
-                    id: p.id,
-                    slot: p.slot,
-                    name: p.kv?.get(Keys.Name) || Strings.MissingName,
-                    isHost: p.slot === 1,
-                    isMe: p.id === _collabClient?.clientId,
-                }));
-            const left = this._players.filter(p => !presence.users.some(p2 => p2.id === p.id));
-            this._players = this._players.filter(p => !left.some(p2 => p2.id === p.id));
-            this._players.push(...joined);
-            left.forEach(p => this.listeners.emit("player-left", p.id));
-            joined.forEach(p => this.listeners.emit("player-joined", p.id));
+        emitter.on("kv", (op, key, val) => {
+            if (val) {
+                val = JSON.parse(val, jsonReviver);
+            }
+            switch (op) {
+                case "set":
+                    console.log(`KV set: ${key} = ${JSON.stringify(val, jsonReplacer)}`);
+                    break;
+                case "del":
+                    console.log(`KV del: ${key}`);
+                    break;
+                case "sub":
+                    break;
+                case "uns":
+                    break;
+            }
         });
     }
     public on = (ev: "player-joined" | "player-left", callback: () => void): (() => void) => {
@@ -563,16 +464,6 @@ namespace Protocol {
         sessKv: Map<string, string>;
     };
 
-    export type PlayerJoinedMessage = MessageBase & {
-        type: "player-joined";
-        clientId: string;
-    };
-
-    export type PlayerLeftMessage = MessageBase & {
-        type: "player-left";
-        clientId: string;
-    };
-
     export type KickPlayerMessage = MessageBase & {
         type: "kick-player";
         clientId: string;
@@ -583,23 +474,26 @@ namespace Protocol {
         reason: SessionOverReason;
     };
 
+    export type KVStoreMessage = {
+        type: "kv";
+        op: "set" | "del" | "sub" | "uns";
+        key: string;
+        val?: string;
+    };
+
     export type Message =
         | ConnectMessage
         | PresenceMessage
         | JoinedMessage
-        | PlayerJoinedMessage
-        | PlayerLeftMessage
         | KickPlayerMessage
-        | CollabOverMessage;
+        | CollabOverMessage
+        | KVStoreMessage;
 
     export namespace Binary {
         export enum MessageType {
-            SetPlayerValue = 16,
-            DelPlayerValue = 17,
-            SetSessionValue = 18,
-            DelSessionValue = 19,
         }
 
+        /*
         // Collab:SetPlayerValue
         export function packSetPlayerValueMessage(key: string, value: string): Buffer {
             const writer = new SmartBuffer();
@@ -687,5 +581,6 @@ namespace Protocol {
                 clientId,
             };
         }
+        */
     }
 }

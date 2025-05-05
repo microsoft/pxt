@@ -48,11 +48,8 @@ function ActionCards() {
                 icon="fas fa-gamepad"
                 classes={css["host"]}
                 onClick={async () => {
-                    const initialUserKv = new Map<string, string>();
-                    initialUserKv.set(Keys.Name, generateRandomName());
-                    const initialSessKv = new Map<string, string>();
-                    initialSessKv.set(Keys.Seed, "" + randomInt(0, 1000000));
-                    await hostNewGameAsync(initialSessKv, initialUserKv);
+                    //initialSessKv.set(Keys.Seed, "" + randomInt(0, 1000000));
+                    await hostNewGameAsync();
                 }}
             />
             <ActionCard

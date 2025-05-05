@@ -50,12 +50,10 @@ export function JoinModal() {
                     title={Strings.JoinGame}
                     disabled={!buttonEnabled}
                     onClick={async () => {
-                        const initialKv = new Map<string, string>();
-                        initialKv.set(Keys.Name, generateRandomName());
                         const joinCode = cleanupJoinCode(inputRef.current?.value);
                         if (joinCode) {
                             dismissModal();
-                            await joinGameAsync(joinCode, initialKv);
+                            await joinGameAsync(joinCode);
                         } else {
                             if (inputRef.current) {
                                 inputRef.current.value = "";
