@@ -314,6 +314,10 @@ export class FieldTileset extends FieldImages implements FieldCustom {
         this.localTile = asset as pxt.Tile;
         super.loadState(pxt.getTSReferenceForAsset(asset));
     }
+
+    getFieldDescription(): string {
+        return lf("tile");
+    }
 }
 
 function constructTransparentTile(): TilesetDropdownOption {

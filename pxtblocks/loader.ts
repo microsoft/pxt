@@ -27,6 +27,8 @@ import { setDraggableShadowBlocks, setDuplicateOnDrag, setDuplicateOnDragStrateg
 import { applyPolyfills } from "./polyfills";
 import { initCopyPaste } from "./copyPaste";
 
+export const DRAGGABLE_PARAM_INPUT_PREFIX = "HANDLER_DRAG_PARAM_";
+
 
 interface BlockDefinition {
     codeCard?: any;
@@ -255,7 +257,7 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
         }
         else if (fn.attributes.draggableParameters) {
             comp.handlerArgs.filter(a => !a.inBlockDef).forEach(arg => {
-                const i = block.appendValueInput("HANDLER_DRAG_PARAM_" + arg.name);
+                const i = block.appendValueInput(DRAGGABLE_PARAM_INPUT_PREFIX + arg.name);
                 if (fn.attributes.draggableParameters == "reporter") {
                     i.setCheck(getBlocklyCheckForType(arg.type, info));
                 } else {
@@ -265,7 +267,7 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
             });
 
             comp.handlerArgs.forEach(arg => {
-                setDuplicateOnDrag(block.type, "HANDLER_DRAG_PARAM_" + arg.name);
+                setDuplicateOnDrag(block.type, DRAGGABLE_PARAM_INPUT_PREFIX + arg.name);
             });
         }
         else {
@@ -395,7 +397,7 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
                     }
 
                     if (isHandlerArg(pr)) {
-                        inputName = "HANDLER_DRAG_PARAM_" + pr.name;
+                        inputName = DRAGGABLE_PARAM_INPUT_PREFIX + pr.name;
                         inputCheck = fn.attributes.draggableParameters === "reporter" ? getBlocklyCheckForType(pr.type, info) : "Variable";
                         return;
                     }

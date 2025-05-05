@@ -6,6 +6,9 @@ on:
       - '**' # Run workflow when any branch is updated
     tags:
       - '*'  # Run workflow when any new tag is pushed
+  pull_request:
+    branches:
+      - '**' # Run workflow for pull requests targeting any branch
 
 permissions:
   contents: write

@@ -73,6 +73,10 @@ export class BaseFieldTextDropdown extends Blockly.FieldTextInput {
         return typeof this.menuGenerator_ === 'function';
     }
 
+    getFieldDescription(): string {
+        return this.getText();
+    }
+
     protected dropdownDispose_() {
         this.dropDownOpen_ = false;
         if (this.menu_) {
