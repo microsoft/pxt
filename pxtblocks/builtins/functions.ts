@@ -10,6 +10,7 @@ import { domToWorkspaceNoEvents } from "../importer";
 
 import { DUPLICATE_ON_DRAG_MUTATION_KEY } from "../plugins/duplicateOnDrag";
 import { PathObject } from "../plugins/renderer/pathObject";
+import { FieldImageNoText } from "../fields/field_imagenotext";
 
 export function initFunctions() {
     const msg = Blockly.Msg;
@@ -424,7 +425,7 @@ function initReturnStatement(b: Blockly.Block) {
 
     function addButton(name: string, uri: string, alt: string) {
         b.appendDummyInput(name)
-            .appendField(new Blockly.FieldImage(uri, 24, 24, alt, () => {
+            .appendField(new FieldImageNoText(uri, 24, 24, alt, () => {
                 const oldMutation = mutationString();
                 returnValueVisible = !returnValueVisible;
 

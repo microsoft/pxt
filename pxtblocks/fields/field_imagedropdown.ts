@@ -201,6 +201,10 @@ export class FieldImageDropdown extends FieldDropdown implements FieldCustom {
         super.doValueUpdate_(newValue);
     }
 
+    getFieldDescription(): string {
+        return lf("image");
+    }
+
     /**
      * Callback for when a button is clicked inside the drop-down.
      * Should be bound to the FieldIconMenu.

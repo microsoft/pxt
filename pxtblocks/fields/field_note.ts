@@ -209,17 +209,25 @@ export class FieldNote extends Blockly.FieldNumber implements FieldCustom {
         if (this.isExpanded) {
             return "" + this.value_;
         } else {
-            const note = +this.value_;
-            for (let i = 0; i < this.nKeys_; i++) {
-                if (Math.abs(this.getKeyFreq(i + this.minNote_) - note) < this.eps) {
-                    return this.getKeyName(i + this.minNote_);
-                }
-            }
-            let text = note.toString();
-            if (!isNaN(note))
-                text += " Hz";
-            return text;
+            return this.getNoteString();
         }
+    }
+
+    getFieldDescription(): string {
+        return this.getNoteString() || lf("note");
+    }
+
+    private getNoteString() {
+        const note = +this.value_;
+        for (let i = 0; i < this.nKeys_; i++) {
+            if (Math.abs(this.getKeyFreq(i + this.minNote_) - note) < this.eps) {
+                return this.getKeyName(i + this.minNote_);
+            }
+        }
+        let text = note.toString();
+        if (!isNaN(note))
+            text += " Hz";
+        return text;
     }
 
     /**

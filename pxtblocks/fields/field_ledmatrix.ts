@@ -435,6 +435,10 @@ export class FieldMatrix extends Blockly.Field implements FieldCustom {
         return `\`\n${FieldMatrix.TAB}${text}\n${FieldMatrix.TAB}\``;
     }
 
+    getFieldDescription(): string {
+        return lf("{0}x{1} LED Grid", this.matrixWidth, this.matrixHeight);
+    }
+
     // Restores the block state from the text value of the field
     private restoreStateFromString() {
         let r = this.value_ as string;

@@ -173,11 +173,6 @@ export function all(): Experiment[] {
             description: lf("Show an error list panel for JavaScript and Python.")
         },
         {
-            id: "blocksErrorList",
-            name: lf("Blocks Error List"),
-            description: lf("Show an error list panel for Blocks")
-        },
-        {
             id: "timeMachine",
             name: lf("Time Machine"),
             description: lf("Save and restore past versions of a project")

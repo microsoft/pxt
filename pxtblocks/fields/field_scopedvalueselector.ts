@@ -136,4 +136,8 @@ export class FieldScopedValueSelector extends Blockly.FieldLabel implements Fiel
         if (!this.sourceBlock_ || !this.sourceBlock_.workspace || this.sourceBlock_.disposed) return;
         if (ev.type === Blockly.Events.BLOCK_DRAG) return this.onDragEvent(ev as Blockly.Events.BlockDrag);
     }
+
+    getFieldDescription(): string {
+        return this.scopedValue || this.defl || lf("value");
+    }
 }

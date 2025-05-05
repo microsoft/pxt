@@ -76,6 +76,13 @@ export abstract class FieldBase<U> extends Blockly.Field implements FieldCustom 
         this.valueText = this.onValueChanged(this.valueText);
     }
 
+    /**
+     * Returns a human-readable description of the field's current value.
+     */
+    getFieldDescription(): string {
+        return this.getDisplayText_();
+    }
+
     protected getAnchorDimensions() {
         const boundingBox = this.getScaledBBox() as any;
         if (this.sourceBlock_.RTL) {
@@ -117,4 +124,5 @@ export abstract class FieldBase<U> extends Blockly.Field implements FieldCustom 
         if (!block) return undefined;
         return block.getField(fieldName);
     }
+
 }

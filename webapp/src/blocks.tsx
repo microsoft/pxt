@@ -23,7 +23,7 @@ import { WorkspaceSearch } from "@blockly/plugin-workspace-search";
 
 import Util = pxt.Util;
 import { DebuggerToolbox } from "./debuggerToolbox";
-import { ErrorList } from "./errorList";
+import { ErrorDisplayInfo, ErrorList, StackFrameDisplayInfo } from "./errorList";
 import { resolveExtensionUrl } from "./extensionManager";
 import { experiments, initEditorExtensionsAsync } from "../../pxteditor";
 
@@ -46,7 +46,6 @@ interface CopyDataEntry {
     headerId: string;
 }
 
-
 export class Editor extends toolboxeditor.ToolboxEditor {
     editor: Blockly.WorkspaceSvg;
     currFile: pkg.File;
@@ -63,8 +62,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     breakpointsSet: number[]; // the IDs of the breakpoints set.
     currentFlyoutKey: string;
 
-    private errorChangesListeners: pxt.Map<(errors: pxtblockly.BlockDiagnostic[]) => void> = {};
     protected intersectionObserver: IntersectionObserver;
+    private errors: ErrorDisplayInfo[] = [];
 
     protected debuggerToolbox: DebuggerToolbox;
     protected highlightedStatement: pxtc.LocationInfo;
@@ -78,8 +77,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     constructor(parent: IProjectView) {
         super(parent);
 
-        this.listenToBlockErrorChanges = this.listenToBlockErrorChanges.bind(this)
         this.onErrorListResize = this.onErrorListResize.bind(this)
+        this.getDisplayInfoForBlockError = this.getDisplayInfoForBlockError.bind(this)
+        this.getDisplayInfoForException = this.getDisplayInfoForException.bind(this)
     }
     setBreakpointsMap(breakpoints: pxtc.Breakpoint[], procCallLocations: pxtc.LocationInfo[]): void {
         if (!breakpoints || !this.compilationResult) return;
@@ -884,7 +884,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     <div id="blocksEditor"></div>
                     <toolbox.ToolboxTrashIcon flyoutOnly={flyoutOnly} />
                 </div>
-                {showErrorList && <ErrorList isInBlocksEditor={true} listenToBlockErrorChanges={this.listenToBlockErrorChanges}
+                {showErrorList && <ErrorList
+                    errors={this.errors}
                     onSizeChange={this.onErrorListResize} />}
             </div>
         )
@@ -894,14 +895,64 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.parent.fireResize();
     }
 
-    listenToBlockErrorChanges(handlerKey: string, handler: (errors: pxtblockly.BlockDiagnostic[]) => void) {
-        this.errorChangesListeners[handlerKey] = handler;
+    onExceptionDetected(exception: pxsim.DebuggerBreakpointMessage) {
+        const displayInfo: ErrorDisplayInfo = this.getDisplayInfoForException(exception);
+        this.errors = [displayInfo];
     }
 
-    private onBlockErrorChanges(errors: pxtblockly.BlockDiagnostic[]) {
-        for (let listener of pxt.U.values(this.errorChangesListeners)) {
-            listener(errors)
+    private onBlockErrorChanges(errors: ErrorDisplayInfo[]) {
+        this.errors = errors;
+    }
+
+    private getDisplayInfoForBlockError(blockId: string, message: string): ErrorDisplayInfo {
+        return {
+            message: message,
+            onClick: () => {
+                this.clearHighlightedStatements();
+                this.editor.highlightBlock(blockId);
+                this.editor.centerOnBlock(blockId, true);
+            }
         }
+    }
+
+    private getDisplayInfoForException(exception: pxsim.DebuggerBreakpointMessage): ErrorDisplayInfo {
+        const message = pxt.Util.rlf(exception.exceptionMessage);
+        const stackFrames: StackFrameDisplayInfo[] = exception.stackframes?.map(frame => {
+            const locInfo = frame.funcInfo as pxtc.FunctionLocationInfo;
+            if (!locInfo?.functionName) {
+                return undefined;
+            }
+
+            const blockId = this.compilationResult ? pxtblockly.findBlockIdByLine(this.compilationResult.sourceMap, { start: locInfo.line, length: locInfo.endLine - locInfo.line }) : undefined;
+            if (!blockId) {
+                return undefined;
+            }
+
+            // Get human-readable block text
+            const block = this.editor.getBlockById(blockId);
+            if (!block) {
+                return undefined;
+            }
+
+            let blockText = pxtblockly.getBlockText(block);
+            if (blockText.length > 100) {
+                blockText = blockText.substring(0, 97) + "...";
+            }
+
+            return {
+                message: blockText ? lf("at the '{0}' block", blockText) : lf("at {0}", locInfo.functionName),
+                onClick: () => {
+                    this.clearHighlightedStatements();
+                    this.editor.highlightBlock(blockId);
+                    this.editor.centerOnBlock(blockId, true);
+                }
+            };
+        }).filter(f => !!f) ?? undefined;
+
+        return {
+            message,
+            stackFrames
+        };
     }
 
     getBlocksAreaDiv() {
@@ -1118,6 +1169,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     unloadFileAsync(): Promise<void> {
         this.delayLoadXml = undefined;
+        this.errors = [];
         if (this.toolbox) this.toolbox.clearSearch();
         return Promise.resolve();
     }
@@ -1142,6 +1194,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (!tsfile || !tsfile.diagnostics) return;
 
         // only show errors
+        const errorDisplayInfo: ErrorDisplayInfo[] = [];
         let diags = tsfile.diagnostics.filter(d => d.category == ts.pxtc.DiagnosticCategory.Error);
         let sourceMap = this.compilationResult.sourceMap;
 
@@ -1153,6 +1206,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     let txt = ts.pxtc.flattenDiagnosticMessageText(diag.messageText, "\n");
                     b.setWarningText(txt, pxtblockly.PXT_WARNING_ID);
                     setHighlightWarningAsync(b, true);
+                    errorDisplayInfo.push(this.getDisplayInfoForBlockError(bid, txt));
                 }
             }
         })
@@ -1164,10 +1218,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 if (b) {
                     b.setWarningText(d.message, pxtblockly.PXT_WARNING_ID);
                     setHighlightWarningAsync(b, true);
+                    errorDisplayInfo.push(this.getDisplayInfoForBlockError(d.blockId, d.message));
                 }
             }
         })
-        this.onBlockErrorChanges(this.compilationResult.diagnostics);
+        this.onBlockErrorChanges(errorDisplayInfo);
         this.setBreakpointsFromBlocks();
     }
 
