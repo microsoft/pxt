@@ -1216,8 +1216,8 @@ namespace pxt.github {
                 const parsed = parseRepoId(gh[1])
                 const repo_s = stringifyRepo(parsed)
                 pxt.debug(`upgrading ${id} to ${repo_s}}`)
-                const np : string = upgradedPackageReference(cfg, repo_s)
-                if (np) return np 
+                const np: string = upgradedPackageReference(cfg, repo_s)
+                if (np) return np
                 else return repo_s
             }
             const m = /^min:(.*)/.exec(upgr)

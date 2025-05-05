@@ -675,7 +675,7 @@ namespace pxt {
 
             // we are installing the script, and we've download the original version and we haven't upgraded it yet
             // do upgrade and reload as needed
-            if (this.level == 0 && isInstall) {
+            if (isInstall) {
                 const fixes = await this.upgradePackagesAsync();
 
                 if (fixes) {
