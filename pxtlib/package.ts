@@ -654,7 +654,10 @@ namespace pxt {
 
             // if we are installing this script, we haven't yet downloaded the config
             // do upgrade later
-            if (this.level == 0 && !isInstall) {
+            // TODO: why only level 0?
+            //if (this.level == 0 && !isInstall) {
+
+            if (!isInstall) {
                 await this.upgradePackagesAsync();
             }
 

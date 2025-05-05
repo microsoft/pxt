@@ -722,6 +722,7 @@ namespace pxt.github {
             p.tag = await db.latestVersionAsync(p.slug, config)
         }
         const cached = await db.loadPackageAsync(p.fullName, p.tag)
+        // TODO: what about min/gh?
         const dv = upgradedDisablesVariants(config, repoWithTag)
         if (dv) {
             const cfg = Package.parseAndValidConfig(cached.files[pxt.CONFIG_NAME])
@@ -1210,7 +1211,7 @@ namespace pxt.github {
             return null
 
         for (const upgr of rules) {
-            const gh = /^gh:(.*)/.exec(upgr)
+            const gh = /^move:(.*)/.exec(upgr)
             if (gh) {
                 const parsed = parseRepoId(gh[1])
                 const repo_s = stringifyRepo(parsed)
