@@ -130,6 +130,8 @@ export const Input = (props: InputProps) => {
         (e.target as HTMLElement).blur();
         expandButtonClickHandler();
         document.getElementById(id)?.focus();
+        e.stopPropagation();
+        e.preventDefault();
     }
 
     const iconClickHandler = () => {
