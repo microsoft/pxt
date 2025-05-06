@@ -1,6 +1,7 @@
 import css from "./styling/NetView.module.scss";
 import * as collabClient from "@/services/collabClient";
 import { useContext, useMemo } from "react";
+import { useSyncExternalStore } from "use-sync-external-store/shim"
 import { AppStateContext } from "@/state/Context";
 import { classList } from "react-common/components/util";
 import { getGuestNetState } from "@/state/helpers";
@@ -16,20 +17,19 @@ export function GuestView() {
     const context = useContext(AppStateContext);
     const { state, dispatch } = context;
     const netState = getGuestNetState(context);
-
-    const presence = useMemo(() => {
-        if (!netState) return { users: [] };
-        return netState.presence;
-    }, [netState]);
+    const presence = useSyncExternalStore(
+        collabClient.playerPresenceStore.subscribe,
+        collabClient.playerPresenceStore.getSnapshot,
+    );
 
     const players: ViewPlayer[] = useMemo(() => {
         if (!netState) return [];
-        return presence.users
-            .sort((a, b) => a.slot - b.slot)
+        return presence
+            .sort((a, b) => a.id.localeCompare(b.id))
             .map(u => ({
                 id: u.id,
-                name: u.kv?.get(Keys.Name) || Strings.MissingName,
-                isHost: u.slot === 1,
+                name: u.name ?? Strings.MissingName,
+                isHost: u.role === "host",
                 isMe: u.id === netState.clientId,
             }));
     }, [presence, netState]);
@@ -116,7 +116,7 @@ export function GuestView() {
                     {players.map(p => (
                         <div key={p.id} className={css["player"]}>
                             <span className={css["name"]}>{p.name}</span>
-                            {p.isHost && <span className={classList(css["pill"], css["host"])}>{lf("host")}</span>}
+                            {(p.role === "host") && <span className={classList(css["pill"], css["host"])}>{lf("host")}</span>}
                             {p.isMe && <span className={classList(css["pill"], css["me"])}>{lf("me")}</span>}
                             <Button
                                 className={css["actions"]}

@@ -13,11 +13,10 @@ import {
     HTTP_INTERNAL_SERVER_ERROR,
     HTTP_IM_A_TEAPOT,
     ViewPlayer,
+    KvMutationOp,
 } from "@/types";
-import { notifyDisconnected, setPresenceAsync, playerJoinedAsync, playerLeftAsync } from "@/transforms";
-import * as CollabTransforms from "@/transforms/collab";
+import { notifyDisconnected } from "@/transforms";
 import { jsonReplacer, jsonReviver } from "@/utils";
-import { Keys, Strings } from "@/constants";
 
 const COLLAB_HOST_PROD = "https://plato.makecode.com";
 const COLLAB_HOST_STAGING = "https://dev.multiplayer.staging.pxt.io";
@@ -42,7 +41,7 @@ type Events = {
     "service-created": () => void;
     "service-destroyed": () => void;
     "joined": (role: ClientRole, clientId: string, slot: number, kv: Map<string, string>, sessKv: Map<string, string>) => void;
-    "kv": (op: "set" | "del" | "sub" | "uns", key: string, val?: string) => void;
+    "kv": (op: KvMutationOp, path: string[], val?: string) => void;
 };
 
 const emitter = new EventEmitter<Events>();
@@ -263,6 +262,25 @@ class CollabClient {
         this.sock?.close();
     }
 
+    public setKey(key: string, val: string) {
+        const msg: Protocol.KVStoreMessage = {
+            type: "kv",
+            op: "set",
+            key,
+            val,
+        };
+        this.sendMessage(msg);
+    }
+
+    public delKey(key: string) {
+        const msg: Protocol.KVStoreMessage = {
+            type: "kv",
+            op: "del",
+            key,
+        };
+        this.sendMessage(msg);
+    }
+
     //==========================================================
     // Message Handlers
 
@@ -274,16 +292,20 @@ class CollabClient {
         this.clientId = clientId;
 
         emitter.emit("joined", role, clientId, slot, kv, sessKv);
-
-        //CollabTransforms.connected(clientId);
-        //CollabTransforms.recvSetSessionState(sessKv);
     }
 
     private async recvKVStoreMessageAsync(msg: Protocol.KVStoreMessage) {
         pxt.debug(`Server sent KV store message: ${msg.op} (${msg.key})`);
         const { op, key, val } = msg;
 
-        emitter.emit("kv", op, key, val);
+        pxt.log(`KV ${op}: ${key} = ${JSON.stringify(val ?? "", jsonReplacer)}`);
+
+        if (!key.startsWith("/")) return;
+
+        const path = key.split("/");
+        path.shift();
+
+        emitter.emit("kv", op, path, val);
     }
 
     //==========================================================
@@ -301,7 +323,7 @@ class CollabClient {
         destroyCollabClient();
     }
 
-    public kvOp(op: "set" | "del" | "sub" | "uns", key: string, val?: string) {
+    public kvOp(op: KvMutationOp, key: string, val?: string) {
         const msg: Protocol.KVStoreMessage = {
             type: "kv",
             op,
@@ -358,7 +380,7 @@ export function collabOver(reason: SessionOverReason) {
     collabClient?.collabOver(reason);
 }
 
-export function kvOp(op: "set" | "del" | "sub" | "uns", key: string, val?: string) {
+export function kvOp(op: KvMutationOp, key: string, val?: string) {
     const collabClient = ensureCollabClient();
     collabClient?.kvOp(op, key, val);
 }
@@ -376,56 +398,141 @@ export function destroy() {
 // (for use with React's useSyncExternalStore)
 
 type PlayerPresenceEvents = {
+    "notify": () => void;
+    "reset": () => void;
+    "joined": () => void;
     "player-joined": (playerId: string) => void;
     "player-left": (playerId: string) => void;
+    "player-updated": (playerId: string) => void;
 };
 
 class PlayerPresenceStore {
     private listeners: EventEmitter<PlayerPresenceEvents> = new EventEmitter();
-    private _players: ViewPlayer[] = [];
+    private _players: Map<string, ViewPlayer> = new Map();
+    private _cachedSnapshot: ViewPlayer[] = [];
     public players(): ViewPlayer[] {
-        return this._players;
+        return Array.from(this._players.values());
     }
     public player(id: string): ViewPlayer | undefined {
-        return this._players.find(p => p.id === id);
+        return this._players.get(id);
     }
     constructor() {
         emitter.on("service-created", () => {
-            this._players.forEach(p => this.listeners.emit("player-left", p.id));
-            this._players = [];
+            this._players = new Map();
+            this._cachedSnapshot = [];
+            this.listeners.emit("reset");
         });
         emitter.on("service-destroyed", () => {
-            this._players.forEach(p => this.listeners.emit("player-left", p.id));
-            this._players = [];
+            this._players = new Map();
+            this._cachedSnapshot = [];
+            this.listeners.emit("reset");
         });
-        emitter.on("kv", (op, key, val) => {
-            if (val) {
-                val = JSON.parse(val, jsonReviver);
-            }
+        emitter.on("kv", (op, path, val) => {
+            if (path[0] !== "clients") return;
             switch (op) {
                 case "set":
-                    console.log(`KV set: ${key} = ${JSON.stringify(val, jsonReplacer)}`);
+                    this.setKey(path, val);
                     break;
                 case "del":
-                    console.log(`KV del: ${key}`);
-                    break;
-                case "sub":
-                    break;
-                case "uns":
+                    this.delKey(path);
                     break;
             }
         });
     }
-    public on = (ev: "player-joined" | "player-left", callback: () => void): (() => void) => {
-        this.listeners.on(ev, callback);
-        return () => {
-            this.listeners.off(ev, callback);
-        };
-    };
 
+    private setKey(path: string[], val: any) {
+        let changed = false;
+        const clientId = path[1];
+        const isNewPlayer = !this._players.has(clientId);
+        const player = this._players.get(clientId) ?? {
+            id: clientId,
+            isMe: clientId === _collabClient?.clientId,
+        } satisfies ViewPlayer;
+        this._players.set(clientId, player);
+        const key = path[2];
+        if (key) {
+            switch (key) {
+                case "role":
+                    player.role = val;
+                    changed = true;
+                    break;
+                case "name":
+                    player.name = val;
+                    changed = true;
+                    break;
+                default:
+                    pxt.warn(`[set] Unknown player key: ${key}`);
+            }
+        }
+        if (isNewPlayer) {
+            changed = true;
+            this.listeners.emit("player-joined", clientId);
+        } else if (changed) {
+            this.listeners.emit("player-updated", clientId);
+        }
+
+        if (changed) {
+            this.notify();
+        }
+    }
+
+    private delKey(path: string[]) {
+        const clientId = path[1];
+        if (path.length < 3) {
+            this._players.delete(clientId);
+            this.listeners.emit("player-left", clientId);
+            this.notify();
+        } else {
+            const player = this._players.get(clientId);
+            if (player) {
+                let changed = false;
+                const key = path[2];
+                switch (key) {
+                    case "role":
+                        player.role = undefined;
+                        changed = true;
+                        break;
+                    case "name":
+                        player.name = undefined;
+                        changed = true;
+                        break;
+                    default:
+                        pxt.warn(`[del] Unknown player key: ${key}`);
+                }
+                if (changed) {
+                    this.listeners.emit("player-updated", clientId);
+                    this.notify();
+                }
+            }
+        }
+    }
+
+    private notify() {
+        this._cachedSnapshot = Array.from(this._players.values());
+        this.listeners.emit("notify");
+    }
+
+    public on(ev: "reset", callback: () => void): (() => void);
+    public on(ev: "joined", callback: () => void): (() => void);
+    public on(ev: "player-joined", callback: (playerId: string) => void): (() => void);
+    public on(ev: "player-left", callback: (playerId: string) => void): (() => void);
+    public on(ev: "player-updated", callback: (playerId: string) => void): (() => void);
+    public on(ev: keyof PlayerPresenceEvents, callback: (...args: any[]) => void): (() => void) {
+        this.listeners.on(ev, callback);
+        return () => this.listeners.off(ev, callback);
+    }
+
+    // React's useSyncExternalStore
+    public subscribe = (callback: () => void): (() => void) => {
+        this.listeners.on("notify", callback);
+        return () => this.listeners.off("notify", callback);
+    }
     public getSnapshot = (): ViewPlayer[] => {
-        return this._players;
-    };
+        return this._cachedSnapshot;
+    }
+    public getServerSnapshot = (): ViewPlayer[] => {
+        return this._cachedSnapshot;
+    }
 };
 
 export const playerPresenceStore = new PlayerPresenceStore();
@@ -476,7 +583,7 @@ namespace Protocol {
 
     export type KVStoreMessage = {
         type: "kv";
-        op: "set" | "del" | "sub" | "uns";
+        op: KvMutationOp;
         key: string;
         val?: string;
     };

@@ -1,5 +1,6 @@
 import css from "./styling/NetView.module.scss";
 import { useContext, useMemo } from "react";
+import { useSyncExternalStore } from "use-sync-external-store/shim"
 import { AppStateContext } from "@/state/Context";
 import { getHostNetState } from "@/state/helpers";
 import { Input } from "react-common/components/controls/Input";
@@ -10,27 +11,26 @@ import { showToast } from "@/transforms";
 import { makeToast } from "./Toaster";
 import * as collabClient from "@/services/collabClient";
 import { setNetState } from "@/state/actions";
-import { Keys, Strings } from "@/constants";
 import { ViewPlayer } from "@/types";
+import { Strings } from "@/constants";
 
 export function HostView() {
     const context = useContext(AppStateContext);
     const { state, dispatch } = context;
     const netState = getHostNetState(context);
-
-    const presence = useMemo(() => {
-        if (!netState) return { users: [] };
-        return netState.presence;
-    }, [netState]);
+    const presence = useSyncExternalStore(
+        collabClient.playerPresenceStore.subscribe,
+        collabClient.playerPresenceStore.getSnapshot,
+    );
 
     const players: ViewPlayer[] = useMemo(() => {
         if (!netState) return [];
-        return presence.users
-            .sort((a, b) => a.slot - b.slot)
+        return presence
+            .sort((a, b) => a.id.localeCompare(b.id))
             .map(u => ({
                 id: u.id,
-                name: u.kv?.get(Keys.Name) || Strings.MissingName,
-                isHost: u.slot === 1,
+                name: u.name ?? Strings.MissingName,
+                isHost: u.role === "host",
                 isMe: u.id === netState.clientId,
             }));
     }, [presence, netState]);
@@ -72,17 +72,17 @@ export function HostView() {
             <div className={classList(css["panel"], css["controls"])}>
                 <p className={css["label"]}>
                     {lf("Game Link")}
-                    <i className={classList(css["help"], "fas fa-question-circle")} onClick={() => {}}></i>
+                    <i className={classList(css["help"], "fas fa-question-circle")} onClick={() => { }}></i>
                 </p>
                 <div className={css["share-link"]}>
                     <Input className={css["share-link"]} placeholder="Paste your game link here" />
-                    <Button className={css["load"]} label={lf("Load")} title={lf("Load")} onClick={() => {}} />
+                    <Button className={css["load"]} label={lf("Load")} title={lf("Load")} onClick={() => { }} />
                 </div>
                 <p></p>
                 <p></p>
                 <p className={css["label"]}>
                     {lf("Join Code")}
-                    <i className={classList(css["help"], "fas fa-question-circle")} onClick={() => {}}></i>
+                    <i className={classList(css["help"], "fas fa-question-circle")} onClick={() => { }}></i>
                 </p>
                 <div className={css["join-code-group"]}>
                     <Button
@@ -101,7 +101,7 @@ export function HostView() {
                         className={css["copy-link"]}
                         label={lf("Copy Link")}
                         title={lf("Copy Link")}
-                        onClick={() => {}}
+                        onClick={() => { }}
                     />
                 </div>
                 <p></p>
@@ -127,13 +127,13 @@ export function HostView() {
                     {players.map(p => (
                         <div key={p.id} className={css["player"]}>
                             <span className={css["name"]}>{p.name}</span>
-                            {p.isHost && <span className={classList(css["pill"], css["host"])}>{lf("host")}</span>}
+                            {(p.role === "host") && <span className={classList(css["pill"], css["host"])}>{lf("host")}</span>}
                             {p.isMe && <span className={classList(css["pill"], css["me"])}>{lf("me")}</span>}
                             <Button
                                 className={css["actions"]}
                                 title={lf("Actions")}
                                 leftIcon="fas fa-ellipsis-v"
-                                onClick={() => {}}
+                                onClick={() => { }}
                             />
                         </div>
                     ))}

@@ -53,9 +53,9 @@ export const defaultPresence: Presence = {
 
 export type ViewPlayer = {
     id: string;
-    name: string;
-    isHost: boolean;
-    isMe: boolean;
+    name?: string;
+    role?: ClientRole;
+    isMe?: boolean;
 };
 
 export type ModalType = "sign-in" | "join-game";
@@ -82,3 +82,7 @@ export namespace SimMessages {
     };
     //export type Message = ImageMessage | AudioMessage | InputMessage | MultiplayerIconMessage;
 }
+
+export type KvMutationOp = "set" | "del";
+export type KvSubscriptionOp = "sub" | "uns";
+export type KvOp = KvMutationOp | KvSubscriptionOp;
