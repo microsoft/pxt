@@ -920,6 +920,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.clearHighlightedStatements();
                 this.editor.highlightBlock(blockId);
                 this.editor.centerOnBlock(blockId, true);
+            },
+            metadata: {
+                blockId: blockId
             }
         }
     }
@@ -954,6 +957,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     this.clearHighlightedStatements();
                     this.editor.highlightBlock(blockId);
                     this.editor.centerOnBlock(blockId, true);
+                },
+                metadata: {
+                    blockId: blockId
                 }
             };
         }).filter(f => !!f) ?? undefined;

@@ -7,6 +7,13 @@ import { classList } from "../../react-common/components/util";
 import { ErrorHelpButton, ErrorHelpResponse } from "./components/errorHelpButton";
 import { Button } from "../../react-common/components/controls/Button";
 
+/**
+ * A collection of optional metadata that can be attached to an error.
+ */
+type ErrorMetadata = {
+    blockId?: string,
+}
+
 type GroupedError = {
     error: ErrorDisplayInfo,
     count: number,
@@ -15,12 +22,14 @@ type GroupedError = {
 
 export type StackFrameDisplayInfo = {
     message: string,
+    metadata?: ErrorMetadata,
     onClick?: () => void,
 }
 
 export type ErrorDisplayInfo = {
     message: string,
     stackFrames?: StackFrameDisplayInfo[],
+    metadata?: ErrorMetadata,
     onClick?: () => void
 };
 
