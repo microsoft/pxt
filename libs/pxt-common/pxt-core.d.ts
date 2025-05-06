@@ -312,6 +312,7 @@ declare interface String {
     //% this.shadow="text"
     //% this.defl="this"
     //% blockNamespace="text"
+    //% expandArgumentsInToolbox
     substr(start: number, length?: number): string;
 
     /**

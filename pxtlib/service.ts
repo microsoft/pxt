@@ -835,8 +835,15 @@ namespace ts.pxtc {
         return r;
     }
 
-    const numberAttributes = ["weight", "imageLiteral", "gridLiteral", "topblockWeight", "inlineInputModeLimit"]
-    const booleanAttributes = [
+    const numberAttributes: (keyof CommentAttrs)[] = [
+        "weight",
+        "imageLiteral",
+        "gridLiteral",
+        "topblockWeight",
+        "inlineInputModeLimit"
+    ];
+
+    const booleanAttributes: (keyof CommentAttrs)[] = [
         "advanced",
         "handlerStatement",
         "afterOnStart",
@@ -851,7 +858,8 @@ namespace ts.pxtc {
         "callInDebugger",
         "duplicateShadowOnDrag",
         "argsNullable",
-        "compileHiddenArguments"
+        "compileHiddenArguments",
+        "expandArgumentsInToolbox",
     ];
 
     export function parseCommentString(cmt: string): CommentAttrs {
