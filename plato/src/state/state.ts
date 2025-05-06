@@ -1,4 +1,4 @@
-import { AuthStatus, CollabInfo, ModalType, ModalOptions, Presence, defaultPresence } from "@/types";
+import { AuthStatus, CollabInfo, ModalType, ModalOptions } from "@/types";
 import { ToastWithId } from "@/components/Toaster";
 
 export type AppState = {
@@ -13,7 +13,6 @@ export type AppState = {
 
 export type NetStateBase = {
     type: string;
-    presence: Presence;
     joinCode?: string;
 };
 
@@ -37,10 +36,8 @@ export const initialAppState: AppState = {
 
 export const initialHostNetState: HostNetState = {
     type: "host",
-    presence: defaultPresence,
 };
 
 export const initialGuestNetState: GuestNetState = {
     type: "guest",
-    presence: defaultPresence,
 };

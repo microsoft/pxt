@@ -43,14 +43,6 @@ export function getUserValue(user: UserInfo, key: string, def?: string): string 
     return def;
 }
 
-export type Presence = {
-    users: UserInfo[];
-};
-
-export const defaultPresence: Presence = {
-    users: [],
-};
-
 export type ViewPlayer = {
     id: string;
     name?: string;
@@ -86,3 +78,6 @@ export namespace SimMessages {
 export type KvMutationOp = "set" | "del";
 export type KvSubscriptionOp = "sub" | "uns";
 export type KvOp = KvMutationOp | KvSubscriptionOp;
+
+export type BaseValueType = string | number | boolean;
+export type ValueType = BaseValueType | Set<BaseValueType> | Map<string, BaseValueType> | Array<BaseValueType>;

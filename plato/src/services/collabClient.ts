@@ -5,7 +5,6 @@ import * as authClient from "./authClient";
 import {
     CollabInfo,
     ClientRole,
-    Presence,
     SessionOverReason,
     CollabJoinResult,
     HTTP_OK,
@@ -14,9 +13,10 @@ import {
     HTTP_IM_A_TEAPOT,
     ViewPlayer,
     KvMutationOp,
+    ValueType,
 } from "@/types";
-import { notifyDisconnected } from "@/transforms";
-import { generateRandomName, jsonReplacer, jsonReviver } from "@/utils";
+import { joinedSessionAsync, notifyDisconnected } from "@/transforms";
+import { jsonReplacer, jsonReviver } from "@/utils";
 
 const COLLAB_HOST_PROD = "https://plato.makecode.com";
 const COLLAB_HOST_STAGING = "https://dev.multiplayer.staging.pxt.io";
@@ -41,7 +41,7 @@ type Events = {
     "service-created": () => void;
     "service-destroyed": () => void;
     "joined": (role: ClientRole, clientId: string) => void;
-    "kv": (op: KvMutationOp, path: string[], val?: string) => void;
+    "kv": (op: KvMutationOp, path: string[], val?: ValueType) => void;
 };
 
 const emitter = new EventEmitter<Events>();
@@ -281,6 +281,15 @@ class CollabClient {
         this.sendMessage(msg);
     }
 
+    public sendSignal(signal: string, payload?: ValueType) {
+        const msg: Protocol.SignalMessage = {
+            type: "signal",
+            signal,
+            payload,
+        };
+        this.sendMessage(msg);
+    }
+
     //==========================================================
     // Message Handlers
 
@@ -399,9 +408,13 @@ export function setName(name: string) {
     collabClient?.setKey(`/clients/${collabClient.clientId}/name`, name);
 }
 
+export function sendSignal(signal: string, payload?: ValueType) {
+    const collabClient = getCollabClient(false);
+    collabClient?.sendSignal(signal, payload);
+}
+
 //=============================================================================
-// PlayerPresence - Sync External Store
-// (for use with React's useSyncExternalStore)
+// PlayerPresenceStore
 
 type PlayerPresenceEvents = {
     "notify": () => void;
@@ -417,12 +430,6 @@ class PlayerPresenceStore {
     private _players: Map<string, ViewPlayer> = new Map();
     private _cachedSnapshot: ViewPlayer[] = [];
     private _clientId?: string;
-    public players(): ViewPlayer[] {
-        return Array.from(this._players.values());
-    }
-    public player(id: string): ViewPlayer | undefined {
-        return this._players.get(id);
-    }
     constructor() {
         emitter.on("service-created", () => {
             this._players = new Map();
@@ -436,7 +443,7 @@ class PlayerPresenceStore {
             this._clientId = undefined;
             this.listeners.emit("reset");
         });
-        emitter.on("joined", (role: ClientRole, clientId: string) => {
+        emitter.on("joined", async (role: ClientRole, clientId: string) => {
             let changed = false;
             this._clientId = clientId;
             const me = this._players.get(clientId);
@@ -448,8 +455,7 @@ class PlayerPresenceStore {
                 this.notify();
                 this.listeners.emit("player-updated", clientId);
             }
-            // TODO: Move this
-            setName(generateRandomName());
+            await joinedSessionAsync(role, clientId);
         });
         emitter.on("kv", (op, path, val) => {
             if (path[0] !== "clients") return;
@@ -512,14 +518,6 @@ class PlayerPresenceStore {
                 let changed = false;
                 const key = path[2];
                 switch (key) {
-                    case "role":
-                        player.role = undefined;
-                        changed = true;
-                        break;
-                    case "name":
-                        player.name = undefined;
-                        changed = true;
-                        break;
                     default:
                         pxt.warn(`[del] Unknown player key: ${key}`);
                 }
@@ -554,9 +552,6 @@ class PlayerPresenceStore {
     public getSnapshot = (): ViewPlayer[] => {
         return this._cachedSnapshot;
     }
-    public getServerSnapshot = (): ViewPlayer[] => {
-        return this._cachedSnapshot;
-    }
 };
 
 export const playerPresenceStore = new PlayerPresenceStore();
@@ -581,11 +576,6 @@ namespace Protocol {
         version: number;
     };
 
-    export type PresenceMessage = MessageBase & {
-        type: "presence";
-        presence: Presence;
-    };
-
     export type JoinedMessage = MessageBase & {
         type: "joined";
         role: ClientRole;
@@ -606,16 +596,22 @@ namespace Protocol {
         type: "kv";
         op: KvMutationOp;
         key: string;
-        val?: string;
+        val?: ValueType;
+    };
+
+    export type SignalMessage = MessageBase & {
+        type: "signal";
+        signal: string;
+        payload?: ValueType;
     };
 
     export type Message =
         | ConnectMessage
-        | PresenceMessage
         | JoinedMessage
         | KickPlayerMessage
         | CollabOverMessage
-        | KVStoreMessage;
+        | KVStoreMessage
+        | SignalMessage;
 
     export namespace Binary {
         export enum MessageType {

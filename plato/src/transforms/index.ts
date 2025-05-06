@@ -1,12 +1,10 @@
 export { setUserProfileAsync } from "./setUserProfileAsync";
 export { userSignedInAsync } from "./userSignedInAsync";
 export { notifyDisconnected } from "./notifyDisconnected";
-export { setPresenceAsync } from "./setPresenceAsync";
 export { showModal } from "./showModal";
 export { dismissModal } from "./dismissModal";
 export { showToast } from "./showToast";
 export { dismissToast } from "./dismissToast";
-export { playerJoinedAsync } from "./playerJoinedAsync";
-export { playerLeftAsync } from "./playerLeftAsync";
-export { hostNewGameAsync } from "./hostNewGameAsync";
-export { joinGameAsync } from "./joinGameAsync";
+export { hostSessionAsync } from "./hostSessionAsync";
+export { joinSessionAsync } from "./joinSessionAsync";
+export { joinedSessionAsync } from "./joinedSessionAsync";

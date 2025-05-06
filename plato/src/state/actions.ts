@@ -1,4 +1,4 @@
-import { ActionBase, ModalOptions, CollabInfo, Presence } from "@/types";
+import { ActionBase, ModalOptions } from "@/types";
 import { ToastWithId } from "@/components/Toaster";
 import { NetState } from "./state";
 
@@ -13,7 +13,6 @@ type DismissAllToasts = ActionBase<"DISMISS_ALL_TOASTS">;
 type ShowModal = ActionBase<"SHOW_MODAL", { modalOptions: ModalOptions }>;
 type DismissModal = ActionBase<"DISMISS_MODAL">;
 type SetNetState = ActionBase<"SET_NET_STATE", { netState?: Partial<NetState> }>;
-type SetPresence = ActionBase<"SET_PRESENCE", { presence: Presence }>;
 
 /**
  * All Actions
@@ -26,8 +25,7 @@ export type Action =
     | DismissAllToasts
     | ShowModal
     | DismissModal
-    | SetNetState
-    | SetPresence;
+    | SetNetState;
 
 /**
  * Action Creators
@@ -60,8 +58,4 @@ export const dismissModal = (): DismissModal => ({
 export const setNetState = (netState: Partial<NetState> | undefined): SetNetState => ({
     type: "SET_NET_STATE",
     payload: { netState },
-});
-export const setPresence = (presence: Presence): SetPresence => ({
-    type: "SET_PRESENCE",
-    payload: { presence },
 });

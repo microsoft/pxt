@@ -5,7 +5,7 @@ import { initialHostNetState } from "@/state/state";
 import { makeToast } from "@/components/Toaster";
 import { showToast, dismissToast } from ".";
 
-export async function hostNewGameAsync() {
+export async function hostSessionAsync() {
     const { dispatch } = stateAndDispatch();
     const connectingToast = makeToast({
         type: "info",

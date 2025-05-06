@@ -5,7 +5,7 @@ import { makeToast } from "@/components/Toaster";
 import { showToast, dismissToast } from ".";
 import { initialGuestNetState } from "@/state/state";
 
-export async function joinGameAsync(joinCode: string): Promise<void> {
+export async function joinSessionAsync(joinCode: string): Promise<void> {
     const { dispatch } = stateAndDispatch();
     const connectingToast = makeToast({
         type: "info",

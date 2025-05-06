@@ -59,20 +59,5 @@ export function reducer(state: AppState, action: Action): AppState {
                 },
             };
         }
-        case "SET_PRESENCE": {
-            const { netState } = state;
-            if (!netState) {
-                return state;
-            }
-            return {
-                ...state,
-                netState: {
-                    ...netState,
-                    presence: {
-                        ...action.payload.presence,
-                    },
-                },
-            };
-        }
     }
 }

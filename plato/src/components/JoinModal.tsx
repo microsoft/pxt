@@ -5,7 +5,7 @@ import { Button } from "react-common/components/controls/Button";
 import { Link } from "react-common/components/controls/Link";
 import { Input } from "react-common/components/controls/Input";
 import { Modal } from "react-common/components/controls/Modal";
-import { dismissModal, joinGameAsync } from "@/transforms";
+import { dismissModal, joinSessionAsync } from "@/transforms";
 import { JoinGameModalOptions } from "@/types";
 import { cleanupJoinCode, generateRandomName } from "@/utils";
 import { Keys, Strings } from "@/constants";
@@ -53,7 +53,7 @@ export function JoinModal() {
                         const joinCode = cleanupJoinCode(inputRef.current?.value);
                         if (joinCode) {
                             dismissModal();
-                            await joinGameAsync(joinCode);
+                            await joinSessionAsync(joinCode);
                         } else {
                             if (inputRef.current) {
                                 inputRef.current.value = "";
