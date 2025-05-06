@@ -453,6 +453,24 @@ export function createToolboxBlock(info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, c
         }
     }
 
+    if (fn.attributes.expandArgumentsInToolbox) {
+        let mutation: Element;
+
+        for (const child of block.children) {
+            if (child.tagName === "mutation") {
+                mutation = child;
+                break;
+            }
+        }
+
+        if (!mutation) {
+            mutation = document.createElement("mutation");
+            block.appendChild(mutation);
+        }
+
+        mutation.setAttribute("_expanded", "" + fn.attributes._expandedDef.parameters.length);
+    }
+
     if (parent) {
         parentInput.appendChild(block);
         return parent;
