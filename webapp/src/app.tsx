@@ -3395,15 +3395,15 @@ export class ProjectView
                         const res = await pxt.commands.showProgramTooLargeErrorAsync(attemptedVariants, core.confirmAsync, saveOnly);
                         if (res?.recompile) {
                             pxt.tickEvent("compile.programTooLargeDialog.recompile");
-                            const oldVariants = pxt.appTarget.multiVariants;
+                            const oldVariants = pxt.appTarget.disabledVariants;
                             this.setState({ compiling: false, isSaving: false });
                             try {
-                                pxt.appTarget.multiVariants = res.useVariants;
+                                pxt.appTarget.disabledVariants = pxt.appTarget.multiVariants.filter(v => !res.useVariants.includes(v));
                                 await this.compile(saveOnly);
                                 return;
                             }
                             finally {
-                                pxt.appTarget.multiVariants = oldVariants;
+                                pxt.appTarget.disabledVariants = oldVariants;
                             }
                         }
                         else {
