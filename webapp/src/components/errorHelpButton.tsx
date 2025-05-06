@@ -38,16 +38,18 @@ export class ErrorHelpButton extends React.Component<
         this.aiErrorExplainRequest = this.aiErrorExplainRequest.bind(this);
         this.parseResponse = this.parseResponse.bind(this);
         this.getErrorsAsText = this.getErrorsAsText.bind(this);
+        this.cleanBlocksCode = this.cleanBlocksCode.bind(this);
     }
 
     async aiErrorExplainRequest(
         code: string,
-        errors: string[],
+        errors: string,
         lang: string,
-        target: string
+        target: string,
+        outputFormat: string
     ): Promise<string | undefined> {
         const url = `/api/copilot/explainerror`;
-        const data = { code, errors, lang, target };
+        const data = { lang, code, errors, target, outputFormat };
         let result: string = "";
 
         const request = await pxt.auth.AuthClient.staticApiAsync(url, data, "POST");
@@ -98,26 +100,28 @@ export class ErrorHelpButton extends React.Component<
         if (parsedResponse) {
             const validBlockIds = this.props.parent.getBlocks().map((b) => b.id);
             for (const item of parsedResponse) {
-                // Check each blockId is valid, and if so, add a tour step for it
+                const tourStep = {
+                    title: lf("Error Explanation"),
+                    description: item.message,
+                    location: pxt.tour.BubbleLocation.Center
+                } as pxt.tour.BubbleStep;
+
+                // Check each blockId is specified & valid, and if so, add a tour step for it
                 const blockId = item.blockId;
-                if (validBlockIds.includes(blockId)) {
-                    const tourStep = {
-                        title: lf("Error Explanation"),
-                        description: item.message,
-                        targetQuery: `g[data-id="${blockId}"]`,
-                        location: pxt.tour.BubbleLocation.Right,
-                        onStepBegin: () => {
+                if (blockId) {
+                    if (validBlockIds.includes(blockId)) {
+                        tourStep.targetQuery = `g[data-id="${blockId}"]`;
+                        tourStep.location = pxt.tour.BubbleLocation.Right;
+                        tourStep.onStepBegin = () => {
                             (this.props.parent.editor as Editor).editor.centerOnBlock(blockId);
                         }
-                        // sansQuery?: string; // Use this to exclude an element from the cutout
-                        // sansLocation?: BubbleLocation; // relative location of element to exclude
-                    } as pxt.tour.BubbleStep;
-
-                    explanationAsTour.push(tourStep);
-                } else {
-                    // TODO - handle this case
-                    console.error("Invalid blockId in AI response", blockId, parsedResponse, response);
+                    } else {
+                        // TODO - handle this case
+                        console.error("Invalid blockId in AI response", blockId, parsedResponse, response);
+                    }
                 }
+
+                explanationAsTour.push(tourStep);
             }
         } else {
             explanationAsText = response; // TODO - handle this case better
@@ -134,14 +138,12 @@ export class ErrorHelpButton extends React.Component<
         this.setState({
             loadingHelp: true,
         });
-
-        const mainFileName = this.props.parent.isBlocksActive()
-            ? pxt.MAIN_BLOCKS
-            : pxt.MAIN_TS;
+;
         const lang = this.props.parent.isBlocksActive() ? "blocks" : "typescript";
         const target = pxt.appTarget.nickname || pxt.appTarget.name;
         const mainPkg = pkg.mainEditorPkg();
-        const code = (this.props.parent.isBlocksActive() ? (this.props.parent.editor as Editor).getWorkspaceXmlWithIds() : mainPkg.files[mainFileName]?.content) ?? "";
+        const code = (this.props.parent.isBlocksActive() ? this.cleanBlocksCode((this.props.parent.editor as Editor).getWorkspaceXmlWithIds()) : mainPkg.files[pxt.MAIN_TS]?.content) ?? "";
+        const outputFormat = this.props.parent.isBlocksActive() ? "tour_json" : "text";
         console.log("Code", code);
 
         const errors = this.getErrorsAsText();
@@ -153,7 +155,8 @@ export class ErrorHelpButton extends React.Component<
             code,
             errors,
             lang,
-            target
+            target,
+            outputFormat
         );
 
         const parsedResponse = this.parseResponse(response);
@@ -161,8 +164,18 @@ export class ErrorHelpButton extends React.Component<
         this.props.onHelpResponse?.(parsedResponse);
     }
 
-    getErrorsAsText(): string[] {
-        return this.props.errors.map((error) => error.message);
+    cleanBlocksCode(code: string): string {
+        // Remove any image content (it's bulky and not useful for the AI)
+        const updatedCode = code.replace(/img`[^`]*`/g, "img`[trimmed for brevity]`");
+        return updatedCode;
+    }
+
+    /**
+     * Converts the list of errors into a string format for the AI to reference.
+     * Adds block ids to the error message if they exist.
+     */
+    getErrorsAsText(): string {
+        return JSON.stringify(this.props.errors);
     }
 
     render() {
