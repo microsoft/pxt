@@ -87,7 +87,7 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
         bubbleArrowOutline.style.border = "none";
         const bubbleBounds = bubble.getBoundingClientRect();
         let cutoutBounds: CutoutBounds;
-        if (targetContent.targetQuery === "nothing") {
+        if (!targetContent.targetQuery || targetContent.targetQuery === "nothing") {
             cutoutBounds = {
                 top: window.innerHeight / 2,
                 bottom: 0,

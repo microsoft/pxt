@@ -1341,7 +1341,7 @@ declare namespace pxt.tour {
     interface BubbleStep {
         title: string;
         description: string;
-        targetQuery: string;
+        targetQuery?: string;
         location: BubbleLocation;
         sansQuery?: string; // Use this to exclude an element from the cutout
         sansLocation?: BubbleLocation; // relative location of element to exclude
