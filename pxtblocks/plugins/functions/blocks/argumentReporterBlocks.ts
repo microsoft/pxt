@@ -7,7 +7,7 @@ import {
     ARGUMENT_REPORTER_CUSTOM_BLOCK_TYPE,
 } from "../constants";
 import { MsgKey } from "../msg";
-import { DUPLICATE_ON_DRAG_MUTATION_KEY, DuplicateOnDragStrategy, setDuplicateOnDragStrategy } from "../../duplicateOnDrag";
+import { DUPLICATE_ON_DRAG_MUTATION_KEY, setDuplicateOnDragStrategy } from "../../duplicateOnDrag";
 import { PathObject } from "../../renderer/pathObject";
 
 type ArgumentReporterMixinType = typeof ARGUMENT_REPORTER_MIXIN;
