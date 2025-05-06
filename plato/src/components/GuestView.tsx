@@ -7,7 +7,7 @@ import { classList } from "react-common/components/util";
 import { getGuestNetState } from "@/state/helpers";
 import { ViewPlayer } from "@/types";
 import { Keys, Strings } from "@/constants";
-import { debounce } from "@/utils";
+import { debounce, generateRandomName } from "@/utils";
 import { makeToast } from "./Toaster";
 import { showToast } from "@/transforms";
 import { Button } from "react-common/components/controls/Button";
@@ -25,13 +25,7 @@ export function GuestView() {
     const players: ViewPlayer[] = useMemo(() => {
         if (!netState) return [];
         return presence
-            .sort((a, b) => a.id.localeCompare(b.id))
-            .map(u => ({
-                id: u.id,
-                name: u.name ?? Strings.MissingName,
-                isHost: u.role === "host",
-                isMe: u.id === netState.clientId,
-            }));
+            .sort((a, b) => a.id.localeCompare(b.id));
     }, [presence, netState]);
 
     const joinCode = useMemo(() => {
@@ -71,7 +65,7 @@ export function GuestView() {
             <div className={classList(css["panel"], css["controls"])}>
                 <p className={css["label"]}>
                     {lf("Join Code")}
-                    <i className={classList(css["help"], "fas fa-question-circle")} onClick={() => {}}></i>
+                    <i className={classList(css["help"], "fas fa-question-circle")} onClick={() => { }}></i>
                 </p>
                 <div className={css["join-code-group"]}>
                     <Button
@@ -90,13 +84,21 @@ export function GuestView() {
                         className={css["copy-link"]}
                         label={lf("Copy Link")}
                         title={lf("Copy Link")}
-                        onClick={() => {}}
+                        onClick={() => { }}
                     />
                 </div>
                 <p></p>
                 <p></p>
                 <div className={css["me-group"]}>
                     <p className={css["label"]}>{lf("Me")}</p>
+                    <Button
+                        label={lf("Regenerate Name")}
+                        title={lf("Regenerate Name")}
+                        onClick={() => {
+                            const name = generateRandomName();
+                            collabClient.setName(name);
+                        }}
+                    />
                 </div>
                 <div className={css["leave-group"]}>
                     <Button
@@ -122,7 +124,7 @@ export function GuestView() {
                                 className={css["actions"]}
                                 title={lf("Actions")}
                                 leftIcon="fas fa-ellipsis-v"
-                                onClick={() => {}}
+                                onClick={() => { }}
                             />
                         </div>
                     ))}

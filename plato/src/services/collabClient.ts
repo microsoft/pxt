@@ -16,7 +16,7 @@ import {
     KvMutationOp,
 } from "@/types";
 import { notifyDisconnected } from "@/transforms";
-import { jsonReplacer, jsonReviver } from "@/utils";
+import { generateRandomName, jsonReplacer, jsonReviver } from "@/utils";
 
 const COLLAB_HOST_PROD = "https://plato.makecode.com";
 const COLLAB_HOST_STAGING = "https://dev.multiplayer.staging.pxt.io";
@@ -40,7 +40,7 @@ export type CollabPlayer = {
 type Events = {
     "service-created": () => void;
     "service-destroyed": () => void;
-    "joined": (role: ClientRole, clientId: string, slot: number, kv: Map<string, string>, sessKv: Map<string, string>) => void;
+    "joined": (role: ClientRole, clientId: string) => void;
     "kv": (op: KvMutationOp, path: string[], val?: string) => void;
 };
 
@@ -285,13 +285,13 @@ class CollabClient {
     // Message Handlers
 
     private async recvJoinedMessageAsync(msg: Protocol.JoinedMessage) {
-        pxt.debug(`Server said we're joined as "${msg.role}" in slot "${msg.slot}"`);
-        const { role, clientId, slot, kv, sessKv } = msg;
+        pxt.debug(`Server said we're joined as "${msg.role}"`);
+        const { role, clientId } = msg;
 
         this.clientRole = role;
         this.clientId = clientId;
 
-        emitter.emit("joined", role, clientId, slot, kv, sessKv);
+        emitter.emit("joined", role, clientId);
     }
 
     private async recvKVStoreMessageAsync(msg: Protocol.KVStoreMessage) {
@@ -336,8 +336,8 @@ class CollabClient {
 
 let _collabClient: CollabClient | undefined;
 
-function ensureCollabClient(): CollabClient {
-    if (!_collabClient) {
+function getCollabClient(alloc: boolean = true): CollabClient | undefined {
+    if (!_collabClient && alloc) {
         _collabClient = new CollabClient();
         emitter.emit("service-created");
     }
@@ -352,45 +352,51 @@ function destroyCollabClient() {
 
 export async function hostCollabAsync(): Promise<CollabJoinResult> {
     destroyCollabClient();
-    const collabClient = ensureCollabClient();
+    const collabClient = getCollabClient()!;
     const collabInfo = await collabClient.hostCollabAsync();
     return collabInfo;
 }
 
 export async function joinCollabAsync(joinCode: string): Promise<CollabJoinResult> {
     destroyCollabClient();
-    const collabClient = ensureCollabClient();
+    const collabClient = getCollabClient()!;
     const collabInfo = await collabClient.joinCollabAsync(joinCode);
     return collabInfo;
 }
 
 export async function leaveCollabAsync(reason: SessionOverReason) {
-    const collabClient = ensureCollabClient();
+    const collabClient = getCollabClient(false);
     await collabClient?.leaveCollabAsync(reason);
     destroyCollabClient();
 }
 
 export function kickPlayer(clientId: string) {
-    const collabClient = ensureCollabClient();
+    const collabClient = getCollabClient(false);
     collabClient?.kickPlayer(clientId);
 }
 
 export function collabOver(reason: SessionOverReason) {
-    const collabClient = ensureCollabClient();
+    const collabClient = getCollabClient(false);
     collabClient?.collabOver(reason);
 }
 
 export function kvOp(op: KvMutationOp, key: string, val?: string) {
-    const collabClient = ensureCollabClient();
+    const collabClient = getCollabClient(false);
     collabClient?.kvOp(op, key, val);
 }
 
 export function getClientId() {
-    return _collabClient?.clientId;
+    const collabClient = getCollabClient(false);
+    return collabClient?.clientId;
 }
 
 export function destroy() {
     destroyCollabClient();
+}
+
+export function setName(name: string) {
+    const collabClient = getCollabClient(false);
+    collabClient?.setKey(`/clients/${collabClient.clientId}/name`, name);
 }
 
 //=============================================================================
@@ -400,7 +406,7 @@ export function destroy() {
 type PlayerPresenceEvents = {
     "notify": () => void;
     "reset": () => void;
-    "joined": () => void;
+    "joined": (role: ClientRole, clientId: string) => void;
     "player-joined": (playerId: string) => void;
     "player-left": (playerId: string) => void;
     "player-updated": (playerId: string) => void;
@@ -410,6 +416,7 @@ class PlayerPresenceStore {
     private listeners: EventEmitter<PlayerPresenceEvents> = new EventEmitter();
     private _players: Map<string, ViewPlayer> = new Map();
     private _cachedSnapshot: ViewPlayer[] = [];
+    private _clientId?: string;
     public players(): ViewPlayer[] {
         return Array.from(this._players.values());
     }
@@ -420,12 +427,29 @@ class PlayerPresenceStore {
         emitter.on("service-created", () => {
             this._players = new Map();
             this._cachedSnapshot = [];
+            this._clientId = undefined;
             this.listeners.emit("reset");
         });
         emitter.on("service-destroyed", () => {
             this._players = new Map();
             this._cachedSnapshot = [];
+            this._clientId = undefined;
             this.listeners.emit("reset");
+        });
+        emitter.on("joined", (role: ClientRole, clientId: string) => {
+            let changed = false;
+            this._clientId = clientId;
+            const me = this._players.get(clientId);
+            if (me) {
+                me.isMe = true;
+                changed = true;
+            }
+            if (changed) {
+                this.notify();
+                this.listeners.emit("player-updated", clientId);
+            }
+            // TODO: Move this
+            setName(generateRandomName());
         });
         emitter.on("kv", (op, path, val) => {
             if (path[0] !== "clients") return;
@@ -446,7 +470,7 @@ class PlayerPresenceStore {
         const isNewPlayer = !this._players.has(clientId);
         const player = this._players.get(clientId) ?? {
             id: clientId,
-            isMe: clientId === _collabClient?.clientId,
+            isMe: clientId === this._clientId,
         } satisfies ViewPlayer;
         this._players.set(clientId, player);
         const key = path[2];
@@ -565,10 +589,7 @@ namespace Protocol {
     export type JoinedMessage = MessageBase & {
         type: "joined";
         role: ClientRole;
-        slot: number;
         clientId: string;
-        kv: Map<string, string>;
-        sessKv: Map<string, string>;
     };
 
     export type KickPlayerMessage = MessageBase & {

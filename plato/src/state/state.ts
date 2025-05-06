@@ -15,7 +15,6 @@ export type NetStateBase = {
     type: string;
     presence: Presence;
     joinCode?: string;
-    clientId?: string;
 };
 
 export type HostNetState = NetStateBase & {

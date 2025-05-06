@@ -6,7 +6,7 @@ import { getHostNetState } from "@/state/helpers";
 import { Input } from "react-common/components/controls/Input";
 import { Button } from "react-common/components/controls/Button";
 import { classList } from "react-common/components/util";
-import { debounce } from "@/utils";
+import { debounce, generateRandomName } from "@/utils";
 import { showToast } from "@/transforms";
 import { makeToast } from "./Toaster";
 import * as collabClient from "@/services/collabClient";
@@ -26,13 +26,7 @@ export function HostView() {
     const players: ViewPlayer[] = useMemo(() => {
         if (!netState) return [];
         return presence
-            .sort((a, b) => a.id.localeCompare(b.id))
-            .map(u => ({
-                id: u.id,
-                name: u.name ?? Strings.MissingName,
-                isHost: u.role === "host",
-                isMe: u.id === netState.clientId,
-            }));
+            .sort((a, b) => a.id.localeCompare(b.id));
     }, [presence, netState]);
 
     const joinCode = useMemo(() => {
@@ -108,6 +102,14 @@ export function HostView() {
                 <p></p>
                 <div className={css["me-group"]}>
                     <p className={css["label"]}>{lf("Me")}</p>
+                    <Button
+                        label={lf("Regenerate Name")}
+                        title={lf("Regenerate Name")}
+                        onClick={() => {
+                            const name = generateRandomName();
+                            collabClient.setName(name);
+                        }}
+                    />
                 </div>
                 <div className={css["leave-group"]}>
                     <Button
