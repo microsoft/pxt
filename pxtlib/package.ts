@@ -680,6 +680,7 @@ namespace pxt {
                     Object.keys(fixes).forEach(key => pxt.tickEvent("package.doubleload", { "extension": key }))
                     pxt.log(`upgraded, downloading again`);
                     pxt.debug(fixes);
+                    // TODO: we should cache
                     await this.downloadAsync();
                 }
             }

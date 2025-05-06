@@ -1210,17 +1210,15 @@ namespace pxt.github {
             return null
 
         for (const upgr of rules) {
-            const gh = /^move:(.*)/.exec(upgr)
-            if (gh) {
-                const orig_parsed = parseRepoId(id)
-                const new_parsed = parseRepoId(gh[1])
-                // to deal with mono repo, we should preserve filename if
-                // new repo doesn't override it
-                if (orig_parsed.fileName && !new_parsed.fileName) {
-                    new_parsed.fileName = orig_parsed.fileName
-                    new_parsed.fullName = join(new_parsed.owner, new_parsed.project, new_parsed.fileName)
-                }
-                const repo_s = stringifyRepo(new_parsed)
+            const move = /^move:([^#\/:]+)\/([^#\/:]+)$/.exec(upgr);
+            if (move) {
+                const repo = parseRepoId(id)
+                repo.owner = move[1]
+                repo.project = move[2]
+                repo.slug = join(repo.owner, repo.project)
+                repo.fullName = join(repo.owner, repo.project, repo.fileName)
+                repo.tag = undefined
+                const repo_s = stringifyRepo(repo)
                 pxt.debug(`upgrading ${id} to ${repo_s}}`)
                 const np: string = upgradedPackageReference(cfg, repo_s)
                 if (np) return np
