@@ -31,20 +31,20 @@ const reinstateBlocklyKeyHandlers = () => {
 export const BlocklyKeyboardIntercept = ({children, keyCodes}: BlocklyKeyboardInterceptProps) => {
     const keysSuspended = useRef<boolean>(false);
 
-    useEffect(() => 
+    useEffect(() =>
         () => { // when the component is destroyed, ensure it cleans up
             if (keysSuspended.current) {
                 reinstateBlocklyKeyHandlers();
             }
         }, []);
 
-    return <div 
+    return <div
         onFocus={() => {
             // Unlike pure HTML, React synthetic focus and blur bubble up from children
             if (keysSuspended.current) return;
             suspendBlocklyKeyHandlers(keyCodes);
             keysSuspended.current = true;
-        }} 
+        }}
         onBlur={() => {
             if (!keysSuspended.current) return;
             reinstateBlocklyKeyHandlers();
