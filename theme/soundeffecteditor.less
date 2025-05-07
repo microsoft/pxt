@@ -37,6 +37,11 @@
     flex-grow: 1;
     position: relative;
     overflow: hidden;
+
+    .common-dropdown-item:focus-visible {
+        outline: 3px solid var(--pxt-focus-border);
+        outline-offset: -3px;
+    }
 }
 
 .sound-controls {
