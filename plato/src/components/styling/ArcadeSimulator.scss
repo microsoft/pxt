@@ -1,0 +1,7 @@
+/* override padding value which makes resizing particulary hard */
+
+#sim-container .simframe {
+    padding: unset !important;
+    width: 100% !important;
+    height: 100vh !important;
+}

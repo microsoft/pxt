@@ -18,7 +18,7 @@ export async function joinSessionAsync(joinCode: string): Promise<void> {
         showToast(connectingToast);
         dispatch(
             setNetState({
-                ...initialGuestNetState,
+                ...initialGuestNetState(),
                 joinCode,
             })
         );

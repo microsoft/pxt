@@ -8,8 +8,8 @@ export function getClientRole(context?: AppStateContextProps): ClientRole {
     if (!netState) {
         return "none";
     }
-    const { type } = netState;
-    return type ?? "none";
+    const { clientRole } = netState;
+    return clientRole ?? "none";
 }
 
 export function getHostNetState(context?: AppStateContextProps): HostNetState | undefined {
@@ -18,7 +18,7 @@ export function getHostNetState(context?: AppStateContextProps): HostNetState | 
     if (!netState) {
         return undefined;
     }
-    if (netState.type !== "host") {
+    if (netState.clientRole !== "host") {
         return undefined;
     }
     return netState as HostNetState;
@@ -30,7 +30,7 @@ export function getGuestNetState(context?: AppStateContextProps): GuestNetState 
     if (!netState) {
         return undefined;
     }
-    if (netState.type !== "guest") {
+    if (netState.clientRole !== "guest") {
         return undefined;
     }
     return netState as GuestNetState;

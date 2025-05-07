@@ -12,12 +12,17 @@ import { usePromise } from "@/hooks/usePromise";
 import { ThemeManager } from "react-common/components/theming/themeManager";
 import { classList } from "react-common/components/util";
 import { JoinModal } from "./JoinModal";
+import * as transforms from "@/transforms";
 
 function App() {
     const { dispatch } = useContext(AppStateContext);
     const [authCheckComplete, setAuthCheckComplete] = useState(false);
 
     const ready = usePromise(AppStateReady, false);
+
+    useEffect(() => {
+        transforms.init();
+    }, []);
 
     useEffect(() => {
         /*
@@ -31,7 +36,7 @@ function App() {
             req.then(trgcfg => trgcfg && dispatch(setTargetConfig(trgcfg)));
         }
             */
-    });
+    }, []);
 
     //useVisibilityChange(visibilityChanged);
 

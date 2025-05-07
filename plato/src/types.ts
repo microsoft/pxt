@@ -68,7 +68,7 @@ export type ModalOptions = ShowSignInModalOptions | JoinGameModalOptions;
 
 export namespace SimMessages {
     type MessageBase = {
-        type: "arcade-plato";
+        type: "plato";
         origin?: "server" | "client";
         broadcast?: boolean;
     };
@@ -78,6 +78,5 @@ export namespace SimMessages {
 export type KvMutationOp = "set" | "del";
 export type KvSubscriptionOp = "sub" | "uns";
 export type KvOp = KvMutationOp | KvSubscriptionOp;
-
 export type BaseValueType = string | number | boolean;
 export type ValueType = BaseValueType | Set<BaseValueType> | Map<string, BaseValueType> | Array<BaseValueType>;

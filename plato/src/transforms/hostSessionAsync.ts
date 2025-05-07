@@ -16,7 +16,7 @@ export async function hostSessionAsync() {
     try {
         dispatch(dismissAllToasts());
         showToast(connectingToast);
-        dispatch(setNetState(initialHostNetState));
+        dispatch(setNetState(initialHostNetState()));
         const hostResult = await collabClient.hostCollabAsync();
 
         if (!hostResult.success) {

@@ -1,4 +1,4 @@
-import { AppState } from "./state";
+import { AppState, initialNoneNetState } from "./state";
 import { Action } from "./actions";
 
 export function reducer(state: AppState, action: Action): AppState {
@@ -41,14 +41,14 @@ export function reducer(state: AppState, action: Action): AppState {
             if (!action.payload.netState) {
                 return {
                     ...state,
-                    netState: undefined,
+                    netState: initialNoneNetState(),
                 };
             }
-            if (!state.netState?.type && !action.payload.netState.type) {
-                // If netState has no type, then incoming must have one.
+            if (!state.netState?.clientRole && !action.payload.netState.clientRole) {
+                // If existing netState has no clientRole, then incoming is expected to have one.
                 return {
                     ...state,
-                    netState: undefined,
+                    netState: initialNoneNetState(),
                 };
             }
             return {

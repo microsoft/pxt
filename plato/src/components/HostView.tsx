@@ -1,5 +1,5 @@
 import css from "./styling/NetView.module.scss";
-import { useContext, useMemo } from "react";
+import { useContext, useMemo, useRef } from "react";
 import { useSyncExternalStore } from "use-sync-external-store/shim"
 import { AppStateContext } from "@/state/Context";
 import { getHostNetState } from "@/state/helpers";
@@ -7,15 +7,17 @@ import { Input } from "react-common/components/controls/Input";
 import { Button } from "react-common/components/controls/Button";
 import { classList } from "react-common/components/util";
 import { debounce, generateRandomName } from "@/utils";
-import { showToast } from "@/transforms";
+import { showToast, startLoadingGame } from "@/transforms";
 import { makeToast } from "./Toaster";
 import * as collabClient from "@/services/collabClient";
 import { setNetState } from "@/state/actions";
 import { ViewPlayer } from "@/types";
 import { Strings } from "@/constants";
+import { ArcadeSimulator } from "./ArcadeSimulator";
 
 export function HostView() {
     const context = useContext(AppStateContext);
+    const gameLinkRef = useRef<HTMLInputElement>(null);
     const { state, dispatch } = context;
     const netState = getHostNetState(context);
     const presence = useSyncExternalStore(
@@ -61,6 +63,13 @@ export function HostView() {
         return null;
     }
 
+    const loadGame = () => {
+        const gameLink = gameLinkRef.current?.value;
+        const shareCode = pxt.Cloud.parseScriptId(gameLink || "");
+        if (!shareCode) return;
+        startLoadingGame(shareCode);
+    };
+
     return (
         <div className={css["view"]}>
             <div className={classList(css["panel"], css["controls"])}>
@@ -69,8 +78,8 @@ export function HostView() {
                     <i className={classList(css["help"], "fas fa-question-circle")} onClick={() => { }}></i>
                 </p>
                 <div className={css["share-link"]}>
-                    <Input className={css["share-link"]} placeholder="Paste your game link here" />
-                    <Button className={css["load"]} label={lf("Load")} title={lf("Load")} onClick={() => { }} />
+                    <Input className={css["share-link"]} handleInputRef={gameLinkRef} placeholder="Paste your game link here" />
+                    <Button className={css["load"]} label={lf("Load")} title={lf("Load")} onClick={loadGame} />
                 </div>
                 <p></p>
                 <p></p>
@@ -141,7 +150,9 @@ export function HostView() {
                     ))}
                 </div>
             </div>
-            <div className={classList(css["panel"], css["sim"])}></div>
+            <div className={classList(css["panel"], css["sim"])}>
+                <ArcadeSimulator />
+            </div>
         </div>
     );
 }

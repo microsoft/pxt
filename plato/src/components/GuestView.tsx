@@ -12,6 +12,7 @@ import { makeToast } from "./Toaster";
 import { showToast } from "@/transforms";
 import { Button } from "react-common/components/controls/Button";
 import { setNetState } from "@/state/actions";
+import { ArcadeSimulator } from "./ArcadeSimulator";
 
 export function GuestView() {
     const context = useContext(AppStateContext);
@@ -130,7 +131,9 @@ export function GuestView() {
                     ))}
                 </div>
             </div>
-            <div className={classList(css["panel"], css["sim"])}></div>
+            <div className={classList(css["panel"], css["sim"])}>
+                <ArcadeSimulator />
+            </div>
         </div>
     );
 }

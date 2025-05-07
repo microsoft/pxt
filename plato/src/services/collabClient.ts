@@ -15,7 +15,6 @@ import {
     KvMutationOp,
     ValueType,
 } from "@/types";
-import { joinedSessionAsync, notifyDisconnected } from "@/transforms";
 import { jsonReplacer, jsonReviver } from "@/utils";
 
 const COLLAB_HOST_PROD = "https://plato.makecode.com";
@@ -37,14 +36,16 @@ export type CollabPlayer = {
     kv: Map<string, string>;
 };
 
-type Events = {
+type EmitterEvents = {
     "service-created": () => void;
     "service-destroyed": () => void;
     "joined": (role: ClientRole, clientId: string) => void;
     "kv": (op: KvMutationOp, path: string[], val?: ValueType) => void;
+    "signal": (signal: string, payload?: ValueType) => void;
+    "disconnected": (reason?: SessionOverReason) => void;
 };
 
-const emitter = new EventEmitter<Events>();
+const emitter = new EventEmitter<EmitterEvents>();
 
 class CollabClient {
     sock: Socket | undefined;
@@ -105,6 +106,8 @@ class CollabClient {
                     return await this.recvJoinedMessageAsync(msg);
                 case "kv":
                     return await this.recvKVStoreMessageAsync(msg);
+                case "signal":
+                    return await this.recvSignalMessageAsync(msg);
             }
         } else {
             throw new Error(`Unknown payload: ${payload}`);
@@ -161,7 +164,7 @@ class CollabClient {
                 });
                 this.sock?.on("close", () => {
                     pxt.debug("socket disconnected");
-                    notifyDisconnected(this.sessOverReason);
+                    emitter.emit("disconnected", this.sessOverReason);
                     clearTimeout(joinTimeout);
                     resolve();
                 });
@@ -262,6 +265,19 @@ class CollabClient {
         this.sock?.close();
     }
 
+    public kickPlayer(clientId: string) {
+        const msg: Protocol.KickPlayerMessage = {
+            type: "kick-player",
+            clientId,
+        };
+        this.sendMessage(msg);
+    }
+
+    public collabOver(reason: SessionOverReason) {
+        this.sessOverReason = reason;
+        destroyCollabClient();
+    }
+
     public setKey(key: string, val: string) {
         const msg: Protocol.KVStoreMessage = {
             type: "kv",
@@ -281,6 +297,16 @@ class CollabClient {
         this.sendMessage(msg);
     }
 
+    public kvOp(op: KvMutationOp, key: string, val?: string) {
+        const msg: Protocol.KVStoreMessage = {
+            type: "kv",
+            op,
+            key,
+            val,
+        };
+        this.sendMessage(msg);
+    }
+
     public sendSignal(signal: string, payload?: ValueType) {
         const msg: Protocol.SignalMessage = {
             type: "signal",
@@ -289,6 +315,7 @@ class CollabClient {
         };
         this.sendMessage(msg);
     }
+
 
     //==========================================================
     // Message Handlers
@@ -317,29 +344,11 @@ class CollabClient {
         emitter.emit("kv", op, path, val);
     }
 
-    //==========================================================
+    private async recvSignalMessageAsync(msg: Protocol.SignalMessage) {
+        pxt.debug(`Server sent signal message: ${msg.signal}`);
+        const { signal, payload } = msg;
 
-    public kickPlayer(clientId: string) {
-        const msg: Protocol.KickPlayerMessage = {
-            type: "kick-player",
-            clientId,
-        };
-        this.sendMessage(msg);
-    }
-
-    public collabOver(reason: SessionOverReason) {
-        this.sessOverReason = reason;
-        destroyCollabClient();
-    }
-
-    public kvOp(op: KvMutationOp, key: string, val?: string) {
-        const msg: Protocol.KVStoreMessage = {
-            type: "kv",
-            op,
-            key,
-            val,
-        };
-        this.sendMessage(msg);
+        emitter.emit("signal", signal, payload);
     }
 }
 
@@ -408,10 +417,127 @@ export function setName(name: string) {
     collabClient?.setKey(`/clients/${collabClient.clientId}/name`, name);
 }
 
-export function sendSignal(signal: string, payload?: ValueType) {
+export function loadGame(shareCode: string) {
     const collabClient = getCollabClient(false);
-    collabClient?.sendSignal(signal, payload);
+    collabClient?.setKey("/sess/shareCode", shareCode);
 }
+
+export function on(ev: keyof EmitterEvents, callback: (...args: any[]) => void): (() => void) {
+    emitter.on(ev, callback);
+    return () => {
+        emitter.off(ev, callback);
+    };
+}
+
+export function off(ev: keyof EmitterEvents, callback: (...args: any[]) => void): void {
+    emitter.off(ev, callback);
+}
+
+//=============================================================================
+// SessionStore
+
+type SessionEvents = {
+    "notify": () => void;
+    "reset": () => void;
+};
+
+type SessionState = {
+    sessionId: string;
+    joinCode: string;
+    hostId: string;
+    seed: number;
+    clientIds: Set<string>
+    shareCode?: string;
+};
+
+const initialSessionState = (): SessionState => ({
+    sessionId: "",
+    joinCode: "",
+    hostId: "",
+    seed: 0,
+    clientIds: new Set(),
+});
+
+class SessionStore {
+    private listeners: EventEmitter<SessionEvents> = new EventEmitter();
+    private state: SessionState;
+    private _snapshot: SessionState;
+
+    constructor() {
+        this.state = initialSessionState();
+        this._snapshot = initialSessionState();
+        emitter.on("kv", (op, path, val) => {
+            if (path[0] !== "sess") return;
+            switch (op) {
+                case "set":
+                    this.setKey(path, val!);
+                    break;
+                case "del":
+                    this.delKey(path);
+                    break;
+            }
+        });
+    }
+
+    private setKey(path: string[], val: ValueType) {
+        if (path.length < 2) return;
+        let changed = false;
+        path.shift(); // remove "sess"
+        const key = path.shift();
+        switch (key) {
+            case "sessionId":
+                this.state.sessionId = val as string;
+                changed = true;
+                break;
+            case "joinCode":
+                this.state.joinCode = val as string;
+                changed = true;
+                break;
+            case "hostId":
+                this.state.hostId = val as string;
+                changed = true;
+                break;
+            case "seed":
+                this.state.seed = val as number;
+                changed = true;
+                break;
+            case "clientIds":
+                this.state.clientIds = val as Set<string>;
+                changed = true;
+                break;
+            case "shareCode":
+                this.state.shareCode = val as string;
+                changed = true;
+                break;
+        }
+        if (changed) {
+            this.notify();
+        }
+    }
+
+    private delKey(path: string[]) {
+        if (path.length < 2) return;
+        let changed = false;
+        path.shift(); // remove "sess"
+        const key = path.shift();
+    }
+
+    private notify() {
+        this._snapshot = { ...this.state };
+        this.listeners.emit("notify");
+    }
+
+    // React's useSyncExternalStore
+    public subscribe = (callback: () => void): (() => void) => {
+        this.listeners.on("notify", callback);
+        return () => this.listeners.off("notify", callback);
+    }
+    public getSnapshot = (): SessionState => {
+        return this._snapshot;
+    }
+};
+
+export const sessionStore = new SessionStore();
 
 //=============================================================================
 // PlayerPresenceStore
@@ -455,13 +581,12 @@ class PlayerPresenceStore {
                 this.notify();
                 this.listeners.emit("player-updated", clientId);
             }
-            await joinedSessionAsync(role, clientId);
         });
         emitter.on("kv", (op, path, val) => {
             if (path[0] !== "clients") return;
             switch (op) {
                 case "set":
-                    this.setKey(path, val);
+                    this.setKey(path, val!);
                     break;
                 case "del":
                     this.delKey(path);
@@ -470,7 +595,7 @@ class PlayerPresenceStore {
         });
     }
 
-    private setKey(path: string[], val: any) {
+    private setKey(path: string[], val: ValueType) {
         let changed = false;
         const clientId = path[1];
         const isNewPlayer = !this._players.has(clientId);
@@ -483,11 +608,11 @@ class PlayerPresenceStore {
         if (key) {
             switch (key) {
                 case "role":
-                    player.role = val;
+                    player.role = val as ClientRole;
                     changed = true;
                     break;
                 case "name":
-                    player.name = val;
+                    player.name = val as string;
                     changed = true;
                     break;
                 default:

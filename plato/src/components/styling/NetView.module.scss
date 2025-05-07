@@ -141,6 +141,9 @@ $page-text: white;
                         justify-items: center;
                         font-weight: bold;
                         padding: 0.1rem 0.75rem;
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
                     }
 
                     span.host {

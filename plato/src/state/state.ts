@@ -4,7 +4,7 @@ import { ToastWithId } from "@/components/Toaster";
 export type AppState = {
     authStatus: AuthStatus;
     userProfile?: pxt.auth.UserProfile;
-    netState?: Partial<NetState>;
+    netState: Partial<NetState>;
     collabInfo?: CollabInfo;
     modalType?: ModalType;
     modalOptions?: ModalOptions;
@@ -12,32 +12,41 @@ export type AppState = {
 };
 
 export type NetStateBase = {
-    type: string;
+    clientRole: string;
     joinCode?: string;
 };
 
+export type NoneNetState = NetStateBase & {
+    clientRole: "none";
+    shareCode?: string;
+};
+
 export type HostNetState = NetStateBase & {
-    type: "host";
+    clientRole: "host";
     shareCode?: string;
 };
 
 export type GuestNetState = NetStateBase & {
-    type: "guest";
+    clientRole: "guest";
     shareCode?: string;
 };
 
-export type NetState = HostNetState | GuestNetState;
+export type NetState = HostNetState | GuestNetState | NoneNetState;
+
+export const initialNoneNetState = (): NoneNetState => ({
+    clientRole: "none",
+});
+
+export const initialHostNetState = (): HostNetState => ({
+    clientRole: "host",
+});
+
+export const initialGuestNetState = (): GuestNetState => ({
+    clientRole: "guest",
+});
 
 export const initialAppState: AppState = {
-    //netMode: "init",
     authStatus: "unknown",
+    netState: initialNoneNetState(),
     toasts: [],
-};
-
-export const initialHostNetState: HostNetState = {
-    type: "host",
-};
-
-export const initialGuestNetState: GuestNetState = {
-    type: "guest",
 };

@@ -1,4 +1,5 @@
 //import { gameOver } from "./gameClient";
+import { ClientRole } from "@/types";
 import { stateAndDispatch } from "../state";
 import { setNetState } from "../state/actions";
 
@@ -23,7 +24,7 @@ if (!pxt.react.getTilemapProject) {
 }
 
 async function loadPackageAsync(runOpts: RunOptions) {
-    const verspec = runOpts.mpRole === "server" ? `pub:${runOpts.id}` : "empty:clientprj";
+    const verspec = `pub:${runOpts.shareCode}`;
     const previousMainPackage = mainPkg();
     if (previousMainPackage?._verspec !== verspec || verspec.startsWith("pub:S")) {
         const mp = mainPkg(true /** force refresh */);
@@ -33,15 +34,6 @@ async function loadPackageAsync(runOpts: RunOptions) {
         mp._verspec = verspec;
         await mp.host().downloadPackageAsync(mainPkg(), []);
         await mainPkg().installAllAsync();
-    }
-
-    try {
-        if (runOpts.mpRole === "client") {
-            let epkg = getEditorPkg(mainPkg());
-            epkg.files[pxt.MAIN_TS] = "multiplayer.init()";
-        }
-    } catch (e: any) {
-        console.error(lf("Cannot load extension: {0}", e));
     }
 }
 
@@ -70,7 +62,7 @@ class EditorPackage {
     files: pxt.Map<string> = {};
     id: string | undefined;
 
-    constructor(private ksPkg: pxt.Package, public topPkg: EditorPackage) {}
+    constructor(private ksPkg: pxt.Package, public topPkg: EditorPackage) { }
 
     getKsPkg() {
         return this.ksPkg;
@@ -119,7 +111,7 @@ class PkgHost implements pxt.Host {
     async cacheStoreAsync(id: string, val: string): Promise<void> {
         try {
             this.githubPackageCache[id] = val ? JSON.parse(val) : undefined;
-        } catch (e) {}
+        } catch (e) { }
     }
 
     async cacheGetAsync(id: string): Promise<string> {
@@ -218,29 +210,30 @@ function getCompileOptionsAsync() {
 }
 
 function getStoredState(runOpts: RunOptions) {
+    const shareCode = runOpts.shareCode;
     let storedState: pxt.Map<string> = {};
-    if (runOpts.mpRole != "server") return storedState;
-    const id = runOpts.id;
+    if (!shareCode) return storedState;
+
     try {
-        let projectStorage = window.localStorage.getItem(id);
+        const projectStorage = window.localStorage.getItem(shareCode);
         if (projectStorage) {
             storedState = JSON.parse(projectStorage);
         }
-    } catch (e) {}
+    } catch (e) { }
     return storedState;
 }
 
 function setStoredState(runOpts: RunOptions, key: string, value: any) {
-    if (runOpts.mpRole != "server") return;
-    const id = runOpts.id;
-    let storedState: pxt.Map<string> = getStoredState(runOpts);
+    const shareCode = runOpts.shareCode;
+    if (!shareCode) return;
+    const storedState = getStoredState(runOpts);
 
     if (value != null) storedState[key] = value;
     else delete storedState[key];
 
     try {
-        window.localStorage.setItem(id, JSON.stringify(storedState));
-    } catch (e) {}
+        window.localStorage.setItem(shareCode, JSON.stringify(storedState));
+    } catch (e) { }
 }
 function workerOpAsync<T extends keyof pxtc.service.ServiceOps>(op: T, arg: pxtc.service.OpArg): Promise<any> {
     const startTm = Date.now();
@@ -281,21 +274,13 @@ export function simDriver(container?: HTMLElement) {
     return _simDriver;
 }
 
-interface RunOptionsBase {
-    mpRole: "server" | "client";
-    simQueryParams: string;
+export interface RunOptions {
+    shareCode?: string;
+    clientRole?: ClientRole;
     mute?: boolean;
+    simQueryParams?: string;
     builtJsInfo?: pxtc.BuiltSimJsInfo; // TODO probably move this out
 }
-interface ServerRunOptions extends RunOptionsBase {
-    mpRole: "server";
-    id: string;
-}
-interface ClientRunOptions extends RunOptionsBase {
-    mpRole: "client";
-}
-
-export type RunOptions = ClientRunOptions | ServerRunOptions;
 
 function initDriverAndOptions(
     container: HTMLElement,
@@ -319,7 +304,6 @@ function initDriverAndOptions(
         single: true,
         autofocus: true,
         queryParameters: runOpts.simQueryParams,
-        mpRole: runOpts.mpRole,
     };
     driver.setRunOptions(runOptions);
     return runOptions;
@@ -373,8 +357,6 @@ export async function buildSimJsInfo(runOpts: RunOptions): Promise<pxtc.BuiltSim
         opts.computeUsedParts = true;
         opts.breakpoints = true;
 
-        if (runOpts.mpRole == "client") opts.fileSystem[pxt.MAIN_TS] = "multiplayer.init()";
-
         // Api info needed for py2ts conversion, if project is shared in Python
         if (opts.target.preferredEditor === pxt.PYTHON_PROJECT_NAME) {
             opts.target.preferredEditor = pxt.JAVASCRIPT_PROJECT_NAME;
@@ -407,9 +389,7 @@ export async function buildSimJsInfo(runOpts: RunOptions): Promise<pxtc.BuiltSim
 
     if (compileResult.diagnostics?.length > 0 && didUpgrade) {
         pxt.log("Compile with upgrade rules failed, trying again with original code");
-        compileResult = await compileAsync(opts => {
-            if (runOpts.mpRole === "client") opts.fileSystem[pxt.MAIN_TS] = "multiplayer.init()";
-        });
+        compileResult = await compileAsync(opts => { });
     }
 
     if (compileResult.diagnostics?.length > 0) {
