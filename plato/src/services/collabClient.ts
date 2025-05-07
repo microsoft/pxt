@@ -438,7 +438,6 @@ export function off(ev: keyof EmitterEvents, callback: (...args: any[]) => void)
 
 type SessionEvents = {
     "notify": () => void;
-    "reset": () => void;
 };
 
 type SessionState = {
@@ -466,6 +465,16 @@ class SessionStore {
     constructor() {
         this.state = initialSessionState();
         this._snapshot = initialSessionState();
+        emitter.on("service-created", () => {
+            this.state = initialSessionState();
+            this._snapshot = initialSessionState();
+            this.listeners.emit("notify");
+        });
+        emitter.on("service-destroyed", () => {
+            this.state = initialSessionState();
+            this._snapshot = initialSessionState();
+            this.listeners.emit("notify");
+        });
         emitter.on("kv", (op, path, val) => {
             if (path[0] !== "sess") return;
             switch (op) {
@@ -544,11 +553,6 @@ export const sessionStore = new SessionStore();
 
 type PlayerPresenceEvents = {
     "notify": () => void;
-    "reset": () => void;
-    "joined": (role: ClientRole, clientId: string) => void;
-    "player-joined": (playerId: string) => void;
-    "player-left": (playerId: string) => void;
-    "player-updated": (playerId: string) => void;
 };
 
 class PlayerPresenceStore {
@@ -561,13 +565,13 @@ class PlayerPresenceStore {
             this._players = new Map();
             this._cachedSnapshot = [];
             this._clientId = undefined;
-            this.listeners.emit("reset");
+            this.listeners.emit("notify");
         });
         emitter.on("service-destroyed", () => {
             this._players = new Map();
             this._cachedSnapshot = [];
             this._clientId = undefined;
-            this.listeners.emit("reset");
+            this.listeners.emit("notify");
         });
         emitter.on("joined", async (role: ClientRole, clientId: string) => {
             let changed = false;
@@ -579,7 +583,6 @@ class PlayerPresenceStore {
             }
             if (changed) {
                 this.notify();
-                this.listeners.emit("player-updated", clientId);
             }
         });
         emitter.on("kv", (op, path, val) => {
@@ -619,12 +622,6 @@ class PlayerPresenceStore {
                     pxt.warn(`[set] Unknown player key: ${key}`);
             }
         }
-        if (isNewPlayer) {
-            changed = true;
-            this.listeners.emit("player-joined", clientId);
-        } else if (changed) {
-            this.listeners.emit("player-updated", clientId);
-        }
 
         if (changed) {
             this.notify();
@@ -635,7 +632,6 @@ class PlayerPresenceStore {
         const clientId = path[1];
         if (path.length < 3) {
             this._players.delete(clientId);
-            this.listeners.emit("player-left", clientId);
             this.notify();
         } else {
             const player = this._players.get(clientId);
@@ -647,7 +643,6 @@ class PlayerPresenceStore {
                         pxt.warn(`[del] Unknown player key: ${key}`);
                 }
                 if (changed) {
-                    this.listeners.emit("player-updated", clientId);
                     this.notify();
                 }
             }
@@ -657,16 +652,6 @@ class PlayerPresenceStore {
     private notify() {
         this._cachedSnapshot = Array.from(this._players.values());
         this.listeners.emit("notify");
-    }
-
-    public on(ev: "reset", callback: () => void): (() => void);
-    public on(ev: "joined", callback: () => void): (() => void);
-    public on(ev: "player-joined", callback: (playerId: string) => void): (() => void);
-    public on(ev: "player-left", callback: (playerId: string) => void): (() => void);
-    public on(ev: "player-updated", callback: (playerId: string) => void): (() => void);
-    public on(ev: keyof PlayerPresenceEvents, callback: (...args: any[]) => void): (() => void) {
-        this.listeners.on(ev, callback);
-        return () => this.listeners.off(ev, callback);
     }
 
     // React's useSyncExternalStore
