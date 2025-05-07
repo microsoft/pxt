@@ -1,7 +1,7 @@
 /// <reference path="../built/pxtlib.d.ts" />
 
 import * as Blockly from "blockly";
-import { flyoutCategory, getAllFunctionDefinitionBlocks } from "./plugins/functions";
+import { flyoutCategory, getAllFunctionDefinitionBlocks, LOCALIZATION_NAME_MUTATION_KEY } from "./plugins/functions";
 import { DUPLICATE_ON_DRAG_MUTATION_KEY } from "./plugins/duplicateOnDrag";
 import { DRAGGABLE_PARAM_INPUT_PREFIX } from "./loader";
 
@@ -433,18 +433,12 @@ export function createToolboxBlock(info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, c
                 if (useReporter && blockType === "argument_reporter_custom") {
                     mutation.setAttribute("typename", arg.type);
                 }
+                mutation.setAttribute(LOCALIZATION_NAME_MUTATION_KEY, arg.localizationKey);
 
                 const field = document.createElement("field");
                 field.setAttribute("name", useReporter ? "VALUE" : "VAR");
 
-                let localizedName = pxt.U.rlf(arg.localizationKey);
-
-                // if the strings are out of date, don't show the localization key
-                if (localizedName === arg.localizationKey) {
-                    localizedName = arg.name;
-                }
-
-                field.textContent = pxt.Util.htmlEscape(localizedName);
+                field.textContent = pxt.Util.htmlEscape(arg.name);
 
                 shadow.appendChild(field);
                 value.appendChild(shadow);

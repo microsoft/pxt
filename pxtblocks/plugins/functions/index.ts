@@ -1,6 +1,7 @@
 export * from "./msg";
 export * from "./extensions";
 export * from "./fields/fieldArgumentEditor";
+export * from "./fields/fieldArgumentReporter";
 export * from "./fields/fieldAutocapitalizeTextInput";
 export * from "./blocks/argumentEditorBlocks";
 export * from "./blocks/argumentReporterBlocks";
