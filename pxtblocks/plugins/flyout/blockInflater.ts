@@ -5,6 +5,7 @@ export const HIDDEN_CLASS_NAME = "pxtFlyoutHidden";
 export class MultiFlyoutRecyclableBlockInflater extends Blockly.BlockFlyoutInflater {
     protected keyToBlock: Map<string, Blockly.BlockSvg> = new Map();
     protected blockToKey: Map<Blockly.BlockSvg, string> = new Map();
+    protected varRemapping: Map<string, string> = new Map();
 
     static register() {
         Blockly.registry.register(
@@ -16,13 +17,6 @@ export class MultiFlyoutRecyclableBlockInflater extends Blockly.BlockFlyoutInfla
     }
 
     protected isBlockRecycleable(block: Blockly.BlockSvg): boolean {
-        switch (block.type) {
-            case "variables_get":
-            case "variables_set":
-            case "variables_change":
-                return false;
-        }
-
         return true;
     }
 
@@ -74,6 +68,46 @@ export class MultiFlyoutRecyclableBlockInflater extends Blockly.BlockFlyoutInfla
         block.moveBy(-xy.x, -xy.y);
         block.addClass(HIDDEN_CLASS_NAME);
         block.setDisabledReason(true, HIDDEN_CLASS_NAME);
+
+        // blockly deletes all of the potential variables in the flyout after recycling blocks.
+        // this can end up deleting our cached blocks if one of the referenced variables was
+        // promoted from a potential variable to a real one, since it will detect all of the
+        // cached blocks as referencing that variable. we can remap any variable that exists
+        // as both a potential and non-potential variable to a new one with the same name to
+        // prevent its usages from being deleted
+        const potentialVariableMap = block.workspace.getPotentialVariableMap();
+
+        if (potentialVariableMap) {
+            const allBlocks = [block].concat(block.getChildren(false));
+
+            // loop over all child variable fields
+            for (const block of allBlocks) {
+                for (const input of block.inputList) {
+                    for (const field of input.fieldRow) {
+                        if (field instanceof Blockly.FieldVariable) {
+                            const variable = field.getVariable();
+                            const id = variable.getId();
+
+                            // check if this variable was promoted to a real variable
+                            if (!block.workspace.getVariableMap().getVariableById(id)) {
+                                continue;
+                            }
+
+                            // if it was, replace with a new potential variable
+                            if (!this.varRemapping.has(id)) {
+                                // rename the old potential variable to avoid collisions
+                                const name = variable.getName();
+                                variable.setName(Blockly.utils.idGenerator.getNextUniqueId());
+                                this.varRemapping.set(id, potentialVariableMap.createVariable(name).getId());
+                            }
+
+                            field.setValue(this.varRemapping.get(id));
+                        }
+                    }
+                }
+            }
+        }
+
         const key = this.blockToKey.get(block);
         this.keyToBlock.set(key, block);
         this.removeListeners(block.id);
