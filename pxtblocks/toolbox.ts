@@ -436,7 +436,15 @@ export function createToolboxBlock(info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, c
 
                 const field = document.createElement("field");
                 field.setAttribute("name", useReporter ? "VALUE" : "VAR");
-                field.textContent = pxt.Util.htmlEscape(arg.name);
+
+                let localizedName = pxt.U.rlf(arg.localizationKey);
+
+                // if the strings are out of date, don't show the localization key
+                if (localizedName === arg.localizationKey) {
+                    localizedName = arg.name;
+                }
+
+                field.textContent = pxt.Util.htmlEscape(localizedName);
 
                 shadow.appendChild(field);
                 value.appendChild(shadow);
