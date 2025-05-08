@@ -390,7 +390,7 @@ namespace pxt {
                     let fixes: pxt.Map<string> = {};
                     const promises: Promise<void>[] = []
                     U.iterMap(this.config.dependencies, (pkg, ver) => {
-                        const doit = async () => { 
+                        const doit = async () => {
                             if (pxt.github.isGithubId(ver)) {
                                 const upgraded = await pxt.github.upgradedPackageReferenceAsync(packagesConfig, ver)
                                 if (upgraded && upgraded != ver) {
