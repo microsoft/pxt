@@ -1210,23 +1210,25 @@ namespace pxt.github {
             return null
 
         for (const upgr of rules) {
-            const move = /^move:([^#\/:]+)\/([^#\/:]+)$/.exec(upgr);
-            if (move) {
-                const owner = move[1];
-                const project = move[2];
-                const tag = await latestVersionAsync(`https://github.com/${owner}/${project}`,cfg)
-                if (tag) {
+            const mv = /^move:(.*)$/.exec(upgr);
+            if (mv) {
+                const new_repo = parseRepoId(mv[1])
+                if (new_repo) {
+                    if (!new_repo.tag) {
+                        new_repo.tag = await latestVersionAsync(mv[1],cfg)
+                    }
                     const repo = parseRepoId(id)
-                    repo.owner = owner
-                    repo.project = project
-                    repo.slug = join(repo.owner, repo.project)
-                    repo.fullName = join(repo.owner, repo.project, repo.fileName)
-                    repo.tag = tag
-                    const repo_s = stringifyRepo(repo)
-                    pxt.debug(`upgrading ${id} to ${repo_s}}`)
-                    const np: string = await upgradedPackageReferenceAsync(cfg, repo_s)
+                    if (!new_repo.fileName && repo.fileName) {
+                        new_repo.fileName = repo.fileName
+                        new_repo.fullName = join(new_repo.owner, new_repo.project, new_repo.fileName)
+                    }
+                    const new_repo_s = stringifyRepo(new_repo)
+                    pxt.debug(`upgrading ${id} to ${new_repo_s}}`)
+                    const np: string = await upgradedPackageReferenceAsync(cfg, new_repo_s)
                     if (np) return np
-                    else return repo_s
+                    else return new_repo_s
+                } else {
+                    pxt.log(`cannot parse move target: ${mv[1]}`)
                 }
             }
             const m = /^min:(.*)/.exec(upgr)
