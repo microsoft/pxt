@@ -385,7 +385,7 @@ namespace pxt {
             if (!this.config)
                 this.loadConfig();
             return pxt.packagesConfigAsync()
-                .then(packagesConfig => {
+                .then(async packagesConfig => {
                     let numfixes = 0
                     let fixes: pxt.Map<string> = {};
                     const promises: Promise<void>[] = []
@@ -403,7 +403,7 @@ namespace pxt {
                         }
                         promises.push(doit())
                     })
-                    Promise.all(promises)
+                    await Promise.all(promises)
                     if (numfixes)
                         this.saveConfig()
                     return numfixes && fixes;
