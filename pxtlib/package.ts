@@ -388,17 +388,22 @@ namespace pxt {
                 .then(packagesConfig => {
                     let numfixes = 0
                     let fixes: pxt.Map<string> = {};
+                    const promises: Promise<void>[] = []
                     U.iterMap(this.config.dependencies, (pkg, ver) => {
-                        if (pxt.github.isGithubId(ver)) {
-                            const upgraded = pxt.github.upgradedPackageReference(packagesConfig, ver)
-                            if (upgraded && upgraded != ver) {
-                                pxt.log(`upgrading dep ${pkg}: ${ver} -> ${upgraded}`);
-                                fixes[ver] = upgraded;
-                                this.config.dependencies[pkg] = upgraded
-                                numfixes++
+                        const doit = async () => { 
+                            if (pxt.github.isGithubId(ver)) {
+                                const upgraded = await pxt.github.upgradedPackageReferenceAsync(packagesConfig, ver)
+                                if (upgraded && upgraded != ver) {
+                                    pxt.log(`upgrading dep ${pkg}: ${ver} -> ${upgraded}`);
+                                    fixes[ver] = upgraded;
+                                    this.config.dependencies[pkg] = upgraded
+                                    numfixes++
+                                }
                             }
                         }
+                        promises.push(doit())
                     })
+                    Promise.all(promises)
                     if (numfixes)
                         this.saveConfig()
                     return numfixes && fixes;

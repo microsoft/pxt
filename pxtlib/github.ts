@@ -1204,25 +1204,30 @@ namespace pxt.github {
         return null
     }
 
-    export function upgradedPackageReference(cfg: PackagesConfig, id: string) {
+    export async function upgradedPackageReferenceAsync(cfg: PackagesConfig, id: string) {
         const rules = upgradeRules(cfg, id)
         if (!rules)
             return null
 
         for (const upgr of rules) {
-            const move = /^move:([^#\/:]+)\/([^#\/:]+)$/.exec(upgr);
+            const move = /^([^#\/:]+)\/([^#\/:]+)$/.exec(upgr);
             if (move) {
-                const repo = parseRepoId(id)
-                repo.owner = move[1]
-                repo.project = move[2]
-                repo.slug = join(repo.owner, repo.project)
-                repo.fullName = join(repo.owner, repo.project, repo.fileName)
-                repo.tag = undefined
-                const repo_s = stringifyRepo(repo)
-                pxt.debug(`upgrading ${id} to ${repo_s}}`)
-                const np: string = upgradedPackageReference(cfg, repo_s)
-                if (np) return np
-                else return repo_s
+                const owner = move[1];
+                const project = move[2];
+                const tag = await latestVersionAsync(`github:${owner}/${project}`,cfg)
+                if (tag) {
+                    const repo = parseRepoId(id)
+                    repo.owner = owner
+                    repo.project = project
+                    repo.slug = join(repo.owner, repo.project)
+                    repo.fullName = join(repo.owner, repo.project, repo.fileName)
+                    repo.tag = tag
+                    const repo_s = stringifyRepo(repo)
+                    pxt.debug(`upgrading ${id} to ${repo_s}}`)
+                    const np: string = await upgradedPackageReferenceAsync(cfg, repo_s)
+                    if (np) return np
+                    else return repo_s
+                }
             }
             const m = /^min:(.*)/.exec(upgr)
             const minV = m && pxt.semver.tryParse(m[1]);
