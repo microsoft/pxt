@@ -192,6 +192,10 @@ export function mutateCallersAndDefinition(name: string, ws: Blockly.Workspace, 
         for (const block of definitionBlock.getDescendants(false)) {
             if (!isFunctionArgumentReporter(block)) continue;
 
+            const argumentOwner = getArgumentReporterParent(block, block);
+
+            if (argumentOwner && argumentOwner !== definitionBlock) continue;
+
             const oldName = block.getFieldValue("VALUE");
             const oldArgId = oldArgNamesToIds[oldName];
             const newName = idsToNewArgNames[oldArgId];
@@ -264,54 +268,66 @@ export function doArgumentReporterDragChecks(a: Blockly.RenderedConnection, b: B
         return true;
     }
 
-    const draggedName = draggedBlock.getFieldValue("VALUE");
-    const draggedType = (draggedBlock as ArgumentReporterBlock).getTypeName();
+    const destinationBlock = b.getSourceBlock();
 
-    let destinationBlock = b.getSourceBlock();
-
-    // this shouldn't happen, but if it does we should let the stock checker handle it
+    // this shouldn't happen, but if it does then we should let the default connection checker handle it
     if (!destinationBlock) {
         return true;
     }
 
-    while (destinationBlock.getSurroundParent()) {
-        destinationBlock = destinationBlock.getSurroundParent();
+    return !!(getArgumentReporterParent(draggedBlock, destinationBlock));
+}
+
+function getArgumentReporterParent(reporter: Blockly.Block, location: Blockly.Block): Blockly.Block | undefined {
+    pxt.U.assert(isFunctionArgumentReporter(reporter));
+
+    const varName = reporter.getFieldValue("VALUE");
+    const varType = (reporter as ArgumentReporterBlock).getTypeName();
+
+    while (location.getSurroundParent()) {
+        location = location.getSurroundParent();
 
         // check to see if this is a callback with draggable reporters
-        for (const input of destinationBlock.inputList) {
+        for (const input of location.inputList) {
             if (!input.connection || !input.name.startsWith(DRAGGABLE_PARAM_INPUT_PREFIX)) continue;
 
             const name = input.name.slice(DRAGGABLE_PARAM_INPUT_PREFIX.length);
-            if (name !== draggedName) continue;
+            if (name !== varName) continue;
 
             // blockly primitive types are capitalized
-            let toCheck = draggedType;
+            let toCheck = varType;
             if (toCheck === "string" || toCheck === "number" || toCheck === "boolean") {
                 toCheck = toCheck.charAt(0).toUpperCase() + toCheck.slice(1);
+            }
+
+            if (input.connection.getCheck().indexOf(toCheck) !== -1) {
+                return location;
             }
 
             // bail out, even if there is a chance that a parent higher up in the stack could
             // have a matching argument. we don't allow shadowing of arguments with
             // different types
-            return input.connection.getCheck().indexOf(toCheck) !== -1;
+            return undefined;
         }
     }
 
     // if disabled, this block must be an orphaned block on the workspace. connecting
     // function parameters to these blocks can be useful when refactoring, so allow
     // the connection
-    if (!destinationBlock.isEnabled()) {
-        return true;
+    if (!location.isEnabled()) {
+        return location;
     }
 
     // for functions, make sure the function has a parameter with this same name and type
-    if (isFunctionDefinition(destinationBlock)) {
-        const functionArgs = (destinationBlock as unknown as FunctionDefinitionBlock).getArguments();
+    if (isFunctionDefinition(location)) {
+        const functionArgs = (location as unknown as FunctionDefinitionBlock).getArguments();
 
-        return functionArgs.some(arg => arg.name === draggedName && arg.type === draggedType);
+        if (functionArgs.some(arg => arg.name === varName && arg.type === varType)) {
+            return location;
+        }
     }
 
-    return false;
+    return undefined;
 }
 
 export function findUniqueParamName(name: string, paramNames: string[]) {

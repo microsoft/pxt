@@ -108,8 +108,12 @@ export const Input = (props: InputProps) => {
                 e.preventDefault();
                 onEnterKey(value);
             }
-        } else if (options && expanded && e.key === "ArrowDown") {
-            document.getElementById(getDropdownOptionId(Object.values(options)[0]))?.focus();
+        } else if (options && e.key === "ArrowDown") {
+            if (expanded) {
+                document.getElementById(getDropdownOptionId(Object.values(options)[0]))?.focus();
+            } else {
+                expandButtonClickHandler();
+            }
             e.preventDefault();
             e.stopPropagation();
         } else if (options && expanded && e.key === "ArrowUp") {
@@ -118,6 +122,15 @@ export const Input = (props: InputProps) => {
             e.preventDefault();
             e.stopPropagation();
         }
+    }
+
+    const captureEscapeKey = (e: React.KeyboardEvent) => {
+        if (e.code !== "Escape") return;
+        (e.target as HTMLElement).blur();
+        expandButtonClickHandler();
+        document.getElementById(id)?.focus();
+        e.stopPropagation();
+        e.preventDefault();
     }
 
     const iconClickHandler = () => {
@@ -212,6 +225,7 @@ export const Input = (props: InputProps) => {
                         ariaHasPopup="listbox"
                         ariaExpanded={expanded}
                         ariaLabel={ariaLabel}
+                        tabIndex={-1}
                         onClick={expandButtonClickHandler} />}
             </div>
             {expanded &&
@@ -220,7 +234,8 @@ export const Input = (props: InputProps) => {
                     childTabStopId={getDropdownOptionId(value) ?? getDropdownOptionId(Object.values(options)[0])}
                     aria-labelledby={id}
                     useUpAndDownArrowKeys={true}>
-                        <ul role="presentation">
+                        <ul role="presentation"
+                        onKeyDown={captureEscapeKey}>
                             { Object.keys(options).map(option =>
                                 <li key={option} role="presentation">
                                     <Button
