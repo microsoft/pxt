@@ -1210,11 +1210,11 @@ namespace pxt.github {
             return null
 
         for (const upgr of rules) {
-            const move = /^([^#\/:]+)\/([^#\/:]+)$/.exec(upgr);
+            const move = /^move:([^#\/:]+)\/([^#\/:]+)$/.exec(upgr);
             if (move) {
                 const owner = move[1];
                 const project = move[2];
-                const tag = await latestVersionAsync(`github:${owner}/${project}`,cfg)
+                const tag = await latestVersionAsync(`https://github.com/${owner}/${project}`,cfg)
                 if (tag) {
                     const repo = parseRepoId(id)
                     repo.owner = owner
