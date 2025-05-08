@@ -74,7 +74,7 @@ export class FieldImageDropdown extends FieldDropdown implements FieldCustom {
 
         const options = this.getOptions();
 
-        const columnButtonWidth = this.columns_ ? ((this.width_ / this.columns_) - BUTTON_MARGIN) : 0;
+        const columnButtonSize = this.columns_ ? ((this.width_ / this.columns_) - BUTTON_MARGIN) : 0;
 
         // do a first pass to calculate the rows
         for (let i = 0; i < options.length; i++) {
@@ -84,8 +84,8 @@ export class FieldImageDropdown extends FieldDropdown implements FieldCustom {
             let buttonHeight = content.height;
 
             if (content.type != "placeholder" && this.columns_) {
-                buttonWidth = columnButtonWidth;
-                buttonHeight = columnButtonWidth;
+                buttonWidth = columnButtonSize;
+                buttonHeight = columnButtonSize;
             }
 
             if (currentRow.height && (currentRow.width + buttonWidth + BUTTON_MARGIN > this.width_)) {
@@ -132,8 +132,8 @@ export class FieldImageDropdown extends FieldDropdown implements FieldCustom {
                 button.setAttribute('class', 'blocklyDropDownButton');
                 button.title = content.alt;
 
-                button.style.width = (columnButtonWidth || content.width) + 'px';
-                button.style.height = row.height + 'px';
+                button.style.width = (columnButtonSize || content.width) + 'px';
+                button.style.height = (columnButtonSize || content.height) + 'px';
 
                 let backgroundColor = this.backgroundColour_;
                 if (value == this.getValue()) {
