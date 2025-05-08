@@ -9,6 +9,11 @@ export interface FieldCustom {
     isFieldCustom_: boolean;
     saveOptions?(): pxt.Map<string | number | boolean>;
     restoreOptions?(map: pxt.Map<string | number | boolean>): void;
+
+    /**
+     * Returns a human-readable description of the field's current value.
+     */
+    getFieldDescription?(): string;
 }
 
 export interface FieldCustomOptions {

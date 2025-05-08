@@ -307,8 +307,12 @@ declare interface String {
      */
     //% helper=stringSubstr
     //% help=text/substr
-    //% blockId="string_substr" block="substring of %this=text|from %start|of length %length" blockNamespace="text"
+    //% blockId=string_substr_new
+    //% block="substring of $this|from $start||of length $length"
+    //% this.shadow="text"
     //% this.defl="this"
+    //% blockNamespace="text"
+    //% expandArgumentsInToolbox
     substr(start: number, length?: number): string;
 
     /**
@@ -402,6 +406,19 @@ declare interface String {
     //% helper=stringToLowerCase
     //% help=text/to-lower-case
     toLowerCase(): string;
+
+    /**
+     * Return a substring of the current string.
+     * @param start first character index; can be negative from counting from the end, eg:0
+     * @param length number of characters to extract, eg: 10
+     */
+    //% helper=stringSubstr
+    //% help=text/substr
+    //% blockId="string_substr" block="substring of %this=text|from %start|of length %length" blockNamespace="text"
+    //% this.defl="this"
+    //% blockAliasFor="String.substr"
+    //% deprecated
+    __substr(start: number, length?: number): string;
 
     [index: number]: string;
 }

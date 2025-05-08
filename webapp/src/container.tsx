@@ -300,7 +300,8 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
     renderCore() {
         const hasIdentity = pxt.auth.hasIdentity();
         const highContrast = this.getData<boolean>(auth.HIGHCONTRAST)
-        const { greenScreen, accessibleBlocks } = this.state;
+        const { greenScreen } = this.state;
+        const accessibleBlocks = this.getData<boolean>(auth.ACCESSIBLE_BLOCKS);
         const targetTheme = pxt.appTarget.appTheme;
         const packages = pxt.appTarget.cloud && !!pxt.appTarget.cloud.packages;
         const reportAbuse = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing;
@@ -354,7 +355,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             <div className="ui divider"></div>
             {targetTheme.selectLanguage ? <sui.Item icon='xicon globe' role="menuitem" text={lf("Language")} onClick={this.showLanguagePicker} /> : undefined}
             <sui.Item role="menuitem" icon="paint brush" text={lf("Theme")} onClick={this.showThemePicker} />
-            {targetTheme.accessibleBlocks ? <sui.Item role="menuitem" text={accessibleBlocks ? lf("Accessible Blocks Off") : lf("Accessible Blocks On")} onClick={this.toggleAccessibleBlocks} /> : undefined}
+            <sui.Item role="menuitem" text={accessibleBlocks ? lf("Accessible Blocks Off") : lf("Accessible Blocks On")} onClick={this.toggleAccessibleBlocks} />
             {showGreenScreen ? <sui.Item role="menuitem" text={greenScreen ? lf("Green Screen Off") : lf("Green Screen On")} onClick={this.toggleGreenScreen} /> : undefined}
             {docItems && renderDocItems(this.props.parent, docItems, "setting-docs-item mobile only inherit")}
             {githubUser ? <div className="ui divider"></div> : undefined}
@@ -378,7 +379,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
 
 
 interface IBaseMenuItemProps extends ISettingsProps {
-    onClick: () => void;
+    onClick: (e: React.MouseEvent<HTMLElement>) => void;
     isActive: () => boolean;
 
     icon?: string;
@@ -443,7 +444,7 @@ class BlocksMenuItem extends data.Component<ISettingsProps, {}> {
         super(props);
     }
 
-    protected onClick = (): void => {
+    protected onClick = (e: React.MouseEvent<HTMLElement>): void => {
         pxt.tickEvent("menu.blocks", undefined, { interactiveConsent: true });
         this.props.parent.openBlocks();
     }

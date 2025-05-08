@@ -1164,6 +1164,8 @@ namespace pxt {
                 }
             }
 
+            const disabledVariants = pxt.appTarget.disabledVariants;
+
             let shimsGenerated = false
 
             const fillExtInfoAsync = async (variant: string) => {
@@ -1222,10 +1224,14 @@ namespace pxt {
                     variants = [pxt.appTargetVariant]
                 } else if (pxt.appTarget.alwaysMultiVariant || pxt.appTarget.compile.switches.multiVariant) {
                     // multivariants enabled
-                    variants = pxt.appTarget.multiVariants
+                    variants = pxt.appTarget.multiVariants;
                 } else {
                     // not enbaled - default to first variant
                     variants = [pxt.appTarget.multiVariants[0]]
+                }
+
+                if (!pxt.appTarget.alwaysMultiVariant && disabledVariants) {
+                    variants = variants.filter(v => !disabledVariants.includes(v));
                 }
             } else {
                 // no multi-variants, use empty variant name,
@@ -1245,6 +1251,9 @@ namespace pxt {
                         const einfo = etarget.extinfo;
                         einfo.appVariant = v;
                         einfo.outputPrefix = variants.length == 1 || !v ? "" : v + "-";
+                        if (disabledVariants?.indexOf(v) > -1) {
+                            einfo.disabledDeps = einfo.disabledDeps || "user-disabled";
+                        }
                         if (ext) {
                             opts.otherMultiVariants.push(etarget);
                         }

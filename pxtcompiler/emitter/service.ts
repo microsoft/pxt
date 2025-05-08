@@ -336,8 +336,6 @@ namespace ts.pxtc {
             }
             if (si.attributes.jsDoc)
                 jsdocStrings[si.qName] = si.attributes.jsDoc;
-            if (si.attributes.block)
-                locStrings[`${si.qName}|block`] = si.attributes.block;
             if (si.attributes.group)
                 locStrings[`{id:group}${si.attributes.group}`] = si.attributes.group;
             if (si.attributes.subcategory)
@@ -346,6 +344,16 @@ namespace ts.pxtc {
                 si.parameters.filter(pi => !!pi.description).forEach(pi => {
                     jsdocStrings[`${si.qName}|param|${pi.name}`] = pi.description;
                 })
+
+            if (si.attributes.block) {
+                locStrings[`${si.qName}|block`] = si.attributes.block;
+                const comp = pxt.blocks.compileInfo(si);
+                if (comp.handlerArgs?.length) {
+                    for (const arg of comp.handlerArgs) {
+                        locStrings[arg.localizationKey] = arg.name;
+                    }
+                }
+            }
         }
         const mapLocs = (m: pxt.Map<string>, name: string) => {
             if (!options.locs) return;
