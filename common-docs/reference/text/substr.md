@@ -17,16 +17,18 @@ let there = "Hello there!!!".substr(6, 5)
 ```
 
 If you want to have the substring copy to the end of the first string, you just use a starting
-position and set `0` as the length. This will copy all of the first string beginning at position `6`. The substring will say `"there!!!"` in this case.
+position and either don't use the **_length_** parameter or set it to `0`. This will copy all of the first string beginning at position `6`. The substring will say `"there!!!"` in this case.
 
 ```block
+let there = "Hello there!!!".substr(6)
+// - or -
 let there = "Hello there!!!".substr(6, 0)
 ```
 
 ## Parameters
 
 * **start**: a [number](/types/number) which is the position to start copying from the original this string. 
-* **length**: a [number](/types/number) which is the amount of characters to copy from the original string. If _length_ is set to `0`, the rest of this string is copied beginning at _start_. If _length_ is `0` or less, a string with nothing in it is returned.
+* **length**: (optional) a [number](/types/number) which is the amount of characters to copy from the original string. If _length_ is not included or set to `0`, the rest of this string is copied beginning at _start_. If _length_ is less than `0`, a string with nothing in it (empty string) is returned.
 
 ## Returns
 
@@ -37,9 +39,9 @@ let there = "Hello there!!!".substr(6, 0)
 Copy the nouns from the sentence into two smaller strings.
 
 ```blocks
-let sentence = "The mountains have snow."
+let sentence = "The mountains have snow"
 let mountains = sentence.substr(4, 9)
-let snow = sentence.substr(19, 4)
+let snow = sentence.substr(19)
 ```
 
 ## See also
