@@ -20,7 +20,7 @@ const KeyboardControlsHelp = () => {
             <table>
                 <tbody>
                     <Row name={lf("Show/hide shortcut help")} shortcuts={[SHORTCUT_NAMES.LIST_SHORTCUTS]} />
-                    <Row name={lf("Jump to region")} shortcuts={[[cmd, "U"]]} />
+                    <Row name={lf("Jump to region")} shortcuts={[[cmd, "B"]]} />
                     <Row name={lf("Block and toolbox navigation")} shortcuts={[SHORTCUT_NAMES.UP, SHORTCUT_NAMES.DOWN, SHORTCUT_NAMES.LEFT, SHORTCUT_NAMES.RIGHT]} />
                     <Row name={lf("Toolbox or insert")} shortcuts={[SHORTCUT_NAMES.TOOLBOX, SHORTCUT_NAMES.INSERT]} joiner={orAsJoiner} />
                     {editOrConfirmRow}
@@ -37,7 +37,7 @@ const KeyboardControlsHelp = () => {
             <table>
                 <tbody>
                     <Row name={lf("Move between menus, simulator and the workspace")} shortcuts={[[lf("Tab")], [lf("Shift"), lf("Tab")]]} joiner="row"/>
-                    <Row name={lf("Jump to region")} shortcuts={[[cmd, "U"]]} />
+                    <Row name={lf("Jump to region")} shortcuts={[[cmd, "B"]]} />
                     <Row name={lf("Exit")} shortcuts={[SHORTCUT_NAMES.EXIT]} />
                     <Row name={lf("Toolbox")} shortcuts={[SHORTCUT_NAMES.TOOLBOX]} />
                     <Row name={lf("Toolbox: Move in and out of categories")} shortcuts={[SHORTCUT_NAMES.LEFT, SHORTCUT_NAMES.RIGHT]} />
