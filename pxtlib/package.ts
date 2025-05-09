@@ -657,12 +657,6 @@ namespace pxt {
                 this.parseConfig(str);
             }
 
-            // if we are installing this script, we haven't yet downloaded the config
-            // do upgrade later
-            if (!isInstall) {
-                await this.upgradePackagesAsync();
-            }
-
             if (isInstall) {
                 await this.downloadAsync();
                 if (this.level !== 0 && !this.isAssetPack()) {
@@ -675,20 +669,7 @@ namespace pxt {
                 }
             }
 
-            // we are installing the script, and we've download the original version and we haven't upgraded it yet
-            // do upgrade and reload as needed
-            if (isInstall) {
-                const fixes = await this.upgradePackagesAsync();
-
-                if (fixes) {
-                    // worst case scenario with double load
-                    Object.keys(fixes).forEach(key => pxt.tickEvent("package.doubleload", { "extension": key }))
-                    pxt.log(`upgraded, downloading again`);
-                    pxt.debug(fixes);
-                    // TODO: we should cache
-                    await this.downloadAsync();
-                }
-            }
+            await this.upgradePackagesAsync()
 
             if (appTarget.simulator && appTarget.simulator.dynamicBoardDefinition) {
                 if (this.level == 0) {
