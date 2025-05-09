@@ -1,6 +1,6 @@
 {
   "name": "pxt-core",
-  "version": "11.4.17",
+  "version": "11.4.18",
   "description": "Microsoft MakeCode provides Blocks / JavaScript / Python tools and editors",
   "keywords": [
     "TypeScript",
@@ -156,6 +156,9 @@
     "yargs": "^17.7.2"
   },
   "overrides": {
+    "combine-source-map": {
+      "source-map": "0.4.4"
+    },
     "@blockly/field-colour": {
       "blockly": "^12.0.0-beta.4"
     },
