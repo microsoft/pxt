@@ -130,6 +130,10 @@ export class BaseFieldToggle extends Blockly.FieldNumber implements FieldCustom 
         return this.falseText;
     }
 
+    getFieldDescription(): string {
+        return this.getDisplayText_();
+    }
+
     updateSize_() {
         switch (this.getOutputShape()) {
             case provider.SHAPES.ROUND:

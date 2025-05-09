@@ -352,6 +352,8 @@ export class FieldMatrix extends Blockly.Field implements FieldCustom {
             // Clear event listeners and selection used for keyboard navigation.
             this.removeKeyboardFocusHandlers();
             this.clearSelection();
+            // This enables keyboard navigation in the Blockly workspace if not focused already.
+            (this.sourceBlock_.workspace as Blockly.WorkspaceSvg).markFocused();
         }, false));
     }
 
@@ -433,6 +435,10 @@ export class FieldMatrix extends Blockly.Field implements FieldCustom {
         // getText() returns the value that is set by calls to setValue()
         let text = removeQuotes(this.value_);
         return `\`\n${FieldMatrix.TAB}${text}\n${FieldMatrix.TAB}\``;
+    }
+
+    getFieldDescription(): string {
+        return lf("{0}x{1} LED Grid", this.matrixWidth, this.matrixHeight);
     }
 
     // Restores the block state from the text value of the field

@@ -38,7 +38,6 @@ import * as make from "./make";
 import * as blocklyToolbox from "./blocksSnippets";
 import * as monacoToolbox from "./monacoSnippets";
 import * as greenscreen from "./greenscreen";
-import * as accessibleblocks from "./accessibleblocks";
 import * as socketbridge from "./socketbridge";
 import * as webusb from "./webusb";
 import * as auth from "./auth";
@@ -687,6 +686,9 @@ export class ProjectView
 
         if (this.isBlocksActive()) {
             if (this.state.embedSimView) this.setState({ embedSimView: false });
+            // This timeout prevents key events from being handled by Blockly's keyboard
+            // navigation plugin prematurely.
+            setTimeout(() => {this.editor.focusWorkspace()}, 0)
             return;
         }
 
@@ -2807,7 +2809,7 @@ export class ProjectView
         this.stopSimulator(true); // don't keep simulator around
         this.showKeymap(false); // close keymap if open
         cmds.disconnectAsync(); // turn off any kind of logging
-        if (this.editor) this.editor.unloadFileAsync();
+        if (this.editor) this.editor.unloadFileAsync(home);
         this.extensions.unload();
         this.editorFile = undefined;
 
@@ -3393,15 +3395,15 @@ export class ProjectView
                         const res = await pxt.commands.showProgramTooLargeErrorAsync(attemptedVariants, core.confirmAsync, saveOnly);
                         if (res?.recompile) {
                             pxt.tickEvent("compile.programTooLargeDialog.recompile");
-                            const oldVariants = pxt.appTarget.multiVariants;
+                            const oldVariants = pxt.appTarget.disabledVariants;
                             this.setState({ compiling: false, isSaving: false });
                             try {
-                                pxt.appTarget.multiVariants = res.useVariants;
+                                pxt.appTarget.disabledVariants = pxt.appTarget.multiVariants.filter(v => !res.useVariants.includes(v));
                                 await this.compile(saveOnly);
                                 return;
                             }
                             finally {
-                                pxt.appTarget.multiVariants = oldVariants;
+                                pxt.appTarget.disabledVariants = oldVariants;
                             }
                         }
                         else {
@@ -4661,7 +4663,7 @@ export class ProjectView
             extensionsVisible: false
         })
 
-        if (this.state.accessibleBlocks) {
+        if (this.getData<boolean>(auth.ACCESSIBLE_BLOCKS)) {
             this.editor.focusToolbox(CategoryNameID.Extensions);
         }
     }
@@ -5170,14 +5172,9 @@ export class ProjectView
         this.setState({ greenScreen: greenScreenOn });
     }
 
-    toggleAccessibleBlocks() {
-        this.setAccessibleBlocks(!this.state.accessibleBlocks);
-    }
-
-    setAccessibleBlocks(enabled: boolean) {
-        pxt.tickEvent("app.accessibleblocks", { on: enabled ? 1 : 0 });
-        // this.blocksEditor.enableAccessibleBlocks(enabled);
-        this.setState({ accessibleBlocks: enabled })
+    async toggleAccessibleBlocks() {
+        await core.toggleAccessibleBlocks()
+        this.reloadEditor();
     }
 
     setBannerVisible(b: boolean) {
@@ -5353,7 +5350,8 @@ export class ProjectView
         const inDebugMode = this.state.debugging;
         const inHome = this.state.home && !sandbox;
         const inEditor = !!this.state.header && !inHome;
-        const { lightbox, greenScreen, accessibleBlocks } = this.state;
+        const { lightbox, greenScreen } = this.state;
+        const accessibleBlocks = this.getData<boolean>(auth.ACCESSIBLE_BLOCKS)
         const hideTutorialIteration = inTutorial && tutorialOptions.metadata?.hideIteration;
         const hideToolbox = inTutorial && tutorialOptions.metadata?.hideToolbox;
         // flyoutOnly has become a de facto css class for styling tutorials (especially minecraft HOC), so keep it if hideToolbox is true, even if flyoutOnly is false.
@@ -5443,12 +5441,11 @@ export class ProjectView
                         header={this.state.header}
                         reloadHeaderAsync={async () => {
                             await this.reloadHeaderAsync()
-                            this.shouldFocusToolbox = !!this.state.accessibleBlocks;
+                            this.shouldFocusToolbox = !!accessibleBlocks;
                         }}
                     />
                 }
                 {greenScreen ? <greenscreen.WebCam close={this.toggleGreenScreen} /> : undefined}
-                {accessibleBlocks && <accessibleblocks.AccessibleBlocksInfo />}
                 {hideMenuBar || inHome ? undefined :
                     <header className="menubar" role="banner">
                         {inEditor ? <accessibility.EditorAccessibilityMenu parent={this} highContrast={hc} /> : undefined}

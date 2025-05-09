@@ -283,6 +283,24 @@ text.blocklyCheckbox {
     }
 }
 
+/* Keyboard navigation plugin styles */
+
+.passiveBlockFocus.blocklyPath {
+    stroke-dasharray: 5 3;
+    stroke-width: 3;
+    stroke: #ffa200;
+}
+
+.passiveNextIndicator {
+    stroke: #ffa200;
+    fill: #ffa200;
+ }
+
+.inputActiveFocus {
+    stroke-width: 3;
+    stroke: #ffa200;
+}
+
 /*******************************
         Scrollbars
 *******************************/
@@ -372,4 +390,46 @@ text.blocklyCheckbox {
     text.blocklyCheckbox {
         font-size: 17pt !important;
     }
+}
+
+/*******************************
+        Focus styles
+*******************************/
+
+// Avoid focus outlines when not using the keyboard navigation plugin.
+div.blocklyTreeRoot > div > div[role="tree"]:focus-visible {
+    outline: none;
+}
+
+.accessibleBlocks .blocklyWorkspace:focus,.blocklyWorkspaceFocusLayer:focus {
+    outline: none;
+}
+
+.accessibleBlocks .blocklyWorkspaceFocusRingLayer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    pointer-events: none;
+    z-index: 99;
+}
+
+.accessibleBlocks .blocklyWorkspaceFocusRingLayer[data-focused="true"] {
+    outline: 3px solid black;
+    outline-offset: -3px;
+}
+
+.accessibleBlocks div.blocklyTreeRoot > div > div[role="tree"]:focus-visible {
+    outline: 3px solid black;
+    outline-offset: -3px;
+}
+
+.accessibleBlocks .blocklyFlyout:focus {
+    outline: none;
+}
+
+.accessibleBlocks .blocklyFlyout:focus-visible {
+    outline: 3px solid black;
+    outline-offset: -3px;
 }

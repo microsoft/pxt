@@ -22,7 +22,7 @@ import { DebuggerToolbox } from "./debuggerToolbox";
 import { amendmentToInsertSnippet, listenForEditAmendments, createLineReplacementPyAmendment } from "./monacoEditAmendments";
 
 import { MonacoFlyout } from "./monacoFlyout";
-import { ErrorList } from "./errorList";
+import { ErrorList, ErrorDisplayInfo as ErrorDisplayInfo, StackFrameDisplayInfo } from "./errorList";
 import * as auth from "./auth";
 import * as pxteditor from "../../pxteditor";
 
@@ -366,8 +366,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private highlightDecorations: string[] = [];
     private highlightedBreakpoint: number;
     private editAmendmentsListener: monaco.IDisposable | undefined;
-    private errorChangesListeners: pxt.Map<(errors: pxtc.KsDiagnostic[]) => void> = {};
-    private exceptionChangesListeners: pxt.Map<(exception: pxsim.DebuggerBreakpointMessage, locations: pxtc.LocationInfo[]) => void> = {}
+    private errors: ErrorDisplayInfo[] = [];
     private callLocations: pxtc.LocationInfo[];
 
     private userPreferencesSubscriber: data.DataSubscriber = {
@@ -384,11 +383,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         super(parent);
 
         this.setErrorListState = this.setErrorListState.bind(this);
-        this.listenToErrorChanges = this.listenToErrorChanges.bind(this);
-        this.listenToExceptionChanges = this.listenToExceptionChanges.bind(this)
+        this.getDisplayInfoForException = this.getDisplayInfoForException.bind(this);
         this.goToError = this.goToError.bind(this);
-        this.startDebugger = this.startDebugger.bind(this)
+        this.startDebugger = this.startDebugger.bind(this);
         this.onUserPreferencesChanged = this.onUserPreferencesChanged.bind(this);
+        this.getDisplayInfoForError = this.getDisplayInfoForError.bind(this);
 
         data.subscribe(this.userPreferencesSubscriber, auth.HIGHCONTRAST);
 
@@ -655,27 +654,48 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                             setInsertionSnippet={this.setInsertionSnippet}
                             parent={this.parent} />
                     </div>
-                    {showErrorList && <ErrorList isInBlocksEditor={false} onSizeChange={this.setErrorListState}
-                        listenToErrorChanges={this.listenToErrorChanges}
-                        listenToExceptionChanges={this.listenToExceptionChanges} goToError={this.goToError}
+                    {showErrorList && <ErrorList onSizeChange={this.setErrorListState}
+                        errors={this.errors}
                         startDebugger={this.startDebugger} />}
                 </div>
             </div>
         )
     }
 
-    listenToExceptionChanges(handlerKey: string, handler: (exception: pxsim.DebuggerBreakpointMessage, locations: pxtc.LocationInfo[]) => void) {
-        this.exceptionChangesListeners[handlerKey] = handler;
-    }
-
     public onExceptionDetected(exception: pxsim.DebuggerBreakpointMessage) {
-        for (let listener of pxt.U.values(this.exceptionChangesListeners)) {
-            listener(exception, this.callLocations);
-        }
+        const exceptionDisplayInfo: ErrorDisplayInfo = this.getDisplayInfoForException(exception);
+        this.errors = [exceptionDisplayInfo];
     }
 
-    listenToErrorChanges(handlerKey: string, handler: (errors: pxtc.KsDiagnostic[]) => void) {
-        this.errorChangesListeners[handlerKey] = handler;
+    private onErrorChanges(errors: pxtc.KsDiagnostic[]) {
+        const errorDisplayInfo: ErrorDisplayInfo[] = errors.map(this.getDisplayInfoForError);
+        this.errors = errorDisplayInfo;
+    }
+
+    private getDisplayInfoForException(exception: pxsim.DebuggerBreakpointMessage): ErrorDisplayInfo {
+        const message = pxt.Util.rlf(exception.exceptionMessage);
+
+        const stackFrames: StackFrameDisplayInfo[] = exception.stackframes?.map(frame => {
+            const location = this.callLocations[frame.callLocationId];
+            if (!location) return undefined;
+            return {
+                message: lf("at {0} (line {1})", frame.funcInfo.functionName, location.line + 1),
+                onClick: () => this.goToError(location)
+            };
+        }).filter(a => !!a) ?? undefined;
+
+        return {
+            message,
+            stackFrames
+        };
+    }
+
+    private getDisplayInfoForError(error: pxtc.KsDiagnostic): ErrorDisplayInfo {
+        const message = lf("Line {0}: {1}", error.endLine ? error.endLine + 1 : error.line + 1, error.messageText);
+        return {
+            message,
+            onClick: () => this.goToError(error)
+        };
     }
 
     goToError(error: pxtc.LocationInfo) {
@@ -698,12 +718,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     startDebugger() {
         pxt.tickEvent('errorList.startDebugger', null, { interactiveConsent: true })
         this.parent.toggleDebugging()
-    }
-
-    private onErrorChanges(errors: pxtc.KsDiagnostic[]) {
-        for (let listener of pxt.U.values(this.errorChangesListeners)) {
-            listener(errors);
-        }
     }
 
     public showPackageDialog() {
@@ -820,6 +834,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             return true;
 
         return false;
+    }
+
+    getToolboxDiv(): HTMLElement | undefined {
+        const monacoArea = document.getElementById('monacoEditorArea');
+        if (!monacoArea) return undefined;
+        return monacoArea.getElementsByClassName('monacoToolboxDiv')[0] as HTMLElement;
     }
 
     resize(e?: Event) {
@@ -1173,6 +1193,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
+    focusWorkspace(): void {
+        this.editor.focus();
+    }
+
     undo() {
         if (!this.editor) return;
         this.editor.trigger('keyboard', 'undo', null);
@@ -1473,6 +1497,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     unloadFileAsync(): Promise<void> {
         if (this.toolbox)
             this.toolbox.clearSearch();
+        this.errors = [];
         if (this.currFile && this.currFile.getName() == "this/" + pxt.CONFIG_NAME) {
             // Reload the header if a change was made to the config file: pxt.json
             return this.parent.reloadHeaderAsync();
