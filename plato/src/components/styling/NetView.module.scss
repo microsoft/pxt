@@ -18,6 +18,7 @@
         color: $page-text;
         background-color: $page-background;
         border-radius: 1.5rem;
+        overflow: hidden;
 
         p.label {
             font-size: large;
@@ -31,15 +32,19 @@
         }
 
         &.controls {
+            min-width: 12rem;
+
             div.share-link {
                 display: flex;
                 gap: 0.5rem;
-                width: 100%;
+                flex-wrap: wrap;
 
-                div.share-link {
+                div[class~="common-input-wrapper"] {
+                    flex: 1;
+
                     div[class~="common-input-group"] {
-                        width: 100%;
                         border: 1px solid #717171;
+                        width: 100%;
                     }
                 }
 
@@ -55,6 +60,8 @@
 
             div.join-code-group {
                 display: flex;
+                flex-direction: column;
+                flex-wrap: wrap;
                 gap: 0.5rem;
                 width: 100%;
 
@@ -78,26 +85,11 @@
                         filter: grayscale(0.2) brightness(0.8) contrast(1.3);
                     }
                 }
-
-                button.copy {
-                    font-weight: bold;
-                    border-radius: 1rem;
-                    padding: 0 1.5rem;
-                    color: $secondary-text;
-                    background-color: $secondary-background;
-                }
-
-                button.copy-link {
-                    font-weight: bold;
-                    border-radius: 1rem;
-                    padding: 0 1.5rem;
-                    color: $secondary-text;
-                    background-color: $secondary-background;
-                }
             }
 
             div.me-group {
                 flex: 1;
+                flex-wrap: wrap;
             }
 
             div.leave-group {
@@ -112,6 +104,8 @@
         }
 
         &.presence {
+            min-width: 12rem;
+
             div.players {
                 display: flex;
                 flex-direction: column;
@@ -170,6 +164,7 @@
 
         &.sim {
             flex: 1;
+            min-width: 12rem;
         }
     }
 }

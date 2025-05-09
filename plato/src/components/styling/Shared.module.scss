@@ -7,6 +7,11 @@
     width: 100%;
 }
 
+.wrap {
+    display: flex;
+    flex-wrap: wrap;
+}
+
 .button {
     font-weight: bold;
     border-radius: 1rem;

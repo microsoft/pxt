@@ -7,13 +7,14 @@ import { getHostNetState } from "@/state/helpers";
 import { Input } from "react-common/components/controls/Input";
 import { Button } from "react-common/components/controls/Button";
 import { classList } from "react-common/components/util";
-import { debounce, generateRandomName } from "@/utils";
+import { generateRandomName } from "@/utils";
 import { showToast, startLoadingGame } from "@/transforms";
 import { makeToast } from "./Toaster";
 import * as collabClient from "@/services/collabClient";
 import { setNetState } from "@/state/actions";
 import { ViewPlayer } from "@/types";
 import { Strings } from "@/constants";
+import { JoinCodeGroup } from "./JoinCodeGroup";
 import { ArcadeSimulator } from "./ArcadeSimulator";
 
 export function HostView() {
@@ -36,34 +37,6 @@ export function HostView() {
         if (!netState) return undefined;
         return players.find(p => p.isMe);
     }, [players, netState]);
-
-    const joinCode = useMemo(() => {
-        if (!netState) return "";
-        return netState.joinCode || "------";
-    }, [netState]);
-
-    const debounceCopyJoinCode = useMemo(
-        () =>
-            debounce(() => {
-                if (!netState || !netState.joinCode) return;
-                navigator.clipboard.writeText(netState.joinCode).then(
-                    () => {
-                        showToast(
-                            makeToast({
-                                type: "info",
-                                icon: "✔️",
-                                text: lf("Join code copied to clipboard"),
-                                timeoutMs: 2000,
-                            })
-                        );
-                    },
-                    () => {
-                        // Failure
-                    }
-                );
-            }, 250),
-        [netState]
-    );
 
     if (!netState) {
         return null;
@@ -93,31 +66,12 @@ export function HostView() {
                     {lf("Join Code")}
                     <i className={classList(css["help"], "fas fa-question-circle")} onClick={() => { }}></i>
                 </p>
-                <div className={css["join-code-group"]}>
-                    <Button
-                        className={css["join-code"]}
-                        label={joinCode}
-                        title={lf("Join Code")}
-                        onClick={() => debounceCopyJoinCode()}
-                    />
-                    <Button
-                        className={css["copy"]}
-                        label={lf("Copy Code")}
-                        title={lf("Copy Code")}
-                        onClick={() => debounceCopyJoinCode()}
-                    />
-                    <Button
-                        className={css["copy-link"]}
-                        label={lf("Copy Link")}
-                        title={lf("Copy Link")}
-                        onClick={() => { }}
-                    />
-                </div>
+                <JoinCodeGroup />
                 <p></p>
                 <p></p>
                 <div className={css["me-group"]}>
                     <p className={css["label"]}>{lf("{id:name}Me: {0}", me?.name || Strings.MissingName)}</p>
-                    <div className={sharedcss["horz"]}>
+                    <div className={classList(sharedcss["horz"], sharedcss["wrap"])}>
                         <Button
                             className={sharedcss["button"]}
                             label={lf("Change Name")}

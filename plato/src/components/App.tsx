@@ -78,8 +78,20 @@ function App() {
             shareCodeParam = cleanupShareCode(shareCodeParam);
             joinCodeParam = cleanupJoinCode(joinCodeParam);
             if (shareCodeParam) {
+                params.delete("host");
+                const newUrl =
+                    window.location.pathname +
+                    (params.toString() ? "?" + params.toString() : "") +
+                    window.location.hash;
+                window.history.replaceState({}, "", newUrl);
                 /*await*/ hostSessionAsync(shareCodeParam);
             } else if (joinCodeParam) {
+                params.delete("join");
+                const newUrl =
+                    window.location.pathname +
+                    (params.toString() ? "?" + params.toString() : "") +
+                    window.location.hash;
+                window.history.replaceState({}, "", newUrl);
                 /*await*/ joinSessionAsync(joinCodeParam);
             }
         }
