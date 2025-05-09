@@ -31,6 +31,10 @@ export class FieldSoundEffect extends FieldBase<FieldSoundEffectParams> {
     protected workspace: Blockly.Workspace;
     protected registeredChangeListener = false;
 
+    getClass() {
+        return FieldSoundEffect;
+    }
+
     protected onInit(): void {
         if (!this.options) this.options = {} as any;
         if (!this.options.durationInputName) this.options.durationInputName = "duration";

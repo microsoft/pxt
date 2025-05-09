@@ -20,6 +20,10 @@ const BG_HEIGHT = BG_PADDING * 2 + PREVIEW_HEIGHT;
 const TOTAL_HEIGHT = Y_PADDING * 2 + BG_PADDING * 2 + PREVIEW_HEIGHT;
 
 export class FieldMusicEditor extends FieldAssetEditor<FieldMusicEditorOptions, ParsedFieldMusicEditorOptions> {
+    getClass() {
+        return FieldMusicEditor;
+    }
+
     protected getAssetType(): pxt.AssetType {
         return pxt.AssetType.Song;
     }

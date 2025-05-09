@@ -48,8 +48,8 @@ export class PathObject extends Blockly.zelos.PathObject {
         super.updateSelected(enable);
     }
 
-    override addConnectionHighlight(connection: Blockly.RenderedConnection, connectionPath: string, offset: Blockly.utils.Coordinate, rtl: boolean): void {
-        super.addConnectionHighlight(connection, connectionPath, offset, rtl);
+    override addConnectionHighlight(connection: Blockly.RenderedConnection, connectionPath: string, offset: Blockly.utils.Coordinate, rtl: boolean) {
+        const result = super.addConnectionHighlight(connection, connectionPath, offset, rtl);
 
         if (connection.type === Blockly.INPUT_VALUE || connection.type === Blockly.OUTPUT_VALUE) {
             const indicator = Blockly.utils.dom.createSvgElement('g',
@@ -64,6 +64,8 @@ export class PathObject extends Blockly.zelos.PathObject {
             this.connectionPointIndicators.set(connection, indicator);
             this.svgRoot.appendChild(indicator);
         }
+
+        return result;
     }
 
     override removeConnectionHighlight(connection: Blockly.RenderedConnection): void {

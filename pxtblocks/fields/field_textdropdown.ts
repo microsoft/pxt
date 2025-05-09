@@ -102,10 +102,11 @@ export class BaseFieldTextDropdown extends Blockly.FieldTextInput {
             const [label, value] = options[i];
             const content = (() => {
                 if (typeof label === 'object') {
+                    const props = label as HTMLImageElement | Blockly.ImageProperties;
                     // Convert ImageProperties to an HTMLImageElement.
-                    const image = new Image(label['width'], label['height']);
-                    image.src = label['src'];
-                    image.alt = label['alt'] || '';
+                    const image = new Image(props['width'], props['height']);
+                    image.src = props['src'];
+                    image.alt = props['alt'] || '';
                     return image;
                 }
                 return label;
@@ -265,7 +266,7 @@ function validateOptions(options: Blockly.MenuOption[]) {
         } else if (
             tuple[0] &&
             typeof tuple[0] !== 'string' &&
-            typeof tuple[0].src !== 'string'
+            typeof (tuple[0] as Blockly.ImageProperties).src !== 'string'
         ) {
             foundError = true;
             pxt.error(

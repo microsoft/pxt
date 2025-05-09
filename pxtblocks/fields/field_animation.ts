@@ -66,6 +66,10 @@ export class FieldAnimationEditor extends FieldAssetEditor<FieldAnimationOptions
         this.size_.width = TOTAL_WIDTH;
     }
 
+    getClass() {
+        return FieldAnimationEditor;
+    }
+
     protected getAssetType(): pxt.AssetType {
         return pxt.AssetType.Animation;
     }

@@ -30,8 +30,8 @@ export function initCopyPaste() {
 function registerCopy() {
     const copyShortcut: Blockly.ShortcutRegistry.KeyboardShortcut = {
         name: Blockly.ShortcutItems.names.COPY,
-        preconditionFn(workspace) {
-            return oldCopy.preconditionFn(workspace);
+        preconditionFn(workspace, scope) {
+            return oldCopy.preconditionFn(workspace, scope);
         },
         callback: copy,
         // the registered shortcut from blockly isn't an array, it's some sort
@@ -44,17 +44,17 @@ function registerCopy() {
 function registerCut() {
     const cutShortcut: Blockly.ShortcutRegistry.KeyboardShortcut = {
         name: Blockly.ShortcutItems.names.CUT,
-        preconditionFn(workspace) {
-            return oldCut.preconditionFn(workspace);
+        preconditionFn(workspace, scope) {
+            return oldCut.preconditionFn(workspace, scope);
         },
-        callback(workspace, e, shortcut) {
+        callback(workspace, e, shortcut, scope) {
             const handler = getCopyPasteHandlers()?.cut;
 
             if (handler) {
                 return handler(workspace, e);
             }
 
-            return oldCut.callback(workspace, e, shortcut);
+            return oldCut.callback(workspace, e, shortcut, scope);
         },
         keyCodes: [oldCut.keyCodes[0], oldCut.keyCodes[1], oldCut.keyCodes[2]],
     };
@@ -65,8 +65,8 @@ function registerCut() {
 function registerPaste() {
     const pasteShortcut: Blockly.ShortcutRegistry.KeyboardShortcut = {
         name: Blockly.ShortcutItems.names.PASTE,
-        preconditionFn(workspace) {
-            return oldPaste.preconditionFn(workspace);
+        preconditionFn(workspace, scope) {
+            return oldPaste.preconditionFn(workspace, scope);
         },
         callback: paste,
         keyCodes: [oldPaste.keyCodes[0], oldPaste.keyCodes[1], oldPaste.keyCodes[2]],
@@ -98,7 +98,7 @@ function registerCopyContextMenu() {
             if (!block) return;
 
             block.select();
-            copy(block.workspace, e);
+            copy(block.workspace, e, undefined, scope);
         },
         scopeType: Blockly.ContextMenuRegistry.ScopeType.BLOCK,
         weight: BlockContextWeight.Copy,
@@ -127,7 +127,7 @@ function registerCopyContextMenu() {
             if (!comment) return;
 
             comment.select();
-            copy(comment.workspace, e);
+            copy(comment.workspace, e, undefined, scope);
         },
         scopeType: Blockly.ContextMenuRegistry.ScopeType.COMMENT,
         weight: BlockContextWeight.Copy,
@@ -158,7 +158,7 @@ function registerPasteContextMenu() {
             const workspace = scope.workspace;
 
             if (!workspace) return;
-            paste(workspace, e);
+            paste(workspace, e, undefined, scope);
         },
         scopeType: Blockly.ContextMenuRegistry.ScopeType.WORKSPACE,
         weight: WorkspaceContextWeight.Paste,
@@ -168,22 +168,22 @@ function registerPasteContextMenu() {
     Blockly.ContextMenuRegistry.registry.register(pasteOption);
 }
 
-const copy = (workspace: Blockly.WorkspaceSvg, e: Event, shortcut?: Blockly.ShortcutRegistry.KeyboardShortcut) => {
+const copy = (workspace: Blockly.WorkspaceSvg, e: Event, shortcut: Blockly.ShortcutRegistry.KeyboardShortcut, scope: Blockly.ContextMenuRegistry.Scope) => {
     const handler = getCopyPasteHandlers()?.copy;
 
     if (handler) {
         return handler(workspace, e);
     }
 
-    return oldCopy.callback(workspace, e, shortcut);
+    return oldCopy.callback(workspace, e, shortcut, scope);
 }
 
-const paste = (workspace: Blockly.WorkspaceSvg, e: Event, shortcut?: Blockly.ShortcutRegistry.KeyboardShortcut) => {
+const paste = (workspace: Blockly.WorkspaceSvg, e: Event, shortcut: Blockly.ShortcutRegistry.KeyboardShortcut, scope: Blockly.ContextMenuRegistry.Scope) => {
     const handler = getCopyPasteHandlers()?.paste;
 
     if (handler) {
         return handler(workspace, e);
     }
 
-    return oldPaste.callback(workspace, e, shortcut);
+    return oldPaste.callback(workspace, e, shortcut, scope);
 }

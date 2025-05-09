@@ -62,6 +62,10 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends Blockly.Fie
         this.createMelodyIfDoesntExist();
     }
 
+    getClass() {
+        return FieldCustomMelody;
+    }
+
     init() {
         super.init();
         this.onInit();

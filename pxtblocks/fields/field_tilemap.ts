@@ -26,6 +26,10 @@ export class FieldTilemap extends FieldAssetEditor<FieldTilemapOptions, ParsedFi
     protected initText: string;
     protected asset: pxt.ProjectTilemap;
 
+    getClass() {
+        return FieldTilemap;
+    }
+
     getInitText() {
         return this.initText;
     }

@@ -34,6 +34,10 @@ interface ParsedSpriteEditorOptions {
 }
 
 export class FieldSpriteEditor extends FieldAssetEditor<FieldSpriteEditorOptions, ParsedSpriteEditorOptions> {
+    getClass() {
+        return FieldSpriteEditor;
+    }
+
     protected getAssetType(): pxt.AssetType {
         return pxt.AssetType.Image;
     }

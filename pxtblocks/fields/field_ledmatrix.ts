@@ -81,6 +81,10 @@ export class FieldMatrix extends Blockly.Field implements FieldCustom {
             this.scale = 0.9;
     }
 
+    getClass() {
+        return FieldMatrix;
+    }
+
     private keyHandler(e: KeyboardEvent) {
         if (!this.selected) {
             return

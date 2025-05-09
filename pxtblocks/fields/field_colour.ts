@@ -50,6 +50,10 @@ export class FieldColorNumber extends FieldColour implements FieldCustom {
         if (params.valueMode) this.valueMode_ = params.valueMode;
     }
 
+    getClass() {
+        return FieldColorNumber;
+    }
+
     setColours(colours: string[], titles?: string[]): FieldColour {
         const s = super.setColours(colours, titles);
         this.colours_ = colours;

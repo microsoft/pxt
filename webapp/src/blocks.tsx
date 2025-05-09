@@ -1028,17 +1028,19 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     // Modified from blockly-keyboard-experimentation plugin
     // https://github.com/google/blockly-keyboard-experimentation/blob/main/src/navigation.ts
     // This modification is required to workaround the fact that cached blocks are not disposed in MakeCode.
-    private isFlyoutItemDisposed(node: Blockly.ASTNode) {
-        const sourceBlock = node.getSourceBlock();
+    private isFlyoutItemDisposed(
+        node: Blockly.INavigable<any>,
+        sourceBlock: Blockly.BlockSvg | null,
+    ) {
         if (
             sourceBlock?.disposed ||
             sourceBlock?.hasDisabledReason(HIDDEN_CLASS_NAME)
         ) {
             return true;
         }
-        const location = node.getLocation();
-        if (location instanceof FlyoutButton) {
-            return location.isDisposed();
+
+        if (node instanceof Blockly.FlyoutButton) {
+            return node.getSvgRoot().parentNode === null;
         }
         return false;
     }
@@ -1051,7 +1053,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             return;
         }
         const curNode = flyoutCursor.getCurNode();
-        if (curNode && !this.isFlyoutItemDisposed(curNode)) {
+        const sourceBlock = flyoutCursor.getSourceBlock();
+        if (curNode && !this.isFlyoutItemDisposed(curNode, sourceBlock)) {
             return;
         }
         const flyoutContents = flyout.getContents();
@@ -1060,13 +1063,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             return;
         }
         const defaultFlyoutItemElement = defaultFlyoutItem.getElement();
-        if (defaultFlyoutItemElement instanceof Blockly.FlyoutButton) {
-            const astNode = Blockly.ASTNode.createButtonNode(defaultFlyoutItemElement as Blockly.FlyoutButton);
-            flyoutCursor.setCurNode(astNode);
-        } else if (defaultFlyoutItemElement instanceof Blockly.BlockSvg) {
-            const astNode = Blockly.ASTNode.createStackNode(defaultFlyoutItemElement as Blockly.BlockSvg);
-            flyoutCursor.setCurNode(astNode);
-        }
+        flyoutCursor.setCurNode(
+            defaultFlyoutItemElement as unknown as Blockly.INavigable<any>,
+        );
     }
 
     renderToolbox(immediate?: boolean) {
