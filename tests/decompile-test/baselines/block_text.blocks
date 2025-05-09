@@ -101,7 +101,8 @@
 <field name="VAR">f</field>
 <value name="VALUE">
 <shadow type="math_number"><field name="NUM">0</field></shadow>
-<block type="string_substr">
+<block type="string_substr_new">
+<mutation _expanded="1" />
 <value name="this">
 <shadow type="text">
 <field name="TEXT">abcdef</field>

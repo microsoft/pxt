@@ -43,10 +43,11 @@ export class ConnectionPreviewer extends Blockly.InsertionMarkerPreviewer {
         const atan = Math.atan2(dy, dx);
 
         const len = Math.sqrt(dx * dx + dy * dy);
-        // When the indicators are overlapping, we hide the line
-        if (len < radius * 2 + 1) {
+        const isMouseDrag = Blockly.Gesture.inProgress();
+        // When the indicators are overlapping, or if the drag is keyboard driven, we hide the line
+        if (len < radius * 2 + 1 || !isMouseDrag) {
             Blockly.utils.dom.addClass(this.connectionLine, "hidden");
-        } else {
+        } else if (isMouseDrag) {
             Blockly.utils.dom.removeClass(this.connectionLine, "hidden");
             this.connectionLine.setAttribute("x1", String(offset.x + Math.cos(atan) * radius));
             this.connectionLine.setAttribute("y1", String(offset.y + Math.sin(atan) * radius));

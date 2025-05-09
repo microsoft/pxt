@@ -110,4 +110,8 @@ export class FlyoutButton extends Blockly.FlyoutButton {
             svgLine.setAttribute('y2', (this.height + 10) + "");
         }
     }
+
+    isDisposed(): boolean {
+        return this.getSvgRoot().parentNode === null;
+    }
 }

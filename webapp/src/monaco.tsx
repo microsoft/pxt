@@ -838,6 +838,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return false;
     }
 
+    getToolboxDiv(): HTMLElement | undefined {
+        const monacoArea = document.getElementById('monacoEditorArea');
+        if (!monacoArea) return undefined;
+        return monacoArea.getElementsByClassName('monacoToolboxDiv')[0] as HTMLElement;
+    }
+
     resize(e?: Event) {
         let monacoArea = document.getElementById('monacoEditorArea');
         if (!monacoArea) return;
@@ -1187,6 +1193,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.insertSnippet(position, snippet, inline);
             });
         }
+    }
+
+    focusWorkspace(): void {
+        this.editor.focus();
     }
 
     undo() {

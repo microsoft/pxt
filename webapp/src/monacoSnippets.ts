@@ -662,7 +662,7 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                     snippet: `"".substr(0, 0)`,
                     pySnippet: `""[0:1]`,
                     attributes: {
-                        blockId: 'string_substr',
+                        blockId: 'string_substr_new',
                         jsDoc: lf("Returns the part of a string starting at a given index with the given length")
                     },
                     retType: "string"

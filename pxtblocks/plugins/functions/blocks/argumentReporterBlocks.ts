@@ -7,8 +7,10 @@ import {
     ARGUMENT_REPORTER_CUSTOM_BLOCK_TYPE,
 } from "../constants";
 import { MsgKey } from "../msg";
-import { DUPLICATE_ON_DRAG_MUTATION_KEY, DuplicateOnDragStrategy, setDuplicateOnDragStrategy } from "../../duplicateOnDrag";
+import { DUPLICATE_ON_DRAG_MUTATION_KEY, setDuplicateOnDragStrategy } from "../../duplicateOnDrag";
 import { PathObject } from "../../renderer/pathObject";
+
+export const LOCALIZATION_NAME_MUTATION_KEY = "localizationname";
 
 type ArgumentReporterMixinType = typeof ARGUMENT_REPORTER_MIXIN;
 
@@ -18,16 +20,24 @@ export type ArgumentReporterBlock = Blockly.BlockSvg & ArgumentReporterMixin;
 
 const ARGUMENT_REPORTER_MIXIN = {
     typeName_: "",
+    localizationName_: "",
     duplicateOnDrag_: false,
 
     getTypeName(this: ArgumentReporterBlock) {
         return this.typeName_;
     },
 
+    getLocalizationName(this: ArgumentReporterBlock) {
+        return this.localizationName_ || this.getFieldValue("VALUE");
+    },
+
     mutationToDom(this: ArgumentReporterBlock) {
         const container = Blockly.utils.xml.createElement("mutation");
         if (this.duplicateOnDrag_) {
             container.setAttribute(DUPLICATE_ON_DRAG_MUTATION_KEY, "true");
+        }
+        if (this.localizationName_) {
+            container.setAttribute(LOCALIZATION_NAME_MUTATION_KEY, this.localizationName_);
         }
         return container;
     },
@@ -39,6 +49,9 @@ const ARGUMENT_REPORTER_MIXIN = {
                 (this.pathObject as PathObject).setHasDottedOutlineOnHover(this.duplicateOnDrag_);
             }
         }
+        if (xmlElement.hasAttribute(LOCALIZATION_NAME_MUTATION_KEY)) {
+            this.localizationName_ = xmlElement.getAttribute(LOCALIZATION_NAME_MUTATION_KEY);
+        }
     },
 };
 
@@ -49,7 +62,7 @@ Blockly.Blocks[ARGUMENT_REPORTER_BOOLEAN_BLOCK_TYPE] = {
             message0: " %1",
             args0: [
                 {
-                    type: "field_label_serializable",
+                    type: "field_argument_reporter",
                     name: "VALUE",
                     text: "",
                 },
@@ -69,7 +82,7 @@ Blockly.Blocks[ARGUMENT_REPORTER_STRING_BLOCK_TYPE] = {
             message0: " %1",
             args0: [
                 {
-                    type: "field_label_serializable",
+                    type: "field_argument_reporter",
                     name: "VALUE",
                     text: "",
                 },
@@ -89,7 +102,7 @@ Blockly.Blocks[ARGUMENT_REPORTER_NUMBER_BLOCK_TYPE] = {
             message0: " %1",
             args0: [
                 {
-                    type: "field_label_serializable",
+                    type: "field_argument_reporter",
                     name: "VALUE",
                     text: "",
                 },
@@ -109,7 +122,7 @@ Blockly.Blocks[ARGUMENT_REPORTER_ARRAY_BLOCK_TYPE] = {
             message0: " %1",
             args0: [
                 {
-                    type: "field_label_serializable",
+                    type: "field_argument_reporter",
                     name: "VALUE",
                     text: "",
                 },
@@ -129,7 +142,7 @@ Blockly.Blocks[ARGUMENT_REPORTER_CUSTOM_BLOCK_TYPE] = {
             message0: " %1",
             args0: [
                 {
-                    type: "field_label_serializable",
+                    type: "field_argument_reporter",
                     name: "VALUE",
                     text: "",
                 },
