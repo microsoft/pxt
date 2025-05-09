@@ -3,9 +3,9 @@ import { stateAndDispatch } from "@/state";
 import { setNetState, dismissAllToasts } from "@/state/actions";
 import { initialHostNetState } from "@/state/state";
 import { makeToast } from "@/components/Toaster";
-import { showToast, dismissToast } from ".";
+import { showToast, dismissToast, startLoadingGame } from ".";
 
-export async function hostSessionAsync() {
+export async function hostSessionAsync(shareCode?: string) {
     const { dispatch } = stateAndDispatch();
     const connectingToast = makeToast({
         type: "info",
@@ -46,6 +46,10 @@ export async function hostSessionAsync() {
                 joinCode: hostResult.joinCode,
             })
         );
+
+        if (shareCode) {
+            startLoadingGame(shareCode);
+        }
     } catch {
         dispatch(setNetState(undefined));
     } finally {

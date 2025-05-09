@@ -34,7 +34,14 @@ export const AppStateContext = createContext<AppStateContextProps>(initialAppSta
 
 const _initialAppState: AppState = {
     ...initialAppState,
-    //bearerToken: Storage.getBearerToken(),
+    opts: (() => {
+        const params = new URLSearchParams(window.location.search);
+        const opts = new Map<string, string>();
+        for (const [key, value] of params.entries()) {
+            opts.set(key, value);
+        }
+        return opts;
+    })()
 };
 
 export function AppStateProvider(props: React.PropsWithChildren<{}>): React.ReactElement {

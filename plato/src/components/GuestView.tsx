@@ -1,4 +1,5 @@
 import css from "./styling/NetView.module.scss";
+import sharedcss from "./styling/Shared.module.scss";
 import * as collabClient from "@/services/collabClient";
 import { useContext, useMemo } from "react";
 import { useSyncExternalStore } from "use-sync-external-store/shim"
@@ -28,6 +29,11 @@ export function GuestView() {
         return presence
             .sort((a, b) => a.id.localeCompare(b.id));
     }, [presence, netState]);
+
+    const me: ViewPlayer | undefined = useMemo(() => {
+        if (!netState) return undefined;
+        return players.find(p => p.isMe);
+    }, [players, netState]);
 
     const joinCode = useMemo(() => {
         if (!netState) return "";
@@ -91,15 +97,24 @@ export function GuestView() {
                 <p></p>
                 <p></p>
                 <div className={css["me-group"]}>
-                    <p className={css["label"]}>{lf("Me")}</p>
-                    <Button
-                        label={lf("Regenerate Name")}
-                        title={lf("Regenerate Name")}
-                        onClick={() => {
-                            const name = generateRandomName();
-                            collabClient.setName(name);
-                        }}
-                    />
+                    <p className={css["label"]}>{lf("{id:name}Me: {0}", me?.name || Strings.MissingName)}</p>
+                    <div className={sharedcss["horz"]}>
+                        <Button
+                            className={sharedcss["button"]}
+                            label={lf("Change Name")}
+                            title={lf("Change Name")}
+                            onClick={() => {
+                                const name = generateRandomName();
+                                collabClient.setName(name);
+                            }}
+                        />
+                        <Button
+                            className={sharedcss["button"]}
+                            label={lf("Change Sprite")}
+                            title={lf("Change Sprite")}
+                            onClick={() => { }}
+                        />
+                    </div>
                 </div>
                 <div className={css["leave-group"]}>
                     <Button

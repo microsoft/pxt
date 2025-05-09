@@ -13,9 +13,11 @@ import { ThemeManager } from "react-common/components/theming/themeManager";
 import { classList } from "react-common/components/util";
 import { JoinModal } from "./JoinModal";
 import * as transforms from "@/transforms";
+import { hostSessionAsync, joinSessionAsync } from "@/transforms";
 
 function App() {
-    const { dispatch } = useContext(AppStateContext);
+    const { state, dispatch } = useContext(AppStateContext);
+    const { authStatus } = state;
     const [authCheckComplete, setAuthCheckComplete] = useState(false);
 
     const ready = usePromise(AppStateReady, false);
@@ -63,8 +65,8 @@ function App() {
     }, []);
 
     const parseUrlParams = useCallback(() => {
-        if (ready) {
-            let params: URLSearchParams | undefined = undefined;
+        if (ready && authStatus === "signed-in") {
+            let params: URLSearchParams;
             if (window.location.hash[1] === "?") {
                 // After sign in the params are in the hash. This may be a bug in pxt.auth.
                 params = new URLSearchParams(window.location.hash.substr(1));
@@ -75,9 +77,13 @@ function App() {
             let joinCodeParam = params.get("join") ?? undefined;
             shareCodeParam = cleanupShareCode(shareCodeParam);
             joinCodeParam = cleanupJoinCode(joinCodeParam);
-            //dispatch(setDeepLinks(shareCodeParam, joinCodeParam));
+            if (shareCodeParam) {
+                /*await*/ hostSessionAsync(shareCodeParam);
+            } else if (joinCodeParam) {
+                /*await*/ joinSessionAsync(joinCodeParam);
+            }
         }
-    }, [ready, dispatch]);
+    }, [ready, dispatch, authStatus]);
 
     useEffect(() => {
         // Once we know the user's auth status, parse the URL

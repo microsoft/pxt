@@ -9,6 +9,7 @@ export type AppState = {
     modalType?: ModalType;
     modalOptions?: ModalOptions;
     toasts: ToastWithId[];
+    opts: Map<string, string>;
 };
 
 export type NetStateBase = {
@@ -49,4 +50,5 @@ export const initialAppState: AppState = {
     authStatus: "unknown",
     netState: initialNoneNetState(),
     toasts: [],
+    opts: new Map<string, string>(),
 };
