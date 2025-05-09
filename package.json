@@ -156,6 +156,9 @@
     "yargs": "^17.7.2"
   },
   "overrides": {
+    "combine-source-map": {
+      "source-map": "0.4.4"
+    },
     "@blockly/field-colour": {
       "blockly": "^12.0.0-beta.4"
     },
