@@ -1108,14 +1108,17 @@ export class ToolboxSearch extends data.Component<ToolboxSearchProps, ToolboxSea
             (toolbox.refs.categoryTree as HTMLDivElement).focus()
             // Don't trigger scroll behaviour inside the toolbox.
             e.preventDefault();
+        } else if (charCode === 13 /* Enter */) {
+            this.searchImmediate().then(() => this.props.parent.moveFocusToFlyout());
         }
     }
 
     focus() {
         (this.refs.searchInput as HTMLInputElement).focus();
+        (this.refs.searchInput as HTMLInputElement).select();
     }
 
-    searchImmediate() {
+    async searchImmediate(): Promise<void> {
         const { parent, toolbox, editorname } = this.props;
         const searchTerm = (this.refs.searchInput as HTMLInputElement).value;
 
@@ -1125,27 +1128,25 @@ export class ToolboxSearch extends data.Component<ToolboxSearchProps, ToolboxSea
         pxt.tickEvent(`${editorname}.search`, undefined, { interactiveConsent: true });
 
         // Execute search
-        parent.searchAsync(searchTerm)
-            .then((blocks) => {
-                if (blocks.length == 0) {
-                    searchAccessibilityLabel = lf("No search results...");
-                } else {
-                    searchAccessibilityLabel = lf("{0} result matching '{1}'", blocks.length, searchTerm.toLowerCase());
-                }
-                hasSearch = searchTerm != '';
+        const blocks = await parent.searchAsync(searchTerm);
+        if (blocks.length == 0) {
+            searchAccessibilityLabel = lf("No search results...");
+        } else {
+            searchAccessibilityLabel = lf("{0} result matching '{1}'", blocks.length, searchTerm.toLowerCase());
+        }
+        hasSearch = searchTerm != '';
 
-                const newState: ToolboxState = {};
-                newState.hasSearch = hasSearch;
-                newState.searchBlocks = blocks;
-                newState.focusSearch = true;
-                if (hasSearch) {
-                    newState.selectedItem = 'search';
-                    toolbox.setSelectedItem(toolbox.refs.searchCategory as CategoryItem)
-                }
-                toolbox.setState(newState);
+        const newState: ToolboxState = {};
+        newState.hasSearch = hasSearch;
+        newState.searchBlocks = blocks;
+        newState.focusSearch = true;
+        if (hasSearch) {
+            newState.selectedItem = 'search';
+            toolbox.setSelectedItem(toolbox.refs.searchCategory as CategoryItem)
+        }
+        toolbox.setState(newState);
 
-                this.setState({ searchAccessibilityLabel: searchAccessibilityLabel });
-            });
+        this.setState({ searchAccessibilityLabel: searchAccessibilityLabel });
     }
 
     renderCore() {
