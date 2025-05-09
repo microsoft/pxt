@@ -569,10 +569,25 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             focusRingDiv.className = "blocklyWorkspaceFocusRingLayer";
             this.editor.getSvgGroup().addEventListener("focus", () => {
                 focusRingDiv.dataset.focused = "true";
-            })
+            });
             this.editor.getSvgGroup().addEventListener("blur", () => {
                 delete focusRingDiv.dataset.focused;
-            })
+            });
+
+            const listShortcuts = Blockly.ShortcutRegistry.registry.getRegistry()["list_shortcuts"];
+            Blockly.ShortcutRegistry.registry.unregister(listShortcuts.name);
+            Blockly.ShortcutRegistry.registry.register({
+                ...listShortcuts,
+                keyCodes: [
+                    Blockly.ShortcutRegistry.registry.createSerializedKey(Blockly.utils.KeyCodes.SLASH, [
+                        Blockly.utils.KeyCodes.META,
+                    ]),
+                    Blockly.ShortcutRegistry.registry.createSerializedKey(Blockly.utils.KeyCodes.SLASH, [
+                        Blockly.utils.KeyCodes.CTRL,
+                    ]),
+                ]
+            });
+
 
             const cleanUpWorkspace = Blockly.ShortcutRegistry.registry.getRegistry()["clean_up_workspace"];
             Blockly.ShortcutRegistry.registry.unregister(cleanUpWorkspace.name);
@@ -584,6 +599,39 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     flow(workspace, { useViewWidth: true });
                     return true
                 }
+            });
+
+            const triggerEditorAction = (action: pxsim.SimulatorAction) => {
+                switch (action) {
+                    case "escape": {
+                        this.parent.setSimulatorFullScreen(false);
+                        return;
+                    }
+                    case "togglekeyboardcontrolshelp": {
+                        this.parent.toggleBuiltInSideDoc("keyboardControls", false);
+                        return
+                    }
+                    case "navigateregions" : {
+                        this.parent.showNavigateRegions();
+                        return
+                    }
+                }
+            }
+
+            const simulatorOrigins = [
+                window.location.origin,
+                // Simulator deployed origin.
+                "https://trg-microbit.userpxt.io"
+            ]
+            window.addEventListener("message", (e: MessageEvent) => {
+                // Listen to simulator iframe keydown post messages.
+                if (simulatorOrigins.includes(e.origin) && e.data.type === "pxtsim") {
+                    triggerEditorAction((e.data as pxsim.SimulatorActionMessage).action)
+                }
+            }, false)
+            document.addEventListener("keydown", (e: KeyboardEvent) => {
+                const action = pxsim.accessibility.getKeyboardShortcutEditorAction(e)
+                triggerEditorAction(action)
             });
         }
     }

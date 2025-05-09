@@ -80,6 +80,7 @@ import Util = pxt.Util;
 import { HintManager } from "./hinttooltip";
 import { mergeProjectCode, appendTemporaryAssets } from "./mergeProjects";
 import { Tour } from "./components/onboarding/Tour";
+import { NavigateRegionsOverlay } from "./components/NavigateRegionsOverlay";
 import { parseTourStepsAsync } from "./onboarding";
 import { initGitHubDb } from "./idbworkspace";
 import { BlockDefinition, CategoryNameID } from "./toolbox";
@@ -1436,6 +1437,12 @@ export class ProjectView
         }
     }
 
+    toggleBuiltInSideDoc(help: pxt.editor.BuiltInHelp, focusIfVisible: boolean) {
+        let sd = this.refs["sidedoc"] as container.SideDocs;
+        if (!sd) return;
+        sd.toggleBuiltInHelp(help, focusIfVisible);
+    }
+
     setTutorialInstructionsExpanded(value: boolean): void {
         const tutorialOptions = this.state.tutorialOptions;
         tutorialOptions.tutorialStepExpanded = value;
@@ -1796,6 +1803,13 @@ export class ProjectView
                 this.shouldTryDecompile = true;
             }
 
+            // Onboard accessible blocks if accessible blocks has just been enabled
+            const onboardAccessibleBlocks = pxt.storage.getLocal("onboardAccessibleBlocks") === "1"
+            const sideDocsLoadUrl = onboardAccessibleBlocks ? `${container.builtInPrefix}keyboardControls` : ""
+            if (onboardAccessibleBlocks) {
+                pxt.storage.setLocal("onboardAccessibleBlocks", "0")
+            }
+
             this.setState({
                 home: false,
                 showFiles: h.githubId ? true : false,
@@ -1804,7 +1818,7 @@ export class ProjectView
                 header: h,
                 projectName: h.name,
                 currFile: file,
-                sideDocsLoadUrl: '',
+                sideDocsLoadUrl: sideDocsLoadUrl,
                 debugging: false,
                 isMultiplayerGame: false
             });
@@ -5173,6 +5187,10 @@ export class ProjectView
     }
 
     async toggleAccessibleBlocks() {
+        const nextEnabled = !this.getData<boolean>(auth.ACCESSIBLE_BLOCKS);
+        if (nextEnabled) {
+            pxt.storage.setLocal("onboardAccessibleBlocks", "1")
+        }
         await core.toggleAccessibleBlocks()
         this.reloadEditor();
     }
@@ -5245,6 +5263,21 @@ export class ProjectView
         const tourSteps: pxt.tour.BubbleStep[] = await parseTourStepsAsync(pxt.appTarget.appTheme?.tours?.editor)
         this.setState({ onboarding: tourSteps })
 
+    }
+
+    ///////////////////////////////////////////////////////////
+    ////////////             Navigate regions     /////////////
+    ///////////////////////////////////////////////////////////
+
+    hideNavigateRegions() {
+        this.setState({ navigateRegions: false });
+    }
+
+    showNavigateRegions() {
+        const dialog = Array.from(document.querySelectorAll("[role=dialog]")).find(dialog => (dialog as any).checkVisibility());
+        if (!dialog) {
+            this.setState(state => state.home ? state : { navigateRegions: true })
+        }
     }
 
     ///////////////////////////////////////////////////////////
@@ -5488,8 +5521,8 @@ export class ProjectView
                         <projects.Projects parent={this} ref={this.handleHomeRef} />
                     </div>
                 </div> : undefined}
-                {showEditorToolbar && <editortoolbar.EditorToolbar ref="editortools" parent={this} />}
                 {sideDocs ? <container.SideDocs ref="sidedoc" parent={this} sideDocsCollapsed={this.state.sideDocsCollapsed} docsUrl={this.state.sideDocsLoadUrl} /> : undefined}
+                {showEditorToolbar && <editortoolbar.EditorToolbar ref="editortools" parent={this} />}
                 {sandbox ? undefined : <scriptsearch.ScriptSearch parent={this} ref={this.handleScriptSearchRef} />}
                 {sandbox ? undefined : <extensions.Extensions parent={this} ref={this.handleExtensionRef} />}
                 {inHome ? <projects.ImportDialog parent={this} ref={this.handleImportDialogRef} /> : undefined}
@@ -5507,6 +5540,7 @@ export class ProjectView
                 {lightbox ? <sui.Dimmer isOpen={true} active={lightbox} portalClassName={'tutorial'} className={'ui modal'}
                     shouldFocusAfterRender={false} closable={true} onClose={this.hideLightbox} /> : undefined}
                 {this.state.onboarding && <Tour tourSteps={this.state.onboarding} onClose={this.hideOnboarding} />}
+                {accessibleBlocks && this.state.navigateRegions && <NavigateRegionsOverlay parent={this}/>}
                 {this.state.themePickerOpen && <ThemePickerModal themes={this.themeManager.getAllColorThemes()} onThemeClicked={theme => this.setColorThemeById(theme?.id, true)} onClose={this.hideThemePicker} />}
             </div>
         );

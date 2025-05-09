@@ -716,6 +716,8 @@ declare namespace pxt.editor {
         zoomOut(): void;
         resize(): void;
         setScale(scale: number): void;
+        focusWorkspace(): void;
+        focusToolbox(): void;
     }
 
     export interface IFile {
@@ -819,6 +821,7 @@ declare namespace pxt.editor {
         extensionsVisible?: boolean;
         isMultiplayerGame?: boolean; // Arcade: Does the current project contain multiplayer blocks?
         onboarding?: pxt.tour.BubbleStep[];
+        navigateRegions?: boolean;
         feedback?: FeedbackState;
         themePickerOpen?: boolean;
     }
@@ -898,6 +901,8 @@ declare namespace pxt.editor {
 
     export type Activity = "tutorial" | "recipe" | "example";
 
+    export type BuiltInHelp = "keyboardControls";
+
     export interface IProjectView {
         state: IAppState;
         setState(st: IAppState): void;
@@ -955,6 +960,7 @@ declare namespace pxt.editor {
         setSideFile(fn: IFile, line?: number): void;
         navigateToError(diag: pxtc.KsDiagnostic): void;
         setSideDoc(path: string, blocksEditor?: boolean): void;
+        toggleBuiltInSideDoc(help: BuiltInHelp, focusIfOpen: boolean): void;
         setSideMarkdown(md: string): void;
         setSideDocCollapsed(shouldCollapse?: boolean): void;
         removeFile(fn: IFile, skipConfirm?: boolean): void;
@@ -1056,6 +1062,8 @@ declare namespace pxt.editor {
         hideLightbox(): void;
         showOnboarding(): void;
         hideOnboarding(): void;
+        showNavigateRegions(): void;
+        hideNavigateRegions(): void;
         showKeymap(show: boolean): void;
         toggleKeymap(): void;
         signOutGithub(): void;

@@ -63,6 +63,10 @@ code.hljs {
     border-top-left-radius: 5px;
     border-bottom-left-radius: 5px;
     z-index: @sidedocZIndex;
+
+    &:has(aside:focus-visible) {
+        outline: @editorFocusBorderSize solid  var(--pxt-focus-border);
+    }
 }
 
 .sideDocs #sidedocsframe {
