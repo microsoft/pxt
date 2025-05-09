@@ -120,7 +120,6 @@ const regions: Region[] = [
             for (const selector of editorSelectors) {
                 const element = document.querySelector(selector) as HTMLElement | null;
                 if (element.offsetParent !== null) {
-                    console.log(element);
                     const bounds = element.getBoundingClientRect();
                     if (selector === "#monacoEditor" || selector === "#blocksArea") {
                         // Use bounds that don't overlap the toolbox region.
