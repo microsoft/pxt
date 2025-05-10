@@ -47,21 +47,25 @@ export function MeGroup() {
 
     return (
         <div className={css["me-group"]}>
-            <p className={css["label"]}>{lf("{id:name}Me: {0}", me?.name || "")}</p>
+            <p className={css["label"]}>{lf("Me")}</p>
             <div className={classList(sharedcss["horz"], sharedcss["wrap"])}>
-                <Button
-                    className={sharedcss["button"]}
-                    label={lf("Change Name")}
+                <span>{me?.name || ""}</span>
+                {me?.name && <Button
+                    className={classList(sharedcss["button"], sharedcss["iconic"])}
                     title={lf("Change Name")}
+                    rightIcon="fas fa-sync"
                     onClick={debounceRegenerateName}
-                />
+                />}
+            </div>
+            {netState.platoExtVersion && <p></p>}
+            {netState.platoExtVersion && <div className={classList(sharedcss["horz"], sharedcss["wrap"])}>
                 <Button
-                    className={sharedcss["button"]}
-                    label={lf("Change Sprite")}
-                    title={lf("Change Sprite")}
+                    className={classList(sharedcss["button"], sharedcss["primary"])}
+                    label={lf("Join Game")}
+                    title={lf("Join Game")}
                     onClick={() => { }}
                 />
-            </div>
+            </div>}
         </div>
     );
 }

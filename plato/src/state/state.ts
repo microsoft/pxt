@@ -15,6 +15,7 @@ export type AppState = {
 export type NetStateBase = {
     clientRole: string;
     joinCode?: string;
+    platoExtVersion?: number;
 };
 
 export type NoneNetState = NetStateBase & {

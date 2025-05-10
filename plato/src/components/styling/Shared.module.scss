@@ -37,4 +37,12 @@
     &.taller {
         height: 2.5rem;
     }
+
+    &.iconic {
+        padding: 0 2px;
+
+        i {
+            margin: 0;
+        }
+    }
 }

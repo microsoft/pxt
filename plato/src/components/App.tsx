@@ -15,7 +15,7 @@ import { JoinModal } from "./JoinModal";
 import * as transforms from "@/transforms";
 import { hostSessionAsync, joinSessionAsync } from "@/transforms";
 
-function App() {
+export function App() {
     const { state, dispatch } = useContext(AppStateContext);
     const { authStatus } = state;
     const [authCheckComplete, setAuthCheckComplete] = useState(false);
@@ -139,5 +139,3 @@ function App() {
         </div>
     );
 }
-
-export default App;

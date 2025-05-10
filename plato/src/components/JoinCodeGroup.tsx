@@ -90,14 +90,16 @@ export function JoinCodeGroup() {
                 />
                 <Button
                     className={sharedcss["button"]}
-                    label={lf("Copy Code")}
+                    label={lf("Code")}
                     title={lf("Copy Code")}
+                    leftIcon="fas fa-copy"
                     onClick={debounceCopyJoinCode}
                 />
                 <Button
                     className={sharedcss["button"]}
-                    label={lf("Copy Link")}
+                    label={lf("Link")}
                     title={lf("Copy Link")}
+                    leftIcon="fas fa-copy"
                     onClick={debounceCopyJoinLink}
                 />
             </div>

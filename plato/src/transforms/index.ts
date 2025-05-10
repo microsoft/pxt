@@ -9,6 +9,7 @@ export { hostSessionAsync } from "./hostSessionAsync";
 export { joinSessionAsync } from "./joinSessionAsync";
 export { joinedSessionAsync } from "./joinedSessionAsync";
 export { startLoadingGame } from "./startLoadingGame";
+export { setPlatoExtInfo } from "./setPlatoExtInfo";
 
 import * as collabClient from "@/services/collabClient";
 import { ClientRole, SessionOverReason, ValueType } from "@/types";
