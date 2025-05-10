@@ -1,0 +1,72 @@
+/* Import all components */
+@import 'themes/default/globals/site.variables';
+@import 'themes/pxt/globals/site.variables';
+
+/* Reference import */
+@import (reference) "semantic.less";
+
+.navigate-regions-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0,0,0,0);
+    width: 100%;
+    height: 100%;
+    z-index: @modalDimmerZIndex;
+
+    .region-button {
+        position: absolute;
+        background-color: rgba(0, 0, 0, .6);
+        border-radius: 0;
+        border: 3px solid white;
+        padding: 0;
+
+        &.simulator-region {
+            z-index: 1;
+        }
+
+        &.simulator-collapsed {
+            border-start-end-radius: 100px;
+            border-end-end-radius: 100px;
+        }
+
+        &:focus-visible {
+            background-color: rgba(0, 0, 0, .3);
+
+            div {
+                border: 5px solid white;
+                background-color: black;
+            }
+
+            p {
+                font-weight: bold;
+            }
+        }
+
+        div {
+            background-color: rgba(0, 0, 0, .6);
+            border: 2px solid white;
+            width: fit-content;
+            margin: auto;
+            padding-right: 1em;
+            padding-left: 1em;
+            border-radius: 5px;
+
+            @media only screen and (max-width: @largestMobileScreen) {
+                padding-right: 0.5em;
+                padding-left: 0.5em;
+            }
+        }
+        p {
+            color: white;
+            font-size: 2rem;
+
+            @media only screen and (max-width: @largestTabletScreen), 
+            only screen and (max-height: @tallEditorBreakpoint) and (min-width: @largestMobileScreen) {
+                font-size: 1.5rem;
+            }
+        }
+    }
+}

@@ -75,6 +75,12 @@ namespace pxsim {
         url: string;
     }
 
+    export type SimulatorAction = "escape" | "navigateregions";
+
+    export interface SimulatorActionMessage extends SimulatorMessage {
+        action: SimulatorAction;
+    }
+
     export interface SimulatorStateMessage extends SimulatorMessage {
         type: "status";
         frameid?: string;
