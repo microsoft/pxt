@@ -12,6 +12,10 @@
     flex-wrap: wrap;
 }
 
+.w100 {
+    width: 100%;
+}
+
 .button {
     font-weight: bold;
     border-radius: 1rem;
@@ -19,4 +23,18 @@
     height: 2rem;
     color: $secondary-text;
     background-color: $secondary-background;
+
+    &.primary {
+        color: $primary-text;
+        background-color: $primary-background;
+    }
+
+    &.destructive {
+        color: $destructive-text;
+        background-color: $destructive-background;
+    }
+
+    &.taller {
+        height: 2.5rem;
+    }
 }

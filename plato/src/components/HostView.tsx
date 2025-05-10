@@ -7,7 +7,6 @@ import { getHostNetState } from "@/state/helpers";
 import { Input } from "react-common/components/controls/Input";
 import { Button } from "react-common/components/controls/Button";
 import { classList } from "react-common/components/util";
-import { generateRandomName } from "@/utils";
 import { showToast, startLoadingGame } from "@/transforms";
 import { makeToast } from "./Toaster";
 import * as collabClient from "@/services/collabClient";
@@ -15,6 +14,7 @@ import { setNetState } from "@/state/actions";
 import { ViewPlayer } from "@/types";
 import { Strings } from "@/constants";
 import { JoinCodeGroup } from "./JoinCodeGroup";
+import { MeGroup } from "./MeGroup";
 import { ArcadeSimulator } from "./ArcadeSimulator";
 
 export function HostView() {
@@ -32,11 +32,6 @@ export function HostView() {
         return presence
             .sort((a, b) => a.id.localeCompare(b.id));
     }, [presence, netState]);
-
-    const me: ViewPlayer | undefined = useMemo(() => {
-        if (!netState) return undefined;
-        return players.find(p => p.isMe);
-    }, [players, netState]);
 
     if (!netState) {
         return null;
@@ -58,42 +53,21 @@ export function HostView() {
                 </p>
                 <div className={css["share-link"]}>
                     <Input className={css["share-link"]} handleInputRef={gameLinkRef} placeholder="Paste your game link here" />
-                    <Button className={css["load"]} label={lf("Load")} title={lf("Load")} onClick={loadGame} />
+                    <Button
+                        className={classList(sharedcss["button"], sharedcss["primary"])}
+                        label={lf("Load")}
+                        title={lf("Load")}
+                        onClick={loadGame} />
                 </div>
                 <p></p>
-                <p></p>
-                <p className={css["label"]}>
-                    {lf("Join Code")}
-                    <i className={classList(css["help"], "fas fa-question-circle")} onClick={() => { }}></i>
-                </p>
                 <JoinCodeGroup />
                 <p></p>
-                <p></p>
-                <div className={css["me-group"]}>
-                    <p className={css["label"]}>{lf("{id:name}Me: {0}", me?.name || Strings.MissingName)}</p>
-                    <div className={classList(sharedcss["horz"], sharedcss["wrap"])}>
-                        <Button
-                            className={sharedcss["button"]}
-                            label={lf("Change Name")}
-                            title={lf("Change Name")}
-                            onClick={() => {
-                                const name = generateRandomName();
-                                collabClient.setName(name);
-                            }}
-                        />
-                        <Button
-                            className={sharedcss["button"]}
-                            label={lf("Change Sprite")}
-                            title={lf("Change Sprite")}
-                            onClick={() => { }}
-                        />
-                    </div>
-                </div>
+                <MeGroup />
                 <div className={css["leave-group"]}>
                     <Button
-                        className={css["exit"]}
-                        label={lf("End Game")}
-                        title={lf("End Game")}
+                        className={classList(sharedcss["button"], sharedcss["destructive"], sharedcss["taller"], sharedcss["w100"])}
+                        label={lf("End Session")}
+                        title={lf("End Session")}
                         onClick={() => {
                             collabClient.collabOver("ended");
                             dispatch(setNetState(undefined));

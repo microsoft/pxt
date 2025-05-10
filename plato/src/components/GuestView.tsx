@@ -8,12 +8,12 @@ import { classList } from "react-common/components/util";
 import { getGuestNetState } from "@/state/helpers";
 import { ViewPlayer } from "@/types";
 import { Strings } from "@/constants";
-import { generateRandomName } from "@/utils";
 import { makeToast } from "./Toaster";
 import { showToast } from "@/transforms";
 import { Button } from "react-common/components/controls/Button";
 import { setNetState } from "@/state/actions";
 import { JoinCodeGroup } from "./JoinCodeGroup";
+import { MeGroup } from "./MeGroup";
 import { ArcadeSimulator } from "./ArcadeSimulator";
 
 export function GuestView() {
@@ -43,38 +43,12 @@ export function GuestView() {
     return (
         <div className={css["view"]}>
             <div className={classList(css["panel"], css["controls"])}>
-                <p className={css["label"]}>
-                    {lf("Join Code")}
-                    <i className={classList(css["help"], "fas fa-question-circle")} onClick={() => { }}></i>
-                </p>
-                <JoinCodeGroup />
-                <p></p>
-                <p></p>
-                <div className={css["me-group"]}>
-                    <p className={css["label"]}>{lf("{id:name}Me: {0}", me?.name || Strings.MissingName)}</p>
-                    <div className={classList(sharedcss["horz"], sharedcss["wrap"])}>
-                        <Button
-                            className={sharedcss["button"]}
-                            label={lf("Change Name")}
-                            title={lf("Change Name")}
-                            onClick={() => {
-                                const name = generateRandomName();
-                                collabClient.setName(name);
-                            }}
-                        />
-                        <Button
-                            className={sharedcss["button"]}
-                            label={lf("Change Sprite")}
-                            title={lf("Change Sprite")}
-                            onClick={() => { }}
-                        />
-                    </div>
-                </div>
+                <MeGroup />
                 <div className={css["leave-group"]}>
                     <Button
-                        className={css["exit"]}
-                        label={lf("Leave Game")}
-                        title={lf("Leave Game")}
+                        className={classList(sharedcss["button"], sharedcss["destructive"], sharedcss["taller"], sharedcss["w100"])}
+                        label={lf("Leave Session")}
+                        title={lf("Leave Session")}
                         onClick={async () => {
                             await collabClient.leaveCollabAsync("left");
                             dispatch(setNetState(undefined));

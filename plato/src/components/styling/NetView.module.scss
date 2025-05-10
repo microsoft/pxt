@@ -66,7 +66,7 @@
                 width: 100%;
 
                 button.join-code {
-                    font-size: x-large;
+                    font-size: large;
                     font-weight: bold;
                     font-family: "Share Tech Mono", "Roboto Mono", monospace;
                     color: #ffffffcc;
@@ -93,13 +93,7 @@
             }
 
             div.leave-group {
-                button.exit {
-                    color: white;
-                    font-weight: bold;
-                    background-color: #f43f5e;
-                    border-radius: 1rem;
-                    width: 100%;
-                }
+                flex-wrap: wrap;
             }
         }
 
@@ -109,18 +103,22 @@
             div.players {
                 display: flex;
                 flex-direction: column;
-                color: #ffffffcc;
+                color: #ffffff;
                 gap: 0.25rem;
 
                 div.player {
                     display: flex;
                     flex-direction: row;
-                    gap: 4px;
+                    gap: 3px;
+                    color: #ffffffdd;
 
                     span.pill {
                         height: 1.75rem;
                         padding: 0.1rem 0.75rem;
-                        border-radius: 0.5rem;
+                        border-radius: 99px;
+                        border-width: 2px;
+                        border-style: solid;
+                        line-height: 1.3;
                     }
 
                     span.name {
@@ -134,11 +132,13 @@
                     }
 
                     span.host {
-                        background-color: rgba($primary-background, 0.75);
+                        background-color: rgba($primary-background, 0.15);
+                        border-color: rgba($primary-background, 1);
                     }
 
                     span.me {
-                        background-color: rgba($secondary-background, 0.75);
+                        background-color: rgba($secondary-background, 0.15);
+                        border-color: rgba($secondary-background, 1);
                     }
 
                     button.actions {

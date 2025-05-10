@@ -31,10 +31,6 @@ export function ArcadeSimulator() {
 
             switch (type) {
                 case "status":
-                    // Once the simulator is ready, if this player is a guest, pass initial screen to simulator
-                    const { state: simState } = data;
-                    if (simState === "running") {
-                    }
                     return;
                 case "toplevelcodefinished": {
                     return;

@@ -59,7 +59,6 @@ export const NameAdjectives = [
     lf("Zippy"),
     lf("Wiggly"),
     lf("Fizzy"),
-    lf("Pixel"),
     lf("Tiny"),
     lf("Fluffy"),
     lf("Glowing"),
@@ -121,4 +120,5 @@ export const NameNouns = [
     lf("Duck"),
     lf("Princess"),
     lf("Knight"),
+    lf("Sprite"),
 ];

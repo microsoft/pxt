@@ -77,24 +77,28 @@ export function JoinCodeGroup() {
 
     return (
         <div className={css["join-code-group"]}>
+            <p className={css["label"]}>
+                {lf("Join Code")}
+                <i className={classList(css["help"], "fas fa-question-circle")} onClick={() => { }}></i>
+            </p>
             <div className={classList(sharedcss["horz"], sharedcss["wrap"])} >
                 <Button
                     className={css["join-code"]}
                     label={joinCode}
                     title={lf("Join Code")}
-                    onClick={() => debounceCopyJoinCode()}
+                    onClick={debounceCopyJoinCode}
                 />
                 <Button
                     className={sharedcss["button"]}
                     label={lf("Copy Code")}
                     title={lf("Copy Code")}
-                    onClick={() => debounceCopyJoinCode()}
+                    onClick={debounceCopyJoinCode}
                 />
                 <Button
                     className={sharedcss["button"]}
                     label={lf("Copy Link")}
                     title={lf("Copy Link")}
-                    onClick={() => debounceCopyJoinLink()}
+                    onClick={debounceCopyJoinLink}
                 />
             </div>
         </div>
