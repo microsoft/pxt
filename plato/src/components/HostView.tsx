@@ -3,7 +3,7 @@ import sharedcss from "./styling/Shared.module.scss";
 import { useContext, useMemo, useRef } from "react";
 import { useSyncExternalStore } from "use-sync-external-store/shim"
 import { AppStateContext } from "@/state/Context";
-import { getHostNetState } from "@/state/helpers";
+import { getNetState } from "@/state/helpers";
 import { Input } from "react-common/components/controls/Input";
 import { Button } from "react-common/components/controls/Button";
 import { classList } from "react-common/components/util";
@@ -21,7 +21,7 @@ export function HostView() {
     const context = useContext(AppStateContext);
     const gameLinkRef = useRef<HTMLInputElement>(null);
     const { state, dispatch } = context;
-    const netState = getHostNetState(context);
+    const netState = getNetState("host", context);
     const presence = useSyncExternalStore(
         collabClient.playerPresenceStore.subscribe,
         collabClient.playerPresenceStore.getSnapshot,

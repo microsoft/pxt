@@ -5,7 +5,7 @@ import { useContext, useMemo } from "react";
 import { useSyncExternalStore } from "use-sync-external-store/shim"
 import { AppStateContext } from "@/state/Context";
 import { classList } from "react-common/components/util";
-import { getGuestNetState } from "@/state/helpers";
+import { getNetState } from "@/state/helpers";
 import { ViewPlayer } from "@/types";
 import { Strings } from "@/constants";
 import { makeToast } from "./Toaster";
@@ -19,7 +19,7 @@ import { ArcadeSimulator } from "./ArcadeSimulator";
 export function GuestView() {
     const context = useContext(AppStateContext);
     const { state, dispatch } = context;
-    const netState = getGuestNetState(context);
+    const netState = getNetState("guest", context);
     const presence = useSyncExternalStore(
         collabClient.playerPresenceStore.subscribe,
         collabClient.playerPresenceStore.getSnapshot,

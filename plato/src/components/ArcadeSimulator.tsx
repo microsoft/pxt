@@ -4,16 +4,18 @@ import { useSyncExternalStore } from "use-sync-external-store/shim";
 import * as collabClient from "@/services/collabClient";
 import { AppStateContext } from "@/state/Context";
 import { simDriver, preloadSim, simulateAsync, buildSimJsInfo, RunOptions } from "@/services/simHost";
-import { initialNoneNetState } from "@/state/state";
+import { initialNetState } from "@/state/state";
 import { setPlatoExtInfo } from "@/transforms";
 
 let builtSimJsInfo: Promise<pxtc.BuiltSimJsInfo | undefined> | undefined;
+
+const CHANNEL_ID = "arcade-plato-ext";
 
 export function ArcadeSimulator() {
     const { state } = useContext(AppStateContext);
     const { netState } = state;
     const gamePaused = false;
-    const { clientRole } = netState ?? initialNoneNetState();
+    const { clientRole, clientId } = netState ?? initialNetState("none");
     const simContainerRef = useRef<HTMLDivElement>(null);
     const sessionState = useSyncExternalStore(
         collabClient.sessionStore.subscribe,
@@ -26,15 +28,28 @@ export function ArcadeSimulator() {
             switch (msg.type) {
                 case "client-init": {
                     const { version } = msg.payload;
-                    setPlatoExtInfo(version)
+                    setPlatoExtInfo(version);
+                    const initMsg: PlayTogether._Protocol.HostInitMessage = {
+                        type: "host-init",
+                        payload: {
+                            playerId: clientId || "",
+                            isHost: clientRole === "host",
+                        },
+                    };
+                    simDriver()?.postMessage({
+                        type: "messagepacket",
+                        channel: CHANNEL_ID,
+                        data: new TextEncoder().encode(JSON.stringify(initMsg)),
+                        broadcast: true,
+                    } satisfies pxsim.SimulatorControlMessage as any)
                     break;
                 }
                 default: {
-                    pxt.warn(`Unknown PlayTogether extension message type: ${msg.type}`);
+                    pxt.warn(`Unknown PlayTogether message: ${msg.type}`);
                     break;
                 }
             }
-        };
+        }
 
         const msgHandler = (
             msg: MessageEvent<
@@ -65,13 +80,14 @@ export function ArcadeSimulator() {
 
         window.addEventListener("message", msgHandler);
         return () => window.removeEventListener("message", msgHandler);
-    }, []);
+    }, [clientId, clientRole]);
 
     const getOpts: () => RunOptions = () => {
         let opts: RunOptions;
         opts = {
             shareCode,
             clientRole,
+            clientId,
         };
         return opts;
     };

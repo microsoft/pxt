@@ -3,7 +3,7 @@ import { stateAndDispatch } from "@/state";
 import { setNetState, dismissAllToasts } from "@/state/actions";
 import { makeToast } from "@/components/Toaster";
 import { showToast, dismissToast } from ".";
-import { initialGuestNetState } from "@/state/state";
+import { initialNetState } from "@/state/state";
 
 export async function joinSessionAsync(joinCode: string): Promise<void> {
     const { dispatch } = stateAndDispatch();
@@ -18,7 +18,7 @@ export async function joinSessionAsync(joinCode: string): Promise<void> {
         showToast(connectingToast);
         dispatch(
             setNetState({
-                ...initialGuestNetState(),
+                ...initialNetState("guest"),
                 joinCode,
             })
         );

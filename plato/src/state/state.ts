@@ -1,10 +1,10 @@
-import { AuthStatus, CollabInfo, ModalType, ModalOptions } from "@/types";
+import { AuthStatus, CollabInfo, ModalType, ModalOptions, ClientRole } from "@/types";
 import { ToastWithId } from "@/components/Toaster";
 
 export type AppState = {
     authStatus: AuthStatus;
     userProfile?: pxt.auth.UserProfile;
-    netState: Partial<NetState>;
+    netState: NetState;
     collabInfo?: CollabInfo;
     modalType?: ModalType;
     modalOptions?: ModalOptions;
@@ -12,44 +12,21 @@ export type AppState = {
     opts: Map<string, string>;
 };
 
-export type NetStateBase = {
-    clientRole: string;
+export type NetState = {
+    clientRole: ClientRole;
+    clientId?: string;
     joinCode?: string;
+    shareCode?: string;
     platoExtVersion?: number;
 };
 
-export type NoneNetState = NetStateBase & {
-    clientRole: "none";
-    shareCode?: string;
-};
-
-export type HostNetState = NetStateBase & {
-    clientRole: "host";
-    shareCode?: string;
-};
-
-export type GuestNetState = NetStateBase & {
-    clientRole: "guest";
-    shareCode?: string;
-};
-
-export type NetState = HostNetState | GuestNetState | NoneNetState;
-
-export const initialNoneNetState = (): NoneNetState => ({
-    clientRole: "none",
-});
-
-export const initialHostNetState = (): HostNetState => ({
-    clientRole: "host",
-});
-
-export const initialGuestNetState = (): GuestNetState => ({
-    clientRole: "guest",
+export const initialNetState = (clientRole: ClientRole): NetState => ({
+    clientRole,
 });
 
 export const initialAppState: AppState = {
     authStatus: "unknown",
-    netState: initialNoneNetState(),
+    netState: initialNetState("none"),
     toasts: [],
     opts: new Map<string, string>(),
 };

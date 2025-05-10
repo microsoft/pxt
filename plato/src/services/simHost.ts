@@ -277,6 +277,7 @@ export function simDriver(container?: HTMLElement) {
 export interface RunOptions {
     shareCode?: string;
     clientRole?: ClientRole;
+    clientId?: string;
     mute?: boolean;
     simQueryParams?: string;
     builtJsInfo?: pxtc.BuiltSimJsInfo; // TODO probably move this out

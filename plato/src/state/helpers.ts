@@ -1,6 +1,6 @@
 import { AppStateContextProps, stateAndDispatch } from "./Context";
 import { ClientRole } from "@/types";
-import { GuestNetState, HostNetState } from "./state";
+import { NetState } from "./state";
 
 export function getClientRole(context?: AppStateContextProps): ClientRole {
     const { state } = stateAndDispatch(context);
@@ -12,26 +12,14 @@ export function getClientRole(context?: AppStateContextProps): ClientRole {
     return clientRole ?? "none";
 }
 
-export function getHostNetState(context?: AppStateContextProps): HostNetState | undefined {
+export function getNetState(forRole?: ClientRole, context?: AppStateContextProps): NetState | undefined {
     const { state } = stateAndDispatch(context);
     const { netState } = state;
     if (!netState) {
         return undefined;
     }
-    if (netState.clientRole !== "host") {
+    if (forRole && netState.clientRole !== forRole) {
         return undefined;
     }
-    return netState as HostNetState;
-}
-
-export function getGuestNetState(context?: AppStateContextProps): GuestNetState | undefined {
-    const { state } = stateAndDispatch(context);
-    const { netState } = state;
-    if (!netState) {
-        return undefined;
-    }
-    if (netState.clientRole !== "guest") {
-        return undefined;
-    }
-    return netState as GuestNetState;
+    return netState;
 }

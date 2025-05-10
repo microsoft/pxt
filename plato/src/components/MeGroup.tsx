@@ -3,7 +3,6 @@ import sharedcss from "./styling/Shared.module.scss";
 import { useContext, useMemo, useRef } from "react";
 import { useSyncExternalStore } from "use-sync-external-store/shim"
 import { AppStateContext } from "@/state/Context";
-import { getHostNetState } from "@/state/helpers";
 import { Button } from "react-common/components/controls/Button";
 import { classList } from "react-common/components/util";
 import { generateRandomName } from "@/utils";

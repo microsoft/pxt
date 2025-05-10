@@ -2,7 +2,6 @@ import css from "./styling/NetView.module.scss";
 import sharedcss from "./styling/Shared.module.scss";
 import { useContext, useMemo } from "react";
 import { AppStateContext } from "@/state/Context";
-import { getHostNetState } from "@/state/helpers";
 import { Button } from "react-common/components/controls/Button";
 import { classList } from "react-common/components/util";
 import { debounce } from "@/utils";
