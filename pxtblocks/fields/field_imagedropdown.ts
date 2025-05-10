@@ -1,7 +1,7 @@
 /// <reference path="../../built/pxtlib.d.ts" />
 
 import * as Blockly from "blockly";
-import { clearDropDownDiv, FieldCustom, FieldCustomDropdownOptions, parseColour } from "./field_utils";
+import { clearDropDownDiv, FieldCustom, FieldCustomDropdownOptions, PointerCoords, parseColour, UserInputAction } from "./field_utils";
 import { FieldDropdown } from "./field_dropdown";
 
 export interface FieldImageDropdownOptions extends FieldCustomDropdownOptions {
@@ -32,6 +32,12 @@ export class FieldImageDropdown extends FieldDropdown implements FieldCustom {
 
     protected savedPrimary_: string;
 
+    protected activeDescendantIndex: number | undefined;
+    protected buttons: HTMLDivElement[] = [];
+
+    protected openingPointerCoords: PointerCoords | undefined;
+    protected lastAction: UserInputAction | undefined;
+
     constructor(text: string, options: FieldImageDropdownOptions, validator?: Function) {
         super(options.data);
 
@@ -43,11 +49,128 @@ export class FieldImageDropdown extends FieldDropdown implements FieldCustom {
         this.borderColour_ = pxt.toolbox.fadeColor(this.backgroundColour_, 0.4, false);
     }
 
+    protected addKeyHandler(contentDiv: HTMLDivElement) {
+        Blockly.browserEvents.bind(contentDiv, 'keydown', this, (e: KeyboardEvent) => {
+            const setFocusedButton = () => {
+                this.lastAction = 'keymove';
+                this.buttons.forEach(button => button.setAttribute('class', 'blocklyDropDownButton'));
+                const activeButton = this.buttons[this.activeDescendantIndex];
+                const activeButtonContainer = activeButton.parentElement;
+                activeButton.setAttribute('class', 'blocklyDropDownButton blocklyDropDownButtonFocus');
+                const activeButtonRect = activeButtonContainer.getBoundingClientRect();
+                // Has to be the parent element as the contents of the contentDiv are all floated.
+                const containerRect = contentDiv.parentElement.getBoundingClientRect();
+                if (activeButtonRect.bottom > containerRect.bottom) {
+                    activeButtonContainer.scrollIntoView({block: "end"});
+                } else if (activeButtonRect.top < containerRect.top) {
+                    activeButtonContainer.scrollIntoView({block: "start"});
+                }
+                contentDiv.setAttribute('aria-activedescendant', ":" + this.activeDescendantIndex);
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            if (this.activeDescendantIndex === undefined) {
+                if (e.code === 'ArrowDown' || e.code === 'ArrowRight' || e.code === 'Home' ) {
+                    this.activeDescendantIndex = 0
+                    return setFocusedButton();
+                } else if (e.code === 'ArrowUp' || e.code === 'ArrowLeft' || e.code === 'End') {
+                    this.activeDescendantIndex =  this.buttons.length - 1
+                    return setFocusedButton();
+                }
+            }
+
+            const ctrlCmd = pxt.BrowserUtils.isMac() ? e.metaKey : e.ctrlKey;
+            switch(e.code) {
+                case 'ArrowUp':
+                    if (this.activeDescendantIndex - this.columns_ >= 0) {
+                        this.activeDescendantIndex -= this.columns_;
+                    }
+                    break;
+                case 'ArrowDown':
+                    if (this.activeDescendantIndex + this.columns_ < this.buttons.length) {
+                        this.activeDescendantIndex += this.columns_;
+                    }
+                    break;
+                case 'ArrowRight':
+                    if (this.activeDescendantIndex < this.buttons.length - 1) {
+                        this.activeDescendantIndex++;
+                    }
+                    break;
+                case 'ArrowLeft':
+                    if (this.activeDescendantIndex !== 0) {
+                        this.activeDescendantIndex--;
+                    }
+                    break;
+                case "Home": {
+                    if (ctrlCmd) {
+                        this.activeDescendantIndex = 0;
+                    } else {
+                        while (this.activeDescendantIndex % this.columns_ !== 0) {
+                            this.activeDescendantIndex--;
+                        }
+                    }
+                    break;
+                }
+                case "End": {
+                    if (ctrlCmd) {
+                        this.activeDescendantIndex = this.buttons.length - 1;
+                    } else {
+                        while (
+                          this.activeDescendantIndex % this.columns_ !== this.columns_ - 1 &&
+                          this.activeDescendantIndex < this.buttons.length - 1
+                        ) {
+                          this.activeDescendantIndex++;
+                        }
+                    }
+                    break;
+                }
+                case "Enter":
+                case "Space": {
+                    this.buttonClick_(this.buttons[this.activeDescendantIndex].getAttribute('data-value'));
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return;
+                }
+                default: {
+                    return
+                }
+            }
+            setFocusedButton();
+        });
+    }
+
+    protected createRow() {
+        const row = document.createElement('div');
+        row.setAttribute('role', 'row');
+        return row;
+    }
+
+    protected addPointerListener(dropdownDiv: HTMLElement) {
+        Blockly.browserEvents.bind(dropdownDiv, 'pointermove', this, () => {
+            this.lastAction = 'pointermove';
+        });
+    }
+
+    protected pointerTriggeredByUser() {
+        return this.openingPointerCoords && !this.lastAction || this.lastAction === 'pointermove'
+    }
+
+    protected pointeroutTriggeredByUser() {
+        return this.lastAction === 'pointermove'
+    }
+
     /**
      * Create a dropdown menu under the text.
      * @private
      */
-    public showEditor_() {
+    public showEditor_(e?: MouseEvent) {
+        if (e) {
+            this.openingPointerCoords = {
+                x: e.pageX,
+                y: e.pageY
+            }
+        }
         // If there is an existing drop-down we own, this is a request to hide the drop-down.
         if (Blockly.DropDownDiv.hideIfOwner(this)) {
             return;
@@ -59,9 +182,12 @@ export class FieldImageDropdown extends FieldDropdown implements FieldCustom {
         let dropdownDiv = Blockly.DropDownDiv.getContentDiv() as HTMLElement;
         let contentDiv = document.createElement('div');
         // Accessibility properties
-        contentDiv.setAttribute('role', 'menu');
-        contentDiv.setAttribute('aria-haspopup', 'true');
+        contentDiv.setAttribute('role', 'grid');
+        contentDiv.setAttribute('tabindex', '0');
         contentDiv.classList.add("blocklyMenu", "blocklyDropdownMenu");
+
+        this.addPointerListener(dropdownDiv);
+        this.addKeyHandler(contentDiv);
 
         const rows: ButtonRow[] = [];
         let currentRow: ButtonRow = {
@@ -77,6 +203,8 @@ export class FieldImageDropdown extends FieldDropdown implements FieldCustom {
         const columnButtonWidth = this.columns_ ? ((this.width_ / this.columns_) - BUTTON_MARGIN) : 0;
 
         // do a first pass to calculate the rows
+        let selectedButtonContainer;
+        let row = this.createRow();
         for (let i = 0; i < options.length; i++) {
             const content = (options[i] as any)[0];
 
@@ -108,11 +236,12 @@ export class FieldImageDropdown extends FieldDropdown implements FieldCustom {
         // now create the actual row elements
         let descendantIndex = 0;
         for (const row of rows) {
-            const rowDiv = document.createElement("div");
+            const rowDiv = this.createRow();
             rowDiv.style.width = row.width + "px";
             rowDiv.style.height = row.height + "px";
             contentDiv.appendChild(rowDiv);
             for (const option of row.items) {
+                const localDescendantIndex = descendantIndex;
                 let content = (option as any)[0]; // Human-readable text or image.
                 const value = (option as any)[1]; // Language-neutral value.
                 // Icons with the type property placeholder take up space but don't have any functionality
@@ -126,10 +255,13 @@ export class FieldImageDropdown extends FieldDropdown implements FieldCustom {
                     continue;
                 }
 
-                const button = document.createElement('button');
-                button.setAttribute('id', ':' + descendantIndex++); // For aria-activedescendant
-                button.setAttribute('role', 'menuitem');
-                button.setAttribute('class', 'blocklyDropDownButton');
+                const buttonContainer = document.createElement('div');
+                buttonContainer.setAttribute('class', 'blocklyDropDownButtonContainer')
+                const button = document.createElement('div');
+                button.setAttribute('id', ':' + localDescendantIndex); // For aria-activedescendant
+                button.setAttribute('role', 'gridcell');
+                button.setAttribute('aria-selected', 'false');
+                button.classList.add('blocklyDropDownButton');
                 button.title = content.alt;
 
                 button.style.width = (columnButtonWidth || content.width) + 'px';
@@ -140,17 +272,28 @@ export class FieldImageDropdown extends FieldDropdown implements FieldCustom {
                     // This icon is selected, show it in a different colour
                     backgroundColor = (this.sourceBlock_ as Blockly.BlockSvg).getColourTertiary();
                     button.setAttribute('aria-selected', 'true');
+                    this.activeDescendantIndex = localDescendantIndex;
+                    contentDiv.setAttribute('aria-activedescendant', button.id);
+                    button.setAttribute('class', `blocklyDropDownButton ${e ? "blocklyDropDownButtonHover" : "blocklyDropDownButtonFocus"}`);
+                    selectedButtonContainer = buttonContainer;
                 }
                 button.style.backgroundColor = backgroundColor;
                 button.style.borderColor = this.borderColour_;
-                Blockly.browserEvents.bind(button, 'click', this, this.buttonClick_);
-                Blockly.browserEvents.bind(button, 'mouseover', this, () => {
-                    button.setAttribute('class', 'blocklyDropDownButton blocklyDropDownButtonHover');
-                    contentDiv.setAttribute('aria-activedescendant', button.id);
+                Blockly.browserEvents.bind(button, 'click', this, () => this.buttonClick_(value));
+                Blockly.browserEvents.bind(button, 'pointermove', this, () => {
+                    if (this.pointerTriggeredByUser()) {
+                        this.buttons.forEach(button => button.setAttribute('class', 'blocklyDropDownButton'));
+                        this.activeDescendantIndex = localDescendantIndex;
+                        button.setAttribute('class', 'blocklyDropDownButton blocklyDropDownButtonHover');
+                        contentDiv.setAttribute('aria-activedescendant', button.id);
+                    }
                 });
-                Blockly.browserEvents.bind(button, 'mouseout', this, () => {
-                    button.setAttribute('class', 'blocklyDropDownButton');
-                    contentDiv.removeAttribute('aria-activedescendant');
+                Blockly.browserEvents.bind(button, 'pointerout', this, () => {
+                    if (this.pointeroutTriggeredByUser()) {
+                        button.setAttribute('class', 'blocklyDropDownButton');
+                        contentDiv.removeAttribute('aria-activedescendant');
+                        this.activeDescendantIndex = undefined;
+                    }
                 });
                 let buttonImg = document.createElement('img');
                 buttonImg.src = content.src;
@@ -160,7 +303,10 @@ export class FieldImageDropdown extends FieldDropdown implements FieldCustom {
                 button.setAttribute('data-value', value);
                 buttonImg.setAttribute('data-value', value);
                 button.appendChild(buttonImg);
-                rowDiv.appendChild(button);
+                this.buttons.push(button);
+                buttonContainer.appendChild(button);
+                rowDiv.append(buttonContainer);
+                descendantIndex++;
             }
         }
 
@@ -187,6 +333,12 @@ export class FieldImageDropdown extends FieldDropdown implements FieldCustom {
 
         Blockly.DropDownDiv.showPositionedByField(this, this.onHide_.bind(this));
 
+        contentDiv.focus();
+
+        if (selectedButtonContainer) {
+            selectedButtonContainer.scrollIntoView({block: "end"});
+        }
+
         let source = this.sourceBlock_ as Blockly.BlockSvg;
         this.savedPrimary_ = source?.getColour();
         if (source?.isShadow()) {
@@ -208,11 +360,10 @@ export class FieldImageDropdown extends FieldDropdown implements FieldCustom {
     /**
      * Callback for when a button is clicked inside the drop-down.
      * Should be bound to the FieldIconMenu.
-     * @param {Event} e DOM event for the click/touch
+     * @param {string | null} value the value to set for the field
      * @private
      */
-    protected buttonClick_ = (e: MouseEvent) => {
-        let value = (e.target as Element).getAttribute('data-value');
+    protected buttonClick_ = (value: string | null) => {
         if (!value) return;
         this.setValue(value);
         Blockly.DropDownDiv.hide();
@@ -222,10 +373,13 @@ export class FieldImageDropdown extends FieldDropdown implements FieldCustom {
      * Callback for when the drop-down is hidden.
      */
     protected onHide_() {
+        this.openingPointerCoords = undefined;
+        this.lastAction = undefined;
         let content = Blockly.DropDownDiv.getContentDiv() as HTMLElement;
         content.removeAttribute('role');
-        content.removeAttribute('aria-haspopup');
         content.removeAttribute('aria-activedescendant');
+        this.activeDescendantIndex = undefined;
+        this.buttons = [];
         content.style.width = '';
         content.style.paddingRight = '';
         content.style.maxHeight = '';
@@ -244,20 +398,32 @@ function sumRowHeight(arr: ButtonRow[]) {
 }
 
 Blockly.Css.register(`
+.blocklyDropDownButtonContainer,
 .blocklyDropDownButton {
     display: inline-block;
     float: left;
-    padding: 0;
-    margin: 4px;
     border-radius: 4px;
-    outline: none;
+    text-align: center;
+    margin: 0;
+}
+
+.blocklyDropDownButtonContainer {
+    padding: 4px;
+}
+
+.blocklyDropDownButton {
     border: 1px solid;
     transition: box-shadow .1s;
     cursor: pointer;
+    outline: none;
 }
 
 .blocklyDropDownButtonHover {
     box-shadow: 0px 0px 0px 4px rgba(255, 255, 255, 0.2);
+}
+
+.blocklyDropDownButtonFocus {
+    box-shadow: 0px 0px 0px 4px rgb(255, 255, 255);
 }
 
 .blocklyDropDownButton:active {
@@ -267,6 +433,8 @@ Blockly.Css.register(`
 .blocklyDropDownButton > img {
     width: 80%;
     height: 80%;
-    margin-top: 5%
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
 }
 `)
