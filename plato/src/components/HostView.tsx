@@ -94,6 +94,9 @@ export function HostView() {
                 </div>
             </div>
             <div className={classList(css["panel"], css["sim"])}>
+                <p className={css["label"]}>
+                    {lf("Game")}
+                </p>
                 <ArcadeSimulator />
             </div>
         </div>
