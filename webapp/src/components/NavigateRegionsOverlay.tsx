@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as ReactDOM from "react-dom";
 import { Button, ButtonProps } from "../../../react-common/components/controls/Button";
 import { FocusTrap } from "../../../react-common/components/controls/FocusTrap";
@@ -67,11 +67,15 @@ const regions: Region[] = [
             const bounds = element?.getBoundingClientRect();
             if (projectView.state.collapseEditorTools) {
                 // Custom presentation for the collapsed sim.
+                const isRtl = pxt.Util.isUserLanguageRtl();
                 const collapsedSimPadding = 30;
                 const copy = DOMRect.fromRect(bounds);
                 copy.y = bounds.top - collapsedSimPadding;
                 copy.width = 70;
                 copy.height = bounds.height + collapsedSimPadding * 2;
+                if (isRtl) {
+                    copy.x -= copy.width - bounds.width;
+                }
                 return copy;
             }
             return bounds;
@@ -99,10 +103,15 @@ const regions: Region[] = [
         getBounds(projectView: IProjectView) {
             const bounds = getToolboxBounds(projectView);
             if (projectView.state.collapseEditorTools) {
+                const isRtl = pxt.Util.isUserLanguageRtl();
                 // Shift over for a clearer region when the toolbox is collapsed
                 const copy = DOMRect.fromRect(bounds);
-                copy.x = 0;
-                copy.width = bounds.left + bounds.width;
+                if (isRtl) {
+                    copy.width += document.body.clientWidth - bounds.right;
+                } else {
+                    copy.x = 0;
+                    copy.width = bounds.x + bounds.width;
+                }
                 return copy;
             }
             return bounds;
@@ -123,11 +132,14 @@ const regions: Region[] = [
                     const bounds = element.getBoundingClientRect();
                     if (selector === "#monacoEditor" || selector === "#blocksArea") {
                         // Use bounds that don't overlap the toolbox region.
+                        const isRtl = pxt.Util.isUserLanguageRtl();
                         const toolbox = getToolboxBounds(projectView);
                         const copied = DOMRect.fromRect(bounds);
                         if (toolbox) {
-                            copied.x = toolbox.right;
-                            copied.width = bounds.width - toolbox.width;
+                            copied.width -= toolbox.width;
+                            if (!isRtl) {
+                                copied.x = toolbox.right;
+                            }
                         }
                         return copied;
                     }
