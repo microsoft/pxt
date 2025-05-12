@@ -284,7 +284,7 @@ export async function npmVersionBumpAsync(
 ): Promise<string> {
     const output = await spawnWithPipeAsync({
         cmd: addCmd("npm"),
-        args: ["version", bumpType, "--message", `"[pxt-cli] bump version to %s"`, "--git-tag-version", tagCommit ? "true" : "false"],
+        args: ["version", bumpType, "--message", `[pxt-cli] bump version to %s`, "--git-tag-version", tagCommit ? "true" : "false"],
         cwd: ".",
         silent: true,
     });
@@ -299,7 +299,7 @@ export async function npmVersionBumpAsync(
         });
         await spawnAsync({
             cmd: "git",
-            args: ["commit", "-m", `"[pxt-cli] bump version to ${ver}"`],
+            args: ["commit", "-m", `[pxt-cli] bump version to ${ver}`],
             cwd: ".",
             silent: true,
         });
