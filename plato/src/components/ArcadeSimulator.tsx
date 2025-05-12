@@ -5,11 +5,10 @@ import * as collabClient from "@/services/collabClient";
 import { AppStateContext } from "@/state/Context";
 import { simDriver, preloadSim, simulateAsync, buildSimJsInfo, RunOptions } from "@/services/simHost";
 import { initialNetState } from "@/state/state";
-import { setPlatoExtInfo } from "@/transforms";
+import { setPlatoExtInfo, clearPlayerCurrentGames } from "@/transforms";
+import { PlayTogether, CHANNEL_ID } from "@/protocol";
 
 let builtSimJsInfo: Promise<pxtc.BuiltSimJsInfo | undefined> | undefined;
-
-const CHANNEL_ID = "arcade-plato-ext";
 
 export function ArcadeSimulator() {
     const { state } = useContext(AppStateContext);
@@ -53,7 +52,8 @@ export function ArcadeSimulator() {
 
         const msgHandler = (
             msg: MessageEvent<
-                pxsim.SimulatorStateMessage | pxsim.SimulatorTopLevelCodeFinishedMessage | pxsim.SimulatorControlMessage
+                pxsim.SimulatorStateMessage | pxsim.SimulatorTopLevelCodeFinishedMessage |
+                pxsim.SimulatorControlMessage | pxsim.SimulatorCommandMessage
             >
         ) => {
             const { data } = msg;
@@ -65,6 +65,10 @@ export function ArcadeSimulator() {
                 }
                 case "toplevelcodefinished": {
                     return;
+                }
+                case "simulator": {
+                    clearPlayerCurrentGames();
+                    break;
                 }
                 case "messagepacket": {
                     const { channel } = data;
@@ -116,6 +120,8 @@ export function ArcadeSimulator() {
 
     useEffect(() => {
         if (shareCode) {
+            setPlatoExtInfo(0);
+            clearPlayerCurrentGames();
             compileSimCode().then(() => {
                 runSimulator();
             }).catch((e) => {
@@ -141,60 +147,4 @@ export function ArcadeSimulator() {
             }}
         />
     );
-}
-
-// Copied from eanders-ms/arcade-plato/protocol.ts
-// Keep them in sync
-namespace PlayTogether {
-    export namespace _Protocol {
-
-        /**
-         * Client --> Host
-         * Notify host that the client is a PlayTogether client.
-         */
-        export interface ClientInitMessage {
-            type: "client-init";
-            payload: {
-                version: number;
-            };
-        }
-
-        /**
-         * Host --> Client
-         * Communicate game config and other information to the client.
-         */
-        export interface HostInitMessage {
-            type: "host-init";
-            payload: {
-                playerId: string; // ID of the local player
-                isHost: boolean; // true if the local player is the session host
-            };
-        }
-
-        /**
-         * Host --> Client
-         * Notify client that a player is joining the game.
-         */
-        export interface PlayerJoinedMessage {
-            type: "player-joined";
-            payload: {
-                playerId: string;
-                playerName: string;
-                //playerIcon: Buffer;
-            };
-        }
-
-        /**
-         * Host --> Client
-         * Notify client that a player is leaving the game.
-         */
-        export interface PlayerLeftMessage {
-            type: "player-left";
-            payload: {
-                playerId: string;
-            };
-        }
-
-        export type Message = ClientInitMessage | HostInitMessage | PlayerJoinedMessage | PlayerLeftMessage;
-    }
 }

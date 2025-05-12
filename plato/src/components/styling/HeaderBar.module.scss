@@ -71,6 +71,11 @@
             background-color: #472d7e;
             border-radius: 99px;
             padding: 0.5rem 1.5rem;
+
+            &.plato-game {
+                border: 4px solid yellow;
+                transition: border 0.35s;
+            }
         }
     }
 

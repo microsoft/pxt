@@ -10,6 +10,10 @@ export { joinSessionAsync } from "./joinSessionAsync";
 export { joinedSessionAsync } from "./joinedSessionAsync";
 export { startLoadingGame } from "./startLoadingGame";
 export { setPlatoExtInfo } from "./setPlatoExtInfo";
+export { setPlayerValue } from "./setPlayerValue";
+export { clearPlayerCurrentGames } from "./clearPlayerCurrentGames";
+export { recvPlayerJoinGame } from "./recvPlayerJoinGame";
+export { recvPlayerLeaveGame } from "./recvPlayerLeaveGame";
 
 import * as collabClient from "@/services/collabClient";
 import { ClientRole, SessionOverReason, ValueType } from "@/types";

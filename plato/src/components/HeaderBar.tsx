@@ -16,7 +16,9 @@ const betaTag = () => {
 
 export function HeaderBar() {
     const { state } = useContext(AppStateContext);
+    const { netState } = state;
 
+    const isPlatoGame = React.useMemo(() => !!netState?.platoExtVersion, [netState?.platoExtVersion]);
     const appTheme = pxt.appTarget?.appTheme;
 
     function onBrandIconClick() {
@@ -210,11 +212,11 @@ export function HeaderBar() {
             </div>
 
             <div className={css["centered-panel"]}>
-                <div className={classList(css["app-title"], "min-2md")}>
+                <div className={classList(css["app-title"], isPlatoGame ? css["plato-game"] : "", "min-2md")}>
                     {Strings.AppTitle}
                     {betaTag()}
                 </div>
-                <div className={classList(css["app-title"], "min-xs max-2md")}>
+                <div className={classList(css["app-title"], isPlatoGame ? css["plato-game"] : "", "min-xs max-2md")}>
                     {Strings.AppTitleShort}
                     {betaTag()}
                 </div>

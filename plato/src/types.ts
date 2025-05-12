@@ -29,25 +29,12 @@ export type CollabInfo = {
 
 export type CollabJoinResult = CollabInfo & NetResult;
 
-export type UserInfo = {
-    id: string;
-    slot: number;
-    role: ClientRole;
-    kv?: Map<string, string>;
-};
-
-export function getUserValue(user: UserInfo, key: string, def?: string): string | undefined {
-    if (user.kv) {
-        return user.kv.get(key) ?? def;
-    }
-    return def;
-}
-
 export type ViewPlayer = {
     id: string;
     name?: string;
     role?: ClientRole;
     isMe?: boolean;
+    currentGame?: string; // PLATO games only, this is the game ID the user is joined to.
 };
 
 export type ModalType = "sign-in" | "join-game";

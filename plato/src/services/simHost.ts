@@ -1,7 +1,7 @@
 //import { gameOver } from "./gameClient";
 import { ClientRole } from "@/types";
 import { stateAndDispatch } from "../state";
-import { setNetState } from "../state/actions";
+import { PlayTogether, CHANNEL_ID } from "@/protocol";
 
 let _mainPkg: pxt.MainPackage;
 let mainPkg = (reset?: boolean) => {
@@ -403,4 +403,35 @@ export async function buildSimJsInfo(runOpts: RunOptions): Promise<pxtc.BuiltSim
     const res = pxtc.buildSimJsInfo(compileResult);
     res.parts = compileResult.usedParts;
     return res;
+}
+
+export function playerJoin(playerId: string, playerName: string) {
+    const initMsg: PlayTogether._Protocol.PlayerJoinedMessage = {
+        type: "player-joined",
+        payload: {
+            playerId,
+            playerName,
+        },
+    };
+    simDriver()?.postMessage({
+        type: "messagepacket",
+        channel: CHANNEL_ID,
+        data: new TextEncoder().encode(JSON.stringify(initMsg)),
+        broadcast: true,
+    } satisfies pxsim.SimulatorControlMessage as any)
+}
+
+export function playerLeave(playerId: string) {
+    const initMsg: PlayTogether._Protocol.PlayerLeftMessage = {
+        type: "player-left",
+        payload: {
+            playerId,
+        },
+    };
+    simDriver()?.postMessage({
+        type: "messagepacket",
+        channel: CHANNEL_ID,
+        data: new TextEncoder().encode(JSON.stringify(initMsg)),
+        broadcast: true,
+    } satisfies pxsim.SimulatorControlMessage as any)
 }

@@ -4,7 +4,6 @@
     display: flex;
     flex-direction: row;
     gap: 0.5rem;
-    width: 100%;
 }
 
 .wrap {
@@ -14,6 +13,14 @@
 
 .w100 {
     width: 100%;
+}
+
+.stretch {
+    flex: 1;
+}
+
+.items-right {
+    justify-content: flex-end;
 }
 
 .button {

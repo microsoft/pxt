@@ -9,12 +9,19 @@ import { generateRandomName } from "@/utils";
 import * as collabClient from "@/services/collabClient";
 import { debounce } from "@/utils";
 import { ViewPlayer } from "@/types";
+import { setPlayerValue } from "@/transforms";
 import { Strings } from "@/constants";
 
 export function MeGroup() {
     const context = useContext(AppStateContext);
     const { state } = context;
     const { netState } = state;
+    const sessionState = useSyncExternalStore(
+        collabClient.sessionStore.subscribe,
+        collabClient.sessionStore.getSnapshot
+    );
+    const { shareCode } = sessionState;
+
     const presence = useSyncExternalStore(
         collabClient.playerPresenceStore.subscribe,
         collabClient.playerPresenceStore.getSnapshot,
@@ -31,18 +38,40 @@ export function MeGroup() {
         return players.find(p => p.isMe);
     }, [players, netState]);
 
+    const debounceRegenerateName = useMemo(
+        () =>
+            debounce(() => {
+                if (!me) return;
+                const name = generateRandomName();
+                setPlayerValue(me.id, "name", name);
+            }, 100),
+        [me]);
+
+    const joinedToGame = useMemo(() => {
+        if (!shareCode || !me) return false;
+        return me.currentGame === shareCode;
+    }, [me?.currentGame, shareCode]);
+
+    const isPlatoGame = useMemo(() => {
+        const platoExtVersion = netState?.platoExtVersion ?? 0;
+        return platoExtVersion > 0;
+    }, [netState]);
+
     if (!netState) {
         return null;
     }
 
-    const debounceRegenerateName = useMemo(
-        () =>
-            debounce(() => {
-                const name = generateRandomName();
-                collabClient.setName(name);
-            }, 100),
-        []
-    );
+    const joinGame = () => {
+        if (!me) return false;
+        const { shareCode } = sessionState;
+        if (!shareCode) return false;
+        setPlayerValue(me.id, "currentGame", shareCode);
+    };
+
+    const leaveGame = () => {
+        if (!me) return;
+        setPlayerValue(me.id, "currentGame", undefined);
+    };
 
     return (
         <div className={css["me-group"]}>
@@ -55,16 +84,21 @@ export function MeGroup() {
                     rightIcon="fas fa-sync"
                     onClick={debounceRegenerateName}
                 />}
+                {isPlatoGame && <div className={classList(sharedcss["horz"], sharedcss["wrap"], sharedcss["stretch"], sharedcss["items-right"])}>
+                    {!joinedToGame && <Button
+                        className={classList(sharedcss["button"], sharedcss["primary"])}
+                        label={lf("Join Game")}
+                        title={lf("Join Game")}
+                        onClick={joinGame}
+                    />}
+                    {joinedToGame && <Button
+                        className={classList(sharedcss["button"], sharedcss["destructive"])}
+                        label={lf("Leave Game")}
+                        title={lf("Leave Game")}
+                        onClick={leaveGame}
+                    />}
+                </div>}
             </div>
-            {netState.platoExtVersion && <p></p>}
-            {netState.platoExtVersion && <div className={classList(sharedcss["horz"], sharedcss["wrap"])}>
-                <Button
-                    className={classList(sharedcss["button"], sharedcss["primary"])}
-                    label={lf("Join Game")}
-                    title={lf("Join Game")}
-                    onClick={() => { }}
-                />
-            </div>}
         </div>
     );
 }

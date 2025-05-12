@@ -16,6 +16,7 @@ import {
     ValueType,
 } from "@/types";
 import { jsonReplacer, jsonReviver } from "@/utils";
+import { recvPlayerJoinGame, recvPlayerLeaveGame } from "@/transforms";
 
 const COLLAB_HOST_PROD = "https://plato.makecode.com";
 const COLLAB_HOST_STAGING = "https://dev.multiplayer.staging.pxt.io";
@@ -278,7 +279,7 @@ class CollabClient {
         destroyCollabClient();
     }
 
-    public setKey(key: string, val: string) {
+    public setKey(key: string, val: ValueType) {
         const msg: Protocol.KVStoreMessage = {
             type: "kv",
             op: "set",
@@ -398,11 +399,6 @@ export function collabOver(reason: SessionOverReason) {
     collabClient?.collabOver(reason);
 }
 
-export function kvOp(op: KvMutationOp, key: string, val?: string) {
-    const collabClient = getCollabClient(false);
-    collabClient?.kvOp(op, key, val);
-}
-
 export function getClientId() {
     const collabClient = getCollabClient(false);
     return collabClient?.clientId;
@@ -412,9 +408,14 @@ export function destroy() {
     destroyCollabClient();
 }
 
-export function setName(name: string) {
+export function setClientValue(clientId: string, key: string, val: ValueType) {
     const collabClient = getCollabClient(false);
-    collabClient?.setKey(`/clients/${collabClient.clientId}/name`, name);
+    collabClient?.setKey(`/clients/${clientId}/${key}`, val);
+}
+
+export function delClientValue(clientId: string, key: string) {
+    const collabClient = getCollabClient(false);
+    collabClient?.delKey(`/clients/${clientId}/${key}`);
 }
 
 export function loadGame(shareCode: string) {
@@ -529,6 +530,17 @@ class SessionStore {
         let changed = false;
         path.shift(); // remove "sess"
         const key = path.shift();
+        switch (key) {
+            case "shareCode":
+                this.state.shareCode = undefined;
+                changed = true;
+                break;
+            default:
+                pxt.warn(`[del] Unknown session key: ${key}`);
+        }
+        if (changed) {
+            this.notify();
+        }
     }
 
     private notify() {
@@ -601,7 +613,6 @@ class PlayerPresenceStore {
     private setKey(path: string[], val: ValueType) {
         let changed = false;
         const clientId = path[1];
-        const isNewPlayer = !this._players.has(clientId);
         const player = this._players.get(clientId) ?? {
             id: clientId,
             isMe: clientId === this._clientId,
@@ -617,6 +628,11 @@ class PlayerPresenceStore {
                 case "name":
                     player.name = val as string;
                     changed = true;
+                    break;
+                case "currentGame":
+                    player.currentGame = val as string;
+                    changed = true;
+                    recvPlayerJoinGame(player.id);
                     break;
                 default:
                     pxt.warn(`[set] Unknown player key: ${key}`);
@@ -639,6 +655,11 @@ class PlayerPresenceStore {
                 let changed = false;
                 const key = path[2];
                 switch (key) {
+                    case "currentGame":
+                        player.currentGame = undefined;
+                        changed = true;
+                        recvPlayerLeaveGame(player.id);
+                        break;
                     default:
                         pxt.warn(`[del] Unknown player key: ${key}`);
                 }
