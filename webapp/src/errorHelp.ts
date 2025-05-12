@@ -3,9 +3,14 @@ import { Editor } from "./blocks";
 import { ErrorDisplayInfo } from "./errorList";
 import { aiErrorExplainRequest } from "./cloud";
 
+export interface ErrorExplanationStep {
+    message: string; // The message to display
+    elementId?: string; // The id of the element on the page to highlight
+    onStepBegin?: () => void;
+}
+
 export interface ErrorHelpResponse {
-    explanationAsText: string;
-    explanationAsTour: pxt.tour.BubbleStep[];
+    explanationSteps: ErrorExplanationStep[];
 }
 
 export class ErrorHelper {
@@ -15,26 +20,32 @@ export class ErrorHelper {
         this.parent = parent;
     }
 
-    protected parseResponse(response: string): ErrorHelpResponse {
-        // We ask the AI to provide an ordered JSON list with blockIds tied to explanations for each block.
-        // For example:
-        // [
-        //     {
-        //         "blockId": "sampleblockid",
-        //         "message": "Here is a helpful message walking you through the error. This one will be displayed first."
-        //     },
-        //     {
-        //         "blockId": "sampleblockid2",
-        //         "message": "Here is another helpful message walking you through the error. This one will be displayed second."
-        //     }
-        // ]
+    /**
+     * Converts the AI response data into our structured ErrorHelpResponse format.
+     * This is used when the AI returns a JSON "tour" response.
+     */
+    protected parseTourResponse(response: string): ErrorHelpResponse {
+        /*
+        The AI either provides a JSON list with blockIds tied to explanations for each block.
+        For example:
+        [
+            {
+                "blockId": "sampleblockid",
+                "message": "Here is a helpful message walking you through the error. This one will be displayed first."
+            },
+            {
+                "blockId": "sampleblockid2",
+                "message": "Here is another helpful message walking you through the error. This one will be displayed second."
+            }
+        ]
+        */
+
         interface AiResponseJsonFormat {
             blockId: string;
             message: string;
         }
 
-        let explanationAsText = "";
-        let explanationAsTour: pxt.tour.BubbleStep[] = [];
+        let explanationSteps: ErrorExplanationStep[] = [];
 
         console.log("AI response", response);
 
@@ -44,40 +55,55 @@ export class ErrorHelper {
         const parsedResponse = pxt.Util.jsonTryParse(
             response
         ) as AiResponseJsonFormat[];
+
         if (parsedResponse) {
+            // TODO thsparks - Can we move "validation" of a response up to the parent editor?
             const validBlockIds = this.parent.getBlocks().map((b) => b.id);
             for (const item of parsedResponse) {
-                const tourStep = {
-                    title: lf("Error Explanation"),
-                    description: item.message,
-                    location: pxt.tour.BubbleLocation.Center
-                } as pxt.tour.BubbleStep;
+                const step: ErrorExplanationStep = {
+                    message: item.message
+                };
 
                 // Check each blockId is specified & valid, and if so, add a tour step for it
                 const blockId = item.blockId;
                 if (blockId) {
                     if (validBlockIds.includes(blockId)) {
-                        tourStep.targetQuery = `g[data-id="${blockId}"]`;
-                        tourStep.location = pxt.tour.BubbleLocation.Right;
-                        tourStep.onStepBegin = () => {
+                        step.elementId = `g[data-id="${blockId}"]`;
+                        step.onStepBegin = () => {
                             (this.parent.editor as Editor).editor.centerOnBlock(blockId);
-                        }
+                        };
                     } else {
-                        // TODO - handle this case
-                        console.error("Invalid blockId in AI response", blockId, parsedResponse, response);
+
+                        // TODO thsparks - Maybe?
+                        // Try to repair the block id. The AI sometimes sends variable ids instead of blockIds.
+                        // If that variable id is only used in one block, we can assume that is the block we should point to.
+                        // https://developers.google.com/blockly/reference/js/blockly.workspace_class.getvariableusesbyid_1_method#workspacegetvariableusesbyid_method
+
+                        pxt.error(`Invalid blockId in AI response`, blockId, parsedResponse);
                     }
                 }
 
-                explanationAsTour.push(tourStep);
+                explanationSteps.push(step);
             }
         } else {
-            explanationAsText = response; // TODO - handle this case better
+            // TODO thsparks - handle error properly
+            throw new Error("Invalid response from AI");
         }
 
+        return { explanationSteps };
+    }
+
+    /**
+     * Converts the AI response data into our structured ErrorHelpResponse format.
+     * This is used when the AI returns a simple text response.
+     */
+    protected parseTextResponse(response: string): ErrorHelpResponse {
         return {
-            explanationAsText,
-            explanationAsTour:
-                explanationAsTour.length > 0 ? explanationAsTour : undefined,
+            explanationSteps: [
+                {
+                    message: response
+                }
+            ]
         };
     }
 
@@ -89,12 +115,18 @@ export class ErrorHelper {
         return JSON.stringify(errors);
     }
 
+    /**
+     * Cleans up blocks code to remove unnecessary and bulky content.
+     */
     protected cleanBlocksCode(code: string): string {
         // Remove any image content (it's bulky and not useful for the AI)
         const updatedCode = code.replace(/img`[^`]*`/g, "img`[trimmed for brevity]`");
         return updatedCode;
     }
 
+    /**
+     * Calls the AI-Error-Help API to get assistance with the provided errors.
+     */
     async getHelpAsync(errors: ErrorDisplayInfo[]): Promise<ErrorHelpResponse> {
         const lang = this.parent.isBlocksActive() ? "blocks" : "typescript";
         const target = pxt.appTarget.nickname || pxt.appTarget.name;
@@ -106,6 +138,9 @@ export class ErrorHelper {
         const errString = this.getErrorsAsText(errors);
         console.log("Errors", errString);
 
+
+        // TODO thsparks : If error (incl. block ids) is same, check cached response. If ids in that are also valid, return cached response. Else, call API.
+
         // Call to backend API with code and errors, then set the explanation state
         // to the response from the backend
         const response = await aiErrorExplainRequest(
@@ -116,7 +151,7 @@ export class ErrorHelper {
             outputFormat
         );
 
-        const parsedResponse = this.parseResponse(response);
+        const parsedResponse = outputFormat == "tour_json" ? this.parseTourResponse(response) : this.parseTextResponse(response);
         return parsedResponse;
     }
 }

@@ -75,13 +75,34 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         }
     }
 
+    createTourFromResponse = (response: ErrorHelpResponse) => {
+        const tourSteps: pxt.tour.BubbleStep[] = [];
+        for (const item of response.explanationSteps) {
+            const tourStep = {
+                title: lf("Error Explanation"),
+                description: item.message,
+                location: pxt.tour.BubbleLocation.Center
+            } as pxt.tour.BubbleStep;
+
+            tourStep.targetQuery = item.elementId;
+            tourStep.location = pxt.tour.BubbleLocation.Right;
+            tourStep.onStepBegin = item.onStepBegin;
+
+            tourSteps.push(tourStep);
+        }
+        return tourSteps;
+    }
+
+
     handleHelpResponse = (response: ErrorHelpResponse) => {
-        if (response.explanationAsTour) {
-            this.props.parent.showTour(response.explanationAsTour);
-        } else if (response.explanationAsText) {
+        if (response.explanationSteps.length == 1 && !response.explanationSteps[0].elementId) {
+            // Response is just a single block of text. Display it in the error window.
             this.setState({
-                responseText: response.explanationAsText
+                responseText: response.explanationSteps[0].message
             });
+        } else if (response.explanationSteps.length > 0) {
+            const tourSteps = this.createTourFromResponse(response);
+            this.props.parent.showTour(tourSteps);
         } else {
             // TODO thsparks - Error
         }
