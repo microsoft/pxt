@@ -1,57 +1,66 @@
-export const CHANNEL_ID = "arcade-plato-ext";
-
 // Copied from eanders-ms/arcade-plato/protocol.ts
 // Keep them in sync
+// Keep host changes backward compatible
 export namespace PlayTogether {
+    export const CHANNEL_ID = "arcade-plato-ext";
+
     export namespace _Protocol {
 
         /**
          * Client --> Host
-         * Notify host that the client is a PlayTogether client.
          */
-        export interface ClientInitMessage {
-            type: "client-init";
-            payload: {
-                version: number;
-            };
+        export namespace CliToHost {
+            /**
+             * Notify host that the client is a PlayTogether client.
+             */
+            export interface InitMessage {
+                type: "init";
+                payload: {
+                    version: number;
+                };
+            }
+
+            export type Message = InitMessage;
         }
 
         /**
          * Host --> Client
-         * Communicate game config and other information to the client.
          */
-        export interface HostInitMessage {
-            type: "host-init";
-            payload: {
-                playerId: string; // ID of the local player
-                isHost: boolean; // true if the local player is the session host
-            };
-        }
+        export namespace HostToCli {
+            /**
+             * Notify client that the host is a PlayTogether host.
+             */
+            export interface InitMessage {
+                type: "init";
+                payload: {
+                    playerId: string; // ID of the local player
+                    isHost: boolean; // true if the local player is the session host
+                };
+            }
 
-        /**
-         * Host --> Client
-         * Notify client that a player is joining the game.
-         */
-        export interface PlayerJoinedMessage {
-            type: "player-joined";
-            payload: {
-                playerId: string;
-                playerName: string;
-                //playerIcon: Buffer;
-            };
-        }
+            /**
+             * Notify client that a player is joining the game.
+             */
+            export interface PlayerJoinMessage {
+                type: "player-join";
+                payload: {
+                    playerId: string;
+                    playerName: string;
+                    //playerIcon: Buffer;
+                };
+            }
 
-        /**
-         * Host --> Client
-         * Notify client that a player is leaving the game.
-         */
-        export interface PlayerLeftMessage {
-            type: "player-left";
-            payload: {
-                playerId: string;
-            };
-        }
+            /**
+             * Notify client that a player is leaving the game.
+             */
+            export interface PlayerLeaveMessage {
+                type: "player-leave";
+                payload: {
+                    playerId: string;
+                };
+            }
 
-        export type Message = ClientInitMessage | HostInitMessage | PlayerJoinedMessage | PlayerLeftMessage;
+            export type Message = InitMessage | PlayerJoinMessage | PlayerLeaveMessage;
+        }
     }
 }

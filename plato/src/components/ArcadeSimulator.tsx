@@ -6,7 +6,7 @@ import { AppStateContext } from "@/state/Context";
 import { simDriver, preloadSim, simulateAsync, buildSimJsInfo, RunOptions } from "@/services/simHost";
 import { initialNetState } from "@/state/state";
 import { setPlatoExtInfo, clearPlayerCurrentGames } from "@/transforms";
-import { PlayTogether, CHANNEL_ID } from "@/protocol";
+import { PlayTogether } from "@/protocol";
 
 let builtSimJsInfo: Promise<pxtc.BuiltSimJsInfo | undefined> | undefined;
 
@@ -23,13 +23,13 @@ export function ArcadeSimulator() {
     const { shareCode } = sessionState;
 
     useEffect(() => {
-        const handlePlayTogetherMessage = (msg: PlayTogether._Protocol.Message) => {
+        const handlePlayTogetherMessage = (msg: PlayTogether._Protocol.CliToHost.Message) => {
             switch (msg.type) {
-                case "client-init": {
+                case "init": {
                     const { version } = msg.payload;
                     setPlatoExtInfo(version);
-                    const initMsg: PlayTogether._Protocol.HostInitMessage = {
-                        type: "host-init",
+                    const initMsg: PlayTogether._Protocol.HostToCli.InitMessage = {
+                        type: "init",
                         payload: {
                             playerId: clientId || "",
                             isHost: clientRole === "host",
@@ -37,7 +37,7 @@ export function ArcadeSimulator() {
                     };
                     simDriver()?.postMessage({
                         type: "messagepacket",
-                        channel: CHANNEL_ID,
+                        channel: PlayTogether.CHANNEL_ID,
                         data: new TextEncoder().encode(JSON.stringify(initMsg)),
                         broadcast: true,
                     } satisfies pxsim.SimulatorControlMessage as any)
@@ -75,7 +75,7 @@ export function ArcadeSimulator() {
                     if (channel !== "arcade-plato-ext") return;
                     const { data: buf } = data;
                     let zdata = new TextDecoder().decode(new Uint8Array(buf))
-                    const zmsg = JSON.parse(zdata) as PlayTogether._Protocol.Message;
+                    const zmsg = JSON.parse(zdata) as PlayTogether._Protocol.CliToHost.Message;
                     handlePlayTogetherMessage(zmsg);
                     return;
                 }
