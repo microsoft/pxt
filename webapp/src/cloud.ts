@@ -679,3 +679,34 @@ export function init() {
     // subscribe to header changes
     data.subscribe(onHeaderChangeSubscriber, "header:*");
 }
+
+/**
+ * Copilot / AI Requests
+ */
+export async function aiErrorExplainRequest(
+    code: string,
+    errors: string,
+    lang: string,
+    target: string,
+    outputFormat: string
+): Promise<string | undefined> {
+    const url = `/api/copilot/explainerror`;
+    const data = { lang, code, errors, target, outputFormat };
+    let result: string = "";
+
+    const request = await auth.apiAsync(url, data, "POST");
+    if (!request.success) {
+        // TODO thsparks : different errors for different responses, 403, throttling, etc...
+        throw new Error(
+            request.err ||
+            lf(
+                "Unable to reach AI. Error: {0}.\n{1}",
+                request.statusCode,
+                request.err
+            )
+        );
+    }
+    result = await request.resp;
+
+    return result;
+}

@@ -40,7 +40,6 @@ import { Measurements } from "./constants";
 import { flow } from "../../pxtblocks";
 import { HIDDEN_CLASS_NAME } from "../../pxtblocks/plugins/flyout/blockInflater";
 import { FlyoutButton } from "../../pxtblocks/plugins/flyout/flyoutButton";
-import { ErrorHelpResponse } from "./components/errorHelpButton";
 
 interface CopyDataEntry {
     version: 1;
@@ -86,7 +85,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.onErrorListResize = this.onErrorListResize.bind(this)
         this.getDisplayInfoForBlockError = this.getDisplayInfoForBlockError.bind(this)
         this.getDisplayInfoForException = this.getDisplayInfoForException.bind(this)
-        this.handleErrorHelp = this.handleErrorHelp.bind(this)
     }
     setBreakpointsMap(breakpoints: pxtc.Breakpoint[], procCallLocations: pxtc.LocationInfo[]): void {
         if (!breakpoints || !this.compilationResult) return;
@@ -929,7 +927,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 {showErrorList && <ErrorList
                     errors={this.errors}
                     parent={this.parent}
-                    onHelpResponse={this.handleErrorHelp}
                     onSizeChange={this.onErrorListResize} />}
             </div>
         )
@@ -1003,12 +1000,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             message,
             stackFrames
         };
-    }
-
-    private handleErrorHelp(helpResponse: ErrorHelpResponse) {
-        if (helpResponse.explanationAsTour) {
-            this.parent.showTour(helpResponse.explanationAsTour);
-        }
     }
 
     getBlocksAreaDiv() {

@@ -4,8 +4,9 @@ import * as React from "react";
 import * as sui from "./sui";
 import { fireClickOnEnter } from "./util";
 import { classList } from "../../react-common/components/util";
-import { ErrorHelpButton, ErrorHelpResponse } from "./components/errorHelpButton";
+import { ErrorHelpButton } from "./components/errorHelpButton";
 import { Button } from "../../react-common/components/controls/Button";
+import { ErrorHelpResponse } from "./errorHelp";
 
 /**
  * A collection of optional metadata that can be attached to an error.
@@ -38,7 +39,6 @@ export interface ErrorListProps {
     parent: pxt.editor.IProjectView;
     errors: ErrorDisplayInfo[];
     startDebugger?: () => void;
-    onHelpResponse?: (response: ErrorHelpResponse) => void;
 }
 export interface ErrorListState {
     isCollapsed: boolean,
@@ -76,22 +76,19 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
     }
 
     handleHelpResponse = (response: ErrorHelpResponse) => {
-        // TODO thsparks : Clean up this mess.
-
-        if (this.props.onHelpResponse) {
-            this.props.onHelpResponse(response);
-        }
-
-        if (response.explanationAsText) {
+        if (response.explanationAsTour) {
+            this.props.parent.showTour(response.explanationAsTour);
+        } else if (response.explanationAsText) {
             this.setState({
                 responseText: response.explanationAsText
             });
+        } else {
+            // TODO thsparks - Error
         }
-
     }
 
     render() {
-        const { startDebugger, errors, onHelpResponse } = this.props;
+        const { startDebugger, errors } = this.props;
         const { isCollapsed, responseText } = this.state;
         const errorsAvailable = !!errors?.length;
 
