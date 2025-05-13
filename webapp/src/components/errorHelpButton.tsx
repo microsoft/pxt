@@ -2,10 +2,7 @@ import * as React from "react";
 import { ErrorDisplayInfo } from "../errorList";
 import { Button } from "../../../react-common/components/controls/Button";
 import { classList } from "../../../react-common/components/util";
-import { ErrorHelper, ErrorHelpResponse } from "../errorHelp";
-
-
-// TODO thsparks - there is probably a better way to do this.
+import { ErrorHelpResponse, getHelpAsync } from "../errorHelp";
 
 export interface ErrorHelpButtonProps {
     parent: pxt.editor.IProjectView;
@@ -37,9 +34,8 @@ export class ErrorHelpButton extends React.Component<
             loadingHelp: true,
         });
 
-        const helper: ErrorHelper = new ErrorHelper(this.props.parent);
         try {
-            const response = await helper.getHelpAsync(this.props.errors);
+            const response = await getHelpAsync(this.props.parent, this.props.errors);
             this.props.onHelpResponse?.(response);
         } catch (e) {
             // TODO thsparks - handle error
