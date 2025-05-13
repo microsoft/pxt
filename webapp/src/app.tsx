@@ -322,7 +322,7 @@ export class ProjectView
     }
 
     /**
-     * Run a globnal action based on shortcuts triggered in sim or main window.
+     * Run a global action based on shortcuts triggered in sim or main window.
      */
     private runGlobalAction(action: pxsim.GlobalAction) {
         if (!data.getData<boolean>(auth.ACCESSIBLE_BLOCKS)) {
