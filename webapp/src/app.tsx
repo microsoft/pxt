@@ -239,6 +239,7 @@ export class ProjectView
         this.exitTutorial = this.exitTutorial.bind(this);
         this.setEditorOffset = this.setEditorOffset.bind(this);
         this.resetTutorialTemplateCode = this.resetTutorialTemplateCode.bind(this);
+        this.initGlobalActionHandlers();
         this.initSimulatorMessageHandlers();
         this.showThemePicker = this.showThemePicker.bind(this);
         this.hideThemePicker = this.hideThemePicker.bind(this);
@@ -306,8 +307,37 @@ export class ProjectView
                     };
                     simulator.driver.postMessage(playerOneConnectedMsg);
                 }
+            } else if (msg.type === "action") {
+                const { action } = msg as pxsim.SimulatorActionMessage;
+                this.runGlobalAction(action);
             }
         }, false);
+    }
+
+    private initGlobalActionHandlers() {
+        document.addEventListener("keydown", (e: KeyboardEvent) => {
+            const action = pxsim.accessibility.getGlobalAction(e)
+            this.runGlobalAction(action)
+        });
+    }
+
+    /**
+     * Run a globnal action based on shortcuts triggered in sim or main window.
+     */
+    private runGlobalAction(action: pxsim.GlobalAction) {
+        if (!data.getData<boolean>(auth.ACCESSIBLE_BLOCKS)) {
+            return;
+        }
+        switch (action) {
+            case "escape": {
+                this.setSimulatorFullScreen(false);
+                return;
+            }
+            case "navigateregions" : {
+                this.showNavigateRegions();
+                return
+            }
+        }
     }
 
     /**
@@ -5525,7 +5555,7 @@ export class ProjectView
                 {lightbox ? <sui.Dimmer isOpen={true} active={lightbox} portalClassName={'tutorial'} className={'ui modal'}
                     shouldFocusAfterRender={false} closable={true} onClose={this.hideLightbox} /> : undefined}
                 {this.state.onboarding && <Tour tourSteps={this.state.onboarding} onClose={this.hideOnboarding} />}
-                {accessibleBlocks && this.state.navigateRegions && <NavigateRegionsOverlay parent={this}/>}
+                {this.state.navigateRegions && <NavigateRegionsOverlay parent={this}/>}
                 {this.state.themePickerOpen && <ThemePickerModal themes={this.themeManager.getAllColorThemes()} onThemeClicked={theme => this.setColorThemeById(theme?.id, true)} onClose={this.hideThemePicker} />}
             </div>
         );

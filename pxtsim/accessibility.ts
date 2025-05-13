@@ -8,7 +8,7 @@ namespace pxsim.accessibility {
         elem.setAttribute("tabindex", "0");
     }
 
-    export function getKeyboardShortcutEditorAction(e: KeyboardEvent): pxsim.SimulatorAction | null {
+    export function getGlobalAction(e: KeyboardEvent): pxsim.GlobalAction | null {
         const meta  = e.metaKey || e.ctrlKey;
         if (e.key === "Escape") {
             e.preventDefault();
@@ -22,10 +22,10 @@ namespace pxsim.accessibility {
 
     export function postKeyboardEvent() {
         document.addEventListener("keydown", (e) => {
-            const action = getKeyboardShortcutEditorAction(e)
+            const action = getGlobalAction(e)
             if (action) {
                 const message = {
-                    type: "pxtsim",
+                    type: "action",
                     action
                 } as pxsim.SimulatorActionMessage;
                 Runtime.postMessage(message)

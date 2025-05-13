@@ -585,32 +585,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     return true
                 }
             });
-
-            const triggerEditorAction = (action: pxsim.SimulatorAction) => {
-                switch (action) {
-                    case "escape": {
-                        this.parent.setSimulatorFullScreen(false);
-                        return;
-                    }
-                    case "navigateregions" : {
-                        this.parent.showNavigateRegions();
-                        return
-                    }
-                }
-            }
-
-            const simulatorUrl = new URL(pxt.webConfig.simUrl, window.location.origin);
-            const simulatorOrigin = simulatorUrl.origin;
-            window.addEventListener("message", (e: MessageEvent) => {
-                // Listen to simulator iframe keydown post messages.
-                if (e.origin === simulatorOrigin && e.data.type === "pxtsim") {
-                    triggerEditorAction((e.data as pxsim.SimulatorActionMessage).action)
-                }
-            }, false)
-            document.addEventListener("keydown", (e: KeyboardEvent) => {
-                const action = pxsim.accessibility.getKeyboardShortcutEditorAction(e)
-                triggerEditorAction(action)
-            });
         }
     }
 
