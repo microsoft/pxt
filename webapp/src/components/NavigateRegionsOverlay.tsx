@@ -65,6 +65,9 @@ const regions: Region[] = [
                     document.querySelector("#computertogglesim")
                     : document.querySelector("#editorSidebar")
             const bounds = element?.getBoundingClientRect();
+            if (!bounds) {
+                return undefined;
+            }
             if (projectView.state.collapseEditorTools) {
                 // Custom presentation for the collapsed sim.
                 const isRtl = pxt.Util.isUserLanguageRtl();
@@ -88,12 +91,15 @@ const regions: Region[] = [
                 if (projectView.state.collapseEditorTools) {
                     projectView.toggleSimulatorCollapse();
                 }
-                (document.querySelector("#boardview") as HTMLElement).focus();
+                (document.querySelector("#boardview") as HTMLElement)?.focus();
             }
         },
         getClassName(projectView: IProjectView) {
-            return `simulator-region ${projectView.state.collapseEditorTools ? "simulator-collapsed" : ""
-                }`;
+            const classNames = ["simulator-region"];
+            if (projectView.state.collapseEditorTools) {
+                classNames.push("simulator-collapsed");
+            }
+            return classNames.join(" ");
         },
     },
     {
@@ -102,6 +108,9 @@ const regions: Region[] = [
         shortcutKey: "3",
         getBounds(projectView: IProjectView) {
             const bounds = getToolboxBounds(projectView);
+            if (!bounds) {
+                return undefined;
+            }
             if (projectView.state.collapseEditorTools) {
                 const isRtl = pxt.Util.isUserLanguageRtl();
                 // Shift over for a clearer region when the toolbox is collapsed
@@ -257,21 +266,13 @@ interface RegionButtonProps extends ButtonProps {
 }
 
 const RegionButton = ({ shortcutKey, bounds, ...props }: RegionButtonProps) => {
-    const buttonRef = useRef<HTMLButtonElement>()
-
-    useEffect(() => {
-        if (bounds) {
-            buttonRef.current.style.top = `${bounds.top}px`;
-            buttonRef.current.style.height = `${bounds.height}px`;
-            buttonRef.current.style.left = `${bounds.left}px`;
-            buttonRef.current.style.width = `${bounds.width}px`;
-        }
-    }, [bounds])
-
+    const { top, height, left, width } = bounds;
     return <Button
-        buttonRef={(ref) => { buttonRef.current = ref }}
         {...props}
         className={`region-button ${props.className}`}
+        style={{
+            top, height, left, width
+        }}
     >
         <div><p>{shortcutKey.toUpperCase()}</p></div>
     </Button>

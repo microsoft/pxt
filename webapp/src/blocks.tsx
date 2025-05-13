@@ -599,14 +599,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 }
             }
 
-            const simulatorOrigins = [
-                window.location.origin,
-                // Simulator deployed origin.
-                "https://trg-microbit.userpxt.io"
-            ]
+            const simulatorUrl = new URL(pxt.webConfig.simUrl, window.location.origin);
+            const simulatorOrigin = simulatorUrl.origin;
             window.addEventListener("message", (e: MessageEvent) => {
                 // Listen to simulator iframe keydown post messages.
-                if (simulatorOrigins.includes(e.origin) && e.data.type === "pxtsim") {
+                if (e.origin === simulatorOrigin && e.data.type === "pxtsim") {
                     triggerEditorAction((e.data as pxsim.SimulatorActionMessage).action)
                 }
             }, false)
