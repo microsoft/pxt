@@ -686,9 +686,9 @@ export function init() {
 export async function aiErrorExplainRequest(
     code: string,
     errors: string,
-    lang: string,
+    lang: "blocks" | "typescript" | "python",
     target: string,
-    outputFormat: string
+    outputFormat: "tour_json" | "text"
 ): Promise<string | undefined> {
     const url = `/api/copilot/explainerror`;
     const data = { lang, code, errors, target, outputFormat };

@@ -2,16 +2,16 @@ import * as React from "react";
 import { ErrorDisplayInfo } from "../errorList";
 import { Button } from "../../../react-common/components/controls/Button";
 import { classList } from "../../../react-common/components/util";
-import { ErrorHelpResponse, getHelpAsync } from "../errorHelp";
+import { ErrorHelpTourResponse } from "../errorHelp";
 
 export interface ErrorHelpButtonProps {
     parent: pxt.editor.IProjectView;
     errors: ErrorDisplayInfo[];
-    onHelpResponse?: (response: ErrorHelpResponse) => void;
+    getErrorHelp: () => void;
 }
 
 interface ErrorHelpButtonState {
-    explanation?: ErrorHelpResponse;
+    explanation?: ErrorHelpTourResponse;
     loadingHelp?: boolean;
 }
 
@@ -25,21 +25,6 @@ export class ErrorHelpButton extends React.Component<
             explanation: undefined,
             loadingHelp: false,
         };
-
-        this.handleHelpClick = this.handleHelpClick.bind(this);
-    }
-
-    async handleHelpClick() {
-        this.setState({
-            loadingHelp: true,
-        });
-
-        try {
-            const response = await getHelpAsync(this.props.parent, this.props.errors);
-            this.props.onHelpResponse?.(response);
-        } catch (e) {
-            // TODO thsparks - handle error
-        }
     }
 
     render() {
@@ -52,7 +37,7 @@ export class ErrorHelpButton extends React.Component<
         return (
             <Button
                 id="error-help-button"
-                onClick={this.handleHelpClick}
+                onClick={this.props.getErrorHelp}
                 title={lf("Help me understand")}
                 className={classList("secondary", "error-help-button")}
                 label={lf("Help me understand")}

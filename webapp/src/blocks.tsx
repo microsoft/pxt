@@ -27,6 +27,7 @@ import { DebuggerToolbox } from "./debuggerToolbox";
 import { ErrorDisplayInfo, ErrorList, StackFrameDisplayInfo } from "./errorList";
 import { resolveExtensionUrl } from "./extensionManager";
 import { experiments, initEditorExtensionsAsync } from "../../pxteditor";
+import { ErrorHelpTourResponse, getErrorHelpAsTour } from "./errorHelp";
 
 
 import IProjectView = pxt.editor.IProjectView;
@@ -85,6 +86,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.onErrorListResize = this.onErrorListResize.bind(this)
         this.getDisplayInfoForBlockError = this.getDisplayInfoForBlockError.bind(this)
         this.getDisplayInfoForException = this.getDisplayInfoForException.bind(this)
+        this.createTourFromResponse = this.createTourFromResponse.bind(this)
+        this.getErrorHelp = this.getErrorHelp.bind(this)
     }
     setBreakpointsMap(breakpoints: pxtc.Breakpoint[], procCallLocations: pxtc.LocationInfo[]): void {
         if (!breakpoints || !this.compilationResult) return;
@@ -927,7 +930,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 {showErrorList && <ErrorList
                     errors={this.errors}
                     parent={this.parent}
-                    onSizeChange={this.onErrorListResize} />}
+                    onSizeChange={this.onErrorListResize}
+                    getErrorHelp={this.getErrorHelp} />}
             </div>
         )
     }
@@ -1000,6 +1004,47 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             message,
             stackFrames
         };
+    }
+
+    /**
+     * Provides a user-facing explanation of the errors in the error list.
+     */
+    async getErrorHelp() {
+        const code = this.getWorkspaceXmlWithIds();
+        const helpResponse = await getErrorHelpAsTour(this.errors, "blocks", code);
+        const tour = this.createTourFromResponse(helpResponse);
+        this.parent.showTour(tour);
+    }
+
+    /**
+     * Converts an ErrorHelpTourRespone into an actual tour, which mostly involves
+     * ensuring all provided ids are valid and setting up the corresponding target queries.
+     */
+    private createTourFromResponse = (response: ErrorHelpTourResponse) => {
+        const validBlockIds = this.parent.getBlocks().map((b) => b.id);
+
+        const tourSteps: pxt.tour.BubbleStep[] = [];
+        for (const step of response.explanationSteps) {
+            const tourStep = {
+                title: lf("Error Explanation"),
+                description: step.message,
+                location: pxt.tour.BubbleLocation.Center
+            } as pxt.tour.BubbleStep;
+
+            if (validBlockIds.includes(step.elementId)) {
+                tourStep.targetQuery = `g[data-id="${step.elementId}"]`;
+                tourStep.location = pxt.tour.BubbleLocation.Right;
+                tourStep.onStepBegin = () => this.editor.centerOnBlock(step.elementId, true);
+            } else {
+                // TODO thsparks - Maybe?
+                // Try to repair the block id. The AI sometimes sends variable ids instead of blockIds.
+                // If that variable id is only used in one block, we can assume that is the block we should point to.
+                // https://developers.google.com/blockly/reference/js/blockly.workspace_class.getvariableusesbyid_1_method#workspacegetvariableusesbyid_method
+            }
+
+            tourSteps.push(tourStep);
+        }
+        return tourSteps;
     }
 
     getBlocksAreaDiv() {

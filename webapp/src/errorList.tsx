@@ -6,7 +6,6 @@ import { fireClickOnEnter } from "./util";
 import { classList } from "../../react-common/components/util";
 import { ErrorHelpButton } from "./components/errorHelpButton";
 import { Button } from "../../react-common/components/controls/Button";
-import { ErrorHelpResponse } from "./errorHelp";
 
 /**
  * A collection of optional metadata that can be attached to an error.
@@ -38,11 +37,12 @@ export interface ErrorListProps {
     onSizeChange?: (state: pxt.editor.ErrorListState) => void;
     parent: pxt.editor.IProjectView;
     errors: ErrorDisplayInfo[];
+    note?: string;
     startDebugger?: () => void;
+    getErrorHelp?: () => void;
 }
 export interface ErrorListState {
-    isCollapsed: boolean,
-    responseText?: string,
+    isCollapsed: boolean
 }
 
 export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
@@ -51,12 +51,10 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         super(props);
 
         this.state = {
-            isCollapsed: true,
-            responseText: undefined,
+            isCollapsed: true
         }
 
         this.onCollapseClick = this.onCollapseClick.bind(this);
-        this.handleHelpResponse = this.handleHelpResponse.bind(this);
     }
 
     componentDidUpdate(prevProps: Readonly<ErrorListProps>, prevState: Readonly<ErrorListState>, snapshot?: any): void {
@@ -75,42 +73,9 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         }
     }
 
-    createTourFromResponse = (response: ErrorHelpResponse) => {
-        const tourSteps: pxt.tour.BubbleStep[] = [];
-        for (const item of response.explanationSteps) {
-            const tourStep = {
-                title: lf("Error Explanation"),
-                description: item.message,
-                location: pxt.tour.BubbleLocation.Center
-            } as pxt.tour.BubbleStep;
-
-            tourStep.targetQuery = item.elementId;
-            tourStep.location = pxt.tour.BubbleLocation.Right;
-            tourStep.onStepBegin = item.onStepBegin;
-
-            tourSteps.push(tourStep);
-        }
-        return tourSteps;
-    }
-
-
-    handleHelpResponse = (response: ErrorHelpResponse) => {
-        if (response.explanationSteps.length == 1 && !response.explanationSteps[0].elementId) {
-            // Response is just a single block of text. Display it in the error window.
-            this.setState({
-                responseText: response.explanationSteps[0].message
-            });
-        } else if (response.explanationSteps.length > 0) {
-            const tourSteps = this.createTourFromResponse(response);
-            this.props.parent.showTour(tourSteps);
-        } else {
-            // TODO thsparks - Error
-        }
-    }
-
     render() {
-        const { startDebugger, errors } = this.props;
-        const { isCollapsed, responseText } = this.state;
+        const { startDebugger, errors, getErrorHelp, note } = this.props;
+        const { isCollapsed } = this.state;
         const errorsAvailable = !!errors?.length;
 
         const groupedErrors = groupErrors(errors);
@@ -123,7 +88,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
                 <div className="errorListHeader" role="button" aria-label={lf("{0} error list", isCollapsed ? lf("Expand") : lf("Collapse"))} onClick={this.onCollapseClick} onKeyDown={fireClickOnEnter} tabIndex={0}>
                     <h4>{lf("Problems")}</h4>
                     <div className="ui red circular label countBubble">{errorCount}</div>
-                    <ErrorHelpButton parent={this.props.parent} errors={errors} onHelpResponse={this.handleHelpResponse} />
+                    {getErrorHelp && <ErrorHelpButton parent={this.props.parent} errors={errors} getErrorHelp={getErrorHelp} />}
                     <div className="toggleButton">
                         <sui.Icon icon={`chevron ${isCollapsed ? "up" : "down"}`} />
                     </div>
@@ -134,7 +99,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
                         <sui.Icon className="debug-icon" icon="icon bug" />
                     </div>}
 
-                    {responseText && <div className="explanationText">{responseText}</div>}
+                    {note && <div className="explanationText">{note}</div>}
 
                     <div className="ui selection list">
                         {errorListContent}

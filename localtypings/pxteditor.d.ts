@@ -821,6 +821,7 @@ declare namespace pxt.editor {
         onboarding?: pxt.tour.BubbleStep[];
         feedback?: FeedbackState;
         themePickerOpen?: boolean;
+        errorListNote?: string;
     }
 
     export interface EditorState {

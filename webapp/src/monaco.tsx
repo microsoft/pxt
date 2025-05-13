@@ -31,6 +31,7 @@ import ErrorListState = pxt.editor.ErrorListState;
 
 import * as pxtblockly from "../../pxtblocks";
 import { ThemeManager } from "../../react-common/components/theming/themeManager";
+import { getErrorHelpAsText } from "./errorHelp";
 
 const MIN_EDITOR_FONT_SIZE = 10
 const MAX_EDITOR_FONT_SIZE = 40
@@ -388,6 +389,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.startDebugger = this.startDebugger.bind(this);
         this.onUserPreferencesChanged = this.onUserPreferencesChanged.bind(this);
         this.getDisplayInfoForError = this.getDisplayInfoForError.bind(this);
+        this.getErrorHelp = this.getErrorHelp.bind(this);
 
         data.subscribe(this.userPreferencesSubscriber, auth.HIGHCONTRAST);
 
@@ -658,7 +660,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                         onSizeChange={this.setErrorListState}
                         parent={this.parent}
                         errors={this.errors}
-                        startDebugger={this.startDebugger} />}
+                        startDebugger={this.startDebugger}
+                        getErrorHelp={this.getErrorHelp}
+                        note={this.parent.state.errorListNote} />}
                 </div>
             </div>
         )
@@ -698,6 +702,17 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             message,
             onClick: () => this.goToError(error)
         };
+    }
+
+    /**
+     * Provides a user-facing explanation of the errors in the error list.
+     */
+    private async getErrorHelp() {
+        this.parent.setState({errorListNote: undefined});
+        const lang = this.fileType == pxt.editor.FileType.Python ? "python" : "typescript";
+        const code = this.currFile.content;
+        const helpResponse = await getErrorHelpAsText(this.errors, lang, code);
+        this.parent.setState({errorListNote: helpResponse});
     }
 
     goToError(error: pxtc.LocationInfo) {
@@ -1500,6 +1515,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (this.toolbox)
             this.toolbox.clearSearch();
         this.errors = [];
+        this.parent.setState({errorListNote: undefined});
         if (this.currFile && this.currFile.getName() == "this/" + pxt.CONFIG_NAME) {
             // Reload the header if a change was made to the config file: pxt.json
             return this.parent.reloadHeaderAsync();
