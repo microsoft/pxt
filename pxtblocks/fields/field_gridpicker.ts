@@ -3,6 +3,7 @@
 import * as Blockly from "blockly";
 import { FieldCustom, FieldCustomDropdownOptions, parseColour } from "./field_utils";
 import { FieldBase } from "./field_base";
+import { FieldDropdownGrid } from "./field_dropdowngrid";
 
 export interface FieldGridPickerToolTipConfig {
     yOffset?: number;
@@ -20,20 +21,7 @@ export interface FieldGridPickerOptions extends FieldCustomDropdownOptions {
     hideRect?: boolean;
 }
 
-export class FieldGridPicker extends Blockly.FieldDropdown implements FieldCustom {
-    public isFieldCustom_ = true;
-    // Width in pixels
-    private width_: number;
-
-    // Columns in grid
-    private columns_: number;
-
-    // Number of rows to display (if there are extra rows, the picker will be scrollable)
-    private maxRows_: number;
-
-    protected backgroundColour_: string;
-    protected borderColour_: string;
-
+export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
     private tooltipConfig_: FieldGridPickerToolTipConfig;
 
     private gridTooltip_: HTMLElement;
@@ -76,12 +64,19 @@ export class FieldGridPicker extends Blockly.FieldDropdown implements FieldCusto
         this.hideRect_ = !!options.hideRect || false;
     }
 
+    protected setFocusedItem_(_gridItemContainer: HTMLElement) {
+        this.gridItems.forEach(button => button.classList.remove('gridpicker-option-focused', 'gridpicker-menuitem-highlight'));
+        const activeItem = this.gridItems[this.activeDescendantIndex];
+        activeItem.classList.add('gridpicker-option-focused');
+    }
+
     /**
      * When disposing the grid picker, make sure the tooltips are disposed too.
      * @public
      */
     public dispose() {
         super.dispose();
+        this.disposeGrid();
         this.disposeTooltip();
         this.disposeIntersectionObserver();
     }
@@ -135,7 +130,8 @@ export class FieldGridPicker extends Blockly.FieldDropdown implements FieldCusto
             const menuItem = document.createElement('div');
             menuItem.className = 'gridpicker-menuitem gridpicker-option';
             menuItem.setAttribute('id', ':' + i); // For aria-activedescendant
-            menuItem.setAttribute('role', 'menuitem');
+            menuItem.setAttribute('role', 'gridcell');
+            menuItem.setAttribute('aria-selected', 'false');
             menuItem.style.userSelect = 'none';
             menuItem.title = content['alt'] || content;
             menuItem.setAttribute('data-value', value);
@@ -152,7 +148,8 @@ export class FieldGridPicker extends Blockly.FieldDropdown implements FieldCusto
             if (value == this.getValue()) {
                 // This option is selected
                 menuItem.setAttribute('aria-selected', 'true');
-                pxt.BrowserUtils.addClass(menuItem, 'gridpicker-option-selected');
+                this.activeDescendantIndex = i;
+                pxt.BrowserUtils.addClass(menuItem, `gridpicker-option-selected ${!this.openingPointerCoords ? 'gridpicker-option-focused' : '' }`);
                 backgroundColour = (this.sourceBlock_ as Blockly.BlockSvg).getColourTertiary();
 
                 // Save so we can scroll to it later
@@ -188,38 +185,46 @@ export class FieldGridPicker extends Blockly.FieldDropdown implements FieldCusto
             }
 
             if (this.shouldShowTooltips()) {
-                Blockly.browserEvents.conditionalBind(menuItem, 'click', this, this.buttonClickAndClose_);
+                Blockly.browserEvents.conditionalBind(menuItem, 'click', this, () => this.buttonClickAndClose_(value));
 
                 // Setup hover tooltips
                 const xOffset = (this.sourceBlock_.RTL ? -this.tooltipConfig_.xOffset : this.tooltipConfig_.xOffset);
                 const yOffset = this.tooltipConfig_.yOffset;
 
                 Blockly.browserEvents.bind(menuItem, 'pointermove', this, (e: PointerEvent) => {
-                    if (hasImages) {
-                        this.gridTooltip_.style.top = `${e.clientY + yOffset}px`;
-                        this.gridTooltip_.style.left = `${e.clientX + xOffset}px`;
-                        // Set tooltip text
-                        const touchTarget = document.elementFromPoint(e.clientX, e.clientY);
-                        const title = (touchTarget as any).title || (touchTarget as any).alt;
-                        this.gridTooltip_.textContent = title;
-                        // Show the tooltip
-                        this.gridTooltip_.style.visibility = title ? 'visible' : 'hidden';
-                        this.gridTooltip_.style.display = title ? '' : 'none';
-                    }
+                    if (this.pointerMoveTriggeredByUser()) {
+                        this.gridItems.forEach(item => item.classList.remove('gridpicker-option-focused'))
+                        this.activeDescendantIndex = i;
+                        if (hasImages) {
+                            this.gridTooltip_.style.top = `${e.clientY + yOffset}px`;
+                            this.gridTooltip_.style.left = `${e.clientX + xOffset}px`;
+                            // Set tooltip text
+                            const touchTarget = document.elementFromPoint(e.clientX, e.clientY);
+                            const title = (touchTarget as any).title || (touchTarget as any).alt;
+                            this.gridTooltip_.textContent = title;
+                            // Show the tooltip
+                            this.gridTooltip_.style.visibility = title ? 'visible' : 'hidden';
+                            this.gridTooltip_.style.display = title ? '' : 'none';
+                        }
 
-                    pxt.BrowserUtils.addClass(menuItem, 'gridpicker-menuitem-highlight');
-                    tableContainer.setAttribute('aria-activedescendant', menuItem.id);
+                        pxt.BrowserUtils.addClass(menuItem, 'gridpicker-menuitem-highlight');
+                        tableContainer.setAttribute('aria-activedescendant', menuItem.id);
+                    }
                 });
 
                 Blockly.browserEvents.bind(menuItem, 'pointerout', this, (e: PointerEvent) => {
-                    if (hasImages) {
-                        // Hide the tooltip
-                        this.gridTooltip_.style.visibility = 'hidden';
-                        this.gridTooltip_.style.display = 'none';
-                    }
+                    if (this.pointerOutTriggeredByUser()) {
+                        this.gridItems.forEach(item => item.classList.remove('gridpicker-option-focused'))
+                        if (hasImages) {
+                            // Hide the tooltip
+                            this.gridTooltip_.style.visibility = 'hidden';
+                            this.gridTooltip_.style.display = 'none';
+                        }
 
-                    pxt.BrowserUtils.removeClass(menuItem, 'gridpicker-menuitem-highlight');
-                    tableContainer.removeAttribute('aria-activedescendant');
+                        pxt.BrowserUtils.removeClass(menuItem, 'gridpicker-menuitem-highlight');
+                        tableContainer.removeAttribute('aria-activedescendant');
+                        this.activeDescendantIndex = undefined;
+                    }
                 });
             } else {
                 if (hasImages) {
@@ -229,7 +234,7 @@ export class FieldGridPicker extends Blockly.FieldDropdown implements FieldCusto
                     // Show the selected item (in the selected bar)
                     Blockly.browserEvents.conditionalBind(menuItem, 'click', this, (e: MouseEvent) => {
                         if (this.closeModal_) {
-                            this.buttonClick_(e);
+                            this.buttonClick_(value);
                         } else {
                             // Clear all current hovers.
                             const currentHovers = tableContainer.getElementsByClassName('gridpicker-menuitem-highlight');
@@ -243,12 +248,13 @@ export class FieldGridPicker extends Blockly.FieldDropdown implements FieldCusto
                         }
                     });
                 } else {
-                    Blockly.browserEvents.conditionalBind(menuItem, 'click', this, this.buttonClickAndClose_);
-                    Blockly.browserEvents.conditionalBind(menuItem, 'mouseup', this, this.buttonClickAndClose_);
+                    Blockly.browserEvents.conditionalBind(menuItem, 'click', this, () => this.buttonClickAndClose_(value));
+                    Blockly.browserEvents.conditionalBind(menuItem, 'mouseup', this, () => this.buttonClickAndClose_(value));
                 }
             }
 
             menuItem.appendChild(menuItemContent);
+            this.gridItems.push(menuItem);
             rowContent.appendChild(menuItem);
 
             if (i == 0) {
@@ -262,11 +268,10 @@ export class FieldGridPicker extends Blockly.FieldDropdown implements FieldCusto
     /**
      * Callback for when a button is clicked inside the drop-down.
      * Should be bound to the FieldIconMenu.
-     * @param {Event} e DOM event for the click/touch
+     * @param {string | null} value the value to set for the field
      * @private
      */
-    protected buttonClick_ = (e: any) => {
-        let value = e.target.getAttribute('data-value');
+    protected buttonClick_ = (value: string | null) => {
         if (value !== null) {
             this.setValue(value);
 
@@ -278,9 +283,9 @@ export class FieldGridPicker extends Blockly.FieldDropdown implements FieldCusto
         }
     };
 
-    protected buttonClickAndClose_ = (e: any) => {
+    protected buttonClickAndClose_ = (value: string | null) => {
         this.closeModal_ = true;
-        this.buttonClick_(e);
+        this.buttonClick_(value);
     };
 
     /**
@@ -305,6 +310,7 @@ export class FieldGridPicker extends Blockly.FieldDropdown implements FieldCusto
      */
     private close() {
         this.disposeTooltip();
+        this.disposeGrid();
 
         Blockly.WidgetDiv.hideIfOwner(this);
         Blockly.Events.setGroup(false);
@@ -348,7 +354,9 @@ export class FieldGridPicker extends Blockly.FieldDropdown implements FieldCusto
      * Create a dropdown menu under the text.
      * @private
      */
-    public showEditor_() {
+    public showEditor_(e?: Event) {
+        this.setOpeningPointerCoords(e);
+
         Blockly.WidgetDiv.show(this, this.sourceBlock_.RTL, () => {
             this.onClose_();
         });
@@ -359,6 +367,7 @@ export class FieldGridPicker extends Blockly.FieldDropdown implements FieldCusto
 
         const tableContainer = document.createElement("div");
         this.positionMenu_(tableContainer);
+        tableContainer.focus();
     }
 
     private positionMenu_(tableContainer: HTMLElement) {
@@ -430,13 +439,16 @@ export class FieldGridPicker extends Blockly.FieldDropdown implements FieldCusto
     };
 
     private createWidget_(tableContainer: HTMLElement) {
-        const div = Blockly.WidgetDiv.getDiv();
+        const widgetDiv = Blockly.WidgetDiv.getDiv();
 
         const options = this.getOptions();
 
         // Container for the menu rows
-        tableContainer.setAttribute("role", "menu");
-        tableContainer.setAttribute("aria-haspopup", "true");
+        tableContainer.setAttribute('role', 'grid');
+        tableContainer.setAttribute('tabindex', '0');
+
+        this.addPointerListener(widgetDiv);
+        this.addKeyDownHandler(tableContainer);
 
         // Container used to limit the height of the tableContainer, because the tableContainer uses
         // display: table, which ignores height and maxHeight
@@ -458,7 +470,7 @@ export class FieldGridPicker extends Blockly.FieldDropdown implements FieldCusto
 
         paddingContainer.appendChild(scrollContainer);
         scrollContainer.appendChild(tableContainer);
-        div.appendChild(paddingContainer);
+        widgetDiv.appendChild(paddingContainer);
 
         // Search bar
         if (this.hasSearchBar_) {
@@ -652,6 +664,7 @@ export class FieldGridPicker extends Blockly.FieldDropdown implements FieldCusto
 
     private onClose_() {
         this.disposeTooltip();
+        this.disposeGrid();
     }
 }
 
@@ -736,6 +749,10 @@ Blockly.Css.register(`
 
 .blocklyWidgetDiv .blocklyGridPickerMenu .gridpicker-menuitem .gridpicker-menuitem-checkbox {
     display: none;
+}
+
+.blocklyWidgetDiv .blocklyGridPickerMenu .gridpicker-option.gridpicker-option-focused {
+    box-shadow: 0px 0px 0px 4px rgb(255, 255, 255);
 }
 
 .blocklyGridPickerTooltip {
