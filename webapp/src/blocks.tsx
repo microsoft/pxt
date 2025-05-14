@@ -1012,8 +1012,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     async getErrorHelp() {
         const code = this.getWorkspaceXmlWithIds();
         const helpResponse = await getErrorHelpAsTour(this.errors, "blocks", code);
-        const tour = this.createTourFromResponse(helpResponse);
-        this.parent.showTour(tour);
+        const tourSteps = this.createTourFromResponse(helpResponse);
+        this.parent.showTour(
+            {
+                steps: tourSteps,
+                showConfetti: false
+            }
+        );
     }
 
     /**
@@ -1028,7 +1033,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             const tourStep = {
                 title: lf("Error Explanation"),
                 description: step.message,
-                location: pxt.tour.BubbleLocation.Center
+                location: pxt.tour.BubbleLocation.Center,
+                bubbleStyle: "yellow",
             } as pxt.tour.BubbleStep;
 
             if (validBlockIds.includes(step.elementId)) {

@@ -818,7 +818,7 @@ declare namespace pxt.editor {
         screenshoting?: boolean;
         extensionsVisible?: boolean;
         isMultiplayerGame?: boolean; // Arcade: Does the current project contain multiplayer blocks?
-        onboarding?: pxt.tour.BubbleStep[];
+        activeTourConfig?: pxt.tour.TourConfig;
         feedback?: FeedbackState;
         themePickerOpen?: boolean;
         errorListNote?: string;
@@ -1056,8 +1056,8 @@ declare namespace pxt.editor {
         showLightbox(): void;
         hideLightbox(): void;
         showOnboarding(): void;
-        showTour(steps: pxt.tour.BubbleStep[]): void;
-        hideOnboarding(): void;
+        showTour(config: pxt.tour.TourConfig): void;
+        closeTour(): void;
         showKeymap(show: boolean): void;
         toggleKeymap(): void;
         signOutGithub(): void;

@@ -1,4 +1,14 @@
 .teaching-bubble-container {
+    --teaching-bubble-foreground: var(--pxt-tertiary-foreground);
+    --teaching-bubble-background: var(--pxt-tertiary-background);
+}
+
+.teaching-bubble-container.yellow {
+    --teaching-bubble-foreground: var(--pxt-colors-yellow-foreground);
+    --teaching-bubble-background: var(--pxt-colors-yellow-background);
+}
+
+.teaching-bubble-container {
     position: fixed;
     top: 0;
     left: 0;
@@ -30,17 +40,16 @@
     position: fixed;
     max-width: 25rem;
     min-width: 18.75rem;
-    background: var(--pxt-tertiary-background);
-    color: var(--pxt-tertiary-foreground);
+    background: var(--teaching-bubble-background);
+    color: var(--teaching-bubble-foreground);
     box-shadow: 0 0 0 0.1rem;
     border-radius: 0.5rem;
     padding: 1rem;
     z-index: @modalDimmerZIndex;
 
     .common-button {
-
         &:focus {
-            outline: .1rem solid var(--pxt-tertiary-foreground);
+            outline: 0.1rem solid var(--teaching-bubble-foreground);
             filter: grayscale(.15) brightness(.85) contrast(1.3);
         }
         &.tertiary:focus::after, &:focus::after {
@@ -54,7 +63,7 @@
     width: 0;
     height: 0;
     z-index: @modalDimmerZIndex + 1;
-    color: var(--pxt-tertiary-background);
+    color: var(--teaching-bubble-background);
 }
 
 .teaching-bubble-arrow-outline {
@@ -62,7 +71,7 @@
     width: 0;
     height: 0;
     z-index: @modalDimmerZIndex;
-    color: var(--pxt-tertiary-foreground);
+    color: var(--teaching-bubble-foreground);
 }
 
 .teaching-bubble-content {
@@ -81,25 +90,25 @@
 
     .teaching-bubble-steps {
         font-size: .9rem;
-        color: var(--pxt-tertiary-foreground);
+        color: var(--teaching-bubble-foreground);
     }
 
     .common-button.tertiary {
         padding: .25rem .5rem;
         margin: 0 .5rem 0 0;
-        border: .1rem solid var(--pxt-tertiary-foreground);
-        background: var(--pxt-tertiary-background);
-        color: var(--pxt-tertiary-foreground);
+        border: 0.1rem solid var(--teaching-bubble-foreground) !important;
+        background: var(--teaching-bubble-background) !important;
+        color: var(--teaching-bubble-foreground) !important;
 
         &.inverted {
             margin-right: 0;
-            background: var(--pxt-tertiary-foreground);
-            color: var(--pxt-tertiary-background);
+            background: var(--teaching-bubble-foreground) !important;
+            color: var(--teaching-bubble-background) !important;
         }
     }
 
     .common-button:focus-visible {
-        outline: 2px solid var(--pxt-tertiary-foreground);
+        outline: 2px solid var(--teaching-bubble-foreground);
         outline-offset: 3px;
     }
 
@@ -114,7 +123,7 @@
     top: 0.5rem;
     padding: 0.5rem 0 0.25rem 0;
     background: transparent;
-    color: var(--pxt-tertiary-foreground);
+    color: var(--teaching-bubble-foreground);
     margin: 0;
 
     i.right {

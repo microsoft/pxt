@@ -23,6 +23,7 @@ export interface TeachingBubbleProps extends ContainerProps {
     onClose: () => void;
     parentElement?: Element;
     activeTarget?: boolean; // if true, the target is clickable
+    showConfetti?: boolean;
     onNext: () => void;
     onBack: () => void;
     onFinish: () => void;
@@ -363,11 +364,12 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
 
     const classes = classList(
         "teaching-bubble-container",
-        className
+        className,
+        targetContent.bubbleStyle
     );
 
     return ReactDOM.createPortal(<FocusTrap className={classes} onEscape={onClose}>
-        {/* {stepNumber === totalSteps + 1 && <Confetti />} */}
+        {props.showConfetti && stepNumber === totalSteps + 1 && <Confetti />}
         <div className="teaching-bubble-cutout" />
         <div className="teaching-bubble-arrow" />
         <div className="teaching-bubble-arrow-outline" />

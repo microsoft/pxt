@@ -4,11 +4,12 @@ import { TeachingBubble } from "../../../../react-common/components/controls/Tea
 
 export interface TourProps {
     onClose: () => void;
-    tourSteps: pxt.tour.BubbleStep[];
+    config: pxt.tour.TourConfig;
 }
 
 export const Tour = (props: TourProps) => {
-    const { onClose, tourSteps } = props;
+    const { onClose, config } = props;
+    const { steps, showConfetti } = config;
     const [currentStep, setCurrentStep] = useState(0);
     const tourStartTime = useRef(Date.now());
     const stepStartTime = useRef(Date.now());
@@ -26,11 +27,11 @@ export const Tour = (props: TourProps) => {
     }
 
     const data = () => ({
-        title: tourSteps[currentStep].title,
+        title: steps[currentStep].title,
         stepDuration: getStepDuration(),
         tourDuration: getTourDuration(),
         step: currentStep + 1,
-        totalSteps: tourSteps.length
+        totalSteps: steps.length
     });
 
     const onNext = () => {
@@ -56,12 +57,13 @@ export const Tour = (props: TourProps) => {
     }
 
     return <TeachingBubble id="teachingBubble"
-        targetContent={tourSteps[currentStep]}
+        targetContent={steps[currentStep]}
         onNext={onNext}
         onBack={onBack}
         stepNumber={currentStep + 1}
-        totalSteps={tourSteps.length - 1}
+        totalSteps={steps.length - 1}
         onClose={onExit}
         onFinish={onFinish}
+        showConfetti={showConfetti}
     />
 };

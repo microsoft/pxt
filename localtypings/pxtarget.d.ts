@@ -1347,6 +1347,11 @@ declare namespace pxt.tour {
         sansQuery?: string; // Use this to exclude an element from the cutout
         sansLocation?: BubbleLocation; // relative location of element to exclude
         onStepBegin?: () => void;
+        bubbleStyle?: "yellow"; // Currently just have default (unset) & yellow styles. May add more in the future...
+    }
+    interface TourConfig {
+        showConfetti?: boolean;
+        steps: BubbleStep[];
     }
     const enum BubbleLocation {
         Above,
