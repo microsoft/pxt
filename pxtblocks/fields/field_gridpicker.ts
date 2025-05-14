@@ -248,8 +248,8 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
                         }
                     });
                 } else {
-                    Blockly.browserEvents.conditionalBind(menuItem, 'click', this, () => this.buttonClickAndClose_.bind(value));
-                    Blockly.browserEvents.conditionalBind(menuItem, 'mouseup', this, () => this.buttonClickAndClose_.bind(value));
+                    Blockly.browserEvents.conditionalBind(menuItem, 'click', this, () => this.buttonClickAndClose_(value));
+                    Blockly.browserEvents.conditionalBind(menuItem, 'mouseup', this, () => this.buttonClickAndClose_(value));
                 }
             }
 
