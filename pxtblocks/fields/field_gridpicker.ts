@@ -170,6 +170,7 @@ export class FieldGridPicker extends Blockly.FieldDropdown implements FieldCusto
      */
     public dispose() {
         super.dispose();
+        this.disposeInternal();
         this.disposeTooltip();
         this.disposeIntersectionObserver();
     }
@@ -285,7 +286,7 @@ export class FieldGridPicker extends Blockly.FieldDropdown implements FieldCusto
             }
 
             if (this.shouldShowTooltips()) {
-                Blockly.browserEvents.conditionalBind(menuItem, 'click', this, () => this.buttonClickAndClose_.bind(this)(value));
+                Blockly.browserEvents.conditionalBind(menuItem, 'click', this, () => this.buttonClickAndClose_(value));
 
                 // Setup hover tooltips
                 const xOffset = (this.sourceBlock_.RTL ? -this.tooltipConfig_.xOffset : this.tooltipConfig_.xOffset);
@@ -348,8 +349,8 @@ export class FieldGridPicker extends Blockly.FieldDropdown implements FieldCusto
                         }
                     });
                 } else {
-                    Blockly.browserEvents.conditionalBind(menuItem, 'click', this, () => this.buttonClickAndClose_.bind(this)(value));
-                    Blockly.browserEvents.conditionalBind(menuItem, 'mouseup', this, () => this.buttonClickAndClose_.bind(this)(value));
+                    Blockly.browserEvents.conditionalBind(menuItem, 'click', this, () => this.buttonClickAndClose_.bind(value));
+                    Blockly.browserEvents.conditionalBind(menuItem, 'mouseup', this, () => this.buttonClickAndClose_.bind(value));
                 }
             }
 
