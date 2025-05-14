@@ -2,6 +2,7 @@ import * as Blockly from "blockly";
 import { getDefinition } from "./utils";
 import { MsgKey } from "./msg";
 import { ADD_IMAGE_DATAURI, REMOVE_IMAGE_DATAURI } from "./svgs";
+import { FieldVariable } from "../newVariableField/fieldVariable";
 
 export interface InlineSvgsExtensionBlock extends Blockly.Block {
     ADD_IMAGE_DATAURI: string;
@@ -81,7 +82,7 @@ const variableReporterMixin = {
             enabled: !this.workspace.options.readOnly,
             callback: () => {
                 const workspace = this.workspace;
-                const variable = (this.getField('VAR') as Blockly.FieldVariable).getVariable();
+                const variable = (this.getField('VAR') as FieldVariable).getVariable();
                 Blockly.Variables.renameVariable(workspace, variable);
             }
         };
