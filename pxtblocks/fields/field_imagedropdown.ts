@@ -89,8 +89,6 @@ export class FieldImageDropdown extends FieldDropdownGrid implements FieldCustom
         const columnButtonWidth = this.columns_ ? ((this.width_ / this.columns_) - BUTTON_MARGIN) : 0;
 
         // do a first pass to calculate the rows
-        let selectedButtonContainer;
-        let row = this.createRow();
         for (let i = 0; i < options.length; i++) {
             const content = (options[i] as any)[0];
 
@@ -119,8 +117,10 @@ export class FieldImageDropdown extends FieldDropdownGrid implements FieldCustom
 
         rows.push(currentRow);
 
-        // now create the actual row elements
+        let selectedButtonContainer;
         let descendantIndex = 0;
+
+        // now create the actual row elements
         for (const row of rows) {
             const rowDiv = this.createRow();
             rowDiv.style.width = row.width + "px";
