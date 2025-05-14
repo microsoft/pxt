@@ -24,7 +24,6 @@ import { initContextMenu } from "./contextMenu";
 import { renderCodeCard } from "./codecardRenderer";
 import { FieldDropdown } from "./fields/field_dropdown";
 import { setDraggableShadowBlocks, setDuplicateOnDrag, setDuplicateOnDragStrategy } from "./plugins/duplicateOnDrag";
-import { applyPolyfills } from "./polyfills";
 import { initCopyPaste } from "./copyPaste";
 
 export const DRAGGABLE_PARAM_INPUT_PREFIX = "HANDLER_DRAG_PARAM_";
@@ -596,8 +595,6 @@ let blocklyInitialized = false;
 function init(blockInfo: pxtc.BlocksInfo) {
     if (blocklyInitialized) return;
     blocklyInitialized = true;
-
-    applyPolyfills();
 
     initFieldEditors();
     initContextMenu();
