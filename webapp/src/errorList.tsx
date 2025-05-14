@@ -1,10 +1,10 @@
 /// <reference path="../../built/pxtlib.d.ts" />
 
 import * as React from "react";
+import * as auth from "./auth";
 import * as sui from "./sui";
 import { fireClickOnEnter } from "./util";
 import { classList } from "../../react-common/components/util";
-import { ErrorHelpButton } from "./components/errorHelpButton";
 import { Button } from "../../react-common/components/controls/Button";
 
 /**
@@ -35,17 +35,18 @@ export type ErrorDisplayInfo = {
 
 export interface ErrorListProps {
     onSizeChange?: (state: pxt.editor.ErrorListState) => void;
-    parent: pxt.editor.IProjectView;
     errors: ErrorDisplayInfo[];
     note?: string;
     startDebugger?: () => void;
     getErrorHelp?: () => void;
+    showLoginDialog?: (continuationHash?: string, dialogMessages?: { signInMessage?: string; signUpMessage?: string }) => void;
 }
+
 export interface ErrorListState {
     isCollapsed: boolean
 }
 
-export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
+export class ErrorList extends auth.Component<ErrorListProps, ErrorListState> {
 
     constructor(props: ErrorListProps) {
         super(props);
@@ -73,8 +74,23 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         }
     }
 
-    render() {
-        const { startDebugger, errors, getErrorHelp, note } = this.props;
+    onHelpClick = () => {
+        // this.setState({ loadingHelp: true });
+
+        // Sign-in required. Prompt the user, if they are logged out.
+        if (!this.isLoggedIn()) {
+            this.props.showLoginDialog(undefined, {
+                signInMessage: lf("Sign-in is required to use this feature"),
+                signUpMessage: lf("Sign-up is required to use this feature"),
+            });
+            return;
+        }
+
+        this.props.getErrorHelp();
+    }
+
+    renderCore() {
+        const { startDebugger, errors, getErrorHelp, showLoginDialog, note } = this.props;
         const { isCollapsed } = this.state;
         const errorsAvailable = !!errors?.length;
 
@@ -83,12 +99,21 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         const errorCount = errors.length;
         const canDebug = startDebugger && !!errors.find(a => a.stackFrames?.length);
 
+        const showErrorHelp = !!getErrorHelp && !!showLoginDialog; // && !pxt.appTarget.appTheme.disableErrorHelp;
+
         return (
             <div className={classList("errorList", isCollapsed ? "errorListSummary" : undefined)} hidden={!errorsAvailable}>
                 <div className="errorListHeader" role="button" aria-label={lf("{0} error list", isCollapsed ? lf("Expand") : lf("Collapse"))} onClick={this.onCollapseClick} onKeyDown={fireClickOnEnter} tabIndex={0}>
                     <h4>{lf("Problems")}</h4>
                     <div className="ui red circular label countBubble">{errorCount}</div>
-                    {getErrorHelp && <ErrorHelpButton parent={this.props.parent} getErrorHelp={getErrorHelp} />}
+                    {showErrorHelp && <Button
+                        id="error-help-button"
+                        onClick={this.onHelpClick}
+                        title={lf("Help me understand")}
+                        className={classList("secondary", "error-help-button")}
+                        label={lf("Help me understand")}
+                        leftIcon="fas fa-robot"
+                    />}
                     <div className="toggleButton">
                         <sui.Icon icon={`chevron ${isCollapsed ? "up" : "down"}`} />
                     </div>

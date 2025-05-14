@@ -658,11 +658,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     </div>
                     {showErrorList && <ErrorList
                         onSizeChange={this.setErrorListState}
-                        parent={this.parent}
                         errors={this.errors}
                         startDebugger={this.startDebugger}
                         getErrorHelp={this.getErrorHelp}
-                        note={this.parent.state.errorListNote} />}
+                        note={this.parent.state.errorListNote}
+                        showLoginDialog={this.parent.showLoginDialog} />}
                 </div>
             </div>
         )

@@ -240,6 +240,7 @@ export class ProjectView
         this.showThemePicker = this.showThemePicker.bind(this);
         this.hideThemePicker = this.hideThemePicker.bind(this);
         this.setColorThemeById = this.setColorThemeById.bind(this);
+        this.showLoginDialog = this.showLoginDialog.bind(this);
 
         // add user hint IDs and callback to hint manager
         if (pxt.BrowserUtils.useOldTutorialLayout()) this.hintManager.addHint(ProjectView.tutorialCardId, this.tutorialCardHintCallback.bind(this));

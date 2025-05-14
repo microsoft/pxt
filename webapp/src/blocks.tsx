@@ -929,9 +929,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 </div>
                 {showErrorList && <ErrorList
                     errors={this.errors}
-                    parent={this.parent}
                     onSizeChange={this.onErrorListResize}
-                    getErrorHelp={this.getErrorHelp} />}
+                    getErrorHelp={this.getErrorHelp}
+                    showLoginDialog={this.parent.showLoginDialog} />}
             </div>
         )
     }
