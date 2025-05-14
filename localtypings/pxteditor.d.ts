@@ -1070,7 +1070,7 @@ declare namespace pxt.editor {
         showFeedbackDialog(kind: ocv.FeedbackKind): void;
         showTurnBackTimeDialogAsync(): Promise<void>;
 
-        showLoginDialog(continuationHash?: string): void;
+        showLoginDialog(continuationHash?: string, dialogMessages?: { signInMessage?: string; signUpMessage?: string }): void;
         showProfileDialog(location?: string): void;
 
         showImportUrlDialog(): void;

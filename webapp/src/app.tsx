@@ -4565,8 +4565,8 @@ export class ProjectView
         }
     }
 
-    showLoginDialog(continuationHash?: string) {
-        this.loginDialog.show(continuationHash);
+    showLoginDialog(continuationHash?: string, dialogMessages?: { signInMessage?: string; signUpMessage?: string }) {
+        this.loginDialog.show(continuationHash, dialogMessages);
     }
 
     showProfileDialog(location?: string) {

@@ -88,7 +88,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
                 <div className="errorListHeader" role="button" aria-label={lf("{0} error list", isCollapsed ? lf("Expand") : lf("Collapse"))} onClick={this.onCollapseClick} onKeyDown={fireClickOnEnter} tabIndex={0}>
                     <h4>{lf("Problems")}</h4>
                     <div className="ui red circular label countBubble">{errorCount}</div>
-                    {getErrorHelp && <ErrorHelpButton parent={this.props.parent} errors={errors} getErrorHelp={getErrorHelp} />}
+                    {getErrorHelp && <ErrorHelpButton parent={this.props.parent} getErrorHelp={getErrorHelp} />}
                     <div className="toggleButton">
                         <sui.Icon icon={`chevron ${isCollapsed ? "up" : "down"}`} />
                     </div>
