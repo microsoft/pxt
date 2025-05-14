@@ -697,7 +697,7 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
             || this.state.docsUrl != nextState.docsUrl;
     }
 
-    protected handleOnKeyDown = (ev: React.KeyboardEvent<HTMLElement>) => {
+    private handleKeyDown = (ev: React.KeyboardEvent<HTMLElement>) => {
         if (ev.key == "Escape") {
             this.collapse();
         }
@@ -719,7 +719,7 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
             <button id="sidedocstoggle" role="button" aria-label={sideDocsCollapsed ? lf("Expand the side documentation") : lf("Collapse the side documentation")} className="ui icon button large" onClick={this.toggleVisibility}>
                 <sui.Icon icon={`icon inverted chevron ${showLeftChevron ? 'left' : 'right'}`} />
             </button>
-            <div id="sidedocs" onKeyDown={this.handleOnKeyDown}>
+            <div id="sidedocs" onKeyDown={this.handleKeyDown}>
                 <div id="sidedocsframe-wrapper">
                     {this.renderContent(url, isBuiltIn, lockedEditor)}
                 </div>
