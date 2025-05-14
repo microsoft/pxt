@@ -226,7 +226,7 @@ export function setContainerClass(className: string) {
 }
 
 export function init() {
-    pxt.react.getFieldEditorView = function<U>(fieldEditorId: string, value: U, options: any, container?: HTMLDivElement) {
+    pxt.react.getFieldEditorView = function<U>(fieldEditorId: string, value: U, options: any, container?: HTMLDivElement, keyboardTriggered?: boolean) {
         if (current) current.dispose();
 
         const refHandler = (e: FieldEditorComponent<any>) => {
@@ -260,7 +260,8 @@ export function init() {
                         }}
                         onSoundChange={options.onSoundChange}
                         initialSound={options.initialSound}
-                        useMixerSynthesizer={options.useMixerSynthesizer} />
+                        useMixerSynthesizer={options.useMixerSynthesizer}
+                        keyboardTriggered={keyboardTriggered} />
                 )
                 break;
             case "music-editor":
