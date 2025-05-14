@@ -1,7 +1,7 @@
 /// <reference path="../../built/pxtlib.d.ts" />
 
 import * as Blockly from "blockly";
-import { clearDropDownDiv, FieldCustom, FieldCustomDropdownOptions, PointerCoords, parseColour, UserInputAction } from "./field_utils";
+import { clearDropDownDiv, FieldCustom, FieldCustomDropdownOptions, parseColour } from "./field_utils";
 import { FieldDropdownGrid } from "./field_dropdowngrid";
 
 export interface FieldImageDropdownOptions extends FieldCustomDropdownOptions {
