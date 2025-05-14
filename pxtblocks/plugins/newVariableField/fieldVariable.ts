@@ -172,6 +172,20 @@ export class FieldVariable extends Blockly.FieldVariable {
     protected showEditor_(e?: MouseEvent): void {
         showEditorMixin.call(this, e);
     }
+
+    getValue(): string | null {
+        const id = super.getValue();
+
+        if (this.sourceBlock_?.isInFlyout) {
+            const potentialMap = this.sourceBlock_.workspace?.getPotentialVariableMap();
+
+            if (potentialMap.getVariableById(id)) {
+                return "potential_" + id;
+            }
+        }
+
+        return id;
+    }
 }
 
 // Override the default variable field
