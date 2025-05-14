@@ -1,0 +1,75 @@
+/* Import all components */
+@import 'themes/default/globals/site.variables';
+@import 'themes/pxt/globals/site.variables';
+
+/* Reference import */
+@import (reference) "semantic.less";
+
+.navigate-regions-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--pxt-neutral-alpha0);
+    width: 100%;
+    height: 100%;
+    z-index: @modalDimmerZIndex;
+
+    .region-button {
+        position: absolute;
+        background-color: var(--pxt-neutral-alpha50);
+        border-radius: 0;
+        border: 3px solid var(--pxt-neutral-background1);
+        padding: 0;
+
+        &.simulator-region {
+            // Must be more than the z-index of 1 that high contrast mode adds to all buttons.
+            z-index: 2 !important;
+        }
+
+        &.simulator-collapsed {
+            border-start-end-radius: 100px;
+            border-end-end-radius: 100px;
+        }
+
+        &:focus-visible {
+            background-color: var(--pxt-neutral-alpha20);
+
+            div {
+                border-width: 5px;
+                background-color: var(--pxt-neutral-foreground1);
+            }
+
+            p {
+                font-weight: bold;
+            }
+        }
+
+
+
+        div {
+            background-color: var(--pxt-neutral-alpha80);
+            border: 2px solid var(--pxt-secondary-foreground);
+            width: 3.125em;
+
+            margin: auto;
+            border-radius: 5px;
+
+            @media only screen and (max-width: @largestMobileScreen) {
+                padding-right: 0.5em;
+                padding-left: 0.5em;
+            }
+        }
+        p {
+            color: var(--pxt-neutral-background1);
+            font-size: 2rem;
+
+            @media only screen and (max-width: @largestTabletScreen), 
+            only screen and (max-height: @tallEditorBreakpoint) and (min-width: @largestMobileScreen) {
+                font-size: 1.5rem;
+            }
+        }
+    }
+
+}
