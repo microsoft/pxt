@@ -9,6 +9,7 @@ import { Button } from "../../react-common/components/controls/Button";
 
 /**
  * A collection of optional metadata that can be attached to an error.
+ * TODO thsparks - Can this be removed?
  */
 type ErrorMetadata = {
     blockId?: string,
@@ -38,12 +39,13 @@ export interface ErrorListProps {
     errors: ErrorDisplayInfo[];
     note?: string;
     startDebugger?: () => void;
-    getErrorHelp?: () => void;
+    getErrorHelp?: () => Promise<void>; // Should return a promise that resolves when the help is loaded
     showLoginDialog?: (continuationHash?: string, dialogMessages?: { signInMessage?: string; signUpMessage?: string }) => void;
 }
 
 export interface ErrorListState {
     isCollapsed: boolean
+    isLoadingHelp?: boolean
 }
 
 export class ErrorList extends auth.Component<ErrorListProps, ErrorListState> {
@@ -52,7 +54,8 @@ export class ErrorList extends auth.Component<ErrorListProps, ErrorListState> {
         super(props);
 
         this.state = {
-            isCollapsed: true
+            isCollapsed: true,
+            isLoadingHelp: false
         }
 
         this.onCollapseClick = this.onCollapseClick.bind(this);
@@ -74,9 +77,7 @@ export class ErrorList extends auth.Component<ErrorListProps, ErrorListState> {
         }
     }
 
-    onHelpClick = () => {
-        // this.setState({ loadingHelp: true });
-
+    onHelpClick = async () => {
         // Sign-in required. Prompt the user, if they are logged out.
         if (!this.isLoggedIn()) {
             this.props.showLoginDialog(undefined, {
@@ -86,12 +87,16 @@ export class ErrorList extends auth.Component<ErrorListProps, ErrorListState> {
             return;
         }
 
-        this.props.getErrorHelp();
+        this.setState({ isLoadingHelp: true });
+
+        await this.props.getErrorHelp();
+
+        this.setState({ isLoadingHelp: false });
     }
 
     renderCore() {
         const { startDebugger, errors, getErrorHelp, showLoginDialog, note } = this.props;
-        const { isCollapsed } = this.state;
+        const { isCollapsed, isLoadingHelp } = this.state;
         const errorsAvailable = !!errors?.length;
 
         const groupedErrors = groupErrors(errors);
@@ -101,19 +106,30 @@ export class ErrorList extends auth.Component<ErrorListProps, ErrorListState> {
 
         const showErrorHelp = !!getErrorHelp && !!showLoginDialog; // && !pxt.appTarget.appTheme.disableErrorHelp;
 
+        const helpLoader = <div className="error-help-loader" onClick={(e) => e.stopPropagation()}>
+            <div className="common-spinner" />
+            <span className="analyzing-label">{lf("Analyzing...")}</span>
+        </div>;
+
+        const helpButton = (
+            <Button
+                id="error-help-button"
+                onClick={this.onHelpClick}
+                title={lf("Help me understand")}
+                className="secondary error-help-button"
+                label={lf("Help me understand")}
+                leftIcon={"fas fa-robot"}
+            />
+        );
+
         return (
             <div className={classList("errorList", isCollapsed ? "errorListSummary" : undefined)} hidden={!errorsAvailable}>
                 <div className="errorListHeader" role="button" aria-label={lf("{0} error list", isCollapsed ? lf("Expand") : lf("Collapse"))} onClick={this.onCollapseClick} onKeyDown={fireClickOnEnter} tabIndex={0}>
                     <h4>{lf("Problems")}</h4>
                     <div className="ui red circular label countBubble">{errorCount}</div>
-                    {showErrorHelp && <Button
-                        id="error-help-button"
-                        onClick={this.onHelpClick}
-                        title={lf("Help me understand")}
-                        className={classList("secondary", "error-help-button")}
-                        label={lf("Help me understand")}
-                        leftIcon="fas fa-robot"
-                    />}
+                    {showErrorHelp && <div className={classList("error-help-container", isLoadingHelp ? "loading" : undefined)}>
+                        {isLoadingHelp ? helpLoader : helpButton}
+                    </div>}
                     <div className="toggleButton">
                         <sui.Icon icon={`chevron ${isCollapsed ? "up" : "down"}`} />
                     </div>

@@ -15,6 +15,10 @@
         padding: 0.75em 1em;
         height: @errorListHeaderHeight;
         margin-bottom: 0;
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-start;
+        align-items: center;
 
         &:hover {
             cursor: pointer;
@@ -45,6 +49,35 @@
 
             i {
                 font-size: 1.3em;
+            }
+        }
+
+        .error-help-container {
+            flex-grow: 1;
+            margin: 0 1rem;
+
+            .error-help-button {
+                padding: 0.7rem;
+            }
+
+            .error-help-loader {
+                display: flex;
+                flex-direction: row;
+                justify-content: flex-start;
+                align-items: center;
+                width: fit-content;
+                color: var(--pxt-secondary-background); // Inverted to match the button bkg color
+                cursor: progress;
+
+                // Match button
+                padding: 0.7rem;
+                font-weight: 400;
+                line-height: 1em;
+                font-size: 16px;
+
+                .analyzing-label {
+                    margin: 0 1rem;
+                }
             }
         }
     }
@@ -107,11 +140,6 @@
                 vertical-align: text-top;
             }
         }
-    }
-
-    .error-help-button {
-        margin: 0 1rem;
-        padding: 0.7rem;
     }
 
     .explanationText {
