@@ -44,6 +44,12 @@ export interface AssetSaveState {
     assetId: string;
 }
 
+export interface PointerCoords {
+    x: number,
+    y: number,
+}
+
+export type UserInputAction = "pointermove" | "keymove";
 
 export namespace svg {
     export function hasClass(el: SVGElement, cls: string): boolean {

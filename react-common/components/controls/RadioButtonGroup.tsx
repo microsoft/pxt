@@ -42,14 +42,14 @@ export const RadioButtonGroup = (props: RadioButtonGroupProps) => {
             childTabStopId={selectedId}>
             {choices.map(choice =>
                 <div key={choice.id}
-                    className={classList("common-radio-choice", choice.className, selectedId === choice.id && "selected" )}
-                    onClick={() => onChoiceClick(choice.id)}>
+                    className={classList("common-radio-choice", choice.className, selectedId === choice.id && "selected" )}>
                     <input
                         type="radio"
                         id={choice.id}
                         value={choice.id}
                         name={id + "-input"}
                         checked={selectedId === choice.id}
+                        onChange={() => onChoiceClick(choice.id)}
                         tabIndex={0}
                         aria-label={choice.label ? undefined : choice.title}
                         aria-labelledby={choice.label ? choice.id + "-label" : undefined} />
