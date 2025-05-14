@@ -2,7 +2,7 @@
 
 import * as Blockly from "blockly";
 import { clearDropDownDiv, FieldCustom, FieldCustomDropdownOptions, PointerCoords, parseColour, UserInputAction } from "./field_utils";
-import { FieldDropdown } from "./field_dropdown";
+import { FieldDropdownGrid } from "./field_dropdowngrid";
 
 export interface FieldImageDropdownOptions extends FieldCustomDropdownOptions {
     columns?: string;
@@ -16,27 +16,8 @@ type ButtonRow = {
     items: Blockly.MenuOption[];
 }
 
-export class FieldImageDropdown extends FieldDropdown implements FieldCustom {
-    public isFieldCustom_ = true;
-    // Width in pixels
-    protected width_: number;
-
-    // Columns in grid
-    protected columns_: number;
-
-    // Number of rows to display (if there are extra rows, the picker will be scrollable)
-    protected maxRows_: number;
-
-    protected backgroundColour_: string;
-    protected borderColour_: string;
-
+export class FieldImageDropdown extends FieldDropdownGrid implements FieldCustom {
     protected savedPrimary_: string;
-
-    protected activeDescendantIndex: number | undefined;
-    protected buttons: HTMLDivElement[] = [];
-
-    protected openingPointerCoords: PointerCoords | undefined;
-    protected lastAction: UserInputAction | undefined;
 
     constructor(text: string, options: FieldImageDropdownOptions, validator?: Function) {
         super(options.data);
@@ -49,95 +30,19 @@ export class FieldImageDropdown extends FieldDropdown implements FieldCustom {
         this.borderColour_ = pxt.toolbox.fadeColor(this.backgroundColour_, 0.4, false);
     }
 
-    protected addKeyHandler(contentDiv: HTMLDivElement) {
-        Blockly.browserEvents.bind(contentDiv, 'keydown', this, (e: KeyboardEvent) => {
-            const setFocusedButton = () => {
-                this.lastAction = 'keymove';
-                this.buttons.forEach(button => button.setAttribute('class', 'blocklyDropDownButton'));
-                const activeButton = this.buttons[this.activeDescendantIndex];
-                const activeButtonContainer = activeButton.parentElement;
-                activeButton.setAttribute('class', 'blocklyDropDownButton blocklyDropDownButtonFocus');
-                const activeButtonRect = activeButtonContainer.getBoundingClientRect();
-                // Has to be the parent element as the contents of the contentDiv are all floated.
-                const containerRect = contentDiv.parentElement.getBoundingClientRect();
-                if (activeButtonRect.bottom > containerRect.bottom) {
-                    activeButtonContainer.scrollIntoView({block: "end"});
-                } else if (activeButtonRect.top < containerRect.top) {
-                    activeButtonContainer.scrollIntoView({block: "start"});
-                }
-                contentDiv.setAttribute('aria-activedescendant', ":" + this.activeDescendantIndex);
-                e.preventDefault();
-                e.stopPropagation();
-            }
-
-            if (this.activeDescendantIndex === undefined) {
-                if (e.code === 'ArrowDown' || e.code === 'ArrowRight' || e.code === 'Home' ) {
-                    this.activeDescendantIndex = 0
-                    return setFocusedButton();
-                } else if (e.code === 'ArrowUp' || e.code === 'ArrowLeft' || e.code === 'End') {
-                    this.activeDescendantIndex =  this.buttons.length - 1
-                    return setFocusedButton();
-                }
-            }
-
-            const ctrlCmd = pxt.BrowserUtils.isMac() ? e.metaKey : e.ctrlKey;
-            switch(e.code) {
-                case 'ArrowUp':
-                    if (this.activeDescendantIndex - this.columns_ >= 0) {
-                        this.activeDescendantIndex -= this.columns_;
-                    }
-                    break;
-                case 'ArrowDown':
-                    if (this.activeDescendantIndex + this.columns_ < this.buttons.length) {
-                        this.activeDescendantIndex += this.columns_;
-                    }
-                    break;
-                case 'ArrowRight':
-                    if (this.activeDescendantIndex < this.buttons.length - 1) {
-                        this.activeDescendantIndex++;
-                    }
-                    break;
-                case 'ArrowLeft':
-                    if (this.activeDescendantIndex !== 0) {
-                        this.activeDescendantIndex--;
-                    }
-                    break;
-                case "Home": {
-                    if (ctrlCmd) {
-                        this.activeDescendantIndex = 0;
-                    } else {
-                        while (this.activeDescendantIndex % this.columns_ !== 0) {
-                            this.activeDescendantIndex--;
-                        }
-                    }
-                    break;
-                }
-                case "End": {
-                    if (ctrlCmd) {
-                        this.activeDescendantIndex = this.buttons.length - 1;
-                    } else {
-                        while (
-                          this.activeDescendantIndex % this.columns_ !== this.columns_ - 1 &&
-                          this.activeDescendantIndex < this.buttons.length - 1
-                        ) {
-                          this.activeDescendantIndex++;
-                        }
-                    }
-                    break;
-                }
-                case "Enter":
-                case "Space": {
-                    this.buttonClick_(this.buttons[this.activeDescendantIndex].getAttribute('data-value'));
-                    e.preventDefault();
-                    e.stopPropagation();
-                    return;
-                }
-                default: {
-                    return
-                }
-            }
-            setFocusedButton();
-        });
+    protected setFocusedItem_(gridItemContainer: HTMLElement) {
+        this.gridItems.forEach(button => button.setAttribute('class', 'blocklyDropDownButton'));
+        const activeButton = this.gridItems[this.activeDescendantIndex];
+        const activeButtonContainer = activeButton.parentElement;
+        activeButton.setAttribute('class', 'blocklyDropDownButton blocklyDropDownButtonFocus');
+        const activeButtonRect = activeButtonContainer.getBoundingClientRect();
+        // Has to be the parent element as the gridItems in the gridItemContainer are all floated.
+        const containerRect = gridItemContainer.parentElement.getBoundingClientRect();
+        if (activeButtonRect.bottom > containerRect.bottom) {
+            activeButtonContainer.scrollIntoView({block: "end"});
+        } else if (activeButtonRect.top < containerRect.top) {
+            activeButtonContainer.scrollIntoView({block: "start"});
+        }
     }
 
     protected createRow() {
@@ -146,31 +51,12 @@ export class FieldImageDropdown extends FieldDropdown implements FieldCustom {
         return row;
     }
 
-    protected addPointerListener(dropdownDiv: HTMLElement) {
-        Blockly.browserEvents.bind(dropdownDiv, 'pointermove', this, () => {
-            this.lastAction = 'pointermove';
-        });
-    }
-
-    protected pointerTriggeredByUser() {
-        return this.openingPointerCoords && !this.lastAction || this.lastAction === 'pointermove'
-    }
-
-    protected pointeroutTriggeredByUser() {
-        return this.lastAction === 'pointermove'
-    }
-
     /**
      * Create a dropdown menu under the text.
      * @private
      */
-    public showEditor_(e?: MouseEvent) {
-        if (e) {
-            this.openingPointerCoords = {
-                x: e.pageX,
-                y: e.pageY
-            }
-        }
+    public showEditor_(e?: Event) {
+        this.setOpeningPointerCoords(e);
         // If there is an existing drop-down we own, this is a request to hide the drop-down.
         if (Blockly.DropDownDiv.hideIfOwner(this)) {
             return;
@@ -187,7 +73,7 @@ export class FieldImageDropdown extends FieldDropdown implements FieldCustom {
         contentDiv.classList.add("blocklyMenu", "blocklyDropdownMenu");
 
         this.addPointerListener(dropdownDiv);
-        this.addKeyHandler(contentDiv);
+        this.addKeyDownHandler(contentDiv);
 
         const rows: ButtonRow[] = [];
         let currentRow: ButtonRow = {
@@ -274,22 +160,22 @@ export class FieldImageDropdown extends FieldDropdown implements FieldCustom {
                     button.setAttribute('aria-selected', 'true');
                     this.activeDescendantIndex = localDescendantIndex;
                     contentDiv.setAttribute('aria-activedescendant', button.id);
-                    button.setAttribute('class', `blocklyDropDownButton ${e ? "blocklyDropDownButtonHover" : "blocklyDropDownButtonFocus"}`);
+                    button.setAttribute('class', `blocklyDropDownButton ${this.openingPointerCoords ? "blocklyDropDownButtonHover" : "blocklyDropDownButtonFocus"}`);
                     selectedButtonContainer = buttonContainer;
                 }
                 button.style.backgroundColor = backgroundColor;
                 button.style.borderColor = this.borderColour_;
-                Blockly.browserEvents.bind(button, 'click', this, () => this.buttonClick_(value));
+                Blockly.browserEvents.bind(button, 'click', this, () => this.buttonClickAndClose_(value));
                 Blockly.browserEvents.bind(button, 'pointermove', this, () => {
-                    if (this.pointerTriggeredByUser()) {
-                        this.buttons.forEach(button => button.setAttribute('class', 'blocklyDropDownButton'));
+                    if (this.pointerMoveTriggeredByUser()) {
+                        this.gridItems.forEach(button => button.setAttribute('class', 'blocklyDropDownButton'));
                         this.activeDescendantIndex = localDescendantIndex;
                         button.setAttribute('class', 'blocklyDropDownButton blocklyDropDownButtonHover');
                         contentDiv.setAttribute('aria-activedescendant', button.id);
                     }
                 });
                 Blockly.browserEvents.bind(button, 'pointerout', this, () => {
-                    if (this.pointeroutTriggeredByUser()) {
+                    if (this.pointerOutTriggeredByUser()) {
                         button.setAttribute('class', 'blocklyDropDownButton');
                         contentDiv.removeAttribute('aria-activedescendant');
                         this.activeDescendantIndex = undefined;
@@ -303,7 +189,7 @@ export class FieldImageDropdown extends FieldDropdown implements FieldCustom {
                 button.setAttribute('data-value', value);
                 buttonImg.setAttribute('data-value', value);
                 button.appendChild(buttonImg);
-                this.buttons.push(button);
+                this.gridItems.push(button);
                 buttonContainer.appendChild(button);
                 rowDiv.append(buttonContainer);
                 descendantIndex++;
@@ -357,13 +243,7 @@ export class FieldImageDropdown extends FieldDropdown implements FieldCustom {
         return lf("image");
     }
 
-    /**
-     * Callback for when a button is clicked inside the drop-down.
-     * Should be bound to the FieldIconMenu.
-     * @param {string | null} value the value to set for the field
-     * @private
-     */
-    protected buttonClick_ = (value: string | null) => {
+    protected buttonClickAndClose_ = (value: string | null) => {
         if (!value) return;
         this.setValue(value);
         Blockly.DropDownDiv.hide();
@@ -373,13 +253,10 @@ export class FieldImageDropdown extends FieldDropdown implements FieldCustom {
      * Callback for when the drop-down is hidden.
      */
     protected onHide_() {
-        this.openingPointerCoords = undefined;
-        this.lastAction = undefined;
+        this.disposeGrid();
         let content = Blockly.DropDownDiv.getContentDiv() as HTMLElement;
         content.removeAttribute('role');
         content.removeAttribute('aria-activedescendant');
-        this.activeDescendantIndex = undefined;
-        this.buttons = [];
         content.style.width = '';
         content.style.paddingRight = '';
         content.style.maxHeight = '';
