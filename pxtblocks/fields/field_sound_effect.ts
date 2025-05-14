@@ -128,7 +128,8 @@ export class FieldSoundEffect extends FieldBase<FieldSoundEffectParams> {
         this.fieldGroup_.appendChild(g.el);
     }
 
-    showEditor_() {
+    showEditor_(e: Event) {
+        const keyboardTriggered = !e;
         const initialSound = this.readCurrentSound();
         Blockly.Events.disable();
 
@@ -186,7 +187,7 @@ export class FieldSoundEffect extends FieldBase<FieldSoundEffectParams> {
             useMixerSynthesizer: isTrue(this.options.useMixerSynthesizer)
         }
 
-        const fv = pxt.react.getFieldEditorView("soundeffect-editor", initialSound, opts, widgetDiv);
+        const fv = pxt.react.getFieldEditorView("soundeffect-editor", initialSound, opts, widgetDiv, keyboardTriggered);
 
         const block = this.sourceBlock_ as Blockly.BlockSvg;
         const bounds = block.getBoundingRectangle();
