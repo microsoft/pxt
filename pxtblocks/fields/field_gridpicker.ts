@@ -310,6 +310,7 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
      */
     private close() {
         this.disposeTooltip();
+        this.disposeGrid();
 
         Blockly.WidgetDiv.hideIfOwner(this);
         Blockly.Events.setGroup(false);

@@ -151,8 +151,12 @@ export abstract class FieldDropdownGrid extends FieldDropdown {
     }
 
     protected disposeGrid(): void {
-        Blockly.browserEvents.unbind(this.keyDownBinding);
-        Blockly.browserEvents.unbind(this.pointerMoveBinding);
+        if (this.keyDownBinding) {
+            Blockly.browserEvents.unbind(this.keyDownBinding);
+        }
+        if (this.pointerMoveBinding) {
+            Blockly.browserEvents.unbind(this.pointerMoveBinding);
+        }
         this.keyDownBinding = null;
         this.pointerMoveBinding = null;
         this.openingPointerCoords = undefined;
