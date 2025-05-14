@@ -9,7 +9,6 @@ import { Button } from "../../react-common/components/controls/Button";
 
 /**
  * A collection of optional metadata that can be attached to an error.
- * TODO thsparks - Can this be removed?
  */
 type ErrorMetadata = {
     blockId?: string,
