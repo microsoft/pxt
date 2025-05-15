@@ -1047,11 +1047,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 tourStep.location = pxt.tour.BubbleLocation.Right;
                 tourStep.onStepBegin = () => this.editor.centerOnBlock(step.elementId, true);
             } else {
+                // Do not add the tour target, but keep the step in case it's still helpful.
                 pxt.tickEvent("errorHelp.invalidBlockId");
-                // TODO thsparks - Maybe?
-                // Try to repair the block id. The AI sometimes sends variable ids instead of blockIds.
-                // If that variable id is only used in one block, we can assume that is the block we should point to.
-                // https://developers.google.com/blockly/reference/js/blockly.workspace_class.getvariableusesbyid_1_method#workspacegetvariableusesbyid_method
             }
 
             tourSteps.push(tourStep);

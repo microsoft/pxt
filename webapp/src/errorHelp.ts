@@ -120,10 +120,8 @@ async function getHelpAsync(
     const target = pxt.appTarget.nickname || pxt.appTarget.name;
     const cleanedCode = cleanCodeForAI(code);
     const errString = getErrorsAsText(errors);
-
-    // TODO thsparks : If error (incl. block ids) is same, check cached response. If ids in that are also valid, return cached response. Else, call API.
-
     const requestId = pxt.Util.guidGen();
+
     pxt.tickEvent("errorHelp.requestStart", { requestId, lang, outputFormat, errorCount: errors.length, errorSize: errString.length, codeSize: code.length, cleanedCodeSize: cleanedCode.length });
 
     const startTime = Date.now();
