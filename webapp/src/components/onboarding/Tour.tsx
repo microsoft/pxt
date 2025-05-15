@@ -1,4 +1,3 @@
-import * as React from "react";
 import { useEffect, useRef, useState } from "react";
 import { TeachingBubble } from "../../../../react-common/components/controls/TeachingBubble";
 
@@ -9,7 +8,7 @@ export interface TourProps {
 
 export const Tour = (props: TourProps) => {
     const { onClose, config } = props;
-    const { steps, showConfetti } = config;
+    const { steps } = config;
     const [currentStep, setCurrentStep] = useState(0);
     const tourStartTime = useRef(Date.now());
     const stepStartTime = useRef(Date.now());
@@ -56,14 +55,21 @@ export const Tour = (props: TourProps) => {
         onClose();
     }
 
+    const isLastStep = currentStep === steps.length - 1;
+    const confetti = config.showConfetti && isLastStep;
+    const hideSteps = !config.numberFinalStep && isLastStep;
+    const totalDisplaySteps = config.numberFinalStep ? steps.length : steps.length - 1;
     return <TeachingBubble id="teachingBubble"
         targetContent={steps[currentStep]}
         onNext={onNext}
         onBack={onBack}
         stepNumber={currentStep + 1}
-        totalSteps={steps.length - 1}
+        totalSteps={totalDisplaySteps}
+        hasPrevious={currentStep > 0}
+        hasNext={!isLastStep}
         onClose={onExit}
         onFinish={onFinish}
-        showConfetti={showConfetti}
+        showConfetti={confetti}
+        forceHideSteps={hideSteps}
     />
 };

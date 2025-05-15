@@ -1351,8 +1351,9 @@ declare namespace pxt.tour {
         bubbleStyle?: "yellow"; // Currently just have default (unset) & yellow styles. May add more in the future...
     }
     interface TourConfig {
-        showConfetti?: boolean;
         steps: BubbleStep[];
+        showConfetti?: boolean;
+        numberFinalStep?: boolean; // The last step will only be included in the step count if this is true.
     }
     const enum BubbleLocation {
         Above,

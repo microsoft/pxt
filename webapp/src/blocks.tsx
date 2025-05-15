@@ -1013,13 +1013,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const code = this.getWorkspaceXmlWithIds();
         try {
             const helpResponse = await getErrorHelpAsTour(this.errors, "blocks", code);
-            const tourSteps = this.createTourFromResponse(helpResponse);
-            this.parent.showTour(
-                {
-                    steps: tourSteps,
-                    showConfetti: false
-                }
-            );
+            const tour = this.createTourFromResponse(helpResponse);
+            this.parent.showTour(tour);
         } catch (e) {
             pxt.reportException(e);
 
@@ -1035,7 +1030,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
      * Converts an ErrorHelpTourRespone into an actual tour, which mostly involves
      * ensuring all provided ids are valid and setting up the corresponding target queries.
      */
-    private createTourFromResponse = (response: ErrorHelpTourResponse) => {
+    private createTourFromResponse = (response: ErrorHelpTourResponse): pxt.tour.TourConfig => {
         const validBlockIds = this.parent.getBlocks().map((b) => b.id);
 
         const tourSteps: pxt.tour.BubbleStep[] = [];
@@ -1061,7 +1056,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
             tourSteps.push(tourStep);
         }
-        return tourSteps;
+        return {
+            steps: tourSteps,
+            showConfetti: false,
+            numberFinalStep: true
+        };
     }
 
     getBlocksAreaDiv() {

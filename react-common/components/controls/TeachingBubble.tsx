@@ -20,10 +20,13 @@ export interface TeachingBubbleProps extends ContainerProps {
     targetContent: pxt.tour.BubbleStep;
     stepNumber: number;
     totalSteps: number;
+    hasPrevious: boolean;
+    hasNext: boolean;
     onClose: () => void;
     parentElement?: Element;
     activeTarget?: boolean; // if true, the target is clickable
     showConfetti?: boolean;
+    forceHideSteps?: boolean;
     onNext: () => void;
     onBack: () => void;
     onFinish: () => void;
@@ -45,7 +48,10 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
         stepNumber,
         totalSteps,
         parentElement,
-        activeTarget
+        activeTarget,
+        forceHideSteps,
+        hasPrevious,
+        hasNext
     } = props;
 
     const margin = 10;
@@ -62,23 +68,11 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
             props.targetContent.onStepBegin();
         }
         positionBubbleAndCutout();
-        setStepsVisibility();
         window.addEventListener("resize", positionBubbleAndCutout);
         return () => {
             window.removeEventListener("resize", positionBubbleAndCutout);
         }
     }, [stepNumber, targetContent]);
-
-    const setStepsVisibility = () => {
-        const steps = document.querySelector(".teaching-bubble-steps") as HTMLElement;
-        if (!steps) return;
-
-        if (stepNumber > totalSteps || totalSteps === 1) {
-            steps.style.visibility = "hidden";
-        } else {
-            steps.style.visibility = "visible";
-        }
-    }
 
     const positionBubbleAndCutout = () => {
         const bubble = document.getElementById(id);
@@ -354,8 +348,6 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
         element.style.left = left + "px";
     }
 
-    const hasPrevious = stepNumber > 1;
-    const hasNext = stepNumber < totalSteps + 1;
     const hasSteps = totalSteps > 1;
     const closeLabel = lf("Close");
     const backLabel = lf("Back");
@@ -369,7 +361,7 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
     );
 
     return ReactDOM.createPortal(<FocusTrap className={classes} onEscape={onClose}>
-        {props.showConfetti && stepNumber === totalSteps + 1 && <Confetti />}
+        {props.showConfetti && <Confetti />}
         <div className="teaching-bubble-cutout" />
         <div className="teaching-bubble-arrow" />
         <div className="teaching-bubble-arrow-outline" />
@@ -391,7 +383,7 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
                 <strong aria-live="polite">{targetContent.title}</strong>
                 <p aria-live="polite">{targetContent.description}</p>
                 <div className={`teaching-bubble-footer ${!hasSteps ? "no-steps" : ""}`}>
-                    {hasSteps && <div className="teaching-bubble-steps" aria-live="polite">
+                    {hasSteps && <div className={classList("teaching-bubble-steps", forceHideSteps ? "hidden" : undefined)} aria-live="polite">
                         {stepNumber} of {totalSteps}
                     </div>}
                     <div className="teaching-bubble-navigation">
