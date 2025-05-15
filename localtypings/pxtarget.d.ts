@@ -1349,6 +1349,7 @@ declare namespace pxt.tour {
         sansLocation?: BubbleLocation; // relative location of element to exclude
         onStepBegin?: () => void;
         bubbleStyle?: "yellow"; // Currently just have default (unset) & yellow styles. May add more in the future...
+        notice?: string; // Optional notice to show in the bubble
     }
     interface TourConfig {
         steps: BubbleStep[];

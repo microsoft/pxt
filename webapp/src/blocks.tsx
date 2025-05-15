@@ -1035,6 +1035,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 description: step.message,
                 location: pxt.tour.BubbleLocation.Center,
                 bubbleStyle: "yellow",
+                notice: lf("AI-generated content may not be perfect. Always double check.")
             } as pxt.tour.BubbleStep;
 
             if (validBlockIds.includes(step.elementId)) {

@@ -382,6 +382,10 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
             <div className="teaching-bubble-content">
                 <strong aria-live="polite">{targetContent.title}</strong>
                 <p aria-live="polite">{targetContent.description}</p>
+                {targetContent.notice && <div className="teaching-bubble-notice" aria-live="polite">
+                    <i className="fas fa-exclamation" />
+                    <span className="notice-text">{targetContent.notice}</span>
+                </div>}
                 <div className={`teaching-bubble-footer ${!hasSteps ? "no-steps" : ""}`}>
                     {hasSteps && <div className={classList("teaching-bubble-steps", forceHideSteps ? "hidden" : undefined)} aria-live="polite">
                         {stepNumber} of {totalSteps}
