@@ -8,29 +8,29 @@ import { classList } from "../../react-common/components/util";
 import { Button } from "../../react-common/components/controls/Button";
 
 type GroupedError = {
-    error: ErrorDisplayInfo,
-    count: number,
-    index: number
+    error: ErrorDisplayInfo;
+    count: number;
+    index: number;
 };
 
 /**
  * A collection of optional metadata that can be attached to an error.
  */
 export type ErrorMetadata = {
-    blockId?: string,
-}
+    blockId?: string;
+};
 
 export type StackFrameDisplayInfo = {
-    message: string,
-    metadata?: ErrorMetadata,
-    onClick?: () => void,
-}
+    message: string;
+    metadata?: ErrorMetadata;
+    onClick?: () => void;
+};
 
 export type ErrorDisplayInfo = {
-    message: string,
-    stackFrames?: StackFrameDisplayInfo[],
-    metadata?: ErrorMetadata,
-    onClick?: () => void
+    message: string;
+    stackFrames?: StackFrameDisplayInfo[];
+    metadata?: ErrorMetadata;
+    onClick?: () => void;
 };
 
 export interface ErrorListProps {
@@ -39,23 +39,25 @@ export interface ErrorListProps {
     note?: string;
     startDebugger?: () => void;
     getErrorHelp?: () => Promise<void>; // Should return a promise that resolves when the help is loaded
-    showLoginDialog?: (continuationHash?: string, dialogMessages?: { signInMessage?: string; signUpMessage?: string }) => void;
+    showLoginDialog?: (
+        continuationHash?: string,
+        dialogMessages?: { signInMessage?: string; signUpMessage?: string }
+    ) => void;
 }
 
 export interface ErrorListState {
-    isCollapsed: boolean
-    isLoadingHelp?: boolean
+    isCollapsed: boolean;
+    isLoadingHelp?: boolean;
 }
 
 export class ErrorList extends auth.Component<ErrorListProps, ErrorListState> {
-
     constructor(props: ErrorListProps) {
         super(props);
 
         this.state = {
             isCollapsed: true,
-            isLoadingHelp: false
-        }
+            isLoadingHelp: false,
+        };
 
         this.onCollapseClick = this.onCollapseClick.bind(this);
     }
@@ -79,7 +81,7 @@ export class ErrorList extends auth.Component<ErrorListProps, ErrorListState> {
     onHelpClick = async () => {
         // Sign-in required. Prompt the user, if they are logged out.
         if (!this.isLoggedIn()) {
-            pxt.tickEvent('errorlist.showSignIn');
+            pxt.tickEvent("errorlist.showSignIn");
             this.props.showLoginDialog(undefined, {
                 signInMessage: lf("Sign-in is required to use this feature"),
                 signUpMessage: lf("Sign-up is required to use this feature"),
@@ -90,7 +92,7 @@ export class ErrorList extends auth.Component<ErrorListProps, ErrorListState> {
         this.setState({ isLoadingHelp: true });
         await this.props.getErrorHelp();
         this.setState({ isLoadingHelp: false });
-    }
+    };
 
     renderCore() {
         const { startDebugger, errors, getErrorHelp, showLoginDialog, note } = this.props;
@@ -104,10 +106,12 @@ export class ErrorList extends auth.Component<ErrorListProps, ErrorListState> {
 
         const showErrorHelp = !!getErrorHelp && !!showLoginDialog && pxt.appTarget.appTheme.aiErrorHelp;
 
-        const helpLoader = <div className="error-help-loader" onClick={(e) => e.stopPropagation()}>
-            <div className="common-spinner" />
-            <span className="analyzing-label">{lf("Analyzing...")}</span>
-        </div>;
+        const helpLoader = (
+            <div className="error-help-loader" onClick={(e) => e.stopPropagation()}>
+                <div className="common-spinner" />
+                <span className="analyzing-label">{lf("Analyzing...")}</span>
+            </div>
+        );
 
         const helpButton = (
             <Button
@@ -125,9 +129,11 @@ export class ErrorList extends auth.Component<ErrorListProps, ErrorListState> {
                 <div className="errorListHeader" role="button" aria-label={lf("{0} error list", isCollapsed ? lf("Expand") : lf("Collapse"))} onClick={this.onCollapseClick} onKeyDown={fireClickOnEnter} tabIndex={0}>
                     <h4>{lf("Problems")}</h4>
                     <div className="ui red circular label countBubble">{errorCount}</div>
-                    {showErrorHelp && <div className={classList("error-help-container", isLoadingHelp ? "loading" : undefined)}>
-                        {isLoadingHelp ? helpLoader : helpButton}
-                    </div>}
+                    {showErrorHelp && (
+                        <div className={classList("error-help-container", isLoadingHelp ? "loading" : undefined)}>
+                            {isLoadingHelp ? helpLoader : helpButton}
+                        </div>
+                    )}
                     <div className="filler" />
                     <div className="toggleButton">
                         <sui.Icon icon={`chevron ${isCollapsed ? "up" : "down"}`} />
@@ -146,7 +152,7 @@ export class ErrorList extends auth.Component<ErrorListProps, ErrorListState> {
                     </div>
                 </div>}
             </div>
-        )
+        );
     }
 
     onDisplayStateChange() {

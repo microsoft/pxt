@@ -10,8 +10,16 @@ export interface ErrorHelpTourResponse {
     explanationSteps: ErrorExplanationStep[];
 }
 
-export type ErrorHelpExceptionType = "featureDisabled" | "contentTooLarge" | "cannotParseResponse" | "throttled" | "emptyResponse" | "forbidden" | "unknown";
-export class ErrorHelpException extends Error {
+export type ErrorHelpExceptionType =
+    | "featureDisabled"
+    | "contentTooLarge"
+    | "cannotParseResponse"
+    | "throttled"
+    | "emptyResponse"
+    | "forbidden"
+    | "unknown";
+
+    export class ErrorHelpException extends Error {
     errorType: ErrorHelpExceptionType;
     originalError?: Error;
 
@@ -45,20 +53,7 @@ export class ErrorHelpException extends Error {
  * This is used when the AI returns a JSON "tour" response.
  */
 function parseTourResponse(response: string): ErrorHelpTourResponse {
-    /*
-    The AI either provides a JSON list with blockIds tied to explanations for each block.
-    For example:
-    [
-        {
-            "blockId": "sampleblockid",
-            "message": "Here is a helpful message walking you through the error. This one will be displayed first."
-        },
-        {
-            "blockId": "sampleblockid2",
-            "message": "Here is another helpful message walking you through the error. This one will be displayed second."
-        }
-    ]
-    */
+    // The AI provides a JSON list with blockIds tied to explanations for each block, matching this format
     interface AiResponseJsonFormat {
         blockId: string;
         message: string;
@@ -97,7 +92,6 @@ function getErrorsAsText(errors: ErrorDisplayInfo[]): string {
     return JSON.stringify(errors);
 }
 
-
 /**
  * Helper function to clean up code and remove unnecessary and bulky content.
  */
@@ -122,17 +116,36 @@ async function getHelpAsync(
     const errString = getErrorsAsText(errors);
     const requestId = pxt.Util.guidGen();
 
-    pxt.tickEvent("errorHelp.requestStart", { requestId, lang, outputFormat, errorCount: errors.length, errorSize: errString.length, codeSize: code.length, cleanedCodeSize: cleanedCode.length });
+    pxt.tickEvent("errorHelp.requestStart", {
+        requestId,
+        lang,
+        outputFormat,
+        errorCount: errors.length,
+        errorSize: errString.length,
+        codeSize: code.length,
+        cleanedCodeSize: cleanedCode.length,
+    });
 
     const startTime = Date.now();
     try {
         const response = await aiErrorExplainRequest(cleanedCode, errString, lang, target, outputFormat);
         const endTime = Date.now();
-        pxt.tickEvent("errorHelp.requestEnd", { requestId, success: "true", responseTimeMs: (endTime - startTime).toString(), responseSize: response?.length });
+        pxt.tickEvent("errorHelp.requestEnd", {
+            requestId,
+            success: "true",
+            responseTimeMs: (endTime - startTime).toString(),
+            responseSize: response?.length,
+        });
         return response;
     } catch (e) {
         const endTime = Date.now();
-        pxt.tickEvent("errorHelp.requestEnd", { requestId, success: "false", responseTimeMs: (endTime - startTime).toString(), statusCode: e.statusCode, error: e.message });
+        pxt.tickEvent("errorHelp.requestEnd", {
+            requestId,
+            success: "false",
+            responseTimeMs: (endTime - startTime).toString(),
+            statusCode: e.statusCode,
+            error: e.message,
+        });
 
         // Check status code to determine reason for error
         switch (e.statusCode) {
@@ -149,6 +162,9 @@ async function getHelpAsync(
     }
 }
 
+/**
+ * Get explanations for the given errors in a step-by-step format with specific points of interest.
+ */
 export async function getErrorHelpAsTour(
     errors: ErrorDisplayInfo[],
     lang: "blocks" | "typescript" | "python",
@@ -159,6 +175,9 @@ export async function getErrorHelpAsTour(
     return parsedResponse;
 }
 
+/**
+ * Get a simple, text-based explanation for the given errors.
+ */
 export async function getErrorHelpAsText(
     errors: ErrorDisplayInfo[],
     lang: "blocks" | "typescript" | "python",
