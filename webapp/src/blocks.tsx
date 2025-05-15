@@ -27,7 +27,7 @@ import { DebuggerToolbox } from "./debuggerToolbox";
 import { ErrorDisplayInfo, ErrorList, StackFrameDisplayInfo } from "./errorList";
 import { resolveExtensionUrl } from "./extensionManager";
 import { experiments, initEditorExtensionsAsync } from "../../pxteditor";
-import { ErrorHelpTourResponse, getErrorHelpAsTour } from "./errorHelp";
+import { ErrorHelpException, ErrorHelpTourResponse, getErrorHelpAsTour } from "./errorHelp";
 
 
 import IProjectView = pxt.editor.IProjectView;
@@ -1011,14 +1011,24 @@ export class Editor extends toolboxeditor.ToolboxEditor {
      */
     async getErrorHelp() {
         const code = this.getWorkspaceXmlWithIds();
-        const helpResponse = await getErrorHelpAsTour(this.errors, "blocks", code);
-        const tourSteps = this.createTourFromResponse(helpResponse);
-        this.parent.showTour(
-            {
-                steps: tourSteps,
-                showConfetti: false
+        try {
+            const helpResponse = await getErrorHelpAsTour(this.errors, "blocks", code);
+            const tourSteps = this.createTourFromResponse(helpResponse);
+            this.parent.showTour(
+                {
+                    steps: tourSteps,
+                    showConfetti: false
+                }
+            );
+        } catch (e) {
+            pxt.reportException(e);
+
+            if (e instanceof ErrorHelpException) {
+                core.errorNotification(e.getUserFacingMessage());
+            } else {
+                core.errorNotification(lf("Sorry, something went wrong. Please try again later."));
             }
-        );
+        }
     }
 
     /**
@@ -1042,6 +1052,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 tourStep.location = pxt.tour.BubbleLocation.Right;
                 tourStep.onStepBegin = () => this.editor.centerOnBlock(step.elementId, true);
             } else {
+                pxt.tickEvent("errorHelp.invalidBlockId");
                 // TODO thsparks - Maybe?
                 // Try to repair the block id. The AI sometimes sends variable ids instead of blockIds.
                 // If that variable id is only used in one block, we can assume that is the block we should point to.

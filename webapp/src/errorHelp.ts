@@ -10,6 +10,36 @@ export interface ErrorHelpTourResponse {
     explanationSteps: ErrorExplanationStep[];
 }
 
+export type ErrorHelpExceptionType = "featureDisabled" | "contentTooLarge" | "cannotParseResponse" | "throttled" | "emptyResponse" | "forbidden" | "unknown";
+export class ErrorHelpException extends Error {
+    errorType: ErrorHelpExceptionType;
+    originalError?: Error;
+
+    getUserFacingMessage(): string {
+        switch (this.errorType) {
+            case "featureDisabled":
+                return lf("Feature not enabled for {0}.", pxt.appTarget.nickname || pxt.appTarget.name);
+            case "contentTooLarge":
+                return lf("Project too large");
+            case "throttled":
+                return lf("Too many requests. Please try again later.");
+            case "forbidden":
+                return lf("You don't have permission to use this feature.");
+            case "cannotParseResponse":
+            case "unknown":
+            default:
+                return lf("Something went wrong. Please try again later.");
+        }
+    }
+
+    constructor(originalError: Error, errorType: ErrorHelpExceptionType) {
+        super(originalError.message);
+
+        this.errorType = errorType;
+        this.originalError = originalError;
+    }
+}
+
 /**
  * Converts the AI response data into our structured ErrorHelpResponse format.
  * This is used when the AI returns a JSON "tour" response.
@@ -34,8 +64,6 @@ function parseTourResponse(response: string): ErrorHelpTourResponse {
         message: string;
     }
 
-    console.log("AI response", response);
-
     // If the response contains markdown code "fencing" (i.e. ```json <my json> ```), remove it
     response = response.trim().replace(/^`{3,}(?:\w+)?\s*|`{3,}$/g, "");
 
@@ -52,7 +80,7 @@ function parseTourResponse(response: string): ErrorHelpTourResponse {
             explanationSteps.push(explanationStep);
         });
     } else {
-        throw new Error("Invalid response from AI");
+        throw new ErrorHelpException(new Error("Invalid response from AI"), "cannotParseResponse");
     }
 
     return { explanationSteps };
@@ -77,24 +105,46 @@ function cleanCodeForAI(code: string): string {
     return updatedCode;
 }
 
+/**
+ * Sends a request to the AI service to get help with the provided code and errors.
+ * Wraps exceptions in a custom ErrorHelpException.
+ */
+async function getHelpAsync(
+    code: string,
+    errors: ErrorDisplayInfo[],
+    lang: "blocks" | "typescript" | "python",
+    outputFormat: "tour_json" | "text"
+): Promise<string> {
+    const target = pxt.appTarget.nickname || pxt.appTarget.name;
+    const cleanedCode = cleanCodeForAI(code);
+    const errString = getErrorsAsText(errors);
+
+    // TODO thsparks : If error (incl. block ids) is same, check cached response. If ids in that are also valid, return cached response. Else, call API.
+
+    try {
+        return await aiErrorExplainRequest(cleanedCode, errString, lang, target, outputFormat);
+    } catch (e) {
+        // Check status code to determine reason for error
+        switch (e.statusCode) {
+            case 403:
+                throw new ErrorHelpException(e, "featureDisabled");
+            case 401:
+                throw new ErrorHelpException(e, "forbidden");
+            case 413:
+                throw new ErrorHelpException(e, "contentTooLarge");
+            case 429:
+                throw new ErrorHelpException(e, "throttled");
+        }
+        throw new ErrorHelpException(e, "unknown");
+    }
+}
+
 export async function getErrorHelpAsTour(
     errors: ErrorDisplayInfo[],
     lang: "blocks" | "typescript" | "python",
     code: string
 ): Promise<ErrorHelpTourResponse> {
-    const target = pxt.appTarget.nickname || pxt.appTarget.name;
-    const cleanedCode = cleanCodeForAI(code);
-    console.log("Cleaned Code", cleanedCode);
-
-    const errString = getErrorsAsText(errors);
-    console.log("Errors", errString);
-
-    // TODO thsparks : If error (incl. block ids) is same, check cached response. If ids in that are also valid, return cached response. Else, call API.
-
-    // Call to backend API with code and errors, then set the explanation state
-    // to the response from the backend
-    const response = await aiErrorExplainRequest(cleanedCode, errString, lang, target, "tour_json");
-
+    const response = await getHelpAsync(code, errors, lang, "tour_json");
     const parsedResponse = parseTourResponse(response);
     return parsedResponse;
 }
@@ -104,23 +154,10 @@ export async function getErrorHelpAsText(
     lang: "blocks" | "typescript" | "python",
     code: string
 ): Promise<string> {
-    const target = pxt.appTarget.nickname || pxt.appTarget.name;
-    const cleanedCode = cleanCodeForAI(code);
-    console.log("Cleaned Code", cleanedCode);
-
-    const errString = getErrorsAsText(errors);
-    console.log("Errors", errString);
-
-    // TODO thsparks : If error (incl. block ids) is same, check cached response. If ids in that are also valid, return cached response. Else, call API.
-
-    // Call to backend API with code and errors, then set the explanation state
-    // to the response from the backend
-    const response = await aiErrorExplainRequest(cleanedCode, errString, lang, target, "text");
+    const response = await getHelpAsync(code, errors, lang, "text");
     const trimmedResponse = response?.trim();
-
     if (!trimmedResponse) {
-        throw new Error("Invalid response from AI");
+        throw new ErrorHelpException(new Error("Empty response from AI"), "emptyResponse");
     }
-
     return trimmedResponse;
 }

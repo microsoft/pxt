@@ -31,7 +31,7 @@ import ErrorListState = pxt.editor.ErrorListState;
 
 import * as pxtblockly from "../../pxtblocks";
 import { ThemeManager } from "../../react-common/components/theming/themeManager";
-import { getErrorHelpAsText } from "./errorHelp";
+import { ErrorHelpException, getErrorHelpAsText } from "./errorHelp";
 
 const MIN_EDITOR_FONT_SIZE = 10
 const MAX_EDITOR_FONT_SIZE = 40
@@ -711,8 +711,18 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.parent.setState({errorListNote: undefined});
         const lang = this.fileType == pxt.editor.FileType.Python ? "python" : "typescript";
         const code = this.currFile.content;
-        const helpResponse = await getErrorHelpAsText(this.errors, lang, code);
-        this.parent.setState({errorListNote: helpResponse});
+        try {
+            const helpResponse = await getErrorHelpAsText(this.errors, lang, code);
+            this.parent.setState({errorListNote: helpResponse});
+        } catch (e) {
+            pxt.reportException(e);
+
+            if (e instanceof ErrorHelpException) {
+                core.errorNotification(e.getUserFacingMessage());
+            } else {
+                core.errorNotification(lf("Sorry, something went wrong. Please try again later."));
+            }
+        }
     }
 
     goToError(error: pxtc.LocationInfo) {
