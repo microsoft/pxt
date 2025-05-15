@@ -308,11 +308,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return this.serializeBlocks();
     }
 
-    getWorkspaceXmlWithIds(): string {
-        const xml = this.serializeBlocks(false, true);
-        return xml;
-    }
-
     private serializeBlocks(normalize?: boolean, forceKeepIds?: boolean): string {
         // store ids when using github
         let xml = pxtblockly.saveWorkspaceXml(this.editor, forceKeepIds ||
@@ -1010,7 +1005,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
      * Provides a user-facing explanation of the errors in the error list.
      */
     async getErrorHelp() {
-        const code = this.getWorkspaceXmlWithIds();
+        const code = this.serializeBlocks(false, true /* forceKeepIds */);
         try {
             const helpResponse = await getErrorHelpAsTour(this.errors, "blocks", code);
             const tour = this.createTourFromResponse(helpResponse);
