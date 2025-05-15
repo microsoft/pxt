@@ -29,6 +29,7 @@ namespace pxsim.AudioContextManager {
                 destination = _context.createGain();
                 destination.connect(_context.destination);
                 destination.gain.setValueAtTime(1, 0);
+
             }
         }
         return _context;
@@ -462,8 +463,77 @@ namespace pxsim.AudioContextManager {
     function frequencyFromMidiNoteNumber(note: number) {
         return 440 * Math.pow(2, (note - 69) / 12);
     }
+    let nextSoundId = 0;
 
-    export function playInstructionsAsync(instructions: Uint8Array, isCancelled?: () => boolean, onPull?: (freq: number, volume: number) => void) {
+    class AudioWorkletChannel {
+        node: AudioWorkletNode;
+        activeSounds = 0
+        resolvers: {[index: string]: () => void} = {};
+
+        constructor() {
+            this.node = new AudioWorkletNode(context(), "pxt-mixer-audio-worklet-processor");
+            this.node.connect(destination);
+            this.node.port.onmessage = e => {
+                if (e.data.type === "done") {
+                    if (this.resolvers[e.data.id]) {
+                        this.resolvers[e.data.id]();
+                        delete this.resolvers[e.data.id];
+                    }
+                    this.activeSounds--;
+                    console.log(`[channel ${workletChannels.indexOf(this)}]  done: ${e.data.id} remaining: ${this.activeSounds}`);
+                }
+            }
+            this.activeSounds = 0;
+        }
+
+        playInstructionsAsync(instructions: Uint8Array) {
+            return new Promise<void>((resolve) => {
+                const msg = {
+                    type: "play",
+                    instructions: instructions,
+                    id: nextSoundId++
+                };
+
+                this.activeSounds++;
+                this.resolvers[msg.id] = resolve;
+                this.node.port.postMessage(msg);
+
+                console.log(`[channel ${workletChannels.indexOf(this)}]  start: ${msg.id} active: ${this.activeSounds}`);
+            })
+        }
+
+        dispose() {
+            this.node.disconnect();
+            this.node.port.close();
+            this.node = undefined;
+
+            for (const key of Object.keys(this.resolvers)) {
+                this.resolvers[key]();
+            }
+        }
+    }
+
+    let workletInit: Promise<void>;
+    let workletChannels: AudioWorkletChannel[] = [];
+    export async function playInstructionsAsync(instructions: Uint8Array, isCancelled?: () => boolean, onPull?: (freq: number, volume: number) => void) {
+        if (!workletInit) {
+            workletInit = (async () => {
+                await context().audioWorklet.addModule("/static/audioWorklet/audioWorkletProcessor.js");
+            })();
+        }
+        await workletInit;
+
+        let channel = workletChannels.find(c => c.activeSounds < 1000);
+
+        if (!channel) {
+            channel = new AudioWorkletChannel();
+            workletChannels.push(channel);
+        }
+
+        await channel.playInstructionsAsync(instructions);
+    }
+
+    export function playInstructionsAsync2(instructions: Uint8Array, isCancelled?: () => boolean, onPull?: (freq: number, volume: number) => void) {
         return new Promise<void>(async resolve => {
             soundEventCallback?.("playinstructions", instructions);
             let resolved = false;
