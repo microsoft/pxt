@@ -80,17 +80,20 @@ import Util = pxt.Util;
 import { HintManager } from "./hinttooltip";
 import { mergeProjectCode, appendTemporaryAssets } from "./mergeProjects";
 import { Tour } from "./components/onboarding/Tour";
+import { NavigateRegionsOverlay } from "./components/NavigateRegionsOverlay";
 import { parseTourStepsAsync } from "./onboarding";
 import { initGitHubDb } from "./idbworkspace";
 import { BlockDefinition, CategoryNameID } from "./toolbox";
 import { FeedbackModal } from "../../react-common/components/controls/Feedback/Feedback";
 import { ThemeManager } from "../../react-common/components/theming/themeManager";
+import { applyPolyfills } from "./polyfills";
 
 pxt.blocks.requirePxtBlockly = () => pxtblockly as any;
 pxt.blocks.requireBlockly = () => Blockly;
 pxt.blocks.registerFieldEditor = (selector, proto, validator) => pxtblockly.registerFieldEditor(selector, proto, validator);
 
 pxsim.util.injectPolyphils();
+applyPolyfills();
 
 let theEditor: ProjectView;
 let hash: { cmd: string, arg: string };
@@ -236,6 +239,7 @@ export class ProjectView
         this.exitTutorial = this.exitTutorial.bind(this);
         this.setEditorOffset = this.setEditorOffset.bind(this);
         this.resetTutorialTemplateCode = this.resetTutorialTemplateCode.bind(this);
+        this.initGlobalActionHandlers();
         this.initSimulatorMessageHandlers();
         this.showThemePicker = this.showThemePicker.bind(this);
         this.hideThemePicker = this.hideThemePicker.bind(this);
@@ -304,8 +308,37 @@ export class ProjectView
                     };
                     simulator.driver.postMessage(playerOneConnectedMsg);
                 }
+            } else if (msg.type === "action") {
+                const { action } = msg as pxsim.SimulatorActionMessage;
+                this.runGlobalAction(action);
             }
         }, false);
+    }
+
+    private initGlobalActionHandlers() {
+        document.addEventListener("keydown", (e: KeyboardEvent) => {
+            const action = pxsim.accessibility.getGlobalAction(e)
+            this.runGlobalAction(action)
+        });
+    }
+
+    /**
+     * Run a global action based on shortcuts triggered in sim or main window.
+     */
+    private runGlobalAction(action: pxsim.GlobalAction) {
+        if (!data.getData<boolean>(auth.ACCESSIBLE_BLOCKS)) {
+            return;
+        }
+        switch (action) {
+            case "escape": {
+                this.setSimulatorFullScreen(false);
+                return;
+            }
+            case "navigateregions" : {
+                this.showNavigateRegions();
+                return
+            }
+        }
     }
 
     /**
@@ -5256,6 +5289,21 @@ export class ProjectView
     }
 
     ///////////////////////////////////////////////////////////
+    ////////////             Navigate regions     /////////////
+    ///////////////////////////////////////////////////////////
+
+    hideNavigateRegions() {
+        this.setState({ navigateRegions: false });
+    }
+
+    showNavigateRegions() {
+        const dialog = Array.from(document.querySelectorAll("[role=dialog]")).find(dialog => (dialog as any).checkVisibility());
+        if (!dialog) {
+            this.setState(state => state.home ? state : { navigateRegions: true })
+        }
+    }
+
+    ///////////////////////////////////////////////////////////
     ////////////             Key map              /////////////
     ///////////////////////////////////////////////////////////
 
@@ -5514,6 +5562,7 @@ export class ProjectView
                 {hideMenuBar ? <div id="editorlogo"><a className="poweredbylogo"></a></div> : undefined}
                 {lightbox ? <sui.Dimmer isOpen={true} active={lightbox} portalClassName={'tutorial'} className={'ui modal'}
                     shouldFocusAfterRender={false} closable={true} onClose={this.hideLightbox} /> : undefined}
+                {this.state.navigateRegions && <NavigateRegionsOverlay parent={this}/>}
                 {this.state.activeTourConfig && <Tour config={this.state.activeTourConfig} onClose={this.closeTour} />}
                 {this.state.themePickerOpen && <ThemePickerModal themes={this.themeManager.getAllColorThemes()} onThemeClicked={theme => this.setColorThemeById(theme?.id, true)} onClose={this.hideThemePicker} />}
             </div>

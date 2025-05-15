@@ -24,8 +24,8 @@ import { initContextMenu } from "./contextMenu";
 import { renderCodeCard } from "./codecardRenderer";
 import { FieldDropdown } from "./fields/field_dropdown";
 import { setDraggableShadowBlocks, setDuplicateOnDrag, setDuplicateOnDragStrategy } from "./plugins/duplicateOnDrag";
-import { applyPolyfills } from "./polyfills";
 import { initCopyPaste } from "./copyPaste";
+import { FieldVariable } from "./plugins/newVariableField/fieldVariable";
 
 export const DRAGGABLE_PARAM_INPUT_PREFIX = "HANDLER_DRAG_PARAM_";
 
@@ -273,7 +273,7 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
         else {
             let i = block.appendDummyInput();
             comp.handlerArgs.filter(a => !a.inBlockDef).forEach(arg => {
-                i.appendField(new Blockly.FieldVariable(arg.name), "HANDLER_" + arg.name);
+                i.appendField(new FieldVariable(arg.name), "HANDLER_" + arg.name);
             });
         }
     }
@@ -597,8 +597,6 @@ function init(blockInfo: pxtc.BlocksInfo) {
     if (blocklyInitialized) return;
     blocklyInitialized = true;
 
-    applyPolyfills();
-
     initFieldEditors();
     initContextMenu();
     initOnStart();
@@ -829,7 +827,7 @@ function removeOuterSpace(str: string) {
  * variable ID or set the value of the model and not the field
  */
 export function setVarFieldValue(block: Blockly.Block, fieldName: string, newName: string) {
-    const varField = block.getField(fieldName) as Blockly.FieldVariable;
+    const varField = block.getField(fieldName) as FieldVariable;
 
     // Check for an existing model with this name; otherwise we'll create
     // a second variable with the same name and it will show up twice in the UI

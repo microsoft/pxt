@@ -36,6 +36,7 @@ const FocusTrapInner = (props: FocusTrapProps) => {
     const containerRef = React.useRef<HTMLDivElement | null>(null);
     const previouslyFocused = React.useRef<Element>(document.activeElement);
     const [stoleFocus, setStoleFocus] = React.useState(false);
+    const lastValidTabElement = React.useRef<HTMLElement | null>(null);
 
     const { regions } = useFocusTrapState();
 
@@ -116,30 +117,40 @@ const FocusTrapInner = (props: FocusTrapProps) => {
 
             if (!focusable.length) return;
 
-            const index = focusable.indexOf(e.target as HTMLElement);
+            let index = focusable.indexOf(e.target as HTMLElement);
+            if (index < 0) {
+                // If we have arrived at a non-indexed focusable, it's probably
+                // been triggered by a calling focus() on an element with
+                // tabindex=-1, from the last focusable element, so try to use
+                // that.
+                index = focusable.indexOf(lastValidTabElement.current);
+            }
 
+            let nextFocusableElement;
             if (forward) {
                 if (goToEnd) {
-                    findNextFocusableElement(focusable, index, focusable.length - 1, forward).focus();
+                    nextFocusableElement = findNextFocusableElement(focusable, index, focusable.length - 1, forward);
                 }
                 else if (index === focusable.length - 1) {
-                    findNextFocusableElement(focusable, index, 0, forward).focus();
+                    nextFocusableElement = findNextFocusableElement(focusable, index, 0, forward);
                 }
                 else {
-                    findNextFocusableElement(focusable, index, index + 1, forward).focus();
+                    nextFocusableElement = findNextFocusableElement(focusable, index, index + 1, forward);
                 }
             }
             else {
                 if (goToEnd) {
-                    findNextFocusableElement(focusable, index, 0, forward).focus();
+                    nextFocusableElement = findNextFocusableElement(focusable, index, 0, forward);
                 }
                 else if (index === 0) {
-                    findNextFocusableElement(focusable, index, focusable.length - 1, forward).focus();
+                    nextFocusableElement = findNextFocusableElement(focusable, index, focusable.length - 1, forward);
                 }
                 else {
-                    findNextFocusableElement(focusable, index, Math.max(index - 1, 0), forward).focus();
+                    nextFocusableElement = findNextFocusableElement(focusable, index, Math.max(index - 1, 0), forward);
                 }
             }
+            lastValidTabElement.current = nextFocusableElement;
+            nextFocusableElement.focus();
 
             e.preventDefault();
             e.stopPropagation();

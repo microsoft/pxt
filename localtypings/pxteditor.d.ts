@@ -716,6 +716,8 @@ declare namespace pxt.editor {
         zoomOut(): void;
         resize(): void;
         setScale(scale: number): void;
+        focusWorkspace(): void;
+        focusToolbox(): void;
     }
 
     export interface IFile {
@@ -819,6 +821,7 @@ declare namespace pxt.editor {
         extensionsVisible?: boolean;
         isMultiplayerGame?: boolean; // Arcade: Does the current project contain multiplayer blocks?
         activeTourConfig?: pxt.tour.TourConfig;
+        navigateRegions?: boolean;
         feedback?: FeedbackState;
         themePickerOpen?: boolean;
         errorListNote?: string;
@@ -1058,6 +1061,8 @@ declare namespace pxt.editor {
         showOnboarding(): void;
         showTour(config: pxt.tour.TourConfig): void;
         closeTour(): void;
+        showNavigateRegions(): void;
+        hideNavigateRegions(): void;
         showKeymap(show: boolean): void;
         toggleKeymap(): void;
         signOutGithub(): void;
