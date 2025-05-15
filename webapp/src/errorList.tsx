@@ -7,18 +7,18 @@ import { fireClickOnEnter } from "./util";
 import { classList } from "../../react-common/components/util";
 import { Button } from "../../react-common/components/controls/Button";
 
-/**
- * A collection of optional metadata that can be attached to an error.
- */
-type ErrorMetadata = {
-    blockId?: string,
-}
-
 type GroupedError = {
     error: ErrorDisplayInfo,
     count: number,
     index: number
 };
+
+/**
+ * A collection of optional metadata that can be attached to an error.
+ */
+export type ErrorMetadata = {
+    blockId?: string,
+}
 
 export type StackFrameDisplayInfo = {
     message: string,

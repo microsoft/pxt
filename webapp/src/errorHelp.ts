@@ -91,7 +91,9 @@ function parseTourResponse(response: string): ErrorHelpTourResponse {
  * Adds block ids to the error message if they exist.
  */
 function getErrorsAsText(errors: ErrorDisplayInfo[]): string {
-    // TODO thsparks - json appears to be very token-heavy. Consider using a more readable format.
+    // Experimentally, converting to json is more token-heavy but leads to better results from the AI.
+    // Providing more human-readable text often results in the AI walking through a stack instead of explaining root cause.
+    // Prompt improvements may be able to help with this, but for now, use the json.
     return JSON.stringify(errors);
 }
 
