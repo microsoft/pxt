@@ -13,6 +13,8 @@ Requests to the `/eval` endpoint will be routed to the Teacher Tool dev server.
 
 Debug and step through Teacher Tool code using the browser dev tools (F12 to open).
 
+To skip having to log in on localhost, add `?noauth=1` to the end of the url.
+
 
 ## Test in staging environment
 

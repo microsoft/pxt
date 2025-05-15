@@ -64,15 +64,23 @@ export const App = () => {
 
     useEffect(() => {
         async function checkAuthAsync() {
-            // On mount, check if user is signed in
-            try {
-                await authClient.authCheckAsync();
-            } catch (e) {
-                // Log error but continue
-                // Don't include actual error in error log in case PII
-                logError(ErrorCode.authCheckFailed);
-                logDebug("Auth check failed details", e);
+            if (pxt.BrowserUtils.isLocalHostDev() && /noauth=1/i.test(window.location.href)) {
+                dispatch(Actions.setUserProfile({
+                    id: "?"
+                }));
             }
+            else {
+                // On mount, check if user is signed in
+                try {
+                    await authClient.authCheckAsync();
+                } catch (e) {
+                    // Log error but continue
+                    // Don't include actual error in error log in case PII
+                    logError(ErrorCode.authCheckFailed);
+                    logDebug("Auth check failed details", e);
+                }
+            }
+
             setAuthCheckComplete(true);
         }
         checkAuthAsync();
