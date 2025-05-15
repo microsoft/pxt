@@ -123,9 +123,19 @@ async function getHelpAsync(
 
     // TODO thsparks : If error (incl. block ids) is same, check cached response. If ids in that are also valid, return cached response. Else, call API.
 
+    const requestId = pxt.Util.guidGen();
+    pxt.tickEvent("errorHelp.requestStart", { requestId, lang, outputFormat, errorCount: errors.length, errorSize: errString.length, codeSize: code.length, cleanedCodeSize: cleanedCode.length });
+
+    const startTime = Date.now();
     try {
-        return await aiErrorExplainRequest(cleanedCode, errString, lang, target, outputFormat);
+        const response = await aiErrorExplainRequest(cleanedCode, errString, lang, target, outputFormat);
+        const endTime = Date.now();
+        pxt.tickEvent("errorHelp.requestEnd", { requestId, success: "true", responseTimeMs: (endTime - startTime).toString(), responseSize: response?.length });
+        return response;
     } catch (e) {
+        const endTime = Date.now();
+        pxt.tickEvent("errorHelp.requestEnd", { requestId, success: "false", responseTimeMs: (endTime - startTime).toString(), statusCode: e.statusCode, error: e.message });
+
         // Check status code to determine reason for error
         switch (e.statusCode) {
             case 403:

@@ -79,6 +79,7 @@ export class ErrorList extends auth.Component<ErrorListProps, ErrorListState> {
     onHelpClick = async () => {
         // Sign-in required. Prompt the user, if they are logged out.
         if (!this.isLoggedIn()) {
+            pxt.tickEvent('errorlist.showSignIn');
             this.props.showLoginDialog(undefined, {
                 signInMessage: lf("Sign-in is required to use this feature"),
                 signUpMessage: lf("Sign-up is required to use this feature"),
@@ -87,9 +88,7 @@ export class ErrorList extends auth.Component<ErrorListProps, ErrorListState> {
         }
 
         this.setState({ isLoadingHelp: true });
-
         await this.props.getErrorHelp();
-
         this.setState({ isLoadingHelp: false });
     }
 
