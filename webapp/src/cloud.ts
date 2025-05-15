@@ -24,6 +24,12 @@ export interface SharedCloudProject extends CloudProject, pxt.Cloud.JsonScript {
     text: string;
 }
 
+class StatusCodeError extends Error {
+    constructor(public statusCode: number, public message: string) {
+        super(message);
+    }
+}
+
 const localOnlyMetadataFields: (keyof Header)[] = [
     // different for different local storage instances
     '_rev', '_id' as keyof Header,
@@ -678,4 +684,31 @@ export function init() {
 
     // subscribe to header changes
     data.subscribe(onHeaderChangeSubscriber, "header:*");
+}
+
+/**
+ * Copilot / AI Requests
+ */
+export async function aiErrorExplainRequest(
+    code: string,
+    errors: string,
+    lang: "blocks" | "typescript" | "python",
+    target: string,
+    outputFormat: "tour_json" | "text"
+): Promise<string | undefined> {
+
+    const url = `/api/copilot/explainerror`;
+    const data = { lang, code, errors, target, outputFormat };
+    let result: string = "";
+
+    const request = await auth.apiAsync(url, data, "POST");
+    if (!request.success) {
+        throw new StatusCodeError(
+            request.statusCode,
+            request.err || `Unable to reach AI. Error: ${request.statusCode}.\n${request.err}`
+        );
+    }
+    result = await request.resp;
+
+    return result;
 }

@@ -17,6 +17,10 @@ export type LoginDialogProps = ISettingsProps & {
 export type LoginDialogState = {
     visible?: boolean;
     continuationHash?: string;
+    dialogMessages?: {
+        signInMessage?: string
+        signUpMessage?: string
+    }
 };
 
 export class LoginDialog extends auth.Component<LoginDialogProps, LoginDialogState> {
@@ -26,12 +30,13 @@ export class LoginDialog extends auth.Component<LoginDialogProps, LoginDialogSta
 
         this.state = {
             visible: false,
-            continuationHash: ""
+            continuationHash: "",
+            dialogMessages: {}
         };
     }
 
-    public async show(continuationHash?: string) {
-        this.setState({ visible: true, continuationHash });
+    public async show(continuationHash?: string, dialogMessages?: { signInMessage?: string; signUpMessage?: string }) {
+        this.setState({ visible: true, continuationHash, dialogMessages });
     }
 
     public hide = () => {
@@ -47,10 +52,10 @@ export class LoginDialog extends auth.Component<LoginDialogProps, LoginDialogSta
     }
 
     renderCore() {
-        const { visible } = this.state;
+        const { visible, dialogMessages } = this.state;
 
         return <>
-            {visible && <SignInModal onClose={this.hide} onSignIn={this.signInAsync} />}
+            {visible && <SignInModal onClose={this.hide} onSignIn={this.signInAsync} dialogMessages={dialogMessages} />}
         </>;
     }
 }

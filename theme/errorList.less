@@ -15,6 +15,10 @@
         padding: 0.75em 1em;
         height: @errorListHeaderHeight;
         margin-bottom: 0;
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-start;
+        align-items: center;
 
         &:hover {
             cursor: pointer;
@@ -36,6 +40,39 @@
 
         &:hover > .toggleButton > i , &:focus > .toggleButton > i{
             font-size: 1.4em;
+        }
+
+        .error-help-container {
+            margin: 0 1rem;
+
+            .error-help-button {
+                padding: 0.7rem;
+                line-height: 0.8rem;
+            }
+
+            .error-help-loader {
+                display: flex;
+                flex-direction: row;
+                justify-content: flex-start;
+                align-items: center;
+                width: fit-content;
+                color: var(--pxt-secondary-background); // Inverted to match the button bkg color
+                cursor: progress;
+
+                // Match button
+                padding: 0.7rem;
+                font-weight: 400;
+                line-height: 0.8rem;
+                font-size: 16px;
+
+                .analyzing-label {
+                    margin: 0 1rem;
+                }
+            }
+        }
+
+        .filler {
+            flex-grow: 1;
         }
 
         .toggleButton {
@@ -107,6 +144,14 @@
                 vertical-align: text-top;
             }
         }
+    }
+
+    .note {
+        margin: 1rem;
+        padding: 0.5rem;
+        border-radius: 0.2rem;
+        background-color: var(--pxt-neutral-alpha10);
+        white-space: pre-line; // Preserve new lines
     }
 }
 

@@ -211,7 +211,7 @@ export class ProjectView
             simState: SimState.Stopped,
             autoRun: this.autoRunOnStart(),
             isMultiplayerGame: false,
-            onboarding: undefined,
+            activeTourConfig: undefined,
             mute: pxt.editor.MuteState.Unmuted,
             feedback: {showing: false, kind: "generic"} // state that tracks if the feedback modal is showing and what kind
         };
@@ -222,7 +222,7 @@ export class ProjectView
         this.hidePackageDialog = this.hidePackageDialog.bind(this);
         this.hwDebug = this.hwDebug.bind(this);
         this.hideLightbox = this.hideLightbox.bind(this);
-        this.hideOnboarding = this.hideOnboarding.bind(this);
+        this.closeTour = this.closeTour.bind(this);
         this.hideFeedback = this.hideFeedback.bind(this);
         this.openSimSerial = this.openSimSerial.bind(this);
         this.openDeviceSerial = this.openDeviceSerial.bind(this);
@@ -244,6 +244,7 @@ export class ProjectView
         this.showThemePicker = this.showThemePicker.bind(this);
         this.hideThemePicker = this.hideThemePicker.bind(this);
         this.setColorThemeById = this.setColorThemeById.bind(this);
+        this.showLoginDialog = this.showLoginDialog.bind(this);
 
         // add user hint IDs and callback to hint manager
         if (pxt.BrowserUtils.useOldTutorialLayout()) this.hintManager.addHint(ProjectView.tutorialCardId, this.tutorialCardHintCallback.bind(this));
@@ -4598,8 +4599,8 @@ export class ProjectView
         }
     }
 
-    showLoginDialog(continuationHash?: string) {
-        this.loginDialog.show(continuationHash);
+    showLoginDialog(continuationHash?: string, dialogMessages?: { signInMessage?: string; signUpMessage?: string }) {
+        this.loginDialog.show(continuationHash, dialogMessages);
     }
 
     showProfileDialog(location?: string) {
@@ -5267,17 +5268,24 @@ export class ProjectView
     }
 
     ///////////////////////////////////////////////////////////
-    ////////////             Onboarding           /////////////
+    ////////////               Tours              /////////////
     ///////////////////////////////////////////////////////////
 
-    hideOnboarding() {
-        this.setState({ onboarding: undefined });
+    closeTour() {
+        this.setState({ activeTourConfig: undefined });
     }
 
     async showOnboarding() {
         const tourSteps: pxt.tour.BubbleStep[] = await parseTourStepsAsync(pxt.appTarget.appTheme?.tours?.editor)
-        this.setState({ onboarding: tourSteps })
+        const config: pxt.tour.TourConfig = {
+            steps: tourSteps,
+            showConfetti: true,
+        }
+        this.showTour(config);
+    }
 
+    async showTour(config: pxt.tour.TourConfig) {
+        this.setState({ activeTourConfig: config });
     }
 
     ///////////////////////////////////////////////////////////
@@ -5554,8 +5562,8 @@ export class ProjectView
                 {hideMenuBar ? <div id="editorlogo"><a className="poweredbylogo"></a></div> : undefined}
                 {lightbox ? <sui.Dimmer isOpen={true} active={lightbox} portalClassName={'tutorial'} className={'ui modal'}
                     shouldFocusAfterRender={false} closable={true} onClose={this.hideLightbox} /> : undefined}
-                {this.state.onboarding && <Tour tourSteps={this.state.onboarding} onClose={this.hideOnboarding} />}
                 {this.state.navigateRegions && <NavigateRegionsOverlay parent={this}/>}
+                {this.state.activeTourConfig && <Tour config={this.state.activeTourConfig} onClose={this.closeTour} />}
                 {this.state.themePickerOpen && <ThemePickerModal themes={this.themeManager.getAllColorThemes()} onThemeClicked={theme => this.setColorThemeById(theme?.id, true)} onClose={this.hideThemePicker} />}
             </div>
         );
