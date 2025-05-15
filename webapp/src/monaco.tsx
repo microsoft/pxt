@@ -671,11 +671,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     public onExceptionDetected(exception: pxsim.DebuggerBreakpointMessage) {
         const exceptionDisplayInfo: ErrorDisplayInfo = this.getDisplayInfoForException(exception);
         this.errors = [exceptionDisplayInfo];
+        this.parent.setState({ errorListNote: undefined });
     }
 
     private onErrorChanges(errors: pxtc.KsDiagnostic[]) {
         const errorDisplayInfo: ErrorDisplayInfo[] = errors.map(this.getDisplayInfoForError);
         this.errors = errorDisplayInfo;
+        this.parent.setState({ errorListNote: undefined });
     }
 
     private getDisplayInfoForException(exception: pxsim.DebuggerBreakpointMessage): ErrorDisplayInfo {
