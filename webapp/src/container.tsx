@@ -13,6 +13,8 @@ import ISettingsProps = pxt.editor.ISettingsProps;
 import UserInfo = pxt.editor.UserInfo;
 import SimState = pxt.editor.SimState;
 import { sendUpdateFeedbackTheme } from "../../react-common/components/controls/Feedback/FeedbackEventListener";
+import { TabPane } from "./components/core/TabPane";
+import KeyboardControlsHelp from "./components/KeyboardControlsHelp";
 
 // common menu items -- do not remove
 // lf("About")
@@ -45,6 +47,11 @@ function startTour(parent: IProjectView) {
     parent.showOnboarding();
 }
 
+function openKeyboardNavHelp(parent: IProjectView) {
+    parent.toggleBuiltInSideDoc("keyboardControls", true);
+}
+
+
 function renderDocItems(parent: IProjectView, elements: pxt.DocMenuEntry[], cls: string = "") {
     return elements.map(m =>
         m.tutorial ? <DocsMenuItem key={"docsmenututorial" + m.path} role="menuitem" ariaLabel={pxt.Util.rlf(m.name)} text={pxt.Util.rlf(m.name)} className={"ui " + cls} parent={parent} path={m.path} onItemClick={openTutorial} />
@@ -65,6 +72,11 @@ function getTourItem(parent: IProjectView, cls: string = ""): JSX.Element {
     return <DocsMenuItem key={"docsmenu" + path} role="menuitem" ariaLabel={lf("Tour")} text={lf("Tour")} className={`ui ${cls}`} parent={parent} path={path} onItemClick={startTour} />
 }
 
+function getKeyboardNavHelpItem(parent: IProjectView, cls: string = ""): JSX.Element {
+    const path = "/keyboardControls";
+    return <DocsMenuItem key={"docsmenu" + path} role="menuitem" ariaLabel={lf("Keyboard Controls")} text={lf("Keyboard Controls")} className={`ui ${cls}`} parent={parent} path={path} onItemClick={openKeyboardNavHelp} />
+}
+
 type DocsMenuEditorName = "Blocks" | "JavaScript" | "Python";
 interface DocsMenuProps extends ISettingsProps {
     editor: DocsMenuEditorName;
@@ -74,8 +86,10 @@ export class DocsMenu extends data.PureComponent<DocsMenuProps, {}> {
     renderCore() {
         const parent = this.props.parent;
         const targetTheme = pxt.appTarget.appTheme;
+        const accessibleBlocksEnabled = data.getData<boolean>(auth.ACCESSIBLE_BLOCKS);
         return <sui.DropdownMenu role="menuitem" icon="help circle large"
             className="item mobile hide help-dropdown-menuitem" textClass={"landscape only"} title={lf("Help")} >
+            {accessibleBlocksEnabled && getKeyboardNavHelpItem(parent)}
             {targetTheme.tours?.editor && getTourItem(parent)}
             {renderDocItems(parent, targetTheme.docMenu)}
             {getDocsLanguageItem(this.props.editor, parent)}
@@ -576,6 +590,8 @@ export interface SideDocsState {
     sideDocsCollapsed?: boolean;
 }
 
+export const builtInPrefix = "/builtin/";
+
 export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
     private openingSideDoc = false;
 
@@ -614,6 +630,17 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
         const mode = "blocks" // this.props.parent.isBlocksEditor() ? "blocks" : "js";
         const url = `${docsUrl}md:${encodeURIComponent(md)}:${mode}:${pxt.Util.localeInfo()}`;
         this.props.parent.setState({ sideDocsLoadUrl: url });
+    }
+
+    toggleBuiltInHelp(help: pxt.editor.BuiltInHelp, focusIfVisible: boolean) {
+        const url = `${builtInPrefix}${help}`;
+        if (this.state.docsUrl === url && !this.state.sideDocsCollapsed && !focusIfVisible) {
+            this.toggleVisibility();
+            this.props.parent.editor.focusWorkspace();
+        } else {
+            this.openingSideDoc = true;
+            this.setUrl(url);
+        }
     }
 
     private setUrl(url: string) {
@@ -670,6 +697,12 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
             || this.state.docsUrl != nextState.docsUrl;
     }
 
+    private handleKeyDown = (ev: React.KeyboardEvent<HTMLElement>) => {
+        if (ev.key == "Escape") {
+            this.collapse();
+        }
+    }
+
     renderCore() {
         const { sideDocsCollapsed, docsUrl } = this.state;
         const isRTL = pxt.Util.isUserLanguageRtl();
@@ -679,17 +712,18 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
         if (!docsUrl) return null;
 
         const url = sideDocsCollapsed ? this.rootDocsUrl() : docsUrl;
+        const isBuiltIn = url.startsWith(`${builtInPrefix}`);
+
         /* eslint-disable @microsoft/sdl/react-iframe-missing-sandbox */
         return <div>
             <button id="sidedocstoggle" role="button" aria-label={sideDocsCollapsed ? lf("Expand the side documentation") : lf("Collapse the side documentation")} className="ui icon button large" onClick={this.toggleVisibility}>
                 <sui.Icon icon={`icon inverted chevron ${showLeftChevron ? 'left' : 'right'}`} />
             </button>
-            <div id="sidedocs">
+            <div id="sidedocs" onKeyDown={this.handleKeyDown}>
                 <div id="sidedocsframe-wrapper">
-                    <iframe id="sidedocsframe" src={url} title={lf("Documentation")} aria-atomic="true" aria-live="assertive"
-                        sandbox={`allow-scripts allow-same-origin allow-forms ${lockedEditor ? "" : "allow-popups"}`} />
+                    {this.renderContent(url, isBuiltIn, lockedEditor)}
                 </div>
-                {!lockedEditor && <div className="ui app hide" id="sidedocsbar">
+                {!lockedEditor && !isBuiltIn && <div className="ui app hide" id="sidedocsbar">
                     <a className="ui icon link" role="button" tabIndex={0} data-content={lf("Open documentation in new tab")} aria-label={lf("Open documentation in new tab")} onClick={this.popOut} onKeyDown={fireClickOnEnter} >
                         <sui.Icon icon="external" />
                     </a>
@@ -697,6 +731,21 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
             </div>
         </div>
         /* eslint-enable @microsoft/sdl/react-iframe-missing-sandbox */
+    }
+
+    renderContent(url: string, isBuiltin: boolean, lockedEditor: boolean) {
+        if (isBuiltin) {
+            const component = url.slice(builtInPrefix.length) as pxt.editor.BuiltInHelp;
+            switch (component) {
+                case "keyboardControls": {
+                    return <KeyboardControlsHelp />
+                }
+            }
+        }
+        return (
+            <iframe id="sidedocsframe" src={url} title={lf("Documentation")} aria-atomic="true" aria-live="assertive"
+                sandbox={`allow-scripts allow-same-origin allow-forms ${lockedEditor ? "" : "allow-popups"}`} />
+        )
     }
 }
 

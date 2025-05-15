@@ -1,0 +1,50 @@
+/* Import all components */
+@import 'themes/default/globals/site.variables';
+@import 'themes/pxt/globals/site.variables';
+
+/* Reference import */
+@import (reference) "semantic.less";
+
+/*******************************
+        Keyboard nav help 
+*******************************/
+
+#keyboardnavhelp {
+    font-family: @docsPageFont !important;
+    color: @docsTextColor;
+    background-color: @docsBackgroundColor;
+
+    height: 100%;
+    padding: 1rem;
+    overflow: auto;
+    .key {
+        display: inline-flex;
+        justify-content: center;
+        padding: 0.2rem;
+        border: 1px solid var(--pxt-neutral-foreground1);
+        border-radius: 5px;
+        min-width: 1.8em;
+    }
+    .shortcut {
+        gap: 0.5rem;
+    }
+    .hint {
+        font-size: 85%;
+        line-height: 1;
+    }
+    table {
+        width: 100%;
+        table-layout: fixed;
+        text-align: left;
+    }
+    th, td {
+        vertical-align: top;
+        padding: 0.4rem 0.2rem
+    }
+    tr {
+        margin-bottom: 0.3rem;
+    }
+    h3 {
+        margin-top: 2rem;
+    }
+}
