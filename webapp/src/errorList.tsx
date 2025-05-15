@@ -103,7 +103,7 @@ export class ErrorList extends auth.Component<ErrorListProps, ErrorListState> {
         const errorCount = errors.length;
         const canDebug = startDebugger && !!errors.find(a => a.stackFrames?.length);
 
-        const showErrorHelp = !!getErrorHelp && !!showLoginDialog; // && !pxt.appTarget.appTheme.disableErrorHelp;
+        const showErrorHelp = !!getErrorHelp && !!showLoginDialog && pxt.appTarget.appTheme.aiErrorHelp;
 
         const helpLoader = <div className="error-help-loader" onClick={(e) => e.stopPropagation()}>
             <div className="common-spinner" />
@@ -129,6 +129,7 @@ export class ErrorList extends auth.Component<ErrorListProps, ErrorListState> {
                     {showErrorHelp && <div className={classList("error-help-container", isLoadingHelp ? "loading" : undefined)}>
                         {isLoadingHelp ? helpLoader : helpButton}
                     </div>}
+                    <div className="filler" />
                     <div className="toggleButton">
                         <sui.Icon icon={`chevron ${isCollapsed ? "up" : "down"}`} />
                     </div>
