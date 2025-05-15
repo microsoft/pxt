@@ -94,7 +94,7 @@ export class FieldLedMatrix extends FieldMatrix implements FieldCustom {
     showEditor_() {
         this.selected = [0, 0];
         this.focusCell(0, 0);
-        this.matrixSvg.focus();
+        this.returnEphemeralFocus = Blockly.getFocusManager().takeEphemeralFocus(this.matrixSvg);
         this.attachEventHandlersToMatrix();
     }
 
@@ -146,6 +146,7 @@ export class FieldLedMatrix extends FieldMatrix implements FieldCustom {
                 }
             }
 
+            this.fieldGroup_.classList.add("blocklyFieldLedMatrixGroup");
             this.fieldGroup_.replaceChild(this.matrixSvg, this.fieldGroup_.firstChild);
         }
     }
@@ -373,3 +374,9 @@ function removeQuotes(str: string) {
     }
     return str;
 }
+
+Blockly.Css.register(`
+.blocklyFieldLedMatrixGroup.blocklyActiveFocus {
+    outline: var(--blockly-selection-width) solid var(--blockly-active-node-color);
+    border-radius: 3px;
+}`);

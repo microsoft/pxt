@@ -23,6 +23,7 @@ export abstract class FieldMatrix extends Blockly.Field {
     protected abstract numMatrixCols: number;
     protected abstract numMatrixRows: number;
     protected abstract clearSelectionOnBlur: boolean;
+    protected returnEphemeralFocus: Blockly.ReturnEphemeralFocus | undefined = undefined;
 
     protected createMatrixDisplay({
         cellWidth,
@@ -157,6 +158,7 @@ export abstract class FieldMatrix extends Blockly.Field {
                 }
                 case "Escape": {
                     (this.sourceBlock_.workspace as Blockly.WorkspaceSvg).markFocused();
+                    this.returnEphemeralFocus?.()
                     return;
                 }
                 default: {

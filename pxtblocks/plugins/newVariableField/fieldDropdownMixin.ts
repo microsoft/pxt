@@ -1,4 +1,5 @@
 import * as Blockly from "blockly";
+import { isImageProperties } from "../../fields";
 
 // This is the same as showEditor_ and dropdownCreate in field_dropdown
 // except that it supports separators between dropdown menu items
@@ -30,11 +31,11 @@ export function showEditorMixin(this: Blockly.FieldDropdown, e?: MouseEvent) {
         }
 
         const content = (() => {
-            if (typeof label === 'object') {
+            if (isImageProperties(label)) {
                 // Convert ImageProperties to an HTMLImageElement.
-                const image = new Image(label['width'], label['height']);
-                image.src = label['src'];
-                image.alt = label['alt'] || '';
+                const image = new Image(label.width, label.height);
+                image.src = label.src;
+                image.alt = label.alt || '';
                 return image;
             }
             return label;
@@ -84,6 +85,7 @@ export function showEditorMixin(this: Blockly.FieldDropdown, e?: MouseEvent) {
 
     this.applyColour();
 }
+
 
 class HorizontalRuleMenuItem extends Blockly.MenuItem {
     element_: Element;

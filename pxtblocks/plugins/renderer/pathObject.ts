@@ -48,8 +48,41 @@ export class PathObject extends Blockly.zelos.PathObject {
         super.updateSelected(enable);
     }
 
-    override addConnectionHighlight(connection: Blockly.RenderedConnection, connectionPath: string, offset: Blockly.utils.Coordinate, rtl: boolean): void {
-        super.addConnectionHighlight(connection, connectionPath, offset, rtl);
+    override addConnectionHighlight(connection: Blockly.RenderedConnection, connectionPath: string, offset: Blockly.utils.Coordinate, rtl: boolean): SVGElement {
+        const transformation =
+            `translate(${offset.x}, ${offset.y})` + (rtl ? ' scale(-1 1)' : '');
+
+        const previousHighlightGroup = (this as any).connectionHighlights.get(connection) as SVGGElement;
+        if (previousHighlightGroup) {
+            // Since a connection already exists, make sure that its path and
+            // transform are correct.
+            const previousHighlight = previousHighlightGroup.firstElementChild;
+            previousHighlight.setAttribute('d', connectionPath);
+            previousHighlight.setAttribute('transform', transformation);
+            // Move last in paint order.
+            previousHighlightGroup.parentElement.appendChild(previousHighlightGroup);
+            return previousHighlightGroup;
+        }
+
+        const highlightGroup = Blockly.utils.dom.createSvgElement(
+            Blockly.utils.Svg.G,
+            {
+                'id': connection.id,
+                'style': 'display: none;',
+                'tabindex': '-1',
+            },
+            this.svgRoot,
+        );
+        Blockly.utils.dom.createSvgElement(
+            Blockly.utils.Svg.PATH,
+            {
+                'id': connection.id,
+                'class': 'blocklyHighlightedConnectionPath',
+                'd': connectionPath,
+                'transform': transformation,
+            },
+            highlightGroup,
+        );
 
         if (connection.type === Blockly.INPUT_VALUE || connection.type === Blockly.OUTPUT_VALUE) {
             const indicator = Blockly.utils.dom.createSvgElement('g',
@@ -62,8 +95,11 @@ export class PathObject extends Blockly.zelos.PathObject {
             indicator.setAttribute('transform',
                 'translate(' + offset.x + ',' + offset.y + ')');
             this.connectionPointIndicators.set(connection, indicator);
-            this.svgRoot.appendChild(indicator);
+            highlightGroup.appendChild(indicator);
         }
+
+        (this as any).connectionHighlights.set(connection, highlightGroup);
+        return highlightGroup;
     }
 
     override removeConnectionHighlight(connection: Blockly.RenderedConnection): void {
