@@ -145,7 +145,7 @@ export class ErrorList extends auth.Component<ErrorListProps, ErrorListState> {
                         <sui.Icon className="debug-icon" icon="icon bug" />
                     </div>}
 
-                    {note && <div className="explanationText">{note}</div>}
+                    {note && <div className="note">{note}</div>}
 
                     <div className="ui selection list">
                         {errorListContent}
