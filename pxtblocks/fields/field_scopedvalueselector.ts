@@ -2,6 +2,7 @@
 
 import * as Blockly from "blockly";
 import { FieldCustom, FieldCustomOptions, setBlockDataForField, getBlockDataForField } from "./field_utils";
+import { FieldVariable } from "../plugins/newVariableField/fieldVariable";
 
 interface FieldScopedValueSelectorOptions extends FieldCustomOptions {
     defl?: string;
@@ -107,7 +108,7 @@ export class FieldScopedValueSelector extends Blockly.FieldLabel implements Fiel
                 if (!input) continue;
                 const fieldRow = input.fieldRow;
                 if (!fieldRow) continue;
-                const field = fieldRow.find(f => f.name === "VAR") as Blockly.FieldVariable;
+                const field = fieldRow.find(f => f.name === "VAR") as FieldVariable;
                 if (!field) continue;
                 const variable = field.getVariable();
                 if (!variable) continue;
