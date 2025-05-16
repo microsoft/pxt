@@ -3,7 +3,7 @@ import { classList } from "../../util";
 import { Button } from "../Button";
 
 interface ThumbsFeedbackProps {
-    onFeedbackSelected: (positive: boolean) => void;
+    onFeedbackSelected: (positive: boolean | undefined) => void;
     lockOnSelect?: boolean;
     positiveFeedbackText?: string;
     negativeFeedbackText?: string;
@@ -23,9 +23,17 @@ export const ThumbsFeedback = (props: ThumbsFeedbackProps) => {
     } = props;
     const [selectedFeedback, setSelectedFeedback] = React.useState<boolean | undefined>(undefined);
 
+    React.useEffect(() => {
+        onFeedbackSelected(selectedFeedback);
+    }, [selectedFeedback]);
+
     const handleFeedbackSelected = (positive: boolean) => {
-        setSelectedFeedback(positive);
-        onFeedbackSelected(positive);
+        if (positive === selectedFeedback) {
+            // If the user clicks the same feedback button again, reset it
+            setSelectedFeedback(undefined);
+        } else {
+            setSelectedFeedback(positive);
+        }
     };
 
     const positiveText = positiveFeedbackText || lf("Helpful");

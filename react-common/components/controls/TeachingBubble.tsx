@@ -5,6 +5,7 @@ import { Confetti } from "../animations/Confetti";
 import { ContainerProps, classList } from "../util";
 import { FocusTrap } from "./FocusTrap";
 import { useEffect } from "react";
+import { ThumbsFeedback } from "./Feedback/ThumbsFeedback";
 
 
 export interface CutoutBounds {
@@ -394,21 +395,8 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
                     {hasSteps && <div className={classList("teaching-bubble-steps", forceHideSteps ? "hidden" : undefined)} aria-live="polite">
                         {stepNumber} of {totalSteps}
                     </div>}
-                    { onFeedback && <div className="teaching-bubble-feedback">
-                        <Button
-                            className={classList("feedback-button", selectedFeedback ? "selected" : undefined)}
-                            onClick={() => onFeedback(true)}
-                            title={lf("Helpful")}
-                            ariaLabel={lf("Helpful")}
-                            leftIcon={selectedFeedback ? "fas fa-thumbs-up" : "far fa-thumbs-up"}
-                        />
-                        <Button
-                            className={classList("feedback-button", selectedFeedback === false ? "selected" : undefined)}
-                            onClick={() => onFeedback(false)}
-                            title={lf("Not Helpful")}
-                            ariaLabel={lf("Not Helpful")}
-                            leftIcon={selectedFeedback === false ? "fas fa-thumbs-down" : "far fa-thumbs-down"}
-                        />
+                    {onFeedback && <div className="teaching-bubble-feedback">
+                        <ThumbsFeedback lockOnSelect={false} onFeedbackSelected={onFeedback} />
                     </div>}
                     <div className="teaching-bubble-navigation">
                         {hasPrevious && <Button

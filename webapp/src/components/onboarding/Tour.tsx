@@ -48,7 +48,7 @@ export const Tour = (props: TourProps) => {
 
     const handleClose = () => {
         // Send feedback once the tour closes
-        if (config.onFeedback && selectedFeedback) {
+        if (config.onFeedback && selectedFeedback !== undefined) {
             config.onFeedback(selectedFeedback);
         }
 
@@ -65,13 +65,8 @@ export const Tour = (props: TourProps) => {
         handleClose();
     }
 
-    const onFeedback = (positive: boolean) => {
-        if (positive === selectedFeedback) {
-            // If the user clicks the same feedback button again, reset it
-            setSelectedFeedback(undefined);
-        } else {
-            setSelectedFeedback(positive);
-        }
+    const onFeedback = (positive: boolean | undefined) => {
+        setSelectedFeedback(positive);
     };
 
     const isLastStep = currentStep === steps.length - 1;
