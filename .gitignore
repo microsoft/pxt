@@ -8,6 +8,7 @@ webapp/public/multiplayer.html
 webapp/public/kiosk.html
 webapp/public/teachertool.html
 webapp/public/tutorialtool.html
+webapp/public/plato.html
 localtypings/blockly.d.ts
 node_modules
 *.sw?
