@@ -198,6 +198,16 @@
                 display: flex;
                 flex-direction: row;
             }
+
+            .game-nonlink {
+                font-weight: bold;
+            }
+
+            .game-link {
+                font-weight: bold;
+                text-decoration: underline;
+                cursor: pointer;
+            }
         }
 
         &.sim {

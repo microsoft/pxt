@@ -48,6 +48,8 @@ window.addEventListener("DOMContentLoaded", () => {
         pxt.analytics.consoleTicks = pxt.analytics.ConsoleTickOptions.Short;
     }
 
+    pxt.Cloud.apiRoot = "https://www.makecode.com/api/";
+
     pxt.setupWebConfig((window as any).pxtConfig || pxt.webConfig);
     pxt.setAppTarget(bundle);
 

@@ -12,6 +12,7 @@ export { startLoadingGame } from "./startLoadingGame";
 export { setPlatoExtInfo } from "./setPlatoExtInfo";
 export { setPlayerValue } from "./setPlayerValue";
 export { clearPlayerCurrentGames } from "./clearPlayerCurrentGames";
+export { sendGameSuggestionAsync } from "./sendGameSuggestionAsync";
 
 import * as collabClient from "@/services/collabClient";
 import { ClientRole, SessionOverReason, ValueType } from "@/types";

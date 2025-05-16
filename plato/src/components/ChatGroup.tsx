@@ -8,13 +8,36 @@ import * as collabClient from "@/services/collabClient";
 import { classList } from "react-common/components/util";
 import { Input } from "react-common/components/controls/Input";
 import { Button } from "react-common/components/controls/Button";
-import { ChatMessage } from "@/types";
+import { ChatMessage, ChatMessagePayload } from "@/types";
+import { showToast, startLoadingGame } from "@/transforms";
 
 function TextChatMessage({ message, fromClientId }: { message: string, fromClientId: string }) {
     return (
         <>
             <div className={classList(css["from"], sharedcss["username"])}>{getDisplayName(fromClientId, lf("[gone]"))}</div>
             <div className={css["text"]}>{message}</div>
+        </>
+    );
+}
+
+function GameChatMessage({ fromClientId, shareCode, title }: { fromClientId: string, shareCode: string, title: string }) {
+    const context = useContext(AppStateContext);
+    const isHost = getIsHost(context);
+
+    const loadGame = () => {
+        startLoadingGame(shareCode);
+    }
+
+    return (
+        <>
+            <div className={classList(css["from"], sharedcss["username"])}>{getDisplayName(fromClientId, lf("[gone]"))}</div>
+            <div className={css["text"]}>
+                <span>
+                    {lf("Shared a game: ")}
+                </span>
+                {!isHost && <span className={css["game-nonlink"]}>{title}</span>}
+                {isHost && <span className={css["game-link"]} onClick={loadGame}>{title}</span>}
+            </div>
         </>
     );
 }
@@ -49,7 +72,11 @@ export function ChatGroup({ className }: { className?: string }) {
         if (!message) return;
         curr.value = "";
         setInputRegenKey(inputRegenKey + 1);
-        collabClient.sendChatMessage(message);
+        const payload: ChatMessagePayload = {
+            type: "text",
+            text: message,
+        };
+        collabClient.sendChatMessage(payload);
     }
 
     const chatMessageKeys = useMemo(() => {
@@ -71,6 +98,13 @@ export function ChatGroup({ className }: { className?: string }) {
                     {chatMessageList.map((m, index) => (
                         <div key={index} className={css["entry"]}>
                             {m.payload.type === "text" && (<TextChatMessage message={m.payload.text} fromClientId={m.fromClientId} />)}
+                            {m.payload.type === "game" && (
+                                <GameChatMessage
+                                    fromClientId={m.fromClientId}
+                                    shareCode={m.payload.shareCode}
+                                    title={m.payload.title}
+                                />
+                            )}
                         </div>
                     ))}
                 </div>

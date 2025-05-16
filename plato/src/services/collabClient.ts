@@ -16,7 +16,8 @@ import {
     ViewPlayer,
     KvMutationOp,
     ValueType,
-    ChatMessage
+    ChatMessage,
+    ChatMessagePayload
 } from "@/types";
 import { jsonReplacer, jsonReviver } from "@/utils";
 
@@ -25,7 +26,7 @@ const badWordsFilter = new BadWordsFilter();
 const COLLAB_HOST_PROD = "https://plato.makecode.com";
 const COLLAB_HOST_STAGING = "https://dev.multiplayer.staging.pxt.io";
 const COLLAB_HOST_LOCALHOST = "http://localhost:8082";
-const COLLAB_HOST_DEV = COLLAB_HOST_LOCALHOST;
+const COLLAB_HOST_DEV = COLLAB_HOST_STAGING;
 const COLLAB_HOST = (() => {
     if (pxt.BrowserUtils.isLocalHostDev()) {
         return COLLAB_HOST_DEV;
@@ -434,10 +435,12 @@ export function setSessionValue(key: string, val: ValueType) {
     collabClient?.setKey(`/sess/${key}`, val);
 }
 
-export function sendChatMessage(message: string) {
+export function sendChatMessage(payload: ChatMessagePayload) {
     const collabClient = getCollabClient(false);
-    message = badWordsFilter.clean(leoFilter.clean(message));
-    collabClient?.sendSignal("chat", true, message);
+    if (payload.type === "text") {
+        payload.text = badWordsFilter.clean(leoFilter.clean(payload.text));
+    }
+    collabClient?.sendSignal("chat", true, JSON.stringify(payload));
 }
 
 export function sendRestartGameSignal() {
