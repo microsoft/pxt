@@ -2,7 +2,7 @@ export namespace Strings {
     export const AppTitle = lf("Play Together");
     export const AppTitleShort = lf("Play Together");
     export const WelcomeUserFmt = (name: string) => lf("Welcome {0}!", name);
-    export const MissingName = lf("~ Anonymous ~");
+    export const MissingName = lf("?");
     export const PlayerJoinedFmt = (name: string) => lf("{0} joined", name);
     export const PlayerLeftFmt = (name: string) => lf("{0} left", name);
     export const Privacy = lf("Privacy");

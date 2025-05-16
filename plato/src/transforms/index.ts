@@ -12,21 +12,40 @@ export { startLoadingGame } from "./startLoadingGame";
 export { setPlatoExtInfo } from "./setPlatoExtInfo";
 export { setPlayerValue } from "./setPlayerValue";
 export { clearPlayerCurrentGames } from "./clearPlayerCurrentGames";
-export { recvPlayerJoinGame } from "./recvPlayerJoinGame";
-export { recvPlayerLeaveGame } from "./recvPlayerLeaveGame";
 
 import * as collabClient from "@/services/collabClient";
 import { ClientRole, SessionOverReason, ValueType } from "@/types";
 import { notifyDisconnected } from "./notifyDisconnected";
 import { joinedSessionAsync } from "./joinedSessionAsync";
+import { recvPlayerJoinGame } from "./recvPlayerJoinGame";
+import { recvPlayerLeaveGame } from "./recvPlayerLeaveGame";
 
 export function init() {
     collabClient.on("disconnected", (reason?: SessionOverReason) => {
         notifyDisconnected(reason);
     });
     collabClient.on("joined", async (role: ClientRole, clientId: string) => {
+        // Local client has joined the session
         await joinedSessionAsync(role, clientId);
     });
     collabClient.on("signal", async (signal: string, payload: ValueType) => {
+        // Somebody (maybe the local client) sent a signal to the session
+    });
+
+    collabClient.playerPresenceStore.on("recv-player-joined-game", (clientId: string, currentGame: string) => {
+        // a client joined a plato-enabled game
+        recvPlayerJoinGame(clientId, currentGame);
+    });
+    collabClient.playerPresenceStore.on("recv-player-left-game", (clientId: string) => {
+        // a client left a plato-enabled game
+        recvPlayerLeaveGame(clientId);
+    });
+
+    collabClient.sessionStore.on("player-joined-session", (clientId: string) => {
+        // a client joined the session
+    });
+    collabClient.sessionStore.on("player-left-session", (clientId: string) => {
+        // a client left the session
+        recvPlayerLeaveGame(clientId);
     });
 }

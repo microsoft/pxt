@@ -1,7 +1,7 @@
 import css from "./styling/NetView.module.scss";
 import sharedcss from "./styling/Shared.module.scss";
 import { useContext, useMemo, useRef } from "react";
-import { useSyncExternalStore } from "use-sync-external-store/shim"
+import { useSyncExternalStore } from "use-sync-external-store/shim";
 import { AppStateContext } from "@/state/Context";
 import { Button } from "react-common/components/controls/Button";
 import { classList } from "react-common/components/util";
@@ -11,6 +11,7 @@ import { debounce } from "@/utils";
 import { ViewPlayer } from "@/types";
 import { setPlayerValue } from "@/transforms";
 import { Strings } from "@/constants";
+import { getDisplayName } from "@/state/helpers";
 
 export function MeGroup() {
     const context = useContext(AppStateContext);
@@ -20,17 +21,16 @@ export function MeGroup() {
         collabClient.sessionStore.subscribe,
         collabClient.sessionStore.getSnapshot
     );
-    const { shareCode } = sessionState;
+    const { shareCode, realNames } = sessionState;
 
     const presence = useSyncExternalStore(
         collabClient.playerPresenceStore.subscribe,
-        collabClient.playerPresenceStore.getSnapshot,
+        collabClient.playerPresenceStore.getSnapshot
     );
 
     const players: ViewPlayer[] = useMemo(() => {
         if (!netState) return [];
-        return presence
-            .sort((a, b) => a.id.localeCompare(b.id));
+        return presence.sort((a, b) => a.id.localeCompare(b.id));
     }, [presence, netState]);
 
     const me: ViewPlayer | undefined = useMemo(() => {
@@ -45,7 +45,8 @@ export function MeGroup() {
                 const name = generateRandomName();
                 setPlayerValue(me.id, "name", name);
             }, 100),
-        [me]);
+        [me]
+    );
 
     const joinedToGame = useMemo(() => {
         if (!shareCode || !me) return false;
@@ -74,31 +75,47 @@ export function MeGroup() {
     };
 
     return (
-        <div className={css["me-group"]}>
+        <div className={css["group"]}>
             <p className={css["label"]}>{lf("Me")}</p>
-            <div className={classList(sharedcss["horz"], sharedcss["wrap"])}>
-                <span>{me?.name || ""}</span>
-                {me?.name && <Button
-                    className={classList(sharedcss["button"], sharedcss["iconic"])}
-                    title={lf("Change Name")}
-                    rightIcon="fas fa-sync"
-                    onClick={debounceRegenerateName}
-                />}
-                {isPlatoGame && <div className={classList(sharedcss["horz"], sharedcss["wrap"], sharedcss["stretch"], sharedcss["items-right"])}>
-                    {!joinedToGame && <Button
-                        className={classList(sharedcss["button"], sharedcss["primary"])}
-                        label={lf("Join Game")}
-                        title={lf("Join Game")}
-                        onClick={joinGame}
-                    />}
-                    {joinedToGame && <Button
-                        className={classList(sharedcss["button"], sharedcss["destructive"])}
-                        label={lf("Leave Game")}
-                        title={lf("Leave Game")}
-                        onClick={leaveGame}
-                    />}
-                </div>}
+            <div className={classList(sharedcss["horz"], sharedcss["wrap"], sharedcss["gap50"])}>
+                <span>{getDisplayName(me, "")}</span>
+                {!realNames && me?.name && (
+                    <Button
+                        className={classList(sharedcss["button"], sharedcss["iconic"], sharedcss["smaller"])}
+                        title={lf("Change Name")}
+                        rightIcon="fas fa-sync"
+                        onClick={debounceRegenerateName}
+                    />
+                )}
             </div>
+            {isPlatoGame && (
+                <div
+                    className={classList(
+                        sharedcss["horz"],
+                        sharedcss["wrap"],
+                        sharedcss["gap50"],
+                        sharedcss["stretch"],
+                        sharedcss["items-right"]
+                    )}
+                >
+                    {!joinedToGame && (
+                        <Button
+                            className={classList(sharedcss["button"], sharedcss["primary"])}
+                            label={lf("Join Game")}
+                            title={lf("Join Game")}
+                            onClick={joinGame}
+                        />
+                    )}
+                    {joinedToGame && (
+                        <Button
+                            className={classList(sharedcss["button"], sharedcss["destructive"])}
+                            label={lf("Leave Game")}
+                            title={lf("Leave Game")}
+                            onClick={leaveGame}
+                        />
+                    )}
+                </div>
+            )}
         </div>
     );
 }

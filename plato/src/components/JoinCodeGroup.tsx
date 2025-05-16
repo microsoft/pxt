@@ -75,12 +75,12 @@ export function JoinCodeGroup() {
     }
 
     return (
-        <div className={css["join-code-group"]}>
+        <div className={css["group"]}>
             <p className={css["label"]}>
                 {lf("Join Code")}
-                <i className={classList(css["help"], "fas fa-question-circle")} onClick={() => { }}></i>
+                <i className={classList(css["help"], "fas fa-question-circle")} onClick={() => {}}></i>
             </p>
-            <div className={classList(sharedcss["horz"], sharedcss["wrap"])} >
+            <div className={classList(sharedcss["horz"], sharedcss["wrap"], sharedcss["gap50"])}>
                 <Button
                     className={css["join-code"]}
                     label={joinCode}

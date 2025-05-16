@@ -5,7 +5,6 @@ export namespace PlayTogether {
     export const CHANNEL_ID = "arcade-plato-ext";
 
     export namespace _Protocol {
-
         /**
          * Client --> Host
          */

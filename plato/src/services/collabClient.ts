@@ -16,7 +16,6 @@ import {
     ValueType,
 } from "@/types";
 import { jsonReplacer, jsonReviver } from "@/utils";
-import { recvPlayerJoinGame, recvPlayerLeaveGame } from "@/transforms";
 
 const COLLAB_HOST_PROD = "https://plato.makecode.com";
 const COLLAB_HOST_STAGING = "https://dev.multiplayer.staging.pxt.io";
@@ -40,10 +39,10 @@ export type CollabPlayer = {
 type EmitterEvents = {
     "service-created": () => void;
     "service-destroyed": () => void;
-    "joined": (role: ClientRole, clientId: string) => void;
-    "kv": (op: KvMutationOp, path: string[], val?: ValueType) => void;
-    "signal": (signal: string, payload?: ValueType) => void;
-    "disconnected": (reason?: SessionOverReason) => void;
+    joined: (role: ClientRole, clientId: string) => void;
+    kv: (op: KvMutationOp, path: string[], val?: ValueType) => void;
+    signal: (signal: string, payload?: ValueType) => void;
+    disconnected: (reason?: SessionOverReason) => void;
 };
 
 const emitter = new EventEmitter<EmitterEvents>();
@@ -56,13 +55,13 @@ class CollabClient {
     sessOverReason: SessionOverReason | undefined;
     receivedJoinMessageInTimeHandler: ((a: any) => void) | undefined;
 
-    constructor() { }
+    constructor() {}
 
     destroy() {
         try {
             this.sock?.close();
             this.sock = undefined;
-        } catch (e) { }
+        } catch (e) {}
     }
 
     private sendMessage(msg: Protocol.Message | Buffer) {
@@ -85,7 +84,8 @@ class CollabClient {
             //--
             const reader = SmartBuffer.fromBuffer(Buffer.from(payload));
             const type = reader.readUInt16LE();
-            switch (type) {
+            switch (
+                type
                 /*
                 case Protocol.Binary.MessageType.SetPlayerValue:
                     return await this.recvSetPlayerValueMessageAsync(reader);
@@ -96,6 +96,7 @@ class CollabClient {
                 case Protocol.Binary.MessageType.DelSessionValue:
                     return await this.recvDelSessionValueMessageAsync(reader);
                 */
+            ) {
             }
         } else if (typeof payload === "string") {
             //-------------------------------------------------
@@ -317,7 +318,6 @@ class CollabClient {
         this.sendMessage(msg);
     }
 
-
     //==========================================================
     // Message Handlers
 
@@ -423,7 +423,12 @@ export function loadGame(shareCode: string) {
     collabClient?.setKey("/sess/shareCode", shareCode);
 }
 
-export function on(ev: keyof EmitterEvents, callback: (...args: any[]) => void): (() => void) {
+export function setSessionValue(key: string, val: ValueType) {
+    const collabClient = getCollabClient(false);
+    collabClient?.setKey(`/sess/${key}`, val);
+}
+
+export function on(ev: keyof EmitterEvents, callback: (...args: any[]) => void): () => void {
     emitter.on(ev, callback);
     return () => {
         emitter.off(ev, callback);
@@ -438,7 +443,9 @@ export function off(ev: keyof EmitterEvents, callback: (...args: any[]) => void)
 // SessionStore
 
 type SessionEvents = {
-    "notify": () => void;
+    notify: () => void;
+    "player-joined-session": (clientId: string) => void;
+    "player-left-session": (clientId: string) => void;
 };
 
 type SessionState = {
@@ -446,7 +453,9 @@ type SessionState = {
     joinCode: string;
     hostId: string;
     seed: number;
-    clientIds: Set<string>
+    clientIds: Set<string>;
+    realNames: boolean;
+    chatEnabled: boolean;
     shareCode?: string;
 };
 
@@ -456,24 +465,27 @@ const initialSessionState = (): SessionState => ({
     hostId: "",
     seed: 0,
     clientIds: new Set(),
+    realNames: false,
+    chatEnabled: false,
 });
 
 class SessionStore {
     private listeners: EventEmitter<SessionEvents> = new EventEmitter();
-    private state: SessionState;
-    private _snapshot: SessionState;
+    private state: SessionState = initialSessionState();
+    private _snapshot = this.snapshot();
+
+    private _init() {
+        this.state = initialSessionState();
+        this.snapshot();
+    }
 
     constructor() {
-        this.state = initialSessionState();
-        this._snapshot = initialSessionState();
         emitter.on("service-created", () => {
-            this.state = initialSessionState();
-            this._snapshot = initialSessionState();
+            this._init();
             this.listeners.emit("notify");
         });
         emitter.on("service-destroyed", () => {
-            this.state = initialSessionState();
-            this._snapshot = initialSessionState();
+            this._init();
             this.listeners.emit("notify");
         });
         emitter.on("kv", (op, path, val) => {
@@ -512,7 +524,38 @@ class SessionStore {
                 changed = true;
                 break;
             case "clientIds":
-                this.state.clientIds = val as Set<string>;
+                // compute added and removed clientIds
+                const clientIds = new Set<string>(val as string[]);
+                const added = new Set<string>();
+                const removed = new Set<string>();
+                for (const id of clientIds) {
+                    if (!this.state.clientIds.has(id)) {
+                        added.add(id);
+                    }
+                }
+                for (const id of this.state.clientIds) {
+                    if (!clientIds.has(id)) {
+                        removed.add(id);
+                    }
+                }
+                // update clientIds
+                this.state.clientIds = clientIds;
+                this.snapshot();
+                // emit events for added and removed clientIds
+                for (const id of added) {
+                    this.listeners.emit("player-joined-session", id);
+                }
+                for (const id of removed) {
+                    this.listeners.emit("player-left-session", id);
+                }
+                changed = true;
+                break;
+            case "realNames":
+                this.state.realNames = val as boolean;
+                changed = true;
+                break;
+            case "chatEnabled":
+                this.state.chatEnabled = val as boolean;
                 changed = true;
                 break;
             case "shareCode":
@@ -543,20 +586,34 @@ class SessionStore {
         }
     }
 
-    private notify() {
+    private snapshot(): SessionState {
         this._snapshot = { ...this.state };
+        return this._snapshot;
+    }
+
+    private notify() {
+        this.snapshot();
         this.listeners.emit("notify");
+    }
+
+    public on(ev: "player-joined-session", callback: (clientId: string) => void): () => void;
+    public on(ev: "player-left-session", callback: (clientId: string) => void): () => void;
+    public on(ev: keyof SessionEvents, callback: (...args: any[]) => void): () => void {
+        this.listeners.on(ev, callback);
+        return () => {
+            this.listeners.off(ev, callback);
+        };
     }
 
     // React's useSyncExternalStore
     public subscribe = (callback: () => void): (() => void) => {
         this.listeners.on("notify", callback);
         return () => this.listeners.off("notify", callback);
-    }
+    };
     public getSnapshot = (): SessionState => {
         return this._snapshot;
-    }
-};
+    };
+}
 
 export const sessionStore = new SessionStore();
 
@@ -564,7 +621,9 @@ export const sessionStore = new SessionStore();
 // PlayerPresenceStore
 
 type PlayerPresenceEvents = {
-    "notify": () => void;
+    notify: () => void;
+    "recv-player-joined-game": (clientId: string, currentGame: string) => void;
+    "recv-player-left-game": (clientId: string) => void;
 };
 
 class PlayerPresenceStore {
@@ -575,14 +634,16 @@ class PlayerPresenceStore {
     constructor() {
         emitter.on("service-created", () => {
             this._players = new Map();
-            this._cachedSnapshot = [];
             this._clientId = undefined;
+            this.snapshot();
+
             this.listeners.emit("notify");
         });
         emitter.on("service-destroyed", () => {
             this._players = new Map();
-            this._cachedSnapshot = [];
             this._clientId = undefined;
+            this.snapshot();
+
             this.listeners.emit("notify");
         });
         emitter.on("joined", async (role: ClientRole, clientId: string) => {
@@ -613,10 +674,12 @@ class PlayerPresenceStore {
     private setKey(path: string[], val: ValueType) {
         let changed = false;
         const clientId = path[1];
-        const player = this._players.get(clientId) ?? {
-            id: clientId,
-            isMe: clientId === this._clientId,
-        } satisfies ViewPlayer;
+        const player =
+            this._players.get(clientId) ??
+            ({
+                id: clientId,
+                isMe: clientId === this._clientId,
+            } satisfies ViewPlayer);
         this._players.set(clientId, player);
         const key = path[2];
         if (key) {
@@ -629,10 +692,15 @@ class PlayerPresenceStore {
                     player.name = val as string;
                     changed = true;
                     break;
+                case "realName":
+                    player.realName = val as string;
+                    changed = true;
+                    break;
                 case "currentGame":
                     player.currentGame = val as string;
                     changed = true;
-                    recvPlayerJoinGame(player.id);
+                    this.snapshot();
+                    this.listeners.emit("recv-player-joined-game", player.id, player.currentGame);
                     break;
                 default:
                     pxt.warn(`[set] Unknown player key: ${key}`);
@@ -648,6 +716,8 @@ class PlayerPresenceStore {
         const clientId = path[1];
         if (path.length < 3) {
             this._players.delete(clientId);
+            this.snapshot();
+            this.listeners.emit("recv-player-left-game", clientId);
             this.notify();
         } else {
             const player = this._players.get(clientId);
@@ -658,7 +728,8 @@ class PlayerPresenceStore {
                     case "currentGame":
                         player.currentGame = undefined;
                         changed = true;
-                        recvPlayerLeaveGame(player.id);
+                        this.snapshot();
+                        this.listeners.emit("recv-player-left-game", player.id);
                         break;
                     default:
                         pxt.warn(`[del] Unknown player key: ${key}`);
@@ -670,20 +741,34 @@ class PlayerPresenceStore {
         }
     }
 
-    private notify() {
+    private snapshot(): ViewPlayer[] {
         this._cachedSnapshot = Array.from(this._players.values());
+        return this._cachedSnapshot;
+    }
+
+    private notify() {
+        this.snapshot();
         this.listeners.emit("notify");
+    }
+
+    public on(ev: "recv-player-joined-game", callback: (clientId: string, currentGame: string) => void): () => void;
+    public on(ev: "recv-player-left-game", callback: (clientId: string) => void): () => void;
+    public on(ev: keyof PlayerPresenceEvents, callback: (...args: any[]) => void): () => void {
+        this.listeners.on(ev, callback);
+        return () => {
+            this.listeners.off(ev, callback);
+        };
     }
 
     // React's useSyncExternalStore
     public subscribe = (callback: () => void): (() => void) => {
         this.listeners.on("notify", callback);
         return () => this.listeners.off("notify", callback);
-    }
+    };
     public getSnapshot = (): ViewPlayer[] => {
         return this._cachedSnapshot;
-    }
-};
+    };
+}
 
 export const playerPresenceStore = new PlayerPresenceStore();
 
@@ -745,8 +830,7 @@ namespace Protocol {
         | SignalMessage;
 
     export namespace Binary {
-        export enum MessageType {
-        }
+        export enum MessageType {}
 
         /*
         // Collab:SetPlayerValue

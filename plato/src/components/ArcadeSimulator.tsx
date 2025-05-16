@@ -40,7 +40,7 @@ export function ArcadeSimulator() {
                         channel: PlayTogether.CHANNEL_ID,
                         data: new TextEncoder().encode(JSON.stringify(initMsg)),
                         broadcast: true,
-                    } satisfies pxsim.SimulatorControlMessage as any)
+                    } satisfies pxsim.SimulatorControlMessage as any);
                     break;
                 }
                 default: {
@@ -48,12 +48,14 @@ export function ArcadeSimulator() {
                     break;
                 }
             }
-        }
+        };
 
         const msgHandler = (
             msg: MessageEvent<
-                pxsim.SimulatorStateMessage | pxsim.SimulatorTopLevelCodeFinishedMessage |
-                pxsim.SimulatorControlMessage | pxsim.SimulatorCommandMessage
+                | pxsim.SimulatorStateMessage
+                | pxsim.SimulatorTopLevelCodeFinishedMessage
+                | pxsim.SimulatorControlMessage
+                | pxsim.SimulatorCommandMessage
             >
         ) => {
             const { data } = msg;
@@ -74,7 +76,7 @@ export function ArcadeSimulator() {
                     const { channel } = data;
                     if (channel !== "arcade-plato-ext") return;
                     const { data: buf } = data;
-                    let zdata = new TextDecoder().decode(new Uint8Array(buf))
+                    let zdata = new TextDecoder().decode(new Uint8Array(buf));
                     const zmsg = JSON.parse(zdata) as PlayTogether._Protocol.CliToHost.Message;
                     handlePlayTogetherMessage(zmsg);
                     return;
@@ -122,11 +124,13 @@ export function ArcadeSimulator() {
         if (shareCode) {
             setPlatoExtInfo(0);
             clearPlayerCurrentGames();
-            compileSimCode().then(() => {
-                runSimulator();
-            }).catch((e) => {
-                console.error("Error running simulator:", e);
-            });
+            compileSimCode()
+                .then(() => {
+                    runSimulator();
+                })
+                .catch(e => {
+                    console.error("Error running simulator:", e);
+                });
         }
     }, [shareCode]);
 

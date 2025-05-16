@@ -41,7 +41,7 @@ const _initialAppState: AppState = {
             opts.set(key, value);
         }
         return opts;
-    })()
+    })(),
 };
 
 export function AppStateProvider(props: React.PropsWithChildren<{}>): React.ReactElement {

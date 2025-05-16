@@ -32,16 +32,14 @@ const TYPE_KEY = "__@type" as const;
 type SerializedValue =
     | { [TYPE_KEY]: "Map"; value: [any, any][] }
     | { [TYPE_KEY]: "Set"; value: any[] }
-    | { [TYPE_KEY]: "Date"; value: string }
+    | { [TYPE_KEY]: "Date"; value: string };
 //| { [TYPE_KEY]: "RegExp"; value: string }
 
 export function jsonReplacer(_key: string, value: any): any {
     if (value instanceof Map) {
         return {
             [TYPE_KEY]: "Map",
-            value: Array.from(value.entries()).map(
-                ([k, v]) => [k, jsonReplacer("", v)] as [any, any]
-            ),
+            value: Array.from(value.entries()).map(([k, v]) => [k, jsonReplacer("", v)] as [any, any]),
         } satisfies SerializedValue;
     }
     if (value instanceof Set) {
@@ -102,7 +100,7 @@ export function cleanupJoinCode(joinCode: string | undefined): string | undefine
         if (url.searchParams.has("join")) {
             joinCode = url.searchParams.get("join") ?? undefined;
         }
-    } catch { }
+    } catch {}
     if (!joinCode) return undefined;
     joinCode = joinCode.toUpperCase().replace(/[^A-Z0-9]/g, "");
     if (joinCode.length !== 6) return undefined;
@@ -115,7 +113,7 @@ export function cleanupShareCode(shareCode: string | undefined): string | undefi
         if (url.searchParams.has("host")) {
             shareCode = url.searchParams.get("host") ?? undefined;
         }
-    } catch { }
+    } catch {}
     if (!shareCode) return undefined;
     return pxt.Cloud.parseScriptId(shareCode);
 }

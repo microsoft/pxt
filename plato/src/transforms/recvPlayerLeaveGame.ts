@@ -1,5 +1,5 @@
-import * as collabClient from '@/services/collabClient';
-import * as simHost from '@/services/simHost';
+import * as collabClient from "@/services/collabClient";
+import * as simHost from "@/services/simHost";
 
 export function recvPlayerLeaveGame(clientId: string) {
     // Get the ViewPlayer record for the playerId

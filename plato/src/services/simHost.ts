@@ -62,7 +62,7 @@ class EditorPackage {
     files: pxt.Map<string> = {};
     id: string | undefined;
 
-    constructor(private ksPkg: pxt.Package, public topPkg: EditorPackage) { }
+    constructor(private ksPkg: pxt.Package, public topPkg: EditorPackage) {}
 
     getKsPkg() {
         return this.ksPkg;
@@ -111,7 +111,7 @@ class PkgHost implements pxt.Host {
     async cacheStoreAsync(id: string, val: string): Promise<void> {
         try {
             this.githubPackageCache[id] = val ? JSON.parse(val) : undefined;
-        } catch (e) { }
+        } catch (e) {}
     }
 
     async cacheGetAsync(id: string): Promise<string> {
@@ -219,7 +219,7 @@ function getStoredState(runOpts: RunOptions) {
         if (projectStorage) {
             storedState = JSON.parse(projectStorage);
         }
-    } catch (e) { }
+    } catch (e) {}
     return storedState;
 }
 
@@ -233,7 +233,7 @@ function setStoredState(runOpts: RunOptions, key: string, value: any) {
 
     try {
         window.localStorage.setItem(shareCode, JSON.stringify(storedState));
-    } catch (e) { }
+    } catch (e) {}
 }
 function workerOpAsync<T extends keyof pxtc.service.ServiceOps>(op: T, arg: pxtc.service.OpArg): Promise<any> {
     const startTm = Date.now();
@@ -390,7 +390,7 @@ export async function buildSimJsInfo(runOpts: RunOptions): Promise<pxtc.BuiltSim
 
     if (compileResult.diagnostics?.length > 0 && didUpgrade) {
         pxt.log("Compile with upgrade rules failed, trying again with original code");
-        compileResult = await compileAsync(opts => { });
+        compileResult = await compileAsync(opts => {});
     }
 
     if (compileResult.diagnostics?.length > 0) {
@@ -418,7 +418,7 @@ export function playerJoin(playerId: string, playerName: string) {
         channel: PlayTogether.CHANNEL_ID,
         data: new TextEncoder().encode(JSON.stringify(initMsg)),
         broadcast: true,
-    } satisfies pxsim.SimulatorControlMessage as any)
+    } satisfies pxsim.SimulatorControlMessage as any);
 }
 
 export function playerLeave(playerId: string) {
@@ -433,5 +433,5 @@ export function playerLeave(playerId: string) {
         channel: PlayTogether.CHANNEL_ID,
         data: new TextEncoder().encode(JSON.stringify(initMsg)),
         broadcast: true,
-    } satisfies pxsim.SimulatorControlMessage as any)
+    } satisfies pxsim.SimulatorControlMessage as any);
 }

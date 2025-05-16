@@ -1,6 +1,7 @@
 import { AppStateContextProps, stateAndDispatch } from "./Context";
-import { ClientRole } from "@/types";
+import { ClientRole, ViewPlayer } from "@/types";
 import { NetState } from "./state";
+import * as collabClient from "@/services/collabClient";
 
 export function getClientRole(context?: AppStateContextProps): ClientRole {
     const { state } = stateAndDispatch(context);
@@ -22,4 +23,24 @@ export function getNetState(forRole?: ClientRole, context?: AppStateContextProps
         return undefined;
     }
     return netState;
+}
+
+export function getDisplayName(player: ViewPlayer | undefined, defaultName: string): string {
+    if (!player) {
+        return defaultName;
+    }
+    const { realNames } = collabClient.sessionStore.getSnapshot();
+    if (realNames) {
+        return player.realName || defaultName;
+    }
+    return player.name || defaultName;
+}
+
+export function getIsHost(context?: AppStateContextProps): boolean {
+    const { state } = stateAndDispatch(context);
+    const { netState } = state;
+    if (!netState) {
+        return false;
+    }
+    return netState.clientRole === "host";
 }

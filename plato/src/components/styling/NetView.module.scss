@@ -9,6 +9,28 @@
     width: 95%;
     height: 95%;
 
+    span.pill {
+        height: 1.75rem;
+        padding: 0.1rem 0.75rem;
+        border-radius: 99px;
+        border-width: 2px;
+        border-style: solid;
+        line-height: 1.3;
+        background-color: rgba(lightgray, 0.15);
+
+        &.host {
+            border-color: rgba($primary-background, 1);
+        }
+
+        &.me {
+            border-color: rgba($secondary-background, 1);
+        }
+
+        &.playing {
+            border-color: rgba(yellow, 1);
+        }
+    }
+
     .panel {
         display: flex;
         flex-direction: column;
@@ -19,6 +41,13 @@
         background-color: $page-background;
         border-radius: 1.5rem;
         overflow: hidden;
+
+        .group {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            flex-wrap: wrap;
+        }
 
         p.label {
             font-size: large;
@@ -58,42 +87,25 @@
                 }
             }
 
-            div.join-code-group {
-                display: flex;
-                flex-direction: column;
-                flex-wrap: wrap;
-                gap: 0.5rem;
-                width: 100%;
+            button.join-code {
+                font-size: large;
+                font-weight: bold;
+                font-family: "Share Tech Mono", "Roboto Mono", monospace;
+                color: #ffffffcc;
+                background-color: rgba(lightgray, 0.15);
+                border: 2px solid #ffffffcc;
+                border-radius: 1rem;
+                padding: 0.25rem 1.5rem;
+                white-space: nowrap;
+                cursor: pointer;
 
-                button.join-code {
-                    font-size: large;
-                    font-weight: bold;
-                    font-family: "Share Tech Mono", "Roboto Mono", monospace;
-                    color: #ffffffcc;
-                    background-color: #ffffff22;
-                    border: 2px solid #ffffffcc;
-                    border-radius: 1rem;
-                    padding: 0.25rem 1.5rem;
-                    white-space: nowrap;
-                    cursor: pointer;
-
-                    &:hover {
-                        filter: grayscale(0.15) brightness(0.85) contrast(1.3);
-                    }
-
-                    &:active {
-                        filter: grayscale(0.2) brightness(0.8) contrast(1.3);
-                    }
+                &:hover {
+                    filter: grayscale(0.15) brightness(0.85) contrast(1.3);
                 }
-            }
 
-            div.me-group {
-                flex: 1;
-                flex-wrap: wrap;
-            }
-
-            div.leave-group {
-                flex-wrap: wrap;
+                &:active {
+                    filter: grayscale(0.2) brightness(0.8) contrast(1.3);
+                }
             }
         }
 
@@ -112,15 +124,6 @@
                     gap: 3px;
                     color: #ffffffdd;
 
-                    span.pill {
-                        height: 1.75rem;
-                        padding: 0.1rem 0.75rem;
-                        border-radius: 99px;
-                        border-width: 2px;
-                        border-style: solid;
-                        line-height: 1.3;
-                    }
-
                     span.name {
                         flex: 1;
                         justify-items: center;
@@ -131,21 +134,11 @@
                         text-overflow: ellipsis;
                     }
 
-                    span.host {
-                        background-color: rgba($primary-background, 0.15);
-                        border-color: rgba($primary-background, 1);
-                    }
-
-                    span.me {
-                        background-color: rgba($secondary-background, 0.15);
-                        border-color: rgba($secondary-background, 1);
-                    }
-
                     button.actions {
                         color: #ffffffcc;
                         padding: 0;
                         margin: 0;
-                        background-color: #ffffff22;
+                        background-color: rgba(lightgray, 0.15);
                         border-radius: 0.5rem;
                         height: 1.75rem;
 
@@ -159,6 +152,20 @@
                         }
                     }
                 }
+            }
+
+            div.chat-dialog {
+                display: flex;
+                flex-direction: column;
+                border: 2px solid #ffffff55;
+                background-color: rgba(lightgray, 0.15);
+                border-radius: 1rem;
+                flex: 1;
+            }
+
+            div.chat-input {
+                display: flex;
+                flex-direction: row;
             }
         }
 

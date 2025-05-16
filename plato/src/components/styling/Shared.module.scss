@@ -3,7 +3,11 @@
 .horz {
     display: flex;
     flex-direction: row;
-    gap: 0.5rem;
+}
+
+.vert {
+    display: flex;
+    flex-direction: column;
 }
 
 .wrap {
@@ -13,6 +17,14 @@
 
 .w100 {
     width: 100%;
+}
+
+.gap25 {
+    gap: 0.25rem;
+}
+
+.gap50 {
+    gap: 0.5rem;
 }
 
 .stretch {
@@ -43,6 +55,17 @@
 
     &.taller {
         height: 2.5rem;
+    }
+
+    &.smaller {
+        height: 1.5rem;
+        padding: 0 1rem;
+
+        &.iconic {
+            i {
+                font-size: small;
+            }
+        }
     }
 
     &.iconic {

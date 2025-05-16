@@ -32,6 +32,7 @@ export type CollabJoinResult = CollabInfo & NetResult;
 export type ViewPlayer = {
     id: string;
     name?: string;
+    realName?: string;
     role?: ClientRole;
     isMe?: boolean;
     currentGame?: string; // PLATO games only, this is the game ID the user is joined to.
