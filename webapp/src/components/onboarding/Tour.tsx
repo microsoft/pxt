@@ -10,6 +10,7 @@ export const Tour = (props: TourProps) => {
     const { onClose, config } = props;
     const { steps } = config;
     const [currentStep, setCurrentStep] = useState(0);
+    const [selectedFeedback, setSelectedFeedback] = useState<boolean | undefined>(undefined);
     const tourStartTime = useRef(Date.now());
     const stepStartTime = useRef(Date.now());
 
@@ -45,15 +46,33 @@ export const Tour = (props: TourProps) => {
         setCurrentStep(currentStep - 1);
     };
 
+    const handleClose = () => {
+        // Send feedback once the tour closes
+        if (config.onFeedback && selectedFeedback) {
+            config.onFeedback(selectedFeedback);
+        }
+
+        onClose();
+    }
+
     const onExit = () => {
         pxt.tickEvent("tour.exit", data());
-        onClose();
+        handleClose();
     }
 
     const onFinish = () => {
         pxt.tickEvent("tour.finish", data());
-        onClose();
+        handleClose();
     }
+
+    const onFeedback = (positive: boolean) => {
+        if (positive === selectedFeedback) {
+            // If the user clicks the same feedback button again, reset it
+            setSelectedFeedback(undefined);
+        } else {
+            setSelectedFeedback(positive);
+        }
+    };
 
     const isLastStep = currentStep === steps.length - 1;
     const confetti = config.showConfetti && isLastStep;
@@ -63,6 +82,8 @@ export const Tour = (props: TourProps) => {
         targetContent={steps[currentStep]}
         onNext={onNext}
         onBack={onBack}
+        onFeedback={onFeedback}
+        selectedFeedback={selectedFeedback}
         stepNumber={currentStep + 1}
         totalSteps={totalDisplaySteps}
         hasPrevious={currentStep > 0}

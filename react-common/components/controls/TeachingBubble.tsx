@@ -30,6 +30,8 @@ export interface TeachingBubbleProps extends ContainerProps {
     onNext: () => void;
     onBack: () => void;
     onFinish: () => void;
+    onFeedback?: (positive: boolean) => void;
+    selectedFeedback?: boolean;
 }
 
 export const TeachingBubble = (props: TeachingBubbleProps) => {
@@ -45,6 +47,8 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
         onNext,
         onBack,
         onFinish,
+        onFeedback,
+        selectedFeedback,
         stepNumber,
         totalSteps,
         parentElement,
@@ -389,6 +393,22 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
                 <div className={`teaching-bubble-footer ${!hasSteps ? "no-steps" : ""}`}>
                     {hasSteps && <div className={classList("teaching-bubble-steps", forceHideSteps ? "hidden" : undefined)} aria-live="polite">
                         {stepNumber} of {totalSteps}
+                    </div>}
+                    { onFeedback && <div className="teaching-bubble-feedback">
+                        <Button
+                            className={classList("feedback-button", selectedFeedback ? "selected" : undefined)}
+                            onClick={() => onFeedback(true)}
+                            title={lf("Helpful")}
+                            ariaLabel={lf("Helpful")}
+                            leftIcon={selectedFeedback ? "fas fa-thumbs-up" : "far fa-thumbs-up"}
+                        />
+                        <Button
+                            className={classList("feedback-button", selectedFeedback === false ? "selected" : undefined)}
+                            onClick={() => onFeedback(false)}
+                            title={lf("Not Helpful")}
+                            ariaLabel={lf("Not Helpful")}
+                            leftIcon={selectedFeedback === false ? "fas fa-thumbs-down" : "far fa-thumbs-down"}
+                        />
                     </div>}
                     <div className="teaching-bubble-navigation">
                         {hasPrevious && <Button

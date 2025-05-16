@@ -105,6 +105,42 @@
     align-items: flex-end;
     justify-content: space-between;
 
+    .teaching-bubble-footer-left {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-start;
+    }
+
+    .teaching-bubble-footer-right {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-end;
+    }
+
+    .teaching-bubble-feedback {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+
+        .common-button.feedback-button {
+            background: none;
+            color: var(--teaching-bubble-foreground);
+            padding: 0.1rem 0;
+            margin: 0 0.2rem 0 0;
+
+            i {
+                margin: 0;
+            }
+
+            &:hover {
+                color: var(--pxt-neutral-alpha50);
+            }
+        }
+    }
+
     .teaching-bubble-steps {
         font-size: .9rem;
         color: var(--teaching-bubble-foreground);

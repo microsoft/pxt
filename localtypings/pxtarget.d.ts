@@ -1355,6 +1355,7 @@ declare namespace pxt.tour {
         steps: BubbleStep[];
         showConfetti?: boolean;
         numberFinalStep?: boolean; // The last step will only be included in the step count if this is true.
+        onFeedback?: (positive: boolean) => void; // Optional callback for thumbs up/down feedback. Feedback is only shown if this is set.
     }
     const enum BubbleLocation {
         Above,
