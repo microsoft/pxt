@@ -1,7 +1,14 @@
+@use "sass:color";
+@import "../../variables";
+
 :global {
     #sim-container .simframe {
         padding: unset !important;
         width: 100% !important;
         height: 50vh !important;
     }
+}
+
+.no-game {
+    color: rgba($secondary-text, 0.5);
 }

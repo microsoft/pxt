@@ -76,9 +76,9 @@ export function MeGroup() {
 
     return (
         <div className={css["group"]}>
-            <p className={css["label"]}>{lf("Me")}</p>
+            <p className={classList(css["label"], sharedcss["usename"])}>{lf("Me")}</p>
             <div className={classList(sharedcss["horz"], sharedcss["wrap"], sharedcss["gap50"])}>
-                <span>{getDisplayName(me, "")}</span>
+                <span className={sharedcss["username"]}>{getDisplayName(me, "")}</span>
                 {!realNames && me?.name && (
                     <Button
                         className={classList(sharedcss["button"], sharedcss["iconic"], sharedcss["smaller"])}

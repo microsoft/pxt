@@ -68,3 +68,18 @@ export type KvSubscriptionOp = "sub" | "uns";
 export type KvOp = KvMutationOp | KvSubscriptionOp;
 export type BaseValueType = string | number | boolean;
 export type ValueType = BaseValueType | Set<BaseValueType> | Map<string, BaseValueType> | Array<BaseValueType>;
+
+export type ChatMessage = {
+    id: number;
+    fromClientId: string;
+    payload: {
+        type: "text";
+        text: string;
+    } | {
+        type: "game";
+        shareCode: string;
+    } | {
+        type: "reaction";
+        emoji: string;
+    }
+};

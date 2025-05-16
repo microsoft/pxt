@@ -1,6 +1,8 @@
 import { Socket } from "engine.io-client";
 import { SmartBuffer } from "smart-buffer";
 import EventEmitter from "eventemitter3";
+import * as leoFilter from "leo-profanity";
+import { Filter as BadWordsFilter } from "bad-words";
 import * as authClient from "./authClient";
 import {
     CollabInfo,
@@ -14,8 +16,11 @@ import {
     ViewPlayer,
     KvMutationOp,
     ValueType,
+    ChatMessage
 } from "@/types";
 import { jsonReplacer, jsonReviver } from "@/utils";
+
+const badWordsFilter = new BadWordsFilter();
 
 const COLLAB_HOST_PROD = "https://plato.makecode.com";
 const COLLAB_HOST_STAGING = "https://dev.multiplayer.staging.pxt.io";
@@ -41,7 +46,7 @@ type EmitterEvents = {
     "service-destroyed": () => void;
     joined: (role: ClientRole, clientId: string) => void;
     kv: (op: KvMutationOp, path: string[], val?: ValueType) => void;
-    signal: (signal: string, payload?: ValueType) => void;
+    signal: (signal: string, fromClientId: string, payload?: ValueType) => void;
     disconnected: (reason?: SessionOverReason) => void;
 };
 
@@ -55,13 +60,13 @@ class CollabClient {
     sessOverReason: SessionOverReason | undefined;
     receivedJoinMessageInTimeHandler: ((a: any) => void) | undefined;
 
-    constructor() {}
+    constructor() { }
 
     destroy() {
         try {
             this.sock?.close();
             this.sock = undefined;
-        } catch (e) {}
+        } catch (e) { }
     }
 
     private sendMessage(msg: Protocol.Message | Buffer) {
@@ -85,17 +90,17 @@ class CollabClient {
             const reader = SmartBuffer.fromBuffer(Buffer.from(payload));
             const type = reader.readUInt16LE();
             switch (
-                type
-                /*
-                case Protocol.Binary.MessageType.SetPlayerValue:
-                    return await this.recvSetPlayerValueMessageAsync(reader);
-                case Protocol.Binary.MessageType.DelPlayerValue:
-                    return await this.recvDelPlayerValueMessageAsync(reader);
-                case Protocol.Binary.MessageType.SetSessionValue:
-                    return await this.recvSetSessionValueMessageAsync(reader);
-                case Protocol.Binary.MessageType.DelSessionValue:
-                    return await this.recvDelSessionValueMessageAsync(reader);
-                */
+            type
+            /*
+            case Protocol.Binary.MessageType.SetPlayerValue:
+                return await this.recvSetPlayerValueMessageAsync(reader);
+            case Protocol.Binary.MessageType.DelPlayerValue:
+                return await this.recvDelPlayerValueMessageAsync(reader);
+            case Protocol.Binary.MessageType.SetSessionValue:
+                return await this.recvSetSessionValueMessageAsync(reader);
+            case Protocol.Binary.MessageType.DelSessionValue:
+                return await this.recvDelSessionValueMessageAsync(reader);
+            */
             ) {
             }
         } else if (typeof payload === "string") {
@@ -309,10 +314,11 @@ class CollabClient {
         this.sendMessage(msg);
     }
 
-    public sendSignal(signal: string, payload?: ValueType) {
+    public sendSignal(signal: string, hostOnly: boolean, payload?: ValueType) {
         const msg: Protocol.SignalMessage = {
             type: "signal",
             signal,
+            hostOnly,
             payload,
         };
         this.sendMessage(msg);
@@ -347,9 +353,9 @@ class CollabClient {
 
     private async recvSignalMessageAsync(msg: Protocol.SignalMessage) {
         pxt.debug(`Server sent signal message: ${msg.signal}`);
-        const { signal, payload } = msg;
+        const { signal, fromClientId, payload } = msg;
 
-        emitter.emit("signal", signal, payload);
+        emitter.emit("signal", signal, fromClientId!, payload);
     }
 }
 
@@ -428,6 +434,22 @@ export function setSessionValue(key: string, val: ValueType) {
     collabClient?.setKey(`/sess/${key}`, val);
 }
 
+export function sendChatMessage(message: string) {
+    const collabClient = getCollabClient(false);
+    message = badWordsFilter.clean(leoFilter.clean(message));
+    collabClient?.sendSignal("chat", true, message);
+}
+
+export function sendRestartGameSignal() {
+    const collabClient = getCollabClient(false);
+    collabClient?.sendSignal("restart-game", false);
+}
+
+export function on(ev: "service-created" | "service-destroyed", callback: () => void): () => void;
+export function on(ev: "joined", callback: (role: ClientRole, clientId: string) => void): () => void;
+export function on(ev: "kv", callback: (op: KvMutationOp, path: string[], val?: ValueType) => void): () => void;
+export function on(ev: "signal", callback: (signal: string, fromClientId: string, payload?: ValueType) => void): () => void;
+export function on(ev: "disconnected", callback: (reason?: SessionOverReason) => void): () => void;
 export function on(ev: keyof EmitterEvents, callback: (...args: any[]) => void): () => void {
     emitter.on(ev, callback);
     return () => {
@@ -457,6 +479,7 @@ type SessionState = {
     realNames: boolean;
     chatEnabled: boolean;
     shareCode?: string;
+    chatMessages: Map<number, ChatMessage>;
 };
 
 const initialSessionState = (): SessionState => ({
@@ -467,6 +490,7 @@ const initialSessionState = (): SessionState => ({
     clientIds: new Set(),
     realNames: false,
     chatEnabled: false,
+    chatMessages: new Map(),
 });
 
 class SessionStore {
@@ -506,24 +530,29 @@ class SessionStore {
         let changed = false;
         path.shift(); // remove "sess"
         const key = path.shift();
+        if (!key) return;
         switch (key) {
-            case "sessionId":
+            case "sessionId": {
                 this.state.sessionId = val as string;
                 changed = true;
                 break;
-            case "joinCode":
+            }
+            case "joinCode": {
                 this.state.joinCode = val as string;
                 changed = true;
                 break;
-            case "hostId":
+            }
+            case "hostId": {
                 this.state.hostId = val as string;
                 changed = true;
                 break;
-            case "seed":
+            }
+            case "seed": {
                 this.state.seed = val as number;
                 changed = true;
                 break;
-            case "clientIds":
+            }
+            case "clientIds": {
                 // compute added and removed clientIds
                 const clientIds = new Set<string>(val as string[]);
                 const added = new Set<string>();
@@ -550,18 +579,33 @@ class SessionStore {
                 }
                 changed = true;
                 break;
-            case "realNames":
+            }
+            case "realNames": {
                 this.state.realNames = val as boolean;
                 changed = true;
                 break;
-            case "chatEnabled":
+            }
+            case "chatEnabled": {
                 this.state.chatEnabled = val as boolean;
                 changed = true;
                 break;
-            case "shareCode":
+            }
+            case "shareCode": {
                 this.state.shareCode = val as string;
                 changed = true;
                 break;
+            }
+            case "chat": {
+                const chatId_s = path.shift();
+                if (!chatId_s) return;
+                const chatId = Number(chatId_s);
+                const chatMessage = JSON.parse(val as string) as ChatMessage;
+                if (chatId !== chatMessage?.id) return;
+                this.state.chatMessages.set(chatId, chatMessage);
+                this.state.chatMessages = new Map(this.state.chatMessages);
+                changed = true;
+                break;
+            }
         }
         if (changed) {
             this.notify();
@@ -818,6 +862,8 @@ namespace Protocol {
     export type SignalMessage = MessageBase & {
         type: "signal";
         signal: string;
+        fromClientId?: string; // set when receiving
+        hostOnly?: boolean; // set when sending
         payload?: ValueType;
     };
 
@@ -830,7 +876,7 @@ namespace Protocol {
         | SignalMessage;
 
     export namespace Binary {
-        export enum MessageType {}
+        export enum MessageType { }
 
         /*
         // Collab:SetPlayerValue

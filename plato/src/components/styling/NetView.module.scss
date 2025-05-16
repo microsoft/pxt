@@ -9,7 +9,7 @@
     width: 95%;
     height: 95%;
 
-    span.pill {
+    span.pill, div.pill {
         height: 1.75rem;
         padding: 0.1rem 0.75rem;
         border-radius: 99px;
@@ -154,13 +154,44 @@
                 }
             }
 
-            div.chat-dialog {
+            div.chat-messages {
                 display: flex;
                 flex-direction: column;
                 border: 2px solid #ffffff55;
                 background-color: rgba(lightgray, 0.15);
                 border-radius: 1rem;
                 flex: 1;
+                position: relative;
+
+                div.scrollable {
+                    flex: 1 1 auto;
+                    min-height: 0;
+                    overflow-y: auto;
+                    display: flex;
+                    flex-direction: column-reverse;
+                    overflow-anchor: none;
+                    position: absolute;
+                    top: 0;
+                    bottom: 0;
+                    left: 0;
+                    right: 0;
+
+                    div.entry {
+                        display: flex;
+                        flex-direction: column;
+                        padding: 0.25rem;
+                        min-height: fit-content;
+
+                        div.from {
+                            font-size: small;
+                        }
+
+                        div.text {
+                            font-size: large;
+                            padding-left: 0.75rem;
+                        }
+                    }
+                }
             }
 
             div.chat-input {

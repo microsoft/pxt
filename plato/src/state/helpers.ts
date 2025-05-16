@@ -25,9 +25,15 @@ export function getNetState(forRole?: ClientRole, context?: AppStateContextProps
     return netState;
 }
 
-export function getDisplayName(player: ViewPlayer | undefined, defaultName: string): string {
+export function getDisplayName(player: ViewPlayer | string | undefined, defaultName: string): string {
     if (!player) {
         return defaultName;
+    }
+    if (typeof player === "string") {
+        player = collabClient.playerPresenceStore.getSnapshot().find(p => p.id === player);
+        if (!player) {
+            return defaultName;
+        }
     }
     const { realNames } = collabClient.sessionStore.getSnapshot();
     if (realNames) {

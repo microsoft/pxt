@@ -31,7 +31,7 @@ export function PresenceGroup({ className }: { className?: string }) {
             <div className={css["players"]}>
                 {players.map(p => (
                     <div key={p.id} className={css["player"]}>
-                        <span className={css["name"]}>{getDisplayName(p, Strings.MissingName)}</span>
+                        <span className={classList(css["name"], sharedcss["username"])}>{getDisplayName(p, Strings.MissingName)}</span>
                         {p.role === "host" && <span className={classList(css["pill"], css["host"])}>{lf("host")}</span>}
                         {p.isMe && <span className={classList(css["pill"], css["me"])}>{lf("me")}</span>}
                         {p.currentGame && (

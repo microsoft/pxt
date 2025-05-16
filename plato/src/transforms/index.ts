@@ -19,6 +19,8 @@ import { notifyDisconnected } from "./notifyDisconnected";
 import { joinedSessionAsync } from "./joinedSessionAsync";
 import { recvPlayerJoinGame } from "./recvPlayerJoinGame";
 import { recvPlayerLeaveGame } from "./recvPlayerLeaveGame";
+import { recvChatMessageSignal } from "./recvChatMessageSignal";
+import { recvRestartGameSignal } from "./recvRestartGameSignal";
 
 export function init() {
     collabClient.on("disconnected", (reason?: SessionOverReason) => {
@@ -28,8 +30,14 @@ export function init() {
         // Local client has joined the session
         await joinedSessionAsync(role, clientId);
     });
-    collabClient.on("signal", async (signal: string, payload: ValueType) => {
+    collabClient.on("signal", async (signal: string, fromClientId: string, payload?: ValueType) => {
         // Somebody (maybe the local client) sent a signal to the session
+        switch (signal) {
+            case "chat":
+                return recvChatMessageSignal(fromClientId, payload as string);
+            case "restart-game":
+                return recvRestartGameSignal();
+        }
     });
 
     collabClient.playerPresenceStore.on("recv-player-joined-game", (clientId: string, currentGame: string) => {

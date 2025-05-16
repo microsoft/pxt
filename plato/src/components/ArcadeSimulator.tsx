@@ -140,6 +140,14 @@ export function ArcadeSimulator() {
         };
     });
 
+    if (!shareCode) {
+        return (
+            <div className={css["no-game"]}>
+                {lf("No game loaded")}
+            </div>
+        );
+    }
+
     return (
         <div
             id="sim-container"
