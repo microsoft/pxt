@@ -36,7 +36,7 @@ export type ErrorDisplayInfo = {
 export interface ErrorListProps {
     onSizeChange?: (state: pxt.editor.ErrorListState) => void;
     errors: ErrorDisplayInfo[];
-    note?: string;
+    note?: string | JSX.Element;
     startDebugger?: () => void;
     getErrorHelp?: () => Promise<void>; // Should return a promise that resolves when the help is loaded
     showLoginDialog?: (
