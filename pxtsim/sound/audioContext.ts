@@ -465,28 +465,39 @@ namespace pxsim.AudioContextManager {
     }
     let nextSoundId = 0;
 
+    interface ActiveSound {
+        id: number;
+        resolve: () => void;
+        isCancelled: () => boolean;
+    }
+
     class AudioWorkletChannel {
         node: AudioWorkletNode;
-        activeSounds = 0
-        resolvers: {[index: string]: () => void} = {};
+        analyser: AnalyserNode;
+        activeSounds: ActiveSound[];
+
+        protected animRef: number;
 
         constructor() {
+            this.analyser = context().createAnalyser();
+            this.analyser.fftSize = 2048;
             this.node = new AudioWorkletNode(context(), "pxt-mixer-audio-worklet-processor");
-            this.node.connect(destination);
+            this.node.connect(this.analyser);
+            this.analyser.connect(destination);
             this.node.port.onmessage = e => {
                 if (e.data.type === "done") {
-                    if (this.resolvers[e.data.id]) {
-                        this.resolvers[e.data.id]();
-                        delete this.resolvers[e.data.id];
+                    const entry = this.activeSounds.find(s => s.id === e.data.id);
+                    if (entry) {
+                        entry.resolve();
+                        this.activeSounds = this.activeSounds.filter(s => s !== entry);
                     }
-                    this.activeSounds--;
-                    console.log(`[channel ${workletChannels.indexOf(this)}]  done: ${e.data.id} remaining: ${this.activeSounds}`);
+                    // console.log(`[channel ${workletChannels.indexOf(this)}]  done: ${e.data.id} remaining: ${this.activeSounds}`);
                 }
             }
-            this.activeSounds = 0;
+            this.activeSounds = [];
         }
 
-        playInstructionsAsync(instructions: Uint8Array) {
+        playInstructionsAsync(instructions: Uint8Array, isCancelled?: () => boolean) {
             return new Promise<void>((resolve) => {
                 const msg = {
                     type: "play",
@@ -494,43 +505,110 @@ namespace pxsim.AudioContextManager {
                     id: nextSoundId++
                 };
 
-                this.activeSounds++;
-                this.resolvers[msg.id] = resolve;
+                const sound = {
+                    id: msg.id,
+                    resolve,
+                    isCancelled
+                }
+
+                this.activeSounds.push(sound);
                 this.node.port.postMessage(msg);
 
-                console.log(`[channel ${workletChannels.indexOf(this)}]  start: ${msg.id} active: ${this.activeSounds}`);
-            })
+                if (isCancelled) {
+                    this.updateActiveSounds();
+                }
+
+                // console.log(`[channel ${workletChannels.indexOf(this)}]  start: ${msg.id} active: ${this.activeSounds}`);
+            });
         }
 
         dispose() {
             this.node.disconnect();
             this.node.port.close();
             this.node = undefined;
+            this.analyser.disconnect();
+            this.analyser = undefined;
 
-            for (const key of Object.keys(this.resolvers)) {
-                this.resolvers[key]();
+            for (const sound of this.activeSounds) {
+                sound.resolve();
+            }
+        }
+
+        protected updateActiveSounds() {
+            if (this.animRef) {
+                cancelAnimationFrame(this.animRef);
+                this.animRef = undefined;
+            }
+
+            for (const sound of this.activeSounds) {
+                if (sound.isCancelled?.()) {
+                    sound.resolve();
+                    this.activeSounds = this.activeSounds.filter(s => s !== sound);
+                    this.node.port.postMessage({
+                        type: "cancel",
+                        id: sound.id
+                    });
+                }
+            }
+
+            if (this.activeSounds.length) {
+                this.animRef = requestAnimationFrame(() => {
+                    this.updateActiveSounds();
+                });
             }
         }
     }
 
     let workletInit: Promise<void>;
     let workletChannels: AudioWorkletChannel[] = [];
-    export async function playInstructionsAsync(instructions: Uint8Array, isCancelled?: () => boolean, onPull?: (freq: number, volume: number) => void) {
+    export async function playInstructionsAsync(instructions: Uint8Array, isCancelled?: () => boolean, onPull?: (data: Float32Array, fft: Uint8Array) => void) {
+        soundEventCallback?.("playinstructions", instructions);
+
         if (!workletInit) {
             workletInit = (async () => {
-                await context().audioWorklet.addModule("/static/audioWorklet/audioWorkletProcessor.js");
+                // await context().audioWorklet.addModule("/static/audioWorklet/audioWorkletProcessor.js");
+                await context().audioWorklet.addModule(getWorkletUri());
             })();
         }
         await workletInit;
 
-        let channel = workletChannels.find(c => c.activeSounds < 1000);
+        let channel: AudioWorkletChannel;
+        let finished = false;
 
-        if (!channel) {
+        if (onPull) {
             channel = new AudioWorkletChannel();
-            workletChannels.push(channel);
+
+            const bufferLength = channel.analyser.frequencyBinCount;
+            const dataArray = new Float32Array(bufferLength);
+            const fftArray = new Uint8Array(bufferLength);
+
+            const handleAnimationFrame = () => {
+                if (finished || isCancelled?.()) {
+                    channel.dispose();
+                    return;
+                }
+
+                channel.analyser.getFloatTimeDomainData(dataArray);
+                channel.analyser.getByteFrequencyData(fftArray);
+                onPull(dataArray, fftArray);
+
+                requestAnimationFrame(handleAnimationFrame)
+            }
+            requestAnimationFrame(handleAnimationFrame);
+        }
+        else {
+            channel = workletChannels.find(c => c.activeSounds.length < 30);
+
+            if (!channel) {
+                channel = new AudioWorkletChannel();
+                workletChannels.push(channel);
+            }
         }
 
-        await channel.playInstructionsAsync(instructions);
+
+        await channel.playInstructionsAsync(instructions, isCancelled);
+
+        finished = true;
     }
 
     export function playInstructionsAsync2(instructions: Uint8Array, isCancelled?: () => boolean, onPull?: (freq: number, volume: number) => void) {

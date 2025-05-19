@@ -44,7 +44,7 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
 
     let startPreviewAnimation: (duration: number) => void;
     let startControlsAnimation: (duration: number) => void;
-    let previewSynthListener: (freq: number, vol: number, sound: pxt.assets.Sound, cancelToken: CancellationToken) => void;
+    let previewSynthListener: (data: Float32Array, fft: Uint8Array, sound: pxt.assets.Sound, cancelToken: CancellationToken) => void;
 
     const cancel = () => {
         if (!cancelToken) return;
@@ -67,15 +67,15 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
         if (startControlsAnimation) startControlsAnimation(toPlay.duration);
 
         const isCancelled = () => newToken.cancelled;
-        const onPull = (freq: number, volume: number) => {
-            previewSynthListener(freq, volume, toPlay, newToken)
+        const onPull = (data: Float32Array, fft: Uint8Array) => {
+            previewSynthListener(data, fft, toPlay, newToken)
         }
 
         if (useMixerSynthesizer) {
             await pxsim.AudioContextManager.playInstructionsAsync(pxt.assets.soundToInstructionBuffer(toPlay, 20, 1), isCancelled, onPull);
         }
         else {
-            await pxsim.codal.music.playSoundExpressionAsync(soundToCodalSound(toPlay).src, isCancelled, onPull);
+            // await pxsim.codal.music.playSoundExpressionAsync(soundToCodalSound(toPlay).src, isCancelled, onPull);
         }
 
         setCancelToken(null);
@@ -134,7 +134,7 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
         startControlsAnimation = startAnimation;
     }
 
-    const handleSynthListenerRef = (onPull: (freq: number, vol: number, sound: pxt.assets.Sound, token: CancellationToken) => void) => {
+    const handleSynthListenerRef = (onPull: (data: Float32Array, fft: Uint8Array, sound: pxt.assets.Sound, cancelToken: CancellationToken) => void) => {
         previewSynthListener = onPull;
     }
 
@@ -153,7 +153,7 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
 
     return (
         <div className="sound-effect-editor" onKeyDown={handleKeyDown}>
-            {/* 
+            {/*
                 Don't steal focus to prevent focus-visible style if opened by mouse.
                 If opened by keyboard, we focus the editor / gallery toggle anyway.
             */}

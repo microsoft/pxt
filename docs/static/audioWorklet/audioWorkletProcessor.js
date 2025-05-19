@@ -9,7 +9,7 @@ const SW_SQUARE_50 = 15;
 const SW_SQUARE_CYCLE_16 = 16;
 const SW_SQUARE_CYCLE_32 = 17;
 const SW_SQUARE_CYCLE_64 = 18;
-const OUTPUT_BITS = 12;
+const OUTPUT_BITS = 14;
 
 function instrSoundWave(instructions, index) {
     return instructions[index];
@@ -278,6 +278,9 @@ class MixerAudioWorkletProcessor extends AudioWorkletProcessor {
                     currInstr: 0,
                     id: event.data.id
                 });
+            }
+            else if (event.data.type === "cancel") {
+                this.sounds = this.sounds.filter(s => s.id !== event.data.id);
             }
         };
     }

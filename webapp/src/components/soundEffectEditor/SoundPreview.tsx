@@ -4,7 +4,7 @@ import { CancellationToken } from "./SoundEffectEditor";
 export interface SoundPreviewProps {
     sound: pxt.assets.Sound;
     handleStartAnimationRef?: (startAnimation: (duration: number) => void) => void;
-    handleSynthListenerRef?: (onPull: (freq: number, volume: number, sound: pxt.assets.Sound, cancelToken: CancellationToken) => void) => void;
+    handleSynthListenerRef?: (onPull: (data: Float32Array, fft: Uint8Array, sound: pxt.assets.Sound, cancelToken: CancellationToken) => void) => void;
 }
 
 export const SoundPreview = (props: SoundPreviewProps) => {
@@ -28,13 +28,13 @@ export const SoundPreview = (props: SoundPreviewProps) => {
                 return;
             }
             let toDraw = sound;
-            let frequency = toDraw.startFrequency;
-            let volume = toDraw.startVolume;
+            let freqData: Float32Array;
+            let fftData: Uint8Array;
             let cancelToken: CancellationToken = null;
 
-            handleSynthListenerRef((freq, vol, sound, token) => {
-                frequency = freq;
-                volume = vol * pxt.assets.MAX_VOLUME;
+            handleSynthListenerRef((data, fft, sound, token) => {
+                freqData = data;
+                fftData = fft;
                 toDraw = sound;
                 cancelToken = token;
             })
@@ -51,7 +51,10 @@ export const SoundPreview = (props: SoundPreviewProps) => {
                 animationPath.setAttribute("opacity", "1");
                 previewPath.setAttribute("opacity", "0");
 
-                animationPath.setAttribute("d", pxt.assets.renderWaveSnapshot(frequency, volume, toDraw.wave, width, height, 10))
+                if (freqData) {
+                    // animationPath.setAttribute("d", renderWaveSnapshot(freqData, width, height))
+                    animationPath.setAttribute("d", renderFrequencyContent(fftData, width, height))
+                }
 
                 requestAnimationFrame(doAnimationFrame);
             }
@@ -110,3 +113,89 @@ export const SoundPreview = (props: SoundPreviewProps) => {
     </div>
 }
 
+function renderWaveSnapshot(data: Float32Array, width: number, height: number) {
+    const xSlice = width / (data.length * 0.75);
+
+    const parts: string[] = [];
+
+    // let min = 9999999;
+    // let max = -9999999;
+
+
+    const MIN_VALUE = -0.125;
+    const MAX_VALUE = 0.125;
+
+
+    let currentSign = 0;
+
+    const crossings: number[] = [];
+
+    let res = "";
+    for (let i = 0; i < data.length; ++i) {
+        const sign = Math.sign(data[i]);
+
+        if (sign !== currentSign) {
+            currentSign = sign;
+            crossings.push(i);
+
+            res += currentSign + " ";
+        }
+    }
+
+    console.log(res);
+
+    let middleCrossing = data.length >> 1;
+
+
+    if (crossings.length) {
+        let middleIndex = Math.floor(crossings.length / 2);
+        while (data[crossings[middleIndex]] <=0) {
+            middleIndex++;
+        }
+        middleCrossing = crossings[middleIndex];
+    }
+
+    for (let i = 0; i < data.length; ++i) {
+        const x = (width / 2) + (i - middleCrossing) * xSlice;
+        const y = (height / 2) + data[i] * (height / (MAX_VALUE - MIN_VALUE));
+
+        let op = "L"
+        if (parts.length === 0) {
+            op = "M";
+        }
+
+        // min = Math.min(min, data[i]);
+        // max = Math.max(max, data[i]);
+
+        parts.push(`${op} ${x} ${height - y}`);
+    }
+
+    // console.log(`min: ${min}, max: ${max}`);
+
+    return parts.join(" ");
+}
+
+function renderFrequencyContent(data: Uint8Array, width: number, height: number) {
+    const xSlice = width / data.length;
+
+    const parts: string[] = [];
+
+    for (let i = 0; i < data.length; ++i) {
+        const x = i * xSlice;
+        const y = (data[i] / 255) * height;
+
+        let op = "L"
+        if (parts.length === 0) {
+            op = "M";
+        }
+
+        // min = Math.min(min, data[i]);
+        // max = Math.max(max, data[i]);
+
+        parts.push(`${op} ${x} ${height - y}`);
+    }
+
+    // console.log(`min: ${min}, max: ${max}`);
+
+    return parts.join(" ");
+}
