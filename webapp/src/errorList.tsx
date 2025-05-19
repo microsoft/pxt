@@ -125,12 +125,12 @@ export class ErrorList extends auth.Component<ErrorListProps, ErrorListState> {
         );
 
         return (
-            <div className={classList("errorList", isCollapsed ? "errorListSummary" : undefined)} hidden={!errorsAvailable}>
+            <div className={classList("errorList", isCollapsed && "errorListSummary")} hidden={!errorsAvailable}>
                 <div className="errorListHeader" role="button" aria-label={lf("{0} error list", isCollapsed ? lf("Expand") : lf("Collapse"))} onClick={this.onCollapseClick} onKeyDown={fireClickOnEnter} tabIndex={0}>
                     <h4>{lf("Problems")}</h4>
                     <div className="ui red circular label countBubble">{errorCount}</div>
                     {showErrorHelp && (
-                        <div className={classList("error-help-container", isLoadingHelp ? "loading" : undefined)}>
+                        <div className={classList("error-help-container", isLoadingHelp && "loading")}>
                             {isLoadingHelp ? helpLoader : helpButton}
                         </div>
                     )}
