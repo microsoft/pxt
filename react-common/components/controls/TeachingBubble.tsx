@@ -32,7 +32,6 @@ export interface TeachingBubbleProps extends ContainerProps {
     onBack: () => void;
     onFinish: () => void;
     onFeedback?: (positive: boolean) => void;
-    selectedFeedback?: boolean;
 }
 
 export const TeachingBubble = (props: TeachingBubbleProps) => {
@@ -49,7 +48,6 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
         onBack,
         onFinish,
         onFeedback,
-        selectedFeedback,
         stepNumber,
         totalSteps,
         parentElement,
