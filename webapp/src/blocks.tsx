@@ -308,6 +308,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return this.serializeBlocks();
     }
 
+    /**
+     * Serializes the blocks in the editor to XML.
+     * @param normalize Whether to normalize the XML (remove id, x, y attributes)
+     * @param forceKeepIds Whether to force keeping the block ids in the XML
+     * @returns The serialized XML string
+     */
     private serializeBlocks(normalize?: boolean, forceKeepIds?: boolean): string {
         // store ids when using github
         let xml = pxtblockly.saveWorkspaceXml(this.editor, forceKeepIds ||
