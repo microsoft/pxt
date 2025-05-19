@@ -1043,7 +1043,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 bubbleStyle: "yellow",
             } as pxt.tour.BubbleStep;
 
-            if (validBlockIds.includes(step.elementId)) {
+            if (step.elementId && validBlockIds.includes(step.elementId)) {
                 tourStep.targetQuery = `g[data-id="${step.elementId}"]`;
                 tourStep.location = pxt.tour.BubbleLocation.Right;
                 tourStep.onStepBegin = () => this.editor.centerOnBlock(step.elementId, true);
