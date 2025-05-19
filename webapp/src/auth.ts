@@ -45,7 +45,9 @@ export class Component<TProps, TState> extends data.Component<TProps, TState> {
 export class AuthClient extends pxt.auth.AuthClient {
     protected async onSignedIn(): Promise<void> {
         const state = await pxt.auth.getUserStateAsync();
-        core.infoNotification(lf("Signed in: {0}", pxt.auth.userName(state.profile)));
+        if (!pxt.auth.proxyIdentityThroughIPC()) {
+            core.infoNotification(lf("Signed in: {0}", pxt.auth.userName(state.profile)));
+        }
         if (!!workspace.getWorkspaceType())
             await cloud.syncAsync();
         pxt.storage.setLocal(HAS_USED_CLOUD, "true");

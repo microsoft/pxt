@@ -4376,7 +4376,7 @@ export class ProjectView
         const hasIdentity = auth.hasIdentity() && this.isLoggedIn();
 
         try {
-            const persistentPublish = hasIdentity && !forceAnonymous;
+            const persistentPublish = hasIdentity && !forceAnonymous && !pxt.auth.proxyIdentityThroughIPC();
             const id = await this.publishCurrentHeaderAsync(persistentPublish, screenshotUri);
             return await this.getShareUrl(id, persistentPublish);
         } catch (e) {
