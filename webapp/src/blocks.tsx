@@ -308,6 +308,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return this.serializeBlocks();
     }
 
+    /**
+     * Serializes the blocks in the editor to XML.
+     * @param normalize Whether to normalize the XML (remove id, x, y attributes)
+     * @param forceKeepIds Whether to force keeping the block ids in the XML
+     * @returns The serialized XML string
+     */
     private serializeBlocks(normalize?: boolean, forceKeepIds?: boolean): string {
         // store ids when using github
         let xml = pxtblockly.saveWorkspaceXml(this.editor, forceKeepIds ||
@@ -1016,7 +1022,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             if (e instanceof ErrorHelpException) {
                 core.errorNotification(e.getUserFacingMessage());
             } else {
-                core.errorNotification(lf("Sorry, something went wrong. Please try again later."));
+                core.errorNotification(lf("Something went wrong. Please try again later."));
             }
         }
     }
@@ -1039,7 +1045,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 notice: lf("AI generated content may be incorrect.")
             } as pxt.tour.BubbleStep;
 
-            if (validBlockIds.includes(step.elementId)) {
+            if (step.elementId && validBlockIds.includes(step.elementId)) {
                 tourStep.targetQuery = `g[data-id="${step.elementId}"]`;
                 tourStep.location = pxt.tour.BubbleLocation.Right;
                 tourStep.onStepBegin = () => this.editor.centerOnBlock(step.elementId, true);

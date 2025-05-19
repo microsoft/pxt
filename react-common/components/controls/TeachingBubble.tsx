@@ -69,8 +69,8 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
     }
 
     useEffect(() => {
-        if (props.targetContent.onStepBegin) {
-            props.targetContent.onStepBegin();
+        if (targetContent.onStepBegin) {
+            targetContent.onStepBegin();
         }
         positionBubbleAndCutout();
         window.addEventListener("resize", positionBubbleAndCutout);
@@ -391,7 +391,7 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
                     {targetContent.notice}
                 </div>}
                 <div className={`teaching-bubble-footer ${!hasSteps ? "no-steps" : ""}`}>
-                    {hasSteps && <div className={classList("teaching-bubble-steps", forceHideSteps ? "hidden" : undefined)} aria-live="polite">
+                    {hasSteps && <div className={classList("teaching-bubble-steps", forceHideSteps && "hidden")} aria-live="polite">
                         {stepNumber} of {totalSteps}
                     </div>}
                     {onFeedback && <div className="teaching-bubble-feedback">
