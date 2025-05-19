@@ -13,7 +13,7 @@ import { initLoops } from "./builtins/loops";
 import { initText } from "./builtins/text";
 import { createToolboxBlock, isArrayType } from "./toolbox";
 import { mkCard } from "./help";
-import { FieldMatrix } from "./fields";
+import { FieldLedMatrix } from "./fields";
 import { FieldStyledLabel } from "./fields";
 import { FieldUserEnum } from "./fields";
 import { createFieldEditor, initFieldEditors } from "./fields";
@@ -314,7 +314,7 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
         const onColor = fn.attributes.gridLiteralOnColor;
         const offColor = fn.attributes.gridLiteralOffColor;
         let ri = block.appendDummyInput();
-        ri.appendField(new FieldMatrix("", { columns, rows, scale, onColor, offColor }), "LEDS");
+        ri.appendField(new FieldLedMatrix("", { columns, rows, scale, onColor, offColor }), "LEDS");
     }
 
     if (fn.attributes.inlineInputMode === "external") {
