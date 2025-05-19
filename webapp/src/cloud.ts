@@ -70,9 +70,17 @@ async function listAsync(hdrs?: Header[]): Promise<Header[]> {
                 header.cloudVersion = proj.version;
                 return header;
             });
+
+            if (!hdrs) {
+
+            }
             pxt.tickEvent(`identity.cloudApi.list.success`, { count: headers.length });
             resolve(headers);
-        } else {
+        }
+        else if (result.statusCode === 404) {
+            resolve([]);
+        }
+        else {
             pxt.tickEvent(`identity.cloudApi.list.failed`);
             reject(result.err);
         }
@@ -168,7 +176,7 @@ export class CloudTempMetadata {
         const h = workspace.getHeader(this.headerId);
         if (!h || !h.cloudUserId)
             return undefined;
-        if (!auth.loggedIn())
+        if (!auth.loggedIn() || auth.isOffline())
             return pxt.cloud.cloudStatus["offline"];
         if (this._syncStartTime > 0)
             return pxt.cloud.cloudStatus["syncing"];
@@ -421,8 +429,9 @@ async function syncAsyncInternal(opts: SyncAsyncOptions): Promise<pxt.workspace.
 
         async function syncOneUp(local: Header): Promise<void> {
             const projShorthand = shortName(local);
+            let cloudCurrent = local.cloudCurrent && (!fullSync || remoteHeaders.some(h => h.id === local.id))
             try {
-                if (!local.cloudCurrent) {
+                if (!cloudCurrent) {
                     if (local.isDeleted) {
                         // Deleted local project, push to cloud
                         const res = await toCloud(local, null);
