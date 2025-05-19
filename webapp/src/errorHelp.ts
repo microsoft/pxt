@@ -19,7 +19,7 @@ export type ErrorHelpExceptionType =
     | "forbidden"
     | "unknown";
 
-    export class ErrorHelpException extends Error {
+export class ErrorHelpException extends Error {
     errorType: ErrorHelpExceptionType;
     originalError?: Error;
 
