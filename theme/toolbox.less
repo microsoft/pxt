@@ -3,7 +3,7 @@
         Blockly Toolbox
 *******************************/
 
-.blocklyToolboxDiv, .monacoToolboxDiv {
+.blocklyToolbox, .monacoToolboxDiv {
     background: var(--pxt-target-background3) !important;
     color: var(--pxt-target-foreground3);
     overflow-x: visible;
@@ -18,9 +18,10 @@
     -o-transition: width 1s, background 0.3s; /* Opera */
     transition: width 1s, background 0.3s;
     transition-timing-function: ease-in;
+    height: 100%;
 }
 
-.blocklyToolboxDiv text,
+.blocklyToolbox text,
 .monacoToolboxDiv text,
 span.blocklyTreeIcon {
     user-select: none;
@@ -30,7 +31,7 @@ span.blocklyTreeIcon {
     cursor: inherit;
 }
 
-.blocklyToolboxDiv.blocklyToolboxDeleting {
+.blocklyToolbox.blocklyToolboxDeleting {
     background: var(--pxt-colors-red-background) !important;
     filter: brightness(1.2) saturate(0.8);
 }
@@ -39,7 +40,7 @@ span.blocklyTreeIcon {
     display: none !important;
 }
 
-.debugger .blocklyToolboxDiv {
+.debugger .blocklyToolbox {
     width: 20%;
 }
 
@@ -270,6 +271,10 @@ div.blocklyTreeIcon span {
     background-color: var(--pxt-target-background3-hover);
 }
 
+.blocklyToolbox .blocklyTreeRoot [role="treeitem"]:focus-visible {
+    outline: none;
+}
+
 /*******************************
     Inverted Toolbox
 *******************************/
@@ -321,7 +326,7 @@ div.blocklyTreeIcon span {
 /* Large Monitor */
 @media only screen and (min-width: @largeMonitorBreakpoint) {
     /* Blockly */
-    div.blocklyToolboxDiv, div.monacoToolboxDiv {
+    div.blocklyToolbox, div.monacoToolboxDiv {
         min-width: @blocklyRowWidthWide;
     }
     div.blocklyTreeRow {
@@ -339,7 +344,7 @@ div.blocklyTreeIcon span {
 /* Small Monitor */
 @media only screen and (min-width: @computerBreakpoint) and (max-width: @largestSmallMonitor) {
     /* Blockly row */
-    div.blocklyToolboxDiv, div.monacoToolboxDiv {
+    div.blocklyToolbox, div.monacoToolboxDiv {
         min-width: @blocklyRowWidthComputer;
     }
     div.blocklyTreeRow {
@@ -357,7 +362,7 @@ div.blocklyTreeIcon span {
 /* Tablet */
 @media only screen and (min-width: @tabletBreakpoint) and (max-width: @largestTabletScreen) {
     /* Blockly */
-    div.blocklyToolboxDiv, div.monacoToolboxDiv {
+    div.blocklyToolbox, div.monacoToolboxDiv {
         min-width: @blocklyRowWidthTablet;
     }
     div.blocklyTreeRow {
@@ -378,7 +383,7 @@ div.blocklyTreeIcon span {
 
 /* Mobile */
 @media only screen and (max-width: @largestMobileScreen) {
-    div.blocklyToolboxDiv, div.monacoToolboxDiv {
+    div.blocklyToolbox, div.monacoToolboxDiv {
         min-width: @blocklyRowWidthMobile;
     }
     div.blocklyTreeRow {

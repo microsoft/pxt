@@ -24,8 +24,10 @@ import { initContextMenu } from "./contextMenu";
 import { renderCodeCard } from "./codecardRenderer";
 import { FieldDropdown } from "./fields/field_dropdown";
 import { setDraggableShadowBlocks, setDuplicateOnDrag, setDuplicateOnDragStrategy } from "./plugins/duplicateOnDrag";
-import { applyPolyfills } from "./polyfills";
 import { initCopyPaste } from "./copyPaste";
+import { FieldVariable } from "./plugins/newVariableField/fieldVariable";
+
+export const DRAGGABLE_PARAM_INPUT_PREFIX = "HANDLER_DRAG_PARAM_";
 
 
 interface BlockDefinition {
@@ -255,7 +257,7 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
         }
         else if (fn.attributes.draggableParameters) {
             comp.handlerArgs.filter(a => !a.inBlockDef).forEach(arg => {
-                const i = block.appendValueInput("HANDLER_DRAG_PARAM_" + arg.name);
+                const i = block.appendValueInput(DRAGGABLE_PARAM_INPUT_PREFIX + arg.name);
                 if (fn.attributes.draggableParameters == "reporter") {
                     i.setCheck(getBlocklyCheckForType(arg.type, info));
                 } else {
@@ -265,13 +267,13 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
             });
 
             comp.handlerArgs.forEach(arg => {
-                setDuplicateOnDrag(block.type, "HANDLER_DRAG_PARAM_" + arg.name);
+                setDuplicateOnDrag(block.type, DRAGGABLE_PARAM_INPUT_PREFIX + arg.name);
             });
         }
         else {
             let i = block.appendDummyInput();
             comp.handlerArgs.filter(a => !a.inBlockDef).forEach(arg => {
-                i.appendField(new Blockly.FieldVariable(arg.name), "HANDLER_" + arg.name);
+                i.appendField(new FieldVariable(arg.name), "HANDLER_" + arg.name);
             });
         }
     }
@@ -279,7 +281,7 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
     appendMutation(block, {
         mutationToDom: (el: Element) => {
             block.inputList.forEach(input => {
-                input.fieldRow.forEach((fieldRow: FieldCustom) => {
+                input.fieldRow.forEach((fieldRow: FieldCustom & Blockly.Field) => {
                     if (fieldRow.isFieldCustom_ && fieldRow.saveOptions) {
                         const getOptions = fieldRow.saveOptions();
                         if (getOptions) {
@@ -292,7 +294,7 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
         },
         domToMutation: (saved: Element) => {
             block.inputList.forEach(input => {
-                input.fieldRow.forEach((fieldRow: FieldCustom) => {
+                input.fieldRow.forEach((fieldRow: FieldCustom & Blockly.Field) => {
                     if (fieldRow.isFieldCustom_ && fieldRow.restoreOptions) {
                         const options = JSON.parse(saved.getAttribute(`customfield`));
                         if (options) {
@@ -395,7 +397,7 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
                     }
 
                     if (isHandlerArg(pr)) {
-                        inputName = "HANDLER_DRAG_PARAM_" + pr.name;
+                        inputName = DRAGGABLE_PARAM_INPUT_PREFIX + pr.name;
                         inputCheck = fn.attributes.draggableParameters === "reporter" ? getBlocklyCheckForType(pr.type, info) : "Variable";
                         return;
                     }
@@ -594,8 +596,6 @@ let blocklyInitialized = false;
 function init(blockInfo: pxtc.BlocksInfo) {
     if (blocklyInitialized) return;
     blocklyInitialized = true;
-
-    applyPolyfills();
 
     initFieldEditors();
     initContextMenu();
@@ -827,16 +827,16 @@ function removeOuterSpace(str: string) {
  * variable ID or set the value of the model and not the field
  */
 export function setVarFieldValue(block: Blockly.Block, fieldName: string, newName: string) {
-    const varField = block.getField(fieldName) as Blockly.FieldVariable;
+    const varField = block.getField(fieldName) as FieldVariable;
 
     // Check for an existing model with this name; otherwise we'll create
     // a second variable with the same name and it will show up twice in the UI
-    const vars = block.workspace.getAllVariables();
+    const vars = block.workspace.getVariableMap().getAllVariables();
     let foundIt = false;
     if (vars && vars.length) {
         for (let v = 0; v < vars.length; v++) {
             const model = vars[v];
-            if (model.name === newName) {
+            if (model.getName() === newName) {
                 varField.setValue(model.getId());
                 foundIt = true;
             }
@@ -845,7 +845,7 @@ export function setVarFieldValue(block: Blockly.Block, fieldName: string, newNam
     if (!foundIt) {
         varField.initModel();
         const model = varField.getVariable();
-        model.name = newName;
+        model.setName(newName);
         varField.setValue(model.getId());
     }
 }

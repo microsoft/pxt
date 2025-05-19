@@ -82,7 +82,7 @@ export function registerFieldEditor(selector: string, field: FieldCustomConstruc
     }
 }
 
-export function createFieldEditor(selector: string, text: string, params: any): FieldCustom {
+export function createFieldEditor(selector: string, text: string, params: any): FieldCustom & Blockly.Field {
     if (registeredFieldEditors[selector] == undefined) {
         pxt.error(`Field editor ${selector} not registered`);
         return null;

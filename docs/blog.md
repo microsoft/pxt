@@ -1,5 +1,11 @@
 # Microsoft MakeCode Blog
 
+## [Summer 2025 – MakeCode Professional Development](/blog/csp/summer-pd-2025)
+
+April showers bring May flowers. For many of us, we are on the home stretch of the academic year already! Which is a good time to start planning for summer training and professional development opportunities.
+
+**[Continue reading this blog post](/blog/csp/summer-pd-2025)**
+
 ## [MakeCode Arcade 2025 Update](/blog/arcade/update-mar-2025)
 
 March 24th, 2025 by [Jaqster](https://github.com/jaqster)

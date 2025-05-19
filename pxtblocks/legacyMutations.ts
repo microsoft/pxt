@@ -5,6 +5,7 @@ import { Environment } from "./compiler/environment";
 import { escapeVarName } from "./compiler/util";
 import { compileExpression } from "./compiler/compiler";
 import { setVarFieldValue } from "./loader";
+import { FieldVariable } from "./plugins/newVariableField/fieldVariable";
 
 /**
  * This interface defines the optionally defined functions for mutations that Blockly
@@ -462,7 +463,7 @@ class DestructuringMutator extends MutatorHelper {
         this.parameters.forEach(param => {
             if (this.currentlyVisible.indexOf(param) === -1) {
                 const fieldValue = this.parameterRenames[param] || param;
-                dummyInput.appendField(new Blockly.FieldVariable(fieldValue), param);
+                dummyInput.appendField(new FieldVariable(fieldValue), param);
             }
         });
 

@@ -8,7 +8,7 @@ let oldCut: Blockly.ShortcutRegistry.KeyboardShortcut;
 let oldPaste: Blockly.ShortcutRegistry.KeyboardShortcut;
 
 export function initCopyPaste() {
-    if (oldCopy) return;
+    if (oldCopy || !getCopyPasteHandlers()) return;
 
     const shortcuts = Blockly.ShortcutRegistry.registry.getRegistry()
 
@@ -78,7 +78,7 @@ function registerPaste() {
 function registerCopyContextMenu() {
     const copyOption: Blockly.ContextMenuRegistry.RegistryItem = {
         displayText: () => lf("Copy"),
-        preconditionFn: scope => {
+        preconditionFn: (scope: Blockly.ContextMenuRegistry.Scope) => {
             const block = scope.block;
             if (block.isInFlyout || !block.isMovable() || !block.isEditable()) {
                 return "hidden";
@@ -107,7 +107,7 @@ function registerCopyContextMenu() {
 
     const copyCommentOption: Blockly.ContextMenuRegistry.RegistryItem = {
         displayText: () => lf("Copy"),
-        preconditionFn: scope => {
+        preconditionFn: (scope: Blockly.ContextMenuRegistry.Scope) => {
             const comment = scope.comment;
             if (!comment.isMovable() || !comment.isEditable()) {
                 return "hidden";
@@ -141,7 +141,7 @@ function registerCopyContextMenu() {
 function registerPasteContextMenu() {
     const pasteOption: Blockly.ContextMenuRegistry.RegistryItem = {
         displayText: () => lf("Paste"),
-        preconditionFn: scope => {
+        preconditionFn: (scope: Blockly.ContextMenuRegistry.Scope) => {
             if (pxt.shell.isReadOnly() || scope.workspace.options.readOnly) {
                 return "hidden";
             }

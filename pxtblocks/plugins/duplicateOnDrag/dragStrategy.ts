@@ -45,6 +45,9 @@ export class DuplicateOnDragStrategy implements Blockly.IDragStrategy {
 
     private dragging = false;
 
+    /** Used to persist an event group when snapping is done async. */
+    private originalEventGroup = '';
+
     /**
      * If this is a shadow block, the offset between this block and the parent
      * block, to add to the drag location. In workspace units.
@@ -382,6 +385,7 @@ export class DuplicateOnDragStrategy implements Blockly.IDragStrategy {
             this.block.getParent()?.endDrag(e);
             return;
         }
+        this.originalEventGroup = eventUtils.getGroup();
 
         this.fireDragEndEvent();
         this.fireMoveEvent();
@@ -396,24 +400,30 @@ export class DuplicateOnDragStrategy implements Blockly.IDragStrategy {
             // if we've already stopped dragging because we moved back to the start.
             this.workspace
                 .getLayerManager()
-                ?.moveOffDragLayer(this.block, BLOCK_LAYER);
+                ?.moveOffDragLayer(this.block, Blockly.layers.BLOCK);
             this.block.setDragging(false);
         }
 
         if (this.connectionCandidate) {
             // Applying connections also rerenders the relevant blocks.
             this.applyConnections(this.connectionCandidate);
+            this.disposeStep();
         } else {
-            this.block.queueRender();
+            this.block.queueRender().then(() => this.disposeStep());
         }
+    }
+
+    /** Disposes of any state at the end of the drag. */
+    private disposeStep() {
+        const newGroup = eventUtils.getGroup();
+        eventUtils.setGroup(this.originalEventGroup);
         this.block.snapToGrid();
 
         // Must dispose after connections are applied to not break the dynamic
         // connections plugin. See #7859
         this.connectionPreviewer!.dispose();
         this.workspace.setResizesEnabled(true);
-
-        eventUtils.setGroup(false);
+        eventUtils.setGroup(newGroup);
     }
 
     /** Connects the given candidate connections. */

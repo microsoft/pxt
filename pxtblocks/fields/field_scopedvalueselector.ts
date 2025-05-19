@@ -2,6 +2,7 @@
 
 import * as Blockly from "blockly";
 import { FieldCustom, FieldCustomOptions, setBlockDataForField, getBlockDataForField } from "./field_utils";
+import { FieldVariable } from "../plugins/newVariableField/fieldVariable";
 
 interface FieldScopedValueSelectorOptions extends FieldCustomOptions {
     defl?: string;
@@ -107,13 +108,13 @@ export class FieldScopedValueSelector extends Blockly.FieldLabel implements Fiel
                 if (!input) continue;
                 const fieldRow = input.fieldRow;
                 if (!fieldRow) continue;
-                const field = fieldRow.find(f => f.name === "VAR") as Blockly.FieldVariable;
+                const field = fieldRow.find(f => f.name === "VAR") as FieldVariable;
                 if (!field) continue;
                 const variable = field.getVariable();
                 if (!variable) continue;
                 //if (this.types.includes(variable.type)) {
                 {
-                    return this.setValue(variable.name);
+                    return this.setValue(variable.getName());
                 }
                 continue;
             }
@@ -135,5 +136,9 @@ export class FieldScopedValueSelector extends Blockly.FieldLabel implements Fiel
     onWorkspaceChange = (ev: Blockly.Events.Abstract) => {
         if (!this.sourceBlock_ || !this.sourceBlock_.workspace || this.sourceBlock_.disposed) return;
         if (ev.type === Blockly.Events.BLOCK_DRAG) return this.onDragEvent(ev as Blockly.Events.BlockDrag);
+    }
+
+    getFieldDescription(): string {
+        return this.scopedValue || this.defl || lf("value");
     }
 }

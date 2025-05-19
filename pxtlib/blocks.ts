@@ -81,9 +81,10 @@ namespace pxt.blocks {
     }
 
     export interface HandlerArg {
-        name: string,
-        type: string,
-        inBlockDef: boolean
+        name: string;
+        type: string;
+        inBlockDef: boolean;
+        localizationKey: string;
     }
 
     // Information for blocks that compile to function calls but are defined by vanilla Blockly
@@ -215,7 +216,8 @@ namespace pxt.blocks {
                         res.handlerArgs.push({
                             name: arg.name,
                             type: arg.type,
-                            inBlockDef: defParameters ? defParameters.some(def => def.ref && def.name === arg.name) : false
+                            inBlockDef: defParameters ? defParameters.some(def => def.ref && def.name === arg.name) : false,
+                            localizationKey: `${fn.qName}|handlerParam|${arg.name}`
                         });
                     })
                 }

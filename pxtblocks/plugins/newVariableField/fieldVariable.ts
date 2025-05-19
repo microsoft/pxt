@@ -40,7 +40,7 @@ export class FieldVariable extends Blockly.FieldVariable {
             const id = menuItem.getValue();
             if (id === FieldVariable.CREATE_VARIABLE_ID) {
                 Blockly.Variables.createVariableButtonHandler(this.sourceBlock_.workspace, name => {
-                    const newVar = this.sourceBlock_.workspace.getVariable(name);
+                    const newVar = this.sourceBlock_.workspace.getVariableMap().getVariable(name);
 
                     if (newVar) {
                         this.setValue(newVar.getId());
@@ -171,6 +171,24 @@ export class FieldVariable extends Blockly.FieldVariable {
 
     protected showEditor_(e?: MouseEvent): void {
         showEditorMixin.call(this, e);
+    }
+
+    getValue(): string | null {
+        const id = super.getValue();
+
+        // this is a workaround for to prevent blockly's flyout clearing behavior from
+        // deleting recycled blocks in the flyout. by returning a fake variable name,
+        // we get blockly to skip over this field's source block when it tries to delete
+        // all usages of the variable
+        if (this.sourceBlock_?.isInFlyout) {
+            const potentialMap = this.sourceBlock_.workspace?.getPotentialVariableMap();
+
+            if (potentialMap.getVariableById(id)) {
+                return "potential_" + id;
+            }
+        }
+
+        return id;
     }
 }
 

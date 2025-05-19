@@ -3,7 +3,7 @@
 import * as Blockly from "blockly";
 
 import svg = pxt.svgUtil;
-import { FieldCustom, FieldCustomOptions, setMelodyEditorOpen } from "./field_utils";
+import { clearDropDownDiv, FieldCustom, FieldCustomOptions, setMelodyEditorOpen } from "./field_utils";
 export const HEADER_HEIGHT = 50;
 export const TOTAL_WIDTH = 300;
 
@@ -70,7 +70,7 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends Blockly.Fie
     showEditor_() {
         // If there is an existing drop-down someone else owns, hide it immediately and clear it.
         Blockly.DropDownDiv.hideWithoutAnimation();
-        Blockly.DropDownDiv.clearContent();
+        clearDropDownDiv();
         Blockly.DropDownDiv.setColour(this.getDropdownBackgroundColour(), this.getDropdownBorderColour());
 
         let contentDiv = Blockly.DropDownDiv.getContentDiv() as HTMLDivElement;
@@ -113,6 +113,11 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends Blockly.Fie
     getText_() {
         if (this.invalidString) return pxt.Util.lf("Invalid Input");
         else return this.getValue();
+    }
+
+    getFieldDescription(): string {
+        const melodyString = this.melody.getStringRepresentation()?.replace(/-/g, "")?.trim();
+        return melodyString || lf("empty");
     }
 
     // This will be run when the field is created (i.e. when it appears on the workspace)

@@ -100,17 +100,18 @@ export class CodeCardView extends data.Component<CodeCardProps, CodeCardState> {
         const cloudShowTimestamp = cloudStatus && (cloudStatus.value === "synced" || cloudStatus.value === "justSynced" || cloudStatus.value === "localEdits");
 
         const ariaLabel = card.ariaLabel || card.title || card.shortName || name;
+        const ariaExpanded = !card.directOpen && card.selected !== undefined ? card.selected : undefined;
 
         const style = card.style || "card"
 
         const renderButton = (content: JSX.Element) => {
             return (<div className={`ui ${style} ${color} ${card.onClick ? "link" : ''} ${className ? className : ''}`}
-                role={card.role} aria-selected={card.role === "option" ? "true" : undefined} aria-label={ariaLabel} title={card.title}
+                role={card.role} aria-selected={card.role === "option" ? "true" : undefined} aria-label={ariaLabel} aria-expanded={ariaExpanded} title={card.title}
                 onClick={clickHandler} tabIndex={card.onClick ? card.tabIndex || 0 : null} onKeyDown={keydownHandler}>{content}</div>)
         }
         const renderLink = (content: JSX.Element) => {
             return (<a href={url} className={`ui ${style} ${color} link ${className ? className : ''}`}
-                aria-label={ariaLabel} title={card.title}>{content}</a>)
+                aria-label={ariaLabel} aria-expanded={ariaExpanded} title={card.title}>{content}</a>)
         }
 
         const cardContent = <>

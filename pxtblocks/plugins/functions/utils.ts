@@ -16,6 +16,9 @@ import { MsgKey } from "./msg";
 import { newFunctionMutation } from "./blocks/functionDeclarationBlock";
 import { FunctionDefinitionBlock } from "./blocks/functionDefinitionBlock";
 import { FunctionCallBlock, SerializedShadow } from "./blocks/functionCallBlocks";
+import { isFunctionDefinition } from "../../compiler/util";
+import { ArgumentReporterBlock } from "./blocks/argumentReporterBlocks";
+import { DRAGGABLE_PARAM_INPUT_PREFIX } from "../../loader";
 
 export type StringMap<T> = { [index: string]: T };
 
@@ -137,8 +140,8 @@ export function findLegalName(name: string, ws: Blockly.Workspace, block?: Commo
 
 function namesInUse(ws: Blockly.Workspace, exceptBlock?: Blockly.Block, exceptFuncId?: string) {
     const usedNames: StringMap<boolean> = {};
-    ws.getAllVariables().forEach(function (v) {
-        usedNames[v.name] = true;
+    ws.getVariableMap().getAllVariables().forEach(function (v) {
+        usedNames[v.getName()] = true;
     });
     ws.getAllBlocks(false).forEach(function (b) {
         const block = b as CommonFunctionBlock;
@@ -188,6 +191,10 @@ export function mutateCallersAndDefinition(name: string, ws: Blockly.Workspace, 
 
         for (const block of definitionBlock.getDescendants(false)) {
             if (!isFunctionArgumentReporter(block)) continue;
+
+            const argumentOwner = getArgumentReporterParent(block, block);
+
+            if (argumentOwner && argumentOwner !== definitionBlock) continue;
 
             const oldName = block.getFieldValue("VALUE");
             const oldArgId = oldArgNamesToIds[oldName];
@@ -244,7 +251,7 @@ export function getArgMap(mutation: Element, inverse: boolean) {
     return map;
 }
 
-function isFunctionArgumentReporter(block: Blockly.Block) {
+export function isFunctionArgumentReporter(block: Blockly.Block) {
     return (
         block.type == ARGUMENT_REPORTER_BOOLEAN_BLOCK_TYPE ||
         block.type == ARGUMENT_REPORTER_NUMBER_BLOCK_TYPE ||
@@ -252,6 +259,75 @@ function isFunctionArgumentReporter(block: Blockly.Block) {
         block.type == ARGUMENT_REPORTER_ARRAY_BLOCK_TYPE ||
         block.type == ARGUMENT_REPORTER_CUSTOM_BLOCK_TYPE
     );
+}
+
+export function doArgumentReporterDragChecks(a: Blockly.RenderedConnection, b: Blockly.RenderedConnection, distance: number) {
+    const draggedBlock = a.getSourceBlock();
+
+    if (!isFunctionArgumentReporter(draggedBlock)) {
+        return true;
+    }
+
+    const destinationBlock = b.getSourceBlock();
+
+    // this shouldn't happen, but if it does then we should let the default connection checker handle it
+    if (!destinationBlock) {
+        return true;
+    }
+
+    return !!(getArgumentReporterParent(draggedBlock, destinationBlock));
+}
+
+function getArgumentReporterParent(reporter: Blockly.Block, location: Blockly.Block): Blockly.Block | undefined {
+    pxt.U.assert(isFunctionArgumentReporter(reporter));
+
+    const varName = reporter.getFieldValue("VALUE");
+    const varType = (reporter as ArgumentReporterBlock).getTypeName();
+
+    while (location.getSurroundParent()) {
+        location = location.getSurroundParent();
+
+        // check to see if this is a callback with draggable reporters
+        for (const input of location.inputList) {
+            if (!input.connection || !input.name.startsWith(DRAGGABLE_PARAM_INPUT_PREFIX)) continue;
+
+            const name = input.name.slice(DRAGGABLE_PARAM_INPUT_PREFIX.length);
+            if (name !== varName) continue;
+
+            // blockly primitive types are capitalized
+            let toCheck = varType;
+            if (toCheck === "string" || toCheck === "number" || toCheck === "boolean") {
+                toCheck = toCheck.charAt(0).toUpperCase() + toCheck.slice(1);
+            }
+
+            if (input.connection.getCheck().indexOf(toCheck) !== -1) {
+                return location;
+            }
+
+            // bail out, even if there is a chance that a parent higher up in the stack could
+            // have a matching argument. we don't allow shadowing of arguments with
+            // different types
+            return undefined;
+        }
+    }
+
+    // if disabled, this block must be an orphaned block on the workspace. connecting
+    // function parameters to these blocks can be useful when refactoring, so allow
+    // the connection
+    if (!location.isEnabled()) {
+        return location;
+    }
+
+    // for functions, make sure the function has a parameter with this same name and type
+    if (isFunctionDefinition(location)) {
+        const functionArgs = (location as unknown as FunctionDefinitionBlock).getArguments();
+
+        if (functionArgs.some(arg => arg.name === varName && arg.type === varType)) {
+            return location;
+        }
+    }
+
+    return undefined;
 }
 
 export function findUniqueParamName(name: string, paramNames: string[]) {

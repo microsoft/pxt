@@ -1,7 +1,7 @@
 /// <reference path="../../built/pxtlib.d.ts" />
 
 import * as Blockly from "blockly";
-import { FieldCustomOptions, FieldCustom, parseColour } from "./field_utils";
+import { FieldCustomOptions, FieldCustom, parseColour, clearDropDownDiv } from "./field_utils";
 
 enum Note {
     C = 262,
@@ -209,17 +209,25 @@ export class FieldNote extends Blockly.FieldNumber implements FieldCustom {
         if (this.isExpanded) {
             return "" + this.value_;
         } else {
-            const note = +this.value_;
-            for (let i = 0; i < this.nKeys_; i++) {
-                if (Math.abs(this.getKeyFreq(i + this.minNote_) - note) < this.eps) {
-                    return this.getKeyName(i + this.minNote_);
-                }
-            }
-            let text = note.toString();
-            if (!isNaN(note))
-                text += " Hz";
-            return text;
+            return this.getNoteString();
         }
+    }
+
+    getFieldDescription(): string {
+        return this.getNoteString() || lf("note");
+    }
+
+    private getNoteString() {
+        const note = +this.value_;
+        for (let i = 0; i < this.nKeys_; i++) {
+            if (Math.abs(this.getKeyFreq(i + this.minNote_) - note) < this.eps) {
+                return this.getKeyName(i + this.minNote_);
+            }
+        }
+        let text = note.toString();
+        if (!isNaN(note))
+            text += " Hz";
+        return text;
     }
 
     /**
@@ -250,7 +258,7 @@ export class FieldNote extends Blockly.FieldNumber implements FieldCustom {
 
         // If there is an existing drop-down someone else owns, hide it immediately and clear it.
         Blockly.DropDownDiv.hideWithoutAnimation();
-        Blockly.DropDownDiv.clearContent();
+        clearDropDownDiv();
 
         const isMobile = pxt.BrowserUtils.isMobile() || pxt.BrowserUtils.isIOS();
         // invoke FieldTextInputs showeditor, so we can set quiet explicitly / not have a pop up dialogue

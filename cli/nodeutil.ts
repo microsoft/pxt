@@ -284,7 +284,7 @@ export async function npmVersionBumpAsync(
 ): Promise<string> {
     const output = await spawnWithPipeAsync({
         cmd: addCmd("npm"),
-        args: ["version", bumpType, "--message", `"[pxt-cli] bump version to %s"`, "--git-tag-version", tagCommit ? "true" : "false"],
+        args: ["version", bumpType, "--message", quoteIfNeeded(`[pxt-cli] bump version to %s`), "--git-tag-version", tagCommit ? "true" : "false"],
         cwd: ".",
         silent: true,
     });
@@ -299,12 +299,19 @@ export async function npmVersionBumpAsync(
         });
         await spawnAsync({
             cmd: "git",
-            args: ["commit", "-m", `"[pxt-cli] bump version to ${ver}"`],
+            args: ["commit", "-m", quoteIfNeeded(`[pxt-cli] bump version to ${ver}`)],
             cwd: ".",
             silent: true,
         });
     }
     return ver;
+}
+
+function quoteIfNeeded(arg: string) {
+    if (os.platform() === "win32") {
+        return `"${arg}"`;
+    }
+    return arg;
 }
 
 export function gitPushAsync(followTags: boolean = true) {
@@ -369,15 +376,14 @@ export async function isBranchProtectedAsync(
     });
 
     if (res.statusCode !== 200) {
-        Util.userError(`Failed to get branch info: ${res.statusCode} ${res.text}`);
+        Util.userError(`Failed to get branch protection info: ${res.statusCode} ${res.text}`);
     }
 
     const data = await res.json;
 
-    const requiresPR = !!data.protection?.required_pull_request_reviews;
-    const hasPushRestrictions = !!data.protection?.restrictions;
+    const requiresPR = data.protected;
 
-    return requiresPR || hasPushRestrictions;
+    return requiresPR;
 }
 
 export function timestamp(date = new Date()): string {

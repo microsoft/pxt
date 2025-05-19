@@ -5,10 +5,15 @@ import { FieldMusicEditor } from "./field_musiceditor";
 import { FieldSpriteEditor } from "./field_sprite";
 import { FieldTileset } from "./field_tileset";
 
-export interface FieldCustom extends Blockly.Field {
+export interface FieldCustom {
     isFieldCustom_: boolean;
     saveOptions?(): pxt.Map<string | number | boolean>;
     restoreOptions?(map: pxt.Map<string | number | boolean>): void;
+
+    /**
+     * Returns a human-readable description of the field's current value.
+     */
+    getFieldDescription?(): string;
 }
 
 export interface FieldCustomOptions {
@@ -23,7 +28,7 @@ export interface FieldCustomDropdownOptions extends FieldCustomOptions {
 }
 
 export interface FieldCustomConstructor {
-    new(text: string, options: FieldCustomOptions, validator?: Function): FieldCustom;
+    new(text: string, options: FieldCustomOptions, validator?: Function): FieldCustom & Blockly.Field;
 }
 
 // Parsed format of data stored in the .data attribute of blocks
@@ -39,6 +44,12 @@ export interface AssetSaveState {
     assetId: string;
 }
 
+export interface PointerCoords {
+    x: number,
+    y: number,
+}
+
+export type UserInputAction = "pointermove" | "keymove";
 
 export namespace svg {
     export function hasClass(el: SVGElement, cls: string): boolean {
@@ -215,17 +226,6 @@ export function songToDataURI(song: pxt.assets.music.Song, width: number, height
     return canvas.toDataURL();
 }
 
-function deleteTilesetTileIfExists(ws: Blockly.Workspace, tile: pxt.sprite.legacy.LegacyTileInfo) {
-    const existing = ws.getVariablesOfType(pxt.sprite.BLOCKLY_TILESET_TYPE);
-
-    for (const model of existing) {
-        if (parseInt(model.name.substr(0, model.name.indexOf(";"))) === tile.projectId) {
-            ws.deleteVariableById(model.getId());
-            break;
-        }
-    }
-}
-
 export interface FieldEditorReference<U extends Blockly.Field> {
     block: Blockly.Block;
     field: string;
@@ -242,7 +242,9 @@ export function getAllBlocksWithTilesets(ws: Blockly.Workspace): FieldEditorRefe
 }
 
 export function needsTilemapUpgrade(ws: Blockly.Workspace) {
-    const allTiles = ws.getVariablesOfType(pxt.sprite.BLOCKLY_TILESET_TYPE).map(model => pxt.sprite.legacy.blocklyVariableToTile(model.name));
+    const allTiles = ws.getVariableMap()
+        .getVariablesOfType(pxt.sprite.BLOCKLY_TILESET_TYPE)
+        .map(model => pxt.sprite.legacy.blocklyVariableToTile(model.getName()));
     return !!allTiles.length;
 }
 
@@ -692,4 +694,9 @@ function inflateJRes(jres: pxt.Map<pxt.JRes | string>): pxt.Map<pxt.JRes> {
     }
 
     return result;
+}
+
+export function clearDropDownDiv() {
+    Blockly.DropDownDiv.clearContent();
+    Blockly.DropDownDiv.getContentDiv().style.height = "";
 }

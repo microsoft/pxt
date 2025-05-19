@@ -162,20 +162,9 @@ export function all(): Experiment[] {
             description: lf("Open connected editors in different browser tabs.")
         },
         {
-            id: "accessibleBlocks",
-            name: lf("Accessible Blocks"),
-            description: lf("Use the WASD keys to move and modify blocks."),
-            feedbackUrl: "https://github.com/microsoft/pxt/issues/6850"
-        },
-        {
             id: "errorList",
             name: lf("Error List"),
             description: lf("Show an error list panel for JavaScript and Python.")
-        },
-        {
-            id: "blocksErrorList",
-            name: lf("Blocks Error List"),
-            description: lf("Show an error list panel for Blocks")
         },
         {
             id: "timeMachine",

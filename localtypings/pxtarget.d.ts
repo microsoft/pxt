@@ -134,6 +134,7 @@ declare namespace pxt {
         uploadDocs?: boolean; // enable uploading to crowdin on master or v* builds
         variants?: Map<AppTarget>; // patches on top of the current AppTarget for different chip variants
         multiVariants?: string[];
+        disabledVariants?: string[];
         alwaysMultiVariant?: boolean;
         queryVariants?: Map<AppTarget>; // patches on top of the current AppTarget using query url regex
         unsupportedBrowsers?: BrowserOptions[]; // list of unsupported browsers for a specific target (eg IE11 in arcade). check browserutils.js browser() function for strings
@@ -415,7 +416,6 @@ declare namespace pxt {
         extendEditor?: boolean; // whether a target specific editor.js is loaded
         extendFieldEditors?: boolean; // wether a target specific fieldeditors.js is loaded
         highContrast?: boolean; // simulator has a high contrast mode
-        accessibleBlocks?: boolean; // enable keyboard navigation in blockly
         print?: boolean; //Print blocks and text feature
         greenScreen?: boolean; // display webcam stream in background
         instructions?: boolean; // display make instructions
@@ -503,7 +503,7 @@ declare namespace pxt {
         tutorialExplicitHints?: boolean; // allow use explicit hints
         errorList?: boolean; // error list experiment
         embedBlocksInSnapshot?: boolean; // embed blocks xml in right-click snapshot
-        blocksErrorList?: boolean; // blocks error list experiment
+        blocksErrorList?: boolean; // blocks error list
         identity?: boolean; // login with identity providers
         assetEditor?: boolean; // enable asset editor view (in blocks/text toggle)
         disableMemoryWorkspaceWarning?: boolean; // do not warn the user when switching to in memory workspace
@@ -529,6 +529,7 @@ declare namespace pxt {
         timeMachineSnapshotInterval?: number; // An interval in milliseconds at which to take full project snapshots in project history. Defaults to 15 minutes
         adjustBlockContrast?: boolean; // If set to true, all block colors will automatically be adjusted to have a contrast ratio of 4.5 with text
         ipcIdentityProxy?: boolean; // for use with the in game minecraft experience only. If true, proxies all identity API requests through the ipc channel
+        pxtJsonOptions?: PxtJsonOption[];
     }
 
     interface DownloadDialogTheme {
@@ -584,6 +585,12 @@ declare namespace pxt {
         path?: string;
         subitems?: TOCMenuEntry[];
         markdown?: string;
+    }
+
+    interface PxtJsonOption {
+        label: string;
+        property: string;
+        type: "checkbox";
     }
 
     interface TargetBundle extends AppTarget {
@@ -943,6 +950,7 @@ declare namespace ts.pxtc {
         inlineInputModeLimit?: number; // the number of expanded arguments at which to switch from inline to external. only applies when inlineInputMode=variable and expandableArgumentsMode=enabled
         expandableArgumentMode?: string; // can be disabled, enabled, or toggle
         expandableArgumentBreaks?: string; // a comma separated list of how many arguments to reveal/hide each time + or - is pressed on a block. only applies when expandableArgumentsMode=enabled
+        expandArgumentsInToolbox?: boolean; // if true, the block will be fully expanded in the toolbox flyout
         compileHiddenArguments?: boolean; // if true, compiles the values in expandable arguments even when collapsed
         draggableParameters?: string; // can be reporter or variable; defaults to variable
 
