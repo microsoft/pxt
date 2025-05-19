@@ -3,6 +3,7 @@
 import * as React from "react";
 import * as auth from "./auth";
 import * as sui from "./sui";
+import * as core from "./core";
 import { fireClickOnEnter } from "./util";
 import { classList } from "../../react-common/components/util";
 import { Button } from "../../react-common/components/controls/Button";
@@ -86,6 +87,18 @@ export class ErrorList extends auth.Component<ErrorListProps, ErrorListState> {
                 signInMessage: lf("Sign-in is required to use this feature"),
                 signUpMessage: lf("Sign-up is required to use this feature"),
             });
+            return;
+        }
+
+        // We need to get permission to send the code & errors to AI.
+        const permission = await core.confirmAsync({
+            header: lf("Permission Required"),
+            body: lf("We’ll send your code and errors to an AI to help explain the issue. Do you want to continue?"),
+            agreeLbl: lf("Yes"),
+            disagreeLbl: lf("No"),
+        });
+        if (!permission) {
+            pxt.tickEvent("errorlist.permissionDenied");
             return;
         }
 
