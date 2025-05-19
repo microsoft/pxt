@@ -3,14 +3,18 @@ import { classList } from "../../util";
 import { Button } from "../Button";
 
 interface ThumbsFeedbackProps {
-    onFeedbackSelected: (positive: boolean | undefined) => void;
-    lockOnSelect?: boolean;
-    positiveFeedbackText?: string;
-    negativeFeedbackText?: string;
-    rootClassName?: string;
-    positiveClassName?: string;
-    negativeClassName?: string;
+    onFeedbackSelected: (positive: boolean | undefined) => void; // Callback function to handle feedback selection
+    lockOnSelect?: boolean; // If true, the user cannot change their selection once made
+    positiveFeedbackText?: string; // Tooltip text for the thumbs up button (not displayed)
+    negativeFeedbackText?: string; // Tooltip text for the thumbs down button (not displayed)
+    rootClassName?: string; // Optional class name to add to the root element
+    positiveClassName?: string; // Optional class name to add to the thumbs up button
+    negativeClassName?: string; // Optional class name to add to the thumbs down button
 }
+
+/**
+ * A simple component for thumbs up/down feedback.
+ */
 export const ThumbsFeedback = (props: ThumbsFeedbackProps) => {
     const {
         lockOnSelect,
