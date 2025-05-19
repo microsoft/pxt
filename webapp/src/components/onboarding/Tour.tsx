@@ -65,10 +65,6 @@ export const Tour = (props: TourProps) => {
         handleClose();
     }
 
-    const onFeedback = (positive: boolean | undefined) => {
-        setSelectedFeedback(positive);
-    };
-
     const isLastStep = currentStep === steps.length - 1;
     const confetti = config.showConfetti && isLastStep;
     const hideSteps = !config.numberFinalStep && isLastStep;
@@ -77,7 +73,7 @@ export const Tour = (props: TourProps) => {
         targetContent={steps[currentStep]}
         onNext={onNext}
         onBack={onBack}
-        onFeedback={onFeedback}
+        onFeedback={config.onFeedback ? (b) => setSelectedFeedback(b) : undefined}
         selectedFeedback={selectedFeedback}
         stepNumber={currentStep + 1}
         totalSteps={totalDisplaySteps}
