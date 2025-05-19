@@ -1016,7 +1016,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             if (e instanceof ErrorHelpException) {
                 core.errorNotification(e.getUserFacingMessage());
             } else {
-                core.errorNotification(lf("Sorry, something went wrong. Please try again later."));
+                core.errorNotification(lf("Something went wrong. Please try again later."));
             }
         }
     }
