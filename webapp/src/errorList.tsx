@@ -93,7 +93,7 @@ export class ErrorList extends auth.Component<ErrorListProps, ErrorListState> {
         // We need to get permission to send the code & errors to AI.
         const permission = await core.confirmAsync({
             header: lf("Permission Required"),
-            body: lf("We’ll send your code and errors to an AI to help explain the issue. Do you want to continue?"),
+            body: lf("We’ll send your code and the errors to an AI to help explain the issue. Do you want to continue?"),
             agreeLbl: lf("Yes"),
             disagreeLbl: lf("No"),
         });
