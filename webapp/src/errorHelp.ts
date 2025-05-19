@@ -97,7 +97,11 @@ function getErrorsAsText(errors: ErrorDisplayInfo[]): string {
  */
 function cleanCodeForAI(code: string): string {
     // Remove any image content (it's bulky and not useful for the AI)
-    const updatedCode = code.replace(/img`[^`]*`/g, "img`[trimmed for brevity]`");
+    let updatedCode = code.replace(/img`[^`]*`/g, "img`[trimmed for brevity]`");
+
+    // Remove <mutation> tags (control things like block expansion, which is not useful for the AI)
+    updatedCode = updatedCode.replace(/<mutation[^>]*>(.*?)<\/mutation>/g, "");
+
     return updatedCode;
 }
 
