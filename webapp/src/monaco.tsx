@@ -657,13 +657,23 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                             setInsertionSnippet={this.setInsertionSnippet}
                             parent={this.parent} />
                     </div>
-                    {showErrorList && <ErrorList
-                        onSizeChange={this.setErrorListState}
-                        errors={this.errors}
-                        startDebugger={this.startDebugger}
-                        getErrorHelp={this.getErrorHelp}
-                        note={this.parent.state.errorListNote && <AIErrorExplanationText explanation={this.parent.state.errorListNote} onFeedbackSelected={this.onAIFeedback} />}
-                        showLoginDialog={this.parent.showLoginDialog} />}
+                    {showErrorList && (
+                        <ErrorList
+                            onSizeChange={this.setErrorListState}
+                            errors={this.errors}
+                            startDebugger={this.startDebugger}
+                            getErrorHelp={this.getErrorHelp}
+                            note={
+                                this.parent.state.errorListNote && (
+                                    <AIErrorExplanationText
+                                        explanation={this.parent.state.errorListNote}
+                                        onFeedbackSelected={this.onAIFeedback}
+                                    />
+                                )
+                            }
+                            showLoginDialog={this.parent.showLoginDialog}
+                        />
+                    )}
                 </div>
             </div>
         )
@@ -724,7 +734,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const lang = this.fileType == pxt.editor.FileType.Python ? "python" : "typescript";
         const code = this.currFile.content;
         try {
-            let helpResponse = await getErrorHelpAsText(this.errors, lang, code);
+            const helpResponse = await getErrorHelpAsText(this.errors, lang, code);
             this.parent.setState({errorListNote: helpResponse});
         } catch (e) {
             pxt.reportException(e);
