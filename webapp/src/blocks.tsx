@@ -27,6 +27,7 @@ import { DebuggerToolbox } from "./debuggerToolbox";
 import { ErrorDisplayInfo, ErrorList, StackFrameDisplayInfo } from "./errorList";
 import { resolveExtensionUrl } from "./extensionManager";
 import { experiments, initEditorExtensionsAsync } from "../../pxteditor";
+import { ErrorHelpException, ErrorHelpTourResponse, getErrorHelpAsTour } from "./errorHelp";
 
 
 import IProjectView = pxt.editor.IProjectView;
@@ -85,6 +86,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.onErrorListResize = this.onErrorListResize.bind(this)
         this.getDisplayInfoForBlockError = this.getDisplayInfoForBlockError.bind(this)
         this.getDisplayInfoForException = this.getDisplayInfoForException.bind(this)
+        this.createTourFromResponse = this.createTourFromResponse.bind(this)
+        this.getErrorHelp = this.getErrorHelp.bind(this)
     }
     setBreakpointsMap(breakpoints: pxtc.Breakpoint[], procCallLocations: pxtc.LocationInfo[]): void {
         if (!breakpoints || !this.compilationResult) return;
@@ -305,12 +308,18 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return this.serializeBlocks();
     }
 
-    private serializeBlocks(normalize?: boolean): string {
+    /**
+     * Serializes the blocks in the editor to XML.
+     * @param normalize Whether to normalize the XML (remove id, x, y attributes)
+     * @param forceKeepIds Whether to force keeping the block ids in the XML
+     * @returns The serialized XML string
+     */
+    private serializeBlocks(normalize?: boolean, forceKeepIds?: boolean): string {
         // store ids when using github
-        let xml = pxtblockly.saveWorkspaceXml(this.editor,
-            !normalize && this.parent.state
+        let xml = pxtblockly.saveWorkspaceXml(this.editor, forceKeepIds ||
+            (!normalize && this.parent.state
             && this.parent.state.header
-            && !!this.parent.state.header.githubId);
+            && !!this.parent.state.header.githubId));
         // strip out id, x, y attributes
         if (normalize) xml = xml.replace(/(x|y|id)="[^"]*"/g, '')
         pxt.debug(xml)
@@ -921,7 +930,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 </div>
                 {showErrorList && <ErrorList
                     errors={this.errors}
-                    onSizeChange={this.onErrorListResize} />}
+                    onSizeChange={this.onErrorListResize}
+                    getErrorHelp={this.getErrorHelp}
+                    showLoginDialog={this.parent.showLoginDialog} />}
             </div>
         )
     }
@@ -946,6 +957,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.clearHighlightedStatements();
                 this.editor.highlightBlock(blockId);
                 this.editor.centerOnBlock(blockId, true);
+            },
+            metadata: {
+                blockId: blockId
             }
         }
     }
@@ -980,6 +994,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     this.clearHighlightedStatements();
                     this.editor.highlightBlock(blockId);
                     this.editor.centerOnBlock(blockId, true);
+                },
+                metadata: {
+                    blockId: blockId
                 }
             };
         }).filter(f => !!f) ?? undefined;
@@ -987,6 +1004,60 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return {
             message,
             stackFrames
+        };
+    }
+
+    /**
+     * Provides a user-facing explanation of the errors in the error list.
+     */
+    async getErrorHelp() {
+        const code = this.serializeBlocks(false, true /* forceKeepIds */);
+        try {
+            const helpResponse = await getErrorHelpAsTour(this.errors, "blocks", code);
+            const tour = this.createTourFromResponse(helpResponse);
+            this.parent.showTour(tour);
+        } catch (e) {
+            pxt.reportException(e);
+
+            if (e instanceof ErrorHelpException) {
+                core.errorNotification(e.getUserFacingMessage());
+            } else {
+                core.errorNotification(lf("Something went wrong. Please try again later."));
+            }
+        }
+    }
+
+    /**
+     * Converts an ErrorHelpTourRespone into an actual tour, which mostly involves
+     * ensuring all provided ids are valid and setting up the corresponding target queries.
+     */
+    private createTourFromResponse = (response: ErrorHelpTourResponse): pxt.tour.TourConfig => {
+        const validBlockIds = this.parent.getBlocks().map((b) => b.id);
+
+        const tourSteps: pxt.tour.BubbleStep[] = [];
+        for (const step of response.explanationSteps) {
+            const tourStep = {
+                title: lf("Error Explanation"),
+                description: step.message,
+                location: pxt.tour.BubbleLocation.Center,
+                bubbleStyle: "yellow",
+            } as pxt.tour.BubbleStep;
+
+            if (step.elementId && validBlockIds.includes(step.elementId)) {
+                tourStep.targetQuery = `g[data-id="${step.elementId}"]`;
+                tourStep.location = pxt.tour.BubbleLocation.Right;
+                tourStep.onStepBegin = () => this.editor.centerOnBlock(step.elementId, true);
+            } else {
+                // Do not add the tour target, but keep the step in case it's still helpful.
+                pxt.tickEvent("errorHelp.invalidBlockId");
+            }
+
+            tourSteps.push(tourStep);
+        }
+        return {
+            steps: tourSteps,
+            showConfetti: false,
+            numberFinalStep: true
         };
     }
 
