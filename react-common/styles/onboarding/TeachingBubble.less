@@ -44,7 +44,6 @@
     color: var(--teaching-bubble-foreground);
     box-shadow: 0 0 0 0.1rem;
     border-radius: 0.5rem;
-    padding: 1rem;
     z-index: @modalDimmerZIndex;
 
     .common-button {
@@ -74,7 +73,8 @@
     color: var(--teaching-bubble-foreground);
 }
 
-.teaching-bubble-content {
+.teaching-bubble-body {
+    padding: 1rem;
     font-size: 1.1rem;
 
     p {
@@ -128,7 +128,7 @@
 .teaching-bubble-footer {
     color: var(--pxt-neutral-alpha80);
     margin-top: 0.5rem;
-    margin: 0.5rem -1rem -1rem -1rem; // negative margins compensate for the padding on the bubble
+    margin: 0; // negative margins compensate for the padding on the bubble
     padding: 0.5rem 1rem;
     border-top: 1px solid var(--pxt-neutral-alpha50);
 }
