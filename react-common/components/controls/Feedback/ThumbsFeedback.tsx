@@ -13,7 +13,7 @@ interface ThumbsFeedbackProps {
 }
 
 /**
- * A simple component for thumbs up/down feedback.
+ * A component for gathering simple thumbs up/down feedback.
  */
 export const ThumbsFeedback = (props: ThumbsFeedbackProps) => {
     const {

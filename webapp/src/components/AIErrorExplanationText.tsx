@@ -4,7 +4,11 @@ interface AIErrorExplanationTextProps {
     explanation: string;
     onFeedbackSelected: (positive: boolean) => void;
 }
-/* Simple component to encapsulate how we display paragraph-form AI generated error explanations. */
+
+/**
+ * A simple component to encapsulate how we display paragraph-form AI generated error explanations.
+ * Mostly exists to encapsulate the disclaimer and feedback footer.
+ */
 export const AIErrorExplanationText = (props: AIErrorExplanationTextProps) => {
     const {
         explanation,
