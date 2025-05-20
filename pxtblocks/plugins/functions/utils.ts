@@ -278,7 +278,7 @@ export function doArgumentReporterDragChecks(a: Blockly.RenderedConnection, b: B
     return !!(getArgumentReporterParent(draggedBlock, destinationBlock));
 }
 
-function getArgumentReporterParent(reporter: Blockly.Block, location: Blockly.Block): Blockly.Block | undefined {
+export function getArgumentReporterParent(reporter: Blockly.Block, location: Blockly.Block): Blockly.Block | undefined {
     pxt.U.assert(isFunctionArgumentReporter(reporter));
 
     const varName = reporter.getFieldValue("VALUE");
