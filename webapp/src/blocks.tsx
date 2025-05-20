@@ -41,6 +41,7 @@ import { Measurements } from "./constants";
 import { flow } from "../../pxtblocks";
 import { HIDDEN_CLASS_NAME } from "../../pxtblocks/plugins/flyout/blockInflater";
 import { FlyoutButton } from "../../pxtblocks/plugins/flyout/flyoutButton";
+import { AIFooter } from "../../react-common/components/controls/AIFooter";
 
 interface CopyDataEntry {
     version: 1;
@@ -1042,7 +1043,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 description: step.message,
                 location: pxt.tour.BubbleLocation.Center,
                 bubbleStyle: "yellow",
-                notice: lf("AI generated content may be incorrect.")
             } as pxt.tour.BubbleStep;
 
             if (step.elementId && validBlockIds.includes(step.elementId)) {
@@ -1061,14 +1061,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             steps: tourSteps,
             showConfetti: false,
             numberFinalStep: true,
-            onFeedback: (positive: boolean) => {
-                this.handleErrorHelpFeedback(positive, {
+            footer: <AIFooter onFeedbackSelected={positive => this.handleErrorHelpFeedback(positive, {
                     type: "tour",
                     tourStepCount: response.explanationSteps.length,
                     errorCount: this.errors.length,
                     invalidBlockIdCount: invalidBlockIdCount,
-                });
-            }
+                })} feedbackLockOnSelect={true} />
         };
     }
 

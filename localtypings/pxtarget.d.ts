@@ -1349,13 +1349,12 @@ declare namespace pxt.tour {
         sansLocation?: BubbleLocation; // relative location of element to exclude
         onStepBegin?: () => void;
         bubbleStyle?: "yellow"; // Currently just have default (unset) & yellow styles. May add more in the future...
-        notice?: string; // Optional notice to show in the bubble
     }
     interface TourConfig {
         steps: BubbleStep[];
         showConfetti?: boolean;
         numberFinalStep?: boolean; // The last step will only be included in the step count if this is true.
-        onFeedback?: (positive: boolean) => void; // Optional callback for thumbs up/down feedback. Feedback is only shown if this is set.
+        footer?: string | JSX.Element;
     }
     const enum BubbleLocation {
         Above,

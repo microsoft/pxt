@@ -5,7 +5,6 @@ import { Confetti } from "../animations/Confetti";
 import { ContainerProps, classList } from "../util";
 import { FocusTrap } from "./FocusTrap";
 import { useEffect } from "react";
-import { ThumbsFeedback } from "./Feedback/ThumbsFeedback";
 
 
 export interface CutoutBounds {
@@ -31,7 +30,7 @@ export interface TeachingBubbleProps extends ContainerProps {
     onNext: () => void;
     onBack: () => void;
     onFinish: () => void;
-    onFeedback?: (positive: boolean) => void;
+    footer?: string | JSX.Element;
 }
 
 export const TeachingBubble = (props: TeachingBubbleProps) => {
@@ -47,7 +46,7 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
         onNext,
         onBack,
         onFinish,
-        onFeedback,
+        footer,
         stepNumber,
         totalSteps,
         parentElement,
@@ -385,17 +384,11 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
             <div className="teaching-bubble-content">
                 <strong aria-live="polite">{targetContent.title}</strong>
                 <p aria-live="polite">{targetContent.description}</p>
-                {targetContent.notice && <div className="teaching-bubble-notice" aria-live="polite">
-                    {targetContent.notice}
-                </div>}
-                <div className={`teaching-bubble-footer ${!hasSteps ? "no-steps" : ""}`}>
+                <div className={`teaching-bubble-navigation ${!hasSteps ? "no-steps" : ""}`}>
                     {hasSteps && <div className={classList("teaching-bubble-steps", forceHideSteps && "hidden")} aria-live="polite">
                         {stepNumber} of {totalSteps}
                     </div>}
-                    {onFeedback && <div className="teaching-bubble-feedback">
-                        <ThumbsFeedback lockOnSelect={false} onFeedbackSelected={onFeedback} />
-                    </div>}
-                    <div className="teaching-bubble-navigation">
+                    <div className="teaching-bubble-navigation-buttons">
                         {hasPrevious && <Button
                             className="tertiary tour-button"
                             onClick={onBack}
@@ -419,6 +412,9 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
                         />}
                     </div>
                 </div>
+                {footer && <div className="teaching-bubble-footer">
+                    {footer}
+                </div>}
             </div>
         </div>
     </FocusTrap>, parentElement || document.getElementById("root") || document.body)
