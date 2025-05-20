@@ -18,7 +18,7 @@ export const AIErrorExplanationText = (props: AIErrorExplanationTextProps) => {
     return (
         <div className="ai-explanation-container">
             <div className="explanation">{explanation}</div>
-            <AIFooter onFeedbackSelected={onFeedbackSelected} feedbackLockOnSelect={true} />
+            <AIFooter onFeedbackSelected={onFeedbackSelected} />
         </div>
     );
 };

@@ -131,6 +131,11 @@
     margin: 0; // negative margins compensate for the padding on the bubble
     padding: 0.5rem 1rem;
     border-top: 1px solid var(--pxt-neutral-alpha50);
+
+    .ai-footer .feedback-button.disabled {
+        // Override the default disabled coloring
+        color: var(--pxt-neutral-alpha80);
+    }
 }
 
 .teaching-bubble-close.common-button {

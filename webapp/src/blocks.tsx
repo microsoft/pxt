@@ -1066,7 +1066,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     tourStepCount: response.explanationSteps.length,
                     errorCount: this.errors.length,
                     invalidBlockIdCount: invalidBlockIdCount,
-                })} feedbackLockOnSelect={true} />
+                })} />
         };
     }
 

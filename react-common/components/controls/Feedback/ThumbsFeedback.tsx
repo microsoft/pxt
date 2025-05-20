@@ -27,16 +27,14 @@ export const ThumbsFeedback = (props: ThumbsFeedbackProps) => {
     } = props;
     const [selectedFeedback, setSelectedFeedback] = React.useState<boolean | undefined>(undefined);
 
-    React.useEffect(() => {
-        onFeedbackSelected(selectedFeedback);
-    }, [selectedFeedback]);
-
     const handleFeedbackSelected = (positive: boolean) => {
         if (positive === selectedFeedback) {
             // If the user clicks the same feedback button again, reset it
             setSelectedFeedback(undefined);
+            onFeedbackSelected(undefined);
         } else {
             setSelectedFeedback(positive);
+            onFeedbackSelected(positive);
         }
     };
 
