@@ -72,7 +72,6 @@ export const Tour = (props: TourProps) => {
         onNext={onNext}
         onBack={onBack}
         onFeedback={config.onFeedback ? (b) => setSelectedFeedback(b) : undefined}
-        selectedFeedback={selectedFeedback}
         stepNumber={currentStep + 1}
         totalSteps={totalDisplaySteps}
         hasPrevious={currentStep > 0}
