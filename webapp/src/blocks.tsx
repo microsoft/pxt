@@ -41,6 +41,7 @@ import { Measurements } from "./constants";
 import { flow } from "../../pxtblocks";
 import { HIDDEN_CLASS_NAME } from "../../pxtblocks/plugins/flyout/blockInflater";
 import { FlyoutButton } from "../../pxtblocks/plugins/flyout/flyoutButton";
+import { AIFooter } from "../../react-common/components/controls/AIFooter";
 
 interface CopyDataEntry {
     version: 1;
@@ -308,6 +309,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return this.serializeBlocks();
     }
 
+    /**
+     * Serializes the blocks in the editor to XML.
+     * @param normalize Whether to normalize the XML (remove id, x, y attributes)
+     * @param forceKeepIds Whether to force keeping the block ids in the XML
+     * @returns The serialized XML string
+     */
     private serializeBlocks(normalize?: boolean, forceKeepIds?: boolean): string {
         // store ids when using github
         let xml = pxtblockly.saveWorkspaceXml(this.editor, forceKeepIds ||
@@ -1016,7 +1023,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             if (e instanceof ErrorHelpException) {
                 core.errorNotification(e.getUserFacingMessage());
             } else {
-                core.errorNotification(lf("Sorry, something went wrong. Please try again later."));
+                core.errorNotification(lf("Something went wrong. Please try again later."));
             }
         }
     }
@@ -1036,10 +1043,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 description: step.message,
                 location: pxt.tour.BubbleLocation.Center,
                 bubbleStyle: "yellow",
-                notice: lf("AI-generated content may not be perfect.")
             } as pxt.tour.BubbleStep;
 
-            if (validBlockIds.includes(step.elementId)) {
+            if (step.elementId && validBlockIds.includes(step.elementId)) {
                 tourStep.targetQuery = `g[data-id="${step.elementId}"]`;
                 tourStep.location = pxt.tour.BubbleLocation.Right;
                 tourStep.onStepBegin = () => this.editor.centerOnBlock(step.elementId, true);
@@ -1055,14 +1061,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             steps: tourSteps,
             showConfetti: false,
             numberFinalStep: true,
-            onFeedback: (positive: boolean) => {
-                this.handleErrorHelpFeedback(positive, {
+            footer: <AIFooter onFeedbackSelected={positive => this.handleErrorHelpFeedback(positive, {
                     type: "tour",
                     tourStepCount: response.explanationSteps.length,
                     errorCount: this.errors.length,
                     invalidBlockIdCount: invalidBlockIdCount,
-                });
-            }
+                })} />
         };
     }
 

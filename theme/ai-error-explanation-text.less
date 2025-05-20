@@ -1,4 +1,4 @@
-.error-list-ai-explanation-container {
+.ai-explanation-container {
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -8,25 +8,11 @@
     white-space: pre-line; // Preserve new lines
 
     .ai-footer {
-        display: flex;
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: flex-end;
-        width: 100%;
-        height: fit-content;
-        margin-top: 0.5rem;
-        font-size: 0.9rem;
-        line-height: 0.9rem;
+        margin-top: 1rem;
 
-        .feedback-button {
-            i {
-                font-size: 0.9rem;
-            }
-
-            &.disabled {
-                // Override the default disabled coloring
-                color: var(--pxt-neutral1-foreground);
-            }
+        .feedback-button.disabled {
+            // Override the default disabled coloring
+            color: var(--pxt-neutral1-foreground);
         }
     }
 }

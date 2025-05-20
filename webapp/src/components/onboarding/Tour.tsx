@@ -8,9 +8,8 @@ export interface TourProps {
 
 export const Tour = (props: TourProps) => {
     const { onClose, config } = props;
-    const { steps } = config;
+    const { steps, footer } = config;
     const [currentStep, setCurrentStep] = useState(0);
-    const [selectedFeedback, setSelectedFeedback] = useState<boolean | undefined>(undefined);
     const tourStartTime = useRef(Date.now());
     const stepStartTime = useRef(Date.now());
 
@@ -36,33 +35,22 @@ export const Tour = (props: TourProps) => {
 
     const onNext = () => {
         pxt.tickEvent("tour.next", data());
-        const nextStep = currentStep + 1;
         setCurrentStep(currentStep + 1);
     };
 
     const onBack = () => {
         pxt.tickEvent("tour.back", data());
-        const prevStep = currentStep - 1;
         setCurrentStep(currentStep - 1);
     };
 
-    const handleClose = () => {
-        // Send feedback once the tour closes
-        if (config.onFeedback && selectedFeedback !== undefined) {
-            config.onFeedback(selectedFeedback);
-        }
-
-        onClose();
-    }
-
     const onExit = () => {
         pxt.tickEvent("tour.exit", data());
-        handleClose();
+        onClose();
     }
 
     const onFinish = () => {
         pxt.tickEvent("tour.finish", data());
-        handleClose();
+        onClose();
     }
 
     const isLastStep = currentStep === steps.length - 1;
@@ -73,8 +61,6 @@ export const Tour = (props: TourProps) => {
         targetContent={steps[currentStep]}
         onNext={onNext}
         onBack={onBack}
-        onFeedback={config.onFeedback ? (b) => setSelectedFeedback(b) : undefined}
-        selectedFeedback={selectedFeedback}
         stepNumber={currentStep + 1}
         totalSteps={totalDisplaySteps}
         hasPrevious={currentStep > 0}
@@ -83,5 +69,6 @@ export const Tour = (props: TourProps) => {
         onFinish={onFinish}
         showConfetti={confetti}
         forceHideSteps={hideSteps}
+        footer={footer}
     />
 };
