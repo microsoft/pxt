@@ -452,7 +452,7 @@ async function expandImagesAsync(xsg: Document): Promise<void> {
     const linkedSvgImages = images
         .filter(image => {
             const href = image.getAttribute("href");
-            return href.endsWith(".svg") &&
+            return href?.endsWith(".svg") &&
                 (
                     href.startsWith("/") ||
                     href.startsWith(pxt.webConfig.cdnUrl)
