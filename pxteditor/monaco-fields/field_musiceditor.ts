@@ -1,5 +1,5 @@
 import { MonacoReactFieldEditor } from "./field_react";
-import { MonacoFieldEditorDefinition, registerMonacoFieldEditor } from "./monacoFieldEditor";
+import { registerMonacoFieldEditor } from "./monacoFieldEditor";
 
 const fieldEditorId = "music-editor";
 
@@ -91,7 +91,7 @@ function createFakeAsset(song: pxt.assets.music.Song): pxt.Song {
     }
 }
 
-export const songEditorDefinition: MonacoFieldEditorDefinition = {
+export const songEditorDefinition: pxt.editor.MonacoFieldEditorDefinition = {
     id: fieldEditorId,
     foldMatches: true,
     glyphCssClass: "fas fa-music sprite-focus-hover",

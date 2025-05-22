@@ -1,5 +1,5 @@
 import { MonacoReactFieldEditor } from "./field_react";
-import { MonacoFieldEditorDefinition, registerMonacoFieldEditor } from "./monacoFieldEditor";
+import { registerMonacoFieldEditor } from "./monacoFieldEditor";
 
 const fieldEditorId = "tilemap-editor";
 
@@ -139,7 +139,7 @@ function createFakeAsset(data: pxt.sprite.TilemapData): pxt.ProjectTilemap {
     }
 }
 
-export const tilemapEditorDefinition: MonacoFieldEditorDefinition = {
+export const tilemapEditorDefinition: pxt.editor.MonacoFieldEditorDefinition = {
     id: fieldEditorId,
     foldMatches: true,
     alwaysBuildOnClose: true,

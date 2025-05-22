@@ -13,6 +13,7 @@ import * as pxtblockly from "../../pxtblocks";
 import ExtensionResult = pxt.editor.ExtensionResult;
 import NativeHostMessage = pxt.editor.NativeHostMessage;
 import { setEditorExtensionExperiments } from "../../pxteditor/experiments";
+import { registerMonacoFieldEditor } from "../../pxteditor";
 
 
 function log(msg: string) {
@@ -400,6 +401,11 @@ function applyExtensionResult() {
     }
     if (res.experiments) {
         setEditorExtensionExperiments(res.experiments);
+    }
+    if (res.monacoFieldEditors) {
+        for (const def of res.monacoFieldEditors) {
+            registerMonacoFieldEditor(def.id, def);
+        }
     }
 }
 
