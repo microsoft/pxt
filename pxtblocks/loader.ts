@@ -26,6 +26,9 @@ import { FieldDropdown } from "./fields/field_dropdown";
 import { setDraggableShadowBlocks, setDuplicateOnDrag, setDuplicateOnDragStrategy } from "./plugins/duplicateOnDrag";
 import { initCopyPaste } from "./copyPaste";
 import { FieldVariable } from "./plugins/newVariableField/fieldVariable";
+import { ArgumentReporterBlock, FieldArgumentReporter, setArgumentReporterLocalizeFunction } from "./plugins/functions";
+import { getArgumentReporterParent } from "./plugins/functions/utils";
+import { isFunctionDefinition } from "./compiler/util";
 
 export const DRAGGABLE_PARAM_INPUT_PREFIX = "HANDLER_DRAG_PARAM_";
 
@@ -104,7 +107,11 @@ export function blockSymbol(type: string): pxtc.SymbolInfo {
 export function injectBlocks(blockInfo: pxtc.BlocksInfo): pxtc.SymbolInfo[] {
     cachedBlockInfo = blockInfo;
 
-   setDraggableShadowBlocks(blockInfo.blocks.filter(fn => fn.attributes.duplicateShadowOnDrag).map(fn => fn.attributes.blockId));
+    setDraggableShadowBlocks(blockInfo.blocks.filter(fn => fn.attributes.duplicateShadowOnDrag).map(fn => fn.attributes.blockId));
+
+    setArgumentReporterLocalizeFunction((arg, block) => {
+        return localizeArgumentReporter(blockInfo, arg, block);
+    });
 
     // inject Blockly with all block definitions
     return blockInfo.blocks
@@ -848,4 +855,38 @@ export function setVarFieldValue(block: Blockly.Block, fieldName: string, newNam
         model.setName(newName);
         varField.setValue(model.getId());
     }
+}
+
+
+function localizeArgumentReporter(blocksInfo: pxtc.BlocksInfo, field: FieldArgumentReporter, block: ArgumentReporterBlock): string | undefined {
+    let result: string = undefined;
+
+    const mutationName = block.getLocalizationName();
+    if (mutationName) {
+        const localized = pxt.U.rlf(mutationName);
+        if (localized !== mutationName) {
+            result = localized;
+        }
+        else {
+            result = pxtc.getBlockTranslationsCacheKey(mutationName);
+        }
+    }
+
+    const parent = getArgumentReporterParent(block, block);
+
+    if (!parent || isFunctionDefinition(parent)) return result;
+
+    const fn = blocksInfo.blocksById[parent.type];
+
+    if (!fn) return result;
+
+    const comp = pxt.blocks.compileInfo(fn);
+
+    const handlerArg = comp.handlerArgs?.find(arg => arg.name === field.getValue());
+
+    if (handlerArg) {
+        return pxtc.getBlockTranslationsCacheKey(handlerArg.localizationKey);
+    }
+
+    return result;
 }
