@@ -338,6 +338,10 @@ export class ProjectView
                 this.showNavigateRegions();
                 return
             }
+            case "togglekeyboardcontrolshelp": {
+                this.toggleBuiltInSideDoc("keyboardControls", false);
+                return
+            }
         }
     }
 
@@ -1470,6 +1474,12 @@ export class ProjectView
         }
     }
 
+    toggleBuiltInSideDoc(help: pxt.editor.BuiltInHelp, focusIfVisible: boolean) {
+        let sd = this.refs["sidedoc"] as container.SideDocs;
+        if (!sd) return;
+        sd.toggleBuiltInHelp(help, focusIfVisible);
+    }
+
     setTutorialInstructionsExpanded(value: boolean): void {
         const tutorialOptions = this.state.tutorialOptions;
         tutorialOptions.tutorialStepExpanded = value;
@@ -1830,6 +1840,13 @@ export class ProjectView
                 this.shouldTryDecompile = true;
             }
 
+            // Onboard accessible blocks if accessible blocks has just been enabled
+            const onboardAccessibleBlocks = pxt.storage.getLocal("onboardAccessibleBlocks") === "1"
+            const sideDocsLoadUrl = onboardAccessibleBlocks ? `${container.builtInPrefix}keyboardControls` : ""
+            if (onboardAccessibleBlocks) {
+                pxt.storage.setLocal("onboardAccessibleBlocks", "0")
+            }
+
             this.setState({
                 home: false,
                 showFiles: h.githubId ? true : false,
@@ -1838,7 +1855,7 @@ export class ProjectView
                 header: h,
                 projectName: h.name,
                 currFile: file,
-                sideDocsLoadUrl: '',
+                sideDocsLoadUrl: sideDocsLoadUrl,
                 debugging: false,
                 isMultiplayerGame: false
             });
@@ -5207,6 +5224,10 @@ export class ProjectView
     }
 
     async toggleAccessibleBlocks() {
+        const nextEnabled = !this.getData<boolean>(auth.ACCESSIBLE_BLOCKS);
+        if (nextEnabled) {
+            pxt.storage.setLocal("onboardAccessibleBlocks", "1")
+        }
         await core.toggleAccessibleBlocks()
         this.reloadEditor();
     }
@@ -5544,8 +5565,8 @@ export class ProjectView
                         <projects.Projects parent={this} ref={this.handleHomeRef} />
                     </div>
                 </div> : undefined}
-                {showEditorToolbar && <editortoolbar.EditorToolbar ref="editortools" parent={this} />}
                 {sideDocs ? <container.SideDocs ref="sidedoc" parent={this} sideDocsCollapsed={this.state.sideDocsCollapsed} docsUrl={this.state.sideDocsLoadUrl} /> : undefined}
+                {showEditorToolbar && <editortoolbar.EditorToolbar ref="editortools" parent={this} />}
                 {sandbox ? undefined : <scriptsearch.ScriptSearch parent={this} ref={this.handleScriptSearchRef} />}
                 {sandbox ? undefined : <extensions.Extensions parent={this} ref={this.handleExtensionRef} />}
                 {inHome ? <projects.ImportDialog parent={this} ref={this.handleImportDialogRef} /> : undefined}
