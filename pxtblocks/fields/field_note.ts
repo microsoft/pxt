@@ -250,7 +250,7 @@ export class FieldNote extends Blockly.FieldNumber implements FieldCustom {
     };
 
     protected widgetDispose_(): void {
-        this.htmlInput_.addEventListener("keydown", this.keyHandler);
+        this.htmlInput_.removeEventListener("keydown", this.keyHandler);
         super.widgetDispose_();
     }
 
