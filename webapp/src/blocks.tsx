@@ -879,6 +879,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const accessibleBlocksEnabled = data.getData<boolean>(auth.ACCESSIBLE_BLOCKS)
         if (accessibleBlocksEnabled) {
             (this.editor.getSvgGroup() as SVGElement).focus();
+            Blockly.hideChaff();
         }
     }
 
