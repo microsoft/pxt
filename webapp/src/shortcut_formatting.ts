@@ -95,15 +95,15 @@ export function getActionShortcutsAsKeys(
  */
 const shortcutRegistryKeyNames: Record<string | number, string> = {
   // Numeric (subset we use).
-  8: lf('Backspace'),
-  13: lf('Enter'),
-  27: lf('Esc'),
-  32: lf('Space'),
+  8: lf("Backspace"),
+  13: lf("Enter"),
+  27: lf("Esc"),
+  32: lf("Space"),
   37: '←',
   38: '↑',
   39: '→',
   40: '↓',
-  46: lf('Delete'),
+  46: lf("Delete"),
   48: '0',
   49: '1',
   50: '2',
@@ -142,8 +142,8 @@ const shortcutRegistryKeyNames: Record<string | number, string> = {
   90: 'Z',
   191: '/',
   // Modifiers
-  'Shift': lf('Shift'),
-  'Control': lf('Ctrl'),
+  'Shift': lf("Shift"),
+  'Control': lf("Ctrl"),
   'Meta': '⌘',
-  'Alt': isMacPlatform ? '⌥' : lf('Alt'),
+  'Alt': isMacPlatform ? '⌥' : lf("Alt"),
 };
