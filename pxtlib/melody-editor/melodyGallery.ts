@@ -64,20 +64,20 @@ namespace pxtmelody {
             const [x, y] = this.selectedColRow;
             switch(e.code) {
                 case "ArrowUp": {
-                    this.selectedColRow = [x, y === 0 ? 0 : y - 1];
+                    this.selectedColRow = [x, Math.max(0, y - 1)];
                     break;
                 }
                 case "ArrowDown": {
-                    this.selectedColRow = [x, y === this.selectionButtons.length -1 ? y : y + 1];
+                    this.selectedColRow = [x, Math.min(this.selectionButtons.length - 1, y + 1)];
                     break;
                 }
                 case "ArrowLeft": {
-                    this.selectedColRow = [x === 0 ? 0 : x - 1, y];
+                    this.selectedColRow = [Math.max(0, x - 1), y];
                     break;
                 }
                 case "ArrowRight": {
                     // Only two columns.
-                    this.selectedColRow = [x === 1 ? 1 : x + 1, y];
+                    this.selectedColRow = [Math.min(1, x + 1), y];
                     break;
                 }
                 case "Enter":
@@ -99,7 +99,7 @@ namespace pxtmelody {
                 this.selectedElement = this.previewButtons[newY]
             }
             this.selectedElement.classList.add("selected");
-            this.contentDiv.setAttribute("aria-activedescendant", `:${newY}-${newX === 0 ? "selection" : "preview"}`);
+            this.contentDiv.setAttribute("aria-activedescendant", getCellId(newX, newY));
 
             const containerRect = this.contentDiv.getBoundingClientRect();
             const selectedElementRect = this.selectedElement.getBoundingClientRect()
@@ -120,7 +120,7 @@ namespace pxtmelody {
             }
             this.selectedElement.classList.add("selected");
             const [x, y] = this.selectedColRow;
-            this.contentDiv.setAttribute("aria-activedescendant", `:${x}-${y === 0 ? "selection" : "preview"}`);
+            this.contentDiv.setAttribute("aria-activedescendant", getCellId(x, y));
         }
 
         blurListener(_e: FocusEvent) {
@@ -252,7 +252,7 @@ namespace pxtmelody {
                 role: "menuitem",
                 title: sample.name,
                 tabIndex: -1,
-                id: `:${i}-selection`
+                id: getCellId(i, 0)
             }, () => this.handleSelection(sample))
 
             leftButton.appendChild(icon);
@@ -268,7 +268,7 @@ namespace pxtmelody {
                 role: "menuitem",
                 title: lf("Preview {0}", sample.name),
                 tabIndex: -1,
-                id: `:${i}-preview`
+                id: getCellId(i,1)
             }, () => this.togglePlay(sample, i));
 
             const playIcon = mkElement("i", {
@@ -412,3 +412,5 @@ namespace pxtmelody {
         return el;
     }
 }
+
+const getCellId = (x: number, y: number) => `:${x}-${y === 0 ? "selection" : "preview"}`;

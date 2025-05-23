@@ -50,7 +50,7 @@ export abstract class FieldMatrix extends Blockly.Field {
 
                 const cellG = pxsim.svg.child(row, "g", { transform: `translate(${tx} ${ty})`, 'role': 'gridcell' });
                 const rectOptions = {
-                    'id': `${this.sourceBlock_.id}:${x}${y}`,  // For aria-activedescendant
+                    'id': this.getCellId(x,y),  // For aria-activedescendant
                     'aria-label': cellLabel,
                     'role': 'switch',
                     'aria-checked': "false",
@@ -60,7 +60,8 @@ export abstract class FieldMatrix extends Blockly.Field {
                     'stroke': cellStroke,
                     'data-x': x,
                     'data-y': y,
-                    'rx': Math.max(2, scale * cornerRadius) };
+                    'rx': Math.max(2, scale * cornerRadius)
+                };
                 const cellRect = pxsim.svg.child(cellG, "rect", rectOptions) as SVGRectElement;
                 this.cells[x][y] = cellRect;
 
@@ -186,7 +187,7 @@ export abstract class FieldMatrix extends Blockly.Field {
     }
 
     private setCellSelection(x: number, y: number) {
-        this.matrixSvg.setAttribute('aria-activedescendant', this.sourceBlock_.id + `:${x}${y}`);
+        this.matrixSvg.setAttribute('aria-activedescendant', this.getCellId(x, y));
     }
 
     protected clearCellSelection() {
@@ -208,7 +209,7 @@ export abstract class FieldMatrix extends Blockly.Field {
     }
 
     protected attachEventHandlersToMatrix() {
-        if ((this.sourceBlock_.workspace as any).isFlyout) return;
+        if (this.sourceBlock_.isInFlyout) return;
 
         this.addKeyDownHandler();
         this.addBlurHandler();
@@ -228,6 +229,8 @@ export abstract class FieldMatrix extends Blockly.Field {
             Blockly.browserEvents.unbind(this.blurBinding)
         }
     }
+
+    protected getCellId = (x: number, y: number) => `${this.sourceBlock_.id}:${x}-${y}`;
 
     protected abstract attachPointerEventHandlersToCell(x: number, y: number, cellRect: SVGElement): void;
 

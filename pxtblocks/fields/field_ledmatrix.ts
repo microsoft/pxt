@@ -100,7 +100,8 @@ export class FieldLedMatrix extends FieldMatrix implements FieldCustom {
 
     private initMatrix() {
         if (!this.sourceBlock_.isInsertionMarker()) {
-            this.matrixSvg = pxsim.svg.parseString(`<svg xmlns="http://www.w3.org/2000/svg" id="field-matrix" class="blocklyMatrix" tabindex="-1" role="grid" aria-label="${lf("LED grid")}" />`);
+            this.matrixSvg = pxsim.svg.parseString(`<svg xmlns="http://www.w3.org/2000/svg" id="field-matrix" class="blocklyMatrix" tabindex="-1" role="grid" />`);
+            this.matrixSvg.ariaLabel = lf("LED grid");
 
             // Initialize the matrix that holds the state
             for (let i = 0; i < this.numMatrixCols; i++) {

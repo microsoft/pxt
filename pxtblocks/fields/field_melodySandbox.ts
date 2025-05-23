@@ -448,8 +448,7 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
         return false;
     }
 
-    protected toggleCell(x: number, y: number): void {
-        const [row, column] = [y, x];
+    protected toggleCell(column: number, row: number): void {
         // update melody array
         this.invalidString = null;
         this.melody.updateMelody(row, column);
@@ -462,8 +461,7 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
         this.updateFieldLabel();
     }
 
-    protected getCellToggled(x: number, y: number): boolean {
-        const [row, column] = [y, x];
+    protected getCellToggled(column: number, row: number): boolean {
         return this.melody.getValue(row, column);
     }
 
@@ -565,7 +563,8 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
         FieldCustomMelody.VIEWBOX_WIDTH = (FieldCustomMelody.CELL_WIDTH + FieldCustomMelody.CELL_HORIZONTAL_MARGIN) * this.numMatrixCols + FieldCustomMelody.CELL_HORIZONTAL_MARGIN;
         if (pxt.BrowserUtils.isEdge()) FieldCustomMelody.VIEWBOX_WIDTH += 37;
         FieldCustomMelody.VIEWBOX_HEIGHT = (FieldCustomMelody.CELL_WIDTH + FieldCustomMelody.CELL_VERTICAL_MARGIN) * this.numMatrixRows + FieldCustomMelody.CELL_VERTICAL_MARGIN;
-        this.matrixSvg = pxsim.svg.parseString(`<svg xmlns="http://www.w3.org/2000/svg" class="melody-grid-div blocklyMatrix" role="grid"  aria-label="${lf("Melody grid")}" viewBox="0 0 ${FieldCustomMelody.VIEWBOX_WIDTH} ${FieldCustomMelody.VIEWBOX_HEIGHT}" tabindex="0" />`);
+        this.matrixSvg = pxsim.svg.parseString(`<svg xmlns="http://www.w3.org/2000/svg" class="melody-grid-div blocklyMatrix" role="grid" viewBox="0 0 ${FieldCustomMelody.VIEWBOX_WIDTH} ${FieldCustomMelody.VIEWBOX_HEIGHT}" tabindex="0" />`);
+        this.matrixSvg.ariaLabel =  lf("Melody grid");
 
         this.createMatrixDisplay({
             cellWidth: FieldCustomMelody.CELL_WIDTH,
