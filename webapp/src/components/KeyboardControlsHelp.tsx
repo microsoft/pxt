@@ -1,5 +1,5 @@
 import * as React from "react";
-import { getActionShortcut, ShortcutNames } from "../shortcut_formatting";
+import { getActionShortcut, getActionShortcutsAsKeys, ShortcutNames } from "../shortcut_formatting";
 
 const KeyboardControlsHelp = () => {
     const ref = React.useRef<HTMLElement>(null);
@@ -12,8 +12,7 @@ const KeyboardControlsHelp = () => {
     const contextMenuRow = <Row name={lf("Open context menu")} shortcuts={[ShortcutNames.MENU]} />
     const cleanUpRow = <Row name={lf("Workspace: Format code")} shortcuts={[ShortcutNames.CLEAN_UP]} />
     const orAsJoiner = lf("or")
-    // We need a better strategy for pulling alternatives from the registry. For now these are hardcoded.
-    const enterOrSpace = { shortcuts: [[lf("Enter")], [lf("Space")]], joiner: orAsJoiner}
+    const enterOrSpace = { shortcuts: getActionShortcutsAsKeys(ShortcutNames.EDIT_OR_CONFIRM), joiner: orAsJoiner}
     const editOrConfirmRow = <Row name={lf("Edit or confirm")} {...enterOrSpace} />
     return (
         <aside id="keyboardnavhelp" aria-label={lf("Keyboard Controls")} ref={ref} tabIndex={0}>
@@ -58,7 +57,7 @@ const KeyboardControlsHelp = () => {
                     <Row name={lf("Copy")} shortcuts={[ShortcutNames.COPY]} />
                     <Row name={lf("Paste")} shortcuts={[ShortcutNames.PASTE]} />
                     <Row name={lf("Cut")} shortcuts={[ShortcutNames.CUT]} />
-                    <Row name={lf("Delete")} shortcuts={[ShortcutNames.DELETE, [lf("Backspace")]]} joiner={orAsJoiner} />
+                    <Row name={lf("Delete")} shortcuts={getActionShortcutsAsKeys(ShortcutNames.DELETE)} joiner={orAsJoiner} />
                     <Row name={lf("Undo")} shortcuts={[ShortcutNames.UNDO]} />
                     <Row name={lf("Redo")} shortcuts={[ShortcutNames.REDO]} />
                     {contextMenuRow}
@@ -171,7 +170,7 @@ const Key = ({ value }: { value: string }) => {
             break;
         }
     }
-    return <span className="key" aria-label={aria}>{lf("{0}", value)}</span>
+    return <span className="key" aria-label={aria}>{value}</span>
 }
 
 export default KeyboardControlsHelp;
