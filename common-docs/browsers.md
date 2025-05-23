@@ -1,6 +1,6 @@
 # Supported Browsers
 
-You can experience MakeCode on a number of different operating system and browsers. In order to provide the best performance and support for features, the compatibiltity lists for browsers and operating system support for MakeCode is shown in the following sections.
+You can experience MakeCode on a number of different operating system and browsers. In order to provide the best performance and support for features, the compatibility lists of browsers and operating system support for MakeCode is shown in the following sections.
 
 ## Windows
 
