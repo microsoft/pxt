@@ -8,7 +8,7 @@ export interface TourProps {
 
 export const Tour = (props: TourProps) => {
     const { onClose, config } = props;
-    const { steps } = config;
+    const { steps, footer } = config;
     const [currentStep, setCurrentStep] = useState(0);
     const tourStartTime = useRef(Date.now());
     const stepStartTime = useRef(Date.now());
@@ -69,5 +69,6 @@ export const Tour = (props: TourProps) => {
         onFinish={onFinish}
         showConfetti={confetti}
         forceHideSteps={hideSteps}
+        footer={footer}
     />
 };

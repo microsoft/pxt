@@ -44,7 +44,6 @@
     color: var(--teaching-bubble-foreground);
     box-shadow: 0 0 0 0.1rem;
     border-radius: 0.5rem;
-    padding: 1rem;
     z-index: @modalDimmerZIndex;
 
     .common-button {
@@ -74,19 +73,24 @@
     color: var(--teaching-bubble-foreground);
 }
 
-.teaching-bubble-content {
+.teaching-bubble-body {
+    padding: 1rem;
     font-size: 1.1rem;
 
     p {
-        margin: .25rem 0 .5rem;
+        margin: 0.5rem 0;
     }
 }
 
-.teaching-bubble-footer {
+.teaching-bubble-navigation {
     display: flex;
     flex-direction: row;
     align-items: flex-end;
     justify-content: space-between;
+
+    .common-button.feedback-button {
+        color: var(--teaching-bubble-foreground);
+    }
 
     .teaching-bubble-steps {
         font-size: .9rem;
@@ -121,6 +125,19 @@
     }
 }
 
+.teaching-bubble-footer {
+    color: var(--pxt-neutral-alpha80);
+    margin-top: 0.5rem;
+    margin: 0; // negative margins compensate for the padding on the bubble
+    padding: 0.5rem 1rem;
+    border-top: 1px solid var(--pxt-neutral-alpha50);
+
+    .ai-footer .feedback-button.disabled {
+        // Override the default disabled coloring
+        color: var(--pxt-neutral-alpha80);
+    }
+}
+
 .teaching-bubble-close.common-button {
     position: absolute;
     right: 0.5rem;
@@ -148,7 +165,7 @@
         color: @highContrastTextColor;
         border: solid @highContrastTextColor;
 
-        .teaching-bubble-navigation>.common-button {
+        .teaching-bubble-navigation-buttons>.common-button {
             color: @highContrastTextColor;
             border: solid @highContrastTextColor;
         }

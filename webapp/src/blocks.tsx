@@ -41,6 +41,7 @@ import { Measurements } from "./constants";
 import { flow } from "../../pxtblocks";
 import { HIDDEN_CLASS_NAME } from "../../pxtblocks/plugins/flyout/blockInflater";
 import { FlyoutButton } from "../../pxtblocks/plugins/flyout/flyoutButton";
+import { AIFooter } from "../../react-common/components/controls/AIFooter";
 
 interface CopyDataEntry {
     version: 1;
@@ -1035,6 +1036,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const validBlockIds = this.parent.getBlocks().map((b) => b.id);
 
         const tourSteps: pxt.tour.BubbleStep[] = [];
+        let invalidBlockIdCount = 0;
         for (const step of response.explanationSteps) {
             const tourStep = {
                 title: lf("Error Explanation"),
@@ -1050,6 +1052,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             } else {
                 // Do not add the tour target, but keep the step in case it's still helpful.
                 pxt.tickEvent("errorHelp.invalidBlockId");
+                invalidBlockIdCount++;
             }
 
             tourSteps.push(tourStep);
@@ -1057,8 +1060,18 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return {
             steps: tourSteps,
             showConfetti: false,
-            numberFinalStep: true
+            numberFinalStep: true,
+            footer: <AIFooter onFeedbackSelected={positive => this.handleErrorHelpFeedback(positive, {
+                    type: "tour",
+                    tourStepCount: response.explanationSteps.length,
+                    errorCount: this.errors.length,
+                    invalidBlockIdCount: invalidBlockIdCount,
+                })} />
         };
+    }
+
+    private handleErrorHelpFeedback(positive: boolean, responseData: any) {
+        pxt.tickEvent("errorHelp.feedback", { ...responseData, positive: positive + "" });
     }
 
     getBlocksAreaDiv() {

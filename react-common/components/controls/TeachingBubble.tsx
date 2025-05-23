@@ -30,6 +30,7 @@ export interface TeachingBubbleProps extends ContainerProps {
     onNext: () => void;
     onBack: () => void;
     onFinish: () => void;
+    footer?: string | JSX.Element;
 }
 
 export const TeachingBubble = (props: TeachingBubbleProps) => {
@@ -45,6 +46,7 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
         onNext,
         onBack,
         onFinish,
+        footer,
         stepNumber,
         totalSteps,
         parentElement,
@@ -379,14 +381,14 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
                 ariaLabel={closeLabel}
                 rightIcon="fas fa-times-circle"
             />
-            <div className="teaching-bubble-content">
+            <div className="teaching-bubble-body">
                 <strong aria-live="polite">{targetContent.title}</strong>
                 <p aria-live="polite">{targetContent.description}</p>
-                <div className={`teaching-bubble-footer ${!hasSteps ? "no-steps" : ""}`}>
+                <div className={`teaching-bubble-navigation ${!hasSteps ? "no-steps" : ""}`}>
                     {hasSteps && <div className={classList("teaching-bubble-steps", forceHideSteps && "hidden")} aria-live="polite">
                         {stepNumber} of {totalSteps}
                     </div>}
-                    <div className="teaching-bubble-navigation">
+                    <div className="teaching-bubble-navigation-buttons">
                         {hasPrevious && <Button
                             className="tertiary tour-button"
                             onClick={onBack}
@@ -411,6 +413,9 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
                     </div>
                 </div>
             </div>
+            {footer && <div className="teaching-bubble-footer">
+                {footer}
+            </div>}
         </div>
     </FocusTrap>, parentElement || document.getElementById("root") || document.body)
 }

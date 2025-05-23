@@ -32,6 +32,7 @@ import ErrorListState = pxt.editor.ErrorListState;
 import * as pxtblockly from "../../pxtblocks";
 import { ThemeManager } from "../../react-common/components/theming/themeManager";
 import { ErrorHelpException, getErrorHelpAsText } from "./errorHelp";
+import { AIErrorExplanationText } from "./components/AIErrorExplanationText";
 
 const MIN_EDITOR_FONT_SIZE = 10
 const MAX_EDITOR_FONT_SIZE = 40
@@ -656,16 +657,35 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                             setInsertionSnippet={this.setInsertionSnippet}
                             parent={this.parent} />
                     </div>
-                    {showErrorList && <ErrorList
-                        onSizeChange={this.setErrorListState}
-                        errors={this.errors}
-                        startDebugger={this.startDebugger}
-                        getErrorHelp={this.getErrorHelp}
-                        note={this.parent.state.errorListNote}
-                        showLoginDialog={this.parent.showLoginDialog} />}
+                    {showErrorList && (
+                        <ErrorList
+                            onSizeChange={this.setErrorListState}
+                            errors={this.errors}
+                            startDebugger={this.startDebugger}
+                            getErrorHelp={this.getErrorHelp}
+                            note={
+                                this.parent.state.errorListNote && (
+                                    <AIErrorExplanationText
+                                        explanation={this.parent.state.errorListNote}
+                                        onFeedbackSelected={this.onAIFeedback}
+                                    />
+                                )
+                            }
+                            showLoginDialog={this.parent.showLoginDialog}
+                        />
+                    )}
                 </div>
             </div>
         )
+    }
+
+    private onAIFeedback = (positive: boolean) => {
+        pxt.tickEvent("errorHelp.feedback", {
+                positive: positive + "",
+                type: "text",
+                responseLength: this.parent.state.errorListNote?.length + "",
+                errorCount: this.errors.length
+            });
     }
 
     public onExceptionDetected(exception: pxsim.DebuggerBreakpointMessage) {
