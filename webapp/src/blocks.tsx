@@ -220,7 +220,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.loadingXml = true;
 
             const flyout = this.editor.getFlyout() as pxtblockly.CachingFlyout;
-            flyout.clearBlockCache();
+            flyout?.clearBlockCache();
 
             const loadingDimmer = document.createElement("div");
             loadingDimmer.className = "ui active dimmer";
