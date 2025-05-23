@@ -504,6 +504,7 @@ declare namespace pxt {
         errorList?: boolean; // error list experiment
         embedBlocksInSnapshot?: boolean; // embed blocks xml in right-click snapshot
         blocksErrorList?: boolean; // blocks error list
+        aiErrorHelp?: boolean; // Enable AI assistance for errors
         identity?: boolean; // login with identity providers
         assetEditor?: boolean; // enable asset editor view (in blocks/text toggle)
         disableMemoryWorkspaceWarning?: boolean; // do not warn the user when switching to in memory workspace
@@ -1342,10 +1343,18 @@ declare namespace pxt.tour {
     interface BubbleStep {
         title: string;
         description: string;
-        targetQuery: string;
+        targetQuery?: string;
         location: BubbleLocation;
         sansQuery?: string; // Use this to exclude an element from the cutout
         sansLocation?: BubbleLocation; // relative location of element to exclude
+        onStepBegin?: () => void;
+        bubbleStyle?: "yellow"; // Currently just have default (unset) & yellow styles. May add more in the future...
+    }
+    interface TourConfig {
+        steps: BubbleStep[];
+        showConfetti?: boolean;
+        numberFinalStep?: boolean; // The last step will only be included in the step count if this is true.
+        footer?: string | JSX.Element;
     }
     const enum BubbleLocation {
         Above,

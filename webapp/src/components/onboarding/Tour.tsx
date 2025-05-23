@@ -1,14 +1,14 @@
-import * as React from "react";
 import { useEffect, useRef, useState } from "react";
 import { TeachingBubble } from "../../../../react-common/components/controls/TeachingBubble";
 
 export interface TourProps {
     onClose: () => void;
-    tourSteps: pxt.tour.BubbleStep[];
+    config: pxt.tour.TourConfig;
 }
 
 export const Tour = (props: TourProps) => {
-    const { onClose, tourSteps } = props;
+    const { onClose, config } = props;
+    const { steps, footer } = config;
     const [currentStep, setCurrentStep] = useState(0);
     const tourStartTime = useRef(Date.now());
     const stepStartTime = useRef(Date.now());
@@ -26,11 +26,11 @@ export const Tour = (props: TourProps) => {
     }
 
     const data = () => ({
-        title: tourSteps[currentStep].title,
+        title: steps[currentStep].title,
         stepDuration: getStepDuration(),
         tourDuration: getTourDuration(),
         step: currentStep + 1,
-        totalSteps: tourSteps.length
+        totalSteps: steps.length
     });
 
     const onNext = () => {
@@ -53,13 +53,22 @@ export const Tour = (props: TourProps) => {
         onClose();
     }
 
+    const isLastStep = currentStep === steps.length - 1;
+    const confetti = config.showConfetti && isLastStep;
+    const hideSteps = !config.numberFinalStep && isLastStep;
+    const totalDisplaySteps = config.numberFinalStep ? steps.length : steps.length - 1;
     return <TeachingBubble id="teachingBubble"
-        targetContent={tourSteps[currentStep]}
+        targetContent={steps[currentStep]}
         onNext={onNext}
         onBack={onBack}
         stepNumber={currentStep + 1}
-        totalSteps={tourSteps.length - 1}
+        totalSteps={totalDisplaySteps}
+        hasPrevious={currentStep > 0}
+        hasNext={!isLastStep}
         onClose={onExit}
         onFinish={onFinish}
+        showConfetti={confetti}
+        forceHideSteps={hideSteps}
+        footer={footer}
     />
 };

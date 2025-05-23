@@ -22,7 +22,7 @@ import { DebuggerToolbox } from "./debuggerToolbox";
 import { amendmentToInsertSnippet, listenForEditAmendments, createLineReplacementPyAmendment } from "./monacoEditAmendments";
 
 import { MonacoFlyout } from "./monacoFlyout";
-import { ErrorList, ErrorDisplayInfo as ErrorDisplayInfo, StackFrameDisplayInfo } from "./errorList";
+import { ErrorList, ErrorDisplayInfo, StackFrameDisplayInfo } from "./errorList";
 import * as auth from "./auth";
 import * as pxteditor from "../../pxteditor";
 
@@ -31,6 +31,8 @@ import ErrorListState = pxt.editor.ErrorListState;
 
 import * as pxtblockly from "../../pxtblocks";
 import { ThemeManager } from "../../react-common/components/theming/themeManager";
+import { ErrorHelpException, getErrorHelpAsText } from "./errorHelp";
+import { AIErrorExplanationText } from "./components/AIErrorExplanationText";
 
 const MIN_EDITOR_FONT_SIZE = 10
 const MAX_EDITOR_FONT_SIZE = 40
@@ -388,6 +390,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.startDebugger = this.startDebugger.bind(this);
         this.onUserPreferencesChanged = this.onUserPreferencesChanged.bind(this);
         this.getDisplayInfoForError = this.getDisplayInfoForError.bind(this);
+        this.getErrorHelp = this.getErrorHelp.bind(this);
 
         data.subscribe(this.userPreferencesSubscriber, auth.HIGHCONTRAST);
 
@@ -654,22 +657,47 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                             setInsertionSnippet={this.setInsertionSnippet}
                             parent={this.parent} />
                     </div>
-                    {showErrorList && <ErrorList onSizeChange={this.setErrorListState}
-                        errors={this.errors}
-                        startDebugger={this.startDebugger} />}
+                    {showErrorList && (
+                        <ErrorList
+                            onSizeChange={this.setErrorListState}
+                            errors={this.errors}
+                            startDebugger={this.startDebugger}
+                            getErrorHelp={this.getErrorHelp}
+                            note={
+                                this.parent.state.errorListNote && (
+                                    <AIErrorExplanationText
+                                        explanation={this.parent.state.errorListNote}
+                                        onFeedbackSelected={this.onAIFeedback}
+                                    />
+                                )
+                            }
+                            showLoginDialog={this.parent.showLoginDialog}
+                        />
+                    )}
                 </div>
             </div>
         )
     }
 
+    private onAIFeedback = (positive: boolean) => {
+        pxt.tickEvent("errorHelp.feedback", {
+                positive: positive + "",
+                type: "text",
+                responseLength: this.parent.state.errorListNote?.length + "",
+                errorCount: this.errors.length
+            });
+    }
+
     public onExceptionDetected(exception: pxsim.DebuggerBreakpointMessage) {
         const exceptionDisplayInfo: ErrorDisplayInfo = this.getDisplayInfoForException(exception);
         this.errors = [exceptionDisplayInfo];
+        this.parent.setState({ errorListNote: undefined });
     }
 
     private onErrorChanges(errors: pxtc.KsDiagnostic[]) {
         const errorDisplayInfo: ErrorDisplayInfo[] = errors.map(this.getDisplayInfoForError);
         this.errors = errorDisplayInfo;
+        this.parent.setState({ errorListNote: undefined });
     }
 
     private getDisplayInfoForException(exception: pxsim.DebuggerBreakpointMessage): ErrorDisplayInfo {
@@ -696,6 +724,27 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             message,
             onClick: () => this.goToError(error)
         };
+    }
+
+    /**
+     * Provides a user-facing explanation of the errors in the error list.
+     */
+    private async getErrorHelp() {
+        this.parent.setState({errorListNote: undefined});
+        const lang = this.fileType == pxt.editor.FileType.Python ? "python" : "typescript";
+        const code = this.currFile.content;
+        try {
+            const helpResponse = await getErrorHelpAsText(this.errors, lang, code);
+            this.parent.setState({errorListNote: helpResponse});
+        } catch (e) {
+            pxt.reportException(e);
+
+            if (e instanceof ErrorHelpException) {
+                core.errorNotification(e.getUserFacingMessage());
+            } else {
+                core.errorNotification(lf("Sorry, something went wrong. Please try again later."));
+            }
+        }
     }
 
     goToError(error: pxtc.LocationInfo) {
@@ -1498,6 +1547,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (this.toolbox)
             this.toolbox.clearSearch();
         this.errors = [];
+        this.parent.setState({errorListNote: undefined});
         if (this.currFile && this.currFile.getName() == "this/" + pxt.CONFIG_NAME) {
             // Reload the header if a change was made to the config file: pxt.json
             return this.parent.reloadHeaderAsync();
