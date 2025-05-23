@@ -692,7 +692,7 @@ function initComments() {
 
 function initTooltip() {
     const renderTip = (el: any) => {
-        if (el.disabled)
+        if (el.hasDisabledReason?.("disabled"))
             return lf("This block is disabled and will not run. Attach this block to an event to enable it.")
         let tip = el.tooltip;
         while (typeof tip === "function") {

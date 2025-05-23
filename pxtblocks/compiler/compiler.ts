@@ -240,11 +240,11 @@ function blockKey(b: Blockly.Block) {
 }
 
 function setChildrenEnabled(block: Blockly.Block, enabled: boolean) {
-    block.setEnabled(enabled);
+    block.setDisabledReason(!enabled, "disabled");
     // propagate changes
     const children = block.getDescendants(false);
     for (const child of children) {
-        child.setEnabled(enabled);
+        child.setDisabledReason(!enabled, "disabled");
     }
 }
 
@@ -257,7 +257,7 @@ function updateDisabledBlocks(e: Environment, allBlocks: Blockly.Block[], topBlo
     }
 
     // unset disabled
-    allBlocks.forEach(b => b.setEnabled(true));
+    allBlocks.forEach(b => b.setDisabledReason(false, "disabled"));
 
     // update top blocks
     const events: pxt.Map<Blockly.Block> = {};

@@ -334,7 +334,7 @@ export class FieldNote extends Blockly.FieldNumber implements FieldCustom {
         }
 
         Blockly.DropDownDiv.setColour(this.primaryColour, this.borderColour);
-        Blockly.DropDownDiv.showPositionedByBlock(this, this.sourceBlock_ as Blockly.BlockSvg, () => this.onHide());
+        Blockly.DropDownDiv.showPositionedByBlock(this, this.sourceBlock_ as Blockly.BlockSvg, () => this.onHide(), undefined, false);
 
 
         this.htmlInput_.addEventListener("keydown", this.keyHandler);

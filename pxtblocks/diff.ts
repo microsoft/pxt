@@ -163,7 +163,7 @@ function diffWorkspaceNoEvents(oldWs: Blockly.Workspace, newWs: Blockly.Workspac
             done(b);
             const b2 = cloneIntoDiff(b);
             done(b2);
-            b2.setEnabled(false);
+            b2.setDisabledReason(true, "disabled");
         });
         logTodo('deleted top')
     }
@@ -272,7 +272,7 @@ function diffWorkspaceNoEvents(oldWs: Blockly.Workspace, newWs: Blockly.Workspac
     function stitch(b: Blockly.Block) {
         log(`stitching ${b.toDevString()}->${dids[b.id]}`)
         const wb = ws.getBlockById(dids[b.id]);
-        wb.setEnabled(false);
+        wb.setDisabledReason(true, "disabled");
         markUsed(wb);
         done(wb);
         // connect previous connection to delted or existing block

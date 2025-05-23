@@ -700,3 +700,24 @@ export function clearDropDownDiv() {
     Blockly.DropDownDiv.clearContent();
     Blockly.DropDownDiv.getContentDiv().style.height = "";
 }
+
+/**
+ * Returns whether or not an object conforms to the ImageProperties interface.
+ *
+ * @param obj The object to test.
+ * @returns True if the object conforms to ImageProperties, otherwise false.
+ */
+export function isImageProperties(obj: any): obj is Blockly.ImageProperties {
+  return (
+    obj &&
+    typeof obj === 'object' &&
+    'src' in obj &&
+    typeof obj.src === 'string' &&
+    'alt' in obj &&
+    typeof obj.alt === 'string' &&
+    'width' in obj &&
+    typeof obj.width === 'number' &&
+    'height' in obj &&
+    typeof obj.height === 'number'
+  );
+}

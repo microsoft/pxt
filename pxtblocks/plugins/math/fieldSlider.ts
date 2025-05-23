@@ -191,7 +191,7 @@ export class FieldSlider extends Blockly.FieldNumber {
 
         // Set colour and size of drop-down
         Blockly.DropDownDiv.setColour('#ffffff', '#dddddd');
-        Blockly.DropDownDiv.showPositionedByBlock(this, this.sourceBlock_ as Blockly.BlockSvg);
+        Blockly.DropDownDiv.showPositionedByBlock(this, this.sourceBlock_ as Blockly.BlockSvg, undefined, undefined, false);
 
         this.addEventListeners();
     }

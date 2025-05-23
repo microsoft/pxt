@@ -22,6 +22,6 @@ export class LabelFlyoutInflater extends Blockly.LabelFlyoutInflater {
         );
         label.show();
 
-        return new Blockly.FlyoutItem(label, LABEL_TYPE, true);
+        return new Blockly.FlyoutItem(label, LABEL_TYPE);
     }
 }
