@@ -22,7 +22,7 @@ const KeyboardControlsHelp = () => {
                     <Row name={lf("Show/hide shortcut help")} shortcuts={[ShortcutNames.LIST_SHORTCUTS]} />
                     <Row name={lf("Jump to region")} shortcuts={[[cmd, "B"]]} />
                     <Row name={lf("Block and toolbox navigation")} shortcuts={[ShortcutNames.UP, ShortcutNames.DOWN, ShortcutNames.LEFT, ShortcutNames.RIGHT]} />
-                    <Row name={lf("Toolbox or insert")} shortcuts={[ShortcutNames.TOOLBOX, ShortcutNames.INSERT]} joiner={orAsJoiner} />
+                    <Row name={lf("Toolbox")} shortcuts={[ShortcutNames.TOOLBOX]} />
                     {editOrConfirmRow}
                     <Row name={lf("Move mode")} shortcuts={[ShortcutNames.MOVE]} >
                         <br /><span className="hint">{lf("Move with arrow keys")}</span>
@@ -53,7 +53,6 @@ const KeyboardControlsHelp = () => {
                     <Row name={lf("Move in and out of a block")} shortcuts={[ShortcutNames.LEFT, ShortcutNames.RIGHT]} />
                     {editOrConfirmRow}
                     <Row name={lf("Cancel or exit")} shortcuts={[ShortcutNames.EXIT]} />
-                    <Row name={lf("Insert block at current position")} shortcuts={[ShortcutNames.INSERT]} />
                     <Row name={lf("Copy")} shortcuts={[ShortcutNames.COPY]} />
                     <Row name={lf("Paste")} shortcuts={[ShortcutNames.PASTE]} />
                     <Row name={lf("Cut")} shortcuts={[ShortcutNames.CUT]} />
@@ -73,7 +72,7 @@ const KeyboardControlsHelp = () => {
                     </Row>
                     <Row name={lf("Move mode: Confirm")} {...enterOrSpace} />
                     <Row name={lf("Move mode: Cancel")} shortcuts={[ShortcutNames.EXIT]} />
-                    <Row name={lf("Disconnect blocks")} shortcuts={[ShortcutNames.DISCONNECT]} />
+                    <Row name={lf("Disconnect block")} shortcuts={[ShortcutNames.DISCONNECT]} />
                 </tbody>
             </table>
         </aside>
@@ -104,7 +103,8 @@ const Row = ({ name, shortcuts = [], joiner, children}: RowProps) => {
     const shortcutElements = shortcuts.map((s, idx) => {
         if (typeof s === "string") {
             // Pull keys from shortcut registry.
-            return <Shortcut key={idx} keys={getActionShortcut(s)} />
+            const shortcut = getActionShortcut(s);
+            return shortcut === null ? null : <Shortcut key={idx} keys={getActionShortcut(s)} />
         } else {
             // Display keys as specified.
             return <Shortcut key={idx} keys={s} />
