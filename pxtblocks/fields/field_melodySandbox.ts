@@ -157,6 +157,7 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
         if (!this.invalidString) {
             this.size_.width = FieldCustomMelody.MUSIC_ICON_WIDTH + (FieldCustomMelody.COLOR_BLOCK_WIDTH + FieldCustomMelody.COLOR_BLOCK_SPACING) * this.numMatrixCols;
         }
+        this.size_.height = 34;
         this.sourceBlock_.setColour("#ffffff");
     }
 
@@ -711,6 +712,10 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
     private hideGallery() {
         this.gallery.hide();
         this.lastFocusableElement = this.doneButton;
+    }
+
+    isFullBlockField(): boolean {
+        return true;
     }
 }
 
