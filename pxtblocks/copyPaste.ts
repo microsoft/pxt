@@ -34,9 +34,7 @@ function registerCopy() {
             return oldCopy.preconditionFn(workspace, scope);
         },
         callback: copy,
-        // the registered shortcut from blockly isn't an array, it's some sort
-        // of serialized object so we have to convert it back to an array
-        keyCodes: [oldCopy.keyCodes[0], oldCopy.keyCodes[1], oldCopy.keyCodes[2]],
+        keyCodes: oldCopy.keyCodes,
     };
     Blockly.ShortcutRegistry.registry.register(copyShortcut);
 }
@@ -56,7 +54,7 @@ function registerCut() {
 
             return oldCut.callback(workspace, e, shortcut, scope);
         },
-        keyCodes: [oldCut.keyCodes[0], oldCut.keyCodes[1], oldCut.keyCodes[2]],
+        keyCodes: oldCut.keyCodes,
     };
 
     Blockly.ShortcutRegistry.registry.register(cutShortcut);
@@ -69,7 +67,7 @@ function registerPaste() {
             return oldPaste.preconditionFn(workspace, scope);
         },
         callback: paste,
-        keyCodes: [oldPaste.keyCodes[0], oldPaste.keyCodes[1], oldPaste.keyCodes[2]],
+        keyCodes: oldPaste.keyCodes,
     };
 
     Blockly.ShortcutRegistry.registry.register(pasteShortcut);
