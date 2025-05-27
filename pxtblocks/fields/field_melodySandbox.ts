@@ -85,6 +85,7 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
         this.gallery = new pxtmelody.MelodyGallery();
         this.renderEditor(contentDiv);
 
+        this.addKeyboardFocusHandlers();
         this.attachEventHandlersToMatrix();
         this.matrixFocusBind = Blockly.browserEvents.bind(this.matrixSvg, 'focus', this, this.handleMatrixFocus.bind(this));
         this.tabKeyBind = Blockly.browserEvents.bind(contentDiv, 'keydown', this, this.handleTabKey.bind(this));
@@ -237,10 +238,13 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
             this.gallery.stopMelody();
         }
         if (this.matrixFocusBind) {
-            Blockly.browserEvents.unbind(this.matrixFocusBind)
+            Blockly.browserEvents.unbind(this.matrixFocusBind);
+            this.matrixFocusBind = undefined;
         }
         if (this.tabKeyBind) {
-            Blockly.browserEvents.unbind(this.tabKeyBind)
+            Blockly.browserEvents.unbind(this.tabKeyBind);
+            this.tabKeyBind = undefined;
+
         }
         this.clearCellSelection();
         this.removeKeyboardFocusHandlers();

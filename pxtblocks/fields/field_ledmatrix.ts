@@ -94,8 +94,8 @@ export class FieldLedMatrix extends FieldMatrix implements FieldCustom {
     showEditor_() {
         this.selected = [0, 0];
         this.focusCell(0, 0);
-        this.returnEphemeralFocus = Blockly.getFocusManager().takeEphemeralFocus(this.matrixSvg);
-        this.attachEventHandlersToMatrix();
+        this.returnEphemeralFocusFn = Blockly.getFocusManager().takeEphemeralFocus(this.matrixSvg);
+        this.addKeyboardFocusHandlers();
     }
 
     private initMatrix() {
@@ -148,6 +148,8 @@ export class FieldLedMatrix extends FieldMatrix implements FieldCustom {
 
             this.fieldGroup_.classList.add("blocklyFieldLedMatrixGroup");
             this.fieldGroup_.replaceChild(this.matrixSvg, this.fieldGroup_.firstChild);
+
+            this.attachEventHandlersToMatrix();
         }
     }
 
@@ -221,6 +223,7 @@ export class FieldLedMatrix extends FieldMatrix implements FieldCustom {
             // Clear event listeners and selection used for keyboard navigation.
             this.removeKeyboardFocusHandlers();
             this.clearCellSelection();
+            this.returnEphemeralFocus();
         }, false));
     }
 
