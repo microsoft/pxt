@@ -2495,7 +2495,7 @@ function copy(workspace: Blockly.WorkspaceSvg, e: Event, _shortcut: Blockly.Shor
 
 // adapted from Blockly/core/shortcut_items.ts
 function cut(workspace: Blockly.WorkspaceSvg, _e: Event, _shortcut: Blockly.ShortcutRegistry.KeyboardShortcut, scope: Blockly.ContextMenuRegistry.Scope) {
-      const focused = scope.focusedNode;
+    const focused = scope.focusedNode;
 
     if (focused instanceof Blockly.BlockSvg) {
         const copyData = focused.toCopyData();
