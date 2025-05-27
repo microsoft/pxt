@@ -25,6 +25,7 @@ import { renderCodeCard } from "./codecardRenderer";
 import { FieldDropdown } from "./fields/field_dropdown";
 import { setDraggableShadowBlocks, setDuplicateOnDrag, setDuplicateOnDragStrategy } from "./plugins/duplicateOnDrag";
 import { initAccessibleBlocksCopyPasteContextMenu, initCopyPaste } from "./copyPaste";
+export { initCopyPaste } from "./copyPaste";
 import { FieldVariable } from "./plugins/newVariableField/fieldVariable";
 import { ArgumentReporterBlock, FieldArgumentReporter, setArgumentReporterLocalizeFunction } from "./plugins/functions";
 import { getArgumentReporterParent } from "./plugins/functions/utils";
@@ -587,7 +588,8 @@ export function cleanBlocks() {
  * Used by pxtrunner to initialize blocks in the docs
  */
 export function initializeAndInject(blockInfo: pxtc.BlocksInfo) {
-    init(blockInfo, false);
+    init(blockInfo);
+    initCopyPaste(false);
     injectBlocks(blockInfo);
 }
 
@@ -595,13 +597,13 @@ export function initializeAndInject(blockInfo: pxtc.BlocksInfo) {
  * Used by main app to initialize blockly blocks.
  * Blocks are injected separately by called injectBlocks
  */
-export function initialize(blockInfo: pxtc.BlocksInfo, accessibleBlocksEnabled: boolean) {
-    init(blockInfo, accessibleBlocksEnabled);
+export function initialize(blockInfo: pxtc.BlocksInfo) {
+    init(blockInfo);
     initJresIcons(blockInfo);
 }
 
 let blocklyInitialized = false;
-function init(blockInfo: pxtc.BlocksInfo, accessibleBlocksEnabled: boolean) {
+function init(blockInfo: pxtc.BlocksInfo) {
     if (blocklyInitialized) return;
     blocklyInitialized = true;
 
@@ -617,7 +619,6 @@ function init(blockInfo: pxtc.BlocksInfo, accessibleBlocksEnabled: boolean) {
     initText();
     initComments();
     initTooltip();
-    initCopyPaste(accessibleBlocksEnabled);
 
     // in safari on ios, Blockly isn't always great at clearing touch
     // identifiers. for most browsers this doesn't matter because the

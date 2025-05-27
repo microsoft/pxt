@@ -38,7 +38,7 @@ import SimState = pxt.editor.SimState;
 import { DuplicateOnDragConnectionChecker } from "../../pxtblocks/plugins/duplicateOnDrag";
 import { PathObject } from "../../pxtblocks/plugins/renderer/pathObject";
 import { Measurements } from "./constants";
-import { flow } from "../../pxtblocks";
+import { flow, initCopyPaste } from "../../pxtblocks";
 import { HIDDEN_CLASS_NAME } from "../../pxtblocks/plugins/flyout/blockInflater";
 import { AIFooter } from "../../react-common/components/controls/AIFooter";
 
@@ -237,16 +237,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 .then(bi => {
                     this.blockInfo = bi;
 
-                    const accessibleBlocksEnabled = data.getData<boolean>(auth.ACCESSIBLE_BLOCKS)
-
                     // Initialize blocks in Blockly and update our toolbox
-                    pxtblockly.initialize(this.blockInfo, accessibleBlocksEnabled);
-                    // This must come after pxtblockly.initialize which overrides the default cut, copy,
-                    // paste shortcuts. The keyboard navigation plugin utilizes these cut, copy and paste
-                    // shortcuts and wraps them with additional behaviours (e.g., toast notifications).
-                    if (accessibleBlocksEnabled) {
-                        this.initAccessibleBlocks();
-                    }
+                    pxtblockly.initialize(this.blockInfo);
 
                     this.nsMap = this.partitionBlocks();
                     this.refreshToolbox();
@@ -801,6 +793,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.initPrompts();
         this.initBlocklyToolbox();
         this.initWorkspaceSounds();
+        const accessibleBlocksEnabled = data.getData<boolean>(auth.ACCESSIBLE_BLOCKS)
+        initCopyPaste(accessibleBlocksEnabled);
+        // This must come after initCopyPaste which overrides the default cut, copy,
+        // paste shortcuts. The keyboard navigation plugin utilizes these cut, copy and paste
+        // shortcuts and wraps them with additional behaviours (e.g., toast notifications).
+        if (accessibleBlocksEnabled) {
+            this.initAccessibleBlocks();
+        }
         this.initWorkspaceSearch();
         this.setupIntersectionObserver();
         this.resize();
