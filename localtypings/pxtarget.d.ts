@@ -1354,7 +1354,7 @@ declare namespace pxt.tour {
         steps: BubbleStep[];
         showConfetti?: boolean;
         numberFinalStep?: boolean; // The last step will only be included in the step count if this is true.
-        footer?: string | JSX.Element;
+        footer?: any; // actually 'string | JSX.Element', but this file is included in some compilations that don't include JSX
     }
     const enum BubbleLocation {
         Above,

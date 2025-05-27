@@ -17,6 +17,13 @@ export class PathObject extends Blockly.zelos.PathObject {
 
     protected connectionPointIndicators = new WeakMap<Blockly.RenderedConnection, SVGElement>();
 
+    override setPath(pathString: string): void {
+        super.setPath(pathString);
+        if (this.svgPathHighlighted) {
+            this.svgPathHighlighted.setAttribute('d', pathString);
+        }
+    }
+
 
     override updateHighlighted(enable: boolean) {
         // this.setClass_('blocklySelected', enable);
@@ -165,13 +172,6 @@ export class PathObject extends Blockly.zelos.PathObject {
 
     isHighlighted() {
         return !!this.svgPathHighlighted;
-    }
-
-    resizeHighlight() {
-        if (this.svgPathHighlighted) {
-            this.updateHighlighted(false);
-            this.updateHighlighted(true);
-        }
     }
 }
 
