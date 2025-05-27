@@ -98,6 +98,10 @@ export class FieldLedMatrix extends FieldMatrix implements FieldCustom {
         this.addKeyboardFocusHandlers();
     }
 
+    onNodeBlur() {
+        this.returnEphemeralFocus();
+    }
+
     private initMatrix() {
         if (!this.sourceBlock_.isInsertionMarker()) {
             this.matrixSvg = pxsim.svg.parseString(`<svg xmlns="http://www.w3.org/2000/svg" id="field-matrix" class="blocklyMatrix" tabindex="-1" role="grid" />`);
@@ -220,9 +224,6 @@ export class FieldLedMatrix extends FieldMatrix implements FieldCustom {
 
             ev.stopPropagation();
             ev.preventDefault();
-            // Clear event listeners and selection used for keyboard navigation.
-            this.removeKeyboardFocusHandlers();
-            this.clearCellSelection();
             this.returnEphemeralFocus();
         }, false));
     }
