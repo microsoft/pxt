@@ -62,6 +62,8 @@ namespace pxtmelody {
                 return;
             }
             const [x, y] = this.selectedColRow;
+            const arrowToSelection = pxt.Util.isUserLanguageRtl() ? "ArrowRight" : "ArrowLeft";
+            const arrowToPreview = pxt.Util.isUserLanguageRtl() ? "ArrowLeft" : "ArrowRight";
             switch(e.code) {
                 case "ArrowUp": {
                     this.selectedColRow = [x, Math.max(0, y - 1)];
@@ -71,11 +73,11 @@ namespace pxtmelody {
                     this.selectedColRow = [x, Math.min(this.selectionButtons.length - 1, y + 1)];
                     break;
                 }
-                case "ArrowLeft": {
+                case arrowToSelection: {
                     this.selectedColRow = [Math.max(0, x - 1), y];
                     break;
                 }
-                case "ArrowRight": {
+                case arrowToPreview: {
                     // Only two columns.
                     this.selectedColRow = [Math.min(1, x + 1), y];
                     break;
