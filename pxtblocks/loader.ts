@@ -24,7 +24,7 @@ import { initContextMenu } from "./contextMenu";
 import { renderCodeCard } from "./codecardRenderer";
 import { FieldDropdown } from "./fields/field_dropdown";
 import { setDraggableShadowBlocks, setDuplicateOnDrag, setDuplicateOnDragStrategy } from "./plugins/duplicateOnDrag";
-import { initAccessibleContextMenu, initCopyPaste } from "./copyPaste";
+import { initAccessibleBlocksCopyPasteContextMenu, initCopyPaste } from "./copyPaste";
 import { FieldVariable } from "./plugins/newVariableField/fieldVariable";
 import { ArgumentReporterBlock, FieldArgumentReporter, setArgumentReporterLocalizeFunction } from "./plugins/functions";
 import { getArgumentReporterParent } from "./plugins/functions/utils";
@@ -635,11 +635,8 @@ function init(blockInfo: pxtc.BlocksInfo, accessibleBlocksEnabled: boolean) {
     }
 }
 
-let accessibleContextMenuInitialized = false;
 export function initAccessibleBlocksContextMenuItems() {
-    if (accessibleContextMenuInitialized) return;
-    accessibleContextMenuInitialized = true;
-    initAccessibleContextMenu()
+    initAccessibleBlocksCopyPasteContextMenu()
 }
 
 

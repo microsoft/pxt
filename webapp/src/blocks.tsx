@@ -241,21 +241,15 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
                     // Initialize blocks in Blockly and update our toolbox
                     pxtblockly.initialize(this.blockInfo, accessibleBlocksEnabled);
-                    this.nsMap = this.partitionBlocks();
-                    this.refreshToolbox();
-
                     // This must come after pxtblockly.initialize which overrides the default cut, copy,
                     // paste shortcuts. The keyboard navigation plugin utilizes these cut, copy and paste
                     // shortcuts and wraps them with additional behaviours (e.g., toast notifications).
-                    this.initAccessibleBlocks(accessibleBlocksEnabled);
-
                     if (accessibleBlocksEnabled) {
-                        // This must come after this.initAccessibleBlocks to override context menu
-                        // precondition functions set by the keyboard navigation plugin.
-                        // We want to customize this behavior and have access to clipboard data to
-                        // determined whether paste should be enabled.
-                        pxtblockly.initAccessibleBlocksContextMenuItems();
+                        this.initAccessibleBlocks();
                     }
+
+                    this.nsMap = this.partitionBlocks();
+                    this.refreshToolbox();
 
                     pxt.debug(`loading block workspace`)
                     let xml = this.delayLoadXml;
@@ -592,8 +586,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         };
     }
 
-    private initAccessibleBlocks(enabled: boolean) {
-        if (enabled && !this.keyboardNavigation) {
+    private initAccessibleBlocks() {
+        if (!this.keyboardNavigation) {
             this.keyboardNavigation = new KeyboardNavigation(this.editor);
 
             const listShortcuts = Blockly.ShortcutRegistry.registry.getRegistry()["list_shortcuts"];
@@ -621,6 +615,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     return true
                 }
             });
+
+            // This must come after plugin initialization to override context menu
+            // precondition functions set by the keyboard navigation plugin.
+            // We want to customize this behavior and have access to clipboard data to
+            // determined whether paste should be enabled.
+            pxtblockly.initAccessibleBlocksContextMenuItems();
         }
     }
 

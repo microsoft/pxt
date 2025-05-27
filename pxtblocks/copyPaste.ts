@@ -30,7 +30,7 @@ export function initCopyPaste(accessibleBlocksEnabled: boolean) {
     }
 }
 
-export function initAccessibleContextMenu() {
+export function initAccessibleBlocksCopyPasteContextMenu() {
     overridePasteContextMenuItem();
     overrideCutContextMenuItem();
 }
