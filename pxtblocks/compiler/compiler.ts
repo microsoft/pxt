@@ -312,13 +312,6 @@ function updateDisabledBlocks(e: Environment, allBlocks: Blockly.Block[], topBlo
     }
 }
 
-export function updateDisabledOnDrag(workspace: Blockly.WorkspaceSvg) {
-    for (const block of workspace.getTopBlocks(false)) {
-        if (block.hasDisabledReason(AUTO_DISABLED_REASON)) continue;
-        setChildrenEnabled(block, true);
-    }
-}
-
 function compileStatementBlock(e: Environment, b: Blockly.Block): pxt.blocks.JsNode[] {
     if (b.isInsertionMarker()) {
         // Must have accidentally triggered a compile during a block drag
