@@ -380,7 +380,7 @@ function removeQuotes(str: string) {
 }
 
 Blockly.Css.register(`
-.blocklyFieldLedMatrixGroup.blocklyActiveFocus {
+.blocklyFieldLedMatrixGroup.blocklyActiveFocus > .blocklyMatrix {
     outline: var(--blockly-selection-width) solid var(--blockly-active-node-color);
     border-radius: 3px;
 }`);

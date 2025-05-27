@@ -467,7 +467,10 @@ div.blocklyTreeRoot > div[role="tree"]:focus-visible {
     outline: none;
 }
 
-// Image fields e.g. +/- buttons. Needs to be the image for Safari.
+// Image fields e.g. +/- buttons. Needs to be the image for Safari but Chrome has the group by default.
+.blocklyKeyboardNavigation .blocklyImageField:focus-visible {
+    outline: none;
+}
 .blocklyKeyboardNavigation .blocklyImageField:is(.blocklyActiveFocus, .blocklyPassiveFocus) > image {
     outline: var(--blockly-selection-width) solid
         var(--blockly-active-node-color);
