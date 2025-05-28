@@ -617,6 +617,21 @@ function init(blockInfo: pxtc.BlocksInfo) {
     initComments();
     initTooltip();
     initCopyPaste();
+
+    // in safari on ios, Blockly isn't always great at clearing touch
+    // identifiers. for most browsers this doesn't matter because the
+    // pointer id stored in the pointerevent is reused. however, ios
+    // generates a unique pointerid for each event, so the editor will
+    // stop processing events entirely if it isn't cleared properly
+    if (pxt.BrowserUtils.isSafari() && pxt.BrowserUtils.isIOS()) {
+        document.addEventListener("pointerup", ev => {
+            setTimeout(() => {
+                if (Blockly.Touch.checkTouchIdentifier(ev)) {
+                    Blockly.Touch.clearTouchIdentifier();
+                }
+            })
+        });
+    }
 }
 
 
