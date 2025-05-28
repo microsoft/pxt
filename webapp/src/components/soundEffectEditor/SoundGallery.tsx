@@ -43,6 +43,8 @@ export const SoundGallery = (props: SoundGalleryProps) => {
         next: number,
         current: number,
         e: React.KeyboardEvent<HTMLElement>) => {
+        const arrowToSelection = pxt.Util.isUserLanguageRtl() ? "ArrowRight" : "ArrowLeft";
+        const arrowToPreview = pxt.Util.isUserLanguageRtl() ? "ArrowLeft" : "ArrowRight";
         switch(e.code) {
             case "ArrowDown":
                 selectedCoord.current.row = next;
@@ -50,10 +52,10 @@ export const SoundGallery = (props: SoundGalleryProps) => {
             case "ArrowUp":
                 selectedCoord.current.row = prev;
                 break;
-            case "ArrowLeft":
+            case arrowToSelection:
                 selectedCoord.current.col = "select";
                 break;
-            case "ArrowRight":
+            case arrowToPreview:
                 selectedCoord.current.col = "preview";
                 break;
             case "Space":
