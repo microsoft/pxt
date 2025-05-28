@@ -252,7 +252,7 @@ export const TimeMachine = (props: TimeMachineProps) => {
 
     const url = `${window.location.origin + window.location.pathname}?${argString}`;
 
-    return createPortal(
+    return (
         <FocusTrap className="time-machine" onEscape={hideDialog}>
             <div className="time-machine-header">
                 <div className="time-machine-back-button">
@@ -346,7 +346,7 @@ export const TimeMachine = (props: TimeMachineProps) => {
                 </div>
             </div>
         </FocusTrap>
-    , document.body);
+    );
 }
 
 async function getTextAtTimestampAsync(text: ScriptText, history: HistoryFile, time: TimeEntry): Promise<Project> {
