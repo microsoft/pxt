@@ -1,7 +1,6 @@
 import * as React from "react";
 import * as workspace from "./workspace";
 import { Tree, TreeItem, TreeItemBody } from "../../react-common/components/controls/Tree";
-import { createPortal } from "react-dom";
 import { Button } from "../../react-common/components/controls/Button";
 import { hideDialog, warningNotification } from "./core";
 import { FocusTrap } from "../../react-common/components/controls/FocusTrap";
@@ -252,7 +251,7 @@ export const TimeMachine = (props: TimeMachineProps) => {
 
     const url = `${window.location.origin + window.location.pathname}?${argString}`;
 
-    return createPortal(
+    return (
         <FocusTrap className="time-machine" onEscape={hideDialog}>
             <div className="time-machine-header">
                 <div className="time-machine-back-button">
@@ -346,7 +345,7 @@ export const TimeMachine = (props: TimeMachineProps) => {
                 </div>
             </div>
         </FocusTrap>
-    , document.body);
+    );
 }
 
 async function getTextAtTimestampAsync(text: ScriptText, history: HistoryFile, time: TimeEntry): Promise<Project> {
