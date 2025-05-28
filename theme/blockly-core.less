@@ -415,21 +415,41 @@ div.blocklyTreeRoot > div[role="tree"]:focus-visible {
 }
 
 /* Blocks, connections and fields. */
-.blocklyKeyboardNavigation .blocklyActiveFocus:is(.blocklyPath, .blocklyHighlightedConnectionPath),
-.blocklyKeyboardNavigation .blocklyActiveFocus.blocklyField
-> .blocklyFieldRect {
+.blocklyKeyboardNavigation
+.blocklyActiveFocus:is(.blocklyPath, .blocklyHighlightedConnectionPath),
+.blocklyKeyboardNavigation
+.blocklyActiveFocus.blocklyField
+> .blocklyFieldRect,
+.blocklyKeyboardNavigation
+.blocklyActiveFocus.blocklyIconGroup
+> .blocklyIconShape:first-child {
     stroke: var(--blockly-active-node-color);
     stroke-width: var(--blockly-selection-width);
 }
-.blocklyKeyboardNavigation .blocklyPassiveFocus:is(
-    .blocklyPath /*:not(.blocklyFlyout .blocklyPath),*/
+// Compared to the plugin CSS, we've moved a :not(.blocklyFlyout .blocklyPath)
+// from .blockyPath to a separate rule below as it would not parse as less.
+.blocklyKeyboardNavigation
+.blocklyPassiveFocus:is(
+    .blocklyPath,
     .blocklyHighlightedConnectionPath
 ),
-.blocklyKeyboardNavigation .blocklyPassiveFocus.blocklyField > .blocklyFieldRect {
+.blocklyKeyboardNavigation
+.blocklyPassiveFocus.blocklyField
+> .blocklyFieldRect,
+.blocklyKeyboardNavigation
+.blocklyPassiveFocus.blocklyIconGroup
+> .blocklyIconShape:first-child {
     stroke: var(--blockly-active-node-color);
     stroke-dasharray: 5px 3px;
     stroke-width: var(--blockly-selection-width);
 }
+// Rule replacing the :not (see note above).
+.blocklyKeyboardNavigation
+.blocklyFlyout
+.blocklyPassiveFocus.blocklyPath {
+    stroke: none;
+}
+
 .blocklyKeyboardNavigation .blocklyPassiveFocus.blocklyHighlightedConnectionPath {
     /* The connection path is being unexpectedly hidden in core */
     display: unset !important;
