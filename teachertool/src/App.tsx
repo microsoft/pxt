@@ -18,12 +18,10 @@ import { SignInModal } from "./components/SignInModal";
 import { SignedOutPanel } from "./components/SignedOutPanel";
 import * as authClient from "./services/authClient";
 import { ErrorCode } from "./types/errorCode";
-import { loadProjectMetadataAsync } from "./transforms/loadProjectMetadataAsync";
-import { Constants, Ticks } from "./constants";
+import { Constants } from "./constants";
 import { UnsupportedExperienceModal } from "react-common/components/experiences/UnsupportedExperienceModal";
 import { ThemeManager } from "react-common/components/theming/themeManager";
-import { maybeLoadDefaultChecklistAsync } from "./transforms/maybeLoadDefaultChecklist";
-import { setActiveTab } from "./transforms/setActiveTab";
+import { handleProjectOnLoadAsync } from "./transforms/handleProjectOnLoadAsync";
 
 export const App = () => {
     const { state, dispatch } = useContext(AppStateContext);
@@ -49,22 +47,7 @@ export const App = () => {
                 setInited(true);
 
                 // Check if a project was specified on the URL and load it if so.
-                const projectParam = window.location.href.match(/project=([^&]+)/)?.[1];
-                if (!!projectParam) {
-                    const decoded = decodeURIComponent(projectParam);
-                    const shareId = pxt.Cloud.parseScriptId(decoded);
-                    if (!!shareId) {
-                        pxt.tickEvent(Ticks.LoadProjectFromUrl);
-                        await loadProjectMetadataAsync(decoded, shareId);
-
-                        // Load a default checklist to evaluate the project, if one exists.
-                        await maybeLoadDefaultChecklistAsync(cfg);
-
-                        // Regardless of whether we used a default checklist or one the user already had,
-                        // we want to set the active tab to results.
-                        setActiveTab("results");
-                    }
-                }
+                await handleProjectOnLoadAsync(cfg?.teachertool?.defaultChecklistUrl);
 
                 logDebug("App initialized");
             });
