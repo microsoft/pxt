@@ -389,6 +389,11 @@ Blockly.Css.register(`
     stroke: var(--blockly-active-node-color);
     stroke-width: var(--blockly-selection-width);
 }
+.pxt-renderer.classic-theme .blocklyDraggable:not(.blocklyDisabled) .blocklyFieldLedMatrixGroup.blocklyPassiveFocus.blocklyEditableField:not(.blocklyEditing):hover>rect {
+    stroke: var(--blockly-active-node-color);
+    stroke-dasharray: 5px 3px;
+    stroke-width: var(--blockly-selection-width);
+}
 .blocklyFieldLedMatrixGroup > .blocklyFieldRect {
     fill: none !important;
 }`);
