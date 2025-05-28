@@ -103,6 +103,8 @@ declare namespace pxt {
     }
 
     interface TeacherToolConfig {
+        showSharePageEvalButton?: boolean; // show the "Evaluate" button on the share page
+        defaultChecklistUrl?: string; // default checklist to load when no checklist is active and eval button is clicked for a project
         carousels?: TeacherToolCarouselConfig[];
     }
 
