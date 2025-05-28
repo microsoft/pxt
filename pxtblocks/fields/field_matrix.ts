@@ -191,9 +191,8 @@ export abstract class FieldMatrix extends Blockly.Field {
         const cellG = cell.parentNode as SVGRectElement;
         const cellWidth = parseInt(cell.getAttribute("width"))
         const cornerRadius = parseInt(cell.getAttribute("rx"));
-        const focusRects: SVGElement[] = [];
 
-        focusRects.push(pxsim.svg.child(cellG, "rect", {
+        pxsim.svg.child(cellG, "rect", {
             transform: 'translate(-2, -2)',
             width: cellWidth + 4,
             height: cellWidth + 4,
@@ -201,9 +200,9 @@ export abstract class FieldMatrix extends Blockly.Field {
             stroke: "#fff",
             "stroke-width": 4,
             fill: "none"
-        }));
+        });
         if (useTwoToneFocusIndicator) {
-            focusRects.push(pxsim.svg.child(cellG, "rect", {
+            pxsim.svg.child(cellG, "rect", {
                 transform: 'translate(-1, -1)',
                 width: cellWidth + 2,
                 height: cellWidth + 2,
@@ -211,7 +210,7 @@ export abstract class FieldMatrix extends Blockly.Field {
                 stroke: "#000",
                 "stroke-width": 2,
                 fill: "none"
-            }));
+            });
         }
     }
 
