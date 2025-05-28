@@ -886,13 +886,17 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     getToolboxDiv(): HTMLElement | undefined {
-        const monacoArea = document.getElementById('monacoEditorArea');
+        const monacoArea = this.getEditorAreaDiv();
         if (!monacoArea) return undefined;
         return monacoArea.getElementsByClassName('monacoToolboxDiv')[0] as HTMLElement;
     }
 
+    getEditorAreaDiv(): HTMLElement {
+        return document.getElementById('monacoEditorArea');
+    }
+
     resize(e?: Event) {
-        let monacoArea = document.getElementById('monacoEditorArea');
+        let monacoArea = this.getEditorAreaDiv();
         if (!monacoArea) return;
         let monacoToolboxDiv = monacoArea.getElementsByClassName('monacoToolboxDiv')[0] as HTMLElement;
 
@@ -946,7 +950,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     private createLoadMonacoPromise(): Promise<void> {
         this.extraLibs = Object.create(null);
-        let editorArea = document.getElementById("monacoEditorArea");
         let editorElement = document.getElementById("monacoEditorInner");
 
         return pxteditor.monaco.initMonacoAsync(editorElement).then((editor) => {
@@ -1916,6 +1919,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             }
         }
     }
+
+    public setFlyoutForceOpen(_forceOpen: boolean): void {}
 
     ///////////////////////////////////////////////////////////
     ////////////         Flyout methods           /////////////
