@@ -239,13 +239,25 @@ function blockKey(b: Blockly.Block) {
     };
 }
 
+export const AUTO_DISABLED_REASON = "pxt_automatic_disabled";
+
 function setChildrenEnabled(block: Blockly.Block, enabled: boolean) {
-    block.setEnabled(enabled);
+    block.setDisabledReason(!enabled, AUTO_DISABLED_REASON);
     // propagate changes
     const children = block.getDescendants(false);
     for (const child of children) {
-        child.setEnabled(enabled);
+        child.setDisabledReason(!enabled, AUTO_DISABLED_REASON);
     }
+}
+
+function clearDisabled(block: Blockly.Block) {
+    block.setDisabledReason(false, AUTO_DISABLED_REASON);
+
+    // for legacy projects, the disabled reason will be MANUALLY_DISABLED
+    block.setDisabledReason(false, Blockly.constants.MANUALLY_DISABLED);
+
+    // this is the reason for blocks that are disabled via Blockly.Events.disableOrphans
+    block.setDisabledReason(false, "ORPHANED_BLOCK");
 }
 
 function updateDisabledBlocks(e: Environment, allBlocks: Blockly.Block[], topBlocks: Blockly.Block[]) {
@@ -257,7 +269,7 @@ function updateDisabledBlocks(e: Environment, allBlocks: Blockly.Block[], topBlo
     }
 
     // unset disabled
-    allBlocks.forEach(b => b.setEnabled(true));
+    allBlocks.forEach(clearDisabled);
 
     // update top blocks
     const events: pxt.Map<Blockly.Block> = {};
