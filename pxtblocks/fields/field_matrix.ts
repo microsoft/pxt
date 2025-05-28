@@ -188,6 +188,8 @@ export abstract class FieldMatrix extends Blockly.Field {
 
     private setFocusIndicator(cell: SVGRectElement, useTwoToneFocusIndicator: boolean) {
         this.clearFocusIndicator();
+        const focusVisible = this.matrixSvg.matches(":focus-visible");
+        if (!focusVisible) return;
         const cellG = cell.parentNode as SVGRectElement;
         const cellWidth = parseInt(cell.getAttribute("width"))
         const cornerRadius = parseInt(cell.getAttribute("rx"));
