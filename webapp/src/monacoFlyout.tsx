@@ -187,6 +187,9 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
                 }
             } else if ((charCode == 37 && !isRtl) || (charCode == 38 && isRtl)) { // (LEFT & LTR) or (RIGHT & RTL)
                 // Focus back to toolbox
+                this.setState({
+                    selectedBlock: undefined
+                })
                 this.props.moveFocusToParent();
             } else if (charCode == 27) { // ESCAPE
                 // Focus back to toolbox and close Flyout
