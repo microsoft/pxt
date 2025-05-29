@@ -421,6 +421,9 @@ div.blocklyTreeRoot > div[role="tree"]:focus-visible {
 .blocklyActiveFocus.blocklyField
 > .blocklyFieldRect,
 .blocklyKeyboardNavigation
+.blocklyActiveFocus.blocklyField
+> .blocklyFieldRect.blocklySpriteField,
+.blocklyKeyboardNavigation
 .blocklyActiveFocus.blocklyIconGroup
 > .blocklyIconShape:first-child {
     stroke: var(--blockly-active-node-color);
@@ -436,6 +439,9 @@ div.blocklyTreeRoot > div[role="tree"]:focus-visible {
 .blocklyKeyboardNavigation
 .blocklyPassiveFocus.blocklyField
 > .blocklyFieldRect,
+.blocklyKeyboardNavigation
+.blocklyPassiveFocus.blocklyField
+> .blocklyFieldRect.blocklySpriteField,
 .blocklyKeyboardNavigation
 .blocklyPassiveFocus.blocklyIconGroup
 > .blocklyIconShape:first-child {
