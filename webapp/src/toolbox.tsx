@@ -471,7 +471,6 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
 
     handlePointerDownCapture = (e: React.PointerEvent) => {
         e.preventDefault();
-        e.stopPropagation();
         this.shouldHandleCategoryTreeFocus = false;
         (this.refs.categoryTree as HTMLElement).focus();
     }
