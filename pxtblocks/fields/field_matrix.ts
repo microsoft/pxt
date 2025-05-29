@@ -23,6 +23,7 @@ export abstract class FieldMatrix extends Blockly.Field {
     protected abstract numMatrixCols: number;
     protected abstract numMatrixRows: number;
     protected abstract clearSelectionOnBlur: boolean;
+    protected returnEphemeralFocusFn: Blockly.ReturnEphemeralFocus | undefined = undefined;
 
     protected createMatrixDisplay({
         cellWidth,
@@ -157,6 +158,7 @@ export abstract class FieldMatrix extends Blockly.Field {
                 }
                 case "Escape": {
                     (this.sourceBlock_.workspace as Blockly.WorkspaceSvg).markFocused();
+                    this.returnEphemeralFocus();
                     return;
                 }
                 default: {
@@ -208,11 +210,15 @@ export abstract class FieldMatrix extends Blockly.Field {
         this.cells.forEach(cell => cell.forEach(cell => cell.nextElementSibling.firstElementChild.classList.remove("focusedTwoTone", "focused")));
     }
 
-    protected attachEventHandlersToMatrix() {
+    protected addKeyboardFocusHandlers() {
         if (this.sourceBlock_.isInFlyout) return;
 
         this.addKeyDownHandler();
         this.addBlurHandler();
+    }
+
+    protected attachEventHandlersToMatrix() {
+        if (this.sourceBlock_.isInFlyout) return;
 
         for (let x = 0; x < this.numMatrixCols; ++x) {
             for (let y = 0; y < this.numMatrixRows; ++y) {
@@ -221,12 +227,21 @@ export abstract class FieldMatrix extends Blockly.Field {
         }
     }
 
+    protected returnEphemeralFocus() {
+        if (this.returnEphemeralFocusFn) {
+            this.returnEphemeralFocusFn();
+            this.returnEphemeralFocusFn = undefined;
+        }
+    }
+
     protected removeKeyboardFocusHandlers() {
         if (this.keyDownBinding) {
             Blockly.browserEvents.unbind(this.keyDownBinding)
+            this.keyDownBinding = undefined;
         }
         if (this.blurBinding) {
             Blockly.browserEvents.unbind(this.blurBinding)
+            this.blurBinding = undefined;
         }
     }
 

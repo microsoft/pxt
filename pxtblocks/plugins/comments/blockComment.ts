@@ -23,7 +23,7 @@ const COMMENT_OFFSET_Y_FIELD_NAME = "~commentOffsetY";
 /**
  * An icon which allows the user to add comment text to a block.
  */
-export class CommentIcon extends Blockly.icons.Icon {
+export class CommentIcon extends Blockly.icons.Icon implements Blockly.IHasBubble {
     /** The type string used to identify this icon. */
     static readonly TYPE = Blockly.icons.IconType.COMMENT;
 
@@ -328,6 +328,10 @@ export class CommentIcon extends Blockly.icons.Icon {
                 ),
             );
         }
+    }
+
+    getBubble(): Blockly.IBubble | null {
+        return this.textInputBubble;
     }
 
     /**

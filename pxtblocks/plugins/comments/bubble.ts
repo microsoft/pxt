@@ -7,7 +7,7 @@ import dom = Blockly.utils.dom;
  * bubble, where it has a "tail" that points to the block, and a "head" that
  * displays arbitrary svg elements.
  */
-export abstract class Bubble implements Blockly.IDeletable {
+export abstract class Bubble implements Blockly.IDeletable, Blockly.IBubble, Blockly.ISelectable {
     /** The width of the border around the bubble. */
     static readonly BORDER_WIDTH = 0;
 
@@ -637,6 +637,32 @@ export abstract class Bubble implements Blockly.IDeletable {
 
     unselect(): void {
         // Bubbles don't have any visual for being selected.
+    }
+
+    /** See IFocusableNode.getFocusableElement. */
+    getFocusableElement(): HTMLElement | SVGElement {
+      return this.svgRoot;
+    }
+
+    /** See IFocusableNode.getFocusableTree. */
+    getFocusableTree(): Blockly.IFocusableTree {
+        return this.workspace;
+    }
+
+    /** See IFocusableNode.onNodeFocus. */
+    onNodeFocus(): void {
+        this.select();
+        this.bringToFront();
+    }
+
+    /** See IFocusableNode.onNodeBlur. */
+    onNodeBlur(): void {
+        this.unselect();
+    }
+
+    /** See IFocusableNode.canBeFocused. */
+    canBeFocused(): boolean {
+        return true;
     }
 
     contentTop() {

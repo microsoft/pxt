@@ -30,13 +30,11 @@ export function initCopyPaste() {
 function registerCopy() {
     const copyShortcut: Blockly.ShortcutRegistry.KeyboardShortcut = {
         name: Blockly.ShortcutItems.names.COPY,
-        preconditionFn(workspace) {
-            return oldCopy.preconditionFn(workspace);
+        preconditionFn(workspace, scope) {
+            return oldCopy.preconditionFn(workspace, scope);
         },
         callback: copy,
-        // the registered shortcut from blockly isn't an array, it's some sort
-        // of serialized object so we have to convert it back to an array
-        keyCodes: [oldCopy.keyCodes[0], oldCopy.keyCodes[1], oldCopy.keyCodes[2]],
+        keyCodes: oldCopy.keyCodes,
     };
     Blockly.ShortcutRegistry.registry.register(copyShortcut);
 }
@@ -44,19 +42,19 @@ function registerCopy() {
 function registerCut() {
     const cutShortcut: Blockly.ShortcutRegistry.KeyboardShortcut = {
         name: Blockly.ShortcutItems.names.CUT,
-        preconditionFn(workspace) {
-            return oldCut.preconditionFn(workspace);
+        preconditionFn(workspace, scope) {
+            return oldCut.preconditionFn(workspace, scope);
         },
-        callback(workspace, e, shortcut) {
+        callback(workspace, e, shortcut, scope) {
             const handler = getCopyPasteHandlers()?.cut;
 
             if (handler) {
                 return handler(workspace, e);
             }
 
-            return oldCut.callback(workspace, e, shortcut);
+            return oldCut.callback(workspace, e, shortcut, scope);
         },
-        keyCodes: [oldCut.keyCodes[0], oldCut.keyCodes[1], oldCut.keyCodes[2]],
+        keyCodes: oldCut.keyCodes,
     };
 
     Blockly.ShortcutRegistry.registry.register(cutShortcut);
@@ -65,11 +63,11 @@ function registerCut() {
 function registerPaste() {
     const pasteShortcut: Blockly.ShortcutRegistry.KeyboardShortcut = {
         name: Blockly.ShortcutItems.names.PASTE,
-        preconditionFn(workspace) {
-            return oldPaste.preconditionFn(workspace);
+        preconditionFn(workspace, scope) {
+            return oldPaste.preconditionFn(workspace, scope);
         },
         callback: paste,
-        keyCodes: [oldPaste.keyCodes[0], oldPaste.keyCodes[1], oldPaste.keyCodes[2]],
+        keyCodes: oldPaste.keyCodes,
     };
 
     Blockly.ShortcutRegistry.registry.register(pasteShortcut);
@@ -168,22 +166,22 @@ function registerPasteContextMenu() {
     Blockly.ContextMenuRegistry.registry.register(pasteOption);
 }
 
-const copy = (workspace: Blockly.WorkspaceSvg, e: Event, shortcut?: Blockly.ShortcutRegistry.KeyboardShortcut) => {
+const copy = (workspace: Blockly.WorkspaceSvg, e: Event, shortcut?: Blockly.ShortcutRegistry.KeyboardShortcut, scope?: Blockly.ContextMenuRegistry.Scope) => {
     const handler = getCopyPasteHandlers()?.copy;
 
     if (handler) {
         return handler(workspace, e);
     }
 
-    return oldCopy.callback(workspace, e, shortcut);
+    return oldCopy.callback(workspace, e, shortcut, scope);
 }
 
-const paste = (workspace: Blockly.WorkspaceSvg, e: Event, shortcut?: Blockly.ShortcutRegistry.KeyboardShortcut) => {
+const paste = (workspace: Blockly.WorkspaceSvg, e: Event, shortcut?: Blockly.ShortcutRegistry.KeyboardShortcut, scope?: Blockly.ContextMenuRegistry.Scope) => {
     const handler = getCopyPasteHandlers()?.paste;
 
     if (handler) {
         return handler(workspace, e);
     }
 
-    return oldPaste.callback(workspace, e, shortcut);
+    return oldPaste.callback(workspace, e, shortcut, scope);
 }

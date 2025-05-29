@@ -85,6 +85,7 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
         this.gallery = new pxtmelody.MelodyGallery();
         this.renderEditor(contentDiv);
 
+        this.addKeyboardFocusHandlers();
         this.attachEventHandlersToMatrix();
         this.matrixFocusBind = Blockly.browserEvents.bind(this.matrixSvg, 'focus', this, this.handleMatrixFocus.bind(this));
         this.tabKeyBind = Blockly.browserEvents.bind(contentDiv, 'keydown', this, this.handleTabKey.bind(this));
@@ -157,6 +158,7 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
         if (!this.invalidString) {
             this.size_.width = FieldCustomMelody.MUSIC_ICON_WIDTH + (FieldCustomMelody.COLOR_BLOCK_WIDTH + FieldCustomMelody.COLOR_BLOCK_SPACING) * this.numMatrixCols;
         }
+        this.size_.height = 34;
         this.sourceBlock_.setColour("#ffffff");
     }
 
@@ -236,10 +238,13 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
             this.gallery.stopMelody();
         }
         if (this.matrixFocusBind) {
-            Blockly.browserEvents.unbind(this.matrixFocusBind)
+            Blockly.browserEvents.unbind(this.matrixFocusBind);
+            this.matrixFocusBind = undefined;
         }
         if (this.tabKeyBind) {
-            Blockly.browserEvents.unbind(this.tabKeyBind)
+            Blockly.browserEvents.unbind(this.tabKeyBind);
+            this.tabKeyBind = undefined;
+
         }
         this.clearCellSelection();
         this.removeKeyboardFocusHandlers();
@@ -711,6 +716,10 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
     private hideGallery() {
         this.gallery.hide();
         this.lastFocusableElement = this.doneButton;
+    }
+
+    isFullBlockField(): boolean {
+        return true;
     }
 }
 

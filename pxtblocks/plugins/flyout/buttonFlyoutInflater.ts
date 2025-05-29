@@ -22,6 +22,6 @@ export class ButtonFlyoutInflater extends Blockly.ButtonFlyoutInflater {
         );
         button.show();
 
-        return new Blockly.FlyoutItem(button, BUTTON_TYPE, true);
+        return new Blockly.FlyoutItem(button, BUTTON_TYPE);
     }
 }

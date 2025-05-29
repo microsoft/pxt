@@ -77,6 +77,9 @@ export class FieldLedMatrix extends FieldMatrix implements FieldCustom {
             this.scale = 0.85;
         else if (Math.max(this.numMatrixCols, this.numMatrixRows) > 10)
             this.scale = 0.9;
+
+        this.size_.height = this.scale * Number(this.numMatrixRows) * (FieldLedMatrix.CELL_WIDTH + FieldLedMatrix.CELL_VERTICAL_MARGIN) + FieldLedMatrix.CELL_VERTICAL_MARGIN * 2 + FieldLedMatrix.BOTTOM_MARGIN + this.getXAxisHeight()
+        this.size_.width = this.scale * Number(this.numMatrixCols) * (FieldLedMatrix.CELL_WIDTH + FieldLedMatrix.CELL_HORIZONTAL_MARGIN) + FieldLedMatrix.CELL_HORIZONTAL_MARGIN + this.getYAxisWidth();
     }
 
     protected getCellToggled(x: number, y: number): boolean {
@@ -94,8 +97,12 @@ export class FieldLedMatrix extends FieldMatrix implements FieldCustom {
     showEditor_() {
         this.selected = [0, 0];
         this.focusCell(0, 0);
-        this.matrixSvg.focus();
-        this.attachEventHandlersToMatrix();
+        this.returnEphemeralFocusFn = Blockly.getFocusManager().takeEphemeralFocus(this.matrixSvg);
+        this.addKeyboardFocusHandlers();
+    }
+
+    onNodeBlur() {
+        this.returnEphemeralFocus();
     }
 
     private initMatrix() {
@@ -146,7 +153,10 @@ export class FieldLedMatrix extends FieldMatrix implements FieldCustom {
                 }
             }
 
-            this.fieldGroup_.replaceChild(this.matrixSvg, this.fieldGroup_.firstChild);
+            this.fieldGroup_.classList.add("blocklyFieldLedMatrixGroup");
+            this.fieldGroup_.append(this.matrixSvg);
+
+            this.attachEventHandlersToMatrix();
         }
     }
 
@@ -217,9 +227,7 @@ export class FieldLedMatrix extends FieldMatrix implements FieldCustom {
 
             ev.stopPropagation();
             ev.preventDefault();
-            // Clear event listeners and selection used for keyboard navigation.
-            this.removeKeyboardFocusHandlers();
-            this.clearCellSelection();
+            this.returnEphemeralFocus();
         }, false));
     }
 
@@ -291,9 +299,6 @@ export class FieldLedMatrix extends FieldMatrix implements FieldCustom {
             this.initMatrix();
         }
 
-        // The height and width must be set by the render function
-        this.size_.height = this.scale * Number(this.numMatrixRows) * (FieldLedMatrix.CELL_WIDTH + FieldLedMatrix.CELL_VERTICAL_MARGIN) + FieldLedMatrix.CELL_VERTICAL_MARGIN * 2 + FieldLedMatrix.BOTTOM_MARGIN + this.getXAxisHeight()
-        this.size_.width = this.scale * Number(this.numMatrixCols) * (FieldLedMatrix.CELL_WIDTH + FieldLedMatrix.CELL_HORIZONTAL_MARGIN) + FieldLedMatrix.CELL_HORIZONTAL_MARGIN + this.getYAxisWidth();
     }
 
     // The return value of this function is inserted in the code
@@ -373,3 +378,22 @@ function removeQuotes(str: string) {
     }
     return str;
 }
+
+// Override the hover stroke which doesn't make sense here.
+// Restate the keyboard nav stroke more specifically than the field hover override.
+Blockly.Css.register(`
+.pxt-renderer.classic-theme .blocklyDraggable:not(.blocklyDisabled) .blocklyFieldLedMatrixGroup.blocklyEditableField:not(.blocklyEditing):hover>rect {
+    stroke: none;
+}
+.pxt-renderer.classic-theme .blocklyDraggable:not(.blocklyDisabled) .blocklyFieldLedMatrixGroup.blocklyActiveFocus.blocklyEditableField:not(.blocklyEditing):hover>rect {
+    stroke: var(--blockly-active-node-color);
+    stroke-width: var(--blockly-selection-width);
+}
+.pxt-renderer.classic-theme .blocklyDraggable:not(.blocklyDisabled) .blocklyFieldLedMatrixGroup.blocklyPassiveFocus.blocklyEditableField:not(.blocklyEditing):hover>rect {
+    stroke: var(--blockly-active-node-color);
+    stroke-dasharray: 5px 3px;
+    stroke-width: var(--blockly-selection-width);
+}
+.blocklyFieldLedMatrixGroup > .blocklyFieldRect {
+    fill: none !important;
+}`);
