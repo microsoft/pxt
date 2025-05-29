@@ -38,9 +38,8 @@ import SimState = pxt.editor.SimState;
 import { DuplicateOnDragConnectionChecker } from "../../pxtblocks/plugins/duplicateOnDrag";
 import { PathObject } from "../../pxtblocks/plugins/renderer/pathObject";
 import { Measurements } from "./constants";
-import { flow } from "../../pxtblocks";
+import { flow, initCopyPaste } from "../../pxtblocks";
 import { HIDDEN_CLASS_NAME } from "../../pxtblocks/plugins/flyout/blockInflater";
-import { FlyoutButton } from "../../pxtblocks/plugins/flyout/flyoutButton";
 import { AIFooter } from "../../react-common/components/controls/AIFooter";
 
 interface CopyDataEntry {
@@ -240,6 +239,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
                     // Initialize blocks in Blockly and update our toolbox
                     pxtblockly.initialize(this.blockInfo);
+
                     this.nsMap = this.partitionBlocks();
                     this.refreshToolbox();
 
@@ -501,13 +501,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             pxtblockly.external.setPromptTranslateBlock(dialogs.promptTranslateBlock);
         }
 
-        // Disable clipboard overwrite (initCopyPaste) when accessible blocks enabled.
-        if (!data.getData<boolean>(auth.ACCESSIBLE_BLOCKS)) {
-            pxtblockly.external.setCopyPaste(copy, cut, this.pasteCallback, this.copyPrecondition, this.pastePrecondition);
-        }
+        pxtblockly.external.setCopyPaste(copy, cut, this.pasteCallback, this.copyPrecondition, this.pastePrecondition);
     }
 
     private initBlocklyToolbox() {
+        // Remove unwanted additional tab stop from the editor.
+        // We add tabindex to the tree wrapping the toolbox categories (excluding search) instead.
+        this.getToolboxDiv().removeAttribute("tabindex");
+
         let editor = this;
         /**
          * Move the toolbox to the edge.
@@ -525,6 +526,15 @@ export class Editor extends toolboxeditor.ToolboxEditor {
          * it to select the first category and clear the selection.
          */
         const that = this;
+        Blockly.Toolbox.prototype.getFocusableElement = function() {
+            return that.getToolboxDiv().querySelector(".blocklyTreeRoot [role=tree]") as HTMLElement;
+        };
+        Blockly.Toolbox.prototype.getRestoredFocusableNode = function() {
+            return null;
+        };
+        Blockly.Toolbox.prototype.onTreeFocus = function() {
+            return;
+        };
         (Blockly as any).Toolbox.prototype.setSelectedItem = function (newItem: Blockly.ISelectableToolboxItem | null) {
             if (newItem === null) {
                 that.hideFlyout();
@@ -569,20 +579,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private initAccessibleBlocks() {
-        const enabled = data.getData<boolean>(auth.ACCESSIBLE_BLOCKS)
-        if (enabled && !this.keyboardNavigation) {
+        if (!this.keyboardNavigation) {
             this.keyboardNavigation = new KeyboardNavigation(this.editor);
-
-            const injectionDiv = document.getElementById("blocksEditor");
-            injectionDiv.classList.add("accessibleBlocks");
-            const focusRingDiv = injectionDiv.appendChild(document.createElement("div"))
-            focusRingDiv.className = "blocklyWorkspaceFocusRingLayer";
-            this.editor.getSvgGroup().addEventListener("focus", () => {
-                focusRingDiv.dataset.focused = "true";
-            });
-            this.editor.getSvgGroup().addEventListener("blur", () => {
-                delete focusRingDiv.dataset.focused;
-            });
 
             const listShortcuts = Blockly.ShortcutRegistry.registry.getRegistry()["list_shortcuts"];
             Blockly.ShortcutRegistry.registry.unregister(listShortcuts.name);
@@ -598,7 +596,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 ]
             });
 
-
             const cleanUpWorkspace = Blockly.ShortcutRegistry.registry.getRegistry()["clean_up_workspace"];
             Blockly.ShortcutRegistry.registry.unregister(cleanUpWorkspace.name);
             Blockly.ShortcutRegistry.registry.register({
@@ -610,6 +607,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     return true
                 }
             });
+
+            // This must come after plugin initialization to override context menu
+            // precondition functions set by the keyboard navigation plugin.
+            // We want to customize this behavior and have access to clipboard data to
+            // determined whether paste should be enabled.
+            pxtblockly.initAccessibleBlocksContextMenuItems();
         }
     }
 
@@ -701,7 +704,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 Blockly.Events.VIEWPORT_CHANGE,
                 Blockly.Events.BUBBLE_OPEN,
                 Blockly.Events.THEME_CHANGE,
-                Blockly.Events.MARKER_MOVE,
                 pxtblockly.FIELD_EDITOR_OPEN_EVENT_TYPE
             ];
 
@@ -791,7 +793,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.initPrompts();
         this.initBlocklyToolbox();
         this.initWorkspaceSounds();
-        this.initAccessibleBlocks();
+        const accessibleBlocksEnabled = data.getData<boolean>(auth.ACCESSIBLE_BLOCKS)
+        initCopyPaste(accessibleBlocksEnabled);
+        // This must come after initCopyPaste which overrides the default cut, copy,
+        // paste shortcuts. The keyboard navigation plugin utilizes these cut, copy and paste
+        // shortcuts and wraps them with additional behaviours (e.g., toast notifications).
+        if (accessibleBlocksEnabled) {
+            this.initAccessibleBlocks();
+        }
         this.initWorkspaceSearch();
         this.setupIntersectionObserver();
         this.resize();
@@ -865,6 +874,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const accessibleBlocksEnabled = data.getData<boolean>(auth.ACCESSIBLE_BLOCKS)
         if (accessibleBlocksEnabled) {
             (this.editor.getSvgGroup() as SVGElement).focus();
+            Blockly.hideChaff();
         }
     }
 
@@ -1102,27 +1112,24 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     public moveFocusToFlyout() {
         if (this.keyboardNavigation) {
-            const flyout = this.editor.getFlyout() as pxtblockly.CachingFlyout;;
-            const element = flyout.getFlyoutElement();
-            element?.focus();
-            this.defaultFlyoutCursorIfNeeded(flyout);
+            // It's the nested workspace focus tree that takes focus for navigation.
+            Blockly.FocusManager.getFocusManager().focusTree(this.editor.getFlyout().getWorkspace())
+            this.defaultFlyoutCursorIfNeeded(this.editor.getFlyout());
         }
     }
 
     // Modified from blockly-keyboard-experimentation plugin
     // https://github.com/google/blockly-keyboard-experimentation/blob/main/src/navigation.ts
     // This modification is required to workaround the fact that cached blocks are not disposed in MakeCode.
-    private isFlyoutItemDisposed(node: Blockly.ASTNode) {
-        const sourceBlock = node.getSourceBlock();
-        if (
-            sourceBlock?.disposed ||
-            sourceBlock?.hasDisabledReason(HIDDEN_CLASS_NAME)
-        ) {
-            return true;
+    private isFlyoutItemDisposed(
+        node: Blockly.IFocusableNode,
+        sourceBlock: Blockly.BlockSvg | null,
+    ) {
+        if (sourceBlock?.disposed || sourceBlock?.hasDisabledReason(HIDDEN_CLASS_NAME)) {
+        return true;
         }
-        const location = node.getLocation();
-        if (location instanceof FlyoutButton) {
-            return location.isDisposed();
+        if (node instanceof Blockly.FlyoutButton) {
+        return node.getSvgRoot().parentNode === null;
         }
         return false;
     }
@@ -1135,22 +1142,15 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             return;
         }
         const curNode = flyoutCursor.getCurNode();
-        if (curNode && !this.isFlyoutItemDisposed(curNode)) {
-            return;
-        }
+        const sourceBlock = flyoutCursor.getSourceBlock();
+        if (curNode && !this.isFlyoutItemDisposed(curNode, sourceBlock))
+        return;
+
         const flyoutContents = flyout.getContents();
         const defaultFlyoutItem = flyoutContents[0];
-        if (!defaultFlyoutItem) {
-            return;
-        }
+        if (!defaultFlyoutItem) return;
         const defaultFlyoutItemElement = defaultFlyoutItem.getElement();
-        if (defaultFlyoutItemElement instanceof Blockly.FlyoutButton) {
-            const astNode = Blockly.ASTNode.createButtonNode(defaultFlyoutItemElement as Blockly.FlyoutButton);
-            flyoutCursor.setCurNode(astNode);
-        } else if (defaultFlyoutItemElement instanceof Blockly.BlockSvg) {
-            const astNode = Blockly.ASTNode.createStackNode(defaultFlyoutItemElement as Blockly.BlockSvg);
-            flyoutCursor.setCurNode(astNode);
-        }
+        flyoutCursor.setCurNode(defaultFlyoutItemElement);
     }
 
     renderToolbox(immediate?: boolean) {
@@ -2351,7 +2351,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     protected pastePrecondition = (scope: Blockly.ContextMenuRegistry.Scope) => {
-        if (scope.workspace !== this.editor) return "hidden";
+        if (
+            (scope.workspace && scope.workspace !== this.editor) ||
+            (scope.block && scope.block.workspace !== this.editor)
+        )
+            return "hidden";
+
 
         const data = getCopyData();
 
@@ -2459,21 +2464,21 @@ function resolveLocalizedMarkdown(url: string) {
 }
 
 // adapted from Blockly/core/shortcut_items.ts
-function copy(workspace: Blockly.WorkspaceSvg, e: Event) {
+function copy(workspace: Blockly.WorkspaceSvg, e: Event, _shortcut: Blockly.ShortcutRegistry.KeyboardShortcut, scope: Blockly.ContextMenuRegistry.Scope) {
     // Prevent the default copy behavior, which may beep or otherwise indicate
     // an error due to the lack of a selection.
     e.preventDefault();
     workspace.hideChaff();
-    const selected = Blockly.common.getSelected();
-    if (!selected || !Blockly.isCopyable(selected)) return false;
+    const focused = scope.focusedNode;
+    if (!focused || !Blockly.isCopyable(focused)) return false;
+    const copyData = focused.toCopyData();
 
-    const copyData = selected.toCopyData();
     const copyWorkspace =
-        selected.workspace instanceof Blockly.WorkspaceSvg
-            ? selected.workspace
+        focused.workspace instanceof Blockly.WorkspaceSvg
+            ? focused.workspace
             : workspace;
-    const copyCoords = Blockly.isDraggable(selected)
-        ? selected.getRelativeToSurfaceXY()
+    const copyCoords = Blockly.isDraggable(focused)
+        ? focused.getRelativeToSurfaceXY()
         : null;
 
     if (copyData) {
@@ -2489,30 +2494,30 @@ function copy(workspace: Blockly.WorkspaceSvg, e: Event) {
 }
 
 // adapted from Blockly/core/shortcut_items.ts
-function cut(workspace: Blockly.WorkspaceSvg, e: Event) {
-    const selected = Blockly.common.getSelected();
+function cut(workspace: Blockly.WorkspaceSvg, _e: Event, _shortcut: Blockly.ShortcutRegistry.KeyboardShortcut, scope: Blockly.ContextMenuRegistry.Scope) {
+    const focused = scope.focusedNode;
 
-    if (selected instanceof Blockly.BlockSvg) {
-        const copyData = selected.toCopyData();
+    if (focused instanceof Blockly.BlockSvg) {
+        const copyData = focused.toCopyData();
         const copyWorkspace = workspace;
-        const copyCoords = selected.getRelativeToSurfaceXY();
+        const copyCoords = focused.getRelativeToSurfaceXY();
         saveCopyData(
             copyData,
             copyCoords,
             copyWorkspace,
             pkg.mainEditorPkg().header.id
         );
-        selected.checkAndDelete();
+        focused.checkAndDelete();
         return true;
     } else if (
-        Blockly.isDeletable(selected) &&
-        selected.isDeletable() &&
-        Blockly.isCopyable(selected)
+        Blockly.isDeletable(focused) &&
+        focused.isDeletable() &&
+        Blockly.isCopyable(focused)
     ) {
-        const copyData = selected.toCopyData();
+        const copyData = focused.toCopyData();
         const copyWorkspace = workspace;
-        const copyCoords = Blockly.isDraggable(selected)
-            ? selected.getRelativeToSurfaceXY()
+        const copyCoords = Blockly.isDraggable(focused)
+            ? focused.getRelativeToSurfaceXY()
             : null;
         saveCopyData(
             copyData,
@@ -2520,7 +2525,7 @@ function cut(workspace: Blockly.WorkspaceSvg, e: Event) {
             copyWorkspace,
             pkg.mainEditorPkg().header.id
         );
-        selected.dispose();
+        focused.dispose();
         return true;
     }
     return false;

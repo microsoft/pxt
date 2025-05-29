@@ -90,7 +90,7 @@ export function openWorkspaceSearch() {
     }
 }
 
-type ShortcutHandler = (workspace: Blockly.Workspace, e: Event) => boolean;
+type ShortcutHandler = (workspace: Blockly.Workspace, e: Event, shortcut: Blockly.ShortcutRegistry.KeyboardShortcut, scope: Blockly.ContextMenuRegistry.Scope) => boolean;
 type PreconditionFn = (scope: Blockly.ContextMenuRegistry.Scope) => "enabled" | "disabled" | "hidden";
 
 let _handleCopy: ShortcutHandler;
