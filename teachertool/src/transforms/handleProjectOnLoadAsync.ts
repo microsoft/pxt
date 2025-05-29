@@ -11,12 +11,19 @@ import { setActiveTab } from "./setActiveTab";
 export async function handleProjectOnLoadAsync(defaultChecklistUrl?: string | undefined): Promise<void> {
     const { state } = stateAndDispatch();
 
-    const projectParam = window.location.href.match(/project=([^&]+)/)?.[1];
+    const projectRegex = /project=([^&]+)/;
+
+    const projectParam = window.location.href.match(projectRegex)?.[1];
     if (!!projectParam) {
         const decoded = decodeURIComponent(projectParam);
         const shareId = pxt.Cloud.parseScriptId(decoded);
         if (!!shareId) {
             pxt.tickEvent(Ticks.LoadProjectFromUrl);
+
+            // Remove the project parameter from the URL without reloading the page.
+            // This also prevents the project from being loaded again if the user refreshes the page or navigates back.
+            window.history.replaceState({}, "", window.location.href.replace(projectRegex, ""));
+
             await loadProjectMetadataAsync(decoded, shareId);
 
             // If the user does not already have a checklist loaded, load a default.
