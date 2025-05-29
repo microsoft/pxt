@@ -410,7 +410,7 @@ class BaseMenuItemProps extends data.Component<IBaseMenuItemProps, {}> {
 
     renderCore() {
         const active = this.props.isActive();
-        return <sui.Item className={`base-menuitem ${this.props.className} ${active ? "selected" : ""}`} role="menuitem" textClass="landscape only"
+        return <sui.Item className={`base-menuitem ${this.props.className} ${active ? "selected" : ""}`} role="option" textClass="landscape only"
             text={this.props.text} icon={this.props.icon} active={active} onClick={this.props.onClick} title={this.props.title} ariaLabel={this.props.ariaLabel} />
     }
 }
@@ -563,12 +563,12 @@ export class EditorSelector extends data.Component<IEditorSelectorProps, {}> {
         }
 
         return (
-            <div id="editortoggle" className={`ui grid padded ${(pyOnly || tsOnly) ? "one-language" : ""}`} role="menubar" aria-orientation="horizontal" aria-label={lf("Editor toggle")}>
+            <div id="editortoggle" className={`ui grid padded ${(pyOnly || tsOnly) ? "one-language" : ""}`} role="listbox" aria-orientation="horizontal" aria-label={lf("Editor toggle")}>
                 {showSandbox && <SandboxMenuItem parent={parent} />}
                 {showBlocks && <BlocksMenuItem parent={parent} />}
                 {textLanguage}
                 {secondTextLanguage}
-                {showDropdown && <sui.DropdownMenu id="editordropdown" role="menuitem" icon="chevron down" rightIcon title={lf("Select code editor language")} className={`item button attached right ${dropdownActive ? "active" : ""}`}>
+                {showDropdown && <sui.DropdownMenu id="editordropdown" role="option" icon="chevron down" rightIcon title={lf("Select code editor language")} className={`item button attached right ${dropdownActive ? "active" : ""}`}>
                     <JavascriptMenuItem parent={parent} />
                     <PythonMenuItem parent={parent} />
                 </sui.DropdownMenu>}
