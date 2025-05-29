@@ -96,6 +96,7 @@ export class FieldLedMatrix extends FieldMatrix implements FieldCustom {
      */
     showEditor_() {
         this.selected = [0, 0];
+        this.matrixSvg.focus();
         this.focusCell(0, 0);
         this.returnEphemeralFocusFn = Blockly.getFocusManager().takeEphemeralFocus(this.matrixSvg);
         this.addKeyboardFocusHandlers();
