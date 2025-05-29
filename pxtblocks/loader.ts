@@ -24,7 +24,8 @@ import { initContextMenu } from "./contextMenu";
 import { renderCodeCard } from "./codecardRenderer";
 import { FieldDropdown } from "./fields/field_dropdown";
 import { setDraggableShadowBlocks, setDuplicateOnDrag, setDuplicateOnDragStrategy } from "./plugins/duplicateOnDrag";
-import { initCopyPaste } from "./copyPaste";
+import { initAccessibleBlocksCopyPasteContextMenu, initCopyPaste } from "./copyPaste";
+export { initCopyPaste } from "./copyPaste";
 import { FieldVariable } from "./plugins/newVariableField/fieldVariable";
 import { ArgumentReporterBlock, FieldArgumentReporter, setArgumentReporterLocalizeFunction } from "./plugins/functions";
 import { getArgumentReporterParent } from "./plugins/functions/utils";
@@ -588,6 +589,7 @@ export function cleanBlocks() {
  */
 export function initializeAndInject(blockInfo: pxtc.BlocksInfo) {
     init(blockInfo);
+    initCopyPaste(false);
     injectBlocks(blockInfo);
 }
 
@@ -617,7 +619,6 @@ function init(blockInfo: pxtc.BlocksInfo) {
     initText();
     initComments();
     initTooltip();
-    initCopyPaste();
 
     // in safari on ios, Blockly isn't always great at clearing touch
     // identifiers. for most browsers this doesn't matter because the
@@ -633,6 +634,10 @@ function init(blockInfo: pxtc.BlocksInfo) {
             })
         });
     }
+}
+
+export function initAccessibleBlocksContextMenuItems() {
+    initAccessibleBlocksCopyPasteContextMenu()
 }
 
 
