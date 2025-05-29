@@ -16,6 +16,7 @@ export class PathObject extends Blockly.zelos.PathObject {
     protected mouseLeaveData: Blockly.browserEvents.Data;
 
     protected connectionPointIndicators = new WeakMap<Blockly.RenderedConnection, SVGElement>();
+    staticConnectionIndicatorParentGroup: any;
 
     override setPath(pathString: string): void {
         super.setPath(pathString);
@@ -56,66 +57,26 @@ export class PathObject extends Blockly.zelos.PathObject {
     }
 
     override addConnectionHighlight(connection: Blockly.RenderedConnection, connectionPath: string, offset: Blockly.utils.Coordinate, rtl: boolean): SVGElement {
-        const transformation =
-            `translate(${offset.x}, ${offset.y})` + (rtl ? ' scale(-1 1)' : '');
+        const result = super.addConnectionHighlight(connection, connectionPath, offset, rtl);
 
-        const previousHighlightGroup = (this as any).connectionHighlights.get(connection) as SVGGElement;
-        if (previousHighlightGroup) {
-            // Since a connection already exists, make sure that its path and
-            // transform are correct.
-            const previousHighlight = previousHighlightGroup.firstElementChild;
-            previousHighlight.setAttribute('d', connectionPath);
-            previousHighlight.setAttribute('transform', transformation);
+        // We add a group that our ConnectionPreviewer uses to add the connection preview indicators.
+        // We create it here to manage the paint order.
+        if (!this.staticConnectionIndicatorParentGroup) {
+            this.staticConnectionIndicatorParentGroup = Blockly.utils.dom.createSvgElement("g", {
+                class: "blocklyConnectionIndicatorParent"
+            }, this.svgRoot);
+        } else {
             // Move last in paint order.
-            previousHighlightGroup.parentElement.appendChild(previousHighlightGroup);
-            return previousHighlightGroup;
+            this.svgRoot.appendChild(this.staticConnectionIndicatorParentGroup);
         }
 
-        const highlightGroup = Blockly.utils.dom.createSvgElement(
-            Blockly.utils.Svg.G,
-            {
-                'id': connection.id,
-                'style': 'display: none;',
-                'tabindex': '-1',
-            },
-            this.svgRoot,
-        );
-        Blockly.utils.dom.createSvgElement(
-            Blockly.utils.Svg.PATH,
-            {
-                'id': connection.id,
-                'class': 'blocklyHighlightedConnectionPath',
-                'd': connectionPath,
-                'transform': transformation,
-            },
-            highlightGroup,
-        );
-
-        if (connection.type === Blockly.INPUT_VALUE || connection.type === Blockly.OUTPUT_VALUE) {
-            const indicator = Blockly.utils.dom.createSvgElement('g',
-                { 'class': 'blocklyInputConnectionIndicator' }
-            );
-            Blockly.utils.dom.createSvgElement('circle',
-                { 'r': PathObject.CONNECTION_INDICATOR_RADIUS }, indicator);
-
-            const offset = connection.getOffsetInBlock();
-            indicator.setAttribute('transform',
-                'translate(' + offset.x + ',' + offset.y + ')');
-            this.connectionPointIndicators.set(connection, indicator);
-            highlightGroup.appendChild(indicator);
-        }
-
-        (this as any).connectionHighlights.set(connection, highlightGroup);
-        return highlightGroup;
+        return result;
     }
 
     override removeConnectionHighlight(connection: Blockly.RenderedConnection): void {
-        super.removeConnectionHighlight(connection);
+        this.staticConnectionIndicatorParentGroup?.remove();
 
-        if (this.connectionPointIndicators.has(connection)) {
-            this.connectionPointIndicators.get(connection).remove();
-            this.connectionPointIndicators.delete(connection);
-        }
+        super.removeConnectionHighlight(connection);
     }
 
     override applyColour(block: Blockly.BlockSvg): void {
