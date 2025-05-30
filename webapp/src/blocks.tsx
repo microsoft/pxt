@@ -38,7 +38,7 @@ import SimState = pxt.editor.SimState;
 import { DuplicateOnDragConnectionChecker } from "../../pxtblocks/plugins/duplicateOnDrag";
 import { PathObject } from "../../pxtblocks/plugins/renderer/pathObject";
 import { Measurements } from "./constants";
-import { CachingFlyout, flow, initCopyPaste } from "../../pxtblocks";
+import { flow, initCopyPaste } from "../../pxtblocks";
 import { HIDDEN_CLASS_NAME } from "../../pxtblocks/plugins/flyout/blockInflater";
 import { AIFooter } from "../../react-common/components/controls/AIFooter";
 
@@ -546,7 +546,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         (Blockly as any).Toolbox.prototype.onTreeBlur = function (nextTree: Blockly.IFocusableTree | null) {
             // If the search box is focused and there are search results, the flyout is set to forceOpen.
             // Otherwise, the flyout closes and then re-opens causing an unpleasant visual effect.
-            if ((that.editor.getFlyout() as CachingFlyout).forceOpen) {
+            if ((that.editor.getFlyout() as pxtblockly.CachingFlyout).forceOpen) {
                 that.toolbox.selectFirstItem();
                 that.setFlyoutForceOpen(false);
                 return;
@@ -1747,7 +1747,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     public setFlyoutForceOpen(forceOpen: boolean) {
-        (this.editor.getFlyout() as CachingFlyout).setForceOpen(forceOpen);
+        (this.editor.getFlyout() as pxtblockly.CachingFlyout).setForceOpen(forceOpen);
     }
 
     ///////////////////////////////////////////////////////////
