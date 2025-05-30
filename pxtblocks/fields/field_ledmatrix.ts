@@ -96,18 +96,32 @@ export class FieldLedMatrix extends FieldMatrix implements FieldCustom {
      */
     showEditor_() {
         this.selected = [0, 0];
-        this.returnEphemeralFocusFn = Blockly.getFocusManager().takeEphemeralFocus(this.matrixSvg);
-        this.focusCell(0, 0);
-        this.addKeyboardFocusHandlers();
-    }
 
-    onNodeBlur() {
-        this.returnEphemeralFocus();
+        const widgetDiv = Blockly.WidgetDiv.getDiv();
+        widgetDiv.append(this.matrixSvg);
+        this.addKeyboardFocusHandlers();
+
+        const fieldGroupRect = this.getScaledBBox()
+        widgetDiv.style.left = fieldGroupRect.left + "px";
+        widgetDiv.style.top = fieldGroupRect.top + "px";
+        widgetDiv.style.transform = `scale(${(Blockly.getMainWorkspace() as Blockly.WorkspaceSvg).getScale()})`;
+        widgetDiv.style.transformOrigin = "0 0";
+
+        Blockly.WidgetDiv.show(this, this.sourceBlock_.RTL, () => {
+            this.fieldGroup_.append(this.matrixSvg);
+            widgetDiv.style.left = "";
+            widgetDiv.style.top = "";
+            widgetDiv.style.transform = "";
+            widgetDiv.style.transformOrigin = "";
+        });
+
+        this.matrixSvg.focus();
+        this.focusCell(0, 0);
     }
 
     private initMatrix() {
         if (!this.sourceBlock_.isInsertionMarker()) {
-            this.matrixSvg = pxsim.svg.parseString(`<svg xmlns="http://www.w3.org/2000/svg" id="field-matrix" class="blocklyMatrix" tabindex="-1" role="grid" />`);
+            this.matrixSvg = pxsim.svg.parseString(`<svg xmlns="http://www.w3.org/2000/svg" id="field-matrix" class="blocklyMatrix" tabindex="-1" role="grid" width="${this.size_.width}px" height="${this.size_.height}px"/>`);
             this.matrixSvg.ariaLabel = lf("LED grid");
 
             // Initialize the matrix that holds the state
