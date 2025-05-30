@@ -1,4 +1,4 @@
-declare module "@blockly/keyboard-experiment" {
+declare module "@blockly/keyboard-navigation" {
   import { WorkspaceSvg } from "blockly";
 
   class KeyboardNavigation {

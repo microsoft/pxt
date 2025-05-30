@@ -243,8 +243,12 @@ export abstract class FieldMatrix extends Blockly.Field {
 
     protected returnEphemeralFocus() {
         if (this.returnEphemeralFocusFn) {
-            this.returnEphemeralFocusFn();
+            // Clear field before running function. If this is called due to 'Escape',
+            // onNodeBlur will fire running this function again.
+            // onNodeBlur is required for mouse clicks in the workspace.
+            const returnEphemeralFocusFn = this.returnEphemeralFocusFn;
             this.returnEphemeralFocusFn = undefined;
+            returnEphemeralFocusFn();
         }
     }
 
