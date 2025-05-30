@@ -44,6 +44,7 @@ export class FieldLedMatrix extends FieldMatrix implements FieldCustom {
     private currentDragState_: boolean;
 
     protected clearSelectionOnBlur = true;
+    protected forceFocusVisible = true;
 
     constructor(text: string, params: any, validator?: Blockly.FieldValidator) {
         super(text, validator);
@@ -108,6 +109,8 @@ export class FieldLedMatrix extends FieldMatrix implements FieldCustom {
         widgetDiv.style.transformOrigin = "0 0";
 
         Blockly.WidgetDiv.show(this, this.sourceBlock_.RTL, () => {
+            this.removeKeyboardFocusHandlers();
+            this.clearCellSelection();
             this.fieldGroup_.append(this.matrixSvg);
             widgetDiv.style.left = "";
             widgetDiv.style.top = "";
