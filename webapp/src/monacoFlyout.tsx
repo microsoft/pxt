@@ -206,6 +206,18 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
         }
     }
 
+    private handleFocus = (name: string) => {
+        this.setState({
+            selectedBlock: name
+        });
+    }
+
+    private handleBlur = () => {
+        this.setState({
+            selectedBlock: undefined
+        });
+    }
+
     protected getHelpButtonClickHandler = (group?: string) => {
         return () => {
             pxt.debug(`${group} help icon clicked.`);
@@ -365,8 +377,10 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
         return <div className={`monacoBlock ${disabled ? "monacoDisabledBlock" : ""} ${selected ? "expand" : ""} ${hover ? "hover" : ""}`}
             style={this.getSelectedStyle()}
             title={block.attributes.jsDoc}
-            key={`block_${qName}_${index}`} tabIndex={0} role="listitem"
+            key={`block_${qName}_${index}`} tabIndex={!this.state.selectedBlock && index === 0 ? 0 : selected ? 0 : -1} role="listitem"
             onClick={this.getBlockClickHandler(qName)}
+            onFocus={() => this.handleFocus(qName)}
+            onBlur={() => this.handleBlur()}
             onMouseOver={this.getBlockMouseOver(qName)}
             onMouseOut={this.getBlockMouseOut(qName)}
             onKeyDown={this.getKeyDownHandler(block, snippet, isPython)}
@@ -401,7 +415,7 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
     }
 
     renderCore() {
-        const { name, ns, color, icon, groups } = this.state;
+        const { name, ns, color, icon, groups, selectedBlock } = this.state;
         const rgb = pxt.toolbox.getAccessibleBackground(pxt.toolbox.convertColor(color || (ns && pxt.toolbox.getNamespaceColor(ns)) || "255"));
         const iconClass = `blocklyTreeIcon${icon ? (ns || icon).toLowerCase() : "Default"}`.replace(/\s/g, "");
         return <div id="monacoFlyoutWidget" className="monacoFlyout" style={this.getFlyoutStyle()}>
@@ -417,7 +431,7 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
                     // Add group label, for non-default groups
                     if (g.name != pxt.DEFAULT_GROUP_NAME && groups.length > 1) {
                         group.push(
-                            <div className="monacoFlyoutLabel blocklyFlyoutGroup" key={`label_${i}`} tabIndex={0} onKeyDown={this.getKeyDownHandler()} role="separator">
+                            <div className="monacoFlyoutLabel blocklyFlyoutGroup" key={`label_${i}`} tabIndex={selectedBlock || i > 0 ? -1 : 0} onKeyDown={this.getKeyDownHandler()} role="separator">
                                 {g.icon && <span className={`monacoFlyoutHeadingIcon blocklyTreeIcon ${iconClass}`} role="presentation">{g.icon}</span>}
                                 <div className="monacoFlyoutLabelText">{pxtc.U.rlf(`{id:group}${g.name}`)}</div>
                                 {g.hasHelp && HELP_IMAGE_URI && <span>
