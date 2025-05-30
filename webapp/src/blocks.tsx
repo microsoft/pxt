@@ -1,4 +1,4 @@
-/// <reference path="../../localtypings/blockly-keyboard-experiment.d.ts"/>
+/// <reference path="../../localtypings/blockly-keyboard-navigation.d.ts"/>
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -19,7 +19,7 @@ import { CreateFunctionDialog } from "./createFunction";
 import { initializeSnippetExtensions } from './snippetBuilder';
 
 import * as pxtblockly from "../../pxtblocks";
-import { KeyboardNavigation } from '@blockly/keyboard-experiment';
+import { KeyboardNavigation } from '@blockly/keyboard-navigation';
 import { WorkspaceSearch } from "@blockly/plugin-workspace-search";
 
 import Util = pxt.Util;
@@ -543,11 +543,38 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         (Blockly as any).Toolbox.prototype.clearSelection = function () {
             that.hideFlyout();
         };
+        (Blockly as any).Toolbox.prototype.onTreeBlur = function (nextTree: Blockly.IFocusableTree | null) {
+            // If the search box is focused and there are search results, the flyout is set to forceOpen.
+            // Otherwise, the flyout closes and then re-opens causing an unpleasant visual effect.
+            if ((that.editor.getFlyout() as pxtblockly.CachingFlyout).forceOpen) {
+                that.toolbox.selectFirstItem();
+                that.setFlyoutForceOpen(false);
+                return;
+            }
+            // If navigating to anything other than the toolbox's flyout then clear the
+            // selection so that the toolbox's flyout can automatically close.
+            if (!nextTree || nextTree !== this.flyout?.getWorkspace()) {
+                this.clearSelection();
+                if (this.flyout && this.flyout.autoHide !== undefined) {
+                    this.flyout.autoHide(false);
+                }
+            }
+        };
         (Blockly.WorkspaceSvg as any).prototype.refreshToolboxSelection = function () {
             let ws = this.isFlyout ? this.targetWorkspace : this;
             if (ws && !ws.currentGesture_ && ws.toolbox_ && ws.toolbox_.flyout_) {
                 that.toolbox.refreshSelection();
             }
+        };
+        (Blockly.WorkspaceSvg as any).prototype.getRestoredFocusableNode = function (previousNode: Blockly.IFocusableNode | null) {
+            // Specifically handle flyout case to work with the caching flyout implementation
+            if (this.isFlyout) {
+                return that.getDefaultFlyoutCursorIfNeeded(that.editor.getFlyout());
+            }
+            // Default implementation
+            if (!previousNode) {
+                return this.getTopBlocks(true)[0] ?? null;
+            } else return null;
         };
         const oldHideChaff = (Blockly as any).hideChaff;
         (Blockly as any).hideChaff = function (opt_allowToolbox?: boolean) {
@@ -581,6 +608,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private initAccessibleBlocks() {
         if (!this.keyboardNavigation) {
             this.keyboardNavigation = new KeyboardNavigation(this.editor);
+            Blockly.keyboardNavigationController.setIsActive(true);
 
             const listShortcuts = Blockly.ShortcutRegistry.registry.getRegistry()["list_shortcuts"];
             Blockly.ShortcutRegistry.registry.unregister(listShortcuts.name);
@@ -1102,6 +1130,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return this.getBlocklyToolboxDiv();
     }
 
+    getEditorAreaDiv(): HTMLElement {
+        return this.getBlocksAreaDiv();
+    }
+
     handleToolboxRef = (c: toolbox.Toolbox) => {
         this.toolbox = c;
     }
@@ -1114,7 +1146,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (this.keyboardNavigation) {
             // It's the nested workspace focus tree that takes focus for navigation.
             Blockly.FocusManager.getFocusManager().focusTree(this.editor.getFlyout().getWorkspace())
-            this.defaultFlyoutCursorIfNeeded(this.editor.getFlyout());
+            this.setDefaultFlyoutCursorIfNeeded(this.editor.getFlyout());
         }
     }
 
@@ -1126,31 +1158,39 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         sourceBlock: Blockly.BlockSvg | null,
     ) {
         if (sourceBlock?.disposed || sourceBlock?.hasDisabledReason(HIDDEN_CLASS_NAME)) {
-        return true;
+            return true;
         }
         if (node instanceof Blockly.FlyoutButton) {
-        return node.getSvgRoot().parentNode === null;
+            return node.getSvgRoot().parentNode === null;
         }
         return false;
     }
 
     // Modified from blockly-keyboard-experimentation plugin
     // https://github.com/google/blockly-keyboard-experimentation/blob/main/src/navigation.ts
-    private defaultFlyoutCursorIfNeeded(flyout: Blockly.IFlyout): void {
+    getDefaultFlyoutCursorIfNeeded(flyout: Blockly.IFlyout): Blockly.IBoundedElement & Blockly.IFocusableNode | null {
         const flyoutCursor = flyout.getWorkspace().getCursor();
         if (!flyoutCursor) {
-            return;
+            return null;
         }
         const curNode = flyoutCursor.getCurNode();
         const sourceBlock = flyoutCursor.getSourceBlock();
-        if (curNode && !this.isFlyoutItemDisposed(curNode, sourceBlock))
-        return;
-
+        if (curNode && !this.isFlyoutItemDisposed(curNode, sourceBlock)) {
+            return null;
+        }
         const flyoutContents = flyout.getContents();
         const defaultFlyoutItem = flyoutContents[0];
-        if (!defaultFlyoutItem) return;
-        const defaultFlyoutItemElement = defaultFlyoutItem.getElement();
-        flyoutCursor.setCurNode(defaultFlyoutItemElement);
+        if (!defaultFlyoutItem) return null;
+        return defaultFlyoutItem.getElement();
+    }
+
+    // Split from getDefaultFlyoutCursorIfNeeded in order to return the default flyout cursor separately
+    private setDefaultFlyoutCursorIfNeeded(flyout: Blockly.IFlyout): void {
+        const defaultFlyoutItemElement = this.getDefaultFlyoutCursorIfNeeded(flyout)
+        if (defaultFlyoutItemElement) {
+            const flyoutCursor = flyout.getWorkspace().getCursor();
+            flyoutCursor.setCurNode(defaultFlyoutItemElement);
+        }
     }
 
     renderToolbox(immediate?: boolean) {
@@ -1704,6 +1744,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.editor.getFlyout().hide();
         }
         if (this.toolbox) this.toolbox.clear();
+    }
+
+    public setFlyoutForceOpen(forceOpen: boolean) {
+        (this.editor.getFlyout() as pxtblockly.CachingFlyout).setForceOpen(forceOpen);
     }
 
     ///////////////////////////////////////////////////////////
