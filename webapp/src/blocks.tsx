@@ -608,6 +608,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private initAccessibleBlocks() {
         if (!this.keyboardNavigation) {
             this.keyboardNavigation = new KeyboardNavigation(this.editor);
+            Blockly.keyboardNavigationController.setIsActive(true);
 
             const listShortcuts = Blockly.ShortcutRegistry.registry.getRegistry()["list_shortcuts"];
             Blockly.ShortcutRegistry.registry.unregister(listShortcuts.name);
