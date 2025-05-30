@@ -566,6 +566,16 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 that.toolbox.refreshSelection();
             }
         };
+        (Blockly.WorkspaceSvg as any).prototype.getRestoredFocusableNode = function (previousNode: Blockly.IFocusableNode | null) {
+            // Specifically handle flyout case to work with the caching flyout implementation
+            if (this.isFlyout) {
+                return that.getDefaultFlyoutCursorIfNeeded(that.editor.getFlyout());
+            }
+            // Default implementation
+            if (!previousNode) {
+                return this.getTopBlocks(true)[0] ?? null;
+            } else return null;
+        };
         const oldHideChaff = (Blockly as any).hideChaff;
         (Blockly as any).hideChaff = function (opt_allowToolbox?: boolean) {
             oldHideChaff(opt_allowToolbox);
@@ -1135,7 +1145,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (this.keyboardNavigation) {
             // It's the nested workspace focus tree that takes focus for navigation.
             Blockly.FocusManager.getFocusManager().focusTree(this.editor.getFlyout().getWorkspace())
-            this.defaultFlyoutCursorIfNeeded(this.editor.getFlyout());
+            this.setDefaultFlyoutCursorIfNeeded(this.editor.getFlyout());
         }
     }
 
@@ -1147,31 +1157,39 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         sourceBlock: Blockly.BlockSvg | null,
     ) {
         if (sourceBlock?.disposed || sourceBlock?.hasDisabledReason(HIDDEN_CLASS_NAME)) {
-        return true;
+            return true;
         }
         if (node instanceof Blockly.FlyoutButton) {
-        return node.getSvgRoot().parentNode === null;
+            return node.getSvgRoot().parentNode === null;
         }
         return false;
     }
 
     // Modified from blockly-keyboard-experimentation plugin
     // https://github.com/google/blockly-keyboard-experimentation/blob/main/src/navigation.ts
-    private defaultFlyoutCursorIfNeeded(flyout: Blockly.IFlyout): void {
+    getDefaultFlyoutCursorIfNeeded(flyout: Blockly.IFlyout): Blockly.IBoundedElement & Blockly.IFocusableNode | null {
         const flyoutCursor = flyout.getWorkspace().getCursor();
         if (!flyoutCursor) {
-            return;
+            return null;
         }
         const curNode = flyoutCursor.getCurNode();
         const sourceBlock = flyoutCursor.getSourceBlock();
-        if (curNode && !this.isFlyoutItemDisposed(curNode, sourceBlock))
-        return;
-
+        if (curNode && !this.isFlyoutItemDisposed(curNode, sourceBlock)) {
+            return null;
+        }
         const flyoutContents = flyout.getContents();
         const defaultFlyoutItem = flyoutContents[0];
-        if (!defaultFlyoutItem) return;
-        const defaultFlyoutItemElement = defaultFlyoutItem.getElement();
-        flyoutCursor.setCurNode(defaultFlyoutItemElement);
+        if (!defaultFlyoutItem) return null;
+        return defaultFlyoutItem.getElement();
+    }
+
+    // Split from getDefaultFlyoutCursorIfNeeded in order to return the default flyout cursor separately
+    private setDefaultFlyoutCursorIfNeeded(flyout: Blockly.IFlyout): void {
+        const defaultFlyoutItemElement = this.getDefaultFlyoutCursorIfNeeded(flyout)
+        if (defaultFlyoutItemElement) {
+            const flyoutCursor = flyout.getWorkspace().getCursor();
+            flyoutCursor.setCurNode(defaultFlyoutItemElement);
+        }
     }
 
     renderToolbox(immediate?: boolean) {

@@ -519,15 +519,6 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
                 e.preventDefault();
                 e.stopPropagation();
             }
-        } else if (charCode == core.TAB_KEY && !e.shiftKey) {
-            if (this.selectedTreeRow.nameid !== "addpackage") {
-                // Manually focus inside flyout and set the flyout cursor.
-                // If we let Blockly handle this, focus can be restored to a cached block that
-                // is hidden and disabled. This results in broken keyboard navigation in the flyout.
-                this.moveFocusToFlyout();
-                e.preventDefault();
-                e.stopPropagation();
-            }
         } else if (charCode == core.TAB_KEY
             || charCode == 37 /* Left arrow key */
             || charCode == 39 /* Right arrow key */
