@@ -98,13 +98,14 @@ export class FieldLedMatrix extends FieldMatrix implements FieldCustom {
     showEditor_() {
         this.selected = [0, 0];
 
+        const matrixRect = this.matrixSvg.getBoundingClientRect();
+
         const widgetDiv = Blockly.WidgetDiv.getDiv();
         widgetDiv.append(this.matrixSvg);
         this.addKeyboardFocusHandlers();
 
-        const fieldGroupRect = this.getScaledBBox()
-        widgetDiv.style.left = fieldGroupRect.left + "px";
-        widgetDiv.style.top = fieldGroupRect.top + "px";
+        widgetDiv.style.left = matrixRect.left + "px";
+        widgetDiv.style.top = matrixRect.top + "px";
         widgetDiv.style.transform = `scale(${(Blockly.getMainWorkspace() as Blockly.WorkspaceSvg).getScale()})`;
         widgetDiv.style.transformOrigin = "0 0";
 
@@ -124,7 +125,7 @@ export class FieldLedMatrix extends FieldMatrix implements FieldCustom {
 
     private initMatrix() {
         if (!this.sourceBlock_.isInsertionMarker()) {
-            this.matrixSvg = pxsim.svg.parseString(`<svg xmlns="http://www.w3.org/2000/svg" id="field-matrix" class="blocklyMatrix" tabindex="-1" role="grid" width="${this.size_.width}px" height="${this.size_.height}px"/>`);
+            this.matrixSvg = pxsim.svg.parseString(`<svg xmlns="http://www.w3.org/2000/svg" id="field-matrix" class="blocklyMatrix" tabindex="-1" role="grid" width="${this.size_.width}" height="${this.size_.height}"/>`);
             this.matrixSvg.ariaLabel = lf("LED grid");
 
             // Initialize the matrix that holds the state
@@ -169,6 +170,17 @@ export class FieldLedMatrix extends FieldMatrix implements FieldCustom {
                     lbl.textContent = this.getLabel(i, this.yAxisLabel);
                 }
             }
+
+            // Add rect so that different browsers interpret the matrixSvg clientBoundingRect
+            // in the same way. Required for the widget div position.
+            const rect = Blockly.utils.dom.createSvgElement('rect', {
+                'x': 0,
+                'y': 0,
+                'fill': 'none',
+                'width': this.size_.width,
+                'height': this.size_.height,
+            }, null) as SVGRectElement;
+            this.matrixSvg.append(rect);
 
             this.fieldGroup_.classList.add("blocklyFieldLedMatrixGroup");
             this.fieldGroup_.append(this.matrixSvg);
