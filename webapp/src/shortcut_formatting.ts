@@ -5,6 +5,7 @@ const isMacPlatform = pxt.BrowserUtils.isMac();
 /**
  * Default keyboard navigation shortcut names.
  * Based from blockly-keyboard-experiment constants.ts.
+ * See https://github.com/google/blockly-keyboard-experimentation/blob/main/src/constants.ts
  */
 export enum ShortcutNames {
   UP = 'up',
@@ -42,6 +43,7 @@ export function getActionShortcut(action: string): string[] | null {
  * current platform or tagged them with a platform.
  * 
  * Copied from blockly-keyboard-experiment.
+ * See https://github.com/google/blockly-keyboard-experimentation/blob/main/src/shortcut_formatting.ts
  *
  * @param action The action name, e.g. "cut".
  * @param modifierNames The names to use for the Meta/Control/Alt modifiers.

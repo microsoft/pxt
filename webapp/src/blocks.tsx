@@ -1,4 +1,4 @@
-/// <reference path="../../localtypings/blockly-keyboard-experiment.d.ts"/>
+/// <reference path="../../localtypings/blockly-keyboard-navigation.d.ts"/>
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -19,7 +19,7 @@ import { CreateFunctionDialog } from "./createFunction";
 import { initializeSnippetExtensions } from './snippetBuilder';
 
 import * as pxtblockly from "../../pxtblocks";
-import { KeyboardNavigation } from '@blockly/keyboard-experiment';
+import { KeyboardNavigation } from '@blockly/keyboard-navigation';
 import { WorkspaceSearch } from "@blockly/plugin-workspace-search";
 
 import Util = pxt.Util;
