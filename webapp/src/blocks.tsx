@@ -542,15 +542,16 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         Blockly.Toolbox.prototype.onTreeFocus = function() {
             return;
         };
-        (Blockly as any).Toolbox.prototype.setSelectedItem = function (newItem: Blockly.ISelectableToolboxItem | null) {
+        Blockly.Toolbox.prototype.setSelectedItem = function (newItem: Blockly.ISelectableToolboxItem | null) {
             if (newItem === null) {
                 that.hideFlyout();
             }
         };
-        (Blockly as any).Toolbox.prototype.clearSelection = function () {
+        Blockly.Toolbox.prototype.clearSelection = function () {
             that.hideFlyout();
         };
-        (Blockly as any).Toolbox.prototype.onTreeBlur = function (nextTree: Blockly.IFocusableTree | null) {
+        const oldToolboxOnTreeBlur = Blockly.Toolbox.prototype.onTreeBlur;
+        (Blockly.Toolbox as any).prototype.onTreeBlur = function (nextTree: Blockly.IFocusableTree | null) {
             // If the search box is focused and there are search results, the flyout is set to forceOpen.
             // Otherwise, the flyout closes and then re-opens causing an unpleasant visual effect.
             if ((that.editor.getFlyout() as pxtblockly.CachingFlyout).forceOpen) {
@@ -558,14 +559,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 that.setFlyoutForceOpen(false);
                 return;
             }
-            // If navigating to anything other than the toolbox's flyout then clear the
-            // selection so that the toolbox's flyout can automatically close.
-            if (!nextTree || nextTree !== this.flyout?.getWorkspace()) {
-                this.clearSelection();
-                if (this.flyout && this.flyout.autoHide !== undefined) {
-                    this.flyout.autoHide(false);
-                }
-            }
+            oldToolboxOnTreeBlur.bind(this)(nextTree);
         };
         (Blockly.WorkspaceSvg as any).prototype.refreshToolboxSelection = function () {
             let ws = this.isFlyout ? this.targetWorkspace : this;
@@ -573,7 +567,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 that.toolbox.refreshSelection();
             }
         };
-        (Blockly.WorkspaceSvg as any).prototype.getRestoredFocusableNode = function (previousNode: Blockly.IFocusableNode | null) {
+        const oldWorkspaceSvgGetRestoredFocusableNode = Blockly.WorkspaceSvg.prototype.getRestoredFocusableNode;
+        Blockly.WorkspaceSvg.prototype.getRestoredFocusableNode = function (previousNode: Blockly.IFocusableNode | null) {
             // Specifically handle flyout case to work with the caching flyout implementation
             if (this.isFlyout) {
                 const flyout = that.editor.getFlyout()
@@ -581,34 +576,21 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 if (node) {
                     const flyoutCursor = flyout.getWorkspace().getCursor();
                     // Work around issue with a flyout label being the first item in the flyout.
+                    // Set the cursor node here so the cursor doesn't fall back to last focused block.
                     flyoutCursor.setCurNode(node);
                 }
                 return node;
             }
-            // Default implementation
-            if (!previousNode) {
-                return this.getTopBlocks(true)[0] ?? null;
-            } else return null;
+            return oldWorkspaceSvgGetRestoredFocusableNode.bind(this)(previousNode)
         };
+        const oldWorkspaceSvgOnTreeBlur = Blockly.WorkspaceSvg.prototype.onTreeBlur;
         (Blockly.WorkspaceSvg as any).prototype.onTreeBlur = function (nextTree: Blockly.IFocusableNode | null): void {
             // Keep the flyout open whe a variable is created.
             if ((that.editor.getFlyout() as pxtblockly.CachingFlyout).forceOpen) {
                 that.setFlyoutForceOpen(false);
                 return;
             }
-            // Default implementation
-            // If the flyout loses focus, make sure to close it unless focus is being
-            // lost to the toolbox or ephemeral focus.
-            if (this.isFlyout && this.targetWorkspace) {
-                // Only hide the flyout if the flyout's workspace is losing focus and that
-                // focus isn't returning to the flyout itself, the toolbox, or ephemeral.
-                if (Blockly.getFocusManager().ephemeralFocusTaken()) return;
-                const flyout = this.targetWorkspace.getFlyout();
-                const toolbox = this.targetWorkspace.getToolbox();
-                if (toolbox && nextTree === toolbox) return;
-                if (toolbox) toolbox.clearSelection();
-                if (flyout && flyout.autoHide !== undefined) flyout.autoHide(false);
-            };
+            oldWorkspaceSvgOnTreeBlur.bind(this)(nextTree);
         };
         const oldHideChaff = (Blockly as any).hideChaff;
         (Blockly as any).hideChaff = function (opt_allowToolbox?: boolean) {
