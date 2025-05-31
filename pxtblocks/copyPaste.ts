@@ -128,8 +128,13 @@ function registerCut() {
 function registerPaste() {
     const pasteShortcut: Blockly.ShortcutRegistry.KeyboardShortcut = {
         name: Blockly.ShortcutItems.names.PASTE,
-        preconditionFn(workspace, scope) {
-            return oldPaste.preconditionFn(workspace, scope);
+        preconditionFn(workspace, _scope) {
+            // Override the paste precondition in core as it now checks
+            // it's own clipboard for copy data.
+            return (
+                !workspace.isReadOnly() &&
+                !workspace.isDragging()
+            );
         },
         callback: paste,
         keyCodes: oldPaste.keyCodes,

@@ -2514,6 +2514,15 @@ function copy(workspace: Blockly.WorkspaceSvg, e: Event, _shortcut: Blockly.Shor
     e.preventDefault();
     workspace.hideChaff();
     const focused = scope.focusedNode;
+
+    // If copying a block in the flyout via the context menu, the workspace is the flyout,
+    // otherwise (using the keyboard shortcut) the workspace is the main workspace.
+    // If the workspace is the main workspace, calling hideChaff will close the flyout,
+    // so focus the main workspace after that happens.
+    if ((focused as Blockly.BlockSvg).isInFlyout && !workspace.isFlyout) {
+        Blockly.getFocusManager().focusTree(workspace);
+    }
+
     if (!focused || !Blockly.isCopyable(focused)) return false;
     const copyData = focused.toCopyData();
 
