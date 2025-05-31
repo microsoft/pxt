@@ -757,8 +757,22 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
             if (ev.type === "var_create") {
                 if (this.currentFlyoutKey === "variables" && this.editor.getFlyout()?.isVisible()) {
+                    const focusManager = Blockly.getFocusManager();
+                    const createVarButtonNode = focusManager.getFocusedNode();
+                    const createVarButtonElement = createVarButtonNode.getFocusableElement();
+
                     // refresh the flyout when a new variable is created
                     this.showVariablesFlyout();
+
+                    if (createVarButtonElement && createVarButtonNode.canBeFocused()) {
+                        const flyoutWorkspace = this.editor.getFlyout().getWorkspace();
+                        const newCreateVarButtonNode = flyoutWorkspace.lookUpFocusableNode(createVarButtonElement.id);
+                        const flyout = this.editor.getFlyout();
+                        const flyoutCursor = flyout.getWorkspace().getCursor();
+                        flyoutCursor.setCurNode(newCreateVarButtonNode);
+                    } else {
+                        this.focusWorkspace();
+                    }
                 }
             }
 
