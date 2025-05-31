@@ -569,7 +569,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         (Blockly.WorkspaceSvg as any).prototype.getRestoredFocusableNode = function (previousNode: Blockly.IFocusableNode | null) {
             // Specifically handle flyout case to work with the caching flyout implementation
             if (this.isFlyout) {
-                return that.getDefaultFlyoutCursorIfNeeded(that.editor.getFlyout());
+                const flyout = that.editor.getFlyout()
+                const node = that.getDefaultFlyoutCursorIfNeeded(flyout);
+                if (node) {
+                    const flyoutCursor = flyout.getWorkspace().getCursor();
+                    // Work around issue with a flyout label being the first item in the flyout.
+                    flyoutCursor.setCurNode(node);
+                }
+                return node;
             }
             // Default implementation
             if (!previousNode) {
