@@ -761,8 +761,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     const createVarButtonNode = focusManager.getFocusedNode();
                     const createVarButtonElement = createVarButtonNode.getFocusableElement();
 
+                    // Prevents toolbox selection from clearing when creating a variable via keyboard
+                    // inside workspace onTreeBlur.
+                    this.setFlyoutForceOpen(true);
                     // refresh the flyout when a new variable is created
                     this.showVariablesFlyout();
+                    // Workspace onTreeBlur is not called if the var is created via mouse, so reset state.
+                    this.setFlyoutForceOpen(false);
 
                     if (createVarButtonElement && createVarButtonNode.canBeFocused()) {
                         const flyoutWorkspace = this.editor.getFlyout().getWorkspace();
