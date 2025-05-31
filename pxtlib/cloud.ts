@@ -7,6 +7,8 @@ namespace pxt.cloud {
 
     type BackendUrls = typeof DEV_BACKEND_PROD | typeof DEV_BACKEND_STAGING | typeof DEV_BACKEND_LOCALHOST;
     export const DEV_BACKEND: BackendUrls = DEV_BACKEND_STAGING;
+    export const DEV_REGION = "US";
+
 
     export function devBackendType(): DevBackendType {
         if (DEV_BACKEND === DEV_BACKEND_PROD) return "prod";

@@ -1893,6 +1893,27 @@ namespace ts.pxtc.Util {
             }
         }
     }
+
+    /**
+     * Check if the specified feature is enabled for the user (based on pxtarget configuration and region).
+     */
+    export function isFeatureEnabled(featureKey: string): boolean {
+        const feature = pxt.appTarget.appTheme?.enabledFeatures?.[featureKey];
+        if (!feature) return false;
+
+        let enabled = true;
+        const regionNormalised = pxt.Cloud.getRegion() ? pxt.Cloud.getRegion().toUpperCase() : undefined;
+        if (feature.includeRegions) {
+            enabled = regionNormalised && feature.includeRegions.some(r => r.toUpperCase() == regionNormalised);
+        }
+
+        // Include and exclude shouldn't really be used together, but if they are, exclude takes precedence
+        if (enabled && feature.excludeRegions) {
+            enabled = regionNormalised && !feature.excludeRegions.some(r => r.toUpperCase() == regionNormalised);
+        }
+
+        return enabled;
+    }
 }
 
 namespace ts.pxtc.BrowserImpl {
