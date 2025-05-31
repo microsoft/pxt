@@ -446,7 +446,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
          * @param {string} message The message to display to the user.
          * @param {function()=} opt_callback The callback when the alert is dismissed.
          */
-        Blockly.dialog.setAlert(function (message, opt_callback) {
+        Blockly.dialog.setAlert((message, opt_callback) => {
+            this.setFlyoutForceOpen(true);
             return core.confirmAsync({
                 hideCancel: true,
                 header: lf("Alert"),
@@ -456,6 +457,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 body: message,
                 size: "tiny"
             }).then(() => {
+                this.setFlyoutForceOpen(false);
                 if (opt_callback) {
                     opt_callback();
                 }
@@ -468,7 +470,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
          * @param {string} message The message to display to the user.
          * @param {!function(boolean)} callback The callback for handling user response.
          */
-        Blockly.dialog.setConfirm(function (message, callback) {
+        Blockly.dialog.setConfirm((message, callback) => {
+            this.setFlyoutForceOpen(true);
             return core.confirmAsync({
                 header: lf("Confirm"),
                 body: message,
@@ -480,11 +483,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 disagreeIcon: "cancel",
                 size: "tiny"
             }).then(b => {
+                this.setFlyoutForceOpen(false);
                 callback(b == 1);
             })
         });
 
-        pxtblockly.external.setPrompt(function (message, defaultValue, callback, options?: Partial<core.PromptOptions>) {
+
+        pxtblockly.external.setPrompt((message, defaultValue, callback, options?: Partial<core.PromptOptions>) => {
+            this.setFlyoutForceOpen(true);
             return core.promptAsync({
                 header: message,
                 initialValue: defaultValue,
@@ -493,6 +499,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 size: "tiny",
                 ...options
             }).then(value => {
+                this.setFlyoutForceOpen(false);
                 callback(value);
             })
         }, true);
@@ -582,6 +589,26 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             if (!previousNode) {
                 return this.getTopBlocks(true)[0] ?? null;
             } else return null;
+        };
+        (Blockly.WorkspaceSvg as any).prototype.onTreeBlur = function (nextTree: Blockly.IFocusableNode | null): void {
+            // Keep the flyout open whe a variable is created.
+            if ((that.editor.getFlyout() as pxtblockly.CachingFlyout).forceOpen) {
+                that.setFlyoutForceOpen(false);
+                return;
+            }
+            // Default implementation
+            // If the flyout loses focus, make sure to close it unless focus is being
+            // lost to the toolbox or ephemeral focus.
+            if (this.isFlyout && this.targetWorkspace) {
+                // Only hide the flyout if the flyout's workspace is losing focus and that
+                // focus isn't returning to the flyout itself, the toolbox, or ephemeral.
+                if (Blockly.getFocusManager().ephemeralFocusTaken()) return;
+                const flyout = this.targetWorkspace.getFlyout();
+                const toolbox = this.targetWorkspace.getToolbox();
+                if (toolbox && nextTree === toolbox) return;
+                if (toolbox) toolbox.clearSelection();
+                if (flyout && flyout.autoHide !== undefined) flyout.autoHide(false);
+            };
         };
         const oldHideChaff = (Blockly as any).hideChaff;
         (Blockly as any).hideChaff = function (opt_allowToolbox?: boolean) {
