@@ -133,7 +133,8 @@ function registerPaste() {
             // it's own clipboard for copy data.
             return (
                 !workspace.isReadOnly() &&
-                !workspace.isDragging()
+                !workspace.isDragging() &&
+                !Blockly.getFocusManager().ephemeralFocusTaken()
             );
         },
         callback: paste,
