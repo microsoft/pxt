@@ -41,6 +41,7 @@ import { Measurements } from "./constants";
 import { flow, initCopyPaste } from "../../pxtblocks";
 import { HIDDEN_CLASS_NAME } from "../../pxtblocks/plugins/flyout/blockInflater";
 import { AIFooter } from "../../react-common/components/controls/AIFooter";
+import { CREATE_VAR_BTN_ID } from "../../pxtblocks/builtins/variables";
 
 interface CopyDataEntry {
     version: 1;
@@ -757,10 +758,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
             if (ev.type === "var_create") {
                 if (this.currentFlyoutKey === "variables" && this.editor.getFlyout()?.isVisible()) {
-                    const focusManager = Blockly.getFocusManager();
-                    const createVarButtonNode = focusManager.getFocusedNode();
-                    const createVarButtonElement = createVarButtonNode.getFocusableElement();
-
                     // Prevents toolbox selection from clearing when creating a variable via keyboard
                     // inside workspace onTreeBlur.
                     this.setFlyoutForceOpen(true);
@@ -769,10 +766,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     // Workspace onTreeBlur is not called if the var is created via mouse, so reset state.
                     this.setFlyoutForceOpen(false);
 
-                    if (createVarButtonElement && createVarButtonNode.canBeFocused()) {
-                        const flyoutWorkspace = this.editor.getFlyout().getWorkspace();
-                        const newCreateVarButtonNode = flyoutWorkspace.lookUpFocusableNode(createVarButtonElement.id);
-                        const flyout = this.editor.getFlyout();
+                    const flyout = this.editor.getFlyout();
+                    const flyoutWorkspace = flyout.getWorkspace();
+                    const newCreateVarButtonNode = flyoutWorkspace.lookUpFocusableNode(CREATE_VAR_BTN_ID);
+                    if (newCreateVarButtonNode) {
                         const flyoutCursor = flyout.getWorkspace().getCursor();
                         flyoutCursor.setCurNode(newCreateVarButtonNode);
                     } else {
