@@ -1246,6 +1246,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     focusWorkspace(): void {
+        if (!this.editor) return;
         this.editor.focus();
     }
 
