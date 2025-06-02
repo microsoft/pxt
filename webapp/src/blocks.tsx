@@ -766,14 +766,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     // Workspace onTreeBlur is not called if the var is created via mouse, so reset state.
                     this.setFlyoutForceOpen(false);
 
-                    const flyout = this.editor.getFlyout();
-                    const flyoutWorkspace = flyout.getWorkspace();
-                    const newCreateVarButtonNode = flyoutWorkspace.lookUpFocusableNode(CREATE_VAR_BTN_ID);
-                    if (newCreateVarButtonNode) {
-                        const flyoutCursor = flyout.getWorkspace().getCursor();
-                        flyoutCursor.setCurNode(newCreateVarButtonNode);
-                    } else {
-                        this.focusWorkspace();
+                    if (this.keyboardNavigation) {
+                        const flyout = this.editor.getFlyout();
+                        const flyoutWorkspace = flyout.getWorkspace();
+                        const newCreateVarButtonNode = flyoutWorkspace.lookUpFocusableNode(CREATE_VAR_BTN_ID);
+                        if (newCreateVarButtonNode) {
+                            const flyoutCursor = flyout.getWorkspace().getCursor();
+                            flyoutCursor.setCurNode(newCreateVarButtonNode);
+                        }
                     }
                 }
             }
