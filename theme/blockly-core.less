@@ -473,13 +473,24 @@ div.blocklyTreeRoot > div[role="tree"]:focus-visible {
 /* Flyout buttons and labels */
 .blocklyKeyboardNavigation .blocklyFlyout .blocklyFlyoutLabel.blocklyActiveFocus,
 .blocklyKeyboardNavigation .blocklyFlyout .blocklyFlyoutButton.blocklyActiveFocus {
+    outline: none;
+}
+/* Use the backgrounds because the group can't have an outline on Safari */
+.blocklyKeyboardNavigation .blocklyFlyout .blocklyFlyoutLabel.blocklyActiveFocus > .blocklyFlyoutLabelBackground,
+.blocklyKeyboardNavigation .blocklyFlyout .blocklyFlyoutButton.blocklyActiveFocus > .blocklyFlyoutButtonBackground {
+    outline-offset: 2px;
     outline: var(--blockly-selection-width) solid
         var(--blockly-active-node-color);
     border-radius: 2px;
-    outline-offset: 2px;
+}
+.blocklyKeyboardNavigation .blocklyFlyout .blocklyFlyoutLabel.blocklyActiveFocus > .blocklyFlyoutLabelBackground {
+    // Swap opactity for transparent fill so we can see the focus indicator.
+    opacity: 1;
+    fill: transparent;
 }
 
 /* Workspace */
+.blocklyKeyboardNavigation .blocklySvg:has(~ .blocklyBlockDragSurface .blocklyActiveFocus) .blocklyWorkspaceFocusRing,
 .blocklyKeyboardNavigation .blocklyWorkspace:has(.blocklyActiveFocus) .blocklyWorkspaceFocusRing,
 .blocklyKeyboardNavigation .blocklyWorkspace.blocklyActiveFocus .blocklyWorkspaceFocusRing {
     stroke: var(--blockly-active-tree-color);
