@@ -69,22 +69,15 @@ function overrideCutContextMenuItem() {
             if (focused.workspace.isFlyout)
                 return "hidden";
 
+            if (!(workspace instanceof Blockly.WorkspaceSvg)) return 'hidden';
+
             if (
-                workspace.isReadOnly() &&
-                (Blockly.isDeletable(focused) &&
-                !focused.isDeletable()) ||
-                (Blockly.isDraggable(focused) &&
-                !focused.isMovable())
-            )
-                return "disabled";
-
-            const handlers = getCopyPasteHandlers();
-
-            if (handlers) {
-                return handlers.copyPrecondition(scope);
+                oldCut.preconditionFn(workspace, scope)
+            ) {
+                return 'enabled';
             }
 
-            return "enabled";
+            return "hidden";
         },
     };
 
@@ -128,8 +121,14 @@ function registerCut() {
 function registerPaste() {
     const pasteShortcut: Blockly.ShortcutRegistry.KeyboardShortcut = {
         name: Blockly.ShortcutItems.names.PASTE,
-        preconditionFn(workspace, scope) {
-            return oldPaste.preconditionFn(workspace, scope);
+        preconditionFn(workspace, _scope) {
+            // Override the paste precondition in core as it now checks
+            // it's own clipboard for copy data.
+            return (
+                !workspace.isReadOnly() &&
+                !workspace.isDragging() &&
+                !Blockly.getFocusManager().ephemeralFocusTaken()
+            );
         },
         callback: paste,
         keyCodes: oldPaste.keyCodes,
