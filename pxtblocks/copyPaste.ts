@@ -69,22 +69,15 @@ function overrideCutContextMenuItem() {
             if (focused.workspace.isFlyout)
                 return "hidden";
 
+            if (!(workspace instanceof Blockly.WorkspaceSvg)) return 'hidden';
+
             if (
-                workspace.isReadOnly() &&
-                (Blockly.isDeletable(focused) &&
-                !focused.isDeletable()) ||
-                (Blockly.isDraggable(focused) &&
-                !focused.isMovable())
-            )
-                return "disabled";
-
-            const handlers = getCopyPasteHandlers();
-
-            if (handlers) {
-                return handlers.copyPrecondition(scope);
+                oldCut.preconditionFn(workspace, scope)
+            ) {
+                return 'enabled';
             }
 
-            return "enabled";
+            return "hidden";
         },
     };
 
