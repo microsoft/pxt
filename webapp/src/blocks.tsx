@@ -560,7 +560,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 that.setFlyoutForceOpen(false);
                 return;
             }
-            oldToolboxOnTreeBlur.bind(this)(nextTree);
+            oldToolboxOnTreeBlur.call(this, nextTree);
         };
         (Blockly.WorkspaceSvg as any).prototype.refreshToolboxSelection = function () {
             let ws = this.isFlyout ? this.targetWorkspace : this;
@@ -582,7 +582,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 }
                 return node;
             }
-            return oldWorkspaceSvgGetRestoredFocusableNode.bind(this)(previousNode)
+            return oldWorkspaceSvgGetRestoredFocusableNode.call(this, previousNode)
         };
         const oldWorkspaceSvgOnTreeBlur = Blockly.WorkspaceSvg.prototype.onTreeBlur;
         (Blockly.WorkspaceSvg as any).prototype.onTreeBlur = function (nextTree: Blockly.IFocusableNode | null): void {
@@ -591,7 +591,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 that.setFlyoutForceOpen(false);
                 return;
             }
-            oldWorkspaceSvgOnTreeBlur.bind(this)(nextTree);
+            oldWorkspaceSvgOnTreeBlur.call(this, nextTree);
         };
         const oldHideChaff = (Blockly as any).hideChaff;
         (Blockly as any).hideChaff = function (opt_allowToolbox?: boolean) {
