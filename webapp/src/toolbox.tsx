@@ -452,7 +452,6 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
     handleCategoryTreeFocus = (e: React.FocusEvent<HTMLDivElement>) => {
         // Don't handle focus events triggered by pointer events.
         if (!this.shouldHandleCategoryTreeFocus) {
-            this.shouldHandleCategoryTreeFocus = true;
             return;
         }
         if (!this.rootElement) return;
@@ -479,6 +478,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         e.preventDefault();
         this.shouldHandleCategoryTreeFocus = false;
         (this.refs.categoryTree as HTMLElement).focus();
+        this.shouldHandleCategoryTreeFocus = true;
     }
 
     isRtl() {
@@ -1129,7 +1129,15 @@ export class ToolboxSearch extends data.Component<ToolboxSearchProps, ToolboxSea
             // Don't trigger scroll behaviour inside the toolbox.
             e.preventDefault();
         } else if (charCode === 13 /* Enter */) {
-            this.searchImmediate().then(() => this.props.parent.moveFocusToFlyout());
+            this.searchImmediate().then(() => {
+                if (toolbox.state.hasSearch) {
+                    toolbox.setState({
+                        selectedItem: 'search'
+                    });
+                    toolbox.setSelectedItem(toolbox.refs.searchCategory as CategoryItem);
+                }
+                this.props.parent.moveFocusToFlyout();
+            });
         }
     }
 
@@ -1166,10 +1174,6 @@ export class ToolboxSearch extends data.Component<ToolboxSearchProps, ToolboxSea
         newState.hasSearch = hasSearch;
         newState.searchBlocks = blocks;
         newState.focusSearch = true;
-        if (hasSearch) {
-            newState.selectedItem = 'search';
-            toolbox.setSelectedItem(toolbox.refs.searchCategory as CategoryItem)
-        }
         toolbox.setState(newState);
 
         this.setState({ searchAccessibilityLabel: searchAccessibilityLabel });
