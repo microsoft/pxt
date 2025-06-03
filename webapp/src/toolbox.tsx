@@ -313,9 +313,6 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         if (this.state.hasSearch && this.state.searchBlocks != prevState.searchBlocks) {
             // Referesh search items
             this.refreshSearchItem();
-        } else if (prevState.hasSearch && !this.state.hasSearch && this.state.selectedItem == 'search') {
-            // No more search
-            this.closeFlyout();
         }
     }
 
@@ -470,8 +467,11 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
 
     handleCategoryTreeBlur = (e: React.FocusEvent<HTMLDivElement>) => {
         if (e.relatedTarget === (this.refs.searchbox as ToolboxSearch).refs.searchInput) {
-            this.props.parent.setFlyoutForceOpen(this.state.hasSearch)
+            this.props.parent.setFlyoutForceOpen(this.state.hasSearch);
         }
+        // This does nothing for Blocks which is handled by Blockly.Toolbox.prototype.onTreeBlur,
+        // but is required for the Monaco editor for feature parity.
+        this.props.parent.onToolboxBlur(e, this.state.hasSearch);
     }
 
     handlePointerDownCapture = (e: React.PointerEvent) => {
@@ -1175,6 +1175,9 @@ export class ToolboxSearch extends data.Component<ToolboxSearchProps, ToolboxSea
         newState.searchBlocks = blocks;
         newState.focusSearch = true;
         toolbox.setState(newState);
+        if (!hasSearch) {
+            toolbox.closeFlyout();
+        }
 
         this.setState({ searchAccessibilityLabel: searchAccessibilityLabel });
     }
