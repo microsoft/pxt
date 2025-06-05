@@ -498,7 +498,7 @@ namespace pxsim {
             }
         }
 
-        function fmtInfo(fmt: NumberFormat) {
+        export function fmtInfo(fmt: NumberFormat) {
             let size = fmtInfoCore(fmt)
             let signed = false
             if (size < 0) {
