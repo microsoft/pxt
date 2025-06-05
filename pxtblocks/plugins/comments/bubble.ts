@@ -53,6 +53,7 @@ export abstract class Bubble implements Blockly.IDeletable, Blockly.IBubble, Blo
 
     private dragStrategy = new Blockly.dragging.BubbleDragStrategy(this, this.workspace);
 
+    private focusableElement: SVGElement | HTMLElement;
 
     private topBar: SVGRectElement;
 
@@ -76,6 +77,7 @@ export abstract class Bubble implements Blockly.IDeletable, Blockly.IBubble, Blo
         public readonly workspace: Blockly.WorkspaceSvg,
         protected anchor: Blockly.utils.Coordinate,
         protected ownerRect?: Blockly.utils.Rect,
+        overriddenFocusableElement?: SVGElement | HTMLElement,
     ) {
         this.id = Blockly.utils.idGenerator.getNextUniqueId();
         this.svgRoot = dom.createSvgElement(
@@ -138,6 +140,9 @@ export abstract class Bubble implements Blockly.IDeletable, Blockly.IBubble, Blo
             },
             embossGroup
         );
+
+        this.focusableElement = overriddenFocusableElement ?? this.svgRoot;
+        this.focusableElement.setAttribute('id', this.id);
 
         Blockly.browserEvents.conditionalBind(
             this.background,
@@ -267,6 +272,7 @@ export abstract class Bubble implements Blockly.IDeletable, Blockly.IBubble, Blo
     private onMouseDown(e: PointerEvent) {
         this.workspace.getGesture(e)?.handleBubbleStart(e, this);
         Blockly.common.setSelected(this);
+        Blockly.getFocusManager().focusNode(this);
     }
 
     /** Positions the bubble relative to its anchor. Does not render its tail. */
@@ -633,15 +639,17 @@ export abstract class Bubble implements Blockly.IDeletable, Blockly.IBubble, Blo
 
     select(): void {
         // Bubbles don't have any visual for being selected.
+        Blockly.common.fireSelectedEvent(this);
     }
 
     unselect(): void {
         // Bubbles don't have any visual for being selected.
+        Blockly.common.fireSelectedEvent(null);
     }
 
     /** See IFocusableNode.getFocusableElement. */
     getFocusableElement(): HTMLElement | SVGElement {
-      return this.svgRoot;
+        return this.focusableElement;
     }
 
     /** See IFocusableNode.getFocusableTree. */
