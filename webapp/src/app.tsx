@@ -6312,6 +6312,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                 baseUrl: baseUrl,
                 code: useLang,
                 force: force,
+            }).then(async () => {
+                return pxt.Cloud.initRegionAsync();
             }).then(() => {
                 if (pxt.Util.isLocaleEnabled(useLang)) {
                     pxt.BrowserUtils.setCookieLang(useLang);

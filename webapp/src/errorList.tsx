@@ -104,7 +104,7 @@ export class ErrorList extends auth.Component<ErrorListProps, ErrorListState> {
         const errorCount = errors.length;
         const canDebug = startDebugger && !!errors.find(a => a.stackFrames?.length);
 
-        const showErrorHelp = !!getErrorHelp && !!showLoginDialog && pxt.appTarget.appTheme.aiErrorHelp;
+        const showErrorHelp = !!getErrorHelp && !!showLoginDialog && pxt.Util.isFeatureEnabled("aiErrorHelp");
 
         const helpLoader = (
             <div className="error-help-loader" onClick={(e) => e.stopPropagation()}>
