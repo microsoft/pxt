@@ -120,7 +120,7 @@ namespace pxt.HF2 {
     export const HF2_CMD_JDS_SEND = 0x0021
     export const HF2_EV_JDS_PACKET = 0x800020
 
-    export const CUSTOM_EV_JACDAC = "jacdac"
+    export const CUSTOM_EV_JACDAC = "jacdac/pxt-jacdac"
 
     // the eventId is overlayed on the tag+status; the mask corresponds
     // to the HF2_STATUS_EVENT above
