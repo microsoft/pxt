@@ -290,7 +290,7 @@ namespace pxt.HF2 {
         }
 
         sendCustomEventAsync(type: string, payload: Uint8Array): Promise<void> {
-            if (type === CUSTOM_EV_JACDAC) {
+            if (type === CUSTOM_EV_JACDAC || type === "jacdac/pxt-jacdac") {
                 if (this.jacdacAvailable)
                     return this.talkAsync(HF2_CMD_JDS_SEND, payload)
                         .then(() => { })
