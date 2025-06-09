@@ -120,7 +120,7 @@ namespace pxt.HF2 {
     export const HF2_CMD_JDS_SEND = 0x0021
     export const HF2_EV_JDS_PACKET = 0x800020
 
-    export const CUSTOM_EV_JACDAC = "jacdac/pxt-jacdac"
+    export const CUSTOM_EV_JACDAC = "jacdac"
 
     // the eventId is overlayed on the tag+status; the mask corresponds
     // to the HF2_STATUS_EVENT above
@@ -290,12 +290,13 @@ namespace pxt.HF2 {
         }
 
         sendCustomEventAsync(type: string, payload: Uint8Array): Promise<void> {
-            if (type == CUSTOM_EV_JACDAC)
+            if (type === CUSTOM_EV_JACDAC) {
                 if (this.jacdacAvailable)
                     return this.talkAsync(HF2_CMD_JDS_SEND, payload)
                         .then(() => { })
                 else
                     return Promise.resolve() // ignore
+            }
             return Promise.reject(new Error("invalid custom event type"))
         }
 
