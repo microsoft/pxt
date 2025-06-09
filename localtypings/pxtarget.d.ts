@@ -145,7 +145,6 @@ declare namespace pxt {
         blockIdMap?: Map<string[]>; // list of target-specific blocks that are "synonyms" (eg. "agentturnright" and "minecraftAgentTurn")
         defaultBadges?: pxt.auth.Badge[];
         noSimShims?: boolean; // skip check for simshims and only build from cpp / user level typescript.
-        maxUploadedFileSize?: number; // maximum file size in mb for uploaded files
     }
 
     interface BrowserOptions {
