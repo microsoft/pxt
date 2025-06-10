@@ -1345,8 +1345,9 @@ function uploadCoreAsync(opts: UploadOptions) {
 
     // check size
     const maxSize = checkFileSize(opts.fileList);
-    if (maxSize > 30000000) // 30Mb max
-        U.userError(`file too big for upload`);
+    const maxAllowedFileSize = (pxt.appTarget.cloud.maxFileSize || (30000000)); // default to 30Mb
+    if (maxSize > maxAllowedFileSize)
+        U.userError(`file too big for upload: ${maxSize} bytes, max is ${maxAllowedFileSize} bytes`);
     pxt.log('');
 
     if (opts.localDir)
@@ -6113,7 +6114,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
 
     const maxFileSize = checkFileSize(nodeutil.allFiles("docs", { maxDepth: 10, allowMissing: true, includeDirs: true, ignoredFileMarker: ".ignorelargefiles" }));
     if (!pxt.appTarget.ignoreDocsErrors
-        && maxFileSize > (pxt.appTarget.cloud.maxFileSize || (5000000)))
+        && maxFileSize > (pxt.appTarget.cloud.maxFileSize || (30000000)))
         U.userError(`files too big in docs folder`);
 
     // scan and fix image links
