@@ -5611,6 +5611,12 @@ function parseLocalToken() {
 
 function initPacketIO() {
     pxt.debug(`packetio: hook events`)
+
+    let approved: pxt.Map<pxt.RepoData> = {}
+    data.getAsync<pxt.TargetConfig>("target-config:").then(trgConfig => {
+        approved = trgConfig?.packages?.approvedRepoLib || {};
+    })
+
     pxt.packetio.configureEvents(
         () => data.invalidate("packetio:*"),
         (buf, isErr) => {
@@ -5629,7 +5635,7 @@ function initPacketIO() {
         },
         (type, payload) => {
             const messageSimulators = pxt.appTarget.simulator?.messageSimulators;
-            if (messageSimulators?.[type]) {
+            if (messageSimulators?.[type] || approved[type]) {
                 window.postMessage({
                     type: "messagepacket",
                     broadcast: false,
@@ -5641,19 +5647,15 @@ function initPacketIO() {
         });
 
     window.addEventListener('message', (ev: MessageEvent) => {
-        data.getAsync<pxt.TargetConfig>("target-config:")
-        .then(trgConfig => {
-            const approved = trgConfig?.packages?.approvedRepoLib || {};
-            const msg = ev.data
-            if (msg.type === 'messagepacket'
-                && msg.sender !== "packetio"
-                && (pxt.appTarget.simulator?.messageSimulators?.[msg.channel] || approved[msg.channel])
-                && (msg.channel === pxt.HF2.CUSTOM_EV_JACDAC || msg.channel === "jacdac/pxt-jacdac"))
-                pxt.packetio.sendCustomEventAsync(msg.channel, msg.data)
-                    .then(() => { }, err => {
-                        core.errorNotification(lf("{0}: {1}", msg.channel, err.message));
-                    });
-        })
+        const msg = ev.data
+        if (msg.type === 'messagepacket'
+            && msg.sender !== "packetio"
+            && (pxt.appTarget.simulator?.messageSimulators?.[msg.channel] || approved[msg.channel])
+            && (msg.channel.includes(pxt.HF2.CUSTOM_EV_JACDAC)))
+            pxt.packetio.sendCustomEventAsync(msg.channel, msg.data)
+                .then(() => { }, err => {
+                    core.errorNotification(lf("{0}: {1}", msg.channel, err.message));
+                });
     }, false);
 }
 
