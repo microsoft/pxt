@@ -2294,7 +2294,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             }
         });
 
-        this.editor.options.readOnly = debugging || pxt.shell.isReadOnly();
+        this.editor.setIsReadOnly(debugging || pxt.shell.isReadOnly());
     }
 
     protected enableBreakpoint(block: Blockly.Block, enabled: boolean) {
