@@ -1751,11 +1751,12 @@ namespace ts.pxtc.service {
     }
 
     export interface ExtensionMeta {
-        name: string,
-        fullName?: string,
-        description?: string,
-        imageUrl?: string,
-        type?: ExtensionType
+        name: string;
+        displayName?: string;
+        fullRepo?: string;
+        description?: string;
+        imageUrl?: string;
+        type?: ExtensionType;
         learnMoreUrl?: string;
 
         pkgConfig?: pxt.PackageConfig; // Added if the type is Bundled

@@ -524,7 +524,8 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
             || charCode == 39 /* Right arrow key */
             || charCode == 17 /* Ctrl Key */
             || charCode == 16 /* Shift Key */
-            || charCode == 91 /* Cmd Key */) {
+            || charCode == 91 /* Cmd Key */
+            || charCode == 191 /* Slash Key*/) {
             // Escape tab and shift key
         } else {
             this.setSearch();
