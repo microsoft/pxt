@@ -1,3 +1,5 @@
+@selectmargin: 4px;
+
 .common-editor-toggle-outer {
     position: relative;
 }
@@ -9,6 +11,16 @@
     background: var(--pxt-neutral-alpha20);
     display: flex;
     flex-direction: row;
+
+    &.focused {
+        outline: 3px solid var(--pxt-focus-border);
+        outline-offset: 2px;
+    }
+}
+
+.common-editor-toggle .common-editor-toggle-item > .common-button {
+    // the core rem measurements are taken from the common-button class in react-common
+    padding: calc(0.8rem - @selectmargin) calc(2rem - @selectmargin) calc(0.95rem - @selectmargin);
 }
 
 // Used in image/tilemap/animation editor
