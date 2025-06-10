@@ -33,6 +33,7 @@ declare namespace pxt {
      */
     interface PackageConfig {
         name: string;
+        displayName?: string; // used for the codecard in the extension dialog
         version?: string;
         // installedVersion?: string; moved to Package class
         // url to icon -- support for built-in packages only
