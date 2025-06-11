@@ -1193,7 +1193,7 @@ ${output}</xml>`;
                 return r;
             }
 
-            let value = U.htmlEscape(attributes.blockId || callInfo.qName);
+            let value = U.htmlEscape(attributes.blockId) || callInfo.qName;
 
             const [parent,] = getParent(n);
             const parentCallInfo: pxtc.CallInfo = parent && pxtInfo(parent).callInfo;

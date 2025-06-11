@@ -7,7 +7,7 @@ let oldCopy: Blockly.ShortcutRegistry.KeyboardShortcut;
 let oldCut: Blockly.ShortcutRegistry.KeyboardShortcut;
 let oldPaste: Blockly.ShortcutRegistry.KeyboardShortcut;
 
-export function initCopyPaste() {
+export function initCopyPaste(accessibleBlocksEnabled: boolean) {
     if (oldCopy || !getCopyPasteHandlers()) return;
 
     const shortcuts = Blockly.ShortcutRegistry.registry.getRegistry()
@@ -23,8 +23,66 @@ export function initCopyPaste() {
     registerCopy();
     registerCut();
     registerPaste();
-    registerCopyContextMenu();
-    registerPasteContextMenu();
+
+    if (!accessibleBlocksEnabled) {
+        registerCopyContextMenu();
+        registerPasteContextMenu();
+    }
+}
+
+export function initAccessibleBlocksCopyPasteContextMenu() {
+    overridePasteContextMenuItem();
+    overrideCutContextMenuItem();
+}
+
+function overridePasteContextMenuItem() {
+    const oldPasteOption = Blockly.ContextMenuRegistry.registry.getItem("blockPasteFromContextMenu");
+
+    if ("separator" in oldPasteOption) {
+        throw new Error(`RegistryItem ${oldPasteOption.id} is not of type ActionRegistryItem`);
+    };
+
+    const pasteOption: Blockly.ContextMenuRegistry.RegistryItem = {
+        ...oldPasteOption,
+        preconditionFn: pasteContextMenuPreconditionFn,
+    };
+
+    Blockly.ContextMenuRegistry.registry.unregister("blockPasteFromContextMenu");
+    Blockly.ContextMenuRegistry.registry.register(pasteOption);
+}
+
+function overrideCutContextMenuItem() {
+    const oldCutOption = Blockly.ContextMenuRegistry.registry.getItem("blockCutFromContextMenu");
+
+    if ("separator" in oldCutOption) {
+        throw new Error(`RegistryItem ${oldCutOption.id} is not of type ActionRegistryItem`);
+    };
+
+    const cutOption: Blockly.ContextMenuRegistry.RegistryItem = {
+        ...oldCutOption,
+        preconditionFn: (scope: Blockly.ContextMenuRegistry.Scope) => {
+            const focused = scope.focusedNode;
+            if (!focused || !Blockly.isCopyable(focused)) return "hidden";
+
+            const workspace = focused.workspace;
+
+            if (focused.workspace.isFlyout)
+                return "hidden";
+
+            if (!(workspace instanceof Blockly.WorkspaceSvg)) return 'hidden';
+
+            if (
+                oldCut.preconditionFn(workspace, scope)
+            ) {
+                return 'enabled';
+            }
+
+            return "hidden";
+        },
+    };
+
+    Blockly.ContextMenuRegistry.registry.unregister("blockCutFromContextMenu");
+    Blockly.ContextMenuRegistry.registry.register(cutOption);
 }
 
 function registerCopy() {
@@ -49,7 +107,7 @@ function registerCut() {
             const handler = getCopyPasteHandlers()?.cut;
 
             if (handler) {
-                return handler(workspace, e);
+                return handler(workspace, e, shortcut, scope);
             }
 
             return oldCut.callback(workspace, e, shortcut, scope);
@@ -63,8 +121,14 @@ function registerCut() {
 function registerPaste() {
     const pasteShortcut: Blockly.ShortcutRegistry.KeyboardShortcut = {
         name: Blockly.ShortcutItems.names.PASTE,
-        preconditionFn(workspace, scope) {
-            return oldPaste.preconditionFn(workspace, scope);
+        preconditionFn(workspace, _scope) {
+            // Override the paste precondition in core as it now checks
+            // it's own clipboard for copy data.
+            return (
+                !workspace.isReadOnly() &&
+                !workspace.isDragging() &&
+                !Blockly.getFocusManager().ephemeralFocusTaken()
+            );
         },
         callback: paste,
         keyCodes: oldPaste.keyCodes,
@@ -96,7 +160,7 @@ function registerCopyContextMenu() {
             if (!block) return;
 
             block.select();
-            copy(block.workspace, e);
+            copy(block.workspace, e, undefined, scope);
         },
         scopeType: Blockly.ContextMenuRegistry.ScopeType.BLOCK,
         weight: BlockContextWeight.Copy,
@@ -125,7 +189,7 @@ function registerCopyContextMenu() {
             if (!comment) return;
 
             comment.select();
-            copy(comment.workspace, e);
+            copy(comment.workspace, e, undefined, scope);
         },
         scopeType: Blockly.ContextMenuRegistry.ScopeType.COMMENT,
         weight: BlockContextWeight.Copy,
@@ -139,24 +203,12 @@ function registerCopyContextMenu() {
 function registerPasteContextMenu() {
     const pasteOption: Blockly.ContextMenuRegistry.RegistryItem = {
         displayText: () => lf("Paste"),
-        preconditionFn: (scope: Blockly.ContextMenuRegistry.Scope) => {
-            if (pxt.shell.isReadOnly() || scope.workspace.options.readOnly) {
-                return "hidden";
-            }
-
-            const handlers = getCopyPasteHandlers();
-
-            if (handlers) {
-                return handlers.pastePrecondition(scope);
-            }
-
-            return "enabled";
-        },
+        preconditionFn: pasteContextMenuPreconditionFn,
         callback: function (scope: Blockly.ContextMenuRegistry.Scope, e: PointerEvent): void {
             const workspace = scope.workspace;
 
             if (!workspace) return;
-            paste(workspace, e);
+            paste(workspace, e, undefined, scope);
         },
         scopeType: Blockly.ContextMenuRegistry.ScopeType.WORKSPACE,
         weight: WorkspaceContextWeight.Paste,
@@ -166,11 +218,25 @@ function registerPasteContextMenu() {
     Blockly.ContextMenuRegistry.registry.register(pasteOption);
 }
 
+const pasteContextMenuPreconditionFn = (scope: Blockly.ContextMenuRegistry.Scope) => {
+    if (pxt.shell.isReadOnly() || scope.workspace?.options.readOnly) {
+        return "hidden";
+    }
+
+    const handlers = getCopyPasteHandlers();
+
+    if (handlers) {
+        return handlers.pastePrecondition(scope);
+    }
+
+    return "enabled";
+}
+
 const copy = (workspace: Blockly.WorkspaceSvg, e: Event, shortcut?: Blockly.ShortcutRegistry.KeyboardShortcut, scope?: Blockly.ContextMenuRegistry.Scope) => {
     const handler = getCopyPasteHandlers()?.copy;
 
     if (handler) {
-        return handler(workspace, e);
+        return handler(workspace, e, shortcut, scope);
     }
 
     return oldCopy.callback(workspace, e, shortcut, scope);
@@ -180,7 +246,7 @@ const paste = (workspace: Blockly.WorkspaceSvg, e: Event, shortcut?: Blockly.Sho
     const handler = getCopyPasteHandlers()?.paste;
 
     if (handler) {
-        return handler(workspace, e);
+        return handler(workspace, e, shortcut, scope);
     }
 
     return oldPaste.callback(workspace, e, shortcut, scope);

@@ -3287,8 +3287,8 @@ export class ProjectView
             );
     }
 
-    pairAsync(): Promise<boolean> {
-        return cmds.pairAsync();
+    pairDialogAsync(): Promise<pxt.commands.WebUSBPairResult> {
+        return cmds.pairDialogAsync();
     }
 
     ///////////////////////////////////////////////////////////
@@ -3330,7 +3330,7 @@ export class ProjectView
         const variants = pxt.getHwVariants()
         if (variants.length == 0)
             return false
-        let pairAsync = () => cmds.pairAsync()
+        let pairAsync = () => cmds.pairDialogAsync()
             .then(() => {
                 this.checkForHwVariant()
             }, err => {
@@ -6312,6 +6312,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                 baseUrl: baseUrl,
                 code: useLang,
                 force: force,
+            }).then(async () => {
+                return pxt.Cloud.initRegionAsync();
             }).then(() => {
                 if (pxt.Util.isLocaleEnabled(useLang)) {
                     pxt.BrowserUtils.setCookieLang(useLang);

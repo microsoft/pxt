@@ -23,6 +23,7 @@ export abstract class FieldMatrix extends Blockly.Field {
     protected abstract numMatrixCols: number;
     protected abstract numMatrixRows: number;
     protected abstract clearSelectionOnBlur: boolean;
+    protected forceFocusVisible: boolean = false;
     protected returnEphemeralFocusFn: Blockly.ReturnEphemeralFocus | undefined = undefined;
 
     protected createMatrixDisplay({
@@ -65,20 +66,6 @@ export abstract class FieldMatrix extends Blockly.Field {
                 };
                 const cellRect = pxsim.svg.child(cellG, "rect", rectOptions) as SVGRectElement;
                 this.cells[x][y] = cellRect;
-
-                // Borders and box-shadow do not work in this context and outlines do not follow border-radius.
-                // Stroke is harder to manage given the difference in stroke for a cell when it is toggled.
-                // This foreignObject/div is used to create a focus indicator for the cell when selected via keyboard navigation.
-                const foreignObject = pxsim.svg.child(cellG, "foreignObject", {
-                    transform: 'translate(-4, -4)',
-                    width: scale * cellWidth + 8,
-                    height: scale * cellWidth + 8,
-                });
-                foreignObject.style.pointerEvents = "none";
-                const div = document.createElement("div");
-                div.classList.add("blocklyCellFocusIndicator");
-                div.style.borderRadius = `${Math.max(2, scale * cornerRadius)}px`;
-                foreignObject.append(div);
             }
         }
     }
@@ -202,12 +189,40 @@ export abstract class FieldMatrix extends Blockly.Field {
 
     private setFocusIndicator(cell: SVGRectElement, useTwoToneFocusIndicator: boolean) {
         this.clearFocusIndicator();
-        const className = useTwoToneFocusIndicator ? "focusedTwoTone" : "focused"
-        cell.nextElementSibling.firstElementChild.classList.add(className);
+        const focusVisible = this.matrixSvg.matches(":focus-visible");
+        if (!focusVisible && !this.forceFocusVisible) return;
+        const cellG = cell.parentNode as SVGRectElement;
+        const cellWidth = parseInt(cell.getAttribute("width"))
+        const cornerRadius = parseInt(cell.getAttribute("rx"));
+
+        pxsim.svg.child(cellG, "rect", {
+            transform: 'translate(-2, -2)',
+            width: cellWidth + 4,
+            height: cellWidth + 4,
+            rx: `${Math.max(2, cornerRadius)}px`,
+            stroke: "#fff",
+            "stroke-width": 4,
+            fill: "none"
+        });
+        if (useTwoToneFocusIndicator) {
+            pxsim.svg.child(cellG, "rect", {
+                transform: 'translate(-1, -1)',
+                width: cellWidth + 2,
+                height: cellWidth + 2,
+                rx: `${Math.max(2, cornerRadius)}px`,
+                stroke: "#000",
+                "stroke-width": 2,
+                fill: "none"
+            });
+        }
     }
 
     protected clearFocusIndicator() {
-        this.cells.forEach(cell => cell.forEach(cell => cell.nextElementSibling.firstElementChild.classList.remove("focusedTwoTone", "focused")));
+        this.cells.forEach(cell => cell.forEach(cell => {
+            while (cell.nextElementSibling) {
+                cell.nextElementSibling.remove();
+            }
+        }));
     }
 
     protected addKeyboardFocusHandlers() {
@@ -229,8 +244,12 @@ export abstract class FieldMatrix extends Blockly.Field {
 
     protected returnEphemeralFocus() {
         if (this.returnEphemeralFocusFn) {
-            this.returnEphemeralFocusFn();
+            // Clear field before running function. If this is called due to 'Escape',
+            // onNodeBlur will fire running this function again.
+            // onNodeBlur is required for mouse clicks in the workspace.
+            const returnEphemeralFocusFn = this.returnEphemeralFocusFn;
             this.returnEphemeralFocusFn = undefined;
+            returnEphemeralFocusFn();
         }
     }
 
@@ -259,27 +278,5 @@ export abstract class FieldMatrix extends Blockly.Field {
 Blockly.Css.register(`
     .blocklyMatrix:focus-visible {
         outline: none;
-    }
-
-    .blocklyMatrix .blocklyCellFocusIndicator {
-        border: 4px solid transparent;
-        height: 100%;
-    }
-
-    .blocklyMatrix:focus-visible .blocklyCellFocusIndicator.focusedTwoTone,
-    .blocklyMatrix:focus-visible .blocklyCellFocusIndicator.focused {
-        border-color: white;
-        transform: translateZ(0);
-    }
-
-    .blocklyMatrix:focus-visible .blocklyCellFocusIndicator.focusedTwoTone:after {
-        content: "";
-        position: absolute;
-        top: -2px;
-        left: -2px;
-        right: -2px;
-        bottom: -2px;
-        border: 2px solid black;
-        border-radius: inherit;
     }
 `);

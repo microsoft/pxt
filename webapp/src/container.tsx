@@ -6,6 +6,7 @@ import * as sui from "./sui";
 import * as core from "./core";
 import * as auth from "./auth";
 import * as pkg from "./package";
+import * as Blockly from "blockly";
 import { fireClickOnEnter } from "./util";
 
 import IProjectView = pxt.editor.IProjectView;
@@ -82,14 +83,22 @@ interface DocsMenuProps extends ISettingsProps {
     editor: DocsMenuEditorName;
 }
 
-export class DocsMenu extends data.PureComponent<DocsMenuProps, {}> {
+function showKeyboardControls() {
+    const languageRestriction = pkg.mainPkg?.config?.languageRestriction;
+    const pyOnly = languageRestriction === pxt.editor.LanguageRestriction.PythonOnly;
+    const noBlocks = languageRestriction === pxt.editor.LanguageRestriction.NoBlocks;
+    const tsOnly = languageRestriction === pxt.editor.LanguageRestriction.JavaScriptOnly;
+    return !pyOnly && !tsOnly && !noBlocks && !!pkg.mainEditorPkg().files[pxt.MAIN_BLOCKS];
+}
+
+export class DocsMenu extends data.PureComponent<DocsMenuProps & { hasMainBlocksFile: boolean }, {}> {
     renderCore() {
         const parent = this.props.parent;
         const targetTheme = pxt.appTarget.appTheme;
         const accessibleBlocksEnabled = data.getData<boolean>(auth.ACCESSIBLE_BLOCKS);
         return <sui.DropdownMenu role="menuitem" icon="help circle large"
             className="item mobile hide help-dropdown-menuitem" textClass={"landscape only"} title={lf("Help")} >
-            {accessibleBlocksEnabled && getKeyboardNavHelpItem(parent)}
+            {this.props.hasMainBlocksFile && showKeyboardControls() && accessibleBlocksEnabled && getKeyboardNavHelpItem(parent)}
             {targetTheme.tours?.editor && getTourItem(parent)}
             {renderDocItems(parent, targetTheme.docMenu)}
             {getDocsLanguageItem(this.props.editor, parent)}
@@ -255,7 +264,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
 
     pair() {
         pxt.tickEvent("menu.pair");
-        this.props.parent.pairAsync();
+        this.props.parent.pairDialogAsync();
     }
 
     pairBluetooth() {
@@ -369,7 +378,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             <div className="ui divider"></div>
             {targetTheme.selectLanguage ? <sui.Item icon='xicon globe' role="menuitem" text={lf("Language")} onClick={this.showLanguagePicker} /> : undefined}
             <sui.Item role="menuitem" icon="paint brush" text={lf("Theme")} onClick={this.showThemePicker} />
-            <sui.Item role="menuitem" text={accessibleBlocks ? lf("Accessible Blocks Off") : lf("Accessible Blocks On")} onClick={this.toggleAccessibleBlocks} />
+            {showKeyboardControls() && (<sui.Item role="menuitem" text={accessibleBlocks ? lf("Keyboard Controls Off") : lf("Keyboard Controls On")} onClick={this.toggleAccessibleBlocks} />)}
             {showGreenScreen ? <sui.Item role="menuitem" text={greenScreen ? lf("Green Screen Off") : lf("Green Screen On")} onClick={this.toggleGreenScreen} /> : undefined}
             {docItems && renderDocItems(this.props.parent, docItems, "setting-docs-item mobile only inherit")}
             {githubUser ? <div className="ui divider"></div> : undefined}
@@ -635,10 +644,15 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
     toggleBuiltInHelp(help: pxt.editor.BuiltInHelp, focusIfVisible: boolean) {
         const url = `${builtInPrefix}${help}`;
         if (this.state.docsUrl === url && !this.state.sideDocsCollapsed && !focusIfVisible) {
-            this.toggleVisibility();
-            this.props.parent.editor.focusWorkspace();
+            const wasEditorFocused = Blockly.getFocusManager().getFocusedTree();
+            this.props.parent.setState({ sideDocsCollapsed: true });
+
+            if (!wasEditorFocused) {
+                this.props.parent.editor.focusWorkspace();
+            }
         } else {
             this.openingSideDoc = true;
+            Blockly.hideChaff(true);
             this.setUrl(url);
         }
     }
@@ -653,6 +667,7 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
 
     collapse() {
         this.props.parent.setState({ sideDocsCollapsed: true });
+        this.props.parent.editor.focusWorkspace();
     }
 
     isCollapsed() {
@@ -699,6 +714,7 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
 
     private handleKeyDown = (ev: React.KeyboardEvent<HTMLElement>) => {
         if (ev.key == "Escape") {
+            ev.stopPropagation();
             this.collapse();
         }
     }
