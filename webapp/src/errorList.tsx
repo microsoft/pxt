@@ -120,7 +120,7 @@ export class ErrorList extends auth.Component<ErrorListProps, ErrorListState> {
                 title={lf("Explain with AI")}
                 className="secondary error-help-button"
                 label={lf("Explain with AI")}
-                leftIcon={"fas fa-question-circle"}
+                leftIcon={"xicon sparkle"}
             />
         );
 
