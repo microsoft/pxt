@@ -68,13 +68,21 @@ export class BaseFieldTextDropdown extends Blockly.FieldTextInput {
     }
 
     protected showEditor_(e?: Event, quietInput?: boolean): void {
-        super.showEditor_(e, quietInput);
+        // Align with Blockly's approach in https://github.com/google/blockly-samples/blob/master/plugins/field-slider/src/field_slider.ts
+        // Always quiet the input for the super constructor, as we don't want to
+        // focus on the text field, and we don't want to display the modal
+        // editor on mobile devices.
+        super.showEditor_(e, true);
 
         if (!this.dropDownOpen_) this.showDropdown_();
         Blockly.Touch.clearTouchIdentifier();
 
         this.inputKeydownHandler = this.inputKeydownListener.bind(this);
         this.htmlInput_.addEventListener('keydown', this.inputKeydownHandler);
+
+        if (!quietInput) {
+            this.htmlInput_.focus();
+        }
     }
 
     override doValueUpdate_(newValue: string) {
