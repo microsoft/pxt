@@ -1925,7 +1925,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const flyoutFocused = e.relatedTarget === this.flyout.refs.flyout || (this.flyout.refs.flyout as HTMLElement).contains(e.relatedTarget);
         if (((searchInputFocused && !hasSearch) || !searchInputFocused) && !flyoutFocused) {
             this.hideFlyout();
-        };
+        }
         if (!flyoutFocused) {
             this.toolbox.clear();
             this.toolbox.clearExpandedItem();
