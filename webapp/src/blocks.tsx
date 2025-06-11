@@ -992,7 +992,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     display(): JSX.Element {
         let flyoutOnly = this.parent.state.editorState && this.parent.state.editorState.hasCategories === false;
-        let showErrorList = pxt.appTarget.appTheme.blocksErrorList;
+        let showErrorList = pxt.Util.isFeatureEnabled("blocksErrorList");
         return (
             <div className="blocksAndErrorList">
                 <div className="blocksEditorOuter">
@@ -2294,7 +2294,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             }
         });
 
-        this.editor.options.readOnly = debugging || pxt.shell.isReadOnly();
+        this.editor.setIsReadOnly(debugging || pxt.shell.isReadOnly());
     }
 
     protected enableBreakpoint(block: Blockly.Block, enabled: boolean) {
