@@ -23,6 +23,7 @@ export abstract class FieldMatrix extends Blockly.Field {
     protected abstract numMatrixCols: number;
     protected abstract numMatrixRows: number;
     protected abstract clearSelectionOnBlur: boolean;
+    protected forceFocusVisible: boolean = false;
     protected returnEphemeralFocusFn: Blockly.ReturnEphemeralFocus | undefined = undefined;
 
     protected createMatrixDisplay({
@@ -189,7 +190,7 @@ export abstract class FieldMatrix extends Blockly.Field {
     private setFocusIndicator(cell: SVGRectElement, useTwoToneFocusIndicator: boolean) {
         this.clearFocusIndicator();
         const focusVisible = this.matrixSvg.matches(":focus-visible");
-        if (!focusVisible) return;
+        if (!focusVisible && !this.forceFocusVisible) return;
         const cellG = cell.parentNode as SVGRectElement;
         const cellWidth = parseInt(cell.getAttribute("width"))
         const cornerRadius = parseInt(cell.getAttribute("rx"));
@@ -243,8 +244,12 @@ export abstract class FieldMatrix extends Blockly.Field {
 
     protected returnEphemeralFocus() {
         if (this.returnEphemeralFocusFn) {
-            this.returnEphemeralFocusFn();
+            // Clear field before running function. If this is called due to 'Escape',
+            // onNodeBlur will fire running this function again.
+            // onNodeBlur is required for mouse clicks in the workspace.
+            const returnEphemeralFocusFn = this.returnEphemeralFocusFn;
             this.returnEphemeralFocusFn = undefined;
+            returnEphemeralFocusFn();
         }
     }
 

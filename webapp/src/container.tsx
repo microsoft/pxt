@@ -6,6 +6,7 @@ import * as sui from "./sui";
 import * as core from "./core";
 import * as auth from "./auth";
 import * as pkg from "./package";
+import * as Blockly from "blockly";
 import { fireClickOnEnter } from "./util";
 
 import IProjectView = pxt.editor.IProjectView;
@@ -263,7 +264,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
 
     pair() {
         pxt.tickEvent("menu.pair");
-        this.props.parent.pairAsync();
+        this.props.parent.pairDialogAsync();
     }
 
     pairBluetooth() {
@@ -643,10 +644,15 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
     toggleBuiltInHelp(help: pxt.editor.BuiltInHelp, focusIfVisible: boolean) {
         const url = `${builtInPrefix}${help}`;
         if (this.state.docsUrl === url && !this.state.sideDocsCollapsed && !focusIfVisible) {
-            this.toggleVisibility();
-            this.props.parent.editor.focusWorkspace();
+            const wasEditorFocused = Blockly.getFocusManager().getFocusedTree();
+            this.props.parent.setState({ sideDocsCollapsed: true });
+
+            if (!wasEditorFocused) {
+                this.props.parent.editor.focusWorkspace();
+            }
         } else {
             this.openingSideDoc = true;
+            Blockly.hideChaff(true);
             this.setUrl(url);
         }
     }
@@ -661,6 +667,7 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
 
     collapse() {
         this.props.parent.setState({ sideDocsCollapsed: true });
+        this.props.parent.editor.focusWorkspace();
     }
 
     isCollapsed() {
@@ -707,6 +714,7 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
 
     private handleKeyDown = (ev: React.KeyboardEvent<HTMLElement>) => {
         if (ev.key == "Escape") {
+            ev.stopPropagation();
             this.collapse();
         }
     }

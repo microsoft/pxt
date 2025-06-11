@@ -2,6 +2,8 @@ import * as Blockly from "blockly";
 import { createFlyoutGroupLabel, createFlyoutHeadingLabel, mkVariableFieldBlock } from "../toolbox";
 import { installBuiltinHelpInfo, setBuiltinHelpInfo } from "../help";
 
+export const CREATE_VAR_BTN_ID = 'create-variable-btn';
+
 export function initVariables() {
     let varname = lf("{id:var}item");
     Blockly.Variables.flyoutCategory = flyoutCategory;
@@ -240,6 +242,8 @@ function flyoutCategory(workspace: Blockly.WorkspaceSvg, useXml: boolean): Eleme
     const button = document.createElement('button') as HTMLElement;
     button.setAttribute('text', lf("Make a Variable..."));
     button.setAttribute('callbackKey', 'CREATE_VARIABLE');
+    // This id is used to re-focus the create variable button after the dialog is closed.
+    button.setAttribute('id', CREATE_VAR_BTN_ID);
 
     workspace.registerButtonCallback('CREATE_VARIABLE', function (button) {
         Blockly.Variables.createVariableButtonHandler(button.getTargetWorkspace());

@@ -10,6 +10,12 @@ export interface ExtendedButtonInfo extends Blockly.utils.toolbox.LabelInfo {
     "web-line-width": string;
 }
 
+// Copied from toolbox.tsx
+const brandIcons = {
+    '\uf287': 'usb', '\uf368': 'accessible-icon', '\uf170': 'adn', '\uf1a7': 'pied-piper-pp', '\uf1b6': 'steam', '\uf294': 'bluetooth-b',
+    '\uf1d0': 'rebel', '\uf136': 'maxcdn', '\uf1aa': 'joomla', '\uf213': 'sellsy', '\uf20e': 'connectdevelop', '\uf113': 'github-alt'
+};
+
 export class FlyoutButton extends Blockly.FlyoutButton {
     constructor(
         workspace: Blockly.WorkspaceSvg,
@@ -62,10 +68,11 @@ export class FlyoutButton extends Blockly.FlyoutButton {
         const iconColor = def["web-icon-color"];
 
         if (icon || iconClass) {
+            const extraIconClass = Object.keys(brandIcons).includes(icon) ? 'brandIcon' : ''
             const svgIcon = Blockly.utils.dom.createSvgElement(
                 'text',
                 {
-                    'class': iconClass ? 'blocklyFlyoutLabelIcon ' + iconClass : 'blocklyFlyoutLabelIcon',
+                    'class': `blocklyFlyoutLabelIcon${iconClass ? ' ' + iconClass : ''}${extraIconClass ? ' ' + extraIconClass : ''}`,
                     'x': 0, 'y': 0, 'text-anchor': 'start'
                 },
                 svgGroup
@@ -83,10 +90,13 @@ export class FlyoutButton extends Blockly.FlyoutButton {
             const iconWidth = Blockly.utils.dom.getTextWidth(svgIcon) + 2 * Blockly.FlyoutButton.TEXT_MARGIN_X
             this.width += iconWidth;
 
+            const rect = svgGroup.getElementsByClassName("blocklyFlyoutLabelBackground").item(0) as SVGRectElement;
+            rect.setAttribute('width', String(this.width));
+
             for (let i = 0; i < svgGroup.children.length; i++) {
                 const el = svgGroup.children.item(i);
 
-                if (el !== svgIcon) {
+                if (el !== svgIcon && el !== rect) {
                     const x = Number(el.getAttribute("x"));
                     el.setAttribute("x", (x + iconWidth) + "")
                 }

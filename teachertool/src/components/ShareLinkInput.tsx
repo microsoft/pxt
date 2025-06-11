@@ -23,6 +23,15 @@ export const ShareLinkInput: React.FC<IProps> = () => {
         setIconVisible(!!shareId && !(shareId === projectMetadata?.shortid || shareId === projectMetadata?.persistId));
     }, [text, projectMetadata?.shortid, projectMetadata?.persistId]);
 
+    // If project metadata is set outside of this component, update the text to the project ID.
+    useEffect(() => {
+        const id = projectMetadata?.shortid || projectMetadata?.persistId;
+        if (!text && id) {
+            const url = new URL(id, pxt.Util.getHomeUrl()).toString();
+            setText(url);
+        }
+    }, [projectMetadata?.shortid, projectMetadata?.persistId]);
+
     const onTextChange = (str: string) => {
         setText(str);
     };
@@ -59,6 +68,7 @@ export const ShareLinkInput: React.FC<IProps> = () => {
                 preserveValueOnBlur={true}
                 autoComplete={false}
                 handleInputRef={setInputRef}
+                initialValue={text}
             ></Input>
         </div>
     );
