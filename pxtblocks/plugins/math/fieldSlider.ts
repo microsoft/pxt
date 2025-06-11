@@ -175,7 +175,11 @@ export class FieldSlider extends Blockly.FieldNumber {
     }
 
     protected showEditor_(_e?: Event, quietInput?: boolean): void {
-        super.showEditor_(_e, quietInput);
+        // Align with Blockly's approach in https://github.com/google/blockly-samples/blob/master/plugins/field-slider/src/field_slider.ts
+        // Always quiet the input for the super constructor, as we don't want to
+        // focus on the text field, and we don't want to display the modal
+        // editor on mobile devices.
+        super.showEditor_(_e, true);
 
         Blockly.DropDownDiv.hideWithoutAnimation();
         Blockly.DropDownDiv.clearContent();
@@ -194,6 +198,10 @@ export class FieldSlider extends Blockly.FieldNumber {
         Blockly.DropDownDiv.showPositionedByBlock(this, this.sourceBlock_ as Blockly.BlockSvg, undefined, undefined, false);
 
         this.addEventListeners();
+
+        if (!quietInput) {
+            this.htmlInput_.focus();
+        }
     }
 
     protected addSlider_(contentDiv: Element) {

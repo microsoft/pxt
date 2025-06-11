@@ -1246,6 +1246,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     focusWorkspace(): void {
+        if (!this.editor) return;
         this.editor.focus();
     }
 
@@ -1915,8 +1916,19 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             let firstBlock = document.querySelector(".monacoBlock") as HTMLElement;
             if (firstBlock) {
                 firstBlock.focus();
-                firstBlock.click();
             }
+        }
+    }
+
+    public onToolboxBlur(e: React.FocusEvent, hasSearch: boolean): void {
+        const searchInputFocused = e.relatedTarget === (this.toolbox.refs.searchbox as toolbox.ToolboxSearch).refs.searchInput;
+        const flyoutFocused = e.relatedTarget === this.flyout.refs.flyout || (this.flyout.refs.flyout as HTMLElement).contains(e.relatedTarget);
+        if (((searchInputFocused && !hasSearch) || !searchInputFocused) && !flyoutFocused) {
+            this.hideFlyout();
+        }
+        if (!flyoutFocused) {
+            this.toolbox.clear();
+            this.toolbox.clearExpandedItem();
         }
     }
 

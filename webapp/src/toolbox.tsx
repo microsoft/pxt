@@ -313,9 +313,6 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         if (this.state.hasSearch && this.state.searchBlocks != prevState.searchBlocks) {
             // Referesh search items
             this.refreshSearchItem();
-        } else if (prevState.hasSearch && !this.state.hasSearch && this.state.selectedItem == 'search') {
-            // No more search
-            this.closeFlyout();
         }
     }
 
@@ -452,7 +449,6 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
     handleCategoryTreeFocus = (e: React.FocusEvent<HTMLDivElement>) => {
         // Don't handle focus events triggered by pointer events.
         if (!this.shouldHandleCategoryTreeFocus) {
-            this.shouldHandleCategoryTreeFocus = true;
             return;
         }
         if (!this.rootElement) return;
@@ -471,14 +467,18 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
 
     handleCategoryTreeBlur = (e: React.FocusEvent<HTMLDivElement>) => {
         if (e.relatedTarget === (this.refs.searchbox as ToolboxSearch).refs.searchInput) {
-            this.props.parent.setFlyoutForceOpen(this.state.hasSearch)
+            this.props.parent.setFlyoutForceOpen(this.state.hasSearch);
         }
+        // This does nothing for Blocks which is handled by Blockly.Toolbox.prototype.onTreeBlur,
+        // but is required for the Monaco editor for feature parity.
+        this.props.parent.onToolboxBlur(e, this.state.hasSearch);
     }
 
     handlePointerDownCapture = (e: React.PointerEvent) => {
         e.preventDefault();
         this.shouldHandleCategoryTreeFocus = false;
         (this.refs.categoryTree as HTMLElement).focus();
+        this.shouldHandleCategoryTreeFocus = true;
     }
 
     isRtl() {
@@ -524,7 +524,8 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
             || charCode == 39 /* Right arrow key */
             || charCode == 17 /* Ctrl Key */
             || charCode == 16 /* Shift Key */
-            || charCode == 91 /* Cmd Key */) {
+            || charCode == 91 /* Cmd Key */
+            || charCode == 191 /* Slash Key*/) {
             // Escape tab and shift key
         } else {
             this.setSearch();
@@ -1128,7 +1129,15 @@ export class ToolboxSearch extends data.Component<ToolboxSearchProps, ToolboxSea
             // Don't trigger scroll behaviour inside the toolbox.
             e.preventDefault();
         } else if (charCode === 13 /* Enter */) {
-            this.searchImmediate().then(() => this.props.parent.moveFocusToFlyout());
+            this.searchImmediate().then(() => {
+                if (toolbox.state.hasSearch) {
+                    toolbox.setState({
+                        selectedItem: 'search'
+                    });
+                    toolbox.setSelectedItem(toolbox.refs.searchCategory as CategoryItem);
+                }
+                this.props.parent.moveFocusToFlyout();
+            });
         }
     }
 
@@ -1165,11 +1174,10 @@ export class ToolboxSearch extends data.Component<ToolboxSearchProps, ToolboxSea
         newState.hasSearch = hasSearch;
         newState.searchBlocks = blocks;
         newState.focusSearch = true;
-        if (hasSearch) {
-            newState.selectedItem = 'search';
-            toolbox.setSelectedItem(toolbox.refs.searchCategory as CategoryItem)
-        }
         toolbox.setState(newState);
+        if (!hasSearch) {
+            toolbox.closeFlyout();
+        }
 
         this.setState({ searchAccessibilityLabel: searchAccessibilityLabel });
     }

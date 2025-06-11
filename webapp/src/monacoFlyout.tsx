@@ -83,13 +83,6 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
         this.positionDragHandle();
     }
 
-    protected getBlockClickHandler = (name: string) => {
-        return () => {
-            pxt.tickEvent("monaco.toolbox.itemclick", undefined, { interactiveConsent: true });
-            this.setState({ selectedBlock: name != this.state.selectedBlock ? name : undefined });
-        };
-    }
-
     protected getBlockMouseOver = (name: string) => {
         return () => {
             pxt.tickEvent("monaco.toolbox.itemmouseover");
@@ -175,14 +168,12 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
                 // Next item
                 let nextSibling = target.nextElementSibling as HTMLElement;
                 if (target && nextSibling) {
-                    nextSibling.click();
                     nextSibling.focus();
                 }
             } else if (charCode == 38) { // UP
                 // Previous item
                 let prevSibling = target.previousElementSibling as HTMLElement;
                 if (target && prevSibling) {
-                    prevSibling.click();
                     prevSibling.focus();
                 }
             } else if ((charCode == 37 && !isRtl) || (charCode == 38 && isRtl)) { // (LEFT & LTR) or (RIGHT & RTL)
@@ -207,6 +198,7 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
     }
 
     private handleFocus = (name: string) => {
+        pxt.tickEvent("monaco.toolbox.itemclick", undefined, { interactiveConsent: true });
         this.setState({
             selectedBlock: name
         });
@@ -378,7 +370,6 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
             style={this.getSelectedStyle()}
             title={block.attributes.jsDoc}
             key={`block_${qName}_${index}`} tabIndex={!this.state.selectedBlock && index === 0 ? 0 : selected ? 0 : -1} role="listitem"
-            onClick={this.getBlockClickHandler(qName)}
             onFocus={() => this.handleFocus(qName)}
             onBlur={() => this.handleBlur()}
             onMouseOver={this.getBlockMouseOver(qName)}
@@ -418,7 +409,7 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
         const { name, ns, color, icon, groups, selectedBlock } = this.state;
         const rgb = pxt.toolbox.getAccessibleBackground(pxt.toolbox.convertColor(color || (ns && pxt.toolbox.getNamespaceColor(ns)) || "255"));
         const iconClass = `blocklyTreeIcon${icon ? (ns || icon).toLowerCase() : "Default"}`.replace(/\s/g, "");
-        return <div id="monacoFlyoutWidget" className="monacoFlyout" style={this.getFlyoutStyle()}>
+        return <div id="monacoFlyoutWidget" className="monacoFlyout" style={this.getFlyoutStyle()} ref="flyout">
             <div id="monacoFlyoutWrapper" onScroll={this.scrollHandler} onWheel={this.wheelHandler} role="list">
                 <div className="monacoFlyoutLabel monacoFlyoutHeading">
                     <span className={`monacoFlyoutHeadingIcon blocklyTreeIcon ${iconClass}`} role="presentation" style={this.getIconStyle(rgb)}>
