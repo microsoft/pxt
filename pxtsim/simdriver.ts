@@ -452,7 +452,7 @@ namespace pxsim {
                             isDeferrableBroadcastMessage = true;
                             // start secondary frame if needed
                             const mkcdFrames = frames.filter(frame => !frame.dataset[FRAME_DATA_MESSAGE_CHANNEL]);
-                            if (<any>messageChannel === false &&
+                            if (!messageChannel &&
                                     (mkcdFrames.length == 0 || mkcdFrames.length == 1 && !this.singleSimulator)) {
                                 // messageChannel is set to false whenever msg.type !== "messagepacket"
                                 // for example, in the case of msg.type === "radiopacket". However, in the case
