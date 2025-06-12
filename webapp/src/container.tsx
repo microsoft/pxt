@@ -16,6 +16,7 @@ import SimState = pxt.editor.SimState;
 import { sendUpdateFeedbackTheme } from "../../react-common/components/controls/Feedback/FeedbackEventListener";
 import { TabPane } from "./components/core/TabPane";
 import KeyboardControlsHelp from "./components/KeyboardControlsHelp";
+import { Checkbox } from "../../react-common/components/controls/Checkbox";
 
 // common menu items -- do not remove
 // lf("About")
@@ -378,8 +379,22 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             <div className="ui divider"></div>
             {targetTheme.selectLanguage ? <sui.Item icon='xicon globe' role="menuitem" text={lf("Language")} onClick={this.showLanguagePicker} /> : undefined}
             <sui.Item role="menuitem" icon="paint brush" text={lf("Theme")} onClick={this.showThemePicker} />
-            {showKeyboardControls() && (<sui.Item role="menuitem" text={accessibleBlocks ? lf("Keyboard Controls Off") : lf("Keyboard Controls On")} onClick={this.toggleAccessibleBlocks} />)}
-            {showGreenScreen ? <sui.Item role="menuitem" text={greenScreen ? lf("Green Screen Off") : lf("Green Screen On")} onClick={this.toggleGreenScreen} /> : undefined}
+            {showKeyboardControls() &&
+                <CheckboxMenuItem
+                    id="accessible-blocks-checkbox"
+                    isChecked={accessibleBlocks}
+                    label={lf("Keyboard Controls")}
+                    onClick={this.toggleAccessibleBlocks}
+                />
+            }
+            {showGreenScreen &&
+                <CheckboxMenuItem
+                    id="green-screen-checkbox"
+                    isChecked={greenScreen}
+                    label={lf("Green Screen")}
+                    onClick={this.toggleGreenScreen}
+                />
+            }
             {docItems && renderDocItems(this.props.parent, docItems, "setting-docs-item mobile only inherit")}
             {githubUser ? <div className="ui divider"></div> : undefined}
             {githubUser ? <div className="ui item" title={lf("Unlink {0} from GitHub", githubUser.name)} role="menuitem" onClick={this.signOutGithub}>
@@ -419,7 +434,7 @@ class BaseMenuItemProps extends data.Component<IBaseMenuItemProps, {}> {
 
     renderCore() {
         const active = this.props.isActive();
-        return <sui.Item className={`base-menuitem ${this.props.className} ${active ? "selected" : ""}`} role="menuitem" textClass="landscape only"
+        return <sui.Item className={`base-menuitem ${this.props.className} ${active ? "selected" : ""}`} role="option" textClass="landscape only"
             text={this.props.text} icon={this.props.icon} active={active} onClick={this.props.onClick} title={this.props.title} ariaLabel={this.props.ariaLabel} />
     }
 }
@@ -572,12 +587,12 @@ export class EditorSelector extends data.Component<IEditorSelectorProps, {}> {
         }
 
         return (
-            <div id="editortoggle" className={`ui grid padded ${(pyOnly || tsOnly) ? "one-language" : ""}`} role="menubar" aria-orientation="horizontal" aria-label={lf("Editor toggle")}>
+            <div id="editortoggle" className={`ui grid padded ${(pyOnly || tsOnly) ? "one-language" : ""}`} role="listbox" aria-orientation="horizontal" aria-label={lf("Editor toggle")}>
                 {showSandbox && <SandboxMenuItem parent={parent} />}
                 {showBlocks && <BlocksMenuItem parent={parent} />}
                 {textLanguage}
                 {secondTextLanguage}
-                {showDropdown && <sui.DropdownMenu id="editordropdown" role="menuitem" icon="chevron down" rightIcon title={lf("Select code editor language")} className={`item button attached right ${dropdownActive ? "active" : ""}`}>
+                {showDropdown && <sui.DropdownMenu id="editordropdown" role="option" icon="chevron down" rightIcon title={lf("Select code editor language")} className={`item button attached right ${dropdownActive ? "active" : ""}`}>
                     <JavascriptMenuItem parent={parent} />
                     <PythonMenuItem parent={parent} />
                 </sui.DropdownMenu>}
@@ -795,4 +810,35 @@ export class SandboxFooter extends data.PureComponent<SandboxFooterProps, {}> {
             <span className="item"><a role="button" className="ui thin portrait only" title={compileTooltip} onClick={this.compile}><sui.Icon icon={`icon ${pxt.appTarget.appTheme.downloadIcon || 'download'}`} />{pxt.appTarget.appTheme.useUploadMessage ? lf("Upload") : lf("Download")}</a></span>
         </div>;
     }
+}
+
+interface CheckboxMenuItemProps {
+    id: string;
+    label: string;
+    isChecked: boolean;
+    onClick: () => void;
+}
+
+const CheckboxMenuItem = (props: CheckboxMenuItemProps) => {
+    const { id, label, isChecked, onClick } = props;
+
+    return (
+        <div
+            role="menuitemcheckbox"
+            aria-checked={isChecked}
+            tabIndex={0}
+            className="ui item link"
+            onClick={onClick}
+            onKeyDown={fireClickOnEnter}
+        >
+            <Checkbox
+                id={id}
+                className="menu-item-checkbox"
+                isChecked={isChecked}
+                onChange={onClick}
+                label={label}
+                tabIndex={-1}
+            />
+        </div>
+    );
 }

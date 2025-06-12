@@ -117,10 +117,10 @@ export class ErrorList extends auth.Component<ErrorListProps, ErrorListState> {
             <Button
                 id="error-help-button"
                 onClick={this.onHelpClick}
-                title={lf("Help me understand")}
+                title={lf("Explain with AI")}
                 className="secondary error-help-button"
-                label={lf("Help me understand")}
-                leftIcon={"fas fa-question-circle"}
+                label={lf("Explain with AI")}
+                leftIcon={"xicon sparkle"}
             />
         );
 
