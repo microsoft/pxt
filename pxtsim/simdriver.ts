@@ -452,7 +452,8 @@ namespace pxsim {
                             isDeferrableBroadcastMessage = true;
                             // start secondary frame if needed
                             const mkcdFrames = frames.filter(frame => !frame.dataset[FRAME_DATA_MESSAGE_CHANNEL]);
-                            if (<any>messageChannel === false && (mkcdFrames.length == 0 || mkcdFrames.length == 1 && !this.singleSimulator)) {
+                            if (<any>messageChannel === false &&
+                                    (mkcdFrames.length == 0 || mkcdFrames.length == 1 && !this.singleSimulator)) {
                                 // TODO: trace down why the messageChannel is set to false in this case
                                 // TODO: we don't want to start a message channel because of "jacdac" messages.
                                 this.container.appendChild(this.createFrame());
