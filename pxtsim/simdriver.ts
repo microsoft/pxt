@@ -454,8 +454,10 @@ namespace pxsim {
                             const mkcdFrames = frames.filter(frame => !frame.dataset[FRAME_DATA_MESSAGE_CHANNEL]);
                             if (<any>messageChannel === false &&
                                     (mkcdFrames.length == 0 || mkcdFrames.length == 1 && !this.singleSimulator)) {
-                                // TODO: trace down why the messageChannel is set to false in this case
-                                // TODO: we don't want to start a message channel because of "jacdac" messages.
+                                // messageChannel is set to false whenever msg.type !== "messagepacket"
+                                // for example, in the case of msg.type === "radiopacket". However, in the case
+                                // where we have msg.type === "messagepacket" and msg.channel is not matched by an
+                                // extension, we don't want a second simulator to be created. 
                                 this.container.appendChild(this.createFrame());
                                 frames = this.simFrames();
                                 // there might be an old frame
