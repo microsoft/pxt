@@ -8,6 +8,7 @@ import Util = pxt.Util;
 import { fireClickOnEnter } from "./util";
 
 import IProjectView = pxt.editor.IProjectView;
+import { Checkbox } from "../../react-common/components/controls/Checkbox";
 
 export class Editor extends srceditor.Editor {
     config: pxt.PackageConfig = {} as any;
@@ -238,11 +239,14 @@ const UserConfigCheckbox = (props: UserConfigCheckboxProps) => {
     const { uc, isUserConfigActive, applyUserConfig } = props;
 
     return (
-        <sui.Checkbox
-            key={`userconfig-${uc.description}`}
-            inputLabel={pxt.Util.rlf(uc.description)}
-            checked={isUserConfigActive(uc)}
+        <Checkbox
+            id={`userconfig-${uc.description}`}
+            className="user-config-checkbox"
+            ariaLabel={pxt.Util.rlf(uc.description)}
+            label={pxt.Util.rlf(uc.description)}
+            isChecked={isUserConfigActive(uc)}
             onChange={() => applyUserConfig(uc)}
+            style="toggle"
         />
     )
 };
