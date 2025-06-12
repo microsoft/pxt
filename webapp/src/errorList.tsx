@@ -104,7 +104,7 @@ export class ErrorList extends auth.Component<ErrorListProps, ErrorListState> {
         const errorCount = errors.length;
         const canDebug = startDebugger && !!errors.find(a => a.stackFrames?.length);
 
-        const showErrorHelp = !!getErrorHelp && !!showLoginDialog && pxt.appTarget.appTheme.aiErrorHelp;
+        const showErrorHelp = !!getErrorHelp && !!showLoginDialog && pxt.Util.isFeatureEnabled("aiErrorHelp");
 
         const helpLoader = (
             <div className="error-help-loader" onClick={(e) => e.stopPropagation()}>
@@ -117,10 +117,10 @@ export class ErrorList extends auth.Component<ErrorListProps, ErrorListState> {
             <Button
                 id="error-help-button"
                 onClick={this.onHelpClick}
-                title={lf("Help me understand")}
+                title={lf("Explain with AI")}
                 className="secondary error-help-button"
-                label={lf("Help me understand")}
-                leftIcon={"fas fa-question-circle"}
+                label={lf("Explain with AI")}
+                leftIcon={"xicon sparkle"}
             />
         );
 

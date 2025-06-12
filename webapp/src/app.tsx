@@ -5628,23 +5628,19 @@ function initPacketIO() {
             }
         },
         (type, payload) => {
-            const messageSimulators = pxt.appTarget.simulator?.messageSimulators;
-            if (messageSimulators?.[type]) {
-                window.postMessage({
-                    type: "messagepacket",
-                    broadcast: false,
-                    channel: type,
-                    data: payload,
-                    sender: "packetio",
-                }, "*")
-            }
+            window.postMessage({
+                type: "messagepacket",
+                broadcast: false,
+                channel: type,
+                data: payload,
+                sender: "packetio",
+            }, "*")
         });
 
     window.addEventListener('message', (ev: MessageEvent) => {
         const msg = ev.data
         if (msg.type === 'messagepacket'
             && msg.sender !== "packetio"
-            && pxt.appTarget.simulator?.messageSimulators?.[msg.channel]
             && msg.channel === pxt.HF2.CUSTOM_EV_JACDAC)
             pxt.packetio.sendCustomEventAsync(msg.channel, msg.data)
                 .then(() => { }, err => {
@@ -6312,6 +6308,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                 baseUrl: baseUrl,
                 code: useLang,
                 force: force,
+            }).then(async () => {
+                return pxt.Cloud.initRegionAsync();
             }).then(() => {
                 if (pxt.Util.isLocaleEnabled(useLang)) {
                     pxt.BrowserUtils.setCookieLang(useLang);
