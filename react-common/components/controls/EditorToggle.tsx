@@ -38,33 +38,37 @@ export const EditorToggle = (props: EditorToggleProps) => {
     } = props;
 
 
-    const [focusedItem, setFocusedItem] = useState<number | undefined>(undefined);
+    const [isFocused, setIsFocused] = useState<boolean>(false);
     const hasDropdown = items.some(item => isDropdownItem(item));
 
     const onKeydown = (ev: React.KeyboardEvent) => {
         // TODO
     }
 
+    const classNameComposite = classList(
+        "common-editor-toggle",
+        hasDropdown && "has-dropdown",
+        isFocused && "focused",
+        className);
+    
     return (
         <div className="common-editor-toggle-outer">
             <EditorToggleAccessibleMenu
-            onItemReceivedFocus={setFocusedItem}
+            setIsFocused={setIsFocused}
             { ...props} />
             <div id={id}
-                className={classList("common-editor-toggle", hasDropdown && "has-dropdown", className)}
+                className={classNameComposite}
                 role={role || "tablist"}
                 aria-hidden={true}
                 aria-label={ariaLabel}>
                     {items.map((item, index) => {
                         const isSelected = selected === index;
-                        const isFocused = focusedItem === index;
                         return (
                             <div key={index}
                                 className={classList(
                                     "common-editor-toggle-item",
                                     isSelected && "selected",
-                                    isDropdownItem(item) && "common-editor-toggle-item-dropdown",
-                                    isFocused && "focused"
+                                    isDropdownItem(item) && "common-editor-toggle-item-dropdown"
                                 )} >
                                 <ToggleButton item={item} isSelected={isSelected} onKeydown={onKeydown} />
                                 { isDropdownItem(item) &&
@@ -125,11 +129,11 @@ interface ToggleTab extends BasicEditorToggleItem {
 }
 
 interface EditorToggleAccessibleProps extends EditorToggleProps {
-    onItemReceivedFocus: (index: number) => void;
+    setIsFocused: (isFocused: boolean) => void;
 }
 
 const EditorToggleAccessibleMenu = (props: EditorToggleAccessibleProps) => {
-    const { items, id, selected, ariaHidden, onItemReceivedFocus } = props;
+    const { items, id, selected, ariaHidden, setIsFocused } = props;
 
     let selectedIndex : number | undefined;
     const tabs = items.reduce((prev, current, index) => {
@@ -157,7 +161,7 @@ const EditorToggleAccessibleMenu = (props: EditorToggleAccessibleProps) => {
             role="tablist" 
             className="common-toggle-accessibility" 
             childTabStopId={`${childIdPrefix}${selectedIndex}`}
-            onItemReceivedFocus={(item) => props.onItemReceivedFocus(parseInt(item.id.substring(childIdPrefix.length)))}
+            focusSelectsItem={true}
         >
         {tabs.map((item, index) =>
             <Button
@@ -168,8 +172,8 @@ const EditorToggleAccessibleMenu = (props: EditorToggleAccessibleProps) => {
                 title={item.title}
                 label={item.label}
                 onClick={item.onClick}
-                onFocus={() => onItemReceivedFocus(selectedIndex)}
-                onBlur={() => onItemReceivedFocus(undefined)}
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => setIsFocused(false)}
                 ariaSelected={item.selected}
                 ariaHidden={ariaHidden}/>
         )}
