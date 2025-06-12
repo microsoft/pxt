@@ -825,8 +825,11 @@ const CheckboxMenuItem = (props: CheckboxMenuItemProps) => {
     return (
         <div
             role="menuitemcheckbox"
+            aria-checked={isChecked}
+            tabIndex={0}
             className="ui item link"
             onClick={onClick}
+            onKeyDown={fireClickOnEnter}
         >
             <Checkbox
                 id={id}
