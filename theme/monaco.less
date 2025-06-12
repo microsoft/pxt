@@ -160,6 +160,12 @@
         color: var(--pxt-neutral-foreground3);
         font-size: 15px;
 
+        &:focus-visible {
+            border-color: var(--pxt-neutral-stencil3);
+            border-width: 4px 0px 4px 4px;
+            border-style: solid;
+            outline: none;
+        }
         .monacoFlyoutHeadingIcon {
             display: inline-block;
         }
@@ -278,6 +284,7 @@
             border-width: 4px 0px 4px 4px;
             border-style: solid;
             cursor: grab;
+            outline: none;
 
             .blockHandle,
             .detail .params,

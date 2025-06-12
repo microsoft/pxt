@@ -85,7 +85,7 @@ export class FieldSoundEffect extends FieldBase<FieldSoundEffectParams> {
         const bg = new svg.Rect()
             .at(X_PADDING, Y_PADDING)
             .size(TOTAL_WIDTH, TOTAL_HEIGHT)
-            .setClass("blocklySpriteField")
+            .setClass("blocklyFieldRect blocklySpriteField")
             .stroke("#fff", 1)
             .fill("#dedede")
             .corner(TOTAL_HEIGHT / 2);

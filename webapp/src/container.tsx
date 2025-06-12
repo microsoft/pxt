@@ -6,6 +6,7 @@ import * as sui from "./sui";
 import * as core from "./core";
 import * as auth from "./auth";
 import * as pkg from "./package";
+import * as Blockly from "blockly";
 import { fireClickOnEnter } from "./util";
 
 import IProjectView = pxt.editor.IProjectView;
@@ -13,6 +14,9 @@ import ISettingsProps = pxt.editor.ISettingsProps;
 import UserInfo = pxt.editor.UserInfo;
 import SimState = pxt.editor.SimState;
 import { sendUpdateFeedbackTheme } from "../../react-common/components/controls/Feedback/FeedbackEventListener";
+import { TabPane } from "./components/core/TabPane";
+import KeyboardControlsHelp from "./components/KeyboardControlsHelp";
+import { Checkbox } from "../../react-common/components/controls/Checkbox";
 
 // common menu items -- do not remove
 // lf("About")
@@ -45,6 +49,11 @@ function startTour(parent: IProjectView) {
     parent.showOnboarding();
 }
 
+function openKeyboardNavHelp(parent: IProjectView) {
+    parent.toggleBuiltInSideDoc("keyboardControls", true);
+}
+
+
 function renderDocItems(parent: IProjectView, elements: pxt.DocMenuEntry[], cls: string = "") {
     return elements.map(m =>
         m.tutorial ? <DocsMenuItem key={"docsmenututorial" + m.path} role="menuitem" ariaLabel={pxt.Util.rlf(m.name)} text={pxt.Util.rlf(m.name)} className={"ui " + cls} parent={parent} path={m.path} onItemClick={openTutorial} />
@@ -65,17 +74,32 @@ function getTourItem(parent: IProjectView, cls: string = ""): JSX.Element {
     return <DocsMenuItem key={"docsmenu" + path} role="menuitem" ariaLabel={lf("Tour")} text={lf("Tour")} className={`ui ${cls}`} parent={parent} path={path} onItemClick={startTour} />
 }
 
+function getKeyboardNavHelpItem(parent: IProjectView, cls: string = ""): JSX.Element {
+    const path = "/keyboardControls";
+    return <DocsMenuItem key={"docsmenu" + path} role="menuitem" ariaLabel={lf("Keyboard Controls")} text={lf("Keyboard Controls")} className={`ui ${cls}`} parent={parent} path={path} onItemClick={openKeyboardNavHelp} />
+}
+
 type DocsMenuEditorName = "Blocks" | "JavaScript" | "Python";
 interface DocsMenuProps extends ISettingsProps {
     editor: DocsMenuEditorName;
 }
 
-export class DocsMenu extends data.PureComponent<DocsMenuProps, {}> {
+function showKeyboardControls() {
+    const languageRestriction = pkg.mainPkg?.config?.languageRestriction;
+    const pyOnly = languageRestriction === pxt.editor.LanguageRestriction.PythonOnly;
+    const noBlocks = languageRestriction === pxt.editor.LanguageRestriction.NoBlocks;
+    const tsOnly = languageRestriction === pxt.editor.LanguageRestriction.JavaScriptOnly;
+    return !pyOnly && !tsOnly && !noBlocks && !!pkg.mainEditorPkg().files[pxt.MAIN_BLOCKS];
+}
+
+export class DocsMenu extends data.PureComponent<DocsMenuProps & { hasMainBlocksFile: boolean }, {}> {
     renderCore() {
         const parent = this.props.parent;
         const targetTheme = pxt.appTarget.appTheme;
+        const accessibleBlocksEnabled = data.getData<boolean>(auth.ACCESSIBLE_BLOCKS);
         return <sui.DropdownMenu role="menuitem" icon="help circle large"
             className="item mobile hide help-dropdown-menuitem" textClass={"landscape only"} title={lf("Help")} >
+            {this.props.hasMainBlocksFile && showKeyboardControls() && accessibleBlocksEnabled && getKeyboardNavHelpItem(parent)}
             {targetTheme.tours?.editor && getTourItem(parent)}
             {renderDocItems(parent, targetTheme.docMenu)}
             {getDocsLanguageItem(this.props.editor, parent)}
@@ -241,7 +265,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
 
     pair() {
         pxt.tickEvent("menu.pair");
-        this.props.parent.pairAsync();
+        this.props.parent.pairDialogAsync();
     }
 
     pairBluetooth() {
@@ -355,8 +379,22 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             <div className="ui divider"></div>
             {targetTheme.selectLanguage ? <sui.Item icon='xicon globe' role="menuitem" text={lf("Language")} onClick={this.showLanguagePicker} /> : undefined}
             <sui.Item role="menuitem" icon="paint brush" text={lf("Theme")} onClick={this.showThemePicker} />
-            <sui.Item role="menuitem" text={accessibleBlocks ? lf("Accessible Blocks Off") : lf("Accessible Blocks On")} onClick={this.toggleAccessibleBlocks} />
-            {showGreenScreen ? <sui.Item role="menuitem" text={greenScreen ? lf("Green Screen Off") : lf("Green Screen On")} onClick={this.toggleGreenScreen} /> : undefined}
+            {showKeyboardControls() &&
+                <CheckboxMenuItem
+                    id="accessible-blocks-checkbox"
+                    isChecked={accessibleBlocks}
+                    label={lf("Keyboard Controls")}
+                    onClick={this.toggleAccessibleBlocks}
+                />
+            }
+            {showGreenScreen &&
+                <CheckboxMenuItem
+                    id="green-screen-checkbox"
+                    isChecked={greenScreen}
+                    label={lf("Green Screen")}
+                    onClick={this.toggleGreenScreen}
+                />
+            }
             {docItems && renderDocItems(this.props.parent, docItems, "setting-docs-item mobile only inherit")}
             {githubUser ? <div className="ui divider"></div> : undefined}
             {githubUser ? <div className="ui item" title={lf("Unlink {0} from GitHub", githubUser.name)} role="menuitem" onClick={this.signOutGithub}>
@@ -396,7 +434,7 @@ class BaseMenuItemProps extends data.Component<IBaseMenuItemProps, {}> {
 
     renderCore() {
         const active = this.props.isActive();
-        return <sui.Item className={`base-menuitem ${this.props.className} ${active ? "selected" : ""}`} role="menuitem" textClass="landscape only"
+        return <sui.Item className={`base-menuitem ${this.props.className} ${active ? "selected" : ""}`} role="option" textClass="landscape only"
             text={this.props.text} icon={this.props.icon} active={active} onClick={this.props.onClick} title={this.props.title} ariaLabel={this.props.ariaLabel} />
     }
 }
@@ -549,12 +587,12 @@ export class EditorSelector extends data.Component<IEditorSelectorProps, {}> {
         }
 
         return (
-            <div id="editortoggle" className={`ui grid padded ${(pyOnly || tsOnly) ? "one-language" : ""}`} role="menubar" aria-orientation="horizontal" aria-label={lf("Editor toggle")}>
+            <div id="editortoggle" className={`ui grid padded ${(pyOnly || tsOnly) ? "one-language" : ""}`} role="listbox" aria-orientation="horizontal" aria-label={lf("Editor toggle")}>
                 {showSandbox && <SandboxMenuItem parent={parent} />}
                 {showBlocks && <BlocksMenuItem parent={parent} />}
                 {textLanguage}
                 {secondTextLanguage}
-                {showDropdown && <sui.DropdownMenu id="editordropdown" role="menuitem" icon="chevron down" rightIcon title={lf("Select code editor language")} className={`item button attached right ${dropdownActive ? "active" : ""}`}>
+                {showDropdown && <sui.DropdownMenu id="editordropdown" role="option" icon="chevron down" rightIcon title={lf("Select code editor language")} className={`item button attached right ${dropdownActive ? "active" : ""}`}>
                     <JavascriptMenuItem parent={parent} />
                     <PythonMenuItem parent={parent} />
                 </sui.DropdownMenu>}
@@ -575,6 +613,8 @@ export interface SideDocsState {
     docsUrl?: string;
     sideDocsCollapsed?: boolean;
 }
+
+export const builtInPrefix = "/builtin/";
 
 export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
     private openingSideDoc = false;
@@ -616,6 +656,22 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
         this.props.parent.setState({ sideDocsLoadUrl: url });
     }
 
+    toggleBuiltInHelp(help: pxt.editor.BuiltInHelp, focusIfVisible: boolean) {
+        const url = `${builtInPrefix}${help}`;
+        if (this.state.docsUrl === url && !this.state.sideDocsCollapsed && !focusIfVisible) {
+            const wasEditorFocused = Blockly.getFocusManager().getFocusedTree();
+            this.props.parent.setState({ sideDocsCollapsed: true });
+
+            if (!wasEditorFocused) {
+                this.props.parent.editor.focusWorkspace();
+            }
+        } else {
+            this.openingSideDoc = true;
+            Blockly.hideChaff(true);
+            this.setUrl(url);
+        }
+    }
+
     private setUrl(url: string) {
         this.props.parent.setState({ sideDocsLoadUrl: url, sideDocsCollapsed: false });
     }
@@ -626,6 +682,7 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
 
     collapse() {
         this.props.parent.setState({ sideDocsCollapsed: true });
+        this.props.parent.editor.focusWorkspace();
     }
 
     isCollapsed() {
@@ -670,6 +727,13 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
             || this.state.docsUrl != nextState.docsUrl;
     }
 
+    private handleKeyDown = (ev: React.KeyboardEvent<HTMLElement>) => {
+        if (ev.key == "Escape") {
+            ev.stopPropagation();
+            this.collapse();
+        }
+    }
+
     renderCore() {
         const { sideDocsCollapsed, docsUrl } = this.state;
         const isRTL = pxt.Util.isUserLanguageRtl();
@@ -679,17 +743,18 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
         if (!docsUrl) return null;
 
         const url = sideDocsCollapsed ? this.rootDocsUrl() : docsUrl;
+        const isBuiltIn = url.startsWith(`${builtInPrefix}`);
+
         /* eslint-disable @microsoft/sdl/react-iframe-missing-sandbox */
         return <div>
             <button id="sidedocstoggle" role="button" aria-label={sideDocsCollapsed ? lf("Expand the side documentation") : lf("Collapse the side documentation")} className="ui icon button large" onClick={this.toggleVisibility}>
                 <sui.Icon icon={`icon inverted chevron ${showLeftChevron ? 'left' : 'right'}`} />
             </button>
-            <div id="sidedocs">
+            <div id="sidedocs" onKeyDown={this.handleKeyDown}>
                 <div id="sidedocsframe-wrapper">
-                    <iframe id="sidedocsframe" src={url} title={lf("Documentation")} aria-atomic="true" aria-live="assertive"
-                        sandbox={`allow-scripts allow-same-origin allow-forms ${lockedEditor ? "" : "allow-popups"}`} />
+                    {this.renderContent(url, isBuiltIn, lockedEditor)}
                 </div>
-                {!lockedEditor && <div className="ui app hide" id="sidedocsbar">
+                {!lockedEditor && !isBuiltIn && <div className="ui app hide" id="sidedocsbar">
                     <a className="ui icon link" role="button" tabIndex={0} data-content={lf("Open documentation in new tab")} aria-label={lf("Open documentation in new tab")} onClick={this.popOut} onKeyDown={fireClickOnEnter} >
                         <sui.Icon icon="external" />
                     </a>
@@ -697,6 +762,21 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
             </div>
         </div>
         /* eslint-enable @microsoft/sdl/react-iframe-missing-sandbox */
+    }
+
+    renderContent(url: string, isBuiltin: boolean, lockedEditor: boolean) {
+        if (isBuiltin) {
+            const component = url.slice(builtInPrefix.length) as pxt.editor.BuiltInHelp;
+            switch (component) {
+                case "keyboardControls": {
+                    return <KeyboardControlsHelp />
+                }
+            }
+        }
+        return (
+            <iframe id="sidedocsframe" src={url} title={lf("Documentation")} aria-atomic="true" aria-live="assertive"
+                sandbox={`allow-scripts allow-same-origin allow-forms ${lockedEditor ? "" : "allow-popups"}`} />
+        )
     }
 }
 
@@ -730,4 +810,35 @@ export class SandboxFooter extends data.PureComponent<SandboxFooterProps, {}> {
             <span className="item"><a role="button" className="ui thin portrait only" title={compileTooltip} onClick={this.compile}><sui.Icon icon={`icon ${pxt.appTarget.appTheme.downloadIcon || 'download'}`} />{pxt.appTarget.appTheme.useUploadMessage ? lf("Upload") : lf("Download")}</a></span>
         </div>;
     }
+}
+
+interface CheckboxMenuItemProps {
+    id: string;
+    label: string;
+    isChecked: boolean;
+    onClick: () => void;
+}
+
+const CheckboxMenuItem = (props: CheckboxMenuItemProps) => {
+    const { id, label, isChecked, onClick } = props;
+
+    return (
+        <div
+            role="menuitemcheckbox"
+            aria-checked={isChecked}
+            tabIndex={0}
+            className="ui item link"
+            onClick={onClick}
+            onKeyDown={fireClickOnEnter}
+        >
+            <Checkbox
+                id={id}
+                className="menu-item-checkbox"
+                isChecked={isChecked}
+                onChange={onClick}
+                label={label}
+                tabIndex={-1}
+            />
+        </div>
+    );
 }

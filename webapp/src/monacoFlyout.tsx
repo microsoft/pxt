@@ -83,13 +83,6 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
         this.positionDragHandle();
     }
 
-    protected getBlockClickHandler = (name: string) => {
-        return () => {
-            pxt.tickEvent("monaco.toolbox.itemclick", undefined, { interactiveConsent: true });
-            this.setState({ selectedBlock: name != this.state.selectedBlock ? name : undefined });
-        };
-    }
-
     protected getBlockMouseOver = (name: string) => {
         return () => {
             pxt.tickEvent("monaco.toolbox.itemmouseover");
@@ -175,18 +168,19 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
                 // Next item
                 let nextSibling = target.nextElementSibling as HTMLElement;
                 if (target && nextSibling) {
-                    nextSibling.click();
                     nextSibling.focus();
                 }
             } else if (charCode == 38) { // UP
                 // Previous item
                 let prevSibling = target.previousElementSibling as HTMLElement;
                 if (target && prevSibling) {
-                    prevSibling.click();
                     prevSibling.focus();
                 }
             } else if ((charCode == 37 && !isRtl) || (charCode == 38 && isRtl)) { // (LEFT & LTR) or (RIGHT & RTL)
                 // Focus back to toolbox
+                this.setState({
+                    selectedBlock: undefined
+                })
                 this.props.moveFocusToParent();
             } else if (charCode == 27) { // ESCAPE
                 // Focus back to toolbox and close Flyout
@@ -201,6 +195,19 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
                 });
             }
         }
+    }
+
+    private handleFocus = (name: string) => {
+        pxt.tickEvent("monaco.toolbox.itemclick", undefined, { interactiveConsent: true });
+        this.setState({
+            selectedBlock: name
+        });
+    }
+
+    private handleBlur = () => {
+        this.setState({
+            selectedBlock: undefined
+        });
     }
 
     protected getHelpButtonClickHandler = (group?: string) => {
@@ -362,8 +369,9 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
         return <div className={`monacoBlock ${disabled ? "monacoDisabledBlock" : ""} ${selected ? "expand" : ""} ${hover ? "hover" : ""}`}
             style={this.getSelectedStyle()}
             title={block.attributes.jsDoc}
-            key={`block_${qName}_${index}`} tabIndex={0} role="listitem"
-            onClick={this.getBlockClickHandler(qName)}
+            key={`block_${qName}_${index}`} tabIndex={!this.state.selectedBlock && index === 0 ? 0 : selected ? 0 : -1} role="listitem"
+            onFocus={() => this.handleFocus(qName)}
+            onBlur={() => this.handleBlur()}
             onMouseOver={this.getBlockMouseOver(qName)}
             onMouseOut={this.getBlockMouseOut(qName)}
             onKeyDown={this.getKeyDownHandler(block, snippet, isPython)}
@@ -398,10 +406,10 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
     }
 
     renderCore() {
-        const { name, ns, color, icon, groups } = this.state;
+        const { name, ns, color, icon, groups, selectedBlock } = this.state;
         const rgb = pxt.toolbox.getAccessibleBackground(pxt.toolbox.convertColor(color || (ns && pxt.toolbox.getNamespaceColor(ns)) || "255"));
         const iconClass = `blocklyTreeIcon${icon ? (ns || icon).toLowerCase() : "Default"}`.replace(/\s/g, "");
-        return <div id="monacoFlyoutWidget" className="monacoFlyout" style={this.getFlyoutStyle()}>
+        return <div id="monacoFlyoutWidget" className="monacoFlyout" style={this.getFlyoutStyle()} ref="flyout">
             <div id="monacoFlyoutWrapper" onScroll={this.scrollHandler} onWheel={this.wheelHandler} role="list">
                 <div className="monacoFlyoutLabel monacoFlyoutHeading">
                     <span className={`monacoFlyoutHeadingIcon blocklyTreeIcon ${iconClass}`} role="presentation" style={this.getIconStyle(rgb)}>
@@ -414,7 +422,7 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
                     // Add group label, for non-default groups
                     if (g.name != pxt.DEFAULT_GROUP_NAME && groups.length > 1) {
                         group.push(
-                            <div className="monacoFlyoutLabel blocklyFlyoutGroup" key={`label_${i}`} tabIndex={0} onKeyDown={this.getKeyDownHandler()} role="separator">
+                            <div className="monacoFlyoutLabel blocklyFlyoutGroup" key={`label_${i}`} tabIndex={selectedBlock || i > 0 ? -1 : 0} onKeyDown={this.getKeyDownHandler()} role="separator">
                                 {g.icon && <span className={`monacoFlyoutHeadingIcon blocklyTreeIcon ${iconClass}`} role="presentation">{g.icon}</span>}
                                 <div className="monacoFlyoutLabelText">{pxtc.U.rlf(`{id:group}${g.name}`)}</div>
                                 {g.hasHelp && HELP_IMAGE_URI && <span>

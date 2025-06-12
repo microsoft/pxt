@@ -24,17 +24,32 @@ interface SoundGalleryItemProps extends SoundGalleryItem {
     selectKeyDown: (evt: React.KeyboardEvent<HTMLElement>) => void;
 }
 
-type GalleryItem = Record<string, HTMLElement>;
 
 export const SoundGallery = (props: SoundGalleryProps) => {
     const { sounds, onSoundSelected, visible, useMixerSynthesizer } = props;
 
-    const selectItemRefs = React.useRef<[GalleryItem]>([{}]);
-    const playItemRefs = React.useRef<[GalleryItem]>([{}]);
+    const selectItemRefs = React.useRef<HTMLDivElement[]>([]);
+    const playItemRefs = React.useRef<HTMLButtonElement[]>([]);
     const selectedCoord = React.useRef<{row: number, col: "select" | "preview"}>({row: 0, col: "select"});
 
     const focusSelectOrPlayElement = React.useCallback((e: React.KeyboardEvent<HTMLElement> | React.FocusEvent) => {
-        (selectedCoord.current.col === "select" ? selectItemRefs : playItemRefs).current[0][selectedCoord.current.row].focus();
+        if (e.type === "focus") {
+            // Check to see if this focus event is coming from a click on a child element
+            const playIndex = playItemRefs.current.indexOf(e.target as HTMLButtonElement);
+            if (playIndex !== -1) {
+                selectedCoord.current = {col: "preview", row: playIndex};
+                return;
+            }
+
+            const selectIndex = selectItemRefs.current.indexOf(e.target as HTMLDivElement);
+            if (selectIndex !== -1) {
+                selectedCoord.current = {col: "select", row: selectIndex};
+                return;
+            }
+        }
+
+        const elements = (selectedCoord.current.col === "select" ? selectItemRefs : playItemRefs).current;
+        elements[selectedCoord.current.row].focus();
         e.preventDefault();
     }, []);
 
@@ -43,6 +58,8 @@ export const SoundGallery = (props: SoundGalleryProps) => {
         next: number,
         current: number,
         e: React.KeyboardEvent<HTMLElement>) => {
+        const arrowToSelection = pxt.Util.isUserLanguageRtl() ? "ArrowRight" : "ArrowLeft";
+        const arrowToPreview = pxt.Util.isUserLanguageRtl() ? "ArrowLeft" : "ArrowRight";
         switch(e.code) {
             case "ArrowDown":
                 selectedCoord.current.row = next;
@@ -50,10 +67,10 @@ export const SoundGallery = (props: SoundGalleryProps) => {
             case "ArrowUp":
                 selectedCoord.current.row = prev;
                 break;
-            case "ArrowLeft":
+            case arrowToSelection:
                 selectedCoord.current.col = "select";
                 break;
-            case "ArrowRight":
+            case arrowToPreview:
                 selectedCoord.current.col = "preview";
                 break;
             case "Space":
@@ -93,8 +110,8 @@ export const SoundGallery = (props: SoundGalleryProps) => {
                             {...item}
                             useMixerSynthesizer={useMixerSynthesizer}
 
-                            selectReference={ref => selectItemRefs.current[0][index] = ref}
-                            playReference={ref => playItemRefs.current[0][index] = ref}
+                            selectReference={ref => selectItemRefs.current[index] = ref}
+                            playReference={ref => playItemRefs.current[index] = ref}
 
                             previewKeyDown={evt => handleKeyDown(prev, next, index, evt)}
                             selectKeyDown={evt => handleKeyDown(prev, next, index, evt)}

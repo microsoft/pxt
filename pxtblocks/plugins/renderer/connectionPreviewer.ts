@@ -6,9 +6,21 @@ export class ConnectionPreviewer extends Blockly.InsertionMarkerPreviewer {
     protected connectionLine: SVGLineElement;
     protected draggedConnectionIndicator: SVGElement;
     protected staticConnection: Blockly.RenderedConnection;
+    protected staticConnectionIndicator: SVGElement;
+
+    previewConnection(draggedConn: Blockly.RenderedConnection, staticConn: Blockly.RenderedConnection): void {
+        super.previewConnection(draggedConn, staticConn);
+        if (staticConn.type === Blockly.ConnectionType.INPUT_VALUE || staticConn.type === Blockly.ConnectionType.OUTPUT_VALUE) {
+            this.showDraggedIndicatorWithLine(draggedConn, staticConn);
+        }
+    }
 
     previewReplacement(draggedConn: Blockly.RenderedConnection, staticConn: Blockly.RenderedConnection, replacedBlock: Blockly.BlockSvg): void {
         super.previewReplacement(draggedConn, staticConn, replacedBlock);
+        this.showDraggedIndicatorWithLine(draggedConn, staticConn);
+    }
+
+    private showDraggedIndicatorWithLine(draggedConn: Blockly.RenderedConnection, staticConn: Blockly.RenderedConnection) {
         if (!this.connectionLine) {
             this.connectionLine = Blockly.utils.dom.createSvgElement(
                 'line',
@@ -21,9 +33,11 @@ export class ConnectionPreviewer extends Blockly.InsertionMarkerPreviewer {
                 },
                 draggedConn.sourceBlock_.getSvgRoot());
 
-            // Create connection indicator for target/closes connection
-            this.draggedConnectionIndicator = this.createConnectionIndicator(draggedConn);
+            this.draggedConnectionIndicator = this.createConnectionIndicator(draggedConn.sourceBlock_.getSvgRoot(), draggedConn);
+            const staticIndicatorParent = staticConn.sourceBlock_.getSvgRoot().querySelector(":scope>.blocklyConnectionIndicatorParent") as SVGElement;
+            this.staticConnectionIndicator = this.createConnectionIndicator(staticIndicatorParent, staticConn);
         }
+        this.staticConnectionIndicator.parentElement.appendChild(this.staticConnectionIndicator);
 
         const radius = ConnectionPreviewer.CONNECTION_INDICATOR_RADIUS;
         const offset = draggedConn.getOffsetInBlock();
@@ -64,14 +78,16 @@ export class ConnectionPreviewer extends Blockly.InsertionMarkerPreviewer {
             this.connectionLine = null;
             this.draggedConnectionIndicator.remove();
             this.draggedConnectionIndicator = null;
+            this.staticConnectionIndicator.remove();
+            this.staticConnectionIndicator = null;
             this.staticConnection = null;
         }
     }
 
-    protected createConnectionIndicator(connection: Blockly.RenderedConnection): SVGElement {
+    protected createConnectionIndicator(parent: SVGElement, connection: Blockly.RenderedConnection): SVGElement {
         const result = Blockly.utils.dom.createSvgElement('g',
             { 'class': 'blocklyInputConnectionIndicator' },
-            connection.sourceBlock_.getSvgRoot());
+            parent);
         Blockly.utils.dom.createSvgElement('circle',
             { 'r': ConnectionPreviewer.CONNECTION_INDICATOR_RADIUS }, result);
         const offset = connection.getOffsetInBlock();

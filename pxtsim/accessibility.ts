@@ -9,10 +9,14 @@ namespace pxsim.accessibility {
     }
 
     export function getGlobalAction(e: KeyboardEvent): pxsim.GlobalAction | null {
-        const meta  = e.metaKey || e.ctrlKey;
+        const isMac = window.navigator && /Mac/i.test(window.navigator.platform);
+        const meta  = isMac ? e.metaKey : e.ctrlKey;
         if (e.key === "Escape") {
             e.preventDefault();
             return "escape"
+        } else if (e.key === "/" && meta) {
+            e.preventDefault();
+            return "togglekeyboardcontrolshelp";
         } else if (e.key === "b" && meta) {
             e.preventDefault();
             return "navigateregions"

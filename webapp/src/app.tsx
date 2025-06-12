@@ -211,7 +211,7 @@ export class ProjectView
             simState: SimState.Stopped,
             autoRun: this.autoRunOnStart(),
             isMultiplayerGame: false,
-            onboarding: undefined,
+            activeTourConfig: undefined,
             mute: pxt.editor.MuteState.Unmuted,
             feedback: {showing: false, kind: "generic"} // state that tracks if the feedback modal is showing and what kind
         };
@@ -222,7 +222,7 @@ export class ProjectView
         this.hidePackageDialog = this.hidePackageDialog.bind(this);
         this.hwDebug = this.hwDebug.bind(this);
         this.hideLightbox = this.hideLightbox.bind(this);
-        this.hideOnboarding = this.hideOnboarding.bind(this);
+        this.closeTour = this.closeTour.bind(this);
         this.hideFeedback = this.hideFeedback.bind(this);
         this.openSimSerial = this.openSimSerial.bind(this);
         this.openDeviceSerial = this.openDeviceSerial.bind(this);
@@ -244,6 +244,7 @@ export class ProjectView
         this.showThemePicker = this.showThemePicker.bind(this);
         this.hideThemePicker = this.hideThemePicker.bind(this);
         this.setColorThemeById = this.setColorThemeById.bind(this);
+        this.showLoginDialog = this.showLoginDialog.bind(this);
 
         // add user hint IDs and callback to hint manager
         if (pxt.BrowserUtils.useOldTutorialLayout()) this.hintManager.addHint(ProjectView.tutorialCardId, this.tutorialCardHintCallback.bind(this));
@@ -335,6 +336,10 @@ export class ProjectView
             }
             case "navigateregions" : {
                 this.showNavigateRegions();
+                return
+            }
+            case "togglekeyboardcontrolshelp": {
+                this.toggleBuiltInSideDoc("keyboardControls", false);
                 return
             }
         }
@@ -1469,6 +1474,12 @@ export class ProjectView
         }
     }
 
+    toggleBuiltInSideDoc(help: pxt.editor.BuiltInHelp, focusIfVisible: boolean) {
+        let sd = this.refs["sidedoc"] as container.SideDocs;
+        if (!sd) return;
+        sd.toggleBuiltInHelp(help, focusIfVisible);
+    }
+
     setTutorialInstructionsExpanded(value: boolean): void {
         const tutorialOptions = this.state.tutorialOptions;
         tutorialOptions.tutorialStepExpanded = value;
@@ -1829,6 +1840,13 @@ export class ProjectView
                 this.shouldTryDecompile = true;
             }
 
+            // Onboard accessible blocks if accessible blocks has just been enabled
+            const onboardAccessibleBlocks = pxt.storage.getLocal("onboardAccessibleBlocks") === "1"
+            const sideDocsLoadUrl = onboardAccessibleBlocks ? `${container.builtInPrefix}keyboardControls` : ""
+            if (onboardAccessibleBlocks) {
+                pxt.storage.setLocal("onboardAccessibleBlocks", "0")
+            }
+
             this.setState({
                 home: false,
                 showFiles: h.githubId ? true : false,
@@ -1837,7 +1855,7 @@ export class ProjectView
                 header: h,
                 projectName: h.name,
                 currFile: file,
-                sideDocsLoadUrl: '',
+                sideDocsLoadUrl: sideDocsLoadUrl,
                 debugging: false,
                 isMultiplayerGame: false
             });
@@ -3269,8 +3287,8 @@ export class ProjectView
             );
     }
 
-    pairAsync(): Promise<boolean> {
-        return cmds.pairAsync();
+    pairDialogAsync(): Promise<pxt.commands.WebUSBPairResult> {
+        return cmds.pairDialogAsync();
     }
 
     ///////////////////////////////////////////////////////////
@@ -3312,7 +3330,7 @@ export class ProjectView
         const variants = pxt.getHwVariants()
         if (variants.length == 0)
             return false
-        let pairAsync = () => cmds.pairAsync()
+        let pairAsync = () => cmds.pairDialogAsync()
             .then(() => {
                 this.checkForHwVariant()
             }, err => {
@@ -4598,8 +4616,8 @@ export class ProjectView
         }
     }
 
-    showLoginDialog(continuationHash?: string) {
-        this.loginDialog.show(continuationHash);
+    showLoginDialog(continuationHash?: string, dialogMessages?: { signInMessage?: string; signUpMessage?: string }) {
+        this.loginDialog.show(continuationHash, dialogMessages);
     }
 
     showProfileDialog(location?: string) {
@@ -5206,6 +5224,10 @@ export class ProjectView
     }
 
     async toggleAccessibleBlocks() {
+        const nextEnabled = !this.getData<boolean>(auth.ACCESSIBLE_BLOCKS);
+        if (nextEnabled) {
+            pxt.storage.setLocal("onboardAccessibleBlocks", "1")
+        }
         await core.toggleAccessibleBlocks()
         this.reloadEditor();
     }
@@ -5267,17 +5289,24 @@ export class ProjectView
     }
 
     ///////////////////////////////////////////////////////////
-    ////////////             Onboarding           /////////////
+    ////////////               Tours              /////////////
     ///////////////////////////////////////////////////////////
 
-    hideOnboarding() {
-        this.setState({ onboarding: undefined });
+    closeTour() {
+        this.setState({ activeTourConfig: undefined });
     }
 
     async showOnboarding() {
         const tourSteps: pxt.tour.BubbleStep[] = await parseTourStepsAsync(pxt.appTarget.appTheme?.tours?.editor)
-        this.setState({ onboarding: tourSteps })
+        const config: pxt.tour.TourConfig = {
+            steps: tourSteps,
+            showConfetti: true,
+        }
+        this.showTour(config);
+    }
 
+    async showTour(config: pxt.tour.TourConfig) {
+        this.setState({ activeTourConfig: config });
     }
 
     ///////////////////////////////////////////////////////////
@@ -5536,8 +5565,8 @@ export class ProjectView
                         <projects.Projects parent={this} ref={this.handleHomeRef} />
                     </div>
                 </div> : undefined}
-                {showEditorToolbar && <editortoolbar.EditorToolbar ref="editortools" parent={this} />}
                 {sideDocs ? <container.SideDocs ref="sidedoc" parent={this} sideDocsCollapsed={this.state.sideDocsCollapsed} docsUrl={this.state.sideDocsLoadUrl} /> : undefined}
+                {showEditorToolbar && <editortoolbar.EditorToolbar ref="editortools" parent={this} />}
                 {sandbox ? undefined : <scriptsearch.ScriptSearch parent={this} ref={this.handleScriptSearchRef} />}
                 {sandbox ? undefined : <extensions.Extensions parent={this} ref={this.handleExtensionRef} />}
                 {inHome ? <projects.ImportDialog parent={this} ref={this.handleImportDialogRef} /> : undefined}
@@ -5554,8 +5583,8 @@ export class ProjectView
                 {hideMenuBar ? <div id="editorlogo"><a className="poweredbylogo"></a></div> : undefined}
                 {lightbox ? <sui.Dimmer isOpen={true} active={lightbox} portalClassName={'tutorial'} className={'ui modal'}
                     shouldFocusAfterRender={false} closable={true} onClose={this.hideLightbox} /> : undefined}
-                {this.state.onboarding && <Tour tourSteps={this.state.onboarding} onClose={this.hideOnboarding} />}
                 {this.state.navigateRegions && <NavigateRegionsOverlay parent={this}/>}
+                {this.state.activeTourConfig && <Tour config={this.state.activeTourConfig} onClose={this.closeTour} />}
                 {this.state.themePickerOpen && <ThemePickerModal themes={this.themeManager.getAllColorThemes()} onThemeClicked={theme => this.setColorThemeById(theme?.id, true)} onClose={this.hideThemePicker} />}
             </div>
         );
@@ -5599,23 +5628,19 @@ function initPacketIO() {
             }
         },
         (type, payload) => {
-            const messageSimulators = pxt.appTarget.simulator?.messageSimulators;
-            if (messageSimulators?.[type]) {
-                window.postMessage({
-                    type: "messagepacket",
-                    broadcast: false,
-                    channel: type,
-                    data: payload,
-                    sender: "packetio",
-                }, "*")
-            }
+            window.postMessage({
+                type: "messagepacket",
+                broadcast: false,
+                channel: type,
+                data: payload,
+                sender: "packetio",
+            }, "*")
         });
 
     window.addEventListener('message', (ev: MessageEvent) => {
         const msg = ev.data
         if (msg.type === 'messagepacket'
             && msg.sender !== "packetio"
-            && pxt.appTarget.simulator?.messageSimulators?.[msg.channel]
             && msg.channel === pxt.HF2.CUSTOM_EV_JACDAC)
             pxt.packetio.sendCustomEventAsync(msg.channel, msg.data)
                 .then(() => { }, err => {
@@ -6283,6 +6308,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                 baseUrl: baseUrl,
                 code: useLang,
                 force: force,
+            }).then(async () => {
+                return pxt.Cloud.initRegionAsync();
             }).then(() => {
                 if (pxt.Util.isLocaleEnabled(useLang)) {
                     pxt.BrowserUtils.setCookieLang(useLang);

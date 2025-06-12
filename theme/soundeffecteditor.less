@@ -75,11 +75,9 @@
     }
 }
 
-#sound-effect-editor-toggle > .common-editor-toggle-item.focused {
+#sound-effect-editor-toggle.focused {
     outline: 3px solid var(--pxt-neutral-background1);
-    &.selected {
-        outline: 3px solid var(--pxt-focus-border);
-    }
+    outline-offset: 2px;
 }
 
 .common-button.link-button.generate-similar {
@@ -199,6 +197,12 @@
 
     .fas.fa-stop {
         margin: 0;
+    }
+}
+
+.rtl .common-button.sound-effect-play-button {
+    .fas.fa-play, .fas.fa-stop {
+        margin: 0 0.25rem 0 0;
     }
 }
 

@@ -820,10 +820,11 @@ declare namespace pxt.editor {
         screenshoting?: boolean;
         extensionsVisible?: boolean;
         isMultiplayerGame?: boolean; // Arcade: Does the current project contain multiplayer blocks?
-        onboarding?: pxt.tour.BubbleStep[];
+        activeTourConfig?: pxt.tour.TourConfig;
         navigateRegions?: boolean;
         feedback?: FeedbackState;
         themePickerOpen?: boolean;
+        errorListNote?: string;
     }
 
     export interface EditorState {
@@ -901,6 +902,8 @@ declare namespace pxt.editor {
 
     export type Activity = "tutorial" | "recipe" | "example";
 
+    export type BuiltInHelp = "keyboardControls";
+
     export interface IProjectView {
         state: IAppState;
         setState(st: IAppState): void;
@@ -952,12 +955,13 @@ declare namespace pxt.editor {
         saveAndCompile(): void;
         updateHeaderName(name: string): void;
         updateHeaderNameAsync(name: string): Promise<void>;
-        compile(): void;
+        compile(saveOnly?: boolean): void;
 
         setFile(fn: IFile, line?: number): void;
         setSideFile(fn: IFile, line?: number): void;
         navigateToError(diag: pxtc.KsDiagnostic): void;
         setSideDoc(path: string, blocksEditor?: boolean): void;
+        toggleBuiltInSideDoc(help: BuiltInHelp, focusIfOpen: boolean): void;
         setSideMarkdown(md: string): void;
         setSideDocCollapsed(shouldCollapse?: boolean): void;
         removeFile(fn: IFile, skipConfirm?: boolean): void;
@@ -1058,7 +1062,8 @@ declare namespace pxt.editor {
         showLightbox(): void;
         hideLightbox(): void;
         showOnboarding(): void;
-        hideOnboarding(): void;
+        showTour(config: pxt.tour.TourConfig): void;
+        closeTour(): void;
         showNavigateRegions(): void;
         hideNavigateRegions(): void;
         showKeymap(show: boolean): void;
@@ -1073,7 +1078,7 @@ declare namespace pxt.editor {
         showFeedbackDialog(kind: ocv.FeedbackKind): void;
         showTurnBackTimeDialogAsync(): Promise<void>;
 
-        showLoginDialog(continuationHash?: string): void;
+        showLoginDialog(continuationHash?: string, dialogMessages?: { signInMessage?: string; signUpMessage?: string }): void;
         showProfileDialog(location?: string): void;
 
         showImportUrlDialog(): void;
@@ -1088,7 +1093,7 @@ declare namespace pxt.editor {
         showPackageDialog(query?: string): void;
         showBoardDialogAsync(features?: string[], closeIcon?: boolean): Promise<void>;
         checkForHwVariant(): boolean;
-        pairAsync(): Promise<boolean>;
+        pairDialogAsync(): Promise<pxt.commands.WebUSBPairResult>;
 
         createModalClasses(classes?: string): string;
         showModalDialogAsync(options: ModalDialogOptions): Promise<void>;

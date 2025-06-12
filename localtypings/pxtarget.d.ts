@@ -103,6 +103,8 @@ declare namespace pxt {
     }
 
     interface TeacherToolConfig {
+        showSharePageEvalButton?: boolean; // show the "Evaluate" button on the share page
+        defaultChecklistUrl?: string; // default checklist to use when a project is loaded without a checklist already active
         carousels?: TeacherToolCarouselConfig[];
     }
 
@@ -327,6 +329,11 @@ declare namespace pxt {
         skipCloudBuild?: boolean;
     }
 
+    interface FeatureFlag {
+        includeRegions?: string[];
+        excludeRegions?: string[];
+    }
+
     interface AppTheme {
         id?: string;
         name?: string;
@@ -503,7 +510,6 @@ declare namespace pxt {
         tutorialExplicitHints?: boolean; // allow use explicit hints
         errorList?: boolean; // error list experiment
         embedBlocksInSnapshot?: boolean; // embed blocks xml in right-click snapshot
-        blocksErrorList?: boolean; // blocks error list
         identity?: boolean; // login with identity providers
         assetEditor?: boolean; // enable asset editor view (in blocks/text toggle)
         disableMemoryWorkspaceWarning?: boolean; // do not warn the user when switching to in memory workspace
@@ -529,6 +535,7 @@ declare namespace pxt {
         timeMachineSnapshotInterval?: number; // An interval in milliseconds at which to take full project snapshots in project history. Defaults to 15 minutes
         adjustBlockContrast?: boolean; // If set to true, all block colors will automatically be adjusted to have a contrast ratio of 4.5 with text
         pxtJsonOptions?: PxtJsonOption[];
+        enabledFeatures?: pxt.Map<FeatureFlag>;
     }
 
     interface DownloadDialogTheme {
@@ -1342,10 +1349,18 @@ declare namespace pxt.tour {
     interface BubbleStep {
         title: string;
         description: string;
-        targetQuery: string;
+        targetQuery?: string;
         location: BubbleLocation;
         sansQuery?: string; // Use this to exclude an element from the cutout
         sansLocation?: BubbleLocation; // relative location of element to exclude
+        onStepBegin?: () => void;
+        bubbleStyle?: "yellow"; // Currently just have default (unset) & yellow styles. May add more in the future...
+    }
+    interface TourConfig {
+        steps: BubbleStep[];
+        showConfetti?: boolean;
+        numberFinalStep?: boolean; // The last step will only be included in the step count if this is true.
+        footer?: any; // actually 'string | JSX.Element', but this file is included in some compilations that don't include JSX
     }
     const enum BubbleLocation {
         Above,

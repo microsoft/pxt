@@ -247,6 +247,7 @@ text.blocklyCheckbox {
     .blocklyNonEditableText > rect.blocklySpriteField,
     .blocklyNonEditableText > rect.blocklyAnimationField,
     .blocklyNonEditableText > rect.blocklyTilemapField,
+    .blocklyEditableField > rect.blocklySpriteField,
     .blocklyEditableText > rect.blocklySpriteField,
     .blocklyEditableText > rect.blocklyAnimationField,
     .blocklyEditableText > rect.blocklyTilemapField {
@@ -396,40 +397,140 @@ text.blocklyCheckbox {
         Focus styles
 *******************************/
 
+
+html {
+    --blockly-active-node-color: #fff200;
+    --blockly-active-tree-color: black;
+    --blockly-selection-width: 3px;
+}
+
 // Avoid focus outlines when not using the keyboard navigation plugin.
-div.blocklyTreeRoot > div > div[role="tree"]:focus-visible {
+div.blocklyTreeRoot > div[role="tree"]:focus-visible {
     outline: none;
 }
 
-.accessibleBlocks .blocklyWorkspace:focus,.blocklyWorkspaceFocusLayer:focus {
+.blocklyKeyboardNavigation div.blocklyTreeRoot > div[role="tree"]:focus-visible {
+    outline: var(--blockly-selection-width) solid var(--blockly-active-tree-color);
+    outline-offset: calc(var(--blockly-selection-width) * -1);
+}
+
+/* Blocks, connections and fields. */
+.blocklyKeyboardNavigation
+.blocklyActiveFocus:is(.blocklyPath, .blocklyHighlightedConnectionPath),
+.blocklyKeyboardNavigation
+.blocklyActiveFocus.blocklyField
+> .blocklyFieldRect,
+.blocklyKeyboardNavigation
+.blocklyActiveFocus.blocklyField
+> .blocklyFieldRect.blocklySpriteField,
+.blocklyKeyboardNavigation
+.blocklyActiveFocus.blocklyIconGroup
+> .blocklyIconShape:first-child {
+    stroke: var(--blockly-active-node-color);
+    stroke-width: var(--blockly-selection-width);
+}
+// Compared to the plugin CSS, we've moved a :not(.blocklyFlyout .blocklyPath)
+// from .blockyPath to a separate rule below as it would not parse as less.
+.blocklyKeyboardNavigation
+.blocklyPassiveFocus:is(
+    .blocklyPath,
+    .blocklyHighlightedConnectionPath
+),
+.blocklyKeyboardNavigation
+.blocklyPassiveFocus.blocklyField
+> .blocklyFieldRect,
+.blocklyKeyboardNavigation
+.blocklyPassiveFocus.blocklyField
+> .blocklyFieldRect.blocklySpriteField,
+.blocklyKeyboardNavigation
+.blocklyPassiveFocus.blocklyIconGroup
+> .blocklyIconShape:first-child {
+    stroke: var(--blockly-active-node-color);
+    stroke-dasharray: 5px 3px;
+    stroke-width: var(--blockly-selection-width);
+}
+// Rule replacing the :not (see note above).
+.blocklyKeyboardNavigation
+.blocklyFlyout
+.blocklyPassiveFocus.blocklyPath {
+    stroke: none;
+}
+
+.blocklyKeyboardNavigation .blocklyPassiveFocus.blocklyHighlightedConnectionPath {
+    /* The connection path is being unexpectedly hidden in core */
+    display: unset !important;
+}
+
+/* Toolbox and flyout. */
+.blocklyKeyboardNavigation .blocklyFlyout:has(.blocklyActiveFocus),
+.blocklyKeyboardNavigation .blocklyToolbox div[role="tree"]:has(.blocklyActiveFocus),
+.blocklyKeyboardNavigation .blocklyActiveFocus:is(.blocklyFlyout, .blocklyToolbox div[role="tree"]) {
+    outline-offset: calc(var(--blockly-selection-width) * -1);
+    outline: var(--blockly-selection-width) solid
+        var(--blockly-active-tree-color);
+}
+
+/* Flyout buttons and labels */
+.blocklyKeyboardNavigation .blocklyFlyout .blocklyFlyoutLabel.blocklyActiveFocus,
+.blocklyKeyboardNavigation .blocklyFlyout .blocklyFlyoutButton.blocklyActiveFocus {
+    outline: none;
+}
+/* Use the backgrounds because the group can't have an outline on Safari */
+.blocklyKeyboardNavigation .blocklyFlyout .blocklyFlyoutLabel.blocklyActiveFocus > .blocklyFlyoutLabelBackground,
+.blocklyKeyboardNavigation .blocklyFlyout .blocklyFlyoutButton.blocklyActiveFocus > .blocklyFlyoutButtonBackground {
+    outline-offset: 2px;
+    outline: var(--blockly-selection-width) solid
+        var(--blockly-active-node-color);
+    border-radius: 2px;
+}
+.blocklyKeyboardNavigation .blocklyFlyout .blocklyFlyoutLabel.blocklyActiveFocus > .blocklyFlyoutLabelBackground {
+    // Swap opactity for transparent fill so we can see the focus indicator.
+    opacity: 1;
+    fill: transparent;
+}
+
+/* Workspace */
+.blocklyKeyboardNavigation .blocklySvg:has(~ .blocklyBlockDragSurface .blocklyActiveFocus) .blocklyWorkspaceFocusRing,
+.blocklyKeyboardNavigation .blocklyWorkspace:has(.blocklyActiveFocus) .blocklyWorkspaceFocusRing,
+.blocklyKeyboardNavigation .blocklyWorkspace.blocklyActiveFocus .blocklyWorkspaceFocusRing {
+    stroke: var(--blockly-active-tree-color);
+    stroke-width: calc(var(--blockly-selection-width) * 2);
+}
+.blocklyKeyboardNavigation .blocklyWorkspace.blocklyActiveFocus .blocklyWorkspaceSelectionRing {
+    stroke: var(--blockly-active-node-color);
+    stroke-width: var(--blockly-selection-width);
+}
+.blocklyKeyboardNavigation .blocklyToolboxCategoryContainer:focus-visible {
     outline: none;
 }
 
-.accessibleBlocks .blocklyWorkspaceFocusRingLayer {
-    position: absolute;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    right: 0;
-    pointer-events: none;
-    z-index: 99;
-}
-
-.accessibleBlocks .blocklyWorkspaceFocusRingLayer[data-focused="true"] {
-    outline: 3px solid black;
-    outline-offset: -3px;
-}
-
-.accessibleBlocks div.blocklyTreeRoot > div > div[role="tree"]:focus-visible {
-    outline: 3px solid black;
-    outline-offset: -3px;
-}
-
-.accessibleBlocks .blocklyFlyout:focus {
+// Image fields e.g. +/- buttons. Needs to be the image for Safari but Chrome has the group by default.
+.blocklyKeyboardNavigation .blocklyImageField:focus-visible {
     outline: none;
 }
-
-.accessibleBlocks .blocklyFlyout:focus-visible {
-    outline: 3px solid black;
-    outline-offset: -3px;
+.blocklyKeyboardNavigation .blocklyImageField:is(.blocklyActiveFocus, .blocklyPassiveFocus) > image {
+    outline: var(--blockly-selection-width) solid
+        var(--blockly-active-node-color);
+    border-radius: 2px;
+    outline-offset: 2px;
 }
+.blocklyKeyboardNavigation .blocklyImageField.blocklyPassiveFocus > image {
+    outline-style: dashed;
+}
+
+
+// Temporary workaround for https://github.com/google/blockly/issues/9099
+.blocklyActiveFocus:is(
+  .blocklyFlyout,
+  .blocklyWorkspace,
+  .blocklyField,
+  .blocklyPath,
+  .blocklyHighlightedConnectionPath,
+  .blocklyComment,
+  .blocklyBubble,
+  .blocklyIconGroup,
+  .blocklyTextarea
+) {
+  outline: none;
+}
+

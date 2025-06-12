@@ -248,6 +248,7 @@ export abstract class ToolboxEditor extends srceditor.Editor {
 
     abstract showFlyout(treeRow: toolbox.ToolboxCategory): void;
     abstract hideFlyout(): void;
+    abstract setFlyoutForceOpen(forceOpen: boolean): void;
     moveFocusToFlyout() { }
 
     protected abstract showFlyoutHeadingLabel(ns: string, name: string, subns: string, icon: string, color: string): void;
@@ -390,4 +391,6 @@ export abstract class ToolboxEditor extends srceditor.Editor {
             this.toolbox.focus(itemToFocus);
         }
     }
+
+    onToolboxBlur(e: React.FocusEvent, keepFlyoutOpen: boolean) {};
 }
