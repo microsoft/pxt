@@ -835,7 +835,7 @@ const CheckboxMenuItem = (props: CheckboxMenuItemProps) => {
                 id={id}
                 className="menu-item-checkbox"
                 isChecked={isChecked}
-                onChange={onClick}
+                onChange={() => {}}
                 label={label}
                 tabIndex={-1}
             />
