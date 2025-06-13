@@ -156,7 +156,7 @@
 
 #waveform-select .common-radio-choice {
     input:focus-visible {
-        outline: 3px solid var(--pxt-focus-border);
+        outline: 3px solid var(--pxt-focus-border) !important;
     }
 }
 
@@ -207,7 +207,7 @@
 }
 
 .common-button.sound-effect-play-button:focus-visible {
-    outline: 3px solid var(--pxt-focus-border);
+    outline: 3px solid var(--pxt-focus-border) !important;
     outline-offset: 3px;
 }
 
@@ -303,4 +303,27 @@
 
 .sound-gallery-preview-wave {
     stroke: var(--pxt-primary-background);
+}
+
+.hc {
+    .sound-gallery-item-label-inner:focus {
+        outline: 3px solid @highContrastHighlightColor !important;
+    }
+
+    .common-button.sound-effect-play-button {
+        .fas.fa-play, .fas.fa-stop {
+            margin: 0 0 0 0.25rem;
+            color: @highContrastTextColor;
+        }
+        &:focus,:focus-visible {
+            outline: 3px solid var(--pxt-focus-border) !important;
+            &:after {
+                border: none;
+                outline: none;
+            }
+        }
+    }
+    #waveform-select .common-radio-choice.selected i {
+        color: @highContrastHighlightColor;
+    }
 }
