@@ -77,14 +77,6 @@
     }
 }
 
-.common-editor-toggle-item.focused {
-    outline: 3px solid var(--pxt-neutral-foreground2);
-    outline-offset: -5px;
-    &.selected {
-        outline: 3px solid var(--pxt-focus-border);
-    }
-}
-
 /*****************************************************
  *                  Toggle Handle                    *
  ****************************************************/
@@ -280,5 +272,21 @@
             .common-editor-toggle-item + .common-editor-toggle-item.common-editor-toggle-item-dropdown.selected ~ .common-editor-toggle-handle { margin-left: 25%; }
             .common-editor-toggle-item + .common-editor-toggle-item.common-editor-toggle-item-dropdown + .common-editor-toggle-item.selected ~ .common-editor-toggle-handle { margin-left: 75%; }
         }
+    }
+}
+
+.hc {
+    .sound-gallery-preview-wave {
+        stroke: @highContrastTextColor;
+    }
+    .common-editor-toggle.focused {
+        outline: 3px solid var(--pxt-focus-border) !important;
+    }
+    .common-toggle-accessibility > button.common-button:focus {
+        outline: none !important;
+    }
+    .common-editor-toggle-item.selected > button {
+        outline: 3px solid @highContrastTextColor;
+        outline-offset: -5px;
     }
 }
