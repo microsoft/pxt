@@ -151,7 +151,7 @@ interface Array<T> {
     reduce<U>(callbackfn: (previousValue: U, currentValue: T, currentIndex: number) => U, initialValue: U): U;
 
 
-    /** Remove the first occurence of an object. Returns true if removed. */
+    /** Remove the first occurrence of an object. Returns true if removed. */
     //% shim=Array_::removeElement weight=48
     removeElement(element: T): boolean;
 
@@ -307,12 +307,16 @@ declare interface String {
      */
     //% helper=stringSubstr
     //% help=text/substr
-    //% blockId="string_substr" block="substring of %this=text|from %start|of length %length" blockNamespace="text"
+    //% blockId=string_substr_new
+    //% block="substring of $this|from $start||of length $length"
+    //% this.shadow="text"
     //% this.defl="this"
+    //% blockNamespace="text"
+    //% expandArgumentsInToolbox
     substr(start: number, length?: number): string;
 
     /**
-     * Return the current string with the first occurence of toReplace
+     * Return the current string with the first occurrence of toReplace
      * replaced with the replacer
      * @param toReplace the substring to replace in the current string
      * @param replacer either the string that replaces toReplace in the current string,
@@ -322,7 +326,7 @@ declare interface String {
     replace(toReplace: string, replacer: string | ((sub: string) => string)): string;
 
     /**
-     * Return the current string with each occurence of toReplace
+     * Return the current string with each occurrence of toReplace
      * replaced with the replacer
      * @param toReplace the substring to replace in the current string
      * @param replacer either the string that replaces toReplace in the current string,
@@ -402,6 +406,19 @@ declare interface String {
     //% helper=stringToLowerCase
     //% help=text/to-lower-case
     toLowerCase(): string;
+
+    /**
+     * Return a substring of the current string.
+     * @param start first character index; can be negative from counting from the end, eg:0
+     * @param length number of characters to extract, eg: 10
+     */
+    //% helper=stringSubstr
+    //% help=text/substr
+    //% blockId="string_substr" block="substring of %this=text|from %start|of length %length" blockNamespace="text"
+    //% this.defl="this"
+    //% blockAliasFor="String.substr"
+    //% deprecated
+    __substr(start: number, length?: number): string;
 
     [index: number]: string;
 }

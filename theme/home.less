@@ -15,12 +15,15 @@
 @homeDetailViewSelectedCardZIndex: @homeDetailViewZIndex+1; /* Show the card arrow above the detail view */
 @homeFooterZIndex: @homeCarouselArrowZIndex+1;
 
+// Fade looks odd as anything other than black, so it's intentionally hardcoded separate from the theme.
+// Active dot color is also hardcoded for contrast, but non-active outline color and fill color can still be themed.
 @heroBannerGradientColor: rgba(0,0,0,1);
-@heroBannerDotOutlineColor: rgba(0, 0, 0, .4);
+@heroBannerDotOutlineColor: var(--pxt-neutral-alpha50);
 @heroBannerDotOutlineAtiveColor: rgba(255, 255, 255, .75);
 
 #homescreen {
-    background: lighten(@homeScreenBackground, 10%);
+    background: var(--pxt-neutral-background1);
+    color: var(--pxt-neutral-foreground1);
     z-index: @homeScreenZIndex;
     user-select: none;
 }
@@ -51,10 +54,6 @@
         .getting-started {
             padding: @carouselArrowSize;
             margin-top: 70px;
-        }
-        .getting-started-header {
-            font-size: 50px;
-            text-shadow: -1px 0 rgb(87, 87, 87), 0 1px rgb(87, 87, 87), 1px 0 rgb(87, 87, 87), 0 -1px rgb(87, 87, 87);
         }
     }
     .ui.segment.getting-started-segment.hero {
@@ -91,16 +90,39 @@
 
         .action {
             margin: 1rem 0;
+            a:focus-visible, button:focus-visible {
+                outline-width: 4px !important;
+                outline-style: solid;
+                outline-color: var(--pxt-neutral-stencil3);
+            }
         }
 
-        .dots button {
-            transition: background-color 0.5s;
-            border: 2px solid @heroBannerDotOutlineColor;
-            margin-right: 1.25rem;
+        .dots {
+            align-self: flex-start;
+            border-radius: 50px;
+            line-height: 0;
+            margin-top: 8px;
 
-            &.active {
-                border-color: @heroBannerDotOutlineAtiveColor;
-                background-color: transparent;
+            &:focus-visible {
+                outline-width: 3px !important;
+                outline-style: solid;
+                outline-color: white;
+                outline-offset: 4px;
+            }
+
+            button {
+                transition: background-color 0.5s;
+                border: 2px solid @heroBannerDotOutlineColor;
+                margin-right: 1.25rem;
+
+                &.active {
+                    border-color: @heroBannerDotOutlineAtiveColor;
+                    background-color: transparent;
+                }
+
+                &:last-child {
+                    margin-right: 0px;
+                }
             }
         }
 
@@ -124,7 +146,8 @@
         border: 0;
         width: 100%;
         min-height: 100%;
-        background: @homeScreenBackground;
+        background: var(--pxt-target-background1);
+        color: var(--pxt-target-foreground1);
     }
     .ui.segment.gallerysegment {
         background: none;
@@ -137,24 +160,26 @@
             margin: 0;
             padding-left: @carouselArrowSize;
             font-size: 20px;
-            color: @homeHeaderColor;
+            color: var(--pxt-target-foreground1);
             &.myproject-header {
                 cursor: pointer;
                 outline: none;
 
-                &:focus, &:hover {
-                    color: fade(@homeHeaderColor, 80%);
-                }
-
                 > .view-all-button {
                     margin-left: 1.5em;
-                    color: @primaryColor;
+                    color: var(--pxt-primary-background);
                     font-size: 14px;
                     font-weight: 500;
-                    border-bottom: 1px solid fade(@primaryColor, 0%);
+                    border-bottom: 1px solid var(--pxt-neutral-alpha0);
                     transition: border-color 400ms ease;
                     &:hover, &:focus {
-                        border-color: @primaryColor;
+                        border-color: var(--pxt-primary-background);
+                    }
+                    &:focus-visible {
+                        outline-width: @homeCardBorderSize !important;
+                        outline-style: solid;
+                        outline-color: var(--pxt-focus-border);
+                        outline-offset: 2px;
                     }
                 }
             }
@@ -177,6 +202,12 @@
     .import-dialog-btn {
         position: relative;
         z-index: 1; /* Move up so it's above the carousel container that has an offset margin */
+        &:focus-visible {
+            outline-width: @homeCardBorderSize !important;
+            outline-style: solid;
+            outline-color: var(--pxt-focus-border);
+            outline-offset: 2px;
+        }
     }
     /* Footer, Privary, Terms of Use */
     .homefooter {
@@ -189,7 +220,7 @@
         position: absolute;
         .item {
             font-size: 0.8rem !important;
-            color: @homeFooterColor !important;
+            color: var(--pxt-neutral-foreground1) !important;
         }
         .item.copyright {
             display: block;
@@ -198,8 +229,8 @@
         }
     }
     .ui.card:hover {
-        border: @homeCardBorderSize solid @homeCardHoverBorderColor !important;
-        background-color: @homeCardHoverBackgroundColor;
+        border: @homeCardBorderSize solid var(--pxt-neutral-background1) !important;
+        background-color: var(--pxt-neutral-background1);
         transform: scale(1.1);
     }
     .header {
@@ -208,7 +239,7 @@
 
     .carouselitem.selected {
         .ui.card {
-            border: @homeSelectedCardBorderSize solid @homeSelectedCardBorderColor !important;
+            border: @homeSelectedCardBorderSize solid var(--pxt-neutral-background1) !important;
             z-index: @homeDetailViewSelectedCardZIndex;
         }
         .ui.card:hover {
@@ -225,14 +256,14 @@
             pointer-events: none;
         }
         .ui.card:after {
-            border-color: rgba(46, 255, 46, 0);
-            border-top-color: @homeCardBackgroundColor;
+            border-color: var(--pxt-neutral-alpha0);
+            border-top-color: var(--pxt-neutral-background1);
             border-width: 10px;
             margin-left: -10px;
         }
         .ui.card:before {
-            border-color: rgba(255, 255, 255, 0);
-            border-top-color: @homeSelectedCardBorderColor;
+            border-color: var(--pxt-neutral-alpha0);
+            border-top-color: var(--pxt-neutral-stencil3);
             border-width: 17px;
             margin-left: -17px;
         }
@@ -245,7 +276,7 @@
         position: relative;
         overflow: hidden;
         .ui.grid {
-            background: @homeDetailViewBackground;
+            background: var(--pxt-neutral-background3);
         }
         .column {
             height: 15rem;
@@ -275,20 +306,20 @@
             position: absolute;
             pointer-events: none;
             top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(90deg, @homeDetailViewBackground, rgba(0,0,0,0));
+            background: linear-gradient(90deg, var(--pxt-neutral-background3), var(--pxt-neutral-alpha0));
         }
         .header {
             font-size: 20px;
-            color: @homeDetailViewColor;
+            color: var(--pxt-neutral-foreground3);
             margin-bottom: 1rem;
         }
         .detail {
-            color: @homeDetailViewColor;
+            color: var(--pxt-neutral-foreground3);
         }
         .yt-button {
             display: inline-block;
             border-radius: 0.5rem;
-            background-color: @primaryColor;
+            background-color: var(--pxt-primary-background);
         }
         .ui.grid.stackable .actions {
             padding-right: 4rem !important;
@@ -312,7 +343,8 @@
                 transition-duration: 0.1s;
 
                 > .item, > .icon {
-                    background: @homeDetailCardActionBackground;
+                    background: var(--pxt-target-background1);
+                    color: var(--pxt-target-foreground1);
                     height: 8rem;
                 }
 
@@ -320,7 +352,7 @@
                     display: block;
                     margin: auto !important;
                     opacity: 0.65;
-                    color: @homeCardHeaderColor;
+                    color: var(--pxt-neutral-foreground1);
 
                     // These three have text in front of the icons, so leave them faint.
                     &.blocks, &.js, &.py {
@@ -335,12 +367,12 @@
 
                 .button.approve {
                     width: 100%;
-                    color: @homeDetailCardActionText;
+                    color: var(--pxt-neutral-foreground3);
                     background-color: @orange;
                     transition-duration: 0s;
                 }
                 &:first-child .button.approve {
-                    background-color: @primaryColor;
+                    background-color: var(--pxt-primary-background);
                 }
             }
             .card-action-title {
@@ -349,20 +381,22 @@
                 left: 50%;
                 font-size: 1.43rem;
                 font-weight: 700;
-                color: @homeCardHeaderColor;
+                color: var(--pxt-neutral-foreground1);
                 transform: translateX(-50%) translateY(-50%);
                 pointer-events: none;
             }
-            .card-action:hover,
-            .card-action:focus-within {
+            .card-action:hover {
                 cursor: pointer;
-                border-color: @white;
+                border-color: var(--pxt-focus-border);
                 .ui.button {
                     filter: none;
                 }
                 .ui.button:first-child:hover {
                     z-index: auto;
                 }
+            }
+            .card-action:focus-within {
+                border-color: var(--pxt-focus-border);
             }
             .card-action:hover {
                 transform: scale(1.1);
@@ -409,18 +443,23 @@
             line-height: 2.15rem;
             cursor: pointer;
             width: 2.15rem;
-            color: @homeDetailCloseColor;
+            color: var(--pxt-neutral-foreground3);
             height: 2.15rem;
             transition: all 0.15s ease-out;
             opacity: 0.9;
             border-radius: 50%;
-            background-color: @homeDetailCloseBackground;
+            background-color: var(--pxt-neutral-background3);
         }
         > .closeIcon .remove.icon:hover, > .closeIcon .remove.icon:focus {
             opacity: 1;
             transform: scale(1.1, 1.1);
-            box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.35);
+            box-shadow: 0 0 0 3px var(--pxt-neutral-alpha20);
         }
+    }
+
+    .tutorial-progress.not-finished {
+        background-color: var(--pxt-primary-background) !important;
+        color: var(--pxt-primary-foreground) !important;
     }
 }
 
@@ -428,31 +467,34 @@
     .ui.card {
         margin-right: 5px;
         border-radius: @homeCardBorderRadius;
-        color: @homeCardColor;
-        border: @homeCardBorderSize solid @homeCardBorderColor !important;
-        background-color: @homeCardBackgroundColor;
+        color: var(--pxt-neutral-foreground1);
+        border: @homeCardBorderSize solid var(--pxt-neutral-stencil2) !important;
+        background-color: var(--pxt-neutral-background1);
         .ui.image, .ui.imagewrapper, .content {
             border-radius: @homeCardImageBorderRadius !important;
             .tags {
-                color:#717171;
+                color:var(--pxt-neutral-foreground2);
                 font-size: 1rem;
             }
         }
         .header {
-            color: @homeCardHeaderColor;
+            color: var(--pxt-neutral-foreground1);
         }
         .meta {
-            color: @homeCardMetaColor;
+            color: var(--pxt-neutral-foreground1);
         }
     }
     .ui.card:focus {
         border: 2px solid transparent;
-        outline: @homeCardBorderSize solid @homeCardFocusBorderColor !important;
+        outline-width: @homeCardBorderSize !important;
+        outline-style: solid;
+        outline-color: var(--pxt-focus-border);
     }
 }
 
 .ui.fullscreen.modal.scriptmanager > .content, .projectsdialog {
-    background: @homeScreenBackground;
+    background: var(--pxt-target-background1);
+    color: var(--pxt-target-foreground1);
 }
 
 
@@ -485,8 +527,8 @@
     font-size: @carouselArrowSize / 1.18 !important;
     line-height: 1;
     cursor: pointer;
-    background: @homeScreenBackground;
-    color: @primaryColor;
+    background: var(--pxt-target-background1);
+    color: var(--pxt-primary-background);
     top: 0;
     opacity: 0.7;
     overflow: hidden;
@@ -503,7 +545,7 @@
 }
 
 .carouselarrow:focus {
-    outline: solid 3px @primaryColor;
+    outline: solid 3px var(--pxt-primary-background);
 }
 
 .carouselarrow .icon {
@@ -519,16 +561,28 @@
     right: 0rem;
 }
 
+.gallerysegment .ui.card, .gallerysegment .ui.cards .card {
+    background-color: var(--pxt-neutral-background1);
+    color: var(--pxt-neutral-foreground1);
+
+    &:hover, &:focus {
+        background-color: var(--pxt-neutral-background1) !important;
+        color: var(--pxt-neutral-foreground1) !important;
+        border-color: var(--pxt-neutral-background1) !important;
+    }
+}
+
 /* Inverted */
 .inverted-theme {
     .projectsdialog .detailview .actions {
         .card-action {
             > .item, > .icon {
-                background: @homeInvertedDetailCardActionBackground;
+                background: var(--pxt-neutral-background1);
+                color: var(--pxt-neutral-foreground1);
             }
 
             .button.approve {
-                color: @invertedLightTextColor;
+                color: var(--pxt-primary-foreground);
             }
 
             i.xicon {

@@ -141,6 +141,29 @@ export async function getBadgeStateAsync(): Promise<pxt.auth.UserBadgeState | un
     }
 }
 
+export async function getColorThemeIdAsync(): Promise<string | undefined> {
+    const prefs = await userPreferencesAsync();
+    if (prefs) {
+        return prefs?.colorThemeIds?.[pxt.appTarget.id];
+    }
+}
+
+export async function setColorThemeIdAsync(themeId: string): Promise<void> {
+    const cli = await clientAsync();
+    if (cli) {
+        const currentPrefs = await cli.userPreferencesAsync();
+        const newColorThemePref = {
+            ...currentPrefs?.colorThemeIds,
+            [pxt.appTarget.id]: themeId
+        };
+        await cli.patchUserPreferencesAsync({
+            op: 'replace',
+            path: ['colorThemeIds'],
+            value: newColorThemePref
+        });
+    }
+}
+
 export async function userPreferencesAsync(): Promise<pxt.auth.UserPreferences | undefined> {
     const cli = await clientAsync();
     if (cli) {

@@ -194,6 +194,29 @@ function addFireClickOnEnter(el: JQuery<HTMLElement>) {
     });
 }
 
+let aspectRatioListenerInit = false;
+function initAspectRatioListener() {
+    if (aspectRatioListenerInit) return;
+    aspectRatioListenerInit = true;
+
+    // for embedded simulators, we don't know the aspect ratio until we've calculated
+    // the used parts. the iframe should post a message once the compile is complete
+    window.addEventListener("message", ev => {
+        const msg = ev.data as pxsim.SimulatorAspectRatioMessage;
+
+        if (msg.type !== "aspectratio") return;
+
+        const frameId = msg.frameid;
+        const ratio = msg.value;
+
+        const iframe = document.querySelector(`iframe[data-frameid="${frameId}"]`) as HTMLIFrameElement;
+
+        if (iframe?.parentElement) {
+            iframe.parentElement.style.paddingBottom = (100 / ratio) + "%";
+        }
+    });
+}
+
 function fillWithWidget(
     options: ClientRenderOptions,
     $container: JQuery,
@@ -268,13 +291,15 @@ function fillWithWidget(
                 $c.find('.sim').remove(); // remove previous simulators
                 scrollJQueryIntoView($c);
             } else {
+                initAspectRatioListener();
                 let padding = '81.97%';
                 if (pxt.appTarget.simulator) padding = (100 / pxt.appTarget.simulator.aspectRatio) + '%';
                 const deps = options.package ? "&deps=" + encodeURIComponent(options.package) : "";
                 const url = getRunUrl(options) + "#nofooter=1" + deps;
                 const assets = options.assetJSON ? `data-assets="${encodeURIComponent(JSON.stringify(options.assetJSON))}"` : "";
                 const data = encodeURIComponent($js.text());
-                let $embed = $(`<div class="ui card sim"><div class="ui content"><div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${url}" data-code="${data}" ${assets} allowfullscreen="allowfullscreen" sandbox="allow-popups allow-forms allow-scripts allow-same-origin" frameborder="0"></iframe></div></div></div>`);
+                const frameId = `sim-${pxt.Util.guidGen()}`;
+                let $embed = $(`<div class="ui card sim"><div class="ui content"><div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${url}" data-code="${data}" data-frameid="${frameId}" ${assets} allowfullscreen="allowfullscreen" sandbox="allow-popups allow-forms allow-scripts allow-same-origin" frameborder="0"></iframe></div></div></div>`);
                 $c.append($embed);
 
                 scrollJQueryIntoView($embed);
@@ -1060,6 +1085,7 @@ function fillCodeCardAsync(c: JQuery, cards: pxt.CodeCard[], options: CodeCardRe
         let cd = document.createElement("div")
         cd.className = "card-list";
         cd.setAttribute("role", "list")
+        cd.setAttribute("aria-label", options.cardCategory || lf("Content cards"));
         cards.forEach(card => {
             // patch card url with version if necessary, we don't do this in the editor because that goes through the backend and passes the targetVersion then
             const mC = /^\/(v\d+)/.exec(card.url);
@@ -1119,7 +1145,7 @@ function renderNextCodeCardAsync(cls: string, options: ClientRenderOptions): Pro
     }
 
     if (options.snippetReplaceParent) $el = $el.parent();
-    return fillCodeCardAsync($el, cards, { hideHeader: true })
+    return fillCodeCardAsync($el, cards, { hideHeader: true, cardCategory: options.hexName })
         .then(() => pxt.U.delay(1, renderNextCodeCardAsync(cls, options)));
 }
 

@@ -13,7 +13,6 @@ import * as compiler from "./compiler"
 import * as auth from "./auth"
 import * as cloud from "./cloud"
 
-import * as dmp from "diff-match-patch";
 import * as pxteditor from "../../pxteditor";
 
 import U = pxt.Util;
@@ -21,6 +20,7 @@ import Cloud = pxt.Cloud;
 
 import * as pxtblockly from "../../pxtblocks";
 import { getTextAtTime, HistoryFile } from "../../pxteditor/history";
+import { Milestones } from "./constants";
 
 
 // Avoid importing entire crypto-js
@@ -300,7 +300,7 @@ export function initAsync() {
     return syncAsync()
         .then(state => cleanupBackupsAsync().then(() => state))
         .then(_ => {
-            pxt.perf.recordMilestone("workspace init finished")
+            pxt.perf.recordMilestone(Milestones.WorkspaceInitFinished)
             return _
         })
 }
@@ -671,7 +671,7 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
                 // If this fails for some reason, the history is going to end
                 // up being corrupted. Should we switch to memory db?
                 pxt.reportException(e);
-                console.warn("Unable to update project history", e);
+                pxt.warn("Unable to update project history", e);
             }
         }
 
@@ -729,14 +729,13 @@ function computePath(h: Header) {
 
     return path
 }
-const differ = new dmp.diff_match_patch();
 
 function diffText(a: string, b: string) {
-    return differ.patch_make(a, b);
+    return pxt.diff.computePatch(a, b);
 }
 
 function patchText(patch: unknown, a: string) {
-    return differ.patch_apply(patch as any, a)[0]
+    return pxt.diff.applyPatch(a, patch as any)
 }
 
 export function restoreTextToTime(text: ScriptText, history: HistoryFile, timestamp: number) {
@@ -748,7 +747,7 @@ export function importAsync(h: Header, text: ScriptText, isCloud = false) {
     return forceSaveAsync(h, text, isCloud)
 }
 
-export function installAsync(h0: InstallHeader, text: ScriptText, dontOverwriteID = false) {
+export async function installAsync(h0: InstallHeader, text: ScriptText, dontOverwriteID = false) {
     U.assert(h0.target == pxt.appTarget.id);
 
     const h = <Header>h0
@@ -762,9 +761,9 @@ export function installAsync(h0: InstallHeader, text: ScriptText, dontOverwriteI
         pxt.shell.setEditorLanguagePref(cfg.preferredEditor);
     }
 
-    return pxt.github.cacheProjectDependenciesAsync(cfg)
-        .then(() => importAsync(h, text))
-        .then(() => h);
+    await pxt.github.cacheProjectDependenciesAsync(cfg)
+    await importAsync(h, text);
+    return h;
 }
 
 export async function renameAsync(h: Header, newName: string): Promise<Header> {
@@ -1274,52 +1273,61 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
     }
 
     // we need to keep the old cfg to maintain the github id -> local workspace id
-    const oldCfg = pxt.Package.parseAndValidConfig(files[pxt.CONFIG_NAME])
+    const localConfig = pxt.Package.parseAndValidConfig(files[pxt.CONFIG_NAME])
     const cfgText = await downloadAsync(pxt.CONFIG_NAME)
-    let cfg = pxt.Package.parseAndValidConfig(cfgText);
+    let pulledConfig = pxt.Package.parseAndValidConfig(cfgText);
     // invalid cfg
-    if (!cfg) {
+    if (!pulledConfig) {
         if (hd) // not importing
             U.userError(lf("Invalid pxt.json file."));
         pxt.debug(`github: reconstructing pxt.json`)
-        cfg = pxt.diff.reconstructConfig(parsed, files, commit, pxt.appTarget.blocksprj || pxt.appTarget.tsprj);
+        pulledConfig = pxt.diff.reconstructConfig(parsed, files, commit, pxt.appTarget.blocksprj || pxt.appTarget.tsprj);
         if (parsed.fileName && parsed.project)
             // add root folder as reference when creating nested project
-            cfg.dependencies[parsed.project] = `github:${parsed.slug}`
-        files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
+            pulledConfig.dependencies[parsed.project] = `github:${parsed.slug}`
+        files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(pulledConfig);
     }
     // patch the github references back to local workspaces
-    if (oldCfg) {
+    if (localConfig) {
         let ghupdated = 0;
-        Object.keys(cfg.dependencies)
-            // find github references that are also in the original version
-            .filter(k => /^github:/.test(cfg.dependencies[k]) && oldCfg.dependencies[k])
-            .forEach(k => {
-                const gid = pxt.github.parseRepoId(cfg.dependencies[k]);
-                if (gid) {
-                    const wks = oldCfg.dependencies[k];
-                    cfg.dependencies[k] = wks;
-                    ghupdated++;
+
+        for (const dep of Object.keys(pulledConfig.dependencies)) {
+            if (!(/^github:/.test(pulledConfig.dependencies[dep]) && localConfig.dependencies[dep])) {
+                continue;
+            }
+            const gid = pxt.github.parseRepoId(pulledConfig.dependencies[dep]);
+            if (gid) {
+                const wks = localConfig.dependencies[dep];
+                pulledConfig.dependencies[dep] = wks;
+                ghupdated++;
+            }
+        }
+
+        if (ghupdated) {
+            // merge in any locally added dependencies
+            for (const dep of Object.keys(localConfig.dependencies)) {
+                if (!pulledConfig.dependencies[dep]) {
+                    pulledConfig.dependencies[dep] = localConfig.dependencies[dep];
                 }
-            })
-        if (ghupdated)
-            files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
+            }
+            files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(pulledConfig);
+        }
     }
 
-    for (const fn of pxt.allPkgFiles(cfg).slice(1))
+    for (const fn of pxt.allPkgFiles(pulledConfig).slice(1))
         await downloadAsync(fn)
 
-    if (!cfg.name) {
-        cfg.name = parsed.fileName && parsed.project
+    if (!pulledConfig.name) {
+        pulledConfig.name = parsed.fileName && parsed.project
             // when creating nested project, mangle name
             ? `${parsed.project}-${parsed.fileName}`
             : (parsed.project || parsed.fullName)
-        cfg.name = cfg.name.replace(/pxt-/ig, '')
+        pulledConfig.name = pulledConfig.name.replace(/pxt-/ig, '')
             .replace(/\//g, '-')
             .replace(/-+/, "-")
             .replace(/[^\w\-]/g, "")
         if (!justJSON)
-            files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
+            files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(pulledConfig);
     }
 
     if (!justJSON) {
@@ -1341,12 +1349,12 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
      * If the repo was last opened in this target, use that version number in the header;
      * otherwise, use current target version to avoid mismatched updates.
      */
-    const targetVersionToUse = (cfg.targetVersions?.targetId === pxt.appTarget.id && cfg.targetVersions.target) ?
-        cfg.targetVersions.target : pxt.appTarget.versions.target;
+    const targetVersionToUse = (pulledConfig.targetVersions?.targetId === pxt.appTarget.id && pulledConfig.targetVersions.target) ?
+        pulledConfig.targetVersions.target : pxt.appTarget.versions.target;
 
     if (!hd) {
         hd = await installAsync({
-            name: cfg.name,
+            name: pulledConfig.name,
             githubId: repo,
             pubId: "",
             pubCurrent: false,
@@ -1356,7 +1364,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
             targetVersion: targetVersionToUse,
         }, files)
     } else {
-        hd.name = cfg.name
+        hd.name = pulledConfig.name
         await forceSaveAsync(hd, files)
     }
 
@@ -1723,23 +1731,24 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
         });
 }
 
-export function resetAsync() {
+export async function resetAsync() {
     allScripts = []
-    return impl.resetAsync()
-        .then(cloudsync.resetAsync)
-        .then(db.destroyAsync)
-        .then(pxt.BrowserUtils.clearTranslationDbAsync)
-        .then(pxt.BrowserUtils.clearTutorialInfoDbAsync)
-        .then(compiler.clearApiInfoDbAsync)
-        .then(() => {
-            pxt.storage.clearLocal();
-            data.clearCache();
-            // keep local token (localhost and electron) on reset
-            if (Cloud.localToken)
-                pxt.storage.setLocal("local_token", Cloud.localToken);
-        })
-        .then(() => syncAsync()) // sync again to notify other tabs
-        .then(() => { });
+
+    await impl.resetAsync();
+    await cloudsync.resetAsync();
+    await db.destroyAsync();
+    await pxt.BrowserUtils.clearTranslationDbAsync();
+    await pxt.BrowserUtils.clearTutorialInfoDbAsync();
+    await compiler.clearApiInfoDbAsync();
+    pxt.storage.clearLocal();
+    data.clearCache();
+
+    // keep local token (localhost and electron) on reset
+    if (Cloud.localToken) {
+        pxt.storage.setLocal("local_token", Cloud.localToken);
+    }
+
+    await syncAsync(); // sync again to notify other tabs
 }
 
 export function loadedAsync() {

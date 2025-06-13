@@ -20,6 +20,7 @@ import { fireClickOnEnter } from "./util";
 import * as pxtblockly from "../../pxtblocks";
 
 import ISettingsProps = pxt.editor.ISettingsProps;
+import { classList } from "../../react-common/components/util";
 
 
 interface ITutorialBlocks {
@@ -366,7 +367,7 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
             let actions: sui.ModalButton[] = [];
             if (immersiveReaderEnabled) {
                 actions.push({
-                    className: "immersive-reader-button",
+                    className: "immersive-reader-button neutral",
                     onclick: async () => { await ImmersiveReader.launchImmersiveReaderAsync(fullText, options) },
                     ariaLabel: lf("Launch Immersive Reader"),
                     title: lf("Launch Immersive Reader")
@@ -394,6 +395,7 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
 interface TutorialCardState {
     showHint?: boolean;
     showSeeMore?: boolean;
+    initialCardHeight?: number;
 }
 
 interface TutorialCardProps extends ISettingsProps {
@@ -402,7 +404,6 @@ interface TutorialCardProps extends ISettingsProps {
 
 export class TutorialCard extends data.Component<TutorialCardProps, TutorialCardState> {
     private prevStep: number;
-    private cardHeight: number;
     private resizeDebouncer: () => void;
 
     public focusInitialized: boolean;
@@ -593,27 +594,39 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         evt.stopPropagation();
     }
 
+    private getInteriorHeight(element: HTMLElement) {
+        let height = element?.clientHeight; // Includes padding
+        try {
+            const style = window.getComputedStyle(element);
+            height -= parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
+        } catch (e) {
+            // ignore parse errors, etc...
+        }
+        return height;
+    }
+
     private setShowSeeMore(autoexpand?: boolean) {
         // compare scrollHeight of inner text with height of card to determine showSeeMore
         const tutorialCard = this.refs['tutorialmessage'] as HTMLElement;
+        let defaultCardHeight = this.state.initialCardHeight;
+        if (!defaultCardHeight) {
+            defaultCardHeight = this.getInteriorHeight(tutorialCard);
+            this.setState({ initialCardHeight: defaultCardHeight });
+        }
+
         let show = false;
-        if (tutorialCard && tutorialCard.firstElementChild && tutorialCard.firstElementChild.firstElementChild) {
-            show = tutorialCard.clientHeight <= tutorialCard.firstElementChild.firstElementChild.scrollHeight;
-            if (show) {
-                this.cardHeight = tutorialCard.firstElementChild.firstElementChild.scrollHeight;
-                if (autoexpand) this.props.parent.setTutorialInstructionsExpanded(true);
+        const contentChild = tutorialCard?.firstElementChild?.firstElementChild;
+        if (contentChild) {
+            // Check if we need to scroll to see full content when at the default card size.
+            // If we do, display the "see more" button, which allows the user to expand the card and see all content without the scrollbar.
+            show = defaultCardHeight <= contentChild.scrollHeight;
+            if (show && autoexpand) {
+                // Expand automatically if autoexpand is set.
+                this.props.parent.setTutorialInstructionsExpanded(true);
             }
         }
         this.setState({ showSeeMore: show });
         this.props.parent.setEditorOffset();
-    }
-
-    getCardHeight() {
-        return this.cardHeight;
-    }
-
-    getExpandedCardStyle(prop: string) {
-        return { [prop]: `calc(${this.getCardHeight()}px + 2rem)` }
     }
 
     toggleHint(showFullText?: boolean) {
@@ -661,9 +674,10 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         const currentStep = tutorialStep;
         const maxSteps = tutorialStepInfo.length;
         const hideIteration = metadata && metadata.hideIteration;
+        const hideDone = metadata && metadata.hideDone;
         const hasPrevious = tutorialReady && currentStep != 0 && !hideIteration;
         const hasNext = tutorialReady && currentStep != maxSteps - 1 && !hideIteration;
-        const hasFinish = !lockedEditor && currentStep == maxSteps - 1 && !hideIteration;
+        const hasFinish = !lockedEditor && currentStep == maxSteps - 1 && !hideIteration && !hideDone;
         const hasHint = this.hasHint();
         const tutorialCardContent = stepInfo.headerContentMd;
         const showDialog = stepInfo.showDialog;
@@ -678,8 +692,17 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
             hintOnClick = null;
         }
 
+        const tutorialCardClasses = classList(
+            "ui",
+            tutorialStepExpanded ? 'tutorialExpanded' : undefined,
+            tutorialReady ? 'tutorialReady' : undefined,
+            this.state.showSeeMore ? 'seemore' : undefined,
+            !this.state.showHint ? 'showTooltip' : undefined,
+            hasHint ? 'hasHint' : undefined,
+            tutorialStepExpanded ? 'stepExpanded' : undefined);
+
         const isRtl = pxt.Util.isUserLanguageRtl();
-        return <div id="tutorialcard" className={`ui ${tutorialStepExpanded ? 'tutorialExpanded' : ''} ${tutorialReady ? 'tutorialReady' : ''} ${this.state.showSeeMore ? 'seemore' : ''}  ${!this.state.showHint ? 'showTooltip' : ''} ${hasHint ? 'hasHint' : ''}`} style={tutorialStepExpanded ? this.getExpandedCardStyle('height') : null} >
+        return <div id="tutorialcard" className={tutorialCardClasses} >
             {hasHint && this.state.showHint && !showDialog && <div className="mask" role="region" onClick={this.closeHint}></div>}
             <div className='ui buttons'>
                 {hasPrevious ? <sui.Button icon={`${isRtl ? 'right' : 'left'} chevron large`} className={`prevbutton left attached ${!hasPrevious ? 'disabled' : ''}`} text={lf("Back")} textClass="widedesktop only" ariaLabel={lf("Go to the previous step of the tutorial.")} onClick={this.previousTutorialStep} onKeyDown={fireClickOnEnter} /> : undefined}
@@ -747,7 +770,7 @@ export class WorkspaceHeader extends data.Component<any, WorkspaceHeaderState> {
             this.flyoutWidth = flyout.getBoundingClientRect().width;
         }
 
-        const workspace = document.querySelector('#blocksArea');
+        const workspace = document.querySelector(`#${this.props.workspaceId || "blocksArea"}`);
         if (workspace) {
             this.workspaceWidth = workspace.clientWidth - this.flyoutWidth - 4;
         }

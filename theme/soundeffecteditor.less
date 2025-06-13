@@ -1,19 +1,7 @@
-/****************************************************
- *                    Variables                      *
- ****************************************************/
 
-@soundEffectHeaderColor: #E63022;
 
-@soundPlayButtonBackground: #333333;
-@soundPlayButtonForeground: #ffffff;
 
-@soundPreviewBackgroundColor: #fbe2d6;
-@soundPreviewBaselineColor: #888888;
-@soundPreviewStaticWaveColor: @soundPreviewBaselineColor;
-@soundPreviewAnimatedWaveColor: @soundEffectHeaderColor;
 
-@soundGalleryBackgroundColor: #481041;
-@soundGalleryWaveColor: @soundEffectHeaderColor;
 
 
 /****************************************************
@@ -29,7 +17,8 @@
     box-shadow: 0 0 3px ~"rgb(0 0 0 / 30%)";
     overflow: hidden;
     border-radius: 0.25rem;
-    background-color: @white;
+    background-color: var(--pxt-neutral-background1);
+    color: var(--pxt-neutral-foreground1);
     display: flex;
     flex-direction: column;
     user-select: none;
@@ -38,12 +27,21 @@
     .link-button {
         margin-left: 1.8rem;
     }
+
+    .common-menu-dropdown-pane {
+        width: 8rem !important;
+    }
 }
 
 .sound-effect-editor-content {
     flex-grow: 1;
     position: relative;
     overflow: hidden;
+
+    .common-dropdown-item:focus-visible {
+        outline: 3px solid var(--pxt-focus-border);
+        outline-offset: -3px;
+    }
 }
 
 .sound-controls {
@@ -60,22 +58,32 @@
     justify-content: center;
     align-items: center;
 
-    background-color: @soundEffectHeaderColor;
+    background-color: #e30fc0; // Matches block color
 
     & > .common-button {
         position: absolute;
         right: 0;
         top: 0;
+        border: none;
+        &:focus-visible {
+            outline: 3px solid var(--pxt-neutral-background1);
+            outline-offset: -7px;
+            &:after {
+                outline: none !important;
+            }
+        }
     }
+}
+
+#sound-effect-editor-toggle.focused {
+    outline: 3px solid var(--pxt-neutral-background1);
+    outline-offset: 2px;
 }
 
 .common-button.link-button.generate-similar {
     margin-bottom: 0.5rem;
 }
 
-.common-menu-dropdown-pane {
-    width: 8rem !important;
-}
 
 /****************************************************
  *                      Graphs                      *
@@ -91,11 +99,17 @@
     & > span {
         flex-grow: 1;
     }
+
+    .common-dropdown-button:focus-visible,
+    .common-dropdown-item:focus-visible {
+        outline: 3px solid var(--pxt-focus-border);
+        outline-offset: -3px;
+    }
 }
 
 .frequency-graph {
     padding-top: 0.5rem;
-    border-bottom: 1px solid #dedede;
+    border-bottom: 1px solid var(--pxt-neutral-stencil2);
 }
 
 .dropdown-and-label {
@@ -107,7 +121,7 @@
 
 .sound-graph-container {
     margin-top: 0.5rem;
-    border: 1px solid #dedede;
+    border: 1px solid var(--pxt-neutral-stencil2);
 }
 
 .sound-label {
@@ -140,6 +154,12 @@
     }
 }
 
+#waveform-select .common-radio-choice {
+    input:focus-visible {
+        outline: 3px solid var(--pxt-focus-border) !important;
+    }
+}
+
 /****************************************************
  *                     Preview                      *
  ****************************************************/
@@ -147,7 +167,7 @@
  .sound-preview {
     height: 8rem;
     padding: 0 2.5rem;
-    background: @soundPreviewBackgroundColor;
+    background: var(--pxt-neutral-background2);
 
     display: flex;
     justify-content: center;
@@ -164,14 +184,15 @@
     overflow: hidden;
     padding: 0;
     border-radius: 2rem;
-    background: @soundPlayButtonBackground;
+    background-color: var(--pxt-neutral-foreground2);
+    color: var(--pxt-neutral-background2);
     position: absolute;
-    right: 0;
+    right: 5px;
     margin-top: -1.5rem;
 
     .fas.fa-play, .fas.fa-stop {
         margin: 0 0 0 0.25rem;
-        color: @soundPlayButtonForeground;
+        color: var(--pxt-neutral-background2);
     }
 
     .fas.fa-stop {
@@ -179,20 +200,27 @@
     }
 }
 
-.common-button.sound-effect-play-button:focus::after {
-    border-radius: 2rem;
+.rtl .common-button.sound-effect-play-button {
+    .fas.fa-play, .fas.fa-stop {
+        margin: 0 0.25rem 0 0;
+    }
+}
+
+.common-button.sound-effect-play-button:focus-visible {
+    outline: 3px solid var(--pxt-focus-border) !important;
+    outline-offset: 3px;
 }
 
 .sound-preview-baseline {
-    stroke: @soundPreviewBaselineColor;
+    stroke: var(--pxt-neutral-alpha50);
 }
 
 .sound-preview-static-wave {
-    stroke: @soundPreviewStaticWaveColor;
+    stroke: var(--pxt-neutral-alpha50);
 }
 
 .sound-preview-animated-wave {
-    stroke: @soundPreviewAnimatedWaveColor;
+    stroke: var(--pxt-primary-background);
 }
 
 
@@ -206,7 +234,7 @@
     top: -100%;
     width: 100%;
     transition: top 0.25s ease;
-    background: @soundGalleryBackgroundColor;
+    background: var(--pxt-colors-purple-background);
     padding: 1rem;
     overflow-y: auto;
 }
@@ -223,8 +251,14 @@
 
 .sound-gallery-scroller > .common-button {
     margin-bottom: 0.5rem;
-    padding: 0.6rem 1rem 0.6rem;
+    padding: 0.3rem 1rem 0.3rem 0.5rem;
+
+    &:focus-visible {
+        outline: 5px solid var(--pxt-focus-border);
+        outline-offset: -7px;
+    }
 }
+
 
 .sound-gallery-item-label {
     display: flex;
@@ -236,6 +270,15 @@
         margin-top: 0;
         z-index: 2;
     }
+}
+
+.sound-gallery-item-label-inner {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    flex-grow: 1;
+    margin-right: 0.5rem;
+    padding: 0.3rem 0 0.3rem 0.5rem;
 
     .sound-effect-name {
         font-size: 22px;
@@ -259,5 +302,28 @@
 
 
 .sound-gallery-preview-wave {
-    stroke: @soundGalleryWaveColor;
+    stroke: var(--pxt-primary-background);
+}
+
+.hc {
+    .sound-gallery-item-label-inner:focus {
+        outline: 3px solid @highContrastHighlightColor !important;
+    }
+
+    .common-button.sound-effect-play-button {
+        .fas.fa-play, .fas.fa-stop {
+            margin: 0 0 0 0.25rem;
+            color: @highContrastTextColor;
+        }
+        &:focus,:focus-visible {
+            outline: 3px solid var(--pxt-focus-border) !important;
+            &:after {
+                border: none;
+                outline: none;
+            }
+        }
+    }
+    #waveform-select .common-radio-choice.selected i {
+        color: @highContrastHighlightColor;
+    }
 }

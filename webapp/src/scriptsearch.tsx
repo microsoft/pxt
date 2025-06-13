@@ -204,7 +204,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
 
     }
 
-    fetchExperiments(): experiments.Experiment[] {
+    fetchExperiments(): pxt.editor.Experiment[] {
         if (this.state.mode != ScriptSearchMode.Experiments) return [];
         return experiments.all();
     }
@@ -309,7 +309,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         }
     }
 
-    toggleExperiment(experiment: experiments.Experiment) {
+    toggleExperiment(experiment: pxt.editor.Experiment) {
         experiments.toggle(experiment);
         pxt.tickEvent(`experiments.toggle`, { "experiment": experiment.id, "enabled": experiments.isEnabled(experiment) ? 1 : 0 }, { interactiveConsent: true })
         this.forceUpdate();
@@ -505,7 +505,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                     description={experiment.description}
                                     key={'exp' + experiment.id}
                                     role="button"
-                                    label={experiments.isEnabled(experiment) ? lf("Enabled") : lf("Disabled")}
+                                    label={experiment.onClick ? undefined : (experiments.isEnabled(experiment) ? lf("Enabled") : lf("Disabled"))}
                                     labelClass={experiments.isEnabled(experiment) ? "green right ribbon" : "grey right ribbon"}
                                     onCardClick={this.toggleExperiment}
                                     feedbackUrl={experiment.feedbackUrl}
@@ -523,7 +523,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                             />}
                             {showOpenBeta && <codecard.CodeCardView
                                 ariaLabel={lf("Open the next version of the editor")}
-                                role="button"
+                                role="link"
                                 key={'beta'}
                                 className="beta"
                                 icon="lab ui cardimage"

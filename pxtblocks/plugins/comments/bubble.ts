@@ -7,7 +7,7 @@ import dom = Blockly.utils.dom;
  * bubble, where it has a "tail" that points to the block, and a "head" that
  * displays arbitrary svg elements.
  */
-export abstract class Bubble implements Blockly.IDeletable {
+export abstract class Bubble implements Blockly.IDeletable, Blockly.IBubble, Blockly.ISelectable {
     /** The width of the border around the bubble. */
     static readonly BORDER_WIDTH = 0;
 
@@ -53,6 +53,7 @@ export abstract class Bubble implements Blockly.IDeletable {
 
     private dragStrategy = new Blockly.dragging.BubbleDragStrategy(this, this.workspace);
 
+    private focusableElement: SVGElement | HTMLElement;
 
     private topBar: SVGRectElement;
 
@@ -76,6 +77,7 @@ export abstract class Bubble implements Blockly.IDeletable {
         public readonly workspace: Blockly.WorkspaceSvg,
         protected anchor: Blockly.utils.Coordinate,
         protected ownerRect?: Blockly.utils.Rect,
+        overriddenFocusableElement?: SVGElement | HTMLElement,
     ) {
         this.id = Blockly.utils.idGenerator.getNextUniqueId();
         this.svgRoot = dom.createSvgElement(
@@ -138,6 +140,9 @@ export abstract class Bubble implements Blockly.IDeletable {
             },
             embossGroup
         );
+
+        this.focusableElement = overriddenFocusableElement ?? this.svgRoot;
+        this.focusableElement.setAttribute('id', this.id);
 
         Blockly.browserEvents.conditionalBind(
             this.background,
@@ -267,6 +272,7 @@ export abstract class Bubble implements Blockly.IDeletable {
     private onMouseDown(e: PointerEvent) {
         this.workspace.getGesture(e)?.handleBubbleStart(e, this);
         Blockly.common.setSelected(this);
+        Blockly.getFocusManager().focusNode(this);
     }
 
     /** Positions the bubble relative to its anchor. Does not render its tail. */
@@ -633,10 +639,38 @@ export abstract class Bubble implements Blockly.IDeletable {
 
     select(): void {
         // Bubbles don't have any visual for being selected.
+        Blockly.common.fireSelectedEvent(this);
     }
 
     unselect(): void {
         // Bubbles don't have any visual for being selected.
+        Blockly.common.fireSelectedEvent(null);
+    }
+
+    /** See IFocusableNode.getFocusableElement. */
+    getFocusableElement(): HTMLElement | SVGElement {
+        return this.focusableElement;
+    }
+
+    /** See IFocusableNode.getFocusableTree. */
+    getFocusableTree(): Blockly.IFocusableTree {
+        return this.workspace;
+    }
+
+    /** See IFocusableNode.onNodeFocus. */
+    onNodeFocus(): void {
+        this.select();
+        this.bringToFront();
+    }
+
+    /** See IFocusableNode.onNodeBlur. */
+    onNodeBlur(): void {
+        this.unselect();
+    }
+
+    /** See IFocusableNode.canBeFocused. */
+    canBeFocused(): boolean {
+        return true;
     }
 
     contentTop() {

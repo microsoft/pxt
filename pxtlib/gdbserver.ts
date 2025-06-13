@@ -178,7 +178,7 @@ namespace pxt {
             return this.sendCmdOKAsync("M" + addr.toString(16) + "," +
                 data.length.toString(16) + ":" + U.toHex(data))
                 .then(r => {
-                    console.log(r)
+                    pxt.log(r)
                 })
         }
 

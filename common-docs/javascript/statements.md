@@ -1,6 +1,6 @@
 # Statements
 
-The following JavaScript statements are supported for the @boardname@:
+The following JavaScript statements are supported:
 
 ## Variable declarations
 * [`const` statement](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/const)

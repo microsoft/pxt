@@ -90,6 +90,27 @@ export class FieldColorNumber extends FieldColour implements FieldCustom {
         return this.value_;
     }
 
+    getFieldDescription(): string {
+        const value = this.getValue();
+        return value ? lf("color ${0}", value) : lf("color");
+    }
+
+    /**
+     * Defines whether this field should take up the full block or not.
+     *
+     * @returns True if this field should take up the full block. False otherwise.
+     */
+    override isFullBlockField(): boolean {
+        const block = this.getSourceBlock();
+        if (!block) throw new Blockly.UnattachedFieldError();
+
+        const constants = this.getConstants();
+        return (
+            this.blockIsSimpleReporter() &&
+            Boolean(constants?.FIELD_COLOUR_FULL_BLOCK)
+        );
+    }
+
     /**
      * Set the colour.
      * @param {string} colour The new colour in '#rrggbb' format.

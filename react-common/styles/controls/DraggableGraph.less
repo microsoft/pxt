@@ -1,20 +1,39 @@
+.common-draggable-graph {
+    background-color: var(--pxt-neutral-background1);
+    color: var(--pxt-neutral-foreground1);
+}
+
 .common-draggable-graph-text {
     user-select: none;
-    color: @commonTextColor;
+    color: var(--pxt-neutral-foreground1);
+    stroke: var(--pxt-neutral-foreground1);
 }
 
 .draggable-graph-point {
-    fill: @draggableGraphHandleColor;
+    fill: var(--pxt-neutral-background1);
+    stroke: var(--pxt-neutral-alpha50);
 }
 
 .draggable-graph-path {
-    stroke: @draggableGraphPathColor;
+    stroke: var(--pxt-primary-background);
 }
 
 .draggable-graph-surface {
     cursor: pointer;
+    &:focus {
+        outline: none;
+    }
 }
 
 .draggable-graph-svg {
     touch-action: none;
+}
+
+.hc {
+    .draggable-graph-path, .draggable-graph-point {
+        stroke: @highContrastTextColor;
+    }
+    .common-draggable-graph-text {
+        color: @highContrastTextColor;
+    }
 }

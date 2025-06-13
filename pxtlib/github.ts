@@ -75,6 +75,23 @@ namespace pxt.github {
         user: User;
     }
 
+    export interface GHTutorialResponse {
+        path: string;
+        markdown: string | { filename: string, repo: GHTutorialRepoInfo };
+        dependencies: GHTutorialRepoInfo[];
+    }
+
+    export interface GHTutorialRepoInfo {
+        repo: string;
+        files: pxt.Map<string>;
+        sha: string;
+        fileHash: string;
+
+        subPath?: string;
+        version?: string;
+        latestVersion?: string;
+    }
+
     export let forceProxy = false;
 
     function hasProxy() {
@@ -108,6 +125,8 @@ namespace pxt.github {
         latestVersionAsync(repopath: string, config: PackagesConfig): Promise<string>;
         loadConfigAsync(repopath: string, tag: string): Promise<pxt.PackageConfig>;
         loadPackageAsync(repopath: string, tag: string): Promise<CachedPackage>;
+        loadTutorialMarkdown(repopath: string, tag?: string): Promise<CachedPackage>;
+        cacheReposAsync(response: GHTutorialResponse): Promise<void>;
     }
 
     function ghRequestAsync(options: U.HttpRequestOptions) {
@@ -279,6 +298,59 @@ namespace pxt.github {
                         })
                 })
         }
+
+        async loadTutorialMarkdown(repopath: string, tag?: string) {
+            repopath = normalizeTutorialPath(repopath);
+            const tutorialResponse = (await downloadMarkdownTutorialInfoAsync(repopath, tag)).resp;
+
+            const repo = tutorialResponse.markdown as { filename: string, repo: GHTutorialRepoInfo };
+
+            pxt.Util.assert(typeof repo === "object");
+
+            await this.cacheReposAsync(tutorialResponse);
+
+            return repo.repo;
+        }
+
+        async cacheReposAsync(resp: GHTutorialResponse) {
+            if (typeof resp.markdown === "object") {
+                const repo = resp.markdown as { filename: string, repo: GHTutorialRepoInfo };
+
+                this.cacheRepo(repo.repo);
+            }
+            for (const dep of resp.dependencies) {
+                this.cacheRepo(dep);
+            }
+        }
+
+        private cacheRepo(repo: GHTutorialRepoInfo) {
+            let repopath = repo.repo;
+
+            if (repo.subPath) {
+                repopath += "/" + repo.subPath;
+            }
+            let key = repopath
+            key += "/" + repo.sha;
+            this.packages[key] = {
+                files: repo.files
+            };
+
+            if (repo.latestVersion) {
+                this.cacheLatestVersion(repopath, repo.latestVersion);
+            }
+
+            const config = repo.files["pxt.json"];
+
+            if (config) {
+                const alternateConfigKey = key + "/" + (repo.version || "master");
+                this.cacheConfig(key, config);
+                this.cacheConfig(alternateConfigKey, config);
+            }
+        }
+
+        private cacheLatestVersion(repopath: string, version: string) {
+            this.latestVersions[repopath] = version;
+        }
     }
 
     function fallbackDownloadTextAsync(parsed: ParsedRepo, commitid: string, filepath: string) {
@@ -313,6 +385,51 @@ namespace pxt.github {
                 return resp.text
             return fallbackDownloadTextAsync(parsed, commitid, filepath)
         })
+    }
+
+    export async function downloadMarkdownTutorialInfoAsync(repopath: string, tag?: string, noCache?: boolean, etag?: string): Promise<{ resp?: GHTutorialResponse, etag?: string }> {
+        let request = pxt.Cloud.apiRequestWithCdnAsync;
+        const queryParams = new URLSearchParams();
+        if (tag) {
+            queryParams.set("ref", tag);
+        }
+        if (noCache) {
+            queryParams.set("noCache", "1");
+            request = pxt.Cloud.privateRequestAsync;
+        }
+
+        let url = `ghtutorial/${repopath}`;
+        url = pxt.BrowserUtils.appendUrlQueryParams(url, queryParams);
+
+        const headers: pxt.Map<string> = etag ? { "If-None-Match": etag } : undefined;
+
+        const resp = await request(
+            {
+                url,
+                method: "GET",
+                headers
+            }
+        );
+
+        let body: GHTutorialResponse;
+
+        if (resp.statusCode === 304) {
+            body = undefined;
+        }
+        else {
+            body = resp.json;
+        }
+
+        return (
+            {
+                resp: body,
+                etag: resp.headers["etag"] as string
+            }
+        );
+    }
+
+    export async function downloadTutorialMarkdownAsync(repopath: string, tag?: string) {
+        return db.loadTutorialMarkdown(repopath, tag);
     }
 
     // overriden by client
@@ -1087,12 +1204,33 @@ namespace pxt.github {
         return null
     }
 
-    export function upgradedPackageReference(cfg: PackagesConfig, id: string) {
+    export async function upgradedPackageReferenceAsync(cfg: PackagesConfig, id: string) {
         const rules = upgradeRules(cfg, id)
         if (!rules)
             return null
 
         for (const upgr of rules) {
+            const mv = /^move:(.*)$/.exec(upgr);
+            if (mv) {
+                const new_repo = parseRepoId(mv[1])
+                if (new_repo) {
+                    if (!new_repo.tag) {
+                        new_repo.tag = await latestVersionAsync(mv[1],cfg)
+                    }
+                    const repo = parseRepoId(id)
+                    if (!new_repo.fileName && repo.fileName) {
+                        new_repo.fileName = repo.fileName
+                        new_repo.fullName = join(new_repo.owner, new_repo.project, new_repo.fileName)
+                    }
+                    const new_repo_s = stringifyRepo(new_repo)
+                    pxt.debug(`upgrading ${id} to ${new_repo_s}}`)
+                    const np: string = await upgradedPackageReferenceAsync(cfg, new_repo_s)
+                    if (np) return np
+                    else return new_repo_s
+                } else {
+                    pxt.log(`cannot parse move target: ${mv[1]}`)
+                }
+            }
             const m = /^min:(.*)/.exec(upgr)
             const minV = m && pxt.semver.tryParse(m[1]);
             if (minV) {
@@ -1324,5 +1462,35 @@ namespace pxt.github {
             .catch(e => ({
                 status: null
             }))
+    }
+
+    export function normalizeTutorialPath(repopath: string) {
+        // repopath will be one of these three formats:
+        //     1. owner/repo/path/to/file
+        //     2. github:owner/repo/path/to/file
+        //     3. https://github.com/owner/repo/path/to/file
+        //
+        // That third format is not a valid URL (a proper github URL will have /blob/branchname/
+        // in it after the repo) but we used to support it so maintain backwards compatibility
+        if (/^github\:/i.test(repopath)) {
+            repopath = repopath.slice(7)
+        }
+        if (/^https?\:/i.test(repopath)) {
+            const parsed = new URL(repopath);
+
+            // remove the leading slash
+            repopath = parsed.pathname.slice(1);
+
+            // check if this is an actual link to a file in github, for example:
+            //     Mojang/EducationContent/blob/master/computing/unit-2/lesson-1.md
+            //
+            // Note the "/blob/master/" which is not present in example 3 above
+            const fullURLMatch = /^((?:[^\/]+\/){2})blob\/[^\/]+\/(.*)\.md$/.exec(repopath)
+            if (fullURLMatch) {
+                repopath = fullURLMatch[1] + fullURLMatch[2];
+            }
+        }
+
+        return repopath;
     }
 }

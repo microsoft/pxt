@@ -184,7 +184,7 @@ function addPackageToConfig(cfg: pxt.PackageConfig, dep: string) {
     if (m) {
         cfg.dependencies[m[1]] = m[3] || "*"
     } else
-        console.warn(`unknown package syntax ${dep}`)
+        pxt.warn(`unknown package syntax ${dep}`)
     return true;
 }
 
@@ -280,7 +280,7 @@ export function initFooter(footer: HTMLElement, shareId?: string) {
 }
 
 export function showError(msg: string) {
-    console.error(msg)
+    pxt.error(msg)
 }
 
 let previousMainPackage: pxt.MainPackage = undefined;
@@ -345,7 +345,7 @@ function compileAsync(hex: boolean, updateOptions?: (ops: pxtc.CompileOptions) =
             let resp = pxtc.compile(opts)
             if (resp.diagnostics && resp.diagnostics.length > 0) {
                 resp.diagnostics.forEach(diag => {
-                    console.error(diag.messageText)
+                    pxt.error(diag.messageText)
                 })
             }
             return resp
@@ -359,7 +359,7 @@ export function generateHexFileAsync(options: SimulateOptions): Promise<string> 
         }))
         .then(resp => {
             if (resp.diagnostics && resp.diagnostics.length > 0) {
-                console.error("Diagnostics", resp.diagnostics)
+                pxt.error("Diagnostics", resp.diagnostics)
             }
             return resp.outfiles[pxtc.BINARY_HEX];
         });
@@ -372,7 +372,7 @@ export function generateVMFileAsync(options: SimulateOptions): Promise<any> {
             if (options.code) opts.fileSystem[pxt.MAIN_TS] = options.code;
         }))
         .then(resp => {
-            console.log(resp)
+            pxt.log(resp)
             return resp
         })
 }
@@ -382,7 +382,7 @@ export async function simulateAsync(container: HTMLElement, simOptions: Simulate
     const { js } = builtSimJS;
 
     if (!js) {
-        console.error("Program failed to compile");
+        pxt.error("Program failed to compile");
         return undefined;
     }
 
@@ -392,11 +392,12 @@ export async function simulateAsync(container: HTMLElement, simOptions: Simulate
         if (msg.command === "restart") {
             runOptions.storedState = getStoredState(simOptions.id)
             simDriver.run(js, runOptions);
-        }
-        if (msg.command == "setstate") {
+        } else if (msg.command === "setstate") {
             if (msg.stateKey) {
                 setStoredState(simOptions.id, msg.stateKey, msg.stateValue)
             }
+        } else if (msg.command === "single") {
+            simDriver.setSingleSimulator();
         }
     };
     if (builtSimJS.breakpoints && simOptions.debug) {
@@ -436,6 +437,7 @@ function initDriverAndOptions(
         fnArgs: fnArgs,
         cdnUrl: pxt.webConfig.commitCdnUrl,
         localizedStrings: pxt.Util.getLocalizedStrings(),
+        partDefinitions: mainPkg?.computePartDefinitions(parts),
         highContrast: simOptions.highContrast,
         storedState: storedState,
         light: simOptions.light,
@@ -450,6 +452,20 @@ function initDriverAndOptions(
         runOptions.aspectRatio = parts.length && pxt.appTarget.simulator.partsAspectRatio
             ? pxt.appTarget.simulator.partsAspectRatio
             : pxt.appTarget.simulator.aspectRatio;
+
+    if (window.parent && runOptions.aspectRatio && runOptions.aspectRatio !== pxt.appTarget.simulator.aspectRatio) {
+        const frameId = window.frameElement?.getAttribute("data-frameid");
+
+        if (frameId) {
+            // notify parent iframe that we have a different aspect ratio
+            window.parent.postMessage({
+                type: "aspectratio",
+                frameid: frameId,
+                value: runOptions.aspectRatio
+            } as pxsim.SimulatorAspectRatioMessage, "*");
+        }
+    }
+
     simDriver.setRunOptions(runOptions);
     return runOptions;
 }
@@ -544,11 +560,16 @@ export async function buildSimJsInfo(simOptions: SimulateOptions): Promise<pxtc.
     }
 
     if (compileResult.diagnostics && compileResult.diagnostics.length > 0) {
-        console.error("Diagnostics", compileResult.diagnostics);
+        pxt.error("Diagnostics", compileResult.diagnostics);
     }
 
     const res = pxtc.buildSimJsInfo(compileResult);
-    res.parts = compileResult.usedParts;
+    const builtInParts = pxt.appTarget.simulator?.boardDefinition?.onboardComponents || [];
+
+    res.allParts = compileResult.usedParts || [];
+    res.usedBuiltinParts = compileResult.usedParts.filter(p => builtInParts.indexOf(p) !== -1);
+    res.parts = compileResult.usedParts.filter(p => builtInParts.indexOf(p) === -1);
+
     pxt.tickEvent("perfMeasurement", {
       durationMs: Date.now() - start,
       operation: "buildSimJsInfo",
@@ -685,7 +706,7 @@ export function startRenderServer() {
                     ? await pxt.BrowserUtils.encodeToPngAsync(res.xml, { width, height })
                     : undefined;
             } catch (e) {
-                console.warn(e);
+                pxt.warn(e);
             }
             window.parent.postMessage(<pxsim.RenderBlocksResponseMessage>{
                 source: "makecode",
@@ -931,7 +952,7 @@ ${linkString}
 
 `;
     }
-    console.debug(`print md: ${md}`);
+    pxt.debug(`print md: ${md}`);
     const options: RenderMarkdownOptions = {
         print: true
     }
@@ -958,7 +979,7 @@ async function renderDocAsync(content: HTMLElement, docid: string): Promise<void
         // similar to how normal docs handle them.
         await renderMarkdownAsync(content, md, { path: docid });
     } catch (e) {
-        console.warn(e);
+        pxt.warn(e);
     }
 }
 
@@ -1221,7 +1242,7 @@ export function decompileSnippetAsync(code: string, options?: BlocksRenderOption
                             generateSourceMap
                         });
                     if (bresp.diagnostics && bresp.diagnostics.length > 0)
-                        bresp.diagnostics.forEach(diag => console.error(diag.messageText));
+                        bresp.diagnostics.forEach(diag => pxt.error(diag.messageText));
                     if (!bresp.success)
                         return <DecompileResult>{
                             package: mainPkg,

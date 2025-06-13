@@ -8,6 +8,35 @@ namespace pxsim.accessibility {
         elem.setAttribute("tabindex", "0");
     }
 
+    export function getGlobalAction(e: KeyboardEvent): pxsim.GlobalAction | null {
+        const isMac = window.navigator && /Mac/i.test(window.navigator.platform);
+        const meta  = isMac ? e.metaKey : e.ctrlKey;
+        if (e.key === "Escape") {
+            e.preventDefault();
+            return "escape"
+        } else if (e.key === "/" && meta) {
+            e.preventDefault();
+            return "togglekeyboardcontrolshelp";
+        } else if (e.key === "b" && meta) {
+            e.preventDefault();
+            return "navigateregions"
+        }
+        return null
+    }
+
+    export function postKeyboardEvent() {
+        document.addEventListener("keydown", (e) => {
+            const action = getGlobalAction(e)
+            if (action) {
+                const message = {
+                    type: "action",
+                    action
+                } as pxsim.SimulatorActionMessage;
+                Runtime.postMessage(message)
+            }
+        });
+    }
+
     export function enableKeyboardInteraction(elem: Element, handlerKeyDown?: () => void, handlerKeyUp?: () => void): void {
         if (handlerKeyDown) {
             elem.addEventListener('keydown', (e: KeyboardEvent) => {

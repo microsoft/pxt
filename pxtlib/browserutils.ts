@@ -149,7 +149,7 @@ namespace pxt.BrowserUtils {
     export function isLocalHost(ignoreFlags?: boolean): boolean {
         try {
             return typeof window !== "undefined"
-                && /^http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+):\d+\//.test(window.location.href)
+                && /^https?:\/\/(?:localhost|127\.0\.0\.1|192\.168\.\d{1,3}\.\d{1,3}|[a-zA-Z0-9.-]+\.local):\d+\/?/.test(window.location.href)
                 && (ignoreFlags || !/nolocalhost=1/.test(window.location.href))
                 && !(pxt?.webConfig?.isStatic);
         } catch (e) { return false; }
@@ -161,7 +161,7 @@ namespace pxt.BrowserUtils {
 
     export function isSkillmapEditor(): boolean {
         try {
-            return /skill(?:s?)Map=1/.test(window.location.href);
+            return /skill(?:s?)map=1/i.test(window.location.href);
         } catch (e) { return false; }
     }
 
@@ -173,6 +173,17 @@ namespace pxt.BrowserUtils {
         return window?.innerWidth > pxt.BREAKPOINT_TABLET;
     }
 
+    export function isInGame(): boolean {
+        const inGame = /inGame=1/i.exec(window.location.href);
+        return !!inGame;
+    }
+
+    export function hasFileAccess(): boolean {
+        const disableForMacIos = pxt.appTarget.appTheme.disableFileAccessinMaciOs && (pxt.BrowserUtils.isMac() || pxt.BrowserUtils.isIOS());
+        const disableForAndroid = pxt.appTarget.appTheme.disableFileAccessinAndroid && pxt.BrowserUtils.isAndroid();
+        return !disableForMacIos && !disableForAndroid;
+
+    }
     export function noSharedLocalStorage(): boolean {
         try {
             return /nosharedlocalstorage/i.test(window.location.href);
@@ -499,8 +510,8 @@ namespace pxt.BrowserUtils {
         return outputCanvas.toDataURL("image/png");
     }
 
-    const MAX_SCREENSHOT_SIZE = 1e6; // max 1Mb
-    export function encodeToPngAsync(dataUri: string,
+    const MAX_SCREENSHOT_SIZE = 10e6; // max 10Mb
+    export function encodeToPngAsync(uri: string,
         options?: {
             width?: number,
             height?: number,
@@ -545,8 +556,21 @@ namespace pxt.BrowserUtils {
             img.onerror = ev => {
                 pxt.reportError("png", "png rendering failed");
                 resolve(undefined)
+            };
+
+            try {
+                const url = new URL(uri);
+
+                if ((url.protocol === "http:" || url.protocol === "https:") && url.host !== window.location.host) {
+                    img.setAttribute("crossOrigin", "anonymous");
+                }
             }
-            img.src = dataUri;
+            catch (e) {
+                // might fail on localhost or if it's a relative path. safe to
+                // ignore that exception
+            }
+
+            img.src = uri;
         })
     }
 
@@ -770,7 +794,7 @@ namespace pxt.BrowserUtils {
         let md = "...";
         for (let i = 0; i < 16; ++i)
             md += md + Math.random();
-        console.log(`adding entry ${md.length * 2} bytes`);
+        pxt.log(`adding entry ${md.length * 2} bytes`);
         return U.delay(1)
             .then(() => translationDbAsync())
             .then(db => db.setAsync("foobar", Math.random().toString(), null, undefined, md))
@@ -847,7 +871,7 @@ namespace pxt.BrowserUtils {
                 reject(err);
                 return;
             }
-            console.error(new Error(`${this.name} IDBWrapper error for ${op}: ${err.message}`));
+            pxt.error(new Error(`${this.name} IDBWrapper error for ${op}: ${err.message}`));
             reject(err);
             // special case for quota exceeded
             if (err.name == "QuotaExceededError") {
@@ -999,7 +1023,7 @@ namespace pxt.BrowserUtils {
             }
             return openAsync()
                 .catch(e => {
-                    console.log(`db: failed to open database, try delete entire store...`)
+                    pxt.log(`db: failed to open database, try delete entire store...`)
                     return IDBWrapper.deleteDatabaseAsync(IndexedDbTranslationDb.dbName())
                         .then(() => openAsync());
                 })
@@ -1050,16 +1074,16 @@ namespace pxt.BrowserUtils {
             return this.db.setAsync(IndexedDbTranslationDb.TABLE, entry)
                 .finally(() => scheduleStorageCleanup()) // schedule a cleanpu
                 .catch((e) => {
-                    console.log(`db: set failed (${e.message}), recycling...`)
+                    pxt.log(`db: set failed (${e.message}), recycling...`)
                     return this.clearAsync();
                 });
         }
 
         clearAsync(): Promise<void> {
             return this.db.deleteAllAsync(IndexedDbTranslationDb.TABLE)
-                .then(() => console.debug(`db: all clean`))
+                .then(() => pxt.debug(`db: all clean`))
                 .catch(e => {
-                    console.error('db: failed to delete all');
+                    pxt.error('db: failed to delete all');
                 })
         }
     }
@@ -1145,7 +1169,7 @@ namespace pxt.BrowserUtils {
             }
             return openAsync()
                 .catch(e => {
-                    console.log(`db: failed to open tutorial info database, try delete entire store...`)
+                    pxt.log(`db: failed to open tutorial info database, try delete entire store...`)
                     return pxt.BrowserUtils.IDBWrapper.deleteDatabaseAsync(TutorialInfoIndexedDb.dbName())
                         .then(() => openAsync());
                 })
@@ -1171,14 +1195,14 @@ namespace pxt.BrowserUtils {
         }
 
         setAsync(filename: string, snippets: Map<Map<number>>, code: string[], highlights: Map<Map<number>>, codeValidationMap: Map<Map<string[]>>, branch?: string): Promise<void> {
-            pxt.perf.measureStart("tutorial info db setAsync")
+            pxt.perf.measureStart(Measurements.TutorialInfoDbSetAsync)
             const key = getTutorialInfoKey(filename, branch);
             const hash = getTutorialCodeHash(code);
             return this.setWithHashAsync(filename, snippets, hash, highlights, codeValidationMap);
         }
 
         setWithHashAsync(filename: string, snippets: Map<Map<number>>, hash: string, highlights: Map<Map<number>>, codeValidationMap: Map<Map<string[]>>, branch?: string): Promise<void> {
-            pxt.perf.measureStart("tutorial info db setAsync")
+            pxt.perf.measureStart(Measurements.TutorialInfoDbSetAsync)
             const key = getTutorialInfoKey(filename, branch);
             const blocks: Map<number> = {};
             Object.keys(snippets).forEach(hash => {
@@ -1199,15 +1223,15 @@ namespace pxt.BrowserUtils {
 
             return this.db.setAsync(TutorialInfoIndexedDb.TABLE, entry)
                 .then(() => {
-                    pxt.perf.measureEnd("tutorial info db setAsync")
+                    pxt.perf.measureEnd(Measurements.TutorialInfoDbSetAsync)
                 })
         }
 
         clearAsync(): Promise<void> {
             return this.db.deleteAllAsync(TutorialInfoIndexedDb.TABLE)
-                .then(() => console.debug(`db: all clean`))
+                .then(() => pxt.debug(`db: all clean`))
                 .catch(e => {
-                    console.error('db: failed to delete all');
+                    pxt.error('db: failed to delete all');
                 })
         }
     }
@@ -1407,6 +1431,24 @@ namespace pxt.BrowserUtils {
         if (!url) return url;
         if (/[?&]rnd=/.test(url)) return url; // already busted
         return `${url}${url.indexOf('?') > 0 ? "&" : "?"}rnd=${Math.random()}`
+    }
+
+    export function appendUrlQueryParams(url: string, params: URLSearchParams) {
+        const entries: string[] = [];
+        for (const [key, value] of params.entries()) {
+            entries.push(`${encodeURIComponent(key)}=${encodeURIComponent(value)}`);
+        }
+
+        if (entries.length) {
+            if (url.indexOf("?") !== -1) {
+                url += "&" + entries.join("&");
+            }
+            else {
+                url += "?" + entries.join("&");
+            }
+        }
+
+        return url;
     }
 
     export function legacyCopyText(element: HTMLInputElement | HTMLTextAreaElement) {

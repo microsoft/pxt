@@ -6,23 +6,19 @@
 
     div[class*="common-input-group"] {
         border-radius: 0.5rem;
-        border: solid 1px var(--pxt-page-foreground);
+        border: solid 1px var(--pxt-neutral-foreground1);
         padding: 0 0.4rem;
 
         &:focus::after {
             outline: none;
             border-radius: 0.5rem;
-            border: solid 2px var(--pxt-headerbar-accent-smoke);
+            border: solid 2px var(--pxt-neutral-alpha20);
         }
 
         &:focus-within::after {
             outline: none;
             border-radius: 0.5rem;
-            border: solid 2px var(--pxt-headerbar-accent-smoke);
-        }
-
-        input::placeholder {
-            color: var(--pxt-content-accent);
+            border: solid 2px var(--pxt-neutral-alpha20);
         }
     }
 
@@ -46,12 +42,25 @@
             .block-input-btn {
                 margin: 0.2rem 0;
                 border-radius: 0.5rem;
-                border: solid 1px var(--pxt-page-foreground);
+                border: solid 1px var(--pxt-neutral-foreground1);
                 padding: 0.4rem;
 
+                .block-readable-name {
+                    .block-name-segment {
+                        margin-left: 0;
+                        margin-right: 0.2rem;
+                        line-height: normal;
+                    }
+                    .block-name-param {
+                        border-radius: 1rem;
+                        padding: 0.2rem 0.4rem;
+                        background-color: var(--pxt-page-dark-shadow);
+                    }
+                }
+
                 &.error {
-                    border: solid 1px var(--pxt-error-accent);
-                    background-color: var(--pxt-error-background);
+                    border: solid 1px var(--pxt-colors-red-background);
+                    background-color: var(--pxt-colors-red-alpha10);
                     transition: background-color 0.3s ease-in-out, border 0.3s ease-in-out;
                     padding-right: 0.6rem; // balance out with left icon
                 }
@@ -122,20 +131,20 @@
 
                     &.error {
                         &:not(:focus):not(:focus-within) div[class*="common-input-group"] {
-                            border: solid 1px var(--pxt-error-accent);
-                            background-color: var(--pxt-error-background);
+                            border: solid 1px var(--pxt-colors-red-background);
+                            background-color: var(--pxt-colors-red-alpha10);
                             transition: background-color 0.3s ease-in-out, border 0.3s ease-in-out;
 
                             &:focus::after {
-                                border: solid 2px var(--pxt-error);
+                                border: solid 2px var(--pxt-colors-red-background);
                             }
 
                             &:focus-within::after {
-                                border: solid 2px var(--pxt-error);
+                                border: solid 2px var(--pxt-colors-red-background);
                             }
 
                             input::placeholder {
-                                color: var(--pxt-page-foreground);
+                                color: var(--pxt-neutral-foreground1);
                             }
 
                             i {
@@ -157,7 +166,7 @@
     }
 
     .criteria-description {
-        color: var(--pxt-page-foreground-light);
+        color: var(--pxt-neutral-alpha80);
         margin-top: 0.2rem;
         width: 100%; // For non-webkit browsers
         width: -webkit-fill-available; // Webkit browsers

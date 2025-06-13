@@ -303,7 +303,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
             imageUrl: pxt.github.repoIconUrl(r),
             repo: r,
             description: r.description,
-            fullName: r.fullName
+            fullRepo: r.fullName
         }
     }
 
@@ -360,6 +360,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
     function packageConfigToExtensionMeta(p: pxt.PackageConfig): ExtensionMeta {
         return {
             name: p.name,
+            displayName: p.displayName,
             imageUrl: p.icon,
             type: ExtensionType.Bundled,
             learnMoreUrl: `/reference/${p.name}`,
@@ -458,22 +459,23 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
         const { extensionInfo } = props;
         const {
             description,
-            fullName,
+            fullRepo,
             imageUrl,
             learnMoreUrl,
             loading,
             name,
+            displayName,
             repo,
             type,
         } = extensionInfo;
 
         return <ExtensionCard
-            title={name || fullName}
+            title={displayName || name || fullRepo}
             description={description}
             imageUrl={imageUrl}
             extension={extensionInfo}
             onClick={installExtension}
-            learnMoreUrl={learnMoreUrl || (fullName ? `/pkg/${fullName}` : undefined)}
+            learnMoreUrl={learnMoreUrl || (fullRepo ? `/pkg/${fullRepo}` : undefined)}
             loading={loading}
             label={pxt.isPkgBeta(extensionInfo) ? lf("Beta") : undefined}
             showDisclaimer={type != ExtensionType.Bundled && repo?.status != pxt.github.GitRepoStatus.Approved}
@@ -496,6 +498,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
     }
 
     const categoryNames = getCategoryNames();
+    const showImportFile = pxt.BrowserUtils.hasFileAccess();
 
     return (
         <Modal
@@ -577,16 +580,18 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                                 }
                             </div>
                         }
-                        <div className="import-button">
-                            <Button
-                                ariaLabel={(lf("Open file from your computer"))}
-                                title={(lf("Import File"))}
-                                label={(lf("Import File"))}
-                                leftIcon="fas fa-upload"
-                                className="gray"
-                                onClick={importExtension}
-                            />
-                        </div>
+                        {showImportFile &&
+                            <div className="import-button">
+                                <Button
+                                    ariaLabel={(lf("Open file from your computer"))}
+                                    title={(lf("Import File"))}
+                                    label={(lf("Import File"))}
+                                    leftIcon="fas fa-upload"
+                                    className="neutral"
+                                    onClick={importExtension}
+                                />
+                            </div>
+                        }
                     </div>
                     {displayMode == ExtensionView.Search &&
                         <>

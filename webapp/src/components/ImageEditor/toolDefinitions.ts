@@ -386,37 +386,9 @@ export class PaintEdit extends Edit {
         this.startRow = row;
     }
 
-    // https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
     protected interpolate(x0: number, y0: number, x1: number, y1: number) {
-        const dx = x1 - x0;
-        const dy = y1 - y0;
         const draw = (c: number, r: number) => this.mask.set(c, r);
-        if (dx === 0) {
-            const startY = dy >= 0 ? y0 : y1;
-            const endY = dy >= 0 ? y1 : y0;
-            for (let y = startY; y <= endY; y++) {
-                this.drawCore(x0, y, draw);
-            }
-            return;
-        }
-
-        const xStep = dx > 0 ? 1 : -1;
-        const yStep = dy > 0 ? 1 : -1;
-        const dErr = Math.abs(dy / dx);
-
-        let err = 0;
-        let y = y0;
-        for (let x = x0; xStep > 0 ? x <= x1 : x >= x1; x += xStep) {
-            this.drawCore(x, y, draw);
-            err += dErr;
-            while (err >= 0.5) {
-                if (yStep > 0 ? y <= y1 : y >= y1) {
-                    this.drawCore(x, y, draw);
-                }
-                y += yStep;
-                err -= 1;
-            }
-        }
+        pxt.Util.bresenhamLine(x0, y0, x1, y1, (x, y) => this.drawCore(x, y, draw))
     }
 
     protected doEditCore(state: EditState) {
@@ -537,37 +509,9 @@ export class LineEdit extends SelectionEdit {
         this.bresenham(this.startCol, this.startRow, this.endCol, this.endRow, state);
     }
 
-    // https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
     protected bresenham(x0: number, y0: number, x1: number, y1: number, state: EditState) {
-        const dx = x1 - x0;
-        const dy = y1 - y0;
         const draw = (c: number, r: number) => state.activeLayer.set(c, r, this.color);
-        if (dx === 0) {
-            const startY = dy >= 0 ? y0 : y1;
-            const endY = dy >= 0 ? y1 : y0;
-            for (let y = startY; y <= endY; y++) {
-                this.drawCore(x0, y, draw);
-            }
-            return;
-        }
-
-        const xStep = dx > 0 ? 1 : -1;
-        const yStep = dy > 0 ? 1 : -1;
-        const dErr = Math.abs(dy / dx);
-
-        let err = 0;
-        let y = y0;
-        for (let x = x0; xStep > 0 ? x <= x1 : x >= x1; x += xStep) {
-            this.drawCore(x, y, draw);
-            err += dErr;
-            while (err >= 0.5) {
-                if (yStep > 0 ? y <= y1 : y >= y1) {
-                    this.drawCore(x, y, draw);
-                }
-                y += yStep;
-                err -= 1;
-            }
-        }
+        pxt.Util.bresenhamLine(x0, y0, x1, y1, (x, y) => this.drawCore(x, y, draw))
     }
 
     drawCursor(col: number, row: number, draw: (c: number, r: number) => void) {

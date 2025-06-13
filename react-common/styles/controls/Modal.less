@@ -9,7 +9,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: @modalOverlayColor;
+    background-color: var(--pxt-neutral-alpha50);
     z-index: @modalDimmerZIndex;
 }
 
@@ -38,7 +38,8 @@
 }
 
 .common-modal-header {
-    background-color: @modalHeaderBackgroundColor;
+    background-color: var(--pxt-neutral-background1);
+    color: var(--pxt-neutral-foreground1);
 
     display: flex;
     font-size: 1.2rem;
@@ -53,19 +54,29 @@
         padding-bottom: 1.25rem;
     }
 
+    .common-modal-close {
+        border: 1px solid transparent;
+    }
+
     .common-modal-close .common-button .fas {
-        color: @modalCloseColor;
+        color: var(--pxt-neutral-foreground1);
+    }
+
+    .common-modal-close:focus-within {
+        border: 1px solid var(--pxt-focus-border);
     }
 }
 
 .common-modal-body {
-    background-color: @pageBackground;
+    background-color: var(--pxt-neutral-background1);
+    color: var(--pxt-neutral-foreground1);
     min-height: 4rem;
     padding: 1.25rem 1.5rem;
 }
 
 .common-modal-footer {
-    background-color: @modalFooterBackgroundColor;
+    background-color: var(--pxt-neutral-background2);
+    color: var(--pxt-neutral-foreground2);
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 1rem;
@@ -92,8 +103,8 @@
 }
 
 .fullscreen > .common-modal > .common-modal-header {
-    background-color: @primaryColor;
-    color: white;
+    background-color: var(--pxt-primary-background);
+    color: var(--pxt-primary-foreground);
     margin-bottom: 0;
 
     .common-modal-back {
@@ -105,6 +116,10 @@
         .common-button.men .fas {
 
         }
+    }
+
+    .common-modal-back:focus-within {
+        border: 1px, solid var(--pxt-focus-border);
     }
 
     .common-modal-help {
@@ -123,7 +138,8 @@
 
 .fullscreen > .common-modal > .common-modal-body {
     flex-grow: 1;
-    background-color: @homeScreenBackground;
+    background-color: var(--pxt-target-background1);
+    color: var(--pxt-target-foreground1);
     padding: 1rem;
     max-height: unset;
 }

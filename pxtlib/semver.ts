@@ -128,7 +128,7 @@ namespace pxt.semver {
 
     /**
      * Filters and sort tags from latest to oldest (semver wize)
-     * @param tags 
+     * @param tags
      */
     export function sortLatestTags(tags: string[]): string[] {
         const v = tags.filter(tag => !!semver.tryParse(tag));
@@ -137,8 +137,30 @@ namespace pxt.semver {
         return v;
     }
 
+    export function bump(v: Version, bumpType: "patch" | "minor" | "major" | string): Version {
+        let newVer: Version = parse(stringify(v));
+        switch (bumpType) {
+            case "major":
+                newVer.major++;
+                newVer.minor = 0;
+                newVer.patch = 0;
+                break;
+            case "minor":
+                newVer.minor++;
+                newVer.patch = 0;
+                break;
+            case "patch":
+                newVer.patch++;
+                break;
+            default:
+                newVer = pxt.semver.parse(bumpType);
+                break;
+        }
+        return newVer;
+    }
+
     export function test() {
-        console.log("Test semver")
+        pxt.log("Test semver")
         let d = [
             "0.9.0",
             "1.0.0-0.3.7",
@@ -154,11 +176,11 @@ namespace pxt.semver {
 
         for (let i = 0; i < d.length; ++i) {
             let p = parse(d[i])
-            console.log(d[i], p)
+            pxt.log(d[i], p)
             U.assert(stringify(p) == d[i])
             for (let j = 0; j < d.length; ++j) {
                 let x = cmp(p, parse(d[j]))
-                console.log(d[i], d[j], x)
+                pxt.log(d[i], d[j], x)
                 if (i < j)
                     U.assert(x < 0)
                 else if (i > j)

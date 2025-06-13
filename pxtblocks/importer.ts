@@ -3,7 +3,7 @@
 import * as Blockly from "blockly";
 import { blockSymbol, buildinBlockStatements, hasArrowFunction, initializeAndInject } from "./loader";
 import { extensionBlocklyPatch } from "./external";
-import { FieldBase } from "./fields";
+import { FieldBase, updateTilemapXml } from "./fields";
 
 export interface BlockSnippet {
     target: string; // pxt.appTarget.id
@@ -31,6 +31,11 @@ export function domToWorkspaceNoEvents(dom: Element, workspace: Blockly.Workspac
     let newBlockIds: string[] = [];
     patchCommentIds(dom);
     patchShadows(dom, false);
+
+    if (pxt.react.getTilemapProject) {
+        updateTilemapXml(dom, pxt.react.getTilemapProject());
+    }
+
     try {
         Blockly.Events.disable();
         newBlockIds = Blockly.Xml.domToWorkspace(dom, workspace);
@@ -102,7 +107,7 @@ export function saveWorkspaceXml(ws: Blockly.Workspace, keepIds?: boolean): stri
 // FieldKind and FieldUserEnum
 export function workspaceToDom(workspace: Blockly.Workspace, keepIds?: boolean): Element {
     const xml = Blockly.Xml.workspaceToDom(workspace, keepIds);
-    const variables = Blockly.Xml.variablesToDom(workspace.getAllVariables());
+    const variables = Blockly.Xml.variablesToDom(workspace.getVariableMap().getAllVariables());
 
     const existingVariables = getDirectChildren(xml, "variables");
     for (const v of existingVariables) {
@@ -406,7 +411,7 @@ function createBlockFromShadow(shadow: Element) {
 export function patchShadows(root: Element, inShadow: boolean) {
     if (root.tagName === "shadow") {
         if (root.parentElement?.tagName === "xml") {
-            console.warn(`Shadow block of type '${root.getAttribute("type")}' found at top level. Converting to non-shadow block`);
+            pxt.warn(`Shadow block of type '${root.getAttribute("type")}' found at top level. Converting to non-shadow block`);
             pxt.tickEvent(`blocks.import.topLevelShadow`, { blockId: root.getAttribute("type") });
 
             const newBlock = createBlockFromShadow(root);

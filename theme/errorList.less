@@ -5,7 +5,7 @@
     position: relative;
     max-height: @errorListHeight;
     min-height: @errorListHeight;
-    border-top: 2px @errorListBorderColor solid;
+    border-top: 2px var(--pxt-neutral-stencil1) solid;
 
     *:focus {
         outline: none;
@@ -15,6 +15,10 @@
         padding: 0.75em 1em;
         height: @errorListHeaderHeight;
         margin-bottom: 0;
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-start;
+        align-items: center;
 
         &:hover {
             cursor: pointer;
@@ -38,6 +42,43 @@
             font-size: 1.4em;
         }
 
+        .error-help-container {
+            margin: 0 1rem;
+
+            .error-help-button {
+                padding: 0.7rem;
+                line-height: 0.8rem;
+
+                i {
+                    margin-right: 0.4rem;
+                }
+            }
+
+            .error-help-loader {
+                display: flex;
+                flex-direction: row;
+                justify-content: flex-start;
+                align-items: center;
+                width: fit-content;
+                color: var(--pxt-secondary-background); // Inverted to match the button bkg color
+                cursor: progress;
+
+                // Match button
+                padding: 0.7rem;
+                font-weight: 400;
+                line-height: 0.8rem;
+                font-size: 16px;
+
+                .analyzing-label {
+                    margin: 0 1rem;
+                }
+            }
+        }
+
+        .filler {
+            flex-grow: 1;
+        }
+
         .toggleButton {
             float: right;
             position: relative;
@@ -55,28 +96,32 @@
         overflow-y: auto;
 
         .exceptionMessage {
-            color: @textColor;
+            color: var(--pxt-target-foreground1);
             padding: 0.5em 1em;
             width: 70%;
         }
 
         // errors
         .ui.selection.list {
-            color: @textColor;
-            cursor: pointer;
+            color: var(--pxt-target-foreground1);
             margin: 0;
+            padding: 0;
 
             .item {
                 border-radius: unset;
                 padding: 0.5em 1em;
-                color: @textColor;
+                color: var(--pxt-target-foreground1);
+                cursor: pointer;
+                line-height: 1.2rem;
+                width: 100%;
+                text-align: start;
 
                 &:hover, &:focus {
-                    background-color: @errorListMessageHoverColor !important;
+                    background-color: var(--pxt-neutral-alpha20) !important;
                 }
 
                 &:nth-child(even):not(:hover) {
-                    background-color: @errorListEven;
+                    background-color: var(--pxt-neutral-alpha10);
                 }
 
                 &.stackframe {
@@ -91,7 +136,7 @@
             width: fit-content;
             padding-top: 0.5em;
             margin-right: 0.5em;
-            color: @errorListDebugSuggestionColor;
+            color: var(--pxt-tertiary-background);
             cursor: pointer;
 
             &:hover, &:focus {
@@ -104,6 +149,14 @@
             }
         }
     }
+
+    .note {
+        margin: 1rem;
+        padding: 0.5rem;
+        border-radius: 0.2rem;
+        background-color: var(--pxt-neutral-alpha10);
+        white-space: pre-line; // Preserve new lines
+    }
 }
 
 // collapsed error list
@@ -111,33 +164,6 @@
     min-height: unset;
 
     &:hover {
-        background-color: @errorListMessageHoverColor;
-    }
-}
-
-.inverted-theme .errorList {
-    .errorListHeader {
-        color: @errorListInvertedTextColor;
-    }
-
-    .errorListInner {
-        .exceptionMessage {
-            color: @errorListInvertedTextColor;
-        }
-        .ui.selection.list {
-            color: @errorListInvertedTextColor;
-
-            .item {
-                color: @errorListInvertedTextColor;
-
-                &:hover, &:focus {
-                    background-color: @errorListInvertedMessageHoverColor !important;
-                }
-
-                &:nth-child(even):not(:hover) {
-                    background-color: @errorListInvertedEven;
-                }
-            }
-        }
+        background-color: var(--pxt-neutral-alpha20);
     }
 }

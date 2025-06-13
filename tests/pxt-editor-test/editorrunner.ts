@@ -16,11 +16,11 @@ pxt.appTarget = {
 const differ = new dmp.diff_match_patch();
 
 function diffText(a: string, b: string) {
-    return differ.patch_make(a, b);
+    return pxt.diff.computePatch(a, b);
 }
 
 function patchText(patch: unknown, a: string) {
-    return differ.patch_apply(patch as any, a)[0]
+    return pxt.diff.applyPatch(a, patch as any)
 }
 
 const filename = "main.ts";
@@ -41,6 +41,62 @@ function checkTimestamp(e: pxteditor.history.HistoryEntry, value: number) {
     chai.expect(e.timestamp).to.equal(value);
     chai.expect(e.editorVersion).to.equal(value + "");
 }
+
+function testDiff(textA: string, textB: string) {
+    const dmpPatch = differ.patch_make(textA, textB);
+    const ourPatch = pxt.diff.computePatch(textA, textB);
+
+    const dmpResult = differ.patch_apply(dmpPatch, textA)[0];
+    const ourDmpResult = pxt.diff.applyPatch(textA, dmpPatch as any);
+    const ourPatchResult = pxt.diff.applyPatch(textA, ourPatch);
+
+    chai.expect(ourDmpResult).eq(dmpResult, "did not apply DMP patch correctly");
+    chai.expect(ourPatchResult).eq(textB);
+}
+
+describe("diffing+patching", () => {
+    it("should support the diff-match-patch format", () => {
+        const textA = "Hello, my name is richard. I enjoy things";
+        const textB = "Goodbye, my name is roberta. I dislike things";
+        testDiff(textA, textB);
+    });
+
+    it("should handle new line deletions at the end of the file", () => {
+        const textA = "Hello, \nmy name is roberta.\nI enjoy things\n";
+        const textB = "Goodbye, \nmy name is roberta.\nI dislike things";
+        testDiff(textA, textB);
+    });
+
+    it("should handle new line deletions at the end of the file when there is more than one", () => {
+        const textA = "Hello, \nmy name is roberta.\nI enjoy things\n\n";
+        const textB = "Goodbye, \nmy name is roberta.\nI dislike things\n";
+        testDiff(textA, textB);
+    });
+
+    it("should handle new line deletions at the end of the file", () => {
+        const textA = "Hello, \nmy name is roberta.\nI enjoy things";
+        const textB = "Goodbye, \nmy name is roberta.\nI dislike things\n";
+        testDiff(textA, textB);
+    });
+
+    it("should handle new line additions at the end of the file when there is more than one", () => {
+        const textA = "Hello, \nmy name is roberta.\nI enjoy things\n";
+        const textB = "Goodbye, \nmy name is roberta.\nI dislike things\n\n";
+        testDiff(textA, textB);
+    });
+
+    it("should handle \\n -> \\r\\n", () => {
+        const textA = "Hello, \nmy name is roberta.\nI enjoy things\n";
+        const textB = "Goodbye, \r\nmy name is roberta.\r\nI dislike things\r\n";
+        testDiff(textA, textB);
+    });
+
+    it("should handle \\r\\n -> \\n", () => {
+        const textA = "Hello, \r\nmy name is roberta.\r\nI enjoy things\r\n";
+        const textB = "Goodbye, \nmy name is roberta.\nI dislike things\n";
+        testDiff(textA, textB);
+    });
+});
 
 describe("history", () => {
     it("should create and apply patches", () => {
@@ -179,8 +235,9 @@ function createTestHistory() {
 const testVersions: pxt.workspace.ScriptText[] = [];
 const words = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.".split(" ");
 
+let prevLines: string[];
 function makeFile() {
-    const numWords = Math.ceil(Math.random() * 40) + 10;
+    const numWords = Math.ceil(Math.random() * 100) + 10;
     let result = "";
 
     for (let i = 0; i < numWords; i++) {
@@ -188,6 +245,26 @@ function makeFile() {
         if (i % 10 === 0) {
             result += "\n"
         }
+    }
+
+    const lines = result.split("\n");
+
+    if (prevLines) {
+        for (let i = 0; i < 3; i++) {
+            lines.splice(
+                Math.floor(Math.random() * (lines.length - 1)),
+                0,
+                prevLines[Math.floor(Math.random() * (prevLines.length - 1))]
+            )
+        }
+    }
+
+    prevLines = lines;
+
+    result = lines.join("\n");
+
+    if (Math.random() < 0.5) {
+        result += "\n";
     }
 
     return result;
@@ -337,6 +414,33 @@ describe("updateHistory", () => {
 
             chai.expect(files[pxt.MAIN_TS]).equals(entry.timestamp.toString());
         }
+    });
+});
+
+
+describe("pxt.github.normalizeTutorialPath", () => {
+    const testPath = "Mojang/EducationContent/computing/unit-2/lesson-1";
+
+    it("should parse repos of the format owner/repo/path/to/file", () => {
+        chai.expect(pxt.github.normalizeTutorialPath(testPath)).equals(testPath);
+    });
+
+    it("should parse repos of the format github:owner/repo/path/to/file", () => {
+        const path = "github:" + testPath;
+        chai.expect(pxt.github.normalizeTutorialPath(path)).equals(testPath);
+    });
+
+    it("should parse repos of the format https://github.com/owner/repo/path/to/file", () => {
+        const path = "https://github.com/" + testPath;
+        chai.expect(pxt.github.normalizeTutorialPath(path)).equals(testPath);
+
+        const path2 = "http://github.com/" + testPath;
+        chai.expect(pxt.github.normalizeTutorialPath(path2)).equals(testPath);
+    });
+
+    it("should parse actual links to markdown files in github", () => {
+        const url = "https://github.com/Mojang/EducationContent/blob/master/computing/unit-2/lesson-1.md";
+        chai.expect(pxt.github.normalizeTutorialPath(url)).equals(testPath);
     });
 });
 

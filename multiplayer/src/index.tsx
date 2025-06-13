@@ -37,8 +37,9 @@ window.addEventListener("DOMContentLoaded", () => {
     const bundle = (window as any).pxtTargetBundle as pxt.TargetBundle;
 
     pxt.options.debug = /dbg=1/i.test(window.location.href);
-    if (pxt.options.debug)
-        pxt.debug = console.debug;
+    if (pxt.options.debug) {
+        pxt.setLogLevel(pxt.LogLevel.Debug);
+    }
 
     pxt.setupWebConfig((window as any).pxtConfig || pxt.webConfig);
     pxt.setAppTarget(bundle);
@@ -48,7 +49,7 @@ window.addEventListener("DOMContentLoaded", () => {
         const wc = pxt.webConfig as any;
 
         for (const key of Object.keys(wc)) {
-            if (wc[key]?.startsWith("/") && wc[key]?.indexOf("worker") == -1) {
+            if (typeof wc[key] === "string" && wc[key]?.startsWith("/") && wc[key]?.indexOf("worker") == -1) {
                 wc[key] = `http://localhost:3232${wc[key]}`;
             }
         }

@@ -20,7 +20,7 @@ function isMediaDevicesSupported(): boolean {
         && !!navigator.mediaDevices
         && !!navigator.mediaDevices.enumerateDevices
         && !!navigator.mediaDevices.getUserMedia
-        && !pxt.BrowserUtils.isElectron();
+        && !(pxt.BrowserUtils.isPxtElectron() && pxt.BrowserUtils.isMac());
 }
 
 export class WebCam extends data.Component<WebCamProps, WebCamState> {
@@ -64,12 +64,12 @@ export class WebCam extends data.Component<WebCamProps, WebCamState> {
                 }
                 catch (e) {
                     pxt.debug(`greenscreen: play failed`)
-                    console.error(e)
+                    pxt.error(e)
                     this.stop();
                 }
             }, err => {
                 pxt.debug(`greenscreen: get camera failed`)
-                console.error(err)
+                pxt.error(err)
                 this.stop();
             })
         }
@@ -91,7 +91,7 @@ export class WebCam extends data.Component<WebCamProps, WebCamState> {
                     this.setState({ devices: devices.filter(device => device.kind == "videoinput") });
                 }, e => {
                     pxt.debug(`greenscreen: enumerate devices failed`)
-                    console.error(e);
+                    pxt.error(e);
                 });
         }
     }

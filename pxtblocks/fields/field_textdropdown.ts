@@ -1,7 +1,7 @@
 /// <reference path="../../built/pxtlib.d.ts" />
 
 import * as Blockly from "blockly";
-import { FieldCustom, FieldCustomOptions } from "./field_utils";
+import { clearDropDownDiv, FieldCustom, FieldCustomOptions, isImageProperties } from "./field_utils";
 
 export interface FieldTextDropdownOptions extends FieldCustomOptions {
     values?: string;
@@ -25,6 +25,14 @@ export class BaseFieldTextDropdown extends Blockly.FieldTextInput {
 
     protected dropDownOpen_: boolean;
 
+    private menuItems: Blockly.MenuItem[] = [];
+
+    private lastHighlightedMenuElement: Element | null = null;
+
+    private inputKeydownHandler: (e: KeyboardEvent) => {} | undefined;
+
+    private dropdownKeydownHandler: (e: KeyboardEvent) => {} | undefined;
+
     constructor(text: string, protected menuGenerator_: any[], opt_validator?: Blockly.FieldValidator) {
         super(text, opt_validator);
     }
@@ -34,11 +42,47 @@ export class BaseFieldTextDropdown extends Blockly.FieldTextInput {
         this.createSVGArrow();
     }
 
+    private inputKeydownListener(e: KeyboardEvent) {
+        if (e.key === "ArrowDown") {
+            e.preventDefault();
+            this.menu_.focus();
+            if (this.selectedMenuItem) {
+                this.menu_.setHighlighted(this.selectedMenuItem);
+            } else {
+                this.menu_.setHighlighted(this.menuItems[0]);
+            }
+        }
+    }
+
+    private dropdownKeydownListener(e: KeyboardEvent) {
+        // This is the highlighted menu element after a key event has been handled on the dropdown div.
+        // If this was the UpArrow or DownArrow, the highlighted menu item has already been updated.
+        const highlightedMenuElement = this.menu_.getElement().querySelector(".blocklyMenuItemHighlight");
+        if (e.key === "ArrowUp" && (highlightedMenuElement === this.lastHighlightedMenuElement || !this.lastHighlightedMenuElement)) {
+            e.preventDefault();
+            this.selectedMenuItem = null;
+            this.menu_.setHighlighted(null);
+            this.htmlInput_.focus();
+        }
+        this.lastHighlightedMenuElement = highlightedMenuElement;
+    }
+
     protected showEditor_(e?: Event, quietInput?: boolean): void {
-        super.showEditor_(e, quietInput);
+        // Align with Blockly's approach in https://github.com/google/blockly-samples/blob/master/plugins/field-slider/src/field_slider.ts
+        // Always quiet the input for the super constructor, as we don't want to
+        // focus on the text field, and we don't want to display the modal
+        // editor on mobile devices.
+        super.showEditor_(e, true);
 
         if (!this.dropDownOpen_) this.showDropdown_();
         Blockly.Touch.clearTouchIdentifier();
+
+        this.inputKeydownHandler = this.inputKeydownListener.bind(this);
+        this.htmlInput_.addEventListener('keydown', this.inputKeydownHandler);
+
+        if (!quietInput) {
+            this.htmlInput_.focus();
+        }
     }
 
     override doValueUpdate_(newValue: string) {
@@ -73,13 +117,20 @@ export class BaseFieldTextDropdown extends Blockly.FieldTextInput {
         return typeof this.menuGenerator_ === 'function';
     }
 
+    getFieldDescription(): string {
+        return this.getText();
+    }
+
     protected dropdownDispose_() {
+        Blockly.WidgetDiv.getDiv().removeEventListener('keydown', this.inputKeydownHandler);
+        this.menu_.getElement().removeEventListener('keydown', this.dropdownKeydownHandler);
         this.dropDownOpen_ = false;
         if (this.menu_) {
             this.menu_.dispose();
         }
         this.menu_ = null;
         this.selectedMenuItem = null;
+        this.menuItems = [];
         this.applyColour();
     }
 
@@ -97,16 +148,16 @@ export class BaseFieldTextDropdown extends Blockly.FieldTextInput {
         for (let i = 0; i < options.length; i++) {
             const [label, value] = options[i];
             const content = (() => {
-                if (typeof label === 'object') {
+                if (isImageProperties(label)) {
                     // Convert ImageProperties to an HTMLImageElement.
-                    const image = new Image(label['width'], label['height']);
-                    image.src = label['src'];
-                    image.alt = label['alt'] || '';
+                    const image = new Image(label.width, label.height);
+                    image.src = label.src;
+                    image.alt = label.alt;
                     return image;
                 }
                 return label;
             })();
-            const menuItem = new Blockly.MenuItem(content, value);
+            const menuItem = new Blockly.MenuItem(content, value as string);
             menuItem.setRole(Blockly.utils.aria.Role.OPTION);
             menuItem.setRightToLeft(block.RTL);
             menuItem.setCheckable(true);
@@ -116,6 +167,7 @@ export class BaseFieldTextDropdown extends Blockly.FieldTextInput {
                 this.selectedMenuItem = menuItem;
             }
             menuItem.onAction(this.handleMenuActionEvent, this);
+            this.menuItems.push(menuItem);
         }
     }
 
@@ -132,7 +184,7 @@ export class BaseFieldTextDropdown extends Blockly.FieldTextInput {
         }
 
         // Remove any pre-existing elements in the dropdown.
-        Blockly.DropDownDiv.clearContent();
+        clearDropDownDiv();
         // Element gets created in render.
         const menuElement = this.menu_!.render(Blockly.DropDownDiv.getContentDiv());
         Blockly.utils.dom.addClass(menuElement, 'blocklyDropdownMenu');
@@ -145,7 +197,10 @@ export class BaseFieldTextDropdown extends Blockly.FieldTextInput {
 
         this.dropDownOpen_ = true;
 
-        Blockly.DropDownDiv.showPositionedByField(this, this.dropdownDispose_.bind(this));
+        Blockly.DropDownDiv.showPositionedByField(this, this.dropdownDispose_.bind(this), undefined, false);
+
+        this.dropdownKeydownHandler = this.dropdownKeydownListener.bind(this);
+        this.menu_.getElement().addEventListener('keydown', this.dropdownKeydownHandler);
 
         // Focusing needs to be handled after the menu is rendered and positioned.
         // Otherwise it will cause a page scroll to get the misplaced menu in
@@ -240,7 +295,7 @@ function validateOptions(options: Blockly.MenuOption[]) {
         const tuple = options[i];
         if (!Array.isArray(tuple)) {
             foundError = true;
-            console.error(
+            pxt.error(
                 'Invalid option[' +
                 i +
                 ']: Each FieldDropdown option must be an ' +
@@ -249,7 +304,7 @@ function validateOptions(options: Blockly.MenuOption[]) {
             );
         } else if (typeof tuple[1] !== 'string') {
             foundError = true;
-            console.error(
+            pxt.error(
                 'Invalid option[' +
                 i +
                 ']: Each FieldDropdown option id must be ' +
@@ -261,10 +316,10 @@ function validateOptions(options: Blockly.MenuOption[]) {
         } else if (
             tuple[0] &&
             typeof tuple[0] !== 'string' &&
-            typeof tuple[0].src !== 'string'
+            !isImageProperties(tuple[0])
         ) {
             foundError = true;
-            console.error(
+            pxt.error(
                 'Invalid option[' +
                 i +
                 ']: Each FieldDropdown option must have a ' +
@@ -323,7 +378,7 @@ function parseDropdownOptions(options: FieldTextDropdownOptions): [string, strin
             return result;
         }
         else {
-            console.warn("Could not parse textdropdown data field");
+            pxt.warn("Could not parse textdropdown data field");
         }
     }
 

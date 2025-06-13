@@ -5,6 +5,11 @@ export class FieldSlider extends Blockly.FieldNumber {
     protected readout_: HTMLSpanElement;
     protected step_: number;
     protected labelText_: string;
+    private inputKeydownHandler: (e: KeyboardEvent) => {} | undefined;
+    private sliderKeydownHandler: (e: KeyboardEvent) => {} | undefined;
+    private sliderBlurHandler: (e: FocusEvent) => {} | undefined;
+    private sliderPointerdownHandler: (e: PointerEvent) => {} | undefined;
+    private keyboardControlActive = false;
 
     constructor(
         value?: string | number | typeof Blockly.Field.SKIP_SETUP,
@@ -52,6 +57,10 @@ export class FieldSlider extends Blockly.FieldNumber {
         this.setConstraints(min, max, precision);
 
         this.step_ = parseFloat(step) || undefined;
+    }
+
+    getFieldDescription(): string {
+        return this.getValue() + "";
     }
 
     // Mostly the same as FieldNumber, but doesn't constrain min and max
@@ -109,12 +118,72 @@ export class FieldSlider extends Blockly.FieldNumber {
         return n;
     }
 
+    protected widgetDispose_(): void {
+        this.removeEventListeners();
+        super.widgetDispose_();
+    }
+
+    private addEventListeners() {
+        this.inputKeydownHandler = this.inputKeydownListener.bind(this);
+        this.htmlInput_.addEventListener("keydown", this.inputKeydownHandler);
+        this.sliderKeydownHandler = this.sliderKeydownListener.bind(this);
+        this.slider_.addEventListener('keydown', this.sliderKeydownHandler);
+        this.sliderBlurHandler = this.sliderBlurListener.bind(this);
+        this.slider_.addEventListener('blur', this.sliderBlurHandler);
+        this.sliderPointerdownHandler = this.sliderPointerdownListener.bind(this);
+        this.slider_.addEventListener("pointerdown", this.sliderPointerdownHandler);
+    }
+
+    private removeEventListeners() {
+        this.htmlInput_.removeEventListener("keydown", this.inputKeydownHandler);
+        this.slider_.removeEventListener('keydown', this.sliderKeydownHandler);
+        this.slider_.removeEventListener('blur', this.sliderBlurHandler);
+        this.slider_.removeEventListener('pointerdown', this.sliderPointerdownHandler);
+    }
+
+    private inputKeydownListener(e: KeyboardEvent) {
+        if (e.key === "ArrowDown") {
+            e.preventDefault();
+            this.keyboardControlActive = true;
+            this.slider_.focus();
+        }
+    }
+
+    private sliderPointerdownListener(e: PointerEvent) {
+        this.keyboardControlActive = false;
+    }
+
+    private sliderKeydownListener(e: KeyboardEvent) {
+        switch(e.key) {
+            case 'ArrowUp': {
+                e.preventDefault();
+                this.htmlInput_.focus();
+                break;
+            }
+            case 'Enter':
+            case ' ': {
+                e.preventDefault();
+                e.stopPropagation();
+                Blockly.hideChaff();
+                break;
+            }
+        }
+    }
+
+    private sliderBlurListener(e: FocusEvent) {
+        this.keyboardControlActive = false;
+    }
 
     protected showEditor_(_e?: Event, quietInput?: boolean): void {
-        super.showEditor_(_e, quietInput);
+        // Align with Blockly's approach in https://github.com/google/blockly-samples/blob/master/plugins/field-slider/src/field_slider.ts
+        // Always quiet the input for the super constructor, as we don't want to
+        // focus on the text field, and we don't want to display the modal
+        // editor on mobile devices.
+        super.showEditor_(_e, true);
 
         Blockly.DropDownDiv.hideWithoutAnimation();
         Blockly.DropDownDiv.clearContent();
+        Blockly.DropDownDiv.getContentDiv().style.height = "";
 
         const contentDiv = Blockly.DropDownDiv.getContentDiv();
 
@@ -126,7 +195,13 @@ export class FieldSlider extends Blockly.FieldNumber {
 
         // Set colour and size of drop-down
         Blockly.DropDownDiv.setColour('#ffffff', '#dddddd');
-        Blockly.DropDownDiv.showPositionedByBlock(this, this.sourceBlock_ as Blockly.BlockSvg);
+        Blockly.DropDownDiv.showPositionedByBlock(this, this.sourceBlock_ as Blockly.BlockSvg, undefined, undefined, false);
+
+        this.addEventListeners();
+
+        if (!quietInput) {
+            this.htmlInput_.focus();
+        }
     }
 
     protected addSlider_(contentDiv: Element) {
@@ -143,7 +218,9 @@ export class FieldSlider extends Blockly.FieldNumber {
             // In firefox, stealing focus from the range input interrupts
             // the dragging of the slider
             if (!pxt.BrowserUtils.isFirefox()) {
-                this.htmlInput_.focus();
+                if (!this.keyboardControlActive) {
+                    this.htmlInput_.focus();
+                }
             }
         };
 
@@ -175,6 +252,7 @@ export class FieldSlider extends Blockly.FieldNumber {
 
     protected createSlider() {
         const slider = document.createElement("input");
+        slider.setAttribute('class', 'blocklyFieldSlider');
         slider.type = "range";
         slider.min = this.getMin() + "";
         slider.max = this.getMax() + "";
@@ -247,14 +325,14 @@ Blockly.Css.register(`
     margin-left: 10px;
 }
 
-input[type=range] {
+input[type=range].blocklyFieldSlider {
     -webkit-appearance: none;
     width: 100%;
 }
-input[type=range]:focus {
+input[type=range].blocklyFieldSlider:focus {
     outline: none;
 }
-input[type=range]::-webkit-slider-runnable-track {
+input[type=range].blocklyFieldSlider::-webkit-slider-runnable-track {
     -webkit-appearance: none;
     margin: 8px;
     height: 22px;
@@ -264,7 +342,7 @@ input[type=range]::-webkit-slider-runnable-track {
     margin-bottom: 20px;
     background: var(--blocklyFieldSliderBackgroundColor);
 }
-input[type=range]::-webkit-slider-thumb {
+input[type=range].blocklyFieldSlider::-webkit-slider-thumb {
     -webkit-appearance: none;
     width: 26px;
     height: 26px;
@@ -276,7 +354,14 @@ input[type=range]::-webkit-slider-thumb {
     box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.15);
     cursor: pointer;
 }
-input[type=range]::-moz-range-track {
+input[type=range].blocklyFieldSlider:focus-visible::-webkit-slider-thumb {
+    outline: 2px solid white; 
+    outline-offset: 3px;
+    -webkit-box-shadow: 0 0 0 3px var(--pxt-focus-border);
+    -moz-box-shadow: 0 0 0 3px var(--pxt-focus-border);
+    box-shadow: 0 0 0 3px var(--pxt-focus-border);
+}
+input[type=range].blocklyFieldSlider::-moz-range-track {
     margin: 8px;
     height: 22px;
     width: 95%;
@@ -285,7 +370,7 @@ input[type=range]::-moz-range-track {
     margin-bottom: 20px;
     background: #547AB2;
 }
-input[type=range]::-moz-range-thumb {
+input[type=range].blocklyFieldSlider::-moz-range-thumb {
     width: 26px;
     height: 26px;
     margin-top: -1px;

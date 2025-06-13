@@ -385,20 +385,25 @@ namespace pxt {
             if (!this.config)
                 this.loadConfig();
             return pxt.packagesConfigAsync()
-                .then(packagesConfig => {
+                .then(async packagesConfig => {
                     let numfixes = 0
                     let fixes: pxt.Map<string> = {};
+                    const promises: Promise<void>[] = []
                     U.iterMap(this.config.dependencies, (pkg, ver) => {
-                        if (pxt.github.isGithubId(ver)) {
-                            const upgraded = pxt.github.upgradedPackageReference(packagesConfig, ver)
-                            if (upgraded && upgraded != ver) {
-                                pxt.log(`upgrading dep ${pkg}: ${ver} -> ${upgraded}`);
-                                fixes[ver] = upgraded;
-                                this.config.dependencies[pkg] = upgraded
-                                numfixes++
+                        const doit = async () => {
+                            if (pxt.github.isGithubId(ver)) {
+                                const upgraded = await pxt.github.upgradedPackageReferenceAsync(packagesConfig, ver)
+                                if (upgraded && upgraded != ver) {
+                                    pxt.log(`upgrading dep ${pkg}: ${ver} -> ${upgraded}`);
+                                    fixes[ver] = upgraded;
+                                    this.config.dependencies[pkg] = upgraded
+                                    numfixes++
+                                }
                             }
                         }
+                        promises.push(doit())
                     })
+                    await Promise.all(promises)
                     if (numfixes)
                         this.saveConfig()
                     return numfixes && fixes;
@@ -654,7 +659,7 @@ namespace pxt {
 
             // if we are installing this script, we haven't yet downloaded the config
             // do upgrade later
-            if (this.level == 0 && !isInstall) {
+            if (!isInstall) {
                 await this.upgradePackagesAsync();
             }
 
@@ -672,7 +677,7 @@ namespace pxt {
 
             // we are installing the script, and we've download the original version and we haven't upgraded it yet
             // do upgrade and reload as needed
-            if (this.level == 0 && isInstall) {
+            if (isInstall) {
                 const fixes = await this.upgradePackagesAsync();
 
                 if (fixes) {
@@ -680,6 +685,7 @@ namespace pxt {
                     Object.keys(fixes).forEach(key => pxt.tickEvent("package.doubleload", { "extension": key }))
                     pxt.log(`upgraded, downloading again`);
                     pxt.debug(fixes);
+                    // TODO: we should cache
                     await this.downloadAsync();
                 }
             }
@@ -921,7 +927,7 @@ namespace pxt {
         }
 
         /**
-         * Returns localized strings qName -> translation
+         * Returns localized strings qName (+ some additional identification data) -> translation
          */
         packageLocalizationStringsAsync(lang: string): Promise<Map<string>> {
             const targetId = pxt.appTarget.id;
@@ -1158,6 +1164,8 @@ namespace pxt {
                 }
             }
 
+            const disabledVariants = pxt.appTarget.disabledVariants;
+
             let shimsGenerated = false
 
             const fillExtInfoAsync = async (variant: string) => {
@@ -1205,7 +1213,7 @@ namespace pxt {
             await this.loadAsync()
 
             opts.bannedCategories = this.resolveBannedCategories();
-            pxt.debug(`building: ${this.sortedDeps().map(p => p.config.name).join(", ")}`)
+            pxt.debug(`building: ${this.sortedDeps().map(p => p.config?.name).join(", ")}`)
 
             let variants: string[]
 
@@ -1216,10 +1224,14 @@ namespace pxt {
                     variants = [pxt.appTargetVariant]
                 } else if (pxt.appTarget.alwaysMultiVariant || pxt.appTarget.compile.switches.multiVariant) {
                     // multivariants enabled
-                    variants = pxt.appTarget.multiVariants
+                    variants = pxt.appTarget.multiVariants;
                 } else {
                     // not enbaled - default to first variant
                     variants = [pxt.appTarget.multiVariants[0]]
+                }
+
+                if (!pxt.appTarget.alwaysMultiVariant && disabledVariants) {
+                    variants = variants.filter(v => !disabledVariants.includes(v));
                 }
             } else {
                 // no multi-variants, use empty variant name,
@@ -1239,6 +1251,9 @@ namespace pxt {
                         const einfo = etarget.extinfo;
                         einfo.appVariant = v;
                         einfo.outputPrefix = variants.length == 1 || !v ? "" : v + "-";
+                        if (disabledVariants?.indexOf(v) > -1) {
+                            einfo.disabledDeps = einfo.disabledDeps || "user-disabled";
+                        }
                         if (ext) {
                             opts.otherMultiVariants.push(etarget);
                         }
@@ -1302,6 +1317,7 @@ namespace pxt {
             opts.jres = this.getJRes()
             const functionOpts = pxt.appTarget.runtime && pxt.appTarget.runtime.functionsOptions;
             opts.allowedArgumentTypes = functionOpts && functionOpts.extraFunctionEditorTypes && functionOpts.extraFunctionEditorTypes.map(info => info.typeName).concat("number", "boolean", "string");
+            opts.unfetteredInitializers = pxt.appTarget.compile?.unfetteredInitializers;
 
             for (const dep of this.sortedDeps()) {
                 dep.patchAppTargetPalette();

@@ -1,12 +1,12 @@
 import * as React from "react";
 import * as workspace from "./workspace";
 import { Tree, TreeItem, TreeItemBody } from "../../react-common/components/controls/Tree";
-import { createPortal } from "react-dom";
 import { Button } from "../../react-common/components/controls/Button";
 import { hideDialog, warningNotification } from "./core";
 import { FocusTrap } from "../../react-common/components/controls/FocusTrap";
 import { classList } from "../../react-common/components/util";
 import { HistoryFile, applySnapshot, patchConfigEditorVersion } from "../../pxteditor/history";
+import { ThemeManager } from "../../react-common/components/theming/themeManager";
 
 import ScriptText = pxt.workspace.ScriptText;
 
@@ -151,6 +151,18 @@ export const TimeMachine = (props: TimeMachineProps) => {
 
         importProject.current = loadProject;
 
+        // Sync iframe theme with main theme.
+        const themeManager = ThemeManager.getInstance(document);
+        const currentTheme = themeManager.getCurrentColorTheme();
+        if (currentTheme) {
+            sendMessageAsync({
+                type: "pxteditor",
+                action: "setcolorthemebyid",
+                colorThemeId: currentTheme.id,
+                savePreference: false
+            } as pxt.editor.EditorMessageSetColorThemeRequest);
+        }
+
         window.addEventListener("message", onMessageReceived);
         return () => {
             window.removeEventListener("message", onMessageReceived);
@@ -221,7 +233,7 @@ export const TimeMachine = (props: TimeMachineProps) => {
     let queryParams = [
         "timeMachine",
         "controller",
-        "skillsMap",
+        "skillmap",
         "noproject",
         "nocookiebanner",
     ];
@@ -239,7 +251,7 @@ export const TimeMachine = (props: TimeMachineProps) => {
 
     const url = `${window.location.origin + window.location.pathname}?${argString}`;
 
-    return createPortal(
+    return (
         <FocusTrap className="time-machine" onEscape={hideDialog}>
             <div className="time-machine-header">
                 <div className="time-machine-back-button">
@@ -333,7 +345,7 @@ export const TimeMachine = (props: TimeMachineProps) => {
                 </div>
             </div>
         </FocusTrap>
-    , document.body);
+    );
 }
 
 async function getTextAtTimestampAsync(text: ScriptText, history: HistoryFile, time: TimeEntry): Promise<Project> {

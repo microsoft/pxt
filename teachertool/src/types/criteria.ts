@@ -40,6 +40,7 @@ export enum EvaluationStatus {
 
 export interface CriteriaResult {
     result: EvaluationStatus;
+    resultIsManual?: boolean;
     notes?: string;
     error?: string;
 }

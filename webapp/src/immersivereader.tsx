@@ -290,7 +290,7 @@ export class ImmersiveReaderButton extends data.Component<ImmersiveReaderProps, 
     }
 
     render() {
-        return <div className='immersive-reader-button ui item' onClick={this.buttonClickHandler}
+        return <div className='immersive-reader-button ui item neutral' onClick={this.buttonClickHandler}
             aria-label={lf("Launch Immersive Reader")} role="button" onKeyDown={fireClickOnEnter} tabIndex={0}
             title={lf("Launch Immersive Reader")}/>
     }

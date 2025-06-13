@@ -33,6 +33,7 @@ declare namespace pxt {
      */
     interface PackageConfig {
         name: string;
+        displayName?: string; // used for the codecard in the extension dialog
         version?: string;
         // installedVersion?: string; moved to Package class
         // url to icon -- support for built-in packages only
@@ -93,6 +94,10 @@ declare namespace pxt {
         theme?: string | pxt.Map<string>;
         assetPack?: boolean; // if set to true, only the assets of this project will be imported when added as an extension (no code)
         assetPacks?: Map<boolean>; // a map of dependency id to boolean that indicates which dependencies should be imported as asset packs
+        toolboxFilter?: {
+            namespaces: {[index: string]: "visible" | "hidden" | "disabled"},
+            blocks: {[index: string]: "visible" | "hidden" | "disabled"},
+        }
     }
 
     interface PackageExtension {
@@ -170,6 +175,7 @@ declare namespace pxt {
         actionIcon?: string; // icon to override default icon on the action button
         time?: number;
         url?: string;
+        shareUrl?: string;
         learnMoreUrl?: string;
         buyUrl?: string;
         feedbackUrl?: string;
@@ -179,6 +185,7 @@ declare namespace pxt {
         otherActions?: CodeCardAction[];
         directOpen?: boolean; // skip the details view, directly do the card action
         projectId?: string; // the project's header ID
+        selected?: boolean; // for carousels, gives context if the card is selected and  therefore expanded
 
         header?: string;
 

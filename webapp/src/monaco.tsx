@@ -22,7 +22,7 @@ import { DebuggerToolbox } from "./debuggerToolbox";
 import { amendmentToInsertSnippet, listenForEditAmendments, createLineReplacementPyAmendment } from "./monacoEditAmendments";
 
 import { MonacoFlyout } from "./monacoFlyout";
-import { ErrorList } from "./errorList";
+import { ErrorList, ErrorDisplayInfo, StackFrameDisplayInfo } from "./errorList";
 import * as auth from "./auth";
 import * as pxteditor from "../../pxteditor";
 
@@ -30,6 +30,9 @@ import IProjectView = pxt.editor.IProjectView;
 import ErrorListState = pxt.editor.ErrorListState;
 
 import * as pxtblockly from "../../pxtblocks";
+import { ThemeManager } from "../../react-common/components/theming/themeManager";
+import { ErrorHelpException, getErrorHelpAsText } from "./errorHelp";
+import { AIErrorExplanationText } from "./components/AIErrorExplanationText";
 
 const MIN_EDITOR_FONT_SIZE = 10
 const MAX_EDITOR_FONT_SIZE = 40
@@ -365,8 +368,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private highlightDecorations: string[] = [];
     private highlightedBreakpoint: number;
     private editAmendmentsListener: monaco.IDisposable | undefined;
-    private errorChangesListeners: pxt.Map<(errors: pxtc.KsDiagnostic[]) => void> = {};
-    private exceptionChangesListeners: pxt.Map<(exception: pxsim.DebuggerBreakpointMessage, locations: pxtc.LocationInfo[]) => void> = {}
+    private errors: ErrorDisplayInfo[] = [];
     private callLocations: pxtc.LocationInfo[];
 
     private userPreferencesSubscriber: data.DataSubscriber = {
@@ -383,13 +385,16 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         super(parent);
 
         this.setErrorListState = this.setErrorListState.bind(this);
-        this.listenToErrorChanges = this.listenToErrorChanges.bind(this);
-        this.listenToExceptionChanges = this.listenToExceptionChanges.bind(this)
+        this.getDisplayInfoForException = this.getDisplayInfoForException.bind(this);
         this.goToError = this.goToError.bind(this);
-        this.startDebugger = this.startDebugger.bind(this)
+        this.startDebugger = this.startDebugger.bind(this);
         this.onUserPreferencesChanged = this.onUserPreferencesChanged.bind(this);
+        this.getDisplayInfoForError = this.getDisplayInfoForError.bind(this);
+        this.getErrorHelp = this.getErrorHelp.bind(this);
 
         data.subscribe(this.userPreferencesSubscriber, auth.HIGHCONTRAST);
+
+        ThemeManager.getInstance(document)?.subscribe("monaco", () => this.onUserPreferencesChanged());
     }
 
     onUserPreferencesChanged() {
@@ -636,10 +641,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     display(): JSX.Element {
         const showErrorList = pxt.appTarget.appTheme.errorList;
-        const isAndroid = pxt.BrowserUtils.isAndroid();
 
         return (
-            <div id="monacoEditorArea" className={`monacoEditorArea ${isAndroid ? "android" : ""}`} style={{ direction: 'ltr' }}>
+            <div id="monacoEditorArea" className={`monacoEditorArea`} style={{ direction: 'ltr' }}>
                 {this.isVisible && <div className={`monacoToolboxDiv ${(this.toolbox && !this.toolbox.state.visible && !this.isDebugging()) ? 'invisible' : ''}`}>
                     <toolbox.Toolbox ref={this.handleToolboxRef} editorname="monaco" parent={this} />
                     <div id="monacoDebuggerToolbox"></div>
@@ -653,27 +657,94 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                             setInsertionSnippet={this.setInsertionSnippet}
                             parent={this.parent} />
                     </div>
-                    {showErrorList && <ErrorList isInBlocksEditor={false} onSizeChange={this.setErrorListState}
-                        listenToErrorChanges={this.listenToErrorChanges}
-                        listenToExceptionChanges={this.listenToExceptionChanges} goToError={this.goToError}
-                        startDebugger={this.startDebugger} />}
+                    {showErrorList && (
+                        <ErrorList
+                            onSizeChange={this.setErrorListState}
+                            errors={this.errors}
+                            startDebugger={this.startDebugger}
+                            getErrorHelp={this.getErrorHelp}
+                            note={
+                                this.parent.state.errorListNote && (
+                                    <AIErrorExplanationText
+                                        explanation={this.parent.state.errorListNote}
+                                        onFeedbackSelected={this.onAIFeedback}
+                                    />
+                                )
+                            }
+                            showLoginDialog={this.parent.showLoginDialog}
+                        />
+                    )}
                 </div>
             </div>
         )
     }
 
-    listenToExceptionChanges(handlerKey: string, handler: (exception: pxsim.DebuggerBreakpointMessage, locations: pxtc.LocationInfo[]) => void) {
-        this.exceptionChangesListeners[handlerKey] = handler;
+    private onAIFeedback = (positive: boolean) => {
+        pxt.tickEvent("errorHelp.feedback", {
+                positive: positive + "",
+                type: "text",
+                responseLength: this.parent.state.errorListNote?.length + "",
+                errorCount: this.errors.length
+            });
     }
 
     public onExceptionDetected(exception: pxsim.DebuggerBreakpointMessage) {
-        for (let listener of pxt.U.values(this.exceptionChangesListeners)) {
-            listener(exception, this.callLocations);
-        }
+        const exceptionDisplayInfo: ErrorDisplayInfo = this.getDisplayInfoForException(exception);
+        this.errors = [exceptionDisplayInfo];
+        this.parent.setState({ errorListNote: undefined });
     }
 
-    listenToErrorChanges(handlerKey: string, handler: (errors: pxtc.KsDiagnostic[]) => void) {
-        this.errorChangesListeners[handlerKey] = handler;
+    private onErrorChanges(errors: pxtc.KsDiagnostic[]) {
+        const errorDisplayInfo: ErrorDisplayInfo[] = errors.map(this.getDisplayInfoForError);
+        this.errors = errorDisplayInfo;
+        this.parent.setState({ errorListNote: undefined });
+    }
+
+    private getDisplayInfoForException(exception: pxsim.DebuggerBreakpointMessage): ErrorDisplayInfo {
+        const message = pxt.Util.rlf(exception.exceptionMessage);
+
+        const stackFrames: StackFrameDisplayInfo[] = exception.stackframes?.map(frame => {
+            const location = this.callLocations[frame.callLocationId];
+            if (!location) return undefined;
+            return {
+                message: lf("at {0} (line {1})", frame.funcInfo.functionName, location.line + 1),
+                onClick: () => this.goToError(location)
+            };
+        }).filter(a => !!a) ?? undefined;
+
+        return {
+            message,
+            stackFrames
+        };
+    }
+
+    private getDisplayInfoForError(error: pxtc.KsDiagnostic): ErrorDisplayInfo {
+        const message = lf("Line {0}: {1}", error.endLine ? error.endLine + 1 : error.line + 1, error.messageText);
+        return {
+            message,
+            onClick: () => this.goToError(error)
+        };
+    }
+
+    /**
+     * Provides a user-facing explanation of the errors in the error list.
+     */
+    private async getErrorHelp() {
+        this.parent.setState({errorListNote: undefined});
+        const lang = this.fileType == pxt.editor.FileType.Python ? "python" : "typescript";
+        const code = this.currFile.content;
+        try {
+            const helpResponse = await getErrorHelpAsText(this.errors, lang, code);
+            this.parent.setState({errorListNote: helpResponse});
+        } catch (e) {
+            pxt.reportException(e);
+
+            if (e instanceof ErrorHelpException) {
+                core.errorNotification(e.getUserFacingMessage());
+            } else {
+                core.errorNotification(lf("Sorry, something went wrong. Please try again later."));
+            }
+        }
     }
 
     goToError(error: pxtc.LocationInfo) {
@@ -696,12 +767,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     startDebugger() {
         pxt.tickEvent('errorList.startDebugger', null, { interactiveConsent: true })
         this.parent.toggleDebugging()
-    }
-
-    private onErrorChanges(errors: pxtc.KsDiagnostic[]) {
-        for (let listener of pxt.U.values(this.errorChangesListeners)) {
-            listener(errors);
-        }
     }
 
     public showPackageDialog() {
@@ -748,8 +813,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
 
         const colors = pxt.appTarget.appTheme.monacoColors || {};
+        const baseTheme: monaco.editor.BuiltinTheme = hc
+            ? "hc-black"
+            : (ThemeManager.getInstance(document)?.getCurrentColorTheme()?.monacoBaseTheme as monaco.editor.BuiltinTheme) ?? (inverted ? "vs-dark" : "vs");
         monaco.editor.defineTheme('pxtTheme', {
-            base: hc ? 'hc-black' : (inverted ? 'vs-dark' : 'vs'), // can also be vs-dark or hc-black
+            base: baseTheme,
             inherit: true, // can also be false to completely replace the builtin rules
             rules: rules,
             colors: hc ? {} : colors
@@ -817,8 +885,18 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return false;
     }
 
+    getToolboxDiv(): HTMLElement | undefined {
+        const monacoArea = this.getEditorAreaDiv();
+        if (!monacoArea) return undefined;
+        return monacoArea.getElementsByClassName('monacoToolboxDiv')[0] as HTMLElement;
+    }
+
+    getEditorAreaDiv(): HTMLElement {
+        return document.getElementById('monacoEditorArea');
+    }
+
     resize(e?: Event) {
-        let monacoArea = document.getElementById('monacoEditorArea');
+        let monacoArea = this.getEditorAreaDiv();
         if (!monacoArea) return;
         let monacoToolboxDiv = monacoArea.getElementsByClassName('monacoToolboxDiv')[0] as HTMLElement;
 
@@ -872,7 +950,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     private createLoadMonacoPromise(): Promise<void> {
         this.extraLibs = Object.create(null);
-        let editorArea = document.getElementById("monacoEditorArea");
         let editorElement = document.getElementById("monacoEditorInner");
 
         return pxteditor.monaco.initMonacoAsync(editorElement).then((editor) => {
@@ -1168,6 +1245,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
+    focusWorkspace(): void {
+        if (!this.editor) return;
+        this.editor.focus();
+    }
+
     undo() {
         if (!this.editor) return;
         this.editor.trigger('keyboard', 'undo', null);
@@ -1326,8 +1408,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             || this.currFile.isReadonly()
             || pxt.shell.isReadOnly()
             || this.isDebugging();
+
+        const hideForTutorial =
+            this.parent.isTutorial()
+            && this.parent.state.header.tutorial?.metadata?.hideToolbox;
+
         return pxt.appTarget.appTheme.monacoToolbox
             && !readOnly
+            && !hideForTutorial
             && (this.fileType == "typescript" || this.fileType == "python");
     }
 
@@ -1462,6 +1550,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     unloadFileAsync(): Promise<void> {
         if (this.toolbox)
             this.toolbox.clearSearch();
+        this.errors = [];
+        this.parent.setState({errorListNote: undefined});
         if (this.currFile && this.currFile.getName() == "this/" + pxt.CONFIG_NAME) {
             // Reload the header if a change was made to the config file: pxt.json
             return this.parent.reloadHeaderAsync();
@@ -1601,7 +1691,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
-    showFieldEditor(range: monaco.Range, fe: pxteditor.MonacoFieldEditor, viewZoneHeight: number, buildAfter: boolean) {
+    showFieldEditor(range: monaco.Range, fe: pxt.editor.MonacoFieldEditor, viewZoneHeight: number, buildAfter: boolean) {
         if (this.feWidget) {
             this.feWidget.close();
         }
@@ -1826,10 +1916,23 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             let firstBlock = document.querySelector(".monacoBlock") as HTMLElement;
             if (firstBlock) {
                 firstBlock.focus();
-                firstBlock.click();
             }
         }
     }
+
+    public onToolboxBlur(e: React.FocusEvent, hasSearch: boolean): void {
+        const searchInputFocused = e.relatedTarget === (this.toolbox.refs.searchbox as toolbox.ToolboxSearch).refs.searchInput;
+        const flyoutFocused = e.relatedTarget === this.flyout.refs.flyout || (this.flyout.refs.flyout as HTMLElement).contains(e.relatedTarget);
+        if (((searchInputFocused && !hasSearch) || !searchInputFocused) && !flyoutFocused) {
+            this.hideFlyout();
+        }
+        if (!flyoutFocused) {
+            this.toolbox.clear();
+            this.toolbox.clearExpandedItem();
+        }
+    }
+
+    public setFlyoutForceOpen(_forceOpen: boolean): void {}
 
     ///////////////////////////////////////////////////////////
     ////////////         Flyout methods           /////////////
@@ -2104,15 +2207,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     protected getEditorColor() {
-        if (pxt.appTarget.appTheme.monacoColors && pxt.appTarget.appTheme.monacoColors["editor.background"]) {
-            return pxt.appTarget.appTheme.monacoColors["editor.background"]
-        }
-        else if (pxt.appTarget.appTheme.invertedMonaco) {
-            return "#1e1e1e"
-        }
-        else {
-            return "#ffffff"
-        }
+        // Editor color is set to var(--pxt-target-background1), which can change.
+        // This is not ideal, but just return empty for now.
+        return "";
     }
 }
 

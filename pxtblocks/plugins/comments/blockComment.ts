@@ -23,7 +23,7 @@ const COMMENT_OFFSET_Y_FIELD_NAME = "~commentOffsetY";
 /**
  * An icon which allows the user to add comment text to a block.
  */
-export class CommentIcon extends Blockly.icons.Icon {
+export class CommentIcon extends Blockly.icons.Icon implements Blockly.IHasBubble {
     /** The type string used to identify this icon. */
     static readonly TYPE = Blockly.icons.IconType.COMMENT;
 
@@ -225,6 +225,21 @@ export class CommentIcon extends Blockly.icons.Icon {
         this.setBubbleVisible(this.bubbleVisiblity);
     }
 
+    // TODO: switch our custom comment position serialization
+    // to use setBubbleLocation and getBubbleLocation instead
+    setBubbleLocation(location: Blockly.utils.Coordinate) {
+
+    }
+
+    // TODO: switch our custom comment position serialization
+    // to use setBubbleLocation and getBubbleLocation instead
+    getBubbleLocation(): Blockly.utils.Coordinate | undefined {
+        if (this.bubbleIsVisible()) {
+            return this.textInputBubble.getRelativeToSurfaceXY();
+        }
+        return undefined
+    }
+
     override onClick(): void {
         super.onClick();
         this.setBubbleVisible(!this.bubbleIsVisible());
@@ -315,6 +330,10 @@ export class CommentIcon extends Blockly.icons.Icon {
         }
     }
 
+    getBubble(): Blockly.IBubble | null {
+        return this.textInputBubble;
+    }
+
     /**
      * Shows the editable text bubble for this comment, and adds change listeners
      * to update the state of this icon in response to changes in the bubble.
@@ -402,7 +421,7 @@ export class CommentIcon extends Blockly.icons.Icon {
             );
         }
 
-        return undefined;
+        return new Blockly.utils.Coordinate(16, 16);
     }
 
     private clearSavedOffsetData() {

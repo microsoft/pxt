@@ -16,6 +16,14 @@ export class PathObject extends Blockly.zelos.PathObject {
     protected mouseLeaveData: Blockly.browserEvents.Data;
 
     protected connectionPointIndicators = new WeakMap<Blockly.RenderedConnection, SVGElement>();
+    staticConnectionIndicatorParentGroup: any;
+
+    override setPath(pathString: string): void {
+        super.setPath(pathString);
+        if (this.svgPathHighlighted) {
+            this.svgPathHighlighted.setAttribute('d', pathString);
+        }
+    }
 
 
     override updateHighlighted(enable: boolean) {
@@ -25,6 +33,7 @@ export class PathObject extends Blockly.zelos.PathObject {
                 const constants = this.constants as ConstantProvider;
                 const filterId = this.hasError ? constants.errorOutlineFilterId : constants.highlightOutlineFilterId;
                 this.svgPathHighlighted = this.svgPath.cloneNode(true) as SVGElement;
+                this.svgPathHighlighted.classList.add('pxtRendererHighlight');
                 this.svgPathHighlighted.setAttribute('fill', 'none');
                 this.svgPathHighlighted.setAttribute(
                     'filter',
@@ -47,31 +56,27 @@ export class PathObject extends Blockly.zelos.PathObject {
         super.updateSelected(enable);
     }
 
-    override addConnectionHighlight(connection: Blockly.RenderedConnection, connectionPath: string, offset: Blockly.utils.Coordinate, rtl: boolean): void {
-        super.addConnectionHighlight(connection, connectionPath, offset, rtl);
+    override addConnectionHighlight(connection: Blockly.RenderedConnection, connectionPath: string, offset: Blockly.utils.Coordinate, rtl: boolean): SVGElement {
+        const result = super.addConnectionHighlight(connection, connectionPath, offset, rtl);
 
-        if (connection.type === Blockly.INPUT_VALUE || connection.type === Blockly.OUTPUT_VALUE) {
-            const indicator = Blockly.utils.dom.createSvgElement('g',
-                { 'class': 'blocklyInputConnectionIndicator' }
-            );
-            Blockly.utils.dom.createSvgElement('circle',
-                { 'r': PathObject.CONNECTION_INDICATOR_RADIUS }, indicator);
-
-            const offset = connection.getOffsetInBlock();
-            indicator.setAttribute('transform',
-                'translate(' + offset.x + ',' + offset.y + ')');
-            this.connectionPointIndicators.set(connection, indicator);
-            this.svgRoot.appendChild(indicator);
+        // We add a group that our ConnectionPreviewer uses to add the connection preview indicators.
+        // We create it here to manage the paint order.
+        if (!this.staticConnectionIndicatorParentGroup) {
+            this.staticConnectionIndicatorParentGroup = Blockly.utils.dom.createSvgElement("g", {
+                class: "blocklyConnectionIndicatorParent"
+            }, this.svgRoot);
+        } else {
+            // Move last in paint order.
+            this.svgRoot.appendChild(this.staticConnectionIndicatorParentGroup);
         }
+
+        return result;
     }
 
     override removeConnectionHighlight(connection: Blockly.RenderedConnection): void {
-        super.removeConnectionHighlight(connection);
+        this.staticConnectionIndicatorParentGroup?.remove();
 
-        if (this.connectionPointIndicators.has(connection)) {
-            this.connectionPointIndicators.get(connection).remove();
-            this.connectionPointIndicators.delete(connection);
-        }
+        super.removeConnectionHighlight(connection);
     }
 
     override applyColour(block: Blockly.BlockSvg): void {
@@ -165,13 +170,6 @@ export class PathObject extends Blockly.zelos.PathObject {
     isHighlighted() {
         return !!this.svgPathHighlighted;
     }
-
-    resizeHighlight() {
-        if (this.svgPathHighlighted) {
-            this.updateHighlighted(false);
-            this.updateHighlighted(true);
-        }
-    }
 }
 
 function calculateLuminance(rgb: number[]) {
@@ -186,5 +184,8 @@ Blockly.Css.register(`
     stroke-dasharray: 2;
     stroke: white;
     stroke-width: 2;
+}
+.blocklyDisabledPattern>.blocklyPath.pxtRendererHighlight {
+    fill: none;
 }
 `)

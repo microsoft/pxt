@@ -7,6 +7,7 @@ import { optionalDummyInputPrefix, optionalInputWithFieldPrefix } from "./consta
 import { FieldArgumentVariable } from "./fields";
 import { setVarFieldValue } from "./loader";
 import { UpdateBeforeRenderMixin } from "./plugins/renderer";
+import { FieldImageNoText } from "./fields/field_imagenotext";
 
 export interface ComposableMutation {
     // Set to save mutations. Should return an XML element
@@ -103,7 +104,7 @@ export function initVariableArgsBlock(b: Blockly.Block, handlerArgs: pxt.blocks.
     });
 
     function addPlusButton() {
-        i.appendField(new Blockly.FieldImage((b as any).ADD_IMAGE_DATAURI, 24, 24, lf("Add argument"),
+        i.appendField(new FieldImageNoText((b as any).ADD_IMAGE_DATAURI, 24, 24, lf("Add argument"),
             () => {
                 currentlyVisible = Math.min(currentlyVisible + 1, handlerArgs.length);
                 updateShape();
@@ -253,12 +254,12 @@ export function initExpandableBlock(info: pxtc.BlocksInfo, b: Blockly.Block, def
 
         updateButtons();
         if (variableInlineInputs) b.setInputsInline(visibleOptions < inlineInputModeLimit);
-        if (!skipRender) (b as Blockly.BlockSvg).render();
+        if (!skipRender) (b as Blockly.BlockSvg).queueRender();
     }
 
     function addButton(name: string, uri: string, alt: string, delta: number) {
         b.appendDummyInput(name)
-        .appendField(new Blockly.FieldImage(uri, 24, 24, alt, () => updateShape(delta), false))
+        .appendField(new FieldImageNoText(uri, 24, 24, alt, () => updateShape(delta), false));
     }
 
     function updateButtons() {
@@ -284,8 +285,8 @@ export function initExpandableBlock(info: pxtc.BlocksInfo, b: Blockly.Block, def
 
     function addPlusAndMinusButtons() {
         b.appendDummyInput(buttonAddRemName)
-            .appendField(new Blockly.FieldImage((b as any).REMOVE_IMAGE_DATAURI, 24, 24, lf("Hide optional arguments"), () => updateShape(-1 * buttonDelta), false))
-            .appendField(new Blockly.FieldImage((b as any).ADD_IMAGE_DATAURI, 24, 24, lf("Reveal optional arguments"), () => updateShape(buttonDelta), false))
+            .appendField(new FieldImageNoText((b as any).REMOVE_IMAGE_DATAURI, 24, 24, lf("Hide optional arguments"), () => updateShape(-1 * buttonDelta), false))
+            .appendField(new FieldImageNoText((b as any).ADD_IMAGE_DATAURI, 24, 24, lf("Reveal optional arguments"), () => updateShape(buttonDelta), false))
     }
 
     function addPlusButton() {
@@ -345,9 +346,29 @@ export function initExpandableBlock(info: pxtc.BlocksInfo, b: Blockly.Block, def
         Blockly.Events.disable();
 
         try {
-            const nb = Blockly.Xml.domToBlock(shadow, b.workspace);
-            if (nb) {
-                input.connection.connect(nb.outputConnection);
+            let newBlock: Blockly.Block;
+            if (!b.initialized) {
+                // use domToBlockInternal so that we don't trigger a render while
+                // the block is still being initialized
+                newBlock = Blockly.Xml.domToBlockInternal(shadow, b.workspace);
+
+                // we don't know at this time whether the parent block is an insertion marker
+                // or not. doing this check lets us clean up the block in the case that it is,
+                // though we get an annoying flicker
+                setTimeout(() => {
+                    if (newBlock.isInsertionMarker()) {
+                        Blockly.Events.disable();
+                        newBlock.dispose();
+                        Blockly.Events.enable();
+                    }
+                })
+            }
+            else {
+                newBlock = Blockly.Xml.domToBlock(shadow, b.workspace);
+            }
+
+            if (newBlock) {
+                input.connection.connect(newBlock.outputConnection);
             }
         } catch (e) { }
 

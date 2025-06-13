@@ -61,7 +61,7 @@ export class FieldMusicEditor extends FieldAssetEditor<FieldMusicEditorOptions, 
 
         const newAsset: pxt.Song = {
             internalID: -1,
-            id: this.sourceBlock_.id,
+            id: this.temporaryAssetId(),
             type: pxt.AssetType.Song,
             meta: {
             },

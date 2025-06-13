@@ -1,5 +1,6 @@
 /// <reference path="./tickEvent.ts" />
 /// <reference path="./apptarget.ts" />
+/// <reference path="./logger.ts" />
 
 namespace ts.pxtc {
     export let __dummy = 42;
@@ -123,8 +124,8 @@ namespace ts.pxtc.Util {
             _didReportLocalizationsNotSet = true;
             pxt.tickEvent("locale.localizationsnotset");
             // pxt.reportError can't be used here because of order of file imports
-            // Just use console.error instead, and use an Error so stacktrace is reported
-            console.error(new Error("Attempted to translate a string before localizations were set"));
+            // Just use pxt.error instead, and use an Error so stacktrace is reported
+            pxt.error(new Error("Attempted to translate a string before localizations were set"));
         }*/
         return _localizeStrings[s] || s;
     }
@@ -196,8 +197,8 @@ namespace ts.pxtc.Util {
         const r: { [index: string]: string; } = {};
         Object.keys(locStats).sort((a, b) => locStats[b] - locStats[a])
             .forEach(k => r[k] = k);
-        console.log('prioritized list of strings:')
-        console.log(JSON.stringify(r, null, 2));
+        pxt.log('prioritized list of strings:')
+        pxt.log(JSON.stringify(r, null, 2));
     }
 
     let sForPlural = true;
@@ -238,7 +239,7 @@ namespace ts.pxtc.Util {
             d.getFullYear(), d.getMonth() + 1, d.getDate(), d.getHours(), d.getMinutes(), d.getSeconds())
     }
 
-    export function userError(msg: string): Error {
+    export function userError(msg: string): never {
         let e = new Error(msg);
         (<any>e).isUserError = true;
         throw e

@@ -2,6 +2,8 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { ImageEditorStore, AnimationState } from '../store/imageReducer';
 import { dispatchChangeSelectedColor, dispatchChangeBackgroundColor, dispatchSwapBackgroundForeground } from '../actions/dispatch';
+import { Button } from '../../../../../react-common/components/controls/Button';
+import { classList } from '../../../../../react-common/components/util';
 
 export interface PaletteProps {
     colors: string[];
@@ -13,8 +15,6 @@ export interface PaletteProps {
 }
 
 class PaletteImpl extends React.Component<PaletteProps,{}> {
-    protected handlers: ((ev: React.MouseEvent<HTMLDivElement>) => void)[] = [];
-
     render() {
         const { colors, selected, backgroundColor, dispatchSwapBackgroundForeground } = this.props;
         const SPACER = 1;
@@ -57,31 +57,18 @@ class PaletteImpl extends React.Component<PaletteProps,{}> {
                 </g>
             </svg>
             <div className="image-editor-color-buttons" onContextMenu={this.preventContextMenu}>
-                {this.props.colors.map((color, index) => {
-                    return <div key={index}
-                        className={`image-editor-button ${index === 0 ? "checkerboard" : ""}`}
-                        role="button"
+                {this.props.colors.map((color, index) =>
+                    <Button
+                        key={index}
+                        className={classList("image-editor-button", index === 0 && "checkerboard")}
                         title={colorTooltip(index, color)}
-                        onMouseDown={this.clickHandler(index)}
-                        style={index === 0 ? null : { backgroundColor: color }} />
-                })}
+                        style={index === 0 ? null : { "--preview-color": color } as React.CSSProperties}
+                        onClick={() => this.props.dispatchChangeSelectedColor(index)}
+                        onRightClick={() => this.props.dispatchChangeBackgroundColor(index)}
+                    />
+                )}
             </div>
         </div>;
-    }
-
-    protected clickHandler(index: number) {
-        if (!this.handlers[index]) this.handlers[index] = (ev: React.MouseEvent<HTMLDivElement>) => {
-            if (ev.button === 0) {
-                this.props.dispatchChangeSelectedColor(index);
-            }
-            else {
-                this.props.dispatchChangeBackgroundColor(index);
-                ev.preventDefault();
-                ev.stopPropagation();
-            }
-        }
-
-        return this.handlers[index];
     }
 
     protected preventContextMenu = (ev: React.MouseEvent<any>) => ev.preventDefault();

@@ -179,7 +179,7 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
             frame.contentWindow.postMessage(editorMessage, "*");
         }
         else {
-            console.warn(`Attempting to post message to unloaded extesnion ${name}`);
+            pxt.warn(`Attempting to post message to unloaded extesnion ${name}`);
         }
     }
 

@@ -7,16 +7,30 @@
 /// <reference path="tickEvent.ts"/>
 
 namespace pxt.perf {
+    export type EventSource<T> = {
+        subscribe(listener: (ev: T) => void): () => void;
+        //emit(ev: T): void; // not used externally
+        //forEach(listener: (ev: T) => void): void; // not used externally
+    };
+
     // These functions are defined in docfiles/pxtweb/cookieCompliance.ts
+    export declare function isEnabled(): boolean;
     export declare let perfReportLogged: boolean;
     export declare function report(): { milestones: {[index: string]: number}, durations: {[index: string]: number} } | undefined;
-    export declare function recordMilestone(msg: string, time?: number): void;
+    export declare function recordMilestone(msg: string, params?: Map<string>): void;
     export declare function measureStart(name: string): void;
-    export declare function measureEnd(name: string): void;
+    export declare function measureEnd(name: string, params?: Map<string>): void;
+    export declare let measurementThresholdMs: number;
+    export declare const stats: {
+        milestones: EventSource<{ milestone: string, time: number, params?: Map<string> }>;
+        durations: EventSource<{ name: string, start: number, duration: number, params?: Map<string> }>;
+    };
 }
 (function () {
     // Sometimes these aren't initialized, for example in tests. We only care about them
     // doing anything in the browser.
+    if (!pxt.perf.isEnabled)
+        pxt.perf.isEnabled = () => false
     if (!pxt.perf.report)
         pxt.perf.report = () => undefined
     if (!pxt.perf.recordMilestone)
@@ -215,13 +229,15 @@ namespace pxt {
         appTarget = replaceCdnUrlsInJsonBlob(appTarget);
 
         // patch icons in bundled packages
-        Object.keys(appTarget.bundledpkgs).forEach(pkgid => {
-            const res = appTarget.bundledpkgs[pkgid];
-            // path config before storing
-            const config = JSON.parse(res[pxt.CONFIG_NAME]) as pxt.PackageConfig;
-            if (config.icon) config.icon = pxt.BrowserUtils.patchCdn(config.icon);
-            res[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(config);
-        })
+        if (appTarget.bundledpkgs) {
+            Object.keys(appTarget.bundledpkgs).forEach(pkgid => {
+                const res = appTarget.bundledpkgs[pkgid];
+                // path config before storing
+                const config = JSON.parse(res[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+                if (config.icon) config.icon = pxt.BrowserUtils.patchCdn(config.icon);
+                res[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(config);
+            });
+        }
 
         // patch any pre-configured query url appTheme overrides
         if (typeof window !== 'undefined') {
@@ -258,7 +274,7 @@ namespace pxt {
     }
 
     export function reloadAppTargetVariant(temporary = false) {
-        pxt.perf.measureStart("reloadAppTargetVariant")
+        pxt.perf.measureStart(Measurements.ReloadAppTargetVariant)
         const curr = temporary ? "" : JSON.stringify(appTarget);
         appTarget = U.cloneTargetBundle(savedAppTarget)
         if (appTargetVariant) {
@@ -272,7 +288,7 @@ namespace pxt {
         // check if apptarget changed
         if (!temporary && onAppTargetChanged && curr != JSON.stringify(appTarget))
             onAppTargetChanged();
-        pxt.perf.measureEnd("reloadAppTargetVariant")
+        pxt.perf.measureEnd(Measurements.ReloadAppTargetVariant)
     }
 
     // this is set by compileServiceVariant in pxt.json
@@ -323,6 +339,10 @@ namespace pxt {
             })
     }
 
+    export function getActiveHwVariant(): string {
+        return hwVariant
+    }
+
     export interface PxtOptions {
         debug?: boolean;
         light?: boolean; // low resource device
@@ -330,37 +350,22 @@ namespace pxt {
     }
     export let options: PxtOptions = {};
 
-    // general error reported
-    export let debug: (msg: any) => void = typeof console !== "undefined" && !!console.debug
-        ? (msg) => {
-            if (pxt.options.debug)
-                console.debug(msg);
-        } : () => { };
-    export let log: (msg: any) => void = typeof console !== "undefined" && !!console.log
-        ? (msg) => {
-            console.log(msg);
-        } : () => { };
-
     export let reportException: (err: any, data?: Map<string | number>) => void = function (e, d) {
-        if (console) {
-            console.error(e);
-            if (d) {
-                try {
-                    // log it as object, so native object inspector can be used
-                    console.log(d)
-                    //pxt.log(JSON.stringify(d, null, 2))
-                } catch (e) { }
-            }
+        pxt.error(e);
+        if (d) {
+            try {
+                // log it as object, so native object inspector can be used
+                pxt.error(d);
+                //pxt.log(JSON.stringify(d, null, 2))
+            } catch (e) { }
         }
     }
     export let reportError: (cat: string, msg: string, data?: Map<string | number>) => void = function (cat, msg, data) {
-        if (console) {
-            console.error(`${cat}: ${msg}`);
-            if (data) {
-                try {
-                    pxt.log(JSON.stringify(data, null, 2))
-                } catch (e) { }
-            }
+        pxt.error(`${cat}: ${msg}`);
+        if (data) {
+            try {
+                pxt.log(JSON.stringify(data, null, 2))
+            } catch (e) { }
         }
     }
 
@@ -373,10 +378,10 @@ namespace pxt {
         typeScriptWorkerJs: string; // /beta---tsworker
         pxtVersion: string; // "?",
         pxtRelId: string; // "9e298e8784f1a1d6787428ec491baf1f7a53e8fa",
-        pxtCdnUrl: string; // "https://pxt.azureedge.net/commit/9e2...e8fa/",
-        commitCdnUrl: string; // "https://pxt.azureedge.net/commit/9e2...e8fa/",
-        blobCdnUrl: string; // "https://pxt.azureedge.net/commit/9e2...e8fa/",
-        cdnUrl: string; // "https://pxt.azureedge.net"
+        pxtCdnUrl: string; // "https://cdn.makecode.com/commit/9e2...e8fa/",
+        commitCdnUrl: string; // "https://cdn.makecode.com/commit/9e2...e8fa/",
+        blobCdnUrl: string; // "https://cdn.makecode.com/commit/9e2...e8fa/",
+        cdnUrl: string; // "https://cdn.makecode.com"
         targetUrl: string; // "https://pxt.microbit.org"
         targetVersion: string; // "?",
         targetRelId: string; // "9e298e8784f1a1d6787428ec491baf1f7a53e8fa",
@@ -396,6 +401,12 @@ namespace pxt {
         teachertoolUrl?: string; // "/beta---eval"
         isStatic?: boolean;
         verprefix?: string; // "v1"
+        ocv?: OcvConfig;
+    }
+
+    export interface OcvConfig {
+        appId: number;
+        iframeEndpoint: string;
     }
 
     export function localWebConfig() {
@@ -419,7 +430,7 @@ namespace pxt {
             simUrl: "/sim/simulator.html",
             simserviceworkerUrl: "/simulatorserviceworker.js",
             simworkerconfigUrl: "/sim/workerConfig.js",
-            partsUrl: "/sim/siminstructions.html"
+            partsUrl: "/sim/siminstructions.html",
         }
         return r
     }

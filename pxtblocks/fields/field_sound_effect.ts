@@ -85,7 +85,7 @@ export class FieldSoundEffect extends FieldBase<FieldSoundEffectParams> {
         const bg = new svg.Rect()
             .at(X_PADDING, Y_PADDING)
             .size(TOTAL_WIDTH, TOTAL_HEIGHT)
-            .setClass("blocklySpriteField")
+            .setClass("blocklyFieldRect blocklySpriteField")
             .stroke("#fff", 1)
             .fill("#dedede")
             .corner(TOTAL_HEIGHT / 2);
@@ -128,7 +128,8 @@ export class FieldSoundEffect extends FieldBase<FieldSoundEffectParams> {
         this.fieldGroup_.appendChild(g.el);
     }
 
-    showEditor_() {
+    showEditor_(e: Event) {
+        const keyboardTriggered = !e;
         const initialSound = this.readCurrentSound();
         Blockly.Events.disable();
 
@@ -186,7 +187,7 @@ export class FieldSoundEffect extends FieldBase<FieldSoundEffectParams> {
             useMixerSynthesizer: isTrue(this.options.useMixerSynthesizer)
         }
 
-        const fv = pxt.react.getFieldEditorView("soundeffect-editor", initialSound, opts, widgetDiv);
+        const fv = pxt.react.getFieldEditorView("soundeffect-editor", initialSound, opts, widgetDiv, keyboardTriggered);
 
         const block = this.sourceBlock_ as Blockly.BlockSvg;
         const bounds = block.getBoundingRectangle();
@@ -270,6 +271,10 @@ export class FieldSoundEffect extends FieldBase<FieldSoundEffectParams> {
 
         this.size_.height = TOTAL_HEIGHT + Y_PADDING * 2;
         this.size_.width = TOTAL_WIDTH + X_PADDING;
+    }
+
+    getFieldDescription(): string {
+        return lf("sound effect");
     }
 
     protected updateSiblingBlocks(sound: pxt.assets.Sound) {

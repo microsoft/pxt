@@ -12,6 +12,8 @@ import * as pxtblockly from "../../pxtblocks";
 
 import ExtensionResult = pxt.editor.ExtensionResult;
 import NativeHostMessage = pxt.editor.NativeHostMessage;
+import { setEditorExtensionExperiments } from "../../pxteditor/experiments";
+import { registerMonacoFieldEditor } from "../../pxteditor";
 
 
 function log(msg: string) {
@@ -276,7 +278,7 @@ export async function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.comma
             // TODO: slightly different flow vs implicit, as this is in a 'half paired' state?
             // Ideally, we should be including this in the pairing webusb.tsx pairing dialog flow
             // directly instead of deferring it all the way here.
-            await pairAsync();
+            await pairDialogAsync();
             return hidDeployCoreAsync(resp, d);
         } else if (e.message === "timeout") {
             pxt.tickEvent("hid.flash.timeout");
@@ -389,9 +391,62 @@ function applyExtensionResult() {
         log(`extension tutorial completed`);
         pxt.commands.onTutorialCompleted = res.onTutorialCompleted;
     }
+    if (res.onPostHostMessage) {
+        log(`extension post host message`);
+        pxt.commands.onPostHostMessage = res.onPostHostMessage;
+    }
+    if (res.onPerfMilestone) {
+        log(`extension perf milestone`);
+        pxt.commands.onPerfMilestone = res.onPerfMilestone;
+    }
+    if (res.onPerfMeasurement) {
+        log(`extension perf measurement`);
+        pxt.commands.onPerfMeasurement = res.onPerfMeasurement;
+    }
     if (res.showProgramTooLargeErrorAsync) {
         log(`extension showProgramTooLargeErrorAsync`);
         pxt.commands.showProgramTooLargeErrorAsync = res.showProgramTooLargeErrorAsync;
+    }
+    if (res.getDefaultProjectName) {
+        log(`extension getDefaultProjectName`);
+        pxt.commands.getDefaultProjectName = res.getDefaultProjectName;
+    }
+    if (res.getDownloadMenuItems) {
+        log(`extension getDownloadMenuItems`);
+        pxt.commands.getDownloadMenuItems = res.getDownloadMenuItems;
+    }
+    if (res.notifyProjectSaved) {
+        log(`extension notifyProjectSaved`);
+        pxt.commands.notifyProjectSaved = res.notifyProjectSaved;
+    }
+    if (res.notifyProjectCompiled) {
+        log(`extension notifyProjectCompiled`);
+        pxt.commands.notifyProjectCompiled = res.notifyProjectCompiled;
+    }
+    if (res.onDownloadButtonClick) {
+        log(`extension onDownloadButtonClick`);
+        pxt.commands.onDownloadButtonClick = res.onDownloadButtonClick;
+    }
+
+    if (res.initAsync) {
+        res.initAsync({
+            confirmAsync: core.confirmAsync,
+            infoNotification: core.infoNotification,
+            warningNotification: core.warningNotification,
+            errorNotification: core.errorNotification,
+        });
+    }
+    if (res.onMarkdownActivityLoad) {
+        log(`extension onMarkdownActivityLoad`);
+        pxt.commands.onMarkdownActivityLoad = res.onMarkdownActivityLoad;
+    }
+    if (res.experiments) {
+        setEditorExtensionExperiments(res.experiments);
+    }
+    if (res.monacoFieldEditors) {
+        for (const def of res.monacoFieldEditors) {
+            registerMonacoFieldEditor(def.id, def);
+        }
     }
 }
 
@@ -455,6 +510,7 @@ export async function initAsync() {
         log(`deploy: electron`);
         pxt.commands.deployCoreAsync = electron.driveDeployAsync;
         pxt.commands.electronDeployAsync = electron.driveDeployAsync;
+        pxt.commands.electronFileDeployAsync = electron.deployFilesAsync;
     } else if (webUSBSupported) {
         log(`deploy: webusb`);
         pxt.commands.deployCoreAsync = hidDeployCoreAsync;
@@ -492,7 +548,7 @@ export async function maybeReconnectAsync(pairIfDeviceNotFound = false, skipIfCo
                 return true;
             } catch (e) {
                 if (e.type == "devicenotfound") {
-                    return !!pairIfDeviceNotFound && pairAsync();
+                    return !!pairIfDeviceNotFound && pairDialogAsync();
                 } else if (e.type == "inittimeout") {
                     pxt.tickEvent("hid.flash.inittimeout");
                     await showReconnectDeviceInstructionsAsync(core.confirmAsync);
@@ -502,11 +558,12 @@ export async function maybeReconnectAsync(pairIfDeviceNotFound = false, skipIfCo
         } finally {
             reconnectPromise = undefined;
         }
-    })();
+    })().then(res => res === pxt.commands.WebUSBPairResult.Success);
     return reconnectPromise;
 }
 
-export async function pairAsync(implicitlyCalled?: boolean): Promise<boolean> {
+
+export async function pairDialogAsync(implicitlyCalled?: boolean): Promise<pxt.commands.WebUSBPairResult> {
     pxt.tickEvent("cmds.pair")
     const res = await pxt.commands.webUsbPairDialogAsync(
         pxt.usb.pairAsync,
@@ -518,19 +575,15 @@ export async function pairAsync(implicitlyCalled?: boolean): Promise<boolean> {
         case pxt.commands.WebUSBPairResult.Success:
             try {
                 await maybeReconnectAsync(false, true);
-                return true;
             } catch (e) {
                 // Device
                 core.infoNotification(lf("Oops, connection failed."));
-                return false;
+                return pxt.commands.WebUSBPairResult.Failed;
             }
         case pxt.commands.WebUSBPairResult.Failed:
             core.infoNotification(lf("Oops, no device was paired."));
-            return false;
-        case pxt.commands.WebUSBPairResult.UserRejected:
-            // User exited pair flow intentionally
-            return false;
     }
+    return res;
 
 }
 

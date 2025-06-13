@@ -17,8 +17,8 @@
 }
 
 #githubEditor {
-    background-color: @githubBackgroundColor;
-    color: @githubTextColor;
+    background-color: var(--pxt-target-background2);
+    color: var(--pxt-target-foreground2);
     overflow-x: hidden;
     overflow-y: auto;
     #githubArea {
@@ -57,6 +57,10 @@
             font-size: 1.2em;
         }
 
+        h2.header {
+            font-size: 1.5rem;
+        }
+
         .diffheader .ui.button {
             float: right;
             margin-top: -0.5em;
@@ -68,7 +72,8 @@
         }
 
         .ui.segments.filediff {
-            background: @diffSegmentBackgroundColor;
+            background: var(--pxt-neutral-background1);
+            color: var(--pxt-neutral-foreground1);
         }
 
         .legend > span:not(:first-child) {
@@ -109,6 +114,11 @@
 
         .create-pr {
             float: right;
+        }
+
+        .ui.segment {
+            background-color: var(--pxt-target-background1);
+            color: var(--pxt-target-foreground1);
         }
     }
 }
@@ -173,55 +183,55 @@
 // inverted style
 .inverted-theme {
     #githubEditor {
-        color: @githubInvertedTextColor;
+        color: var(--pxt-target-background2);
         .ui.transparent.segment {
-            border: 1px solid @mainMenuInvertedBackground;
+            border: 1px solid var(--pxt-header-background);
         }
         .ui.basic.button > .ui.text,
         .ui.header {
-            color: @githubInvertedTextColor !important;
+            color: var(--pxt-target-background2) !important;
         }
         .ui.items>.link.item {
             .meta, .description {
-                color: @githubInvertedTextColor !important;
+                color: var(--pxt-target-background2) !important;
             }
         }
         .diffheader {
-            background: @mainMenuInvertedBackground !important;
+            background: var(--pxt-header-background) !important;
         }
         table.diffview {
             .change code {
-                color: @githubInvertedTextColor !important;
+                color: var(--pxt-target-background2) !important;
             }
 
             .diff-added {
-                background: @diffInvertedAddedBackground !important;
+                background: var(--pxt-colors-green-background) !important;
 
                 .ch-added {
-                    background: @diffInvertedAddedTokenBackground !important;
+                    background: var(--pxt-colors-green-hover) !important;
                 }
             }
 
             .diff-removed {
-                background: @diffInvertedRemovedBackground !important;
+                background: var(--pxt-colors-red-background) !important;
 
                 .ch-removed {
-                    background: @diffInvertedRemovedTokenBackground !important;
+                    background: var(--pxt-colors-red-hover) !important;
                 }
             }
 
             .diff-unchanged {
-                background: @diffInvertedUnchangedBackground !important;
+                background: var(--pxt-neutral-background1) !important;
             }
 
             .line-a,
             .line-b {
-                color: @diffInvertedLineNumberColor !important;
+                color: var(--pxt-neutral-background1) !important;
             }
 
             .diff-marker {
-                background: @diffInvertedMarkerBackground !important;
-                color: @diffInvertedMarkerColor !important;
+                background: var(--pxt-neutral-background3) !important;
+                color: var(--pxt-neutral-foreground1) !important;
             }
         }
     }

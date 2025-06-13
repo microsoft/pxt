@@ -2,6 +2,7 @@
 import * as srceditor from "./srceditor";
 import * as toolbox from "./toolbox";
 import * as compiler from "./compiler";
+import { getProjectToolboxFilters } from "./package";
 
 export abstract class ToolboxEditor extends srceditor.Editor {
 
@@ -17,11 +18,32 @@ export abstract class ToolboxEditor extends srceditor.Editor {
     abstract getBlocksForCategory(ns: string, subns?: string): toolbox.BlockDefinition[];
 
     protected shouldShowBlock(blockId: string, ns: string, shadow?: boolean) {
-        const filters = this.parent.state.editorState && this.parent.state.editorState.filters;
+        let filters = this.parent.state.editorState && this.parent.state.editorState.filters;
+
+        const projectFilter = getProjectToolboxFilters();
+
+        if (projectFilter) {
+            if (filters) {
+                // tutorial filters override project filters
+                pxt.U.jsonMergeFrom(projectFilter, filters);
+            }
+
+            filters = projectFilter;
+        }
+
+
         if (filters) {
-            // block-level filters should not apply to shadow blocks (nested)
-            const blockFilter = filters.blocks && (filters.blocks[blockId] || (this.blockIdMap && this.blockIdMap[blockId]?.some(id => filters.blocks[id])));
+            let blockFilter: pxt.editor.FilterState | boolean;
+            if (filters.blocks) {
+                if (filters.blocks[blockId] !== undefined) {
+                    blockFilter = filters.blocks[blockId];
+                }
+                else {
+                    blockFilter = this.blockIdMap && this.blockIdMap[blockId]?.some(id => filters.blocks[id]);
+                }
+            }
             const categoryFilter = filters.namespaces && filters.namespaces[ns];
+            // block-level filters should not apply to shadow blocks (nested)
             // First try block filters
             if (blockFilter != undefined && blockFilter == pxt.editor.FilterState.Hidden && !shadow) return false;
             if (blockFilter != undefined) return true;
@@ -226,6 +248,7 @@ export abstract class ToolboxEditor extends srceditor.Editor {
 
     abstract showFlyout(treeRow: toolbox.ToolboxCategory): void;
     abstract hideFlyout(): void;
+    abstract setFlyoutForceOpen(forceOpen: boolean): void;
     moveFocusToFlyout() { }
 
     protected abstract showFlyoutHeadingLabel(ns: string, name: string, subns: string, icon: string, color: string): void;
@@ -368,4 +391,6 @@ export abstract class ToolboxEditor extends srceditor.Editor {
             this.toolbox.focus(itemToFocus);
         }
     }
+
+    onToolboxBlur(e: React.FocusEvent, keepFlyoutOpen: boolean) {};
 }

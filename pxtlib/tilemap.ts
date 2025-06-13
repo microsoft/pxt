@@ -142,9 +142,9 @@ namespace pxt {
 
         getSnapshot(filter?: (asset: U) => boolean) {
             if (filter) {
-                return this.assets.filter(a => filter(a)).map(cloneAsset);
+                return this.assets.filter(a => filter(a)).map(a => cloneAsset(a));
             }
-            return this.assets.map(cloneAsset);
+            return this.assets.map(a => cloneAsset(a));
         }
 
         update(id: string, newValue: U) {
@@ -154,6 +154,12 @@ namespace pxt {
                 const existing = this.lookupByID(id);
 
                 if (!assetEquals(existing, newValue)) {
+                    if (!validateAsset(newValue) && validateAsset(existing)) {
+                        pxt.warn("Refusing to overwrite asset with invalid version");
+                        pxt.tickEvent("assets.invalidAssetOverwrite", { assetType: newValue.type });
+                        return existing;
+                    }
+
                     this.removeByID(id);
                     asset = this.add(newValue);
                     this.notifyListener(newValue.internalID);
@@ -197,6 +203,15 @@ namespace pxt {
             return undefined;
         }
 
+        getByValue(toFind: U) {
+            for (const asset of this.assets) {
+                if (assetEquals(toFind, asset, true)) {
+                    return asset;
+                }
+            }
+            return undefined;
+        }
+
         isIDTaken(id: string) {
             return !!this.takenNames[id];
         }
@@ -208,8 +223,9 @@ namespace pxt {
             return cloned;
         }
 
-        serializeToJRes(allJRes: pxt.Map<JRes | string> = {}): pxt.Map<JRes | string> {
+        serializeToJRes(allJRes: pxt.Map<JRes | string> = {}, filter?: (asset: U) => boolean): pxt.Map<JRes | string> {
             for (const asset of this.assets) {
+                if (filter && !filter(asset)) continue;
                 addAssetToJRes(asset, allJRes);
             }
 
@@ -529,11 +545,19 @@ namespace pxt {
             this.state.tiles.removeByID(id);
         }
 
-        public getProjectTilesetJRes() {
+        public getProjectTilesetJRes(projectFiles?: pxt.Map<{content: string}>) {
             const blob: pxt.Map<any> = {};
 
             this.state.tiles.serializeToJRes(blob);
-            this.state.tilemaps.serializeToJRes(blob);
+
+            // tilemaps are always named assets, so if the user creates a bunch by
+            // accident (e.g. by dragging out blocks) we want to only serialize the ones
+            // that are actually used/nonempty
+            this.state.tilemaps.serializeToJRes(blob, asset => {
+                if (!projectFiles) return true;
+
+                return !pxt.sprite.isTilemapEmptyOrUnused(asset, this, projectFiles)
+            });
 
             blob["*"] = {
                 "mimeType": "image/x-mkcd-f4",
@@ -887,6 +911,16 @@ namespace pxt {
             return getAssetCollection(this.state, assetType).getByDisplayName(name);
         }
 
+        public lookupAssetByValue(assetType: AssetType.Image, toFind: ProjectImage): ProjectImage;
+        public lookupAssetByValue(assetType: AssetType.Tile, toFind: Tile): Tile;
+        public lookupAssetByValue(assetType: AssetType.Tilemap, toFind: ProjectTilemap): ProjectTilemap;
+        public lookupAssetByValue(assetType: AssetType.Animation, toFind: Animation): Animation;
+        public lookupAssetByValue(assetType: AssetType.Song, toFind: Song): Song;
+        public lookupAssetByValue(assetType: AssetType, toFind: Asset): Asset;
+        public lookupAssetByValue(assetType: AssetType, toFind: Asset) {
+            return getAssetCollection(this.state, assetType).getByValue(toFind);
+        }
+
         public getAssets(type: AssetType.Image): ProjectImage[];
         public getAssets(type: AssetType.Tile): Tile[];
         public getAssets(type: AssetType.Tilemap): ProjectTilemap[];
@@ -990,38 +1024,45 @@ namespace pxt {
                 const isProject = dep.id === "this";
                 const images = this.readImages(dep.parseJRes(), isProject);
 
-                for (const image of images) {
-                    image.meta.package = dep.id;
-                    if (image.type === AssetType.Tile) {
+                for (const toAdd of images) {
+                    toAdd.meta.package = dep.id;
+                    if (toAdd.type === AssetType.Tile) {
                         if (isProject) {
-                            this.state.tiles.add(image);
+                            this.state.tiles.add(toAdd);
                         }
                         else {
-                            this.gallery.tiles.add(image);
+                            this.gallery.tiles.add(toAdd);
                         }
                     }
-                    else if (image.type === AssetType.Image) {
+                    else if (toAdd.type === AssetType.Image) {
                         if (isProject) {
-                            this.state.images.add(image);
+                            this.state.images.add(toAdd);
                         }
                         else {
-                            this.gallery.images.add(image);
+                            this.gallery.images.add(toAdd);
                         }
                     }
-                    else if (image.type === AssetType.Animation) {
+                    else if (toAdd.type === AssetType.Animation) {
                         if (isProject) {
-                            this.state.animations.add(image);
+                            this.state.animations.add(toAdd);
                         }
                         else {
-                            this.gallery.animations.add(image);
+                            this.gallery.animations.add(toAdd);
                         }
                     }
                     else {
                         if (isProject) {
-                            this.state.songs.add(image);
+                            // there was a bug at one point that caused songs to be erroneously serialized
+                            // with ids in the myImages namespace. if that's the case here, remap the id to
+                            // the correct namespace before loading it
+                            const IMAGE_NAMESPACE = pxt.sprite.IMAGES_NAMESPACE + ".";
+                            if (toAdd.id.startsWith(IMAGE_NAMESPACE)) {
+                                toAdd.id = toAdd.id.replace(IMAGE_NAMESPACE, pxt.sprite.SONG_NAMESPACE + ".");
+                            }
+                            this.state.songs.add(toAdd);
                         }
                         else {
-                            this.gallery.songs.add(image);
+                            this.gallery.songs.add(toAdd);
                         }
                     }
                 }
@@ -1197,6 +1238,14 @@ namespace pxt {
             return clone;
         }
 
+        saveGallerySnapshot() {
+            return this.gallery;
+        }
+
+        loadGallerySnapshot(snapshot: AssetSnapshot) {
+            this.gallery = snapshot;
+        }
+
         protected generateImage(entry: JRes, type: AssetType.Image): ProjectImage;
         protected generateImage(entry: JRes, type: AssetType.Tile): Tile;
         protected generateImage(entry: JRes, type: AssetType.Image | AssetType.Tile): ProjectImage | Tile {
@@ -1234,7 +1283,7 @@ namespace pxt {
                     data = JSON.parse(entry.data);
                 }
                 catch (e) {
-                    console.warn("could not parse json data of '" + entry.id + "'");
+                    pxt.warn("could not parse json data of '" + entry.id + "'");
                 }
 
                 const anim: Animation = {
@@ -1640,9 +1689,17 @@ namespace pxt {
         const tmWidth = bytes[1] | (bytes[2] << 8);
         const tmHeight = bytes[3] | (bytes[4] << 8);
 
+        const tiles: Tile[] = jres.tileset.map(id => (resolveTile && resolveTile(id)) || { id } as any);
+        let tileWidth = bytes[0];
+
+        if (!tileWidth) {
+            tileWidth = tiles.length && tiles.find(t => t.bitmap?.width)?.bitmap.width;
+        }
+        tileWidth = tileWidth || 16;
+
         const tileset: TileSet = {
-            tileWidth: bytes[0],
-            tiles: jres.tileset.map(id => (resolveTile && resolveTile(id)) || { id } as any)
+            tileWidth,
+            tiles
         };
 
         const tilemapStart = 5;
@@ -1656,8 +1713,12 @@ namespace pxt {
         return new pxt.sprite.TilemapData(tilemap, tileset, layers);
     }
 
-    export function cloneAsset<U extends Asset>(asset: U): U {
+    export function cloneAsset<U extends Asset>(asset: U, includeEditorData = false): U {
         asset.meta = Object.assign({}, asset.meta);
+        if (asset.meta.temporaryInfo) {
+            asset.meta.temporaryInfo = Object.assign({}, asset.meta.temporaryInfo);
+        }
+
         switch (asset.type) {
             case AssetType.Tile:
             case AssetType.Image:
@@ -1673,7 +1734,7 @@ namespace pxt {
             case AssetType.Tilemap:
                 return {
                     ...asset,
-                    data: (asset as ProjectTilemap).data.cloneData()
+                    data: (asset as ProjectTilemap).data.cloneData(includeEditorData)
                 };
             case AssetType.Song:
                 return {
@@ -1769,14 +1830,17 @@ namespace pxt {
 
     }
 
-    export function assetEquals(a: Asset, b: Asset) {
+    export function assetEquals(a: Asset, b: Asset, valueOnly = false): boolean {
         if (a == b) return true;
-        if (a.id !== b.id || a.type !== b.type ||
-            !U.arrayEquals(a.meta.tags, b.meta.tags) ||
-            !U.arrayEquals(a.meta.blockIDs, b.meta.blockIDs) ||
-            a.meta.displayName !== b.meta.displayName
-        )
-            return false;
+        if (!a && b || !b && a || a.type !== b.type) return false;
+        if (!valueOnly) {
+            if (a.id !== b.id ||
+                !U.arrayEquals(a.meta.tags, b.meta.tags) ||
+                !U.arrayEquals(a.meta.blockIDs, b.meta.blockIDs) ||
+                a.meta.displayName !== b.meta.displayName
+            )
+                return false;
+        }
 
         switch (a.type) {
             case AssetType.Image:
@@ -1894,6 +1958,69 @@ namespace pxt {
         return getShortIDCore(asset.type, asset.id);
     }
 
+    export function validateAsset(asset: pxt.Asset) {
+        if (!asset) return false;
+
+        switch (asset.type) {
+            case AssetType.Image:
+            case AssetType.Tile:
+                return validateImageAsset(asset as ProjectImage | Tile);
+            case AssetType.Tilemap:
+                return validateTilemap(asset as ProjectTilemap);
+            case AssetType.Animation:
+                return validateAnimation(asset as Animation)
+            case AssetType.Song:
+                return validateSong(asset as Song);
+        }
+    }
+
+    function validateImageAsset(asset: ProjectImage | Tile) {
+        if (!asset.bitmap) return false;
+
+        return validateBitmap(sprite.Bitmap.fromData(asset.bitmap));
+    }
+
+    function validateTilemap(tilemap: ProjectTilemap) {
+        if (
+            !tilemap.data ||
+            !tilemap.data.tilemap ||
+            !tilemap.data.tileset ||
+            !tilemap.data.tileset.tileWidth ||
+            !tilemap.data.tileset.tiles?.length ||
+            !tilemap.data.layers
+        ) {
+            return false;
+        }
+
+        return validateBitmap(sprite.Bitmap.fromData(tilemap.data.layers)) &&
+            validateBitmap(tilemap.data.tilemap);
+    }
+
+    function validateAnimation(animation: Animation) {
+        if (!animation.frames?.length || animation.interval <= 0) {
+            return false;
+        }
+
+        return !animation.frames.some(frame => !validateBitmap(sprite.Bitmap.fromData(frame)));
+    }
+
+    function validateBitmap(bitmap: sprite.Bitmap) {
+        return bitmap.width > 0 &&
+            bitmap.height > 0 &&
+            !Number.isNaN(bitmap.x0) &&
+            !Number.isNaN(bitmap.y0) &&
+            bitmap.data().data.length === bitmap.dataLength();
+    }
+
+    function validateSong(song: Song) {
+        return song.song &&
+            song.song.ticksPerBeat > 0 &&
+            song.song.beatsPerMeasure > 0 &&
+            song.song.measures > 0 &&
+            song.song.beatsPerMinute > 0 &&
+            !!song.song.tracks;
+    }
+
     function getShortIDCore(assetType: pxt.AssetType, id: string, allowNoPrefix = false) {
         let prefix: string;
         switch (assetType) {
@@ -2008,12 +2135,6 @@ namespace pxt {
         }
     }
 
-
-    function set16Bit(buf: Uint8ClampedArray, offset: number, value: number) {
-        buf[offset] = value & 0xff;
-        buf[offset + 1] = (value >> 8) & 0xff;
-    }
-
     function read16Bit(buf: Uint8ClampedArray, offset: number) {
         return buf[offset] | (buf[offset + 1] << 8)
     }
@@ -2032,5 +2153,22 @@ namespace pxt {
             case AssetType.Tilemap: return snapshot.tilemaps;
             case AssetType.Song: return snapshot.songs;
         }
+    }
+
+    export function patchTemporaryAsset(oldValue: pxt.Asset, newValue: pxt.Asset, project: TilemapProject) {
+        if (!oldValue || assetEquals(oldValue, newValue)) return newValue;
+
+        newValue = cloneAsset(newValue, true);
+        const wasTemporary = !oldValue.meta.displayName;
+        const isTemporary = !newValue.meta.displayName;
+
+        // if we went from being temporary to no longer being temporary,
+        // make sure we replace the junk id with a new value
+        if (wasTemporary && !isTemporary) {
+            newValue.id = project.generateNewID(newValue.type);
+            newValue.internalID = project.getNewInternalId();
+        }
+
+        return newValue;
     }
 }

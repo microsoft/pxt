@@ -2,6 +2,7 @@ import * as Blockly from "blockly";
 import { getDefinition } from "./utils";
 import { MsgKey } from "./msg";
 import { ADD_IMAGE_DATAURI, REMOVE_IMAGE_DATAURI } from "./svgs";
+import { FieldVariable } from "../newVariableField/fieldVariable";
 
 export interface InlineSvgsExtensionBlock extends Blockly.Block {
     ADD_IMAGE_DATAURI: string;
@@ -57,8 +58,9 @@ const contextMenuEditMixin = {
             callback: () => {
                 const functionName = this.getField("function_name")!.getText();
                 const definition = getDefinition(functionName, this.workspace);
-                if (definition && this.workspace instanceof Blockly.WorkspaceSvg)
-                    this.workspace.centerOnBlock(definition.id);
+                if (definition && this.workspace instanceof Blockly.WorkspaceSvg) {
+                    this.workspace.centerOnBlock(definition.id, true);
+                }
             },
         };
         menuOptions.push(gtdOption);
@@ -80,13 +82,13 @@ const variableReporterMixin = {
             enabled: !this.workspace.options.readOnly,
             callback: () => {
                 const workspace = this.workspace;
-                const variable = (this.getField('VAR') as Blockly.FieldVariable).getVariable();
+                const variable = (this.getField('VAR') as FieldVariable).getVariable();
                 Blockly.Variables.renameVariable(workspace, variable);
             }
         };
         options.unshift(renameOption);
         if (!this.isInFlyout) {
-            const variablesList = this.workspace.getVariablesOfType('');
+            const variablesList = this.workspace.getVariableMap().getVariablesOfType('');
             // FIXME (riknoll): Probably need to make a custom field to make this work again
             // if (variablesList.length > 0) {
             //     const separator = { separator: true };
@@ -95,11 +97,11 @@ const variableReporterMixin = {
             for (const variable of variablesList) {
                 const option = {
                     enabled: !this.workspace.options.readOnly,
-                    text: variable.name,
+                    text: variable.getName(),
                     callback: () => {
                         let variableField = this.getField('VAR') as Blockly.FieldVariable;
                         if (!variableField) {
-                          console.log("Tried to get a variable field on the wrong type of block.");
+                          pxt.log("Tried to get a variable field on the wrong type of block.");
                         }
                         variableField.setValue(variable.getId());
                     }

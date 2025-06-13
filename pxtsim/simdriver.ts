@@ -21,13 +21,24 @@ namespace pxsim {
         nestedEditorSim?: boolean;
         parentOrigin?: string;
         mpRole?: string;    // multiplayer role: "client", "server", or undefined
+        // `messageSimulators` is @DEPRECATED. Use `simulatorExtensions` instead.
         messageSimulators?: pxt.Map<{
             url: string;
             localHostUrl?: string;
             aspectRatio?: number;
             permanent?: boolean;
         }>;
-        // needed when messageSimulators are used to provide to their frame
+        // Simulator extensions read from targetconfig.json's `approvedRepoLib` entry.
+        simulatorExtensions?: pxt.Map<{
+            // Fields from pxt.SimulatorExtensionConfig
+            aspectRatio?: number;
+            permanent?: boolean;
+            index?: string;
+            devUrl?: string;
+            // Additional fields outside of pxt.SimulatorExtensionConfig
+            url?: string; // Computed URL
+        }>;
+        // needed when simulatorExtensions are used to provide to their frame
         userLanguage?: string;
     }
 
@@ -95,6 +106,7 @@ namespace pxsim {
         private runId = '';
         private nextFrameId = 0;
         private frameCounter = 0;
+        private singleSimulator = false;
         private _currentRuntime: pxsim.SimulatorRunMessage;
         private listener: (ev: MessageEvent) => void;
         private traceInterval = 0;
@@ -120,16 +132,46 @@ namespace pxsim {
 
             this._allowedOrigins.push(this.getSimUrl().origin);
 
-            const messageSimulators = options?.messageSimulators
-            if (messageSimulators) {
-                Object.keys(messageSimulators)
-                    .map(channel => messageSimulators[channel])
-                    .forEach(messageSimulator => {
-                        this._allowedOrigins.push(new URL(messageSimulator.url).origin);
-                        if (messageSimulator.localHostUrl)
-                            this._allowedOrigins.push(new URL(messageSimulator.localHostUrl).origin);
-                    });
-            }
+            // Legacy support for message simulators
+            const messageSimulators = options?.messageSimulators || {};
+            Object.keys(messageSimulators)
+                .map(channel => messageSimulators[channel])
+                .forEach(messageSimulator => {
+                    this._allowedOrigins.push(new URL(messageSimulator.url).origin);
+                    if (messageSimulator.localHostUrl)
+                        this._allowedOrigins.push(new URL(messageSimulator.localHostUrl).origin);
+                });
+
+            // Preprocess simulator extensions
+            const simXDevMode = U.isLocalHost() && /[?&]simxdev(?:[=&#]|$)/i.test(window.location.href);
+            Object.entries(options?.simulatorExtensions || {}).forEach(([key, simx]) => {
+                // Verify essential `simx` config was provided
+                if (
+                    !simx ||
+                    !simx.index ||
+                    !simx.aspectRatio ||
+                    simx.permanent === undefined
+                ) {
+                    return;
+                }
+                // Compute the effective URL
+                if (simXDevMode && simx.devUrl) {
+                    // Use the dev URL if the dev flag is set (and we're on localhost)
+                    simx.url = new URL(simx.index, simx.devUrl).toString();
+                } else {
+                    const simUrl = this.getSimUrl();
+                    // Ensure we preserve upload target path (/app/<sha>---simulator)
+                    const simPath = simUrl.pathname.replace(/---?.*/, "");
+                    // Construct the path. The "-" element delineates the extension key from the resource name.
+                    const simxPath = [simPath, "simx", key, "-", simx.index].join("/");
+                    // Create the fully-qualified URL, preserving the origin by removing all leading slashes
+                    simx.url = new URL(simxPath.replace(/^\/+/, ""), simUrl.origin).toString();
+                }
+
+                // Add the origin to the allowed origins
+                this._allowedOrigins.push(new URL(simx.url).origin);
+            });
+
             this._allowedOrigins = U.unique(this._allowedOrigins, f => f);
         }
 
@@ -306,6 +348,10 @@ namespace pxsim {
             }
         }
 
+        public setSingleSimulator(){
+            this.singleSimulator = true
+        }
+
         public postMessage(msg: pxsim.SimulatorMessage, source?: Window, frameID?: string) {
             if (this.hwdbg) {
                 this.hwdbg.postMessage(msg)
@@ -349,8 +395,45 @@ namespace pxsim {
                         const messageSimulator = messageChannel &&
                             this.options.messageSimulators &&
                             this.options.messageSimulators[messageChannel];
-                        // should we start an extension editor?
-                        if (messageSimulator) {
+                        const simulatorExtension = messageChannel &&
+                            this.options.simulatorExtensions &&
+                            this.options.simulatorExtensions[messageChannel];
+
+                        const startSimulatorExtension = (url: string, permanent: boolean, aspectRatio: number) => {
+                            aspectRatio = aspectRatio || this._runOptions?.aspectRatio || 1.22;
+                            let wrapper = this.createFrame(url);
+                            this.container.appendChild(wrapper);
+                            const messageFrame = wrapper.firstElementChild as HTMLIFrameElement;
+                            messageFrame.dataset[FRAME_DATA_MESSAGE_CHANNEL] = messageChannel;
+                            messageFrame.dataset[FRAME_ASPECT_RATIO] = aspectRatio + "";
+                            pxsim.U.addClass(wrapper, "simmsg")
+                            pxsim.U.addClass(wrapper, "simmsg" + U.sanitizeCssName(messageChannel))
+                            if (permanent)
+                                messageFrame.dataset[PERMANENT] = "true";
+                            this.startFrame(messageFrame);
+                            frames = this.simFrames(); // refresh
+                        }
+
+                        // should we start a simulator extension for this message?
+                        if (simulatorExtension) {
+                            // find a frame already running that simulator
+                            let messageFrame = frames.find(frame => frame.dataset[FRAME_DATA_MESSAGE_CHANNEL] === messageChannel);
+                            // not found, spin a new one
+                            if (!messageFrame) {
+                                const url = new URL(simulatorExtension.url);
+                                if (this.options.parentOrigin)
+                                    url.searchParams.set("parentOrigin", encodeURIComponent(this.options.parentOrigin));
+                                if (this.options.userLanguage)
+                                    url.searchParams.set("language", encodeURIComponent(this.options.userLanguage));
+                                startSimulatorExtension(url.toString(), simulatorExtension.permanent, simulatorExtension.aspectRatio);
+                            }
+                            // not running the current run, restart
+                            else if (messageFrame.dataset['runid'] != this.runId) {
+                                this.startFrame(messageFrame);
+                            }
+                        }
+                        // (legacy: messageSimulator) should we start a message simulator for this message?
+                        else if (messageSimulator) {
                             // find a frame already running that simulator
                             let messageFrame = frames.find(frame => frame.dataset[FRAME_DATA_MESSAGE_CHANNEL] === messageChannel);
                             // not found, spin a new one
@@ -359,16 +442,7 @@ namespace pxsim {
                                 const url = ((useLocalHost && messageSimulator.localHostUrl) || messageSimulator.url)
                                     .replace("$PARENT_ORIGIN$", encodeURIComponent(this.options.parentOrigin || ""))
                                     .replace("$LANGUAGE$", encodeURIComponent(this.options.userLanguage))
-                                let wrapper = this.createFrame(url);
-                                this.container.appendChild(wrapper);
-                                messageFrame = wrapper.firstElementChild as HTMLIFrameElement;
-                                messageFrame.dataset[FRAME_DATA_MESSAGE_CHANNEL] = messageChannel;
-                                pxsim.U.addClass(wrapper, "simmsg")
-                                pxsim.U.addClass(wrapper, "simmsg" + messageChannel)
-                                if (messageSimulator.permanent)
-                                    messageFrame.dataset[PERMANENT] = "true";
-                                this.startFrame(messageFrame);
-                                frames = this.simFrames(); // refresh
+                                startSimulatorExtension(url, messageSimulator.permanent, messageSimulator.aspectRatio);
                             }
                             // not running the curren run, restart
                             else if (messageFrame.dataset['runid'] != this.runId) {
@@ -378,11 +452,16 @@ namespace pxsim {
                             isDeferrableBroadcastMessage = true;
                             // start secondary frame if needed
                             const mkcdFrames = frames.filter(frame => !frame.dataset[FRAME_DATA_MESSAGE_CHANNEL]);
-                            if (mkcdFrames.length < 2) {
+                            if (!messageChannel &&
+                                    (mkcdFrames.length == 0 || mkcdFrames.length == 1 && !this.singleSimulator)) {
+                                // messageChannel is set to false whenever msg.type !== "messagepacket"
+                                // for example, in the case of msg.type === "radiopacket". However, in the case
+                                // where we have msg.type === "messagepacket" and msg.channel is not matched by an
+                                // extension, we don't want a second simulator to be created. 
                                 this.container.appendChild(this.createFrame());
                                 frames = this.simFrames();
                                 // there might be an old frame
-                            } else if (mkcdFrames[1].dataset['runid'] != this.runId) {
+                            } else if (mkcdFrames.length == 2 && mkcdFrames[1].dataset['runid'] != this.runId) {
                                 this.startFrame(mkcdFrames[1]);
                             }
                         }
@@ -727,6 +806,7 @@ namespace pxsim {
 
             if (!this._currentRuntime) return; // nothing to do
 
+            this.singleSimulator = false;
             this.breakpointsSet = false;
 
             // first frame
@@ -735,8 +815,8 @@ namespace pxsim {
                 let wrapper = this.createFrame();
                 this.container.appendChild(wrapper);
                 frame = wrapper.firstElementChild as HTMLIFrameElement;
-            } else // reuse simulator
-                this.startFrame(frame);
+            }
+            this.startFrame(frame);
 
             this.debuggingFrame = frame.id;
 
@@ -893,7 +973,7 @@ namespace pxsim {
                     msg = 'pause';
                     break;
                 default:
-                    console.debug('unknown command')
+                    pxsim.debug('unknown command')
                     return;
             }
 
@@ -937,7 +1017,7 @@ namespace pxsim {
 
         private handleDebuggerMessage(msg: pxsim.DebuggerMessage) {
             if (msg.subtype !== "trace") {
-                console.log("DBG-MSG", msg.subtype, msg)
+                pxsim.log("DBG-MSG", msg.subtype, msg)
             }
 
             // resolve any request
@@ -974,9 +1054,9 @@ namespace pxsim {
                             let fi = s.funcInfo
                             stackTrace += `   at ${fi.functionName} (${fi.fileName}:${fi.line + 1}:${fi.column + 1})\n`
                         }
-                        if (brk.exceptionMessage) console.error(stackTrace);
+                        if (brk.exceptionMessage) pxsim.error(stackTrace);
                     } else {
-                        console.error("debugger: trying to pause from " + this.state);
+                        pxsim.error("debugger: trying to pause from " + this.state);
                     }
                     break;
                 }

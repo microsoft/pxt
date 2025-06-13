@@ -741,7 +741,7 @@ namespace pxt.cpp {
                         argsFmt,
                         value: null
                     }
-                    //console.log(`${ln.trim()} : ${argsFmt}`)
+                    //pxt.log(`${ln.trim()} : ${argsFmt}`)
                     if (currDocComment) {
                         shimsDTS.setNs(toJs(currNs))
                         shimsDTS.write("")
@@ -1482,7 +1482,7 @@ namespace pxt.hexloader {
                 try { keys = JSON.parse(res || "[]") }
                 catch (e) {
                     // cache entry is corrupted, clear cache so that it gets rebuilt
-                    console.error('invalid cache entry, clearing entry');
+                    pxt.error('invalid cache entry, clearing entry');
                     keys = [];
                 }
                 keys = keys.filter(k => k != newkey)
@@ -1501,7 +1501,7 @@ namespace pxt.hexloader {
                 try { keys = JSON.parse(res || "[]") }
                 catch (e) {
                     // cache entry is corrupted, clear cache so that it gets rebuilt
-                    console.error('invalid cache entry, clearing entry');
+                    pxt.error('invalid cache entry, clearing entry');
                     return host.cacheStoreAsync(idxkey, "[]")
                 }
                 if (keys[0] != newkey) {
@@ -1531,7 +1531,7 @@ namespace pxt.hexloader {
                 try { cachedMeta = res ? JSON.parse(res) : null }
                 catch (e) {
                     // cache entry is corrupted, clear cache so that it gets rebuilt
-                    console.log('invalid cache entry, clearing entry');
+                    pxt.log('invalid cache entry, clearing entry');
                     cachedMeta = null;
                 }
                 if (cachedMeta && cachedMeta.hex) {

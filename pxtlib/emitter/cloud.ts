@@ -8,6 +8,7 @@ namespace pxt.Cloud {
     export let localToken = "";
     let _isOnline = true;
     export let onOffline = () => { };
+    let region: string = undefined;
 
     function offlineError(url: string) {
         let e: any = new Error(Util.lf("Cannot access {0} while offline", url));
@@ -32,6 +33,7 @@ namespace pxt.Cloud {
     export function useCdnApi() {
         return pxt.webConfig && !pxt.webConfig.isStatic
             && !BrowserUtils.isLocalHost() && !!pxt.webConfig.cdnUrl
+            && (typeof window === "undefined" || !/nocdn=1/i.test(window.location.href));
     }
 
     export function cdnApiUrl(url: string) {
@@ -135,7 +137,7 @@ namespace pxt.Cloud {
         return resp.json;
     }
 
-    export async function markdownAsync(docid: string, locale?: string, propagateExceptions?: boolean): Promise<string> {
+    export async function markdownAsync(docid: string, locale?: string, propagateExceptions?: boolean, downloadTutorialBundle?: boolean): Promise<string> {
         // 1h check on markdown content if not on development server
         const MARKDOWN_EXPIRATION = pxt.BrowserUtils.isLocalHostDev() ? 0 : 1 * 60 * 60 * 1000;
         // 1w check don't use cached version and wait for new content
@@ -148,7 +150,7 @@ namespace pxt.Cloud {
 
         const downloadAndSetMarkdownAsync = async () => {
             try {
-                const r = await downloadMarkdownAsync(docid, locale, entry?.etag);
+                const r = await downloadMarkdownAsync(docid, locale, entry?.etag, downloadTutorialBundle);
                 // TODO directly compare the entry/response etags after backend change
                 if (!entry || (r.md && entry.md !== r.md)) {
                     await db.setAsync(locale, docid, r.etag, undefined, r.md);
@@ -189,10 +191,12 @@ namespace pxt.Cloud {
         return downloadAndSetMarkdownAsync();
     }
 
-    function downloadMarkdownAsync(docid: string, locale?: string, etag?: string): Promise<{ md: string; etag?: string; }> {
+    async function downloadMarkdownAsync(docid: string, locale?: string, etag?: string, downloadTutorialBundle?: boolean): Promise<{ md: string; etag?: string; }> {
         const packaged = pxt.webConfig?.isStatic;
         const targetVersion = pxt.appTarget.versions && pxt.appTarget.versions.target || '?';
         let url: string;
+
+        const searchParams = new URLSearchParams();
 
         if (packaged) {
             url = docid;
@@ -205,12 +209,17 @@ namespace pxt.Cloud {
             if (!hasExt) {
                 url = `${url}.md`;
             }
-        } else {
-            url = `md/${pxt.appTarget.id}/${docid.replace(/^\//, "")}?targetVersion=${encodeURIComponent(targetVersion)}`;
+        }
+        else {
+            url = `md/${pxt.appTarget.id}/${docid.replace(/^\//, "")}`;
+            searchParams.set("targetVersion", targetVersion);
         }
         if (locale != "en") {
-            url += `${packaged ? "?" : "&"}lang=${encodeURIComponent(locale)}`
+            searchParams.set("lang", locale);
         }
+
+        url = pxt.BrowserUtils.appendUrlQueryParams(url, searchParams);
+
         if (pxt.BrowserUtils.isLocalHost() && !pxt.Util.liveLocalizationEnabled()) {
             return localRequestAsync(url).then(resp => {
                 if (resp.statusCode == 404)
@@ -218,11 +227,33 @@ namespace pxt.Cloud {
                         .then(resp => { return { md: resp.text, etag: <string>resp.headers["etag"] }; });
                 else return { md: resp.text, etag: undefined };
             });
-        } else {
-            const headers: pxt.Map<string> = etag && !useCdnApi() ? { "If-None-Match": etag } : undefined;
-            return apiRequestWithCdnAsync({ url, method: "GET", headers })
-                .then(resp => { return { md: resp.text, etag: <string>resp.headers["etag"] }; });
         }
+
+        const headers: pxt.Map<string> = etag && !useCdnApi() ? { "If-None-Match": etag } : undefined;
+
+        let resp: Util.HttpResponse;
+        let md: string;
+
+        if (!packaged && downloadTutorialBundle) {
+            url = url.replace(/^md\//, "ghtutorial/docs/");
+            resp = await apiRequestWithCdnAsync({ url, method: "GET", headers });
+
+            const body = resp.json as pxt.github.GHTutorialResponse;
+            await pxt.github.db.cacheReposAsync(body);
+
+            md = body.markdown as string;
+        }
+        else {
+            resp = await apiRequestWithCdnAsync({ url, method: "GET", headers });
+            md = resp.text;
+        }
+
+        return (
+            {
+                md,
+                etag: (resp.headers["etag"] as string)
+            }
+        );
     }
 
     export function privateDeleteAsync(path: string) {
@@ -278,6 +309,38 @@ namespace pxt.Cloud {
             return scriptid;
 
         return undefined;
+    }
+
+    export async function initRegionAsync(): Promise<void> {
+        if (BrowserUtils.isLocalHost()) {
+            region = cloud.DEV_REGION;
+            return;
+        }
+
+        if (region !== undefined || !pxt.webConfig?.cdnUrl) {
+            return;
+        }
+
+        const url = new URL("geo", pxt.webConfig.cdnUrl).toString();
+        const options: Util.HttpRequestOptions = { url };
+
+        try {
+            const response = await Util.requestAsync(options);
+            if (response.statusCode !== 200) {
+                pxt.error(`Failed to get region: ${response.statusCode}`);
+            }
+            region = response.text.trim();
+        } catch (e) {
+            handleNetworkError(options, e);
+        }
+    }
+
+    export function getRegion(): string {
+        if (!region) {
+            pxt.error("Accessing region before it is initialized. Call initRegionAsync first.");
+        }
+
+        return region;
     }
 
     //

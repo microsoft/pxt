@@ -499,6 +499,13 @@ namespace pxsim {
         class Channel {
             generator: OscillatorNode | AudioBufferSourceNode;
             gain: GainNode
+
+            constructor() {
+                this.gain = context().createGain();
+                this.gain.connect(destination);
+                this.gain.gain.value = 0;
+            }
+
             disconnectNodes() {
                 if (this.gain)
                     disconnectVca(this.gain, this.generator)
@@ -605,16 +612,8 @@ namespace pxsim {
                 let nodes: AudioBufferSourceNode[] = [];
                 let nextTime = context().currentTime;
                 let allScheduled = false;
-                const channel = new Channel();
-
-                channel.gain = context().createGain();
-                channel.gain.gain.value = 0;
+                const channel = getChannel();
                 channel.gain.gain.setValueAtTime(volume, context().currentTime);
-                channel.gain.connect(destination);
-
-                if (channels.length > 20)
-                    channels[0].remove()
-                channels.push(channel);
 
                 const checkCancel = () => {
                     if (isCancelled && isCancelled() || !channel.gain) {
@@ -687,17 +686,8 @@ namespace pxsim {
                 soundEventCallback?.("playinstructions", instructions);
                 let resolved = false;
                 let ctx = context();
-                let channel = new Channel()
-
-                if (channels.length > 20)
-                    channels[0].remove()
-                channels.push(channel);
-
-
-                channel.gain = ctx.createGain();
+                let channel = getChannel();
                 channel.gain.gain.value = 1;
-
-                channel.gain.connect(destination);
 
                 const oscillators: pxt.Map<OscillatorNode | AudioBufferSourceNode> = {};
                 const gains: pxt.Map<GainNode> = {};
@@ -849,7 +839,7 @@ namespace pxsim {
             const noteNumber = data[1] || 0;
             const noteFrequency = frequencyFromMidiNoteNumber(noteNumber);
             const velocity = data[2] || 0;
-            //console.log(`midi: cmd ${cmd} channel (-1) ${channel} note ${noteNumber} f ${noteFrequency} v ${velocity}`)
+            //pxsim.log(`midi: cmd ${cmd} channel (-1) ${channel} note ${noteNumber} f ${noteFrequency} v ${velocity}`)
 
             // play drums regardless
             if (cmd == 8 || ((cmd == 9) && (velocity == 0))) { // with MIDI, note on with velocity zero is the same as note off
@@ -861,6 +851,81 @@ namespace pxsim {
                 if (channel == 9) // drums don't call noteOff
                     setTimeout(() => stopTone(), 500);
             }
+        }
+
+        export interface PlaySampleResult {
+            promise: Promise<void>;
+            cancel: () => void;
+        }
+
+        export function startSamplePlayback(sample: RefBuffer, format: BufferMethods.NumberFormat, sampleRange: number, sampleRate: number, gain: number): PlaySampleResult {
+            let channel: Channel;
+            let _resolve: () => void;
+
+            const cancel = () => {
+                if (!channel) return;
+                channel.remove();
+                channel = undefined;
+                _resolve();
+            }
+
+            const promise = new Promise<void>(resolve => {
+                _resolve = resolve;
+                let playbackRate = 1;
+                // chrome errors out if the sample rate is outside [3000, 768000]
+                if (sampleRate < 3000) {
+                    playbackRate = sampleRate / 3000;
+                    sampleRate = 3000;
+                }
+                else if (sampleRate > 768000) {
+                    playbackRate = sampleRate / 768000;
+                    sampleRate = 768000;
+                }
+
+
+                const size = BufferMethods.fmtInfo(format).size;
+                const buf = context().createBuffer(
+                    1,
+                    sample.data.length / size,
+                    sampleRate
+                );
+
+                const data = buf.getChannelData(0);
+
+                for (let i = 0; i < buf.length; i++) {
+                    data[i] = (BufferMethods.getNumber(sample, format, i * size) / sampleRange) * 2 - 1
+                }
+
+                channel = getChannel();
+
+                const node = context().createBufferSource();;
+                node.playbackRate.value = playbackRate;
+
+                channel.gain.gain.value = gain;
+                channel.generator = node;
+                channel.generator.buffer = buf;
+                channel.generator.connect(channel.gain);
+                channel.generator.start(0);
+
+                channel.generator.addEventListener("ended", () => {
+                    channel.remove();
+                    channel = undefined;
+                    resolve();
+                });
+            });
+
+            return {
+                promise,
+                cancel
+            };
+        }
+
+        function getChannel() {
+            if (channels.length > 20)
+                channels[0].remove();
+            const channel = new Channel();
+            channels.push(channel);
+            return channel;
         }
     }
 

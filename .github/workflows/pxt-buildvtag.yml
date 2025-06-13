@@ -1,0 +1,45 @@
+name: pxt-buildvtag
+
+on:
+  push:
+    tags:
+      - 'v*' # Run workflow when any new semver-ish tag is pushed
+
+jobs:
+  filter-vtags:
+    uses: ./.github/workflows/is-vtag.yml
+
+  buildvtag:
+    name: buildvtag
+    # Only run this job if the push is a version tag
+    needs: filter-vtags
+    if: fromJSON(needs.filter-vtags.outputs.is_vtag || 'false') == true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@main
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Use Node.js
+        uses: actions/setup-node@main
+        with:
+          node-version: 18.x
+
+      - name: npm install
+        run: |
+          sudo apt-get install xvfb
+          sudo npm install -g pxt
+          npm install
+
+      - name: npm run test:publish
+        run: |
+          npm run test:publish
+        env:
+          CROWDIN_KEY: ${{ secrets.CROWDIN_KEY }}
+          PXT_ACCESS_TOKEN: ${{ secrets.PXT_ACCESS_TOKEN }}
+          NPM_ACCESS_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}
+          PXT_ENV: production
+          CHROME_BIN: chromium-browser
+          DISPLAY: :99.0
+          CI: true

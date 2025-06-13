@@ -45,7 +45,8 @@
 <block type="soundExpression_playSoundEffect">
 <field name="mode">SoundExpressionPlayMode.UntilDone</field>
 <value name="sound">
-<shadow type="soundExpression_createSoundEffect">
+<shadow type="soundExpression_createSoundEffect"/>
+<block type="soundExpression_createSoundEffect">
 <mutation _expanded="5" />
 <field name="waveShape">WaveShape.Sine</field>
 <field name="effect">SoundExpressionEffect.None</field>
@@ -92,13 +93,14 @@
 <field name="SLIDER">50</field>
 </shadow>
 </value>
-</shadow>
+</block>
 </value>
 <next>
 <block type="soundExpression_playSoundEffect">
 <field name="mode">SoundExpressionPlayMode.UntilDone</field>
 <value name="sound">
-<shadow type="soundExpression_createSoundEffect">
+<shadow type="soundExpression_createSoundEffect"/>
+<block type="soundExpression_createSoundEffect">
 <mutation _expanded="3" />
 <field name="waveShape">WaveShape.Sine</field>
 <field name="effect">SoundExpressionEffect.None</field>
@@ -145,7 +147,7 @@
 </value>
 </block>
 </value>
-</shadow>
+</block>
 </value>
 </block>
 </next>

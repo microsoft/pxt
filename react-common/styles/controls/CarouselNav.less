@@ -1,0 +1,77 @@
+.common-carousel-nav {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+
+    .common-carousel-nav-arrow {
+        min-height: 1rem;
+        min-width: 1rem;
+        padding: 0;
+        background: none;
+        color: white;
+        width: 1.25rem;
+        height: 1.25rem;
+
+        margin: 0;
+
+        i.fas {
+            width: 1.25rem;
+        }
+
+        &.disabled {
+            opacity: 0.5;
+        }
+    }
+
+    ul {
+        list-style: none;
+        margin: 0;
+        margin-left: 0.125rem;
+        margin-right: 0.125rem;
+        margin-block: 0;
+        padding-inline: 0;
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        height: 1.25rem;
+    }
+
+    li {
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        height: 1rem;
+        width: 1rem;
+
+        .common-button {
+            width: 1rem;
+            height: 1rem;
+            padding: 0.3rem;
+            background: none;
+
+            .common-carousel-nav-button-handle {
+                background-color: white;
+                border-radius: 100%;
+                height: 0.4rem;
+                width: 0.4rem;
+                display: block;
+            }
+
+            &.selected {
+                padding: 0.125rem;
+
+                .common-carousel-nav-button-handle {
+                    height: 0.75rem;
+                    width: 0.75rem;
+                }
+            }
+        }
+    }
+
+    .common-button:focus-visible::after {
+        inset: -1px;
+    }
+}

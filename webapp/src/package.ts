@@ -506,7 +506,7 @@ export class EditorPackage {
         const existingTS = this.lookupFile("this/" + pxt.TILEMAP_CODE);
         const existingJRES = this.lookupFile("this/" + pxt.TILEMAP_JRES);
 
-        const jres = this.tilemapProject.getProjectTilesetJRes();
+        const jres = this.tilemapProject.getProjectTilesetJRes(this.files);
 
         if (!existingTS && Object.keys(jres).length === 1) return Promise.resolve();
 
@@ -1000,4 +1000,53 @@ export function getExtensionOfFileName(filename: string) {
 
 async function getHostCacheAsync(): Promise<pxt.BrowserUtils.IDBObjectStoreWrapper<{id: string, val: string}>> {
     return getObjectStoreAsync(HOSTCACHE_TABLE)
+}
+
+export function getProjectToolboxFilters() {
+    const filters: pxt.editor.ProjectFilters = {};
+
+    const deps = mainPkg.sortedDeps();
+    // sort the dependencies by level and then id. lower level overrides
+    // higher level
+    deps.sort((a, b) => {
+        if (a.level === b.level) {
+            return pxt.U.strcmp(a.id, b.id);
+        }
+        return b.level - a.level;
+    });
+
+    const applyProjectFilter = (projectFilter: pxt.PackageConfig["toolboxFilter"], key: keyof pxt.PackageConfig["toolboxFilter"]) => {
+        if (!projectFilter[key]) {
+            return
+        }
+
+        if (!filters[key]) {
+            filters[key] = {};
+        }
+
+        for (const entry of Object.keys(projectFilter[key])) {
+            const value = String(projectFilter[key][entry]).toLowerCase();
+            if (value === "hidden") {
+                filters[key][entry] = pxt.editor.FilterState.Hidden;
+            }
+            else if (value === "visible") {
+                filters[key][entry] = pxt.editor.FilterState.Visible;
+            }
+            else if (value === "disabled") {
+                filters[key][entry] = pxt.editor.FilterState.Disabled;
+            }
+        }
+    }
+
+    for (const dep of deps) {
+        const projectFilter = dep.config?.toolboxFilter;
+        if (!projectFilter) {
+            continue;
+        }
+
+        applyProjectFilter(projectFilter, "blocks");
+        applyProjectFilter(projectFilter, "namespaces");
+    }
+
+    return filters;
 }

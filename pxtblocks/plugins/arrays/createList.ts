@@ -2,6 +2,7 @@ import * as Blockly from "blockly";
 import { FUNCTION_CALL_OUTPUT_BLOCK_TYPE } from "../functions/constants";
 import { CommonFunctionBlock } from "../functions/commonFunctionMixin";
 import { InlineSvgsExtensionBlock } from "../functions";
+import { FieldImageNoText } from "../../fields/field_imagenotext";
 
 type ListCreateMixinType = typeof LIST_CREATE_MIXIN;
 
@@ -176,7 +177,7 @@ const LIST_CREATE_MIXIN = {
             }, Blockly.config.bumpDelay);
         }
         if (block.rendered && block instanceof Blockly.BlockSvg) {
-            block.render();
+            block.queueRender();
         }
         Blockly.Events.setGroup(false);
     },
@@ -220,9 +221,9 @@ const LIST_CREATE_MIXIN = {
         if (this.getInput('BUTTONS')) this.removeInput('BUTTONS');
         const buttons = this.appendDummyInput('BUTTONS');
         if (this.itemCount_ > 0) {
-            buttons.appendField(new Blockly.FieldImage(this.REMOVE_IMAGE_DATAURI, 24, 24, "*", remove, false));
+            buttons.appendField(new FieldImageNoText(this.REMOVE_IMAGE_DATAURI, 24, 24, "*", remove, false));
         }
-        buttons.appendField(new Blockly.FieldImage(this.ADD_IMAGE_DATAURI, 24, 24, "*", add, false));
+        buttons.appendField(new FieldImageNoText(this.ADD_IMAGE_DATAURI, 24, 24, "*", add, false));
 
         /* Switch to vertical list when the list is too long */
         const showHorizontalList = this.itemCount_ <= this.horizontalAfter_;

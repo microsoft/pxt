@@ -138,7 +138,7 @@ namespace ts.pxtc.assembler {
                             }
                         }
                         if (this.ei.is32bit(this)) {
-                            // console.log(actual + " " + v.toString())
+                            // pxt.log(actual + " " + v.toString())
                             bit32_value = v
                             bit32_actual = actual
                             continue
@@ -152,7 +152,7 @@ namespace ts.pxtc.assembler {
 
                     v = enc.encode(v)
 
-                    // console.log("enc(v) = ",v)
+                    // pxt.log("enc(v) = ",v)
                     if (v == null) return emitErr("argument out of range or mis-aligned", actual);
                     assert((r & v) == 0)
                     r |= v;
@@ -395,9 +395,9 @@ namespace ts.pxtc.assembler {
                     if (mul != 1)
                         this.directiveError(lf("multiplication not supported with saved stacks"));
                     if (this.stackpointers.hasOwnProperty(m[1])) {
-                        // console.log(m[1] + ": " + this.stack + " " + this.stackpointers[m[1]] + " " + m[2])
+                        // pxt.log(m[1] + ": " + this.stack + " " + this.stackpointers[m[1]] + " " + m[2])
                         v = this.ei.wordSize() * this.ei.computeStackOffset(m[1], this.stack - this.stackpointers[m[1]] + parseInt(m[2]))
-                        // console.log(v)
+                        // pxt.log(v)
                     }
                     else
                         this.directiveError(lf("saved stack not found"))
@@ -1067,7 +1067,7 @@ namespace ts.pxtc.assembler {
             return r
         }
 
-        public getSource(clean: boolean, numStmts = 1, flashSize = 0) {
+        public getSource(clean: boolean, numStmts = 1, usableEnd = 0) {
             let lenPrev = 0
             let size = (lbl: string) => {
                 let curr = this.labels[lbl] || lenPrev
@@ -1081,18 +1081,18 @@ namespace ts.pxtc.assembler {
             let lenVtables = size("_vtables_end")
             let lenLiterals = size("_literals_end")
             let lenAllCode = lenPrev
-            let totalSize = (lenTotal + this.baseOffset) & 0xffffff
+            let totalEnd = (lenTotal + this.baseOffset) & 0xffffff
 
-            if (flashSize && totalSize > flashSize) {
-                const e = new Error(lf("program too big by {0} bytes!", totalSize - flashSize));
+            if (usableEnd && totalEnd > usableEnd) {
+                const e = new Error(lf("program too big by {0} bytes!", totalEnd - usableEnd));
                 (e as any).ksErrorCode = 9283;
                 throw e;
             }
 
-            flashSize = flashSize || 128 * 1024
+            usableEnd = usableEnd || 128 * 1024
             let totalInfo = lf("; total bytes: {0} ({1}% of {2}k flash with {3} free)",
-                totalSize, (100 * totalSize / flashSize).toFixed(1), (flashSize / 1024).toFixed(1),
-                flashSize - totalSize)
+                totalEnd, (100 * totalEnd / usableEnd).toFixed(1), (usableEnd / 1024).toFixed(1),
+                usableEnd - totalEnd)
             let res =
                 // ARM-specific
                 lf("; generated code sizes (bytes): {0} (incl. {1} user, {2} helpers, {3} vtables, {4} lits); src size {5}\n",
@@ -1441,7 +1441,7 @@ namespace ts.pxtc.assembler {
         if (b.errors.length == 0) {
             oops("ASMTEST: expecting error for: " + asm)
         }
-        // console.log(b.errors[0].message)
+        // pxt.log(b.errors[0].message)
     }
 
     export function tohex(n: number) {
@@ -1465,7 +1465,7 @@ namespace ts.pxtc.assembler {
         b.disablePeepHole = true;
         b.emit(asm);
         if (b.errors.length > 0) {
-            console.debug(b.errors[0].message)
+            pxt.debug(b.errors[0].message)
             oops("ASMTEST: not expecting errors")
         }
 

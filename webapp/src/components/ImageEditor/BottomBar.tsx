@@ -3,11 +3,11 @@ import * as React from "react";
 import { connect } from 'react-redux';
 import { ImageEditorStore, AnimationState, TilemapState } from './store/imageReducer';
 import { dispatchChangeImageDimensions, dispatchUndoImageEdit, dispatchRedoImageEdit, dispatchToggleAspectRatioLocked, dispatchChangeZoom, dispatchToggleOnionSkinEnabled, dispatchChangeAssetName } from './actions/dispatch';
-import { IconButton } from "./Button";
 import { fireClickOnlyOnEnter } from "./util";
 import { isNameTaken } from "../../assets";
 import { obtainShortcutLock, releaseShortcutLock } from "./keyboardShortcuts";
 import { classList } from "../../../../react-common/components/util";
+import { Button } from "../../../../react-common/components/controls/Button";
 
 export interface BottomBarProps {
     dispatchChangeImageDimensions: (dimensions: [number, number]) => void;
@@ -93,12 +93,11 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
                             onKeyDown={this.handleDimensionalKeydown}
                         />
 
-                        <IconButton
+                        <Button
+                            className={classList("image-editor-button", !aspectRatioLocked && "toggle")}
                             onClick={dispatchToggleAspectRatioLocked}
-                            iconClass={aspectRatioLocked ? "ms-Icon ms-Icon--Lock" : "ms-Icon ms-Icon--Unlock"}
+                            leftIcon={aspectRatioLocked ? "ms-Icon ms-Icon--Lock" : "ms-Icon ms-Icon--Unlock"}
                             title={aspectRatioLocked ? lf("Unlock Aspect Ratio") : lf("Lock Aspect Ratio")}
-                            toggle={!aspectRatioLocked}
-                            noTab
                         />
 
                         <input className="image-editor-input"
@@ -114,11 +113,11 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
                 }
                 { !singleFrame && <div className="image-editor-seperator"/> }
                 { !singleFrame && <div>
-                    <IconButton
+                    <Button
                         onClick={dispatchToggleOnionSkinEnabled}
-                        iconClass="ms-Icon ms-Icon--MapLayers"
+                        className={classList("image-editor-button", !onionSkinEnabled && "toggle")}
+                        leftIcon="ms-Icon ms-Icon--MapLayers"
                         title={onionSkinEnabled ? lf("Hide Previous Frame") : lf("Show Previous Frame")}
-                        toggle={!onionSkinEnabled}
                     />
                 </div> }
                 { !resizeDisabled && <div className={classList("image-editor-seperator", !cursorLocation && "transparent")}/> }
@@ -145,42 +144,44 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
                     }
                 </div>
                 <div className="image-editor-undo-redo">
-                    <IconButton
+                    <Button
+                        className="image-editor-button"
                         title={lf("Undo")}
-                        iconClass="ms-Icon ms-Icon--Undo"
+                        leftIcon="ms-Icon ms-Icon--Undo"
                         onClick={hasUndo ? dispatchUndoImageEdit : null}
                         disabled={!hasUndo}
                     />
-                    <IconButton
+                    <Button
+                        className="image-editor-button"
                         title={lf("Redo")}
-                        iconClass="ms-Icon ms-Icon--Redo"
+                        leftIcon="ms-Icon ms-Icon--Redo"
                         onClick={hasRedo ? dispatchRedoImageEdit : null}
                         disabled={!hasRedo}
                     />
                 </div>
                 <div className="image-editor-seperator"/>
                 <div className="image-editor-zoom-controls">
-                    <IconButton
+                    <Button
+                        className="image-editor-button toggle"
                         onClick={this.zoomOut}
-                        iconClass="ms-Icon ms-Icon--ZoomOut"
+                        leftIcon="ms-Icon ms-Icon--ZoomOut"
                         title={lf("Zoom Out")}
-                        toggle={true}
                     />
-                    <IconButton
+                    <Button
+                        className="image-editor-button toggle"
                         onClick={this.zoomIn}
-                        iconClass="ms-Icon ms-Icon--ZoomIn"
+                        leftIcon="ms-Icon ms-Icon--ZoomIn"
                         title={lf("Zoom In")}
-                        toggle={true}
                     />
                 </div>
-                {!hideDoneButton && <div role="button"
-                    className={`image-editor-confirm`}
-                    title={lf("Done")}
-                    tabIndex={0}
-                    onClick={onDoneClick}
-                    onKeyDown={fireClickOnlyOnEnter}>
-                        {lf("Done")}
-                </div>}
+                {!hideDoneButton &&
+                    <Button
+                        className="image-editor-confirm"
+                        title={lf("Done")}
+                        label={lf("Done")}
+                        onClick={onDoneClick}
+                    />
+                }
             </div>
         );
     }

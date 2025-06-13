@@ -6,6 +6,7 @@ import * as pxtblockly from "../../pxtblocks";
 
 import U = pxt.Util;
 import { postHostMessageAsync, shouldPostHostMessages } from "../../pxteditor";
+import { Measurements } from "./constants";
 
 function setDiagnostics(operation: "compile" | "decompile" | "typecheck", diagnostics: pxtc.KsDiagnostic[], sourceMap?: pxtc.SourceInterval[]) {
     let mainPkg = pkg.mainEditorPkg();
@@ -462,7 +463,7 @@ function decompileSnippetsCoreAsync(opts: pxtc.CompileOptions): Promise<string[]
     return workerOpAsync("decompileSnippets", { options: opts })
 }
 
-export function workerOpAsync<T extends keyof pxtc.service.ServiceOps>(op: T, arg: pxtc.service.OpArg): Promise<any> {
+export function workerOpAsync<T extends keyof pxtc.service.ServiceOps>(op: T, arg: pxtc.service.OpArg): Promise<ReturnType<pxtc.service.ServiceOps[T]>> {
     const startTm = Date.now()
     pxt.debug("worker op: " + op)
     return pxt.worker.getWorker(pxt.webConfig.workerjs)
@@ -471,14 +472,14 @@ export function workerOpAsync<T extends keyof pxtc.service.ServiceOps>(op: T, ar
             if (pxt.appTarget.compile.switches.time) {
                 pxt.log(`Worker perf: ${op} ${Date.now() - startTm}ms`)
                 if (res.times)
-                    console.log(res.times)
+                    pxt.log(res.times)
             }
             pxt.debug("worker op done: " + op)
             return res
         })
 }
 
-let firstTypecheck: Promise<void>;
+let firstTypecheck: Promise<any>;
 let cachedApis: pxtc.ApisInfo;
 let cachedBlocks: pxtc.BlocksInfo;
 let refreshApis = false;
@@ -544,28 +545,39 @@ export function snippetAsync(qName: string, python?: boolean): Promise<string> {
     return initStep.then(() => workerOpAsync("snippet", {
         snippet: { qName, python },
         runtime: pxt.appTarget.runtime
-    })).then(res => res as string)
+    }));
 }
 
-export function typecheckAsync() {
+export async function typecheckAsync(): Promise<pxtc.CompileResult | null> {
     const epkg = pkg.mainEditorPkg();
     const isFirstTypeCheck = !firstTypecheck;
-    let p = epkg.buildAssetsAsync()
-        .then(() => pkg.mainPkg.getCompileOptionsAsync())
-        .then(opts => {
-            opts.testMode = true // show errors in all top-level code
-            return workerOpAsync("setOptions", { options: opts })
-        })
-        .then(() => workerOpAsync("allDiags", {}) as Promise<pxtc.CompileResult>)
-        .then(r => setDiagnostics("typecheck", r.diagnostics, r.sourceMap))
-        .then(() => {
+
+    const p = (async () => {
+        try {
+            await epkg.buildAssetsAsync();
+
+            const opts = await pkg.mainPkg.getCompileOptionsAsync();
+            opts.testMode = true; // show errors in all top-level code
+
+            await workerOpAsync("setOptions", { options: opts });
+
+            const r = await workerOpAsync("allDiags", {});
+            setDiagnostics("typecheck", r.diagnostics, r.sourceMap);
+
             if (isFirstTypeCheck) {
                 refreshLanguageServiceApisInfo();
             }
-            return ensureApisInfoAsync();
-        })
-        .catch(catchUserErrorAndSetDiags(null))
-    if (isFirstTypeCheck) firstTypecheck = p;
+            await ensureApisInfoAsync();
+            return r;
+        } catch (e) {
+            return catchUserErrorAndSetDiags(null)(e);
+        }
+    })();
+
+    if (isFirstTypeCheck) {
+        firstTypecheck = p;
+    }
+
     return p;
 }
 
@@ -679,7 +691,7 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
         }
         catch (e) {
             // Don't fail if the indexeddb fails, but log it
-            console.log("Unable to open API info cache DB");
+            pxt.log("Unable to open API info cache DB");
             return null;
         }
 
@@ -898,7 +910,6 @@ function upgradeFromBlocksAsync(): Promise<UpgradeResult> {
 
             const xml = Blockly.utils.xml.textToDom(text);
             pxtblockly.domToWorkspaceNoEvents(xml, ws);
-            pxtblockly.upgradeTilemapsInWorkspace(ws, pxt.react.getTilemapProject());
             const upgradedXml = pxtblockly.workspaceToDom(ws);
             patchedFiles[pxt.MAIN_BLOCKS] = Blockly.Xml.domToText(upgradedXml);
 
@@ -926,7 +937,7 @@ function upgradeFromBlocksAsync(): Promise<UpgradeResult> {
             };
         })
         .catch(e => {
-            console.log(e)
+            pxt.log(e)
             pxt.debug("Block upgrade failed, falling back to TS");
             return upgradeFromTSAsync();
         });
@@ -1176,7 +1187,7 @@ class ApiInfoIndexedDb {
         }
         return openAsync()
             .catch(e => {
-                console.log(`db: failed to open api database, try delete entire store...`)
+                pxt.log(`db: failed to open api database, try delete entire store...`)
                 return pxt.BrowserUtils.IDBWrapper.deleteDatabaseAsync(ApiInfoIndexedDb.dbName())
                     .then(() => openAsync());
             })
@@ -1199,7 +1210,7 @@ class ApiInfoIndexedDb {
     }
 
     setAsync(pack: pkg.EditorPackage, apis: pxt.PackageApiInfo): Promise<void> {
-        pxt.perf.measureStart("compiler db setAsync")
+        pxt.perf.measureStart(Measurements.CompilerDbSetAsync)
         const key = getPackageKey(pack);
         const hash = getPackageHash(pack);
 
@@ -1211,15 +1222,15 @@ class ApiInfoIndexedDb {
 
         return this.db.setAsync(ApiInfoIndexedDb.TABLE, entry)
             .then(() => {
-                pxt.perf.measureEnd("compiler db setAsync")
+                pxt.perf.measureEnd(Measurements.CompilerDbSetAsync)
             })
     }
 
     clearAsync(): Promise<void> {
         return this.db.deleteAllAsync(ApiInfoIndexedDb.TABLE)
-            .then(() => console.debug(`db: all clean`))
+            .then(() => pxt.debug(`db: all clean`))
             .catch(e => {
-                console.error('db: failed to delete all');
+                pxt.error('db: failed to delete all');
             })
     }
 }

@@ -1,4 +1,5 @@
 import * as Blockly from "blockly";
+import { isImageProperties } from "../../fields";
 
 // This is the same as showEditor_ and dropdownCreate in field_dropdown
 // except that it supports separators between dropdown menu items
@@ -30,17 +31,17 @@ export function showEditorMixin(this: Blockly.FieldDropdown, e?: MouseEvent) {
         }
 
         const content = (() => {
-            if (typeof label === 'object') {
+            if (isImageProperties(label)) {
                 // Convert ImageProperties to an HTMLImageElement.
-                const image = new Image(label['width'], label['height']);
-                image.src = label['src'];
-                image.alt = label['alt'] || '';
+                const image = new Image(label.width, label.height);
+                image.src = label.src;
+                image.alt = label.alt || '';
                 return image;
             }
             return label;
         })();
 
-        const menuItem = new Blockly.MenuItem(content, value);
+        const menuItem = new Blockly.MenuItem(content, value as string);
         menuItem.setRole(Blockly.utils.aria.Role.OPTION);
         menuItem.setRightToLeft(block.RTL);
         menuItem.setCheckable(true);
@@ -59,6 +60,7 @@ export function showEditorMixin(this: Blockly.FieldDropdown, e?: MouseEvent) {
     }
 
     Blockly.DropDownDiv.clearContent();
+    Blockly.DropDownDiv.getContentDiv().style.height = "";
     const menuElement = this.menu_!.render(Blockly.DropDownDiv.getContentDiv());
     Blockly.utils.dom.addClass(menuElement, 'blocklyDropdownMenu');
 
@@ -70,6 +72,7 @@ export function showEditorMixin(this: Blockly.FieldDropdown, e?: MouseEvent) {
     }
 
     Blockly.DropDownDiv.showPositionedByField(this, this.dropdownDispose_.bind(this));
+    Blockly.DropDownDiv.getContentDiv().style.height = `${this.menu_.getSize().height}px`;
 
     // Focusing needs to be handled after the menu is rendered and positioned.
     // Otherwise it will cause a page scroll to get the misplaced menu in
@@ -77,16 +80,12 @@ export function showEditorMixin(this: Blockly.FieldDropdown, e?: MouseEvent) {
     this.menu_!.focus();
 
     if (selectedMenuItem) {
-        this.menu_!.setHighlighted(selectedMenuItem);
-        Blockly.utils.style.scrollIntoContainerView(
-            selectedMenuItem.getElement()!,
-            Blockly.DropDownDiv.getContentDiv(),
-            true,
-        );
+        this.menu_.setHighlighted(selectedMenuItem);
     }
 
     this.applyColour();
 }
+
 
 class HorizontalRuleMenuItem extends Blockly.MenuItem {
     element_: Element;
@@ -108,6 +107,10 @@ class HorizontalRuleMenuItem extends Blockly.MenuItem {
 
     getId(): string {
         return this.element_.id;
+    }
+
+    isEnabled(): boolean {
+        return false;
     }
 }
 

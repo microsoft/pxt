@@ -108,7 +108,12 @@ class BaseFieldNumberDropdown extends BaseFieldTextDropdown {
             return null;
         }
         // Get the value in range.
-        n = Math.min(Math.max(n, this.min_), this.max_);
+        if (this.min_ !== undefined) {
+            n = Math.max(n, this.min_);
+        }
+        if (this.max_ !== undefined) {
+            n = Math.min(n, this.max_);
+        }
         // Round to nearest multiple of precision.
         if (this.precision_ && isFinite(n)) {
             n = Math.round(n / this.precision_) * this.precision_;
@@ -208,7 +213,7 @@ function parseDropdownOptions(options: FieldTextDropdownOptions): [string, any][
         return result;
     }
     else {
-        console.warn("Could not parse numberdropdown data field");
+        pxt.warn("Could not parse numberdropdown data field");
     }
 
     return [];

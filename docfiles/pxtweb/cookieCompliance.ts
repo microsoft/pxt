@@ -38,20 +38,54 @@ namespace pxt {
     let eventLogger: TelemetryQueue<string, Map<string>, Map<number>>;
     let exceptionLogger: TelemetryQueue<any, string, Map<string>>;
 
+    type EventListener<T = any> = (ev: T) => void;
+    type EventSource<T> = {
+        subscribe(listener: (ev: T) => void): () => void;
+        emit(ev: T): void;
+        forEach(callback: (ev: T) => void): void;
+    };
+
+    function createEventSource<T = any>(filter?: ((ev: T) => boolean)): EventSource<T> {
+        filter = filter || (() => true);
+        const listeners: EventListener<T>[] = [];
+        const eventCache: T[] = [];
+
+        return {
+            subscribe(listener: EventListener<T>): () => void {
+                eventCache.forEach(ev => filter(ev) && listener(ev));
+                listeners.push(listener);
+                // Return an unsubscribe function
+                return () => {
+                    const index = listeners.indexOf(listener);
+                    if (index !== -1) {
+                        listeners.splice(index, 1);
+                    }
+                };
+            },
+            emit(ev: T): void {
+                eventCache.push(ev);
+                if (filter(ev)) listeners.forEach(listener => listener(ev));
+            },
+            forEach(callback: (ev: T) => void): void {
+                eventCache.forEach(ev => filter(ev) && callback(ev));
+            }
+        };
+    }
+
     // performance measuring, added here because this is amongst the first (typescript) code ever executed
     export namespace perf {
         let enabled: boolean;
 
         export let startTimeMs: number;
+        export let measurementThresholdMs = 10;
         export let stats: {
-            // name, start, duration
-            durations: [string, number, number][],
-            // name, event
-            milestones: [string, number][]
+            durations: EventSource<{ name: string, start: number, duration: number, params?: Map<string> }>,
+            milestones: EventSource<{ milestone: string, time: number, params?: Map<string> }>,
         } = {
-            durations: [],
-            milestones: []
+            durations: createEventSource((ev) => ev.duration >= measurementThresholdMs),
+            milestones: createEventSource(),
         }
+        export function isEnabled() { return enabled; }
         export let perfReportLogged = false
         export function splitMs(): number {
             return Math.round(performance.now() - startTimeMs)
@@ -75,8 +109,9 @@ namespace pxt {
             return prettyStr(splitMs())
         }
 
-        export function recordMilestone(msg: string, time: number = splitMs()) {
-            stats.milestones.push([msg, time])
+        export function recordMilestone(msg: string, params?: Map<string>) {
+            const time = splitMs()
+            stats.milestones.emit({ milestone: msg, time, params });
         }
         export function init() {
             enabled = performance && !!performance.mark && !!performance.measure;
@@ -89,7 +124,7 @@ namespace pxt {
         export function measureStart(name: string) {
             if (enabled) performance.mark(`${name} start`)
         }
-        export function measureEnd(name: string) {
+        export function measureEnd(name: string, params?: Map<string>) {
             if (enabled && performance.getEntriesByName(`${name} start`).length) {
                 performance.mark(`${name} end`)
                 performance.measure(`${name} elapsed`, `${name} start`, `${name} end`)
@@ -97,45 +132,47 @@ namespace pxt {
                 if (e && e.length === 1) {
                     let measure = e[0]
                     let durMs = measure.duration
-                    if (durMs > 10) {
-                        stats.durations.push([name, measure.startTime, durMs])
-                    }
+                    stats.durations.emit({ name, start: measure.startTime, duration: durMs, params });
                 }
                 performance.clearMarks(`${name} start`)
                 performance.clearMarks(`${name} end`)
                 performance.clearMeasures(`${name} elapsed`)
             }
         }
-        export function report(filter: string = null) {
+        export function report() {
             perfReportLogged = true;
-
             if (enabled) {
-                const milestones: {[index: string]: number} = {};
-                const durations: {[index: string]: number} = {};
+                const milestones: { [index: string]: number } = {};
+                const durations: { [index: string]: number } = {};
 
-                let report = `performance report:\n`
-                for (let [msg, time] of stats.milestones) {
-                    if (!filter || msg.indexOf(filter) >= 0) {
-                        let pretty = prettyStr(time)
-                        report += `\t\t${msg} @ ${pretty}\n`
-                        milestones[msg] = time;
+                let report = `Performance Report:\n`
+                report += `\n`
+                report += `\tMilestones:\n`
+                stats.milestones.forEach(({ milestone, time, params }) => {
+                    let pretty = prettyStr(time)
+                    report += `\t\t${milestone} @ ${pretty}`
+                    for (let k of Object.keys(params || {})) {
+                        report += `\n\t\t\t${k}: ${params[k]}`
                     }
-                }
+                    report += `\n`
+                    milestones[milestone] = time;
+                });
 
                 report += `\n`
-                for (let [msg, start, duration] of stats.durations) {
-                    let filterIncl = filter && msg.indexOf(filter) >= 0
-                    if ((duration > 50 && !filter) || filterIncl) {
-                        let pretty = prettyStr(duration)
-                        report += `\t\t${msg} took ~ ${pretty}`
-                        if (duration > 1000) {
-                            report += ` (${prettyStr(start)} - ${prettyStr(start + duration)})`
-                        }
-                        report += `\n`
+                report += `\tMeasurements:\n`
+                stats.durations.forEach(({ name, start, duration, params }) => {
+                    let pretty = prettyStr(duration)
+                    report += `\t\t${name} took ~ ${pretty}`
+                    report += ` (${prettyStr(start)} - ${prettyStr(start + duration)})`
+                    for (let k of Object.keys(params || {})) {
+                        report += `\n\t\t\t${k}: ${params[k]}`
                     }
-                    durations[msg] = duration;
-                }
+                    report += `\n`
+                    durations[name] = duration;
+                });
+
                 console.log(report)
+                enabled = false; // stop collecting milestones and measurements after report
                 return { milestones, durations };
             }
             return undefined;
@@ -210,7 +247,7 @@ namespace pxt {
 
         // App Insights automatically sends a page view event on setup, but we send our own later with additional properties.
         // This stops the automatic event from firing, so we don't end up with duplicate page view events.
-        if(envelope.baseType == "PageviewData" && !envelope.baseData.properties) {
+        if (envelope.baseType == "PageviewData" && !envelope.baseData.properties) {
             return false;
         }
 

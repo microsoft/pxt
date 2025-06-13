@@ -129,6 +129,7 @@ export function splitSvg(svg: SVGSVGElement, ws: Blockly.WorkspaceSvg, emPixels:
         blocki: number,
         size: { height: number, width: number },
         translate: { x: number, y: number },
+        ariaLabel?: string,
         itemClass?: string
     ) {
         const svgclone = svg.cloneNode(true) as SVGSVGElement;
@@ -159,11 +160,12 @@ export function splitSvg(svg: SVGSVGElement, ws: Blockly.WorkspaceSvg, emPixels:
         svgclone.style.height = height;
         svgclone.setAttribute("width", width);
         svgclone.setAttribute("height", height);
+        svgclone.setAttribute("aria-label", ariaLabel)
         div.appendChild(svgclone);
     }
 
     comments.forEach((comment, commenti) => extract('blocklyBubbleCanvas', 'blocklyBlockCanvas',
-        commenti, comment.getSize(), { x: 0, y: 0 }, "blocklyComment"));
+        commenti, comment.getSize(), { x: 0, y: 0 }, lf("blockly comment"), "blocklyComment"));
     blocks.forEach((block, blocki) => {
         const size = block.getHeightWidth();
         const translate = { x: 0, y: 0 };
@@ -171,8 +173,10 @@ export function splitSvg(svg: SVGSVGElement, ws: Blockly.WorkspaceSvg, emPixels:
             size.height += emPixels;
             translate.y += emPixels;
         }
+        // use the block string for the most descriptive aria-label
+        const label = block.toString();
         extract('blocklyBlockCanvas', 'blocklyBubbleCanvas',
-            blocki, size, translate)
+            blocki, size, translate, `${label} blocks`)
     });
     return div;
 }
@@ -226,7 +230,7 @@ export function flow(ws: Blockly.WorkspaceSvg, opts?: FlowOptions) {
 }
 
 export function screenshotEnabled(): boolean {
-    return !pxt.BrowserUtils.isIE()
+    return pxt.BrowserUtils.hasFileAccess() && !pxt.BrowserUtils.isIE();
 }
 
 export function screenshotAsync(ws: Blockly.WorkspaceSvg, pixelDensity?: number, encodeBlocks?: boolean): Promise<string> {
@@ -269,12 +273,38 @@ export function toSvgAsync(ws: Blockly.WorkspaceSvg, pixelDensity: number): Prom
     if (!ws)
         return Promise.resolve<{ width: number; height: number; xml: string; }>(undefined);
 
-    const metrics = ws.getBlocksBoundingBox();
+    const viewbox = ws.getBlocksBoundingBox();
     const sg = ws.getParentSvg().cloneNode(true) as SVGElement;
     cleanUpBlocklySvg(sg);
 
-    let width = metrics.right - metrics.left;
-    let height = metrics.bottom - metrics.top;
+    // getBlocksBoundingBox doesn't include any expanded blocks comments, so
+    // do a pass to expand the bounding box if any are present
+    for (const block of ws.getAllBlocks()) {
+        if (block.hasIcon(Blockly.icons.IconType.COMMENT)) {
+            const icon = block.getIcon(Blockly.icons.IconType.COMMENT);
+            const bubbleLocation = icon.getBubbleLocation();
+
+            if (!bubbleLocation) continue;
+
+            const bubbleSize = icon.getBubbleSize();
+            viewbox.left = Math.min(bubbleLocation.x, viewbox.left);
+            viewbox.top = Math.min(bubbleLocation.y, viewbox.top);
+            viewbox.right = Math.max(bubbleLocation.x + bubbleSize.width, viewbox.right);
+            viewbox.bottom = Math.max(bubbleLocation.y + bubbleSize.height, viewbox.bottom);
+        }
+    }
+
+    // add 1 pixel of padding to the edges because sometimes the border
+    // of blocks/comments get slightly cut off
+    const PADDING = 1;
+
+    viewbox.left -= PADDING;
+    viewbox.top -= PADDING;
+    viewbox.right += PADDING;
+    viewbox.bottom += PADDING;
+
+    let width = viewbox.right - viewbox.left;
+    let height = viewbox.bottom - viewbox.top;
     let scale = 1;
 
     const area = width * height * Math.pow(pixelDensity, 2);
@@ -282,7 +312,7 @@ export function toSvgAsync(ws: Blockly.WorkspaceSvg, pixelDensity: number): Prom
         scale = Math.sqrt(MAX_AREA / area);
     }
 
-    return blocklyToSvgAsync(sg, metrics.left, metrics.top, width, height, scale);
+    return blocklyToSvgAsync(sg, viewbox.left, viewbox.top, width, height, scale);
 }
 
 export function serializeNode(sg: Node): string {
@@ -420,7 +450,14 @@ async function expandImagesAsync(xsg: Document): Promise<void> {
     }
 
     const linkedSvgImages = images
-        .filter(image => /^\/.*.svg$/.test(image.getAttribute("href")));
+        .filter(image => {
+            const href = image.getAttribute("href");
+            return href?.endsWith(".svg") &&
+                (
+                    href.startsWith("/") ||
+                    href.startsWith(pxt.webConfig.cdnUrl)
+                );
+        });
 
     for (const image of linkedSvgImages) {
         const svgUri = image.getAttribute("href");
@@ -467,7 +504,7 @@ async function convertIconsToPngAsync(xsg: Document): Promise<void> {
         let href = imageIconCache[svgUri];
         if (!href) {
             href = await pxt.BrowserUtils.encodeToPngAsync(svgUri, { width, height, pixelDensity: 2 });
-            console.log(`HREF: ${href}`);
+            pxt.log(`HREF: ${href}`);
         }
 
         imageIconCache[svgUri] = href;

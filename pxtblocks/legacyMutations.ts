@@ -5,6 +5,7 @@ import { Environment } from "./compiler/environment";
 import { escapeVarName } from "./compiler/util";
 import { compileExpression } from "./compiler/compiler";
 import { setVarFieldValue } from "./loader";
+import { FieldVariable } from "./plugins/newVariableField/fieldVariable";
 
 /**
  * This interface defines the optionally defined functions for mutations that Blockly
@@ -74,14 +75,14 @@ export function addMutation(b: MutatingBlock, info: pxtc.SymbolInfo, mutationTyp
     switch (mutationType) {
         case MutatorTypes.ObjectDestructuringMutator:
             if (!info.parameters || info.parameters.length < 1) {
-                console.error("Destructuring mutations require at least one parameter")
+                pxt.error("Destructuring mutations require at least one parameter")
             }
             else {
                 let found = false;
                 for (const param of info.parameters) {
                     if (param.type.indexOf("=>") !== -1) {
                         if (!param.properties || param.properties.length === 0) {
-                            console.error("Destructuring mutations only supported for functions with an event parameter that has multiple properties");
+                            pxt.error("Destructuring mutations only supported for functions with an event parameter that has multiple properties");
                             return;
                         }
                         found = true;
@@ -89,7 +90,7 @@ export function addMutation(b: MutatingBlock, info: pxtc.SymbolInfo, mutationTyp
                 }
 
                 if (!found) {
-                    console.error("Destructuring mutations must have an event parameter");
+                    pxt.error("Destructuring mutations must have an event parameter");
                     return;
                 }
             }
@@ -102,7 +103,7 @@ export function addMutation(b: MutatingBlock, info: pxtc.SymbolInfo, mutationTyp
             m = new DefaultInstanceMutator(b, info);
             break;
         default:
-            console.warn("Ignoring unknown mutation type: " + mutationType);
+            pxt.warn("Ignoring unknown mutation type: " + mutationType);
             return;
     }
 
@@ -126,7 +127,7 @@ export function mutateToolboxBlock(block: Node, mutationType: string, mutation: 
         case MutatorTypes.DefaultInstanceMutator:
             mutationElement.setAttribute(DefaultInstanceMutator.attributeName, mutation);
         default:
-            console.warn("Ignoring unknown mutation type: " + mutationType);
+            pxt.warn("Ignoring unknown mutation type: " + mutationType);
             return;
     }
 
@@ -366,7 +367,7 @@ class DestructuringMutator extends MutatorHelper {
                     this.parameterRenames = JSON.parse(xmlElement.getAttribute(DestructuringMutator.renameAttributeName));
                 }
                 catch (e) {
-                    console.warn("Ignoring invalid rename map in saved block mutation");
+                    pxt.warn("Ignoring invalid rename map in saved block mutation");
                 }
             }
 
@@ -462,7 +463,7 @@ class DestructuringMutator extends MutatorHelper {
         this.parameters.forEach(param => {
             if (this.currentlyVisible.indexOf(param) === -1) {
                 const fieldValue = this.parameterRenames[param] || param;
-                dummyInput.appendField(new Blockly.FieldVariable(fieldValue), param);
+                dummyInput.appendField(new FieldVariable(fieldValue), param);
             }
         });
 

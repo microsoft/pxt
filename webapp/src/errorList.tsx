@@ -1,98 +1,167 @@
 /// <reference path="../../built/pxtlib.d.ts" />
 
 import * as React from "react";
+import * as auth from "./auth";
 import * as sui from "./sui";
 import { fireClickOnEnter } from "./util";
-
-import * as pxtblockly from "../../pxtblocks";
+import { classList } from "../../react-common/components/util";
+import { Button } from "../../react-common/components/controls/Button";
 
 type GroupedError = {
-    error: pxtc.KsDiagnostic,
-    count: number,
-    index: number
+    error: ErrorDisplayInfo;
+    count: number;
+    index: number;
+};
+
+/**
+ * A collection of optional metadata that can be attached to an error.
+ */
+export type ErrorMetadata = {
+    blockId?: string;
+};
+
+export type StackFrameDisplayInfo = {
+    message: string;
+    metadata?: ErrorMetadata;
+    onClick?: () => void;
+};
+
+export type ErrorDisplayInfo = {
+    message: string;
+    stackFrames?: StackFrameDisplayInfo[];
+    metadata?: ErrorMetadata;
+    onClick?: () => void;
 };
 
 export interface ErrorListProps {
-    isInBlocksEditor: boolean;
     onSizeChange?: (state: pxt.editor.ErrorListState) => void;
-    listenToErrorChanges?: (key: string, onErrorChanges: (errors: pxtc.KsDiagnostic[]) => void) => void;
-    listenToBlockErrorChanges?: (key: string, onErrorChanges: (errors: pxtblockly.BlockDiagnostic[]) => void) => void;
-    listenToExceptionChanges?: (handlerKey: string, handler: (exception: pxsim.DebuggerBreakpointMessage, locations: pxtc.LocationInfo[]) => void) => void,
-    goToError?: (errorLocation: pxtc.LocationInfo) => void;
+    errors: ErrorDisplayInfo[];
+    note?: string | JSX.Element;
     startDebugger?: () => void;
+    getErrorHelp?: () => Promise<void>; // Should return a promise that resolves when the help is loaded
+    showLoginDialog?: (
+        continuationHash?: string,
+        dialogMessages?: { signInMessage?: string; signUpMessage?: string }
+    ) => void;
 }
+
 export interface ErrorListState {
-    isCollapsed: boolean,
-    errors?: pxtc.KsDiagnostic[],
-    exception?: pxsim.DebuggerBreakpointMessage,
-    callLocations?: pxtc.LocationInfo[],
-    blockErrors?: pxtblockly.BlockDiagnostic[]
+    isCollapsed: boolean;
+    isLoadingHelp?: boolean;
 }
 
-export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
-
+export class ErrorList extends auth.Component<ErrorListProps, ErrorListState> {
     constructor(props: ErrorListProps) {
         super(props);
 
         this.state = {
             isCollapsed: true,
-            errors: [],
-            exception: null,
-            blockErrors: []
-        }
+            isLoadingHelp: false,
+        };
 
-        this.onCollapseClick = this.onCollapseClick.bind(this)
-        this.onErrorsChanged = this.onErrorsChanged.bind(this)
-        this.onBlockErrorsChanged = this.onBlockErrorsChanged.bind(this)
-        this.onExceptionDetected = this.onExceptionDetected.bind(this)
-        this.onErrorMessageClick = this.onErrorMessageClick.bind(this)
-        this.onDisplayStateChange = this.onDisplayStateChange.bind(this)
-        this.getCompilerErrors = this.getCompilerErrors.bind(this)
-        this.generateStackTraces = this.generateStackTraces.bind(this)
-        this.listBlockErrors = this.listBlockErrors.bind(this)
+        this.onCollapseClick = this.onCollapseClick.bind(this);
+    }
 
-        if (props.isInBlocksEditor) {
-            props.listenToBlockErrorChanges("errorList", this.onBlockErrorsChanged)
-        } else {
-            props.listenToErrorChanges("errorList", this.onErrorsChanged);
-            props.listenToExceptionChanges("errorList", this.onExceptionDetected);
+    componentDidUpdate(prevProps: Readonly<ErrorListProps>, prevState: Readonly<ErrorListState>, snapshot?: any): void {
+        // Auto-expand if there are new errors
+        if (this.props.errors.length > 0 && this.state.isCollapsed) {
+            let shouldExpand = this.props.errors.length > prevProps.errors.length;
+
+            if (!shouldExpand) {
+                // Compare errors to see if there are new ones
+                shouldExpand = this.props.errors.some(e => !prevProps.errors.some(prev => getErrorKey(e) === getErrorKey(prev)));
+            }
+
+            if (shouldExpand) {
+                this.setState({ isCollapsed: false }, this.onDisplayStateChange);
+            }
         }
     }
 
-    render() {
-        const { isCollapsed, errors, exception, blockErrors } = this.state;
-        const errorsAvailable = !!errors?.length || !!exception || !!blockErrors?.length;
-        const collapseTooltip = lf("Collapse Error List");
+    onHelpClick = async () => {
+        // Sign-in required. Prompt the user, if they are logged out.
+        if (!this.isLoggedIn()) {
+            pxt.tickEvent("errorlist.showSignIn");
+            this.props.showLoginDialog("editor", {
+                signInMessage: lf("Sign-in is required to use this feature"),
+                signUpMessage: lf("Sign-up is required to use this feature"),
+            });
+            return;
+        }
 
-        const errorListContent = !isCollapsed ? (this.props.isInBlocksEditor ? this.listBlockErrors(blockErrors)
-            : (exception ? this.generateStackTraces(exception) : this.getCompilerErrors(errors))) : undefined;
+        this.setState({ isLoadingHelp: true });
+        await this.props.getErrorHelp();
+        this.setState({ isLoadingHelp: false });
+    };
 
-        const errorCount = this.props.isInBlocksEditor ? blockErrors.length : exception ? 1 : errors.length;
+    renderCore() {
+        const { startDebugger, errors, getErrorHelp, showLoginDialog, note } = this.props;
+        const { isCollapsed, isLoadingHelp } = this.state;
+        const errorsAvailable = !!errors?.length;
+
+        const groupedErrors = groupErrors(errors);
+        const errorListContent = !isCollapsed ? groupedErrors.map((e, i) => <ErrorListItem errorGroup={e} index={i} key={`errorlist_error_${i}`}/> ) : undefined;
+        const errorCount = errors.length;
+        const canDebug = startDebugger && !!errors.find(a => a.stackFrames?.length);
+
+        const showErrorHelp = !!getErrorHelp && !!showLoginDialog && pxt.Util.isFeatureEnabled("aiErrorHelp");
+
+        const helpLoader = (
+            <div className="error-help-loader" onClick={(e) => e.stopPropagation()}>
+                <div className="common-spinner" />
+                <span className="analyzing-label">{lf("Analyzing...")}</span>
+            </div>
+        );
+
+        const helpButton = (
+            <Button
+                id="error-help-button"
+                onClick={this.onHelpClick}
+                title={lf("Explain with AI")}
+                className="secondary error-help-button"
+                label={lf("Explain with AI")}
+                leftIcon={"xicon sparkle"}
+            />
+        );
 
         return (
-            <div className={`errorList ${isCollapsed ? 'errorListSummary' : ''} ${this.props.isInBlocksEditor ? 'errorListBlocks' : ''}`} hidden={!errorsAvailable}>
+            <div className={classList("errorList", isCollapsed && "errorListSummary")} hidden={!errorsAvailable}>
                 <div className="errorListHeader" role="button" aria-label={lf("{0} error list", isCollapsed ? lf("Expand") : lf("Collapse"))} onClick={this.onCollapseClick} onKeyDown={fireClickOnEnter} tabIndex={0}>
                     <h4>{lf("Problems")}</h4>
                     <div className="ui red circular label countBubble">{errorCount}</div>
-                    <div className="toggleButton"><sui.Icon icon={`chevron ${isCollapsed ? 'up' : 'down'}`} /></div>
+                    {showErrorHelp && (
+                        <div className={classList("error-help-container", isLoadingHelp && "loading")}>
+                            {isLoadingHelp ? helpLoader : helpButton}
+                        </div>
+                    )}
+                    <div className="filler" />
+                    <div className="toggleButton">
+                        <sui.Icon icon={`chevron ${isCollapsed ? "up" : "down"}`} />
+                    </div>
                 </div>
                 {!isCollapsed && <div className="errorListInner">
-                    {exception && <div className="debuggerSuggestion" role="button" onClick={this.props.startDebugger} onKeyDown={fireClickOnEnter} tabIndex={0}>
+                    {canDebug && <div className="debuggerSuggestion" role="button" onClick={this.props.startDebugger} onKeyDown={fireClickOnEnter} tabIndex={0}>
                         {lf("Debug this project")}
                         <sui.Icon className="debug-icon" icon="icon bug" />
                     </div>}
-                    {errorListContent}
+
+                    {note && <div className="note">{note}</div>}
+
+                    <div className="ui selection list">
+                        {errorListContent}
+                    </div>
                 </div>}
             </div>
-        )
+        );
     }
 
     onDisplayStateChange() {
-        const { errors, exception, isCollapsed } = this.state;
+        const { errors } = this.props;
+        const { isCollapsed } = this.state;
         // notify parent on possible size change so siblings (monaco)
         // can resize if needed
 
-        const noValueToDisplay = !(errors?.length || exception);
+        const noValueToDisplay = !(errors?.length);
 
         if (this.props.onSizeChange) {
             this.props.onSizeChange(
@@ -106,132 +175,77 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
     }
 
     onCollapseClick() {
-        pxt.tickEvent('errorlist.collapse', null, { interactiveConsent: true })
+        if (this.state.isCollapsed) {
+            pxt.tickEvent('errorlist.expand', null, { interactiveConsent: true })
+        } else {
+            pxt.tickEvent('errorlist.collapse', null, { interactiveConsent: true })
+        }
+
         this.setState({
             isCollapsed: !this.state.isCollapsed
         }, this.onDisplayStateChange);
-    }
-
-    onErrorMessageClick(e: pxtc.LocationInfo, index: number) {
-        pxt.tickEvent('errorlist.goto', { errorIndex: index }, { interactiveConsent: true });
-        this.props.goToError(e)
-    }
-
-    onErrorsChanged(errors: pxtc.KsDiagnostic[]) {
-        this.setState({
-            errors,
-            isCollapsed: errors?.length == 0 || this.state.isCollapsed,
-            exception: null
-        }, this.onDisplayStateChange);
-    }
-
-    onBlockErrorsChanged(blockErrors: pxtblockly.BlockDiagnostic[]) {
-        this.setState({
-            blockErrors,
-            isCollapsed: blockErrors?.length == 0 || this.state.isCollapsed,
-            exception: null
-        }, this.onDisplayStateChange);
-    }
-
-    onExceptionDetected(exception: pxsim.DebuggerBreakpointMessage, callLocations: pxtc.LocationInfo[]) {
-        this.setState({
-            isCollapsed: false,
-            exception,
-            callLocations
-        })
-    }
-
-    getCompilerErrors(errors: pxtc.KsDiagnostic[]) {
-        function errorKey(error: pxtc.KsDiagnostic): string {
-            // React likes have a "key" for each element so that it can smartly only
-            // re-render what changes. Think of it like a hashcode/
-            return `${error.messageText}-${error.fileName}-${error.line}-${error.column}`
-        }
-
-        const grouped = groupErrors(errors);
-        return <div className="ui selection list">
-            {grouped.map((e, index) => <ErrorListItem key={errorKey(e.error)} index={index} error={e} revealError={this.onErrorMessageClick} />)}
-        </div>
-    }
-
-    generateStackTraces(exception: pxsim.DebuggerBreakpointMessage) {
-        return <div>
-            <div className="exceptionMessage">{pxt.Util.rlf(exception.exceptionMessage)}</div>
-            <div className="ui selection list">
-                {(exception.stackframes || []).map((sf, index) => {
-                    const location = this.state.callLocations[sf.callLocationId];
-
-                    if (!location) return null;
-
-                    return <ErrorListItem key={index} index={index} stackframe={sf} location={location} revealError={this.onErrorMessageClick} />
-                })}
-            </div>
-        </div>;
-    }
-
-    listBlockErrors(blockErrors: pxtblockly.BlockDiagnostic[]) {
-        return <div className="ui selection list">
-            {(blockErrors || []).map((e, i) => <ErrorListItem index={i} key={`${i}-${e}`} blockError={e} />)}
-        </div>
     }
 }
 
 interface ErrorListItemProps {
     index: number;
-    revealError?: (location: pxtc.LocationInfo, index: number) => void;
-    error?: GroupedError;
-    stackframe?: pxsim.StackFrameInfo;
-    location?: pxtc.LocationInfo;
-    blockError?: pxtblockly.BlockDiagnostic;
+    errorGroup: GroupedError;
+    className?: string;
 }
 
 interface ErrorListItemState {
 }
 
-
 class ErrorListItem extends React.Component<ErrorListItemProps, ErrorListItemState> {
     constructor(props: ErrorListItemProps) {
-        super(props)
-
-        this.onErrorListItemClick = this.onErrorListItemClick.bind(this)
+        super(props);
     }
 
     render() {
-        const { error, stackframe, location, blockError } = this.props
+        const { className, errorGroup } = this.props
+        const error = errorGroup.error;
 
-        const message = blockError ? lf("{0}", blockError.message)
-            : stackframe ? stackFrameMessageStringWithLineNumber(stackframe, location) :
-                errorMessageStringWithLineNumber(error.error);
-        const errorCount = (stackframe || blockError) ? 1 : error.count;
+        const isInteractive = !!error.onClick;
+        const hasStack = !!error.stackFrames && error.stackFrames.length > 0;
+        const topRowClass = hasStack ? "exceptionMessage" : classList("item", className);
+        const errorCounter = (errorGroup.count <= 1) ? null : <div className="ui gray circular label countBubble">{errorGroup.count}</div>;
 
-        return <div className={`item ${stackframe ? 'stackframe' : ''}`} role="button"
-            onClick={!blockError ? this.onErrorListItemClick : undefined}
-            onKeyDown={fireClickOnEnter}
-            aria-label={lf("Go to {0}: {1}", stackframe ? '' : 'error', message)}
-            tabIndex={0}>
-            {message} {(errorCount <= 1) ? null : <div className="ui gray circular label countBubble">{errorCount}</div>}
-        </div>
+        const itemHeaderRow = isInteractive ? (
+            <Button className={topRowClass}
+                onClick={error.onClick}
+                title={lf("Go to error: {0}", error.message)}
+                aria-label={lf("Go to error: {0}", error.message)}>
+                <div>
+                    <span>{error.message}</span>
+                    {errorCounter}
+                </div>
+            </Button>
+        ) : (
+             <div className={topRowClass} aria-label={error.message} tabIndex={0}>
+                <span>{error.message}</span>
+                {errorCounter}
+            </div>
+        );
+
+        return !hasStack ? itemHeaderRow : (
+            <div className={className}>
+                {itemHeaderRow}
+                <div className="ui selection list">
+                    {(error.stackFrames).map((childErr, index) => {
+                        const errGrp = {error: childErr, count: 1, index: 0};
+                        return <ErrorListItem key={index} index={index} errorGroup={errGrp} className="stackframe"/>
+                    })}
+                </div>
+            </div>
+        )
     }
-
-    onErrorListItemClick() {
-        const location = this.props.stackframe ? this.props.location : this.props.error.error
-        this.props.revealError(location, this.props.index)
-    }
 }
 
-function errorMessageStringWithLineNumber(error: pxtc.KsDiagnostic) {
-    return lf("Line {0}: {1}", error.endLine ? error.endLine + 1 : error.line + 1, error.messageText);
-}
-
-function stackFrameMessageStringWithLineNumber(stackframe: pxsim.StackFrameInfo, location: pxtc.LocationInfo) {
-    return lf("at {0} (line {1})", stackframe.funcInfo.functionName, location.line + 1);
-}
-
-function groupErrors(errors: pxtc.KsDiagnostic[]) {
+function groupErrors(errors: ErrorDisplayInfo[]): GroupedError[] {
     const grouped = new Map<string, GroupedError>();
     let index = 0;
     for (const error of errors) {
-        const key = errorMessageStringWithLineNumber(error);
+        const key = getErrorKey(error);
         if (!grouped.has(key)) {
             grouped.set(key, {
                 index: index++,
@@ -246,4 +260,11 @@ function groupErrors(errors: pxtc.KsDiagnostic[]) {
     const sorted: GroupedError[] = [];
     grouped.forEach(value => sorted.push(value));
     return sorted.sort((a, b) => a.index - b.index);
+}
+
+function getErrorKey(error: ErrorDisplayInfo): string {
+    return JSON.stringify({
+        message: error.message,
+        stackFrames: error.stackFrames
+    });
 }

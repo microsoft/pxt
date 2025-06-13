@@ -429,6 +429,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         this.setState({
             download: null
         });
+
     }
 
     handleDownloadProgressClose = () => {
@@ -510,32 +511,32 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
             const numSelected = Object.keys(selected).length
             if (numSelected > 0) {
                 if (numSelected == 1) {
-                    const openBtn = <sui.Button key="edit" icon="edit outline" className="icon"
+                    const openBtn = <sui.Button key="edit" icon="edit outline" className="icon neutral"
                         text={lf("Open")} textClass="landscape only" title={lf("Open Project")} onClick={this.handleOpen} />;
                     if (!openNewTab)
                         headerActions.push(openBtn);
                     else headerActions.push(<div className="ui buttons">{openBtn}
-                        <sui.DropdownMenu className="floating button" icon="dropdown">
+                        <sui.DropdownMenu className="floating button neutral" icon="dropdown">
                             <sui.Item key="editnewtab" icon="external alternate" className="icon"
                                 text={lf("New Tab")} title={lf("Open Project in a new tab")} onClick={this.handleOpenNewTab} />
                             {openDependent && <sui.Item key="editnewlinkedtab" icon="external alternate" className="icon"
                                 text={lf("New Connected Tab")} title={lf("Open Project in a new tab with a connected simulator")} onClick={this.handleOpenNewLinkedTab} />}
                         </sui.DropdownMenu>
                     </div>);
-                    headerActions.push(<sui.Button key="rename" icon="edit outline" className="icon"
+                    headerActions.push(<sui.Button key="rename" icon="pencil" className="icon neutral"
                         text={lf("Rename")} textClass="landscape only" title={lf("Rename Project")} onClick={this.handleRename} />);
-                    headerActions.push(<sui.Button key="clone" icon="clone outline" className="icon"
+                    headerActions.push(<sui.Button key="clone" icon="clone outline" className="icon neutral"
                         text={lf("Duplicate")} textClass="landscape only" title={lf("Duplicate Project")} onClick={this.handleDuplicate} />);
                 }
                 headerActions.push(<sui.Button key="delete" icon="trash" className="icon red"
                     text={lf("Delete")} textClass="landscape only" title={lf("Delete Project")} onClick={this.handleDelete} />);
-                if (numSelected > 1) {
-                    headerActions.push(<sui.Button key="download-zip" icon="download" className="icon"
+                if (numSelected > 1 && pxt.BrowserUtils.hasFileAccess()) {
+                    headerActions.push(<sui.Button key="download-zip" icon="download" className="icon neutral"
                         text={lf("Download Zip")} textClass="landscape only" title={lf("Download Zip")} onClick={this.handleDownloadAsync} />);
                 }
                 headerActions.push(<div key="divider" className="divider"></div>);
             }
-            headerActions.push(<sui.Button key="view" icon={view == 'grid' ? 'th list' : 'grid layout'} className="icon"
+            headerActions.push(<sui.Button key="view" icon={view == 'grid' ? 'th list' : 'grid layout'} className="icon neutral"
                 title={`${view == 'grid' ? lf("List view") : lf("Grid view")}`} onClick={this.handleSwitchView} />)
         }
 
@@ -570,7 +571,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                                     role="menuitem"
                                     text={dropdownLabel}
                                     title={lf("Sort by dropdown")}
-                                    className={classList("inline button", darkTheme && "inverted")}
+                                    className={classList("inline button neutral", darkTheme && "inverted")}
                                     displayLeft
                                     disabled={sortedBySearch}
                                 >
@@ -594,7 +595,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                                 <sui.Button
                                     role="menuitem"
                                     icon={`arrow ${(sortedAsc && !sortedBySearch) ? 'up' : 'down'}`}
-                                    className={`${darkTheme ? 'inverted' : ''}`}
+                                    className={`neutral ${darkTheme ? 'inverted' : ''}`}
                                     onClick={this.handleSwitchSortDirection}
                                     title={lf("Switch sort order to {0}", !sortedAsc ? lf("ascending") : lf("descending"))}
                                     disabled={sortedBySearch}

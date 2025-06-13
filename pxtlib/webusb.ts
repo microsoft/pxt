@@ -632,7 +632,7 @@ namespace pxt.usb {
 
     export function isAvailable() {
         if (_available === undefined) {
-            console.error(`checkAvailableAsync not called`)
+            pxt.error(`checkAvailableAsync not called`)
             checkAvailableAsync()
         }
         return !!_available;

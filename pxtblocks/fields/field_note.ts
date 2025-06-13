@@ -1,7 +1,7 @@
 /// <reference path="../../built/pxtlib.d.ts" />
 
 import * as Blockly from "blockly";
-import { FieldCustomOptions, FieldCustom, parseColour } from "./field_utils";
+import { FieldCustomOptions, FieldCustom, parseColour, clearDropDownDiv } from "./field_utils";
 
 enum Note {
     C = 262,
@@ -209,17 +209,25 @@ export class FieldNote extends Blockly.FieldNumber implements FieldCustom {
         if (this.isExpanded) {
             return "" + this.value_;
         } else {
-            const note = +this.value_;
-            for (let i = 0; i < this.nKeys_; i++) {
-                if (Math.abs(this.getKeyFreq(i + this.minNote_) - note) < this.eps) {
-                    return this.getKeyName(i + this.minNote_);
-                }
-            }
-            let text = note.toString();
-            if (!isNaN(note))
-                text += " Hz";
-            return text;
+            return this.getNoteString();
         }
+    }
+
+    getFieldDescription(): string {
+        return this.getNoteString() || lf("note");
+    }
+
+    private getNoteString() {
+        const note = +this.value_;
+        for (let i = 0; i < this.nKeys_; i++) {
+            if (Math.abs(this.getKeyFreq(i + this.minNote_) - note) < this.eps) {
+                return this.getKeyName(i + this.minNote_);
+            }
+        }
+        let text = note.toString();
+        if (!isNaN(note))
+            text += " Hz";
+        return text;
     }
 
     /**
@@ -241,6 +249,11 @@ export class FieldNote extends Blockly.FieldNumber implements FieldCustom {
         this.refreshText()
     };
 
+    protected widgetDispose_(): void {
+        this.htmlInput_.removeEventListener("keydown", this.keyHandler);
+        super.widgetDispose_();
+    }
+
     /**
      * Create a piano under the note field.
      */
@@ -250,7 +263,7 @@ export class FieldNote extends Blockly.FieldNumber implements FieldCustom {
 
         // If there is an existing drop-down someone else owns, hide it immediately and clear it.
         Blockly.DropDownDiv.hideWithoutAnimation();
-        Blockly.DropDownDiv.clearContent();
+        clearDropDownDiv();
 
         const isMobile = pxt.BrowserUtils.isMobile() || pxt.BrowserUtils.isIOS();
         // invoke FieldTextInputs showeditor, so we can set quiet explicitly / not have a pop up dialogue
@@ -321,7 +334,25 @@ export class FieldNote extends Blockly.FieldNumber implements FieldCustom {
         }
 
         Blockly.DropDownDiv.setColour(this.primaryColour, this.borderColour);
-        Blockly.DropDownDiv.showPositionedByBlock(this, this.sourceBlock_ as Blockly.BlockSvg, () => this.onHide());
+        Blockly.DropDownDiv.showPositionedByBlock(this, this.sourceBlock_ as Blockly.BlockSvg, () => this.onHide(), undefined, false);
+
+
+        this.htmlInput_.addEventListener("keydown", this.keyHandler);
+    }
+
+    protected keyHandler = (ev: KeyboardEvent) => {
+        const currentFreq = typeof this.value_ === "string" ? parseFloat(this.value_) : this.value_;
+
+        if (ev.code === "ArrowUp" || ev.code === "ArrowDown") {
+            const {keyAbove, keyBelow} = this.getNeighboringKeys(currentFreq);
+            const newKey = ev.code === "ArrowUp" ? keyAbove : keyBelow;
+            const newFrequency = this.getKeyFreq(newKey);
+            this.setValue(newFrequency);
+            this.playKey(this.piano[newKey - this.minNote_], newFrequency);
+            this.noteLabel.textContent = this.getKeyName(newKey);
+            ev.stopPropagation();
+            ev.preventDefault();
+        }
     }
 
     protected playKey(key: HTMLDivElement, frequency: number) {
@@ -515,6 +546,42 @@ export class FieldNote extends Blockly.FieldNumber implements FieldCustom {
         if (this.isWhite(idx))
             return FieldNote.keyHeight;
         return FieldNote.keyHeight / 2;
+    }
+
+    protected getNeighboringKeys(freq: number) {
+        let lowerBound;
+        let upperBound;
+
+        for (let candidate = this.minNote_; candidate <= this.maxNote_; ++candidate) {
+            if (this.getKeyFreq(candidate) + this.eps > freq) {
+                upperBound = candidate;
+                break;
+            }
+            lowerBound = candidate;
+        }
+
+        // Clamp key range at the top and bottom
+        if (!lowerBound) {
+            return {
+                keyAbove: freq + this.eps > this.getKeyFreq(this.minNote_) ? this.minNote_ + 1 : this.minNote_,
+                keyBelow: this.minNote_
+            };
+        }
+        if (!upperBound || upperBound === this.maxNote_) {
+            return {
+                keyAbove: this.maxNote_,
+                keyBelow: freq - this.eps < this.getKeyFreq(this.maxNote_) ? this.maxNote_ - 1 : this.maxNote_
+            };
+        }
+
+        // If we are within an epsilon of confidence, only consider one boundary point
+        if (freq < this.getKeyFreq(lowerBound) + this.eps) {
+            upperBound = lowerBound;
+        } else if (freq > this.getKeyFreq(upperBound) - this.eps) {
+            lowerBound = upperBound;
+        }
+
+        return {keyAbove: lowerBound + 1, keyBelow: upperBound - 1};
     }
 
     protected getKeyFreq(keyIndex: number) {

@@ -10,6 +10,6 @@ namespace pxt.react {
     }
 
     export let isFieldEditorViewVisible: () => boolean;
-    export let getFieldEditorView: <U>(fieldEditorId: string, value: U, options: any, container?: HTMLDivElement) => FieldEditorView<U>;
+    export let getFieldEditorView: <U>(fieldEditorId: string, value: U, options: any, container?: HTMLDivElement, keyboardTriggered?: boolean) => FieldEditorView<U>;
     export let getTilemapProject: () => TilemapProject;
 }

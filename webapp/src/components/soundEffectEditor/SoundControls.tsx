@@ -4,6 +4,7 @@ import { Dropdown, DropdownItem } from "../../../../react-common/components/cont
 import { RadioButtonGroup, RadioGroupChoice } from "../../../../react-common/components/controls/RadioButtonGroup";
 import { Input } from "../../../../react-common/components/controls/Input";
 import { DraggableGraph } from "../../../../react-common/components/controls/DraggableGraph";
+import { BlocklyKeyboardIntercept } from "../../BlocklyKeyboardIntercept";
 
 
 export interface SoundControlsProps {
@@ -198,26 +199,33 @@ export const SoundControls = (props: SoundControlsProps) => {
                     <div className="sound-label">
                         {pxt.U.lf("Duration (ms)")}
                     </div>
-                    <Input
-                        id="sound-duration-input"
-                        initialValue={sound.duration + ""}
-                        className="sound-duration-input"
-                        onEnterKey={onDurationChange}
-                        treatSpaceAsEnter={true}
-                        onBlur={onDurationChange}
-                        onOptionSelected={onOptionSelected}
-                        ariaLabel={pxt.U.lf("Duration (milliseconds)")}
-                        options={
-                            {
-                                [pxt.U.lf("100 ms")]: "100",
-                                [pxt.U.lf("200 ms")]: "200",
-                                [pxt.U.lf("500 ms")]: "500",
-                                [pxt.U.lf("1 second")]: "1000",
-                                [pxt.U.lf("2 seconds")]: "2000",
-                                [pxt.U.lf("5 seconds")]: "5000"
+                    <BlocklyKeyboardIntercept
+                        keyCodes={[
+                            13, /* Enter */
+                            27, /* Escape */
+                        ]}
+                    >
+                        <Input
+                            id="sound-duration-input"
+                            initialValue={sound.duration + ""}
+                            className="sound-duration-input"
+                            onEnterKey={onDurationChange}
+                            treatSpaceAsEnter={true}
+                            onBlur={onDurationChange}
+                            onOptionSelected={onOptionSelected}
+                            ariaLabel={pxt.U.lf("Duration (milliseconds)")}
+                            options={
+                                {
+                                    [pxt.U.lf("100 ms")]: "100",
+                                    [pxt.U.lf("200 ms")]: "200",
+                                    [pxt.U.lf("500 ms")]: "500",
+                                    [pxt.U.lf("1 second")]: "1000",
+                                    [pxt.U.lf("2 seconds")]: "2000",
+                                    [pxt.U.lf("5 seconds")]: "5000"
+                                }
                             }
-                        }
-                    />
+                        />
+                    </BlocklyKeyboardIntercept>
                 </div>
             </div>
         </div>
@@ -231,31 +239,45 @@ export const SoundControls = (props: SoundControlsProps) => {
                         <span className="sound-label">
                             {pxt.U.lf("Effect")}
                         </span>
-
-                        <Dropdown
-                            id="effect-dropdown"
-                            className="icon-preview"
-                            selectedId={sound.effect}
-                            onItemSelected={onEffectSelected}
-                            items={effectOptions}
-                        />
+                        <BlocklyKeyboardIntercept
+                            keyCodes={[
+                                13, /* Enter */
+                                27, /* Escape */
+                            ]}
+                        >
+                            <Dropdown
+                                id="effect-dropdown"
+                                className="icon-preview"
+                                selectedId={sound.effect}
+                                onItemSelected={onEffectSelected}
+                                items={effectOptions}
+                            />
+                        </BlocklyKeyboardIntercept>
                     </div>
                     <div className="dropdown-and-label">
                         <span className="sound-label">
                             {pxt.U.lf("Interpolation")}
                         </span>
-                        <Dropdown
-                            id="interpolation-dropdown"
-                            className="icon-preview hang-left"
-                            selectedId={sound.interpolation}
-                            onItemSelected={onInterpolationSelected}
-                            items={interpolationOptions}
-                        />
+                        <BlocklyKeyboardIntercept
+                            keyCodes={[
+                                13, /* Enter */
+                                27, /* Escape */
+                            ]}
+                        >
+                            <Dropdown
+                                id="interpolation-dropdown"
+                                className="icon-preview hang-left"
+                                selectedId={sound.interpolation}
+                                onItemSelected={onInterpolationSelected}
+                                items={interpolationOptions}
+                            />
+                        </BlocklyKeyboardIntercept>
                     </div>
                 </div>
                 <DraggableGraph
                     min={1}
                     max={pxt.assets.MAX_FREQUENCY}
+                    ariaLabel={lf("Frequency over time")}
                     aspectRatio={3}
                     valueUnits={pxt.U.lf("Hz")}
                     points={[sound.startFrequency, sound.endFrequency]}
@@ -274,12 +296,13 @@ export const SoundControls = (props: SoundControlsProps) => {
                 <DraggableGraph
                     min={0}
                     max={pxt.assets.MAX_VOLUME}
+                    ariaLabel={lf("Volume over time")}
                     aspectRatio={5}
                     points={[sound.startVolume, sound.endVolume]}
                     interpolation="linear"
                     onPointChange={onVolumeChange}
                     handleStartAnimationRef={handleVolumeAnimationRef}
-                    squiggly={sound.effect === "tremolo"}
+                    squiggly={sound.effect === "tremolo" || sound.effect === "warble"}
                 />
             </div>
         </div>

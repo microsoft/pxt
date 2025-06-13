@@ -58,6 +58,9 @@ export namespace Strings {
     export const BelowMin = lf("Below minimum value");
     export const ExceedsMax = lf("Exceeds maximum value");
     export const InvalidValue = lf("Invalid value");
+    export const InvalidShareLink = lf("Invalid share link");
+    export const Privacy = lf("Privacy");
+    export const TermsOfUse = lf("Terms of Use");
 }
 
 export namespace Ticks {
@@ -67,10 +70,14 @@ export namespace Ticks {
     export const OrgLink = "teachertool.orglink";
     export const Error = "teachertool.error";
     export const NewChecklist = "teachertool.newchecklist";
-    export const ImportChecklist = "teachertool.importchecklist";
+    export const ImportChecklistOpen = "teachertool.importchecklist.open";
+    export const ImportChecklistInvalidFile = "teachertool.importchecklist.invalidfile";
+    export const ImportChecklistSuccess = "teachertool.importchecklist.success";
+    export const ImportChecklistClose = "teachertool.importchecklist.close";
     export const ExportChecklist = "teachertool.exportchecklist";
-    export const LoadChecklist = "teachertool.loadchecklist";
-    export const Evaluate = "teachertool.evaluate";
+    export const LoadChecklistFromUrl = "teachertool.loadchecklistfromurl";
+    export const SingleEvaluate = "teachertool.singleevaluate";
+    export const BulkEvaluate = "teachertool.bulkevaluate";
     export const RunOnLoad = "teachertool.runonload";
     export const AddCriteria = "teachertool.addcriteria";
     export const RemoveCriteria = "teachertool.removecriteria";
@@ -83,10 +90,20 @@ export namespace Ticks {
     export const UnhandledEvalError = "teachertool.evaluateerror";
     export const FeedbackForm = "teachertool.feedbackform";
     export const ParamErrorMissingMessage = "teachertool.paramerrormissingmessage";
+    export const SetEvalResultOutcome = "teachertool.setevalresultoutcome";
+    export const SetEvalResultNotes = "teachertool.setevalresultnotes";
+    export const LoadProjectFromInput = "teachertool.loadproject.frominput";
+    export const LoadProjectFromUrl = "teachertool.loadproject.fromurl";
+    export const LoadProjectInvalid = "teachertool.loadproject.invalid";
+    export const BlockPickerBlockSelected = "teachertool.blockpicker.blockselected";
+    export const BlockPickerOpened = "teachertool.blockpicker.opened";
+    export const PrivacyStatementClicked = "teachertool.privacystatement.clicked";
+    export const TermsOfUseClicked = "teachertool.termsofuse.clicked";
 }
 
 namespace Misc {
     export const LearnMoreLink = "https://makecode.microbit.org/teachertool"; // TODO: Replace with golink or aka.ms link
+    export const ExperienceId = "code-eval";
 }
 
 export const Constants = Object.assign(Misc, { Strings, Ticks });

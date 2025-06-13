@@ -107,16 +107,16 @@ function compileWorkspace(e: Environment, w: Blockly.Workspace, blockInfo: pxtc.
 
         const stmtsEnums: pxt.blocks.JsNode[] = [];
         e.enums.forEach(info => {
-            const models = w.getVariablesOfType(info.name);
+            const models = w.getVariableMap().getVariablesOfType(info.name);
             if (models && models.length) {
                 const members: [string, number][] = models.map(m => {
-                    const match = /^(\d+)([^0-9].*)$/.exec(m.name);
+                    const match = /^(\d+)([^0-9].*)$/.exec(m.getName());
                     if (match) {
                         return [match[2], parseInt(match[1])] as [string, number];
                     }
                     else {
                         // Someone has been messing with the XML...
-                        return [m.name, -1] as [string, number];
+                        return [m.getName(), -1] as [string, number];
                     }
                 });
 
@@ -156,9 +156,9 @@ function compileWorkspace(e: Environment, w: Blockly.Workspace, blockInfo: pxtc.
         });
 
         e.kinds.forEach(info => {
-            const models = w.getVariablesOfType("KIND_" + info.name);
+            const models = w.getVariableMap().getVariablesOfType("KIND_" + info.name);
             if (models && models.length) {
-                const userDefined = models.map(m => m.name).filter(n => info.initialMembers.indexOf(n) === -1);
+                const userDefined = models.map(m => m.getName()).filter(n => info.initialMembers.indexOf(n) === -1);
 
                 if (userDefined.length) {
                     stmtsEnums.push(pxt.blocks.mkGroup([
@@ -239,13 +239,25 @@ function blockKey(b: Blockly.Block) {
     };
 }
 
+export const AUTO_DISABLED_REASON = "pxt_automatic_disabled";
+
 function setChildrenEnabled(block: Blockly.Block, enabled: boolean) {
-    block.setEnabled(enabled);
+    block.setDisabledReason(!enabled, AUTO_DISABLED_REASON);
     // propagate changes
     const children = block.getDescendants(false);
     for (const child of children) {
-        child.setEnabled(enabled);
+        child.setDisabledReason(!enabled, AUTO_DISABLED_REASON);
     }
+}
+
+function clearDisabled(block: Blockly.Block) {
+    block.setDisabledReason(false, AUTO_DISABLED_REASON);
+
+    // for legacy projects, the disabled reason will be MANUALLY_DISABLED
+    block.setDisabledReason(false, Blockly.constants.MANUALLY_DISABLED);
+
+    // this is the reason for blocks that are disabled via Blockly.Events.disableOrphans
+    block.setDisabledReason(false, "ORPHANED_BLOCK");
 }
 
 function updateDisabledBlocks(e: Environment, allBlocks: Blockly.Block[], topBlocks: Blockly.Block[]) {
@@ -257,7 +269,7 @@ function updateDisabledBlocks(e: Environment, allBlocks: Blockly.Block[], topBlo
     }
 
     // unset disabled
-    allBlocks.forEach(b => b.setEnabled(true));
+    allBlocks.forEach(clearDisabled);
 
     // update top blocks
     const events: pxt.Map<Blockly.Block> = {};

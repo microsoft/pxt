@@ -145,7 +145,7 @@ namespace pxt.sprite {
             }
         }
 
-        protected dataLength() {
+        dataLength() {
             return Math.ceil(this.width * this.height / 2);
         }
     }
@@ -179,7 +179,7 @@ namespace pxt.sprite {
             this.buf[index] = value;
         }
 
-        protected dataLength() {
+        dataLength() {
             return this.width * this.height;
         }
     }
@@ -196,7 +196,7 @@ namespace pxt.sprite {
 
         constructor(public tilemap: Tilemap, public tileset: TileSet, public layers: BitmapData) {}
 
-        cloneData() {
+        cloneData(includeEditorData = false) {
             const tm = this.tilemap.copy();
             const tileset: TileSet = {
                 tileWidth: this.tileset.tileWidth,
@@ -207,22 +207,23 @@ namespace pxt.sprite {
             }
             const layers = Bitmap.fromData(this.layers).copy().data();
 
-            return new TilemapData(tm, tileset, layers);
+            const result = new TilemapData(tm, tileset, layers);
+
+            if (includeEditorData) {
+                result.nextId = this.nextId;
+                result.projectReferences = this.projectReferences?.slice();
+                result.tileOrder = this.tileOrder?.slice();
+                result.editedTiles = this.editedTiles?.slice();
+                result.deletedTiles = this.deletedTiles?.slice();
+            }
+
+            return result;
         }
 
         equals(other: TilemapData) {
-            if (!(this.tilemap.equals(other.tilemap)
-                && this.tileset.tileWidth == other.tileset.tileWidth
-                && this.tileset.tiles.length == other.tileset.tiles.length
-                && bitmapEquals(this.layers, other.layers))) {
-                    return false;
-            }
-
-            for (let i = 0; i < this.tileset.tiles.length; i++) {
-                if (!assetEquals(this.tileset.tiles[i], other.tileset.tiles[i])) return false;
-            }
-
-            return true;
+            return this.tilemap.equals(other.tilemap) &&
+                tilesetEquals(this.tileset, other.tileset) &&
+                bitmapEquals(this.layers, other.layers);
         }
     }
 
@@ -257,7 +258,7 @@ namespace pxt.sprite {
     export function decodeTilemap(literal: string, fileType: "typescript" | "python", proj: TilemapProject): TilemapData {
         literal = Util.htmlUnescape(literal).trim();
 
-        if (!literal.trim()) {
+        if (!literal.trim() || literal.indexOf("(") === -1) {
             return null;
         }
 
@@ -736,6 +737,19 @@ namespace pxt.sprite {
         pxt.sprite.trimTilemapTileset(result);
     }
 
+    export function isTilemapEmptyOrUnused(asset: ProjectTilemap, project: TilemapProject, projectFiles: pxt.Map<{content: string}>) {
+        const walls = sprite.Bitmap.fromData(asset.data.layers);
+        for (let x = 0; x < asset.data.tilemap.width; x++) {
+            for (let y = 0; y < asset.data.tilemap.height; y++) {
+                if (asset.data.tilemap.get(x, y) || walls.get(x, y)) {
+                    return false;
+                }
+            }
+        }
+
+        return !project.isAssetUsed(asset, projectFiles);
+    }
+
     function imageLiteralPrologue(fileType: "typescript" | "python", templateLiteral = "img"): string {
         let res = '';
         switch (fileType) {
@@ -802,7 +816,14 @@ namespace pxt.sprite {
     }
 
     export function bitmapEquals(a: pxt.sprite.BitmapData, b: pxt.sprite.BitmapData) {
+        if (a === b) return true;
+        else if (!a && b || !b && a) return false;
         return pxt.sprite.Bitmap.fromData(a).equals(pxt.sprite.Bitmap.fromData(b));
+    }
+
+    export function tilesetEquals(a: TileSet, b: TileSet) {
+        return a.tileWidth === b.tileWidth &&
+            pxt.U.arrayEquals(a.tiles, b.tiles, assetEquals);
     }
 
     export function tileWidthToTileScale(tileWidth: number) {

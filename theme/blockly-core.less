@@ -11,11 +11,13 @@
 *******************************/
 
 svg.blocklySvg {
-    background-color: @blocklySvgColor !important;
+    background-color: var(--pxt-target-background1) !important;
+    color: var(--pxt-target-foreground1) !important;
 }
 
 #maineditor, #blocksEditor > div.loading {
-    background: @blocklySvgColor;
+    background: var(--pxt-target-background1);
+    color: var(--pxt-target-foreground1);
 }
 
 .blocksAndErrorList {
@@ -142,16 +144,16 @@ i.icon.blocklyTreeButton {
 }
 
 .blocklyFlyoutButton:hover {
-    fill: @blocklyFlyoutButtonColor !important;
+    fill: var(--pxt-primary-background) !important;
 }
 
 .blocklyFlyoutButtonBackground {
-    stroke: @blocklyFlyoutButtonColor !important;
+    stroke: var(--pxt-primary-background) !important;
     stroke-width: 3px !important;
 }
 
 .blocklyFlyoutButton .blocklyText {
-    fill: white !important;
+    fill: var(--pxt-neutral-foreground3) !important;
 }
 
 .blocklyFlyoutButtonShadow {
@@ -159,17 +161,17 @@ i.icon.blocklyTreeButton {
 }
 
 .blocklyFlyoutLabelText {
-    fill: @flyoutLabelColor !important;
+    fill: var(--pxt-neutral-foreground3) !important;
     font-size: 1rem;
 }
 
 .blocklyFlyoutHeading .blocklyFlyoutLabelText {
-    fill: @flyoutLabelColor !important;
+    fill: var(--pxt-neutral-foreground3) !important;
     font-size: 1.5rem;
 }
 
 .blocklyFlyoutLabelText:hover {
-    fill: @flyoutLabelColor !important;
+    fill: var(--pxt-neutral-foreground3) !important;
 }
 
 .blocklyFlyoutLabelIcon {
@@ -178,13 +180,13 @@ i.icon.blocklyTreeButton {
 }
 
 line.blocklyFlyoutLine {
-    stroke: @flyoutLabelColor;
+    stroke: var(--pxt-neutral-foreground3);
 }
 
 
 /* Opacity of blockly flyout background */
 path.blocklyFlyoutBackground {
-    fill: @blocklyFlyoutColor !important;
+    fill: var(--pxt-neutral-background3) !important;
     fill-opacity: @blocklyFlyoutColorOpacity !important;
 }
 
@@ -245,6 +247,7 @@ text.blocklyCheckbox {
     .blocklyNonEditableText > rect.blocklySpriteField,
     .blocklyNonEditableText > rect.blocklyAnimationField,
     .blocklyNonEditableText > rect.blocklyTilemapField,
+    .blocklyEditableField > rect.blocklySpriteField,
     .blocklyEditableText > rect.blocklySpriteField,
     .blocklyEditableText > rect.blocklyAnimationField,
     .blocklyEditableText > rect.blocklyTilemapField {
@@ -281,22 +284,40 @@ text.blocklyCheckbox {
     }
 }
 
+/* Keyboard navigation plugin styles */
+
+.passiveBlockFocus.blocklyPath {
+    stroke-dasharray: 5 3;
+    stroke-width: 3;
+    stroke: #ffa200;
+}
+
+.passiveNextIndicator {
+    stroke: #ffa200;
+    fill: #ffa200;
+ }
+
+.inputActiveFocus {
+    stroke-width: 3;
+    stroke: #ffa200;
+}
+
 /*******************************
         Scrollbars
 *******************************/
 
 .blocklyScrollbarBackground {
-    fill: @blocklyScrollbarBackgroundColor;
+    fill: none;
 }
 
 .blocklyScrollbarHandle {
-    fill: @blocklyScrollbarColor;
+    fill: var(--pxt-target-stencil1);
     opacity: @blocklyScrollbarOpacity;
 }
 
 .blocklyScrollbarBackground:hover+.blocklyScrollbarHandle, .blocklyScrollbarHandle:hover, .blocklyScrollbarBackground:active+.blocklyScrollbarHandle, .blocklyScrollbarHandle:active {
     stroke-width: 3;
-    stroke: @blocklyScrollbarColor;
+    stroke: var(--pxt-target-stencil1);
 }
 
 /*******************************
@@ -304,21 +325,30 @@ text.blocklyCheckbox {
 *******************************/
 
 .blocklyWidgetDiv .blocklyContextMenu {
-    border: 1px solid rgba(34,36,38,.15);
-    box-shadow: 0 1px 2px 0 rgba(34,36,38,.15) !important;
+    background: var(--pxt-neutral-background1);
+    color: var(--pxt-neutral-foreground1);
+    border: 1px solid var(--pxt-neutral-stencil1);
+    box-shadow: 0 1px 2px 0 var(--pxt-neutral-alpha20) !important;
     padding: 0 !important;
 }
 
-.blocklyWidgetDiv .blocklyContextMenu .goog-menuitem {
+.blocklyWidgetDiv .blocklyContextMenu .blocklyMenuItem {
     margin: 0 !important;
     padding: .92857143em 1.14285714em !important;
     font: normal 13px @pageFont !important;
+    background: var(--pxt-neutral-background1);
+    color: var(--pxt-neutral-foreground1);
+
+    &.blocklyMenuItemDisabled {
+        color: var(--pxt-neutral-alpha20);
+    }
 }
 
-.blocklyWidgetDiv .blocklyContextMenu .goog-menuitem-highlight, .blocklyWidgetDiv .blocklyContextMenu .goog-menuitem-hover {
+.blocklyWidgetDiv .blocklyContextMenu .blocklyMenuItem.blocklyMenuItemHighlight, .blocklyWidgetDiv .blocklyContextMenu .goog-menuitem-hover {
     border: none !important;
     padding: .92857143em 1.14285714em !important;
-    background: rgba(0,0,0,.05) !important;
+    background: var(--pxt-neutral-background1-hover) !important;
+    color: var(--pxt-neutral-foreground1-hover);
 }
 
 /*******************************
@@ -362,3 +392,145 @@ text.blocklyCheckbox {
         font-size: 17pt !important;
     }
 }
+
+/*******************************
+        Focus styles
+*******************************/
+
+
+html {
+    --blockly-active-node-color: #fff200;
+    --blockly-active-tree-color: black;
+    --blockly-selection-width: 3px;
+}
+
+// Avoid focus outlines when not using the keyboard navigation plugin.
+div.blocklyTreeRoot > div[role="tree"]:focus-visible {
+    outline: none;
+}
+
+.blocklyKeyboardNavigation div.blocklyTreeRoot > div[role="tree"]:focus-visible {
+    outline: var(--blockly-selection-width) solid var(--blockly-active-tree-color);
+    outline-offset: calc(var(--blockly-selection-width) * -1);
+}
+
+/* Blocks, connections and fields. */
+.blocklyKeyboardNavigation
+.blocklyActiveFocus:is(.blocklyPath, .blocklyHighlightedConnectionPath),
+.blocklyKeyboardNavigation
+.blocklyActiveFocus.blocklyField
+> .blocklyFieldRect,
+.blocklyKeyboardNavigation
+.blocklyActiveFocus.blocklyField
+> .blocklyFieldRect.blocklySpriteField,
+.blocklyKeyboardNavigation
+.blocklyActiveFocus.blocklyIconGroup
+> .blocklyIconShape:first-child {
+    stroke: var(--blockly-active-node-color);
+    stroke-width: var(--blockly-selection-width);
+}
+// Compared to the plugin CSS, we've moved a :not(.blocklyFlyout .blocklyPath)
+// from .blockyPath to a separate rule below as it would not parse as less.
+.blocklyKeyboardNavigation
+.blocklyPassiveFocus:is(
+    .blocklyPath,
+    .blocklyHighlightedConnectionPath
+),
+.blocklyKeyboardNavigation
+.blocklyPassiveFocus.blocklyField
+> .blocklyFieldRect,
+.blocklyKeyboardNavigation
+.blocklyPassiveFocus.blocklyField
+> .blocklyFieldRect.blocklySpriteField,
+.blocklyKeyboardNavigation
+.blocklyPassiveFocus.blocklyIconGroup
+> .blocklyIconShape:first-child {
+    stroke: var(--blockly-active-node-color);
+    stroke-dasharray: 5px 3px;
+    stroke-width: var(--blockly-selection-width);
+}
+// Rule replacing the :not (see note above).
+.blocklyKeyboardNavigation
+.blocklyFlyout
+.blocklyPassiveFocus.blocklyPath {
+    stroke: none;
+}
+
+.blocklyKeyboardNavigation .blocklyPassiveFocus.blocklyHighlightedConnectionPath {
+    /* The connection path is being unexpectedly hidden in core */
+    display: unset !important;
+}
+
+/* Toolbox and flyout. */
+.blocklyKeyboardNavigation .blocklyFlyout:has(.blocklyActiveFocus),
+.blocklyKeyboardNavigation .blocklyToolbox div[role="tree"]:has(.blocklyActiveFocus),
+.blocklyKeyboardNavigation .blocklyActiveFocus:is(.blocklyFlyout, .blocklyToolbox div[role="tree"]) {
+    outline-offset: calc(var(--blockly-selection-width) * -1);
+    outline: var(--blockly-selection-width) solid
+        var(--blockly-active-tree-color);
+}
+
+/* Flyout buttons and labels */
+.blocklyKeyboardNavigation .blocklyFlyout .blocklyFlyoutLabel.blocklyActiveFocus,
+.blocklyKeyboardNavigation .blocklyFlyout .blocklyFlyoutButton.blocklyActiveFocus {
+    outline: none;
+}
+/* Use the backgrounds because the group can't have an outline on Safari */
+.blocklyKeyboardNavigation .blocklyFlyout .blocklyFlyoutLabel.blocklyActiveFocus > .blocklyFlyoutLabelBackground,
+.blocklyKeyboardNavigation .blocklyFlyout .blocklyFlyoutButton.blocklyActiveFocus > .blocklyFlyoutButtonBackground {
+    outline-offset: 2px;
+    outline: var(--blockly-selection-width) solid
+        var(--blockly-active-node-color);
+    border-radius: 2px;
+}
+.blocklyKeyboardNavigation .blocklyFlyout .blocklyFlyoutLabel.blocklyActiveFocus > .blocklyFlyoutLabelBackground {
+    // Swap opactity for transparent fill so we can see the focus indicator.
+    opacity: 1;
+    fill: transparent;
+}
+
+/* Workspace */
+.blocklyKeyboardNavigation .blocklySvg:has(~ .blocklyBlockDragSurface .blocklyActiveFocus) .blocklyWorkspaceFocusRing,
+.blocklyKeyboardNavigation .blocklyWorkspace:has(.blocklyActiveFocus) .blocklyWorkspaceFocusRing,
+.blocklyKeyboardNavigation .blocklyWorkspace.blocklyActiveFocus .blocklyWorkspaceFocusRing {
+    stroke: var(--blockly-active-tree-color);
+    stroke-width: calc(var(--blockly-selection-width) * 2);
+}
+.blocklyKeyboardNavigation .blocklyWorkspace.blocklyActiveFocus .blocklyWorkspaceSelectionRing {
+    stroke: var(--blockly-active-node-color);
+    stroke-width: var(--blockly-selection-width);
+}
+.blocklyKeyboardNavigation .blocklyToolboxCategoryContainer:focus-visible {
+    outline: none;
+}
+
+// Image fields e.g. +/- buttons. Needs to be the image for Safari but Chrome has the group by default.
+.blocklyKeyboardNavigation .blocklyImageField:focus-visible {
+    outline: none;
+}
+.blocklyKeyboardNavigation .blocklyImageField:is(.blocklyActiveFocus, .blocklyPassiveFocus) > image {
+    outline: var(--blockly-selection-width) solid
+        var(--blockly-active-node-color);
+    border-radius: 2px;
+    outline-offset: 2px;
+}
+.blocklyKeyboardNavigation .blocklyImageField.blocklyPassiveFocus > image {
+    outline-style: dashed;
+}
+
+
+// Temporary workaround for https://github.com/google/blockly/issues/9099
+.blocklyActiveFocus:is(
+  .blocklyFlyout,
+  .blocklyWorkspace,
+  .blocklyField,
+  .blocklyPath,
+  .blocklyHighlightedConnectionPath,
+  .blocklyComment,
+  .blocklyBubble,
+  .blocklyIconGroup,
+  .blocklyTextarea
+) {
+  outline: none;
+}
+

@@ -35,6 +35,8 @@ export const DraggableGraph = (props: DraggableGraphProps) => {
         valueUnits
     } = props;
 
+    const [focusedIndex, setFocusedIndex] = React.useState<number | undefined>();
+ 
     const width = 1000;
     const height = (1 / aspectRatio) * width;
 
@@ -109,6 +111,19 @@ export const DraggableGraph = (props: DraggableGraphProps) => {
                 const svg = screenToSVGCoord(ref.ownerSVGElement, coord);
                 throttledSetDragValue(index, svgCoordToValue(svg));
             };
+
+            ref.onkeydown = ev => {
+                const step = (max - min) / 100;
+                if (ev.code === "ArrowDown" || ev.code === "ArrowLeft") {
+                    onPointChange(index, Math.max(min, points[index] - step));
+                    ev.stopPropagation();
+                    ev.preventDefault();
+                } else if (ev.code === "ArrowUp" || ev.code === "ArrowRight") {
+                    onPointChange(index, Math.min(max, points[index] + step));
+                    ev.stopPropagation();
+                    ev.preventDefault();
+                } 
+            }
         });
     }, [dragIndex, onPointChange])
 
@@ -158,11 +173,12 @@ export const DraggableGraph = (props: DraggableGraphProps) => {
                     !isNotLast && getValue(index - 1) > getValue(index)
                 );
 
+                const textAnchor = (isNotLast !== pxt.Util.isUserLanguageRtl()) ? "start" : "end"
+
                 return <g key={index} className="draggable-graph-column">
                         {isNotLast &&
                             <path
                                 className="draggable-graph-path"
-                                stroke="black"
                                 fill="none"
                                 strokeWidth="2px"
                                 d={getInterpolationPath(
@@ -184,11 +200,24 @@ export const DraggableGraph = (props: DraggableGraphProps) => {
                             fill="white"
                             filter="url(#dropshadow)"
                         />
+
+                        {focusedIndex === index && 
+                            <circle
+                                className="draggable-graph-point-focus"
+                                cx={x + halfUnit}
+                                cy={y}
+                                r={unit+4}
+                                stroke="var(--pxt-focus-border)"
+                                fill="transparent"
+                                strokeWidth={8}
+                            />
+                        }
+
                         <text
                             className="common-draggable-graph-text"
                             x={isNotLast ? x + unit * 2 : x - unit}
                             y={shouldFlipLabel ? y + unit * 2 : Math.max(y - unit, unit)}
-                            textAnchor={isNotLast ? "start" : "end"}
+                            textAnchor={textAnchor}
                             fontSize={unit}>
                             {Math.round(getValue(index)) + (valueUnits || "")}
                         </text>
@@ -201,7 +230,14 @@ export const DraggableGraph = (props: DraggableGraphProps) => {
                             height={height}
                             fill="white"
                             opacity={0}
-
+                            tabIndex={0}
+                            role="slider"
+                            aria-label={lf("{0}, position {1}", ariaLabel, index)}
+                            aria-valuemin={min}
+                            aria-valuemax={max}
+                            aria-valuenow={getValue(index)}
+                            onFocus={() => setFocusedIndex(index)}
+                            onBlur={() => focusedIndex === index && setFocusedIndex(undefined)}
                             />
                     </g>
             })}

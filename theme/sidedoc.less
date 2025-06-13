@@ -63,6 +63,10 @@ code.hljs {
     border-top-left-radius: 5px;
     border-bottom-left-radius: 5px;
     z-index: @sidedocZIndex;
+
+    &:has(aside:focus-visible) {
+        outline: @editorFocusBorderSize solid  var(--pxt-focus-border);
+    }
 }
 
 .sideDocs #sidedocsframe {
@@ -167,9 +171,5 @@ code.hljs {
 @media only screen and (max-height: @tallEditorBreakpoint) and (min-width: @largestMobileScreen) {
     .sideDocs #sidedocs {
         top: calc(@thinMenuHeight + 1rem);
-        height: ~"calc(100% - @{thinMenuHeight} - @{editorToolsHeight} - 2rem)";
-    }
-    .sideDocs.collapsedEditorTools #sidedocs, .sideDocs.hideEditorFloats #sidedocs {
-        height: ~"calc(100% - @{thinMenuHeight} - @{editorToolsCollapsedHeight} - 2rem)";
     }
 }

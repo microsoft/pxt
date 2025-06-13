@@ -871,6 +871,11 @@ namespace ts.pxtc.Util {
     export function requestAsync(options: HttpRequestOptions): Promise<HttpResponse> {
         //if (debugHttpRequests)
         //    pxt.debug(`>> ${options.method || "GET"} ${options.url.replace(/[?#].*/, "...")}`); // don't leak secrets in logs
+        const measureParams: pxt.Map<string> = {
+            "url": `${encodeURI(options.url.replace(/[?#].*/, "..."))}`, // don't leak secrets in logs
+            "method": `${options.method || "GET"}`
+        };
+        pxt.perf.measureStart(Measurements.NetworkRequest)
         return httpRequestCoreAsync(options)
             .then(resp => {
                 //if (debugHttpRequests)
@@ -887,6 +892,24 @@ namespace ts.pxtc.Util {
                 if (resp.text && /application\/json/.test(resp.headers["content-type"] as string))
                     resp.json = U.jsonTryParse(resp.text)
                 return resp
+            })
+            .then(resp => {
+                const contentLength = resp.headers["content-length"];
+                if (contentLength) {
+                    measureParams["sizeInBytes"] = `${contentLength}`;
+                } else if (resp.text) {
+                    if (pxt.perf.isEnabled()) {
+                        // only do this work if perf measurement is actually enabled
+                        const encoder = new TextEncoder();
+                        const encoded = encoder.encode(resp.text);
+                        measureParams["sizeInBytes"] = encoded.length + "";
+                    }
+                }
+                measureParams["statusCode"] = `${resp.statusCode}`;
+                return resp
+            })
+            .finally(() => {
+                pxt.perf.measureEnd(Measurements.NetworkRequest, measureParams)
             })
     }
 
@@ -1104,6 +1127,7 @@ namespace ts.pxtc.Util {
                 case "xml": return "application/xml";
                 case "m4a": return "audio/m4a";
                 case "mp3": return "audio/mp3";
+                case "wasm": return "application/wasm";
                 default: return "application/octet-stream";
             }
         else return "application/octet-stream";
@@ -1141,7 +1165,7 @@ namespace ts.pxtc.Util {
 
                 return resp.json;
             }, e => {
-                console.log(`failed to load translations from ${url}`)
+                pxt.log(`failed to load translations from ${url}`)
                 return undefined;
             })
         }
@@ -1199,7 +1223,9 @@ namespace ts.pxtc.Util {
         "fo": { englishName: "Faroese", localizedName: "føroyskt" },
         "fr": { englishName: "French", localizedName: "Français" },
         "fr-CA": { englishName: "French (Canada)", localizedName: "Français (Canada)" },
+        "ga-IE": { englishName: "Irish", localizedName: "Gaeilge" },
         "gl": { englishName: "Galician", localizedName: "galego" },
+        "gn": { englishName: "Guarani", localizedName: "Avañe'ẽ" },
         "gu-IN": { englishName: "Gujarati", localizedName: "ગુજરાતી" },
         "haw": { englishName: "Hawaiian", localizedName: "ʻŌlelo Hawaiʻi" },
         "hi": { englishName: "Hindi", localizedName: "हिन्दी" },
@@ -1370,7 +1396,7 @@ namespace ts.pxtc.Util {
 
             const pAll = U.promiseMapAllSeries(stringFiles, (file) => downloadLiveTranslationsAsync(code, file.path)
                 .then(mergeTranslations, e => {
-                    console.log(e.message);
+                    pxt.log(e.message);
                     ++errorCount;
                 })
             );
@@ -1401,7 +1427,7 @@ namespace ts.pxtc.Util {
                     translationsCache()[translationsCacheId] = translations;
                 }
             }, e => {
-                console.error('failed to load localizations')
+                pxt.error('failed to load localizations')
             })
                 .then(() => translations);
         }
@@ -1809,6 +1835,85 @@ namespace ts.pxtc.Util {
     export function fromUTF8Array(s: Uint8Array) {
         return (new TextDecoder()).decode(s);
     }
+
+    export function getHomeUrl() {
+        // relprefix looks like "/beta---", need to chop off the hyphens and slash
+        let rel = pxt.webConfig?.relprefix.substr(0, pxt.webConfig.relprefix.length - 3);
+        if (pxt.appTarget.appTheme.homeUrl && rel) {
+            if (pxt.appTarget.appTheme.homeUrl?.lastIndexOf("/") === pxt.appTarget.appTheme.homeUrl?.length - 1) {
+                rel = rel.substr(1);
+            }
+            return pxt.appTarget.appTheme.homeUrl + rel;
+        }
+        else {
+            return pxt.appTarget.appTheme.homeUrl;
+        }
+    }
+
+    export function isExperienceSupported(experienceId: string) {
+        const supportedExps = pxt.appTarget?.appTheme?.supportedExperiences?.map((e) => e.toLocaleLowerCase());
+        const cleanedExpId = experienceId.toLocaleLowerCase();
+        const isSupported = supportedExps?.includes(cleanedExpId) ?? false;
+        return isSupported;
+    }
+
+    export function ocvEnabled() {
+        return pxt.webConfig?.ocv?.appId && pxt.webConfig?.ocv?.iframeEndpoint;
+    }
+
+    // https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
+    export function bresenhamLine(x0: number, y0: number, x1: number, y1: number, handler: (x: number, y: number) => void) {
+        const dx = x1 - x0;
+        const dy = y1 - y0;
+
+        if (dx === 0) {
+            const startY = dy >= 0 ? y0 : y1;
+            const endY = dy >= 0 ? y1 : y0;
+            for (let y = startY; y <= endY; y++) {
+                handler(x0, y);
+            }
+            return;
+        }
+
+        const xStep = dx > 0 ? 1 : -1;
+        const yStep = dy > 0 ? 1 : -1;
+        const dErr = Math.abs(dy / dx);
+
+        let err = 0;
+        let y = y0;
+        for (let x = x0; xStep > 0 ? x <= x1 : x >= x1; x += xStep) {
+            handler(x, y);
+            err += dErr;
+            while (err >= 0.5) {
+                if (yStep > 0 ? y <= y1 : y >= y1) {
+                    handler(x, y);
+                }
+                y += yStep;
+                err -= 1;
+            }
+        }
+    }
+
+    /**
+     * Check if the specified feature is enabled for the user (based on pxtarget configuration and region).
+     */
+    export function isFeatureEnabled(featureKey: string): boolean {
+        const feature = pxt.appTarget.appTheme?.enabledFeatures?.[featureKey];
+        if (!feature) return false;
+
+        let enabled = true;
+        const regionNormalised = pxt.Cloud.getRegion() ? pxt.Cloud.getRegion().toUpperCase() : undefined;
+        if (feature.includeRegions) {
+            enabled = regionNormalised && feature.includeRegions.some(r => r.toUpperCase() == regionNormalised);
+        }
+
+        // Include and exclude shouldn't really be used together, but if they are, exclude takes precedence
+        if (enabled && feature.excludeRegions) {
+            enabled = regionNormalised && !feature.excludeRegions.some(r => r.toUpperCase() == regionNormalised);
+        }
+
+        return enabled;
+    }
 }
 
 namespace ts.pxtc.BrowserImpl {
@@ -2002,9 +2107,9 @@ namespace ts.pxtc.BrowserImpl {
     }
 
     export function sha256string(s: string) {
-        pxt.perf.measureStart("sha256buffer")
+        pxt.perf.measureStart(Measurements.Sha256Buffer)
         const res = sha256buffer(Util.toUTF8Array(s));
-        pxt.perf.measureEnd("sha256buffer")
+        pxt.perf.measureEnd(Measurements.Sha256Buffer)
         return res;
     }
 }
@@ -2282,14 +2387,14 @@ namespace ts.pxtc.jsonPatch.tests {
             ];
 
         for (const test of tests) {
-            console.log(test.comment);
+            pxt.log(test.comment);
             const patches = ts.pxtc.jsonPatch.diff(test.obja, test.objb);
             if (deepEqual(patches, test.expected)) {
-                console.log("succeeded");
+                pxt.log("succeeded");
             } else {
-                console.error("FAILED");
-                console.log("got", patches);
-                console.log("exp", test.expected);
+                pxt.error("FAILED");
+                pxt.log("got", patches);
+                pxt.log("exp", test.expected);
             }
         }
     }
@@ -2348,16 +2453,16 @@ namespace ts.pxtc.jsonPatch.tests {
             ];
 
         for (const test of tests) {
-            console.log(test.comment);
+            pxt.log(test.comment);
             ts.pxtc.jsonPatch.patchInPlace(test.obj, test.patches);
             const equal = deepEqual(test.obj, test.expected);
             const succeeded = equal && test.validate ? test.validate(test.obj) : true;
             if (succeeded) {
-                console.log("succeeded");
+                pxt.log("succeeded");
             } else if (test.expected) {
-                console.error("FAILED");
-                console.log("got", test.obj);
-                console.log("exp", test.expected);
+                pxt.error("FAILED");
+                pxt.log("got", test.obj);
+                pxt.log("exp", test.expected);
             }
         }
     }

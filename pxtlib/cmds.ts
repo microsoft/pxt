@@ -3,6 +3,7 @@ namespace pxt.commands {
         Failed = 0,
         Success = 1,
         UserRejected = 2,
+        DownloadOnly = 3,
     }
 
     export interface RecompileOptions {
@@ -36,7 +37,18 @@ namespace pxt.commands {
     export let showProgramTooLargeErrorAsync: (variants: string[], confirmAsync: (options: any) => Promise<number>, saveOnly?: boolean) => Promise<RecompileOptions>;
     export let saveProjectAsync: (project: pxt.cpp.HexFile) => Promise<void> = undefined;
     export let electronDeployAsync: (r: ts.pxtc.CompileResult) => Promise<void> = undefined; // A pointer to the Electron deploy function, so that targets can access it in their extension.ts
+    export let electronFileDeployAsync: (deployRequest: pxt.electron.FileDeployRequest) => Promise<void> = undefined; // A pointer to the Electron file deploy function, so that targets can access it in their extension.ts
     export let webUsbPairDialogAsync: (pairAsync: () => Promise<boolean>, confirmAsync: (options: any) => Promise<WebUSBPairResult>, implicitlyCalled?: boolean) => Promise<WebUSBPairResult> = undefined;
     export let onTutorialCompleted: () => void = undefined;
+    export let onPostHostMessage: (msg: any /*pxt.editor.EditorMessageRequest*/) => void;
+    export let perfMeasurementThresholdMs: number = undefined;
+    export let onPerfMilestone: (payload: { milestone: string, time: number, params?: Map<string> }) => void = undefined;
+    export let onPerfMeasurement: (payload: { name: string, start: number, duration: number, params?: Map<string> }) => void = undefined;
     export let workspaceLoadedAsync: () => Promise<void> = undefined;
+    export let getDownloadMenuItems: () => any[] = undefined; // sui.ItemProps[]
+    export let notifyProjectCompiled: (headerId: string, compileResult: pxtc.CompileResult) => void = undefined;
+    export let notifyProjectSaved: (header: pxt.workspace.Header) => void = undefined;
+    export let onDownloadButtonClick: () => Promise<void> = undefined;
+    export let getDefaultProjectName: () => string = undefined;
+    export let onMarkdownActivityLoad: (path: string, title?: string, editorProjectName?: string) => Promise<void> = undefined;
 }

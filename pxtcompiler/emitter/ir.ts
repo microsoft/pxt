@@ -487,7 +487,7 @@ namespace ts.pxtc.ir {
         }
     }
 
-    function inlineSubst(e: Expr): Expr {
+    function inlineSubst(e: Expr, isRtCallArg?: boolean): Expr {
         e = Expr.clone(e)
         switch (e.exprKind) {
             case EK.PointerLiteral:
@@ -495,13 +495,19 @@ namespace ts.pxtc.ir {
                 return e
             case EK.RuntimeCall:
                 for (let i = 0; i < e.args.length; ++i)
-                    e.args[i] = inlineSubst(e.args[i])
+                    e.args[i] = inlineSubst(e.args[i], true);
                 return e
             case EK.CellRef:
                 const cell = e.data as Cell
                 if (cell.repl) {
-                    cell.replUses++
-                    return cell.repl
+                    if (cell.repl.exprKind === EK.CellRef && isRtCallArg) {
+                        // cellRefs can't be reused as arguments to runtime calls because
+                        // it will trip up the usage counting that takes place in
+                        // ProctoAssembler.clearArgs()
+                        return Expr.clone(cell.repl);
+                    }
+                    cell.replUses++;
+                    return cell.repl;
                 }
                 return e
             case EK.FieldAccess:
@@ -726,7 +732,7 @@ namespace ts.pxtc.ir {
                 switch (e.exprKind) {
                     case EK.SharedDef:
                         let arg = e.args[0]
-                        //console.log(arg)
+                        //pxt.log(arg)
                         U.assert(arg.totalUses < 0, "arg.totalUses < 0")
                         U.assert(arg.currUses === 0, "arg.currUses === 0")
                         // if there is just one usage, strip the SharedDef
@@ -753,7 +759,7 @@ namespace ts.pxtc.ir {
             }
 
             let sharedincr = (e: Expr): Expr => {
-                //console.log("OUTSH", e.toString())
+                //pxt.log("OUTSH", e.toString())
                 switch (e.exprKind) {
                     case EK.SharedDef:
                         iterargs(e, sharedincr)
@@ -774,9 +780,9 @@ namespace ts.pxtc.ir {
 
             this.body = this.body.filter(s => {
                 if (s.expr) {
-                    //console.log("OPT", s.expr.toString())
+                    //pxt.log("OPT", s.expr.toString())
                     s.expr = opt(refdef(s.expr))
-                    //console.log("INTO", s.expr.toString())
+                    //pxt.log("INTO", s.expr.toString())
                     if (s.stmtKind == ir.SK.Expr && s.expr.isPure())
                         return false;
                 }
@@ -790,7 +796,7 @@ namespace ts.pxtc.ir {
 
             for (let s of this.body) {
                 if (s.expr) {
-                    //console.log("CNT", s.expr.toString())
+                    //pxt.log("CNT", s.expr.toString())
                     s.expr = cntuses(s.expr)
                 }
 
@@ -875,7 +881,7 @@ namespace ts.pxtc.ir {
                     let n = allBrkp[i + 1]
                     s += "\n"
                 }
-                console.log(s)
+                pxt.log(s)
             }
         }
     }

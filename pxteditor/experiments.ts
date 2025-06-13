@@ -1,14 +1,14 @@
-export interface Experiment {
-    id: string; // == field in apptheme also assumes image at /static/experiments/ID.png
-    name: string;
-    description: string;
-    feedbackUrl?: string; // allows user to put feedback
-    enableOnline?: boolean; // requires internet connection, disable in offline app
-}
+import Experiment = pxt.editor.Experiment;
 
 function key(experiment: Experiment | string): string {
     const id = (typeof experiment === "object") ? experiment.id : experiment;
     return `experiments-${id}`
+}
+
+let editorExtensionExperiments: Experiment[];
+
+export function setEditorExtensionExperiments(experiments: Experiment[]) {
+    editorExtensionExperiments = experiments;
 }
 
 export function syncTheme() {
@@ -31,7 +31,7 @@ export function syncTheme() {
 export function all(): Experiment[] {
     const ids = pxt.appTarget.appTheme.experiments;
     if (!ids) return [];
-    return [
+    const exps: Experiment[] = [
         {
             id: "print",
             name: lf("Print Code"),
@@ -162,27 +162,20 @@ export function all(): Experiment[] {
             description: lf("Open connected editors in different browser tabs.")
         },
         {
-            id: "accessibleBlocks",
-            name: lf("Accessible Blocks"),
-            description: lf("Use the WASD keys to move and modify blocks."),
-            feedbackUrl: "https://github.com/microsoft/pxt/issues/6850"
-        },
-        {
             id: "errorList",
             name: lf("Error List"),
             description: lf("Show an error list panel for JavaScript and Python.")
-        },
-        {
-            id: "blocksErrorList",
-            name: lf("Blocks Error List"),
-            description: lf("Show an error list panel for Blocks")
         },
         {
             id: "timeMachine",
             name: lf("Time Machine"),
             description: lf("Save and restore past versions of a project")
         },
-    ].filter(experiment => ids.indexOf(experiment.id) > -1 && !(pxt.BrowserUtils.isPxtElectron() && experiment.enableOnline));
+    ];
+
+    return exps.filter(experiment => ids.indexOf(experiment.id) > -1)
+        .concat(editorExtensionExperiments || [])
+        .filter(experiment => !(pxt.BrowserUtils.isPxtElectron() && experiment.enableOnline));
 }
 
 export function clear() {
@@ -199,7 +192,12 @@ export function isEnabled(experiment: Experiment | string): boolean {
 }
 
 export function toggle(experiment: Experiment) {
-    setState(experiment, !isEnabled(experiment));
+    if (experiment.onClick) {
+        experiment.onClick();
+    }
+    else {
+        setState(experiment, !isEnabled(experiment));
+    }
 }
 
 export function state(): string {

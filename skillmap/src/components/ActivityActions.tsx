@@ -106,7 +106,7 @@ export class ActivityActionsImpl extends React.Component<ActivityActionsProps> {
         // Apply "grid" class when there are four actions (for a completed activity)
         return <div className={`actions ${completedHeaderId ? "grid" : ""}`}>
             <Button
-                className="teal"
+                className="tertiary"
                 tabIndex={-1}
                 ariaPosInSet={1}
                 ariaSetSize={numberOfActions}

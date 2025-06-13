@@ -1,8 +1,9 @@
 /// <reference path="../built/pxtlib.d.ts" />
 
 import * as Blockly from "blockly";
-import { flyoutCategory, getAllFunctionDefinitionBlocks } from "./plugins/functions";
+import { flyoutCategory, getAllFunctionDefinitionBlocks, LOCALIZATION_NAME_MUTATION_KEY } from "./plugins/functions";
 import { DUPLICATE_ON_DRAG_MUTATION_KEY } from "./plugins/duplicateOnDrag";
+import { DRAGGABLE_PARAM_INPUT_PREFIX } from "./loader";
 
 const primitiveTypeRegex = /^(string|number|boolean)$/;
 
@@ -100,7 +101,7 @@ export function createShadowValue(info: pxtc.BlocksInfo, p: pxt.blocks.BlockPara
     const value = document.createElement("value");
     value.setAttribute("name", p.definitionName);
 
-    const isArray = isArrayType(p.type);
+    const isArray = (shadowId === "lists_create_with" || !shadowId) ? isArrayType(p.type) : undefined;
 
     const shadow = document.createElement(((isVariable || isArray) && !parentIsShadow) ? "block" : "shadow");
 
@@ -420,7 +421,7 @@ export function createToolboxBlock(info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, c
                 const useReporter = fn.attributes.draggableParameters === "reporter";
 
                 const value = document.createElement("value");
-                value.setAttribute("name", "HANDLER_DRAG_PARAM_" + arg.name);
+                value.setAttribute("name", DRAGGABLE_PARAM_INPUT_PREFIX + arg.name);
 
                 const blockType = useReporter ? pxt.blocks.reporterTypeForArgType(arg.type) : "variables_get_reporter";
                 const shadow = document.createElement("block");
@@ -432,9 +433,11 @@ export function createToolboxBlock(info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, c
                 if (useReporter && blockType === "argument_reporter_custom") {
                     mutation.setAttribute("typename", arg.type);
                 }
+                mutation.setAttribute(LOCALIZATION_NAME_MUTATION_KEY, arg.localizationKey);
 
                 const field = document.createElement("field");
                 field.setAttribute("name", useReporter ? "VALUE" : "VAR");
+
                 field.textContent = pxt.Util.htmlEscape(arg.name);
 
                 shadow.appendChild(field);
@@ -450,6 +453,24 @@ export function createToolboxBlock(info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, c
                 block.appendChild(field);
             });
         }
+    }
+
+    if (fn.attributes.expandArgumentsInToolbox) {
+        let mutation: Element;
+
+        for (const child of block.children) {
+            if (child.tagName === "mutation") {
+                mutation = child;
+                break;
+            }
+        }
+
+        if (!mutation) {
+            mutation = document.createElement("mutation");
+            block.appendChild(mutation);
+        }
+
+        mutation.setAttribute("_expanded", "" + fn.attributes._expandedDef.parameters.length);
     }
 
     if (parent) {

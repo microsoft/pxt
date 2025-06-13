@@ -1,6 +1,6 @@
 {
   "name": "pxt-core",
-  "version": "10.3.8",
+  "version": "11.4.28",
   "description": "Microsoft MakeCode provides Blocks / JavaScript / Python tools and editors",
   "keywords": [
     "TypeScript",
@@ -61,9 +61,9 @@
     "npm": ">=8.0.0"
   },
   "dependencies": {
-    "@blockly/field-colour": "5.0.5",
-    "@blockly/keyboard-navigation": "0.6.5",
-    "@blockly/plugin-workspace-search": "9.1.0",
+    "@blockly/field-colour": "6.0.0",
+    "@blockly/keyboard-navigation": "1.0.0",
+    "@blockly/plugin-workspace-search": "10.0.0",
     "@crowdin/crowdin-api-client": "^1.33.0",
     "@fortawesome/fontawesome-free": "^5.15.4",
     "@microsoft/applicationinsights-web": "^2.8.11",
@@ -72,17 +72,18 @@
     "@zip.js/zip.js": "2.4.20",
     "adm-zip": "^0.5.12",
     "axios": "^1.6.8",
-    "blockly": "11.1.1",
+    "blockly": "12.1.0",
     "browserify": "17.0.0",
     "chai": "^3.5.0",
+    "chalk": "^4.1.2",
     "cssnano": "4.1.10",
     "dashjs": "^4.4.0",
     "diff-match-patch": "^1.0.5",
     "dompurify": "2.0.17",
     "faye-websocket": "0.11.1",
-    "karma": "6.3.10",
+    "karma": "6.4.4",
     "karma-chai": "0.1.0",
-    "karma-chrome-launcher": "3.1.0",
+    "karma-chrome-launcher": "3.2.0",
     "karma-mocha": "2.0.1",
     "less": "3.13.1",
     "lzma": "2.3.2",
@@ -91,7 +92,7 @@
     "pngjs": "3.4.0",
     "postcss": "6.0.21",
     "promise.prototype.finally": "^3.1.2",
-    "puppeteer": "13.0.1",
+    "puppeteer": "23.11.1",
     "request": "2.88.0",
     "rimraf": "2.5.4",
     "rtlcss": "2.2.1",
@@ -150,11 +151,24 @@
     "redux": "4.2.0",
     "smoothie": "1.35.0",
     "typescript": "4.8.3",
-    "uglifyify": "5.0.2"
+    "uglifyify": "5.0.2",
+    "yargs": "^17.7.2"
+  },
+  "overrides": {
+    "combine-source-map": {
+      "source-map": "0.4.4"
+    },
+    "@blockly/field-colour": {
+      "blockly": "^12.1.0"
+    },
+    "@blockly/plugin-workspace-search": {
+      "blockly": "^12.1.0"
+    }
   },
   "scripts": {
     "build": "gulp",
     "test": "gulp travis",
+    "test:publish": "gulp travis --publish",
     "clean": "gulp clean",
     "lint": "gulp lint",
     "start": "gulp",
@@ -164,6 +178,7 @@
     "test:err": "gulp testerr",
     "test:fmt": "gulp testfmt",
     "test:lang": "gulp testlang",
+    "test:tutorials": "gulp testtutorials",
     "update": "gulp update",
     "watch-streamer": "cd docs/static/streamer && tsc -t es6 --watch",
     "prepare": "node ./scripts/npm-prepare.js",

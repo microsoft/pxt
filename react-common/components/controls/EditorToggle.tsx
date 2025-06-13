@@ -3,6 +3,7 @@ import { classList, ControlProps } from "../util";
 import { Button } from "./Button";
 import { FocusList } from "./FocusList";
 import { MenuDropdown } from "./MenuDropdown";
+import { useState } from "react";
 
 export interface EditorToggleProps extends ControlProps {
     items: EditorToggleItem[];
@@ -37,17 +38,26 @@ export const EditorToggle = (props: EditorToggleProps) => {
     } = props;
 
 
+    const [isFocused, setIsFocused] = useState<boolean>(false);
     const hasDropdown = items.some(item => isDropdownItem(item));
 
     const onKeydown = (ev: React.KeyboardEvent) => {
         // TODO
     }
 
+    const classNameComposite = classList(
+        "common-editor-toggle",
+        hasDropdown && "has-dropdown",
+        isFocused && "focused",
+        className);
+    
     return (
         <div className="common-editor-toggle-outer">
-            <EditorToggleAccessibleMenu {...props} />
+            <EditorToggleAccessibleMenu
+            setIsFocused={setIsFocused}
+            { ...props} />
             <div id={id}
-                className={classList("common-editor-toggle", hasDropdown && "has-dropdown", className)}
+                className={classNameComposite}
                 role={role || "tablist"}
                 aria-hidden={true}
                 aria-label={ariaLabel}>
@@ -58,7 +68,7 @@ export const EditorToggle = (props: EditorToggleProps) => {
                                 className={classList(
                                     "common-editor-toggle-item",
                                     isSelected && "selected",
-                                    isDropdownItem(item) && "common-editor-toggle-item-dropdown",
+                                    isDropdownItem(item) && "common-editor-toggle-item-dropdown"
                                 )} >
                                 <ToggleButton item={item} isSelected={isSelected} onKeydown={onKeydown} />
                                 { isDropdownItem(item) &&
@@ -92,6 +102,7 @@ export const EditorToggle = (props: EditorToggleProps) => {
 interface ToggleButtonProps {
     item: BasicEditorToggleItem;
     isSelected?: boolean;
+    isFocused?: boolean;
     onKeydown: (ev: React.KeyboardEvent) => void;
 }
 
@@ -117,9 +128,14 @@ interface ToggleTab extends BasicEditorToggleItem {
     selected?: boolean;
 }
 
-const EditorToggleAccessibleMenu = (props: EditorToggleProps) => {
-    const { items, id, selected, ariaHidden } = props;
+interface EditorToggleAccessibleProps extends EditorToggleProps {
+    setIsFocused: (isFocused: boolean) => void;
+}
 
+const EditorToggleAccessibleMenu = (props: EditorToggleAccessibleProps) => {
+    const { items, id, selected, ariaHidden, setIsFocused } = props;
+
+    let selectedIndex : number | undefined;
     const tabs = items.reduce((prev, current, index) => {
         const next: ToggleTab[] = [...prev]
         next.push({...current});
@@ -127,6 +143,7 @@ const EditorToggleAccessibleMenu = (props: EditorToggleProps) => {
         // The selected item will always be a top-level option, not in a dropdown
         if (selected === index) {
             next[next.length - 1].selected = true;
+            selectedIndex = index;
         } else {
             next[next.length - 1].selected = false;
         }
@@ -137,16 +154,26 @@ const EditorToggleAccessibleMenu = (props: EditorToggleProps) => {
         return next;
     }, [] as ToggleTab[]);
 
-    return <FocusList id={id} role="tablist" className="common-toggle-accessibility" childTabStopId={id + "-selected"}>
+    const childIdPrefix = `${id}-option-`
+    
+    return <FocusList 
+            id={id} 
+            role="tablist" 
+            className="common-toggle-accessibility" 
+            childTabStopId={`${childIdPrefix}${selectedIndex}`}
+            focusSelectsItem={true}
+        >
         {tabs.map((item, index) =>
             <Button
                 key={index}
                 className={item.selected ? "selected" : undefined}
-                id={item.selected ? id + "-selected" : undefined}
+                id={`${childIdPrefix}${index}`}
                 role="tab"
                 title={item.title}
                 label={item.label}
                 onClick={item.onClick}
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => setIsFocused(false)}
                 ariaSelected={item.selected}
                 ariaHidden={ariaHidden}/>
         )}

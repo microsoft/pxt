@@ -39,7 +39,8 @@ Blockly.defineBlocksWithJsonArray([
           {
             "type": "field_variable",
             "name": "VAR",
-            "variable": "%{BKY_VARIABLES_DEFAULT_NAME}"
+            "variable": "%{BKY_VARIABLES_DEFAULT_NAME}",
+            "variableTypes": [""],
           }
         ],
         "output": null,

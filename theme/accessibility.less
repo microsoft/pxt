@@ -11,7 +11,7 @@
 *******************************/
 
 @accessibleMenuBackground: rgba(255,255,255,.9);
-@accessibleMenuColor: #387894;
+@accessibleMenuColor: black;
 
 /* Main menu focus */
 #mainmenu .ui.item:focus {
@@ -20,8 +20,17 @@
 }
 
 /* Toggle focus */
-#mainmenu .editor-menuitem .ui.item:focus {
-    background: rgba(0,0,0,0.1) !important;
+#mainmenu .editor-menuitem {
+    .ui.item:focus-visible {
+        background: transparent;
+        outline: 3px solid white;
+        outline-offset: -5px;
+        filter: none;
+    }
+
+    .ui.item.active:focus-visible {
+        outline-color: black;
+    }
 }
 
 .ui.item:focus, .ui.button:focus {

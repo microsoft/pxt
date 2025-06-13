@@ -170,7 +170,7 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
                                         })
                                     });
                             }
-case "renderxml": {
+                            case "renderxml": {
                                 const rendermsg = data as pxt.editor.EditorMessageRenderXmlRequest;
                                 return Promise.resolve()
                                     .then(() => {
@@ -202,11 +202,19 @@ case "renderxml": {
                                         resp = results;
                                     });
                             }
-case "gettoolboxcategories": {
+                            case "gettoolboxcategories": {
                                 const msg = data as pxt.editor.EditorMessageGetToolboxCategoriesRequest;
                                 return Promise.resolve()
                                     .then(() => {
                                         resp = projectView.getToolboxCategories(msg.advanced);
+                                    });
+                            }
+                            case "getblockastext": {
+                                const msg = data as pxt.editor.EditorMessageGetBlockAsTextRequest;
+                                return Promise.resolve()
+                                    .then(() => {
+                                        const readableName = projectView.getBlockAsText(msg.blockId);
+                                        resp = { blockAsText: readableName } as pxt.editor.EditorMessageGetBlockAsTextResponse;
                                     });
                             }
                             case "renderpython": {
@@ -250,7 +258,7 @@ case "gettoolboxcategories": {
                                     .then(() => projectView.printCode());
                             }
                             case "pair": {
-                                return projectView.pairAsync().then(() => {});
+                                return projectView.pairDialogAsync().then(() => {});
                             }
                             case "info": {
                                 return Promise.resolve()
@@ -290,10 +298,29 @@ case "gettoolboxcategories": {
                             case "setlanguagerestriction": {
                                 const msg = data as pxt.editor.EditorSetLanguageRestriction;
                                 if (msg.restriction === "no-blocks") {
-                                    console.warn("no-blocks language restriction is not supported");
+                                    pxt.warn("no-blocks language restriction is not supported");
                                     throw new Error("no-blocks language restriction is not supported")
                                 }
                                 return projectView.setLanguageRestrictionAsync(msg.restriction);
+                            }
+                            case "precachetutorial": {
+                                const msg = data as pxt.editor.PrecacheTutorialRequest;
+                                const tutorialData = msg.data;
+                                const lang = msg.lang || pxt.Util.userLanguage();
+
+                                return pxt.github.db.cacheReposAsync(tutorialData)
+                                    .then(async () => {
+                                        if (typeof tutorialData.markdown === "string") {
+                                            // the markdown needs to be cached in the translation db
+                                            const db = await pxt.BrowserUtils.translationDbAsync();
+                                            await db.setAsync(lang, tutorialData.path, undefined, undefined, tutorialData.markdown);
+                                        }
+                                    });
+                            }
+                            case "setcolorthemebyid": {
+                                const msg = data as pxt.editor.EditorMessageSetColorThemeRequest;
+                                projectView.setColorThemeById(msg.colorThemeId, !!msg.savePreference);
+                                return Promise.resolve();
                             }
                         }
                         return Promise.resolve();
@@ -313,8 +340,17 @@ case "gettoolboxcategories": {
 /**
  * Sends analytics messages upstream to container if any
  */
+let controllerAnalyticsEnabled = false;
 export function enableControllerAnalytics() {
-    if (!pxt.appTarget.appTheme.allowParentController || !pxt.BrowserUtils.isIFrame()) return;
+    if (controllerAnalyticsEnabled) return;
+
+    const hasOnPostHostMessage = !!pxt.commands.onPostHostMessage;
+    const hasAllowParentController = pxt.appTarget.appTheme.allowParentController;
+    const isInsideIFrame = pxt.BrowserUtils.isIFrame();
+
+    if (!(hasOnPostHostMessage || (hasAllowParentController && isInsideIFrame))) {
+        return;
+    }
 
     const te = pxt.tickEvent;
     pxt.tickEvent = function (id: string, data?: pxt.Map<string | number>): void {
@@ -357,6 +393,8 @@ export function enableControllerAnalytics() {
             data
         })
     }
+
+    controllerAnalyticsEnabled = true;
 }
 
 function sendResponse(request: pxt.editor.EditorMessage, resp: any, success: boolean, error: any) {
@@ -400,6 +438,16 @@ export function postHostMessageAsync(msg: pxt.editor.EditorMessageRequest): Prom
         }
         else {
             window.parent.postMessage(env, "*");
+        }
+
+        // Post to editor extension if it wants to be notified of these messages.
+        // Note this is a one-way notification. Responses are not supported.
+        if (pxt.commands.onPostHostMessage) {
+            try {
+                pxt.commands.onPostHostMessage(env);
+            } catch (err) {
+                pxt.reportException(err);
+            }
         }
 
         if (!msg.response)

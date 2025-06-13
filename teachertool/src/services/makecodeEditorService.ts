@@ -6,6 +6,8 @@ import { EditorDriver } from "pxtservices/editorDriver";
 import { loadToolboxCategoriesAsync } from "../transforms/loadToolboxCategoriesAsync";
 import { stateAndDispatch } from "../state";
 import { runEvaluateAsync } from "../transforms/runEvaluateAsync";
+import { Ticks } from "../constants";
+import { getChecklistHash, getObfuscatedProjectId } from "../utils";
 
 let driver: EditorDriver | undefined;
 let highContrast: boolean = false;
@@ -36,6 +38,15 @@ export function setEditorRef(ref: HTMLIFrameElement | undefined, forceReload: ()
             const { runOnLoad, projectMetadata } = state;
 
             if (runOnLoad && !!projectMetadata) {
+                pxt.tickEvent(Ticks.BulkEvaluate, {
+                    fromUserInteraction: true + "",
+                    runOnLoad: true + "",
+                    criteriaCount: state.checklist.criteria.length,
+                    catalogCriteriaIds: JSON.stringify(state.checklist.criteria.map(c => c.catalogCriteriaId)),
+                    checklistHash: getChecklistHash(state.checklist),
+                    projectId: getObfuscatedProjectId(state.projectMetadata?.id),
+                });
+
                 runEvaluateAsync(true); // cause a switch to checklist tab on run
             }
 
@@ -60,6 +71,11 @@ export async function getToolboxCategoriesAsync(
     advanced?: boolean
 ): Promise<pxt.editor.ToolboxCategoryDefinition[] | undefined> {
     const response = driver ? await driver.getToolboxCategories(advanced) : undefined;
+    return response;
+}
+
+export async function getBlockAsText(blockId: string): Promise<pxt.editor.BlockAsText | undefined> {
+    const response = driver ? await driver.getBlockAsText(blockId) : undefined;
     return response;
 }
 
