@@ -179,7 +179,6 @@ export const DraggableGraph = (props: DraggableGraphProps) => {
                         {isNotLast &&
                             <path
                                 className="draggable-graph-path"
-                                stroke="black"
                                 fill="none"
                                 strokeWidth="2px"
                                 d={getInterpolationPath(

@@ -4,6 +4,7 @@ import { ContainerProps, findNextFocusableElement } from "../util";
 export interface FocusListProps extends ContainerProps {
     role: string;
     childTabStopId?: string;
+    focusSelectsItem?: boolean;
     useUpAndDownArrowKeys?: boolean;
     onItemReceivedFocus?: (item: HTMLElement) => void;
 }
@@ -25,6 +26,7 @@ export const FocusList = (props: FocusListProps) => {
         ariaLabel,
         childTabStopId,
         children,
+        focusSelectsItem,
         onItemReceivedFocus,
         useUpAndDownArrowKeys
     } = props;
@@ -68,26 +70,47 @@ export const FocusList = (props: FocusListProps) => {
         const target = document.activeElement as HTMLElement;
         const index = focusableElements.indexOf(target);
 
+        const handleClick = (element: HTMLElement) => {
+            if (element.click) {
+                element.click();
+            }
+            else {
+                // SVG Elements
+                element.dispatchEvent(new Event("click"));
+            }
+        }
+
         const focus = (element: HTMLElement) => {
             element.focus();
             if (onItemReceivedFocus) onItemReceivedFocus(element);
+            if (focusSelectsItem) {
+                handleClick(element);
+            }
         }
 
         if (index === -1 && target !== focusList) return;
 
-        if (e.key === "Enter" || e.key === " ") {
+        let prevKey, nextKey;
+        if (useUpAndDownArrowKeys) {
+            prevKey = "ArrowUp";
+            nextKey = "ArrowDown";
+        } else {
+            if (pxt.Util.isUserLanguageRtl()) {
+                prevKey = "ArrowRight";
+                nextKey = "ArrowLeft";
+            } else {
+                prevKey = "ArrowLeft";
+                nextKey = "ArrowRight";
+            }
+        }
+
+        if (!focusSelectsItem && (e.key === "Enter" || e.key === " ")) {
             e.preventDefault();
             e.stopPropagation();
 
-            if (target.click) {
-                target.click();
-            }
-            else {
-                // SVG Elements
-                target.dispatchEvent(new Event("click"));
-            }
+            handleClick(target);
         }
-        else if (e.key === (useUpAndDownArrowKeys ? "ArrowDown" : "ArrowRight")) {
+        else if (e.key === nextKey) {
             if (index === focusableElements.length - 1 || target === focusList) {
                 focus(findNextFocusableElement(focusableElements, index, 0, true, isFocusable));
             }
@@ -97,7 +120,7 @@ export const FocusList = (props: FocusListProps) => {
             e.preventDefault();
             e.stopPropagation();
         }
-        else if (e.key === (useUpAndDownArrowKeys ? "ArrowUp" : "ArrowLeft")) {
+        else if (e.key === prevKey) {
             if (index === 0 || target === focusList) {
                 focus(findNextFocusableElement(focusableElements, index, focusableElements.length - 1, false, isFocusable));
             }
