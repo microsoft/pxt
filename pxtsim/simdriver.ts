@@ -352,6 +352,9 @@ namespace pxsim {
             this.singleSimulator = true
         }
 
+        // BEGIN TEMPORARY: jacdac simulator
+        newJacdacSimulator: boolean = false;
+        // END TEMPORARY: jacdac simulator
         public postMessage(msg: pxsim.SimulatorMessage, source?: Window, frameID?: string) {
             if (this.hwdbg) {
                 this.hwdbg.postMessage(msg)
@@ -413,11 +416,14 @@ namespace pxsim {
                             this.startFrame(messageFrame);
                             frames = this.simFrames(); // refresh
                         }
-
                         // should we start a simulator extension for this message?
                         if (simulatorExtension) {
                             // find a frame already running that simulator
                             let messageFrame = frames.find(frame => frame.dataset[FRAME_DATA_MESSAGE_CHANNEL] === messageChannel);
+                            // BEGIN TEMPORARY: jacdac simulator
+                            if (messageChannel === "jacdac/pxt-jacdac")
+                                this.newJacdacSimulator = true;
+                            // END TEMPORARY: jacdac simulator
                             // not found, spin a new one
                             if (!messageFrame) {
                                 const url = new URL(simulatorExtension.url);
@@ -438,11 +444,13 @@ namespace pxsim {
                             let messageFrame = frames.find(frame => frame.dataset[FRAME_DATA_MESSAGE_CHANNEL] === messageChannel);
                             // not found, spin a new one
                             if (!messageFrame) {
-                                const useLocalHost = U.isLocalHost() && /localhostmessagesims=1/i.test(window.location.href)
-                                const url = ((useLocalHost && messageSimulator.localHostUrl) || messageSimulator.url)
-                                    .replace("$PARENT_ORIGIN$", encodeURIComponent(this.options.parentOrigin || ""))
-                                    .replace("$LANGUAGE$", encodeURIComponent(this.options.userLanguage))
-                                startSimulatorExtension(url, messageSimulator.permanent, messageSimulator.aspectRatio);
+                                if (messageChannel !== "jacdac" || !this.newJacdacSimulator) { // TEMPORARY: jacdac simulator
+                                    const useLocalHost = U.isLocalHost() && /localhostmessagesims=1/i.test(window.location.href)
+                                    const url = ((useLocalHost && messageSimulator.localHostUrl) || messageSimulator.url)
+                                        .replace("$PARENT_ORIGIN$", encodeURIComponent(this.options.parentOrigin || ""))
+                                        .replace("$LANGUAGE$", encodeURIComponent(this.options.userLanguage))
+                                    startSimulatorExtension(url, messageSimulator.permanent, messageSimulator.aspectRatio);
+                                }
                             }
                             // not running the curren run, restart
                             else if (messageFrame.dataset['runid'] != this.runId) {
