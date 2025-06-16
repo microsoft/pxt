@@ -14,9 +14,8 @@ import ISettingsProps = pxt.editor.ISettingsProps;
 import UserInfo = pxt.editor.UserInfo;
 import SimState = pxt.editor.SimState;
 import { sendUpdateFeedbackTheme } from "../../react-common/components/controls/Feedback/FeedbackEventListener";
-import { TabPane } from "./components/core/TabPane";
 import KeyboardControlsHelp from "./components/KeyboardControlsHelp";
-import { Checkbox, CheckboxIcon } from "../../react-common/components/controls/Checkbox";
+import { CheckboxIcon } from "../../react-common/components/controls/Checkbox";
 
 // common menu items -- do not remove
 // lf("About")
