@@ -49,3 +49,17 @@ export const Checkbox = (props: CheckboxProps) => {
         </div>
     )
 }
+
+interface CheckboxIconProps {
+    isChecked: boolean;
+}
+
+export const CheckboxIcon = (props: CheckboxIconProps) => {
+    const { isChecked } = props;
+
+    return (
+        <span className={classList("common-checkbox-icon", isChecked && "checked")}>
+            {isChecked && <i className="fas fa-check" />}
+        </span>
+    );
+}
