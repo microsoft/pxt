@@ -697,18 +697,36 @@ export async function aiErrorExplainRequest(
     outputFormat: "tour_json" | "text"
 ): Promise<string | undefined> {
 
-    const url = `/api/copilot/explainerror`;
+    const startUrl = `/api/copilot/startexplainerror`;
+    const statusUrl = `/api/copilot/explainerrorstatus`;
+    const taskTerminalStates = ["SUCCESS", "FAILURE"];
+    const pollIntervalMs = 1000;
+    const timeoutMs = 90000;
     const data = { lang, code, errors, target, outputFormat };
-    let result: string = "";
 
-    const request = await auth.apiAsync(url, data, "POST");
-    if (!request.success) {
-        throw new StatusCodeError(
-            request.statusCode,
-            request.err || `Unable to reach AI. Error: ${request.statusCode}.\n${request.err}`
-        );
+    // Start the request.
+    const queryStart = await auth.apiAsync(startUrl, data, "POST");
+    await pxt.Util.timeout(pollIntervalMs);
+    const resultId = queryStart.resp.resultId;
+
+    // Poll periodically until the request is complete (or timeout).
+    let statusResponse = await auth.apiAsync(statusUrl, { resultId }, "POST");
+    const startTime = Date.now();
+    while (!taskTerminalStates.includes(statusResponse.resp.state)) {
+        await pxt.Util.timeout(pollIntervalMs);
+        statusResponse = await auth.apiAsync(statusUrl, { resultId }, "POST");
+        if (Date.now() - startTime > timeoutMs) {
+            pxt.reportError("errorHelp", "Timeout waiting for Explain Error response.");
+            throw new Error("Timeout waiting for Explain Error response");
+        }
     }
-    result = await request.resp;
 
-    return result;
+    if (statusResponse.resp.state === "FAILURE") {
+        // This shouldn't normally happen (backend will log errors and return 500, instead)
+        // but handle it just in case.
+        pxt.reportError("errorHelp", `"Error in response for Explain Error: ${JSON.stringify(statusResponse.resp)}`);
+        throw new Error("Failure response from AI service");
+    }
+
+    return statusResponse.resp.data;
 }
