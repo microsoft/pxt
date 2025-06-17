@@ -696,12 +696,10 @@ export async function aiErrorExplainRequest(
     target: string,
     outputFormat: "tour_json" | "text"
 ): Promise<string | undefined> {
-
     const startUrl = `/api/copilot/startexplainerror`;
     const statusUrl = `/api/copilot/explainerrorstatus`;
-    const taskTerminalStates = ["SUCCESS", "FAILURE"];
-    const pollIntervalMs = 1000;
-    const timeoutMs = 90000;
+    const pollIntervalMs = 1000; // 1 second
+    const timeoutMs = 90000; // 1.5 minutes
     const data = { lang, code, errors, target, outputFormat };
 
     // Start the request.
@@ -710,9 +708,10 @@ export async function aiErrorExplainRequest(
     const resultId = queryStart.resp.resultId;
 
     // Poll periodically until the request is complete (or timeout).
+    // Expected states: "InProgress", "Success", "Failed"
     let statusResponse = await auth.apiAsync(statusUrl, { resultId }, "POST");
     const startTime = Date.now();
-    while (!taskTerminalStates.includes(statusResponse.resp.state)) {
+    while (statusResponse.resp.state != "Success" && statusResponse.resp.state != "Failed") {
         await pxt.Util.timeout(pollIntervalMs);
         statusResponse = await auth.apiAsync(statusUrl, { resultId }, "POST");
         if (Date.now() - startTime > timeoutMs) {
@@ -721,7 +720,7 @@ export async function aiErrorExplainRequest(
         }
     }
 
-    if (statusResponse.resp.state === "FAILURE") {
+    if (statusResponse.resp.state === "Failed") {
         // This shouldn't normally happen (backend will log errors and return 500, instead)
         // but handle it just in case.
         pxt.reportError("errorHelp", `"Error in response for Explain Error: ${JSON.stringify(statusResponse.resp)}`);
