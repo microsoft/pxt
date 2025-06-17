@@ -698,34 +698,34 @@ export async function aiErrorExplainRequest(
 ): Promise<string | undefined> {
     const startUrl = `/api/copilot/startexplainerror`;
     const statusUrl = `/api/copilot/explainerrorstatus`;
-    const pollIntervalMs = 1000; // 1 second
-    const timeoutMs = 90000; // 1.5 minutes
+
     const data = { lang, code, errors, target, outputFormat };
 
     // Start the request.
     const queryStart = await auth.apiAsync(startUrl, data, "POST");
-    await pxt.Util.timeout(pollIntervalMs);
     const resultId = queryStart.resp.resultId;
 
-    // Poll periodically until the request is complete (or timeout).
-    // Expected states: "InProgress", "Success", "Failed"
-    let statusResponse = await auth.apiAsync(statusUrl, { resultId }, "POST");
-    const startTime = Date.now();
-    while (statusResponse.resp.state != "Success" && statusResponse.resp.state != "Failed") {
-        await pxt.Util.timeout(pollIntervalMs);
-        statusResponse = await auth.apiAsync(statusUrl, { resultId }, "POST");
-        if (Date.now() - startTime > timeoutMs) {
-            pxt.reportError("errorHelp", "Timeout waiting for Explain Error response.");
-            throw new Error("Timeout waiting for Explain Error response");
-        }
-    }
+    // Poll until the request is complete (or timeout).
+    const result = await pxt.Util.runWithBackoffAsync<pxt.auth.ApiResult<any>>(
+        async () => {
+            return auth.apiAsync(statusUrl, { resultId }, "POST");
+        },
+        (statusResponse) => {
+            // Expected states: "InProgress", "Success", "Failed"
+            return statusResponse.resp.state === "Success" || statusResponse.resp.state === "Failed";
+        },
+        1000, // initial delay, 1 second
+        10000, // max delay, 10 seconds
+        90000, // timeout, 90 seconds
+        "Timeout waiting for Explain Error response",
+    );
 
-    if (statusResponse.resp.state === "Failed") {
+    if (result.resp.state === "Failed") {
         // This shouldn't normally happen (backend will log errors and return 500, instead)
         // but handle it just in case.
-        pxt.reportError("errorHelp", `"Error in response for Explain Error: ${JSON.stringify(statusResponse.resp)}`);
+        pxt.reportError("errorHelp", `"Error in response for Explain Error: ${JSON.stringify(result.resp)}`);
         throw new Error("Failure response from AI service");
     }
 
-    return statusResponse.resp.data;
+    return result.resp.data;
 }
