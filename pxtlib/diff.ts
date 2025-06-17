@@ -249,7 +249,7 @@ namespace pxt.diff {
             result = "  ";
         }
 
-        return result + text.replace(/\r?n/, "");
+        return result + text.replace(/\r?\n/, "");
     }
 
     function diffToPatch(diff: DiffPart[]): Patch[] {
