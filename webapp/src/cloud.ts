@@ -703,12 +703,25 @@ export async function aiErrorExplainRequest(
 
     // Start the request.
     const queryStart = await auth.apiAsync(startUrl, data, "POST");
+    if (!queryStart.success) {
+        throw new StatusCodeError(
+            queryStart.statusCode,
+            queryStart.err || `Unable to reach AI. Error: ${queryStart.statusCode}.\n${queryStart.err}`
+        );
+    }
     const resultId = queryStart.resp.resultId;
 
     // Poll until the request is complete (or timeout).
     const result = await pxt.Util.runWithBackoffAsync<pxt.auth.ApiResult<any>>(
-        () => {
-            return auth.apiAsync(statusUrl, { resultId }, "POST");
+        async () => {
+            const response = await auth.apiAsync(statusUrl, { resultId }, "POST");
+            if (!response.success) {
+                throw new StatusCodeError(
+                    response.statusCode,
+                    response.err || `Unable to reach AI. Error: ${response.statusCode}.\n${response.err}`
+                );
+            }
+            return response;
         },
         (statusResponse) => {
             // Expected states: "InProgress", "Success", "Failed"
