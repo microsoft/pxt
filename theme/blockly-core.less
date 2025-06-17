@@ -118,8 +118,18 @@ body.blocklyMinimalBody {
         Blockly Toolbox
 *******************************/
 
-.blocklyTreeIcon {
+.blocklyTreeRowContentContainer {
+    // pointEvents style required to work around non-null assertion operator in Blockly code.
+    // See https://github.com/google/blockly/blob/develop/core/toolbox/toolbox.ts#L263
+    pointer-events: none;
+}
+
+span.blocklyTreeIcon {
     visibility: visible;
+
+    &.pxt-toolbox-icon {
+        display: inline-block;
+    }
 }
 
 i.icon.blocklyTreeButton {
