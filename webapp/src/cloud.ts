@@ -707,7 +707,7 @@ export async function aiErrorExplainRequest(
 
     // Poll until the request is complete (or timeout).
     const result = await pxt.Util.runWithBackoffAsync<pxt.auth.ApiResult<any>>(
-        async () => {
+        () => {
             return auth.apiAsync(statusUrl, { resultId }, "POST");
         },
         (statusResponse) => {
