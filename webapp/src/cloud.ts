@@ -712,7 +712,7 @@ export async function aiErrorExplainRequest(
         },
         (statusResponse) => {
             // Expected states: "InProgress", "Success", "Failed"
-            return statusResponse.resp.state === "Success" || statusResponse.resp.state === "Failed";
+            return statusResponse.resp?.state === "Success" || statusResponse.resp?.state === "Failed";
         },
         1000, // initial delay, 1 second
         10000, // max delay, 10 seconds
