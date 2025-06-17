@@ -27,8 +27,7 @@ export enum ShortcutNames {
   CLEAN_UP = 'clean_up_workspace',
   UNDO = 'undo',
   REDO = 'redo',
-  // This name style doesn't match the others and is likely a plugin bug.
-  MOVE = 'Start move',
+  MOVE = 'start_move',
 }
 
 export function getActionShortcut(action: string): string[] | null {
