@@ -11,18 +11,6 @@
     }
 }
 
-.common-checkbox.menu-item-checkbox {
-    padding: 0;
-
-    input {
-        margin-right: 0.75rem;
-
-        // This is matching the size of semantic ui icons
-        width: 18.875px;
-        height: 16px;
-    }
-}
-
 .common-checkbox.toggle {
     input {
         opacity: 0;
@@ -84,6 +72,41 @@
 
 #profile-email-checkbox {
     width: 2rem;
+}
+
+/****************************************************
+ *                 Checkbox Icon                    *
+ ****************************************************/
+
+ .common-checkbox-icon {
+    display: inline-block;
+    position: relative;
+
+    // This is matching the size of semantic ui icons
+    width: 16px;
+    height: 16px;
+
+    border: 1px solid var(--pxt-neutral-foreground1);
+    border-radius: 2px;
+
+    &.checked {
+        background-color: var(--pxt-primary-background);
+        border-color: var(--pxt-primary-accent);
+    }
+
+    i.fas.fa-check {
+        font-size: 11px;
+        position: absolute;
+        width: 14px;
+        height: 14px;
+        margin: 0;
+        color: var(--pxt-primary-foreground)
+    }
+}
+
+.menuitemcheckbox .common-checkbox-icon {
+    margin-left: .125rem;
+    margin-right: .875rem;
 }
 
 /****************************************************
