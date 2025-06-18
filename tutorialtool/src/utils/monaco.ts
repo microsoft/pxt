@@ -42,7 +42,7 @@ function createEditor(element: HTMLElement): monaco.editor.IStandaloneCodeEditor
 
     let editor = monaco.editor.create(element, {
         ariaLabel: pxt.Util.lf("JavaScript editor"),
-        fontFamily: "'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', 'monospace'",
+        fontFamily: "'Consolas', 'Monaco', 'Menlo', 'Ubuntu Mono', 'source-code-pro', 'monospace'",
         scrollBeyondLastLine: true,
         language: "markdown",
         mouseWheelZoom: false,
