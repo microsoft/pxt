@@ -2196,6 +2196,15 @@ namespace pxt.py {
         },
         UnaryOp: (n: py.UnaryOp) => {
             let op = prefixOps[n.op]
+
+            if (n.op !== "Not") {
+                unifyTypeOf(n, tpNumber);
+                unifyTypeOf(n.operand, tpNumber);
+            }
+            else {
+                unifyTypeOf(n, tpBoolean);
+            }
+
             U.assert(!!op)
             return B.mkInfix(null!, op, expr(n.operand))
         },

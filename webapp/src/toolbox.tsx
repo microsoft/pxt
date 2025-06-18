@@ -912,6 +912,12 @@ export interface TreeRowProps {
     onDeleteClick?: (ns: string) => void;
 }
 
+interface TreeRowPropsExtension extends React.CSSProperties {
+    "--block-meta-color"?: string;
+    "--block-faded-color"?: string;
+    "--image-icon-url"?: string;
+}
+
 export class TreeRow extends data.Component<TreeRowProps, {}> {
     private treeRow: HTMLElement;
     private baseAnimationDelay: number = 1;
@@ -975,11 +981,11 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
             && appTheme.blocklyOptions.toolboxOptions
             && appTheme.blocklyOptions.toolboxOptions.invertedMultiplier || 0.3;
 
-        let treeRowStyle: React.CSSProperties = {
+        let treeRowStyle: TreeRowPropsExtension= {
             paddingLeft: '0px',
             "--block-meta-color": metaColor,
             "--block-faded-color": pxt.toolbox.fadeColor(metaColor || '#ddd', invertedMultipler, false)
-        } as React.CSSProperties;
+        };
 
         let treeRowClass = `blocklyTreeRow${selected ? ' blocklyTreeSelected' : '' }`;
 
@@ -992,10 +998,9 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
         let iconClass = `blocklyTreeIcon${subns ? 'more' : icon ? (nameid || icon).toLowerCase() : 'Default'}`.replace(/\s/g, '');
         let iconContent = subns ? pxt.toolbox.getNamespaceIcon('more') : icon || pxt.toolbox.getNamespaceIcon('default');
         const isImageIcon = iconContent.length > 1;  // It's probably an image icon, and not an icon code
-        let iconImageStyle: React.CSSProperties = {
-            "--image-icon-url": isImageIcon ? `url("${Util.pathJoin(pxt.webConfig.commitCdnUrl, encodeURI(icon))}")!important`: undefined,
-            display: "inline-block"
-        } as React.CSSProperties;
+        if (isImageIcon) {
+            treeRowStyle['--image-icon-url'] = `url("${Util.pathJoin(pxt.webConfig.commitCdnUrl, encodeURI(icon))}")`
+        }
 
         if (isImageIcon) {
             iconClass += ' image-icon';
@@ -1015,15 +1020,10 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
                 onContextMenu={onClick}
                 onKeyDown={onKeyDown ? onKeyDown : fireClickOnEnter}
             >
-                {/* 
-                    pointEvents style required to work around non-null assertion operator in Blockly code.
-                    See https://github.com/google/blockly/blob/develop/core/toolbox/toolbox.ts#L263
-                 */}
-                <div className="blocklyTreeRowContentContainer" style={{pointerEvents: "none"}}>
+                <div className="blocklyTreeRowContentContainer">
                     <span className="blocklyTreeIcon" role="presentation"/>
                     <span
-                        style={iconImageStyle}
-                        className={`blocklyTreeIcon ${iconClass} ${extraIconClass}`}
+                        className={classList("blocklyTreeIcon pxt-toolbox-icon", iconClass, extraIconClass)}
                         role="presentation"
                     >
                         {iconContent}
