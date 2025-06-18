@@ -509,6 +509,7 @@ export async function buildSimJsInfo(simOptions: SimulateOptions): Promise<pxtc.
     const currentTargetVersion = pxt.appTarget.versions.target;
     let compileResult = await compileAsync(false, opts => {
         opts.computeUsedParts = true;
+        opts.computeUsedSymbols = true;
 
         if (simOptions.debug)
             opts.breakpoints = true;
