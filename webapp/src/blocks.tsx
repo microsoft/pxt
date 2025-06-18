@@ -1276,6 +1276,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         pxt.perf.measureEnd(Measurements.UpdateToolbox)
     }
 
+    focusToolbox(itemToFocus?: string): void {
+        if (this.debuggerToolbox) {
+            this.debuggerToolbox.focus();
+        } else if (this.toolbox) {
+            this.toolbox.focus(itemToFocus);
+        }
+    }
+
     showPackageDialog() {
         pxt.tickEvent("blocks.addpackage");
         if (this.editor.getToolbox()) this.editor.getToolbox().clearSelection();
