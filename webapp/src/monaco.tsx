@@ -661,7 +661,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                         <ErrorList
                             onSizeChange={this.setErrorListState}
                             errors={this.errors}
-                            startDebugger={this.startDebugger}
+                            startDebugger={!!this.errors.find(a => a.stackFrames?.length) && this.startDebugger}
                             getErrorHelp={this.getErrorHelp}
                             note={
                                 this.parent.state.errorListNote && (

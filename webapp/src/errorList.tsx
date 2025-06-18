@@ -102,7 +102,6 @@ export class ErrorList extends auth.Component<ErrorListProps, ErrorListState> {
         const groupedErrors = groupErrors(errors);
         const errorListContent = !isCollapsed ? groupedErrors.map((e, i) => <ErrorListItem errorGroup={e} index={i} key={`errorlist_error_${i}`}/> ) : undefined;
         const errorCount = errors.length;
-        const canDebug = startDebugger && !!errors.find(a => a.stackFrames?.length);
 
         const showErrorHelp = !!getErrorHelp && !!showLoginDialog && pxt.Util.isFeatureEnabled("aiErrorHelp");
 
@@ -134,7 +133,7 @@ export class ErrorList extends auth.Component<ErrorListProps, ErrorListState> {
                             {isLoadingHelp ? helpLoader : helpButton}
                         </div>
                     )}
-                    {canDebug && (
+                    {startDebugger && (
                         <Button id="debug-button"
                             onClick={this.props.startDebugger}
                             title={lf("Debug this project")}
