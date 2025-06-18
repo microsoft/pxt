@@ -78,7 +78,11 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
         setSelectedTag("")
         setSearchComplete(false)
         setExtensionsToShow([emptyCard, emptyCard, emptyCard, emptyCard])
-        const exts = await fetchGithubDataAsync([searchFor])
+
+        const config = await pxt.packagesConfigAsync();
+
+        let exts = await fetchGithubDataAsync([searchFor])
+        exts = exts?.filter(e => !pxt.github.isRepoHidden(e, config));
         const parsedExt = exts?.map(repo => parseGithubRepo(repo)) ?? [];
         //Search bundled extensions as well
         fetchBundled().forEach(e => {
