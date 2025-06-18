@@ -281,6 +281,8 @@ export function initExpandableBlock(info: pxtc.BlocksInfo, b: Blockly.Block, def
         else if (showMinus) {
             addMinusButton();
         }
+
+        if (b instanceof Blockly.BlockSvg) Blockly.getFocusManager().focusNode(b as Blockly.BlockSvg);
     }
 
     function addPlusAndMinusButtons() {
