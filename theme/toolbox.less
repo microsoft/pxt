@@ -199,7 +199,6 @@ span.blocklyTreeLabel, text.blocklyText {
 
 /* Blockly toolbox icons */
 span.blocklyTreeIcon {
-    background: none !important;
     opacity: 1;
     margin: 0.0em 0.25em 0.0em 0.25em;
     width: 30px;
@@ -217,6 +216,10 @@ span.blocklyTreeIcon {
     height: 100%;
     display: none;
     vertical-align: middle;
+
+    &:not(.image-icon) {
+        background: none !important;
+    }
 }
 
 .blocklyTreeIcon.brandIcon {
