@@ -765,7 +765,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     startDebugger() {
-        pxt.tickEvent('errorList.startDebugger', null, { interactiveConsent: true })
+        pxt.tickEvent('errorList.startDebugger', {lang: this.fileType}, { interactiveConsent: true })
         this.parent.toggleDebugging()
     }
 

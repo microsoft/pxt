@@ -89,6 +89,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.getDisplayInfoForException = this.getDisplayInfoForException.bind(this)
         this.createTourFromResponse = this.createTourFromResponse.bind(this)
         this.getErrorHelp = this.getErrorHelp.bind(this)
+        this.startDebugger = this.startDebugger.bind(this);
     }
     setBreakpointsMap(breakpoints: pxtc.Breakpoint[], procCallLocations: pxtc.LocationInfo[]): void {
         if (!breakpoints || !this.compilationResult) return;
@@ -992,6 +993,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return "blocksArea"
     }
 
+    startDebugger() {
+        pxt.tickEvent('errorList.startDebugger', {lang: "blocks"}, { interactiveConsent: true })
+        this.parent.toggleDebugging()
+    }
+
     display(): JSX.Element {
         let flyoutOnly = this.parent.state.editorState && this.parent.state.editorState.hasCategories === false;
         let showErrorList = pxt.Util.isFeatureEnabled("blocksErrorList");
@@ -1005,7 +1011,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     errors={this.errors}
                     onSizeChange={this.onErrorListResize}
                     getErrorHelp={this.getErrorHelp}
-                    showLoginDialog={this.parent.showLoginDialog} />}
+                    showLoginDialog={this.parent.showLoginDialog}
+                    startDebugger={this.startDebugger} />}
             </div>
         )
     }
