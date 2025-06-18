@@ -642,11 +642,20 @@ function compileControlsForOf(e: Environment, b: Blockly.Block, comments: string
     let bOf = getInputTargetBlock(e, b, "LIST");
     let bDo = getInputTargetBlock(e, b, "DO");
 
+    let listExpression: pxt.blocks.JsNode;
+
+    if (!bOf || bOf.type === "placeholder") {
+        listExpression = pxt.blocks.mkText("null");
+    }
+    else {
+        listExpression = compileExpression(e, bOf, comments);
+    }
+
     let binding = lookup(e, b, getLoopVariableField(e, b).getField("VAR").getText());
 
     return [
         pxt.blocks.mkText("for (let " + binding.escapedName + " of "),
-        compileExpression(e, bOf, comments),
+        listExpression,
         pxt.blocks.mkText(")"),
         compileStatements(e, bDo)
     ]
