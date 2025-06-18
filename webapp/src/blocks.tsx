@@ -2536,7 +2536,8 @@ function shouldEventHideFlyout(ev: Blockly.Events.Abstract) {
         ev.type === Blockly.Events.TOOLBOX_ITEM_SELECT ||
         ev.type === Blockly.Events.BLOCK_DRAG ||
         // Selected events are fired late when using 'T' to open the toolbox during a keyboard-driven block move.
-        ev.type === Blockly.Events.SELECTED
+        ev.type === Blockly.Events.SELECTED ||
+        ev.type === Blockly.Events.BLOCK_MOVE
     ) {
         return false;
     }
