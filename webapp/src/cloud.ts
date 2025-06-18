@@ -696,19 +696,49 @@ export async function aiErrorExplainRequest(
     target: string,
     outputFormat: "tour_json" | "text"
 ): Promise<string | undefined> {
+    const startUrl = `/api/copilot/startexplainerror`;
+    const statusUrl = `/api/copilot/explainerrorstatus`;
 
-    const url = `/api/copilot/explainerror`;
     const data = { lang, code, errors, target, outputFormat };
-    let result: string = "";
 
-    const request = await auth.apiAsync(url, data, "POST");
-    if (!request.success) {
+    // Start the request.
+    const queryStart = await auth.apiAsync(startUrl, data, "POST");
+    if (!queryStart.success) {
         throw new StatusCodeError(
-            request.statusCode,
-            request.err || `Unable to reach AI. Error: ${request.statusCode}.\n${request.err}`
+            queryStart.statusCode,
+            queryStart.err || `Unable to reach AI. Error: ${queryStart.statusCode}.\n${queryStart.err}`
         );
     }
-    result = await request.resp;
+    const resultId = queryStart.resp.resultId;
 
-    return result;
+    // Poll until the request is complete (or timeout).
+    const result = await pxt.Util.runWithBackoffAsync<pxt.auth.ApiResult<any>>(
+        async () => {
+            const response = await auth.apiAsync(statusUrl, { resultId }, "POST");
+            if (!response.success) {
+                throw new StatusCodeError(
+                    response.statusCode,
+                    response.err || `Unable to reach AI. Error: ${response.statusCode}.\n${response.err}`
+                );
+            }
+            return response;
+        },
+        (statusResponse) => {
+            // Expected states: "InProgress", "Success", "Failed"
+            return statusResponse.resp?.state === "Success" || statusResponse.resp?.state === "Failed";
+        },
+        1000, // initial delay, 1 second
+        10000, // max delay, 10 seconds
+        90000, // timeout, 90 seconds
+        "Timeout waiting for Explain Error response",
+    );
+
+    if (result.resp.state === "Failed") {
+        // This shouldn't normally happen (backend will log errors and return 500, instead)
+        // but handle it just in case.
+        pxt.reportError("errorHelp", `"Error in response for Explain Error: ${JSON.stringify(result.resp)}`);
+        throw new Error("Failure response from AI service");
+    }
+
+    return result.resp.data;
 }
