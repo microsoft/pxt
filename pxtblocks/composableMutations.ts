@@ -252,7 +252,7 @@ export function initExpandableBlock(info: pxtc.BlocksInfo, b: Blockly.Block, def
             }
         }
 
-        updateButtons();
+        updateButtons(!skipRender);
         if (variableInlineInputs) b.setInputsInline(visibleOptions < inlineInputModeLimit);
         if (!skipRender) (b as Blockly.BlockSvg).queueRender();
     }
@@ -262,7 +262,7 @@ export function initExpandableBlock(info: pxtc.BlocksInfo, b: Blockly.Block, def
         .appendField(new FieldImageNoText(uri, 24, 24, alt, () => updateShape(delta), false));
     }
 
-    function updateButtons() {
+    function updateButtons(manageFocus: boolean = false) {
         if (updatingInputs) return;
         const visibleOptions = state.getNumber(numVisibleAttr);
         const showPlus = visibleOptions !== totalOptions;
@@ -282,7 +282,7 @@ export function initExpandableBlock(info: pxtc.BlocksInfo, b: Blockly.Block, def
             addMinusButton();
         }
 
-        if (b instanceof Blockly.BlockSvg) Blockly.getFocusManager().focusNode(b as Blockly.BlockSvg);
+        if (b instanceof Blockly.BlockSvg && manageFocus) Blockly.getFocusManager().focusNode(b as Blockly.BlockSvg);
     }
 
     function addPlusAndMinusButtons() {
