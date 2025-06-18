@@ -2531,17 +2531,14 @@ function isBreakpointSet(block: Blockly.BlockSvg) {
 }
 
 function shouldEventHideFlyout(ev: Blockly.Events.Abstract) {
-    if (ev.type === "var_create" || ev.type === "marker_move" || ev.type === "toolbox_item_select") {
+    if (
+        ev.type === Blockly.Events.VAR_CREATE ||
+        ev.type === Blockly.Events.TOOLBOX_ITEM_SELECT ||
+        ev.type === Blockly.Events.BLOCK_DRAG ||
+        // Selected events are fired late when using 'T' to open the toolbox during a keyboard-driven block move.
+        ev.type === Blockly.Events.SELECTED
+    ) {
         return false;
-    }
-
-    // If a block is selected when the user clicks on a flyout button (e.g. "Make a Variable"),
-    // a selected event will fire unselecting the block before the var_create event is fired.
-    // Make sure we don't close the flyout in the case where a block is simply being unselected.
-    if (ev.type === "selected") {
-        if (!(ev as Blockly.Events.Selected).newElementId) {
-            return false;
-        }
     }
 
     return true;
