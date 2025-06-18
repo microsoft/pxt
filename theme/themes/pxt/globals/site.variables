@@ -197,7 +197,7 @@
 @blocklyRowHeightTablet: 45px;
 @blocklyRowHeightMobile: 50px;
 
-@blocklyFont: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+@blocklyFont: 'Consolas', 'Monaco', 'Menlo', 'Ubuntu Mono', 'source-code-pro', monospace;
 
 @blocklyScrollbarOpacity: 1;
 
