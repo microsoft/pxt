@@ -6,6 +6,17 @@
 .teaching-bubble-container.yellow {
     --teaching-bubble-foreground: var(--pxt-colors-yellow-foreground);
     --teaching-bubble-background: var(--pxt-colors-yellow-background);
+
+    .ai-footer {
+        opacity: 0.8;
+        .ai-footer-text {
+            color: var(--pxt-colors-yellow-foreground);
+        }
+        .feedback-button, .feedback-button.disabled {
+            // Override the default disabled coloring
+            color: var(--pxt-colors-yellow-foreground);
+        }
+    }
 }
 
 .teaching-bubble-container {

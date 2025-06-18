@@ -18,6 +18,8 @@ export interface DebuggerToolbarState {
 
 export class DebuggerToolbar extends data.Component<DebuggerToolbarProps, DebuggerToolbarState> {
 
+    private menuRef = React.createRef<HTMLDivElement>()
+
     constructor(props: DebuggerToolbarProps) {
         super(props);
         this.state = {
@@ -30,6 +32,11 @@ export class DebuggerToolbar extends data.Component<DebuggerToolbarProps, Debugg
         this.dbgStepOut = this.dbgStepOut.bind(this);
         this.exitDebugging = this.exitDebugging.bind(this);
         this.toggleTrace = this.toggleTrace.bind(this);
+    }
+
+    focus() {
+        const item = this.menuRef.current?.firstChild as HTMLElement | undefined;
+        item?.focus();
     }
 
     restartSimulator() {
@@ -105,7 +112,7 @@ export class DebuggerToolbar extends data.Component<DebuggerToolbarProps, Debugg
             // Debugger Toolbar for the monaco editor.
             return <div className="debugtoolbar" role="complementary" aria-label={lf("Debugger toolbar")}>
                 {!isDebugging ? undefined :
-                    <div className={`ui compact borderless menu icon`}>
+                    <div className={`ui compact borderless menu icon`} ref={this.menuRef}>
                         <sui.Item key='dbgpauseresume' className={`dbg-btn dbg-pause-resume ${dbgStepDisabledClass} ${isDebuggerRunning ? "pause" : "play"}`} icon={`${isDebuggerRunning ? "pause blue" : "play green"}`} title={dbgPauseResumeTooltip} onClick={this.dbgPauseResume} />
                         <sui.Item key='dbgstepover' className={`dbg-btn dbg-step-over ${dbgStepDisabledClass}`} icon={`xicon stepover ${isDebuggerRunning ? "disabled" : "blue"}`} title={dbgStepOverTooltip} onClick={this.dbgStepOver} />
                         <sui.Item key='dbgstepinto' className={`dbg-btn dbg-step-into ${dbgStepDisabledClass}`} icon={`xicon stepinto ${isDebuggerRunning ? "disabled" : ""}`} title={dbgStepIntoTooltip} onClick={this.dbgStepInto} />
@@ -117,7 +124,7 @@ export class DebuggerToolbar extends data.Component<DebuggerToolbarProps, Debugg
         } else {
             // Debugger Toolbar for the blocks editor.
             return <div className="debugtoolbar" role="complementary" aria-label={lf("Debugger toolbar")}>
-                <div className={`ui compact borderless menu icon`}>
+                <div className={`ui compact borderless menu icon`} ref={this.menuRef}>
                     <sui.Item key='dbgstep' className={`dbg-btn dbg-step separator-after ${dbgStepDisabledClass}`} icon={`arrow right ${dbgStepDisabled ? "disabled" : "blue"}`} title={dbgStepIntoTooltip} onClick={this.dbgStepInto} text={"Step"} />
                     <sui.Item key='dbgpauseresume' className={`dbg-btn dbg-pause-resume ${isDebuggerRunning ? "pause" : "play"}`} icon={`${isDebuggerRunning ? "pause blue" : "play green"}`} title={dbgPauseResumeTooltip} onClick={this.dbgPauseResume} />
                     <sui.Item key='dbgrestart' className={`dbg-btn dbg-restart`} icon={`refresh green`} title={restartTooltip} onClick={this.restartSimulator} />

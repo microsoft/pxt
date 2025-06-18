@@ -14,9 +14,8 @@ import ISettingsProps = pxt.editor.ISettingsProps;
 import UserInfo = pxt.editor.UserInfo;
 import SimState = pxt.editor.SimState;
 import { sendUpdateFeedbackTheme } from "../../react-common/components/controls/Feedback/FeedbackEventListener";
-import { TabPane } from "./components/core/TabPane";
 import KeyboardControlsHelp from "./components/KeyboardControlsHelp";
-import { Checkbox } from "../../react-common/components/controls/Checkbox";
+import { CheckboxIcon } from "../../react-common/components/controls/Checkbox";
 
 // common menu items -- do not remove
 // lf("About")
@@ -381,7 +380,6 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             <sui.Item role="menuitem" icon="paint brush" text={lf("Theme")} onClick={this.showThemePicker} />
             {showKeyboardControls() &&
                 <CheckboxMenuItem
-                    id="accessible-blocks-checkbox"
                     isChecked={accessibleBlocks}
                     label={lf("Keyboard Controls")}
                     onClick={this.toggleAccessibleBlocks}
@@ -389,7 +387,6 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             }
             {showGreenScreen &&
                 <CheckboxMenuItem
-                    id="green-screen-checkbox"
                     isChecked={greenScreen}
                     label={lf("Green Screen")}
                     onClick={this.toggleGreenScreen}
@@ -813,32 +810,29 @@ export class SandboxFooter extends data.PureComponent<SandboxFooterProps, {}> {
 }
 
 interface CheckboxMenuItemProps {
-    id: string;
     label: string;
     isChecked: boolean;
     onClick: () => void;
 }
 
 const CheckboxMenuItem = (props: CheckboxMenuItemProps) => {
-    const { id, label, isChecked, onClick } = props;
+    const { label, isChecked, onClick } = props;
 
     return (
         <div
             role="menuitemcheckbox"
             aria-checked={isChecked}
             tabIndex={0}
-            className="ui item link"
+            className="ui item link menuitemcheckbox"
             onClick={onClick}
             onKeyDown={fireClickOnEnter}
         >
-            <Checkbox
-                id={id}
-                className="menu-item-checkbox"
+            <CheckboxIcon
                 isChecked={isChecked}
-                onChange={onClick}
-                label={label}
-                tabIndex={-1}
             />
+            <span>
+                {label}
+            </span>
         </div>
     );
 }

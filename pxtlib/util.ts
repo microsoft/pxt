@@ -1088,6 +1088,40 @@ namespace ts.pxtc.Util {
         return new Promise(resolve => setTimeout(() => resolve(), ms))
     }
 
+    /**
+     * Utility function to run an action with exponential backoff until a condition is met or a timeout occurs.
+     * @param action - The main action to run.
+     * @param isComplete - A function that checks if the result of the action indicates completion.
+     * @param initialDelayMs - The starting delay to use between the initial attempt and any retry.
+     * @param maxDelayMs - The maximum delay between retries.
+     * @param timeoutMs - The total timeout for the operation.
+     * @param timeoutErrorMsg - The error message to throw if the operation times out.
+     * @param backoffFactor - The factor by which to increase the delay after each retry (default is 1.5).
+     */
+    export async function runWithBackoffAsync<T>(
+        action: () => Promise<T>,
+        isComplete: (result: T) => boolean,
+        initialDelayMs: number,
+        maxDelayMs: number,
+        timeoutMs: number,
+        timeoutErrorMsg: string,
+        backoffFactor: number = 1.5
+    ): Promise<T> {
+        let delay = initialDelayMs;
+        const startTime = Date.now();
+
+        while (Date.now() - startTime < timeoutMs) {
+            const result = await action();
+            if (isComplete(result)) {
+                return result;
+            }
+            await pxt.Util.timeout(delay);
+            delay = Math.min(delay * backoffFactor, maxDelayMs);
+        }
+
+        throw new Error(timeoutErrorMsg);
+    }
+
     // node.js overrides this to use process.cpuUsage()
     export let cpuUs = (): number => {
         // current time in microseconds

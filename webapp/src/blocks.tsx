@@ -515,7 +515,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private initBlocklyToolbox() {
         // Remove unwanted additional tab stop from the editor.
         // We add tabindex to the tree wrapping the toolbox categories (excluding search) instead.
-        this.getToolboxDiv().removeAttribute("tabindex");
+        const toolboxDiv = this.getToolboxDiv();
+
+        // toolbox div might not exist if this is a read-only editor
+        if (toolboxDiv) {
+            toolboxDiv.removeAttribute("tabindex");
+        }
 
         let editor = this;
         /**
@@ -1269,6 +1274,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
         ReactDOM.render(debuggerToolbox, container);
         pxt.perf.measureEnd(Measurements.UpdateToolbox)
+    }
+
+    focusToolbox(itemToFocus?: string): void {
+        if (this.debuggerToolbox) {
+            this.debuggerToolbox.focus();
+        } else if (this.toolbox) {
+            this.toolbox.focus(itemToFocus);
+        }
     }
 
     showPackageDialog() {
