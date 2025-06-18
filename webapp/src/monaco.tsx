@@ -1377,6 +1377,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         ReactDOM.render(debuggerToolbox, container);
     }
 
+    focusToolbox(itemToFocus?: string): void {
+        if (this.isDebugging())  {
+            this.debuggerToolbox.focus();
+        } else if (this.toolbox) {
+            this.toolbox.focus(itemToFocus);
+        }
+    }
+
     getId() {
         return "monacoEditor"
     }

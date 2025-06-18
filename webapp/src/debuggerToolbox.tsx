@@ -20,12 +20,19 @@ export interface DebuggerToolboxState {
 }
 
 export class DebuggerToolbox extends React.Component<DebuggerToolboxProps, DebuggerToolboxState> {
+
+    private toolbarRef = React.createRef<DebuggerToolbar>();
+
     constructor(props: DebuggerToolboxProps) {
         super(props);
         this.state = {
             sequence: 0,
             currentFrame: 0
         };
+    }
+
+    focus() {
+        this.toolbarRef.current?.focus();
     }
 
     setBreakpoint(bp: pxsim.DebuggerBreakpointMessage, varFilters?: string[]) {
@@ -39,7 +46,7 @@ export class DebuggerToolbox extends React.Component<DebuggerToolboxProps, Debug
 
     render() {
         return <div>
-            <DebuggerToolbar parent={this.props.parent} showAdvancedControls={this.props.showCallStack} />
+            <DebuggerToolbar ref={this.toolbarRef} parent={this.props.parent} showAdvancedControls={this.props.showCallStack} />
             <DebuggerVariables
                 apis={this.props.apis}
                 breakpoint={this.state.lastBreakpoint}
