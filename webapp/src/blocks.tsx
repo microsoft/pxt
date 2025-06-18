@@ -68,6 +68,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     breakpointsSet: number[]; // the IDs of the breakpoints set.
     currentFlyoutKey: string;
 
+    private ignoreFlyoutPreviousNode = false;
+
     protected intersectionObserver: IntersectionObserver;
     private errors: ErrorDisplayInfo[] = [];
 
@@ -579,8 +581,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const oldWorkspaceSvgGetRestoredFocusableNode = Blockly.WorkspaceSvg.prototype.getRestoredFocusableNode;
         Blockly.WorkspaceSvg.prototype.getRestoredFocusableNode = function (previousNode: Blockly.IFocusableNode | null) {
             // Specifically handle flyout case to work with the caching flyout implementation
-            if (this.isFlyout && (!previousNode || that.isFlyoutItemDisposed(previousNode, previousNode instanceof Blockly.BlockSvg ? previousNode : null))) {
-                const flyout = that.editor.getFlyout()
+            if (this.isFlyout &&
+                (!previousNode || that.isFlyoutItemDisposed(previousNode, previousNode instanceof Blockly.BlockSvg ? previousNode : null) || that.ignoreFlyoutPreviousNode)
+            ) {
+                const flyout = that.editor.getFlyout();
                 const node = that.getDefaultFlyoutCursorIfNeeded(flyout);
                 if (node) {
                     const flyoutCursor = flyout.getWorkspace().getCursor();
@@ -588,9 +592,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     // Set the cursor node here so the cursor doesn't fall back to last focused block.
                     flyoutCursor.setCurNode(node);
                 }
+                that.ignoreFlyoutPreviousNode = false;
                 return node;
             }
-            return oldWorkspaceSvgGetRestoredFocusableNode.call(this, previousNode)
+            return oldWorkspaceSvgGetRestoredFocusableNode.call(this, previousNode);
         };
         const oldWorkspaceSvgOnTreeBlur = Blockly.WorkspaceSvg.prototype.onTreeBlur;
         (Blockly.WorkspaceSvg as any).prototype.onTreeBlur = function (nextTree: Blockly.IFocusableNode | null): void {
@@ -1801,6 +1806,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     public hideFlyout() {
         if (this.editor.getToolbox()) {
+            this.ignoreFlyoutPreviousNode = true;
             this.editor.getFlyout().hide();
         }
         if (this.toolbox) this.toolbox.clear();
