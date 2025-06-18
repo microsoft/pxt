@@ -645,7 +645,7 @@ function compileControlsForOf(e: Environment, b: Blockly.Block, comments: string
     let listExpression: pxt.blocks.JsNode;
 
     if (!bOf || bOf.type === "placeholder") {
-        listExpression = pxt.blocks.mkText("null");
+        listExpression = pxt.blocks.mkText("[0]");
     }
     else {
         listExpression = compileExpression(e, bOf, comments);
