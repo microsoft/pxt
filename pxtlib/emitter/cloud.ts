@@ -312,27 +312,32 @@ namespace pxt.Cloud {
     }
 
     export async function initRegionAsync(): Promise<void> {
+        if (region !== undefined) {
+            // Already initialized
+            return;
+        }
+
         if (BrowserUtils.isLocalHost()) {
             region = cloud.DEV_REGION;
             return;
         }
 
-        if (region !== undefined || !pxt.webConfig?.cdnUrl) {
+        if (!pxt.webConfig?.cdnUrl) {
+            region = "unknown";
             return;
         }
 
-        const url = new URL("geo", pxt.webConfig.cdnUrl).toString();
-        const options: Util.HttpRequestOptions = { url };
-
         try {
+            const url = new URL("geo", pxt.webConfig.cdnUrl).toString();
+            const options: Util.HttpRequestOptions = { url };
             const response = await Util.requestAsync(options);
             if (response.statusCode !== 200) {
                 pxt.error(`Failed to get region: ${response.statusCode}`);
             }
             region = response.text.trim();
         } catch (e) {
-            handleNetworkError(options, e);
-            region = "error"; // Set to a default value to differentiate from uninitialized
+            pxt.error("Unable to determine region", e);
+            region = "unknown";
         }
     }
 
