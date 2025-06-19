@@ -10,10 +10,6 @@ import { showModal } from "../transforms/showModal";
 import * as authClient from "../services/authClient";
 import { classList } from "react-common/components/util";
 
-const betaTag = () => {
-    return <div className={css["beta-tag"]}>{lf("Beta")}</div>;
-};
-
 interface HeaderBarProps { }
 
 export const HeaderBar: React.FC<HeaderBarProps> = () => {
@@ -216,11 +212,9 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
             <div className={css["centered-panel"]}>
                 <div className={classList(css["app-title"], "min-2md")}>
                     {Strings.AppTitle}
-                    {betaTag()}
                 </div>
                 <div className={classList(css["app-title"], "min-xs max-2md")}>
                     {Strings.AppTitleShort}
-                    {betaTag()}
                 </div>
             </div>
 
