@@ -245,11 +245,6 @@ export function createSnapshot(text: ScriptText) {
             }
         }
 
-        if (result[pxt.HISTORY_FILE]) {
-            // don't include the history file in the snapshot
-            delete result[pxt.HISTORY_FILE];
-        }
-
         return result;
     }
     catch(e) {
