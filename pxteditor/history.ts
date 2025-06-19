@@ -47,110 +47,103 @@ export interface FileEditedChange {
 }
 
 export interface CollapseHistoryOptions {
+    // the interval in milliseconds at which to collapse history entries
     interval: number;
+
+    // the minimum time of entries that are subject to collapsing (inclusive)
     minTime?: number;
+
+    // the maximum time of entries that are subject to collapsing (inclusive)
     maxTime?: number;
 }
 
 // 5 minutes. This is overridden in pxtarget.json
 const DEFAULT_DIFF_HISTORY_INTERVAL = 1000 * 60 * 5;
 
-// 15 minutes. This is overridden in pxtarget.json
-const DEFAULT_SNAPSHOT_HISTORY_INTERVAL = 1000 * 60 * 15;
+// 30 minutes. This is overridden in pxtarget.json
+const DEFAULT_SNAPSHOT_HISTORY_INTERVAL = 1000 * 60 * 30;
 
 const ONE_DAY = 1000 * 60 * 60 * 24;
 
-export function collapseHistory(history: HistoryEntry[], text: ScriptText, options: CollapseHistoryOptions, diff: (a: string, b: string) => unknown, patch: (p: unknown, text: string) => string) {
+/**
+ * Collapses the history file in a given script text object. This modifies the text object in
+ * place and will always preserve the first history entry regardless of the minTime and maxTime
+ * passed in through the options. This function only collapses diff entries; snapshots and shares
+ * are not collapsed.
+ *
+ * For example, if you wanted to collapse history entries that are older than one day so that we\
+ * don't store more than one history entry per day, you could do:
+ *
+ * interval = 1000 * 60 * 60 * 24; // one day
+ * maxTime = Data.now() - 1000 * 60 * 60 * 24; // one day ago
+ *
+ */
+export function collapseHistory(text: ScriptText, options: CollapseHistoryOptions, diff: (a: string, b: string) => unknown, patch: (p: unknown, text: string) => string) {
+    if (!text[pxt.HISTORY_FILE]) return;
+
     const newHistory: HistoryEntry[] = [];
+    const history: HistoryFile = parseHistoryFile(text[pxt.HISTORY_FILE]);
+    const entries = history.entries.slice();
 
     let current = {...text};
-    let lastVersion = pxt.appTarget?.versions?.target;
-    let lastTime: number = undefined;
-    let lastTimeIndex: number = undefined;
-    let lastTimeText: ScriptText = undefined;
-
     let { interval, minTime, maxTime } = options;
 
     if (minTime === undefined) {
         minTime = 0;
     }
     if (maxTime === undefined) {
-        maxTime = history[history.length - 1].timestamp;
+        maxTime = history.lastSaveTime;
     }
 
-    for (let i = history.length - 1; i >= 0; i--) {
-        const entry = history[i];
+    let lastHistoryEntry: ScriptText = {...current};
+    let lastTime: number = history.lastSaveTime;
+
+    while (entries.length) {
+        const entry = entries.pop();
+        current = applyDiff(current, entry, patch);
 
         if (entry.timestamp > maxTime) {
             newHistory.unshift(entry);
-            current = applyDiff(current, entry, patch);
-            continue;
+            lastHistoryEntry = {...current};
+            lastTime = entry.timestamp;
         }
         else if (entry.timestamp < minTime) {
-            if (lastTimeIndex !== undefined) {
-                if (lastTimeIndex - i > 1) {
-                    newHistory.unshift({
-                        timestamp: lastTime,
-                        editorVersion: lastVersion,
-                        changes: diffScriptText(current, lastTimeText, lastTime, diff).changes
-                    })
-                }
-                else {
-                    newHistory.unshift(history[lastTimeIndex]);
-                }
-            }
-            newHistory.unshift(entry);
-            lastTimeIndex = undefined;
-            continue;
-        }
-        else if (lastTimeIndex === undefined) {
-            lastTimeText = {...current};
-            lastTime = entry.timestamp;
-            lastVersion = entry.editorVersion;
-
-            lastTimeIndex = i;
-            current = applyDiff(current, entry, patch);
-            continue;
-        }
-
-        if (lastTime - entry.timestamp > interval) {
-            if (lastTimeIndex - i > 1) {
+            if (lastHistoryEntry) {
                 newHistory.unshift({
-                    timestamp: lastTime,
-                    editorVersion: lastVersion,
-                    changes: diffScriptText(current, lastTimeText, lastTime, diff).changes
-                })
+                    timestamp: entry.timestamp,
+                    editorVersion: entry.editorVersion,
+                    changes: diffScriptText(current, lastHistoryEntry, entry.timestamp, diff).changes
+                });
+                lastHistoryEntry = undefined;
             }
             else {
-                newHistory.unshift(history[lastTimeIndex]);
+                newHistory.unshift(entry);
             }
-
-            lastTimeText = {...current}
-            current = applyDiff(current, entry, patch);
-
-            lastTimeIndex = i;
-            lastTime = entry.timestamp;
-            lastVersion = entry.editorVersion;
         }
-        else {
-            current = applyDiff(current, entry, patch);
-        }
-    }
-
-    if (lastTimeIndex !== undefined) {
-        if (lastTimeIndex) {
+        else if (lastTime - entry.timestamp >= interval) {
             newHistory.unshift({
-                timestamp: lastTime,
-                editorVersion: lastVersion,
-                changes: diffScriptText(current, lastTimeText, lastTime, diff).changes
-            })
-        }
-        else {
-            newHistory.unshift(history[0]);
+                timestamp: entry.timestamp,
+                editorVersion: entry.editorVersion,
+                changes: diffScriptText(current, lastHistoryEntry, entry.timestamp, diff).changes
+            });
+            lastHistoryEntry = {...current};
+            lastTime = entry.timestamp;
         }
     }
 
-    return newHistory;
+    if (lastHistoryEntry && lastTime > history.entries[0].timestamp) {
+        // always preserve the first entry in the history
+        newHistory.unshift({
+            timestamp: history.entries[0].timestamp,
+            editorVersion: history.entries[0].editorVersion,
+            changes: diffScriptText(current, lastHistoryEntry, history.entries[0].timestamp, diff).changes
+        });
+    }
+
+    text[pxt.HISTORY_FILE] = JSON.stringify({
+        ...history,
+        entries: newHistory,
+    });
 }
 
 export function diffScriptText(oldVersion: ScriptText, newVersion: ScriptText, time: number, diff: (a: string, b: string) => unknown): HistoryEntry {
