@@ -5243,7 +5243,7 @@ export class ProjectView
     }
 
     setColorThemeById(colorThemeId: string, savePreference: boolean) {
-         if (this.themeManager.getCurrentColorTheme()?.id === colorThemeId) {
+        if (this.themeManager.getCurrentColorTheme()?.id === colorThemeId) {
             return;
         }
 
