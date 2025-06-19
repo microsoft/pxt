@@ -1012,12 +1012,15 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     <div id="blocksEditor"></div>
                     <toolbox.ToolboxTrashIcon flyoutOnly={flyoutOnly} />
                 </div>
-                {showErrorList && <ErrorList
-                    errors={this.errors}
-                    onSizeChange={this.onErrorListResize}
-                    getErrorHelp={this.getErrorHelp}
-                    showLoginDialog={this.parent.showLoginDialog}
-                    startDebugger={this.startDebugger} />}
+                {showErrorList && (
+                    <ErrorList
+                        errors={this.errors}
+                        onSizeChange={this.onErrorListResize}
+                        getErrorHelp={this.getErrorHelp}
+                        showLoginDialog={this.parent.showLoginDialog}
+                        startDebugger={this.startDebugger}
+                    />
+                )}
             </div>
         )
     }
