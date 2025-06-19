@@ -35,7 +35,7 @@
         }
 
         .countBubble {
-            margin-left: 1em;
+            margin: 0 1rem;
         }
 
         &:hover > .toggleButton > i , &:focus > .toggleButton > i{
@@ -89,6 +89,32 @@
         }
     }
 
+    .debuggerSuggestion {
+        background: none;
+        color: var(--pxt-link);
+        cursor: pointer;
+        padding: 0.7rem;
+        line-height: 0.8rem;
+
+        &:hover {
+            color: var(--pxt-link-hover);
+        }
+
+        &:focus, &:focus-visible {
+            color: var(--pxt-link-hover);
+            border: 2px solid var(--pxt-focus-border);
+
+            &::after {
+                // Hide inner-focus outline, since we have the outer border
+                outline: none;
+            }
+        }
+
+        i {
+            margin-right: 0.4rem;
+        }
+    }
+
     .errorListInner {
         height: @errorListInnerHeight;
         padding: 0 0 1em 0;
@@ -126,25 +152,6 @@
                 &.stackframe {
                     padding-left: 2em;
                 }
-            }
-        }
-
-        .debuggerSuggestion {
-            float: right;
-            height: fit-content;
-            width: fit-content;
-            padding-top: 0.5em;
-            margin-right: 0.5em;
-            color: var(--pxt-tertiary-background);
-            cursor: pointer;
-
-            &:hover, &:focus {
-                opacity: 0.75;
-            }
-
-            .debug-icon {
-                margin-left: 0.5em;
-                vertical-align: text-top;
             }
         }
     }
