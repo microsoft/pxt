@@ -5,7 +5,7 @@ import "mocha";
 import * as chai from "chai";
 import * as dmp from "diff-match-patch";
 import * as pxteditor from "../../pxteditor";
-import { getTextAtTime, HistoryFile, updateHistory } from "../../pxteditor/history";
+import { getTextAtTime, HistoryFile, parseHistoryFile, updateHistory } from "../../pxteditor/history";
 
 pxt.appTarget = {
     versions: {
@@ -39,7 +39,20 @@ const versions = [
 
 function checkTimestamp(e: pxteditor.history.HistoryEntry, value: number) {
     chai.expect(e.timestamp).to.equal(value);
-    chai.expect(e.editorVersion).to.equal(value + "");
+}
+
+function checkCollapsedHistory(collapsedProject: pxt.workspace.ScriptText, originalProject: pxt.workspace.ScriptText) {
+    const collapsedHistory = parseHistoryFile(collapsedProject[pxt.HISTORY_FILE]);
+    const originalHistory = parseHistoryFile(originalProject[pxt.HISTORY_FILE]);
+
+    for (const entry of collapsedHistory.entries) {
+        const { files } = getTextAtTime(collapsedProject, collapsedHistory, entry.timestamp, patchText);
+        const { files: originalFiles } = getTextAtTime(originalProject, originalHistory, entry.timestamp, patchText);
+
+        chai.expect(files[pxt.MAIN_TS]).equals(originalFiles[pxt.MAIN_TS]);
+        chai.expect(files[pxt.MAIN_BLOCKS]).equals(originalFiles[pxt.MAIN_BLOCKS]);
+        chai.expect(files[pxt.CONFIG_NAME]).equals(originalFiles[pxt.CONFIG_NAME]);
+    }
 }
 
 function testDiff(textA: string, textB: string) {
@@ -110,90 +123,6 @@ describe("history", () => {
         chai.expect(text[filename]).to.equal(versions[0]);
     });
 
-    it("should collapse entries at a given interval", () => {
-        let { text, history } = createTestHistory();
-
-        const collapsed = pxteditor.history.collapseHistory([...history], {...text}, { interval: 250 }, diffText, patchText);
-
-        chai.expect(collapsed.length).to.equal(3);
-
-        for (let i = 0; collapsed.length > 0; i++) {
-            const entry = collapsed.pop();
-            text = pxteditor.history.applyDiff(text, entry, patchText);
-            if (collapsed.length) {
-                chai.expect(text[filename]).to.equal(versions[collapsed[collapsed.length - 1].timestamp / 100]);
-            }
-        }
-        chai.expect(text[filename]).to.equal(versions[0]);
-    });
-
-    it("should respect a min timestamp when collapsing", () => {
-        let { text, history } = createTestHistory();
-
-        const collapsed = pxteditor.history.collapseHistory([...history], {...text}, { interval: 250, minTime: 300 }, diffText, patchText);
-
-        chai.expect(collapsed.length).to.equal(4);
-        checkTimestamp(collapsed[0], 100);
-        checkTimestamp(collapsed[1], 200);
-        checkTimestamp(collapsed[2], 500);
-        checkTimestamp(collapsed[3], 800);
-
-        for (let i = 0; collapsed.length > 0; i++) {
-            const entry = collapsed.pop();
-            text = pxteditor.history.applyDiff(text, entry, patchText);
-            if (collapsed.length) {
-                chai.expect(text[filename]).to.equal(versions[collapsed[collapsed.length - 1].timestamp / 100]);
-            }
-        }
-        chai.expect(text[filename]).to.equal(versions[0]);
-    });
-
-    it("should respect a max timestamp when collapsing", () => {
-        let { text, history } = createTestHistory();
-
-        const collapsed = pxteditor.history.collapseHistory([...history], {...text}, { interval: 250, maxTime: 500 }, diffText, patchText);
-
-        chai.expect(collapsed.length).to.equal(5);
-        checkTimestamp(collapsed[0], 200);
-        checkTimestamp(collapsed[1], 500);
-        checkTimestamp(collapsed[2], 600);
-        checkTimestamp(collapsed[3], 700);
-        checkTimestamp(collapsed[4], 800);
-
-        for (let i = 0; collapsed.length > 0; i++) {
-            const entry = collapsed.pop();
-            text = pxteditor.history.applyDiff(text, entry, patchText);
-            if (collapsed.length) {
-                chai.expect(text[filename]).to.equal(versions[collapsed[collapsed.length - 1].timestamp / 100]);
-            }
-        }
-        chai.expect(text[filename]).to.equal(versions[0]);
-    });
-
-    it("should respect a min + max timestamp when collapsing", () => {
-        let { text, history } = createTestHistory();
-
-        const collapsed = pxteditor.history.collapseHistory([...history], {...text}, { interval: 250, minTime: 400, maxTime: 500 }, diffText, patchText);
-
-        chai.expect(collapsed.length).to.equal(7);
-        checkTimestamp(collapsed[0], 100);
-        checkTimestamp(collapsed[1], 200);
-        checkTimestamp(collapsed[2], 300);
-        checkTimestamp(collapsed[3], 500);
-        checkTimestamp(collapsed[4], 600);
-        checkTimestamp(collapsed[5], 700);
-        checkTimestamp(collapsed[6], 800);
-
-        for (let i = 0; collapsed.length > 0; i++) {
-            const entry = collapsed.pop();
-            text = pxteditor.history.applyDiff(text, entry, patchText);
-            if (collapsed.length) {
-                chai.expect(text[filename]).to.equal(versions[collapsed[collapsed.length - 1].timestamp / 100]);
-            }
-        }
-        chai.expect(text[filename]).to.equal(versions[0]);
-    });
-
     it("should handle adding and removing files", () => {
         const v1 = { "main.ts": versions[0] };
         const v2 = { "main.ts": versions[1], "custom.blocks": versions[2] };
@@ -214,21 +143,28 @@ describe("history", () => {
 })
 
 function createTestHistory() {
-    const history: pxteditor.history.HistoryEntry[] = [];
+    let previous: pxt.workspace.ScriptText = { [filename]: versions[0] };
 
-    let previous = { [filename]: versions[0] };
+    let oldTheme = pxt.appTarget.appTheme;
 
-    for (let i = 1; i < versions.length; i++) {
-        let current = { [filename]: versions[i] };
-        history.push(pxteditor.history.diffScriptText(previous, current, Date.now(), diffText));
-        history[history.length - 1].timestamp = 100 * i;
-        history[history.length - 1].editorVersion = "" + (100 * i);
-        previous = {...current};
+    pxt.appTarget.appTheme = {
+        timeMachineDiffInterval: 1
     }
+
+    for (let i = 0; i < versions.length; i++) {
+        let current = { ...previous, [filename]: versions[i] };
+
+        updateHistory(previous, current, 100 * i, [], diffText, patchText);
+
+        previous = current;
+    }
+
+    // console.log(JSON.stringify(parseHistoryFile(previous[pxt.HISTORY_FILE]).entries, null, 4));
+    pxt.appTarget.appTheme = oldTheme;
 
     return {
         text: previous as pxt.workspace.ScriptText,
-        history
+        history: parseHistoryFile(previous[pxt.HISTORY_FILE]).entries
     };
 }
 
@@ -290,6 +226,11 @@ for (let i = 0; i < 20; i++) {
 
 const ONE_MINUTE = 1000 * 60;
 const ONE_HOUR = ONE_MINUTE * 60;
+const ONE_DAY = ONE_HOUR * 24;
+
+const testProject = createProjectText();
+
+console.log((JSON.parse(testProject[pxt.HISTORY_FILE]) as HistoryFile).entries.map(e => new Date(e.timestamp).toLocaleString()).join("\n"));
 
 
 describe("updateHistory", () => {
@@ -406,7 +347,7 @@ describe("updateHistory", () => {
     });
 
     it("should restore to the version on the timestamp", () => {
-        const project = createProjectText();
+        const project = { ...testProject };
         const history = JSON.parse(project[pxt.HISTORY_FILE]) as HistoryFile;
 
         for (const entry of history.entries) {
@@ -414,6 +355,114 @@ describe("updateHistory", () => {
 
             chai.expect(files[pxt.MAIN_TS]).equals(entry.timestamp.toString());
         }
+    });
+});
+
+describe("collapseHistory", () => {
+    it("should collapse history entries", () => {
+        const project = { ...testProject };
+        const collapsed = { ...project };
+        const history = JSON.parse(project[pxt.HISTORY_FILE]) as HistoryFile;
+
+        pxteditor.history.collapseHistory(
+            collapsed,
+            { interval: ONE_DAY },
+            diffText,
+            patchText
+        );
+
+        // taken from createProjectText below
+        const expectedTimes = [
+            // first entry
+            new Date(2024, 8, 12, 8, 0, 0, 0),
+            // end of each day
+            new Date(2024, 8, 12, 8, 24, 0, 0),
+            new Date(2024, 8, 13, 10, 7, 0, 0),
+            new Date(2024, 8, 15, 8, 30, 45, 0),
+        ]
+
+        const newHistory = parseHistoryFile(collapsed[pxt.HISTORY_FILE]);
+
+        chai.expect(newHistory.entries.length).to.equal(4);
+
+
+        for (let i = 1; i < newHistory.entries.length; i++) {
+            const entry = newHistory.entries[i];
+
+            chai.expect(entry.timestamp).to.equal(expectedTimes[i].getTime());
+
+            const { files } = getTextAtTime(project, newHistory, entry.timestamp, patchText);
+            const { files: originalFiles } = getTextAtTime(project, history, entry.timestamp, patchText);
+
+            chai.expect(files[pxt.MAIN_TS]).equals(originalFiles[pxt.MAIN_TS]);
+        }
+    });
+
+    it("should collapse entries at a given interval", () => {
+        let { text } = createTestHistory();
+
+        const collapsed = { ...text };
+
+        pxteditor.history.collapseHistory(collapsed, { interval: 250 }, diffText, patchText);
+        checkCollapsedHistory(collapsed, text);
+        const entries = parseHistoryFile(collapsed[pxt.HISTORY_FILE]).entries;
+
+        chai.expect(entries.length).to.equal(3);
+        checkTimestamp(entries[0], 0);
+        checkTimestamp(entries[1], 200);
+        checkTimestamp(entries[2], 500);
+    });
+
+    it("should respect a min timestamp when collapsing", () => {
+        let { text } = createTestHistory();
+
+        const collapsed = { ...text };
+
+        pxteditor.history.collapseHistory(collapsed, { interval: 250, minTime: 300  }, diffText, patchText);
+        checkCollapsedHistory(collapsed, text);
+
+        const entries = parseHistoryFile(collapsed[pxt.HISTORY_FILE]).entries;
+
+        chai.expect(entries.length).to.equal(4);
+        checkTimestamp(entries[0], 0);
+        checkTimestamp(entries[1], 100);
+        checkTimestamp(entries[2], 200);
+        checkTimestamp(entries[3], 500);
+    });
+
+    it("should respect a max timestamp when collapsing", () => {
+        let { text } = createTestHistory();
+
+        const collapsed = { ...text };
+
+        pxteditor.history.collapseHistory(collapsed, { interval: 250, maxTime: 500 }, diffText, patchText);
+        checkCollapsedHistory(collapsed, text);
+
+        const entries = parseHistoryFile(collapsed[pxt.HISTORY_FILE]).entries;
+
+        chai.expect(entries.length).to.equal(4);
+        checkTimestamp(entries[0], 0);
+        checkTimestamp(entries[1], 300);
+        checkTimestamp(entries[2], 600);
+        checkTimestamp(entries[3], 700);
+    });
+
+    it("should respect a min + max timestamp when collapsing", () => {
+        let { text } = createTestHistory();
+
+        const collapsed = { ...text };
+
+        pxteditor.history.collapseHistory(collapsed, { interval: 250, minTime: 300, maxTime: 600 }, diffText, patchText);
+        checkCollapsedHistory(collapsed, text);
+
+        const entries = parseHistoryFile(collapsed[pxt.HISTORY_FILE]).entries;
+
+        chai.expect(entries.length).to.equal(5);
+        checkTimestamp(entries[0], 0);
+        checkTimestamp(entries[1], 100);
+        checkTimestamp(entries[2], 200);
+        checkTimestamp(entries[3], 400);
+        checkTimestamp(entries[4], 700);
     });
 });
 
@@ -447,11 +496,12 @@ describe("pxt.github.normalizeTutorialPath", () => {
 function createProjectText(): pxt.workspace.ScriptText {
     // A realistic timeline of project edits
     const dates = [
-        new Date(2024, 8, 13, 8, 0, 0, 0),
-        new Date(2024, 8, 13, 8, 15, 0, 0),
-        new Date(2024, 8, 13, 8, 17, 0, 0),
-        new Date(2024, 8, 13, 8, 23, 0, 0),
-        new Date(2024, 8, 13, 8, 24, 0, 0),
+        new Date(2024, 8, 12, 8, 0, 0, 0),
+        new Date(2024, 8, 12, 8, 15, 0, 0),
+        new Date(2024, 8, 12, 8, 17, 0, 0),
+        new Date(2024, 8, 12, 8, 23, 0, 0),
+        new Date(2024, 8, 12, 8, 24, 0, 0),
+
         new Date(2024, 8, 13, 8, 25, 0, 0),
         new Date(2024, 8, 13, 8, 45, 0, 0),
         new Date(2024, 8, 13, 8, 47, 0, 0),
@@ -463,6 +513,7 @@ function createProjectText(): pxt.workspace.ScriptText {
         new Date(2024, 8, 13, 9, 56, 0, 0),
         new Date(2024, 8, 13, 10, 5, 0, 0),
         new Date(2024, 8, 13, 10, 7, 0, 0),
+
         new Date(2024, 8, 15, 8, 0, 0, 0),
         new Date(2024, 8, 15, 8, 15, 0, 0),
         new Date(2024, 8, 15, 8, 15, 20, 0),
@@ -512,6 +563,7 @@ function createProjectText(): pxt.workspace.ScriptText {
         new Date(2024, 8, 15, 8, 30, 0, 0),
         new Date(2024, 8, 15, 8, 30, 20, 0),
         new Date(2024, 8, 15, 8, 30, 45, 0),
+
         new Date(2024, 8, 18, 8, 45, 0, 0),
     ];
 
