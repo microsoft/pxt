@@ -97,7 +97,7 @@ export function createEditor(element: HTMLElement): monaco.editor.IStandaloneCod
     let editor = monaco.editor.create(element, {
         model: null,
         ariaLabel: pxt.Util.lf("JavaScript editor"),
-        fontFamily: "'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', 'monospace'",
+        fontFamily: "'Consolas', 'Monaco', 'Menlo', 'Ubuntu Mono', 'source-code-pro', 'monospace'",
         scrollBeyondLastLine: true,
         language: "typescript",
         mouseWheelZoom: false,
