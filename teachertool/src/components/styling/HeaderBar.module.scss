@@ -114,19 +114,6 @@
     }
 }
 
-.beta-tag {
-    text-transform: uppercase;
-    position: absolute;
-    top: 3px;
-    right: -50px;
-    background-color: var(--pxt-header-foreground);
-    color: var(--pxt-header-background);
-    padding: 0.25rem 0.5rem;
-    border-radius: 0.25rem;
-    font-size: 0.75rem;
-    font-weight: bold;
-}
-
 .feedback-btn {
     background: var(--pxt-header-foreground);
     color: var(--pxt-header-foreground);
