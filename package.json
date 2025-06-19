@@ -62,7 +62,7 @@
   },
   "dependencies": {
     "@blockly/field-colour": "6.0.0",
-    "@blockly/keyboard-navigation": "1.0.0",
+    "@blockly/keyboard-navigation": "file:blockly-keyboard-navigation-1.0.0.tgz",
     "@blockly/plugin-workspace-search": "10.0.0",
     "@crowdin/crowdin-api-client": "^1.33.0",
     "@fortawesome/fontawesome-free": "^5.15.4",

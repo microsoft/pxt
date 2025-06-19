@@ -435,7 +435,7 @@ div.blocklyTreeRoot > div[role="tree"]:focus-visible {
 > .blocklyFieldRect.blocklySpriteField,
 .blocklyKeyboardNavigation
 .blocklyActiveFocus.blocklyIconGroup
-> .blocklyIconShape:first-child {
+> :is(.blocklyIconShape, .blocklyBreakpointSymbol) {
     stroke: var(--blockly-active-node-color);
     stroke-width: var(--blockly-selection-width);
 }
@@ -454,7 +454,7 @@ div.blocklyTreeRoot > div[role="tree"]:focus-visible {
 > .blocklyFieldRect.blocklySpriteField,
 .blocklyKeyboardNavigation
 .blocklyPassiveFocus.blocklyIconGroup
-> .blocklyIconShape:first-child {
+> :is(.blocklyIconShape, .blocklyBreakpointSymbol) {
     stroke: var(--blockly-active-node-color);
     stroke-dasharray: 5px 3px;
     stroke-width: var(--blockly-selection-width);
@@ -464,6 +464,12 @@ div.blocklyTreeRoot > div[role="tree"]:focus-visible {
 .blocklyFlyout
 .blocklyPassiveFocus.blocklyPath {
     stroke: none;
+}
+
+.blocklyKeyboardNavigation .blocklyIconGroup:is(.blocklyActiveFocus, .blocklyPassiveFocus) {
+    // Unless you hover the icon group has opacity 0.6 which makes
+    // the focus indicator unclear.
+    opacity: 1;
 }
 
 .blocklyKeyboardNavigation .blocklyPassiveFocus.blocklyHighlightedConnectionPath {
