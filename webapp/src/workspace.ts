@@ -19,7 +19,7 @@ import U = pxt.Util;
 import Cloud = pxt.Cloud;
 
 import * as pxtblockly from "../../pxtblocks";
-import { getTextAtTime, HistoryFile, parseHistoryFile } from "../../pxteditor/history";
+import { getTextAtTime, HistoryFile } from "../../pxteditor/history";
 import { Milestones } from "./constants";
 
 
@@ -39,9 +39,6 @@ let headerQ = new U.PromiseQueue();
 
 let impl: WorkspaceProvider;
 let implType: string;
-
-const ONE_DAY = 1000 * 60 * 60 * 24;
-const TWO_HOURS = 1000 * 60 * 60 * 2;
 
 export function getWorkspaceType(): string {
     return implType
