@@ -65,6 +65,8 @@ const DEFAULT_SNAPSHOT_HISTORY_INTERVAL = 1000 * 60 * 30;
 
 const ONE_DAY = 1000 * 60 * 60 * 24;
 
+const TWO_HOURS = 1000 * 60 * 60 * 2;
+
 /**
  * Collapses the history file in a given script text object. This modifies the text object in
  * place and will always preserve the first history entry regardless of the minTime and maxTime
@@ -81,8 +83,14 @@ const ONE_DAY = 1000 * 60 * 60 * 24;
 export function collapseHistory(text: ScriptText, options: CollapseHistoryOptions, diff: (a: string, b: string) => unknown, patch: (p: unknown, text: string) => string) {
     if (!text[pxt.HISTORY_FILE]) return;
 
-    const newHistory: HistoryEntry[] = [];
     const history: HistoryFile = parseHistoryFile(text[pxt.HISTORY_FILE]);
+    const newHistory = collapseHistoryCore(history, text, options, diff, patch);
+
+    text[pxt.HISTORY_FILE] = JSON.stringify(newHistory);
+}
+
+function collapseHistoryCore(history: HistoryFile, text: ScriptText, options: CollapseHistoryOptions, diff: (a: string, b: string) => unknown, patch: (p: unknown, text: string) => string) {
+    const newHistory: HistoryEntry[] = [];
     const entries = history.entries.slice();
 
     let current = {...text};
@@ -140,10 +148,10 @@ export function collapseHistory(text: ScriptText, options: CollapseHistoryOption
         });
     }
 
-    text[pxt.HISTORY_FILE] = JSON.stringify({
+    return {
         ...history,
         entries: newHistory,
-    });
+    };
 }
 
 export function diffScriptText(oldVersion: ScriptText, newVersion: ScriptText, time: number, diff: (a: string, b: string) => unknown): HistoryEntry {
@@ -206,8 +214,9 @@ export function applyDiff(text: ScriptText, history: HistoryEntry, patch: (p: un
 }
 
 export function createSnapshot(text: ScriptText) {
+    let result: ScriptText;
     try {
-        const result: ScriptText = {};
+        result = {};
         const config: pxt.PackageConfig = JSON.parse(text[pxt.CONFIG_NAME]);
 
         for (const file of config.files) {
@@ -236,11 +245,23 @@ export function createSnapshot(text: ScriptText) {
             }
         }
 
+        if (result[pxt.HISTORY_FILE]) {
+            // don't include the history file in the snapshot
+            delete result[pxt.HISTORY_FILE];
+        }
+
         return result;
     }
     catch(e) {
-        return { ...text }
+        result = { ...text };
     }
+
+    if (result[pxt.HISTORY_FILE]) {
+        // don't include the history file in the snapshot
+        delete result[pxt.HISTORY_FILE];
+    }
+
+    return result;
 }
 
 export function applySnapshot(text: ScriptText, snapshot: ScriptText) {
@@ -251,6 +272,9 @@ export function applySnapshot(text: ScriptText, snapshot: ScriptText) {
         // preserve any files from the current text that aren't in the config; this is just to make
         // sure that our internal files like history, markdown, serial output are preserved
         for (const file of Object.keys(text)) {
+            // we had a bug at one point where the history file was included in snapshots
+            if (file === pxt.HISTORY_FILE) continue;
+
             if (config.files.indexOf(file) === -1 && config.testFiles?.indexOf(file) === -1 && !result[file]) {
                 result[file] = text[file];
             }
@@ -278,7 +302,7 @@ export function parseHistoryFile(text: string): HistoryFile {
     return result;
 }
 
-export function updateHistory(previousText: ScriptText, toWrite: ScriptText, currentTime: number, shares: pxt.workspace.PublishVersion[], diff: (a: string, b: string) => unknown, patch: (p: unknown, text: string) => string) {
+export function updateHistory(previousText: ScriptText, toWrite: ScriptText, currentTime: number, shares: pxt.workspace.PublishVersion[], diff: (a: string, b: string) => unknown, patch: (p: unknown, text: string) => string, collapseHistory: boolean = false) {
     let history: HistoryFile;
 
     // Always base the history off of what was in the previousText,
@@ -298,6 +322,8 @@ export function updateHistory(previousText: ScriptText, toWrite: ScriptText, cur
             lastSaveTime: currentTime
         };
     }
+
+    const previousSaveTime = history.lastSaveTime;
 
     // First save any new project shares
     for (const share of shares) {
@@ -352,6 +378,20 @@ export function updateHistory(previousText: ScriptText, toWrite: ScriptText, cur
         }
     }
 
+    // also collapse diff history once per day
+    if (collapseHistory && Math.floor(previousSaveTime / ONE_DAY) !== Math.floor(currentTime / ONE_DAY)) {
+        history = collapseHistoryCore(
+            history,
+            toWrite,
+            {
+                interval: TWO_HOURS,
+                maxTime: currentTime - ONE_DAY
+            },
+            diff,
+            patch
+        );
+    }
+
     history.lastSaveTime = currentTime;
 
     // Finally, update the snapshots. These are failsafes in case something
@@ -378,6 +418,14 @@ export function updateHistory(previousText: ScriptText, toWrite: ScriptText, cur
         }
 
         history.snapshots = trimmed;
+    }
+
+    // we previously had a bug where the history file was included in snapshots,
+    // so delete those if they exist. they just blow up the file size
+    for (const snapshot of history.snapshots) {
+        if (snapshot.text[pxt.HISTORY_FILE]) {
+            delete snapshot.text[pxt.HISTORY_FILE];
+        }
     }
 
     toWrite[pxt.HISTORY_FILE] = JSON.stringify(history);

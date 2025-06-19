@@ -385,16 +385,23 @@ export class EditorPackage {
         })
     }
 
-    setContentAsync(n: string, v: string): Promise<void> {
+    async setContentAsync(n: string, v: string): Promise<void> {
         Util.assert(!!n, "missing file name");
         let f = this.files[n];
-        let p = Promise.resolve();
         if (!f) {
             f = new File(this, n, '')
             this.files[n] = f
-            p = p.then(() => this.updateConfigAsync(cfg => cfg.files.indexOf(n) < 0 ? cfg.files.push(n) : 0))
+
+            // if this is a new file, add it to the config but skip the history file and pxt.json
+            if (n !== pxt.CONFIG_NAME && n !== pxt.HISTORY_FILE) {
+                await this.updateConfigAsync(cfg => {
+                    if (cfg.files.indexOf(n) < 0) {
+                        cfg.files.push(n);
+                    }
+                });
+            }
         }
-        return p.then(() => f.setContentAsync(v));
+        return f.setContentAsync(v);
     }
 
     updateGitJsonCache() {
