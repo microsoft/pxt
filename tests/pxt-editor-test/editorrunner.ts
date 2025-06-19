@@ -6,7 +6,6 @@ import * as chai from "chai";
 import * as dmp from "diff-match-patch";
 import * as pxteditor from "../../pxteditor";
 import { getTextAtTime, HistoryFile, parseHistoryFile, updateHistory } from "../../pxteditor/history";
-import { parse } from "path";
 
 pxt.appTarget = {
     versions: {
