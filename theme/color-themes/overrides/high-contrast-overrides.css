@@ -71,10 +71,10 @@
 }
 
 .pxtToolbox:not(.invertedToolbox) .blocklyTreeRow:not(.blocklyTreeSelected) .blocklyTreeLabel {
-    color: var(--pxt-target-foreground3) !important;
+    color: var(--pxt-target-foreground3);
 }
 
 .pxtToolbox:not(.invertedToolbox) .blocklyTreeRow:not(.blocklyTreeSelected):hover,
 .pxtToolbox:not(.invertedToolbox) .blocklyTreeRow:not(.blocklyTreeSelected):focus {
-    background-color: #404040 !important;
+    background-color: #404040;
 }
