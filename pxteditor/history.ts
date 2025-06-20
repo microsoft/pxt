@@ -244,8 +244,6 @@ export function createSnapshot(text: ScriptText) {
                 result[file] = text[file];
             }
         }
-
-        return result;
     }
     catch(e) {
         result = { ...text };
