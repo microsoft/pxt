@@ -663,7 +663,7 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
                     }
 
                     if (toWrite) {
-                        pxteditor.history.updateHistory(previous.text, toWrite, Date.now(), h.pubVersions || [], diffText, patchText);
+                        pxteditor.history.updateHistory(previous.text, toWrite, Date.now(), h.pubVersions || [], diffText, patchText, true);
                     }
                 }
             }
