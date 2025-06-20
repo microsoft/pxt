@@ -1074,14 +1074,17 @@ namespace ts.pxtc.service {
 
             // Fill default parameters in block string
             const computeBlockString = (symbol: SymbolInfo, skipParent = false, paramMap?: pxt.Map<string>): string => {
-                if (symbol.attributes?.toolboxParent && !skipParent) {
-                    const parentSymbol = blockInfo.blocksById[symbol.attributes.toolboxParent];
+                const toolboxParent = symbol.attributes?.toolboxParent || symbol.attributes?.duplicateWithToolboxParent;
+                const toolboxArgument = symbol.attributes?.toolboxParentArgument || symbol.attributes?.duplicateWithToolboxParentArgument;
+
+                if (toolboxParent && !skipParent) {
+                    const parentSymbol = blockInfo.blocksById[toolboxParent];
 
                     if (parentSymbol) {
                         const childString = computeBlockString(symbol, true);
 
                         const paramMap = {
-                            [symbol.attributes.toolboxParentArgument || "*"]: childString
+                            [toolboxArgument || "*"]: childString
                         };
 
                         return computeBlockString(parentSymbol, true, paramMap);
