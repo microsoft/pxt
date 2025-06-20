@@ -130,6 +130,11 @@ span.blocklyTreeLabel, text.blocklyText {
     color: var(--pxt-target-background3);
 }
 
+.blocklyTreeSelected .blocklyTreeIcon.image-icon {
+    // Has to contrast with block colors
+    background-color: var(--pxt-target-background3);
+}
+
 /*******************************
         Toolbox Label
 *******************************/
@@ -240,12 +245,13 @@ div.blocklyTreeIcon span {
     font-family: 'brand-icons';
 }
 .blocklyTreeIcon.image-icon {
-    background-image: var(--image-icon-url);
+    background-color: var(--block-meta-color);
+    mask-image: var(--image-icon-url);
     width: 30px;
     height: 100%;
-    background-size: 20px !important;
-    background-repeat: no-repeat !important;
-    background-position: 50% 50% !important;
+    mask-size: 20px !important;
+    mask-repeat: no-repeat !important;
+    mask-position: 50% 50% !important;
 }
 
 /*******************************
