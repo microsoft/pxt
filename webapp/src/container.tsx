@@ -748,14 +748,14 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
                 <sui.Icon icon={`icon inverted chevron ${showLeftChevron ? 'left' : 'right'}`} />
             </button>
             <div id="sidedocs" onKeyDown={this.handleKeyDown}>
-                <div id="sidedocsframe-wrapper">
-                    {this.renderContent(url, isBuiltIn, lockedEditor)}
-                </div>
                 {!lockedEditor && !isBuiltIn && <div className="ui app hide" id="sidedocsbar">
                     <a className="ui icon link" role="button" tabIndex={0} data-content={lf("Open documentation in new tab")} aria-label={lf("Open documentation in new tab")} onClick={this.popOut} onKeyDown={fireClickOnEnter} >
                         <sui.Icon icon="external" />
                     </a>
                 </div>}
+                <div id="sidedocsframe-wrapper">
+                    {this.renderContent(url, isBuiltIn, lockedEditor)}
+                </div>
             </div>
         </div>
         /* eslint-enable @microsoft/sdl/react-iframe-missing-sandbox */

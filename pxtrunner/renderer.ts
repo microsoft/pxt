@@ -185,14 +185,17 @@ function snippetBtn(label: string, icon: string): JQuery {
 }
 
 function addFireClickOnEnter(el: JQuery<HTMLElement>) {
-    el.keypress(e => {
-        const charCode = (typeof e.which == "number") ? e.which : e.keyCode;
-        if (charCode === 13 /* enter */ || charCode === 32 /* space */) {
-            e.preventDefault();
-            e.currentTarget.click();
-        }
-    });
+    el.keypress(fireClickOnEnter);
 }
+
+export function fireClickOnEnter(e: KeyboardEvent | JQuery.KeyPressEvent) {
+    const charCode = (typeof e.which == "number") ? e.which : e.keyCode;
+    if (charCode === 13 /* enter */ || charCode === 32 /* space */) {
+        e.preventDefault();
+        (e.currentTarget as HTMLElement).click();
+    }
+}
+
 
 let aspectRatioListenerInit = false;
 function initAspectRatioListener() {
