@@ -1073,7 +1073,24 @@ namespace ts.pxtc.service {
             };
 
             // Fill default parameters in block string
-            const computeBlockString = (symbol: SymbolInfo): string => {
+            const computeBlockString = (symbol: SymbolInfo, skipParent = false, paramMap?: pxt.Map<string>): string => {
+                const toolboxParent = symbol.attributes?.toolboxParent || symbol.attributes?.duplicateWithToolboxParent;
+                const toolboxArgument = symbol.attributes?.toolboxParentArgument || symbol.attributes?.duplicateWithToolboxParentArgument;
+
+                if (toolboxParent && !skipParent) {
+                    const parentSymbol = blockInfo.blocksById[toolboxParent];
+
+                    if (parentSymbol) {
+                        const childString = computeBlockString(symbol, true);
+
+                        const paramMap = {
+                            [toolboxArgument || "*"]: childString
+                        };
+
+                        return computeBlockString(parentSymbol, true, paramMap);
+                    }
+                }
+
                 if (symbol.attributes?._def) {
                     let block = [];
                     const blockDef = symbol.attributes._def;
@@ -1088,10 +1105,21 @@ namespace ts.pxtc.service {
                             case "param":
                                 // In order, preference default value, var name, param name, blockdef param name
                                 let actualParam = compileInfo.definitionNameToParam[part.name];
-                                block.push(actualParam?.defaultValue
+
+                                let valueString = actualParam?.defaultValue
                                     || part.varName
                                     || actualParam?.actualName
-                                    || part.name);
+                                    || part.name;
+
+                                if (paramMap?.["*"]) {
+                                    valueString = paramMap["*"];
+                                    delete paramMap["*"];
+                                }
+                                else if (paramMap?.[actualParam.definitionName]) {
+                                    valueString = paramMap[actualParam.definitionName];
+                                }
+
+                                block.push(valueString);
                                 break;
                         }
                     }
