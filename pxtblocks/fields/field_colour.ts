@@ -61,7 +61,7 @@ export class FieldColorNumber extends FieldGridDropdown implements FieldCustom {
         const transparentPlaceholderValue = "#dedede";
         if (params.colours) {
             allColoursCSSFormat = JSON.parse(params.colours);
-            if (allColoursCSSFormat.slice(1).includes(allColoursCSSFormat[0])) {
+            if (allColoursCSSFormat.lastIndexOf(allColoursCSSFormat[0]) > 0) {
                 allColoursCSSFormat[0] = transparentPlaceholderValue;
             }
         }
