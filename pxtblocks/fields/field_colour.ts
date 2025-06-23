@@ -49,17 +49,25 @@ export class FieldColorNumber extends FieldGridDropdown implements FieldCustom {
     private valueMode_: FieldColourValueMode;
 
     constructor(text: string, params: FieldColourNumberOptions, opt_validator?: Blockly.FieldValidator) {
-        super(Blockly.Field.SKIP_SETUP as any, opt_validator, { primaryColour: "white", borderColour: "black", columns: !!params.columns ? parseInt(params.columns) : 7});
+        super(Blockly.Field.SKIP_SETUP as any, opt_validator, {
+            primaryColour: "white",
+            borderColour: "#dadce0",
+            columns: !!params.columns ? parseInt(params.columns) : 7
+        });
         let allColoursValueFormat: string[];
         let allColoursCSSFormat: string[];
         let titles: string[] | undefined;
         const valueMode = params.valueMode ?? "rgb";
+        const transparentPlaceholderValue = "#dedede";
         if (params.colours) {
             allColoursCSSFormat = JSON.parse(params.colours);
+            if (allColoursCSSFormat.slice(1).includes(allColoursCSSFormat[0])) {
+                allColoursCSSFormat[0] = transparentPlaceholderValue;
+            }
         }
         else if (pxt.appTarget.runtime && pxt.appTarget.runtime.palette) {
             allColoursCSSFormat = pxt.Util.clone(pxt.appTarget.runtime.palette);
-            allColoursCSSFormat[0] = "#dedede";
+            allColoursCSSFormat[0] = transparentPlaceholderValue;
             if (pxt.appTarget.runtime.paletteNames) {
                 titles = pxt.Util.clone(pxt.appTarget.runtime.paletteNames);
                 titles[0] = lf("transparent");
