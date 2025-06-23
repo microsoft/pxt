@@ -66,6 +66,12 @@
                 }
             }
 
+            @media print {
+                .block-input-btn, div[class*="common-input-group"] {
+                    border: 1px solid black;
+                }
+            }
+
             .inline-input-wrapper {
                 &:has(.long) {
                     flex-grow: 1;
