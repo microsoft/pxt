@@ -293,16 +293,6 @@ export class FieldColorNumber extends FieldGridDropdown implements FieldCustom {
 
 }
 
-/**
-* Creates a set of divs representing colour swatches for use in the picker.
-*
-* @param allColoursValueFormat An array of colours to create swatches for. The colours must
-*     be any legal CSS colour specifier.
-* @param titles A corresponding array of titles to be displayed as tooltips on
-*     the colour swatches.
-* @returns An array of pairs of DOM elements representing colour swatches and
-*     their corresponding colour.
-*/
 function makeSwatches(
     allColoursValueFormat: string[],
     allColoursCSSFormat: string[],
@@ -344,6 +334,7 @@ function cssFormatToValueFormat(value_: string, valueMode: FieldColourValueMode,
 }
 
 function valueFormatToCSSFormat(value: string, allColoursCSSFormat: string[]): string {
+    // This supports a variety of formats this field editor does not generate.
     if (value) {
         const enumSplit = /Colors\.([a-zA-Z]+)/.exec(value);
         const hexSplit = /(0x|#)([0-9a-fA-F]+)/.exec(value);
@@ -395,88 +386,41 @@ function valueFormatToCSSFormat(value: string, allColoursCSSFormat: string[]): s
  * CSS for colour picker.
  */
 Blockly.Css.register(`
-.blocklyFieldColour .blocklyFieldGridItemSelected,
-.blocklyFieldGridItemSelected:hover {
-  border-color: #eee !important;
-  outline: 1px solid #333;
-  position: relative;
-}
-
 .blocklyColourSwatch {
-  width: 20px;
-  height: 20px;
+    width: 22px;
+    height: 22px;
 }
 
-.blocklyGridContainer {
-  padding: 0px;
+.blocklyFieldColour.blocklyFieldGridContainer {
+    padding: 0px;
+    outline: none;
 }
 
 .blocklyFieldColour .blocklyFieldGrid {
-  grid-gap: 0px;
-  row-gap: 4px;
-}
-
-.blocklyFieldColour .blocklyFieldGrid .blocklyGridItem {
-  border-radius: 0;
-  padding: 0;
-  border: 0.5px solid #888;
-  cursor: pointer;
+    grid-gap: 0px;
+    row-gap: 0px;
 }
 
 .blocklyFieldColour .blocklyFieldGrid .blocklyFieldGridItem {
-  border: 0.5px solid #888;
-  padding: 0;
-  margin: 0;
-  border-radius: 0;
-}
-
-.blocklyFieldColour .blocklyFieldGrid .blocklyFieldGridItem:focus {
-  border-color: #eee;
-  box-shadow: 2px 2px 7px 2px rgba(0, 0, 0, 0.3);
-  position: relative;
-  border-radius: 0;
-  outline: none;
-}
-`);
-
-/*
-Blockly.Css.register(`
-table.blocklyColourTable {
-    outline: none;
-    border-radius: 11px;
-}
-
-table.blocklyColourTable > tr > td {
-    height: 22px;
-    width: 22px;
+    padding: 0;
+    border: none;
     margin: 2px;
-    text-align: center;
-    cursor: pointer;
-    border-radius: 4px;
+}
+
+.blocklyFieldColour .blocklyFieldGrid .blocklyFieldGridItem .blocklyColourSwatch {
     border: 2px solid rgba(0,0,0,.1);
+    border-radius: 4px;
 }
 
-table.blocklyColourTable > tr > td:hover {
-    border: 1px solid #FFF;
-    box-sizing: border-box;
-}
-
-table.blocklyColourTable > tr > td.blocklyColourSelected {
-    border: 1px solid #000;
-    box-sizing: border-box;
-    color: #fff;
-}
-
-table.blocklyColourTable>tr>td.blocklyColourHighlighted {
-    border-color: #eee;
+.blocklyFieldColour .blocklyFieldGridItem:focus .blocklyColourSwatch {
     box-shadow: 2px 2px 7px 2px rgba(0,0,0,.3);
-    position: relative;
+    border-color: #eee;
+    border-width: 1px;
 }
 
-.blocklyColourSelected, .blocklyColourSelected:hover {
-    border-color: #eee !important;
-    outline: 1px solid #333;
-    position: relative;
+.blocklyFieldColour .blocklyFieldGrid .blocklyFieldGridItemSelected .blocklyColourSwatch {
+    outline: 1px solid #000;
+    border-color: #eee;
+    border-width: 1px;
 }
 `);
-*/
