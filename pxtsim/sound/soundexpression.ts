@@ -258,7 +258,7 @@ namespace pxsim.codal.music {
 
             try {
                 sound.onStarted();
-                await playSoundExpressionAsync(sound.notes, sound.volume, () => currentToken.cancelled);
+                await playSoundExpressionAsync(sound.notes, () => currentToken.cancelled, undefined, sound.volume);
                 if (currentToken.cancelled) {
                     sound.onCancelled();
                 }
@@ -286,7 +286,7 @@ namespace pxsim.codal.music {
         };
     }
 
-    export function playSoundExpressionAsync(notes: string, volume?: number, isCancelled?: () => boolean, onPull?: (freq: number, volume: number) => void) {
+    export function playSoundExpressionAsync(notes: string, isCancelled?: () => boolean, onPull?: (freq: number, volume: number) => void, volume?: number) {
         const synth = new SoundEmojiSynthesizer(0);
         const soundEffects = parseSoundEffects(notes);
         synth.play(soundEffects);

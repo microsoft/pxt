@@ -153,7 +153,7 @@ const SoundGalleryEntry = (props: SoundGalleryItemProps) => {
             await pxsim.AudioContextManager.playInstructionsAsync(pxt.assets.soundToInstructionBuffer(sound, 20, 1));
         }
         else {
-            await pxsim.codal.music.playSoundExpressionAsync(soundToCodalSound(sound).src, 127);
+            await pxsim.codal.music.playSoundExpressionAsync(soundToCodalSound(sound).src, undefined, undefined, 0.03);
         }
 
         setCancelToken(null);
