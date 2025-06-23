@@ -32,7 +32,7 @@ function getTargetMap(target: string): querySelector {
         "play button" : {
             targetQuery: ".big-play-button",
         },
-        "sign in": {
+        "sign in" : {
             targetQuery: ".sign-in-dropdown",
         },
         "avatar" : {
