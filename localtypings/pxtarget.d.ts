@@ -1126,6 +1126,7 @@ declare namespace ts.pxtc {
         clearIncrBuildAndRetryOnError?: boolean; // on error when compiling in service, try again with a full recompile.
         errorOnGreyBlocks?: boolean;
         generateSourceMap?: boolean;
+        tsCompileOptions?: ts.CompilerOptions; // options to pass to the TypeScript compiler
 
         otherMultiVariants?: ExtensionTarget[];
 

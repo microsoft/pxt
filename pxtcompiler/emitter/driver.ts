@@ -25,7 +25,11 @@ namespace ts.pxtc {
         options.noImplicitAny = true;
         options.noImplicitReturns = true;
         options.allowUnreachableCode = true;
-        return options
+
+        return {
+            ...options,
+            ...opts?.tsCompileOptions
+        };
     }
 
     export function nodeLocationInfo(node: ts.Node) {
