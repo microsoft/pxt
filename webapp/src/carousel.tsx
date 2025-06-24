@@ -194,7 +194,7 @@ export class Carousel extends data.Component<ICarouselProps, ICarouselState> {
 
         let up = (event: MouseEvent | TouchEvent | PointerEvent) => {
             if (this.isDragging) {
-                this.dragEnd();
+                this.dragEnd(event);
                 if (this.definitelyDragging) {
                     event.preventDefault();
                     event.stopPropagation();
@@ -272,9 +272,23 @@ export class Carousel extends data.Component<ICarouselProps, ICarouselState> {
         }
     }
 
-    private dragEnd() {
+    private dragEnd(event?: MouseEvent | PointerEvent | TouchEvent) {
         this.isDragging = false;
-        this.calculateIndex();
+
+        if (!event || this.definitelyDragging) {
+            this.calculateIndex();
+        }
+        else {
+            const x = getX(event);
+            for (let i = 0; i < this.childrenElements.length; i++) {
+                const child = this.childrenElements[i];
+                const bounds = child.getBoundingClientRect();
+                if (bounds.right > x && bounds.left < x) {
+                    this.setIndex(i, 200);
+                    return;
+                }
+            }
+        }
     }
 
     private dragMove(x: number) {
