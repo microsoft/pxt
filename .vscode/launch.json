@@ -147,7 +147,7 @@
 			"sourceMaps": false,
 			"outFiles": []
 		},
-				{
+		{
 			"name": "pxt buildcoredts (pxt-bedrock)",
 			"type": "node",
 			"request": "launch",
