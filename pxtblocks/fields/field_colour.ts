@@ -401,12 +401,12 @@ Blockly.Css.register(`
 
 .blocklyFieldColour.blocklyFieldGridContainer {
     padding: 0px;
-    outline: none;
 }
 
 .blocklyFieldColour .blocklyFieldGrid {
     grid-gap: 0px;
     row-gap: 0px;
+    outline: none;
 }
 
 .blocklyFieldColour .blocklyFieldGrid .blocklyFieldGridItem {
