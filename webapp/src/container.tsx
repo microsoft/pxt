@@ -98,7 +98,7 @@ export class DocsMenu extends data.PureComponent<DocsMenuProps & { hasMainBlocks
         const accessibleBlocksEnabled = data.getData<boolean>(auth.ACCESSIBLE_BLOCKS);
         return <sui.DropdownMenu role="menuitem" icon="help circle large"
             className="item mobile hide help-dropdown-menuitem" textClass={"landscape only"} title={lf("Help")} >
-            {this.props.hasMainBlocksFile && showKeyboardControls() && accessibleBlocksEnabled && getKeyboardNavHelpItem(parent)}
+            {this.props.hasMainBlocksFile && parent.isBlocksEditor() && showKeyboardControls() && accessibleBlocksEnabled && getKeyboardNavHelpItem(parent)}
             {targetTheme.tours?.editor && getTourItem(parent)}
             {renderDocItems(parent, targetTheme.docMenu)}
             {getDocsLanguageItem(this.props.editor, parent)}
