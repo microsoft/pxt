@@ -49,18 +49,14 @@ export class FieldColorNumber extends FieldGridDropdown implements FieldCustom {
     private valueMode_: FieldColourValueMode;
 
     constructor(text: string, params: FieldColourNumberOptions, opt_validator?: Blockly.FieldValidator) {
-        super(Blockly.Field.SKIP_SETUP as any, opt_validator, {
-            primaryColour: "white",
-            borderColour: "#dadce0",
-            columns: !!params.columns ? parseInt(params.columns) : 7
-        });
-        let allColoursValueFormat: string[];
         let allColoursCSSFormat: string[];
         let titles: string[] | undefined;
         const valueMode = params.valueMode ?? "rgb";
+        // TOOD: replace with a logical value and render checkerboard-style.
         const transparentPlaceholderValue = "#dedede";
         if (params.colours) {
             allColoursCSSFormat = JSON.parse(params.colours);
+            // Assume the first colour represents transparent if it's present elsewhere.
             if (allColoursCSSFormat.lastIndexOf(allColoursCSSFormat[0]) > 0) {
                 allColoursCSSFormat[0] = transparentPlaceholderValue;
             }
@@ -73,11 +69,15 @@ export class FieldColorNumber extends FieldGridDropdown implements FieldCustom {
                 titles[0] = lf("transparent");
             }
         }
-        allColoursValueFormat = allColoursCSSFormat.map(c => cssFormatToValueFormat(c, valueMode, allColoursCSSFormat))
+        super(makeSwatches(allColoursCSSFormat, titles), opt_validator, {
+            primaryColour: "white",
+            borderColour: "#dadce0",
+            columns: !!params.columns ? parseInt(params.columns) : 7
+        });
+
         this.allColoursCSSFormat_ = allColoursCSSFormat;
-        this.setOptions(makeSwatches(allColoursValueFormat, allColoursCSSFormat, titles));
-        this.setValue(text);
         this.valueMode_ = valueMode;
+        this.setValue(text);
     }
 
     /**
@@ -264,6 +264,12 @@ export class FieldColorNumber extends FieldGridDropdown implements FieldCustom {
     protected override doClassValidation_(
         newValue?: string,
     ): string | null | undefined {
+        if (!this.allColoursCSSFormat_) {
+            // This is the super constructor setting the value to the first
+            // option before we've had a chance to assign fields.
+            return newValue;
+        }
+
         if (typeof newValue !== 'string') {
             return null;
         }
@@ -302,10 +308,10 @@ export class FieldColorNumber extends FieldGridDropdown implements FieldCustom {
 }
 
 function makeSwatches(
-    allColoursValueFormat: string[],
     allColoursCSSFormat: string[],
     titles?: string[],
 ): Blockly.MenuOption[] {
+    const allColoursValueFormat = allColoursCSSFormat.map(c => cssFormatToValueFormat(c, valueMode, allColoursCSSFormat))
     return allColoursValueFormat.map((colourValueFormat, index) => {
         const swatch = document.createElement('div');
         swatch.className = 'blocklyColourSwatch';
