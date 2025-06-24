@@ -69,7 +69,7 @@ export class FieldColorNumber extends FieldGridDropdown implements FieldCustom {
                 titles[0] = lf("transparent");
             }
         }
-        super(makeSwatches(allColoursCSSFormat, titles), opt_validator, {
+        super(makeSwatches(valueMode, allColoursCSSFormat, titles), opt_validator, {
             primaryColour: "white",
             borderColour: "#dadce0",
             columns: !!params.columns ? parseInt(params.columns) : 7
@@ -308,6 +308,7 @@ export class FieldColorNumber extends FieldGridDropdown implements FieldCustom {
 }
 
 function makeSwatches(
+    valueMode: FieldColourValueMode,
     allColoursCSSFormat: string[],
     titles?: string[],
 ): Blockly.MenuOption[] {
