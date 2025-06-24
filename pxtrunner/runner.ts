@@ -6,7 +6,7 @@
 
 import { BlocksRenderOptions, blocklyToSvgAsync, initializeAndInject, render } from "../pxtblocks";
 import { initEditorExtensionsAsync } from "../pxteditor/editor";
-import { defaultClientRenderOptions, renderAsync } from "./renderer";
+import { defaultClientRenderOptions, fireClickOnEnter, renderAsync } from "./renderer";
 
 import * as pxtblockly from "../pxtblocks";
 import * as Blockly from "blockly";
@@ -763,6 +763,7 @@ export function startDocsServer(loading: HTMLElement, content: HTMLElement, back
         backButton.addEventListener("click", () => {
             goBack();
         });
+        backButton.addEventListener("keydown", fireClickOnEnter);
         setElementDisabled(backButton, true);
     }
 
