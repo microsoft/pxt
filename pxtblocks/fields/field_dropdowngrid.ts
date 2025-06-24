@@ -65,12 +65,14 @@ export abstract class FieldDropdownGrid extends FieldDropdown {
     }
 
     protected addKeyDownHandler(gridItemContainer: HTMLElement) {
+        const nextKey = pxt.Util.isUserLanguageRtl() ? "ArrowLeft" : "ArrowRight";
+        const prevKey = pxt.Util.isUserLanguageRtl() ? "ArrowRight" : "ArrowLeft";
         this.keyDownBinding = Blockly.browserEvents.bind(gridItemContainer, 'keydown', this, (e: KeyboardEvent) => {
             if (this.activeDescendantIndex === undefined) {
-                if (e.code === 'ArrowDown' || e.code === 'ArrowRight' || e.code === 'Home' ) {
+                if (e.code === 'ArrowDown' || e.code === nextKey || e.code === 'Home' ) {
                     this.activeDescendantIndex = 0;
                     return this.setFocusedItem(gridItemContainer, e);
-                } else if (e.code === 'ArrowUp' || e.code === 'ArrowLeft' || e.code === 'End') {
+                } else if (e.code === 'ArrowUp' || e.code === prevKey || e.code === 'End') {
                     this.activeDescendantIndex =  this.gridItems.length - 1;
                     return this.setFocusedItem(gridItemContainer, e);
                 }
@@ -88,12 +90,12 @@ export abstract class FieldDropdownGrid extends FieldDropdown {
                         this.activeDescendantIndex += this.columns_;
                     }
                     break;
-                case 'ArrowRight':
+                case nextKey:
                     if (this.activeDescendantIndex < this.gridItems.length - 1) {
                         this.activeDescendantIndex++;
                     }
                     break;
-                case 'ArrowLeft':
+                case prevKey:
                     if (this.activeDescendantIndex !== 0) {
                         this.activeDescendantIndex--;
                     }
