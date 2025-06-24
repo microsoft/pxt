@@ -378,7 +378,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             <div className="ui divider"></div>
             {targetTheme.selectLanguage ? <sui.Item icon='xicon globe' role="menuitem" text={lf("Language")} onClick={this.showLanguagePicker} /> : undefined}
             <sui.Item role="menuitem" icon="paint brush" text={lf("Theme")} onClick={this.showThemePicker} />
-            {showKeyboardControls() &&
+            {this.props.parent.isBlocksEditor() && showKeyboardControls() &&
                 <CheckboxMenuItem
                     isChecked={accessibleBlocks}
                     label={lf("Keyboard Controls")}
