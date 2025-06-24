@@ -538,6 +538,7 @@ declare namespace pxt {
         adjustBlockContrast?: boolean; // If set to true, all block colors will automatically be adjusted to have a contrast ratio of 4.5 with text
         pxtJsonOptions?: PxtJsonOption[];
         enabledFeatures?: pxt.Map<FeatureFlag>;
+        forceEnableAiErrorHelp?: boolean; // Enables the AI Error Help feature, regardless of geo setting.
     }
 
     interface DownloadDialogTheme {
@@ -1126,6 +1127,7 @@ declare namespace ts.pxtc {
         clearIncrBuildAndRetryOnError?: boolean; // on error when compiling in service, try again with a full recompile.
         errorOnGreyBlocks?: boolean;
         generateSourceMap?: boolean;
+        tsCompileOptions?: ts.CompilerOptions; // options to pass to the TypeScript compiler
 
         otherMultiVariants?: ExtensionTarget[];
 
