@@ -694,12 +694,13 @@ export async function aiErrorExplainRequest(
     errors: string,
     lang: "blocks" | "typescript" | "python",
     target: string,
-    outputFormat: "tour_json" | "text"
+    outputFormat: "tour_json" | "text",
+    locale: string
 ): Promise<string | undefined> {
     const startUrl = `/api/copilot/startexplainerror`;
     const statusUrl = `/api/copilot/explainerrorstatus`;
 
-    const data = { lang, code, errors, target, outputFormat };
+    const data = { lang, code, errors, target, outputFormat, locale };
 
     // Start the request.
     const queryStart = await auth.apiAsync(startUrl, data, "POST");

@@ -367,7 +367,7 @@ namespace ts.pxtc {
                     err("File not found: " + fn)
                     text = ""
                 }
-                return createSourceFile(fn, text, v, setParentNodes)
+                return createSourceFile(fn, text, v, setParentNodes, undefined /* scriptKind */, options);
             },
             fileExists: fn => {
                 fn = normalizePath(fn)
