@@ -922,7 +922,7 @@ namespace pxsim {
             };
         }
 
-        export function createAudioSourceNode(uri: string, clippingThreshold: number) {
+        export function createAudioSourceNode(uri: string, clippingThreshold: number, volume: number): HTMLAudioElement {
             const audioElement = new Audio(uri);
             const source = context().createMediaElementSource(audioElement);
             const distortion = context().createWaveShaper();
@@ -933,7 +933,7 @@ namespace pxsim {
             channel.generator = distortion;
             channel.generator.connect(channel.gain);
             source.connect(distortion);
-            channel.gain.gain.value = 1;
+            channel.gain.gain.value = volume;
 
             return audioElement;
         }
