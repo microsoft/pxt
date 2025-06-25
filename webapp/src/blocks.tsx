@@ -514,6 +514,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private initBlocklyToolbox() {
+        if (pxt.shell.isTimeMachineEmbed()) {
+            return;
+        }
+
         // Remove unwanted additional tab stop from the editor.
         // We add tabindex to the tree wrapping the toolbox categories (excluding search) instead.
         const toolboxDiv = this.getToolboxDiv();
@@ -595,7 +599,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const oldWorkspaceSvgOnTreeBlur = Blockly.WorkspaceSvg.prototype.onTreeBlur;
         (Blockly.WorkspaceSvg as any).prototype.onTreeBlur = function (nextTree: Blockly.IFocusableNode | null): void {
             // Keep the flyout open whe a variable is created.
-            if ((that.editor.getFlyout() as pxtblockly.CachingFlyout).forceOpen) {
+            if ((that.editor.getFlyout() as pxtblockly.CachingFlyout)?.forceOpen) {
                 that.setFlyoutForceOpen(false);
                 return;
             }
