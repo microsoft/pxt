@@ -20,8 +20,13 @@ namespace pxt.hash {
         | "reload"
         | "skillmapimport"
         | "embedimport"
-        | "github";
+        | "github"
+        | "editor";
 
+    export type HashChangeListener = (hash: UrlHash) => void;
+
+    let pendingHash: string | undefined;
+    let hashListeners: HashChangeListener[];
 
     export interface UrlHash {
         command: URLHashCommand;
@@ -48,6 +53,43 @@ namespace pxt.hash {
     export function changeHash(hash: URLHashCommand, arg?: string, keepHistory?: boolean) {
         const newHash = `#${hash}${arg ? `:${arg}` : ""}`;
         pxt.BrowserUtils.changeHash(newHash, keepHistory);
+        pendingHash = newHash;
+    }
+
+    export function addChangeListener(callback: (hash: UrlHash) => void) {
+        if (!hashListeners) {
+            pendingHash = undefined;
+            hashListeners = [];
+            window.addEventListener("hashchange", () => {
+                const hash = window.location.hash;
+
+                if (hash === pendingHash) {
+                    pendingHash = undefined;
+                    return;
+                }
+
+                pendingHash = undefined;
+
+                const parsed = parse(hash);
+                for (const listener of hashListeners) {
+                    try {
+                        listener(parsed);
+                    } catch (e) {
+                        pxt.log(`Error in hash change listener: ${e}`);
+                    }
+                }
+            });
+        }
+
+        if (hashListeners.indexOf(callback) < 0) {
+            hashListeners.push(callback);
+        }
+    }
+
+    export function removeChangeListener(callback: (hash: UrlHash) => void) {
+        if (hashListeners) {
+            hashListeners = hashListeners.filter(listener => listener !== callback);
+        }
     }
 
     // Determines whether the hash argument affects the starting project

@@ -1918,7 +1918,12 @@ export class ProjectView
         }
         finally {
             // Editor is loaded
-            pxt.BrowserUtils.changeHash("#editor", true);
+            if (h.tutorial) {
+                pxt.hash.changeHash("tutorial", h.tutorial.tutorial, true)
+            }
+            else {
+                pxt.hash.changeHash("editor", undefined, true);
+            }
             // Clear the focus.
             document.getElementById("root").focus();
             /* await */ cmds.maybeReconnectAsync(false, true);
@@ -5982,16 +5987,16 @@ function loadHeaderBySharedId(id: string) {
         .finally(() => core.hideLoading("loadingheader"));
 }
 
-const handleHashChange = (e: HashChangeEvent) => {
-    handleHash(pxt.hash.parse(window.location.hash), false);
+const handleHashChange = (hash: pxt.hash.UrlHash) => {
+    handleHash(hash, false);
 }
 
 function initHashchange() {
-    window.addEventListener("hashchange", handleHashChange);
+    pxt.hash.addChangeListener(handleHashChange);
 }
 
 function clearHashChange() {
-    window.removeEventListener("hashchange", handleHashChange)
+   pxt.hash.removeChangeListener(handleHashChange);
 }
 
 function saveAsBlocks(): boolean {
