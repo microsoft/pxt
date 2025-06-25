@@ -96,7 +96,7 @@ pxsim.util.injectPolyphils();
 applyPolyfills();
 
 let theEditor: ProjectView;
-let hash: { cmd: string, arg: string };
+let hash: pxt.hash.UrlHash;
 let pendingEditorRequests: ((p: ProjectView) => void)[];
 
 export function hasEditor() {
@@ -437,14 +437,14 @@ export class ProjectView
     }
 
     shouldShowHomeScreen() {
-        const hash = parseHash();
+        const hash = pxt.hash.parse(window.location.hash);
         const isSandbox = pxt.shell.isSandboxMode() || pxt.shell.isReadOnly();
         // Only show the start screen if there are no initial projects requested
         // (e.g. from the URL hash or from controller mode)
         const skipStartScreen = pxt.appTarget.appTheme.allowParentController
             || pxt.shell.isControllerMode()
             || /^#editor/.test(window.location.hash);
-        return !isSandbox && !skipStartScreen && !isProjectRelatedHash(hash);
+        return !isSandbox && !skipStartScreen && !pxt.hash.isProjectRelated(hash);
     }
 
     async updateVisibilityAsync() {
@@ -2895,8 +2895,8 @@ export class ProjectView
             // Prevent us from stripping out the hash before the reload is complete
             clearHashChange();
             // On embedded pages, preserve the loaded project
-            if (hash && ((pxt.BrowserUtils.isIFrame() && (hash.cmd === "pub" || hash.cmd === "sandbox")) || hash.cmd == "tutorial")) {
-                location.hash = `#${hash.cmd}:${hash.arg}`;
+            if (hash && ((pxt.BrowserUtils.isIFrame() && (hash.command === "pub" || hash.command === "sandbox")) || hash.command == "tutorial")) {
+                location.hash = `#${hash.command}:${hash.arg}`;
             }
             else if (this.state?.home) {
                 location.hash = "#reload";
@@ -5755,22 +5755,14 @@ let myexports: any = {
 
 export let ksVersion: string;
 
-function parseHash(): { cmd: string; arg: string } {
-    let hashM = /^#(\w+)(:([:\.\/\-\+\=\w]+))?/.exec(window.location.hash)
-    if (hashM) {
-        return { cmd: hashM[1], arg: hashM[3] || '' };
-    }
-    return { cmd: '', arg: '' };
-}
-
-function handleHash(newHash: { cmd: string; arg: string }, loading: boolean): boolean {
+function handleHash(newHash: pxt.hash.UrlHash, loading: boolean): boolean {
     if (!newHash) return false;
     let editor = theEditor;
     if (!editor) return false;
 
-    if (isProjectRelatedHash(newHash)) editor.setState({ home: false });
+    if (pxt.hash.isProjectRelated(newHash)) editor.setState({ home: false });
 
-    switch (newHash.cmd) {
+    switch (newHash.command) {
         case "doc":
             pxt.tickEvent("hash.doc")
             editor.setSideDoc(newHash.arg, editor.editor === editor.blocksEditor);
@@ -5782,21 +5774,21 @@ function handleHash(newHash: { cmd: string; arg: string }, loading: boolean): bo
         case "newproject": // shortcut to create a new blocks proj
             pxt.tickEvent("hash.newproject")
             editor.newProject();
-            pxt.BrowserUtils.changeHash("");
+            pxt.hash.clear();
             return true;
         case "newjavascript": // shortcut to create a new JS proj
             pxt.tickEvent("hash.newjavascript");
             editor.newProject({
                 preferredEditor: pxt.JAVASCRIPT_PROJECT_NAME
             });
-            pxt.BrowserUtils.changeHash("");
+            pxt.hash.clear();
             return true;
         case "newpython": // shortcut to create a new python proj
             pxt.tickEvent("hash.newpython");
             editor.newProject({
                 preferredEditor: pxt.PYTHON_PROJECT_NAME
             });
-            pxt.BrowserUtils.changeHash("");
+            pxt.hash.clear();
             return true;
         case "testproject": {// create new project that references the given extension
             pxt.tickEvent("hash.testproject");
@@ -5814,13 +5806,13 @@ function handleHash(newHash: { cmd: string; arg: string }, loading: boolean): bo
                     });
                 }
             }
-            pxt.BrowserUtils.changeHash("");
+            pxt.hash.clear();
             return true;
         }
         case "gettingstarted": {
             pxt.tickEvent("hash.gettingstarted");
             editor.newProject();
-            pxt.BrowserUtils.changeHash("");
+            pxt.hash.clear();
             return true;
         }
         // shortcut to a tutorial. eg: #tutorial:tutorials/getting-started
@@ -5828,7 +5820,7 @@ function handleHash(newHash: { cmd: string; arg: string }, loading: boolean): bo
         case "tutorial":
         case "example":
         case "recipe": {
-            pxt.tickEvent("hash." + newHash.cmd)
+            pxt.tickEvent("hash." + newHash.command)
             hash = newHash;
             let tutorialPath = newHash.arg;
             let editorProjectName: string = undefined;
@@ -5842,7 +5834,7 @@ function handleHash(newHash: { cmd: string; arg: string }, loading: boolean): bo
                 tutorialPath = tutorialPath.substr(tutorialPath.indexOf(':') + 1)
             }
             editor.startActivity({
-                activity: newHash.cmd,
+                activity: newHash.command,
                 path: tutorialPath,
                 editor: editorProjectName,
                 focus: false
@@ -5853,41 +5845,41 @@ function handleHash(newHash: { cmd: string; arg: string }, loading: boolean): bo
         case "home": // shortcut to home
             pxt.tickEvent("hash.home");
             editor.openHome();
-            pxt.BrowserUtils.changeHash("");
+            pxt.hash.clear();
             return true;
         case "sandbox":
         case "pub":
         case "edit": // load a published proj, eg: #pub:27750-32291-62442-22749
-            pxt.tickEvent("hash." + newHash.cmd);
-            pxt.BrowserUtils.changeHash("");
+            pxt.tickEvent("hash." + newHash.command);
+            pxt.hash.clear();
             if (/^(github:|https:\/\/github\.com\/)/.test(newHash.arg))
                 importGithubProject(newHash.arg);
             else
                 loadHeaderBySharedId(newHash.arg);
             return true;
         case "header":
-            pxt.tickEvent("hash." + newHash.cmd);
-            pxt.BrowserUtils.changeHash("");
+            pxt.tickEvent("hash." + newHash.command);
+            pxt.hash.clear();
             editor.loadHeaderAsync(workspace.getHeader(newHash.arg));
             return true;
         case "sandboxproject":
         case "project":
-            pxt.tickEvent("hash." + newHash.cmd);
+            pxt.tickEvent("hash." + newHash.command);
             const fileContents = Util.stringToUint8Array(atob(newHash.arg));
-            pxt.BrowserUtils.changeHash("");
+            pxt.hash.clear();
             core.showLoading("loadingproject", lf("loading project..."));
             editor.importProjectFromFileAsync(fileContents)
                 .finally(() => core.hideLoading("loadingproject"));
             return true;
         case "reload": // need to reload last project - handled later in the load process
-            if (loading) pxt.BrowserUtils.changeHash("");
+            if (loading) pxt.hash.clear();
             return false;
         case "skillmapimport":
             const headerId = newHash.arg;
             core.showLoading("skillmapimport", lf("loading project..."));
             editor.importSkillmapProjectAsync(headerId)
                 .finally(() => {
-                    pxt.BrowserUtils.changeHash("");
+                    pxt.hash.clear();
                     core.hideLoading("skillmapimport")
                 });
             return true;
@@ -5896,14 +5888,14 @@ function handleHash(newHash: { cmd: string; arg: string }, loading: boolean): bo
             core.showLoading("embedimport", lf("loading project..."));
             editor.importEmbedProjectAsync(importId)
                 .finally(() => {
-                    pxt.BrowserUtils.changeHash("");
+                    pxt.hash.clear();
                     core.hideLoading("embedimport")
                 });
             return true;
         case "github": {
             const repoid = pxt.github.parseRepoId(newHash.arg);
             const [ghCmd, ghArg] = newHash.arg.split(':', 2);
-            pxt.BrowserUtils.changeHash("");
+            pxt.hash.clear();
             const provider = cloudsync.githubProvider();
             if (!provider)
                 return false;
@@ -5937,33 +5929,6 @@ function handleHash(newHash: { cmd: string; arg: string }, loading: boolean): bo
     return false;
 }
 
-// Determines whether the hash argument affects the starting project
-function isProjectRelatedHash(hash: { cmd: string; arg: string }): boolean {
-    if (!hash) {
-        return false;
-    }
-    switch (hash.cmd) {
-        case "follow":
-        case "newproject":
-        case "newjavascript":
-        case "testproject":
-        // case "gettingstarted": // This should be true, #gettingstarted hash handling is not yet implemented
-        case "tutorial":
-        case "example":
-        case "recipe":
-        case "projects":
-        case "sandbox":
-        case "pub":
-        case "edit":
-        case "sandboxproject":
-        case "project":
-        case "header":
-            return true;
-        case "github":
-        default:
-            return false;
-    }
-}
 
 async function importGithubProject(repoid: string, requireSignin?: boolean) {
     if (!pxt.appTarget.appTheme.githubEditor || pxt.BrowserUtils.isPxtElectron()) {
@@ -6018,7 +5983,7 @@ function loadHeaderBySharedId(id: string) {
 }
 
 const handleHashChange = (e: HashChangeEvent) => {
-    handleHash(parseHash(), false);
+    handleHash(pxt.hash.parse(window.location.hash), false);
 }
 
 function initHashchange() {
@@ -6206,7 +6171,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     cloud.init(); // depends on auth.init() and workspace.ts's top level
     cloudsync.loginCheck()
     parseLocalToken();
-    hash = parseHash();
+    hash = pxt.hash.parse(window.location.hash);
     blocklyFieldView.init();
 
     pxt.react.getTilemapProject = () => {
@@ -6395,7 +6360,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 theEditor.setState({ home: false });
             }
 
-            if (hash.cmd && handleHash(hash, true)) {
+            if (hash.command && handleHash(hash, true)) {
                 return Promise.resolve();
             }
             if (pxt.shell.isNoProject()) {
