@@ -1009,7 +1009,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     display(): JSX.Element {
         let flyoutOnly = this.parent.state.editorState && this.parent.state.editorState.hasCategories === false;
-        let showErrorList = pxt.Util.isFeatureEnabled("blocksErrorList");
+        let showErrorList = pxt.Util.isFeatureEnabled("blocksErrorList") && !pxt.shell.isTimeMachineEmbed() && !this.parent.state.debugging;
         return (
             <div className="blocksAndErrorList">
                 <div className="blocksEditorOuter">
