@@ -103,7 +103,7 @@ export class ErrorList extends auth.Component<ErrorListProps, ErrorListState> {
         const errorListContent = !isCollapsed ? groupedErrors.map((e, i) => <ErrorListItem errorGroup={e} index={i} key={`errorlist_error_${i}`}/> ) : undefined;
         const errorCount = errors.length;
 
-        const showErrorHelp = !!getErrorHelp && !!showLoginDialog && pxt.Util.isFeatureEnabled("aiErrorHelp");
+        const showErrorHelp = !!getErrorHelp && !!showLoginDialog && (pxt.appTarget.appTheme.forceEnableAiErrorHelp || pxt.Util.isFeatureEnabled("aiErrorHelp"));
 
         const helpLoader = (
             <div className="error-help-loader" onClick={(e) => e.stopPropagation()}>

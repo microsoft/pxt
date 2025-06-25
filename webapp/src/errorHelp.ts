@@ -118,6 +118,7 @@ async function getHelpAsync(
     const target = pxt.appTarget.nickname || pxt.appTarget.name;
     const cleanedCode = cleanCodeForAI(code);
     const errString = getErrorsAsText(errors);
+    const locale = pxt.Util.userLanguage();
     const requestId = pxt.Util.guidGen();
 
     pxt.tickEvent("errorHelp.requestStart", {
@@ -128,11 +129,12 @@ async function getHelpAsync(
         errorSize: errString.length,
         codeSize: code.length,
         cleanedCodeSize: cleanedCode.length,
+        locale
     });
 
     const startTime = Date.now();
     try {
-        const response = await aiErrorExplainRequest(cleanedCode, errString, lang, target, outputFormat);
+        const response = await aiErrorExplainRequest(cleanedCode, errString, lang, target, outputFormat, locale);
         const endTime = Date.now();
         pxt.tickEvent("errorHelp.requestEnd", {
             requestId,
