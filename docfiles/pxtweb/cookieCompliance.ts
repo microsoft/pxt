@@ -268,6 +268,8 @@ namespace pxt {
         telemetryItem.properties = telemetryItem.properties || {};
         telemetryItem.properties["target"] = pxtConfig.targetId;
         telemetryItem.properties["stage"] = (pxtConfig.relprefix || "/--").replace(/[^a-z]/ig, '')
+        telemetryItem.properties["targetVersion"] = pxtConfig.targetVersion;
+        telemetryItem.properties["pxtVersion"] = pxtConfig.pxtVersion;
 
         if (partnerName) {
             telemetryItem.properties["partner"] = partnerName;
