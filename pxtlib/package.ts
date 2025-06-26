@@ -1348,6 +1348,8 @@ namespace pxt {
                     cfg.dependencies[k] = v
                 }
             })
+
+            cfg.files = cfg.files.filter(fn => fn !== HISTORY_FILE);
             return cfg;
         }
 
@@ -1361,7 +1363,7 @@ namespace pxt {
                     files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
                     for (let f of this.getFiles()) {
                         // already stored
-                        if (f == pxt.CONFIG_NAME) continue;
+                        if (f === pxt.CONFIG_NAME || f === HISTORY_FILE) continue;
                         let str = this.readFile(f)
                         if (str == null)
                             U.userError("referenced file missing: " + f)

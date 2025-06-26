@@ -78,9 +78,18 @@ export function infer(allBlocks: Blockly.Block[], e: Environment, w: Blockly.Wor
                     break;
                 case "pxt_controls_for_of":
                 case "controls_for_of":
-                    const listTp = returnType(e, getInputTargetBlock(e, b, "LIST"));
-                    const elementTp = lookup(e, b, getLoopVariableField(e, b).getField("VAR").getText()).type;
-                    genericLink(listTp, elementTp);
+                    const listArgument = getInputTargetBlock(e, b, "LIST");
+                    if (listArgument && listArgument.type !== "placeholder") {
+                        const listTp = returnType(e, listArgument);
+                        const elementTp = lookup(e, b, getLoopVariableField(e, b).getField("VAR").getText()).type;
+                        genericLink(listTp, elementTp);
+                    }
+                    else {
+                        e.diagnostics.push({
+                            blockId: b.id,
+                            message: lf("The 'for of' block must have a list input")
+                        });
+                    }
                     break;
                 case "variables_set":
                 case "variables_change":

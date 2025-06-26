@@ -640,7 +640,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     display(): JSX.Element {
-        const showErrorList = pxt.appTarget.appTheme.errorList;
+        const showErrorList = pxt.appTarget.appTheme.errorList && !pxt.shell.isTimeMachineEmbed() && !this.parent.state.debugging;
 
         return (
             <div id="monacoEditorArea" className={`monacoEditorArea`} style={{ direction: 'ltr' }}>
@@ -661,7 +661,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                         <ErrorList
                             onSizeChange={this.setErrorListState}
                             errors={this.errors}
-                            startDebugger={this.startDebugger}
+                            startDebugger={!!this.errors.find(a => a.stackFrames?.length) && this.startDebugger}
                             getErrorHelp={this.getErrorHelp}
                             note={
                                 this.parent.state.errorListNote && (
@@ -765,7 +765,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     startDebugger() {
-        pxt.tickEvent('errorList.startDebugger', null, { interactiveConsent: true })
+        pxt.tickEvent('errorList.startDebugger', {lang: this.fileType}, { interactiveConsent: true })
         this.parent.toggleDebugging()
     }
 

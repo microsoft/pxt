@@ -2269,6 +2269,7 @@ declare namespace ts {
         types?: string[];
         /** Paths used to compute primary types search locations */
         typeRoots?: string[];
+        emitBlockCommentsAsJsDocs?: boolean; // pxt: Treat block comments like JSDoc comments (so they can be emitted in generated .d.ts files)
         [option: string]: CompilerOptionsValue | JsonSourceFile | undefined;
     }
     interface TypeAcquisition {
@@ -3144,7 +3145,7 @@ declare namespace ts {
      * that they appear in the source code. The language service depends on this property to locate nodes by position.
      */
     function forEachChild<T>(node: Node, cbNode: (node: Node) => T | undefined, cbNodes?: (nodes: NodeArray<Node>) => T | undefined): T | undefined;
-    function createSourceFile(fileName: string, sourceText: string, languageVersion: ScriptTarget, setParentNodes?: boolean, scriptKind?: ScriptKind): SourceFile;
+    function createSourceFile(fileName: string, sourceText: string, languageVersion: ScriptTarget, setParentNodes?: boolean, scriptKind?: ScriptKind, options?: CompilerOptions): SourceFile;
     function parseIsolatedEntityName(text: string, languageVersion: ScriptTarget): EntityName;
     /**
      * Parse json text into SyntaxTree and return node and parse errors if any

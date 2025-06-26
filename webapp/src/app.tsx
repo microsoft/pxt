@@ -5219,6 +5219,12 @@ export class ProjectView
 
     toggleGreenScreen() {
         const greenScreenOn = !this.state.greenScreen;
+
+        // Switch to default color theme when using greenscreen.
+        if (greenScreenOn && this.themeManager?.getCurrentColorTheme()?.id !== pxt.appTarget.appTheme.defaultColorTheme) {
+            this.setColorThemeById(pxt.appTarget.appTheme.defaultColorTheme, false);
+        }
+
         pxt.tickEvent("app.greenscreen", { on: greenScreenOn ? 1 : 0 });
         this.setState({ greenScreen: greenScreenOn });
     }
@@ -5239,6 +5245,10 @@ export class ProjectView
     setColorThemeById(colorThemeId: string, savePreference: boolean) {
         if (this.themeManager.getCurrentColorTheme()?.id === colorThemeId) {
             return;
+        }
+
+        if (this.state.greenScreen && colorThemeId !== pxt.appTarget.appTheme.defaultColorTheme) {
+            this.toggleGreenScreen(); // turn off green screen if switching to a non-default theme
         }
 
         pxt.tickEvent("app.setcolortheme", { theme: colorThemeId, savePreference: `${savePreference}` });
