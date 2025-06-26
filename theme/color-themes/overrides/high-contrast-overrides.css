@@ -78,3 +78,7 @@
 .pxtToolbox:not(.invertedToolbox) .blocklyTreeRow:not(.blocklyTreeSelected):focus {
     background-color: #404040;
 }
+
+.blocksEditorOuter #blocklyTrashIcon {
+    color: var(--pxt-primary-foreground);
+}
