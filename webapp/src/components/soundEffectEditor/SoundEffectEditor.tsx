@@ -75,7 +75,7 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
             await pxsim.AudioContextManager.playInstructionsAsync(pxt.assets.soundToInstructionBuffer(toPlay, 20, 1), isCancelled, onPull);
         }
         else {
-            await pxsim.codal.music.playSoundExpressionAsync(soundToCodalSound(toPlay).src, isCancelled, onPull, 0.03);
+            await pxsim.codal.music.playSoundExpressionAsync(soundToCodalSound(toPlay).src, isCancelled, onPull);
         }
 
         setCancelToken(null);
