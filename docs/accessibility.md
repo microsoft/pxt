@@ -36,11 +36,17 @@ These shortcuts are available in all areas of the editor:
 
 Press Control+/ on Windows or ⌘+/ on Mac to open or close the keyboard controls help.
 
+![Keyboard controls](/static/images/accessibility/keyboard-controls.png)
+
 If you have enough space you can keep the embedded help open by navigating to the workspace. 
-Navigating between areas
+
+### Navigating between areas
+
 Tab and Shift+Tab can be used to navigate the whole page.
 
 Alternatively, use Ctrl+B followed by the number of the area you want to jump to.
+
+![Navigating areas](/static/images/accessibility/area-navigation.png)
 
 | Action | Windows | Mac |
 |-|-|-|
@@ -81,7 +87,7 @@ The following shortcuts are also available when you are already in the workspace
 
 Blocks added from the Toolbox are placed on the Workspace in move mode:
 
-  
+![Move and dragging blocks](/static/images/accessibility/move-drag-blocks.png)
 
 Press Enter to confirm the position. Or use arrow keys to move the block to another position and then Enter to confirm. 
 
@@ -91,13 +97,15 @@ Hold Ctrl and arrow keys to drag a block around the workspace (to any position n
 
 The search box in the Toolbox can be useful for keyboard users. 
 
-  
+![Toolbox search box](/static/images/accessibility/search-box.png)
 
 After pressing T (or Ctrl+B then 3), just start typing and the text will appear in the search box. Matching search results are shown immediately. Press Enter to navigate to the search results. 
 
 ## Pop-up help messages
 
 Some actions display a helpful pop-up message at the bottom of the workspace.
+
+![Pop-up help message](/static/images/accessibility/popup-help-message.png)
 
 ## Tab trapping
 
@@ -183,11 +191,27 @@ Voice Over is the built-in screen reader provided with the Mac. To start Voice O
 ## Zoom and responsive layout
 
 MakeCode editors feature responsive, adaptive layouts that work at high levels of zoom, remaining usable at zoom levels of at least 200% and beyond . Different areas of the interface will automatically reflow and collapse to allow continued access to all areas. 
-   
+
+![Zoom size 1](/static/images/accessibility/zoom1.png)
+_Zoom level 1_
+
+![Zoom size 2](/static/images/accessibility/zoom2.png)
+_Zoom level 2_
+
+![Zoom size 3](/static/images/accessibility/zoom3.png)
+_Zoom level 3_
+
+
 ## High Contrast
 
 The high contrast helps people to locate and distinguish between the different visual elements in the MakeCode editor. This is enabled by each MakeCode target with its own use of color and contrast. So, a high contrast view and dark view are not always available in every instance of a MakeCode editor (partner editions).
+
 Where they are available, these modes are available even when the operating system configuration hasn’t enabled it. If available, in MakeCode, Tab to the Settings menu and choose Theme then choose from the available options.
+
+![Settings menu](/static/images/accessibility/settings-menu.png)
+
+![Theme choices](/static/images/accessibility/theme-choices.png)
+
     
 ## JavaScript editor
 
