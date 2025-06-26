@@ -2853,7 +2853,11 @@ export class ProjectView
     }
 
     private editorLoaded() {
-        pxt.tickEvent('app.editor', { projectHeaderId: this.state.header?.id });
+        pxt.tickEvent('app.editor', {
+            projectHeaderId: this.state.header?.id,
+            fileType: this.editorFile?.getExtension(),
+            accessibleBlocks: this.getData<boolean>(auth.ACCESSIBLE_BLOCKS) ? "true" : "false"
+        });
     }
 
     unloadProjectAsync(home?: boolean) {
@@ -5229,12 +5233,12 @@ export class ProjectView
         this.setState({ greenScreen: greenScreenOn });
     }
 
-    async toggleAccessibleBlocks() {
+    async toggleAccessibleBlocks(eventSource: string) {
         const nextEnabled = !this.getData<boolean>(auth.ACCESSIBLE_BLOCKS);
         if (nextEnabled) {
             pxt.storage.setLocal("onboardAccessibleBlocks", "1")
         }
-        await core.toggleAccessibleBlocks()
+        await core.toggleAccessibleBlocks(eventSource)
         this.reloadEditor();
     }
 
@@ -5324,10 +5328,12 @@ export class ProjectView
     ///////////////////////////////////////////////////////////
 
     hideNavigateRegions() {
+        pxt.tickEvent("app.hideNavigateRegions");
         this.setState({ navigateRegions: false });
     }
 
     showNavigateRegions() {
+        pxt.tickEvent("app.showNavigateRegions");
         const dialog = Array.from(document.querySelectorAll("[role=dialog]")).find(dialog => (dialog as any).checkVisibility());
         if (!dialog) {
             this.setState(state => state.home ? state : { navigateRegions: true })
