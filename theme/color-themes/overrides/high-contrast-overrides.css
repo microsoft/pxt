@@ -9,6 +9,10 @@
     z-index: 1;
 }
 
+div.field .ui.toggle.checkbox input:checked~label:before {
+    background-color: var(--pxt-colors-purple-background) !important;
+}
+
 /*
  * Selection highlights
  */
