@@ -1137,7 +1137,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             } as pxt.tour.BubbleStep;
 
             if (step.elementId && validBlockIds.includes(step.elementId)) {
-                tourStep.targetQuery = `g[data-id="${step.elementId}"]`;
+                tourStep.targetQuery = `g[data-id="${step.elementId}"]:not(.pxtFlyoutHidden)`;
                 tourStep.location = pxt.tour.BubbleLocation.Right;
                 tourStep.onStepBegin = () => this.editor.centerOnBlock(step.elementId, true);
             } else {
