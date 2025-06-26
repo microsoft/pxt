@@ -152,7 +152,7 @@
 }
 
 .ui.modal .ui.button.neutral:focus {
-    outline: 1px solid @black;
+    outline: 1px solid var(--pxt-target-foreground1);
     outline-offset: -7px;
 }
 
