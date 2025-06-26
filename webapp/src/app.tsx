@@ -2855,8 +2855,7 @@ export class ProjectView
     private editorLoaded() {
         pxt.tickEvent('app.editor', {
             projectHeaderId: this.state.header?.id,
-            fileType: this.editorFile?.getExtension(),
-            accessibleBlocks: this.getData<boolean>(auth.ACCESSIBLE_BLOCKS) ? "true" : "false"
+            fileType: this.editorFile?.getExtension()
         });
     }
 
@@ -6393,6 +6392,12 @@ document.addEventListener("DOMContentLoaded", async () => {
             initHashchange();
             socketbridge.tryInit();
             electron.initElectron(theEditor);
+            pxt.tickEvent(
+                "accessibilty.accessibleBlocksEnabledForSession",
+                {
+                    enabled: data.getData<boolean>(auth.ACCESSIBLE_BLOCKS) ? "true" : "false",
+                }
+            );
         })
         .then(() => {
             const showHome = theEditor.shouldShowHomeScreen();
