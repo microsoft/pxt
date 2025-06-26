@@ -514,7 +514,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private initBlocklyToolbox() {
-        if (pxt.shell.isTimeMachineEmbed()) {
+        if (pxt.shell.isReadOnly()) {
             return;
         }
 
