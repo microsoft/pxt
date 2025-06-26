@@ -78,6 +78,10 @@ export function getActionShortcutsAsKeys(
     return isMacShortcut === isMacPlatform;
   });
   currentPlatform = currentPlatform.length === 0 ? named : currentPlatform;
+  // Prefer simpler shortcuts. This promotes Ctrl+Y for redo.
+  currentPlatform.sort((a, b) => {
+    return a.length - b.length;
+  })
 
   // If there are modifiers return only one shortcut on the assumption they are
   // intended for different platforms. Otherwise assume they are alternatives.

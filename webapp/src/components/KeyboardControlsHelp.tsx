@@ -1,14 +1,16 @@
 import * as React from "react";
 import { getActionShortcut, getActionShortcutsAsKeys, ShortcutNames } from "../shortcut_formatting";
 
+const isMacPlatform = pxt.BrowserUtils.isMac();
+
 const KeyboardControlsHelp = () => {
     const ref = React.useRef<HTMLElement>(null);
     React.useEffect(() => {
         ref.current?.focus()
     }, []);
     const ctrl = lf("Ctrl");
-    const cmd = pxt.BrowserUtils.isMac() ? "⌘" : ctrl;
-    const optionOrCtrl = pxt.BrowserUtils.isMac() ? "⌥" : ctrl;
+    const cmd = isMacPlatform ? "⌘" : ctrl;
+    const optionOrCtrl = isMacPlatform ? "⌥" : ctrl;
     const contextMenuRow = <Row name={lf("Open context menu")} shortcuts={[ShortcutNames.MENU]} />
     const cleanUpRow = <Row name={lf("Workspace: Format code")} shortcuts={[ShortcutNames.CLEAN_UP]} />
     const orAsJoiner = lf("or")
@@ -80,7 +82,7 @@ const KeyboardControlsHelp = () => {
 }
 
 const Shortcut = ({ keys }: { keys: string[] }) => {
-    const joiner = pxt.BrowserUtils.isMac() ? " " : " + "
+    const joiner = isMacPlatform ? " " : " + "
     return (
         <span className="shortcut">
             {keys.reduce((acc, key) => {
