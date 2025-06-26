@@ -235,7 +235,7 @@ export class CommentIcon extends Blockly.icons.Icon implements Blockly.IHasBubbl
     // to use setBubbleLocation and getBubbleLocation instead
     getBubbleLocation(): Blockly.utils.Coordinate | undefined {
         if (this.bubbleIsVisible()) {
-            return this.textInputBubble.getRelativeToSurfaceXY();
+            return this.textInputBubble?.getRelativeToSurfaceXY();
         }
         return undefined
     }
