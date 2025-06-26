@@ -821,7 +821,7 @@ declare namespace pxt.editor {
         extensionsVisible?: boolean;
         isMultiplayerGame?: boolean; // Arcade: Does the current project contain multiplayer blocks?
         activeTourConfig?: pxt.tour.TourConfig;
-        navigateRegions?: boolean;
+        areaMenuOpen?: boolean;
         feedback?: FeedbackState;
         themePickerOpen?: boolean;
         errorListNote?: string;

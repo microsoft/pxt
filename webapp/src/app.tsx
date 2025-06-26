@@ -5326,12 +5326,12 @@ export class ProjectView
     toggleAreaMenu() {
         const dialog = Array.from(document.querySelectorAll("[role=dialog]")).find(dialog => (dialog as any).checkVisibility());
         this.setState((state) => {
-            const { navigateRegions } = state;
+            const { areaMenuOpen } = state;
             if (state.home || dialog) {
                 // Skip on home page or if a dialog is open.
                 return state;
             }
-            return { navigateRegions: !navigateRegions }
+            return { areaMenuOpen: !areaMenuOpen }
         });
     }
 
@@ -5594,7 +5594,7 @@ export class ProjectView
                 {hideMenuBar ? <div id="editorlogo"><a className="poweredbylogo"></a></div> : undefined}
                 {lightbox ? <sui.Dimmer isOpen={true} active={lightbox} portalClassName={'tutorial'} className={'ui modal'}
                     shouldFocusAfterRender={false} closable={true} onClose={this.hideLightbox} /> : undefined}
-                {this.state.navigateRegions && <AreaMenuOverlay parent={this}/>}
+                {this.state.areaMenuOpen && <AreaMenuOverlay parent={this}/>}
                 {this.state.activeTourConfig && <Tour config={this.state.activeTourConfig} onClose={this.closeTour} />}
                 {this.state.themePickerOpen && <ThemePickerModal themes={this.themeManager.getAllColorThemes()} onThemeClicked={theme => this.setColorThemeById(theme?.id, true)} onClose={this.hideThemePicker} />}
             </div>

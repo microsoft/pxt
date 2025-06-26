@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import * as ReactDOM from "react-dom";
 import { Button, ButtonProps } from "../../../react-common/components/controls/Button";
 import { FocusTrap } from "../../../react-common/components/controls/FocusTrap";
@@ -192,11 +192,18 @@ const areas: Area[] = [
 
 export const AreaMenuOverlay = ({ parent }: AreaMenuOverlapProps) => {
     const previouslyFocused = useRef<Element>(document.activeElement);
+    const movedFocusToAreaRef = useRef(false);
+
     const getRects = (): Map<AreaId, DOMRect | undefined> => (
         new Map(areas.map(area => [area.id, area.getBounds(parent)]))
     );
     const [areaRects, setAreaRects] = useState(getRects());
 
+    const moveFocusToArea = useCallback((area: Area) => {
+        area.focus(parent);
+        movedFocusToAreaRef.current = true;
+        parent.toggleAreaMenu();
+    }, [parent]);
     useEffect(() => {
         if (parent.state.fullscreen) {
             parent.setSimulatorFullScreen(false);
@@ -206,8 +213,7 @@ export const AreaMenuOverlay = ({ parent }: AreaMenuOverlapProps) => {
             const area = areas.find(area => area.shortcutKey === e.key);
             if (area) {
                 e.preventDefault();
-                area.focus(parent);
-                parent.toggleAreaMenu();
+                moveFocusToArea(area);
             }
         }
         document.addEventListener("keydown", listener)
@@ -220,13 +226,15 @@ export const AreaMenuOverlay = ({ parent }: AreaMenuOverlapProps) => {
         return () => {
             observer.disconnect()
             document.removeEventListener("keydown", listener)
+
+            // Restore focus if we didn't already move it.
+            if (previouslyFocused.current && !movedFocusToAreaRef.current) {
+                (previouslyFocused.current as HTMLElement).focus();
+            }
         }
     }, [])
 
     const handleEscape = () => {
-        if (previouslyFocused.current) {
-            (previouslyFocused.current as HTMLElement).focus()
-        }
         parent.toggleAreaMenu();
     }
 
@@ -238,7 +246,7 @@ export const AreaMenuOverlay = ({ parent }: AreaMenuOverlapProps) => {
 
     return ReactDOM.createPortal(
         <FocusTrap dontRestoreFocus onEscape={handleEscape}>
-            <div className="area-menu-container">
+            <div className="area-menu-container" >
                 {areas.map(area => {
                     const rect = areaRects.get(area.id);
                     return rect ? (<AreaButton
@@ -247,8 +255,7 @@ export const AreaMenuOverlay = ({ parent }: AreaMenuOverlapProps) => {
                         shortcutKey={area.shortcutKey}
                         bounds={rect}
                         onClick={() => {
-                            area.focus(parent);
-                            parent.toggleAreaMenu();
+                            moveFocusToArea(area);
                         }}
                         ariaLabel={area.ariaLabel}
                         className={area.getClassName?.(parent)}
