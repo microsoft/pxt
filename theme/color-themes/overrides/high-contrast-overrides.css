@@ -9,8 +9,21 @@
     z-index: 1;
 }
 
+/* 
+ * Checkbox styles
+ * In HC the neutral and primary colors are the same, so we need to differentiate with
+ * a different background color when checked.
+ */
+.common-checkbox.toggle input:checked~label:before,
 div.field .ui.toggle.checkbox input:checked~label:before {
     background-color: var(--pxt-colors-purple-background) !important;
+}
+
+/*
+ * Make toggle "handle" more visible for HC
+ */
+.common-checkbox.toggle label:after {
+    background-color: var(--pxt-neutral-foreground1) !important;
 }
 
 /*
