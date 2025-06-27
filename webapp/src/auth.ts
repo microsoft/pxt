@@ -243,8 +243,18 @@ export async function setHighContrastPrefAsync(highContrast: boolean): Promise<v
     }
 }
 
-export async function setAccessibleBlocksPrefAsync(accessibleBlocks: boolean): Promise<void> {
+export async function setAccessibleBlocksPrefAsync(accessibleBlocks: boolean, eventSource: string): Promise<void> {
     const cli = await clientAsync();
+
+    pxt.tickEvent(
+        "auth.setAccessibleBlocks",
+        {
+            enabling: accessibleBlocks ? "true" : "false",
+            eventSource: eventSource,
+            local: !cli ? "true" : "false"
+        }
+    );
+
     if (cli) {
         await cli.patchUserPreferencesAsync({
             op: 'replace',

@@ -266,8 +266,7 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
     }
 
     toggleAccessibleBlocks() {
-        pxt.tickEvent("home.toggleaccessibleblocks", undefined, { interactiveConsent: true });
-        this.props.parent.toggleAccessibleBlocks();
+        this.props.parent.toggleAccessibleBlocks("homesettings");
     }
 
     showResetDialog() {

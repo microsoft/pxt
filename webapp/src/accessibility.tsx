@@ -63,16 +63,7 @@ export class EditorAccessibilityMenu extends data.Component<EditorAccessibilityM
     }
 
     toggleAccessibleBlocks() {
-        pxt.tickEvent(
-            "accmenu.editor.toggleAccessibleBlocks",
-            {
-                enabling: !this.getData<boolean>(auth.ACCESSIBLE_BLOCKS) ? "true" : "false"
-            },
-            {
-                interactiveConsent: true,
-            }
-        );
-        this.props.parent.toggleAccessibleBlocks();
+        this.props.parent.toggleAccessibleBlocks("accmenu");
     }
 
     UNSAFE_componentWillReceiveProps(nextProps: EditorAccessibilityMenuProps) {
