@@ -1,4 +1,5 @@
 import * as Blockly from "blockly";
+import { FieldImageNoText } from "../fields/field_imagenotext";
 import { ConstantProvider } from "../plugins/renderer/constants";
 
 export function monkeyPatchBlockSvg() {
@@ -13,7 +14,7 @@ export function monkeyPatchBlockSvg() {
 
             const image = ConstantProvider.EXPAND_IMAGE_DATAURI;
             if (image) {
-                input.appendField(new Blockly.FieldImage(image, 24, 24, "", () => {
+                input.appendField(new FieldImageNoText(image, 24, 24, "", () => {
                     this.setCollapsed(false)
                 }, false));
             }
