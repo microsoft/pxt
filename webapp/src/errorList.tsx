@@ -103,7 +103,13 @@ export class ErrorList extends auth.Component<ErrorListProps, ErrorListState> {
         const errorListContent = !isCollapsed ? groupedErrors.map((e, i) => <ErrorListItem errorGroup={e} index={i} key={`errorlist_error_${i}`}/> ) : undefined;
         const errorCount = errors.length;
 
-        const showErrorHelp = !!getErrorHelp && !!showLoginDialog && (pxt.appTarget.appTheme.forceEnableAiErrorHelp || pxt.Util.isFeatureEnabled("aiErrorHelp"));
+        const showDebuggerSuggestion = startDebugger && !pxt.shell.isReadOnly();
+
+        const showErrorHelp =
+            !!getErrorHelp &&
+            !!showLoginDialog &&
+            !pxt.shell.isReadOnly() &&
+            (pxt.appTarget.appTheme.forceEnableAiErrorHelp || pxt.Util.isFeatureEnabled("aiErrorHelp"));
 
         const helpLoader = (
             <div className="error-help-loader" onClick={(e) => e.stopPropagation()}>
@@ -133,7 +139,7 @@ export class ErrorList extends auth.Component<ErrorListProps, ErrorListState> {
                             {isLoadingHelp ? helpLoader : helpButton}
                         </div>
                     )}
-                    {startDebugger && (
+                    {showDebuggerSuggestion && (
                         <Button id="debug-button"
                             onClick={this.props.startDebugger}
                             title={lf("Debug this project")}

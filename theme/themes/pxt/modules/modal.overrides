@@ -151,6 +151,11 @@
     outline-offset: -7px;
 }
 
+.ui.modal .ui.button.neutral:focus {
+    outline: 1px solid var(--pxt-neutral-foreground2);
+    outline-offset: -7px;
+}
+
 .ui.modal .ui.button.approve.secondary:focus {
     background: rgba(0,0,0,0.75);
 }
