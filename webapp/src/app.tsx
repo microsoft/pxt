@@ -80,7 +80,7 @@ import Util = pxt.Util;
 import { HintManager } from "./hinttooltip";
 import { mergeProjectCode, appendTemporaryAssets } from "./mergeProjects";
 import { Tour } from "./components/onboarding/Tour";
-import { NavigateRegionsOverlay } from "./components/NavigateRegionsOverlay";
+import { AreaMenuOverlay } from "./components/AreaMenuOverlay";
 import { parseTourStepsAsync } from "./onboarding";
 import { initGitHubDb } from "./idbworkspace";
 import { BlockDefinition, CategoryNameID } from "./toolbox";
@@ -334,8 +334,8 @@ export class ProjectView
                 this.setSimulatorFullScreen(false);
                 return;
             }
-            case "navigateregions" : {
-                this.showNavigateRegions();
+            case "toggleareamenu" : {
+                this.toggleAreaMenu();
                 return
             }
             case "togglekeyboardcontrolshelp": {
@@ -5320,18 +5320,19 @@ export class ProjectView
     }
 
     ///////////////////////////////////////////////////////////
-    ////////////             Navigate regions     /////////////
+    ////////////            Area menu             /////////////
     ///////////////////////////////////////////////////////////
 
-    hideNavigateRegions() {
-        this.setState({ navigateRegions: false });
-    }
-
-    showNavigateRegions() {
+    toggleAreaMenu() {
         const dialog = Array.from(document.querySelectorAll("[role=dialog]")).find(dialog => (dialog as any).checkVisibility());
-        if (!dialog) {
-            this.setState(state => state.home ? state : { navigateRegions: true })
-        }
+        this.setState((state) => {
+            const { areaMenuOpen } = state;
+            if (state.home || dialog) {
+                // Skip on home page or if a dialog is open.
+                return state;
+            }
+            return { areaMenuOpen: !areaMenuOpen }
+        });
     }
 
     ///////////////////////////////////////////////////////////
@@ -5593,7 +5594,7 @@ export class ProjectView
                 {hideMenuBar ? <div id="editorlogo"><a className="poweredbylogo"></a></div> : undefined}
                 {lightbox ? <sui.Dimmer isOpen={true} active={lightbox} portalClassName={'tutorial'} className={'ui modal'}
                     shouldFocusAfterRender={false} closable={true} onClose={this.hideLightbox} /> : undefined}
-                {this.state.navigateRegions && <NavigateRegionsOverlay parent={this}/>}
+                {this.state.areaMenuOpen && <AreaMenuOverlay parent={this}/>}
                 {this.state.activeTourConfig && <Tour config={this.state.activeTourConfig} onClose={this.closeTour} />}
                 {this.state.themePickerOpen && <ThemePickerModal themes={this.themeManager.getAllColorThemes()} onThemeClicked={theme => this.setColorThemeById(theme?.id, true)} onClose={this.hideThemePicker} />}
             </div>
