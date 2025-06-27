@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import * as Blockly from "blockly";
 import * as ReactDOM from "react-dom";
 import { Button, ButtonProps } from "../../../react-common/components/controls/Button";
 import { FocusTrap } from "../../../react-common/components/controls/FocusTrap";
@@ -200,6 +201,7 @@ export const AreaMenuOverlay = ({ parent }: AreaMenuOverlapProps) => {
     const [areaRects, setAreaRects] = useState(getRects());
 
     const moveFocusToArea = useCallback((area: Area) => {
+        Blockly.hideChaff();
         area.focus(parent);
         movedFocusToAreaRef.current = true;
         parent.toggleAreaMenu();
