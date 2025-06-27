@@ -163,6 +163,7 @@ export class TextInputBubble extends Bubble {
         // Don't let the pointerdown event get to the workspace.
         browserEvents.conditionalBind(textArea, 'pointerdown', this, (e: Event) => {
             e.stopPropagation();
+            Blockly.Touch.clearTouchIdentifier();
         });
 
         browserEvents.conditionalBind(textArea, 'change', this, this.onTextChange);
