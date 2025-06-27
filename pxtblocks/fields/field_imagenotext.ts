@@ -16,4 +16,12 @@ export class FieldImageNoText extends Blockly.FieldImage implements FieldCustom 
     getFieldDescription(): string {
         return undefined;
     }
+
+    protected override showEditor_() {
+        super.showEditor_();
+        const sourceBlock = this.getSourceBlock();
+        if (sourceBlock instanceof Blockly.BlockSvg) {
+            Blockly.getFocusManager().focusNode(this.getSourceBlock() as Blockly.BlockSvg);
+        }
+    }
 }
