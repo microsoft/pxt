@@ -6,6 +6,7 @@ The JavaScript and Python editors are accessible using they keyboard and are acc
 The MakeCode block editor is accessible with keyboard and assistive technologies when "Keyboard Controls" are turned on, but is not yet accessible to screen readers (screen reader compatibility is under development).
 
 Other MakeCode block editors including Arcade are not yet accessible, accessible coding is done using just the JavaScript or Python editors in these cases.
+
 Here are the accessible features and how to enable and use them.
 
 ## Keyboard Navigation
@@ -23,7 +24,7 @@ The micro:bit MakeCode block editor allows you to use keyboard controls to creat
 
 To turn the keyboard controls off, use `Tab` to navigate to the **Settings** menu, you will see a check next to **Keyboard Controls** when it is enabled, select **Keyboard Controls** to uncheck and disable keyboard controls. 
 
-![Settings menu selec keyboard controls](/static/images/accessibility/settings-menu-keyboard.png)
+![Settings menu select keyboard controls](/static/images/accessibility/settings-menu-keyboard.png)
 
 These shortcuts are available in all areas of the editor:
 
@@ -211,7 +212,7 @@ Where they are available, these modes are available even when the operating syst
     
 ## JavaScript and Python editors
 
-Read more about accessibility for the JavaScript or pythin editor (keyboard navigation, screen readers and high contrast) in the [Monaco Editor Accessibility Guide](https://github.com/microsoft/monaco-editor/wiki/Monaco-Editor-Accessibility-Guide).
+Read more about accessibility for the JavaScript or Python editor (keyboard navigation, screen readers and high contrast) in the [Monaco Editor Accessibility Guide](https://github.com/microsoft/monaco-editor/wiki/Monaco-Editor-Accessibility-Guide).
 
 ## Accessibility guidance for specific editors
 
