@@ -23,7 +23,7 @@ The micro:bit MakeCode block editor allows you to use keyboard controls to creat
 
 To turn the keyboard controls off, use `Tab` to navigate to the **Settings** menu, you will see a check next to **Keyboard Controls** when it is enabled, select **Keyboard Controls** to uncheck and disable keyboard controls. 
 
-![Settings menu](/static/images/accessibility/settings-menu.png)
+![Settings menu selec keyboard controls](/static/images/accessibility/settings-menu-keyboard.png)
 
 These shortcuts are available in all areas of the editor:
 
@@ -205,6 +205,8 @@ The high contrast helps people to locate and distinguish between the different v
 
 Where they are available, these modes are available even when the operating system configuration hasn’t enabled it. If available, in MakeCode, `Tab` to the **Settings** menu and choose **Theme** then choose from the available options.
 
+![Settings menu choosing theme](/static/images/accessibility/settings-menu-theme.png)
+
 ![Theme choices](/static/images/accessibility/theme-choices.png)
     
 ## JavaScript and Python editors
@@ -213,7 +215,8 @@ Read more about accessibility for the JavaScript or pythin editor (keyboard navi
 
 ## Accessibility guidance for specific editors
 
-Some MakeCode editors have more detailed accessibility information and guidance specific to each platform. 
+Some MakeCode editors have more detailed accessibility information and guidance specific to its own platform. 
+
 
 * Micro:bit MakeCode accessibility [landing page launching 21 July on microbit.org including onboarding videos for keyboard controls, printable keyboard controls etc]
 * Micro:bit accessibility [landing page to be update by 21 July] 
