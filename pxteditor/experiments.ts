@@ -175,6 +175,7 @@ export function all(): Experiment[] {
             id: "forceEnableAiErrorHelp",
             name: lf("AI Error Explainer"),
             description: lf("Get AI's help explaining errors in your code"),
+            feedbackUrl: "https://github.com/microsoft/pxt/issues/10694"
         },
     ];
 
