@@ -98,7 +98,7 @@ export class DocsMenu extends data.PureComponent<DocsMenuProps & { hasMainBlocks
         const accessibleBlocksEnabled = data.getData<boolean>(auth.ACCESSIBLE_BLOCKS);
         return <sui.DropdownMenu role="menuitem" icon="help circle large"
             className="item mobile hide help-dropdown-menuitem" textClass={"landscape only"} title={lf("Help")} >
-            {this.props.hasMainBlocksFile && showKeyboardControls() && accessibleBlocksEnabled && getKeyboardNavHelpItem(parent)}
+            {this.props.hasMainBlocksFile && parent.isBlocksEditor() && showKeyboardControls() && accessibleBlocksEnabled && getKeyboardNavHelpItem(parent)}
             {targetTheme.tours?.editor && getTourItem(parent)}
             {renderDocItems(parent, targetTheme.docMenu)}
             {getDocsLanguageItem(this.props.editor, parent)}
@@ -378,7 +378,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             <div className="ui divider"></div>
             {targetTheme.selectLanguage ? <sui.Item icon='xicon globe' role="menuitem" text={lf("Language")} onClick={this.showLanguagePicker} /> : undefined}
             <sui.Item role="menuitem" icon="paint brush" text={lf("Theme")} onClick={this.showThemePicker} />
-            {showKeyboardControls() &&
+            {this.props.parent.isBlocksEditor() && showKeyboardControls() &&
                 <CheckboxMenuItem
                     isChecked={accessibleBlocks}
                     label={lf("Keyboard Controls")}

@@ -516,6 +516,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private initBlocklyToolbox() {
+        if (pxt.shell.isReadOnly()) {
+            return;
+        }
+
         // Remove unwanted additional tab stop from the editor.
         // We add tabindex to the tree wrapping the toolbox categories (excluding search) instead.
         const toolboxDiv = this.getToolboxDiv();
@@ -600,7 +604,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const oldWorkspaceSvgOnTreeBlur = Blockly.WorkspaceSvg.prototype.onTreeBlur;
         (Blockly.WorkspaceSvg as any).prototype.onTreeBlur = function (nextTree: Blockly.IFocusableNode | null): void {
             // Keep the flyout open whe a variable is created.
-            if ((that.editor.getFlyout() as pxtblockly.CachingFlyout).forceOpen) {
+            if ((that.editor.getFlyout() as pxtblockly.CachingFlyout)?.forceOpen) {
                 that.setFlyoutForceOpen(false);
                 return;
             }
@@ -1030,7 +1034,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     display(): JSX.Element {
         let flyoutOnly = this.parent.state.editorState && this.parent.state.editorState.hasCategories === false;
-        let showErrorList = pxt.Util.isFeatureEnabled("blocksErrorList");
+        let showErrorList = pxt.Util.isFeatureEnabled("blocksErrorList") && !pxt.shell.isTimeMachineEmbed() && !this.parent.state.debugging;
         return (
             <div className="blocksAndErrorList">
                 <div className="blocksEditorOuter">
@@ -1158,7 +1162,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             } as pxt.tour.BubbleStep;
 
             if (step.elementId && validBlockIds.includes(step.elementId)) {
-                tourStep.targetQuery = `g[data-id="${step.elementId}"]`;
+                tourStep.targetQuery = `g[data-id="${step.elementId}"]:not(.pxtFlyoutHidden)`;
                 tourStep.location = pxt.tour.BubbleLocation.Right;
                 tourStep.onStepBegin = () => this.editor.centerOnBlock(step.elementId, true);
             } else {

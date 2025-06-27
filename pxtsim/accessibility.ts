@@ -19,7 +19,7 @@ namespace pxsim.accessibility {
             return "togglekeyboardcontrolshelp";
         } else if (e.key === "b" && meta) {
             e.preventDefault();
-            return "navigateregions"
+            return "toggleareamenu"
         }
         return null
     }
