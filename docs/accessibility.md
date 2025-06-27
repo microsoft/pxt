@@ -215,8 +215,4 @@ Read more about accessibility for the JavaScript or pythin editor (keyboard navi
 
 ## Accessibility guidance for specific editors
 
-Some MakeCode editors have more detailed accessibility information and guidance specific to its own platform. 
-
-
-* Micro:bit MakeCode accessibility [landing page launching 21 July on microbit.org including onboarding videos for keyboard controls, printable keyboard controls etc]
-* Micro:bit accessibility [landing page to be update by 21 July] 
+Some MakeCode editors have more detailed accessibility information and guidance specific to its own platform.
