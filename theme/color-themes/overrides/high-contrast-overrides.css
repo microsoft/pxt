@@ -10,6 +10,18 @@
 }
 
 /* 
+ * Ideally this would be set in semantic-ui-overrides, but it is visible during loading, and there is a brief period
+ * where the theme has not been applied yet, during which time anything in semantic-ui-overrides utilizes the base theme and cannot be overridden.
+ * Meanwhile, it is important for the light-theme dimmer to have a light-blue background color consistent with pre-theme days,
+ * which is the default specified in dimmer.variables. So the "default" dimmer needs to be unstyled in semantic-ui-overrides, and any theme styling
+ * must be done in these overrides. This way, the color will remain light-blue even before the color theme is applied, but we can customize it here so non-light themes
+ * can look a little better once they've loaded.
+ */
+.ui.dimmer {
+    background-color: var(--pxt-neutral-alpha50);
+}
+
+/* 
  * Checkbox styles
  * In HC the neutral and primary colors are the same, so we need to differentiate with
  * a different background color when checked.
