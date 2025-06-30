@@ -3904,7 +3904,7 @@ export class ProjectView
         const autoRun = this.state.autoRun && !clickTrigger; // if user pressed stop, don't restart
 
         // Only fire setState if something changed
-        const setStatePromise = this.state.simState !== SimState.Stopped || !!this.state.autoRun !== !!autoRun ? 
+        const setStatePromise = this.state.simState !== SimState.Stopped || !!this.state.autoRun !== !!autoRun ?
             this.setStateAsync({ simState: SimState.Stopped, autoRun: autoRun }) :
             Promise.resolve();
 
