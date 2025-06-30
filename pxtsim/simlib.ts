@@ -933,7 +933,7 @@ namespace pxsim {
             channel.generator = distortion;
             channel.generator.connect(channel.gain);
             source.connect(distortion);
-            channel.gain.gain.value = volume;
+            channel.gain.gain.value = volume * 0.1;
 
             return audioElement;
         }
