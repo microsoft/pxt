@@ -13,6 +13,7 @@ import * as projects from "./projects";
 import * as tutorial from "./tutorial";
 
 import ISettingsProps = pxt.editor.ISettingsProps;
+import { ThemeManager } from "../../react-common/components/theming/themeManager";
 
 type HeaderBarView = "home" | "editor" | "tutorial" | "tutorial-tab" | "debugging" | "sandbox" | "time-machine";
 const LONGPRESS_DURATION = 750;
@@ -240,7 +241,7 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
 
     renderCore() {
         const targetTheme = pxt.appTarget.appTheme;
-        const highContrast = this.getData<boolean>(auth.HIGHCONTRAST);
+        const highContrast = ThemeManager.isCurrentThemeHighContrast();
         const view = this.getView();
 
         const { home, header, tutorialOptions } = this.props.parent.state;

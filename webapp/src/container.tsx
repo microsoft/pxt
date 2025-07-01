@@ -16,6 +16,7 @@ import SimState = pxt.editor.SimState;
 import { sendUpdateFeedbackTheme } from "../../react-common/components/controls/Feedback/FeedbackEventListener";
 import KeyboardControlsHelp from "./components/KeyboardControlsHelp";
 import { MenuDropdown, MenuItem } from "../../react-common/components/controls/MenuDropdown";
+import { ThemeManager } from "../../react-common/components/theming/themeManager";
 
 // common menu items -- do not remove
 // lf("About")
@@ -332,7 +333,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
 
     renderCore() {
         const hasIdentity = pxt.auth.hasIdentity();
-        const highContrast = this.getData<boolean>(auth.HIGHCONTRAST)
+        const highContrast = ThemeManager.isCurrentThemeHighContrast();
         const { greenScreen } = this.state;
         const accessibleBlocks = this.getData<boolean>(auth.ACCESSIBLE_BLOCKS);
         const targetTheme = pxt.appTarget.appTheme;

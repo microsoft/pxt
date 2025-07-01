@@ -171,13 +171,6 @@ export class ProjectView
 
     private themeManager: ThemeManager;
 
-    private highContrastSubscriber: data.DataSubscriber = {
-        subscriptions: [],
-        onDataChanged: () => {
-            this.onHighContrastChanged();
-        }
-    };
-
     private cloudStatusSubscriber: data.DataSubscriber = {
         subscriptions: [],
         onDataChanged: (path) => this.onCloudStatusChanged(path)
@@ -197,9 +190,7 @@ export class ProjectView
         this.reload = false; //set to true in case of reset of the project where we are going to reload the page.
         this.settings = JSON.parse(pxt.storage.getLocal("editorSettings") || "{}")
         const shouldShowHomeScreen = this.shouldShowHomeScreen();
-        const isHighContrast = /hc=(\w+)/.test(window.location.href) || (window.matchMedia?.('(forced-colors: active)')?.matches);
         this.themeManager = ThemeManager.getInstance(document);
-        if (isHighContrast) core.setHighContrast(true);
 
         const simcfg = pxt.appTarget.simulator;
         this.state = {
@@ -243,11 +234,16 @@ export class ProjectView
         this.initSimulatorMessageHandlers();
         this.showThemePicker = this.showThemePicker.bind(this);
         this.hideThemePicker = this.hideThemePicker.bind(this);
+        this.onThemeChanged = this.onThemeChanged.bind(this);
         this.setColorThemeById = this.setColorThemeById.bind(this);
         this.showLoginDialog = this.showLoginDialog.bind(this);
 
         // add user hint IDs and callback to hint manager
         if (pxt.BrowserUtils.useOldTutorialLayout()) this.hintManager.addHint(ProjectView.tutorialCardId, this.tutorialCardHintCallback.bind(this));
+
+        this.themeManager.subscribe("mainWebapp", this.onThemeChanged);
+        const isHighContrast = /hc=(\w+)/.test(window.location.href) || (window.matchMedia?.('(forced-colors: active)')?.matches);
+        if (isHighContrast) this.setColorThemeById(pxt.appTarget.appTheme.highContrastColorTheme, true);
     }
 
     private autoRunOnStart(): boolean {
@@ -1195,15 +1191,14 @@ export class ProjectView
         this.loadBlocklyAsync();
 
         // subscribe to user preference changes (for simulator or non-render subscriptions)
-        data.subscribe(this.highContrastSubscriber, auth.HIGHCONTRAST);
         data.subscribe(this.cloudStatusSubscriber, `${cloud.HEADER_CLOUDSTATE}:*`);
         data.subscribe(this.headerChangeSubscriber, "header:*");
     }
 
     public componentWillUnmount() {
-        data.unsubscribe(this.highContrastSubscriber);
         data.unsubscribe(this.cloudStatusSubscriber);
         data.unsubscribe(this.headerChangeSubscriber);
+        this.themeManager?.unsubscribe("mainWebapp");
     }
 
     // Add an error guard for the entire application
@@ -1275,8 +1270,8 @@ export class ProjectView
                 return previousEditor ? previousEditor.unloadFileAsync() : Promise.resolve();
             })
             .then(() => {
-                let hc = this.getData<boolean>(auth.HIGHCONTRAST)
-                return this.editor.loadFileAsync(this.editorFile, hc)
+                let hc = this.themeManager.isHighContrast(this.themeManager.getCurrentColorTheme()?.id);
+                return this.editor.loadFileAsync(this.editorFile, hc);
             })
             .then(() => {
                 this.saveFileAsync(); // make sure state is up to date
@@ -3892,7 +3887,7 @@ export class ProjectView
         return (!!debugging != simulator.driver.isDebug()) || (!!tracing != simulator.driver.isTracing())
     }
 
-    stopSimulator(unload?: boolean, opts?: pxt.editor.SimulatorStartOptions) {
+    stopSimulator(unload?: boolean, opts?: pxt.editor.SimulatorStartOptions): Promise<void> {
         pxt.perf.measureStart(Measurements.StopSimulator)
         pxt.tickEvent('simulator.stop')
         const clickTrigger = opts && opts.clickTrigger;
@@ -3909,11 +3904,12 @@ export class ProjectView
         const autoRun = this.state.autoRun && !clickTrigger; // if user pressed stop, don't restart
 
         // Only fire setState if something changed
-        if (this.state.simState !== SimState.Stopped || !!this.state.autoRun !== !!autoRun) {
-            this.setState({ simState: SimState.Stopped, autoRun: autoRun });
-        }
+        const setStatePromise = this.state.simState !== SimState.Stopped || !!this.state.autoRun !== !!autoRun ?
+            this.setStateAsync({ simState: SimState.Stopped, autoRun: autoRun }) :
+            Promise.resolve();
 
         pxt.perf.measureEnd(Measurements.StopSimulator)
+        return setStatePromise;
     }
 
     suspendSimulator() {
@@ -3929,16 +3925,16 @@ export class ProjectView
         this.setState({ showMiniSim: visible });
     }
 
-    onHighContrastChanged() {
+    async onThemeChanged() {
         this.clearSerial();
         // Not this.restartSimulator; need full restart to consistently update visuals,
         // and don't want to steal focus.
         if (this.isSimulatorRunning()) {
-            this.stopSimulator();
+            await this.stopSimulator();
             this.startSimulator();
         }
 
-        const highContrast = this.getData<boolean>(auth.HIGHCONTRAST);
+        const highContrast = this.themeManager.isHighContrast(this.themeManager.getCurrentColorTheme()?.id);
         const bodyIsHighContrast = document.body.classList.contains("high-contrast");
         if (highContrast) {
             if (!bodyIsHighContrast) document.body.classList.add("high-contrast");
@@ -4040,7 +4036,7 @@ export class ProjectView
                         if (!cancellationToken.isCancelled()) {
                             pxt.debug(`sim: run`)
 
-                            const hc = data.getData<boolean>(auth.HIGHCONTRAST)
+                            const hc = this.themeManager.isHighContrast(this.themeManager.getCurrentColorTheme()?.id);
                             if (!pxt.react.isFieldEditorViewVisible?.()) {
                                 simulator.run(pkg.mainPkg, opts.debug, resp, {
                                     mute: this.state.mute === pxt.editor.MuteState.Muted,
@@ -5462,7 +5458,7 @@ export class ProjectView
         const isMultiplayerGame = this.state.isMultiplayerGame;
         const collapseIconTooltip = this.state.collapseEditorTools ? lf("Show the simulator") : lf("Hide the simulator");
         const isApp = cmds.isNativeHost() || pxt.BrowserUtils.isElectron();
-        const hc = this.getData<boolean>(auth.HIGHCONTRAST)
+        const hc = this.themeManager.isHighContrast(this.themeManager.getCurrentColorTheme()?.id);
 
         let rootClassList = [
             "ui",

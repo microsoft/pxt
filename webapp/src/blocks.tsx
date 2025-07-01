@@ -1089,7 +1089,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 return undefined;
             }
 
-            const blockId = this.compilationResult ? pxtblockly.findBlockIdByLine(this.compilationResult.sourceMap, { start: locInfo.line, length: locInfo.endLine - locInfo.line }) : undefined;
+            const blockId = locInfo.functionName === "<main>" /* Root JS function, therefore On Start block */ ?
+                this.editor.getBlocksByType(ts.pxtc.ON_START_TYPE)?.[0]?.id :
+                (this.compilationResult ? pxtblockly.findBlockIdByLine(this.compilationResult.sourceMap, { start: locInfo.line, length: locInfo.endLine - locInfo.line }) : undefined);
+
             if (!blockId) {
                 return undefined;
             }
