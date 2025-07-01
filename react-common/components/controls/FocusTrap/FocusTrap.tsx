@@ -8,9 +8,11 @@ export interface FocusTrapProps extends React.PropsWithChildren<{}> {
     id?: string;
     className?: string;
     arrowKeyNavigation?: boolean;
-    dontStealFocus?: boolean;
     includeOutsideTabOrder?: boolean;
+    dontStealFocus?: boolean;
     dontRestoreFocus?: boolean;
+    dontTrapFocus?: boolean;
+    focusFirstItem?: boolean;
 }
 
 export const FocusTrap = (props: FocusTrapProps) => {
@@ -30,7 +32,9 @@ const FocusTrapInner = (props: FocusTrapProps) => {
         arrowKeyNavigation,
         dontStealFocus,
         includeOutsideTabOrder,
-        dontRestoreFocus
+        dontRestoreFocus,
+        dontTrapFocus,
+        focusFirstItem
     } = props;
 
     const containerRef = React.useRef<HTMLDivElement | null>(null);
@@ -101,13 +105,18 @@ const FocusTrapInner = (props: FocusTrapProps) => {
         if (!ref) return;
         containerRef.current = ref;
 
-        if (!dontStealFocus && !stoleFocus && !ref.contains(document.activeElement) && getElements().length) {
+        const elements = getElements();
+
+        if (!dontStealFocus && !stoleFocus && !ref.contains(document.activeElement) && elements.length) {
             containerRef.current.focus();
+            if (focusFirstItem) {
+                findNextFocusableElement(elements, -1, 0, true).focus();
+            }
 
             // Only steal focus once
             setStoleFocus(true);
         }
-    }, [getElements, dontStealFocus, stoleFocus]);
+    }, [getElements, dontStealFocus, stoleFocus, focusFirstItem]);
 
     const onKeyDown = React.useCallback((e: React.KeyboardEvent) => {
         if (!containerRef.current) return;
@@ -175,8 +184,11 @@ const FocusTrapInner = (props: FocusTrapProps) => {
             e.preventDefault();
             e.stopPropagation();
         }
-        else  if (e.key === "Tab") {
-            if (e.shiftKey) moveFocus(false, false);
+        else if (e.key === "Tab") {
+            if (dontTrapFocus) {
+                onEscape();
+            }
+            else if (e.shiftKey) moveFocus(false, false);
             else moveFocus(true, false);
         }
         else if (arrowKeyNavigation) {
@@ -193,7 +205,7 @@ const FocusTrapInner = (props: FocusTrapProps) => {
                 moveFocus(true, true);
             }
         }
-    }, [getElements, onEscape, arrowKeyNavigation, regions])
+    }, [getElements, onEscape, arrowKeyNavigation, regions, dontTrapFocus])
 
     return(
         <div id={id}

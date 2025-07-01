@@ -1,12 +1,33 @@
 import * as React from "react";
-import { classList, ControlProps } from "../util";
-import { Button, ButtonProps } from "./Button";
+import { classList, ControlProps, fireClickOnEnter } from "../util";
+import { Button, ButtonBody, ButtonProps, inflateButtonProps } from "./Button";
 import { FocusTrap } from "./FocusTrap";
+import { CheckboxIcon } from "./Checkbox";
 
-export interface MenuItem extends ButtonProps {
-    role?: "menuitem" | undefined;
+export type MenuItem = MenuDropdownItem | MenuSeparatorItem | MenuCheckboxItem | MenuLinkItem;
+
+export interface MenuDropdownItem extends ButtonProps {
+    role: "menuitem";
     ariaPosInSet?: undefined;
     ariaSetSize?: undefined;
+}
+
+export interface MenuSeparatorItem {
+    role: "separator";
+    className?: string;
+}
+
+export interface MenuCheckboxItem extends ControlProps {
+    role: "menuitemcheckbox";
+    label: string;
+    isChecked: boolean;
+    onChange: (isChecked: boolean) => void;
+}
+
+export interface MenuLinkItem extends ControlProps {
+    role: "link";
+    label: string;
+    href: string;
 }
 
 export interface MenuDropdownProps extends ControlProps {
@@ -34,7 +55,7 @@ export const MenuDropdown = (props: MenuDropdownProps) => {
         disabled
     } = props;
 
-    const [ expanded, setExpanded ] = React.useState(false);
+    const [expanded, setExpanded] = React.useState(false);
 
     let container: HTMLDivElement;
     let expandButton: HTMLButtonElement;
@@ -63,8 +84,16 @@ export const MenuDropdown = (props: MenuDropdownProps) => {
         if (expanded && !container.contains(e.relatedTarget as HTMLElement)) setExpanded(false);
     }
 
+    const onKeydown = (e: React.KeyboardEvent) => {
+        if (e.key === "ArrowDown" && !expanded) {
+            setExpanded(true);
+        }
+    }
+
     const classes = classList("common-menu-dropdown", className);
     const menuId = id + "-menu";
+
+    const menuGroups = getGroups(items);
 
     return <div className={classes} ref={handleContainerRef} onBlur={onBlur}>
         <Button
@@ -83,32 +112,187 @@ export const MenuDropdown = (props: MenuDropdownProps) => {
             ariaLabel={ariaLabel}
             ariaHidden={ariaHidden}
             disabled={disabled}
-            />
+            onKeydown={onKeydown}
+        />
         {expanded &&
-            <div role="menu"
+            <ul role="menu"
                 className="common-menu-dropdown-pane"
                 tabIndex={0}
                 id={menuId}
-                aria-labelledby={id}>
-                <FocusTrap arrowKeyNavigation={true} onEscape={onSubpaneEscape}>
-                    <ul role="presentation">
-                        { items.map((item, index) =>
-                            <li key={index} role="presentation">
-                                <Button
-                                    {...item}
-                                    className={classList("common-menu-dropdown-item", item.className)}
-                                    onClick={() => {
-                                        setExpanded(false);
-                                        item.onClick();
-                                    }}
-                                    role="menuitem"
-                                    ariaPosInSet={index + 1}
-                                    ariaSetSize={items.length}/>
+                aria-labelledby={id}
+            >
+                <FocusTrap
+                    arrowKeyNavigation={true}
+                    onEscape={onSubpaneEscape}
+                    includeOutsideTabOrder={true}
+                    dontTrapFocus={true}
+                    dontRestoreFocus={true}
+                    focusFirstItem={true}
+                >
+                    {menuGroups.map((group, groupIndex) =>
+                        <>
+                            <li key={groupIndex} role="none">
+                                <ul role="group">
+                                    {group.items.map(
+                                        (item, itemIndex) => {
+                                            if (item.role === "menuitem") {
+                                                return (
+                                                    <MenuDropdownItemImpl
+                                                        key={itemIndex}
+                                                        {...item}
+                                                        onClick={() => {
+                                                            setExpanded(false);
+                                                            item.onClick?.();
+                                                        }}
+                                                    />
+                                                )
+                                            }
+                                            else if (item.role === "link") {
+                                                return (
+                                                    <MenuLinkItemImpl
+                                                        key={itemIndex}
+                                                        {...item}
+                                                        onClick={() => {
+                                                            setExpanded(false);
+                                                        }}
+                                                    />
+                                                )
+                                            }
+                                            else {
+                                                return (
+                                                    <MenuCheckboxItemImpl
+                                                        key={itemIndex}
+                                                        {...item}
+                                                        onChange={newValue => {
+                                                            setExpanded(false);
+                                                            item.onChange?.(newValue);
+                                                        }}
+                                                    />
+                                                );
+                                            }
+                                        }
+                                    )}
+                                </ul>
                             </li>
-                        )}
-                    </ul>
+                            {groupIndex < menuGroups.length - 1 &&
+                                <li
+                                    key={`separator-${groupIndex}`}
+                                    role="separator"
+                                    className={classList("common-menu-dropdown-separator", group.className)}
+                                />
+                            }
+                        </>
+                    )}
                 </FocusTrap>
-            </div>
+            </ul>
         }
     </div>
+}
+
+export const MenuDropdownItemImpl = (props: MenuDropdownItem) => {
+    const inflated = inflateButtonProps(props);
+
+    return (
+        <li
+            {...inflated}
+            className={classList("common-menu-dropdown-item", inflated.className)}
+            role="menuitem"
+            tabIndex={-1}
+        >
+            <ButtonBody {...props} />
+        </li>
+    )
+}
+
+export const MenuCheckboxItemImpl = (props: MenuCheckboxItem) => {
+    const {
+        label,
+        isChecked,
+        onChange,
+        id,
+        className,
+        ariaLabel,
+        ariaHidden,
+        ariaDescribedBy,
+    } = props;
+
+    return (
+        <li
+            role="menuitemcheckbox"
+            aria-checked={isChecked}
+            tabIndex={-1}
+            className={classList("common-menu-dropdown-item", "common-menu-dropdown-checkbox-item", className)}
+            aria-label={ariaLabel}
+            aria-hidden={ariaHidden}
+            aria-describedby={ariaDescribedBy}
+            onClick={() => onChange(!isChecked)}
+            onKeyDown={fireClickOnEnter}
+            id={id}
+        >
+            <CheckboxIcon
+                isChecked={isChecked}
+            />
+            <span>
+                {label}
+            </span>
+        </li>
+    );
+}
+
+export const MenuLinkItemImpl = (props: MenuLinkItem & { onClick?: () => void }) => {
+    const {
+        href,
+        label,
+        id,
+        className,
+        ariaLabel,
+        ariaHidden,
+        ariaDescribedBy,
+        onClick
+    } = props;
+
+    return (
+        <li
+            role="none"
+            className={classList("common-menu-dropdown-item", "common-menu-dropdown-link-item", className)}
+            aria-label={ariaLabel}
+            aria-hidden={ariaHidden}
+            aria-describedby={ariaDescribedBy}
+            id={id}
+        >
+            <a role="menuitem" href={href} target="_blank" rel="noopener noreferrer" onClick={onClick}>
+                {label}
+            </a>
+        </li>
+    );
+}
+
+interface Group {
+    items: (MenuDropdownItem | MenuCheckboxItem | MenuLinkItem)[];
+    className?: string;
+}
+
+function getGroups(items: MenuItem[]): Group[] {
+    const groups: Group[] = [];
+    let currentGroup: Group = { items: [] };
+
+    for (const item of items) {
+        if (item.role === "separator") {
+            currentGroup.className = item.className;
+
+            if (currentGroup.items.length > 0) {
+                groups.push(currentGroup);
+                currentGroup = { items: [] };
+            }
+        }
+        else {
+            currentGroup.items.push(item);
+        }
+    }
+
+    if (currentGroup.items.length > 0) {
+        groups.push(currentGroup);
+    }
+
+    return groups;
 }

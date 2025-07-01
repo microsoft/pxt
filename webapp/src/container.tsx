@@ -16,6 +16,7 @@ import SimState = pxt.editor.SimState;
 import { sendUpdateFeedbackTheme } from "../../react-common/components/controls/Feedback/FeedbackEventListener";
 import KeyboardControlsHelp from "./components/KeyboardControlsHelp";
 import { CheckboxIcon } from "../../react-common/components/controls/Checkbox";
+import { MenuDropdown, MenuItem } from "../../react-common/components/controls/MenuDropdown";
 
 // common menu items -- do not remove
 // lf("About")
@@ -55,8 +56,10 @@ function openKeyboardNavHelp(parent: IProjectView) {
 
 function renderDocItems(parent: IProjectView, elements: pxt.DocMenuEntry[], cls: string = "") {
     return elements.map(m =>
-        m.tutorial ? <DocsMenuItem key={"docsmenututorial" + m.path} role="menuitem" ariaLabel={pxt.Util.rlf(m.name)} text={pxt.Util.rlf(m.name)} className={"ui " + cls} parent={parent} path={m.path} onItemClick={openTutorial} />
-            : !/^\//.test(m.path) ? <a key={"docsmenulink" + m.path} role="menuitem" aria-label={m.name} title={m.name} className={`ui item link ${cls}`} href={m.path} target="docs">{pxt.Util.rlf(m.name)}</a>
+        m.tutorial ?
+            <DocsMenuItem key={"docsmenututorial" + m.path} role="menuitem" ariaLabel={pxt.Util.rlf(m.name)} text={pxt.Util.rlf(m.name)} className={"ui " + cls} parent={parent} path={m.path} onItemClick={openTutorial} />
+            : !/^\//.test(m.path) ?
+                <a key={"docsmenulink" + m.path} role="menuitem" aria-label={m.name} title={m.name} className={`ui item link ${cls}`} href={m.path} target="docs">{pxt.Util.rlf(m.name)}</a>
                 : <DocsMenuItem key={"docsmenu" + m.path} role="menuitem" ariaLabel={pxt.Util.rlf(m.name)} text={pxt.Util.rlf(m.name)} className={"ui " + cls} parent={parent} path={m.path} onItemClick={openDocs} />
     );
 }
@@ -356,59 +359,271 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         const simCollapseText = headless ? lf("Toggle the File Explorer") : lf("Toggle the simulator");
         const extDownloadMenuItems = pxt.commands.getDownloadMenuItems?.() || [];
 
-        return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("Settings")} className="item icon more-dropdown-menuitem" ref={ref => this.dropdown = ref} closeOnItemClick={true} onShow={
-            () => this.forceUpdate() // force update to refresh extDownloadMenuItems
-        }>
-            {showHome && <sui.Item className="mobile only inherit" role="menuitem" icon="home" title={lf("Home")} text={lf("Home")} ariaLabel={lf("Home screen")} onClick={this.showExitAndSaveDialog} />}
-            {showShare && <sui.Item className="mobile only inherit" role="menuitem" icon="share alternate" title={lf("Publish your game to create a shareable link")} text={lf("Share")} ariaLabel={lf("Share Project")} onClick={this.showShareDialog} />}
-            {(showHome || showShare) && <div className="ui divider mobile only inherit" />}
-            {showProjectSettings ? <sui.Item role="menuitem" icon="options" text={lf("Project Settings")} onClick={this.openSettings} /> : undefined}
-            {packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Extensions")} onClick={this.showPackageDialog} /> : undefined}
-            {showPairDevice ? <sui.Item role="menuitem" icon={usbIcon} text={lf("Connect Device")} onClick={this.pair} /> : undefined}
-            {pxt.webBluetooth.isAvailable() ? <sui.Item role="menuitem" icon='bluetooth' text={lf("Pair Bluetooth")} onClick={this.pairBluetooth} /> : undefined}
-            {showPrint ? <sui.Item role="menuitem" icon="print" text={lf("Print...")} onClick={this.print} /> : undefined}
-            {showSave ? <sui.Item role="menuitem" icon="save" text={lf("Save Project")} onClick={this.saveProject} /> : undefined}
-            {!isController ? <sui.Item role="menuitem" icon="trash" text={lf("Delete Project")} onClick={this.removeProject} /> : undefined}
-            {targetTheme.timeMachine ? <sui.Item role="menuitem" icon="history" text={lf("Version History")} onClick={this.showTurnBackTimeDialog} /> : undefined}
-            {showSimCollapse ? <sui.Item role="menuitem" icon='toggle right' text={simCollapseText} onClick={this.toggleCollapse} /> : undefined}
-            {!!extDownloadMenuItems.length && <>
-                <div className="ui divider" />
-                {extDownloadMenuItems.map((props, index) => <sui.Item key={index} role="menuitem" tabIndex={-1} {...props} />)}
-            </>}
-            <div className="ui divider"></div>
-            {targetTheme.selectLanguage ? <sui.Item icon='xicon globe' role="menuitem" text={lf("Language")} onClick={this.showLanguagePicker} /> : undefined}
-            <sui.Item role="menuitem" icon="paint brush" text={lf("Theme")} onClick={this.showThemePicker} />
-            {this.props.parent.isBlocksEditor() && showKeyboardControls() &&
-                <CheckboxMenuItem
-                    isChecked={accessibleBlocks}
-                    label={lf("Keyboard Controls")}
-                    onClick={this.toggleAccessibleBlocks}
-                />
+
+        const items: MenuItem[] = [];
+        if (showHome) {
+            items.push({
+                role: "menuitem",
+                className: "mobile-only",
+                leftIcon: "icon home",
+                title: lf("Home"),
+                label: lf("Home"),
+                ariaLabel: lf("Home screen"),
+                onClick: this.showExitAndSaveDialog
+            });
+        }
+
+        if (showShare) {
+            items.push({
+                role: "menuitem",
+                className: "mobile-only",
+                leftIcon: "icon share alternate",
+                title: lf("Publish your game to create a shareable link"),
+                label: lf("Share"),
+                ariaLabel: lf("Share Project"),
+                onClick: this.showShareDialog
+            });
+        }
+
+        if (showHome || showShare) {
+            items.push({ role: "separator", className: "mobile-only" });
+        }
+
+        if (showProjectSettings) {
+            items.push({
+                role: "menuitem",
+                leftIcon: "icon options",
+                label: lf("Project Settings"),
+                title: lf("Project Settings"),
+                onClick: this.openSettings
+            });
+        }
+
+        if (packages) {
+            items.push({
+                role: "menuitem",
+                leftIcon: "icon disk outline",
+                label: lf("Extensions"),
+                title: lf("Extensions"),
+                onClick: this.showPackageDialog
+            });
+        }
+
+        if (showPairDevice) {
+            items.push({
+                role: "menuitem",
+                leftIcon: usbIcon,
+                label: lf("Connect Device"),
+                title: lf("Connect Device"),
+                onClick: this.pair
+            });
+        }
+
+        if (pxt.webBluetooth.isAvailable()) {
+            items.push({
+                role: "menuitem",
+                leftIcon: "icon bluetooth",
+                label: lf("Pair Bluetooth"),
+                title: lf("Pair Bluetooth"),
+                onClick: this.pairBluetooth
+            });
+        }
+
+        if (showPrint) {
+            items.push({
+                role: "menuitem",
+                leftIcon: "icon print",
+                label: lf("Print..."),
+                title: lf("Print..."),
+                onClick: this.print
+            });
+        }
+
+        if (showSave) {
+            items.push({
+                role: "menuitem",
+                leftIcon: "icon save",
+                label: lf("Save Project"),
+                title: lf("Save Project"),
+                onClick: this.saveProject
+            });
+        }
+
+        if (!isController) {
+            items.push({
+                role: "menuitem",
+                leftIcon: "icon trash",
+                label: lf("Delete Project"),
+                title: lf("Delete Project"),
+                onClick: this.removeProject
+            });
+        }
+
+        if (targetTheme.timeMachine) {
+            items.push({
+                role: "menuitem",
+                leftIcon: "icon history",
+                label: lf("Version History"),
+                title: lf("Version History"),
+                onClick: this.showTurnBackTimeDialog
+            });
+        }
+
+        if (showSimCollapse) {
+            items.push({
+                role: "menuitem",
+                leftIcon: "icon toggle right",
+                label: simCollapseText,
+                title: simCollapseText,
+                onClick: this.toggleCollapse
+            });
+        }
+
+        if (extDownloadMenuItems.length) {
+            items.push({ role: "separator" });
+            // FIXME
+            extDownloadMenuItems.forEach(props => {
+                items.push({
+                    role: "menuitem",
+                    ...props
+                });
+            });
+        }
+
+        if (items.length) {
+            items.push({ role: "separator" });
+        }
+
+        if (targetTheme.selectLanguage) {
+            items.push({
+                role: "menuitem",
+                leftIcon: "xicon globe",
+                label: lf("Language"),
+                title: lf("Language"),
+                onClick: this.showLanguagePicker
+            });
+        }
+
+        items.push({
+            role: "menuitem",
+            leftIcon: "icon paint brush",
+            label: lf("Theme"),
+            title: lf("Theme"),
+            onClick: this.showThemePicker
+        });
+
+        if (this.props.parent.isBlocksEditor() && showKeyboardControls()) {
+            items.push({
+                role: "menuitemcheckbox",
+                label: lf("Keyboard Controls"),
+                isChecked: accessibleBlocks,
+                onChange: this.toggleAccessibleBlocks
+            });
+        }
+
+        if (showGreenScreen) {
+            items.push({
+                role: "menuitemcheckbox",
+                label: lf("Green Screen"),
+                isChecked: greenScreen,
+                onChange: this.toggleGreenScreen
+            });
+        }
+
+        if (docItems?.length) {
+            for (const docItem of docItems) {
+                const baseItem = {
+                    label: pxt.U.rlf(docItem.name),
+                    title: pxt.U.rlf(docItem.name),
+                    className: "mobile-only",
+                };
+
+                if (docItem.tutorial) {
+                    items.push({
+                        ...baseItem,
+                        role: "menuitem",
+                        onClick: () => openTutorial(this.props.parent, docItem.path),
+                    })
+                }
+                else if (!/^\//.test(docItem.path)) {
+                    items.push({
+                        ...baseItem,
+                        role: "link",
+                        href: docItem.path,
+                        ariaLabel: docItem.name
+                    });
+                } else {
+                    items.push({
+                        ...baseItem,
+                        role: "menuitem",
+                        onClick: () => openDocs(this.props.parent, docItem.path),
+                        ariaLabel: docItem.name
+                    });
+                }
             }
-            {showGreenScreen &&
-                <CheckboxMenuItem
-                    isChecked={greenScreen}
-                    label={lf("Green Screen")}
-                    onClick={this.toggleGreenScreen}
-                />
-            }
-            {docItems && renderDocItems(this.props.parent, docItems, "setting-docs-item mobile only inherit")}
-            {githubUser ? <div className="ui divider"></div> : undefined}
-            {githubUser ? <div className="ui item" title={lf("Unlink {0} from GitHub", githubUser.name)} role="menuitem" onClick={this.signOutGithub}>
-                <div className="avatar" role="presentation">
-                    <img className="ui circular image" src={githubUser.photo} alt={lf("User picture")} />
-                </div>
-                {lf("Disconnect GitHub")}
-            </div> : undefined}
-            {showCenterDivider && <div className="ui divider"></div>}
-            {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...")} onClick={this.showReportAbuse} /> : undefined}
-            {!isController ? <sui.Item role="menuitem" icon='sign out' text={lf("Reset")} onClick={this.showResetDialog} /> : undefined}
-            <sui.Item role="menuitem" text={lf("About...")} onClick={this.showAboutDialog} />
-            {
-                // we always need a way to clear local storage, regardless if signed in or not
-            }
-            {showFeedbackOption ? <sui.Item role="menuitem" icon="comment" text={lf("Feedback")} onClick={this.showFeedbackDialog} /> : undefined}
-        </sui.DropdownMenu>;
+        }
+
+        if (githubUser) {
+            items.push({ role: "separator" });
+            items.push({
+                role: "menuitem",
+                className: "ui item",
+                title: lf("Unlink {0} from GitHub", githubUser.name),
+                onClick: this.signOutGithub,
+                children: <>
+                    <div className="avatar" role="presentation">
+                        <img className="ui circular image" src={githubUser.photo} alt={lf("User picture")} />
+                    </div>,
+                    {lf("Disconnect GitHub")}
+                </>
+            });
+        }
+
+        if (showCenterDivider) {
+            items.push({ role: "separator" });
+        }
+
+        if (reportAbuse) {
+            items.push({
+                role: "menuitem",
+                leftIcon: "icon warning circle",
+                label: lf("Report Abuse..."),
+                title: lf("Report Abuse..."),
+                onClick: this.showReportAbuse
+            });
+        }
+
+        if (!isController) {
+            items.push({
+                role: "menuitem",
+                leftIcon: "icon sign out",
+                label: lf("Reset"),
+                title: lf("Reset"),
+                onClick: this.showResetDialog
+            });
+        }
+
+        items.push({
+            role: "menuitem",
+            label: lf("About..."),
+            title: lf("About..."),
+            onClick: this.showAboutDialog
+        });
+
+        if (showFeedbackOption) {
+            items.push({
+                role: "menuitem",
+                leftIcon: "icon comment",
+                label: lf("Feedback"),
+                title: lf("Feedback"),
+                onClick: this.showFeedbackDialog
+            });
+        }
+
+        return (
+            <MenuDropdown items={items} title={lf("Settings")} icon="icon setting" />
+
+        );
     }
 }
 
