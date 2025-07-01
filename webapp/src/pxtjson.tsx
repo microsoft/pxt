@@ -167,12 +167,26 @@ export class Editor extends srceditor.Editor {
                             applyUserConfig={this.applyUserConfig} />
                     )}
                     {pxtJsonOptions.map(option =>
-                        <sui.Checkbox
-                            key={option.property}
-                            inputLabel={pxt.Util.rlf(`{id:setting}${option.label}`)}
-                            checked={!!c?.[option.property as keyof pxt.PackageConfig]}
-                            onChange={value => this.applyPropertyCheckbox(option, value)}
-                        />
+                        option.type === "checkbox" ? (
+                            <sui.Checkbox
+                                key={option.property}
+                                inputLabel={pxt.Util.rlf(`{id:setting}${option.label}`)}
+                                checked={!!c?.[option.property as keyof pxt.PackageConfig]}
+                                onChange={value => this.applyPropertyCheckbox(option, value)}
+                            />
+                        ) : option.type === "input" ? (
+                            <sui.Input
+                                key={option.property}
+                                id={option.property}
+                                ariaLabel={option.label}
+                                value={(c as any)?.[option.property] || ""}
+                                onChange={(v: string) => {
+                                    (c as any)[option.property] = v;
+                                    this.parent.forceUpdate();
+                                }}
+                                autoComplete={false}
+                            />
+                        ) : undefined
                     )}
                     <sui.Field>
                         <sui.Button text={lf("Save")} className={`green ${this.isSaving ? 'disabled' : ''}`} onClick={this.saveOnClick} />
