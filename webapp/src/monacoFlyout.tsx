@@ -4,10 +4,10 @@ import * as core from "./core";
 import * as toolbox from "./toolbox";
 import * as workspace from "./workspace";
 import * as data from "./data";
-import * as auth from "./auth";
 import * as pxtblockly from "../../pxtblocks";
 import { HELP_IMAGE_URI } from "../../pxteditor";
 import { getBlockAsText } from "./toolboxHelpers";
+import { ThemeManager } from "../../react-common/components/theming/themeManager";
 
 import ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -240,7 +240,7 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
     }
 
     protected getBlockStyle = (color: string) => {
-        const highContrast = this.getData<boolean>(auth.HIGHCONTRAST)
+        const highContrast = ThemeManager.isCurrentThemeHighContrast();
         return {
             backgroundColor: color,
             border: highContrast ? `2px solid ${color}` : "none",
