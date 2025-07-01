@@ -116,77 +116,75 @@ export const MenuDropdown = (props: MenuDropdownProps) => {
             onKeydown={onKeydown}
         />
         {expanded &&
-            <ul role="menu"
+            <FocusTrap
+                role="menu"
                 className="common-menu-dropdown-pane"
-                tabIndex={0}
                 id={menuId}
-                aria-labelledby={id}
+                arrowKeyNavigation={true}
+                onEscape={onSubpaneEscape}
+                includeOutsideTabOrder={true}
+                dontTrapFocus={true}
+                dontRestoreFocus={true}
+                focusFirstItem={true}
+                ariaLabelledby={id}
+                tagName="ul"
             >
-                <FocusTrap
-                    arrowKeyNavigation={true}
-                    onEscape={onSubpaneEscape}
-                    includeOutsideTabOrder={true}
-                    dontTrapFocus={true}
-                    dontRestoreFocus={true}
-                    focusFirstItem={true}
-                >
-                    {menuGroups.map((group, groupIndex) =>
-                        <React.Fragment key={groupIndex}>
-                            <li role="none">
-                                <ul role="group">
-                                    {group.items.map(
-                                        (item, itemIndex) => {
-                                            const key = `${groupIndex}-${itemIndex}`;
-                                            if (item.role === "menuitem") {
-                                                return (
-                                                    <MenuDropdownItemImpl
-                                                        {...item}
-                                                        key={key}
-                                                        onClick={() => {
-                                                            setExpanded(false);
-                                                            item.onClick?.();
-                                                        }}
-                                                    />
-                                                )
-                                            }
-                                            else if (item.role === "link") {
-                                                return (
-                                                    <MenuLinkItemImpl
-                                                        {...item}
-                                                        key={key}
-                                                        onClick={() => {
-                                                            setExpanded(false);
-                                                            item.onClick?.();
-                                                        }}
-                                                    />
-                                                )
-                                            }
-                                            else {
-                                                return (
-                                                    <MenuCheckboxItemImpl
-                                                        {...item}
-                                                        key={key}
-                                                        onChange={newValue => {
-                                                            setExpanded(false);
-                                                            item.onChange?.(newValue);
-                                                        }}
-                                                    />
-                                                );
-                                            }
+                {menuGroups.map((group, groupIndex) =>
+                    <React.Fragment key={groupIndex}>
+                        <li role="none">
+                            <ul role="group">
+                                {group.items.map(
+                                    (item, itemIndex) => {
+                                        const key = `${groupIndex}-${itemIndex}`;
+                                        if (item.role === "menuitem") {
+                                            return (
+                                                <MenuDropdownItemImpl
+                                                    {...item}
+                                                    key={key}
+                                                    onClick={() => {
+                                                        setExpanded(false);
+                                                        item.onClick?.();
+                                                    }}
+                                                />
+                                            )
                                         }
-                                    )}
-                                </ul>
-                            </li>
-                            {groupIndex < menuGroups.length - 1 &&
-                                <li
-                                    role="separator"
-                                    className={classList("common-menu-dropdown-separator", group.className)}
-                                />
-                            }
-                        </React.Fragment>
-                    )}
-                </FocusTrap>
-            </ul>
+                                        else if (item.role === "link") {
+                                            return (
+                                                <MenuLinkItemImpl
+                                                    {...item}
+                                                    key={key}
+                                                    onClick={() => {
+                                                        setExpanded(false);
+                                                        item.onClick?.();
+                                                    }}
+                                                />
+                                            )
+                                        }
+                                        else {
+                                            return (
+                                                <MenuCheckboxItemImpl
+                                                    {...item}
+                                                    key={key}
+                                                    onChange={newValue => {
+                                                        setExpanded(false);
+                                                        item.onChange?.(newValue);
+                                                    }}
+                                                />
+                                            );
+                                        }
+                                    }
+                                )}
+                            </ul>
+                        </li>
+                        {groupIndex < menuGroups.length - 1 &&
+                            <li
+                                role="separator"
+                                className={classList("common-menu-dropdown-separator", group.className)}
+                            />
+                        }
+                    </React.Fragment>
+                )}
+            </FocusTrap>
         }
     </div>
 }
@@ -221,12 +219,12 @@ export const MenuCheckboxItemImpl = (props: MenuCheckboxItem) => {
     return (
         <li
             role="menuitemcheckbox"
-            aria-checked={isChecked}
             tabIndex={-1}
             className={classList("common-menu-dropdown-item", "common-menu-dropdown-checkbox-item", className)}
             aria-label={ariaLabel}
             aria-hidden={ariaHidden}
             aria-describedby={ariaDescribedBy}
+            aria-checked={isChecked ? "true" : "false"}
             onClick={() => onChange(!isChecked)}
             onKeyDown={fireClickOnEnter}
             id={id}

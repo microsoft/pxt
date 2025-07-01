@@ -1,11 +1,10 @@
 import * as React from "react";
-import { classList, nodeListToArray, findNextFocusableElement, focusLastActive } from "../../util";
+import { classList, nodeListToArray, findNextFocusableElement, focusLastActive, ContainerProps } from "../../util";
 import { addRegion, FocusTrapProvider, removeRegion, useFocusTrapDispatch, useFocusTrapState } from "./context";
 import { useId } from "../../../hooks/useId";
 
-export interface FocusTrapProps extends React.PropsWithChildren<{}> {
+export interface FocusTrapProps extends ContainerProps {
     onEscape: () => void;
-    id?: string;
     className?: string;
     arrowKeyNavigation?: boolean;
     includeOutsideTabOrder?: boolean;
@@ -13,6 +12,8 @@ export interface FocusTrapProps extends React.PropsWithChildren<{}> {
     dontRestoreFocus?: boolean;
     dontTrapFocus?: boolean;
     focusFirstItem?: boolean;
+    tagName?: keyof JSX.IntrinsicElements;
+    ariaLabelledby?: string;
 }
 
 export const FocusTrap = (props: FocusTrapProps) => {
@@ -34,7 +35,12 @@ const FocusTrapInner = (props: FocusTrapProps) => {
         includeOutsideTabOrder,
         dontRestoreFocus,
         dontTrapFocus,
-        focusFirstItem
+        focusFirstItem,
+        tagName,
+        role,
+        ariaLabelledby,
+        ariaLabel,
+        ariaHidden
     } = props;
 
     const containerRef = React.useRef<HTMLDivElement | null>(null);
@@ -207,14 +213,21 @@ const FocusTrapInner = (props: FocusTrapProps) => {
         }
     }, [getElements, onEscape, arrowKeyNavigation, regions, dontTrapFocus])
 
-    return(
-        <div id={id}
-            className={classList("common-focus-trap", className)}
-            ref={handleRef}
-            onKeyDown={onKeyDown}
-            tabIndex={-1}>
-            {children}
-        </div>
+    return React.createElement(
+        tagName || "div",
+        {
+            id,
+            className: classList("common-focus-trap", className),
+            ref: handleRef,
+            onKeyDown,
+            role,
+            tabIndex: -1,
+            "aria-labelledby": ariaLabelledby,
+            "aria-label": ariaLabel,
+            "aria-hidden": ariaHidden,
+        },
+        children
+
     );
 }
 

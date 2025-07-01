@@ -140,6 +140,7 @@ export class DocsMenu extends data.PureComponent<DocsMenuProps, {}> {
 
         return (
             <MenuDropdown
+                id="docs-menuitem"
                 role="menuitem"
                 title={lf("Help")}
                 className="mobile-hidden help-dropdown-menuitem"
@@ -601,7 +602,13 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         }
 
         return (
-            <MenuDropdown items={items} title={lf("Settings")} icon="icon setting large" className="settings-menuitem" />
+            <MenuDropdown
+                id="settings-menuitem"
+                className="settings-menuitem"
+                title={lf("Settings")}
+                icon="icon setting large"
+                items={items}
+            />
         );
     }
 }
