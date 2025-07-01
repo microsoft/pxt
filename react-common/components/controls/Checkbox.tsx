@@ -7,6 +7,8 @@ interface CheckboxProps extends ControlProps {
     isChecked: boolean;
     onChange: (newValue: boolean) => void;
     label?: string | JSX.Element;
+    style?: "toggle" | "default"
+    tabIndex?: number;
 }
 
 export const Checkbox = (props: CheckboxProps) => {
@@ -18,7 +20,9 @@ export const Checkbox = (props: CheckboxProps) => {
         role,
         isChecked,
         onChange,
-        label
+        label,
+        style,
+        tabIndex
     } = props;
 
     const onCheckboxClick = () => {
@@ -26,10 +30,10 @@ export const Checkbox = (props: CheckboxProps) => {
     }
 
     return (
-        <div className={classList("common-checkbox", className)}>
+        <div className={classList("common-checkbox", className, style === "toggle" && "toggle")}>
             <input
                 id={id}
-                tabIndex={0}
+                tabIndex={tabIndex ?? 0}
                 type="checkbox"
                 checked={isChecked}
                 onChange={onCheckboxClick}
@@ -44,4 +48,18 @@ export const Checkbox = (props: CheckboxProps) => {
             }
         </div>
     )
+}
+
+interface CheckboxIconProps {
+    isChecked: boolean;
+}
+
+export const CheckboxIcon = (props: CheckboxIconProps) => {
+    const { isChecked } = props;
+
+    return (
+        <span className={classList("common-checkbox-icon", isChecked && "checked")}>
+            {isChecked && <i className="fas fa-check" />}
+        </span>
+    );
 }

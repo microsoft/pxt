@@ -1,14 +1,16 @@
 import * as React from "react";
 import { getActionShortcut, getActionShortcutsAsKeys, ShortcutNames } from "../shortcut_formatting";
 
+const isMacPlatform = pxt.BrowserUtils.isMac();
+
 const KeyboardControlsHelp = () => {
     const ref = React.useRef<HTMLElement>(null);
     React.useEffect(() => {
         ref.current?.focus()
     }, []);
     const ctrl = lf("Ctrl");
-    const cmd = pxt.BrowserUtils.isMac() ? "⌘" : ctrl;
-    const optionOrCtrl = pxt.BrowserUtils.isMac() ? "⌥" : ctrl;
+    const cmd = isMacPlatform ? "⌘" : ctrl;
+    const optionOrCtrl = isMacPlatform ? "⌥" : ctrl;
     const contextMenuRow = <Row name={lf("Open context menu")} shortcuts={[ShortcutNames.MENU]} />
     const cleanUpRow = <Row name={lf("Workspace: Format code")} shortcuts={[ShortcutNames.CLEAN_UP]} />
     const orAsJoiner = lf("or")
@@ -20,13 +22,13 @@ const KeyboardControlsHelp = () => {
             <table>
                 <tbody>
                     <Row name={lf("Show/hide shortcut help")} shortcuts={[ShortcutNames.LIST_SHORTCUTS]} />
-                    <Row name={lf("Jump to region")} shortcuts={[[cmd, "B"]]} />
+                    <Row name={lf("Open/close area menu")} shortcuts={[[cmd, "B"]]} />
                     <Row name={lf("Block and toolbox navigation")} shortcuts={[ShortcutNames.UP, ShortcutNames.DOWN, ShortcutNames.LEFT, ShortcutNames.RIGHT]} />
                     <Row name={lf("Toolbox")} shortcuts={[ShortcutNames.TOOLBOX]} />
                     {editOrConfirmRow}
                     <Row name={lf("Move mode")} shortcuts={[ShortcutNames.MOVE]} >
-                        <br /><span className="hint">{lf("Move with arrow keys")}</span>
-                        <br /><span className="hint">{lf("Hold {0} for free movement", optionOrCtrl)}</span>
+                        <p className="hint">{lf("Press arrow keys to move to connections")}</p>
+                        <p className="hint">{lf("Hold {0} to move anywhere", optionOrCtrl)}</p>
                     </Row>
                     <Row name={lf("Copy / paste")} shortcuts={[ShortcutNames.COPY, ShortcutNames.PASTE]} joiner="/" />
                     {cleanUpRow}
@@ -37,7 +39,7 @@ const KeyboardControlsHelp = () => {
             <table>
                 <tbody>
                     <Row name={lf("Move between menus, simulator and the workspace")} shortcuts={[[lf("Tab")], [lf("Shift"), lf("Tab")]]} joiner="row"/>
-                    <Row name={lf("Jump to region")} shortcuts={[[cmd, "B"]]} />
+                    <Row name={lf("Open/close area menu")} shortcuts={[[cmd, "B"]]} />
                     <Row name={lf("Exit")} shortcuts={[ShortcutNames.EXIT]} />
                     <Row name={lf("Toolbox")} shortcuts={[ShortcutNames.TOOLBOX]} />
                     <Row name={lf("Toolbox: Move in and out of categories")} shortcuts={[ShortcutNames.LEFT, ShortcutNames.RIGHT]} />
@@ -66,8 +68,8 @@ const KeyboardControlsHelp = () => {
             <table>
                 <tbody>
                     <Row name={lf("Move mode")} shortcuts={[ShortcutNames.MOVE]} />
-                    <Row name={lf("Move mode: Move to new position")} shortcuts={[ShortcutNames.UP, ShortcutNames.DOWN, ShortcutNames.LEFT, ShortcutNames.RIGHT]} />
-                    <Row name={lf("Move mode: Free movement")}>
+                    <Row name={lf("Move mode: Move to connections")} shortcuts={[ShortcutNames.UP, ShortcutNames.DOWN, ShortcutNames.LEFT, ShortcutNames.RIGHT]} />
+                    <Row name={lf("Move mode: Move anywhere")}>
                         {lf("Hold {0} and press arrow keys", optionOrCtrl)}
                     </Row>
                     <Row name={lf("Move mode: Confirm")} {...enterOrSpace} />
@@ -80,7 +82,7 @@ const KeyboardControlsHelp = () => {
 }
 
 const Shortcut = ({ keys }: { keys: string[] }) => {
-    const joiner = pxt.BrowserUtils.isMac() ? " " : " + "
+    const joiner = isMacPlatform ? " " : " + "
     return (
         <span className="shortcut">
             {keys.reduce((acc, key) => {
@@ -136,7 +138,6 @@ const Row = ({ name, shortcuts = [], joiner, children}: RowProps) => {
                         : [...acc, joiner ? ` ${joiner} ` : " ", shortcut]
                 }, [])}
                 {children}
-                <br />
             </td>
         </tr>
     )

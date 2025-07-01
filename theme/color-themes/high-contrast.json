@@ -122,9 +122,9 @@
         "pxt-colors-teal-foreground": "#000000",
         "pxt-colors-teal-hover": "#5BE0FF",
         "pxt-colors-teal-alpha10": "#5BE0FF19",
-        "pxt-colors-yellow-background": "#00FFFF",
+        "pxt-colors-yellow-background": "#FFFF00",
         "pxt-colors-yellow-foreground": "#000000",
-        "pxt-colors-yellow-hover": "#00FFFF",
-        "pxt-colors-yellow-alpha10": "#00FFFF19"
+        "pxt-colors-yellow-hover": "#FFFF00",
+        "pxt-colors-yellow-alpha10": "#FFFF0019"
     }
 }

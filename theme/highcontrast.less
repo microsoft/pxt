@@ -45,20 +45,20 @@
 @HCaccessibleMenuColor: white;
 
 .hc {
-
-    /* Focus */
-
-    *[tabindex='0'],
+    /*
+    * Generic Focus Highlights
+    */
+    *[tabindex='0']:not(.blocklyWorkspace, .blocklyPassiveFocus, .blocklyTreeInner),
     *[tabindex*='d1'],
     *[tabindex*='d2'], /* Takes items with a defined tabIndex from 0 to 29. */
-    *[role='menuitem'],
+    *[role='menuitem']:not(.editor-menuitem),
     a:not([tabindex='-1']),
     input:not([tabindex='-1']),
     button:not([tabindex='-1']),
     #monacoEditor .blocklyTreeRow,
     #monacoEditor .monacoDraggableBlock {
         &:focus, &:hover {
-            outline: @editorFocusBorderSize solid @selected !important;
+            outline: 3px solid var(--pxt-colors-yellow-background) !important;
         }
     }
 

@@ -58,6 +58,8 @@ declare namespace pxt {
         upgrades?: string[];
         // This repo's simulator extension configuration
         simx?: SimulatorExtensionConfig;
+        // if true, this repo will not be shown in extension search results
+        hidden?: boolean;
     }
 
     interface SimulatorExtensionConfig {
@@ -329,6 +331,11 @@ declare namespace pxt {
         skipCloudBuild?: boolean;
     }
 
+    interface FeatureFlag {
+        includeRegions?: string[];
+        excludeRegions?: string[];
+    }
+
     interface AppTheme {
         id?: string;
         name?: string;
@@ -505,8 +512,6 @@ declare namespace pxt {
         tutorialExplicitHints?: boolean; // allow use explicit hints
         errorList?: boolean; // error list experiment
         embedBlocksInSnapshot?: boolean; // embed blocks xml in right-click snapshot
-        blocksErrorList?: boolean; // blocks error list
-        aiErrorHelp?: boolean; // Enable AI assistance for errors
         identity?: boolean; // login with identity providers
         assetEditor?: boolean; // enable asset editor view (in blocks/text toggle)
         disableMemoryWorkspaceWarning?: boolean; // do not warn the user when switching to in memory workspace
@@ -532,6 +537,8 @@ declare namespace pxt {
         timeMachineSnapshotInterval?: number; // An interval in milliseconds at which to take full project snapshots in project history. Defaults to 15 minutes
         adjustBlockContrast?: boolean; // If set to true, all block colors will automatically be adjusted to have a contrast ratio of 4.5 with text
         pxtJsonOptions?: PxtJsonOption[];
+        enabledFeatures?: pxt.Map<FeatureFlag>;
+        forceEnableAiErrorHelp?: boolean; // Enables the AI Error Help feature, regardless of geo setting.
     }
 
     interface DownloadDialogTheme {
@@ -1120,6 +1127,7 @@ declare namespace ts.pxtc {
         clearIncrBuildAndRetryOnError?: boolean; // on error when compiling in service, try again with a full recompile.
         errorOnGreyBlocks?: boolean;
         generateSourceMap?: boolean;
+        tsCompileOptions?: any /* ts.CompilerOptions */; // options to pass to the TypeScript compiler
 
         otherMultiVariants?: ExtensionTarget[];
 

@@ -102,9 +102,14 @@ export class ErrorList extends auth.Component<ErrorListProps, ErrorListState> {
         const groupedErrors = groupErrors(errors);
         const errorListContent = !isCollapsed ? groupedErrors.map((e, i) => <ErrorListItem errorGroup={e} index={i} key={`errorlist_error_${i}`}/> ) : undefined;
         const errorCount = errors.length;
-        const canDebug = startDebugger && !!errors.find(a => a.stackFrames?.length);
 
-        const showErrorHelp = !!getErrorHelp && !!showLoginDialog && pxt.appTarget.appTheme.aiErrorHelp;
+        const showDebuggerSuggestion = startDebugger && !pxt.shell.isReadOnly();
+
+        const showErrorHelp =
+            !!getErrorHelp &&
+            !!showLoginDialog &&
+            !pxt.shell.isReadOnly() &&
+            (pxt.appTarget.appTheme.forceEnableAiErrorHelp || pxt.Util.isFeatureEnabled("aiErrorHelp"));
 
         const helpLoader = (
             <div className="error-help-loader" onClick={(e) => e.stopPropagation()}>
@@ -117,10 +122,10 @@ export class ErrorList extends auth.Component<ErrorListProps, ErrorListState> {
             <Button
                 id="error-help-button"
                 onClick={this.onHelpClick}
-                title={lf("Help me understand")}
+                title={lf("Explain with AI")}
                 className="secondary error-help-button"
-                label={lf("Help me understand")}
-                leftIcon={"fas fa-question-circle"}
+                label={lf("Explain with AI")}
+                leftIcon={"xicon sparkle"}
             />
         );
 
@@ -134,17 +139,21 @@ export class ErrorList extends auth.Component<ErrorListProps, ErrorListState> {
                             {isLoadingHelp ? helpLoader : helpButton}
                         </div>
                     )}
+                    {showDebuggerSuggestion && (
+                        <Button id="debug-button"
+                            onClick={this.props.startDebugger}
+                            title={lf("Debug this project")}
+                            label={lf("Debug this project")}
+                            className="debuggerSuggestion"
+                            ariaLabel={lf("Debug this project")}
+                            leftIcon="icon bug" />
+                    )}
                     <div className="filler" />
                     <div className="toggleButton">
                         <sui.Icon icon={`chevron ${isCollapsed ? "up" : "down"}`} />
                     </div>
                 </div>
                 {!isCollapsed && <div className="errorListInner">
-                    {canDebug && <div className="debuggerSuggestion" role="button" onClick={this.props.startDebugger} onKeyDown={fireClickOnEnter} tabIndex={0}>
-                        {lf("Debug this project")}
-                        <sui.Icon className="debug-icon" icon="icon bug" />
-                    </div>}
-
                     {note && <div className="note">{note}</div>}
 
                     <div className="ui selection list">

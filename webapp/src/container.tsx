@@ -14,8 +14,9 @@ import ISettingsProps = pxt.editor.ISettingsProps;
 import UserInfo = pxt.editor.UserInfo;
 import SimState = pxt.editor.SimState;
 import { sendUpdateFeedbackTheme } from "../../react-common/components/controls/Feedback/FeedbackEventListener";
-import { TabPane } from "./components/core/TabPane";
 import KeyboardControlsHelp from "./components/KeyboardControlsHelp";
+import { CheckboxIcon } from "../../react-common/components/controls/Checkbox";
+import { ThemeManager } from "../../react-common/components/theming/themeManager";
 
 // common menu items -- do not remove
 // lf("About")
@@ -98,7 +99,7 @@ export class DocsMenu extends data.PureComponent<DocsMenuProps & { hasMainBlocks
         const accessibleBlocksEnabled = data.getData<boolean>(auth.ACCESSIBLE_BLOCKS);
         return <sui.DropdownMenu role="menuitem" icon="help circle large"
             className="item mobile hide help-dropdown-menuitem" textClass={"landscape only"} title={lf("Help")} >
-            {this.props.hasMainBlocksFile && showKeyboardControls() && accessibleBlocksEnabled && getKeyboardNavHelpItem(parent)}
+            {this.props.hasMainBlocksFile && parent.isBlocksEditor() && showKeyboardControls() && accessibleBlocksEnabled && getKeyboardNavHelpItem(parent)}
             {targetTheme.tours?.editor && getTourItem(parent)}
             {renderDocItems(parent, targetTheme.docMenu)}
             {getDocsLanguageItem(this.props.editor, parent)}
@@ -322,7 +323,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
 
     renderCore() {
         const hasIdentity = pxt.auth.hasIdentity();
-        const highContrast = this.getData<boolean>(auth.HIGHCONTRAST)
+        const highContrast = ThemeManager.isCurrentThemeHighContrast();
         const { greenScreen } = this.state;
         const accessibleBlocks = this.getData<boolean>(auth.ACCESSIBLE_BLOCKS);
         const targetTheme = pxt.appTarget.appTheme;
@@ -378,8 +379,20 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             <div className="ui divider"></div>
             {targetTheme.selectLanguage ? <sui.Item icon='xicon globe' role="menuitem" text={lf("Language")} onClick={this.showLanguagePicker} /> : undefined}
             <sui.Item role="menuitem" icon="paint brush" text={lf("Theme")} onClick={this.showThemePicker} />
-            {showKeyboardControls() && (<sui.Item role="menuitem" text={accessibleBlocks ? lf("Keyboard Controls Off") : lf("Keyboard Controls On")} onClick={this.toggleAccessibleBlocks} />)}
-            {showGreenScreen ? <sui.Item role="menuitem" text={greenScreen ? lf("Green Screen Off") : lf("Green Screen On")} onClick={this.toggleGreenScreen} /> : undefined}
+            {this.props.parent.isBlocksEditor() && showKeyboardControls() &&
+                <CheckboxMenuItem
+                    isChecked={accessibleBlocks}
+                    label={lf("Keyboard Controls")}
+                    onClick={this.toggleAccessibleBlocks}
+                />
+            }
+            {showGreenScreen &&
+                <CheckboxMenuItem
+                    isChecked={greenScreen}
+                    label={lf("Green Screen")}
+                    onClick={this.toggleGreenScreen}
+                />
+            }
             {docItems && renderDocItems(this.props.parent, docItems, "setting-docs-item mobile only inherit")}
             {githubUser ? <div className="ui divider"></div> : undefined}
             {githubUser ? <div className="ui item" title={lf("Unlink {0} from GitHub", githubUser.name)} role="menuitem" onClick={this.signOutGithub}>
@@ -419,7 +432,7 @@ class BaseMenuItemProps extends data.Component<IBaseMenuItemProps, {}> {
 
     renderCore() {
         const active = this.props.isActive();
-        return <sui.Item className={`base-menuitem ${this.props.className} ${active ? "selected" : ""}`} role="menuitem" textClass="landscape only"
+        return <sui.Item className={`base-menuitem ${this.props.className} ${active ? "selected" : ""}`} role="option" textClass="landscape only"
             text={this.props.text} icon={this.props.icon} active={active} onClick={this.props.onClick} title={this.props.title} ariaLabel={this.props.ariaLabel} />
     }
 }
@@ -572,12 +585,12 @@ export class EditorSelector extends data.Component<IEditorSelectorProps, {}> {
         }
 
         return (
-            <div id="editortoggle" className={`ui grid padded ${(pyOnly || tsOnly) ? "one-language" : ""}`} role="menubar" aria-orientation="horizontal" aria-label={lf("Editor toggle")}>
+            <div id="editortoggle" className={`ui grid padded ${(pyOnly || tsOnly) ? "one-language" : ""}`} role="listbox" aria-orientation="horizontal" aria-label={lf("Editor toggle")}>
                 {showSandbox && <SandboxMenuItem parent={parent} />}
                 {showBlocks && <BlocksMenuItem parent={parent} />}
                 {textLanguage}
                 {secondTextLanguage}
-                {showDropdown && <sui.DropdownMenu id="editordropdown" role="menuitem" icon="chevron down" rightIcon title={lf("Select code editor language")} className={`item button attached right ${dropdownActive ? "active" : ""}`}>
+                {showDropdown && <sui.DropdownMenu id="editordropdown" role="option" icon="chevron down" rightIcon title={lf("Select code editor language")} className={`item button attached right ${dropdownActive ? "active" : ""}`}>
                     <JavascriptMenuItem parent={parent} />
                     <PythonMenuItem parent={parent} />
                 </sui.DropdownMenu>}
@@ -736,14 +749,14 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
                 <sui.Icon icon={`icon inverted chevron ${showLeftChevron ? 'left' : 'right'}`} />
             </button>
             <div id="sidedocs" onKeyDown={this.handleKeyDown}>
-                <div id="sidedocsframe-wrapper">
-                    {this.renderContent(url, isBuiltIn, lockedEditor)}
-                </div>
                 {!lockedEditor && !isBuiltIn && <div className="ui app hide" id="sidedocsbar">
                     <a className="ui icon link" role="button" tabIndex={0} data-content={lf("Open documentation in new tab")} aria-label={lf("Open documentation in new tab")} onClick={this.popOut} onKeyDown={fireClickOnEnter} >
                         <sui.Icon icon="external" />
                     </a>
                 </div>}
+                <div id="sidedocsframe-wrapper">
+                    {this.renderContent(url, isBuiltIn, lockedEditor)}
+                </div>
             </div>
         </div>
         /* eslint-enable @microsoft/sdl/react-iframe-missing-sandbox */
@@ -795,4 +808,32 @@ export class SandboxFooter extends data.PureComponent<SandboxFooterProps, {}> {
             <span className="item"><a role="button" className="ui thin portrait only" title={compileTooltip} onClick={this.compile}><sui.Icon icon={`icon ${pxt.appTarget.appTheme.downloadIcon || 'download'}`} />{pxt.appTarget.appTheme.useUploadMessage ? lf("Upload") : lf("Download")}</a></span>
         </div>;
     }
+}
+
+interface CheckboxMenuItemProps {
+    label: string;
+    isChecked: boolean;
+    onClick: () => void;
+}
+
+const CheckboxMenuItem = (props: CheckboxMenuItemProps) => {
+    const { label, isChecked, onClick } = props;
+
+    return (
+        <div
+            role="menuitemcheckbox"
+            aria-checked={isChecked}
+            tabIndex={0}
+            className="ui item link menuitemcheckbox"
+            onClick={onClick}
+            onKeyDown={fireClickOnEnter}
+        >
+            <CheckboxIcon
+                isChecked={isChecked}
+            />
+            <span>
+                {label}
+            </span>
+        </div>
+    );
 }

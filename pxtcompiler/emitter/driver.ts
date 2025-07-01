@@ -25,7 +25,11 @@ namespace ts.pxtc {
         options.noImplicitAny = true;
         options.noImplicitReturns = true;
         options.allowUnreachableCode = true;
-        return options
+
+        return {
+            ...options,
+            ...opts?.tsCompileOptions
+        };
     }
 
     export function nodeLocationInfo(node: ts.Node) {
@@ -363,7 +367,7 @@ namespace ts.pxtc {
                     err("File not found: " + fn)
                     text = ""
                 }
-                return createSourceFile(fn, text, v, setParentNodes)
+                return createSourceFile(fn, text, v, setParentNodes, undefined /* scriptKind */, options);
             },
             fileExists: fn => {
                 fn = normalizePath(fn)

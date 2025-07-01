@@ -214,6 +214,11 @@
                 opacity: 1;
             }
         }
+
+        &:focus-visible {
+            outline-offset: 2px;
+            outline: 4px solid var(--pxt-focus-border);
+        }
     }
 
     > .common-button.square-button {
@@ -267,6 +272,11 @@
     .ui.button:hover, .ui.button:focus {
         background: var(--pxt-colors-blue-hover);
         color: var(--pxt-colors-blue-foreground);
+    }
+
+    .ui.button:focus-visible {
+        outline-offset: 2px;
+        outline: 4px solid var(--pxt-focus-border);
     }
 }
 

@@ -178,6 +178,11 @@ a.ui.card:focus,
     background-color: var(--pxt-secondary-background) !important;
     color: var(--pxt-secondary-foreground) !important;
 
+    &:hover, &:focus {
+        background-color: var(--pxt-secondary-background-hover) !important;
+        color: var(--pxt-secondary-foreground) !important;
+    }
+
     .header {
         color: var(--pxt-secondary-foreground) !important;
     }

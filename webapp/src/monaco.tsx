@@ -371,13 +371,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private errors: ErrorDisplayInfo[] = [];
     private callLocations: pxtc.LocationInfo[];
 
-    private userPreferencesSubscriber: data.DataSubscriber = {
-        subscriptions: [],
-        onDataChanged: () => {
-            this.onUserPreferencesChanged();
-        }
-    };
-
     private handleFlyoutWheel = (e: WheelEvent) => e.stopPropagation();
     private handleFlyoutScroll = (e: WheelEvent) => e.stopPropagation();
 
@@ -392,14 +385,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.getDisplayInfoForError = this.getDisplayInfoForError.bind(this);
         this.getErrorHelp = this.getErrorHelp.bind(this);
 
-        data.subscribe(this.userPreferencesSubscriber, auth.HIGHCONTRAST);
-
         ThemeManager.getInstance(document)?.subscribe("monaco", () => this.onUserPreferencesChanged());
     }
 
     onUserPreferencesChanged() {
-        const hc = data.getData<boolean>(auth.HIGHCONTRAST);
-
+        const hc = ThemeManager.isCurrentThemeHighContrast();
         if (this.loadMonacoPromise) this.defineEditorTheme(hc, true);
     }
 
@@ -640,7 +630,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     display(): JSX.Element {
-        const showErrorList = pxt.appTarget.appTheme.errorList;
+        const showErrorList = pxt.appTarget.appTheme.errorList && !pxt.shell.isTimeMachineEmbed() && !this.parent.state.debugging;
 
         return (
             <div id="monacoEditorArea" className={`monacoEditorArea`} style={{ direction: 'ltr' }}>
@@ -661,7 +651,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                         <ErrorList
                             onSizeChange={this.setErrorListState}
                             errors={this.errors}
-                            startDebugger={this.startDebugger}
+                            startDebugger={!!this.errors.find(a => a.stackFrames?.length) && this.startDebugger}
                             getErrorHelp={this.getErrorHelp}
                             note={
                                 this.parent.state.errorListNote && (
@@ -765,7 +755,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     startDebugger() {
-        pxt.tickEvent('errorList.startDebugger', null, { interactiveConsent: true })
+        pxt.tickEvent('errorList.startDebugger', {lang: this.fileType}, { interactiveConsent: true })
         this.parent.toggleDebugging()
     }
 
@@ -1377,6 +1367,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         ReactDOM.render(debuggerToolbox, container);
     }
 
+    focusToolbox(itemToFocus?: string): void {
+        if (this.isDebugging())  {
+            this.debuggerToolbox.focus();
+        } else if (this.toolbox) {
+            this.toolbox.focus(itemToFocus);
+        }
+    }
+
     getId() {
         return "monacoEditor"
     }
@@ -1916,8 +1914,19 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             let firstBlock = document.querySelector(".monacoBlock") as HTMLElement;
             if (firstBlock) {
                 firstBlock.focus();
-                firstBlock.click();
             }
+        }
+    }
+
+    public onToolboxBlur(e: React.FocusEvent, hasSearch: boolean): void {
+        const searchInputFocused = e.relatedTarget === (this.toolbox.refs.searchbox as toolbox.ToolboxSearch).refs.searchInput;
+        const flyoutFocused = e.relatedTarget === this.flyout.refs.flyout || (this.flyout.refs.flyout as HTMLElement).contains(e.relatedTarget);
+        if (((searchInputFocused && !hasSearch) || !searchInputFocused) && !flyoutFocused) {
+            this.hideFlyout();
+        }
+        if (!flyoutFocused) {
+            this.toolbox.clear();
+            this.toolbox.clearExpandedItem();
         }
     }
 

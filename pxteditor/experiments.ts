@@ -171,6 +171,12 @@ export function all(): Experiment[] {
             name: lf("Time Machine"),
             description: lf("Save and restore past versions of a project")
         },
+        {
+            id: "forceEnableAiErrorHelp",
+            name: lf("AI Error Explainer"),
+            description: lf("Get AI's help explaining errors in your code"),
+            feedbackUrl: "https://github.com/microsoft/pxt/issues/10694"
+        },
     ];
 
     return exps.filter(experiment => ids.indexOf(experiment.id) > -1)
