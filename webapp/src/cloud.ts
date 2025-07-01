@@ -743,3 +743,25 @@ export async function aiErrorExplainRequest(
 
     return result.resp.data;
 }
+
+export async function getHowToResponse(
+    goal: string,
+    code: string,
+    lang: "blocks" | "typescript" | "python",
+    target: string,
+    locale: string
+): Promise<string> {
+    const url = `/api/copilot/howto`;
+
+    const data = { lang, code, goal, target, locale };
+
+    const response = await auth.apiAsync(url, data, "POST");
+    if (!response.success) {
+        throw new StatusCodeError(
+            response.statusCode,
+            response.err || `Unable to reach AI. Error: ${response.statusCode}.\n${response.err}`
+        );
+    }
+
+    return response.resp;
+}

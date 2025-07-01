@@ -5315,6 +5315,16 @@ export class ProjectView
         this.setState({ activeTourConfig: config });
     }
 
+    async showHowTo() {
+        let goal: string = "Make my character jump";
+
+        const code = this.blocksEditor.serializeBlocks(false, true /* forceKeepIds */);
+
+        const response = await cloud.getHowToResponse(goal, code, "blocks", "arcade", "en");
+
+        console.log("HowTo response:", response);
+    }
+
     ///////////////////////////////////////////////////////////
     ////////////            Area menu             /////////////
     ///////////////////////////////////////////////////////////
