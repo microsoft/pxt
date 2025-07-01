@@ -63,6 +63,11 @@
             outline: 3px solid var(--pxt-focus-border);
             outline-offset: -4px;
         }
+
+        &:focus-visible::after {
+            outline: none;
+            border: none;
+        }
     }
 
     li.common-menu-dropdown-separator {

@@ -434,9 +434,31 @@ div.simframe > iframe {
     display: flex;
 }
 
-.settings-menuitem ul.common-menu-dropdown-pane {
-    overflow-y: auto;
-    max-height: calc(100vh - @mainMenuHeight);
+.settings-menuitem, .help-dropdown-menuitem {
+    flex-shrink: 0;
+
+    ul.common-menu-dropdown-pane {
+        overflow-y: auto;
+        max-height: calc(100vh - @mainMenuHeight);
+    }
+
+    & > button.common-button {
+        &:focus-visible {
+            background: var(--pxt-neutral-alpha10);
+            color: #fff;
+            outline: 3px solid var(--pxt-neutral-stencil3);
+            outline-offset: -3px
+        }
+
+        &:focus-visible::after {
+            outline: none;
+            border: none;
+        }
+
+        & > span > i {
+            opacity: 0.9;
+        }
+    }
 }
 
 
@@ -1041,8 +1063,11 @@ Field editors
         }
     }
 
-    .settings-menuitem ul.common-menu-dropdown-pane {
-        max-height: calc(100vh - @mobileMenuHeight);
+    .settings-menuitem, .help-dropdown-menuitem {
+        ul.common-menu-dropdown-pane {
+            overflow-y: auto;
+            max-height: calc(100vh - @mobileMenuHeight);
+        }
     }
 }
 

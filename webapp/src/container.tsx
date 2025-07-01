@@ -15,7 +15,6 @@ import UserInfo = pxt.editor.UserInfo;
 import SimState = pxt.editor.SimState;
 import { sendUpdateFeedbackTheme } from "../../react-common/components/controls/Feedback/FeedbackEventListener";
 import KeyboardControlsHelp from "./components/KeyboardControlsHelp";
-import { CheckboxIcon } from "../../react-common/components/controls/Checkbox";
 import { MenuDropdown, MenuItem } from "../../react-common/components/controls/MenuDropdown";
 
 // common menu items -- do not remove
@@ -53,37 +52,46 @@ function openKeyboardNavHelp(parent: IProjectView) {
     parent.toggleBuiltInSideDoc("keyboardControls", true);
 }
 
+function renderDocItems(parent: IProjectView, elements: pxt.DocMenuEntry[], className?: string): MenuItem[] {
+    const items: MenuItem[] = [];
 
-function renderDocItems(parent: IProjectView, elements: pxt.DocMenuEntry[], cls: string = "") {
-    return elements.map(m =>
-        m.tutorial ?
-            <DocsMenuItem key={"docsmenututorial" + m.path} role="menuitem" ariaLabel={pxt.Util.rlf(m.name)} text={pxt.Util.rlf(m.name)} className={"ui " + cls} parent={parent} path={m.path} onItemClick={openTutorial} />
-            : !/^\//.test(m.path) ?
-                <a key={"docsmenulink" + m.path} role="menuitem" aria-label={m.name} title={m.name} className={`ui item link ${cls}`} href={m.path} target="docs">{pxt.Util.rlf(m.name)}</a>
-                : <DocsMenuItem key={"docsmenu" + m.path} role="menuitem" ariaLabel={pxt.Util.rlf(m.name)} text={pxt.Util.rlf(m.name)} className={"ui " + cls} parent={parent} path={m.path} onItemClick={openDocs} />
-    );
-}
+    for (const docItem of elements) {
+        const baseItem = {
+            label: pxt.U.rlf(docItem.name),
+            title: pxt.U.rlf(docItem.name),
+            className,
+        };
 
-// Always append a link to the appropriate language (Blocks, JS, Python) to the help menu
-function getDocsLanguageItem(editor: DocsMenuEditorName, parent: IProjectView, cls: string = ""): JSX.Element {
-    const path = "/" + editor.toLowerCase();
-    // Use rlf as "Blocks" is localized above & "JavaScript" and "Python" should not be localized
-    return <DocsMenuItem key={"docsmenu" + path} role="menuitem" ariaLabel={pxt.Util.rlf(editor)} text={pxt.Util.rlf(editor)} className={`ui ${cls}`} parent={parent} path={path} onItemClick={openDocs} />
-}
-
-function getTourItem(parent: IProjectView, cls: string = ""): JSX.Element {
-    const path = "/tour";
-    return <DocsMenuItem key={"docsmenu" + path} role="menuitem" ariaLabel={lf("Tour")} text={lf("Tour")} className={`ui ${cls}`} parent={parent} path={path} onItemClick={startTour} />
-}
-
-function getKeyboardNavHelpItem(parent: IProjectView, cls: string = ""): JSX.Element {
-    const path = "/keyboardControls";
-    return <DocsMenuItem key={"docsmenu" + path} role="menuitem" ariaLabel={lf("Keyboard Controls")} text={lf("Keyboard Controls")} className={`ui ${cls}`} parent={parent} path={path} onItemClick={openKeyboardNavHelp} />
+        if (docItem.tutorial) {
+            items.push({
+                ...baseItem,
+                role: "menuitem",
+                onClick: () => openTutorial(parent, docItem.path),
+            })
+        }
+        else if (!/^\//.test(docItem.path)) {
+            items.push({
+                ...baseItem,
+                role: "link",
+                href: docItem.path,
+                ariaLabel: docItem.name
+            });
+        } else {
+            items.push({
+                ...baseItem,
+                role: "menuitem",
+                onClick: () => openDocs(parent, docItem.path),
+                ariaLabel: docItem.name
+            });
+        }
+    }
+    return items;
 }
 
 type DocsMenuEditorName = "Blocks" | "JavaScript" | "Python";
 interface DocsMenuProps extends ISettingsProps {
     editor: DocsMenuEditorName;
+    hasMainBlocksFile: boolean;
 }
 
 function showKeyboardControls() {
@@ -94,44 +102,50 @@ function showKeyboardControls() {
     return !pyOnly && !tsOnly && !noBlocks && !!pkg.mainEditorPkg().files[pxt.MAIN_BLOCKS];
 }
 
-export class DocsMenu extends data.PureComponent<DocsMenuProps & { hasMainBlocksFile: boolean }, {}> {
+export class DocsMenu extends data.PureComponent<DocsMenuProps, {}> {
     renderCore() {
-        const parent = this.props.parent;
+        const { parent, editor } = this.props;
         const targetTheme = pxt.appTarget.appTheme;
         const accessibleBlocksEnabled = data.getData<boolean>(auth.ACCESSIBLE_BLOCKS);
-        return <sui.DropdownMenu role="menuitem" icon="help circle large"
-            className="item mobile hide help-dropdown-menuitem" textClass={"landscape only"} title={lf("Help")} >
-            {this.props.hasMainBlocksFile && parent.isBlocksEditor() && showKeyboardControls() && accessibleBlocksEnabled && getKeyboardNavHelpItem(parent)}
-            {targetTheme.tours?.editor && getTourItem(parent)}
-            {renderDocItems(parent, targetTheme.docMenu)}
-            {getDocsLanguageItem(this.props.editor, parent)}
-        </sui.DropdownMenu>
-    }
-}
 
+        const items: MenuItem[] = [];
 
-interface DocsMenuItemProps extends sui.ItemProps {
-    parent: IProjectView;
-    path: string;
-    onItemClick: (parent: IProjectView, path: string) => void;
-}
+        if (this.props.hasMainBlocksFile && parent.isBlocksEditor() && showKeyboardControls() && accessibleBlocksEnabled) {
+            items.push({
+                role: "menuitem",
+                label: lf("Keyboard Controls"),
+                title: lf("Keyboard Controls"),
+                onClick: () => openKeyboardNavHelp(parent)
+            });
+        }
 
-class DocsMenuItem extends sui.StatelessUIElement<DocsMenuItemProps> {
+        if (targetTheme.tours?.editor) {
+            items.push({
+                role: "menuitem",
+                label: lf("Tour"),
+                title: lf("Tour"),
+                onClick: () => startTour(parent)
+            });
+        }
 
-    constructor(props: DocsMenuItemProps) {
-        super(props);
+        items.push(...renderDocItems(parent, targetTheme.docMenu));
 
-        this.handleClick = this.handleClick.bind(this);
-    }
+        items.push({
+            role: "menuitem",
+            label: pxt.Util.rlf(this.props.editor),
+            title: pxt.Util.rlf(this.props.editor),
+            onClick: () => openDocs(parent,  "/" + editor.toLowerCase())
+        });
 
-    handleClick() {
-        const { onItemClick, parent, path } = this.props;
-        onItemClick(parent, path);
-    }
-
-    renderCore() {
-        const { onClick, onItemClick, parent, path, ...rest } = this.props;
-        return <sui.Item {...rest} onClick={this.handleClick} />
+        return (
+            <MenuDropdown
+                role="menuitem"
+                title={lf("Help")}
+                className="mobile-hidden help-dropdown-menuitem"
+                icon="icon help circle large"
+                items={items}
+            />
+        );
     }
 }
 
@@ -150,7 +164,6 @@ export interface SettingsMenuState {
 }
 
 export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenuState> {
-    dropdown: sui.DropdownMenu;
     constructor(props: SettingsMenuProps) {
         super(props);
         this.state = {
@@ -178,7 +191,6 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.showTurnBackTimeDialog = this.showTurnBackTimeDialog.bind(this);
         this.print = this.print.bind(this);
         this.signOutGithub = this.signOutGithub.bind(this);
-        this.hide = this.hide.bind(this);
     }
 
     showExitAndSaveDialog() {
@@ -292,13 +304,8 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.props.parent.printCode();
     }
 
-    hide() {
-        this.dropdown?.hide();
-    }
-
     signOutGithub() {
         pxt.tickEvent("menu.github.signout");
-        this.hide();
         this.props.parent.signOutGithub();
     }
 
@@ -481,7 +488,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
 
         if (extDownloadMenuItems.length) {
             items.push({ role: "separator" });
-            // FIXME
+            // FIXME: need to update mc to support this
             extDownloadMenuItems.forEach(props => {
                 items.push({
                     role: "menuitem",
@@ -532,36 +539,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
 
         if (docItems?.length) {
             items.push({ role: "separator", className: "mobile-only" });
-            for (const docItem of docItems) {
-                const baseItem = {
-                    label: pxt.U.rlf(docItem.name),
-                    title: pxt.U.rlf(docItem.name),
-                    className: "mobile-only",
-                };
-
-                if (docItem.tutorial) {
-                    items.push({
-                        ...baseItem,
-                        role: "menuitem",
-                        onClick: () => openTutorial(this.props.parent, docItem.path),
-                    })
-                }
-                else if (!/^\//.test(docItem.path)) {
-                    items.push({
-                        ...baseItem,
-                        role: "link",
-                        href: docItem.path,
-                        ariaLabel: docItem.name
-                    });
-                } else {
-                    items.push({
-                        ...baseItem,
-                        role: "menuitem",
-                        onClick: () => openDocs(this.props.parent, docItem.path),
-                        ariaLabel: docItem.name
-                    });
-                }
-            }
+            items.push(...renderDocItems(this.props.parent, docItems, "mobile-only"));
         }
 
         if (githubUser) {
@@ -622,7 +600,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         }
 
         return (
-            <MenuDropdown items={items} title={lf("Settings")} icon="icon setting" className="settings-menuitem"/>
+            <MenuDropdown items={items} title={lf("Settings")} icon="icon setting large" className="settings-menuitem" />
         );
     }
 }
