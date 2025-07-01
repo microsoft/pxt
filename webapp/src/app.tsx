@@ -5317,11 +5317,31 @@ export class ProjectView
     }
 
     async showHowTo() {
-        let goal: string = "Make my character jump";
+        const opts: core.PromptOptions = {
+            header: lf("How To "),
+            body: lf("What would you like to learn how to do?"),
+            agreeLbl: lf("Generate Tutorial"),
+            placeholder: lf("Make my character jump"),
+            hideCancel: true,
+        };
 
-        const code = this.blocksEditor.serializeBlocks(false, true /* forceKeepIds */);
+        const goal = await core.promptAsync(opts);
 
-        const response = await cloud.getHowToResponse(goal, code, "blocks", "arcade", "en");
+        // User cancelled the dialog
+        if (goal === null) {
+            return;
+        }
+
+        // User didn't enter anything
+        let trimmedGoal = goal?.trim();
+        if (!trimmedGoal) {
+            core.warningNotification(lf("Please enter a goal for your tutorial"));
+            return;
+        }
+
+        const code = this.blocksEditor.serializeBlocks(false);
+
+        const response = await cloud.getHowToResponse(trimmedGoal, code, "blocks", "arcade", "en");
 
         console.log("HowTo response:", response);
 
