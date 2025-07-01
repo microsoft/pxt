@@ -2566,9 +2566,10 @@ export class ProjectView
         await this.loadHeaderAsync(installed, editorState);
     }
 
-    importTutorialAsync(md: string) {
+    importTutorialAsync(md: string, mutate?: (options: pxt.tutorial.TutorialOptions) => void) {
         try {
             const { options, editor } = pxt.tutorial.getTutorialOptions(md, "untitled", "untitled", "", false);
+            mutate?.(options);
             const dependencies = pxt.gallery.parsePackagesFromMarkdown(md);
             this.hintManager.clearViewedHints();
 
@@ -5323,6 +5324,26 @@ export class ProjectView
         const response = await cloud.getHowToResponse(goal, code, "blocks", "arcade", "en");
 
         console.log("HowTo response:", response);
+
+        if (response) {
+            try {
+                // Remove markdown code fencing if present (```markdown ... ``` or ``` ... ```)
+                let cleanedResponse = response.trim();
+                const fenceRegex = /^```(?:markdown)?\s*\n([\s\S]*?)\n```$/;
+                const match = fenceRegex.exec(cleanedResponse);
+                if (match) {
+                    cleanedResponse = match[1];
+                }
+
+                await this.importTutorialAsync(cleanedResponse, options => {
+                    // Specify user's current code as template code
+                    options.templateCode = code;
+                });
+            } catch (e) {
+                console.error("Failed to start HowTo tutorial:", e);
+                core.errorNotification(lf("Failed to create tutorial from response"));
+            }
+        }
     }
 
     ///////////////////////////////////////////////////////////
