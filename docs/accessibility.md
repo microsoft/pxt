@@ -20,7 +20,7 @@ You can use the `Tab` key to jump between MakeCode controls. Use `Shift`+`Tab` t
 
 The micro:bit MakeCode block editor allows you to use keyboard controls to create programs using blocks. Press `Tab` to reach 'Enable blocks keyboard controls' and press `Enter`. 
 
-[add screenshot showing jumplink when available]
+![Enable blocks keyboard controls](static/images/accessibility/enable-blocks-keyboard.png)
 
 To turn the keyboard controls off, use `Tab` to navigate to the **Settings** menu, you will see a check next to **Keyboard Controls** when it is enabled, select **Keyboard Controls** to uncheck and disable keyboard controls. 
 
