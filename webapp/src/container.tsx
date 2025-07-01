@@ -531,6 +531,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         }
 
         if (docItems?.length) {
+            items.push({ role: "separator", className: "mobile-only" });
             for (const docItem of docItems) {
                 const baseItem = {
                     label: pxt.U.rlf(docItem.name),
@@ -621,8 +622,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         }
 
         return (
-            <MenuDropdown items={items} title={lf("Settings")} icon="icon setting" />
-
+            <MenuDropdown items={items} title={lf("Settings")} icon="icon setting" className="settings-menuitem"/>
         );
     }
 }
@@ -1022,32 +1022,4 @@ export class SandboxFooter extends data.PureComponent<SandboxFooterProps, {}> {
             <span className="item"><a role="button" className="ui thin portrait only" title={compileTooltip} onClick={this.compile}><sui.Icon icon={`icon ${pxt.appTarget.appTheme.downloadIcon || 'download'}`} />{pxt.appTarget.appTheme.useUploadMessage ? lf("Upload") : lf("Download")}</a></span>
         </div>;
     }
-}
-
-interface CheckboxMenuItemProps {
-    label: string;
-    isChecked: boolean;
-    onClick: () => void;
-}
-
-const CheckboxMenuItem = (props: CheckboxMenuItemProps) => {
-    const { label, isChecked, onClick } = props;
-
-    return (
-        <div
-            role="menuitemcheckbox"
-            aria-checked={isChecked}
-            tabIndex={0}
-            className="ui item link menuitemcheckbox"
-            onClick={onClick}
-            onKeyDown={fireClickOnEnter}
-        >
-            <CheckboxIcon
-                isChecked={isChecked}
-            />
-            <span>
-                {label}
-            </span>
-        </div>
-    );
 }

@@ -25,7 +25,7 @@
         color: var(--pxt-neutral-foreground1);
     }
 
-    li.common-menu-dropdown-item, li.common-menu-dropdown-item.common-button {
+    li.common-menu-dropdown-item, li.common-menu-dropdown-item.common-button, a.common-menu-dropdown-link-item {
         white-space: nowrap;
         background: var(--pxt-neutral-background1);
         color: var(--pxt-neutral-foreground1);
@@ -51,8 +51,17 @@
             margin-right: .875rem;
         }
 
+        &:hover {
+            text-decoration: none;
+        }
+
         &:hover:not(.disabled) {
             filter: grayscale(.15) brightness(.85) contrast(1.3);
+        }
+
+        &:focus-visible {
+            outline: 3px solid var(--pxt-focus-border);
+            outline-offset: -4px;
         }
     }
 

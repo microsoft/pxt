@@ -28,6 +28,7 @@ export interface MenuLinkItem extends ControlProps {
     role: "link";
     label: string;
     href: string;
+    onClick?: () => void;
 }
 
 export interface MenuDropdownProps extends ControlProps {
@@ -130,16 +131,17 @@ export const MenuDropdown = (props: MenuDropdownProps) => {
                     focusFirstItem={true}
                 >
                     {menuGroups.map((group, groupIndex) =>
-                        <>
-                            <li key={groupIndex} role="none">
+                        <React.Fragment key={groupIndex}>
+                            <li role="none">
                                 <ul role="group">
                                     {group.items.map(
                                         (item, itemIndex) => {
+                                            const key = `${groupIndex}-${itemIndex}`;
                                             if (item.role === "menuitem") {
                                                 return (
                                                     <MenuDropdownItemImpl
-                                                        key={itemIndex}
                                                         {...item}
+                                                        key={key}
                                                         onClick={() => {
                                                             setExpanded(false);
                                                             item.onClick?.();
@@ -150,10 +152,11 @@ export const MenuDropdown = (props: MenuDropdownProps) => {
                                             else if (item.role === "link") {
                                                 return (
                                                     <MenuLinkItemImpl
-                                                        key={itemIndex}
                                                         {...item}
+                                                        key={key}
                                                         onClick={() => {
                                                             setExpanded(false);
+                                                            item.onClick?.();
                                                         }}
                                                     />
                                                 )
@@ -161,8 +164,8 @@ export const MenuDropdown = (props: MenuDropdownProps) => {
                                             else {
                                                 return (
                                                     <MenuCheckboxItemImpl
-                                                        key={itemIndex}
                                                         {...item}
+                                                        key={key}
                                                         onChange={newValue => {
                                                             setExpanded(false);
                                                             item.onChange?.(newValue);
@@ -176,12 +179,11 @@ export const MenuDropdown = (props: MenuDropdownProps) => {
                             </li>
                             {groupIndex < menuGroups.length - 1 &&
                                 <li
-                                    key={`separator-${groupIndex}`}
                                     role="separator"
                                     className={classList("common-menu-dropdown-separator", group.className)}
                                 />
                             }
-                        </>
+                        </React.Fragment>
                     )}
                 </FocusTrap>
             </ul>
@@ -252,18 +254,22 @@ export const MenuLinkItemImpl = (props: MenuLinkItem & { onClick?: () => void })
     } = props;
 
     return (
-        <li
+        <a
             role="none"
             className={classList("common-menu-dropdown-item", "common-menu-dropdown-link-item", className)}
             aria-label={ariaLabel}
             aria-hidden={ariaHidden}
             aria-describedby={ariaDescribedBy}
             id={id}
+            tabIndex={-1}
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={onClick}
+            onKeyDown={fireClickOnEnter}
         >
-            <a role="menuitem" href={href} target="_blank" rel="noopener noreferrer" onClick={onClick}>
-                {label}
-            </a>
-        </li>
+            {label}
+        </a>
     );
 }
 

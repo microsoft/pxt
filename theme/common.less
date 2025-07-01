@@ -434,6 +434,10 @@ div.simframe > iframe {
     display: flex;
 }
 
+.settings-menuitem ul.common-menu-dropdown-pane {
+    overflow-y: auto;
+    max-height: calc(100vh - @mainMenuHeight);
+}
 
 
 /* toggle style */
@@ -1035,6 +1039,10 @@ Field editors
                 display: none;
             }
         }
+    }
+
+    .settings-menuitem ul.common-menu-dropdown-pane {
+        max-height: calc(100vh - @mobileMenuHeight);
     }
 }
 
