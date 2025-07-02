@@ -2848,7 +2848,10 @@ export class ProjectView
     }
 
     private editorLoaded() {
-        pxt.tickEvent('app.editor', { projectHeaderId: this.state.header?.id });
+        pxt.tickEvent('app.editor', {
+            projectHeaderId: this.state.header?.id,
+            fileType: this.editorFile?.getExtension()
+        });
     }
 
     unloadProjectAsync(home?: boolean) {
@@ -5225,12 +5228,12 @@ export class ProjectView
         this.setState({ greenScreen: greenScreenOn });
     }
 
-    async toggleAccessibleBlocks() {
+    async toggleAccessibleBlocks(eventSource: string) {
         const nextEnabled = !this.getData<boolean>(auth.ACCESSIBLE_BLOCKS);
         if (nextEnabled) {
             pxt.storage.setLocal("onboardAccessibleBlocks", "1")
         }
-        await core.toggleAccessibleBlocks()
+        await core.toggleAccessibleBlocks(eventSource)
         this.reloadEditor();
     }
 
@@ -5327,6 +5330,7 @@ export class ProjectView
                 // Skip on home page or if a dialog is open.
                 return state;
             }
+            pxt.tickEvent("app.toggleareamenu", { open: !this.state.areaMenuOpen ? "true" : "false" });
             return { areaMenuOpen: !areaMenuOpen }
         });
     }
@@ -6384,6 +6388,12 @@ document.addEventListener("DOMContentLoaded", async () => {
             initHashchange();
             socketbridge.tryInit();
             electron.initElectron(theEditor);
+            pxt.tickEvent(
+                "accessibilty.accessibleBlocksEnabledForSession",
+                {
+                    enabled: data.getData<boolean>(auth.ACCESSIBLE_BLOCKS) ? "true" : "false",
+                }
+            );
         })
         .then(() => {
             const showHome = theEditor.shouldShowHomeScreen();
