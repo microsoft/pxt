@@ -2100,6 +2100,8 @@ export class ProjectView
 
         if (projectname === pxt.PYTHON_PROJECT_NAME && header.tutorial.templateLanguage === "python") {
             currentText[pxt.MAIN_PY] = template;
+        } else if (header.tutorial.templateLanguage === "blocks") {
+            currentText[pxt.MAIN_BLOCKS] = template;
         }
         else if (projectname === pxt.JAVASCRIPT_PROJECT_NAME) {
             currentText[pxt.MAIN_TS] = template;
@@ -2566,7 +2568,7 @@ export class ProjectView
         await this.loadHeaderAsync(installed, editorState);
     }
 
-    importTutorialAsync(md: string, mutate?: (options: pxt.tutorial.TutorialOptions) => void) {
+    importTutorialAsync(md: string, name?: string, mutate?: (options: pxt.tutorial.TutorialOptions) => void) {
         try {
             const { options, editor } = pxt.tutorial.getTutorialOptions(md, "untitled", "untitled", "", false);
             mutate?.(options);
@@ -2574,7 +2576,7 @@ export class ProjectView
             this.hintManager.clearViewedHints();
 
             return this.createProjectAsync({
-                name: "untitled",
+                name: name || "untitled",
                 tutorial: options,
                 preferredEditor: editor,
                 dependencies
@@ -5318,10 +5320,10 @@ export class ProjectView
 
     async showHowTo() {
         const opts: core.PromptOptions = {
-            header: lf("How To "),
-            body: lf("What would you like to learn how to do?"),
+            header: lf("What would you like to learn how to do?"),
             agreeLbl: lf("Generate Tutorial"),
             placeholder: lf("Make my character jump"),
+            hasCloseIcon: true,
             hideCancel: true,
         };
 
@@ -5343,7 +5345,7 @@ export class ProjectView
 
         const response = await cloud.getHowToResponse(trimmedGoal, code, "blocks", "arcade", "en");
 
-        console.log("HowTo response:", response);
+        console.log("How-To Response:", response);
 
         if (response) {
             try {
@@ -5355,9 +5357,19 @@ export class ProjectView
                     cleanedResponse = match[1];
                 }
 
-                await this.importTutorialAsync(cleanedResponse, options => {
+                // Fix missing backticks around ||...|| blocks
+                // Replace patterns like "||controller:on A button pressed||" with "``||controller:on A button pressed||``"
+                // Only add backticks if they're not already properly wrapped
+                cleanedResponse = cleanedResponse.replace(/(?<!``)((?<!\S)(\|\|[^|]+\|\|)(?!\S))(?!``)/g, '``$2``');
+
+                const newName = this.state.projectName ? this.state.projectName + " - How To" : lf("How To");
+
+                console.log("Cleaned How-To Response:", cleanedResponse);
+
+                await this.importTutorialAsync(cleanedResponse, newName, options => {
                     // Specify user's current code as template code
                     options.templateCode = code;
+                    options.templateLanguage = "blocks";
                 });
             } catch (e) {
                 console.error("Failed to start HowTo tutorial:", e);
