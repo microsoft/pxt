@@ -5,9 +5,9 @@ import * as ReactTooltip from 'react-tooltip';
 
 import * as data from "./data";
 import * as core from "./core";
-import * as auth from "./auth";
 import { fireClickOnEnter } from "./util";
 import { focusLastActive } from "../../react-common/components/util";
+import { ThemeManager } from "../../react-common/components/theming/themeManager";
 
 export const appElement = document.getElementById('content');
 
@@ -1311,7 +1311,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
             'modal transition visible active',
             className
         ]);
-        const hc = this.getData<boolean>(auth.HIGHCONTRAST);
+        const hc = ThemeManager.isCurrentThemeHighContrast();
         const portalClassName = cx([
             hc ? 'hc' : '',
             mountClasses
