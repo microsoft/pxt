@@ -20,7 +20,7 @@ export default function Render() {
         await sendReactionAsync(index);
     };
 
-    const onReactionsButtonRef = (ref: HTMLButtonElement) => {
+    const onReactionsButtonRef = (ref: Element) => {
         setReactionsButtonRef(ref);
     };
 

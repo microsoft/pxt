@@ -36,17 +36,14 @@ export default function Render() {
 
     const onPrivacyClicked = () => {
         pxt.tickEvent("mp.settingsmenu.privacy");
-        window.open(privacyUrl);
     };
 
     const onTermsofUseClicked = () => {
         pxt.tickEvent("mp.settingsmenu.termsofuse");
-        window.open(termsOfUseUrl);
     };
 
     const onOnlineSafetyClicked = () => {
         pxt.tickEvent("mp.settingsmenu.onlinesafety");
-        window.open(safetyUrl);
     };
 
     const onHomeClicked = () => {
@@ -143,6 +140,7 @@ export default function Render() {
 
         if (authStatus === "signed-in") {
             items.push({
+                role: "menuitem",
                 id: "signout",
                 title: lf("Sign Out"),
                 label: lf("Sign Out"),
@@ -202,8 +200,9 @@ export default function Render() {
 
         if (privacyUrl) {
             items.push({
+                role: "link",
                 id: "privacy",
-                title: lf("Privacy"),
+                href: privacyUrl,
                 label: lf("Privacy"),
                 onClick: onPrivacyClicked,
             });
@@ -211,17 +210,19 @@ export default function Render() {
 
         if (termsOfUseUrl) {
             items.push({
+                role: "link",
                 id: "termsOfUse",
-                title: lf("Terms of Use"),
                 label: lf("Terms of Use"),
+                href: termsOfUseUrl,
                 onClick: onTermsofUseClicked,
             });
         }
 
         items.push({
+            role: "link",
             id: "safety",
-            title: lf("Online Safety"),
             label: lf("Online Safety"),
+            href: safetyUrl,
             onClick: onOnlineSafetyClicked,
         });
 
@@ -229,6 +230,7 @@ export default function Render() {
 
         if (shareCode && approvedLinks.indexOf(shareCode) < 0) {
             items.push({
+                role: "menuitem",
                 id: "report",
                 title: lf("Report Abuse"),
                 label: lf("Report Abuse"),

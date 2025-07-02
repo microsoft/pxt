@@ -124,8 +124,8 @@ const ScanQR: React.FC<IProps> = ({}) => {
     const [helpLinkRef, setHelpLinkRef] = useState<HTMLButtonElement | null>(
         null
     );
-    const handleHelpLinkRef = (input: HTMLButtonElement) => {
-        setHelpLinkRef(input);
+    const handleHelpLinkRef = (input: Element) => {
+        setHelpLinkRef(input as HTMLButtonElement);
     };
     useMakeNavigable(helpLinkRef);
 
