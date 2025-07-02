@@ -5370,11 +5370,33 @@ export class ProjectView
                 const newName = this.state.projectName ? this.state.projectName + " - How To" : lf("How To");
 
                 console.log("Cleaned How-To Response:", cleanedResponse);
+                const currentHeader = this.state.header;
+                const currentText = await workspace.getTextAsync(currentHeader.id);
 
                 await this.importTutorialAsync(cleanedResponse, newName, options => {
                     // Specify user's current code as template code
                     options.templateCode = code;
                     options.templateLanguage = "blocks";
+
+                    // Preserve assets from the current project
+                    const assetFiles: pxt.Map<string> = {};
+                    if (currentText[pxt.IMAGES_JRES] && currentText[pxt.IMAGES_JRES] !== "{}") {
+                        assetFiles[pxt.IMAGES_JRES] = currentText[pxt.IMAGES_JRES];
+                    }
+                    if (currentText[pxt.TILEMAP_JRES] && currentText[pxt.TILEMAP_JRES] !== "{}") {
+                        assetFiles[pxt.TILEMAP_JRES] = currentText[pxt.TILEMAP_JRES];
+                    }
+                    if (currentText[pxt.IMAGES_CODE] && currentText[pxt.IMAGES_CODE].trim() !== "") {
+                        assetFiles[pxt.IMAGES_CODE] = currentText[pxt.IMAGES_CODE];
+                    }
+                    if (currentText[pxt.TILEMAP_CODE] && currentText[pxt.TILEMAP_CODE].trim() !== "") {
+                        assetFiles[pxt.TILEMAP_CODE] = currentText[pxt.TILEMAP_CODE];
+                    }
+
+                    // Only set assetFiles if we have any content to preserve
+                    if (Object.keys(assetFiles).length > 0) {
+                        options.assetFiles = assetFiles;
+                    }
                 });
             } catch (e) {
                 console.error("Failed to start HowTo tutorial:", e);
