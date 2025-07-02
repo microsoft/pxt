@@ -5343,7 +5343,12 @@ export class ProjectView
 
         const code = this.blocksEditor.serializeBlocks(false);
 
-        const response = await cloud.getHowToResponse(trimmedGoal, code, "blocks", "arcade", "en");
+        const response = await cloud.getHowToResponse(
+            trimmedGoal,
+            code,
+            "blocks",
+            pxt.appTarget.nickname || pxt.appTarget.name,
+            pxt.Util.userLanguage());
 
         console.log("How-To Response:", response);
 
