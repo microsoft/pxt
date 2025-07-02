@@ -35,7 +35,7 @@ import MuteState = pxt.editor.MuteState;
 import SimState = pxt.editor.SimState;
 
 
-import { DuplicateOnDragConnectionChecker } from "../../pxtblocks/plugins/duplicateOnDrag";
+import { DuplicateOnDragConnectionChecker, shouldDuplicateOnDrag } from "../../pxtblocks/plugins/duplicateOnDrag";
 import { PathObject } from "../../pxtblocks/plugins/renderer/pathObject";
 import { Measurements } from "./constants";
 import { flow, initCopyPaste } from "../../pxtblocks";
@@ -689,6 +689,33 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     return true
                 }
             });
+
+            const startMove = Blockly.ShortcutRegistry.registry.getRegistry()["start_move"];
+            Blockly.ShortcutRegistry.registry.unregister(startMove.name);
+            Blockly.ShortcutRegistry.registry.register({
+                ...startMove,
+                callback: (workspace, e, shortcut, scope) => {
+                    const block = workspace?.getCursor()?.getSourceBlock();
+
+                    if (block && shouldDuplicateOnDrag(block)) {
+                        const xml = Blockly.Xml.blockToDom(block);
+                        const clone = Blockly.Xml.domToBlock(xml as Element, workspace);
+                        clone.setShadow(false);
+
+                        const position = block.getRelativeToSurfaceXY();
+                        const snapRadius = Blockly.config.snapRadius;
+
+                        clone.moveBy(
+                            position.x + snapRadius,
+                            position.y + snapRadius,
+                        );
+
+                        Blockly.getFocusManager().focusNode(clone as Blockly.BlockSvg);
+                    }
+
+                    return startMove.callback!(workspace, e, shortcut, scope);
+                }
+            })
 
             // This must come after plugin initialization to override context menu
             // precondition functions set by the keyboard navigation plugin.
@@ -2651,7 +2678,9 @@ function cut(workspace: Blockly.WorkspaceSvg, _e: Event, _shortcut: Blockly.Shor
             copyWorkspace,
             pkg.mainEditorPkg().header.id
         );
-        focused.checkAndDelete();
+        if (!shouldDuplicateOnDrag(focused)) {
+            focused.checkAndDelete();
+        }
         return true;
     } else if (
         Blockly.isDeletable(focused) &&
