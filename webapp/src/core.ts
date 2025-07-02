@@ -340,14 +340,7 @@ export const ENTER_KEY = 13;
 export const SPACE_KEY = 32;
 
 export function getHighContrastOnce(): boolean {
-    // User preference gets priority over theme setting.
-    if (data.getData<boolean>(auth.HIGHCONTRAST)) {
-        return true;
-    }
-
-    const themeManager = ThemeManager.getInstance(document);
-    const currentTheme = themeManager.getCurrentColorTheme();
-    return themeManager.isHighContrast(currentTheme?.id);
+    return ThemeManager.isCurrentThemeHighContrast();
 }
 export function toggleHighContrast() {
     setHighContrast(!getHighContrastOnce())

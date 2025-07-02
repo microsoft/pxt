@@ -5,7 +5,7 @@
 /* Reference import */
 @import (reference) "semantic.less";
 
-.navigate-regions-container {
+.area-menu-container {
     position: fixed;
     top: 0;
     left: 0;
@@ -16,14 +16,14 @@
     height: 100%;
     z-index: @modalDimmerZIndex;
 
-    .region-button {
+    .area-button {
         position: absolute;
         background-color: var(--pxt-neutral-alpha50);
         border-radius: 0;
         border: 3px solid var(--pxt-neutral-background1);
         padding: 0;
 
-        &.simulator-region {
+        &.simulator-area {
             // Must be more than the z-index of 1 that high contrast mode adds to all buttons.
             z-index: 2 !important;
         }

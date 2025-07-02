@@ -497,7 +497,7 @@ namespace pxsim {
         }
 
         class Channel {
-            generator: OscillatorNode | AudioBufferSourceNode;
+            generator: AudioNode;
             gain: GainNode
 
             constructor() {
@@ -510,7 +510,9 @@ namespace pxsim {
                 if (this.gain)
                     disconnectVca(this.gain, this.generator)
                 else if (this.generator) {
-                    this.generator.stop()
+                    if ((this.generator as OscillatorNode | AudioBufferSourceNode).stop) {
+                        (this.generator as OscillatorNode | AudioBufferSourceNode).stop();
+                    }
                     this.generator.disconnect()
                 }
                 this.gain = null
@@ -903,9 +905,9 @@ namespace pxsim {
 
                 channel.gain.gain.value = gain;
                 channel.generator = node;
-                channel.generator.buffer = buf;
-                channel.generator.connect(channel.gain);
-                channel.generator.start(0);
+                (channel.generator as AudioBufferSourceNode).buffer = buf;
+                (channel.generator as AudioBufferSourceNode).connect(channel.gain);
+                (channel.generator as AudioBufferSourceNode).start(0);
 
                 channel.generator.addEventListener("ended", () => {
                     channel.remove();
@@ -919,6 +921,41 @@ namespace pxsim {
                 cancel
             };
         }
+
+        export function createAudioSourceNode(uri: string, clippingThreshold: number, volume: number): HTMLAudioElement {
+            const audioElement = new Audio(uri);
+            const source = context().createMediaElementSource(audioElement);
+            const distortion = context().createWaveShaper();
+            distortion.curve = makeDistortionCurve(clippingThreshold);
+            distortion.oversample = "4x";
+
+            const channel = getChannel();
+            channel.generator = distortion;
+            channel.generator.connect(channel.gain);
+            source.connect(distortion);
+            // scaling the volume to be a multiplier of 0.1
+            // 0.1 is what sounded the best when testing audio recordings against other music blocks
+            channel.gain.gain.value = volume * 0.1;
+
+            return audioElement;
+        }
+
+        function makeDistortionCurve(clippingThreshold: number) {
+            const n_samples = 44100;
+            const curve = new Float32Array(n_samples);
+            clippingThreshold = Math.max(0.01, Math.min(1, clippingThreshold));
+
+            const slope = 1 / clippingThreshold;
+
+            for (let i = 0; i < n_samples; i++) {
+                const x = (i * 2) / n_samples - 1;
+                const scaled = x * slope;
+                curve[i] = Math.max(-1, Math.min(1, scaled));
+            }
+
+            return curve;
+        }
+
 
         function getChannel() {
             if (channels.length > 20)
