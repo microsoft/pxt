@@ -371,13 +371,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private errors: ErrorDisplayInfo[] = [];
     private callLocations: pxtc.LocationInfo[];
 
-    private userPreferencesSubscriber: data.DataSubscriber = {
-        subscriptions: [],
-        onDataChanged: () => {
-            this.onUserPreferencesChanged();
-        }
-    };
-
     private handleFlyoutWheel = (e: WheelEvent) => e.stopPropagation();
     private handleFlyoutScroll = (e: WheelEvent) => e.stopPropagation();
 
@@ -392,14 +385,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.getDisplayInfoForError = this.getDisplayInfoForError.bind(this);
         this.getErrorHelp = this.getErrorHelp.bind(this);
 
-        data.subscribe(this.userPreferencesSubscriber, auth.HIGHCONTRAST);
-
         ThemeManager.getInstance(document)?.subscribe("monaco", () => this.onUserPreferencesChanged());
     }
 
     onUserPreferencesChanged() {
-        const hc = data.getData<boolean>(auth.HIGHCONTRAST);
-
+        const hc = ThemeManager.isCurrentThemeHighContrast();
         if (this.loadMonacoPromise) this.defineEditorTheme(hc, true);
     }
 

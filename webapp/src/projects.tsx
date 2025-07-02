@@ -5,18 +5,17 @@ import * as ReactDOM from "react-dom";
 import * as data from "./data";
 import * as sui from "./sui";
 import * as core from "./core";
-import * as cloudsync from "./cloudsync";
 import * as auth from "./auth";
-import * as identity from "./identity";
 import * as codecard from "./codecard"
 import * as carousel from "./carousel";
 import { showAboutDialogAsync } from "./dialogs";
 import { fireClickOnEnter } from "./util";
+import { sendUpdateFeedbackTheme } from "../../react-common/components/controls/Feedback/FeedbackEventListener";
+import { ThemeManager } from "../../react-common/components/theming/themeManager";
 
 import IProjectView = pxt.editor.IProjectView;
 import ISettingsProps = pxt.editor.ISettingsProps;
 import UserInfo = pxt.editor.UserInfo;
-import { sendUpdateFeedbackTheme } from "../../react-common/components/controls/Feedback/FeedbackEventListener";
 
 
 // This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
@@ -301,7 +300,7 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
 
     renderCore() {
         const hasIdentity = pxt.auth.hasIdentity();
-        const highContrast = this.getData<boolean>(auth.HIGHCONTRAST)
+        const highContrast = ThemeManager.isCurrentThemeHighContrast()
         const targetTheme = pxt.appTarget.appTheme;
         // Targets with identity show github user on the profile screen.
         const githubUser = !hasIdentity && this.getData("github:user") as UserInfo;
@@ -1066,7 +1065,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         const { name, description, largeImageUrl, videoUrl,
             youTubeId, youTubePlaylistId, buttonLabel, actionIcon, cardType, tags, otherActions } = this.props;
 
-        const highContrast = this.getData<boolean>(auth.HIGHCONTRAST)
+        const highContrast = ThemeManager.isCurrentThemeHighContrast();
         const tagColors: pxt.Map<string> = pxt.appTarget.appTheme.tagColors || {};
         const descriptions = description && description.split("\n");
         const image = !highContrast && (largeImageUrl || (youTubeId && `https://img.youtube.com/vi/${youTubeId}/0.jpg`));
