@@ -26,6 +26,11 @@ export class ThemeManager {
         return ThemeManager.instances.get(doc);
     }
 
+    public static isCurrentThemeHighContrast(doc: Document = document): boolean {
+        const themeManager = ThemeManager.getInstance(doc);
+        return themeManager.isHighContrast(themeManager.getCurrentColorTheme()?.id);
+    }
+
     public getCurrentColorTheme(): Readonly<pxt.ColorThemeInfo> {
         return this.currentTheme;
     }
