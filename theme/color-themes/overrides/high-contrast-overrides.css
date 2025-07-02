@@ -106,3 +106,29 @@ div.field .ui.toggle.checkbox input:checked~label:before {
 .blocksEditorOuter #blocklyTrashIcon {
     color: var(--pxt-primary-foreground);
 }
+
+/*
+ * Teaching Bubbles
+ */
+.teaching-bubble,
+.teaching-bubble .teaching-bubble-navigation-buttons > .common-button {
+    background: var(--pxt-neutral-background1) !important;
+    color: var(--pxt-neutral-foreground1) !important;
+    border: solid var(--pxt-neutral-foreground1) !important;
+}
+
+.teaching-bubble-cutout {
+    border: 0.25rem solid var(--pxt-neutral-alpha20);
+}
+
+.teaching-bubble .ai-footer {
+    opacity: 1 !important;
+}
+
+.teaching-bubble-arrow,
+.teaching-bubble .ai-footer-text,
+.teaching-bubble .feedback-button,
+.teaching-bubble .feedback-button.disabled,
+.teaching-bubble .teaching-bubble-steps {
+    color: var(--pxt-neutral-foreground1) !important;
+}
