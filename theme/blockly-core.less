@@ -209,6 +209,9 @@ div.blocklyWidgetDiv {
     position: fixed;
     /* Lower Z index for BlocklyWidgetDiv and grid picker tooltips */
     z-index: @blocklyWidgetDivZIndex;
+    &:focus-visible {
+        outline: none;
+    }
 }
 
 div.blocklyWidgetDiv.functioneditor {
@@ -219,6 +222,9 @@ div.blocklyWidgetDiv.functioneditor {
 div.blocklyDropDownDiv {
     z-index: @blocklyDropdownDivZIndex;
     overflow: hidden;
+    &:focus-visible {
+        outline: none;
+    }
 }
 
 div.blocklyTooltipDiv {

@@ -1067,9 +1067,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.errors = errors;
     }
 
-    private getDisplayInfoForBlockError(blockId: string, message: string): ErrorDisplayInfo {
+    private getDisplayInfoForBlockError(blockId: string, message: string, preventsRunning: boolean): ErrorDisplayInfo {
         return {
             message: message,
+            preventsRunning: preventsRunning,
             onClick: () => {
                 this.clearHighlightedStatements();
                 this.editor.highlightBlock(blockId);
@@ -1513,7 +1514,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     let txt = ts.pxtc.flattenDiagnosticMessageText(diag.messageText, "\n");
                     b.setWarningText(txt, pxtblockly.PXT_WARNING_ID);
                     setHighlightWarningAsync(b, true);
-                    errorDisplayInfo.push(this.getDisplayInfoForBlockError(bid, txt));
+                    errorDisplayInfo.push(this.getDisplayInfoForBlockError(bid, txt, true));
                 }
             }
         })
@@ -1525,7 +1526,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 if (b) {
                     b.setWarningText(d.message, pxtblockly.PXT_WARNING_ID);
                     setHighlightWarningAsync(b, true);
-                    errorDisplayInfo.push(this.getDisplayInfoForBlockError(d.blockId, d.message));
+                    errorDisplayInfo.push(this.getDisplayInfoForBlockError(d.blockId, d.message, false));
                 }
             }
         })

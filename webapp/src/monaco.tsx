@@ -651,7 +651,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                         <ErrorList
                             onSizeChange={this.setErrorListState}
                             errors={this.errors}
-                            startDebugger={!!this.errors.find(a => a.stackFrames?.length) && this.startDebugger}
+                            startDebugger={this.startDebugger}
                             getErrorHelp={this.getErrorHelp}
                             note={
                                 this.parent.state.errorListNote && (
@@ -704,7 +704,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         return {
             message,
-            stackFrames
+            stackFrames,
+            preventsRunning: false
         };
     }
 
@@ -712,7 +713,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const message = lf("Line {0}: {1}", error.endLine ? error.endLine + 1 : error.line + 1, error.messageText);
         return {
             message,
-            onClick: () => this.goToError(error)
+            onClick: () => this.goToError(error),
+            preventsRunning: true
         };
     }
 
