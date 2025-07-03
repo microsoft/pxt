@@ -5345,63 +5345,81 @@ export class ProjectView
 
         const code = this.blocksEditor.serializeBlocks(false);
 
-        const response = await cloud.getHowToResponse(
-            trimmedGoal,
-            code,
-            "blocks",
-            pxt.appTarget.nickname || pxt.appTarget.name,
-            pxt.Util.userLanguage());
+        try {
+            const response = await cloud.getHowToResponse(
+                trimmedGoal,
+                code,
+                "blocks",
+                pxt.appTarget.nickname || pxt.appTarget.name,
+                pxt.Util.userLanguage());
 
-        console.log("How-To Response:", response);
+            console.log("How-To Response:", response);
 
-        if (response) {
-            try {
-                // Remove markdown code fencing if present (```markdown ... ``` or ``` ... ```)
-                let cleanedResponse = response.trim();
-                const fenceRegex = /^```(?:markdown)?\s*\n([\s\S]*?)\n```$/;
-                const match = fenceRegex.exec(cleanedResponse);
-                if (match) {
-                    cleanedResponse = match[1];
+            if (!response) {
+                throw new Error("No response from server");
+            }
+
+            // Remove markdown code fencing if present (```markdown ... ``` or ``` ... ```)
+            let cleanedResponse = response.trim();
+            const fenceRegex = /^```(?:markdown)?\s*\n([\s\S]*?)\n```$/;
+            const match = fenceRegex.exec(cleanedResponse);
+            if (match) {
+                cleanedResponse = match[1];
+            }
+
+            // Fix missing backticks around ||...|| blocks
+            // Replace patterns like "||controller:on A button pressed||" with "``||controller:on A button pressed||``"
+            cleanedResponse = cleanedResponse.replace(/(?<!``)((?<!\S)(\|\|[^|]+\|\|)(?!\S))(?!``)/g, '``$2``');
+
+            const newName = this.state.projectName ? this.state.projectName + " - How To" : lf("How To");
+
+            console.log("Cleaned How-To Response:", cleanedResponse);
+            const currentHeader = this.state.header;
+            const currentText = await workspace.getTextAsync(currentHeader.id);
+
+            await this.importTutorialAsync(cleanedResponse, newName, options => {
+                // Specify user's current code as template code
+                options.templateCode = code;
+                options.templateLanguage = "blocks";
+
+                // Preserve assets from the current project
+                const assetFiles: pxt.Map<string> = {};
+                if (currentText[pxt.IMAGES_JRES] && currentText[pxt.IMAGES_JRES] !== "{}") {
+                    assetFiles[pxt.IMAGES_JRES] = currentText[pxt.IMAGES_JRES];
+                }
+                if (currentText[pxt.TILEMAP_JRES] && currentText[pxt.TILEMAP_JRES] !== "{}") {
+                    assetFiles[pxt.TILEMAP_JRES] = currentText[pxt.TILEMAP_JRES];
+                }
+                if (currentText[pxt.IMAGES_CODE] && currentText[pxt.IMAGES_CODE].trim() !== "") {
+                    assetFiles[pxt.IMAGES_CODE] = currentText[pxt.IMAGES_CODE];
+                }
+                if (currentText[pxt.TILEMAP_CODE] && currentText[pxt.TILEMAP_CODE].trim() !== "") {
+                    assetFiles[pxt.TILEMAP_CODE] = currentText[pxt.TILEMAP_CODE];
+                }
+                if (Object.keys(assetFiles).length > 0) {
+                    options.assetFiles = assetFiles;
                 }
 
-                // Fix missing backticks around ||...|| blocks
-                // Replace patterns like "||controller:on A button pressed||" with "``||controller:on A button pressed||``"
-                // Only add backticks if they're not already properly wrapped
-                cleanedResponse = cleanedResponse.replace(/(?<!``)((?<!\S)(\|\|[^|]+\|\|)(?!\S))(?!``)/g, '``$2``');
+                function addFooter(string: string): string {
+                    let newString = string?.trim();
+                    if (!newString) return newString;
 
-                const newName = this.state.projectName ? this.state.projectName + " - How To" : lf("How To");
+                    if (!newString.endsWith("---")) {
+                        newString += "\n\n---";
+                    }
 
-                console.log("Cleaned How-To Response:", cleanedResponse);
-                const currentHeader = this.state.header;
-                const currentText = await workspace.getTextAsync(currentHeader.id);
+                    newString += `\n\n<small>${lf("AI generated content may be incorrect.")}</small>`;
+                    return newString;
+                }
 
-                await this.importTutorialAsync(cleanedResponse, newName, options => {
-                    // Specify user's current code as template code
-                    options.templateCode = code;
-                    options.templateLanguage = "blocks";
-
-                    // Preserve assets from the current project
-                    const assetFiles: pxt.Map<string> = {};
-                    if (currentText[pxt.IMAGES_JRES] && currentText[pxt.IMAGES_JRES] !== "{}") {
-                        assetFiles[pxt.IMAGES_JRES] = currentText[pxt.IMAGES_JRES];
-                    }
-                    if (currentText[pxt.TILEMAP_JRES] && currentText[pxt.TILEMAP_JRES] !== "{}") {
-                        assetFiles[pxt.TILEMAP_JRES] = currentText[pxt.TILEMAP_JRES];
-                    }
-                    if (currentText[pxt.IMAGES_CODE] && currentText[pxt.IMAGES_CODE].trim() !== "") {
-                        assetFiles[pxt.IMAGES_CODE] = currentText[pxt.IMAGES_CODE];
-                    }
-                    if (currentText[pxt.TILEMAP_CODE] && currentText[pxt.TILEMAP_CODE].trim() !== "") {
-                        assetFiles[pxt.TILEMAP_CODE] = currentText[pxt.TILEMAP_CODE];
-                    }
-                    if (Object.keys(assetFiles).length > 0) {
-                        options.assetFiles = assetFiles;
-                    }
-                });
-            } catch (e) {
-                console.error("Failed to start HowTo tutorial:", e);
-                core.errorNotification(lf("Failed to create tutorial from response"));
-            }
+                for (const step of options.tutorialStepInfo ?? []) {
+                    step.contentMd = addFooter(step.contentMd);
+                    step.headerContentMd = addFooter(step.headerContentMd);
+                }
+            });
+        } catch (e) {
+            console.error("Failed to start HowTo tutorial:", e);
+            core.errorNotification(lf("Failed to create tutorial"));
         }
     }
 
