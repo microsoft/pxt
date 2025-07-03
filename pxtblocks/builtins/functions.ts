@@ -8,7 +8,7 @@ import { FieldProcedure } from "../fields";
 import { cachedBlockInfo, setOutputCheck } from "../loader";
 import { domToWorkspaceNoEvents } from "../importer";
 
-import { DUPLICATE_ON_DRAG_MUTATION_KEY } from "../plugins/duplicateOnDrag";
+import { shouldDuplicateOnDrag } from "../plugins/duplicateOnDrag";
 import { PathObject } from "../plugins/renderer/pathObject";
 import { FieldImageNoText } from "../fields/field_imagenotext";
 
@@ -278,14 +278,6 @@ export function initFunctions() {
         (Blockly.Blocks["argument_reporter_custom"]).domToMutation = function (xmlElement: Element) {
             const typeName = xmlElement.getAttribute('typename');
             this.typeName_ = typeName;
-
-            if (xmlElement.hasAttribute(DUPLICATE_ON_DRAG_MUTATION_KEY)) {
-                this.duplicateOnDrag_ = xmlElement.getAttribute(DUPLICATE_ON_DRAG_MUTATION_KEY).toLowerCase() === "true";
-            }
-
-            if (this.pathObject) {
-                (this.pathObject as PathObject).setHasDottedOutlineOnHover(this.duplicateOnDrag_);
-            }
 
             setOutputCheck(this, typeName, cachedBlockInfo);
         };
