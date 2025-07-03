@@ -690,32 +690,28 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 }
             });
 
-            const startMove = Blockly.ShortcutRegistry.registry.getRegistry()["start_move"];
-            Blockly.ShortcutRegistry.registry.unregister(startMove.name);
+            const startMoveShortcut = Blockly.ShortcutRegistry.registry.getRegistry()["start_move"];
+            Blockly.ShortcutRegistry.registry.unregister(startMoveShortcut.name);
             Blockly.ShortcutRegistry.registry.register({
-                ...startMove,
+                ...startMoveShortcut,
                 callback: (workspace, e, shortcut, scope) => {
-                    const block = workspace?.getCursor()?.getSourceBlock();
+                    maybeCloneBlockForMove(workspace);
 
-                    if (block && shouldDuplicateOnDrag(block)) {
-                        const xml = Blockly.Xml.blockToDom(block);
-                        const clone = Blockly.Xml.domToBlock(xml as Element, workspace);
-                        clone.setShadow(false);
-
-                        const position = block.getRelativeToSurfaceXY();
-                        const snapRadius = Blockly.config.snapRadius;
-
-                        clone.moveBy(
-                            position.x + snapRadius,
-                            position.y + snapRadius,
-                        );
-
-                        Blockly.getFocusManager().focusNode(clone as Blockly.BlockSvg);
-                    }
-
-                    return startMove.callback!(workspace, e, shortcut, scope);
+                    return startMoveShortcut.callback!(workspace, e, shortcut, scope);
                 }
-            })
+            });
+
+
+            const startMoveContextMenuEntry = Blockly.ContextMenuRegistry.registry.getItem("move");
+            Blockly.ContextMenuRegistry.registry.unregister(startMoveContextMenuEntry.id);
+            Blockly.ContextMenuRegistry.registry.register({
+                ...startMoveContextMenuEntry,
+                callback: (scope: Blockly.ContextMenuRegistry.Scope, menuOpenEvent: Event, menuSelectEvent: Event, location: Blockly.utils.Coordinate) => {
+                    maybeCloneBlockForMove(scope.block?.workspace || scope.workspace);
+
+                    return startMoveContextMenuEntry.callback!(scope, menuOpenEvent, menuSelectEvent, location);
+                }
+            } as Blockly.ContextMenuRegistry.RegistryItem);
 
             // This must come after plugin initialization to override context menu
             // precondition functions set by the keyboard navigation plugin.
@@ -2736,4 +2732,25 @@ function getCopyData(): CopyDataEntry | undefined {
 
 function copyDataKey() {
     return "copyData";
+}
+
+function maybeCloneBlockForMove(workspace: Blockly.WorkspaceSvg) {
+    const block = workspace?.getCursor()?.getSourceBlock();
+
+    if (block && shouldDuplicateOnDrag(block)) {
+        Blockly.Events.setGroup(true);
+        const xml = Blockly.Xml.blockToDom(block);
+        const clone = Blockly.Xml.domToBlock(xml as Element, workspace);
+        clone.setShadow(false);
+
+        const position = block.getRelativeToSurfaceXY();
+        const snapRadius = Blockly.config.snapRadius;
+
+        clone.moveBy(
+            position.x + snapRadius,
+            position.y + snapRadius,
+        );
+
+        Blockly.getFocusManager().focusNode(clone as Blockly.BlockSvg);
+    }
 }
