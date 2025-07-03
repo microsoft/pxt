@@ -5322,7 +5322,9 @@ export class ProjectView
         const opts: core.PromptOptions = {
             header: lf("What would you like to learn how to do?"),
             agreeLbl: lf("Generate Tutorial"),
+            agreeIcon: "xicon sparkle",
             placeholder: lf("Make my character jump"),
+            jsx: <><br /><p style={{ color: "gray", fontSize: "12px" }}>{lf("This will send your code to AI for analysis")}</p></>,
             hasCloseIcon: true,
             hideCancel: true,
         };
@@ -5392,8 +5394,6 @@ export class ProjectView
                     if (currentText[pxt.TILEMAP_CODE] && currentText[pxt.TILEMAP_CODE].trim() !== "") {
                         assetFiles[pxt.TILEMAP_CODE] = currentText[pxt.TILEMAP_CODE];
                     }
-
-                    // Only set assetFiles if we have any content to preserve
                     if (Object.keys(assetFiles).length > 0) {
                         options.assetFiles = assetFiles;
                     }
