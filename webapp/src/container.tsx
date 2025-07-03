@@ -253,8 +253,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
     }
 
     toggleAccessibleBlocks() {
-        pxt.tickEvent("menu.toggleaccessibleblocks", undefined, { interactiveConsent: true });
-        this.props.parent.toggleAccessibleBlocks();
+        this.props.parent.toggleAccessibleBlocks("settings");
     }
 
     showResetDialog() {
@@ -656,7 +655,18 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
 
     toggleBuiltInHelp(help: pxt.editor.BuiltInHelp, focusIfVisible: boolean) {
         const url = `${builtInPrefix}${help}`;
-        if (this.state.docsUrl === url && !this.state.sideDocsCollapsed && !focusIfVisible) {
+        const shouldCollapse = this.state.docsUrl === url && !this.state.sideDocsCollapsed && !focusIfVisible;
+
+        pxt.tickEvent(
+            `sidedocs.builtin`,
+            {
+                path: url,
+                focusIfVisible: focusIfVisible ? "true" : "false",
+                collapsing: shouldCollapse ? "true" : "false"
+            },
+        );
+
+        if (shouldCollapse) {
             const wasEditorFocused = Blockly.getFocusManager().getFocusedTree();
             this.props.parent.setState({ sideDocsCollapsed: true });
 
