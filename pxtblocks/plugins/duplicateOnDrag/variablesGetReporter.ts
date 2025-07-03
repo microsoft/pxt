@@ -20,8 +20,7 @@ Blockly.Blocks["variables_get_reporter"] = {
             "outputShape": new Blockly.zelos.ConstantProvider().SHAPES.ROUND,
             "helpUrl": "%{BKY_VARIABLES_GET_HELPURL}",
             "tooltip": "%{BKY_VARIABLES_GET_TOOLTIP}",
-            "extensions": ["contextMenu_variableReporter"],
-            "mutator": "variables_get_reporter_mutator"
+            "extensions": ["contextMenu_variableReporter"]
         });
 
         updateDuplicateOnDragState(this);
