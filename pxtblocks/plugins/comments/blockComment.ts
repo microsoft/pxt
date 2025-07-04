@@ -358,10 +358,10 @@ export class CommentIcon extends Blockly.icons.Icon implements Blockly.IHasBubbl
         this.textInputBubble.setCollapseHandler(() => {
             this.setBubbleVisible(false);
         });
-
         if (savedPosition) {
             this.textInputBubble.setPositionRelativeToAnchor(savedPosition.x, savedPosition.y);
         }
+        Blockly.getFocusManager().focusNode(this.textInputBubble);
     }
 
     /** Shows the non editable text bubble for this comment. */
@@ -381,12 +381,14 @@ export class CommentIcon extends Blockly.icons.Icon implements Blockly.IHasBubbl
         if (savedPosition) {
             this.textInputBubble.setPositionRelativeToAnchor(savedPosition.x, savedPosition.y);
         }
+        Blockly.getFocusManager().focusNode(this.textInputBubble);
     }
 
     /** Hides any open bubbles owned by this comment. */
     private hideBubble() {
         this.textInputBubble?.dispose();
         this.textInputBubble = null;
+        Blockly.getFocusManager().focusNode(this.getSourceBlock() as Blockly.BlockSvg);
     }
 
     /**
