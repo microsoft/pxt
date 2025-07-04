@@ -1855,6 +1855,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         // note that we don't need to clear the flyout SVG cache since those
         // will regenerate themselves more precisely based on the hash of the
         // input blocks xml.
+
+        // Avoid the focus manager remembering prior workspace node selections.
+        Blockly.getFocusManager().unregisterTree(this.editor);
+        Blockly.getFocusManager().registerTree(this.editor, true);
     }
 
     clearFlyoutCaches() {
