@@ -871,6 +871,7 @@ declare namespace pxt.editor {
 
     export interface SimulatorStartOptions {
         clickTrigger?: boolean;
+        background?: boolean;
     }
 
     export interface ImportFileOptions {

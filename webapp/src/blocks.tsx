@@ -856,7 +856,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 }
                 else {
                     if (shouldRestartSim) {
-                        this.parent.startSimulator();
+                        this.parent.startSimulator({background: true});
                     }
                 }
             }
