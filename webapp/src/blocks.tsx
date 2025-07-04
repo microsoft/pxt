@@ -1857,8 +1857,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         // input blocks xml.
 
         // Avoid the focus manager remembering prior workspace node selections.
-        Blockly.getFocusManager().unregisterTree(this.editor);
-        Blockly.getFocusManager().registerTree(this.editor, true);
+        const focusManager = Blockly.getFocusManager();
+        if (focusManager.isRegistered(this.editor)) {
+            focusManager.unregisterTree(this.editor);
+            focusManager.registerTree(this.editor, true);
+        }
     }
 
     clearFlyoutCaches() {
