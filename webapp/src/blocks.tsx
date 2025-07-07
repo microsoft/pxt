@@ -1,5 +1,3 @@
-/// <reference path="../../localtypings/blockly-keyboard-navigation.d.ts"/>
-
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import * as Blockly from "blockly";
@@ -661,7 +659,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 CLOSE: lf("Close")
             });
 
-            this.keyboardNavigation = new KeyboardNavigation(this.editor);
+            this.keyboardNavigation = new KeyboardNavigation(this.editor, {
+                allowCrossWorkspacePaste: true
+            });
             Blockly.keyboardNavigationController.setIsActive(true);
 
             const listShortcuts = Blockly.ShortcutRegistry.registry.getRegistry()["list_shortcuts"];
@@ -777,10 +777,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             return;
         pxsim.U.clear(blocklyDiv);
 
+        const accessibleBlocksEnabled = data.getData<boolean>(auth.ACCESSIBLE_BLOCKS)
         // Increase the Blockly connection radius
         Blockly.config.snapRadius = 48;
         Blockly.config.connectingSnapRadius = 96;
-
+        if (accessibleBlocksEnabled) {
+            KeyboardNavigation.registerKeyboardNavigationStyles();
+        }
         this.editor = Blockly.inject(blocklyDiv, this.getBlocklyOptions(forceHasCategories)) as Blockly.WorkspaceSvg;
         pxtblockly.contextMenu.setupWorkspaceContextMenu(this.editor);
 
@@ -913,7 +916,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.initPrompts();
         this.initBlocklyToolbox();
         this.initWorkspaceSounds();
-        const accessibleBlocksEnabled = data.getData<boolean>(auth.ACCESSIBLE_BLOCKS)
         initCopyPaste(accessibleBlocksEnabled);
         // This must come after initCopyPaste which overrides the default cut, copy,
         // paste shortcuts. The keyboard navigation plugin utilizes these cut, copy and paste
