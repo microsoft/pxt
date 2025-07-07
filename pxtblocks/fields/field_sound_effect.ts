@@ -175,8 +175,8 @@ export class FieldSoundEffect extends FieldBase<FieldSoundEffectParams> {
         const widgetDiv = Blockly.WidgetDiv.getDiv();
         const opts = {
             onClose: () => {
-                fv.hide();
                 Blockly.WidgetDiv.hideIfOwner(widgetOwner);
+                fv.hide();
             },
             onSoundChange: (newSound: pxt.assets.Sound) => {
                 this.mostRecentValue = newSound;
