@@ -57,7 +57,6 @@ const FUNCTION_DEFINITION_MIXIN: FunctionDefinitionMixin = {
             argumentReporter = this.createArgumentReporter_(arg);
         }
 
-        argumentReporter.duplicateOnDrag_ = true;
 
         // Attach the block.
         input.connection!.connect(argumentReporter.outputConnection!);
