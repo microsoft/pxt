@@ -6,7 +6,7 @@
 
 import * as Blockly from "blockly";
 
-import { DUPLICATE_ON_DRAG_MUTATION_KEY, isAllowlistedShadow, shouldDuplicateOnDrag } from "./duplicateOnDrag";
+import { isAllowlistedShadow, shouldDuplicateOnDrag, updateDuplicateOnDragState } from "./duplicateOnDrag";
 import eventUtils = Blockly.Events;
 import Coordinate = Blockly.utils.Coordinate;
 import dom = Blockly.utils.dom;
@@ -161,8 +161,6 @@ export class DuplicateOnDragStrategy implements Blockly.IDragStrategy {
             this.block.setShadow(false);
         }
 
-        const mutation = this.block.mutationToDom?.();
-
         if (shouldDuplicateOnDrag(this.block)) {
             const output = this.block.outputConnection;
 
@@ -189,12 +187,10 @@ export class DuplicateOnDragStrategy implements Blockly.IDragStrategy {
 
         this.block.unplug(healStack);
         Blockly.blockAnimations.disconnectUiEffect(this.block);
+        updateDuplicateOnDragState(this.block);
 
         if (target && clone) {
             target.connect(clone.outputConnection);
-
-            mutation.setAttribute(DUPLICATE_ON_DRAG_MUTATION_KEY, "false");
-            this.block.domToMutation?.(mutation);
         }
     }
 
