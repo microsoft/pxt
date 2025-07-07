@@ -140,3 +140,28 @@ div.field .ui.toggle.checkbox input:checked~label:before {
 .teaching-bubble .teaching-bubble-steps {
     color: var(--pxt-neutral-foreground1) !important;
 }
+
+/*
+ * Side Docs
+ */
+
+#sidedocs {
+    background-color: var(--pxt-neutral-foreground1);
+}
+
+#sidedocsbar a i,
+#sidedocsbar a span {
+    color: var(--pxt-neutral-background1) !important;
+}
+
+#sidedocsbar a:hover,
+#sidedocsbar a:focus {
+    outline: 3px solid var(--pxt-neutral-background1) !important; /* Yellow does not contrast well against white background */
+}
+
+#sidedocsbar a:hover i,
+#sidedocsbar a:focus i,
+#sidedocsbar a:hover span,
+#sidedocsbar a:focus span {
+    color: var(--pxt-link-hover) !important;
+}
