@@ -9,6 +9,14 @@
     z-index: 1;
 }
 
+.area-menu-container .area-button {
+    /*
+    Override default button background for the area menu, which requires transparency
+    But still use a fairly opaque one to keep focus/visibility on the main buttons.
+    */
+    background-color: var(--pxt-neutral-alpha80) !important;
+}
+
 /* 
  * Checkbox styles
  * In HC the neutral and primary colors are the same, so we need to differentiate with
