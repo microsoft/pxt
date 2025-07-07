@@ -11,8 +11,8 @@
 
 .area-menu-container .area-button {
     /*
-    Override default button background for the area menu, which requires transparency
-    But still use a fairly opaque one to keep focus/visibility on the main buttons.
+    Override default button background for the area menu, which requires transparency,
+    but still use a fairly opaque one to keep focus/visibility on the main buttons.
     */
     background-color: var(--pxt-neutral-alpha80) !important;
 }
