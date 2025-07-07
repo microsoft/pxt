@@ -89,7 +89,7 @@ export const Dropdown = (props: DropdownProps) => {
         <Button
             {...selected}
             id={id}
-            buttonRef={ref => dropdownButton.current = ref}
+            buttonRef={ref => dropdownButton.current = (ref as HTMLButtonElement)}
             tabIndex={tabIndex}
             rightIcon={expanded ? "fas fa-chevron-up" : "fas fa-chevron-down"}
             role={role}
@@ -113,7 +113,7 @@ export const Dropdown = (props: DropdownProps) => {
                             <li key={item.id} role="presentation">
                                 <Button
                                     {...item}
-                                    buttonRef={ref => focusableItems.current[item.id] = ref}
+                                    buttonRef={ref => focusableItems.current[item.id] = (ref as HTMLButtonElement)}
                                     className={classList("common-dropdown-item", item.className)}
                                     onClick={() => {
                                         setExpanded(false);
