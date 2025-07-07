@@ -156,7 +156,8 @@ div.field .ui.toggle.checkbox input:checked~label:before {
 
 #sidedocsbar a:hover,
 #sidedocsbar a:focus {
-    outline: 3px solid var(--pxt-neutral-background1) !important; /* Yellow does not contrast well against white background */
+    /* Yellow does not contrast well against white background */
+    outline: 3px solid var(--pxt-neutral-background1) !important;
 }
 
 #sidedocsbar a:hover i,
