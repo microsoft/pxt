@@ -56,40 +56,44 @@ export function getActionShortcutsAsKeys(
     return [];
   }
   // See ShortcutRegistry.createSerializedKey for the starting format.
-  const named = shortcuts.map((shortcut) => {
-    return shortcut
-      .split('+')
-      .map((numericOrModifier) => shortcutRegistryKeyNames[numericOrModifier] ?? numericOrModifier)
-  });
+  const shortcutsAsParts = shortcuts.map(shortcut => shortcut.split("+"));
 
-  const command = shortcutRegistryKeyNames['Meta'];
-  const option = shortcutRegistryKeyNames['Alt'];
-  const control = shortcutRegistryKeyNames['Control'];
+  // Prefer e.g. Cmd+Shift to Shift+Cmd.
+  shortcutsAsParts.forEach(s => s.sort((a, b) => {
+    const aValue = modifierOrder(a);
+    const bValue = modifierOrder(b);
+    return aValue - bValue;
+  }))
+
   // Needed to prefer Command to Option where we've bound Alt.
-  named.sort((a, b) => {
-    const aValue = a.includes(command) ? 1 : 0;
-    const bValue = b.includes(command) ? 1 : 0;
+  shortcutsAsParts.sort((a, b) => {
+    const aValue = a.includes("Meta") ? 1 : 0;
+    const bValue = b.includes("Meta") ? 1 : 0;
     return bValue - aValue;
   });
-  let currentPlatform = named.filter((shortcut) => {
-    const isMacShortcut =
-      shortcut.includes(command) || shortcut.includes(option);
+  let currentPlatform = shortcutsAsParts.filter((shortcut) => {
+    const isMacShortcut = shortcut.includes("Meta");
     return isMacShortcut === isMacPlatform;
   });
-  currentPlatform = currentPlatform.length === 0 ? named : currentPlatform;
+  currentPlatform = currentPlatform.length === 0 ? shortcutsAsParts : currentPlatform;
+
   // Prefer simpler shortcuts. This promotes Ctrl+Y for redo.
   currentPlatform.sort((a, b) => {
     return a.length - b.length;
-  })
+  });
 
   // If there are modifiers return only one shortcut on the assumption they are
   // intended for different platforms. Otherwise assume they are alternatives.
   const hasModifiers = currentPlatform.some((shortcut) =>
     shortcut.some(
-      (key) => command === key || option === key || control === key,
+      (key) => "Meta" === key || "Alt" === key || "Control" === key,
     ),
   );
-  return hasModifiers ? [currentPlatform[0]] : currentPlatform;
+  const chosen = hasModifiers ? [currentPlatform[0]] : currentPlatform;
+  return chosen.map((shortcut) => {
+    return shortcut
+      .map((numericOrModifier) => shortcutRegistryKeyNames[numericOrModifier] ?? numericOrModifier)
+  });
 }
 
 /**
@@ -151,3 +155,19 @@ const shortcutRegistryKeyNames: Record<string | number, string> = {
   'Meta': '⌘',
   'Alt': isMacPlatform ? '⌥' : lf("Alt"),
 };
+
+/**
+ * Preferred listing order of untranslated modifiers.
+ */
+const modifierOrdering: string[] = [
+  'Meta',
+  'Control',
+  'Alt',
+  'Shift'
+];
+
+function modifierOrder(key: string): number {
+    const order = modifierOrdering.indexOf(key);
+    // Regular keys at the end.
+    return order === -1 ? Number.MAX_VALUE : order;
+  }
