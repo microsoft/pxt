@@ -27,6 +27,16 @@ div.field .ui.toggle.checkbox input:checked~label:before {
     background-color: var(--pxt-colors-purple-background) !important;
 }
 
+.common-checkbox-icon.checked {
+    background-color: var(--pxt-colors-purple-background);
+    color: var(--pxt-colors-purple-foreground);
+    border-color: var(--pxt-colors-purple-hover);
+}
+
+.common-checkbox-icon.checked i.fas.fa-check {
+    color: var(--pxt-colors-purple-foreground);
+}
+
 /*
  * Make toggle "handle" more visible for HC
  */
