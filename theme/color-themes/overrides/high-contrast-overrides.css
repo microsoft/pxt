@@ -9,6 +9,14 @@
     z-index: 1;
 }
 
+.area-menu-container .area-button {
+    /*
+    Override default button background for the area menu, which requires transparency,
+    but still use a fairly opaque one to keep focus/visibility on the main buttons.
+    */
+    background-color: var(--pxt-neutral-alpha80) !important;
+}
+
 /* 
  * Checkbox styles
  * In HC the neutral and primary colors are the same, so we need to differentiate with
@@ -17,6 +25,16 @@
 .common-checkbox.toggle input:checked~label:before,
 div.field .ui.toggle.checkbox input:checked~label:before {
     background-color: var(--pxt-colors-purple-background) !important;
+}
+
+.common-checkbox-icon.checked {
+    background-color: var(--pxt-colors-purple-background);
+    color: var(--pxt-colors-purple-foreground);
+    border-color: var(--pxt-colors-purple-hover);
+}
+
+.common-checkbox-icon.checked i.fas.fa-check {
+    color: var(--pxt-colors-purple-foreground);
 }
 
 /*
@@ -131,4 +149,30 @@ div.field .ui.toggle.checkbox input:checked~label:before {
 .teaching-bubble .feedback-button.disabled,
 .teaching-bubble .teaching-bubble-steps {
     color: var(--pxt-neutral-foreground1) !important;
+}
+
+/*
+ * Side Docs
+ */
+
+#sidedocs {
+    background-color: var(--pxt-neutral-foreground1);
+}
+
+#sidedocsbar a i,
+#sidedocsbar a span {
+    color: var(--pxt-neutral-background1) !important;
+}
+
+#sidedocsbar a:hover,
+#sidedocsbar a:focus {
+    /* Yellow does not contrast well against white background */
+    outline: 3px solid var(--pxt-neutral-background1) !important;
+}
+
+#sidedocsbar a:hover i,
+#sidedocsbar a:focus i,
+#sidedocsbar a:hover span,
+#sidedocsbar a:focus span {
+    color: var(--pxt-link-hover) !important;
 }
