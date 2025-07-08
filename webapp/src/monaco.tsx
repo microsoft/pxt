@@ -574,7 +574,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.parent.saveBlocksToTypeScriptAsync().then((src) => {
                     this.overrideFile(src);
 
-                    // Clear diagnostics so blocks editor doesn't show old errors
+                    // Clear diagnostics so blocks editor doesn't show old errors.
                     // Recompile will pick up the updated content and re-validate it.
                     this.currFile.diagnostics = [];
 
