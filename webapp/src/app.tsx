@@ -3876,6 +3876,7 @@ export class ProjectView
         pxt.tickEvent('simulator.start');
         const isDebugMatch = !this.debugOptionsChanged();
         const clickTrigger = opts && opts.clickTrigger;
+        const background = opts && opts.background;
         pxt.debug(`start sim (autorun ${this.state.autoRun})`)
         if (!this.shouldStartSimulator() && isDebugMatch || this.state.home) {
             pxt.log("Ignoring call to start simulator, either already running or we shouldn't start.");
@@ -3883,7 +3884,7 @@ export class ProjectView
         }
 
         await this.saveFileAsync();
-        await this.runSimulator({ debug: this.state.debugging, clickTrigger });
+        await this.runSimulator({ debug: this.state.debugging, clickTrigger, background });
     }
 
     debugOptionsChanged() {
