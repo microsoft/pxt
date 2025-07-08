@@ -1119,7 +1119,7 @@ export class ProjectView
 
     public async componentDidMount() {
         this.allEditors.forEach(e => e.prepare())
-        await simulator.initAsync(document.getElementById("boardview"), {
+        await simulator.initAsync(getBoardView(), {
             orphanException: brk => {
                 // TODO: start debugging session
                 // TODO: user friendly error message
@@ -3652,7 +3652,7 @@ export class ProjectView
             default:
                 this.maybeShowPackageErrors(true);
                 this.startSimulator(opts);
-                if (opts && opts.clickTrigger) simulator.driver.focus();
+                if (!this.state.fullscreen && opts && opts.clickTrigger) getBoardView().focus();
                 break;
         }
     }
@@ -3864,7 +3864,9 @@ export class ProjectView
         } else {
             simulator.driver.restart(); // fast restart
         }
-        simulator.driver.focus()
+        if (!this.state.fullscreen) {
+            getBoardView().focus();
+        }
         if (!isDebug) {
             this.blocksEditor.clearBreakpoints();
         }
@@ -5609,6 +5611,10 @@ function render() {
 
 function getEditor() {
     return theEditor
+}
+
+function getBoardView() {
+    return document.getElementById("boardview");
 }
 
 function parseLocalToken() {
