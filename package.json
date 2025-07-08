@@ -62,7 +62,7 @@
   },
   "dependencies": {
     "@blockly/field-grid-dropdown": "^6.0.1",
-    "@blockly/keyboard-navigation": "2.0.0-beta.0",
+    "@blockly/keyboard-navigation": "1.0.0",
     "@blockly/plugin-workspace-search": "10.1.0",
     "@crowdin/crowdin-api-client": "^1.33.0",
     "@fortawesome/fontawesome-free": "^5.15.4",
@@ -72,7 +72,7 @@
     "@zip.js/zip.js": "2.4.20",
     "adm-zip": "^0.5.12",
     "axios": "^1.6.8",
-    "blockly": "12.2.0-beta.0",
+    "blockly": "12.1.0",
     "browserify": "17.0.0",
     "chai": "^3.5.0",
     "chalk": "^4.1.2",
@@ -158,11 +158,11 @@
     "combine-source-map": {
       "source-map": "0.4.4"
     },
-    "@blockly/plugin-workspace-search": {
-      "blockly": "12.2.0-beta.0"
+    "@blockly/field-colour": {
+      "blockly": "^12.1.0"
     },
-    "@blockly/field-grid-dropdown": {
-      "blockly": "12.2.0-beta.0"
+    "@blockly/plugin-workspace-search": {
+      "blockly": "^12.1.0"
     }
   },
   "scripts": {
