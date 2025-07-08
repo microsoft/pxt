@@ -63,7 +63,7 @@
   "dependencies": {
     "@blockly/field-grid-dropdown": "^6.0.1",
     "@blockly/keyboard-navigation": "2.0.0-beta.0",
-    "@blockly/plugin-workspace-search": "10.0.0",
+    "@blockly/plugin-workspace-search": "10.1.0",
     "@crowdin/crowdin-api-client": "^1.33.0",
     "@fortawesome/fontawesome-free": "^5.15.4",
     "@microsoft/applicationinsights-web": "^2.8.11",
