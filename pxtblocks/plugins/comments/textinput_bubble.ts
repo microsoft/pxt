@@ -78,6 +78,12 @@ export class TextInputBubble extends Bubble {
         if (readOnly) {
             this.deleteIcon.style.display = "none";
         }
+        browserEvents.conditionalBind(
+            this.textArea,
+            'keydown',
+            this,
+            this.onKeyDown,
+        );
     }
 
     /** @returns the text of this bubble. */
@@ -315,6 +321,13 @@ export class TextInputBubble extends Bubble {
     private onPositionChange() {
         for (const listener of this.positionChangeListeners) {
             listener();
+        }
+    }
+
+    private onKeyDown(e: KeyboardEvent) {
+        if (e.key === 'Escape') {
+            this.collapseHandler();
+            e.stopPropagation();
         }
     }
 }

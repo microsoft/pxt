@@ -1119,7 +1119,7 @@ export class ProjectView
 
     public async componentDidMount() {
         this.allEditors.forEach(e => e.prepare())
-        await simulator.initAsync(document.getElementById("boardview"), {
+        await simulator.initAsync(getBoardView(), {
             orphanException: brk => {
                 // TODO: start debugging session
                 // TODO: user friendly error message
@@ -2848,7 +2848,10 @@ export class ProjectView
     }
 
     private editorLoaded() {
-        pxt.tickEvent('app.editor', { projectHeaderId: this.state.header?.id });
+        pxt.tickEvent('app.editor', {
+            projectHeaderId: this.state.header?.id,
+            fileType: this.editorFile?.getExtension()
+        });
     }
 
     unloadProjectAsync(home?: boolean) {
@@ -3649,7 +3652,7 @@ export class ProjectView
             default:
                 this.maybeShowPackageErrors(true);
                 this.startSimulator(opts);
-                if (opts && opts.clickTrigger) simulator.driver.focus();
+                if (!this.state.fullscreen && opts && opts.clickTrigger) getBoardView().focus();
                 break;
         }
     }
@@ -3861,7 +3864,9 @@ export class ProjectView
         } else {
             simulator.driver.restart(); // fast restart
         }
-        simulator.driver.focus()
+        if (!this.state.fullscreen) {
+            getBoardView().focus();
+        }
         if (!isDebug) {
             this.blocksEditor.clearBreakpoints();
         }
@@ -3871,6 +3876,7 @@ export class ProjectView
         pxt.tickEvent('simulator.start');
         const isDebugMatch = !this.debugOptionsChanged();
         const clickTrigger = opts && opts.clickTrigger;
+        const background = opts && opts.background;
         pxt.debug(`start sim (autorun ${this.state.autoRun})`)
         if (!this.shouldStartSimulator() && isDebugMatch || this.state.home) {
             pxt.log("Ignoring call to start simulator, either already running or we shouldn't start.");
@@ -3878,7 +3884,7 @@ export class ProjectView
         }
 
         await this.saveFileAsync();
-        await this.runSimulator({ debug: this.state.debugging, clickTrigger });
+        await this.runSimulator({ debug: this.state.debugging, clickTrigger, background });
     }
 
     debugOptionsChanged() {
@@ -5225,12 +5231,12 @@ export class ProjectView
         this.setState({ greenScreen: greenScreenOn });
     }
 
-    async toggleAccessibleBlocks() {
+    async toggleAccessibleBlocks(eventSource: string) {
         const nextEnabled = !this.getData<boolean>(auth.ACCESSIBLE_BLOCKS);
         if (nextEnabled) {
             pxt.storage.setLocal("onboardAccessibleBlocks", "1")
         }
-        await core.toggleAccessibleBlocks()
+        await core.toggleAccessibleBlocks(eventSource)
         this.reloadEditor();
     }
 
@@ -5327,6 +5333,7 @@ export class ProjectView
                 // Skip on home page or if a dialog is open.
                 return state;
             }
+            pxt.tickEvent("app.toggleareamenu", { open: !this.state.areaMenuOpen ? "true" : "false" });
             return { areaMenuOpen: !areaMenuOpen }
         });
     }
@@ -5604,6 +5611,10 @@ function render() {
 
 function getEditor() {
     return theEditor
+}
+
+function getBoardView() {
+    return document.getElementById("boardview");
 }
 
 function parseLocalToken() {
@@ -6384,6 +6395,12 @@ document.addEventListener("DOMContentLoaded", async () => {
             initHashchange();
             socketbridge.tryInit();
             electron.initElectron(theEditor);
+            pxt.tickEvent(
+                "accessibilty.accessibleBlocksEnabledForSession",
+                {
+                    enabled: data.getData<boolean>(auth.ACCESSIBLE_BLOCKS) ? "true" : "false",
+                }
+            );
         })
         .then(() => {
             const showHome = theEditor.shouldShowHomeScreen();

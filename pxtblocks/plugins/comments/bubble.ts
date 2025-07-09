@@ -61,7 +61,7 @@ export abstract class Bubble implements Blockly.IDeletable, Blockly.IBubble, Blo
 
     private collapseIcon: SVGImageElement;
 
-    private collapseHandler: () => void;
+    protected collapseHandler: () => void;
     private deleteHandler: () => void;
 
     private isDragDelete: boolean;
@@ -693,6 +693,7 @@ export abstract class Bubble implements Blockly.IDeletable, Blockly.IBubble, Blo
         }
 
         if (this.deleteHandler) {
+            e.preventDefault();
             this.deleteHandler();
         }
         e.stopPropagation();
@@ -705,6 +706,7 @@ export abstract class Bubble implements Blockly.IDeletable, Blockly.IBubble, Blo
         }
 
         if (this.collapseHandler) {
+            e.preventDefault();
             this.collapseHandler();
         }
         e.stopPropagation();

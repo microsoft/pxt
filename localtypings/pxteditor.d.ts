@@ -871,6 +871,7 @@ declare namespace pxt.editor {
 
     export interface SimulatorStartOptions {
         clickTrigger?: boolean;
+        background?: boolean;
     }
 
     export interface ImportFileOptions {
@@ -1043,7 +1044,7 @@ declare namespace pxt.editor {
         toggleHighContrast(): void;
         setHighContrast(on: boolean): void;
         toggleGreenScreen(): void;
-        toggleAccessibleBlocks(): void;
+        toggleAccessibleBlocks(eventSource: string): void;
         launchFullEditor(): void;
         resetWorkspace(): void;
 

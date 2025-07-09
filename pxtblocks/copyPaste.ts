@@ -2,6 +2,7 @@ import * as Blockly from "blockly";
 import { getCopyPasteHandlers } from "./external";
 import { BlockContextWeight } from "./contextMenu/blockItems";
 import { WorkspaceContextWeight } from "./contextMenu/workspaceItems";
+import { shouldDuplicateOnDrag, updateDuplicateOnDragState } from "./plugins/duplicateOnDrag";
 
 let oldCopy: Blockly.ShortcutRegistry.KeyboardShortcut;
 let oldCut: Blockly.ShortcutRegistry.KeyboardShortcut;
@@ -89,7 +90,7 @@ function registerCopy() {
     const copyShortcut: Blockly.ShortcutRegistry.KeyboardShortcut = {
         name: Blockly.ShortcutItems.names.COPY,
         preconditionFn(workspace, scope) {
-            return oldCopy.preconditionFn(workspace, scope);
+            return runCopyPreconditionFunction(workspace, scope, oldCopy.preconditionFn);
         },
         callback: copy,
         keyCodes: oldCopy.keyCodes,
@@ -101,7 +102,7 @@ function registerCut() {
     const cutShortcut: Blockly.ShortcutRegistry.KeyboardShortcut = {
         name: Blockly.ShortcutItems.names.CUT,
         preconditionFn(workspace, scope) {
-            return oldCut.preconditionFn(workspace, scope);
+            return  runCopyPreconditionFunction(workspace, scope, oldCut.preconditionFn);
         },
         callback(workspace, e, shortcut, scope) {
             const handler = getCopyPasteHandlers()?.cut;
@@ -250,4 +251,26 @@ const paste = (workspace: Blockly.WorkspaceSvg, e: Event, shortcut?: Blockly.Sho
     }
 
     return oldPaste.callback(workspace, e, shortcut, scope);
+}
+
+/**
+ * This is hack to get around the fact that Blockly's isCopyable logic doesn't
+ * allow blocks that are not deletable to be copied. Our duplicateOnDrag blocks
+ * are not deletable, but we still want to allow them to be copied.
+ */
+function runCopyPreconditionFunction(
+    workspace: Blockly.WorkspaceSvg,
+    scope: Blockly.ContextMenuRegistry.Scope,
+    func: (workspace: Blockly.WorkspaceSvg, scope: Blockly.ContextMenuRegistry.Scope) => boolean
+): boolean {
+    const toCopy = Blockly.getFocusManager().getFocusedNode();
+    if (toCopy instanceof Blockly.BlockSvg) {
+        if (shouldDuplicateOnDrag(toCopy)) {
+            toCopy.setDeletable(true);
+        }
+    }
+    const result = func(workspace, scope);
+
+    updateDuplicateOnDragState(toCopy as Blockly.BlockSvg);
+    return result;
 }
