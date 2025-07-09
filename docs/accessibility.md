@@ -83,6 +83,9 @@ The following shortcuts are also available when you are already in the workspace
 | Cut | `Ctrl`+`X` | `⌘`+`X` |
 | Undo | `Ctrl`+`Z` | `⌘`+`Z` |
 | Redo | `Ctrl`+`Y` or `Shift`+`Ctrl`+`Z` | `Shift`+`⌘`+`Z` |
+| Duplicate | D | D |
+| Navigate to next stack of blocks | N | N |
+| Navigate to previous stack of blocks | B | B |
 
 ### Moving and Dragging blocks
 
