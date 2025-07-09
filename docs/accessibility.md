@@ -1,7 +1,7 @@
 # Accessibility
 
 Microsoft MakeCode includes some core features which promote greater accessibility for everyone. The menus and documentation are accessible with keyboard, assistive technology (including screen readers) and alternative themes, such as a high contrast color mode.  
-The JavaScript and Python editors are accessible using they keyboard and are accessible to screen readers.
+The JavaScript and Python editors are accessible using the keyboard and are accessible to screen readers.
 
 The MakeCode block editor is accessible with keyboard and assistive technologies when "Keyboard Controls" are turned on, but is not yet accessible to screen readers (screen reader compatibility is under development).
 
