@@ -604,7 +604,20 @@ export interface SideDocsState {
     sideDocsCollapsed?: boolean;
 }
 
-export const builtInPrefix = "/builtin/";
+
+interface BuiltInHelpDetails {
+    component: () => JSX.Element;
+    popOutHref: string;
+}
+
+const builtIns: Record<pxt.editor.BuiltInHelp, BuiltInHelpDetails> = {
+    "keyboardControls": {
+        component: KeyboardControlsHelp,
+        popOutHref: "https://makecode.com/accessibility"
+    }
+}
+
+export const builtInPrefix = "/builtin/"
 
 export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
     private openingSideDoc = false;
@@ -615,11 +628,18 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
         }
 
         this.toggleVisibility = this.toggleVisibility.bind(this);
-        this.popOut = this.popOut.bind(this);
+        this.notifyPopOut = this.notifyPopOut.bind(this);
+        this.close = this.close.bind(this);
     }
 
     private rootDocsUrl(): string {
         return (pxt.webConfig.docsUrl || '/--docs') + "#";
+    }
+
+    private notifyPopOut() {
+        SideDocs.notify({
+            type: "popout"
+        })
     }
 
     public static notify(message: pxsim.SimulatorMessage) {
@@ -686,14 +706,13 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
         this.props.parent.editor.focusWorkspace();
     }
 
-    isCollapsed() {
-        return !!this.state.sideDocsCollapsed;
+    close() {
+        this.props.parent.setState({ sideDocsCollapsed: true, sideDocsLoadUrl: '' });
+        this.props.parent.editor.focusWorkspace();
     }
 
-    popOut() {
-        SideDocs.notify({
-            type: "popout"
-        })
+    isCollapsed() {
+        return !!this.state.sideDocsCollapsed;
     }
 
     toggleVisibility() {
@@ -744,7 +763,20 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
         if (!docsUrl) return null;
 
         const url = sideDocsCollapsed ? this.rootDocsUrl() : docsUrl;
-        const isBuiltIn = url.startsWith(`${builtInPrefix}`);
+        const builtIn = url.startsWith(`${builtInPrefix}`)
+            ? builtIns[url.slice(builtInPrefix.length) as pxt.editor.BuiltInHelp]
+            : undefined;
+        const openInNewTabLinkProps: React.ComponentProps<'a'> = builtIn ? {
+            target: "_blank",
+            href: builtIn.popOutHref,
+            rel: "noopener",
+            onClick: this.close,
+        } : {
+            onClick: this.notifyPopOut,
+            onKeyDown: fireClickOnEnter,
+            role: "button",
+            tabIndex: 0,
+        };
 
         /* eslint-disable @microsoft/sdl/react-iframe-missing-sandbox */
         return <div>
@@ -752,29 +784,22 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
                 <sui.Icon icon={`icon inverted chevron ${showLeftChevron ? 'left' : 'right'}`} />
             </button>
             <div id="sidedocs" onKeyDown={this.handleKeyDown}>
-                {!lockedEditor && !isBuiltIn && <div className="ui app hide" id="sidedocsbar">
-                    <a className="ui icon link" role="button" tabIndex={0} data-content={lf("Open documentation in new tab")} aria-label={lf("Open documentation in new tab")} onClick={this.popOut} onKeyDown={fireClickOnEnter} >
+                {!lockedEditor && <div className="ui app hide" id="sidedocsbar">
+                    <a className="ui icon link" aria-label={lf("Open documentation in new tab")} {...openInNewTabLinkProps}>
                         <sui.Icon icon="external" />
                     </a>
                 </div>}
                 <div id="sidedocsframe-wrapper">
-                    {this.renderContent(url, isBuiltIn, lockedEditor)}
+                    {this.renderContent(url, builtIn, lockedEditor)}
                 </div>
             </div>
         </div>
         /* eslint-enable @microsoft/sdl/react-iframe-missing-sandbox */
     }
 
-    renderContent(url: string, isBuiltin: boolean, lockedEditor: boolean) {
-        if (isBuiltin) {
-            const component = url.slice(builtInPrefix.length) as pxt.editor.BuiltInHelp;
-            switch (component) {
-                case "keyboardControls": {
-                    return <KeyboardControlsHelp />
-                }
-            }
-        }
-        return (
+    renderContent(url: string, builtIn: BuiltInHelpDetails | undefined, lockedEditor: boolean) {
+        const BuiltInComponent =  builtIn?.component;
+        return BuiltInComponent ? <BuiltInComponent /> : (
             <iframe id="sidedocsframe" src={url} title={lf("Documentation")} aria-atomic="true" aria-live="assertive"
                 sandbox={`allow-scripts allow-same-origin allow-forms ${lockedEditor ? "" : "allow-popups"}`} />
         )
