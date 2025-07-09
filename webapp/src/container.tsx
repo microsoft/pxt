@@ -82,24 +82,17 @@ function getKeyboardNavHelpItem(parent: IProjectView, cls: string = ""): JSX.Ele
 type DocsMenuEditorName = "Blocks" | "JavaScript" | "Python";
 interface DocsMenuProps extends ISettingsProps {
     editor: DocsMenuEditorName;
+    inBlocks: boolean;
 }
 
-function showKeyboardControls() {
-    const languageRestriction = pkg.mainPkg?.config?.languageRestriction;
-    const pyOnly = languageRestriction === pxt.editor.LanguageRestriction.PythonOnly;
-    const noBlocks = languageRestriction === pxt.editor.LanguageRestriction.NoBlocks;
-    const tsOnly = languageRestriction === pxt.editor.LanguageRestriction.JavaScriptOnly;
-    return !pyOnly && !tsOnly && !noBlocks && !!pkg.mainEditorPkg().files[pxt.MAIN_BLOCKS];
-}
-
-export class DocsMenu extends data.PureComponent<DocsMenuProps & { hasMainBlocksFile: boolean }, {}> {
+export class DocsMenu extends data.PureComponent<DocsMenuProps, {}> {
     renderCore() {
         const parent = this.props.parent;
         const targetTheme = pxt.appTarget.appTheme;
         const accessibleBlocksEnabled = data.getData<boolean>(auth.ACCESSIBLE_BLOCKS);
         return <sui.DropdownMenu role="menuitem" icon="help circle large"
             className="item mobile hide help-dropdown-menuitem" textClass={"landscape only"} title={lf("Help")} >
-            {this.props.hasMainBlocksFile && parent.isBlocksEditor() && showKeyboardControls() && accessibleBlocksEnabled && getKeyboardNavHelpItem(parent)}
+            {this.props.inBlocks && accessibleBlocksEnabled && getKeyboardNavHelpItem(parent)}
             {targetTheme.tours?.editor && getTourItem(parent)}
             {renderDocItems(parent, targetTheme.docMenu)}
             {getDocsLanguageItem(this.props.editor, parent)}
@@ -378,7 +371,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             <div className="ui divider"></div>
             {targetTheme.selectLanguage ? <sui.Item icon='xicon globe' role="menuitem" text={lf("Language")} onClick={this.showLanguagePicker} /> : undefined}
             <sui.Item role="menuitem" icon="paint brush" text={lf("Theme")} onClick={this.showThemePicker} />
-            {this.props.parent.isBlocksEditor() && showKeyboardControls() &&
+            {this.props.inBlocks &&
                 <CheckboxMenuItem
                     isChecked={accessibleBlocks}
                     label={lf("Keyboard Controls")}
