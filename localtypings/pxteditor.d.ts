@@ -956,7 +956,7 @@ declare namespace pxt.editor {
         saveAndCompile(): void;
         updateHeaderName(name: string): void;
         updateHeaderNameAsync(name: string): Promise<void>;
-        compile(saveOnly?: boolean): void;
+        compile(): void;
 
         setFile(fn: IFile, line?: number): void;
         setSideFile(fn: IFile, line?: number): void;
@@ -1093,7 +1093,7 @@ declare namespace pxt.editor {
         showPackageDialog(query?: string): void;
         showBoardDialogAsync(features?: string[], closeIcon?: boolean): Promise<void>;
         checkForHwVariant(): boolean;
-        pairDialogAsync(): Promise<pxt.commands.WebUSBPairResult>;
+        pairAsync(): Promise<boolean>;
 
         createModalClasses(classes?: string): string;
         showModalDialogAsync(options: ModalDialogOptions): Promise<void>;

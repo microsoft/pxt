@@ -74,10 +74,8 @@ export async function webUsbPairThemedDialogAsync(pairAsync: () => Promise<boole
         if (connected) {
             // plugged in underneath previous dialog, continue;
             core.hideDialog();
-        } else if (webUsbInstrDialogRes === ShowPairStepResult.Rejected) {
+        } else if (!webUsbInstrDialogRes) {
             return notPairedResult();
-        } else if (webUsbInstrDialogRes === ShowPairStepResult.DownloadOnly) {
-            return pxt.commands.WebUSBPairResult.DownloadOnly;
         } else {
             let errMessage: any;
             try {
@@ -123,10 +121,9 @@ export async function webUsbPairThemedDialogAsync(pairAsync: () => Promise<boole
         await showConnectionSuccessAsync(confirmAsync, implicitlyCalled);
     }
     else {
-        const userResponse = await showConnectionFailureAsync(confirmAsync, implicitlyCalled, lastPairingError);
+        const tryAgain = await showConnectionFailureAsync(confirmAsync, implicitlyCalled, lastPairingError);
 
-        if (userResponse === ShowPairStepResult.Accepted) return webUsbPairThemedDialogAsync(pairAsync, confirmAsync, implicitlyCalled);
-        else if (userResponse === ShowPairStepResult.DownloadOnly) return pxt.commands.WebUSBPairResult.DownloadOnly;
+        if (tryAgain) return webUsbPairThemedDialogAsync(pairAsync, confirmAsync, implicitlyCalled);
     }
 
     if (paired) {
@@ -161,10 +158,9 @@ function showConnectDeviceDialogAsync(confirmAsync: ConfirmAsync) {
     );
 
     return showPairStepAsync({
+        hideClose: true,
         confirmAsync,
         jsxd,
-        hideClose: true,
-        showCancelButton: true,
         buttonLabel: lf("Next"),
         buttonIcon: pxt.appTarget?.appTheme?.downloadDialogTheme?.deviceIcon,
         header: lf("1. Connect your {0} to your computer", boardName),
@@ -303,16 +299,9 @@ interface PairStepOptions {
     tick: string;
     help?: string;
     headerIcon?: string;
-    showCancelButton?: boolean;
     showDownloadAsFileButton?: boolean;
     hideClose?: boolean;
     doNotHideOnAgree?: boolean;
-}
-
-enum ShowPairStepResult {
-    Rejected,
-    Accepted,
-    DownloadOnly
 }
 
 async function showPairStepAsync({
@@ -324,12 +313,12 @@ async function showPairStepAsync({
     tick,
     help,
     headerIcon,
-    showCancelButton,
     showDownloadAsFileButton,
     hideClose,
     doNotHideOnAgree,
-}: PairStepOptions): Promise<ShowPairStepResult> {
-    let userResponse = ShowPairStepResult.DownloadOnly;
+}: PairStepOptions) {
+    let tryAgain = false;
+
     /**
      * The deferred below is only used when doNotHideOnAgree is set
      */
@@ -346,7 +335,7 @@ async function showPairStepAsync({
             labelPosition: "left",
             onclick: () => {
                 pxt.tickEvent(tick);
-                userResponse = ShowPairStepResult.Accepted;
+                tryAgain = true;
                 if (doNotHideOnAgree) {
                     deferred();
                 }
@@ -364,19 +353,8 @@ async function showPairStepAsync({
             onclick: () => {
                 pxt.tickEvent("downloaddialog.button.webusb.preferdownload");
                 userPrefersDownloadFlag = true;
-                userResponse = ShowPairStepResult.DownloadOnly;
+                tryAgain = false;
             },
-        });
-    }
-
-    if (showCancelButton) {
-        buttons.unshift({
-            label: lf("Cancel"),
-            className: "cancel neutral",
-            icon: "cancel",
-            onclick: () => {
-                userResponse = ShowPairStepResult.Rejected;
-            }
         });
     }
 
@@ -401,7 +379,7 @@ async function showPairStepAsync({
         await dialog;
     }
 
-    return userResponse;
+    return tryAgain;
 }
 
 export function webUsbPairLegacyDialogAsync(pairAsync: () => Promise<boolean>, confirmAsync: ConfirmAsync): Promise<number> {
