@@ -2100,6 +2100,8 @@ export class ProjectView
 
         if (projectname === pxt.PYTHON_PROJECT_NAME && header.tutorial.templateLanguage === "python") {
             currentText[pxt.MAIN_PY] = template;
+        } else if (header.tutorial.templateLanguage === "blocks") {
+            currentText[pxt.MAIN_BLOCKS] = template;
         }
         else if (projectname === pxt.JAVASCRIPT_PROJECT_NAME) {
             currentText[pxt.MAIN_TS] = template;
@@ -2566,14 +2568,15 @@ export class ProjectView
         await this.loadHeaderAsync(installed, editorState);
     }
 
-    importTutorialAsync(md: string) {
+    importTutorialAsync(md: string, name?: string, mutate?: (options: pxt.tutorial.TutorialOptions) => void) {
         try {
             const { options, editor } = pxt.tutorial.getTutorialOptions(md, "untitled", "untitled", "", false);
+            mutate?.(options);
             const dependencies = pxt.gallery.parsePackagesFromMarkdown(md);
             this.hintManager.clearViewedHints();
 
             return this.createProjectAsync({
-                name: "untitled",
+                name: name || "untitled",
                 tutorial: options,
                 preferredEditor: editor,
                 dependencies
@@ -5319,6 +5322,111 @@ export class ProjectView
 
     async showTour(config: pxt.tour.TourConfig) {
         this.setState({ activeTourConfig: config });
+    }
+
+    async showHowTo() {
+        const opts: core.PromptOptions = {
+            header: lf("What would you like to learn how to do?"),
+            agreeLbl: lf("Generate Tutorial"),
+            agreeIcon: "xicon sparkle",
+            placeholder: lf("Make my character jump"),
+            jsx: <><br /><p style={{ color: "gray", fontSize: "12px" }}>{lf("This will send your code to AI for analysis")}</p></>,
+            hasCloseIcon: true,
+            hideCancel: true,
+        };
+
+        const goal = await core.promptAsync(opts);
+
+        // User cancelled the dialog
+        if (goal === null) {
+            return;
+        }
+
+        // User didn't enter anything
+        let trimmedGoal = goal?.trim();
+        if (!trimmedGoal) {
+            core.warningNotification(lf("Please enter a goal for your tutorial"));
+            return;
+        }
+
+        const code = this.blocksEditor.serializeBlocks(false);
+
+        try {
+            const response = await cloud.getHowToResponse(
+                trimmedGoal,
+                code,
+                "blocks",
+                pxt.appTarget.nickname || pxt.appTarget.name,
+                pxt.Util.userLanguage());
+
+            console.log("How-To Response:", response);
+
+            if (!response) {
+                throw new Error("No response from server");
+            }
+
+            // Remove markdown code fencing if present (```markdown ... ``` or ``` ... ```)
+            let cleanedResponse = response.trim();
+            const fenceRegex = /^```(?:markdown)?\s*\n([\s\S]*?)\n```$/;
+            const match = fenceRegex.exec(cleanedResponse);
+            if (match) {
+                cleanedResponse = match[1];
+            }
+
+            // Fix missing backticks around ||...|| blocks
+            // Replace patterns like "||controller:on A button pressed||" with "``||controller:on A button pressed||``"
+            cleanedResponse = cleanedResponse.replace(/(?<!``)((?<!\S)(\|\|[^|]+\|\|)(?!\S))(?!``)/g, '``$2``');
+
+            const newName = this.state.projectName ? this.state.projectName + " - How To" : lf("How To");
+
+            console.log("Cleaned How-To Response:", cleanedResponse);
+            const currentHeader = this.state.header;
+            const currentText = await workspace.getTextAsync(currentHeader.id);
+
+            await this.importTutorialAsync(cleanedResponse, newName, options => {
+                // Specify user's current code as template code
+                options.templateCode = code;
+                options.templateLanguage = "blocks";
+
+                // Preserve assets from the current project
+                const assetFiles: pxt.Map<string> = {};
+                if (currentText[pxt.IMAGES_JRES] && currentText[pxt.IMAGES_JRES] !== "{}") {
+                    assetFiles[pxt.IMAGES_JRES] = currentText[pxt.IMAGES_JRES];
+                }
+                if (currentText[pxt.TILEMAP_JRES] && currentText[pxt.TILEMAP_JRES] !== "{}") {
+                    assetFiles[pxt.TILEMAP_JRES] = currentText[pxt.TILEMAP_JRES];
+                }
+                if (currentText[pxt.IMAGES_CODE] && currentText[pxt.IMAGES_CODE].trim() !== "") {
+                    assetFiles[pxt.IMAGES_CODE] = currentText[pxt.IMAGES_CODE];
+                }
+                if (currentText[pxt.TILEMAP_CODE] && currentText[pxt.TILEMAP_CODE].trim() !== "") {
+                    assetFiles[pxt.TILEMAP_CODE] = currentText[pxt.TILEMAP_CODE];
+                }
+                if (Object.keys(assetFiles).length > 0) {
+                    options.assetFiles = assetFiles;
+                }
+
+                function addFooter(string: string): string {
+                    let newString = string?.trim();
+                    if (!newString) return newString;
+
+                    if (!newString.endsWith("---")) {
+                        newString += "\n\n---";
+                    }
+
+                    newString += `\n\n<small>${lf("AI generated content may be incorrect.")}</small>`;
+                    return newString;
+                }
+
+                for (const step of options.tutorialStepInfo ?? []) {
+                    step.contentMd = addFooter(step.contentMd);
+                    step.headerContentMd = addFooter(step.headerContentMd);
+                }
+            });
+        } catch (e) {
+            console.error("Failed to start HowTo tutorial:", e);
+            core.errorNotification(lf("Failed to create tutorial"));
+        }
     }
 
     ///////////////////////////////////////////////////////////

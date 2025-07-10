@@ -317,7 +317,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
      * @param forceKeepIds Whether to force keeping the block ids in the XML
      * @returns The serialized XML string
      */
-    private serializeBlocks(normalize?: boolean, forceKeepIds?: boolean): string {
+    public serializeBlocks(normalize?: boolean, forceKeepIds?: boolean): string {
         // store ids when using github
         let xml = pxtblockly.saveWorkspaceXml(this.editor, forceKeepIds ||
             (!normalize && this.parent.state
