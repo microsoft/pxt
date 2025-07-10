@@ -47,6 +47,8 @@ const KeyboardControlsHelp = () => {
                     <Row name={lf("Toolbox: Insert block")} {...enterOrSpace} />
                     <Row name={lf("Workspace: Select workspace")} shortcuts={[ShortcutNames.CREATE_WS_CURSOR]} />
                     {cleanUpRow}
+                    <Row name={lf("Next block stack")} shortcuts={[ShortcutNames.NEXT_STACK]} />
+                    <Row name={lf("Previous block stack")} shortcuts={[ShortcutNames.PREVIOUS_STACK]} />
                 </tbody>
             </table>
             <h3>{lf("Edit Blocks")}</h3>
@@ -58,6 +60,7 @@ const KeyboardControlsHelp = () => {
                     <Row name={lf("Copy")} shortcuts={[ShortcutNames.COPY]} />
                     <Row name={lf("Paste")} shortcuts={[ShortcutNames.PASTE]} />
                     <Row name={lf("Cut")} shortcuts={[ShortcutNames.CUT]} />
+                    <Row name={lf("Duplicate")} shortcuts={[ShortcutNames.DUPLICATE]} />
                     <Row name={lf("Delete")} shortcuts={getActionShortcutsAsKeys(ShortcutNames.DELETE)} joiner={orAsJoiner} />
                     <Row name={lf("Undo")} shortcuts={[ShortcutNames.UNDO]} />
                     <Row name={lf("Redo")} shortcuts={[ShortcutNames.REDO]} />
