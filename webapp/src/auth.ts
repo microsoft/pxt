@@ -260,7 +260,7 @@ export async function setAccessibleBlocksPrefAsync(accessibleBlocks: boolean, ev
             op: 'replace',
             path: ['accessibleBlocks'],
             value: accessibleBlocks
-        });
+        }, { immediate: true }); // sync this change immediately, as the page is about to reload.
     } else {
         // Identity not available, save this setting locally
         pxt.storage.setLocal(ACCESSIBLE_BLOCKS, accessibleBlocks.toString());
