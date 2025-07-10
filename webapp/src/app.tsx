@@ -5326,6 +5326,11 @@ export class ProjectView
     ///////////////////////////////////////////////////////////
 
     toggleAreaMenu() {
+        // Close the simulator if needed.
+        if (this.state.fullscreen) {
+            this.setSimulatorFullScreen(false);
+        }
+
         const dialog = Array.from(document.querySelectorAll("[role=dialog]")).find(dialog => (dialog as any).checkVisibility());
         this.setState((state) => {
             const { areaMenuOpen } = state;
