@@ -1190,14 +1190,16 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 bubbleStyle: "yellow",
             } as pxt.tour.BubbleStep;
 
-            if (step.elementId && validBlockIds.includes(step.elementId)) {
-                tourStep.targetQuery = `g[data-id="${step.elementId}"]:not(.blocklyFlyout g)`;
-                tourStep.location = pxt.tour.BubbleLocation.Right;
-                tourStep.onStepBegin = () => this.editor.centerOnBlock(step.elementId, true);
-            } else {
-                // Do not add the tour target, but keep the step in case it's still helpful.
-                pxt.tickEvent("errorHelp.invalidBlockId");
-                invalidBlockIdCount++;
+            if (step.elementId) {
+                if (validBlockIds.includes(step.elementId)) {
+                    tourStep.targetQuery = `g[data-id="${step.elementId}"]:not(.blocklyFlyout g)`;
+                    tourStep.location = pxt.tour.BubbleLocation.Right;
+                    tourStep.onStepBegin = () => this.editor.centerOnBlock(step.elementId, true);
+                } else {
+                    // Do not add the tour target, but keep the step in case it's still helpful.
+                    pxt.tickEvent("errorHelp.invalidBlockId");
+                    invalidBlockIdCount++;
+                }
             }
 
             tourSteps.push(tourStep);
