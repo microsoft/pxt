@@ -207,10 +207,6 @@ export const AreaMenuOverlay = ({ parent }: AreaMenuOverlapProps) => {
         parent.toggleAreaMenu();
     }, [parent]);
     useEffect(() => {
-        if (parent.state.fullscreen) {
-            parent.setSimulatorFullScreen(false);
-        }
-
         const listener = (e: KeyboardEvent) => {
             const area = areas.find(area => area.shortcutKey === e.key);
             if (area) {
@@ -236,16 +232,21 @@ export const AreaMenuOverlay = ({ parent }: AreaMenuOverlapProps) => {
         }
     }, [])
 
-    const handleEscape = () => {
+    const handleEscape = useCallback(() => {
         parent.toggleAreaMenu();
-    }
+    }, [parent]);
 
-    if (!areaRects.get("editor")) {
-        // Something is awry, bail out.
-        parent.toggleAreaMenu();
+    // Something is awry, bail out.
+    const bailOut = !areaRects.get("editor");
+    useEffect(() => {
+        if (bailOut) {
+            parent.toggleAreaMenu();
+        }
+    }, [bailOut, parent]);
+
+    if (bailOut) {
         return null;
     }
-
     return ReactDOM.createPortal(
         <FocusTrap dontRestoreFocus onEscape={handleEscape}>
             <div className="area-menu-container" >
