@@ -2,6 +2,7 @@
 // Helpers designed to help to make a simulator accessible.
 namespace pxsim.accessibility {
     let liveRegion: HTMLDivElement;
+    let keydownListenerAdded = false;
 
     export function makeFocusable(elem: SVGElement): void {
         elem.setAttribute("focusable", "true");
@@ -25,6 +26,10 @@ namespace pxsim.accessibility {
     }
 
     export function postKeyboardEvent() {
+        if (keydownListenerAdded) {
+            return;
+        }
+        keydownListenerAdded = true;
         document.addEventListener("keydown", (e) => {
             const action = getGlobalAction(e)
             if (action) {
