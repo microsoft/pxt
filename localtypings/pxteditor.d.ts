@@ -1063,7 +1063,7 @@ declare namespace pxt.editor {
         showLightbox(): void;
         hideLightbox(): void;
         showOnboarding(): void;
-        showHowTo(): void;
+        generateWorkspaceOutline(): void;
         showTour(config: pxt.tour.TourConfig): void;
         closeTour(): void;
         toggleAreaMenu(): void;

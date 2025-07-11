@@ -5324,109 +5324,51 @@ export class ProjectView
         this.setState({ activeTourConfig: config });
     }
 
-    async showHowTo() {
-        const opts: core.PromptOptions = {
-            header: lf("What would you like to learn how to do?"),
-            agreeLbl: lf("Generate Tutorial"),
-            agreeIcon: "xicon sparkle",
-            placeholder: lf("Make my character jump"),
-            jsx: <><br /><p style={{ color: "gray", fontSize: "12px" }}>{lf("This will send your code to AI for analysis")}</p></>,
-            hasCloseIcon: true,
-            hideCancel: true,
-        };
+    async generateWorkspaceOutline() {
+        const topLevelBlocks = this.getBlocks().filter(b => !b.getParent());
 
-        const goal = await core.promptAsync(opts);
+        // const code = this.blocksEditor.serializeBlocks(true);
 
-        // User cancelled the dialog
-        if (goal === null) {
-            return;
+        interface OutlineBlockInfo {
+            blockId: string;
+            header: string;
         }
 
-        // User didn't enter anything
-        let trimmedGoal = goal?.trim();
-        if (!trimmedGoal) {
-            core.warningNotification(lf("Please enter a goal for your tutorial"));
-            return;
-        }
-
-        const code = this.blocksEditor.serializeBlocks(false);
-
+        const outline: OutlineBlockInfo[] = [];
         try {
-            const response = await cloud.getHowToResponse(
-                trimmedGoal,
-                code,
-                "blocks",
-                pxt.appTarget.nickname || pxt.appTarget.name,
-                pxt.Util.userLanguage());
+            for (const block of topLevelBlocks) {
+                const xml = Blockly.Xml.blockToDom(block);
+                const code = Blockly.Xml.domToText(xml);
 
-            console.log("How-To Response:", response);
+                const response = await cloud.getCodeOutlineSummaryResponse(
+                    code,
+                    "blocks",
+                    pxt.appTarget.nickname || pxt.appTarget.name,
+                    pxt.Util.userLanguage());
 
-            if (!response) {
-                throw new Error("No response from server");
+                if (!response) {
+                    throw new Error(`No response from server for block: ${block.id}`);
+                }
+
+                // Remove json code fencing if present (```json ... ``` or ``` ... ```)
+                let cleanedResponse = response.trim();
+                const fenceRegex = /^```(?:json)?\s*\n([\s\S]*?)\n```$/;
+                const match = fenceRegex.exec(cleanedResponse);
+                if (match) {
+                    cleanedResponse = match[1];
+                }
+
+                outline.push({
+                    blockId: block.id,
+                    header: cleanedResponse
+                });
             }
-
-            // Remove markdown code fencing if present (```markdown ... ``` or ``` ... ```)
-            let cleanedResponse = response.trim();
-            const fenceRegex = /^```(?:markdown)?\s*\n([\s\S]*?)\n```$/;
-            const match = fenceRegex.exec(cleanedResponse);
-            if (match) {
-                cleanedResponse = match[1];
-            }
-
-            // Fix missing backticks around ||...|| blocks
-            // Replace patterns like "||controller:on A button pressed||" with "``||controller:on A button pressed||``"
-            cleanedResponse = cleanedResponse.replace(/(?<!``)((?<!\S)(\|\|[^|]+\|\|)(?!\S))(?!``)/g, '``$2``');
-
-            const newName = this.state.projectName ? this.state.projectName + " - How To" : lf("How To");
-
-            console.log("Cleaned How-To Response:", cleanedResponse);
-            const currentHeader = this.state.header;
-            const currentText = await workspace.getTextAsync(currentHeader.id);
-
-            await this.importTutorialAsync(cleanedResponse, newName, options => {
-                // Specify user's current code as template code
-                options.templateCode = code;
-                options.templateLanguage = "blocks";
-
-                // Preserve assets from the current project
-                const assetFiles: pxt.Map<string> = {};
-                if (currentText[pxt.IMAGES_JRES] && currentText[pxt.IMAGES_JRES] !== "{}") {
-                    assetFiles[pxt.IMAGES_JRES] = currentText[pxt.IMAGES_JRES];
-                }
-                if (currentText[pxt.TILEMAP_JRES] && currentText[pxt.TILEMAP_JRES] !== "{}") {
-                    assetFiles[pxt.TILEMAP_JRES] = currentText[pxt.TILEMAP_JRES];
-                }
-                if (currentText[pxt.IMAGES_CODE] && currentText[pxt.IMAGES_CODE].trim() !== "") {
-                    assetFiles[pxt.IMAGES_CODE] = currentText[pxt.IMAGES_CODE];
-                }
-                if (currentText[pxt.TILEMAP_CODE] && currentText[pxt.TILEMAP_CODE].trim() !== "") {
-                    assetFiles[pxt.TILEMAP_CODE] = currentText[pxt.TILEMAP_CODE];
-                }
-                if (Object.keys(assetFiles).length > 0) {
-                    options.assetFiles = assetFiles;
-                }
-
-                function addFooter(string: string): string {
-                    let newString = string?.trim();
-                    if (!newString) return newString;
-
-                    if (!newString.endsWith("---")) {
-                        newString += "\n\n---";
-                    }
-
-                    newString += `\n\n<small>${lf("AI generated content may be incorrect.")}</small>`;
-                    return newString;
-                }
-
-                for (const step of options.tutorialStepInfo ?? []) {
-                    step.contentMd = addFooter(step.contentMd);
-                    step.headerContentMd = addFooter(step.headerContentMd);
-                }
-            });
         } catch (e) {
             console.error("Failed to start HowTo tutorial:", e);
             core.errorNotification(lf("Failed to create tutorial"));
         }
+
+        console.log("Workspace outline generated:", outline);
     }
 
     ///////////////////////////////////////////////////////////

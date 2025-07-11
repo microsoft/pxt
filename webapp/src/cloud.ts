@@ -744,16 +744,17 @@ export async function aiErrorExplainRequest(
     return result.resp.data;
 }
 
-export async function getHowToResponse(
-    goal: string,
+export async function getCodeOutlineSummaryResponse(
     code: string,
     lang: "blocks" | "typescript" | "python",
     target: string,
     locale: string
 ): Promise<string> {
-    const url = `/api/copilot/howto`;
+    const url = `/api/copilot/outlinesummary`;
 
-    const data = { lang, code, goal, target, locale };
+    const data = { lang, code, target, locale };
+
+    console.log("Requesting Code Outline Summary:", data);
 
     const response = await auth.apiAsync(url, data, "POST");
     if (!response.success) {
@@ -762,6 +763,8 @@ export async function getHowToResponse(
             response.err || `Unable to reach AI. Error: ${response.statusCode}.\n${response.err}`
         );
     }
+
+    console.log("Code Outline Summary Response:", response.resp);
 
     return response.resp;
 }

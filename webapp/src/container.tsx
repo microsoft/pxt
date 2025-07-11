@@ -51,7 +51,7 @@ function startTour(parent: IProjectView) {
 
 function startHowTo(parent: IProjectView) {
     pxt.tickEvent(`howto.start`, { origin: "help-menu" });
-    parent.showHowTo();
+    parent.generateWorkspaceOutline();
 }
 
 function openKeyboardNavHelp(parent: IProjectView) {
