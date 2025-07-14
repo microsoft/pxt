@@ -19,6 +19,22 @@
     }
 }
 
+.teaching-bubble-container.blue {
+    --teaching-bubble-foreground: var(--pxt-colors-blue-foreground);
+    --teaching-bubble-background: var(--pxt-colors-blue-background);
+
+    .ai-footer {
+        opacity: 0.8;
+        .ai-footer-text {
+            color: var(--pxt-colors-blue-foreground);
+        }
+        .feedback-button, .feedback-button.disabled {
+            // Override the default disabled coloring
+            color: var(--pxt-colors-blue-foreground);
+        }
+    }
+}
+
 .teaching-bubble-container {
     position: fixed;
     top: 0;

@@ -49,9 +49,9 @@ function startTour(parent: IProjectView) {
     parent.showOnboarding();
 }
 
-function startHowTo(parent: IProjectView) {
-    pxt.tickEvent(`howto.start`, { origin: "help-menu" });
-    parent.generateWorkspaceOutline();
+function startProjectWalkthrough(parent: IProjectView) {
+    pxt.tickEvent(`projectwalkthrough.start`, { origin: "help-menu" });
+    parent.generateProjectWalkthrough();
 }
 
 function openKeyboardNavHelp(parent: IProjectView) {
@@ -79,9 +79,9 @@ function getTourItem(parent: IProjectView, cls: string = ""): JSX.Element {
     return <DocsMenuItem key={"docsmenu" + path} role="menuitem" ariaLabel={lf("Tour")} text={lf("Tour")} className={`ui ${cls}`} parent={parent} path={path} onItemClick={startTour} />
 }
 
-function getHowToItem(parent: IProjectView, cls: string = ""): JSX.Element {
+function getProjectWalkthroughItem(parent: IProjectView, cls: string = ""): JSX.Element {
     const path = "/how-to";
-    return <DocsMenuItem key={"docsmenu" + path} role="menuitem" ariaLabel={lf("How To")} text={lf("How To")} className={`ui ${cls}`} parent={parent} path={path} onItemClick={startHowTo} />
+    return <DocsMenuItem key={"docsmenu" + path} role="menuitem" ariaLabel={lf("Walkthrough")} text={lf("Walkthrough")} className={`ui ${cls}`} parent={parent} path={path} onItemClick={startProjectWalkthrough} />
 }
 
 function getKeyboardNavHelpItem(parent: IProjectView, cls: string = ""): JSX.Element {
@@ -106,7 +106,7 @@ export class DocsMenu extends data.PureComponent<DocsMenuProps, {}> {
             {targetTheme.tours?.editor && getTourItem(parent)}
             {renderDocItems(parent, targetTheme.docMenu)}
             {getDocsLanguageItem(this.props.editor, parent)}
-            {getHowToItem(parent)}
+            {getProjectWalkthroughItem(parent)}
         </sui.DropdownMenu>
     }
 }

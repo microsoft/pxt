@@ -52,7 +52,7 @@ export class ErrorHelpException extends Error {
  * Converts the AI response data into our structured ErrorHelpResponse format.
  * This is used when the AI returns a JSON "tour" response.
  */
-function parseTourResponse(response: string): ErrorHelpTourResponse {
+export function parseTourResponse(response: string): ErrorHelpTourResponse {
     // The AI provides a JSON list with blockIds tied to explanations for each block, matching this format
     interface AiResponseJsonFormat {
         blockId: string;

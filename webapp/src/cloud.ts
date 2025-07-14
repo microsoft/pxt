@@ -744,17 +744,17 @@ export async function aiErrorExplainRequest(
     return result.resp.data;
 }
 
-export async function getCodeOutlineSummaryResponse(
+export async function aiProjectWalkthroughRequest(
     code: string,
-    lang: "blocks" | "typescript" | "python",
+    codeLang: "blocks" | "typescript" | "python",
     target: string,
     locale: string
 ): Promise<string> {
-    const url = `/api/copilot/outlinesummary`;
+    const url = `/api/copilot/walkthrough`;
 
-    const data = { lang, code, target, locale };
+    const data = { codeLang, code, target, locale };
 
-    console.log("Requesting Code Outline Summary:", data);
+    console.log("Requesting Project Walkthrough:", data);
 
     const response = await auth.apiAsync(url, data, "POST");
     if (!response.success) {
@@ -764,7 +764,7 @@ export async function getCodeOutlineSummaryResponse(
         );
     }
 
-    console.log("Code Outline Summary Response:", response.resp);
+    console.log("Project Walkthrough Response:", response.resp);
 
     return response.resp;
 }

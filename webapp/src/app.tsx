@@ -87,6 +87,7 @@ import { BlockDefinition, CategoryNameID } from "./toolbox";
 import { FeedbackModal } from "../../react-common/components/controls/Feedback/Feedback";
 import { ThemeManager } from "../../react-common/components/theming/themeManager";
 import { applyPolyfills } from "./polyfills";
+import { parseTourResponse } from "./errorHelp";
 
 pxt.blocks.requirePxtBlockly = () => pxtblockly as any;
 pxt.blocks.requireBlockly = () => Blockly;
@@ -5324,109 +5325,35 @@ export class ProjectView
         this.setState({ activeTourConfig: config });
     }
 
-    async generateWorkspaceOutline() {
+    async generateProjectWalkthrough() {
         const code = this.blocksEditor.serializeBlocks(false, true);
         const validBlockIds = this.getBlocks().map((b) => b.id);
 
-        interface OutlineBlockInfo {
-            blockId: string;
-            header: string;
-        }
-
-        interface OutlineInfo {
-            steps: OutlineBlockInfo[];
-        }
-
         try {
-            const response = await cloud.getCodeOutlineSummaryResponse(
+            const response = await cloud.aiProjectWalkthroughRequest(
                 code,
                 "blocks",
                 pxt.appTarget.nickname || pxt.appTarget.name,
                 pxt.Util.userLanguage());
 
             if (!response) {
-                throw new Error("No response from server for workspace outline");
+                throw new Error("No response from server for project walkthrough");
             }
 
-            // Remove json code fencing if present (```json ... ``` or ``` ... ```)
-            let cleanedResponse = response.trim();
-            const fenceRegex = /^```(?:json)?\s*\n([\s\S]*?)\n```$/;
-            const match = fenceRegex.exec(cleanedResponse);
-            if (match) {
-                cleanedResponse = match[1];
+            const parsedResponse = parseTourResponse(response);
+            if (!parsedResponse) {
+                throw new Error("Failed to parse project walkthrough response");
+            }
+            if (!parsedResponse.explanationSteps) {
+                throw new Error(`No steps found in project walkthrough`);
             }
 
-            const parsedResponse = JSON.parse(cleanedResponse) as OutlineBlockInfo[];
-            if (!parsedResponse || !parsedResponse.length) {
-                throw new Error(`No steps found in outline`);
-            }
-
-            const finalOutline: OutlineInfo = {
-                steps: []
-            };
-            for (const step of parsedResponse) {
-                // Verify block ids and remove invalid ones.
-                if (!step.blockId || !validBlockIds.includes(step.blockId)) {
-                    console.warn("Invalid block id in outline:", step);
-                    continue;
-                }
-                finalOutline.steps.push({
-                    blockId: step.blockId,
-                    header: step.header
-                });
-            }
-            console.log("Workspace outline generated:", finalOutline);
+            const tour = this.blocksEditor.createTourFromResponse(parsedResponse, "blue");
+            this.showTour(tour);
         } catch (e) {
             console.error("Failed to start HowTo tutorial:", e);
             core.errorNotification(lf("Failed to create tutorial"));
         }
-    }
-
-    async generateWorkspaceOutlineByBlock() {
-        const topLevelBlocks = this.getBlocks().filter(b => !b.getParent());
-
-        // const code = this.blocksEditor.serializeBlocks(true);
-
-        interface OutlineBlockInfo {
-            blockId: string;
-            header: string;
-        }
-
-        const outline: OutlineBlockInfo[] = [];
-        try {
-            for (const block of topLevelBlocks) {
-                const xml = Blockly.Xml.blockToDom(block);
-                const code = Blockly.Xml.domToText(xml);
-
-                const response = await cloud.getCodeOutlineSummaryResponse(
-                    code,
-                    "blocks",
-                    pxt.appTarget.nickname || pxt.appTarget.name,
-                    pxt.Util.userLanguage());
-
-                if (!response) {
-                    throw new Error(`No response from server for block: ${block.id}`);
-                }
-
-                // Remove json code fencing if present (```json ... ``` or ``` ... ```)
-                let cleanedResponse = response.trim();
-                const fenceRegex = /^```(?:json)?\s*\n([\s\S]*?)\n```$/;
-                const match = fenceRegex.exec(cleanedResponse);
-                if (match) {
-                    cleanedResponse = match[1];
-                }
-
-                outline.push({
-                    blockId: block.id,
-                    header: cleanedResponse
-                });
-            }
-        } catch (e) {
-            console.error("Failed to start HowTo tutorial:", e);
-            core.errorNotification(lf("Failed to create tutorial"));
-        }
-
-        console.log("Workspace outline generated:", outline);
     }
 
     ///////////////////////////////////////////////////////////

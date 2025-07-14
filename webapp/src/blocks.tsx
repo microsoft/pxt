@@ -1160,7 +1160,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const code = this.serializeBlocks(false, true /* forceKeepIds */);
         try {
             const helpResponse = await getErrorHelpAsTour(this.errors, "blocks", code);
-            const tour = this.createTourFromResponse(helpResponse);
+            const tour = this.createTourFromResponse(helpResponse, "yellow");
             this.parent.showTour(tour);
         } catch (e) {
             pxt.reportException(e);
@@ -1177,7 +1177,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
      * Converts an ErrorHelpTourRespone into an actual tour, which mostly involves
      * ensuring all provided ids are valid and setting up the corresponding target queries.
      */
-    private createTourFromResponse = (response: ErrorHelpTourResponse): pxt.tour.TourConfig => {
+    public createTourFromResponse = (response: ErrorHelpTourResponse, bubbleStyle: string): pxt.tour.TourConfig => {
         const validBlockIds = this.parent.getBlocks().map((b) => b.id);
 
         const tourSteps: pxt.tour.BubbleStep[] = [];
@@ -1187,7 +1187,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 title: lf("Error Explanation"),
                 description: step.message,
                 location: pxt.tour.BubbleLocation.Center,
-                bubbleStyle: "yellow",
+                bubbleStyle: bubbleStyle,
             } as pxt.tour.BubbleStep;
 
             if (step.elementId) {
