@@ -1005,7 +1005,7 @@ namespace pxt.github {
 
         const entry = config.approvedRepoLib[repoFull] || config.approvedRepoLib[repoSlug];
 
-        if (!entry || entry.hidden) {
+        if (entry && entry.hidden) {
             return true;
         }
 
