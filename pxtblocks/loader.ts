@@ -20,6 +20,7 @@ import { createFieldEditor, initFieldEditors } from "./fields";
 import { promptTranslateBlock } from "./external";
 import { initVariables } from "./builtins/variables";
 import { initOnStart } from "./builtins/misc";
+import { initContextMenu } from "./contextMenu";
 import { renderCodeCard } from "./codecardRenderer";
 import { FieldDropdown } from "./fields/field_dropdown";
 import { setDraggableShadowBlocks, setDuplicateOnDrag, setDuplicateOnDragStrategy } from "./plugins/duplicateOnDrag";
@@ -588,6 +589,7 @@ export function cleanBlocks() {
  */
 export function initializeAndInject(blockInfo: pxtc.BlocksInfo) {
     init(blockInfo);
+    initContextMenu();
     initCopyPaste(false);
     injectBlocks(blockInfo);
 }
