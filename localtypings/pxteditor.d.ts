@@ -80,9 +80,11 @@ declare namespace pxt.editor {
         | "getblockastext"
 
         | "toggletrace" // EditorMessageToggleTraceRequest
+        | "showthemepicker"
         | "togglehighcontrast"
         | "sethighcontrast" // EditorMessageSetHighContrastRequest
         | "togglegreenscreen"
+        | "togglekeyboardcontrols"
         | "settracestate" //
         | "setsimulatorfullscreen" // EditorMessageSimulatorFullScreenRequest
 
@@ -422,6 +424,7 @@ declare namespace pxt.editor {
         versions: pxt.TargetVersions;
         locale: string;
         availableLocales?: string[];
+        keyboardControls: boolean;
     }
 
     export interface PackageExtensionData {
@@ -1045,6 +1048,7 @@ declare namespace pxt.editor {
         setHighContrast(on: boolean): void;
         toggleGreenScreen(): void;
         toggleAccessibleBlocks(eventSource: string): void;
+        isAccessibleBlocks(): boolean;
         launchFullEditor(): void;
         resetWorkspace(): void;
 
