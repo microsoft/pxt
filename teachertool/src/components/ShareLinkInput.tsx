@@ -44,7 +44,7 @@ export const ShareLinkInput: React.FC<IProps> = () => {
             return;
         }
 
-        const isReload: boolean = shareId !== projectMetadata?.shortid && shareId !== projectMetadata?.persistId;
+        const isReload: boolean = shareId === projectMetadata?.shortid || shareId === projectMetadata?.persistId;
         pxt.tickEvent(Ticks.LoadProjectFromInput, { checklistHash: getChecklistHash(teacherTool.checklist), isReload: isReload.toString() });
         loadProjectMetadataAsync(text, shareId, true);
     }, [text, projectMetadata?.shortid, projectMetadata?.persistId]);
