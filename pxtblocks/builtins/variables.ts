@@ -199,7 +199,7 @@ export function initVariables() {
          * @this Blockly.Block
          */
         customContextMenu: function (this: Blockly.BlockSvg, options: any[]) {
-            if (!(this.workspace?.options?.readOnly)) {
+            if (!(this.workspace?.options?.readOnly) && !this.isInFlyout) {
                 let option: any = {
                     enabled: this.workspace.remainingCapacity() > 0
                 };
