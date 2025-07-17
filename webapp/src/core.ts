@@ -342,13 +342,6 @@ export const SPACE_KEY = 32;
 export function getHighContrastOnce(): boolean {
     return ThemeManager.isCurrentThemeHighContrast();
 }
-export function toggleHighContrast() {
-    setHighContrast(!getHighContrastOnce())
-}
-export async function setHighContrast(on: boolean) {
-    sendUpdateFeedbackTheme(on);
-    await auth.setHighContrastPrefAsync(on);
-}
 
 export async function toggleAccessibleBlocks(eventSource: string) {
     await setAccessibleBlocks(!data.getData<boolean>(auth.ACCESSIBLE_BLOCKS), eventSource);
