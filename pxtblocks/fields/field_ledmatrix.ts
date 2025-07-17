@@ -310,7 +310,8 @@ export class FieldLedMatrix extends FieldMatrix implements FieldCustom {
     }
 
     setValue(newValue: string | number, restoreState = true) {
-        super.setValue(String(newValue));
+        const shouldFireChangeEvent = newValue !== this.value_;
+        super.setValue(String(newValue), shouldFireChangeEvent);
         if (this.matrixSvg) {
             if (restoreState) this.restoreStateFromString();
 
