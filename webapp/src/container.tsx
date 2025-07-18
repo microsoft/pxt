@@ -608,12 +608,14 @@ export interface SideDocsState {
 interface BuiltInHelpDetails {
     component: () => JSX.Element;
     popOutHref: string;
+    singleTabStop: boolean; // if the whole doc is only one tab stop, the "open in new tab" button placement becomes unintuitive.
 }
 
 const builtIns: Record<pxt.editor.BuiltInHelp, BuiltInHelpDetails> = {
     "keyboardControls": {
         component: KeyboardControlsHelp,
-        popOutHref: "https://makecode.com/accessibility"
+        popOutHref: "https://makecode.com/accessibility",
+        singleTabStop: true
     }
 }
 
@@ -778,20 +780,27 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
             tabIndex: 0,
         };
 
+        const openInNewTab = !lockedEditor && <div key="newTab" className="ui app hide" id="sidedocsbar">
+            <a className="ui icon link" aria-label={lf("Open documentation in new tab")} {...openInNewTabLinkProps}>
+                <sui.Icon icon="external" />
+            </a>
+        </div>;
+
+        const content = <div key="content" id="sidedocsframe-wrapper">
+            {this.renderContent(url, builtIn, lockedEditor)}
+        </div>;
+
+        const flipNewTabLinkOrder = builtIn?.singleTabStop;
+
+        const contentParts = flipNewTabLinkOrder ? [content, openInNewTab] : [openInNewTab, content];
+
         /* eslint-disable @microsoft/sdl/react-iframe-missing-sandbox */
         return <div>
             <button id="sidedocstoggle" role="button" aria-label={sideDocsCollapsed ? lf("Expand the side documentation") : lf("Collapse the side documentation")} className="ui icon button large" onClick={this.toggleVisibility}>
                 <sui.Icon icon={`icon inverted chevron ${showLeftChevron ? 'left' : 'right'}`} />
             </button>
             <div id="sidedocs" onKeyDown={this.handleKeyDown}>
-                {!lockedEditor && <div className="ui app hide" id="sidedocsbar">
-                    <a className="ui icon link" aria-label={lf("Open documentation in new tab")} {...openInNewTabLinkProps}>
-                        <sui.Icon icon="external" />
-                    </a>
-                </div>}
-                <div id="sidedocsframe-wrapper">
-                    {this.renderContent(url, builtIn, lockedEditor)}
-                </div>
+                {contentParts}
             </div>
         </div>
         /* eslint-enable @microsoft/sdl/react-iframe-missing-sandbox */
