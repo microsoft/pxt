@@ -12,28 +12,27 @@ Why is keyboard accessibility important? Some computer users may have difficulty
 
 To turn on the keyboard controls, in the MakeCode editor, click on the Settings menu and select **Keyboard Controls** to toggle this feature on.
 
- 
-<SettingsMenu.png>
+![Settings Menu](/static/blog/microbit/2025-update/settings-menu.png)
 
 You can also just press the **Tab** key when you open the editor to get the shortcut menu and then select **Enter**.
- 
-<TabShortcut.png>
+
+![Tab Shortcut](/static/blog/microbit/2025-update/tab-shortcut.png)
 
 When you activate keyboard controls, a help pane will appear with information on the keys to press to navigate around the editor.
  
-<SideDocs.png>
+![Side Docs](/static/blog/microbit/2025-update/sidedocs.png)
 
 Pressing the **Escape** key will hide this pane and pressing **Control** and **/** keys simultaneously will show the Keyboard Controls help pane.
 
 Pressing the **Control (Ctrl)** and **B** key on the keyboard simultaneously will show the different areas of the editor you can navigate to by pressing the numbers **1-5**.
  
-<CtrlB.png>
+![Ctrl-B function](/static/blog/microbit/2025-update/ctrl-b.png)
 
 You can navigate around the Toolbox menus and the blocks on the Workspace by using the directional **Arrow** keys. To select or edit a value, press the **Enter** key.  Pressing the **Escape** key will exit you out of the current focus.  
 
 In the Workspace, you can move blocks around by pressing the **M** key – this will put the editor into "Move mode" which is denoted by a circle with arrows inside. In this mode, you can press the **Arrow** keys to move blocks to different valid positions in your code or you can press the **Control** and **Arrow** keys simultaneously for free movement of blocks around the workspace.
  
-<MoveMode.png>
+![Move Mode](/static/blog/microbit/2025-update/move-mode.png)
 
 For videos and a downloadable pdf to help you learn how to use keyboard controls visit [Micro:bit Educational Foundation's MakeCode Accessibility](https://microbit.org/accessibility/microsoft-makecode) support page. 
 
