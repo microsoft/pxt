@@ -18,8 +18,12 @@ export const MakeCodeFrame: React.FC<IProps> = () => {
 
     useEffect(() => {
         const newUrl = createIFrameUrl(teacherTool.projectMetadata?.id || "");
-        setFrameUrl(newUrl);
-    }, [frameId, teacherTool.projectMetadata?.id]);
+        if (frameUrl == newUrl) {
+            forceIFrameReload();
+        } else {
+            setFrameUrl(newUrl);
+        }
+    }, [frameId, teacherTool.projectMetadata?.id, teacherTool.projectReloadCounter]);
 
     function createIFrameUrl(shareId: string): string {
         const editorUrl: string = pxt.BrowserUtils.isLocalHost()
