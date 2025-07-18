@@ -65,30 +65,27 @@ When you click the **Evaluate** button, after logging into MakeCode, the project
 
 ## Display Shield Extension
 
-We love the micro:bit LED's, but there is only so much information you can convey on a 5 x 5 single-color display.  Many micro:bit hardware partners have created accessories to extend the micro:bit to add a full color screen, often called “display shields”.  To support these accessories, we are launching a new Blocks and Simulator extension.
+We love the micro:bit LED's, but there is only so much information you can convey on a 5 x 5 single-color display. Many micro:bit hardware partners have created accessories to extend the micro:bit to add a full color screen, often called "display shields". To support these accessories, we are launching a new Blocks and Simulator extension.
  
-<DisplayShield.png>
- 
-<DisplayShieldHW.png>
+![Display shield](/static/blog/microbit/2025-update/display-shield.png)
+
+![Display shield hardware](/static/blog/microbit/2025-update/display-shield-hw.png)
 
 To learn more about this extension and how to get started, see the [Display Shield extension landing page]( https://makecode.microbit.org/pkg/microbit-apps/display-shield). 
 
 ## Error Explainer Experiment
 
-The Error Explainer is an AI-powered feature that helps students understand errors in their programs. If an error occurs in code, the problems pane appears below the editor with the error message and an Explain with AI button that users can optionally click for a more comprehensive explanation of the error, as well as indicating where in their code the error occurs. This feature is available for both Blocks and Text editors.  We are initially rolling this feature out as an experiment and to select users in different regions.
+The Error Explainer is an AI-powered feature that helps students understand errors in their programs. If an error occurs in code, the problems pane appears below the editor with the error message and an **Explain with AI** button that users can optionally click for a more comprehensive explanation of the error, as well as indicating where in their code the error occurs. This feature is available for both Blocks and Text editors. We are initially rolling this feature out as an experiment and to select users in different regions.
 
 If you're interested in trying this out, you will have to sign into MakeCode, and then in the Settings menu, open the About dialog box and click on the **Experiments** button. Select the AI Error Explainer option to enable it.
 
- 
-<ErrorExplainerCard.png>
+![Error explainer card](/static/blog/microbit/2025-update/error-explainer-card.png)
 
-Now if you have a program with an error, clicking on the Explain with AI button will launch callout windows in blocks or additional explanations in text with more information about the error and suggestions on how to fix it.
+Now if you have a program with an error, clicking on the **Explain with AI** button will launch callout windows in blocks or additional explanations in text with more information about the error and suggestions on how to fix it.
 
- 
-<ErrorExplainerBlocks.png>
+![Error explainer blocks](/static/blog/microbit/2025-update/error-explainer-blocks.png)
 
- 
-<ErrorExplainerText.png>
+![Error explainer text](/static/blog/microbit/2025-update/error-explainer-text.png)
 
 As this is still an experimental feature, we'd love to hear your thoughts!  Please add your comments to this [GitHub Issue](https://github.com/microsoft/pxt/issues/10694). 
 
@@ -102,15 +99,15 @@ Together with the Micro:bit Educational Foundation, we launched [CreateAI last N
 
 Teaching AI can be intimidating, but with the micro:bit and CreateAI, these concepts become simple and tangible for any student to understand – the impact and immediacy of physical computing applied to AI.
  
-<BBC playground survey.jpg>
+![BBC Playground Survey](/static/blog/microbit/2025-update/bbc-playground-survey.jpg)
  
-<CreateAI.png>
+![Create AI](/static/blog/microbit/2025-update/create-ai.png)
 
-To get started, go to [CreateAI.microbit.org](https://createai.microbit.org) for videos and starter projects.  If you have BirdBrain robots, try out the Magic Wand Lesson for [Finch](https://learn.birdbraintechnologies.com/finch/magicwand) or [Hummingbird](https://learn.birdbraintechnologies.com/hummingbirdbit/magicwand) robots.
+To get started, go to [CreateAI.microbit.org](https://createai.microbit.org) for videos and starter projects. If you have BirdBrain robots, try out the Magic Wand Lesson for [Finch](https://learn.birdbraintechnologies.com/finch/magicwand) or [Hummingbird](https://learn.birdbraintechnologies.com/hummingbirdbit/magicwand) robots.
 
-Thank you to everyone who has logged bugs, submitted PR's, translated and suggested new features throughout the year.  And special thanks to everyone who helped with testing the new Blocks Keyboard Navigation feature!
+Thank you to everyone who has logged bugs, submitted PR's, translated and suggested new features throughout the year. And special thanks to everyone who helped with testing the new Blocks Keyboard Navigation feature!
 
-Any new bugs you find in this release, please log them in GitHub: https://github.com/Microsoft/pxt-microbit/issues. Other comments, suggestions, and feedback, please participate in the micro:bit community on Slack: https://tech.microbit.org/get-involved/where-to-find or the MakeCode Forum https://forum.makecode.com.  We are specifically interested in hearing your thoughts on keyboard accessibility of blocks, so please participate in the [discussion]( https://forum.makecode.com/t/keyboard-accessibility-for-blocks/37422).
+Any new bugs you find in this release, please log them in [GitHub](https://github.com/Microsoft/pxt-microbit/issues). Other comments, suggestions, and feedback, please participate in the micro:bit community on [Slack](https://tech.microbit.org/get-involved/where-to-find) or the [MakeCode Forum](https://forum.makecode.com). We are specifically interested in hearing your thoughts on keyboard accessibility of blocks, so please participate in the [discussion]( https://forum.makecode.com/t/keyboard-accessibility-for-blocks/37422).
 
 Happy Making and Coding!
 
