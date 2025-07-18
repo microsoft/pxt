@@ -87,6 +87,7 @@ import { BlockDefinition, CategoryNameID } from "./toolbox";
 import { FeedbackModal } from "../../react-common/components/controls/Feedback/Feedback";
 import { ThemeManager } from "../../react-common/components/theming/themeManager";
 import { applyPolyfills } from "./polyfills";
+import { sendUpdateFeedbackTheme } from "../../react-common/components/controls/Feedback/FeedbackEventListener";
 
 pxt.blocks.requirePxtBlockly = () => pxtblockly as any;
 pxt.blocks.requireBlockly = () => Blockly;
@@ -3741,10 +3742,10 @@ export class ProjectView
         if (enabled) {
             document.addEventListener('keydown', this.closeOnEscape);
             simulator.driver.focus();
+            this.closeFlyout();
         } else {
             document.removeEventListener('keydown', this.closeOnEscape);
         }
-        this.closeFlyout();
         this.setState({ fullscreen: enabled });
     }
 
@@ -5207,16 +5208,17 @@ export class ProjectView
     ////////////            Theming               /////////////
     ///////////////////////////////////////////////////////////
 
-    toggleHighContrast() {
-        core.toggleHighContrast();
-        pxt.tickEvent("app.highcontrast", { on: core.getHighContrastOnce() ? 1 : 0 });
-        if (this.isSimulatorRunning()) {  // if running, send updated high contrast state.
-            this.startSimulator()
-        }
+    toggleHighContrast(): void {
+        this.setHighContrast(!core.getHighContrastOnce());
     }
 
-    setHighContrast(on: boolean) {
-        return core.setHighContrast(on);
+    setHighContrast(on: boolean): void {
+        if (!pxt.appTarget.appTheme.highContrastColorTheme || !pxt.appTarget.appTheme.defaultColorTheme) {
+            return;
+        }
+        pxt.tickEvent("app.highcontrast", { on: on ? 1 : 0 });
+        sendUpdateFeedbackTheme(on);
+        this.setColorThemeById(on ? pxt.appTarget.appTheme.highContrastColorTheme : pxt.appTarget.appTheme.defaultColorTheme, true);
     }
 
     toggleGreenScreen() {
@@ -5238,6 +5240,10 @@ export class ProjectView
         }
         await core.toggleAccessibleBlocks(eventSource)
         this.reloadEditor();
+    }
+
+    isAccessibleBlocks(): boolean {
+        return this.getData<boolean>(auth.ACCESSIBLE_BLOCKS);
     }
 
     setBannerVisible(b: boolean) {
@@ -5326,8 +5332,10 @@ export class ProjectView
     ///////////////////////////////////////////////////////////
 
     toggleAreaMenu() {
-        // Close the simulator if needed.
-        if (this.state.fullscreen) {
+        // Restore the simulator if needed. If the area menu is open, allow the simulator to
+        // stay fullscreened. The desired behaviour is that the mini sim can be fullscreened
+        // through the area menu, otherwise it has been restored already.
+        if (this.state.fullscreen && !this.state.areaMenuOpen) {
             this.setSimulatorFullScreen(false);
         }
 
