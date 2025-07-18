@@ -780,15 +780,15 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
             tabIndex: 0,
         };
 
-        const openInNewTab = !lockedEditor && <div className="ui app hide" id="sidedocsbar">
-                    <a className="ui icon link" aria-label={lf("Open documentation in new tab")} {...openInNewTabLinkProps}>
-                        <sui.Icon icon="external" />
-                    </a>
-                </div>;
+        const openInNewTab = !lockedEditor && <div key="newTab" className="ui app hide" id="sidedocsbar">
+            <a className="ui icon link" aria-label={lf("Open documentation in new tab")} {...openInNewTabLinkProps}>
+                <sui.Icon icon="external" />
+            </a>
+        </div>;
 
-        const content =  <div id="sidedocsframe-wrapper">
-                    {this.renderContent(url, builtIn, lockedEditor)}
-                </div>;
+        const content = <div key="content" id="sidedocsframe-wrapper">
+            {this.renderContent(url, builtIn, lockedEditor)}
+        </div>;
 
         const flipNewTabLinkOrder = builtIn?.singleTabStop;
 
