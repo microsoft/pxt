@@ -42,27 +42,26 @@ Fully accessible block coding is a multi-year investment – we started last yea
 
 We also continue to work on accessibility by adding theming support to MakeCode's visual interface, supporting people with differing visual needs. To select a theme, click on the Settings menu and select 'Theme'. This will give you the option to select from the default Light theme, a Dark theme, and a High Contrast theme.
  
-<ThemeSettings.png>
+![Theme Settings](/static/blog/microbit/2025-update/theme-settings.png)
 
- 
-<ChooseTheme.png>
+![Choose Theme](/static/blog/microbit/2025-update/choose-theme.png)
 
 ## Math Constants
 
 And what's a release without some new code blocks?!  This year we are introducing the Math constants block which contains some helpful values like Pi, e, and some square root and logarithmic values.
  
-<MathConst.png>
+![Math constant block](/static/blog/microbit/2025-update/math-const.png)
 
 ## Code Evaluation
 
 Earlier this year we introduced the Beta of our [Code Evaluation](https://makecode.com/blog/tools/code-eval-tool) tool for teachers which helps them understand and evaluate student programs. We are moving this out of Beta and adding an **Evaluate** button on the Shared project page to make it easier to access.  
 
  
-<SharePage.png>
+![Share page](/static/blog/microbit/2025-update/share-page.png)
 
 When you click the **Evaluate** button, after logging into MakeCode, the project will load in the Code Evaluation tool where you can evaluate checklists of program criteria and Ask AI questions about the student code.
  
-<EvalTool.png>
+![Eval tool](/static/blog/microbit/2025-update/eval-tool.png)
 
 ## Display Shield Extension
 
