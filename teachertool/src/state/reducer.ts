@@ -29,6 +29,7 @@ export default function reducer(state: AppState, action: Action): AppState {
             return {
                 ...state,
                 projectMetadata: action.metadata,
+                projectReloadCounter: action.force ? state.projectReloadCounter + 1 : state.projectReloadCounter,
             };
         }
         case "SET_EVAL_RESULT": {
