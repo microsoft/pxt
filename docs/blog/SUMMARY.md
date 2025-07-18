@@ -1,6 +1,7 @@
 # Microsoft MakeCode Blog
 
 * [Blog](/blog)
+    * [MakeCode for the micro:bit – 2025 Update](/blog/microbit/2025-update)
     * [Summer 2025 – MakeCode Professional Development](/blog/csp/summer-pd-2025)
     * [MakeCode Arcade 2025 Update](/blog/arcade/update-mar-2025)
     * [Display shield extension/simulator for the micro:bit](/blog/microbit/display-shield)

@@ -1,5 +1,11 @@
 # Microsoft MakeCode Blog
 
+## [MakeCode for the micro:bit – 2025 Update](/blog/microbit/2025-update)
+
+It's July and school's out in most of the world, so it's time for our annual MakeCode for the micro:bit update! As well as the 142 bugs that we fixed in this release, here's a rundown of the new features...
+
+**[Continue reading this blog post](/blog/microbit/2025-update)**
+
 ## [Summer 2025 – MakeCode Professional Development](/blog/csp/summer-pd-2025)
 
 April showers bring May flowers. For many of us, we are on the home stretch of the academic year already! Which is a good time to start planning for summer training and professional development opportunities.
