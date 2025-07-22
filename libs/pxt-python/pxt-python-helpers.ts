@@ -6,82 +6,242 @@ namespace _py {
 
     export function py_string_capitalize(str: string): string {
         nullCheck(str);
-        return str;
+
+        if (str.length === 0) {
+            return str;
+        }
+
+        return py_string_upper(str.charAt(0)) + py_string_lower(str.slice(1));
     }
 
     export function py_string_casefold(str: string): string {
-        nullCheck(str);
-        return str;
+        return py_string_lower(str);
     }
 
     export function py_string_center(str: string, width: number, fillChar?: string): string {
         nullCheck(str);
-        return str;
+
+        let result = str;
+
+        while (result.length < width) {
+            result += fillChar || " ";
+
+            if (result.length < width) {
+                result = (fillChar || " ") + result;
+            }
+        }
+
+        return result;
     }
 
     export function py_string_count(str: string, sub: string, start?: number, end?: number): number {
         nullCheck(str);
-        return 0;
+
+        const indices = sliceIndices(str.length, start, end);
+        start = indices[0];
+        end = indices[1];
+
+        let count = 0;
+
+        for (let i = start; i < end - sub.length + 1; i++) {
+            if (str.charAt(i) === sub.charAt(0)) {
+                let found = true;
+                for (let j = 1; j < sub.length; j++) {
+                    if (str.charAt(i + j) !== sub.charAt(j)) {
+                        found = false;
+                        break;
+                    }
+                }
+
+                if (found) {
+                    count++;
+                    i += sub.length - 1; // Skip ahead to avoid counting overlapping occurrences
+                }
+            }
+        }
+
+        return count;
     }
 
     export function py_string_endswith(str: string, suffix: string, start?: number, end?: number): boolean {
         nullCheck(str);
-        return false;
+
+        const indices = sliceIndices(str.length, start, end);
+        start = indices[0];
+        end = indices[1];
+
+        if (end - start < suffix.length) {
+            return false;
+        }
+
+        for (let i = 0; i < suffix.length; i++) {
+            if (str.charAt(end - suffix.length + i) !== suffix.charAt(i)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     export function py_string_find(str: string, sub: string, start?: number, end?: number): number {
         nullCheck(str);
-        return 0;
+
+        const indices = sliceIndices(str.length, start, end);
+        start = indices[0];
+        end = indices[1];
+
+        if (sub === "") {
+            return start;
+        }
+
+        for (let i = start; i < end - sub.length + 1; i++) {
+            if (str.charAt(i) === sub.charAt(0)) {
+                let found = true;
+                for (let j = 1; j < sub.length; j++) {
+                    if (str.charAt(i + j) !== sub.charAt(j)) {
+                        found = false;
+                        break;
+                    }
+                }
+                if (found) return i;
+            }
+        }
+
+        return -1;
     }
 
     export function py_string_index(str: string, sub: string, start?: number, end?: number): number {
         nullCheck(str);
-        return 0;
+        const result = py_string_find(str, sub, start, end);
+
+        if (result === -1) {
+            throw VALUE_ERROR;
+        }
+
+        return result;
     }
 
     export function py_string_isalnum(str: string): boolean {
         nullCheck(str);
-        return false;
+
+        if (str.length === 0) {
+            return false;
+        }
+
+        for (let i = 0; i < str.length; i++) {
+            const char = str.charAt(i);
+            if (!isUppercase(char) && !isLowercase(char) && !isDigit(char)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     export function py_string_isalpha(str: string): boolean {
         nullCheck(str);
-        return false;
+
+        if (str.length === 0) {
+            return false;
+        }
+
+        for (let i = 0; i < str.length; i++) {
+            const char = str.charAt(i);
+            if (!isUppercase(char) && !isLowercase(char)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     export function py_string_isascii(str: string): boolean {
         nullCheck(str);
-        return false;
+
+        for (let i = 0; i < str.length; i++) {
+            if (str.charCodeAt(i) > 127) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     export function py_string_isdigit(str: string): boolean {
         nullCheck(str);
-        return false;
+
+        if (str.length === 0) {
+            return false;
+        }
+
+        for (let i = 0; i < str.length; i++) {
+            if (!isDigit(str.charAt(i))) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     export function py_string_isnumeric(str: string): boolean {
-        nullCheck(str);
-        return false;
+        return py_string_isdigit(str);
+    }
+
+    export function py_string_isdecimal(str: string): boolean {
+        return py_string_isdigit(str);
     }
 
     export function py_string_isspace(str: string): boolean {
         nullCheck(str);
-        return false;
-    }
 
-    export function py_string_isdecimal(str: string): boolean {
-        nullCheck(str);
-        return false;
+        if (str.length === 0) {
+            return false;
+        }
+
+        for (let i = 0; i < str.length; i++) {
+            if (!isWhitespace(str.charAt(i))) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     export function py_string_isidentifier(str: string): boolean {
         nullCheck(str);
-        return false;
+
+        if (str.length === 0) {
+            return false;
+        }
+
+        if (isDigit(str.charAt(0))) {
+            return false; // Identifiers cannot start with a digit
+        }
+
+        for (let i = 0; i < str.length; i++) {
+            const char = str.charAt(i);
+            if (!isUppercase(char) && !isLowercase(char) && !isDigit(char) && char !== "_") {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     export function py_string_islower(str: string): boolean {
         nullCheck(str);
-        return false;
+
+        // python considers a string to be lowercase if it contains at least one
+        // lowercase letter and no uppercase letters
+        let foundLowercase = false;
+        for (let i = 0; i < str.length; i++) {
+            if (isUppercase(str.charAt(i))) {
+                return false;
+            }
+            if (isLowercase(str.charAt(i))) {
+                foundLowercase = true;
+            }
+        }
+
+        return foundLowercase;
     }
 
     export function py_string_isprintable(str: string): boolean {
@@ -91,41 +251,151 @@ namespace _py {
 
     export function py_string_istitle(str: string): boolean {
         nullCheck(str);
-        return false;
+
+        if (str.length === 0) {
+            return false;
+        }
+
+        // python considers a string to be title case if it contains at least one
+        // uppercase letter, all sequences of lowercase letters are preceded by a
+        // single uppercase letter, and uppercase letters are not preceded by other
+        // uppercase or lowercase letters (but a space or punctuation is allowed)
+        let foundUppercase = false
+        let inWord = false;
+        for (let i = 0; i < str.length; i++) {
+            const char = str.charAt(i);
+
+            if (isUppercase(char)) {
+                if (inWord) {
+                    return false;
+                }
+                inWord = true;
+                foundUppercase = true;
+            }
+            else if (isLowercase(char)) {
+                if (!inWord) {
+                    return false;
+                }
+            }
+            else {
+                inWord = false;
+            }
+        }
+
+        return foundUppercase;
     }
 
     export function py_string_isupper(str: string): boolean {
         nullCheck(str);
-        return false;
+
+        // python considers a string to be uppercase if it contains at least one
+        // uppercase letter and no lowercase letters
+        let foundUppercase = false;
+        for (let i = 0; i < str.length; i++) {
+            if (isLowercase(str.charAt(i))) {
+                return false;
+            }
+            if (isUppercase(str.charAt(i))) {
+                foundUppercase = true;
+            }
+        }
+        return foundUppercase;
     }
 
     export function py_string_join(str: string, iterable: any[]): string {
         nullCheck(str);
-        return str;
+
+        let result = "";
+        for (let i = 0; i < iterable.length; i++) {
+            if (typeof iterable[i] !== "string") {
+                throw TYPE_ERROR;
+            }
+
+            if (i > 0) {
+                result += str;
+            }
+            result += iterable[i];
+        }
+
+        return result;
     }
 
     export function py_string_ljust(str: string, width: number, fillChar?: string): string {
         nullCheck(str);
+
+        fillChar = fillChar || " ";
+
+        while (str.length < width) {
+            str += fillChar;
+        }
+
         return str;
     }
 
     export function py_string_lower(str: string): string {
         nullCheck(str);
-        return str;
+
+        let result = "";
+
+        for (let i = 0; i < str.length; i++) {
+            const char = str.charAt(i);
+            if (isUppercase(char)) {
+                result += String.fromCharCode(char.charCodeAt(0) + 32);
+            }
+            else {
+                result += char;
+            }
+        }
+        return result;
     }
 
     export function py_string_rfind(str: string, sub: string, start?: number, end?: number): number {
         nullCheck(str);
-        return 0;
+
+
+        const indices = sliceIndices(str.length, start, end);
+        start = indices[0];
+        end = indices[1];
+
+        if (sub === "") {
+            return end;
+        }
+
+        for (let i = end - sub.length; i >= start; i--) {
+            if (str.charAt(i) === sub.charAt(0)) {
+                let found = true;
+                for (let j = 1; j < sub.length; j++) {
+                    if (str.charAt(i + j) !== sub.charAt(j)) {
+                        found = false;
+                        break;
+                    }
+                }
+                if (found) return i;
+            }
+        }
+
+        return -1;
     }
 
     export function py_string_rindex(str: string, sub: string, start?: number, end?: number): number {
-        nullCheck(str);
-        return 0;
+        const result = py_string_rfind(str, sub, start, end);
+
+        if (result === -1) {
+            throw VALUE_ERROR;
+        }
+
+        return result;
     }
 
     export function py_string_rjust(str: string, width: number, fillChar?: string): string {
         nullCheck(str);
+
+        fillChar = fillChar || " ";
+
+        while (str.length < width) {
+            str = fillChar + str;
+        }
+
         return str;
     }
 
@@ -280,17 +550,59 @@ namespace _py {
     function isWhitespace(char: string) {
         // TODO Figure out everything python considers whitespace.
         // the \s character class in JS regexes also includes these: \u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff
-        return char === " " || char === "\t" || char === "\n" || char === "\v" || char === "\r" || char === "\f";
+        return char === " " || char === "\t" || isLineBreak(char);
     }
 
     export function py_string_splitlines(str: string, keepends?: boolean): string[] {
         nullCheck(str);
-        return [];
+
+        let result: string[] = [];
+
+        let currentLine: string = "";
+        for (let i = 0; i < str.length; i++) {
+            const currentChar = str.charAt(i);
+            if (currentChar === "\r" && i + 1 < str.length && str.charAt(i + 1) === "\n") {
+                if (keepends) {
+                    currentLine += "\r\n";
+                }
+                result.push(currentLine);
+                currentLine = "";
+                i++; // Skip the next character since it's part of the line break
+            }
+            else if (isLineBreak(currentChar)) {
+                if (keepends) {
+                    currentLine += currentChar;
+                }
+                result.push(currentLine);
+                currentLine = "";
+            }
+        }
+        if (currentLine) {
+            result.push(currentLine);
+        }
+
+        return result;
     }
 
     export function py_string_startswith(str: string, prefix: string, start?: number, end?: number): boolean {
         nullCheck(str);
-        return false;
+
+        const indices = sliceIndices(str.length, start, end);
+        start = indices[0];
+        end = indices[1];
+
+        if (end - start < prefix.length) {
+            return false;
+        }
+
+
+        for (let i = 0; i < prefix.length; i++) {
+            if (str.charAt(start + i) !== prefix.charAt(i)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     export function py_string_rstrip(str: string, chars?: string): string {
@@ -333,22 +645,90 @@ namespace _py {
 
     export function py_string_swapcase(str: string): string {
         nullCheck(str);
-        return str;
+
+        let result = "";
+        for (let i = 0; i < str.length; i++) {
+            const char = str.charAt(i);
+            if (isUppercase(char)) {
+                result += py_string_lower(char);
+            }
+            else if (isLowercase(char)) {
+                result += py_string_upper(char);
+            }
+            else {
+                result += char;
+            }
+        }
+
+        return result;
     }
 
     export function py_string_title(str: string): string {
         nullCheck(str);
-        return str;
+
+        let result = "";
+        let inWord = false;
+
+        for (let i = 0; i < str.length; i++) {
+            const char = str.charAt(i);
+            if (isUppercase(char)) {
+                if (!inWord) {
+                    result += char;
+                    inWord = true;
+                }
+                else {
+                    result += py_string_lower(char);
+                }
+            }
+            else if (isLowercase(char)) {
+                if (!inWord) {
+                    result += py_string_upper(char);
+                    inWord = true;
+                }
+                else {
+                    result += char;
+                }
+            }
+            else {
+                result += char;
+                inWord = false;
+            }
+        }
+
+        return result;
     }
 
     export function py_string_upper(str: string): string {
         nullCheck(str);
-        return str;
+
+        let result = "";
+        for (let i = 0; i < str.length; i++) {
+            const char = str.charAt(i);
+            if (isLowercase(char)) {
+                result += String.fromCharCode(char.charCodeAt(0) - 32);
+            }
+            else {
+                result += char;
+            }
+        }
+
+        return result;
     }
 
     export function py_string_zfill(str: string, width: number): string {
         nullCheck(str);
-        return str;
+
+        let padding = "";
+
+        while (padding.length + str.length < width) {
+            padding += "0";
+        }
+
+        if (str.charAt(0) === "-" || str.charAt(0) === "+") {
+            return str.charAt(0) + padding + str.slice(1);
+        }
+
+        return padding + str;
     }
 
     export function py_array_pop(arr: any[], index?: number): any {
@@ -485,6 +865,31 @@ namespace _py {
         return range(start, stop, step)
     }
 
+    function sliceIndices(valueLength: number, start?: number, stop?: number) {
+        if (start == null) {
+            start = 0;
+        }
+        if (stop == null) {
+            stop = valueLength;
+        }
+
+        if (start < 0) {
+            start += valueLength;
+            if (start < 0) start = 0;
+        } else if (start >= valueLength) {
+            start = valueLength - 1;
+        }
+
+        if (stop < 0) {
+            stop += valueLength;
+            if (stop < 0) stop = 0;
+        } else if (stop >= valueLength) {
+            stop = valueLength;
+        }
+
+        return [start, stop];
+    }
+
     /**
      * Returns a section of an array according to python's extended slice syntax
      */
@@ -503,5 +908,41 @@ namespace _py {
             throw TYPE_ERROR;
         }
         return sliceRange(value.length, start, stop, step).map(index => value.charAt(index)).join("");
+    }
+
+    function isLineBreak(char: string): boolean {
+        switch (char) {
+            case "\n":
+            case "\r":
+            case "\r\n":
+            case "\v":
+            case "\x0b":
+            case "\f":
+            case "\x0c":
+            case "\x1c":
+            case "\x1d":
+            case "\x1e":
+            case "\x85":
+            case "\u2028":
+            case "\u2029":
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    function isUppercase(char: string): boolean {
+        const code = char.charCodeAt(0);
+        return code >= 65 && code <= 90;
+    }
+
+    function isLowercase(char: string): boolean {
+        const code = char.charCodeAt(0);
+        return code >= 97 && code <= 122;
+    }
+
+    function isDigit(char: string): boolean {
+        const code = char.charCodeAt(0);
+        return code >= 48 && code <= 57;
     }
 }
