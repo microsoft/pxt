@@ -1153,6 +1153,8 @@ namespace ts.pxtc.service {
                                         // option[0] is display text, option[1] is value
                                         if (typeof option[0] === 'string') {
                                             options.push(option[0]);
+                                        } else if (typeof option[0] === 'object' && option[0].alt) {
+                                            options.push(option[0].alt);
                                         }
                                     }
                                 });
@@ -1173,6 +1175,41 @@ namespace ts.pxtc.service {
                                     }
                                 });
                             }
+                        }
+
+                        // Check for fixed instance parameters
+                        const typeInfo = blockInfo.apis.byQName[param.type];
+                        if (typeInfo && typeInfo.attributes.fixedInstances) {
+                            // Get fixed instance dropdown values
+                            const syms = pxt.Util.values(blockInfo.apis.byQName).filter(sym =>
+                                sym.kind === ts.pxtc.SymbolKind.Variable &&
+                                sym.attributes.fixedInstance &&
+                                sym.retType === param.type
+                            );
+                            syms.forEach(sym => {
+                                const k = sym.attributes.block || sym.attributes.blockId || sym.name;
+                                options.push(k);
+                            });
+                        }
+
+                        if (symbol.attributes.constantShim) {
+                            const syms = pxt.Util.values(blockInfo.apis.byQName).filter(sym =>
+                                sym.attributes.blockIdentity === symbol.qName
+                            );
+                            syms.forEach(sym => {
+                                const k = sym.attributes.block || sym.attributes.blockId || sym.name;
+                                options.push(k);
+                            });
+                        }
+
+                        if (param.type === "@combined@" && symbol.combinedProperties) {
+                            symbol.combinedProperties.forEach(prop => {
+                                const sym = blockInfo.apis.byQName[prop];
+                                if (sym) {
+                                    const k = sym.attributes.block || sym.attributes.blockId || sym.name;
+                                    options.push(k);
+                                }
+                            });
                         }
                     });
                 }
@@ -1271,7 +1308,7 @@ namespace ts.pxtc.service {
 
                 const fuseOptions = {
                     shouldSort: true,
-                    threshold: 0.6,
+                    threshold: 0.4,
                     location: 0,
                     distance: 1000,
                     maxPatternLength: 16,
