@@ -240,6 +240,10 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
                                 return Promise.resolve()
                                     .then(() => projectView.setSimulatorFullScreen(fsmsg.enabled));
                             }
+                            case "showthemepicker" : {
+                                return Promise.resolve()
+                                    .then(() => projectView.showThemePicker());
+                            }
                             case "togglehighcontrast": {
                                 return Promise.resolve()
                                     .then(() => projectView.toggleHighContrast());
@@ -252,6 +256,10 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
                             case "togglegreenscreen": {
                                 return Promise.resolve()
                                     .then(() => projectView.toggleGreenScreen());
+                            }
+                            case "togglekeyboardcontrols": {
+                                return Promise.resolve()
+                                    .then(() => projectView.toggleAccessibleBlocks("editormessage"));
                             }
                             case "print": {
                                 return Promise.resolve()
@@ -266,7 +274,8 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
                                         resp = {
                                             versions: pxt.appTarget.versions,
                                             locale: ts.pxtc.Util.userLanguage(),
-                                            availableLocales: pxt.appTarget.appTheme.availableLocales
+                                            availableLocales: pxt.appTarget.appTheme.availableLocales,
+                                            keyboardControls: projectView.isAccessibleBlocks()
                                         } as pxt.editor.InfoMessage;
                                     });
                             }
