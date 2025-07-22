@@ -3742,10 +3742,10 @@ export class ProjectView
         if (enabled) {
             document.addEventListener('keydown', this.closeOnEscape);
             simulator.driver.focus();
+            this.closeFlyout();
         } else {
             document.removeEventListener('keydown', this.closeOnEscape);
         }
-        this.closeFlyout();
         this.setState({ fullscreen: enabled });
     }
 
@@ -5332,8 +5332,10 @@ export class ProjectView
     ///////////////////////////////////////////////////////////
 
     toggleAreaMenu() {
-        // Close the simulator if needed.
-        if (this.state.fullscreen) {
+        // Restore the simulator if needed. If the area menu is open, allow the simulator to
+        // stay fullscreened. The desired behaviour is that the mini sim can be fullscreened
+        // through the area menu, otherwise it has been restored already.
+        if (this.state.fullscreen && !this.state.areaMenuOpen) {
             this.setSimulatorFullScreen(false);
         }
 
