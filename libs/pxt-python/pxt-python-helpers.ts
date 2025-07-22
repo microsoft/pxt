@@ -21,13 +21,17 @@ namespace _py {
     export function py_string_center(str: string, width: number, fillChar?: string): string {
         nullCheck(str);
 
+        checkFillCharacter(fillChar);
+
+        fillChar = fillChar || " ";
+
         let result = str;
 
         while (result.length < width) {
-            result += fillChar || " ";
+            result += fillChar;
 
             if (result.length < width) {
-                result = (fillChar || " ") + result;
+                result = fillChar + result;
             }
         }
 
@@ -246,7 +250,15 @@ namespace _py {
 
     export function py_string_isprintable(str: string): boolean {
         nullCheck(str);
-        return false;
+
+        // python considers space to be the only printable whitespace character
+        for (let i = 0; i < str.length; i++) {
+            if (str.charCodeAt(i) < 32) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     export function py_string_istitle(str: string): boolean {
@@ -323,6 +335,8 @@ namespace _py {
     export function py_string_ljust(str: string, width: number, fillChar?: string): string {
         nullCheck(str);
 
+        checkFillCharacter(fillChar);
+
         fillChar = fillChar || " ";
 
         while (str.length < width) {
@@ -389,6 +403,8 @@ namespace _py {
 
     export function py_string_rjust(str: string, width: number, fillChar?: string): string {
         nullCheck(str);
+
+        checkFillCharacter(fillChar);
 
         fillChar = fillChar || " ";
 
@@ -575,6 +591,9 @@ namespace _py {
                 }
                 result.push(currentLine);
                 currentLine = "";
+            }
+            else {
+                currentLine += currentChar;
             }
         }
         if (currentLine) {
@@ -944,5 +963,11 @@ namespace _py {
     function isDigit(char: string): boolean {
         const code = char.charCodeAt(0);
         return code >= 48 && code <= 57;
+    }
+
+    function checkFillCharacter(fillChar?: string): void {
+        if (fillChar !== undefined && fillChar.length !== 1) {
+            throw TYPE_ERROR;
+        }
     }
 }
