@@ -6,7 +6,7 @@ It's July and school's out in most of the world, so it's time for our annual [Ma
 
 ## Keyboard Accessibility of Blocks
 
-This was the biggest area of work for this year and was a great example of collaboration with our partners at [Google Blockly](https://developers.google.com/blockly) and the [Micro:bit Foundation](https://microbit.org) who did much of the heavy lifting to make this happen. So huge kudos and thank you to them for all the hard work and extensive user testing that went into this feature!!!
+This was the biggest area of work for this year and was a great example of collaboration with our partners at [Google Blockly](https://developers.google.com/blockly) and the [Micro:bit Educational Foundation](https://microbit.org) who did much of the heavy lifting to make this happen. So huge kudos and thank you to them for all the hard work and extensive user testing that went into this feature!!!
 
 Why is keyboard accessibility important? Some computer users may have difficulty using a mouse as an input device – either due to fine motor or mobility challenges, or simply because they prefer using a keyboard. The drag-and-drop block coding interface, while an excellent approach to teaching novice programmers, has thus far been completely dependent on being able to use a mouse to click and drag around blocks on the workspace. No longer! (drum-roll) We are so proud and excited to announce that keyboard accessibility in block-based coding is here!!!
 
@@ -97,9 +97,9 @@ Together with the Micro:bit Educational Foundation, we launched [CreateAI last N
 * Dancer/CS teacher using CreateAI to model dance moves for her students
 * [BBC Playground Survey]( https://www.bbc.co.uk/teach/microbit/articles/zkskh4j) in the UK to monitor activity levels
 
-Teaching AI can be intimidating, but with the micro:bit and CreateAI, these concepts become simple and tangible for any student to understand – the impact and immediacy of physical computing applied to AI.
- 
 ![BBC Playground Survey](/static/blog/microbit/2025-update/bbc-playground-survey.jpg)
+
+Teaching AI can be intimidating, but with the micro:bit and CreateAI, these concepts become simple and tangible for any student to understand – the impact and immediacy of physical computing applied to AI.
  
 ![Create AI](/static/blog/microbit/2025-update/create-ai.png)
 
