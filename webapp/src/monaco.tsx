@@ -369,6 +369,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private highlightedBreakpoint: number;
     private editAmendmentsListener: monaco.IDisposable | undefined;
     private errors: ErrorDisplayInfo[] = [];
+    private errorDebounceTimer: number | undefined;
+    private readonly errorDebounceDelayMs = 2000; // 2 seconds
     private callLocations: pxtc.LocationInfo[];
 
     private handleFlyoutWheel = (e: WheelEvent) => e.stopPropagation();
@@ -635,7 +637,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     display(): JSX.Element {
-        const showErrorList = pxt.appTarget.appTheme.errorList && !pxt.shell.isTimeMachineEmbed() && !this.parent.state.debugging;
+        const errorDebounceActive = this.errorDebounceTimer !== undefined;
+        const showErrorList = pxt.appTarget.appTheme.errorList && !pxt.shell.isTimeMachineEmbed() && !this.parent.state.debugging && !errorDebounceActive;
 
         return (
             <div id="monacoEditorArea" className={`monacoEditorArea`} style={{ direction: 'ltr' }}>
@@ -683,15 +686,42 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             });
     }
 
+    // This sets the errors and manages our debounce logic for showing the error list.
+    // We only debounce if we are transitioning from having no errors to having some errors,
+    // and we reset the timer if it still hasn't fired and a new error comes in.
+    // We do NOT debounce if we're already showing errors and this is just a new/different one.
+    setErrors(errors: ErrorDisplayInfo[]) {
+        const oldHasErrors = !!this.errors && this.errors.length > 0;
+        const newHasErrors = !!errors && errors.length > 0;
+
+        if ((!oldHasErrors || this.errorDebounceTimer) && newHasErrors) {
+            if (this.errorDebounceTimer) {
+                clearTimeout(this.errorDebounceTimer);
+            }
+
+            this.errorDebounceTimer = window.setTimeout(() => {
+                this.errorDebounceTimer = undefined;
+                this.parent.forceUpdate(); // Force re-render
+            }, this.errorDebounceDelayMs);
+        }
+
+        if (!newHasErrors && this.errorDebounceTimer) {
+            clearTimeout(this.errorDebounceTimer);
+            this.errorDebounceTimer = undefined;
+        }
+
+        this.errors = errors;
+    }
+
     public onExceptionDetected(exception: pxsim.DebuggerBreakpointMessage) {
         const exceptionDisplayInfo: ErrorDisplayInfo = this.getDisplayInfoForException(exception);
-        this.errors = [exceptionDisplayInfo];
+        this.setErrors([exceptionDisplayInfo]);
         this.parent.setState({ errorListNote: undefined });
     }
 
     private onErrorChanges(errors: pxtc.KsDiagnostic[]) {
         const errorDisplayInfo: ErrorDisplayInfo[] = errors.map(this.getDisplayInfoForError);
-        this.errors = errorDisplayInfo;
+        this.setErrors(errorDisplayInfo);
         this.parent.setState({ errorListNote: undefined });
     }
 
@@ -1555,7 +1585,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     unloadFileAsync(): Promise<void> {
         if (this.toolbox)
             this.toolbox.clearSearch();
-        this.errors = [];
+        this.setErrors([]);
         this.parent.setState({errorListNote: undefined});
         if (this.currFile && this.currFile.getName() == "this/" + pxt.CONFIG_NAME) {
             // Reload the header if a change was made to the config file: pxt.json
