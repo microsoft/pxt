@@ -86,21 +86,13 @@ namespace pxt {
 
     interface AssetSnapshot {
         revision: number;
-        tiles: AssetCollection<Tile>;
-        tilemaps: AssetCollection<ProjectTilemap>;
-        images: AssetCollection<ProjectImage>;
-        animations: AssetCollection<Animation>;
-        songs: AssetCollection<Song>;
+        assets: pxt.Map<AssetCollection<Asset>>; // key is AssetType
     }
 
     interface AssetSnapshotDiff {
         beforeRevision: number;
         afterRevision: number;
-        tiles: AssetCollectionDiff<Tile>;
-        tilemaps: AssetCollectionDiff<ProjectTilemap>;
-        images: AssetCollectionDiff<ProjectImage>;
-        animations: AssetCollectionDiff<Animation>;
-        songs: AssetCollectionDiff<Song>;
+        assetDiffs: pxt.Map<AssetCollectionDiff<Asset>>;
     }
 
     interface AssetUpdateListener {
@@ -117,6 +109,9 @@ namespace pxt {
         protected assets: U[] = [];
         protected takenNames: pxt.Map<boolean> = {};
         protected listeners: AssetUpdateListener[] = [];
+
+        constructor(public readonly type: string) {
+        }
 
         add(asset: U) {
             if (this.takenNames[asset.id]) {
@@ -217,7 +212,7 @@ namespace pxt {
         }
 
         clone() {
-            const cloned = new AssetCollection<U>();
+            const cloned = new AssetCollection<U>(this.type);
             cloned.assets = this.getSnapshot();
             cloned.takenNames = { ...this.takenNames };
             return cloned;
@@ -352,28 +347,34 @@ namespace pxt {
         constructor() {
             this.committedState = {
                 revision: 0,
-                tilemaps: new AssetCollection(),
-                tiles: new AssetCollection(),
-                animations: new AssetCollection(),
-                images: new AssetCollection(),
-                songs: new AssetCollection(),
+                assets: {
+                    [AssetType.Image]: new AssetCollection(AssetType.Image),
+                    [AssetType.Tile]: new AssetCollection(AssetType.Tile),
+                    [AssetType.Tilemap]: new AssetCollection(AssetType.Tilemap),
+                    [AssetType.Animation]: new AssetCollection(AssetType.Animation),
+                    [AssetType.Song]: new AssetCollection(AssetType.Song),
+                }
             };
             this.state = {
                 revision: this.nextID++,
-                tilemaps: new AssetCollection(),
-                tiles: new AssetCollection(),
-                animations: new AssetCollection(),
-                images: new AssetCollection(),
-                songs: new AssetCollection(),
+                assets: {
+                    [AssetType.Image]: new AssetCollection(AssetType.Image),
+                    [AssetType.Tile]: new AssetCollection(AssetType.Tile),
+                    [AssetType.Tilemap]: new AssetCollection(AssetType.Tilemap),
+                    [AssetType.Animation]: new AssetCollection(AssetType.Animation),
+                    [AssetType.Song]: new AssetCollection(AssetType.Song),
+                }
             };
 
             this.gallery = {
                 revision: 0,
-                tilemaps: new AssetCollection(),
-                tiles: new AssetCollection(),
-                animations: new AssetCollection(),
-                images: new AssetCollection(),
-                songs: new AssetCollection(),
+                assets: {
+                    [AssetType.Image]: new AssetCollection(AssetType.Image),
+                    [AssetType.Tile]: new AssetCollection(AssetType.Tile),
+                    [AssetType.Tilemap]: new AssetCollection(AssetType.Tilemap),
+                    [AssetType.Animation]: new AssetCollection(AssetType.Animation),
+                    [AssetType.Song]: new AssetCollection(AssetType.Song),
+                }
             };
 
             this.undoStack = [];
@@ -397,7 +398,7 @@ namespace pxt {
                 meta: {},
                 jresData: pxt.sprite.base64EncodeBitmap(bitmap)
             };
-            return this.state.images.add(newImage);
+            return this.getAssetCollection(AssetType.Image).add(newImage);
         }
 
         public createNewAnimation(width = 16, height = 16) {
@@ -413,7 +414,7 @@ namespace pxt {
                 interval: 500,
                 meta: {},
             };
-            return this.state.animations.add(newAnimation);
+            return this.getAssetCollection(AssetType.Animation).add(newAnimation);
         }
 
         public createNewAnimationFromData(frames: pxt.sprite.BitmapData[], interval = 500, displayName?: string) {
@@ -428,7 +429,7 @@ namespace pxt {
                 interval,
                 meta: { displayName },
             };
-            return this.state.animations.add(newAnimation);
+            return this.getAssetCollection(AssetType.Animation).add(newAnimation);
         }
 
         public getGalleryTiles(tileWidth: number): TileSet[] | null {
@@ -441,11 +442,11 @@ namespace pxt {
         }
 
         public getProjectImages(): ProjectImage[] {
-            return this.state.images.getSnapshot();
+            return this.getAssetCollection(AssetType.Image).getSnapshot();
         }
 
         public getProjectTiles(tileWidth: number, createIfMissing: boolean): TileSet | null {
-            const tiles = this.state.tiles.getSnapshot(tile => tile.bitmap.width === tileWidth);
+            const tiles = this.getAssetCollection(AssetType.Tile).getSnapshot(tile => tile.bitmap.width === tileWidth);
 
             if (tiles.length === 0) {
                 if (createIfMissing) {
@@ -481,7 +482,7 @@ namespace pxt {
                 isProjectTile: true
             };
 
-            return this.state.tiles.add(newTile);
+            return this.getAssetCollection(AssetType.Tile).add(newTile);
         }
 
         public createNewProjectImage(data: pxt.sprite.BitmapData, displayName?: string) {
@@ -498,7 +499,7 @@ namespace pxt {
                 bitmap: data
             };
 
-            return this.state.images.add(newImage);
+            return this.getAssetCollection(AssetType.Image).add(newImage);
         }
 
         public createNewSong(data: pxt.assets.music.Song, displayName?: string) {
@@ -514,7 +515,7 @@ namespace pxt {
                 },
             };
 
-            return this.state.songs.add(newSong);
+            return this.getAssetCollection(AssetType.Song).add(newSong);
         }
 
         public updateTile(tile: pxt.Tile) {
@@ -523,7 +524,7 @@ namespace pxt {
             const existing = this.resolveProjectTileByInternalID(tile.internalID);
 
             if (existing) {
-                this.state.tiles.update(existing.id, tile);
+                this.getAssetCollection(AssetType.Tile).update(existing.id, tile);
 
                 if (existing.id !== tile.id || !pxt.sprite.bitmapEquals(existing.bitmap, tile.bitmap)) {
                     for (const tm of this.getAssets(AssetType.Tilemap)) {
@@ -542,18 +543,18 @@ namespace pxt {
 
         public deleteTile(id: string) {
             this.onChange();
-            this.state.tiles.removeByID(id);
+            this.getAssetCollection(AssetType.Tile).removeByID(id);
         }
 
         public getProjectTilesetJRes(projectFiles?: pxt.Map<{content: string}>) {
             const blob: pxt.Map<any> = {};
 
-            this.state.tiles.serializeToJRes(blob);
+            this.getAssetCollection(AssetType.Tile).serializeToJRes(blob);
 
             // tilemaps are always named assets, so if the user creates a bunch by
             // accident (e.g. by dragging out blocks) we want to only serialize the ones
             // that are actually used/nonempty
-            this.state.tilemaps.serializeToJRes(blob, asset => {
+            this.getAssetCollection(AssetType.Tilemap).serializeToJRes(blob, asset => {
                 if (!projectFiles) return true;
 
                 return !pxt.sprite.isTilemapEmptyOrUnused(asset, this, projectFiles)
@@ -572,9 +573,11 @@ namespace pxt {
 
             const blob: pxt.Map<any> = {};
 
-            this.state.images.serializeToJRes(blob);
-            this.state.animations.serializeToJRes(blob);
-            this.state.songs.serializeToJRes(blob);
+            for (const type of Object.keys(this.state.assets)) {
+                if (type !== AssetType.Tilemap && type !== AssetType.Tile) {
+                    this.state.assets[type].serializeToJRes(blob);
+                }
+            }
 
             blob["*"] = {
                 "mimeType": "image/x-mkcd-f4",
@@ -586,12 +589,12 @@ namespace pxt {
         }
 
         public getTilemap(id: string) {
-            return this.state.tilemaps.getByID(id);
+            return this.getAssetCollection(AssetType.Tilemap).getByID(id);
         }
 
         public updateTilemap(id: string, data: pxt.sprite.TilemapData): ProjectTilemap {
 
-            const existing = this.state.tilemaps.getByID(id);
+            const existing = this.getAssetCollection(AssetType.Tilemap).getByID(id);
 
             if (existing) {
                 this.onChange();
@@ -599,7 +602,7 @@ namespace pxt {
                     ...existing,
                     data: data,
                 };
-                this.state.tilemaps.update(id, newValue);
+                this.getAssetCollection(AssetType.Tilemap).update(id, newValue);
                 return newValue;
             }
 
@@ -626,17 +629,17 @@ namespace pxt {
         }
 
         public resolveProjectTileByInternalID(id: number): Tile {
-            return this.state.tiles.getSnapshot(tile => tile.internalID === id)[0];
+            return this.getAssetCollection(AssetType.Tile).getSnapshot(tile => tile.internalID === id)[0];
         }
 
         public resolveTileByBitmap(data: pxt.sprite.BitmapData): Tile {
             const dataString = pxt.sprite.base64EncodeBitmap(data);
-            return this.state.tiles.getSnapshot(tile => tile.jresData === dataString)[0];
+            return this.getAssetCollection(AssetType.Tile).getSnapshot(tile => tile.jresData === dataString)[0];
         }
 
         public getTransparency(tileWidth: number) {
             const id = pxt.sprite.TILE_NAMESPACE + ".transparency" + tileWidth;
-            let tile = this.state.tiles.getByID(id);
+            let tile = this.getAssetCollection(AssetType.Tile).getByID(id);
 
             if (!tile) {
                 const bitmap = new pxt.sprite.Bitmap(tileWidth, tileWidth).data();
@@ -650,7 +653,7 @@ namespace pxt {
                     isProjectTile: true
                 };
 
-                return this.state.tiles.add(tile);
+                return this.getAssetCollection(AssetType.Tile).add(tile);
             }
             return tile;
         }
@@ -659,7 +662,7 @@ namespace pxt {
             this.onChange()
 
             const id = this.generateNewIDInternal(AssetType.Tilemap, name || lf("level"));
-            this.state.tilemaps.add({
+            this.getAssetCollection(AssetType.Tilemap).add({
                 internalID: this.getNewInternalId(),
                 id,
                 type: AssetType.Tilemap,
@@ -673,14 +676,16 @@ namespace pxt {
         }
 
         protected cloneState(): AssetSnapshot {
-            return {
+            const result: AssetSnapshot = {
                 revision: this.state.revision,
-                images: this.state.images.clone(),
-                tilemaps: this.state.tilemaps.clone(),
-                animations: this.state.animations.clone(),
-                tiles: this.state.tiles.clone(),
-                songs: this.state.songs.clone(),
+                assets: {}
+            };
+
+            for (const type of Object.keys(this.state.assets)) {
+                result.assets[type] = this.state.assets[type].clone();
             }
+
+            return result;
         }
 
         public undo() {
@@ -690,11 +695,10 @@ namespace pxt {
             if (this.undoStack.length) {
                 const undo = this.undoStack.pop();
 
-                this.state.tiles.applyDiff(undo.tiles, true);
-                this.state.images.applyDiff(undo.images, true);
-                this.state.tilemaps.applyDiff(undo.tilemaps, true);
-                this.state.animations.applyDiff(undo.animations, true);
-                this.state.songs.applyDiff(undo.songs, true);
+                for (const key of Object.keys(undo.assetDiffs)) {
+                    this.getAssetCollection(key as AssetType).applyDiff(undo.assetDiffs[key], true);
+                }
+
                 this.state.revision = undo.beforeRevision;
 
                 this.redoStack.push(undo);
@@ -708,11 +712,9 @@ namespace pxt {
             if (this.redoStack.length) {
                 const redo = this.redoStack.pop();
 
-                this.state.tiles.applyDiff(redo.tiles);
-                this.state.images.applyDiff(redo.images);
-                this.state.tilemaps.applyDiff(redo.tilemaps);
-                this.state.animations.applyDiff(redo.animations);
-                this.state.songs.applyDiff(redo.songs);
+                for (const key of Object.keys(redo.assetDiffs)) {
+                    this.getAssetCollection(key as AssetType).applyDiff(redo.assetDiffs[key]);
+                }
 
                 this.state.revision = redo.afterRevision;
 
@@ -729,12 +731,14 @@ namespace pxt {
             this.undoStack.push({
                 beforeRevision: this.committedState.revision,
                 afterRevision: this.state.revision,
-                tiles: this.state.tiles.diff(this.committedState.tiles),
-                images: this.state.images.diff(this.committedState.images),
-                tilemaps: this.state.tilemaps.diff(this.committedState.tilemaps),
-                animations: this.state.animations.diff(this.committedState.animations),
-                songs: this.state.songs.diff(this.committedState.songs)
+                assetDiffs: {}
             });
+
+            const entry = this.undoStack[this.undoStack.length - 1];
+            for (const type of Object.keys(this.state.assets)) {
+                entry.assetDiffs[type] = this.state.assets[type].diff(this.committedState.assets[type]);
+            }
+
             this.committedState = this.cloneState();
             this.cleanupTemporaryAssets();
         }
@@ -769,8 +773,8 @@ namespace pxt {
 
         public isNameTaken(assetType: AssetType, name: string) {
             const isTaken = (id: string) => {
-                return getAssetCollection(this.state, assetType).isIDTaken(id) ||
-                    getAssetCollection(this.gallery, assetType).isIDTaken(id);
+                return this.getAssetCollection(assetType).isIDTaken(id) ||
+                    this.getAssetCollection(assetType, true).isIDTaken(id);
             }
 
             const shortId = getShortIDCore(assetType, name);
@@ -897,8 +901,8 @@ namespace pxt {
         public lookupAsset(assetType: AssetType.Song, name: string): Song;
         public lookupAsset(assetType: AssetType, name: string): Asset;
         public lookupAsset(assetType: AssetType, name: string) {
-            return getAssetCollection(this.state, assetType).getByID(name) ||
-                getAssetCollection(this.gallery, assetType).getByID(name);
+            return this.getAssetCollection(assetType).getByID(name) ||
+                this.getAssetCollection(assetType, true).getByID(name);
         }
 
         public lookupAssetByName(assetType: AssetType.Image, name: string): ProjectImage;
@@ -908,7 +912,7 @@ namespace pxt {
         public lookupAssetByName(assetType: AssetType.Song, name: string): Song;
         public lookupAssetByName(assetType: AssetType, name: string): Asset;
         public lookupAssetByName(assetType: AssetType, name: string) {
-            return getAssetCollection(this.state, assetType).getByDisplayName(name);
+            return this.getAssetCollection(assetType).getByDisplayName(name);
         }
 
         public lookupAssetByValue(assetType: AssetType.Image, toFind: ProjectImage): ProjectImage;
@@ -918,7 +922,7 @@ namespace pxt {
         public lookupAssetByValue(assetType: AssetType.Song, toFind: Song): Song;
         public lookupAssetByValue(assetType: AssetType, toFind: Asset): Asset;
         public lookupAssetByValue(assetType: AssetType, toFind: Asset) {
-            return getAssetCollection(this.state, assetType).getByValue(toFind);
+            return this.getAssetCollection(assetType).getByValue(toFind);
         }
 
         public getAssets(type: AssetType.Image): ProjectImage[];
@@ -928,7 +932,7 @@ namespace pxt {
         public getAssets(type: AssetType.Song): Song[];
         public getAssets(type: AssetType): Asset[];
         public getAssets(type: AssetType) {
-            return getAssetCollection(this.state, type).getSnapshot();
+            return this.getAssetCollection(type).getSnapshot();
         }
 
         public getGalleryAssets(type: AssetType.Image): ProjectImage[];
@@ -938,7 +942,7 @@ namespace pxt {
         public getGalleryAssets(type: AssetType.Song): Song[];
         public getGalleryAssets(type: AssetType): Asset[];
         public getGalleryAssets(type: AssetType) {
-            return getAssetCollection(this.gallery, type).getSnapshot();
+            return this.getAssetCollection(type).getSnapshot();
         }
 
         public lookupBlockAsset(assetType: AssetType.Image, blockID: string): ProjectImage;
@@ -950,7 +954,7 @@ namespace pxt {
         public lookupBlockAsset(type: AssetType, blockID: string) {
             let filter = (a: Asset) => a.meta?.blockIDs?.indexOf(blockID) !== -1;
 
-            return getAssetCollection(this.state, type).getSnapshot(filter)[0];
+            return this.getAssetCollection(type).getSnapshot(filter)[0];
         }
 
         public updateAsset(asset: ProjectImage): ProjectImage;
@@ -965,7 +969,7 @@ namespace pxt {
                 case AssetType.Tile:
                     return this.updateTile(asset);
                 default:
-                    return getAssetCollection(this.state, asset.type).update(asset.id, asset);
+                    return this.getAssetCollection(asset.type).update(asset.id, asset);
             }
         }
 
@@ -1005,15 +1009,15 @@ namespace pxt {
 
         public removeAsset(asset: Asset) {
             this.onChange();
-            getAssetCollection(this.state, asset.type).removeByID(asset.id);
+            this.getAssetCollection(asset.type).removeByID(asset.id);
         }
 
         public addChangeListener(asset: Asset, listener: () => void) {
-            getAssetCollection(this.state, asset.type).addListener(asset.internalID, listener);
+            this.getAssetCollection(asset.type).addListener(asset.internalID, listener);
         }
 
         public removeChangeListener(type: AssetType, listener: () => void) {
-            getAssetCollection(this.state, type).removeListener(listener);
+            this.getAssetCollection(type).removeListener(listener);
         }
 
         loadPackage(pack: MainPackage) {
@@ -1027,28 +1031,13 @@ namespace pxt {
                 for (const toAdd of images) {
                     toAdd.meta.package = dep.id;
                     if (toAdd.type === AssetType.Tile) {
-                        if (isProject) {
-                            this.state.tiles.add(toAdd);
-                        }
-                        else {
-                            this.gallery.tiles.add(toAdd);
-                        }
+                        this.getAssetCollection(AssetType.Tile, !isProject).add(toAdd);
                     }
                     else if (toAdd.type === AssetType.Image) {
-                        if (isProject) {
-                            this.state.images.add(toAdd);
-                        }
-                        else {
-                            this.gallery.images.add(toAdd);
-                        }
+                        this.getAssetCollection(AssetType.Image, !isProject).add(toAdd);
                     }
                     else if (toAdd.type === AssetType.Animation) {
-                        if (isProject) {
-                            this.state.animations.add(toAdd);
-                        }
-                        else {
-                            this.gallery.animations.add(toAdd);
-                        }
+                        this.getAssetCollection(AssetType.Animation, !isProject).add(toAdd);
                     }
                     else {
                         if (isProject) {
@@ -1059,10 +1048,10 @@ namespace pxt {
                             if (toAdd.id.startsWith(IMAGE_NAMESPACE)) {
                                 toAdd.id = toAdd.id.replace(IMAGE_NAMESPACE, pxt.sprite.SONG_NAMESPACE + ".");
                             }
-                            this.state.songs.add(toAdd);
+                            this.getAssetCollection(AssetType.Song).add(toAdd);
                         }
                         else {
-                            this.gallery.songs.add(toAdd);
+                            this.getAssetCollection(AssetType.Song, true).add(toAdd);
                         }
                     }
                 }
@@ -1072,7 +1061,7 @@ namespace pxt {
                 const isProject = dep.id === "this";
                 for (const tm of getTilemaps(dep.parseJRes())) {
                     if (isProject) {
-                        this.state.tilemaps.add({
+                        this.getAssetCollection(AssetType.Tilemap).add({
                             internalID: this.getNewInternalId(),
                             type: AssetType.Tilemap,
                             id: tm.id,
@@ -1085,7 +1074,7 @@ namespace pxt {
                         });
                     }
                     else {
-                        this.gallery.tilemaps.add({
+                        this.getAssetCollection(AssetType.Tilemap, true).add({
                             internalID: this.getNewInternalId(),
                             type: AssetType.Tilemap,
                             id: tm.id,
@@ -1094,7 +1083,7 @@ namespace pxt {
                                 displayName: tm.displayName || tm.id,
                                 package: pack.id
                             },
-                            data: decodeTilemap(tm, id => this.gallery.tiles.getByID(id))
+                            data: decodeTilemap(tm, id => this.getAssetCollection(AssetType.Tile, true).getByID(id))
                         });
                     }
                 }
@@ -1118,7 +1107,7 @@ namespace pxt {
 
             if (gallery) {
                 for (const tile of tiles) {
-                    this.gallery.tiles.add(tile);
+                    this.getAssetCollection(AssetType.Tile, true).add(tile);
                 }
             }
             else {
@@ -1139,10 +1128,8 @@ namespace pxt {
                 }
             }
 
-            const state = gallery ? this.gallery : this.state;
-
             for (const tm of getTilemaps(jres)) {
-                state.tilemaps.add({
+                this.getAssetCollection(AssetType.Tilemap, gallery).add({
                     internalID: this.getNewInternalId(),
                     type: AssetType.Tilemap,
                     id: tm.id,
@@ -1166,41 +1153,37 @@ namespace pxt {
 
             const toInflate = [];
 
-            const state = gallery ? this.gallery : this.state;
 
             for (const key of Object.keys(jres)) {
                 const entry = jres[key];
 
                 if (entry.tilemapTile) {
-                    state.tiles.add(this.generateImage(entry, AssetType.Tile));
+                    this.getAssetCollection(AssetType.Tile, gallery).add(this.generateImage(entry, AssetType.Tile));
                 } else if (entry.mimeType === IMAGE_MIME_TYPE) {
-                    state.images.add(this.generateImage(entry, AssetType.Image));
+                    this.getAssetCollection(AssetType.Image, gallery).add(this.generateImage(entry, AssetType.Image));
                 } else if (entry.mimeType === ANIMATION_MIME_TYPE) {
                     const [animation, needsInflation] = this.generateAnimation(entry)
                     if (needsInflation) {
                         toInflate.push(animation);
                     } else {
-                        state.animations.add(animation);
+                        this.getAssetCollection(AssetType.Animation, gallery).add(animation);
                     }
                 } else if (entry.mimeType === SONG_MIME_TYPE) {
-                    state.songs.add(this.generateSong(entry));
+                    this.getAssetCollection(AssetType.Song, gallery).add(this.generateSong(entry));
                 }
             }
 
             for (const animation of toInflate) {
-                state.animations.add(
-                    this.inflateAnimation(animation, state.images.getSnapshot())
+                this.getAssetCollection(AssetType.Animation, gallery).add(
+                    this.inflateAnimation(animation, this.getAssetCollection(AssetType.Image, gallery).getSnapshot())
                 );
             }
         }
 
         removeInactiveBlockAssets(activeBlockIDs: string[]) {
-            cleanupCollection(this.state.images);
-            cleanupCollection(this.state.tiles);
-            cleanupCollection(this.state.tilemaps);
-            cleanupCollection(this.state.animations);
-            cleanupCollection(this.state.songs);
-
+            for (const type of Object.keys(this.state.assets)) {
+                cleanupCollection(this.state.assets[type]);
+            }
 
             function cleanupCollection<U extends Asset>(collection: AssetCollection<U>) {
                 const inactiveAssets = collection.getSnapshot(asset => !asset.meta.displayName && asset.meta.blockIDs?.some(id => activeBlockIDs.indexOf(id) === -1));
@@ -1399,9 +1382,24 @@ namespace pxt {
         }
 
         protected cleanupTemporaryAssets() {
-            const orphaned = this.state.images.getSnapshot(image => !image.meta.displayName && !(image.meta.blockIDs?.length));
+            const images = this.getAssetCollection(AssetType.Image);
+            const orphaned = images.getSnapshot(image => !image.meta.displayName && !(image.meta.blockIDs?.length));
             for (const image of orphaned) {
-                this.state.images.removeByID(image.id);
+                images.removeByID(image.id);
+            }
+        }
+
+        protected getAssetCollection(type: AssetType.Animation, gallery?: boolean): AssetCollection<Animation>
+        protected getAssetCollection(type: AssetType.Image, gallery?: boolean): AssetCollection<ProjectImage>
+        protected getAssetCollection(type: AssetType.Song, gallery?: boolean): AssetCollection<Song>
+        protected getAssetCollection(type: AssetType.Tile, gallery?: boolean): AssetCollection<Tile>
+        protected getAssetCollection(type: AssetType.Tilemap, gallery?: boolean): AssetCollection<ProjectTilemap>
+        protected getAssetCollection(type: AssetType, gallery?: boolean): AssetCollection<Asset>
+        protected getAssetCollection(type: AssetType, gallery = false,): AssetCollection<Asset> {
+            if (gallery) {
+                return getAssetCollection(this.gallery, type, true);
+            } else {
+                return getAssetCollection(this.state, type, true);
             }
         }
     }
@@ -1745,25 +1743,30 @@ namespace pxt {
     }
 
     function cloneSnapshot(toClone: AssetSnapshot) {
-        return {
+        const result: AssetSnapshot = {
             revision: toClone.revision,
-            tilemaps: toClone.tilemaps.clone(),
-            images: toClone.images.clone(),
-            animations: toClone.animations.clone(),
-            songs: toClone.songs.clone(),
-            tiles: toClone.tiles.clone()
+            assets: {}
+        };
+
+        for (const key of Object.keys(toClone.assets)) {
+            const assetCollection = toClone.assets[key];
+            result.assets[key] = assetCollection.clone();
         }
+
+        return result;
     }
 
     function cloneSnapshotDiff(toClone: AssetSnapshotDiff): AssetSnapshotDiff {
-        return {
+        const result: AssetSnapshotDiff = {
             ...toClone,
-            animations: cloneAssetCollectionDiff(toClone.animations),
-            tiles: cloneAssetCollectionDiff(toClone.tiles),
-            images: cloneAssetCollectionDiff(toClone.images),
-            tilemaps: cloneAssetCollectionDiff(toClone.tilemaps),
-            songs: cloneAssetCollectionDiff(toClone.songs)
+            assetDiffs: {}
+        };
+
+        for (const key of Object.keys(toClone.assetDiffs)) {
+            const assetCollection = toClone.assetDiffs[key];
+            result.assetDiffs[key] = cloneAssetCollectionDiff(assetCollection);
         }
+        return result;
     }
 
     function cloneAssetCollectionDiff<U extends Asset>(toClone: AssetCollectionDiff<U>): AssetCollectionDiff<U> {
@@ -2139,20 +2142,23 @@ namespace pxt {
         return buf[offset] | (buf[offset + 1] << 8)
     }
 
-    function getAssetCollection(snapshot: AssetSnapshot, type: AssetType.Animation): AssetCollection<Animation>
-    function getAssetCollection(snapshot: AssetSnapshot, type: AssetType.Image): AssetCollection<ProjectImage>
-    function getAssetCollection(snapshot: AssetSnapshot, type: AssetType.Song): AssetCollection<Song>
-    function getAssetCollection(snapshot: AssetSnapshot, type: AssetType.Tile): AssetCollection<Tile>
-    function getAssetCollection(snapshot: AssetSnapshot, type: AssetType.Tilemap): AssetCollection<ProjectTilemap>
-    function getAssetCollection(snapshot: AssetSnapshot, type: AssetType): AssetCollection<Asset>
-    function getAssetCollection(snapshot: AssetSnapshot, type: AssetType): AssetCollection<Asset> {
-        switch (type) {
-            case AssetType.Animation: return snapshot.animations;
-            case AssetType.Image: return snapshot.images;
-            case AssetType.Tile: return snapshot.tiles;
-            case AssetType.Tilemap: return snapshot.tilemaps;
-            case AssetType.Song: return snapshot.songs;
+    function getAssetCollection(snapshot: AssetSnapshot, type: AssetType.Animation, createIfMissing?: boolean): AssetCollection<Animation>
+    function getAssetCollection(snapshot: AssetSnapshot, type: AssetType.Image, createIfMissing?: boolean): AssetCollection<ProjectImage>
+    function getAssetCollection(snapshot: AssetSnapshot, type: AssetType.Song, createIfMissing?: boolean): AssetCollection<Song>
+    function getAssetCollection(snapshot: AssetSnapshot, type: AssetType.Tile, createIfMissing?: boolean): AssetCollection<Tile>
+    function getAssetCollection(snapshot: AssetSnapshot, type: AssetType.Tilemap, createIfMissing?: boolean): AssetCollection<ProjectTilemap>
+    function getAssetCollection(snapshot: AssetSnapshot, type: AssetType, createIfMissing?: boolean): AssetCollection<Asset>
+    function getAssetCollection(snapshot: AssetSnapshot, type: AssetType, createIfMissing = false): AssetCollection<Asset> {
+        if (!snapshot.assets[type]) {
+            if (createIfMissing) {
+                snapshot.assets[type] = new AssetCollection<Asset>(type);
+            }
+            else {
+                return undefined;
+            }
         }
+
+        return snapshot.assets[type];
     }
 
     export function patchTemporaryAsset(oldValue: pxt.Asset, newValue: pxt.Asset, project: TilemapProject) {
