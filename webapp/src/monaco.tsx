@@ -1545,6 +1545,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                         this.updateDiagnostics();
                         this.changeCallback();
                         this.updateFieldEditors();
+
+                        if (this.errorListDebounceActive) {
+                            // Delay showing the error list while user is typing
+                            this.revealErrorListDebounced();
+                        }
                     });
                 }
 
