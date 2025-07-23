@@ -369,10 +369,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private highlightedBreakpoint: number;
     private editAmendmentsListener: monaco.IDisposable | undefined;
     private errors: ErrorDisplayInfo[] = [];
-    private errorDebounceTimer: number | undefined;
-    private readonly errorDebounceDelayMs = 2000; // 2 seconds
+    private errorListDebounceActive: boolean = false;
+    private revealErrorListDebounced: () => void;
     private callLocations: pxtc.LocationInfo[];
-
     private handleFlyoutWheel = (e: WheelEvent) => e.stopPropagation();
     private handleFlyoutScroll = (e: WheelEvent) => e.stopPropagation();
 
@@ -386,6 +385,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.onUserPreferencesChanged = this.onUserPreferencesChanged.bind(this);
         this.getDisplayInfoForError = this.getDisplayInfoForError.bind(this);
         this.getErrorHelp = this.getErrorHelp.bind(this);
+        this.setErrors = this.setErrors.bind(this);
+        this.revealErrorListDebounced = pxt.Util.debounce(() => {
+            this.errorListDebounceActive = false;
+        }, 2000 /* 2 seconds */);
 
         ThemeManager.getInstance(document)?.subscribe("monaco", () => this.onUserPreferencesChanged());
     }
@@ -637,8 +640,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     display(): JSX.Element {
-        const errorDebounceActive = this.errorDebounceTimer !== undefined;
-        const showErrorList = pxt.appTarget.appTheme.errorList && !pxt.shell.isTimeMachineEmbed() && !this.parent.state.debugging && !errorDebounceActive;
+        const showErrorList =
+            !this.errorListDebounceActive &&
+            pxt.appTarget.appTheme.errorList &&
+            !pxt.shell.isTimeMachineEmbed() &&
+            !this.parent.state.debugging;
 
         return (
             <div id="monacoEditorArea" className={`monacoEditorArea`} style={{ direction: 'ltr' }}>
@@ -687,30 +693,18 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     // This sets the errors and manages our debounce logic for showing the error list.
-    // We only debounce if we are transitioning from having no errors to having some errors,
-    // and we reset the timer if it still hasn't fired and a new error comes in.
-    // We do NOT debounce if we're already showing errors and this is just a new/different one.
     setErrors(errors: ErrorDisplayInfo[]) {
-        const oldHasErrors = !!this.errors && this.errors.length > 0;
-        const newHasErrors = !!errors && errors.length > 0;
-
-        if ((!oldHasErrors || this.errorDebounceTimer) && newHasErrors) {
-            if (this.errorDebounceTimer) {
-                clearTimeout(this.errorDebounceTimer);
-            }
-
-            this.errorDebounceTimer = window.setTimeout(() => {
-                this.errorDebounceTimer = undefined;
-                this.parent.forceUpdate(); // Force re-render
-            }, this.errorDebounceDelayMs);
-        }
-
-        if (!newHasErrors && this.errorDebounceTimer) {
-            clearTimeout(this.errorDebounceTimer);
-            this.errorDebounceTimer = undefined;
-        }
+        const oldHasErrors = !!this.errors?.length;
+        const newHasErrors = !!errors?.length;
 
         this.errors = errors;
+
+        // Delay showing error list when going from none -> some errors,
+        // but do not re-hide the list if it was already visible.
+        if (newHasErrors && (!oldHasErrors || this.errorListDebounceActive)) {
+            this.errorListDebounceActive = true;
+            this.revealErrorListDebounced();
+        }
     }
 
     public onExceptionDetected(exception: pxsim.DebuggerBreakpointMessage) {
