@@ -3,13 +3,15 @@ namespace pxt {
     export const TILEMAP_MIME_TYPE = "application/mkcd-tilemap"
     export const ANIMATION_MIME_TYPE = "application/mkcd-animation"
     export const SONG_MIME_TYPE = "application/mkcd-song"
+    export const JSON_MIME_TYPE = "application/json";
 
     export const enum AssetType {
         Image = "image",
         Tile = "tile",
         Tilemap = "tilemap",
         Animation = "animation",
-        Song = "song"
+        Song = "song",
+        Json = "json"
     }
 
     export interface AssetMetadata {
@@ -25,7 +27,7 @@ namespace pxt {
         fieldName: string;
     }
 
-    export type Asset = ProjectImage | Tile | Animation | ProjectTilemap | Song;
+    export type Asset = ProjectImage | Tile | Animation | ProjectTilemap | Song | JsonAsset;
 
     export interface BaseAsset {
         internalID: number;
@@ -74,6 +76,12 @@ namespace pxt {
     export interface Song extends BaseAsset {
         type: AssetType.Song;
         song: assets.music.Song;
+    }
+
+    export interface JsonAsset extends BaseAsset {
+        type: AssetType.Json;
+        data: any;
+        fileName?: string;
     }
 
     export interface TilemapSnapshot {
@@ -353,6 +361,7 @@ namespace pxt {
                     [AssetType.Tilemap]: new AssetCollection(AssetType.Tilemap),
                     [AssetType.Animation]: new AssetCollection(AssetType.Animation),
                     [AssetType.Song]: new AssetCollection(AssetType.Song),
+                    [AssetType.Json]: new AssetCollection(AssetType.Json),
                 }
             };
             this.state = {
@@ -363,6 +372,7 @@ namespace pxt {
                     [AssetType.Tilemap]: new AssetCollection(AssetType.Tilemap),
                     [AssetType.Animation]: new AssetCollection(AssetType.Animation),
                     [AssetType.Song]: new AssetCollection(AssetType.Song),
+                    [AssetType.Json]: new AssetCollection(AssetType.Json),
                 }
             };
 
@@ -374,6 +384,7 @@ namespace pxt {
                     [AssetType.Tilemap]: new AssetCollection(AssetType.Tilemap),
                     [AssetType.Animation]: new AssetCollection(AssetType.Animation),
                     [AssetType.Song]: new AssetCollection(AssetType.Song),
+                    [AssetType.Json]: new AssetCollection(AssetType.Json),
                 }
             };
 
@@ -516,6 +527,23 @@ namespace pxt {
             };
 
             return this.getAssetCollection(AssetType.Song).add(newSong);
+        }
+
+        public createNewJsonAsset(data: any, fileName?: string, displayName?: string) {
+            this.onChange();
+
+            const newSong: JsonAsset = {
+                internalID: this.getNewInternalId(),
+                id: this.generateNewID(AssetType.Json),
+                type: AssetType.Json,
+                data,
+                fileName,
+                meta: {
+                    displayName
+                },
+            };
+
+            return this.getAssetCollection(AssetType.Json).add(newSong);
         }
 
         public updateTile(tile: pxt.Tile) {
@@ -847,6 +875,10 @@ namespace pxt {
                         assetTsRefs = `assets.song\`${shortId}\``;
                         if (displayName) assetTsRefs += `|assets.song\`${displayName}\``;
                         break;
+                    case pxt.AssetType.Json:
+                        assetTsRefs = `assets.json\`${shortId}\``;
+                        if (displayName) assetTsRefs += `|assets.json\`${displayName}\``;
+                        break;
                     default:
                         assetTsRefs = `assets.image\`${shortId}\``;
                         if (displayName) assetTsRefs += `|assets.image\`${displayName}\``;
@@ -870,6 +902,10 @@ namespace pxt {
                     case pxt.AssetType.Song:
                         assetPyRefs = `assets.song\("""${shortId}"""\)`;
                         if (displayName) assetPyRefs += `|assets.song\("""${displayName}"""\)`;
+                        break;
+                    case pxt.AssetType.Json:
+                        assetPyRefs = `assets.json\("""${shortId}"""\)`;
+                        if (displayName) assetPyRefs += `|assets.json\("""${displayName}"""\)`;
                         break;
                     default:
                         assetPyRefs = `assets.image\("""${shortId}"""\)`;
@@ -899,6 +935,7 @@ namespace pxt {
         public lookupAsset(assetType: AssetType.Tilemap, name: string): ProjectTilemap;
         public lookupAsset(assetType: AssetType.Animation, name: string): Animation;
         public lookupAsset(assetType: AssetType.Song, name: string): Song;
+        public lookupAsset(assetType: AssetType.Json, name: string): JsonAsset;
         public lookupAsset(assetType: AssetType, name: string): Asset;
         public lookupAsset(assetType: AssetType, name: string) {
             return this.getAssetCollection(assetType).getByID(name) ||
@@ -910,6 +947,7 @@ namespace pxt {
         public lookupAssetByName(assetType: AssetType.Tilemap, name: string): ProjectTilemap;
         public lookupAssetByName(assetType: AssetType.Animation, name: string): Animation;
         public lookupAssetByName(assetType: AssetType.Song, name: string): Song;
+        public lookupAssetByName(assetType: AssetType.Json, name: string): JsonAsset;
         public lookupAssetByName(assetType: AssetType, name: string): Asset;
         public lookupAssetByName(assetType: AssetType, name: string) {
             return this.getAssetCollection(assetType).getByDisplayName(name);
@@ -920,6 +958,7 @@ namespace pxt {
         public lookupAssetByValue(assetType: AssetType.Tilemap, toFind: ProjectTilemap): ProjectTilemap;
         public lookupAssetByValue(assetType: AssetType.Animation, toFind: Animation): Animation;
         public lookupAssetByValue(assetType: AssetType.Song, toFind: Song): Song;
+        public lookupAssetByValue(assetType: AssetType.Json, toFind: Song): JsonAsset;
         public lookupAssetByValue(assetType: AssetType, toFind: Asset): Asset;
         public lookupAssetByValue(assetType: AssetType, toFind: Asset) {
             return this.getAssetCollection(assetType).getByValue(toFind);
@@ -930,6 +969,7 @@ namespace pxt {
         public getAssets(type: AssetType.Tilemap): ProjectTilemap[];
         public getAssets(type: AssetType.Animation): Animation[];
         public getAssets(type: AssetType.Song): Song[];
+        public getAssets(type: AssetType.Json): JsonAsset[];
         public getAssets(type: AssetType): Asset[];
         public getAssets(type: AssetType) {
             return this.getAssetCollection(type).getSnapshot();
@@ -940,6 +980,7 @@ namespace pxt {
         public getGalleryAssets(type: AssetType.Tilemap): ProjectTilemap[];
         public getGalleryAssets(type: AssetType.Animation): Animation[];
         public getGalleryAssets(type: AssetType.Song): Song[];
+        public getGalleryAssets(type: AssetType.Json): JsonAsset[];
         public getGalleryAssets(type: AssetType): Asset[];
         public getGalleryAssets(type: AssetType) {
             return this.getAssetCollection(type).getSnapshot();
@@ -950,6 +991,7 @@ namespace pxt {
         public lookupBlockAsset(assetType: AssetType.Tilemap, blockID: string): ProjectTilemap;
         public lookupBlockAsset(assetType: AssetType.Animation, blockID: string): Animation;
         public lookupBlockAsset(assetType: AssetType.Song, blockID: string): Song;
+        public lookupBlockAsset(assetType: AssetType.Json, blockID: string): JsonAsset;
         public lookupBlockAsset(assetType: AssetType, blockID: string): Asset;
         public lookupBlockAsset(type: AssetType, blockID: string) {
             let filter = (a: Asset) => a.meta?.blockIDs?.indexOf(blockID) !== -1;
@@ -962,6 +1004,7 @@ namespace pxt {
         public updateAsset(asset: ProjectTilemap): ProjectTilemap;
         public updateAsset(asset: Animation): Animation;
         public updateAsset(asset: Song): Song;
+        public updateAsset(asset: JsonAsset): JsonAsset;
         public updateAsset(asset: Asset): Asset;
         public updateAsset(asset: Asset) {
             this.onChange();
@@ -978,6 +1021,7 @@ namespace pxt {
         public duplicateAsset(asset: ProjectTilemap, displayName?: string): ProjectTilemap;
         public duplicateAsset(asset: Animation, displayName?: string): Animation;
         public duplicateAsset(asset: Song, displayName?: string): Song;
+        public duplicateAsset(asset: JsonAsset, displayName?: string): JsonAsset;
         public duplicateAsset(asset: Asset, displayName?: string): Asset;
         public duplicateAsset(asset: Asset, displayName?: string) {
             this.onChange();
@@ -1000,7 +1044,10 @@ namespace pxt {
                     newAsset = this.createNewAnimationFromData((clone as pxt.Animation).frames, (clone as pxt.Animation).interval, name);
                     break;
                 case AssetType.Song:
-                    newAsset = this.createNewSong(asset.song, name);
+                    newAsset = this.createNewSong((clone as pxt.Song).song, name);
+                    break;
+                case AssetType.Json:
+                    newAsset = this.createNewJsonAsset((clone as JsonAsset).data, asset.fileName, name);
                     break;
 
             }
@@ -1038,6 +1085,9 @@ namespace pxt {
                     }
                     else if (toAdd.type === AssetType.Animation) {
                         this.getAssetCollection(AssetType.Animation, !isProject).add(toAdd);
+                    }
+                    else if (toAdd.type === AssetType.Json) {
+                        this.getAssetCollection(AssetType.Json, !isProject).add(toAdd);
                     }
                     else {
                         if (isProject) {
@@ -1170,6 +1220,8 @@ namespace pxt {
                     }
                 } else if (entry.mimeType === SONG_MIME_TYPE) {
                     this.getAssetCollection(AssetType.Song, gallery).add(this.generateSong(entry));
+                } else if (entry.mimeType === JSON_MIME_TYPE) {
+                    this.getAssetCollection(AssetType.Json, gallery).add(this.generateJsonAsset(entry));
                 }
             }
 
@@ -1258,6 +1310,21 @@ namespace pxt {
             }
         }
 
+        protected generateJsonAsset(entry: JRes): JsonAsset {
+            const parsed = JSON.parse(entry.data);
+            return {
+                internalID: this.getNewInternalId(),
+                type: AssetType.Json,
+                id: entry.id,
+                meta: {
+                    displayName: entry.displayName,
+                    tags: entry.tags
+                },
+                data: parsed.data,
+                fileName: parsed.fileName
+            }
+        }
+
         protected generateAnimation(entry: JRes): [Animation, boolean] {
             if (entry.dataEncoding === "json") {
                 let data: any;
@@ -1293,7 +1360,7 @@ namespace pxt {
             }
         }
 
-        protected inflateAnimation(animation: Animation, assets: (Tile | ProjectImage | Animation | Song)[]): Animation {
+        protected inflateAnimation(animation: Animation, assets: (Tile | ProjectImage | Animation | Song | JsonAsset)[]): Animation {
             animation.frames = animation.frameIds.map(frameId =>
                 (assets.find(entry => entry.id === frameId) as ProjectImage).bitmap
             );
@@ -1327,6 +1394,8 @@ namespace pxt {
                     return this.generateNewIDInternal(AssetType.Tilemap, lf("level"));
                 case AssetType.Song:
                     return this.generateNewIDInternal(AssetType.Song, pxt.sprite.SONG_PREFIX, pxt.sprite.SONG_NAMESPACE);
+                case AssetType.Json:
+                    return this.generateNewIDInternal(AssetType.Json, pxt.sprite.JSON_PREFIX, pxt.sprite.JSON_NAMESPACE);
             }
         }
 
@@ -1346,7 +1415,7 @@ namespace pxt {
         }
 
         protected readImages(allJRes: Map<JRes>, isProjectFile = false) {
-            const assets: (Tile | ProjectImage | Animation | Song)[] = [];
+            const assets: (Tile | ProjectImage | Animation | Song | JsonAsset)[] = [];
 
             const toInflate: Animation[] = [];
 
@@ -1372,6 +1441,9 @@ namespace pxt {
                 else if (entry.mimeType === SONG_MIME_TYPE) {
                     assets.push(this.generateSong(entry));
                 }
+                else if (entry.mimeType === JSON_MIME_TYPE) {
+                    assets.push(this.generateJsonAsset(entry));
+                }
             }
 
             for (const animation of toInflate) {
@@ -1394,6 +1466,7 @@ namespace pxt {
         protected getAssetCollection(type: AssetType.Song, gallery?: boolean): AssetCollection<Song>
         protected getAssetCollection(type: AssetType.Tile, gallery?: boolean): AssetCollection<Tile>
         protected getAssetCollection(type: AssetType.Tilemap, gallery?: boolean): AssetCollection<ProjectTilemap>
+        protected getAssetCollection(type: AssetType.Json, gallery?: boolean): AssetCollection<JsonAsset>
         protected getAssetCollection(type: AssetType, gallery?: boolean): AssetCollection<Asset>
         protected getAssetCollection(type: AssetType, gallery = false,): AssetCollection<Asset> {
             if (gallery) {
@@ -1520,6 +1593,9 @@ namespace pxt {
             else if (mimeType === SONG_MIME_TYPE) {
                 value = `hex\`${entry.data}\``;
             }
+            else if (mimeType === JSON_MIME_TYPE) {
+                value = entry.data;
+            }
 
             out += `${indent}//% fixedInstance jres whenUsed\n`
             if (blockIdentity)  out += `${indent}//% blockIdentity=${blockIdentity}\n`
@@ -1607,6 +1683,7 @@ namespace pxt {
         const imageEntries: FactoryEntry[] = [];
         const animationEntries: FactoryEntry[] = [];
         const songEntries: FactoryEntry[] = [];
+        const jsonEntries: FactoryEntry[] = [];
 
         for (const key of entries) {
             if (key === "*") continue;
@@ -1644,6 +1721,12 @@ namespace pxt {
                     expression: `hex\`${entry.data}\``
                 });
             }
+            else if (entry.mimeType === JSON_MIME_TYPE) {
+                jsonEntries.push({
+                    keys: [getShortIDCore(AssetType.Json, key, true), entry.displayName],
+                    expression: entry.data
+                });
+            }
         }
 
 
@@ -1652,6 +1735,7 @@ namespace pxt {
         out += emitFactoryHelper("image", imageEntries);
         out += emitFactoryHelper("animation", animationEntries);
         out += emitFactoryHelper("song", songEntries);
+        out += emitFactoryHelper("json", jsonEntries);
 
         return `// ${warning}\nnamespace ${pxt.sprite.IMAGES_NAMESPACE} {\n${out}\n}\n// ${warning}\n`
     }
@@ -1738,6 +1822,11 @@ namespace pxt {
                 return {
                     ...asset,
                     song: pxt.assets.music.cloneSong(asset.song)
+                }
+            case AssetType.Json:
+                return {
+                    ...asset,
+                    data: U.clone((asset as JsonAsset).data),
                 }
         }
     }
@@ -1829,6 +1918,18 @@ namespace pxt {
 
                 allJRes[id] = songJres;
                 break;
+            case AssetType.Json:
+                const jsonJres: Partial<JRes> = {
+                    data: JSON.stringify({ data: asset.data, fileName: asset.fileName }),
+                    mimeType: JSON_MIME_TYPE,
+                    displayName: asset.meta.displayName,
+                    namespace: pxt.sprite.JSON_NAMESPACE + "."
+                };
+                if (tags?.length)
+                    jsonJres.tags = tags;
+
+                allJRes[id] = jsonJres;
+                break;
         }
 
     }
@@ -1856,6 +1957,8 @@ namespace pxt {
                 return a.data.equals((b as ProjectTilemap).data);
             case AssetType.Song:
                 return pxt.assets.music.songEquals(a.song, (b as Song).song);
+            case AssetType.Json:
+                return a.fileName === (b as JsonAsset).fileName && U.deepEqual(a.data, (b as JsonAsset).data);
         }
     }
 
@@ -1899,6 +2002,8 @@ namespace pxt {
                 return `tilemap${leftTick}${shortId}${rightTick}`
             case AssetType.Song:
                 return `assets.song${leftTick}${shortId}${rightTick}`
+            case AssetType.Json:
+                return `assets.json${leftTick}${shortId}${rightTick}`;
         }
     }
 
@@ -1934,6 +2039,8 @@ namespace pxt {
                     return project.lookupAssetByName(AssetType.Animation, name);
                 case "song":
                     return project.lookupAssetByName(AssetType.Song, name);
+                case "json":
+                    return project.lookupAssetByName(AssetType.Json, name);
             }
         }
 
@@ -1952,6 +2059,8 @@ namespace pxt {
                 return lf("myAnim");
             case pxt.AssetType.Song:
                 return lf("mySong");
+            case pxt.AssetType.Json:
+                return lf("myFile");
             default:
                 return lf("asset")
         }
@@ -1974,6 +2083,8 @@ namespace pxt {
                 return validateAnimation(asset as Animation)
             case AssetType.Song:
                 return validateSong(asset as Song);
+            case AssetType.Json:
+                return !!(asset as JsonAsset).data;
         }
     }
 
@@ -2041,6 +2152,9 @@ namespace pxt {
                 break;
             case AssetType.Song:
                 prefix = pxt.sprite.SONG_NAMESPACE + ".";
+                break;
+            case AssetType.Json:
+                prefix = pxt.sprite.JSON_NAMESPACE + ".";
                 break;
         }
 
@@ -2145,6 +2259,7 @@ namespace pxt {
     function getAssetCollection(snapshot: AssetSnapshot, type: AssetType.Animation, createIfMissing?: boolean): AssetCollection<Animation>
     function getAssetCollection(snapshot: AssetSnapshot, type: AssetType.Image, createIfMissing?: boolean): AssetCollection<ProjectImage>
     function getAssetCollection(snapshot: AssetSnapshot, type: AssetType.Song, createIfMissing?: boolean): AssetCollection<Song>
+    function getAssetCollection(snapshot: AssetSnapshot, type: AssetType.Json, createIfMissing?: boolean): AssetCollection<JsonAsset>
     function getAssetCollection(snapshot: AssetSnapshot, type: AssetType.Tile, createIfMissing?: boolean): AssetCollection<Tile>
     function getAssetCollection(snapshot: AssetSnapshot, type: AssetType.Tilemap, createIfMissing?: boolean): AssetCollection<ProjectTilemap>
     function getAssetCollection(snapshot: AssetSnapshot, type: AssetType, createIfMissing?: boolean): AssetCollection<Asset>

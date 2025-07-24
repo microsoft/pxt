@@ -13,6 +13,7 @@ import { dispatchChangeGalleryView, dispatchChangeSelectedAsset, dispatchUpdateU
 import { AssetPreview } from "./assetPreview";
 import { AssetPalette } from "./assetPalette";
 import { getBlocksEditor } from "../../app";
+import { getLabelForAssetType } from "../../assets";
 
 interface AssetDetail {
     name: string;
@@ -62,7 +63,7 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
         const asset = this.props.asset;
         const details: AssetDetail[] = [];
         if (asset) {
-            details.push({ name: lf("Type"), value: getDisplayTextForAsset(asset.type) });
+            details.push({ name: lf("Type"), value: getLabelForAssetType(asset.type) });
 
             switch (asset.type) {
                 case pxt.AssetType.Image:
@@ -254,21 +255,6 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
             </Modal>}
             {showPaletteModal && <AssetPalette onClose={this.hidePaletteModal} />}
         </div>
-    }
-}
-
-function getDisplayTextForAsset(type: pxt.AssetType) {
-    switch (type) {
-        case pxt.AssetType.Image:
-            return lf("Image");
-        case pxt.AssetType.Tile:
-            return lf("Tile");
-        case pxt.AssetType.Animation:
-            return lf("Animation");
-        case pxt.AssetType.Tilemap:
-            return lf("Tilemap");
-        case pxt.AssetType.Song:
-            return lf("Song");
     }
 }
 

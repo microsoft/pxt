@@ -2423,7 +2423,7 @@ namespace ts.pxtc.jsonPatch.tests {
         for (const test of tests) {
             pxt.log(test.comment);
             const patches = ts.pxtc.jsonPatch.diff(test.obja, test.objb);
-            if (deepEqual(patches, test.expected)) {
+            if (U.deepEqual(patches, test.expected)) {
                 pxt.log("succeeded");
             } else {
                 pxt.error("FAILED");
@@ -2489,7 +2489,7 @@ namespace ts.pxtc.jsonPatch.tests {
         for (const test of tests) {
             pxt.log(test.comment);
             ts.pxtc.jsonPatch.patchInPlace(test.obj, test.patches);
-            const equal = deepEqual(test.obj, test.expected);
+            const equal = U.deepEqual(test.obj, test.expected);
             const succeeded = equal && test.validate ? test.validate(test.obj) : true;
             if (succeeded) {
                 pxt.log("succeeded");
@@ -2500,37 +2500,4 @@ namespace ts.pxtc.jsonPatch.tests {
             }
         }
     }
-
-    function deepEqual(a: any, b: any): boolean {
-        if (a === b) { return true; }
-
-        if (a && b && typeof a === 'object' && typeof b === 'object') {
-            const arrA = Array.isArray(a);
-            const arrB = Array.isArray(b);
-
-            if (arrA && arrB) {
-                if (a.length !== b.length) { return false; }
-                for (let i = 0; i < a.length; ++i) {
-                    if (!deepEqual(a[i], b[i])) { return false; }
-                }
-                return true;
-            }
-
-            if (arrA !== arrB) { return false; }
-
-            const keysA = Object.keys(a);
-
-            if (keysA.length !== Object.keys(b).length) { return false; }
-
-            for (const key of keysA) {
-                if (!b.hasOwnProperty(key)) { return false; }
-                if (!deepEqual(a[key], b[key])) { return false; }
-            }
-
-            return true;
-        }
-
-        // True if both are NaN, false otherwise
-        return a !== a && b !== b;
-    };
 }
