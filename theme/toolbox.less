@@ -299,12 +299,22 @@ div.blocklyTreeIcon span {
     Inverted Toolbox
 *******************************/
 #root.hc .invertedToolbox {
+    div.blocklyTreeRow {
+        background-color: var(--pxt-primary-background);
+        color: var(--pxt-primary-foreground);
+    }
+
     div.blocklyTreeRow .blocklyTreeIcon {
         color: var(--block-meta-color);
     }
 
-    div.blocklyTreeRow.blocklyTreeSelected .blocklyTreeIcon {
-        color: var(--pxt-target-background3);
+    div.blocklyTreeRow.blocklyTreeSelected {
+        background-color: var(--block-meta-color);
+        color: var(--pxt-primary-foreground);
+
+        .blocklyTreeIcon, .blocklyTreeLabel {
+            color: var(--pxt-primary-foreground);
+        }
     }
 }
 
@@ -430,7 +440,7 @@ div.blocklyTreeIcon span {
     div.blocklyTreeRow {
         border-left-width: 12px !important;
     }
-    div.blocklyTreeRoot div div div div div.blocklyTreeRow {
+    div.blocklyTreeRoot div div:not(#advanced) div div div.blocklyTreeRow {
         border-left-width: 18px !important;
     }
 }
