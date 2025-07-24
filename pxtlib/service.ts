@@ -1775,6 +1775,7 @@ namespace ts.pxtc.service {
         localizedCategory?: string;
         builtinBlock?: boolean;
         params?: string;
+        dropdownOptions?: string;
     }
 
     export interface ProjectSearchOptions {
