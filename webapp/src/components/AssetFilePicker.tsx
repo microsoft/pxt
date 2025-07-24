@@ -49,9 +49,15 @@ export class AssetFilePicker extends React.Component<AssetFilePickerProps> imple
             errorNotification(lf("The file {0} is not a valid JSON file.", name));
         }
 
+        const hasDefaultName = !this.asset.data;
+
         if (data) {
             this.asset.fileName = name;
             this.asset.data = JSON.parse(text);
+
+            if (hasDefaultName) {
+                this.asset.meta.displayName = name.split(".")[0].replace(/[^a-zA-Z0-9_ \-]/g, "")
+            }
         }
         this.closeCallback?.();
     }

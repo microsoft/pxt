@@ -1,3 +1,4 @@
+import { string } from "blockly/core/utils";
 import * as pxtblockly from "../../pxtblocks";
 
 export function isNameTaken(name: string) {
@@ -125,7 +126,7 @@ export function assetToGalleryItem(asset: pxt.Asset, imgConv = new pxt.ImageConv
             asset.previewURI = pxtblockly.songToDataURI(asset.song, 32, 32, false, 1);
             return asset;
         case pxt.AssetType.Json:
-            // TODO
+            // For JSON assets, we just show the filename
             return asset;
     }
 }
@@ -148,7 +149,7 @@ export function getIconClassForAssetType(type: pxt.AssetType) {
         case pxt.AssetType.Song:
             return "music";
         case pxt.AssetType.Json:
-            return "file";
+            return "file code";
         case pxt.AssetType.Image:
         default:
             return null;

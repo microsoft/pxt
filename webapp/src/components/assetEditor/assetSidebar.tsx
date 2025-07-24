@@ -76,6 +76,9 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
                 case pxt.AssetType.Animation:
                     details.push({ name: lf("Size"), value: `${asset.frames[0].width} x ${asset.frames[0].height}` });
                     break;
+                case pxt.AssetType.Json:
+                    details.push({ name: lf("Filename"), value: asset.fileName });
+                    break;
             }
         }
 
@@ -98,7 +101,7 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
         project.pushUndo();
         result = pxt.patchTemporaryAsset(this.props.asset, result, project);
 
-        if (result.meta.displayName) {
+        if (result.meta.displayName && (result.type !== pxt.AssetType.Json || result.data)) {
             result = project.updateAsset(result);
         }
 
