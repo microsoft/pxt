@@ -110,6 +110,7 @@ export class ErrorList extends auth.Component<ErrorListProps, ErrorListState> {
             !!getErrorHelp &&
             !!showLoginDialog &&
             !pxt.shell.isReadOnly() &&
+            !pxt.BrowserUtils.isPxtElectron() &&
             (pxt.appTarget.appTheme.forceEnableAiErrorHelp || pxt.Util.isFeatureEnabled("aiErrorHelp"));
 
         const helpLoader = (
