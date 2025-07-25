@@ -22,7 +22,7 @@ import { DebuggerToolbox } from "./debuggerToolbox";
 import { amendmentToInsertSnippet, listenForEditAmendments, createLineReplacementPyAmendment } from "./monacoEditAmendments";
 
 import { MonacoFlyout } from "./monacoFlyout";
-import { ErrorList, ErrorDisplayInfo as ErrorDisplayInfo, StackFrameDisplayInfo } from "./errorList";
+import { ErrorList, ErrorDisplayInfo, StackFrameDisplayInfo } from "./errorList";
 import * as auth from "./auth";
 import * as pxteditor from "../../pxteditor";
 
@@ -31,6 +31,8 @@ import ErrorListState = pxt.editor.ErrorListState;
 
 import * as pxtblockly from "../../pxtblocks";
 import { ThemeManager } from "../../react-common/components/theming/themeManager";
+import { ErrorHelpException, getErrorHelpAsText } from "./errorHelp";
+import { AIErrorExplanationText } from "./components/AIErrorExplanationText";
 
 const MIN_EDITOR_FONT_SIZE = 10
 const MAX_EDITOR_FONT_SIZE = 40
@@ -367,15 +369,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private highlightedBreakpoint: number;
     private editAmendmentsListener: monaco.IDisposable | undefined;
     private errors: ErrorDisplayInfo[] = [];
+    private errorListDebounceActive: boolean = false;
+    private revealErrorListDebounced: () => void;
     private callLocations: pxtc.LocationInfo[];
-
-    private userPreferencesSubscriber: data.DataSubscriber = {
-        subscriptions: [],
-        onDataChanged: () => {
-            this.onUserPreferencesChanged();
-        }
-    };
-
     private handleFlyoutWheel = (e: WheelEvent) => e.stopPropagation();
     private handleFlyoutScroll = (e: WheelEvent) => e.stopPropagation();
 
@@ -388,15 +384,17 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.startDebugger = this.startDebugger.bind(this);
         this.onUserPreferencesChanged = this.onUserPreferencesChanged.bind(this);
         this.getDisplayInfoForError = this.getDisplayInfoForError.bind(this);
-
-        data.subscribe(this.userPreferencesSubscriber, auth.HIGHCONTRAST);
+        this.getErrorHelp = this.getErrorHelp.bind(this);
+        this.setErrors = this.setErrors.bind(this);
+        this.revealErrorListDebounced = pxt.Util.debounce(() => {
+            this.errorListDebounceActive = false;
+        }, 2000 /* 2 seconds */);
 
         ThemeManager.getInstance(document)?.subscribe("monaco", () => this.onUserPreferencesChanged());
     }
 
     onUserPreferencesChanged() {
-        const hc = data.getData<boolean>(auth.HIGHCONTRAST);
-
+        const hc = ThemeManager.isCurrentThemeHighContrast();
         if (this.loadMonacoPromise) this.defineEditorTheme(hc, true);
     }
 
@@ -580,6 +578,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 pxt.tickEvent(`${tickLang}.discardText`, undefined, { interactiveConsent: true });
                 this.parent.saveBlocksToTypeScriptAsync().then((src) => {
                     this.overrideFile(src);
+
+                    // Clear diagnostics so blocks editor doesn't show old errors.
+                    // Recompile will pick up the updated content and re-validate it.
+                    this.currFile.diagnostics = [];
+
                     this.parent.setFile(bf);
                 })
             }
@@ -637,7 +640,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     display(): JSX.Element {
-        const showErrorList = pxt.appTarget.appTheme.errorList;
+        const showErrorList =
+            !this.errorListDebounceActive &&
+            pxt.appTarget.appTheme.errorList &&
+            !pxt.shell.isTimeMachineEmbed() &&
+            !this.parent.state.debugging;
 
         return (
             <div id="monacoEditorArea" className={`monacoEditorArea`} style={{ direction: 'ltr' }}>
@@ -654,22 +661,62 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                             setInsertionSnippet={this.setInsertionSnippet}
                             parent={this.parent} />
                     </div>
-                    {showErrorList && <ErrorList onSizeChange={this.setErrorListState}
-                        errors={this.errors}
-                        startDebugger={this.startDebugger} />}
+                    {showErrorList && (
+                        <ErrorList
+                            onSizeChange={this.setErrorListState}
+                            errors={this.errors}
+                            startDebugger={this.startDebugger}
+                            getErrorHelp={this.getErrorHelp}
+                            note={
+                                this.parent.state.errorListNote && (
+                                    <AIErrorExplanationText
+                                        explanation={this.parent.state.errorListNote}
+                                        onFeedbackSelected={this.onAIFeedback}
+                                    />
+                                )
+                            }
+                            showLoginDialog={this.parent.showLoginDialog}
+                        />
+                    )}
                 </div>
             </div>
         )
     }
 
+    private onAIFeedback = (positive: boolean) => {
+        pxt.tickEvent("errorHelp.feedback", {
+                positive: positive + "",
+                type: "text",
+                responseLength: this.parent.state.errorListNote?.length + "",
+                errorCount: this.errors.length
+            });
+    }
+
+    // This sets the errors and manages our debounce logic for showing the error list.
+    setErrors(errors: ErrorDisplayInfo[]) {
+        const oldHasErrors = !!this.errors?.length;
+        const newHasErrors = !!errors?.length;
+
+        this.errors = errors;
+
+        // Delay showing error list when going from none -> some errors,
+        // but do not re-hide the list if it was already visible.
+        if (newHasErrors && (!oldHasErrors || this.errorListDebounceActive)) {
+            this.errorListDebounceActive = true;
+            this.revealErrorListDebounced();
+        }
+    }
+
     public onExceptionDetected(exception: pxsim.DebuggerBreakpointMessage) {
         const exceptionDisplayInfo: ErrorDisplayInfo = this.getDisplayInfoForException(exception);
-        this.errors = [exceptionDisplayInfo];
+        this.setErrors([exceptionDisplayInfo]);
+        this.parent.setState({ errorListNote: undefined });
     }
 
     private onErrorChanges(errors: pxtc.KsDiagnostic[]) {
         const errorDisplayInfo: ErrorDisplayInfo[] = errors.map(this.getDisplayInfoForError);
-        this.errors = errorDisplayInfo;
+        this.setErrors(errorDisplayInfo);
+        this.parent.setState({ errorListNote: undefined });
     }
 
     private getDisplayInfoForException(exception: pxsim.DebuggerBreakpointMessage): ErrorDisplayInfo {
@@ -686,7 +733,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         return {
             message,
-            stackFrames
+            stackFrames,
+            preventsRunning: false
         };
     }
 
@@ -694,8 +742,30 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const message = lf("Line {0}: {1}", error.endLine ? error.endLine + 1 : error.line + 1, error.messageText);
         return {
             message,
-            onClick: () => this.goToError(error)
+            onClick: () => this.goToError(error),
+            preventsRunning: true
         };
+    }
+
+    /**
+     * Provides a user-facing explanation of the errors in the error list.
+     */
+    private async getErrorHelp() {
+        this.parent.setState({errorListNote: undefined});
+        const lang = this.fileType == pxt.editor.FileType.Python ? "python" : "typescript";
+        const code = this.currFile.content;
+        try {
+            const helpResponse = await getErrorHelpAsText(this.errors, lang, code);
+            this.parent.setState({errorListNote: helpResponse});
+        } catch (e) {
+            pxt.reportException(e);
+
+            if (e instanceof ErrorHelpException) {
+                core.errorNotification(e.getUserFacingMessage());
+            } else {
+                core.errorNotification(lf("Sorry, something went wrong. Please try again later."));
+            }
+        }
     }
 
     goToError(error: pxtc.LocationInfo) {
@@ -716,7 +786,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     startDebugger() {
-        pxt.tickEvent('errorList.startDebugger', null, { interactiveConsent: true })
+        pxt.tickEvent('errorList.startDebugger', {lang: this.fileType}, { interactiveConsent: true })
         this.parent.toggleDebugging()
     }
 
@@ -837,13 +907,17 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     getToolboxDiv(): HTMLElement | undefined {
-        const monacoArea = document.getElementById('monacoEditorArea');
+        const monacoArea = this.getEditorAreaDiv();
         if (!monacoArea) return undefined;
         return monacoArea.getElementsByClassName('monacoToolboxDiv')[0] as HTMLElement;
     }
 
+    getEditorAreaDiv(): HTMLElement {
+        return document.getElementById('monacoEditorArea');
+    }
+
     resize(e?: Event) {
-        let monacoArea = document.getElementById('monacoEditorArea');
+        let monacoArea = this.getEditorAreaDiv();
         if (!monacoArea) return;
         let monacoToolboxDiv = monacoArea.getElementsByClassName('monacoToolboxDiv')[0] as HTMLElement;
 
@@ -897,7 +971,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     private createLoadMonacoPromise(): Promise<void> {
         this.extraLibs = Object.create(null);
-        let editorArea = document.getElementById("monacoEditorArea");
         let editorElement = document.getElementById("monacoEditorInner");
 
         return pxteditor.monaco.initMonacoAsync(editorElement).then((editor) => {
@@ -1194,6 +1267,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     focusWorkspace(): void {
+        if (!this.editor) return;
         this.editor.focus();
     }
 
@@ -1322,6 +1396,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             openLocation={this.revealBreakpointLocation}
             showCallStack /> : null;
         ReactDOM.render(debuggerToolbox, container);
+    }
+
+    focusToolbox(itemToFocus?: string): void {
+        if (this.isDebugging())  {
+            this.debuggerToolbox.focus();
+        } else if (this.toolbox) {
+            this.toolbox.focus(itemToFocus);
+        }
     }
 
     getId() {
@@ -1463,6 +1545,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                         this.updateDiagnostics();
                         this.changeCallback();
                         this.updateFieldEditors();
+
+                        if (this.errorListDebounceActive) {
+                            // Delay showing the error list while user is typing
+                            this.revealErrorListDebounced();
+                        }
                     });
                 }
 
@@ -1497,7 +1584,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     unloadFileAsync(): Promise<void> {
         if (this.toolbox)
             this.toolbox.clearSearch();
-        this.errors = [];
+        this.setErrors([]);
+        this.parent.setState({errorListNote: undefined});
         if (this.currFile && this.currFile.getName() == "this/" + pxt.CONFIG_NAME) {
             // Reload the header if a change was made to the config file: pxt.json
             return this.parent.reloadHeaderAsync();
@@ -1862,10 +1950,23 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             let firstBlock = document.querySelector(".monacoBlock") as HTMLElement;
             if (firstBlock) {
                 firstBlock.focus();
-                firstBlock.click();
             }
         }
     }
+
+    public onToolboxBlur(e: React.FocusEvent, hasSearch: boolean): void {
+        const searchInputFocused = e.relatedTarget === (this.toolbox.refs.searchbox as toolbox.ToolboxSearch).refs.searchInput;
+        const flyoutFocused = e.relatedTarget === this.flyout.refs.flyout || (this.flyout.refs.flyout as HTMLElement).contains(e.relatedTarget);
+        if (((searchInputFocused && !hasSearch) || !searchInputFocused) && !flyoutFocused) {
+            this.hideFlyout();
+        }
+        if (!flyoutFocused) {
+            this.toolbox.clear();
+            this.toolbox.clearExpandedItem();
+        }
+    }
+
+    public setFlyoutForceOpen(_forceOpen: boolean): void {}
 
     ///////////////////////////////////////////////////////////
     ////////////         Flyout methods           /////////////

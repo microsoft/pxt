@@ -24,6 +24,12 @@ export interface SharedCloudProject extends CloudProject, pxt.Cloud.JsonScript {
     text: string;
 }
 
+class StatusCodeError extends Error {
+    constructor(public statusCode: number, public message: string) {
+        super(message);
+    }
+}
+
 const localOnlyMetadataFields: (keyof Header)[] = [
     // different for different local storage instances
     '_rev', '_id' as keyof Header,
@@ -678,4 +684,62 @@ export function init() {
 
     // subscribe to header changes
     data.subscribe(onHeaderChangeSubscriber, "header:*");
+}
+
+/**
+ * Copilot / AI Requests
+ */
+export async function aiErrorExplainRequest(
+    code: string,
+    errors: string,
+    lang: "blocks" | "typescript" | "python",
+    target: string,
+    outputFormat: "tour_json" | "text",
+    locale: string
+): Promise<string | undefined> {
+    const startUrl = `/api/copilot/startexplainerror`;
+    const statusUrl = `/api/copilot/explainerrorstatus`;
+
+    const data = { lang, code, errors, target, outputFormat, locale };
+
+    // Start the request.
+    const queryStart = await auth.apiAsync(startUrl, data, "POST");
+    if (!queryStart.success) {
+        throw new StatusCodeError(
+            queryStart.statusCode,
+            queryStart.err || `Unable to reach AI. Error: ${queryStart.statusCode}.\n${queryStart.err}`
+        );
+    }
+    const resultId = queryStart.resp.resultId;
+
+    // Poll until the request is complete (or timeout).
+    const result = await pxt.Util.runWithBackoffAsync<pxt.auth.ApiResult<any>>(
+        async () => {
+            const response = await auth.apiAsync(statusUrl, { resultId }, "POST");
+            if (!response.success) {
+                throw new StatusCodeError(
+                    response.statusCode,
+                    response.err || `Unable to reach AI. Error: ${response.statusCode}.\n${response.err}`
+                );
+            }
+            return response;
+        },
+        (statusResponse) => {
+            // Expected states: "InProgress", "Success", "Failed"
+            return statusResponse.resp?.state === "Success" || statusResponse.resp?.state === "Failed";
+        },
+        1000, // initial delay, 1 second
+        10000, // max delay, 10 seconds
+        90000, // timeout, 90 seconds
+        "Timeout waiting for Explain Error response",
+    );
+
+    if (result.resp.state === "Failed") {
+        // This shouldn't normally happen (backend will log errors and return 500, instead)
+        // but handle it just in case.
+        pxt.reportError("errorHelp", `"Error in response for Explain Error: ${JSON.stringify(result.resp)}`);
+        throw new Error("Failure response from AI service");
+    }
+
+    return result.resp.data;
 }

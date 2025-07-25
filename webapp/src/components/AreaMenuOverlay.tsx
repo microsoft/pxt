@@ -1,11 +1,12 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import * as Blockly from "blockly";
 import * as ReactDOM from "react-dom";
 import { Button, ButtonProps } from "../../../react-common/components/controls/Button";
 import { FocusTrap } from "../../../react-common/components/controls/FocusTrap";
 
 import IProjectView = pxt.editor.IProjectView;
 
-interface NavigateRegionsOverlayProps {
+interface AreaMenuOverlapProps {
     parent: IProjectView;
 }
 
@@ -18,10 +19,10 @@ interface RectBounds {
     height: number;
 }
 
-type RegionId = "mainmenu" | "simulator" | "toolbox" | "editor" | "editortools" | "tutorial";
+type AreaId = "mainmenu" | "simulator" | "toolbox" | "editor" | "editortools" | "tutorial";
 
-interface Region {
-    id: RegionId;
+interface Area {
+    id: AreaId;
     ariaLabel: string;
     shortcutKey: string;
     getClassName?(projectView: IProjectView): string | undefined;
@@ -35,7 +36,7 @@ const getToolboxBounds = (projectView: IProjectView): DOMRect | undefined => {
 
 const isSimMini = () => !!document.querySelector(".miniSim");
 
-const regions: Region[] = [
+const areas: Area[] = [
     {
         id: "mainmenu",
         ariaLabel: lf("Main menu"),
@@ -95,7 +96,7 @@ const regions: Region[] = [
             }
         },
         getClassName(projectView: IProjectView) {
-            const classNames = ["simulator-region"];
+            const classNames = ["simulator-area"];
             if (projectView.state.collapseEditorTools) {
                 classNames.push("simulator-collapsed");
             }
@@ -113,7 +114,7 @@ const regions: Region[] = [
             }
             if (projectView.state.collapseEditorTools) {
                 const isRtl = pxt.Util.isUserLanguageRtl();
-                // Shift over for a clearer region when the toolbox is collapsed
+                // Shift over for a clearer area when the toolbox is collapsed
                 const copy = DOMRect.fromRect(bounds);
                 if (isRtl) {
                     copy.width += document.body.clientWidth - bounds.right;
@@ -140,7 +141,7 @@ const regions: Region[] = [
                 if (element.offsetParent !== null) {
                     const bounds = element.getBoundingClientRect();
                     if (selector === "#monacoEditor" || selector === "#blocksArea") {
-                        // Use bounds that don't overlap the toolbox region.
+                        // Use bounds that don't overlap the toolbox.
                         const isRtl = pxt.Util.isUserLanguageRtl();
                         const toolbox = getToolboxBounds(projectView);
                         const copied = DOMRect.fromRect(bounds);
@@ -190,68 +191,77 @@ const regions: Region[] = [
     },
 ];
 
-export const NavigateRegionsOverlay = ({ parent }: NavigateRegionsOverlayProps) => {
+export const AreaMenuOverlay = ({ parent }: AreaMenuOverlapProps) => {
     const previouslyFocused = useRef<Element>(document.activeElement);
-    const getRects = (): Map<RegionId, DOMRect | undefined> => (
-        new Map(regions.map(region => [region.id, region.getBounds(parent)]))
+    const movedFocusToAreaRef = useRef(false);
+
+    const getRects = (): Map<AreaId, DOMRect | undefined> => (
+        new Map(areas.map(area => [area.id, area.getBounds(parent)]))
     );
-    const [regionRects, setRegionRects] = useState(getRects());
+    const [areaRects, setAreaRects] = useState(getRects());
 
+    const moveFocusToArea = useCallback((area: Area) => {
+        Blockly.hideChaff();
+        area.focus(parent);
+        movedFocusToAreaRef.current = true;
+        parent.toggleAreaMenu();
+    }, [parent]);
     useEffect(() => {
-        if (parent.state.fullscreen) {
-            parent.setSimulatorFullScreen(false);
-        }
-
         const listener = (e: KeyboardEvent) => {
-            const region = regions.find(region => region.shortcutKey === e.key);
-            if (region) {
+            const area = areas.find(area => area.shortcutKey === e.key);
+            if (area) {
                 e.preventDefault();
-                region.focus(parent);
-                parent.hideNavigateRegions();
+                moveFocusToArea(area);
             }
         }
         document.addEventListener("keydown", listener)
 
         const observer = new ResizeObserver(() => {
-            setRegionRects(getRects())
+            setAreaRects(getRects())
         });
         observer.observe(document.body);
 
         return () => {
             observer.disconnect()
             document.removeEventListener("keydown", listener)
+
+            // Restore focus if we didn't already move it.
+            if (previouslyFocused.current && !movedFocusToAreaRef.current) {
+                (previouslyFocused.current as HTMLElement).focus();
+            }
         }
     }, [])
 
-    const handleEscape = () => {
-        if (previouslyFocused.current) {
-            (previouslyFocused.current as HTMLElement).focus()
-        }
-        parent.hideNavigateRegions();
-    }
+    const handleEscape = useCallback(() => {
+        parent.toggleAreaMenu();
+    }, [parent]);
 
-    if (!regionRects.get("editor")) {
-        // Something is awry, bail out.
-        parent.hideNavigateRegions();
+    // Something is awry, bail out.
+    const bailOut = !areaRects.get("editor");
+    useEffect(() => {
+        if (bailOut) {
+            parent.toggleAreaMenu();
+        }
+    }, [bailOut, parent]);
+
+    if (bailOut) {
         return null;
     }
-
     return ReactDOM.createPortal(
         <FocusTrap dontRestoreFocus onEscape={handleEscape}>
-            <div className="navigate-regions-container">
-                {regions.map(region => {
-                    const rect = regionRects.get(region.id);
-                    return rect ? (<RegionButton
-                        key={region.id}
-                        title={region.ariaLabel}
-                        shortcutKey={region.shortcutKey}
+            <div className="area-menu-container" >
+                {areas.map(area => {
+                    const rect = areaRects.get(area.id);
+                    return rect ? (<AreaButton
+                        key={area.id}
+                        title={area.ariaLabel}
+                        shortcutKey={area.shortcutKey}
                         bounds={rect}
                         onClick={() => {
-                            region.focus(parent);
-                            parent.hideNavigateRegions();
+                            moveFocusToArea(area);
                         }}
-                        ariaLabel={region.ariaLabel}
-                        className={region.getClassName?.(parent)}
+                        ariaLabel={area.ariaLabel}
+                        className={area.getClassName?.(parent)}
                     />) : null;
                 })}
             </div>
@@ -260,16 +270,16 @@ export const NavigateRegionsOverlay = ({ parent }: NavigateRegionsOverlayProps) 
     );
 }
 
-interface RegionButtonProps extends ButtonProps {
+interface AreaButtonProps extends ButtonProps {
     shortcutKey: string;
     bounds: RectBounds;
 }
 
-const RegionButton = ({ shortcutKey, bounds, ...props }: RegionButtonProps) => {
+const AreaButton = ({ shortcutKey, bounds, ...props }: AreaButtonProps) => {
     const { top, height, left, width } = bounds;
     return <Button
         {...props}
-        className={`region-button ${props.className}`}
+        className={`area-button ${props.className}`}
         style={{
             top, height, left, width
         }}

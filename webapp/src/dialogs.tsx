@@ -688,7 +688,7 @@ export function showReportAbuseAsync(pubId?: string) {
             </div>
             <div className="ui field">
                 <label id="abuseDescriptionLabel">{lf("Why do you find it offensive?")}</label>
-                <textarea aria-labelledby="abuseDescriptionLabel"></textarea>
+                <textarea aria-labelledby="abuseDescriptionLabel" maxLength={1000}></textarea>
             </div>
         </div>,
     }).then(res => {

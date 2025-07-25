@@ -1073,7 +1073,24 @@ namespace ts.pxtc.service {
             };
 
             // Fill default parameters in block string
-            const computeBlockString = (symbol: SymbolInfo): string => {
+            const computeBlockString = (symbol: SymbolInfo, skipParent = false, paramMap?: pxt.Map<string>): string => {
+                const toolboxParent = symbol.attributes?.toolboxParent || symbol.attributes?.duplicateWithToolboxParent;
+                const toolboxArgument = symbol.attributes?.toolboxParentArgument || symbol.attributes?.duplicateWithToolboxParentArgument;
+
+                if (toolboxParent && !skipParent) {
+                    const parentSymbol = blockInfo.blocksById[toolboxParent];
+
+                    if (parentSymbol) {
+                        const childString = computeBlockString(symbol, true);
+
+                        const paramMap = {
+                            [toolboxArgument || "*"]: childString
+                        };
+
+                        return computeBlockString(parentSymbol, true, paramMap);
+                    }
+                }
+
                 if (symbol.attributes?._def) {
                     let block = [];
                     const blockDef = symbol.attributes._def;
@@ -1088,10 +1105,21 @@ namespace ts.pxtc.service {
                             case "param":
                                 // In order, preference default value, var name, param name, blockdef param name
                                 let actualParam = compileInfo.definitionNameToParam[part.name];
-                                block.push(actualParam?.defaultValue
+
+                                let valueString = actualParam?.defaultValue
                                     || part.varName
                                     || actualParam?.actualName
-                                    || part.name);
+                                    || part.name;
+
+                                if (paramMap?.["*"]) {
+                                    valueString = paramMap["*"];
+                                    delete paramMap["*"];
+                                }
+                                else if (paramMap?.[actualParam.definitionName]) {
+                                    valueString = paramMap[actualParam.definitionName];
+                                }
+
+                                block.push(valueString);
                                 break;
                         }
                     }
@@ -1105,9 +1133,88 @@ namespace ts.pxtc.service {
             const computeParameterString = (symbol: SymbolInfo): string => {
                 const paramHelp = symbol.attributes?.paramHelp;
                 if (paramHelp) {
-                    Object.keys(paramHelp).map(p => paramHelp[p]).join(" ");
+                    return Object.keys(paramHelp).map(p => paramHelp[p]).join(" ");
                 }
                 return "";
+            }
+
+            // Extract dropdown options from parameters for search indexing
+            const computeDropdownOptionsString = (symbol: SymbolInfo): string => {
+                let options: string[] = [];
+
+                if (symbol.parameters) {
+                    symbol.parameters.forEach(param => {
+                        // Check for fieldEditorOptions that contain dropdown values
+                        if (param.options && param.options.fieldEditorOptions) {
+                            const editorOptions = param.options.fieldEditorOptions.value;
+                            if (editorOptions && Array.isArray(editorOptions)) {
+                                editorOptions.forEach(option => {
+                                    if (Array.isArray(option) && option.length >= 2) {
+                                        // option[0] is display text, option[1] is value
+                                        if (typeof option[0] === 'string') {
+                                            options.push(option[0]);
+                                        } else if (typeof option[0] === 'object' && option[0].alt) {
+                                            options.push(option[0].alt);
+                                        }
+                                    }
+                                });
+                            }
+                        }
+
+                        // Check if parameter is an enum and extract enum member names
+                        if (param.isEnum && param.type) {
+                            // Look up enum members in the API info
+                            const enumInfo = blockInfo.apis.byQName[param.type];
+                            if (enumInfo && enumInfo.kind === ts.pxtc.SymbolKind.Enum) {
+                                // Find enum members
+                                Object.keys(blockInfo.apis.byQName).forEach(qName => {
+                                    const member = blockInfo.apis.byQName[qName];
+                                    if (member.kind === ts.pxtc.SymbolKind.EnumMember &&
+                                        member.namespace === enumInfo.name) {
+                                        options.push(member.name);
+                                    }
+                                });
+                            }
+                        }
+
+                        // Check for fixed instance parameters
+                        const typeInfo = blockInfo.apis.byQName[param.type];
+                        if (typeInfo && typeInfo.attributes.fixedInstances) {
+                            // Get fixed instance dropdown values
+                            const syms = pxt.Util.values(blockInfo.apis.byQName).filter(sym =>
+                                sym.kind === ts.pxtc.SymbolKind.Variable &&
+                                sym.attributes.fixedInstance &&
+                                sym.retType === param.type
+                            );
+                            syms.forEach(sym => {
+                                const k = sym.attributes.block || sym.attributes.blockId || sym.name;
+                                options.push(k);
+                            });
+                        }
+
+                        if (symbol.attributes.constantShim) {
+                            const syms = pxt.Util.values(blockInfo.apis.byQName).filter(sym =>
+                                sym.attributes.blockIdentity === symbol.qName
+                            );
+                            syms.forEach(sym => {
+                                const k = sym.attributes.block || sym.attributes.blockId || sym.name;
+                                options.push(k);
+                            });
+                        }
+
+                        if (param.type === "@combined@" && symbol.combinedProperties) {
+                            symbol.combinedProperties.forEach(prop => {
+                                const sym = blockInfo.apis.byQName[prop];
+                                if (sym) {
+                                    const k = sym.attributes.block || sym.attributes.blockId || sym.name;
+                                    options.push(k);
+                                }
+                            });
+                        }
+                    });
+                }
+
+                return options.join(" ");
             }
 
             if (!builtinItems) {
@@ -1180,6 +1287,7 @@ namespace ts.pxtc.service {
                         jsdoc: s.attributes.jsDoc,
                         localizedCategory: tbSubset && typeof tbSubset[s.attributes.blockId] === "string"
                             ? tbSubset[s.attributes.blockId] as string : undefined,
+                        dropdownOptions: computeDropdownOptionsString(s),
                     };
                     return mappedSi;
                 });
@@ -1200,20 +1308,21 @@ namespace ts.pxtc.service {
 
                 const fuseOptions = {
                     shouldSort: true,
-                    threshold: 0.6,
+                    threshold: 0.4,
                     location: 0,
-                    distance: 100,
+                    distance: 1000,
                     maxPatternLength: 16,
                     minMatchCharLength: 2,
                     findAllMatches: false,
                     caseSensitive: false,
                     keys: [
                         { name: 'name', weight: 0.3 },
+                        { name: "dropdownOptions", weight: 0.15 },
                         { name: 'namespace', weight: 0.1 },
                         { name: 'localizedCategory', weight: 0.1 },
                         { name: 'block', weight: 0.4375 },
                         { name: 'params', weight: 0.0625 },
-                        { name: 'jsdoc', weight: 0.0625 }
+                        { name: 'jsdoc', weight: 0.0625 },
                     ],
                     sortFn: function (a: any, b: any): number {
                         const wa = a.qName ? 1 - weights[a.item.qName] / mw : 1;

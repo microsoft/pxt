@@ -15,13 +15,13 @@ export const LOGGED_IN = `${MODULE}:${FIELD_LOGGED_IN}`;
 const USER_PREF_MODULE = "user-pref";
 const FIELD_USER_PREFERENCES = "preferences";
 const FIELD_HIGHCONTRAST = "high-contrast";
-const FIELD_ACCESSIBLE_BLOCKS = "accessible-blocks";
+const FIELD_KEYBOARD_CONTROLS = "keyboard-controls";
 const FIELD_COLOR_THEME_IDS = "colorThemeIds";
 const FIELD_LANGUAGE = "language";
 const FIELD_READER = "reader";
 export const USER_PREFERENCES = `${USER_PREF_MODULE}:${FIELD_USER_PREFERENCES}`
 export const HIGHCONTRAST = `${USER_PREF_MODULE}:${FIELD_HIGHCONTRAST}`
-export const ACCESSIBLE_BLOCKS = `${USER_PREF_MODULE}:${FIELD_ACCESSIBLE_BLOCKS}`
+export const ACCESSIBLE_BLOCKS = `${USER_PREF_MODULE}:${FIELD_KEYBOARD_CONTROLS}`
 export const COLOR_THEME_IDS = `${USER_PREF_MODULE}:${FIELD_COLOR_THEME_IDS}`
 export const LANGUAGE = `${USER_PREF_MODULE}:${FIELD_LANGUAGE}`
 export const READER = `${USER_PREF_MODULE}:${FIELD_READER}`
@@ -134,7 +134,7 @@ class AuthClient extends pxt.auth.AuthClient {
             switch (field) {
                 case FIELD_USER_PREFERENCES: return { ...state.preferences };
                 case FIELD_HIGHCONTRAST: return state.preferences?.highContrast ?? pxt.auth.DEFAULT_USER_PREFERENCES().highContrast;
-                case FIELD_ACCESSIBLE_BLOCKS: return state.preferences?.accessibleBlocks ?? pxt.auth.DEFAULT_USER_PREFERENCES().accessibleBlocks;
+                case FIELD_KEYBOARD_CONTROLS: return state.preferences?.accessibleBlocks ?? pxt.auth.DEFAULT_USER_PREFERENCES().accessibleBlocks;
                 case FIELD_COLOR_THEME_IDS: return state.preferences?.colorThemeIds ?? pxt.auth.DEFAULT_USER_PREFERENCES().colorThemeIds;
                 case FIELD_LANGUAGE: return state.preferences?.language ?? pxt.auth.DEFAULT_USER_PREFERENCES().language;
                 case FIELD_READER: return state.preferences?.reader ?? pxt.auth.DEFAULT_USER_PREFERENCES().reader;
@@ -243,14 +243,24 @@ export async function setHighContrastPrefAsync(highContrast: boolean): Promise<v
     }
 }
 
-export async function setAccessibleBlocksPrefAsync(accessibleBlocks: boolean): Promise<void> {
+export async function setAccessibleBlocksPrefAsync(accessibleBlocks: boolean, eventSource: string): Promise<void> {
     const cli = await clientAsync();
+
+    pxt.tickEvent(
+        "auth.setAccessibleBlocks",
+        {
+            enabling: accessibleBlocks ? "true" : "false",
+            eventSource: eventSource,
+            local: !cli ? "true" : "false"
+        }
+    );
+
     if (cli) {
         await cli.patchUserPreferencesAsync({
             op: 'replace',
             path: ['accessibleBlocks'],
             value: accessibleBlocks
-        });
+        }, { immediate: true }); // sync this change immediately, as the page is about to reload.
     } else {
         // Identity not available, save this setting locally
         pxt.storage.setLocal(ACCESSIBLE_BLOCKS, accessibleBlocks.toString());

@@ -5,8 +5,7 @@
 
 .common-draggable-graph-text {
     user-select: none;
-    color: var(--pxt-neutral-foreground1);
-    stroke: var(--pxt-neutral-foreground1);
+    fill: var(--pxt-neutral-foreground1);
 }
 
 .draggable-graph-point {
@@ -27,4 +26,13 @@
 
 .draggable-graph-svg {
     touch-action: none;
+}
+
+.hc {
+    .draggable-graph-path, .draggable-graph-point {
+        stroke: @highContrastTextColor;
+    }
+    .common-draggable-graph-text {
+        color: @highContrastTextColor;
+    }
 }

@@ -430,6 +430,10 @@ div.simframe > iframe {
     }
 }
 
+.ui.menu .ui.dropdown.item .menu .item.link.menuitemcheckbox {
+    display: flex;
+}
+
 
 
 /* toggle style */
@@ -503,7 +507,7 @@ div.simframe > iframe {
     float: right;
 }
 
-#root:not(.hc) #editordropdown {
+.main:not(.hc) #editordropdown {
     .menu {
         background-color: var(--pxt-neutral-background1) !important;
 
@@ -758,7 +762,7 @@ div.simframe > iframe {
 
 .notificationBannerVisible #simulator .editor-sidebar,
 .notificationBannerVisible #maineditor,
-.notificationBannerVisible #sidedocs {
+.notificationBannerVisible.sideDocs #sidedocs {
     top: calc(@mainMenuHeight + @bannerHeight);
 }
 
@@ -775,6 +779,7 @@ div.simframe > iframe {
     display: flex;
     flex-direction: row;
     align-items: center;
+    width: 100%;
     .bannerLeft {
         display: block;
         .content {
@@ -805,7 +810,7 @@ div.simframe > iframe {
         .close {
             &:hover, &:focus {
                 cursor: pointer;
-                color: var(--pxt-neutral-background1-hover);
+                opacity: 0.7;
             }
         }
     }
@@ -1070,7 +1075,7 @@ Field editors
                 border-radius: 500rem;
                 padding: 0.7rem 1rem;
 
-                & > i.fas.fa-search {
+                & i.fas.fa-search {
                     position: relative;
                     margin-top: 0.1rem;
                     right: 0;
@@ -1078,6 +1083,25 @@ Field editors
 
                     opacity: .5;
                     transition: opacity 0.3s ease;
+                }
+                & > button:focus-visible {
+                    outline: 3px solid var(--pxt-focus-border);
+                    border-radius: 20%;
+                    &::after {
+                        content: none;
+                    }
+                }
+                &:focus-within {
+                    outline: 3px solid var(--pxt-focus-border);
+                    &:has(button:focus-visible) {
+                        outline: none;
+                    }
+                }
+                &:focus-within::after {
+                    content: none;
+                }
+                & > input:focus {
+                    outline: none !important;
                 }
             }
 
@@ -1154,6 +1178,10 @@ Field editors
             background-color: var(--pxt-neutral-background1-hover) !important;
             color: var(--pxt-neutral-foreground1-hover) !important;
         }
+
+        &:focus-visible {
+            outline: 3px solid var(--pxt-focus-border);
+        }
     }
 
     .extension-grid {
@@ -1193,10 +1221,11 @@ Field editors
         color: @white
     }
 
-    .extension-tag:focus::after  {
-        border: .05rem;
-        border-color: var(--pxt-focus-border);
-        border-radius: 1.6rem;
+    .extension-tag:focus-visible {
+        outline: 3px solid var(--pxt-focus-border);
+        &::after {
+            content: none;
+        }
     }
 
     .tab-header {
@@ -1513,10 +1542,10 @@ p.ui.font.small {
 
         background-color: var(--pxt-target-background2);
         background: var(--pxt-target-background2); /* For browsers that do not support gradients */
-        background: -webkit-linear-gradient(var(--pxt-target-background2) 50%, var(--pxt-target-background2)); /* For Safari 5.1 to 6.0 */
-        background: -o-linear-gradient(var(--pxt-target-background2) 50%, var(--pxt-target-background2)); /* For Opera 11.1 to 12.0 */
-        background: -moz-linear-gradient(var(--pxt-target-background2) 50%, var(--pxt-target-background2)); /* For Firefox 3.6 to 15 */
-        background: linear-gradient(var(--pxt-target-background2) 50%, var(--pxt-target-background2)); /* Standard syntax */
+        background: -webkit-linear-gradient(var(--pxt-secondary-background) 50%, var(--pxt-target-background2)); /* For Safari 5.1 to 6.0 */
+        background: -o-linear-gradient(var(--pxt-secondary-background) 50%, var(--pxt-target-background2)); /* For Opera 11.1 to 12.0 */
+        background: -moz-linear-gradient(var(--pxt-secondary-background) 50%, var(--pxt-target-background2)); /* For Firefox 3.6 to 15 */
+        background: linear-gradient(var(--pxt-secondary-background) 50%, var(--pxt-target-background2)); /* Standard syntax */
     }
     #simulator .hidefullscreen,
     .menubar .ui.item:not(.logo),

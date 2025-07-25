@@ -31,6 +31,7 @@
                 <div class="page-header-item page-header-spacer"></div>
                 <div class="page-header-item page-header-content no-grow">
                     <h2 class="ui item header">@title@</h2>
+                    <a id="eval-button" href="/--eval#project=@id@" class="ui tiny button">Evaluate</a>
                     <a href="/@versionsuff@#pub:@id@" class="ui tiny button">Edit Code</a>
                 </div>
             </div>
@@ -63,7 +64,7 @@
                     <div class="ui form">
                         <div class="field">
                             <label>Why do you find it offensive?</label>
-                            <textarea id='abusetext' rows="2"></textarea>
+                            <textarea id='abusetext' rows="2" maxlength="1000"></textarea>
                         </div>
                     </div>
                 </div>
@@ -139,6 +140,14 @@
                                 'approved.shareurl.loaded',
                                 { shareurl: "@id@" },
                             );
+                        }
+
+                        var evalEnabled = targetConfig && targetConfig.teachertool.showSharePageEvalButton;
+                        if (!evalEnabled) {
+                            var evalButton = document.querySelector("#eval-button");
+                            if (evalButton) {
+                                evalButton.remove();
+                            }
                         }
                     });
 

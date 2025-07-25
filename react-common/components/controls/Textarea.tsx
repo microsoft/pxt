@@ -11,6 +11,7 @@ export interface TextareaProps extends ControlProps {
     rows?: number;
     disabled?: boolean;
     minLength?: number;
+    maxLength?: number;
     readOnly?: boolean;
     resize?: "both" | "horizontal" | "vertical";
     wrap?: "hard" | "soft" | "off";
@@ -36,6 +37,7 @@ export const Textarea = (props: TextareaProps) => {
         rows,
         disabled,
         minLength,
+        maxLength,
         readOnly,
         resize,
         wrap,
@@ -130,6 +132,7 @@ export const Textarea = (props: TextareaProps) => {
                     cols={cols}
                     rows={rows}
                     minLength={minLength}
+                    maxLength={maxLength}
                     wrap={wrap}
                     readOnly={!!readOnly}
                     ref={textareaRef}

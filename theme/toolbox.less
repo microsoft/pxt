@@ -130,6 +130,11 @@ span.blocklyTreeLabel, text.blocklyText {
     color: var(--pxt-target-background3);
 }
 
+.blocklyTreeSelected .blocklyTreeIcon.image-icon {
+    // Has to contrast with block colors
+    background-color: var(--pxt-target-background3);
+}
+
 /*******************************
         Toolbox Label
 *******************************/
@@ -199,7 +204,6 @@ span.blocklyTreeLabel, text.blocklyText {
 
 /* Blockly toolbox icons */
 span.blocklyTreeIcon {
-    background: none !important;
     opacity: 1;
     margin: 0.0em 0.25em 0.0em 0.25em;
     width: 30px;
@@ -217,6 +221,10 @@ span.blocklyTreeIcon {
     height: 100%;
     display: none;
     vertical-align: middle;
+
+    &:not(.image-icon) {
+        background: none !important;
+    }
 }
 
 .blocklyTreeIcon.brandIcon {
@@ -233,13 +241,25 @@ div.blocklyTreeIcon span {
 .blocklyFlyoutLabelIcon.blocklyFlyoutIconfunctions {
     font-family: xicon !important;
 }
+.blocklyFlyoutLabelIcon.brandIcon {
+    font-family: 'brand-icons';
+}
 .blocklyTreeIcon.image-icon {
-    background-image: var(--image-icon-url);
+    background-color: var(--block-meta-color);
+    mask-image: var(--image-icon-url);
     width: 30px;
     height: 100%;
-    background-size: 20px !important;
-    background-repeat: no-repeat !important;
-    background-position: 50% 50% !important;
+    mask-size: 20px !important;
+    mask-repeat: no-repeat !important;
+    mask-position: 50% 50% !important;
+}
+#search {
+    .blocklyTreeRow {
+        border-left-color: var(--pxt-target-foreground3);
+    }
+    .blocklyTreeIcon {
+        color: var(--pxt-target-foreground3);
+    }
 }
 
 /*******************************
@@ -279,12 +299,22 @@ div.blocklyTreeIcon span {
     Inverted Toolbox
 *******************************/
 #root.hc .invertedToolbox {
+    div.blocklyTreeRow {
+        background-color: var(--pxt-primary-background);
+        color: var(--pxt-primary-foreground);
+    }
+
     div.blocklyTreeRow .blocklyTreeIcon {
         color: var(--block-meta-color);
     }
 
-    div.blocklyTreeRow.blocklyTreeSelected .blocklyTreeIcon {
-        color: var(--pxt-target-background3);
+    div.blocklyTreeRow.blocklyTreeSelected {
+        background-color: var(--block-meta-color);
+        color: var(--pxt-primary-foreground);
+
+        .blocklyTreeIcon, .blocklyTreeLabel {
+            color: var(--pxt-primary-foreground);
+        }
     }
 }
 
@@ -410,7 +440,7 @@ div.blocklyTreeIcon span {
     div.blocklyTreeRow {
         border-left-width: 12px !important;
     }
-    div.blocklyTreeRoot div div div div div.blocklyTreeRow {
+    div.blocklyTreeRoot div div:not(#advanced) div div div.blocklyTreeRow {
         border-left-width: 18px !important;
     }
 }

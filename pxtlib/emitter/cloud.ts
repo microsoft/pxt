@@ -8,6 +8,7 @@ namespace pxt.Cloud {
     export let localToken = "";
     let _isOnline = true;
     export let onOffline = () => { };
+    let region: string = undefined;
 
     function offlineError(url: string) {
         let e: any = new Error(Util.lf("Cannot access {0} while offline", url));
@@ -308,6 +309,44 @@ namespace pxt.Cloud {
             return scriptid;
 
         return undefined;
+    }
+
+    export async function initRegionAsync(): Promise<void> {
+        if (region !== undefined) {
+            // Already initialized
+            return;
+        }
+
+        if (BrowserUtils.isLocalHost()) {
+            region = cloud.DEV_REGION;
+            return;
+        }
+
+        if (!pxt.webConfig?.cdnUrl) {
+            region = "unknown";
+            return;
+        }
+
+        try {
+            const url = new URL("geo", pxt.webConfig.cdnUrl).toString();
+            const options: Util.HttpRequestOptions = { url };
+            const response = await Util.requestAsync(options);
+            if (response.statusCode !== 200) {
+                pxt.error(`Failed to get region: ${response.statusCode}`);
+            }
+            region = response.text.trim();
+        } catch (e) {
+            pxt.error("Unable to determine region", e);
+            region = "unknown";
+        }
+    }
+
+    export function getRegion(): string {
+        if (!region) {
+            pxt.error("Accessing region before it is initialized. Call initRegionAsync first.");
+        }
+
+        return region;
     }
 
     //

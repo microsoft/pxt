@@ -1,7 +1,7 @@
 /// <reference path="../../built/pxtlib.d.ts" />
 
 import * as Blockly from "blockly";
-import { clearDropDownDiv, FieldCustom, FieldCustomOptions } from "./field_utils";
+import { clearDropDownDiv, FieldCustom, FieldCustomOptions, isImageProperties } from "./field_utils";
 
 export interface FieldTextDropdownOptions extends FieldCustomOptions {
     values?: string;
@@ -68,13 +68,21 @@ export class BaseFieldTextDropdown extends Blockly.FieldTextInput {
     }
 
     protected showEditor_(e?: Event, quietInput?: boolean): void {
-        super.showEditor_(e, quietInput);
+        // Align with Blockly's approach in https://github.com/google/blockly-samples/blob/master/plugins/field-slider/src/field_slider.ts
+        // Always quiet the input for the super constructor, as we don't want to
+        // focus on the text field, and we don't want to display the modal
+        // editor on mobile devices.
+        super.showEditor_(e, true);
 
         if (!this.dropDownOpen_) this.showDropdown_();
         Blockly.Touch.clearTouchIdentifier();
 
         this.inputKeydownHandler = this.inputKeydownListener.bind(this);
         this.htmlInput_.addEventListener('keydown', this.inputKeydownHandler);
+
+        if (!quietInput) {
+            this.htmlInput_.focus();
+        }
     }
 
     override doValueUpdate_(newValue: string) {
@@ -140,11 +148,11 @@ export class BaseFieldTextDropdown extends Blockly.FieldTextInput {
         for (let i = 0; i < options.length; i++) {
             const [label, value] = options[i];
             const content = (() => {
-                if (typeof label === 'object') {
+                if (isImageProperties(label)) {
                     // Convert ImageProperties to an HTMLImageElement.
-                    const image = new Image(label['width'], label['height']);
-                    image.src = label['src'];
-                    image.alt = label['alt'] || '';
+                    const image = new Image(label.width, label.height);
+                    image.src = label.src;
+                    image.alt = label.alt;
                     return image;
                 }
                 return label;
@@ -189,7 +197,7 @@ export class BaseFieldTextDropdown extends Blockly.FieldTextInput {
 
         this.dropDownOpen_ = true;
 
-        Blockly.DropDownDiv.showPositionedByField(this, this.dropdownDispose_.bind(this));
+        Blockly.DropDownDiv.showPositionedByField(this, this.dropdownDispose_.bind(this), undefined, false);
 
         this.dropdownKeydownHandler = this.dropdownKeydownListener.bind(this);
         this.menu_.getElement().addEventListener('keydown', this.dropdownKeydownHandler);
@@ -308,7 +316,7 @@ function validateOptions(options: Blockly.MenuOption[]) {
         } else if (
             tuple[0] &&
             typeof tuple[0] !== 'string' &&
-            typeof tuple[0].src !== 'string'
+            !isImageProperties(tuple[0])
         ) {
             foundError = true;
             pxt.error(

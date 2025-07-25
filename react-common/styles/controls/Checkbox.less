@@ -11,6 +11,60 @@
     }
 }
 
+.common-checkbox.toggle {
+    input {
+        opacity: 0;
+        width: 3rem;
+        height: 1.5rem;
+        position: absolute;
+        left: 0;
+        top: 0;
+    }
+
+    label {
+        position: relative;
+        padding-left: 4rem;
+
+        &::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 3rem;
+            height: 1.5rem;
+            background-color: var(--pxt-neutral-background2);
+            border-radius: 500rem;
+            transition: background-color 0.2s ease-in-out;
+            border: 1px solid var(--pxt-neutral-stencil2);
+        }
+
+        &::after {
+            background: var(--pxt-neutral-background1) linear-gradient(transparent, var(--pxt-neutral-alpha10));
+            position: absolute;
+            content: "";
+            opacity: 1;
+            border: none;
+            width: 1.5rem;
+            height: 1.5rem;
+            top: 0;
+            left: 0;
+            border-radius: 500rem;
+            border: 1px solid var(--pxt-neutral-foreground2);
+            transition: background .3s ease, left .3s ease;
+        }
+    }
+
+    input:checked~label {
+        &::before {
+            background-color: var(--pxt-primary-background);
+        }
+
+        &::after {
+            left: 1.5rem;
+        }
+    }
+}
+
 .common-checkbox:focus-within {
     outline: @checkboxFocusOutline;
     border-radius: 0.2em;
@@ -18,6 +72,41 @@
 
 #profile-email-checkbox {
     width: 2rem;
+}
+
+/****************************************************
+ *                 Checkbox Icon                    *
+ ****************************************************/
+
+ .common-checkbox-icon {
+    display: inline-block;
+    position: relative;
+
+    // This is matching the size of semantic ui icons
+    width: 16px;
+    height: 16px;
+
+    border: 1px solid var(--pxt-neutral-foreground1);
+    border-radius: 2px;
+
+    &.checked {
+        background-color: var(--pxt-primary-background);
+        border-color: var(--pxt-primary-accent);
+    }
+
+    i.fas.fa-check {
+        font-size: 11px;
+        position: absolute;
+        width: 14px;
+        height: 14px;
+        margin: 0;
+        color: var(--pxt-primary-foreground)
+    }
+}
+
+.menuitemcheckbox .common-checkbox-icon {
+    margin-left: .125rem;
+    margin-right: .875rem;
 }
 
 /****************************************************

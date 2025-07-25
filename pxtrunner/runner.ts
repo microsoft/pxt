@@ -6,7 +6,7 @@
 
 import { BlocksRenderOptions, blocklyToSvgAsync, initializeAndInject, render } from "../pxtblocks";
 import { initEditorExtensionsAsync } from "../pxteditor/editor";
-import { defaultClientRenderOptions, renderAsync } from "./renderer";
+import { defaultClientRenderOptions, fireClickOnEnter, renderAsync } from "./renderer";
 
 import * as pxtblockly from "../pxtblocks";
 import * as Blockly from "blockly";
@@ -437,6 +437,7 @@ function initDriverAndOptions(
         fnArgs: fnArgs,
         cdnUrl: pxt.webConfig.commitCdnUrl,
         localizedStrings: pxt.Util.getLocalizedStrings(),
+        partDefinitions: mainPkg?.computePartDefinitions(parts),
         highContrast: simOptions.highContrast,
         storedState: storedState,
         light: simOptions.light,
@@ -451,6 +452,20 @@ function initDriverAndOptions(
         runOptions.aspectRatio = parts.length && pxt.appTarget.simulator.partsAspectRatio
             ? pxt.appTarget.simulator.partsAspectRatio
             : pxt.appTarget.simulator.aspectRatio;
+
+    if (window.parent && runOptions.aspectRatio && runOptions.aspectRatio !== pxt.appTarget.simulator.aspectRatio) {
+        const frameId = window.frameElement?.getAttribute("data-frameid");
+
+        if (frameId) {
+            // notify parent iframe that we have a different aspect ratio
+            window.parent.postMessage({
+                type: "aspectratio",
+                frameid: frameId,
+                value: runOptions.aspectRatio
+            } as pxsim.SimulatorAspectRatioMessage, "*");
+        }
+    }
+
     simDriver.setRunOptions(runOptions);
     return runOptions;
 }
@@ -494,6 +509,7 @@ export async function buildSimJsInfo(simOptions: SimulateOptions): Promise<pxtc.
     const currentTargetVersion = pxt.appTarget.versions.target;
     let compileResult = await compileAsync(false, opts => {
         opts.computeUsedParts = true;
+        opts.computeUsedSymbols = true;
 
         if (simOptions.debug)
             opts.breakpoints = true;
@@ -549,7 +565,12 @@ export async function buildSimJsInfo(simOptions: SimulateOptions): Promise<pxtc.
     }
 
     const res = pxtc.buildSimJsInfo(compileResult);
-    res.parts = compileResult.usedParts;
+    const builtInParts = pxt.appTarget.simulator?.boardDefinition?.onboardComponents || [];
+
+    res.allParts = compileResult.usedParts || [];
+    res.usedBuiltinParts = compileResult.usedParts.filter(p => builtInParts.indexOf(p) !== -1);
+    res.parts = compileResult.usedParts.filter(p => builtInParts.indexOf(p) === -1);
+
     pxt.tickEvent("perfMeasurement", {
       durationMs: Date.now() - start,
       operation: "buildSimJsInfo",
@@ -742,6 +763,7 @@ export function startDocsServer(loading: HTMLElement, content: HTMLElement, back
         backButton.addEventListener("click", () => {
             goBack();
         });
+        backButton.addEventListener("keydown", fireClickOnEnter);
         setElementDisabled(backButton, true);
     }
 

@@ -13,6 +13,7 @@ import * as projects from "./projects";
 import * as tutorial from "./tutorial";
 
 import ISettingsProps = pxt.editor.ISettingsProps;
+import { ThemeManager } from "../../react-common/components/theming/themeManager";
 
 type HeaderBarView = "home" | "editor" | "tutorial" | "tutorial-tab" | "debugging" | "sandbox" | "time-machine";
 const LONGPRESS_DURATION = 750;
@@ -240,7 +241,7 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
 
     renderCore() {
         const targetTheme = pxt.appTarget.appTheme;
-        const highContrast = this.getData<boolean>(auth.HIGHCONTRAST);
+        const highContrast = ThemeManager.isCurrentThemeHighContrast();
         const view = this.getView();
 
         const { home, header, tutorialOptions } = this.props.parent.state;
@@ -274,7 +275,7 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
                 {this.getExitButtons(targetTheme, view, tutorialOptions)}
                 {showHomeButton && <sui.Item className={`icon openproject ${hasIdentity ? "mobile hide" : ""}`} role="menuitem" title={lf("Home")} icon="home large" ariaLabel={lf("Home screen")} onClick={this.goHome} />}
                 {showShareButton && <sui.Item className="icon shareproject mobile hide" role="menuitem" title={lf("Publish your game to create a shareable link")} icon="share alternate large" ariaLabel={lf("Share Project")} onClick={this.showShareDialog} />}
-                {showHelpButton && <container.DocsMenu parent={this.props.parent} editor={activeEditor} />}
+                {showHelpButton && <container.DocsMenu parent={this.props.parent} editor={activeEditor} inBlocks={this.props.parent.isBlocksActive()} />}
                 {this.getSettingsMenu(view)}
                 {hasIdentity && (view === "home" || view === "editor" || view === "tutorial-tab") && <identity.UserMenu parent={this.props.parent} />}
             </div>

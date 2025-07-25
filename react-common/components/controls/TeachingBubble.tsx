@@ -20,12 +20,17 @@ export interface TeachingBubbleProps extends ContainerProps {
     targetContent: pxt.tour.BubbleStep;
     stepNumber: number;
     totalSteps: number;
+    hasPrevious: boolean;
+    hasNext: boolean;
     onClose: () => void;
     parentElement?: Element;
     activeTarget?: boolean; // if true, the target is clickable
+    showConfetti?: boolean;
+    forceHideSteps?: boolean;
     onNext: () => void;
     onBack: () => void;
     onFinish: () => void;
+    footer?: string | JSX.Element;
 }
 
 export const TeachingBubble = (props: TeachingBubbleProps) => {
@@ -41,10 +46,14 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
         onNext,
         onBack,
         onFinish,
+        footer,
         stepNumber,
         totalSteps,
         parentElement,
-        activeTarget
+        activeTarget,
+        forceHideSteps,
+        hasPrevious,
+        hasNext
     } = props;
 
     const margin = 10;
@@ -57,22 +66,15 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
     }
 
     useEffect(() => {
+        if (targetContent.onStepBegin) {
+            targetContent.onStepBegin();
+        }
         positionBubbleAndCutout();
-        setStepsVisibility();
         window.addEventListener("resize", positionBubbleAndCutout);
         return () => {
             window.removeEventListener("resize", positionBubbleAndCutout);
         }
-    }, [stepNumber]);
-
-    const setStepsVisibility = () => {
-        const steps = document.querySelector(".teaching-bubble-steps") as HTMLElement;
-        if (stepNumber > totalSteps || totalSteps === 1) {
-            steps.style.visibility = "hidden";
-        } else {
-            steps.style.visibility = "visible";
-        }
-    }
+    }, [stepNumber, targetContent]);
 
     const positionBubbleAndCutout = () => {
         const bubble = document.getElementById(id);
@@ -82,7 +84,7 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
         bubbleArrowOutline.style.border = "none";
         const bubbleBounds = bubble.getBoundingClientRect();
         let cutoutBounds: CutoutBounds;
-        if (targetContent.targetQuery === "nothing") {
+        if (!targetContent.targetQuery || targetContent.targetQuery === "nothing") {
             cutoutBounds = {
                 top: window.innerHeight / 2,
                 bottom: 0,
@@ -348,8 +350,6 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
         element.style.left = left + "px";
     }
 
-    const hasPrevious = stepNumber > 1;
-    const hasNext = stepNumber < totalSteps + 1;
     const hasSteps = totalSteps > 1;
     const closeLabel = lf("Close");
     const backLabel = lf("Back");
@@ -358,11 +358,12 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
 
     const classes = classList(
         "teaching-bubble-container",
-        className
+        className,
+        targetContent.bubbleStyle
     );
 
     return ReactDOM.createPortal(<FocusTrap className={classes} onEscape={onClose}>
-        {stepNumber === totalSteps + 1 && <Confetti />}
+        {props.showConfetti && <Confetti />}
         <div className="teaching-bubble-cutout" />
         <div className="teaching-bubble-arrow" />
         <div className="teaching-bubble-arrow-outline" />
@@ -380,14 +381,14 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
                 ariaLabel={closeLabel}
                 rightIcon="fas fa-times-circle"
             />
-            <div className="teaching-bubble-content">
+            <div className="teaching-bubble-body">
                 <strong aria-live="polite">{targetContent.title}</strong>
                 <p aria-live="polite">{targetContent.description}</p>
-                <div className={`teaching-bubble-footer ${!hasSteps ? "no-steps" : ""}`}>
-                    {hasSteps && <div className="teaching-bubble-steps" aria-live="polite">
+                <div className={`teaching-bubble-navigation ${!hasSteps ? "no-steps" : ""}`}>
+                    {hasSteps && <div className={classList("teaching-bubble-steps", forceHideSteps && "hidden")} aria-live="polite">
                         {stepNumber} of {totalSteps}
                     </div>}
-                    <div className="teaching-bubble-navigation">
+                    <div className="teaching-bubble-navigation-buttons">
                         {hasPrevious && <Button
                             className="tertiary tour-button"
                             onClick={onBack}
@@ -412,6 +413,9 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
                     </div>
                 </div>
             </div>
+            {footer && <div className="teaching-bubble-footer">
+                {footer}
+            </div>}
         </div>
     </FocusTrap>, parentElement || document.getElementById("root") || document.body)
 }

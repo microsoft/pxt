@@ -208,6 +208,7 @@ namespace pxsim.codal.music {
 
     interface PendingSound {
         notes: string;
+        volume: number;
         onStarted: () => void;
         onFinished: () => void;
         onCancelled: () => void;
@@ -223,7 +224,7 @@ namespace pxsim.codal.music {
         return playing;
     }
 
-    export function __playSoundExpression(notes: string, waitTillDone: boolean): void {
+    export function __playSoundExpression(notes: string, waitTillDone: boolean, volume: number = 0.03): void {
         if (!soundQueue) soundQueue = [];
 
         const cb = getResume();
@@ -231,6 +232,7 @@ namespace pxsim.codal.music {
         const soundPromise = new Promise<void>((resolve, reject) => {
             soundQueue.push({
                 notes,
+                volume,
                 onStarted: () => {
                     if (!waitTillDone) cb();
                 },
@@ -256,7 +258,7 @@ namespace pxsim.codal.music {
 
             try {
                 sound.onStarted();
-                await playSoundExpressionAsync(sound.notes, () => currentToken.cancelled);
+                await playSoundExpressionAsync(sound.notes, () => currentToken.cancelled, undefined, sound.volume);
                 if (currentToken.cancelled) {
                     sound.onCancelled();
                 }
@@ -284,7 +286,7 @@ namespace pxsim.codal.music {
         };
     }
 
-    export function playSoundExpressionAsync(notes: string, isCancelled?: () => boolean, onPull?: (freq: number, volume: number) => void) {
+    export function playSoundExpressionAsync(notes: string, isCancelled?: () => boolean, onPull?: (freq: number, volume: number) => void, volume: number = 0.03) {
         const synth = new SoundEmojiSynthesizer(0);
         const soundEffects = parseSoundEffects(notes);
         synth.play(soundEffects);
@@ -310,7 +312,7 @@ namespace pxsim.codal.music {
                     arr[i] = ((buff[i] - 512) / 512);
                 }
                 return arr;
-            }, synth.sampleRate, 0.03, () => cancelled || (isCancelled && isCancelled()))
+            }, synth.sampleRate, volume, () => cancelled || (isCancelled && isCancelled()))
         ]);
     }
 

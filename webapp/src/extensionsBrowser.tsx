@@ -78,7 +78,11 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
         setSelectedTag("")
         setSearchComplete(false)
         setExtensionsToShow([emptyCard, emptyCard, emptyCard, emptyCard])
-        const exts = await fetchGithubDataAsync([searchFor])
+
+        const config = await pxt.packagesConfigAsync();
+
+        let exts = await fetchGithubDataAsync([searchFor])
+        exts = exts?.filter(e => !pxt.github.isRepoHidden(e, config));
         const parsedExt = exts?.map(repo => parseGithubRepo(repo)) ?? [];
         //Search bundled extensions as well
         fetchBundled().forEach(e => {
@@ -303,7 +307,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
             imageUrl: pxt.github.repoIconUrl(r),
             repo: r,
             description: r.description,
-            fullName: r.fullName
+            fullRepo: r.fullName
         }
     }
 
@@ -360,6 +364,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
     function packageConfigToExtensionMeta(p: pxt.PackageConfig): ExtensionMeta {
         return {
             name: p.name,
+            displayName: p.displayName,
             imageUrl: p.icon,
             type: ExtensionType.Bundled,
             learnMoreUrl: `/reference/${p.name}`,
@@ -458,22 +463,23 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
         const { extensionInfo } = props;
         const {
             description,
-            fullName,
+            fullRepo,
             imageUrl,
             learnMoreUrl,
             loading,
             name,
+            displayName,
             repo,
             type,
         } = extensionInfo;
 
         return <ExtensionCard
-            title={name || fullName}
+            title={displayName || name || fullRepo}
             description={description}
             imageUrl={imageUrl}
             extension={extensionInfo}
             onClick={installExtension}
-            learnMoreUrl={learnMoreUrl || (fullName ? `/pkg/${fullName}` : undefined)}
+            learnMoreUrl={learnMoreUrl || (fullRepo ? `/pkg/${fullRepo}` : undefined)}
             loading={loading}
             label={pxt.isPkgBeta(extensionInfo) ? lf("Beta") : undefined}
             showDisclaimer={type != ExtensionType.Bundled && repo?.status != pxt.github.GitRepoStatus.Approved}

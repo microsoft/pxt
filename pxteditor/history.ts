@@ -47,110 +47,111 @@ export interface FileEditedChange {
 }
 
 export interface CollapseHistoryOptions {
+    // the interval in milliseconds at which to collapse history entries
     interval: number;
+
+    // the minimum time of entries that are subject to collapsing (inclusive)
     minTime?: number;
+
+    // the maximum time of entries that are subject to collapsing (inclusive)
     maxTime?: number;
 }
 
 // 5 minutes. This is overridden in pxtarget.json
 const DEFAULT_DIFF_HISTORY_INTERVAL = 1000 * 60 * 5;
 
-// 15 minutes. This is overridden in pxtarget.json
-const DEFAULT_SNAPSHOT_HISTORY_INTERVAL = 1000 * 60 * 15;
+// 30 minutes. This is overridden in pxtarget.json
+const DEFAULT_SNAPSHOT_HISTORY_INTERVAL = 1000 * 60 * 30;
 
 const ONE_DAY = 1000 * 60 * 60 * 24;
 
-export function collapseHistory(history: HistoryEntry[], text: ScriptText, options: CollapseHistoryOptions, diff: (a: string, b: string) => unknown, patch: (p: unknown, text: string) => string) {
+const TWO_HOURS = 1000 * 60 * 60 * 2;
+
+/**
+ * Collapses the history file in a given script text object. This modifies the text object in
+ * place and will always preserve the first history entry regardless of the minTime and maxTime
+ * passed in through the options. This function only collapses diff entries; snapshots and shares
+ * are not collapsed.
+ *
+ * For example, if you wanted to collapse history entries that are older than one day so that we\
+ * don't store more than one history entry per day, you could do:
+ *
+ * interval = 1000 * 60 * 60 * 24; // one day
+ * maxTime = Data.now() - 1000 * 60 * 60 * 24; // one day ago
+ *
+ */
+export function collapseHistory(text: ScriptText, options: CollapseHistoryOptions, diff: (a: string, b: string) => unknown, patch: (p: unknown, text: string) => string) {
+    if (!text[pxt.HISTORY_FILE]) return;
+
+    const history: HistoryFile = parseHistoryFile(text[pxt.HISTORY_FILE]);
+    const newHistory = collapseHistoryCore(history, text, options, diff, patch);
+
+    text[pxt.HISTORY_FILE] = JSON.stringify(newHistory);
+}
+
+function collapseHistoryCore(history: HistoryFile, text: ScriptText, options: CollapseHistoryOptions, diff: (a: string, b: string) => unknown, patch: (p: unknown, text: string) => string) {
     const newHistory: HistoryEntry[] = [];
+    const entries = history.entries.slice();
 
     let current = {...text};
-    let lastVersion = pxt.appTarget?.versions?.target;
-    let lastTime: number = undefined;
-    let lastTimeIndex: number = undefined;
-    let lastTimeText: ScriptText = undefined;
-
     let { interval, minTime, maxTime } = options;
 
     if (minTime === undefined) {
         minTime = 0;
     }
     if (maxTime === undefined) {
-        maxTime = history[history.length - 1].timestamp;
+        maxTime = history.lastSaveTime;
     }
 
-    for (let i = history.length - 1; i >= 0; i--) {
-        const entry = history[i];
+    let lastHistoryEntry: ScriptText = {...current};
+    let lastTime: number = history.lastSaveTime;
+
+    while (entries.length) {
+        const entry = entries.pop();
+        current = applyDiff(current, entry, patch);
 
         if (entry.timestamp > maxTime) {
             newHistory.unshift(entry);
-            current = applyDiff(current, entry, patch);
-            continue;
+            lastHistoryEntry = {...current};
+            lastTime = entry.timestamp;
         }
         else if (entry.timestamp < minTime) {
-            if (lastTimeIndex !== undefined) {
-                if (lastTimeIndex - i > 1) {
-                    newHistory.unshift({
-                        timestamp: lastTime,
-                        editorVersion: lastVersion,
-                        changes: diffScriptText(current, lastTimeText, lastTime, diff).changes
-                    })
-                }
-                else {
-                    newHistory.unshift(history[lastTimeIndex]);
-                }
-            }
-            newHistory.unshift(entry);
-            lastTimeIndex = undefined;
-            continue;
-        }
-        else if (lastTimeIndex === undefined) {
-            lastTimeText = {...current};
-            lastTime = entry.timestamp;
-            lastVersion = entry.editorVersion;
-
-            lastTimeIndex = i;
-            current = applyDiff(current, entry, patch);
-            continue;
-        }
-
-        if (lastTime - entry.timestamp > interval) {
-            if (lastTimeIndex - i > 1) {
+            if (lastHistoryEntry) {
                 newHistory.unshift({
-                    timestamp: lastTime,
-                    editorVersion: lastVersion,
-                    changes: diffScriptText(current, lastTimeText, lastTime, diff).changes
-                })
+                    timestamp: entry.timestamp,
+                    editorVersion: entry.editorVersion,
+                    changes: diffScriptText(current, lastHistoryEntry, entry.timestamp, diff).changes
+                });
+                lastHistoryEntry = undefined;
             }
             else {
-                newHistory.unshift(history[lastTimeIndex]);
+                newHistory.unshift(entry);
             }
-
-            lastTimeText = {...current}
-            current = applyDiff(current, entry, patch);
-
-            lastTimeIndex = i;
-            lastTime = entry.timestamp;
-            lastVersion = entry.editorVersion;
         }
-        else {
-            current = applyDiff(current, entry, patch);
-        }
-    }
-
-    if (lastTimeIndex !== undefined) {
-        if (lastTimeIndex) {
+        else if (lastTime - entry.timestamp >= interval) {
             newHistory.unshift({
-                timestamp: lastTime,
-                editorVersion: lastVersion,
-                changes: diffScriptText(current, lastTimeText, lastTime, diff).changes
-            })
-        }
-        else {
-            newHistory.unshift(history[0]);
+                timestamp: entry.timestamp,
+                editorVersion: entry.editorVersion,
+                changes: diffScriptText(current, lastHistoryEntry, entry.timestamp, diff).changes
+            });
+            lastHistoryEntry = {...current};
+            lastTime = entry.timestamp;
         }
     }
 
-    return newHistory;
+    if (lastHistoryEntry && lastTime > history.entries[0].timestamp) {
+        // always preserve the first entry in the history
+        newHistory.unshift({
+            timestamp: history.entries[0].timestamp,
+            editorVersion: history.entries[0].editorVersion,
+            changes: diffScriptText(current, lastHistoryEntry, history.entries[0].timestamp, diff).changes
+        });
+    }
+
+    return {
+        ...history,
+        entries: newHistory,
+    };
 }
 
 export function diffScriptText(oldVersion: ScriptText, newVersion: ScriptText, time: number, diff: (a: string, b: string) => unknown): HistoryEntry {
@@ -213,8 +214,9 @@ export function applyDiff(text: ScriptText, history: HistoryEntry, patch: (p: un
 }
 
 export function createSnapshot(text: ScriptText) {
+    let result: ScriptText;
     try {
-        const result: ScriptText = {};
+        result = {};
         const config: pxt.PackageConfig = JSON.parse(text[pxt.CONFIG_NAME]);
 
         for (const file of config.files) {
@@ -242,12 +244,17 @@ export function createSnapshot(text: ScriptText) {
                 result[file] = text[file];
             }
         }
-
-        return result;
     }
     catch(e) {
-        return { ...text }
+        result = { ...text };
     }
+
+    if (result[pxt.HISTORY_FILE]) {
+        // don't include the history file in the snapshot
+        delete result[pxt.HISTORY_FILE];
+    }
+
+    return result;
 }
 
 export function applySnapshot(text: ScriptText, snapshot: ScriptText) {
@@ -258,6 +265,9 @@ export function applySnapshot(text: ScriptText, snapshot: ScriptText) {
         // preserve any files from the current text that aren't in the config; this is just to make
         // sure that our internal files like history, markdown, serial output are preserved
         for (const file of Object.keys(text)) {
+            // we had a bug at one point where the history file was included in snapshots
+            if (file === pxt.HISTORY_FILE) continue;
+
             if (config.files.indexOf(file) === -1 && config.testFiles?.indexOf(file) === -1 && !result[file]) {
                 result[file] = text[file];
             }
@@ -285,7 +295,7 @@ export function parseHistoryFile(text: string): HistoryFile {
     return result;
 }
 
-export function updateHistory(previousText: ScriptText, toWrite: ScriptText, currentTime: number, shares: pxt.workspace.PublishVersion[], diff: (a: string, b: string) => unknown, patch: (p: unknown, text: string) => string) {
+export function updateHistory(previousText: ScriptText, toWrite: ScriptText, currentTime: number, shares: pxt.workspace.PublishVersion[], diff: (a: string, b: string) => unknown, patch: (p: unknown, text: string) => string, collapseHistory: boolean = false) {
     let history: HistoryFile;
 
     // Always base the history off of what was in the previousText,
@@ -305,6 +315,8 @@ export function updateHistory(previousText: ScriptText, toWrite: ScriptText, cur
             lastSaveTime: currentTime
         };
     }
+
+    const previousSaveTime = history.lastSaveTime;
 
     // First save any new project shares
     for (const share of shares) {
@@ -359,6 +371,20 @@ export function updateHistory(previousText: ScriptText, toWrite: ScriptText, cur
         }
     }
 
+    // also collapse diff history once per day
+    if (collapseHistory && Math.floor(previousSaveTime / ONE_DAY) !== Math.floor(currentTime / ONE_DAY)) {
+        history = collapseHistoryCore(
+            history,
+            toWrite,
+            {
+                interval: TWO_HOURS,
+                maxTime: currentTime - ONE_DAY
+            },
+            diff,
+            patch
+        );
+    }
+
     history.lastSaveTime = currentTime;
 
     // Finally, update the snapshots. These are failsafes in case something
@@ -385,6 +411,14 @@ export function updateHistory(previousText: ScriptText, toWrite: ScriptText, cur
         }
 
         history.snapshots = trimmed;
+    }
+
+    // we previously had a bug where the history file was included in snapshots,
+    // so delete those if they exist. they just blow up the file size
+    for (const snapshot of history.snapshots) {
+        if (snapshot.text[pxt.HISTORY_FILE]) {
+            delete snapshot.text[pxt.HISTORY_FILE];
+        }
     }
 
     toWrite[pxt.HISTORY_FILE] = JSON.stringify(history);

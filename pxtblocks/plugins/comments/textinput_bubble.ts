@@ -37,7 +37,7 @@ export class TextInputBubble extends Bubble {
     /** Functions listening for changes to the size of this bubble. */
     private sizeChangeListeners: (() => void)[] = [];
 
-     /** Functions listening for changes to the position of this bubble. */
+    /** Functions listening for changes to the position of this bubble. */
     private positionChangeListeners: (() => void)[] = []
 
     /** The text of this bubble. */
@@ -68,17 +68,22 @@ export class TextInputBubble extends Bubble {
         protected ownerRect?: Blockly.utils.Rect,
         protected readonly readOnly?: boolean
     ) {
-        super(workspace, anchor, ownerRect);
+        super(workspace, anchor, ownerRect, TextInputBubble.createTextArea());
         dom.addClass(this.svgRoot, 'blocklyTextInputBubble');
-        ({ inputRoot: this.inputRoot, textArea: this.textArea } = this.createEditor(
-            this.contentContainer,
-        ));
+        this.textArea = this.getFocusableElement() as HTMLTextAreaElement;
+        this.inputRoot = this.createEditor(this.contentContainer, this.textArea);
         this.resizeGroup = this.createResizeHandle(this.svgRoot, workspace);
         this.setSize(this.DEFAULT_SIZE, true);
 
         if (readOnly) {
             this.deleteIcon.style.display = "none";
         }
+        browserEvents.conditionalBind(
+            this.textArea,
+            'keydown',
+            this,
+            this.onKeyDown,
+        );
     }
 
     /** @returns the text of this bubble. */
@@ -112,11 +117,20 @@ export class TextInputBubble extends Bubble {
         this.positionChangeListeners.push(listener);
     }
 
-    /** Creates the editor UI for this bubble. */
-    private createEditor(container: SVGGElement): {
-        inputRoot: SVGForeignObjectElement;
-        textArea: HTMLTextAreaElement;
-    } {
+    private static createTextArea(): HTMLTextAreaElement {
+        const textArea = document.createElementNS(
+            dom.HTML_NS,
+            'textarea',
+        ) as HTMLTextAreaElement;
+        textArea.className = 'blocklyTextarea blocklyText';
+        return textArea;
+    }
+
+    /** Creates and returns the UI container element for this bubble's editor. */
+    private createEditor(
+        container: SVGGElement,
+        textArea: HTMLTextAreaElement,
+    ): SVGForeignObjectElement {
         const inputRoot = dom.createSvgElement(
             Blockly.utils.Svg.FOREIGNOBJECT,
             {
@@ -137,26 +151,13 @@ export class TextInputBubble extends Bubble {
         body.setAttribute('xmlns', dom.HTML_NS);
         body.className = 'blocklyMinimalBody';
 
-        const textArea = document.createElementNS(
-            dom.HTML_NS,
-            'textarea',
-        ) as HTMLTextAreaElement;
-        textArea.className = 'blocklyTextarea blocklyText';
         textArea.setAttribute('dir', this.workspace.RTL ? 'RTL' : 'LTR');
-
-        if (this.readOnly) {
-            textArea.setAttribute("disabled", "true");
-        }
-
         body.appendChild(textArea);
         inputRoot.appendChild(body);
 
         this.bindTextAreaEvents(textArea);
-        setTimeout(() => {
-            textArea.focus();
-        }, 0);
 
-        return { inputRoot, textArea };
+        return inputRoot;
     }
 
     /** Binds events to the text area element. */
@@ -165,14 +166,12 @@ export class TextInputBubble extends Bubble {
         browserEvents.conditionalBind(textArea, 'wheel', this, (e: Event) => {
             e.stopPropagation();
         });
+        // Don't let the pointerdown event get to the workspace.
+        browserEvents.conditionalBind(textArea, 'pointerdown', this, (e: Event) => {
+            e.stopPropagation();
+            Blockly.Touch.clearTouchIdentifier();
+        });
 
-        browserEvents.conditionalBind(
-            textArea,
-            'focus',
-            this,
-            this.onStartEdit,
-            true,
-        );
         browserEvents.conditionalBind(textArea, 'change', this, this.onTextChange);
     }
 
@@ -303,17 +302,6 @@ export class TextInputBubble extends Bubble {
         this.onSizeChange();
     }
 
-    /**
-     * Handles starting an edit of the text area. Brings the bubble to the front.
-     */
-    private onStartEdit() {
-        if (this.bringToFront()) {
-            // Since the act of moving this node within the DOM causes a loss of
-            // focus, we need to reapply the focus.
-            this.textArea.focus();
-        }
-    }
-
     /** Handles a text change event for the text area. Calls event listeners. */
     private onTextChange() {
         this.text = this.textArea.value;
@@ -333,6 +321,13 @@ export class TextInputBubble extends Bubble {
     private onPositionChange() {
         for (const listener of this.positionChangeListeners) {
             listener();
+        }
+    }
+
+    private onKeyDown(e: KeyboardEvent) {
+        if (e.key === 'Escape') {
+            this.collapseHandler();
+            e.stopPropagation();
         }
     }
 }

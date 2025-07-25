@@ -23,7 +23,7 @@ const COMMENT_OFFSET_Y_FIELD_NAME = "~commentOffsetY";
 /**
  * An icon which allows the user to add comment text to a block.
  */
-export class CommentIcon extends Blockly.icons.Icon {
+export class CommentIcon extends Blockly.icons.Icon implements Blockly.IHasBubble {
     /** The type string used to identify this icon. */
     static readonly TYPE = Blockly.icons.IconType.COMMENT;
 
@@ -235,7 +235,7 @@ export class CommentIcon extends Blockly.icons.Icon {
     // to use setBubbleLocation and getBubbleLocation instead
     getBubbleLocation(): Blockly.utils.Coordinate | undefined {
         if (this.bubbleIsVisible()) {
-            return this.textInputBubble.getRelativeToSurfaceXY();
+            return this.textInputBubble?.getRelativeToSurfaceXY();
         }
         return undefined
     }
@@ -330,6 +330,10 @@ export class CommentIcon extends Blockly.icons.Icon {
         }
     }
 
+    getBubble(): Blockly.IBubble | null {
+        return this.textInputBubble;
+    }
+
     /**
      * Shows the editable text bubble for this comment, and adds change listeners
      * to update the state of this icon in response to changes in the bubble.
@@ -354,10 +358,10 @@ export class CommentIcon extends Blockly.icons.Icon {
         this.textInputBubble.setCollapseHandler(() => {
             this.setBubbleVisible(false);
         });
-
         if (savedPosition) {
             this.textInputBubble.setPositionRelativeToAnchor(savedPosition.x, savedPosition.y);
         }
+        Blockly.getFocusManager().focusNode(this.textInputBubble);
     }
 
     /** Shows the non editable text bubble for this comment. */
@@ -377,12 +381,14 @@ export class CommentIcon extends Blockly.icons.Icon {
         if (savedPosition) {
             this.textInputBubble.setPositionRelativeToAnchor(savedPosition.x, savedPosition.y);
         }
+        Blockly.getFocusManager().focusNode(this.textInputBubble);
     }
 
     /** Hides any open bubbles owned by this comment. */
     private hideBubble() {
         this.textInputBubble?.dispose();
         this.textInputBubble = null;
+        Blockly.getFocusManager().focusNode(this.getSourceBlock() as Blockly.BlockSvg);
     }
 
     /**

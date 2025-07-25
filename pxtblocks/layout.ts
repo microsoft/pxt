@@ -346,6 +346,10 @@ export function cleanUpBlocklySvg(svg: SVGElement): SVGElement {
     pxt.U.toArray(svg.querySelectorAll('.blocklyBlockCanvas,.blocklyBubbleCanvas'))
         .forEach(el => el.removeAttribute('transform'));
 
+    svg.querySelectorAll("[tabindex]").forEach(el => {
+        el.removeAttribute("tabindex");
+    });
+
     // In order to get the Blockly comment's text area to serialize properly they have to have names
     const parser = new DOMParser();
     pxt.U.toArray(svg.querySelectorAll('.blocklyTextarea'))
@@ -452,7 +456,7 @@ async function expandImagesAsync(xsg: Document): Promise<void> {
     const linkedSvgImages = images
         .filter(image => {
             const href = image.getAttribute("href");
-            return href.endsWith(".svg") &&
+            return href?.endsWith(".svg") &&
                 (
                     href.startsWith("/") ||
                     href.startsWith(pxt.webConfig.cdnUrl)

@@ -80,13 +80,14 @@ import Util = pxt.Util;
 import { HintManager } from "./hinttooltip";
 import { mergeProjectCode, appendTemporaryAssets } from "./mergeProjects";
 import { Tour } from "./components/onboarding/Tour";
-import { NavigateRegionsOverlay } from "./components/NavigateRegionsOverlay";
+import { AreaMenuOverlay } from "./components/AreaMenuOverlay";
 import { parseTourStepsAsync } from "./onboarding";
 import { initGitHubDb } from "./idbworkspace";
 import { BlockDefinition, CategoryNameID } from "./toolbox";
 import { FeedbackModal } from "../../react-common/components/controls/Feedback/Feedback";
 import { ThemeManager } from "../../react-common/components/theming/themeManager";
 import { applyPolyfills } from "./polyfills";
+import { sendUpdateFeedbackTheme } from "../../react-common/components/controls/Feedback/FeedbackEventListener";
 
 pxt.blocks.requirePxtBlockly = () => pxtblockly as any;
 pxt.blocks.requireBlockly = () => Blockly;
@@ -171,13 +172,6 @@ export class ProjectView
 
     private themeManager: ThemeManager;
 
-    private highContrastSubscriber: data.DataSubscriber = {
-        subscriptions: [],
-        onDataChanged: () => {
-            this.onHighContrastChanged();
-        }
-    };
-
     private cloudStatusSubscriber: data.DataSubscriber = {
         subscriptions: [],
         onDataChanged: (path) => this.onCloudStatusChanged(path)
@@ -197,9 +191,7 @@ export class ProjectView
         this.reload = false; //set to true in case of reset of the project where we are going to reload the page.
         this.settings = JSON.parse(pxt.storage.getLocal("editorSettings") || "{}")
         const shouldShowHomeScreen = this.shouldShowHomeScreen();
-        const isHighContrast = /hc=(\w+)/.test(window.location.href) || (window.matchMedia?.('(forced-colors: active)')?.matches);
         this.themeManager = ThemeManager.getInstance(document);
-        if (isHighContrast) core.setHighContrast(true);
 
         const simcfg = pxt.appTarget.simulator;
         this.state = {
@@ -211,7 +203,7 @@ export class ProjectView
             simState: SimState.Stopped,
             autoRun: this.autoRunOnStart(),
             isMultiplayerGame: false,
-            onboarding: undefined,
+            activeTourConfig: undefined,
             mute: pxt.editor.MuteState.Unmuted,
             feedback: {showing: false, kind: "generic"} // state that tracks if the feedback modal is showing and what kind
         };
@@ -222,7 +214,7 @@ export class ProjectView
         this.hidePackageDialog = this.hidePackageDialog.bind(this);
         this.hwDebug = this.hwDebug.bind(this);
         this.hideLightbox = this.hideLightbox.bind(this);
-        this.hideOnboarding = this.hideOnboarding.bind(this);
+        this.closeTour = this.closeTour.bind(this);
         this.hideFeedback = this.hideFeedback.bind(this);
         this.openSimSerial = this.openSimSerial.bind(this);
         this.openDeviceSerial = this.openDeviceSerial.bind(this);
@@ -243,10 +235,16 @@ export class ProjectView
         this.initSimulatorMessageHandlers();
         this.showThemePicker = this.showThemePicker.bind(this);
         this.hideThemePicker = this.hideThemePicker.bind(this);
+        this.onThemeChanged = this.onThemeChanged.bind(this);
         this.setColorThemeById = this.setColorThemeById.bind(this);
+        this.showLoginDialog = this.showLoginDialog.bind(this);
 
         // add user hint IDs and callback to hint manager
         if (pxt.BrowserUtils.useOldTutorialLayout()) this.hintManager.addHint(ProjectView.tutorialCardId, this.tutorialCardHintCallback.bind(this));
+
+        this.themeManager.subscribe("mainWebapp", this.onThemeChanged);
+        const isHighContrast = /hc=(\w+)/.test(window.location.href) || (window.matchMedia?.('(forced-colors: active)')?.matches);
+        if (isHighContrast) this.setColorThemeById(pxt.appTarget.appTheme.highContrastColorTheme, true);
     }
 
     private autoRunOnStart(): boolean {
@@ -333,8 +331,12 @@ export class ProjectView
                 this.setSimulatorFullScreen(false);
                 return;
             }
-            case "navigateregions" : {
-                this.showNavigateRegions();
+            case "toggleareamenu" : {
+                this.toggleAreaMenu();
+                return
+            }
+            case "togglekeyboardcontrolshelp": {
+                this.toggleBuiltInSideDoc("keyboardControls", false);
                 return
             }
         }
@@ -1118,7 +1120,7 @@ export class ProjectView
 
     public async componentDidMount() {
         this.allEditors.forEach(e => e.prepare())
-        await simulator.initAsync(document.getElementById("boardview"), {
+        await simulator.initAsync(getBoardView(), {
             orphanException: brk => {
                 // TODO: start debugging session
                 // TODO: user friendly error message
@@ -1190,15 +1192,14 @@ export class ProjectView
         this.loadBlocklyAsync();
 
         // subscribe to user preference changes (for simulator or non-render subscriptions)
-        data.subscribe(this.highContrastSubscriber, auth.HIGHCONTRAST);
         data.subscribe(this.cloudStatusSubscriber, `${cloud.HEADER_CLOUDSTATE}:*`);
         data.subscribe(this.headerChangeSubscriber, "header:*");
     }
 
     public componentWillUnmount() {
-        data.unsubscribe(this.highContrastSubscriber);
         data.unsubscribe(this.cloudStatusSubscriber);
         data.unsubscribe(this.headerChangeSubscriber);
+        this.themeManager?.unsubscribe("mainWebapp");
     }
 
     // Add an error guard for the entire application
@@ -1270,8 +1271,8 @@ export class ProjectView
                 return previousEditor ? previousEditor.unloadFileAsync() : Promise.resolve();
             })
             .then(() => {
-                let hc = this.getData<boolean>(auth.HIGHCONTRAST)
-                return this.editor.loadFileAsync(this.editorFile, hc)
+                let hc = this.themeManager.isHighContrast(this.themeManager.getCurrentColorTheme()?.id);
+                return this.editor.loadFileAsync(this.editorFile, hc);
             })
             .then(() => {
                 this.saveFileAsync(); // make sure state is up to date
@@ -1467,6 +1468,12 @@ export class ProjectView
         } else if (!shouldCollapse && !this.isSideDocExpanded()) {
             sd.expand();
         }
+    }
+
+    toggleBuiltInSideDoc(help: pxt.editor.BuiltInHelp, focusIfVisible: boolean) {
+        let sd = this.refs["sidedoc"] as container.SideDocs;
+        if (!sd) return;
+        sd.toggleBuiltInHelp(help, focusIfVisible);
     }
 
     setTutorialInstructionsExpanded(value: boolean): void {
@@ -1829,6 +1836,13 @@ export class ProjectView
                 this.shouldTryDecompile = true;
             }
 
+            // Onboard accessible blocks if accessible blocks has just been enabled
+            const onboardAccessibleBlocks = pxt.storage.getLocal("onboardAccessibleBlocks") === "1"
+            const sideDocsLoadUrl = onboardAccessibleBlocks ? `${container.builtInPrefix}keyboardControls` : ""
+            if (onboardAccessibleBlocks) {
+                pxt.storage.setLocal("onboardAccessibleBlocks", "0")
+            }
+
             this.setState({
                 home: false,
                 showFiles: h.githubId ? true : false,
@@ -1837,7 +1851,7 @@ export class ProjectView
                 header: h,
                 projectName: h.name,
                 currFile: file,
-                sideDocsLoadUrl: '',
+                sideDocsLoadUrl: sideDocsLoadUrl,
                 debugging: false,
                 isMultiplayerGame: false
             });
@@ -2835,7 +2849,10 @@ export class ProjectView
     }
 
     private editorLoaded() {
-        pxt.tickEvent('app.editor', { projectHeaderId: this.state.header?.id });
+        pxt.tickEvent('app.editor', {
+            projectHeaderId: this.state.header?.id,
+            fileType: this.editorFile?.getExtension()
+        });
     }
 
     unloadProjectAsync(home?: boolean) {
@@ -3636,7 +3653,7 @@ export class ProjectView
             default:
                 this.maybeShowPackageErrors(true);
                 this.startSimulator(opts);
-                if (opts && opts.clickTrigger) simulator.driver.focus();
+                if (!this.state.fullscreen && opts && opts.clickTrigger) getBoardView().focus();
                 break;
         }
     }
@@ -3725,10 +3742,10 @@ export class ProjectView
         if (enabled) {
             document.addEventListener('keydown', this.closeOnEscape);
             simulator.driver.focus();
+            this.closeFlyout();
         } else {
             document.removeEventListener('keydown', this.closeOnEscape);
         }
-        this.closeFlyout();
         this.setState({ fullscreen: enabled });
     }
 
@@ -3848,7 +3865,9 @@ export class ProjectView
         } else {
             simulator.driver.restart(); // fast restart
         }
-        simulator.driver.focus()
+        if (!this.state.fullscreen) {
+            getBoardView().focus();
+        }
         if (!isDebug) {
             this.blocksEditor.clearBreakpoints();
         }
@@ -3858,6 +3877,7 @@ export class ProjectView
         pxt.tickEvent('simulator.start');
         const isDebugMatch = !this.debugOptionsChanged();
         const clickTrigger = opts && opts.clickTrigger;
+        const background = opts && opts.background;
         pxt.debug(`start sim (autorun ${this.state.autoRun})`)
         if (!this.shouldStartSimulator() && isDebugMatch || this.state.home) {
             pxt.log("Ignoring call to start simulator, either already running or we shouldn't start.");
@@ -3865,7 +3885,7 @@ export class ProjectView
         }
 
         await this.saveFileAsync();
-        await this.runSimulator({ debug: this.state.debugging, clickTrigger });
+        await this.runSimulator({ debug: this.state.debugging, clickTrigger, background });
     }
 
     debugOptionsChanged() {
@@ -3874,7 +3894,7 @@ export class ProjectView
         return (!!debugging != simulator.driver.isDebug()) || (!!tracing != simulator.driver.isTracing())
     }
 
-    stopSimulator(unload?: boolean, opts?: pxt.editor.SimulatorStartOptions) {
+    stopSimulator(unload?: boolean, opts?: pxt.editor.SimulatorStartOptions): Promise<void> {
         pxt.perf.measureStart(Measurements.StopSimulator)
         pxt.tickEvent('simulator.stop')
         const clickTrigger = opts && opts.clickTrigger;
@@ -3891,11 +3911,12 @@ export class ProjectView
         const autoRun = this.state.autoRun && !clickTrigger; // if user pressed stop, don't restart
 
         // Only fire setState if something changed
-        if (this.state.simState !== SimState.Stopped || !!this.state.autoRun !== !!autoRun) {
-            this.setState({ simState: SimState.Stopped, autoRun: autoRun });
-        }
+        const setStatePromise = this.state.simState !== SimState.Stopped || !!this.state.autoRun !== !!autoRun ?
+            this.setStateAsync({ simState: SimState.Stopped, autoRun: autoRun }) :
+            Promise.resolve();
 
         pxt.perf.measureEnd(Measurements.StopSimulator)
+        return setStatePromise;
     }
 
     suspendSimulator() {
@@ -3911,16 +3932,16 @@ export class ProjectView
         this.setState({ showMiniSim: visible });
     }
 
-    onHighContrastChanged() {
+    async onThemeChanged() {
         this.clearSerial();
         // Not this.restartSimulator; need full restart to consistently update visuals,
         // and don't want to steal focus.
         if (this.isSimulatorRunning()) {
-            this.stopSimulator();
+            await this.stopSimulator();
             this.startSimulator();
         }
 
-        const highContrast = this.getData<boolean>(auth.HIGHCONTRAST);
+        const highContrast = this.themeManager.isHighContrast(this.themeManager.getCurrentColorTheme()?.id);
         const bodyIsHighContrast = document.body.classList.contains("high-contrast");
         if (highContrast) {
             if (!bodyIsHighContrast) document.body.classList.add("high-contrast");
@@ -4022,7 +4043,7 @@ export class ProjectView
                         if (!cancellationToken.isCancelled()) {
                             pxt.debug(`sim: run`)
 
-                            const hc = data.getData<boolean>(auth.HIGHCONTRAST)
+                            const hc = this.themeManager.isHighContrast(this.themeManager.getCurrentColorTheme()?.id);
                             if (!pxt.react.isFieldEditorViewVisible?.()) {
                                 simulator.run(pkg.mainPkg, opts.debug, resp, {
                                     mute: this.state.mute === pxt.editor.MuteState.Muted,
@@ -4598,8 +4619,8 @@ export class ProjectView
         }
     }
 
-    showLoginDialog(continuationHash?: string) {
-        this.loginDialog.show(continuationHash);
+    showLoginDialog(continuationHash?: string, dialogMessages?: { signInMessage?: string; signUpMessage?: string }) {
+        this.loginDialog.show(continuationHash, dialogMessages);
     }
 
     showProfileDialog(location?: string) {
@@ -5187,27 +5208,42 @@ export class ProjectView
     ////////////            Theming               /////////////
     ///////////////////////////////////////////////////////////
 
-    toggleHighContrast() {
-        core.toggleHighContrast();
-        pxt.tickEvent("app.highcontrast", { on: core.getHighContrastOnce() ? 1 : 0 });
-        if (this.isSimulatorRunning()) {  // if running, send updated high contrast state.
-            this.startSimulator()
-        }
+    toggleHighContrast(): void {
+        this.setHighContrast(!core.getHighContrastOnce());
     }
 
-    setHighContrast(on: boolean) {
-        return core.setHighContrast(on);
+    setHighContrast(on: boolean): void {
+        if (!pxt.appTarget.appTheme.highContrastColorTheme || !pxt.appTarget.appTheme.defaultColorTheme) {
+            return;
+        }
+        pxt.tickEvent("app.highcontrast", { on: on ? 1 : 0 });
+        sendUpdateFeedbackTheme(on);
+        this.setColorThemeById(on ? pxt.appTarget.appTheme.highContrastColorTheme : pxt.appTarget.appTheme.defaultColorTheme, true);
     }
 
     toggleGreenScreen() {
         const greenScreenOn = !this.state.greenScreen;
+
+        // Switch to default color theme when using greenscreen.
+        if (greenScreenOn && this.themeManager?.getCurrentColorTheme()?.id !== pxt.appTarget.appTheme.defaultColorTheme) {
+            this.setColorThemeById(pxt.appTarget.appTheme.defaultColorTheme, false);
+        }
+
         pxt.tickEvent("app.greenscreen", { on: greenScreenOn ? 1 : 0 });
         this.setState({ greenScreen: greenScreenOn });
     }
 
-    async toggleAccessibleBlocks() {
-        await core.toggleAccessibleBlocks()
+    async toggleAccessibleBlocks(eventSource: string) {
+        const nextEnabled = !this.getData<boolean>(auth.ACCESSIBLE_BLOCKS);
+        if (nextEnabled) {
+            pxt.storage.setLocal("onboardAccessibleBlocks", "1")
+        }
+        await core.toggleAccessibleBlocks(eventSource)
         this.reloadEditor();
+    }
+
+    isAccessibleBlocks(): boolean {
+        return this.getData<boolean>(auth.ACCESSIBLE_BLOCKS);
     }
 
     setBannerVisible(b: boolean) {
@@ -5217,6 +5253,10 @@ export class ProjectView
     setColorThemeById(colorThemeId: string, savePreference: boolean) {
         if (this.themeManager.getCurrentColorTheme()?.id === colorThemeId) {
             return;
+        }
+
+        if (this.state.greenScreen && colorThemeId !== pxt.appTarget.appTheme.defaultColorTheme) {
+            this.toggleGreenScreen(); // turn off green screen if switching to a non-default theme
         }
 
         pxt.tickEvent("app.setcolortheme", { theme: colorThemeId, savePreference: `${savePreference}` });
@@ -5267,32 +5307,48 @@ export class ProjectView
     }
 
     ///////////////////////////////////////////////////////////
-    ////////////             Onboarding           /////////////
+    ////////////               Tours              /////////////
     ///////////////////////////////////////////////////////////
 
-    hideOnboarding() {
-        this.setState({ onboarding: undefined });
+    closeTour() {
+        this.setState({ activeTourConfig: undefined });
     }
 
     async showOnboarding() {
         const tourSteps: pxt.tour.BubbleStep[] = await parseTourStepsAsync(pxt.appTarget.appTheme?.tours?.editor)
-        this.setState({ onboarding: tourSteps })
-
-    }
-
-    ///////////////////////////////////////////////////////////
-    ////////////             Navigate regions     /////////////
-    ///////////////////////////////////////////////////////////
-
-    hideNavigateRegions() {
-        this.setState({ navigateRegions: false });
-    }
-
-    showNavigateRegions() {
-        const dialog = Array.from(document.querySelectorAll("[role=dialog]")).find(dialog => (dialog as any).checkVisibility());
-        if (!dialog) {
-            this.setState(state => state.home ? state : { navigateRegions: true })
+        const config: pxt.tour.TourConfig = {
+            steps: tourSteps,
+            showConfetti: true,
         }
+        this.showTour(config);
+    }
+
+    async showTour(config: pxt.tour.TourConfig) {
+        this.setState({ activeTourConfig: config });
+    }
+
+    ///////////////////////////////////////////////////////////
+    ////////////            Area menu             /////////////
+    ///////////////////////////////////////////////////////////
+
+    toggleAreaMenu() {
+        // Restore the simulator if needed. If the area menu is open, allow the simulator to
+        // stay fullscreened. The desired behaviour is that the mini sim can be fullscreened
+        // through the area menu, otherwise it has been restored already.
+        if (this.state.fullscreen && !this.state.areaMenuOpen) {
+            this.setSimulatorFullScreen(false);
+        }
+
+        const dialog = Array.from(document.querySelectorAll("[role=dialog]")).find(dialog => (dialog as any).checkVisibility());
+        this.setState((state) => {
+            const { areaMenuOpen } = state;
+            if (state.home || dialog) {
+                // Skip on home page or if a dialog is open.
+                return state;
+            }
+            pxt.tickEvent("app.toggleareamenu", { open: !this.state.areaMenuOpen ? "true" : "false" });
+            return { areaMenuOpen: !areaMenuOpen }
+        });
     }
 
     ///////////////////////////////////////////////////////////
@@ -5422,7 +5478,7 @@ export class ProjectView
         const isMultiplayerGame = this.state.isMultiplayerGame;
         const collapseIconTooltip = this.state.collapseEditorTools ? lf("Show the simulator") : lf("Hide the simulator");
         const isApp = cmds.isNativeHost() || pxt.BrowserUtils.isElectron();
-        const hc = this.getData<boolean>(auth.HIGHCONTRAST)
+        const hc = this.themeManager.isHighContrast(this.themeManager.getCurrentColorTheme()?.id);
 
         let rootClassList = [
             "ui",
@@ -5536,8 +5592,8 @@ export class ProjectView
                         <projects.Projects parent={this} ref={this.handleHomeRef} />
                     </div>
                 </div> : undefined}
-                {showEditorToolbar && <editortoolbar.EditorToolbar ref="editortools" parent={this} />}
                 {sideDocs ? <container.SideDocs ref="sidedoc" parent={this} sideDocsCollapsed={this.state.sideDocsCollapsed} docsUrl={this.state.sideDocsLoadUrl} /> : undefined}
+                {showEditorToolbar && <editortoolbar.EditorToolbar ref="editortools" parent={this} />}
                 {sandbox ? undefined : <scriptsearch.ScriptSearch parent={this} ref={this.handleScriptSearchRef} />}
                 {sandbox ? undefined : <extensions.Extensions parent={this} ref={this.handleExtensionRef} />}
                 {inHome ? <projects.ImportDialog parent={this} ref={this.handleImportDialogRef} /> : undefined}
@@ -5554,8 +5610,8 @@ export class ProjectView
                 {hideMenuBar ? <div id="editorlogo"><a className="poweredbylogo"></a></div> : undefined}
                 {lightbox ? <sui.Dimmer isOpen={true} active={lightbox} portalClassName={'tutorial'} className={'ui modal'}
                     shouldFocusAfterRender={false} closable={true} onClose={this.hideLightbox} /> : undefined}
-                {this.state.onboarding && <Tour tourSteps={this.state.onboarding} onClose={this.hideOnboarding} />}
-                {this.state.navigateRegions && <NavigateRegionsOverlay parent={this}/>}
+                {this.state.areaMenuOpen && <AreaMenuOverlay parent={this}/>}
+                {this.state.activeTourConfig && <Tour config={this.state.activeTourConfig} onClose={this.closeTour} />}
                 {this.state.themePickerOpen && <ThemePickerModal themes={this.themeManager.getAllColorThemes()} onThemeClicked={theme => this.setColorThemeById(theme?.id, true)} onClose={this.hideThemePicker} />}
             </div>
         );
@@ -5568,6 +5624,10 @@ function render() {
 
 function getEditor() {
     return theEditor
+}
+
+function getBoardView() {
+    return document.getElementById("boardview");
 }
 
 function parseLocalToken() {
@@ -5599,23 +5659,19 @@ function initPacketIO() {
             }
         },
         (type, payload) => {
-            const messageSimulators = pxt.appTarget.simulator?.messageSimulators;
-            if (messageSimulators?.[type]) {
-                window.postMessage({
-                    type: "messagepacket",
-                    broadcast: false,
-                    channel: type,
-                    data: payload,
-                    sender: "packetio",
-                }, "*")
-            }
+            window.postMessage({
+                type: "messagepacket",
+                broadcast: false,
+                channel: type,
+                data: payload,
+                sender: "packetio",
+            }, "*")
         });
 
     window.addEventListener('message', (ev: MessageEvent) => {
         const msg = ev.data
         if (msg.type === 'messagepacket'
             && msg.sender !== "packetio"
-            && pxt.appTarget.simulator?.messageSimulators?.[msg.channel]
             && msg.channel === pxt.HF2.CUSTOM_EV_JACDAC)
             pxt.packetio.sendCustomEventAsync(msg.channel, msg.data)
                 .then(() => { }, err => {
@@ -6283,6 +6339,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                 baseUrl: baseUrl,
                 code: useLang,
                 force: force,
+            }).then(async () => {
+                return pxt.Cloud.initRegionAsync();
             }).then(() => {
                 if (pxt.Util.isLocaleEnabled(useLang)) {
                     pxt.BrowserUtils.setCookieLang(useLang);
@@ -6350,6 +6408,12 @@ document.addEventListener("DOMContentLoaded", async () => {
             initHashchange();
             socketbridge.tryInit();
             electron.initElectron(theEditor);
+            pxt.tickEvent(
+                "accessibilty.accessibleBlocksEnabledForSession",
+                {
+                    enabled: data.getData<boolean>(auth.ACCESSIBLE_BLOCKS) ? "true" : "false",
+                }
+            );
         })
         .then(() => {
             const showHome = theEditor.shouldShowHomeScreen();

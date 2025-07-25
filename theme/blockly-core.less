@@ -118,8 +118,18 @@ body.blocklyMinimalBody {
         Blockly Toolbox
 *******************************/
 
-.blocklyTreeIcon {
+.blocklyTreeRowContentContainer {
+    // pointEvents style required to work around non-null assertion operator in Blockly code.
+    // See https://github.com/google/blockly/blob/develop/core/toolbox/toolbox.ts#L263
+    pointer-events: none;
+}
+
+span.blocklyTreeIcon {
     visibility: visible;
+
+    &.pxt-toolbox-icon {
+        display: inline-block;
+    }
 }
 
 i.icon.blocklyTreeButton {
@@ -199,6 +209,9 @@ div.blocklyWidgetDiv {
     position: fixed;
     /* Lower Z index for BlocklyWidgetDiv and grid picker tooltips */
     z-index: @blocklyWidgetDivZIndex;
+    &:focus-visible {
+        outline: none;
+    }
 }
 
 div.blocklyWidgetDiv.functioneditor {
@@ -209,6 +222,9 @@ div.blocklyWidgetDiv.functioneditor {
 div.blocklyDropDownDiv {
     z-index: @blocklyDropdownDivZIndex;
     overflow: hidden;
+    &:focus-visible {
+        outline: none;
+    }
 }
 
 div.blocklyTooltipDiv {
@@ -247,6 +263,7 @@ text.blocklyCheckbox {
     .blocklyNonEditableText > rect.blocklySpriteField,
     .blocklyNonEditableText > rect.blocklyAnimationField,
     .blocklyNonEditableText > rect.blocklyTilemapField,
+    .blocklyEditableField > rect.blocklySpriteField,
     .blocklyEditableText > rect.blocklySpriteField,
     .blocklyEditableText > rect.blocklyAnimationField,
     .blocklyEditableText > rect.blocklyTilemapField {
@@ -343,7 +360,8 @@ text.blocklyCheckbox {
     }
 }
 
-.blocklyWidgetDiv .blocklyContextMenu .blocklyMenuItem.blocklyMenuItemHighlight, .blocklyWidgetDiv .blocklyContextMenu .goog-menuitem-hover {
+.blocklyWidgetDiv .blocklyContextMenu .blocklyMenuItem.blocklyMenuItemHighlight,
+.blocklyWidgetDiv .blocklyContextMenu .gridpicker-menuitem-hover {
     border: none !important;
     padding: .92857143em 1.14285714em !important;
     background: var(--pxt-neutral-background1-hover) !important;
@@ -396,40 +414,98 @@ text.blocklyCheckbox {
         Focus styles
 *******************************/
 
+
+.injectionDiv {
+    --blockly-active-node-color: #fff200;
+    --blockly-active-tree-color: var(--pxt-target-foreground1);
+    /* Comments are yellow default highlight is orange */
+    --blockly-active-workspace-comment-color: var(--pxt-target-foreground1);
+    --blockly-selection-width: 3px;
+}
+
 // Avoid focus outlines when not using the keyboard navigation plugin.
-div.blocklyTreeRoot > div > div[role="tree"]:focus-visible {
+div.blocklyTreeRoot > div[role="tree"]:focus-visible {
     outline: none;
 }
 
-.accessibleBlocks .blocklyWorkspace:focus,.blocklyWorkspaceFocusLayer:focus {
+.blocklyKeyboardNavigation div.blocklyTreeRoot > div[role="tree"]:focus-visible {
+    outline: var(--blockly-selection-width) solid var(--blockly-active-tree-color);
+    outline-offset: calc(var(--blockly-selection-width) * -1);
+}
+
+/* Blocks, connections and fields. */
+.blocklyKeyboardNavigation
+.blocklyActiveFocus.blocklyField
+> .blocklyFieldRect.blocklySpriteField,
+.blocklyKeyboardNavigation
+.blocklyActiveFocus.blocklyIconGroup
+> :is(.blocklyBreakpointSymbol) {
+    stroke: var(--blockly-active-node-color);
+    stroke-width: var(--blockly-selection-width);
+}
+.blocklyKeyboardNavigation
+.blocklyPassiveFocus.blocklyField
+> .blocklyFieldRect.blocklySpriteField,
+.blocklyKeyboardNavigation
+.blocklyPassiveFocus.blocklyIconGroup
+> :is(.blocklyBreakpointSymbol) {
+    stroke: var(--blockly-active-node-color);
+    stroke-dasharray: 5px 3px;
+    stroke-width: var(--blockly-selection-width);
+}
+.blocklyKeyboardNavigation .blocklyIconGroup:is(.blocklyActiveFocus, .blocklyPassiveFocus) {
+    // Unless you hover the icon group has opacity 0.6 which makes
+    // the focus indicator unclear.
+    opacity: 1;
+}
+
+/* Toolbox and flyout. */
+.blocklyKeyboardNavigation .injectionDiv .blocklyToolbox:has(.blocklyActiveFocus) {
     outline: none;
 }
 
-.accessibleBlocks .blocklyWorkspaceFocusRingLayer {
-    position: absolute;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    right: 0;
-    pointer-events: none;
-    z-index: 99;
-}
-
-.accessibleBlocks .blocklyWorkspaceFocusRingLayer[data-focused="true"] {
-    outline: 3px solid black;
-    outline-offset: -3px;
-}
-
-.accessibleBlocks div.blocklyTreeRoot > div > div[role="tree"]:focus-visible {
-    outline: 3px solid black;
-    outline-offset: -3px;
-}
-
-.accessibleBlocks .blocklyFlyout:focus {
+/* Flyout buttons and labels */
+.blocklyKeyboardNavigation .blocklyFlyout .blocklyFlyoutLabel.blocklyActiveFocus,
+.blocklyKeyboardNavigation .blocklyFlyout .blocklyFlyoutButton.blocklyActiveFocus {
     outline: none;
 }
 
-.accessibleBlocks .blocklyFlyout:focus-visible {
-    outline: 3px solid black;
-    outline-offset: -3px;
+/* Use the backgrounds because the group can't have an outline on Safari */
+.blocklyKeyboardNavigation .blocklyFlyout .blocklyFlyoutLabel.blocklyActiveFocus > .blocklyFlyoutLabelBackground,
+.blocklyKeyboardNavigation .blocklyFlyout .blocklyFlyoutButton.blocklyActiveFocus > .blocklyFlyoutButtonBackground {
+    outline-offset: 2px;
+    outline: var(--blockly-selection-width) solid
+        var(--blockly-active-node-color);
+    border-radius: 2px;
+}
+.blocklyKeyboardNavigation .blocklyFlyout .blocklyFlyoutLabel.blocklyActiveFocus > .blocklyFlyoutLabelBackground {
+    // Swap opacity for transparent fill so we can see the focus indicator.
+    opacity: 1;
+    fill: transparent;
+}
+
+// Image fields e.g. +/- buttons. Needs to be the image for Safari but Chrome has the group by default.
+.blocklyKeyboardNavigation .blocklyImageField:focus-visible {
+    outline: none;
+}
+.blocklyKeyboardNavigation .blocklyImageField:is(.blocklyActiveFocus, .blocklyPassiveFocus) > image {
+    outline: var(--blockly-selection-width) solid
+        var(--blockly-active-node-color);
+    border-radius: 2px;
+    outline-offset: 2px;
+}
+.blocklyKeyboardNavigation .blocklyImageField.blocklyPassiveFocus > image {
+    outline-style: dashed;
+}
+
+/* Workspace comments */
+.blocklyKeyboardNavigation .blocklyComment.blocklyActiveFocus .blocklyCommentHighlight {
+    /* Different colour for contrast */
+    stroke: var(--blockly-active-workspace-comment-color);
+    stroke-width: 4px;
+}
+.blocklyCommentTopbar .blocklyActiveFocus {
+    outline: 2px solid var(--blockly-active-workspace-comment-color);
+    border-radius: 2px;
+    outline-offset: -1px;
 }

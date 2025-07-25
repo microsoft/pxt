@@ -997,6 +997,21 @@ namespace pxt.github {
                 : GitRepoStatus.Unknown;
     }
 
+    export function isRepoHidden(repo: ParsedRepo, config: pxt.PackagesConfig): boolean {
+        if (!repo || !config) return true;
+
+        const repoFull = repo.fullName?.toLowerCase();
+        const repoSlug = repo.slug?.toLowerCase();
+
+        const entry = config.approvedRepoLib[repoFull] || config.approvedRepoLib[repoSlug];
+
+        if (entry && entry.hidden) {
+            return true;
+        }
+
+        return false;
+    }
+
     function isOrgBanned(repo: ParsedRepo, config: pxt.PackagesConfig): boolean {
         if (!config) return false; // don't know
         if (!repo || !repo.owner) return true;

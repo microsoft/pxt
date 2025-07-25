@@ -483,7 +483,10 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
 
                             const toolboxSelector = `${editorSelector} .blocklyTreeRow[data-ns="${ns}"]`;
                             const toolboxRow = document.querySelector<HTMLDivElement>(toolboxSelector);
-                            toolboxRow?.click();
+                            if (toolboxRow) {
+                                toolboxRow.click();
+                                this.props.parent.editor.focusToolbox();
+                            }
                         });
                         inlineBlock.addEventListener("keydown", e => fireClickOnEnter(e as any))
                     }

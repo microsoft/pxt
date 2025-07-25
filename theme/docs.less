@@ -29,6 +29,7 @@
 
 @docsCardBorderColor: #e9eef2;
 @docsCardHoverBorderColor: #1dacf4;
+@docsCardFocusBorderColor: #0078D4; // --pxt-focus-border not available in iframed documentation
 
 #docs .footer,
 #docs .topbar,
@@ -219,8 +220,20 @@
     #sidedocs-back-button {
         margin-top: 1.25rem;
         margin-left: 1.25rem;
+        margin-right: 5rem; // Safety margin for the "open in new tab" button
         cursor: pointer;
         user-select: none;
+        color: var(--pxt-page-foreground);
+        display: block;
+
+        &:hover {
+            text-decoration: none;
+        }
+
+        &:focus-visible {
+            outline: 3px solid @docsCardFocusBorderColor;
+            outline-offset: 3px;
+        }
     }
 
     #sidedocs-back-button.disabled {
@@ -477,6 +490,10 @@
 
 .sideDocs #sidedocsbar a {
     color: @docsLinkColor;
+    &:focus-visible {
+        outline: 3px solid var(--pxt-focus-border);
+        outline-offset: 3px;
+    }
 }
 
 .replaceDocsAvatar() when not (@docsAvatarImage = none) {

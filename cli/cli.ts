@@ -1345,8 +1345,9 @@ function uploadCoreAsync(opts: UploadOptions) {
 
     // check size
     const maxSize = checkFileSize(opts.fileList);
-    if (maxSize > 30000000) // 30Mb max
-        U.userError(`file too big for upload`);
+    const maxAllowedFileSize = (pxt.appTarget.cloud.maxFileSize || (30000000)); // default to 30Mb
+    if (maxSize > maxAllowedFileSize)
+        U.userError(`file too big for upload: ${maxSize} bytes, max is ${maxAllowedFileSize} bytes`);
     pxt.log('');
 
     if (opts.localDir)
@@ -3136,17 +3137,17 @@ class SnippetHost implements pxt.Host {
 
         if (module.id === "this") {
             if (filename === "pxt-core.d.ts") {
-                const contents = fs.readFileSync(path.join(this.getRepoDir(), "libs", "pxt-common", "pxt-core.d.ts"), 'utf8');
+                const contents = fs.readFileSync(path.join(this.getPxtRepoDir(), "libs", "pxt-common", "pxt-core.d.ts"), 'utf8');
                 this.writeFile(module, filename, contents);
                 return contents;
             }
             else if (filename === "pxt-helpers.ts") {
-                const contents = fs.readFileSync(path.resolve(this.getRepoDir(), "libs", "pxt-common", "pxt-helpers.ts"), 'utf8');
+                const contents = fs.readFileSync(path.resolve(this.getPxtRepoDir(), "libs", "pxt-common", "pxt-helpers.ts"), 'utf8');
                 this.writeFile(module, filename, contents);
                 return contents;
             }
             else if (filename === "pxt-python.d.ts" || filename === "pxt-python-helpers.ts") {
-                const contents = fs.readFileSync(path.resolve(this.getRepoDir(), "libs", "pxt-python", filename), 'utf8');
+                const contents = fs.readFileSync(path.resolve(this.getPxtRepoDir(), "libs", "pxt-python", filename), 'utf8');
                 this.writeFile(module, filename, contents);
                 return contents;
             }
@@ -3156,10 +3157,16 @@ class SnippetHost implements pxt.Host {
         return null;
     }
 
-    private getRepoDir() {
+    private getPxtRepoDir() {
         const cwd = process.cwd();
-        const i = cwd.lastIndexOf(path.sep + "pxt" + path.sep);
-        return cwd.substr(0, i + 5);
+        let p = path.parse(cwd);
+        while (p.base) {
+            if (p.base === "pxt") {
+                return path.format(p);
+            }
+            p = path.parse(p.dir);
+        }
+        return path.join(cwd, "node_modules", "pxt-core");
     }
 
     writeFile(module: pxt.Package, filename: string, contents: string) {
@@ -5056,7 +5063,7 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
                 console.log(compileResult.times)
 
             switch (buildOpts.mode) {
-                case BuildOption.GenDocs:
+                case BuildOption.GenDocs: {
                     const apiInfo = pxtc.getApiInfo(res.ast, compileOptions.jres)
                     // keeps apis from this module only
                     for (const infok in apiInfo.byQName) {
@@ -5087,6 +5094,7 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
                         }
                     }
                     return null
+                }
                 case BuildOption.Deploy:
                     if (pxt.commands.hasDeployFn())
                         return pxt.commands.deployAsync(res)
@@ -5756,6 +5764,85 @@ export async function buildShareSimJsAsync(parsed: commandParser.ParsedCommand) 
     console.log(`saved prebuilt ${id} to ${outputLocation}`);
 }
 
+export async function buildCoreDeclarationFiles(parsed: commandParser.ParsedCommand) {
+    const shareId = (parsed && parsed.flags["shareid"] as string)?.trim();
+    const writeCombined = !!(parsed && parsed.flags["combined"]);
+    const writeIndex = !!(parsed && parsed.flags["index"]);
+
+    console.log(shareId ? `Building .d.ts for ${shareId}` : `Building .d.ts for blocksprj`);
+    const cwd = process.cwd();
+    const builtFolder = path.join(cwd, "temp", shareId ? `${shareId}dts` : "dts");
+    nodeutil.mkdirP(builtFolder);
+    process.chdir(cwd);
+
+    const host = shareId ? new Host() : new SnippetHost("decl-build", { "main.ts" : "" }, { "blocksprj": "*" });
+    const mainPkg = new pxt.MainPackage(host);
+
+    if (shareId) {
+        mainPkg._verspec = `pub:${shareId}`;
+        await mainPkg.host().downloadPackageAsync(mainPkg);
+    }
+
+    console.log("installing")
+    await mainPkg.installAllAsync();
+    console.log("installed")
+    const opts = await mainPkg.getCompileOptionsAsync();
+    console.log("created compiler options")
+    opts.tsCompileOptions = opts.tsCompileOptions ?? {};
+    opts.tsCompileOptions.declaration = true;
+    opts.tsCompileOptions.emitBlockCommentsAsJsDocs = true;
+    await rimrafAsync(builtFolder, {});
+
+    const tsProg = pxtc.getTSProgram(opts);
+    console.log("compiled")
+
+    let combined = ""
+    const writeDts = (fileName: string, data: string) => {
+        console.log(`writing ${fileName}`);
+        const writePath = path.join(builtFolder, fileName);
+        nodeutil.mkdirP(path.parse(writePath).dir);
+        fs.writeFileSync(writePath, data);
+        if (writeCombined) combined += data + "\n\n";
+    }
+
+    const filenames: string[] = [];
+
+    // pre-created
+    for (const file of tsProg.getSourceFiles()) {
+        if (file.fileName.endsWith(".d.ts")) {
+            filenames.push(file.fileName);
+            writeDts(
+                file.fileName,
+                file.getFullText()
+            );
+        }
+    }
+
+    // generated via build
+    tsProg.emit(
+        /** targetSourceFile **/ undefined,
+        (fileName: string, data: string) => {
+            if (!data?.trim()) return;
+            filenames.push(fileName);
+            writeDts(fileName, data);
+        },
+        /** cancellation token **/ undefined,
+        /** emitOnlyDtsFiles **/ true,
+        /** customTransformers -> I believe where we should apply culling of deprecated blocks */
+    );
+
+    if (writeCombined) {
+        console.log(`writing combined.d.ts`)
+        fs.writeFileSync(path.join(builtFolder, "combined.d.ts"), combined);
+    }
+
+    if (writeIndex) {
+        console.log(`writing index.d.ts`)
+        const indexContent = filenames.map(fn => `/// <reference path="./${fn}" />`).join("\n");
+        fs.writeFileSync(path.join(builtFolder, "index.d.ts"), indexContent);
+    }
+}
+
 export function gendocsAsync(parsed: commandParser.ParsedCommand) {
     const docs = !!parsed.flags["docs"];
     const locs = !!parsed.flags["locs"];
@@ -6113,7 +6200,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
 
     const maxFileSize = checkFileSize(nodeutil.allFiles("docs", { maxDepth: 10, allowMissing: true, includeDirs: true, ignoredFileMarker: ".ignorelargefiles" }));
     if (!pxt.appTarget.ignoreDocsErrors
-        && maxFileSize > (pxt.appTarget.cloud.maxFileSize || (5000000)))
+        && maxFileSize > (pxt.appTarget.cloud.maxFileSize || (30000000)))
         U.userError(`files too big in docs folder`);
 
     // scan and fix image links
@@ -7174,6 +7261,27 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
             },
         },
     }, buildShareSimJsAsync)
+
+    p.defineCommand({
+        name: "buildcoredts",
+        help: "build d.ts files for core packages",
+        flags: {
+            shareId: {
+                description: "Share ID to build for",
+                argument: "shareid",
+                type: "string",
+                aliases: ["s"]
+            },
+            combined: {
+                description: "Build combined d.ts file for all core packages",
+                aliases: ["c"]
+            },
+            index: {
+                description: "Build index.d.ts file for all core packages",
+                aliases: ["i"]
+            },
+        }
+    }, buildCoreDeclarationFiles)
 
     simpleCmd("clean", "removes built folders", cleanAsync);
     advancedCommand("cleangen", "remove generated files", cleanGenAsync);

@@ -1,0 +1,18 @@
+.ai-explanation-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+    width: 100%;
+    height: 100%;
+    white-space: pre-line; // Preserve new lines
+
+    .ai-footer {
+        margin-top: 1rem;
+
+        .feedback-button.disabled {
+            // Override the default disabled coloring
+            color: var(--pxt-neutral1-foreground);
+        }
+    }
+}

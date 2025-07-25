@@ -18,10 +18,10 @@ import { SignInModal } from "./components/SignInModal";
 import { SignedOutPanel } from "./components/SignedOutPanel";
 import * as authClient from "./services/authClient";
 import { ErrorCode } from "./types/errorCode";
-import { loadProjectMetadataAsync } from "./transforms/loadProjectMetadataAsync";
-import { Constants, Ticks } from "./constants";
+import { Constants } from "./constants";
 import { UnsupportedExperienceModal } from "react-common/components/experiences/UnsupportedExperienceModal";
 import { ThemeManager } from "react-common/components/theming/themeManager";
+import { handleProjectOnLoadAsync } from "./transforms/handleProjectOnLoadAsync";
 
 export const App = () => {
     const { state, dispatch } = useContext(AppStateContext);
@@ -47,15 +47,7 @@ export const App = () => {
                 setInited(true);
 
                 // Check if a project was specified on the URL and load it if so.
-                const projectParam = window.location.href.match(/project=([^&]+)/)?.[1];
-                if (!!projectParam) {
-                    const decoded = decodeURIComponent(projectParam);
-                    const shareId = pxt.Cloud.parseScriptId(decoded);
-                    if (!!shareId) {
-                        pxt.tickEvent(Ticks.LoadProjectFromUrl);
-                        await loadProjectMetadataAsync(decoded, shareId);
-                    }
-                }
+                await handleProjectOnLoadAsync(cfg?.teachertool?.defaultChecklistUrl);
 
                 logDebug("App initialized");
             });
@@ -64,15 +56,23 @@ export const App = () => {
 
     useEffect(() => {
         async function checkAuthAsync() {
-            // On mount, check if user is signed in
-            try {
-                await authClient.authCheckAsync();
-            } catch (e) {
-                // Log error but continue
-                // Don't include actual error in error log in case PII
-                logError(ErrorCode.authCheckFailed);
-                logDebug("Auth check failed details", e);
+            if (pxt.BrowserUtils.isLocalHostDev() && /noauth=1/i.test(window.location.href)) {
+                dispatch(Actions.setUserProfile({
+                    id: "?"
+                }));
             }
+            else {
+                // On mount, check if user is signed in
+                try {
+                    await authClient.authCheckAsync();
+                } catch (e) {
+                    // Log error but continue
+                    // Don't include actual error in error log in case PII
+                    logError(ErrorCode.authCheckFailed);
+                    logDebug("Auth check failed details", e);
+                }
+            }
+
             setAuthCheckComplete(true);
         }
         checkAuthAsync();

@@ -80,9 +80,11 @@ declare namespace pxt.editor {
         | "getblockastext"
 
         | "toggletrace" // EditorMessageToggleTraceRequest
+        | "showthemepicker"
         | "togglehighcontrast"
         | "sethighcontrast" // EditorMessageSetHighContrastRequest
         | "togglegreenscreen"
+        | "togglekeyboardcontrols"
         | "settracestate" //
         | "setsimulatorfullscreen" // EditorMessageSimulatorFullScreenRequest
 
@@ -422,6 +424,7 @@ declare namespace pxt.editor {
         versions: pxt.TargetVersions;
         locale: string;
         availableLocales?: string[];
+        keyboardControls: boolean;
     }
 
     export interface PackageExtensionData {
@@ -820,10 +823,11 @@ declare namespace pxt.editor {
         screenshoting?: boolean;
         extensionsVisible?: boolean;
         isMultiplayerGame?: boolean; // Arcade: Does the current project contain multiplayer blocks?
-        onboarding?: pxt.tour.BubbleStep[];
-        navigateRegions?: boolean;
+        activeTourConfig?: pxt.tour.TourConfig;
+        areaMenuOpen?: boolean;
         feedback?: FeedbackState;
         themePickerOpen?: boolean;
+        errorListNote?: string;
     }
 
     export interface EditorState {
@@ -870,6 +874,7 @@ declare namespace pxt.editor {
 
     export interface SimulatorStartOptions {
         clickTrigger?: boolean;
+        background?: boolean;
     }
 
     export interface ImportFileOptions {
@@ -900,6 +905,8 @@ declare namespace pxt.editor {
     }
 
     export type Activity = "tutorial" | "recipe" | "example";
+
+    export type BuiltInHelp = "keyboardControls";
 
     export interface IProjectView {
         state: IAppState;
@@ -958,6 +965,7 @@ declare namespace pxt.editor {
         setSideFile(fn: IFile, line?: number): void;
         navigateToError(diag: pxtc.KsDiagnostic): void;
         setSideDoc(path: string, blocksEditor?: boolean): void;
+        toggleBuiltInSideDoc(help: BuiltInHelp, focusIfOpen: boolean): void;
         setSideMarkdown(md: string): void;
         setSideDocCollapsed(shouldCollapse?: boolean): void;
         removeFile(fn: IFile, skipConfirm?: boolean): void;
@@ -1039,7 +1047,8 @@ declare namespace pxt.editor {
         toggleHighContrast(): void;
         setHighContrast(on: boolean): void;
         toggleGreenScreen(): void;
-        toggleAccessibleBlocks(): void;
+        toggleAccessibleBlocks(eventSource: string): void;
+        isAccessibleBlocks(): boolean;
         launchFullEditor(): void;
         resetWorkspace(): void;
 
@@ -1058,9 +1067,9 @@ declare namespace pxt.editor {
         showLightbox(): void;
         hideLightbox(): void;
         showOnboarding(): void;
-        hideOnboarding(): void;
-        showNavigateRegions(): void;
-        hideNavigateRegions(): void;
+        showTour(config: pxt.tour.TourConfig): void;
+        closeTour(): void;
+        toggleAreaMenu(): void;
         showKeymap(show: boolean): void;
         toggleKeymap(): void;
         signOutGithub(): void;
@@ -1073,7 +1082,7 @@ declare namespace pxt.editor {
         showFeedbackDialog(kind: ocv.FeedbackKind): void;
         showTurnBackTimeDialogAsync(): Promise<void>;
 
-        showLoginDialog(continuationHash?: string): void;
+        showLoginDialog(continuationHash?: string, dialogMessages?: { signInMessage?: string; signUpMessage?: string }): void;
         showProfileDialog(location?: string): void;
 
         showImportUrlDialog(): void;

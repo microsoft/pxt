@@ -30,6 +30,7 @@ namespace ts.pxtc {
 
     export const NATIVE_TYPE_THUMB = "thumb";
     export const NATIVE_TYPE_VM = "vm";
+    export const BLOCK_TRANSLATION_CACHE_KEY = "_blocks";
 
     export interface BlocksInfo {
         apis: ApisInfo;
@@ -591,7 +592,8 @@ namespace ts.pxtc {
                 && s.kind != pxtc.SymbolKind.EnumMember
                 && s.kind != pxtc.SymbolKind.Module
                 && s.kind != pxtc.SymbolKind.Interface
-                && s.kind != pxtc.SymbolKind.Class) {
+                && s.kind != pxtc.SymbolKind.Class
+                && !s.attributes.blockIdentity) {
                 if (!s.attributes.blockId)
                     s.attributes.blockId = s.qName.replace(/\./g, "_")
                 if (s.attributes.block == "true") {
@@ -724,6 +726,20 @@ namespace ts.pxtc {
             const nsDoc = loc['{id:category}' + Util.capitalize(fn.qName)];
             let locBlock = loc[`${fn.qName}|block`] || fn.attributes.locs?.[attrBlockLocsKey];
 
+            if (fn.attributes.block) {
+                const comp = pxt.blocks.compileInfo(fn);
+                if (comp.handlerArgs) {
+                    for (const arg of comp.handlerArgs) {
+                        if (loc[arg.localizationKey]) {
+                           setBlockTranslationCacheKey(arg.localizationKey, loc[arg.localizationKey]);
+                        }
+                        else {
+                            clearBlockTranslationCacheKey(arg.localizationKey);
+                        }
+                    }
+                }
+            }
+
             if (!locBlock && altLocSrcFn) {
                 const otherTranslation = loc[`${altLocSrcFn.qName}|block`] || altLocSrcFn.attributes.locs?.[attrBlockLocsKey];
                 const isSameBlockDef = fn.attributes.block === (altLocSrcFn.attributes._untranslatedBlock || altLocSrcFn.attributes.block);
@@ -793,6 +809,34 @@ namespace ts.pxtc {
             .filter(fb => fb.attributes.block && /^{[^:]+:[^}]+}/.test(fb.attributes.block))
             .forEach(fn => { fn.attributes.block = fn.attributes.block.replace(/^{[^:]+:[^}]+}/, ''); });
         return apis;
+    }
+
+    function setBlockTranslationCacheKey(key: string, value: string) {
+        const cache = pxt.Util.translationsCache();
+
+        if (!cache[BLOCK_TRANSLATION_CACHE_KEY]) {
+            cache[BLOCK_TRANSLATION_CACHE_KEY] = {};
+        }
+
+        cache[BLOCK_TRANSLATION_CACHE_KEY][key] = value;
+    }
+
+    function clearBlockTranslationCacheKey(key: string) {
+        const cache = pxt.Util.translationsCache();
+
+        if (cache[BLOCK_TRANSLATION_CACHE_KEY]) {
+            delete cache[BLOCK_TRANSLATION_CACHE_KEY][key];
+        }
+    }
+
+    export function getBlockTranslationsCacheKey(key: string): string | undefined {
+        const cache = pxt.Util.translationsCache();
+
+        if (cache[BLOCK_TRANSLATION_CACHE_KEY]) {
+            return cache[BLOCK_TRANSLATION_CACHE_KEY][key];
+        }
+
+        return undefined;
     }
 
     function hasEquivalentParameters(a: pxt.blocks.BlockCompileInfo, b: pxt.blocks.BlockCompileInfo) {
@@ -1707,11 +1751,12 @@ namespace ts.pxtc.service {
     }
 
     export interface ExtensionMeta {
-        name: string,
-        fullName?: string,
-        description?: string,
-        imageUrl?: string,
-        type?: ExtensionType
+        name: string;
+        displayName?: string;
+        fullRepo?: string;
+        description?: string;
+        imageUrl?: string;
+        type?: ExtensionType;
         learnMoreUrl?: string;
 
         pkgConfig?: pxt.PackageConfig; // Added if the type is Bundled
@@ -1730,6 +1775,7 @@ namespace ts.pxtc.service {
         localizedCategory?: string;
         builtinBlock?: boolean;
         params?: string;
+        dropdownOptions?: string;
     }
 
     export interface ProjectSearchOptions {

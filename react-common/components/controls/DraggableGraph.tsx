@@ -173,11 +173,12 @@ export const DraggableGraph = (props: DraggableGraphProps) => {
                     !isNotLast && getValue(index - 1) > getValue(index)
                 );
 
+                const textAnchor = (isNotLast !== pxt.Util.isUserLanguageRtl()) ? "start" : "end"
+
                 return <g key={index} className="draggable-graph-column">
                         {isNotLast &&
                             <path
                                 className="draggable-graph-path"
-                                stroke="black"
                                 fill="none"
                                 strokeWidth="2px"
                                 d={getInterpolationPath(
@@ -216,7 +217,7 @@ export const DraggableGraph = (props: DraggableGraphProps) => {
                             className="common-draggable-graph-text"
                             x={isNotLast ? x + unit * 2 : x - unit}
                             y={shouldFlipLabel ? y + unit * 2 : Math.max(y - unit, unit)}
-                            textAnchor={isNotLast ? "start" : "end"}
+                            textAnchor={textAnchor}
                             fontSize={unit}>
                             {Math.round(getValue(index)) + (valueUnits || "")}
                         </text>

@@ -167,7 +167,7 @@ body.pxt-theme-root {
         }
     }
 
-    .ui.header {
+    .ui.header, .ui.header .sub.header {
         color: var(--pxt-neutral-foreground1);
     }
 
@@ -287,6 +287,10 @@ body.pxt-theme-root {
                 background-color: var(--pxt-primary-background) !important;
             }
         }
+    }
+
+    .ui.dimmer:not(#loading) {
+        background-color: var(--pxt-neutral-alpha50);
     }
 
     // Colors
@@ -439,7 +443,6 @@ body.pxt-theme-root {
 
 
     .ui.button, .common-button {
-
         // Semantic ui sometimes sets the background image to a faint gradient.
         // We don't want that, so we override it here.
         background-image: none;

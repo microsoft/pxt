@@ -84,6 +84,10 @@ export class Editor implements IEditor {
         return undefined;
     }
 
+    getEditorAreaDiv(): HTMLElement | undefined {
+        return undefined;
+    }
+
     hasHistory() { return true; }
     hasUndo() { return true; }
     hasRedo() { return true; }
