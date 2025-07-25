@@ -87,6 +87,46 @@
             text-transform: uppercase;
         }
 
+        /* Download section styling */
+        #download-segment .ui.segment {
+            min-height: 140px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5em 0.8em;
+            margin: 0.2em 0;
+        }
+
+        #download-segment .ui.button {
+            margin-top: auto;
+            white-space: normal;
+            text-align: center;
+            height: 4.5em;
+            width: 90%;
+            line-height: 1.1;
+            padding: 0.5em 0.8em;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #download-segment .ui.button .download.icon {
+            margin-bottom: 0.5em !important;
+        }
+
+        #download-segment h4.ui {
+            margin-bottom: 0;
+            margin-top: 0;
+            flex-shrink: 0;
+        }
+
+        #download-segment h2.ui.header {
+            margin-top: 0;
+            margin-bottom: 0.3em;
+        }
+
         @media only screen and (max-width: 800px) {
             .flex-wrapper img {
                 display: none;
@@ -440,13 +480,24 @@
 
         function updateDownloadLinks(electronVersion) {
             $("#download-win64").attr("href", "https://makecode.com/api/release/@targetid@/" + electronVersion + "/win64");
+            $("#download-winarm64").attr("href", "https://makecode.com/api/release/@targetid@/" + electronVersion + "/winarm64");
             $("#download-mac64").attr("href", "https://makecode.com/api/release/@targetid@/" + electronVersion + "/mac64");
+            $("#download-macarm64").attr("href", "https://makecode.com/api/release/@targetid@/" + electronVersion + "/macarm64");
+            
+            // Show Windows ARM section if needed (currently hidden by default)
+            // $("#winarm64-section").removeClass("hidden");
         }
         function downloadWin64() {
             window.pxtTickEvent("offlineapp.download", { "target": "@targetid@", "platform": "win64" });
         }
+        function downloadWinArm64() {
+            window.pxtTickEvent("offlineapp.download", { "target": "@targetid@", "platform": "winarm64" });
+        }
         function downloadMac64() {
             window.pxtTickEvent("offlineapp.download", { "target": "@targetid@", "platform": "mac64" });
+        }
+        function downloadMacArm64() {
+            window.pxtTickEvent("offlineapp.download", { "target": "@targetid@", "platform": "macarm64" });
         }
         $(function () {
             try {

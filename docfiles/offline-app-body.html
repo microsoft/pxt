@@ -203,19 +203,40 @@
             <div id="download-segment" class="ui center aligned segment hidden">
                 <div class="ui grid">
                     <div class="eight wide column">
-                        <h3 class="ui">Windows</h3>
-                        <a id="download-win64" class="ui icon button" onclick="downloadWin64()">
-                            <i class="download icon"></i>
-                            makecode-@targetid@-setup-win64.exe
-                        </a>
+                        <h2 class="ui header">Windows</h2>
+                        <div class="ui segment">
+                            <h4 class="ui">Intel/AMD</h4>
+                            <a id="download-win64" class="ui icon button" onclick="downloadWin64()">
+                                <i class="download icon"></i>
+                                makecode-@targetid@-setup-win64.exe
+                            </a>
+                        </div>
+                        <div class="ui segment hidden" id="winarm64-section">
+                            <h4 class="ui">ARM</h4>
+                            <a id="download-winarm64" class="ui icon button" onclick="downloadWinArm64()">
+                                <i class="download icon"></i>
+                                makecode-@targetid@-setup-winarm64.exe
+                            </a>
+                        </div>
                     </div>
                     <div class="eight wide column">
-                        <h3 class="ui">Mac OS</h3>
-                        <a id="download-mac64" class="ui icon button" onclick="downloadMac64()">
-                            <i class="download icon"></i>
-                            makecode-@targetid@-mac64.zip
-                        </a>
+                        <h2 class="ui header">Mac OS</h2>
+                        <div class="ui segment">
+                            <h4 class="ui">Intel</h4>
+                            <a id="download-mac64" class="ui icon button" onclick="downloadMac64()">
+                                <i class="download icon"></i>
+                                makecode-@targetid@-mac64.zip
+                            </a>
+                        </div>
+                        <div class="ui segment">
+                            <h4 class="ui">Apple Silicon</h4>
+                            <a id="download-macarm64" class="ui icon button" onclick="downloadMacArm64()">
+                                <i class="download icon"></i>
+                                makecode-@targetid@-macarm64.zip
+                            </a>
+                        </div>
                     </div>
+
                 </div>
             </div>
         </div>
