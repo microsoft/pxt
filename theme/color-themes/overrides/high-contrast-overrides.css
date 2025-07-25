@@ -9,12 +9,19 @@
     z-index: 1;
 }
 
+/*
+Override default button background for the area menu, which requires transparency,
+but still use a fairly opaque one to keep focus/visibility on the main buttons.
+*/
 .area-menu-container .area-button {
-    /*
-    Override default button background for the area menu, which requires transparency,
-    but still use a fairly opaque one to keep focus/visibility on the main buttons.
-    */
     background-color: var(--pxt-neutral-alpha80) !important;
+}
+
+/* 
+ * "User-provided content" header in the import modal.
+ */
+.ui.violet.message .header {
+    color: var(--pxt-colors-purple-background) !important;
 }
 
 /* 
