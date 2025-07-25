@@ -5315,7 +5315,11 @@ export class ProjectView
     }
 
     async showOnboarding() {
-        const tourSteps: pxt.tour.BubbleStep[] = await parseTourStepsAsync(pxt.appTarget.appTheme?.tours?.editor)
+        const tourSteps: pxt.tour.BubbleStep[] = await parseTourStepsAsync(pxt.appTarget.appTheme?.tours?.editor);
+        if (tourSteps.length === 0) {
+            pxt.debug("No tour steps found for onboarding");
+            return;
+        }
         const config: pxt.tour.TourConfig = {
             steps: tourSteps,
             showConfetti: true,
