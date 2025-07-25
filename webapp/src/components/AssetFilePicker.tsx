@@ -2,6 +2,7 @@ import * as React from "react";
 import { Modal, ModalAction } from "../../../react-common/components/controls/Modal";
 import { FieldEditorComponent } from "../blocklyFieldView";
 import { errorNotification } from "../core";
+import { addDragAndDropHandler, DragAndDropHandler, removeDragAndDropHandler } from "../draganddrop";
 
 interface AssetFilePickerProps {
 }
@@ -96,7 +97,29 @@ const AssetFilePickerView = (props: AssetFilePickerViewProps) => {
             className: "secondary",
             onClick: () => onDone()
         }
-    ]
+    ];
+
+    React.useEffect(() => {
+        let handler: DragAndDropHandler = {
+            priority: 1,
+            filter: (f: File) => {
+                // temporarily disable all other drag and drop handlers
+                return true;
+            },
+            dragged: (files: File[]) => {
+                for (const file of files) {
+                    if (file.name.toLowerCase().endsWith(".json")) {
+                        onDone(file);
+                        break;
+                    }
+                }
+            },
+            draggedUri: (uri: string) => { }
+        }
+        addDragAndDropHandler(handler);
+
+        return () => removeDragAndDropHandler(handler);
+    }, []);
 
     return (
         <Modal
