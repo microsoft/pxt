@@ -138,7 +138,6 @@ const AssetFilePickerView = (props: AssetFilePickerViewProps) => {
                     }}
                 />
             </div>
-
         </Modal>
     );
 }

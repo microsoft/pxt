@@ -104,6 +104,7 @@ export function addDragAndDropHandler(handler: DragAndDropHandler) {
 }
 
 export function removeDragAndDropHandler(handler: DragAndDropHandler) {
+    if (!handlers) return;
     const index = handlers.indexOf(handler);
     if (index >= 0) {
         handlers.splice(index, 1);

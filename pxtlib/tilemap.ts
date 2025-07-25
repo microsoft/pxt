@@ -2280,8 +2280,8 @@ namespace pxt {
         if (!oldValue || assetEquals(oldValue, newValue)) return newValue;
 
         newValue = cloneAsset(newValue, true);
-        const wasTemporary = !oldValue.meta.displayName;
-        const isTemporary = !newValue.meta.displayName;
+        const wasTemporary = oldValue.internalID === -1;
+        const isTemporary = newValue.internalID === -1;
 
         // if we went from being temporary to no longer being temporary,
         // make sure we replace the junk id with a new value
