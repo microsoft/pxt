@@ -176,3 +176,21 @@ div.field .ui.toggle.checkbox input:checked~label:before {
 #sidedocsbar a:focus span {
     color: var(--pxt-link-hover) !important;
 }
+
+/*
+ * Editor Toggle
+ */
+#editortoggle .selected.item {
+    transition: none;
+    &:focus {
+        box-shadow: inset 0 0 0 6px #000000 !important;
+    }
+    >.icon {
+        color: #000000 !important;
+    }
+}
+
+#editordropdown.ui.button.active > .icon {
+    color: #000000 !important;
+}
+
