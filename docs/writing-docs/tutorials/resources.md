@@ -150,7 +150,7 @@ rather than showing the editor for Blocks or Code.
 
 ### ~ alert
 
-#### MackeCode Arcade only
+#### MakeCode Arcade only
 
 Asset packs only work with MakeCode Arcade.
 
