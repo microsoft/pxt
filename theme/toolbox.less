@@ -256,9 +256,10 @@ div.blocklyTreeIcon span {
 #search {
     .blocklyTreeRow {
         border-left-color: var(--pxt-target-foreground3);
-    }
-    .blocklyTreeIcon {
-        color: var(--pxt-target-foreground3);
+
+        &:not(.blocklyTreeSelected) .blocklyTreeIcon {
+            color: var(--pxt-target-foreground3);
+        }
     }
 }
 
@@ -331,6 +332,15 @@ div.blocklyTreeIcon span {
     div.blocklyTreeRow:hover {
         background-color: var(--block-faded-color);
         color: var(--pxt-primary-foreground);
+    }
+
+    #search {
+        .blocklyTreeRow {
+            border-left-color: var(--pxt-primary-foreground);
+        }
+        .blocklyTreeIcon {
+            color: var(--pxt-primary-foreground);
+        }
     }
 }
 
