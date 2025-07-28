@@ -1,3 +1,6 @@
+const MAX_LFO_FREQUENCY = 200;
+const MIN_LFO_FREQUENCY = 0.001;
+
 interface LowFrequencyOscillator {
     period: number;
     samplesLeft: number;
@@ -18,7 +21,7 @@ const enum LFOWave {
 }
 
 function advanceLFO(lfo: LowFrequencyOscillator, gateOn: boolean): void {
-    if (lfo.amplitude <= 0) {
+    if (lfo.amplitude === 0) {
         return;
     }
 
@@ -105,7 +108,7 @@ function lfoRandomWave(lfo: LowFrequencyOscillator, progress: number): number {
 function setLFOParam(lfo: LowFrequencyOscillator, param: number, value: number): void {
     switch (param) {
         case LFOParamIndex.Frequency:
-            lfo.period = millisToSamples(1000 / value);
+            lfo.period = millisToSamples(1000 / Math.max(MIN_LFO_FREQUENCY, (value / 0x7fff * (MAX_LFO_FREQUENCY - MIN_LFO_FREQUENCY) + MIN_LFO_FREQUENCY)));
             break;
         case LFOParamIndex.Wave:
             lfo.wave = getLFOWaveFunction(value);

@@ -133,8 +133,10 @@ function exponentialInterpolation(value) {
 function logarithmicInterpolation(value) {
     return Math.log(1 + value * 1.718281828459045);
 }
+const MAX_LFO_FREQUENCY = 200;
+const MIN_LFO_FREQUENCY = 0.001;
 function advanceLFO(lfo, gateOn) {
-    if (lfo.amplitude <= 0) {
+    if (lfo.amplitude === 0) {
         return;
     }
     if (gateOn) {
@@ -209,7 +211,7 @@ function lfoRandomWave(lfo, progress) {
 function setLFOParam(lfo, param, value) {
     switch (param) {
         case 0 /* LFOParamIndex.Frequency */:
-            lfo.period = millisToSamples(1000 / value);
+            lfo.period = millisToSamples(1000 / Math.max(MIN_LFO_FREQUENCY, (value / 0x7fff * (MAX_LFO_FREQUENCY - MIN_LFO_FREQUENCY) + MIN_LFO_FREQUENCY)));
             break;
         case 1 /* LFOParamIndex.Wave */:
             lfo.wave = getLFOWaveFunction(value);
@@ -246,7 +248,7 @@ function handleMessage(synth, message) {
             }
             break;
         case 2 /* ComponentIndex.Frequency */:
-            synth.frequency = value;
+            synth.pitch = value / 0x7fff * MAX_NOTE; // scale to MIDI note range
             break;
         case 3 /* ComponentIndex.AmpEnvelope */:
             setEnvelopeParam(synth.ampEnvelope, param, value);
@@ -262,10 +264,10 @@ function handleMessage(synth, message) {
             break;
         case 7 /* ComponentIndex.PitchBend */:
             if (param === 0 /* PitchBendParamIndex.Value */) {
-                synth.pitchBend = value;
+                synth.pitchBend = value / 0x7fff;
             }
             else if (param === 1 /* PitchBendParamIndex.Range */) {
-                synth.pitchBendRange = value;
+                synth.pitchBendRange = value / 0x7fff * PITCH_MOD_RANGE;
             }
             break;
     }
@@ -274,8 +276,8 @@ const samplesPerMS = (sampleRate << 8) / 1000;
 const toneStepMult = (1024.0 * (1 << 16)) / sampleRate;
 function advanceOscillator(osc, frequency) {
     const toneStep = Math.floor(frequency * toneStepMult);
-    osc.position += toneStep;
-    osc.value = osc.waveFn(osc, (osc.position >> 16) & 1023, osc.position >> 26) / 0x7fff;
+    osc.phase += toneStep;
+    osc.value = osc.waveFn(osc, (osc.phase >> 16) & 1023, osc.phase >> 26) / 0x7fff;
 }
 const SW_TRIANGLE = 1;
 const SW_SAWTOOTH = 2;
@@ -417,7 +419,7 @@ function createOscillator(wave) {
         wave: wave,
         waveFn: getWaveFn(wave),
         generatorState: 0,
-        position: 0,
+        phase: 0,
         value: 0
     };
     return osc;
@@ -425,19 +427,19 @@ function createOscillator(wave) {
 function createDefaultSynth() {
     return {
         osc: createOscillator(SW_SINE),
-        ampEnvelope: createEnvelope(100, 100, 0.5, 200, 1, 0 /* Interpolation.Linear */),
-        pitchEnvelope: createEnvelope(100, 100, 0.5, 200, 0, 0 /* Interpolation.Linear */),
+        ampEnvelope: createEnvelope(10, 100, 0.5, 200, 1, 0 /* Interpolation.Linear */),
+        pitchEnvelope: createEnvelope(10, 100, 0.5, 200, 0, 0 /* Interpolation.Linear */),
         gateOn: false,
-        frequency: 440,
+        pitch: 60,
         pitchBend: 0,
-        pitchBendRange: 1200,
+        pitchBendRange: 2,
         ampLFO: createLFO(1, 0, 0 /* LFOWave.Sine */),
         pitchLFO: createLFO(1, 0, 0 /* LFOWave.Sine */)
     };
 }
 let debug = [];
 function fillSamples(synth, output) {
-    const baseFrequency = synth.frequency + synth.pitchBend * synth.pitchBendRange / 1204;
+    const basePitch = synth.pitch + synth.pitchBend * synth.pitchBendRange;
     for (let i = 0; i < output.length; ++i) {
         advanceEnvelope(synth.ampEnvelope, synth.gateOn);
         advanceEnvelope(synth.pitchEnvelope, synth.gateOn);
@@ -452,15 +454,25 @@ function fillSamples(synth, output) {
         //         debug = [];
         //     }
         // }
-        const pitchEnvelopeRange = 1024;
-        const frequency = baseFrequency + synth.pitchEnvelope.amplitude * synth.pitchEnvelope.value * pitchEnvelopeRange + synth.pitchLFO.amplitude * synth.pitchLFO.value * pitchEnvelopeRange;
+        const pitch = basePitch + (synth.pitchEnvelope.amplitude * synth.pitchEnvelope.value +
+            synth.pitchLFO.amplitude * synth.pitchLFO.value) * PITCH_MOD_RANGE;
         const amplitude = Math.max(synth.ampEnvelope.amplitude * synth.ampEnvelope.value - synth.ampLFO.amplitude * synth.ampLFO.value, 0);
-        advanceOscillator(synth.osc, frequency);
+        advanceOscillator(synth.osc, midiNoteToFrequency(pitch));
         output[i] = synth.osc.value * amplitude;
     }
 }
+const MIN_NOTE = 0;
+const MAX_NOTE = 127;
+const MIDI_NOTE_0_FREQ = 8.17579891564;
+const PITCH_MOD_RANGE = 24; // 2 octaves
 function millisToSamples(millis) {
     return Math.floor(millis * sampleRate / 1000);
+}
+function midiNoteToFrequency(note) {
+    return MIDI_NOTE_0_FREQ * Math.pow(2, note / 12);
+}
+function frequencyToMidiNote(frequency) {
+    return Math.log2(frequency / MIDI_NOTE_0_FREQ) * 12;
 }
 ;
 class MixerAudioWorkletProcessor extends AudioWorkletProcessor {

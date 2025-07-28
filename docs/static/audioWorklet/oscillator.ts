@@ -2,7 +2,7 @@ interface Oscillator {
     wave: number;
     waveFn: (osc: Oscillator, position: number, cycle: number) => number;
     generatorState: number;
-    position: number;
+    phase: number;
     value: number;
 }
 
@@ -11,9 +11,9 @@ const toneStepMult = (1024.0 * (1 << 16)) / sampleRate;
 
 function advanceOscillator(osc: Oscillator, frequency: number) {
     const toneStep = Math.floor(frequency * toneStepMult);
-    osc.position += toneStep;
+    osc.phase += toneStep;
 
-    osc.value = osc.waveFn(osc, (osc.position >> 16) & 1023, osc.position >> 26) / 0x7fff
+    osc.value = osc.waveFn(osc, (osc.phase >> 16) & 1023, osc.phase >> 26) / 0x7fff
 }
 
 
@@ -168,7 +168,7 @@ function createOscillator(wave: number): Oscillator {
         wave: wave,
         waveFn: getWaveFn(wave),
         generatorState: 0,
-        position: 0,
+        phase: 0,
         value: 0
     };
 

@@ -60,7 +60,7 @@ function handleMessage(synth: Synth, message: [number, number, number]) {
             }
             break;
         case ComponentIndex.Frequency:
-            synth.frequency = value;
+            synth.pitch = value / 0x7fff * MAX_NOTE; // scale to MIDI note range
             break;
         case ComponentIndex.AmpEnvelope:
             setEnvelopeParam(synth.ampEnvelope, param, value);
@@ -76,9 +76,9 @@ function handleMessage(synth: Synth, message: [number, number, number]) {
             break;
         case ComponentIndex.PitchBend:
             if (param === PitchBendParamIndex.Value) {
-                synth.pitchBend = value;
+                synth.pitchBend = value / 0x7fff;
             } else if (param === PitchBendParamIndex.Range) {
-                synth.pitchBendRange = value;
+                synth.pitchBendRange = value / 0x7fff * PITCH_MOD_RANGE;
             }
             break;
     }
