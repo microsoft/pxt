@@ -296,6 +296,22 @@ namespace pxsim {
             stopTone();
             muteAllChannels();
 
+            if (workletChannels) {
+                for (const channel of workletChannels) {
+                    channel.dispose();
+                }
+                workletChannels = [];
+            }
+
+            if (monoSynthChannels) {
+                for (const channel of monoSynthChannels) {
+                    if (channel) {
+                        channel.dispose();
+                    }
+                }
+                monoSynthChannels = [];
+            }
+
             for (const handler of stopAllListeners) {
                 handler();
             }
@@ -780,16 +796,22 @@ namespace pxsim {
         }
 
         let workletInit: Promise<void>;
+        let workletInitComplete = false;
         let workletChannels: AudioWorkletChannel[] = [];
-        export async function playInstructionsAsync(instructions: Uint8Array, isCancelled?: () => boolean, onPull?: (data: Float32Array, fft: Uint8Array) => void) {
-            soundEventCallback?.("playinstructions", instructions);
-
+        function _workletInit() {
             if (!workletInit) {
                 workletInit = (async () => {
                     // await context().audioWorklet.addModule("/static/audioWorklet/audioWorkletProcessor.js");
+                    await context().audioWorklet.addModule("/static/audioWorklet/worklet.js");
                     await context().audioWorklet.addModule(getWorkletUri());
+                    workletInitComplete = true;
                 })();
             }
+        }
+        export async function playInstructionsAsync(instructions: Uint8Array, isCancelled?: () => boolean, onPull?: (data: Float32Array, fft: Uint8Array) => void) {
+            soundEventCallback?.("playinstructions", instructions);
+
+            _workletInit();
             await workletInit;
 
             let channel: AudioWorkletChannel;
@@ -829,6 +851,65 @@ namespace pxsim {
             await channel.playInstructionsAsync(instructions, isCancelled);
 
             finished = true;
+        }
+
+        class MonoSynthChannel {
+            generator: AudioWorkletNode;
+
+            constructor() {
+                this.generator = new AudioWorkletNode(context(), "pxt-monosynth-audio-worklet-processor");
+                this.generator.connect(destination);
+            }
+
+            sendMessage(msg: [number, number, number]) {
+                if (this.generator && this.generator.port) {
+                    this.generator.port.postMessage(msg);
+                }
+            }
+
+            dispose() {
+                this.generator.disconnect();
+                this.generator.port.close();
+                this.generator = undefined;
+            }
+        }
+
+        let monoSynthChannels: MonoSynthChannel[] = [];
+
+        export function sendMonoSynthMessage(channel: number, message: RefBuffer) {
+            if (channel < 0) {
+                return;
+            }
+
+            if (workletInitComplete) {
+                sendMonoSynthMessageCore(channel, message);
+            }
+            else {
+                (async () => {
+                    _workletInit();
+                    await workletInit;
+
+                    sendMonoSynthMessageCore(channel, message);
+                })()
+            }
+
+        }
+
+        function sendMonoSynthMessageCore(channel: number, message: RefBuffer) {
+            if (!monoSynthChannels[channel]) {
+                monoSynthChannels[channel] = new MonoSynthChannel();
+            }
+
+            const synthChannel = monoSynthChannels[channel];
+            if (synthChannel) {
+                synthChannel.sendMessage(
+                    [
+                        BufferMethods.getNumber(message, BufferMethods.NumberFormat.UInt8LE, 0),
+                        BufferMethods.getNumber(message, BufferMethods.NumberFormat.UInt8LE, 1),
+                        BufferMethods.getNumber(message, BufferMethods.NumberFormat.Int16LE, 2)
+                    ]
+                );
+            }
         }
 
         export function sendMidiMessage(buf: RefBuffer) {

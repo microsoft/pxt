@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "esnext",
+    "lib": ["es2017", "es7", "es6", "dom"],
+    "declaration": false,
+    "outFile": "worklet.js",
+    "strict": true,
+    "types": []
+  },
+  "exclude": [
+    "worklet.js"
+  ]
+}
