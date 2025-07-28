@@ -756,7 +756,7 @@ Blockly.Css.register(`
 }
 
 .blocklyGridPickerTooltip {
-    z-index: 955;
+    z-index: 995;
 }
 
 .blocklyGridPickerSelectedBar {

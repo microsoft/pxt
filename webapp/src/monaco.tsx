@@ -369,8 +369,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private highlightedBreakpoint: number;
     private editAmendmentsListener: monaco.IDisposable | undefined;
     private errors: ErrorDisplayInfo[] = [];
+    private errorListDebounceActive: boolean = false;
+    private revealErrorListDebounced: () => void;
     private callLocations: pxtc.LocationInfo[];
-
     private handleFlyoutWheel = (e: WheelEvent) => e.stopPropagation();
     private handleFlyoutScroll = (e: WheelEvent) => e.stopPropagation();
 
@@ -384,6 +385,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.onUserPreferencesChanged = this.onUserPreferencesChanged.bind(this);
         this.getDisplayInfoForError = this.getDisplayInfoForError.bind(this);
         this.getErrorHelp = this.getErrorHelp.bind(this);
+        this.setErrors = this.setErrors.bind(this);
+        this.revealErrorListDebounced = pxt.Util.debounce(() => {
+            this.errorListDebounceActive = false;
+        }, 2000 /* 2 seconds */);
 
         ThemeManager.getInstance(document)?.subscribe("monaco", () => this.onUserPreferencesChanged());
     }
@@ -635,7 +640,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     display(): JSX.Element {
-        const showErrorList = pxt.appTarget.appTheme.errorList && !pxt.shell.isTimeMachineEmbed() && !this.parent.state.debugging;
+        const showErrorList =
+            !this.errorListDebounceActive &&
+            pxt.appTarget.appTheme.errorList &&
+            !pxt.shell.isTimeMachineEmbed() &&
+            !this.parent.state.debugging;
 
         return (
             <div id="monacoEditorArea" className={`monacoEditorArea`} style={{ direction: 'ltr' }}>
@@ -683,15 +692,30 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             });
     }
 
+    // This sets the errors and manages our debounce logic for showing the error list.
+    setErrors(errors: ErrorDisplayInfo[]) {
+        const oldHasErrors = !!this.errors?.length;
+        const newHasErrors = !!errors?.length;
+
+        this.errors = errors;
+
+        // Delay showing error list when going from none -> some errors,
+        // but do not re-hide the list if it was already visible.
+        if (newHasErrors && (!oldHasErrors || this.errorListDebounceActive)) {
+            this.errorListDebounceActive = true;
+            this.revealErrorListDebounced();
+        }
+    }
+
     public onExceptionDetected(exception: pxsim.DebuggerBreakpointMessage) {
         const exceptionDisplayInfo: ErrorDisplayInfo = this.getDisplayInfoForException(exception);
-        this.errors = [exceptionDisplayInfo];
+        this.setErrors([exceptionDisplayInfo]);
         this.parent.setState({ errorListNote: undefined });
     }
 
     private onErrorChanges(errors: pxtc.KsDiagnostic[]) {
         const errorDisplayInfo: ErrorDisplayInfo[] = errors.map(this.getDisplayInfoForError);
-        this.errors = errorDisplayInfo;
+        this.setErrors(errorDisplayInfo);
         this.parent.setState({ errorListNote: undefined });
     }
 
@@ -1521,6 +1545,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                         this.updateDiagnostics();
                         this.changeCallback();
                         this.updateFieldEditors();
+
+                        if (this.errorListDebounceActive) {
+                            // Delay showing the error list while user is typing
+                            this.revealErrorListDebounced();
+                        }
                     });
                 }
 
@@ -1555,7 +1584,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     unloadFileAsync(): Promise<void> {
         if (this.toolbox)
             this.toolbox.clearSearch();
-        this.errors = [];
+        this.setErrors([]);
         this.parent.setState({errorListNote: undefined});
         if (this.currFile && this.currFile.getName() == "this/" + pxt.CONFIG_NAME) {
             // Reload the header if a change was made to the config file: pxt.json
