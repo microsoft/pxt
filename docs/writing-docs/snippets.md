@@ -251,6 +251,10 @@ is no **template** block present in the tutorial, the default "new project" code
     ```template
     let x = 0
     ```
+When creating a tutorial using Python, **python-template** should be used instead for initial code.
+    ```python-template
+    x = 0
+    ```
 
 ### customts (tutorials only)
 
