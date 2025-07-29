@@ -559,8 +559,6 @@
             $("#download-mac64").attr("href", "https://makecode.com/api/release/@targetid@/" + electronVersion + "/mac64");
             $("#download-macarm64").attr("href", "https://makecode.com/api/release/@targetid@/" + electronVersion + "/macarm64");
             
-            // Show Windows ARM section if needed (currently hidden by default)
-            // $("#winarm64-section").removeClass("hidden");
         }
         function downloadWin64() {
             window.pxtTickEvent("offlineapp.download", { "target": "@targetid@", "platform": "win64" });
