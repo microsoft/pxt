@@ -56,7 +56,7 @@ export class ErrorList extends auth.Component<ErrorListProps, ErrorListState> {
         super(props);
 
         this.state = {
-            isCollapsed: true,
+            isCollapsed: !this.props.errors?.length,
             isLoadingHelp: false,
         };
 
@@ -110,6 +110,7 @@ export class ErrorList extends auth.Component<ErrorListProps, ErrorListState> {
             !!getErrorHelp &&
             !!showLoginDialog &&
             !pxt.shell.isReadOnly() &&
+            !pxt.BrowserUtils.isPxtElectron() &&
             (pxt.appTarget.appTheme.forceEnableAiErrorHelp || pxt.Util.isFeatureEnabled("aiErrorHelp"));
 
         const helpLoader = (

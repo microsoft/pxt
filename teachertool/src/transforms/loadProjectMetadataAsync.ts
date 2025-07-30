@@ -6,7 +6,7 @@ import { showToast } from "./showToast";
 import { makeToast } from "../utils";
 import { initNewProjectResults } from "./initNewProjectResults";
 
-export async function loadProjectMetadataAsync(inputText: string, shareLink: string) {
+export async function loadProjectMetadataAsync(inputText: string, shareLink: string, force?: boolean) {
     const { dispatch } = stateAndDispatch();
 
     const scriptId = pxt.Cloud.parseScriptId(shareLink);
@@ -32,7 +32,7 @@ export async function loadProjectMetadataAsync(inputText: string, shareLink: str
         ...projMeta,
         inputText,
     };
-    dispatch(Actions.setProjectMetadata(projectData));
+    dispatch(Actions.setProjectMetadata(projectData, force));
     initNewProjectResults();
     logDebug("Loaded project metadata", projMeta);
 }
