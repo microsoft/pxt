@@ -96,7 +96,7 @@ namespace pxsim {
             if (!o) return o;
             if (o instanceof RefObject) return o; // already a Ref* object
             if (Array.isArray(o)) return RefCollection.fromAny(o);
-            if (typeof o === "object") return RefRecord.fromAny(o);
+            if (typeof o === "object") return RefMap.fromAny(o);
             return o; // number, string, boolean, null, undefined, etc...
         }
 
