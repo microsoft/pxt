@@ -1899,12 +1899,11 @@ export class ProjectView
                 this.setSideDoc(documentation, editorForFile == this.blocksEditor);
             }
             else {
-                const readme = main.lookupFile("this/README.md");
-                const readmeContent = readme?.content?.trim();
+                const readmeContent = this.getLocalizedReadmeContent();
                 // no auto-popup when editing packages locally
                 // ### @autoOpen false
                 if (!h.githubId && readmeContent && !/#{2,}\s+@autoOpen\s+false\s*/i.test(readmeContent)) {
-                    this.setSideMarkdown(readme.content);
+                    this.setSideMarkdown(readmeContent);
                 }
             }
 
@@ -1920,6 +1919,25 @@ export class ProjectView
             /* await */ cmds.maybeReconnectAsync(false, true);
             this.editorLoaded();
         }
+    }
+
+    private getLocalizedReadmeContent(): string | undefined {
+        const main = pkg.getEditorPkg(pkg.mainPkg);
+        const [initialLang, baseLang, initialLangLowerCase] = pxt.Util.normalizeLanguageCode(pxt.Util.userLanguage());
+        const priorityOrder = [initialLang, initialLangLowerCase, baseLang].filter((lang) => typeof lang === "string");
+        const pathsToTest = [
+            ...priorityOrder.map(lang =>`this/_locales/${lang}/README.md`),
+            "this/README.md"
+        ];
+        for (const path of pathsToTest) {
+            const file = main.lookupFile(path);
+            const hasContent = file?.content?.trim();
+
+            if (hasContent) {
+                return file.content;
+            }
+        }
+        return undefined;
     }
 
     private async loadTutorialFiltersAsync(): Promise<void> {
