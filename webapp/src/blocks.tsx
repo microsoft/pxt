@@ -921,7 +921,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         initCopyPaste(accessibleBlocksEnabled);
         // This must come after initCopyPaste and initContextMenu.
         // initCopyPaste overrides the default cut, copy, paste shortcuts.
-        // The keyboard navigation plugin utilizes these cut, copy and paste shortcuts 
+        // The keyboard navigation plugin utilizes these cut, copy and paste shortcuts
         // and wraps them with additional behaviours (e.g., toast notifications). 
         // initContextMenu overrides the default context menu options. The plugin 
         // decorates the duplicate block context menu item to display the shortcut.
