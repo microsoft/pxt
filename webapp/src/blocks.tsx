@@ -37,6 +37,7 @@ import { DuplicateOnDragConnectionChecker, shouldDuplicateOnDrag } from "../../p
 import { PathObject } from "../../pxtblocks/plugins/renderer/pathObject";
 import { Measurements } from "./constants";
 import { flow, initCopyPaste } from "../../pxtblocks";
+import { initContextMenu } from "../../pxtblocks/contextMenu";
 import { HIDDEN_CLASS_NAME } from "../../pxtblocks/plugins/flyout/blockInflater";
 import { AIFooter } from "../../react-common/components/controls/AIFooter";
 import { CREATE_VAR_BTN_ID } from "../../pxtblocks/builtins/variables";
@@ -916,10 +917,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.initPrompts();
         this.initBlocklyToolbox();
         this.initWorkspaceSounds();
+        initContextMenu();
         initCopyPaste(accessibleBlocksEnabled);
-        // This must come after initCopyPaste which overrides the default cut, copy,
-        // paste shortcuts. The keyboard navigation plugin utilizes these cut, copy and paste
-        // shortcuts and wraps them with additional behaviours (e.g., toast notifications).
+        // This must come after initCopyPaste and initContextMenu.
+        // initCopyPaste overrides the default cut, copy, paste shortcuts.
+        // The keyboard navigation plugin utilizes these cut, copy and paste shortcuts
+        // and wraps them with additional behaviours (e.g., toast notifications). 
+        // initContextMenu overrides the default context menu options. The plugin 
+        // decorates the duplicate block context menu item to display the shortcut.
         if (accessibleBlocksEnabled) {
             this.initAccessibleBlocks();
         }
