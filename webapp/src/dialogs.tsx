@@ -717,9 +717,13 @@ export function showReportAbuseAsync(pubId?: string) {
 }
 
 export function showResetDialogAsync() {
+    const isMinecraft = pxt.appTarget.id === "minecraft";
+    const dialogBody = isMinecraft
+        ? lf("You are about to delete all MakeCode projects from Minecraft. Are you sure? This operation cannot be undone.")
+        : lf("You are about to delete all projects. Are you sure? This operation cannot be undone.");
     return core.confirmAsync({
         header: lf("Reset"),
-        body: lf("You are about to clear all projects. Are you sure? This operation cannot be undone."),
+        body: dialogBody,
         agreeLbl: lf("Reset"),
         agreeClass: "red",
         agreeIcon: "sign out",
