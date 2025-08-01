@@ -58,6 +58,15 @@ basic.showString("Hello!")
 
 Users will have the option of clicking the Python icon to see the snippet in Python just like they can with Blocks and Javascript/Typescript.
 
+### Python templates
+To provide starter code in Python, these should be written using **python-template** like this:
+````
+```python-template
+for i in range(100):
+    mobs.spawn(CHICKEN, pos(0, 10, 0))
+```
+````
+
 ## JavaScript and Python with a single tutorial ("Spy tutorials")
 
 If you are able to author your tutorial in a language agnostic way,

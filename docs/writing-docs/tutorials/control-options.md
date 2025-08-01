@@ -111,6 +111,8 @@ For a "blank" template that only contains the `on start` block (in targets like 
 
 You can include **1** template in a tutorial. Place the template section either at the beginning of the document or at the end so as to not clutter the sequence of tutorial steps.
 
+If you're writing a Python tutorial, you should use **python-template** in place of **template** to provide the user with starter code.
+
 ### Ghost blocks
 
 When a step from a tutorial is loaded, the Toolbox contains the only the blocks from the snippet to allow the user to complete the step as intended. If you want to give the user additional blocks beyond those in the hint snippet, you can include _ghost_ blocks in for the step. These blocks appear in the Toolbox but not in the hint snippet.
