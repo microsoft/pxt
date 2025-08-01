@@ -220,3 +220,6 @@ Read more about accessibility for the JavaScript or Python editor (keyboard navi
 ## Accessibility guidance for specific editors
 
 Some MakeCode editors have more detailed accessibility information and guidance specific to its own platform.
+
+For MakeCode for the micro:bit, please visit [Micro:bit Educational Foundation’s MakeCode Accessibility](https://microbit.org/accessibility/microsoft-makecode/) support page for videos and a downloadable resources to help you learn how to use keyboard controls and other accessibility features.
+

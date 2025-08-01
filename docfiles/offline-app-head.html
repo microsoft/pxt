@@ -87,6 +87,65 @@
             text-transform: uppercase;
         }
 
+        /* Download section styling */
+        #download-segment .ui.segment {
+            min-height: 140px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5em 0.8em;
+            margin: 0.2em 0;
+        }
+
+        #download-segment .download-header {
+            text-align: center;
+            margin-bottom: auto;
+        }
+
+        #download-segment .ui.button {
+            white-space: normal;
+            text-align: center;
+            height: 4.5em;
+            width: 90%;
+            line-height: 1.1;
+            padding: 0.5em 0.8em;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #download-segment .ui.button .download.icon {
+            margin-bottom: 0.5em !important;
+        }
+
+        #download-segment h4.ui {
+            margin-bottom: 0;
+            margin-top: 0;
+        }
+
+        #download-segment h2.ui.header {
+            margin-top: 0;
+            margin-bottom: 0.3em;
+        }
+
+        .recommended-text {
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 0.1em;
+            margin-bottom: 0.6em;
+            font-style: italic;
+            height: 1.2em;
+            line-height: 1.2em;
+        }
+
+        .recommended-space {
+            height: 1.2em;
+            margin-top: 0.1em;
+            margin-bottom: 0.6em;
+        }
+
         @media only screen and (max-width: 800px) {
             .flex-wrapper img {
                 display: none;
@@ -436,17 +495,82 @@
 
         function showDownloads() {
             $("#download-segment").removeClass("hidden");
+            detectAndMarkRecommendedDownload();
+        }
+
+        function detectAndMarkRecommendedDownload() {
+            const userAgent = navigator.userAgent;
+            const platform = navigator.platform;
+            
+            // Detect operating system and architecture
+            const isMac = /Mac|iPhone|iPad|iPod/.test(userAgent) || platform.indexOf('Mac') > -1;
+            const isWindows = /Win/.test(platform) || /Windows/.test(userAgent);
+            const isAppleSilicon = isMac && (userAgent.includes('Macintosh') && 
+                                            (userAgent.includes('Intel') === false || 
+                                             /arm64|aarch64/i.test(userAgent)));
+            const isWindowsARM = isWindows && /arm64|aarch64|WOW64/i.test(userAgent);
+            
+            // Ensure all segments have consistent structure
+            $("#download-segment .ui.segment").each(function() {
+                const segment = $(this);
+                const h4 = segment.find("h4.ui");
+                
+                // Wrap h4 in header div if not already wrapped
+                if (!h4.parent().hasClass('download-header')) {
+                    h4.wrap('<div class="download-header"></div>');
+                }
+                
+                // Add recommendation space if it doesn't exist
+                const header = segment.find(".download-header");
+                if (!header.find(".recommended-text, .recommended-space").length) {
+                    header.append('<div class="recommended-space"></div>');
+                }
+            });
+            
+            let recommendedButton = null;
+            
+            if (isMac) {
+                if (isAppleSilicon) {
+                    recommendedButton = $("#download-macarm64");
+                } else {
+                    recommendedButton = $("#download-mac64");
+                }
+            } else if (isWindows) {
+                if (false && isWindowsARM) {
+                    recommendedButton = $("#download-winarm64");
+                } else {
+                    recommendedButton = $("#download-win64");
+                }
+            }
+            
+            // Mark the recommended download
+            if (recommendedButton && recommendedButton.length) {
+                const segment = recommendedButton.closest(".ui.segment");
+                const space = segment.find(".recommended-space");
+                if (space.length) {
+                    space.replaceWith('<div class="recommended-text">Recommended</div>');
+                }
+            }
         }
 
         function updateDownloadLinks(electronVersion) {
             $("#download-win64").attr("href", "https://makecode.com/api/release/@targetid@/" + electronVersion + "/win64");
+            $("#download-winarm64").attr("href", "https://makecode.com/api/release/@targetid@/" + electronVersion + "/winarm64");
             $("#download-mac64").attr("href", "https://makecode.com/api/release/@targetid@/" + electronVersion + "/mac64");
+            $("#download-macarm64").attr("href", "https://makecode.com/api/release/@targetid@/" + electronVersion + "/macarm64");
+            
         }
         function downloadWin64() {
             window.pxtTickEvent("offlineapp.download", { "target": "@targetid@", "platform": "win64" });
         }
+        function downloadWinArm64() {
+            window.pxtTickEvent("offlineapp.download", { "target": "@targetid@", "platform": "winarm64" });
+        }
         function downloadMac64() {
             window.pxtTickEvent("offlineapp.download", { "target": "@targetid@", "platform": "mac64" });
+        }
+        function downloadMacArm64() {
+            window.pxtTickEvent("offlineapp.download", { "target": "@targetid@", "platform": "macarm64" });
         }
         $(function () {
             try {
