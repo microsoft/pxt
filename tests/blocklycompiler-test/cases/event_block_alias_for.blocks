@@ -1,0 +1,22 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="test_event_alias">
+<statement name="HANDLER">
+</statement>
+</block>
+<block type="test_event_alias2">
+<value name="HANDLER_DRAG_PARAM_num">
+<block type="argument_reporter_number">
+<mutation duplicateondrag="true" />
+<field name="VALUE">num</field>
+</block>
+</value>
+<value name="HANDLER_DRAG_PARAM_bool">
+<block type="argument_reporter_boolean">
+<mutation duplicateondrag="true" />
+<field name="VALUE">bool</field>
+</block>
+</value>
+<statement name="HANDLER">
+</statement>
+</block>
+</xml>
