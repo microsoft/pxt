@@ -26,6 +26,7 @@ interface AssetGalleryState {
 }
 
 interface AssetOption {
+    type: pxt.AssetType;
     label: string;
     icon: string;
     handler: () => void;
@@ -38,17 +39,39 @@ class AssetGalleryImpl extends React.Component<AssetGalleryProps, AssetGallerySt
         super(props);
         this.state = { showCreateModal: false };
 
-        this.assetCreateOptions = [
-            { label: lf("Image"), icon: "picture", handler: this.getCreateAssetHandler(pxt.AssetType.Image) },
-            { label: lf("Tile"), icon: "clone", handler: this.getCreateAssetHandler(pxt.AssetType.Tile) },
-            { label: lf("Tilemap"), icon: "map", handler: this.getCreateAssetHandler(pxt.AssetType.Tilemap) },
-            { label: lf("Animation"), icon: "video", handler: this.getCreateAssetHandler(pxt.AssetType.Animation) }
+        const defaultOptions: AssetOption[] = [
+            { type: pxt.AssetType.Image, label: lf("Image"), icon: "picture", handler: this.getCreateAssetHandler(pxt.AssetType.Image) },
+            { type: pxt.AssetType.Tile, label: lf("Tile"), icon: "clone", handler: this.getCreateAssetHandler(pxt.AssetType.Tile) },
+            { type: pxt.AssetType.Tilemap, label: lf("Tilemap"), icon: "map", handler: this.getCreateAssetHandler(pxt.AssetType.Tilemap) },
+            { type: pxt.AssetType.Animation, label: lf("Animation"), icon: "video", handler: this.getCreateAssetHandler(pxt.AssetType.Animation) },
+            { type: pxt.AssetType.Song, label: lf("Song"), icon: "music", handler: this.getCreateAssetHandler(pxt.AssetType.Song) },
+            { type: pxt.AssetType.Json, label: lf("File"), icon: "file", handler: this.getCreateAssetHandler(pxt.AssetType.Json) }
         ]
 
-        if (pxt.appTarget.appTheme?.songEditor) {
-            this.assetCreateOptions.push(
-                { label: lf("Song"), icon: "music", handler: this.getCreateAssetHandler(pxt.AssetType.Song) }
-            );
+        if (typeof pxt.appTarget.appTheme?.assetEditor === "object") {
+            const config = pxt.appTarget.appTheme.assetEditor as pxt.AssetConfig;
+            this.assetCreateOptions = defaultOptions.filter(opt => config[opt.type])
+
+            for (const assetType of Object.keys(pxt.appTarget.appTheme.assetEditor)) {
+                const entry = config[assetType];
+
+                if (typeof entry === "object") {
+                    const opt = this.assetCreateOptions.find(o => o.type === assetType);
+                    if (entry.label) {
+                        opt.label = pxt.U.rlf(`{id:assetType}${entry.label}`);
+                    }
+                    if (entry.iconClass) {
+                        opt.icon = entry.iconClass;
+                    }
+                }
+            }
+        }
+        else {
+            this.assetCreateOptions = defaultOptions.filter(opt => opt.type !== pxt.AssetType.Json);
+
+            if (!pxt.appTarget.appTheme?.songEditor) {
+                this.assetCreateOptions = this.assetCreateOptions.filter(opt => opt.type !== pxt.AssetType.Song);
+            }
         }
     }
 
@@ -82,6 +105,8 @@ class AssetGalleryImpl extends React.Component<AssetGalleryProps, AssetGallerySt
                         project.createNewAnimationFromData(result.frames, result.interval, name); break;
                     case pxt.AssetType.Song:
                         project.createNewSong(result.song, name); break;
+                    case pxt.AssetType.Json:
+                        project.createNewJsonAsset(result.data, result.fileName, name); break;
                 }
                 pkg.mainEditorPkg().buildAssetsAsync()
                     .then(() => this.props.dispatchUpdateUserAssets());

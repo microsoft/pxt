@@ -4,75 +4,76 @@ interface AssetPreviewProps {
     asset: pxt.Asset;
 }
 
-export class AssetPreview extends React.Component<AssetPreviewProps> {
-    protected ref: HTMLImageElement;
-    protected animationIntervalRef: number;
-    protected currentFrame: number;
+export const AssetPreview = (props: AssetPreviewProps) => {
+    const { asset } = props;
+    const title = asset.meta.displayName || (asset.meta.temporaryInfo ? lf("Temporary Asset") : asset.id);
 
-    render() {
-        const { asset } = this.props;
-
-        const isAnimation = asset.type === pxt.AssetType.Animation && asset.framePreviewURIs?.length > 1;
-
-        const title = asset.meta.displayName || (asset.meta.temporaryInfo ? lf("Temporary Asset") : asset.id);
-
-        return <div className="asset-editor-preview" title={title}>
-            <img
-                src={asset.previewURI}
-                alt={lf("A preview of your asset (eg image, tile, animation)")}
-                onMouseEnter={isAnimation ? this.onMouseEnter : undefined}
-                onMouseLeave={isAnimation ? this.onMouseLeave : undefined}
-                ref={isAnimation ? this.handleRef : undefined}
-                // @ts-ignore
-                loading="lazy" />
+    return (
+        <div className="asset-editor-preview" title={title}>
+            { asset.type === pxt.AssetType.Json ?
+                <JsonAssetPreview {...props} /> :
+                <AssetImagePreview {...props} />
+            }
         </div>
-    }
+    )
+}
 
-    componentDidUpdate() {
-        if (this.animationIntervalRef) {
-            this.restartAnimation();
-        }
-    }
+const AssetImagePreview = (props: AssetPreviewProps) => {
+    const { asset } = props;
 
-    componentWillUnmount() {
-        this.endAnimation();
-    }
+    const ref = React.useRef<HTMLImageElement>(null);
+    const isAnimation = asset.type === pxt.AssetType.Animation && asset.framePreviewURIs?.length > 1;
 
-    protected onMouseEnter = () => {
-        this.restartAnimation();
-    }
+    React.useEffect(() => {
+        if (!isAnimation || !ref.current) return undefined;
+        let intervalRef: number | undefined;
+        let currentFrame = 0;
 
-    protected onMouseLeave = () => {
-        this.endAnimation();
-    }
-
-    protected endAnimation() {
-        if (this.animationIntervalRef) {
-            clearInterval(this.animationIntervalRef);
-            this.animationIntervalRef = undefined;
-            this.ref.src = this.props.asset.previewURI;
-        }
-    }
-
-    protected restartAnimation = () => {
-        this.endAnimation();
-        const animation = this.props.asset as pxt.Animation;
-
-        if (animation.type === pxt.AssetType.Animation && animation.framePreviewURIs?.length > 1) {
-            this.currentFrame = 0;
-
-            this.animationIntervalRef = setInterval(() => {
-                if (this.ref) {
-                    this.ref.src = animation.framePreviewURIs[this.currentFrame];
+        const mouseEnter = () => {
+            intervalRef = setInterval(() => {
+                if (ref.current) {
+                    ref.current.src = asset.framePreviewURIs[currentFrame];
                 }
-                this.currentFrame = (this.currentFrame + 1) % animation.framePreviewURIs.length;
-            }, Math.max(animation.interval, 100));
+                currentFrame = (currentFrame + 1) % asset.framePreviewURIs.length;
+            }, Math.max(asset.interval, 100));
         }
-    }
 
-    protected handleRef = (ref: HTMLImageElement) => {
-        if (ref) {
-            this.ref = ref;
+        const mouseLeave = () => {
+            clearInterval(intervalRef);
         }
-    }
+
+        ref.current.addEventListener("mouseenter", mouseEnter);
+        ref.current.addEventListener("mouseleave", mouseLeave);
+
+        return () => {
+            if (intervalRef) {
+                clearInterval(intervalRef);
+            }
+            ref.current?.removeEventListener("mouseenter", mouseEnter);
+            ref.current?.removeEventListener("mouseleave", mouseLeave);
+        }
+    }, [asset, isAnimation])
+
+    return (
+        <img
+            src={asset.previewURI}
+            alt={lf("A preview of your asset (eg image, tile, animation)")}
+            ref={ref}
+            // @ts-ignore
+            loading="lazy" />
+    )
+}
+
+const JsonAssetPreview = (props: AssetPreviewProps) => {
+    const { asset } = props;
+
+    const name = asset.meta.displayName || lf("Untitled");
+
+    return (
+        <div className="json-asset-preview">
+            <div>
+                {name}
+            </div>
+        </div>
+    )
 }
