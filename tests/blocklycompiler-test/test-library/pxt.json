@@ -7,7 +7,8 @@
         "mbit.ts",
         "expandableBlocks.ts",
         "spritekind.ts",
-        "toStringArgs.ts"
+        "toStringArgs.ts",
+        "blockAliasFor.ts"
     ],
     "public": true,
     "dependencies": {},
