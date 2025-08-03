@@ -106,6 +106,7 @@ namespace pxt.auth {
     // Last known auth token state. This is provided as a convenience for legacy methods that cannot be made async.
     // Preference hasAuthTokenAsync() over taking a dependency on this cached value.
     export let cachedHasAuthToken = false;
+    export let cachedAuthOffline = false;
 
     async function setLocalStorageValueAsync(key: string, value: string | undefined): Promise<void> {
         if (!!value)
@@ -127,6 +128,10 @@ namespace pxt.auth {
         return await setLocalStorageValueAsync(CSRF_TOKEN_KEY, token);
     }
     export async function hasAuthTokenAsync(): Promise<boolean> {
+        if (proxyIdentityThroughIPC()) {
+            cachedHasAuthToken = true;
+            return true;
+        }
         return !!(await getAuthTokenAsync());
     }
     async function delAuthTokenAsync(): Promise<void> {
@@ -759,7 +764,14 @@ namespace pxt.auth {
     }
 
     export function hasIdentity(): boolean {
+        if (proxyIdentityThroughIPC()) {
+            return true;
+        }
         return !authDisabled && !pxt.BrowserUtils.isPxtElectron() && identityProviders().length > 0;
+    }
+
+    export function proxyIdentityThroughIPC(): boolean {
+        return pxt.appTarget.appTheme.ipcIdentityProxy;
     }
 
     function idpEnabled(idp: pxt.IdentityProviderId): boolean {
