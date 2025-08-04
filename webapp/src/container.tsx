@@ -16,6 +16,7 @@ import SimState = pxt.editor.SimState;
 import { sendUpdateFeedbackTheme } from "../../react-common/components/controls/Feedback/FeedbackEventListener";
 import KeyboardControlsHelp from "./components/KeyboardControlsHelp";
 import { CheckboxIcon } from "../../react-common/components/controls/Checkbox";
+import { ThemeManager } from "../../react-common/components/theming/themeManager";
 
 // common menu items -- do not remove
 // lf("About")
@@ -81,24 +82,17 @@ function getKeyboardNavHelpItem(parent: IProjectView, cls: string = ""): JSX.Ele
 type DocsMenuEditorName = "Blocks" | "JavaScript" | "Python";
 interface DocsMenuProps extends ISettingsProps {
     editor: DocsMenuEditorName;
+    inBlocks: boolean;
 }
 
-function showKeyboardControls() {
-    const languageRestriction = pkg.mainPkg?.config?.languageRestriction;
-    const pyOnly = languageRestriction === pxt.editor.LanguageRestriction.PythonOnly;
-    const noBlocks = languageRestriction === pxt.editor.LanguageRestriction.NoBlocks;
-    const tsOnly = languageRestriction === pxt.editor.LanguageRestriction.JavaScriptOnly;
-    return !pyOnly && !tsOnly && !noBlocks && !!pkg.mainEditorPkg().files[pxt.MAIN_BLOCKS];
-}
-
-export class DocsMenu extends data.PureComponent<DocsMenuProps & { hasMainBlocksFile: boolean }, {}> {
+export class DocsMenu extends data.PureComponent<DocsMenuProps, {}> {
     renderCore() {
         const parent = this.props.parent;
         const targetTheme = pxt.appTarget.appTheme;
         const accessibleBlocksEnabled = data.getData<boolean>(auth.ACCESSIBLE_BLOCKS);
         return <sui.DropdownMenu role="menuitem" icon="help circle large"
             className="item mobile hide help-dropdown-menuitem" textClass={"landscape only"} title={lf("Help")} >
-            {this.props.hasMainBlocksFile && showKeyboardControls() && accessibleBlocksEnabled && getKeyboardNavHelpItem(parent)}
+            {this.props.inBlocks && accessibleBlocksEnabled && getKeyboardNavHelpItem(parent)}
             {targetTheme.tours?.editor && getTourItem(parent)}
             {renderDocItems(parent, targetTheme.docMenu)}
             {getDocsLanguageItem(this.props.editor, parent)}
@@ -252,8 +246,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
     }
 
     toggleAccessibleBlocks() {
-        pxt.tickEvent("menu.toggleaccessibleblocks", undefined, { interactiveConsent: true });
-        this.props.parent.toggleAccessibleBlocks();
+        this.props.parent.toggleAccessibleBlocks("settings");
     }
 
     showResetDialog() {
@@ -264,7 +257,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
 
     pair() {
         pxt.tickEvent("menu.pair");
-        this.props.parent.pairDialogAsync();
+        this.props.parent.pairAsync();
     }
 
     pairBluetooth() {
@@ -322,7 +315,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
 
     renderCore() {
         const hasIdentity = pxt.auth.hasIdentity();
-        const highContrast = this.getData<boolean>(auth.HIGHCONTRAST)
+        const highContrast = ThemeManager.isCurrentThemeHighContrast();
         const { greenScreen } = this.state;
         const accessibleBlocks = this.getData<boolean>(auth.ACCESSIBLE_BLOCKS);
         const targetTheme = pxt.appTarget.appTheme;
@@ -378,7 +371,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             <div className="ui divider"></div>
             {targetTheme.selectLanguage ? <sui.Item icon='xicon globe' role="menuitem" text={lf("Language")} onClick={this.showLanguagePicker} /> : undefined}
             <sui.Item role="menuitem" icon="paint brush" text={lf("Theme")} onClick={this.showThemePicker} />
-            {showKeyboardControls() &&
+            {this.props.inBlocks &&
                 <CheckboxMenuItem
                     isChecked={accessibleBlocks}
                     label={lf("Keyboard Controls")}
@@ -611,7 +604,22 @@ export interface SideDocsState {
     sideDocsCollapsed?: boolean;
 }
 
-export const builtInPrefix = "/builtin/";
+
+interface BuiltInHelpDetails {
+    component: () => JSX.Element;
+    popOutHref: string;
+    singleTabStop: boolean; // if the whole doc is only one tab stop, the "open in new tab" button placement becomes unintuitive.
+}
+
+const builtIns: Record<pxt.editor.BuiltInHelp, BuiltInHelpDetails> = {
+    "keyboardControls": {
+        component: KeyboardControlsHelp,
+        popOutHref: "https://makecode.com/accessibility",
+        singleTabStop: true
+    }
+}
+
+export const builtInPrefix = "/builtin/"
 
 export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
     private openingSideDoc = false;
@@ -622,11 +630,18 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
         }
 
         this.toggleVisibility = this.toggleVisibility.bind(this);
-        this.popOut = this.popOut.bind(this);
+        this.notifyPopOut = this.notifyPopOut.bind(this);
+        this.close = this.close.bind(this);
     }
 
     private rootDocsUrl(): string {
         return (pxt.webConfig.docsUrl || '/--docs') + "#";
+    }
+
+    private notifyPopOut() {
+        SideDocs.notify({
+            type: "popout"
+        })
     }
 
     public static notify(message: pxsim.SimulatorMessage) {
@@ -655,7 +670,18 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
 
     toggleBuiltInHelp(help: pxt.editor.BuiltInHelp, focusIfVisible: boolean) {
         const url = `${builtInPrefix}${help}`;
-        if (this.state.docsUrl === url && !this.state.sideDocsCollapsed && !focusIfVisible) {
+        const shouldCollapse = this.state.docsUrl === url && !this.state.sideDocsCollapsed && !focusIfVisible;
+
+        pxt.tickEvent(
+            `sidedocs.builtin`,
+            {
+                path: url,
+                focusIfVisible: focusIfVisible ? "true" : "false",
+                collapsing: shouldCollapse ? "true" : "false"
+            },
+        );
+
+        if (shouldCollapse) {
             const wasEditorFocused = Blockly.getFocusManager().getFocusedTree();
             this.props.parent.setState({ sideDocsCollapsed: true });
 
@@ -682,14 +708,13 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
         this.props.parent.editor.focusWorkspace();
     }
 
-    isCollapsed() {
-        return !!this.state.sideDocsCollapsed;
+    close() {
+        this.props.parent.setState({ sideDocsCollapsed: true, sideDocsLoadUrl: '' });
+        this.props.parent.editor.focusWorkspace();
     }
 
-    popOut() {
-        SideDocs.notify({
-            type: "popout"
-        })
+    isCollapsed() {
+        return !!this.state.sideDocsCollapsed;
     }
 
     toggleVisibility() {
@@ -740,7 +765,34 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
         if (!docsUrl) return null;
 
         const url = sideDocsCollapsed ? this.rootDocsUrl() : docsUrl;
-        const isBuiltIn = url.startsWith(`${builtInPrefix}`);
+        const builtIn = url.startsWith(`${builtInPrefix}`)
+            ? builtIns[url.slice(builtInPrefix.length) as pxt.editor.BuiltInHelp]
+            : undefined;
+        const openInNewTabLinkProps: React.ComponentProps<'a'> = builtIn ? {
+            target: "_blank",
+            href: builtIn.popOutHref,
+            rel: "noopener",
+            onClick: this.close,
+        } : {
+            onClick: this.notifyPopOut,
+            onKeyDown: fireClickOnEnter,
+            role: "button",
+            tabIndex: 0,
+        };
+
+        const openInNewTab = !lockedEditor && <div key="newTab" className="ui app hide" id="sidedocsbar">
+            <a className="ui icon link" aria-label={lf("Open documentation in new tab")} {...openInNewTabLinkProps}>
+                <sui.Icon icon="external" />
+            </a>
+        </div>;
+
+        const content = <div key="content" id="sidedocsframe-wrapper">
+            {this.renderContent(url, builtIn, lockedEditor)}
+        </div>;
+
+        const flipNewTabLinkOrder = builtIn?.singleTabStop;
+
+        const contentParts = flipNewTabLinkOrder ? [content, openInNewTab] : [openInNewTab, content];
 
         /* eslint-disable @microsoft/sdl/react-iframe-missing-sandbox */
         return <div>
@@ -748,29 +800,15 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
                 <sui.Icon icon={`icon inverted chevron ${showLeftChevron ? 'left' : 'right'}`} />
             </button>
             <div id="sidedocs" onKeyDown={this.handleKeyDown}>
-                {!lockedEditor && !isBuiltIn && <div className="ui app hide" id="sidedocsbar">
-                    <a className="ui icon link" role="button" tabIndex={0} data-content={lf("Open documentation in new tab")} aria-label={lf("Open documentation in new tab")} onClick={this.popOut} onKeyDown={fireClickOnEnter} >
-                        <sui.Icon icon="external" />
-                    </a>
-                </div>}
-                <div id="sidedocsframe-wrapper">
-                    {this.renderContent(url, isBuiltIn, lockedEditor)}
-                </div>
+                {contentParts}
             </div>
         </div>
         /* eslint-enable @microsoft/sdl/react-iframe-missing-sandbox */
     }
 
-    renderContent(url: string, isBuiltin: boolean, lockedEditor: boolean) {
-        if (isBuiltin) {
-            const component = url.slice(builtInPrefix.length) as pxt.editor.BuiltInHelp;
-            switch (component) {
-                case "keyboardControls": {
-                    return <KeyboardControlsHelp />
-                }
-            }
-        }
-        return (
+    renderContent(url: string, builtIn: BuiltInHelpDetails | undefined, lockedEditor: boolean) {
+        const BuiltInComponent =  builtIn?.component;
+        return BuiltInComponent ? <BuiltInComponent /> : (
             <iframe id="sidedocsframe" src={url} title={lf("Documentation")} aria-atomic="true" aria-live="assertive"
                 sandbox={`allow-scripts allow-same-origin allow-forms ${lockedEditor ? "" : "allow-popups"}`} />
         )

@@ -78,6 +78,12 @@ export class TextInputBubble extends Bubble {
         if (readOnly) {
             this.deleteIcon.style.display = "none";
         }
+        browserEvents.conditionalBind(
+            this.textArea,
+            'keydown',
+            this,
+            this.onKeyDown,
+        );
     }
 
     /** @returns the text of this bubble. */
@@ -159,6 +165,11 @@ export class TextInputBubble extends Bubble {
         // Don't zoom with mousewheel.
         browserEvents.conditionalBind(textArea, 'wheel', this, (e: Event) => {
             e.stopPropagation();
+        });
+        // Don't let the pointerdown event get to the workspace.
+        browserEvents.conditionalBind(textArea, 'pointerdown', this, (e: Event) => {
+            e.stopPropagation();
+            Blockly.Touch.clearTouchIdentifier();
         });
 
         browserEvents.conditionalBind(textArea, 'change', this, this.onTextChange);
@@ -310,6 +321,13 @@ export class TextInputBubble extends Bubble {
     private onPositionChange() {
         for (const listener of this.positionChangeListeners) {
             listener();
+        }
+    }
+
+    private onKeyDown(e: KeyboardEvent) {
+        if (e.key === 'Escape') {
+            this.collapseHandler();
+            e.stopPropagation();
         }
     }
 }

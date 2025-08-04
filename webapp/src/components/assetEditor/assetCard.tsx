@@ -6,6 +6,7 @@ import { dispatchChangeSelectedAsset } from './actions/dispatch';
 
 import { AssetPreview } from "./assetPreview";
 import { fireClickOnEnter } from "../../util";
+import { getIconClassForAssetType } from "../../assets";
 
 
 interface AssetCardProps {
@@ -33,22 +34,6 @@ interface AssetCardCoreProps {
 }
 
 export class AssetCardView extends React.Component<AssetCardCoreProps> {
-    protected getDisplayIconForAsset(type: pxt.AssetType) {
-        switch (type) {
-            case pxt.AssetType.Tile:
-                return "clone";
-            case pxt.AssetType.Animation:
-                return "video";
-            case pxt.AssetType.Tilemap:
-                return "map";
-            case pxt.AssetType.Song:
-                return "music";
-            case pxt.AssetType.Image:
-            default:
-                return null;
-        }
-    }
-
     clickHandler = () => {
         this.props.onClick(this.props.asset);
     }
@@ -56,7 +41,7 @@ export class AssetCardView extends React.Component<AssetCardCoreProps> {
     render() {
         const { asset, selected } = this.props;
         const inGallery = isGalleryAsset(asset);
-        const icon = this.getDisplayIconForAsset(asset.type);
+        const icon = getIconClassForAssetType(asset.type);
         const showIcons = icon || !asset.meta?.displayName;
         return (
             <div

@@ -460,6 +460,8 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
                     return assets.filter(t => t.type === pxt.AssetType.Tilemap);
                 case pxt.AssetType.Song:
                     return assets.filter(t => t.type === pxt.AssetType.Song);
+                case pxt.AssetType.Json:
+                    return assets.filter(t => t.type === pxt.AssetType.Json);
             }
         }
         else {
@@ -474,6 +476,8 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
                     return assets.filter(t => t.type === pxt.AssetType.Tilemap);
                 case pxt.AssetType.Song:
                     return assets.filter(t => t.type === pxt.AssetType.Song);
+                case pxt.AssetType.Json:
+                    return assets.filter(t => t.type === pxt.AssetType.Json);
             }
         }
     }

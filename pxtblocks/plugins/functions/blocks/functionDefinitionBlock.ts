@@ -22,6 +22,7 @@ import { FunctionManager } from "../functionManager";
 import { COLLAPSE_IMAGE_DATAURI } from "../svgs";
 import { ArgumentReporterBlock } from "./argumentReporterBlocks";
 import { setDuplicateOnDrag } from "../../duplicateOnDrag";
+import { FieldImageNoText } from "../../../fields/field_imagenotext";
 
 interface FunctionDefinitionMixin extends CommonFunctionMixin {
     createArgumentReporter_(arg: FunctionArgument): ArgumentReporterBlock;
@@ -56,7 +57,6 @@ const FUNCTION_DEFINITION_MIXIN: FunctionDefinitionMixin = {
             argumentReporter = this.createArgumentReporter_(arg);
         }
 
-        argumentReporter.duplicateOnDrag_ = true;
 
         // Attach the block.
         input.connection!.connect(argumentReporter.outputConnection!);
@@ -194,7 +194,7 @@ Blockly.Blocks[FUNCTION_DEFINITION_BLOCK_TYPE] = {
         if (this.workspace.options.collapse) {
             const image = COLLAPSE_IMAGE_DATAURI;
             this.appendDummyInput("function_collapse").appendField(
-                new Blockly.FieldImage(
+                new FieldImageNoText(
                     image,
                     24,
                     24,

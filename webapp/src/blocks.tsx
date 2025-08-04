@@ -1,5 +1,3 @@
-/// <reference path="../../localtypings/blockly-keyboard-navigation.d.ts"/>
-
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import * as Blockly from "blockly";
@@ -35,10 +33,11 @@ import MuteState = pxt.editor.MuteState;
 import SimState = pxt.editor.SimState;
 
 
-import { DuplicateOnDragConnectionChecker } from "../../pxtblocks/plugins/duplicateOnDrag";
+import { DuplicateOnDragConnectionChecker, shouldDuplicateOnDrag } from "../../pxtblocks/plugins/duplicateOnDrag";
 import { PathObject } from "../../pxtblocks/plugins/renderer/pathObject";
 import { Measurements } from "./constants";
 import { flow, initCopyPaste } from "../../pxtblocks";
+import { initContextMenu } from "../../pxtblocks/contextMenu";
 import { HIDDEN_CLASS_NAME } from "../../pxtblocks/plugins/flyout/blockInflater";
 import { AIFooter } from "../../react-common/components/controls/AIFooter";
 import { CREATE_VAR_BTN_ID } from "../../pxtblocks/builtins/variables";
@@ -67,6 +66,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     breakpointsByBlock: pxt.Map<number>; // Map block id --> breakpoint ID
     breakpointsSet: number[]; // the IDs of the breakpoints set.
     currentFlyoutKey: string;
+
+    private ignoreFlyoutPreviousNode = false;
 
     protected intersectionObserver: IntersectionObserver;
     private errors: ErrorDisplayInfo[] = [];
@@ -583,8 +584,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const oldWorkspaceSvgGetRestoredFocusableNode = Blockly.WorkspaceSvg.prototype.getRestoredFocusableNode;
         Blockly.WorkspaceSvg.prototype.getRestoredFocusableNode = function (previousNode: Blockly.IFocusableNode | null) {
             // Specifically handle flyout case to work with the caching flyout implementation
-            if (this.isFlyout) {
-                const flyout = that.editor.getFlyout()
+            if (this.isFlyout &&
+                (!previousNode || that.isFlyoutItemDisposed(previousNode, previousNode instanceof Blockly.BlockSvg ? previousNode : null) || that.ignoreFlyoutPreviousNode)
+            ) {
+                const flyout = that.editor.getFlyout();
                 const node = that.getDefaultFlyoutCursorIfNeeded(flyout);
                 if (node) {
                     const flyoutCursor = flyout.getWorkspace().getCursor();
@@ -592,9 +595,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     // Set the cursor node here so the cursor doesn't fall back to last focused block.
                     flyoutCursor.setCurNode(node);
                 }
+                that.ignoreFlyoutPreviousNode = false;
                 return node;
             }
-            return oldWorkspaceSvgGetRestoredFocusableNode.call(this, previousNode)
+            return oldWorkspaceSvgGetRestoredFocusableNode.call(this, previousNode);
         };
         const oldWorkspaceSvgOnTreeBlur = Blockly.WorkspaceSvg.prototype.onTreeBlur;
         (Blockly.WorkspaceSvg as any).prototype.onTreeBlur = function (nextTree: Blockly.IFocusableNode | null): void {
@@ -636,7 +640,29 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     private initAccessibleBlocks() {
         if (!this.keyboardNavigation) {
-            this.keyboardNavigation = new KeyboardNavigation(this.editor);
+            // Keyboard navigation plugin (note message text is actually in Blockly)
+            // Excludes text used only in the shortcut dialog that we don't use.
+            Object.assign(Blockly.Msg, {
+                EDIT_BLOCK_CONTENTS: lf("Edit Block contents"),
+                MOVE_BLOCK: lf("Move Block"),
+                // Longer versions not used (COMMAND_KEY, OPTION_KEY), short ones used in hints.
+                CONTROL_KEY: lf("Ctrl"),
+                ALT_KEY: lf("Alt"),
+                CUT_SHORTCUT: lf("Cut"),
+                COPY_SHORTCUT: lf("Copy"),
+                PASTE_SHORTCUT: lf("Paste"),
+                HELP_PROMPT: lf("Press %1 for help on keyboard controls"),
+                KEYBOARD_NAV_UNCONSTRAINED_MOVE_HINT: lf("Hold %1 and use arrow keys to move anywhere, then %2 to accept the position"),
+                KEYBOARD_NAV_CONSTRAINED_MOVE_HINT: lf("Use the arrow keys to move, then %1 to accept the position"),
+                KEYBOARD_NAV_COPIED_HINT: lf("Copied. Press %1 to paste."),
+                KEYBOARD_NAV_CUT_HINT: lf("Cut. Press %1 to paste."),
+                // Used for Blocky's toast's close aria label.
+                CLOSE: lf("Close")
+            });
+
+            this.keyboardNavigation = new KeyboardNavigation(this.editor, {
+                allowCrossWorkspacePaste: true
+            });
             Blockly.keyboardNavigationController.setIsActive(true);
 
             const listShortcuts = Blockly.ShortcutRegistry.registry.getRegistry()["list_shortcuts"];
@@ -664,6 +690,29 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     return true
                 }
             });
+
+            const startMoveShortcut = Blockly.ShortcutRegistry.registry.getRegistry()["start_move"];
+            Blockly.ShortcutRegistry.registry.unregister(startMoveShortcut.name);
+            Blockly.ShortcutRegistry.registry.register({
+                ...startMoveShortcut,
+                callback: (workspace, e, shortcut, scope) => {
+                    maybeCloneBlockForMove(workspace);
+
+                    return startMoveShortcut.callback!(workspace, e, shortcut, scope);
+                }
+            });
+
+
+            const startMoveContextMenuEntry = Blockly.ContextMenuRegistry.registry.getItem("move");
+            Blockly.ContextMenuRegistry.registry.unregister(startMoveContextMenuEntry.id);
+            Blockly.ContextMenuRegistry.registry.register({
+                ...startMoveContextMenuEntry,
+                callback: (scope: Blockly.ContextMenuRegistry.Scope, menuOpenEvent: Event, menuSelectEvent: Event, location: Blockly.utils.Coordinate) => {
+                    maybeCloneBlockForMove(scope.block?.workspace || scope.workspace);
+
+                    return startMoveContextMenuEntry.callback!(scope, menuOpenEvent, menuSelectEvent, location);
+                }
+            } as Blockly.ContextMenuRegistry.RegistryItem);
 
             // This must come after plugin initialization to override context menu
             // precondition functions set by the keyboard navigation plugin.
@@ -729,10 +778,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             return;
         pxsim.U.clear(blocklyDiv);
 
+        const accessibleBlocksEnabled = data.getData<boolean>(auth.ACCESSIBLE_BLOCKS)
         // Increase the Blockly connection radius
         Blockly.config.snapRadius = 48;
         Blockly.config.connectingSnapRadius = 96;
-
+        if (accessibleBlocksEnabled) {
+            KeyboardNavigation.registerKeyboardNavigationStyles();
+        }
         this.editor = Blockly.inject(blocklyDiv, this.getBlocklyOptions(forceHasCategories)) as Blockly.WorkspaceSvg;
         pxtblockly.contextMenu.setupWorkspaceContextMenu(this.editor);
 
@@ -831,7 +883,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 }
                 else {
                     if (shouldRestartSim) {
-                        this.parent.startSimulator();
+                        this.parent.startSimulator({background: true});
                     }
                 }
             }
@@ -865,11 +917,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.initPrompts();
         this.initBlocklyToolbox();
         this.initWorkspaceSounds();
-        const accessibleBlocksEnabled = data.getData<boolean>(auth.ACCESSIBLE_BLOCKS)
+        initContextMenu();
         initCopyPaste(accessibleBlocksEnabled);
-        // This must come after initCopyPaste which overrides the default cut, copy,
-        // paste shortcuts. The keyboard navigation plugin utilizes these cut, copy and paste
-        // shortcuts and wraps them with additional behaviours (e.g., toast notifications).
+        // This must come after initCopyPaste and initContextMenu.
+        // initCopyPaste overrides the default cut, copy, paste shortcuts.
+        // The keyboard navigation plugin utilizes these cut, copy and paste shortcuts
+        // and wraps them with additional behaviours (e.g., toast notifications). 
+        // initContextMenu overrides the default context menu options. The plugin 
+        // decorates the duplicate block context menu item to display the shortcut.
         if (accessibleBlocksEnabled) {
             this.initAccessibleBlocks();
         }
@@ -1042,9 +1097,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.errors = errors;
     }
 
-    private getDisplayInfoForBlockError(blockId: string, message: string): ErrorDisplayInfo {
+    private getDisplayInfoForBlockError(blockId: string, message: string, preventsRunning: boolean): ErrorDisplayInfo {
         return {
             message: message,
+            preventsRunning: preventsRunning,
             onClick: () => {
                 this.clearHighlightedStatements();
                 this.editor.highlightBlock(blockId);
@@ -1064,7 +1120,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 return undefined;
             }
 
-            const blockId = this.compilationResult ? pxtblockly.findBlockIdByLine(this.compilationResult.sourceMap, { start: locInfo.line, length: locInfo.endLine - locInfo.line }) : undefined;
+            const blockId = locInfo.functionName === "<main>" /* Root JS function, therefore On Start block */ ?
+                this.editor.getBlocksByType(ts.pxtc.ON_START_TYPE)?.[0]?.id :
+                (this.compilationResult ? pxtblockly.findBlockIdByLine(this.compilationResult.sourceMap, { start: locInfo.line, length: locInfo.endLine - locInfo.line }) : undefined);
+
             if (!blockId) {
                 return undefined;
             }
@@ -1136,14 +1195,16 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 bubbleStyle: "yellow",
             } as pxt.tour.BubbleStep;
 
-            if (step.elementId && validBlockIds.includes(step.elementId)) {
-                tourStep.targetQuery = `g[data-id="${step.elementId}"]:not(.pxtFlyoutHidden)`;
-                tourStep.location = pxt.tour.BubbleLocation.Right;
-                tourStep.onStepBegin = () => this.editor.centerOnBlock(step.elementId, true);
-            } else {
-                // Do not add the tour target, but keep the step in case it's still helpful.
-                pxt.tickEvent("errorHelp.invalidBlockId");
-                invalidBlockIdCount++;
+            if (step.elementId) {
+                if (validBlockIds.includes(step.elementId)) {
+                    tourStep.targetQuery = `g[data-id="${step.elementId}"]:not(.blocklyFlyout g)`;
+                    tourStep.location = pxt.tour.BubbleLocation.Right;
+                    tourStep.onStepBegin = () => this.editor.centerOnBlock(step.elementId, true);
+                } else {
+                    // Do not add the tour target, but keep the step in case it's still helpful.
+                    pxt.tickEvent("errorHelp.invalidBlockId");
+                    invalidBlockIdCount++;
+                }
             }
 
             tourSteps.push(tourStep);
@@ -1215,6 +1276,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
         if (node instanceof Blockly.FlyoutButton) {
             return node.getSvgRoot().parentNode === null;
+        }
+        if (!sourceBlock) {
+            return true;
         }
         return false;
     }
@@ -1482,7 +1546,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     let txt = ts.pxtc.flattenDiagnosticMessageText(diag.messageText, "\n");
                     b.setWarningText(txt, pxtblockly.PXT_WARNING_ID);
                     setHighlightWarningAsync(b, true);
-                    errorDisplayInfo.push(this.getDisplayInfoForBlockError(bid, txt));
+                    errorDisplayInfo.push(this.getDisplayInfoForBlockError(bid, txt, true));
                 }
             }
         })
@@ -1494,7 +1558,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 if (b) {
                     b.setWarningText(d.message, pxtblockly.PXT_WARNING_ID);
                     setHighlightWarningAsync(b, true);
-                    errorDisplayInfo.push(this.getDisplayInfoForBlockError(d.blockId, d.message));
+                    errorDisplayInfo.push(this.getDisplayInfoForBlockError(d.blockId, d.message, false));
                 }
             }
         })
@@ -1802,6 +1866,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     public hideFlyout() {
         if (this.editor.getToolbox()) {
+            this.ignoreFlyoutPreviousNode = true;
             this.editor.getFlyout().hide();
         }
         if (this.toolbox) this.toolbox.clear();
@@ -1822,6 +1887,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         // note that we don't need to clear the flyout SVG cache since those
         // will regenerate themselves more precisely based on the hash of the
         // input blocks xml.
+
+        // Avoid the focus manager remembering prior workspace node selections.
+        const focusManager = Blockly.getFocusManager();
+        if (focusManager.isRegistered(this.editor)) {
+            focusManager.unregisterTree(this.editor);
+            focusManager.registerTree(this.editor, true);
+        }
     }
 
     clearFlyoutCaches() {
@@ -2526,17 +2598,15 @@ function isBreakpointSet(block: Blockly.BlockSvg) {
 }
 
 function shouldEventHideFlyout(ev: Blockly.Events.Abstract) {
-    if (ev.type === "var_create" || ev.type === "marker_move" || ev.type === "toolbox_item_select") {
+    if (
+        ev.type === Blockly.Events.VAR_CREATE ||
+        ev.type === Blockly.Events.TOOLBOX_ITEM_SELECT ||
+        ev.type === Blockly.Events.BLOCK_DRAG ||
+        // Selected events are fired late when using 'T' to open the toolbox during a keyboard-driven block move.
+        ev.type === Blockly.Events.SELECTED ||
+        ev.type === Blockly.Events.BLOCK_MOVE
+    ) {
         return false;
-    }
-
-    // If a block is selected when the user clicks on a flyout button (e.g. "Make a Variable"),
-    // a selected event will fire unselecting the block before the var_create event is fired.
-    // Make sure we don't close the flyout in the case where a block is simply being unselected.
-    if (ev.type === "selected") {
-        if (!(ev as Blockly.Events.Selected).newElementId) {
-            return false;
-        }
     }
 
     return true;
@@ -2621,7 +2691,9 @@ function cut(workspace: Blockly.WorkspaceSvg, _e: Event, _shortcut: Blockly.Shor
             copyWorkspace,
             pkg.mainEditorPkg().header.id
         );
-        focused.checkAndDelete();
+        if (!shouldDuplicateOnDrag(focused)) {
+            focused.checkAndDelete();
+        }
         return true;
     } else if (
         Blockly.isDeletable(focused) &&
@@ -2677,4 +2749,25 @@ function getCopyData(): CopyDataEntry | undefined {
 
 function copyDataKey() {
     return "copyData";
+}
+
+function maybeCloneBlockForMove(workspace: Blockly.WorkspaceSvg) {
+    const block = workspace?.getCursor()?.getSourceBlock();
+
+    if (block && shouldDuplicateOnDrag(block)) {
+        Blockly.Events.setGroup(true);
+        const xml = Blockly.Xml.blockToDom(block);
+        const clone = Blockly.Xml.domToBlock(xml as Element, workspace);
+        clone.setShadow(false);
+
+        const position = block.getRelativeToSurfaceXY();
+        const snapRadius = Blockly.config.snapRadius;
+
+        clone.moveBy(
+            position.x + snapRadius,
+            position.y + snapRadius,
+        );
+
+        Blockly.getFocusManager().focusNode(clone as Blockly.BlockSvg);
+    }
 }
