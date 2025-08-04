@@ -16,7 +16,8 @@
         "globals.ts",
         "spritekind.ts",
         "decompilerShadowAlias.ts",
-        "blockAliasFor.ts"
+        "blockAliasFor.ts",
+        "forceStatement.ts"
     ],
     "public": true,
     "dependencies": {},

@@ -290,9 +290,9 @@ function updateDisabledBlocks(e: Environment, allBlocks: Blockly.Block[], topBlo
         // multiple calls allowed
         if (b.type == ts.pxtc.ON_START_TYPE)
             flagDuplicate(ts.pxtc.ON_START_TYPE, b);
-        else if (isFunctionDefinition(b) || call && call.attrs.blockAllowMultiple && !call.attrs.handlerStatement) return;
+        else if (isFunctionDefinition(b) || call && call.attrs.blockAllowMultiple && !(call.attrs.handlerStatement || call.attrs.forceStatement)) return;
         // is this an event?
-        else if (call && call.hasHandler && !call.attrs.handlerStatement) {
+        else if (call && call.hasHandler && !(call.attrs.handlerStatement || call.attrs.forceStatement)) {
             // compute key that identifies event call
             // detect if same event is registered already
             const key = call.attrs.blockHandlerKey || callKey(e, b);

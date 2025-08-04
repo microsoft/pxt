@@ -566,6 +566,10 @@ describe("blockly compiler", function () {
         it("should compile gridTemplate blocks to template strings", done => {
             blockTestAsync("grid_template_string").then(done, done);
         })
+
+        it ("should handle forceStatement blocks", done => {
+            blockTestAsync("force_statement").then(done, done);
+        })
     });
 
     describe("compiling expandable blocks", () => {
