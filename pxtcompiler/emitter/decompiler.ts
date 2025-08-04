@@ -3362,7 +3362,7 @@ ${output}</xml>`;
                 const pInfo = pxtInfo(n);
                 if (isUndefined(n)) {
                     return Util.lf("Undefined is not supported in blocks");
-                } else if (isDeclaredElsewhere(n as Identifier) && !(pInfo.commentAttrs && pInfo.commentAttrs.blockIdentity && pInfo.commentAttrs.enumIdentity)) {
+                } else if (isDeclaredElsewhere(n as Identifier) && !(pInfo.commentAttrs && pInfo.commentAttrs.blockIdentity && pInfo.commentAttrs.enumIdentity && env.blocks.apis.byQName[pInfo.commentAttrs.blockIdentity])) {
                     return Util.lf("Variable is declared in another file");
                 } else {
                     return undefined;
@@ -3396,7 +3396,7 @@ ${output}</xml>`;
             if (callInfo) {
                 const attributes = env.attrs(callInfo);
                 const blockInfo = env.compInfo(callInfo);
-                if (attributes.blockIdentity || attributes.blockId === "lists_length" || attributes.blockId === "text_length") {
+                if ((attributes.blockIdentity && env.blocks.apis.byQName[attributes.blockIdentity]) || attributes.blockId === "lists_length" || attributes.blockId === "text_length") {
                     return undefined;
                 }
                 else if (callInfo.decl.kind === SK.EnumMember) {
@@ -3474,7 +3474,7 @@ ${output}</xml>`;
 
         const attributes = env.attrs(callInfo);
 
-        if (!attributes.blockIdentity) {
+        if (!attributes.blockIdentity || !env.blocks.apis.byQName[attributes.blockIdentity]) {
             return Util.lf("Tagged template does not have blockIdentity set");
         }
 
