@@ -575,8 +575,8 @@ ${output}</xml>`;
             };
         }
 
-        function compInfo(callInfo: pxtc.CallInfo): pxt.blocks.BlockCompileInfo {
-            const blockInfo = blocksInfo.apis.byQName[callInfo.qName];
+        function compInfo(callInfo: DecompilerCallInfo): pxt.blocks.BlockCompileInfo {
+            const blockInfo = blocksInfo.apis.byQName[callInfo.decompilerBlockAlias || callInfo.qName];
             if (blockInfo) {
                 return pxt.blocks.compileInfo(blockInfo);
             }
@@ -694,12 +694,18 @@ ${output}</xml>`;
         function isEventExpression(expr: ts.ExpressionStatement): boolean {
             if (expr.expression.kind == SK.CallExpression) {
                 const call = expr.expression as ts.CallExpression;
-                const callInfo = pxtInfo(call).callInfo;
+                const callInfo = pxtInfo(call).callInfo as DecompilerCallInfo;
                 if (!callInfo) {
                     error(expr)
                     return false;
                 }
-                const attributes = attrs(callInfo);
+                let attributes = attrs(callInfo);
+                if (!attributes.block) {
+                    if (env.aliasBlocks[callInfo.qName]) {
+                        callInfo.decompilerBlockAlias = env.aliasBlocks[callInfo.qName];
+                        attributes = attrs(callInfo);
+                    }
+                }
                 return attributes.blockId && !attributes.handlerStatement && !callInfo.isExpression && hasStatementInput(callInfo, attributes);
             }
             return false;
@@ -1290,11 +1296,8 @@ ${output}</xml>`;
                 const info = pxtInfo(call).callInfo;
                 const index = call.arguments.indexOf(n);
                 if (info && index !== -1) {
-                    const blockInfo = blocksInfo.apis.byQName[info.qName];
-                    if (blockInfo) {
-                        const comp = pxt.blocks.compileInfo(blockInfo);
-                        return comp && comp.parameters[index];
-                    }
+                    const comp = compInfo(info);
+                    return comp && comp.parameters[index];
                 }
             }
             return undefined;
@@ -2070,9 +2073,8 @@ ${output}</xml>`;
                 // }
             }
 
-            const args = paramList(info, env.blocks);
-            const api = env.blocks.apis.byQName[info.decompilerBlockAlias || info.qName];
-            const comp = pxt.blocks.compileInfo(api);
+            const args = paramList(info, env);
+            const comp = compInfo(info);
 
             const r = asExpression ? mkExpr(attributes.blockId, node)
                 : mkStmt(attributes.blockId, node);
@@ -2784,9 +2786,9 @@ ${output}</xml>`;
                 attributes.blockId = builtin.blockId;
             }
 
-            const args = paramList(info, env.blocks);
+            const args = paramList(info, env);
             const api = env.blocks.apis.byQName[info.qName];
-            const comp = pxt.blocks.compileInfo(api);
+            const comp = env.compInfo(info);
             const totalDecompilableArgs = comp.parameters.length + (comp.thisParameter ? 1 : 0);
 
             if (attributes.imageLiteral || attributes.gridLiteral) {
@@ -3591,14 +3593,13 @@ ${output}</xml>`;
         return node.kind === SK.ArrowFunction || node.kind === SK.FunctionExpression;
     }
 
-    function paramList(info: CallInfo, blocksInfo: BlocksInfo) {
+    function paramList(info: CallInfo, env: DecompilerEnv) {
         const res: DecompileArgument[] = [];
-        const sym = blocksInfo.apis.byQName[info.qName];
+        const sym = env.blocks.apis.byQName[info.qName];
 
         if (sym) {
-            const attributes = blocksInfo.apis.byQName[info.qName].attributes;
-            const comp = pxt.blocks.compileInfo(sym);
-            const builtin = pxt.blocks.builtinFunctionInfo[info.qName]
+            const attributes = env.blocks.apis.byQName[info.qName].attributes;
+            const comp = env.compInfo(info);
             let offset = attributes.imageLiteral ? 1 : 0;
 
             if (comp.thisParameter) {
