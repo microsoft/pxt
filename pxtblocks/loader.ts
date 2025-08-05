@@ -343,12 +343,15 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
         block.setInputsInline(true);
     }
 
-    setOutputCheck(block, fn.retType, info);
-
-    // hook up/down if return value is void
     const hasHandlers = hasArrowFunction(fn);
-    block.setPreviousStatement(!(hasHandlers && !fn.attributes.handlerStatement) && fn.retType == "void");
-    block.setNextStatement(!(hasHandlers && !fn.attributes.handlerStatement) && fn.retType == "void");
+    const isStatement = !!fn.attributes.handlerStatement || !!fn.attributes.forceStatement || (fn.retType === "void" && !hasHandlers);
+
+    if (!isStatement) {
+        setOutputCheck(block, fn.retType, info);
+    }
+
+    block.setPreviousStatement(isStatement);
+    block.setNextStatement(isStatement);
 
     block.setTooltip(/^__/.test(fn.namespace) ? "" : fn.attributes.jsDoc);
     function buildBlockFromDef(def: pxtc.ParsedBlockDef, expanded = false) {

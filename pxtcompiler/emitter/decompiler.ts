@@ -706,7 +706,7 @@ ${output}</xml>`;
                         attributes = attrs(callInfo);
                     }
                 }
-                return attributes.blockId && !attributes.handlerStatement && !callInfo.isExpression && hasStatementInput(callInfo, attributes);
+                return attributes.blockId && !attributes.handlerStatement && !attributes.forceStatement && !callInfo.isExpression && hasStatementInput(callInfo, attributes);
             }
             return false;
         }
@@ -2023,7 +2023,7 @@ ${output}</xml>`;
 
                         let isStatement = true;
 
-                        if (info.isExpression) {
+                        if (isOutputExpression(node, env)) {
                             const [parent] = getParent(node);
                             isStatement = parent && parent.kind === SK.ExpressionStatement;
                         }
@@ -2737,7 +2737,7 @@ ${output}</xml>`;
             }
 
             if (!asExpression) {
-                if (info.isExpression && !userFunction) {
+                if (isOutputExpression(n, env) && !userFunction) {
                     const alias = env.aliasBlocks[info.qName];
 
                     if (alias) {
@@ -2747,6 +2747,9 @@ ${output}</xml>`;
                         return Util.lf("No output expressions as statements");
                     }
                 }
+            }
+            else if (attributes.forceStatement || attributes.handlerStatement) {
+                return Util.lf("Function with forceStatement cannot be used as an expression.")
             }
 
             if (info.qName == "Math.pow") {
@@ -2768,7 +2771,7 @@ ${output}</xml>`;
             }
 
             const hasCallback = hasStatementInput(info, attributes);
-            if (hasCallback && !attributes.handlerStatement && !topLevel) {
+            if (hasCallback && !attributes.handlerStatement && !attributes.forceStatement && !topLevel) {
                 return Util.lf("Events must be top level");
             }
 
@@ -2894,7 +2897,7 @@ ${output}</xml>`;
 
                 const predicate = p as (ts.FunctionExpression | ts.ArrowFunction);
 
-                if (isOutputExpression(predicate.body as ts.Expression)) {
+                if (isOutputExpression(predicate.body as ts.Expression, env)) {
                     return true;
                 }
 
@@ -3682,7 +3685,7 @@ ${output}</xml>`;
         });
     }
 
-    function isOutputExpression(expr: ts.Expression): boolean {
+    function isOutputExpression(expr: ts.Expression, env: DecompilerEnv): boolean {
         switch (expr.kind) {
             case SK.BinaryExpression: {
                 const tk = (expr as ts.BinaryExpression).operatorToken.kind;
@@ -3699,7 +3702,8 @@ ${output}</xml>`;
             case SK.CallExpression: {
                 const callInfo: pxtc.CallInfo = pxtc.pxtInfo(expr).callInfo
                 assert(!!callInfo);
-                return callInfo.isExpression;
+                const attrs = env.attrs(callInfo);
+                return callInfo.isExpression && !attrs.forceStatement && !attrs.handlerStatement;
             }
             case SK.Identifier:
             case SK.ParenthesizedExpression:
