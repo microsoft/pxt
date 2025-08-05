@@ -513,7 +513,7 @@ declare namespace pxt {
         errorList?: boolean; // error list experiment
         embedBlocksInSnapshot?: boolean; // embed blocks xml in right-click snapshot
         identity?: boolean; // login with identity providers
-        assetEditor?: boolean; // enable asset editor view (in blocks/text toggle)
+        assetEditor?: boolean | AssetConfig; // enable asset editor view (in blocks/text toggle)
         disableMemoryWorkspaceWarning?: boolean; // do not warn the user when switching to in memory workspace
         embeddedTutorial?: boolean;
         disableBlobObjectDownload?: boolean; // use data uri downloads instead of object urls
@@ -600,6 +600,10 @@ declare namespace pxt {
         label: string;
         property: string;
         type: "checkbox";
+    }
+
+    interface AssetConfig {
+        [index: string /*pxt.AssetType*/]: (boolean | { label?: string; iconClass?: string });
     }
 
     interface TargetBundle extends AppTarget {

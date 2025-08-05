@@ -287,6 +287,39 @@ namespace ts.pxtc.Util {
 
         return "Unable to compare " + a + ", " + b;
     }
+
+    export function deepEqual(a: any, b: any): boolean {
+        if (a === b) { return true; }
+
+        if (a && b && typeof a === 'object' && typeof b === 'object') {
+            const arrA = Array.isArray(a);
+            const arrB = Array.isArray(b);
+
+            if (arrA && arrB) {
+                if (a.length !== b.length) { return false; }
+                for (let i = 0; i < a.length; ++i) {
+                    if (!deepEqual(a[i], b[i])) { return false; }
+                }
+                return true;
+            }
+
+            if (arrA !== arrB) { return false; }
+
+            const keysA = Object.keys(a);
+
+            if (keysA.length !== Object.keys(b).length) { return false; }
+
+            for (const key of keysA) {
+                if (!b.hasOwnProperty(key)) { return false; }
+                if (!deepEqual(a[key], b[key])) { return false; }
+            }
+
+            return true;
+        }
+
+        // True if both are NaN, false otherwise
+        return a !== a && b !== b;
+    };
 }
 
 const lf = ts.pxtc.Util.lf;

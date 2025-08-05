@@ -2662,15 +2662,15 @@ export class ProjectView
     }
 
     initDragAndDrop() {
-        draganddrop.setupDragAndDrop(document.body,
-            file => file.size < 1000000 && this.isHexFile(file.name) || this.isBlocksFile(file.name) || this.isZipFile(file.name),
-            files => {
+        draganddrop.addDragAndDropHandler({
+            filter: file => file.size < 1000000 && this.isHexFile(file.name) || this.isBlocksFile(file.name) || this.isZipFile(file.name),
+            dragged: files => {
                 if (files) {
                     pxt.tickEvent("dragandrop.open")
                     this.importFile(files[0]);
                 }
             },
-            url => {
+            draggedUri: url => {
                 if (this.isPNGFile(url)) {
                     pxt.Util.httpRequestCoreAsync({
                         url,
@@ -2679,8 +2679,9 @@ export class ProjectView
                     }).then(resp => this.importUri(url, resp.buffer))
                         .catch(e => core.handleNetworkError(e));
                 }
-            }
-        );
+            },
+            priority: 0
+        });
     }
 
     importUri(url: string, buf: ArrayBuffer) {

@@ -610,6 +610,10 @@ describe("blockly compiler", function () {
         it("should handle APIs where the handler's type uses the Action alias", done => {
             blockTestAsync("action_event").then(done, done);
         });
+
+        it("should handle events with blockAliasFor set", done => {
+            blockTestAsync("event_block_alias_for").then(done, done);
+        });
     })
 
     describe("compiling variable set", () => {
