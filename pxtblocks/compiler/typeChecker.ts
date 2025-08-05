@@ -687,7 +687,7 @@ function getCBParameters(b: Blockly.Block, stdfun: StdFunc, e: Environment): Dec
                 varName = varBlock && varBlock.getField("VAR").getText();
             }
 
-            if (varName !== null) {
+            if (varName !== null && varName !== undefined) {
                 handlerArgs.push({
                     name: varName,
                     type: mkPoint(arg.type)

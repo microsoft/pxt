@@ -5,9 +5,10 @@ import { createShadowValue } from "./toolbox";
 import { MutatingBlock } from "./legacyMutations";
 import { optionalDummyInputPrefix, optionalInputWithFieldPrefix } from "./constants";
 import { FieldArgumentVariable } from "./fields";
-import { setVarFieldValue } from "./loader";
+import { DRAGGABLE_PARAM_INPUT_PREFIX, getBlocklyCheckForType, setVarFieldValue } from "./loader";
 import { UpdateBeforeRenderMixin } from "./plugins/renderer";
 import { FieldImageNoText } from "./fields/field_imagenotext";
+import { setDuplicateOnDrag } from "./plugins/duplicateOnDrag";
 
 export interface ComposableMutation {
     // Set to save mutations. Should return an XML element
@@ -374,6 +375,134 @@ export function initExpandableBlock(info: pxtc.BlocksInfo, b: Blockly.Block, def
 
         Blockly.Events.enable();
     }
+}
+
+export function initVariableReporterArgs(b: Blockly.Block, handlerArgs: pxt.blocks.HandlerArg[], info: pxtc.BlocksInfo) {
+    const buttonAddName = "0_add_button";
+    const numVisibleAttr = "numargs";
+
+    const state = new MutationState(b as unknown as MutatingBlock);
+    state.setEventsEnabled(false);
+    state.setValue(numVisibleAttr, 0);
+    state.setEventsEnabled(true);
+
+    Blockly.Extensions.apply('inline-svgs', b, false);
+
+    const populateArguments = () => {
+        for (const arg of handlerArgs) {
+            const input = b.getInput(DRAGGABLE_PARAM_INPUT_PREFIX + arg.name);
+
+            if (!input) break;
+
+            if (!input.connection.targetConnection) {
+                Blockly.Events.disable();
+
+                const type = pxt.blocks.reporterTypeForArgType(arg.type);
+                const blockDom = document.createElement("block");
+                blockDom.setAttribute("type", type);
+
+                const fieldDom = document.createElement("field");
+                fieldDom.setAttribute("name", "VALUE");
+                fieldDom.textContent = arg.name;
+                blockDom.appendChild(fieldDom);
+
+                if (type === "argument_reporter_custom") {
+                    const mutation = document.createElement("mutation");
+                    mutation.setAttribute("type", arg.type);
+                    blockDom.appendChild(mutation);
+                }
+
+                const newBlock = Blockly.Xml.domToBlock(blockDom, b.workspace);
+                input.connection.connect(newBlock.outputConnection);
+
+                if (!b.isInsertionMarker() && newBlock instanceof Blockly.BlockSvg) {
+                    newBlock.initSvg();
+                    newBlock.queueRender();
+                }
+
+                Blockly.Events.enable();
+            }
+        }
+    }
+
+    const updateShape = () => {
+        const existingInputs = b.inputList.filter(
+            i => i.name.startsWith(DRAGGABLE_PARAM_INPUT_PREFIX)
+        ).length;
+
+        const buttonExists = b.inputList.some(i => i.name === buttonAddName);
+
+        if (existingInputs < state.getNumber(numVisibleAttr)) {
+            for (let i = existingInputs; i < state.getNumber(numVisibleAttr); i++) {
+                const arg = handlerArgs[i];
+                if (arg) {
+                    const input = b.appendValueInput(DRAGGABLE_PARAM_INPUT_PREFIX + arg.name);
+                    input.setCheck(getBlocklyCheckForType(arg.type, info));
+
+                    setDuplicateOnDrag(b.type, input.name);
+
+                    if (buttonExists) {
+                        b.moveInputBefore(input.name, buttonAddName);
+                    }
+                    else {
+                        b.moveInputBefore(input.name, "HANDLER");
+                    }
+                }
+            }
+        }
+        else if (existingInputs > state.getNumber(numVisibleAttr)) {
+            for (let i = existingInputs - 1; i >= state.getNumber(numVisibleAttr); i--) {
+                const arg = handlerArgs[i];
+                if (arg) {
+                    const input = b.getInput(DRAGGABLE_PARAM_INPUT_PREFIX + arg.name);
+
+                    if (input.connection.targetConnection) {
+                        Blockly.Events.disable();
+                        input.connection.targetBlock().dispose();
+                        Blockly.Events.enable();
+                    }
+                    b.removeInput(input.name, true);
+                }
+            }
+        }
+
+        if (state.getNumber(numVisibleAttr) < handlerArgs.length) {
+            if (!buttonExists) {
+                b.appendDummyInput(buttonAddName)
+                    .appendField(new FieldImageNoText((b as any).ADD_IMAGE_DATAURI, 24, 24, lf("Add argument"),
+                        () => {
+                            state.setValue(numVisibleAttr, state.getNumber(numVisibleAttr) + 1);
+                            updateShape();
+                        }, false));
+                b.moveInputBefore(buttonAddName, "HANDLER");
+            }
+        }
+        else if (buttonExists) {
+            b.removeInput(buttonAddName, true);
+        }
+
+        setTimeout(populateArguments);
+    }
+
+    updateShape();
+
+    appendMutation(b, {
+        mutationToDom: (el: Element) => {
+            el.setAttribute(numVisibleAttr, state.getString(numVisibleAttr));
+            return el;
+        },
+        domToMutation: (saved: Element) => {
+            state.setEventsEnabled(false);
+            if (saved.hasAttribute(numVisibleAttr)) {
+                const val = parseInt(saved.getAttribute(numVisibleAttr));
+                if (!isNaN(val)) {
+                    state.setValue(numVisibleAttr, val);
+                    updateShape();
+                }
+            }
+            state.setEventsEnabled(true);
+        }
+    });
 }
 
 class MutationState {
