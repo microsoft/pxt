@@ -2174,9 +2174,18 @@ ${output}</xml>`;
                                     r.mutation = {
                                         "numargs": arrow.parameters.length.toString()
                                     };
-                                    arrow.parameters.forEach((parameter, i) => {
-                                        r.mutation["arg" + i] = (parameter.name as ts.Identifier).text;
-                                    });
+
+                                    if (attributes.draggableParameters === "reporter") {
+                                        arrow.parameters.forEach((parameter, i) => {
+                                            const arg = paramDesc.handlerParameters[i];
+                                            addDraggableInput(arg, (parameter.name as ts.Identifier).text);
+                                        });
+                                    }
+                                    else {
+                                        arrow.parameters.forEach((parameter, i) => {
+                                            r.mutation["arg" + i] = (parameter.name as ts.Identifier).text;
+                                        });
+                                    }
                                 }
                                 else {
                                     arrow.parameters.forEach((parameter, i) => {
@@ -2192,7 +2201,7 @@ ${output}</xml>`;
                                 }
                             }
                             if (attributes.draggableParameters) {
-                                if (arrow.parameters.length < paramDesc.handlerParameters.length) {
+                                if (arrow.parameters.length < paramDesc.handlerParameters.length && !attributes.optionalVariableArgs) {
                                     for (let i = arrow.parameters.length; i < paramDesc.handlerParameters.length; i++) {
                                         const arg = paramDesc.handlerParameters[i];
                                         addDraggableInput(arg, arg.name);
