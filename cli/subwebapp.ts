@@ -4,10 +4,10 @@ export interface SubWebAppConfig {
     name: string;
     buildCss: boolean;
 
-    // If true, the local server will seve the "--" endpoint defined in the web config (e.g. /--skilmap)
+    // If true, the local server will serve the "--" endpoint defined in the web config (e.g. /--skillmap)
     localServeWebConfigUrl: boolean;
 
-    // If defined, the local serve will serve the webapp code at this endpoint (e.g. /eva;)
+    // If defined, the local server will serve the webapp code at this endpoint (e.g. /eval)
     localServeEndpoint?: string;
 }
 

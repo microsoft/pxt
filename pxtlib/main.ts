@@ -399,6 +399,7 @@ namespace pxt {
         multiplayerUrl?: string; // "/beta---multiplayer"
         kioskUrl?: string; // "/beta---kiosk"
         teachertoolUrl?: string; // "/beta---eval"
+        teachableMachineUrl?: string; // "/beta---tm"
         isStatic?: boolean;
         verprefix?: string; // "v1"
         ocv?: OcvConfig;

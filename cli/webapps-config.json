@@ -33,6 +33,12 @@
             "name": "authcode",
             "buildCss": true,
             "localServeWebConfigUrl": true
+        },
+        {
+            "name": "teachablemachine",
+            "buildCss": false,
+            "localServeWebConfigUrl": false,
+            "localServeEndpoint": "tm"
         }
     ]
 }

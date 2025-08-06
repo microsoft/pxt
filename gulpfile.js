@@ -619,6 +619,12 @@ const teacherTool = createWebappTasks("teachertool");
 const tutorialTool = createWebappTasks("tutorialtool");
 
 /********************************************************
+                      Teachable Machine
+*********************************************************/
+
+const teachableMachine = createWebappTasks("teachablemachine");
+
+/********************************************************
                  Webapp build wrappers
 *********************************************************/
 
@@ -632,7 +638,7 @@ const maybeUpdateWebappStrings = () => {
 
 const maybeBuildWebapps = () => {
     if (!shouldBuildWebapps()) return noop;
-    return gulp.parallel(skillmap, authcode, multiplayer, kiosk, teacherTool, tutorialTool);
+    return gulp.parallel(skillmap, authcode, multiplayer, kiosk, teacherTool, tutorialTool, teachableMachine);
 }
 
 /********************************************************
@@ -643,7 +649,7 @@ const lintWithEslint = () => Promise.all(
     ["cli", "pxtblocks", "pxteditor", "pxtlib", "pxtcompiler",
         "pxtpy", "pxtrunner", "pxtsim", "webapp", "pxtservices",
         "docfiles/pxtweb", "skillmap", "authcode",
-        "multiplayer"/*, "kiosk"*/, "teachertool", "docs/static/streamer"].map(dirname =>
+        "multiplayer"/*, "kiosk"*/, "teachertool", "teachablemachine", "docs/static/streamer"].map(dirname =>
             exec(`node node_modules/eslint/bin/eslint.js -c .eslintrc.js --ext .ts,.tsx ./${dirname}/`, true)))
     .then(() => console.log("linted"))
 const lint = lintWithEslint
@@ -815,6 +821,7 @@ exports.watchCli = initWatchCli;
 exports.testlanguageservice = testlanguageservice;
 exports.onlinelearning = onlinelearning;
 exports.tt = teacherTool;
+exports.tm = teachableMachine;
 exports.icons = buildSVGIcons;
 exports.testhelpers = testhelpers;
 exports.testpxteditor = testpxteditor;
