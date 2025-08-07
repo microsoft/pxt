@@ -589,7 +589,6 @@ export function cleanBlocks() {
  */
 export function initializeAndInject(blockInfo: pxtc.BlocksInfo) {
     init(blockInfo);
-    initContextMenu();
     initCopyPaste(false);
     injectBlocks(blockInfo);
 }
@@ -609,6 +608,7 @@ function init(blockInfo: pxtc.BlocksInfo) {
     blocklyInitialized = true;
 
     initFieldEditors();
+    initContextMenu();
     initOnStart();
     initMath(blockInfo);
     initVariables();
