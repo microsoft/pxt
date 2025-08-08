@@ -261,6 +261,11 @@ export function TutorialContainer(props: TutorialContainerProps) {
         {!isHorizontal && stepCounter}
         <div className={classList("tutorial-content", hasHint && "has-hint")} ref={contentRef} onScroll={updateScrollGradient}>
             <div className={"tutorial-content-bkg"}>
+                <div className="tutorial-controls steve4">
+                    {hasHint && <TutorialHint tutorialId={tutorialId} currentStep={visibleStep} markdown={hintMarkdown} parent={parent} />}
+                    {isHorizontal && stepCounter}
+                    {!isHorizontal && nextButton}
+                </div>
                 {!isHorizontal && <div className="tutorial-step-label">
                     {name && <span className="tutorial-step-title">{name}</span>}
                     <span className="tutorial-step-number">{lf("Step {0} of {1}", visibleStep + 1, steps.length)}</span>
@@ -268,11 +273,6 @@ export function TutorialContainer(props: TutorialContainerProps) {
                 {showImmersiveReader && <ImmersiveReaderButton ref={immReaderRef} content={markdown} tutorialOptions={tutorialOptions} />}
                 {title && <div className="tutorial-title">{title}</div>}
                 <MarkedContent className="no-select tutorial-step-content" tabIndex={0} markdown={markdown} parent={parent} contentRef={handleMarkedContentRef}/>
-                <div className="tutorial-controls">
-                    {hasHint && <TutorialHint tutorialId={tutorialId} currentStep={visibleStep} markdown={hintMarkdown} parent={parent} />}
-                    {isHorizontal && stepCounter}
-                    {!isHorizontal && nextButton}
-                </div>
             </div>
         </div>
         {validationFailures.length > 0 &&
