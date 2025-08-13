@@ -251,7 +251,7 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
 
     toggleHighContrast() {
         pxt.tickEvent("home.togglecontrast", undefined, { interactiveConsent: true });
-        core.toggleHighContrast();
+        this.props.parent.toggleHighContrast();
     }
 
     showThemePicker() {
@@ -265,8 +265,7 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
     }
 
     toggleAccessibleBlocks() {
-        pxt.tickEvent("home.toggleaccessibleblocks", undefined, { interactiveConsent: true });
-        this.props.parent.toggleAccessibleBlocks();
+        this.props.parent.toggleAccessibleBlocks("homesettings");
     }
 
     showResetDialog() {

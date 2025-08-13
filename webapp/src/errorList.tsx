@@ -30,6 +30,7 @@ export type ErrorDisplayInfo = {
     message: string;
     stackFrames?: StackFrameDisplayInfo[];
     metadata?: ErrorMetadata;
+    preventsRunning?: boolean;
     onClick?: () => void;
 };
 
@@ -55,7 +56,7 @@ export class ErrorList extends auth.Component<ErrorListProps, ErrorListState> {
         super(props);
 
         this.state = {
-            isCollapsed: true,
+            isCollapsed: !this.props.errors?.length,
             isLoadingHelp: false,
         };
 
@@ -103,12 +104,13 @@ export class ErrorList extends auth.Component<ErrorListProps, ErrorListState> {
         const errorListContent = !isCollapsed ? groupedErrors.map((e, i) => <ErrorListItem errorGroup={e} index={i} key={`errorlist_error_${i}`}/> ) : undefined;
         const errorCount = errors.length;
 
-        const showDebuggerSuggestion = startDebugger && !pxt.shell.isReadOnly();
+        const showDebuggerSuggestion = startDebugger && !pxt.shell.isReadOnly() && !errors.some(e => e.preventsRunning);
 
         const showErrorHelp =
             !!getErrorHelp &&
             !!showLoginDialog &&
             !pxt.shell.isReadOnly() &&
+            !pxt.BrowserUtils.isPxtElectron() &&
             (pxt.appTarget.appTheme.forceEnableAiErrorHelp || pxt.Util.isFeatureEnabled("aiErrorHelp"));
 
         const helpLoader = (

@@ -290,9 +290,9 @@ function updateDisabledBlocks(e: Environment, allBlocks: Blockly.Block[], topBlo
         // multiple calls allowed
         if (b.type == ts.pxtc.ON_START_TYPE)
             flagDuplicate(ts.pxtc.ON_START_TYPE, b);
-        else if (isFunctionDefinition(b) || call && call.attrs.blockAllowMultiple && !call.attrs.handlerStatement) return;
+        else if (isFunctionDefinition(b) || call && call.attrs.blockAllowMultiple && !(call.attrs.handlerStatement || call.attrs.forceStatement)) return;
         // is this an event?
-        else if (call && call.hasHandler && !call.attrs.handlerStatement) {
+        else if (call && call.hasHandler && !(call.attrs.handlerStatement || call.attrs.forceStatement)) {
             // compute key that identifies event call
             // detect if same event is registered already
             const key = call.attrs.blockHandlerKey || callKey(e, b);
@@ -775,7 +775,20 @@ function compileEvent(e: Environment, b: Blockly.Block, stdfun: StdFunc, args: p
         argumentDeclaration = pxt.blocks.mkText(`function (${handlerArgs.join(", ")})`)
     }
 
-    return mkCallWithCallback(e, ns, stdfun.f, compiledArgs, body, argumentDeclaration, stdfun.isExtensionMethod);
+
+    let callNamespace = ns;
+    let callName = stdfun.f
+    if (stdfun.attrs.blockAliasFor) {
+        const aliased = e.blocksInfo.apis.byQName[stdfun.attrs.blockAliasFor];
+
+        if (aliased) {
+            callName = aliased.name;
+            callNamespace = aliased.namespace;
+        }
+    }
+
+
+    return mkCallWithCallback(e, callNamespace, callName, compiledArgs, body, argumentDeclaration, stdfun.isExtensionMethod);
 }
 
 function compileImage(e: Environment, b: Blockly.Block, frames: number, columns: number, rows: number, n: string, f: string, args?: pxt.blocks.JsNode[]): pxt.blocks.JsNode {

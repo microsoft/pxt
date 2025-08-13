@@ -80,9 +80,11 @@ declare namespace pxt.editor {
         | "getblockastext"
 
         | "toggletrace" // EditorMessageToggleTraceRequest
+        | "showthemepicker"
         | "togglehighcontrast"
         | "sethighcontrast" // EditorMessageSetHighContrastRequest
         | "togglegreenscreen"
+        | "togglekeyboardcontrols"
         | "settracestate" //
         | "setsimulatorfullscreen" // EditorMessageSimulatorFullScreenRequest
 
@@ -422,6 +424,7 @@ declare namespace pxt.editor {
         versions: pxt.TargetVersions;
         locale: string;
         availableLocales?: string[];
+        keyboardControls: boolean;
     }
 
     export interface PackageExtensionData {
@@ -871,6 +874,7 @@ declare namespace pxt.editor {
 
     export interface SimulatorStartOptions {
         clickTrigger?: boolean;
+        background?: boolean;
     }
 
     export interface ImportFileOptions {
@@ -955,7 +959,7 @@ declare namespace pxt.editor {
         saveAndCompile(): void;
         updateHeaderName(name: string): void;
         updateHeaderNameAsync(name: string): Promise<void>;
-        compile(saveOnly?: boolean): void;
+        compile(): void;
 
         setFile(fn: IFile, line?: number): void;
         setSideFile(fn: IFile, line?: number): void;
@@ -1043,7 +1047,8 @@ declare namespace pxt.editor {
         toggleHighContrast(): void;
         setHighContrast(on: boolean): void;
         toggleGreenScreen(): void;
-        toggleAccessibleBlocks(): void;
+        toggleAccessibleBlocks(eventSource: string): void;
+        isAccessibleBlocks(): boolean;
         launchFullEditor(): void;
         resetWorkspace(): void;
 
@@ -1092,7 +1097,7 @@ declare namespace pxt.editor {
         showPackageDialog(query?: string): void;
         showBoardDialogAsync(features?: string[], closeIcon?: boolean): Promise<void>;
         checkForHwVariant(): boolean;
-        pairDialogAsync(): Promise<pxt.commands.WebUSBPairResult>;
+        pairAsync(): Promise<boolean>;
 
         createModalClasses(classes?: string): string;
         showModalDialogAsync(options: ModalDialogOptions): Promise<void>;

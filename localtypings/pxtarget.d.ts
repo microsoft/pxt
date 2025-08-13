@@ -513,7 +513,7 @@ declare namespace pxt {
         errorList?: boolean; // error list experiment
         embedBlocksInSnapshot?: boolean; // embed blocks xml in right-click snapshot
         identity?: boolean; // login with identity providers
-        assetEditor?: boolean; // enable asset editor view (in blocks/text toggle)
+        assetEditor?: boolean | AssetConfig; // enable asset editor view (in blocks/text toggle)
         disableMemoryWorkspaceWarning?: boolean; // do not warn the user when switching to in memory workspace
         embeddedTutorial?: boolean;
         disableBlobObjectDownload?: boolean; // use data uri downloads instead of object urls
@@ -600,6 +600,10 @@ declare namespace pxt {
         label: string;
         property: string;
         type: "checkbox";
+    }
+
+    interface AssetConfig {
+        [index: string /*pxt.AssetType*/]: (boolean | { label?: string; iconClass?: string });
     }
 
     interface TargetBundle extends AppTarget {
@@ -935,6 +939,10 @@ declare namespace ts.pxtc {
         toolboxParentArgument?: string; // Used with toolboxParent. The name of the arg that this block should be inserted into as a shadow
         duplicateWithToolboxParent?: string; // The ID of an additional block that will be created, which wraps this block in the toolbox. The original (unwrapped) block will also remain in the toolbox.
         duplicateWithToolboxParentArgument?: string; // Used with duplicateWithToolboxParent. The name of the arg that this block should be inserted into as a shadow.
+        blockHandlerKey?: string; // optional field for explicitly declaring the handler key to use to compare duplicate events
+        afterOnStart?: boolean; // indicates an event that should be compiled after on start when converting to typescripts
+        handlerStatement?: boolean; // deprecated, use forceStatement instead
+        forceStatement?: boolean; // indicates that the block for this API should be a statement, regardless of the return value or if it has a handler param
 
         // On namepspace
         subcategories?: string[];
@@ -942,9 +950,6 @@ declare namespace ts.pxtc {
         groupIcons?: string[];
         groupHelp?: string[];
         labelLineWidth?: string;
-        handlerStatement?: boolean; // indicates a block with a callback that can be used as a statement
-        blockHandlerKey?: string; // optional field for explicitly declaring the handler key to use to compare duplicate events
-        afterOnStart?: boolean; // indicates an event that should be compiled after on start when converting to typescript
 
         // on interfaces
         indexerGet?: string;

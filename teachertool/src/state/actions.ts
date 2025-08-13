@@ -24,6 +24,7 @@ type DismissToast = ActionBase & {
 type SetProjectMetadata = ActionBase & {
     type: "SET_PROJECT_METADATA";
     metadata: ProjectData | undefined;
+    force?: boolean; // Optional flag to force reload even if metadata is the same
 };
 
 type SetEvalResult = ActionBase & {
@@ -162,9 +163,10 @@ const dismissToast = (toastId: string): DismissToast => ({
     toastId,
 });
 
-const setProjectMetadata = (metadata: ProjectData | undefined): SetProjectMetadata => ({
+const setProjectMetadata = (metadata: ProjectData | undefined, force?: boolean): SetProjectMetadata => ({
     type: "SET_PROJECT_METADATA",
     metadata,
+    force,
 });
 
 const setEvalResult = (criteriaInstanceId: string, result: CriteriaResult): SetEvalResult => ({

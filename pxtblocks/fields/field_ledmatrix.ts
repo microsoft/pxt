@@ -127,6 +127,10 @@ export class FieldLedMatrix extends FieldMatrix implements FieldCustom {
         if (!this.sourceBlock_.isInsertionMarker()) {
             this.matrixSvg = pxsim.svg.parseString(`<svg xmlns="http://www.w3.org/2000/svg" id="field-matrix" class="blocklyMatrix" tabindex="-1" role="grid" width="${this.size_.width}" height="${this.size_.height}"/>`);
             this.matrixSvg.ariaLabel = lf("LED grid");
+            const workspace = Blockly.getMainWorkspace() as Blockly.WorkspaceSvg
+            this.matrixSvg.style.boxShadow = `rgba(255, 255, 255, 0.3) 0 0 0 ${4 * workspace.getAbsoluteScale()}px`;
+            this.matrixSvg.style.transition = "box-shadow 0.25s"
+            this.matrixSvg.style.borderRadius = `${4 * workspace.getAbsoluteScale()}px`
 
             // Initialize the matrix that holds the state
             for (let i = 0; i < this.numMatrixCols; i++) {
@@ -306,7 +310,8 @@ export class FieldLedMatrix extends FieldMatrix implements FieldCustom {
     }
 
     setValue(newValue: string | number, restoreState = true) {
-        super.setValue(String(newValue));
+        const shouldFireChangeEvent = newValue !== this.value_;
+        super.setValue(String(newValue), shouldFireChangeEvent);
         if (this.matrixSvg) {
             if (restoreState) this.restoreStateFromString();
 

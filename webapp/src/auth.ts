@@ -243,14 +243,24 @@ export async function setHighContrastPrefAsync(highContrast: boolean): Promise<v
     }
 }
 
-export async function setAccessibleBlocksPrefAsync(accessibleBlocks: boolean): Promise<void> {
+export async function setAccessibleBlocksPrefAsync(accessibleBlocks: boolean, eventSource: string): Promise<void> {
     const cli = await clientAsync();
+
+    pxt.tickEvent(
+        "auth.setAccessibleBlocks",
+        {
+            enabling: accessibleBlocks ? "true" : "false",
+            eventSource: eventSource,
+            local: !cli ? "true" : "false"
+        }
+    );
+
     if (cli) {
         await cli.patchUserPreferencesAsync({
             op: 'replace',
             path: ['accessibleBlocks'],
             value: accessibleBlocks
-        });
+        }, { immediate: true }); // sync this change immediately, as the page is about to reload.
     } else {
         // Identity not available, save this setting locally
         pxt.storage.setLocal(ACCESSIBLE_BLOCKS, accessibleBlocks.toString());
