@@ -429,7 +429,8 @@ const buildSVGIcons = () => {
                 bucket: 0xf102,
                 undo: 0xf118,
                 redo: 0xf111,
-                rectangularselection: 0xf113
+                rectangularselection: 0xf113,
+                brain: 0xf114,
             },
             writeFiles: false,
         }, function (error, res) {
