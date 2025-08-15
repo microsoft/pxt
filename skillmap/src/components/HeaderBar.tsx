@@ -42,6 +42,7 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
 
         if (this.props.preferences) {
             items.push({
+                role: "menuitem",
                 id: "theme",
                 title: lf("Theme"),
                 label: lf("Theme"),
@@ -56,6 +57,7 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
         // reloading the workspace and losing unsaved work.
         if (!this.props.activityOpen) {
             items.push({
+                role: "menuitem",
                 id: "language",
                 title: lf("Language"),
                 label: lf("Language"),
@@ -68,18 +70,17 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
 
         if (this.props.showReportAbuse) {
             items.push({
+                role: "link",
                 id: "report",
-                title: lf("Report Abuse"),
                 label: lf("Report Abuse"),
-                onClick: () => {
-                    tickEvent("skillmap.reportabuse");
-                    window.open(this.reportAbuseUrl);
-                }
+                href: this.reportAbuseUrl,
+                onClick: () => tickEvent("skillmap.reportabuse")
             })
         }
 
         if (pxt.U.ocvEnabled()) {
             items.push({
+                role: "menuitem",
                 id: "feedback",
                 title: lf("Feedback"),
                 label: lf("Feedback"),
@@ -89,6 +90,7 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
 
         if (!this.props.activityOpen) {
             items.push({
+                role: "menuitem",
                 id: "reset",
                 title: lf("Reset All"),
                 label: lf("Reset All"),
@@ -140,12 +142,14 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
 
         if (signedIn) {
             items.push({
+                role: "menuitem",
                 id: "profile",
                 title: lf("My Profile"),
                 label: lf("My Profile"),
                 onClick: this.onProfileClicked
             });
             items.push({
+                role: "menuitem",
                 id: "signout",
                 title: lf("Sign Out"),
                 label: lf("Sign Out"),
