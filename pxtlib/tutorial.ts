@@ -605,4 +605,9 @@ ${code}
 
         return hintCode;
     }
+
+    export function shouldFilterProject(metadata: pxt.tutorial.TutorialMetadata): boolean {
+        if (!metadata) return false;
+        return !!(metadata.hideFromProjects || metadata.hideIteration);
+    }
 }
