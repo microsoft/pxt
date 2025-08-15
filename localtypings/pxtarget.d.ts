@@ -1247,6 +1247,7 @@ declare namespace pxt.tutorial {
         autoexpandOff?: boolean; // INTERNAL TESTING ONLY
         preferredEditor?: string; // preferred editor for opening the tutorial
         hideDone?: boolean; // Do not show a "Done" button at the end of the tutorial
+        hideFromProjects?: boolean; // hide this tutorial from the projects list
     }
 
     interface TutorialBlockConfigEntry {
