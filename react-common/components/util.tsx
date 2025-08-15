@@ -100,7 +100,7 @@ export function findNextFocusableElement(elements: HTMLElement[], focusedIndex: 
     if (focusedIndex === index) {
         return element;
     }
-    if (isFocusable ? isFocusable(element) : getComputedStyle(element).display !== "none") {
+    if (isFocusable ? isFocusable(element) : isVisible(element)) {
         return element;
     } else {
         if (index + increment >= elements.length) {
@@ -112,6 +112,14 @@ export function findNextFocusableElement(elements: HTMLElement[], focusedIndex: 
         }
     }
     return findNextFocusableElement(elements, focusedIndex, index, forward, isFocusable);
+}
+
+function isVisible(e: HTMLElement): boolean {
+    if ((e as any).checkVisibility) {
+        return (e as any).checkVisibility({ visibilityProperty: true });
+    }
+    const style = getComputedStyle(e);
+    return style.display !== "none" && style.visibility !== "hidden";
 }
 
 export function isFocusable(e: HTMLElement) {
