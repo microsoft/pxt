@@ -2563,7 +2563,7 @@ async function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
     const hexCachePath = path.resolve(process.cwd(), "built", "hexcache");
     nodeutil.mkdirP(hexCachePath);
 
-    pxt.log(`building target.json in ${process.cwd()}...`)
+    pxt.log(`building target.json in ${process.cwd()}...`);
 
     let builtInfo: pxt.Map<pxt.PackageApiInfo> = {};
 
@@ -2576,7 +2576,7 @@ async function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
 
     await buildWebStringsAsync();
     if (!options.quick) await internalGenDocsAsync(false, true)
-    if (pxt.appTarget.cacheusedblocksdirs) cfg.tutorialInfo = await internalCacheUsedBlocksAsync();
+    if (pxt.appTarget.cacheusedblocksdirs && !options.quick) cfg.tutorialInfo = await internalCacheUsedBlocksAsync();
 
     await forEachBundledPkgAsync(async (pkg, dirname) => {
         pxt.log(`building bundled ${dirname}`);
