@@ -758,7 +758,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
             const showCloudProjectsCard = auth.hasIdentity() && !auth.loggedIn() && pxt.storage.getLocal(auth.HAS_USED_CLOUD);
 
             const headersToShow = headers
-                .filter(h => !h.tutorial?.metadata?.hideIteration)
+                .filter(h => !pxt.tutorial.shouldFilterProject(h.tutorial?.metadata))
                 .slice(0, ProjectsCarousel.NUM_PROJECTS_HOMESCREEN);
             const isFirstProject = (!headers || headers?.length == 0);
             return <carousel.Carousel tickId="myprojects" bleedPercent={20}>
