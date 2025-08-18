@@ -525,7 +525,8 @@ declare namespace pxt {
         tours?: {
             editor?: string // path to markdown file for the editor tour steps
         }
-        tutorialSimSidebarLayout?: boolean; // Enable tutorial layout with the sim in the sidebar (desktop only)
+        tutorialSimSidebarLayout?: boolean; // Enable tutorial layout with the sim in the sidebar (desktop only) for all languages.
+        tutorialSimSidebarLangs?: string[]; // List of languages that should use tutorialSimSidebarLayout.
         showOpenInVscode?: boolean; // show the open in VS Code button
         matchWebUSBDeviceInSim?: boolean; // if set, pass current device id as theme to sim when available.
         condenseProfile?: boolean; // if set, will make the profile dialog smaller
