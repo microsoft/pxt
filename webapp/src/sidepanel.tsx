@@ -244,6 +244,11 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
 
         return <div id="simulator" className="simulator" ref={this.handleSimRef}>
             {!hasSimulator && <div id="boardview" className="headless-sim" role="region" aria-label={lf("Simulator")} tabIndex={-1} />}
+            {!hasSimulator && showFileList && <div id="editorSidebar" className={editorSidebarClassName}>
+                <div className="ui items simPanel" ref={this.handleSimPanelRef}>
+                    <filelist.FileList parent={parent} />
+                </div>
+            </div>}
             {hasSimulator && <div id="editorSidebar" className={editorSidebarClassName} style={!this.props.tutorialSimSidebar ? { height: editorSidebarHeight } : undefined}>
                 <div className={simContainerClassName}>
                     <div className={`ui items simPanel ${showHostMultiplayerGameButton ? "multiplayer-preview" : ""}`} ref={this.handleSimPanelRef}>
