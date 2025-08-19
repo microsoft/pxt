@@ -5112,7 +5112,7 @@ export class ProjectView
     }
 
     useTutorialSimSidebarLayout() {
-        const lang = this.isBlocksActive() ? "blocks" : this.isPythonActive ? "python" : "javascript";
+        const lang = this.isBlocksActive() ? "blocks" : this.isPythonActive() ? "python" : "javascript";
         return !!pxt.appTarget.appTheme.tutorialSimSidebarLangs?.includes(lang);
     }
 
