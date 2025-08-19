@@ -5112,14 +5112,6 @@ export class ProjectView
     }
 
     useTutorialSimSidebarLayout() {
-        if (!this.isTutorial() || pxt.BrowserUtils.isTabletSize()) {
-            return false;
-        }
-
-        if (pxt.appTarget.appTheme.tutorialSimSidebarLayout) {
-            return true;
-        }
-
         const lang = this.isBlocksActive() ? "blocks" : this.isPythonActive ? "python" : "javascript";
         return !!pxt.appTarget.appTheme.tutorialSimSidebarLangs?.includes(lang);
     }
@@ -5487,7 +5479,7 @@ export class ProjectView
         const isSidebarTutorial = pxt.appTarget.appTheme.sidebarTutorial;
         const isTabTutorial = inTutorial && !pxt.BrowserUtils.useOldTutorialLayout();
         const inTutorialExpanded = inTutorial && tutorialOptions.tutorialStepExpanded;
-        const tutorialSimSidebar = this.useTutorialSimSidebarLayout();
+        const tutorialSimSidebar = !pxt.BrowserUtils.isTabletSize() && this.useTutorialSimSidebarLayout();
         const inDebugMode = this.state.debugging;
         const inHome = this.state.home && !sandbox;
         const inEditor = !!this.state.header && !inHome;
