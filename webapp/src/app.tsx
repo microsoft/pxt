@@ -5121,7 +5121,7 @@ export class ProjectView
         }
 
         const lang = this.isBlocksActive() ? "blocks" : this.isPythonActive ? "python" : "javascript";
-        return pxt.appTarget.appTheme.tutorialSimSidebarLangs?.includes(lang);
+        return !!pxt.appTarget.appTheme.tutorialSimSidebarLangs?.includes(lang);
     }
 
     onEditorContentLoaded() {
