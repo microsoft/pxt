@@ -115,7 +115,11 @@ const areas: Area[] = [
             if (!bounds) {
                 return undefined;
             }
-            if (projectView.state.collapseEditorTools && !pxt.appTarget.simulator?.headless) {
+
+            const inTutorial = !!projectView.state.tutorialOptions?.tutorial;
+            const isHeadless = !!pxt.appTarget.simulator?.headless;
+
+            if (projectView.state.collapseEditorTools && !(isHeadless && inTutorial)) {
                 const isRtl = pxt.Util.isUserLanguageRtl();
                 // Shift over for a clearer area when the toolbox is collapsed
                 const copy = DOMRect.fromRect(bounds);
