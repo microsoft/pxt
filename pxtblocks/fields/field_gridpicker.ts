@@ -28,7 +28,6 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
     private firstItem_: HTMLElement;
 
     private hasSearchBar_: boolean;
-    private hideRect_: boolean;
 
     private observer: IntersectionObserver;
 
@@ -61,7 +60,6 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
 
         this.tooltipConfig_ = tooltipCfg;
         this.hasSearchBar_ = !!options.hasSearchBar || false;
-        this.hideRect_ = !!options.hideRect || false;
     }
 
     protected setFocusedItem_(_gridItemContainer: HTMLElement) {
@@ -287,15 +285,6 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
         this.closeModal_ = true;
         this.buttonClick_(value);
     };
-
-    /**
-     * Whether or not to show a box around the dropdown menu.
-     * @return {boolean} True if we should show a box (rect) around the dropdown menu. Otherwise false.
-     * @private
-     */
-    shouldShowRect_() {
-        return !this.hideRect_ ? !this.sourceBlock_.isShadow() : false;
-    }
 
     doClassValidation_(newValue: string) {
         return newValue;
