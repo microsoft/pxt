@@ -104,8 +104,7 @@
 }
 
 .tutorial-controls {
-    border-top: 2px solid var(--pxt-neutral-alpha50);
-    margin-top: 1rem;
+    margin-bottom: 1rem;
 }
 
 /*******************************
@@ -251,7 +250,7 @@
 .tutorial-controls {
     display: flex;
     flex-direction: row;
-    justify-content: space-between;
+    justify-content: end;
     flex-wrap: wrap;
     margin-bottom: 1rem;
 
@@ -592,7 +591,6 @@
     .immersive-reader-button.ui.item {
         float: right;
         border: 2px solid var(--pxt-neutral-stencil1);
-        margin-left: 1.5rem;
     }
 }
 
@@ -700,7 +698,6 @@
         min-height: 100%;
         display: flex;
         flex-direction: column;
-        justify-content: space-between;
         padding: .5rem 1rem 0.7rem 1rem;
 
         .tutorial-step-content {
@@ -709,8 +706,8 @@
 
         .immersive-reader-button {
             position: absolute;
-            top: 0.3rem;
-            right: 1rem;
+            top: 1rem;
+            left: 1rem;
         }
     }
 
@@ -782,7 +779,6 @@
         padding: 0 0;
         column-gap: 1rem;
         border-bottom: unset;
-        margin-left: auto;
 
         .ui.button {
             margin: 0;
@@ -815,10 +811,11 @@
 
     .tutorial-controls {
         display: flex;
+        gap: 1rem;
         align-items: center;
         margin: 0;
         margin-top: 0.5rem;
-        padding: 0.7rem 0 0 0;
+        padding: 0 0 0.7rem 0;
 
         > .ui.button {
             width: unset;
