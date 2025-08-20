@@ -41,6 +41,8 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
     private selectedBarText_: HTMLElement;
     private selectedBarValue_: string;
 
+    protected scrollContainer: HTMLDivElement;
+
     private static DEFAULT_IMG = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
 
     constructor(text: string, options: FieldGridPickerOptions, validator?: Function) {
@@ -66,6 +68,18 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
         this.gridItems.forEach(button => button.classList.remove('gridpicker-option-focused', 'gridpicker-menuitem-highlight'));
         const activeItem = this.gridItems[this.activeDescendantIndex];
         activeItem.classList.add('gridpicker-option-focused');
+
+        Blockly.utils.style.scrollIntoContainerView(activeItem, this.scrollContainer);
+        const rect = activeItem.getBoundingClientRect();
+
+        const title = activeItem.title || (activeItem as any).alt;
+        this.gridTooltip_.textContent = title;
+        // Show the tooltip
+        this.gridTooltip_.style.visibility = title ? 'visible' : 'hidden';
+        this.gridTooltip_.style.display = title ? '' : 'none';
+
+        this.gridTooltip_.style.top = `${rect.bottom}px`;
+        this.gridTooltip_.style.left = `${rect.left}px`;
     }
 
     /**
@@ -365,6 +379,7 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
         const anchorBBox = this.getAnchorDimensions_();
 
         const { paddingContainer, scrollContainer } = this.createWidget_(tableContainer);
+        this.scrollContainer = scrollContainer;
 
         const containerSize = {
             width: paddingContainer.offsetWidth,
@@ -740,8 +755,9 @@ Blockly.Css.register(`
     display: none;
 }
 
-.blocklyWidgetDiv .blocklyGridPickerMenu .gridpicker-option.gridpicker-option-focused {
-    box-shadow: 0px 0px 0px 4px rgb(255, 255, 255);
+.blocklyWidgetDiv .blocklyGridPickerMenu .blocklyGridPickerRow .gridpicker-menuitem.gridpicker-option-focused {
+    outline: 3px solid var(--pxt-focus-border);
+    outline-offset: -5px;
 }
 
 .blocklyGridPickerTooltip {
