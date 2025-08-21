@@ -86,6 +86,8 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
             this.gridTooltip_.style.top = `${rect.bottom + 5}px`;
             this.gridTooltip_.style.left = `${rect.left}px`;
         }
+
+        this.addKeyboardNavigableClass();
     }
 
     /**
@@ -373,6 +375,9 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
         const tableContainer = document.createElement("div");
         this.positionMenu_(tableContainer);
         tableContainer.focus();
+        if (!e) {
+            this.addKeyboardNavigableClass();
+        }
     }
 
     private positionMenu_(tableContainer: HTMLElement) {
@@ -524,7 +529,11 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
         });
 
         // Search on key change
-        searchBar.addEventListener("keyup", pxt.Util.debounce(() => {
+        searchBar.addEventListener("keyup", pxt.Util.debounce((e: KeyboardEvent) => {
+            if (e.code === "Tab") {
+                return;
+            }
+
             let text = searchBar.value;
             let re = new RegExp(text, "i");
             let filteredOptions = options.filter((block) => {
@@ -532,7 +541,7 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
                 const value = (block as any)[1]; // Language-neutral value.
                 return alt ? re.test(alt) : re.test(value);
             })
-            this.populateTableContainer.bind(this)(filteredOptions, tableContainer, scrollContainer);
+            this.populateTableContainer(filteredOptions, tableContainer, scrollContainer);
             if (text) {
                 this.highlightFirstItem(tableContainer)
             } else {
@@ -687,6 +696,7 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
     // Used for focus trap
     private handleTabKey(e: KeyboardEvent) {
         if (e.code === "Tab") {
+            this.addKeyboardNavigableClass();
             if (document.activeElement === this.lastFocusableElement && !e.shiftKey) {
                 this.firstFocusableElement.focus();
                 e.preventDefault();
@@ -694,6 +704,12 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
                 this.lastFocusableElement.focus();
                 e.preventDefault();
             }
+        }
+    }
+
+    private addKeyboardNavigableClass() {
+        if (this.scrollContainer) {
+            this.scrollContainer.classList.add("keyboardNavigable");
         }
     }
 }
@@ -724,6 +740,10 @@ Blockly.Css.register(`
     border-radius: 4px;
     position: relative;
     -webkit-overflow-scrolling: touch;
+}
+
+.blocklyGridPickerScroller.keyboardNavigable:has(:focus-visible) {
+    outline: 4px solid var(--pxt-focus-border);
 }
 
 .blocklyGridPickerPadder {
@@ -781,7 +801,7 @@ Blockly.Css.register(`
     display: none;
 }
 
-.blocklyWidgetDiv .blocklyGridPickerMenu .blocklyGridPickerRow .gridpicker-menuitem.gridpicker-option-focused {
+.blocklyWidgetDiv .blocklyGridPickerMenu:focus .blocklyGridPickerRow .gridpicker-menuitem.gridpicker-option-focused {
     outline: 3px solid var(--pxt-focus-border);
 }
 
