@@ -436,60 +436,6 @@ export class ExpandableMenu extends UIElement<ExpandableMenuProps, ExpandableMen
     }
 }
 
-export interface SelectProps {
-    options: SelectItem[];
-    onChange?: (value: string) => void;
-    "aria-label"?: string;
-    label?: string;
-}
-
-export interface SelectState {
-    selected?: string;
-}
-
-export interface SelectItem {
-    value: string | number;
-    display?: string;
-}
-
-export class Select extends UIElement<SelectProps, SelectState> {
-    constructor(props: SelectProps) {
-        super(props);
-        const { options } = props;
-        this.state = {
-            selected: options[0] && (options[0].value + "")
-        };
-    }
-
-    handleOnChange = (ev: React.ChangeEvent<HTMLSelectElement>) => {
-        const { onChange } = this.props;
-        this.setState({
-            selected: ev.target.value
-        });
-
-        if (onChange) {
-            onChange(ev.target.value);
-        }
-    }
-
-    render() {
-        const { options, label, "aria-label": ariaLabel } = this.props;
-        const { selected } = this.state;
-
-        return (<div>
-            { label && `${label} ` }
-            <select value={selected} className="ui dropdown" onChange={this.handleOnChange} aria-label={ariaLabel} >
-                {options.map(opt =>
-                    opt && <option
-                        aria-selected={selected === opt.value}
-                        value={opt.value}
-                        key={opt.value}
-                    >{opt.display || opt.value}</option>
-                )}
-            </select>
-        </div>);
-    }
-}
 
 ///////////////////////////////////////////////////////////
 ////////////             Items                /////////////
