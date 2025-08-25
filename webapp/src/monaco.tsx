@@ -994,17 +994,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 run: () => Promise.resolve(this.parent.typecheckNow())
             });
 
-            this.editor.addAction({
-                id: "runSimulator",
-                label: lf("Run Simulator"),
-                keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
-                keybindingContext: "!editorReadonly",
-                precondition: "!editorReadonly",
-                contextMenuGroupId: "0_pxtnavigation",
-                contextMenuOrder: 0.21,
-                run: () => Promise.resolve(this.parent.runSimulator())
-            });
-
             if (pxt.appTarget.compile && pxt.appTarget.compile.hasHex) {
                 this.editor.addAction({
                     id: "compileHex",
