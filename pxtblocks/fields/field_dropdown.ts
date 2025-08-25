@@ -11,6 +11,10 @@ export class FieldDropdown extends Blockly.FieldDropdown {
     override initView() {
         super.initView();
 
+        if (this.fieldGroup_) {
+            this.fieldGroup_.classList.add("pxtFieldDropdown");
+        }
+
         if (this.shouldAddBorderRect_()) {
             return;
         }
@@ -122,3 +126,9 @@ export class FieldDropdown extends Blockly.FieldDropdown {
         showEditorMixin.call(this, e);
     }
 }
+
+Blockly.Css.register(`
+.pxtFieldDropdown.blocklyActiveFocus > .blocklyFieldRect, .pxtFieldDropdown.blocklyPassiveFocus > .blocklyFieldRect {
+    stroke-opacity: 1;
+}
+`)
