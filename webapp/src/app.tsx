@@ -1967,8 +1967,11 @@ export class ProjectView
                 editorState.filters = {
                     blocks: tutorialBlocks.usedBlocks,
                     defaultState: pxt.editor.FilterState.Hidden
-                }
-                editorState.hasCategories = !(header.tutorial.metadata && header.tutorial.metadata.flyoutOnly);
+                };
+                editorState.hasCategories = !(
+                    header.tutorial.metadata &&
+                    (header.tutorial.metadata.flyoutOnly || header.tutorial.metadata.unifiedToolbox)
+                );
             }
             this.setState({ editorState: editorState });
             this.editor.filterToolbox(true);
@@ -5172,6 +5175,7 @@ export class ProjectView
                     const flyoutOnly =
                         this.state.editorState?.hasCategories === false
                         || this.state.tutorialOptions?.metadata?.flyoutOnly
+                        || this.state.tutorialOptions?.metadata?.unifiedToolbox
                         || this.state.tutorialOptions?.metadata?.hideToolbox;
 
                     let headerHeight = 0;
