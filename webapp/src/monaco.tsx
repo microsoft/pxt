@@ -1379,7 +1379,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.toolbox.hide();
         }
 
-        if (this.parent.isTutorial() && (this.parent.state.tutorialOptions?.metadata?.flyoutOnly || this.parent.state.tutorialOptions?.metadata?.unifiedToolbox)) {
+        if (this.parent.isTutorial() &&
+            (this.parent.state.tutorialOptions?.metadata?.flyoutOnly ||
+                this.parent.state.tutorialOptions?.metadata?.unifiedToolbox)) {
             this.showUnifiedToolbox();
         }
 
