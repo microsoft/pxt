@@ -1390,21 +1390,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     // Merge all toolbox categories into one single, always-open flyout
     showUnifiedToolbox() {
-        const allCategories = this.getAllCategories();
-        let allBlocks: toolbox.BlockDefinition[] = [];
-        allCategories.forEach(category => {
-            const blocks = category.blocks;
-            allBlocks = allBlocks.concat(blocks);
-            if (category.subcategories) category.subcategories.forEach(subcategory => {
-                const subblocks = subcategory.blocks;
-                allBlocks = allBlocks.concat(subblocks);
-            })
-        });
+        this.injectCategoryStyles();
 
-        let container = document.createElement("div");
-        ReactDOM.render(<toolbox.ToolboxStyle categories={allCategories} />, container);
-        document.getElementById('editorcontent').appendChild(container);
-
+        let allBlocks = this.getAllBlocks();
         let combinedGroup: toolbox.GroupDefinition = {
             name: lf("Snippets"),
             blocks: allBlocks
