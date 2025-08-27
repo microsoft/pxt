@@ -30,9 +30,17 @@ Typically, when a tutorial starts the default editor view, it's for editing code
 ### @preferredEditor asset
 ```
 
-### Flyout blocks
+### Unified toolbox
 
-To have all of the available blocks in a permanently visible flyout instead of the toolbox, use **@flyoutOnly**. The default setting is ``false``.
+To have all of the available blocks grouped in a permanently visible flyout (instead of the toolbox), use **@unifiedToolbox**. The default setting is ``false``.
+
+```
+### @unifiedToolbox true
+```
+
+### Flyout blocks (deprecated)
+
+This flag is deprecated. Use `unifiedToolbox` instead.
 
 ```
 ### @flyoutOnly true
