@@ -566,6 +566,10 @@ describe("blockly compiler", function () {
         it("should compile gridTemplate blocks to template strings", done => {
             blockTestAsync("grid_template_string").then(done, done);
         })
+
+        it ("should handle forceStatement blocks", done => {
+            blockTestAsync("force_statement").then(done, done);
+        })
     });
 
     describe("compiling expandable blocks", () => {
@@ -613,6 +617,10 @@ describe("blockly compiler", function () {
 
         it("should handle events with blockAliasFor set", done => {
             blockTestAsync("event_block_alias_for").then(done, done);
+        });
+
+        it("should handle events with draggableParameters=reporter and optionalVariableArgs", done => {
+            blockTestAsync("variable_reporter_args").then(done, done);
         });
     })
 

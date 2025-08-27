@@ -890,6 +890,7 @@ namespace ts.pxtc {
     const booleanAttributes: (keyof CommentAttrs)[] = [
         "advanced",
         "handlerStatement",
+        "forceStatement",
         "afterOnStart",
         "optionalVariableArgs",
         "blockHidden",

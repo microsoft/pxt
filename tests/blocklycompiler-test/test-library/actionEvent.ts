@@ -119,3 +119,23 @@ namespace player {
     export function onChatCommand(command: string, argTypes: ChatArgument[], handler: (args: ChatCommandArguments) => void): void {
     }
 }
+
+namespace testNamespace {
+    //% blockId=test_handler_arguments5 optionalVariableArgs
+    //% block="Handler with optiional arguments"
+    //% draggableParameters="reporter"
+    //% blockAllowMultiple
+    export function callbackWithVariableReporterArgs(cb: (c: number, d: TestClass) => void) {}
+
+    //% blockId=test_create_class
+    //% block="Create test class with number %x"
+    export function createTestClass(x: number): TestClass { return new TestClass(x); }
+
+    export class TestClass {
+        constructor(x: number) {}
+
+        //% blockId=test_class_method
+        //% block="Some method|on %testClass|with number %x"
+        public testMethod(a: number) {}
+    }
+}

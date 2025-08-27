@@ -706,7 +706,7 @@ ${output}</xml>`;
                         attributes = attrs(callInfo);
                     }
                 }
-                return attributes.blockId && !attributes.handlerStatement && !callInfo.isExpression && hasStatementInput(callInfo, attributes);
+                return attributes.blockId && !attributes.handlerStatement && !attributes.forceStatement && !callInfo.isExpression && hasStatementInput(callInfo, attributes);
             }
             return false;
         }
@@ -2023,7 +2023,7 @@ ${output}</xml>`;
 
                         let isStatement = true;
 
-                        if (info.isExpression) {
+                        if (isOutputExpression(node, env)) {
                             const [parent] = getParent(node);
                             isStatement = parent && parent.kind === SK.ExpressionStatement;
                         }
@@ -2174,9 +2174,18 @@ ${output}</xml>`;
                                     r.mutation = {
                                         "numargs": arrow.parameters.length.toString()
                                     };
-                                    arrow.parameters.forEach((parameter, i) => {
-                                        r.mutation["arg" + i] = (parameter.name as ts.Identifier).text;
-                                    });
+
+                                    if (attributes.draggableParameters === "reporter") {
+                                        arrow.parameters.forEach((parameter, i) => {
+                                            const arg = paramDesc.handlerParameters[i];
+                                            addDraggableInput(arg, (parameter.name as ts.Identifier).text);
+                                        });
+                                    }
+                                    else {
+                                        arrow.parameters.forEach((parameter, i) => {
+                                            r.mutation["arg" + i] = (parameter.name as ts.Identifier).text;
+                                        });
+                                    }
                                 }
                                 else {
                                     arrow.parameters.forEach((parameter, i) => {
@@ -2192,7 +2201,7 @@ ${output}</xml>`;
                                 }
                             }
                             if (attributes.draggableParameters) {
-                                if (arrow.parameters.length < paramDesc.handlerParameters.length) {
+                                if (arrow.parameters.length < paramDesc.handlerParameters.length && !attributes.optionalVariableArgs) {
                                     for (let i = arrow.parameters.length; i < paramDesc.handlerParameters.length; i++) {
                                         const arg = paramDesc.handlerParameters[i];
                                         addDraggableInput(arg, arg.name);
@@ -2737,7 +2746,7 @@ ${output}</xml>`;
             }
 
             if (!asExpression) {
-                if (info.isExpression && !userFunction) {
+                if (isOutputExpression(n, env) && !userFunction) {
                     const alias = env.aliasBlocks[info.qName];
 
                     if (alias) {
@@ -2747,6 +2756,9 @@ ${output}</xml>`;
                         return Util.lf("No output expressions as statements");
                     }
                 }
+            }
+            else if (attributes.forceStatement || attributes.handlerStatement) {
+                return Util.lf("Function with forceStatement cannot be used as an expression.")
             }
 
             if (info.qName == "Math.pow") {
@@ -2768,7 +2780,7 @@ ${output}</xml>`;
             }
 
             const hasCallback = hasStatementInput(info, attributes);
-            if (hasCallback && !attributes.handlerStatement && !topLevel) {
+            if (hasCallback && !attributes.handlerStatement && !attributes.forceStatement && !topLevel) {
                 return Util.lf("Events must be top level");
             }
 
@@ -2894,7 +2906,7 @@ ${output}</xml>`;
 
                 const predicate = p as (ts.FunctionExpression | ts.ArrowFunction);
 
-                if (isOutputExpression(predicate.body as ts.Expression)) {
+                if (isOutputExpression(predicate.body as ts.Expression, env)) {
                     return true;
                 }
 
@@ -3682,7 +3694,7 @@ ${output}</xml>`;
         });
     }
 
-    function isOutputExpression(expr: ts.Expression): boolean {
+    function isOutputExpression(expr: ts.Expression, env: DecompilerEnv): boolean {
         switch (expr.kind) {
             case SK.BinaryExpression: {
                 const tk = (expr as ts.BinaryExpression).operatorToken.kind;
@@ -3699,7 +3711,8 @@ ${output}</xml>`;
             case SK.CallExpression: {
                 const callInfo: pxtc.CallInfo = pxtc.pxtInfo(expr).callInfo
                 assert(!!callInfo);
-                return callInfo.isExpression;
+                const attrs = env.attrs(callInfo);
+                return callInfo.isExpression && !attrs.forceStatement && !attrs.handlerStatement;
             }
             case SK.Identifier:
             case SK.ParenthesizedExpression:

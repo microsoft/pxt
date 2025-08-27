@@ -535,10 +535,13 @@
         background: none transparent;
         min-width: inherit;
         max-width: inherit;
-        width: @simulatorWidth;
         top: @mainMenuHeight;
         bottom: 0;
         left: 0;
+
+        &:not(.topInstructions) {
+            width: @simulatorWidth;
+        }
 
         .simPanel {
             display: none;
@@ -549,7 +552,7 @@
         display: auto;
     }
 
-    #maineditor {
+    &:not(.tutorialSimSidebar) #maineditor {
         left: @simulatorWidth;
     }
 }
