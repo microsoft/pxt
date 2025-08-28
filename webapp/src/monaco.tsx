@@ -1000,9 +1000,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
                 keybindingContext: "!editorReadonly",
                 precondition: "!editorReadonly",
-                contextMenuGroupId: "0_pxtnavigation",
-                contextMenuOrder: 0.21,
-                run: () => Promise.resolve(this.parent.runSimulator())
+                run: async () => this.parent.startStopSimulator({ clickTrigger: true })
             });
 
             if (pxt.appTarget.compile && pxt.appTarget.compile.hasHex) {
