@@ -61,6 +61,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     compilationResult: pxtblockly.BlockCompilationResult;
     shouldFocusWorkspace = false;
     functionsDialog: CreateFunctionDialog = null;
+    registeredKeyboardNavigationStyles = false;
 
     showCategories: boolean = true;
     breakpointsByBlock: pxt.Map<number>; // Map block id --> breakpoint ID
@@ -784,7 +785,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         // Increase the Blockly connection radius
         Blockly.config.snapRadius = 48;
         Blockly.config.connectingSnapRadius = 96;
-        if (accessibleBlocksEnabled) {
+        if (accessibleBlocksEnabled && !this.registeredKeyboardNavigationStyles) {
+            this.registeredKeyboardNavigationStyles = true;
             KeyboardNavigation.registerKeyboardNavigationStyles();
         }
         this.editor = Blockly.inject(blocklyDiv, this.getBlocklyOptions(forceHasCategories)) as Blockly.WorkspaceSvg;
