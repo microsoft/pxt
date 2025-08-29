@@ -548,7 +548,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
          */
         const that = this;
         Blockly.Toolbox.prototype.getFocusableElement = function() {
-            return that.getToolboxDiv().querySelector(".blocklyTreeRoot [role=tree]") as HTMLElement;
+            return that.getToolboxDiv()?.querySelector(".blocklyTreeRoot [role=tree]") as HTMLElement ?? that.getBlocksAreaDiv();
         };
         Blockly.Toolbox.prototype.getRestoredFocusableNode = function() {
             return null;
