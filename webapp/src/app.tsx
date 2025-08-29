@@ -3759,7 +3759,7 @@ export class ProjectView
     }
 
     setSimulatorFullScreen(enabled: boolean) {
-        if (this.state.collapseEditorTools) {
+        if (this.state.collapseEditorTools && !pxt.appTarget.simulator?.headless) {
             this.expandSimulator();
         }
         if (enabled) {
