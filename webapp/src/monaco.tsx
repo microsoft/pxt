@@ -1379,7 +1379,30 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.toolbox.hide();
         }
 
+        if (this.parent.isTutorial() &&
+            (this.parent.state.tutorialOptions?.metadata?.flyoutOnly ||
+                this.parent.state.tutorialOptions?.metadata?.unifiedToolbox)) {
+            this.showUnifiedToolbox();
+        }
+
         this.updateDebuggerToolbox();
+    }
+
+    // Merge all toolbox categories into one single, always-open flyout
+    showUnifiedToolbox() {
+        this.injectCategoryStyles();
+
+        let allBlocks = this.getAllBlocks();
+        let combinedGroup: toolbox.GroupDefinition = {
+            name: lf("Snippets"),
+            blocks: allBlocks
+        }
+
+        this.flyout.setState( {
+            hide: false,
+            groups: [combinedGroup],
+            stayOpenOnDrag: true,
+        })
     }
 
     private updateDebuggerToolbox() {
