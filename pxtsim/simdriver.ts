@@ -851,6 +851,11 @@ namespace pxsim {
                 msg.breakOnStart = false;
             }
             this.postMessageCore(frame, msg);
+            const lang = this.options?.userLanguage;
+            if (lang) {
+                const langMsg: any = { type: 'pxt-set-language', lang: lang, source: MESSAGE_SOURCE };
+                this.postMessageCore(frame, langMsg);
+            }
             if (this.traceInterval) this.setTraceInterval(this.traceInterval);
             this.applyAspectRatioToFrame(frame);
             this.setFrameState(frame);
