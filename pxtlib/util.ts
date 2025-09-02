@@ -1948,6 +1948,66 @@ namespace ts.pxtc.Util {
 
         return enabled;
     }
+
+    /**
+     * Remove potentially sensitive info from the given data to avoid logging it.
+     * Currently only supports string data.
+     */
+    export function cleanData(data: any, visited = new WeakSet(), depth = 0): any {
+        if (!data) return data;
+
+        if (typeof data === "string") {
+            data = removePropertiesWithPossibleUserInfo(data);
+        } else if (typeof data === "object") {
+            // Check for string properties
+            if (depth > 5) {
+                return "<REDACTED: Max Depth>";
+            }
+
+            if (visited.has(data)) {
+                return "<REDACTED: Circular Reference>";
+            }
+
+            visited.add(data);
+            for (const key of Object.keys(data)) {
+                data[key] = cleanData(data[key], visited, depth + 1);
+            }
+        }
+
+        return data;
+    }
+
+    /**
+     * Attempts to remove commonly leaked PII
+     * @param property The property which will be removed if it contains user data
+     * @returns The new value for the property
+     * 
+     * Taken from https://github.com/microsoft/vscode/blob/main/src/vs/platform/telemetry/common/telemetryUtils.ts
+     */
+    function removePropertiesWithPossibleUserInfo(property: string): string {
+        // If for some reason it is undefined we skip it (this shouldn't be possible);
+        if (!property) {
+            return property;
+        }
+
+        const userDataRegexes = [
+            { label: 'Google API Key', regex: /AIza[A-Za-z0-9_\\\-]{35}/ },
+            { label: 'Slack Token', regex: /xox[pbar]\-[A-Za-z0-9]/ },
+            { label: 'GitHub Token', regex: /(gh[psuro]_[a-zA-Z0-9]{36}|github_pat_[a-zA-Z0-9]{22}_[a-zA-Z0-9]{59})/ },
+            { label: 'Generic Secret', regex: /(key|token|sig|secret|signature|password|passwd|pwd|android:value)[^a-zA-Z0-9]/i },
+            { label: 'CLI Credentials', regex: /((login|psexec|(certutil|psexec)\.exe).{1,50}(\s-u(ser(name)?)?\s+.{3,100})?\s-(admin|user|vm|root)?p(ass(word)?)?\s+["']?[^$\-\/\s]|(^|[\s\r\n\\])net(\.exe)?.{1,5}(user\s+|share\s+\/user:| user -? secrets ? set) \s + [^ $\s \/])/ },
+            { label: 'Email', regex: /@[a-zA-Z0-9-]+\.[a-zA-Z0-9-]+/ } // Regex which matches @*.site
+        ];
+
+        // Check for common user data in the telemetry events
+        for (const secretRegex of userDataRegexes) {
+            if (secretRegex.regex.test(property)) {
+                return `<REDACTED: ${secretRegex.label}>`;
+            }
+        }
+
+        return property;
+    }
 }
 
 namespace ts.pxtc.BrowserImpl {

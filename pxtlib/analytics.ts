@@ -40,6 +40,8 @@ namespace pxt.analytics {
 
         const te = pxt.tickEvent;
         pxt.tickEvent = function (id: string, data?: Map<string | number>, opts?: TelemetryEventOptions): void {
+            data = pxt.Util.cleanData(data);
+
             if (consoleTicks != ConsoleTickOptions.Off)
             {
                 const prefix = consoleTicks == ConsoleTickOptions.Short ? "" : `${new Date().toLocaleTimeString(undefined, { hour12: false })} - Tick - `;
@@ -67,6 +69,9 @@ namespace pxt.analytics {
         const rexp = pxt.reportException;
         pxt.reportException = function (err: any, data: pxt.Map<string | number>): void {
             if (rexp) rexp(err, data);
+
+            data = pxt.Util.cleanData(data);
+
             const props: pxt.Map<string> = {
                 target: pxt.appTarget.id,
                 version: pxt.appTarget.versions.target
@@ -78,6 +83,9 @@ namespace pxt.analytics {
         const re = pxt.reportError;
         pxt.reportError = function (cat: string, msg: string, data?: pxt.Map<string | number>): void {
             if (re) re(cat, msg, data);
+
+            data = pxt.Util.cleanData(data);
+
             try {
                 throw msg
             }
