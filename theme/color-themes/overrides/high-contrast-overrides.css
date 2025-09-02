@@ -70,6 +70,11 @@ div.field .ui.toggle.checkbox input:checked~label:before {
     outline: 3px solid var(--pxt-colors-yellow-background) !important;
 }
 
+#blocklySearchInput i {
+    color: var(--pxt-neutral-foreground1);
+    opacity: 1;
+}
+
 /* 
  * Inverted image colors
  */
