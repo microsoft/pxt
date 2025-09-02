@@ -1953,28 +1953,24 @@ namespace ts.pxtc.Util {
      * Remove potentially sensitive info from the given data to avoid logging it.
      * Currently only supports string data.
      */
-    export function cleanData(data: any, visited = new WeakSet(), depth = 0): any {
+    export function cleanData(data: string): string;
+    export function cleanData(data: pxt.Map<string | number>): pxt.Map<string | number>;
+    export function cleanData(data: any): any {
         if (!data) return data;
 
+        let result: any;
         if (typeof data === "string") {
-            data = removePropertiesWithPossibleUserInfo(data);
+            result = removePropertiesWithPossibleUserInfo(data);
         } else if (typeof data === "object") {
-            // Check for string properties
-            if (depth > 5) {
-                return "<REDACTED: Max Depth>";
+            result = {};
+            for (const [key, value] of Object.entries(data)) {
+                result[key] = typeof value === "string" ? removePropertiesWithPossibleUserInfo(value) : value;
             }
-
-            if (visited.has(data)) {
-                return "<REDACTED: Circular Reference>";
-            }
-
-            visited.add(data);
-            for (const key of Object.keys(data)) {
-                data[key] = cleanData(data[key], visited, depth + 1);
-            }
+        } else {
+            result = data;
         }
 
-        return data;
+        return result;
     }
 
     /**
