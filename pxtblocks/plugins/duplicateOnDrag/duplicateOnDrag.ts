@@ -65,7 +65,7 @@ export function shouldDuplicateOnDrag(block: Blockly.Block) {
                 if (ref && (!ref.childBlockType || ref.childBlockType === block.type)) {
                     if (ref.inputName) {
                         const targetConnection = block.outputConnection.targetConnection;
-                        if (targetConnection.getParentInput().name === ref.inputName) {
+                        if (targetConnection.getParentInput()?.name === ref.inputName) {
                             return true;
                         }
                     }
