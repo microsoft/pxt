@@ -68,10 +68,8 @@ namespace pxt.analytics {
 
         const rexp = pxt.reportException;
         pxt.reportException = function (err: any, data: pxt.Map<string | number>): void {
-            if (rexp) rexp(err, data);
-
             data = pxt.Util.cleanData(data);
-
+            if (rexp) rexp(err, data);
             const props: pxt.Map<string> = {
                 target: pxt.appTarget.id,
                 version: pxt.appTarget.versions.target
@@ -82,10 +80,8 @@ namespace pxt.analytics {
 
         const re = pxt.reportError;
         pxt.reportError = function (cat: string, msg: string, data?: pxt.Map<string | number>): void {
-            if (re) re(cat, msg, data);
-
             data = pxt.Util.cleanData(data);
-
+            if (re) re(cat, msg, data);
             try {
                 throw msg
             }
