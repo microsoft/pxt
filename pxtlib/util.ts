@@ -1990,7 +1990,7 @@ namespace ts.pxtc.Util {
             { label: 'Google API Key', regex: /AIza[A-Za-z0-9_\\\-]{35}/ },
             { label: 'Slack Token', regex: /xox[pbar]\-[A-Za-z0-9]/ },
             { label: 'GitHub Token', regex: /(gh[psuro]_[a-zA-Z0-9]{36}|github_pat_[a-zA-Z0-9]{22}_[a-zA-Z0-9]{59})/ },
-            { label: 'Generic Secret', regex: /\b(key|token|sig|secret|signature|password|passwd|pwd|android:value)[^a-zA-Z0-9]{0,200}/i },
+            { label: 'Generic Secret', regex: /\b(token|signature|password|passwd|pwd|android:value)[^a-zA-Z0-9]{0,200}/i },
             { label: 'CLI Credentials', regex: /((login|psexec|(certutil|psexec)\.exe).{1,50}(\s-u(ser(name)?)?\s+.{3,100})?\s-(admin|user|vm|root)?p(ass(word)?)?\s+["']?[^$\-\/\s]|(^|[\s\r\n\\])net(\.exe)?.{1,5}(user\s+|share\s+\/user:| user -? secrets ? set) \s + [^ $\s \/])/ },
             { label: 'JWT Token', regex: /\beyJ[A-Za-z0-9_\-]+?\.[A-Za-z0-9_\-]+?\.[A-Za-z0-9_\-]+?\b/ },
             { label: 'Email', regex: /\b[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,63}\b/i }
