@@ -1,6 +1,6 @@
 /* Import all components */
-@import 'themes/default/globals/site.variables';
-@import 'themes/pxt/globals/site.variables';
+@import "themes/default/globals/site.variables";
+@import "themes/pxt/globals/site.variables";
 
 /* Reference import */
 @import (reference) "semantic.less";
@@ -11,12 +11,14 @@
 
 /* Side Docs layout */
 #sidedocs {
-  top: 0;
-  z-index: @sidedocZIndex;
-  visibility: hidden;
-  opacity: 0;
-  right: 0;
-  width: 0;
+    top: 0;
+    z-index: @sidedocZIndex;
+    visibility: hidden;
+    opacity: 0;
+    right: 0;
+    width: 0;
+    /* Animate width/right/opacity so the side panel transitions with the same timing as the tabs */
+    transition: width 0.25s ease, right 0.25s ease, opacity 0.25s ease;
 }
 
 code.hljs {
@@ -24,28 +26,43 @@ code.hljs {
 }
 
 #sidedocsbar {
-  position: absolute;
-  right: 1rem;
+    position: absolute;
+    right: 1rem;
 }
 
 #sidedocsframe {
-  width: 0;
-  height: 0;
-  border:none;
-  background: white;
+    width: 0;
+    height: 0;
+    border: none;
+    background: white;
 }
 
-/* Side docs toggle button */
-#sidedocstoggle {
-  right: 0;
-  left: auto;
+/* Close button inside the SideDocs panel (top-right) */
+#sidedocsframe-wrapper .sidedocs-close {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    z-index: @sidedocZIndex + 2;
+    background: transparent;
+    border: none;
+    color: var(--pxt-neutral-foreground1);
+    opacity: 0.9;
+    padding: 0.25rem;
+    line-height: 1;
+}
+
+#sidedocsframe-wrapper .sidedocs-close:hover,
+#sidedocsframe-wrapper .sidedocs-close:focus {
+    opacity: 1;
 }
 
 .sideDocs #sidedocs {
     position: fixed;
     visibility: visible;
     opacity: 1;
-    width: @sideBarWidth;
+    width: var(--sidedocWidth);
+    /* Don't let the panel expand beyond a fraction of the viewport */
+    max-width: 50vw;
     top: calc(@mainMenuHeight + 1rem);
     height: ~"calc(100% - @{mainMenuHeight} - @{editorToolsCollapsedHeight} - 2rem)";
 }
@@ -54,31 +71,28 @@ code.hljs {
     position: relative;
     -webkit-overflow-scrolling: touch;
     overflow: auto;
-    width: @sideBarWidth;
+    width: var(--sidedocWidth);
     height: 100%;
-    -webkit-box-shadow: 0px 0px 20px 0px rgba(0,0,0,0.41);
-    -moz-box-shadow: 0px 0px 20px 0px rgba(0,0,0,0.41);
-    box-shadow: 0px 0px 20px 0px rgba(0,0,0,0.41);
+    -webkit-box-shadow: 0px 0px 20px 0px rgba(0, 0, 0, 0.41);
+    -moz-box-shadow: 0px 0px 20px 0px rgba(0, 0, 0, 0.41);
+    box-shadow: 0px 0px 20px 0px rgba(0, 0, 0, 0.41);
     border-top-left-radius: 5px;
     border-bottom-left-radius: 5px;
     z-index: @sidedocZIndex;
 
     &:has(aside:focus-visible) {
-        outline: @editorFocusBorderSize solid  var(--pxt-focus-border);
+        outline: @editorFocusBorderSize solid var(--pxt-focus-border);
     }
 }
 
 .sideDocs #sidedocsframe {
-  position:absolute;
-  top:0px;
-  width:100%;
-  height:100%;
+    position: absolute;
+    top: 0px;
+    width: 100%;
+    height: 100%;
 }
 
-.sideDocs #sidedocstoggle {
-   right: @sideBarWidth;
-   transition: right 0.5s, opacity 0.5s linear;
-}
+/* The old sidedocstoggle control was removed; the new close button is inside #sidedocsframe-wrapper */
 
 .sideDocs #sidedocsbar {
     top: 1rem;
@@ -86,89 +100,112 @@ code.hljs {
 }
 
 #sidedocsbar .ui.link .icon {
-  cursor: pointer;
-  font-size: @h3;
+    cursor: pointer;
+    font-size: @h3;
 }
 
 /* Sidedocs in Monaco editor */
 .sideDocs.editorlang-text {
     #sidedocs {
-        width: 50%!important;
+        width: 50% !important;
         min-width: 18rem;
     }
 
-    #sidedocsframe, #sidedocsframe-wrapper {
-        width: 100%!important;
+    #sidedocsframe,
+    #sidedocsframe-wrapper {
+        width: 100% !important;
     }
 
-    #sidedocstoggle {
-        right: calc(~'50% - 0.5rem')!important;
-    }
-
-    @media only screen and (max-width: 36rem) {
-        #sidedocstoggle {
-            right: 17rem!important;
-        }
-    }
+    /* The old sidedocstoggle control was removed; the new close button is inside #sidedocsframe-wrapper */
 }
 
 /* Large Monitor */
 @media only screen and (min-width: @largeMonitorBreakpoint) {
-    .sideDocs #sidedocs, .sideDocs #sidedocsframe, .sideDocs #sidedocsframe-wrapper {
-        width: @sideBarWidthLarge !important;
-    }
-    .sideDocs #sidedocstoggle {
-        right: @sideBarWidthLarge !important;
-    }
+    /* override the CSS variable used by the panel and tabs */
+    .sideDocs { --sidedocWidth: ~"min(@{sideBarWidthLarge}, 50vw)"; }
+    /* The old sidedocstoggle control was removed; the new close button is inside #sidedocsframe-wrapper */
 }
 
 /* Small Monitor */
 @media only screen and (min-width: @computerBreakpoint) and (max-width: @largestSmallMonitor) {
-
 }
 
 /* Tablet */
 @media only screen and (min-width: @tabletBreakpoint) and (max-width: @largestTabletScreen) {
-
 }
 
 /* Mobile */
 @media only screen and (max-width: @largestMobileScreen) {
-
-}
-
-/* >= Small Monitor (Small Monitor + Large Monitor + Wide Monitor) */
-@media only screen and (min-width: @computerBreakpoint) {
-}
-
-/* <= Small Monitor (Mobile + Tablet + Small Monitor) */
-@media only screen and (max-width: @largestSmallMonitor) {
-
-}
-
-/* <= Tablet (Mobile + Tablet) */
-@media only screen and (max-width: @largestTabletScreen) {
-    .sideDocs #sidedocs {
-        top: calc(@mobileMenuHeight + 1rem);
-        height: ~"calc(100% - @{mobileMenuHeight} - @{editorToolsHeight} - 2rem)";
-    }
-    .sideDocs.collapsedEditorTools #sidedocs, .sideDocs.hideEditorFloats #sidedocs {
-        height: ~"calc(100% - @{mobileMenuHeight} - @{editorToolsCollapsedHeight} - 2rem)";
-    }
-}
-
-/* Mobile */
-@media only screen and (max-width: @largestMobileScreen) {
-    .sideDocs #sidedocs, .sideDocs #sidedocsframe, .sideDocs #sidedocsframe-wrapper {
-        width: @sideBarWidthSmall !important;
-    }
-    .sideDocs #sidedocstoggle {
-        right: @sideBarWidthSmall !important;
-    }
+    /* override the CSS variable used by the panel and tabs on mobile */
+    .sideDocs { --sidedocWidth: ~"min(@{sideBarWidthSmall}, 50vw)"; }
+    /* The old sidedocstoggle control was removed; the new close button is inside #sidedocsframe-wrapper */
+     /* position the tabstrip appropriately on mobile */
+     #sidedocstabs, .sidedoc-tablist {
+         top: calc(@mobileMenuHeight + 8px);
+     }
 }
 
 @media only screen and (max-height: @tallEditorBreakpoint) and (min-width: @largestMobileScreen) {
     .sideDocs #sidedocs {
         top: calc(@thinMenuHeight + 1rem);
     }
+}
+
+/* Side docs tab strip styles */
+#sidedocstabs,
+.sidedoc-tablist {
+    position: fixed;
+    right: 0;
+    top: calc(@mainMenuHeight + 8px);
+    display: flex;
+    flex-direction: column;
+    z-index: @sidedocZIndex + 1;
+    gap: 0.35rem;
+    padding: 0.25rem;
+    /* no transition by default (instant close on collapse) */
+    transition: none;
+}
+
+/* When the sidebar is open, define the clamped width value for use by the panel and the tabstrip */
+.sideDocs {
+    --sidedocWidth: ~"min(@{sideBarWidth}, 50vw)";
+}
+
+/* When the sidebar is open (body .sideDocs), move the tab strip to the panel edge */
+.sideDocs #sidedocstabs {
+    /* place the tab strip at the same clamped width used by the panel */
+    right: var(--sidedocWidth);
+    transition: right 0.25s ease;
+}
+
+.sidedoc-tab {
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.35rem;
+    background: var(--pxt-neutral-alpha10);
+    color: var(--pxt-neutral-foreground1);
+    cursor: pointer;
+    border: 1px solid transparent;
+}
+
+.sidedoc-tab.active {
+    background: var(--pxt-neutral-alpha20);
+    border-color: var(--pxt-secondary-accent);
+}
+
+/* Make the inner button fill the tab wrapper */
+.sidedoc-tab .ui.button {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    padding: 0;
+    margin: 0;
+    box-shadow: none;
 }
