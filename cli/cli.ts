@@ -2811,6 +2811,9 @@ function pxtVersion(): string {
 
 function buildAndWatchAsync(f: () => Promise<string[]>, maxDepth: number): Promise<void> {
     let currMtime = Date.now()
+    const DEBOUNCE_MS = 3000;
+    let debounceTimer: any = null;
+
     return f()
         .then(dirs => {
             if (globalConfig.noAutoBuild) return
@@ -2821,11 +2824,26 @@ function buildAndWatchAsync(f: () => Promise<string[]>, maxDepth: number): Promi
                     .then(num => {
                         if (num > currMtime) {
                             currMtime = num
-                            f()
-                                .then(d => {
-                                    dirs = d
-                                    U.nextTick(loop)
-                                })
+                            if (debounceTimer) {
+                                clearTimeout(debounceTimer)
+                                debounceTimer = null
+                            }
+
+                            debounceTimer = setTimeout(() => {
+                                debounceTimer = null
+                                f()
+                                    .then(d => {
+                                        dirs = d
+                                        U.nextTick(loop)
+                                    })
+                                    .catch((e) => {
+                                        buildFailed("debounced build failed: " + (e && e.message ? e.message : ""), e)
+                                        U.nextTick(loop)
+                                    })
+                            }, DEBOUNCE_MS)
+
+                            // continue polling so subsequent changes reset debounceTimer
+                            U.nextTick(loop)
                         } else {
                             U.nextTick(loop)
                         }
