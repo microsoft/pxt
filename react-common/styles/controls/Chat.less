@@ -1,0 +1,122 @@
+/* Chat component styles: lightweight, theme-aware using CSS variables */
+
+.common-chat {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    background-color: var(--pxt-neutral-background2);
+    color: var(--pxt-neutral-foreground2);
+    border-radius: 0.5rem;
+    border: 1px solid var(--pxt-neutral-stencil1);
+    overflow: hidden;
+}
+
+.common-chat-message-list {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.common-chat-message {
+    display: flex;
+    flex-direction: column;
+    max-width: 100%;
+}
+
+.common-chat-message.from-user {
+    align-items: flex-end;
+}
+
+.common-chat-message.from-agent {
+    align-items: flex-start;
+}
+
+.common-chat-message-meta {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    color: var(--pxt-neutral-foreground3);
+}
+
+.common-chat-message-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin-top: 0.25rem;
+}
+
+.common-chat-message-part {
+    max-width: 72%;
+}
+
+.common-chat-part-text {
+    background: var(--pxt-neutral-background1);
+    color: var(--pxt-neutral-foreground1);
+    padding: 0.6rem 0.75rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.02);
+    white-space: pre-wrap;
+}
+
+.common-chat-part-image {
+    max-width: 18rem;
+    border-radius: 0.35rem;
+    border: 1px solid var(--pxt-neutral-stencil1);
+}
+
+.common-chat-composer {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    border-top: 1px solid var(--pxt-neutral-stencil1);
+    background-color: var(--pxt-neutral-background1);
+}
+
+.common-chat-composer-textarea {
+    flex: 1 1 auto;
+    min-height: 2.5rem;
+    max-height: 10rem;
+    resize: none;
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+    border: 1px solid var(--pxt-neutral-stencil1);
+    font-family: var(--page-font, "Segoe UI", Tahoma, Geneva, Verdana);
+}
+
+.common-chat-send-button {
+    align-self: flex-end;
+}
+
+.common-chat-part-fallback {
+    background: var(--pxt-neutral-background1);
+    color: var(--pxt-neutral-foreground1);
+    padding: 0.5rem;
+    border-radius: 0.3rem;
+    border: 1px dashed var(--pxt-neutral-stencil1);
+    font-family: var(--page-font, "Segoe UI", Tahoma, Geneva, Verdana);
+}
+
+.common-chat-demo-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+/* small scroll to bottom helper */
+.common-chat-scroll-bottom {
+    position: absolute;
+    right: 1rem;
+    bottom: 4.25rem;
+}
+
+/* Respect reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+    .common-chat-message-body {
+        transition: none !important;
+    }
+}
