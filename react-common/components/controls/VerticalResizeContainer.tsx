@@ -54,9 +54,16 @@ export const VerticalResizeContainer = (props: VerticalResizeContainerProps) => 
             e.stopPropagation();
         };
 
+        const preventSelection = (e: Event) => {
+            e.preventDefault();
+            e.stopPropagation();
+        };
+
         const cleanupBodyEvents = () => {
             document.removeEventListener("pointermove", resize, false);
             document.removeEventListener("pointerup", onPointerUp, false);
+            document.removeEventListener("mousemove", preventSelection, false);
+            document.removeEventListener("mousedown", preventSelection, false);
             document.body.classList.remove("cursor-resize");
         };
 
@@ -77,6 +84,11 @@ export const VerticalResizeContainer = (props: VerticalResizeContainerProps) => 
                 document.body.classList.add("cursor-resize");
                 document.addEventListener("pointermove", resize, false);
                 document.addEventListener("pointerup", onPointerUp, false);
+
+                // We use pointer events for the resize, but mouse events can still fire and cause things to get selected.
+                // Just prevent it while dragging.
+                document.addEventListener("mousemove", preventSelection, false);
+                document.addEventListener("mousedown", preventSelection, false);
             }
         };
 
