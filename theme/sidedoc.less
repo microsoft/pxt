@@ -39,21 +39,16 @@ code.hljs {
 
 /* Close button inside the SideDocs panel (top-right) */
 #sidedocsframe-wrapper .sidedocs-close {
-    position: absolute;
-    top: 0.5rem;
-    right: 0.5rem;
     z-index: @sidedocZIndex + 2;
     background: transparent;
     border: none;
     color: var(--pxt-neutral-foreground1);
-    opacity: 0.9;
     padding: 0.25rem;
     line-height: 1;
 }
 
 #sidedocsframe-wrapper .sidedocs-close:hover,
 #sidedocsframe-wrapper .sidedocs-close:focus {
-    opacity: 1;
 }
 
 .sideDocs #sidedocs {
@@ -68,9 +63,10 @@ code.hljs {
 }
 
 .sideDocs #sidedocsframe-wrapper {
+    display: flex;
+    flex-direction: column;
     position: relative;
-    -webkit-overflow-scrolling: touch;
-    overflow: auto;
+    overflow: hidden;
     width: var(--sidedocWidth);
     height: 100%;
     -webkit-box-shadow: 0px 0px 20px 0px rgba(0, 0, 0, 0.41);
@@ -86,8 +82,6 @@ code.hljs {
 }
 
 .sideDocs #sidedocsframe {
-    position: absolute;
-    top: 0px;
     width: 100%;
     height: 100%;
 }
@@ -122,7 +116,9 @@ code.hljs {
 /* Large Monitor */
 @media only screen and (min-width: @largeMonitorBreakpoint) {
     /* override the CSS variable used by the panel and tabs */
-    .sideDocs { --sidedocWidth: ~"min(@{sideBarWidthLarge}, 50vw)"; }
+    .sideDocs {
+        --sidedocWidth: ~"min(@{sideBarWidthLarge}, 50vw)";
+    }
     /* The old sidedocstoggle control was removed; the new close button is inside #sidedocsframe-wrapper */
 }
 
@@ -137,12 +133,15 @@ code.hljs {
 /* Mobile */
 @media only screen and (max-width: @largestMobileScreen) {
     /* override the CSS variable used by the panel and tabs on mobile */
-    .sideDocs { --sidedocWidth: ~"min(@{sideBarWidthSmall}, 50vw)"; }
+    .sideDocs {
+        --sidedocWidth: ~"min(@{sideBarWidthSmall}, 50vw)";
+    }
     /* The old sidedocstoggle control was removed; the new close button is inside #sidedocsframe-wrapper */
-     /* position the tabstrip appropriately on mobile */
-     #sidedocstabs, .sidedoc-tablist {
-         top: calc(@mobileMenuHeight + 8px);
-     }
+    /* position the tabstrip appropriately on mobile */
+    #sidedocstabs,
+    .sidedoc-tablist {
+        top: calc(@mobileMenuHeight + 8px);
+    }
 }
 
 @media only screen and (max-height: @tallEditorBreakpoint) and (min-width: @largestMobileScreen) {
@@ -156,7 +155,7 @@ code.hljs {
 .sidedoc-tablist {
     position: fixed;
     right: 0;
-    top: calc(@mainMenuHeight + 8px);
+    top: calc(@mainMenuHeight + 12px);
     display: flex;
     flex-direction: column;
     z-index: @sidedocZIndex + 1;
@@ -208,4 +207,46 @@ code.hljs {
     padding: 0;
     margin: 0;
     box-shadow: none;
+}
+
+#sidedocsframe-wrapper .sidedoc-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.25rem;
+    background: var(--pxt-header-background);
+    color: var(--pxt-primary-foreground);
+    z-index: @sidedocZIndex + 3;
+    min-height: fit-content;
+
+    .sidedoc-header-spacer {
+        flex-grow: 1;
+    }
+}
+
+#sidedocsframe-wrapper .sidedoc-title {
+    font-weight: 600;
+    font-size: 1rem;
+    line-height: 1;
+    margin: 0;
+}
+
+/* close button in header */
+#sidedocsframe-wrapper .sidedocs-close {
+    background: transparent;
+    border: none;
+    color: var(--pxt-neutral-foreground1);
+    opacity: 0.95;
+}
+
+#sidedocsframe-wrapper .sidedocs-close:hover,
+#sidedocsframe-wrapper .sidedocs-close:focus {
+    opacity: 1;
+}
+
+/* content area below header */
+#sidedocsframe-wrapper .sidedocs-content {
+    flex-grow: 1;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
 }

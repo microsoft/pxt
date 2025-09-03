@@ -805,6 +805,7 @@ export interface SideDocsProps extends ISettingsProps {
     sideDocsCollapsed: boolean;
     extraTabs?: SideDocsTab[]; // dynamic tabs passed from parent
     showBuiltIns?: boolean; // defaults to true
+    sideDocsTitle?: React.ReactNode; // title to show in the side docs header
 }
 
 // This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
@@ -1111,10 +1112,17 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
             </a>
         </div>;
 
-        const content = <div key="content" id="sidedocsframe-wrapper">
-            {/* Close button in the top-right of the expanded panel */}
+        const headerBar = <div className="sidedoc-header" role="banner">
+            <div className="sidedoc-title">{this.props.sideDocsTitle || lf("Docs")}</div>
+            <div className="sidedoc-header-spacer" />
             <sui.Button id="sidedocsclose" className={`sidedocs-close ui icon button`} icon="close" title={lf("Close the side documentation")} ariaLabel={lf("Close the side documentation")} onClick={this.close} />
-            {this.renderTabContent(activeTab, url, builtInDetail, lockedEditor)}
+        </div>;
+
+        const content = <div key="content" id="sidedocsframe-wrapper">
+            {headerBar}
+            <div className="sidedocs-content">
+                {this.renderTabContent(activeTab, url, builtInDetail, lockedEditor)}
+            </div>
         </div>;
 
         const flipNewTabLinkOrder = builtInDetail?.singleTabStop;
