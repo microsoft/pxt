@@ -62,6 +62,8 @@ export const VerticalResizeContainer = (props: VerticalResizeContainerProps) => 
         const cleanupBodyEvents = () => {
             document.removeEventListener("pointermove", resize, false);
             document.removeEventListener("pointerup", onPointerUp, false);
+            document.removeEventListener("mousemove", preventSelection, false);
+            document.removeEventListener("mousedown", preventSelection, false);
             document.removeEventListener("touchmove", preventSelection, false);
             document.removeEventListener("touchstart", preventSelection, false);
             document.body.classList.remove("cursor-resize");
