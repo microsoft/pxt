@@ -148,6 +148,7 @@ export interface SettingsMenuProps extends ISettingsProps {
     accessibleBlocks: boolean;
     showShare?: boolean;
     inBlocks: boolean;
+    inTutorial: boolean;
 }
 
 // This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
@@ -321,6 +322,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             || this.state.accessibleBlocks != nextState.accessibleBlocks
             || this.state.showShare != nextState.showShare
             || nextProps.inBlocks !== this.props.inBlocks
+            || nextProps.inTutorial !== this.props.inTutorial;
     }
 
     renderCore() {
@@ -345,7 +347,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             !readOnly &&
             !isController &&
             !!targetTheme.simCollapseInMenu &&
-            !(headless && (this.props.inBlocks || this.props.parent.isTutorial()));
+            !(headless && (this.props.inBlocks || this.props.inTutorial));
         const showGreenScreen = targetTheme.greenScreen || /greenscreen=1/i.test(window.location.href);
         const showPrint = targetTheme.print && !pxt.BrowserUtils.isIE();
         const showProjectSettings = targetTheme.showProjectSettings;
