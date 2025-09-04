@@ -12,17 +12,13 @@
 /* Side Docs layout */
 #sidedocs {
     top: 0;
+    right: 0;
+    width: 0;
     z-index: @sidedocZIndex;
     visibility: hidden;
     opacity: 0;
-    right: 0;
-    width: 0;
     /* Animate width/right/opacity so the side panel transitions with the same timing as the tabs */
     transition: width 0.25s ease, right 0.25s ease, opacity 0.25s ease;
-}
-
-code.hljs {
-    background: none;
 }
 
 #sidedocsbar {
@@ -37,60 +33,62 @@ code.hljs {
     background: white;
 }
 
-/* Close button inside the SideDocs panel (top-right) */
-#sidedocsframe-wrapper .sidedocs-close {
-    z-index: @sidedocZIndex + 2;
-    background: transparent;
-    border: none;
-    color: var(--pxt-neutral-foreground1);
-    padding: 0.25rem;
-    line-height: 1;
+code.hljs {
+    background: none;
 }
 
-#sidedocsframe-wrapper .sidedocs-close:hover,
-#sidedocsframe-wrapper .sidedocs-close:focus {
-}
+/* Side docs - expanded state */
+.sideDocs {
+    /* Define the clamped width value for use by the panel and the tabstrip */
+    --sidedocWidth:~"min(@{sideBarWidth}, 50vw)";
 
-.sideDocs #sidedocs {
-    position: fixed;
-    visibility: visible;
-    opacity: 1;
-    width: var(--sidedocWidth);
-    /* Don't let the panel expand beyond a fraction of the viewport */
-    max-width: 50vw;
-    top: calc(@mainMenuHeight + 1rem);
-    height: ~"calc(100% - @{mainMenuHeight} - @{editorToolsCollapsedHeight} - 2rem)";
-}
-
-.sideDocs #sidedocsframe-wrapper {
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    overflow: hidden;
-    width: var(--sidedocWidth);
-    height: 100%;
-    -webkit-box-shadow: 0px 0px 20px 0px rgba(0, 0, 0, 0.41);
-    -moz-box-shadow: 0px 0px 20px 0px rgba(0, 0, 0, 0.41);
-    box-shadow: 0px 0px 20px 0px rgba(0, 0, 0, 0.41);
-    border-top-left-radius: 5px;
-    border-bottom-left-radius: 5px;
-    z-index: @sidedocZIndex;
-
-    &:has(aside:focus-visible) {
-        outline: @editorFocusBorderSize solid var(--pxt-focus-border);
+    #sidedocs {
+        position: fixed;
+        visibility: visible;
+        opacity: 1;
+        width: var(--sidedocWidth);
+        /* Don't let the panel expand beyond a fraction of the viewport */
+        max-width: 50vw;
+        top: calc(@mainMenuHeight + 1rem);
+        height:~"calc(100% - @{mainMenuHeight} - @{editorToolsCollapsedHeight} - 2rem)";
     }
-}
 
-.sideDocs #sidedocsframe {
-    width: 100%;
-    height: 100%;
-}
+    #sidedocsframe-wrapper {
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        overflow: hidden;
+        width: var(--sidedocWidth);
+        height: 100%;
+        -webkit-box-shadow: 0px 0px 20px 0px rgba(0, 0, 0, 0.41);
+        -moz-box-shadow: 0px 0px 20px 0px rgba(0, 0, 0, 0.41);
+        box-shadow: 0px 0px 20px 0px rgba(0, 0, 0, 0.41);
+        border-top-left-radius: 5px;
+        border-bottom-left-radius: 5px;
+        z-index: @sidedocZIndex;
 
-/* The old sidedocstoggle control was removed; the new close button is inside #sidedocsframe-wrapper */
+        &:has(aside:focus-visible) {
+            outline: @editorFocusBorderSize solid var(--pxt-focus-border);
+        }
+    }
 
-.sideDocs #sidedocsbar {
-    top: 1rem;
-    z-index: @sidedocZIndex+1;
+    #sidedocsframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+        background: white;
+    }
+
+    #sidedocsbar {
+        top: 1rem;
+        z-index: @sidedocZIndex+1;
+    }
+
+    /* Move the tab strip to the panel edge when sidebar is open */
+    #sidedocstabs {
+        right: var(--sidedocWidth);
+        transition: right 0.25s ease;
+    }
 }
 
 #sidedocsbar .ui.link .icon {
@@ -109,45 +107,6 @@ code.hljs {
     #sidedocsframe-wrapper {
         width: 100% !important;
     }
-
-    /* The old sidedocstoggle control was removed; the new close button is inside #sidedocsframe-wrapper */
-}
-
-/* Large Monitor */
-@media only screen and (min-width: @largeMonitorBreakpoint) {
-    /* override the CSS variable used by the panel and tabs */
-    .sideDocs {
-        --sidedocWidth: ~"min(@{sideBarWidthLarge}, 50vw)";
-    }
-    /* The old sidedocstoggle control was removed; the new close button is inside #sidedocsframe-wrapper */
-}
-
-/* Small Monitor */
-@media only screen and (min-width: @computerBreakpoint) and (max-width: @largestSmallMonitor) {
-}
-
-/* Tablet */
-@media only screen and (min-width: @tabletBreakpoint) and (max-width: @largestTabletScreen) {
-}
-
-/* Mobile */
-@media only screen and (max-width: @largestMobileScreen) {
-    /* override the CSS variable used by the panel and tabs on mobile */
-    .sideDocs {
-        --sidedocWidth: ~"min(@{sideBarWidthSmall}, 50vw)";
-    }
-    /* The old sidedocstoggle control was removed; the new close button is inside #sidedocsframe-wrapper */
-    /* position the tabstrip appropriately on mobile */
-    #sidedocstabs,
-    .sidedoc-tablist {
-        top: calc(@mobileMenuHeight + 8px);
-    }
-}
-
-@media only screen and (max-height: @tallEditorBreakpoint) and (min-width: @largestMobileScreen) {
-    .sideDocs #sidedocs {
-        top: calc(@thinMenuHeight + 1rem);
-    }
 }
 
 /* Side docs tab strip styles */
@@ -165,18 +124,6 @@ code.hljs {
     transition: none;
 }
 
-/* When the sidebar is open, define the clamped width value for use by the panel and the tabstrip */
-.sideDocs {
-    --sidedocWidth: ~"min(@{sideBarWidth}, 50vw)";
-}
-
-/* When the sidebar is open (body .sideDocs), move the tab strip to the panel edge */
-.sideDocs #sidedocstabs {
-    /* place the tab strip at the same clamped width used by the panel */
-    right: var(--sidedocWidth);
-    transition: right 0.25s ease;
-}
-
 .sidedoc-tab {
     width: 2.5rem;
     height: 2.5rem;
@@ -188,65 +135,86 @@ code.hljs {
     color: var(--pxt-neutral-foreground1);
     cursor: pointer;
     border: 1px solid transparent;
-}
 
-.sidedoc-tab.active {
-    background: var(--pxt-neutral-alpha20);
-    border-color: var(--pxt-secondary-accent);
-}
+    &.active {
+        background: var(--pxt-neutral-alpha20);
+        border-color: var(--pxt-secondary-accent);
+    }
 
-/* Make the inner button fill the tab wrapper */
-.sidedoc-tab .ui.button {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent;
-    border: none;
-    padding: 0;
-    margin: 0;
-    box-shadow: none;
-}
-
-#sidedocsframe-wrapper .sidedoc-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0.25rem;
-    background: var(--pxt-header-background);
-    color: var(--pxt-primary-foreground);
-    z-index: @sidedocZIndex + 3;
-    min-height: fit-content;
-
-    .sidedoc-header-spacer {
-        flex-grow: 1;
+    /* Make the inner button fill the tab wrapper */
+    .ui.button {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: transparent;
+        border: none;
+        padding: 0;
+        margin: 0;
+        box-shadow: none;
     }
 }
 
-#sidedocsframe-wrapper .sidedoc-title {
-    font-weight: 600;
-    font-size: 1rem;
-    line-height: 1;
-    margin: 0;
+/* Header and content area styles */
+#sidedocsframe-wrapper {
+    .sidedoc-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.25rem;
+        background: var(--pxt-header-background);
+        color: var(--pxt-primary-foreground);
+        z-index: @sidedocZIndex + 3;
+        min-height: fit-content;
+
+        .sidedoc-header-spacer {
+            flex-grow: 1;
+        }
+    }
+
+    .sidedoc-title {
+        font-weight: 600;
+        font-size: 1rem;
+        line-height: 1;
+        margin: 0;
+    }
+
+    /* content area below header */
+    .sidedocs-content {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+
+        /* iframe inside content area should flex to fill available space */
+        #sidedocsframe {
+            flex: 1;
+            min-height: 0;
+        }
+    }
 }
 
-/* close button in header */
-#sidedocsframe-wrapper .sidedocs-close {
-    background: transparent;
-    border: none;
-    color: var(--pxt-neutral-foreground1);
-    opacity: 0.95;
+/* Media Queries */
+@media only screen and (min-width: @largeMonitorBreakpoint) {
+    .sideDocs {
+        --sidedocWidth:~"min(@{sideBarWidthLarge}, 50vw)";
+    }
 }
 
-#sidedocsframe-wrapper .sidedocs-close:hover,
-#sidedocsframe-wrapper .sidedocs-close:focus {
-    opacity: 1;
+@media only screen and (max-width: @largestMobileScreen) {
+    .sideDocs {
+        --sidedocWidth:~"min(@{sideBarWidthSmall}, 50vw)";
+    }
+
+    #sidedocstabs,
+    .sidedoc-tablist {
+        top: calc(@mobileMenuHeight + 8px);
+    }
 }
 
-/* content area below header */
-#sidedocsframe-wrapper .sidedocs-content {
-    flex-grow: 1;
-    overflow: auto;
-    -webkit-overflow-scrolling: touch;
+@media only screen and (max-height: @tallEditorBreakpoint) and (min-width: @largestMobileScreen) {
+    .sideDocs #sidedocs {
+        top: calc(@thinMenuHeight + 1rem);
+    }
 }

@@ -1,3 +1,5 @@
+/** @format */
+
 // Chat public types and serialization envelope
 
 export const CHAT_SCHEMA_VERSION = 1;
@@ -8,8 +10,7 @@ export type PartKind = string;
 export interface MessagePartBase {
     kind: string; // semantic kind name
     version?: number; // part schema version
-    // any additional serializable fields are allowed
-    [k: string]: any;
+    [k: string]: string | number | boolean | null | undefined | object; // Restrict to serializable values only
 }
 
 export interface TextPart extends MessagePartBase {
@@ -63,5 +64,24 @@ export function cloneMessageWithId(message: Message, newId: string): Message {
         ...message,
         id: newId,
         parts: message.parts.map((p) => ({ ...p })),
+    };
+}
+
+// Validation helpers
+export function isValidMessage(obj: any): obj is Message {
+    return obj && typeof obj.id === "string" && Array.isArray(obj.parts) && obj.parts.every(isValidMessagePart);
+}
+
+export function isValidMessagePart(obj: any): obj is MessagePart {
+    return obj && typeof obj.kind === "string" && (obj.version === undefined || typeof obj.version === "number");
+}
+
+export function sanitizeMessage(message: Message): Message {
+    return {
+        ...message,
+        id: String(message.id),
+        parts: message.parts.filter(isValidMessagePart),
+        author: message.author ? String(message.author) : undefined,
+        timestamp: message.timestamp ? String(message.timestamp) : undefined,
     };
 }

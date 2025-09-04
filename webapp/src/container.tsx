@@ -1106,16 +1106,16 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
             tabIndex: 0,
         };
 
-        const openInNewTab = !lockedEditor && <div key="newTab" className="ui app hide" id="sidedocsbar">
-            <a className="ui icon link" aria-label={lf("Open documentation in new tab")} {...openInNewTabLinkProps}>
-                <sui.Icon icon="external" />
-            </a>
-        </div>;
+        const openInNewTab = !lockedEditor && <a className="ui icon link sidedocs-opentab" aria-label={lf("Open documentation in new tab")} {...openInNewTabLinkProps}>
+            <sui.Icon icon="external" />
+        </a>;
 
         const headerBar = <div className="sidedoc-header" role="banner">
             <div className="sidedoc-title">{this.props.sideDocsTitle || lf("Docs")}</div>
-            <div className="sidedoc-header-spacer" />
-            <sui.Button id="sidedocsclose" className={`sidedocs-close ui icon button`} icon="close" title={lf("Close the side documentation")} ariaLabel={lf("Close the side documentation")} onClick={this.close} />
+            <div className="sidedoc-controls">
+                {openInNewTab}
+                <sui.Button id="sidedocsclose" className={`sidedocs-close ui icon button`} icon="close" title={lf("Close the side documentation")} ariaLabel={lf("Close the side documentation")} onClick={this.close} />
+            </div>
         </div>;
 
         const content = <div key="content" id="sidedocsframe-wrapper">
@@ -1125,8 +1125,7 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
             </div>
         </div>;
 
-        const flipNewTabLinkOrder = builtInDetail?.singleTabStop;
-        const contentParts = flipNewTabLinkOrder ? [content, openInNewTab] : [openInNewTab, content];
+        const contentParts = [content];
 
         /* eslint-disable @microsoft/sdl/react-iframe-missing-sandbox */
         return <div>

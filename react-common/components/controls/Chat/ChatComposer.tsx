@@ -1,3 +1,5 @@
+/** @format */
+
 import * as React from "react";
 import { classList, ContainerProps } from "../../util";
 import { Button } from "../Button";
@@ -11,53 +13,75 @@ export interface ChatComposerProps extends ContainerProps {
 }
 
 export const ChatComposer = (props: ChatComposerProps) => {
-    const { onSend, className, style, placeholder, disabled, busy } = props;
+    const { onSend, className, style, placeholder, disabled, busy, id, ...ariaProps } = props;
     const [value, setValue] = React.useState("");
     const textareaRef = React.useRef<HTMLTextAreaElement | null>(null);
+    const resizeTimeoutRef = React.useRef<number>();
 
-    React.useEffect(() => {
-        // auto resize on mount
-        if (textareaRef.current) {
-            textareaRef.current.style.height = "1px";
-            textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    const debouncedResize = React.useCallback(() => {
+        if (resizeTimeoutRef.current) {
+            clearTimeout(resizeTimeoutRef.current);
         }
+        resizeTimeoutRef.current = setTimeout(() => {
+            if (!textareaRef.current) return;
+            // Reset height to measure scrollHeight accurately
+            textareaRef.current.style.height = "auto";
+            const newHeight = Math.min(textareaRef.current.scrollHeight, 160); // max ~10rem
+            textareaRef.current.style.height = `${newHeight}px`;
+        }, 16); // ~1 frame at 60fps
     }, []);
 
-    const maybeResize = () => {
-        if (!textareaRef.current) return;
-        textareaRef.current.style.height = "1px";
-        textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
-    };
+    React.useEffect(() => {
+        return () => {
+            if (resizeTimeoutRef.current) {
+                clearTimeout(resizeTimeoutRef.current);
+            }
+        };
+    }, []);
 
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    React.useEffect(() => {
+        // Initial resize
+        debouncedResize();
+    }, [debouncedResize]);
+
+    const handleKeyDown = React.useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (e.key === "Enter" && !e.shiftKey) {
-            // send
             e.preventDefault();
             const trimmed = value.trim();
-            if (!trimmed) return;
+            if (!trimmed || disabled || busy) return;
             onSend(trimmed);
             setValue("");
+            // Reset height after clearing
+            requestAnimationFrame(() => {
+                if (textareaRef.current) {
+                    textareaRef.current.style.height = "auto";
+                }
+            });
         }
-    };
+    }, [value, onSend, disabled, busy]);
 
-    const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const handleChange = React.useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
         setValue(e.target.value);
-        maybeResize();
-    };
+        debouncedResize();
+    }, [debouncedResize]);
 
-    const doSend = () => {
+    const doSend = React.useCallback(() => {
         const trimmed = value.trim();
-        if (!trimmed) return;
+        if (!trimmed || disabled || busy) return;
         onSend(trimmed);
         setValue("");
-        if (textareaRef.current) {
-            textareaRef.current.style.height = "1px";
-        }
-    };
+        requestAnimationFrame(() => {
+            if (textareaRef.current) {
+                textareaRef.current.style.height = "auto";
+                textareaRef.current.focus();
+            }
+        });
+    }, [value, onSend, disabled, busy]);
 
     return (
         <div className={classList("common-chat-composer", className)} style={style}>
             <textarea
+                id={id}
                 ref={textareaRef}
                 className={classList("common-textarea", "common-chat-composer-textarea")}
                 placeholder={placeholder || lf("Type a message...")}
@@ -66,6 +90,9 @@ export const ChatComposer = (props: ChatComposerProps) => {
                 onKeyDown={handleKeyDown}
                 aria-label={placeholder || lf("Message input")}
                 disabled={disabled}
+                rows={1}
+                style={{ minHeight: "2.5rem", maxHeight: "10rem", resize: "none", overflow: "hidden" }}
+                {...ariaProps}
             />
             <Button
                 className={classList("common-chat-send-button")}
@@ -73,6 +100,7 @@ export const ChatComposer = (props: ChatComposerProps) => {
                 label={busy ? <div className="common-spinner" /> : lf("Send")}
                 onClick={doSend}
                 disabled={disabled || busy || value.trim().length === 0}
+                aria-keyshortcuts="Enter"
             />
         </div>
     );
