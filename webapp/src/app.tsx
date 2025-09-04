@@ -1844,6 +1844,9 @@ export class ProjectView
                 pxt.storage.setLocal("onboardAccessibleBlocks", "0")
             }
 
+            // Force editor tools to collapse in headless tutorials and blocks mode (essentially hiding file explorer)
+            const forceEditorToolsCollapse = pxt.appTarget.simulator.headless && (!!h.tutorial || h.editor === pxt.BLOCKS_PROJECT_NAME);
+
             this.setState({
                 home: false,
                 showFiles: h.githubId ? true : false,
@@ -1854,7 +1857,8 @@ export class ProjectView
                 currFile: file,
                 sideDocsLoadUrl: sideDocsLoadUrl,
                 debugging: false,
-                isMultiplayerGame: false
+                isMultiplayerGame: false,
+                collapseEditorTools: forceEditorToolsCollapse || this.state.collapseEditorTools,
             });
 
             pkg.getEditorPkg(pkg.mainPkg).onupdate = () => {
