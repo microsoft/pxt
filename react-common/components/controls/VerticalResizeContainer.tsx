@@ -77,6 +77,9 @@ export const VerticalResizeContainer = (props: VerticalResizeContainerProps) => 
                 document.body.classList.add("cursor-resize");
                 document.addEventListener("pointermove", resize, false);
                 document.addEventListener("pointerup", onPointerUp, false);
+
+                e.preventDefault();
+                e.stopPropagation();
             }
         };
 
