@@ -229,7 +229,12 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
         // When searching multiple repos at the same time, use 'extension-search' which caches results
         // for much longer than 'gh-search'
         const virtualApi = preferredRepos.length <= 1 ? 'gh-search' : 'extension-search';
-        return data.getAsync<pxt.github.GitRepo[]>(`${virtualApi}:${preferredRepos.join("|")}`);
+
+        // Users can put anything in the search box.
+        // Make sure there are no secrets in it before we send to backend.
+        const cleanedRepos = preferredRepos.map(repo => pxt.Util.cleanData(repo));
+
+        return data.getAsync<pxt.github.GitRepo[]>(`${virtualApi}:${cleanedRepos.join("|")}`);
     }
 
     async function fetchGithubDataAndAddAsync(repos: string[]): Promise<ExtensionMeta[]> {
