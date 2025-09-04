@@ -535,10 +535,13 @@
         background: none transparent;
         min-width: inherit;
         max-width: inherit;
-        width: @simulatorWidth;
         top: @mainMenuHeight;
         bottom: 0;
         left: 0;
+
+        &:not(.topInstructions) {
+            width: @simulatorWidth;
+        }
 
         .simPanel {
             display: none;
@@ -549,7 +552,7 @@
         display: auto;
     }
 
-    #maineditor {
+    &:not(.tutorialSimSidebar) #maineditor {
         left: @simulatorWidth;
     }
 }
@@ -1086,7 +1089,8 @@
         min-width: 25rem;
     }
 
-    #simulator .editor-sidebar {
+    #simulator .editor-sidebar,
+    #root.headless.tabTutorial #simulator .editor-sidebar {
         top: @mobileMenuHeight;
     }
 

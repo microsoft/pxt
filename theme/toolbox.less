@@ -49,6 +49,27 @@ span.blocklyTreeIcon {
 }
 
 /*******************************
+        Monaco Flyout Only
+*******************************/
+#root.flyoutOnly {
+    // Hide toolbox categories section & flyout header
+    .monacoToolboxDiv, .monacoFlyoutHeading {
+        display: none;
+    }
+
+    #monacoEditorInner {
+        display: flex;
+        flex-direction: row;
+
+        #monacoFlyoutWidget {
+            position: relative;
+            border-radius: 0;
+            border-right: 5px solid var(--pxt-neutral-alpha80);
+        }
+    }
+}
+
+/*******************************
         Toolbox root
 *******************************/
 
