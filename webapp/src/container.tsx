@@ -341,7 +341,11 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         const showHome = !targetTheme.lockedEditor && !isController && auth.hasIdentity();
         const showShare = this.props.showShare && pxt.appTarget.cloud?.sharing && !isController;
         const showSave = !readOnly && !isController && !!targetTheme.saveInMenu && !disableFileAccessinMaciOs && !disableFileAccessinAndroid;
-        const showSimCollapse = !readOnly && !isController && !!targetTheme.simCollapseInMenu && !(headless && this.props.inBlocks);
+        const showSimCollapse =
+            !readOnly &&
+            !isController &&
+            !!targetTheme.simCollapseInMenu &&
+            !(headless && (this.props.inBlocks || this.props.parent.isTutorial()));
         const showGreenScreen = targetTheme.greenScreen || /greenscreen=1/i.test(window.location.href);
         const showPrint = targetTheme.print && !pxt.BrowserUtils.isIE();
         const showProjectSettings = targetTheme.showProjectSettings;
