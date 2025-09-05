@@ -31,7 +31,13 @@ interface Area {
 }
 
 const getToolboxBounds = (projectView: IProjectView): DOMRect | undefined => {
-    return document.querySelector(`${projectView.isBlocksActive() ? ".blocklyToolbox" : ".monacoToolboxDiv"}`)?.getBoundingClientRect();
+    const flyoutOnly = projectView.state.editorState?.hasCategories === false;
+    const blocksActive = projectView.isBlocksActive();
+    if (flyoutOnly) {
+        return document.querySelector(`${blocksActive ? ".blocklyFlyout" : ".monacoFlyout"}`)?.getBoundingClientRect();
+    } else {
+        return document.querySelector(`${blocksActive ? ".blocklyToolbox" : ".monacoToolboxDiv"}`)?.getBoundingClientRect();
+    }
 }
 
 const isSimMini = () => !!document.querySelector(".miniSim");
