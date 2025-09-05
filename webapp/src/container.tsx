@@ -816,6 +816,9 @@ export interface SideDocsState {
     activeTabId?: string;
     sideDocsWidthPx?: number;
     tabsTopPx?: number;
+    // Resize-related state
+    isResizing?: boolean;
+    sideDocsUserWidthPercent?: number; // User-set width as percentage of viewport
 }
 
 
@@ -837,6 +840,7 @@ export const builtInPrefix = "/builtin/"
 
 export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
     private openingSideDoc = false;
+    private resizeHandleRef = React.createRef<HTMLDivElement>();
 
     constructor(props: SideDocsProps) {
         super(props);
@@ -845,13 +849,17 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
             sideDocsCollapsed: undefined,
             activeTabId: 'docs-iframe',
             sideDocsWidthPx: 0,
-            tabsTopPx: 48
+            tabsTopPx: 48,
+            isResizing: false,
+            sideDocsUserWidthPercent: undefined
         }
 
         this.toggleVisibility = this.toggleVisibility.bind(this);
         this.notifyPopOut = this.notifyPopOut.bind(this);
         this.close = this.close.bind(this);
         this.updateLayoutMeasurements = this.updateLayoutMeasurements.bind(this);
+        this.handleResizeStart = this.handleResizeStart.bind(this);
+        this.handleResizeKeyDown = this.handleResizeKeyDown.bind(this);
     }
 
     private rootDocsUrl(): string {
@@ -958,10 +966,22 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
     componentDidMount() {
         window.addEventListener('resize', this.updateLayoutMeasurements);
         this.updateLayoutMeasurements();
+        
+        // Load saved width preference
+        const savedWidthPercent = pxt.storage.getLocal("sidedocs-width-percent");
+        if (savedWidthPercent) {
+            const widthPercent = parseFloat(savedWidthPercent);
+            if (!isNaN(widthPercent) && widthPercent >= 20 && widthPercent <= 60) {
+                this.setState({ sideDocsUserWidthPercent: widthPercent });
+                const root = document.documentElement;
+                root.style.setProperty('--sidedoc-user-width', `${widthPercent}vw`);
+            }
+        }
     }
 
     componentWillUnmount() {
         window.removeEventListener('resize', this.updateLayoutMeasurements);
+        document.body.classList.remove('resizing-sidedocs');
     }
 
     componentDidUpdate() {
@@ -974,6 +994,12 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
         }
 
         this.updateLayoutMeasurements();
+        
+        // Apply user-set width if available
+        if (this.state.sideDocsUserWidthPercent) {
+            const root = document.documentElement;
+            root.style.setProperty('--sidedoc-user-width', `${this.state.sideDocsUserWidthPercent}vw`);
+        }
     }
 
     UNSAFE_componentWillReceiveProps(nextProps: SideDocsProps) {
@@ -1000,7 +1026,9 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
             || this.state.docsIframeUrl != nextState.docsIframeUrl
             || this.state.activeTabId != nextState.activeTabId
             || this.state.sideDocsWidthPx != nextState.sideDocsWidthPx
-            || this.state.tabsTopPx != nextState.tabsTopPx;
+            || this.state.tabsTopPx != nextState.tabsTopPx
+            || this.state.isResizing != nextState.isResizing
+            || this.state.sideDocsUserWidthPercent != nextState.sideDocsUserWidthPercent;
     }
 
     private handleKeyDown = (ev: React.KeyboardEvent<HTMLElement>) => {
@@ -1078,8 +1106,148 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
             newState.tabsTopPx = 48;
         }
         if (newState.sideDocsWidthPx !== this.state.sideDocsWidthPx || newState.tabsTopPx !== this.state.tabsTopPx) {
+            // Don't update state during resize to prevent DOM interference
+            if (this.state.isResizing) {
+                return;
+            }
             this.setState(newState as SideDocsState);
         }
+    }
+
+    private handleResizeStart(e: React.MouseEvent | React.TouchEvent | React.PointerEvent) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (this.state.isResizing) {
+            return;
+        }
+        
+        // Capture pointer events to ensure we get all mouse movements
+        const target = e.currentTarget as HTMLElement;
+        if ('pointerId' in e.nativeEvent && 'setPointerCapture' in target) {
+            target.setPointerCapture((e.nativeEvent as PointerEvent).pointerId);
+        }
+        
+        this.setState({ isResizing: true });
+        
+        // Simple event handlers - no complex bound references
+        const handleMove = (e: MouseEvent | TouchEvent | PointerEvent) => {
+            const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+            
+            if (!this.state.isResizing) {
+                return;
+            }
+            
+            // For mouse events, check if button is still pressed
+            // Skip button checking for pointer events as they may have different button state behavior
+            if (e.type === 'mousemove' && 'buttons' in e && e.buttons !== 1) {
+                handleEnd();
+                return;
+            }
+            
+            e.preventDefault();
+            
+            const viewportWidth = window.innerWidth;
+            const newWidthPx = Math.max(0, viewportWidth - clientX);
+            const newWidthPercent = (newWidthPx / viewportWidth) * 100;
+            
+            const minWidthPercent = 20;
+            const maxWidthPercent = 60;
+            const constrainedWidthPercent = Math.min(Math.max(newWidthPercent, minWidthPercent), maxWidthPercent);
+            
+            this.setState({ sideDocsUserWidthPercent: constrainedWidthPercent });
+            
+            const root = document.documentElement;
+            root.style.setProperty('--sidedoc-user-width', `${constrainedWidthPercent}vw`);
+        };
+        
+        const handleEnd = () => {
+            this.setState({ isResizing: false });
+            
+            // Remove all listeners
+            document.removeEventListener('mousemove', handleMove);
+            document.removeEventListener('mouseup', handleEnd);
+            document.removeEventListener('pointermove', handleMove as any);
+            document.removeEventListener('pointerup', handleEnd);
+            document.removeEventListener('touchmove', handleMove);
+            document.removeEventListener('touchend', handleEnd);
+            window.removeEventListener('mouseup', handleEnd);
+            
+            document.body.classList.remove('resizing-sidedocs');
+            
+            // Save preference
+            const widthPercent = this.state.sideDocsUserWidthPercent;
+            if (widthPercent) {
+                const announcement = lf("Documentation panel resized to {0}% of screen width", Math.round(widthPercent));
+                pxt.debug(announcement);
+                pxt.storage.setLocal("sidedocs-width-percent", widthPercent.toString());
+            }
+        };
+        
+        // Add listeners
+        document.addEventListener('mousemove', handleMove);
+        document.addEventListener('mouseup', handleEnd);
+        document.addEventListener('pointermove', handleMove as any);
+        document.addEventListener('pointerup', handleEnd);
+        document.addEventListener('touchmove', handleMove);
+        document.addEventListener('touchend', handleEnd);
+        window.addEventListener('mouseup', handleEnd); // Catch mouseup outside window
+        
+        document.body.classList.add('resizing-sidedocs');
+        
+        const announcement = lf("Resizing documentation panel");
+        pxt.debug(announcement);
+    }
+
+    private handleResizeKeyDown(e: React.KeyboardEvent) {
+        const step = e.shiftKey ? 5 : 2; // Percentage steps (5% with Shift, 2% normally)
+        let currentWidthPercent = this.state.sideDocsUserWidthPercent;
+        
+        // If no user width set, calculate current width as percentage
+        if (!currentWidthPercent) {
+            const currentWidthPx = this.state.sideDocsWidthPx || (window.innerWidth * 0.3); // Default to 30%
+            currentWidthPercent = (currentWidthPx / window.innerWidth) * 100;
+        }
+        
+        let newWidthPercent = currentWidthPercent;
+        
+        switch (e.key) {
+            case 'ArrowRight':
+                e.preventDefault();
+                newWidthPercent = Math.max(currentWidthPercent - step, 20); // Min 20%
+                break;
+            case 'ArrowLeft': 
+                e.preventDefault();
+                newWidthPercent = Math.min(currentWidthPercent + step, 60); // Max 60%
+                break;
+            case 'Home':
+                e.preventDefault();
+                newWidthPercent = 20; // minimum width
+                break;
+            case 'End':
+                e.preventDefault();
+                newWidthPercent = 60; // maximum width
+                break;
+            case 'Escape':
+                e.preventDefault();
+                if (this.resizeHandleRef.current) {
+                    this.resizeHandleRef.current.blur();
+                }
+                return;
+            default:
+                return;
+        }
+        
+        this.setState({ sideDocsUserWidthPercent: newWidthPercent });
+        const root = document.documentElement;
+        root.style.setProperty('--sidedoc-user-width', `${newWidthPercent}vw`);
+        
+        // Save preference
+        pxt.storage.setLocal("sidedocs-width-percent", newWidthPercent.toString());
+        
+        // Announce to screen readers
+        const announcement = lf("Documentation panel width: {0}% of screen", Math.round(newWidthPercent));
+        pxt.debug(announcement);
     }
 
     renderCore() {
@@ -1088,7 +1256,7 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
         const activeTabId = this.state.activeTabId || (this.props.docsUrl && this.props.docsUrl.startsWith(builtInPrefix) ? this.getBuiltInKeyFromUrl(this.props.docsUrl as string) || 'docs-iframe' : 'docs-iframe');
         const activeTab = tabs.find(t => t.id === activeTabId) || tabs[0];
 
-        const { sideDocsCollapsed, docsIframeUrl } = this.state;
+        const { sideDocsCollapsed, docsIframeUrl, isResizing, sideDocsUserWidthPercent } = this.state;
         const lockedEditor = !!pxt.appTarget.appTheme.lockedEditor;
 
         const url = (activeTab.id === 'docs-iframe') ? (sideDocsCollapsed ? this.rootDocsUrl() : (docsIframeUrl || (this.props.docsUrl && !this.props.docsUrl.startsWith(builtInPrefix) ? this.props.docsUrl : this.rootDocsUrl()))) : (activeTab.builtInKey ? `${builtInPrefix}${activeTab.builtInKey}` : '');
@@ -1110,6 +1278,23 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
             <sui.Icon icon="external" />
         </a>;
 
+        const resizeHandle = <div
+            ref={this.resizeHandleRef}
+            className={`sidedocs-resize-handle ${isResizing ? 'resizing' : ''}`}
+            role="separator"
+            aria-orientation="vertical"
+            aria-label={lf("Resize documentation panel")}
+            aria-valuenow={sideDocsUserWidthPercent ? Math.round(sideDocsUserWidthPercent) : Math.round((this.state.sideDocsWidthPx / window.innerWidth) * 100)}
+            aria-valuemin={20}
+            aria-valuemax={60}
+            tabIndex={0}
+            title={lf("Drag to resize panel, or use arrow keys. Press Escape to finish.")}
+            onPointerDown={this.handleResizeStart}
+            onMouseDown={this.handleResizeStart}
+            onTouchStart={this.handleResizeStart}
+            onKeyDown={this.handleResizeKeyDown}
+        />;
+
         const headerBar = <div className="sidedoc-header" role="banner">
             <div className="sidedoc-title">{this.props.sideDocsTitle || lf("Docs")}</div>
             <div className="sidedoc-controls">
@@ -1125,7 +1310,7 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
             </div>
         </div>;
 
-        const contentParts = [content];
+        const contentParts = [resizeHandle, content];
 
         /* eslint-disable @microsoft/sdl/react-iframe-missing-sandbox */
         return <div>

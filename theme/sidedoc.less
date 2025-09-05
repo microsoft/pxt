@@ -39,16 +39,20 @@ code.hljs {
 
 /* Side docs - expanded state */
 .sideDocs {
-    /* Define the clamped width value for use by the panel and the tabstrip */
+    /* Define the default width value for use by the panel and the tabstrip */
     --sidedocWidth:~"min(@{sideBarWidth}, 50vw)";
+
+    /* Use user-set width (in vw) if available, otherwise use default */
+    --effectiveWidth: var(--sidedoc-user-width, var(--sidedocWidth));
 
     #sidedocs {
         position: fixed;
         visibility: visible;
         opacity: 1;
-        width: var(--sidedocWidth);
+        width: var(--effectiveWidth);
         /* Don't let the panel expand beyond a fraction of the viewport */
-        max-width: 50vw;
+        max-width: 60vw;
+        min-width: 20vw;
         top: calc(@mainMenuHeight + 1rem);
         height:~"calc(100% - @{mainMenuHeight} - @{editorToolsCollapsedHeight} - 2rem)";
     }
@@ -58,7 +62,7 @@ code.hljs {
         flex-direction: column;
         position: relative;
         overflow: hidden;
-        width: var(--sidedocWidth);
+        width: var(--effectiveWidth);
         height: 100%;
         -webkit-box-shadow: 0px 0px 20px 0px rgba(0, 0, 0, 0.41);
         -moz-box-shadow: 0px 0px 20px 0px rgba(0, 0, 0, 0.41);
@@ -86,7 +90,7 @@ code.hljs {
 
     /* Move the tab strip to the panel edge when sidebar is open */
     #sidedocstabs {
-        right: var(--sidedocWidth);
+        right: var(--effectiveWidth);
         transition: right 0.25s ease;
     }
 }
@@ -195,16 +199,94 @@ code.hljs {
     }
 }
 
+/* Resize handle styles */
+.sidedocs-resize-handle {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 4px;
+    height: 100%;
+    cursor: ew-resize;
+    background: transparent;
+    z-index: @sidedocZIndex + 2;
+
+    /* Extended hit area for easier interaction */
+    &::before {
+        content: '';
+        position: absolute;
+        left: -2px;
+        top: 0;
+        width: 8px;
+        height: 100%;
+    }
+
+    /* Visible indicator on hover/focus */
+    &:hover,
+    &:focus,
+    &.resizing {
+        background: var(--pxt-secondary-accent);
+        outline: none;
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--pxt-focus-border);
+        outline-offset: 2px;
+    }
+
+    /* Hide on mobile to avoid accidental touches */
+    @media only screen and (max-width: @largestMobileScreen) {
+        display: none;
+    }
+}
+
+/* Body cursor changes during resize */
+body.resizing-sidedocs {
+    cursor: ew-resize !important;
+    user-select: none !important;
+    
+    /* Disable transitions during resize for immediate feedback */
+    #sidedocs,
+    #sidedocsframe-wrapper {
+        transition: none !important;
+    }
+}
+
+/* High contrast support */
+@media (prefers-contrast: high) {
+    .sidedocs-resize-handle {
+        &:hover,
+        &:focus-visible,
+        &.resizing,
+        &:active {
+            background: CanvasText;
+        }
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .sidedocs-resize-handle {
+        transition: none;
+    }
+}
+
 /* Media Queries */
 @media only screen and (min-width: @largeMonitorBreakpoint) {
     .sideDocs {
         --sidedocWidth:~"min(@{sideBarWidthLarge}, 50vw)";
+        --effectiveWidth: var(--sidedoc-user-width, var(--sidedocWidth));
     }
 }
 
 @media only screen and (max-width: @largestMobileScreen) {
     .sideDocs {
         --sidedocWidth:~"min(@{sideBarWidthSmall}, 50vw)";
+        --effectiveWidth: var(--sidedoc-user-width, var(--sidedocWidth));
+
+        /* Disable resize on small screens */
+        .sidedocs-resize-handle {
+            display: none;
+        }
     }
 
     #sidedocstabs,
