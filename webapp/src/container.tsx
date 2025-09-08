@@ -1199,6 +1199,26 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
         pxt.debug(announcement);
     }
 
+    private handleResizeHover = (e: React.MouseEvent) => {
+        // Check if there's already a drag operation in progress
+        // If mouse buttons are pressed (but not specifically on our handle), suppress hover effects
+        if (e.buttons > 0) {
+            // Remove hover styling to indicate the handle is not interactive during other drag operations
+            const handle = this.resizeHandleRef.current;
+            if (handle) {
+                handle.classList.add('drag-disabled');
+            }
+        }
+    };
+
+    private handleResizeHoverEnd = (e: React.MouseEvent) => {
+        // Remove the drag-disabled class when mouse leaves
+        const handle = this.resizeHandleRef.current;
+        if (handle) {
+            handle.classList.remove('drag-disabled');
+        }
+    };
+
     private handleResizeKeyDown(e: React.KeyboardEvent) {
         const step = e.shiftKey ? 5 : 2; // Percentage steps (5% with Shift, 2% normally)
         let currentWidthPercent = this.state.sideDocsUserWidthPercent;
@@ -1293,6 +1313,8 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
             onMouseDown={this.handleResizeStart}
             onTouchStart={this.handleResizeStart}
             onKeyDown={this.handleResizeKeyDown}
+            onMouseEnter={this.handleResizeHover}
+            onMouseLeave={this.handleResizeHoverEnd}
         />;
 
         const headerBar = <div className="sidedoc-header" role="banner">

@@ -233,6 +233,15 @@ code.hljs {
         outline-offset: 2px;
     }
 
+    /* Suppress hover effects when another drag operation is active */
+    &.drag-disabled {
+        cursor: default;
+        
+        &:hover {
+            background: transparent;
+        }
+    }
+
     /* Hide on mobile to avoid accidental touches */
     @media only screen and (max-width: @largestMobileScreen) {
         display: none;
