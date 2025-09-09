@@ -2819,7 +2819,7 @@ function buildAndWatchAsync(f: () => Promise<string[]>, maxDepth: number): Promi
         .then(dirs => {
             if (globalConfig.noAutoBuild) return
             pxt.debug('watching ' + dirs.join(', ') + '...');
-            
+
             let loop = () => {
                 // Skip polling if we're currently building or debouncing
                 if (isBuilding || debounceTimer) {
@@ -2832,7 +2832,7 @@ function buildAndWatchAsync(f: () => Promise<string[]>, maxDepth: number): Promi
                     .then(num => {
                         if (num > currMtime) {
                             currMtime = num;
-                            
+
                             // Clear any existing debounce timer
                             if (debounceTimer) {
                                 clearTimeout(debounceTimer);
@@ -2843,7 +2843,7 @@ function buildAndWatchAsync(f: () => Promise<string[]>, maxDepth: number): Promi
                             debounceTimer = setTimeout(() => {
                                 debounceTimer = null;
                                 isBuilding = true;
-                                
+
                                 f()
                                     .then(d => {
                                         dirs = d;
@@ -2857,7 +2857,7 @@ function buildAndWatchAsync(f: () => Promise<string[]>, maxDepth: number): Promi
                                     });
                             }, DEBOUNCE_MS);
                         }
-                        
+
                         // Continue polling regardless of whether we detected changes
                         U.nextTick(loop);
                     })
@@ -2867,7 +2867,7 @@ function buildAndWatchAsync(f: () => Promise<string[]>, maxDepth: number): Promi
                         U.nextTick(loop);
                     });
             };
-            
+
             U.nextTick(loop);
         });
 }
