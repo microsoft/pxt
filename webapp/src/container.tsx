@@ -966,7 +966,7 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
     componentDidMount() {
         window.addEventListener('resize', this.updateLayoutMeasurements);
         this.updateLayoutMeasurements();
-        
+
         // Load saved width preference
         const savedWidthPercent = pxt.storage.getLocal("sidedocs-width-percent");
         if (savedWidthPercent) {
@@ -994,7 +994,7 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
         }
 
         this.updateLayoutMeasurements();
-        
+
         // Apply user-set width if available
         if (this.state.sideDocsUserWidthPercent) {
             const root = document.documentElement;
@@ -1117,53 +1117,53 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
     private handleResizeStart(e: React.MouseEvent | React.TouchEvent | React.PointerEvent) {
         e.preventDefault();
         e.stopPropagation();
-        
+
         if (this.state.isResizing) {
             return;
         }
-        
+
         // Capture pointer events to ensure we get all mouse movements
         const target = e.currentTarget as HTMLElement;
         if ('pointerId' in e.nativeEvent && 'setPointerCapture' in target) {
             target.setPointerCapture((e.nativeEvent as PointerEvent).pointerId);
         }
-        
+
         this.setState({ isResizing: true });
-        
+
         // Simple event handlers - no complex bound references
         const handleMove = (e: MouseEvent | TouchEvent | PointerEvent) => {
             const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-            
+
             if (!this.state.isResizing) {
                 return;
             }
-            
+
             // For mouse events, check if button is still pressed
             // Skip button checking for pointer events as they may have different button state behavior
             if (e.type === 'mousemove' && 'buttons' in e && e.buttons !== 1) {
                 handleEnd();
                 return;
             }
-            
+
             e.preventDefault();
-            
+
             const viewportWidth = window.innerWidth;
             const newWidthPx = Math.max(0, viewportWidth - clientX);
             const newWidthPercent = (newWidthPx / viewportWidth) * 100;
-            
+
             const minWidthPercent = 20;
             const maxWidthPercent = 60;
             const constrainedWidthPercent = Math.min(Math.max(newWidthPercent, minWidthPercent), maxWidthPercent);
-            
+
             this.setState({ sideDocsUserWidthPercent: constrainedWidthPercent });
-            
+
             const root = document.documentElement;
             root.style.setProperty('--sidedoc-user-width', `${constrainedWidthPercent}vw`);
         };
-        
+
         const handleEnd = () => {
             this.setState({ isResizing: false });
-            
+
             // Remove all listeners
             document.removeEventListener('mousemove', handleMove);
             document.removeEventListener('mouseup', handleEnd);
@@ -1172,9 +1172,9 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
             document.removeEventListener('touchmove', handleMove);
             document.removeEventListener('touchend', handleEnd);
             window.removeEventListener('mouseup', handleEnd);
-            
+
             document.body.classList.remove('resizing-sidedocs');
-            
+
             // Save preference
             const widthPercent = this.state.sideDocsUserWidthPercent;
             if (widthPercent) {
@@ -1183,7 +1183,7 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
                 pxt.storage.setLocal("sidedocs-width-percent", widthPercent.toString());
             }
         };
-        
+
         // Add listeners
         document.addEventListener('mousemove', handleMove);
         document.addEventListener('mouseup', handleEnd);
@@ -1192,9 +1192,9 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
         document.addEventListener('touchmove', handleMove);
         document.addEventListener('touchend', handleEnd);
         window.addEventListener('mouseup', handleEnd); // Catch mouseup outside window
-        
+
         document.body.classList.add('resizing-sidedocs');
-        
+
         const announcement = lf("Resizing documentation panel");
         pxt.debug(announcement);
     }
@@ -1222,21 +1222,21 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
     private handleResizeKeyDown(e: React.KeyboardEvent) {
         const step = e.shiftKey ? 5 : 2; // Percentage steps (5% with Shift, 2% normally)
         let currentWidthPercent = this.state.sideDocsUserWidthPercent;
-        
+
         // If no user width set, calculate current width as percentage
         if (!currentWidthPercent) {
             const currentWidthPx = this.state.sideDocsWidthPx || (window.innerWidth * 0.3); // Default to 30%
             currentWidthPercent = (currentWidthPx / window.innerWidth) * 100;
         }
-        
+
         let newWidthPercent = currentWidthPercent;
-        
+
         switch (e.key) {
             case 'ArrowRight':
                 e.preventDefault();
                 newWidthPercent = Math.max(currentWidthPercent - step, 20); // Min 20%
                 break;
-            case 'ArrowLeft': 
+            case 'ArrowLeft':
                 e.preventDefault();
                 newWidthPercent = Math.min(currentWidthPercent + step, 60); // Max 60%
                 break;
@@ -1257,14 +1257,14 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
             default:
                 return;
         }
-        
+
         this.setState({ sideDocsUserWidthPercent: newWidthPercent });
         const root = document.documentElement;
         root.style.setProperty('--sidedoc-user-width', `${newWidthPercent}vw`);
-        
+
         // Save preference
         pxt.storage.setLocal("sidedocs-width-percent", newWidthPercent.toString());
-        
+
         // Announce to screen readers
         const announcement = lf("Documentation panel width: {0}% of screen", Math.round(newWidthPercent));
         pxt.debug(announcement);
@@ -1358,7 +1358,7 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
                              this.collapse();
                          }
                      };
- 
+
                      return tabs.map((t, i) => {
                          const isActive = t.id === activeTabId;
                         return (
