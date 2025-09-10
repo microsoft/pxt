@@ -301,6 +301,12 @@ a.ui.card:focus,
     }
 
     .ui.card, .ui.cards>.card {
+        .content>.description {
+            // Overriding some default semantic ui styling
+            margin: 0.5rem 0 0 0 !important;
+            padding: 0 !important;
+        }
+
         .content .header {
             font-size: 80%;
             font-weight: normal;
