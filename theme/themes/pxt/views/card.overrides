@@ -301,9 +301,6 @@ a.ui.card:focus,
     }
 
     .ui.card, .ui.cards>.card {
-        .content .description {
-            display: none;
-        }
         .content .header {
             font-size: 80%;
             font-weight: normal;

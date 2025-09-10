@@ -239,6 +239,13 @@
     }
 }
 
+@media only screen and (max-width: @largestMobileScreen) {
+    .ui.modal .content>.description {
+        // Overriding some default semantic ui styling
+        margin: 0.5rem 0 0 0 !important;
+        padding: 0 !important;
+    }
+}
 
 /*******************************
         Modal Close Icon
