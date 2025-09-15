@@ -385,7 +385,9 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
     // Renders inline blocks, such as "||controller: Controller||".
     private renderInlineBlocks(content: HTMLElement) {
         const { parent } = this.props;
-        const hasCategories = !parent.state.tutorialOptions?.metadata?.flyoutOnly && !parent.state.tutorialOptions?.metadata?.hideToolbox;
+        const hasCategories = !parent.state.tutorialOptions?.metadata?.flyoutOnly
+            && !parent.state.tutorialOptions?.metadata?.hideToolbox
+            && !parent.state.tutorialOptions?.metadata?.unifiedToolbox;
         const inlineBlocks = pxt.Util.toArray(content.querySelectorAll(`:not(pre) > code`))
             .map((inlineBlock: HTMLElement) => {
                 const text = inlineBlock.innerText;
@@ -483,7 +485,10 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
 
                             const toolboxSelector = `${editorSelector} .blocklyTreeRow[data-ns="${ns}"]`;
                             const toolboxRow = document.querySelector<HTMLDivElement>(toolboxSelector);
-                            toolboxRow?.click();
+                            if (toolboxRow) {
+                                toolboxRow.click();
+                                this.props.parent.editor.focusToolbox();
+                            }
                         });
                         inlineBlock.addEventListener("keydown", e => fireClickOnEnter(e as any))
                     }

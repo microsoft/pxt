@@ -1,0 +1,14 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="forceStatement">
+<next>
+<block type="handlerStatement">
+<statement name="HANDLER">
+</statement>
+</block>
+</next>
+</block>
+</statement>
+</block>
+</xml>

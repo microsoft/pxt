@@ -62,7 +62,7 @@
         }
     }
 
-    p {
+    p:not(#sidedocs p) {
         color: @HCtextColor !important;
         background-color: @HCbackground !important;
     }
@@ -88,16 +88,6 @@
             > i, > span, > i.orange {
                 color: @HCtextColor !important;
             }
-        }
-    }
-
-    #editortoggle .active.item {
-        transition: none;
-        &:focus {
-            box-shadow: inset 0 0 0 6px @HCbackground !important;
-        }
-        >.icon {
-            color: @HCbackground !important;
         }
     }
 
@@ -597,10 +587,6 @@
         }
         .item:focus {
             border-color: @selected !important;
-
-            span {
-                color: @HCbackground !important;
-            }
         }
     }
 
@@ -736,20 +722,6 @@
     a {
         color: @hyperlink !important;
         text-decoration: underline !important;
-    }
-
-    #sidedocsbar {
-        a {
-            color: @HCbackground !important;
-
-            &:focus {
-                color: @selected !important;
-
-                i, span {
-                    color: @selected !important;
-                }
-            }
-        }
     }
 
     /* Dropdown */

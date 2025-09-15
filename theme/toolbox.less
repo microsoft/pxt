@@ -49,6 +49,27 @@ span.blocklyTreeIcon {
 }
 
 /*******************************
+        Monaco Flyout Only
+*******************************/
+#root.flyoutOnly {
+    // Hide toolbox categories section & flyout header
+    .monacoToolboxDiv, .monacoFlyoutHeading {
+        display: none;
+    }
+
+    #monacoEditorInner {
+        display: flex;
+        flex-direction: row;
+
+        #monacoFlyoutWidget {
+            position: relative;
+            border-radius: 0;
+            border-right: 5px solid var(--pxt-neutral-alpha80);
+        }
+    }
+}
+
+/*******************************
         Toolbox root
 *******************************/
 
@@ -256,9 +277,10 @@ div.blocklyTreeIcon span {
 #search {
     .blocklyTreeRow {
         border-left-color: var(--pxt-target-foreground3);
-    }
-    .blocklyTreeIcon {
-        color: var(--pxt-target-foreground3);
+
+        &:not(.blocklyTreeSelected) .blocklyTreeIcon {
+            color: var(--pxt-target-foreground3);
+        }
     }
 }
 
@@ -299,12 +321,22 @@ div.blocklyTreeIcon span {
     Inverted Toolbox
 *******************************/
 #root.hc .invertedToolbox {
-    div.blocklyTreeRow .blocklyTreeIcon {
+    div.blocklyTreeRow {
+        background-color: var(--pxt-primary-background);
+        color: var(--pxt-primary-foreground);
+    }
+
+    div.blocklyTreeRow .blocklyTreeIcon:not(.blocklyTreeIconsearch) {
         color: var(--block-meta-color);
     }
 
-    div.blocklyTreeRow.blocklyTreeSelected .blocklyTreeIcon {
-        color: var(--pxt-target-background3);
+    div.blocklyTreeRow.blocklyTreeSelected {
+        background-color: var(--block-meta-color);
+        color: var(--pxt-primary-foreground);
+
+        .blocklyTreeIcon, .blocklyTreeLabel {
+            color: var(--pxt-primary-foreground);
+        }
     }
 }
 
@@ -321,6 +353,15 @@ div.blocklyTreeIcon span {
     div.blocklyTreeRow:hover {
         background-color: var(--block-faded-color);
         color: var(--pxt-primary-foreground);
+    }
+
+    #search {
+        .blocklyTreeRow {
+            border-left-color: var(--pxt-primary-foreground);
+        }
+        .blocklyTreeIcon {
+            color: var(--pxt-primary-foreground);
+        }
     }
 }
 
@@ -430,7 +471,7 @@ div.blocklyTreeIcon span {
     div.blocklyTreeRow {
         border-left-width: 12px !important;
     }
-    div.blocklyTreeRoot div div div div div.blocklyTreeRow {
+    div.blocklyTreeRoot div div:not(#advanced) div div div.blocklyTreeRow {
         border-left-width: 18px !important;
     }
 }

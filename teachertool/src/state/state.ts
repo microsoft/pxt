@@ -20,6 +20,7 @@ export type AppState = {
     catalogOpen: boolean;
     screenReaderAnnouncement?: string;
     userProfile: pxt.auth.UserProfile | undefined;
+    projectReloadCounter: number; // Counter to force project reload
     flags: {
         testCatalog: boolean;
     };
@@ -40,6 +41,7 @@ export const initialAppState: AppState = {
     catalogOpen: false,
     screenReaderAnnouncement: undefined,
     userProfile: undefined,
+    projectReloadCounter: 0,
     flags: {
         testCatalog: false,
     },

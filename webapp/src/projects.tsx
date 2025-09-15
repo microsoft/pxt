@@ -16,6 +16,7 @@ import { ThemeManager } from "../../react-common/components/theming/themeManager
 import IProjectView = pxt.editor.IProjectView;
 import ISettingsProps = pxt.editor.ISettingsProps;
 import UserInfo = pxt.editor.UserInfo;
+import { Dropdown, DropdownItem } from "../../react-common/components/controls/Dropdown";
 
 
 // This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
@@ -251,7 +252,7 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
 
     toggleHighContrast() {
         pxt.tickEvent("home.togglecontrast", undefined, { interactiveConsent: true });
-        core.toggleHighContrast();
+        this.props.parent.toggleHighContrast();
     }
 
     showThemePicker() {
@@ -265,8 +266,7 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
     }
 
     toggleAccessibleBlocks() {
-        pxt.tickEvent("home.toggleaccessibleblocks", undefined, { interactiveConsent: true });
-        this.props.parent.toggleAccessibleBlocks();
+        this.props.parent.toggleAccessibleBlocks("homesettings");
     }
 
     showResetDialog() {
@@ -759,7 +759,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
             const showCloudProjectsCard = auth.hasIdentity() && !auth.loggedIn() && pxt.storage.getLocal(auth.HAS_USED_CLOUD);
 
             const headersToShow = headers
-                .filter(h => !h.tutorial?.metadata?.hideIteration)
+                .filter(h => !pxt.tutorial.shouldFilterProject(h.tutorial?.metadata))
                 .slice(0, ProjectsCarousel.NUM_PROJECTS_HOMESCREEN);
             const isFirstProject = (!headers || headers?.length == 0);
             return <carousel.Carousel tickId="myprojects" bleedPercent={20}>
@@ -1580,18 +1580,21 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
         ];
 
         const mobile = pxt.BrowserUtils.isMobile();
-        const langOpts: sui.SelectItem[] = [
+        const langOpts: DropdownItem[] = [
             {
-                value: pxt.editor.LanguageRestriction.Standard,
-                display: python ? lf("Blocks, {0}, and {1}", "JavaScript", "Python") : lf("Blocks and {0}", "JavaScript")
+                id: pxt.editor.LanguageRestriction.Standard,
+                label: python ? lf("Blocks, {0}, and {1}", "JavaScript", "Python") : lf("Blocks and {0}", "JavaScript"),
+                title: python ? lf("Blocks, {0}, and {1}", "JavaScript", "Python") : lf("Blocks and {0}", "JavaScript")
             },
             python && {
-                value: pxt.editor.LanguageRestriction.PythonOnly,
-                display: lf("{0} Only", "Python")
+                id: pxt.editor.LanguageRestriction.PythonOnly,
+                label: lf("{0} Only", "Python"),
+                title: lf("{0} Only", "Python")
             },
             {
-                value: pxt.editor.LanguageRestriction.JavaScriptOnly,
-                display: lf("{0} Only", "JavaScript")
+                id: pxt.editor.LanguageRestriction.JavaScriptOnly,
+                label: lf("{0} Only", "JavaScript"),
+                title: lf("{0} Only", "JavaScript")
             }
         ];
         const classes = this.props.parent.createModalClasses("newproject");
@@ -1614,7 +1617,13 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
             {chooseLanguageRestrictionOnNewProject && <div>
                 <br />
                 <sui.ExpandableMenu title={lf("Code options")} onShow={this.onExpandedMenuShow} onHide={this.onExpandedMenuHide}>
-                    <sui.Select options={langOpts} onChange={this.handleLanguageChange} aria-label={lf("Select Language")} />
+                    <Dropdown
+                        className="language-restriction-dropdown"
+                        id="language-restriction-dropdown"
+                        items={langOpts}
+                        selectedId={this.state.languageRestriction}
+                        onItemSelected={this.handleLanguageChange}
+                    />
                 </sui.ExpandableMenu>
             </div>}
         </sui.Modal>

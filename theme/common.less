@@ -434,6 +434,32 @@ div.simframe > iframe {
     display: flex;
 }
 
+.settings-menuitem, .help-dropdown-menuitem {
+    flex-shrink: 0;
+
+    ul.common-menu-dropdown-pane {
+        overflow-y: auto;
+        max-height: calc(100vh - @mainMenuHeight);
+    }
+
+    & > button.common-button {
+        &:focus-visible {
+            background: var(--pxt-neutral-alpha10);
+            color: #fff;
+            outline: 3px solid var(--pxt-neutral-stencil3);
+            outline-offset: -3px
+        }
+
+        &:focus-visible::after {
+            outline: none;
+            border: none;
+        }
+
+        & > span > i {
+            opacity: 0.9;
+        }
+    }
+}
 
 
 /* toggle style */
@@ -762,7 +788,7 @@ div.simframe > iframe {
 
 .notificationBannerVisible #simulator .editor-sidebar,
 .notificationBannerVisible #maineditor,
-.notificationBannerVisible #sidedocs {
+.notificationBannerVisible.sideDocs #sidedocs {
     top: calc(@mainMenuHeight + @bannerHeight);
 }
 
@@ -779,6 +805,7 @@ div.simframe > iframe {
     display: flex;
     flex-direction: row;
     align-items: center;
+    width: 100%;
     .bannerLeft {
         display: block;
         .content {
@@ -809,7 +836,7 @@ div.simframe > iframe {
         .close {
             &:hover, &:focus {
                 cursor: pointer;
-                color: var(--pxt-neutral-background1-hover);
+                opacity: 0.7;
             }
         }
     }
@@ -1036,6 +1063,13 @@ Field editors
             }
         }
     }
+
+    .settings-menuitem, .help-dropdown-menuitem {
+        ul.common-menu-dropdown-pane {
+            overflow-y: auto;
+            max-height: calc(100vh - @mobileMenuHeight);
+        }
+    }
 }
 
 @media @mobileAndBelow {
@@ -1074,7 +1108,7 @@ Field editors
                 border-radius: 500rem;
                 padding: 0.7rem 1rem;
 
-                & > i.fas.fa-search {
+                & i.fas.fa-search {
                     position: relative;
                     margin-top: 0.1rem;
                     right: 0;
@@ -1082,6 +1116,25 @@ Field editors
 
                     opacity: .5;
                     transition: opacity 0.3s ease;
+                }
+                & > button:focus-visible {
+                    outline: 3px solid var(--pxt-focus-border);
+                    border-radius: 20%;
+                    &::after {
+                        content: none;
+                    }
+                }
+                &:focus-within {
+                    outline: 3px solid var(--pxt-focus-border);
+                    &:has(button:focus-visible) {
+                        outline: none;
+                    }
+                }
+                &:focus-within::after {
+                    content: none;
+                }
+                & > input:focus {
+                    outline: none !important;
                 }
             }
 
@@ -1158,6 +1211,10 @@ Field editors
             background-color: var(--pxt-neutral-background1-hover) !important;
             color: var(--pxt-neutral-foreground1-hover) !important;
         }
+
+        &:focus-visible {
+            outline: 3px solid var(--pxt-focus-border);
+        }
     }
 
     .extension-grid {
@@ -1197,10 +1254,11 @@ Field editors
         color: @white
     }
 
-    .extension-tag:focus::after  {
-        border: .05rem;
-        border-color: var(--pxt-focus-border);
-        border-radius: 1.6rem;
+    .extension-tag:focus-visible {
+        outline: 3px solid var(--pxt-focus-border);
+        &::after {
+            content: none;
+        }
     }
 
     .tab-header {
@@ -2794,6 +2852,10 @@ select.ui.dropdown {
 .newproject {
     .expandable-menu {
         font-size: 12px !important;
+    }
+
+    .language-restriction-dropdown > button {
+        min-width: 18rem;
     }
 }
 

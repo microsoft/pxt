@@ -890,6 +890,7 @@ namespace ts.pxtc {
     const booleanAttributes: (keyof CommentAttrs)[] = [
         "advanced",
         "handlerStatement",
+        "forceStatement",
         "afterOnStart",
         "optionalVariableArgs",
         "blockHidden",
@@ -1775,6 +1776,7 @@ namespace ts.pxtc.service {
         localizedCategory?: string;
         builtinBlock?: boolean;
         params?: string;
+        dropdownOptions?: string;
     }
 
     export interface ProjectSearchOptions {

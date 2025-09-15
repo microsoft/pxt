@@ -154,7 +154,7 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
                 if (!hideIteration) return <tutorial.TutorialMenu parent={this.props.parent} />
                 break;
             case "tutorial-tab":
-                if (tutorialOptions && (pxt.appTarget?.appTheme?.tutorialSimSidebarLayout || pxt.BrowserUtils.isTabletSize())) {
+                if (tutorialOptions && (pxt.BrowserUtils.isTabletSize() || this.props.parent.useTutorialSimSidebarLayout())) {
                     const currentStep = tutorialOptions.tutorialStep ? tutorialOptions.tutorialStep + 1 : undefined;
                     const totalSteps = tutorialOptions.tutorialStepInfo ? tutorialOptions.tutorialStepInfo?.length : undefined;
                     return (
@@ -233,7 +233,16 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
                 return <projects.ProjectSettingsMenu parent={this.props.parent} />
             case "tutorial-tab":
             case "editor":
-                return <container.SettingsMenu parent={this.props.parent} greenScreen={greenScreen} accessibleBlocks={accessibleBlocks} showShare={!!header} inBlocks={this.props.parent.isBlocksActive()} />
+                return (
+                    <container.SettingsMenu
+                        parent={this.props.parent}
+                        greenScreen={greenScreen}
+                        accessibleBlocks={accessibleBlocks}
+                        showShare={!!header}
+                        inBlocks={this.props.parent.isBlocksActive()}
+                        inTutorial={this.props.parent.isTutorial()}
+                    />
+                );
             default:
                 return <div />
         }
@@ -275,7 +284,7 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
                 {this.getExitButtons(targetTheme, view, tutorialOptions)}
                 {showHomeButton && <sui.Item className={`icon openproject ${hasIdentity ? "mobile hide" : ""}`} role="menuitem" title={lf("Home")} icon="home large" ariaLabel={lf("Home screen")} onClick={this.goHome} />}
                 {showShareButton && <sui.Item className="icon shareproject mobile hide" role="menuitem" title={lf("Publish your game to create a shareable link")} icon="share alternate large" ariaLabel={lf("Share Project")} onClick={this.showShareDialog} />}
-                {showHelpButton && <container.DocsMenu parent={this.props.parent} editor={activeEditor} hasMainBlocksFile={!!pkg.mainEditorPkg().files[pxt.MAIN_BLOCKS]}/>}
+                {showHelpButton && <container.DocsMenu parent={this.props.parent} editor={activeEditor} inBlocks={this.props.parent.isBlocksActive()} />}
                 {this.getSettingsMenu(view)}
                 {hasIdentity && (view === "home" || view === "editor" || view === "tutorial-tab") && <identity.UserMenu parent={this.props.parent} />}
             </div>

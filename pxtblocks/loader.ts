@@ -1,7 +1,7 @@
 /// <reference path="../built/pxtlib.d.ts" />
 import * as Blockly from "blockly";
 import { optionalDummyInputPrefix, optionalInputWithFieldPrefix, provider } from "./constants";
-import { initExpandableBlock, initVariableArgsBlock, appendMutation } from "./composableMutations";
+import { initExpandableBlock, initVariableArgsBlock, appendMutation, initVariableReporterArgs } from "./composableMutations";
 import { addMutation, MutatingBlock, MutatorTypes } from "./legacyMutations";
 import { initMath } from "./builtins/math";
 import { FieldCustom, FieldCustomDropdownOptions, FieldCustomOptions } from "./fields";
@@ -243,6 +243,7 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
 
     buildBlockFromDef(fn.attributes._def);
     let hasHandler = false;
+    let variableReporterArgs = false;
 
     if (fn.attributes.mutate) {
         addMutation(block as MutatingBlock, fn, fn.attributes.mutate);
@@ -262,7 +263,13 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
          */
         hasHandler = true;
         if (fn.attributes.optionalVariableArgs) {
-            initVariableArgsBlock(block, comp.handlerArgs);
+            if (fn.attributes.draggableParameters === "reporter") {
+                // variable reporter args need to be initialized after the statement input
+                variableReporterArgs = true;
+            }
+            else {
+                initVariableArgsBlock(block, comp.handlerArgs);
+            }
         }
         else if (fn.attributes.draggableParameters) {
             comp.handlerArgs.filter(a => !a.inBlockDef).forEach(arg => {
@@ -343,12 +350,19 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
         block.setInputsInline(true);
     }
 
-    setOutputCheck(block, fn.retType, info);
-
-    // hook up/down if return value is void
     const hasHandlers = hasArrowFunction(fn);
-    block.setPreviousStatement(!(hasHandlers && !fn.attributes.handlerStatement) && fn.retType == "void");
-    block.setNextStatement(!(hasHandlers && !fn.attributes.handlerStatement) && fn.retType == "void");
+    const isStatement = !!fn.attributes.handlerStatement || !!fn.attributes.forceStatement || (fn.retType === "void" && !hasHandlers);
+
+    if (!isStatement) {
+        setOutputCheck(block, fn.retType, info);
+    }
+
+    block.setPreviousStatement(isStatement);
+    block.setNextStatement(isStatement);
+
+    if (variableReporterArgs) {
+        initVariableReporterArgs(block, comp.handlerArgs, info);
+    }
 
     block.setTooltip(/^__/.test(fn.namespace) ? "" : fn.attributes.jsDoc);
     function buildBlockFromDef(def: pxtc.ParsedBlockDef, expanded = false) {
@@ -589,6 +603,7 @@ export function cleanBlocks() {
  */
 export function initializeAndInject(blockInfo: pxtc.BlocksInfo) {
     init(blockInfo);
+    initContextMenu();
     initCopyPaste(false);
     injectBlocks(blockInfo);
 }
@@ -608,7 +623,6 @@ function init(blockInfo: pxtc.BlocksInfo) {
     blocklyInitialized = true;
 
     initFieldEditors();
-    initContextMenu();
     initOnStart();
     initMath(blockInfo);
     initVariables();
@@ -648,7 +662,7 @@ export function initAccessibleBlocksContextMenuItems() {
  * @returns An array of checks if the type is valid, undefined if there are no valid checks
  *      (e.g. type is void), and null if all checks should be accepted (e.g. type is generic)
  */
-function getBlocklyCheckForType(type: string, info: pxtc.BlocksInfo) {
+export function getBlocklyCheckForType(type: string, info: pxtc.BlocksInfo) {
     const types = type.split(/\s*\|\s*/);
     const output = [];
     for (const subtype of types) {

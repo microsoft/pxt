@@ -369,8 +369,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private highlightedBreakpoint: number;
     private editAmendmentsListener: monaco.IDisposable | undefined;
     private errors: ErrorDisplayInfo[] = [];
+    private errorListDebounceActive: boolean = false;
+    private revealErrorListDebounced: () => void;
     private callLocations: pxtc.LocationInfo[];
-
     private handleFlyoutWheel = (e: WheelEvent) => e.stopPropagation();
     private handleFlyoutScroll = (e: WheelEvent) => e.stopPropagation();
 
@@ -384,6 +385,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.onUserPreferencesChanged = this.onUserPreferencesChanged.bind(this);
         this.getDisplayInfoForError = this.getDisplayInfoForError.bind(this);
         this.getErrorHelp = this.getErrorHelp.bind(this);
+        this.setErrors = this.setErrors.bind(this);
+        this.revealErrorListDebounced = pxt.Util.debounce(() => {
+            this.errorListDebounceActive = false;
+        }, 2000 /* 2 seconds */);
 
         ThemeManager.getInstance(document)?.subscribe("monaco", () => this.onUserPreferencesChanged());
     }
@@ -573,6 +578,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 pxt.tickEvent(`${tickLang}.discardText`, undefined, { interactiveConsent: true });
                 this.parent.saveBlocksToTypeScriptAsync().then((src) => {
                     this.overrideFile(src);
+
+                    // Clear diagnostics so blocks editor doesn't show old errors.
+                    // Recompile will pick up the updated content and re-validate it.
+                    this.currFile.diagnostics = [];
+
                     this.parent.setFile(bf);
                 })
             }
@@ -630,7 +640,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     display(): JSX.Element {
-        const showErrorList = pxt.appTarget.appTheme.errorList && !pxt.shell.isTimeMachineEmbed() && !this.parent.state.debugging;
+        const showErrorList =
+            !this.errorListDebounceActive &&
+            pxt.appTarget.appTheme.errorList &&
+            !pxt.shell.isTimeMachineEmbed() &&
+            !this.parent.state.debugging;
 
         return (
             <div id="monacoEditorArea" className={`monacoEditorArea`} style={{ direction: 'ltr' }}>
@@ -651,7 +665,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                         <ErrorList
                             onSizeChange={this.setErrorListState}
                             errors={this.errors}
-                            startDebugger={!!this.errors.find(a => a.stackFrames?.length) && this.startDebugger}
+                            startDebugger={this.startDebugger}
                             getErrorHelp={this.getErrorHelp}
                             note={
                                 this.parent.state.errorListNote && (
@@ -678,15 +692,30 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             });
     }
 
+    // This sets the errors and manages our debounce logic for showing the error list.
+    setErrors(errors: ErrorDisplayInfo[]) {
+        const oldHasErrors = !!this.errors?.length;
+        const newHasErrors = !!errors?.length;
+
+        this.errors = errors;
+
+        // Delay showing error list when going from none -> some errors,
+        // but do not re-hide the list if it was already visible.
+        if (newHasErrors && (!oldHasErrors || this.errorListDebounceActive)) {
+            this.errorListDebounceActive = true;
+            this.revealErrorListDebounced();
+        }
+    }
+
     public onExceptionDetected(exception: pxsim.DebuggerBreakpointMessage) {
         const exceptionDisplayInfo: ErrorDisplayInfo = this.getDisplayInfoForException(exception);
-        this.errors = [exceptionDisplayInfo];
+        this.setErrors([exceptionDisplayInfo]);
         this.parent.setState({ errorListNote: undefined });
     }
 
     private onErrorChanges(errors: pxtc.KsDiagnostic[]) {
         const errorDisplayInfo: ErrorDisplayInfo[] = errors.map(this.getDisplayInfoForError);
-        this.errors = errorDisplayInfo;
+        this.setErrors(errorDisplayInfo);
         this.parent.setState({ errorListNote: undefined });
     }
 
@@ -704,7 +733,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         return {
             message,
-            stackFrames
+            stackFrames,
+            preventsRunning: false
         };
     }
 
@@ -712,7 +742,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const message = lf("Line {0}: {1}", error.endLine ? error.endLine + 1 : error.line + 1, error.messageText);
         return {
             message,
-            onClick: () => this.goToError(error)
+            onClick: () => this.goToError(error),
+            preventsRunning: true
         };
     }
 
@@ -1348,7 +1379,30 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.toolbox.hide();
         }
 
+        if (this.parent.isTutorial() &&
+            (this.parent.state.tutorialOptions?.metadata?.flyoutOnly ||
+                this.parent.state.tutorialOptions?.metadata?.unifiedToolbox)) {
+            this.showUnifiedToolbox();
+        }
+
         this.updateDebuggerToolbox();
+    }
+
+    // Merge all toolbox categories into one single, always-open flyout
+    showUnifiedToolbox() {
+        this.injectCategoryStyles();
+
+        let allBlocks = this.getAllBlocks();
+        let combinedGroup: toolbox.GroupDefinition = {
+            name: lf("Snippets"),
+            blocks: allBlocks
+        }
+
+        this.flyout.setState( {
+            hide: false,
+            groups: [combinedGroup],
+            stayOpenOnDrag: true,
+        })
     }
 
     private updateDebuggerToolbox() {
@@ -1514,6 +1568,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                         this.updateDiagnostics();
                         this.changeCallback();
                         this.updateFieldEditors();
+
+                        if (this.errorListDebounceActive) {
+                            // Delay showing the error list while user is typing
+                            this.revealErrorListDebounced();
+                        }
                     });
                 }
 
@@ -1548,7 +1607,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     unloadFileAsync(): Promise<void> {
         if (this.toolbox)
             this.toolbox.clearSearch();
-        this.errors = [];
+        this.setErrors([]);
         this.parent.setState({errorListNote: undefined});
         if (this.currFile && this.currFile.getName() == "this/" + pxt.CONFIG_NAME) {
             // Reload the header if a change was made to the config file: pxt.json
