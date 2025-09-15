@@ -9,12 +9,19 @@
     z-index: 1;
 }
 
+/*
+Override default button background for the area menu, which requires transparency,
+but still use a fairly opaque one to keep focus/visibility on the main buttons.
+*/
 .area-menu-container .area-button {
-    /*
-    Override default button background for the area menu, which requires transparency,
-    but still use a fairly opaque one to keep focus/visibility on the main buttons.
-    */
     background-color: var(--pxt-neutral-alpha80) !important;
+}
+
+/* 
+ * "User-provided content" header in the import modal.
+ */
+.ui.violet.message .header {
+    color: var(--pxt-colors-purple-background) !important;
 }
 
 /* 
@@ -61,6 +68,11 @@ div.field .ui.toggle.checkbox input:checked~label:before {
  */
 .blocklyTreeRow:hover {
     outline: 3px solid var(--pxt-colors-yellow-background) !important;
+}
+
+#blocklySearchInput i {
+    color: var(--pxt-neutral-foreground1);
+    opacity: 1;
 }
 
 /* 
@@ -176,3 +188,21 @@ div.field .ui.toggle.checkbox input:checked~label:before {
 #sidedocsbar a:focus span {
     color: var(--pxt-link-hover) !important;
 }
+
+/*
+ * Editor Toggle
+ */
+#editortoggle .selected.item {
+    transition: none;
+    &:focus {
+        box-shadow: inset 0 0 0 6px #000000 !important;
+    }
+    >.icon {
+        color: #000000 !important;
+    }
+}
+
+#editordropdown.ui.button.active > .icon {
+    color: #000000 !important;
+}
+

@@ -60,6 +60,9 @@ const areas: Area[] = [
         ariaLabel: lf("Simulator"),
         shortcutKey: "2",
         getBounds(projectView: IProjectView) {
+            if (pxt.appTarget.simulator?.headless) {
+                return undefined;
+            }
             const element = isSimMini()
                 ? document.querySelector(".simPanel")
                 : projectView.state.collapseEditorTools ?
@@ -112,7 +115,11 @@ const areas: Area[] = [
             if (!bounds) {
                 return undefined;
             }
-            if (projectView.state.collapseEditorTools) {
+
+            const inTutorial = !!projectView.state.tutorialOptions?.tutorial;
+            const isHeadless = !!pxt.appTarget.simulator?.headless;
+
+            if (projectView.state.collapseEditorTools && !(isHeadless && inTutorial)) {
                 const isRtl = pxt.Util.isUserLanguageRtl();
                 // Shift over for a clearer area when the toolbox is collapsed
                 const copy = DOMRect.fromRect(bounds);
@@ -208,7 +215,7 @@ export const AreaMenuOverlay = ({ parent }: AreaMenuOverlapProps) => {
     }, [parent]);
     useEffect(() => {
         const listener = (e: KeyboardEvent) => {
-            const area = areas.find(area => area.shortcutKey === e.key);
+            const area = areas.find(area => area.shortcutKey === e.key && !!areaRects.get(area.id));
             if (area) {
                 e.preventDefault();
                 moveFocusToArea(area);

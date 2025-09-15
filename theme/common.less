@@ -434,6 +434,32 @@ div.simframe > iframe {
     display: flex;
 }
 
+.settings-menuitem, .help-dropdown-menuitem {
+    flex-shrink: 0;
+
+    ul.common-menu-dropdown-pane {
+        overflow-y: auto;
+        max-height: calc(100vh - @mainMenuHeight);
+    }
+
+    & > button.common-button {
+        &:focus-visible {
+            background: var(--pxt-neutral-alpha10);
+            color: #fff;
+            outline: 3px solid var(--pxt-neutral-stencil3);
+            outline-offset: -3px
+        }
+
+        &:focus-visible::after {
+            outline: none;
+            border: none;
+        }
+
+        & > span > i {
+            opacity: 0.9;
+        }
+    }
+}
 
 
 /* toggle style */
@@ -1035,6 +1061,13 @@ Field editors
             .common-button-label {
                 display: none;
             }
+        }
+    }
+
+    .settings-menuitem, .help-dropdown-menuitem {
+        ul.common-menu-dropdown-pane {
+            overflow-y: auto;
+            max-height: calc(100vh - @mobileMenuHeight);
         }
     }
 }
@@ -2819,6 +2852,10 @@ select.ui.dropdown {
 .newproject {
     .expandable-menu {
         font-size: 12px !important;
+    }
+
+    .language-restriction-dropdown > button {
+        min-width: 18rem;
     }
 }
 

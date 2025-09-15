@@ -7,6 +7,7 @@ import { ImageFieldEditor } from "./components/ImageFieldEditor";
 import { MusicEditor } from "./components/musicEditor/MusicEditor";
 import { MusicFieldEditor } from "./components/MusicFieldEditor";
 import { SoundEffectEditor } from "./components/soundEffectEditor/SoundEffectEditor";
+import { AssetFilePicker } from "./components/AssetFilePicker";
 
 export interface EditorBounds {
     top: number;
@@ -265,7 +266,12 @@ export function init() {
                 )
                 break;
             case "music-editor":
-                current.injectElement(<ImageFieldEditor ref={ refHandler } singleFrame={true} isMusicEditor={true} />)
+                current.injectElement(<ImageFieldEditor ref={ refHandler } singleFrame={true} isMusicEditor={true} />);
+                break;
+            case "file-picker":
+                current.injectElement(<AssetFilePicker ref={ refHandler } />);
+                break;
+
         }
 
         if (cachedBounds) current.resize(cachedBounds);

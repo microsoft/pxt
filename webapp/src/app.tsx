@@ -238,6 +238,7 @@ export class ProjectView
         this.onThemeChanged = this.onThemeChanged.bind(this);
         this.setColorThemeById = this.setColorThemeById.bind(this);
         this.showLoginDialog = this.showLoginDialog.bind(this);
+        this.useTutorialSimSidebarLayout = this.useTutorialSimSidebarLayout.bind(this);
 
         // add user hint IDs and callback to hint manager
         if (pxt.BrowserUtils.useOldTutorialLayout()) this.hintManager.addHint(ProjectView.tutorialCardId, this.tutorialCardHintCallback.bind(this));
@@ -1843,6 +1844,9 @@ export class ProjectView
                 pxt.storage.setLocal("onboardAccessibleBlocks", "0")
             }
 
+            // Force editor tools to collapse in headless tutorials and blocks mode (essentially hiding file explorer)
+            const forceEditorToolsCollapse = pxt.appTarget.simulator.headless && (!!h.tutorial || h.editor === pxt.BLOCKS_PROJECT_NAME);
+
             this.setState({
                 home: false,
                 showFiles: h.githubId ? true : false,
@@ -1853,7 +1857,8 @@ export class ProjectView
                 currFile: file,
                 sideDocsLoadUrl: sideDocsLoadUrl,
                 debugging: false,
-                isMultiplayerGame: false
+                isMultiplayerGame: false,
+                collapseEditorTools: forceEditorToolsCollapse || this.state.collapseEditorTools,
             });
 
             pkg.getEditorPkg(pkg.mainPkg).onupdate = () => {
@@ -1899,12 +1904,11 @@ export class ProjectView
                 this.setSideDoc(documentation, editorForFile == this.blocksEditor);
             }
             else {
-                const readme = main.lookupFile("this/README.md");
-                const readmeContent = readme?.content?.trim();
+                const readmeContent = this.getLocalizedReadmeContent();
                 // no auto-popup when editing packages locally
                 // ### @autoOpen false
                 if (!h.githubId && readmeContent && !/#{2,}\s+@autoOpen\s+false\s*/i.test(readmeContent)) {
-                    this.setSideMarkdown(readme.content);
+                    this.setSideMarkdown(readmeContent);
                 }
             }
 
@@ -1920,6 +1924,25 @@ export class ProjectView
             /* await */ cmds.maybeReconnectAsync(false, true);
             this.editorLoaded();
         }
+    }
+
+    private getLocalizedReadmeContent(): string | undefined {
+        const main = pkg.getEditorPkg(pkg.mainPkg);
+        const [initialLang, baseLang, initialLangLowerCase] = pxt.Util.normalizeLanguageCode(pxt.Util.userLanguage());
+        const priorityOrder = [initialLang, initialLangLowerCase, baseLang].filter((lang) => typeof lang === "string");
+        const pathsToTest = [
+            ...priorityOrder.map(lang =>`this/_locales/${lang}/README.md`),
+            "this/README.md"
+        ];
+        for (const path of pathsToTest) {
+            const file = main.lookupFile(path);
+            const hasContent = file?.content?.trim();
+
+            if (hasContent) {
+                return file.content;
+            }
+        }
+        return undefined;
     }
 
     private async loadTutorialFiltersAsync(): Promise<void> {
@@ -1948,8 +1971,11 @@ export class ProjectView
                 editorState.filters = {
                     blocks: tutorialBlocks.usedBlocks,
                     defaultState: pxt.editor.FilterState.Hidden
-                }
-                editorState.hasCategories = !(header.tutorial.metadata && header.tutorial.metadata.flyoutOnly);
+                };
+                editorState.hasCategories = !(
+                    header.tutorial.metadata &&
+                    (header.tutorial.metadata.flyoutOnly || header.tutorial.metadata.unifiedToolbox)
+                );
             }
             this.setState({ editorState: editorState });
             this.editor.filterToolbox(true);
@@ -2644,15 +2670,15 @@ export class ProjectView
     }
 
     initDragAndDrop() {
-        draganddrop.setupDragAndDrop(document.body,
-            file => file.size < 1000000 && this.isHexFile(file.name) || this.isBlocksFile(file.name) || this.isZipFile(file.name),
-            files => {
+        draganddrop.addDragAndDropHandler({
+            filter: file => file.size < 1000000 && this.isHexFile(file.name) || this.isBlocksFile(file.name) || this.isZipFile(file.name),
+            dragged: files => {
                 if (files) {
                     pxt.tickEvent("dragandrop.open")
                     this.importFile(files[0]);
                 }
             },
-            url => {
+            draggedUri: url => {
                 if (this.isPNGFile(url)) {
                     pxt.Util.httpRequestCoreAsync({
                         url,
@@ -2661,8 +2687,9 @@ export class ProjectView
                     }).then(resp => this.importUri(url, resp.buffer))
                         .catch(e => core.handleNetworkError(e));
                 }
-            }
-        );
+            },
+            priority: 0
+        });
     }
 
     importUri(url: string, buf: ArrayBuffer) {
@@ -3736,7 +3763,7 @@ export class ProjectView
     }
 
     setSimulatorFullScreen(enabled: boolean) {
-        if (this.state.collapseEditorTools) {
+        if (this.state.collapseEditorTools && !pxt.appTarget.simulator?.headless) {
             this.expandSimulator();
         }
         if (enabled) {
@@ -5091,6 +5118,11 @@ export class ProjectView
         return this.state.tutorialOptions != undefined;
     }
 
+    useTutorialSimSidebarLayout() {
+        const lang = this.isBlocksActive() ? "blocks" : this.isPythonActive() ? "python" : "javascript";
+        return !!pxt.appTarget.appTheme.tutorialSimSidebarLangs?.includes(lang);
+    }
+
     onEditorContentLoaded() {
         if (this.isTutorial()) {
             pxt.tickEvent("tutorial.editorLoaded")
@@ -5136,7 +5168,7 @@ export class ProjectView
             if (!pxt.BrowserUtils.useOldTutorialLayout()) {
                 const tutorialElements = document?.getElementsByClassName("tutorialWrapper");
                 const tutorialEl = tutorialElements?.length === 1 ? (tutorialElements[0] as HTMLElement) : undefined;
-                if (tutorialEl && (pxt.BrowserUtils.isTabletSize() || pxt.appTarget.appTheme.tutorialSimSidebarLayout)) {
+                if (tutorialEl && (pxt.BrowserUtils.isTabletSize() || this.useTutorialSimSidebarLayout())) {
                     this.setState({ editorOffset: tutorialEl.offsetHeight + "px" });
                 } else {
                     this.setState({ editorOffset: undefined });
@@ -5147,6 +5179,7 @@ export class ProjectView
                     const flyoutOnly =
                         this.state.editorState?.hasCategories === false
                         || this.state.tutorialOptions?.metadata?.flyoutOnly
+                        || this.state.tutorialOptions?.metadata?.unifiedToolbox
                         || this.state.tutorialOptions?.metadata?.hideToolbox;
 
                     let headerHeight = 0;
@@ -5315,7 +5348,11 @@ export class ProjectView
     }
 
     async showOnboarding() {
-        const tourSteps: pxt.tour.BubbleStep[] = await parseTourStepsAsync(pxt.appTarget.appTheme?.tours?.editor)
+        const tourSteps: pxt.tour.BubbleStep[] = await parseTourStepsAsync(pxt.appTarget.appTheme?.tours?.editor);
+        if (tourSteps.length === 0) {
+            pxt.debug("No tour steps found for onboarding");
+            return;
+        }
         const config: pxt.tour.TourConfig = {
             steps: tourSteps,
             showConfetti: true,
@@ -5450,7 +5487,7 @@ export class ProjectView
         const isSidebarTutorial = pxt.appTarget.appTheme.sidebarTutorial;
         const isTabTutorial = inTutorial && !pxt.BrowserUtils.useOldTutorialLayout();
         const inTutorialExpanded = inTutorial && tutorialOptions.tutorialStepExpanded;
-        const tutorialSimSidebar = pxt.appTarget.appTheme.tutorialSimSidebarLayout && !pxt.BrowserUtils.isTabletSize();
+        const tutorialSimSidebar = !pxt.BrowserUtils.isTabletSize() && this.useTutorialSimSidebarLayout();
         const inDebugMode = this.state.debugging;
         const inHome = this.state.home && !sandbox;
         const inEditor = !!this.state.header && !inHome;
@@ -6475,7 +6512,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
 
             // Check to see if we should show the mini simulator (<= tablet size)
-            if (!theEditor.isTutorial() || pxt.appTarget.appTheme.tutorialSimSidebarLayout || pxt.BrowserUtils.useOldTutorialLayout()) {
+            if (!theEditor.isTutorial() || theEditor.useTutorialSimSidebarLayout() || pxt.BrowserUtils.useOldTutorialLayout()) {
                 if (pxt.BrowserUtils.isTabletSize()) {
                     theEditor.showMiniSim(true);
                 } else {

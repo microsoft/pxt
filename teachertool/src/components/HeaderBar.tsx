@@ -123,6 +123,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
         const items: MenuItem[] = [];
         if (teacherTool.userProfile) {
             items.push({
+                role: "menuitem",
                 id: "signout",
                 title: lf("Sign Out"),
                 label: lf("Sign Out"),
@@ -179,8 +180,8 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
 
         if (privacyUrl) {
             items.push({
+                role: "link",
                 id: "privacy",
-                title: Strings.Privacy,
                 label: Strings.Privacy,
                 onClick: () => pxt.tickEvent(Ticks.PrivacyStatementClicked),
                 href: privacyUrl,
@@ -189,8 +190,8 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
 
         if (termsOfUseUrl) {
             items.push({
+                role: "link",
                 id: "termsOfUse",
-                title: Strings.TermsOfUse,
                 label: Strings.TermsOfUse,
                 onClick: () => pxt.tickEvent(Ticks.TermsOfUseClicked),
                 href: termsOfUseUrl,

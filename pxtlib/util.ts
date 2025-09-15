@@ -1948,6 +1948,63 @@ namespace ts.pxtc.Util {
 
         return enabled;
     }
+
+    /**
+     * Remove potentially sensitive info from the given data to avoid logging it.
+     * Currently only supports string data.
+     */
+    export function cleanData(data: string): string;
+    export function cleanData(data: pxt.Map<string | number>): pxt.Map<string | number>;
+    export function cleanData(data: any): any {
+        if (!data) return data;
+
+        let result: any;
+        if (typeof data === "string") {
+            result = removePropertiesWithPossibleUserInfo(data);
+        } else if (typeof data === "object") {
+            result = {};
+            for (const [key, value] of Object.entries(data)) {
+                result[key] = typeof value === "string" ? removePropertiesWithPossibleUserInfo(value) : value;
+            }
+        } else {
+            result = data;
+        }
+
+        return result;
+    }
+
+    /**
+     * Attempts to remove commonly leaked PII
+     * @param property The property which will be removed if it contains user data
+     * @returns The new value for the property
+     * 
+     * Taken from https://github.com/microsoft/vscode/blob/main/src/vs/platform/telemetry/common/telemetryUtils.ts
+     */
+    function removePropertiesWithPossibleUserInfo(property: string): string {
+        // If for some reason it is undefined we skip it (this shouldn't be possible);
+        if (!property) {
+            return property;
+        }
+
+        const userDataRegexes = [
+            { label: 'Google API Key', regex: /AIza[A-Za-z0-9_\\\-]{35}/ },
+            { label: 'Slack Token', regex: /xox[pbar]\-[A-Za-z0-9]/ },
+            { label: 'GitHub Token', regex: /(gh[psuro]_[a-zA-Z0-9]{36}|github_pat_[a-zA-Z0-9]{22}_[a-zA-Z0-9]{59})/ },
+            { label: 'Generic Secret', regex: /\b(token|signature|password|passwd|pwd|android:value)[^a-zA-Z0-9]{0,200}/i },
+            { label: 'CLI Credentials', regex: /((login|psexec|(certutil|psexec)\.exe).{1,50}(\s-u(ser(name)?)?\s+.{3,100})?\s-(admin|user|vm|root)?p(ass(word)?)?\s+["']?[^$\-\/\s]|(^|[\s\r\n\\])net(\.exe)?.{1,5}(user\s+|share\s+\/user:| user -? secrets ? set) \s + [^ $\s \/])/ },
+            { label: 'JWT Token', regex: /\beyJ[A-Za-z0-9_\-]+?\.[A-Za-z0-9_\-]+?\.[A-Za-z0-9_\-]+?\b/ },
+            { label: 'Email', regex: /\b[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,63}\b/i }
+        ];
+
+        // Check for common user data in the telemetry events
+        for (const secretRegex of userDataRegexes) {
+            if (secretRegex.regex.test(property)) {
+                return `<REDACTED: ${secretRegex.label}>`;
+            }
+        }
+
+        return property;
+    }
 }
 
 namespace ts.pxtc.BrowserImpl {
@@ -2423,7 +2480,7 @@ namespace ts.pxtc.jsonPatch.tests {
         for (const test of tests) {
             pxt.log(test.comment);
             const patches = ts.pxtc.jsonPatch.diff(test.obja, test.objb);
-            if (deepEqual(patches, test.expected)) {
+            if (U.deepEqual(patches, test.expected)) {
                 pxt.log("succeeded");
             } else {
                 pxt.error("FAILED");
@@ -2489,7 +2546,7 @@ namespace ts.pxtc.jsonPatch.tests {
         for (const test of tests) {
             pxt.log(test.comment);
             ts.pxtc.jsonPatch.patchInPlace(test.obj, test.patches);
-            const equal = deepEqual(test.obj, test.expected);
+            const equal = U.deepEqual(test.obj, test.expected);
             const succeeded = equal && test.validate ? test.validate(test.obj) : true;
             if (succeeded) {
                 pxt.log("succeeded");
@@ -2500,37 +2557,4 @@ namespace ts.pxtc.jsonPatch.tests {
             }
         }
     }
-
-    function deepEqual(a: any, b: any): boolean {
-        if (a === b) { return true; }
-
-        if (a && b && typeof a === 'object' && typeof b === 'object') {
-            const arrA = Array.isArray(a);
-            const arrB = Array.isArray(b);
-
-            if (arrA && arrB) {
-                if (a.length !== b.length) { return false; }
-                for (let i = 0; i < a.length; ++i) {
-                    if (!deepEqual(a[i], b[i])) { return false; }
-                }
-                return true;
-            }
-
-            if (arrA !== arrB) { return false; }
-
-            const keysA = Object.keys(a);
-
-            if (keysA.length !== Object.keys(b).length) { return false; }
-
-            for (const key of keysA) {
-                if (!b.hasOwnProperty(key)) { return false; }
-                if (!deepEqual(a[key], b[key])) { return false; }
-            }
-
-            return true;
-        }
-
-        // True if both are NaN, false otherwise
-        return a !== a && b !== b;
-    };
 }

@@ -37,6 +37,7 @@ import { DuplicateOnDragConnectionChecker, shouldDuplicateOnDrag } from "../../p
 import { PathObject } from "../../pxtblocks/plugins/renderer/pathObject";
 import { Measurements } from "./constants";
 import { flow, initCopyPaste } from "../../pxtblocks";
+import { initContextMenu } from "../../pxtblocks/contextMenu";
 import { HIDDEN_CLASS_NAME } from "../../pxtblocks/plugins/flyout/blockInflater";
 import { AIFooter } from "../../react-common/components/controls/AIFooter";
 import { CREATE_VAR_BTN_ID } from "../../pxtblocks/builtins/variables";
@@ -60,6 +61,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     compilationResult: pxtblockly.BlockCompilationResult;
     shouldFocusWorkspace = false;
     functionsDialog: CreateFunctionDialog = null;
+    registeredKeyboardNavigationStyles = false;
 
     showCategories: boolean = true;
     breakpointsByBlock: pxt.Map<number>; // Map block id --> breakpoint ID
@@ -222,7 +224,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.loadingXml = true;
 
             const flyout = this.editor.getFlyout() as pxtblockly.CachingFlyout;
-            flyout?.clearBlockCache();
+            if (flyout && typeof flyout.clearBlockCache === 'function') {
+                flyout.clearBlockCache();
+            }
 
             const loadingDimmer = document.createElement("div");
             loadingDimmer.className = "ui active dimmer";
@@ -545,7 +549,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
          */
         const that = this;
         Blockly.Toolbox.prototype.getFocusableElement = function() {
-            return that.getToolboxDiv().querySelector(".blocklyTreeRoot [role=tree]") as HTMLElement;
+            return that.getToolboxDiv()?.querySelector(".blocklyTreeRoot [role=tree]") as HTMLElement ?? that.getBlocksAreaDiv();
         };
         Blockly.Toolbox.prototype.getRestoredFocusableNode = function() {
             return null;
@@ -781,7 +785,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         // Increase the Blockly connection radius
         Blockly.config.snapRadius = 48;
         Blockly.config.connectingSnapRadius = 96;
-        if (accessibleBlocksEnabled) {
+        if (accessibleBlocksEnabled && !this.registeredKeyboardNavigationStyles) {
+            this.registeredKeyboardNavigationStyles = true;
             KeyboardNavigation.registerKeyboardNavigationStyles();
         }
         this.editor = Blockly.inject(blocklyDiv, this.getBlocklyOptions(forceHasCategories)) as Blockly.WorkspaceSvg;
@@ -916,10 +921,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.initPrompts();
         this.initBlocklyToolbox();
         this.initWorkspaceSounds();
+        initContextMenu();
         initCopyPaste(accessibleBlocksEnabled);
-        // This must come after initCopyPaste which overrides the default cut, copy,
-        // paste shortcuts. The keyboard navigation plugin utilizes these cut, copy and paste
-        // shortcuts and wraps them with additional behaviours (e.g., toast notifications).
+        // This must come after initCopyPaste and initContextMenu.
+        // initCopyPaste overrides the default cut, copy, paste shortcuts.
+        // The keyboard navigation plugin utilizes these cut, copy and paste shortcuts
+        // and wraps them with additional behaviours (e.g., toast notifications). 
+        // initContextMenu overrides the default context menu options. The plugin 
+        // decorates the duplicate block context menu item to display the shortcut.
         if (accessibleBlocksEnabled) {
             this.initAccessibleBlocks();
         }
@@ -2169,21 +2178,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     // For editors that have no toolbox
     showFlyoutOnlyToolbox() {
         // Show a Flyout only with all the blocks
-        const allCategories = this.getAllCategories();
-        let allBlocks: toolbox.BlockDefinition[] = [];
-        allCategories.forEach(category => {
-            const blocks = category.blocks;
-            allBlocks = allBlocks.concat(blocks);
-            if (category.subcategories) category.subcategories.forEach(subcategory => {
-                const subblocks = subcategory.blocks;
-                allBlocks = allBlocks.concat(subblocks);
-            })
-        });
+        this.injectCategoryStyles();
 
-        let container = document.createElement("div");
-        ReactDOM.render(<toolbox.ToolboxStyle categories={allCategories} />, container);
-        document.getElementById('editorcontent').appendChild(container);
-
+        let allBlocks = this.getAllBlocks();
         let xmlList: Element[] = [];
         allBlocks.forEach((block) => {
             const blockXmlList = this.getBlockXml(block);

@@ -49,6 +49,27 @@ span.blocklyTreeIcon {
 }
 
 /*******************************
+        Monaco Flyout Only
+*******************************/
+#root.flyoutOnly {
+    // Hide toolbox categories section & flyout header
+    .monacoToolboxDiv, .monacoFlyoutHeading {
+        display: none;
+    }
+
+    #monacoEditorInner {
+        display: flex;
+        flex-direction: row;
+
+        #monacoFlyoutWidget {
+            position: relative;
+            border-radius: 0;
+            border-right: 5px solid var(--pxt-neutral-alpha80);
+        }
+    }
+}
+
+/*******************************
         Toolbox root
 *******************************/
 
@@ -256,9 +277,10 @@ div.blocklyTreeIcon span {
 #search {
     .blocklyTreeRow {
         border-left-color: var(--pxt-target-foreground3);
-    }
-    .blocklyTreeIcon {
-        color: var(--pxt-target-foreground3);
+
+        &:not(.blocklyTreeSelected) .blocklyTreeIcon {
+            color: var(--pxt-target-foreground3);
+        }
     }
 }
 
@@ -304,7 +326,7 @@ div.blocklyTreeIcon span {
         color: var(--pxt-primary-foreground);
     }
 
-    div.blocklyTreeRow .blocklyTreeIcon {
+    div.blocklyTreeRow .blocklyTreeIcon:not(.blocklyTreeIconsearch) {
         color: var(--block-meta-color);
     }
 
@@ -331,6 +353,15 @@ div.blocklyTreeIcon span {
     div.blocklyTreeRow:hover {
         background-color: var(--block-faded-color);
         color: var(--pxt-primary-foreground);
+    }
+
+    #search {
+        .blocklyTreeRow {
+            border-left-color: var(--pxt-primary-foreground);
+        }
+        .blocklyTreeIcon {
+            color: var(--pxt-primary-foreground);
+        }
     }
 }
 

@@ -202,7 +202,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         // Matching the tick in the call to compile() above for historical reasons
         pxt.tickEvent("editortools.download", { collapsed: this.getCollapsedState() }, { interactiveConsent: true });
         pxt.tickEvent("editortools.downloadasfile", { collapsed: this.getCollapsedState() }, { interactiveConsent: true });
-        (this.props.parent as ProjectView).compile();
+        (this.props.parent as ProjectView).compile(true);
     }
 
     protected onPairClick = () => {
@@ -377,7 +377,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         const isTimeMachineEmbed = pxt.shell.isTimeMachineEmbed();
         const readOnly = pxt.shell.isReadOnly();
         const tutorial = tutorialOptions ? tutorialOptions.tutorial : false;
-        const flyoutOnly = editorState && editorState.hasCategories === false;
+        const hideZoomAndUndo = tutorial && tutorialOptions.metadata?.flyoutOnly; // Legacy flag that indicates Minecraft HOC (where zoom & undo are a the top)
         const hideToolbox = tutorial && tutorialOptions.metadata?.hideToolbox;
 
         const disableFileAccessinMaciOs = targetTheme.disableFileAccessinMaciOs && (pxt.BrowserUtils.isIOS() || pxt.BrowserUtils.isMac());
@@ -398,8 +398,8 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         const running = simState == SimState.Running;
         const starting = simState == SimState.Starting;
 
-        const showUndoRedo = !readOnly && !debugging && !flyoutOnly && !hideToolbox;
-        const showZoomControls = !flyoutOnly && !hideToolbox;
+        const showUndoRedo = !readOnly && !debugging && !hideZoomAndUndo && !hideToolbox;
+        const showZoomControls = !hideZoomAndUndo && !hideToolbox;
         const showGithub = !!pxt.appTarget.cloud
             && !!pxt.appTarget.cloud.githubPackages
             && targetTheme.githubEditor

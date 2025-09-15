@@ -1,4 +1,5 @@
 
+import * as ReactDOM from "react-dom";
 import * as srceditor from "./srceditor";
 import * as toolbox from "./toolbox";
 import * as compiler from "./compiler";
@@ -134,6 +135,29 @@ export abstract class ToolboxEditor extends srceditor.Editor {
 
     public getAllCategories() {
         return this.getToolboxCategories(false).concat(this.getToolboxCategories(true));
+    }
+
+    protected getAllBlocks(): toolbox.BlockDefinition[] {
+        const allCategories = this.getAllCategories();
+        let allBlocks: toolbox.BlockDefinition[] = [];
+        allCategories.forEach(category => {
+            const blocks = category.blocks;
+            allBlocks = allBlocks.concat(blocks);
+            if (category.subcategories) category.subcategories.forEach(subcategory => {
+                const subblocks = subcategory.blocks;
+                allBlocks = allBlocks.concat(subblocks);
+            })
+        });
+        return allBlocks;
+    }
+
+    // Injects a style element that allows the tutorial engine to render blocks
+    // and associate them with their categories, even if the toolbox itself is not present.
+    protected injectCategoryStyles() {
+        const allCategories = this.getAllCategories();
+        let container = document.createElement("div");
+        ReactDOM.render(<toolbox.ToolboxStyle categories={allCategories} />, container);
+        document.getElementById('editorcontent').appendChild(container);
     }
 
     public getToolboxCategories(isAdvanced?: boolean) {
