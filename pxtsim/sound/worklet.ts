@@ -239,7 +239,7 @@ namespace pxsim {
                         }
                     }
                 }
-                let v = fn(snd, (tonePosition >> 16) & 1023, tonePosition >> 26);
+                let v = fn(snd, (tonePosition >> 16) & 1023, (tonePosition >> 26) & 0xff);
                 v = (v * (volume >> 16)) >> (10 + (16 - OUTPUT_BITS));
                 // if (v > MAXVAL)
                 //    target_panic(123);
