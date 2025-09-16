@@ -83,7 +83,7 @@ import { Tour } from "./components/onboarding/Tour";
 import { AreaMenuOverlay } from "./components/AreaMenuOverlay";
 import { parseTourStepsAsync } from "./onboarding";
 import { initGitHubDb } from "./idbworkspace";
-import { BlockDefinition, CategoryNameID } from "./toolbox";
+import { BlockDefinition, CategoryNameID, ToolboxCategory } from "./toolbox";
 import { FeedbackModal } from "../../react-common/components/controls/Feedback/Feedback";
 import { ThemeManager } from "../../react-common/components/theming/themeManager";
 import { applyPolyfills } from "./polyfills";
@@ -5367,6 +5367,34 @@ export class ProjectView
         this.setState({ activeTourConfig: config });
     }
 
+    getHumanReadableBlockName(block: BlockDefinition, symbolInfo?: pxtc.SymbolInfo): string {
+        const blockAsText = this.getBlockAsText(block.attributes.blockId);
+        if (!blockAsText?.parts?.length) {
+            return undefined;
+        }
+
+        let name = "";
+        if (!!symbolInfo?.attributes?.blockSetVariable) {
+            name += `set [${symbolInfo.attributes.blockSetVariable}] to `;
+        }
+        for (const part of blockAsText.parts) {
+            if (part.kind === "label") {
+                name += part.content;
+                continue;
+            }
+            if (part.kind === "param") {
+                name += `[${part.content}]`;
+                continue;
+            }
+            // Stop if we hit a break.
+            if (part.kind === "break" && !!name) {
+                break;
+            }
+        }
+
+        return name.trim() || undefined;
+    }
+
     async showHowTo() {
         const opts: core.PromptOptions = {
             header: lf("What would you like to learn how to do?"),
@@ -5392,6 +5420,30 @@ export class ProjectView
             return;
         }
 
+        const blocksInfo = await compiler.getBlocksAsync();
+        const allBlocks = [];
+        const toolboxCategories: ToolboxCategory[] = [
+            ...this.blocksEditor.getToolboxCategories(false),
+            ...this.blocksEditor.getToolboxCategories(true)
+        ];
+        for (const cat of toolboxCategories) {
+            for (const block of cat.blocks ?? []) {
+                if (block.attributes.blockHidden || block.attributes.deprecated || block.name.startsWith("_")) {
+                    continue;
+                }
+                const type = block.attributes.blockId || block.name;
+                allBlocks.push({
+                    namespace: cat.nameid, // More reliable than block namespace
+                    displayText: this.getHumanReadableBlockName(block, blocksInfo.blocksById[type]),
+                    type: type,
+                    tooltip: block.attributes.jsDoc,
+                });
+            }
+        }
+
+        const serializedBlocks = JSON.stringify(allBlocks);
+        console.log("All Blocks:", serializedBlocks);
+
         const code = this.blocksEditor.serializeBlocks(false);
 
         try {
@@ -5400,7 +5452,8 @@ export class ProjectView
                 code,
                 "blocks",
                 pxt.appTarget.nickname || pxt.appTarget.name,
-                pxt.Util.userLanguage());
+                pxt.Util.userLanguage(),
+                serializedBlocks);
 
             console.log("How-To Response:", response);
 
@@ -5430,6 +5483,7 @@ export class ProjectView
                 // Specify user's current code as template code
                 options.templateCode = code;
                 options.templateLanguage = "blocks";
+                options.tutorialRecipe = true;
 
                 // Preserve assets from the current project
                 const assetFiles: pxt.Map<string> = {};

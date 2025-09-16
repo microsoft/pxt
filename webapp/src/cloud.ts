@@ -749,11 +749,12 @@ export async function getHowToResponse(
     code: string,
     lang: "blocks" | "typescript" | "python",
     target: string,
-    locale: string
+    locale: string,
+    blockData?: string
 ): Promise<string> {
     const url = `/api/copilot/howto`;
 
-    const data = { lang, code, goal, target, locale };
+    const data = { lang, code, goal, target, locale, blockData };
 
     const response = await auth.apiAsync(url, data, "POST");
     if (!response.success) {
