@@ -13,7 +13,7 @@ export const SocialButton = (props: SocialButtonProps) => {
     const { className, url, type, heading } = props;
 
     const classes = classList(className, "social-button", "type");
-    const socialOptions = pxt.appTarget.appTheme.socialOptions;
+    const socialOptions = pxt.appTarget.appTheme.socialOptions || {};
     let socialUrl = "";
 
     switch (type) {
