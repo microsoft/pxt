@@ -443,64 +443,6 @@ namespace pxsim {
             return squareBuffer[param]
         }
 
-        /*
-        #define SW_TRIANGLE 1
-        #define SW_SAWTOOTH 2
-        #define SW_SINE 3
-        #define SW_TUNEDNOISE 4
-        #define SW_NOISE 5
-        #define SW_SQUARE_10 11
-        #define SW_SQUARE_50 15
-        #define SW_SQUARE_CYCLE_16 16
-        #define SW_SQUARE_CYCLE_32 17
-        #define SW_SQUARE_CYCLE_64 18
-        */
-
-
-        /*
-         struct SoundInstruction {
-             uint8_t soundWave;
-             uint8_t flags;
-             uint16_t frequency;
-             uint16_t duration;
-             uint16_t startVolume;
-             uint16_t endVolume;
-         };
-         */
-
-        function getGenerator(waveFormIdx: number, hz: number): OscillatorNode | AudioBufferSourceNode {
-            let form = waveForms[waveFormIdx]
-            if (form) {
-                let src = context().createOscillator()
-                src.type = form
-                src.frequency.value = hz
-                return src
-            }
-
-            let buffer: AudioBuffer
-            if (waveFormIdx == 4)
-                buffer = getRectNoiseBuffer()
-            else if (waveFormIdx == 5)
-                buffer = getNoiseBuffer()
-            else if (11 <= waveFormIdx && waveFormIdx <= 15)
-                buffer = getSquareBuffer((waveFormIdx - 10) * 10)
-            else if (16 <= waveFormIdx && waveFormIdx <= 18)
-                buffer = getCycleNoiseBuffer((waveFormIdx - 16) + 4)
-            else
-                return null
-
-            let node = context().createBufferSource();
-            node.buffer = buffer;
-            node.loop = true;
-            const isFilteredNoise = waveFormIdx == 4 || (16 <= waveFormIdx && waveFormIdx <= 18);
-            if (isFilteredNoise)
-                node.playbackRate.value = hz / (context().sampleRate / 4);
-            else if (waveFormIdx != 5)
-                node.playbackRate.value = hz / (context().sampleRate / 1024);
-
-            return node
-        }
-
         class Channel {
             generator: AudioNode;
             gain: GainNode
@@ -796,8 +738,8 @@ namespace pxsim {
 
             if (!workletInit) {
                 workletInit = (async () => {
-                    await context().audioWorklet.addModule("/static/audioWorklet/audioWorkletProcessor.js");
-                    // await context().audioWorklet.addModule(getWorkletUri());
+                    // await context().audioWorklet.addModule("/static/audioWorklet/audioWorkletProcessor.js");
+                    await context().audioWorklet.addModule(getWorkletUri());
                 })();
             }
             await workletInit;

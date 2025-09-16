@@ -5,12 +5,15 @@ namespace pxsim {
     const SW_SINE = 3;
     const SW_TUNEDNOISE = 4;
     const SW_NOISE = 5;
+    const SW_WAVETABLE = 6;
     const SW_SQUARE_10 = 11;
     const SW_SQUARE_50 = 15;
     const SW_SQUARE_CYCLE_16 = 16;
     const SW_SQUARE_CYCLE_32 = 17;
     const SW_SQUARE_CYCLE_64 = 18;
     const OUTPUT_BITS = 14;
+
+    let wavetable = [0];
 
     function instrSoundWave(instructions, index) {
         return instructions[index];
@@ -123,6 +126,11 @@ namespace pxsim {
         return position < 512 ? -0x7fff : 0x7fff;
     }
 
+    function wavetableTone(sound, position, cycle) {
+        const index = (((position / 1024) * wavetable.length) | 0) % wavetable.length;
+        return wavetable[index];
+    }
+
     // Bit patterns for use by the cyclic noise tone.
     //
     // The bit pattern is arbitrary, but should have equal numbers of 0 and 1 bits,
@@ -167,6 +175,8 @@ namespace pxsim {
                 return noiseTone;
             case SW_SINE:
                 return sineTone;
+            case SW_WAVETABLE:
+                return wavetableTone;
             default:
                 if (SW_SQUARE_10 <= wave && wave <= SW_SQUARE_50)
                     return squareWaveTone;
@@ -282,6 +292,9 @@ namespace pxsim {
                 }
                 else if (event.data.type === "cancel") {
                     this.sounds = this.sounds.filter(s => s.id !== event.data.id);
+                }
+                else if (event.data.type === "wavetable") {
+                    wavetable = event.data.wavetable;;
                 }
             };
         }
