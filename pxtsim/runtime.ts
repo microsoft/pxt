@@ -1209,7 +1209,7 @@ namespace pxsim {
             let userGlobals: string[];
             let __this = this // ex
             this.traceDisabled = !!msg.traceDisabled;
-            const yieldDelay = msg.yieldDelay !== undefined ? msg.yieldDelay : 5;
+            const yieldDelay = msg.yieldDelay !== undefined ? msg.yieldDelay : 0;
 
             // this is passed to generated code
             const evalIface = {
@@ -1650,6 +1650,7 @@ namespace pxsim {
             }
             runtime = this;
 
+            AudioContextManager.setWavetable(undefined);
             initCurrentRuntime(msg);
         }
 

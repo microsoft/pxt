@@ -296,6 +296,11 @@ namespace pxsim {
             stopTone();
             muteAllChannels();
 
+            for (const channel of workletChannels) {
+                channel.dispose();
+            }
+            workletChannels = [];
+
             for (const handler of stopAllListeners) {
                 handler();
             }
@@ -737,8 +742,13 @@ namespace pxsim {
                     if (isCancelled) {
                         this.updateActiveSounds();
                     }
+                });
+            }
 
-                    // console.log(`[channel ${workletChannels.indexOf(this)}]  start: ${msg.id} active: ${this.activeSounds}`);
+            setWavetable(wavetable: number[]) {
+                this.node.port.postMessage({
+                    type: "wavetable",
+                    wavetable
                 });
             }
 
@@ -786,8 +796,8 @@ namespace pxsim {
 
             if (!workletInit) {
                 workletInit = (async () => {
-                    // await context().audioWorklet.addModule("/static/audioWorklet/audioWorkletProcessor.js");
-                    await context().audioWorklet.addModule(getWorkletUri());
+                    await context().audioWorklet.addModule("/static/audioWorklet/audioWorkletProcessor.js");
+                    // await context().audioWorklet.addModule(getWorkletUri());
                 })();
             }
             await workletInit;
@@ -825,10 +835,30 @@ namespace pxsim {
                 }
             }
 
+            if (wavetable) {
+                channel.setWavetable(wavetable);
+            }
 
             await channel.playInstructionsAsync(instructions, isCancelled);
 
             finished = true;
+        }
+
+        let wavetable: number[];
+
+        export function setWavetable(tableBuff: RefBuffer) {
+            if (!tableBuff) {
+                wavetable = undefined;
+                return;
+            }
+            wavetable = [];
+            for (let i = 0; i < tableBuff.data.length; i += 2) {
+                wavetable.push(BufferMethods.getNumber(tableBuff, BufferMethods.NumberFormat.Int16LE, i));
+            }
+
+            for (const channel of workletChannels) {
+                channel.setWavetable(wavetable);
+            }
         }
 
         export function sendMidiMessage(buf: RefBuffer) {

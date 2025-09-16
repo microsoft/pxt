@@ -52,8 +52,8 @@ export const SoundPreview = (props: SoundPreviewProps) => {
                 previewPath.setAttribute("opacity", "0");
 
                 if (freqData) {
-                    // animationPath.setAttribute("d", renderWaveSnapshot(freqData, width, height))
-                    animationPath.setAttribute("d", renderFrequencyContent(fftData, width, height))
+                    animationPath.setAttribute("d", renderWaveSnapshot(freqData, width, height))
+                    // animationPath.setAttribute("d", renderFrequencyContent(fftData, width, height))
                 }
 
                 requestAnimationFrame(doAnimationFrame);
@@ -118,13 +118,8 @@ function renderWaveSnapshot(data: Float32Array, width: number, height: number) {
 
     const parts: string[] = [];
 
-    // let min = 9999999;
-    // let max = -9999999;
-
-
     const MIN_VALUE = -0.125;
     const MAX_VALUE = 0.125;
-
 
     let currentSign = 0;
 
@@ -142,10 +137,7 @@ function renderWaveSnapshot(data: Float32Array, width: number, height: number) {
         }
     }
 
-    console.log(res);
-
     let middleCrossing = data.length >> 1;
-
 
     if (crossings.length) {
         let middleIndex = Math.floor(crossings.length / 2);
@@ -164,13 +156,8 @@ function renderWaveSnapshot(data: Float32Array, width: number, height: number) {
             op = "M";
         }
 
-        // min = Math.min(min, data[i]);
-        // max = Math.max(max, data[i]);
-
         parts.push(`${op} ${x} ${height - y}`);
     }
-
-    // console.log(`min: ${min}, max: ${max}`);
 
     return parts.join(" ");
 }
@@ -189,13 +176,8 @@ function renderFrequencyContent(data: Uint8Array, width: number, height: number)
             op = "M";
         }
 
-        // min = Math.min(min, data[i]);
-        // max = Math.max(max, data[i]);
-
         parts.push(`${op} ${x} ${height - y}`);
     }
-
-    // console.log(`min: ${min}, max: ${max}`);
 
     return parts.join(" ");
 }
