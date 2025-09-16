@@ -2,7 +2,7 @@
 
 New features, bug fixes, and other changes that aren't in the current release version of the editor are available to try in the Beta editor. Most MakeCode editors will let you preview some of what's coming in the next release by trying out the [Beta](@homeurl@/beta).
 
-## How can I try the Beta?
+## How can I try the Beta? #using-beta
 
 Trying the Beta version is simple. Go to the **Settings** menu (click on the ⚙️ symbol) and select **About**.
 
