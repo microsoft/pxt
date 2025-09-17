@@ -314,6 +314,7 @@ export interface RunOptions {
     clickTrigger?: boolean;
     storedState?: pxt.Map<any>;
     autoRun?: boolean;
+    tutorialStepNumber?: number;
 }
 
 export function run(pkg: pxt.MainPackage, debug: boolean,
@@ -327,7 +328,7 @@ export function run(pkg: pxt.MainPackage, debug: boolean,
         allParts
     } = pxtc.buildSimJsInfo(res);
     lastCompileResult = res;
-    const { mute, highContrast, light, clickTrigger, storedState, autoRun } = options;
+    const { mute, highContrast, light, clickTrigger, storedState, autoRun, tutorialStepNumber } = options;
     const isIpcRenderer = pxt.BrowserUtils.isIpcRenderer() || undefined;
     const dependencies: pxt.Map<string> = {}
     for (const dep of pkg.sortedDeps())
@@ -368,6 +369,7 @@ export function run(pkg: pxt.MainPackage, debug: boolean,
         dependencies,
         activePlayer: playerNumber,
         theme: theme,
+        tutorialStepNumber,
     }
     //if (pxt.options.debug)
     //    pxt.debug(JSON.stringify(opts, null, 2))

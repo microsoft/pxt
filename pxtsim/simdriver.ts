@@ -90,6 +90,7 @@ namespace pxsim {
         mpRole?: "server" | "client";
         activePlayer?: 1 | 2 | 3 | 4 | undefined;
         theme?: string | pxt.Map<string>;
+        tutorialStepNumber?: number;
     }
 
     export interface HwDebugger {
@@ -791,6 +792,7 @@ namespace pxsim {
                 dependencies: opts.dependencies,
                 activePlayer: opts.activePlayer,
                 theme: opts.theme,
+                tutorialStepNumber: opts.tutorialStepNumber,
             }
             this.stopSound();
             this.start();

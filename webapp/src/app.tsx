@@ -4127,7 +4127,8 @@ export class ProjectView
                                     light: pxt.options.light,
                                     clickTrigger: opts.clickTrigger,
                                     storedState: pkg.mainEditorPkg().getSimState(),
-                                    autoRun: this.state.autoRun
+                                    autoRun: this.state.autoRun,
+                                    tutorialStepNumber: this.state.tutorialOptions?.tutorialStep
                                 }, opts.trace)
                             }
                             this.blocksEditor.setBreakpointsMap(resp.breakpoints, resp.procCallLocations);

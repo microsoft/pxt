@@ -846,6 +846,8 @@ namespace pxsim {
         thumbnailRecordingIntervalRef: number;
         thumbnailFrames: ImageData[];
 
+        tutorialStepNumber?: number;
+
         public refCountingDebug = false;
         private refObjId = 1;
 
@@ -1198,6 +1200,7 @@ namespace pxsim {
 
             this.id = msg.id
             this.refCountingDebug = !!msg.refCountingDebug;
+            this.tutorialStepNumber = msg.tutorialStepNumber;
 
             let threadId = 0
             let breakpoints: Uint8Array = null
