@@ -296,4 +296,72 @@ namespace pxsim.AudioContextManager {
 
         return source.getAudioElement();
     }
+
+    export function createSpatialAudioPlayer(): number {
+        return new SpatialAudioPlayer(context(), destination).id;
+    }
+
+    export function setSpatialAudioPlayerPosition(id: number, x: number, y: number, z: number) {
+        const player = SpatialAudioPlayer.getPlayerById(id);
+        if (player) {
+            player.setPosition(x, y, z);
+        }
+    }
+
+    export function setSpatialAudioPlayerOrientation(id: number, x: number, y: number, z: number) {
+        const player = SpatialAudioPlayer.getPlayerById(id);
+        if (player) {
+            player.setOrientation(x, y, z);
+        }
+    }
+
+    export function setSpatialAudioPlayerCone(id: number, innerAngle: number, outerAngle: number, outerGain: number) {
+        const player = SpatialAudioPlayer.getPlayerById(id);
+        if (player) {
+            player.setCone(innerAngle, outerAngle, outerGain);
+        }
+    }
+
+    export function setSpatialAudioRollOff(id: number, refDistance: number, maxDistance: number, rollOffFactor: number) {
+        const player = SpatialAudioPlayer.getPlayerById(id);
+        if (player) {
+            player.setRollOff(refDistance, maxDistance, rollOffFactor);
+        }
+    }
+
+    export function setSpatialAudioDistanceModel(id: number, model: DistanceModelValue) {
+        const player = SpatialAudioPlayer.getPlayerById(id);
+        if (player) {
+            player.setDistanceModel(model);
+        }
+    }
+
+    export function disposeSpatialAudioPlayer(id: number) {
+        const player = SpatialAudioPlayer.getPlayerById(id);
+        if (player) {
+            player.dispose();
+        }
+    }
+
+    export function queuePlayInstructionsAtSpatialAudioPlayer(id: number, when: number, b: RefBuffer) {
+        const player = SpatialAudioPlayer.getPlayerById(id);
+        if (player) {
+            const prevStop = instrStopId
+            U.delay(when)
+                .then(() => {
+                    if (prevStop != instrStopId)
+                        return Promise.resolve()
+                    return player.playInstructionsAsync(b.data)
+                });
+        }
+    }
+
+    export function setListenerPosition(x: number, y: number, z: number) {
+        const ctx = context();
+        if (ctx) {
+            ctx.listener.positionX.setTargetAtTime(x, 0, 0.02);
+            ctx.listener.positionY.setTargetAtTime(y, 0, 0.02);
+            ctx.listener.positionZ.setTargetAtTime(z, 0, 0.02);
+        }
+    }
 }

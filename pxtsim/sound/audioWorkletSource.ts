@@ -26,7 +26,7 @@ namespace pxsim.AudioContextManager {
 
         static getAvailableSource(): AudioWorkletSource {
             for (const source of AudioWorkletSource.allWorkletSources) {
-                if (source.activeSounds.length < 30) {
+                if (source.activeSounds.length < 30 && !source.isPrivate) {
                     return source;
                 }
             }
@@ -52,7 +52,7 @@ namespace pxsim.AudioContextManager {
 
         protected animRef: number;
 
-        constructor(context: AudioContext, destination: AudioNode) {
+        constructor(context: AudioContext, destination: AudioNode, public readonly isPrivate = false) {
             super(context, destination);
 
             AudioWorkletSource.allWorkletSources.push(this);
