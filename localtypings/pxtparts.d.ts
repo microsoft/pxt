@@ -157,6 +157,12 @@ declare namespace pxsim {
         source?: string;
     }
 
+    export interface IncomingSimulatorMessage extends SimulatorMessage {
+        type: "messagepacket",
+        channel?: string;
+        data?: any;
+    }
+
     // type=debugger
     export interface DebuggerMessage extends SimulatorMessage {
         subtype: string;

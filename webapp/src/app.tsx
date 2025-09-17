@@ -128,6 +128,11 @@ function setEditor(editor: ProjectView) {
     }
 }
 
+interface TutorialValidationResult {
+    isValid: boolean;
+    message?: string;
+}
+
 export class ProjectView
     extends auth.Component<IAppProps, IAppState>
     implements IProjectView {
@@ -239,6 +244,7 @@ export class ProjectView
         this.setColorThemeById = this.setColorThemeById.bind(this);
         this.showLoginDialog = this.showLoginDialog.bind(this);
         this.useTutorialSimSidebarLayout = this.useTutorialSimSidebarLayout.bind(this);
+        this.handleTutorialCodeValidation = this.handleTutorialCodeValidation.bind(this);
 
         // add user hint IDs and callback to hint manager
         if (pxt.BrowserUtils.useOldTutorialLayout()) this.hintManager.addHint(ProjectView.tutorialCardId, this.tutorialCardHintCallback.bind(this));
@@ -309,8 +315,26 @@ export class ProjectView
             } else if (msg.type === "action") {
                 const { action } = msg as pxsim.SimulatorActionMessage;
                 this.runGlobalAction(action);
+            } else if (msg.type === "messagepacket") {
+                const incomingMsg = msg as pxsim.IncomingSimulatorMessage;
+                if (incomingMsg.channel === "tutorialcodevalidation") {
+                    let unpackedData = "";
+                    for (let i = 0; i < incomingMsg.data.length; ++i) {
+                        unpackedData += String.fromCharCode(incomingMsg.data[i]);
+                    }
+                    try {
+                        const data = JSON.parse(unpackedData) as TutorialValidationResult;
+                        this.handleTutorialCodeValidation(data);
+                    } catch {
+                        console.error("Failed to parse tutorial code validation message", ev);
+                    }
+                }
             }
         }, false);
+    }
+
+    private handleTutorialCodeValidation(result: TutorialValidationResult) {
+        console.log(`VALIDATION RESULT: ${result.isValid} ${result.message || "<no message>"}`, result);
     }
 
     private initGlobalActionHandlers() {
