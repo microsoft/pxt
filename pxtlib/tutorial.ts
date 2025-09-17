@@ -309,6 +309,8 @@ ${code}
                 info.tutorialCompleted = true;
             if (/@resetDiff/.test(flags))
                 info.resetDiff = true;
+            if (/@requiresValidation/.test(flags))
+                info.requiresValidation = true;
             if (hint)
                 info.hintContentMd = hint;
             stepInfo.push(info);

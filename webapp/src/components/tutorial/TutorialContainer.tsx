@@ -237,10 +237,20 @@ export function TutorialContainer(props: TutorialContainerProps) {
 
     const hideDone = tutorialOptions.metadata?.hideDone;
     const doneButtonLabel = lf("Finish the tutorial.");
+
+    const runtimeValidationResult = currentStepInfo.runtimeValidationResult;
+    const nextEnabled = !currentStepInfo.requiresValidation || !!runtimeValidationResult?.isValid;
+    const runtimeValidationMessage = runtimeValidationResult?.message || (nextEnabled ? undefined : lf("Complete the step to continue."));
+    const runtimeValidationMessageElement = runtimeValidationMessage && (
+        <div className={`runtime-validation-message ${nextEnabled ? "success" : "error"}`}>
+            {runtimeValidationMessage}
+        </div>
+    );
+
     const nextButtonLabel = lf("Go to the next step of the tutorial.");
     const nextButton = isDone
         ? hideDone ? null : <Button icon="check circle" title={doneButtonLabel} ariaLabel={doneButtonLabel} text={lf("Done")} onClick={onTutorialComplete} />
-        : <Button icon="arrow circle right" title={nextButtonLabel} ariaLabel={nextButtonLabel} disabled={!showNext} text={lf("Next")} onClick={() => validateTutorialStep()} />;
+        : <Button className="tutorial-next" icon="arrow circle right" title={nextButtonLabel} ariaLabel={nextButtonLabel} disabled={!nextEnabled || !showNext} text={lf("Next")} onClick={() => validateTutorialStep()} />;
 
     const stepCounter = <TutorialStepCounter
         tutorialId={tutorialId}
@@ -269,9 +279,12 @@ export function TutorialContainer(props: TutorialContainerProps) {
                 {title && <div className="tutorial-title">{title}</div>}
                 <MarkedContent className="no-select tutorial-step-content" tabIndex={0} markdown={markdown} parent={parent} contentRef={handleMarkedContentRef}/>
                 <div className="tutorial-controls">
-                    {hasHint && <TutorialHint tutorialId={tutorialId} currentStep={visibleStep} markdown={hintMarkdown} parent={parent} />}
-                    {isHorizontal && stepCounter}
-                    {!isHorizontal && nextButton}
+                    {!isHorizontal && runtimeValidationMessageElement}
+                    <div className="tutorial-control-buttons">
+                        {hasHint && <TutorialHint tutorialId={tutorialId} currentStep={visibleStep} markdown={hintMarkdown} parent={parent} />}
+                        {isHorizontal && stepCounter}
+                        {!isHorizontal && nextButton}
+                    </div>
                 </div>
             </div>
         </div>

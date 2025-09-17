@@ -250,33 +250,55 @@
 
 .tutorial-controls {
     display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    flex-wrap: wrap;
+    flex-direction: column;
+    justify-content: flex-start;
     margin-bottom: 1rem;
 
-    .ui.button {
-        margin: 0 1rem;
-        color: @white;
-        background: @tutorialPrimaryColor;
-        font-size: @tutorialFontSize;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+    .runtime-validation-message {
+        text-align: center;
+        margin-bottom: 1rem;
+
+        &.success {
+            color: var(--pxt-success);
+        }
+        &.error {
+            color: var(--pxt-error);
+        }
     }
 
-    > .ui.button:last-child {
-        margin-left: auto;
-    }
+    .tutorial-control-buttons {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        flex-wrap: wrap;
+    
+        .ui.button {
+            margin: 0 1rem;
+            color: @white;
+            background: @tutorialPrimaryColor;
+            font-size: @tutorialFontSize;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
 
-    .ui.button:hover, .ui.button:focus {
-        background: var(--pxt-colors-blue-hover);
-        color: var(--pxt-colors-blue-foreground);
-    }
-
-    .ui.button:focus-visible {
-        outline-offset: 2px;
-        outline: 4px solid var(--pxt-focus-border);
+        .tutorial-next.disabled {
+            filter: grayscale(1);
+        }
+    
+        > .ui.button:last-child {
+            margin-left: auto;
+        }
+    
+        .ui.button:hover, .ui.button:focus {
+            background: var(--pxt-colors-blue-hover);
+            color: var(--pxt-colors-blue-foreground);
+        }
+    
+        .ui.button:focus-visible {
+            outline-offset: 2px;
+            outline: 4px solid var(--pxt-focus-border);
+        }
     }
 }
 

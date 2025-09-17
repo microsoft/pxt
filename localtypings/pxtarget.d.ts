@@ -1290,12 +1290,19 @@ declare namespace pxt.tutorial {
         validatorsMetadata: CodeValidatorMetadata[];
     }
 
+    interface RuntimeValidationResult {
+        isValid: Boolean;
+        message?: string;
+    }
+
     interface TutorialStepInfo {
         // Step metadata
         showHint?: boolean; // automatically displays hint
         showDialog?: boolean; // no coding, displays in modal
         resetDiff?: boolean; // reset diffify algo
         tutorialCompleted?: boolean;
+        requiresValidation?: boolean; // require runtime validation to proceed
+        runtimeValidationResult?: RuntimeValidationResult; // result from runtime validation, if any
 
         // Step content
         title?: string;

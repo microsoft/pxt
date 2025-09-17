@@ -128,11 +128,6 @@ function setEditor(editor: ProjectView) {
     }
 }
 
-interface TutorialValidationResult {
-    isValid: boolean;
-    message?: string;
-}
-
 export class ProjectView
     extends auth.Component<IAppProps, IAppState>
     implements IProjectView {
@@ -323,7 +318,7 @@ export class ProjectView
                         unpackedData += String.fromCharCode(incomingMsg.data[i]);
                     }
                     try {
-                        const data = JSON.parse(unpackedData) as TutorialValidationResult;
+                        const data = JSON.parse(unpackedData) as pxt.tutorial.RuntimeValidationResult;
                         this.handleTutorialCodeValidation(data);
                     } catch {
                         console.error("Failed to parse tutorial code validation message", ev);
@@ -333,8 +328,38 @@ export class ProjectView
         }, false);
     }
 
-    private handleTutorialCodeValidation(result: TutorialValidationResult) {
+    private handleTutorialCodeValidation(result: pxt.tutorial.RuntimeValidationResult) {
         console.log(`VALIDATION RESULT: ${result.isValid} ${result.message || "<no message>"}`, result);
+
+        let tutorialOptions = this.state.tutorialOptions;
+        if (!tutorialOptions) {
+            console.error("Received tutorial code validation result but no tutorial is active");
+            return;
+        }
+        if (!tutorialOptions.tutorialStep) {
+            console.error("Received tutorial code validation result but no tutorial step is active");
+            return;
+        }
+
+        const existingResult = tutorialOptions.tutorialStepInfo[tutorialOptions.tutorialStep].runtimeValidationResult;
+        if (existingResult && existingResult.isValid === result.isValid && existingResult.message === result.message) {
+            // No change
+            return;
+        }
+
+        const newTutorialOptions = {
+            ...tutorialOptions,
+            tutorialStepInfo: tutorialOptions.tutorialStepInfo.map((step, index) => {
+                return index !== tutorialOptions.tutorialStep ? step : ({
+                    ...step,
+                    runtimeValidationResult: result
+                });
+            })
+        };
+
+        this.setState({
+            tutorialOptions: newTutorialOptions
+        });
     }
 
     private initGlobalActionHandlers() {
