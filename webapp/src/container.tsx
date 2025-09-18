@@ -127,7 +127,7 @@ export class DocsMenu extends data.PureComponent<DocsMenuProps, {}> {
             role: "menuitem",
             label: pxt.Util.rlf(this.props.editor),
             title: pxt.Util.rlf(this.props.editor),
-            onClick: () => openDocs(parent,  "/" + editor.toLowerCase())
+            onClick: () => openDocs(parent, "/" + editor.toLowerCase())
         });
 
         return (
@@ -643,7 +643,7 @@ class JavascriptMenuItem extends data.Component<ISettingsProps, {}> {
     }
 
     renderCore() {
-        return <BaseMenuItemProps className="javascript-menuitem" icon="xicon js" text="JavaScript" title={lf("Convert code to JavaScript")} onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} ariaLabel={lf("Convert code to JavaScript")}/>
+        return <BaseMenuItemProps className="javascript-menuitem" icon="xicon js" text="JavaScript" title={lf("Convert code to JavaScript")} onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} ariaLabel={lf("Convert code to JavaScript")} />
     }
 }
 
@@ -681,7 +681,7 @@ class BlocksMenuItem extends data.Component<ISettingsProps, {}> {
     }
 
     renderCore() {
-        return <BaseMenuItemProps className="blocks-menuitem" icon="xicon blocks" text={lf("Blocks")} title={lf("Convert code to Blocks")} onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} ariaLabel={lf("Convert code to Blocks")}/>
+        return <BaseMenuItemProps className="blocks-menuitem" icon="xicon blocks" text={lf("Blocks")} title={lf("Convert code to Blocks")} onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} ariaLabel={lf("Convert code to Blocks")} />
     }
 }
 
@@ -761,18 +761,18 @@ export class EditorSelector extends data.Component<IEditorSelectorProps, {}> {
         let secondTextLanguage: JSX.Element = undefined;
 
         if (showDropdown) {
-            if (pythonIsActive) textLanguage = <PythonMenuItem parent={parent}/>
-            else textLanguage = <JavascriptMenuItem parent={parent}/>
+            if (pythonIsActive) textLanguage = <PythonMenuItem parent={parent} />
+            else textLanguage = <JavascriptMenuItem parent={parent} />
         }
         else if (showPython && showJavaScript) {
-            textLanguage = <JavascriptMenuItem parent={parent}/>;
-            secondTextLanguage  = <PythonMenuItem parent={parent}/>;
+            textLanguage = <JavascriptMenuItem parent={parent} />;
+            secondTextLanguage = <PythonMenuItem parent={parent} />;
         }
         else if (showPython) {
-            textLanguage = <PythonMenuItem parent={parent}/>;
+            textLanguage = <PythonMenuItem parent={parent} />;
         }
         else if (showJavaScript) {
-            textLanguage = <JavascriptMenuItem parent={parent}/>
+            textLanguage = <JavascriptMenuItem parent={parent} />
         }
 
         return (
@@ -927,7 +927,7 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
     }
 
     private setUrl(url: string) {
-        this.props.parent.setState({ sideDocsLoadUrl: url, sideDocsCollapsed: false });
+        this.props.parent.setState({ sideDocsLoadUrl: url });
         // store last non-built-in docs url in state.docsIframeUrl so iframe tab has its own url cache
         if (!url.startsWith(builtInPrefix)) {
             this.setState({ docsIframeUrl: url, activeTabId: 'docs-iframe' });
@@ -1008,12 +1008,20 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
             newState.sideDocsCollapsed = nextProps.sideDocsCollapsed;
         }
         if (nextProps.docsUrl != undefined) {
-            // If incoming docsUrl indicates a built-in, set active tab accordingly; otherwise track it as the iframe URL
-            if (nextProps.docsUrl && nextProps.docsUrl.startsWith(builtInPrefix)) {
+            // Handle component URLs (component:tabId)
+            if (nextProps.docsUrl && nextProps.docsUrl.startsWith('component:')) {
+                const componentTabId = nextProps.docsUrl.slice('component:'.length);
+                newState.activeTabId = componentTabId;
+                // Don't set docsIframeUrl for component tabs
+            }
+            // If incoming docsUrl indicates a built-in, set active tab accordingly
+            else if (nextProps.docsUrl && nextProps.docsUrl.startsWith(builtInPrefix)) {
                 const key = this.getBuiltInKeyFromUrl(nextProps.docsUrl);
                 if (key) newState.activeTabId = key;
                 else newState.activeTabId = 'docs-iframe';
-            } else {
+            }
+            // Otherwise track it as the iframe URL
+            else {
                 newState.docsIframeUrl = nextProps.docsUrl;
                 newState.activeTabId = 'docs-iframe';
             }
@@ -1060,8 +1068,10 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
         }
 
         if (this.props.extraTabs) {
-            for (const et of this.props.extraTabs) {
-                const tid = et.id || `extra-${Math.random().toString(36).slice(2, 8)}`;
+            for (const i in this.props.extraTabs) {
+                const et = this.props.extraTabs[i];
+                if (!et) continue;
+                const tid = et.id || `extra-tab-${i}`;
                 tabs.push({ id: tid, title: et.title, icon: et.icon, component: et.component });
             }
         }
@@ -1073,6 +1083,10 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
         const tabs = this.buildTabs();
         const tab = tabs.find(t => t.id === tabId);
         if (!tab) return;
+
+        // Always expand the panel when a tab is selected
+        this.props.parent.setState({ sideDocsCollapsed: false });
+
         if (tab.builtInKey) {
             const url = builtInPrefix + tab.builtInKey;
             this.setUrl(url);
@@ -1083,9 +1097,11 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
             const candidateFromProps = (this.props.docsUrl && !this.props.docsUrl.startsWith(builtInPrefix)) ? this.props.docsUrl : undefined;
             const url = candidateFromState || candidateFromProps || this.rootDocsUrl();
             this.setUrl(url);
+            this.setState({ activeTabId: tabId });
         } else if (tab.component) {
             this.setState({ activeTabId: tabId });
-            this.props.parent.setState({ sideDocsLoadUrl: '', sideDocsCollapsed: false });
+            // Set a special URL to indicate component tab is active
+            this.props.parent.setState({ sideDocsLoadUrl: 'component:' + tabId });
         }
     }
 
@@ -1279,7 +1295,12 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
         const { sideDocsCollapsed, docsIframeUrl, isResizing, sideDocsUserWidthPercent } = this.state;
         const lockedEditor = !!pxt.appTarget.appTheme.lockedEditor;
 
-        const url = (activeTab.id === 'docs-iframe') ? (sideDocsCollapsed ? this.rootDocsUrl() : (docsIframeUrl || (this.props.docsUrl && !this.props.docsUrl.startsWith(builtInPrefix) ? this.props.docsUrl : this.rootDocsUrl()))) : (activeTab.builtInKey ? `${builtInPrefix}${activeTab.builtInKey}` : '');
+        // Calculate URL - only for iframe and built-in tabs, not for component tabs
+        const url = activeTab.component ? '' : (
+            (activeTab.id === 'docs-iframe') ?
+                (sideDocsCollapsed ? this.rootDocsUrl() : (docsIframeUrl || (this.props.docsUrl && !this.props.docsUrl.startsWith(builtInPrefix) ? this.props.docsUrl : this.rootDocsUrl()))) :
+                (activeTab.builtInKey ? `${builtInPrefix}${activeTab.builtInKey}` : '')
+        );
 
         const builtInDetail = url && url.startsWith(builtInPrefix) ? builtIns[url.slice(builtInPrefix.length) as pxt.editor.BuiltInHelp] : undefined;
         const openInNewTabLinkProps: React.ComponentProps<'a'> = builtInDetail ? {
@@ -1337,30 +1358,30 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
         /* eslint-disable @microsoft/sdl/react-iframe-missing-sandbox */
         return <div>
             {/* tab strip */}
-             <div id="sidedocstabs" role="tablist" className="sidedoc-tablist" aria-orientation="vertical">
-                 {(() => {
-                     const onTabKeyDown = (ev: React.KeyboardEvent<HTMLElement>, idx: number) => {
-                         const key = ev.key;
-                         if (key === 'ArrowUp' || key === 'ArrowDown' || key === 'Home' || key === 'End') {
-                             ev.preventDefault();
-                             let newIdx = idx;
-                             if (key === 'ArrowUp') newIdx = (idx - 1 + tabs.length) % tabs.length;
-                             else if (key === 'ArrowDown') newIdx = (idx + 1) % tabs.length;
-                             else if (key === 'Home') newIdx = 0;
-                             else if (key === 'End') newIdx = tabs.length - 1;
-                             const tabBtn = document.getElementById('sidedocstabs')?.querySelectorAll('button')[newIdx] as HTMLButtonElement;
-                             if (tabBtn) {
-                                 tabBtn.focus();
-                                 // invoke selectTab directly to ensure state is in sync
-                                 this.selectTab(tabs[newIdx].id);
-                             }
-                         } else if (key === 'Escape') {
-                             this.collapse();
-                         }
-                     };
+            <div id="sidedocstabs" role="tablist" className="sidedoc-tablist" aria-orientation="vertical">
+                {(() => {
+                    const onTabKeyDown = (ev: React.KeyboardEvent<HTMLElement>, idx: number) => {
+                        const key = ev.key;
+                        if (key === 'ArrowUp' || key === 'ArrowDown' || key === 'Home' || key === 'End') {
+                            ev.preventDefault();
+                            let newIdx = idx;
+                            if (key === 'ArrowUp') newIdx = (idx - 1 + tabs.length) % tabs.length;
+                            else if (key === 'ArrowDown') newIdx = (idx + 1) % tabs.length;
+                            else if (key === 'Home') newIdx = 0;
+                            else if (key === 'End') newIdx = tabs.length - 1;
+                            const tabBtn = document.getElementById('sidedocstabs')?.querySelectorAll('button')[newIdx] as HTMLButtonElement;
+                            if (tabBtn) {
+                                tabBtn.focus();
+                                // invoke selectTab directly to ensure state is in sync
+                                this.selectTab(tabs[newIdx].id);
+                            }
+                        } else if (key === 'Escape') {
+                            this.collapse();
+                        }
+                    };
 
-                     return tabs.map((t, i) => {
-                         const isActive = t.id === activeTabId;
+                    return tabs.map((t, i) => {
+                        const isActive = t.id === activeTabId;
                         return (
                             <div key={t.id} title={t.title || ''} className={`sidedoc-tab ${isActive ? 'active' : ''}`}>
                                 <sui.Button
@@ -1377,18 +1398,20 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
                                 />
                             </div>
                         );
-                     });
-                 })()}
-             </div>
-             <div id="sidedocs" onKeyDown={this.handleKeyDown}>
-                 {!sideDocsCollapsed ? contentParts : null}
-             </div>
-         </div>
-         /* eslint-enable @microsoft/sdl/react-iframe-missing-sandbox */
-     }
+                    });
+                })()}
+            </div>
+            <div id="sidedocs" onKeyDown={this.handleKeyDown}>
+                {!sideDocsCollapsed ? contentParts : null}
+            </div>
+        </div>
+        /* eslint-enable @microsoft/sdl/react-iframe-missing-sandbox */
+    }
 
     renderTabContent(tab: SideDocsTab, url: string, builtInDetail: BuiltInHelpDetails | undefined, lockedEditor: boolean) {
         if (!tab) return null;
+
+        // Handle component tabs (like Chat)
         if (tab.component) {
             const TabComponent = tab.component;
             try {
@@ -1398,9 +1421,14 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
             }
         }
 
-        // If no tab.component provided, fall back to iframe/built-in handling
-        const BuiltInComponent = builtInDetail?.component;
-        return BuiltInComponent ? <BuiltInComponent /> : (
+        // Handle built-in help tabs (like Keyboard Help)
+        if (builtInDetail?.component) {
+            const BuiltInComponent = builtInDetail.component;
+            return <BuiltInComponent />;
+        }
+
+        // Show iframe tab (Docs)
+        return (
             <iframe id="sidedocsframe" src={url} title={lf("Documentation")} aria-atomic="true" aria-live="assertive"
                 sandbox={`allow-scripts allow-same-origin allow-forms ${lockedEditor ? "" : "allow-popups"}`} />
         );

@@ -47,6 +47,7 @@ import * as headerbar from "./headerbar";
 import * as sidepanel from "./sidepanel";
 import * as qr from "./qr";
 import { ThemePickerModal } from "../../react-common/components/theming/ThemePickerModal";
+import { CopilotChat } from "./copilotChat";
 
 import * as monaco from "./monaco"
 import * as toolboxHelpers from "./toolboxHelpers"
@@ -205,7 +206,9 @@ export class ProjectView
             isMultiplayerGame: false,
             activeTourConfig: undefined,
             mute: pxt.editor.MuteState.Unmuted,
-            feedback: {showing: false, kind: "generic"} // state that tracks if the feedback modal is showing and what kind
+            feedback: {showing: false, kind: "generic"}, // state that tracks if the feedback modal is showing and what kind
+            sideDocsCollapsed: true, // Start with sidedocs hidden
+            sideDocsLoadUrl: '' // Start with no URL loaded
         };
         if (!this.settings.editorFontSize) this.settings.editorFontSize = /mobile/i.test(navigator.userAgent) ? 15 : 19;
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
@@ -1853,6 +1856,7 @@ export class ProjectView
                 projectName: h.name,
                 currFile: file,
                 sideDocsLoadUrl: sideDocsLoadUrl,
+                sideDocsCollapsed: !sideDocsLoadUrl,
                 debugging: false,
                 isMultiplayerGame: false
             });
@@ -2784,7 +2788,7 @@ export class ProjectView
         return Util.promiseTimeout(1000, this.requestScreenshotPromise = new Promise<string>((resolve, reject) => {
             this.pushScreenshotHandler(msg => resolve(pxt.BrowserUtils.imageDataToPNG(msg.data, 3)));
         })) // simulator might be stopped or in bad shape
-            .catch(e => {
+            .catch((e: unknown): undefined => {
                 pxt.tickEvent('screenshot.timeout');
                 return undefined;
             })
@@ -5500,7 +5504,7 @@ export class ProjectView
         const feedbackEnabled = pxt.U.ocvEnabled();
         const showEditorToolbar = inEditor && !hideEditorToolbar && this.editor.hasEditorToolbar();
         const useSerialEditor = pxt.appTarget.serial && !!pxt.appTarget.serial.useEditor;
-        const showSideDoc = sideDocs && this.state.sideDocsLoadUrl && !this.state.sideDocsCollapsed;
+        const showSideDoc = sideDocs && this.state.sideDocsCollapsed === false;
         const showCollapseButton = showEditorToolbar && !inHome && !sandbox && !targetTheme.simCollapseInMenu && (!isHeadless || inDebugMode) && !isTabTutorial;
         const shouldHideEditorFloats = this.state.hideEditorFloats || this.state.collapseEditorTools;
         const logoWide = !!targetTheme.logoWide;
@@ -5625,7 +5629,20 @@ export class ProjectView
                         <projects.Projects parent={this} ref={this.handleHomeRef} />
                     </div>
                 </div> : undefined}
-                {sideDocs ? <container.SideDocs ref="sidedoc" parent={this} sideDocsCollapsed={this.state.sideDocsCollapsed} docsUrl={this.state.sideDocsLoadUrl} /> : undefined}
+                {sideDocs ? <container.SideDocs 
+                    ref="sidedoc" 
+                    parent={this} 
+                    sideDocsCollapsed={this.state.sideDocsCollapsed} 
+                    docsUrl={this.state.sideDocsLoadUrl}
+                    extraTabs={[
+                        {
+                            id: "copilot-chat",
+                            title: lf("Chat"),
+                            icon: "comment",
+                            component: () => <CopilotChat />
+                        }
+                    ]}
+                /> : undefined}
                 {showEditorToolbar && <editortoolbar.EditorToolbar ref="editortools" parent={this} />}
                 {sandbox ? undefined : <scriptsearch.ScriptSearch parent={this} ref={this.handleScriptSearchRef} />}
                 {sandbox ? undefined : <extensions.Extensions parent={this} ref={this.handleExtensionRef} />}
