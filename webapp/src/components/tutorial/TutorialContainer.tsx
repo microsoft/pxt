@@ -240,7 +240,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
 
     const runtimeValidationResult = currentStepInfo.runtimeValidationResult;
     const nextEnabled = !currentStepInfo.requiresValidation || !!runtimeValidationResult?.isValid;
-    const runtimeValidationMessage = runtimeValidationResult?.message || (nextEnabled ? undefined : lf("Complete the step to continue."));
+    const runtimeValidationMessage = currentStepInfo.requiresValidation ? runtimeValidationResult?.message || lf("Complete the step to continue.") : undefined;
     const runtimeValidationMessageElement = runtimeValidationMessage && (
         <div className={`runtime-validation-message ${nextEnabled ? "success" : "error"}`}>
             {runtimeValidationMessage}
