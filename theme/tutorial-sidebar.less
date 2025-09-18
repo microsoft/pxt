@@ -691,7 +691,7 @@
         #simulator .editor-sidebar {
             display: block !important;
             height: @defaultTutorialHeight;
-            width: 100%;
+            width: 100% !important;
         }
     }
 
@@ -1064,6 +1064,15 @@
 
     .topInstructionsWrapper {
         .topInstructionsSettings();
+
+        .tutorial-step-bubbles {
+            justify-content: flex-end !important;
+            gap: 1.5rem;
+
+            .circle-button {
+                margin: 0;
+            }
+        }
 
         .tutorial-callout {
             right: unset;
