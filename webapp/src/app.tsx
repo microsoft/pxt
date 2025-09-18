@@ -347,6 +347,12 @@ export class ProjectView
             return;
         }
 
+        if (existingResult?.isValid && !result.isValid) {
+            // Do not overwrite a passing result with a failing one
+            // Typically this means the simulator just reset and it has to re-run
+            return;
+        }
+
         const newTutorialOptions = {
             ...tutorialOptions,
             tutorialStepInfo: tutorialOptions.tutorialStepInfo.map((step, index) => {
