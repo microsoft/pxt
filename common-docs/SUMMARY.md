@@ -81,6 +81,7 @@
     * [Offline support](/offline)
     * [Save](/save)
     * [Reset](/reset)
+    * [Beta version](/beta)
     * [Home page content](/homepage-content)
 
 ## Developers #devs
