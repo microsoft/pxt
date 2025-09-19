@@ -20,7 +20,9 @@ Have fun with the Beta editor!
 
 ### ~alert
 
-#### The Beta version may work differently from the Release version
+#### Beta is for testing and experimentation only.
+
+We do not recommend using Beta for projects you wish to keep. It's under constant development and any projects made in Beta may be lost or become nonfunctional in future updates.
 
 The Beta version may have new features or changes that aren't fully tested or ready for use as in a released version. To be certain that your code works correctly and is saved properly, use the current release version.
 
