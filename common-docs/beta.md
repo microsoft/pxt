@@ -20,7 +20,7 @@ Have fun with the Beta editor!
 
 ### ~alert
 
-#### Beta is for testing and experimentation only.
+#### Beta is for testing and experimentation only
 
 We do not recommend using Beta for projects you wish to keep. It's under constant development and any projects made in Beta may be lost or become nonfunctional in future updates.
 
