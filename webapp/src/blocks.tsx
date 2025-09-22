@@ -1359,7 +1359,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         } else if (this.toolbox) {
             this.toolbox.focus(itemToFocus);
         } else if (this.editor.getFlyout()) {
-            this.editor.getFlyout().getWorkspace()?.getFocusableElement()?.focus();
+            this.moveFocusToFlyout();
         }
     }
 
