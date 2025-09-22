@@ -41,6 +41,7 @@ import { initContextMenu } from "../../pxtblocks/contextMenu";
 import { HIDDEN_CLASS_NAME } from "../../pxtblocks/plugins/flyout/blockInflater";
 import { AIFooter } from "../../react-common/components/controls/AIFooter";
 import { CREATE_VAR_BTN_ID } from "../../pxtblocks/builtins/variables";
+import { ShortcutRegistry } from "blockly";
 
 interface CopyDataEntry {
     version: 1;
@@ -1791,6 +1792,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             const refreshBlockly = () => {
                 this.delayLoadXml = this.getCurrentSource();
                 this.editor = undefined;
+                this.cleanupKeyboardNavigation();
                 this.prepareBlockly(hasCategories);
                 this.domUpdate();
                 this.editor.scrollCenter();
@@ -1809,6 +1811,19 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             }
         }
         pxt.perf.measureEnd(Measurements.RefreshToolbox)
+    }
+
+    cleanupKeyboardNavigation() {
+        if (this.keyboardNavigation) {
+            if (ShortcutRegistry.registry.getRegistry()["commitMove"]) {
+                // This event doesn't always get cleaned up properly when a move is completed.
+                // Clear out any lingering registrations just in case.
+                // (This is already patched in blockly, but we need an update to get it)
+                ShortcutRegistry.registry.unregister("commitMove");
+            }
+            this.keyboardNavigation.dispose();
+            this.keyboardNavigation = undefined;
+        }
     }
 
     filterToolbox(showCategories?: boolean) {
