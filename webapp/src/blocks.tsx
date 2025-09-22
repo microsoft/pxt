@@ -61,7 +61,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     compilationResult: pxtblockly.BlockCompilationResult;
     shouldFocusWorkspace = false;
     functionsDialog: CreateFunctionDialog = null;
-    registeredKeyboardNavigationStyles = false;
 
     showCategories: boolean = true;
     breakpointsByBlock: pxt.Map<number>; // Map block id --> breakpoint ID
@@ -781,14 +780,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             return;
         pxsim.U.clear(blocklyDiv);
 
-        const accessibleBlocksEnabled = data.getData<boolean>(auth.ACCESSIBLE_BLOCKS)
         // Increase the Blockly connection radius
         Blockly.config.snapRadius = 48;
         Blockly.config.connectingSnapRadius = 96;
-        if (accessibleBlocksEnabled && !this.registeredKeyboardNavigationStyles) {
-            this.registeredKeyboardNavigationStyles = true;
-            KeyboardNavigation.registerKeyboardNavigationStyles();
-        }
         this.editor = Blockly.inject(blocklyDiv, this.getBlocklyOptions(forceHasCategories)) as Blockly.WorkspaceSvg;
         pxtblockly.contextMenu.setupWorkspaceContextMenu(this.editor);
 
@@ -914,6 +908,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         })
 
 
+        const accessibleBlocksEnabled = data.getData<boolean>(auth.ACCESSIBLE_BLOCKS)
         if (this.shouldShowCategories()) {
             this.renderToolbox();
         }
@@ -1463,6 +1458,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                             window.open(url, 'docs');
                         }
                     });
+
+                    const accessibleBlocksEnabled = data.getData<boolean>(auth.ACCESSIBLE_BLOCKS)
+                    if (accessibleBlocksEnabled) {
+                        KeyboardNavigation.registerKeyboardNavigationStyles();
+                    }
+
                     this.prepareBlockly();
                 })
                 .then(() => initEditorExtensionsAsync())
