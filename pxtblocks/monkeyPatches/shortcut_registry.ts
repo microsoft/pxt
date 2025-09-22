@@ -11,7 +11,7 @@ export function monkeyPatchAddKeyMapping() {
         shortcutName: string,
         allowCollision?: boolean,
       ): void {
-        if (Blockly.ShortcutRegistry.registry.getShortcutNamesByKeyCode(keyCode.toString()).indexOf(shortcutName) !== -1) {
+        if (Blockly.ShortcutRegistry.registry.getShortcutNamesByKeyCode(keyCode.toString()).includes(shortcutName)) {
             // Already have this mapping, no-op
             return;
         }
