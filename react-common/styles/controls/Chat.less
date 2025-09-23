@@ -48,6 +48,9 @@
     scroll-behavior: smooth;
     /* Ensure proper scrolling on mobile */
     -webkit-overflow-scrolling: touch;
+    /* Ensure proper height constraints for scrolling */
+    min-height: 0;
+    height: 0;
 }
 
 /* === Message Structure === */
@@ -57,6 +60,8 @@
     max-width: 100%;
     opacity: 0;
     animation: messageSlideIn 0.3s ease-out forwards;
+    /* Prevent flex shrinking that causes message squeezing */
+    flex-shrink: 0;
 }
 
 @keyframes messageSlideIn {
