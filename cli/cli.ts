@@ -2810,66 +2810,30 @@ function pxtVersion(): string {
 }
 
 function buildAndWatchAsync(f: () => Promise<string[]>, maxDepth: number): Promise<void> {
-    let currMtime = Date.now();
-    const DEBOUNCE_MS = 3000;
-    let debounceTimer: NodeJS.Timeout | null = null;
-    let isBuilding = false;
-
+    let currMtime = Date.now()
     return f()
         .then(dirs => {
             if (globalConfig.noAutoBuild) return
             pxt.debug('watching ' + dirs.join(', ') + '...');
-
             let loop = () => {
-                // Skip polling if we're currently building or debouncing
-                if (isBuilding || debounceTimer) {
-                    U.nextTick(loop);
-                    return;
-                }
-
                 U.delay(1000)
                     .then(() => maxMTimeAsync(dirs, maxDepth))
                     .then(num => {
                         if (num > currMtime) {
-                            currMtime = num;
-
-                            // Clear any existing debounce timer
-                            if (debounceTimer) {
-                                clearTimeout(debounceTimer);
-                                debounceTimer = null;
-                            }
-
-                            // Set up debounced build
-                            debounceTimer = setTimeout(() => {
-                                debounceTimer = null;
-                                isBuilding = true;
-
-                                f()
-                                    .then(d => {
-                                        dirs = d;
-                                        isBuilding = false;
-                                        U.nextTick(loop);
-                                    })
-                                    .catch((e) => {
-                                        buildFailed("debounced build failed: " + (e && e.message ? e.message : ""), e);
-                                        isBuilding = false;
-                                        U.nextTick(loop);
-                                    });
-                            }, DEBOUNCE_MS);
+                            currMtime = num
+                            f()
+                                .then(d => {
+                                    dirs = d
+                                    U.nextTick(loop)
+                                })
+                        } else {
+                            U.nextTick(loop)
                         }
-
-                        // Continue polling regardless of whether we detected changes
-                        U.nextTick(loop);
                     })
-                    .catch((e) => {
-                        // Handle maxMTimeAsync errors gracefully
-                        pxt.debug("Error checking file times: " + (e && e.message ? e.message : ""));
-                        U.nextTick(loop);
-                    });
-            };
+            }
+            U.nextTick(loop)
+        })
 
-            U.nextTick(loop);
-        });
 }
 
 function buildFailed(msg: string, e: any) {
