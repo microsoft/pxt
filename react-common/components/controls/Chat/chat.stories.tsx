@@ -32,7 +32,7 @@ const sampleMessages: Message[] = [
 export const Default = () => {
     const [messages, setMessages] = React.useState<Message[]>(sampleMessages);
     return (
-        <div style={{ height: 420, width: 420 }}>
+        <div className="common-chat-story-container">
             <Chat
                 messages={messages}
                 onSend={(msgOrText: any) => {
@@ -58,9 +58,9 @@ export const WithCustomCard = () => {
             render: (part: any, ctx) => {
                 const count = ctx?.uiState?.count || 0;
                 return (
-                    <div style={{ border: "1px solid var(--pxt-neutral-stencil1)", padding: "0.5rem", borderRadius: "0.25rem" }}>
+                    <div className="common-chat-custom-card">
                         <div>{part.title || "Demo Card"}</div>
-                        <div style={{ marginTop: "0.5rem" }}>
+                        <div className="common-chat-custom-card-content">
                             <button className="common-button" onClick={() => ctx.updateUiState?.("count", count + 1)}>
                                 Click +{count}
                             </button>
@@ -76,7 +76,7 @@ export const WithCustomCard = () => {
     ]);
 
     return (
-        <div style={{ height: 420, width: 420 }}>
+        <div className="common-chat-story-container">
             <Chat
                 messages={messages}
                 registry={registry}
@@ -99,7 +99,7 @@ export const LongTranscript = () => {
     const [messages, setMessages] = React.useState<Message[]>(many);
 
     return (
-        <div style={{ height: 420, width: 420 }}>
+        <div className="common-chat-story-container">
             <Chat
                 messages={messages}
                 onSend={(mOrText: any) => {

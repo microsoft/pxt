@@ -1,5 +1,29 @@
-/* Chat component styles: lightweight, theme-aware using CSS variables */
+/* ===============================================
+   Chat Component Styles
+   Lightweight, theme-aware using CSS variables
+   
+   Structure:
+   - .common-chat (main container)
+     - .common-chat-message-list (scrollable message area)
+       - .common-chat-message (individual message)
+         - .common-chat-message-meta (author/timestamp)
+         - .common-chat-message-body (message content)
+           - .common-chat-message-part (individual part)
+             - .common-chat-part-text (text content)
+             - .common-chat-part-image (images)
+             - .common-chat-part-fallback (unknown types)
+     - .common-chat-composer (input area)
+       - .common-chat-composer-textarea (auto-resize input)
+       - .common-chat-send-button (send button)
+   
+   Additional components:
+   - .common-chat-scroll-bottom (scroll helper)
+   - .common-chat-error-* (error states)
+   - .common-chat-story-* (storybook specific)
+   - .common-chat-custom-* (demo/example styles)
+   =============================================== */
 
+/* === Base Container === */
 .common-chat {
     display: flex;
     flex-direction: column;
@@ -13,6 +37,7 @@
     position: relative;
 }
 
+/* === Message List === */
 .common-chat-message-list {
     flex: 1 1 auto;
     overflow-y: auto;
@@ -25,6 +50,7 @@
     -webkit-overflow-scrolling: touch;
 }
 
+/* === Message Structure === */
 .common-chat-message {
     display: flex;
     flex-direction: column;
@@ -53,6 +79,7 @@
     align-items: flex-start;
 }
 
+/* === Message Metadata === */
 .common-chat-message-meta {
     display: flex;
     flex-direction: row;
@@ -68,12 +95,14 @@
     gap: 0.25rem;
 }
 
+/* === Message Parts === */
 .common-chat-message-part {
     max-width: ~"min(72%, 28rem)";
     word-wrap: break-word;
     overflow-wrap: break-word;
 }
 
+/* Text parts */
 .common-chat-part-text {
     background: var(--pxt-neutral-background1);
     color: var(--pxt-neutral-foreground1);
@@ -90,6 +119,7 @@
     -ms-user-select: text;
 }
 
+/* Image parts */
 .common-chat-part-image {
     max-width: 18rem;
     border-radius: 0.35rem;
@@ -113,6 +143,22 @@
     font-size: 0.875rem;
 }
 
+/* Fallback parts */
+.common-chat-part-fallback {
+    background: var(--pxt-neutral-background1);
+    color: var(--pxt-neutral-foreground1);
+    padding: 0.5rem;
+    border-radius: 0.3rem;
+    border: 1px dashed var(--pxt-neutral-stencil1);
+    font-family: monospace;
+    font-size: 0.75rem;
+    white-space: pre-wrap;
+    max-width: 20rem;
+    max-height: 10rem;
+    overflow: auto;
+}
+
+/* === Composer Section === */
 .common-chat-composer {
     display: flex;
     gap: 0.5rem;
@@ -127,6 +173,7 @@
     min-height: 2.5rem;
     max-height: 10rem;
     resize: none;
+    overflow: hidden;
     padding: 0.75rem;
     border-radius: 0.5rem;
     border: 1px solid var(--pxt-neutral-stencil1);
@@ -160,20 +207,8 @@
     }
 }
 
-.common-chat-part-fallback {
-    background: var(--pxt-neutral-background1);
-    color: var(--pxt-neutral-foreground1);
-    padding: 0.5rem;
-    border-radius: 0.3rem;
-    border: 1px dashed var(--pxt-neutral-stencil1);
-    font-family: monospace;
-    font-size: 0.75rem;
-    white-space: pre-wrap;
-    max-width: 20rem;
-    max-height: 10rem;
-    overflow: auto;
-}
-
+/* === UI Elements === */
+/* Demo card component */
 .common-chat-demo-card {
     display: flex;
     flex-direction: column;
@@ -185,7 +220,31 @@
     min-width: 12rem;
 }
 
-/* Error boundary styles */
+/* Scroll to bottom helper */
+.common-chat-scroll-bottom {
+    position: absolute;
+    right: 1rem;
+    bottom: 4.25rem;
+    background: var(--pxt-primary-background);
+    color: var(--pxt-primary-foreground);
+    border: none;
+    border-radius: 50%;
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transition: all 0.2s ease;
+
+    &:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+}
+
+/* === Error States === */
 .common-chat-error {
     display: flex;
     align-items: center;
@@ -214,35 +273,32 @@
     font-weight: 500;
 }
 
-/* Loading state */
+/* === Loading States === */
 .common-chat.loading {
     opacity: 0.7;
     pointer-events: none;
 }
 
-/* small scroll to bottom helper */
-.common-chat-scroll-bottom {
-    position: absolute;
-    right: 1rem;
-    bottom: 4.25rem;
-    background: var(--pxt-primary-background);
-    color: var(--pxt-primary-foreground);
-    border: none;
-    border-radius: 50%;
-    width: 2.5rem;
-    height: 2.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    transition: all 0.2s ease;
-
-    &:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    }
+/* === Story-specific styles and demo components === */
+.common-chat-story-container {
+    height: 420px;
+    width: 420px;
 }
+
+.common-chat-custom-card {
+    border: 1px solid var(--pxt-neutral-stencil1);
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+    background: var(--pxt-neutral-background1);
+}
+
+.common-chat-custom-card-content {
+    margin-top: 0.5rem;
+}
+
+/* ===============================================
+   Accessibility & Responsive Media Queries
+   =============================================== */
 
 /* High contrast mode support */
 @media (prefers-contrast: high) {
@@ -255,7 +311,7 @@
     }
 }
 
-/* Respect reduced-motion */
+/* Respect reduced-motion preferences */
 @media (prefers-reduced-motion: reduce) {
     .common-chat-message {
         animation: none !important;

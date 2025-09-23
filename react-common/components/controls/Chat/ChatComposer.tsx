@@ -4,6 +4,9 @@ import * as React from "react";
 import { classList, ContainerProps } from "../../util";
 import { Button } from "../Button";
 
+// Localization function - placeholder if not available
+const lf = (s: string) => s;
+
 export interface ChatComposerProps extends ContainerProps {
     onSend: (value: string) => void;
     placeholder?: string;
@@ -91,7 +94,6 @@ export const ChatComposer = (props: ChatComposerProps) => {
                 aria-label={placeholder || lf("Message input")}
                 disabled={disabled}
                 rows={1}
-                style={{ minHeight: "2.5rem", maxHeight: "10rem", resize: "none", overflow: "hidden" }}
                 {...ariaProps}
             />
             <Button

@@ -47,16 +47,11 @@ export const CopilotChat: React.FC<CopilotChatProps> = (props) => {
         }, 1000);
     }, []);
 
-    const handleAppend = React.useCallback((message: Message) => {
-        setMessages(prev => [...prev, message]);
-    }, []);
-
     return (
         <div className="copilot-chat-container" style={{ height: "100%", display: "flex", flexDirection: "column" }}>
             <Chat
                 messages={messages}
                 onSend={handleSend}
-                onAppend={handleAppend}
                 style={{ flex: 1 }}
             />
         </div>
