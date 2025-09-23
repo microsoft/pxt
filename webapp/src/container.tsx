@@ -1068,6 +1068,7 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
         }
 
         if (this.props.extraTabs) {
+            // eslint-disable-next-line @typescript-eslint/no-for-in-array
             for (const i in this.props.extraTabs) {
                 const et = this.props.extraTabs[i];
                 if (!et) continue;

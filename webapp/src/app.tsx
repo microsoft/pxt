@@ -5629,10 +5629,10 @@ export class ProjectView
                         <projects.Projects parent={this} ref={this.handleHomeRef} />
                     </div>
                 </div> : undefined}
-                {sideDocs ? <container.SideDocs 
-                    ref="sidedoc" 
-                    parent={this} 
-                    sideDocsCollapsed={this.state.sideDocsCollapsed} 
+                {sideDocs ? <container.SideDocs
+                    ref="sidedoc"
+                    parent={this}
+                    sideDocsCollapsed={this.state.sideDocsCollapsed}
                     docsUrl={this.state.sideDocsLoadUrl}
                     extraTabs={[
                         {
