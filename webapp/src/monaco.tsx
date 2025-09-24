@@ -1424,8 +1424,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     focusToolbox(itemToFocus?: string): void {
         if (this.isDebugging())  {
             this.debuggerToolbox.focus();
-        } else if (this.toolbox) {
+        } else if (this.toolbox && this.parent.state.editorState?.hasCategories !== false) {
             this.toolbox.focus(itemToFocus);
+        } else if (this.flyout) {
+            this.flyout.focus();
         }
     }
 

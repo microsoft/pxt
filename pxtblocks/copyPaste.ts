@@ -8,14 +8,16 @@ let oldCopy: Blockly.ShortcutRegistry.KeyboardShortcut;
 let oldCut: Blockly.ShortcutRegistry.KeyboardShortcut;
 let oldPaste: Blockly.ShortcutRegistry.KeyboardShortcut;
 
-export function initCopyPaste(accessibleBlocksEnabled: boolean) {
-    if (oldCopy || !getCopyPasteHandlers()) return;
+export function initCopyPaste(accessibleBlocksEnabled: boolean, forceRefresh: boolean = false) {
+    if (!getCopyPasteHandlers()) return;
+
+    if (oldCopy && !forceRefresh) return;
 
     const shortcuts = Blockly.ShortcutRegistry.registry.getRegistry()
 
-    oldCopy = { ...shortcuts[Blockly.ShortcutItems.names.COPY] };
-    oldCut = { ...shortcuts[Blockly.ShortcutItems.names.CUT] };
-    oldPaste = { ...shortcuts[Blockly.ShortcutItems.names.PASTE] };
+    oldCopy = oldCopy || { ...shortcuts[Blockly.ShortcutItems.names.COPY] };
+    oldCut = oldCut || { ...shortcuts[Blockly.ShortcutItems.names.CUT] };
+    oldPaste = oldPaste || { ...shortcuts[Blockly.ShortcutItems.names.PASTE] };
 
     Blockly.ShortcutRegistry.registry.unregister(Blockly.ShortcutItems.names.COPY);
     Blockly.ShortcutRegistry.registry.unregister(Blockly.ShortcutItems.names.CUT);
@@ -197,6 +199,13 @@ function registerCopyContextMenu() {
         id: "makecode-copy-comment"
     };
 
+    if (Blockly.ContextMenuRegistry.registry.getItem(copyOption.id)) {
+        Blockly.ContextMenuRegistry.registry.unregister(copyOption.id);
+    }
+    if (Blockly.ContextMenuRegistry.registry.getItem(copyCommentOption.id)) {
+        Blockly.ContextMenuRegistry.registry.unregister(copyCommentOption.id);
+    }
+
     Blockly.ContextMenuRegistry.registry.register(copyOption);
     Blockly.ContextMenuRegistry.registry.register(copyCommentOption);
 }
@@ -215,6 +224,10 @@ function registerPasteContextMenu() {
         weight: WorkspaceContextWeight.Paste,
         id: "makecode-paste"
     };
+
+    if (Blockly.ContextMenuRegistry.registry.getItem(pasteOption.id)) {
+        Blockly.ContextMenuRegistry.registry.unregister(pasteOption.id);
+    }
 
     Blockly.ContextMenuRegistry.registry.register(pasteOption);
 }
