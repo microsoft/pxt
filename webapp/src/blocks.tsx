@@ -640,6 +640,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         };
     }
 
+    private unregisterBlocklyShortcutIfExists(shortcutName: string) {
+        if (Blockly.ShortcutRegistry.registry.getRegistry()[shortcutName]) {
+            Blockly.ShortcutRegistry.registry.unregister(shortcutName);
+        }
+    }
+
     private initAccessibleBlocks() {
         if (!this.keyboardNavigation) {
             // Keyboard navigation plugin (note message text is actually in Blockly)
@@ -661,6 +667,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 // Used for Blocky's toast's close aria label.
                 CLOSE: lf("Close")
             });
+
+            // Unregister shortcuts that will be re-created when the keyboard nav plugin registers
+            this.unregisterBlocklyShortcutIfExists("keyboard_nav_copy");
+            this.unregisterBlocklyShortcutIfExists("keyboard_nav_cut");
+            this.unregisterBlocklyShortcutIfExists("keyboard_nav_paste");
 
             this.keyboardNavigation = new KeyboardNavigation(this.editor, {
                 allowCrossWorkspacePaste: true
@@ -1814,14 +1825,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     cleanupKeyboardNavigation() {
         if (this.keyboardNavigation) {
-            if (Blockly.ShortcutRegistry.registry.getRegistry()["commitMove"]) {
-                // This event doesn't always get cleaned up properly when a move is completed.
-                // Clear out any lingering registrations just in case.
-                // (This is already patched in blockly, but we need an update to get it)
-                Blockly.ShortcutRegistry.registry.unregister("commitMove");
-            }
+            // This event doesn't always get cleaned up properly when a move is completed.
+            // Clear out any lingering registrations just in case.
+            // (This is already patched in blockly, but we need an update to get it)
+            this.unregisterBlocklyShortcutIfExists("commitMove");
             this.keyboardNavigation.dispose();
             this.keyboardNavigation = undefined;
+            initCopyPaste(false, true); // Re-initialize old copy/paste handlers
         }
     }
 

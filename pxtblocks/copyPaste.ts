@@ -8,8 +8,10 @@ let oldCopy: Blockly.ShortcutRegistry.KeyboardShortcut;
 let oldCut: Blockly.ShortcutRegistry.KeyboardShortcut;
 let oldPaste: Blockly.ShortcutRegistry.KeyboardShortcut;
 
-export function initCopyPaste(accessibleBlocksEnabled: boolean) {
+export function initCopyPaste(accessibleBlocksEnabled: boolean, forceRefresh: boolean = false) {
     if (!getCopyPasteHandlers()) return;
+
+    if (oldCopy && !forceRefresh) return;
 
     const shortcuts = Blockly.ShortcutRegistry.registry.getRegistry()
 
@@ -20,10 +22,6 @@ export function initCopyPaste(accessibleBlocksEnabled: boolean) {
     Blockly.ShortcutRegistry.registry.unregister(Blockly.ShortcutItems.names.COPY);
     Blockly.ShortcutRegistry.registry.unregister(Blockly.ShortcutItems.names.CUT);
     Blockly.ShortcutRegistry.registry.unregister(Blockly.ShortcutItems.names.PASTE);
-
-    Blockly.ShortcutRegistry.registry.unregister("keyboard_nav_copy");
-    Blockly.ShortcutRegistry.registry.unregister("keyboard_nav_cut");
-    Blockly.ShortcutRegistry.registry.unregister("keyboard_nav_paste");
 
     registerCopy();
     registerCut();
