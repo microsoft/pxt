@@ -84,6 +84,11 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
         this.positionDragHandle();
     }
 
+    focus() {
+        const firstFocusableElement = (this.refs.flyout as HTMLDivElement)?.querySelector<HTMLElement>("[tabindex='0']");
+        firstFocusableElement?.focus();
+    }
+
     protected getBlockMouseOver = (name: string) => {
         return () => {
             pxt.tickEvent("monaco.toolbox.itemmouseover");
