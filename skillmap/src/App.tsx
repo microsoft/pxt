@@ -57,7 +57,7 @@ interface AppProps {
     skillMaps: { [key: string]: SkillMap };
     activityOpen: boolean;
     backgroundImageUrl: string;
-    pixellatedBackground?: boolean;
+    pixelatedBackground?: boolean;
     theme: SkillGraphTheme;
     signedIn: boolean;
     activityId: string;
@@ -72,7 +72,7 @@ interface AppProps {
     dispatchSetPageTitle: (title: string) => void;
     dispatchSetPageDescription: (description: string) => void;
     dispatchSetPageInfoUrl: (infoUrl: string) => void;
-    dispatchSetPageBackgroundImageUrl: (backgroundImageUrl: string, pixellatedBackground?: boolean) => void;
+    dispatchSetPageBackgroundImageUrl: (backgroundImageUrl: string, pixelatedBackground?: boolean) => void;
     dispatchSetPageBannerImageUrl: (bannerImageUrl: string) => void;
     dispatchSetUser: (user: UserState) => void;
     dispatchSetPageSourceUrl: (url: string, status: PageSourceStatus) => void;
@@ -229,13 +229,13 @@ class AppImpl extends React.Component<AppProps, AppState> {
                 }
 
                 if (metadata) {
-                    const { title, description, infoUrl, backgroundImageUrl, pixellatedBackground,
+                    const { title, description, infoUrl, backgroundImageUrl, pixelatedBackground,
                         bannerImageUrl, theme, alternateSources } = metadata;
                     setPageTitle(title);
                     this.props.dispatchSetPageTitle(title);
                     if (description) this.props.dispatchSetPageDescription(description);
                     if (infoUrl) this.props.dispatchSetPageInfoUrl(infoUrl);
-                    if (backgroundImageUrl) this.props.dispatchSetPageBackgroundImageUrl(backgroundImageUrl, pixellatedBackground);
+                    if (backgroundImageUrl) this.props.dispatchSetPageBackgroundImageUrl(backgroundImageUrl, pixelatedBackground);
                     if (bannerImageUrl) this.props.dispatchSetPageBannerImageUrl(bannerImageUrl);
                     if (alternateSources) this.props.dispatchSetPageAlternateUrls(alternateSources);
                     if (theme) this.props.dispatchSetPageTheme(theme);
@@ -433,7 +433,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
     }
 
     render() {
-        const { skillMaps, activityOpen, backgroundImageUrl, theme, pixellatedBackground } = this.props;
+        const { skillMaps, activityOpen, backgroundImageUrl, theme, pixelatedBackground } = this.props;
         const { error, showingSyncLoader, forcelang } = this.state;
         const maps = Object.keys(skillMaps).map((id: string) => skillMaps[id]);
         const feedbackEnabled = pxt.U.ocvEnabled();
@@ -447,7 +447,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
                 <div className={`skill-map-container ${activityOpen ? "hidden" : ""}`} style={{ backgroundColor: theme.backgroundColor }}>
                     { error
                         ? <div className="skill-map-error">{error}</div>
-                        : <SkillGraphContainer maps={maps} backgroundImageUrl={backgroundImageUrl} backgroundColor={theme.backgroundColor} pixellatedBackground={pixellatedBackground} strokeColor={theme.strokeColor} />
+                        : <SkillGraphContainer maps={maps} backgroundImageUrl={backgroundImageUrl} backgroundColor={theme.backgroundColor} pixelatedBackground={pixelatedBackground} strokeColor={theme.strokeColor} />
                     }
                     { !error && <InfoPanel onFocusEscape={this.focusCurrentActivity} />}
                 </div>
@@ -569,7 +569,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         skillMaps: state.maps,
         activityOpen: !!state.editorView,
         backgroundImageUrl: state.backgroundImageUrl,
-        pixellatedBackground: state.pixellatedBackground,
+        pixelatedBackground: state.pixelatedBackground,
         theme: state.theme,
         signedIn: state.auth.signedIn,
         activityId: state.selectedItem?.activityId,
