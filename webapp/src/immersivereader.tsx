@@ -232,7 +232,8 @@ export async function launchImmersiveReaderAsync(content: string, tutorialOption
         onPreferencesChanged: (pref: string) => {
             auth.setImmersiveReaderPrefAsync(pref)
         },
-        preferences: userReaderPref
+        preferences: userReaderPref,
+        allowFullscreen: !pxt.appTarget.simulator?.headless
     }
 
     try {
