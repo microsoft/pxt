@@ -389,6 +389,7 @@ function inflateMetadata(section: MarkdownSection): PageMetadata {
         description: section.attributes["description"],
         infoUrl: cleanInfoUrl(section.attributes["infourl"]),
         backgroundImageUrl: section.attributes["backgroundurl"],
+        pixelatedBackground: isTrue(section.attributes["pixelatedbackground"]),
         bannerImageUrl: section.attributes["bannerurl"],
         alternateSources: parseList(section.attributes["alternatesources"]),
         theme: {
