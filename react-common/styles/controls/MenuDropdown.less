@@ -16,6 +16,7 @@
     margin: 0;
     background: var(--pxt-neutral-background1);
     border: 1px solid var(--pxt-neutral-stencil1);
+    overflow: visible;
 
     ul {
         list-style: none;
@@ -35,6 +36,7 @@
         display: flex;
         align-items: center;
         text-align: left;
+        position: relative;
 
         cursor: pointer;
         user-select: none;
@@ -53,6 +55,7 @@
 
         &:hover {
             text-decoration: none;
+            color: var(--pxt-neutral-foreground1);
         }
 
         &:hover:not(.disabled) {
@@ -77,25 +80,6 @@
     }
 }
 
-
 .common-menu-dropdown-item.common-button:focus::after {
-    outline: @buttonFocusOutlineLightBackground;
-}
-
-/****************************************************
- *                 High Contrast                    *
- ****************************************************/
-
-.high-contrast {
-    .common-menu-dropdown-pane {
-        color: @highContrastTextColor;
-        background-color: @highContrastBackgroundColor;
-        border: 1px solid @highContrastTextColor;
-    }
-
-    .common-menu-dropdown-item:hover,
-    .common-menu-dropdown > .menu-button.expanded {
-        outline: @highContrastFocusOutline;
-        z-index: @highContrastFocusZIndex;
-    }
+    outline: var(--pxt-focus-border) solid 3px !important;
 }
