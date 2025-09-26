@@ -209,11 +209,6 @@ div.field .ui.toggle.checkbox input:checked~label:before {
 /*
  * Dropdown Menu
  */
-/* .common-menu-dropdown-pane {
-    color: var(--pxt-neutral-foreground1);
-    background-color: var(--pxt-neutral-background1);
-    border: 1px solid var(--pxt-neutral-foreground1);
-} */
 .common-menu-dropdown-item:hover,
 .common-menu-dropdown > .menu-button.expanded {
     outline: var(--pxt-focus-border) solid 3px !important;
