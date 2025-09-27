@@ -125,7 +125,7 @@ export const MenuDropdown = (props: MenuDropdownProps) => {
                 includeOutsideTabOrder={true}
                 dontTrapFocus={true}
                 dontRestoreFocus={true}
-                focusFirstItem={true}
+                focusFirstItem={false}
                 ariaLabelledby={id}
                 tagName="ul"
             >
