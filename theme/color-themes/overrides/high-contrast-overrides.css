@@ -212,5 +212,6 @@ div.field .ui.toggle.checkbox input:checked~label:before {
 .common-menu-dropdown-item:hover,
 .common-menu-dropdown > .menu-button.expanded {
     outline: var(--pxt-focus-border) solid 3px !important;
+    outline-offset: -4px;
     z-index: 1;
 }
