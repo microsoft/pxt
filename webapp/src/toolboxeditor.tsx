@@ -58,21 +58,33 @@ export abstract class ToolboxEditor extends srceditor.Editor {
     }
 
     protected shouldShowCustomCategory(ns: string) {
-        const filters = this.parent.state.editorState && this.parent.state.editorState.filters;
+        let filters = this.parent.state.editorState && this.parent.state.editorState.filters;
+
+        const projectFilter = getProjectToolboxFilters();
+
+        if (projectFilter) {
+            if (filters) {
+                // tutorial filters override project filters
+                pxt.U.jsonMergeFrom(projectFilter, filters);
+            }
+
+            filters = projectFilter;
+        }
+
         if (filters) {
             // These categories are special and won't have any children so we need to check the filters manually
             if (ns === "variables" && (!filters.blocks ||
                 filters.blocks["variables_set"] ||
                 filters.blocks["variables_get"] ||
                 filters.blocks["variables_change"]) &&
-                (!filters.namespaces || filters.namespaces["variables"] !== pxt.editor.FilterState.Disabled)) {
+                (!filters.namespaces || !shouldHideCategory("variables", filters.namespaces))) {
                 return true;
             } else if (ns === "functions" && (!filters.blocks ||
                 filters.blocks["function_definition"] ||
                 filters.blocks["function_call"] ||
                 filters.blocks["procedures_defnoreturn"] ||
                 filters.blocks["procedures_callnoreturn"]) &&
-                (!filters.namespaces || filters.namespaces["functions"] !== pxt.editor.FilterState.Disabled)) {
+                (!filters.namespaces || !shouldHideCategory("functions", filters.namespaces))) {
                 return true;
             } else {
                 return false;
@@ -411,4 +423,9 @@ export abstract class ToolboxEditor extends srceditor.Editor {
     }
 
     onToolboxBlur(e: React.FocusEvent, keepFlyoutOpen: boolean) {};
+}
+
+
+function shouldHideCategory(category: string, filters: {[index: string]: pxt.editor.FilterState}): boolean {
+    return filters[category] == pxt.editor.FilterState.Hidden || filters[category] == pxt.editor.FilterState.Disabled;
 }
