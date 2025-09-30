@@ -1204,6 +1204,7 @@ declare namespace pxt.tutorial {
         globalBlockConfig?: TutorialBlockConfig; // concatenated `blockconfig.global` sections. Contains block configs applicable to all tutorial steps
         globalValidationConfig?: CodeValidationConfig; // concatenated 'validation.global' sections. Contains validation config applicable to all steps
         simTheme?: Partial<pxt.PackageConfig>;
+        hiddenNamespaces?: string[]; // list of categories to put in the toolbox filters of the tutorial project's pxt.json
     }
 
     interface TutorialMetadata {
@@ -1219,6 +1220,7 @@ declare namespace pxt.tutorial {
         autoexpandOff?: boolean; // INTERNAL TESTING ONLY
         preferredEditor?: string; // preferred editor for opening the tutorial
         hideDone?: boolean; // Do not show a "Done" button at the end of the tutorial
+        hideReplaceMyCode?: boolean; // hide the "Replace Code" button in the tutorial
     }
 
     interface TutorialBlockConfigEntry {
@@ -1317,6 +1319,7 @@ declare namespace pxt.tutorial {
         globalBlockConfig?: TutorialBlockConfig; // concatenated `blockconfig.global` sections. Contains block configs applicable to all tutorial steps
         globalValidationConfig?: CodeValidationConfig // concatenated 'validation.global' sections. Contains validation config applicable to all steps
         simTheme?: Partial<pxt.PackageConfig>;
+        hiddenNamespaces?: string[]; // list of categories to put in the toolbox filters of the tutorial project's pxt.json
     }
     interface TutorialCompletionInfo {
         // id of the tutorial
