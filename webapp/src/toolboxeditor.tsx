@@ -58,6 +58,7 @@ export abstract class ToolboxEditor extends srceditor.Editor {
 
     protected shouldShowCustomCategory(ns: string) {
         let filters = this.parent.state.editorState && this.parent.state.editorState.filters;
+        const hasTutorialFilters = !!(filters);
 
         const projectFilter = getProjectToolboxFilters();
 
@@ -85,7 +86,7 @@ export abstract class ToolboxEditor extends srceditor.Editor {
                 filters.blocks["procedures_callnoreturn"]) &&
                 (!filters.namespaces || !shouldHideCategory("functions", filters.namespaces))) {
                 return true;
-            } else {
+            } else if (hasTutorialFilters) {
                 return false;
             }
         }
