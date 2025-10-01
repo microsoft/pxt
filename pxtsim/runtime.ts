@@ -431,6 +431,10 @@ namespace pxsim {
             this.bus = new pxsim.EventBus(runtime, this);
         }
 
+        public onEveryYield () {
+
+        }
+
         public updateView() { }
         public receiveMessage(msg: SimulatorMessage) {
             if (!runtime || runtime.dead) return;
@@ -1447,6 +1451,7 @@ namespace pxsim {
                         __this.currFrame = p;
                         __this.currFrame.overwrittenPC = false;
                         p = p.fn(p)
+                        __this.board.onEveryYield()
                         //if (yieldSteps-- < 0 && maybeYield(p, p.pc, 0)) break;
                         __this.maybeUpdateDisplay()
                         if (__this.currFrame.overwrittenPC)
