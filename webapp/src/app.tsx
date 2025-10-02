@@ -1776,6 +1776,7 @@ export class ProjectView
             await this.loadTutorialCustomTsAsync();
             await this.loadTutorialTemplateCodeAsync();
             await this.loadTutorialBlockConfigsAsync();
+            await this.loadTutorialHiddenCategoriesAsync();
 
             const main = pkg.getEditorPkg(pkg.mainPkg);
 
@@ -1844,6 +1845,9 @@ export class ProjectView
                 pxt.storage.setLocal("onboardAccessibleBlocks", "0")
             }
 
+            // Force editor tools to collapse in headless tutorials and blocks mode (essentially hiding file explorer)
+            const forceEditorToolsCollapse = pxt.appTarget.simulator.headless && (!!h.tutorial || h.editor === pxt.BLOCKS_PROJECT_NAME);
+
             this.setState({
                 home: false,
                 showFiles: h.githubId ? true : false,
@@ -1854,7 +1858,8 @@ export class ProjectView
                 currFile: file,
                 sideDocsLoadUrl: sideDocsLoadUrl,
                 debugging: false,
-                isMultiplayerGame: false
+                isMultiplayerGame: false,
+                collapseEditorTools: forceEditorToolsCollapse || this.state.collapseEditorTools,
             });
 
             pkg.getEditorPkg(pkg.mainPkg).onupdate = () => {
@@ -1967,8 +1972,11 @@ export class ProjectView
                 editorState.filters = {
                     blocks: tutorialBlocks.usedBlocks,
                     defaultState: pxt.editor.FilterState.Hidden
-                }
-                editorState.hasCategories = !(header.tutorial.metadata && header.tutorial.metadata.flyoutOnly);
+                };
+                editorState.hasCategories = !(
+                    header.tutorial.metadata &&
+                    (header.tutorial.metadata.flyoutOnly || header.tutorial.metadata.unifiedToolbox)
+                );
             }
             this.setState({ editorState: editorState });
             this.editor.filterToolbox(true);
@@ -2096,8 +2104,11 @@ export class ProjectView
         if (!header || !header.tutorial) {
             return;
         }
-        else if (!header.tutorial.templateCode || header.tutorial.templateLoaded) {
-            if (header.tutorial.mergeCarryoverCode && header.tutorial.mergeHeaderId) {
+        const hasCodeCarryover = header.tutorial.mergeCarryoverCode && header.tutorial.mergeHeaderId;
+        const hideReplaceMyCode = header.tutorial.metadata?.hideReplaceMyCode || pxt.appTarget.appTheme.hideReplaceMyCode;
+
+        if (!header.tutorial.templateCode && !(hasCodeCarryover && hideReplaceMyCode) || header.tutorial.templateLoaded) {
+            if (hasCodeCarryover) {
                 pxt.warn(lf("Refusing to carry code between tutorials because the loaded tutorial \"{0}\" does not contain a template code block.", header.tutorial.tutorial));
             }
             return;
@@ -2108,33 +2119,36 @@ export class ProjectView
         // Mark that the template has been loaded so that we don't overwrite the
         // user code if the tutorial is re-opened
         header.tutorial.templateLoaded = true;
+
         let currentText = await workspace.getTextAsync(header.id);
 
-        // If we're starting in the asset editor, always load into TS
-        const preferredEditor = header.tutorial.metadata?.preferredEditor;
-        if (preferredEditor && filenameForEditor(preferredEditor) === pxt.ASSETS_FILE) {
-            currentText[pxt.MAIN_TS] = template;
-        }
-
-        const projectname = projectNameForEditor(preferredEditor || header.editor);
-
-        if (projectname === pxt.PYTHON_PROJECT_NAME && header.tutorial.templateLanguage === "python") {
-            currentText[pxt.MAIN_PY] = template;
-        }
-        else if (projectname === pxt.JAVASCRIPT_PROJECT_NAME) {
-            currentText[pxt.MAIN_TS] = template;
-        }
-        else if (projectname === pxt.PYTHON_PROJECT_NAME) {
-            const pyCode = await compiler.decompilePythonSnippetAsync(template)
-            if (pyCode) {
-                currentText[pxt.MAIN_PY] = pyCode;
+        if (template) {
+            // If we're starting in the asset editor, always load into TS
+            const preferredEditor = header.tutorial.metadata?.preferredEditor;
+            if (preferredEditor && filenameForEditor(preferredEditor) === pxt.ASSETS_FILE) {
+                currentText[pxt.MAIN_TS] = template;
             }
-        }
-        else {
-            const resp = await compiler.decompileBlocksSnippetAsync(template)
-            const blockXML = resp.outfiles[pxt.MAIN_BLOCKS];
-            if (blockXML) {
-                currentText[pxt.MAIN_BLOCKS] = blockXML
+
+            const projectname = projectNameForEditor(preferredEditor || header.editor);
+
+            if (projectname === pxt.PYTHON_PROJECT_NAME && header.tutorial.templateLanguage === "python") {
+                currentText[pxt.MAIN_PY] = template;
+            }
+            else if (projectname === pxt.JAVASCRIPT_PROJECT_NAME) {
+                currentText[pxt.MAIN_TS] = template;
+            }
+            else if (projectname === pxt.PYTHON_PROJECT_NAME) {
+                const pyCode = await compiler.decompilePythonSnippetAsync(template)
+                if (pyCode) {
+                    currentText[pxt.MAIN_PY] = pyCode;
+                }
+            }
+            else {
+                const resp = await compiler.decompileBlocksSnippetAsync(template)
+                const blockXML = resp.outfiles[pxt.MAIN_BLOCKS];
+                if (blockXML) {
+                    currentText[pxt.MAIN_BLOCKS] = blockXML
+                }
             }
         }
 
@@ -2234,6 +2248,27 @@ export class ProjectView
         await mainPkg.setContentAsync(pxt.TUTORIAL_CUSTOM_TS, customTs);
         await mainPkg.saveFilesAsync();
         return Promise.resolve();
+    }
+
+    private async loadTutorialHiddenCategoriesAsync(): Promise<void> {
+        const mainPkg = pkg.mainEditorPkg();
+        const header = mainPkg.header;
+        if (!header || !header.tutorial || !header.tutorial.hiddenNamespaces) {
+            return;
+        }
+
+        await mainPkg.updateConfigAsync(config => {
+            if (!config.toolboxFilter) {
+                config.toolboxFilter = {
+                    namespaces: {},
+                    blocks: {}
+                };
+            }
+
+            for (const category of header.tutorial.hiddenNamespaces) {
+                config.toolboxFilter.namespaces[category] = "hidden";
+            }
+        });
     }
 
     async resetTutorialTemplateCode(keepAssets: boolean): Promise<void> {
@@ -5172,6 +5207,7 @@ export class ProjectView
                     const flyoutOnly =
                         this.state.editorState?.hasCategories === false
                         || this.state.tutorialOptions?.metadata?.flyoutOnly
+                        || this.state.tutorialOptions?.metadata?.unifiedToolbox
                         || this.state.tutorialOptions?.metadata?.hideToolbox;
 
                     let headerHeight = 0;

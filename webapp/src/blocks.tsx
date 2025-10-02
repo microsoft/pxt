@@ -223,7 +223,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.loadingXml = true;
 
             const flyout = this.editor.getFlyout() as pxtblockly.CachingFlyout;
-            flyout?.clearBlockCache();
+            if (flyout && typeof flyout.clearBlockCache === 'function') {
+                flyout.clearBlockCache();
+            }
 
             const loadingDimmer = document.createElement("div");
             loadingDimmer.className = "ui active dimmer";
@@ -546,7 +548,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
          */
         const that = this;
         Blockly.Toolbox.prototype.getFocusableElement = function() {
-            return that.getToolboxDiv().querySelector(".blocklyTreeRoot [role=tree]") as HTMLElement;
+            return that.getToolboxDiv()?.querySelector(".blocklyTreeRoot [role=tree]") as HTMLElement ?? that.getBlocksAreaDiv();
         };
         Blockly.Toolbox.prototype.getRestoredFocusableNode = function() {
             return null;
@@ -638,6 +640,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         };
     }
 
+    private unregisterBlocklyShortcutIfExists(shortcutName: string) {
+        if (Blockly.ShortcutRegistry.registry.getRegistry()[shortcutName]) {
+            Blockly.ShortcutRegistry.registry.unregister(shortcutName);
+        }
+    }
+
     private initAccessibleBlocks() {
         if (!this.keyboardNavigation) {
             // Keyboard navigation plugin (note message text is actually in Blockly)
@@ -659,6 +667,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 // Used for Blocky's toast's close aria label.
                 CLOSE: lf("Close")
             });
+
+            // Unregister shortcuts that will be re-created when the keyboard nav plugin registers
+            this.unregisterBlocklyShortcutIfExists("keyboard_nav_copy");
+            this.unregisterBlocklyShortcutIfExists("keyboard_nav_cut");
+            this.unregisterBlocklyShortcutIfExists("keyboard_nav_paste");
 
             this.keyboardNavigation = new KeyboardNavigation(this.editor, {
                 allowCrossWorkspacePaste: true
@@ -778,13 +791,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             return;
         pxsim.U.clear(blocklyDiv);
 
-        const accessibleBlocksEnabled = data.getData<boolean>(auth.ACCESSIBLE_BLOCKS)
         // Increase the Blockly connection radius
         Blockly.config.snapRadius = 48;
         Blockly.config.connectingSnapRadius = 96;
-        if (accessibleBlocksEnabled) {
-            KeyboardNavigation.registerKeyboardNavigationStyles();
-        }
         this.editor = Blockly.inject(blocklyDiv, this.getBlocklyOptions(forceHasCategories)) as Blockly.WorkspaceSvg;
         pxtblockly.contextMenu.setupWorkspaceContextMenu(this.editor);
 
@@ -910,6 +919,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         })
 
 
+        const accessibleBlocksEnabled = data.getData<boolean>(auth.ACCESSIBLE_BLOCKS)
         if (this.shouldShowCategories()) {
             this.renderToolbox();
         }
@@ -1359,6 +1369,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.debuggerToolbox.focus();
         } else if (this.toolbox) {
             this.toolbox.focus(itemToFocus);
+        } else if (this.editor.getFlyout()) {
+            this.moveFocusToFlyout();
         }
     }
 
@@ -1457,6 +1469,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                             window.open(url, 'docs');
                         }
                     });
+
+                    const accessibleBlocksEnabled = data.getData<boolean>(auth.ACCESSIBLE_BLOCKS)
+                    if (accessibleBlocksEnabled) {
+                        KeyboardNavigation.registerKeyboardNavigationStyles();
+                    }
+
                     this.prepareBlockly();
                 })
                 .then(() => initEditorExtensionsAsync())
@@ -1784,6 +1802,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             const refreshBlockly = () => {
                 this.delayLoadXml = this.getCurrentSource();
                 this.editor = undefined;
+                this.cleanupKeyboardNavigation();
                 this.prepareBlockly(hasCategories);
                 this.domUpdate();
                 this.editor.scrollCenter();
@@ -1802,6 +1821,18 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             }
         }
         pxt.perf.measureEnd(Measurements.RefreshToolbox)
+    }
+
+    cleanupKeyboardNavigation() {
+        if (this.keyboardNavigation) {
+            // This event doesn't always get cleaned up properly when a move is completed.
+            // Clear out any lingering registrations just in case.
+            // (This is already patched in blockly, but we need an update to get it)
+            this.unregisterBlocklyShortcutIfExists("commitMove");
+            this.keyboardNavigation.dispose();
+            this.keyboardNavigation = undefined;
+            initCopyPaste(false, true); // Re-initialize old copy/paste handlers
+        }
     }
 
     filterToolbox(showCategories?: boolean) {
@@ -1873,7 +1904,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     public setFlyoutForceOpen(forceOpen: boolean) {
-        (this.editor.getFlyout() as pxtblockly.CachingFlyout).setForceOpen(forceOpen);
+        const flyout = this.editor.getFlyout() as pxtblockly.CachingFlyout
+        if (flyout && typeof flyout.setForceOpen === 'function') {
+            flyout.setForceOpen(forceOpen);
+        }
     }
 
     ///////////////////////////////////////////////////////////
@@ -2174,21 +2208,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     // For editors that have no toolbox
     showFlyoutOnlyToolbox() {
         // Show a Flyout only with all the blocks
-        const allCategories = this.getAllCategories();
-        let allBlocks: toolbox.BlockDefinition[] = [];
-        allCategories.forEach(category => {
-            const blocks = category.blocks;
-            allBlocks = allBlocks.concat(blocks);
-            if (category.subcategories) category.subcategories.forEach(subcategory => {
-                const subblocks = subcategory.blocks;
-                allBlocks = allBlocks.concat(subblocks);
-            })
-        });
+        this.injectCategoryStyles();
 
-        let container = document.createElement("div");
-        ReactDOM.render(<toolbox.ToolboxStyle categories={allCategories} />, container);
-        document.getElementById('editorcontent').appendChild(container);
-
+        let allBlocks = this.getAllBlocks();
         let xmlList: Element[] = [];
         allBlocks.forEach((block) => {
             const blockXmlList = this.getBlockXml(block);

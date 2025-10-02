@@ -1232,12 +1232,14 @@ declare namespace pxt.tutorial {
         globalBlockConfig?: TutorialBlockConfig; // concatenated `blockconfig.global` sections. Contains block configs applicable to all tutorial steps
         globalValidationConfig?: CodeValidationConfig; // concatenated 'validation.global' sections. Contains validation config applicable to all steps
         simTheme?: Partial<pxt.PackageConfig>;
+        hiddenNamespaces?: string[]; // list of categories to put in the toolbox filters of the tutorial project's pxt.json
     }
 
     interface TutorialMetadata {
         activities?: boolean; // tutorial consists of activities, then steps. uses `###` for steps
         explicitHints?: boolean; // tutorial expects explicit hints in `#### ~ tutorialhint` format
-        flyoutOnly?: boolean; // no categories, display all blocks in flyout
+        flyoutOnly?: boolean; // Deprecated. Indicates unifiedToolbox (below) + some Minecraft-HOC-specific UI adjustments.
+        unifiedToolbox?: boolean; // No categories, display all blocks directly in an always-open flyout.
         hideToolbox?: boolean; // hide the toolbox in the tutorial
         hideIteration?: boolean; // hide step control in tutorial
         diffs?: boolean; // automatically diff snippets
@@ -1248,6 +1250,7 @@ declare namespace pxt.tutorial {
         preferredEditor?: string; // preferred editor for opening the tutorial
         hideDone?: boolean; // Do not show a "Done" button at the end of the tutorial
         hideFromProjects?: boolean; // hide this tutorial from the projects list
+        hideReplaceMyCode?: boolean; // hide the "Replace Code" button in the tutorial
     }
 
     interface TutorialBlockConfigEntry {
@@ -1346,6 +1349,7 @@ declare namespace pxt.tutorial {
         globalBlockConfig?: TutorialBlockConfig; // concatenated `blockconfig.global` sections. Contains block configs applicable to all tutorial steps
         globalValidationConfig?: CodeValidationConfig // concatenated 'validation.global' sections. Contains validation config applicable to all steps
         simTheme?: Partial<pxt.PackageConfig>;
+        hiddenNamespaces?: string[]; // list of categories to put in the toolbox filters of the tutorial project's pxt.json
     }
     interface TutorialCompletionInfo {
         // id of the tutorial

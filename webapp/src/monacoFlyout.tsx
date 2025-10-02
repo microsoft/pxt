@@ -39,6 +39,7 @@ export interface MonacoFlyoutState {
     selectedBlock?: string;
     hoverBlock?: string;
     hide?: boolean;
+    stayOpenOnDrag?: boolean;
 }
 
 export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyoutState> {
@@ -81,6 +82,11 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
 
     componentDidUpdate() {
         this.positionDragHandle();
+    }
+
+    focus() {
+        const firstFocusableElement = (this.refs.flyout as HTMLDivElement)?.querySelector<HTMLElement>("[tabindex='0']");
+        firstFocusableElement?.focus();
     }
 
     protected getBlockMouseOver = (name: string) => {
@@ -145,7 +151,7 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
             dragBlock.style.left = `${pxt.BrowserUtils.getClientX(e)}px`;
             // For devices without PointerEvents (iOS < 13.0) use state to
             // hide the flyout rather than focusing the editor
-            this.setState({ hide: true });
+            this.setState({ hide: !this.state.stayOpenOnDrag });
         }
     }
 
