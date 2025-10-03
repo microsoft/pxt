@@ -58,6 +58,8 @@ declare namespace pxt {
         upgrades?: string[];
         // This repo's simulator extension configuration
         simx?: SimulatorExtensionConfig;
+        // if true, this repo will not be shown in extension search results
+        hidden?: boolean;
     }
 
     interface SimulatorExtensionConfig {
