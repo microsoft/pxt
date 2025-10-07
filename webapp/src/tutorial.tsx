@@ -674,6 +674,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         const currentStep = tutorialStep;
         const maxSteps = tutorialStepInfo.length;
         const hideIteration = metadata && metadata.hideIteration;
+        const immersiveReaderEnabled = pxt.appTarget.appTheme.immersiveReader;
         const hideDone = metadata && metadata.hideDone;
         const hasPrevious = tutorialReady && currentStep != 0 && !hideIteration;
         const hasNext = tutorialReady && currentStep != maxSteps - 1 && !hideIteration;
@@ -720,6 +721,8 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
                             onClick={hintOnClick} onKeyDown={fireClickOnEnter}
                         />}
                         {(!showDialog && hasHint) && <HintTooltip ref="hinttooltip" pokeUser={this.props.pokeUser} text={tutorialHintTooltip} onClick={hintOnClick} />}
+                        {/* Immersive reader is normally shown in tutorialmenu, but that is cute for hideIteration */}
+                        {hideIteration && immersiveReaderEnabled && <ImmersiveReader.ImmersiveReaderButton content={tutorialCardContent} tutorialOptions={options} />}
                         <TutorialHint ref="tutorialhint" parent={this.props.parent} />
                     </div>
                     {this.state.showSeeMore && !tutorialStepExpanded && <sui.Button className="fluid compact lightgrey" icon="chevron down" tabIndex={0} text={lf("More...")} onClick={this.toggleExpanded} onKeyDown={fireClickOnEnter} />}

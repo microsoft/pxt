@@ -464,6 +464,7 @@ code.lang-filterblocks {
 .avatar-container {
     left: .7rem;
     height: 100%;
+    position: relative;
 }
 
 .avatar-container .tooltip {
@@ -544,6 +545,8 @@ code.lang-filterblocks {
 // old tutorial code
 #simulator .editor-sidebar .immersive-reader-button.ui.item,
 #simulator .editor-sidebar .immersive-reader-button.ui.item:focus,
+.tutorialsegment .immersive-reader-button.ui.item,
+.tutorialsegment .immersive-reader-button.ui.item:focus,
 #mainmenu .immersive-reader-button.ui.item,
 #mainmenu .immersive-reader-button.ui.item:focus {
     width: 2rem;
@@ -553,6 +556,23 @@ code.lang-filterblocks {
     background-position: center;
     border-radius: .2em!important;
 }
+.tutorialsegment .immersive-reader-button.ui.item,
+.tutorialsegment .immersive-reader-button.ui.item:focus {
+    background-image: @immersiveReaderIcon;
+}
+
+.avatar-container .immersive-reader-button.ui.item {
+    position: absolute;
+    right: 0;
+    bottom: 0.25rem;
+}
+
+@media only screen and (min-width: @computerBreakpoint) {
+    .avatar-container .immersive-reader-button.ui.item {
+        bottom: 0.5rem;
+        right: 0.5rem;
+    }
+}
 #mainmenu .immersive-reader-button.ui.item,
 #mainmenu .immersive-reader-button.ui.item:focus {
     background-image: @immersiveReaderLightIcon;
@@ -560,6 +580,12 @@ code.lang-filterblocks {
 #simulator .editor-sidebar .immersive-reader-button.ui.item,
 #simulator .editor-sidebar .immersive-reader-button.ui.item:focus{
     background-image: @immersiveReaderIcon;
+}
+
+.tutorialsegment .immersive-reader-button.ui.item:hover,
+.tutorialsegment .immersive-reader-button.ui.item:focus {
+    background-color: var(--pxt-neutral-alpha20);
+    filter: brightness(0.9);
 }
 
 #mainmenu .immersive-reader-button:focus,
