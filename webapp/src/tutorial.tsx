@@ -713,6 +713,12 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
                             {!showDialog && <md.MarkedContent className="no-select" tabIndex={0} markdown={tutorialCardContent} parent={this.props.parent} onDidRender={this.onMarkdownDidRender} />}
                         </div>
                     </div>
+                    {/* Immersive reader is normally shown in tutorialmenu, but that is cut for hideIteration */}
+                    {hideIteration && immersiveReaderEnabled &&
+                        <div className="tutorialcard-immersive-reader hideiteration">
+                            <ImmersiveReader.ImmersiveReaderButton content={tutorialCardContent} tutorialOptions={options} />
+                        </div>
+                    }
                     <div className="avatar-container">
                         {(!showDialog && hasHint) && <sui.Button
                             className={`ui circular label blue hintbutton hidelightbox ${this.props.pokeUser ? 'shake flash' : ''}`}
@@ -721,8 +727,6 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
                             onClick={hintOnClick} onKeyDown={fireClickOnEnter}
                         />}
                         {(!showDialog && hasHint) && <HintTooltip ref="hinttooltip" pokeUser={this.props.pokeUser} text={tutorialHintTooltip} onClick={hintOnClick} />}
-                        {/* Immersive reader is normally shown in tutorialmenu, but that is cute for hideIteration */}
-                        {hideIteration && immersiveReaderEnabled && <ImmersiveReader.ImmersiveReaderButton content={tutorialCardContent} tutorialOptions={options} />}
                         <TutorialHint ref="tutorialhint" parent={this.props.parent} />
                     </div>
                     {this.state.showSeeMore && !tutorialStepExpanded && <sui.Button className="fluid compact lightgrey" icon="chevron down" tabIndex={0} text={lf("More...")} onClick={this.toggleExpanded} onKeyDown={fireClickOnEnter} />}
