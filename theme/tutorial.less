@@ -464,7 +464,6 @@ code.lang-filterblocks {
 .avatar-container {
     left: .7rem;
     height: 100%;
-    position: relative;
 }
 
 .avatar-container .tooltip {
@@ -564,14 +563,12 @@ code.lang-filterblocks {
 
 #tutorialcard .tutorialcard-immersive-reader {
     position: absolute;
-    right: 0.75rem;
-    bottom: 0.75rem;
-    // z-index: (@tutorialLightboxCardZIndex + 1);
+    top: 0.5em;
+    right: 0;
     display: flex;
     justify-content: flex-end;
-    margin-right: -1em;
-    margin-bottom: -1em;
 }
+
 #mainmenu .immersive-reader-button.ui.item,
 #mainmenu .immersive-reader-button.ui.item:focus {
     background-image: @immersiveReaderLightIcon;
@@ -834,8 +831,12 @@ code.lang-filterblocks {
 
     #tutorialcard .ui.button.hintbutton {
         font-size: 12.5px !important;
-        top: 20%;
+        top: 80%;
         --bubble-pulse-size: 16px;
+    }
+
+    #tutorialcard .tutorialcard-immersive-reader {
+        right: .5em;
     }
 
     .tutorial #tutorialcard.hasHint .tutorialmessage {
@@ -859,7 +860,7 @@ code.lang-filterblocks {
 
     // mobile tutorial tooltip positioning
     .avatar-container .tooltip {
-        top: ~'calc(20% + 1.1rem)';
+        top: ~'calc(80% + 1.1rem)';
     }
 
     .avatar-container .tooltip:before {
