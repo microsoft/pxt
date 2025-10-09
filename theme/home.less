@@ -418,9 +418,14 @@
                 background-size: 70%;
                 background-blend-mode: color-burn;
                 font-size: 6.5rem!important;
+
+                &.py {
+                    background-image: @pyIcon;
+                }
+                &.js {
+                    background-image: @jsIcon;
+                }
             }
-            .card-action .xicon.py { background-image: @pyIcon; }
-            .card-action .xicon.js { background-image: @jsIcon; }
 
             /* unset semantic properties */
             .card-action > a:first-child {
