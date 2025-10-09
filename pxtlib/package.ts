@@ -385,20 +385,25 @@ namespace pxt {
             if (!this.config)
                 this.loadConfig();
             return pxt.packagesConfigAsync()
-                .then(packagesConfig => {
+                .then(async packagesConfig => {
                     let numfixes = 0
                     let fixes: pxt.Map<string> = {};
+                    const promises: Promise<void>[] = []
                     U.iterMap(this.config.dependencies, (pkg, ver) => {
-                        if (pxt.github.isGithubId(ver)) {
-                            const upgraded = pxt.github.upgradedPackageReference(packagesConfig, ver)
-                            if (upgraded && upgraded != ver) {
-                                pxt.log(`upgrading dep ${pkg}: ${ver} -> ${upgraded}`);
-                                fixes[ver] = upgraded;
-                                this.config.dependencies[pkg] = upgraded
-                                numfixes++
+                        const doit = async () => {
+                            if (pxt.github.isGithubId(ver)) {
+                                const upgraded = await pxt.github.upgradedPackageReferenceAsync(packagesConfig, ver)
+                                if (upgraded && upgraded != ver) {
+                                    pxt.log(`upgrading dep ${pkg}: ${ver} -> ${upgraded}`);
+                                    fixes[ver] = upgraded;
+                                    this.config.dependencies[pkg] = upgraded
+                                    numfixes++
+                                }
                             }
                         }
+                        promises.push(doit())
                     })
+                    await Promise.all(promises)
                     if (numfixes)
                         this.saveConfig()
                     return numfixes && fixes;
@@ -654,7 +659,7 @@ namespace pxt {
 
             // if we are installing this script, we haven't yet downloaded the config
             // do upgrade later
-            if (this.level == 0 && !isInstall) {
+            if (!isInstall) {
                 await this.upgradePackagesAsync();
             }
 
@@ -672,7 +677,7 @@ namespace pxt {
 
             // we are installing the script, and we've download the original version and we haven't upgraded it yet
             // do upgrade and reload as needed
-            if (this.level == 0 && isInstall) {
+            if (isInstall) {
                 const fixes = await this.upgradePackagesAsync();
 
                 if (fixes) {
@@ -680,6 +685,7 @@ namespace pxt {
                     Object.keys(fixes).forEach(key => pxt.tickEvent("package.doubleload", { "extension": key }))
                     pxt.log(`upgraded, downloading again`);
                     pxt.debug(fixes);
+                    // TODO: we should cache
                     await this.downloadAsync();
                 }
             }
