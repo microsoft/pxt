@@ -160,13 +160,8 @@ namespace pxsim {
                     simx.url = new URL(simx.index, simx.devUrl).toString();
                 } else {
                     const simUrl = this.getSimUrl();
-                    // ERIC: Ensure we preserve upload target path (/app/<sha>---simulator) 
-                    // TOM: we don't need to preserve the upload target path or beta, as the backend
-                    // TOM: does not store the simx assets based off of the target path. They are available at top-level
-                    // TOM: keyed off off the extension name (key below)
-                    const simPath = simUrl.pathname.replace(/\/.*---?.*/, "/");  // TOM: this code is equivalent to const simPath = "/"
                     // Construct the path. The "-" element delineates the extension key from the resource name.
-                    const simxPath = [simPath, "simx", key, "-", simx.index].join("/");
+                    const simxPath = ["simx", key, "-", simx.index].join("/");
                     // Create the fully-qualified URL, preserving the origin by removing all leading slashes
                     simx.url = new URL(simxPath.replace(/^\/+/, ""), simUrl.origin).toString();
                 }
