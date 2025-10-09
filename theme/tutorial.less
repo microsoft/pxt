@@ -473,6 +473,7 @@ code.lang-filterblocks {
     left: auto;
     width: 10rem;
     max-width: 175px;
+    z-index: @tutorialCardZIndex + 1;
 }
 
 .avatar-container .tooltip ,
@@ -544,6 +545,8 @@ code.lang-filterblocks {
 // old tutorial code
 #simulator .editor-sidebar .immersive-reader-button.ui.item,
 #simulator .editor-sidebar .immersive-reader-button.ui.item:focus,
+.tutorialsegment .immersive-reader-button.ui.item,
+.tutorialsegment .immersive-reader-button.ui.item:focus,
 #mainmenu .immersive-reader-button.ui.item,
 #mainmenu .immersive-reader-button.ui.item:focus {
     width: 2rem;
@@ -553,6 +556,19 @@ code.lang-filterblocks {
     background-position: center;
     border-radius: .2em!important;
 }
+.tutorialsegment .immersive-reader-button.ui.item,
+.tutorialsegment .immersive-reader-button.ui.item:focus {
+    background-image: @immersiveReaderIcon;
+}
+
+#tutorialcard .tutorialcard-immersive-reader {
+    position: absolute;
+    top: 0.5em;
+    right: 0;
+    display: flex;
+    justify-content: flex-end;
+}
+
 #mainmenu .immersive-reader-button.ui.item,
 #mainmenu .immersive-reader-button.ui.item:focus {
     background-image: @immersiveReaderLightIcon;
@@ -560,6 +576,12 @@ code.lang-filterblocks {
 #simulator .editor-sidebar .immersive-reader-button.ui.item,
 #simulator .editor-sidebar .immersive-reader-button.ui.item:focus{
     background-image: @immersiveReaderIcon;
+}
+
+.tutorialsegment .immersive-reader-button.ui.item:hover,
+.tutorialsegment .immersive-reader-button.ui.item:focus {
+    background-color: var(--pxt-neutral-alpha20);
+    filter: brightness(0.9);
 }
 
 #mainmenu .immersive-reader-button:focus,
@@ -809,8 +831,12 @@ code.lang-filterblocks {
 
     #tutorialcard .ui.button.hintbutton {
         font-size: 12.5px !important;
-        top: 20%;
+        top: 80%;
         --bubble-pulse-size: 16px;
+    }
+
+    #tutorialcard .tutorialcard-immersive-reader {
+        right: .5em;
     }
 
     .tutorial #tutorialcard.hasHint .tutorialmessage {
@@ -834,7 +860,7 @@ code.lang-filterblocks {
 
     // mobile tutorial tooltip positioning
     .avatar-container .tooltip {
-        top: ~'calc(20% + 1.1rem)';
+        top: ~'calc(80% + 1.1rem)';
     }
 
     .avatar-container .tooltip:before {
