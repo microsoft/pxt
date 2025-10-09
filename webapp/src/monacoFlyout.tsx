@@ -102,6 +102,8 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
 
     protected getBlockDragStartHandler = (block: toolbox.BlockDefinition, snippet: string, color: string) => {
         return (e: any) => {
+            e.preventDefault();
+            e.stopPropagation();
             this.dragInfo = {
                 x: pxt.BrowserUtils.getClientX(e),
                 y: pxt.BrowserUtils.getClientY(e),
