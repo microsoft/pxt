@@ -308,6 +308,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
     function parseGithubRepo(r: pxt.github.GitRepo): ExtensionMeta {
         return {
             name: ghName(r),
+            displayName: r.displayName,
             type: ExtensionType.Github,
             imageUrl: pxt.github.repoIconUrl(r),
             repo: r,

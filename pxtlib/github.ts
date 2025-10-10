@@ -832,6 +832,7 @@ namespace pxt.github {
 
     export interface GitRepo extends ParsedRepo {
         name: string;
+        displayName?: string;
         description: string;
         defaultBranch: string;
         status?: GitRepoStatus;
@@ -1090,6 +1091,7 @@ namespace pxt.github {
                     fileName: rid.fileName,
                     slug: rid.slug,
                     name: rid.fileName ? `${meta.name}-${rid.fileName}` : meta.name,
+                    displayName: meta.displayName,
                     description: meta.description,
                     defaultBranch: meta.defaultBranch || "master",
                     tag: rid.tag,
