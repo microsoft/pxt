@@ -372,11 +372,8 @@
                 .button.approve {
                     width: 100%;
                     color: var(--pxt-neutral-foreground3);
-                    background-color: @orange;
-                    transition-duration: 0s;
-                }
-                &:first-child .button.approve {
                     background-color: var(--pxt-primary-background);
+                    transition-duration: 0s;
                 }
             }
             .card-action-title {
@@ -418,9 +415,14 @@
                 background-size: 70%;
                 background-blend-mode: color-burn;
                 font-size: 6.5rem!important;
+
+                &.py {
+                    background-image: @pyIcon;
+                }
+                &.js {
+                    background-image: @jsIcon;
+                }
             }
-            .card-action .xicon.py { background-image: @pyIcon; }
-            .card-action .xicon.js { background-image: @jsIcon; }
 
             /* unset semantic properties */
             .card-action > a:first-child {
