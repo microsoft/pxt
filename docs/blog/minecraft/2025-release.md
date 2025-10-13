@@ -31,6 +31,17 @@ Here’s an example of a program that will create an automatic umbrella for you!
 
 ![Umbrella example blocks](/static/blog/minecraft/2025-release/umbrella-example.png)
 
+## New Math blocks
+
+There are also 3 new Math blocks available to use in your programs:
+
+* [Constrain](https://minecraft.makecode.com/reference/math/constrain) – allows you to set a valid range for a value between a minimum and maximum number.
+* [Map](https://minecraft.makecode.com/reference/math/map) – converts a value from one range to another.
+* [Math Constants](https://minecraft.makecode.com/reference/math/constant) – including Pi, *e*, and some square root and logarithmic values.
+
+![New math blocks](/static/blog/minecraft/2025-release/new-math-blocks.png)
+
+
 ## Keyboard Controls
 
 Bringing over this accessibility feature from the work we did with the [Micro:bit Foundation](https://microbit.org/) and [Blockly](https://developers.google.com/blockly), we now have **Keyboard Controls** enabled in MakeCode for Minecraft. This allows people who prefer using a keyboard instead of the mouse to navigate around the workspace, and place and move code blocks using keyboard controls.
