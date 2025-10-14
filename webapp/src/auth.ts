@@ -23,16 +23,31 @@ export const LANGUAGE = `${USER_PREF_MODULE}:${FIELD_LANGUAGE}`
 export const READER = `${USER_PREF_MODULE}:${FIELD_READER}`
 export const HAS_USED_CLOUD = "has-used-cloud"; // Key into local storage to see if this computer has logged in before
 
+/**
+ * AIDEV-NOTE:
+ * pxt 레포지토리에서는 기본적으로 데이터에 대해 로컬 상태로 관리하고, 
+ * 이를 클라우드 상태와 동기화하는 구조로 되어있습니다.
+ * 
+ * 코들에서는 항상 로그인 사용자만 사용할 수 있으며, 
+ * 사용자 인가는 쿠키로 관리하기 때문에, 이 로직을 ignore하는 방향으로 수정해야합니다.
+ * 따라서 로그인 상태와 사용자 프로필은 항상 true와 더미 데이터로 반환하도록 수정합니다.
+ */
+const DUMMY_LOGGED_IN = true;
+const DUMMY_USER_PROFILE: pxt.auth.UserProfile = {
+    id: "00000000-0000-0000-0000-000000000000"
+};
+
+
 export class Component<TProps, TState> extends data.Component<TProps, TState> {
     public getUserProfile(): pxt.auth.UserProfile {
-        return { id: "00000000-0000-0000-0000-000000000000" };
+        return DUMMY_USER_PROFILE;
         // return this.getData<pxt.auth.UserProfile>(USER_PROFILE);
     }
     public getUserPreferences(): pxt.auth.UserPreferences {
         return this.getData<pxt.auth.UserPreferences>(USER_PREFERENCES);
     }
     public isLoggedIn(): boolean {
-        return true;
+        return DUMMY_LOGGED_IN;
         // return this.getData<boolean>(LOGGED_IN);
     }
 }
@@ -172,12 +187,12 @@ export function hasIdentity(): boolean {
 }
 
 export function loggedIn(): boolean {
-    return true;
+    return DUMMY_LOGGED_IN;
     // return data.getData<boolean>(LOGGED_IN);
 }
 
 export function userProfile(): pxt.auth.UserProfile {
-    return { id: "00000000-0000-0000-0000-000000000000" };
+    return DUMMY_USER_PROFILE;
     // return data.getData<pxt.auth.UserProfile>(USER_PROFILE);
 }
 
