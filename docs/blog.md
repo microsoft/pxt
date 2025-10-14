@@ -2,7 +2,7 @@
 
 ## [MakeCode Minecraft 2025 Update](/blog/minecraft/2025-release)
 
-October 13, 2025 by [Jaqster](https://github.com/jaqster)
+October 17, 2025 by [Jaqster](https://github.com/jaqster)
 
 The MakeCode fall update for Minecraft Education is here! Here’s a run-down of all the new features and improvements...
 
