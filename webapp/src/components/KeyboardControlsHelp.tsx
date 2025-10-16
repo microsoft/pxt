@@ -33,6 +33,8 @@ const KeyboardControlsHelp = () => {
                     <Row name={lf("Copy / paste")} shortcuts={[ShortcutNames.COPY, ShortcutNames.PASTE]} joiner="/" />
                     {cleanUpRow}
                     {contextMenuRow}
+                    <Row name={lf("Start / stop simulator")} shortcuts={[["S"]]} />
+                    <Row name={lf("Download your code to the {0}", pxt.appTarget.appTheme.boardName)} shortcuts={[["L"]]} />
                 </tbody>
             </table>
             <h3>{lf("Editor Overview")}</h3>

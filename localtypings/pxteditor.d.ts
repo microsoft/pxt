@@ -959,7 +959,7 @@ declare namespace pxt.editor {
         saveAndCompile(): void;
         updateHeaderName(name: string): void;
         updateHeaderNameAsync(name: string): Promise<void>;
-        compile(): void;
+        compile(): Promise<void>;
 
         setFile(fn: IFile, line?: number): void;
         setSideFile(fn: IFile, line?: number): void;
@@ -986,6 +986,7 @@ declare namespace pxt.editor {
         clearUserPoke(): void;
         setHintSeen(step: number): void;
         setEditorOffset(): void;
+        ariaAnnounce(msg: string): void;
 
         anonymousPublishHeaderByIdAsync(headerId: string, projectName?: string): Promise<ShareData>;
         publishCurrentHeaderAsync(persistent: boolean, screenshotUri?: string): Promise<string>;
@@ -1099,6 +1100,7 @@ declare namespace pxt.editor {
         showBoardDialogAsync(features?: string[], closeIcon?: boolean): Promise<void>;
         checkForHwVariant(): boolean;
         pairAsync(): Promise<boolean>;
+        shouldShowPairingDialogOnDownload(): boolean;
 
         createModalClasses(classes?: string): string;
         showModalDialogAsync(options: ModalDialogOptions): Promise<void>;

@@ -3345,6 +3345,13 @@ export class ProjectView
         return cmds.pairAsync();
     }
 
+    shouldShowPairingDialogOnDownload = () => {
+        return pxt.appTarget.appTheme.preferWebUSBDownload
+            && pxt.appTarget?.compile?.webUSB
+            && pxt.usb.isEnabled
+            && !webusb.userPrefersDownloadFlagSet();
+    }
+
     ///////////////////////////////////////////////////////////
     ////////////             Compile              /////////////
     ///////////////////////////////////////////////////////////
@@ -5263,6 +5270,13 @@ export class ProjectView
         });
 
         setTimeout(() => this.clearUserPoke(), 10000);
+    }
+
+    ariaAnnounce(msg: string) {
+        const el = document.getElementById("aria-announce");
+        if (el) {
+            el.textContent = msg;
+        }
     }
 
     ///////////////////////////////////////////////////////////

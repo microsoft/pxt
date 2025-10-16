@@ -4,6 +4,7 @@ import * as Blockly from "blockly";
 import * as pkg from "./package";
 import * as data from "./data";
 import * as auth from "./auth";
+import * as cmds from "./cmds"
 import * as core from "./core";
 import * as toolboxeditor from "./toolboxeditor"
 import * as compiler from "./compiler"
@@ -693,6 +694,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             });
 
             const cleanUpWorkspace = Blockly.ShortcutRegistry.registry.getRegistry()["clean_up_workspace"];
+            console.log(cleanUpWorkspace)
             Blockly.ShortcutRegistry.registry.unregister(cleanUpWorkspace.name);
             Blockly.ShortcutRegistry.registry.register({
                 ...cleanUpWorkspace,
@@ -715,7 +717,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 }
             });
 
-
             const startMoveContextMenuEntry = Blockly.ContextMenuRegistry.registry.getItem("move");
             Blockly.ContextMenuRegistry.registry.unregister(startMoveContextMenuEntry.id);
             Blockly.ContextMenuRegistry.registry.register({
@@ -726,6 +727,35 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     return startMoveContextMenuEntry.callback!(scope, menuOpenEvent, menuSelectEvent, location);
                 }
             } as Blockly.ContextMenuRegistry.RegistryItem);
+
+            Blockly.ShortcutRegistry.registry.register({
+                name: "toggle_simulator",
+                keyCodes: [Blockly.ShortcutRegistry.registry.createSerializedKey(Blockly.utils.KeyCodes.S, null)],
+                callback: () => {
+                    this.parent.startStopSimulator({clickTrigger: true});
+                    return true
+                }
+            });
+
+            Blockly.ShortcutRegistry.registry.register({
+                name: "download",
+                keyCodes: [Blockly.ShortcutRegistry.registry.createSerializedKey(Blockly.utils.KeyCodes.L, null)],
+                callback: () => {
+                    if (pxt.commands.onDownloadButtonClick) {
+                        pxt.commands.onDownloadButtonClick();
+                    } else {
+                        if (this.parent.shouldShowPairingDialogOnDownload()
+                            && !pxt.packetio.isConnected()
+                            && !pxt.packetio.isConnecting()
+                        ) {
+                            cmds.pairAsync(true).then(() => this.parent.compile().then(() => this.parent.ariaAnnounce(lf("Downloaded"))));
+                        } else {
+                            this.parent.compile().then(() => this.parent.ariaAnnounce(lf("Downloaded")));
+                        }
+                    }
+                    return true
+                }
+            });
 
             // This must come after plugin initialization to override context menu
             // precondition functions set by the keyboard navigation plugin.
