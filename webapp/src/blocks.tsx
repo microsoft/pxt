@@ -775,6 +775,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     private markIncomplete = false;
     isIncomplete() {
+        // first check to see if we're still in the process of loading a file
+        if (!this.typeScriptSaveable) return true;
+
         const incomplete = this.editor?.isDragging();
         if (incomplete) this.markIncomplete = true;
         return incomplete;
@@ -932,8 +935,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         // This must come after initCopyPaste and initContextMenu.
         // initCopyPaste overrides the default cut, copy, paste shortcuts.
         // The keyboard navigation plugin utilizes these cut, copy and paste shortcuts
-        // and wraps them with additional behaviours (e.g., toast notifications). 
-        // initContextMenu overrides the default context menu options. The plugin 
+        // and wraps them with additional behaviours (e.g., toast notifications).
+        // initContextMenu overrides the default context menu options. The plugin
         // decorates the duplicate block context menu item to display the shortcut.
         if (accessibleBlocksEnabled) {
             this.initAccessibleBlocks();
@@ -1486,6 +1489,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     loadFileAsync(file: pkg.File): Promise<void> {
         Util.assert(!this.delayLoadXml);
         const init = this.loadingXmlPromise || Promise.resolve();
+
+        this.typeScriptSaveable = false;
 
         return init
             .then(() => this.loadBlocklyAsync())
