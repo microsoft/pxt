@@ -567,6 +567,19 @@ namespace pxt {
             }
 
             const currentConfig = JSON.stringify(this.config);
+
+            if (this.config?.files) {
+                // clean up the files list. we had some issues in the past with
+                // invalid entries being added to pxt.json
+                this.config.files = this.config.files.filter(f =>
+                    f !== pxt.HISTORY_FILE &&
+                    f !== pxt.CONFIG_NAME &&
+                    f !== "undefined" &&
+                    f !== "null" &&
+                    !!f
+                );
+            }
+
             for (const dep in this.config.dependencies) {
                 const value = pxt.patching.upgradePackageReference(this.targetVersion(), dep, this.config.dependencies[dep]);
                 if (value != dep) {
@@ -1332,6 +1345,8 @@ namespace pxt {
                     cfg.dependencies[k] = v
                 }
             })
+
+            cfg.files = cfg.files.filter(fn => fn !== HISTORY_FILE);
             return cfg;
         }
 
@@ -1345,7 +1360,7 @@ namespace pxt {
                     files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
                     for (let f of this.getFiles()) {
                         // already stored
-                        if (f == pxt.CONFIG_NAME) continue;
+                        if (f === pxt.CONFIG_NAME || f === HISTORY_FILE) continue;
                         let str = this.readFile(f)
                         if (str == null)
                             U.userError("referenced file missing: " + f)
