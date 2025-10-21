@@ -201,6 +201,7 @@ export class FieldSlider extends Blockly.FieldNumber {
 
         if (!quietInput) {
             this.htmlInput_.focus();
+            this.htmlInput_.select();
         }
     }
 
