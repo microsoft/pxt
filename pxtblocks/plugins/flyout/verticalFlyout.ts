@@ -1,7 +1,5 @@
 import * as Blockly from "blockly";
 
-const MAX_CACHED_FLYOUTS = 20;
-
 export class VerticalFlyout implements Blockly.IFlyout {
     horizontalLayout = false;
     RTL: boolean;
@@ -141,10 +139,6 @@ export class VerticalFlyout implements Blockly.IFlyout {
 
         this.activeFlyout = new CachedFlyout(this.options);
         this.cached.push(this.activeFlyout);
-
-        if (this.cached.length >= MAX_CACHED_FLYOUTS) {
-            this.cached.shift().dispose();
-        }
 
         this.element.appendChild(this.activeFlyout.createDom("g"));
         this.activeFlyout.init(this.targetWorkspace);
