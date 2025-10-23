@@ -504,6 +504,24 @@ namespace ts.pxtc {
                 blocks.push(ex)
             }
 
+            function copyOverHelp(param: "blockCombineGetHelp" | "blockCombineSetHelp" | "blockCombineChangeHelp" | "help") {
+                if (s.attributes[param]) {
+                    if (ex.attributes[param]) {
+                        if (ex.attributes[param] !== s.attributes[param]) {
+                            console.warn(`Ignoring duplicate ${param} for get/set/change block: ${s.attributes[param]}`);
+                        }
+                    }
+                    else {
+                        ex.attributes[param] = s.attributes[param];
+                    }
+                }
+            }
+
+            copyOverHelp("blockCombineChangeHelp");
+            copyOverHelp("blockCombineGetHelp");
+            copyOverHelp("blockCombineSetHelp");
+            copyOverHelp("help");
+
             ex.combinedProperties.push(s.qName)
         }
 
