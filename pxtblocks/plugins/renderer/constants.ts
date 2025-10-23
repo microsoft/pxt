@@ -118,7 +118,25 @@ export class ConstantProvider extends Blockly.zelos.ConstantProvider {
             // Flyout heading.
             selector + ' .blocklyFlyoutHeading .blocklyFlyoutLabelText {' +
             'font-size: 1.5rem;',
-            '}'
+            '}',
+
+            // The rules below are all to work around a chrome bug where the browser isn't respecting
+            // the user-select: none css style on blockly SVG text: https://github.com/microsoft/pxt-arcade/issues/6838
+            `${selector} .blocklyText::selection {`,
+            `fill: #fff;`,
+            `}`,
+            `${selector} .blocklyNonEditableField>text::selection,`,
+            `${selector} .blocklyEditableField>text::selection,`,
+            `${selector} .blocklyNonEditableField>g>text::selection,`,
+            `${selector} .blocklyEditableField>g>text::selection {`,
+            `fill: #575E75;`,
+            `}`,
+
+            // Dropdown field.
+            `${selector} .blocklyDropdownText::selection {`,
+            `fill: #fff !important;`,
+            `}`,
+
         ])
     }
 
