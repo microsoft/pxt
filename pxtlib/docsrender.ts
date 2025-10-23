@@ -8,7 +8,13 @@ namespace pxt.docs {
     declare var require: any;
     import U = pxtc.Util;
 
-    let markedInstance: typeof marked;
+    type MarkedModule = typeof import("marked");
+    type MarkedRenderer = InstanceType<MarkedModule["Renderer"]>;
+    type MarkedOptions = Parameters<MarkedModule["setOptions"]>[0];
+    // Provided by the UMD build when running in the browser; undefined in Node environments
+    declare const marked: MarkedModule | undefined;
+
+    let markedInstance: MarkedModule | undefined;
 
     let stdboxes: Map<string> = {
     }
@@ -87,10 +93,10 @@ namespace pxt.docs {
         href: string;
     }
 
-    export let requireMarked = () => {
+    export let requireMarked = (): MarkedModule | undefined => {
         if (typeof marked !== "undefined") return marked;
         if (typeof require === "undefined") return undefined;
-        return require("marked") as typeof marked;
+        return require("marked") as MarkedModule;
     }
 
     export let requireDOMSanitizer = () => {
@@ -417,20 +423,18 @@ namespace pxt.docs {
         TOC?: TOCMenuEntry[]; // TOC parsed here
     }
 
-    export function setupRenderer(renderer: marked.Renderer) {
-        renderer.image = function (href: string, title: string, text: string) {
-            const endpointName="makecodeprodmediaeastus-usea";
-            if (href.startsWith("youtube:")) {
-                let out = '<div class="tutorial-video-embed"><iframe class="yt-embed" src="https://www.youtube.com/embed/' + href.split(":").pop()
-                    + '" title="' + text + '" frameborder="0" ' + 'allowFullScreen ' + 'allow="autoplay; picture-in-picture"></iframe></div>';
-                return out;
-
-            } else if (href.startsWith("azuremedia:")) {
-
-                let videoID = href.split(":")[1];
+    export function setupRenderer(renderer: MarkedRenderer) {
+        renderer.image = function (href: string | null, title: string | null, text: string) {
+            const endpointName = "makecodeprodmediaeastus-usea";
+            const source = href || "";
+            if (source.startsWith("youtube:")) {
+                const videoId = source.split(":").pop() || "";
+                return `<div class="tutorial-video-embed"><iframe class="yt-embed" src="https://www.youtube.com/embed/${videoId}" title="${text}" frameborder="0" allowfullscreen allow="autoplay; picture-in-picture"></iframe></div>`;
+            } else if (source.startsWith("azuremedia:")) {
+                let videoID = source.split(":")[1] || "";
                 const flagsSplit = videoID.split("?");
-                let startTime: string;
-                let endTime: string;
+                let startTime: string | undefined;
+                let endTime: string | undefined;
 
                 if (flagsSplit[1]) {
                     videoID = flagsSplit[0];
@@ -438,7 +442,8 @@ namespace pxt.docs {
                     startTime = /start(?:time)?=(\d+)/i.exec(passedParameters)?.[1];
                     endTime = /end(?:time)?=(\d+)/i.exec(passedParameters)?.[1];
                 }
-                const url = new URL(`https://${endpointName}.streaming.media.azure.net/${videoID}/manifest(format=mpd-time-csf).mpd`)
+
+                const url = new URL(`https://${endpointName}.streaming.media.azure.net/${videoID}/manifest(format=mpd-time-csf).mpd`);
                 if (startTime) {
                     url.hash = `t=${startTime}`;
                     url.searchParams.append("startTime", startTime);
@@ -446,42 +451,50 @@ namespace pxt.docs {
                 if (endTime) {
                     url.searchParams.append("endTime", endTime);
                 }
-                let out = `<div class="tutorial-video-embed"><video class="ams-embed" controls src="${url.toString()}" /></div>`;
-                return out;
-
+                return `<div class="tutorial-video-embed"><video class="ams-embed" controls src="${url.toString()}" /></div>`;
             } else {
-                let out = '<img class="ui image" src="' + href + '" alt="' + text + '"';
+                let out = `<img class="ui image" src="${source}" alt="${text}"`;
                 if (title) {
-                    out += ' title="' + title + '"';
+                    out += ` title="${title}"`;
                 }
                 out += ' loading="lazy"';
-                out += (this as any).options.xhtml ? '/>' : '>';
+                const isXhtml = (this as unknown as { options?: { xhtml?: boolean } }).options?.xhtml;
+                out += isXhtml ? '/>' : '>';
                 return out;
             }
-
-        }
+        };
         renderer.listitem = function (text: string): string {
+            const args = arguments as IArguments;
+            const task = args.length > 1 ? !!args[1] : false;
+            const checked = args.length > 2 ? !!args[2] : false;
+            if (task) {
+                return `<li class="${checked ? 'checked' : 'unchecked'}">${text}</li>\n`;
+            }
             const m = /^\s*\[( |x)\]/i.exec(text);
-            if (m) return `<li class="${m[1] == ' ' ? 'unchecked' : 'checked'}">` + text.slice(m[0].length) + '</li>\n'
+            if (m) return `<li class="${m[1] == ' ' ? 'unchecked' : 'checked'}">` + text.slice(m[0].length) + '</li>\n';
             return '<li>' + text + '</li>\n';
         }
-        renderer.heading = function (text: string, level: number, raw: string) {
-            let m = /(.*)#([\w\-]+)\s*$/.exec(text)
-            let id = ""
+        renderer.heading = function (text: string, level: number, raw: string, _slugger?: unknown) {
+            let displayText = text || "";
+            const rawText = raw || displayText;
+            let id = "";
+            let m = /(.*)#([\w\-]+)\s*$/.exec(rawText);
             if (m) {
-                text = m[1]
-                id = m[2]
+                displayText = m[1];
+                id = m[2];
             }
             // remove tutorial macros
-            if (text)
-                text = text.replace(/@(fullscreen|unplugged|showdialog|showhint)/gi, '');
+            if (displayText)
+                displayText = displayText.replace(/@(fullscreen|unplugged|showdialog|showhint)/gi, '');
             // remove brackets for hiding step title
-            if (text.match(/\{([\s\S]+)\}/))
-                text = text.match(/\{([\s\S]+)\}/)[1].trim()
+            const hiddenHeadingMatch = displayText.match(/\{([\s\S]+)\}/);
+            if (hiddenHeadingMatch)
+                displayText = hiddenHeadingMatch[1].trim();
             if (id === "") {
-                id = text.toLowerCase().replace(/[^\w]+/g, '-')
+                id = displayText.toLowerCase().replace(/[^\w]+/g, '-');
             }
-            return `<h${level} id="${(this as any).options.headerPrefix}${id}">${text}</h${level}>`
+            const headerPrefix = (this as unknown as { options?: { headerPrefix?: string } }).options?.headerPrefix || "";
+            return `<h${level} id="${headerPrefix}${id}">${displayText}</h${level}>`;
         }
     }
 
@@ -554,31 +567,39 @@ namespace pxt.docs {
         if (!markedInstance) {
             markedInstance = requireMarked();
         }
+        if (!markedInstance) {
+            throw new Error("marked module not available");
+        }
 
         // We have to re-create the renderer every time to avoid the link() function's closure capturing the opts
-        let renderer = new markedInstance.Renderer()
+        const renderer: MarkedRenderer = new markedInstance.Renderer();
         setupRenderer(renderer);
-        const linkRenderer = renderer.link;
-        renderer.link = function (href: string, title: string, text: string) {
-            const relative = new RegExp('^[/#]').test(href);
-            const target = !relative ? '_blank' : '';
-            if (relative && d.versionPath) href = `/${d.versionPath}${href}`;
-            const html = linkRenderer.call(renderer, href, title, text);
-            return html.replace(/^<a /, `<a ${target ? `target="${target}"` : ''} rel="nofollow noopener" `);
+        const defaultLinkRenderer = renderer.link ? renderer.link.bind(renderer) : undefined;
+        const enhancedLink = function (href: string, title: string, text: string): string {
+            let resolvedHref = href || "";
+            const isRelative = /^[/#]/.test(resolvedHref);
+            if (isRelative && resolvedHref && d.versionPath) {
+                resolvedHref = `/${d.versionPath}${resolvedHref}`;
+            }
+            const html = defaultLinkRenderer
+                ? defaultLinkRenderer(resolvedHref, title, text)
+                : `<a href="${resolvedHref}">${text}</a>`;
+            const attrs = `${!isRelative && resolvedHref ? `target="_blank" ` : ""}rel="nofollow noopener"`;
+            return html.replace(/^<a\s+/i, `<a ${attrs} `);
         };
+        renderer.link = enhancedLink as MarkedRenderer["link"];
 
-        let sanitizer = requireDOMSanitizer();
-        markedInstance.setOptions({
-            renderer: renderer,
+        const sanitizer = requireDOMSanitizer();
+        const baseOptions: MarkedOptions = {
+            renderer,
             gfm: true,
             tables: true,
             breaks: false,
             pedantic: false,
-            sanitize: true,
-            sanitizer: sanitizer,
             smartLists: true,
             smartypants: true
-        });
+        };
+        markedInstance.setOptions(baseOptions);
 
         let markdown = opts.markdown
 
@@ -611,7 +632,10 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
             return macro || 'unknown macro'
         });
 
-        let html = markedInstance(markdown)
+        let html = markedInstance.parse(markdown);
+        if (sanitizer) {
+            html = sanitizer(html);
+        }
 
         // support for breaks which somehow don't work out of the box
         html = html.replace(/&lt;br\s*\/&gt;/ig, "<br/>");
@@ -916,16 +940,14 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
         if (!summaryMD)
             return null
 
-        const markedInstance = pxt.docs.requireMarked();
-        const sanitizer = requireDOMSanitizer();
-        const options = {
-            renderer: new markedInstance.Renderer(),
+        const markedModule = pxt.docs.requireMarked();
+        if (!markedModule) return null;
+        const options: MarkedOptions = {
+            renderer: new markedModule.Renderer(),
             gfm: true,
             tables: false,
             breaks: false,
             pedantic: false,
-            sanitize: true,
-            sanitizer: sanitizer,
             smartLists: false,
             smartypants: false
         };
@@ -934,7 +956,7 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
         let currentStack: pxt.TOCMenuEntry[] = [];
         currentStack.push(dummy);
 
-        let tokens = markedInstance.lexer(summaryMD, options);
+        let tokens = markedModule.lexer(summaryMD, options);
         let wasListStart = false
         tokens.forEach((token: any) => {
             switch (token.type) {

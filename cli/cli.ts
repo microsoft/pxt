@@ -2169,6 +2169,7 @@ async function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
     // Run postcss with autoprefixer and rtlcss
     pxt.debug("running postcss");
     const postcss = require('postcss');
+    const autoprefixer = require('autoprefixer');
     const browserList = [
         "Chrome >= 38",
         "Firefox >= 31",
@@ -2181,10 +2182,7 @@ async function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
         "FirefoxAndroid >= 55"
     ];
 
-    const cssnano = require("cssnano")({
-        zindex: false,
-        autoprefixer: { browsers: browserList, add: true }
-    });
+    const cssnano = require("cssnano");
 
     const rtlcss = require("rtlcss");
     const files = [
@@ -2200,8 +2198,10 @@ async function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
 
     for (const cssFile of files) {
         const css = await readFileAsync(`built/web/${cssFile}`, "utf8");
-        const processed = await postcss([cssnano])
-            .process(css, { from: `built/web/${cssFile}`, to: `built/web/${cssFile}` });
+        const processed = await postcss([
+            autoprefixer({ overrideBrowserslist: browserList }),
+            cssnano({ preset: ["default", { zindex: false }] })
+        ]).process(css, { from: `built/web/${cssFile}`, to: `built/web/${cssFile}` });
 
         await writeFileAsync(`built/web/${cssFile}`, processed.css);
 
