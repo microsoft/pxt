@@ -1,13 +1,12 @@
 import * as child_process from 'child_process';
 import * as fs from 'fs';
 import * as zlib from 'zlib';
-import * as url from 'url';
-import * as http from 'http';
-import * as https from 'https';
 import * as events from 'events';
 import * as crypto from 'crypto';
 import * as path from 'path';
 import * as os from 'os';
+
+import axios, { AxiosRequestConfig, Method } from 'axios';
 
 import Util = pxt.Util;
 
@@ -57,7 +56,7 @@ export function readResAsync(g: events.EventEmitter) {
 
         g.on("error", (err: any) => reject(err))
 
-        g.on('end', () => resolve(Buffer.concat(bufs)))
+        g.on('end', () => resolve(Buffer.concat(bufs as unknown as Uint8Array[])))
     })
 }
 
@@ -92,7 +91,7 @@ export function spawnWithPipeAsync(opts: SpawnOptions) {
         ch.on('close', (code: number) => {
             if (code != 0 && !opts.allowNonZeroExit)
                 reject(new Error("Exit code: " + code + " from " + info))
-            resolve(Buffer.concat(bufs))
+            resolve(Buffer.concat(bufs as unknown as Uint8Array[]))
         });
         if (opts.input != null)
             ch.stdin.end(opts.input, "utf8")
@@ -396,81 +395,98 @@ export function timestamp(date = new Date()): string {
     return `${yyyy}${mm}${dd}-${hh}${min}${sec}`;
 }
 
-function nodeHttpRequestAsync(options: Util.HttpRequestOptions): Promise<Util.HttpResponse> {
-    let isHttps = false
+async function nodeHttpRequestAsync(options: Util.HttpRequestOptions): Promise<Util.HttpResponse> {
+    const headers: pxt.Map<string> = Util.clone(options.headers) || {};
+    const data = options.data;
+    const method = (options.method || (data == null ? "GET" : "POST")) as Method;
 
-    let u = <http.RequestOptions><any>url.parse(options.url)
-
-    if (u.protocol == "https:") isHttps = true
-    else if (u.protocol == "http:") isHttps = false
-    else return Promise.reject("bad protocol: " + u.protocol)
-
-    u.headers = Util.clone(options.headers) || {}
-    let data = options.data
-    u.method = options.method || (data == null ? "GET" : "POST");
-
-    let buf: Buffer = null;
-
-    u.headers["accept-encoding"] = "gzip"
-    u.headers["user-agent"] = "PXT-CLI"
-
-    let gzipContent = false
+    let body: Buffer = undefined;
+    let gzipContent = false;
 
     if (data != null) {
         if (Buffer.isBuffer(data)) {
-            buf = data;
-        } else if (typeof data == "object") {
-            buf = Buffer.from(JSON.stringify(data), "utf8")
-            u.headers["content-type"] = "application/json; charset=utf8"
-            if (options.allowGzipPost) gzipContent = true
-        } else if (typeof data == "string") {
-            buf = Buffer.from(data, "utf8")
-            if (options.allowGzipPost) gzipContent = true
+            body = data;
+        } else if (data instanceof Uint8Array) {
+            body = Buffer.from(data);
+        } else if (typeof data === "object") {
+            body = Buffer.from(JSON.stringify(data), "utf8");
+            headers["content-type"] = "application/json; charset=utf8";
+            if (options.allowGzipPost) gzipContent = true;
+        } else if (typeof data === "string") {
+            body = Buffer.from(data, "utf8");
+            if (options.allowGzipPost) gzipContent = true;
         } else {
-            Util.oops("bad data")
+            Util.oops("bad data");
         }
     }
 
-    if (gzipContent) {
-        buf = zlib.gzipSync(buf)
-        u.headers['content-encoding'] = "gzip"
+    if (gzipContent && body) {
+        body = zlib.gzipSync(body);
+        headers["content-encoding"] = "gzip";
     }
 
-    if (buf)
-        u.headers['content-length'] = buf.length
+    if (body)
+        headers["content-length"] = body.length.toString();
 
-    return new Promise<Util.HttpResponse>((resolve, reject) => {
-        const handleResponse = (res: http.IncomingMessage) => {
-            let g: events.EventEmitter = res;
-            if (/gzip/.test(res.headers['content-encoding'])) {
-                let tmp = zlib.createUnzip();
-                res.pipe(tmp);
-                g = tmp;
+    headers["accept-encoding"] = "gzip";
+    headers["user-agent"] = "PXT-CLI";
+
+    const config: AxiosRequestConfig = {
+        url: options.url,
+        method,
+        headers,
+        data: body,
+        responseType: "arraybuffer",
+        validateStatus: () => true,
+        withCredentials: options.withCredentials
+    };
+
+    const response = await axios(config);
+
+    const rawData = response.data;
+    const buffer = Buffer.isBuffer(rawData) ? rawData : Buffer.from(rawData);
+
+    let text: string = null;
+    let json: any = null;
+    if (!options.responseArrayBuffer) {
+        text = buffer.toString("utf8");
+        json = Util.jsonTryParse(text);
+        if (json === undefined)
+            json = null;
+    }
+
+    const rawHeaders: any = response.headers;
+    const headerSource = rawHeaders && typeof rawHeaders.toJSON === "function" ? rawHeaders.toJSON() : rawHeaders;
+    const normalizedHeaders: pxt.Map<string | string[]> = {};
+    if (headerSource) {
+        Object.keys(headerSource).forEach(key => {
+            const lowerKey = key.toLowerCase();
+            const value = headerSource[key];
+            if (Array.isArray(value)) {
+                const arr = value
+                    .filter(v => v != null)
+                    .map(v => v.toString());
+                if (arr.length)
+                    normalizedHeaders[lowerKey] = arr;
+            } else if (value === undefined || value === null) {
+                return;
+            } else if (typeof value === "string") {
+                normalizedHeaders[lowerKey] = value;
+            } else {
+                normalizedHeaders[lowerKey] = value.toString();
             }
+        });
+    }
 
-            resolve(readResAsync(g).then(buf => {
-                let text: string = null
-                let json: any = null
-                try {
-                    text = buf.toString("utf8")
-                    json = JSON.parse(text)
-                } catch (e) {
-                }
-                let resp: Util.HttpResponse = {
-                    statusCode: res.statusCode,
-                    headers: res.headers,
-                    buffer: buf,
-                    text: text,
-                    json: json,
-                }
-                return resp;
-            }))
-        };
+    const httpResponse: Util.HttpResponse = {
+        statusCode: response.status,
+        headers: normalizedHeaders,
+        buffer,
+        text,
+        json
+    };
 
-        const req = isHttps ? https.request(u, handleResponse) : http.request(u, handleResponse);
-        req.on('error', (err: any) => reject(err))
-        req.end(buf)
-    })
+    return httpResponse;
 }
 
 function sha256(hashData: string): string {
