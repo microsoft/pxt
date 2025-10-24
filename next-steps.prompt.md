@@ -16,15 +16,17 @@
 - Updated `cli/cli.ts` CSS build to run `postcss([autoprefixer, cssnano])` with the new API.
 - Upgraded build tooling to `gulp` 5.0.1 (`gulp-cli` 3.1.0, `gulp-replace` 1.1.4) to reduce deprecated transitive dependencies.
 - Retired `uglifyify` (and the patch script), relying on the Terser post-build pass for production minification while keeping Blockly assets excluded.
+- Added an npm override to pin `sha.js` to 2.4.12 (patches GHSA-95m3-7q98-8xr5 in the browserify crypto chain).
+- Added overrides for `cipher-base` 1.0.7, `pbkdf2` 3.1.5, `elliptic` 6.6.1, and `tar-fs` 3.1.1 to clear the remaining crypto-related advisories.
 - Ran `npm install` (lockfile managed externally) and `npm run lint` successfully.
-- Latest audit snapshot (post-uglifyify removal): 13 vulnerabilities remain (5 low / 4 high / 4 critical), concentrated in legacy browserify/minifier chain and transitive peer gaps.
+- Latest audit snapshot: 8 vulnerabilities remain (5 low / 3 high), focused on legacy `gulp-header` / `lodash.template`, `socket.io`'s `cookie`, `cross-spawn`, `tmp`, and `brace-expansion`.
 
 ## Outstanding Issues
 1. **Build chain validation**
    - Re-run representative gulp tasks (`gulp lint`, `gulp build`, targeted watch flows) to confirm there are no regressions after the v5 migration.
    - Track any lingering advisories from gulp plugins (e.g., `gulp-header`) and evaluate maintained alternatives if they surface.
 2. **Residual transitive advisories**
-   - Post-migration audit: rerun `npm audit --json` to confirm only unavoidable issues remain. Document rationale for any accepted risk.
+   - Post-migration audit: rerun `npm audit --json` to confirm only unavoidable issues remain. Open items: evaluate mitigation paths for `cookie` (via `socket.io`), `gulp-header` / `lodash.template`, `cross-spawn`, `tmp`, and `brace-expansion` once upstream fixes are released or safer alternatives are identified.
 3. **Documentation & tests**
    - After refactors, rerun the full validation suite (`npm run lint`, targeted gulp tasks, key unit tests) to ensure the build remains stable.
 4. **Browserify minification validation**
