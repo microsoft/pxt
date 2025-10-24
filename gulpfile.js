@@ -319,7 +319,7 @@ function runUglify() {
         console.log("Minifying built/web...")
 
         const terser = require("terser");
-        const files = ju.expand("built/web", ".js");
+        const files = ju.expand("built/web", ".js").filter(fn => !/node_modules[\\/]+@blockly[\\/]/i.test(fn));
 
         return Promise.all(files.map(fn => {
             console.log(`Minifying ${fn}`)
@@ -400,7 +400,7 @@ const copySemanticFonts = () => gulp.src("node_modules/semantic-ui-less/themes/d
     .pipe(gulp.dest("built/web/fonts"))
 
 const execBrowserify = (entryPoint, outfile) => process.env.PXT_ENV == 'production' ?
-    exec(`node node_modules/browserify/bin/cmd ${entryPoint} -g [ envify --NODE_ENV production ] -g [ uglifyify --ignore '**/node_modules/@blockly/**' ] -o ${outfile}`) :
+    exec(`node node_modules/browserify/bin/cmd ${entryPoint} -g [ envify --NODE_ENV production ] -o ${outfile}`) :
     exec(`node node_modules/browserify/bin/cmd ${entryPoint} -o ${outfile} --debug`);
 
 const browserifyWebapp = () => execBrowserify("./built/webapp/src/app.js", "./built/web/main.js");

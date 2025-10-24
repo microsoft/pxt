@@ -8,13 +8,110 @@ namespace pxt.docs {
     declare var require: any;
     import U = pxtc.Util;
 
-    type MarkedModule = typeof import("marked");
-    type MarkedRenderer = InstanceType<MarkedModule["Renderer"]>;
-    type MarkedOptions = Parameters<MarkedModule["setOptions"]>[0];
+    type RendererFunction = (...args: unknown[]) => string;
+
+    type MarkedRenderer = Record<string, unknown>;
+
+    interface MarkedModule {
+        Renderer: new () => MarkedRenderer;
+        setOptions(options: MarkedOptions): void;
+        parse(src: string, options?: MarkedOptions): string;
+        lexer(src: string, options?: MarkedOptions): any[];
+    }
+
+    type MarkedOptions = Record<string, unknown> & { renderer?: MarkedRenderer };
     // Provided by the UMD build when running in the browser; undefined in Node environments
     declare const marked: MarkedModule | undefined;
 
     let markedInstance: MarkedModule | undefined;
+
+    function isRecord(value: unknown): value is Record<string, unknown> {
+        return typeof value === "object" && value !== null;
+    }
+
+    function getRendererFunction(renderer: MarkedRenderer, key: string): RendererFunction | undefined {
+        const candidate = (renderer as Record<string, unknown>)[key];
+        return typeof candidate === "function" ? candidate as RendererFunction : undefined;
+    }
+
+    function setRendererFunction(renderer: MarkedRenderer, key: string, handler: RendererFunction): void {
+        (renderer as Record<string, unknown>)[key] = handler;
+    }
+
+    function normalizeLinkArgs(args: ArrayLike<unknown>): { href: string; title: string | null; text: string } {
+        const first = args[0];
+        if (isRecord(first) && "href" in first) {
+            const token = first as Record<string, unknown>;
+            const hrefValue = token["href"];
+            const titleValue = token["title"];
+            const textValue = token["text"];
+            let text = typeof textValue === "string" ? textValue : "";
+            if (!text && "tokens" in token && Array.isArray(token["tokens"])) {
+                const tokensArray = token["tokens"] as unknown[];
+                text = tokensArray.map(tok => {
+                    if (isRecord(tok)) {
+                        const raw = tok["raw"];
+                        const nestedText = tok["text"];
+                        if (typeof nestedText === "string") return nestedText;
+                        if (typeof raw === "string") return raw;
+                    }
+                    return "";
+                }).join("");
+            }
+            if (!text && args.length > 2 && typeof args[2] === "string") {
+                text = args[2] as string;
+            }
+            return {
+                href: typeof hrefValue === "string" ? hrefValue : "",
+                title: typeof titleValue === "string" ? titleValue : titleValue == null ? null : String(titleValue),
+                text
+            };
+        }
+        const href = typeof first === "string" ? first : "";
+        const rawTitle = args.length > 1 ? args[1] : undefined;
+        let title: string | null = null;
+        if (typeof rawTitle === "string") title = rawTitle;
+        else if (rawTitle == null) title = null;
+        const text = typeof args[2] === "string" ? args[2] as string : "";
+        return { href, title, text };
+    }
+
+    function normalizeListItemArgs(args: ArrayLike<unknown>): { text: string; task: boolean; checked: boolean } {
+        const first = args[0];
+        if (isRecord(first) && ("text" in first || "task" in first)) {
+            const token = first as Record<string, unknown>;
+            return {
+                text: typeof token["text"] === "string" ? token["text"] as string : "",
+                task: !!token["task"],
+                checked: !!token["checked"]
+            };
+        }
+        return {
+            text: typeof args[0] === "string" ? args[0] as string : "",
+            task: !!args[1],
+            checked: !!args[2]
+        };
+    }
+
+    function normalizeHeadingArgs(args: ArrayLike<unknown>): { text: string; level: number; raw: string } {
+        const first = args[0];
+        if (isRecord(first) && "depth" in first) {
+            const token = first as Record<string, unknown>;
+            const textValue = token["text"];
+            const rawValue = token["raw"];
+            const depthValue = token["depth"];
+            const text = typeof textValue === "string" ? textValue : "";
+            return {
+                text,
+                level: typeof depthValue === "number" ? depthValue : 0,
+                raw: typeof rawValue === "string" ? rawValue : text
+            };
+        }
+        const text = typeof args[0] === "string" ? args[0] as string : "";
+        const level = typeof args[1] === "number" ? args[1] as number : 0;
+        const raw = typeof args[2] === "string" ? args[2] as string : text;
+        return { text, level, raw };
+    }
 
     let stdboxes: Map<string> = {
     }
@@ -56,7 +153,7 @@ namespace pxt.docs {
     // the input already should be HTML-quoted but we want to make sure, and also quote quotes
     export function html2Quote(s: string) {
         if (!s) return s;
-        return htmlQuote(s.replace(/\&([#a-z0-9A-Z]+);/g, (f, ent) => {
+    return htmlQuote(s.replace(/\&([#a-z0-9A-Z]+);/g, (f: string, ent: string) => {
             switch (ent) {
                 case "amp": return "&";
                 case "lt": return "<";
@@ -152,7 +249,7 @@ namespace pxt.docs {
         d.macros = macros
         d.settings = settings
 
-        d.html = d.html.replace(/<aside\s+([^<>]+)>([^]*?)<\/aside>/g, (full, attrsStr, body) => {
+    d.html = d.html.replace(/<aside\s+([^<>]+)>([^]*?)<\/aside>/g, (full: string, attrsStr: string, body: string) => {
             let attrs = parseHtmlAttrs(attrsStr)
             let name = attrs["data-name"] || attrs["id"]
 
@@ -424,7 +521,8 @@ namespace pxt.docs {
     }
 
     export function setupRenderer(renderer: MarkedRenderer) {
-        renderer.image = function (href: string | null, title: string | null, text: string) {
+        const imageHandler = function (this: unknown): string {
+            const { href, title, text } = normalizeLinkArgs(arguments);
             const endpointName = "makecodeprodmediaeastus-usea";
             const source = href || "";
             if (source.startsWith("youtube:")) {
@@ -463,18 +561,21 @@ namespace pxt.docs {
                 return out;
             }
         };
-        renderer.listitem = function (text: string): string {
-            const args = arguments as IArguments;
-            const task = args.length > 1 ? !!args[1] : false;
-            const checked = args.length > 2 ? !!args[2] : false;
+        setRendererFunction(renderer, "image", imageHandler as unknown as RendererFunction);
+
+        const listItemHandler = function (this: unknown): string {
+            const { text, task, checked } = normalizeListItemArgs(arguments);
             if (task) {
                 return `<li class="${checked ? 'checked' : 'unchecked'}">${text}</li>\n`;
             }
             const m = /^\s*\[( |x)\]/i.exec(text);
             if (m) return `<li class="${m[1] == ' ' ? 'unchecked' : 'checked'}">` + text.slice(m[0].length) + '</li>\n';
             return '<li>' + text + '</li>\n';
-        }
-        renderer.heading = function (text: string, level: number, raw: string, _slugger?: unknown) {
+        };
+        setRendererFunction(renderer, "listitem", listItemHandler as unknown as RendererFunction);
+
+        const headingHandler = function (this: unknown): string {
+            const { text, level, raw } = normalizeHeadingArgs(arguments);
             let displayText = text || "";
             const rawText = raw || displayText;
             let id = "";
@@ -495,13 +596,14 @@ namespace pxt.docs {
             }
             const headerPrefix = (this as unknown as { options?: { headerPrefix?: string } }).options?.headerPrefix || "";
             return `<h${level} id="${headerPrefix}${id}">${displayText}</h${level}>`;
-        }
+        };
+        setRendererFunction(renderer, "heading", headingHandler as unknown as RendererFunction);
     }
 
     export function renderConditionalMacros(template: string, pubinfo: Map<string>): string {
         return template
             .replace(/<!--\s*@(ifn?def)\s+(\w+)\s*-->([^]*?)<!--\s*@endif\s*-->/g,
-                (full, cond, sym, inner) => {
+                (full: string, cond: string, sym: string, inner: string) => {
                     if ((cond == "ifdef" && pubinfo[sym]) || (cond == "ifndef" && !pubinfo[sym]))
                         return `<!-- ${cond} ${sym} -->${inner}<!-- endif -->`
                     else
@@ -574,20 +676,35 @@ namespace pxt.docs {
         // We have to re-create the renderer every time to avoid the link() function's closure capturing the opts
         const renderer: MarkedRenderer = new markedInstance.Renderer();
         setupRenderer(renderer);
-        const defaultLinkRenderer = renderer.link ? renderer.link.bind(renderer) : undefined;
-        const enhancedLink = function (href: string, title: string, text: string): string {
+        const defaultLinkRenderer = getRendererFunction(renderer, "link");
+        const renderWithDefaultLink = (href: string, title: string | null, text: string): string | undefined => {
+            if (!defaultLinkRenderer) return undefined;
+            if (defaultLinkRenderer.length <= 1) {
+                const token: Record<string, unknown> = {
+                    type: "link",
+                    raw: text,
+                    href,
+                    title,
+                    text,
+                    tokens: [{ type: "text", raw: text, text }] as unknown[]
+                };
+                return (defaultLinkRenderer as (token: Record<string, unknown>) => string).call(renderer, token);
+            }
+            return (defaultLinkRenderer as (href: string, title: string | null, text: string) => string).call(renderer, href, title, text);
+        };
+        const enhancedLinkHandler = function (this: unknown): string {
+            const { href, title, text } = normalizeLinkArgs(arguments);
             let resolvedHref = href || "";
             const isRelative = /^[/#]/.test(resolvedHref);
             if (isRelative && resolvedHref && d.versionPath) {
                 resolvedHref = `/${d.versionPath}${resolvedHref}`;
             }
-            const html = defaultLinkRenderer
-                ? defaultLinkRenderer(resolvedHref, title, text)
-                : `<a href="${resolvedHref}">${text}</a>`;
+            const html = renderWithDefaultLink(resolvedHref, title, text)
+                || `<a href="${resolvedHref}">${text}</a>`;
             const attrs = `${!isRelative && resolvedHref ? `target="_blank" ` : ""}rel="nofollow noopener"`;
             return html.replace(/^<a\s+/i, `<a ${attrs} `);
         };
-        renderer.link = enhancedLink as MarkedRenderer["link"];
+        setRendererFunction(renderer, "link", enhancedLinkHandler as unknown as RendererFunction);
 
         const sanitizer = requireDOMSanitizer();
         const baseOptions: MarkedOptions = {
@@ -612,11 +729,12 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
 `;
 
         //Uses the CmdLink definitions to replace links to YouTube and Vimeo (limited at the moment)
-        markdown = markdown.replace(/^\s*https?:\/\/(\S+)\s*$/mg, (f, lnk) => {
+        const linkCommandRegex = new RegExp(String.raw`^${String.fromCharCode(0x18)}2https?:\/\/(\S+)\s*$`, "mg");
+        markdown = markdown.replace(linkCommandRegex, (f: string, lnk: string) => {
             for (let ent of links) {
                 let m = ent.rx.exec(lnk)
                 if (m) {
-                    return ent.cmd.replace(/\$(\d+)/g, (f, k) => {
+                    return ent.cmd.replace(/\$(\d+)/g, (match: string, k: string) => {
                         return m[parseInt(k)] || ""
                     }) + "\n"
                 }
@@ -625,7 +743,7 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
         })
 
         // replace pre-template in markdown
-        markdown = markdown.replace(/@([a-z]+)@/ig, (m, param) => {
+        markdown = markdown.replace(/@([a-z]+)@/ig, (m: string, param: string) => {
             let macro = pubinfo[param];
             if (!macro && opts.throwOnError)
                 U.userError(`unknown macro ${param}`);
@@ -643,7 +761,7 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
         // github will render images if referenced as ![](/docs/static/foo.png)
         // we require /static/foo.png
         html = html.replace(/(<img [^>]* src=")\/docs\/static\/([^">]+)"/g,
-            (f, pref, addr) => pref + '/static/' + addr + '"')
+            (f: string, pref: string, addr: string) => pref + '/static/' + addr + '"')
 
         let endBox = ""
         let boxSize = 0;
@@ -657,14 +775,14 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
             return r;
         }
 
-        html = html.replace(/<h(\d)[^>]+>\s*([~@])?\s*(.*?)<\/h\d>/g, (f, lvl, tp, body) => {
+        html = html.replace(/<h(\d)[^>]+>\s*([~@])?\s*(.*?)<\/h\d>/g, (f: string, lvlStr: string, tp: string | undefined, body: string) => {
             let m = /^(\w+)\s+(.*)/.exec(body)
             let cmd = m ? m[1] : body
             let args = m ? m[2] : ""
             let rawArgs = args
             args = html2Quote(args)
             cmd = html2Quote(cmd)
-            lvl = parseInt(lvl);
+            const lvl = parseInt(lvlStr, 10);
 
             if (!tp) {
                 return appendEndBox(lvl, endBox, f);
@@ -738,7 +856,7 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
         let registers: Map<string> = {}
         registers["main"] = "" // first
 
-        html = html.replace(/<!-- BEGIN-ASIDE (\S+) -->([^]*?)<!-- END-ASIDE -->/g, (f, nam, cont) => {
+        html = html.replace(/<!-- BEGIN-ASIDE (\S+) -->([^]*?)<!-- END-ASIDE -->/g, (f: string, nam: string, cont: string) => {
             let s = U.lookup(registers, nam)
             registers[nam] = (s || "") + cont
             return "<!-- aside -->"
@@ -774,7 +892,7 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
     function injectHtml(template: string, vars: Map<string>, quoted: string[] = []) {
         if (!template) return '';
 
-        return template.replace(/@(\w+)@/g, (f, key) => {
+    return template.replace(/@(\w+)@/g, (f: string, key: string) => {
             let res = U.lookup(vars, key) || "";
             res += ""; // make sure it's a string
             if (quoted.indexOf(key) < 0) {

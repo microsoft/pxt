@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import * as data from "./data";
-import * as marked from "marked";
+import { marked, Tokens } from "marked";
 import * as compiler from "./compiler"
 import { MediaPlayer } from "dashjs"
 import dashjs = require("dashjs");
@@ -664,25 +664,22 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         // replace pre-template in markdown
         markdown = markdown.replace(/@([a-z]+)@/ig, (m, param) => pubinfo[param] || 'unknown macro')
 
-        // create a custom renderer
-        let renderer = new marked.Renderer()
-        pxt.docs.setupRenderer(renderer);
+        const renderer = new marked.Renderer<string, string>();
+        pxt.docs.setupRenderer(renderer as unknown as Record<string, unknown>);
 
-        // always popout external links
-        const linkRenderer = renderer.link;
-        renderer.link = function (href: string, title: string, text: string) {
-            const relative = /^[\/#]/.test(href);
+        const originalLink = typeof renderer.link === "function" ? renderer.link.bind(renderer) : undefined;
+        renderer.link = (token: Tokens.Link) => {
+            const resolvedHref = token?.href || "";
+            const relative = /^[\/\#]/.test(resolvedHref);
             const target = !relative ? '_blank' : '';
-            const html = linkRenderer.call(renderer, href, title, text);
+            const tokenForDefault = { ...token, href: resolvedHref };
+            const html = originalLink
+                ? originalLink(tokenForDefault)
+                : `<a href="${resolvedHref}">${token?.text ?? ""}</a>`;
             return html.replace(/^<a /, `<a ${target ? `target="${target}"` : ''} rel="nofollow noopener" `);
         };
 
-        // Set markdown options
-        marked.setOptions({
-            renderer: renderer,
-            sanitize: true,
-            sanitizer: pxt.docs.requireDOMSanitizer()
-        })
+        const sanitizer = pxt.docs.requireDOMSanitizer();
 
         // preemptively remove script tags, although they'll be escaped anyway
         // prevents ugly <script ...> rendering in docs. This is not intended to sanitize
@@ -694,9 +691,10 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         const tempDiv = document.createElement("div");
 
         // We pass DOMPurify to marked in the call to setOptions above. This should be safe
-        /* eslint-disable @microsoft/sdl/no-inner-html */
-        tempDiv.innerHTML = marked(markdown);
-        /* eslint-enable @microsoft/sdl/no-inner-html */
+    const renderedMarkdown = marked.parse(markdown, { renderer, async: false });
+    /* eslint-disable @microsoft/sdl/no-inner-html */
+    tempDiv.innerHTML = sanitizer ? sanitizer(renderedMarkdown) : renderedMarkdown;
+    /* eslint-enable @microsoft/sdl/no-inner-html */
 
         // We'll go through a series of adjustments here, rendering inline blocks, blocks and snippets as needed
         this.renderInlineBlocks(tempDiv);
