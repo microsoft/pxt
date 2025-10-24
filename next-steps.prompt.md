@@ -14,13 +14,14 @@
   - Added `autoprefixer` 10.4.20 for the PostCSS pipeline.
 - Replaced the legacy Node HTTP helper with `axios` and removed the `request` dependency.
 - Updated `cli/cli.ts` CSS build to run `postcss([autoprefixer, cssnano])` with the new API.
+- Upgraded build tooling to `gulp` 5.0.1 (`gulp-cli` 3.1.0, `gulp-replace` 1.1.4) to reduce deprecated transitive dependencies.
 - Ran `npm install` (lockfile managed externally) and `npm run lint` successfully.
-- Current audit snapshot: 26 vulnerabilities remain (5 low / 7 moderate / 10 high / 4 critical), all tied to legacy packages noted below.
+- Latest audit snapshot (post-gulp upgrade): 15 vulnerabilities remain (5 low / 6 high / 4 critical), concentrated in legacy browserify/minifier tooling and transitive peer gaps.
 
 ## Outstanding Issues
-1. **Legacy build chain vulnerabilities**
-   - `gulp@4.0.0`, `gulp-cli`, `gulp-header` rely on deprecated transitive dependencies (`anymatch`, `braces`, etc.).
-   - Recommended follow-up: evaluate migration to `gulp@5`, confirm compatibility with existing gulpfile tasks, or consider swapping to an alternative build runner.
+1. **Build chain validation**
+   - Re-run representative gulp tasks (`gulp lint`, `gulp build`, targeted watch flows) to confirm there are no regressions after the v5 migration.
+   - Track any lingering advisories from gulp plugins (e.g., `gulp-header`) and evaluate maintained alternatives if they surface.
 2. **`uglifyify` package**
    - Still surfaces due to bundled `terser` < 5.14.2 inside its dependency tree.
    - Options: migrate the Browserify minification step to a maintained alternative (e.g., `babel-minify` or native `terser` plugin) or drop `uglifyify` entirely if no longer required.
@@ -30,7 +31,7 @@
    - After refactors, rerun the full validation suite (`npm run lint`, targeted gulp tasks, key unit tests) to ensure the build remains stable.
 
 ## Suggested Next Session Plan
-1. Prototype the gulp v5 migration (or alternative) in a feature branch; run `gulp lint/build` to verify.
+1. Exercise core gulp 5 flows (`gulp lint`, `gulp build`, and watch mode) to shake out incompatibilities or plugin deprecations.
 2. Evaluate removal of `uglifyify`: confirm Browserify config (`gulpfile.js`) and `scripts/patchUglifyify.js` implications.
 3. Review PostCSS/Gulp compatibility after upgrades and add targeted tests for CSS build outputs.
 4. Once major swaps are done, regenerate the audit report and capture results for compliance notes.
