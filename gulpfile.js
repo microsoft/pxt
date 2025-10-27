@@ -1,12 +1,13 @@
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
+const { PassThrough } = require("stream");
 
 const gulp = require("gulp");
 const ts = require("gulp-typescript");
 const merge = require("merge-stream");
 const concat = require("gulp-concat");
-const header = require("gulp-header");
+const through2 = require("through2");
 const replace = require("gulp-replace");
 const ju = require("./jakeutil");
 const yargs = require('yargs');
@@ -20,6 +21,35 @@ const isWin32 = os.platform() === "win32";
 const clean = () => rimraf("built").then(() => rimraf("temp"));
 const update = () => exec("git pull", true).then(() => exec("npm install", true))
 const noop = () => Promise.resolve();
+
+function prependText(text) {
+    const prefixBuffer = Buffer.from(text, "utf8");
+    return through2.obj((file, enc, cb) => {
+        if (file.isNull()) {
+            cb(null, file);
+            return;
+        }
+
+        if (file.isBuffer()) {
+            file.contents = Buffer.concat([prefixBuffer, file.contents]);
+            cb(null, file);
+            return;
+        }
+
+        if (file.isStream()) {
+            const combined = new PassThrough();
+            combined.write(prefixBuffer);
+            file.contents.on("error", err => combined.emit("error", err));
+            file.contents.on("end", () => combined.end());
+            file.contents.pipe(combined, { end: false });
+            file.contents = combined;
+            cb(null, file);
+            return;
+        }
+
+        cb(new Error("Unsupported vinyl file type for prependText"));
+    });
+}
 
 const SUB_WEBAPPS = require("./cli/webapps-config.json").webapps;
 
@@ -71,7 +101,7 @@ const pxtworker = () => gulp.src([
     "built/pxtpy.js"
 ])
     .pipe(concat("pxtworker.js"))
-    .pipe(header(`"use strict";\n`))
+    .pipe(prependText(`"use strict";\n`))
     .pipe(gulp.dest("built/web"));
 
 const pxtembed = () => gulp.src([
@@ -96,7 +126,7 @@ const buildpxtjs = () => gulp.src([
     "built/cli.js"
 ])
     .pipe(concat("pxt.js"))
-    .pipe(header(`
+    .pipe(prependText(`
         "use strict";
         // make sure TypeScript doesn't overwrite our module.exports
         global.savedModuleExports = module.exports;
@@ -719,7 +749,7 @@ function testTask(testFolder, testFile, additionalFiles) {
 
     const buildTestRunner = () => gulp.src(src)
         .pipe(concat("runner.js"))
-        .pipe(header(`
+        .pipe(prependText(`
             "use strict";
             // make sure TypeScript doesn't overwrite our module.exports
             global.savedModuleExports = module.exports;
