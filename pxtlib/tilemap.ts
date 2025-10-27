@@ -340,6 +340,8 @@ namespace pxt {
     export class TilemapProject {
         public needsRebuild = true;
 
+        protected static nextRevision = 0;
+
         protected extensionTileSets: TileSetCollection[];
         protected state: AssetSnapshot;
         protected committedState: AssetSnapshot;
@@ -354,7 +356,7 @@ namespace pxt {
 
         constructor() {
             this.committedState = {
-                revision: 0,
+                revision: TilemapProject.nextRevision++,
                 assets: {
                     [AssetType.Image]: new AssetCollection(AssetType.Image),
                     [AssetType.Tile]: new AssetCollection(AssetType.Tile),
@@ -365,7 +367,7 @@ namespace pxt {
                 }
             };
             this.state = {
-                revision: this.nextID++,
+                revision: TilemapProject.nextRevision++,
                 assets: {
                     [AssetType.Image]: new AssetCollection(AssetType.Image),
                     [AssetType.Tile]: new AssetCollection(AssetType.Tile),
@@ -1411,7 +1413,7 @@ namespace pxt {
 
         protected onChange() {
             this.needsRebuild = true;
-            this.state.revision = this.nextID++;
+            this.state.revision = TilemapProject.nextRevision++;
         }
 
         protected readImages(allJRes: Map<JRes>, isProjectFile = false) {
