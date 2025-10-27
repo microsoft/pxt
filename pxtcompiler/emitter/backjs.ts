@@ -177,6 +177,9 @@ namespace ts.pxtc {
             if (p.cachedJS) {
                 curr = p.cachedJS
                 cachedLen += curr.length
+                for (const hexlit of Object.keys(p.cachedJSHexLiterals)) {
+                    bin.hexlits[hexlit] = p.cachedJSHexLiterals[hexlit];
+                }
             } else {
                 curr = irToJS(bin, p)
                 newLen += curr.length
@@ -436,7 +439,9 @@ function ${id}(s) {
                     if (e.ptrlabel()) {
                         return e.ptrlabel().lblId + "";
                     } else if (e.hexlit() != null) {
-                        bin.hexlits[e.data] = `const ${e.data} = pxsim.BufferMethods.createBufferFromHex("${e.hexlit()}")\n`;
+                        const lit = `const ${e.data} = pxsim.BufferMethods.createBufferFromHex("${e.hexlit()}")\n`;
+                        proc.cachedJSHexLiterals[e.data] = lit;
+                        bin.hexlits[e.data] = lit;
                         return e.data;
                     } else if (typeof e.jsInfo == "string") {
                         return e.jsInfo;
