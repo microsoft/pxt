@@ -880,6 +880,9 @@ declare namespace ts.pxtc {
         blockImage?: boolean; // for enum variable, specifies that it should use an image from a predefined location
         blockCombine?: boolean;
         blockCombineShadow?: string;
+        blockCombineGetHelp?: string;
+        blockCombineSetHelp?: string;
+        blockCombineChangeHelp?: string;
         blockSetVariable?: string; // show block with variable assigment in toolbox. Set equal to a name to control the var name
         fixedInstances?: boolean;
         fixedInstance?: boolean;
