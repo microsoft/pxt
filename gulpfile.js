@@ -166,7 +166,7 @@ function initWatch() {
         webapp,
         browserifyWebapp,
         browserifyAssetEditor,
-        gulp.parallel(semanticjs, copyJquery, copyWebapp, copySemanticFonts, copyMonaco),
+        gulp.parallel(semanticjs, copyJquery, copyMarked, copyWebapp, copySemanticFonts, copyMonaco),
         notifyBuildComplete
     ];
 
@@ -422,6 +422,12 @@ const semanticjs = () => gulp.src(ju.expand([
 const copyJquery = () => gulp.src("node_modules/jquery/dist/jquery.min.js")
     .pipe(concat("jquery.js"))
     .pipe(gulp.dest("built/web"));
+
+const copyMarked = () =>
+    gulp.src("node_modules/marked/lib/marked.umd.js")
+        .pipe(concat("marked.min.js"))
+        .pipe(gulp.dest("built/web/marked"))
+        .pipe(gulp.dest("webapp/public/marked"));
 
 const copyWebapp = () =>
     gulp.src([
@@ -808,7 +814,7 @@ const buildAll = gulp.series(
     webapp,
     browserifyWebapp,
     browserifyAssetEditor,
-    gulp.parallel(semanticjs, copyJquery, copyWebapp, copySemanticFonts, copyMonaco),
+    gulp.parallel(semanticjs, copyJquery, copyMarked, copyWebapp, copySemanticFonts, copyMonaco),
     buildBlocksTestRunner,
     gulp.parallel(browserifyBlocksTestRunner, browserifyBlocksPrep),
     runUglify

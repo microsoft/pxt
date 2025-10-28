@@ -697,9 +697,25 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
 
         let html = markedInstance(markdown)
 
-        if (sanitizer) {
-            html = sanitizer(html);
+        if (typeof (html as any)?.then === "function") {
+            pxt.debug(`docs: async markdown rendering not supported${opts.filepath ? ` (${opts.filepath})` : ""}`);
+            html = "";
         }
+
+        const coerceToString = (value: unknown, fallback: string = "") => {
+            if (typeof value === "string") return value;
+            if (value && typeof (value as any).toString === "function") {
+                return (value as any).toString();
+            }
+            return fallback;
+        };
+
+        let sanitizedHtml = html;
+        if (sanitizer) {
+            sanitizedHtml = sanitizer(html);
+        }
+
+        html = coerceToString(sanitizedHtml, coerceToString(html, ""));
 
         // support for breaks which somehow don't work out of the box
         html = html.replace(/&lt;br\s*\/&gt;/ig, "<br/>");
