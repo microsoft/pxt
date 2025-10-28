@@ -1,12 +1,12 @@
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
+const { Transform, PassThrough } = require("stream");
 
 const gulp = require("gulp");
 const ts = require("gulp-typescript");
 const merge = require("merge-stream");
 const concat = require("gulp-concat");
-const header = require("gulp-header");
 const replace = require("gulp-replace");
 const ju = require("./jakeutil");
 const yargs = require('yargs');
@@ -20,6 +20,35 @@ const isWin32 = os.platform() === "win32";
 const clean = () => rimraf("built").then(() => rimraf("temp"));
 const update = () => exec("git pull", true).then(() => exec("npm install", true))
 const noop = () => Promise.resolve();
+
+function prependHeader(headerText) {
+    const headerBuffer = Buffer.from(headerText);
+
+    return new Transform({
+        objectMode: true,
+        transform(file, _enc, callback) {
+            if (file.isNull()) {
+                return callback(null, file);
+            }
+
+            if (file.isBuffer && file.isBuffer()) {
+                file.contents = Buffer.concat([headerBuffer, file.contents]);
+                return callback(null, file);
+            }
+
+            if (file.isStream && file.isStream()) {
+                const combined = new PassThrough();
+                combined.write(headerBuffer);
+                file.contents.on('error', err => combined.emit('error', err));
+                file.contents.pipe(combined, { end: true });
+                file.contents = combined;
+                return callback(null, file);
+            }
+
+            return callback(null, file);
+        }
+    });
+}
 
 const SUB_WEBAPPS = require("./cli/webapps-config.json").webapps;
 
@@ -71,7 +100,7 @@ const pxtworker = () => gulp.src([
     "built/pxtpy.js"
 ])
     .pipe(concat("pxtworker.js"))
-    .pipe(header(`"use strict";\n`))
+    .pipe(prependHeader(`"use strict";\n`))
     .pipe(gulp.dest("built/web"));
 
 const pxtembed = () => gulp.src([
@@ -96,7 +125,7 @@ const buildpxtjs = () => gulp.src([
     "built/cli.js"
 ])
     .pipe(concat("pxt.js"))
-    .pipe(header(`
+    .pipe(prependHeader(`
         "use strict";
         // make sure TypeScript doesn't overwrite our module.exports
         global.savedModuleExports = module.exports;
@@ -732,7 +761,7 @@ function testTask(testFolder, testFile, additionalFiles) {
 
     const buildTestRunner = () => gulp.src(src)
         .pipe(concat("runner.js"))
-        .pipe(header(`
+        .pipe(prependHeader(`
             "use strict";
             // make sure TypeScript doesn't overwrite our module.exports
             global.savedModuleExports = module.exports;

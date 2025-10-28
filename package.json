@@ -133,7 +133,6 @@
     "gulp": "5.0.1",
     "gulp-cli": "3.1.0",
     "gulp-concat": "2.6.1",
-    "gulp-header": "2.0.9",
     "gulp-replace": "1.1.4",
     "gulp-typescript": "5.0.1",
     "highlight.js": "11.11.1",
