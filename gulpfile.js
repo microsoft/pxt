@@ -203,10 +203,23 @@ function compileTsProject(dirname, destination, useOutdir, filename) {
     let tsResult = tsProject.src()
         .pipe(tsProject());
 
-    return merge(
-        tsResult.js.pipe(gulp.dest(destination)),
-        tsResult.dts.pipe(gulp.dest(destination))
-    );
+    const outputStreams = [];
+
+    if (tsResult.js) {
+        outputStreams.push(tsResult.js);
+    }
+
+    if (tsResult.dts) {
+        outputStreams.push(tsResult.dts);
+    }
+
+    const mergedOutput = outputStreams.length > 1 ? merge(...outputStreams) : outputStreams[0];
+
+    if (!mergedOutput) {
+        return Promise.resolve();
+    }
+
+    return mergedOutput.pipe(gulp.dest(destination));
 }
 
 // TODO: Copied from Jakefile; should be async
