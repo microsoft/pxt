@@ -97,7 +97,7 @@
     "rtlcss": "4.3.0",
     "sanitize-html": "2.17.0",
     "semantic-ui-less": "2.4.1",
-    "terser": "5.6.0"
+    "terser": "5.44.0"
   },
   "lazyDependencies": {
     "node-hid": "^0.7.2",
@@ -161,7 +161,8 @@
     "cipher-base": "1.0.7",
     "pbkdf2": "3.1.5",
     "elliptic": "6.6.1",
-    "tar-fs": "3.1.1"
+    "tar-fs": "3.1.1",
+    "terser": "5.44.0"
   },
   "scripts": {
     "build": "gulp",
