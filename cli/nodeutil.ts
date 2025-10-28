@@ -57,7 +57,7 @@ export function readResAsync(g: events.EventEmitter) {
 
         g.on("error", (err: any) => reject(err))
 
-        g.on('end', () => resolve(Buffer.concat(bufs)))
+        g.on('end', () => resolve(Buffer.concat(bufs as unknown as Uint8Array[])))
     })
 }
 
@@ -92,7 +92,7 @@ export function spawnWithPipeAsync(opts: SpawnOptions) {
         ch.on('close', (code: number) => {
             if (code != 0 && !opts.allowNonZeroExit)
                 reject(new Error("Exit code: " + code + " from " + info))
-            resolve(Buffer.concat(bufs))
+            resolve(Buffer.concat(bufs as unknown as Uint8Array[]))
         });
         if (opts.input != null)
             ch.stdin.end(opts.input, "utf8")
