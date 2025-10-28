@@ -57,7 +57,7 @@
   ],
   "main": "built/pxt.js",
   "engines": {
-    "node": ">=16.0.0",
+    "node": ">=18.0.0",
     "npm": ">=8.0.0"
   },
   "dependencies": {
@@ -90,12 +90,12 @@
     "marked": "0.3.19",
     "mocha": "8.4.0",
     "pngjs": "3.4.0",
-    "postcss": "6.0.21",
+    "postcss": "8.5.6",
     "promise.prototype.finally": "^3.1.2",
     "puppeteer": "23.11.1",
     "request": "2.88.0",
     "rimraf": "2.5.4",
-    "rtlcss": "2.2.1",
+    "rtlcss": "4.3.0",
     "sanitize-html": "2.3.2",
     "semantic-ui-less": "2.4.1",
     "terser": "5.6.0"
@@ -137,12 +137,12 @@
     "gulp-header": "2.0.9",
     "gulp-replace": "1.0.0",
     "gulp-typescript": "5.0.1",
-    "highlight.js": "9.12.0",
+    "highlight.js": "11.11.1",
     "jquery": "3.5.0",
     "merge-stream": "2.0.0",
     "monaco-editor": "0.24.0",
-    "pouchdb": "7.2.1",
-    "pouchdb-adapter-memory": "7.2.1",
+    "pouchdb": "7.3.1",
+    "pouchdb-adapter-memory": "7.3.1",
     "react": "17.0.2",
     "react-dom": "17.0.2",
     "react-modal": "3.15.1",
@@ -157,7 +157,12 @@
   "overrides": {
     "combine-source-map": {
       "source-map": "0.4.4"
-    }
+    },
+    "sha.js": "2.4.12",
+    "cipher-base": "1.0.7",
+    "pbkdf2": "3.1.5",
+    "elliptic": "6.6.1",
+    "tar-fs": "3.1.1"
   },
   "scripts": {
     "build": "gulp",
