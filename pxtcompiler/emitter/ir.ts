@@ -538,6 +538,7 @@ namespace ts.pxtc.ir {
         action: ts.FunctionLikeDeclaration = null;
         inlineBody: ir.Expr;
         cachedJS: string = null;
+        cachedJSHexLiterals: pxt.Map<string> = {}
         usingCtx: PxtNode = null;
 
         reset() {
