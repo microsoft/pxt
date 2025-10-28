@@ -10,8 +10,6 @@ import * as coretsx from "./coretsx";
 import Util = pxt.Util;
 import { fireClickOnEnter } from "./util"
 import { DeleteConfirmationModal } from "../../react-common/components/extensions/DeleteConfirmationModal"
-
-import * as Blockly from "blockly";
 import { classList } from "../../react-common/components/util"
 
 export const enum CategoryNameID {
@@ -683,8 +681,8 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
                             />
                         }
                         {nonAdvancedCategories.map(treeRow =>
+                        <React.Fragment key={treeRow.nameid}>
                             <CategoryItem
-                                key={treeRow.nameid}
                                 toolbox={this}
                                 index={index++}
                                 selectedIndex={this.selectedIndex}
@@ -696,25 +694,24 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
                                 hasDeleteButton={treeRow.allowDelete}
                                 onDeleteClick={this.handleRemoveExtension}
                                 ariaLevel={1}
-                                isExpanded={expandedItem == treeRow.nameid}
                             >
-                                {treeRow.subcategories && (
-                                    <div className={classList(expandedItem != treeRow.nameid && "hidden")} role="group">
-                                        {treeRow.subcategories.map(subTreeRow =>
-                                            <CategoryItem
-                                                key={subTreeRow.nameid + subTreeRow.subns}
-                                                index={index++}
-                                                selectedIndex={this.selectedIndex}
-                                                toolbox={this}
-                                                selected={selectedItem == (subTreeRow.nameid + subTreeRow.subns)}
-                                                treeRow={subTreeRow}
-                                                onCategoryClick={this.onCategoryClick}
-                                                ariaLevel={2}
-                                            />
-                                        )}
-                                    </div>
-                                )}
                             </CategoryItem>
+                            {treeRow.subcategories?.map(subTreeRow =>
+                                <CategoryItem
+                                    key={subTreeRow.nameid + subTreeRow.subns}
+                                    className={classList(expandedItem != treeRow.nameid && "sr-only")}
+                                    index={index++}
+                                    selectedIndex={this.selectedIndex}
+                                    toolbox={this}
+                                    selected={selectedItem == (subTreeRow.nameid + subTreeRow.subns)}
+                                    treeRow={subTreeRow}
+                                    onCategoryClick={this.onCategoryClick}
+                                    ariaLevel={1}
+                                    ariaLabel={Util.capitalize(`${treeRow.nameid}, ${subTreeRow.name}`)}
+                                />
+                            )}
+                        </React.Fragment>
+
                         )}
                         {hasAdvanced &&
                             <>
@@ -733,43 +730,38 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
                                     onCategoryClick={this.advancedClicked}
                                     topRowIndex={topRowIndex++}
                                     ariaLevel={1}
-                                    isExpanded={showAdvanced}
-                                >
-                                    <div className={classList(!showAdvanced && "hidden")} role="group">
-                                        {
-                                            advancedCategories.map(treeRow =>
-                                                <CategoryItem
-                                                    key={treeRow.nameid}
-                                                    toolbox={this}
-                                                    index={index++}
-                                                    selectedIndex={this.selectedIndex}
-                                                    selected={selectedItem == treeRow.nameid}
-                                                    treeRow={treeRow}
-                                                    onCategoryClick={this.onCategoryClick}
-                                                    ariaLevel={2}
-                                                    isExpanded={expandedItem == treeRow.nameid}
-                                                >
-                                                    {treeRow.subcategories && (
-                                                        <div className={classList(expandedItem != treeRow.nameid && "hidden")} role="group">
-                                                            {treeRow.subcategories.map(subTreeRow =>
-                                                                <CategoryItem
-                                                                    key={subTreeRow.nameid + subTreeRow.subns}
-                                                                    toolbox={this}
-                                                                    index={index++}
-                                                                    selectedIndex={this.selectedIndex}
-                                                                    selected={selectedItem == (subTreeRow.nameid + subTreeRow.subns)}
-                                                                    treeRow={subTreeRow}
-                                                                    onCategoryClick={this.onCategoryClick}
-                                                                    ariaLevel={3}
-                                                                />
-                                                            )}
-                                                        </div>
-                                                    )}
-                                                </CategoryItem>
-                                            )
-                                        }
-                                    </div>
-                                </CategoryItem>
+                                    ariaHidden={true}
+                                />
+                                {advancedCategories.map(treeRow =>
+                                    <React.Fragment key={treeRow.nameid}>
+                                        <CategoryItem
+                                            className={classList(!showAdvanced && "sr-only")}
+                                            toolbox={this}
+                                            index={index++}
+                                            selectedIndex={this.selectedIndex}
+                                            selected={selectedItem == treeRow.nameid}
+                                            treeRow={treeRow}
+                                            onCategoryClick={this.onCategoryClick}
+                                            ariaLevel={1}
+                                            isExpanded={expandedItem == treeRow.nameid}
+                                            >
+                                        </CategoryItem>
+                                        {treeRow.subcategories?.map(subTreeRow =>
+                                            <CategoryItem
+                                                key={subTreeRow.nameid + subTreeRow.subns}
+                                                className={classList(expandedItem != treeRow.nameid && "sr-only")}
+                                                toolbox={this}
+                                                index={index++}
+                                                selectedIndex={this.selectedIndex}
+                                                selected={selectedItem == (subTreeRow.nameid + subTreeRow.subns)}
+                                                treeRow={subTreeRow}
+                                                onCategoryClick={this.onCategoryClick}
+                                                ariaLevel={1}
+                                                ariaLabel={Util.capitalize(`${treeRow.nameid}, ${subTreeRow.name}`)}
+                                            />
+                                        )}
+                                    </React.Fragment>
+                                )}
                             </>
                         }
                     </div>
@@ -787,8 +779,11 @@ export interface CategoryItemProps extends TreeRowProps {
     topRowIndex?: number;
     hasDeleteButton?: boolean;
     onDeleteClick?: (ns: string) => void;
+    ariaHidden?: boolean;
+    ariaLabel?: string;
     ariaLevel: number;
     isExpanded?: boolean;
+    className?: string;
 }
 
 export interface CategoryItemState {
@@ -865,13 +860,13 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
     }
 
     renderCore() {
-        const { toolbox, hasDeleteButton, treeRow, ariaLevel, isExpanded } = this.props;
+        const { className, toolbox, hasDeleteButton, treeRow, ariaHidden, ariaLabel, ariaLevel, isExpanded } = this.props;
         const { selected } = this.state;
 
         const ariaExpanded = treeRow.subcategories ? isExpanded : undefined;
 
         return (
-            <TreeItem id={treeRow.nameid + (treeRow.subns ?? "")} selected={selected} ariaLevel={ariaLevel} ariaExpanded={ariaExpanded}>
+            <TreeItem id={treeRow.nameid + (treeRow.subns ?? "")} className={className} selected={selected} ariaHidden={ariaHidden} ariaLabel={ariaLabel} ariaLevel={ariaLevel} ariaExpanded={ariaExpanded}>
                 <TreeRow
                     ref={this.handleTreeRowRef}
                     isRtl={toolbox.isRtl()}
@@ -1067,13 +1062,16 @@ export interface TreeItemProps {
     selected: boolean;
     children?: any;
     id: string;
+    ariaHidden?: boolean;
+    ariaLabel?: string
     ariaLevel: number;
     ariaExpanded: boolean | undefined;
+    className?: string;
 }
 
 export class TreeItem extends data.Component<TreeItemProps, {}> {
     renderCore() {
-        const { selected, id, ariaLevel, ariaExpanded } = this.props;
+        const { className, selected, id, ariaHidden, ariaLabel, ariaLevel, ariaExpanded } = this.props;
         return (
             <div
                 id={id}
@@ -1082,7 +1080,9 @@ export class TreeItem extends data.Component<TreeItemProps, {}> {
                 tabIndex={-1}
                 aria-level={ariaLevel}
                 aria-expanded={ariaExpanded}
-                aria-labelledby={`${id}.label`}
+                aria-labelledby={!ariaLabel ? `${id}.label` : undefined}
+                className={classList(className)}
+                aria-hidden={ariaHidden}
             >
                 {this.props.children}
             </div>
