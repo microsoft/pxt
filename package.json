@@ -94,6 +94,7 @@
     "puppeteer": "23.11.1",
     "rimraf": "2.5.4",
     "rtlcss": "4.3.0",
+    "sanitize-html": "2.17.0",
     "semantic-ui-less": "2.4.1",
     "terser": "5.44.0"
   },

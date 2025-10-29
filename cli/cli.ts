@@ -34,7 +34,9 @@ import { SUB_WEBAPPS } from './subwebapp';
 
 const rimraf: (f: string, opts: any, cb: (err: Error, res: any) => void) => void = require('rimraf');
 
-pxt.docs.requireDOMSanitizer = () => require("dompurify");
+// dompurify requires a dom implementation; sanitize-html does not.
+// Swapping this makes all /docs pages output as just `root => createDOMPurify(root)`
+pxt.docs.requireDOMSanitizer = () => require("sanitize-html");
 
 let forceCloudBuild = process.env["KS_FORCE_CLOUD"] !== "no";
 let forceLocalBuild = !!process.env["PXT_FORCE_LOCAL"];
