@@ -2,6 +2,7 @@ const fs = require("fs");
 const os = require("os");
 const path = require("path");
 const { Transform, PassThrough } = require("stream");
+const { minify } = require("terser");
 
 const gulp = require("gulp");
 const ts = require("gulp-typescript");
@@ -46,6 +47,34 @@ function prependHeader(headerText) {
             }
 
             return callback(null, file);
+        }
+    });
+}
+
+function terserMinifyTransform(options = {}) {
+    return new Transform({
+        objectMode: true,
+        transform(file, _enc, callback) {
+            if (file.isNull()) {
+                return callback(null, file);
+            }
+
+            if (file.isStream && file.isStream()) {
+                return callback(new Error("Streaming not supported for terserMinifyTransform"));
+            }
+
+            const source = file.contents.toString("utf8");
+
+            minify(source, options)
+                .then(result => {
+                    if (!result || typeof result.code !== "string") {
+                        throw new Error("Terser produced no output");
+                    }
+
+                    file.contents = Buffer.from(result.code, "utf8");
+                    callback(null, file);
+                })
+                .catch(err => callback(err));
         }
     });
 }
@@ -166,7 +195,7 @@ function initWatch() {
         webapp,
         browserifyWebapp,
         browserifyAssetEditor,
-        gulp.parallel(semanticjs, copyJquery, copyMarked, copyWebapp, copySemanticFonts, copyMonaco),
+        gulp.parallel(semanticjs, copyJquery, copyMarked, copySmoothie, copyWebapp, copySemanticFonts, copyMonaco),
         notifyBuildComplete
     ];
 
@@ -428,6 +457,12 @@ const copyMarked = () =>
         .pipe(concat("marked.min.js"))
         .pipe(gulp.dest("built/web/marked"))
         .pipe(gulp.dest("webapp/public/marked"));
+
+const copySmoothie = () =>
+    gulp.src("node_modules/smoothie/smoothie.js")
+        .pipe(terserMinifyTransform())
+        .pipe(concat("smoothie_compressed.js"))
+        .pipe(gulp.dest("webapp/public/smoothie"));
 
 const copyWebapp = () =>
     gulp.src([
@@ -816,7 +851,7 @@ const buildAll = gulp.series(
     webapp,
     browserifyWebapp,
     browserifyAssetEditor,
-    gulp.parallel(semanticjs, copyJquery, copyMarked, copyWebapp, copySemanticFonts, copyMonaco),
+    gulp.parallel(semanticjs, copyJquery, copyMarked, copySmoothie, copyWebapp, copySemanticFonts, copyMonaco),
     buildBlocksTestRunner,
     gulp.parallel(browserifyBlocksTestRunner, browserifyBlocksPrep),
     runUglify
