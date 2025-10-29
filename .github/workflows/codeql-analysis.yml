@@ -23,6 +23,10 @@ on:
   schedule:
     - cron: '34 6 * * 0'
 
+# Ignore the monaco files in the scan
+paths-ignore:
+  - docs/static/tutorial-tool/vs
+
   # Permissions required by OpenID Connect to access Azure.
 permissions:
   security-events: write
