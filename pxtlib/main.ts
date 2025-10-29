@@ -180,7 +180,7 @@ namespace pxt {
     export function replaceStringsInJsonBlob(blobPart: any, matcher: RegExp, matchHandler: (matchingString: string) => string): any {
         if (Array.isArray(blobPart)) {
             return blobPart.map(el => replaceStringsInJsonBlob(el, matcher, matchHandler));
-    } else if (blobPart && typeof blobPart === "object") {
+        } else if (blobPart && typeof blobPart === "object") {
             for (const key of Object.keys(blobPart)) {
                 blobPart[key] = replaceStringsInJsonBlob(blobPart[key], matcher, matchHandler);
             }
