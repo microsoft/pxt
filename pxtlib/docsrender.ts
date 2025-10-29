@@ -153,7 +153,7 @@ namespace pxt.docs {
     export let requireDOMSanitizer = () => {
         if (typeof DOMPurify !== "undefined") return DOMPurify.sanitize;
         if (typeof require === "undefined") return undefined;
-        return (require("DOMPurify") as typeof DOMPurify).sanitize;
+        return (require("dompurify") as typeof DOMPurify).sanitize;
     }
 
     export interface RenderData {

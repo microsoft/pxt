@@ -447,8 +447,10 @@ const copyWebapp = () =>
 const copySemanticFonts = () => gulp.src("node_modules/semantic-ui-less/themes/default/assets/fonts/*")
     .pipe(gulp.dest("built/web/fonts"))
 
+// NOTE: Uglifyify no longer runs here because it crashes on modern syntax emitted in
+// production builds; minification is handled later in runUglify via Terser.
 const execBrowserify = (entryPoint, outfile) => process.env.PXT_ENV == 'production' ?
-    exec(`node node_modules/browserify/bin/cmd ${entryPoint} -g [ envify --NODE_ENV production ] -g [ uglifyify --ignore '**/node_modules/@blockly/**' ] -o ${outfile}`) :
+    exec(`node node_modules/browserify/bin/cmd ${entryPoint} -g [ envify --NODE_ENV production ] -o ${outfile}`) :
     exec(`node node_modules/browserify/bin/cmd ${entryPoint} -o ${outfile} --debug`);
 
 const browserifyWebapp = () => execBrowserify("./built/webapp/src/app.js", "./built/web/main.js");
