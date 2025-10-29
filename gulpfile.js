@@ -773,7 +773,7 @@ function testTask(testFolder, testFile, additionalFiles) {
             "use strict";
             // make sure TypeScript doesn't overwrite our module.exports
             global.savedModuleExports = module.exports;
-            module.exports = null;
+            module.exports = {};
         `))
         .pipe(gulp.dest('built/tests/' + testFolder));
 
