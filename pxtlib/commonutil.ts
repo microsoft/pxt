@@ -30,12 +30,12 @@ namespace ts.pxtc.Util {
 
     export function htmlEscape(_input: string) {
         if (!_input) return _input; // null, undefined, empty string test
-        return _input.replace(/([^\w .!?\-$])/g, c => "&#" + c.charCodeAt(0) + ";");
+        return _input.replace(/([^\w .!?\-$])/ug, c => "&#" + c.codePointAt(0) + ";");
     }
 
     export function htmlUnescape(_input: string) {
         if (!_input) return _input; // null, undefined, empty string test
-        return _input.replace(/(&#\d+;)/g, c => String.fromCharCode(Number(c.substr(2, c.length - 3))));
+        return _input.replace(/(&#\d+;)/g, c => String.fromCodePoint(Number(c.substr(2, c.length - 3))));
     }
 
     export function jsStringQuote(s: string) {
