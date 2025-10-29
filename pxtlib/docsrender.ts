@@ -548,7 +548,15 @@ namespace pxt.docs {
             }
 
             if (!id) {
-                const plain = html.replace(/<[^>]+>/g, '').toLowerCase();
+                const stripHtmlTags = (input: string): string => {
+                    let prev;
+                    do {
+                        prev = input;
+                        input = input.replace(/<[^>]+>/g, '');
+                    } while (input !== prev);
+                    return input;
+                };
+                const plain = stripHtmlTags(html).toLowerCase();
                 id = plain.replace(/[^\w]+/g, '-');
             }
 
