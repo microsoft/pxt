@@ -476,7 +476,6 @@ namespace pxt.docs {
 
     export function setupRenderer(renderer: MarkedRenderer) {
         renderer.image = function (this: MarkedRenderer, token: MarkedImageToken) {
-            const endpointName = "makecodeprodmediaeastus-usea";
             const href = token.href || "";
             const title = token.title || "";
             const text = token.text || "";
@@ -484,29 +483,6 @@ namespace pxt.docs {
             if (href.startsWith("youtube:")) {
                 const videoId = href.split(":").pop();
                 return `<div class="tutorial-video-embed"><iframe class="yt-embed" src="https://www.youtube.com/embed/${videoId}" title="${text}" frameborder="0" allowFullScreen allow="autoplay; picture-in-picture"></iframe></div>`;
-            } else if (href.startsWith("azuremedia:")) {
-                let videoID = href.split(":")[1];
-                const flagsSplit = videoID.split("?");
-                let startTime: string | undefined;
-                let endTime: string | undefined;
-
-                if (flagsSplit[1]) {
-                    videoID = flagsSplit[0];
-                    const passedParameters = flagsSplit[1];
-                    startTime = /start(?:time)?=(\d+)/i.exec(passedParameters)?.[1];
-                    endTime = /end(?:time)?=(\d+)/i.exec(passedParameters)?.[1];
-                }
-
-                const url = new URL(`https://${endpointName}.streaming.media.azure.net/${videoID}/manifest(format=mpd-time-csf).mpd`);
-                if (startTime) {
-                    url.hash = `t=${startTime}`;
-                    url.searchParams.append("startTime", startTime);
-                }
-                if (endTime) {
-                    url.searchParams.append("endTime", endTime);
-                }
-
-                return `<div class="tutorial-video-embed"><video class="ams-embed" controls src="${url.toString()}" /></div>`;
             } else {
                 let out = `<img class="ui image" src="${href}" alt="${text}"`;
                 if (title) {
