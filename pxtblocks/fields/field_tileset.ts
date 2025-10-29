@@ -74,7 +74,7 @@ export class FieldTileset extends FieldImages implements FieldCustom {
                 src: FieldTileset.getTileImage(tile),
                 width: PREVIEW_SIDE_LENGTH,
                 height: PREVIEW_SIDE_LENGTH,
-                alt: displayName(tile)
+                alt: displayName(tile) || tile.id
             }, tile.id, tile])
         }
 
@@ -167,7 +167,7 @@ export class FieldTileset extends FieldImages implements FieldCustom {
                         src: bitmapToImageURI(pxt.sprite.Bitmap.fromData(tile.bitmap), PREVIEW_SIDE_LENGTH, false),
                         width: PREVIEW_SIDE_LENGTH,
                         height: PREVIEW_SIDE_LENGTH,
-                        alt: displayName(tile)
+                        alt: displayName(tile) || tile.id
                     }, this.value_, tile]
                 }
             }
@@ -247,6 +247,8 @@ export class FieldTileset extends FieldImages implements FieldCustom {
             return null;
         }
 
+        this.localTile = undefined;
+
         return newValue;
     }
 
@@ -261,7 +263,7 @@ export class FieldTileset extends FieldImages implements FieldCustom {
                         src: bitmapToImageURI(pxt.sprite.Bitmap.fromData(this.localTile.bitmap), PREVIEW_SIDE_LENGTH, false),
                         width: PREVIEW_SIDE_LENGTH,
                         height: PREVIEW_SIDE_LENGTH,
-                        alt: displayName(this.localTile)
+                        alt: displayName(this.localTile) || this.localTile.id
                     },
                     this.localTile.id,
                     this.localTile
