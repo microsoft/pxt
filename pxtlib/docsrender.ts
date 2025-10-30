@@ -16,6 +16,7 @@ namespace pxt.docs {
             parse: (tokens: any[], loose?: boolean) => string;
             parseInline: (tokens: any[]) => string;
         };
+        code?: (token: any) => string;
         link?: (token: any) => string;
         image?: (token: any) => string;
         listitem?: (token: any) => string;
@@ -78,6 +79,42 @@ namespace pxt.docs {
 
     function replaceAll(replIn: string, x: string, y: string) {
         return replIn.split(x).join(y)
+    }
+
+    // TODO: go through *everything* and change e.g. lang-blocks to language-blocks? or leave this forever.
+    export function ensureCodeLanguageAliases(markup: string): string {
+        if (!markup) return markup;
+
+        const normalize = (classValue: string): string => {
+            const classes = classValue.split(/\s+/g).filter(Boolean);
+            if (!classes.length) return classValue;
+
+            const classSet = new Set(classes);
+            let mutated = false;
+
+            for (const cls of classes) {
+                if (cls.startsWith("language-")) {
+                    const legacy = `lang-${cls.substring("language-".length)}`;
+                    if (!classSet.has(legacy)) {
+                        classSet.add(legacy);
+                        mutated = true;
+                    }
+                } else if (cls.startsWith("lang-")) {
+                    const modern = `language-${cls.substring("lang-".length)}`;
+                    if (!classSet.has(modern)) {
+                        classSet.add(modern);
+                        mutated = true;
+                    }
+                }
+            }
+
+            return mutated ? Array.from(classSet).join(" ") : classValue;
+        };
+
+        return markup.replace(/(<code\b[^>]*class=)(['"])([^'\"]*)(\2)/gi, (full, prefix, quote, classValue) => {
+            const updated = normalize(classValue);
+            return updated === classValue ? full : `${prefix}${quote}${updated}${quote}`;
+        });
     }
 
     export function htmlQuote(s: string): string {
@@ -615,6 +652,22 @@ namespace pxt.docs {
         // We have to re-create the renderer every time to avoid the link() function's closure capturing the opts
         const renderer = new markedInstance.Renderer() as MarkedRenderer;
         setupRenderer(renderer);
+        const originalCode = renderer.code ? renderer.code.bind(renderer) : undefined;
+        renderer.code = function (token: any) {
+            let rendered = originalCode ? originalCode(token) : undefined;
+            if (!rendered) {
+                const text = typeof token?.text === "string" ? token.text : "";
+                const lang = token?.lang;
+                const escaped = token?.escaped !== false;
+                const code = escaped ? text : htmlQuote(text);
+                if (lang) {
+                    rendered = `<pre><code class="language-${lang}">${code}</code></pre>`;
+                } else {
+                    rendered = `<pre><code>${code}</code></pre>`;
+                }
+            }
+            return ensureCodeLanguageAliases(rendered);
+        };
         const linkRenderer = renderer.link ? renderer.link.bind(renderer) : undefined;
         renderer.link = function (this: MarkedRenderer, token: { href: string; title?: string | null; text: string; tokens?: any[] }) {
             const originalHref = token.href || "";
@@ -700,6 +753,7 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
         }
 
         html = coerceToString(sanitizedHtml, coerceToString(html, ""));
+        html = ensureCodeLanguageAliases(html);
 
         // support for breaks which somehow don't work out of the box
         html = html.replace(/&lt;br\s*\/&gt;/ig, "<br/>");
