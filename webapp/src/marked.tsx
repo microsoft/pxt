@@ -665,49 +665,65 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         markdown = markdown.replace(/@([a-z]+)@/ig, (m, param) => pubinfo[param] || 'unknown macro')
 
         // create a custom renderer
-        let renderer = new marked.Renderer()
+        const renderer = new marked.Renderer()
         pxt.docs.setupRenderer(renderer);
 
         // always popout links
-        const linkRenderer = renderer.link;
-        renderer.link = function (href: string, title: string, text: string) {
-            const html = linkRenderer.call(renderer, href, title, text);
+        const linkRenderer = renderer.link ? renderer.link.bind(renderer) : undefined;
+        renderer.link = function (this: any, token: marked.Tokens.Link) {
+            const html = linkRenderer
+                ? linkRenderer(token)
+                : `<a href="${token.href}">${this.parser.parseInline(token.tokens)}</a>`;
             return html.replace(/^<a /, `<a target="_blank" rel="nofollow noopener" `);
         };
 
         // Set markdown options
         marked.setOptions({
             renderer: renderer,
-            sanitize: true,
-            sanitizer: pxt.docs.requireDOMSanitizer()
+            gfm: true,
+            breaks: false,
+            pedantic: false
         })
+
+        const sanitizer = pxt.docs.requireDOMSanitizer() as ((input: string) => string) | undefined;
 
         // preemptively remove script tags, although they'll be escaped anyway
         // prevents ugly <script ...> rendering in docs. This is not intended to sanitize
         // the markedown, that is done using DOMPurify (see setOptions above)
         markdown = markdown.replace(/<\s*script[^>]*>.*<\/\s*script[^>]*>/gi, '');
 
-        // Render the markdown into a div outside of the DOM tree to prevent the page from reflowing
-        // when we edit the HTML it produces. Then, add the finished result to the content div
         const tempDiv = document.createElement("div");
+        const applyRenderedHtml = (html: string) => {
+            /* eslint-disable @microsoft/sdl/no-inner-html */
+            const safeHtml = sanitizer ? sanitizer(html) : html;
+            const normalizedHtml = typeof safeHtml === "string" ? safeHtml : (safeHtml as any)?.toString?.() ?? html;
+            tempDiv.innerHTML = normalizedHtml;
+            /* eslint-enable @microsoft/sdl/no-inner-html */
 
-        // We pass DOMPurify to marked in the call to setOptions above. This should be safe
-        /* eslint-disable @microsoft/sdl/no-inner-html */
-        tempDiv.innerHTML = marked(markdown);
-        /* eslint-enable @microsoft/sdl/no-inner-html */
+            // We'll go through a series of adjustments here, rendering inline blocks, blocks and snippets as needed
+            this.renderInlineBlocks(tempDiv);
+            this.renderSnippets(tempDiv);
+            this.renderBullets(tempDiv);
+            this.renderAccordianHints(tempDiv);
+            this.renderOthers(tempDiv);
+            this.renderVideo(tempDiv);
 
-        // We'll go through a series of adjustments here, rendering inline blocks, blocks and snippets as needed
-        this.renderInlineBlocks(tempDiv);
-        this.renderSnippets(tempDiv);
-        this.renderBullets(tempDiv);
-        this.renderAccordianHints(tempDiv);
-        this.renderOthers(tempDiv);
-        this.renderVideo(tempDiv);
+            content.innerHTML = "";
+            content.append(...tempDiv.childNodes);
 
-        content.innerHTML = "";
-        content.append(...tempDiv.childNodes);
+            pxt.perf.measureEnd(Measurements.RenderMarkdown);
+        };
 
-        pxt.perf.measureEnd(Measurements.RenderMarkdown);
+        const rendered = marked.marked(markdown);
+        if ((rendered as any)?.then) {
+            (rendered as Promise<string>).then(applyRenderedHtml).catch(e => {
+                pxt.reportException(e);
+                pxt.perf.measureEnd(Measurements.RenderMarkdown);
+            });
+            return;
+        }
+
+        applyRenderedHtml(rendered as string);
     }
 
     componentDidMount() {
