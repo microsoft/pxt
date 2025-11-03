@@ -361,9 +361,9 @@ export function enableControllerAnalytics() {
         return;
     }
 
-    const te = pxt.tickEvent;
-    pxt.tickEvent = function (id: string, data?: pxt.Map<string | number>): void {
-        if (te) te(id, data);
+    const analyticsTickEvent = pxt.tickEvent;
+    pxt.tickEvent = function (id: string, data?: pxt.Map<string | number>, opts?: pxt.TelemetryEventOptions): void {
+        if (analyticsTickEvent) analyticsTickEvent(id, data, opts);
         postHostMessageAsync(<pxt.editor.EditorMessageEventRequest>{
             type: 'pxthost',
             action: 'event',
