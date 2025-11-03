@@ -1069,58 +1069,101 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
             smartypants: false
         };
 
-        let dummy: pxt.TOCMenuEntry = { name: 'dummy', subitems: [] };
-        let currentStack: pxt.TOCMenuEntry[] = [];
-        currentStack.push(dummy);
+        const tokens = markedInstance.lexer(summaryMD, options);
 
-        let tokens = markedInstance.lexer(summaryMD, options);
-        let wasListStart = false
-        tokens.forEach((token: any) => {
-            switch (token.type) {
-                case "heading":
-                    if (token.depth == 3) {
-                        // heading
-                    }
-                    break;
-                case "list_start":
-                    break;
-                case "list_item_start":
-                case "loose_item_start":
-                    wasListStart = true;
-                    let newItem: pxt.TOCMenuEntry = {
-                        name: '',
-                        path: '',
-                        subitems: []
-                    };
-                    currentStack.push(newItem);
-                    return;
-                case "text":
-                    let lastTocEntry = currentStack[currentStack.length - 1]
-                    if (token.text.indexOf("[") >= 0) {
-                        token.text.replace(/\[(.*?)\]\((.*?)\)/i, function (full: string, name: string, path: string) {
-                            lastTocEntry.name = name;
-                            lastTocEntry.path = path.replace('.md', '');
-                        });
-                    }
-                    else if (wasListStart) {
-                        lastTocEntry.name = token.text
-                    }
-                    break;
-                case "list_item_end":
-                case "loose_item_end":
-                    let docEntry = currentStack.pop();
-                    currentStack[currentStack.length - 1].subitems.push(docEntry);
-                    break;
-                case "list_end":
-                    break;
-                default:
+        const sanitizePath = (href: string | undefined) =>
+            (href || "").replace(/\.md$/i, "");
+
+        const collectText = (tok: any): string => {
+            if (!tok) return "";
+            if (typeof tok.text === "string") return tok.text.trim();
+            if (tok.tokens && tok.tokens.length) {
+                for (const inner of tok.tokens) {
+                    const res = collectText(inner);
+                    if (res) return res;
+                }
             }
-            wasListStart = false;
-        })
+            return "";
+        };
 
-        let TOC = dummy.subitems
-        if (!TOC || TOC.length == 0) return null
-        return TOC
+        const readEntry = (item: any): pxt.TOCMenuEntry => {
+            const entry: pxt.TOCMenuEntry = { name: "", path: "", subitems: [] };
+            let fallbackName = "";
+
+            const visitTokens = (arr?: any[]) => {
+                if (!arr) return;
+                for (const tok of arr) {
+                    if (!tok) continue;
+                    switch (tok.type) {
+                        case "link":
+                            if (!entry.name) entry.name = (tok.text || "").trim();
+                            if (!entry.path) entry.path = sanitizePath(tok.href);
+                            break;
+                        case "text":
+                        case "codespan":
+                        case "strong":
+                        case "em":
+                        case "paragraph":
+                            if (tok.tokens && tok.tokens.length) {
+                                visitTokens(tok.tokens);
+                            } else if (!fallbackName && typeof tok.text === "string") {
+                                fallbackName = tok.text.trim();
+                            }
+                            break;
+                        default:
+                            if (tok.tokens && tok.tokens.length)
+                                visitTokens(tok.tokens);
+                    }
+                }
+            };
+
+            visitTokens(item?.tokens);
+            if (!entry.name) {
+                fallbackName = fallbackName || collectText(item);
+                if (!fallbackName && typeof item?.text === "string") {
+                    fallbackName = item.text.split(/\n/)[0].trim();
+                }
+                entry.name = fallbackName || "";
+            }
+
+            entry.path = sanitizePath(entry.path);
+
+            return entry;
+        };
+
+        const processList = (items: any[], target: pxt.TOCMenuEntry[]) => {
+            if (!items || !items.length) return;
+            for (const item of items) {
+                const entry = readEntry(item);
+
+                const childLists = (item?.tokens || []).filter((tok: any) => tok?.type === "list");
+                for (const child of childLists) {
+                    processList(child?.items || [], entry.subitems);
+                }
+
+                if (!entry.name && !entry.subitems.length)
+                    continue;
+
+                target.push(entry);
+            }
+        };
+
+        const root: pxt.TOCMenuEntry[] = [];
+        for (const token of tokens) {
+            if (token?.type === "list" && Array.isArray(token.items)) {
+                processList(token.items, root);
+            }
+        }
+
+        const filterEmpty = (entries: pxt.TOCMenuEntry[]): pxt.TOCMenuEntry[] =>
+            entries.filter(e => !!e.name || (e.subitems && e.subitems.length)).map(e => ({
+                name: e.name,
+                path: e.path,
+                subitems: e.subitems ? filterEmpty(e.subitems) : []
+            }));
+
+        let toc = filterEmpty(root);
+        return toc.length ? toc : null;
     }
 
     export function visitTOC(toc: TOCMenuEntry[], fn: (e: TOCMenuEntry) => void) {
