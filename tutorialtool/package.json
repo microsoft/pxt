@@ -42,5 +42,8 @@
     "prettier": "^2.7.1",
     "react-app-alias-ex": "^2.1.0",
     "react-app-rewired": "^2.2.1"
+  },
+  "overrides": {
+    "nth-check": "2.1.1"
   }
 }

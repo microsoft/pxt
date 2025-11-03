@@ -43,5 +43,8 @@
     "react-app-alias-ex": "^2.1.0",
     "react-app-rewired": "^2.2.1",
     "tailwindcss": "^3.1.8"
+  },
+  "overrides": {
+    "nth-check": "2.1.1"
   }
 }
