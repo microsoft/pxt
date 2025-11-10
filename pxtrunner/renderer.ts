@@ -76,6 +76,41 @@ export function defaultClientRenderOptions() {
     return renderOptions;
 }
 
+function ensureLegacyLanguageAliasesInDom(root?: Document | Element) {
+    const scope = root || (typeof document !== 'undefined' ? document : undefined);
+    if (!scope) return;
+    const nodes = scope.querySelectorAll('code[class]');
+    nodes.forEach(node => {
+        const el = node as Element;
+        const classAttr = el.getAttribute('class');
+        if (!classAttr) return;
+        const classes = classAttr.split(/\s+/g).filter(Boolean);
+        if (!classes.length) return;
+        const classSet = new Set(classes);
+        let mutated = false;
+
+        for (const cls of classes) {
+            if (cls.startsWith('language-')) {
+                const legacy = `lang-${cls.substring('language-'.length)}`;
+                if (!classSet.has(legacy)) {
+                    classSet.add(legacy);
+                    mutated = true;
+                }
+            } else if (cls.startsWith('lang-')) {
+                const modern = `language-${cls.substring('lang-'.length)}`;
+                if (!classSet.has(modern)) {
+                    classSet.add(modern);
+                    mutated = true;
+                }
+            }
+        }
+
+        if (mutated) {
+            el.setAttribute('class', Array.from(classSet).join(' '));
+        }
+    });
+}
+
 export interface WidgetOptions {
     showEdit?: boolean;
     showJs?: boolean;
@@ -1366,6 +1401,7 @@ export function renderAsync(options?: ClientRenderOptions): Promise<void> {
     if (options.pxtUrl) options.pxtUrl = options.pxtUrl.replace(/\/$/, '');
     if (options.showEdit) options.showEdit = !pxt.BrowserUtils.isIFrame();
 
+    ensureLegacyLanguageAliasesInDom();
     mergeConfig(options);
     readAssetJson(options);
 

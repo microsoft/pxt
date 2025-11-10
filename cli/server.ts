@@ -433,7 +433,8 @@ export function expandHtml(html: string, params?: pxt.Map<string>, appTheme?: px
         // so we don't do them here either.
     }
     pxt.docs.prepTemplate(d)
-    return d.finish().replace(/@-(\w+)-@/g, (f, w) => "@" + w + "@")
+    const expanded = d.finish().replace(/@-(\w+)-@/g, (f, w) => "@" + w + "@")
+    return pxt.docs.ensureCodeLanguageAliases(expanded)
 }
 
 export function expandDocTemplateCore(template: string) {
