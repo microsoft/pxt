@@ -5,7 +5,7 @@ import { ReadyResources } from '../lib/readyResources';
 import { getCompletedTags, lookupActivityProgress, isMapCompleted,
     isRewardNode, applyUserUpgrades, applyUserMigrations } from '../lib/skillMapUtils';
 
-export type ModalType = "restart-warning" | "completion" | "report-abuse" | "reset" | "carryover" | "share" | "login" | "login-prompt" | "delete-account" | "reward";
+export type ModalType = "restart-warning" | "completion" | "report-abuse" | "reset" | "carryover" | "share" | "login" | "login-prompt" | "delete-account" | "reward" | "markdown-intro";
 export type PageSourceStatus = "approved" | "banned" | "unknown";
 
 // State for the entire page
@@ -50,6 +50,7 @@ export interface ModalState {
     currentMapId?: string;
     currentActivityId?: string;
     currentReward?: MapReward;
+    markdownContent?: string;
 }
 
 export interface ShareState {

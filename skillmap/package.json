@@ -4,6 +4,8 @@
   "private": true,
   "dependencies": {
     "@types/node": "8.0.53",
+    "dompurify": "3.3.0",
+    "marked": "17.0.0",
     "react-redux": "7.2.9",
     "redux": "4.2.0"
   },
