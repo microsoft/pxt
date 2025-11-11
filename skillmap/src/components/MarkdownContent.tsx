@@ -7,7 +7,7 @@ interface Props {
 }
 
 export const MarkdownContent = (props: Props) => {
-    const parsed = useParsedMarkdown(props.markdown);
+    const sanitizedHTML = useSanitizedMarkdown(props.markdown);
 
     let containerRef: HTMLDivElement | null = null;
 
@@ -16,12 +16,14 @@ export const MarkdownContent = (props: Props) => {
     }
 
     React.useEffect(() => {
-        if (parsed && containerRef) {
-            containerRef.innerHTML = parsed;
+        if (sanitizedHTML && containerRef) {
+            // Note: this innerHTML has been sanitized by DOMPurify
+            // eslint-disable-next-line @microsoft/sdl/no-inner-html
+            containerRef.innerHTML = sanitizedHTML;
         }
-    }, [containerRef, parsed])
+    }, [containerRef, sanitizedHTML])
 
-    if (!parsed) {
+    if (!sanitizedHTML) {
         return (
             <div className="common-spinner" />
         );
@@ -33,22 +35,21 @@ export const MarkdownContent = (props: Props) => {
 }
 
 
-function useParsedMarkdown(markdown: string): string | undefined {
-    const [parsed, setParsed] = React.useState<string>();
+function useSanitizedMarkdown(markdown: string): string | undefined {
+    const [sanitized, setSanitized] = React.useState<string>();
 
     React.useEffect(() => {
-        // Only applies to ancient browsers
+        // Only applies to ancient browsers like IE
         if (!DOMPurify.isSupported) {
-            setParsed(`<div></div>`)
+            setSanitized(`<div></div>`)
             return;
         }
 
         (async () => {
             const unsanitized = await Marked.parse(markdown);
-            const sanitized = DOMPurify.sanitize(unsanitized);
-            setParsed(sanitized);
+            setSanitized(DOMPurify.sanitize(unsanitized));
         })();
     }, [markdown])
 
-    return parsed;
+    return sanitized;
 }
