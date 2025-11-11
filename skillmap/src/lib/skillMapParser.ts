@@ -384,6 +384,8 @@ function inflateMetadata(section: MarkdownSection): PageMetadata {
     const lockedNodeColor = section.attributes["lockednodecolor"];
     const completedNodeColor = section.attributes["completednodecolor"];
 
+    const introductoryModal = section.codeBlocks?.find(b => b.languageCode === "intro");
+
     return {
         title: section.attributes["name"] || section.header,
         description: section.attributes["description"],
@@ -408,7 +410,8 @@ function inflateMetadata(section: MarkdownSection): PageMetadata {
             completedNodeForeground: (completedNodeColor || secondary) ? getContrastingColor(completedNodeColor || secondary) : "#000000",
             selectedStrokeColor: highlight || "var(--pxt-primary-background)",
             pathOpacity: 0.5,
-        }
+        },
+        introductoryModal: introductoryModal?.content
     }
 }
 

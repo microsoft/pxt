@@ -7,6 +7,7 @@ interface PageMetadata {
     bannerImageUrl?: string; // Banner image in the info panel when no activity is selected
     theme?: SkillGraphTheme
     alternateSources?: string[]; // List of alternate pageSourceUrls to import user projects from
+    introductoryModal?: string; // Text content for a modal that displays when a skillmap that has not been started is visited
 }
 
 interface SkillMap {

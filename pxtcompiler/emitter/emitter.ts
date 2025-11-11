@@ -657,6 +657,14 @@ namespace ts.pxtc {
     }
 
     function isArrayType(t: Type) {
+        if (t.flags & TypeFlags.Union && (t as UnionType).types) {
+            for (const subtype of (t as UnionType).types) {
+                if (!isArrayType(subtype)) {
+                    return false;
+                }
+            }
+            return true;
+        }
         if (!isObjectType(t)) {
             return false;
         }
@@ -701,7 +709,12 @@ namespace ts.pxtc {
 
     function arrayElementType(t: Type, idx = -1): Type {
         if (isArrayType(t))
-            return checkType((<TypeReference>t).typeArguments[0])
+            if (t.flags & TypeFlags.Union) {
+                return checkType(t.getNumberIndexType());
+            }
+            else {
+                return checkType((<TypeReference>t).typeArguments[0])
+            }
         return checker.getIndexTypeOfType(t, IndexKind.Number);
     }
 
