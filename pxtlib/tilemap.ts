@@ -985,7 +985,7 @@ namespace pxt {
         public getGalleryAssets(type: AssetType.Json): JsonAsset[];
         public getGalleryAssets(type: AssetType): Asset[];
         public getGalleryAssets(type: AssetType) {
-            return this.getAssetCollection(type).getSnapshot();
+            return this.getAssetCollection(type, true).getSnapshot();
         }
 
         public lookupBlockAsset(assetType: AssetType.Image, blockID: string): ProjectImage;

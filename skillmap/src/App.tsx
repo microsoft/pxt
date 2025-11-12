@@ -26,9 +26,10 @@ import {
     dispatchCloseSelectLanguage,
     dispatchCloseSelectTheme,
     dispatchShowFeedback,
-    dispatchCloseFeedback
+    dispatchCloseFeedback,
+    dispatchSetModal
 } from './actions/dispatch';
-import { PageSourceStatus, SkillMapState } from './store/reducer';
+import { ModalState, PageSourceStatus, SkillMapState } from './store/reducer';
 import { HeaderBar } from './components/HeaderBar';
 import { AppModal } from './components/AppModal';
 import { SkillGraphContainer } from './components/SkillGraphContainer';
@@ -83,6 +84,7 @@ interface AppProps {
     dispatchCloseSelectTheme: () => void;
     dispatchShowFeedback: () => void;
     dispatchCloseFeedback: () => void;
+    dispatchSetModal: (modal: ModalState) => void;
 }
 
 interface AppState {
@@ -230,7 +232,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
 
                 if (metadata) {
                     const { title, description, infoUrl, backgroundImageUrl, pixelatedBackground,
-                        bannerImageUrl, theme, alternateSources } = metadata;
+                        bannerImageUrl, theme, alternateSources, introductoryModal } = metadata;
                     setPageTitle(title);
                     this.props.dispatchSetPageTitle(title);
                     if (description) this.props.dispatchSetPageDescription(description);
@@ -239,6 +241,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
                     if (bannerImageUrl) this.props.dispatchSetPageBannerImageUrl(bannerImageUrl);
                     if (alternateSources) this.props.dispatchSetPageAlternateUrls(alternateSources);
                     if (theme) this.props.dispatchSetPageTheme(theme);
+                    if (introductoryModal) this.props.dispatchSetModal({ type: "markdown-intro", markdownContent: introductoryModal })
                 }
 
                 this.setState({ error: undefined });
@@ -627,6 +630,7 @@ const mapDispatchToProps = {
     dispatchCloseSelectTheme,
     dispatchShowFeedback,
     dispatchCloseFeedback,
+    dispatchSetModal
 };
 
 const App = connect(mapStateToProps, mapDispatchToProps)(AppImpl);
