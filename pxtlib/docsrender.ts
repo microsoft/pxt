@@ -81,45 +81,6 @@ namespace pxt.docs {
         return replIn.split(x).join(y)
     }
 
-    function restoreCodeLanguageClassesFromTokens(markup: string, languages: string[]): string {
-        if (!markup || !languages?.length) return markup;
-
-        let index = 0;
-
-        const ensureClassList = (existing: string, lang: string): string => {
-            const classSet = new Set(existing.split(/\s+/g).filter(Boolean));
-            const normalizedLang = lang.trim().toLowerCase();
-            if (!normalizedLang) return existing;
-            classSet.add(`language-${normalizedLang}`);
-            classSet.add(`lang-${normalizedLang}`);
-            return Array.from(classSet).join(" ");
-        };
-
-        return markup.replace(/(<pre[^>]*>\s*)<code\b([^>]*)>/gi, (full: string, preStart: string, codeAttrs: string) => {
-            if (index >= languages.length) return full;
-            const rawLang = languages[index++] || "";
-            const lang = rawLang.trim();
-            if (!lang) return full;
-
-            const attrSegment = codeAttrs || "";
-            const classMatch = /\bclass\s*=\s*(["'])([^"']*)(\1)/i.exec(attrSegment);
-            let updatedAttrs = attrSegment;
-            const normalizedLang = lang.toLowerCase();
-
-            if (classMatch) {
-                const quote = classMatch[1];
-                const existingClasses = classMatch[2];
-                const replacement = `class=${quote}${ensureClassList(existingClasses, lang)}${quote}`;
-                updatedAttrs = attrSegment.replace(classMatch[0], replacement);
-            } else {
-                const needsSpace = attrSegment.trim().length > 0 ? (/[\s]$/.test(attrSegment) ? "" : " ") : " ";
-                updatedAttrs = `${attrSegment}${needsSpace}class=\"language-${normalizedLang} lang-${normalizedLang}\"`;
-            }
-
-            return `${preStart}<code${updatedAttrs}>`;
-        });
-    }
-
     export function htmlQuote(s: string): string {
         s = replaceAll(s, "&", "&amp;")
         s = replaceAll(s, "<", "&lt;")
@@ -581,15 +542,14 @@ namespace pxt.docs {
         }
 
         renderer.code = function (token: { lang: string; text: string; escaped: boolean }) {
-            const lang = typeof token?.lang === "string" ? token.lang.trim() : "";
+            const rawLang = typeof token?.lang === "string" ? token.lang.trim() : "";
+            const normalizedLang = htmlQuote(rawLang.toLowerCase());
             const text = typeof token?.text === "string" ? token.text : "";
             const escaped = token?.escaped !== false;
             const code = escaped ? text : htmlQuote(text);
-            const rendered = lang
-                ? `<pre><code class="lang-${lang}">${code}</code></pre>`
-                : `<pre><code>${code}</code></pre>`;
+            const classAttr = normalizedLang ? ` class="lang-${normalizedLang}"` : "";
 
-            return rendered;
+            return `<pre><code${classAttr}>${code}</code></pre>`;
         };
 
         const versionPath = context?.versionPath;
@@ -730,11 +690,6 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
             return macro || 'unknown macro'
         });
 
-        const codeTokens = markedInstance.lexer(markdown);
-        const fencedCodeLanguages = codeTokens
-            .filter(tok => tok && typeof tok === "object" && tok.type === "code")
-            .map(tok => (typeof tok.lang === "string" ? tok.lang : ""));
-
         let html = markedInstance(markdown);
         const coerceToString = (value: unknown, fallback: string = "") => {
             if (typeof value === "string") return value;
@@ -871,7 +826,6 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
             html += injectBody(k + "-container", registers[k])
         }
 
-        html = restoreCodeLanguageClassesFromTokens(html, fencedCodeLanguages);
         pubinfo["body"] = html
         // don't mangle target name in title, it is already in the sitename
         pubinfo["name"] = pubinfo["title"] || ""
