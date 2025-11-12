@@ -35,7 +35,7 @@ import { SUB_WEBAPPS } from './subwebapp';
 const rimraf: (f: string, opts: any, cb: (err: Error, res: any) => void) => void = require('rimraf');
 
 // dompurify requires a DOM implementation; sanitize-html does not.
-// sanitize-html is a big more aggressive and culls class names by default from code snippets
+// sanitize-html is a bit more aggressive and culls class names by default from code snippets
 // Need to wrap to prevent that. Possibly worth swapping to jsdom + dompurify later for consistency.
 pxt.docs.requireDOMSanitizer = () => {
     const sanitizeHtml = require("sanitize-html");

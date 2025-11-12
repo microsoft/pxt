@@ -679,6 +679,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
 
         // Set markdown options
         marked.setOptions({
+            async: false,
             renderer: renderer,
             gfm: true,
             breaks: false,
@@ -689,41 +690,31 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
 
         // preemptively remove script tags, although they'll be escaped anyway
         // prevents ugly <script ...> rendering in docs. This is not intended to sanitize
-        // the markedown, that is done using DOMPurify (see setOptions above)
+        // the markdown, that is done using DOMPurify below
         markdown = markdown.replace(/<\s*script[^>]*>.*<\/\s*script[^>]*>/gi, '');
 
+        // Render the markdown into a div outside of the DOM tree to prevent the page from reflowing
+        // when we edit the HTML it produces. Then, add the finished result to the content div
         const tempDiv = document.createElement("div");
-        const applyRenderedHtml = (html: string) => {
-            /* eslint-disable @microsoft/sdl/no-inner-html */
-            const safeHtml = sanitizer ? sanitizer(html) : html;
-            const normalizedHtml = typeof safeHtml === "string" ? safeHtml : (safeHtml as any)?.toString?.() ?? html;
-            tempDiv.innerHTML = normalizedHtml;
-            /* eslint-enable @microsoft/sdl/no-inner-html */
+        const rendered = marked.marked(markdown) as string;
+        /* eslint-disable @microsoft/sdl/no-inner-html */
+        const safeHtml = sanitizer?.(rendered);
+        const normalizedHtml = typeof safeHtml === "string" ? safeHtml : (safeHtml as any)?.toString?.() ?? rendered;
+        tempDiv.innerHTML = normalizedHtml;
+        /* eslint-enable @microsoft/sdl/no-inner-html */
 
-            // We'll go through a series of adjustments here, rendering inline blocks, blocks and snippets as needed
-            this.renderInlineBlocks(tempDiv);
-            this.renderSnippets(tempDiv);
-            this.renderBullets(tempDiv);
-            this.renderAccordianHints(tempDiv);
-            this.renderOthers(tempDiv);
-            this.renderVideo(tempDiv);
+        // We'll go through a series of adjustments here, rendering inline blocks, blocks and snippets as needed
+        this.renderInlineBlocks(tempDiv);
+        this.renderSnippets(tempDiv);
+        this.renderBullets(tempDiv);
+        this.renderAccordianHints(tempDiv);
+        this.renderOthers(tempDiv);
+        this.renderVideo(tempDiv);
 
-            content.innerHTML = "";
-            content.append(...tempDiv.childNodes);
+        content.innerHTML = "";
+        content.append(...tempDiv.childNodes);
 
-            pxt.perf.measureEnd(Measurements.RenderMarkdown);
-        };
-
-        const rendered = marked.marked(markdown);
-        if ((rendered as any)?.then) {
-            (rendered as Promise<string>).then(applyRenderedHtml).catch(e => {
-                pxt.reportException(e);
-                pxt.perf.measureEnd(Measurements.RenderMarkdown);
-            });
-            return;
-        }
-
-        applyRenderedHtml(rendered as string);
+        pxt.perf.measureEnd(Measurements.RenderMarkdown);
     }
 
     componentDidMount() {
