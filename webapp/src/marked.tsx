@@ -697,8 +697,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
             /* eslint-disable @microsoft/sdl/no-inner-html */
             const safeHtml = sanitizer ? sanitizer(html) : html;
             const normalizedHtml = typeof safeHtml === "string" ? safeHtml : (safeHtml as any)?.toString?.() ?? html;
-            const aliasedHtml = pxt.docs.ensureCodeLanguageAliases(normalizedHtml);
-            tempDiv.innerHTML = aliasedHtml;
+            tempDiv.innerHTML = normalizedHtml;
             /* eslint-enable @microsoft/sdl/no-inner-html */
 
             // We'll go through a series of adjustments here, rendering inline blocks, blocks and snippets as needed

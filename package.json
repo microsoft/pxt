@@ -145,9 +145,9 @@
     "react-redux": "7.2.9",
     "react-tooltip": "3.9.0",
     "redux": "4.2.0",
-  "smoothie": "1.36.1",
-  "typescript": "4.8.3",
-  "yargs": "^17.7.2"
+    "smoothie": "1.36.1",
+    "typescript": "4.8.3",
+    "yargs": "^17.7.2"
   },
   "overrides": {
     "combine-source-map": {

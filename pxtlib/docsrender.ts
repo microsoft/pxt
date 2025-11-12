@@ -81,42 +81,6 @@ namespace pxt.docs {
         return replIn.split(x).join(y)
     }
 
-    // TODO: go through *everything* and change e.g. lang-blocks to language-blocks? or leave this forever.
-    export function ensureCodeLanguageAliases(markup: string): string {
-        if (!markup) return markup;
-
-        const normalize = (classValue: string): string => {
-            const classes = classValue.split(/\s+/g).filter(Boolean);
-            if (!classes.length) return classValue;
-
-            const classSet = new Set(classes);
-            let mutated = false;
-
-            for (const cls of classes) {
-                if (cls.startsWith("language-")) {
-                    const legacy = `lang-${cls.substring("language-".length)}`;
-                    if (!classSet.has(legacy)) {
-                        classSet.add(legacy);
-                        mutated = true;
-                    }
-                } else if (cls.startsWith("lang-")) {
-                    const modern = `language-${cls.substring("lang-".length)}`;
-                    if (!classSet.has(modern)) {
-                        classSet.add(modern);
-                        mutated = true;
-                    }
-                }
-            }
-
-            return mutated ? Array.from(classSet).join(" ") : classValue;
-        };
-
-        return markup.replace(/(<code\b[^>]*class=)(['"])([^'\"]*)(\2)/gi, (full, prefix, quote, classValue) => {
-            const updated = normalize(classValue);
-            return updated === classValue ? full : `${prefix}${quote}${updated}${quote}`;
-        });
-    }
-
     function restoreCodeLanguageClassesFromTokens(markup: string, languages: string[]): string {
         if (!markup || !languages?.length) return markup;
 
@@ -550,7 +514,7 @@ namespace pxt.docs {
         TOC?: TOCMenuEntry[]; // TOC parsed here
     }
 
-    export function setupRenderer(renderer: MarkedRenderer) {
+    export function setupRenderer(renderer: MarkedRenderer, context: { versionPath?: string } = {}) {
         renderer.image = function (this: MarkedRenderer, token: MarkedImageToken) {
             const href = token.href || "";
             const title = token.title || "";
@@ -615,6 +579,39 @@ namespace pxt.docs {
             const headerPrefix = this.options?.headerPrefix || "";
             return `<h${token.depth} id="${headerPrefix}${id}">${html}</h${token.depth}>`;
         }
+
+        renderer.code = function (token: { lang: string; text: string; escaped: boolean }) {
+            const lang = typeof token?.lang === "string" ? token.lang.trim() : "";
+            const text = typeof token?.text === "string" ? token.text : "";
+            const escaped = token?.escaped !== false;
+            const code = escaped ? text : htmlQuote(text);
+            const rendered = lang
+                ? `<pre><code class="lang-${lang}">${code}</code></pre>`
+                : `<pre><code>${code}</code></pre>`;
+
+            return rendered;
+        };
+
+        const versionPath = context?.versionPath;
+        const linkRenderer = renderer.link ? renderer.link.bind(renderer) : undefined;
+        renderer.link = function (this: MarkedRenderer, token: { href: string; title?: string | null; text: string; tokens?: any[] }) {
+            const originalHref = token.href || "";
+            const isRelative = /^[/#]/.test(originalHref);
+            const adjustedHref = isRelative && versionPath ? `/${versionPath}${originalHref}` : originalHref;
+            const adjustedToken = { ...token, href: adjustedHref };
+
+            const html = linkRenderer
+                ? linkRenderer(adjustedToken)
+                : `<a href="${adjustedToken.href}">${this.parser.parseInline(adjustedToken.tokens || [])}</a>`;
+
+            const attrs: string[] = [];
+            if (!isRelative) {
+                attrs.push('target="_blank"');
+            }
+            attrs.push('rel="nofollow noopener"');
+            const attrString = attrs.join(' ');
+            return html.replace(/^<a /, `<a ${attrString} `);
+        };
     }
 
     export function renderConditionalMacros(template: string, pubinfo: Map<string>): string {
@@ -690,65 +687,16 @@ namespace pxt.docs {
 
         // We have to re-create the renderer every time to avoid the link() function's closure capturing the opts
         const renderer = new markedInstance.Renderer() as MarkedRenderer;
-        setupRenderer(renderer);
-        const originalCode = renderer.code ? renderer.code.bind(renderer) : undefined;
-        renderer.code = function (token: any) {
-            const lang = typeof token?.lang === "string" ? token.lang.trim() : "";
-            let rendered = originalCode ? originalCode(token) : undefined;
-
-            if (rendered && lang) {
-                const hasCodeElement = /<code\b/i.test(rendered);
-                const hasClass = /<code\b[^>]*\bclass\s*=\s*['"]/i.test(rendered);
-                if (hasCodeElement && !hasClass) {
-                    rendered = rendered.replace(/<code\b([^>]*)>/i, (match: string, attrs: string) => {
-                        const attrText = attrs || "";
-                        return `<code class="language-${lang}"${attrText}>`;
-                    });
-                }
-            }
-
-            if (!rendered) {
-                const text = typeof token?.text === "string" ? token.text : "";
-                const escaped = token?.escaped !== false;
-                const code = escaped ? text : htmlQuote(text);
-                rendered = lang
-                    ? `<pre><code class="language-${lang}">${code}</code></pre>`
-                    : `<pre><code>${code}</code></pre>`;
-            }
-
-            return ensureCodeLanguageAliases(rendered);
-        };
-        const linkRenderer = renderer.link ? renderer.link.bind(renderer) : undefined;
-        renderer.link = function (this: MarkedRenderer, token: { href: string; title?: string | null; text: string; tokens?: any[] }) {
-            const originalHref = token.href || "";
-            const isRelative = /^[/#]/.test(originalHref);
-            const adjustedToken = {
-                ...token,
-                href: isRelative && d.versionPath ? `/${d.versionPath}${originalHref}` : originalHref
-            };
-
-            const html = linkRenderer
-                ? linkRenderer(adjustedToken)
-                : `<a href="${adjustedToken.href}">${this.parser.parseInline(adjustedToken.tokens || [])}</a>`;
-
-            const attrs: string[] = [];
-            if (!isRelative) {
-                attrs.push('target="_blank"');
-            }
-            attrs.push('rel="nofollow noopener"');
-            const attrString = attrs.join(' ');
-            return html.replace(/^<a /, `<a ${attrString} `);
-        };
+        setupRenderer(renderer, { versionPath: d.versionPath });
 
         let sanitizer = requireDOMSanitizer();
         markedInstance.setOptions({
             renderer: renderer,
+            async: false, // default but for clarity
             gfm: true,
             tables: true,
             breaks: false,
-            pedantic: false,
-            smartLists: true,
-            smartypants: true
+            pedantic: false
         });
 
         let markdown = opts.markdown
@@ -787,13 +735,7 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
             .filter(tok => tok && typeof tok === "object" && tok.type === "code")
             .map(tok => (typeof tok.lang === "string" ? tok.lang : ""));
 
-        let html = markedInstance(markdown)
-
-        if (typeof (html as any)?.then === "function") {
-            pxt.debug(`docs: async markdown rendering not supported${opts.filepath ? ` (${opts.filepath})` : ""}`);
-            html = "";
-        }
-
+        let html = markedInstance(markdown);
         const coerceToString = (value: unknown, fallback: string = "") => {
             if (typeof value === "string") return value;
             if (value && typeof (value as any).toString === "function") {
@@ -808,7 +750,6 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
         }
 
         html = coerceToString(sanitizedHtml, coerceToString(html, ""));
-        html = ensureCodeLanguageAliases(html);
 
         // support for breaks which somehow don't work out of the box
         html = html.replace(/&lt;br\s*\/&gt;/ig, "<br/>");
@@ -931,8 +872,6 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
         }
 
         html = restoreCodeLanguageClassesFromTokens(html, fencedCodeLanguages);
-        html = ensureCodeLanguageAliases(html);
-
         pubinfo["body"] = html
         // don't mangle target name in title, it is already in the sitename
         pubinfo["name"] = pubinfo["title"] || ""
