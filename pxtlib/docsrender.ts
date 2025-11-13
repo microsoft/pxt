@@ -8,7 +8,50 @@ namespace pxt.docs {
     declare var require: any;
     import U = pxtc.Util;
 
-    let markedInstance: typeof marked;
+    type MarkedRenderFunction = (src: string, options?: any) => string;
+
+    interface MarkedRenderer {
+        options?: any;
+        parser: {
+            parse: (tokens: any[], loose?: boolean) => string;
+            parseInline: (tokens: any[]) => string;
+        };
+        code?: (token: any) => string;
+        link?: (token: any) => string;
+        image?: (token: any) => string;
+        listitem?: (token: any) => string;
+        heading?: (token: any) => string;
+    }
+
+    interface MarkedModule extends MarkedRenderFunction {
+        Renderer: {
+            new (): MarkedRenderer;
+        };
+        lexer: (src: string, options?: any) => any[];
+        setOptions: (options: any) => void;
+        parseInline?: (src: string, options?: any) => string;
+    }
+
+    interface MarkedImageToken {
+        href: string;
+        title?: string | null;
+        text: string;
+    }
+
+    interface MarkedListItemToken {
+        tokens: any[];
+        task?: boolean;
+        checked?: boolean;
+        loose?: boolean;
+    }
+
+    interface MarkedHeadingToken {
+        text?: string;
+        depth: number;
+        tokens: any[];
+    }
+
+    let markedInstance: MarkedModule | undefined;
 
     let stdboxes: Map<string> = {
     }
@@ -87,16 +130,31 @@ namespace pxt.docs {
         href: string;
     }
 
-    export let requireMarked = () => {
-        if (typeof marked !== "undefined") return marked;
+    export let requireMarked = (): MarkedModule | undefined => {
+        const globalMarked = (globalThis as any)?.marked;
+        if (globalMarked) return globalMarked as MarkedModule;
         if (typeof require === "undefined") return undefined;
-        return require("marked") as typeof marked;
+
+        const tryRequire = (id: string): MarkedModule | undefined => {
+            try {
+                const mod = require(id);
+                if (mod?.marked) return mod.marked as MarkedModule;
+                if (mod?.default?.marked) return mod.default.marked as MarkedModule;
+                if (mod?.default) return mod.default as MarkedModule;
+                return mod as MarkedModule;
+            } catch (e) {
+                return undefined;
+            }
+        };
+
+        return tryRequire("marked/lib/marked.umd.js")
+            || tryRequire("marked");
     }
 
     export let requireDOMSanitizer = () => {
         if (typeof DOMPurify !== "undefined") return DOMPurify.sanitize;
         if (typeof require === "undefined") return undefined;
-        return (require("DOMPurify") as typeof DOMPurify).sanitize;
+        return (require("dompurify") as typeof DOMPurify).sanitize;
     }
 
     export interface RenderData {
@@ -417,72 +475,103 @@ namespace pxt.docs {
         TOC?: TOCMenuEntry[]; // TOC parsed here
     }
 
-    export function setupRenderer(renderer: marked.Renderer) {
-        renderer.image = function (href: string, title: string, text: string) {
-            const endpointName="makecodeprodmediaeastus-usea";
+    export function setupRenderer(renderer: MarkedRenderer, context: { versionPath?: string } = {}) {
+        renderer.image = function (this: MarkedRenderer, token: MarkedImageToken) {
+            const href = token.href || "";
+            const title = token.title || "";
+            const text = token.text || "";
+
             if (href.startsWith("youtube:")) {
-                let out = '<div class="tutorial-video-embed"><iframe class="yt-embed" src="https://www.youtube.com/embed/' + href.split(":").pop()
-                    + '" title="' + text + '" frameborder="0" ' + 'allowFullScreen ' + 'allow="autoplay; picture-in-picture"></iframe></div>';
-                return out;
-
-            } else if (href.startsWith("azuremedia:")) {
-
-                let videoID = href.split(":")[1];
-                const flagsSplit = videoID.split("?");
-                let startTime: string;
-                let endTime: string;
-
-                if (flagsSplit[1]) {
-                    videoID = flagsSplit[0];
-                    const passedParameters = flagsSplit[1];
-                    startTime = /start(?:time)?=(\d+)/i.exec(passedParameters)?.[1];
-                    endTime = /end(?:time)?=(\d+)/i.exec(passedParameters)?.[1];
-                }
-                const url = new URL(`https://${endpointName}.streaming.media.azure.net/${videoID}/manifest(format=mpd-time-csf).mpd`)
-                if (startTime) {
-                    url.hash = `t=${startTime}`;
-                    url.searchParams.append("startTime", startTime);
-                }
-                if (endTime) {
-                    url.searchParams.append("endTime", endTime);
-                }
-                let out = `<div class="tutorial-video-embed"><video class="ams-embed" controls src="${url.toString()}" /></div>`;
-                return out;
-
+                const videoId = href.split(":").pop();
+                return `<div class="tutorial-video-embed"><iframe class="yt-embed" src="https://www.youtube.com/embed/${videoId}" title="${text}" frameborder="0" allowFullScreen allow="autoplay; picture-in-picture"></iframe></div>`;
             } else {
-                let out = '<img class="ui image" src="' + href + '" alt="' + text + '"';
+                let out = `<img class="ui image" src="${href}" alt="${text}"`;
                 if (title) {
-                    out += ' title="' + title + '"';
+                    out += ` title="${title}"`;
                 }
                 out += ' loading="lazy"';
-                out += (this as any).options.xhtml ? '/>' : '>';
+                out += (this.options?.xhtml) ? '/>' : '>';
                 return out;
             }
+        }
 
-        }
-        renderer.listitem = function (text: string): string {
-            const m = /^\s*\[( |x)\]/i.exec(text);
-            if (m) return `<li class="${m[1] == ' ' ? 'unchecked' : 'checked'}">` + text.slice(m[0].length) + '</li>\n'
-            return '<li>' + text + '</li>\n';
-        }
-        renderer.heading = function (text: string, level: number, raw: string) {
-            let m = /(.*)#([\w\-]+)\s*$/.exec(text)
-            let id = ""
-            if (m) {
-                text = m[1]
-                id = m[2]
+        renderer.listitem = function (this: MarkedRenderer, item: MarkedListItemToken): string {
+            const inner = this.parser.parse(item.tokens, !!item.loose);
+            if (item.task) {
+                return `<li class="${item.checked ? "checked" : "unchecked"}">${inner}</li>\n`;
             }
+            return `<li>${inner}</li>\n`;
+        }
+
+        renderer.heading = function (this: MarkedRenderer, token: MarkedHeadingToken) {
+            const parser = this.parser;
+            let html = parser.parseInline(token.tokens).trim();
+
+            // Extract custom id, if provided
+            let id = "";
+            const idMatch = /(.*)#([\w\-]+)\s*$/.exec(token.text || "");
+            if (idMatch) {
+                id = idMatch[2];
+                html = html.replace(/#([\w\-]+)\s*$/, "").trim();
+            }
+
             // remove tutorial macros
-            if (text)
-                text = text.replace(/@(fullscreen|unplugged|showdialog|showhint)/gi, '');
+            html = html.replace(/@(fullscreen|unplugged|showdialog|showhint)/gi, '').trim();
+
             // remove brackets for hiding step title
-            if (text.match(/\{([\s\S]+)\}/))
-                text = text.match(/\{([\s\S]+)\}/)[1].trim()
-            if (id === "") {
-                id = text.toLowerCase().replace(/[^\w]+/g, '-')
+            const braceMatch = html.match(/\{([\s\S]+)\}/);
+            if (braceMatch) {
+                html = braceMatch[1].trim();
             }
-            return `<h${level} id="${(this as any).options.headerPrefix}${id}">${text}</h${level}>`
+
+            if (!id) {
+                const stripHtmlTags = (input: string): string => {
+                    let prev;
+                    do {
+                        prev = input;
+                        input = input.replace(/<[^>]+>/g, '');
+                    } while (input !== prev);
+                    return input;
+                };
+                const plain = stripHtmlTags(html).toLowerCase();
+                id = plain.replace(/[^\w]+/g, '-');
+            }
+
+            const headerPrefix = this.options?.headerPrefix || "";
+            return `<h${token.depth} id="${headerPrefix}${id}">${html}</h${token.depth}>`;
         }
+
+        renderer.code = function (token: { lang: string; text: string; escaped: boolean }) {
+            const rawLang = typeof token?.lang === "string" ? token.lang.trim() : "";
+            const normalizedLang = htmlQuote(rawLang.toLowerCase());
+            const text = typeof token?.text === "string" ? token.text : "";
+            const escaped = token?.escaped !== false;
+            const code = escaped ? text : htmlQuote(text);
+            const classAttr = normalizedLang ? ` class="lang-${normalizedLang}"` : "";
+
+            return `<pre><code${classAttr}>${code}</code></pre>`;
+        };
+
+        const versionPath = context?.versionPath;
+        const linkRenderer = renderer.link ? renderer.link.bind(renderer) : undefined;
+        renderer.link = function (this: MarkedRenderer, token: { href: string; title?: string | null; text: string; tokens?: any[] }) {
+            const originalHref = token.href || "";
+            const isRelative = /^[/#]/.test(originalHref);
+            const adjustedHref = isRelative && versionPath ? `/${versionPath}${originalHref}` : originalHref;
+            const adjustedToken = { ...token, href: adjustedHref };
+
+            const html = linkRenderer
+                ? linkRenderer(adjustedToken)
+                : `<a href="${adjustedToken.href}">${this.parser.parseInline(adjustedToken.tokens || [])}</a>`;
+
+            const attrs: string[] = [];
+            if (!isRelative) {
+                attrs.push('target="_blank"');
+            }
+            attrs.push('rel="nofollow noopener"');
+            const attrString = attrs.join(' ');
+            return html.replace(/^<a /, `<a ${attrString} `);
+        };
     }
 
     export function renderConditionalMacros(template: string, pubinfo: Map<string>): string {
@@ -554,30 +643,20 @@ namespace pxt.docs {
         if (!markedInstance) {
             markedInstance = requireMarked();
         }
+        if (!markedInstance) return d.finish ? d.finish() : d.html;
 
         // We have to re-create the renderer every time to avoid the link() function's closure capturing the opts
-        let renderer = new markedInstance.Renderer()
-        setupRenderer(renderer);
-        const linkRenderer = renderer.link;
-        renderer.link = function (href: string, title: string, text: string) {
-            const relative = new RegExp('^[/#]').test(href);
-            const target = !relative ? '_blank' : '';
-            if (relative && d.versionPath) href = `/${d.versionPath}${href}`;
-            const html = linkRenderer.call(renderer, href, title, text);
-            return html.replace(/^<a /, `<a ${target ? `target="${target}"` : ''} rel="nofollow noopener" `);
-        };
+        const renderer = new markedInstance.Renderer() as MarkedRenderer;
+        setupRenderer(renderer, { versionPath: d.versionPath });
 
         let sanitizer = requireDOMSanitizer();
         markedInstance.setOptions({
             renderer: renderer,
+            async: false, // default but for clarity
             gfm: true,
             tables: true,
             breaks: false,
-            pedantic: false,
-            sanitize: true,
-            sanitizer: sanitizer,
-            smartLists: true,
-            smartypants: true
+            pedantic: false
         });
 
         let markdown = opts.markdown
@@ -611,7 +690,21 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
             return macro || 'unknown macro'
         });
 
-        let html = markedInstance(markdown)
+        let html = markedInstance(markdown);
+        const coerceToString = (value: unknown, fallback: string = "") => {
+            if (typeof value === "string") return value;
+            if (value && typeof (value as any).toString === "function") {
+                return (value as any).toString();
+            }
+            return fallback;
+        };
+
+        let sanitizedHtml = html;
+        if (sanitizer) {
+            sanitizedHtml = sanitizer(html);
+        }
+
+        html = coerceToString(sanitizedHtml, coerceToString(html, ""));
 
         // support for breaks which somehow don't work out of the box
         html = html.replace(/&lt;br\s*\/&gt;/ig, "<br/>");
@@ -619,7 +712,7 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
         // github will render images if referenced as ![](/docs/static/foo.png)
         // we require /static/foo.png
         html = html.replace(/(<img [^>]* src=")\/docs\/static\/([^">]+)"/g,
-            (f, pref, addr) => pref + '/static/' + addr + '"')
+            (full: string, pref: string, addr: string) => pref + '/static/' + addr + '"')
 
         let endBox = ""
         let boxSize = 0;
@@ -633,17 +726,16 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
             return r;
         }
 
-        html = html.replace(/<h(\d)[^>]+>\s*([~@])?\s*(.*?)<\/h\d>/g, (f, lvl, tp, body) => {
+        html = html.replace(/<h(\d)[^>]+>\s*([~@])?\s*(.*?)<\/h\d>/g, (full: string, lvl: string, tp: string | undefined, body: string) => {
             let m = /^(\w+)\s+(.*)/.exec(body)
             let cmd = m ? m[1] : body
             let args = m ? m[2] : ""
-            let rawArgs = args
             args = html2Quote(args)
             cmd = html2Quote(cmd)
-            lvl = parseInt(lvl);
+            const level = parseInt(lvl, 10);
 
             if (!tp) {
-                return appendEndBox(lvl, endBox, f);
+                return appendEndBox(level, endBox, full);
             } else if (tp == "@") {
                 let expansion = U.lookup(d.settings, cmd)
                 if (expansion != null) {
@@ -662,7 +754,7 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
                     CMD: cmd
                 }
 
-                return appendEndBox(lvl, endBox, injectHtml(expansion, ivars, ["ARGS", "CMD"]))
+                return appendEndBox(level, endBox, injectHtml(expansion, ivars, ["ARGS", "CMD"]))
             } else {
                 if (!cmd) {
                     let r = endBox
@@ -673,12 +765,12 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
                 let box = U.lookup(d.boxes, cmd)
                 if (box) {
                     let parts = box.split("@BODY@")
-                    let r = appendEndBox(lvl, endBox, parts[0].replace("@ARGS@", args));
+                    let r = appendEndBox(level, endBox, parts[0].replace("@ARGS@", args));
                     endBox = parts[1];
 
                     let attrs = box.match(/data-[^>\s]+/ig);
                     if (attrs && attrs.indexOf('data-inferred') >= 0) {
-                        boxSize = lvl;
+                        boxSize = level;
                     }
                     return r;
                 } else {
@@ -714,7 +806,7 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
         let registers: Map<string> = {}
         registers["main"] = "" // first
 
-        html = html.replace(/<!-- BEGIN-ASIDE (\S+) -->([^]*?)<!-- END-ASIDE -->/g, (f, nam, cont) => {
+        html = html.replace(/<!-- BEGIN-ASIDE (\S+) -->([^]*?)<!-- END-ASIDE -->/g, (full: string, nam: string, cont: string) => {
             let s = U.lookup(registers, nam)
             registers[nam] = (s || "") + cont
             return "<!-- aside -->"
@@ -917,71 +1009,112 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
             return null
 
         const markedInstance = pxt.docs.requireMarked();
-        const sanitizer = requireDOMSanitizer();
+        if (!markedInstance) return null;
         const options = {
             renderer: new markedInstance.Renderer(),
             gfm: true,
             tables: false,
             breaks: false,
             pedantic: false,
-            sanitize: true,
-            sanitizer: sanitizer,
             smartLists: false,
             smartypants: false
         };
 
-        let dummy: pxt.TOCMenuEntry = { name: 'dummy', subitems: [] };
-        let currentStack: pxt.TOCMenuEntry[] = [];
-        currentStack.push(dummy);
+        const tokens = markedInstance.lexer(summaryMD, options);
 
-        let tokens = markedInstance.lexer(summaryMD, options);
-        let wasListStart = false
-        tokens.forEach((token: any) => {
-            switch (token.type) {
-                case "heading":
-                    if (token.depth == 3) {
-                        // heading
-                    }
-                    break;
-                case "list_start":
-                    break;
-                case "list_item_start":
-                case "loose_item_start":
-                    wasListStart = true;
-                    let newItem: pxt.TOCMenuEntry = {
-                        name: '',
-                        path: '',
-                        subitems: []
-                    };
-                    currentStack.push(newItem);
-                    return;
-                case "text":
-                    let lastTocEntry = currentStack[currentStack.length - 1]
-                    if (token.text.indexOf("[") >= 0) {
-                        token.text.replace(/\[(.*?)\]\((.*?)\)/i, function (full: string, name: string, path: string) {
-                            lastTocEntry.name = name;
-                            lastTocEntry.path = path.replace('.md', '');
-                        });
-                    }
-                    else if (wasListStart) {
-                        lastTocEntry.name = token.text
-                    }
-                    break;
-                case "list_item_end":
-                case "loose_item_end":
-                    let docEntry = currentStack.pop();
-                    currentStack[currentStack.length - 1].subitems.push(docEntry);
-                    break;
-                case "list_end":
-                    break;
-                default:
+        const sanitizePath = (href: string | undefined) =>
+            (href || "").replace(/\.md$/i, "");
+
+        const collectText = (tok: any): string => {
+            if (!tok) return "";
+            if (typeof tok.text === "string") return tok.text.trim();
+            if (tok.tokens && tok.tokens.length) {
+                for (const inner of tok.tokens) {
+                    const res = collectText(inner);
+                    if (res) return res;
+                }
             }
-            wasListStart = false;
-        })
+            return "";
+        };
 
-        let TOC = dummy.subitems
-        if (!TOC || TOC.length == 0) return null
-        return TOC
+        const readEntry = (item: any): pxt.TOCMenuEntry => {
+            const entry: pxt.TOCMenuEntry = { name: "", path: "", subitems: [] };
+            let fallbackName = "";
+
+            const visitTokens = (arr?: any[]) => {
+                if (!arr) return;
+                for (const tok of arr) {
+                    if (!tok) continue;
+                    switch (tok.type) {
+                        case "link":
+                            if (!entry.name) entry.name = (tok.text || "").trim();
+                            if (!entry.path) entry.path = sanitizePath(tok.href);
+                            break;
+                        case "text":
+                        case "codespan":
+                        case "strong":
+                        case "em":
+                        case "paragraph":
+                            if (tok.tokens && tok.tokens.length) {
+                                visitTokens(tok.tokens);
+                            } else if (!fallbackName && typeof tok.text === "string") {
+                                fallbackName = tok.text.trim();
+                            }
+                            break;
+                        default:
+                            if (tok.tokens && tok.tokens.length)
+                                visitTokens(tok.tokens);
+                    }
+                }
+            };
+
+            visitTokens(item?.tokens);
+            if (!entry.name) {
+                fallbackName = fallbackName || collectText(item);
+                if (!fallbackName && typeof item?.text === "string") {
+                    fallbackName = item.text.split(/\n/)[0].trim();
+                }
+                entry.name = fallbackName || "";
+            }
+
+            entry.path = sanitizePath(entry.path);
+
+            return entry;
+        };
+
+        const processList = (items: any[], target: pxt.TOCMenuEntry[]) => {
+            if (!items || !items.length) return;
+            for (const item of items) {
+                const entry = readEntry(item);
+
+                const childLists = (item?.tokens || []).filter((tok: any) => tok?.type === "list");
+                for (const child of childLists) {
+                    processList(child?.items || [], entry.subitems);
+                }
+
+                if (!entry.name && !entry.subitems.length)
+                    continue;
+
+                target.push(entry);
+            }
+        };
+
+        const root: pxt.TOCMenuEntry[] = [];
+        for (const token of tokens) {
+            if (token?.type === "list" && Array.isArray(token.items)) {
+                processList(token.items, root);
+            }
+        }
+
+        const filterEmpty = (entries: pxt.TOCMenuEntry[]): pxt.TOCMenuEntry[] =>
+            entries.filter(e => !!e.name || (e.subitems && e.subitems.length)).map(e => ({
+                name: e.name,
+                path: e.path,
+                subitems: e.subitems ? filterEmpty(e.subitems) : []
+            }));
+
+        let toc = filterEmpty(root);
+        return toc.length ? toc : null;
     }
 
     export function visitTOC(toc: TOCMenuEntry[], fn: (e: TOCMenuEntry) => void) {
