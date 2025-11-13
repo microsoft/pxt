@@ -429,6 +429,8 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
         if (!paused) {
             this.clearRefresh();
             this.carouselTimeout = setTimeout(this.handleRefreshCard, HERO_BANNER_DELAY);
+        } else {
+            this.clearRefresh();
         }
     }
 
@@ -505,6 +507,14 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
         return this.prevGalleries;
     }
 
+    pause = () => {
+        this.setState({ paused: true });
+    }
+
+    resume = () => {
+        this.setState({ paused: false });
+    }
+
     renderCore() {
         const targetTheme = pxt.appTarget.appTheme;
         const { cardIndex } = this.state;
@@ -531,6 +541,10 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
             aria-label={lf("Banner")}
             onPointerDown={this.onPointerDown} onTouchStart={this.onTouchstart}
             onPointerUp={this.onPointerUp} onTouchEnd={this.onTouchEnd}
+            onFocus={this.pause}
+            onBlur={this.resume}
+            onMouseOver={this.pause}
+            onMouseLeave={this.resume}
         >
             {(!!description || hasAction || isGallery) && <div className="gradient-overlay" />}
             <div className="hero-banner-contents">
