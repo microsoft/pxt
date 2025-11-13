@@ -434,14 +434,10 @@ async function ciAsync(parsed?: commandParser.ParsedCommand) {
         tag = tagOverride;
         pxt.log(`overriding tag to ${tag}`);
     }
-    const atok = process.env.NPM_ACCESS_TOKEN
-    const npmPublish = (intentToPublish || /^v\d+\.\d+\.\d+$/.exec(tag)) && atok;
+    const npmPublish = (intentToPublish || /^v\d+\.\d+\.\d+$/.exec(tag)) && process.env.NPM_PUBLISH;
 
     if (npmPublish) {
-        let npmrc = path.join(process.env.HOME, ".npmrc")
-        pxt.log(`setting up ${npmrc} for publish`)
-        let cfg = "//registry.npmjs.org/:_authToken=" + atok + "\n"
-        fs.writeFileSync(npmrc, cfg)
+        pxt.log(`npm publish is true`)
     } else if (intentToPublish) {
         pxt.log("not publishing, no tag or access token")
     }
