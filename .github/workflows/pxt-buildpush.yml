@@ -12,6 +12,7 @@ on:
 
 permissions:
   contents: write
+  id-token: write  # Required for OIDC
 
 jobs:
   filter-vtags:
