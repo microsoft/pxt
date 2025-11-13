@@ -167,7 +167,13 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         this.setState({ visible: true })
     }
 
-    setSelectedItem(item: CategoryItem) {
+    setSelectedItem(item: CategoryItem, name?: string) {
+        for (const item of this.items) {
+            if (item.nameid === name) {
+                this.setSelection(item, this.items.indexOf(item), true);
+                return;
+            }
+        }
         this.selectedItem = item;
     }
 
@@ -194,13 +200,14 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
     setSearch() {
         // Focus the search box if it exists
         const searchBox = this.refs.searchbox as ToolboxSearch;
-        if (searchBox) searchBox.focus();
+        if (searchBox) {
+            this.clear();
+            searchBox.focus();
+        }
     }
 
     clear() {
         this.clearSelection();
-        this.selectedIndex = 0;
-        this.selectedTreeRow = undefined;
     }
 
     clearSelection() {
@@ -478,10 +485,6 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         }
         if (!this.rootElement) return;
         if (this.selectedIndex !== undefined && this.selectedTreeRow) {
-            if (this.selectedTreeRow === this.selectedItem.props.treeRow) {
-                // The flyout is already open with appropriate content.
-                return;
-            }
             // 'Focus' the selected item
             this.setSelection(this.selectedTreeRow, this.selectedIndex, true);
         } else {
@@ -516,11 +519,17 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
 
         const charCode = core.keyCodeFromEvent(e);
         if (charCode == 40 /* Down arrow key */) {
-            this.nextItem();
+            if (this.state.selectedItem) {
+                this.nextItem();
+            } else {
+                this.selectFirstItem();
+            }
             // Don't trigger scroll behaviour inside the toolbox.
             e.preventDefault();
         } else if (charCode == 38 /* Up arrow key */) {
-            this.previousItem();
+            if (this.state.selectedItem) {
+                this.previousItem();
+            }
             // Don't trigger scroll behaviour inside the toolbox.
             e.preventDefault();
         } else if ((charCode == 39 /* Right arrow key */ && !isRtl)
@@ -538,12 +547,8 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
             this.closeFlyout();
             this.props.parent.focusWorkspace();
         } else if (charCode == core.ENTER_KEY || charCode == core.SPACE_KEY) {
-            const {onCategoryClick, treeRow, index} = this.selectedItem.props;
-            if (onCategoryClick) {
-                onCategoryClick(treeRow, index);
-                e.preventDefault();
-                e.stopPropagation();
-            }
+            e.preventDefault();
+            e.stopPropagation();
         } else if (charCode == core.TAB_KEY
             || charCode == 37 /* Left arrow key */
             || charCode == 39 /* Right arrow key */
@@ -650,6 +655,8 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
                 <div className="blocklyTreeRoot">
                     <div
                         className="blocklyTreeInner"
+                        // Required for certain Blockly code to run.
+                        id="toolbox-tree"
                         role="tree"
                         aria-label={lf("Toolbox")}
                         tabIndex={0}
@@ -1134,9 +1141,9 @@ export class ToolboxSearch extends data.Component<ToolboxSearchProps, ToolboxSea
         const { toolbox } = this.props;
         let charCode = (typeof e.which == "number") ? e.which : e.keyCode
         if (charCode === 40 /* Down Key */) {
-            // Focus the toolbox category tree which opens the currently selected
-            // item if one exists, or the first item.
-            (toolbox.refs.categoryTree as HTMLDivElement).focus()
+            // Always select the first toolbox category item when using the down arrow.
+            toolbox.selectFirstItem();
+            (toolbox.refs.categoryTree as HTMLDivElement).focus();
             // Don't trigger scroll behaviour inside the toolbox.
             e.preventDefault();
         } else if (charCode === 13 /* Enter */) {
@@ -1145,7 +1152,7 @@ export class ToolboxSearch extends data.Component<ToolboxSearchProps, ToolboxSea
                     toolbox.setState({
                         selectedItem: 'search'
                     });
-                    toolbox.setSelectedItem(toolbox.refs.searchCategory as CategoryItem);
+                    toolbox.setSelectedItem(toolbox.refs.searchCategory as CategoryItem, 'search');
                 }
                 this.props.parent.moveFocusToFlyout();
             });
