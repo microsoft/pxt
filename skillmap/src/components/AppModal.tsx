@@ -21,6 +21,7 @@ import { SignInModal } from "react-common/components/profile/SignInModal";
 import { Share, ShareData } from "react-common/components/share/Share";
 import { Input } from 'react-common/components/controls/Input';
 import { pdfRenderNameField, loadPdfLibAsync } from '../lib/pdfUtil';
+import { MarkdownContent } from './MarkdownContent';
 
 interface AppModalProps {
     type: ModalType;
@@ -38,6 +39,7 @@ interface AppModalProps {
     signedIn: boolean;
     profile?: pxt.auth.UserProfile;
     pageSourceState?: PageSourceStatus;
+    markdownIntroContent?: string;
     dispatchHideModal: () => void;
     dispatchNextModal: () => void;
     dispatchRestartActivity: (mapId: string, activityId: string, previousHeaderId?: string, carryoverCode?: boolean) => void;
@@ -100,6 +102,8 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                 return this.renderDeleteAccountModal();
             case "reward":
                 return this.renderRewardModal();
+            case "markdown-intro":
+                return this.renderMarkdownIntroModal()
             default:
                 return <div/>
         }
@@ -632,13 +636,32 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
             </div>
         </Modal>
     }
+
+    renderMarkdownIntroModal(): JSX.Element {
+        const { skillMap, markdownIntroContent } = this.props;
+
+        return (
+            <Modal
+                title={skillMap?.displayName || lf("Introduction")}
+                onClose={this.handleOnClose}
+                actions={[
+                    {
+                        label: lf("Okay"),
+                        onClick: this.handleOnClose
+                    }
+                ]}
+            >
+                <MarkdownContent markdown={markdownIntroContent!} />
+            </Modal>
+        )
+    }
 }
 
 function mapStateToProps(state: SkillMapState, ownProps: any) {
     if (!state) return {};
     const { pageSourceUrl, shareState } = state;
     const [ modal ] = state.modalQueue || [];
-    const { currentMapId, currentActivityId, type, currentReward } = modal || {};
+    const { currentMapId, currentActivityId, type, currentReward, markdownContent } = modal || {};
 
     // Set the map as currently open map (editorView), or mapId passed into modal
     const currentMap = state.editorView ?
@@ -666,6 +689,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         signedIn: state.auth.signedIn,
         profile: state.auth.profile,
         pageSourceState: state.pageSourceStatus,
+        markdownIntroContent: markdownContent
     } as AppModalProps
 }
 

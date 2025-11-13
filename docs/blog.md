@@ -1,5 +1,13 @@
 # Microsoft MakeCode Blog
 
+## [Computer Science Education Week 2025](/blog/csed-week/csed-week-2025)
+
+November 12, 2025 by [Jaqster](https://github.com/jaqster)
+
+Computer Science Education Week is the time every year where schools all across the country shine a light on the importance of computing and technical education. This year it's all about Artificial Intelligence (AI) and some great activities are available during **Hour of AI**.
+
+**[Continue reading this blog post](/blog/csed-week/csed-week-2025)**
+
 ## [MakeCode Minecraft 2025 Update](/blog/minecraft/2025-release)
 
 October 17, 2025 by [Jaqster](https://github.com/jaqster)
