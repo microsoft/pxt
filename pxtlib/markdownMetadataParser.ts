@@ -4,6 +4,12 @@ namespace pxt {
         header: string;
         attributes: pxt.Map<string>;
         listAttributes?: pxt.Map<MarkdownList>;
+        codeBlocks?: MarkdownCodeBlock[];
+    }
+
+    export interface MarkdownCodeBlock {
+        content: string;
+        languageCode?: string;
     }
 
     export interface MarkdownList {
@@ -22,6 +28,7 @@ namespace pxt {
         let listStack: MarkdownList[] = [];
 
         let currentIndent = 0;
+        let currentCodeBlock: MarkdownCodeBlock | null = null;
 
         for (const line of lines) {
             if (!line.trim()) {
@@ -29,6 +36,35 @@ namespace pxt {
                     currentValue += "\n";
                 }
                 continue;
+            }
+
+            if (line.startsWith("```")) {
+                if (currentCodeBlock) {
+                    if (currentSection) {
+                        if (!currentSection.codeBlocks) {
+                            currentSection.codeBlocks = [currentCodeBlock]
+                        }
+                        else {
+                            currentSection.codeBlocks.push(currentCodeBlock);
+                        }
+                    }
+                    currentCodeBlock = null;
+                    continue;
+                }
+                else {
+                    const match = /^```([a-zA-Z_\-]*)$/.exec(line);
+
+                    if (match) {
+                        currentCodeBlock = {
+                            content: "",
+                            languageCode: match[1]
+                        };
+                        continue;
+                    }
+                }
+            }
+            else if (currentCodeBlock) {
+                currentCodeBlock.content += line + "\n";
             }
 
             if (line.startsWith("#")) {

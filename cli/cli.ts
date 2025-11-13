@@ -34,7 +34,30 @@ import { SUB_WEBAPPS } from './subwebapp';
 
 const rimraf: (f: string, opts: any, cb: (err: Error, res: any) => void) => void = require('rimraf');
 
-pxt.docs.requireDOMSanitizer = () => require("sanitize-html");
+// dompurify requires a DOM implementation; sanitize-html does not.
+// sanitize-html is a bit more aggressive and culls class names by default from code snippets
+// Need to wrap to prevent that. Possibly worth swapping to jsdom + dompurify later for consistency.
+pxt.docs.requireDOMSanitizer = () => {
+    const sanitizeHtml = require("sanitize-html");
+    const defaults = sanitizeHtml.defaults || {};
+    const baseAllowedAttrs = defaults.allowedAttributes || {};
+
+    const mergeClassAttribute = (tag: string) => {
+        const existing: string[] = baseAllowedAttrs[tag] || [];
+        return Array.from(new Set<string>([...existing, "class"]));
+    };
+
+    const options = {
+        ...defaults,
+        allowedAttributes: {
+            ...baseAllowedAttrs,
+            code: mergeClassAttribute("code"),
+            pre: mergeClassAttribute("pre"),
+        },
+    };
+
+    return (html: string) => sanitizeHtml(html, options);
+};
 
 let forceCloudBuild = process.env["KS_FORCE_CLOUD"] !== "no";
 let forceLocalBuild = !!process.env["PXT_FORCE_LOCAL"];
