@@ -640,29 +640,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         };
     }
 
-    private overrideBlocklyWheelZoom() {
-        // Override Blockly's default multiplicative wheel zoom to use additive zoom
-        // matching our button-based zoom behavior (zoomCenter with ±0.8)
-        const blocklyDiv = document.getElementById('blocksEditor');
-        if (!blocklyDiv) return;
-
-        blocklyDiv.addEventListener('wheel', (e: WheelEvent) => {
-            // Only handle zoom when Ctrl/Cmd key is pressed
-            if (e.ctrlKey || e.metaKey) {
-                e.preventDefault();
-                e.stopPropagation();
-
-                // Use the same zoom increment as our buttons (0.8)
-                // Negative deltaY means scroll up (zoom in)
-                if (e.deltaY < 0) {
-                    this.zoomIn();
-                } else if (e.deltaY > 0) {
-                    this.zoomOut();
-                }
-            }
-        }, { passive: false });
-    }
-
     private unregisterBlocklyShortcutIfExists(shortcutName: string) {
         if (Blockly.ShortcutRegistry.registry.getRegistry()[shortcutName]) {
             Blockly.ShortcutRegistry.registry.unregister(shortcutName);
@@ -822,7 +799,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         Blockly.config.connectingSnapRadius = 96;
         this.editor = Blockly.inject(blocklyDiv, this.getBlocklyOptions(forceHasCategories)) as Blockly.WorkspaceSvg;
         pxtblockly.contextMenu.setupWorkspaceContextMenu(this.editor);
-        this.overrideBlocklyWheelZoom();
 
         // set Blockly Colors
         (async () => {
@@ -1785,10 +1761,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 controls: false,
                 maxScale: 2.5,
                 minScale: .2,
-                scaleSpeed: 1.5,
+                scaleSpeed: 1.2,
                 startScale: pxt.BrowserUtils.isMobile() ? 0.7 : 0.9,
                 pinch: true,
-                wheel: false  // Disable built-in wheel zoom, we override it with additive zoom
+                wheel: true
             },
             rtl: Util.isUserLanguageRtl()
         };
