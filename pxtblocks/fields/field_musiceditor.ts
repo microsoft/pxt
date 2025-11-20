@@ -105,7 +105,7 @@ export class FieldMusicEditor extends FieldAssetEditor<FieldMusicEditorOptions, 
         const bg = new svg.Rect()
             .at(X_PADDING, Y_PADDING)
             .size(BG_PADDING * 2 + this.previewWidth(), BG_HEIGHT)
-            .setClass("blocklySpriteField")
+            .setClass("blocklyFieldRect blocklySpriteField")
             .stroke("#898989", 1)
             .corner(4);
 
