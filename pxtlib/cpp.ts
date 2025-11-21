@@ -25,6 +25,7 @@ namespace pxt {
                 try {
                     lzma.decompress(buf, (res: string, error: any) => {
                         if (error) pxt.debug(`lzma decompression failed`);
+
                         resolve(error ? undefined : res);
                     })
                 }
@@ -80,6 +81,8 @@ namespace pxt.cpp {
         "pxt::dumpPerfCounters": 1,
         "pxt::deepSleep": 1,
         "pxt::getConfig": 1,
+        "pxt::error": 1,
+        "pxt::oops": 1,
 
         "pxtrt::mkMap": 1,
         "pxtrt::mapSet": 1,
@@ -87,7 +90,7 @@ namespace pxt.cpp {
         "pxtrt::mklocRef": 1,
         "pxtrt::stlocRef": 1,
         "pxtrt::ldlocRef": 1,
-        "pxtrt::panic": 1,
+        "pxtrt::panic": 1
     }
 
     export function nsWriter(nskw = "namespace") {
