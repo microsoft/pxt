@@ -30,6 +30,9 @@ export class MonacoSpriteEditor extends MonacoReactFieldEditor<pxt.ProjectImage>
                 if (name && !project.isNameTaken(pxt.AssetType.Image, name) && pxt.validateAssetName(name)) {
                     newAsset.meta.displayName = name;
                 }
+                else {
+                    newAsset.meta.displayName = project.generateNewName(pxt.AssetType.Image);
+                }
 
                 this.editing = newAsset;
 

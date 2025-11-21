@@ -30,6 +30,9 @@ export class MonacoSongEditor extends MonacoReactFieldEditor<pxt.Song> {
                 if (name && !project.isNameTaken(pxt.AssetType.Song, name) && pxt.validateAssetName(name)) {
                     newAsset.meta.displayName = name;
                 }
+                else {
+                    newAsset.meta.displayName = project.generateNewName(pxt.AssetType.Song);
+                }
 
                 this.editing = newAsset;
 
