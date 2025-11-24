@@ -30,6 +30,7 @@ namespace pxt.docs {
         lexer: (src: string, options?: any) => any[];
         setOptions: (options: any) => void;
         parseInline?: (src: string, options?: any) => string;
+        parse?: (src: string, options?: any) => string;
     }
 
     interface MarkedImageToken {
@@ -690,7 +691,7 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
             return macro || 'unknown macro'
         });
 
-        let html = markedInstance(markdown);
+        let html = markedInstance.parse(markdown);
         const coerceToString = (value: unknown, fallback: string = "") => {
             if (typeof value === "string") return value;
             if (value && typeof (value as any).toString === "function") {
