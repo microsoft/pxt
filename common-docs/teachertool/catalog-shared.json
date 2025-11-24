@@ -14,7 +14,25 @@
                     "name": "question",
                     "type": "longString",
                     "maxCharacters": 1000,
-                    "paths": ["checks[0].question"]
+                    "paths": ["checks[0].question"],
+                    "options": [
+                        {
+                            "id": "explainProgram",
+                            "value": "Explain what this program does in clear, student-friendly language."
+                        },
+                        {
+                            "id": "findMajorBugs",
+                            "value": "Look for major bugs or logic errors in this project and describe any issues you find."
+                        },
+                        {
+                            "id": "codeQuality",
+                            "value": "Review the code quality. Mention strengths and suggest one improvement for readability or structure."
+                        },
+                        {
+                            "id": "suggestEnhancement",
+                            "value": "Suggest a meaningful enhancement that would make this project more engaging or polished."
+                        }
+                    ]
                 },
                 {
                     "name": "shareid",
