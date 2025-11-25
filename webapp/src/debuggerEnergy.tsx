@@ -3,24 +3,45 @@ import * as data from "./data";
 import * as simulator from "./simulator";
 import { DebuggerTable, DebuggerTableRow } from "./debuggerTable";
 
+
+interface ScopeVariables {
+    title: string;
+    variables: Variable[];
+    key?: string;
+}
+
+interface Variable {
+    name: string;
+    value: any;
+    id?: number;
+    prevValue?: any;
+}
+
+// TODO: where do the values come from and how do we get 
+// TODO: updates
+let energyVars = [
+    { name: "Total", value: 10},
+    { name: "LEDs", value: 10},
+    { name: "Radio", value: 10},
+    // TBD
+]
+
 interface DebuggerEnergyProps {
+    // TODO
 }
 
 interface DebuggerEnergyState {
-
+    energyFrame: ScopeVariables;
 }
 
 export class DebuggerEnergy extends data.Component<DebuggerEnergyProps, DebuggerEnergyState> {
     constructor(props: DebuggerEnergyProps) {
         super(props);
         this.state = {
-            globalFrame: {
-                title: lf("Globals"),
-                variables: []
-            },
-            stackFrames: [],
-            nextID: 0,
-            preview: null
+            energyFrame: {
+                title: lf("Energy Usage"),
+                variables: energyVars
+            }
         };
 
     }
