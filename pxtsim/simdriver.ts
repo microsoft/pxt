@@ -538,6 +538,7 @@ namespace pxsim {
         private createFrame(url?: string): HTMLDivElement {
             const wrapper = document.createElement("div") as HTMLDivElement;
             wrapper.className = `simframe ui embed`;
+            wrapper.setAttribute('tabindex', '0');
 
             const frame = document.createElement('iframe') as HTMLIFrameElement;
             frame.id = 'sim-frame-' + this.nextId()
