@@ -35,6 +35,7 @@ interface DebuggerVariablesProps {
 }
 
 interface DebuggerVariablesState {
+    energyFrame: ScopeVariables;
     globalFrame: ScopeVariables;
     stackFrames: ScopeVariables[];
     nextID: number;
@@ -49,6 +50,10 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
     constructor(props: DebuggerVariablesProps) {
         super(props);
         this.state = {
+            energyFrame: {
+                title: lf("Energy"),
+                variables: []
+            },
             globalFrame: {
                 title: lf("Globals"),
                 variables: []
@@ -62,6 +67,10 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
 
     clear() {
         this.setState({
+            energyFrame: {
+                title: this.state.energyFrame.title,
+                variables: []
+            },
             globalFrame: {
                 title: this.state.globalFrame.title,
                 variables: []
@@ -87,7 +96,7 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
     }
 
     renderCore() {
-        const { globalFrame, stackFrames, frozen, preview } = this.state;
+        const { energyFrame, globalFrame, stackFrames, frozen, preview } = this.state;
         const { activeFrame, breakpoint } = this.props;
         const variableTableHeader = lf("Variables");
         let variables = globalFrame.variables;
@@ -176,7 +185,7 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
         breakpoint: pxsim.DebuggerBreakpointMessage,
         filters?: string[]
     ) {
-        const { globals, environmentGlobals, stackframes } = breakpoint;
+        const { energyVars, globals, environmentGlobals, stackframes } = breakpoint;
         if (!globals && !environmentGlobals) {
             // freeze the ui
             this.update(true)
@@ -213,6 +222,7 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
         }
 
         this.setState({
+            energyFrame: undefined, //TODO
             globalFrame: updatedGlobals,
             stackFrames: updatedFrames || [],
             nextID: nextId,
