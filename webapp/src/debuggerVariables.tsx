@@ -100,7 +100,7 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
         const { activeFrame, breakpoint } = this.props;
         const energyTableHeader = lf("Energy");
         const variableTableHeader = lf("Variables");
-        let variables = globalFrame.variables.concat(energyFrame.variables)
+        let variables = globalFrame.variables
 
         // Add in the local variables.
         // TODO: Handle callstack
@@ -119,6 +119,8 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
 
         const tableRows = placeholderText ? [] : this.renderVars(variables);
 
+        const energyTableRows = placeholderText ? [] : this.renderVars(energyFrame.variables)
+
         if (breakpoint?.exceptionMessage && !frozen) {
             tableRows.unshift(<DebuggerTableRow
                 leftText={lf("Exception:")}
@@ -133,8 +135,8 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
         const previewLabel = previewVar && lf("Current value for '{0}'", previewVar.name);
 
         return <div>
-            <DebuggerTable header={energyTableHeader} placeholderText={"waiting for energy"}>
-                {[]}
+            <DebuggerTable header={energyTableHeader} placeholderText={placeholderText}>
+                {energyTableRows}
             </DebuggerTable>  
             <DebuggerTable header={variableTableHeader} placeholderText={placeholderText}>
                 {tableRows}
