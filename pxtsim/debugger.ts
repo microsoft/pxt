@@ -192,6 +192,12 @@ namespace pxsim {
         return stackFrame.retval;
     }
 
+    export function injectEnergyVariables(msg: DebuggerBreakpointMessage, heap: Map<any>) {
+        // TODO
+        // 1. from board
+        // 2. from runtime
+    }
+
     export function injectEnvironmentGlobals(msg: DebuggerBreakpointMessage, heap: Map<any>) {
         const environmentGlobals = runtime.environmentGlobals;
         const keys = Object.keys(environmentGlobals);

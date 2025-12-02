@@ -1326,6 +1326,7 @@ namespace pxsim {
                 const { msg, heap } = getBreakpointMsg(s, brkId, userGlobals);
                 dbgHeap = heap;
                 injectEnvironmentGlobals(msg, heap);
+                injectEnergyVariables(msg, heap)
                 Runtime.postMessage(msg)
                 breakpoints[0] = 0;
                 breakFrame = null;
@@ -1469,7 +1470,8 @@ namespace pxsim {
                     else {
                         pxsim.error("Simulator crashed, no error handler", e.stack)
                         const { msg, heap } = getBreakpointMsg(p, p.lastBrkId, userGlobals)
-                        injectEnvironmentGlobals(msg, heap);
+                        injectEnergyVariables(msg,heap)
+                        injectEnvironmentGlobals(msg, heap)
                         msg.exceptionMessage = e.message
                         msg.exceptionStack = e.stack
                         Runtime.postMessage(msg)
