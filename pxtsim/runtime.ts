@@ -431,6 +431,10 @@ namespace pxsim {
             this.bus = new pxsim.EventBus(runtime, this);
         }
 
+        public getVariables(): pxsim.Variables {
+            return {}
+        }
+
         public onEveryYield () {
 
         }
