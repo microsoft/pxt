@@ -98,8 +98,9 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
     renderCore() {
         const { energyFrame, globalFrame, stackFrames, frozen, preview } = this.state;
         const { activeFrame, breakpoint } = this.props;
+        const energyTableHeader = lf("Energy");
         const variableTableHeader = lf("Variables");
-        let variables = globalFrame.variables;
+        let variables = globalFrame.variables.concat(energyFrame.variables)
 
         // Add in the local variables.
         // TODO: Handle callstack
@@ -132,6 +133,9 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
         const previewLabel = previewVar && lf("Current value for '{0}'", previewVar.name);
 
         return <div>
+            <DebuggerTable header={energyTableHeader} placeholderText={"waiting for energy"}>
+                {[]}
+            </DebuggerTable>  
             <DebuggerTable header={variableTableHeader} placeholderText={placeholderText}>
                 {tableRows}
             </DebuggerTable>
