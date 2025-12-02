@@ -1,12 +1,32 @@
 # Microsoft MakeCode Blog
 
+## [Computer Science Education Week 2025](/blog/csed-week/csed-week-2025)
+
+November 12, 2025 by [Jaqster](https://github.com/jaqster)
+
+Computer Science Education Week is the time every year where schools all across the country shine a light on the importance of computing and technical education. This year it's all about Artificial Intelligence (AI) and some great activities are available during **Hour of AI**.
+
+**[Continue reading this blog post](/blog/csed-week/csed-week-2025)**
+
+## [MakeCode Minecraft 2025 Update](/blog/minecraft/2025-release)
+
+October 17, 2025 by [Jaqster](https://github.com/jaqster)
+
+The MakeCode fall update for Minecraft Education is here! Here’s a run-down of all the new features and improvements...
+
+**[Continue reading this blog post](/blog/minecraft/2025-release)**
+
 ## [MakeCode for the micro:bit – 2025 Update](/blog/microbit/2025-update)
+
+July 18, 2025 by [Jaqster](https://github.com/jaqster)
 
 It's July and school's out in most of the world, so it's time for our annual MakeCode for the micro:bit update! As well as the 142 bugs that we fixed in this release, here's a rundown of the new features...
 
 **[Continue reading this blog post](/blog/microbit/2025-update)**
 
 ## [Summer 2025 – MakeCode Professional Development](/blog/csp/summer-pd-2025)
+
+April 21, 2025 by [Jaqster](https://github.com/jaqster)
 
 April showers bring May flowers. For many of us, we are on the home stretch of the academic year already! Which is a good time to start planning for summer training and professional development opportunities.
 

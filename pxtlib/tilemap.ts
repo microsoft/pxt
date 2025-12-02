@@ -340,6 +340,8 @@ namespace pxt {
     export class TilemapProject {
         public needsRebuild = true;
 
+        protected static nextRevision = 0;
+
         protected extensionTileSets: TileSetCollection[];
         protected state: AssetSnapshot;
         protected committedState: AssetSnapshot;
@@ -354,7 +356,7 @@ namespace pxt {
 
         constructor() {
             this.committedState = {
-                revision: 0,
+                revision: TilemapProject.nextRevision++,
                 assets: {
                     [AssetType.Image]: new AssetCollection(AssetType.Image),
                     [AssetType.Tile]: new AssetCollection(AssetType.Tile),
@@ -365,7 +367,7 @@ namespace pxt {
                 }
             };
             this.state = {
-                revision: this.nextID++,
+                revision: TilemapProject.nextRevision++,
                 assets: {
                     [AssetType.Image]: new AssetCollection(AssetType.Image),
                     [AssetType.Tile]: new AssetCollection(AssetType.Tile),
@@ -983,7 +985,7 @@ namespace pxt {
         public getGalleryAssets(type: AssetType.Json): JsonAsset[];
         public getGalleryAssets(type: AssetType): Asset[];
         public getGalleryAssets(type: AssetType) {
-            return this.getAssetCollection(type).getSnapshot();
+            return this.getAssetCollection(type, true).getSnapshot();
         }
 
         public lookupBlockAsset(assetType: AssetType.Image, blockID: string): ProjectImage;
@@ -1399,6 +1401,18 @@ namespace pxt {
             }
         }
 
+        generateNewName(type: AssetType, name?: string) {
+            const defaultName = name || pxt.getDefaultAssetDisplayName(type);
+            let newName = defaultName;
+            let index = 0;
+
+            while (this.isNameTaken(type, newName)) {
+                newName = defaultName + (index++);
+            }
+
+            return newName;
+        }
+
         protected generateNewIDInternal(type: AssetType, varPrefix: string, namespaceString?: string) {
             varPrefix = varPrefix.replace(/\d+$/, "");
             const prefix = namespaceString ? namespaceString + "." + varPrefix : varPrefix;
@@ -1411,7 +1425,7 @@ namespace pxt {
 
         protected onChange() {
             this.needsRebuild = true;
-            this.state.revision = this.nextID++;
+            this.state.revision = TilemapProject.nextRevision++;
         }
 
         protected readImages(allJRes: Map<JRes>, isProjectFile = false) {
@@ -2008,7 +2022,7 @@ namespace pxt {
     }
 
     export function parseAssetTSReference(ts: string) {
-        const match = /^\s*(?:(?:assets\s*\.\s*(image|tile|animation|tilemap|song))|(tilemap))\s*(?:`|\(""")([^`"]+)(?:`|"""\))\s*$/m.exec(ts);
+        const match = /^\s*(?:(?:assets\s*\.\s*(image|tile|animation|tilemap|song))|(tilemap))\s*(?:`|\(""")([^`"]*)(?:`|"""\))\s*$/m.exec(ts);
 
         if (match) {
             const type = match[1] || match[2];

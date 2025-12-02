@@ -34,7 +34,30 @@ import { SUB_WEBAPPS } from './subwebapp';
 
 const rimraf: (f: string, opts: any, cb: (err: Error, res: any) => void) => void = require('rimraf');
 
-pxt.docs.requireDOMSanitizer = () => require("sanitize-html");
+// dompurify requires a DOM implementation; sanitize-html does not.
+// sanitize-html is a bit more aggressive and culls class names by default from code snippets
+// Need to wrap to prevent that. Possibly worth swapping to jsdom + dompurify later for consistency.
+pxt.docs.requireDOMSanitizer = () => {
+    const sanitizeHtml = require("sanitize-html");
+    const defaults = sanitizeHtml.defaults || {};
+    const baseAllowedAttrs = defaults.allowedAttributes || {};
+
+    const mergeClassAttribute = (tag: string) => {
+        const existing: string[] = baseAllowedAttrs[tag] || [];
+        return Array.from(new Set<string>([...existing, "class"]));
+    };
+
+    const options = {
+        ...defaults,
+        allowedAttributes: {
+            ...baseAllowedAttrs,
+            code: mergeClassAttribute("code"),
+            pre: mergeClassAttribute("pre"),
+        },
+    };
+
+    return (html: string) => sanitizeHtml(html, options);
+};
 
 let forceCloudBuild = process.env["KS_FORCE_CLOUD"] !== "no";
 let forceLocalBuild = !!process.env["PXT_FORCE_LOCAL"];
@@ -411,14 +434,10 @@ async function ciAsync(parsed?: commandParser.ParsedCommand) {
         tag = tagOverride;
         pxt.log(`overriding tag to ${tag}`);
     }
-    const atok = process.env.NPM_ACCESS_TOKEN
-    const npmPublish = (intentToPublish || /^v\d+\.\d+\.\d+$/.exec(tag)) && atok;
+    const npmPublish = (intentToPublish || /^v\d+\.\d+\.\d+$/.exec(tag)) && process.env.NPM_PUBLISH;
 
     if (npmPublish) {
-        let npmrc = path.join(process.env.HOME, ".npmrc")
-        pxt.log(`setting up ${npmrc} for publish`)
-        let cfg = "//registry.npmjs.org/:_authToken=" + atok + "\n"
-        fs.writeFileSync(npmrc, cfg)
+        pxt.log(`npm publish is true`)
     } else if (intentToPublish) {
         pxt.log("not publishing, no tag or access token")
     }

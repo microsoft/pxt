@@ -82,6 +82,13 @@ export class FieldKind extends FieldDropdown {
     }
 
     doClassValidation_(value: any) {
+        if (typeof value === "string" && this.sourceBlock_?.workspace) {
+            const existing = getExistingKindMembers(this.sourceBlock_.workspace, this.opts.name);
+            if (!existing.some(e => e === value)) {
+                createVariableForKind(this.sourceBlock_.workspace, this.opts, value);
+            }
+        }
+
         // update cached option list when adding a new kind
         if (this.opts?.initialMembers && !this.opts.initialMembers.find(el => el == value)) this.getOptions();
         return super.doClassValidation_(value);

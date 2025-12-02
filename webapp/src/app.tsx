@@ -2699,7 +2699,7 @@ export class ProjectView
 
     initDragAndDrop() {
         draganddrop.addDragAndDropHandler({
-            filter: file => file.size < 1000000 && this.isHexFile(file.name) || this.isBlocksFile(file.name) || this.isZipFile(file.name),
+            filter: file => file.size < 1000000,
             dragged: files => {
                 if (files) {
                     pxt.tickEvent("dragandrop.open")

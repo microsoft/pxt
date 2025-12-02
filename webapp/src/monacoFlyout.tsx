@@ -10,6 +10,7 @@ import { getBlockAsText } from "./toolboxHelpers";
 import { ThemeManager } from "../../react-common/components/theming/themeManager";
 
 import ISettingsProps = pxt.editor.ISettingsProps;
+import { classList } from "../../react-common/components/util";
 
 const DRAG_THRESHOLD = 5;
 const SELECTED_BORDER_WIDTH = 4;
@@ -102,6 +103,8 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
 
     protected getBlockDragStartHandler = (block: toolbox.BlockDefinition, snippet: string, color: string) => {
         return (e: any) => {
+            e.preventDefault();
+            e.stopPropagation();
             this.dragInfo = {
                 x: pxt.BrowserUtils.getClientX(e),
                 y: pxt.BrowserUtils.getClientY(e),
@@ -372,11 +375,21 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
         const description = block.attributes.jsDoc.replace(/``/g, '"')
             .split("* @param", 1)[0] // drop any kind of parameter annotation
 
-        return <div className={`monacoBlock ${disabled ? "monacoDisabledBlock" : ""} ${selected ? "expand" : ""} ${hover ? "hover" : ""}`}
+        let buttonRef: HTMLDivElement;
+        const handleRef = (ref: HTMLDivElement) => {
+            if (ref) buttonRef = ref;
+        }
+
+        return <div
+            className={classList("monacoBlock", disabled && "monacoDisabledBlock", selected && "expand", hover && "hover")}
             style={this.getSelectedStyle()}
             title={block.attributes.jsDoc}
-            key={`block_${qName}_${index}`} tabIndex={!this.state.selectedBlock && index === 0 ? 0 : selected ? 0 : -1} role="listitem"
+            key={`block_${qName}_${index}`}
+            tabIndex={!this.state.selectedBlock && index === 0 ? 0 : selected ? 0 : -1}
+            role="listitem"
+            ref={handleRef}
             onFocus={() => this.handleFocus(qName)}
+            onClick={() => buttonRef && buttonRef.focus()}
             onBlur={() => this.handleBlur()}
             onMouseOver={this.getBlockMouseOver(qName)}
             onMouseOut={this.getBlockMouseOut(qName)}

@@ -257,8 +257,19 @@ namespace pxt.blocks {
     }
 
     export function getHelpUrl(fn: pxtc.SymbolInfo) {
-        if (fn.attributes.help) {
-            const helpUrl = fn.attributes.help.replace(/^\//, '');
+        let helpAttr = fn.attributes.help;
+        if (fn.attributes.blockId?.endsWith(`_blockCombine_get`)) {
+            helpAttr = fn.attributes.blockCombineGetHelp || helpAttr;
+        }
+        else if (fn.attributes.blockId?.endsWith(`_blockCombine_set`)) {
+            helpAttr = fn.attributes.blockCombineSetHelp || helpAttr;
+        }
+        else if (fn.attributes.blockId?.endsWith(`_blockCombine_change`)) {
+            helpAttr = fn.attributes.blockCombineChangeHelp || helpAttr;
+        }
+
+        if (helpAttr) {
+            const helpUrl = helpAttr.replace(/^\//, '');
             if (/^github:/.test(helpUrl)) {
                 return helpUrl;
             } else if (helpUrl !== "none") {

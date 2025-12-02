@@ -21,17 +21,24 @@ export class FieldTileset extends FieldImages implements FieldCustom {
     protected selectedOption_: TilesetDropdownOption;
 
     protected static referencedTiles: TilesetDropdownOption[];
-    protected static cachedRevision: number;
-    protected static cachedWorkspaceId: string;
+    protected static cachedPalette: string;
+    protected static cachedRevision = -1;
+    protected static bitmapCache: Map<string, string> = new Map();
 
     protected static getReferencedTiles(workspace: Blockly.Workspace) {
         const project = pxt.react.getTilemapProject();
+        const paletteKey = pxt.appTarget.runtime.palette ? pxt.appTarget.runtime.palette.join("") : undefined;
 
-        if (project.revision() !== FieldTileset.cachedRevision || workspace.id != FieldTileset.cachedWorkspaceId) {
+        if (paletteKey !== FieldTileset.cachedPalette) {
+            this.bitmapCache.clear();
+            this.cachedPalette = paletteKey;
+            this.cachedRevision = -1;
+        }
+
+        if (FieldTileset.cachedRevision !== project.revision()) {
             FieldTileset.cachedRevision = project.revision();
-            FieldTileset.cachedWorkspaceId = workspace.id;
-            const references = getAllReferencedTiles(workspace);
 
+            const references = getAllReferencedTiles(workspace);
             const supportedTileWidths = [16, 4, 8, 32];
 
             for (const width of supportedTileWidths) {
@@ -63,18 +70,29 @@ export class FieldTileset extends FieldImages implements FieldCustom {
                     (weights[b.id] || (weights[b.id] = tileWeight(b.id)))
             });
 
-            const getTileImage = (t: pxt.Tile) => tileWeight(t.id) <= 2 ?
-                mkTransparentTileImage(t.bitmap.width) :
-                bitmapToImageURI(pxt.sprite.Bitmap.fromData(t.bitmap), PREVIEW_SIDE_LENGTH, false);
-
             FieldTileset.referencedTiles = references.map(tile => [{
-                src: getTileImage(tile),
+                src: FieldTileset.getTileImage(tile),
                 width: PREVIEW_SIDE_LENGTH,
                 height: PREVIEW_SIDE_LENGTH,
-                alt: displayName(tile)
+                alt: displayName(tile) || tile.id
             }, tile.id, tile])
         }
+
         return FieldTileset.referencedTiles;
+    }
+
+
+    static getTileImage(t: pxt.Tile) {
+        const key = pxt.U.toHex(t.bitmap.data) + "-" + t.bitmap.width + "-" + t.bitmap.height;
+        if (!this.bitmapCache.has(key)) {
+            if (tileWeight(t.id) <= 2) {
+                this.bitmapCache.set(key, mkTransparentTileImage(t.bitmap.width));
+            }
+            else {
+                this.bitmapCache.set(key, bitmapToImageURI(pxt.sprite.Bitmap.fromData(t.bitmap), PREVIEW_SIDE_LENGTH, false))
+            }
+        }
+        return this.bitmapCache.get(key);
     }
 
     public isFieldCustom_ = true;
@@ -143,14 +161,13 @@ export class FieldTileset extends FieldImages implements FieldCustom {
         if (this.value_ && this.selectedOption_) {
             if (this.selectedOption_[1] !== this.value_) {
                 const tile = pxt.react.getTilemapProject().resolveTile(this.value_);
-                FieldTileset.cachedRevision = -1;
 
                 if (tile) {
                     this.selectedOption_ = [{
                         src: bitmapToImageURI(pxt.sprite.Bitmap.fromData(tile.bitmap), PREVIEW_SIDE_LENGTH, false),
                         width: PREVIEW_SIDE_LENGTH,
                         height: PREVIEW_SIDE_LENGTH,
-                        alt: displayName(tile)
+                        alt: displayName(tile) || tile.id
                     }, this.value_, tile]
                 }
             }
@@ -230,6 +247,8 @@ export class FieldTileset extends FieldImages implements FieldCustom {
             return null;
         }
 
+        this.localTile = undefined;
+
         return newValue;
     }
 
@@ -244,7 +263,7 @@ export class FieldTileset extends FieldImages implements FieldCustom {
                         src: bitmapToImageURI(pxt.sprite.Bitmap.fromData(this.localTile.bitmap), PREVIEW_SIDE_LENGTH, false),
                         width: PREVIEW_SIDE_LENGTH,
                         height: PREVIEW_SIDE_LENGTH,
-                        alt: displayName(this.localTile)
+                        alt: displayName(this.localTile) || this.localTile.id
                     },
                     this.localTile.id,
                     this.localTile

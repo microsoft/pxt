@@ -657,6 +657,14 @@ namespace ts.pxtc {
     }
 
     function isArrayType(t: Type) {
+        if (t.flags & TypeFlags.Union && (t as UnionType).types) {
+            for (const subtype of (t as UnionType).types) {
+                if (!isArrayType(subtype)) {
+                    return false;
+                }
+            }
+            return true;
+        }
         if (!isObjectType(t)) {
             return false;
         }
@@ -701,7 +709,12 @@ namespace ts.pxtc {
 
     function arrayElementType(t: Type, idx = -1): Type {
         if (isArrayType(t))
-            return checkType((<TypeReference>t).typeArguments[0])
+            if (t.flags & TypeFlags.Union) {
+                return checkType(t.getNumberIndexType());
+            }
+            else {
+                return checkType((<TypeReference>t).typeArguments[0])
+            }
         return checker.getIndexTypeOfType(t, IndexKind.Number);
     }
 
@@ -1826,9 +1839,12 @@ ${lbl}: .short 0xffff
             let eltT = arrayElementType(typeOf(node))
             let coll = ir.shared(ir.rtcall("Array_::mk", []))
             for (let elt of node.elements) {
-                let mask = isRefCountedExpr(elt) ? 2 : 0
+                let mask = isRefCountedExpr(elt) ? (1 << 1) : 0
                 proc.emitExpr(ir.rtcall("Array_::push", [coll, emitExpr(elt)], mask))
             }
+            if (node.elements.length > 0)
+                // Make sure there is at least one use of the array, so it doesn't get GC-ed away in the last push.
+                proc.emitExpr(ir.rtcall("langsupp::ignore", [coll], 1))
             return coll
         }
         function emitObjectLiteral(node: ObjectLiteralExpression) {
@@ -1838,6 +1854,7 @@ ${lbl}: .short 0xffff
 
                 let keyName: string
                 let init: ir.Expr
+                let mask = 0
                 if (p.kind == SK.ShorthandPropertyAssignment) {
                     const sp = p as ShorthandPropertyAssignment
                     assert(!sp.equalsToken && !sp.objectAssignmentInitializer) // disallowed by TS grammar checker
@@ -1861,6 +1878,8 @@ ${lbl}: .short 0xffff
                     keyName = p.name.kind == SK.StringLiteral ?
                         (p.name as StringLiteral).text : p.name.getText();
                     init = emitExpr(p.initializer)
+                    if (isRefCountedExpr(p.initializer))
+                        mask |= 1 << 2
                 }
                 const fieldId = target.isNative
                     ? ir.numlit(getIfaceMemberId(keyName))
@@ -1870,8 +1889,11 @@ ${lbl}: .short 0xffff
                     fieldId,
                     init
                 ];
-                proc.emitExpr(ir.rtcall(target.isNative ? "pxtrt::mapSet" : "pxtrt::mapSetByString", args))
+                proc.emitExpr(ir.rtcall(target.isNative ? "pxtrt::mapSet" : "pxtrt::mapSetByString", args, mask))
             })
+            // Make sure there is at least one use of the map, so it doesn't get GC-ed away in the last mapSet.
+            if (node.properties.length > 0)
+                proc.emitExpr(ir.rtcall("langsupp::ignore", [expr], 1))
             return expr
         }
         function emitPropertyAssignment(node: PropertyDeclaration) {
@@ -3346,7 +3368,7 @@ ${lbl}: .short 0xffff
                 } else if (decl && (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment || isSlowField(decl))) {
                     proc.emitExpr(emitCallCore(trg, trg, [src], null, decl as FunctionLikeDeclaration))
                 } else {
-                    for (;;) {
+                    for (; ;) {
                         if (trg.kind === SK.PropertyAccessExpression) {
                             const idx = fieldIndex(trg as PropertyAccessExpression)
                             const fld = getFieldInfo(idx.classInfo, idx.name)
