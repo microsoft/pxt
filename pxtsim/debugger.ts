@@ -192,7 +192,7 @@ namespace pxsim {
         return stackFrame.retval;
     }
 
-    export function injectEnergyVariables(msg: DebuggerBreakpointMessage, heap: Map<any>) {
+    export function injectEnergyVariables(msg: DebuggerBreakpointMessage, heap: Map<any>, board: BaseBoard) {
         // TODO
         // 1. from board
         // 2. from runtime

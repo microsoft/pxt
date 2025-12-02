@@ -1,6 +1,5 @@
 import * as React from "react";
 import { DebuggerCallStack } from "./debuggerCallStack";
-import { DebuggerEnergy} from "./debuggerEnergy"
 import { DebuggerVariables } from "./debuggerVariables";
 import { DebuggerToolbar } from "./debuggerToolbar";
 
@@ -48,7 +47,6 @@ export class DebuggerToolbox extends React.Component<DebuggerToolboxProps, Debug
     render() {
         return <div>
             <DebuggerToolbar ref={this.toolbarRef} parent={this.props.parent} showAdvancedControls={this.props.showCallStack} />
-            <DebuggerEnergy></DebuggerEnergy>
             <DebuggerVariables
                 apis={this.props.apis}
                 breakpoint={this.state.lastBreakpoint}
