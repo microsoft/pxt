@@ -109,17 +109,22 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
         }
 
         let placeholderText: string;
+        let energyPlaceholderText: string;
 
         if (frozen) {
             placeholderText = lf("Code is running...");
+            energyPlaceholderText = lf("Code is running...");
         }
         else if (!variables.length && !breakpoint?.exceptionMessage) {
             placeholderText = lf("No variables to show");
         }
+        if (!frozen && !energyFrame.variables.length && !breakpoint?.exceptionMessage) {
+            energyPlaceholderText = lf("No energy variables to show");
+        }
+
 
         const tableRows = placeholderText ? [] : this.renderVars(variables);
-
-        const energyTableRows = placeholderText ? [] : this.renderVars(energyFrame.variables)
+        const energyTableRows = energyPlaceholderText ? [] : this.renderVars(energyFrame.variables)
 
         if (breakpoint?.exceptionMessage && !frozen) {
             tableRows.unshift(<DebuggerTableRow
@@ -135,9 +140,9 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
         const previewLabel = previewVar && lf("Current value for '{0}'", previewVar.name);
 
         return <div>
-            <DebuggerTable header={energyTableHeader} placeholderText={placeholderText}>
+            <DebuggerTable header={energyTableHeader} placeholderText={energyPlaceholderText}>
                 {energyTableRows}
-            </DebuggerTable>  
+            </DebuggerTable>
             <DebuggerTable header={variableTableHeader} placeholderText={placeholderText}>
                 {tableRows}
             </DebuggerTable>
