@@ -431,7 +431,7 @@ namespace pxsim {
             this.bus = new pxsim.EventBus(runtime, this);
         }
 
-        public getVariables(): pxsim.Variables {
+        public getBoardVariables(): pxsim.Variables {
             return {}
         }
 

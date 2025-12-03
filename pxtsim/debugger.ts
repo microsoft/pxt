@@ -193,15 +193,15 @@ namespace pxsim {
     }
 
     export function injectEnergyVariables(msg: DebuggerBreakpointMessage, heap: Map<any>, board: BaseBoard) {
-        const dalVars = board.getVariables()
+        const dalVars = board.getBoardVariables()
         const keys = Object.keys(dalVars);
         if (!keys.length)
             return;
 
         const energyVars: Variables = msg.energyVars = {};
         Object.keys(dalVars)
-            .forEach(n => energyVars[n] = valToJSON(dalVars[n], heap))  
-        // TODO
+            .forEach(n => energyVars[n] = valToJSON(dalVars[n], heap))
+        // Possible future sources of energy variables:
         // 2. from runtime
     }
 
