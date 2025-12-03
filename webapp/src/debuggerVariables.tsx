@@ -197,7 +197,7 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
         filters?: string[]
     ) {
         const { energyVars, globals, environmentGlobals, stackframes } = breakpoint;
-        if (!globals && !environmentGlobals) {
+        if (!energyVars && !globals && !environmentGlobals) {
             // freeze the ui
             this.update(true)
             return;
@@ -205,10 +205,12 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
 
         let nextId = 0;
 
+        const updatedEnergyVars = updateScope(this.state.energyFrame, energyVars);
         const updatedGlobals = updateScope(this.state.globalFrame, globals);
         if (filters) {
             updatedGlobals.variables = updatedGlobals.variables.filter(v => filters.indexOf(v.name) !== -1)
         }
+
         // inject unfiltered environment variables
         if (environmentGlobals)
             updatedGlobals.variables = updatedGlobals.variables.concat(variablesToVariableList(environmentGlobals));
@@ -233,7 +235,7 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
         }
 
         this.setState({
-            energyFrame: undefined, //TODO
+            energyFrame: updatedEnergyVars,
             globalFrame: updatedGlobals,
             stackFrames: updatedFrames || [],
             nextID: nextId,
