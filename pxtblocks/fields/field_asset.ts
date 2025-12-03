@@ -403,7 +403,7 @@ export abstract class FieldAssetEditor<U extends FieldAssetEditorOptions, V exte
         const bg = new svg.Rect()
             .at(X_PADDING, Y_PADDING)
             .size(BG_WIDTH, BG_WIDTH)
-            .setClass("blocklySpriteField")
+            .setClass("blocklyFieldRect blocklySpriteField")
             .stroke("#898989", 1)
             .corner(4);
 

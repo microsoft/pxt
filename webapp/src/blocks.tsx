@@ -956,6 +956,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 if (entry.intersectionRatio > 0) {
                     this.intersectionObserver.unobserve(entry.target);
                     this.editor.refreshTheme();
+                    const flyoutWorkspace = this.editor.getFlyout()?.getWorkspace();
+                    if (flyoutWorkspace) {
+                        flyoutWorkspace.refreshTheme();
+                    }
                 }
             })
         });
