@@ -2,6 +2,7 @@ import * as React from "react";
 import * as data from "./data";
 import * as simulator from "./simulator";
 import { DebuggerTable, DebuggerTableRow } from "./debuggerTable";
+import { EnergyMeter } from "./energyMeter";
 
 const MAX_VARIABLE_LENGTH = 20;
 
@@ -143,6 +144,7 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
             <DebuggerTable header={energyTableHeader} placeholderText={energyPlaceholderText}>
                 {energyTableRows}
             </DebuggerTable>
+            <EnergyMeter readings={[80, 60, 40]} maxReading={100} />
             <DebuggerTable header={variableTableHeader} placeholderText={placeholderText}>
                 {tableRows}
             </DebuggerTable>
