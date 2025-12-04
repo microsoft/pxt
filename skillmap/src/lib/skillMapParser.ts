@@ -95,8 +95,8 @@ function buildMapFromSections(header: MarkdownSection, sections: MarkdownSection
 function inflateSkillMap(section: MarkdownSection): Partial<SkillMap> {
     const result: Partial<SkillMap> = {
         mapId: section.header.toLowerCase(),
-        displayName: section.attributes["name"] || section.header,
-        description: section.attributes["description"],
+        displayName: section.attributes["name"] || getCodeBlock(section, "name") || section.header,
+        description: section.attributes["description"] || getCodeBlock(section, "description"),
         completionUrl: section.attributes["completionurl"],
         prerequisites: [],
         activities: {},
@@ -135,7 +135,7 @@ function inflateMapNode(section: MarkdownSection): MapNode {
         activityId: section.header.toLowerCase(),
         imageUrl: section.attributes["imageurl"],
         next: [],
-        displayName: section.attributes["name"] || section.header,
+        displayName: section.attributes["name"] || getCodeBlock(section, "name") || section.header,
         nextIds: parseList(section.attributes["next"])
     }
 
@@ -309,7 +309,7 @@ function inflateActivity(section: MarkdownSection, base: Partial<MapActivity>): 
     const result: Partial<MapActivity> = {
         ...base,
         kind: "activity",
-        description: section.attributes["description"],
+        description: section.attributes["description"] || getCodeBlock(section, "description"),
         url: section.attributes["url"],
         tags: parseList(section.attributes["tags"]),
         // defaults to true
@@ -384,11 +384,11 @@ function inflateMetadata(section: MarkdownSection): PageMetadata {
     const lockedNodeColor = section.attributes["lockednodecolor"];
     const completedNodeColor = section.attributes["completednodecolor"];
 
-    const introductoryModal = section.codeBlocks?.find(b => b.languageCode === "intro");
+    const introductoryModal = getCodeBlock(section, "intro");
 
     return {
-        title: section.attributes["name"] || section.header,
-        description: section.attributes["description"],
+        title: section.attributes["name"] || getCodeBlock(section, "name") || section.header,
+        description: section.attributes["description"] || getCodeBlock(section, "description"),
         infoUrl: cleanInfoUrl(section.attributes["infourl"]),
         backgroundImageUrl: section.attributes["backgroundurl"],
         pixelatedBackground: isTrue(section.attributes["pixelatedbackground"]),
@@ -411,8 +411,12 @@ function inflateMetadata(section: MarkdownSection): PageMetadata {
             selectedStrokeColor: highlight || "var(--pxt-primary-background)",
             pathOpacity: 0.5,
         },
-        introductoryModal: introductoryModal?.content
+        introductoryModal
     }
+}
+
+function getCodeBlock(section: MarkdownSection, languageCode: string): string | undefined {
+    return section.codeBlocks?.find(b => b.languageCode === languageCode)?.content?.trim();
 }
 
 function getContrastingColor(color: string) {
