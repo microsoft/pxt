@@ -141,10 +141,10 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
         const previewLabel = previewVar && lf("Current value for '{0}'", previewVar.name);
 
         return <div>
+            <EnergyMeter readings={[95, 60, 20]} maxReading={100} />
             <DebuggerTable header={energyTableHeader} placeholderText={energyPlaceholderText}>
                 {energyTableRows}
             </DebuggerTable>
-            <EnergyMeter readings={[80, 60, 40]} maxReading={100} />
             <DebuggerTable header={variableTableHeader} placeholderText={placeholderText}>
                 {tableRows}
             </DebuggerTable>

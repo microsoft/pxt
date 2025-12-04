@@ -17,8 +17,8 @@ export class EnergyMeter extends React.Component<EnergyMeterProps> {
             <svg width="100" height={(barHeight + barSpacing) * readings.length}>
                 {readings.map((reading, index) => {
                     const width = (reading / maxReading) * 100;
-                    const color = reading > maxReading * 0.8 ? 'red' :
-                                  reading > maxReading * 0.5 ? 'orange' : 'green';
+                    const color = reading > maxReading * 0.8 ? 'green' :
+                                  reading > maxReading * 0.5 ? 'orange' : 'red';
                     return (
                         <rect
                             key={index}
