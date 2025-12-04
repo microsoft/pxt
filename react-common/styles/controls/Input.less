@@ -134,6 +134,47 @@
     color: @textColor !important;
 }
 
+.common-input-wrapper {
+    position: relative;
+}
+
+
+.common-input-wrapper > .common-menu-dropdown-pane {
+    position: absolute;
+    left: 0;
+    right: auto;
+    top: calc(100% + 0.25rem);
+    width: auto;
+    min-width: 100%;
+    max-width: calc(100% + 4rem);
+    box-sizing: border-box;
+    z-index: 1;
+
+    .common-button {
+        padding: 0.7rem 0.8rem;
+        width: 100%;
+        text-align: start;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        line-height: 1.35;
+
+        .common-button-flex {
+            display: flex;
+            width: 100%;
+            gap: 0.4rem;
+            overflow: hidden;
+        }
+
+        .common-button-label {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex: 1 1 auto;
+        }
+    }
+}
+
 .common-menu-dropdown-pane {
     z-index: 1;
 

@@ -30,6 +30,9 @@ export class MonacoSpriteEditor extends MonacoReactFieldEditor<pxt.ProjectImage>
                 if (name && !project.isNameTaken(pxt.AssetType.Image, name) && pxt.validateAssetName(name)) {
                     newAsset.meta.displayName = name;
                 }
+                else {
+                    newAsset.meta.displayName = project.generateNewName(pxt.AssetType.Image);
+                }
 
                 this.editing = newAsset;
 
@@ -85,14 +88,27 @@ function createFakeAsset(bitmap: pxt.sprite.Bitmap): pxt.ProjectImage {
     }
 }
 
+const regexes = [
+    // typescript
+    "img\\s*`[\\.a-zA-Z0-9#\\n\\s]*`",
+    "bmp\\s*`[\\.a-zA-Z0-9#\\n\\s]*`",
+    "assets\\s*\\.\\s*image\\s*`[a-zA-Z_\\s\\n]*`",
+
+    // python
+    'img\\s*\\(\\s*"""[\\.a-zA-Z0-9#\\n\\s]*"""\\s*\\)',
+    'bmp\\s*\\(\\s*"""[\\.a-zA-Z0-9#\\n\\s]*"""\\s*\\)',
+    'assets\\s*\\.\\s*image\\s*\\(\\s*"""[a-zA-Z_\\s\\n]*"""\\s*\\)'
+];
+
+const searchString = regexes.map(r => `(?:${r})`).join("|");
+
 export const spriteEditorDefinition: pxt.editor.MonacoFieldEditorDefinition = {
     id: fieldEditorId,
     foldMatches: true,
     glyphCssClass: "sprite-editor-glyph sprite-focus-hover",
     heightInPixels: 510,
     matcher: {
-        // match both JS and python
-        searchString: "(?:img|bmp|assets\\s*\\.\\s*image)\\s*(?:`|\\(\\s*\"\"\")(?:(?:[^(){}:\\[\\]\"';?/,+\\-=*&|^%!`~]|\\n)*)\\s*(?:`|\"\"\"\\s*\\))",
+        searchString: searchString,
         isRegex: true,
         matchCase: true,
         matchWholeWord: false
