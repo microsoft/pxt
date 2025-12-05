@@ -88,7 +88,7 @@ div.field .ui.toggle.checkbox input:checked~label:before {
 /* Sim toolbar */
 #simulator .editor-sidebar .simtoolbar .debug-button.active,
 #simulator .editor-sidebar .simtoolbar .debug-button.active:hover {
-    /* Make active state more apparent by inverting the colors */
+    /* Make active state more apparent with a yellow border */
     color: var(--pxt-neutral-foreground2) !important;
     background: var(--pxt-neutral-background2) !important;
     border: 3px solid var(--pxt-colors-yellow-background) !important;
