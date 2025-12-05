@@ -6602,14 +6602,6 @@ document.addEventListener("DOMContentLoaded", async () => {
                 theEditor.importFile(new File(msg.parts, msg.filename));
             return;
         }
-        if (m.type === "messagepacket") {
-            const msg = m as pxsim.SimulatorControlMessage;
-            const channel = msg.channel;
-            if (channel === "keydown-Escape" && theEditor && theEditor.state.fullscreen) {
-                theEditor.toggleSimulatorFullscreen();
-                return;
-            }
-        }
     }, false);
 
     // Disable right-click in locked editor to prevent "Back". (Blockly context menu still enabled)
