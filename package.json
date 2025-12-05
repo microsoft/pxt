@@ -1,6 +1,6 @@
 {
   "name": "pxt-core",
-  "version": "12.2.10",
+  "version": "12.2.12",
   "description": "Microsoft MakeCode provides Blocks / JavaScript / Python tools and editors",
   "keywords": [
     "TypeScript",
@@ -60,9 +60,9 @@
     "npm": ">=8.0.0"
   },
   "dependencies": {
-    "@blockly/field-grid-dropdown": "^6.0.1",
-    "@blockly/keyboard-navigation": "2.0.0",
-    "@blockly/plugin-workspace-search": "10.1.0",
+    "@blockly/field-grid-dropdown": "6.0.4",
+    "@blockly/keyboard-navigation": "3.0.3",
+    "@blockly/plugin-workspace-search": "10.1.2",
     "@crowdin/crowdin-api-client": "^1.33.0",
     "@fortawesome/fontawesome-free": "^5.15.4",
     "@microsoft/applicationinsights-web": "^2.8.11",
@@ -71,7 +71,7 @@
     "@zip.js/zip.js": "2.4.20",
     "adm-zip": "^0.5.12",
     "axios": "^1.12.2",
-    "blockly": "12.2.0",
+    "blockly": "12.3.1",
     "browserify": "17.0.0",
     "chai": "^3.5.0",
     "chalk": "^4.1.2",
