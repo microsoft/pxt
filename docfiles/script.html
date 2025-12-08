@@ -142,7 +142,7 @@
                             );
                         }
 
-                        var evalEnabled = targetConfig && targetConfig.teachertool.showSharePageEvalButton;
+                        var evalEnabled = targetConfig && targetConfig.teachertool && targetConfig.teachertool.showSharePageEvalButton;
                         if (!evalEnabled) {
                             var evalButton = document.querySelector("#eval-button");
                             if (evalButton) {

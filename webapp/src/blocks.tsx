@@ -956,6 +956,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 if (entry.intersectionRatio > 0) {
                     this.intersectionObserver.unobserve(entry.target);
                     this.editor.refreshTheme();
+                    const flyoutWorkspace = this.editor.getFlyout()?.getWorkspace();
+                    if (flyoutWorkspace) {
+                        flyoutWorkspace.refreshTheme();
+                    }
                 }
             })
         });
@@ -1761,7 +1765,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 controls: false,
                 maxScale: 2.5,
                 minScale: .2,
-                scaleSpeed: 1.5,
+                scaleSpeed: 1.08,
                 startScale: pxt.BrowserUtils.isMobile() ? 0.7 : 0.9,
                 pinch: true,
                 wheel: true

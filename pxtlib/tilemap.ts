@@ -1401,6 +1401,18 @@ namespace pxt {
             }
         }
 
+        generateNewName(type: AssetType, name?: string) {
+            const defaultName = name || pxt.getDefaultAssetDisplayName(type);
+            let newName = defaultName;
+            let index = 0;
+
+            while (this.isNameTaken(type, newName)) {
+                newName = defaultName + (index++);
+            }
+
+            return newName;
+        }
+
         protected generateNewIDInternal(type: AssetType, varPrefix: string, namespaceString?: string) {
             varPrefix = varPrefix.replace(/\d+$/, "");
             const prefix = namespaceString ? namespaceString + "." + varPrefix : varPrefix;
@@ -2010,7 +2022,7 @@ namespace pxt {
     }
 
     export function parseAssetTSReference(ts: string) {
-        const match = /^\s*(?:(?:assets\s*\.\s*(image|tile|animation|tilemap|song))|(tilemap))\s*(?:`|\(""")([^`"]+)(?:`|"""\))\s*$/m.exec(ts);
+        const match = /^\s*(?:(?:assets\s*\.\s*(image|tile|animation|tilemap|song))|(tilemap))\s*(?:`|\(""")([^`"]*)(?:`|"""\))\s*$/m.exec(ts);
 
         if (match) {
             const type = match[1] || match[2];
