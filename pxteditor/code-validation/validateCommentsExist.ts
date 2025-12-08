@@ -29,7 +29,7 @@ export function validateWorkspaceCommentsExist({ usedBlocks, numRequired }: {
 }
 
 function getWorkspaceComments(usedBlocks: Blockly.Block[]): Blockly.comments.WorkspaceComment[] {
-    const workspace = usedBlocks[0]?.workspace;
+    const workspace = usedBlocks[0]?.workspace ?? Blockly.getMainWorkspace();
     const topComments = workspace?.getTopComments() ?? [];
     return topComments.filter(comment => !!comment.getText());
 }
