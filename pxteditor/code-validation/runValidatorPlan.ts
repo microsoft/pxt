@@ -5,7 +5,7 @@ import * as Blockly from "blockly";
 import { validateBlockFieldValueExists } from "./validateBlockFieldValueExists";
 import { validateBlocksExist } from "./validateBlocksExist";
 import { validateBlocksInSetExist } from "./validateBlocksInSetExist";
-import { validateBlockCommentsExist } from "./validateCommentsExist";
+import { validateBlockCommentsExist, validateCommentsExist } from "./validateCommentsExist";
 import { validateSpecificBlockCommentsExist } from "./validateSpecificBlockCommentsExist";
 import { getNestedChildBlocks } from "./getNestedChildBlocks";
 import { validateVariableUsage } from "./validateVariableUsage";
@@ -20,6 +20,9 @@ export function runValidatorPlan(usedBlocks: Blockly.Block[], plan: pxt.blocks.V
         switch (check.validator) {
             case "blocksExist":
                 [successfulBlocks, checkPassed] = [...runBlocksExistValidation(usedBlocks, check as pxt.blocks.BlocksExistValidatorCheck)];
+                break;
+            case "commentsExist":
+                checkPassed = runValidateCommentsExist(usedBlocks, check as pxt.blocks.CommentExistsValidatorCheck)
                 break;
             case "blockCommentsExist":
                 checkPassed = runValidateBlockCommentsExist(usedBlocks, check as pxt.blocks.BlockCommentsExistValidatorCheck);
@@ -92,6 +95,11 @@ function runBlocksExistValidation(usedBlocks: Blockly.Block[], inputs: pxt.block
 
 function runValidateBlockCommentsExist(usedBlocks: Blockly.Block[], inputs: pxt.blocks.BlockCommentsExistValidatorCheck): boolean {
     const blockResults = validateBlockCommentsExist({ usedBlocks, numRequired: inputs.count });
+    return blockResults.passed;
+}
+
+function runValidateCommentsExist(usedBlocks: Blockly.Block[], inputs: pxt.blocks.CommentExistsValidatorCheck): boolean {
+    const blockResults = validateCommentsExist({ usedBlocks, numRequired: inputs.count });
     return blockResults.passed;
 }
 
