@@ -1856,7 +1856,7 @@ function processLf(filename: string, translationStrings: pxt.Map<string>): void 
                 return;
 
             while (true) {
-                const newLine = line.replace(/\blf(_va)?\s*\(\s*(.*)/, (all, a, args) => {
+                const newLine = line.replace(/\b(?:blf|(?:lf(_va)?))\s*\(\s*(.*)/, (all, a, args) => {
                     const m = /^("([^"]|(\\"))+")\s*[\),]/.exec(args)
                     if (m) {
                         try {
@@ -6808,7 +6808,7 @@ function extractLocStringsAsync(output: string, dirs: string[]): Promise<void> {
                 return;
 
             while (true) {
-                let newLine = line.replace(/\blf(_va)?\s*\(\s*(.*)/, (all, a, args) => {
+                let newLine = line.replace(/\b(?:blf|(?:lf(_va)?))\s*\(\s*(.*)/, (all, a, args) => {
                     let m = /^("([^"]|(\\"))+")\s*[\),]/.exec(args)
                     if (m) {
                         try {
