@@ -58,6 +58,7 @@
                 {
                     "name": "count",
                     "type": "number",
+                    "min": 1,
                     "default": 1,
                     "paths": ["checks[0].blockCounts[0].count"]
                 }
@@ -75,6 +76,7 @@
                 {
                     "name": "count",
                     "type": "number",
+                    "min": 1,
                     "default": 1,
                     "paths": ["checks[0].count"]
                 }
@@ -92,6 +94,7 @@
                 {
                     "name": "count",
                     "type": "number",
+                    "min": 1,
                     "paths": ["checks[0].count"],
                     "default": 1
                 }
@@ -109,6 +112,7 @@
                 {
                     "name": "count",
                     "type": "number",
+                    "min": 1,
                     "paths": ["checks[0].count", "checks[1].count"],
                     "default": 1
                 }
@@ -126,6 +130,7 @@
                 {
                     "name": "count",
                     "type": "number",
+                    "min": 1,
                     "paths": ["checks[0].count"],
                     "default": 1
                 }
