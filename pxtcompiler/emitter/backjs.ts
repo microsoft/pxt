@@ -149,7 +149,7 @@ namespace ts.pxtc {
         jsheader += `const pxtrt = pxsim.pxtrt;\n`
 
         jsheader += `let yieldSteps = 1;\n`
-        jsheader += `ectx.setupYield(function() { yieldSteps = 100; })\n`
+        jsheader += `ectx.setupYield(function() { yieldSteps = 1; })\n`
 
         let jssource = "pxsim.setTitle(" + JSON.stringify(bin.getTitle()) + ");\n"
         let cfg: pxt.Map<number> = {}

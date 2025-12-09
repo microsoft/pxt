@@ -1295,14 +1295,14 @@ namespace pxsim {
                 __this.cleanScheduledExpired()
                 yieldReset();
                 let now = Date.now()
-                if (now - lastYield >= 20) {
+                //if (now - lastYield >= 20) {
                     lastYield = now
                     s.pc = pc;
                     s.r0 = r0;
-                    setTimeout(loopForSchedule(s), yieldDelay)
+                    setTimeout(loopForSchedule(s), 2)
                     return true
-                }
-                return false
+                //}
+                //return false
             }
 
             function setupDebugger(numBreakpoints: number, userCodeGlobals?: string[]) {
