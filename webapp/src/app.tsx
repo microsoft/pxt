@@ -393,7 +393,8 @@ export class ProjectView
             // it's a go, let's add
             for (const ghid of ghids) {
                 pxt.debug(`adding ${ghid.fullName}`)
-                const { config, version } = await pxt.github.downloadLatestPackageAsync(ghid);
+                const useProxy = pxt.github.shouldUseProxyForRepo(ghid.fullName);
+                const { config, version } = await pxt.github.downloadLatestPackageAsync(ghid, useProxy);
                 await p.setDependencyAsync(config.name, version);
             }
             this.reloadHeaderAsync();
