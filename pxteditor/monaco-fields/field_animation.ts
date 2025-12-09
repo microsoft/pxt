@@ -62,10 +62,10 @@ export class MonacoAnimationEditor extends MonacoReactFieldEditor<pxt.Animation>
 
 const regexes = [
     // typescript
-    "assets\\s*\\.\\s*animation\\s*`[a-zA-Z_\\s\\n]*`",
+    "assets\\s*\\.\\s*animation\\s*`[^`]*`",
 
     // python
-    'assets\\s*\\.\\s*animation\\s*\\(\\s*"""[a-zA-Z_\\s\\n]*"""\\s*\\)'
+    'assets\\s*\\.\\s*animation\\s*\\(\\s*"""[^"]*"""\\s*\\)'
 ];
 
 const searchString = regexes.map(r => `(?:${r})`).join("|");
