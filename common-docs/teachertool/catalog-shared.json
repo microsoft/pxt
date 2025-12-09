@@ -66,7 +66,7 @@
         },
         {
             "id": "7AE7EA2A-3AC8-42DC-89DB-65E3AE157156",
-            "use": "block_comment_used",
+            "use": "comment_used",
             "template": "At least ${count} comment(s)",
             "description": "The project contains at least the specified number of comments.",
             "docPath": "/teachertool",
