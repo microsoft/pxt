@@ -16,14 +16,14 @@ export function initMath(blockInfo: pxtc.BlocksInfo) {
     Blockly.Blocks[mathOp2Id] = {
         init: function () {
             this.jsonInit({
-                "message0": lf("%1 of %2 and %3"),
+                "message0": mathOp2Def.block.message0,
                 "args0": [
                     {
                         "type": "field_dropdown",
                         "name": "op",
                         "options": [
-                            [lf("{id:op}min"), "min"],
-                            [lf("{id:op}max"), "max"]
+                            [mathOp2Def.block.optionMin, "min"],
+                            [mathOp2Def.block.optionMax, "max"]
                         ]
                     },
                     {
