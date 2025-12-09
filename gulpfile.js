@@ -337,7 +337,7 @@ function buildStrings(out, rootPaths, recursive) {
                 return;
 
             while (true) {
-                let newLine = line.replace(/\blf(_va)?\s*\(\s*(.*)/, (all, a, args) => {
+                let newLine = line.replace(/\b(?:blf|(?:lf(_va)?))\s*\(\s*(.*)/, (all, a, args) => {
                     let m = /^("([^"]|(\\"))+")\s*[\),]/.exec(args)
                     if (m) {
                         try {
