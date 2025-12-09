@@ -44,6 +44,17 @@
             ]
         },
         {
+            ".desc": "A comment exists in a project",
+            "name": "comment_used",
+            "threshold": 1,
+            "checks": [
+                {
+                    "validator": "commentsExist",
+                    "count": 1
+                }
+            ]
+        },
+        {
             ".desc": "A block comment exists in a project",
             "name": "block_comment_used",
             "threshold": 1,

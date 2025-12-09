@@ -25,6 +25,10 @@ declare namespace pxt.blocks {
         blockCounts: BlocksExistCountInfo[];
     }
 
+    export interface CommentExistsValidatorCheck {
+        validator: "commentsExist";
+        count: number;
+    }
     export interface BlockCommentsExistValidatorCheck extends ValidatorCheckBase {
         validator: "blockCommentsExist";
         count: number;
