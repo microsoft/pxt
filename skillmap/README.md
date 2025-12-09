@@ -8,6 +8,8 @@ When running locally, the skillmap iframe will load `localhost:3232`, so you wil
 
 Use the `?nolocalhost=1` flag to load the default content for the skillmap.
 
+To test local markdown files, use `pxt skillmap --docs . --serve`, and reference them under docs e.g. `http://localhost:3000/#docs:/skillmap/bug-arena`
+
 ## Loading skillmap content
 The skillmap can render markdown from Github or from our docs. The format is:
 
