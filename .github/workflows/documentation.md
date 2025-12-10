@@ -13,8 +13,11 @@ tools:
   github:
     read-only: true
     allowed:
-      - get_pull_request
-      - list_pull_request_files
+      - pull_request_read
+      - get_commit
+      - list_commits
+      - search_code
+      - semantic_code_search
   edit:
 safe-outputs:
   add-comment:
@@ -39,6 +42,7 @@ This workflow was triggered because PR #${{ github.event.pull_request.number }} 
 
 1. **Retrieve PR Information**
    - Get the full PR diff to understand what changed
+   - **IMPORTANT**: You must analyze ALL changes in the PR, not just the last commit. Use `git diff origin/master...HEAD` or `git diff origin/master..HEAD` to get all changes from the base branch to the PR head
    - Focus on files that directly impact external users (public APIs, exported functions, React components, TypeScript types)
    - **Pay special attention to React components** - they are consumed by other PXT-based repositories (like pxt-arcade, pxt-microbit) and changes can have external implications
 
