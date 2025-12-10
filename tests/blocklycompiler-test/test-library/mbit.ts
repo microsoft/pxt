@@ -35,6 +35,16 @@ namespace basic {
     export function createTemplateGrid(leds: string): string {
         return leds
     }
+
+    /**
+     * Repeats the code forever in the background. On each iteration, allows other codes to run.
+     * @param body code to execute
+     */
+    //% help=basic/forever weight=55 blockGap=8 blockAllowMultiple=1
+    //% blockId=device_forever block="forever" icon="\uf01e"
+    export function forever(a: () => void): void {
+
+    }
 }
 
 
