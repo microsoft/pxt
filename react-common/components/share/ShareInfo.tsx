@@ -53,6 +53,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
     const [ thumbnailUri, setThumbnailUri ] = React.useState(screenshotUri);
     const [ shareState, setShareState ] = React.useState<"share" | "gifrecord" | "publish" | "publish-vscode" | "publishing">("share");
     const [ shareData, setShareData ] = React.useState<ShareData>();
+    const [ lastShareWasAnonymous, setLastShareWasAnonymous ] = React.useState<boolean | undefined>(undefined);
     const [ embedState, setEmbedState ] = React.useState<"none" | "code" | "editor" | "simulator">("none");
     const [ showQRCode, setShowQRCode ] = React.useState(false);
     const [ copySuccessful, setCopySuccessful ] = React.useState(false);
@@ -93,6 +94,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
 
     const handlePublishClick = async () => {
         setShareState("publishing");
+        setLastShareWasAnonymous(isAnonymous);
         let publishedShareData = await publishAsync(name, thumbnailUri, isAnonymous);
         setShareData(publishedShareData);
         if (!publishedShareData?.error) setShareState("publish");
@@ -101,6 +103,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
 
     const handlePublishInVscodeClick = async () => {
         setShareState("publishing");
+        setLastShareWasAnonymous(isAnonymous);
         let publishedShareData = await publishAsync(name, thumbnailUri, isAnonymous);
         setShareData(publishedShareData);
         if (!publishedShareData?.error) {
@@ -235,6 +238,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
     const handleMultiplayerShareConfirmClick = async () => {
         setShareState("publishing");
         setIsShowingMultiConfirmation(false);
+    setLastShareWasAnonymous(isAnonymous);
 
         const publishedShareData = await publishAsync(name, thumbnailUri, isAnonymous);
 
@@ -321,6 +325,20 @@ export const ShareInfo = (props: ShareInfoProps) => {
     const inputTitle = prePublish ? lf("Project Title") :
         (shareState === "publish-vscode" ? lf("Share Successful") : lf("Project Link"));
 
+    const shareAttemptWasAnonymous = lastShareWasAnonymous === undefined ? isAnonymous : lastShareWasAnonymous;
+    const hasGithubProvider = !!pxt.appTarget?.cloud?.cloudProviders?.github;
+    const shareErrorMessage = shareData?.error
+        ? shareData.error.statusCode === 413
+            ? (shareAttemptWasAnonymous
+                ? (hasGithubProvider
+                    ? lf("Oops! Your project is too big to share anonymously. Sign in and create a persistent link for higher limits, or publish to GitHub instead.")
+                    : lf("Oops! Your project is too big to share anonymously. Sign in and create a persistent link to unlock a higher size limit."))
+                : (hasGithubProvider
+                    ? lf("Oops! Your project is too big. You can create a GitHub repository to share it.")
+                    : lf("Oops! Your project is too big to share.")))
+            : lf("Oops! There was an error. Please ensure you are connected to the Internet and try again.")
+        : undefined;
+
     return <>
         <div className="project-share-info">
             {showSimulator && shareState !== "gifrecord" &&
@@ -364,12 +382,8 @@ export const ShareInfo = (props: ShareInfoProps) => {
                         </>
                     }
                     {prePublish && <>
-                        {shareData?.error && <div className="project-share-error">
-                            {shareData.error.statusCode === 413
-                                ? (pxt.appTarget?.cloud?.cloudProviders?.github
-                                    ? lf("Oops! Your project is too big. You can create a GitHub repository to share it.")
-                                    : lf("Oops! Your project is too big to share."))
-                                : lf("Oops! There was an error. Please ensure you are connected to the Internet and try again.")}
+                        {shareData?.error && shareErrorMessage && <div className="project-share-error">
+                            {shareErrorMessage}
                         </div>}
                         <div className="project-share-publish-actions">
                             {shareState === "share" &&
