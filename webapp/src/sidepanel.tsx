@@ -254,7 +254,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
             {hasSimulator && <div id="editorSidebar" className={editorSidebarClassName} style={!this.props.tutorialSimSidebar ? { height: editorSidebarHeight } : undefined}>
                 <div className={simContainerClassName}>
                     <div className={`ui items simPanel ${showHostMultiplayerGameButton ? "multiplayer-preview" : ""}`} ref={this.handleSimPanelRef}>
-                        <div id="boardview" className="ui vertical editorFloat" role="region" aria-label={lf("Simulator")} tabIndex={(inHome || parent.state.fullscreen) ? -1 : 0} />
+                        <div id="boardview" className="ui vertical editorFloat" role="region" aria-label={lf("Simulator")} tabIndex={-1} />
                         {showHostMultiplayerGameButton && <div className="ui item grid centered portrait multiplayer-presence">
                             <SimulatorPresenceBar />
                         </div>}

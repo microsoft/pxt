@@ -365,9 +365,10 @@ export const ShareInfo = (props: ShareInfoProps) => {
                     }
                     {prePublish && <>
                         {shareData?.error && <div className="project-share-error">
-                            {(shareData.error.statusCode === 413
-                                && pxt.appTarget?.cloud?.cloudProviders?.github)
-                                ? lf("Oops! Your project is too big. You can create a GitHub repository to share it.")
+                            {shareData.error.statusCode === 413
+                                ? (pxt.appTarget?.cloud?.cloudProviders?.github
+                                    ? lf("Oops! Your project is too big. You can create a GitHub repository to share it.")
+                                    : lf("Oops! Your project is too big to share."))
                                 : lf("Oops! There was an error. Please ensure you are connected to the Internet and try again.")}
                         </div>}
                         <div className="project-share-publish-actions">
