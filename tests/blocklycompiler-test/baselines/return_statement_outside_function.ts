@@ -1,12 +1,12 @@
-function doSomething () {
+function doSomething() {
     custom.handlerStatement(function () {
         return
     })
     return true
 }
-custom.handlerStatement(function () {
+basic.forever(function () {
     return
 })
-basic.forever(function () {
+custom.handlerStatement(function () {
     return
 })
