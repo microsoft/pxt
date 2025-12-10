@@ -59,3 +59,12 @@ namespace radio {
 
     }
 }
+
+namespace custom {
+    //% blockId=custom_handlerStatement
+    //% handlerStatement
+    //% block
+    export function handlerStatement(handler: () => void) {
+
+    }
+}
