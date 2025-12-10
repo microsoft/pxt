@@ -83,15 +83,18 @@
 # 1. **Retrieve PR Information**
 #    - Get the full PR diff to understand what changed
 #    - Focus on files that directly impact external users (public APIs, exported functions, React components, TypeScript types)
+#    - **Pay special attention to React components** - they are consumed by other PXT-based repositories (like pxt-arcade, pxt-microbit) and changes can have external implications
 #
 # 2. **Check for Documentation Needs**
 #
 #    You need to identify if the PR:
 #    - **Adds new features** that need to be documented (new public APIs, exported functions, user-facing features)
 #    - **Changes existing features** in ways that require documentation updates (API signature changes, behavior changes, breaking changes)
+#    - **Modifies React components** that are used by other PXT repositories - even seemingly internal changes can affect downstream consumers
 #
 #    **IMPORTANT**:
 #    - Only flag changes that impact external users/consumers
+#    - **React component changes deserve special scrutiny** - components in `react-common/`, `webapp/src/components/`, and other shared locations are consumed by repositories like pxt-arcade, pxt-microbit, etc. Changes to props, component behavior, or removal of components should be documented
 #    - Implementation changes that don't affect the public API should NOT require documentation additions
 #    - Internal refactoring, performance improvements, or bug fixes that don't change behavior should NOT require documentation additions
 #    - Documentation should NOT be verbose - only document what's necessary for users to understand and use the feature
@@ -101,6 +104,7 @@
 #    a. **JSDoc Comments in Code**
 #       - Check if new public APIs/exported functions have adequate JSDoc comments
 #       - Check if modified public APIs have updated JSDoc comments
+#       - **For React components**: Verify that component props are documented, especially for shared components used across repositories
 #       - Look for: function descriptions, parameter descriptions, return values, examples where helpful
 #
 #    b. **Documentation Files in `docs/` folder**
@@ -2643,15 +2647,18 @@ jobs:
           1. **Retrieve PR Information**
              - Get the full PR diff to understand what changed
              - Focus on files that directly impact external users (public APIs, exported functions, React components, TypeScript types)
+             - **Pay special attention to React components** - they are consumed by other PXT-based repositories (like pxt-arcade, pxt-microbit) and changes can have external implications
           
           2. **Check for Documentation Needs**
           
              You need to identify if the PR:
              - **Adds new features** that need to be documented (new public APIs, exported functions, user-facing features)
              - **Changes existing features** in ways that require documentation updates (API signature changes, behavior changes, breaking changes)
+             - **Modifies React components** that are used by other PXT repositories - even seemingly internal changes can affect downstream consumers
           
              **IMPORTANT**:
              - Only flag changes that impact external users/consumers
+             - **React component changes deserve special scrutiny** - components in `react-common/`, `webapp/src/components/`, and other shared locations are consumed by repositories like pxt-arcade, pxt-microbit, etc. Changes to props, component behavior, or removal of components should be documented
              - Implementation changes that don't affect the public API should NOT require documentation additions
              - Internal refactoring, performance improvements, or bug fixes that don't change behavior should NOT require documentation additions
              - Documentation should NOT be verbose - only document what's necessary for users to understand and use the feature
@@ -2661,6 +2668,7 @@ jobs:
              a. **JSDoc Comments in Code**
                 - Check if new public APIs/exported functions have adequate JSDoc comments
                 - Check if modified public APIs have updated JSDoc comments
+                - **For React components**: Verify that component props are documented, especially for shared components used across repositories
                 - Look for: function descriptions, parameter descriptions, return values, examples where helpful
           
              b. **Documentation Files in `docs/` folder**
