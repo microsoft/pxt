@@ -327,17 +327,22 @@ export const ShareInfo = (props: ShareInfoProps) => {
 
     const shareAttemptWasAnonymous = lastShareWasAnonymous === undefined ? isAnonymous : lastShareWasAnonymous;
     const hasGithubProvider = !!pxt.appTarget?.cloud?.cloudProviders?.github;
-    const shareErrorMessage = shareData?.error
-        ? shareData.error.statusCode === 413
-            ? (shareAttemptWasAnonymous
-                ? (hasGithubProvider
-                    ? lf("Oops! Your project is too big to share anonymously. Sign in and create a persistent link for higher limits, or publish to GitHub instead.")
-                    : lf("Oops! Your project is too big to share anonymously. Sign in and create a persistent link to unlock a higher size limit."))
-                : (hasGithubProvider
-                    ? lf("Oops! Your project is too big. You can create a GitHub repository to share it.")
-                    : lf("Oops! Your project is too big to share.")))
-            : lf("Oops! There was an error. Please ensure you are connected to the Internet and try again.")
-        : undefined;
+    const shareErrorMessage = (() => {
+        if (!shareData?.error) return undefined;
+        if (shareData.error.statusCode !== 413) {
+            return lf("Oops! There was an error. Please ensure you are connected to the Internet and try again.");
+        }
+
+        if (shareAttemptWasAnonymous && hasGithubProvider) {
+            return lf("Oops! Your project is too big to share anonymously. Sign in and create a persistent link for higher limits, or publish to GitHub instead.");
+        } else if (shareAttemptWasAnonymous) {
+            return lf("Oops! Your project is too big to share anonymously. Sign in and create a persistent link to unlock a higher size limit.");
+        } else if (hasGithubProvider) {
+            return lf("Oops! Your project is too big. You can create a GitHub repository to share it.");
+        } else {
+            return lf("Oops! Your project is too big to share.");
+        }
+    })();
 
     return <>
         <div className="project-share-info">
