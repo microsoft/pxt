@@ -795,7 +795,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         pxsim.U.clear(blocklyDiv);
 
         // Increase the Blockly connection radius
-        Blockly.config.snapRadius = 48;
+        Blockly.config.snapRadius = 28;
         Blockly.config.connectingSnapRadius = 96;
         this.editor = Blockly.inject(blocklyDiv, this.getBlocklyOptions(forceHasCategories)) as Blockly.WorkspaceSvg;
         pxtblockly.contextMenu.setupWorkspaceContextMenu(this.editor);
@@ -1765,7 +1765,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 controls: false,
                 maxScale: 2.5,
                 minScale: .2,
-                scaleSpeed: 1.5,
+                scaleSpeed: 1.08,
                 startScale: pxt.BrowserUtils.isMobile() ? 0.7 : 0.9,
                 pinch: true,
                 wheel: true

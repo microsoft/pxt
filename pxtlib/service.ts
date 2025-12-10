@@ -508,7 +508,7 @@ namespace ts.pxtc {
                 if (s.attributes[param]) {
                     if (ex.attributes[param]) {
                         if (ex.attributes[param] !== s.attributes[param]) {
-                            console.warn(`Ignoring duplicate ${param} for get/set/change block: ${s.attributes[param]}`);
+                            pxt.debug(`Ignoring duplicate ${param} for get/set/change block: ${s.attributes[param]}`);
                         }
                     }
                     else {
