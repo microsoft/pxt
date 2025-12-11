@@ -705,9 +705,7 @@ export function startRenderServer() {
 
             let res: BlockSvg;
             try {
-                res = blocksSvg
-                    ? await blocklyToSvgAsync(blocksSvg, 0, 0, width, height)
-                    : undefined;
+                res = await blocklyToSvgAsync(blocksSvg, 0, 0, width, height);
             } catch (e) {
                 pxt.reportException(e);
                 throw e;
