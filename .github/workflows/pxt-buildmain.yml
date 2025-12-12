@@ -1,5 +1,8 @@
 name: pxt-buildmain
 
+permissions:
+  id-token: write  # Required for OIDC
+
 on:
   push:
     branches:
@@ -18,7 +21,11 @@ jobs:
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@main
         with:
-          node-version: '16.x'
+          node-version: 20.x
+
+      - name: Update npm
+        run: npm install -g npm@latest
+
       - name: npm install
         run: |
           sudo apt-get install xvfb
@@ -30,7 +37,7 @@ jobs:
         env:
           CROWDIN_KEY: ${{ secrets.CROWDIN_KEY }}
           PXT_ACCESS_TOKEN: ${{ secrets.PXT_ACCESS_TOKEN }}
-          NPM_ACCESS_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}
+          NPM_PUBLISH: true
           PXT_ENV: production
           CHROME_BIN: chromium-browser
           DISPLAY: :99.0
