@@ -444,13 +444,38 @@ async function ciAsync() {
 
     lintJSONInDirectory(path.resolve("."));
     lintJSONInDirectory(path.resolve("docs"));
+    let pkg = readJson("package.json")
 
-    function npmPublishAsync() {
+    async function npmPublishAsync() {
         if (!npmPublish) return Promise.resolve();
+
+        let latest: pxt.semver.Version;
+
+        try {
+            const version = await nodeutil.npmLatestVersionAsync(pkg["name"]);
+            latest = pxt.semver.parse(version);
+        }
+        catch (e) {
+            // no latest tag
+        }
+
+        let distTag: string;
+
+        if (latest) {
+            const current = pxt.semver.parse(pkg["version"]);
+
+            if (pxt.semver.cmp(current, latest) < 0) {
+                distTag = `stable${current.major}.${current.minor}`;
+            }
+        }
+
+        if (distTag) {
+            return nodeutil.runNpmAsync("publish", "--tag", distTag);
+        }
+
         return nodeutil.runNpmAsync("publish");
     }
 
-    let pkg = readJson("package.json")
     if (pkg["name"] == "pxt-core") {
         pxt.log("pxt-core build");
 
