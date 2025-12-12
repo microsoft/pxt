@@ -1,0 +1,54 @@
+name: Check if the commit is part of a merged PR
+
+on:
+  workflow_call:
+    outputs:
+      is_merged_pr:
+        description: "Whether the current push came from a merged PR"
+        value: ${{ jobs.check-pr.outputs.is_merged_pr }}
+      pr_head_sha:
+        description: "The head SHA of the merged PR"
+        value: ${{ jobs.check-pr.outputs.pr_head_sha }}
+
+jobs:
+  check-pr:
+    runs-on: ubuntu-latest
+    outputs:
+      is_merged_pr: ${{ steps.parse-check-pr.outputs.is_merged_pr }}
+      pr_head_sha: ${{ steps.parse-check-pr.outputs.pr_head_sha }}
+    steps:
+      - name: Check if this commit is from a merged PR
+        id: check-pr
+        uses: actions/github-script@v7
+        with:
+          result-encoding: string
+          script: |
+            const commitSha = context.sha;
+            const { data: prs } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: commitSha
+            });
+
+            if (!prs.length) {
+              core.info('No PRs associated with this commit.');
+              return JSON.stringify({ is_merged_pr: false, pr_head_sha: '' });
+            }
+
+            const mergedPr = prs.find(pr => pr.merged_at !== null);
+      
+            if (!mergedPr) {
+              core.info('PRs found, but none were merged.');
+              return JSON.stringify({ is_merged_pr: false, pr_head_sha: '' });
+            }
+
+            core.info(`Found merged PR head SHA: ${mergedPr.head.sha}`);
+            return JSON.stringify({ is_merged_pr: true, pr_head_sha: mergedPr.head.sha });
+
+      - name: Parse outputs
+        id: parse-check-pr
+        shell: bash
+        run: |
+          echo "Parsing result: ${{ steps.check-pr.outputs.result }}"
+          echo "is_merged_pr=$(jq -r '.is_merged_pr' <<< '${{ steps.check-pr.outputs.result }}')" >> $GITHUB_OUTPUT
+          echo "pr_head_sha=$(jq -r '.pr_head_sha' <<< '${{ steps.check-pr.outputs.result }}')" >> $GITHUB_OUTPUT
