@@ -414,14 +414,10 @@ async function ciAsync() {
         buildInfo.branch = "local"
 
     const { tag, branch, pullRequest } = buildInfo
-    const atok = process.env.NPM_ACCESS_TOKEN
-    const npmPublish = /^v\d+\.\d+\.\d+$/.exec(tag) && atok;
+    const npmPublish = /^v\d+\.\d+\.\d+$/.exec(tag) && process.env.NPM_PUBLISH;
 
     if (npmPublish) {
-        let npmrc = path.join(process.env.HOME, ".npmrc")
-        pxt.log(`setting up ${npmrc}`)
-        let cfg = "//registry.npmjs.org/:_authToken=" + atok + "\n"
-        fs.writeFileSync(npmrc, cfg)
+        pxt.log(`npm publish is true`)
     }
 
     process.env["PXT_ENV"] = "production";
