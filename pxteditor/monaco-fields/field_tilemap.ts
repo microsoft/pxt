@@ -149,8 +149,8 @@ export const tilemapEditorDefinition: pxt.editor.MonacoFieldEditorDefinition = {
     heightInPixels: 510,
     weight: 5,
     matcher: {
-        // match both JS and python
-        searchString: "(?:tilemap(?:8|16|32)?\\s*(?:`|\\(\"\"\")(?:[ a-zA-Z0-9_]|\\n)*\\s*(?:`|\"\"\"\\)))|(?:tiles\\s*\\.\\s*createTilemap\\s*\\([^\\)]+\\))",
+        // match both JS and python, allowing Unicode characters in tilemap names
+        searchString: "(?:tilemap(?:8|16|32)?\\s*(?:`|\\(\"\"\")(?:[^`\"]|\\n)*\\s*(?:`|\"\"\"\\)))|(?:tiles\\s*\\.\\s*createTilemap\\s*\\([^\\)]+\\))",
         isRegex: true,
         matchCase: true,
         matchWholeWord: false

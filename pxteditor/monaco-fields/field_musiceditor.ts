@@ -115,12 +115,12 @@ function createFakeAsset(song: pxt.assets.music.Song): pxt.Song {
 const regexes = [
     // typescript
     "music\\s*\\.\\s*createSong\\s*\\(\\s*hex`[a-fA-F0-9\\s\\n]*`\\s*\\)",
-    "assets\\s*\\.\\s*song\\s*`[a-zA-Z_\\s\\n]*`",
+    "assets\\s*\\.\\s*song\\s*`[^`]*`",
 
     // python
     'music\\s*\\.\\s*create_song\\s*\\(\\s*hex\\s*\\(\\s*"""[a-fA-F0-9\\s\\n]*"""\\s*\\)\\s*\\)',
     'music\\s*\\.\\s*createSong\\s*\\(\\s*hex\\s*\\(\\s*"""[a-fA-F0-9\\s\\n]*"""\\s*\\)\\s*\\)',
-    'assets\\s*\\.\\s*song\\s*\\(\\s*"""[a-zA-Z_\\s\\n]*"""\\s*\\)'
+    'assets\\s*\\.\\s*song\\s*\\(\\s*"""[^"]*"""\\s*\\)'
 ];
 
 const searchString = regexes.map(r => `(?:${r})`).join("|");
