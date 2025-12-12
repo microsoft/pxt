@@ -9,6 +9,7 @@ on:
     branches-ignore:
       - 'main'
       - 'master'
+  create:
 
 jobs:
   build:
@@ -31,10 +32,13 @@ jobs:
           sudo apt-get install xvfb
           sudo npm install -g pxt
           npm install
+
       - name: npm test
         run: |
           npm test
+
         env:
+          CROWDIN_KEY: ${{ secrets.CROWDIN_KEY }}
           PXT_ACCESS_TOKEN: ${{ secrets.PXT_ACCESS_TOKEN }}
           NPM_PUBLISH: true
           PXT_ENV: production
