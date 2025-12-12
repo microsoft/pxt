@@ -67,6 +67,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
     const prePublish = shareState === "share" || shareState === "publishing";
     const isPublished = shareState === "publish" || shareState === "publish-vscode";
     const showDescription = !isPublished;
+    const showPersistentShareCheckbox = isLoggedIn && hasProjectBeenPersistentShared && !pxt.auth.proxyIdentityThroughIPC();
     let qrCodeButtonRef: HTMLButtonElement;
     let inputRef: HTMLInputElement;
     let kioskInputRef: HTMLInputElement;
@@ -378,7 +379,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
                             onBlur={setName}
                             onEnterKey={setName}
                             preserveValueOnBlur={true} />
-                        {isLoggedIn && hasProjectBeenPersistentShared && <Checkbox
+                        {showPersistentShareCheckbox && <Checkbox
                             id="persistent-share-checkbox"
                             label={lf("Update existing share link for this project")}
                             isChecked={!isAnonymous}
