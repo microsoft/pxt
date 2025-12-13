@@ -206,37 +206,6 @@ export function initFunctions() {
     Blockly.Blocks[functionReturnId] = {
         init: function () {
             initReturnStatement(this);
-        },
-        onchange: function (event: Blockly.Events.Abstract) {
-            const block = this as Blockly.Block;
-            if (!block.workspace || (block.workspace as Blockly.WorkspaceSvg).isFlyout) {
-                // Block is deleted or is in a flyout.
-                return;
-            }
-
-            const thisWasCreated =
-                event.type === Blockly.Events.BLOCK_CREATE && (event as Blockly.Events.BlockCreate).ids.indexOf(block.id) != -1;
-            const thisWasDragged =
-                event.type === Blockly.Events.BLOCK_DRAG && (event as Blockly.Events.BlockDrag).blocks.some(b => b.id === block.id);
-
-            if (thisWasCreated || thisWasDragged) {
-                const rootBlock = block.getRootBlock();
-                const isTopBlock = rootBlock.type === functionReturnId;
-
-                if (isTopBlock || rootBlock.previousConnection != null) {
-                    // Statement is by itself on the workspace, or it is slotted into a
-                    // stack of statements that is not attached to a function or event. Let
-                    // it exist until it is connected to a function
-                    return;
-                }
-
-                if (rootBlock.type !== functionDefinitionId) {
-                    // Not a function block, so disconnect
-                    Blockly.Events.setGroup(event.group);
-                    block.previousConnection.disconnect();
-                    Blockly.Events.setGroup(false);
-                }
-            }
         }
     };
     installBuiltinHelpInfo(functionReturnId);

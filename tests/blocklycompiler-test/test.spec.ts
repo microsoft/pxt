@@ -497,6 +497,10 @@ describe("blockly compiler", function () {
             blockTestAsync("return_statement").then(done, done);
         });
 
+        it("should handle return statements in event handlers", (done: () => void) => {
+            blockTestAsync("return_statement_outside_function").then(done, done);
+        });
+
         it("should handle functions that return values", (done: () => void) => {
             blockTestAsync("function_output").then(done, done);
         });

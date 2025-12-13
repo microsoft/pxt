@@ -3141,15 +3141,16 @@ ${output}</xml>`;
             if (checkIfWithinFunction(n)) {
                 return undefined;
             }
-            return Util.lf("Return statements can only be used within top-level function declarations");
+            return Util.lf("Return statements can only return values inside user-defined functions");
 
-            function checkIfWithinFunction(n: Node): boolean {
-                const enclosing = ts.getEnclosingBlockScopeContainer(n);
+            function checkIfWithinFunction(toCheck: Node): boolean {
+                const enclosing = ts.getEnclosingBlockScopeContainer(toCheck);
                 if (enclosing) {
                     switch (enclosing.kind) {
-                        case SK.SourceFile:
                         case SK.ArrowFunction:
                         case SK.FunctionExpression:
+                            return !n.expression;
+                        case SK.SourceFile:
                             return false;
                         case SK.FunctionDeclaration:
                             return enclosing.parent && enclosing.parent.kind === SK.SourceFile && !checkStatement(enclosing, env, false, true);

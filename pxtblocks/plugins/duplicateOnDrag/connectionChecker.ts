@@ -1,6 +1,7 @@
 import * as Blockly from "blockly";
 import { isAllowlistedShadow, shouldDuplicateOnDrag } from "./duplicateOnDrag";
 import { doArgumentReporterDragChecks } from "../functions/utils";
+import { FUNCTION_DEFINITION_BLOCK_TYPE } from "../functions/constants";
 
 
 const OPPOSITE_TYPE: number[] = [];
@@ -27,6 +28,22 @@ export class DuplicateOnDragConnectionChecker extends Blockly.ConnectionChecker 
 
         if (!doArgumentReporterDragChecks(a, b, distance)) {
             return false;
+        }
+
+        const draggedblock = a.sourceBlock_;
+
+        if (draggedblock.type === "function_return") {
+            const destinationBlock = b.sourceBlock_;
+
+            if (!destinationBlock.isEnabled()) {
+                return true;
+            }
+
+            if (b === destinationBlock.outputConnection) {
+                return !!getContainingFunction(destinationBlock.getSurroundParent());
+            }
+
+            return !!getContainingFunction(destinationBlock);
         }
 
         return true;
@@ -80,4 +97,31 @@ export class DuplicateOnDragConnectionChecker extends Blockly.ConnectionChecker 
         }
         return Blockly.Connection.CAN_CONNECT;
     }
+}
+
+export function getContainingFunction(block: Blockly.Block) {
+    let parent = block;
+
+    while (parent) {
+        if (parent.type === ts.pxtc.ON_START_TYPE) {
+            return undefined;
+        }
+
+        if (parent.inputList.some(input => input.type === Blockly.inputs.inputTypes.STATEMENT)) {
+            if (parent.type === FUNCTION_DEFINITION_BLOCK_TYPE) {
+                return parent;
+            }
+
+            // getBlockDefintion will return a definition for all builtin blocks including loops
+            // and if/else. if there isn't a definition, this must be user defined and thus a
+            // function that can be returned from
+            if (!pxt.blocks.getBlockDefinition(parent.type)) {
+                return parent;
+            }
+        }
+
+        parent = parent.getSurroundParent();
+    }
+
+    return undefined;
 }
