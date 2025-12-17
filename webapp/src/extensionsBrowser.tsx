@@ -179,13 +179,15 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
             core.showLoading("downloadingpackage", lf("downloading extension..."));
             const pkg = getExtensionFromFetched(scr.repo.fullName);
             if (pkg) {
-                r = await pxt.github.downloadLatestPackageAsync(pkg.repo);
+                const useProxy = pxt.github.shouldUseProxyForRepo(pkg.repo.fullName);
+                r = await pxt.github.downloadLatestPackageAsync(pkg.repo, useProxy);
             } else {
                 const res = await fetchGithubDataAsync([scr.repo.fullName]);
                 if (res && res.length > 0) {
                     const parsed = parseGithubRepo(res[0])
                     addExtensionsToPool([parsed])
-                    r = await pxt.github.downloadLatestPackageAsync(parsed.repo)
+                    const useProxy = pxt.github.shouldUseProxyForRepo(parsed.repo.fullName);
+                    r = await pxt.github.downloadLatestPackageAsync(parsed.repo, useProxy)
                 }
             }
         }
