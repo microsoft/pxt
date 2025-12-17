@@ -1,4 +1,4 @@
-function doSomething() {
+function doSomething () {
     custom.handlerStatement(function () {
         return
     })

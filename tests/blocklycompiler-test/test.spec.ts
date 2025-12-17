@@ -278,7 +278,7 @@ async function blockTestAsync(name: string) {
         console.log(compiledTs);
     }
 
-    chai.assert(compiledTs === baselineTs, "Compiled result did not match baseline: " + name + " " + res.source);
+    chai.expect(compiledTs).to.equal(baselineTs, "Compiled result did not match baseline: " + name + " " + res.source);
 }
 
 describe("blockly compiler", function () {
