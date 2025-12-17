@@ -10,6 +10,8 @@ import { MutatorTypes } from "../legacyMutations";
 import { trackAllVariables } from "./variables";
 import { FieldTilemap, FieldTextInput } from "../fields";
 import { CommonFunctionBlock } from "../plugins/functions/commonFunctionMixin";
+import { getContainingFunction } from "../plugins/duplicateOnDrag";
+import { FUNCTION_DEFINITION_BLOCK_TYPE } from "../plugins/functions/constants";
 
 
 interface Rect {
@@ -1162,7 +1164,24 @@ function compileFunctionCall(e: Environment, b: Blockly.Block, comments: string[
 function compileReturnStatement(e: Environment, b: Blockly.Block, comments: string[]): pxt.blocks.JsNode {
     const expression = getInputTargetBlock(e, b, "RETURN_VALUE");
 
-    if (expression && expression.type != "placeholder") {
+    const hasReturn = expression?.type !== "placeholder";
+
+    const parentFunction = getContainingFunction(b);
+    if (!parentFunction) {
+        e.diagnostics.push({
+            blockId: b.id,
+            message: lf("Return statements can only be used within function bodies.")
+        });
+    }
+    else if (hasReturn && parentFunction.type !== FUNCTION_DEFINITION_BLOCK_TYPE) {
+        e.diagnostics.push({
+            blockId: b.id,
+            message: lf("Return statements can only return values inside function definitions.")
+        });
+    }
+
+
+    if (hasReturn) {
         return pxt.blocks.mkStmt(pxt.blocks.mkText("return "), compileExpression(e, expression, comments));
     }
     else {

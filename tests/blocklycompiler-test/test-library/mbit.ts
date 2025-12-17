@@ -35,6 +35,16 @@ namespace basic {
     export function createTemplateGrid(leds: string): string {
         return leds
     }
+
+    /**
+     * Repeats the code forever in the background. On each iteration, allows other codes to run.
+     * @param body code to execute
+     */
+    //% help=basic/forever weight=55 blockGap=8 blockAllowMultiple=1
+    //% blockId=device_forever block="forever" icon="\uf01e"
+    export function forever(a: () => void): void {
+
+    }
 }
 
 
@@ -56,6 +66,15 @@ namespace radio {
     //% blockId=radio_on_string_2 block="on radio received" blockGap=16 draggableParameters="reporter"
     //% useLoc="radio.onDataPacketReceived"
     export function onReceivedString(cb: (receivedString: string) => void) {
+
+    }
+}
+
+namespace custom {
+    //% blockId=custom_handlerStatement
+    //% handlerStatement
+    //% block
+    export function handlerStatement(handler: () => void) {
 
     }
 }
