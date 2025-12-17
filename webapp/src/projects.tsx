@@ -18,12 +18,83 @@ import ISettingsProps = pxt.editor.ISettingsProps;
 import UserInfo = pxt.editor.UserInfo;
 import { Dropdown, DropdownItem } from "../../react-common/components/controls/Dropdown";
 
+interface FilterSidebarProps {
+    searchQuery: string;
+    selectedCategory: string;
+    categories: string[];
+    selectedTags: string[];
+    availableTags: string[];
+    onSearchChange: (query: string) => void;
+    onCategoryChange: (category: string) => void;
+    onTagToggle: (tag: string) => void;
+}
+
+function FilterSidebar(props: FilterSidebarProps) {
+    const { searchQuery, selectedCategory, categories, selectedTags, availableTags,
+        onSearchChange, onCategoryChange, onTagToggle } = props;
+    
+    return (
+        <div className="filter-sidebar">
+            <div className="filter-section search-section">
+                <div className="ui icon input">
+                    <sui.Input
+                        placeholder={lf("Search...")}
+                        value={searchQuery}
+                        onChange={onSearchChange}
+                        ariaLabel={lf("Search projects")}
+                    />
+                    <i className="search icon"></i>
+                </div>
+            </div>
+            
+            <div className="filter-section">
+                <h4 className="filter-section-title">{lf("Categories")}</h4>
+                <div className="category-list">
+                    {categories.map(cat => (
+                        <div
+                            key={cat}
+                            className={`category-item ${selectedCategory === cat ? 'selected' : ''}`}
+                            onClick={() => onCategoryChange(cat)}
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={fireClickOnEnter}
+                        >
+                            <span className="category-name">{pxt.Util.rlf(cat)}</span>
+                            <span className="category-count">16</span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+            
+            <div className="filter-section">
+                <h4 className="filter-section-title">{lf("Tags")}</h4>
+                <div className="tag-list">
+                    {availableTags.map(tag => (
+                        <button
+                            key={tag}
+                            className={`tag-button ${selectedTags.includes(tag) ? 'selected' : ''}`}
+                            onClick={() => onTagToggle(tag)}
+                            aria-pressed={selectedTags.includes(tag)}
+                        >
+                            {tag}
+                        </button>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+}
+
 
 // This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
 interface ProjectsState {
     visible?: boolean;
     selectedCategory?: string;
     selectedIndex?: number;
+    // New filter state
+    searchQuery?: string;
+    selectedTags?: string[];
+    sortOrder?: 'default' | 'name' | 'date';
 }
 
 export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
@@ -31,7 +102,10 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
     constructor(props: ISettingsProps) {
         super(props)
         this.state = {
-            visible: false
+            visible: false,
+            searchQuery: '',
+            selectedTags: [],
+            sortOrder: 'default'
         }
 
         this.showLanguagePicker = this.showLanguagePicker.bind(this);
@@ -41,12 +115,20 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         this.importProject = this.importProject.bind(this);
         this.showScriptManager = this.showScriptManager.bind(this);
         this.setSelected = this.setSelected.bind(this);
+        this.handleSearchChange = this.handleSearchChange.bind(this);
+        this.handleCategoryChange = this.handleCategoryChange.bind(this);
+        this.handleTagToggle = this.handleTagToggle.bind(this);
+        this.handleSortChange = this.handleSortChange.bind(this);
+        this.removeFilter = this.removeFilter.bind(this);
     }
 
     shouldComponentUpdate(nextProps: ISettingsProps, nextState: ProjectsState, nextContext: any): boolean {
         return this.state.visible != nextState.visible
             || this.state.selectedCategory != nextState.selectedCategory
-            || this.state.selectedIndex != nextState.selectedIndex;
+            || this.state.selectedIndex != nextState.selectedIndex
+            || this.state.searchQuery != nextState.searchQuery
+            || this.state.selectedTags != nextState.selectedTags
+            || this.state.sortOrder != nextState.sortOrder;
     }
 
     setSelected(category: string, index: number) {
@@ -120,8 +202,54 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         this.props.parent.showScriptManager();
     }
 
+    handleSearchChange(query: string) {
+        pxt.tickEvent("projects.search");
+        this.setState({ searchQuery: query });
+    }
+
+    handleCategoryChange(category: string) {
+        pxt.tickEvent("projects.category", { category });
+        this.setState({ 
+            selectedCategory: this.state.selectedCategory === category ? undefined : category 
+        });
+    }
+
+    handleTagToggle(tag: string) {
+        pxt.tickEvent("projects.tag", { tag });
+        const { selectedTags } = this.state;
+        if (selectedTags.includes(tag)) {
+            this.setState({ selectedTags: selectedTags.filter(t => t !== tag) });
+        } else {
+            this.setState({ selectedTags: [...selectedTags, tag] });
+        }
+    }
+
+    handleSortChange(sort: 'default' | 'name' | 'date') {
+        pxt.tickEvent("projects.sort", { sort });
+        this.setState({ sortOrder: sort });
+    }
+
+    removeFilter(filterType: string, value?: string) {
+        pxt.tickEvent("projects.removefilter", { filterType });
+        switch (filterType) {
+            case 'search':
+                this.setState({ searchQuery: '' });
+                break;
+            case 'category':
+                this.setState({ selectedCategory: undefined });
+                break;
+            case 'tag':
+                if (value) {
+                    this.setState({ 
+                        selectedTags: this.state.selectedTags.filter(t => t !== value) 
+                    });
+                }
+                break;
+        }
+    }
+
     renderCore() {
-        const { selectedCategory, selectedIndex } = this.state;
+        const { selectedCategory, selectedIndex, searchQuery, selectedTags, sortOrder } = this.state;
 
         const targetTheme = pxt.appTarget.appTheme;
         const { scriptManager } = targetTheme;
@@ -141,83 +269,166 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         // lf("Tutorials")
 
         const tabClasses = sui.cx([
-            'ui segment bottom attached tab active tabsegment'
+            'ui segment bottom attached tab active tabsegment filterable-gallery'
         ]);
 
+        // Get gallery categories for filter sidebar
+        const galleryCategories = Object.keys(galleries).filter(galleryName => {
+            const galProps = galleries[galleryName] as pxt.GalleryProps | string;
+            if (typeof galProps === "string")
+                return true;
+            const exp = galProps.experimentName;
+            if (exp && !(pxt.appTarget.appTheme as any)[exp])
+                return false;
+            const locales = galProps.locales;
+            if (locales && locales.indexOf(pxt.Util.userLanguage()) < 0)
+                return false;
+            const testUrl = galProps.testUrl || (!!galProps.youTube && "https://www.youtube.com/favicon.ico");
+            if (testUrl) {
+                const ping = this.getData(`ping:${testUrl.replace('@random@', Math.random().toString())}`);
+                if (ping !== true)
+                    return false;
+            }
+            return true;
+        });
+
+        // Available tags for filtering
+        const availableTags = ['tutorial', 'skillmap', 'hardware', 'courses', 'video'];
+
+        // Active filters for display
+        const activeFilters: { type: string; label: string; value?: string }[] = [];
+        if (searchQuery) {
+            activeFilters.push({ type: 'search', label: `Search: "${searchQuery}"` });
+        }
+        if (selectedCategory) {
+            activeFilters.push({ type: 'category', label: pxt.Util.rlf(selectedCategory) });
+        }
+        selectedTags.forEach(tag => {
+            activeFilters.push({ type: 'tag', label: tag, value: tag });
+        });
+
         return <div ref="homeContainer" className={tabClasses} role="main">
-            <HeroBanner parent={this.props.parent} />
             <h1 className="accessible-hidden">{lf("MakeCode Home")}</h1>
-            <div key={`mystuff_gallerysegment`} className="ui segment gallerysegment mystuff-segment" role="region" aria-label={lf("My Projects")}>
-                <div className="ui heading">
-                    <div className="column" style={{ zIndex: 1 }}
-                        onClick={scriptManager && this.showScriptManager} onKeyDown={scriptManager && fireClickOnEnter}
+            
+            {/* My Projects Section - Above Filter Area */}
+            <div key={`mystuff_section`} className="mystuff-section" role="region" aria-label={lf("My Projects")}>
+                <div className="mystuff-header">
+                    <div className="mystuff-title-wrapper"
+                        onClick={scriptManager && this.showScriptManager} 
+                        onKeyDown={scriptManager && fireClickOnEnter}
                     >
-                        {scriptManager ? <h2 className="ui header myproject-header">
+                        {scriptManager ? <h2 className="mystuff-title">
                             {lf("My Projects")}
-                            <span className="view-all-button" tabIndex={0} title={lf("View all projects")} role="button">
+                            <span className="view-all-link" tabIndex={0} title={lf("View all projects")} role="button">
                                 {lf("View All")}
                             </span>
-                        </h2> : <h2 className="ui header">{lf("My Projects")}</h2>}
+                        </h2> : <h2 className="mystuff-title">{lf("My Projects")}</h2>}
                     </div>
-                    <div className="column right aligned" style={{ zIndex: 1 }}>
+                    <div className="mystuff-actions">
                         {pxt.appTarget.compile || (pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing) ?
                             <sui.Button key="import" icon="upload" className="import-dialog-btn neutral" textClass="landscape only" text={lf("Import")} title={lf("Import a project")} onClick={this.importProject} /> : undefined}
                     </div>
                 </div>
-                <div className="content">
+                <div className="mystuff-content">
                     <ProjectsCarousel key={`mystuff_carousel`} parent={this.props.parent} name={'recent'} onClick={this.chgHeader} />
                 </div>
             </div>
-            {Object.keys(galleries)
-                .filter(galleryName => {
-                    // hide galleries that are part of an experiment and that experiment is
-                    // not enabled
-                    const galProps = galleries[galleryName] as pxt.GalleryProps | string
-                    if (typeof galProps === "string")
-                        return true
-                    // filter categories by experiment
-                    const exp = galProps.experimentName;
-                    if (exp && !(pxt.appTarget.appTheme as any)[exp])
-                        return false; // experiment not enabled
-                    const locales = galProps.locales;
-                    if (locales && locales.indexOf(pxt.Util.userLanguage()) < 0)
-                        return false; // locale not supported
-                    // test if blocked
-                    const testUrl = galProps.testUrl || (!!galProps.youTube && "https://www.youtube.com/favicon.ico");
-                    if (testUrl) {
-                        const ping = this.getData(`ping:${testUrl.replace('@random@', Math.random().toString())}`);
-                        if (ping !== true) // still loading or can't ping
-                            return false;
-                    }
-                    // show the gallery
-                    return true;
-                })
-                .map(galleryName => {
-                    const galProps = galleries[galleryName] as pxt.GalleryProps | string
-                    const url = typeof galProps === "string" ? galProps : galProps.url
-                    const shuffle: pxt.GalleryShuffle = typeof galProps === "string" ? undefined : galProps.shuffle;
-                    return <div key={`${galleryName}_gallerysegment`} className="ui segment gallerysegment" role="region" aria-label={pxt.Util.rlf(galleryName)}>
-                        <h2 className="ui header heading">{pxt.Util.rlf(galleryName)} </h2>
-                        <div className="content">
-                            <ProjectsCarousel ref={`${selectedCategory == galleryName ? 'activeCarousel' : ''}`}
-                                key={`${galleryName}_carousel`} parent={this.props.parent}
-                                name={galleryName}
-                                path={url}
-                                onClick={this.chgGallery} setSelected={this.setSelected}
-                                shuffle={shuffle}
-                                selectedIndex={selectedCategory == galleryName ? selectedIndex : undefined} />
+
+            <div className="gallery-container">
+                {/* Filter Sidebar */}
+                <FilterSidebar
+                    searchQuery={searchQuery}
+                    selectedCategory={selectedCategory}
+                    categories={galleryCategories}
+                    selectedTags={selectedTags}
+                    availableTags={availableTags}
+                    onSearchChange={this.handleSearchChange}
+                    onCategoryChange={this.handleCategoryChange}
+                    onTagToggle={this.handleTagToggle}
+                />
+
+                {/* Main Content Area */}
+                <div className="gallery-main-content">
+                    {/* Header with sort options */}
+                    <div className="gallery-header">
+                        <div className="gallery-controls">
+                            <div className="sort-wrapper">
+                                <label className="sort-label">{lf("Sort by")}:</label>
+                                <Dropdown
+                                    className="sort-dropdown"
+                                    id="sort-dropdown"
+                                    items={[
+                                        { id: 'default', label: lf("Default Sorting"), title: lf("Default Sorting") },
+                                        { id: 'name', label: lf("Name"), title: lf("Sort by name") },
+                                        { id: 'date', label: lf("Date"), title: lf("Sort by date") }
+                                    ]}
+                                    selectedId={sortOrder}
+                                    onItemSelected={this.handleSortChange}
+                                />
+                            </div>
                         </div>
                     </div>
-                }
-                )}
-            {targetTheme.organizationUrl || targetTheme.organizationUrl || targetTheme.privacyUrl || targetTheme.copyrightText ? <div className="ui horizontal small divided link list homefooter" role="contentinfo">
-                {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" target="_blank" rel="noopener noreferrer" href={targetTheme.organizationUrl}>{targetTheme.organization}</a> : undefined}
-                {targetTheme.selectLanguage ? <sui.Link className="item" icon="xicon globe" text={lf("Language")} onClick={this.showLanguagePicker} onKeyDown={fireClickOnEnter} role="button" /> : undefined}
-                {targetTheme.termsOfUseUrl ? <a target="_blank" className="item" href={targetTheme.termsOfUseUrl} rel="noopener noreferrer">{lf("Terms of Use")}</a> : undefined}
-                {targetTheme.privacyUrl ? <a target="_blank" className="item" href={targetTheme.privacyUrl} rel="noopener noreferrer">{lf("Privacy")}</a> : undefined}
-                {pxt.appTarget.versions ? <sui.Link className="item" text={`v${pxt.appTarget.versions.target}`} onClick={this.showAboutDialog} onKeyDown={fireClickOnEnter} role="button" /> : undefined}
-                {targetTheme.copyrightText ? <div className="ui item copyright">{targetTheme.copyrightText}</div> : undefined}
-            </div> : undefined}
+
+                    {/* Active Filters Display */}
+                    {activeFilters.length > 0 && (
+                        <div className="active-filters" role="region" aria-label={lf("Active filters")}>
+                            {activeFilters.map((filter, idx) => (
+                                <div key={`${filter.type}-${idx}`} className="filter-chip">
+                                    <span>{filter.label}</span>
+                                    <button
+                                        className="filter-remove"
+                                        onClick={() => this.removeFilter(filter.type, filter.value)}
+                                        aria-label={lf("Remove {0} filter", filter.label)}
+                                    >
+                                        <i className="icon remove" />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Gallery Grid */}
+                    <div className="gallery-grid">
+                        {galleryCategories
+                            .filter(galleryName => !selectedCategory || galleryName === selectedCategory)
+                            .map(galleryName => {
+                                const galProps = galleries[galleryName] as pxt.GalleryProps | string;
+                                const url = typeof galProps === "string" ? galProps : galProps.url;
+                                const shuffle: pxt.GalleryShuffle = typeof galProps === "string" ? undefined : galProps.shuffle;
+                                
+                                return <div key={`${galleryName}_section`} className="gallery-section" role="region" aria-label={pxt.Util.rlf(galleryName)}>
+                                    <h3 className="section-title">{pxt.Util.rlf(galleryName)}</h3>
+                                    <div className="section-content">
+                                        <ProjectsCarousel 
+                                            ref={`${selectedCategory == galleryName ? 'activeCarousel' : ''}`}
+                                            key={`${galleryName}_carousel`} 
+                                            parent={this.props.parent}
+                                            name={galleryName}
+                                            path={url}
+                                            onClick={this.chgGallery} 
+                                            setSelected={this.setSelected}
+                                            shuffle={shuffle}
+                                            selectedIndex={selectedCategory == galleryName ? selectedIndex : undefined}
+                                            filterTags={selectedTags}
+                                        />
+                                    </div>
+                                </div>;
+                            })}
+                    </div>
+                </div>
+            </div>
+
+            {/* Footer */}
+            {targetTheme.organizationUrl || targetTheme.organizationUrl || targetTheme.privacyUrl || targetTheme.copyrightText ? 
+                <div className="ui horizontal small divided link list homefooter" role="contentinfo">
+                    {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" target="_blank" rel="noopener noreferrer" href={targetTheme.organizationUrl}>{targetTheme.organization}</a> : undefined}
+                    {targetTheme.selectLanguage ? <sui.Link className="item" icon="xicon globe" text={lf("Language")} onClick={this.showLanguagePicker} onKeyDown={fireClickOnEnter} role="button" /> : undefined}
+                    {targetTheme.termsOfUseUrl ? <a target="_blank" className="item" href={targetTheme.termsOfUseUrl} rel="noopener noreferrer">{lf("Terms of Use")}</a> : undefined}
+                    {targetTheme.privacyUrl ? <a target="_blank" className="item" href={targetTheme.privacyUrl} rel="noopener noreferrer">{lf("Privacy")}</a> : undefined}
+                    {pxt.appTarget.versions ? <sui.Link className="item" text={`v${pxt.appTarget.versions.target}`} onClick={this.showAboutDialog} onKeyDown={fireClickOnEnter} role="button" /> : undefined}
+                    {targetTheme.copyrightText ? <div className="ui item copyright">{targetTheme.copyrightText}</div> : undefined}
+                </div> 
+            : undefined}
         </div>;
     }
 }
@@ -583,6 +794,7 @@ interface ProjectsCarouselProps extends ISettingsProps {
     selectedIndex?: number;
     setSelected?: (name: string, index: number) => void;
     shuffle?: pxt.GalleryShuffle;
+    filterTags?: string[];
 }
 
 interface ProjectsCarouselState {
@@ -708,7 +920,17 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
             // Fetch the gallery
             this.hasFetchErrors = false;
 
-            const cards = this.fetchGallery(path);
+            let cards = this.fetchGallery(path);
+            
+            // Filter cards by selected tags
+            const { filterTags } = this.props;
+            if (filterTags && filterTags.length > 0) {
+                cards = cards.filter(card => {
+                    if (!card.tags || card.tags.length === 0) return false;
+                    return filterTags.some(tag => card.tags.includes(tag));
+                });
+            }
+            
             if (this.hasFetchErrors) {
                 return <div className="ui carouselouter">
                     <div role="button" className="carouselcontainer" tabIndex={0} onClick={this.reload}>

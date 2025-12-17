@@ -1,0 +1,488 @@
+/* Filterable Gallery Styles */
+/* Inspired by modern e-commerce filter layouts */
+
+.filterable-gallery {
+    padding: 0 !important;
+    margin: 0 !important;
+    background: @mainBackground;
+    min-height: 100vh;
+}
+
+/* My Projects Section - Above Filters */
+.mystuff-section {
+    padding: 2rem 3rem;
+    background: @mainBackground;
+    border-bottom: 1px solid @dividerColor;
+}
+
+.mystuff-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.mystuff-title-wrapper {
+    cursor: pointer;
+}
+
+.mystuff-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: @primaryTextColor;
+    margin: 0;
+}
+
+.mystuff-content {
+    /* Carousel styles inherited from existing */
+}
+
+.gallery-container {
+    display: flex;
+    flex-direction: row;
+    gap: 0;
+    width: 100%;
+    min-height: calc(100vh - 300px);
+    align-items: flex-start;
+}
+
+/* Filter Sidebar */
+.filter-sidebar {
+    width: 280px;
+    min-width: 280px;
+    background: @sidebarBackground;
+    border-right: 1px solid @sidebarBorder;
+    padding: 2rem 1.5rem;
+    overflow-y: auto;
+    flex-shrink: 0;
+    height: calc(100vh - 300px);
+    position: sticky;
+    top: 0;
+}
+
+.filter-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: @primaryTextColor;
+}
+
+.filter-section {
+    margin-bottom: 2rem;
+    
+    &.search-section {
+        margin-bottom: 1.5rem;
+    }
+}
+
+.filter-section-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 1rem;
+    color: @secondaryTextColor;
+}
+
+/* Search Input */
+.filter-sidebar .ui.input {
+    width: 100%;
+    
+    input {
+        background: @inputBackground;
+        border: 1px solid @inputBorder;
+        border-radius: 0.5rem;
+        padding: 0.75rem 1rem 0.75rem 2.5rem;
+        font-size: 0.875rem;
+        color: @primaryTextColor;
+        
+        &:focus {
+            border-color: @accentColor;
+            outline: none;
+        }
+        
+        &::placeholder {
+            color: @placeholderColor;
+        }
+    }
+    
+    i.icon {
+        left: 0.75rem;
+        color: @placeholderColor;
+    }
+}
+
+/* Category List */
+.category-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.category-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: transparent;
+    
+    &:hover {
+        background: @hoverBackground;
+    }
+    
+    &.selected {
+        background: @selectedBackground;
+        color: @accentColor;
+        font-weight: 600;
+        
+        .category-count {
+            color: @accentColor;
+        }
+    }
+    
+    .category-name {
+        font-size: 0.875rem;
+        color: @primaryTextColor;
+    }
+    
+    .category-count {
+        font-size: 0.75rem;
+        color: @secondaryTextColor;
+        background: @countBackground;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+    }
+}
+
+/* Price Range Slider */
+.price-range-slider {
+    .price-inputs {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        font-size: 0.875rem;
+        color: @primaryTextColor;
+        font-weight: 600;
+        
+        span {
+            &:first-child, &:last-child {
+                font-size: 1rem;
+            }
+        }
+    }
+    
+    input[type="range"] {
+        width: 100%;
+        height: 6px;
+        border-radius: 3px;
+        background: @rangeTrackBackground;
+        outline: none;
+        -webkit-appearance: none;
+        
+        &::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: @accentColor;
+            cursor: pointer;
+            border: 2px solid @mainBackground;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        &::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: @accentColor;
+            cursor: pointer;
+            border: 2px solid @mainBackground;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+    }
+}
+
+/* Size Buttons */
+.size-buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+}
+
+.size-button {
+    padding: 0.75rem;
+    border: 1px solid @buttonBorder;
+    border-radius: 0.5rem;
+    background: transparent;
+    color: @primaryTextColor;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    
+    &:hover {
+        border-color: @accentColor;
+        background: @hoverBackground;
+    }
+    
+    &.selected {
+        background: @accentColor;
+        border-color: @accentColor;
+        color: @accentTextColor;
+    }
+}
+
+/* Tag List */
+.tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.tag-button {
+    padding: 0.5rem 1rem;
+    border: 1px solid @buttonBorder;
+    border-radius: 1.5rem;
+    background: transparent;
+    color: @primaryTextColor;
+    font-size: 0.8125rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    
+    &:hover {
+        border-color: @accentColor;
+        background: @hoverBackground;
+    }
+    
+    &.selected {
+        background: @accentColor;
+        border-color: @accentColor;
+        color: @accentTextColor;
+    }
+}
+
+/* Main Content Area */
+.gallery-main-content {
+    flex: 1;
+    min-width: 0;
+    padding: 2rem 3rem;
+    overflow-y: auto;
+    overflow-x: hidden;
+    background: @mainBackground;
+}
+
+.gallery-header {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.gallery-controls {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    
+    .sort-dropdown {
+        min-width: 180px;
+    }
+}
+
+/* Active Filters */
+.active-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid @dividerColor;
+}
+
+.filter-chip {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: @chipBackground;
+    border: 1px solid @chipBorder;
+    border-radius: 1.5rem;
+    font-size: 0.875rem;
+    color: @primaryTextColor;
+    
+    span {
+        font-weight: 500;
+    }
+    
+    .filter-remove {
+        background: none;
+        border: none;
+        padding: 0;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        color: @secondaryTextColor;
+        transition: color 0.2s ease;
+        
+        &:hover {
+            color: @dangerColor;
+        }
+        
+        i.icon {
+            font-size: 0.75rem;
+        }
+    }
+}
+
+/* Gallery Sections */
+.gallery-section {
+    margin-bottom: 3rem;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.section-title-wrapper {
+    cursor: pointer;
+}
+
+.section-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: @primaryTextColor;
+    margin: 0;
+}
+
+.view-all-link {
+    margin-left: 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: @accentColor;
+    cursor: pointer;
+    
+    &:hover {
+        text-decoration: underline;
+    }
+}
+
+.section-content {
+    /* Carousel styles will be inherited from existing styles */
+}
+
+/* Gallery Grid */
+.gallery-grid {
+    display: grid;
+    gap: 2rem;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .gallery-main-content {
+        padding: 2rem;
+    }
+}
+
+@media (max-width: 992px) {
+    .filter-sidebar {
+        width: 240px;
+        padding: 1.5rem 1rem;
+    }
+    
+    .gallery-main-content {
+        padding: 1.5rem;
+    }
+    
+    .gallery-title {
+        font-size: 1.75rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .mystuff-section {
+        padding: 1.5rem 1rem;
+    }
+    
+    .mystuff-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .gallery-container {
+        flex-direction: column;
+    }
+    
+    .filter-sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+        border-right: none;
+        border-bottom: 1px solid @sidebarBorder;
+    }
+    
+    .gallery-main-content {
+        padding: 1rem;
+    }
+    
+    .gallery-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+}
+
+/* Dark Theme Variables (can be customized in theme files) */
+@mainBackground: #1a1a1a;
+@sidebarBackground: #0f0f0f;
+@sidebarBorder: #2a2a2a;
+@primaryTextColor: #e0e0e0;
+@secondaryTextColor: #a0a0a0;
+@accentColor: #4ecca3;
+@accentTextColor: #0f0f0f;
+@inputBackground: #2a2a2a;
+@inputBorder: #3a3a3a;
+@placeholderColor: #6a6a6a;
+@hoverBackground: rgba(78, 204, 163, 0.1);
+@selectedBackground: rgba(78, 204, 163, 0.15);
+@countBackground: #2a2a2a;
+@rangeTrackBackground: #3a3a3a;
+@buttonBorder: #3a3a3a;
+@dividerColor: #2a2a2a;
+@chipBackground: #2a2a2a;
+@chipBorder: #3a3a3a;
+@dangerColor: #ff6b6b;
+
+/* Light Theme Override */
+.light-theme .filterable-gallery {
+    @mainBackground: #ffffff;
+    @sidebarBackground: #fafafa;
+    @sidebarBorder: #e0e0e0;
+    @primaryTextColor: #1a1a1a;
+    @secondaryTextColor: #666666;
+    @accentColor: #4ecca3;
+    @accentTextColor: #ffffff;
+    @inputBackground: #ffffff;
+    @inputBorder: #d0d0d0;
+    @placeholderColor: #999999;
+    @hoverBackground: rgba(78, 204, 163, 0.05);
+    @selectedBackground: rgba(78, 204, 163, 0.1);
+    @countBackground: #f0f0f0;
+    @rangeTrackBackground: #e0e0e0;
+    @buttonBorder: #d0d0d0;
+    @dividerColor: #e0e0e0;
+    @chipBackground: #f5f5f5;
+    @chipBorder: #e0e0e0;
+    @dangerColor: #ff6b6b;
+}
