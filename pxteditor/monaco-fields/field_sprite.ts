@@ -92,12 +92,12 @@ const regexes = [
     // typescript
     "img\\s*`[\\.a-zA-Z0-9#\\n\\s]*`",
     "bmp\\s*`[\\.a-zA-Z0-9#\\n\\s]*`",
-    "assets\\s*\\.\\s*image\\s*`[a-zA-Z_\\s\\n]*`",
+    "assets\\s*\\.\\s*image\\s*`[^`]*`",
 
     // python
     'img\\s*\\(\\s*"""[\\.a-zA-Z0-9#\\n\\s]*"""\\s*\\)',
     'bmp\\s*\\(\\s*"""[\\.a-zA-Z0-9#\\n\\s]*"""\\s*\\)',
-    'assets\\s*\\.\\s*image\\s*\\(\\s*"""[a-zA-Z_\\s\\n]*"""\\s*\\)'
+    'assets\\s*\\.\\s*image\\s*\\(\\s*"""[^"]*"""\\s*\\)'
 ];
 
 const searchString = regexes.map(r => `(?:${r})`).join("|");
