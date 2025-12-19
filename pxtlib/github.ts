@@ -112,6 +112,33 @@ namespace pxt.github {
         return hasProxy();
     }
 
+    /**
+     * Organizations that require SAML SSO for OAuth tokens.
+     * User tokens without SAML authorization will fail with 403 errors for these orgs.
+     * We should use the proxy instead when a token is present.
+     */
+    const samlProtectedOrgs = ["microsoft"];
+
+    /**
+     * Determines if we should use the proxy for a specific repo to avoid SAML SSO issues.
+     * Returns true if the repo is owned by an organization that requires SAML and we have a token.
+     */
+    export function shouldUseProxyForRepo(repoPath: string): boolean {
+        // If no token, let normal proxy logic apply
+        if (!token) return shouldUseProxy();
+
+        const parsed = parseRepoId(repoPath);
+        if (!parsed) return shouldUseProxy();
+
+        // Check if the repo owner requires SAML SSO
+        const ownerLower = parsed.owner.toLowerCase();
+        const requiresSaml = samlProtectedOrgs.some(org => org === ownerLower);
+
+        // If SAML is required and we have a token, force proxy to avoid auth issues
+        // Otherwise use normal logic (which will skip proxy if we have a token)
+        return requiresSaml ? true : shouldUseProxy();
+    }
+
     export let handleGithubNetworkError: (opts: U.HttpRequestOptions, e: any) => boolean;
 
     const isPrivateRepoCache: pxt.Map<boolean> = {};

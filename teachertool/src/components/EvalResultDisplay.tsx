@@ -98,6 +98,7 @@ const ResultsHeader: React.FC<ResultsHeaderProps> = ({ printRef }) => {
                         title={Strings.ExportChecklist}
                         rightIcon="fas fa-download"
                         onClick={handleExportChecklistClicked}
+                        disabled={checklist.criteria.length === 0}
                     />
                     <Button
                         className={classList("secondary", css["control-button"])}
@@ -105,6 +106,7 @@ const ResultsHeader: React.FC<ResultsHeaderProps> = ({ printRef }) => {
                         title={Strings.PrintChecklist}
                         rightIcon="fas fa-print"
                         onClick={handlePrintClicked}
+                        disabled={checklist.criteria.length === 0}
                     />
                     <Button
                         className={classList("primary", css["control-button"])}

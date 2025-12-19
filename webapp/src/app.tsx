@@ -324,9 +324,11 @@ export class ProjectView
      * Run a global action based on shortcuts triggered in sim or main window.
      */
     private runGlobalAction(action: pxsim.GlobalAction) {
-        if (!data.getData<boolean>(auth.ACCESSIBLE_BLOCKS)) {
+        // Escape always works to exit fullscreen, other actions require accessible blocks
+        if (action !== "escape" && !data.getData<boolean>(auth.ACCESSIBLE_BLOCKS)) {
             return;
         }
+
         switch (action) {
             case "escape": {
                 this.setSimulatorFullScreen(false);
@@ -393,7 +395,8 @@ export class ProjectView
             // it's a go, let's add
             for (const ghid of ghids) {
                 pxt.debug(`adding ${ghid.fullName}`)
-                const { config, version } = await pxt.github.downloadLatestPackageAsync(ghid);
+                const useProxy = pxt.github.shouldUseProxyForRepo(ghid.fullName);
+                const { config, version } = await pxt.github.downloadLatestPackageAsync(ghid, useProxy);
                 await p.setDependencyAsync(config.name, version);
             }
             this.reloadHeaderAsync();
@@ -6258,7 +6261,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     let theme = pxt.appTarget.appTheme;
     const isControllerIFrame = theme.allowParentController || pxt.shell.isControllerMode()
     // disable auth in iframe scenarios
-    if (isControllerIFrame)
+    if (isControllerIFrame && !pxt.BrowserUtils.isSkillmapEditor())
         pxt.auth.enableAuth(false);
     enableAnalytics()
 

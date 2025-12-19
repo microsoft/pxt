@@ -278,7 +278,7 @@ async function blockTestAsync(name: string) {
         console.log(compiledTs);
     }
 
-    chai.assert(compiledTs === baselineTs, "Compiled result did not match baseline: " + name + " " + res.source);
+    chai.expect(compiledTs).to.equal(baselineTs, "Compiled result did not match baseline: " + name + " " + res.source);
 }
 
 describe("blockly compiler", function () {
@@ -495,6 +495,10 @@ describe("blockly compiler", function () {
 
         it("should handle return statements", (done: () => void) => {
             blockTestAsync("return_statement").then(done, done);
+        });
+
+        it("should handle return statements in event handlers", (done: () => void) => {
+            blockTestAsync("return_statement_outside_function").then(done, done);
         });
 
         it("should handle functions that return values", (done: () => void) => {

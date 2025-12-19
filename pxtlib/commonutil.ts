@@ -227,6 +227,19 @@ namespace ts.pxtc.Util {
         return lf_va(format, args); // @ignorelf@
     }
 
+    /**
+     * Same as lf except the strings are not replaced in translation mode. This is used
+     * exclusively for blockly JSON block definitions as the crowdin in-context translation
+     * script doesn't handle the SVG text fields. Instead, they are translated via a context
+     * menu item on the block.
+     */
+    export function blf(format: string): string { // @ignorelf@
+        if (isTranslationMode()) {
+            return format;
+        }
+        return lf_va(format, []); // @ignorelf@
+    }
+
     export function lookup<T>(m: pxt.Map<T>, key: string): T {
         if (m.hasOwnProperty(key))
             return m[key]

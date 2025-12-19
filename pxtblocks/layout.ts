@@ -381,12 +381,16 @@ export async function blocklyToSvgAsync(sg: SVGElement, x: number, y: number, wi
     const xsg = new DOMParser().parseFromString(svgXml, "image/svg+xml");
 
     const cssLink = xsg.createElementNS("http://www.w3.org/1999/xhtml", "style");
-    const isRtl = pxt.Util.isUserLanguageRtl();
-    const customCssHref = (document.getElementById(`style-${isRtl ? 'rtl' : ''}blockly.css`) as HTMLLinkElement).href;
-    const semanticCssHref = pxt.Util.toArray(document.head.getElementsByTagName("link"))
-        .filter(l => pxt.Util.endsWith(l.getAttribute("href"), "semantic.css"))[0].href;
+    const customCssLink = document.getElementById('blocklycss') as HTMLLinkElement;
+    const customCssHref = customCssLink?.href;
+    const semanticCssLink = pxt.Util.toArray(document.head.getElementsByTagName("link"))
+        .filter(l => pxt.Util.endsWith(l.getAttribute("href"), "semantic.css"))[0];
+    const semanticCssHref = semanticCssLink?.href;
 
-    const customCss = await Promise.all([pxt.BrowserUtils.loadAjaxAsync(customCssHref), pxt.BrowserUtils.loadAjaxAsync(semanticCssHref)]);
+    const customCss = await Promise.all([
+        customCssHref ? pxt.BrowserUtils.loadAjaxAsync(customCssHref) : Promise.resolve(""),
+        semanticCssHref ? pxt.BrowserUtils.loadAjaxAsync(semanticCssHref) : Promise.resolve("")
+    ]);
 
     const blocklySvg = pxt.Util.toArray(document.head.querySelectorAll("style"))
         .filter((el: HTMLStyleElement) => /\.blocklySvg/.test(el.innerText))[0] as HTMLStyleElement;
