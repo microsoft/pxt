@@ -823,7 +823,7 @@ function renderInlineBlocksAsync(options: BlocksRenderOptions): Promise<void> {
                         if (symbolInfo && symbolInfo.attributes.help) {
                             // Create accessible label for the link using a human-readable name
                             const readableName = symbolInfo.name || symbolInfo.qName;
-                            const ariaLabel = lf("documentation for {0} block", readableName);
+                            const ariaLabel = lf("Documentation for {0} block", readableName);
                             $newel = $(`<a class="ui link"/>`).attr("href", `/reference/${symbolInfo.attributes.help}`).attr("aria-label", ariaLabel).append($newel);
                         }
                     }
