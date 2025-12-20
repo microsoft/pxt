@@ -10,7 +10,7 @@ submitted as an entry in Code Ninja’s recent [Champions Game
 Jam](https://forms.codeninjas.com/gamejam-champions). You can see all the 
 submissions [here](https://blog.codeninjas.com/champions-game-jam).
 
-<EthanPlayingGame.jpg>
+![Ethan playing JetChamp](/static/blog/arcade/code-ninjas/ethan-playing-game.jpg)
 
 _Ethan playing JetChamp at his Code Ninjas center_
 
@@ -24,7 +24,8 @@ title of JetChamp!
 The gameplay is full of timing-based challenges where the player must use their jetpack to 
 fly at just the right time to pass each obstacle. There are five levels in total, with each level 
 building off of the previous ones by introducing new and exciting game mechanics!
-<JetChamp1.png>
+
+![JetChamp screen 1](/static/blog/arcade/code-ninjas/jet-champ1.png)
 
 ## How did you come up with the idea for it?
 
@@ -41,7 +42,7 @@ So, once the player pushes past an obstacle, they feel immensely satisfied and r
 Building these moments into the game by using clever tilemap design and checkpoints was 
 easily the most enjoyable part of making this game.
 
-<JetChamp2.png>
+![JetChamp screen 2](/static/blog/arcade/code-ninjas/jet-champ2.png)
 
 ## What was the biggest challenge?
 
@@ -97,7 +98,8 @@ children’s hospital!
 In October of 2025, Extra Life and Code Ninjas came together and created the Champions 
 game jam where the winners each get $500USD donated to their local children’s hospital!
 
-<CodeNinjasGameJam.png>
+![Code Ninjas Game Jam](/static/blog/arcade/code-ninjas/code-ninjas-game-jam.png)
+
 
 ## Any advice you have for aspiring game developers?
 
