@@ -1,6 +1,7 @@
 # Microsoft MakeCode Blog
 
 * [Blog](/blog)
+    * [Interview with MakeCode Arcade Game Maker](/blog/arcade/code-ninjas)
     * [Computer Science Education Week 2025](/blog/csed-week/csed-week-2025)
     * [MakeCode Minecraft 2025 Update](/blog/minecraft/2025-release)
     * [MakeCode for the micro:bit – 2025 Update](/blog/microbit/2025-update)
