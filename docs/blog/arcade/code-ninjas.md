@@ -1,6 +1,8 @@
 # Interview with MakeCode Arcade Game Maker
 
-December, 2025
+**Posted on December 19th, 2025 by [Jaqster](https://github.com/jaqster)**
+
+_Interview from December, 2025_
 
 As a great way to close out 2025, we sat down with MakeCode game developer and [Code 
 Ninjas](https://www.codeninjas.com) Sensei, Ethan Battaglia, to learn more about what 
@@ -71,6 +73,7 @@ At Code Ninjas, kids (or Ninjas) learn how to code by starting with block coding
 MakeCode Arcade and progressing to professional game engines like Unity and Godot. 
 They practice their skills by building dozens of projects, answering interactive quizzes, and 
 solving problems in example code. As a Code Ninjas Sensei, I:
+
 1.
 2.
 3. Teach the fundamental rules behind
@@ -83,7 +86,7 @@ solving problems in example code. As a Code Ninjas Sensei, I:
 10.
 11.
 12.
-13.Inspire Ninjas to build their dream
+13. Inspire Ninjas to build their dream
 14. games
 15.
 
