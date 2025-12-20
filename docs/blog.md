@@ -1,6 +1,6 @@
 # Microsoft MakeCode Blog
 
-## [nterview with MakeCode Arcade Game Maker](/blog/arcade/code-ninjas)
+## [Interview with MakeCode Arcade Game Maker](/blog/arcade/code-ninjas)
 
 December 19, 2025 by [Jaqster](https://github.com/jaqster)
 
