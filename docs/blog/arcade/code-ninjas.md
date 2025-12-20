@@ -6,7 +6,8 @@ _Interview from December, 2025_
 
 As a great way to close out 2025, we sat down with MakeCode game developer and [Code 
 Ninjas](https://www.codeninjas.com) Sensei, Ethan Battaglia, to learn more about what 
-it’s like learning and creating games with MakeCode Arcade. 
+it’s like learning and creating games with MakeCode Arcade.
+
 Ethan’s very fun [JetChamp](https://ethansguild.github.io/jetchamp) game, was 
 submitted as an entry in Code Ninja’s recent [Champions Game 
 Jam](https://forms.codeninjas.com/gamejam-champions). You can see all the 
