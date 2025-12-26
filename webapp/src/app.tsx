@@ -84,6 +84,7 @@ import { AreaMenuOverlay } from "./components/AreaMenuOverlay";
 import { parseTourStepsAsync } from "./onboarding";
 import { initGitHubDb } from "./idbworkspace";
 import { BlockDefinition, CategoryNameID } from "./toolbox";
+import { MinecraftAuthClient } from "./minecraftAuthClient";
 import { FeedbackModal } from "../../react-common/components/controls/Feedback/Feedback";
 import { ThemeManager } from "../../react-common/components/theming/themeManager";
 import { applyPolyfills } from "./polyfills";
@@ -4454,7 +4455,7 @@ export class ProjectView
         const hasIdentity = auth.hasIdentity() && this.isLoggedIn();
 
         try {
-            const persistentPublish = hasIdentity && !forceAnonymous;
+            const persistentPublish = hasIdentity && !forceAnonymous && !pxt.auth.proxyIdentityThroughIPC();
             const id = await this.publishCurrentHeaderAsync(persistentPublish, screenshotUri);
             return await this.getShareUrl(id, persistentPublish);
         } catch (e) {
@@ -6251,6 +6252,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     pkg.setupAppTarget((window as any).pxtTargetBundle);
 
     initGitHubDb();
+
+    if (pxt.auth.proxyIdentityThroughIPC()) {
+        auth.overrideAuthClient(() => new MinecraftAuthClient());
+    }
 
     // DO NOT put any async code before this line! The serviceworker must be initialized before
     // the window load event fires

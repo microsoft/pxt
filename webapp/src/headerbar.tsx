@@ -256,7 +256,7 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
         const { home, header, tutorialOptions } = this.props.parent.state;
         const isController = pxt.shell.isControllerMode();
         const isNativeHost = cmds.isNativeHost();
-        const hasIdentity = auth.hasIdentity();
+        const hasIdentity = auth.hasIdentity() && !pxt.auth.proxyIdentityThroughIPC();
         const activeEditor = this.props.parent.isPythonActive() ? "Python"
             : (this.props.parent.isJavaScriptActive() ? "JavaScript" : "Blocks");
 
