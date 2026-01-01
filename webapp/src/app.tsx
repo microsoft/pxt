@@ -489,7 +489,11 @@ export class ProjectView
             } else if (this.state.resumeOnVisibility) {
                 this.setState({ resumeOnVisibility: false });
                 // We did a save when the page was hidden, no need to save again.
-                this.runSimulator();
+                // Use background: true to avoid calling beforeCompile, which would
+                // close any open field editors (e.g., text input on a block).
+                // This is important for embedded browsers like Grid 3 where page
+                // changes cause brief visibility changes but the user is still editing.
+                this.runSimulator({ background: true });
                 cmds.maybeReconnectAsync(false, true);
             } else if (!this.state.home) {
                 cmds.maybeReconnectAsync(false, true);
