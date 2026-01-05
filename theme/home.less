@@ -323,7 +323,13 @@
         .yt-button, button.home-share-button {
             display: inline-block;
             border-radius: 0.5rem;
+        }
+        .yt-button {
             background-color: var(--pxt-primary-background);
+        }
+        button.home-share-button {
+            color: var(--pxt-neutral-foreground1);
+            background-color: var(--pxt-target-background1);
         }
         .ui.grid.stackable .actions {
             padding-right: 4rem !important;
@@ -772,13 +778,22 @@
 
         .detailview {
             .column:first-child {
-                height: 10.5rem;
-                overflow: hidden;
+                height: auto;
+                overflow: visible;
+
+                .segment {
+                    padding-bottom: 1rem;
+                }
             }
             .actions {
-                height: 9rem;
-                padding-right: 4rem !important;
+                height: auto;
+                padding-right: @carouselArrowSizeMobile !important;
                 .card-action {
+                    display: inline-block;
+                    width: 8rem;
+                    margin: 0 0 0 0.5rem;
+                    border-width: 3px;
+
                     > .item, > .icon {
                         height: 2rem;
                     }
@@ -786,17 +801,12 @@
                         background-image: none!important;
                     }
                     .button.approve {
-                        padding: .35em 1em .5em;
+                        font-size: 0.9rem !important;
+                        padding: .35em 0.75em .5em;
                     }
                     .button.attached .icon:not(.xicon) {
                         font-size: 2rem;
                         line-height: 2rem;
-                    }
-                    &:first-child {
-                        margin-left: 0;
-                    }
-                    &:last-child {
-                        margin-right: 0;
                     }
                 }
 
@@ -806,11 +816,10 @@
                 }
 
                 .segment {
-                    position: absolute;
-                    bottom: 0;
-                    right: 0;
-                    margin: 0 1rem 0.5rem;
-                    white-space: normal;
+                    position: static;
+                    margin: 0 0.5rem 0.5rem;
+                    text-align: right;
+                    white-space: nowrap;
                 }
             }
         }

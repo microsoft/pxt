@@ -1250,8 +1250,8 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                         />}
                     {pxt.appTarget.appTheme.shareHomepageContent && !!shareableLink &&
                         <sui.Button
-                            text={lf("Share This")}
-                            className={`home-share-button button attached approve large inverted`}
+                            text={lf("Share")}
+                            className={`home-share-button button attached approve large`}
                             onClick={this.showShareDialog}
                             onKeyDown={fireClickOnEnter}
                             title={lf("Create a link to share this content")} ariaLabel={lf("Create a link to share this content")}
@@ -1283,8 +1283,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
             shareUrl={shareUrlForDialog}
             onClose={this.hideShareDialog}
         >
-            {shareEditors.length > 1 && <>
-                <div className="project-share-label">{lf("Share as")}</div>
+            {shareEditors.length > 1 &&
                 <EditorToggle
                     id="homepage-share-editor-toggle"
                     className="slim tablet-compact"
@@ -1295,8 +1294,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                         onClick: () => this.setShareDialogEditor(e)
                     }))}
                     selected={Math.max(0, shareEditors.indexOf(shareDialogEditor))}
-                />
-            </>}
+                />}
         </ShareLinkDialog>
         </>;
     }
