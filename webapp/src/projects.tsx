@@ -12,6 +12,8 @@ import { showAboutDialogAsync } from "./dialogs";
 import { fireClickOnEnter } from "./util";
 import { sendUpdateFeedbackTheme } from "../../react-common/components/controls/Feedback/FeedbackEventListener";
 import { ThemeManager } from "../../react-common/components/theming/themeManager";
+import { ShareLinkDialog } from "../../react-common/components/share/ShareLinkDialog";
+import { EditorToggle } from "../../react-common/components/controls/EditorToggle";
 
 import IProjectView = pxt.editor.IProjectView;
 import ISettingsProps = pxt.editor.ISettingsProps;
@@ -898,6 +900,8 @@ export interface ProjectsDetailProps extends ISettingsProps {
 }
 
 export interface ProjectsDetailState {
+    shareDialogVisible?: boolean;
+    shareDialogEditor?: pxt.CodeCardEditorType;
 }
 
 export class ProjectsDetail extends data.Component<ProjectsDetailProps, ProjectsDetailState> {
@@ -906,11 +910,61 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
     constructor(props: ProjectsDetailProps) {
         super(props);
         this.state = {
+            shareDialogVisible: false,
+            shareDialogEditor: undefined
         }
 
         this.handleDetailClick = this.handleDetailClick.bind(this);
         this.handleOpenForumUrlInEditor = this.handleOpenForumUrlInEditor.bind(this);
+        this.showShareDialog = this.showShareDialog.bind(this);
+        this.hideShareDialog = this.hideShareDialog.bind(this);
+        this.setShareDialogEditor = this.setShareDialogEditor.bind(this);
         this.linkRef = React.createRef<HTMLAnchorElement>();
+    }
+
+    private showShareDialog() {
+        pxt.tickEvent("projects.share.open", { cardType: this.props.cardType }, { interactiveConsent: true });
+        const editors = this.getShareableEditors();
+        const previousEditor = this.state.shareDialogEditor;
+        const selectedEditor = previousEditor && editors.indexOf(previousEditor) !== -1
+            ? previousEditor
+            : editors[0];
+        this.setState({
+            shareDialogVisible: true,
+            shareDialogEditor: selectedEditor
+        });
+    }
+
+    private hideShareDialog() {
+        this.setState({ shareDialogVisible: false });
+    }
+
+    private setShareDialogEditor(editor: pxt.CodeCardEditorType) {
+        this.setState({ shareDialogEditor: editor });
+    }
+
+    private getShareableEditors(): pxt.CodeCardEditorType[] {
+        const { cardType, otherActions } = this.props;
+
+        if (cardType !== "tutorial" && cardType !== "example" && cardType !== "codeExample")
+            return [undefined];
+
+        const available: pxt.CodeCardEditorType[] = [];
+
+        const addEditor = (editor: pxt.CodeCardEditorType) => {
+            if (!editor) return;
+            if (available.indexOf(editor) === -1) available.push(editor);
+        }
+
+        addEditor(this.getActionEditor(cardType, undefined));
+
+        for (const action of (otherActions ?? [])) {
+            const actionCardType: pxt.CodeCardType = action.cardType || cardType;
+            if (actionCardType !== cardType) continue;
+            addEditor(this.getActionEditor(actionCardType, action));
+        }
+
+        return available;
     }
 
     protected isLink(actionType?: pxt.CodeCardType) {
@@ -1018,6 +1072,82 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         </div>
     }
 
+    protected getShareableLink(overrideEditor?: pxt.CodeCardEditorType): string {
+        const { cardType, url, scr } = this.props;
+        if (!cardType) return undefined;
+
+        const relPrefix = normalizeUrlPathPrefix(pxt.webConfig?.relprefix?.replace(/-+$/, ""));
+        const baseUrl = `${window.location.origin}${relPrefix}`;
+
+        const cardUrl = (scr?.url || url) as string;
+        const editor = (overrideEditor || ((scr as any)?.editor as pxt.CodeCardEditorType | undefined)) as string | undefined;
+        const normalizedEditorPrefix = editor ? normalizeEditorPrefix(editor) : "";
+        // For share links, omit the prefix when Blocks is selected (default). (todo jwunderl: double check flags for this)
+        const editorPrefix = normalizedEditorPrefix === "blocks:"
+            ? ""
+            : normalizedEditorPrefix;
+
+        switch (cardType) {
+            case "tutorial": {
+                let tutorialPath = (cardUrl || "").trim();
+                if (!tutorialPath) return undefined;
+                return `${baseUrl}#tutorial:${editorPrefix}${tutorialPath}`;
+            }
+            case "example":
+            case "codeExample": {
+                let examplePath = (cardUrl || "").trim();
+                if (!examplePath) return undefined;
+                return `${baseUrl}#example:${editorPrefix}${examplePath}`;
+            }
+            case "sharedExample": {
+                const raw = cardUrl || (scr as any)?.shareUrl;
+                if (!raw) return undefined;
+
+                const repoId = pxt.github.normalizeRepoId(raw);
+                if (repoId) return `${baseUrl}#github:${repoId}`;
+
+                const scriptId = pxt.Cloud.parseScriptId(raw);
+                if (scriptId) return `${baseUrl}#pub:${scriptId}`;
+
+                if (/^https?:\/\//i.test(raw)) return raw;
+                return undefined;
+            }
+            default: {
+                if (!cardUrl) return undefined;
+                if (/^(https?:)?\/\//i.test(cardUrl)) return cardUrl;
+                return new URL(cardUrl, baseUrl).toString();
+            }
+        }
+
+        function normalizeUrlPathPrefix(prefix: string | undefined): string {
+            let p = (prefix || "").trim();
+            if (!p) return "/";
+            if (!/^\//.test(p)) p = "/" + p;
+            // Keep '/' for root, otherwise strip trailing slashes
+            if (p !== "/") p = p.replace(/\/+$/, "");
+            return p;
+        }
+
+        function normalizeEditorPrefix(editor: string): string {
+            const normalized = editor.toLowerCase();
+            switch (normalized) {
+                case "typescript":
+                case "ts":
+                case "javascript":
+                case "js":
+                    return "js:";
+                case "python":
+                case "py":
+                    return "py:";
+                case "block":
+                case "blocks":
+                    return "blocks:";
+                default:
+                    return "";
+            }
+        }
+    }
+
     handleDetailClick() {
         const { scr, onClick } = this.props;
         pxt.tickEvent('projects.actions.details', {
@@ -1085,7 +1215,15 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         const image = !highContrast && (largeImageUrl || (youTubeId && `https://img.youtube.com/vi/${youTubeId}/0.jpg`));
         const video = !highContrast && !pxt.BrowserUtils.isElectron() && !pxt.BrowserUtils.isIOS() && videoUrl;
         const showVideoOrImage = !pxt.appTarget.appTheme.hideHomeDetailsVideo;
-        const youTubeWatchUrl = pxt.youtube.watchUrl(youTubeId, youTubePlaylistId)
+        const youTubeWatchUrl = pxt.youtube.watchUrl(youTubeId, youTubePlaylistId);
+        const shareableLink = pxt.appTarget.appTheme.shareHomepageContent ? this.getShareableLink() : undefined;
+        const shareEditors = this.getShareableEditors().filter(e => !!e) as pxt.CodeCardEditorType[];
+        const shareDialogEditor = this.state.shareDialogEditor && shareEditors.indexOf(this.state.shareDialogEditor) !== -1
+            ? this.state.shareDialogEditor
+            : shareEditors[0];
+        const shareUrlForDialog = pxt.appTarget.appTheme.shareHomepageContent
+            ? this.getShareableLink(shareDialogEditor)
+            : undefined;
 
         let clickLabel: string;
         if (buttonLabel)
@@ -1093,7 +1231,8 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         else
             clickLabel = this.getClickLabel(cardType);
 
-        return <div className="ui grid stackable padded">
+        return <>
+        <div className="ui grid stackable padded">
             {showVideoOrImage && (video || image) && <div className="imagewrapper">
                 {video ? <video className="video" src={video} autoPlay={true} controls={false} loop={true} playsInline={true} />
                     : <div className="image" style={{ backgroundImage: `url("${image}")` }} />}
@@ -1120,6 +1259,15 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                             className={`yt-button button attached approve large inverted`}
                             title={lf("Open YouTube video in new window")}
                         />}
+                    {pxt.appTarget.appTheme.shareHomepageContent && !!shareableLink &&
+                        <sui.Button
+                            text={lf("Share This")}
+                            className={`home-share-button button attached approve large inverted`}
+                            onClick={this.showShareDialog}
+                            onKeyDown={fireClickOnEnter}
+                            title={lf("Create a link to share this content")} ariaLabel={lf("Create a link to share this content")}
+                        />
+                    }
                 </div>
             </div>
             <div className="actions column ten wide">
@@ -1139,7 +1287,29 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                     }
                 </div>
             </div>
-        </div>;
+        </div>
+
+        <ShareLinkDialog
+            visible={!!this.state.shareDialogVisible}
+            shareUrl={shareUrlForDialog}
+            onClose={this.hideShareDialog}
+        >
+            {shareEditors.length > 1 && <>
+                <div className="project-share-label">{lf("Share as")}</div>
+                <EditorToggle
+                    id="homepage-share-editor-toggle"
+                    className="slim tablet-compact"
+                    items={shareEditors.map((e: pxt.CodeCardEditorType) => ({
+                        label: e === "blocks" ? lf("Blocks") : e === "py" ? lf("Python") : lf("JavaScript"),
+                        title: e === "blocks" ? lf("Share as Blocks") : e === "py" ? lf("Share as Python") : lf("Share as JavaScript"),
+                        focusable: true,
+                        onClick: () => this.setShareDialogEditor(e)
+                    }))}
+                    selected={Math.max(0, shareEditors.indexOf(shareDialogEditor))}
+                />
+            </>}
+        </ShareLinkDialog>
+        </>;
     }
 }
 
