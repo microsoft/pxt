@@ -1,5 +1,14 @@
 # Microsoft MakeCode Blog
 
+## [Interview with MakeCode Arcade Game Maker](/blog/arcade/code-ninjas)
+
+December 19, 2025 by [Jaqster](https://github.com/jaqster)
+
+As a great way to close out 2025, we sat down with MakeCode game developer and Code 
+Ninjas Sensei, Ethan Battaglia, to learn more about what it’s like learning and creating games with MakeCode Arcade. 
+
+**[Continue reading this blog post](/blog/arcade/code-ninjas)**
+
 ## [Computer Science Education Week 2025](/blog/csed-week/csed-week-2025)
 
 November 12, 2025 by [Jaqster](https://github.com/jaqster)

@@ -1076,16 +1076,14 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         const { cardType, url, scr } = this.props;
         if (!cardType) return undefined;
 
-        const relPrefix = normalizeUrlPathPrefix(pxt.webConfig?.relprefix?.replace(/-+$/, ""));
+        const relPrefix = pxt.webConfig?.relprefix?.replace(/-+$/, "");
         const baseUrl = `${window.location.origin}${relPrefix}`;
 
         const cardUrl = (scr?.url || url) as string;
-        const editor = (overrideEditor || ((scr as any)?.editor as pxt.CodeCardEditorType | undefined)) as string | undefined;
-        const normalizedEditorPrefix = editor ? normalizeEditorPrefix(editor) : "";
-        // For share links, omit the prefix when Blocks is selected (default). (todo jwunderl: double check flags for this)
-        const editorPrefix = normalizedEditorPrefix === "blocks:"
-            ? ""
-            : normalizedEditorPrefix;
+        const defaultEditor = this.getActionEditor(cardType, undefined);
+        const includeEditorPrefix = !!overrideEditor
+            && overrideEditor !== defaultEditor;
+        const editorPrefix = includeEditorPrefix ? normalizeEditorPrefix(overrideEditor) : "";
 
         switch (cardType) {
             case "tutorial": {
@@ -1117,15 +1115,6 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                 if (/^(https?:)?\/\//i.test(cardUrl)) return cardUrl;
                 return new URL(cardUrl, baseUrl).toString();
             }
-        }
-
-        function normalizeUrlPathPrefix(prefix: string | undefined): string {
-            let p = (prefix || "").trim();
-            if (!p) return "/";
-            if (!/^\//.test(p)) p = "/" + p;
-            // Keep '/' for root, otherwise strip trailing slashes
-            if (p !== "/") p = p.replace(/\/+$/, "");
-            return p;
         }
 
         function normalizeEditorPrefix(editor: string): string {
