@@ -171,7 +171,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
             </div>}
             {!isHeadless && <div className={`ui icon tiny buttons computer only`} style={{ padding: "0" }}>
                 {screenshot && <sui.Button disabled={!isRunning} key='screenshotbtn' className={`screenshot-button ${screenshotClass}`} icon={`icon camera left`} title={screenshotTooltip} onClick={this.takeScreenshot} />}
-                {fullscreen && <sui.Button key='fullscreenbtn' className={`fullscreen-button`} icon={`xicon ${isFullscreen ? 'fullscreencollapse' : 'fullscreen'}`} title={fullscreenTooltip} onClick={this.toggleSimulatorFullscreen} />}
+                {fullscreen && <sui.Button key='fullscreenbtn' className={`fullscreen-button`} icon={`fas ${isFullscreen ? 'fa-compress-alt' : 'fa-expand-alt'}`} fontAwesome={true} title={fullscreenTooltip} onClick={this.toggleSimulatorFullscreen} />}
             </div>}
         </aside >;
     }
