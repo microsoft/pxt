@@ -53,6 +53,11 @@ const InlineInputSegment: React.FC<InlineInputSegmentProps> = ({
             return;
         }
 
+        if (!initialValue) {
+            setErrorMessage(Strings.ValueRequired);
+            return;
+        }
+
         // We still allow some invalid values to be set on the parameter so the user can see what they typed
         // and the associated error.
         // Without this, we risk erroring too soon (i.e. typing in first digit of number with min > 10),
@@ -88,6 +93,7 @@ const InlineInputSegment: React.FC<InlineInputSegmentProps> = ({
                 icon={errorMessage ? "fas fa-exclamation-triangle" : undefined}
                 initialValue={initialValue}
                 onChange={onChange}
+                onOptionSelected={onChange}
                 preserveValueOnBlur={true}
                 placeholder={numeric ? "0" : param.name}
                 title={tooltip}
