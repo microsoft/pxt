@@ -3168,7 +3168,7 @@ export class ProjectView
         const { name, path, loadBlocks, prj, preferredEditor } = options;
         core.showLoading("changingcode", lf("loading..."));
         this.loadingExample = true;
-        return this.loadActivityFromMarkdownAsync(path, name.toLowerCase(), preferredEditor)
+        return this.loadActivityFromMarkdownAsync(path, name?.toLowerCase(), preferredEditor)
             .then(r => {
                 const { filename, md, features, autoChooseBoard: autoChooseBoardMeta } = (r || {});
                 const autoChooseBoard = !prj && autoChooseBoardMeta;
