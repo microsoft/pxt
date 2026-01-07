@@ -4445,10 +4445,10 @@ export class ProjectView
         return this.getShareUrl(script.shortid || script.id, false);
     }
 
-    async publishAsync (name: string, screenshotUri?: string, forceAnonymous?: boolean): Promise<pxt.editor.ShareData> {
+    async publishAsync (name: string, description?: string,screenshotUri?: string, forceAnonymous?: boolean): Promise<pxt.editor.ShareData> {
         pxt.tickEvent("menu.embed.publish", undefined, { interactiveConsent: true });
-        if (name && this.state.projectName != name) {
-            await this.updateHeaderNameAsync(name);
+        if ((name && this.state.projectName != name) || description) {
+            await this.updateHeaderNameAsync(name, description);
         }
 
         const hasIdentity = auth.hasIdentity() && this.isLoggedIn();
@@ -4595,13 +4595,14 @@ export class ProjectView
         }
     }
 
-    updateHeaderNameAsync(name: string): Promise<void> {
+    updateHeaderNameAsync(name: string, description?: string): Promise<void> {
         // nothing to do?
-        if (pkg.mainPkg.config.name == name)
+        if (pkg.mainPkg.config.name == name && (!description || pkg.mainPkg.config.description == description))
             return Promise.resolve();
 
         //Save the name in the target MainPackage as well
         pkg.mainPkg.config.name = name;
+        pkg.mainPkg.config.description = description || pkg.mainPkg.config.description;
 
         pxt.debug('saving project name to ' + name);
         let f = pkg.mainEditorPkg().lookupFile("this/" + pxt.CONFIG_NAME);

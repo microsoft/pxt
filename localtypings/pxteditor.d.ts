@@ -989,7 +989,7 @@ declare namespace pxt.editor {
 
         anonymousPublishHeaderByIdAsync(headerId: string, projectName?: string): Promise<ShareData>;
         publishCurrentHeaderAsync(persistent: boolean, screenshotUri?: string): Promise<string>;
-        publishAsync (name: string, screenshotUri?: string, forceAnonymous?: boolean): Promise<ShareData>;
+        publishAsync (name: string, description?: string,screenshotUri?: string, forceAnonymous?: boolean): Promise<ShareData>;
 
         startStopSimulator(opts?: SimulatorStartOptions): void;
         stopSimulator(unload?: boolean, opts?: SimulatorStartOptions): void;

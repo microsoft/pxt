@@ -20,12 +20,12 @@ const vscodeDevUrl = "https://vscode.dev/edu/makecode/"
 
 export interface ShareInfoProps {
     projectName: string;
-    description?: string;
+    projectDescription?: string;
     screenshotUri?: string;
     isLoggedIn?: boolean;
     hasProjectBeenPersistentShared?: boolean;
     simRecorder: SimRecorder;
-    publishAsync: (name: string, screenshotUri?: string, forceAnonymous?: boolean) => Promise<ShareData>;
+    publishAsync: (name: string, description?: string, screenshotUri?: string, forceAnonymous?: boolean) => Promise<ShareData>;
     isMultiplayerGame?: boolean; // Arcade: Does the game being shared have multiplayer enabled?
     kind?: "multiplayer" | "vscode" | "share"; // Arcade: Was the share dialog opened specifically for hosting a multiplayer game?
     anonymousShareByDefault?: boolean;
@@ -37,7 +37,7 @@ export interface ShareInfoProps {
 export const ShareInfo = (props: ShareInfoProps) => {
     const {
         projectName,
-        description,
+        projectDescription,
         screenshotUri,
         isLoggedIn,
         simRecorder,
@@ -50,6 +50,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
         onClose,
     } = props;
     const [ name, setName ] = React.useState(projectName);
+    const [ description, setDescription ] = React.useState(projectDescription);
     const [ thumbnailUri, setThumbnailUri ] = React.useState(screenshotUri);
     const [ shareState, setShareState ] = React.useState<"share" | "gifrecord" | "publish" | "publish-vscode" | "publishing">("share");
     const [ shareData, setShareData ] = React.useState<ShareData>();
@@ -95,7 +96,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
     const handlePublishClick = async () => {
         setShareState("publishing");
         setLastShareWasAnonymous(isAnonymous);
-        let publishedShareData = await publishAsync(name, thumbnailUri, isAnonymous);
+        let publishedShareData = await publishAsync(name, description, thumbnailUri, isAnonymous);
         setShareData(publishedShareData);
         if (!publishedShareData?.error) setShareState("publish");
         else setShareState("share")
@@ -104,7 +105,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
     const handlePublishInVscodeClick = async () => {
         setShareState("publishing");
         setLastShareWasAnonymous(isAnonymous);
-        let publishedShareData = await publishAsync(name, thumbnailUri, isAnonymous);
+        let publishedShareData = await publishAsync(name, description, thumbnailUri, isAnonymous);
         setShareData(publishedShareData);
         if (!publishedShareData?.error) {
             setShareState("publish-vscode");
@@ -238,9 +239,9 @@ export const ShareInfo = (props: ShareInfoProps) => {
     const handleMultiplayerShareConfirmClick = async () => {
         setShareState("publishing");
         setIsShowingMultiConfirmation(false);
-    setLastShareWasAnonymous(isAnonymous);
+        setLastShareWasAnonymous(isAnonymous);
 
-        const publishedShareData = await publishAsync(name, thumbnailUri, isAnonymous);
+        const publishedShareData = await publishAsync(name, description, thumbnailUri, isAnonymous);
 
         // TODO multiplayer: This won't work on staging (parseScriptId domains check doesn't include staging urls)
         // but those wouldn't load anyways (as staging multiplayer is currently fetching games from prod links)
@@ -322,7 +323,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
         if (setAnonymousSharePreference) setAnonymousSharePreference(!newValue);
     }
 
-    const inputTitle = prePublish ? lf("Project Title") :
+    const inputTitle = prePublish ? lf("Project Name") :
         (shareState === "publish-vscode" ? lf("Share Successful") : lf("Project Link"));
 
     const shareAttemptWasAnonymous = lastShareWasAnonymous === undefined ? isAnonymous : lastShareWasAnonymous;
@@ -378,6 +379,19 @@ export const ShareInfo = (props: ShareInfoProps) => {
                             onBlur={setName}
                             onEnterKey={setName}
                             preserveValueOnBlur={true} />
+                        {pxt.appTarget.appTheme.showProjectDescription && <>
+                            <div className="project-share-title project-share-label" id="share-description-title">
+                                {lf("Project Description")}
+                            </div>
+                            <Textarea
+                                ariaDescribedBy="share-description-title"
+                                ariaLabel={lf("Type a description for your project")}
+                                initialValue={projectDescription || ''}
+                                onChange={setDescription}
+                                id="projectDescriptionTextareaShare"
+                                resize="vertical"
+                            />
+                        </>}
                         {isLoggedIn && hasProjectBeenPersistentShared && <Checkbox
                             id="persistent-share-checkbox"
                             label={lf("Update existing share link for this project")}
