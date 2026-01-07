@@ -25,6 +25,7 @@ export interface UiProps {
     tabIndex?: number;
     rightIcon?: boolean;
     inverted?: boolean;
+    fontAwesome?: boolean;
 }
 
 export type SIZES = 'mini' | 'tiny' | 'small' | 'medium' | 'large' | 'big' | 'huge' | 'massive';
@@ -43,7 +44,7 @@ function genericClassName(cls: string, props: UiProps, ignoreIcon: boolean = fal
 
 export function genericContent(props: UiProps) {
     let retVal = [
-        props.icon ? (<Icon key='iconkey' icon={props.icon + (props.text ? " icon-and-text " : "") + (props.iconClass ? " " + props.iconClass : '')} />) : null,
+        props.icon ? (<Icon key='iconkey' icon={props.icon + (props.text ? " icon-and-text " : "") + (props.iconClass ? " " + props.iconClass : '')} fontAwesome={props.fontAwesome} />) : null,
         props.text ? (<span key='textkey' className={'ui text' + (props.textClass ? ' ' + props.textClass : '')}>{props.text}</span>) : null,
     ]
     if (props.icon && props.rightIcon) retVal = retVal.reverse();
@@ -836,11 +837,12 @@ export interface IconProps extends UiProps {
     icon?: string;
     onClick?: () => void;
     onKeyDown?: () => void;
+    fontAwesome?: boolean;
 }
 
 export const Icon: React.FunctionComponent<IconProps> = (props: IconProps) => {
-    const { icon, className, onClick, onKeyDown, children, ...rest } = props;
-    return <i className={`icon ${icon} ${className ? className : ''}`}
+    const { icon, className, onClick, onKeyDown, fontAwesome, children, ...rest } = props;
+    return <i className={`${fontAwesome ? '' : 'icon '}${icon} ${className ? className : ''}`}
         onClick={onClick}
         onKeyDown={onKeyDown || fireClickOnEnter}
         aria-hidden={true} role="presentation" {...rest}>
