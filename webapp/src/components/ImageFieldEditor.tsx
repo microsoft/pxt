@@ -246,13 +246,13 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
         if (options) {
             this.blocksInfo = options.blocksInfo;
 
-            // todo:jwunderl need to consider this a bit for tilemaps; there's really 2 filters, 1 for the tiles in the subeditor,
-            // one for tilemaps themselves, but currently the tilemap blocks we do all do fieldOptions filter tile.
-            // just skipping it for the moment, so that tilemaps show up as a baseline
-            if (options.filter && value.type !== pxt.AssetType.Tilemap) {
-            // if (options.filter) {
+            const filter = value.type === pxt.AssetType.Tilemap
+                ? options.tilemapFilter
+                : options.filter;
+
+            if (filter) {
                 this.setState({
-                    galleryFilter: options.filter
+                    galleryFilter: filter
                 });
                 didUpdate = true;
             }
@@ -461,7 +461,12 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
                 case pxt.AssetType.Tile:
                     return assets.filter(t => t.type === pxt.AssetType.Tile);
                 case pxt.AssetType.Tilemap:
-                    return assets.filter(t => t.type === pxt.AssetType.Tilemap);
+                    const currentTileWidth = (this.asset as pxt.ProjectTilemap)?.data?.tileset?.tileWidth;
+                    return assets.filter(t => {
+                        if (t.type !== pxt.AssetType.Tilemap) return false;
+                        if (!currentTileWidth) return true;
+                        return t?.data?.tileset?.tileWidth === currentTileWidth;
+                    });
                 case pxt.AssetType.Song:
                     return assets.filter(t => t.type === pxt.AssetType.Song);
                 case pxt.AssetType.Json:
