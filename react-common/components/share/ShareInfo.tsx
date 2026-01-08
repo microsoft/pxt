@@ -389,6 +389,8 @@ export const ShareInfo = (props: ShareInfoProps) => {
                                 initialValue={projectDescription || ''}
                                 onChange={setDescription}
                                 id="projectDescriptionTextareaShare"
+                                maxLength={pxt.MAX_DESCRIPTION_LENGTH}
+                                showRemainingCharacterCount={500}
                                 resize="vertical"
                             />
                         </>}
