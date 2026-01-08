@@ -80,7 +80,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
 
         let showHeader = headerVisible;
         // If there is no asset, show the gallery to prevent changing shape when it's added
-        let showGallery = !this.props.isMusicEditor && (!this.asset || editingTile || this.asset.type !== pxt.AssetType.Tilemap);
+        let showGallery = !this.props.isMusicEditor && (!this.asset || !editingTile);
         const showMyAssets = !hideMyAssets && !editingTile;
 
         if (this.asset && !this.galleryAssets && showGallery) {
@@ -246,7 +246,11 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
         if (options) {
             this.blocksInfo = options.blocksInfo;
 
-            if (options.filter) {
+            // todo:jwunderl need to consider this a bit for tilemaps; there's really 2 filters, 1 for the tiles in the subeditor,
+            // one for tilemaps themselves, but currently the tilemap blocks we do all do fieldOptions filter tile.
+            // just skipping it for the moment, so that tilemaps show up as a baseline
+            if (options.filter && value.type !== pxt.AssetType.Tilemap) {
+            // if (options.filter) {
                 this.setState({
                     galleryFilter: options.filter
                 });
@@ -565,7 +569,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
                 (this.ref as ImageEditor).openInTileEditor(pxt.sprite.Bitmap.fromData((asset as pxt.Tile).bitmap))
             }
             else if (this.state.currentView === "gallery") {
-                this.ref.openGalleryAsset(asset as pxt.Tile | pxt.ProjectImage | pxt.Animation);
+                this.ref.openGalleryAsset(asset);
             }
             else {
                 const project = pxt.react.getTilemapProject();

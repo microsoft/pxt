@@ -122,7 +122,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
         }
     }
 
-    openGalleryAsset(asset: pxt.Animation | pxt.ProjectImage | pxt.Tile) {
+    openGalleryAsset(asset: pxt.Asset) {
         const current = this.getAsset();
 
         const frames = (this.getStore().getState().store.present as AnimationState).frames;
@@ -150,6 +150,77 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
                         this.setCurrentFrame(pxt.sprite.Bitmap.fromData(asset.frames[0]), true);
                         break;
                 }
+                break;
+            case pxt.AssetType.Tilemap:
+                if (asset.type === pxt.AssetType.Tilemap) {
+                    const currentTilemap = current as pxt.ProjectTilemap;
+                    const copied = pxt.cloneAsset(asset) as pxt.ProjectTilemap;
+
+                    const project = pxt.react.getTilemapProject();
+                    this.mergeTilemapTilesIntoProject(project, copied);
+
+                    copied.id = currentTilemap.id;
+                    copied.internalID = currentTilemap.internalID;
+                    copied.meta = { ...currentTilemap.meta };
+                    this.openAsset(copied, undefined, true);
+                }
+                break;
+        }
+    }
+
+    /**
+     * When applying a gallery tilemap as a template, ensure the resulting tilemap references tiles in *this* project.
+     */
+    protected mergeTilemapTilesIntoProject(project: pxt.TilemapProject, tilemap: pxt.ProjectTilemap) {
+        const tiles = tilemap?.data?.tileset?.tiles;
+        if (!tiles?.length) return;
+
+        const getSourceTileName = (t: pxt.Tile) => {
+            const name = t?.meta?.displayName || pxt.getShortIDForAsset(t) || t?.id;
+            return name ? name.split(".").pop() : undefined;
+        }
+
+        const remappedByBitmap: pxt.Map<pxt.Tile> = {};
+
+        for (let i = 0; i < tiles.length; i++) {
+            const tile = tiles[i];
+            if (!tile) continue;
+
+            const key = (tile as any).jresData || (tile.bitmap ? pxt.sprite.base64EncodeBitmap(tile.bitmap) : "");
+            if (key && remappedByBitmap[key]) {
+                tiles[i] = remappedByBitmap[key];
+                continue;
+            }
+
+            const existing = tile.bitmap && project.lookupAssetByValue(pxt.AssetType.Tile, tile);
+            if (existing) {
+                tiles[i] = existing;
+                if (key) remappedByBitmap[key] = existing;
+
+                if (!existing.meta?.displayName) {
+                    const originalName = getSourceTileName(tile);
+                    if (originalName) {
+                        const uniqueDisplayName = project.generateNewName(pxt.AssetType.Tile, originalName);
+                        project.updateTile({
+                            ...existing,
+                            meta: {
+                                ...existing.meta,
+                                displayName: uniqueDisplayName
+                            }
+                        });
+                    }
+                }
+                continue;
+            }
+
+            if (tile.bitmap) {
+                const originalName = getSourceTileName(tile);
+                const newName = originalName ? project.generateNewName(pxt.AssetType.Tile, originalName) : undefined;
+
+                const created = project.createNewTile(tile.bitmap, undefined, newName);
+                tiles[i] = created;
+                if (key) remappedByBitmap[key] = created;
+            }
         }
     }
 

@@ -1120,7 +1120,7 @@ namespace pxt {
                             meta: {
                                 // For tilemaps, use the id as the display name for backwards compat
                                 displayName: tm.displayName || tm.id,
-                                package: pack.id
+                                package: dep.id
                             },
                             data: decodeTilemap(tm, id => this.resolveTile(id))
                         });
@@ -1133,7 +1133,7 @@ namespace pxt {
                             meta: {
                                 // For tilemaps, use the id as the display name for backwards compat
                                 displayName: tm.displayName || tm.id,
-                                package: pack.id
+                                package: dep.id
                             },
                             data: decodeTilemap(tm, id => this.getAssetCollection(AssetType.Tile, true).getByID(id))
                         });
