@@ -21,6 +21,12 @@
     pointer-events: none;
 }
 
+.common-textarea-wrapper {
+    &.resize-both .common-textarea { resize: both; }
+    &.resize-horizontal .common-textarea { resize: horizontal; }
+    &.resize-vertical .common-textarea { resize: vertical; }
+}
+
 .common-textarea {
     width: 100%;
     min-width: 0;
@@ -32,10 +38,7 @@
     background: none transparent;
     text-overflow: ellipsis;
     resize: none;
-
-    &.resize-both { resize: both; }
-    &.resize-horizontal { resize: horizontal; }
-    &.resize-vertical { resize: vertical; }
+    min-height: 5rem;
 }
 
 

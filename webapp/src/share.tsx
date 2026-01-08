@@ -1,6 +1,7 @@
 import * as React from "react";
 import * as auth from "./auth";
 import * as screenshot from "./screenshot";
+import * as pkg from "./package";
 
 import { Modal } from "../../react-common/components/controls/Modal";
 import { Share } from "../../react-common/components/share/Share";
@@ -193,8 +194,8 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
 
         const hasProjectBeenPersistentShared = parent.hasHeaderBeenPersistentShared();
 
-        const publishAsync = async (name: string, screenshotUri?: string, forceAnonymous?: boolean) =>
-            parent.publishAsync(name, screenshotUri, forceAnonymous)
+        const publishAsync = async (name: string, description?: string, screenshotUri?: string, forceAnonymous?: boolean) =>
+            parent.publishAsync(name, description, screenshotUri, forceAnonymous)
 
         const setSharePreference = (anonymousByDefault: boolean) => parent.saveSharePreferenceForHeaderAsync(anonymousByDefault)
 
@@ -204,7 +205,9 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
                 className={`sharedialog${thumbnails ? " wide" : ""}`}
                 parentElement={document.getElementById("root") || undefined}
                 onClose={this.hide}>
-                <Share projectName={newProjectName}
+                <Share
+                    projectName={newProjectName}
+                    projectDescription={pkg.mainPkg?.config?.description}
                     screenshotUri={screenshotUri}
                     isLoggedIn={hasIdentity}
                     publishAsync={publishAsync}
@@ -214,7 +217,8 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
                     setAnonymousSharePreference={setSharePreference}
                     isMultiplayerGame={this.props.parent.state.isMultiplayerGame}
                     kind={this.state.kind}
-                    onClose={this.hide}/>
+                    onClose={this.hide}
+                />
             </Modal>
             : <></>
     }
