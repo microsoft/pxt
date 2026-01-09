@@ -157,16 +157,51 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
                     const copied = pxt.cloneAsset(asset) as pxt.ProjectTilemap;
 
                     const project = pxt.react.getTilemapProject();
-                    this.mergeTilemapTilesIntoProject(project, copied);
+                    pxt.sprite.updateTilemapReferencesFromResult(project, currentTilemap);
+                    this.prepareGalleryTilemapTemplate(project, currentTilemap, copied);
 
                     copied.id = currentTilemap.id;
                     copied.internalID = currentTilemap.internalID;
                     copied.meta = { ...currentTilemap.meta };
-
                     const { tileGallery } = this.getStore().getState().editor;
                     this.openAsset(copied, tileGallery, false);
                 }
                 break;
+        }
+    }
+
+    protected prepareGalleryTilemapTemplate(
+        project: pxt.TilemapProject,
+        current: pxt.ProjectTilemap,
+        copied: pxt.ProjectTilemap
+    ) {
+        this.mergeTilemapTilesIntoProject(project, copied);
+        this.mergeCurrentTilemapCustomTilesIntoTileset(project, current, copied);
+    }
+
+    protected mergeCurrentTilemapCustomTilesIntoTileset(
+        project: pxt.TilemapProject,
+        source: pxt.ProjectTilemap,
+        target: pxt.ProjectTilemap
+    ) {
+        const sourceTiles = source?.data?.tileset?.tiles as pxt.Tile[];
+        const targetTiles = target?.data?.tileset?.tiles as pxt.Tile[];
+        const tileWidth = target?.data?.tileset?.tileWidth;
+
+        if (!sourceTiles?.length || !targetTiles || !tileWidth) return;
+
+        const transparencyId = `myTiles.transparency${tileWidth}`;
+
+        for (const tile of sourceTiles) {
+            if (!tile?.isProjectTile) continue;
+            if (tile.id === transparencyId) continue;
+            if (tile.bitmap?.width !== tileWidth || tile.bitmap?.height !== tileWidth) continue;
+
+            const resolved = project.resolveTile(tile.id);
+            if (!resolved) continue;
+            if (targetTiles.some(t => t?.id === resolved.id)) continue;
+
+            targetTiles.push(resolved);
         }
     }
 
