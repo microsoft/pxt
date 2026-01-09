@@ -75,6 +75,11 @@ namespace pxt.github {
         user: User;
     }
 
+    // [Monolith] GitHub API 요청은 원본 makecode 서버로 라우팅
+    // 자체 서버(class rails)에는 GitHub 프록시가 없으므로 원본 서버 사용
+    // CORS: makecode.com에서 허용됨
+    const MAKECODE_API_ROOT = "https://www.makecode.com/api/";
+
     export let forceProxy = false;
 
     function hasProxy() {
@@ -147,9 +152,11 @@ namespace pxt.github {
     }
 
     function ghProxyWithCdnJsonAsync(path: string) {
-        return Cloud.apiRequestWithCdnAsync({
-            url: "gh/" + path,
-            forceLiveEndpoint: true
+        // [Monolith] GitHub 프록시 요청은 원본 makecode 서버로 직접 전송
+        // 자체 서버에는 /api/gh/* 엔드포인트가 없음
+        return U.requestAsync({
+            url: MAKECODE_API_ROOT + "gh/" + path,
+            allowGzipPost: true
         }).then(r => r.json);
     }
 
@@ -531,7 +538,8 @@ namespace pxt.github {
         const fetch = !proxy ?
             ghGetJsonAsync(`https://api.github.com/repos/${parsed.slug}/git/refs/${namespace}/?per_page=100`) :
             // no CDN caching here, bust browser cace
-            U.httpGetJsonAsync(pxt.BrowserUtils.cacheBustingUrl(`${pxt.Cloud.apiRoot}gh/${parsed.slug}/refs${noCache ? "?nocache=1" : ""}`))
+            // [Monolith] refs 조회는 원본 makecode 서버로 전송
+            U.httpGetJsonAsync(pxt.BrowserUtils.cacheBustingUrl(`${MAKECODE_API_ROOT}gh/${parsed.slug}/refs${noCache ? "?nocache=1" : ""}`))
                 .then(r => {
                     let res = Object.keys(r.refs)
                         .filter(k => U.startsWith(k, "refs/" + namespace + "/"))
@@ -845,7 +853,8 @@ namespace pxt.github {
     }
 
     export function mkRepoIconUrl(repo: ParsedRepo): string {
-        return Cloud.cdnApiUrl(`gh/${repo.fullName}/icon`)
+        // [Monolith] 아이콘 URL은 원본 makecode 서버 사용
+        return `${MAKECODE_API_ROOT}gh/${repo.fullName}/icon`;
     }
 
     function mkRepo(r: Repo, options?: {
@@ -977,7 +986,8 @@ namespace pxt.github {
                 .then(rs => rs.filter(r => r && r.status != GitRepoStatus.Banned)); // allow deep links to github repos
 
         // todo fix search
-        const fetch = () => U.httpGetJsonAsync(`${pxt.Cloud.apiRoot}ghsearch/${appTarget.id}/${appTarget.platformid || appTarget.id}?q=${encodeURIComponent(query)}`)
+        // [Monolith] GitHub 검색은 원본 makecode 서버로 전송
+        const fetch = () => U.httpGetJsonAsync(`${MAKECODE_API_ROOT}ghsearch/${appTarget.id}/${appTarget.platformid || appTarget.id}?q=${encodeURIComponent(query)}`)
         return fetch()
             .then((rs: SearchResults) =>
                 rs.items.map(item => mkRepo(item, { config, fullName: item.full_name }))
