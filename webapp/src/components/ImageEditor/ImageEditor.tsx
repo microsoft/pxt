@@ -162,7 +162,9 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
                     copied.id = currentTilemap.id;
                     copied.internalID = currentTilemap.internalID;
                     copied.meta = { ...currentTilemap.meta };
-                    this.openAsset(copied, undefined, true);
+
+                    const { tileGallery } = this.getStore().getState().editor;
+                    this.openAsset(copied, tileGallery, false);
                 }
                 break;
         }
