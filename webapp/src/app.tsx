@@ -4521,7 +4521,7 @@ export class ProjectView
             }
 
             const meta: workspace.ScriptMeta = {
-                description: mpkg.config.description,
+                description: mpkg.config.description?.substring(0, pxt.MAX_DESCRIPTION_LENGTH),
             };
 
             const blocksSize = this.blocksEditor.contentSize();
