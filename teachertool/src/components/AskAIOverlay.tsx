@@ -50,19 +50,17 @@ function getAiQuestionCatalogCriteria(catalog: CatalogCriteria[] | undefined): C
 function getPromptCategoriesFromCatalog(aiCriteria: CatalogCriteria | undefined): PromptCategory[] {
     const questionParam = aiCriteria?.params?.find(p => p.name === "question");
     const options = questionParam?.options;
-    if (!options) return [];
-
-    if (!Array.isArray(options)) return [];
+    if (!options || !Array.isArray(options) || options.length === 0) return [];
 
     const categories: PromptCategory[] = [];
     const categoriesByTitle: pxt.Map<PromptCategory> = {};
 
-    (options as any[]).forEach(o => {
-        const value = typeof o?.value === "string" ? o.value : undefined;
+    options.forEach(o => {
+        const value = typeof o.value === "string" ? o.value : undefined;
         if (!value) return;
 
-        const title = typeof o?.category === "string" && o.category.trim() ? o.category.trim() : lf("Prompts");
-        const label = typeof o?.label === "string" && o.label.trim() ? o.label : value;
+        const title = typeof o.category === "string" && o.category.trim() ? o.category.trim() : lf("Prompts");
+        const label = typeof o.label === "string" && o.label.trim() ? o.label : value;
 
         let cat = categoriesByTitle[title];
         if (!cat) {
@@ -245,13 +243,13 @@ export const AskAIOverlay = () => {
 
                     <div className={css["footer"]}>
                         <Button
-                            className={classList("secondary", css["footer-button"]) }
+                            className={classList("secondary", css["footer-button"])}
                             label={Strings.Cancel}
                             onClick={close}
                             title={Strings.Cancel}
                         />
                         <Button
-                            className={classList(selectedQuestions.length ? "primary" : "secondary", css["footer-button"]) }
+                            className={classList(selectedQuestions.length ? "primary" : "secondary", css["footer-button"])}
                             label={Strings.AddSelected}
                             onClick={addSelected}
                             disabled={!selectedQuestions.length}
