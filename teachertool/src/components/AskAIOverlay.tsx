@@ -47,6 +47,12 @@ function getAiQuestionCatalogCriteria(catalog: CatalogCriteria[] | undefined): C
     return catalog?.find(c => c.use === "ai_question");
 }
 
+function getAiQuestionMaxLength(aiCriteria: CatalogCriteria | undefined): number | undefined {
+    const questionParam = aiCriteria?.params?.find(p => p.name === "question");
+    const maxCharacters = (questionParam as any)?.maxCharacters;
+    return typeof maxCharacters === "number" ? maxCharacters : undefined;
+}
+
 function getPromptCategoriesFromCatalog(aiCriteria: CatalogCriteria | undefined): PromptCategory[] {
     const questionParam = aiCriteria?.params?.find(p => p.name === "question");
     const options = questionParam?.options;
@@ -80,6 +86,7 @@ export const AskAIOverlay = () => {
     const catalog = teacherTool.catalog;
 
     const aiCriteria = React.useMemo(() => getAiQuestionCatalogCriteria(catalog), [catalog]);
+    const aiQuestionMaxLength = React.useMemo(() => getAiQuestionMaxLength(aiCriteria), [aiCriteria]);
     const promptCategories = React.useMemo(() => getPromptCategoriesFromCatalog(aiCriteria), [aiCriteria]);
 
     const [selected, setSelected] = React.useState<pxt.Map<boolean>>({});
@@ -182,6 +189,30 @@ export const AskAIOverlay = () => {
                                     <Accordion.Item key="ask-ai-custom" itemId="ask-ai-custom">
                                         <Accordion.Header>{Strings.Custom}</Accordion.Header>
                                         <Accordion.Panel>
+                                            {customPrompts.length > 0 && (
+                                                <div className={css["custom-list"]}>
+                                                    {customPrompts.map((p, index) => (
+                                                        <div key={p.id} className={css["custom-item"]}>
+                                                            <Checkbox
+                                                                id={`ask-ai-custom-check-${p.id}`}
+                                                                className={css["checkbox"]}
+                                                                label={lf("Question {0}", index + 1)}
+                                                                isChecked={p.checked}
+                                                                onChange={checked => setCustomChecked(p.id, checked)}
+                                                            />
+                                                            <Textarea
+                                                                id={`ask-ai-custom-text-${p.id}`}
+                                                                className={css["textarea"]}
+                                                                placeholder={Strings.CustomPromptPlaceholder}
+                                                                initialValue={p.text}
+                                                                maxLength={aiQuestionMaxLength}
+                                                                onChange={text => setCustomTextForId(p.id, text)}
+                                                            />
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+
                                             <div className={css["custom-actions"]}>
                                                 <Button
                                                     id={CUSTOM_ADD_BUTTON_ID}
@@ -192,29 +223,6 @@ export const AskAIOverlay = () => {
                                                     rightIcon="fas fa-plus"
                                                 />
                                             </div>
-
-                                            {customPrompts.length > 0 && (
-                                                <div className={css["custom-list"]}>
-                                                    {customPrompts.map((p, index) => (
-                                                        <div key={p.id} className={css["custom-item"]}>
-                                                            <Checkbox
-                                                                id={`ask-ai-custom-check-${p.id}`}
-                                                                className={css["checkbox"]}
-                                                                label={lf("Custom question {0}", index + 1)}
-                                                                isChecked={p.checked}
-                                                                onChange={checked => setCustomChecked(p.id, checked)}
-                                                            />
-                                                            <Textarea
-                                                                id={`ask-ai-custom-text-${p.id}`}
-                                                                className={css["textarea"]}
-                                                                placeholder={Strings.CustomPromptPlaceholder}
-                                                                initialValue={p.text}
-                                                                onChange={text => setCustomTextForId(p.id, text)}
-                                                            />
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            )}
                                         </Accordion.Panel>
                                     </Accordion.Item>
                                 ),
