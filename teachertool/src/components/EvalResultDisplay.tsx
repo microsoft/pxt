@@ -8,6 +8,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { getChecklistHash, getObfuscatedProjectId, getProjectLink } from "../utils";
 import { classList } from "react-common/components/util";
 import { AddCriteriaButton } from "./AddCriteriaButton";
+import { AskAIButton } from "./AskAIButton";
 import { DebouncedInput } from "./DebouncedInput";
 import { setChecklistName } from "../transforms/setChecklistName";
 import { Strings, Ticks } from "../constants";
@@ -142,6 +143,7 @@ const CriteriaWithResultsTable: React.FC = () => {
 const ResultsFooterControls: React.FC = () => {
     return (
         <div className={classList(css["footer"], "no-print")}>
+            <AskAIButton />
             <AddCriteriaButton />
         </div>
     );
