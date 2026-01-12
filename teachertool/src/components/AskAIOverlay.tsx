@@ -5,6 +5,7 @@ import { Button } from "react-common/components/controls/Button";
 import { Checkbox } from "react-common/components/controls/Checkbox";
 import { Textarea } from "react-common/components/controls/Textarea";
 import { FocusTrap } from "react-common/components/controls/FocusTrap";
+import { classList } from "react-common/components/util";
 
 import { Strings } from "../constants";
 import { setAskAiOpen } from "../transforms/setAskAiOpen";
@@ -25,8 +26,13 @@ type PromptCategory = {
     items: PromptItem[];
 };
 
-const CUSTOM_TEXTAREA_ID = "ask-ai-custom-textarea";
-const CUSTOM_CHECKBOX_ID = "ask-ai-custom-enabled";
+type CustomPrompt = {
+    id: number;
+    text: string;
+    checked: boolean;
+};
+
+const CUSTOM_ADD_BUTTON_ID = "ask-ai-custom-add";
 
 function toIdFragment(text: string) {
     return (text || "")
@@ -44,27 +50,29 @@ function getPromptCategoriesFromCatalog(aiCriteria: CatalogCriteria | undefined)
     const options = questionParam?.options;
     if (!options) return [];
 
-    if (Array.isArray(options)) {
-        const items: PromptItem[] = (options as any[])
-            .map(o => (typeof o?.value === "string" ? { label: o.value, value: o.value } : undefined))
-            .filter((x): x is PromptItem => !!x);
-
-        return items.length ? [{ title: lf("Prompts"), items }] : [];
-    }
+    if (!Array.isArray(options)) return [];
 
     const categories: PromptCategory[] = [];
-    Object.keys(options).forEach(cat => {
-        const values = (options as any)[cat] as string[] | undefined;
-        if (!Array.isArray(values) || values.length === 0) return;
+    const categoriesByTitle: pxt.Map<PromptCategory> = {};
 
-        categories.push({
-            title: cat,
-            items: values.map(v => ({ label: v, value: v })),
-        });
+    (options as any[]).forEach(o => {
+        const value = typeof o?.value === "string" ? o.value : undefined;
+        if (!value) return;
+
+        const title = typeof o?.category === "string" && o.category.trim() ? o.category.trim() : lf("Prompts");
+        const label = typeof o?.label === "string" && o.label.trim() ? o.label : value;
+
+        let cat = categoriesByTitle[title];
+        if (!cat) {
+            cat = { title, items: [] };
+            categoriesByTitle[title] = cat;
+            categories.push(cat);
+        }
+
+        cat.items.push({ label, value });
     });
 
-    // Keep order stable, but move "Custom" to UI top separately.
-    return categories;
+    return categories.filter(c => c.items.length > 0);
 }
 
 export const AskAIOverlay = () => {
@@ -75,10 +83,9 @@ export const AskAIOverlay = () => {
     const promptCategories = React.useMemo(() => getPromptCategoriesFromCatalog(aiCriteria), [aiCriteria]);
 
     const [selected, setSelected] = React.useState<pxt.Map<boolean>>({});
-    const [customEnabled, setCustomEnabled] = React.useState(false);
-    const [customText, setCustomText] = React.useState("");
-
-    const wasCustomEnabled = React.useRef(false);
+    const [customPrompts, setCustomPrompts] = React.useState<CustomPrompt[]>([]);
+    const nextCustomPromptId = React.useRef(1);
+    const lastAddedCustomPromptId = React.useRef<number | undefined>(undefined);
 
     const close = React.useCallback(() => setAskAiOpen(false), []);
 
@@ -92,10 +99,11 @@ export const AskAIOverlay = () => {
     const selectedQuestions = React.useMemo(() => {
         const values: string[] = [];
 
-        if (customEnabled) {
-            const trimmed = (customText || "").trim();
+        customPrompts.forEach(p => {
+            if (!p.checked) return;
+            const trimmed = (p.text || "").trim();
             if (trimmed) values.push(trimmed);
-        }
+        });
 
         Object.keys(selected).forEach(k => {
             if (selected[k]) values.push(k);
@@ -104,7 +112,7 @@ export const AskAIOverlay = () => {
         // Remove dupes while keeping order.
         const seen: pxt.Map<boolean> = {};
         return values.filter(v => (seen[v] ? false : (seen[v] = true)));
-    }, [selected, customEnabled, customText]);
+    }, [selected, customPrompts]);
 
     const addSelected = React.useCallback(() => {
         if (!selectedQuestions.length) return;
@@ -112,16 +120,27 @@ export const AskAIOverlay = () => {
         close();
     }, [selectedQuestions, close]);
 
-    React.useEffect(() => {
-        if (customEnabled && !wasCustomEnabled.current) {
-            const el = document.getElementById(CUSTOM_TEXTAREA_ID) as HTMLTextAreaElement | null;
-            el?.focus();
-        }
-        wasCustomEnabled.current = customEnabled;
-    }, [customEnabled]);
+    const addCustomPrompt = React.useCallback(() => {
+        const id = nextCustomPromptId.current++;
+        lastAddedCustomPromptId.current = id;
+        setCustomPrompts(prev => prev.concat([{ id, text: "", checked: true }]));
+    }, []);
 
-    const onCustomCheckChanged = React.useCallback((checked: boolean) => {
-        setCustomEnabled(checked);
+    React.useEffect(() => {
+        const id = lastAddedCustomPromptId.current;
+        if (id === undefined) return;
+
+        const el = document.getElementById(`ask-ai-custom-text-${id}`) as HTMLTextAreaElement | null;
+        el?.focus();
+        lastAddedCustomPromptId.current = undefined;
+    }, [customPrompts.length]);
+
+    const setCustomChecked = React.useCallback((id: number, checked: boolean) => {
+        setCustomPrompts(prev => prev.map(p => (p.id === id ? { ...p, checked } : p)));
+    }, []);
+
+    const setCustomTextForId = React.useCallback((id: number, text: string) => {
+        setCustomPrompts(prev => prev.map(p => (p.id === id ? { ...p, text } : p)));
     }, []);
 
     const hasPrompts = promptCategories.some(c => c.items.length);
@@ -145,21 +164,38 @@ export const AskAIOverlay = () => {
                     <div className={css["content"]}>
                         <div className={css["section"]}>
                             <div className={css["section-title"]}>{Strings.Custom}</div>
-                            <Checkbox
-                                id={CUSTOM_CHECKBOX_ID}
-                                className={css["checkbox"]}
-                                label={pxt.Util.lf("Use custom prompt")}
-                                isChecked={customEnabled}
-                                onChange={onCustomCheckChanged}
-                            />
-                            {customEnabled && (
-                                <Textarea
-                                    id={CUSTOM_TEXTAREA_ID}
-                                    className={css["textarea"]}
-                                    placeholder={Strings.CustomPromptPlaceholder}
-                                    initialValue={customText}
-                                    onChange={setCustomText}
+                            <div className={css["custom-actions"]}>
+                                <Button
+                                    id={CUSTOM_ADD_BUTTON_ID}
+                                    className={css["custom-add-button"]}
+                                    label={lf("Add custom question")}
+                                    title={lf("Add custom question")}
+                                    onClick={addCustomPrompt}
+                                    rightIcon="fas fa-plus"
                                 />
+                            </div>
+
+                            {customPrompts.length > 0 && (
+                                <div className={css["custom-list"]}>
+                                    {customPrompts.map((p, index) => (
+                                        <div key={p.id} className={css["custom-item"]}>
+                                            <Checkbox
+                                                id={`ask-ai-custom-check-${p.id}`}
+                                                className={css["checkbox"]}
+                                                label={lf("Custom question {0}", index + 1)}
+                                                isChecked={p.checked}
+                                                onChange={checked => setCustomChecked(p.id, checked)}
+                                            />
+                                            <Textarea
+                                                id={`ask-ai-custom-text-${p.id}`}
+                                                className={css["textarea"]}
+                                                placeholder={Strings.CustomPromptPlaceholder}
+                                                initialValue={p.text}
+                                                onChange={text => setCustomTextForId(p.id, text)}
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
                             )}
                         </div>
 
@@ -188,13 +224,13 @@ export const AskAIOverlay = () => {
 
                     <div className={css["footer"]}>
                         <Button
-                            className={css["secondary-button"]}
+                            className={classList("secondary", css["footer-button"]) }
                             label={Strings.Cancel}
                             onClick={close}
                             title={Strings.Cancel}
                         />
                         <Button
-                            className={css["primary-button"]}
+                            className={classList(selectedQuestions.length ? "primary" : "secondary", css["footer-button"]) }
                             label={Strings.AddSelected}
                             onClick={addSelected}
                             disabled={!selectedQuestions.length}

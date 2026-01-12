@@ -12,13 +12,17 @@ export interface AskAIButtonProps {}
 export const AskAIButton: React.FC<AskAIButtonProps> = ({}) => {
     const { state: teacherTool } = useContext(AppStateContext);
 
-    return !teacherTool.catalogOpen ? (
+    const isSelected = !!teacherTool.askAiOpen;
+    const onClick = () => setAskAiOpen(!isSelected);
+
+    return (
         <Button
             className={classList("inline", "outline-button")}
             label={Strings.AskAI}
-            onClick={() => setAskAiOpen(true)}
+            onClick={onClick}
             title={Strings.AskAI}
             leftIcon="fas fa-robot"
+            rightIcon={isSelected ? "fas fa-check" : undefined}
         />
-    ) : null;
+    );
 };

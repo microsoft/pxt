@@ -74,6 +74,31 @@
         font-weight: 700;
     }
 
+    .custom-actions {
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-start;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .custom-add-button {
+        padding: 0.5rem 0.75rem;
+        border-radius: 0.5rem;
+    }
+
+    .custom-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .custom-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
     .prompt-list {
         display: flex;
         flex-direction: column;
@@ -95,4 +120,8 @@
     gap: 0.5rem;
     padding: 1rem;
     border-top: 1px solid var(--pxt-neutral-stencil1);
+}
+
+.footer-button {
+    min-width: 10rem;
 }
