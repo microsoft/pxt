@@ -114,7 +114,7 @@ const ResultsHeader: React.FC<ResultsHeaderProps> = ({ printRef }) => {
                         title={Strings.EvaluateChecklist}
                         rightIcon="fas fa-play"
                         onClick={handleEvaluateClickedAsync}
-                        disabled={!isProjectLoaded(teacherTool)}
+                        disabled={!isProjectLoaded(teacherTool) || checklist.criteria.length === 0}
                     />
                 </div>
             </div>
