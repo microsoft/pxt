@@ -5,6 +5,7 @@ import { Button } from "react-common/components/controls/Button";
 import { Checkbox } from "react-common/components/controls/Checkbox";
 import { Textarea } from "react-common/components/controls/Textarea";
 import { FocusTrap } from "react-common/components/controls/FocusTrap";
+import { Accordion } from "react-common/components/controls/Accordion";
 import { classList } from "react-common/components/util";
 
 import { Strings } from "../constants";
@@ -33,6 +34,7 @@ type CustomPrompt = {
 };
 
 const CUSTOM_ADD_BUTTON_ID = "ask-ai-custom-add";
+const DEFAULT_CUSTOM_PROMPT_ID = 1;
 
 function toIdFragment(text: string) {
     return (text || "")
@@ -83,8 +85,10 @@ export const AskAIOverlay = () => {
     const promptCategories = React.useMemo(() => getPromptCategoriesFromCatalog(aiCriteria), [aiCriteria]);
 
     const [selected, setSelected] = React.useState<pxt.Map<boolean>>({});
-    const [customPrompts, setCustomPrompts] = React.useState<CustomPrompt[]>([]);
-    const nextCustomPromptId = React.useRef(1);
+    const [customPrompts, setCustomPrompts] = React.useState<CustomPrompt[]>([
+        { id: DEFAULT_CUSTOM_PROMPT_ID, text: "", checked: true },
+    ]);
+    const nextCustomPromptId = React.useRef(DEFAULT_CUSTOM_PROMPT_ID + 1);
     const lastAddedCustomPromptId = React.useRef<number | undefined>(undefined);
 
     const close = React.useCallback(() => setAskAiOpen(false), []);
@@ -117,6 +121,13 @@ export const AskAIOverlay = () => {
     const addSelected = React.useCallback(() => {
         if (!selectedQuestions.length) return;
         addAiQuestionCriteriaToChecklist(selectedQuestions);
+
+        // Clear state so reopening doesn't immediately duplicate.
+        setSelected({});
+        setCustomPrompts([{ id: DEFAULT_CUSTOM_PROMPT_ID, text: "", checked: true }]);
+        nextCustomPromptId.current = DEFAULT_CUSTOM_PROMPT_ID + 1;
+        lastAddedCustomPromptId.current = undefined;
+
         close();
     }, [selectedQuestions, close]);
 
@@ -143,8 +154,6 @@ export const AskAIOverlay = () => {
         setCustomPrompts(prev => prev.map(p => (p.id === id ? { ...p, text } : p)));
     }, []);
 
-    const hasPrompts = promptCategories.some(c => c.items.length);
-
     if (!teacherTool.askAiOpen) return null;
 
     return (
@@ -162,64 +171,76 @@ export const AskAIOverlay = () => {
                     </div>
 
                     <div className={css["content"]}>
-                        <div className={css["section"]}>
-                            <div className={css["section-title"]}>{Strings.Custom}</div>
-                            <div className={css["custom-actions"]}>
-                                <Button
-                                    id={CUSTOM_ADD_BUTTON_ID}
-                                    className={css["custom-add-button"]}
-                                    label={lf("Add custom question")}
-                                    title={lf("Add custom question")}
-                                    onClick={addCustomPrompt}
-                                    rightIcon="fas fa-plus"
-                                />
-                            </div>
-
-                            {customPrompts.length > 0 && (
-                                <div className={css["custom-list"]}>
-                                    {customPrompts.map((p, index) => (
-                                        <div key={p.id} className={css["custom-item"]}>
-                                            <Checkbox
-                                                id={`ask-ai-custom-check-${p.id}`}
-                                                className={css["checkbox"]}
-                                                label={lf("Custom question {0}", index + 1)}
-                                                isChecked={p.checked}
-                                                onChange={checked => setCustomChecked(p.id, checked)}
-                                            />
-                                            <Textarea
-                                                id={`ask-ai-custom-text-${p.id}`}
-                                                className={css["textarea"]}
-                                                placeholder={Strings.CustomPromptPlaceholder}
-                                                initialValue={p.text}
-                                                onChange={text => setCustomTextForId(p.id, text)}
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-
-                        {hasPrompts && (
-                            <>
-                                {promptCategories.map(cat => (
-                                    <div key={cat.title} className={css["section"]}>
-                                        <div className={css["section-title"]}>{cat.title}</div>
-                                        <div className={css["prompt-list"]}>
-                                            {cat.items.map((item, index) => (
-                                                <Checkbox
-                                                    id={`ask-ai-opt-${toIdFragment(cat.title)}-${index}`}
-                                                    key={item.value}
-                                                    className={css["checkbox"]}
-                                                    label={item.label}
-                                                    isChecked={!!selected[item.value]}
-                                                    onChange={() => onToggle(item.value)}
+                        <Accordion
+                            className={css["ask-ai-accordion"]}
+                            multiExpand={true}
+                            defaultExpandedIds={[
+                                "ask-ai-custom",
+                                ...promptCategories.map(c => `ask-ai-cat-${toIdFragment(c.title)}`),
+                            ]}
+                        >
+                            {[
+                                (
+                                    <Accordion.Item key="ask-ai-custom" itemId="ask-ai-custom">
+                                        <Accordion.Header>{Strings.Custom}</Accordion.Header>
+                                        <Accordion.Panel>
+                                            <div className={css["custom-actions"]}>
+                                                <Button
+                                                    id={CUSTOM_ADD_BUTTON_ID}
+                                                    className={css["custom-add-button"]}
+                                                    label={lf("Add custom question")}
+                                                    title={lf("Add custom question")}
+                                                    onClick={addCustomPrompt}
+                                                    rightIcon="fas fa-plus"
                                                 />
-                                            ))}
-                                        </div>
-                                    </div>
-                                ))}
-                            </>
-                        )}
+                                            </div>
+
+                                            {customPrompts.length > 0 && (
+                                                <div className={css["custom-list"]}>
+                                                    {customPrompts.map((p, index) => (
+                                                        <div key={p.id} className={css["custom-item"]}>
+                                                            <Checkbox
+                                                                id={`ask-ai-custom-check-${p.id}`}
+                                                                className={css["checkbox"]}
+                                                                label={lf("Custom question {0}", index + 1)}
+                                                                isChecked={p.checked}
+                                                                onChange={checked => setCustomChecked(p.id, checked)}
+                                                            />
+                                                            <Textarea
+                                                                id={`ask-ai-custom-text-${p.id}`}
+                                                                className={css["textarea"]}
+                                                                placeholder={Strings.CustomPromptPlaceholder}
+                                                                initialValue={p.text}
+                                                                onChange={text => setCustomTextForId(p.id, text)}
+                                                            />
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </Accordion.Panel>
+                                    </Accordion.Item>
+                                ),
+                                ...promptCategories.map(cat => (
+                                    <Accordion.Item key={cat.title} itemId={`ask-ai-cat-${toIdFragment(cat.title)}`}>
+                                        <Accordion.Header>{cat.title}</Accordion.Header>
+                                        <Accordion.Panel>
+                                            <div className={css["prompt-list"]}>
+                                                {cat.items.map((item, index) => (
+                                                    <Checkbox
+                                                        id={`ask-ai-opt-${toIdFragment(cat.title)}-${index}`}
+                                                        key={item.value}
+                                                        className={css["checkbox"]}
+                                                        label={item.label}
+                                                        isChecked={!!selected[item.value]}
+                                                        onChange={() => onToggle(item.value)}
+                                                    />
+                                                ))}
+                                            </div>
+                                        </Accordion.Panel>
+                                    </Accordion.Item>
+                                )),
+                            ]}
+                        </Accordion>
                     </div>
 
                     <div className={css["footer"]}>

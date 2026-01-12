@@ -17,7 +17,7 @@
     width: 95%;
     height: 95%;
     background-color: var(--pxt-neutral-background1);
-    border-radius: .285rem; // Match modal
+    border-radius: .285rem;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -63,15 +63,29 @@
     flex-direction: column;
     gap: 1rem;
 
-    .section {
+    .ask-ai-accordion {
         display: flex;
         flex-direction: column;
-        gap: 0.5rem;
+        width: 100%;
     }
 
-    .section-title {
-        font-size: 1.1rem;
-        font-weight: 700;
+    .ask-ai-accordion {
+        div[class*="common-accordion-chevron"] {
+            width: 3rem;
+        }
+
+        button[class*="common-accordion-header-outer"] {
+            background-color: var(--pxt-tertiary-background);
+            color: var(--pxt-tertiary-foreground);
+            border-bottom: 1px solid var(--pxt-neutral-background1);
+            font-size: 1.2rem;
+            padding: 0.5rem 0.95rem;
+        }
+
+        div[class*="common-accordion-panel"] {
+            padding: 1rem;
+            background-color: var(--pxt-neutral-background1);
+        }
     }
 
     .custom-actions {
