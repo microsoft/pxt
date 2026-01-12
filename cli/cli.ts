@@ -1103,6 +1103,9 @@ function uploadCoreAsync(opts: UploadOptions) {
     let targetFieldEditorsJs = "";
     if (pxt.appTarget.appTheme?.extendFieldEditors)
         targetFieldEditorsJs = "@commitCdnUrl@fieldeditors.js";
+    let targetScriptPageJs = "";
+    if (pxt.appTarget.appTheme?.extendScriptPage)
+        targetScriptPageJs = "@commitCdnUrl@scriptPage.js";
 
     let replacements: Map<string> = {
         "/sim/simulator.html": "@simUrl@",
@@ -1123,6 +1126,7 @@ function uploadCoreAsync(opts: UploadOptions) {
         "@cachedHexFilesEncoded@": encodeURLs(hexFiles),
         "@targetEditorJs@": targetEditorJs,
         "@targetFieldEditorsJs@": targetFieldEditorsJs,
+        "@targetScriptPageJs@": targetScriptPageJs,
         "@targetImages@": targetImagesHashed.length ? targetImagesHashed.join('\n') : '',
         "@targetImagesEncoded@": targetImagesHashed.length ? encodeURLs(targetImagesHashed) : ""
     }
@@ -1182,6 +1186,7 @@ function uploadCoreAsync(opts: UploadOptions) {
             "@cachedHexFilesEncoded@": "",
             "@targetEditorJs@": targetEditorJs ? `${opts.localDir}editor.js` : "",
             "@targetFieldEditorsJs@": targetFieldEditorsJs ? `${opts.localDir}fieldeditors.js` : "",
+            "@targetScriptPageJs@": targetScriptPageJs ? `${opts.localDir}scriptPage.js` : "",
             "@targetImages@": targetImagePaths.length ? targetImageLocalPaths.join('\n') : '',
             "@targetImagesEncoded@": targetImagePaths.length ? encodeURLs(targetImageLocalPaths) : ''
         }
@@ -1580,6 +1585,7 @@ export async function internalBuildTargetAsync(options: BuildTargetOptions = {})
     await buildSemanticUIAsync();
     await buildEditorExtensionAsync("editor", "extendEditor");
     await buildEditorExtensionAsync("fieldeditors", "extendFieldEditors");
+    await buildEditorExtensionAsync("scriptPage", "extendScriptPage");
     await buildFolderAsync('server', true, 'server');
 
     function inCommonPkg(p: string) {
@@ -2076,7 +2082,7 @@ ${gcards.map(gcard => `[${gcard.name}](${gcard.url})`).join(',\n')}
     }
 
     // extract strings from editor
-    ["editor", "fieldeditors", "cmds"]
+    ["editor", "fieldeditors", "cmds", "scriptPage"]
         .filter(d => nodeutil.existsDirSync(d))
         .forEach(d => nodeutil.allFiles(d)
             .forEach(f => processLf(f, targetStrings))
@@ -2570,6 +2576,8 @@ async function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
             dirsToWatch.push("editor");
         if (fs.existsSync("fieldeditors"))
             dirsToWatch.push("fieldeditors");
+        if (fs.existsSync("scriptPage"))
+            dirsToWatch.push("scriptPage");
         if (fs.existsSync(simDir())) {
             dirsToWatch.push(simDir()); // simulator
             dirsToWatch = dirsToWatch.concat(
