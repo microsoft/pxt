@@ -18,7 +18,7 @@ export namespace Strings {
     export const AddCriteria = lf("Add Criteria");
     export const AskAI = lf("Ask AI");
     export const Custom = lf("Custom");
-    export const CustomPromptPlaceholder = lf("Enter a custom prompt");
+    export const CustomPromptPlaceholder = lf("Write your own question here...");
     export const Actions = lf("Actions");
     export const RunOnLoad = lf("Evaluate on load");
     export const RunOnLoadDescription = lf("Automatically evaluate a project when it is loaded");

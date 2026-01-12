@@ -206,6 +206,7 @@ export const AskAIOverlay = () => {
                                                                 placeholder={Strings.CustomPromptPlaceholder}
                                                                 initialValue={p.text}
                                                                 maxLength={aiQuestionMaxLength}
+                                                                showRemainingCharacterCount={100}
                                                                 onChange={text => setCustomTextForId(p.id, text)}
                                                             />
                                                         </div>
