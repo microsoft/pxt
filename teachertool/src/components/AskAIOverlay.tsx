@@ -148,10 +148,7 @@ export const AskAIOverlay = () => {
 
     const addCustomPromptDisabledReason =
         remainingAiQuestionSlots !== undefined && !canAddAnotherCustomPrompt
-            ? lf(
-                  "Only {0} more question(s) can be added. Remove a selection to add another custom question.",
-                  remainingAiQuestionSlots
-              )
+            ? lf("Only {0} more question(s) can be added. Remove a selection to add another custom question.", remainingAiQuestionSlots)
             : undefined;
 
     const canAddAny = remainingAiQuestionSlots === undefined || remainingAiQuestionSlots > 0;
