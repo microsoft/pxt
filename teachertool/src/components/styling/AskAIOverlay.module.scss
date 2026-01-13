@@ -98,6 +98,12 @@
     .custom-add-button {
         padding: 0.5rem 0.75rem;
         border-radius: 0.5rem;
+
+        &:global(.disabled) {
+            opacity: 0.45;
+            filter: grayscale(1);
+            cursor: not-allowed;
+        }
     }
 
     .custom-list {

@@ -11,7 +11,9 @@ import { classList } from "react-common/components/util";
 import { Strings } from "../constants";
 import { setAskAiOpen } from "../transforms/setAskAiOpen";
 import { addAiQuestionCriteriaToChecklist } from "../transforms/addAiQuestionCriteriaToChecklist";
+import { showToast } from "../transforms/showToast";
 import { AppStateContext } from "../state/appStateContext";
+import { makeToast } from "../utils";
 
 import { CatalogCriteria } from "../types/criteria";
 
@@ -49,7 +51,7 @@ function getAiQuestionCatalogCriteria(catalog: CatalogCriteria[] | undefined): C
 
 function getAiQuestionMaxLength(aiCriteria: CatalogCriteria | undefined): number | undefined {
     const questionParam = aiCriteria?.params?.find(p => p.name === "question");
-    const maxCharacters = (questionParam as any)?.maxCharacters;
+    const maxCharacters = (questionParam as { maxCharacters?: number } | undefined)?.maxCharacters;
     return typeof maxCharacters === "number" ? maxCharacters : undefined;
 }
 
@@ -89,6 +91,15 @@ export const AskAIOverlay = () => {
     const aiQuestionMaxLength = React.useMemo(() => getAiQuestionMaxLength(aiCriteria), [aiCriteria]);
     const promptCategories = React.useMemo(() => getPromptCategoriesFromCatalog(aiCriteria), [aiCriteria]);
 
+    const maxAiQuestions = aiCriteria?.maxCount;
+    const existingAiQuestionCount = React.useMemo(() => {
+        if (!aiCriteria) return 0;
+        return teacherTool.checklist.criteria.filter(i => i.catalogCriteriaId === aiCriteria.id).length;
+    }, [teacherTool.checklist.criteria, aiCriteria]);
+
+    const remainingAiQuestionSlots =
+        maxAiQuestions !== undefined ? Math.max(maxAiQuestions - existingAiQuestionCount, 0) : undefined;
+
     const [selected, setSelected] = React.useState<pxt.Map<boolean>>({});
     const [customPrompts, setCustomPrompts] = React.useState<CustomPrompt[]>([
         { id: DEFAULT_CUSTOM_PROMPT_ID, text: "", checked: true },
@@ -123,9 +134,49 @@ export const AskAIOverlay = () => {
         return values.filter(v => (seen[v] ? false : (seen[v] = true)));
     }, [selected, customPrompts]);
 
+    const selectedTemplateCount = React.useMemo(
+        () => Object.keys(selected).reduce((acc, k) => acc + (selected[k] ? 1 : 0), 0),
+        [selected]
+    );
+
+    const checkedCustomPromptCount = React.useMemo(() => customPrompts.filter(p => p.checked).length, [customPrompts]);
+
+    const canAddAnotherCustomPrompt =
+        remainingAiQuestionSlots === undefined
+            ? true
+            : selectedTemplateCount + checkedCustomPromptCount + 1 <= remainingAiQuestionSlots;
+
+    const addCustomPromptDisabledReason =
+        remainingAiQuestionSlots !== undefined && !canAddAnotherCustomPrompt
+            ? lf(
+                  "Only {0} more question(s) can be added. Remove a selection to add another custom question.",
+                  remainingAiQuestionSlots
+              )
+            : undefined;
+
+    const canAddAny = remainingAiQuestionSlots === undefined || remainingAiQuestionSlots > 0;
+    const canSubmit = !!selectedQuestions.length && canAddAny;
+
     const addSelected = React.useCallback(() => {
         if (!selectedQuestions.length) return;
-        addAiQuestionCriteriaToChecklist(selectedQuestions);
+
+        const toAdd =
+            remainingAiQuestionSlots !== undefined
+                ? selectedQuestions.slice(0, remainingAiQuestionSlots)
+                : selectedQuestions;
+
+        if (!toAdd.length) return;
+
+        addAiQuestionCriteriaToChecklist(toAdd);
+
+        if (toAdd.length !== selectedQuestions.length) {
+            showToast(
+                makeToast(
+                    "warning",
+                    lf("Only added {0} of {1} questions (maximum reached).", toAdd.length, selectedQuestions.length)
+                )
+            );
+        }
 
         // Clear state so reopening doesn't immediately duplicate.
         setSelected({});
@@ -134,7 +185,7 @@ export const AskAIOverlay = () => {
         lastAddedCustomPromptId.current = undefined;
 
         close();
-    }, [selectedQuestions, close]);
+    }, [selectedQuestions, remainingAiQuestionSlots, close]);
 
     const addCustomPrompt = React.useCallback(() => {
         const id = nextCustomPromptId.current++;
@@ -219,9 +270,10 @@ export const AskAIOverlay = () => {
                                                     id={CUSTOM_ADD_BUTTON_ID}
                                                     className={css["custom-add-button"]}
                                                     label={lf("Add custom question")}
-                                                    title={lf("Add custom question")}
+                                                    title={addCustomPromptDisabledReason ?? lf("Add custom question")}
                                                     onClick={addCustomPrompt}
                                                     rightIcon="fas fa-plus"
+                                                    disabled={!canAddAnotherCustomPrompt}
                                                 />
                                             </div>
                                         </Accordion.Panel>
@@ -258,10 +310,10 @@ export const AskAIOverlay = () => {
                             title={Strings.Cancel}
                         />
                         <Button
-                            className={classList(selectedQuestions.length ? "primary" : "secondary", css["footer-button"])}
+                            className={classList(canSubmit ? "primary" : "secondary", css["footer-button"])}
                             label={Strings.AddSelected}
                             onClick={addSelected}
-                            disabled={!selectedQuestions.length}
+                            disabled={!canSubmit}
                             title={Strings.AddSelected}
                         />
                     </div>
