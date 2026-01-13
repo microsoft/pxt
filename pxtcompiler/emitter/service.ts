@@ -1025,7 +1025,7 @@ namespace ts.pxtc.service {
             }
 
             const { bannedCategories, screenSize } = v.runtime;
-            const { apis } = lastApiInfo;
+            const { apis, decls } = lastApiInfo;
             const blocksInfo = blocksInfoOp(apis, bannedCategories);
             const checker = service && service.getProgram().getTypeChecker();
             // needed for blocks that have parent wraps like music.play(...)
@@ -1039,7 +1039,8 @@ namespace ts.pxtc.service {
                 bannedCategories,
                 screenSize,
                 checker,
-                includeParentSnippet
+                includeParentSnippet,
+                decls
             }
             const snippetNode = getSnippet(snippetContext, fn, n as FunctionLikeDeclaration, isPython)
             const snippet = snippetStringify(snippetNode)

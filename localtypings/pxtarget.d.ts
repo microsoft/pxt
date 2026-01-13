@@ -540,6 +540,7 @@ declare namespace pxt {
         enabledFeatures?: pxt.Map<FeatureFlag>;
         forceEnableAiErrorHelp?: boolean; // Enables the AI Error Help feature, regardless of geo setting.
         shareHomepageContent?: boolean; // Show buttons to share links to homepage content more easily
+        showProjectDescription?: boolean; // Show project description in pxtjson editor and share dialog
     }
 
     interface DownloadDialogTheme {
