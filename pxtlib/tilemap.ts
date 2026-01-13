@@ -1120,7 +1120,7 @@ namespace pxt {
                             meta: {
                                 // For tilemaps, use the id as the display name for backwards compat
                                 displayName: tm.displayName || tm.id,
-                                package: pack.id
+                                package: dep.id
                             },
                             data: decodeTilemap(tm, id => this.resolveTile(id))
                         });
@@ -1133,7 +1133,7 @@ namespace pxt {
                             meta: {
                                 // For tilemaps, use the id as the display name for backwards compat
                                 displayName: tm.displayName || tm.id,
-                                package: pack.id
+                                package: dep.id
                             },
                             data: decodeTilemap(tm, id => this.getAssetCollection(AssetType.Tile, true).getByID(id))
                         });
@@ -1403,11 +1403,21 @@ namespace pxt {
 
         generateNewName(type: AssetType, name?: string) {
             const defaultName = name || pxt.getDefaultAssetDisplayName(type);
-            let newName = defaultName;
-            let index = 0;
 
+            if (!this.isNameTaken(type, defaultName)) {
+                return defaultName;
+            }
+
+            // If ending in digits, continue incrementing that suffix (e.g. "level3" -> "level4")
+            // Otherwise append 1, 2, 3...
+            const matchEndingNumber = /^(.*)(\d+)$/.exec(defaultName);
+            const baseName = matchEndingNumber ? matchEndingNumber[1] : defaultName;
+            let index = matchEndingNumber ? parseInt(matchEndingNumber[2], 10) + 1 : 1;
+
+            let newName = baseName + index;
             while (this.isNameTaken(type, newName)) {
-                newName = defaultName + (index++);
+                index++;
+                newName = baseName + index;
             }
 
             return newName;
