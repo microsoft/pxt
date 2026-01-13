@@ -1410,7 +1410,7 @@ namespace pxt {
 
             // If ending in digits, continue incrementing that suffix (e.g. "level3" -> "level4")
             // Otherwise append 1, 2, 3...
-            const matchEndingNumber = /^(.*?)(\d+)$/.exec(defaultName);
+            const matchEndingNumber = /^(.*)(\d+)$/.exec(defaultName);
             const baseName = matchEndingNumber ? matchEndingNumber[1] : defaultName;
             let index = matchEndingNumber ? parseInt(matchEndingNumber[2], 10) + 1 : 1;
 
