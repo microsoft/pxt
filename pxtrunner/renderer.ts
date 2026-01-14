@@ -1369,6 +1369,8 @@ export function renderAsync(options?: ClientRenderOptions): Promise<void> {
     if (options.pxtUrl) options.pxtUrl = options.pxtUrl.replace(/\/$/, '');
     if (options.showEdit) options.showEdit = !pxt.BrowserUtils.isIFrame();
 
+    pxt.docs.hydrateYouTubeEmbeds(document.body, false);
+
     mergeConfig(options);
     readAssetJson(options);
 

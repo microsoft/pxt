@@ -42,9 +42,9 @@ pxt.docs.requireDOMSanitizer = () => {
     const defaults = sanitizeHtml.defaults || {};
     const baseAllowedAttrs = defaults.allowedAttributes || {};
 
-    const mergeClassAttribute = (tag: string) => {
+    const mergeClassAttribute = (tag: string, ...otherAttributes: string[]) => {
         const existing: string[] = baseAllowedAttrs[tag] || [];
-        return Array.from(new Set<string>([...existing, "class"]));
+        return Array.from(new Set<string>([...existing, "class", ...otherAttributes]));
     };
 
     const options = {
@@ -53,6 +53,7 @@ pxt.docs.requireDOMSanitizer = () => {
             ...baseAllowedAttrs,
             code: mergeClassAttribute("code"),
             pre: mergeClassAttribute("pre"),
+            div: mergeClassAttribute("div", "data-youtube", "title"),
         },
     };
 
