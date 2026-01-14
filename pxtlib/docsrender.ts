@@ -484,7 +484,7 @@ namespace pxt.docs {
 
             if (href.startsWith("youtube:")) {
                 const videoId = href.split(":").pop();
-                // This data-youtube attribute is handled in marked.tsx
+                // This data-youtube attribute is handled in hydrateYoutubeEmbeds
                 return `<div class="tutorial-video-embed" data-youtube="${encodeURIComponent(videoId)}" title="${text}"></div>`;
             } else {
                 let out = `<img class="ui image" src="${href}" alt="${text}"`;
