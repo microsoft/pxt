@@ -57,6 +57,11 @@ type SetCatalogOpen = ActionBase & {
     open: boolean;
 };
 
+type SetAskAiOpen = ActionBase & {
+    type: "SET_ASK_AI_OPEN";
+    open: boolean;
+};
+
 type SetChecklist = ActionBase & {
     type: "SET_CHECKLIST";
     checklist: Checklist;
@@ -138,6 +143,7 @@ export type Action =
     | SetTargetConfig
     | SetCatalog
     | SetCatalogOpen
+    | SetAskAiOpen
     | SetChecklist
     | ShowModal
     | HideModal
@@ -196,6 +202,11 @@ const setCatalog = (catalog: CatalogCriteria[] | undefined): SetCatalog => ({
 
 const setCatalogOpen = (open: boolean): SetCatalogOpen => ({
     type: "SET_CATALOG_OPEN",
+    open,
+});
+
+const setAskAiOpen = (open: boolean): SetAskAiOpen => ({
+    type: "SET_ASK_AI_OPEN",
     open,
 });
 
@@ -276,6 +287,7 @@ export {
     setTargetConfig,
     setCatalog,
     setCatalogOpen,
+    setAskAiOpen,
     setChecklist,
     showModal,
     hideModal,
