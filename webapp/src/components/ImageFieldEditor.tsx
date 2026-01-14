@@ -80,7 +80,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
 
         let showHeader = headerVisible;
         // If there is no asset, show the gallery to prevent changing shape when it's added
-        let showGallery = !this.props.isMusicEditor && (!this.asset || editingTile || this.asset.type !== pxt.AssetType.Tilemap);
+        let showGallery = !this.props.isMusicEditor && (!this.asset || !editingTile);
         const showMyAssets = !hideMyAssets && !editingTile;
 
         if (this.asset && !this.galleryAssets && showGallery) {
@@ -246,9 +246,13 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
         if (options) {
             this.blocksInfo = options.blocksInfo;
 
-            if (options.filter) {
+            const filter = value.type === pxt.AssetType.Tilemap
+                ? options.tilemapFilter
+                : options.filter;
+
+            if (filter) {
                 this.setState({
-                    galleryFilter: options.filter
+                    galleryFilter: filter
                 });
                 didUpdate = true;
             }
@@ -457,7 +461,12 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
                 case pxt.AssetType.Tile:
                     return assets.filter(t => t.type === pxt.AssetType.Tile);
                 case pxt.AssetType.Tilemap:
-                    return assets.filter(t => t.type === pxt.AssetType.Tilemap);
+                    const currentTileWidth = (this.asset as pxt.ProjectTilemap)?.data?.tileset?.tileWidth;
+                    return assets.filter(t => {
+                        if (t.type !== pxt.AssetType.Tilemap) return false;
+                        if (!currentTileWidth) return true;
+                        return t?.data?.tileset?.tileWidth === currentTileWidth;
+                    });
                 case pxt.AssetType.Song:
                     return assets.filter(t => t.type === pxt.AssetType.Song);
                 case pxt.AssetType.Json:
@@ -565,7 +574,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
                 (this.ref as ImageEditor).openInTileEditor(pxt.sprite.Bitmap.fromData((asset as pxt.Tile).bitmap))
             }
             else if (this.state.currentView === "gallery") {
-                this.ref.openGalleryAsset(asset as pxt.Tile | pxt.ProjectImage | pxt.Animation);
+                this.ref.openGalleryAsset(asset);
             }
             else {
                 const project = pxt.react.getTilemapProject();
