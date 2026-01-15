@@ -18,6 +18,7 @@ export type AppState = {
     toolboxCategories?: pxt.Map<pxt.editor.ToolboxCategoryDefinition>;
     blockImageCache: pxt.Map<string>; // block id -> image uri
     catalogOpen: boolean;
+    askAiOpen: boolean;
     screenReaderAnnouncement?: string;
     userProfile: pxt.auth.UserProfile | undefined;
     projectReloadCounter: number; // Counter to force project reload
@@ -39,6 +40,7 @@ export const initialAppState: AppState = {
     toolboxCategories: undefined,
     blockImageCache: {},
     catalogOpen: false,
+    askAiOpen: false,
     screenReaderAnnouncement: undefined,
     userProfile: undefined,
     projectReloadCounter: 0,
