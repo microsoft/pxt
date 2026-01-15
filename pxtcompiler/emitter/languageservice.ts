@@ -607,6 +607,7 @@ namespace ts.pxtc.service {
             blocksInfo,
             screenSize,
             apis: lastApiInfo.apis,
+            decls: lastApiInfo.decls,
             checker: service?.getProgram()?.getTypeChecker()
         }
         resultSymbols.forEach(sym => patchSymbolWithSnippet(sym.symbol, isPython, context))

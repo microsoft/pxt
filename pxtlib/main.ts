@@ -526,6 +526,7 @@ namespace pxt {
     export const BREAKPOINT_TABLET = 991; // TODO (shakao) revisit when tutorial stuff is more settled
     export const PALETTES_FILE = "_palettes.json";
     export const HISTORY_FILE = "_history";
+    export const MAX_DESCRIPTION_LENGTH = 5000;
 
     export function outputName(trg: pxtc.CompileTarget = null) {
         if (!trg) trg = appTarget.compile

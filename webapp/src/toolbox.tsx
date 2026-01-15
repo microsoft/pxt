@@ -56,6 +56,7 @@ export interface BlockDefinition {
         _def?: pxtc.ParsedBlockDef;
         parentBlock?: BlockDefinition;
         toolboxParentArgument?: string;
+        blockAliasFor?: string;
     };
     retType?: string;
     blockXml?: string;
