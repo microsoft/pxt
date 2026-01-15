@@ -209,6 +209,8 @@ export class Editor extends srceditor.Editor {
                             initialValue={c.description || ''}
                             onChange={this.setProjectDescription}
                             id="projectDescriptionTextareaSettings"
+                            maxLength={pxt.MAX_DESCRIPTION_LENGTH}
+                            showRemainingCharacterCount={500}
                             resize="vertical"
                         />
                     }
