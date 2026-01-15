@@ -115,10 +115,23 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
 
     protected getTargetLogo(targetTheme: pxt.AppTheme) {
         const { activityOpen } = this.props;
-        return <div className={`ui item logo brand ${!activityOpen ? "noclick" : ""}`} aria-hidden="true">
+        const isInteractive = activityOpen && targetTheme.useTextLogo;
+
+        return <div className={`ui item logo brand ${!activityOpen ? "noclick" : ""}`} aria-hidden={!isInteractive}>
             {targetTheme.useTextLogo
-                ? [<span className="name" key="org-name" onClick={this.onBackClicked}>{targetTheme.organizationText}</span>,
-                   <span className="name-short" key="org-name-short" onClick={this.onBackClicked}>{targetTheme.organizationShortText || targetTheme.organizationText}</span>]
+                ? (activityOpen
+                    ? [<Button className="name menu-button" key="org-name"
+                              onClick={this.onBackClicked}
+                              title={lf("MakeCode logo, return to activity selection")}
+                              ariaLabel={lf("MakeCode logo, return to activity selection")}
+                              label={targetTheme.organizationText} />,
+                       <Button className="name-short menu-button" key="org-name-short"
+                              onClick={this.onBackClicked}
+                              title={lf("MakeCode logo, return to activity selection")}
+                              ariaLabel={lf("MakeCode logo, return to activity selection")}
+                              label={targetTheme.organizationShortText || targetTheme.organizationText} />]
+                    : [<span className="name" key="org-name">{targetTheme.organizationText}</span>,
+                       <span className="name-short" key="org-name-short">{targetTheme.organizationShortText || targetTheme.organizationText}</span>])
                 : (targetTheme.logo || targetTheme.portraitLogo
                     ? <img className="logo" src={targetTheme.logo || targetTheme.portraitLogo} alt={lf("{0} Logo", targetTheme.boardName)}/>
                     : <span className="name"> {targetTheme.boardName}</span>)
