@@ -106,7 +106,7 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
 
     protected getOrganizationLogo(targetTheme: pxt.AppTheme) {
         const logoUrl = targetTheme.organizationWideLogo;
-        return <div className="header-logo" role="presentation">
+        return <div className="header-logo" aria-hidden="true">
             {logoUrl
                 ? <img src={isLocal() ? `./assets/${logoUrl}`: logoUrl} alt={lf("{0} Logo", targetTheme.organization)}/>
                 : <span className="name">{targetTheme.organization}</span>}
@@ -115,8 +115,9 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
 
     protected getTargetLogo(targetTheme: pxt.AppTheme) {
         const { activityOpen } = this.props;
+        const isInteractive = activityOpen && targetTheme.useTextLogo;
 
-        return <div className={`ui item logo brand ${!activityOpen ? "noclick" : ""}`} role="presentation">
+        return <div className={`ui item logo brand ${!activityOpen ? "noclick" : ""}`} aria-hidden={!isInteractive}>
             {targetTheme.useTextLogo
                 ? (activityOpen
                     ? [<Button className="name menu-button" key="org-name"
