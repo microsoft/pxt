@@ -1,4 +1,44 @@
 {
     "name": "Code Check",
-    "criteria": []
+    "criteria": [
+        {
+            "catalogCriteriaId": "499F3572-E655-4DEE-953B-5F26BF0191D7",
+            "instanceId": "k7ZPidUOM8tz5cj6rDZw5",
+            "params": [
+                {
+                    "name": "question",
+                    "value": "Does this program demonstrate good software development practices?"
+                },
+                {
+                    "name": "shareid"
+                }
+            ]
+        },
+        {
+            "catalogCriteriaId": "499F3572-E655-4DEE-953B-5F26BF0191D7",
+            "instanceId": "KvtH9LgvBEDeVBxVJzNfP",
+            "params": [
+                {
+                    "name": "question",
+                    "value": "Are there any bugs in this program?"
+                },
+                {
+                    "name": "shareid"
+                }
+            ]
+        },
+        {
+            "catalogCriteriaId": "499F3572-E655-4DEE-953B-5F26BF0191D7",
+            "instanceId": "7Rsu-lFAIILIFGf0dxl9s",
+            "params": [
+                {
+                    "name": "question",
+                    "value": "How could this program be improved?"
+                },
+                {
+                    "name": "shareid"
+                }
+            ]
+        }
+    ]
 }

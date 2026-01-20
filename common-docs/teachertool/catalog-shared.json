@@ -1,6 +1,48 @@
 {
     "criteria": [
         {
+            "id": "499F3572-E655-4DEE-953B-5F26BF0191D7",
+            "use": "ai_question",
+            "template": "Ask AI: ${question}",
+            "description": "Experimental: AI outputs may not be accurate. Use with caution and always review responses.",
+            "docPath": "/teachertool",
+            "maxCount": 5,
+            "tags": ["General"],
+            "requestFeedback": true,
+            "params": [
+                {
+                    "name": "question",
+                    "type": "longString",
+                    "maxCharacters": 1000,
+                    "paths": ["checks[0].question"],
+                    "options": [
+                        {
+                            "id": "explainProgram",
+                            "value": "Explain what this program does in clear, student-friendly language."
+                        },
+                        {
+                            "id": "findMajorBugs",
+                            "value": "Look for major bugs or logic errors in this project and describe any issues you find."
+                        },
+                        {
+                            "id": "codeQuality",
+                            "value": "Review the code quality. Mention strengths and suggest one improvement for readability or structure."
+                        },
+                        {
+                            "id": "suggestEnhancement",
+                            "value": "Suggest a meaningful enhancement that would make this project more engaging or polished."
+                        }
+                    ]
+                },
+                {
+                    "name": "shareid",
+                    "type": "system",
+                    "key": "SHARE_ID",
+                    "paths": ["checks[0].shareId"]
+                }
+            ]
+        },
+        {
             "id": "59AAC5BA-B0B3-4389-AA90-1E767EFA8563",
             "use": "block_used_n_times",
             "template": "${Block} used at least ${count} time(s)",
