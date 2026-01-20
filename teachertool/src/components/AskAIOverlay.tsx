@@ -140,6 +140,7 @@ export const AskAIOverlay = () => {
     );
 
     const checkedCustomPromptCount = React.useMemo(() => customPrompts.filter(p => p.checked).length, [customPrompts]);
+    const canRemoveCustomPrompt = customPrompts.length > 1;
 
     const canAddAnotherCustomPrompt =
         remainingAiQuestionSlots === undefined
@@ -206,6 +207,9 @@ export const AskAIOverlay = () => {
     const setCustomTextForId = React.useCallback((id: number, text: string) => {
         setCustomPrompts(prev => prev.map(p => (p.id === id ? { ...p, text } : p)));
     }, []);
+    const removeCustomPrompt = React.useCallback((id: number) => {
+        setCustomPrompts(prev => (prev.length > 1 ? prev.filter(p => p.id !== id) : prev));
+    }, []);
 
     if (!teacherTool.askAiOpen) return null;
 
@@ -241,13 +245,23 @@ export const AskAIOverlay = () => {
                                                 <div className={css["custom-list"]}>
                                                     {customPrompts.map((p, index) => (
                                                         <div key={p.id} className={css["custom-item"]}>
-                                                            <Checkbox
-                                                                id={`ask-ai-custom-check-${p.id}`}
-                                                                className={css["checkbox"]}
-                                                                label={lf("Question {0}", index + 1)}
-                                                                isChecked={p.checked}
-                                                                onChange={checked => setCustomChecked(p.id, checked)}
-                                                            />
+                                                            <div className={css["custom-header"]}>
+                                                                <Checkbox
+                                                                    id={`ask-ai-custom-check-${p.id}`}
+                                                                    className={css["checkbox"]}
+                                                                    label={lf("Question {0}", index + 1)}
+                                                                    isChecked={p.checked}
+                                                                    onChange={checked => setCustomChecked(p.id, checked)}
+                                                                />
+                                                                <Button
+                                                                    className={classList("secondary", css["custom-delete-button"])}
+                                                                    rightIcon="fas fa-trash"
+                                                                    title={Strings.Remove}
+                                                                    ariaLabel={Strings.Remove}
+                                                                    onClick={() => removeCustomPrompt(p.id)}
+                                                                    disabled={!canRemoveCustomPrompt}
+                                                                />
+                                                            </div>
                                                             <Textarea
                                                                 id={`ask-ai-custom-text-${p.id}`}
                                                                 className={css["textarea"]}
