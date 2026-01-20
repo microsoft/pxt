@@ -107,11 +107,6 @@ const CatalogList: React.FC = () => {
     const criteriaGroupedByTag = useMemo<pxt.Map<CatalogCriteria[]>>(() => {
         const grouped: pxt.Map<CatalogCriteria[]> = {};
         getCatalogCriteria(teacherTool)?.forEach(c => {
-            // Filter out AI question criteria - these are added via the Ask AI button
-            if (c.use === "ai_question") {
-                return;
-            }
-
             if (!c.tags || c.tags.length === 0) {
                 logError(ErrorCode.missingTag, { message: "Catalog criteria missing tag", criteria: c });
                 return;
