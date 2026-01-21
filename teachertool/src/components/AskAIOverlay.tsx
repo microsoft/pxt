@@ -253,14 +253,15 @@ export const AskAIOverlay = () => {
                                                                     isChecked={p.checked}
                                                                     onChange={checked => setCustomChecked(p.id, checked)}
                                                                 />
-                                                                <Button
-                                                                    className={classList("secondary", css["custom-delete-button"])}
-                                                                    rightIcon="fas fa-trash"
-                                                                    title={Strings.Remove}
-                                                                    ariaLabel={Strings.Remove}
-                                                                    onClick={() => removeCustomPrompt(p.id)}
-                                                                    disabled={!canRemoveCustomPrompt}
-                                                                />
+                                                                {canRemoveCustomPrompt && (
+                                                                    <Button
+                                                                        className={classList("text-only", css["custom-delete-button"])}
+                                                                        rightIcon="fas fa-trash"
+                                                                        title={Strings.Remove}
+                                                                        ariaLabel={Strings.Remove}
+                                                                        onClick={() => removeCustomPrompt(p.id)}
+                                                                    />
+                                                                )}
                                                             </div>
                                                             <Textarea
                                                                 id={`ask-ai-custom-text-${p.id}`}
