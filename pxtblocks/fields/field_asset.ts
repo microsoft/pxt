@@ -114,6 +114,16 @@ export abstract class FieldAssetEditor<U extends FieldAssetEditorOptions, V exte
                 const project = pxt.react.getTilemapProject();
                 pxt.sprite.addMissingTilemapTilesAndReferences(project, this.asset);
 
+                const assetPackTiles = project.getAssetPackTiles(this.asset?.data?.tileset?.tileWidth);
+                if (assetPackTiles?.length) {
+                    params.galleryTiles = assetPackTiles.map(tile => ({
+                        qName: tile.id,
+                        bitmap: tile.bitmap,
+                        alt: tile.meta?.displayName || tile.id,
+                        tags: this.normalizeGalleryTags(tile.meta?.tags, tile.meta?.package)
+                    }));
+                }
+
                 for (const tile of getTilesReferencedByTilesets(this.sourceBlock_.workspace)) {
                     if (this.asset.data.projectReferences.indexOf(tile.id) === -1) {
                         this.asset.data.projectReferences.push(tile.id);
@@ -435,6 +445,37 @@ export abstract class FieldAssetEditor<U extends FieldAssetEditorOptions, V exte
                 this.fieldGroup_.appendChild(img.el);
             }
         }
+    }
+
+    protected normalizeGalleryTags(tags?: string[], packageId?: string) {
+        const normalized: string[] = [];
+
+        if (tags) {
+            for (const tag of tags) {
+                if (!tag) continue;
+
+                if (pxt.Util.startsWith(tag, "category-")) {
+                    if (normalized.indexOf(tag) === -1) normalized.push(tag);
+                } else {
+                    const lowered = tag.toLowerCase();
+                    if (normalized.indexOf(lowered) === -1) normalized.push(lowered);
+                }
+            }
+        }
+
+        const hasCategory = normalized.some(tag => pxt.Util.startsWith(tag, "category-"));
+        const fallbackCategory = this.buildAssetPackCategoryTagFromId(packageId);
+        if (!hasCategory && fallbackCategory) normalized.push(fallbackCategory);
+        if (normalized.indexOf("tile") === -1) normalized.push("tile");
+
+        return normalized;
+    }
+
+    protected buildAssetPackCategoryTagFromId(packageId?: string) {
+        if (!packageId) return undefined;
+
+        const sanitized = packageId.replace(/[^\w]+/g, "-").replace(/^-+|-+$/g, "").toLowerCase() || "asset-pack";
+        return `category-${sanitized}`;
     }
 
     protected parseValueText(newText: string) {

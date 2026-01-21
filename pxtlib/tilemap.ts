@@ -343,6 +343,7 @@ namespace pxt {
         protected static nextRevision = 0;
 
         protected extensionTileSets: TileSetCollection[];
+        protected assetPackIds: string[];
         protected state: AssetSnapshot;
         protected committedState: AssetSnapshot;
 
@@ -355,6 +356,7 @@ namespace pxt {
         protected nextInternalID = 0;
 
         constructor() {
+            this.assetPackIds = [];
             this.committedState = {
                 revision: TilemapProject.nextRevision++,
                 assets: {
@@ -988,6 +990,15 @@ namespace pxt {
             return this.getAssetCollection(type, true).getSnapshot();
         }
 
+        public getAssetPackTiles(tileWidth?: number): Tile[] {
+            if (!this.assetPackIds?.length) return [];
+
+            return (this.getGalleryAssets(AssetType.Tile) as Tile[]).filter(tile =>
+                !!tile?.bitmap && (!tileWidth || tile.bitmap.width === tileWidth) &&
+                tile.meta?.package && this.assetPackIds.indexOf(tile.meta.package) !== -1
+            );
+        }
+
         public lookupBlockAsset(assetType: AssetType.Image, blockID: string): ProjectImage;
         public lookupBlockAsset(assetType: AssetType.Tile, blockID: string): Tile;
         public lookupBlockAsset(assetType: AssetType.Tilemap, blockID: string): ProjectTilemap;
@@ -1072,13 +1083,27 @@ namespace pxt {
         loadPackage(pack: MainPackage) {
             const allPackages = pack.sortedDeps();
             this.extensionTileSets = [];
+            this.assetPackIds = [];
 
             for (const dep of allPackages) {
                 const isProject = dep.id === "this";
+                const isAssetPack = !isProject && dep.isAssetPack();
+                const assetPackCategory = isAssetPack ? buildAssetPackCategoryTag(dep) : undefined;
+                const assetPackTileSets: pxt.Map<Tile[]> = {};
                 const images = this.readImages(dep.parseJRes(), isProject);
 
                 for (const toAdd of images) {
+                    toAdd.meta = toAdd.meta || {};
                     toAdd.meta.package = dep.id;
+                    if (isAssetPack && toAdd.type === AssetType.Tile) {
+                        toAdd.meta.tags = normalizeAssetPackTileTags(toAdd.meta.tags, assetPackCategory);
+
+                        const width = toAdd.bitmap?.width;
+                        if (width) {
+                            assetPackTileSets[width] = assetPackTileSets[width] || [];
+                            assetPackTileSets[width].push(cloneAsset(toAdd) as Tile);
+                        }
+                    }
                     if (toAdd.type === AssetType.Tile) {
                         this.getAssetCollection(AssetType.Tile, !isProject).add(toAdd);
                     }
@@ -1105,6 +1130,21 @@ namespace pxt {
                         else {
                             this.getAssetCollection(AssetType.Song, true).add(toAdd);
                         }
+                    }
+                }
+
+                if (isAssetPack) {
+                    this.assetPackIds.push(dep.id);
+
+                    const tileSets = Object.keys(assetPackTileSets)
+                        .map(tileWidth => ({ tileWidth: parseInt(tileWidth, 10), tiles: assetPackTileSets[tileWidth] }))
+                        .filter(tileSet => !!tileSet.tiles?.length);
+
+                    if (tileSets.length) {
+                        this.extensionTileSets.push({
+                            extensionID: dep.id,
+                            tileSets
+                        });
                     }
                 }
             }
@@ -1267,6 +1307,7 @@ namespace pxt {
                     tiles: ts.tiles.map(tl => cloneAsset(tl))
                 }))
             }));
+            clone.assetPackIds = this.assetPackIds?.slice();
             clone.needsRebuild = this.needsRebuild;
             clone.nextID = this.nextID;
             clone.nextInternalID = this.nextInternalID;
@@ -1817,6 +1858,33 @@ namespace pxt {
         const layers = new pxt.sprite.Bitmap(tmWidth, tmHeight, 0, 0, new Uint8ClampedArray(bitmapData)).data();
 
         return new pxt.sprite.TilemapData(tilemap, tileset, layers);
+    }
+
+    function buildAssetPackCategoryTag(dep: Package) {
+        const base = (dep.config?.name || dep.id || "").trim();
+        const sanitized = base.replace(/[^\w]+/g, "-").replace(/^-+|-+$/g, "").toLowerCase() || "asset-pack";
+        return `category-${sanitized}`;
+    }
+
+    function normalizeAssetPackTileTags(tags?: string[], categoryTag?: string) {
+        const normalized: string[] = [];
+
+        if (tags) {
+            for (const tag of tags) {
+                if (!tag) continue;
+                if (pxt.Util.startsWith(tag, "category-")) {
+                    if (normalized.indexOf(tag) === -1) normalized.push(tag);
+                } else {
+                    const lower = tag.toLowerCase();
+                    if (normalized.indexOf(lower) === -1) normalized.push(lower);
+                }
+            }
+        }
+
+        if (categoryTag && normalized.indexOf(categoryTag) === -1) normalized.push(categoryTag);
+        if (normalized.indexOf("tile") === -1) normalized.push("tile");
+
+        return normalized;
     }
 
     export function cloneAsset<U extends Asset>(asset: U, includeEditorData = false): U {
