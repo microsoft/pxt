@@ -105,31 +105,7 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
     constructor(props: TilePaletteProps) {
         super(props);
 
-        const { gallery } = props;
-
         this.refreshGallery(props);
-
-        if (gallery) {
-            const extraCategories: pxt.Map<Category> = {};
-            for (const tile of gallery) {
-                const categoryName = tile.tags.find(t => pxt.Util.startsWith(t, "category-"));
-                if (categoryName) {
-                    if (!extraCategories[categoryName]) {
-                        extraCategories[categoryName] = {
-                            id: categoryName,
-                            text: pxt.Util.rlf(`{id:tilecategory}${categoryName.substr(9)}`),
-                            tiles: []
-                        };
-                    }
-
-                    extraCategories[categoryName].tiles.push(tile);
-                }
-            }
-
-            this.categories = options.concat(Object.keys(extraCategories).map(key => extraCategories[key]));
-        } else {
-            this.categories = [];
-        }
     }
 
     componentDidMount() {
@@ -171,12 +147,13 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
 
         const visibleTiles = this.categoryTiles.slice(startIndex, startIndex + columns * rows);
 
-        const dropdownItems: DropdownItem[] = this.categories.filter(c => !!c.tiles.length)
-            .map(cat => ({
-                id: cat.id,
-                title: cat.text,
-                label: cat.text,
-            }));
+        const dropdownCategories = this.categories.filter(c => !!c.tiles.length);
+        const dropdownItems: DropdownItem[] = dropdownCategories.map(cat => ({
+            id: cat.id,
+            title: cat.text,
+            label: cat.text,
+        }));
+        const selectedDropdownIndex = Math.min(category, Math.max(dropdownItems.length - 1, 0));
 
         return <div className="tile-palette">
             <div className="tile-palette-fg-bg">
@@ -207,13 +184,13 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
             </div>
             <Pivot options={tabs} selected={galleryOpen ? 1 : 0} onChange={this.pivotHandler} />
             <div className="tile-palette-controls-outer">
-                { galleryOpen &&
+                { galleryOpen && dropdownItems.length > 0 &&
                     <Dropdown
                         id="tile-palette-gallery"
                         className="tile-palette-dropdown"
                         items={dropdownItems}
                         onItemSelected={this.dropdownHandler}
-                        selectedId={dropdownItems[category].id}
+                        selectedId={dropdownItems[selectedDropdownIndex]?.id}
                     />
                 }
 
@@ -295,9 +272,12 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
 
     protected updateGalleryTiles() {
         const { page, category, galleryOpen } = this.props;
+        const safeCategory = Math.min(category, Math.max(this.categories.length - 1, 0));
 
-        if (galleryOpen) {
-            this.categoryTiles = this.categories[category].tiles;
+        if (galleryOpen && this.categories.length) {
+            this.categoryTiles = this.categories[safeCategory].tiles;
+        } else if (galleryOpen) {
+            this.categoryTiles = [];
         }
         else {
             this.categoryTiles = this.getCustomTiles().map(([t, i]) => ({ index: i, bitmap: t.bitmap }));
@@ -432,11 +412,52 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
     }
 
     protected refreshGallery(props: TilePaletteProps) {
-        const { gallery, tileset } = props;
+        const { gallery, tileset, galleryOpen, category, dispatchChangeTilePaletteCategory } = props;
+        const baseCategories = options.map(opt => ({
+            id: opt.id,
+            text: opt.text,
+            tiles: [] as GalleryTile[]
+        }));
+        const extraCategories: pxt.Map<Category> = {};
+
         if (gallery) {
-            options.forEach(opt => {
-                opt.tiles = gallery.filter(t => t.tags.indexOf(opt.id) !== -1 && t.tileWidth === tileset.tileWidth);
-            });
+            for (const tile of gallery) {
+                if (tile.tileWidth !== tileset.tileWidth) continue;
+
+                const categoryName = tile.tags.find(t => pxt.Util.startsWith(t, "category-"));
+                if (categoryName && categoryName !== "category-misc") {
+                    if (!extraCategories[categoryName]) {
+                        extraCategories[categoryName] = {
+                            id: categoryName,
+                            text: pxt.Util.rlf(`{id:tilecategory}${categoryName.substr(9)}`),
+                            tiles: []
+                        };
+                    }
+
+                    extraCategories[categoryName].tiles.push(tile);
+                }
+
+                const bucket = baseCategories.find(opt => opt.id === "misc") || baseCategories[0];
+                if (tile.tags.indexOf(bucket.id) !== -1 || !categoryName) {
+                    bucket.tiles.push(tile);
+                }
+                for (const base of baseCategories) {
+                    if (base.id !== "misc" && tile.tags.indexOf(base.id) !== -1) base.tiles.push(tile);
+                }
+            }
+        }
+
+        const filteredBase = baseCategories.filter(cat => !!cat.tiles.length);
+        const sortedDynamic = Object.keys(extraCategories)
+            .map(key => extraCategories[key])
+            .filter(cat => !!cat.tiles.length)
+            .sort((a, b) => a.text.localeCompare(b.text));
+
+        this.categories = filteredBase.concat(sortedDynamic);
+        if (!this.categories.length) this.categories = baseCategories;
+
+        if (galleryOpen && this.categories.length && category >= this.categories.length) {
+            dispatchChangeTilePaletteCategory(0 as TileCategory);
         }
     }
 
