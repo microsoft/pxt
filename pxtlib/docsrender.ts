@@ -1246,7 +1246,7 @@ My links
             const videoId = decodeURIComponent(videoContainer.getAttribute("data-youtube"));
             const iframe = document.createElement("iframe");
             iframe.className = "yt-embed";
-            const rawUrl = `https://www.youtube.com/embed/${videoId}`;
+            const rawUrl = `https://www.youtube-nocookie.com/embed/${videoId}`;
 
             let lang = pxt.appTarget.appTheme?.defaultLocale ?? "en";
             let url = new URL(rawUrl);
