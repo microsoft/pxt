@@ -26,9 +26,16 @@ async function loadBlockImageAsync(block: pxt.editor.ToolboxBlockDefinition) {
 export async function loadBlockImagesAsync(category: pxt.editor.ToolboxCategoryDefinition) {
     return category.blocks
         ? pxt.Util.promisePoolAsync(
-              4,
-              category.blocks,
-              async (block: pxt.editor.ToolboxBlockDefinition) => await loadBlockImageAsync(block)
-          )
+            4,
+            category.blocks,
+            async (block: pxt.editor.ToolboxBlockDefinition) => {
+                try {
+                    await loadBlockImageAsync(block);
+                }
+                catch (e) {
+                    console.warn(`Failed to load image for block ${block.name}: ${e}`);
+                }
+            }
+        )
         : Promise.resolve();
 }
