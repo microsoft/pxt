@@ -436,7 +436,7 @@ export function decompilePySnippetstoXmlAsync(code: string[]): Promise<string[]>
             // strip the namespace declaration out of the converted snippets and concat to convert to blocks
             const tsCode = [];
             for (let file of files) {
-                let match = res.outfiles[file + ".ts"].match(namespaceRegex);
+                let match = res.outfiles[file + ".ts"]?.match(namespaceRegex);
                 if (match && match[1]) {
                     const noNamespace = match[1];
                     // strip out 'export let' and 'export function'. This won't hit custom kinds since those are always const
