@@ -461,6 +461,23 @@ namespace pxt.sprite {
         }
     }
 
+    export function normalizeGalleryTags(tags?: string[], includeDefaultTile = false): string[] {
+        const normalized: string[] = [];
+
+        for (const tag of tags || []) {
+            if (!tag) continue;
+            if (pxt.Util.startsWith(tag, "category-")) {
+                if (normalized.indexOf(tag) === -1) normalized.push(tag);
+            } else {
+                const lower = tag.toLowerCase();
+                if (normalized.indexOf(lower) === -1) normalized.push(lower);
+            }
+        }
+
+        if (includeDefaultTile && normalized.indexOf("tile") === -1) normalized.push("tile");
+        return normalized;
+    }
+
     export function getGalleryItems(blocksInfo: pxtc.BlocksInfo, qName: string): GalleryItem[] {
         let syms = getFixedInstanceDropdownValues(blocksInfo.apis, qName);
         syms = syms.filter(s => s.namespace != TILE_NAMESPACE);
@@ -470,14 +487,13 @@ namespace pxt.sprite {
         return syms.map(sym => {
             const splitTags = (sym.attributes.tags || "")
                 .split(" ")
-                .filter(el => !!el)
-                .map(tag => pxt.Util.startsWith(tag, "category-") ? tag : tag.toLowerCase());
+                .filter(el => !!el);
 
             return {
                 qName: sym.qName,
                 src: sym.attributes.iconURL,
                 alt: sym.qName,
-                tags: splitTags
+                tags: normalizeGalleryTags(splitTags)
             };
         });
     }

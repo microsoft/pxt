@@ -348,17 +348,16 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
                 const comments = this.commentAttrs[tile.id];
                 if (!comments) return undefined;
 
-                const splitTags = tile.meta.tags
-                    ?.map(tag => pxt.Util.startsWith(tag, "category-") ? tag : tag.toLowerCase());
+                const normalizedTags = pxt.sprite.normalizeGalleryTags(tile.meta.tags);
 
-                if (!splitTags || splitTags.indexOf("tile") === -1) return undefined;
+                if (!normalizedTags || normalizedTags.indexOf("tile") === -1) return undefined;
 
 
                 return {
                     qName: tile.id,
                     bitmap: tile.bitmap,
                     alt: tile.id,
-                    tags: splitTags
+                    tags: normalizedTags
                 };
             })
             .filter(gt => !!gt);

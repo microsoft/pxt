@@ -516,7 +516,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
         const projectGallery = project.getTileGallery(tileWidth)
             ?.map(tile => ({
                 bitmap: tile.bitmap,
-                tags: (tile.meta?.tags?.map(tag => pxt.Util.startsWith(tag, "category-") ? tag : tag.toLowerCase()) || ["tile"]),
+                tags: pxt.sprite.normalizeGalleryTags(tile.meta?.tags, true),
                 qualifiedName: tile.id,
                 tileWidth: tile.bitmap?.width || tileWidth
             }));
@@ -531,7 +531,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
             const builtInGallery = pxt.sprite.filterItems(pxt.sprite.getGalleryItems(this.blocksInfo, "Image"), ["tile"]);
             for (const g of builtInGallery) {
                 const qName = g.qName;
-                const normalizedTags = (g.tags?.map(tag => pxt.Util.startsWith(tag, "category-") ? tag : tag.toLowerCase()) || ["tile"]);
+                const normalizedTags = pxt.sprite.normalizeGalleryTags(g.tags, true);
                 const existing = galleryById[qName];
                 const bitmapData = pxt.sprite.getBitmap(this.blocksInfo, qName)?.data();
                 const width = bitmapData?.width || tileWidth;
@@ -575,7 +575,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
             }
         }
 
-        this.ref.openAsset(asset, gallery.length ? gallery : undefined);
+        this.ref.openAsset(asset, gallery);
     }
 
     protected showEditor = () => {

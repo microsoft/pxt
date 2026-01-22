@@ -1909,20 +1909,9 @@ namespace pxt {
     }
 
     function normalizeAssetPackTileTags(tags?: string[], categoryTag?: string) {
-        const normalized: string[] = [];
-
-        for (const tag of tags ?? []) {
-            if (!tag) continue;
-            if (pxt.Util.startsWith(tag, "category-")) {
-                if (normalized.indexOf(tag) === -1) normalized.push(tag);
-            } else {
-                const lower = tag.toLowerCase();
-                if (normalized.indexOf(lower) === -1) normalized.push(lower);
-            }
-        }
+        const normalized = pxt.sprite.normalizeGalleryTags(tags, true);
 
         if (categoryTag && normalized.indexOf(categoryTag) === -1) normalized.push(categoryTag);
-        if (normalized.indexOf("tile") === -1) normalized.push("tile");
 
         return normalized;
     }
