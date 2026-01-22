@@ -508,27 +508,71 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
     }
 
     protected initTilemap(asset: pxt.ProjectTilemap, options?: any) {
-        let gallery: GalleryTile[] = [];
+        const project = pxt.react.getTilemapProject();
+        const tileWidth = asset?.data?.tileset?.tileWidth || 16;
+
+        const galleryById: pxt.Map<GalleryTile> = {};
+
+        const projectGallery = project.getTileGallery(tileWidth)
+            ?.map(tile => ({
+                bitmap: tile.bitmap,
+                tags: (tile.meta?.tags?.map(tag => pxt.Util.startsWith(tag, "category-") ? tag : tag.toLowerCase()) || ["tile"]),
+                qualifiedName: tile.id,
+                tileWidth: tile.bitmap?.width || tileWidth
+            }));
+
+        for (const tile of projectGallery || []) {
+            galleryById[tile.qualifiedName] = tile;
+        }
 
         if (options?.blocksInfo) {
             this.blocksInfo = options.blocksInfo;
 
-            const builtInGallery = pxt.sprite.filterItems(pxt.sprite.getGalleryItems(this.blocksInfo, "Image"), ["tile"])
-                .map(g => ({ bitmap: pxt.sprite.getBitmap(this.blocksInfo, g.qName).data(), tags: g.tags, qualifiedName: g.qName, tileWidth: 16 }));
+            const builtInGallery = pxt.sprite.filterItems(pxt.sprite.getGalleryItems(this.blocksInfo, "Image"), ["tile"]);
+            for (const g of builtInGallery) {
+                const qName = g.qName;
+                const normalizedTags = (g.tags?.map(tag => pxt.Util.startsWith(tag, "category-") ? tag : tag.toLowerCase()) || ["tile"]);
+                const existing = galleryById[qName];
+                const bitmapData = pxt.sprite.getBitmap(this.blocksInfo, qName)?.data();
+                const width = bitmapData?.width || tileWidth;
 
-            gallery = gallery.concat(builtInGallery);
+                if (existing) {
+                    // Merge in richer tags from blocks info if existing tags are sparse
+                    const mergedTags = existing.tags ? existing.tags.slice() : [];
+                    for (const t of normalizedTags) {
+                        if (mergedTags.indexOf(t) === -1) mergedTags.push(t);
+                    }
+                    existing.tags = mergedTags;
+                    if (!existing.bitmap && bitmapData) existing.bitmap = bitmapData;
+                    if (!existing.tileWidth) existing.tileWidth = width;
+                } else {
+                    galleryById[qName] = {
+                        bitmap: bitmapData,
+                        tags: normalizedTags,
+                        qualifiedName: qName,
+                        tileWidth: width
+                    };
+                }
+            }
         }
+
+        let gallery: GalleryTile[] = Object.keys(galleryById).map(key => galleryById[key]);
 
         if (options?.galleryTiles) {
             const additionalGallery = options.galleryTiles
                 .map((g: any) => ({
                     bitmap: g.bitmap,
-                    tags: g.tags,
+                    tags: g.tags || ["tile"],
                     qualifiedName: g.qName,
-                    tileWidth: g.tileWidth || g.bitmap?.width || 16
-                }))
+                    tileWidth: g.tileWidth || g.bitmap?.width || tileWidth
+                }));
 
-            gallery = gallery.concat(additionalGallery);
+            for (const tile of additionalGallery) {
+                if (!galleryById[tile.qualifiedName]) {
+                    galleryById[tile.qualifiedName] = tile;
+                    gallery.push(tile);
+                }
+            }
         }
 
         this.ref.openAsset(asset, gallery.length ? gallery : undefined);

@@ -456,6 +456,40 @@ namespace pxt {
             return null;
         }
 
+        public getTileGallery(tileWidth: number): Tile[] {
+            const seen: pxt.Map<boolean> = {};
+            const tiles: Tile[] = [];
+
+            const addTile = (tile: Tile) => {
+                if (!tile || !tile.bitmap || tile.bitmap.width !== tileWidth) return;
+                if (seen[tile.id]) return;
+            // Skip transparent tiles
+            const allZero = tile.bitmap.data?.every?.(p => p === 0);
+            if (allZero) return;
+
+                const clone = cloneAsset(tile);
+                clone.meta = clone.meta || {};
+                clone.meta.tags = normalizeAssetPackTileTags(clone.meta.tags);
+
+                seen[clone.id] = true;
+                tiles.push(clone);
+            };
+
+            // Tiles from gallery assets (includes dependencies and asset packs)
+            const galleryTiles = this.getAssetCollection(AssetType.Tile, true).getSnapshot();
+            galleryTiles.forEach(addTile);
+
+            // Tiles explicitly captured as extension tile sets (asset packs)
+            if (this.extensionTileSets?.length) {
+                for (const collection of this.extensionTileSets) {
+                    const match = collection.tileSets?.find(ts => ts.tileWidth === tileWidth);
+                    match?.tiles?.forEach(addTile);
+                }
+            }
+
+            return tiles;
+        }
+
         public getProjectImages(): ProjectImage[] {
             return this.getAssetCollection(AssetType.Image).getSnapshot();
         }

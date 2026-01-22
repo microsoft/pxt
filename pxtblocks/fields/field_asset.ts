@@ -114,16 +114,6 @@ export abstract class FieldAssetEditor<U extends FieldAssetEditorOptions, V exte
                 const project = pxt.react.getTilemapProject();
                 pxt.sprite.addMissingTilemapTilesAndReferences(project, this.asset);
 
-                const assetPackTiles = project.getAssetPackTiles(this.asset?.data?.tileset?.tileWidth);
-                if (assetPackTiles?.length) {
-                    params.galleryTiles = assetPackTiles.map(tile => ({
-                        qName: tile.id,
-                        bitmap: tile.bitmap,
-                        alt: tile.meta?.displayName || tile.id,
-                        tags: this.normalizeGalleryTags(tile.meta?.tags, tile.meta?.package)
-                    }));
-                }
-
                 for (const tile of getTilesReferencedByTilesets(this.sourceBlock_.workspace)) {
                     if (this.asset.data.projectReferences.indexOf(tile.id) === -1) {
                         this.asset.data.projectReferences.push(tile.id);
