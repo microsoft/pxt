@@ -147,13 +147,12 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
 
         const visibleTiles = this.categoryTiles.slice(startIndex, startIndex + columns * rows);
 
-        const dropdownCategories = this.categories.filter(c => !!c.tiles.length);
-        const dropdownItems: DropdownItem[] = dropdownCategories.map(cat => ({
-            id: cat.id,
-            title: cat.text,
-            label: cat.text,
-        }));
-        const selectedDropdownIndex = Math.min(category, Math.max(dropdownItems.length - 1, 0));
+        const dropdownItems: DropdownItem[] = this.categories.filter(c => !!c.tiles.length)
+            .map(cat => ({
+                id: cat.id,
+                title: cat.text,
+                label: cat.text,
+            }));
 
         return <div className="tile-palette">
             <div className="tile-palette-fg-bg">
@@ -184,13 +183,13 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
             </div>
             <Pivot options={tabs} selected={galleryOpen ? 1 : 0} onChange={this.pivotHandler} />
             <div className="tile-palette-controls-outer">
-                { galleryOpen && dropdownItems.length > 0 &&
+                { galleryOpen && 
                     <Dropdown
                         id="tile-palette-gallery"
                         className="tile-palette-dropdown"
                         items={dropdownItems}
                         onItemSelected={this.dropdownHandler}
-                        selectedId={dropdownItems[selectedDropdownIndex]?.id}
+                        selectedId={dropdownItems[category]?.id}
                     />
                 }
 

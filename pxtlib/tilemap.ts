@@ -461,11 +461,11 @@ namespace pxt {
             const tiles: Tile[] = [];
 
             const addTile = (tile: Tile) => {
-                if (!tile || !tile.bitmap || tile.bitmap.width !== tileWidth) return;
+                if (!tile?.bitmap || tile.bitmap.width !== tileWidth) return;
                 if (seen[tile.id]) return;
-            // Skip transparent tiles
-            const allZero = tile.bitmap.data?.every?.(p => p === 0);
-            if (allZero) return;
+                // Skip transparent tiles
+                const allZero = tile.bitmap.data?.every?.(p => p === 0);
+                if (allZero) return;
 
                 const clone = cloneAsset(tile);
                 clone.meta = clone.meta || {};
@@ -1026,10 +1026,11 @@ namespace pxt {
 
         public getAssetPackTiles(tileWidth?: number): Tile[] {
             if (!this.assetPackIds?.length) return [];
+            const tiles = this.getGalleryAssets(AssetType.Tile);
 
-            return (this.getGalleryAssets(AssetType.Tile) as Tile[]).filter(tile =>
-                !!tile?.bitmap && (!tileWidth || tile.bitmap.width === tileWidth) &&
-                tile.meta?.package && this.assetPackIds.indexOf(tile.meta.package) !== -1
+            return tiles.filter(tile => !!tile?.bitmap
+                && (!tileWidth || tile.bitmap.width === tileWidth)
+                && tile.meta?.package && this.assetPackIds.indexOf(tile.meta.package) !== -1
             );
         }
 
@@ -1122,8 +1123,8 @@ namespace pxt {
             for (const dep of allPackages) {
                 const isProject = dep.id === "this";
                 const isAssetPack = !isProject && dep.isAssetPack();
-                const assetPackCategory = isAssetPack ? buildAssetPackCategoryTag(dep) : undefined;
-                const assetPackTileSets: pxt.Map<Tile[]> = {};
+                const assetPackCategory = isAssetPack ? packageToCategoryTag(dep) : undefined;
+                const assetPackTiles: Tile[] = [];
                 const images = this.readImages(dep.parseJRes(), isProject);
 
                 for (const toAdd of images) {
@@ -1132,11 +1133,7 @@ namespace pxt {
                     if (isAssetPack && toAdd.type === AssetType.Tile) {
                         toAdd.meta.tags = normalizeAssetPackTileTags(toAdd.meta.tags, assetPackCategory);
 
-                        const width = toAdd.bitmap?.width;
-                        if (width) {
-                            assetPackTileSets[width] = assetPackTileSets[width] || [];
-                            assetPackTileSets[width].push(cloneAsset(toAdd) as Tile);
-                        }
+                        assetPackTiles.push(cloneAsset(toAdd) as Tile);
                     }
                     if (toAdd.type === AssetType.Tile) {
                         this.getAssetCollection(AssetType.Tile, !isProject).add(toAdd);
@@ -1170,8 +1167,19 @@ namespace pxt {
                 if (isAssetPack) {
                     this.assetPackIds.push(dep.id);
 
-                    const tileSets = Object.keys(assetPackTileSets)
-                        .map(tileWidth => ({ tileWidth: parseInt(tileWidth, 10), tiles: assetPackTileSets[tileWidth] }))
+                    const assetPackTileSets = new Map<number, Tile[]>();
+
+                    for (const tile of assetPackTiles) {
+                        const width = tile.bitmap?.width;
+                        if (!width) continue;
+
+                        const tilesForWidth = assetPackTileSets.get(width) || [];
+                        tilesForWidth.push(tile);
+                        assetPackTileSets.set(width, tilesForWidth);
+                    }
+
+                    const tileSets = Array.from(assetPackTileSets.entries())
+                        .map(([tileWidth, tiles]) => ({ tileWidth, tiles }))
                         .filter(tileSet => !!tileSet.tiles?.length);
 
                     if (tileSets.length) {
@@ -1894,7 +1902,7 @@ namespace pxt {
         return new pxt.sprite.TilemapData(tilemap, tileset, layers);
     }
 
-    function buildAssetPackCategoryTag(dep: Package) {
+    function packageToCategoryTag(dep: Package) {
         const base = (dep.config?.name || dep.id || "").trim();
         const sanitized = base.replace(/[^\w]+/g, "-").replace(/^-+|-+$/g, "").toLowerCase() || "asset-pack";
         return `category-${sanitized}`;
@@ -1903,15 +1911,13 @@ namespace pxt {
     function normalizeAssetPackTileTags(tags?: string[], categoryTag?: string) {
         const normalized: string[] = [];
 
-        if (tags) {
-            for (const tag of tags) {
-                if (!tag) continue;
-                if (pxt.Util.startsWith(tag, "category-")) {
-                    if (normalized.indexOf(tag) === -1) normalized.push(tag);
-                } else {
-                    const lower = tag.toLowerCase();
-                    if (normalized.indexOf(lower) === -1) normalized.push(lower);
-                }
+        for (const tag of tags ?? []) {
+            if (!tag) continue;
+            if (pxt.Util.startsWith(tag, "category-")) {
+                if (normalized.indexOf(tag) === -1) normalized.push(tag);
+            } else {
+                const lower = tag.toLowerCase();
+                if (normalized.indexOf(lower) === -1) normalized.push(lower);
             }
         }
 

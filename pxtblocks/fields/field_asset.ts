@@ -437,37 +437,6 @@ export abstract class FieldAssetEditor<U extends FieldAssetEditorOptions, V exte
         }
     }
 
-    protected normalizeGalleryTags(tags?: string[], packageId?: string) {
-        const normalized: string[] = [];
-
-        if (tags) {
-            for (const tag of tags) {
-                if (!tag) continue;
-
-                if (pxt.Util.startsWith(tag, "category-")) {
-                    if (normalized.indexOf(tag) === -1) normalized.push(tag);
-                } else {
-                    const lowered = tag.toLowerCase();
-                    if (normalized.indexOf(lowered) === -1) normalized.push(lowered);
-                }
-            }
-        }
-
-        const hasCategory = normalized.some(tag => pxt.Util.startsWith(tag, "category-"));
-        const fallbackCategory = this.buildAssetPackCategoryTagFromId(packageId);
-        if (!hasCategory && fallbackCategory) normalized.push(fallbackCategory);
-        if (normalized.indexOf("tile") === -1) normalized.push("tile");
-
-        return normalized;
-    }
-
-    protected buildAssetPackCategoryTagFromId(packageId?: string) {
-        if (!packageId) return undefined;
-
-        const sanitized = packageId.replace(/[^\w]+/g, "-").replace(/^-+|-+$/g, "").toLowerCase() || "asset-pack";
-        return `category-${sanitized}`;
-    }
-
     protected parseValueText(newText: string) {
         newText = pxt.Util.htmlUnescape(newText);
         if (this.sourceBlock_) {
