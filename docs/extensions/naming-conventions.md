@@ -20,11 +20,13 @@ In other words, it should match the following regex: `^[a-z][a-z0-9\-_]+`.
 
 ### ~ reminder
 
-#### Replacement of the top-level heading
+#### Headings in the Extensions Gallery info pages
 
-When displaying the extension information (details from the README.md file), a the top-level heading (h1) is created from the `name` field in the `pxt.json` file. To avoid duplication, this heading may get removed in order to show an alternate heading containing a more complete repository name. For example:
+To display the information page for an extension (when you click `Learn more` on an extension card in the Extensions Gallery) the Editor will inject portions of the `README.md` file from the extension's repository. A new top-level heading (`h1`), in addition to the one from the `README.md`, is generated for this page. The new heading might contain something like `theowner/pxt-laser-ray 1.2.3`, depending on the repository, owner, and version.
 
-If the extension name is `theowner/pxt-laser-ray` and the `pxt.json` file contains the same name as the repository -
+The rendering process for the extension's information page will attempt to remove the original `h1` element that came from `README.md` in order to avoid name duplication in the page headings. This is done by looking for the heading from the `README.md` that contains the `name` entry from the `pxt.json` in the repository. If found, that heading is removed. However, if the heading from the `README.md` doesn't match the `name` from `pxt.json`, then that `h1` heading isn't removed and it will also display in the extension information page.
+
+If `pxt.json` file contains:
 
 ```
 "name": "pxt-laser-ray",
@@ -32,11 +34,23 @@ If the extension name is `theowner/pxt-laser-ray` and the `pxt.json` file contai
 "description": "Generate light effects to simulate laser rays."
 ```
 
-Then, the top-level heading will contain -
+...but the `README.md` contains:
 
-`theowner/pxt-laser-ray 1.2.3`
+```
+# Cool Laser Ray
 
-If the names differ, you may see two top-level headings in the extension information page source.
+This extenstion contains blocks to create laser ray effects.
+
+...
+```
+
+...the information page will contain both:
+
+`<h1>theowner/pxt-laser-ray 1.2.3</h1>`
+
+and
+
+`<h1>Cool Laser Ray</h1>`
 
 ### ~
 
