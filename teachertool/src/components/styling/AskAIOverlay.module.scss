@@ -118,6 +118,32 @@
         gap: 0.5rem;
     }
 
+    .custom-header {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+        width: 100%;
+
+        .checkbox {
+            flex: 1;
+        }
+
+        label {
+            white-space: normal;
+        }
+    }
+
+    .custom-delete-button {
+        margin: 0;
+        padding: 0.15rem 0;
+
+        span[class~="common-button-label"] {
+            display: none;
+        }
+    }
+
     .prompt-list {
         display: flex;
         flex-direction: column;
