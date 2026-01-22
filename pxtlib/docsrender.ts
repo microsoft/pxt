@@ -1246,7 +1246,7 @@ My links
             const videoId = decodeURIComponent(videoContainer.getAttribute("data-youtube"));
             const iframe = document.createElement("iframe");
             iframe.className = "yt-embed";
-            const rawUrl = `https://www.youtube.com/embed/${videoId}`;
+            const rawUrl = `https://www.youtube-nocookie.com/embed/${videoId}`;
 
             let lang = pxt.appTarget.appTheme?.defaultLocale ?? "en";
             let url = new URL(rawUrl);
@@ -1257,12 +1257,17 @@ My links
                 });
             }
             url.searchParams.append("hl", lang);
+            url.searchParams.append("rel", "0");
+            url.searchParams.append("modestbranding", "1");
+            url.searchParams.append("autoplay", "0");
+            url.searchParams.append("showinfo", "0");
 
             iframe.setAttribute("src", url.toString());
             iframe.setAttribute("title", videoContainer.getAttribute("title") || "");
             iframe.setAttribute("frameborder", "0");
             iframe.setAttribute("allowFullScreen", "true");
             iframe.setAttribute("allow", "autoplay; picture-in-picture");
+            iframe.setAttribute("sandbox", "allow-same-origin allow-scripts");
             videoContainer.textContent = "";
             videoContainer.appendChild(iframe);
         }
