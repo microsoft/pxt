@@ -44,7 +44,17 @@ This extenstion contains blocks to create laser ray effects.
 ...
 ```
 
-...the information page will contain both:
+...instead of:
+
+```
+# pxt-laser-ray
+
+This extenstion contains blocks to create laser ray effects.
+
+...
+```
+
+...then the information page will contain both:
 
 `<h1>theowner/pxt-laser-ray 1.2.3</h1>`
 
