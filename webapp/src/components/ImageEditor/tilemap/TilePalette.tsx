@@ -422,26 +422,31 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
         if (gallery) {
             for (const tile of gallery) {
                 if (tile.tileWidth !== tileset.tileWidth) continue;
+                const bitmapData = tile.bitmap?.data;
+                if (bitmapData?.every?.(p => p === 0)) continue;
 
-                const categoryName = tile.tags.find(t => pxt.Util.startsWith(t, "category-"));
-                if (categoryName && categoryName !== "category-misc") {
-                    if (!extraCategories[categoryName]) {
-                        extraCategories[categoryName] = {
-                            id: categoryName,
-                            text: pxt.Util.rlf(`{id:tilecategory}${categoryName.substr(9)}`),
+                const miscBucket = baseCategories.find(opt => opt.id === "misc") || baseCategories[0];
+                const categoryTag = tile.tags.find(t => pxt.Util.startsWith(t, "category-") && t !== "category-misc");
+
+                if (categoryTag) {
+                    if (!extraCategories[categoryTag]) {
+                        extraCategories[categoryTag] = {
+                            id: categoryTag,
+                            text: pxt.Util.rlf(`{id:tilecategory}${categoryTag.substr(9)}`),
                             tiles: []
                         };
                     }
 
-                    extraCategories[categoryName].tiles.push(tile);
+                    extraCategories[categoryTag].tiles.push(tile);
                 }
 
-                const bucket = baseCategories.find(opt => opt.id === "misc") || baseCategories[0];
-                if (tile.tags.indexOf(bucket.id) !== -1 || !categoryName) {
-                    bucket.tiles.push(tile);
-                }
-                for (const base of baseCategories) {
-                    if (base.id !== "misc" && tile.tags.indexOf(base.id) !== -1) base.tiles.push(tile);
+                const matchedBase = baseCategories.filter(base => base.id !== "misc" && tile.tags.indexOf(base.id) !== -1);
+                matchedBase.forEach(base => base.tiles.push(tile));
+
+                const hasAnyCategory = !!categoryTag || matchedBase.length > 0;
+                const explicitMisc = tile.tags.indexOf("misc") !== -1 || tile.tags.indexOf("category-misc") !== -1;
+                if (explicitMisc || !hasAnyCategory) {
+                    miscBucket.tiles.push(tile);
                 }
             }
         }
