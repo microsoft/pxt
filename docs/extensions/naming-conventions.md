@@ -39,7 +39,7 @@ If `pxt.json` file contains:
 ```
 # Cool Laser Ray
 
-This extenstion contains blocks to create laser ray effects.
+This extension contains blocks to create laser ray effects.
 
 ...
 ```
@@ -49,7 +49,7 @@ This extenstion contains blocks to create laser ray effects.
 ```
 # pxt-laser-ray
 
-This extenstion contains blocks to create laser ray effects.
+This extension contains blocks to create laser ray effects.
 
 ...
 ```
