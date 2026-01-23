@@ -277,8 +277,10 @@ export const AskAIOverlay = () => {
                                                 <div className={css["custom-list"]}>
                                                     {customPrompts.map((p, index) => {
                                                         const trimmedText = p.text.trim();
-                                                        const validationMsg = p.checked ? getValidationMessage(p.text) : undefined;
-                                                        const hasError = p.checked && trimmedText && trimmedText.length < Constants.MinAIQuestionLength;
+                                                        // Show validation message whenever there's text that doesn't meet requirements
+                                                        const validationMsg = getValidationMessage(p.text);
+                                                        // Show error styling when there's text but it's too short
+                                                        const hasError = trimmedText && trimmedText.length < Constants.MinAIQuestionLength;
                                                         
                                                         return (
                                                         <div key={p.id} className={css["custom-item"]}>

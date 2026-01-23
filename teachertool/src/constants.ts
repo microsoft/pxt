@@ -1,3 +1,9 @@
+namespace Misc {
+    export const LearnMoreLink = "https://makecode.microbit.org/teachertool"; // TODO: Replace with golink or aka.ms link
+    export const ExperienceId = "code-eval";
+    export const MinAIQuestionLength = 10;
+}
+
 export namespace Strings {
     export const AppTitle = lf("Code Evaluation");
     export const AppTitleShort = lf("Code Eval");
@@ -103,12 +109,6 @@ export namespace Ticks {
     export const BlockPickerOpened = "teachertool.blockpicker.opened";
     export const PrivacyStatementClicked = "teachertool.privacystatement.clicked";
     export const TermsOfUseClicked = "teachertool.termsofuse.clicked";
-}
-
-namespace Misc {
-    export const LearnMoreLink = "https://makecode.microbit.org/teachertool"; // TODO: Replace with golink or aka.ms link
-    export const ExperienceId = "code-eval";
-    export const MinAIQuestionLength = 10;
 }
 
 export const Constants = Object.assign(Misc, { Strings, Ticks });
