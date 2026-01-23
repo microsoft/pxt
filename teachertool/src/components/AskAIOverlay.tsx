@@ -275,7 +275,12 @@ export const AskAIOverlay = () => {
                                         <Accordion.Panel>
                                             {customPrompts.length > 0 && (
                                                 <div className={css["custom-list"]}>
-                                                    {customPrompts.map((p, index) => (
+                                                    {customPrompts.map((p, index) => {
+                                                        const trimmedText = p.text.trim();
+                                                        const validationMsg = p.checked ? getValidationMessage(p.text) : undefined;
+                                                        const hasError = p.checked && trimmedText && trimmedText.length < Constants.MinAIQuestionLength;
+                                                        
+                                                        return (
                                                         <div key={p.id} className={css["custom-item"]}>
                                                             <div className={css["custom-header"]}>
                                                                 <Checkbox
@@ -297,20 +302,20 @@ export const AskAIOverlay = () => {
                                                             </div>
                                                             <Textarea
                                                                 id={`ask-ai-custom-text-${p.id}`}
-                                                                className={classList(css["textarea"], p.checked && p.text.trim() && p.text.trim().length < Constants.MinAIQuestionLength && css["textarea-error"])}
+                                                                className={classList(css["textarea"], hasError && css["textarea-error"])}
                                                                 placeholder={Strings.CustomPromptPlaceholder}
                                                                 initialValue={p.text}
                                                                 maxLength={aiQuestionMaxLength}
                                                                 showRemainingCharacterCount={100}
                                                                 onChange={text => setCustomTextForId(p.id, text)}
                                                             />
-                                                            {p.checked && getValidationMessage(p.text) && (
+                                                            {validationMsg && (
                                                                 <div className={css["validation-message"]}>
-                                                                    {getValidationMessage(p.text)}
+                                                                    {validationMsg}
                                                                 </div>
                                                             )}
                                                         </div>
-                                                    ))}
+                                                    )})}
                                                 </div>
                                             )}
 
