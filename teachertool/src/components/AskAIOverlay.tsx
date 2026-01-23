@@ -231,6 +231,17 @@ export const AskAIOverlay = () => {
     const removeCustomPrompt = React.useCallback((id: number) => {
         setCustomPrompts(prev => (prev.length > 1 ? prev.filter(p => p.id !== id) : prev));
     }, []);
+    
+    const getValidationMessage = React.useCallback((text: string) => {
+        const trimmed = text.trim();
+        if (!trimmed) {
+            return Strings.ValueRequired;
+        }
+        if (trimmed.length < Constants.MinAIQuestionLength) {
+            return lf(Strings.QuestionTooShort, Constants.MinAIQuestionLength);
+        }
+        return undefined;
+    }, []);
 
     if (!teacherTool.askAiOpen) return null;
 
@@ -286,13 +297,18 @@ export const AskAIOverlay = () => {
                                                             </div>
                                                             <Textarea
                                                                 id={`ask-ai-custom-text-${p.id}`}
-                                                                className={css["textarea"]}
+                                                                className={classList(css["textarea"], p.checked && p.text.trim() && p.text.trim().length < Constants.MinAIQuestionLength && css["textarea-error"])}
                                                                 placeholder={Strings.CustomPromptPlaceholder}
                                                                 initialValue={p.text}
                                                                 maxLength={aiQuestionMaxLength}
                                                                 showRemainingCharacterCount={100}
                                                                 onChange={text => setCustomTextForId(p.id, text)}
                                                             />
+                                                            {p.checked && getValidationMessage(p.text) && (
+                                                                <div className={css["validation-message"]}>
+                                                                    {getValidationMessage(p.text)}
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     ))}
                                                 </div>
