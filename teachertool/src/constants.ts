@@ -52,6 +52,7 @@ export namespace Strings {
     export const UnableToReachAI = lf("Unable to reach the AI service");
     export const UnexpectedError = lf("An unexpected error occurred");
     export const Dismiss = lf("Dismiss");
+    export const QuestionTooShort = lf("Question must be at least {0} characters");
     export const EvaluationComplete = lf("Evaluation complete");
     export const UnableToEvaluatePartial = lf("Unable to evaluate some criteria");
     export const GiveFeedback = lf("Give Feedback");
@@ -107,6 +108,7 @@ export namespace Ticks {
 namespace Misc {
     export const LearnMoreLink = "https://makecode.microbit.org/teachertool"; // TODO: Replace with golink or aka.ms link
     export const ExperienceId = "code-eval";
+    export const MinAIQuestionLength = 10;
 }
 
 export const Constants = Object.assign(Misc, { Strings, Ticks });

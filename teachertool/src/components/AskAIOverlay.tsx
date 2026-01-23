@@ -8,7 +8,7 @@ import { FocusTrap } from "react-common/components/controls/FocusTrap";
 import { Accordion } from "react-common/components/controls/Accordion";
 import { classList } from "react-common/components/util";
 
-import { Strings } from "../constants";
+import { Strings, Constants } from "../constants";
 import { setAskAiOpen } from "../transforms/setAskAiOpen";
 import { addAiQuestionCriteriaToChecklist } from "../transforms/addAiQuestionCriteriaToChecklist";
 import { showToast } from "../transforms/showToast";
@@ -122,11 +122,11 @@ export const AskAIOverlay = () => {
         customPrompts.forEach(p => {
             if (!p.checked) return;
             const trimmed = (p.text || "").trim();
-            if (trimmed) values.push(trimmed);
+            if (trimmed && trimmed.length >= Constants.MinAIQuestionLength) values.push(trimmed);
         });
 
         Object.keys(selected).forEach(k => {
-            if (selected[k]) values.push(k);
+            if (selected[k] && k.length >= Constants.MinAIQuestionLength) values.push(k);
         });
 
         // Remove dupes while keeping order.
@@ -156,6 +156,33 @@ export const AskAIOverlay = () => {
     const canSubmit = !!selectedQuestions.length && canAddAny;
 
     const addSelected = React.useCallback(() => {
+        // Check if any questions are too short
+        const tooShortQuestions: string[] = [];
+        
+        customPrompts.forEach(p => {
+            if (!p.checked) return;
+            const trimmed = (p.text || "").trim();
+            if (trimmed && trimmed.length < Constants.MinAIQuestionLength) {
+                tooShortQuestions.push(trimmed);
+            }
+        });
+        
+        Object.keys(selected).forEach(k => {
+            if (selected[k] && k.length < Constants.MinAIQuestionLength) {
+                tooShortQuestions.push(k);
+            }
+        });
+        
+        if (tooShortQuestions.length > 0) {
+            showToast(
+                makeToast(
+                    "error",
+                    lf(Strings.QuestionTooShort, Constants.MinAIQuestionLength)
+                )
+            );
+            return;
+        }
+        
         if (!selectedQuestions.length) return;
 
         const toAdd =
@@ -183,7 +210,7 @@ export const AskAIOverlay = () => {
         lastAddedCustomPromptId.current = undefined;
 
         close();
-    }, [selectedQuestions, remainingAiQuestionSlots, close]);
+    }, [selectedQuestions, customPrompts, selected, remainingAiQuestionSlots, close]);
 
     const addCustomPrompt = React.useCallback(() => {
         const id = nextCustomPromptId.current++;
