@@ -157,25 +157,17 @@ export const AskAIOverlay = () => {
 
     const addSelected = React.useCallback(() => {
         // Check if any checked questions are too short
-        let hasTooShortQuestion = false;
-        
-        customPrompts.forEach(p => {
-            if (!p.checked) return;
+        const hasShortCustomQuestion = customPrompts.some(p => {
+            if (!p.checked) return false;
             const trimmed = (p.text || "").trim();
-            if (trimmed && trimmed.length < Constants.MinAIQuestionLength) {
-                hasTooShortQuestion = true;
-            }
+            return trimmed && trimmed.length < Constants.MinAIQuestionLength;
         });
         
-        if (!hasTooShortQuestion) {
-            Object.keys(selected).forEach(k => {
-                if (selected[k] && k.length < Constants.MinAIQuestionLength) {
-                    hasTooShortQuestion = true;
-                }
-            });
-        }
+        const hasShortSelectedQuestion = !hasShortCustomQuestion && Object.keys(selected).some(k => 
+            selected[k] && k.length < Constants.MinAIQuestionLength
+        );
         
-        if (hasTooShortQuestion) {
+        if (hasShortCustomQuestion || hasShortSelectedQuestion) {
             showToast(
                 makeToast(
                     "error",
