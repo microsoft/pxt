@@ -29,7 +29,6 @@ namespace ts.pxtc {
         "control.createBuffer": { n: "bytearray", t: ts.SyntaxKind.Unknown },
         "control.createBufferFromArray": { n: "bytes", t: ts.SyntaxKind.Unknown },
         "!!": { n: "bool", t: ts.SyntaxKind.BooleanKeyword },
-        "Array.indexOf": { n: "Array.index", t: ts.SyntaxKind.Unknown },
         "Array.push": { n: "Array.append", t: ts.SyntaxKind.Unknown },
         "parseInt": { n: "int", t: ts.SyntaxKind.NumberKeyword, snippet: 'int("0")' },
         "_py.range": { n: "range", t: ts.SyntaxKind.Unknown, snippet: 'range(4)' }
@@ -1020,6 +1019,10 @@ namespace ts.pxtc.service {
             const { apis } = lastApiInfo;
             const blocksInfo = blocksInfoOp(apis, bannedCategories);
             const checker = service && service.getProgram().getTypeChecker();
+            // needed for blocks that have parent wraps like music.play(...)
+            // with this snippet call, we are dragging a block from the toolbox,
+            // so we want to include the parent snippet
+            const includeParentSnippet = true;
             const snippetContext = {
                 apis,
                 blocksInfo,
@@ -1027,6 +1030,7 @@ namespace ts.pxtc.service {
                 bannedCategories,
                 screenSize,
                 checker,
+                includeParentSnippet
             }
             const snippetNode = getSnippet(snippetContext, fn, n as FunctionLikeDeclaration, isPython)
             const snippet = snippetStringify(snippetNode)

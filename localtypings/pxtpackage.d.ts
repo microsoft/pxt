@@ -76,6 +76,7 @@ declare namespace pxt {
             corePackage?: string;
             includeDirs?: string[];
             excludePrefix?: string[];
+            compileServiceVariant?: string;
         };
         features?: string[];
         hidden?: boolean; // hide package from package selection dialog

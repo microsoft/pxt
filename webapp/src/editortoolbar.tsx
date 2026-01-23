@@ -278,6 +278,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         const webUSBSupported = pxt.usb.isEnabled && editorSupportsWebUSB;
         const showUsbNotSupportedHint = editorSupportsWebUSB
             && !pxt.usb.isEnabled
+            && pxt.shell.getControllerMode() !== pxt.shell.ControllerMode.App
             && !pxt.BrowserUtils.isPxtElectron()
             && (pxt.BrowserUtils.isChromiumEdge() || pxt.BrowserUtils.isChrome());
         const packetioConnected = !!this.getData("packetio:connected");

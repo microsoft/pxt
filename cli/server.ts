@@ -421,7 +421,7 @@ export function expandHtml(html: string, params?: pxt.Map<string>, appTheme?: px
     // page overrides
     let m = /<title>([^<>@]*)<\/title>/.exec(html)
     if (m) params["name"] = m[1]
-    m = /<meta name="Description" content="([^"@]*)"/.exec(html)
+    m = /<meta name="Description" content="([^"@]*)"/i.exec(html)
     if (m) params["description"] = m[1]
     let d: pxt.docs.RenderData = {
         html: html,

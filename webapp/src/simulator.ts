@@ -240,7 +240,8 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
         nestedEditorSim,
         parentOrigin,
         mpRole,
-        messageSimulators: pxt.appTarget?.simulator?.messageSimulators
+        messageSimulators: pxt.appTarget?.simulator?.messageSimulators,
+        userLanguage: pxt.Util.userLanguage()
     };
     driver = new pxsim.SimulatorDriver(document.getElementById('simulators'), options);
     config = cfg

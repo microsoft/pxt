@@ -39,12 +39,13 @@ export class DebuggerToolbox extends React.Component<DebuggerToolboxProps, Debug
 
     render() {
         return <div>
-            <DebuggerToolbar parent={this.props.parent} />
+            <DebuggerToolbar parent={this.props.parent} showAdvancedControls={this.props.showCallStack} />
             <DebuggerVariables
                 apis={this.props.apis}
                 breakpoint={this.state.lastBreakpoint}
                 filters={this.state.varFilters}
                 activeFrame={this.state.currentFrame}
+                includeAllVariables={this.props.showCallStack}
                 sequence={this.state.sequence} />
             { this.props.showCallStack &&
                 <DebuggerCallStack openLocation={this.props.openLocation} activeFrame={this.state.currentFrame} stackframes={this.state.lastBreakpoint ? this.state.lastBreakpoint.stackframes : []}  /> }

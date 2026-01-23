@@ -1,4 +1,4 @@
-import { ToastWithId, TabName, ProjectData } from "../types";
+import { ToastWithId, TabName, ProjectData, UserFeedback } from "../types";
 import { CatalogCriteria, CriteriaResult } from "../types/criteria";
 import { ModalOptions } from "../types/modalOptions";
 import { Checklist } from "../types/checklist";
@@ -80,9 +80,9 @@ type SetActiveTab = ActionBase & {
     tabName: TabName;
 };
 
-type SetAutorun = ActionBase & {
-    type: "SET_AUTORUN";
-    autorun: boolean;
+type SetRunOnLoad = ActionBase & {
+    type: "SET_RUN_ON_LOAD";
+    runOnLoad: boolean;
 };
 
 type SetEvalResultsBatch = ActionBase & {
@@ -110,6 +110,17 @@ type SetScreenReaderAnnouncement = ActionBase & {
     announcement: string;
 };
 
+type SetUserProfile = ActionBase & {
+    type: "SET_USER_PROFILE";
+    profile: pxt.auth.UserProfile | undefined;
+};
+
+type SetUserFeedback = ActionBase & {
+    type: "SET_USER_FEEDBACK";
+    criteriaInstanceId: string;
+    userFeedback: UserFeedback;
+};
+
 /**
  * Union of all actions
  */
@@ -131,10 +142,12 @@ export type Action =
     | HideModal
     | SetValidatorPlans
     | SetActiveTab
-    | SetAutorun
+    | SetRunOnLoad
     | SetToolboxCategories
     | SetBlockImageUri
-    | SetScreenReaderAnnouncement;
+    | SetScreenReaderAnnouncement
+    | SetUserProfile
+    | SetUserFeedback;
 
 /**
  * Action creators
@@ -208,9 +221,9 @@ const setActiveTab = (tabName: TabName): SetActiveTab => ({
     tabName,
 });
 
-const setAutorun = (autorun: boolean): SetAutorun => ({
-    type: "SET_AUTORUN",
-    autorun,
+const setRunOnLoad = (runOnLoad: boolean): SetRunOnLoad => ({
+    type: "SET_RUN_ON_LOAD",
+    runOnLoad,
 });
 
 const setEvalResultsBatch = (criteriaResults: pxt.Map<CriteriaResult>): SetEvalResultsBatch => ({
@@ -238,6 +251,17 @@ const setScreenReaderAnnouncement = (announcement: string): SetScreenReaderAnnou
     announcement,
 });
 
+const setUserProfile = (profile: pxt.auth.UserProfile | undefined): SetUserProfile => ({
+    type: "SET_USER_PROFILE",
+    profile,
+});
+
+const setUserFeedback = (criteriaInstanceId: string, userFeedback: UserFeedback): SetUserFeedback => ({
+    type: "SET_USER_FEEDBACK",
+    criteriaInstanceId,
+    userFeedback,
+});
+
 export {
     showToast,
     dismissToast,
@@ -255,8 +279,10 @@ export {
     hideModal,
     setValidatorPlans,
     setActiveTab,
-    setAutorun,
+    setRunOnLoad,
     setToolboxCategories,
     setBlockImageUri,
     setScreenReaderAnnouncement,
+    setUserProfile,
+    setUserFeedback,
 };

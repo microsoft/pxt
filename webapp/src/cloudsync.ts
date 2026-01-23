@@ -122,8 +122,8 @@ export class ProviderBase {
             pxt.storage.setLocal(this.name + CLOUD_USER, JSON.stringify(user))
         else
             pxt.storage.removeLocal(this.name + CLOUD_USER);
-            data.invalidate("sync:user")
-            data.invalidate("github:user")
+        data.invalidate("sync:user")
+        data.invalidate("github:user")
     }
 
     protected token() {
@@ -516,7 +516,7 @@ function pingApiHandlerAsync(p: string): Promise<any> {
 }
 
 data.mountVirtualApi("sync", { getSync: syncApiHandler })
-data.mountVirtualApi("github", { getSync: githubApiHandler })
+data.mountVirtualApi("github", { getSync: githubApiHandler, expirationTime: p => 24 * 3600 * 1000 })
 data.mountVirtualApi("ping", {
     getAsync: pingApiHandlerAsync,
     expirationTime: p => 24 * 3600 * 1000,

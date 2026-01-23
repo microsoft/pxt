@@ -29,7 +29,7 @@ namespace pxt.packetio {
 
     export interface PacketIO {
         sendPacketAsync(pkt: Uint8Array): Promise<void>;
-        recvPacketAsync?: () => Promise<Uint8Array>;
+        recvPacketAsync?: (timeout?: number) => Promise<Uint8Array>;
         onDeviceConnectionChanged: (connect: boolean) => void;
         onConnectionChanged: () => void;
         onData: (v: Uint8Array) => void;

@@ -479,3 +479,9 @@ export function setBlockDataForField(block: Blockly.Block, field: string, data: 
 export function getBlockDataForField(block: Blockly.Block, field: string) {
     return getBlockData(block).fieldData[field];
 }
+
+export function deleteBlockDataForField(block: Blockly.Block, field: string) {
+    const blockData = getBlockData(block);
+    delete blockData.fieldData[field];
+    setBlockData(block, blockData);
+}

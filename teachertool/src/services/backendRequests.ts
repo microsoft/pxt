@@ -1,3 +1,4 @@
+import { Strings } from "../constants";
 import { stateAndDispatch } from "../state";
 import { ErrorCode } from "../types/errorCode";
 import { logError } from "./loggingService";
@@ -90,27 +91,17 @@ export async function loadTestableCollectionFromDocsAsync<T>(fileNames: string[]
 }
 
 export async function askCopilotQuestionAsync(shareId: string, question: string): Promise<string | undefined> {
-    const { state: teacherTool } = stateAndDispatch();
-
-    const url = `${
-        teacherTool.copilotEndpointOverride ? teacherTool.copilotEndpointOverride : pxt.Cloud.apiRoot
-    }/copilot/question`;
-
+    const url = `/api/copilot/question`;
     const data = { id: shareId, question };
     let result: string = "";
     try {
-        const request = await fetch(url, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(data),
-        });
-
-        if (!request.ok) {
-            throw new Error("Unable to reach Copilot");
+        const request = await pxt.auth.AuthClient.staticApiAsync(url, data, "POST");
+        if (!request.success) {
+            throw new Error(request.err || lf("Unable to reach AI. Error code: {0}", request.statusCode));
         }
-        result = await request.json();
+        result = await request.resp;
     } catch (e) {
-        logError(ErrorCode.askCopilotQuestion, e);
+        logError(ErrorCode.askAIQuestion, e);
     }
 
     return result;

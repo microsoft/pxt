@@ -4,6 +4,7 @@ import { runValidatorPlan } from "./code-validation/runValidatorPlan";
 import IProjectView = pxt.editor.IProjectView;
 
 import { IFrameEmbeddedClient } from "../pxtservices/iframeEmbeddedClient";
+import { saveProjectAsync } from "./projectImport";
 
 const pendingRequests: pxt.Map<{
     resolve: (res?: pxt.editor.EditorMessageResponse | PromiseLike<pxt.editor.EditorMessageResponse>) => void;
@@ -22,8 +23,7 @@ let iframeClient: IFrameEmbeddedClient;
  * Some commands may be async, use the ``id`` field to correlate to the original request.
  */
 export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) {
-    const allowEditorMessages = (pxt.appTarget.appTheme.allowParentController || pxt.shell.isControllerMode())
-        && pxt.BrowserUtils.isIFrame();
+    const allowEditorMessages = pxt.appTarget.appTheme.allowParentController || pxt.shell.isControllerMode();
     const allowExtensionMessages = pxt.appTarget.appTheme.allowPackageExtensions;
     const allowSimTelemetry = pxt.appTarget.appTheme.allowSimulatorTelemetry;
 
@@ -66,7 +66,7 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
                     return getEditorAsync().then(projectView => {
                         const req = data as pxt.editor.EditorMessageRequest;
                         pxt.debug(`pxteditor: ${req.action}`);
-                        switch (req.action.toLowerCase()) {
+                        switch (req.action.toLowerCase() as pxt.editor.EditorMessageRequest["action"]) {
                             case "switchjavascript": return Promise.resolve().then(() => projectView.openJavaScript());
                             case "switchpython": return Promise.resolve().then(() => projectView.openPython());
                             case "switchblocks": return Promise.resolve().then(() => projectView.openBlocks());
@@ -77,6 +77,7 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
                             case "closeflyout": return Promise.resolve().then(() => projectView.closeFlyout());
                             case "unloadproject": return Promise.resolve().then(() => projectView.unloadProjectAsync());
                             case "saveproject": return projectView.saveProjectAsync();
+                            case "compile": return projectView.compile();
                             case "redo": return Promise.resolve()
                                 .then(() => {
                                     const editor = projectView.editor;
@@ -111,6 +112,16 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
                                         filters: load.filters,
                                         searchBar: load.searchBar
                                     }));
+                            }
+                            case "importexternalproject": {
+                                const importExternal = data as pxt.editor.EditorMessageImportExternalProjectRequest
+                                return saveProjectAsync(importExternal.project)
+                                    .then(importId => {
+                                        const importUrl = location.origin + location.pathname + `#embedimport:${importId}`;
+                                        resp = {
+                                            importUrl
+                                        } as Partial<pxt.editor.EditorMessageImportExternalProjectResponse>
+                                    });
                             }
                             case "openheader": {
                                 const open = data as pxt.editor.EditorMessageOpenHeaderRequest;
@@ -188,7 +199,7 @@ case "renderxml": {
                                         const blocks = projectView.getBlocks();
                                         return runValidatorPlan(blocks, plan, planLib)})
                                     .then (results => {
-                                        resp = { result: results };
+                                        resp = results;
                                     });
                             }
 case "gettoolboxcategories": {

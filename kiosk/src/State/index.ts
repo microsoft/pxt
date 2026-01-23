@@ -9,6 +9,15 @@ function getHighScores(gameId: string | undefined): HighScore[] {
     return state.allHighScores[gameId];
 }
 
+function getScoringType(gameId: string | undefined): string {
+    const { state } = stateAndDispatch();
+    if (!gameId || !state.allGames.find(game => game.id === gameId)) {
+        return "None";
+    }
+    return state.allGames.find(game => game.id === gameId)!.highScoreMode;
+
+}
+
 function getSelectedGameIndex(): number | undefined {
     const { state } = stateAndDispatch();
     if (!state.selectedGameId) {
@@ -39,4 +48,5 @@ export {
     getSelectedGameId,
     getSelectedGame,
     getLaunchedGame,
+    getScoringType,
 };

@@ -118,6 +118,16 @@ namespace pxt.auth {
     export async function hasAuthTokenAsync(): Promise<boolean> {
         return !!(await getAuthTokenAsync());
     }
+
+    export async function getAuthHeadersAsync(authToken?: string): Promise<pxt.Map<string>> {
+        const headers: pxt.Map<string> = {};
+        const token = pxt.cookie.getCookieToken();
+        if (token) {
+            headers["Authorization"] = `Bearer ${token}`;
+        }
+        headers[X_PXT_TARGET] = pxt.appTarget?.id;
+        return headers;
+    }
     async function delAuthTokenAsync(): Promise<void> {
         cachedHasAuthToken = false;
         return await setLocalStorageValueAsync(CSRF_TOKEN_KEY, undefined);

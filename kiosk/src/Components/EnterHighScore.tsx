@@ -2,20 +2,35 @@ import NewScoreEntry from "./NewScoreEntry";
 import ExistingScoreEntry from "./ExistingScoreEntry";
 import { useContext } from "react";
 import { AppStateContext } from "../State/AppStateContext";
-import { getHighScores } from "../State";
+import { getHighScores, getScoringType } from "../State";
+import { HighScore } from "../Types";
 
 interface IProps {}
+
 
 const EnterHighScore: React.FC<IProps> = ({}) => {
     const { state: kiosk } = useContext(AppStateContext);
     const existingHighScores = getHighScores(kiosk.selectedGameId);
+    const launchedGameScoringMethod = getScoringType(kiosk.selectedGameId);
+
+    const sortingFunction = (a: HighScore, b: HighScore) => {
+        return (
+            launchedGameScoringMethod === "highscore" || launchedGameScoringMethod === "SingleAscending"
+            ? b.score - a.score
+            : a.score - b.score
+        )
+    }
 
     const aboveScores = existingHighScores
-        .filter(item => item.score > kiosk.mostRecentScores[0])
-        .sort((a, b) => b.score - a.score);
+        .filter(item =>
+            launchedGameScoringMethod === "highscore" || launchedGameScoringMethod === "SingleAscending"
+            ? item.score > kiosk.mostRecentScores[0]
+            : item.score < kiosk.mostRecentScores[0]
+        )
+        .sort(sortingFunction);
     const belowScores = existingHighScores
         .slice(aboveScores.length, existingHighScores.length)
-        .sort((a, b) => b.score - a.score);
+        .sort(sortingFunction);
 
     return (
         <div className="enterHighScore">

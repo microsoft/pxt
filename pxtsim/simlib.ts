@@ -71,16 +71,18 @@ namespace pxsim {
             return this.queues[key];
         }
 
-        listen(id: EventIDType, evid: EventIDType, handler: RefAction) {
+        listen(id: EventIDType, evid: EventIDType, handler: RefAction, flags = 0) {
             // special handle for idle, start the idle timeout
             if (id == this.schedulerID && evid == this.idleEventID)
                 this.runtime.startIdle();
 
             let q = this.start(id, evid, this.backgroundHandlerFlag, true);
-            if (this.backgroundHandlerFlag)
-                q.addHandler(handler);
-            else
-                q.setHandler(handler);
+            if (this.backgroundHandlerFlag) {
+                q.addHandler(handler, flags);
+            }
+            else {
+                q.setHandler(handler, flags);
+            }
             this.backgroundHandlerFlag = false;
         }
 

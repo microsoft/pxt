@@ -1441,4 +1441,8 @@ namespace pxt.BrowserUtils {
             body.classList.add(`theme-${theme}`);
         }
     }
+
+    export function isElement(node: Node): node is Element {
+        return node.nodeType === Node.ELEMENT_NODE;
+    }
 }

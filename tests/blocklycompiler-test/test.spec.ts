@@ -217,7 +217,7 @@ async function blockTestAsync(name: string) {
         disable: false,
         readOnly: false,
         plugins: {
-            'blockDragger': pxtblockly.BlockDragger,
+            // 'blockDragger': pxtblockly.BlockDragger,
             'connectionChecker': DuplicateOnDragConnectionChecker,
             'flyoutsVerticalToolbox': pxtblockly.VerticalFlyout
         },

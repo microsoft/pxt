@@ -26,18 +26,18 @@ export function soundToCodalSound(sound: pxt.assets.Sound): pxsim.codal.music.So
     switch (sound.effect) {
         case "vibrato":
             codalSound.fx = pxsim.codal.music.Effect.Vibrato;
-            codalSound.fxnSteps = 512;
-            codalSound.fxParam = 2;
+            codalSound.fxnSteps = readDalConstant("SFX_DEFAULT_VIBRATO_STEPS", 512);
+            codalSound.fxParam = readDalConstant("SFX_DEFAULT_VIBRATO_PARAM", 2);
             break;
         case "tremolo":
             codalSound.fx = pxsim.codal.music.Effect.Tremolo;
-            codalSound.fxnSteps = 900;
-            codalSound.fxParam = 3;
+            codalSound.fxnSteps = readDalConstant("SFX_DEFAULT_TREMOLO_STEPS", 900);
+            codalSound.fxParam = readDalConstant("SFX_DEFAULT_TREMOLO_PARAM", 3);
             break;
         case "warble":
             codalSound.fx = pxsim.codal.music.Effect.Warble;
-            codalSound.fxnSteps = 700;
-            codalSound.fxParam = 2;
+            codalSound.fxnSteps = readDalConstant("SFX_DEFAULT_WARBLE_STEPS", 700);
+            codalSound.fxParam = readDalConstant("SFX_DEFAULT_WARBLE_PARAM", 2);
             break;
     }
 
@@ -289,4 +289,19 @@ export function getMixerGallerySounds(): SoundGalleryItem[] {
     ];
 
     return res;
+}
+
+function readDalConstant(name: string, defaultValue: number) {
+    const file = pxt.appTarget.bundledpkgs?.["core"]?.["dal.d.ts"];
+
+    if (!file) return defaultValue;
+
+    const regEx = new RegExp(`${name}\\s*=\\s*(\\d+),`);
+
+    const match = regEx.exec(file);
+
+    if (match) {
+        return parseInt(match[1]);
+    }
+    return defaultValue;
 }

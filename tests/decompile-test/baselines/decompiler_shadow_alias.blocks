@@ -1,0 +1,19 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="device_set_digital_pin">
+<value name="name">
+<shadow type="digital_pin_shadow">
+<field name="pin">P0</field>
+</shadow>
+</value>
+<value name="value">
+<shadow type="math_number_minmax">
+<mutation min="0" max="1" />
+<field name="SLIDER">2</field>
+</shadow>
+</value>
+</block>
+</statement>
+</block>
+</xml>

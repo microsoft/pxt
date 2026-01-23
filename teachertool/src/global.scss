@@ -110,12 +110,168 @@ code {
     border-radius: 99px;
     background-clip: padding-box;
     background-color: rgb(206, 205, 206);
+
     &:hover {
         // Style matching the standalone editor
         //background-color: rgb(187, 187, 187);
         //box-shadow: inset -2px -2px 0px rgb(206, 205, 206), inset 2px 2px 0px rgb(206, 205, 206);
         // Style matching the embedded editor
         border-width: 1px;
+    }
+}
+
+/*******************************/
+/**** PRINT MEDIA QUERIES ******/
+/*******************************/
+
+@media print {
+    * {
+        break-before: avoid;
+    }
+
+    .no-print {
+        display: none !important;
+    }
+}
+
+@media screen {
+    .only-print {
+        display: none !important;
+    }
+}
+
+/*******************************/
+/****  BREAKPOINT QUERIES  *****/
+/*******************************/
+
+// Composable breakpoints, aligned to react-common breakpoint sizes (see https://github.com/microsoft/pxt/blob/master/react-common/styles/react-common-breakpoints.less)
+
+// Become visible at the given breakpoint
+.min-xl,
+.min-lg,
+.min-md,
+.min-2md,
+.min-sm,
+.min-2sm,
+.min-xs,
+.min-2xs {
+    display: initial;
+}
+
+// Become invisible at the given breakpoint
+.max-xl,
+.max-lg,
+.max-md,
+.max-2md,
+.max-sm,
+.max-2sm,
+.max-xs,
+.max-2xs {
+    display: initial;
+}
+
+$smallMobileBreakpoint: 240px;
+$mobileBreakpoint: 320px;
+$smallTabletBreakpoint: 480px;
+$tabletBreakpoint: 768px;
+$computerBreakpoint: 992px;
+$smallComputerBreakpoint: 800px;
+$largeMonitorBreakpoint: 1200px;
+$widescreenMonitorBreakpoint: 1920px;
+
+@media (min-width: $widescreenMonitorBreakpoint) {
+    .max-xl {
+        display: none !important;
+    }
+}
+
+@media (min-width: $largeMonitorBreakpoint) {
+    .max-lg {
+        display: none !important;
+    }
+}
+
+@media (min-width: $computerBreakpoint) {
+    .max-md {
+        display: none !important;
+    }
+}
+
+@media (min-width: $smallComputerBreakpoint) {
+    .max-2md {
+        display: none !important;
+    }
+}
+
+@media (min-width: $tabletBreakpoint) {
+    .max-sm {
+        display: none !important;
+    }
+}
+
+@media (min-width: $smallTabletBreakpoint) {
+    .max-2sm {
+        display: none !important;
+    }
+}
+
+@media (min-width: $mobileBreakpoint) {
+    .max-xs {
+        display: none !important;
+    }
+}
+
+@media (min-width: $smallMobileBreakpoint) {
+    .max-2xs {
+        display: none !important;
+    }
+}
+
+@media (max-width: ($widescreenMonitorBreakpoint - 0.02px)) {
+    .min-xl {
+        display: none !important;
+    }
+}
+
+@media (max-width: ($largeMonitorBreakpoint - 0.02px)) {
+    .min-lg {
+        display: none !important;
+    }
+}
+
+@media (max-width: ($computerBreakpoint - 0.02px)) {
+    .min-md {
+        display: none !important;
+    }
+}
+
+@media (max-width: ($smallComputerBreakpoint - 0.02px)) {
+    .min-2md {
+        display: none !important;
+    }
+}
+
+@media (max-width: ($tabletBreakpoint - 0.02px)) {
+    .min-sm {
+        display: none !important;
+    }
+}
+
+@media (max-width: ($smallTabletBreakpoint - 0.02px)) {
+    .min-2sm {
+        display: none !important;
+    }
+}
+
+@media (max-width: ($mobileBreakpoint - 0.02px)) {
+    .min-xs {
+        display: none !important;
+    }
+}
+
+@media (max-width: ($smallMobileBreakpoint - 0.02px)) {
+    .min-2xs {
+        display: none !important;
     }
 }
 

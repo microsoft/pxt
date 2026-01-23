@@ -5,6 +5,7 @@ export interface ButtonViewProps extends ContainerProps {
     buttonRef?: (ref: HTMLButtonElement) => void;
     title: string;
     label?: string | JSX.Element;
+    labelClassName?: string;
     leftIcon?: string;
     rightIcon?: string;
     disabled?: boolean;     // Disables the button in an accessible-friendly way.
@@ -53,6 +54,7 @@ export const Button = (props: ButtonProps) => {
         buttonRef,
         title,
         label,
+        labelClassName,
         leftIcon,
         rightIcon,
         hardDisabled,
@@ -108,7 +110,7 @@ export const Button = (props: ButtonProps) => {
                 {(leftIcon || rightIcon || label) && (
                     <span className="common-button-flex">
                         {leftIcon && <i className={leftIcon} aria-hidden={true}/>}
-                        <span className="common-button-label">
+                        <span className={classList("common-button-label", labelClassName)}>
                             {label}
                         </span>
                         {rightIcon && <i className={"right " + rightIcon} aria-hidden={true}/>}

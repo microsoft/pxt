@@ -25,7 +25,11 @@ export enum ErrorCode {
     selectedBlockWithoutOptions = "selectedBlockWithoutOptions",
     unrecognizedSystemParameter = "unrecognizedSystemParameter",
     invalidValidatorPlan = "invalidValidatorPlan",
-    askCopilotQuestion = "askCopilotQuestion",
+    askAIQuestion = "askAIQuestion",
     missingTag = "missingTag",
-    noCatalogCriteria = "noCatalogCriteria"
+    noCatalogCriteria = "noCatalogCriteria",
+    criteriaInstanceNotFound = "criteriaInstanceNotFound",
+    signInFailed = "signInFailed",
+    loginApiError = "loginApiError",
+    authCheckFailed = "authCheckFailed",
 }

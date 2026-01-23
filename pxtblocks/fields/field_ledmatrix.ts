@@ -164,6 +164,21 @@ export class FieldMatrix extends Blockly.Field implements FieldCustom {
         ev.preventDefault();
     }
 
+    public updateEditable() {
+        let group = this.fieldGroup_;
+        if (!this.EDITABLE || !group) {
+            return;
+        }
+
+        if (this.sourceBlock_.isEditable()) {
+            this.fieldGroup_.setAttribute("cursor", "pointer");
+        } else {
+            this.fieldGroup_.removeAttribute("cursor");
+        }
+
+        super.updateEditable();
+    }
+
     private createCell(x: number, y: number) {
         const tx = this.scale * x * (FieldMatrix.CELL_WIDTH + FieldMatrix.CELL_HORIZONTAL_MARGIN) + FieldMatrix.CELL_HORIZONTAL_MARGIN + this.getYAxisWidth();
         const ty = this.scale * y * (FieldMatrix.CELL_WIDTH + FieldMatrix.CELL_VERTICAL_MARGIN) + FieldMatrix.CELL_VERTICAL_MARGIN;
@@ -171,7 +186,6 @@ export class FieldMatrix extends Blockly.Field implements FieldCustom {
         const cellG = pxsim.svg.child(this.elt, "g", { transform: `translate(${tx} ${ty})` }) as SVGGElement;
         const cellRect = pxsim.svg.child(cellG, "rect", {
             'class': `blocklyLed${this.cellState[x][y] ? 'On' : 'Off'}`,
-            'cursor': 'pointer',
             width: this.scale * FieldMatrix.CELL_WIDTH, height: this.scale * FieldMatrix.CELL_WIDTH,
             fill: this.getColor(x, y),
             'data-x': x,
@@ -182,12 +196,14 @@ export class FieldMatrix extends Blockly.Field implements FieldCustom {
         if ((this.sourceBlock_.workspace as any).isFlyout) return;
 
         pxsim.pointerEvents.down.forEach(evid => cellRect.addEventListener(evid, (ev: MouseEvent) => {
+            if (!this.sourceBlock_.isEditable()) return;
+
             const svgRoot = (this.sourceBlock_ as Blockly.BlockSvg).getSvgRoot();
             this.currentDragState_ = !this.cellState[x][y];
 
             // select and hide chaff
             Blockly.hideChaff();
-            (this.sourceBlock_ as Blockly.BlockSvg).select();
+            Blockly.common.setSelected(this.sourceBlock_ as Blockly.BlockSvg);
 
             this.toggleRect(x, y);
             pxsim.pointerEvents.down.forEach(evid => svgRoot.addEventListener(evid, this.dontHandleMouseEvent_));
@@ -210,6 +226,8 @@ export class FieldMatrix extends Blockly.Field implements FieldCustom {
     }
 
     private handleRootMouseMoveListener = (ev: MouseEvent) => {
+        if (!this.sourceBlock_.isEditable()) return;
+
         let clientX;
         let clientY;
         if ((ev as any).changedTouches && (ev as any).changedTouches.length == 1) {

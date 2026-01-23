@@ -1,6 +1,7 @@
 # Microsoft MakeCode Blog
 
 * [Blog](/blog)
+    * [MakeCode for the micro:bit 2024 Update](/blog/microbit/2024-update)
     * [MakeCode Arcade - now more ways to play!](/blog/arcade/arcade-on-microbit-xbox)
     * [MakeCode Minecraft 2023 Update](/blog/minecraft/2023-release)
     * [MakeCode Clever Integration Released!](/blog/clever-release)

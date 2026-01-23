@@ -8,7 +8,7 @@ import { Checklist } from "../types/checklist";
 // ----------------------------------
 
 const KEY_PREFIX = "teachertool";
-const AUTORUN_KEY = [KEY_PREFIX, "autorun"].join("/");
+const RUN_ON_LOAD_KEY = [KEY_PREFIX, "runOnLoad"].join("/");
 const LAST_ACTIVE_CHECKLIST_KEY = [KEY_PREFIX, "lastActiveChecklist"].join("/");
 const SPLIT_POSITION_KEY = [KEY_PREFIX, "splitPosition"].join("/");
 const EXPANDED_CATALOG_TAGS_KEY = [KEY_PREFIX, "expandedCatalogTags"].join("/");
@@ -116,18 +116,18 @@ async function deleteChecklistFromIndexedDbAsync(name: string) {
 // Exports
 // ----------------------------------
 
-export function getAutorun(): boolean {
+export function getRunOnLoad(): boolean {
     try {
-        return getValue(AUTORUN_KEY, "false") === "true";
+        return getValue(RUN_ON_LOAD_KEY, "false") === "true";
     } catch (e) {
         logError(ErrorCode.localStorageReadError, e);
         return false;
     }
 }
 
-export function setAutorun(autorun: boolean) {
+export function setRunOnLoad(runOnLoad: boolean) {
     try {
-        setValue(AUTORUN_KEY, autorun.toString());
+        setValue(RUN_ON_LOAD_KEY, runOnLoad.toString());
     } catch (e) {
         logError(ErrorCode.localStorageWriteError, e);
     }
