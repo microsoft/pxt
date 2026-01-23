@@ -4298,7 +4298,10 @@ export class ProjectView
     async renderByBlockIdAsync(req: pxt.editor.EditorMessageRenderByBlockIdRequest): Promise<pxt.editor.EditorMessageRenderByBlockIdResponse> {
         const blocksInfo = await compiler.getBlocksAsync();
         const blockInfo = blocksInfo.blocksById[req.blockId];
-        const symbolInfo: pxtc.SymbolInfo = blocksInfo.apis.byQName[blockInfo.qName];
+        let symbolInfo: pxtc.SymbolInfo = blocksInfo.apis.byQName[blockInfo.qName];
+        if (!symbolInfo) {
+            symbolInfo = pxtblockly.blockSymbol(blockInfo.attributes.blockId)
+        }
         const compileInfo: pxt.blocks.BlockCompileInfo = pxt.blocks.compileInfo(symbolInfo);
         const xml = pxtblockly.createToolboxBlock(blocksInfo, symbolInfo, compileInfo, false, 3);
         return this.renderXmlInner(xml.outerHTML, req.snippetMode, req.layout);
@@ -4608,6 +4611,7 @@ export class ProjectView
         let f = pkg.mainEditorPkg().lookupFile("this/" + pxt.CONFIG_NAME);
         let config = JSON.parse(f.content) as pxt.PackageConfig;
         config.name = name;
+        config.description = description || config.description;
         return f.setContentAsync(pxt.Package.stringifyConfig(config))
             .then(() => {
                 if (this.state.header)
