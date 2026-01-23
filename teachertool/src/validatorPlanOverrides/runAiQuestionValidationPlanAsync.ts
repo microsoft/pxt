@@ -18,12 +18,11 @@ export async function runAiQuestionValidationPlanAsync(
     const question = (inputs.question || "").trim();
     if (question.length < Constants.MinAIQuestionLength) {
         logDebug(`Question too short: '${question}' (length: ${question.length}, minimum: ${Constants.MinAIQuestionLength})`);
-        const errorMsg = Strings.QuestionTooShort.replace("{0}", Constants.MinAIQuestionLength.toString());
         return {
             executionSuccess: false,
             result: undefined,
             notes: undefined,
-            executionErrorMsg: errorMsg,
+            executionErrorMsg: Strings.QuestionTooShort,
         };
     }
     

@@ -171,7 +171,7 @@ export const AskAIOverlay = () => {
             showToast(
                 makeToast(
                     "error",
-                    lf(Strings.QuestionTooShort, Constants.MinAIQuestionLength)
+                    Strings.QuestionTooShort
                 )
             );
             return;
@@ -238,7 +238,7 @@ export const AskAIOverlay = () => {
             return Strings.ValueRequired;
         }
         if (trimmed.length < Constants.MinAIQuestionLength) {
-            return lf(Strings.QuestionTooShort, Constants.MinAIQuestionLength);
+            return Strings.QuestionTooShort;
         }
         return undefined;
     }, []);

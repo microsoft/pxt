@@ -52,7 +52,7 @@ export namespace Strings {
     export const UnableToReachAI = lf("Unable to reach the AI service");
     export const UnexpectedError = lf("An unexpected error occurred");
     export const Dismiss = lf("Dismiss");
-    export const QuestionTooShort = lf("Question must be at least {0} characters");
+    export const QuestionTooShort = lf("Question must be at least {0} characters", Misc.MinAIQuestionLength);
     export const EvaluationComplete = lf("Evaluation complete");
     export const UnableToEvaluatePartial = lf("Unable to evaluate some criteria");
     export const GiveFeedback = lf("Give Feedback");
