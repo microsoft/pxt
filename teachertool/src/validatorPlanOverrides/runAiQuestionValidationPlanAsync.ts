@@ -1,4 +1,4 @@
-import { Strings } from "../constants";
+import { Strings, Constants } from "../constants";
 import { askCopilotQuestionAsync } from "../services/backendRequests";
 import { logDebug, logError } from "../services/loggingService";
 import { ErrorCode } from "../types/errorCode";
@@ -13,8 +13,21 @@ export async function runAiQuestionValidationPlanAsync(
     }
 
     const inputs = plan.checks[0] as pxt.blocks.AiQuestionValidatorCheck;
-    logDebug(`Asking question: '${inputs.question}' on project with shareId: '${inputs.shareId}'`);
-    const response = await askCopilotQuestionAsync(inputs.shareId, inputs.question);
+    
+    // Validate question length
+    const question = (inputs.question || "").trim();
+    if (question.length < Constants.MinAIQuestionLength) {
+        logDebug(`Question too short: '${question}' (length: ${question.length}, minimum: ${Constants.MinAIQuestionLength})`);
+        return {
+            executionSuccess: false,
+            result: undefined,
+            notes: undefined,
+            executionErrorMsg: lf(Strings.QuestionTooShort, Constants.MinAIQuestionLength),
+        };
+    }
+    
+    logDebug(`Asking question: '${question}' on project with shareId: '${inputs.shareId}'`);
+    const response = await askCopilotQuestionAsync(inputs.shareId, question);
     logDebug(`Response: ${response}`);
 
     return {
