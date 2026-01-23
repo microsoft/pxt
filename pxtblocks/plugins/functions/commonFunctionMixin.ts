@@ -134,7 +134,7 @@ export const COMMON_FUNCTION_MIXIN = {
         // out of the input list at every index.
         const newInputList = [];
         for (let i = 0, input; (input = this.inputList[i]); i++) {
-            if (input.type == Blockly.inputTypes.VALUE) {
+            if (input.type == Blockly.inputs.inputTypes.VALUE) {
                 input.dispose();
             } else {
                 newInputList.push(input);
@@ -175,7 +175,9 @@ export const COMMON_FUNCTION_MIXIN = {
                 if (saveInfo) {
                     const block = saveInfo["block"];
                     if (block?.isShadow()) {
-                        block.dispose(false);
+                        if (!block.isDeadOrDying()) {
+                            block.dispose(false);
+                        }
                         delete connectionMap[id];
                     }
                 }
@@ -250,15 +252,12 @@ export const COMMON_FUNCTION_MIXIN = {
 
     updateDisplay_: function (this: CommonFunctionBlock) {
         let wasRendered = this.rendered;
-        this.rendered = false;
-
         let connectionMap = this.disconnectOldBlocks_();
         this.removeValueInputs_();
 
         this.createAllInputs_(connectionMap);
         this.deleteShadows_(connectionMap);
 
-        this.rendered = wasRendered;
         if (wasRendered && !this.isInsertionMarker() && this instanceof Blockly.BlockSvg) {
             this.initSvg();
             this.render();

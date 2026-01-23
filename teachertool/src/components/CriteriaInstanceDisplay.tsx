@@ -1,11 +1,10 @@
+import css from "./styling/CriteriaInstanceDisplay.module.scss";
 import { getCatalogCriteriaWithId } from "../state/helpers";
 import { CriteriaInstance, CriteriaParameterValue } from "../types/criteria";
 import { logDebug } from "../services/loggingService";
 import { setParameterValue } from "../transforms/setParameterValue";
 import { classList } from "react-common/components/util";
 import { getReadableBlockString, splitCriteriaTemplate } from "../utils";
-// eslint-disable-next-line import/no-internal-modules
-import css from "./styling/CriteriaInstanceDisplay.module.scss";
 import { useContext, useMemo, useState } from "react";
 import { Input } from "react-common/components/controls/Input";
 import { Button } from "react-common/components/controls/Button";
@@ -35,7 +34,7 @@ const InlineInputSegment: React.FC<InlineInputSegmentProps> = ({
         setParameterValue(instance.instanceId, param.name, newValue);
     }
 
-    const tooltip = isEmpty ? `"${param.name}: ${Strings.ValueRequired}` : param.name;
+    const tooltip = isEmpty ? `${param.name}: ${Strings.ValueRequired}` : param.name;
     return (
         <div title={tooltip} className={css["inline-input-wrapper"]}>
             <Input
@@ -52,7 +51,7 @@ const InlineInputSegment: React.FC<InlineInputSegmentProps> = ({
                 placeholder={numeric ? "0" : param.name}
                 title={tooltip}
                 autoComplete={false}
-                type={numeric ? "number" : "text"}
+                filter={numeric ? "[0-9]{1,2}" : undefined}
             />
         </div>
     );
@@ -158,7 +157,10 @@ export const CriteriaInstanceDisplay: React.FC<CriteriaInstanceDisplayProps> = (
                     </span>
                 ))}
             </div>
-            <div className={css["criteria-description"]}>{catalogCriteria.description}</div>
+            <div className={classList(css["criteria-description"], "no-print")}>{catalogCriteria.description}</div>
+            <div className={classList(css["criteria-description"], css["for-print"], "only-print")}>
+                {catalogCriteria.description}
+            </div>
         </div>
     ) : null;
 };

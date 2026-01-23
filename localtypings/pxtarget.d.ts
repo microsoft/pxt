@@ -522,6 +522,7 @@ declare namespace pxt {
 
         dragFileImage?: string;
         connectDeviceImage?: string;
+        disconnectDeviceImage?: string;
         selectDeviceImage?: string;
         connectionSuccessImage?: string;
         incompatibleHardwareImage?: string;
@@ -830,6 +831,7 @@ declare namespace ts.pxtc {
         fixedInstance?: boolean;
         expose?: boolean; // expose to VM despite being in pxt:: namespace
         decompileIndirectFixedInstances?: boolean; // Attribute on TYPEs with fixedInstances set to indicate that expressions with that type may be decompiled even if not a fixed instance
+        decompilerShadowAlias?: string; // hints to the decompiler that this block can be replaced with the block with this id if doing so would create a shadow block
         constantShim?: boolean;
         indexedInstanceNS?: string;
         indexedInstanceShim?: string;
@@ -1163,6 +1165,7 @@ declare namespace pxt.tutorial {
         code: string[]; // all code
         language?: string; // language of code snippet (ts or python)
         templateCode?: string;
+        templateLanguage?: string; // language of template code
         metadata?: TutorialMetadata;
         assetFiles?: pxt.Map<string>;
         jres?: string; // JRES to be used when generating hints; necessary for tilemaps
@@ -1268,6 +1271,7 @@ declare namespace pxt.tutorial {
         tutorialCode?: string[]; // all tutorial code bundled
         tutorialRecipe?: boolean; // micro tutorial running within the context of a script
         templateCode?: string;
+        templateLanguage?: string;
         mergeHeaderId?: string;
         mergeCarryoverCode?: boolean;
         autoexpandStep?: boolean; // autoexpand tutorial card if instruction text overflows

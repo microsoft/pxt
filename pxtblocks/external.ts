@@ -78,3 +78,14 @@ export function prompt(message: string, defaultValue: string, callback: (value: 
         Blockly.dialog.prompt(message, defaultValue, callback);
     }
 }
+
+let _openWorkspaceSearch: () => void;
+export function setOpenWorkspaceSearch(impl: () => void) {
+    _openWorkspaceSearch = impl;
+}
+
+export function openWorkspaceSearch() {
+    if (_openWorkspaceSearch) {
+        _openWorkspaceSearch();
+    }
+}

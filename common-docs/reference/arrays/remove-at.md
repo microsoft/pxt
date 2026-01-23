@@ -1,6 +1,6 @@
 # remove At
 
-Remove an element from an array at some position.
+Remove and return an element from an array at some position.
 
 ```sig
 [""].removeAt(0)
@@ -10,8 +10,8 @@ The size of the array shrinks by one. The element is removed from the array at t
 `4, 5, 9, 3, 2` will be `4, 5, 3, 2` if `9` is removed from the array at index `2`. It looks like this in blocks:
 
 ```block
-let myNumbers = [4, 5, 9, 3, 2];
-let item = myNumbers.removeAt(2);
+let myNumbers = [4, 5, 9, 3, 2]
+let item = myNumbers.removeAt(2)
 ```
 
 ## Parameters
@@ -27,11 +27,12 @@ let item = myNumbers.removeAt(2);
 Remove the most dangerous level of radiation from the list.
 
 ```block
-let radLevels = ["alpha", "beta", "gamma"];
-let level = radLevels.indexOf("gamma");
-let unzapped = radLevels.removeAt(level);
+let radLevels = ["alpha", "beta", "gamma"]
+let level = radLevels.indexOf("gamma")
+let unzapped = radLevels.removeAt(level)
 ```
 
 ## See also
 
+[remove at (no return value)](/reference/arrays/remove-at-statement),
 [insert at](/reference/arrays/insert-at)

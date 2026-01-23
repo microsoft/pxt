@@ -771,7 +771,7 @@
                 margin-left: 0;
             }
         }
-        
+
         .counter-previous-button .icon {
             margin: 0;
         }
@@ -993,7 +993,7 @@
 /* Desktop Only */
 @media only screen and (min-width: @largestTabletScreen) {
     #root.tabTutorial:not(.fullscreensim, .greenscreen) {
-        #simulator .editor-sidebar:not(.topInstructions) {
+        #simulator .editor-sidebar:not(.topInstructions) .editor-sidebar:not(.tutorial-sim) {
             bottom: 0;
         }
 
@@ -1018,7 +1018,7 @@
             padding-top: 1rem;
         }
     }
-    
+
     /* Short Desktop Only */
     @media (max-height: @tallEditorBreakpoint) {
         #root.tabTutorial:not(.fullscreensim) {
@@ -1045,7 +1045,7 @@
 
     .topInstructionsWrapper {
         .topInstructionsSettings();
-        
+
         .tutorial-callout {
             right: unset;
             top: unset;

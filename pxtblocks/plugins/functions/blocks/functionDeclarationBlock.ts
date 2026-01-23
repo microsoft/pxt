@@ -95,14 +95,14 @@ const FUNCTION_DECLARATION_MIXIN: FunctionDeclarationMixin = {
     focusLastEditor_(this: FunctionDeclarationBlock) {
         if (this.inputList.length > 0) {
             let newInput = this.inputList[this.inputList.length - 2];
-            if (newInput.type == Blockly.inputTypes.DUMMY) {
+            if (newInput.type == Blockly.inputs.inputTypes.DUMMY) {
                 const workspace = this.workspace;
 
                 if (workspace instanceof Blockly.WorkspaceSvg) {
                     workspace.centerOnBlock(this.id);
                 }
                 newInput.fieldRow[0].showEditor();
-            } else if (newInput.type == Blockly.inputTypes.VALUE) {
+            } else if (newInput.type == Blockly.inputs.inputTypes.VALUE) {
                 // Inspect the argument editor.
                 const target = newInput.connection!.targetBlock()!;
                 const workspace = target.workspace;
@@ -187,15 +187,15 @@ const FUNCTION_DECLARATION_MIXIN: FunctionDeclarationMixin = {
         for (let i = 1; i < this.inputList.length; i++) {
             const input = this.inputList[i];
             switch (input.type) {
-                case Blockly.inputTypes.STATEMENT:
+                case Blockly.inputs.inputTypes.STATEMENT:
                     // Nothing to save
                     break;
-                case Blockly.inputTypes.DUMMY:
+                case Blockly.inputs.inputTypes.DUMMY:
                     // This is the function name text input. Previously stored in the text
                     // attribute (now deprecated), so we check both text and value
                     this.name_ = input.fieldRow[0].getValue() || input.fieldRow[0].getText();
                     break;
-                case Blockly.inputTypes.VALUE:
+                case Blockly.inputs.inputTypes.VALUE:
                     // Inspect the argument editor to add the argument to our mutation.
                     const target = input.connection!.targetBlock() as ArgumentEditorBlock;
 

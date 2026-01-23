@@ -3,7 +3,7 @@ import configData from "../config.json";
 import { KioskState } from "../Types";
 import { exitGame } from "./exitGame";
 
-export function exitToEnterHighScore(): void {
+export function exitToEnterHighScore(highScoreMode: string): void {
     const { state } = stateAndDispatch();
 
     if (!state.mostRecentScores?.length) {
@@ -20,11 +20,12 @@ export function exitToEnterHighScore(): void {
     launchedGameHighs = launchedGameHighs || [];
     const currentHighScore = state.mostRecentScores[0];
     const lastScore = launchedGameHighs[launchedGameHighs.length - 1]?.score;
+    const scoreOutOfRange = highScoreMode === "lowscore" ? currentHighScore > lastScore : currentHighScore < lastScore;
 
     if (
         launchedGameHighs.length === configData.HighScoresToKeep &&
         lastScore &&
-        currentHighScore < lastScore
+        scoreOutOfRange
     ) {
         exitGame(KioskState.GameOver);
     } else {

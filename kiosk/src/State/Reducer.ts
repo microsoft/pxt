@@ -3,7 +3,7 @@ import { Action } from "./Actions";
 import * as Storage from "../Services/LocalStorage";
 import { setSoundEffectVolume } from "../Services/SoundEffectService";
 import configData from "../config.json";
-import { GameData } from "../Types";
+import { GameData, HighScoreWithId } from "../Types";
 
 // The reducer's job is to apply state changes by creating a copy of the existing state with the change applied.
 // The reducer must not create side effects. E.g. do not dispatch a state change from within the reducer.
@@ -140,11 +140,17 @@ export default function reducer(state: AppState, action: Action): AppState {
             const { gameId, highScore } = action;
             const allHighScores = { ...state.allHighScores };
             const highScores = allHighScores[gameId] || [];
+            const scoringType = state.allGames.find(g => g.id === gameId)?.highScoreMode;
+            const sortingFunction = (first: HighScoreWithId, second: HighScoreWithId) => {
+                return scoringType === "highscore" || scoringType === "SingleAscending"
+                    ? second.score - first.score
+                    : first.score - second.score;
+            }
             // Before saving this high score, ensure we don't already have it recorded.
             // Protect against duplicate action dispatches.
             if (!highScores.find(hs => hs.id === highScore.id)) {
                 highScores.push(highScore);
-                highScores.sort((first, second) => second.score - first.score);
+                highScores.sort(sortingFunction);
                 highScores.splice(configData.HighScoresToKeep);
                 allHighScores[gameId] = highScores;
                 Storage.setHighScores(allHighScores);

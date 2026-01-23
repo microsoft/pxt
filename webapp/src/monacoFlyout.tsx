@@ -252,8 +252,17 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
 
     protected getBlockDescription(block: toolbox.BlockDefinition, params: pxtc.ParameterDesc[]): JSX.Element[] {
         let description = [];
-        let compileInfo = pxt.blocks.compileInfo(block as pxtc.SymbolInfo)
+        let compileInfo = pxt.blocks.compileInfo(block as pxtc.SymbolInfo);
         let parts = block.attributes._def && block.attributes._def.parts;
+        if (block.attributes.parentBlock) {
+            const parent = block.attributes.parentBlock;
+            const parentBlockParts = [...parent.attributes._def.parts];
+            const overrideLocation = parentBlockParts.findIndex((part: any) => part.kind === "param" && part.name === block.attributes.toolboxParentArgument);
+            if (overrideLocation !== -1) {
+                parentBlockParts.splice(overrideLocation, 1, ...block.attributes._def.parts);
+                parts = parentBlockParts;
+            }
+        }
         let name = block.qName || block.name;
         const isPython = this.props.fileType == pxt.editor.FileType.Python;
 

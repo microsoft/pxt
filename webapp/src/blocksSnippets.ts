@@ -686,6 +686,7 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                 theEditor.showPackageDialog();
                 return true;
             },
+            onlyTriggerOnClick: true,
             attributes: {
                 advanced: false,
                 weight: -1,

@@ -20,6 +20,7 @@ import U = pxt.Util;
 import Cloud = pxt.Cloud;
 
 import * as pxtblockly from "../../pxtblocks";
+import { getTextAtTime, HistoryFile } from "../../pxteditor/history";
 
 
 // Avoid importing entire crypto-js
@@ -573,7 +574,6 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
             text,
             version: null
         }
-        allScripts.push(e)
     }
 
     const hasUserFileChanges = () => {
@@ -692,6 +692,10 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
             e.version = ver;
         }
 
+        if (newSave) {
+            allScripts.push(e);
+        }
+
         if (isUserChange) {
             h.pubCurrent = false;
             h.cloudCurrent = false;
@@ -735,8 +739,8 @@ function patchText(patch: unknown, a: string) {
     return differ.patch_apply(patch as any, a)[0]
 }
 
-export function applyDiff(text: ScriptText, history: pxteditor.history.HistoryEntry) {
-    return pxteditor.history.applyDiff(text, history, patchText);
+export function restoreTextToTime(text: ScriptText, history: HistoryFile, timestamp: number) {
+    return getTextAtTime(text, history, timestamp, patchText);
 }
 
 export function importAsync(h: Header, text: ScriptText, isCloud = false) {

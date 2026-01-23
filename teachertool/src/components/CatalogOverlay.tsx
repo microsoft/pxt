@@ -195,6 +195,7 @@ const CatalogList: React.FC = () => {
                                     catalogCriteria={c}
                                     recentlyAddedIds={recentlyAddedIds}
                                     onItemClicked={onItemClicked}
+                                    key={`catalog-item-${c.id}`}
                                 />
                             ))}
                         </Accordion.Panel>

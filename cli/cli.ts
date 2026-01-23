@@ -38,6 +38,7 @@ pxt.docs.requireDOMSanitizer = () => require("sanitize-html");
 let forceCloudBuild = process.env["KS_FORCE_CLOUD"] !== "no";
 let forceLocalBuild = !!process.env["PXT_FORCE_LOCAL"];
 let forceBuild = false; // don't use cache
+let useCompileServiceDocker = false;
 
 Error.stackTraceLimit = 100;
 
@@ -64,6 +65,7 @@ function parseHwVariant(parsed: commandParser.ParsedCommand) {
 function parseBuildInfo(parsed?: commandParser.ParsedCommand) {
     const cloud = parsed && parsed.flags["cloudbuild"];
     const local = parsed && parsed.flags["localbuild"];
+    const useCompService = parsed?.flags["localcompileservice"]
     const hwvariant = parseHwVariant(parsed);
     forceBuild = parsed && !!parsed.flags["force"];
     if (cloud && local)
@@ -76,6 +78,11 @@ function parseBuildInfo(parsed?: commandParser.ParsedCommand) {
     if (local) {
         forceCloudBuild = false;
         forceLocalBuild = true;
+    }
+    if (useCompService) {
+        forceCloudBuild = false;
+        forceLocalBuild = true;
+        useCompileServiceDocker = true;
     }
 
     if (hwvariant) {
@@ -1434,37 +1441,40 @@ export function buildTargetAsync(parsed?: commandParser.ParsedCommand): Promise<
         .then(() => internalBuildTargetAsync(opts));
 }
 
-export function internalBuildTargetAsync(options: BuildTargetOptions = {}): Promise<void> {
+export async function internalBuildTargetAsync(options: BuildTargetOptions = {}): Promise<void> {
     if (pxt.appTarget.id == "core")
         return buildTargetCoreAsync(options)
-
-    let initPromise: Promise<void>;
 
     const commonPackageDir = path.resolve("node_modules/pxt-common-packages")
 
     // Make sure to build common sim in case of a local clean. This will do nothing for
     // targets without pxt-common-packages installed.
     if (!inCommonPkg("built/common-sim.js") || !inCommonPkg("built/common-sim.d.ts")) {
-        initPromise = buildCommonSimAsync();
+        await buildCommonSimAsync();
+    }
+
+    if (nodeutil.existsDirSync(simDir())) {
+        await extractLocStringsAsync("sim-strings", [simDir()]);
+    }
+
+    copyCommonSim();
+    await simshimAsync();
+    await buildFolderAsync('compiler', true, 'compiler');
+    fillInCompilerExtension(pxt.appTarget);
+
+    if (options.rebundle) {
+        await buildTargetCoreAsync({ quick: true });
     }
     else {
-        initPromise = Promise.resolve();
+        await buildTargetCoreAsync(options);
     }
 
-    if (nodeutil.existsDirSync(simDir()))
-        initPromise = initPromise.then(() => extractLocStringsAsync("sim-strings", [simDir()]));
-
-    return initPromise
-        .then(() => { copyCommonSim(); return simshimAsync() })
-        .then(() => buildFolderAsync('compiler', true, 'compiler'))
-        .then(() => fillInCompilerExtension(pxt.appTarget))
-        .then(() => options.rebundle ? buildTargetCoreAsync({ quick: true }) : buildTargetCoreAsync(options))
-        .then(() => buildSimAsync())
-        .then(() => buildFolderAsync('cmds', true))
-        .then(() => buildSemanticUIAsync())
-        .then(() => buildEditorExtensionAsync("editor", "extendEditor"))
-        .then(() => buildEditorExtensionAsync("fieldeditors", "extendFieldEditors"))
-        .then(() => buildFolderAsync('server', true, 'server'))
+    await buildSimAsync();
+    await buildFolderAsync('cmds', true);
+    await buildSemanticUIAsync();
+    await buildEditorExtensionAsync("editor", "extendEditor");
+    await buildEditorExtensionAsync("fieldeditors", "extendFieldEditors");
+    await buildFolderAsync('server', true, 'server');
 
     function inCommonPkg(p: string) {
         return fs.existsSync(path.join(commonPackageDir, p));
@@ -3020,6 +3030,7 @@ class SnippetHost implements pxt.Host {
 class Host
     implements pxt.Host {
     fileOverrides: Map<string> = {}
+    queue = new pxt.Util.PromiseQueue();
 
     resolve(module: pxt.Package, filename: string) {
         //pxt.debug(`resolving ${module.level}:${module.id} -- ${filename} in ${path.resolve(".")}`)
@@ -3152,9 +3163,25 @@ class Host
         if (!forceLocalBuild && (extInfo.onlyPublic || forceCloudBuild))
             return pxt.hexloader.getHexInfoAsync(this, extInfo)
 
-        setBuildEngine()
-        return build.buildHexAsync(build.thisBuild, mainPkg, extInfo, forceBuild)
-            .then(() => build.thisBuild.patchHexInfo(extInfo))
+        if (useCompileServiceDocker) {
+            return build.compileWithLocalCompileService(extInfo);
+        }
+        return this.queue.enqueue("getHexInfoAsync", async () => {
+            const prevVariant = pxt.appTargetVariant;
+
+            if (extInfo.appVariant && extInfo.appVariant !== prevVariant) {
+                pxt.setAppTargetVariant(extInfo.appVariant, { temporary: true });
+            }
+            setBuildEngine()
+            await build.buildHexAsync(build.thisBuild, mainPkg, extInfo, forceBuild)
+            const res = build.thisBuild.patchHexInfo(extInfo);
+
+            if (extInfo.appVariant && extInfo.appVariant !== prevVariant) {
+                pxt.setAppTargetVariant(prevVariant);
+            }
+
+            return res;
+        });
     }
 
     cacheStoreAsync(id: string, val: string): Promise<void> {
@@ -4767,18 +4794,21 @@ async function buildDalDTSAsync(c: commandParser.ParsedCommand) {
 
     if (fs.existsSync("pxtarget.json")) {
         pxt.log(`generating dal.d.ts for packages`)
-        return rebundleAsync()
-            .then(() => forEachBundledPkgAsync((f, dir) => {
-                return f.loadAsync()
-                    .then(() => {
-                        if (f.config.dalDTS && f.config.dalDTS.corePackage) {
-                            console.log(`  ${dir}`)
-                            return prepAsync()
-                                .then(() => build.buildDalConst(build.thisBuild, f, true, true));
-                        }
-                        return Promise.resolve();
-                    })
-            }));
+        await rebundleAsync();
+        await forEachBundledPkgAsync(async (f, dir) => {
+            await f.loadAsync();
+            if (f.config.dalDTS && f.config.dalDTS.corePackage) {
+                console.log(`  ${dir}`)
+
+                if (f.config.dalDTS.compileServiceVariant) {
+                    pxt.setAppTargetVariant(f.config.dalDTS.compileServiceVariant);
+                    setBuildEngine();
+                }
+
+                await prepAsync();
+                build.buildDalConst(build.thisBuild, f, true, true);
+            }
+        })
     } else {
         ensurePkgDir()
         await mainPkg.loadAsync()
@@ -4919,7 +4949,7 @@ export async function staticpkgAsync(parsed: commandParser.ParsedCommand) {
         await internalGenDocsAsync(false, true);
         if (locsSrc) {
             const languages = pxt.appTarget?.appTheme?.availableLocales
-                .filter(langId => nodeutil.existsDirSync(path.join(locsSrc, langId)));
+                ?.filter(langId => nodeutil.existsDirSync(path.join(locsSrc, langId))) ?? [];
 
             await crowdin.buildAllTranslationsAsync(async (fileName: string) => {
                 const output: pxt.Map<pxt.Map<string>> = {};
@@ -6685,6 +6715,11 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
                 description: "Build native image using local toolchains",
                 aliases: ["local", "l", "local-build", "lb"]
             },
+            localcompileservice: {
+                description: "Build native image using docker",
+                hidden: true,
+                aliases: []
+            },
             force: {
                 description: "skip cache lookup and force build",
                 aliases: ["f"]
@@ -6761,6 +6796,11 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
                 description: "Build native image using local toolchains",
                 aliases: ["local", "l", "local-build", "lb"]
             },
+            localcompileservice: {
+                description: "Build native image using docker",
+                hidden: true,
+                aliases: []
+            },
             force: {
                 description: "skip cache lookup and force build",
                 aliases: ["f"]
@@ -6835,6 +6875,11 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
                 description: "Build native image using local toolchains",
                 aliases: ["local", "l", "local-build", "lb"]
             },
+            localcompileservice: {
+                description: "Build native image using docker",
+                hidden: true,
+                aliases: []
+            },
             locs: {
                 description: "Download localization files and bundle them",
                 aliases: ["locales", "crowdin"]
@@ -6892,6 +6937,11 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
             localbuild: {
                 description: "Build native image using local toolchains",
                 aliases: ["local", "l", "local-build", "lb"]
+            },
+            localcompileservice: {
+                description: "Build native image using docker",
+                hidden: true,
+                aliases: []
             },
             just: { description: "just serve without building" },
             rebundle: { description: "rebundle when change is detected", aliases: ["rb"] },
@@ -6961,6 +7011,11 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
                 description: "Build native image using local toolchains",
                 aliases: ["local", "l", "local-build", "lb"]
             },
+            localcompileservice: {
+                description: "Build native image using docker",
+                hidden: true,
+                aliases: []
+            },
             force: {
                 description: "skip cache lookup and force build",
                 aliases: ["f"]
@@ -6988,6 +7043,11 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
             localbuild: {
                 description: "Build native image using local toolchains",
                 aliases: ["local", "l", "local-build", "lb"]
+            },
+            localcompileservice: {
+                description: "Build native image using docker",
+                hidden: true,
+                aliases: []
             },
             force: {
                 description: "skip cache lookup and force build",
@@ -7260,6 +7320,11 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
             localbuild: {
                 description: "Build native image using local toolchains",
                 aliases: ["local", "l", "local-build", "lb"]
+            },
+            localcompileservice: {
+                description: "Build native image using docker",
+                hidden: true,
+                aliases: []
             },
             clean: { description: "delete all previous repos" },
             fast: { description: "don't check tag" },

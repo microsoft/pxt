@@ -64,7 +64,7 @@ const FUNCTION_DEFINITION_MIXIN: FunctionDefinitionMixin = {
 
     afterWorkspaceLoad: function(this: FunctionDefinitionBlock) {
         for (const input of this.inputList) {
-            if (input.type !== Blockly.inputTypes.VALUE) continue;
+            if (input.type !== Blockly.inputs.inputTypes.VALUE) continue;
             const target = input.connection?.targetBlock();
 
             if (target?.isShadow() && target.mutationToDom) {

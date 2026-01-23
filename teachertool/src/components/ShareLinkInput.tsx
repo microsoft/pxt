@@ -13,6 +13,7 @@ export const ShareLinkInput: React.FC<IProps> = () => {
     const { projectMetadata } = teacherTool;
     const [text, setText] = useState("");
     const [iconVisible, setIconVisible] = useState(false);
+    const [inputRef, setInputRef] = useState<HTMLInputElement>();
 
     useEffect(() => {
         const shareId = pxt.Cloud.parseScriptId(text);
@@ -44,8 +45,10 @@ export const ShareLinkInput: React.FC<IProps> = () => {
                 onChange={onTextChange}
                 onEnterKey={onEnterKey}
                 onIconClick={onEnterKey}
+                onFocus={() => inputRef?.select()}
                 preserveValueOnBlur={true}
                 autoComplete={false}
+                handleInputRef={setInputRef}
             ></Input>
         </div>
     );

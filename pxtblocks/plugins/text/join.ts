@@ -74,15 +74,10 @@ const TEXT_JOIN_MUTATOR_MIXIN = {
         const block = this;
         const oldMutationDom = block.mutationToDom();
         const oldMutation = oldMutationDom && Blockly.Xml.domToText(oldMutationDom);
-        // Switch off rendering while the source block is rebuilt.
-        const savedRendered = block.rendered;
-        block.rendered = false;
         // Update the mutation
         if (update) update.call(this);
         // Allow the source block to rebuild itself.
         this.updateShape_();
-        // Restore rendering and show the changes.
-        block.rendered = savedRendered;
         // Mutation may have added some elements that need initializing.
         if (block instanceof Blockly.BlockSvg) {
             block.initSvg();
@@ -132,7 +127,7 @@ const TEXT_JOIN_MUTATOR_MIXIN = {
             if (!this.getInput('ADD' + i)) {
                 const input = this.appendValueInput('ADD' + i)
                     // pxt-blockly: pxt-blockly/pull/112
-                    .setAlign(Blockly.ALIGN_LEFT);
+                    .setAlign(Blockly.inputs.Align.LEFT);
                 // if (i == 0) {
                 //   input.appendField(Blockly.Msg['TEXT_JOIN_TITLE_CREATEWITH']);
                 // }

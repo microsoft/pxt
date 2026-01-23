@@ -60,7 +60,7 @@ export class FieldGridPicker extends Blockly.FieldDropdown implements FieldCusto
 
         this.columns_ = parseInt(options.columns) || 4;
         this.maxRows_ = parseInt(options.maxRows) || 0;
-        this.width_ = parseInt(options.width) || 200;
+        this.width_ = parseInt(options.width) || undefined;
 
         this.backgroundColour_ = parseColour(options.colour);
         this.borderColour_ = pxt.toolbox.fadeColor(this.backgroundColour_, 0.4, false);
@@ -367,14 +367,16 @@ export class FieldGridPicker extends Blockly.FieldDropdown implements FieldCusto
             width: paddingContainer.offsetWidth,
             height: paddingContainer.offsetHeight
         };
+        const windowHeight = window.outerHeight;
 
         // Set width
-        const windowWidth = window.outerWidth;
-        const windowHeight = window.outerHeight;
-        if (this.width_ > windowWidth) {
-            this.width_ = windowWidth;
+        if (this.width_) {
+            const windowWidth = window.outerWidth;
+            if (this.width_ > windowWidth) {
+                this.width_ = windowWidth;
+            }
+            tableContainer.style.width = this.width_ + 'px';
         }
-        tableContainer.style.width = this.width_ + 'px';
 
         let addedHeight = 0;
         if (this.hasSearchBar_) addedHeight += 50; // Account for search bar

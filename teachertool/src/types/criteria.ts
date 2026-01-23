@@ -1,3 +1,5 @@
+import { UserFeedback } from ".";
+
 // A criteria defined in the catalog of all possible criteria for the user to choose from when creating a checklist.
 export interface CatalogCriteria {
     id: string; // A unique id (GUID) for the catalog criteria
@@ -9,6 +11,7 @@ export interface CatalogCriteria {
     hideInCatalog?: boolean; // Whether the criteria should be hidden in the user-facing catalog
     maxCount?: number; // The maximum number of instances allowed for this criteria within a single checklist. Unlimited if undefined.
     tags?: string[]; // Tags to help categorize the criteria
+    requestFeedback?: boolean; // Whether the criteria should request feedback from the user
 }
 
 // An instance of a criteria in a checklist.
@@ -16,6 +19,7 @@ export interface CriteriaInstance {
     catalogCriteriaId: string;
     instanceId: string;
     params: CriteriaParameterValue[] | undefined;
+    userFeedback?: UserFeedback;
 }
 
 // Represents a parameter definition in a catalog criteria.
@@ -46,4 +50,5 @@ export enum EvaluationStatus {
 export interface CriteriaResult {
     result: EvaluationStatus;
     notes?: string;
+    error?: string;
 }

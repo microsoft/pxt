@@ -21,7 +21,7 @@ export type ToastWithId = Toast & {
     id: string;
 };
 
-export type TabName = "home" | "checklist" | "results";
+export type TabName = "home" | "results";
 
 export type CardType = "checklist-resource";
 
@@ -51,3 +51,5 @@ export type CriteriaTemplateSegment = {
     type: "plain-text" | "param";
     content: string; // plain text or parameter name
 };
+
+export type UserFeedback = "helpful" | "not-helpful" | undefined;

@@ -1,3 +1,4 @@
+import { Strings } from "../constants";
 import { askCopilotQuestionAsync } from "../services/backendRequests";
 import { logDebug, logError } from "../services/loggingService";
 import { ErrorCode } from "../types/errorCode";
@@ -17,7 +18,9 @@ export async function runAiQuestionValidationPlanAsync(
     logDebug(`Response: ${response}`);
 
     return {
+        executionSuccess: !!response,
         result: undefined,
         notes: response,
+        executionErrorMsg: response ? undefined : Strings.UnableToReachAI,
     };
 }

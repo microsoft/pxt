@@ -440,6 +440,10 @@ const buildSVGIcons = () => {
     })
 }
 
+const copyBlocklyMedia = () =>
+    gulp.src("node_modules/blockly/media/*")
+    .pipe(gulp.dest("webapp/public/blockly/media"))
+
 
 
 /********************************************************
@@ -729,7 +733,7 @@ function getMochaExecutable() {
 const buildAll = gulp.series(
     updatestrings,
     maybeUpdateWebappStrings(),
-    copyTypescriptServices,
+    gulp.parallel(copyTypescriptServices, copyBlocklyMedia),
     gulp.parallel(pxtlib, pxtweb),
     gulp.parallel(pxtcompiler, pxtsim, backendutils),
     pxtpy,

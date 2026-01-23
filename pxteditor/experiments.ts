@@ -109,6 +109,11 @@ export function all(): Experiment[] {
             description: lf("Use the JavaScript debugger to debug extension code")
         },
         {
+            id: "advancedBlockDebugger",
+            name: lf("Advanced Blocks Debugger"),
+            description: lf("Enables extra options and variables in the Blocks debugger")
+        },
+        {
             id: "snippetBuilder",
             name: lf("Snippet Builder"),
             description: lf("Try out the new snippet dialogs.")

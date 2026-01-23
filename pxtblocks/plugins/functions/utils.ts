@@ -214,6 +214,12 @@ export function mutateCallersAndDefinition(name: string, ws: Blockly.Workspace, 
                         let argName = d.getFieldValue("VALUE");
                         let argId = oldArgNamesToIds[argName];
 
+                        // This argument reporter must belong to a different block. For example,
+                        // a block with handlerStatement=1 and draggableParameters=reporter
+                        if (argId === undefined) {
+                            return;
+                        }
+
                         if (!idsToNewArgNames[argId]) {
                             // That arg ID no longer exists on the new mutation, delete this
                             // arg reporter.
