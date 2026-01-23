@@ -302,7 +302,7 @@ export const AskAIOverlay = () => {
                                                             </div>
                                                             <Textarea
                                                                 id={`ask-ai-custom-text-${p.id}`}
-                                                                className={classList(css["textarea"], hasError && css["textarea-error"])}
+                                                                className={classList(css["textarea"], hasError ? css["textarea-error"] : undefined)}
                                                                 placeholder={Strings.CustomPromptPlaceholder}
                                                                 initialValue={p.text}
                                                                 maxLength={aiQuestionMaxLength}
