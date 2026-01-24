@@ -2046,7 +2046,7 @@ ${gcards.map(gcard => `[${gcard.name}](${gcard.url})`).join(',\n')}
         const kioskGames = targetConfig?.kiosk?.games;
         for (const game of (kioskGames ?? [])) {
             if (game.name) targetStrings[`{id:game-name}${game.name}`] = game.name;
-            if (game.description)  targetStrings[`{id:game-description}${game.description}`] = game.description;
+            if (game.description) targetStrings[`{id:game-description}${game.description}`] = game.description;
         }
 
         const approvedRepoLib = targetConfig?.packages?.approvedRepoLib;
@@ -6192,7 +6192,8 @@ function checkDocsAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
         true,
         parsed.flags["re"] as string,
         !!parsed.flags["fix"],
-        !!parsed.flags["pycheck"]
+        !!parsed.flags["pycheck"],
+        parsed.flags["file"] as string
     )
 }
 
@@ -6213,9 +6214,10 @@ function checkFileSize(files: string[]): number {
     return maxSize;
 }
 
-function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: boolean, pycheck?: boolean): Promise<void> {
+function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: boolean, pycheck?: boolean, fileFilter?: string): Promise<void> {
     if (!nodeutil.existsDirSync("docs"))
         return Promise.resolve();
+    const imageChecks = !fileFilter
     const docsRoot = nodeutil.targetDir;
     const docsTemplate = server.expandDocFileTemplate("docs.html")
     pxt.log(`checking docs`);
@@ -6235,40 +6237,43 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
     const existingSnippets: pxt.Map<boolean> = {};
     let snippets: CodeSnippet[] = [];
 
-    const maxFileSize = checkFileSize(nodeutil.allFiles("docs", { maxDepth: 10, allowMissing: true, includeDirs: true, ignoredFileMarker: ".ignorelargefiles" }));
+    const maxFileSize = imageChecks ? checkFileSize(nodeutil.allFiles("docs", { maxDepth: 10, allowMissing: true, includeDirs: true, ignoredFileMarker: ".ignorelargefiles" })) : 0;
     if (!pxt.appTarget.ignoreDocsErrors
         && maxFileSize > (pxt.appTarget.cloud.maxFileSize || (30000000)))
         U.userError(`files too big in docs folder`);
 
     // scan and fix image links
-    nodeutil.allFiles("docs", { ignoredFileMarker: ignoredFoldersKey })
-        .filter(f => /\.md/.test(f))
-        .forEach(f => {
-            let md = fs.readFileSync(f, { encoding: "utf8" });
-            let newmd = md.replace(/]\((\/static\/[^)]+?)\.(png|jpg)(\s+"[^"]+")?\)/g, (m: string, p: string, ext: string, comment: string) => {
-                let fn = path.join(docsRoot, "docs", `${p}.${ext}`);
-                if (fs.existsSync(fn))
-                    return m;
-                // try finding other file
-                let next = ext == "png" ? "jpg" : "png";
-                const exists = fs.existsSync(path.join(docsRoot, "docs", `${p}.${next}`));
-                if (exists && fix)
-                    return `](${p}.${next}${comment ? " " : ""}${comment || ""})`;
+    if (imageChecks)
+        nodeutil.allFiles("docs", { ignoredFileMarker: ignoredFoldersKey })
+            .filter(f => /\.md/.test(f))
+            .forEach(f => {
+                let md = fs.readFileSync(f, { encoding: "utf8" });
+                let newmd = md.replace(/]\((\/static\/[^)]+?)\.(png|jpg)(\s+"[^"]+")?\)/g, (m: string, p: string, ext: string, comment: string) => {
+                    let fn = path.join(docsRoot, "docs", `${p}.${ext}`);
+                    if (fs.existsSync(fn))
+                        return m;
+                    // try finding other file
+                    let next = ext == "png" ? "jpg" : "png";
+                    const exists = fs.existsSync(path.join(docsRoot, "docs", `${p}.${next}`));
+                    if (exists && fix)
+                        return `](${p}.${next}${comment ? " " : ""}${comment || ""})`;
 
-                // broken image or resources
-                broken++;
-                pxt.log(`missing file ${p}.${ext}`)
-                return m;
+                    // broken image or resources
+                    broken++;
+                    pxt.log(`missing file ${p}.${ext}`)
+                    return m;
+                });
+                if (fix && md != newmd) {
+                    pxt.log(`patching ${f}`)
+                    nodeutil.writeFileSync(f, newmd, { encoding: "utf8" })
+                }
             });
-            if (fix && md != newmd) {
-                pxt.log(`patching ${f}`)
-                nodeutil.writeFileSync(f, newmd, { encoding: "utf8" })
-            }
-        });
 
     function addSnippet(snippet: CodeSnippet, entryPath: string, snipIndex: number, src: string) {
         const key = `${src}${snipIndex}`;
         if (existingSnippets[key])
+            return;
+        if (fileFilter && !snippet.file?.includes(fileFilter))
             return;
         snippets.push(snippet);
         const dir = path.join("temp/snippets", snippet.type);
@@ -7575,6 +7580,9 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
                 description: "Check code snippets by round-tripping to .py and comparing the "
                     + "original and result .ts. This will generate lots of false positives but can "
                     + "still be useful for searching for semantic issues."
+            },
+            file: {
+                description: "partial file name matching, also disables image checking"
             }
         }
     }, checkDocsAsync);
