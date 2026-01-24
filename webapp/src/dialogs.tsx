@@ -717,9 +717,10 @@ export function showReportAbuseAsync(pubId?: string) {
 }
 
 export function showResetDialogAsync() {
+    const dialogBody = lf("You are about to delete all MakeCode {0} projects. Are you sure? This operation cannot be undone.", pxt.Util.capitalize(pxt.appTarget.id));
     return core.confirmAsync({
         header: lf("Reset"),
-        body: lf("You are about to clear all projects. Are you sure? This operation cannot be undone."),
+        body: dialogBody,
         agreeLbl: lf("Reset"),
         agreeClass: "red",
         agreeIcon: "sign out",
