@@ -6101,9 +6101,18 @@ async function importGithubProject(repoid: string, requireSignin?: boolean) {
 
 function loadHeaderBySharedId(id: string) {
     core.showLoading("loadingheader", lf("loading project..."));
+    let previousHeader: pxt.workspace.Header;
+    if (id.startsWith("S") && auth.hasIdentity() && data.getData<string>(auth.LOGGED_IN)) {
+        // if loading a persistent url, check for existing headers
+        previousHeader = workspace.getHeaders().find(h => h.pubPermalink === id);
+    }
 
-    workspace.installByIdAsync(id)
-        .then(hd => theEditor.loadHeaderAsync(hd, null))
+    const projHeaderPromise = previousHeader
+        ? Promise.resolve(previousHeader)
+        : workspace.installByIdAsync(id);
+
+    projHeaderPromise
+        .then(hd => theEditor.loadHeaderAsync(hd, null, !!previousHeader))
         .catch(e => {
             theEditor.openHome();
             core.handleNetworkError(e);
