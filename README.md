@@ -64,6 +64,33 @@ npm install
 npm run build
 ```
 
+## Team Monolith Build & Publish
+
+npm 패키지 빌드 및 배포 프로세스:
+
+1. package.json의 version 필드 업데이트
+
+2. 빌드를 위해 package.json의 name 필드를 `pxt-core`로 임시 수정
+   ```json
+   "name": "pxt-core"
+   ```
+
+3. 빌드 실행
+   ```bash
+   npm install
+   npm run build
+   ```
+
+4. 배포를 위해 package.json의 name 필드를 `@team-monolith/pxt-core`로 원복
+   ```json
+   "name": "@team-monolith/pxt-core"
+   ```
+
+5. npm 배포
+   ```bash
+   npm publish
+   ```
+
 Then install the `pxt` command line tool (only need to do it once):
 
 ```
