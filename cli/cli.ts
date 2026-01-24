@@ -1997,7 +1997,7 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
                 targetStrings[k] = k;
                 const galleryUrl = getGalleryUrl(targetConfig.galleries[k])
                 const gallerymd = nodeutil.resolveMd(docsRoot, galleryUrl);
-                const gallery = pxt.gallery.parseGalleryMardown(gallerymd);
+                const gallery = pxt.gallery.parseGalleryMarkdown(gallerymd);
                 const gurl = `/${galleryUrl.replace(/^\//, '')}`;
                 tocmd +=
                     `* [${k}](${gurl})
@@ -3859,7 +3859,7 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
     let lastCard: pxt.CodeCard = undefined;
     // parse existing cards
     if (md) {
-        cards = pxt.gallery.parseGalleryMardown(md);
+        cards = pxt.gallery.parseGalleryMarkdown(md);
         lastCard = cards.pop();
     }
     return pxt.discourse.topicsByTag(discourseRoot, tag)
@@ -6433,7 +6433,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                     broken++;
                     return;
                 }
-                let gallery = pxt.gallery.parseGalleryMardown(gallerymd);
+                let gallery = pxt.gallery.parseGalleryMarkdown(gallerymd);
                 pxt.debug(`found ${gallery.length} galleries`);
                 gallery.forEach(gal => gal.cards.forEach((card, cardIndex) => {
                     pxt.debug(`card ${card.shortName || card.name}`);
