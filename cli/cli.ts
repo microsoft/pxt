@@ -3480,7 +3480,7 @@ export function installAsync(parsed?: commandParser.ParsedCommand): Promise<void
     ensurePkgDir();
     const packageName = parsed && parsed.args.length ? parsed.args[0] : undefined;
     const hwvariant = parseHwVariant(parsed);
-    const lnk = parsed.flags["link"] as string
+    const lnk = parsed?.flags?.["link"];
     if (lnk && !fs.existsSync(lnk))
         U.userError(`folder not found: ${lnk}`)
     return installPackageNameAsync(packageName)
