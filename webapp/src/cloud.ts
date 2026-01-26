@@ -298,6 +298,16 @@ function getConflictCopyName(hdr: Header): string {
 
 async function resolveConflictAsync(local: Header, remote: Header | null) {
     pxt.debug(`cloud conflict detected for ${shortName(local)}`);
+
+    // 서버에서 삭제된 프로젝트인 경우 복제본 생성 없이 바로 삭제 처리
+    if (remote?.isDeleted) {
+        pxt.debug(`cloud project deleted for ${shortName(local)}, marking local as deleted`);
+        local.isDeleted = true;
+        local.cloudCurrent = true;
+        await workspace.saveAsync(local, null, true);
+        return;
+    }
+
     // Strategy: resolve conflict by creating a copy
     // Note, we do the operations in the following order:
     // 1. create a local copy
