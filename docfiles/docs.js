@@ -133,7 +133,7 @@ function setupSidebar() {
 function setupSemantic() {
     // do not use pxt.appTarget in this function
     // don't show related videos
-    $.fn.embed.settings.sources.youtube.url = '//www.youtube.com/embed/{id}?rel=0'
+    $.fn.embed.settings.sources.youtube.url = '//www.youtube-nocookie.com/embed/{id}?rel=0'
 
     //This is an adapted version of the original template code in Semantic UI
     $.fn.embed.settings.templates.placeholder = function (image, icon) {
