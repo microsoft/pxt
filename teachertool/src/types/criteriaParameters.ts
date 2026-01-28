@@ -1,11 +1,19 @@
 export type CriteriaParameterType = "string" | "longString" | "number" | "block" | "system";
 
+export interface CriteriaParameterOption {
+    id?: string;
+    value: string;
+    label?: string;
+    category?: string;
+}
+
 // Represents a parameter definition in a catalog criteria.
 export type CriteriaParameterBase = {
     name: string;
     type: CriteriaParameterType;
     default: string | undefined;
     paths: string[]; // The json path(s) to update with the parameter value in the catalog criteria.
+    options?: CriteriaParameterOption[];
 };
 
 export type StringParameterBase = CriteriaParameterBase & {

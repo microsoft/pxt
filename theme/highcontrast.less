@@ -11,7 +11,6 @@
 
 @selected: yellow;
 @disabled: #3ff23f;
-@hyperlink: #807FFF;
 
 /* Messages */
 #msg .hc {
@@ -718,12 +717,6 @@
         }
     }
 
-    /* Hyperlinks */
-    a {
-        color: @hyperlink !important;
-        text-decoration: underline !important;
-    }
-
     /* Dropdown */
     .ui.dropdown .menu,
     .ui.menu .ui.dropdown .menu {
@@ -942,7 +935,8 @@
     /* immersive reader */
     .modals .ui.button.immersive-reader-button,
     #mainmenu .immersive-reader-button.ui.item,
-    #simulator .editor-sidebar .immersive-reader-button.ui.item {
+    #simulator .editor-sidebar .immersive-reader-button.ui.item,
+    .tutorialsegment .immersive-reader-button.ui.item {
         border: 1px solid #fff!important;
         background-image: @immersiveReaderLightIcon !important;
         background-repeat: no-repeat !important;
@@ -955,7 +949,9 @@
     #mainmenu .immersive-reader-button.ui.item:focus,
     #mainmenu .immersive-reader-button.ui.item:hover,
     #simulator .editor-sidebar .immersive-reader-button.ui.item:focus,
-    #simulator .editor-sidebar .immersive-reader-button.ui.item:hover {
+    #simulator .editor-sidebar .immersive-reader-button.ui.item:hover,
+    .tutorialsegment .immersive-reader-button.ui.item:focus,
+    .tutorialsegment .immersive-reader-button.ui.item:hover {
         background-color: white !important;
         background-image: @immersiveReaderIcon !important;
         background-repeat: no-repeat !important;

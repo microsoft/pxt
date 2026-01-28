@@ -14,7 +14,25 @@
                     "name": "question",
                     "type": "longString",
                     "maxCharacters": 1000,
-                    "paths": ["checks[0].question"]
+                    "paths": ["checks[0].question"],
+                    "options": [
+                        {
+                            "id": "explainProgram",
+                            "value": "Explain what this program does in clear, student-friendly language."
+                        },
+                        {
+                            "id": "findMajorBugs",
+                            "value": "Look for major bugs or logic errors in this project and describe any issues you find."
+                        },
+                        {
+                            "id": "codeQuality",
+                            "value": "Review the code quality. Mention strengths and suggest one improvement for readability or structure."
+                        },
+                        {
+                            "id": "suggestEnhancement",
+                            "value": "Suggest a meaningful enhancement that would make this project more engaging or polished."
+                        }
+                    ]
                 },
                 {
                     "name": "shareid",
@@ -40,6 +58,7 @@
                 {
                     "name": "count",
                     "type": "number",
+                    "min": 1,
                     "default": 1,
                     "paths": ["checks[0].blockCounts[0].count"]
                 }
@@ -47,7 +66,7 @@
         },
         {
             "id": "7AE7EA2A-3AC8-42DC-89DB-65E3AE157156",
-            "use": "block_comment_used",
+            "use": "comment_used",
             "template": "At least ${count} comment(s)",
             "description": "The project contains at least the specified number of comments.",
             "docPath": "/teachertool",
@@ -57,6 +76,7 @@
                 {
                     "name": "count",
                     "type": "number",
+                    "min": 1,
                     "default": 1,
                     "paths": ["checks[0].count"]
                 }
@@ -74,6 +94,7 @@
                 {
                     "name": "count",
                     "type": "number",
+                    "min": 1,
                     "paths": ["checks[0].count"],
                     "default": 1
                 }
@@ -91,6 +112,7 @@
                 {
                     "name": "count",
                     "type": "number",
+                    "min": 1,
                     "paths": ["checks[0].count", "checks[1].count"],
                     "default": 1
                 }
@@ -108,6 +130,7 @@
                 {
                     "name": "count",
                     "type": "number",
+                    "min": 1,
                     "paths": ["checks[0].count"],
                     "default": 1
                 }

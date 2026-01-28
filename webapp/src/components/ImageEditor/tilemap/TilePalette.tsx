@@ -250,7 +250,7 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
                         <TileButton
                             key={index}
                             tile={tile.bitmap}
-                            title={lf("Tile {0}", tile)}
+                            title={this.getTileTooltip(tile)}
                             colors={colors}
                             onClick={() => this.handleTileClick(index, false)}
                             onRightClick={() => this.handleTileClick(index, true)}
@@ -277,6 +277,20 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
                 </div>
             </div>
         </div>;
+    }
+
+    protected getTileTooltip(tile: RenderedTile): string {
+        const label = (() => {
+            if (isGalleryTile(tile)) return tile.qualifiedName?.split(".").pop();
+
+            const tileInfo = this.props.tileset?.tiles?.[tile.index];
+            return tileInfo?.meta?.displayName
+                || (tileInfo ? pxt.getShortIDForAsset(tileInfo) : undefined)
+                || tileInfo?.id;
+        })();
+
+        const shortName = label?.split(".").pop();
+        return shortName ? lf("Tile {0}", shortName) : lf("Tile");
     }
 
     protected updateGalleryTiles() {

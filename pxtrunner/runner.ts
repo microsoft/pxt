@@ -4,7 +4,7 @@
 /// <reference path="../built/pxtcompiler.d.ts" />
 /// <reference path="../built/pxtsim.d.ts" />
 
-import { BlocksRenderOptions, blocklyToSvgAsync, initializeAndInject, render } from "../pxtblocks";
+import { BlockSvg, BlocksRenderOptions, blocklyToSvgAsync, initializeAndInject, render } from "../pxtblocks";
 import { initEditorExtensionsAsync } from "../pxteditor/editor";
 import { defaultClientRenderOptions, fireClickOnEnter, renderAsync } from "./renderer";
 
@@ -694,12 +694,23 @@ export function startRenderServer() {
             const result = isXml
                 ? await compileBlocksAsync(msg.code, options)
                 : await decompileSnippetAsync(msg.code, msg.options);
+
             const blocksSvg = result.blocksSvg as SVGSVGElement;
+            if (!blocksSvg) {
+                throw new Error("Failed to generate blocks SVG");
+            }
+
             const width = blocksSvg.viewBox.baseVal.width;
             const height = blocksSvg.viewBox.baseVal.height;
-            const res = blocksSvg
-                ? await blocklyToSvgAsync(blocksSvg, 0, 0, width, height)
-                : undefined;
+
+            let res: BlockSvg;
+            try {
+                res = await blocklyToSvgAsync(blocksSvg, 0, 0, width, height);
+            } catch (e) {
+                pxt.reportException(e);
+                throw e;
+            }
+
             // try to render to png
             let png: string;
             try {

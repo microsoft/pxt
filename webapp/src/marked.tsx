@@ -295,21 +295,9 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
 
 
     private renderVideo(content: HTMLElement) {
+        pxt.docs.hydrateYouTubeEmbeds(content, true);
 
-        pxt.Util.toArray(content.querySelectorAll('iframe.yt-embed'))
-            .forEach((inlineVideo: HTMLElement) => {
-                let lang = pxt.appTarget.appTheme?.defaultLocale ?? "en";
-                const src = inlineVideo.getAttribute('src');
-                let url = new URL(src);
-                pxt.tickEvent("video.loaded", {
-                    player: "youtube",
-                    url: src
-                })
-                url.searchParams.append('hl', lang);
-                inlineVideo.setAttribute('src', url.toString());
-            });
-
-        pxt.Util.toArray(content.querySelectorAll('Video.ams-embed'))
+        pxt.Util.toArray(content.querySelectorAll("Video.ams-embed"))
             .forEach((inlineVideo: HTMLMediaElement) => {
 
                 let player = MediaPlayer().create()
@@ -665,37 +653,42 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         markdown = markdown.replace(/@([a-z]+)@/ig, (m, param) => pubinfo[param] || 'unknown macro')
 
         // create a custom renderer
-        let renderer = new marked.Renderer()
+        const renderer = new marked.Renderer()
         pxt.docs.setupRenderer(renderer);
 
-        // always popout external links
-        const linkRenderer = renderer.link;
-        renderer.link = function (href: string, title: string, text: string) {
-            const relative = /^[\/#]/.test(href);
-            const target = !relative ? '_blank' : '';
-            const html = linkRenderer.call(renderer, href, title, text);
-            return html.replace(/^<a /, `<a ${target ? `target="${target}"` : ''} rel="nofollow noopener" `);
+        // always popout links
+        const linkRenderer = renderer.link ? renderer.link.bind(renderer) : undefined;
+        renderer.link = function (this: any, token: marked.Tokens.Link) {
+            const html = linkRenderer
+                ? linkRenderer(token)
+                : `<a href="${token.href}">${this.parser.parseInline(token.tokens)}</a>`;
+            return html.replace(/^<a /, `<a target="_blank" rel="nofollow noopener" `);
         };
 
         // Set markdown options
         marked.setOptions({
+            async: false,
             renderer: renderer,
-            sanitize: true,
-            sanitizer: pxt.docs.requireDOMSanitizer()
+            gfm: true,
+            breaks: false,
+            pedantic: false
         })
+
+        const sanitizer = pxt.docs.requireDOMSanitizer() as ((input: string) => string) | undefined;
 
         // preemptively remove script tags, although they'll be escaped anyway
         // prevents ugly <script ...> rendering in docs. This is not intended to sanitize
-        // the markedown, that is done using DOMPurify (see setOptions above)
+        // the markdown, that is done using DOMPurify below
         markdown = markdown.replace(/<\s*script[^>]*>.*<\/\s*script[^>]*>/gi, '');
 
         // Render the markdown into a div outside of the DOM tree to prevent the page from reflowing
         // when we edit the HTML it produces. Then, add the finished result to the content div
         const tempDiv = document.createElement("div");
-
-        // We pass DOMPurify to marked in the call to setOptions above. This should be safe
+        const rendered = marked.marked(markdown) as string;
         /* eslint-disable @microsoft/sdl/no-inner-html */
-        tempDiv.innerHTML = marked(markdown);
+        const safeHtml = sanitizer?.(rendered);
+        const normalizedHtml = typeof safeHtml === "string" ? safeHtml : (safeHtml as any)?.toString?.() ?? rendered;
+        tempDiv.innerHTML = normalizedHtml;
         /* eslint-enable @microsoft/sdl/no-inner-html */
 
         // We'll go through a series of adjustments here, rendering inline blocks, blocks and snippets as needed

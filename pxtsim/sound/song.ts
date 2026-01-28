@@ -302,11 +302,11 @@ namespace pxsim.music {
             },
             ampLFO: {
                 frequency: buf[offset + 21],
-                amplitude: get16BitNumber(buf, 22)
+                amplitude: get16BitNumber(buf, offset + 22)
             },
             pitchLFO: {
                 frequency: buf[offset + 24],
-                amplitude: get16BitNumber(buf, 25)
+                amplitude: get16BitNumber(buf, offset + 25)
             },
             octave: buf[offset + 27]
         }

@@ -1000,9 +1000,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
                 keybindingContext: "!editorReadonly",
                 precondition: "!editorReadonly",
-                contextMenuGroupId: "0_pxtnavigation",
-                contextMenuOrder: 0.21,
-                run: () => Promise.resolve(this.parent.runSimulator())
+                run: async () => this.parent.startStopSimulator({ clickTrigger: true })
             });
 
             if (pxt.appTarget.compile && pxt.appTarget.compile.hasHex) {
@@ -1424,8 +1422,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     focusToolbox(itemToFocus?: string): void {
         if (this.isDebugging())  {
             this.debuggerToolbox.focus();
-        } else if (this.toolbox) {
+        } else if (this.toolbox && this.parent.state.editorState?.hasCategories !== false) {
             this.toolbox.focus(itemToFocus);
+        } else if (this.flyout) {
+            this.flyout.focus();
         }
     }
 
@@ -1604,12 +1604,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             });
     }
 
-    unloadFileAsync(): Promise<void> {
+    unloadFileAsync(unloadToHome?: boolean): Promise<void> {
         if (this.toolbox)
             this.toolbox.clearSearch();
         this.setErrors([]);
         this.parent.setState({errorListNote: undefined});
-        if (this.currFile && this.currFile.getName() == "this/" + pxt.CONFIG_NAME) {
+        if (this.currFile && this.currFile.getName() == "this/" + pxt.CONFIG_NAME && !unloadToHome) {
             // Reload the header if a change was made to the config file: pxt.json
             return this.parent.reloadHeaderAsync();
         }
@@ -2007,7 +2007,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private filterBlocks(subns: string, blocks: toolbox.BlockDefinition[]) {
         return blocks.filter((block => !(block.attributes.blockHidden)
             && !(block.attributes.deprecated && !this.parent.isTutorial())
-            && (block.name.indexOf('_') != 0)
+            && (block.name.indexOf('_') != 0 || block.attributes.blockAliasFor)
             && ((!subns && !block.attributes.subcategory && !block.attributes.advanced)
                 || (subns && ((block.attributes.advanced && subns == lf("more"))
                     || (block.attributes.subcategory && subns == block.attributes.subcategory))))));

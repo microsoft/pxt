@@ -324,9 +324,11 @@ export class ProjectView
      * Run a global action based on shortcuts triggered in sim or main window.
      */
     private runGlobalAction(action: pxsim.GlobalAction) {
-        if (!data.getData<boolean>(auth.ACCESSIBLE_BLOCKS)) {
+        // Escape always works to exit fullscreen, other actions require accessible blocks
+        if (action !== "escape" && !data.getData<boolean>(auth.ACCESSIBLE_BLOCKS)) {
             return;
         }
+
         switch (action) {
             case "escape": {
                 this.setSimulatorFullScreen(false);
@@ -393,7 +395,8 @@ export class ProjectView
             // it's a go, let's add
             for (const ghid of ghids) {
                 pxt.debug(`adding ${ghid.fullName}`)
-                const { config, version } = await pxt.github.downloadLatestPackageAsync(ghid);
+                const useProxy = pxt.github.shouldUseProxyForRepo(ghid.fullName);
+                const { config, version } = await pxt.github.downloadLatestPackageAsync(ghid, useProxy);
                 await p.setDependencyAsync(config.name, version);
             }
             this.reloadHeaderAsync();
@@ -1776,6 +1779,7 @@ export class ProjectView
             await this.loadTutorialCustomTsAsync();
             await this.loadTutorialTemplateCodeAsync();
             await this.loadTutorialBlockConfigsAsync();
+            await this.loadTutorialHiddenCategoriesAsync();
 
             const main = pkg.getEditorPkg(pkg.mainPkg);
 
@@ -2103,8 +2107,11 @@ export class ProjectView
         if (!header || !header.tutorial) {
             return;
         }
-        else if (!header.tutorial.templateCode || header.tutorial.templateLoaded) {
-            if (header.tutorial.mergeCarryoverCode && header.tutorial.mergeHeaderId) {
+        const hasCodeCarryover = header.tutorial.mergeCarryoverCode && header.tutorial.mergeHeaderId;
+        const hideReplaceMyCode = header.tutorial.metadata?.hideReplaceMyCode || pxt.appTarget.appTheme.hideReplaceMyCode;
+
+        if (!header.tutorial.templateCode && !(hasCodeCarryover && hideReplaceMyCode) || header.tutorial.templateLoaded) {
+            if (hasCodeCarryover) {
                 pxt.warn(lf("Refusing to carry code between tutorials because the loaded tutorial \"{0}\" does not contain a template code block.", header.tutorial.tutorial));
             }
             return;
@@ -2115,33 +2122,36 @@ export class ProjectView
         // Mark that the template has been loaded so that we don't overwrite the
         // user code if the tutorial is re-opened
         header.tutorial.templateLoaded = true;
+
         let currentText = await workspace.getTextAsync(header.id);
 
-        // If we're starting in the asset editor, always load into TS
-        const preferredEditor = header.tutorial.metadata?.preferredEditor;
-        if (preferredEditor && filenameForEditor(preferredEditor) === pxt.ASSETS_FILE) {
-            currentText[pxt.MAIN_TS] = template;
-        }
-
-        const projectname = projectNameForEditor(preferredEditor || header.editor);
-
-        if (projectname === pxt.PYTHON_PROJECT_NAME && header.tutorial.templateLanguage === "python") {
-            currentText[pxt.MAIN_PY] = template;
-        }
-        else if (projectname === pxt.JAVASCRIPT_PROJECT_NAME) {
-            currentText[pxt.MAIN_TS] = template;
-        }
-        else if (projectname === pxt.PYTHON_PROJECT_NAME) {
-            const pyCode = await compiler.decompilePythonSnippetAsync(template)
-            if (pyCode) {
-                currentText[pxt.MAIN_PY] = pyCode;
+        if (template) {
+            // If we're starting in the asset editor, always load into TS
+            const preferredEditor = header.tutorial.metadata?.preferredEditor;
+            if (preferredEditor && filenameForEditor(preferredEditor) === pxt.ASSETS_FILE) {
+                currentText[pxt.MAIN_TS] = template;
             }
-        }
-        else {
-            const resp = await compiler.decompileBlocksSnippetAsync(template)
-            const blockXML = resp.outfiles[pxt.MAIN_BLOCKS];
-            if (blockXML) {
-                currentText[pxt.MAIN_BLOCKS] = blockXML
+
+            const projectname = projectNameForEditor(preferredEditor || header.editor);
+
+            if (projectname === pxt.PYTHON_PROJECT_NAME && header.tutorial.templateLanguage === "python") {
+                currentText[pxt.MAIN_PY] = template;
+            }
+            else if (projectname === pxt.JAVASCRIPT_PROJECT_NAME) {
+                currentText[pxt.MAIN_TS] = template;
+            }
+            else if (projectname === pxt.PYTHON_PROJECT_NAME) {
+                const pyCode = await compiler.decompilePythonSnippetAsync(template)
+                if (pyCode) {
+                    currentText[pxt.MAIN_PY] = pyCode;
+                }
+            }
+            else {
+                const resp = await compiler.decompileBlocksSnippetAsync(template)
+                const blockXML = resp.outfiles[pxt.MAIN_BLOCKS];
+                if (blockXML) {
+                    currentText[pxt.MAIN_BLOCKS] = blockXML
+                }
             }
         }
 
@@ -2241,6 +2251,27 @@ export class ProjectView
         await mainPkg.setContentAsync(pxt.TUTORIAL_CUSTOM_TS, customTs);
         await mainPkg.saveFilesAsync();
         return Promise.resolve();
+    }
+
+    private async loadTutorialHiddenCategoriesAsync(): Promise<void> {
+        const mainPkg = pkg.mainEditorPkg();
+        const header = mainPkg.header;
+        if (!header || !header.tutorial || !header.tutorial.hiddenNamespaces) {
+            return;
+        }
+
+        await mainPkg.updateConfigAsync(config => {
+            if (!config.toolboxFilter) {
+                config.toolboxFilter = {
+                    namespaces: {},
+                    blocks: {}
+                };
+            }
+
+            for (const category of header.tutorial.hiddenNamespaces) {
+                config.toolboxFilter.namespaces[category] = "hidden";
+            }
+        });
     }
 
     async resetTutorialTemplateCode(keepAssets: boolean): Promise<void> {
@@ -2671,7 +2702,7 @@ export class ProjectView
 
     initDragAndDrop() {
         draganddrop.addDragAndDropHandler({
-            filter: file => file.size < 1000000 && this.isHexFile(file.name) || this.isBlocksFile(file.name) || this.isZipFile(file.name),
+            filter: file => file.size < 1000000,
             dragged: files => {
                 if (files) {
                     pxt.tickEvent("dragandrop.open")
@@ -3137,7 +3168,7 @@ export class ProjectView
         const { name, path, loadBlocks, prj, preferredEditor } = options;
         core.showLoading("changingcode", lf("loading..."));
         this.loadingExample = true;
-        return this.loadActivityFromMarkdownAsync(path, name.toLowerCase(), preferredEditor)
+        return this.loadActivityFromMarkdownAsync(path, name?.toLowerCase(), preferredEditor)
             .then(r => {
                 const { filename, md, features, autoChooseBoard: autoChooseBoardMeta } = (r || {});
                 const autoChooseBoard = !prj && autoChooseBoardMeta;
@@ -4267,7 +4298,10 @@ export class ProjectView
     async renderByBlockIdAsync(req: pxt.editor.EditorMessageRenderByBlockIdRequest): Promise<pxt.editor.EditorMessageRenderByBlockIdResponse> {
         const blocksInfo = await compiler.getBlocksAsync();
         const blockInfo = blocksInfo.blocksById[req.blockId];
-        const symbolInfo: pxtc.SymbolInfo = blocksInfo.apis.byQName[blockInfo.qName];
+        let symbolInfo: pxtc.SymbolInfo = blocksInfo.apis.byQName[blockInfo.qName];
+        if (!symbolInfo) {
+            symbolInfo = pxtblockly.blockSymbol(blockInfo.attributes.blockId)
+        }
         const compileInfo: pxt.blocks.BlockCompileInfo = pxt.blocks.compileInfo(symbolInfo);
         const xml = pxtblockly.createToolboxBlock(blocksInfo, symbolInfo, compileInfo, false, 3);
         return this.renderXmlInner(xml.outerHTML, req.snippetMode, req.layout);
@@ -4414,10 +4448,10 @@ export class ProjectView
         return this.getShareUrl(script.shortid || script.id, false);
     }
 
-    async publishAsync (name: string, screenshotUri?: string, forceAnonymous?: boolean): Promise<pxt.editor.ShareData> {
+    async publishAsync (name: string, description?: string,screenshotUri?: string, forceAnonymous?: boolean): Promise<pxt.editor.ShareData> {
         pxt.tickEvent("menu.embed.publish", undefined, { interactiveConsent: true });
-        if (name && this.state.projectName != name) {
-            await this.updateHeaderNameAsync(name);
+        if ((name && this.state.projectName != name) || description) {
+            await this.updateHeaderNameAsync(name, description);
         }
 
         const hasIdentity = auth.hasIdentity() && this.isLoggedIn();
@@ -4490,7 +4524,7 @@ export class ProjectView
             }
 
             const meta: workspace.ScriptMeta = {
-                description: mpkg.config.description,
+                description: mpkg.config.description?.substring(0, pxt.MAX_DESCRIPTION_LENGTH),
             };
 
             const blocksSize = this.blocksEditor.contentSize();
@@ -4564,18 +4598,20 @@ export class ProjectView
         }
     }
 
-    updateHeaderNameAsync(name: string): Promise<void> {
+    updateHeaderNameAsync(name: string, description?: string): Promise<void> {
         // nothing to do?
-        if (pkg.mainPkg.config.name == name)
+        if (pkg.mainPkg.config.name == name && (!description || pkg.mainPkg.config.description == description))
             return Promise.resolve();
 
         //Save the name in the target MainPackage as well
         pkg.mainPkg.config.name = name;
+        pkg.mainPkg.config.description = description || pkg.mainPkg.config.description;
 
         pxt.debug('saving project name to ' + name);
         let f = pkg.mainEditorPkg().lookupFile("this/" + pxt.CONFIG_NAME);
         let config = JSON.parse(f.content) as pxt.PackageConfig;
         config.name = name;
+        config.description = description || config.description;
         return f.setContentAsync(pxt.Package.stringifyConfig(config))
             .then(() => {
                 if (this.state.header)
@@ -6230,7 +6266,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     let theme = pxt.appTarget.appTheme;
     const isControllerIFrame = theme.allowParentController || pxt.shell.isControllerMode()
     // disable auth in iframe scenarios
-    if (isControllerIFrame)
+    if (isControllerIFrame && !pxt.BrowserUtils.isSkillmapEditor())
         pxt.auth.enableAuth(false);
     enableAnalytics()
 

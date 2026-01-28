@@ -424,6 +424,7 @@ declare namespace pxt {
         disableLiveTranslations?: boolean; // don't load translations from crowdin
         extendEditor?: boolean; // whether a target specific editor.js is loaded
         extendFieldEditors?: boolean; // wether a target specific fieldeditors.js is loaded
+        extendScriptPage?: boolean; // if set to true, builds scriptpage.js from scriptPage/ folder when building target
         highContrast?: boolean; // simulator has a high contrast mode
         print?: boolean; //Print blocks and text feature
         greenScreen?: boolean; // display webcam stream in background
@@ -539,6 +540,8 @@ declare namespace pxt {
         pxtJsonOptions?: PxtJsonOption[];
         enabledFeatures?: pxt.Map<FeatureFlag>;
         forceEnableAiErrorHelp?: boolean; // Enables the AI Error Help feature, regardless of geo setting.
+        shareHomepageContent?: boolean; // Show buttons to share links to homepage content more easily
+        showProjectDescription?: boolean; // Show project description in pxtjson editor and share dialog
     }
 
     interface DownloadDialogTheme {
@@ -880,6 +883,9 @@ declare namespace ts.pxtc {
         blockImage?: boolean; // for enum variable, specifies that it should use an image from a predefined location
         blockCombine?: boolean;
         blockCombineShadow?: string;
+        blockCombineGetHelp?: string;
+        blockCombineSetHelp?: string;
+        blockCombineChangeHelp?: string;
         blockSetVariable?: string; // show block with variable assigment in toolbox. Set equal to a name to control the var name
         fixedInstances?: boolean;
         fixedInstance?: boolean;
@@ -1232,6 +1238,7 @@ declare namespace pxt.tutorial {
         globalBlockConfig?: TutorialBlockConfig; // concatenated `blockconfig.global` sections. Contains block configs applicable to all tutorial steps
         globalValidationConfig?: CodeValidationConfig; // concatenated 'validation.global' sections. Contains validation config applicable to all steps
         simTheme?: Partial<pxt.PackageConfig>;
+        hiddenNamespaces?: string[]; // list of categories to put in the toolbox filters of the tutorial project's pxt.json
     }
 
     interface TutorialMetadata {
@@ -1249,6 +1256,7 @@ declare namespace pxt.tutorial {
         preferredEditor?: string; // preferred editor for opening the tutorial
         hideDone?: boolean; // Do not show a "Done" button at the end of the tutorial
         hideFromProjects?: boolean; // hide this tutorial from the projects list
+        hideReplaceMyCode?: boolean; // hide the "Replace Code" button in the tutorial
     }
 
     interface TutorialBlockConfigEntry {
@@ -1347,6 +1355,7 @@ declare namespace pxt.tutorial {
         globalBlockConfig?: TutorialBlockConfig; // concatenated `blockconfig.global` sections. Contains block configs applicable to all tutorial steps
         globalValidationConfig?: CodeValidationConfig // concatenated 'validation.global' sections. Contains validation config applicable to all steps
         simTheme?: Partial<pxt.PackageConfig>;
+        hiddenNamespaces?: string[]; // list of categories to put in the toolbox filters of the tutorial project's pxt.json
     }
     interface TutorialCompletionInfo {
         // id of the tutorial

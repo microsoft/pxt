@@ -31,9 +31,30 @@ const InlineInputSegment: React.FC<InlineInputSegmentProps> = ({
 }) => {
     const [errorMessage, setErrorMessage] = useState(initialValue ? "" : Strings.ValueRequired);
     const paramDefinition = useMemo(() => getParameterDefinition(instance.catalogCriteriaId, param.name), [param]);
+    const paramOptions = useMemo(() => {
+        if (!paramDefinition?.options?.length) {
+            return undefined;
+        }
+
+        return paramDefinition.options.reduce((acc, option) => {
+            const optionLabel = option.label || option.value;
+            const optionValue = option.value ?? optionLabel;
+
+            if (optionLabel && optionValue) {
+                acc[optionLabel] = optionValue;
+            }
+
+            return acc;
+        }, {} as pxt.Map<string>);
+    }, [paramDefinition]);
 
     useEffect(() => {
         if (!paramDefinition) {
+            return;
+        }
+
+        if (!initialValue) {
+            setErrorMessage(Strings.ValueRequired);
             return;
         }
 
@@ -68,14 +89,15 @@ const InlineInputSegment: React.FC<InlineInputSegmentProps> = ({
                     shouldExpand ? css["long"] : undefined,
                     errorMessage ? css["error"] : undefined
                 )}
+                options={paramOptions}
                 icon={errorMessage ? "fas fa-exclamation-triangle" : undefined}
                 initialValue={initialValue}
                 onChange={onChange}
+                onOptionSelected={onChange}
                 preserveValueOnBlur={true}
                 placeholder={numeric ? "0" : param.name}
                 title={tooltip}
-                autoComplete={false}
-                filter={numeric ? "[0-9]{1,2}" : undefined}
+                filter={numeric && !paramOptions ? "[0-9]{1,2}" : undefined}
             />
         </div>
     );

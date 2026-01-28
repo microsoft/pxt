@@ -52,7 +52,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
                         )}
                     </>
                 ) : (
-                    <span className="name">{appTheme.organization}</span>
+                    <span className={css["organization-name"]}>{appTheme.organization}</span>
                 )}
             </div>
         );
@@ -67,14 +67,20 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
                 onClick={onBrandIconClick}
             >
                 {appTheme.useTextLogo ? (
-                    [
-                        <span className={css["name"]} key="org-name">
+                    <>
+                        <span
+                            className={classList(css["brand-text"], "min-sm")}
+                            key="org-name"
+                        >
                             {appTheme.organizationText}
-                        </span>,
-                        <span className={css["name-short"]} key="org-name-short">
+                        </span>
+                        <span
+                            className={classList(css["brand-text-short"], "max-sm")}
+                            key="org-name-short"
+                        >
                             {appTheme.organizationShortText || appTheme.organizationText}
-                        </span>,
-                    ]
+                        </span>
+                    </>
                 ) : appTheme.logo || appTheme.portraitLogo ? (
                     <>
                         {appTheme.logo && (
@@ -93,7 +99,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = () => {
                         )}
                     </>
                 ) : (
-                    <span className={css["name"]}>{appTheme.boardName}</span>
+                    <span className={css["brand-text"]}>{appTheme.boardName}</span>
                 )}
             </div>
         );

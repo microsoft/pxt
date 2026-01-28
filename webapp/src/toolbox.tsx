@@ -56,6 +56,7 @@ export interface BlockDefinition {
         _def?: pxtc.ParsedBlockDef;
         parentBlock?: BlockDefinition;
         toolboxParentArgument?: string;
+        blockAliasFor?: string;
     };
     retType?: string;
     blockXml?: string;
@@ -149,6 +150,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         this.deleteExtension = this.deleteExtension.bind(this);
         this.cancelDeleteExtension= this.cancelDeleteExtension.bind(this);
         this.handleKeyDown = this.handleKeyDown.bind(this);
+        this.hasTopBlocks = this.hasTopBlocks.bind(this);
     }
 
     getElement() {
@@ -413,7 +415,11 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
 
     getNonAdvancedCategories() {
         const { categories } = this.state;
-        return categories.filter(category => !category.advanced);
+        let nonAdvanced = categories.filter(category => !category.advanced);
+        if (this.hasTopBlocks()) {
+            nonAdvanced = [this.getTopBlocksCategory(), ...nonAdvanced];
+        }
+        return nonAdvanced;
     }
 
     getAdvancedCategories() {
@@ -421,10 +427,31 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         return categories.filter(category => category.advanced);
     }
 
+    private hasTopBlocks() {
+        const theme = pxt.appTarget.appTheme;
+        const tutorialOptions = this.props.parent.parent.state.tutorialOptions;
+        const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
+        return !!theme.topBlocks && !inTutorial;
+    }
+
+    private getTopBlocksCategory() {
+        return {
+            nameid: 'topblocks',
+            name: lf("{id:category}Basic"),
+            color: pxt.toolbox.getNamespaceColor('topblocks'),
+            icon: pxt.toolbox.getNamespaceIcon('topblocks')
+        };
+    }
+
     private getAllCategoriesList(visibleOnly?: boolean): ToolboxCategory[] {
         const { categories, hasSearch, expandedItem } = this.state;
         const categoriesList: ToolboxCategory[] = [];
         if (hasSearch) categoriesList.push(ToolboxSearch.getSearchTreeRow());
+
+        if (this.hasTopBlocks()) {
+            categoriesList.push(this.getTopBlocksCategory());
+        }
+
         categories.forEach(category => {
             categoriesList.push(category);
             if (category.subcategories &&
@@ -555,10 +582,8 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
             );
         }
 
-        const theme = pxt.appTarget.appTheme;
         const tutorialOptions = parent.parent.state.tutorialOptions;
-        const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial
-        const hasTopBlocks = !!theme.topBlocks && !inTutorial;
+        const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
         const showToolboxLabel = inTutorial;
 
         if (loading || hasError) {
@@ -595,12 +620,6 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         this.items = this.getAllCategoriesList();
 
         const searchTreeRow = ToolboxSearch.getSearchTreeRow();
-        const topBlocksTreeRow = {
-            nameid: 'topblocks',
-            name: lf("{id:category}Basic"),
-            color: pxt.toolbox.getNamespaceColor('topblocks'),
-            icon: pxt.toolbox.getNamespaceIcon('topblocks')
-        };
 
         const appTheme = pxt.appTarget.appTheme;
         const classes = classList(
@@ -659,16 +678,6 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
                                 selectedIndex={this.selectedIndex}
                                 selected={selectedItem == "search"}
                                 treeRow={searchTreeRow}
-                                onCategoryClick={this.onCategoryClick}
-                                ariaLevel={1}
-                            />
-                        }
-                        {hasTopBlocks &&
-                            <CategoryItem
-                                key={"topblocks"}
-                                toolbox={this}
-                                selected={selectedItem == "topblocks"}
-                                treeRow={topBlocksTreeRow}
                                 onCategoryClick={this.onCategoryClick}
                                 ariaLevel={1}
                             />

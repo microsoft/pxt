@@ -572,6 +572,19 @@ namespace pxt {
             }
 
             const currentConfig = JSON.stringify(this.config);
+
+            if (this.config?.files) {
+                // clean up the files list. we had some issues in the past with
+                // invalid entries being added to pxt.json
+                this.config.files = this.config.files.filter(f =>
+                    f !== pxt.HISTORY_FILE &&
+                    f !== pxt.CONFIG_NAME &&
+                    f !== "undefined" &&
+                    f !== "null" &&
+                    !!f
+                );
+            }
+
             for (const dep in this.config.dependencies) {
                 const value = pxt.patching.upgradePackageReference(this.targetVersion(), dep, this.config.dependencies[dep]);
                 if (value != dep) {

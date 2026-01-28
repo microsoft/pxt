@@ -26,9 +26,10 @@ import {
     dispatchCloseSelectLanguage,
     dispatchCloseSelectTheme,
     dispatchShowFeedback,
-    dispatchCloseFeedback
+    dispatchCloseFeedback,
+    dispatchSetModal
 } from './actions/dispatch';
-import { PageSourceStatus, SkillMapState } from './store/reducer';
+import { ModalState, PageSourceStatus, SkillMapState } from './store/reducer';
 import { HeaderBar } from './components/HeaderBar';
 import { AppModal } from './components/AppModal';
 import { SkillGraphContainer } from './components/SkillGraphContainer';
@@ -57,6 +58,7 @@ interface AppProps {
     skillMaps: { [key: string]: SkillMap };
     activityOpen: boolean;
     backgroundImageUrl: string;
+    pixelatedBackground?: boolean;
     theme: SkillGraphTheme;
     signedIn: boolean;
     activityId: string;
@@ -71,7 +73,7 @@ interface AppProps {
     dispatchSetPageTitle: (title: string) => void;
     dispatchSetPageDescription: (description: string) => void;
     dispatchSetPageInfoUrl: (infoUrl: string) => void;
-    dispatchSetPageBackgroundImageUrl: (backgroundImageUrl: string) => void;
+    dispatchSetPageBackgroundImageUrl: (backgroundImageUrl: string, pixelatedBackground?: boolean) => void;
     dispatchSetPageBannerImageUrl: (bannerImageUrl: string) => void;
     dispatchSetUser: (user: UserState) => void;
     dispatchSetPageSourceUrl: (url: string, status: PageSourceStatus) => void;
@@ -82,6 +84,7 @@ interface AppProps {
     dispatchCloseSelectTheme: () => void;
     dispatchShowFeedback: () => void;
     dispatchCloseFeedback: () => void;
+    dispatchSetModal: (modal: ModalState) => void;
 }
 
 interface AppState {
@@ -228,16 +231,17 @@ class AppImpl extends React.Component<AppProps, AppState> {
                 }
 
                 if (metadata) {
-                    const { title, description, infoUrl, backgroundImageUrl,
-                        bannerImageUrl, theme, alternateSources } = metadata;
+                    const { title, description, infoUrl, backgroundImageUrl, pixelatedBackground,
+                        bannerImageUrl, theme, alternateSources, introductoryModal } = metadata;
                     setPageTitle(title);
                     this.props.dispatchSetPageTitle(title);
                     if (description) this.props.dispatchSetPageDescription(description);
                     if (infoUrl) this.props.dispatchSetPageInfoUrl(infoUrl);
-                    if (backgroundImageUrl) this.props.dispatchSetPageBackgroundImageUrl(backgroundImageUrl);
+                    if (backgroundImageUrl) this.props.dispatchSetPageBackgroundImageUrl(backgroundImageUrl, pixelatedBackground);
                     if (bannerImageUrl) this.props.dispatchSetPageBannerImageUrl(bannerImageUrl);
                     if (alternateSources) this.props.dispatchSetPageAlternateUrls(alternateSources);
                     if (theme) this.props.dispatchSetPageTheme(theme);
+                    if (introductoryModal) this.props.dispatchSetModal({ type: "markdown-intro", markdownContent: introductoryModal })
                 }
 
                 this.setState({ error: undefined });
@@ -432,7 +436,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
     }
 
     render() {
-        const { skillMaps, activityOpen, backgroundImageUrl, theme } = this.props;
+        const { skillMaps, activityOpen, backgroundImageUrl, theme, pixelatedBackground } = this.props;
         const { error, showingSyncLoader, forcelang } = this.state;
         const maps = Object.keys(skillMaps).map((id: string) => skillMaps[id]);
         const feedbackEnabled = pxt.U.ocvEnabled();
@@ -446,7 +450,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
                 <div className={`skill-map-container ${activityOpen ? "hidden" : ""}`} style={{ backgroundColor: theme.backgroundColor }}>
                     { error
                         ? <div className="skill-map-error">{error}</div>
-                        : <SkillGraphContainer maps={maps} backgroundImageUrl={backgroundImageUrl} backgroundColor={theme.backgroundColor} strokeColor={theme.strokeColor} />
+                        : <SkillGraphContainer maps={maps} backgroundImageUrl={backgroundImageUrl} backgroundColor={theme.backgroundColor} pixelatedBackground={pixelatedBackground} strokeColor={theme.strokeColor} />
                     }
                     { !error && <InfoPanel onFocusEscape={this.focusCurrentActivity} />}
                 </div>
@@ -568,6 +572,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         skillMaps: state.maps,
         activityOpen: !!state.editorView,
         backgroundImageUrl: state.backgroundImageUrl,
+        pixelatedBackground: state.pixelatedBackground,
         theme: state.theme,
         signedIn: state.auth.signedIn,
         activityId: state.selectedItem?.activityId,
@@ -625,6 +630,7 @@ const mapDispatchToProps = {
     dispatchCloseSelectTheme,
     dispatchShowFeedback,
     dispatchCloseFeedback,
+    dispatchSetModal
 };
 
 const App = connect(mapStateToProps, mapDispatchToProps)(AppImpl);

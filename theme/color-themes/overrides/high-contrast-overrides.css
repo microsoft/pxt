@@ -87,11 +87,11 @@ div.field .ui.toggle.checkbox input:checked~label:before {
 
 /* Sim toolbar */
 #simulator .editor-sidebar .simtoolbar .debug-button.active,
-#simulator .editor-sidebar .simtoolbar .debug-button.active:hover,
-#simulator .editor-sidebar .simtoolbar .debug-button.active:hover i {
-    /* Make active state more apparent by inverting the colors */
-    background: var(--pxt-neutral-foreground2) !important;
-    color: var(--pxt-neutral-background2) !important;
+#simulator .editor-sidebar .simtoolbar .debug-button.active:hover {
+    /* Make active state more apparent with a yellow border */
+    color: var(--pxt-neutral-foreground2) !important;
+    background: var(--pxt-neutral-background2) !important;
+    border: 3px solid var(--pxt-colors-yellow-background) !important;
 }
 
 /* Image Editor */
@@ -206,3 +206,12 @@ div.field .ui.toggle.checkbox input:checked~label:before {
     color: #000000 !important;
 }
 
+/*
+ * Dropdown Menu
+ */
+.common-menu-dropdown-item:hover,
+.common-menu-dropdown > .menu-button.expanded {
+    outline: var(--pxt-focus-border) solid 3px !important;
+    outline-offset: -4px;
+    z-index: 1;
+}

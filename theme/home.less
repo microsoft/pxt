@@ -317,13 +317,24 @@
             color: var(--pxt-neutral-foreground3);
             margin-bottom: 1rem;
         }
+        .description-container {
+            max-height: 8rem;
+            overflow-y: auto;
+            margin-bottom: 0.5rem;
+        }
         .detail {
             color: var(--pxt-neutral-foreground3);
         }
-        .yt-button {
+        .yt-button, button.home-share-button {
             display: inline-block;
             border-radius: 0.5rem;
+        }
+        .yt-button {
             background-color: var(--pxt-primary-background);
+        }
+        button.home-share-button {
+            color: var(--pxt-neutral-foreground1);
+            background-color: var(--pxt-target-background1);
         }
         .ui.grid.stackable .actions {
             padding-right: 4rem !important;
@@ -372,11 +383,8 @@
                 .button.approve {
                     width: 100%;
                     color: var(--pxt-neutral-foreground3);
-                    background-color: @orange;
-                    transition-duration: 0s;
-                }
-                &:first-child .button.approve {
                     background-color: var(--pxt-primary-background);
+                    transition-duration: 0s;
                 }
             }
             .card-action-title {
@@ -418,9 +426,14 @@
                 background-size: 70%;
                 background-blend-mode: color-burn;
                 font-size: 6.5rem!important;
+
+                &.py {
+                    background-image: @pyIcon;
+                }
+                &.js {
+                    background-image: @jsIcon;
+                }
             }
-            .card-action .xicon.py { background-image: @pyIcon; }
-            .card-action .xicon.js { background-image: @jsIcon; }
 
             /* unset semantic properties */
             .card-action > a:first-child {
@@ -770,13 +783,22 @@
 
         .detailview {
             .column:first-child {
-                height: 10.5rem;
-                overflow: hidden;
+                height: auto;
+                overflow: visible;
+
+                .segment {
+                    padding-bottom: 1rem;
+                }
             }
             .actions {
-                height: 9rem;
-                padding-right: 4rem !important;
+                height: auto;
+                padding-right: @carouselArrowSizeMobile !important;
                 .card-action {
+                    display: inline-block;
+                    width: 8rem;
+                    margin: 0 0 0 0.5rem;
+                    border-width: 3px;
+
                     > .item, > .icon {
                         height: 2rem;
                     }
@@ -784,17 +806,12 @@
                         background-image: none!important;
                     }
                     .button.approve {
-                        padding: .35em 1em .5em;
+                        font-size: 0.9rem !important;
+                        padding: .35em 0.75em .5em;
                     }
                     .button.attached .icon:not(.xicon) {
                         font-size: 2rem;
                         line-height: 2rem;
-                    }
-                    &:first-child {
-                        margin-left: 0;
-                    }
-                    &:last-child {
-                        margin-right: 0;
                     }
                 }
 
@@ -804,11 +821,10 @@
                 }
 
                 .segment {
-                    position: absolute;
-                    bottom: 0;
-                    right: 0;
-                    margin: 0 1rem 0.5rem;
-                    white-space: normal;
+                    position: static;
+                    margin: 0 0.5rem 0.5rem;
+                    text-align: right;
+                    white-space: nowrap;
                 }
             }
         }

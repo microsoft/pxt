@@ -61,7 +61,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     compilationResult: pxtblockly.BlockCompilationResult;
     shouldFocusWorkspace = false;
     functionsDialog: CreateFunctionDialog = null;
-    registeredKeyboardNavigationStyles = false;
 
     showCategories: boolean = true;
     breakpointsByBlock: pxt.Map<number>; // Map block id --> breakpoint ID
@@ -641,6 +640,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         };
     }
 
+    private unregisterBlocklyShortcutIfExists(shortcutName: string) {
+        if (Blockly.ShortcutRegistry.registry.getRegistry()[shortcutName]) {
+            Blockly.ShortcutRegistry.registry.unregister(shortcutName);
+        }
+    }
+
     private initAccessibleBlocks() {
         if (!this.keyboardNavigation) {
             // Keyboard navigation plugin (note message text is actually in Blockly)
@@ -662,6 +667,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 // Used for Blocky's toast's close aria label.
                 CLOSE: lf("Close")
             });
+
+            // Unregister shortcuts that will be re-created when the keyboard nav plugin registers
+            this.unregisterBlocklyShortcutIfExists("keyboard_nav_copy");
+            this.unregisterBlocklyShortcutIfExists("keyboard_nav_cut");
+            this.unregisterBlocklyShortcutIfExists("keyboard_nav_paste");
 
             this.keyboardNavigation = new KeyboardNavigation(this.editor, {
                 allowCrossWorkspacePaste: true
@@ -765,6 +775,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     private markIncomplete = false;
     isIncomplete() {
+        // first check to see if we're still in the process of loading a file
+        if (!this.typeScriptSaveable) return true;
+
         const incomplete = this.editor?.isDragging();
         if (incomplete) this.markIncomplete = true;
         return incomplete;
@@ -781,14 +794,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             return;
         pxsim.U.clear(blocklyDiv);
 
-        const accessibleBlocksEnabled = data.getData<boolean>(auth.ACCESSIBLE_BLOCKS)
         // Increase the Blockly connection radius
-        Blockly.config.snapRadius = 48;
+        Blockly.config.snapRadius = 28;
         Blockly.config.connectingSnapRadius = 96;
-        if (accessibleBlocksEnabled && !this.registeredKeyboardNavigationStyles) {
-            this.registeredKeyboardNavigationStyles = true;
-            KeyboardNavigation.registerKeyboardNavigationStyles();
-        }
         this.editor = Blockly.inject(blocklyDiv, this.getBlocklyOptions(forceHasCategories)) as Blockly.WorkspaceSvg;
         pxtblockly.contextMenu.setupWorkspaceContextMenu(this.editor);
 
@@ -914,6 +922,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         })
 
 
+        const accessibleBlocksEnabled = data.getData<boolean>(auth.ACCESSIBLE_BLOCKS)
         if (this.shouldShowCategories()) {
             this.renderToolbox();
         }
@@ -926,8 +935,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         // This must come after initCopyPaste and initContextMenu.
         // initCopyPaste overrides the default cut, copy, paste shortcuts.
         // The keyboard navigation plugin utilizes these cut, copy and paste shortcuts
-        // and wraps them with additional behaviours (e.g., toast notifications). 
-        // initContextMenu overrides the default context menu options. The plugin 
+        // and wraps them with additional behaviours (e.g., toast notifications).
+        // initContextMenu overrides the default context menu options. The plugin
         // decorates the duplicate block context menu item to display the shortcut.
         if (accessibleBlocksEnabled) {
             this.initAccessibleBlocks();
@@ -947,6 +956,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 if (entry.intersectionRatio > 0) {
                     this.intersectionObserver.unobserve(entry.target);
                     this.editor.refreshTheme();
+                    const flyoutWorkspace = this.editor.getFlyout()?.getWorkspace();
+                    if (flyoutWorkspace) {
+                        flyoutWorkspace.refreshTheme();
+                    }
                 }
             })
         });
@@ -1363,6 +1376,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.debuggerToolbox.focus();
         } else if (this.toolbox) {
             this.toolbox.focus(itemToFocus);
+        } else if (this.editor.getFlyout()) {
+            this.moveFocusToFlyout();
         }
     }
 
@@ -1461,6 +1476,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                             window.open(url, 'docs');
                         }
                     });
+
+                    const accessibleBlocksEnabled = data.getData<boolean>(auth.ACCESSIBLE_BLOCKS)
+                    if (accessibleBlocksEnabled) {
+                        KeyboardNavigation.registerKeyboardNavigationStyles();
+                    }
+
                     this.prepareBlockly();
                 })
                 .then(() => initEditorExtensionsAsync())
@@ -1472,6 +1493,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     loadFileAsync(file: pkg.File): Promise<void> {
         Util.assert(!this.delayLoadXml);
         const init = this.loadingXmlPromise || Promise.resolve();
+
+        this.typeScriptSaveable = false;
 
         return init
             .then(() => this.loadBlocklyAsync())
@@ -1742,7 +1765,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 controls: false,
                 maxScale: 2.5,
                 minScale: .2,
-                scaleSpeed: 1.5,
+                scaleSpeed: 1.08,
                 startScale: pxt.BrowserUtils.isMobile() ? 0.7 : 0.9,
                 pinch: true,
                 wheel: true
@@ -1788,6 +1811,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             const refreshBlockly = () => {
                 this.delayLoadXml = this.getCurrentSource();
                 this.editor = undefined;
+                this.cleanupKeyboardNavigation();
                 this.prepareBlockly(hasCategories);
                 this.domUpdate();
                 this.editor.scrollCenter();
@@ -1806,6 +1830,18 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             }
         }
         pxt.perf.measureEnd(Measurements.RefreshToolbox)
+    }
+
+    cleanupKeyboardNavigation() {
+        if (this.keyboardNavigation) {
+            // This event doesn't always get cleaned up properly when a move is completed.
+            // Clear out any lingering registrations just in case.
+            // (This is already patched in blockly, but we need an update to get it)
+            this.unregisterBlocklyShortcutIfExists("commitMove");
+            this.keyboardNavigation.dispose();
+            this.keyboardNavigation = undefined;
+            initCopyPaste(false, true); // Re-initialize old copy/paste handlers
+        }
     }
 
     filterToolbox(showCategories?: boolean) {
@@ -1877,7 +1913,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     public setFlyoutForceOpen(forceOpen: boolean) {
-        (this.editor.getFlyout() as pxtblockly.CachingFlyout).setForceOpen(forceOpen);
+        const flyout = this.editor.getFlyout() as pxtblockly.CachingFlyout
+        if (flyout && typeof flyout.setForceOpen === 'function') {
+            flyout.setForceOpen(forceOpen);
+        }
     }
 
     ///////////////////////////////////////////////////////////

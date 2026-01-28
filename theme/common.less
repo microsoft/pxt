@@ -232,6 +232,14 @@ pre {
             filter: none;
         }
     }
+
+    .fullscreen-button {
+        i {
+            margin: 0;
+            width: inherit;
+            opacity: 0.9;
+        }
+    }
 }
 
 .editor-sidebar .simtoolbar .ui.button:focus-visible {
@@ -596,6 +604,11 @@ div.simframe > iframe {
     margin-bottom: 1px;
 }
 
+.ui.item.logo button.name,
+.ui.item.logo button.name-short {
+    margin-left: 0 !important;
+}
+
 .ui.item.logo .name-short {
     display: none;
 }
@@ -609,6 +622,13 @@ div.simframe > iframe {
     margin: 0 1rem;
     height: 1.4rem;
 }
+
+.ui.item.logo .logo-button {
+    img {
+        margin: 3px 0 0 0 !important;
+    }
+}
+
 
 /* Native Host (iOS app) back button */
 .nativeback.ui.item {

@@ -55,6 +55,14 @@
         .common-editor-toggle-outer {
             z-index: 1;
         }
+
+        .common-textarea {
+            max-height: 12rem;
+        }
+
+        .common-textarea-wrapper {
+            margin-bottom: 1rem;
+        }
     }
 }
 
@@ -191,6 +199,12 @@
 .project-share-data .common-input-attached-button .common-button {
     width: 10rem;
     padding: .8rem 1rem .95rem;
+}
+
+.share-link-dialog {
+    .share-link-dialog-top {
+        margin-bottom: 0.75rem;
+    }
 }
 
 .project-share-vscode {
@@ -333,12 +347,6 @@
 @media @tabletAndBelow {
     .gif-recorder-content .thumbnail-controls {
         padding: 0 2rem;
-    }
-
-    .common-button.square-button.embed.gray.mobile-portrait-hidden {
-        // important is need for color to override semantic ui's use of important
-        color: var(--pxt-neutral-foreground2) !important;
-        background: var(--pxt-neutral-background2);
     }
 }
 

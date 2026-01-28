@@ -30,12 +30,12 @@ namespace ts.pxtc.Util {
 
     export function htmlEscape(_input: string) {
         if (!_input) return _input; // null, undefined, empty string test
-        return _input.replace(/([^\w .!?\-$])/g, c => "&#" + c.charCodeAt(0) + ";");
+        return _input.replace(/([^\w .!?\-$])/ug, c => "&#" + c.codePointAt(0) + ";");
     }
 
     export function htmlUnescape(_input: string) {
         if (!_input) return _input; // null, undefined, empty string test
-        return _input.replace(/(&#\d+;)/g, c => String.fromCharCode(Number(c.substr(2, c.length - 3))));
+        return _input.replace(/(&#\d+;)/g, c => String.fromCodePoint(Number(c.substr(2, c.length - 3))));
     }
 
     export function jsStringQuote(s: string) {
@@ -225,6 +225,19 @@ namespace ts.pxtc.Util {
      */
     export function rlf(format: string, ...args: any[]): string {
         return lf_va(format, args); // @ignorelf@
+    }
+
+    /**
+     * Same as lf except the strings are not replaced in translation mode. This is used
+     * exclusively for blockly JSON block definitions as the crowdin in-context translation
+     * script doesn't handle the SVG text fields. Instead, they are translated via a context
+     * menu item on the block.
+     */
+    export function blf(format: string): string { // @ignorelf@
+        if (isTranslationMode()) {
+            return format;
+        }
+        return lf_va(format, []); // @ignorelf@
     }
 
     export function lookup<T>(m: pxt.Map<T>, key: string): T {
