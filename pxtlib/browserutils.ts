@@ -1451,6 +1451,21 @@ namespace pxt.BrowserUtils {
         return url;
     }
 
+    export function getCopilotServerParam(): "ppe" | "prod" | undefined {
+        if (typeof window === "undefined") return undefined;
+        const query = pxt.Util.parseQueryString(window.location.search || "");
+        const value = (query["useCopilotServer"] || "").toLowerCase();
+        return value === "ppe" || value === "prod" ? (value as "ppe" | "prod") : undefined;
+    }
+
+    export function appendCopilotServerQueryParam(url: string): string {
+        const value = getCopilotServerParam();
+        if (!value) return url;
+        const params = new URLSearchParams();
+        params.set("useCopilotServer", value);
+        return appendUrlQueryParams(url, params);
+    }
+
     export function legacyCopyText(element: HTMLInputElement | HTMLTextAreaElement) {
         element.focus();
         element.setSelectionRange(0, 9999);

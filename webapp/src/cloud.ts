@@ -697,8 +697,8 @@ export async function aiErrorExplainRequest(
     outputFormat: "tour_json" | "text",
     locale: string
 ): Promise<string | undefined> {
-    const startUrl = `/api/copilot/startexplainerror`;
-    const statusUrl = `/api/copilot/explainerrorstatus`;
+    const startUrl = pxt.BrowserUtils.appendCopilotServerQueryParam(`/api/copilot/startexplainerror`);
+    const statusUrl = pxt.BrowserUtils.appendCopilotServerQueryParam(`/api/copilot/explainerrorstatus`);
 
     const data = { lang, code, errors, target, outputFormat, locale };
 
