@@ -1455,7 +1455,7 @@ namespace pxt.BrowserUtils {
         if (typeof window === "undefined") return undefined;
         const query = pxt.Util.parseQueryString(window.location.search || "");
         const value = (query["useCopilotServer"] || "").toLowerCase();
-        return value === "ppe" || value === "prod" ? (value as "ppe" | "prod") : undefined;
+        return value === "ppe" || value === "prod" ? value : undefined;
     }
 
     export function appendCopilotServerQueryParam(url: string): string {
