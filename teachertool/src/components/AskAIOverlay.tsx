@@ -122,11 +122,11 @@ export const AskAIOverlay = () => {
         customPrompts.forEach(p => {
             if (!p.checked) return;
             const trimmed = (p.text || "").trim();
-            if (trimmed && trimmed.length >= Constants.MinAIQuestionLength) values.push(trimmed);
+            if (trimmed) values.push(trimmed);
         });
 
         Object.keys(selected).forEach(k => {
-            if (selected[k] && k.length >= Constants.MinAIQuestionLength) values.push(k);
+            if (selected[k]) values.push(k);
         });
 
         // Remove dupes while keeping order.
@@ -153,28 +153,9 @@ export const AskAIOverlay = () => {
             : undefined;
 
     const canAddAny = remainingAiQuestionSlots === undefined || remainingAiQuestionSlots > 0;
-
-    const hasShortCustomQuestion = React.useMemo(() => {
-        return customPrompts.some(p => {
-            if (!p.checked) return false;
-            const trimmed = (p.text || "").trim();
-            return trimmed && trimmed.length < Constants.MinAIQuestionLength;
-        });
-    }, [customPrompts]);
-
-    const hasShortSelectedQuestion = React.useMemo(() => {
-        if (hasShortCustomQuestion) return false;
-        return Object.keys(selected).some(k => selected[k] && k.length < Constants.MinAIQuestionLength);
-    }, [selected, hasShortCustomQuestion]);
-
-    const hasTooShortQuestion = hasShortCustomQuestion || hasShortSelectedQuestion;
-    const canSubmit = !!selectedQuestions.length && canAddAny && !hasTooShortQuestion;
+    const canSubmit = !!selectedQuestions.length && canAddAny;
 
     const addSelected = React.useCallback(() => {
-        if (hasTooShortQuestion) {
-            showToast(makeToast("error", Strings.QuestionTooShort));
-            return;
-        }
         if (!selectedQuestions.length) return;
 
         const toAdd =
@@ -202,7 +183,7 @@ export const AskAIOverlay = () => {
         lastAddedCustomPromptId.current = undefined;
 
         close();
-    }, [selectedQuestions, remainingAiQuestionSlots, close, hasTooShortQuestion]);
+    }, [selectedQuestions, remainingAiQuestionSlots, close]);
 
     const addCustomPrompt = React.useCallback(() => {
         const id = nextCustomPromptId.current++;
