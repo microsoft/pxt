@@ -12,7 +12,6 @@ namespace pxsim.AudioContextManager {
     export class AudioWorkletSource extends AudioSource {
         static allWorkletSources: AudioWorkletSource[] = [];
 
-        protected static wavetable: number[];
         private static workletInit: Promise<void>;
 
         static initializeWorklet(context: AudioContext): Promise<void> {
@@ -32,18 +31,6 @@ namespace pxsim.AudioContextManager {
             }
 
             return undefined;
-        }
-
-        static setWavetable(wavetable: number[]) {
-            if (!wavetable) {
-                AudioWorkletSource.wavetable = undefined;
-                return;
-            }
-            AudioWorkletSource.wavetable = wavetable;
-
-            for (const source of AudioWorkletSource.allWorkletSources) {
-                source.setWavetable(wavetable);
-            }
         }
 
         node: AudioWorkletNode;
@@ -72,10 +59,6 @@ namespace pxsim.AudioContextManager {
                 }
             }
             this.activeSounds = [];
-
-            if (AudioWorkletSource.wavetable) {
-                this.setWavetable(AudioWorkletSource.wavetable);
-            }
         }
 
         playInstructionsAsync(instructions: Uint8Array, isCancelled?: () => boolean) {
@@ -101,14 +84,9 @@ namespace pxsim.AudioContextManager {
             });
         }
 
-        setWavetable(wavetable: number[]) {
-            this.node.port.postMessage({
-                type: "wavetable",
-                wavetable
-            });
-        }
-
         dispose() {
+            if (this.isDisposed()) return;
+
             super.dispose();
             AudioWorkletSource.allWorkletSources = AudioWorkletSource.allWorkletSources.filter(s => s !== this);
 
@@ -124,6 +102,8 @@ namespace pxsim.AudioContextManager {
         }
 
         protected updateActiveSounds() {
+            if (this.isDisposed()) return;
+
             if (this.animRef) {
                 cancelAnimationFrame(this.animRef);
                 this.animRef = undefined;

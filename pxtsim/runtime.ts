@@ -1652,7 +1652,6 @@ namespace pxsim {
             }
             runtime = this;
 
-            AudioContextManager.setWavetable(undefined);
             initCurrentRuntime(msg);
         }
 

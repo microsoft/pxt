@@ -577,7 +577,6 @@ namespace pxsim.instructions {
         }
         pxsim.runtime = new Runtime(msg);
         pxsim.runtime.board = null;
-        AudioContextManager.setWavetable(undefined);
         pxsim.initCurrentRuntime(msg); // TODO it seems Runtime() ctor already calls this?
 
         let style = document.createElement("style");

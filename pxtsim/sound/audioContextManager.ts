@@ -69,14 +69,7 @@ namespace pxsim.AudioContextManager {
     }
 
     export function stopAll() {
-        stopTone();
         muteAllChannels();
-
-        AudioSource.stopAll();
-
-        for (const handler of stopAllListeners) {
-            handler();
-        }
     }
 
     export function stop() {
@@ -95,6 +88,14 @@ namespace pxsim.AudioContextManager {
     export function muteAllChannels() {
         soundEventCallback?.("muteallchannels");
         instrStopId++;
+
+        stopTone();
+
+        AudioSource.stopAll();
+
+        for (const handler of stopAllListeners) {
+            handler();
+        }
     }
 
     export function queuePlayInstructions(when: number, b: RefBuffer) {
@@ -211,20 +212,6 @@ namespace pxsim.AudioContextManager {
         await channel.playInstructionsAsync(instructions, isCancelled);
 
         finished = true;
-    }
-
-    export function setWavetable(tableBuff: RefBuffer) {
-        if (!tableBuff) {
-            AudioWorkletSource.setWavetable(undefined);
-            return;
-        }
-
-        const wavetable = [];
-        for (let i = 0; i < tableBuff.data.length; i += 2) {
-            wavetable.push(BufferMethods.getNumber(tableBuff, BufferMethods.NumberFormat.Int16LE, i));
-        }
-
-        AudioWorkletSource.setWavetable(wavetable);
     }
 
     export function sendMidiMessage(buf: RefBuffer) {

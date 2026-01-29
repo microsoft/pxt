@@ -19,6 +19,7 @@ namespace pxsim.AudioContextManager {
         }
 
         dispose() {
+            if (this.isDisposed()) return;
             this.vca.disconnect();
             this.vca = undefined;
         }

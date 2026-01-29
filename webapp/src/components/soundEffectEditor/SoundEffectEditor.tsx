@@ -109,6 +109,12 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
             play();
     }, [play, selectedView])
 
+    React.useEffect(() => {
+        return () => {
+            pxsim.AudioContextManager.stopAll();
+        }
+    }, [])
+
     const handlePlayButtonClick = () => {
         if (cancelToken) {
             cancel();
