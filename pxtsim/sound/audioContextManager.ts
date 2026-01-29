@@ -1,4 +1,16 @@
 namespace pxsim.AudioContextManager {
+    export interface SoundOscilloscopeData {
+        data: Float32Array;
+        fft: Uint8Array;
+    }
+
+    export interface SoundSnapshotData {
+        frequency: number;
+        volume: number;
+    }
+
+    export type SoundPreviewCallback = (data: SoundOscilloscopeData | SoundSnapshotData) => void;
+
     let _context: AudioContext;
 
     let _mute = false; //mute audio
@@ -172,7 +184,7 @@ namespace pxsim.AudioContextManager {
         return 440 * Math.pow(2, (note - 69) / 12);
     }
 
-    export async function playInstructionsAsync(instructions: Uint8Array, isCancelled?: () => boolean, onPull?: (data: Float32Array, fft: Uint8Array) => void) {
+    export async function playInstructionsAsync(instructions: Uint8Array, isCancelled?: () => boolean, onPull?: SoundPreviewCallback) {
         soundEventCallback?.("playinstructions", instructions);
 
         await AudioWorkletSource.initializeWorklet(context());
@@ -183,23 +195,7 @@ namespace pxsim.AudioContextManager {
         if (onPull) {
             channel = new AudioWorkletSource(context(), destination);
 
-            const bufferLength = channel.analyser.frequencyBinCount;
-            const dataArray = new Float32Array(bufferLength);
-            const fftArray = new Uint8Array(bufferLength);
-
-            const handleAnimationFrame = () => {
-                if (finished || isCancelled?.()) {
-                    channel.dispose();
-                    return;
-                }
-
-                channel.analyser.getFloatTimeDomainData(dataArray);
-                channel.analyser.getByteFrequencyData(fftArray);
-                onPull(dataArray, fftArray);
-
-                requestAnimationFrame(handleAnimationFrame)
-            }
-            requestAnimationFrame(handleAnimationFrame);
+            initOscilloscope(onPull, channel.analyser, () => finished || isCancelled?.());
         }
         else {
             channel = AudioWorkletSource.getAvailableSource();
@@ -212,6 +208,21 @@ namespace pxsim.AudioContextManager {
         await channel.playInstructionsAsync(instructions, isCancelled);
 
         finished = true;
+    }
+
+    function initOscilloscope(onPull: SoundPreviewCallback, analyser: AnalyserNode, isCancelled: () => boolean) {
+        const bufferLength = analyser.frequencyBinCount;
+        const dataArray = new Float32Array(bufferLength);
+        const fftArray = new Uint8Array(bufferLength);
+        const handleAnimationFrame = () => {
+            if (isCancelled()) return;
+            analyser.getFloatTimeDomainData(dataArray);
+            analyser.getByteFrequencyData(fftArray);
+            onPull({ data: dataArray, fft: fftArray });
+
+            requestAnimationFrame(handleAnimationFrame)
+        }
+        requestAnimationFrame(handleAnimationFrame);
     }
 
     export function sendMidiMessage(buf: RefBuffer) {

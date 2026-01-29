@@ -1,4 +1,7 @@
-
+/**
+ * This file is NOT used at runtime, it only exists for debug. The actual source
+ * can be found in pxtsim/sound/worklet.ts
+ */
 const SW_TRIANGLE = 1;
 const SW_SAWTOOTH = 2;
 const SW_SINE = 3;
