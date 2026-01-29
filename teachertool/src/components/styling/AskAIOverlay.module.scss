@@ -157,6 +157,19 @@
     textarea[class*="common-textarea"] {
         min-height: 6rem;
     }
+    
+    .textarea-error {
+        textarea[class*="common-textarea"] {
+            border-color: var(--pxt-error-foreground);
+            border-width: 2px;
+        }
+    }
+    
+    .validation-message {
+        color: var(--pxt-error-foreground);
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
 }
 
 .footer {
