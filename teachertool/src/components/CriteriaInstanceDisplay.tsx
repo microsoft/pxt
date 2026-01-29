@@ -9,7 +9,7 @@ import { useContext, useEffect, useMemo, useState } from "react";
 import { Input } from "react-common/components/controls/Input";
 import { Button } from "react-common/components/controls/Button";
 import { AppStateContext } from "../state/appStateContext";
-import { Strings, Ticks } from "../constants";
+import { Constants, Strings, Ticks } from "../constants";
 import { showModal } from "../transforms/showModal";
 import { BlockPickerOptions } from "../types/modalOptions";
 import { validateParameterValue } from "../utils/validateParameterValue";
@@ -21,6 +21,7 @@ interface InlineInputSegmentProps {
     param: CriteriaParameterValue;
     shouldExpand: boolean;
     numeric: boolean;
+    minLength?: number;
 }
 const InlineInputSegment: React.FC<InlineInputSegmentProps> = ({
     initialValue,
@@ -28,6 +29,7 @@ const InlineInputSegment: React.FC<InlineInputSegmentProps> = ({
     param,
     shouldExpand,
     numeric,
+    minLength,
 }) => {
     const [errorMessage, setErrorMessage] = useState(initialValue ? "" : Strings.ValueRequired);
     const paramDefinition = useMemo(() => getParameterDefinition(instance.catalogCriteriaId, param.name), [param]);
@@ -58,6 +60,11 @@ const InlineInputSegment: React.FC<InlineInputSegmentProps> = ({
             return;
         }
 
+        if (minLength && initialValue.trim().length < minLength) {
+            setErrorMessage(Strings.QuestionTooShort);
+            return;
+        }
+
         // We still allow some invalid values to be set on the parameter so the user can see what they typed
         // and the associated error.
         // Without this, we risk erroring too soon (i.e. typing in first digit of number with min > 10),
@@ -74,6 +81,10 @@ const InlineInputSegment: React.FC<InlineInputSegmentProps> = ({
     function onChange(newValue: string) {
         if (!newValue) {
             setErrorMessage(Strings.ValueRequired);
+        }
+
+        if (minLength && newValue.trim().length < minLength) {
+            setErrorMessage(Strings.QuestionTooShort);
         }
 
         setParameterValue(instance.instanceId, param.name, newValue);
@@ -234,6 +245,10 @@ export const CriteriaInstanceDisplay: React.FC<CriteriaInstanceDisplayProps> = (
         if (paramDef.type === "block") {
             return <BlockInputSegment param={paramInstance} instance={criteriaInstance} />;
         } else {
+            const minLength =
+                catalogCriteria?.use === "ai_question" && paramDef.name === "question"
+                    ? Constants.MinAIQuestionLength
+                    : undefined;
             return (
                 <InlineInputSegment
                     initialValue={paramInstance.value}
@@ -241,6 +256,7 @@ export const CriteriaInstanceDisplay: React.FC<CriteriaInstanceDisplayProps> = (
                     instance={criteriaInstance}
                     shouldExpand={paramDef.type === "longString"}
                     numeric={paramDef.type === "number"}
+                    minLength={minLength}
                 />
             );
         }
