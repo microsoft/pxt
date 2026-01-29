@@ -156,6 +156,40 @@
 
     textarea[class*="common-textarea"] {
         min-height: 6rem;
+        resize: vertical;
+    }
+
+    .custom-textarea-wrapper {
+        position: relative;
+        &.textarea-error {
+            :global(.common-textarea-group) {
+                border: solid 1px var(--pxt-colors-red-background);
+                background-color: var(--pxt-colors-red-alpha10);
+                transition: background-color 0.3s ease-in-out, border 0.3s ease-in-out;
+
+                &:focus::after,
+                &:focus-within::after {
+                    border: solid 2px var(--pxt-colors-red-background);
+                }
+            }
+
+            textarea[class*="common-textarea"] {
+                padding-right: 2rem;
+            }
+
+            .validation-icon {
+                color: var(--pxt-colors-red-background) !important;
+            }
+        }
+    }
+
+    .validation-icon {
+        position: absolute;
+        top: 0.7rem;
+        right: 0.75rem;
+        font-size: 0.9rem;
+        pointer-events: none;
+        color: var(--pxt-colors-red-background);
     }
 }
 

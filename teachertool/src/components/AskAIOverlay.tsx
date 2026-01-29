@@ -8,7 +8,7 @@ import { FocusTrap } from "react-common/components/controls/FocusTrap";
 import { Accordion } from "react-common/components/controls/Accordion";
 import { classList } from "react-common/components/util";
 
-import { Strings } from "../constants";
+import { Constants, Strings } from "../constants";
 import { setAskAiOpen } from "../transforms/setAskAiOpen";
 import { addAiQuestionCriteriaToChecklist } from "../transforms/addAiQuestionCriteriaToChecklist";
 import { showToast } from "../transforms/showToast";
@@ -122,11 +122,11 @@ export const AskAIOverlay = () => {
         customPrompts.forEach(p => {
             if (!p.checked) return;
             const trimmed = (p.text || "").trim();
-            if (trimmed) values.push(trimmed);
+            if (trimmed && trimmed.length >= Constants.MinAIQuestionLength) values.push(trimmed);
         });
 
         Object.keys(selected).forEach(k => {
-            if (selected[k]) values.push(k);
+            if (selected[k] && k.length >= Constants.MinAIQuestionLength) values.push(k);
         });
 
         // Remove dupes while keeping order.
@@ -153,9 +153,28 @@ export const AskAIOverlay = () => {
             : undefined;
 
     const canAddAny = remainingAiQuestionSlots === undefined || remainingAiQuestionSlots > 0;
-    const canSubmit = !!selectedQuestions.length && canAddAny;
+
+    const hasShortCustomQuestion = React.useMemo(() => {
+        return customPrompts.some(p => {
+            if (!p.checked) return false;
+            const trimmed = (p.text || "").trim();
+            return trimmed && trimmed.length < Constants.MinAIQuestionLength;
+        });
+    }, [customPrompts]);
+
+    const hasShortSelectedQuestion = React.useMemo(() => {
+        if (hasShortCustomQuestion) return false;
+        return Object.keys(selected).some(k => selected[k] && k.length < Constants.MinAIQuestionLength);
+    }, [selected, hasShortCustomQuestion]);
+
+    const hasTooShortQuestion = hasShortCustomQuestion || hasShortSelectedQuestion;
+    const canSubmit = !!selectedQuestions.length && canAddAny && !hasTooShortQuestion;
 
     const addSelected = React.useCallback(() => {
+        if (hasTooShortQuestion) {
+            showToast(makeToast("error", Strings.QuestionTooShort));
+            return;
+        }
         if (!selectedQuestions.length) return;
 
         const toAdd =
@@ -183,7 +202,7 @@ export const AskAIOverlay = () => {
         lastAddedCustomPromptId.current = undefined;
 
         close();
-    }, [selectedQuestions, remainingAiQuestionSlots, close]);
+    }, [selectedQuestions, remainingAiQuestionSlots, close, hasTooShortQuestion]);
 
     const addCustomPrompt = React.useCallback(() => {
         const id = nextCustomPromptId.current++;
@@ -243,7 +262,11 @@ export const AskAIOverlay = () => {
                                         <Accordion.Panel>
                                             {customPrompts.length > 0 && (
                                                 <div className={css["custom-list"]}>
-                                                    {customPrompts.map((p, index) => (
+                                                    {customPrompts.map((p, index) => {
+                                                        const trimmedText = p.text.trim();
+                                                        const hasError = trimmedText && trimmedText.length < Constants.MinAIQuestionLength;
+
+                                                        return (
                                                         <div key={p.id} className={css["custom-item"]}>
                                                             <div className={css["custom-header"]}>
                                                                 <Checkbox
@@ -263,17 +286,30 @@ export const AskAIOverlay = () => {
                                                                     />
                                                                 )}
                                                             </div>
-                                                            <Textarea
-                                                                id={`ask-ai-custom-text-${p.id}`}
-                                                                className={css["textarea"]}
-                                                                placeholder={Strings.CustomPromptPlaceholder}
-                                                                initialValue={p.text}
-                                                                maxLength={aiQuestionMaxLength}
-                                                                showRemainingCharacterCount={100}
-                                                                onChange={text => setCustomTextForId(p.id, text)}
-                                                            />
+                                                            <div
+                                                                className={classList(css["custom-textarea-wrapper"], hasError ? css["textarea-error"] : undefined)}
+                                                                title={hasError ? Strings.QuestionTooShort : undefined}
+                                                            >
+                                                                <Textarea
+                                                                    id={`ask-ai-custom-text-${p.id}`}
+                                                                    className={css["textarea"]}
+                                                                    placeholder={Strings.CustomPromptPlaceholder}
+                                                                    initialValue={p.text}
+                                                                    maxLength={aiQuestionMaxLength}
+                                                                    showRemainingCharacterCount={100}
+                                                                    resize="vertical"
+                                                                    title={hasError ? Strings.QuestionTooShort : undefined}
+                                                                    onChange={text => setCustomTextForId(p.id, text)}
+                                                                />
+                                                                {hasError && (
+                                                                    <i
+                                                                        className={classList(css["validation-icon"], "fas", "fa-exclamation-triangle")}
+                                                                        aria-hidden="true"
+                                                                    />
+                                                                )}
+                                                            </div>
                                                         </div>
-                                                    ))}
+                                                    )})}
                                                 </div>
                                             )}
 
