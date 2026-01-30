@@ -11,10 +11,11 @@ export interface SoundControlsProps {
     onSoundChange: (newValue: pxt.assets.Sound) => void;
     sound: pxt.assets.Sound;
     handleStartAnimationRef?: (startAnimation: (duration: number) => void) => void;
+    isMixerSound: boolean;
 }
 
 export const SoundControls = (props: SoundControlsProps) => {
-    const { onSoundChange, sound, handleStartAnimationRef } = props;
+    const { onSoundChange, sound, handleStartAnimationRef, isMixerSound } = props;
 
     const waveformOptions: RadioGroupChoice[] = [
         {
@@ -302,7 +303,7 @@ export const SoundControls = (props: SoundControlsProps) => {
                     interpolation="linear"
                     onPointChange={onVolumeChange}
                     handleStartAnimationRef={handleVolumeAnimationRef}
-                    squiggly={sound.effect === "tremolo" || sound.effect === "warble"}
+                    squiggly={sound.effect === "tremolo" || (sound.effect === "warble" && !isMixerSound)}
                 />
             </div>
         </div>

@@ -67,6 +67,7 @@
     "@fortawesome/fontawesome-free": "^5.15.4",
     "@microsoft/applicationinsights-web": "^2.8.11",
     "@microsoft/immersive-reader-sdk": "1.1.0",
+    "@types/audioworklet": "^0.0.75",
     "@types/diff-match-patch": "^1.0.32",
     "@zip.js/zip.js": "2.4.20",
     "adm-zip": "^0.5.12",
