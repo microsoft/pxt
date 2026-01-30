@@ -1211,12 +1211,24 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             } as pxt.tour.BubbleStep;
 
             if (step.elementId) {
-                const visibleTargetId = this.getVisibleBlockAncestorId(step.elementId);
-                if (visibleTargetId) {
-                    tourStep.targetQuery = `g[data-id="${visibleTargetId}"]:not(.blocklyFlyout g)`;
+                const targetBlock = this.editor?.getBlockById(step.elementId);
+                if (targetBlock) {
+                    const targetBlockRoot = targetBlock.getRootBlock();
+                    const isInsideCollapsedBlock = targetBlockRoot.isCollapsed() && targetBlockRoot.id !== step.elementId;
+                    tourStep.targetQuery = `g[data-id="${step.elementId}"]:not(.blocklyFlyout g)`;
                     tourStep.location = pxt.tour.BubbleLocation.Right;
 
-                    tourStep.onStepBegin = () => this.editor.centerOnBlock(visibleTargetId, true);
+                    tourStep.onStepBegin = () => {
+                        if (isInsideCollapsedBlock) {
+                            targetBlockRoot.setCollapsed(false);
+                            targetBlockRoot.bringToFront();
+                            targetBlockRoot.render();
+                        }
+                        this.editor.centerOnBlock(step.elementId, true);
+                    };
+                    if (isInsideCollapsedBlock) {
+                        tourStep.onStepEnd = () => targetBlockRoot.setCollapsed(true);
+                    }
                 } else {
                     // Do not add the tour target, but keep the step in case it's still helpful.
                     pxt.tickEvent("errorHelp.invalidBlockId");
