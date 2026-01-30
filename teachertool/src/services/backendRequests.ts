@@ -90,7 +90,7 @@ export async function loadTestableCollectionFromDocsAsync<T>(fileNames: string[]
 }
 
 export async function askCopilotQuestionAsync(shareId: string, question: string): Promise<string | undefined> {
-    const url = `/api/copilot/question`;
+    const url = pxt.BrowserUtils.appendCopilotServerQueryParam(`/api/copilot/question`);
 
     question = pxt.Util.cleanData(question);
 
