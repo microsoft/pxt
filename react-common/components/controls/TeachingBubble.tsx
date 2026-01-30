@@ -72,6 +72,9 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
         positionBubbleAndCutout();
         window.addEventListener("resize", positionBubbleAndCutout);
         return () => {
+            if (targetContent.onStepEnd) {
+                targetContent.onStepEnd();
+            }
             window.removeEventListener("resize", positionBubbleAndCutout);
         }
     }, [stepNumber, targetContent]);
