@@ -747,8 +747,14 @@ export function promptTranslateBlock(blockid: string, blockTranslationIds: strin
 export function renderBrowserDownloadInstructions(saveonly?: boolean, redeploy?: () => Promise<void>) {
     const boardName = pxt.appTarget.appTheme.boardName || lf("device");
     const boardDriveName = pxt.appTarget.appTheme.driveDisplayName || pxt.appTarget.compile.driveName || "???";
-    const fileExtension = pxt.appTarget.compile?.useUF2 ? ".uf2" : ".hex";
+    let fileExtension = ".hex";
     const webUSBSupported = pxt.usb.isEnabled && pxt.appTarget?.compile?.webUSB;
+
+    if (pxt.appTarget.compile?.switches?.rawELF) {
+      fileExtension = ".elf";
+    } else if (pxt.appTarget.compile?.useUF2) {
+      fileExtension = ".uf2";
+    }
 
     const onPairClicked = async () => {
         core.hideDialog();
