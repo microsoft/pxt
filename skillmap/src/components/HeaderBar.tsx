@@ -106,7 +106,7 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
 
     protected getOrganizationLogo(targetTheme: pxt.AppTheme) {
         const logoUrl = targetTheme.organizationWideLogo;
-        return <div className="header-logo">
+        return <div className="header-logo" aria-hidden="true">
             {logoUrl
                 ? <img src={isLocal() ? `./assets/${logoUrl}`: logoUrl} alt={lf("{0} Logo", targetTheme.organization)}/>
                 : <span className="name">{targetTheme.organization}</span>}
@@ -115,10 +115,23 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
 
     protected getTargetLogo(targetTheme: pxt.AppTheme) {
         const { activityOpen } = this.props;
-        return <div className={`ui item logo brand ${!activityOpen ? "noclick" : ""}`}>
+        const isInteractive = activityOpen && targetTheme.useTextLogo;
+
+        return <div className={`ui item logo brand ${!activityOpen ? "noclick" : ""}`} aria-hidden={!isInteractive}>
             {targetTheme.useTextLogo
-                ? [<span className="name" key="org-name" onClick={this.onBackClicked}>{targetTheme.organizationText}</span>,
-                   <span className="name-short" key="org-name-short" onClick={this.onBackClicked}>{targetTheme.organizationShortText || targetTheme.organizationText}</span>]
+                ? (activityOpen
+                    ? [<Button className="name menu-button" key="org-name"
+                              onClick={this.onBackClicked}
+                              title={lf("MakeCode logo, return to activity selection")}
+                              ariaLabel={lf("MakeCode logo, return to activity selection")}
+                              label={targetTheme.organizationText} />,
+                       <Button className="name-short menu-button" key="org-name-short"
+                              onClick={this.onBackClicked}
+                              title={lf("MakeCode logo, return to activity selection")}
+                              ariaLabel={lf("MakeCode logo, return to activity selection")}
+                              label={targetTheme.organizationShortText || targetTheme.organizationText} />]
+                    : [<span className="name" key="org-name">{targetTheme.organizationText}</span>,
+                       <span className="name-short" key="org-name-short">{targetTheme.organizationShortText || targetTheme.organizationText}</span>])
                 : (targetTheme.logo || targetTheme.portraitLogo
                     ? <img className="logo" src={targetTheme.logo || targetTheme.portraitLogo} alt={lf("{0} Logo", targetTheme.boardName)}/>
                     : <span className="name"> {targetTheme.boardName}</span>)
@@ -169,7 +182,7 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
         return <div className="user-menu">
             {signedIn
             ?  <MenuDropdown id="profile-dropdown" items={items} label={avatarElem || initialsElem} title={lf("Profile Settings")}/>
-             : <Button className="menu-button" rightIcon="xicon cloud-user" title={lf("Sign In")} label={lf("Sign In")} onClick={ () => {
+             : <Button className="menu-button" role="menuitem" rightIcon="xicon cloud-user" title={lf("Sign In")} label={lf("Sign In")} onClick={ () => {
                 pxt.tickEvent(`skillmap.usermenu.signin`);
                 this.props.dispatchShowLoginModal();
             }}/>}
@@ -192,8 +205,8 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
 
             <div className="spacer" />
             <div className="header-right">
-                { activityOpen && <Button className="menu-button" leftIcon="fas fa-arrow-left large" title={lf("Return to activity selection")} onClick={this.onBackClicked}/> }
-                <Button className="menu-button" leftIcon="fas fa-home large" title={lf("Return to the editor homepage")} onClick={this.onHomeClicked}/>
+                { activityOpen && <Button className="menu-button" role="menuitem" leftIcon="fas fa-arrow-left large" title={lf("Return to activity selection")} onClick={this.onBackClicked}/> }
+                <Button className="menu-button" role="menuitem" leftIcon="fas fa-home large" title={lf("Return to the editor homepage")} onClick={this.onHomeClicked}/>
                 { helpItems?.length > 0 && <MenuDropdown id="skillmap-help" title={lf("Help menu")} icon="fas fa-question-circle large" items={helpItems}  />}
                 { settingItems?.length > 0 && <MenuDropdown id="settings-help" title={lf("Settings menu")} icon="fas fa-cog large" items={settingItems}  />}
                 { hasIdentity && this.getUserMenu() }
