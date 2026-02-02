@@ -306,5 +306,5 @@
     flex-direction: row;
     justify-content: center;
     gap: 0.5rem;
-    margin-top: 0.5rem;
+    min-height: 5rem; // Ensure footer has sufficient height for iPad Safari
 }
