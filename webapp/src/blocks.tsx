@@ -1200,8 +1200,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
      * ensuring all provided ids are valid and setting up the corresponding target queries.
      */
     private createTourFromResponse = (response: ErrorHelpTourResponse): pxt.tour.TourConfig => {
-        const validBlockIds = this.parent.getBlocks().map((b) => b.id);
-
         const tourSteps: pxt.tour.BubbleStep[] = [];
         let invalidBlockIdCount = 0;
         for (const step of response.explanationSteps) {
@@ -1213,10 +1211,24 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             } as pxt.tour.BubbleStep;
 
             if (step.elementId) {
-                if (validBlockIds.includes(step.elementId)) {
+                const targetBlock = this.editor?.getBlockById(step.elementId);
+                if (targetBlock) {
+                    const targetBlockRoot = targetBlock.getRootBlock();
+                    const isInsideCollapsedBlock = targetBlockRoot.isCollapsed() && targetBlockRoot.id !== step.elementId;
                     tourStep.targetQuery = `g[data-id="${step.elementId}"]:not(.blocklyFlyout g)`;
                     tourStep.location = pxt.tour.BubbleLocation.Right;
-                    tourStep.onStepBegin = () => this.editor.centerOnBlock(step.elementId, true);
+
+                    tourStep.onStepBegin = () => {
+                        if (isInsideCollapsedBlock) {
+                            targetBlockRoot.setCollapsed(false);
+                            targetBlockRoot.bringToFront();
+                            targetBlockRoot.render();
+                        }
+                        this.editor.centerOnBlock(step.elementId, true);
+                    };
+                    if (isInsideCollapsedBlock) {
+                        tourStep.onStepEnd = () => targetBlockRoot.setCollapsed(true);
+                    }
                 } else {
                     // Do not add the tour target, but keep the step in case it's still helpful.
                     pxt.tickEvent("errorHelp.invalidBlockId");
@@ -1237,6 +1249,15 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     invalidBlockIdCount: invalidBlockIdCount,
                 })} />
         };
+    }
+
+    private getVisibleBlockAncestorId(blockId: string): string | undefined {
+        const block = this.editor?.getBlockById(blockId) as Blockly.BlockSvg;
+        const rootBlock = block?.getRootBlock() as Blockly.BlockSvg;
+        if (!block || !rootBlock) {
+            return undefined;
+        }
+        return rootBlock.isCollapsed() ? rootBlock.id : blockId;
     }
 
     private handleErrorHelpFeedback(positive: boolean, responseData: any) {
