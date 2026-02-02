@@ -71,13 +71,9 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         if (option.type !== "checkbox") return;
 
         try {
-            const cfg = pkg.mainPkg.config as any;
-            cfg[option.property] = checked;
-
-            const file = pkg.mainEditorPkg().lookupFile("this/" + pxt.CONFIG_NAME);
-            await file.setContentAsync(pxt.Package.stringifyConfig(cfg));
-            pkg.mainPkg.loadConfig();
-
+            await pkg.mainEditorPkg().updateConfigAsync(cfg => {
+                (cfg as any)[option.property] = checked;
+            });
             this.forceUpdate();
         } catch (e) {
             this.handleGithubError(e);
