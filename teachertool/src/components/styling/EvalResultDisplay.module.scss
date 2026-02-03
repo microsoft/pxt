@@ -305,6 +305,9 @@
     display: flex;
     flex-direction: row;
     justify-content: center;
+    align-items: flex-start;
     gap: 0.5rem;
-    margin-top: 0.5rem;
+    margin-top: 1rem;
+    padding-bottom: env(safe-area-inset-bottom, 0); // Handle safe area on iOS
+    min-height: 7rem; // Only apply min-height on larger screens
 }
