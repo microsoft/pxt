@@ -511,6 +511,7 @@ const buildSVGIcons = () => {
             // The following icons have fixed code points because they are referenced in the code
             codepoints: {
                 function: 0xf109,
+                functions: 0xf109,  // Alias for function to support both singular and plural
                 bucket: 0xf102,
                 undo: 0xf118,
                 redo: 0xf111,
