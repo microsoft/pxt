@@ -81,7 +81,7 @@ code {
 #root {
     display: flex;
     flex-direction: column;
-    height: 100vh;
+    height: 100dvh; // Use dynamic viewport height for mobile browsers
     width: 100vw;
     overflow: hidden;
     isolation: isolate;
@@ -316,7 +316,6 @@ $widescreenMonitorBreakpoint: 1920px;
 /*******************************/
 
 button[class*="outline-button"] {
-    align-self: center;
     border-radius: 0.5rem;
     width: auto;
     padding: 0.85rem 1.4rem;
