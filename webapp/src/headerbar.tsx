@@ -14,6 +14,7 @@ import * as tutorial from "./tutorial";
 
 import ISettingsProps = pxt.editor.ISettingsProps;
 import { ThemeManager } from "../../react-common/components/theming/themeManager";
+import { Button } from "../../react-common/components/controls/Button";
 
 type HeaderBarView = "home" | "editor" | "tutorial" | "tutorial-tab" | "debugging" | "sandbox" | "time-machine";
 const LONGPRESS_DURATION = 750;
@@ -107,7 +108,7 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
             return <></>;
         }
 
-        return <div className="ui item logo organization" role="presentation">
+        return <div className="ui item logo organization" aria-hidden="true">
             {targetTheme.organizationWideLogo || targetTheme.organizationLogo
                 ? <img className={`ui logo ${view !== "home" ? "mobile hide" : ""}`} src={targetTheme.organizationWideLogo || targetTheme.organizationLogo} alt={lf("{0} Logo", targetTheme.organization)} />
                 : <span className="name">{targetTheme.organization}</span>}
@@ -123,16 +124,40 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
         const shouldLinkHome = pxt.shell.hasHomeScreen() && view !== "home";
 
         const role = shouldLinkHome ? "menuitem" : "presentation";
-        const onClickHandler = shouldLinkHome ? this.brandIconClick : undefined;
 
         // TODO: "sandbox" view components are temporary share page layout
-        return <div aria-label={lf("{0} Logo", targetTheme.boardName)} role={role} className={`ui item logo brand ${view !== "sandbox" && view !== "home" ? "mobile hide" : ""}`} onClick={onClickHandler}>
+        return <div aria-hidden={!shouldLinkHome} role={role} className={`ui item logo brand ${view !== "sandbox" && view !== "home" ? "mobile hide" : ""}`}>
             {targetTheme.useTextLogo
-            ? [ <span className="name" key="org-name">{targetTheme.organizationText}</span>,
-                <span className="name-short" key="org-name-short">{targetTheme.organizationShortText || targetTheme.organizationText}</span> ]
-            : (targetTheme.logo || targetTheme.portraitLogo
-                ? <img className={`ui ${targetTheme.logoWide ? "small" : ""} logo`} src={targetTheme.logo || targetTheme.portraitLogo} alt={lf("{0} Logo", targetTheme.boardName)} />
-                : <span className="name">{targetTheme.boardName}</span>)}
+            ? (shouldLinkHome
+                ? [<Button className="name menu-button" key="org-name"
+                    onClick={this.brandIconClick}
+                    title={lf("MakeCode {0} Logo, return to home page", targetTheme.boardName)}
+                    ariaLabel={lf("MakeCode {0} Logo, return to home page", targetTheme.boardName)}
+                    label={targetTheme.organizationText} />,
+                <Button className="name-short menu-button" key="org-name-short"
+                    onClick={this.brandIconClick}
+                    title={lf("MakeCode {0} Logo, return to home page", targetTheme.boardName)}
+                    ariaLabel={lf("MakeCode {0} Logo, return to home page", targetTheme.boardName)}
+                    label={targetTheme.organizationShortText || targetTheme.organizationText} />]
+                : [ <span className="name" key="org-name">{targetTheme.organizationText}</span>,
+                    <span className="name-short" key="org-name-short">{targetTheme.organizationShortText || targetTheme.organizationText}</span> ])
+            : (shouldLinkHome
+                ? (targetTheme.logo || targetTheme.portraitLogo
+                    ? <Button className="logo-button menu-button"
+                        onClick={this.brandIconClick}
+                        title={lf("MakeCode {0} Logo, return to home page", targetTheme.boardName)}
+                        ariaLabel={lf("MakeCode {0} Logo, return to home page", targetTheme.boardName)}
+                        >
+                            <img className={`ui ${targetTheme.logoWide ? "small" : ""} logo`} src={targetTheme.logo || targetTheme.portraitLogo} alt={lf("{0} Logo", targetTheme.boardName)} />
+                        </Button>
+                    : <Button className="name menu-button"
+                        onClick={this.brandIconClick}
+                        title={lf("MakeCode {0} Logo, return to home page", targetTheme.boardName)}
+                        ariaLabel={lf("MakeCode {0} Logo, return to home page", targetTheme.boardName)}
+                        label={targetTheme.boardName} />)
+                : (targetTheme.logo || targetTheme.portraitLogo
+                    ? <img className={`ui ${targetTheme.logoWide ? "small" : ""} logo`} src={targetTheme.logo || targetTheme.portraitLogo} alt={lf("{0} Logo", targetTheme.boardName)} />
+                    : <span className="name">{targetTheme.boardName}</span>))}
         </div>
     }
 
