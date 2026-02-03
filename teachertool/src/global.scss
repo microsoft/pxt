@@ -81,7 +81,7 @@ code {
 #root {
     display: flex;
     flex-direction: column;
-    height: 100vh;
+    height: 100dvh; // Use dynamic viewport height for mobile browsers
     width: 100vw;
     overflow: hidden;
     isolation: isolate;

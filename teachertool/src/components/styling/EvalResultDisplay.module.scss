@@ -308,5 +308,6 @@
     align-items: start;
     gap: 0.5rem;
     margin-top: 1rem;
-    min-height: 10rem; // Ensure footer has sufficient height for iPad Safari
+    padding-bottom: env(safe-area-inset-bottom, 0); // Handle safe area on iOS
+    min-height: 7rem; // Only apply min-height on larger screens
 }
