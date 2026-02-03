@@ -70,18 +70,10 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
     public async togglePxtJsonOption(option: pxt.PxtJsonOption, checked: boolean) {
         if (option.type !== "checkbox") return;
 
-        try {
-            const updatedCfg = await pkg.mainEditorPkg().updateConfigAsync(cfg => {
-                (cfg as any)[option.property] = checked;
-            });
-
-            if (updatedCfg) {
-                this.forceUpdate();
-            }
-        } catch (e) {
-            console.error("Failed to update pxt.json option", e);
-            core.errorNotification(lf("Unable to update project configuration."));
-        }
+        await pkg.mainEditorPkg().updateConfigAsync(cfg => {
+            (cfg as any)[option.property] = checked;
+        });
+        this.forceUpdate();
     }
 
     clearCacheDiff(cachePrefix?: string, f?: DiffFile) {
