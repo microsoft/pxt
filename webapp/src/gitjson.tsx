@@ -20,6 +20,7 @@ import UserInfo = pxt.editor.UserInfo;
 
 import { Accordion } from "../../react-common/components/controls/Accordion";
 import { Button } from "../../react-common/components/controls/Button"
+import { Checkbox } from "../../react-common/components/controls/Checkbox";
 
 const MAX_COMMIT_DESCRIPTION_LENGTH = 70;
 
@@ -63,6 +64,16 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         this.handleGithubError = this.handleGithubError.bind(this);
         this.handlePullRequest = this.handlePullRequest.bind(this);
         this.handleSignoutGithub = this.handleSignoutGithub.bind(this);
+        this.togglePxtJsonOption = this.togglePxtJsonOption.bind(this);
+    }
+
+    public async togglePxtJsonOption(option: pxt.PxtJsonOption, checked: boolean) {
+        if (option.type !== "checkbox") return;
+
+        await pkg.mainEditorPkg().updateConfigAsync(cfg => {
+            (cfg as any)[option.property] = checked;
+        });
+        this.forceUpdate();
     }
 
     clearCacheDiff(cachePrefix?: string, f?: DiffFile) {
@@ -1497,6 +1508,8 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
             /^LICENSE/.test(f.path.toUpperCase()) || /^COPYING/.test(f.path.toUpperCase()))
         const testurl = header && `${window.location.href.replace(/#.*$/, '')}#testproject:${header.id}`;
         const showFork = user && user.id != githubId.owner;
+        const pxtJsonOptions = pxt.appTarget.appTheme?.pxtJsonOptions || [];
+        const cfg = pkg.mainPkg.config;
 
         const inverted = !!pxt.appTarget.appTheme.invertedGitHub;
         return <div className={`ui transparent ${inverted ? 'inverted' : ''} segment`}>
@@ -1543,6 +1556,20 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
                     {sui.helpIconLink("/github/offline", lf("Learn more about offline support for extensions."))}
                 </span>
             </div>
+            {pxtJsonOptions.map(option => {
+                const checked = !!cfg?.[option.property as keyof pxt.PackageConfig];
+                return (
+                    <div className="ui field" key={option.property}>
+                        <Checkbox
+                            id={`ext-opt-${option.property}`}
+                            label={pxt.Util.rlf(`{id:setting}${option.label}`)}
+                            isChecked={checked}
+                            onChange={value => this.props.parent.togglePxtJsonOption(option, value)}
+                            style="toggle"
+                        />
+                    </div>
+                );
+            })}
         </div>
     }
 }
