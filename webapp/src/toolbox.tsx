@@ -268,8 +268,15 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         }
     }
 
-    onCategoryClick = (treeRow: ToolboxCategory, index: number) => {
-        this.setSelection(treeRow, index, undefined, true);
+    onCategoryClick = (treeRow: ToolboxCategory, index: number, isClick = true) => {
+        if (isClick) {
+            return this.setSelection(treeRow, index, undefined, isClick);
+        }
+        const { customClick } = treeRow;
+        const { parent } = this.props;
+        if (customClick) {
+            customClick(parent);
+        }
     }
 
     focus(itemToFocus?: string) {
@@ -547,8 +554,12 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
             this.closeFlyout();
             this.props.parent.focusWorkspace();
         } else if (charCode == core.ENTER_KEY || charCode == core.SPACE_KEY) {
-            e.preventDefault();
-            e.stopPropagation();
+            const {onCategoryClick, treeRow, index } = this.selectedItem.props;
+            if (onCategoryClick) {
+                onCategoryClick(treeRow, index, false);
+                e.preventDefault();
+                e.stopPropagation();
+            }
         } else if (charCode == core.TAB_KEY
             || charCode == 37 /* Left arrow key */
             || charCode == 39 /* Right arrow key */
@@ -781,7 +792,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
 
 export interface CategoryItemProps extends TreeRowProps {
     toolbox: Toolbox;
-    onCategoryClick?: (treeRow: ToolboxCategory, index: number) => void;
+    onCategoryClick?: (treeRow: ToolboxCategory, index: number, isClick?: boolean) => void;
     index?: number;
     selectedIndex?: number;
     topRowIndex?: number;
