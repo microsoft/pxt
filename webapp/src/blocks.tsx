@@ -1050,12 +1050,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     zoomIn() {
         if (!this.editor) return;
-        this.editor.zoomCenter(0.8);
+        this.editor.zoomCenter(5);
     }
 
     zoomOut() {
         if (!this.editor) return;
-        this.editor.zoomCenter(-0.8);
+        this.editor.zoomCenter(-5);
     }
 
     setScale(scale: number) {
