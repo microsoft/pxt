@@ -23,6 +23,8 @@ namespace pxsim.music {
         protected trackVolumes: number[] = [];
         protected drumTrackVolumes: number[][] = [];
 
+        protected spatialAudioPlayer: AudioContextManager.SpatialAudioPlayer;
+
         protected currentCancelToken = { cancelled: false };
 
         constructor() {
@@ -154,6 +156,10 @@ namespace pxsim.music {
             this.drumTrackVolumes[trackIndex][drumIndex] = volume;
         }
 
+        setSpatialAudioPlayer(player: AudioContextManager.SpatialAudioPlayer) {
+            this.spatialAudioPlayer = player;
+        }
+
         protected getMelodicTrackVolume(trackIndex: number) {
             let trackVolume = 1024;
             if (trackIndex < this.trackVolumes.length) {
@@ -194,11 +200,31 @@ namespace pxsim.music {
                 for (const noteEvent of track.notes) {
                     if (noteEvent.startTick === this._currentTick) {
                         for (const note of noteEvent.notes) {
-                            if (track.drums) {
-                                playDrumAsync(track.drums[note.note], () => currentToken.cancelled, this.getDrumTrackVolume(i, note.note));
+                            if (this.spatialAudioPlayer) {
+                                if (track.drums) {
+                                    playDrumAtSpatialAudioPlayerAsync(
+                                        this.spatialAudioPlayer,
+                                        track.drums[note.note],
+                                        this.getDrumTrackVolume(i, note.note)
+                                    );
+                                }
+                                else {
+                                    playNoteAtSpatialAudioPlayerAsync(
+                                        this.spatialAudioPlayer,
+                                        note.note,
+                                        track.instrument,
+                                        tickToMs(this.currentlyPlaying.beatsPerMinute, this.currentlyPlaying.ticksPerBeat, noteEvent.endTick - noteEvent.startTick),
+                                        this.getMelodicTrackVolume(i)
+                                    );
+                                }
                             }
                             else {
-                                playNoteAsync(note.note, track.instrument, tickToMs(this.currentlyPlaying.beatsPerMinute, this.currentlyPlaying.ticksPerBeat, noteEvent.endTick - noteEvent.startTick), () => currentToken.cancelled, this.getMelodicTrackVolume(i));
+                                if (track.drums) {
+                                    playDrumAsync(track.drums[note.note], () => currentToken.cancelled, this.getDrumTrackVolume(i, note.note));
+                                }
+                                else {
+                                    playNoteAsync(note.note, track.instrument, tickToMs(this.currentlyPlaying.beatsPerMinute, this.currentlyPlaying.ticksPerBeat, noteEvent.endTick - noteEvent.startTick), () => currentToken.cancelled, this.getMelodicTrackVolume(i));
+                                }
                             }
                         }
                     }
@@ -235,6 +261,18 @@ namespace pxsim.music {
         await pxsim.AudioContextManager.playInstructionsAsync(
             pxsim.music.renderDrumInstrument(drum, volume),
             isCancelled
+        )
+    }
+
+    async function playNoteAtSpatialAudioPlayerAsync(player: AudioContextManager.SpatialAudioPlayer, note: number, instrument: pxt.assets.music.Instrument, time: number, volume = 100) {
+        await player.playInstructionsAsync(
+            pxsim.music.renderInstrument(instrument, frequencies[note], time, volume)
+        )
+    }
+
+    async function playDrumAtSpatialAudioPlayerAsync(player: AudioContextManager.SpatialAudioPlayer, drum: pxt.assets.music.DrumInstrument, volume = 100) {
+        await player.playInstructionsAsync(
+            pxsim.music.renderDrumInstrument(drum, volume),
         )
     }
 

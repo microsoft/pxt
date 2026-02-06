@@ -30,6 +30,7 @@ export function initFunctions() {
     msg.FUNCTIONS_DEFNORETURN_TITLE = lf("function");
     msg.PROCEDURES_HUE = pxt.toolbox.getNamespaceColor("functions");
     msg.REPORTERS_HUE = pxt.toolbox.getNamespaceColor("variables");
+    msg.FUNCTIONS_DELETE_PARAMETER_BUTTON = lf("{id:delete-function-parameter}Delete");
 
     // builtin procedures_defnoreturn
     const proceduresDefId = "procedures_defnoreturn";

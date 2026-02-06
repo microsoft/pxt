@@ -1925,7 +1925,13 @@ export class ProjectView
             pxt.BrowserUtils.changeHash("#editor", true);
             // Clear the focus.
             document.getElementById("root").focus();
-            /* await */ cmds.maybeReconnectAsync(false, true);
+            /** TODO: Resolve race condition that makes this having a delay necessary.
+             * Without this delay, in some circumstances (e.g. extensions being added) the reconnect will go through
+             * but webusb state will be lost right afterwards and the download icon will change from webusb connected
+             * to normal save icon (with some inconsistency on whether clicking download automatically reconnects,
+             * or requires further attention in form of disconnect/reconnect or page refresh)
+             */
+            /* await */ pxt.Util.delay(500).then(() => cmds.maybeReconnectAsync(false, true));
             this.editorLoaded();
         }
     }
