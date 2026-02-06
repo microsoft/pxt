@@ -535,7 +535,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                     const iconNameString = iconNames.join(" ");
 
                     // Check if there's a category icon mapping first
-                    const categoryIcon = this.categoryIconMap[iconNameString];
+                    const categoryIcon = this.categoryIconMap[iconNameString.toLowerCase().trim()];
                     if (categoryIcon) {
                         // Use the mapped icon directly, split by spaces to handle multi-word icon names
                         icon.className = `ui icon ${categoryIcon}`;
