@@ -98,9 +98,9 @@ export abstract class IframeDriver {
     }
 
     protected resolvePendingMessage(event: MessageEvent) {
-        const data = event.data as pxt.editor.EditorMessageResponse;
-        if (data.id && this.pendingMessages[data.id]) {
-            const resp = event.data as pxt.editor.EditorMessageResponse;
+        const resp = event.data as pxt.editor.EditorMessageResponse | pxt.editor.AssetEditorResponse;
+
+        if (resp.id && this.pendingMessages[resp.id]) {
             const pending = this.pendingMessages[resp.id!];
             delete this.pendingMessages[resp.id!];
 
