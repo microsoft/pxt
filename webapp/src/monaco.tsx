@@ -1283,7 +1283,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (!this.editor) return;
         if (this.parent.settings.editorFontSize >= MAX_EDITOR_FONT_SIZE) return;
         let currentFont = this.getEditorFontSize();
-        this.parent.settings.editorFontSize = currentFont + 1;
+        this.parent.settings.editorFontSize = currentFont + 3;
         this.editor.updateOptions({ fontSize: this.parent.settings.editorFontSize });
         this.forceDiagnosticsUpdate();
     }
@@ -1292,7 +1292,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (!this.editor) return;
         if (this.parent.settings.editorFontSize <= MIN_EDITOR_FONT_SIZE) return;
         let currentFont = this.getEditorFontSize();
-        this.parent.settings.editorFontSize = currentFont - 1;
+        this.parent.settings.editorFontSize = currentFont - 3;
         this.editor.updateOptions({ fontSize: this.parent.settings.editorFontSize });
         this.forceDiagnosticsUpdate();
     }
