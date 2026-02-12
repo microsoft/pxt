@@ -41,6 +41,7 @@ pxt.docs.requireDOMSanitizer = () => {
     const sanitizeHtml = require("sanitize-html");
     const defaults = sanitizeHtml.defaults || {};
     const baseAllowedAttrs = defaults.allowedAttributes || {};
+    const allowedTags = defaults.allowedTags || [];
 
     const mergeClassAttribute = (tag: string, ...otherAttributes: string[]) => {
         const existing: string[] = baseAllowedAttrs[tag] || [];
@@ -49,6 +50,7 @@ pxt.docs.requireDOMSanitizer = () => {
 
     const options = {
         ...defaults,
+        allowedTags: [...allowedTags, "img"],
         allowedAttributes: {
             ...baseAllowedAttrs,
             code: mergeClassAttribute("code"),
