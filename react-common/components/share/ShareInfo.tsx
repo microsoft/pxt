@@ -386,7 +386,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
                             <Textarea
                                 ariaDescribedBy="share-description-title"
                                 ariaLabel={lf("Type a description for your project")}
-                                initialValue={projectDescription || ''}
+                                initialValue={description || projectDescription || ''}
                                 onChange={setDescription}
                                 id="projectDescriptionTextareaShare"
                                 maxLength={pxt.MAX_DESCRIPTION_LENGTH}
