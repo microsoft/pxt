@@ -1,5 +1,13 @@
 # Microsoft MakeCode Blog
 
+February 13th, 2026 by [Jaqster](https://github.com/jaqster)
+
+## [MakeCode Arcade 2026 Update](/blog/arcade/update-feb-2026)
+
+Today we are pleased to release our 2026 MakeCode Arcade updates!
+
+**[Continue reading this blog post](/blog/arcade/update-feb-2026)**
+
 ## [Interview with MakeCode Arcade Game Maker](/blog/arcade/code-ninjas)
 
 December 19, 2025 by [Jaqster](https://github.com/jaqster)
