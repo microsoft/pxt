@@ -1,0 +1,344 @@
+/* ===============================================
+   Chat Component Styles
+   Lightweight, theme-aware using CSS variables
+   
+   Structure:
+   - .common-chat (main container)
+     - .common-chat-message-list (scrollable message area)
+       - .common-chat-message (individual message)
+         - .common-chat-message-meta (author/timestamp)
+         - .common-chat-message-body (message content)
+           - .common-chat-message-part (individual part)
+             - .common-chat-part-text (text content)
+             - .common-chat-part-image (images)
+             - .common-chat-part-fallback (unknown types)
+     - .common-chat-composer (input area)
+       - .common-chat-composer-textarea (auto-resize input)
+       - .common-chat-send-button (send button)
+   
+   Additional components:
+   - .common-chat-scroll-bottom (scroll helper)
+   - .common-chat-error-* (error states)
+   - .common-chat-story-* (storybook specific)
+   - .common-chat-custom-* (demo/example styles)
+   =============================================== */
+
+/* === Base Container === */
+.common-chat {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    background-color: var(--pxt-neutral-background2);
+    color: var(--pxt-neutral-foreground2);
+    border-radius: 0.5rem;
+    border: 1px solid var(--pxt-neutral-stencil1);
+    overflow: hidden;
+    position: relative;
+}
+
+/* === Message List === */
+.common-chat-message-list {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    scroll-behavior: smooth;
+    /* Ensure proper scrolling on mobile */
+    -webkit-overflow-scrolling: touch;
+    /* Ensure proper height constraints for scrolling */
+    min-height: 0;
+    height: 0;
+}
+
+/* === Message Structure === */
+.common-chat-message {
+    display: flex;
+    flex-direction: column;
+    max-width: 100%;
+    opacity: 0;
+    animation: messageSlideIn 0.3s ease-out forwards;
+    /* Prevent flex shrinking that causes message squeezing */
+    flex-shrink: 0;
+}
+
+@keyframes messageSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.common-chat-message.from-user {
+    align-items: flex-end;
+}
+
+.common-chat-message.from-agent {
+    align-items: flex-start;
+}
+
+/* === Message Metadata === */
+.common-chat-message-meta {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    color: var(--pxt-neutral-foreground3);
+    margin-bottom: 0.25rem;
+}
+
+.common-chat-message-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+/* === Message Parts === */
+.common-chat-message-part {
+    max-width: ~"min(72%, 28rem)";
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+/* Text parts */
+.common-chat-part-text {
+    background: var(--pxt-neutral-background1);
+    color: var(--pxt-neutral-foreground1);
+    padding: 0.6rem 0.75rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02);
+    white-space: pre-wrap;
+    line-height: 1.4;
+
+    /* Improve text selection */
+    user-select: text;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+}
+
+/* Image parts */
+.common-chat-part-image {
+    max-width: 18rem;
+    border-radius: 0.35rem;
+    border: 1px solid var(--pxt-neutral-stencil1);
+    transition: opacity 0.2s ease;
+}
+
+.common-chat-part-image:not([src]),
+.common-chat-part-image[src=""] {
+    opacity: 0.5;
+    background-color: var(--pxt-neutral-background1);
+    min-height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.common-chat-part-image::before {
+    content: "🖼️ Loading...";
+    color: var(--pxt-neutral-foreground3);
+    font-size: 0.875rem;
+}
+
+/* Fallback parts */
+.common-chat-part-fallback {
+    background: var(--pxt-neutral-background1);
+    color: var(--pxt-neutral-foreground1);
+    padding: 0.5rem;
+    border-radius: 0.3rem;
+    border: 1px dashed var(--pxt-neutral-stencil1);
+    font-family: monospace;
+    font-size: 0.75rem;
+    white-space: pre-wrap;
+    max-width: 20rem;
+    max-height: 10rem;
+    overflow: auto;
+}
+
+/* === Composer Section === */
+.common-chat-composer {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    border-top: 1px solid var(--pxt-neutral-stencil1);
+    background-color: var(--pxt-neutral-background1);
+    align-items: flex-end;
+}
+
+.common-chat-composer-textarea {
+    flex: 1 1 auto;
+    min-height: 2.5rem;
+    max-height: 10rem;
+    resize: none;
+    overflow: hidden;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    border: 1px solid var(--pxt-neutral-stencil1);
+    font-family: var(--page-font, "Segoe UI", Tahoma, Geneva, Verdana);
+    font-size: 0.875rem;
+    line-height: 1.4;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+    /* Improve focus state */
+    &:focus {
+        outline: none;
+        border-color: var(--pxt-primary-background);
+        box-shadow: 0 0 0 2px var(--pxt-primary-background-transparent);
+    }
+
+    &:disabled {
+        opacity: 0.6;
+        background-color: var(--pxt-neutral-background2);
+        cursor: not-allowed;
+    }
+}
+
+.common-chat-send-button {
+    align-self: flex-end;
+    min-height: 2.5rem;
+    transition: all 0.2s ease;
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+}
+
+/* === UI Elements === */
+/* Demo card component */
+.common-chat-demo-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background: var(--pxt-neutral-background1);
+    border: 1px solid var(--pxt-neutral-stencil1);
+    border-radius: 0.5rem;
+    min-width: 12rem;
+}
+
+/* Scroll to bottom helper */
+.common-chat-scroll-bottom {
+    position: absolute;
+    right: 1rem;
+    bottom: 4.25rem;
+    background: var(--pxt-primary-background);
+    color: var(--pxt-primary-foreground);
+    border: none;
+    border-radius: 50%;
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transition: all 0.2s ease;
+
+    &:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+}
+
+/* === Error States === */
+.common-chat-error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    text-align: center;
+    background-color: var(--pxt-neutral-background2);
+    border-radius: 0.5rem;
+    border: 1px solid var(--pxt-danger-background);
+}
+
+.common-chat-error-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    max-width: 20rem;
+}
+
+.common-chat-error-icon {
+    font-size: 2rem;
+}
+
+.common-chat-error-message {
+    color: var(--pxt-neutral-foreground2);
+    font-weight: 500;
+}
+
+/* === Loading States === */
+.common-chat.loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+/* === Story-specific styles and demo components === */
+.common-chat-story-container {
+    height: 420px;
+    width: 420px;
+}
+
+.common-chat-custom-card {
+    border: 1px solid var(--pxt-neutral-stencil1);
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+    background: var(--pxt-neutral-background1);
+}
+
+.common-chat-custom-card-content {
+    margin-top: 0.5rem;
+}
+
+/* ===============================================
+   Accessibility & Responsive Media Queries
+   =============================================== */
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .common-chat-part-text {
+        border: 1px solid var(--pxt-neutral-foreground2);
+    }
+
+    .common-chat-composer-textarea:focus {
+        border-width: 2px;
+    }
+}
+
+/* Respect reduced-motion preferences */
+@media (prefers-reduced-motion: reduce) {
+    .common-chat-message {
+        animation: none !important;
+        opacity: 1;
+    }
+
+    .common-chat-message-list {
+        scroll-behavior: auto;
+    }
+
+    * {
+        transition: none !important;
+    }
+}
+
+/* Dark theme optimizations */
+@media (prefers-color-scheme: dark) {
+    .common-chat {
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+
+    .common-chat-part-text {
+        box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+}

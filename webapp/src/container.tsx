@@ -127,7 +127,7 @@ export class DocsMenu extends data.PureComponent<DocsMenuProps, {}> {
             role: "menuitem",
             label: pxt.Util.rlf(this.props.editor),
             title: pxt.Util.rlf(this.props.editor),
-            onClick: () => openDocs(parent,  "/" + editor.toLowerCase())
+            onClick: () => openDocs(parent, "/" + editor.toLowerCase())
         });
 
         return (
@@ -649,7 +649,7 @@ class JavascriptMenuItem extends data.Component<ISettingsProps, {}> {
     }
 
     renderCore() {
-        return <BaseMenuItemProps className="javascript-menuitem" icon="xicon js" text="JavaScript" title={lf("Convert code to JavaScript")} onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} ariaLabel={lf("Convert code to JavaScript")}/>
+        return <BaseMenuItemProps className="javascript-menuitem" icon="xicon js" text="JavaScript" title={lf("Convert code to JavaScript")} onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} ariaLabel={lf("Convert code to JavaScript")} />
     }
 }
 
@@ -687,7 +687,7 @@ class BlocksMenuItem extends data.Component<ISettingsProps, {}> {
     }
 
     renderCore() {
-        return <BaseMenuItemProps className="blocks-menuitem" icon="xicon blocks" text={lf("Blocks")} title={lf("Convert code to Blocks")} onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} ariaLabel={lf("Convert code to Blocks")}/>
+        return <BaseMenuItemProps className="blocks-menuitem" icon="xicon blocks" text={lf("Blocks")} title={lf("Convert code to Blocks")} onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} ariaLabel={lf("Convert code to Blocks")} />
     }
 }
 
@@ -767,18 +767,18 @@ export class EditorSelector extends data.Component<IEditorSelectorProps, {}> {
         let secondTextLanguage: JSX.Element = undefined;
 
         if (showDropdown) {
-            if (pythonIsActive) textLanguage = <PythonMenuItem parent={parent}/>
-            else textLanguage = <JavascriptMenuItem parent={parent}/>
+            if (pythonIsActive) textLanguage = <PythonMenuItem parent={parent} />
+            else textLanguage = <JavascriptMenuItem parent={parent} />
         }
         else if (showPython && showJavaScript) {
-            textLanguage = <JavascriptMenuItem parent={parent}/>;
-            secondTextLanguage  = <PythonMenuItem parent={parent}/>;
+            textLanguage = <JavascriptMenuItem parent={parent} />;
+            secondTextLanguage = <PythonMenuItem parent={parent} />;
         }
         else if (showPython) {
-            textLanguage = <PythonMenuItem parent={parent}/>;
+            textLanguage = <PythonMenuItem parent={parent} />;
         }
         else if (showJavaScript) {
-            textLanguage = <JavascriptMenuItem parent={parent}/>
+            textLanguage = <JavascriptMenuItem parent={parent} />
         }
 
         return (
@@ -798,15 +798,33 @@ export class EditorSelector extends data.Component<IEditorSelectorProps, {}> {
     }
 }
 
+export interface SideDocsTab {
+    id: string;
+    title?: string;
+    icon?: string;
+    component?: () => JSX.Element;
+    builtInKey?: pxt.editor.BuiltInHelp;
+}
+
 export interface SideDocsProps extends ISettingsProps {
     docsUrl: string;
     sideDocsCollapsed: boolean;
+    extraTabs?: SideDocsTab[]; // dynamic tabs passed from parent
+    showBuiltIns?: boolean; // defaults to true
+    sideDocsTitle?: React.ReactNode; // title to show in the side docs header
 }
 
 // This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
 export interface SideDocsState {
-    docsUrl?: string;
+    // docsIframeUrl stores the last non-built-in docs URL used by the iframe tab.
+    docsIframeUrl?: string;
     sideDocsCollapsed?: boolean;
+    activeTabId?: string;
+    sideDocsWidthPx?: number;
+    tabsTopPx?: number;
+    // Resize-related state
+    isResizing?: boolean;
+    sideDocsUserWidthPercent?: number; // User-set width as percentage of viewport
 }
 
 
@@ -828,15 +846,26 @@ export const builtInPrefix = "/builtin/"
 
 export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
     private openingSideDoc = false;
+    private resizeHandleRef = React.createRef<HTMLDivElement>();
 
     constructor(props: SideDocsProps) {
         super(props);
         this.state = {
+            docsIframeUrl: undefined,
+            sideDocsCollapsed: undefined,
+            activeTabId: 'docs-iframe',
+            sideDocsWidthPx: 0,
+            tabsTopPx: 48,
+            isResizing: false,
+            sideDocsUserWidthPercent: undefined
         }
 
         this.toggleVisibility = this.toggleVisibility.bind(this);
         this.notifyPopOut = this.notifyPopOut.bind(this);
         this.close = this.close.bind(this);
+        this.updateLayoutMeasurements = this.updateLayoutMeasurements.bind(this);
+        this.handleResizeStart = this.handleResizeStart.bind(this);
+        this.handleResizeKeyDown = this.handleResizeKeyDown.bind(this);
     }
 
     private rootDocsUrl(): string {
@@ -862,20 +891,22 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
         if (query && docsUrl.endsWith("#")) docsUrl = docsUrl.substr(0, docsUrl.length - 1) + query + "#";
         const url = `${docsUrl}doc:${path}:${mode}:${pxt.Util.localeInfo()}`;
         this.setUrl(url);
+        this.setState({ activeTabId: 'docs-iframe' });
     }
 
     setMarkdown(md: string) {
         const docsUrl = this.rootDocsUrl();
         // always render blocks by default when sending custom markdown
-        // to side bar
         const mode = "blocks" // this.props.parent.isBlocksEditor() ? "blocks" : "js";
         const url = `${docsUrl}md:${encodeURIComponent(md)}:${mode}:${pxt.Util.localeInfo()}`;
-        this.props.parent.setState({ sideDocsLoadUrl: url });
+        // Use setUrl so we keep internal iframe URL state in sync
+        this.setUrl(url);
     }
 
     toggleBuiltInHelp(help: pxt.editor.BuiltInHelp, focusIfVisible: boolean) {
         const url = `${builtInPrefix}${help}`;
-        const shouldCollapse = this.state.docsUrl === url && !this.state.sideDocsCollapsed && !focusIfVisible;
+        // determine collapse based on active tab id (built-in) rather than a shared url cache
+        const shouldCollapse = this.state.activeTabId === (help as string) && !this.state.sideDocsCollapsed && !focusIfVisible;
 
         pxt.tickEvent(
             `sidedocs.builtin`,
@@ -897,11 +928,19 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
             this.openingSideDoc = true;
             Blockly.hideChaff(true);
             this.setUrl(url);
+            this.setState({ activeTabId: help as string });
         }
     }
 
     private setUrl(url: string) {
-        this.props.parent.setState({ sideDocsLoadUrl: url, sideDocsCollapsed: false });
+        this.props.parent.setState({ sideDocsLoadUrl: url });
+        // store last non-built-in docs url in state.docsIframeUrl so iframe tab has its own url cache
+        if (!url.startsWith(builtInPrefix)) {
+            this.setState({ docsIframeUrl: url, activeTabId: 'docs-iframe' });
+        } else {
+            const key = this.getBuiltInKeyFromUrl(url);
+            if (key) this.setState({ activeTabId: key });
+        }
     }
 
     expand() {
@@ -924,17 +963,48 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
 
     toggleVisibility() {
         const state = this.props.parent.state;
-        this.props.parent.setState({ sideDocsCollapsed: !state.sideDocsCollapsed });
-        document.getElementById("sidedocstoggle").focus();
+        const nextCollapsed = !state.sideDocsCollapsed;
+        // If we're expanding the panel, set openingSideDoc so componentDidUpdate will focus the close button
+        if (!nextCollapsed) this.openingSideDoc = true;
+        this.props.parent.setState({ sideDocsCollapsed: nextCollapsed });
+    }
+
+    componentDidMount() {
+        window.addEventListener('resize', this.updateLayoutMeasurements);
+        this.updateLayoutMeasurements();
+
+        // Load saved width preference
+        const savedWidthPercent = pxt.storage.getLocal("sidedocs-width-percent");
+        if (savedWidthPercent) {
+            const widthPercent = parseFloat(savedWidthPercent);
+            if (!isNaN(widthPercent) && widthPercent >= 20 && widthPercent <= 60) {
+                this.setState({ sideDocsUserWidthPercent: widthPercent });
+                const root = document.documentElement;
+                root.style.setProperty('--sidedoc-user-width', `${widthPercent}vw`);
+            }
+        }
+    }
+
+    componentWillUnmount() {
+        window.removeEventListener('resize', this.updateLayoutMeasurements);
+        document.body.classList.remove('resizing-sidedocs');
     }
 
     componentDidUpdate() {
         this.props.parent.editor.resize();
 
-        let sidedocstoggle = document.getElementById("sidedocstoggle");
-        if (this.openingSideDoc && sidedocstoggle) {
-            sidedocstoggle.focus();
+        let sidedocsclose = document.getElementById("sidedocsclose");
+        if (this.openingSideDoc && sidedocsclose) {
+            (sidedocsclose as HTMLElement).focus();
             this.openingSideDoc = false;
+        }
+
+        this.updateLayoutMeasurements();
+
+        // Apply user-set width if available
+        if (this.state.sideDocsUserWidthPercent) {
+            const root = document.documentElement;
+            root.style.setProperty('--sidedoc-user-width', `${this.state.sideDocsUserWidthPercent}vw`);
         }
     }
 
@@ -944,14 +1014,35 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
             newState.sideDocsCollapsed = nextProps.sideDocsCollapsed;
         }
         if (nextProps.docsUrl != undefined) {
-            newState.docsUrl = nextProps.docsUrl;
+            // Handle component URLs (component:tabId)
+            if (nextProps.docsUrl && nextProps.docsUrl.startsWith('component:')) {
+                const componentTabId = nextProps.docsUrl.slice('component:'.length);
+                newState.activeTabId = componentTabId;
+                // Don't set docsIframeUrl for component tabs
+            }
+            // If incoming docsUrl indicates a built-in, set active tab accordingly
+            else if (nextProps.docsUrl && nextProps.docsUrl.startsWith(builtInPrefix)) {
+                const key = this.getBuiltInKeyFromUrl(nextProps.docsUrl);
+                if (key) newState.activeTabId = key;
+                else newState.activeTabId = 'docs-iframe';
+            }
+            // Otherwise track it as the iframe URL
+            else {
+                newState.docsIframeUrl = nextProps.docsUrl;
+                newState.activeTabId = 'docs-iframe';
+            }
         }
         if (Object.keys(newState).length > 0) this.setState(newState)
     }
 
     shouldComponentUpdate(nextProps: SideDocsProps, nextState: SideDocsState, nextContext: any): boolean {
         return this.state.sideDocsCollapsed != nextState.sideDocsCollapsed
-            || this.state.docsUrl != nextState.docsUrl;
+            || this.state.docsIframeUrl != nextState.docsIframeUrl
+            || this.state.activeTabId != nextState.activeTabId
+            || this.state.sideDocsWidthPx != nextState.sideDocsWidthPx
+            || this.state.tabsTopPx != nextState.tabsTopPx
+            || this.state.isResizing != nextState.isResizing
+            || this.state.sideDocsUserWidthPercent != nextState.sideDocsUserWidthPercent;
     }
 
     private handleKeyDown = (ev: React.KeyboardEvent<HTMLElement>) => {
@@ -961,21 +1052,267 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
         }
     }
 
+    private getBuiltInKeyFromUrl(url: string): pxt.editor.BuiltInHelp | undefined {
+        if (url && url.startsWith(builtInPrefix)) {
+            return url.slice(builtInPrefix.length) as pxt.editor.BuiltInHelp;
+        }
+        return undefined;
+    }
+
+    private buildTabs(): SideDocsTab[] {
+        const tabs: SideDocsTab[] = [];
+        // persistent iframe docs tab
+        tabs.push({ id: 'docs-iframe', title: lf("Docs"), icon: "help circle" });
+
+        const showBuiltIns = this.props.showBuiltIns !== false;
+        if (showBuiltIns) {
+            for (const k in builtIns) {
+                const key = k as pxt.editor.BuiltInHelp;
+                const info = builtIns[key];
+                tabs.push({ id: key as string, title: pxt.Util.rlf(key), icon: "keyboard", component: info.component, builtInKey: key });
+            }
+        }
+
+        if (this.props.extraTabs) {
+            // eslint-disable-next-line @typescript-eslint/no-for-in-array
+            for (const i in this.props.extraTabs) {
+                const et = this.props.extraTabs[i];
+                if (!et) continue;
+                const tid = et.id || `extra-tab-${i}`;
+                tabs.push({ id: tid, title: et.title, icon: et.icon, component: et.component });
+            }
+        }
+
+        return tabs;
+    }
+
+    private selectTab(tabId: string) {
+        const tabs = this.buildTabs();
+        const tab = tabs.find(t => t.id === tabId);
+        if (!tab) return;
+
+        // Always expand the panel when a tab is selected
+        this.props.parent.setState({ sideDocsCollapsed: false });
+
+        if (tab.builtInKey) {
+            const url = builtInPrefix + tab.builtInKey;
+            this.setUrl(url);
+            this.setState({ activeTabId: tabId });
+        } else if (tab.id === 'docs-iframe') {
+            // prefer iframe-specific non-built-in url from our state; avoid accidentally using a built-in url stored on parent
+            const candidateFromState = this.state.docsIframeUrl;
+            const candidateFromProps = (this.props.docsUrl && !this.props.docsUrl.startsWith(builtInPrefix)) ? this.props.docsUrl : undefined;
+            const url = candidateFromState || candidateFromProps || this.rootDocsUrl();
+            this.setUrl(url);
+            this.setState({ activeTabId: tabId });
+        } else if (tab.component) {
+            this.setState({ activeTabId: tabId });
+            // Set a special URL to indicate component tab is active
+            this.props.parent.setState({ sideDocsLoadUrl: 'component:' + tabId });
+        }
+    }
+
+    private updateLayoutMeasurements() {
+        const sidedocs = document.getElementById('sidedocs');
+        const mainmenu = document.getElementById('mainmenu');
+        const newState: Partial<SideDocsState> = {};
+        if (sidedocs) {
+            const r = sidedocs.getBoundingClientRect();
+            newState.sideDocsWidthPx = Math.round(r.width);
+        } else {
+            newState.sideDocsWidthPx = 0;
+        }
+        if (mainmenu) {
+            const r2 = mainmenu.getBoundingClientRect();
+            newState.tabsTopPx = Math.round(r2.bottom + 8);
+        } else {
+            newState.tabsTopPx = 48;
+        }
+        if (newState.sideDocsWidthPx !== this.state.sideDocsWidthPx || newState.tabsTopPx !== this.state.tabsTopPx) {
+            // Don't update state during resize to prevent DOM interference
+            if (this.state.isResizing) {
+                return;
+            }
+            this.setState(newState as SideDocsState);
+        }
+    }
+
+    private handleResizeStart(e: React.MouseEvent | React.TouchEvent | React.PointerEvent) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (this.state.isResizing) {
+            return;
+        }
+
+        // Capture pointer events to ensure we get all mouse movements
+        const target = e.currentTarget as HTMLElement;
+        if ('pointerId' in e.nativeEvent && 'setPointerCapture' in target) {
+            target.setPointerCapture((e.nativeEvent as PointerEvent).pointerId);
+        }
+
+        this.setState({ isResizing: true });
+
+        // Simple event handlers - no complex bound references
+        const handleMove = (e: MouseEvent | TouchEvent | PointerEvent) => {
+            const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+
+            if (!this.state.isResizing) {
+                return;
+            }
+
+            // For mouse events, check if button is still pressed
+            // Skip button checking for pointer events as they may have different button state behavior
+            if (e.type === 'mousemove' && 'buttons' in e && e.buttons !== 1) {
+                handleEnd();
+                return;
+            }
+
+            e.preventDefault();
+
+            const viewportWidth = window.innerWidth;
+            const newWidthPx = Math.max(0, viewportWidth - clientX);
+            const newWidthPercent = (newWidthPx / viewportWidth) * 100;
+
+            const minWidthPercent = 20;
+            const maxWidthPercent = 60;
+            const constrainedWidthPercent = Math.min(Math.max(newWidthPercent, minWidthPercent), maxWidthPercent);
+
+            this.setState({ sideDocsUserWidthPercent: constrainedWidthPercent });
+
+            const root = document.documentElement;
+            root.style.setProperty('--sidedoc-user-width', `${constrainedWidthPercent}vw`);
+        };
+
+        const handleEnd = () => {
+            this.setState({ isResizing: false });
+
+            // Remove all listeners
+            document.removeEventListener('mousemove', handleMove);
+            document.removeEventListener('mouseup', handleEnd);
+            document.removeEventListener('pointermove', handleMove as any);
+            document.removeEventListener('pointerup', handleEnd);
+            document.removeEventListener('touchmove', handleMove);
+            document.removeEventListener('touchend', handleEnd);
+            window.removeEventListener('mouseup', handleEnd);
+
+            document.body.classList.remove('resizing-sidedocs');
+
+            // Save preference
+            const widthPercent = this.state.sideDocsUserWidthPercent;
+            if (widthPercent) {
+                const announcement = lf("Documentation panel resized to {0}% of screen width", Math.round(widthPercent));
+                pxt.debug(announcement);
+                pxt.storage.setLocal("sidedocs-width-percent", widthPercent.toString());
+            }
+        };
+
+        // Add listeners
+        document.addEventListener('mousemove', handleMove);
+        document.addEventListener('mouseup', handleEnd);
+        document.addEventListener('pointermove', handleMove as any);
+        document.addEventListener('pointerup', handleEnd);
+        document.addEventListener('touchmove', handleMove);
+        document.addEventListener('touchend', handleEnd);
+        window.addEventListener('mouseup', handleEnd); // Catch mouseup outside window
+
+        document.body.classList.add('resizing-sidedocs');
+
+        const announcement = lf("Resizing documentation panel");
+        pxt.debug(announcement);
+    }
+
+    private handleResizeHover = (e: React.MouseEvent) => {
+        // Check if there's already a drag operation in progress
+        // If mouse buttons are pressed (but not specifically on our handle), suppress hover effects
+        if (e.buttons > 0) {
+            // Remove hover styling to indicate the handle is not interactive during other drag operations
+            const handle = this.resizeHandleRef.current;
+            if (handle) {
+                handle.classList.add('drag-disabled');
+            }
+        }
+    };
+
+    private handleResizeHoverEnd = (e: React.MouseEvent) => {
+        // Remove the drag-disabled class when mouse leaves
+        const handle = this.resizeHandleRef.current;
+        if (handle) {
+            handle.classList.remove('drag-disabled');
+        }
+    };
+
+    private handleResizeKeyDown(e: React.KeyboardEvent) {
+        const step = e.shiftKey ? 5 : 2; // Percentage steps (5% with Shift, 2% normally)
+        let currentWidthPercent = this.state.sideDocsUserWidthPercent;
+
+        // If no user width set, calculate current width as percentage
+        if (!currentWidthPercent) {
+            const currentWidthPx = this.state.sideDocsWidthPx || (window.innerWidth * 0.3); // Default to 30%
+            currentWidthPercent = (currentWidthPx / window.innerWidth) * 100;
+        }
+
+        let newWidthPercent = currentWidthPercent;
+
+        switch (e.key) {
+            case 'ArrowRight':
+                e.preventDefault();
+                newWidthPercent = Math.max(currentWidthPercent - step, 20); // Min 20%
+                break;
+            case 'ArrowLeft':
+                e.preventDefault();
+                newWidthPercent = Math.min(currentWidthPercent + step, 60); // Max 60%
+                break;
+            case 'Home':
+                e.preventDefault();
+                newWidthPercent = 20; // minimum width
+                break;
+            case 'End':
+                e.preventDefault();
+                newWidthPercent = 60; // maximum width
+                break;
+            case 'Escape':
+                e.preventDefault();
+                if (this.resizeHandleRef.current) {
+                    this.resizeHandleRef.current.blur();
+                }
+                return;
+            default:
+                return;
+        }
+
+        this.setState({ sideDocsUserWidthPercent: newWidthPercent });
+        const root = document.documentElement;
+        root.style.setProperty('--sidedoc-user-width', `${newWidthPercent}vw`);
+
+        // Save preference
+        pxt.storage.setLocal("sidedocs-width-percent", newWidthPercent.toString());
+
+        // Announce to screen readers
+        const announcement = lf("Documentation panel width: {0}% of screen", Math.round(newWidthPercent));
+        pxt.debug(announcement);
+    }
+
     renderCore() {
-        const { sideDocsCollapsed, docsUrl } = this.state;
-        const isRTL = pxt.Util.isUserLanguageRtl();
-        const showLeftChevron = (sideDocsCollapsed || isRTL) && !(sideDocsCollapsed && isRTL); // Collapsed XOR RTL
+        const tabs = this.buildTabs();
+        // If activeTabId is not set, defer to the incoming props to determine if the current prop url is a built-in.
+        const activeTabId = this.state.activeTabId || (this.props.docsUrl && this.props.docsUrl.startsWith(builtInPrefix) ? this.getBuiltInKeyFromUrl(this.props.docsUrl as string) || 'docs-iframe' : 'docs-iframe');
+        const activeTab = tabs.find(t => t.id === activeTabId) || tabs[0];
+
+        const { sideDocsCollapsed, docsIframeUrl, isResizing, sideDocsUserWidthPercent } = this.state;
         const lockedEditor = !!pxt.appTarget.appTheme.lockedEditor;
 
-        if (!docsUrl) return null;
+        // Calculate URL - only for iframe and built-in tabs, not for component tabs
+        const url = activeTab.component ? '' : (
+            (activeTab.id === 'docs-iframe') ?
+                (sideDocsCollapsed ? this.rootDocsUrl() : (docsIframeUrl || (this.props.docsUrl && !this.props.docsUrl.startsWith(builtInPrefix) ? this.props.docsUrl : this.rootDocsUrl()))) :
+                (activeTab.builtInKey ? `${builtInPrefix}${activeTab.builtInKey}` : '')
+        );
 
-        const url = sideDocsCollapsed ? this.rootDocsUrl() : docsUrl;
-        const builtIn = url.startsWith(`${builtInPrefix}`)
-            ? builtIns[url.slice(builtInPrefix.length) as pxt.editor.BuiltInHelp]
-            : undefined;
-        const openInNewTabLinkProps: React.ComponentProps<'a'> = builtIn ? {
+        const builtInDetail = url && url.startsWith(builtInPrefix) ? builtIns[url.slice(builtInPrefix.length) as pxt.editor.BuiltInHelp] : undefined;
+        const openInNewTabLinkProps: React.ComponentProps<'a'> = builtInDetail ? {
             target: "_blank",
-            href: builtIn.popOutHref,
+            href: builtInDetail.popOutHref,
             rel: "noopener",
             onClick: this.close,
         } : {
@@ -985,38 +1322,123 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
             tabIndex: 0,
         };
 
-        const openInNewTab = !lockedEditor && <div key="newTab" className="ui app hide" id="sidedocsbar">
-            <a className="ui icon link" aria-label={lf("Open documentation in new tab")} {...openInNewTabLinkProps}>
-                <sui.Icon icon="external" />
-            </a>
+        const openInNewTab = !lockedEditor && <a className="ui icon link sidedocs-opentab" aria-label={lf("Open documentation in new tab")} {...openInNewTabLinkProps}>
+            <sui.Icon icon="external" />
+        </a>;
+
+        const resizeHandle = <div
+            ref={this.resizeHandleRef}
+            className={`sidedocs-resize-handle ${isResizing ? 'resizing' : ''}`}
+            role="separator"
+            aria-orientation="vertical"
+            aria-label={lf("Resize documentation panel")}
+            aria-valuenow={sideDocsUserWidthPercent ? Math.round(sideDocsUserWidthPercent) : Math.round((this.state.sideDocsWidthPx / window.innerWidth) * 100)}
+            aria-valuemin={20}
+            aria-valuemax={60}
+            tabIndex={0}
+            title={lf("Drag to resize panel, or use arrow keys. Press Escape to finish.")}
+            onPointerDown={this.handleResizeStart}
+            onMouseDown={this.handleResizeStart}
+            onTouchStart={this.handleResizeStart}
+            onKeyDown={this.handleResizeKeyDown}
+            onMouseEnter={this.handleResizeHover}
+            onMouseLeave={this.handleResizeHoverEnd}
+        />;
+
+        const headerBar = <div className="sidedoc-header" role="banner">
+            <div className="sidedoc-title">{this.props.sideDocsTitle || lf("Docs")}</div>
+            <div className="sidedoc-controls">
+                {openInNewTab}
+                <sui.Button id="sidedocsclose" className={`sidedocs-close ui icon button`} icon="close" title={lf("Close the side documentation")} ariaLabel={lf("Close the side documentation")} onClick={this.close} />
+            </div>
         </div>;
 
         const content = <div key="content" id="sidedocsframe-wrapper">
-            {this.renderContent(url, builtIn, lockedEditor)}
+            {headerBar}
+            <div className="sidedocs-content">
+                {this.renderTabContent(activeTab, url, builtInDetail, lockedEditor)}
+            </div>
         </div>;
 
-        const flipNewTabLinkOrder = builtIn?.singleTabStop;
-
-        const contentParts = flipNewTabLinkOrder ? [content, openInNewTab] : [openInNewTab, content];
+        const contentParts = [resizeHandle, content];
 
         /* eslint-disable @microsoft/sdl/react-iframe-missing-sandbox */
         return <div>
-            <button id="sidedocstoggle" role="button" aria-label={sideDocsCollapsed ? lf("Expand the side documentation") : lf("Collapse the side documentation")} className="ui icon button large" onClick={this.toggleVisibility}>
-                <sui.Icon icon={`icon inverted chevron ${showLeftChevron ? 'left' : 'right'}`} />
-            </button>
+            {/* tab strip */}
+            <div id="sidedocstabs" role="tablist" className="sidedoc-tablist" aria-orientation="vertical">
+                {(() => {
+                    const onTabKeyDown = (ev: React.KeyboardEvent<HTMLElement>, idx: number) => {
+                        const key = ev.key;
+                        if (key === 'ArrowUp' || key === 'ArrowDown' || key === 'Home' || key === 'End') {
+                            ev.preventDefault();
+                            let newIdx = idx;
+                            if (key === 'ArrowUp') newIdx = (idx - 1 + tabs.length) % tabs.length;
+                            else if (key === 'ArrowDown') newIdx = (idx + 1) % tabs.length;
+                            else if (key === 'Home') newIdx = 0;
+                            else if (key === 'End') newIdx = tabs.length - 1;
+                            const tabBtn = document.getElementById('sidedocstabs')?.querySelectorAll('button')[newIdx] as HTMLButtonElement;
+                            if (tabBtn) {
+                                tabBtn.focus();
+                                // invoke selectTab directly to ensure state is in sync
+                                this.selectTab(tabs[newIdx].id);
+                            }
+                        } else if (key === 'Escape') {
+                            this.collapse();
+                        }
+                    };
+
+                    return tabs.map((t, i) => {
+                        const isActive = t.id === activeTabId;
+                        return (
+                            <div key={t.id} title={t.title || ''} className={`sidedoc-tab ${isActive ? 'active' : ''}`}>
+                                <sui.Button
+                                    role="tab"
+                                    aria-selected={isActive}
+                                    ariaLabel={t.title || ''}
+                                    title={t.title || ''}
+                                    aria-controls="sidedocsframe-wrapper"
+                                    onClick={() => this.selectTab(t.id)}
+                                    onKeyDown={(ev: React.KeyboardEvent<HTMLElement>) => onTabKeyDown(ev, i)}
+                                    tabIndex={0}
+                                    icon={t.icon || "help"}
+                                    className={`sidedoc-tab-button`}
+                                />
+                            </div>
+                        );
+                    });
+                })()}
+            </div>
             <div id="sidedocs" onKeyDown={this.handleKeyDown}>
-                {contentParts}
+                {!sideDocsCollapsed ? contentParts : null}
             </div>
         </div>
         /* eslint-enable @microsoft/sdl/react-iframe-missing-sandbox */
     }
 
-    renderContent(url: string, builtIn: BuiltInHelpDetails | undefined, lockedEditor: boolean) {
-        const BuiltInComponent =  builtIn?.component;
-        return BuiltInComponent ? <BuiltInComponent /> : (
+    renderTabContent(tab: SideDocsTab, url: string, builtInDetail: BuiltInHelpDetails | undefined, lockedEditor: boolean) {
+        if (!tab) return null;
+
+        // Handle component tabs (like Chat)
+        if (tab.component) {
+            const TabComponent = tab.component;
+            try {
+                return <TabComponent />;
+            } catch (e) {
+                return <div>{lf("Error rendering tab content")}</div>;
+            }
+        }
+
+        // Handle built-in help tabs (like Keyboard Help)
+        if (builtInDetail?.component) {
+            const BuiltInComponent = builtInDetail.component;
+            return <BuiltInComponent />;
+        }
+
+        // Show iframe tab (Docs)
+        return (
             <iframe id="sidedocsframe" src={url} title={lf("Documentation")} aria-atomic="true" aria-live="assertive"
                 sandbox={`allow-scripts allow-same-origin allow-forms ${lockedEditor ? "" : "allow-popups"}`} />
-        )
+        );
     }
 }
 
