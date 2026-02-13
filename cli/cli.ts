@@ -41,6 +41,7 @@ pxt.docs.requireDOMSanitizer = () => {
     const sanitizeHtml = require("sanitize-html");
     const defaults = sanitizeHtml.defaults || {};
     const baseAllowedAttrs = defaults.allowedAttributes || {};
+    const allowedTags = defaults.allowedTags || [];
 
     const mergeClassAttribute = (tag: string, ...otherAttributes: string[]) => {
         const existing: string[] = baseAllowedAttrs[tag] || [];
@@ -49,6 +50,7 @@ pxt.docs.requireDOMSanitizer = () => {
 
     const options = {
         ...defaults,
+        allowedTags: [...allowedTags, "img"],
         allowedAttributes: {
             ...baseAllowedAttrs,
             code: mergeClassAttribute("code"),
@@ -467,13 +469,38 @@ async function ciAsync(parsed?: commandParser.ParsedCommand) {
 
     lintJSONInDirectory(path.resolve("."));
     lintJSONInDirectory(path.resolve("docs"));
+    let pkg = readJson("package.json")
 
-    function npmPublishAsync() {
+    async function npmPublishAsync() {
         if (!npmPublish) return Promise.resolve();
+
+        let latest: pxt.semver.Version;
+
+        try {
+            const version = await nodeutil.npmLatestVersionAsync(pkg["name"]);
+            latest = pxt.semver.parse(version);
+        }
+        catch (e) {
+            // no latest tag
+        }
+
+        let distTag: string;
+
+        if (latest) {
+            const current = pxt.semver.parse(pkg["version"]);
+
+            if (pxt.semver.cmp(current, latest) < 0) {
+                distTag = `stable${current.major}.${current.minor}`;
+            }
+        }
+
+        if (distTag) {
+            return nodeutil.runNpmAsync("publish", "--tag", distTag);
+        }
+
         return nodeutil.runNpmAsync("publish");
     }
 
-    let pkg = readJson("package.json")
     if (pkg["name"] == "pxt-core") {
         pxt.log("pxt-core build");
 
