@@ -382,11 +382,8 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
 
         const disableFileAccessinMaciOs = targetTheme.disableFileAccessinMaciOs && (pxt.BrowserUtils.isIOS() || pxt.BrowserUtils.isMac());
         const disableFileAccessinAndroid = pxt.appTarget.appTheme.disableFileAccessinAndroid && pxt.BrowserUtils.isAndroid();
-        const ghid = header && pxt.github.parseRepoId(header.githubId);
-        const hasRepository = !!ghid;
         const showSave = !readOnly && !isController && !targetTheme.saveInMenu
-            && !tutorial && !debugging && !disableFileAccessinMaciOs && !disableFileAccessinAndroid
-            && !hasRepository;
+            && !tutorial && !debugging && !disableFileAccessinMaciOs && !disableFileAccessinAndroid;
         const showProjectRename = !tutorial && !readOnly && !isController
             && !targetTheme.hideProjectRename && !debugging;
         const showProjectRenameReadonly = false; // always allow renaming, even for github projects
@@ -394,7 +391,6 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         const compilesToDownloadableFile = compile.hasHex || compile.saveAsPNG || compile.useUF2;
         const hasCompileButtonOverride = !!pxt.commands.onDownloadButtonClick;
         const showCompileBtn = !isTimeMachineEmbed && (compilesToDownloadableFile || hasCompileButtonOverride);
-        const compileLoading = !!compiling;
         const running = simState == SimState.Running;
         const starting = simState == SimState.Starting;
 
@@ -420,16 +416,6 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
 
         const mobile = View.Mobile;
         const computer = View.Computer;
-
-        let downloadButtonClasses = "";
-        let saveButtonClasses = "";
-        if (isSaving) {
-            downloadButtonClasses = "disabled";
-            saveButtonClasses = "loading disabled";
-        } else if (compileLoading) {
-            downloadButtonClasses = "loading disabled";
-            saveButtonClasses = "disabled";
-        }
 
         return <div id="editortools" className="ui" role="region" aria-label={lf("Editor toolbar")}>
             <div id="downloadArea" role="menubar" className="ui column items">
