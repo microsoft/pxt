@@ -1589,6 +1589,7 @@ namespace pxt {
                 }
                 if (entry.tilemapTile) {
                     tags.push("tile");
+                    tags.push("category-" + namespaceName)
                 }
             }
 
