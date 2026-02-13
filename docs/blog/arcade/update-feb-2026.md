@@ -74,7 +74,7 @@ Who loves pixel artists?! I do!!! And I love using community shared pixel art in
 
 Watch this video to see how it's done –
 
-<-AssetPackWalkthru YouTube link->
+https://youtu.be/CjLYl5KJiSk
 
 ## Tilemap Gallery
 
