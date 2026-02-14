@@ -4,6 +4,10 @@
     align-items: flex-start;
     width: 100%;
 
+    @media print {
+        page-break-inside: avoid;
+    }
+
     div[class*="common-input-group"] {
         border-radius: 0.5rem;
         border: solid 1px var(--pxt-neutral-foreground1);
@@ -176,6 +180,11 @@
         margin-top: 0.2rem;
         width: 100%; // For non-webkit browsers
         width: -webkit-fill-available; // Webkit browsers
+
+        @media print {
+            width: 100%;
+            color: #333333;
+        }
 
         &.for-print {
             font-style: italic;
