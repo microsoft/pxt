@@ -3,6 +3,13 @@
     padding: 1rem;
     overflow: auto;
     container-type: inline-size;
+
+    @media print {
+        height: auto;
+        overflow: visible;
+        container-type: normal;
+        padding: 0.5rem;
+    }
 }
 
 .checklist-control-tray {
@@ -83,6 +90,12 @@
     width: 100%; // For non-webkit browsers
     width: -webkit-fill-available; // Webkit browsers
     padding: 0.5rem;
+
+    @media print {
+        width: 100%;
+        padding: 0;
+        page-break-inside: avoid;
+    }
 }
 
 .specific-criteria-result {
@@ -94,6 +107,12 @@
     width: -webkit-fill-available; // Webkit browsers
     min-height: 9rem;
     gap: 0.5rem;
+
+    @media print {
+        width: 100%;
+        min-height: unset;
+        page-break-inside: avoid;
+    }
 
     .loading-display {
         padding-top: 0;
@@ -167,6 +186,11 @@
     margin-top: 0.5rem;
     width: 100%; // For non-webkit browsers
     width: -webkit-fill-available; // Webkit browsers
+
+    @media print {
+        width: 100%;
+        border-bottom-color: #000000;
+    }
 }
 
 .result-details {
@@ -177,6 +201,11 @@
     width: 100%;
     height: 50%;
     gap: 0.5rem;
+
+    @media print {
+        height: auto;
+        page-break-inside: avoid;
+    }
 
     .display-string {
         font-weight: 500;
@@ -220,6 +249,11 @@
     min-height: 5.5rem;
     gap: 0.5rem;
 
+    @media print {
+        min-height: unset;
+        page-break-inside: avoid;
+    }
+
     .notes-container {
         width: 100%;
         max-width: 100%;
@@ -257,6 +291,11 @@
     gap: 0.5rem;
     justify-content: space-between;
     padding: 0.5rem 0;
+
+    @media print {
+        page-break-after: avoid;
+        page-break-inside: avoid;
+    }
 
     .checklist-name {
         display: flex;

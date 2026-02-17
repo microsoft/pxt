@@ -129,6 +129,19 @@ code {
         break-before: avoid;
     }
 
+    // Ensure body and html don't constrain the print layout
+    html, body {
+        height: auto !important;
+        overflow: visible !important;
+    }
+
+    // Fix for webkit browsers (Safari)
+    body {
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
     .no-print {
         display: none !important;
     }

@@ -4456,7 +4456,7 @@ export class ProjectView
 
     async publishAsync (name: string, description?: string,screenshotUri?: string, forceAnonymous?: boolean): Promise<pxt.editor.ShareData> {
         pxt.tickEvent("menu.embed.publish", undefined, { interactiveConsent: true });
-        if ((name && this.state.projectName != name) || description) {
+        if ((name && this.state.projectName != name) || description !== undefined) {
             await this.updateHeaderNameAsync(name, description);
         }
 
@@ -4606,18 +4606,18 @@ export class ProjectView
 
     updateHeaderNameAsync(name: string, description?: string): Promise<void> {
         // nothing to do?
-        if (pkg.mainPkg.config.name == name && (!description || pkg.mainPkg.config.description == description))
+        if (pkg.mainPkg.config.name == name && (description === undefined || pkg.mainPkg.config.description == description))
             return Promise.resolve();
 
         //Save the name in the target MainPackage as well
         pkg.mainPkg.config.name = name;
-        pkg.mainPkg.config.description = description || pkg.mainPkg.config.description;
+        pkg.mainPkg.config.description = description !== undefined ? description : pkg.mainPkg.config.description;
 
         pxt.debug('saving project name to ' + name);
         let f = pkg.mainEditorPkg().lookupFile("this/" + pxt.CONFIG_NAME);
         let config = JSON.parse(f.content) as pxt.PackageConfig;
         config.name = name;
-        config.description = description || config.description;
+        config.description = description !== undefined ? description : config.description;
         return f.setContentAsync(pxt.Package.stringifyConfig(config))
             .then(() => {
                 if (this.state.header)
