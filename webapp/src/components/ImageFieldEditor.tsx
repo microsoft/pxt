@@ -80,7 +80,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
 
         let showHeader = headerVisible;
         // If there is no asset, show the gallery to prevent changing shape when it's added
-        let showGallery = !this.props.isMusicEditor && (!this.asset || !editingTile);
+        let showGallery = !this.props.isMusicEditor && (!this.asset || editingTile);
         const showMyAssets = !hideMyAssets && !editingTile;
 
         if (this.asset && !this.galleryAssets && showGallery) {
