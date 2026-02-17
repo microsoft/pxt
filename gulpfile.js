@@ -544,7 +544,7 @@ const buildSVGIcons = () => {
 }
 
 const copyBlocklyMedia = () =>
-    gulp.src("node_modules/blockly/media/*")
+    gulp.src("node_modules/blockly/media/*", { encoding: false })
     .pipe(gulp.dest("webapp/public/blockly/media"))
 
 
