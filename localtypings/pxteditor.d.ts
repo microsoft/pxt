@@ -820,6 +820,7 @@ declare namespace pxt.editor {
         simSerialActive?: boolean;
         deviceSerialActive?: boolean;
         errorListState?: ErrorListState;
+        errorListCollapsedByUser?: boolean;
         screenshoting?: boolean;
         extensionsVisible?: boolean;
         isMultiplayerGame?: boolean; // Arcade: Does the current project contain multiplayer blocks?
