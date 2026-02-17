@@ -664,6 +664,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     {showErrorList && (
                         <ErrorList
                             onSizeChange={this.setErrorListState}
+                            collapsedByUser={this.parent.state.errorListCollapsedByUser}
+                            onUserCollapse={this.setErrorListCollapsePreference}
                             errors={this.errors}
                             startDebugger={this.startDebugger}
                             getErrorHelp={this.getErrorHelp}
@@ -957,6 +959,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 errorListState: newState
             });
         }
+    }
+
+    protected setErrorListCollapsePreference = (collapsed: boolean) => {
+        this.parent.setState({
+            errorListCollapsedByUser: collapsed
+        });
     }
 
     prepare() {
