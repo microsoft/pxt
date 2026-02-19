@@ -187,25 +187,16 @@ namespace pxsim.AudioContextManager {
     export async function playInstructionsAsync(instructions: Uint8Array, isCancelled?: () => boolean, onPull?: SoundPreviewCallback) {
         soundEventCallback?.("playinstructions", instructions);
 
-        await AudioWorkletSource.initializeWorklet(context());
+        const channel = new PlayInstructionsSource(context(), destination);
 
-        let channel: AudioWorkletSource;
         let finished = false;
 
         if (onPull) {
-            channel = new AudioWorkletSource(context(), destination);
-
-            initOscilloscope(onPull, channel.analyser, () => finished || isCancelled?.());
-        }
-        else {
-            channel = AudioWorkletSource.getAvailableSource();
-
-            if (!channel) {
-                channel = new AudioWorkletSource(context(), destination);
-            }
+            initOscilloscope(onPull, channel.analyser, () => finished || isCancelled?.() || channel.isDisposed());
         }
 
         await channel.playInstructionsAsync(instructions, isCancelled);
+        channel.dispose();
 
         finished = true;
     }
