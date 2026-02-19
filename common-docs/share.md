@@ -60,7 +60,11 @@ By default, all shared projects in MakeCode can be copied and edited. There is n
 
 Certain editors (such as [MakeCode Arcade](https://arcade.makecode.com)) can include resource files inside of projects. The resources, or _assets_, might contain byte respresentations of images, animations, sounds, tilemaps, etc. An **Asset Pack** is a resource only project where just the assets are shared and no code is loaded from the shared project.
 
-If this feature is supportd by your editor, you can set a project as an asset pack by going to the **Settings** (⚙️) menu and selecting 'Project Settings'. Enable the 'Import as asset pack' setting. Read about [asset packs](https://makecode.com/extensions/asset-packs) to learn more.
+If this feature is supported by your editor, you can set a project as an asset pack by going to the **Settings** (⚙️) menu and selecting 'Project Settings'. Enable the 'Import as asset pack' setting. Watch this video to see how it's done:
+
+https://youtu.be/CjLYl5KJiSk
+
+See the [Asset Packs](https://makecode.com/extensions/asset-packs) page to learn more.
 
 ## Report Abuse
 
