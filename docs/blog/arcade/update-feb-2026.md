@@ -108,7 +108,7 @@ The [unfollow](https://arcade.makecode.com/reference/sprites/sprite/unfollow) bl
 
 ### Math Constants
 
-The Math Constants block contains some helpful values like **Pi (π)**, **_e_**, and some square root and logarithmic values.
+The Math Constants block contains some helpful values like **Pi (π)**, **e**, and some square root and logarithmic values.
 
 ![Math constants](/static/blog/arcade/update-feb-2026/math-constants.png)
 
