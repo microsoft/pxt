@@ -1,6 +1,6 @@
 # Asset packs
 
-Certain editors (such as [MakeCode Arcade](https://arcade.makecode.com)) can include resource files inside of projects. The resoures, or _assets_, might contain byte respresentations of images, animations, sounds, tilemaps, etc.
+Certain editors (such as [MakeCode Arcade](https://arcade.makecode.com)) can include resource files inside of projects. The resources, or _assets_, might contain byte respresentations of images, animations, sounds, tilemaps, etc.
 
 An extension containing assets may use them to support the code provided in the extension (custom buttons, animations, etc.). However, you can mark an extension to import only its assets and not include any of the code exported in the extension. This is useful as a way to package reusable assets and publish them for others to use in their projects.
 
