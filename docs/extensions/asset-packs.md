@@ -39,6 +39,6 @@ When committing project changes to GitHub, if assets are present, an **Import as
 
 Turning on this option will cause the editor to only load the assets in the extension and ignore any code.
 
-If a project already has the import option, `pxt.json` will have contain the setting `"assetPack": true` and the settings in the commit operation window will show the **Import as asset pack** option as set.
+If a project already has the import option, `pxt.json` will contain the setting `"assetPack": true` and the settings in the commit operation window will show the **Import as asset pack** option as set.
 
 ![Import assets set](/static/extensions/asset-pack-set.png)
