@@ -22,9 +22,11 @@ export function monkeyPatchBlockSvg() {
     }
 
     // This is duplicated exactly from Blockly.BlockSvg.prototype.dispose,
-    // except the radius of the connection search is increased to make
-    // it more likely to focus a nearby block instead of the workspace
-    // when a block is deleted. See https://github.com/RaspberryPiFoundation/blockly/issues/9585
+    // except the part that searches for the closest top level block
+    // after the connection check, which was added to prevent the workspace
+    // from scrolling to whatever is in the top-left whenever a block with
+    // no parent is disposed.
+    // See https://github.com/RaspberryPiFoundation/blockly/issues/9585
     Blockly.BlockSvg.prototype.dispose = function (this: Blockly.BlockSvg, healStack: boolean, animate: boolean) {
         this.disposing = true;
 
@@ -41,22 +43,42 @@ export function monkeyPatchBlockSvg() {
         ) {
             let parent: Blockly.BlockSvg | undefined | null = this.getParent();
             if (!parent) {
+                // In some cases, blocks are disconnected from their parents before
+                // being deleted. Attempt to infer if there was a parent by checking
+                // for a connection within a radius of 0. Even if this wasn't a parent,
+                // it must be adjacent to this block and so is as good an option as any
+                // to focus after deleting.
                 const connection = this.outputConnection ?? this.previousConnection;
                 if (connection) {
-                    // By default, Blockly searches for nearby connections within a radius of 0
-                    // to only get blocks that are touching. As a result, it usually returns nothing
-                    // and focuses the root of the workspace. Instead, we use the workspace dimensions
-                    // to try and find a block that's on screen
-                    const workspace = this.workspace;
-                    const viewMetrics = workspace?.getMetrics();
-                    const radius = viewMetrics ? Math.max(viewMetrics.viewWidth, viewMetrics.viewHeight) / 2: 0;
-
                     const targetConnection = connection.closest(
-                        radius,
+                        0,
                         new Blockly.utils.Coordinate(0, 0),
                     ).connection;
                     parent = targetConnection?.getSourceBlock();
                 }
+
+                // If we didn't find a good match, search for the closest top-level block
+                const workspace = this.workspace;
+                if (workspace && !workspace.isFlyout) {
+                    const topLevelBlocks = workspace.getTopBlocks(false);
+                    let bestCandidate: Blockly.BlockSvg = undefined;
+                    let bestDistance = 0;
+
+                    for (const block of topLevelBlocks) {
+                        if (block === this) continue;
+                        const distance = Blockly.utils.Coordinate.distance(
+                            this.getRelativeToSurfaceXY(),
+                            block.getRelativeToSurfaceXY()
+                        );
+
+                        if (bestCandidate === undefined || distance < bestDistance) {
+                            bestCandidate = block;
+                            bestDistance = distance;
+                        }
+                    }
+                    parent = bestCandidate;
+                }
+
             }
             if (parent) {
                 focusManager.focusNode(parent);
