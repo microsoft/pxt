@@ -2302,11 +2302,11 @@ namespace pxt {
     }
 
     export function patchTemporaryAsset(oldValue: pxt.Asset, newValue: pxt.Asset, project: TilemapProject) {
-        if (!oldValue || assetEquals(oldValue, newValue)) return newValue;
+        if (!oldValue || assetEquals(oldValue, newValue) || newValue.id !== oldValue.id) return newValue;
 
         newValue = cloneAsset(newValue, true);
         const wasTemporary = oldValue.internalID === -1;
-        const isTemporary = newValue.internalID === -1;
+        const isTemporary = newValue.internalID === -1 && newValue.meta.displayName === undefined;
 
         // if we went from being temporary to no longer being temporary,
         // make sure we replace the junk id with a new value
