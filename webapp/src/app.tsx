@@ -2708,7 +2708,7 @@ export class ProjectView
 
     initDragAndDrop() {
         draganddrop.addDragAndDropHandler({
-            filter: file => file.size < 1000000,
+            filter: () => true,
             dragged: files => {
                 if (files) {
                     pxt.tickEvent("dragandrop.open")
