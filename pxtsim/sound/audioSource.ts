@@ -22,6 +22,11 @@ namespace pxsim.AudioContextManager {
             if (this.isDisposed()) return;
             this.vca.disconnect();
             this.vca = undefined;
+
+            const index = AudioSource.activeSources.indexOf(this);
+            if (index !== -1) {
+                AudioSource.activeSources.splice(index, 1);
+            }
         }
 
         isDisposed() {
