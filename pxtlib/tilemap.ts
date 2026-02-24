@@ -1589,7 +1589,28 @@ namespace pxt {
                 }
                 if (entry.tilemapTile) {
                     tags.push("tile");
-                    tags.push("category-" + namespaceName)
+
+                    let category: string = undefined;
+                    if (entry.displayName && entry.displayName.indexOf("--") !== -1) {
+                        const rawCategory = entry.displayName.split("--")[1].trim();
+                        const categoryParts = rawCategory.split(/[\s\-]+/g).map((part, index) => {
+                            if (index === 0) {
+                                return part
+                            }
+                            else {
+                                return part.charAt(0).toUpperCase() + part.slice(1);
+                            }
+                        });
+                        category = categoryParts.join("");
+                    }
+
+                    if (!category && !/^transparency(?:4|8|16|32)$/.test(varName)) {
+                        category = namespaceName
+                    }
+
+                    if (category) {
+                        tags.push("category-" + category);
+                    }
                 }
             }
 
