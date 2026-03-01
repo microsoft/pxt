@@ -2,6 +2,7 @@ import * as React from "react";
 import * as data from "./data";
 import * as simulator from "./simulator";
 import { DebuggerTable, DebuggerTableRow } from "./debuggerTable";
+import { EnergyMeter } from "./energyMeter";
 
 const MAX_VARIABLE_LENGTH = 20;
 
@@ -35,6 +36,7 @@ interface DebuggerVariablesProps {
 }
 
 interface DebuggerVariablesState {
+    energyFrame: ScopeVariables;
     globalFrame: ScopeVariables;
     stackFrames: ScopeVariables[];
     nextID: number;
@@ -49,6 +51,10 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
     constructor(props: DebuggerVariablesProps) {
         super(props);
         this.state = {
+            energyFrame: {
+                title: lf("Energy"),
+                variables: []
+            },
             globalFrame: {
                 title: lf("Globals"),
                 variables: []
@@ -62,6 +68,10 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
 
     clear() {
         this.setState({
+            energyFrame: {
+                title: this.state.energyFrame.title,
+                variables: []
+            },
             globalFrame: {
                 title: this.state.globalFrame.title,
                 variables: []
@@ -87,10 +97,11 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
     }
 
     renderCore() {
-        const { globalFrame, stackFrames, frozen, preview } = this.state;
+        const { energyFrame, globalFrame, stackFrames, frozen, preview } = this.state;
         const { activeFrame, breakpoint } = this.props;
+        const energyTableHeader = lf("Energy");
         const variableTableHeader = lf("Variables");
-        let variables = globalFrame.variables;
+        let variables = globalFrame.variables
 
         // Add in the local variables.
         // TODO: Handle callstack
@@ -99,15 +110,22 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
         }
 
         let placeholderText: string;
+        let energyPlaceholderText: string;
 
         if (frozen) {
             placeholderText = lf("Code is running...");
+            energyPlaceholderText = lf("Code is running...");
         }
         else if (!variables.length && !breakpoint?.exceptionMessage) {
             placeholderText = lf("No variables to show");
         }
+        if (!frozen && !energyFrame.variables.length && !breakpoint?.exceptionMessage) {
+            energyPlaceholderText = lf("No energy variables to show");
+        }
+
 
         const tableRows = placeholderText ? [] : this.renderVars(variables);
+        const energyTableRows = energyPlaceholderText ? [] : this.renderVars(energyFrame.variables)
 
         if (breakpoint?.exceptionMessage && !frozen) {
             tableRows.unshift(<DebuggerTableRow
@@ -123,6 +141,10 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
         const previewLabel = previewVar && lf("Current value for '{0}'", previewVar.name);
 
         return <div>
+            <EnergyMeter readings={[95, 60, 20]} maxReading={100} />
+            <DebuggerTable header={energyTableHeader} placeholderText={energyPlaceholderText}>
+                {energyTableRows}
+            </DebuggerTable>
             <DebuggerTable header={variableTableHeader} placeholderText={placeholderText}>
                 {tableRows}
             </DebuggerTable>
@@ -176,8 +198,8 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
         breakpoint: pxsim.DebuggerBreakpointMessage,
         filters?: string[]
     ) {
-        const { globals, environmentGlobals, stackframes } = breakpoint;
-        if (!globals && !environmentGlobals) {
+        const { energyVars, globals, environmentGlobals, stackframes } = breakpoint;
+        if (!energyVars && !globals && !environmentGlobals) {
             // freeze the ui
             this.update(true)
             return;
@@ -194,6 +216,8 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
             updatedGlobals.variables = updatedGlobals.variables.concat(variablesToVariableList(environmentGlobals));
 
         assignVarIds(updatedGlobals.variables);
+        const updatedEnergyVars = updateScope(this.state.energyFrame, energyVars);
+        assignVarIds(updatedEnergyVars.variables);
 
         let updatedFrames: ScopeVariables[];
         if (stackframes) {
@@ -213,6 +237,7 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
         }
 
         this.setState({
+            energyFrame: updatedEnergyVars,
             globalFrame: updatedGlobals,
             stackFrames: updatedFrames || [],
             nextID: nextId,
