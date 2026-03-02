@@ -236,7 +236,7 @@ export class FieldAnimationEditor extends FieldAssetEditor<FieldAnimationOptions
     onDispose() {
         super.onDispose();
 
-        const root = (this.sourceBlock_ as Blockly.BlockSvg)?.getSvgRoot();
+        const root = (this.sourceBlock_ as Blockly.BlockSvg)?.getSvgRoot?.();
         if (root) {
             root.removeEventListener("mouseenter", this.onMouseEnter);
             root.removeEventListener("mouseleave", this.cancelAnimation);
