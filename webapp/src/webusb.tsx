@@ -180,13 +180,15 @@ function showPickWebUSBDeviceDialogAsync(confirmAsync: ConfirmAsync, showDownloa
                 <div className="ui">
                     <div className="content">
                         <div className="description">
-                            {lf("Press the Pair button below.")}
-                            <br />
-                            <br />
-                            {lf("A window will appear in the top of your browser.")}
-                            <br />
-                            <br />
-                            {lf("Select the {0} device and click Connect.", boardName)}
+                            <p>
+                                {lf("Press the Pair button below.")}
+                            </p>
+                            <p>
+                                {lf("A window will appear in the top of your browser.")}
+                            </p>
+                            <p>
+                                {lf("Select the {0} device and click Connect.", boardName)}
+                            </p>
                         </div>
                     </div>
                 </div>
