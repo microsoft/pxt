@@ -1641,10 +1641,9 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
             >
                 <div>
-                    <p>{prompt}</p>
                     <div className="ui form">
                         <sui.Input ref="filenameinput" id={"projectNameInput"}
-                            ariaLabel={prompt} autoComplete={false}
+                            label={prompt} labelWrapper="p" autoComplete={false}
                             value={projectName || ''} onChange={this.handleChange} onEnter={this.save}
                             selectOnMount={!mobile} autoFocus={!mobile} />
                     </div>
@@ -1779,10 +1778,9 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
             closeOnDimmerClick closeOnDocumentClick closeOnEscape
         >
             <div>
-                <p>{prompt}</p>
                 <div className="ui form">
                     <sui.Input ref="filenameinput" id={"projectNameInput"}
-                        ariaLabel={prompt} autoComplete={false}
+                        label={prompt} labelWrapper="p" autoComplete={false}
                         value={name || ''} onChange={this.handleTextChange} onEnter={this.save}
                         selectOnMount={!mobile} autoFocus={!mobile} />
                 </div>

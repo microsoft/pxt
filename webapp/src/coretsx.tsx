@@ -181,7 +181,8 @@ export class CoreDialog extends React.Component<core.PromptOptions, CoreDialogSt
                     <>
                         <p>Type '{options.confirmationText}' to confirm:</p>
                         <sui.Input ref="confirmationInput" id="confirmationInput"
-                            ariaLabel={lf("Type your name to confirm")} autoComplete={false}
+                            label={lf("Type your name to confirm")} visuallyHiddenLabel
+                            autoComplete={false}
                             value={this.state.confirmationText || ''} onChange={this.handleConfirmationTextChange}
                             selectOnMount={!mobile} autoFocus={!mobile} />
                     </>
