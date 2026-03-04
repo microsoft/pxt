@@ -65,6 +65,7 @@ namespace pxsim.AudioContextManager {
             super.dispose();
             this.oscillator.stop();
             this.oscillator.disconnect();
+            this.oscillator = undefined;
             AudioToneSource.instance = undefined;
         }
     }

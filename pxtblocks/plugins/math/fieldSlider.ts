@@ -167,6 +167,11 @@ export class FieldSlider extends Blockly.FieldNumber {
                 Blockly.hideChaff();
                 break;
             }
+            case "ArrowDown": {
+                e.preventDefault();
+                e.stopPropagation();
+                break;
+            }
         }
     }
 
@@ -180,6 +185,10 @@ export class FieldSlider extends Blockly.FieldNumber {
         // focus on the text field, and we don't want to display the modal
         // editor on mobile devices.
         super.showEditor_(_e, true);
+
+        if (typeof this.min_ === "number" && typeof this.max_ === "number") {
+            this.htmlInput_.ariaLabel = lf("Enter a value between {0} and {1}", this.min_, this.max_);
+        }
 
         Blockly.DropDownDiv.hideWithoutAnimation();
         Blockly.DropDownDiv.clearContent();

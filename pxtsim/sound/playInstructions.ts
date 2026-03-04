@@ -284,6 +284,8 @@ namespace pxsim.AudioContextManager {
             super.dispose();
             this.analyser.disconnect();
             this.gain.disconnect();
+            this.analyser = undefined;
+            this.gain = undefined;
         }
     }
 

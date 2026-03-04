@@ -33,6 +33,8 @@ namespace pxsim.AudioContextManager {
             this.distortion.disconnect();
             this.audioElement.pause();
             this.audioElement = undefined;
+            this.source = undefined;
+            this.distortion = undefined;
         }
     }
 
