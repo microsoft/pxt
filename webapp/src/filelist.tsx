@@ -133,9 +133,10 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
     private filesOf(pkg: pkg.EditorPackage): JSX.Element[] {
         const topPkg = pkg.isTopLevel();
         const langRestrictions = pkg.getLanguageRestrictions();
-        let files = pkg.sortedFiles();
+        const blocksExplorerMode = this.isBlocksExplorerMode();
+        let files = this.visibleFiles(pkg, blocksExplorerMode);
 
-        if (topPkg) {
+        if (topPkg && !blocksExplorerMode) {
             files = files.filter(f => {
                 switch (langRestrictions) {
                     case pxt.editor.LanguageRestriction.JavaScriptOnly:
@@ -162,12 +163,23 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             .reduce((l, r) => l.concat(r), [])
     }
 
+    private visibleFiles(pkg: pkg.EditorPackage, blocksExplorerMode: boolean): pkg.File[] {
+        let files = pkg.sortedFiles();
+
+        if (blocksExplorerMode) {
+            files = files.filter(f => /\.blocks$/i.test(f.name));
+        }
+
+        return files;
+    }
+
     private folderFilesOf(pkg: pkg.EditorPackage, folder: string, files: pkg.File[]): JSX.Element[] {
         const { currentFile } = this.state;
         const header = this.props.parent.state.header;
         const topPkg = pkg.isTopLevel();
         const shellReadonly = pxt.shell.isReadOnly();
         const deleteFiles = topPkg && !shellReadonly;
+        const blocksExplorerMode = this.isBlocksExplorerMode();
 
         return files.map(file => {
             const meta: pkg.FileMeta = this.getData("open-meta:" + file.getName())
@@ -194,6 +206,11 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                 && pxt.Util.userLanguage() !== (pxt.appTarget.appTheme.defaultLocale || "en")
                 && !files.some(f => f.name == localized);
             const hasDelete = deleteFiles
+                && !(
+                    blocksExplorerMode
+                    && topPkg
+                    && file.name === pxt.MAIN_BLOCKS
+                )
                 && (
                     file.name != pxt.CONFIG_NAME
                     && (usesGitHub || file.name != pxt.MAIN_TS)
@@ -225,7 +242,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
         })
     }
 
-    private packageOf(p: pkg.EditorPackage) {
+    private packageOf(p: pkg.EditorPackage, showDropdown = true) {
         const expandedPkg = this.state.expandedPkg;
         const pkgid = p.getPkgId();
         const del = !pxt.shell.isReadOnly()
@@ -240,7 +257,17 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
         const meta: pkg.PackageMeta = this.getData("open-pkg-meta:" + p.getPkgId());
         let version = gh ? p.getKsPkg().verArgument().split('#')[1] : undefined; // extract github tag
         if (version && version.length > 20) version = version.substring(0, 7);
-        return [<PackgeTreeItem key={"hd-" + pkgid}
+        if (!showDropdown) {
+            return [<PackageTreeItem key={"hd-" + pkgid}
+                pkg={p} isActive={false} onItemClick={() => { }}
+                hasDelete={del} onItemRemove={this.removePkg}
+                version={version} hasRefresh={upd} onItemRefresh={this.updatePkg} showDropdown={false}>
+                {!meta.numErrors ? null : <span className='ui label red'>{meta.numErrors}</span>}
+                {pkgid}
+            </PackageTreeItem>]
+        }
+
+        return [<PackageTreeItem key={"hd-" + pkgid}
             pkg={p} isActive={expandedPkg == pkgid} onItemClick={this.togglePkg}
             hasDelete={del} onItemRemove={this.removePkg}
             version={version} hasRefresh={upd} onItemRefresh={this.updatePkg} >
@@ -250,7 +277,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                 <div role="group" className="menu">
                     {this.filesOf(p)}
                 </div> : undefined}
-        </PackgeTreeItem>]
+        </PackageTreeItem>]
     }
 
     private packageContainsFile(pkg: pkg.EditorPackage, f: IFile) {
@@ -261,16 +288,25 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
         this.setState({ expandedPkg: this.state.expandedPkg == p.getPkgId() ? undefined : p.getPkgId() });
     }
 
-    private filesWithHeader(p: pkg.EditorPackage) {
-        return p.isTopLevel() ? this.filesOf(p) : this.packageOf(p);
+    private filesWithHeader(p: pkg.EditorPackage, blocksExplorerMode: boolean) {
+        if (p.isTopLevel()) return this.filesOf(p);
+
+        const hasVisibleFiles = this.visibleFiles(p, blocksExplorerMode).length > 0;
+        return this.packageOf(p, /*showDropdown*/ hasVisibleFiles);
     }
 
     private toggleVisibility() {
         this.props.parent.setState({ showFiles: !this.props.parent.state.showFiles });
     }
 
+    private isBlocksExplorerMode() {
+        if (!pxt.appTarget?.appTheme?.blocksFileExplorer) return false;
+        return !!(this.props.parent.isBlocksActive());
+    }
+
     private handleCustomBlocksClick(e: React.MouseEvent<any>) {
-        this.addCustomBlocksFile();
+        if (this.isBlocksExplorerMode()) this.addBlocksProjectFile();
+        else this.addCustomBlocksFile();
         e.stopPropagation();
     }
 
@@ -376,6 +412,47 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
         });
     }
 
+    // Duped from above for now just for clarity sake with experiment but probably combine 
+    private addBlocksProjectFile() {
+        const mainPkg = pkg.mainEditorPkg();
+        const validRx = /^[\w][\/\w\-\.]*$/;
+        const defaultName = "custom.blocks";
+
+        core.promptAsync({
+            header: lf("Add new blocks file?"),
+            hasCloseIcon: true,
+            body: lf("Please provide a name for your new blocks file."),
+            initialValue: defaultName,
+            onInputValidation: v => {
+                if (!v) return lf("filename is empty.");
+                const trimmed = v.trim();
+                if (!validRx.test(trimmed.replace(/\.blocks$/i, ""))) {
+                    return lf("Don't use spaces or special characters.");
+                }
+                return undefined;
+            }
+        }).then(str => {
+            if (!str) return Promise.resolve();
+
+            let name = str.trim();
+            if (!/\.blocks$/i.test(name)) name = `${name}.blocks`;
+
+            if (!validRx.test(name.replace(/\.blocks$/i, ""))) {
+                core.warningNotification(lf("Invalid file name"));
+                return Promise.resolve();
+            }
+
+            if (mainPkg.sortedFiles().some(f => f.name === name)) {
+                core.warningNotification(lf("File already exists"));
+                return Promise.resolve();
+            }
+
+            const emptyBlocks = `<xml xmlns="http://www.w3.org/1999/xhtml"></xml>`;
+
+            return this.props.parent.updateFileAsync(name, emptyBlocks, true);
+        });
+    }
+
     private addCustomBlocksFile() {
         if (this.props.parent.state.header.githubId || pxt.appTarget.appTheme.addNewTypeScriptFile) {
             this.addProjectFile()
@@ -394,16 +471,30 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
         const showFiles = !!this.props.parent.state.showFiles;
         const targetTheme = pxt.appTarget.appTheme;
         const mainPkg = pkg.mainEditorPkg()
-        const plus = showFiles && !pxt.shell.isReadOnly() && (!mainPkg.files[customFile] || pxt.appTarget.appTheme.addNewTypeScriptFile);
+        const blocksExplorerMode = this.isBlocksExplorerMode();
+        const plus = showFiles && !pxt.shell.isReadOnly() && (blocksExplorerMode || (!mainPkg.files[customFile] || pxt.appTarget.appTheme.addNewTypeScriptFile));
+        const pkgs = blocksExplorerMode
+            ? pkg.allEditorPkgs().filter(p => {
+                if (p.isTopLevel()) return true;
+                const pkgid = p.getPkgId();
+                const hasBlocks = p.sortedFiles().some(f => /\.blocks$/i.test(f.name));
+                const removable = pkgid != "built"
+                    && pkgid != "assets"
+                    && pkgid != pxt.appTarget.corepkg
+                    && p.getKsPkg().config && !p.getKsPkg().config.core
+                    && p.getKsPkg().level <= 1;
+                return hasBlocks || removable;
+            })
+            : pkg.allEditorPkgs();
         const meta: pkg.PackageMeta = this.getData("open-pkg-meta:" + mainPkg.getPkgId());
         return <div role="tree" className={`ui tiny vertical ${targetTheme.invertedMenu ? `inverted` : ''} menu filemenu landscape only hidefullscreen`}>
             <div role="treeitem" aria-selected={showFiles} aria-expanded={showFiles} aria-label={lf("File explorer toolbar")} key="projectheader" className="link item" onClick={this.toggleVisibility} tabIndex={0} onKeyDown={fireClickOnEnter}>
                 {lf("Explorer")}
                 <sui.Icon icon={`chevron ${showFiles ? "up" : "down"} icon`} />
-                {plus ? <sui.Button className="neutral label" icon="plus" title={lf("Add custom blocks?")} onClick={this.handleCustomBlocksClick} onKeyDown={this.handleButtonKeydown} /> : undefined}
+                {plus ? <sui.Button className="neutral label" icon="plus" title={blocksExplorerMode ? lf("Add blocks file") : lf("Add custom blocks?")} onClick={this.handleCustomBlocksClick} onKeyDown={this.handleButtonKeydown} /> : undefined}
                 {!meta.numErrors ? null : <span className='ui label red'>{meta.numErrors}</span>}
             </div>
-            {showFiles ? pxt.Util.concat(pkg.allEditorPkgs().map(p => this.filesWithHeader(p))) : undefined}
+            {showFiles ? pxt.Util.concat(pkgs.map(p => this.filesWithHeader(p, blocksExplorerMode))) : undefined}
         </div>;
     }
 }
@@ -548,9 +639,10 @@ interface PackageTreeItemProps {
     hasRefresh?: boolean;
     version?: string;
     hasDelete?: boolean;
+    showDropdown?: boolean;
 }
 
-class PackgeTreeItem extends sui.StatelessUIElement<PackageTreeItemProps> {
+class PackageTreeItem extends sui.StatelessUIElement<PackageTreeItemProps> {
     constructor(props: PackageTreeItemProps) {
         super(props);
 
@@ -580,13 +672,13 @@ class PackgeTreeItem extends sui.StatelessUIElement<PackageTreeItemProps> {
 
     renderCore() {
         const { onItemClick, onItemRemove, onItemRefresh, version, // keep these to avoid warnings with ...rest
-            isActive, hasRefresh, hasDelete, pkg: p, ...rest } = this.props;
+            isActive, hasRefresh, hasDelete, showDropdown = true, pkg: p, ...rest } = this.props;
 
         return <div className="header link item" role="treeitem"
-            aria-selected={isActive} aria-expanded={isActive}
-            aria-label={lf("{0}, {1}", p.getPkgId(), isActive ? lf("expanded") : lf("collapsed"))}
-            onClick={this.handleClick} tabIndex={0} onKeyDown={fireClickOnEnter} {...rest}>
-            <sui.Icon icon={`chevron ${isActive ? "up" : "down"} icon`} />
+            aria-selected={isActive} aria-expanded={showDropdown ? isActive : undefined}
+            aria-label={lf("{0}, {1}", p.getPkgId(), showDropdown ? (isActive ? lf("expanded") : lf("collapsed")) : lf("no files available"))}
+            onClick={showDropdown ? this.handleClick : undefined} tabIndex={0} onKeyDown={showDropdown ? fireClickOnEnter : undefined} {...rest}>
+            {showDropdown ? <sui.Icon icon={`chevron ${isActive ? "up" : "down"} icon`} /> : undefined}
             {hasRefresh ? <sui.Button className="neutral label" icon="refresh" title={lf("Refresh extension {0}", p.getPkgId())}
                 onClick={this.handleRefresh} onKeyDown={this.handleButtonKeydown} text={version || ''}></sui.Button>
                 : version ? <span className="label" style={{background: 'transparent'}}>{version}</span> : undefined}
