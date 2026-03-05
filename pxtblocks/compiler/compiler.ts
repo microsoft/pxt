@@ -12,6 +12,7 @@ import { FieldTilemap, FieldTextInput } from "../fields";
 import { CommonFunctionBlock } from "../plugins/functions/commonFunctionMixin";
 import { getContainingFunction } from "../plugins/duplicateOnDrag";
 import { FUNCTION_DEFINITION_BLOCK_TYPE } from "../plugins/functions/constants";
+import { BlocksProgram } from "../blocksProgram";
 
 
 interface Rect {
@@ -32,18 +33,24 @@ export const PXT_WARNING_ID = "WARNING_MESSAGE"
 
 export function compileBlockAsync(b: Blockly.Block, blockInfo: pxtc.BlocksInfo): Promise<BlockCompilationResult> {
     const w = b.workspace;
-    const e = mkEnv(w, blockInfo);
-    infer(w && w.getAllBlocks(false), e, w);
+    const e = mkEnv([w], blockInfo);
+    infer(w && w.getAllBlocks(false), e);
     const compiled = compileStatementBlock(e, b)
     e.placeholders = {};
     return tdASTtoTS(e, compiled);
 }
 
 export function compileAsync(b: Blockly.Workspace, blockInfo: pxtc.BlocksInfo, opts: BlockCompileOptions = {}): Promise<BlockCompilationResult> {
-    const e = mkEnv(b, blockInfo, opts);
+    const e = mkEnv([b], blockInfo, opts);
     const [nodes, diags] = compileWorkspace(e, b, blockInfo);
     const result = tdASTtoTS(e, nodes, diags);
     return result;
+}
+
+export function compileProgramAsync(program: BlocksProgram, blockInfo: pxtc.BlocksInfo, opts: BlockCompileOptions = {}): Promise<BlockCompilationResult> {
+    const e = mkEnv(program.getAllWorkspaces(), blockInfo, opts);
+    const [nodes, diags] = compileBlocksProgram(e, program, blockInfo);
+    return tdASTtoTS(e, nodes, diags);
 }
 
 function eventWeight(b: Blockly.Block, e: Environment) {
@@ -57,6 +64,158 @@ function eventWeight(b: Blockly.Block, e: Environment) {
         return hash;
     else
         return -hash;
+}
+
+function compileBlocksProgram(e: Environment, program: BlocksProgram, blockInfo: pxtc.BlocksInfo): [pxt.blocks.JsNode[], BlockDiagnostic[]] {
+    try {
+        // all compiled top level blocks are events
+        program.refreshSymbols();
+
+        let allBlocks: Blockly.Block[] = [];
+        let topblocks: Blockly.Block[] = [];
+        let topComments: Blockly.comments.WorkspaceComment[] = [];
+
+        for (const workspace of program.getAllWorkspaces()) {
+            allBlocks.push(...workspace.getAllBlocks(false));
+            topblocks.push(...workspace.getTopBlocks(true));
+            topComments.push(...workspace.getTopComments(true));
+        }
+
+        if (pxt.react.getTilemapProject) {
+            pxt.react.getTilemapProject().removeInactiveBlockAssets(allBlocks.map(b => b.id));
+        }
+
+        // reorder remaining events by names (top blocks still contains disabled blocks)
+        topblocks = topblocks.sort((a, b) => {
+            return eventWeight(a, e) - eventWeight(b, e)
+        });
+        // update disable blocks
+        updateDisabledBlocks(e, allBlocks, topblocks);
+        // drop disabled blocks
+        allBlocks = allBlocks.filter(b => b.isEnabled());
+        topblocks = topblocks.filter(b => b.isEnabled());
+        trackAllVariables(topblocks, e);
+        infer(allBlocks, e);
+
+        const stmtsMain: pxt.blocks.JsNode[] = [];
+
+        // compile workspace comments, add them to the top
+        const commentMap = groupWorkspaceComments(topblocks as Blockly.BlockSvg[],
+            topComments as Blockly.comments.RenderedWorkspaceComment[]);
+
+        commentMap.orphans.forEach(comment => append(stmtsMain, compileWorkspaceComment(comment).children));
+
+        topblocks.forEach(b => {
+            if (commentMap.idToComments[b.id]) {
+                commentMap.idToComments[b.id].forEach(comment => {
+                    append(stmtsMain, compileWorkspaceComment(comment).children);
+                });
+            }
+            if (b.type == ts.pxtc.ON_START_TYPE)
+                append(stmtsMain, compileStatementBlock(e, b));
+            else {
+                const compiled = pxt.blocks.mkBlock(compileStatementBlock(e, b));
+                if (compiled.type == pxt.blocks.NT.Block)
+                    append(stmtsMain, compiled.children);
+                else stmtsMain.push(compiled)
+            }
+        });
+
+        const stmtsEnums: pxt.blocks.JsNode[] = [];
+        e.enums.forEach(info => {
+            const symbols = program.getEnumInfo(info.name);
+
+            if (symbols && symbols.length) {
+                const members: [string, number][] = symbols.map(varName => {
+                    const match = /^(\d+)([^0-9].*)$/.exec(varName);
+                    if (match) {
+                        return [match[2], parseInt(match[1])] as [string, number];
+                    }
+                    else {
+                        // Someone has been messing with the XML...
+                        return [varName, -1] as [string, number];
+                    }
+                });
+
+                members.sort((a, b) => a[1] - b[1]);
+
+                const nodes: pxt.blocks.JsNode[] = [];
+                let lastValue = -1;
+                members.forEach(([name, value], index) => {
+                    let newNode: pxt.blocks.JsNode;
+                    if (info.isBitMask) {
+                        const shift = Math.log2(value);
+                        if (shift >= 0 && Math.floor(shift) === shift) {
+                            newNode = pxt.blocks.H.mkAssign(pxt.blocks.mkText(name), pxt.blocks.H.mkSimpleCall("<<", [pxt.blocks.H.mkNumberLiteral(1), pxt.blocks.H.mkNumberLiteral(shift)]));
+                        }
+                    } else if (info.isHash) {
+                        const hash = ts.pxtc.Util.codalHash16(name.toLowerCase());
+                        newNode = pxt.blocks.H.mkAssign(pxt.blocks.mkText(name), pxt.blocks.H.mkNumberLiteral(hash))
+                    }
+                    if (!newNode) {
+                        if (value === lastValue + 1) {
+                            newNode = pxt.blocks.mkText(name);
+                        }
+                        else {
+                            newNode = pxt.blocks.H.mkAssign(pxt.blocks.mkText(name), pxt.blocks.H.mkNumberLiteral(value));
+                        }
+                    }
+                    nodes.push(newNode);
+                    lastValue = value;
+                });
+                const declarations = pxt.blocks.mkCommaSep(nodes, true);
+                declarations.glueToBlock = pxt.blocks.GlueMode.NoSpace;
+                stmtsEnums.push(pxt.blocks.mkGroup([
+                    pxt.blocks.mkText(`enum ${info.name}`),
+                    pxt.blocks.mkBlock([declarations])
+                ]));
+            }
+        });
+
+        e.kinds.forEach(info => {
+            const varNames = program.getKindInfo(info.name);
+            if (varNames && varNames.length) {
+                const userDefined = varNames.filter(n => info.initialMembers.indexOf(n) === -1);
+
+                if (userDefined.length) {
+                    stmtsEnums.push(pxt.blocks.mkGroup([
+                        pxt.blocks.mkText(`namespace ${info.name}`),
+                        pxt.blocks.mkBlock(userDefined.map(varName => pxt.blocks.mkStmt(pxt.blocks.mkText(`export const ${varName} = ${info.name}.${info.createFunctionName}()`))))
+                    ]));
+                }
+            }
+        });
+
+        const leftoverVars = e.allVariables.filter(v => !v.alreadyDeclared).map(v => mkVariableDeclaration(v, blockInfo));
+
+        e.allVariables.filter(v => v.alreadyDeclared === BlockDeclarationType.Implicit && !v.isAssigned).forEach(v => {
+            const t = getConcreteType(v.type);
+
+            // The primitive types all get initializers set to default values, other types are set to null
+            if (t.type === "string" || t.type === "number" || t.type === "boolean" || isArrayType(t.type)) return;
+
+            e.diagnostics.push({
+                blockId: v.firstReference && v.firstReference.id,
+                message: lf("Variable '{0}' is never assigned", v.name)
+            });
+        });
+
+        return [stmtsEnums.concat(leftoverVars.concat(stmtsMain)), e.diagnostics];
+
+    } catch (err) {
+        let be: Blockly.Block = (err as any).block;
+        if (be) {
+            be.setWarningText(err + "", PXT_WARNING_ID);
+            e.errors.push(be);
+        }
+        else {
+            throw err;
+        }
+    } finally {
+        e.placeholders = {};
+    }
+
+    return [null, null] // unreachable
 }
 
 function compileWorkspace(e: Environment, w: Blockly.Workspace, blockInfo: pxtc.BlocksInfo): [pxt.blocks.JsNode[], BlockDiagnostic[]] {
@@ -80,7 +239,7 @@ function compileWorkspace(e: Environment, w: Blockly.Workspace, blockInfo: pxtc.
         allBlocks = allBlocks.filter(b => b.isEnabled());
         topblocks = topblocks.filter(b => b.isEnabled());
         trackAllVariables(topblocks, e);
-        infer(allBlocks, e, w);
+        infer(allBlocks, e);
 
         const stmtsMain: pxt.blocks.JsNode[] = [];
 

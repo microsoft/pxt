@@ -50,7 +50,7 @@ function alignBlocks(blockInfo: ts.pxtc.BlocksInfo, oldWs: Blockly.Workspace, ne
         if (!(oldPosition && oldPosition.x != 0 && oldPosition.y != 0)) continue;
 
         if (!env) {
-            env = mkEnv(oldWs, blockInfo);
+            env = mkEnv([oldWs], blockInfo);
             keyToBlocks = {};
             for (const newBlock of newTopBlocks) {
                 const newBlockKey = callKey(env, newBlock);

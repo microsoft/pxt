@@ -231,7 +231,7 @@ function editFunctionCallback(block: CommonFunctionBlock) {
         block.mutationToDom(),
         mutation => {
             if (mutation) {
-                mutateCallersAndDefinition(block.getName(), block.workspace, mutation);
+                mutateCallersAndDefinition(block.getName(), block.workspace, block.mutationToDom(), mutation);
                 block.updateDisplay_();
             }
 
@@ -242,4 +242,8 @@ function editFunctionCallback(block: CommonFunctionBlock) {
             });
         }
     )
+}
+
+export function isDefinitionBlock(block: Blockly.Block): block is FunctionDefinitionBlock {
+    return block.type === FUNCTION_DEFINITION_BLOCK_TYPE;
 }

@@ -5,8 +5,9 @@ import {
     FUNCTION_CALL_OUTPUT_BLOCK_TYPE,
     FUNCTION_DEFINITION_BLOCK_TYPE,
 } from "../constants";
-import { getArgMap, getDefinition, getShadowBlockInfoFromType_, isVariableBlockType, mutateCallersAndDefinition } from "../utils";
+import { getArgMap, getDefinition, getShadowBlockInfoFromType_, isVariableBlockType, mutateCallersAndDefinition, mutationsAreEqual } from "../utils";
 import { MsgKey } from "../msg";
+import { BlocksFunctionSymbol, generateFunctionMutationFromSymbol } from "../../../blocksProgram";
 
 export interface SerializedShadow {
     inputName: string;
@@ -161,34 +162,47 @@ const FUNCTION_CALL_MIXIN: FunctionCallMixin = {
                 if (JSON.stringify(thisArgs) !== JSON.stringify(defArgs)) {
                     // The function signature has changed since this block was copied,
                     // update it.
-                    mutateCallersAndDefinition(def.getName(), this.workspace, def.mutationToDom());
+                    mutateCallersAndDefinition(def.getName(), this.workspace, this.mutationToDom(), def.mutationToDom());
                 }
                 // Propagate the functionId of the definition to the caller
                 this.functionId_ = def.functionId_;
             } else {
-                // There is no function definition for this function, create an empty one
-                // that matches the signature of the caller.
-                Blockly.Events.setGroup(event.group);
-                const xml = Blockly.utils.xml.createElement("xml");
-                const block = Blockly.utils.xml.createElement("block");
-                block.setAttribute("type", FUNCTION_DEFINITION_BLOCK_TYPE);
-                const xy = this.getRelativeToSurfaceXY();
-                const x = xy.x + Blockly.config.snapRadius * (this.RTL ? -1 : 1);
-                const y = xy.y + Blockly.config.snapRadius * 2;
-                block.setAttribute("x", x + "");
-                block.setAttribute("y", y + "");
-                const mutation = this.mutationToDom();
-                block.appendChild(mutation);
-                xml.appendChild(block);
-                Blockly.Xml.domToWorkspace(xml, this.workspace);
-                Blockly.Events.setGroup(false);
+                const importedDef = this.workspace.getVariableMap().getVariableById(this.functionId_);
+
+                if (importedDef) {
+                    const mutation = generateFunctionMutationFromSymbol(JSON.parse(importedDef.getName()) as BlocksFunctionSymbol);
+
+                    if (!mutationsAreEqual(this.mutationToDom(), mutation)) {
+                        mutateCallersAndDefinition(this.getName(), this.workspace, this.mutationToDom(), mutation);
+                    }
+                }
+                else {
+                    // There is no function definition for this function, create an empty one
+                    // that matches the signature of the caller.
+                    Blockly.Events.setGroup(event.group);
+                    const xml = Blockly.utils.xml.createElement("xml");
+                    const block = Blockly.utils.xml.createElement("block");
+                    block.setAttribute("type", FUNCTION_DEFINITION_BLOCK_TYPE);
+                    const xy = this.getRelativeToSurfaceXY();
+                    const x = xy.x + Blockly.config.snapRadius * (this.RTL ? -1 : 1);
+                    const y = xy.y + Blockly.config.snapRadius * 2;
+                    block.setAttribute("x", x + "");
+                    block.setAttribute("y", y + "");
+                    const mutation = this.mutationToDom();
+                    block.appendChild(mutation);
+                    xml.appendChild(block);
+                    Blockly.Xml.domToWorkspace(xml, this.workspace);
+                    Blockly.Events.setGroup(false);
+                }
             }
-        } else if (event.type == Blockly.Events.BLOCK_DELETE) {
+        } else if (event.type == Blockly.Events.BLOCK_DELETE || event.type === Blockly.Events.VAR_DELETE) {
             // If the deleted block was the function definition for this caller, delete
             // this caller.
             const name = this.getName();
             const def = getDefinition(name, this.workspace);
-            if (!def) {
+            const importedDef = this.workspace.getVariableMap().getVariableById(this.functionId_);
+
+            if (!def && !importedDef) {
                 Blockly.Events.setGroup(event.group);
                 this.dispose(true);
                 Blockly.Events.setGroup(false);

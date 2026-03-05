@@ -3192,8 +3192,12 @@ export class ProjectView
                                 .then(resp => {
                                     pxt.debug(`example decompilation: ${resp.success}`)
                                     if (resp.success) {
-                                        this.overrideBlocksFile(resp.outfiles[pxt.MAIN_BLOCKS])
+                                        return pkg.mainEditorPkg().setContentAsync(pxt.MAIN_BLOCKS, resp.outfiles[pxt.MAIN_BLOCKS])
+                                            .then(() => {
+                                                this.overrideBlocksFile(pxt.MAIN_BLOCKS)
+                                            })
                                     }
+                                    return Promise.resolve();
                                 })
                                 .then(() => autoChooseBoard && this.autoChooseBoardAsync(features));
                         });

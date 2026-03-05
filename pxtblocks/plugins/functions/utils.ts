@@ -26,6 +26,7 @@ export function rename(this: Blockly.FieldTextInput, name: string) {
     // Strip leading and trailing whitespace. Beyond this, all names are legal.
     name = name.replace(/^[\s\xa0]+|[\s\xa0]+$/g, "");
     const sourceBlock = this.sourceBlock_ as CommonFunctionBlock;
+    const oldMutation = sourceBlock.mutationToDom();
 
     const legalName = findLegalName(name, sourceBlock.workspace, sourceBlock);
     const oldName = this.getValue();
@@ -46,7 +47,7 @@ export function rename(this: Blockly.FieldTextInput, name: string) {
         sourceBlock.name_ = legalName;
         const newMutation = sourceBlock.mutationToDom();
         sourceBlock.name_ = oldName;
-        mutateCallersAndDefinition(oldName, sourceBlock.workspace, newMutation);
+        mutateCallersAndDefinition(oldName, sourceBlock.workspace, oldMutation, newMutation);
     }
 
     return legalName;
@@ -180,14 +181,13 @@ function incrementNameSuffix(name: string) {
     return name;
 }
 
-export function mutateCallersAndDefinition(name: string, ws: Blockly.Workspace, mutation: Element) {
+export function mutateCallersAndDefinition(name: string, ws: Blockly.Workspace, oldMutation: Element, newMutation: Element) {
     const definitionBlock = getDefinition(name, ws);
-    if (definitionBlock) {
-        const oldMutation = definitionBlock.mutationToDom();
-        const oldArgNamesToIds = getArgMap(oldMutation, false);
-        const idsToNewArgNames = getArgMap(mutation, true);
+    const changedDescendants: DescendantChange[] = [];
 
-        const changedDescendants: DescendantChange[] = [];
+    if (definitionBlock) {
+        const oldArgNamesToIds = getArgMap(oldMutation, false);
+        const idsToNewArgNames = getArgMap(newMutation, true);
 
         for (const block of definitionBlock.getDescendants(false)) {
             if (!isFunctionArgumentReporter(block)) continue;
@@ -215,29 +215,46 @@ export function mutateCallersAndDefinition(name: string, ws: Blockly.Workspace, 
                 targetInputName,
             });
         }
-
-        const callerChanges = getCallers(name, definitionBlock.workspace)
-            .map(caller => ({
-                id: caller.id,
-                oldMutation: Blockly.utils.xml.domToText(caller.mutationToDom()),
-                shadows: (caller as FunctionCallBlock).serializeChangedInputs(mutation)
-            } as CallerChange))
-
-        const change = new MutateFunctionEvent(
-            definitionBlock.id,
-            callerChanges,
-            Blockly.Xml.domToText(oldMutation),
-            Blockly.Xml.domToText(mutation),
-            changedDescendants
-        );
-
-        change.workspaceId = ws.id;
-
-        change.run(true);
-        Blockly.Events.fire(change);
     } else {
         pxt.warn("Attempted to change function " + name + ", but no definition block was found on the workspace");
     }
+
+    const callerChanges = getCallers(name, ws)
+        .map(caller => ({
+            id: caller.id,
+            oldMutation: Blockly.utils.xml.domToText(caller.mutationToDom()),
+            shadows: (caller as FunctionCallBlock).serializeChangedInputs(newMutation)
+        } as CallerChange))
+
+    const change = new MutateFunctionEvent(
+        definitionBlock.id,
+        callerChanges,
+        Blockly.Xml.domToText(oldMutation),
+        Blockly.Xml.domToText(newMutation),
+        changedDescendants
+    );
+
+    change.workspaceId = ws.id;
+
+    change.run(true);
+    Blockly.Events.fire(change);
+}
+
+export function mutationsAreEqual(m1: Element, m2: Element) {
+    if (m1.getAttribute("name") !== m2.getAttribute("name")) return false;
+    if (m1.getAttribute("functionid") !== m2.getAttribute("functionid")) return false;
+    if (m1.childNodes.length !== m2.childNodes.length) return false;
+
+    for (let i = 0; i < m1.childNodes.length; ++i) {
+        const arg1 = m1.childNodes[i] as Element;
+        const arg2 = m2.childNodes[i] as Element;
+
+        if (arg1.getAttribute("name") !== arg2.getAttribute("name")) return false;
+        if (arg1.getAttribute("id") !== arg2.getAttribute("id")) return false;
+        if (arg1.getAttribute("type") !== arg2.getAttribute("type")) return false;
+    }
+
+    return true;
 }
 
 export function getArgMap(mutation: Element, inverse: boolean) {
@@ -622,9 +639,11 @@ class MutateFunctionEvent extends Blockly.Events.Abstract {
 
         Blockly.Events.disable();
 
-        def.domToMutation(mutation);
-        def.updateArgumentInputs_();
-        def.afterWorkspaceLoad();
+        if (def) {
+            def.domToMutation(mutation);
+            def.updateArgumentInputs_();
+            def.afterWorkspaceLoad();
+        }
 
         for (const change of this.callers) {
             const caller = ws.getBlockById(change.id);

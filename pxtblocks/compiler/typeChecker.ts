@@ -20,7 +20,7 @@ export interface IfBlock extends Blockly.Block {
     elseCount_: number;
 }
 
-export function infer(allBlocks: Blockly.Block[], e: Environment, w: Blockly.Workspace) {
+export function infer(allBlocks: Blockly.Block[], e: Environment) {
     if (allBlocks) allBlocks.filter(b => b.isEnabled()).forEach((b: Blockly.Block) => {
         try {
             switch (b.type) {
@@ -425,7 +425,7 @@ function returnTypeWithInheritance(e: Environment, b: Blockly.Block) {
 
 function getReturnTypeOfFunction(e: Environment, name: string) {
     if (!e.userFunctionReturnValues[name]) {
-        const definition = getDefinition(name, e.workspace);
+        const definition = getFunctionDefinition(e, name);
 
         let res = mkPoint("void");
 
@@ -495,7 +495,7 @@ function mkPlaceholderBlock(e: Environment, parent: Blockly.Block, type?: string
     return {
         type: "placeholder",
         p: mkPoint(type || null),
-        workspace: e.workspace,
+        workspace: e.workspaces.find(w => w instanceof Blockly.WorkspaceSvg) || e.workspaces[0],
         parentBlock_: parent,
         getParent: () => parent
     } as any;
@@ -663,7 +663,7 @@ export function isFunctionRecursive(e: Environment, b: Blockly.Block, strict: bo
             if (visited[callName]) continue;
             visited[callName] = true;
 
-            if (checkForCallRecursive(getDefinition(callName, call.workspace))) {
+            if (checkForCallRecursive(getFunctionDefinition(e, callName))) {
                 return true;
             }
         }
@@ -758,4 +758,13 @@ export function isStringType(type: Point) {
 
 export function isBooleanType(type: Point) {
     return type === pBoolean;
+}
+
+function getFunctionDefinition(e: Environment, name: string): Blockly.Block {
+    for (const workspace of e.workspaces) {
+        const def = getDefinition(name, workspace);
+        if (def) return def;
+    }
+
+    return undefined;
 }

@@ -41,6 +41,7 @@ import { initContextMenu } from "../../pxtblocks/contextMenu";
 import { HIDDEN_CLASS_NAME } from "../../pxtblocks/plugins/flyout/blockInflater";
 import { AIFooter } from "../../react-common/components/controls/AIFooter";
 import { CREATE_VAR_BTN_ID } from "../../pxtblocks/builtins/variables";
+import { BlocksProgram, BlocksProgramHost } from "../../pxtblocks/blocksProgram";
 
 interface CopyDataEntry {
     version: 1;
@@ -81,6 +82,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     protected workspaceSearch: WorkspaceSearch;
 
     public nsMap: pxt.Map<toolbox.BlockDefinition[]>;
+
+    protected blocksProgram: BlocksProgram;
 
     constructor(parent: IProjectView) {
         super(parent);
@@ -189,7 +192,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (!this.typeScriptSaveable) return Promise.resolve(undefined);
         this.clearHighlightedStatements();
         try {
-            return pxtblockly.compileAsync(this.editor, this.blockInfo, { emitTilemapLiterals: willOpenTypeScript })
+            return pxtblockly.compileProgramAsync(this.blocksProgram, this.blockInfo, { emitTilemapLiterals: willOpenTypeScript })
                 .then((compilationResult) => {
                     this.compilationResult = compilationResult;
                     pxt.tickEvent("activity.blocks.compile");
@@ -249,9 +252,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     this.refreshToolbox();
 
                     pxt.debug(`loading block workspace`)
-                    let xml = this.delayLoadXml;
+                    let filename = this.delayLoadXml
                     this.delayLoadXml = undefined;
-                    this.loadBlockly(xml);
+                    this.loadBlockly(filename);
 
                     this.resize();
                     Blockly.svgResize(this.editor);
@@ -310,7 +313,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private saveBlockly(): string {
         // make sure we don't return an empty document before we get started
         // otherwise it may get saved and we're in trouble
-        if (this.delayLoadXml) return this.delayLoadXml;
+        if (this.delayLoadXml) return pkg.mainEditorPkg().files[this.delayLoadXml]?.content || "";
         return this.serializeBlocks();
     }
 
@@ -332,8 +335,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return xml;
     }
 
-    private loadBlockly(s: string): boolean {
-        if (this.serializeBlocks() == s) {
+    private loadBlockly(filename: string): boolean {
+        if (this.blocksProgram.currentlyLoadedFile === filename) {
             this.typeScriptSaveable = true;
             pxt.debug('blocks already loaded...');
             return false;
@@ -342,10 +345,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.typeScriptSaveable = false;
         pxtblockly.clearWithoutEvents(this.editor);
         try {
-            const text = s || `<block type="${ts.pxtc.ON_START_TYPE}"></block>`;
+            const text = pkg.mainEditorPkg().files[filename]?.content || `<block type="${ts.pxtc.ON_START_TYPE}"></block>`;
             const xml = Blockly.utils.xml.textToDom(text);
-            this.cleanXmlForWorkspace(xml);
-            pxtblockly.domToWorkspaceNoEvents(xml, this.editor);
+            this.blocksProgram.loadIntoWorkspaceSvg(filename);
 
             this.initLayout(xml);
             this.editor.clearUndo();
@@ -360,6 +362,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         } catch (e) {
             pxt.log(e);
             pxtblockly.clearWithoutEvents(this.editor);
+            this.blocksProgram.currentlyLoadedFile = undefined;
             this.switchToTypeScript();
             this.changeCallback();
             return false;
@@ -368,12 +371,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.changeCallback();
 
         return true;
-    }
-
-    private cleanXmlForWorkspace(dom: Element) {
-        // Clear out any deletable flags. There are currently no scenarios where we rely on this flag,
-        // and it can be persisted erroneously (with value "false") if the app closes unexpectedly while in debug mode.
-        dom.querySelectorAll("block[deletable], shadow[deletable]").forEach(b => { b.removeAttribute("deletable") });
     }
 
     private initLayout(xml: Element) {
@@ -798,6 +795,20 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         Blockly.config.snapRadius = 28;
         Blockly.config.connectingSnapRadius = 96;
         this.editor = Blockly.inject(blocklyDiv, this.getBlocklyOptions(forceHasCategories)) as Blockly.WorkspaceSvg;
+
+        const host: BlocksProgramHost = {
+            getFile: (filename) => {
+                const file = pkg.mainEditorPkg().files[filename];
+                return file ? file.content : undefined;
+            },
+            saveFile: (filename, content) => {
+                pkg.mainEditorPkg().files[filename].setContentAsync(content)
+            },
+            listFiles: () => {
+                return Object.keys(pkg.mainEditorPkg().files);
+            }
+        }
+        this.blocksProgram = new BlocksProgram(host, this.editor);
         pxtblockly.contextMenu.setupWorkspaceContextMenu(this.editor);
 
         // set Blockly Colors
@@ -1439,12 +1450,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return file.getExtension() == "blocks"
     }
 
-    overrideFile(content: string) {
+    overrideFile(fileName: string) {
         if (this.delayLoadXml) {
-            this.delayLoadXml = content;
-            this.currSource = content;
+            this.delayLoadXml = fileName;
+            this.currSource = pkg.mainEditorPkg().files[fileName]?.content || "";
         } else {
-            this.loadBlockly(content);
+            this.loadBlockly(fileName);
         }
     }
 
@@ -1535,7 +1546,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.currSource = file.content;
                 this.typeScriptSaveable = false;
                 this.setDiagnostics(file)
-                this.delayLoadXml = file.content;
+                this.delayLoadXml = file.name
                 // serial editor is more like an overlay than a custom editor, so preserve blocks undo stack
                 if (!this.parent.shouldPreserveUndoStack()) pxtblockly.clearWithoutEvents(this.editor);
                 this.closeFlyout();
@@ -1838,7 +1849,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             }
 
             const refreshBlockly = () => {
-                this.delayLoadXml = this.getCurrentSource();
+                this.delayLoadXml = this.currFile?.name
                 this.editor = undefined;
                 this.cleanupKeyboardNavigation();
                 this.prepareBlockly(hasCategories);

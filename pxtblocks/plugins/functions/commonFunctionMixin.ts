@@ -7,6 +7,7 @@ import {
 } from "./constants";
 import { getDefinition, idsInUse, isCustomType, StringMap } from "./utils";
 import { MsgKey } from "./msg";
+import { BlocksFunctionSymbol } from "../../blocksProgram";
 
 type CommonFunctionMixinType = typeof COMMON_FUNCTION_MIXIN;
 
@@ -282,6 +283,20 @@ export const COMMON_FUNCTION_MIXIN = {
                             if (defArgs[j].name == this.arguments_[i].name) {
                                 this.arguments_[i].id = defArgs[j].id;
                                 break;
+                            }
+                        }
+                    }
+                }
+                else {
+                    const importedDef = this.workspace.getVariableMap().getVariableById(this.functionId_);
+                    if (importedDef) {
+                        const importedDefArgs = JSON.parse(importedDef.getName()) as BlocksFunctionSymbol;
+                        for (let i = 0; i < this.arguments_.length; ++i) {
+                            for (let j = 0; j < importedDefArgs.arguments.length; ++j) {
+                                if (importedDefArgs.arguments[j].name == this.arguments_[i].name) {
+                                    this.arguments_[i].id = importedDefArgs.arguments[j].id;
+                                    break;
+                                }
                             }
                         }
                     }
