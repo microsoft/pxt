@@ -1,6 +1,7 @@
 import * as Blockly from "blockly";
 import { InlineSvgsExtensionBlock } from "../functions";
 import { FieldImageNoText } from "../../fields/field_imagenotext";
+import { maybeFocusMutatorButton } from "../../utils";
 
 
 type IfElseMixinType = typeof IF_ELSE_MIXIN;
@@ -82,6 +83,10 @@ const IF_ELSE_MIXIN = {
             this.elseCount_--;
         };
         this.update_(update);
+        // Focus the condition of the last elseif branch, fallback to the condition of the if.
+        const focusIndex = this.elseifCount_;
+        const inputName = focusIndex === 0 ? 'IF0' : 'IF' + focusIndex;
+        maybeFocusMutatorButton(this.getInput(inputName)?.connection?.targetBlock() as Blockly.BlockSvg);
     },
     addElseIf_: function (this: IfElseBlock) {
         const update = () => {
@@ -94,6 +99,10 @@ const IF_ELSE_MIXIN = {
             this.elseifCount_--;
         };
         this.update_(update, arg);
+        // Focus the condition of the branch before the one just removed.
+        const prevIndex = arg - 1;
+        const inputName = prevIndex === 0 ? 'IF0' : 'IF' + prevIndex;
+        maybeFocusMutatorButton(this.getInput(inputName)?.connection?.targetBlock() as Blockly.BlockSvg);
     },
     update_: function (this: IfElseBlock, update: () => void, arg?: number) {
         Blockly.Events.setGroup(true);
@@ -182,9 +191,15 @@ const IF_ELSE_MIXIN = {
             return function () {
                 if (that.elseCount_ == 0) {
                     that.addElse_();
+                    // Focus the else 'remove branch' button (keyboard users only).
+                    maybeFocusMutatorButton(that.getInput('ELSEBUTTONS')?.fieldRow[0]);
                 } else {
                     if (!that.elseifCount_) that.elseifCount_ = 0;
                     that.addElseIf_();
+                    // Focus the else if boolean (keyboard users only).
+                    const focusManager = Blockly.getFocusManager();
+                    const node = (that.getInput('IF' + that.elseifCount_)?.connection?.targetBlock() as Blockly.BlockSvg);
+                    focusManager.focusNode(node);
                 }
             };
         }();

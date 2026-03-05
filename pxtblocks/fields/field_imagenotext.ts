@@ -24,11 +24,7 @@ export class FieldImageNoText extends Blockly.FieldImage implements FieldCustom 
         if (keyboardTriggered) {
             return;
         }
-        const sourceBlock = this.getSourceBlock();
-        const focusManager = Blockly.getFocusManager();
-        const currentNode = focusManager.getFocusedNode();
-        if (sourceBlock instanceof Blockly.BlockSvg && !currentNode.canBeFocused()) {
-            Blockly.getFocusManager().focusNode(sourceBlock as Blockly.BlockSvg);
-        }
+        const sourceBlock = this.getSourceBlock() as Blockly.BlockSvg;
+        Blockly.getFocusManager().focusNode(sourceBlock);
     }
 }
