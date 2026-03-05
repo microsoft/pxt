@@ -3,9 +3,10 @@
 
 import * as Blockly from "blockly";
 import { escapeVarName, isFunctionDefinition } from "./util";
+import { BlocksProgram } from "../blocksProgram";
 
 export interface Environment {
-    workspaces: Blockly.Workspace[];
+    blocksProgram: BlocksProgram;
     options: BlockCompileOptions;
     stdCallTable: pxt.Map<StdFunc>;
     userFunctionReturnValues: pxt.Map<Point>;
@@ -125,9 +126,9 @@ export interface GrayBlockStatement extends GrayBlock {
     declaredVariables: string;
 }
 
-export function emptyEnv(w: Blockly.Workspace[], options: BlockCompileOptions): Environment {
+export function emptyEnv(program: BlocksProgram, options: BlockCompileOptions): Environment {
     return {
-        workspaces: w,
+        blocksProgram: program,
         options,
         stdCallTable: {},
         userFunctionReturnValues: {},
@@ -154,9 +155,9 @@ export function emptyEnv(w: Blockly.Workspace[], options: BlockCompileOptions): 
 // - All variables have been assigned an initial [Point] in the union-find.
 // - Variables have been marked to indicate if they are compatible with the
 //   TouchDevelop for-loop model.
-export function mkEnv(w: Blockly.Workspace[], blockInfo?: pxtc.BlocksInfo, options: BlockCompileOptions = {}): Environment {
+export function mkEnv(program: BlocksProgram, blockInfo?: pxtc.BlocksInfo, options: BlockCompileOptions = {}): Environment {
     // The to-be-returned environment.
-    let e = emptyEnv(w, options);
+    let e = emptyEnv(program, options);
     e.blocksInfo = blockInfo;
 
     // append functions in stdcalltable
@@ -212,7 +213,7 @@ export function mkEnv(w: Blockly.Workspace[], blockInfo?: pxtc.BlocksInfo, optio
                 }
             });
 
-        w.reduce((acc, workspace) => acc.concat(workspace.getTopBlocks(false)), [] as Blockly.Block[]).filter(isFunctionDefinition).forEach(b => {
+        program.getAllWorkspaces().reduce((acc, workspace) => acc.concat(workspace.getTopBlocks(false)), [] as Blockly.Block[]).filter(isFunctionDefinition).forEach(b => {
             // Add functions to the rename map to prevent name collisions with variables
             const name = b.type === "procedures_defnoreturn" ? b.getFieldValue("NAME") : b.getField("function_name").getText();
             escapeVarName(name, e, true);

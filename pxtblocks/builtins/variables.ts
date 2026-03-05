@@ -1,6 +1,7 @@
 import * as Blockly from "blockly";
 import { createFlyoutGroupLabel, createFlyoutHeadingLabel, mkVariableFieldBlock } from "../toolbox";
 import { installBuiltinHelpInfo, setBuiltinHelpInfo } from "../help";
+import { EXPORTED_VARIABLE_TYPE, IMPORTED_VARIABLE_TYPE } from "../blocksProgram";
 
 export const CREATE_VAR_BTN_ID = 'create-variable-btn';
 
@@ -9,7 +10,8 @@ export function initVariables() {
     Blockly.Variables.flyoutCategory = flyoutCategory;
 
     Blockly.Variables.flyoutCategoryBlocks = function (workspace) {
-        let variableModelList = workspace.getVariableMap().getVariablesOfType('');
+        const map = workspace.getVariableMap();
+        let variableModelList = map.getVariablesOfType('').concat(map.getVariablesOfType(EXPORTED_VARIABLE_TYPE)).concat(map.getVariablesOfType(IMPORTED_VARIABLE_TYPE));
 
         let xmlList: HTMLElement[] = [];
         if (variableModelList.length > 0) {

@@ -141,6 +141,7 @@ export function findLegalName(name: string, ws: Blockly.Workspace, block?: Commo
 
 function namesInUse(ws: Blockly.Workspace, exceptBlock?: Blockly.Block, exceptFuncId?: string) {
     const usedNames: StringMap<boolean> = {};
+    // TODO (hackathon)
     ws.getVariableMap().getAllVariables().forEach(function (v) {
         usedNames[v.getName()] = true;
     });

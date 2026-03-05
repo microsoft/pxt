@@ -12,7 +12,7 @@ import { FieldTilemap, FieldTextInput } from "../fields";
 import { CommonFunctionBlock } from "../plugins/functions/commonFunctionMixin";
 import { getContainingFunction } from "../plugins/duplicateOnDrag";
 import { FUNCTION_DEFINITION_BLOCK_TYPE } from "../plugins/functions/constants";
-import { BlocksProgram } from "../blocksProgram";
+import { BlocksProgram, SingleWorkspaceBlocksProgram } from "../blocksProgram";
 
 
 interface Rect {
@@ -33,7 +33,7 @@ export const PXT_WARNING_ID = "WARNING_MESSAGE"
 
 export function compileBlockAsync(b: Blockly.Block, blockInfo: pxtc.BlocksInfo): Promise<BlockCompilationResult> {
     const w = b.workspace;
-    const e = mkEnv([w], blockInfo);
+    const e = mkEnv(new SingleWorkspaceBlocksProgram(w), blockInfo);
     infer(w && w.getAllBlocks(false), e);
     const compiled = compileStatementBlock(e, b)
     e.placeholders = {};
@@ -41,14 +41,14 @@ export function compileBlockAsync(b: Blockly.Block, blockInfo: pxtc.BlocksInfo):
 }
 
 export function compileAsync(b: Blockly.Workspace, blockInfo: pxtc.BlocksInfo, opts: BlockCompileOptions = {}): Promise<BlockCompilationResult> {
-    const e = mkEnv([b], blockInfo, opts);
+    const e = mkEnv(new SingleWorkspaceBlocksProgram(b), blockInfo, opts);
     const [nodes, diags] = compileWorkspace(e, b, blockInfo);
     const result = tdASTtoTS(e, nodes, diags);
     return result;
 }
 
 export function compileProgramAsync(program: BlocksProgram, blockInfo: pxtc.BlocksInfo, opts: BlockCompileOptions = {}): Promise<BlockCompilationResult> {
-    const e = mkEnv(program.getAllWorkspaces(), blockInfo, opts);
+    const e = mkEnv(program, blockInfo, opts);
     const [nodes, diags] = compileBlocksProgram(e, program, blockInfo);
     return tdASTtoTS(e, nodes, diags);
 }
@@ -757,7 +757,7 @@ function compileControlsFor(e: Environment, b: Blockly.Block, comments: string[]
     let bFrom = getInputTargetBlock(e, b, "FROM");
     let incOne = !bBy || (bBy.type.match(/^math_number/) && extractNumber(bBy) == 1)
 
-    let binding = lookup(e, b, getLoopVariableField(e, b).getField("VAR").getText());
+    let binding = lookup(e, b, e.blocksProgram.getVariableQualifiedName(getLoopVariableField(e, b).getField("VAR").getText(), b.workspace));
 
     return [
         pxt.blocks.mkText("for (let " + binding.escapedName + " = "),
@@ -774,7 +774,7 @@ function compileControlsFor(e: Environment, b: Blockly.Block, comments: string[]
 function compileControlsRepeat(e: Environment, b: Blockly.Block, comments: string[]): pxt.blocks.JsNode[] {
     let bound = compileExpression(e, getInputTargetBlock(e, b, "TIMES"), comments);
     let body = compileStatements(e, getInputTargetBlock(e, b, "DO"));
-    let valid = (x: string) => !lookup(e, b, x);
+    let valid = (x: string) => !lookup(e, b, e.blocksProgram.getVariableQualifiedName(x, b.workspace));
 
     let name = "index";
     // Start at 2 because index0 and index1 are bad names
@@ -812,7 +812,7 @@ function compileControlsForOf(e: Environment, b: Blockly.Block, comments: string
         listExpression = compileExpression(e, bOf, comments);
     }
 
-    let binding = lookup(e, b, getLoopVariableField(e, b).getField("VAR").getText());
+    let binding = lookup(e, b, e.blocksProgram.getVariableQualifiedName(getLoopVariableField(e, b).getField("VAR").getText(), b.workspace));
 
     return [
         pxt.blocks.mkText("for (let " + binding.escapedName + " of "),
@@ -824,7 +824,7 @@ function compileControlsForOf(e: Environment, b: Blockly.Block, comments: string
 
 function compileVariableGet(e: Environment, b: Blockly.Block): pxt.blocks.JsNode {
     const name = b.getField("VAR").getText();
-    let binding = lookup(e, b, name);
+    let binding = lookup(e, b, e.blocksProgram.getVariableQualifiedName(name, b.workspace));
     if (!binding) // trying to compile a disabled block with a bogus variable
         return pxt.blocks.mkText(name);
 
@@ -836,7 +836,7 @@ function compileVariableGet(e: Environment, b: Blockly.Block): pxt.blocks.JsNode
 
 function compileSet(e: Environment, b: Blockly.Block, comments: string[]): pxt.blocks.JsNode {
     let bExpr = getInputTargetBlock(e, b, "VALUE");
-    let binding = lookup(e, b, b.getField("VAR").getText());
+    let binding = lookup(e, b, e.blocksProgram.getVariableQualifiedName(b.getField("VAR").getText(), b.workspace));
 
     const currentScope = e.idToScope[b.id];
     let isDef = currentScope.declaredVars[binding.name] === binding && !binding.firstReference && !binding.alreadyDeclared;
@@ -846,7 +846,7 @@ function compileSet(e: Environment, b: Blockly.Block, comments: string[]): pxt.b
         // to be hoisted
         forEachChildExpression(b, child => {
             if (child.type === "variables_get") {
-                let childBinding = lookup(e, child, child.getField("VAR").getText());
+                let childBinding = lookup(e, child, e.blocksProgram.getVariableQualifiedName(child.getField("VAR").getText(), child.workspace));
                 if (childBinding === binding) isDef = false;
             }
         }, true);
@@ -882,7 +882,7 @@ function compileSet(e: Environment, b: Blockly.Block, comments: string[]): pxt.b
 
 function compileChange(e: Environment, b: Blockly.Block, comments: string[]): pxt.blocks.JsNode {
     let bExpr = getInputTargetBlock(e, b, "VALUE");
-    let binding = lookup(e, b, b.getField("VAR").getText());
+    let binding = lookup(e, b, e.blocksProgram.getVariableQualifiedName(b.getField("VAR").getText(), b.workspace));
     let expr = compileExpression(e, bExpr, comments);
     let ref = pxt.blocks.mkText(binding.escapedName);
     return pxt.blocks.mkStmt(pxt.blocks.mkInfix(ref, "+=", expr))
@@ -1272,7 +1272,7 @@ function compileFunctionDefinition(e: Environment, b: Blockly.Block, comments: s
     const stmts = getInputTargetBlock(e, b, "STACK");
     const argsDeclaration = (b as CommonFunctionBlock).getArguments().map(a => {
         if (a.type == "Array") {
-            const binding = lookup(e, b, a.name);
+            const binding = lookup(e, b, e.blocksProgram.getVariableQualifiedName(a.name, b.workspace));
             const declaredType = getConcreteType(binding.type);
             const paramType = (declaredType?.type && declaredType.type !== "Array") ? declaredType.type : "any[]";
             return `${escapeVarName(a.name, e)}: ${paramType}`;

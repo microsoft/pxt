@@ -200,7 +200,7 @@ const FUNCTION_CALL_MIXIN: FunctionCallMixin = {
             // this caller.
             const name = this.getName();
             const def = getDefinition(name, this.workspace);
-            const importedDef = this.workspace.getVariableMap().getVariableById(this.functionId_);
+            const importedDef = !def && this.workspace.getVariableMap().getVariableById(this.functionId_);
 
             if (!def && !importedDef) {
                 Blockly.Events.setGroup(event.group);

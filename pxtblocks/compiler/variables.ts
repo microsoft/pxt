@@ -63,12 +63,12 @@ export function trackAllVariables(topBlocks: Blockly.Block[], e: Environment) {
         e.idToScope[block.id] = currentScope;
 
         if (block.type === "variables_get") {
-            const name = block.getField("VAR").getText();
+            const name = e.blocksProgram.getVariableQualifiedName(block.getField("VAR").getText(), block.workspace);
             const info = findOrDeclareVariable(name, currentScope);
             currentScope.referencedVars.push(info.id);
         }
         else if (block.type === "variables_set" || block.type === "variables_change") {
-            const name = block.getField("VAR").getText();
+            const name = e.blocksProgram.getVariableQualifiedName(block.getField("VAR").getText(), block.workspace);
             const info = findOrDeclareVariable(name, currentScope);
             currentScope.assignedVars.push(info.id);
             currentScope.referencedVars.push(info.id);

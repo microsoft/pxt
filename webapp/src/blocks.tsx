@@ -41,7 +41,7 @@ import { initContextMenu } from "../../pxtblocks/contextMenu";
 import { HIDDEN_CLASS_NAME } from "../../pxtblocks/plugins/flyout/blockInflater";
 import { AIFooter } from "../../react-common/components/controls/AIFooter";
 import { CREATE_VAR_BTN_ID } from "../../pxtblocks/builtins/variables";
-import { BlocksProgram, BlocksProgramHost } from "../../pxtblocks/blocksProgram";
+import { BlocksProgram, BlocksProgramHost, MultiWorkspaceBlocksProgram } from "../../pxtblocks/blocksProgram";
 
 interface CopyDataEntry {
     version: 1;
@@ -83,7 +83,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     public nsMap: pxt.Map<toolbox.BlockDefinition[]>;
 
-    protected blocksProgram: BlocksProgram;
+    protected blocksProgram: MultiWorkspaceBlocksProgram;
 
     constructor(parent: IProjectView) {
         super(parent);
@@ -343,7 +343,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
 
         this.typeScriptSaveable = false;
-        pxtblockly.clearWithoutEvents(this.editor);
         try {
             const text = pkg.mainEditorPkg().files[filename]?.content || `<block type="${ts.pxtc.ON_START_TYPE}"></block>`;
             const xml = Blockly.utils.xml.textToDom(text);
@@ -808,7 +807,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 return Object.keys(pkg.mainEditorPkg().files);
             }
         }
-        this.blocksProgram = new BlocksProgram(host, this.editor);
+        this.blocksProgram = new MultiWorkspaceBlocksProgram(host, this.editor);
         pxtblockly.contextMenu.setupWorkspaceContextMenu(this.editor);
 
         // set Blockly Colors
@@ -1578,6 +1577,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.errors = [];
         if (this.toolbox) this.toolbox.clearSearch();
         if (unloadToHome) this.shouldFocusWorkspace = false;
+        if (this.blocksProgram) this.blocksProgram.unloadWorkspaceSvg();
         return Promise.resolve();
     }
 

@@ -52,14 +52,86 @@ export interface BlocksProgramHost {
     saveFile(fileName: string, content: string): void;
 }
 
+export interface BlocksProgram {
+    listFiles(): string[];
+    getSymbolsForFile(fileName: string): BlocksSymbol[];
+    renameVariable(symbol: BlocksVariableSymbol, newName: string): void;
+    deleteSymbol(symbol: BlocksSymbol): void;
+    getAllWorkspaces(): Blockly.Workspace[];
+    getEnumInfo(enumName: string): string[];
+    getKindInfo(kindName: string): string[];
+    getVariableQualifiedName(varName: string, workspace: Blockly.Workspace): string;
+    refreshSymbols?(): void;
+}
 
-export class BlocksProgram {
+
+export class SingleWorkspaceBlocksProgram implements BlocksProgram {
+    constructor(public workspace: Blockly.Workspace) {
+    }
+
+    listFiles(): string[] {
+        return ["main.blocks"];
+    }
+
+    getSymbolsForFile(fileName: string): BlocksSymbol[] {
+        const result: BlocksSymbol[] = [];
+        result.push(...getVariableSymbols({ fileName, workspace: this.workspace }));
+        result.push(...getFunctionSymbols({ fileName, workspace: this.workspace }));
+        result.push(...getKindSymbols({ fileName, workspace: this.workspace }));
+        return result;
+    }
+
+    renameVariable(symbol: BlocksVariableSymbol, newName: string) {
+        const variable = this.workspace.getVariableMap().getVariableById(symbol.id);
+        if (variable) {
+            this.workspace.getVariableMap().renameVariable(variable, newName);
+        }
+        symbol.name = newName;
+    }
+
+    deleteSymbol(symbol: BlocksSymbol) {
+        const variable = this.workspace.getVariableMap().getVariableById(symbol.id);
+        if (variable) {
+            this.workspace.getVariableMap().deleteVariable(variable);
+        }
+
+        if (symbol.type === "function") {
+            const def = getDefinition(symbol.name, this.workspace);
+            if (def) {
+                def.dispose();
+            }
+        }
+    }
+
+    getAllWorkspaces(): Blockly.Workspace[] {
+        return [this.workspace];
+    }
+
+    getEnumInfo(enumName: string): string[] {
+        return getKindSymbols({ fileName: "main.blocks", workspace: this.workspace })
+            .filter(k => k.enumName === enumName)
+            .map(k => k.name);
+    }
+
+    getKindInfo(kindName: string): string[] {
+        return getKindSymbols({ fileName: "main.blocks", workspace: this.workspace })
+            .filter(k => k.enumName === kindName)
+            .map(k => k.name);
+    }
+
+    getVariableQualifiedName(varName: string, workspace: Blockly.Workspace): string {
+        return varName;
+    }
+}
+
+
+export class MultiWorkspaceBlocksProgram implements BlocksProgram {
     protected workspaces: Map<string, FileWorkspace> = new Map();
     protected symbolsCache: Map<string, BlocksSymbol[]> = new Map();
 
     public currentlyLoadedFile: string;
 
-    constructor(public mainPackage: BlocksProgramHost, public workspaceSvg: Blockly.WorkspaceSvg) {
+    constructor(protected mainPackage: BlocksProgramHost, public workspaceSvg: Blockly.WorkspaceSvg) {
     }
 
     listFiles(): string[] {
@@ -166,10 +238,7 @@ export class BlocksProgram {
     }
 
     loadIntoWorkspaceSvg(file: string) {
-        if (this.currentlyLoadedFile === file) {
-            return;
-        }
-        else if (this.currentlyLoadedFile) {
+        if (this.currentlyLoadedFile) {
             if (this.workspaces.has(this.currentlyLoadedFile)) {
                 this.workspaces.delete(this.currentlyLoadedFile);
             }
@@ -177,7 +246,10 @@ export class BlocksProgram {
         }
 
         if (this.workspaces.has(file)) {
-            this.workspaces.get(file).workspace.dispose();
+            const ws = this.workspaces.get(file);
+            if (!(ws.workspace instanceof Blockly.WorkspaceSvg)) {
+                ws.workspace.dispose();
+            }
             this.workspaces.delete(file);
         }
 
@@ -195,6 +267,44 @@ export class BlocksProgram {
         });
 
         this.refreshSymbols();
+    }
+
+    unloadWorkspaceSvg() {
+        if (this.currentlyLoadedFile) {
+            if (this.workspaces.has(this.currentlyLoadedFile)) {
+                this.workspaces.delete(this.currentlyLoadedFile);
+            }
+            this.loadOrGetWorkspace(this.currentlyLoadedFile);
+        }
+
+        clearWithoutEvents(this.workspaceSvg);
+        this.currentlyLoadedFile = null;
+    }
+
+    getVariableQualifiedName(varName: string, workspace: Blockly.Workspace): string {
+        const map = workspace.getVariableMap();
+        let variable = map.getVariable(varName);
+        if (!variable) {
+            variable = map.getVariable(varName, IMPORTED_VARIABLE_TYPE);
+        }
+
+        if (variable?.getType() === IMPORTED_VARIABLE_TYPE) {
+            for (const symbols of this.symbolsCache.values()) {
+                for (const symbol of symbols) {
+                    if (symbol.type === "variable" && symbol.id === variable.getId()) {
+                        return `${getNamespaceFromFilename(symbol.file)}.${symbol.name}`;
+                    }
+                }
+            }
+        }
+        else {
+            for (const fileWorkspace of this.workspaces.values()) {
+                if (fileWorkspace.workspace === workspace) {
+                    return `${getNamespaceFromFilename(fileWorkspace.fileName)}.${varName}`;
+                }
+            }
+        }
+        throw new Error(`Variable ${varName} not found in any workspace`);
     }
 
     protected defineSymbolInWorkspace(symbol: BlocksSymbol, workspace: Blockly.Workspace) {
@@ -386,4 +496,16 @@ function getKindSymbols(workspace: FileWorkspace): (BlockKindSymbol | BlocksEnum
     }
 
     return enumKindSymbols;
+}
+
+function getNamespaceFromFilename(name: string) {
+    name = name.replace(/\.blocks$/i, "");
+
+    name = name.replace(".", "dot");
+    name = name.replace(" ", "_");
+    name = name.replace("-", "dash");
+
+    name = name.replace(/^[^a-zA-Z_]+/, "");
+
+    return "_" + name;
 }

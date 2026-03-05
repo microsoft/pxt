@@ -5,6 +5,7 @@ import { Environment, mkEnv } from "./compiler/environment";
 import { getBlockData } from "./fields";
 import { callKey } from "./compiler/compiler";
 import { BlockSnippet, loadWorkspaceXml, saveBlocksXml, workspaceToDom } from "./importer";
+import { SingleWorkspaceBlocksProgram } from "./blocksProgram";
 
 export interface FlowOptions {
     ratio?: number;
@@ -50,7 +51,7 @@ function alignBlocks(blockInfo: ts.pxtc.BlocksInfo, oldWs: Blockly.Workspace, ne
         if (!(oldPosition && oldPosition.x != 0 && oldPosition.y != 0)) continue;
 
         if (!env) {
-            env = mkEnv([oldWs], blockInfo);
+            env = mkEnv(new SingleWorkspaceBlocksProgram(oldWs), blockInfo);
             keyToBlocks = {};
             for (const newBlock of newTopBlocks) {
                 const newBlockKey = callKey(env, newBlock);

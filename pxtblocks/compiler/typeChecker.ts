@@ -82,7 +82,7 @@ export function infer(allBlocks: Blockly.Block[], e: Environment) {
                     const listArgument = getInputTargetBlock(e, b, "LIST");
                     if (listArgument && listArgument.type !== "placeholder") {
                         const listTp = returnType(e, listArgument);
-                        const elementTp = lookup(e, b, getLoopVariableField(e, b).getField("VAR").getText()).type;
+                        const elementTp = lookup(e, b, e.blocksProgram.getVariableQualifiedName(getLoopVariableField(e, b).getField("VAR").getText(), b.workspace)).type;
                         genericLink(listTp, elementTp);
                     }
                     else {
@@ -94,7 +94,7 @@ export function infer(allBlocks: Blockly.Block[], e: Environment) {
                     break;
                 case "variables_set":
                 case "variables_change":
-                    let p1 = lookup(e, b, b.getField("VAR").getText()).type;
+                    let p1 = lookup(e, b, e.blocksProgram.getVariableQualifiedName(b.getField("VAR").getText(), b.workspace)).type;
                     attachPlaceholderIf(e, b, "VALUE");
                     let rhs = getInputTargetBlock(e, b, "VALUE");
                     if (rhs) {
@@ -337,7 +337,7 @@ export function returnType(e: Environment, b: Blockly.Block): Point {
     }
 
     if (b.type == "variables_get")
-        return find(lookup(e, b, b.getField("VAR").getText()).type);
+        return find(lookup(e, b, e.blocksProgram.getVariableQualifiedName(b.getField("VAR").getText(), b.workspace)).type);
 
     if (b.type == "function_call_output")  {
         return getReturnTypeOfFunctionCall(e, b);
@@ -378,7 +378,7 @@ export function returnType(e: Environment, b: Blockly.Block): Point {
             }
         } else if (b.type == "argument_reporter_array") {
             if (!tp) {
-                tp = lookup(e, b, b.getFieldValue("VALUE")).type
+                tp = lookup(e, b, e.blocksProgram.getVariableQualifiedName(b.getFieldValue("VALUE"), b.workspace)).type;
             }
         }
 
@@ -492,10 +492,11 @@ function isArrayType(type: string) {
 
 function mkPlaceholderBlock(e: Environment, parent: Blockly.Block, type?: string): PlaceholderLikeBlock {
     // XXX define a proper placeholder block type
+    const workspaces = e.blocksProgram.getAllWorkspaces();
     return {
         type: "placeholder",
         p: mkPoint(type || null),
-        workspace: e.workspaces.find(w => w instanceof Blockly.WorkspaceSvg) || e.workspaces[0],
+        workspace: workspaces.find(w => w instanceof Blockly.WorkspaceSvg) || workspaces[0],
         parentBlock_: parent,
         getParent: () => parent
     } as any;
@@ -590,13 +591,13 @@ export function getDeclaredVariables(block: Blockly.Block, e: Environment): Decl
         case 'pxt_controls_for':
         case 'controls_simple_for':
             return [{
-                name: getLoopVariableField(e, block).getField("VAR").getText(),
+                name: e.blocksProgram.getVariableQualifiedName(getLoopVariableField(e, block).getField("VAR").getText(), block.workspace),
                 type: pNumber
             }];
         case 'pxt_controls_for_of':
         case 'controls_for_of':
             return [{
-                name: getLoopVariableField(e, block).getField("VAR").getText(),
+                name: e.blocksProgram.getVariableQualifiedName(getLoopVariableField(e, block).getField("VAR").getText(), block.workspace),
                 type: mkPoint(null)
             }];
         case 'function_definition':
@@ -605,7 +606,7 @@ export function getDeclaredVariables(block: Blockly.Block, e: Environment): Decl
                     const point = mkPoint(null);
                     point.isArrayType = true;
                     return {
-                        name: arg.name,
+                        name: e.blocksProgram.getVariableQualifiedName(arg.name, block.workspace),
                         type: point,
                         isFunctionParameter: true
                     }
@@ -618,7 +619,7 @@ export function getDeclaredVariables(block: Blockly.Block, e: Environment): Decl
         const declarations = block.mutation.getDeclaredVariables();
         if (declarations) {
             return Object.keys(declarations).map(varName => ({
-                name: varName,
+                name: e.blocksProgram.getVariableQualifiedName(varName, block.workspace),
                 type: mkPoint(declarations[varName])
             }));
         }
@@ -673,7 +674,7 @@ export function isFunctionRecursive(e: Environment, b: Blockly.Block, strict: bo
 }
 
 export function getEscapedCBParameters(b: Blockly.Block, stdfun: StdFunc, e: Environment): string[] {
-    return getCBParameters(b, stdfun, e).map(binding => lookup(e, b, binding.name).escapedName);
+    return getCBParameters(b, stdfun, e).map(binding => lookup(e, b, e.blocksProgram.getVariableQualifiedName(binding.name, b.workspace)).escapedName);
 }
 
 function getCBParameters(b: Blockly.Block, stdfun: StdFunc, e: Environment): DeclaredVariable[] {
@@ -685,9 +686,9 @@ function getCBParameters(b: Blockly.Block, stdfun: StdFunc, e: Environment): Dec
             const varBlock = getInputTargetBlock(e, b, DRAGGABLE_PARAM_INPUT_PREFIX + arg.name) as Blockly.Block;
 
             if (stdfun.attrs.draggableParameters === "reporter") {
-                varName = varBlock && varBlock.getFieldValue("VALUE");
+                varName = e.blocksProgram.getVariableQualifiedName(varBlock && varBlock.getFieldValue("VALUE"), b.workspace);
             } else {
-                varName = varBlock && varBlock.getField("VAR").getText();
+                varName = e.blocksProgram.getVariableQualifiedName(varBlock && varBlock.getField("VAR").getText(), b.workspace);
             }
 
             if (varName !== null && varName !== undefined) {
@@ -708,7 +709,7 @@ function getCBParameters(b: Blockly.Block, stdfun: StdFunc, e: Environment): Dec
             const varName = varField && varField.getText();
             if (varName !== null) {
                 handlerArgs.push({
-                    name: varName,
+                    name: e.blocksProgram.getVariableQualifiedName(varName, b.workspace),
                     type: mkPoint(arg.type)
                 });
             }
@@ -761,7 +762,7 @@ export function isBooleanType(type: Point) {
 }
 
 function getFunctionDefinition(e: Environment, name: string): Blockly.Block {
-    for (const workspace of e.workspaces) {
+    for (const workspace of e.blocksProgram.getAllWorkspaces()) {
         const def = getDefinition(name, workspace);
         if (def) return def;
     }
