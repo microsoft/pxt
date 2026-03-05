@@ -627,7 +627,7 @@ export class ProjectView
 
     isBlocksActive(): boolean {
         return !this.state.embedSimView && this.editor == this.blocksEditor
-            && this.editorFile && this.editorFile.name == pxt.MAIN_BLOCKS;
+            && this.editorFile && this.isBlocksFile(this.editorFile.name);
     }
 
     isJavaScriptActive(): boolean {
@@ -720,14 +720,26 @@ export class ProjectView
         pxt.shell.setEditorLanguagePref("js");
     }
 
-    openBlocks() {
+    openBlocks(blocksFile?: pkg.File) {
         if (this.updatingEditorFile) return; // already transitioning
 
+        // const blocksFileExplorer = !!pxt.appTarget.appTheme.blocksFileExplorer;
+        // if (blocksFileExplorer && !this.state.showFiles) {
+        //     this.setState({ showFiles: true });
+        // }
+
+        const mainBlocks = pkg.mainEditorPkg().files[pxt.MAIN_BLOCKS];
+        const targetBlocksFile = blocksFile || mainBlocks;
+
         if (this.isBlocksActive()) {
-            if (this.state.embedSimView) this.setState({ embedSimView: false });
-            // This timeout prevents key events from being handled by Blockly's keyboard
-            // navigation plugin prematurely.
-            setTimeout(() => {this.editor.focusWorkspace()}, 0)
+            if (targetBlocksFile && this.editorFile !== targetBlocksFile) {
+                this.setFile(targetBlocksFile);
+            } else {
+                if (this.state.embedSimView) this.setState({ embedSimView: false });
+                // This timeout prevents key events from being handled by Blockly's keyboard
+                // navigation plugin prematurely.
+                setTimeout(() => { this.editor.focusWorkspace() }, 0)
+            }
             return;
         }
 
@@ -735,8 +747,15 @@ export class ProjectView
             this.toggleSimulatorCollapse();
         }
 
-        const mainBlocks = pkg.mainEditorPkg().files[pxt.MAIN_BLOCKS];
-        if (this.isJavaScriptActive() || (this.shouldTryDecompile && !this.state.embedSimView))
+        if (!targetBlocksFile)
+            return;
+
+        const isMainBlocksTarget = targetBlocksFile === mainBlocks;
+
+        if (!isMainBlocksTarget) {
+            this.saveFileAsync().then(() => this.setFile(targetBlocksFile));
+        }
+        else if (this.isJavaScriptActive() || (this.shouldTryDecompile && !this.state.embedSimView))
             this.textEditor.openBlocks();
         // any other editeable .ts or pxt.json; or empty mainblocks
         else if (this.isAnyEditeableJavaScriptOrPackageActive() || !mainBlocks.content) {
@@ -760,22 +779,45 @@ export class ProjectView
      * Same as openBlocks but waits for the return and ensures that main.blocks exist
      * @returns
      */
-    async openBlocksAsync() {
+    async openBlocksAsync(blocksFile?: pkg.File) {
         if (this.updatingEditorFile) return; // already transitioning
 
-        if (this.isBlocksActive()) {
-            if (this.state.embedSimView) this.setState({ embedSimView: false });
-            return;
-        }
+        // const blocksFileExplorer = !!pxt.appTarget.appTheme.blocksFileExplorer;
+        // if (blocksFileExplorer && !this.state.showFiles) {
+        //     this.setState({ showFiles: true });
+        // }
 
         const epkg = pkg.mainEditorPkg();
 
-        if (!epkg.files[pxt.MAIN_BLOCKS]) {
-            epkg.setContentAsync(pxt.MAIN_BLOCKS, "");
+        let mainBlocks = epkg.files[pxt.MAIN_BLOCKS];
+        let targetBlocksFile = blocksFile || mainBlocks;
+
+        if (this.isBlocksActive()) {
+            if (targetBlocksFile && this.editorFile !== targetBlocksFile) {
+                this.setFile(targetBlocksFile)
+            } else {
+                if (this.state.embedSimView) this.setState({ embedSimView: false });
+            }
+            return;
         }
 
-        const mainBlocks = epkg.files[pxt.MAIN_BLOCKS];
-        if (this.isJavaScriptActive() || (this.shouldTryDecompile && !this.state.embedSimView))
+        if (!mainBlocks) {
+            await epkg.setContentAsync(pxt.MAIN_BLOCKS, "");
+            mainBlocks = epkg.files[pxt.MAIN_BLOCKS];
+        }
+
+        targetBlocksFile = blocksFile || mainBlocks;
+
+        if (!targetBlocksFile)
+            return;
+
+        const isMainBlocksTarget = targetBlocksFile === mainBlocks;
+
+        if (!isMainBlocksTarget) {
+            await this.saveFileAsync();
+            this.setFile(targetBlocksFile)
+        }
+        else if (this.isJavaScriptActive() || (this.shouldTryDecompile && !this.state.embedSimView))
             await this.textEditor.openBlocksAsync();
         // any other editeable .ts or pxt.json; or empty mainblocks
         else if (this.isAnyEditeableJavaScriptOrPackageActive() || !mainBlocks.content) {
@@ -1379,10 +1421,12 @@ export class ProjectView
         let currFile = this.state.currFile.name;
 
         const header = this.state.header;
+        const blocksFileExplorer = !!pxt.appTarget.appTheme.blocksFileExplorer;
         if (fileName != currFile && pxteditor.isBlocks(fn)) {
             // Going from ts/py -> blocks
             pxt.tickEvent("sidebar.showBlocks");
-            this.openBlocks();
+            if (blocksFileExplorer) this.openBlocks(fn);
+            else this.openBlocks();
         } else if (header.editor != pxt.PYTHON_PROJECT_NAME && fileName.endsWith(".py")) {
             // Going from non-py -> py
             pxt.tickEvent("sidebar.showPython");
@@ -1781,6 +1825,8 @@ export class ProjectView
             await this.loadTutorialBlockConfigsAsync();
             await this.loadTutorialHiddenCategoriesAsync();
 
+            const blocksFileExplorer = !!pxt.appTarget.appTheme.blocksFileExplorer;
+
             const main = pkg.getEditorPkg(pkg.mainPkg);
 
             // override preferred editor if specified
@@ -1853,6 +1899,7 @@ export class ProjectView
 
             this.setState({
                 home: false,
+                // showFiles: blocksFileExplorer ? true : (h.githubId ? true : false),
                 showFiles: h.githubId ? true : false,
                 editorState: editorState,
                 tutorialOptions: h.tutorial,
@@ -5610,10 +5657,10 @@ export class ProjectView
         }
         const isRTL = pxt.Util.isUserLanguageRtl();
         const showRightChevron = (this.state.collapseEditorTools || isRTL) && !(this.state.collapseEditorTools && isRTL); // Collapsed XOR RTL
-        // don't show in sandbox or is blocks editor or previous editor is blocks or assets editor
-        const showFileList = !sandbox && !inTutorial && !this.isAssetsActive()
-            && !(isBlocks
-                || (pkg.mainPkg && pkg.mainPkg.config && (pkg.mainPkg.config.preferredEditor == pxt.BLOCKS_PROJECT_NAME)));
+        const blocksFileExplorer = !!pxt.appTarget.appTheme.blocksFileExplorer;
+        const blocksPreferredEditor = pkg.mainPkg && pkg.mainPkg.config && (pkg.mainPkg.config.preferredEditor == pxt.BLOCKS_PROJECT_NAME);
+        const hideFileListForBlocks = !blocksFileExplorer && (isBlocks || blocksPreferredEditor);
+        const showFileList = !sandbox && !inTutorial && !this.isAssetsActive() && !hideFileListForBlocks;
         const hasIdentity = pxt.auth.hasIdentity();
         return (
             <div id='root' className={rootClasses}>
