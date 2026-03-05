@@ -723,11 +723,6 @@ export class ProjectView
     openBlocks(blocksFile?: pkg.File) {
         if (this.updatingEditorFile) return; // already transitioning
 
-        // const blocksFileExplorer = !!pxt.appTarget.appTheme.blocksFileExplorer;
-        // if (blocksFileExplorer && !this.state.showFiles) {
-        //     this.setState({ showFiles: true });
-        // }
-
         const mainBlocks = pkg.mainEditorPkg().files[pxt.MAIN_BLOCKS];
         const targetBlocksFile = blocksFile || mainBlocks;
 
@@ -781,11 +776,6 @@ export class ProjectView
      */
     async openBlocksAsync(blocksFile?: pkg.File) {
         if (this.updatingEditorFile) return; // already transitioning
-
-        // const blocksFileExplorer = !!pxt.appTarget.appTheme.blocksFileExplorer;
-        // if (blocksFileExplorer && !this.state.showFiles) {
-        //     this.setState({ showFiles: true });
-        // }
 
         const epkg = pkg.mainEditorPkg();
 
@@ -1899,7 +1889,6 @@ export class ProjectView
 
             this.setState({
                 home: false,
-                // showFiles: blocksFileExplorer ? true : (h.githubId ? true : false),
                 showFiles: h.githubId ? true : false,
                 editorState: editorState,
                 tutorialOptions: h.tutorial,
