@@ -1,4 +1,5 @@
 import * as Blockly from "blockly";
+import { BlocksProgram } from "./blocksProgram";
 
 let _promptTranslateBlock: (blockId: string, blockTranslationIds: string[]) => void;
 
@@ -127,6 +128,19 @@ export function getCopyPasteHandlers() {
             copyPrecondition: _copyPre,
             pastePrecondition: _pastePre,
         };
+    }
+    return null;
+}
+
+let _getGlobalProgram: () => BlocksProgram;
+
+export function setGetGlobalProgram(impl: () => BlocksProgram) {
+    _getGlobalProgram = impl;
+}
+
+export function getGlobalProgram() {
+    if (_getGlobalProgram) {
+        return _getGlobalProgram();
     }
     return null;
 }
