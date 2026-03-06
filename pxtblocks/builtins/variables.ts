@@ -1,7 +1,8 @@
 import * as Blockly from "blockly";
 import { createFlyoutGroupLabel, createFlyoutHeadingLabel, mkVariableFieldBlock } from "../toolbox";
 import { installBuiltinHelpInfo, setBuiltinHelpInfo } from "../help";
-import { EXPORTED_VARIABLE_TYPE, IMPORTED_VARIABLE_TYPE } from "../blocksProgram";
+import { BlocksVariableSymbol, EXPORTED_VARIABLE_TYPE, IMPORTED_VARIABLE_TYPE } from "../blocksProgram";
+import { getGlobalProgram } from "../external";
 
 export const CREATE_VAR_BTN_ID = 'create-variable-btn';
 export const CREATE_GLOBAL_VAR_BTN_ID = 'create-global-variable-btn';
@@ -12,15 +13,64 @@ export function initVariables() {
 
     Blockly.Variables.flyoutCategoryBlocks = function (workspace) {
         const map = workspace.getVariableMap();
-        let variableModelList = map.getVariablesOfType('').concat(map.getVariablesOfType(EXPORTED_VARIABLE_TYPE)).concat(map.getVariablesOfType(IMPORTED_VARIABLE_TYPE));
+        const program = getGlobalProgram();
+        let variableModelList = map.getVariablesOfType('')
+        let mostRecentVariable = variableModelList[variableModelList.length - 1];
+        variableModelList = variableModelList.concat(map.getVariablesOfType(EXPORTED_VARIABLE_TYPE)).concat(map.getVariablesOfType(IMPORTED_VARIABLE_TYPE));
+
+        const symbolMap: Map<string, BlocksVariableSymbol> = new Map<string, BlocksVariableSymbol>();
+        if (program) {
+
+            for (const v of variableModelList) {
+                const symbol = program.getVariableSymbol(v.getId());
+                if (symbol) {
+                    symbolMap.set(v.getId(), symbol);
+                }
+            }
+
+            variableModelList.sort((a, b) => {
+                const symA = symbolMap.get(a.getId());
+                const symB = symbolMap.get(b.getId());
+
+                if (symA && symB) {
+                    if (symA.file === symB.file) {
+                        return Blockly.Variables.compareByName(a, b);
+                    }
+                    else {
+                        return symA.file.localeCompare(symB.file, undefined, { sensitivity: 'base' });
+                    }
+                }
+                else if (symA) {
+                    return 1;
+                }
+                else if (symB) {
+                    return -1;
+                }
+                else {
+                    return Blockly.Variables.compareByName(a, b);
+                }
+            })
+        }
+        else {
+            variableModelList.sort(Blockly.Variables.compareByName);
+        }
 
         let xmlList: HTMLElement[] = [];
         if (variableModelList.length > 0) {
-            let mostRecentVariable = variableModelList[variableModelList.length - 1];
-            variableModelList.sort(Blockly.Variables.compareByName);
+            let currentFile: string;
+
             // variables getters first
             for (let i = 0; i < variableModelList.length; i++) {
                 const variable = variableModelList[i];
+                const symbol = symbolMap.get(variable.getId());
+                if (symbol) {
+                    if (currentFile !== symbol.file) {
+                        currentFile = symbol.file;
+                        const label = createFlyoutGroupLabel(currentFile);
+                        xmlList.push(label);
+                    }
+                }
+
                 if (Blockly.Blocks['variables_get']) {
                     const block = mkVariableFieldBlock(
                         "variables_get",
@@ -36,7 +86,7 @@ export function initVariables() {
             xmlList[xmlList.length - 1].setAttribute('gap', '24');
 
             if (Blockly.Blocks['variables_change'] || Blockly.Blocks['variables_set']) {
-                xmlList.unshift(createFlyoutGroupLabel(lf("Your Variables")));
+                xmlList.unshift(createFlyoutGroupLabel(lf("Local Variables")));
             }
 
             if (Blockly.Blocks['variables_change']) {
