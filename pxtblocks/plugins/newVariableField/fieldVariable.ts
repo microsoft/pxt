@@ -1,6 +1,12 @@
 import * as Blockly from "blockly";
 import { showEditorMixin } from "./fieldDropdownMixin";
 
+import svg = pxt.svgUtil;
+
+const ICON_WIDTH = 20;
+const ICON_PADDING = 8;
+const TEXT_ARROW_PADDING = 15; // Extra padding between text end and arrow
+
 /**
  * This is the same as the Blockly variable field but with the addition
  * of a "New Variable" option in the dropdown
@@ -58,6 +64,7 @@ export class FieldVariable extends Blockly.FieldVariable {
     private svgRootBinding: Blockly.browserEvents.Data | null = null;
     private fieldRootBinding: Blockly.browserEvents.Data | null = null;
     private clickTargetRect: SVGRectElement;
+    private globeIcon: svg.Text;
 
     override initView() {
         super.initView();
@@ -75,6 +82,13 @@ export class FieldVariable extends Blockly.FieldVariable {
         // Make sure to unset the border rect so that it isn't included in size
         // calculations
         this.borderRect_ = undefined;
+
+        // Add globe icon
+        this.globeIcon = new svg.Text("\uf0ac")
+            .setClass("semanticIcon")
+            .setAttribute("alignment-baseline", "middle")
+            .anchor("middle");
+        this.fieldGroup_.appendChild(this.globeIcon.el);
     }
 
     override shouldAddBorderRect_() {
@@ -150,6 +164,17 @@ export class FieldVariable extends Blockly.FieldVariable {
         }
     }
 
+    protected override updateSize_(margin?: number): void {
+        // Let parent calculate the base size first
+        super.updateSize_(margin);
+
+        // Then add extra width for the icon if we're rendering it
+        if (this.globeIcon && !this.shouldAddBorderRect_()) {
+            // Add space for: icon + padding between icon and text + extra padding after text for arrow
+            this.size_.width += ICON_WIDTH + ICON_PADDING + TEXT_ARROW_PADDING;
+        }
+    }
+
     protected override positionBorderRect_() {
         super.positionBorderRect_();
 
@@ -167,6 +192,53 @@ export class FieldVariable extends Blockly.FieldVariable {
             'ry',
             String(this.getConstants()!.FIELD_BORDER_RECT_RADIUS),
         );
+
+        // Position globe icon
+        if (this.globeIcon) {
+            this.globeIcon.at(ICON_WIDTH / 2, this.size_.height / 2);
+        }
+    }
+
+    protected override render_() {
+        super.render_();
+
+        // After parent renders, shift all children (except the icon) to make room for icon
+        if (this.globeIcon && !this.shouldAddBorderRect_() && this.fieldGroup_) {
+            const children = this.fieldGroup_.children;
+            for (let i = 0; i < children.length; i++) {
+                const child = children[i] as SVGElement;
+
+                // Skip the globe icon itself
+                if (child === this.globeIcon.el) {
+                    continue;
+                }
+
+                // Shift elements with x attribute (like text)
+                if (child.hasAttribute('x')) {
+                    const currentX = parseFloat(child.getAttribute('x') || '0');
+                    child.setAttribute('x', String(currentX + ICON_WIDTH + ICON_PADDING));
+                }
+
+                // Shift elements with transform attribute (like arrow)
+                const transform = child.getAttribute('transform');
+                if (transform) {
+                    const match = transform.match(/translate\(([-\d.]+),\s*([-\d.]+)\)/);
+                    if (match) {
+                        const x = parseFloat(match[1]);
+                        const y = parseFloat(match[2]);
+                        child.setAttribute('transform', `translate(${x + ICON_WIDTH + ICON_PADDING}, ${y})`);
+                    }
+                }
+            }
+
+            // Update the width to account for the icon and shifted elements
+            this.size_.width += ICON_WIDTH + ICON_PADDING;
+
+            // Update the click target rect to cover the new width
+            if (this.clickTargetRect) {
+                this.clickTargetRect.setAttribute('width', String(this.size_.width));
+            }
+        }
     }
 
     protected showEditor_(e?: MouseEvent): void {
