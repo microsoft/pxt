@@ -22,6 +22,9 @@ export function initVariables() {
 
         let xmlList: HTMLElement[] = [];
         if (variableModelList.length > 0) {
+            if (!mostRecentVariable) {
+                mostRecentVariable = variableModelList[0];
+            }
             let currentFile: string;
 
             // variables getters first

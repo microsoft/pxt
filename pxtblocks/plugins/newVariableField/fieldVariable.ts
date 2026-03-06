@@ -66,6 +66,7 @@ export class FieldVariable extends Blockly.FieldVariable {
     private fieldRootBinding: Blockly.browserEvents.Data | null = null;
     private clickTargetRect: SVGRectElement;
     private globeIcon: svg.Text;
+    private globeIconVisible: boolean = false;
 
     /**
      * Check if the current variable is a global variable (exported or imported)
@@ -80,6 +81,22 @@ export class FieldVariable extends Blockly.FieldVariable {
     override initView() {
         super.initView();
 
+        this.globeIcon = new svg.Text("\uf0ac")
+            .setClass("semanticIcon")
+            .setAttribute("alignment-baseline", "middle")
+            .setAttribute("dy", "3.5")
+            .anchor("middle");
+        this.fieldGroup_.appendChild(this.globeIcon.el);
+
+        // Add globe icon only for global variables
+        if (this.isGlobalVariable()) {
+            this.globeIconVisible = true;
+        }
+        else {
+            this.globeIconVisible = false;
+            this.globeIcon.el.style.display = "none";
+        }
+
         if (this.shouldAddBorderRect_()) {
             return;
         }
@@ -93,15 +110,6 @@ export class FieldVariable extends Blockly.FieldVariable {
         // Make sure to unset the border rect so that it isn't included in size
         // calculations
         this.borderRect_ = undefined;
-
-        // Add globe icon only for global variables
-        if (this.isGlobalVariable()) {
-            this.globeIcon = new svg.Text("\uf0ac")
-                .setClass("semanticIcon")
-                .setAttribute("alignment-baseline", "middle")
-                .anchor("middle");
-            this.fieldGroup_.appendChild(this.globeIcon.el);
-        }
     }
 
     override shouldAddBorderRect_() {
@@ -182,7 +190,7 @@ export class FieldVariable extends Blockly.FieldVariable {
         super.updateSize_(margin);
 
         // Then add extra width for the icon if we're rendering it
-        if (this.globeIcon && !this.shouldAddBorderRect_()) {
+        if (this.globeIconVisible) {
             // Add space for: icon + padding between icon and text + extra padding after text for arrow
             this.size_.width += ICON_WIDTH + ICON_PADDING + TEXT_ARROW_PADDING;
         }
@@ -190,6 +198,17 @@ export class FieldVariable extends Blockly.FieldVariable {
 
     protected override positionBorderRect_() {
         super.positionBorderRect_();
+
+        // Position globe icon
+        if (this.globeIcon) {
+            this.globeIcon.at(ICON_WIDTH / 2, this.size_.height / 2);
+
+            if (this.globeIconVisible && this.borderRect_) {
+                this.globeIcon.at(ICON_PADDING + ICON_WIDTH / 2, this.size_.height / 2);
+                this.borderRect_.setAttribute("x", String(Number(this.borderRect_.getAttribute("x") || 0) - ICON_WIDTH - ICON_PADDING));
+                this.borderRect_.setAttribute("width", String(Number(this.borderRect_.getAttribute("width") || 0) + ICON_WIDTH + ICON_PADDING));
+            }
+        }
 
         // The logic below is duplicated from the blockly implementation
         if (!this.clickTargetRect) {
@@ -205,18 +224,26 @@ export class FieldVariable extends Blockly.FieldVariable {
             'ry',
             String(this.getConstants()!.FIELD_BORDER_RECT_RADIUS),
         );
-
-        // Position globe icon
-        if (this.globeIcon) {
-            this.globeIcon.at(ICON_WIDTH / 2, this.size_.height / 2);
-        }
     }
 
     protected override render_() {
+        if (this.globeIcon) {
+            if (this.isGlobalVariable()) {
+                if (!this.globeIconVisible) {
+                    this.globeIconVisible = true;
+                    this.globeIcon.el.style.display = "";
+                }
+            }
+            else if (this.globeIconVisible) {
+                this.globeIconVisible = false;
+                this.globeIcon.el.style.display = "none";
+            }
+        }
+
         super.render_();
 
         // After parent renders, shift all children (except the icon) to make room for icon
-        if (this.globeIcon && !this.shouldAddBorderRect_() && this.fieldGroup_) {
+        if (this.globeIcon && this.globeIconVisible && this.fieldGroup_) {
             const children = this.fieldGroup_.children;
             for (let i = 0; i < children.length; i++) {
                 const child = children[i] as SVGElement;
@@ -246,11 +273,11 @@ export class FieldVariable extends Blockly.FieldVariable {
 
             // Update the width to account for the icon and shifted elements
             this.size_.width += ICON_WIDTH + ICON_PADDING;
+        }
 
-            // Update the click target rect to cover the new width
-            if (this.clickTargetRect) {
-                this.clickTargetRect.setAttribute('width', String(this.size_.width));
-            }
+        // Update the click target rect to cover the new width
+        if (this.clickTargetRect) {
+            this.clickTargetRect.setAttribute('width', String(this.size_.width));
         }
     }
 
