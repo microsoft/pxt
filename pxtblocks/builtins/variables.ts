@@ -13,47 +13,12 @@ export function initVariables() {
 
     Blockly.Variables.flyoutCategoryBlocks = function (workspace) {
         const map = workspace.getVariableMap();
-        const program = getGlobalProgram();
+
         let variableModelList = map.getVariablesOfType('')
         let mostRecentVariable = variableModelList[variableModelList.length - 1];
         variableModelList = variableModelList.concat(map.getVariablesOfType(EXPORTED_VARIABLE_TYPE)).concat(map.getVariablesOfType(IMPORTED_VARIABLE_TYPE));
 
-        const symbolMap: Map<string, BlocksVariableSymbol> = new Map<string, BlocksVariableSymbol>();
-        if (program) {
-
-            for (const v of variableModelList) {
-                const symbol = program.getVariableSymbol(v.getId());
-                if (symbol) {
-                    symbolMap.set(v.getId(), symbol);
-                }
-            }
-
-            variableModelList.sort((a, b) => {
-                const symA = symbolMap.get(a.getId());
-                const symB = symbolMap.get(b.getId());
-
-                if (symA && symB) {
-                    if (symA.file === symB.file) {
-                        return Blockly.Variables.compareByName(a, b);
-                    }
-                    else {
-                        return symA.file.localeCompare(symB.file, undefined, { sensitivity: 'base' });
-                    }
-                }
-                else if (symA) {
-                    return 1;
-                }
-                else if (symB) {
-                    return -1;
-                }
-                else {
-                    return Blockly.Variables.compareByName(a, b);
-                }
-            })
-        }
-        else {
-            variableModelList.sort(Blockly.Variables.compareByName);
-        }
+        const symbolMap = sortVariables(variableModelList);
 
         let xmlList: HTMLElement[] = [];
         if (variableModelList.length > 0) {
@@ -319,3 +284,43 @@ function flyoutCategory(workspace: Blockly.WorkspaceSvg, useXml: boolean): Eleme
     xmlList = xmlList.concat(blockList);
     return xmlList;
 };
+
+export function sortVariables(variableModelList: Blockly.IVariableModel<Blockly.IVariableState>[]): Map<string, BlocksVariableSymbol> {
+    const program = getGlobalProgram();
+    const symbolMap: Map<string, BlocksVariableSymbol> = new Map<string, BlocksVariableSymbol>();
+    if (program) {
+        for (const v of variableModelList) {
+            const symbol = program.getVariableSymbol(v.getId());
+            if (symbol) {
+                symbolMap.set(v.getId(), symbol);
+            }
+        }
+
+        variableModelList.sort((a, b) => {
+            const symA = symbolMap.get(a.getId());
+            const symB = symbolMap.get(b.getId());
+
+            if (symA && symB) {
+                if (symA.file === symB.file) {
+                    return Blockly.Variables.compareByName(a, b);
+                }
+                else {
+                    return symA.file.localeCompare(symB.file, undefined, { sensitivity: 'base' });
+                }
+            }
+            else if (symA) {
+                return 1;
+            }
+            else if (symB) {
+                return -1;
+            }
+            else {
+                return Blockly.Variables.compareByName(a, b);
+            }
+        })
+    }
+    else {
+        variableModelList.sort(Blockly.Variables.compareByName);
+    }
+    return symbolMap;
+}
