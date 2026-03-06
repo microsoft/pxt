@@ -1,5 +1,6 @@
 import * as Blockly from "blockly";
 import { showEditorMixin } from "./fieldDropdownMixin";
+import { EXPORTED_VARIABLE_TYPE, IMPORTED_VARIABLE_TYPE } from "../../blocksProgram";
 
 import svg = pxt.svgUtil;
 
@@ -66,6 +67,16 @@ export class FieldVariable extends Blockly.FieldVariable {
     private clickTargetRect: SVGRectElement;
     private globeIcon: svg.Text;
 
+    /**
+     * Check if the current variable is a global variable (exported or imported)
+     */
+    protected isGlobalVariable(): boolean {
+        const variable = this.getVariable();
+        if (!variable) return false;
+        const varType = variable.getType();
+        return varType === EXPORTED_VARIABLE_TYPE || varType === IMPORTED_VARIABLE_TYPE;
+    }
+
     override initView() {
         super.initView();
 
@@ -83,12 +94,14 @@ export class FieldVariable extends Blockly.FieldVariable {
         // calculations
         this.borderRect_ = undefined;
 
-        // Add globe icon
-        this.globeIcon = new svg.Text("\uf0ac")
-            .setClass("semanticIcon")
-            .setAttribute("alignment-baseline", "middle")
-            .anchor("middle");
-        this.fieldGroup_.appendChild(this.globeIcon.el);
+        // Add globe icon only for global variables
+        if (this.isGlobalVariable()) {
+            this.globeIcon = new svg.Text("\uf0ac")
+                .setClass("semanticIcon")
+                .setAttribute("alignment-baseline", "middle")
+                .anchor("middle");
+            this.fieldGroup_.appendChild(this.globeIcon.el);
+        }
     }
 
     override shouldAddBorderRect_() {
