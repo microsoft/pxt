@@ -809,6 +809,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
         this.blocksProgram = new MultiWorkspaceBlocksProgram(host, this.editor);
         pxtblockly.contextMenu.setupWorkspaceContextMenu(this.editor);
+        pxtblockly.external.setGetGlobalProgram(() => this.blocksProgram);
 
         // set Blockly Colors
         (async () => {

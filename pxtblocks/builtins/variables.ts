@@ -1,9 +1,11 @@
 import * as Blockly from "blockly";
 import { createFlyoutGroupLabel, createFlyoutHeadingLabel, mkVariableFieldBlock } from "../toolbox";
 import { installBuiltinHelpInfo, setBuiltinHelpInfo } from "../help";
-import { EXPORTED_VARIABLE_TYPE, IMPORTED_VARIABLE_TYPE } from "../blocksProgram";
+import { BlocksVariableSymbol, EXPORTED_VARIABLE_TYPE, IMPORTED_VARIABLE_TYPE } from "../blocksProgram";
+import { getGlobalProgram } from "../external";
 
 export const CREATE_VAR_BTN_ID = 'create-variable-btn';
+export const CREATE_GLOBAL_VAR_BTN_ID = 'create-global-variable-btn';
 
 export function initVariables() {
     let varname = lf("{id:var}item");
@@ -11,15 +13,29 @@ export function initVariables() {
 
     Blockly.Variables.flyoutCategoryBlocks = function (workspace) {
         const map = workspace.getVariableMap();
-        let variableModelList = map.getVariablesOfType('').concat(map.getVariablesOfType(EXPORTED_VARIABLE_TYPE)).concat(map.getVariablesOfType(IMPORTED_VARIABLE_TYPE));
+
+        let variableModelList = map.getVariablesOfType('')
+        let mostRecentVariable = variableModelList[variableModelList.length - 1];
+        variableModelList = variableModelList.concat(map.getVariablesOfType(EXPORTED_VARIABLE_TYPE)).concat(map.getVariablesOfType(IMPORTED_VARIABLE_TYPE));
+
+        const symbolMap = sortVariables(variableModelList);
 
         let xmlList: HTMLElement[] = [];
         if (variableModelList.length > 0) {
-            let mostRecentVariable = variableModelList[variableModelList.length - 1];
-            variableModelList.sort(Blockly.Variables.compareByName);
+            let currentFile: string;
+
             // variables getters first
             for (let i = 0; i < variableModelList.length; i++) {
                 const variable = variableModelList[i];
+                const symbol = symbolMap.get(variable.getId());
+                if (symbol) {
+                    if (currentFile !== symbol.file) {
+                        currentFile = symbol.file;
+                        const label = createFlyoutGroupLabel(currentFile);
+                        xmlList.push(label);
+                    }
+                }
+
                 if (Blockly.Blocks['variables_get']) {
                     const block = mkVariableFieldBlock(
                         "variables_get",
@@ -35,7 +51,7 @@ export function initVariables() {
             xmlList[xmlList.length - 1].setAttribute('gap', '24');
 
             if (Blockly.Blocks['variables_change'] || Blockly.Blocks['variables_set']) {
-                xmlList.unshift(createFlyoutGroupLabel(lf("Your Variables")));
+                xmlList.unshift(createFlyoutGroupLabel(lf("Local Variables")));
             }
 
             if (Blockly.Blocks['variables_change']) {
@@ -96,7 +112,7 @@ export function initVariables() {
     const variablesGetDef = pxt.blocks.getBlockDefinition(variablesGetId);
     msg.VARIABLES_GET_CREATE_SET = variablesGetDef.block["VARIABLES_GET_CREATE_SET"];
     Blockly.Blocks[variablesGetId] = {
-        init: function() {
+        init: function () {
             this.jsonInit(
                 {
                     "type": "variables_get",
@@ -106,7 +122,7 @@ export function initVariables() {
                             "type": "field_variable",
                             "name": "VAR",
                             "variable": "%{BKY_VARIABLES_DEFAULT_NAME}",
-                            "variableTypes": [""],
+                            "variableTypes": ["", IMPORTED_VARIABLE_TYPE, EXPORTED_VARIABLE_TYPE],
                         },
                     ],
                     "output": null,
@@ -137,22 +153,22 @@ export function initVariables() {
     msg.VARIABLES_DEFAULT_NAME = varname;
     msg.VARIABLES_SET_CREATE_GET = lf("Create 'get %1'");
     Blockly.Blocks[variablesSetId] = {
-        init: function() {
+        init: function () {
             this.jsonInit(
                 {
                     "type": "variables_set",
                     "message0": "%{BKY_VARIABLES_SET}",
                     "args0": [
-                    {
-                        "type": "field_variable",
-                        "name": "VAR",
-                        "variable": "%{BKY_VARIABLES_DEFAULT_NAME}",
-                        "variableTypes": [""],
-                    },
-                    {
-                        "type": "input_value",
-                        "name": "VALUE",
-                    },
+                        {
+                            "type": "field_variable",
+                            "name": "VAR",
+                            "variable": "%{BKY_VARIABLES_DEFAULT_NAME}",
+                            "variableTypes": ["", IMPORTED_VARIABLE_TYPE, EXPORTED_VARIABLE_TYPE],
+                        },
+                        {
+                            "type": "input_value",
+                            "name": "VALUE",
+                        },
                     ],
                     "previousStatement": null,
                     "nextStatement": null,
@@ -179,7 +195,7 @@ export function initVariables() {
                         "type": "field_variable",
                         "name": "VAR",
                         "variable": varname,
-                        "variableTypes": [""]
+                        "variableTypes": ["", IMPORTED_VARIABLE_TYPE, EXPORTED_VARIABLE_TYPE]
                     },
                     {
                         "type": "input_value",
@@ -247,13 +263,64 @@ function flyoutCategory(workspace: Blockly.WorkspaceSvg, useXml: boolean): Eleme
     // This id is used to re-focus the create variable button after the dialog is closed.
     button.setAttribute('id', CREATE_VAR_BTN_ID);
 
+    const globalButton = document.createElement('button') as HTMLElement;
+    globalButton.setAttribute('text', lf("Make a Global Variable..."));
+    globalButton.setAttribute('callbackKey', 'CREATE_GLOBAL_VARIABLE');
+    // This id is used to re-focus the create variable button after the dialog is closed.
+    globalButton.setAttribute('id', CREATE_GLOBAL_VAR_BTN_ID);
+
     workspace.registerButtonCallback('CREATE_VARIABLE', function (button) {
         Blockly.Variables.createVariableButtonHandler(button.getTargetWorkspace());
     });
 
+    workspace.registerButtonCallback('CREATE_GLOBAL_VARIABLE', function (button) {
+        Blockly.Variables.createVariableButtonHandler(button.getTargetWorkspace(), null, EXPORTED_VARIABLE_TYPE);
+    });
+
     xmlList.push(button);
+    xmlList.push(globalButton);
 
     const blockList = Blockly.Variables.flyoutCategoryBlocks(workspace) as HTMLElement[];
     xmlList = xmlList.concat(blockList);
     return xmlList;
 };
+
+export function sortVariables(variableModelList: Blockly.IVariableModel<Blockly.IVariableState>[]): Map<string, BlocksVariableSymbol> {
+    const program = getGlobalProgram();
+    const symbolMap: Map<string, BlocksVariableSymbol> = new Map<string, BlocksVariableSymbol>();
+    if (program) {
+        for (const v of variableModelList) {
+            const symbol = program.getVariableSymbol(v.getId());
+            if (symbol) {
+                symbolMap.set(v.getId(), symbol);
+            }
+        }
+
+        variableModelList.sort((a, b) => {
+            const symA = symbolMap.get(a.getId());
+            const symB = symbolMap.get(b.getId());
+
+            if (symA && symB) {
+                if (symA.file === symB.file) {
+                    return Blockly.Variables.compareByName(a, b);
+                }
+                else {
+                    return symA.file.localeCompare(symB.file, undefined, { sensitivity: 'base' });
+                }
+            }
+            else if (symA) {
+                return 1;
+            }
+            else if (symB) {
+                return -1;
+            }
+            else {
+                return Blockly.Variables.compareByName(a, b);
+            }
+        })
+    }
+    else {
+        variableModelList.sort(Blockly.Variables.compareByName);
+    }
+    return symbolMap;
+}

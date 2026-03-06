@@ -62,6 +62,7 @@ export interface BlocksProgram {
     getKindInfo(kindName: string): string[];
     getVariableQualifiedName(varName: string, workspace: Blockly.Workspace): string;
     refreshSymbols?(): void;
+    getVariableSymbol(varId: string): BlocksVariableSymbol;
 }
 
 
@@ -121,6 +122,19 @@ export class SingleWorkspaceBlocksProgram implements BlocksProgram {
 
     getVariableQualifiedName(varName: string, workspace: Blockly.Workspace): string {
         return varName;
+    }
+
+    getVariableSymbol(varId: string): BlocksVariableSymbol {
+        const variable = this.workspace.getVariableMap().getVariableById(varId);
+        if (variable) {
+            return {
+                type: "variable",
+                name: variable.getName(),
+                id: variable.getId(),
+                file: "main.blocks"
+            };
+        }
+        return null;
     }
 }
 
@@ -305,6 +319,17 @@ export class MultiWorkspaceBlocksProgram implements BlocksProgram {
             }
         }
         throw new Error(`Variable ${varName} not found in any workspace`);
+    }
+
+    getVariableSymbol(varId: string): BlocksVariableSymbol {
+        for (const symbols of this.symbolsCache.values()) {
+            for (const symbol of symbols) {
+                if (symbol.type === "variable" && symbol.id === varId) {
+                    return symbol;
+                }
+            }
+        }
+        return null;
     }
 
     protected defineSymbolInWorkspace(symbol: BlocksSymbol, workspace: Blockly.Workspace) {
