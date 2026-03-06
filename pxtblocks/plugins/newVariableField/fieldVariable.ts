@@ -282,7 +282,14 @@ export class FieldVariable extends Blockly.FieldVariable {
     }
 
     protected showEditor_(e?: MouseEvent): void {
-        showEditorMixin.call(this, e);
+        const varMap = this.sourceBlock_?.workspace?.getVariableMap();
+        let iconValues: string[] = [];
+
+        if (varMap) {
+            iconValues = varMap.getVariablesOfType(EXPORTED_VARIABLE_TYPE).concat(varMap.getVariablesOfType(IMPORTED_VARIABLE_TYPE)).map(v => v.getId());
+        }
+
+        showEditorMixin.call(this, e, "icon globe", iconValues);
     }
 
     getValue(): string | null {

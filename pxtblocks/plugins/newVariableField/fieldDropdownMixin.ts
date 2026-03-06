@@ -1,9 +1,9 @@
 import * as Blockly from "blockly";
-import { isImageProperties } from "../../fields";
+import { BlocklyTilemapChange, isImageProperties } from "../../fields";
 
 // This is the same as showEditor_ and dropdownCreate in field_dropdown
 // except that it supports separators between dropdown menu items
-export function showEditorMixin(this: Blockly.FieldDropdown, e?: MouseEvent) {
+export function showEditorMixin(this: Blockly.FieldDropdown, e?: MouseEvent, iconClass?: string, iconElements?: string[]) {
     const block = this.getSourceBlock();
     if (!block) {
         throw new Blockly.UnattachedFieldError();
@@ -41,7 +41,15 @@ export function showEditorMixin(this: Blockly.FieldDropdown, e?: MouseEvent) {
             return label;
         })();
 
-        const menuItem = new Blockly.MenuItem(content, value as string);
+        let menuItem: Blockly.MenuItem;
+
+        if (iconClass && iconElements?.includes(value as string)) {
+            menuItem = new MenuItemWithIcon(content, value as string, iconClass);
+        }
+        else {
+            menuItem = new Blockly.MenuItem(content, value as string);
+        }
+
         menuItem.setRole(Blockly.utils.aria.Role.OPTION);
         menuItem.setRightToLeft(block.RTL);
         menuItem.setCheckable(true);
@@ -114,10 +122,31 @@ class HorizontalRuleMenuItem extends Blockly.MenuItem {
     }
 }
 
+class MenuItemWithIcon extends Blockly.MenuItem {
+    iconElement_: Element;
+
+    constructor(label: string | HTMLElement, value: string, protected iconClass: string) {
+        super(label, value);
+    }
+
+    createDom(): Element {
+        const element = super.createDom()
+        const content = element.getElementsByClassName("blocklyMenuItemContent")[0] as HTMLElement;
+        this.iconElement_ = document.createElement("i");
+        this.iconElement_.className = this.iconClass;
+        content.appendChild(this.iconElement_);
+        content.classList.add("menuItemWithIcon");
+        return element;
+    }
+}
+
 Blockly.Css.register(`
 .blockly-menuseparator {
     border-top: 1px solid rgba(0, 0, 0, 0.2);
     margin: 4px 0;
     padding: 0;
+}
+.blocklyMenuItemContent.menuItemWithIcon > i {
+    margin-left: 8px;
 }
 `);
