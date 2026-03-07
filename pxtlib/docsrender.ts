@@ -728,7 +728,7 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
             return r;
         }
 
-        html = html.replace(/<h(\d)[^>]+>\s*([~@])?\s*(.*?)<\/h\d>/g, (full: string, lvl: string, tp: string | undefined, body: string) => {
+        html = html.replace(/<h(\d)[^>]*>\s*([~@])?\s*(.*?)<\/h\d>/g, (full: string, lvl: string, tp: string | undefined, body: string) => {
             let m = /^(\w+)\s+(.*)/.exec(body)
             let cmd = m ? m[1] : body
             let args = m ? m[2] : ""

@@ -1050,12 +1050,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     zoomIn() {
         if (!this.editor) return;
-        this.editor.zoomCenter(0.8);
+        this.editor.zoomCenter(5);
     }
 
     zoomOut() {
         if (!this.editor) return;
-        this.editor.zoomCenter(-0.8);
+        this.editor.zoomCenter(-5);
     }
 
     setScale(scale: number) {
@@ -1092,6 +1092,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     <ErrorList
                         errors={this.errors}
                         onSizeChange={this.onErrorListResize}
+                        collapsedByUser={this.parent.state.errorListCollapsedByUser}
+                        onUserCollapse={this.setErrorListCollapsePreference}
                         getErrorHelp={this.getErrorHelp}
                         showLoginDialog={this.parent.showLoginDialog}
                         startDebugger={this.startDebugger}
@@ -1103,6 +1105,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     onErrorListResize() {
         this.parent.fireResize();
+    }
+
+    protected setErrorListCollapsePreference = (collapsed: boolean) => {
+        this.parent.setState({
+            errorListCollapsedByUser: collapsed
+        });
     }
 
     onExceptionDetected(exception: pxsim.DebuggerBreakpointMessage) {

@@ -289,6 +289,12 @@ export class FieldTileset extends FieldImages implements FieldCustom {
     }
 
     protected updateAssetListener() {
+        if (!this.assetChangeListener) {
+            this.assetChangeListener = () => {
+                this.doValueUpdate_(this.getValue());
+                this.forceRerender();
+            };
+        }
         const project = pxt.react.getTilemapProject();
         project.removeChangeListener(pxt.AssetType.Tile, this.assetChangeListener);
         if (this.selectedOption_) {
@@ -296,10 +302,7 @@ export class FieldTileset extends FieldImages implements FieldCustom {
         }
     }
 
-    protected assetChangeListener = () => {
-       this.doValueUpdate_(this.getValue());
-       this.forceRerender();
-    }
+    protected assetChangeListener: () => void;
 
     saveState(_doFullSerialization?: boolean) {
         let asset = this.localTile || this.selectedOption_?.[2];

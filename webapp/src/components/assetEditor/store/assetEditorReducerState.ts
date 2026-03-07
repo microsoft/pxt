@@ -11,5 +11,5 @@ export interface AssetEditorState {
 }
 
 export function isGalleryAsset(asset?: pxt.Asset) {
-    return asset?.id.startsWith("sprites.");
+    return asset?.id.startsWith("sprites.") || (asset?.meta?.package && asset.meta.package !== "this");
 }

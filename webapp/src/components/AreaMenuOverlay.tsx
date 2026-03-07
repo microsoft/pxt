@@ -19,7 +19,7 @@ interface RectBounds {
     height: number;
 }
 
-type AreaId = "mainmenu" | "simulator" | "toolbox" | "editor" | "editortools" | "tutorial";
+type AreaId = "topbar" | "simulator" | "toolbox" | "workspace" | "bottombar" | "tutorial";
 
 interface Area {
     id: AreaId;
@@ -44,8 +44,8 @@ const isSimMini = () => !!document.querySelector(".miniSim");
 
 const areas: Area[] = [
     {
-        id: "mainmenu",
-        ariaLabel: lf("Main menu"),
+        id: "topbar",
+        ariaLabel: lf("Top bar"),
         shortcutKey: "1",
         getBounds() {
             return document.querySelector("#mainmenu")?.getBoundingClientRect();
@@ -144,8 +144,8 @@ const areas: Area[] = [
         }
     },
     {
-        id: "editor",
-        ariaLabel: lf("Editor"),
+        id: "workspace",
+        ariaLabel: lf("Workspace"),
         shortcutKey: "4",
         getBounds(projectView: IProjectView) {
             const editorSelectors = ["#pxtJsonEditor", "#githubEditor", "#blocksArea", "#serialEditor", "#assetEditor", "#monacoEditor"];
@@ -180,8 +180,8 @@ const areas: Area[] = [
         }
     },
     {
-        id: "editortools",
-        ariaLabel: lf("Editor toolbar"),
+        id: "bottombar",
+        ariaLabel: lf("Bottom bar"),
         shortcutKey: "5",
         getBounds() {
             return document.querySelector("#editortools")?.getBoundingClientRect();
@@ -250,7 +250,7 @@ export const AreaMenuOverlay = ({ parent }: AreaMenuOverlapProps) => {
     }, [parent]);
 
     // Something is awry, bail out.
-    const bailOut = !areaRects.get("editor");
+    const bailOut = !areaRects.get("workspace");
     useEffect(() => {
         if (bailOut) {
             parent.toggleAreaMenu();
@@ -261,8 +261,8 @@ export const AreaMenuOverlay = ({ parent }: AreaMenuOverlapProps) => {
         return null;
     }
     return ReactDOM.createPortal(
-        <FocusTrap dontRestoreFocus onEscape={handleEscape}>
-            <div className="area-menu-container" >
+        <FocusTrap dontRestoreFocus onEscape={handleEscape} arrowKeyNavigation={true} focusFirstItem>
+            <div className="area-menu-container" role="menu" aria-label={lf("Area overlay")}>
                 {areas.map(area => {
                     const rect = areaRects.get(area.id);
                     return rect ? (<AreaButton
@@ -293,6 +293,7 @@ const AreaButton = ({ shortcutKey, bounds, ...props }: AreaButtonProps) => {
     return <Button
         {...props}
         className={`area-button ${props.className}`}
+        role="menuitem"
         style={{
             top, height, left, width
         }}
