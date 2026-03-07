@@ -148,6 +148,7 @@ export function initVariables() {
     msg.DELETE_VARIABLE = lf("Delete the \"%1\" variable");
     msg.DELETE_VARIABLE_CONFIRMATION = lf("Delete %1 uses of the \"%2\" variable?");
     msg.NEW_VARIABLE_DROPDOWN = lf("New variable...");
+    msg.NEW_GLOBAL_VARIABLE_DROPDOWN = lf("New global variable...");
 
     // builtin variables_set
     const variablesSetId = "variables_set";

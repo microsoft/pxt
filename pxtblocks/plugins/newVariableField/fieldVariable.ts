@@ -14,6 +14,7 @@ const TEXT_ARROW_PADDING = 15; // Extra padding between text end and arrow
  */
 export class FieldVariable extends Blockly.FieldVariable {
     static CREATE_VARIABLE_ID = "CREATE_VARIABLE";
+    static CREATE_GLOBAL_VARIABLE_ID = "CREATE_GLOBAL_VARIABLE";
 
     static dropdownCreate(this: FieldVariable): Blockly.MenuOption[] {
         const options = Blockly.FieldVariable.dropdownCreate.call(this) as Blockly.MenuOption[];
@@ -25,6 +26,12 @@ export class FieldVariable extends Blockly.FieldVariable {
             0,
             [Blockly.Msg['NEW_VARIABLE_DROPDOWN'], FieldVariable.CREATE_VARIABLE_ID],
             [undefined, 'SEPARATOR']
+        );
+
+        options.splice(
+            insertIndex + 1,
+            0,
+            [Blockly.Msg['NEW_GLOBAL_VARIABLE_DROPDOWN'], FieldVariable.CREATE_GLOBAL_VARIABLE_ID]
         );
 
         return options;
@@ -45,14 +52,18 @@ export class FieldVariable extends Blockly.FieldVariable {
     protected override onItemSelected_(menu: Blockly.Menu, menuItem: Blockly.MenuItem) {
         if (this.sourceBlock_ && !this.sourceBlock_.isDeadOrDying()) {
             const id = menuItem.getValue();
-            if (id === FieldVariable.CREATE_VARIABLE_ID) {
+
+            // Handle variable creation (local or global)
+            if (id === FieldVariable.CREATE_VARIABLE_ID || id === FieldVariable.CREATE_GLOBAL_VARIABLE_ID) {
+                const variableType = id === FieldVariable.CREATE_GLOBAL_VARIABLE_ID ? EXPORTED_VARIABLE_TYPE : undefined;
+
                 Blockly.Variables.createVariableButtonHandler(this.sourceBlock_.workspace, name => {
-                    const newVar = this.sourceBlock_.workspace.getVariableMap().getVariable(name);
+                    const newVar = this.sourceBlock_.workspace.getVariableMap().getVariable(name, variableType);
 
                     if (newVar) {
                         this.setValue(newVar.getId());
                     }
-                });
+                }, variableType);
                 return;
             }
         }
