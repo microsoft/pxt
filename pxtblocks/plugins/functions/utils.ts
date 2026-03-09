@@ -20,6 +20,7 @@ import { isFunctionDefinition } from "../../compiler/util";
 import { ArgumentReporterBlock } from "./blocks/argumentReporterBlocks";
 import { DRAGGABLE_PARAM_INPUT_PREFIX } from "../../loader";
 import { getGlobalProgram } from "../../external";
+import { createFlyoutGroupLabel } from "../../toolbox";
 
 
 export type StringMap<T> = { [index: string]: T };
@@ -448,6 +449,7 @@ export function flyoutCategory(workspace: Blockly.WorkspaceSvg) {
     if (program) {
         program.refreshSymbols?.();
 
+        // feels hacky did i miss easy way to do this? easy way for now
         const currentFile = (program as any).currentlyLoadedFile as string | undefined;
         const localNames = new Set(getAllFunctionDefinitionBlocks(workspace).map(f => f.getName().toLowerCase()));
 
@@ -467,9 +469,7 @@ export function flyoutCategory(workspace: Blockly.WorkspaceSvg) {
             }
 
             if (importedFunctions.length) {
-                const header = Blockly.utils.xml.createElement("label");
-                header.setAttribute("text", `${file} functions`);
-                xmlList.push(header);
+                xmlList.push(createFlyoutGroupLabel(`${file} functions`));
 
                 for (const func of importedFunctions) {
                     addFunctionCallBlock(func.name, func.arguments);
