@@ -21,6 +21,7 @@ import { ArgumentReporterBlock } from "./blocks/argumentReporterBlocks";
 import { DRAGGABLE_PARAM_INPUT_PREFIX } from "../../loader";
 import { getGlobalProgram } from "../../external";
 import { createFlyoutGroupLabel } from "../../toolbox";
+import { BlocksFunctionSymbol, IMPORTED_FUNCTION_TYPE } from "../../blocksProgram";
 
 
 export type StringMap<T> = { [index: string]: T };
@@ -31,7 +32,22 @@ export function rename(this: Blockly.FieldTextInput, name: string) {
     const sourceBlock = this.sourceBlock_ as CommonFunctionBlock;
     const oldMutation = sourceBlock.mutationToDom();
 
-    const legalName = findLegalName(name, sourceBlock.workspace, sourceBlock);
+    let legalName = name;
+    const workspaces = getGlobalProgram()?.getAllWorkspaces()?.map(w => w.workspace) || [sourceBlock.workspace]
+
+    let didChange = true;
+    while (didChange) {
+        didChange = false;
+        for (const workspace of workspaces) {
+            const newName = findLegalName(legalName, workspace, sourceBlock);
+            if (newName !== legalName) {
+                legalName = newName;
+                didChange = true;
+                break;
+            }
+        }
+    }
+
     const oldName = this.getValue();
 
     if (!name) return oldName;
@@ -231,7 +247,7 @@ export function mutateCallersAndDefinition(name: string, ws: Blockly.Workspace, 
         } as CallerChange))
 
     const change = new MutateFunctionEvent(
-        definitionBlock.id,
+        definitionBlock?.id || newMutation.getAttribute("functionid"),
         callerChanges,
         Blockly.Xml.domToText(oldMutation),
         Blockly.Xml.domToText(newMutation),
@@ -462,8 +478,7 @@ export function flyoutCategory(workspace: Blockly.WorkspaceSvg) {
         program.refreshSymbols?.();
 
         const globeIcon = "\uf0ac";
-        // feels hacky did i miss easy way to do this? easy way for now
-        const currentFile = (program as any).currentlyLoadedFile as string | undefined;
+        const currentFile = program.getAllWorkspaces().find(w => w.workspace === workspace)?.fileName || pxt.MAIN_BLOCKS;
         const localNames = new Set(getAllFunctionDefinitionBlocks(workspace).map(f => f.getName().toLowerCase()));
 
         for (const file of program.listFiles()) {
@@ -602,6 +617,27 @@ export function isVariableBlockType(type: string) {
             return true;
     }
     return false;
+}
+
+export function lookupImportedFunctionDef(name: string, workspace: Blockly.Workspace, functionId?: string) {
+    const program = getGlobalProgram();
+    const symbol = program?.getFunctionSymbol(name);
+
+    let varModel: Blockly.IVariableModel<Blockly.IVariableState> | undefined;
+
+    if (symbol) {
+        varModel = workspace.getVariableMap().getVariableById(symbol.id);
+    }
+    if (!varModel && functionId) {
+        varModel = workspace.getVariableMap().getVariableById(functionId);
+    }
+
+    if (varModel?.getType() === IMPORTED_FUNCTION_TYPE) {
+        if (symbol) return symbol;
+        return JSON.parse(varModel.getName()) as BlocksFunctionSymbol;
+    }
+
+    return undefined;
 }
 
 interface DescendantChange {

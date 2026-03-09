@@ -5,9 +5,10 @@ import {
     FUNCTION_DECLARATION_BLOCK_TYPE,
     FUNCTION_DEFINITION_BLOCK_TYPE,
 } from "./constants";
-import { getDefinition, idsInUse, isCustomType, StringMap } from "./utils";
+import { getDefinition, idsInUse, isCustomType, lookupImportedFunctionDef, StringMap } from "./utils";
 import { MsgKey } from "./msg";
 import { BlocksFunctionSymbol } from "../../blocksProgram";
+import { external } from "../..";
 
 type CommonFunctionMixinType = typeof COMMON_FUNCTION_MIXIN;
 
@@ -295,17 +296,18 @@ export const COMMON_FUNCTION_MIXIN = {
                     }
                 }
                 else {
-                    const importedDef = this.workspace.getVariableMap().getVariableById(this.functionId_);
-                    if (importedDef) {
-                        const importedDefArgs = JSON.parse(importedDef.getName()) as BlocksFunctionSymbol;
+                    const importedFunction = lookupImportedFunctionDef(this.name_, this.workspace, this.functionId_);
+                    if (importedFunction) {
                         for (let i = 0; i < this.arguments_.length; ++i) {
-                            for (let j = 0; j < importedDefArgs.arguments.length; ++j) {
-                                if (importedDefArgs.arguments[j].name == this.arguments_[i].name) {
-                                    this.arguments_[i].id = importedDefArgs.arguments[j].id;
+                            for (let j = 0; j < importedFunction.arguments.length; ++j) {
+                                if (importedFunction.arguments[j].name == this.arguments_[i].name) {
+                                    this.arguments_[i].id = importedFunction.arguments[j].id;
                                     break;
                                 }
                             }
                         }
+
+                        this.functionId_ = importedFunction.id;
                     }
                 }
                 break;
