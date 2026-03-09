@@ -1470,12 +1470,19 @@ export class ProjectView
     }
 
     updateFileAsync(name: string, content: string, open?: boolean): Promise<void> {
-        const p = pkg.mainEditorPkg();
-        return p.setContentAsync(name, content)
-            .then(() => {
-                if (open) this.setFile(p.lookupFile("this/" + name));
-            })
+        const mainPkg = pkg.mainEditorPkg();
+        return mainPkg.setContentAsync(name, content)
             .then(() => this.reloadHeaderAsync())
+            .then(() => {
+                if (open) {
+                    const reloadedPkg = pkg.mainEditorPkg();
+                    const file = reloadedPkg.lookupFile("this/" + name);
+                    if (file) {
+                        if (pxteditor.isBlocks(file)) this.setSideFile(file);
+                        else this.setFile(file);
+                    }
+                }
+            })
     }
 
     isSideDocExpanded(): boolean {
