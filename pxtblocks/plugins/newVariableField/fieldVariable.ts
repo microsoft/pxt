@@ -108,23 +108,23 @@ export class FieldVariable extends Blockly.FieldVariable {
         if (!variable) return;
 
         const workspace = this.sourceBlock_.workspace;
+        const map = workspace.getVariableMap();
         const varName = variable.getName();
         const varId = variable.getId();
         const isGlobal = variable.getType() === EXPORTED_VARIABLE_TYPE;
-        console.log("this is the variable type");
-        console.log(variable.getType());
+        const newType = isGlobal ? '' : EXPORTED_VARIABLE_TYPE;
 
         if (isGlobal) {
             // Check if the variable is referenced in other workspaces
             const program = getGlobalProgram();
             if (program) {
                 const allWorkspaces = program.getAllWorkspaces();
-                for (const ws of allWorkspaces) {
-                    if (ws === workspace) continue;
+                for (const fileWs of allWorkspaces) {
+                    if (fileWs.workspace === workspace) continue;
 
-                    const importedVar = ws.getVariableMap().getVariableById(varId);
+                    const importedVar = fileWs.workspace.getVariableMap().getVariableById(varId);
                     if (importedVar) {
-                        const uses = Blockly.Variables.getVariableUsesById(ws, varId);
+                        const uses = Blockly.Variables.getVariableUsesById(fileWs.workspace, varId);
                         if (uses.length > 0) {
                             Blockly.dialog.alert(
                                 Blockly.Msg['CANNOT_MAKE_VARIABLE_LOCAL'].replace('%1', varName)
@@ -134,11 +134,8 @@ export class FieldVariable extends Blockly.FieldVariable {
                     }
                 }
             }
-
-            variable.setType('');
-        } else {
-            variable.setType(EXPORTED_VARIABLE_TYPE);
         }
+        map.changeVariableType(variable, newType);
 
         // Re-render all blocks that reference this variable so the globe icon updates
         const uses = Blockly.Variables.getVariableUsesById(workspace, varId);
@@ -153,6 +150,14 @@ export class FieldVariable extends Blockly.FieldVariable {
         const program = getGlobalProgram();
         if (program) {
             program.refreshSymbols?.();
+        }
+
+        // Refresh the flyout so variable blocks there reflect the updated type
+        if (workspace instanceof Blockly.WorkspaceSvg) {
+            const toolbox = workspace.getToolbox();
+            if (toolbox) {
+                (toolbox as Blockly.Toolbox).refreshSelection();
+            }
         }
     }
 
@@ -382,7 +387,9 @@ export class FieldVariable extends Blockly.FieldVariable {
         let iconValues: string[] = [];
 
         if (varMap) {
-            iconValues = varMap.getVariablesOfType(EXPORTED_VARIABLE_TYPE).concat(varMap.getVariablesOfType(IMPORTED_VARIABLE_TYPE)).map(v => v.getId());
+            iconValues = varMap.getAllVariables()
+                .filter(v => v.getType() === EXPORTED_VARIABLE_TYPE || v.getType() === IMPORTED_VARIABLE_TYPE)
+                .map(v => v.getId());
         }
 
         showEditorMixin.call(this, e, "icon globe", iconValues);
