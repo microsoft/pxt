@@ -1076,8 +1076,12 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         const { cardType, url, scr } = this.props;
         if (!cardType) return undefined;
 
-        const relPrefix = pxt.webConfig?.relprefix?.replace(/-+$/, "");
-        const baseUrl = `${window.location.origin}${relPrefix}`;
+        const relPrefix = (pxt.webConfig?.relprefix || "").replace(/-+$/, "");
+        const liveBaseUrl = (pxt.appTarget?.appTheme?.embedUrl || pxt.appTarget?.appTheme?.homeUrl || "").replace(/\/+$/, "");
+        const defaultBaseUrl = `${window.location.origin}${relPrefix}`;
+        const baseUrl = pxt.BrowserUtils.isPxtElectron() && liveBaseUrl
+            ? `${liveBaseUrl}${relPrefix}`
+            : defaultBaseUrl;
 
         const cardUrl = (scr?.url || url) as string;
         const defaultEditor = this.getActionEditor(cardType, undefined);
