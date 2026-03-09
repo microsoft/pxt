@@ -429,8 +429,16 @@ export function flyoutCategory(workspace: Blockly.WorkspaceSvg) {
         const mutation = Blockly.utils.xml.createElement("mutation");
         mutation.setAttribute("name", name);
         block.appendChild(mutation);
+
         for (const arg of args) {
             const argElement = Blockly.utils.xml.createElement("arg");
+            // <block type="function_call" x="25" y="25">
+            //   <mutation name="myFunc">
+            //     <arg name="bool" type="boolean" id="..."></arg>
+            //     <arg name="text" type="string" id="..."></arg>
+            //     <arg name="num" type="number" id="..."></arg>
+            //   </mutation>
+            // </block>
             argElement.setAttribute("name", arg.name);
             argElement.setAttribute("type", arg.type);
             argElement.setAttribute("id", arg.id);
