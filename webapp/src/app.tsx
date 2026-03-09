@@ -205,7 +205,7 @@ export class ProjectView
             isMultiplayerGame: false,
             activeTourConfig: undefined,
             mute: pxt.editor.MuteState.Unmuted,
-            feedback: {showing: false, kind: "generic"} // state that tracks if the feedback modal is showing and what kind
+            feedback: { showing: false, kind: "generic" } // state that tracks if the feedback modal is showing and what kind
         };
         if (!this.settings.editorFontSize) this.settings.editorFontSize = /mobile/i.test(navigator.userAgent) ? 15 : 19;
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
@@ -334,7 +334,7 @@ export class ProjectView
                 this.setSimulatorFullScreen(false);
                 return;
             }
-            case "toggleareamenu" : {
+            case "toggleareamenu": {
                 this.toggleAreaMenu();
                 return
             }
@@ -1861,7 +1861,7 @@ export class ProjectView
             // override inferred editor with tutorial editor if present in markdown
             const tutorialPreferredEditor = h.tutorial?.metadata?.preferredEditor;
             if (tutorialPreferredEditor) {
-                let fileName  = "this/" + filenameForEditor(tutorialPreferredEditor);
+                let fileName = "this/" + filenameForEditor(tutorialPreferredEditor);
                 file = main.lookupFile(fileName);
 
                 // If the preferred file does not exist, create it.
@@ -1977,7 +1977,7 @@ export class ProjectView
         const [initialLang, baseLang, initialLangLowerCase] = pxt.Util.normalizeLanguageCode(pxt.Util.userLanguage());
         const priorityOrder = [initialLang, initialLangLowerCase, baseLang].filter((lang) => typeof lang === "string");
         const pathsToTest = [
-            ...priorityOrder.map(lang =>`this/_locales/${lang}/README.md`),
+            ...priorityOrder.map(lang => `this/_locales/${lang}/README.md`),
             "this/README.md"
         ];
         for (const path of pathsToTest) {
@@ -2107,8 +2107,8 @@ export class ProjectView
                     }
                     entry.xml =
                         Blockly.Xml.domToText(block)
-                        .replace(/^<xml[^>]*>\n*/i, '')
-                        .replace(/\n*<\/xml>\n*$/i, '');
+                            .replace(/^<xml[^>]*>\n*/i, '')
+                            .replace(/\n*<\/xml>\n*$/i, '');
                     blockConfig.blocks.push(entry);
                 } catch (e) {
                     // Failed to resolve block, don't propagate exception
@@ -2219,7 +2219,7 @@ export class ProjectView
         }
 
         if (updateConfig) {
-             pkg.mainPkg.saveConfig();
+            pkg.mainPkg.saveConfig();
         }
 
         await workspace.saveAsync(header);
@@ -2481,7 +2481,7 @@ export class ProjectView
             .then(buf => this.importProjectCoreAsync(buf, options))
     }
 
-   async importZipFileAsync(file: File, options?: pxt.editor.ImportFileOptions) {
+    async importZipFileAsync(file: File, options?: pxt.editor.ImportFileOptions) {
         if (!file) return;
         pxt.tickEvent("import.zip");
 
@@ -2539,7 +2539,7 @@ export class ProjectView
             }
 
             if (cancelled) break;
-            progress.done ++;
+            progress.done++;
             core.forceUpdate();
         }
 
@@ -3278,7 +3278,7 @@ export class ProjectView
         this.setFile(f);
     }
 
-    saveBlocksToTypeScriptAsync(): Promise<string> {
+    saveBlocksToTypeScriptAsync(): Promise<pxt.Map<string>> {
         return this.blocksEditor.saveToTypeScriptAsync();
     }
 
@@ -3343,7 +3343,7 @@ export class ProjectView
                     return this.editor.saveToTypeScriptAsync(true)
                         .then(src => {
                             if (src !== undefined) {
-                                mainPkg.cacheTranspile(fromLanguage, fromText, "ts", src);
+                                mainPkg.cacheTranspile(fromLanguage, fromText, "ts", typeof src === "string" ? src : JSON.stringify(src));
                             }
                             return src;
                         });
@@ -3351,27 +3351,32 @@ export class ProjectView
 
                 return this.editor.saveToTypeScriptAsync()
             })
-            .then((src) => {
+            .then(async (src) => {
                 if (src === undefined && open) { // failed to convert
-                    return core.confirmAsync({
+                    await core.confirmAsync({
                         header: lf("Oops, there is a problem converting your code."),
                         body: lf("We are unable to convert your code to JavaScript."),
                         agreeLbl: lf("Done"),
                         agreeClass: "cancel",
                         agreeIcon: "cancel",
                         hasCloseIcon: true,
-                    }).then(b => {
-                        if (this.isPythonActive()) {
-                            pxt.shell.setEditorLanguagePref("py"); // stay in python, else go to blocks
-                        }
                     })
+                    if (this.isPythonActive()) {
+                        pxt.shell.setEditorLanguagePref("py"); // stay in python, else go to blocks
+                    }
                 }
                 if (src === undefined
                     || (this.editorFile && this.editorFile.name == this.editorFile.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME)))
-                    return Promise.resolve();
-                if (this.editorFile.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME))
-                    return this.saveVirtualFileAsync(pxt.JAVASCRIPT_PROJECT_NAME, src, open);
-                return Promise.resolve();
+                    return;
+                if (typeof src === "string") {
+                    if (this.editorFile.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME))
+                        await this.saveVirtualFileAsync(pxt.JAVASCRIPT_PROJECT_NAME, src, open);
+                }
+                else if (src) {
+                    for (const file of Object.keys(src)) {
+                        await this.saveVirtualFileAsyncInternal(pxt.JAVASCRIPT_PROJECT_NAME, src[file], open && file === this.editorFile?.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME), file);
+                    }
+                }
             });
 
         if (open) {
@@ -4494,7 +4499,7 @@ export class ProjectView
         return this.getShareUrl(script.shortid || script.id, false);
     }
 
-    async publishAsync (name: string, description?: string,screenshotUri?: string, forceAnonymous?: boolean): Promise<pxt.editor.ShareData> {
+    async publishAsync(name: string, description?: string, screenshotUri?: string, forceAnonymous?: boolean): Promise<pxt.editor.ShareData> {
         pxt.tickEvent("menu.embed.publish", undefined, { interactiveConsent: true });
         if ((name && this.state.projectName != name) || description !== undefined) {
             await this.updateHeaderNameAsync(name, description);
@@ -4745,11 +4750,11 @@ export class ProjectView
     }
 
     showThemePicker() {
-        this.setState( { themePickerOpen: true });
+        this.setState({ themePickerOpen: true });
     }
 
     hideThemePicker() {
-        this.setState( { themePickerOpen: false });
+        this.setState({ themePickerOpen: false });
     }
 
     showImportUrlDialog() {
@@ -4802,7 +4807,8 @@ export class ProjectView
         });
     }
 
-    showExitAndSaveDialog() {;
+    showExitAndSaveDialog() {
+        ;
         if (!pxt.shell.hasHomeScreen()) return;
 
         this.setState({ debugging: false })
@@ -5402,7 +5408,7 @@ export class ProjectView
     ///////////////////////////////////////////////////////////
 
     hideFeedback() {
-        this.setState({ feedback: {...this.state.feedback, showing: false } });
+        this.setState({ feedback: { ...this.state.feedback, showing: false } });
     }
 
     showFeedback(kind: ocv.FeedbackKind) {
@@ -5724,12 +5730,12 @@ export class ProjectView
                 {hwDialog ? <projects.ChooseHwDialog parent={this} ref={this.handleChooseHwDialogRef} /> : undefined}
                 {sandbox || !sharingEnabled ? undefined : <share.ShareEditor parent={this} ref={this.handleShareEditorRef} loading={this.state.publishing} />}
                 {selectLanguage ? <lang.LanguagePicker parent={this} ref={this.handleLanguagePickerRef} /> : undefined}
-                {feedbackEnabled && this.state.feedback.showing ? <FeedbackModal onClose={this.hideFeedback} kind={this.state.feedback.kind}/> : undefined}
+                {feedbackEnabled && this.state.feedback.showing ? <FeedbackModal onClose={this.hideFeedback} kind={this.state.feedback.kind} /> : undefined}
                 {sandbox ? <container.SandboxFooter parent={this} /> : undefined}
                 {hideMenuBar ? <div id="editorlogo"><a className="poweredbylogo"></a></div> : undefined}
                 {lightbox ? <sui.Dimmer isOpen={true} active={lightbox} portalClassName={'tutorial'} className={'ui modal'}
                     shouldFocusAfterRender={false} closable={true} onClose={this.hideLightbox} /> : undefined}
-                {this.state.areaMenuOpen && <AreaMenuOverlay parent={this}/>}
+                {this.state.areaMenuOpen && <AreaMenuOverlay parent={this} />}
                 {this.state.activeTourConfig && <Tour config={this.state.activeTourConfig} onClose={this.closeTour} />}
                 {this.state.themePickerOpen && <ThemePickerModal themes={this.themeManager.getAllColorThemes()} onThemeClicked={theme => this.setColorThemeById(theme?.id, true)} onClose={this.hideThemePicker} />}
             </div>

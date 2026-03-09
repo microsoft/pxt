@@ -60,7 +60,7 @@ export interface PlaceholderLikeBlock extends Blockly.Block {
 }
 
 export interface BlockCompilationResult {
-    source: string;
+    outfiles: pxt.Map<string>;
     sourceMap: pxt.blocks.BlockSourceInterval[];
     stats: pxt.Map<number>;
     diagnostics: BlockDiagnostic[];
@@ -68,6 +68,10 @@ export interface BlockCompilationResult {
 
 export interface BlockCompileOptions {
     emitTilemapLiterals?: boolean;
+}
+
+export interface PxtBlock extends Blockly.Block {
+    PXT_FILE: string;
 }
 
 
@@ -98,6 +102,7 @@ export enum BlockDeclarationType {
 }
 
 export interface BlockDiagnostic {
+    fileName: string;
     blockId: string;
     message: string;
 }
@@ -105,6 +110,8 @@ export interface BlockDiagnostic {
 export interface VarInfo {
     name: string;
     id: number;
+
+    fileName: string;
 
     escapedName?: string;
     type?: Point;
@@ -213,7 +220,7 @@ export function mkEnv(program: BlocksProgram, blockInfo?: pxtc.BlocksInfo, optio
                 }
             });
 
-        program.getAllWorkspaces().reduce((acc, workspace) => acc.concat(workspace.getTopBlocks(false)), [] as Blockly.Block[]).filter(isFunctionDefinition).forEach(b => {
+        program.getAllWorkspaces().reduce((acc, workspace) => acc.concat(workspace.workspace.getTopBlocks(false)), [] as Blockly.Block[]).filter(isFunctionDefinition).forEach(b => {
             // Add functions to the rename map to prevent name collisions with variables
             const name = b.type === "procedures_defnoreturn" ? b.getFieldValue("NAME") : b.getField("function_name").getText();
             escapeVarName(name, e, true);

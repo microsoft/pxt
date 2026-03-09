@@ -219,7 +219,7 @@ namespace pxt.blocks {
         }
 
         export function mkParenthesizedExpression(expression: JsNode): JsNode {
-            return isParenthesized(flattenNode([expression]).output) ? expression : mkGroup([mkText("("), expression, mkText(")")]);
+            return isParenthesized(flattenNode([expression], "").output) ? expression : mkGroup([mkText("("), expression, mkText(")")]);
         }
     }
 
@@ -276,9 +276,10 @@ namespace pxt.blocks {
         startPos: number; // 0-indexed from start of file including newlines
         endLine: number;
         endPos: number;
+        fileName?: string;
     }
 
-    export function flattenNode(app: JsNode[]) {
+    export function flattenNode(app: JsNode[], fileName?: string) {
         let sourceMap: BlockSourceInterval[] = [];
         let sourceMapById: pxt.Map<BlockSourceInterval> = {};
         let output = ""
@@ -407,7 +408,7 @@ namespace pxt.blocks {
                 else {
                     const interval: BlockSourceInterval = {
                         id: n.id,
-                        startLine: startLine, startPos, endLine: endLine, endPos
+                        startLine: startLine, startPos, endLine: endLine, endPos, fileName
                     }
                     sourceMapById[n.id] = interval;
                     sourceMap.push(interval)

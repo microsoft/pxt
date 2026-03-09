@@ -2,7 +2,7 @@
 
 
 import * as Blockly from "blockly";
-import { BlockCompilationResult, BlockCompileOptions, BlockDeclarationType, BlockDiagnostic, Environment, GrayBlockStatement, StdFunc, VarInfo, mkEnv } from "./environment";
+import { BlockCompilationResult, BlockCompileOptions, BlockDeclarationType, BlockDiagnostic, Environment, GrayBlockStatement, PxtBlock, StdFunc, VarInfo, mkEnv } from "./environment";
 import { IfBlock, attachPlaceholderIf, defaultValueForType, find, getConcreteType, getEscapedCBParameters, infer, isBooleanType, isFunctionRecursive, isStringType, lookup, returnType } from "./typeChecker";
 import { append, countOptionals, escapeVarName, forEachChildExpression, getInputTargetBlock, getLoopVariableField, isFunctionDefinition, isMutatingBlock, visibleParams } from "./util";
 import { isArrayType } from "../toolbox";
@@ -34,23 +34,28 @@ export const PXT_WARNING_ID = "WARNING_MESSAGE"
 export function compileBlockAsync(b: Blockly.Block, blockInfo: pxtc.BlocksInfo): Promise<BlockCompilationResult> {
     const w = b.workspace;
     const e = mkEnv(new SingleWorkspaceBlocksProgram(w), blockInfo);
-    infer(w && w.getAllBlocks(false), e);
+    const allBlocks = w?.getAllBlocks(false);
+    if (allBlocks) {
+        for (const block of allBlocks) (block as PxtBlock).PXT_FILE = "main.blocks";
+    }
+
+    infer(allBlocks, e);
     const compiled = compileStatementBlock(e, b)
     e.placeholders = {};
-    return tdASTtoTS(e, compiled);
+    return tdASTtoTS(e, {"main.blocks": compiled});
 }
 
 export function compileAsync(b: Blockly.Workspace, blockInfo: pxtc.BlocksInfo, opts: BlockCompileOptions = {}): Promise<BlockCompilationResult> {
     const e = mkEnv(new SingleWorkspaceBlocksProgram(b), blockInfo, opts);
     const [nodes, diags] = compileWorkspace(e, b, blockInfo);
-    const result = tdASTtoTS(e, nodes, diags);
+    const result = tdASTtoTS(e, {"main.blocks": nodes}, diags);
     return result;
 }
 
 export function compileProgramAsync(program: BlocksProgram, blockInfo: pxtc.BlocksInfo, opts: BlockCompileOptions = {}): Promise<BlockCompilationResult> {
     const e = mkEnv(program, blockInfo, opts);
-    const [nodes, diags] = compileBlocksProgram(e, program, blockInfo);
-    return tdASTtoTS(e, nodes, diags);
+    const [files, diags] = compileBlocksProgram(e, program, blockInfo);
+    return tdASTtoTS(e, files, diags);
 }
 
 function eventWeight(b: Blockly.Block, e: Environment) {
@@ -66,19 +71,31 @@ function eventWeight(b: Blockly.Block, e: Environment) {
         return -hash;
 }
 
-function compileBlocksProgram(e: Environment, program: BlocksProgram, blockInfo: pxtc.BlocksInfo): [pxt.blocks.JsNode[], BlockDiagnostic[]] {
+function compileBlocksProgram(e: Environment, program: BlocksProgram, blockInfo: pxtc.BlocksInfo): [pxt.Map<pxt.blocks.JsNode[]>, BlockDiagnostic[]] {
     try {
         // all compiled top level blocks are events
         program.refreshSymbols();
 
         let allBlocks: Blockly.Block[] = [];
         let topblocks: Blockly.Block[] = [];
-        let topComments: Blockly.comments.WorkspaceComment[] = [];
+
+        const blocksByFile: pxt.Map<Blockly.Block[]> = {};
+        const stmtsByFile: pxt.Map<pxt.blocks.JsNode[]> = {};
 
         for (const workspace of program.getAllWorkspaces()) {
-            allBlocks.push(...workspace.getAllBlocks(false));
-            topblocks.push(...workspace.getTopBlocks(true));
-            topComments.push(...workspace.getTopComments(true));
+            const ws = workspace.workspace;
+            const fileTopBlocks = ws.getTopBlocks(true);
+            const fileAllBlocks = ws.getAllBlocks(false);
+
+            for (const block of fileAllBlocks) {
+                (block as PxtBlock).PXT_FILE = workspace.fileName;
+            }
+
+            allBlocks.push(...fileAllBlocks);
+            topblocks.push(...fileTopBlocks);
+
+            blocksByFile[workspace.fileName] = fileTopBlocks;
+            stmtsByFile[workspace.fileName] = [];
         }
 
         if (pxt.react.getTilemapProject) {
@@ -94,32 +111,44 @@ function compileBlocksProgram(e: Environment, program: BlocksProgram, blockInfo:
         // drop disabled blocks
         allBlocks = allBlocks.filter(b => b.isEnabled());
         topblocks = topblocks.filter(b => b.isEnabled());
-        trackAllVariables(topblocks, e);
+        trackAllVariables(blocksByFile, e);
         infer(allBlocks, e);
 
-        const stmtsMain: pxt.blocks.JsNode[] = [];
 
         // compile workspace comments, add them to the top
-        const commentMap = groupWorkspaceComments(topblocks as Blockly.BlockSvg[],
-            topComments as Blockly.comments.RenderedWorkspaceComment[]);
+        let metaMap: CommentMap = {
+            idToComments: {},
+            orphans: []
+        }
 
-        commentMap.orphans.forEach(comment => append(stmtsMain, compileWorkspaceComment(comment).children));
+        for (const workspace of program.getAllWorkspaces()) {
+            const topBlocks = blocksByFile[workspace.fileName];
+            const comments = workspace.workspace.getTopComments(true);
 
-        topblocks.forEach(b => {
-            if (commentMap.idToComments[b.id]) {
-                commentMap.idToComments[b.id].forEach(comment => {
-                    append(stmtsMain, compileWorkspaceComment(comment).children);
+            const commentMap = groupWorkspaceComments(topBlocks as Blockly.BlockSvg[], comments as Blockly.comments.RenderedWorkspaceComment[]);
+            commentMap.orphans.forEach(comment => append(stmtsByFile[workspace.fileName], compileWorkspaceComment(comment).children));
+
+            for (const id of Object.keys(commentMap.idToComments)) {
+                metaMap.idToComments[id] = commentMap.idToComments[id];
+            }
+        }
+
+        for (const b of topblocks) {
+            const stmts = stmtsByFile[(b as PxtBlock).PXT_FILE];
+            if (metaMap.idToComments[b.id]) {
+                metaMap.idToComments[b.id].forEach(comment => {
+                    append(stmts, compileWorkspaceComment(comment).children);
                 });
             }
             if (b.type == ts.pxtc.ON_START_TYPE)
-                append(stmtsMain, compileStatementBlock(e, b));
+                append(stmts, compileStatementBlock(e, b));
             else {
                 const compiled = pxt.blocks.mkBlock(compileStatementBlock(e, b));
                 if (compiled.type == pxt.blocks.NT.Block)
-                    append(stmtsMain, compiled.children);
-                else stmtsMain.push(compiled)
+                    append(stmts, compiled.children);
+                else stmts.push(compiled)
             }
-        });
+        }
 
         const stmtsEnums: pxt.blocks.JsNode[] = [];
         e.enums.forEach(info => {
@@ -196,11 +225,14 @@ function compileBlocksProgram(e: Environment, program: BlocksProgram, blockInfo:
 
             e.diagnostics.push({
                 blockId: v.firstReference && v.firstReference.id,
-                message: lf("Variable '{0}' is never assigned", v.name)
+                message: lf("Variable '{0}' is never assigned", v.name),
+                fileName: v.fileName
             });
         });
 
-        return [stmtsEnums.concat(leftoverVars.concat(stmtsMain)), e.diagnostics];
+        stmtsByFile["main.blocks"] = stmtsEnums.concat(leftoverVars.concat(stmtsByFile["main.blocks"]));
+
+        return [stmtsByFile, e.diagnostics];
 
     } catch (err) {
         let be: Blockly.Block = (err as any).block;
@@ -223,6 +255,10 @@ function compileWorkspace(e: Environment, w: Blockly.Workspace, blockInfo: pxtc.
         // all compiled top level blocks are events
         let allBlocks = w.getAllBlocks(false);
 
+        for (const block of allBlocks) {
+            (block as PxtBlock).PXT_FILE = "main.blocks";
+        }
+
         if (pxt.react.getTilemapProject) {
             pxt.react.getTilemapProject().removeInactiveBlockAssets(allBlocks.map(b => b.id));
         }
@@ -238,7 +274,7 @@ function compileWorkspace(e: Environment, w: Blockly.Workspace, blockInfo: pxtc.
         // drop disabled blocks
         allBlocks = allBlocks.filter(b => b.isEnabled());
         topblocks = topblocks.filter(b => b.isEnabled());
-        trackAllVariables(topblocks, e);
+        trackAllVariables({"main.blocks": topblocks}, e);
         infer(allBlocks, e);
 
         const stmtsMain: pxt.blocks.JsNode[] = [];
@@ -340,7 +376,8 @@ function compileWorkspace(e: Environment, w: Blockly.Workspace, blockInfo: pxtc.
 
             e.diagnostics.push({
                 blockId: v.firstReference && v.firstReference.id,
-                message: lf("Variable '{0}' is never assigned", v.name)
+                message: lf("Variable '{0}' is never assigned", v.name),
+                fileName: v.fileName
             });
         });
 
@@ -972,15 +1009,26 @@ function compileImage(e: Environment, b: Blockly.Block, frames: number, columns:
     return pxt.blocks.H.namespaceCall(n, f, [lit].concat(args), false);
 }
 
-function tdASTtoTS(env: Environment, app: pxt.blocks.JsNode[], diags?: BlockDiagnostic[]): Promise<BlockCompilationResult> {
-    let res = pxt.blocks.flattenNode(app)
+function tdASTtoTS(env: Environment, app: pxt.Map<pxt.blocks.JsNode[]>, diags?: BlockDiagnostic[]): Promise<BlockCompilationResult> {
+    const outfiles: pxt.Map<string> = {};
+
+    let concatenated: string = "";
+    const sourceMap: pxt.blocks.BlockSourceInterval[] = [];
+
+    const getOutfile = (file: string) => file.replace(/\.blocks$/, ".ts");
+
+    for (const file of Object.keys(app)) {
+        const res = pxt.blocks.flattenNode(app[file]);
+        outfiles[getOutfile(file)] = res.output;
+        sourceMap.push(...res.sourceMap);
+        concatenated += res.output + "\n";
+    }
 
     // Note: the result of format is not used!
-
-    return workerOpAsync("format", { format: { input: res.output, pos: 1 } }).then(() => {
+    return workerOpAsync("format", { format: { input: concatenated, pos: 1 } }).then(() => {
         return {
-            source: res.output,
-            sourceMap: res.sourceMap,
+            outfiles,
+            sourceMap,
             stats: env.stats,
             diagnostics: diags || []
         };
@@ -1329,13 +1377,15 @@ function compileReturnStatement(e: Environment, b: Blockly.Block, comments: stri
     if (!parentFunction) {
         e.diagnostics.push({
             blockId: b.id,
-            message: lf("Return statements can only be used within function bodies.")
+            message: lf("Return statements can only be used within function bodies."),
+            fileName: (b as PxtBlock).PXT_FILE
         });
     }
     else if (hasReturn && parentFunction.type !== FUNCTION_DEFINITION_BLOCK_TYPE) {
         e.diagnostics.push({
             blockId: b.id,
-            message: lf("Return statements can only return values inside function definitions.")
+            message: lf("Return statements can only return values inside function definitions."),
+            fileName: (b as PxtBlock).PXT_FILE
         });
     }
 

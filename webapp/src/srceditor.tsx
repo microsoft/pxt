@@ -124,7 +124,7 @@ export class Editor implements IEditor {
      * Serializes code to typescript.
      * @returns undefined if there is nothing to save
      */
-    saveToTypeScriptAsync(willOpenTypeScript = false): Promise<string> {
+    saveToTypeScriptAsync(willOpenTypeScript = false): Promise<string | pxt.Map<string>> {
         return Promise.resolve(undefined);
     }
 

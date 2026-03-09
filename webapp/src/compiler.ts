@@ -906,17 +906,34 @@ function upgradeFromBlocksAsync(): Promise<UpgradeResult> {
         .then(() => getBlocksAsync())
         .then(info => {
             ws = new Blockly.Workspace();
-            const text = pxtblockly.importXml(targetVersion, fileText, info, true);
 
-            const xml = Blockly.utils.xml.textToDom(text);
-            pxtblockly.domToWorkspaceNoEvents(xml, ws);
-            const upgradedXml = pxtblockly.workspaceToDom(ws);
-            patchedFiles[pxt.MAIN_BLOCKS] = Blockly.Xml.domToText(upgradedXml);
+            const host: pxtblockly.BlocksProgramHost = {
+                listFiles: () => Object.keys(project.files),
+                getFile: (name: string) => {
+                    if (name.endsWith(".blocks")) {
+                        // apply upgrades
+                        return pxtblockly.importXml(targetVersion, project.files[name].content, info, true)
+                    }
+                    return project.files[name] ? project.files[name].content : null;
+                },
+                saveFile: (name: string, content: string) => {
+                    patchedFiles[name] = content;
+                }
+            }
 
-            return pxtblockly.compileAsync(ws, info)
+            const program = new pxtblockly.MultiWorkspaceBlocksProgram(host, ws);
+            program.refreshSymbols();
+
+            for (const workspace of program.getAllWorkspaces()) {
+                patchedFiles[workspace.fileName] = Blockly.Xml.domToText(pxtblockly.workspaceToDom(workspace.workspace));
+            }
+
+            return pxtblockly.compileProgramAsync(program, info)
         })
         .then(res => {
-            patchedFiles[pxt.MAIN_TS] = res.source;
+            for (const file of Object.keys(res.outfiles)) {
+                patchedFiles[file] = res.outfiles[file];
+            }
             return project.buildAssetsAsync();
         })
         .then(() => {
