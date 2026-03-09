@@ -90,7 +90,7 @@ const FUNCTION_CALL_MIXIN: FunctionCallMixin = {
     addFunctionLabel_: function (this: FunctionCallBlock, text) {
         const input = this.appendDummyInput("function_name");
 
-        if (this.imported_) {
+        if (lookupImportedFunctionDef(text, this.workspace)) {
             const globe = new Blockly.FieldLabel("\uf0ac", "blocklyText semanticIcon");
             globe.setClass("blocklyText semanticIcon");
             input.appendField(globe);
