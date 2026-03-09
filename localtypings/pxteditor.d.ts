@@ -928,7 +928,7 @@ declare namespace pxt.editor {
         switchTypeScript(): void;
         openTypeScriptAsync(): Promise<void>;
         openPythonAsync(): Promise<void>;
-        saveBlocksToTypeScriptAsync(): Promise<string>;
+        saveBlocksToTypeScriptAsync(): Promise<pxt.Map<string>>;
 
         saveFileAsync(): Promise<void>;
         saveCurrentSourceAsync(): Promise<void>;

@@ -1,5 +1,5 @@
 import * as Blockly from "blockly";
-import { CommonFunctionBlock } from "./commonFunctionMixin";
+import { CommonFunctionBlock, FunctionArgument } from "./commonFunctionMixin";
 import {
     ARGUMENT_EDITOR_CUSTOM_BLOCK_TYPE,
     ARGUMENT_REPORTER_ARRAY_BLOCK_TYPE,
@@ -19,6 +19,10 @@ import { FunctionCallBlock, SerializedShadow } from "./blocks/functionCallBlocks
 import { isFunctionDefinition } from "../../compiler/util";
 import { ArgumentReporterBlock } from "./blocks/argumentReporterBlocks";
 import { DRAGGABLE_PARAM_INPUT_PREFIX } from "../../loader";
+import { getGlobalProgram } from "../../external";
+import { createFlyoutGroupLabel } from "../../toolbox";
+import { BlocksFunctionSymbol, IMPORTED_FUNCTION_TYPE } from "../../blocksProgram";
+
 
 export type StringMap<T> = { [index: string]: T };
 
@@ -228,7 +232,7 @@ export function mutateCallersAndDefinition(name: string, ws: Blockly.Workspace, 
         } as CallerChange))
 
     const change = new MutateFunctionEvent(
-        definitionBlock.id,
+        definitionBlock?.id || newMutation.getAttribute("functionid"),
         callerChanges,
         Blockly.Xml.domToText(oldMutation),
         Blockly.Xml.domToText(newMutation),
@@ -419,31 +423,68 @@ export function flyoutCategory(workspace: Blockly.WorkspaceSvg) {
     // label.setAttribute("text", Blockly.Msg[MsgKey.FUNCTION_FLYOUT_LABEL]);
     // xmlList.push(label);
 
-    // Populate function call blocks
-    for (const func of getAllFunctionDefinitionBlocks(workspace)) {
-        const name = func.getName();
-        const args = func.getArguments();
-        // <block type="function_call" x="25" y="25">
-        //   <mutation name="myFunc">
-        //     <arg name="bool" type="boolean" id="..."></arg>
-        //     <arg name="text" type="string" id="..."></arg>
-        //     <arg name="num" type="number" id="..."></arg>
-        //   </mutation>
-        // </block>
+    const addFunctionCallBlock = (name: string, args: { name: string; type: string; id: string }[]) => {
         const block = Blockly.utils.xml.createElement("block");
         block.setAttribute("type", "function_call");
         block.setAttribute("gap", "16");
         const mutation = Blockly.utils.xml.createElement("mutation");
         mutation.setAttribute("name", name);
         block.appendChild(mutation);
-        for (let i = 0; i < args.length; i++) {
-            const arg = Blockly.utils.xml.createElement("arg");
-            arg.setAttribute("name", args[i].name);
-            arg.setAttribute("type", args[i].type);
-            arg.setAttribute("id", args[i].id);
-            mutation.appendChild(arg);
+
+        for (const arg of args) {
+            const argElement = Blockly.utils.xml.createElement("arg");
+            // <block type="function_call" x="25" y="25">
+            //   <mutation name="myFunc">
+            //     <arg name="bool" type="boolean" id="..."></arg>
+            //     <arg name="text" type="string" id="..."></arg>
+            //     <arg name="num" type="number" id="..."></arg>
+            //   </mutation>
+            // </block>
+            argElement.setAttribute("name", arg.name);
+            argElement.setAttribute("type", arg.type);
+            argElement.setAttribute("id", arg.id);
+            mutation.appendChild(argElement);
         }
         xmlList.push(block);
+    };
+
+    // Populate function call blocks from the current workspace
+    for (const func of getAllFunctionDefinitionBlocks(workspace)) {
+        addFunctionCallBlock(func.getName(), func.getArguments());
+    }
+
+    // Populate calls for functions defined in other .blocks files
+    const program = getGlobalProgram?.();
+    if (program) {
+        program.refreshSymbols?.();
+
+        // feels hacky did i miss easy way to do this? easy way for now
+        const currentFile = (program as any).currentlyLoadedFile as string | undefined;
+        const localNames = new Set(getAllFunctionDefinitionBlocks(workspace).map(f => f.getName().toLowerCase()));
+
+        for (const file of program.listFiles()) {
+            if (currentFile && file === currentFile) continue;
+
+            const symbols = program.getSymbolsForFile(file);
+            const importedFunctions: { name: string; arguments: FunctionArgument[] }[] = [];
+            for (const symbol of symbols) {
+                if (symbol.type !== "function") continue;
+
+                const nameKey = (symbol.name || "").toLowerCase();
+                if (localNames.has(nameKey)) continue;
+
+                importedFunctions.push({ name: symbol.name, arguments: symbol.arguments || [] });
+                localNames.add(nameKey);
+            }
+
+            if (importedFunctions.length) {
+                xmlList.push(createFlyoutGroupLabel(`${file} functions`));
+
+                for (const func of importedFunctions) {
+                    addFunctionCallBlock(func.name, func.arguments);
+                }
+            }
+        }
     }
 
     return xmlList;
@@ -553,6 +594,27 @@ export function isVariableBlockType(type: string) {
             return true;
     }
     return false;
+}
+
+export function lookupImportedFunctionDef(name: string, workspace: Blockly.Workspace, functionId?: string) {
+    const program = getGlobalProgram();
+    const symbol = program?.getFunctionSymbol(name);
+
+    let varModel: Blockly.IVariableModel<Blockly.IVariableState> | undefined;
+
+    if (symbol) {
+        varModel = workspace.getVariableMap().getVariableById(symbol.id);
+    }
+    if (!varModel && functionId) {
+        varModel = workspace.getVariableMap().getVariableById(functionId);
+    }
+
+    if (varModel?.getType() === IMPORTED_FUNCTION_TYPE) {
+        if (symbol) return symbol;
+        return JSON.parse(varModel.getName()) as BlocksFunctionSymbol;
+    }
+
+    return undefined;
 }
 
 interface DescendantChange {

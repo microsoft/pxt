@@ -188,7 +188,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
-    saveToTypeScriptAsync(willOpenTypeScript = false): Promise<string> {
+    saveToTypeScriptAsync(willOpenTypeScript = false): Promise<pxt.Map<string>> {
         if (!this.typeScriptSaveable) return Promise.resolve(undefined);
         this.clearHighlightedStatements();
         try {
@@ -209,7 +209,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                             .then(() => disposeOfTemporaryAssets(this.editor))
                     }
 
-                    return next.then(() => this.compilationResult.source)
+                    return next.then(() => this.compilationResult.outfiles)
                 });
         } catch (e) {
             pxt.reportException(e)

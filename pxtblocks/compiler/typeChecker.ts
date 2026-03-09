@@ -1,6 +1,6 @@
 import * as Blockly from "blockly";
 
-import { Point, Environment, VarInfo, Scope, PlaceholderLikeBlock, StdFunc } from "./environment";
+import { Point, Environment, VarInfo, Scope, PlaceholderLikeBlock, StdFunc, PxtBlock } from "./environment";
 import { countOptionals, getFunctionName, getInputTargetBlock, getLoopVariableField, isMutatingBlock, visibleParams } from "./util";
 import { getDefinition } from "../plugins/functions";
 import { CommonFunctionBlock } from "../plugins/functions/commonFunctionMixin";
@@ -88,7 +88,8 @@ export function infer(allBlocks: Blockly.Block[], e: Environment) {
                     else {
                         e.diagnostics.push({
                             blockId: b.id,
-                            message: lf("The 'for of' block must have a list input")
+                            message: lf("The 'for of' block must have a list input"),
+                            fileName: (b as PxtBlock).PXT_FILE
                         });
                     }
                     break;
@@ -454,7 +455,8 @@ function getReturnTypeOfFunction(e: Environment, name: string) {
                 catch (err) {
                     e.diagnostics.push({
                         blockId: definition.id,
-                        message: pxt.Util.lf("Function '{0}' has an invalid return type", name)
+                        message: pxt.Util.lf("Function '{0}' has an invalid return type", name),
+                        fileName: (definition as PxtBlock).PXT_FILE
                     });
 
                     res = mkPoint("any")
@@ -496,9 +498,10 @@ function mkPlaceholderBlock(e: Environment, parent: Blockly.Block, type?: string
     return {
         type: "placeholder",
         p: mkPoint(type || null),
-        workspace: workspaces.find(w => w instanceof Blockly.WorkspaceSvg) || workspaces[0],
+        workspace: (workspaces.find(w => w.workspace instanceof Blockly.WorkspaceSvg) || workspaces[0]).workspace,
         parentBlock_: parent,
-        getParent: () => parent
+        getParent: () => parent,
+        PXT_FILE: (parent as PxtBlock).PXT_FILE
     } as any;
 }
 
@@ -763,7 +766,7 @@ export function isBooleanType(type: Point) {
 
 function getFunctionDefinition(e: Environment, name: string): Blockly.Block {
     for (const workspace of e.blocksProgram.getAllWorkspaces()) {
-        const def = getDefinition(name, workspace);
+        const def = getDefinition(name, workspace.workspace);
         if (def) return def;
     }
 

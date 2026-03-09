@@ -8,26 +8,28 @@ import { getDeclaredVariables, mkPoint } from "./typeChecker";
 import { forEachChildExpression, forEachStatementInput } from "./util";
 
 
-export function trackAllVariables(topBlocks: Blockly.Block[], e: Environment) {
+export function trackAllVariables(topBlocks: pxt.Map<Blockly.Block[]>, e: Environment) {
     let id = 1;
     let topScope: Scope;
 
     // First, look for on-start
-    topBlocks.forEach(block => {
-        if (block.type === ts.pxtc.ON_START_TYPE) {
-            const firstStatement = block.getInputTargetBlock("HANDLER");
-            if (firstStatement) {
-                topScope = {
-                    firstStatement: firstStatement,
-                    declaredVars: {},
-                    referencedVars: [],
-                    children: [],
-                    assignedVars: []
+    for (const file of Object.keys(topBlocks)) {
+        for (const block of topBlocks[file]) {
+            if (block.type === ts.pxtc.ON_START_TYPE) {
+                const firstStatement = block.getInputTargetBlock("HANDLER");
+                if (firstStatement) {
+                    topScope = {
+                        firstStatement: firstStatement,
+                        declaredVars: {},
+                        referencedVars: [],
+                        children: [],
+                        assignedVars: []
+                    }
+                    trackVariables(firstStatement, topScope, e, file);
                 }
-                trackVariables(firstStatement, topScope, e);
             }
         }
-    });
+    }
 
     // If we didn't find on-start, then create an empty top scope
     if (!topScope) {
@@ -40,12 +42,14 @@ export function trackAllVariables(topBlocks: Blockly.Block[], e: Environment) {
         }
     }
 
-    topBlocks.forEach(block => {
-        if (block.type === ts.pxtc.ON_START_TYPE) {
-            return;
+    for (const file of Object.keys(topBlocks)) {
+        for (const block of topBlocks[file]) {
+            if (block.type === ts.pxtc.ON_START_TYPE) {
+                continue;
+            }
+            trackVariables(block, topScope, e, file);
         }
-        trackVariables(block, topScope, e);
-    });
+    }
 
     Object.keys(topScope.declaredVars).forEach(varName => {
         const varID = topScope.declaredVars[varName];
@@ -59,17 +63,17 @@ export function trackAllVariables(topBlocks: Blockly.Block[], e: Environment) {
 
     return topScope;
 
-    function trackVariables(block: Blockly.Block, currentScope: Scope, e: Environment) {
+    function trackVariables(block: Blockly.Block, currentScope: Scope, e: Environment, fileName: string) {
         e.idToScope[block.id] = currentScope;
 
         if (block.type === "variables_get") {
             const name = e.blocksProgram.getVariableQualifiedName(block.getField("VAR").getText(), block.workspace);
-            const info = findOrDeclareVariable(name, currentScope);
+            const info = findOrDeclareVariable(name, currentScope, fileName);
             currentScope.referencedVars.push(info.id);
         }
         else if (block.type === "variables_set" || block.type === "variables_change") {
             const name = e.blocksProgram.getVariableQualifiedName(block.getField("VAR").getText(), block.workspace);
-            const info = findOrDeclareVariable(name, currentScope);
+            const info = findOrDeclareVariable(name, currentScope, fileName);
             currentScope.assignedVars.push(info.id);
             currentScope.referencedVars.push(info.id);
         }
@@ -78,7 +82,7 @@ export function trackAllVariables(topBlocks: Blockly.Block[], e: Environment) {
             if (declaredVars) {
                 const varNames = declaredVars.split(",");
                 varNames.forEach(vName => {
-                    const info = findOrDeclareVariable(vName, currentScope);
+                    const info = findOrDeclareVariable(vName, currentScope, fileName);
                     info.alreadyDeclared = BlockDeclarationType.Argument;
                 });
             }
@@ -88,6 +92,7 @@ export function trackAllVariables(topBlocks: Blockly.Block[], e: Environment) {
             const vars: VarInfo[] = getDeclaredVariables(block, e).map(binding => {
                 return {
                     ...binding,
+                    fileName,
                     id: id++
                 }
             });
@@ -121,7 +126,7 @@ export function trackAllVariables(topBlocks: Blockly.Block[], e: Environment) {
             }
 
             forEachChildExpression(block, child => {
-                trackVariables(child, parentScope, e);
+                trackVariables(child, parentScope, e, fileName);
             });
 
             forEachStatementInput(block, connectedBlock => {
@@ -134,33 +139,34 @@ export function trackAllVariables(topBlocks: Blockly.Block[], e: Environment) {
                     children: []
                 };
                 parentScope.children.push(newScope);
-                trackVariables(connectedBlock, newScope, e);
+                trackVariables(connectedBlock, newScope, e, fileName);
             });
         }
         else {
             forEachChildExpression(block, child => {
-                trackVariables(child, currentScope, e);
+                trackVariables(child, currentScope, e, fileName);
             });
         }
 
         if (block.nextConnection && block.nextConnection.targetBlock()) {
-            trackVariables(block.nextConnection.targetBlock(), currentScope, e);
+            trackVariables(block.nextConnection.targetBlock(), currentScope, e, fileName);
         }
     }
 
-    function findOrDeclareVariable(name: string, scope: Scope): VarInfo {
+    function findOrDeclareVariable(name: string, scope: Scope, fileName: string): VarInfo {
         if (scope.declaredVars[name]) {
             return scope.declaredVars[name];
         }
         else if (scope.parent) {
-            return findOrDeclareVariable(name, scope.parent);
+            return findOrDeclareVariable(name, scope.parent, fileName);
         }
         else {
             // Declare it in the top scope
             scope.declaredVars[name] = {
                 name,
                 type: mkPoint(null),
-                id: id++
+                id: id++,
+                fileName
             };
             return scope.declaredVars[name];
         }

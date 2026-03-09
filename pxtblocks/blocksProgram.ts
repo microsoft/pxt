@@ -57,12 +57,13 @@ export interface BlocksProgram {
     getSymbolsForFile(fileName: string): BlocksSymbol[];
     renameVariable(symbol: BlocksVariableSymbol, newName: string): void;
     deleteSymbol(symbol: BlocksSymbol): void;
-    getAllWorkspaces(): Blockly.Workspace[];
+    getAllWorkspaces(): FileWorkspace[];
     getEnumInfo(enumName: string): string[];
     getKindInfo(kindName: string): string[];
     getVariableQualifiedName(varName: string, workspace: Blockly.Workspace): string;
     refreshSymbols?(): void;
     getVariableSymbol(varId: string): BlocksVariableSymbol;
+    getFunctionSymbol(functionName: string): BlocksFunctionSymbol;
 }
 
 
@@ -104,8 +105,8 @@ export class SingleWorkspaceBlocksProgram implements BlocksProgram {
         }
     }
 
-    getAllWorkspaces(): Blockly.Workspace[] {
-        return [this.workspace];
+    getAllWorkspaces(): FileWorkspace[] {
+        return [{ fileName: "main.blocks", workspace: this.workspace }];
     }
 
     getEnumInfo(enumName: string): string[] {
@@ -136,6 +137,11 @@ export class SingleWorkspaceBlocksProgram implements BlocksProgram {
         }
         return null;
     }
+
+    getFunctionSymbol(functionName: string): BlocksFunctionSymbol {
+        const allFunctions = getFunctionSymbols({ fileName: "main.blocks", workspace: this.workspace });
+        return allFunctions.find(f => f.name === functionName);
+    }
 }
 
 
@@ -145,7 +151,7 @@ export class MultiWorkspaceBlocksProgram implements BlocksProgram {
 
     public currentlyLoadedFile: string;
 
-    constructor(protected mainPackage: BlocksProgramHost, public workspaceSvg: Blockly.WorkspaceSvg) {
+    constructor(protected mainPackage: BlocksProgramHost, public mainWorkspace: Blockly.Workspace) {
     }
 
     listFiles(): string[] {
@@ -200,8 +206,8 @@ export class MultiWorkspaceBlocksProgram implements BlocksProgram {
         this.refreshSymbols();
     }
 
-    getAllWorkspaces(): Blockly.Workspace[] {
-        return Array.from(this.workspaces.values()).map(w => w.workspace);
+    getAllWorkspaces(): FileWorkspace[] {
+        return Array.from(this.workspaces.values());
     }
 
     getEnumInfo(enumName: string): string[] {
@@ -261,23 +267,23 @@ export class MultiWorkspaceBlocksProgram implements BlocksProgram {
 
         if (this.workspaces.has(file)) {
             const ws = this.workspaces.get(file);
-            if (!(ws.workspace instanceof Blockly.WorkspaceSvg)) {
+            if (!(ws.workspace === this.mainWorkspace)) {
                 ws.workspace.dispose();
             }
             this.workspaces.delete(file);
         }
 
-        clearWithoutEvents(this.workspaceSvg);
+        clearWithoutEvents(this.mainWorkspace);
 
         const fileContents = this.mainPackage.getFile(file);
         const xml = Blockly.utils.xml.textToDom(fileContents);
         xml.querySelectorAll("block[deletable], shadow[deletable]").forEach(b => { b.removeAttribute("deletable") });
-        domToWorkspaceNoEvents(xml, this.workspaceSvg);
+        domToWorkspaceNoEvents(xml, this.mainWorkspace);
 
         this.currentlyLoadedFile = file;
         this.workspaces.set(file, {
             fileName: file,
-            workspace: this.workspaceSvg
+            workspace: this.mainWorkspace
         });
 
         this.refreshSymbols();
@@ -291,7 +297,7 @@ export class MultiWorkspaceBlocksProgram implements BlocksProgram {
             this.loadOrGetWorkspace(this.currentlyLoadedFile);
         }
 
-        clearWithoutEvents(this.workspaceSvg);
+        clearWithoutEvents(this.mainWorkspace);
         this.currentlyLoadedFile = null;
     }
 
@@ -325,6 +331,17 @@ export class MultiWorkspaceBlocksProgram implements BlocksProgram {
         for (const symbols of this.symbolsCache.values()) {
             for (const symbol of symbols) {
                 if (symbol.type === "variable" && symbol.id === varId) {
+                    return symbol;
+                }
+            }
+        }
+        return null;
+    }
+
+    getFunctionSymbol(functionName: string): BlocksFunctionSymbol {
+        for (const symbols of this.symbolsCache.values()) {
+            for (const symbol of symbols) {
+                if (symbol.type === "function" && symbol.name === functionName) {
                     return symbol;
                 }
             }
@@ -463,7 +480,7 @@ function getSymbolFromFunctionDefinitionBlock(block: FunctionDefinitionBlock, fi
             functionSymbol.arguments.push({
                 name: child.getAttribute("name"),
                 type: child.getAttribute("type"),
-                id: child.getAttribute("argid")
+                id: child.getAttribute("id")
             });
         }
     }

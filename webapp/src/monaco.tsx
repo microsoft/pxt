@@ -494,7 +494,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     const oldWorkspace = pxtblockly.loadWorkspaceXml(mainPkg.files[blockFile].content);
                     if (oldWorkspace) {
                         return pxtblockly.compileAsync(oldWorkspace, blocksInfo).then((compilationResult) => {
-                            const oldJs = compilationResult.source;
+                            const oldJs = compilationResult.outfiles[this.currFile.name];
                             return compiler.formatAsync(oldJs, 0).then((oldFormatted: any) => {
                                 return compiler.formatAsync(this.editor.getValue(), 0).then((newFormatted: any) => {
                                     if (oldFormatted.formatted == newFormatted.formatted) {
@@ -577,7 +577,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             } else {
                 pxt.tickEvent(`${tickLang}.discardText`, undefined, { interactiveConsent: true });
                 this.parent.saveBlocksToTypeScriptAsync().then((src) => {
-                    this.overrideFile(src);
+                    for (const file of Object.keys(src)) {
+                        if (file == this.currFile.name) {
+                            this.overrideFile(src[file]);
+                        }
+                    }
 
                     // Clear diagnostics so blocks editor doesn't show old errors.
                     // Recompile will pick up the updated content and re-validate it.

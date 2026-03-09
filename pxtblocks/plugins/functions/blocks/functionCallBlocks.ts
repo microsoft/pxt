@@ -5,7 +5,7 @@ import {
     FUNCTION_CALL_OUTPUT_BLOCK_TYPE,
     FUNCTION_DEFINITION_BLOCK_TYPE,
 } from "../constants";
-import { getArgMap, getDefinition, getShadowBlockInfoFromType_, isVariableBlockType, mutateCallersAndDefinition, mutationsAreEqual } from "../utils";
+import { getArgMap, getDefinition, getShadowBlockInfoFromType_, isVariableBlockType, lookupImportedFunctionDef, mutateCallersAndDefinition, mutationsAreEqual } from "../utils";
 import { MsgKey } from "../msg";
 import { BlocksFunctionSymbol, generateFunctionMutationFromSymbol } from "../../../blocksProgram";
 
@@ -167,10 +167,10 @@ const FUNCTION_CALL_MIXIN: FunctionCallMixin = {
                 // Propagate the functionId of the definition to the caller
                 this.functionId_ = def.functionId_;
             } else {
-                const importedDef = this.workspace.getVariableMap().getVariableById(this.functionId_);
+                const importedFunction = lookupImportedFunctionDef(name, this.workspace, this.functionId_);
 
-                if (importedDef) {
-                    const mutation = generateFunctionMutationFromSymbol(JSON.parse(importedDef.getName()) as BlocksFunctionSymbol);
+                if (importedFunction) {
+                    const mutation = generateFunctionMutationFromSymbol(importedFunction);
 
                     if (!mutationsAreEqual(this.mutationToDom(), mutation)) {
                         mutateCallersAndDefinition(this.getName(), this.workspace, this.mutationToDom(), mutation);
@@ -200,9 +200,9 @@ const FUNCTION_CALL_MIXIN: FunctionCallMixin = {
             // this caller.
             const name = this.getName();
             const def = getDefinition(name, this.workspace);
-            const importedDef = !def && this.workspace.getVariableMap().getVariableById(this.functionId_);
+            const importedFunction = !def && lookupImportedFunctionDef(name, this.workspace, this.functionId_);
 
-            if (!def && !importedDef) {
+            if (!def && !importedFunction) {
                 Blockly.Events.setGroup(event.group);
                 this.dispose(true);
                 Blockly.Events.setGroup(false);
