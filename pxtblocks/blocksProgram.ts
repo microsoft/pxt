@@ -63,6 +63,7 @@ export interface BlocksProgram {
     getVariableQualifiedName(varName: string, workspace: Blockly.Workspace): string;
     refreshSymbols?(): void;
     getVariableSymbol(varId: string): BlocksVariableSymbol;
+    getFunctionSymbol(functionName: string): BlocksFunctionSymbol;
 }
 
 
@@ -135,6 +136,11 @@ export class SingleWorkspaceBlocksProgram implements BlocksProgram {
             };
         }
         return null;
+    }
+
+    getFunctionSymbol(functionName: string): BlocksFunctionSymbol {
+        const allFunctions = getFunctionSymbols({ fileName: "main.blocks", workspace: this.workspace });
+        return allFunctions.find(f => f.name === functionName);
     }
 }
 
@@ -332,6 +338,17 @@ export class MultiWorkspaceBlocksProgram implements BlocksProgram {
         return null;
     }
 
+    getFunctionSymbol(functionName: string): BlocksFunctionSymbol {
+        for (const symbols of this.symbolsCache.values()) {
+            for (const symbol of symbols) {
+                if (symbol.type === "function" && symbol.name === functionName) {
+                    return symbol;
+                }
+            }
+        }
+        return null;
+    }
+
     protected defineSymbolInWorkspace(symbol: BlocksSymbol, workspace: Blockly.Workspace) {
         const map = workspace.getVariableMap();
 
@@ -463,7 +480,7 @@ function getSymbolFromFunctionDefinitionBlock(block: FunctionDefinitionBlock, fi
             functionSymbol.arguments.push({
                 name: child.getAttribute("name"),
                 type: child.getAttribute("type"),
-                id: child.getAttribute("argid")
+                id: child.getAttribute("id")
             });
         }
     }

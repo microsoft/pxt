@@ -21,6 +21,7 @@ import { ArgumentReporterBlock } from "./blocks/argumentReporterBlocks";
 import { DRAGGABLE_PARAM_INPUT_PREFIX } from "../../loader";
 import { getGlobalProgram } from "../../external";
 import { createFlyoutGroupLabel } from "../../toolbox";
+import { BlocksFunctionSymbol, IMPORTED_FUNCTION_TYPE } from "../../blocksProgram";
 
 
 export type StringMap<T> = { [index: string]: T };
@@ -231,7 +232,7 @@ export function mutateCallersAndDefinition(name: string, ws: Blockly.Workspace, 
         } as CallerChange))
 
     const change = new MutateFunctionEvent(
-        definitionBlock.id,
+        definitionBlock?.id || newMutation.getAttribute("functionid"),
         callerChanges,
         Blockly.Xml.domToText(oldMutation),
         Blockly.Xml.domToText(newMutation),
@@ -593,6 +594,27 @@ export function isVariableBlockType(type: string) {
             return true;
     }
     return false;
+}
+
+export function lookupImportedFunctionDef(name: string, workspace: Blockly.Workspace, functionId?: string) {
+    const program = getGlobalProgram();
+    const symbol = program?.getFunctionSymbol(name);
+
+    let varModel: Blockly.IVariableModel<Blockly.IVariableState> | undefined;
+
+    if (symbol) {
+        varModel = workspace.getVariableMap().getVariableById(symbol.id);
+    }
+    if (!varModel && functionId) {
+        varModel = workspace.getVariableMap().getVariableById(functionId);
+    }
+
+    if (varModel?.getType() === IMPORTED_FUNCTION_TYPE) {
+        if (symbol) return symbol;
+        return JSON.parse(varModel.getName()) as BlocksFunctionSymbol;
+    }
+
+    return undefined;
 }
 
 interface DescendantChange {
