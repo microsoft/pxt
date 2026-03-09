@@ -915,7 +915,7 @@ declare namespace pxt.editor {
         forceUpdate(): void;
 
         reloadEditor(): void;
-        openBlocks(): void;
+        openBlocks(showKeyboardControlsHint?: boolean): void;
         openJavaScript(giveFocusOnLoading?: boolean): void;
         openPython(giveFocusOnLoading?: boolean): void;
         openAssets(): void;

@@ -720,8 +720,12 @@ export class ProjectView
         pxt.shell.setEditorLanguagePref("js");
     }
 
-    openBlocks() {
+    openBlocks(showKeyboardControlsHint?: boolean) {
         if (this.updatingEditorFile) return; // already transitioning
+
+        if (showKeyboardControlsHint) {
+            this.blocksEditor.pendingKeyboardControlsHint = true;
+        }
 
         if (this.isBlocksActive()) {
             if (this.state.embedSimView) this.setState({ embedSimView: false });
@@ -5309,6 +5313,9 @@ export class ProjectView
     }
 
     async toggleAccessibleBlocks(eventSource: string) {
+        if (core.isKeyboardControlsByDefault()) {
+            eventSource += "-on-by-default";
+        }
         const nextEnabled = !this.getData<boolean>(auth.ACCESSIBLE_BLOCKS);
         if (nextEnabled) {
             pxt.storage.setLocal("onboardAccessibleBlocks", "1")
