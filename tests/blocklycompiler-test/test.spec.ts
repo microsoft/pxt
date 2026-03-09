@@ -271,14 +271,15 @@ async function blockTestAsync(name: string) {
 
     chai.expect(res).to.not.be.undefined;
 
-    const compiledTs = res.source.trim().replace(/\s+/g, " ");
+    const compiledSource = res.outfiles[pxt.MAIN_TS];
+    const compiledTs = compiledSource.trim().replace(/\s+/g, " ");
     const baselineTs = tsFile.trim().replace(/\s+/g, " ");
 
     if (compiledTs !== baselineTs) {
         console.log(compiledTs);
     }
 
-    chai.expect(compiledTs).to.equal(baselineTs, "Compiled result did not match baseline: " + name + " " + res.source);
+    chai.expect(compiledTs).to.equal(baselineTs, "Compiled result did not match baseline: " + name + " " + compiledSource);
 }
 
 describe("blockly compiler", function () {
