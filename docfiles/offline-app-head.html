@@ -530,11 +530,8 @@
             let recommendedButton = null;
             
             if (isMac) {
-                if (isAppleSilicon) {
-                    recommendedButton = $("#download-macarm64");
-                } else {
-                    recommendedButton = $("#download-mac64");
-                }
+                // Do not recommend a Mac binary because architecture detection is unreliable across browsers
+                recommendedButton = null;
             } else if (isWindows) {
                 if (false && isWindowsARM) {
                     recommendedButton = $("#download-winarm64");
