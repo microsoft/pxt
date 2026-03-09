@@ -533,11 +533,12 @@
                 // Do not recommend a Mac binary because architecture detection is unreliable across browsers
                 recommendedButton = null;
             } else if (isWindows) {
-                if (false && isWindowsARM) {
-                    recommendedButton = $("#download-winarm64");
-                } else {
-                    recommendedButton = $("#download-win64");
-                }
+                // if (false && isWindowsARM) {
+                //     recommendedButton = $("#download-winarm64");
+                // } else {
+                //     recommendedButton = $("#download-win64");
+                // }
+                recommendedButton = null;
             }
             
             // Mark the recommended download
