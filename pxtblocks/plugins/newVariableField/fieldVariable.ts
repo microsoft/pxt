@@ -1,6 +1,7 @@
 import * as Blockly from "blockly";
 import { showEditorMixin } from "./fieldDropdownMixin";
 import { EXPORTED_VARIABLE_TYPE, IMPORTED_VARIABLE_TYPE } from "../../blocksProgram";
+import { getGlobalProgram } from "../../external";
 
 import svg = pxt.svgUtil;
 
@@ -14,6 +15,8 @@ const TEXT_ARROW_PADDING = 15; // Extra padding between text end and arrow
  */
 export class FieldVariable extends Blockly.FieldVariable {
     static CREATE_VARIABLE_ID = "CREATE_VARIABLE";
+    static CREATE_GLOBAL_VARIABLE_ID = "CREATE_GLOBAL_VARIABLE";
+    static TOGGLE_VARIABLE_SCOPE_ID = "TOGGLE_VARIABLE_SCOPE";
 
     static dropdownCreate(this: FieldVariable): Blockly.MenuOption[] {
         const options = Blockly.FieldVariable.dropdownCreate.call(this) as Blockly.MenuOption[];
@@ -26,6 +29,36 @@ export class FieldVariable extends Blockly.FieldVariable {
             [Blockly.Msg['NEW_VARIABLE_DROPDOWN'], FieldVariable.CREATE_VARIABLE_ID],
             [undefined, 'SEPARATOR']
         );
+
+        options.splice(
+            insertIndex + 1,
+            0,
+            [Blockly.Msg['NEW_GLOBAL_VARIABLE_DROPDOWN'], FieldVariable.CREATE_GLOBAL_VARIABLE_ID]
+        );
+
+        // Add "Make variable global/local" option next to rename/delete
+        const variable = this.getVariable();
+        if (variable) {
+            const varName = variable.getName();
+            const varType = variable.getType();
+            const isGlobal = varType === EXPORTED_VARIABLE_TYPE;
+            const isImported = varType === IMPORTED_VARIABLE_TYPE;
+
+            // Only show toggle for local or exported variables (not for imported ones)
+            if (!isImported) {
+                const toggleLabel = isGlobal
+                    ? Blockly.Msg['MAKE_VARIABLE_LOCAL'].replace('%1', varName)
+                    : Blockly.Msg['MAKE_VARIABLE_GLOBAL'].replace('%1', varName);
+
+                // Insert after rename, grouped with the other universal variable options
+                const renameIndex = options.findIndex(e => e[1] === "RENAME_VARIABLE_ID");
+                options.splice(
+                    renameIndex + 1,
+                    0,
+                    [toggleLabel, FieldVariable.TOGGLE_VARIABLE_SCOPE_ID]
+                );
+            }
+        }
 
         return options;
     }
@@ -45,19 +78,87 @@ export class FieldVariable extends Blockly.FieldVariable {
     protected override onItemSelected_(menu: Blockly.Menu, menuItem: Blockly.MenuItem) {
         if (this.sourceBlock_ && !this.sourceBlock_.isDeadOrDying()) {
             const id = menuItem.getValue();
-            if (id === FieldVariable.CREATE_VARIABLE_ID) {
+
+            // Handle variable creation (local or global)
+            if (id === FieldVariable.CREATE_VARIABLE_ID || id === FieldVariable.CREATE_GLOBAL_VARIABLE_ID) {
+                const variableType = id === FieldVariable.CREATE_GLOBAL_VARIABLE_ID ? EXPORTED_VARIABLE_TYPE : undefined;
+
                 Blockly.Variables.createVariableButtonHandler(this.sourceBlock_.workspace, name => {
-                    const newVar = this.sourceBlock_.workspace.getVariableMap().getVariable(name);
+                    const newVar = this.sourceBlock_.workspace.getVariableMap().getVariable(name, variableType);
 
                     if (newVar) {
                         this.setValue(newVar.getId());
                     }
-                });
+                }, variableType);
+                return;
+            }
+
+            // Handle toggling variable scope (global <-> local)
+            if (id === FieldVariable.TOGGLE_VARIABLE_SCOPE_ID) {
+                this.toggleVariableScope();
                 return;
             }
         }
 
         super.onItemSelected_(menu, menuItem);
+    }
+
+    protected toggleVariableScope(): void {
+        const variable = this.getVariable();
+        if (!variable) return;
+
+        const workspace = this.sourceBlock_.workspace;
+        const map = workspace.getVariableMap();
+        const varName = variable.getName();
+        const varId = variable.getId();
+        const isGlobal = variable.getType() === EXPORTED_VARIABLE_TYPE;
+        const newType = isGlobal ? '' : EXPORTED_VARIABLE_TYPE;
+
+        if (isGlobal) {
+            // Check if the variable is referenced in other workspaces
+            const program = getGlobalProgram();
+            if (program) {
+                const allWorkspaces = program.getAllWorkspaces();
+                for (const fileWs of allWorkspaces) {
+                    if (fileWs.workspace === workspace) continue;
+
+                    const importedVar = fileWs.workspace.getVariableMap().getVariableById(varId);
+                    if (importedVar) {
+                        const uses = Blockly.Variables.getVariableUsesById(fileWs.workspace, varId);
+                        if (uses.length > 0) {
+                            Blockly.dialog.alert(
+                                Blockly.Msg['CANNOT_MAKE_VARIABLE_LOCAL'].replace('%1', varName)
+                            );
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+        map.changeVariableType(variable, newType);
+
+        // Re-render all blocks that reference this variable so the globe icon updates
+        const uses = Blockly.Variables.getVariableUsesById(workspace, varId);
+        for (const block of uses) {
+            const field = block.getField("VAR");
+            if (field) {
+                field.forceRerender();
+            }
+        }
+
+        // Propagate changes across workspaces
+        const program = getGlobalProgram();
+        if (program) {
+            program.refreshSymbols?.();
+        }
+
+        // Refresh the flyout so variable blocks there reflect the updated type
+        if (workspace instanceof Blockly.WorkspaceSvg) {
+            const toolbox = workspace.getToolbox();
+            if (toolbox) {
+                (toolbox as Blockly.Toolbox).refreshSelection();
+            }
+        }
     }
 
     // Everything in this class below this line is duplicated in pxtblocks/fields/field_dropown
@@ -286,7 +387,9 @@ export class FieldVariable extends Blockly.FieldVariable {
         let iconValues: string[] = [];
 
         if (varMap) {
-            iconValues = varMap.getVariablesOfType(EXPORTED_VARIABLE_TYPE).concat(varMap.getVariablesOfType(IMPORTED_VARIABLE_TYPE)).map(v => v.getId());
+            iconValues = varMap.getAllVariables()
+                .filter(v => v.getType() === EXPORTED_VARIABLE_TYPE || v.getType() === IMPORTED_VARIABLE_TYPE)
+                .map(v => v.getId());
         }
 
         showEditorMixin.call(this, e, "icon globe", iconValues);
