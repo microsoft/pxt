@@ -150,6 +150,10 @@ export function initVariables() {
     msg.DELETE_VARIABLE = lf("Delete the \"%1\" variable");
     msg.DELETE_VARIABLE_CONFIRMATION = lf("Delete %1 uses of the \"%2\" variable?");
     msg.NEW_VARIABLE_DROPDOWN = lf("New variable...");
+    msg.NEW_GLOBAL_VARIABLE_DROPDOWN = lf("New global variable...");
+    msg.MAKE_VARIABLE_GLOBAL = lf("Make variable \"%1\" global");
+    msg.MAKE_VARIABLE_LOCAL = lf("Make variable \"%1\" local");
+    msg.CANNOT_MAKE_VARIABLE_LOCAL = lf("Cannot make variable \"%1\" local because it is referenced in another file.");
 
     // builtin variables_set
     const variablesSetId = "variables_set";
