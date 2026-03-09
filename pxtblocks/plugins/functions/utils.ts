@@ -32,7 +32,22 @@ export function rename(this: Blockly.FieldTextInput, name: string) {
     const sourceBlock = this.sourceBlock_ as CommonFunctionBlock;
     const oldMutation = sourceBlock.mutationToDom();
 
-    const legalName = findLegalName(name, sourceBlock.workspace, sourceBlock);
+    let legalName = name;
+    const workspaces = getGlobalProgram()?.getAllWorkspaces()?.map(w => w.workspace) || [sourceBlock.workspace]
+
+    let didChange = true;
+    while (didChange) {
+        didChange = false;
+        for (const workspace of workspaces) {
+            const newName = findLegalName(legalName, workspace, sourceBlock);
+            if (newName !== legalName) {
+                legalName = newName;
+                didChange = true;
+                break;
+            }
+        }
+    }
+
     const oldName = this.getValue();
 
     if (!name) return oldName;
@@ -458,8 +473,7 @@ export function flyoutCategory(workspace: Blockly.WorkspaceSvg) {
     if (program) {
         program.refreshSymbols?.();
 
-        // feels hacky did i miss easy way to do this? easy way for now
-        const currentFile = (program as any).currentlyLoadedFile as string | undefined;
+        const currentFile = program.getAllWorkspaces().find(w => w.workspace === workspace)?.fileName || pxt.MAIN_BLOCKS;
         const localNames = new Set(getAllFunctionDefinitionBlocks(workspace).map(f => f.getName().toLowerCase()));
 
         for (const file of program.listFiles()) {
