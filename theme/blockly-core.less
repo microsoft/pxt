@@ -102,6 +102,12 @@ body.blocklyMinimalBody {
         font-family: "Icons";
         font-size: 19px;
     }
+    // Fallback to ensure icon font applies even when labels are not wrapped in editable/noneditable text groups
+    text.semanticIcon {
+        font-family: "Icons";
+        font-style: normal;
+        font-weight: normal;
+    }
     .blocklyEditableText>text.semanticIcon.inverted, .blocklyEditableField>text.semanticIcon.inverted {
         fill: #000;
     }

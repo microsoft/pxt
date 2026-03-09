@@ -422,7 +422,10 @@ export function flyoutCategory(workspace: Blockly.WorkspaceSvg) {
     // label.setAttribute("text", Blockly.Msg[MsgKey.FUNCTION_FLYOUT_LABEL]);
     // xmlList.push(label);
 
-    const addFunctionCallBlock = (name: string, args: { name: string; type: string; id: string }[]) => {
+    const addFunctionCallBlock = (
+        name: string,
+        args: { name: string; type: string; id: string }[]
+    ): Element => {
         const block = Blockly.utils.xml.createElement("block");
         block.setAttribute("type", "function_call");
         block.setAttribute("gap", "16");
@@ -445,6 +448,7 @@ export function flyoutCategory(workspace: Blockly.WorkspaceSvg) {
             mutation.appendChild(argElement);
         }
         xmlList.push(block);
+        return block;
     };
 
     // Populate function call blocks from the current workspace
@@ -457,6 +461,7 @@ export function flyoutCategory(workspace: Blockly.WorkspaceSvg) {
     if (program) {
         program.refreshSymbols?.();
 
+        const globeIcon = "\uf0ac";
         // feels hacky did i miss easy way to do this? easy way for now
         const currentFile = (program as any).currentlyLoadedFile as string | undefined;
         const localNames = new Set(getAllFunctionDefinitionBlocks(workspace).map(f => f.getName().toLowerCase()));
@@ -477,10 +482,14 @@ export function flyoutCategory(workspace: Blockly.WorkspaceSvg) {
             }
 
             if (importedFunctions.length) {
-                xmlList.push(createFlyoutGroupLabel(`${file} functions`));
+                const label = createFlyoutGroupLabel(`${file} functions`, globeIcon);
+                label.setAttribute("web-icon-color", "#fff");
+                xmlList.push(label);
 
                 for (const func of importedFunctions) {
-                    addFunctionCallBlock(func.name, func.arguments);
+                    const block = addFunctionCallBlock(func.name, func.arguments);
+                    const mutation = block.querySelector("mutation");
+                    if (mutation) mutation.setAttribute("imported", "true");
                 }
             }
         }

@@ -26,6 +26,7 @@ export function initVariables() {
                 mostRecentVariable = variableModelList[0];
             }
             let currentFile: string;
+            const globeIcon = "\uf0ac";
 
             // variables getters first
             for (let i = 0; i < variableModelList.length; i++) {
@@ -34,7 +35,8 @@ export function initVariables() {
                 if (symbol) {
                     if (currentFile !== symbol.file) {
                         currentFile = symbol.file;
-                        const label = createFlyoutGroupLabel(currentFile);
+                        const label = createFlyoutGroupLabel(currentFile, globeIcon);
+                        label.setAttribute("web-icon-color", "#fff");
                         xmlList.push(label);
                     }
                 }

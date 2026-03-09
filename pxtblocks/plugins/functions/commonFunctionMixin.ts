@@ -38,18 +38,21 @@ export interface FunctionDefinitionExtraState {
     name: string;
     functionid: string;
     arguments: FunctionArgument[];
+    imported?: boolean;
 }
 
 export const COMMON_FUNCTION_MIXIN = {
     name_: "",
     functionId_: "",
     arguments_: [] as FunctionArgument[],
+    imported_: false,
 
     mutationToDom: function (this: CommonFunctionBlock): Element | null {
         this.ensureIds_();
         const container = Blockly.utils.xml.createElement("mutation");
         container.setAttribute("name", this.name_);
         container.setAttribute("functionid", this.functionId_);
+        if (this.imported_) container.setAttribute("imported", "true");
         this.arguments_.forEach(function (arg) {
             const argNode = Blockly.utils.xml.createElement("arg");
             argNode.setAttribute("name", arg.name);
@@ -79,6 +82,8 @@ export const COMMON_FUNCTION_MIXIN = {
         this.arguments_ = args;
         this.name_ = xmlElement.getAttribute("name")!;
 
+        this.imported_ = xmlElement.getAttribute("imported") === "true";
+
         this.restoreSavedFunctionId(xmlElement.getAttribute("functionid")!);
     },
 
@@ -87,12 +92,14 @@ export const COMMON_FUNCTION_MIXIN = {
             name: this.name_,
             functionid: this.functionId_,
             arguments: this.arguments_.slice(),
+            imported: this.imported_,
         };
     },
 
     loadExtraState: function (this: CommonFunctionBlock, state: FunctionDefinitionExtraState) {
         this.arguments_ = state.arguments.slice();
         this.name_ = state.name;
+        this.imported_ = !!(state as any).imported;
 
         this.restoreSavedFunctionId(state.functionid);
     },
