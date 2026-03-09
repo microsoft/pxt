@@ -88,10 +88,15 @@ const FUNCTION_CALL_MIXIN: FunctionCallMixin = {
     },
 
     addFunctionLabel_: function (this: FunctionCallBlock, text) {
-        this.appendDummyInput("function_name").appendField(
-            new Blockly.FieldLabel(text, "functionNameText"),
-            "function_name"
-        );
+        const input = this.appendDummyInput("function_name");
+
+        if (this.imported_) {
+            const globe = new Blockly.FieldLabel("\uf0ac", "blocklyText semanticIcon");
+            globe.setClass("blocklyText semanticIcon");
+            input.appendField(globe);
+        }
+
+        input.appendField(new Blockly.FieldLabel(text, "functionNameText"), "function_name");
     },
 
     updateFunctionLabel_: function (this: FunctionCallBlock, text: string) {

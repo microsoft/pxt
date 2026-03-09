@@ -11,7 +11,6 @@ import { domToWorkspaceNoEvents } from "../importer";
 import { shouldDuplicateOnDrag } from "../plugins/duplicateOnDrag";
 import { PathObject } from "../plugins/renderer/pathObject";
 import { FieldImageNoText } from "../fields/field_imagenotext";
-import { getGlobalProgram } from "../external";
 
 export function initFunctions() {
     const msg = Blockly.Msg;
