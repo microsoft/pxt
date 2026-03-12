@@ -59,6 +59,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     loadingXmlPromise: Promise<any>;
     compilationResult: pxtblockly.BlockCompilationResult;
     shouldFocusWorkspace = false;
+    pendingKeyboardControlsHint = false;
     functionsDialog: CreateFunctionDialog = null;
 
     showCategories: boolean = true;
@@ -997,7 +998,19 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (accessibleBlocksEnabled) {
             (this.editor.getSvgGroup() as SVGElement).focus();
             Blockly.hideChaff();
+
+            if (this.pendingKeyboardControlsHint) {
+                this.pendingKeyboardControlsHint = false;
+                this.showKeyboardControlsHint();
+            }
         }
+    }
+
+    showKeyboardControlsHint() {
+        if (!this.editor || !Blockly.Msg["HELP_PROMPT"]) return;
+        const shortcut = pxt.BrowserUtils.isMac() ? "⌘ /" : lf("Ctrl") + " + /";
+        const message = Blockly.Msg["HELP_PROMPT"].replace("%1", shortcut);
+        Blockly.Toast.show(this.editor, { message, id: "helpHint", oncePerSession: true });
     }
 
     hasUndo() {
