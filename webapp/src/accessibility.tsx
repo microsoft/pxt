@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import * as auth from "./auth";
+import * as core from "./core";
 import * as data from "./data";
 import * as sui from "./sui";
 
@@ -34,7 +35,7 @@ export class EditorAccessibilityMenu extends data.Component<EditorAccessibilityM
     }
 
     openBlocks(e: React.MouseEvent<HTMLElement>) {
-        this.props.parent.openBlocks();
+        this.props.parent.openBlocks(core.isKeyboardControlsByDefault());
     }
 
     openJavaScript() {
