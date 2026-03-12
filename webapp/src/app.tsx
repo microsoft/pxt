@@ -2985,10 +2985,11 @@ export class ProjectView
                     if (hc) params.set("hc", "1");
                     else params.delete("hc");
                 }
+                // Need to add the URL parameters to the URL for the reload.
+                // Assigning to search will navigate on the first call but reload() needed
+                // for subsequent calls if there's a fragment (e.g. #editor).
                 location.search = params.toString();
-                // .reload refreshes without hitting server so it loses the params,
-                // so have to navigate directly
-                location.assign(location.toString());
+                location.reload();
             } else {
                 location.reload();
             }
