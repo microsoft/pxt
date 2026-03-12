@@ -254,6 +254,7 @@ export async function setAccessibleBlocksPrefAsync(accessibleBlocks: boolean, ev
         "auth.setAccessibleBlocks",
         {
             enabling: accessibleBlocks ? "true" : "false",
+            defaultOn: core.isKeyboardControlsByDefault() ? "true" : "false",
             eventSource: eventSource,
             local: !cli ? "true" : "false"
         }

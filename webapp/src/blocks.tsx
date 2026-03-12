@@ -1030,8 +1030,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     showKeyboardControlsHint() {
         if (!this.editor || !Blockly.Msg["HELP_PROMPT"]) return;
-        const isMac = navigator.platform.startsWith("Mac");
-        const shortcut = isMac ? "⌘ /" : lf("Ctrl") + " + /";
+        const shortcut = pxt.BrowserUtils.isMac() ? "⌘ /" : lf("Ctrl") + " + /";
         const message = Blockly.Msg["HELP_PROMPT"].replace("%1", shortcut);
         Blockly.Toast.show(this.editor, { message, id: "helpHint", oncePerSession: true });
     }
