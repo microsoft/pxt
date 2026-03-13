@@ -651,6 +651,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
                     <div
                         className="blocklyTreeInner"
                         role="tree"
+                        aria-label={lf("Toolbox")}
                         tabIndex={0}
                         ref="categoryTree"
                         onFocus={this.handleCategoryTreeFocus}
