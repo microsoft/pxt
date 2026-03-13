@@ -1097,6 +1097,7 @@ export class TreeItem extends data.Component<TreeItemProps, {}> {
                 role="treeitem"
                 aria-selected={selected}
                 tabIndex={-1}
+                aria-label={ariaLabel}
                 aria-level={ariaLevel}
                 aria-expanded={ariaExpanded}
                 aria-labelledby={!ariaLabel ? `${id}.label` : undefined}
