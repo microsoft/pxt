@@ -65,6 +65,51 @@ During an interaction, the step description (all text before the first code bloc
 
 ### ~
 
+#### Instruction lists with icons
+
+It's possible to include icons to help delineate each instruction in a step.
+
+![Tutorial instruction icons](/static/tutorials/instruction-icons.png)
+
+To make an instruction list with icons, use bulleted list syntax with the name of the block namespace (Toolbox category) delimited by the `:` character. Place it before the instruction text. For example, if we want to show that the instruction is talking about using blocks from the "Loops" category:
+
+``- :loops: Instructions for using loops blocks``
+
+Also, there are other icons besides the ones for Toolbox categories you can use, such as ``:mouse pointer:`` and ``:tree:``.
+
+The tutorial step example below has instructions using both the Toolbox category icons and other available icons:
+
+```
+## 🔄 Add a loop to find empty tiles
+
+Now let's add code to find all the ⬜ empty spaces on the game board.
+
+---
+
+- :loops: From ``||loops:Loops||``, drag ``||loops:for element value of list||`` into the ``||functions(noclick):fillEmptyTiles||`` function
+
+- :mouse pointer: Click on the ``||variables(noclick):value||`` drop down and select **Rename variable...** 
+
+- :mouse pointer: Type in **_emptyTile_** as the variable name and then click Ok
+
+- :tree: From the ``||scene:Scene||`` Toolbox category, drag an ``||scene:array of all [tile] locations||`` block and drop it in the ``||loops(noclick):for element||`` block replacing the ``||variables(noclick):list||`` variable
+```
+
+Many of the [Semantic UI Icons](https://semantic-ui.com/elements/icon.html) are available to use in your instructions. When you find one that you want to use, just put its name between two `:` characters at the start of the instruction list item, like `- :lightning:`.
+
+**Note**: If you've chosen an icon that isn't displaying properly in a instruction bullet item, it's possible that it wasn't in the list of icons selected for use by MakeCode. Go ahead and choose a different one to use with that instruction.
+
+Here are some common icons used in tutorial instructions:
+
+```
+- :mouse pointer:
+- :binoculars:
+- :lightbulb:
+- :computer:
+- :paper plane
+- :tree:
+```
+
 ### Hints
 
 Hints provide additional information and code suggestions to help the user complete the step.
