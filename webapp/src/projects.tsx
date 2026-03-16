@@ -1195,9 +1195,11 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
 
         addAction("primary", undefined);
 
-        (this.props.otherActions || [])
-            .filter(action => primaryType === "forumUrl" || (action?.cardType || primaryType) !== primaryType)
-            .forEach((action, index) => addAction(`other-${index}`, action));
+        for (const action of this.props.otherActions || []) {
+            if ((action?.cardType || primaryType) === primaryType) {
+                addAction(`other-${action.cardType || primaryType}`, action);
+            }
+        }
 
         if (primaryType === "forumUrl") {
             const shareUrl = scr?.shareUrl || (this.props as any)?.shareUrl;
