@@ -986,7 +986,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         return this.getShareableLink({
             url: raw,
             cardType: "sharedExample"
-        } as any);
+        });
     }
 
     private getForumEditorShareLink(): string {
