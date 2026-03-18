@@ -205,7 +205,8 @@ export class ProjectView
             isMultiplayerGame: false,
             activeTourConfig: undefined,
             mute: pxt.editor.MuteState.Unmuted,
-            feedback: {showing: false, kind: "generic"} // state that tracks if the feedback modal is showing and what kind
+            feedback: {showing: false, kind: "generic"}, // state that tracks if the feedback modal is showing and what kind
+            errorListCollapsed: true // error pane is collapsed by default
         };
         if (!this.settings.editorFontSize) this.settings.editorFontSize = /mobile/i.test(navigator.userAgent) ? 15 : 19;
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
