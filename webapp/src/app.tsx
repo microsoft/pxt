@@ -5315,9 +5315,6 @@ export class ProjectView
     }
 
     async toggleAccessibleBlocks(eventSource: string) {
-        if (core.isKeyboardControlsByDefault()) {
-            eventSource += "-on-by-default";
-        }
         const nextEnabled = !this.getData<boolean>(auth.ACCESSIBLE_BLOCKS);
         if (nextEnabled) {
             pxt.storage.setLocal("onboardAccessibleBlocks", "1")
