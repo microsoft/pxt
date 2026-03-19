@@ -168,6 +168,7 @@ export class ProjectView
     private preserveUndoStack: boolean;
     private rootClasses: string[];
     private pendingImport: pxt.Util.DeferredPromise<void>;
+    private editorMountComplete = pxt.Util.defer<void>();
     private shouldFocusToolbox: boolean;
 
     private themeManager: ThemeManager;
@@ -1203,6 +1204,7 @@ export class ProjectView
         // subscribe to user preference changes (for simulator or non-render subscriptions)
         data.subscribe(this.cloudStatusSubscriber, `${cloud.HEADER_CLOUDSTATE}:*`);
         data.subscribe(this.headerChangeSubscriber, "header:*");
+        this.editorMountComplete.resolve(undefined);
     }
 
     public componentWillUnmount() {
@@ -1736,6 +1738,7 @@ export class ProjectView
 
     private async internalLoadHeaderAsync(h: pxt.workspace.Header, editorState?: pxt.editor.EditorState): Promise<void> {
         pxt.debug(`loading ${h.id} (pxt v${h.targetVersion})`);
+        await this.editorMountComplete.promise;
         this.stopSimulator(true);
         if (pxt.appTarget.simulator && pxt.appTarget.simulator.aspectRatio) {
             simulator.driver.preload(pxt.appTarget.simulator.aspectRatio);
@@ -3974,7 +3977,7 @@ export class ProjectView
             this.runToken = null
         }
 
-        if (this.isSimulatorRunning() || unload && simulator.driver.state !== pxsim.SimulatorState.Unloaded) {
+        if (simulator.driver && (this.isSimulatorRunning() || unload && simulator.driver.state !== pxsim.SimulatorState.Unloaded)) {
             simulator.stop(unload);
         }
 
@@ -6519,14 +6522,12 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
             if (showHome) return Promise.resolve();
 
-
             // default handlers
             const ent = theEditor.settings.fileHistory.filter(e => !!workspace.getHeader(e.id))[0];
             let hd = workspace.getHeaders()[0];
             if (ent) hd = workspace.getHeader(ent.id);
             if (hd) return theEditor.loadHeaderAsync(hd, theEditor.state.editorState)
-            else theEditor.newProject();
-            return Promise.resolve();
+            else return theEditor.newProject();
         })
         .catch(e => {
             theEditor.handleCriticalError(e, "Failure in DOM loaded handler");
