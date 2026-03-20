@@ -6074,11 +6074,7 @@ function isProjectRelatedHash(hash: { cmd: string; arg: string }): boolean {
 }
 
 async function importGithubProject(repoid: string, requireSignin?: boolean) {
-    if (!pxt.appTarget.appTheme.githubEditor || pxt.BrowserUtils.isPxtElectron()) {
-        core.warningNotification(lf("Importing GitHub projects not currently supported"));
-        theEditor.openHome();
-        return;
-    }
+    const githubEnabled = !!pxt.appTarget.appTheme.githubEditor && !pxt.BrowserUtils.isPxtElectron();
 
     core.showLoading("loadingheader", lf("importing GitHub project..."));
     try {
@@ -6092,7 +6088,7 @@ async function importGithubProject(repoid: string, requireSignin?: boolean) {
             pxt.github.normalizeRepoId(h.githubId) == repoid
         );
         if (!hd) {
-            if (requireSignin) {
+            if (requireSignin && githubEnabled) {
                 const token = await cloudsync.githubProvider(true).routedLoginAsync(repoid);
                 if (!token.accessToken) { // did not sign in, give up
                     theEditor.openHome();
@@ -6101,8 +6097,14 @@ async function importGithubProject(repoid: string, requireSignin?: boolean) {
             }
             hd = await workspace.importGithubAsync(repoid);
         }
-        if (hd)
+        if (hd) {
+            if (!githubEnabled) {
+                hd.githubId = undefined;
+                hd.githubTag = undefined;
+                hd.githubCurrent = false;
+            }
             await theEditor.loadHeaderAsync(hd, null)
+        }
         else
             theEditor.openHome();
     } catch (e) {
