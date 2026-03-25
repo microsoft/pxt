@@ -87,7 +87,7 @@ namespace ts.pxtc {
                 fileName: d.file.fileName,
             }
             if (r.code == 1148)
-                r.messageText = Util.lf("all symbols in top-level scope are always exported; please use a namespace if you want to export only some")
+                r.messageText = Util.lf("Import modules are not supported.")
             return r
         })
     }
