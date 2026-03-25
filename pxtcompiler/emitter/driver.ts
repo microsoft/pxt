@@ -87,7 +87,7 @@ namespace ts.pxtc {
                 fileName: d.file.fileName,
             }
             if (r.code == 1148)
-                r.messageText = Util.lf("Import module declarations are not supported.")
+                r.messageText = Util.lf("The 'Import' module declaration is not supported.")
             return r
         })
     }
