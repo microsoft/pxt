@@ -58,6 +58,28 @@ export const MenuDropdown = (props: MenuDropdownProps) => {
 
     const [expanded, setExpanded] = React.useState(false);
 
+    const openedByKeyboard = React.useRef(false);
+
+    React.useEffect(() => {
+        // Focus the first visible menuitem, menuitemcheckbox or menuitemradio when opened via keyboard.
+        if (expanded && container && openedByKeyboard.current) {
+            const menu = container.querySelector("[role=menu]");
+            if (!menu) {
+                return;
+            }
+            const nodes = menu.querySelectorAll(
+                "[role=menuitem], [role=menuitemcheckbox], [role=menuitemradio]"
+            )
+            for (const node of nodes) {
+                const el = node as HTMLElement;
+                if (el.offsetParent !== null) {
+                    el.focus();
+                    break;
+                }
+            }
+        }
+    }, [expanded])
+
     let container: HTMLDivElement;
     let expandButton: HTMLButtonElement;
 
@@ -71,7 +93,8 @@ export const MenuDropdown = (props: MenuDropdownProps) => {
         expandButton = ref;
     }
 
-    const onMenuButtonClick = () => {
+    const onMenuButtonClick = (e: React.MouseEvent) => {
+        openedByKeyboard.current = e.detail === 0;
         setExpanded(!expanded);
     }
 
@@ -87,6 +110,7 @@ export const MenuDropdown = (props: MenuDropdownProps) => {
 
     const onKeydown = (e: React.KeyboardEvent) => {
         if (e.key === "ArrowDown" && !expanded) {
+            openedByKeyboard.current = true;
             setExpanded(true);
         }
     }
@@ -106,7 +130,8 @@ export const MenuDropdown = (props: MenuDropdownProps) => {
             leftIcon={icon}
             role={role || "menuitem"}
             className={classList("menu-button", expanded && "expanded")}
-            onClick={onMenuButtonClick}
+            onClick={null}
+            onClickEvent={onMenuButtonClick}
             ariaHasPopup="true"
             ariaExpanded={expanded}
             ariaControls={expanded ? menuId : undefined}
@@ -131,51 +156,47 @@ export const MenuDropdown = (props: MenuDropdownProps) => {
             >
                 {menuGroups.map((group, groupIndex) =>
                     <React.Fragment key={groupIndex}>
-                        <li role="none">
-                            <ul role="group">
-                                {group.items.map(
-                                    (item, itemIndex) => {
-                                        const key = `${groupIndex}-${itemIndex}`;
-                                        if (item.role === "menuitem") {
-                                            return (
-                                                <MenuDropdownItemImpl
-                                                    {...item}
-                                                    key={key}
-                                                    onClick={() => {
-                                                        setExpanded(false);
-                                                        item.onClick?.();
-                                                    }}
-                                                />
-                                            )
-                                        }
-                                        else if (item.role === "link") {
-                                            return (
-                                                <MenuLinkItemImpl
-                                                    {...item}
-                                                    key={key}
-                                                    onClick={() => {
-                                                        setExpanded(false);
-                                                        item.onClick?.();
-                                                    }}
-                                                />
-                                            )
-                                        }
-                                        else {
-                                            return (
-                                                <MenuCheckboxItemImpl
-                                                    {...item}
-                                                    key={key}
-                                                    onChange={newValue => {
-                                                        setExpanded(false);
-                                                        item.onChange?.(newValue);
-                                                    }}
-                                                />
-                                            );
-                                        }
-                                    }
-                                )}
-                            </ul>
-                        </li>
+                        {group.items.map(
+                            (item, itemIndex) => {
+                                const key = `${groupIndex}-${itemIndex}`;
+                                if (item.role === "menuitem") {
+                                    return (
+                                        <MenuDropdownItemImpl
+                                            {...item}
+                                            key={key}
+                                            onClick={() => {
+                                                setExpanded(false);
+                                                item.onClick?.();
+                                            }}
+                                        />
+                                    )
+                                }
+                                else if (item.role === "link") {
+                                    return (
+                                        <MenuLinkItemImpl
+                                            {...item}
+                                            key={key}
+                                            onClick={() => {
+                                                setExpanded(false);
+                                                item.onClick?.();
+                                            }}
+                                        />
+                                    )
+                                }
+                                else {
+                                    return (
+                                        <MenuCheckboxItemImpl
+                                            {...item}
+                                            key={key}
+                                            onChange={newValue => {
+                                                setExpanded(false);
+                                                item.onChange?.(newValue);
+                                            }}
+                                        />
+                                    );
+                                }
+                            }
+                        )}
                         {groupIndex < menuGroups.length - 1 &&
                             <li
                                 role="separator"
@@ -252,22 +273,24 @@ export const MenuLinkItemImpl = (props: MenuLinkItem & { onClick?: () => void })
     } = props;
 
     return (
-        <a
-            role="none"
-            className={classList("common-menu-dropdown-item", "common-menu-dropdown-link-item", className)}
-            aria-label={ariaLabel}
-            aria-hidden={ariaHidden}
-            aria-describedby={ariaDescribedBy}
-            id={id}
-            tabIndex={-1}
-            href={href}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={onClick}
-            onKeyDown={fireClickOnEnter}
-        >
-            {label}
-        </a>
+        <li role="none">
+            <a
+                role="menuitem"
+                className={classList("common-menu-dropdown-item", "common-menu-dropdown-link-item", className)}
+                aria-label={ariaLabel}
+                aria-hidden={ariaHidden}
+                aria-describedby={ariaDescribedBy}
+                id={id}
+                tabIndex={-1}
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={onClick}
+                onKeyDown={fireClickOnEnter}
+                >
+                {label}
+            </a>
+        </li>
     );
 }
 
