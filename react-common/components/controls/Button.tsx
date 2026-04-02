@@ -28,6 +28,7 @@ export interface ButtonViewProps extends ContainerProps {
 
 export interface ButtonProps extends ButtonViewProps {
     onClick: () => void;
+    onClickEvent?: (e: React.MouseEvent) => void;
     onRightClick?: () => void;
     onBlur?: () => void;
     onFocus?: () => void;
@@ -85,6 +86,7 @@ export function inflateButtonProps(props: ButtonProps) {
         ariaPressed,
         role,
         onClick,
+        onClickEvent,
         onRightClick,
         onKeydown,
         onBlur,
@@ -110,6 +112,7 @@ export function inflateButtonProps(props: ButtonProps) {
     );
 
     let clickHandler = (ev: React.MouseEvent) => {
+        if (onClickEvent) onClickEvent(ev);
         if (onClick) onClick();
         if (href) window.open(href, target || "_blank", "noopener,noreferrer")
         ev.stopPropagation();
