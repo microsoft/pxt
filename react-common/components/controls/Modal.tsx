@@ -61,9 +61,34 @@ export const Modal = (props: ModalProps) => {
         className
     );
 
+    const modalRef = React.useRef<HTMLDivElement>(null);
+
+    React.useEffect(() => {
+        const root = parentElement || document.body;
+        const parent = modalRef.current?.parentElement;
+
+        const hiddenSiblings: Element[] = [];
+
+        for (const child of root.children) {
+            if (child !== parent) {
+                if (!child.hasAttribute("aria-hidden") || child.getAttribute("aria-hidden") === "false") {
+                    (child as HTMLElement).setAttribute("aria-hidden", "true");
+                    hiddenSiblings.push(child);
+                }
+            }
+        }
+
+        return () => {
+            for (const child of hiddenSiblings) {
+                (child as HTMLElement).removeAttribute("aria-hidden");
+            }
+        };
+    }, [parentElement])
+
     return ReactDOM.createPortal(<FocusTrap className={classes} onEscape={closeClickHandler}>
         <div id={id}
             className="common-modal"
+            ref={modalRef}
             role={role || "dialog"}
             aria-hidden={ariaHidden}
             aria-label={ariaLabel}
@@ -131,5 +156,5 @@ export const Modal = (props: ModalProps) => {
                 </div>
             }
         </div>
-    </FocusTrap>, parentElement || document.getElementById("root") || document.body)
+    </FocusTrap>, parentElement || document.body)
 }
