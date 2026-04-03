@@ -1,6 +1,6 @@
 # Microsoft MakeCode Blog
 
-## [MakeCode Arcade 2026 Update](/blog/csp/summer-pd-2026)
+## [Summer 2026 – MakeCode Professional Development](/blog/csp/summer-pd-2026)
 
 April 6th, 2026 by [Jaqster](https://github.com/jaqster)
 
