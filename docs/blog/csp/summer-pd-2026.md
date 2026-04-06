@@ -17,7 +17,7 @@ Free, online training to help prepare educators to teach the [AP CS Principles w
 
 ![Intro CS Banner](/static/blog/csp/summer-pd-2026/InfoSysBanner.png)
 
-Join us at the InfoSys Pathfinders Summer Institute for an in-depth look at teaching Introduction to Computer Science in a fun, playful way with MakeCode Arcade. The [Intro to CS with MakeCode Arcade](https://arcade.makecode.com/courses/introCS) curriculum is free and designed to be taught as a full year introductory programming class. As part of the registration for this course, all applicants are required to complete an acceptance letter from their school to participate and will receive a handheld Arcade game device! This workshop will be offered during the weeks of June 15th-19th and July 20th-24th. 
+Join us at the InfoSys Pathfinders Summer Institute for an in-depth look at teaching Introduction to Computer Science in a fun, playful way with MakeCode Arcade. The [Intro to CS with MakeCode Arcade](https://arcade.makecode.com/courses/introCS) curriculum is free and designed to be taught as a full year introductory programming class. As part of the registration for this course, all applicants are required to complete an acceptance letter from their school to participate. Along with the courseware, attendees will lots of other resources, including 75 additional lessons on computers, technology, and AI! This workshop will be offered during the weeks of June 15th-19th and July 20th-24th. 
 
 Learn more and register on the **[InfoSys Pathfinders Summer Institute](https://pathfinders.onwingspan.com/web/en/app/event-details/teaching-intro-to-CS-with-makeCode-arcade)** website (you will need to create an account).
 
