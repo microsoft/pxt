@@ -96,6 +96,8 @@ export const SocialButton = (props: SocialButtonProps) => {
                 />
             );
     }
+
+    return <></>;
 }
 
 const LinkButton = (props: ButtonProps & { heading: string }) => {
