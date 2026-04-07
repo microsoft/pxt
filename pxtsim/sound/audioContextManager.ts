@@ -73,7 +73,7 @@ namespace pxsim.AudioContextManager {
     }
 
     function stopTone() {
-        AudioToneSource.dispose();
+        AudioToneSource.setCurrentToneGain(0, context().currentTime);
 
         if (audio) {
             audio.pause();
