@@ -438,7 +438,7 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
         return <div id="monacoFlyoutWidget" className="monacoFlyout" style={this.getFlyoutStyle()} ref="flyout">
             <div id="monacoFlyoutWrapper" onScroll={this.scrollHandler} onWheel={this.wheelHandler} role="list">
                 <div className="monacoFlyoutLabel monacoFlyoutHeading">
-                    <span className={classList("monacoFlyoutHeadingIcon blocklyTreeIcon", iconClass, `${isBrandIcon && "brandIcon"}`)} role="presentation" style={this.getIconStyle(rgb)}>
+                    <span className={classList("monacoFlyoutHeadingIcon blocklyTreeIcon", iconClass, `${isBrandIcon ? "brandIcon" : ""}`)} role="presentation" style={this.getIconStyle(rgb)}>
                         {(icon && icon.length === 1) ? icon : ""}
                     </span>
                     <div className="monacoFlyoutLabelText">{pxtc.U.rlf(`{id:category}${name}`)}</div>
