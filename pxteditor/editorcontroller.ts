@@ -108,10 +108,11 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
                             case "importproject": {
                                 const load = data as pxt.editor.EditorMessageImportProjectRequest;
                                 return Promise.resolve()
+                                    // TASK-5524: importProject에서 id갱신 방지
                                     .then(() => projectView.importProjectAsync(load.project, {
                                         filters: load.filters,
                                         searchBar: load.searchBar
-                                    }));
+                                    }, load.dontOverwriteID));
                             }
                             case "importexternalproject": {
                                 const importExternal = data as pxt.editor.EditorMessageImportExternalProjectRequest

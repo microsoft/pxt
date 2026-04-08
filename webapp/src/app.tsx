@@ -2422,7 +2422,8 @@ export class ProjectView
         }
     }
 
-    async importProjectAsync(project: pxt.workspace.Project, editorState?: pxt.editor.EditorState): Promise<void> {
+    // TASK-5524: importProject에서 id갱신 방지 - dontOverwriteID 파라미터 추가
+    async importProjectAsync(project: pxt.workspace.Project, editorState?: pxt.editor.EditorState, dontOverwriteID?: boolean): Promise<void> {
         if (this.pendingImport) {
             this.pendingImport.reject("concurrent import requests");
         }
@@ -2431,7 +2432,7 @@ export class ProjectView
 
         try {
             await Promise.all([
-                this.installAndLoadProjectAsync(project, editorState),
+                this.installAndLoadProjectAsync(project, editorState, dontOverwriteID),
                 this.pendingImport.promise
             ]);
         }
@@ -2440,7 +2441,8 @@ export class ProjectView
         }
     }
 
-    protected async installAndLoadProjectAsync(project: pxt.workspace.Project, editorState?: pxt.editor.EditorState) {
+    // TASK-5524: importProject에서 id갱신 방지 - dontOverwriteID를 workspace.installAsync에 전달
+    protected async installAndLoadProjectAsync(project: pxt.workspace.Project, editorState?: pxt.editor.EditorState, dontOverwriteID?: boolean) {
         let h: pxt.workspace.InstallHeader = project.header;
         if (!h) {
             h = {
@@ -2454,7 +2456,7 @@ export class ProjectView
             }
         }
 
-        const installed = await workspace.installAsync(h, project.text);
+        const installed = await workspace.installAsync(h, project.text, dontOverwriteID);
         await this.loadHeaderAsync(installed, editorState);
     }
 
