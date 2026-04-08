@@ -434,7 +434,7 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
         const { name, ns, color, icon, groups, selectedBlock } = this.state;
         const rgb = pxt.toolbox.getAccessibleBackground(pxt.toolbox.convertColor(color || (ns && pxt.toolbox.getNamespaceColor(ns)) || "255"));
         const iconClass = `blocklyTreeIcon${icon ? (ns || icon).toLowerCase() : "Default"}`.replace(/\s/g, "");
-        const isBrandIcon = icon && icon in brandIcons;
+        const isBrandIcon = icon && brandIcons.hasOwnProperty(icon);
         return <div id="monacoFlyoutWidget" className="monacoFlyout" style={this.getFlyoutStyle()} ref="flyout">
             <div id="monacoFlyoutWrapper" onScroll={this.scrollHandler} onWheel={this.wheelHandler} role="list">
                 <div className="monacoFlyoutLabel monacoFlyoutHeading">
