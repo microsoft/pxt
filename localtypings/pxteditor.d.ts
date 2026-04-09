@@ -916,8 +916,6 @@ declare namespace pxt.editor {
         removeProject(): void;
         editText(): void;
 
-        hasCloudSync(): boolean;
-
         getPreferredEditor(): string;
         saveAndCompile(): void;
         updateHeaderName(name: string): void;

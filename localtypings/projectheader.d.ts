@@ -31,8 +31,6 @@ declare namespace pxt.workspace {
         tutorialCompleted?: pxt.tutorial.TutorialCompletionInfo;
         // workspace guid of the extension under test
         extensionUnderTest?: string;
-        // id of cloud user who created this project
-        cloudUserId?: string;
         isSkillmapProject?: boolean;
     }
 
@@ -44,12 +42,7 @@ declare namespace pxt.workspace {
         icon?: string; // icon uri
 
         isDeleted: boolean; // mark whether or not a header has been deleted
-        saveId?: any; // used to determine whether a project has been edited while we're saving to cloud
-
-        // For cloud sync (local only metadata)
-        cloudVersion: string;     // The cloud-assigned version number (e.g. etag)
-        cloudCurrent: boolean;    // Has the current version of the project been pushed to cloud
-        cloudLastSyncTime: number; // seconds since epoch
+        saveId?: any; // used to determine whether a project has been edited
 
         // Used for Updating projects
         backupRef?: string; // guid of backed-up project (present if an update was interrupted)

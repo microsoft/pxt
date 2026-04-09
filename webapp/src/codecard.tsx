@@ -1,7 +1,6 @@
 import * as React from "react";
 import * as sui from "./sui";
 import * as data from "./data";
-import * as cloud from "./cloud";
 import { fireClickOnEnter } from "./util";
 
 const repeat = pxt.Util.repeatMap;
@@ -87,10 +86,6 @@ export class CodeCardView extends data.Component<CodeCardProps, CodeCardState> {
         // they won't update dynamically when headers change.
         const header = card.projectId ? this.getData<pxt.workspace.Header>(`header:${card.projectId}`) : null;
         const name = header ? header.name : card.name;
-        const cloudMd = card.projectId ? this.getData<cloud.CloudTempMetadata>(`${cloud.HEADER_CLOUDSTATE}:${card.projectId}`) : null;
-        const cloudStatus = cloudMd?.cloudStatus();
-        const lastCloudSave = cloudStatus ? Math.min(header.cloudLastSyncTime, header.modificationTime) : card.time;
-        const cloudShowTimestamp = cloudStatus && (cloudStatus.value === "synced" || cloudStatus.value === "justSynced" || cloudStatus.value === "localEdits");
 
         const ariaLabel = card.ariaLabel || card.title || card.shortName || name;
 
@@ -137,17 +132,7 @@ export class CodeCardView extends data.Component<CodeCardProps, CodeCardState> {
                 </div> : undefined}
             {card.time ? <div className="meta">
                 {card.tutorialLength ? <span className={`ui tutorial-progress ${tutorialDone ? "green" : "purple"} left floated label`}><i className={`${tutorialDone ? "trophy" : "circle"} icon`}></i>&nbsp;{lf("{0}/{1}", (card.tutorialStep || 0) + 1, card.tutorialLength)}</span> : undefined}
-                {!cloudStatus && card.time && <span key="date" className="date">{pxt.Util.timeSince(card.time)}</span>}
-                {cloudStatus && cloudShowTimestamp &&
-                    <span key="date" className={`date ${card.tutorialLength ? "small-screen hide" : ""}`}>{pxt.Util.timeSince(lastCloudSave)}{cloudStatus.indicator}</span>
-                }
-                {cloudStatus && !cloudShowTimestamp &&
-                    <span key="date" className="date">{cloudStatus.indicator}</span>
-                }
-                {cloudStatus &&
-                    // TODO: alternate icons depending on state
-                    <i className="ui large right floated icon cloud"></i>
-                }
+                {card.time && <span key="date" className="date">{pxt.Util.timeSince(card.time)}</span>}
             </div> : undefined}
             {card.extracontent || card.learnMoreUrl || card.buyUrl || card.feedbackUrl ?
                 <div className="ui extra content mobile hide">

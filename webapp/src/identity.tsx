@@ -4,7 +4,6 @@ import * as React from "react";
 import * as sui from "./sui";
 import * as auth from "./auth";
 import * as data from "./data";
-import * as cloud from "./cloud";
 import { SignInModal } from "../../react-common/components/profile/SignInModal";
 
 import ISettingsProps = pxt.editor.ISettingsProps;
@@ -174,30 +173,3 @@ export class UserMenu extends auth.Component<UserMenuProps, UserMenuState> {
     }
 }
 
-export type CloudSaveStatusProps = {
-    headerId: string;
-};
-
-export class CloudSaveStatus extends data.Component<CloudSaveStatusProps, {}> {
-    public static wouldRender(headerId: string): boolean {
-        const cloudMd = cloud.getCloudTempMetadata(headerId);
-        const cloudStatus = cloudMd.cloudStatus();
-        return !!cloudStatus && cloudStatus.value !== "none" && auth.hasIdentity();
-    }
-
-    renderCore() {
-        if (!this.props.headerId) { return null; }
-        const cloudMd = this.getData<cloud.CloudTempMetadata>(`${cloud.HEADER_CLOUDSTATE}:${this.props.headerId}`);
-        const cloudStatus = cloudMd.cloudStatus();
-        const showCloudButton = !!cloudStatus && cloudStatus.value !== "none" && auth.hasIdentity();
-        if (!showCloudButton) { return null; }
-        const preparing = cloudStatus.value === "localEdits";
-        const syncing = preparing || cloudStatus.value === "syncing";
-
-        return (<div className="cloudstatusarea">
-            {!syncing && <sui.Item role="presentation" className={"ui tiny cloudicon xicon " + cloudStatus.icon} title={cloudStatus.tooltip} tabIndex={-1}></sui.Item>}
-            {syncing && <sui.Item role="presentation" className={"ui tiny inline loader active cloudprogress" + (preparing ? " indeterminate" : "")} title={cloudStatus.tooltip} tabIndex={-1}></sui.Item>}
-            {cloudStatus.value !== "none" && cloudStatus.value !== "synced" && <span className="ui mobile hide no-select cloudtext" role="note">{cloudStatus.shortStatus}</span>}
-        </div>);
-    }
-}

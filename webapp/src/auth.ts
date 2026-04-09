@@ -1,6 +1,5 @@
 import * as core from "./core";
 import * as data from "./data";
-import * as cloud from "./cloud";
 import * as workspace from "./workspace";
 
 /**
@@ -56,8 +55,6 @@ class AuthClient extends pxt.auth.AuthClient {
     protected async onSignedIn(): Promise<void> {
         const state = await pxt.auth.getUserStateAsync();
         core.infoNotification(lf("Signed in: {0}", pxt.auth.userName(state.profile)));
-        if (!!workspace.getWorkspaceType())
-            await cloud.syncAsync();
         pxt.storage.setLocal(HAS_USED_CLOUD, "true");
     }
     protected onSignedOut(): Promise<void> {
@@ -84,12 +81,7 @@ class AuthClient extends pxt.auth.AuthClient {
         return Promise.resolve();
     }
     protected async onProfileDeleted(userId: string): Promise<void> {
-        try {
-            // Convert cloud-saved projects to local projects.
-            await cloud.convertCloudToLocal(userId);
-        } catch {
-            pxt.tickEvent('auth.profile.cloudToLocalFailed');
-        }
+        // No-op: cloud sync is no longer used in controller mode.
     }
     protected async onStateLoaded(): Promise<void> {
         const state = await pxt.auth.getUserStateAsync();

@@ -42,7 +42,6 @@ import * as accessibleblocks from "./accessibleblocks";
 import * as socketbridge from "./socketbridge";
 import * as webusb from "./webusb";
 import * as auth from "./auth";
-import * as cloud from "./cloud";
 import * as user from "./user";
 import * as headerbar from "./headerbar";
 import * as sidepanel from "./sidepanel";
@@ -169,10 +168,6 @@ export class ProjectView
         }
     };
 
-    private cloudStatusSubscriber: data.DataSubscriber = {
-        subscriptions: [],
-        onDataChanged: (path) => this.onCloudStatusChanged(path)
-    }
 
     // component ID strings
     static readonly tutorialCardId = "tutorialcard";
@@ -1126,12 +1121,10 @@ export class ProjectView
 
         // subscribe to user preference changes (for simulator or non-render subscriptions)
         data.subscribe(this.highContrastSubscriber, auth.HIGHCONTRAST);
-        data.subscribe(this.cloudStatusSubscriber, `${cloud.HEADER_CLOUDSTATE}:*`);
     }
 
     public componentWillUnmount() {
         data.unsubscribe(this.highContrastSubscriber);
-        data.unsubscribe(this.cloudStatusSubscriber);
     }
 
     // Add an error guard for the entire application
@@ -1609,37 +1602,6 @@ export class ProjectView
             await workspace.syncAsync();
         }
 
-        if (tryCloudSync) {
-            // Try a quick cloud fetch. If it doesn't complete within X second(s),
-            // continue on.
-            const TIMEOUT_MS = 15000;
-            const timeoutStart = Util.nowSeconds();
-            let timedOut = false;
-            await Promise.race([
-                pxt.U.delay(TIMEOUT_MS)
-                    .then(() => {
-                        timedOut = true
-                    }),
-                cloud.syncAsync({ hdrs: [h], direction: "down" })
-                    .then(changes => {
-                        if (changes.length) {
-                            const elapsed = Util.nowSeconds() - timeoutStart;
-                            if (timedOut) {
-                                // We are too late; the editor has already been loaded.
-                                // Call the onChanges handler to update the editor.
-                                pxt.tickEvent(`identity.syncOnProjectOpen.timedout`, { 'elapsedSec': elapsed })
-                                if (changes.some(header => header.id === h.id))
-                                    cloud.forceReloadForCloudSync()
-                            } else {
-                                // We're not too late, update the local var so that the
-                                // first load has the new info.
-                                pxt.tickEvent(`identity.syncOnProjectOpen.syncSuccess`, { 'elapsedSec': elapsed })
-                                h = workspace.getHeader(h.id)
-                            }
-                        }
-                    })
-            ]);
-        }
 
         if (h) {
             workspace.acquireHeaderSession(h);
@@ -1669,11 +1631,6 @@ export class ProjectView
             if (editorState.filters === undefined) editorState.filters = oldEditorState.filters;
             if (editorState.hasCategories === undefined) editorState.hasCategories = oldEditorState.hasCategories;
             if (editorState.searchBar === undefined) editorState.searchBar = oldEditorState.searchBar;
-        }
-
-        // If user is signed in, sync this project to the cloud.
-        if (this.hasCloudSync()) {
-            h.cloudUserId = this.getUserProfile()?.id;
         }
 
         return compiler.newProjectAsync()
@@ -1712,7 +1669,6 @@ export class ProjectView
                 }
 
                 // keep header name in sync with any changes in pxt.json
-                // for example when cloud sync changes update pxt.json
                 const name = pkg.mainPkg.config.name
                 h.name = name || lf("Untitled");
 
@@ -2962,7 +2918,6 @@ export class ProjectView
             pubCurrent: false,
             target: pxt.appTarget.id,
             targetVersion: pxt.appTarget.versions.target,
-            cloudUserId: this.getUserProfile()?.id,
             temporary: options.temporary,
             tutorial: options.tutorial,
             extensionUnderTest: options.extensionUnderTest,
@@ -3823,25 +3778,7 @@ export class ProjectView
     }
 
     onCloudStatusChanged(path: string) {
-        const cloudMd = this.getData<cloud.CloudTempMetadata>(path);
-        const cloudStatus = cloudMd?.cloudStatus();
-        if (cloudStatus) {
-            const msg: pxt.editor.EditorMessageProjectCloudStatus = {
-                type: "pxthost",
-                action: "projectcloudstatus",
-                headerId: cloudMd.headerId,
-                status: cloudStatus.value
-            };
-            pxteditor.postHostMessageAsync(msg);
-
-            // Deprecated: This was originally fired with the "pxteditor"
-            // type, which should only be used for responses, not events.
-            // Use the pxthost version above instead
-            pxteditor.postHostMessageAsync({
-                ...msg,
-                type: "pxteditor"
-            });
-        }
+        // No-op: cloud sync is no longer used in controller mode.
     }
 
     runSimulator(opts: compiler.CompileOptions = {}): Promise<void> {
@@ -4033,10 +3970,6 @@ export class ProjectView
             });
             this.forceUpdate();
         }
-    }
-
-    hasCloudSync() {
-        return this.isLoggedIn();
     }
 
     showScriptManager() {
@@ -4316,15 +4249,17 @@ export class ProjectView
     }
 
     async saveLocalProjectsToCloudAsync(headerIds: string[]): Promise<pxt.Map<string> | undefined> {
-        return cloud.saveLocalProjectsToCloudAsync(headerIds);
+        // No-op: cloud sync is no longer used in controller mode.
+        return undefined;
     }
 
     async requestProjectCloudStatus(headerIds: string[]): Promise<void> {
-        await cloud.requestProjectCloudStatus(headerIds);
+        // No-op: cloud sync is no longer used in controller mode.
     }
 
     convertCloudProjectsToLocal(userId: string): Promise<void> {
-        return cloud.convertCloudToLocal(userId);
+        // No-op: cloud sync is no longer used in controller mode.
+        return Promise.resolve();
     }
 
     private debouncedSaveProjectName: () => void;
@@ -5604,33 +5539,10 @@ function handleHash(newHash: { cmd: string; arg: string }, loading: boolean): bo
             editor.loadHeaderAsync(workspace.getHeader(newHash.arg));
             return true;
         case "cloudheader":
+            // Cloud sync is no longer used in controller mode.
             pxt.tickEvent("hash." + newHash.cmd);
             pxt.BrowserUtils.changeHash("");
-
-            // cloud.syncAsync의 hdrs 인자에 전달되는 temp header를 만듭니다.
-            // syncAsync 함수 내부에서는 이 header의 id만 사용합니다.
-            // 초기값은 workspace.freshHeader를 참고했습니다.
-            const tempHeader: pxt.workspace.Header = {
-                id: newHash.arg,
-                name: "temp",
-                target: pxt.appTarget.id,
-                targetVersion: pxt.appTarget.versions.target,
-                meta: {},
-                editor: pxt.JAVASCRIPT_PROJECT_NAME,
-                pubId: "",
-                pubCurrent: false,
-                _rev: null,
-                recentUse: 0,
-                modificationTime: 0,
-                cloudUserId: null,
-                cloudCurrent: false,
-                cloudVersion: null,
-                cloudLastSyncTime: 0,
-                isDeleted: false,
-            }
-            cloud.syncAsync({ hdrs: [tempHeader], direction: "down" }).then(
-                () => editor.loadHeaderAsync(workspace.getHeader(newHash.arg))
-            );
+            editor.loadHeaderAsync(workspace.getHeader(newHash.arg));
             return true;
         case "sandboxproject":
         case "project":
@@ -5954,7 +5866,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         await auth.loginAsync(autoLogin, true);
     }
 
-    cloud.init(); // depends on auth.init() and workspace.ts's top level
     cloudsync.loginCheck()
     parseLocalToken();
     hash = parseHash();
@@ -6105,10 +6016,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 || theme.allowSimulatorTelemetry
                 || pxt.shell.isControllerMode())
                 pxteditor.bindEditorMessages(getEditorAsync);
-            return workspace.initAsync().then(async s => {
-                // Poll cloud for changes after workspace is initialized
-                await cloud.syncAsync(); return s;
-            });
+            return workspace.initAsync();
         })
         .then((state) => {
             render(); // this sets theEditor

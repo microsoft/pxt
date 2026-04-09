@@ -431,12 +431,11 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
                     {compileBtn && this.getCompileButton(mobile)}
                 </div>}
             </div>
-            {(showProjectRename || showGithub || identity.CloudSaveStatus.wouldRender(header.id)) &&
+            {(showProjectRename || showGithub) &&
                 <div id="projectNameArea" className="ui column items">
                     <div className={`ui right ${showSave ? "labeled" : ""} input projectname-input projectname-computer`}>
                         {showProjectRename && this.getSaveInput(showSave, "fileNameInput2", projectName, showProjectRenameReadonly)}
                         {showGithub && <githubbutton.GithubButton parent={this.props.parent} key={`githubbtn${computer}`} />}
-                        <identity.CloudSaveStatus headerId={header.id} />
                     </div>
                 </div>}
             <div id="editorToolbarArea" role="menubar" className="ui column items">

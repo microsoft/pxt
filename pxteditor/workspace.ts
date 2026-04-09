@@ -13,10 +13,6 @@ export function freshHeader(name: string, modTime: number) {
         id: pxt.U.guidGen(),
         recentUse: modTime,
         modificationTime: modTime,
-        cloudUserId: null,
-        cloudCurrent: false,
-        cloudVersion: null,
-        cloudLastSyncTime: 0,
         isDeleted: false,
     }
     return header

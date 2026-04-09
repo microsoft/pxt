@@ -11,7 +11,6 @@ import * as cloudsync from "./cloudsync"
 import * as indexedDBWorkspace from "./idbworkspace";
 import * as compiler from "./compiler"
 import * as auth from "./auth"
-import * as cloud from "./cloud"
 
 import * as dmp from "diff-match-patch";
 import * as pxteditor from "../../pxteditor";
@@ -143,23 +142,20 @@ async function switchToMemoryWorkspace(reason: string): Promise<void> {
     implType = "mem";
 }
 
-export function getHeaders(withDeleted = false, filterByEditorType = true, cloudUserIdOverride?: string) {
+export function getHeaders(withDeleted = false, filterByEditorType = true) {
     maybeSyncHeadersAsync();
-    const cloudUserId = cloudUserIdOverride ?? auth.userProfile()?.id;
     let r = allScripts.map(e => e.header).filter(h =>
         // Filter deleted projects
         (withDeleted || !h.isDeleted) &&
         // Hide backup projects
-        !h.isBackup &&
-        // Filter to local projects and projects belonging to this signed in user
-        (!h.cloudUserId || h.cloudUserId === cloudUserId));
+        !h.isBackup);
     if (filterByEditorType) {
         // If this is the skillmap editor, filter to only skillmap projects, otherwise filter out skillmap projects
         r = r.filter(h => !!h.isSkillmapProject === pxt.BrowserUtils.isSkillmapEditor());
     }
     r.sort((a, b) => {
-        const aTime = a.cloudUserId ? Math.min(a.cloudLastSyncTime, a.modificationTime) : a.modificationTime
-        const bTime = b.cloudUserId ? Math.min(b.cloudLastSyncTime, b.modificationTime) : b.modificationTime
+        const aTime = a.modificationTime
+        const bTime = b.modificationTime
         return bTime - aTime
     })
     return r
@@ -276,20 +272,6 @@ function checkHeaderSession(h: Header): void {
         pxt.Util.assert(false, "trying to access outdated session")
     }
 }
-// helps know when we last synced with the cloud (in seconds since epoch)
-export function getHeaderLastCloudSync(h: Header): number {
-    return h.cloudLastSyncTime || 0/*never*/
-}
-export function getLastCloudSync(): number {
-    if (!auth.loggedIn())
-        return 0;
-    const userId = auth.userProfile()?.id;
-    const cloudHeaders = getHeaders(true)
-        .filter(h => h.cloudUserId && h.cloudUserId === userId);
-    if (!cloudHeaders.length)
-        return 0
-    return Math.min(...cloudHeaders.map(getHeaderLastCloudSync))
-}
 
 export function initAsync() {
     if (!impl) {
@@ -397,7 +379,7 @@ function getScriptRequest(h: Header, text: ScriptText, meta: ScriptMeta, screens
         targetVersion: h.targetVersion,
         description: meta.description || lf("Made with ❤️ in {0}.", pxt.appTarget.title || pxt.appTarget.name),
         editor: h.editor,
-        header: JSON.stringify(cloud.excludeLocalOnlyMetadataFields(h)),
+        header: JSON.stringify(h),
         text: JSON.stringify(text),
         meta: {
             versions: pxt.appTarget.versions,
@@ -432,26 +414,8 @@ export async function anonymousPublishAsync(h: Header, text: ScriptText, meta: S
     return inf;
 }
 
-export async function persistentPublishAsync(h: Header, text: ScriptText, meta: ScriptMeta, screenshotUri?: string) {
-    checkHeaderSession(h);
-
-    const saveId = {}
-    h.saveId = saveId
-    const scrReq = getScriptRequest(h, text, meta, screenshotUri)
-    pxt.debug(`publishing script; ${scrReq.text.length} bytes`)
-
-    const { shareID, scr: script } =  await cloud.shareAsync(h.id, scrReq);
-    if (!h.pubVersions) h.pubVersions = [];
-    h.pubVersions.push({ id: script.id, type: "permalink" });
-    h.pubId = shareID
-    h.pubCurrent = h.saveId === saveId
-    h.pubPermalink = shareID;
-    h.meta = script.meta;
-    pxt.debug(`published; id /${h.pubId}`)
-    await saveAsync(h);
-    await updateShareHistoryAsync(h.id);
-
-    return h;
+export async function persistentPublishAsync(h: Header, text: ScriptText, meta: ScriptMeta, screenshotUri?: string): Promise<Header> {
+    throw new Error("Cloud sharing is not supported in controller mode");
 }
 
 function fixupVersionAsync(e: File) {
@@ -588,7 +552,7 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
         const prevProj = e
         const allChanges = computeChangeSummary(prevProj, {header: h, text})
         const ignoredFiles = [GIT_JSON, pxt.SIMSTATE_JSON, pxt.SERIAL_EDITOR_FILE]
-        const ignoredHeaderFields: (keyof Header)[] = ['recentUse', 'modificationTime', 'cloudCurrent', '_rev', '_id' as keyof Header, 'cloudVersion']
+        const ignoredHeaderFields: (keyof Header)[] = ['recentUse', 'modificationTime', '_rev', '_id' as keyof Header]
         const userChanges: ProjectChanges = {
             header: allChanges.header.filter(f => ignoredHeaderFields.indexOf(f.key) < 0),
             files: allChanges.files.filter(f => ignoredFiles.indexOf(f.key) < 0)
@@ -608,14 +572,8 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
         && (h.isDeleted || text && hasUserFileChanges())
     if (isHeaderOnlyChange || isUserChange) {
         h.pubCurrent = false
-        h.cloudCurrent = false
         h.modificationTime = U.nowSeconds();
         h.targetVersion = h.targetVersion || "0.0.0";
-
-        // cloud user association
-        if (auth.hasIdentity() && auth.loggedIn()) {
-            h.cloudUserId = auth.userProfile()?.id
-        }
     }
 
     if (!fromCloudSync)
@@ -698,7 +656,6 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
 
         if (isUserChange) {
             h.pubCurrent = false;
-            h.cloudCurrent = false;
             h.saveId = null;
         }
 
@@ -809,13 +766,6 @@ export async function duplicateAsync(h: Header, newName?: string, newText?: Scri
     delete newHdr.anonymousSharePreference;
     newHdr.pubId = "";
     newHdr.pubCurrent = false;
-
-    if (newHdr.cloudVersion) {
-        pxt.tickEvent(`identity.duplicatingCloudProject`);
-    }
-
-    // drop cloud-related local metadata
-    newHdr = cloud.excludeLocalOnlyMetadataFields(newHdr)
 
     return importAsync(newHdr, dupText)
         .then(() => newHdr)
@@ -1785,7 +1735,7 @@ function dbgShorten(s: string): string {
 }
 export function dbgHdrToString(h: Header): string {
     if (!h) return "#null"
-    return `${h.name} ${h.id.substr(0, 4)}..v${dbgShorten(h.cloudVersion)}@${h.modificationTime % 100}-${U.timeSince(h.modificationTime)}`;
+    return `${h.name} ${h.id.substr(0, 4)}..@${h.modificationTime % 100}-${U.timeSince(h.modificationTime)}`;
 }
 
 async function getScriptCacheAsync(): Promise<pxt.BrowserUtils.IDBObjectStoreWrapper<{id: string, files: ScriptText}>> {
