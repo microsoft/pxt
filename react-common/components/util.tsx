@@ -93,14 +93,14 @@ export function screenToSVGCoord(ref: SVGSVGElement, coord: ClientCoordinates) {
     return screenCoord.matrixTransform(ref.getScreenCTM().inverse());
 }
 
-export function findNextFocusableElement(elements: HTMLElement[], focusedIndex: number, index: number, forward: boolean, isFocusable?: (e: HTMLElement) => boolean): HTMLElement {
+export function findNextFocusableElement(elements: HTMLElement[], focusedIndex: number, index: number, forward: boolean, filter?: (e: HTMLElement) => boolean): HTMLElement {
     const increment = forward ? 1 : -1;
     const element = elements[index];
     // in this case, there are no focusable elements
     if (focusedIndex === index) {
         return element;
     }
-    if (isFocusable ? isFocusable(element) : isVisible(element)) {
+    if (filter ? filter(element) : isVisible(element)) {
         return element;
     } else {
         if (index + increment >= elements.length) {
@@ -111,25 +111,107 @@ export function findNextFocusableElement(elements: HTMLElement[], focusedIndex: 
             index += increment;
         }
     }
-    return findNextFocusableElement(elements, focusedIndex, index, forward, isFocusable);
+    return findNextFocusableElement(elements, focusedIndex, index, forward, filter);
 }
 
-function isVisible(e: HTMLElement): boolean {
+export function getFocusableDescendants(container: Element): Element[] {
+    return getVisibleDescendants(container, isFocusableIfVisible);
+}
+
+export function getTabbableDescendants(container: Element): Element[] {
+    return getVisibleDescendants(container, isTabbableIfVisible);
+}
+
+export function getVisibleDescendants(container: Element, filter: (e: Element) => boolean): Element[] {
+    if (!isVisible(container)) {
+        return [];
+    }
+
+    const walker = document.createTreeWalker(
+        container,
+        NodeFilter.SHOW_ELEMENT,
+        node => {
+            // If not visible, don't bother walking the subtree
+            if (!isVisible(node as Element, false)) {
+                return NodeFilter.FILTER_REJECT;
+            }
+            return filter(node as Element) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
+        }
+    );
+
+    const elements: Element[] = [];
+    let currentNode: Node | null = walker.nextNode();
+    while (currentNode) {
+        elements.push(currentNode as Element);
+        currentNode = walker.nextNode();
+    }
+    return elements;
+}
+
+function isVisible(e: Element, checkParent = true): boolean {
     if ((e as any).checkVisibility) {
         return (e as any).checkVisibility({ visibilityProperty: true });
     }
     const style = getComputedStyle(e);
-    return style.display !== "none" && style.visibility !== "hidden";
-}
-
-export function isFocusable(e: HTMLElement) {
-    if (e) {
-        return (e.getAttribute("data-isfocusable") === "true"
-        || e.tabIndex !== -1)
-        && getComputedStyle(e).display !== "none";
-    } else {
+    if (style.display === "none" || style.visibility === "hidden") {
         return false;
     }
+
+    if (checkParent && e.parentElement) {
+        return isVisible(e.parentElement, checkParent);
+    }
+    return true;
+}
+
+export function isFocusable(e: Element) {
+    return isFocusableIfVisible(e) && isVisible(e);
+}
+
+function isFocusableIfVisible(e: Element) {
+    if (isDisabled(e)) return false;
+
+    // There are some edge cases here like <summary> elements and
+    // span elements with the `user-modify` attribute but we don't use
+    // those anyway. This should cover the vast majority
+    if (
+        e.hasAttribute("tabindex") ||
+        (e.tagName === "A" && (e.hasAttribute("href") || e.hasAttributeNS("xlink", "href"))) ||
+        e.tagName === "BUTTON" ||
+        e.tagName === "INPUT" ||
+        e.tagName === "SELECT" ||
+        e.tagName === "TEXTAREA" ||
+        e.tagName === "IFRAME" ||
+        e.tagName === "EMBED" ||
+        e.tagName === "OBJECT" ||
+        (e.tagName === "DIV" && e.hasAttribute("contenteditable") && e.getAttribute("contenteditable") !== "false") ||
+        ((e.tagName === "AUDIO" || e.tagName === "VIDEO") && e.hasAttribute("controls"))
+    ) {
+        return true;
+    }
+
+    return false;
+}
+
+
+export function isDisabled(e: Element) {
+    if (e) {
+        if (e.hasAttribute("disabled")) return true;
+    }
+    return false;
+}
+
+export function isTabbable(e: Element) {
+    return isTabbableIfVisible(e) && isVisible(e);
+}
+
+function isTabbableIfVisible(e: Element) {
+    if (isFocusableIfVisible(e)) {
+        if (e.hasAttribute("tabindex")) {
+            return parseInt(e.getAttribute("tabindex")!) >= 0;
+        }
+        return true;
+    }
+    return false;
 }
 
 export function focusLastActive(el: HTMLElement) {

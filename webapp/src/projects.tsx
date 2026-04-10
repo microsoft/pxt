@@ -911,7 +911,8 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
         this.setState({})
     }
 
-    handleCardClick(e: any, scr: pxt.CodeCard, index?: number) {
+    handleCardClick(e: Event, scr: pxt.CodeCard, index?: number) {
+        e.preventDefault();
         const { name } = this.props;
         if (this.props.setSelected && !(scr && scr.directOpen)) {
             // Set this item as selected

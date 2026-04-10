@@ -511,6 +511,7 @@ export interface ButtonProps extends UiProps, TooltipUIProps {
     id?: string;
     title?: string;
     ariaLabel?: string;
+    ariaDisabled?: boolean;
     ariaExpanded?: boolean;
     onClick?: (e: React.MouseEvent<HTMLElement>) => void;
     disabled?: boolean;
@@ -539,6 +540,7 @@ export class Button extends StatelessUIElement<ButtonProps> {
             tabIndex={this.props.tabIndex || 0}
             aria-label={this.props.ariaLabel}
             aria-expanded={this.props.ariaExpanded}
+            aria-disabled={this.props.ariaDisabled ?? disabled}
             onClick={this.props.onClick}
             onKeyDown={this.props.onKeyDown}
             autoFocus={this.props.autoFocus}

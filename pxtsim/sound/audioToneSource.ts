@@ -38,6 +38,8 @@ namespace pxsim.AudioContextManager {
         protected constructor(context: AudioContext, destination: AudioNode) {
             super(context, destination);
 
+            this.vca.gain.value = 0;
+
             this.oscillator = context.createOscillator();
             this.oscillator.type = "triangle";
             this.oscillator.frequency.value = 0;
