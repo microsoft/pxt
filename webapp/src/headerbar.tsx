@@ -84,6 +84,35 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
         window.open(pxt.multiplayer.SHORT_LINK(), "_blank");
     }
 
+    onHomeSearchChange = (evt: React.ChangeEvent<HTMLInputElement>) => {
+        const value = evt?.target?.value || "";
+        const parent = this.props.parent as any;
+        parent.setHomeSearchQuery?.(value);
+        parent.home?.setSearchQuery?.(value);
+    }
+
+    getHomeSearchBox = (view: HeaderBarView) => {
+        if (view !== "home") return undefined;
+
+        const parent = this.props.parent;
+        const value = parent.getHomeSearchQuery() || "";
+
+        return <div className="ui item mobile hide" style={{ minWidth: "18rem", width: "24rem", maxWidth: "36vw" }}>
+            <label className="accessible-hidden" htmlFor="homescreen-search-header">{lf("Search home content")}</label>
+            <div className="ui fluid icon input">
+                <input
+                    id="homescreen-search-header"
+                    type="text"
+                    placeholder={lf("Search tutorials, games, projects")}
+                    value={value}
+                    onChange={this.onHomeSearchChange}
+                    aria-label={lf("Search tutorials, games, and projects")}
+                />
+                <i className="search icon" aria-hidden="true" />
+            </div>
+        </div>;
+    }
+
     protected getView = (): HeaderBarView => {
         const { home, debugging, tutorialOptions } = this.props.parent.state;
         if (home) {
@@ -306,6 +335,7 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
                 {this.getCenterLabel(targetTheme, view, tutorialOptions)}
             </div>}
             <div className="right menu">
+                {this.getHomeSearchBox(view)}
                 {this.getExitButtons(targetTheme, view, tutorialOptions)}
                 {showHomeButton && <sui.Item className={`icon openproject ${hasIdentity ? "mobile hide" : ""}`} role="menuitem" title={lf("Home")} icon="home large" ariaLabel={lf("Home screen")} onClick={this.goHome} />}
                 {showShareButton && <sui.Item className="icon shareproject mobile hide" role="menuitem" title={lf("Publish your game to create a shareable link")} icon="share alternate large" ariaLabel={lf("Share Project")} onClick={this.showShareDialog} />}

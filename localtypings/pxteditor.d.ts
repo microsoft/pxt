@@ -1119,6 +1119,9 @@ declare namespace pxt.editor {
         getSharePreferenceForHeader(): boolean;
         saveSharePreferenceForHeaderAsync(anonymousByDefault: boolean): Promise<void>;
         setColorThemeById(colorThemeId: string, savePreference: boolean): void;
+
+        getHomeSearchQuery(): string;
+        
     }
 
     export interface IHexFileImporter {
