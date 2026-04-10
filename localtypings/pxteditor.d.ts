@@ -1121,7 +1121,7 @@ declare namespace pxt.editor {
         setColorThemeById(colorThemeId: string, savePreference: boolean): void;
 
         getHomeSearchQuery(): string;
-        
+        setHomeSearchQuery(query: string): void;
     }
 
     export interface IHexFileImporter {

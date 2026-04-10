@@ -1740,6 +1740,7 @@ namespace ts.pxtc.service {
         blocks?: BlocksOptions;
         extensions?: ExtensionsOptions;
         projectSearch?: ProjectSearchOptions;
+        homeSearch?: HomeSearchOptions;
         snippet?: SnippetOptions;
         runtime?: pxt.RuntimeOptions;
         light?: boolean; // in light mode?
@@ -1805,6 +1806,18 @@ namespace ts.pxtc.service {
     export interface ProjectSearchInfo {
         name: string;
         id?: string;
+    }
+
+    export interface HomeSearchOptions {
+        term: string;
+        entries: HomeSearchInfo[];
+    }
+
+    export interface HomeSearchInfo {
+        id: string;
+        name: string;
+        description?: string;
+        tags?: string;
     }
 
     export interface BlocksOptions {
