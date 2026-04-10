@@ -778,6 +778,7 @@ namespace ts.pxtc.service {
         name: string;
         description?: string;
         tags?: string;
+        searchTerms?: string;
     }
 
     export interface HomeSearchOptions {
@@ -1401,7 +1402,8 @@ namespace ts.pxtc.service {
                     keys: [
                         { name: 'name', weight: 0.45 },
                         { name: 'description', weight: 0.35 },
-                        { name: 'tags', weight: 0.2 }
+                        { name: 'searchTerms', weight: 0.35 },
+                        { name: 'tags', weight: 0.15 },
                     ]
                 };
                 lastHomeFuse = new Fuse(searchSet, fuseOptions);

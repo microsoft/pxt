@@ -1818,6 +1818,7 @@ namespace ts.pxtc.service {
         name: string;
         description?: string;
         tags?: string;
+        searchTerms?: string;
     }
 
     export interface BlocksOptions {

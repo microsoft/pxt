@@ -113,7 +113,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
 
     private collectGallerySearchEntries(galleries: pxt.Map<string | pxt.GalleryProps>) {
         const cards: pxt.CodeCard[] = [];
-        const entries = [] as { id: string; name: string; description?: string; tags?: string; }[];
+        const entries = [] as { id: string; name: string; description?: string; tags?: string; searchTerms?: string; }[];
         const cardMap: pxt.Map<pxt.CodeCard> = {};
         const seen = new Set<string>();
 
@@ -135,7 +135,8 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                     id: key,
                     name: card.name || "",
                     description: card.description || "",
-                    tags: Array.isArray(card.tags) ? card.tags.join(" ") : ""
+                    tags: Array.isArray(card.tags) ? card.tags.join(" ") : "",
+                    searchTerms: Array.isArray(card.searchTerms) ? card.searchTerms.join(" ") : ""
                 });
             }));
         });
