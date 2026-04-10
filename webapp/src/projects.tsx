@@ -8,6 +8,7 @@ import * as core from "./core";
 import * as auth from "./auth";
 import * as codecard from "./codecard"
 import * as carousel from "./carousel";
+import * as compiler from "./compiler";
 import { showAboutDialogAsync } from "./dialogs";
 import { fireClickOnEnter } from "./util";
 import { sendUpdateFeedbackTheme } from "../../react-common/components/controls/Feedback/FeedbackEventListener";
@@ -26,9 +27,14 @@ interface ProjectsState {
     visible?: boolean;
     selectedCategory?: string;
     selectedIndex?: number;
+    searchQuery?: string;
+    searchResults?: pxt.CodeCard[];
 }
 
+const SEARCH_CATEGORY = "__search__";
+
 export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
+    private searchRequestId = 0;
 
     constructor(props: ISettingsProps) {
         super(props)
@@ -43,12 +49,17 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         this.importProject = this.importProject.bind(this);
         this.showScriptManager = this.showScriptManager.bind(this);
         this.setSelected = this.setSelected.bind(this);
+        this.onSearchChange = this.onSearchChange.bind(this);
+        this.clearSearch = this.clearSearch.bind(this);
+        this.handleSearchCardClick = this.handleSearchCardClick.bind(this);
     }
 
     shouldComponentUpdate(nextProps: ISettingsProps, nextState: ProjectsState, nextContext: any): boolean {
         return this.state.visible != nextState.visible
             || this.state.selectedCategory != nextState.selectedCategory
-            || this.state.selectedIndex != nextState.selectedIndex;
+            || this.state.selectedIndex != nextState.selectedIndex
+            || this.state.searchQuery != nextState.searchQuery
+            || this.state.searchResults != nextState.searchResults;
     }
 
     setSelected(category: string, index: number) {
@@ -63,6 +74,18 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         if (this.state.selectedCategory !== prevState.selectedCategory) {
             this.ensureSelectedItemVisible();
         }
+
+        // If search query exists but results were empty when galleries weren't loaded yet, retry once galleries are available
+        if (this.state.searchQuery && this.state.searchQuery === prevState.searchQuery) {
+            const hadNoResults = !prevState.searchResults || prevState.searchResults.length === 0;
+            const stillNoResults = !this.state.searchResults || this.state.searchResults.length === 0;
+            if (hadNoResults && stillNoResults) {
+                const cards = this.collectGalleryCards(this.getHomeGalleries());
+                if (cards && cards.length) {
+                    this.runSearch(this.state.searchQuery);
+                }
+            }
+        }
     }
 
     ensureSelectedItemVisible() {
@@ -71,6 +94,126 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
             let domNode = (activeCarousel as ProjectsCarousel).getCarouselDOM() as Element;
             this.scrollElementIntoViewIfNeeded(domNode);
         }
+    }
+
+    private getHomeGalleries(): pxt.Map<string | pxt.GalleryProps> {
+        const targetConfig = this.getData("target-config:") as pxt.TargetConfig;
+        const lang = pxt.Util.userLanguage();
+        let galleries: pxt.Map<string | pxt.GalleryProps> = {};
+        if (targetConfig && targetConfig.localizedGalleries && targetConfig.localizedGalleries[lang])
+            pxt.Util.jsonCopyFrom(galleries, targetConfig.localizedGalleries[lang]);
+        if (targetConfig && targetConfig.galleries)
+            pxt.Util.jsonCopyFrom(galleries, targetConfig.galleries);
+        return galleries;
+    }
+
+    private collectGalleryCards(galleries: pxt.Map<string | pxt.GalleryProps>): pxt.CodeCard[] {
+        return this.collectGallerySearchEntries(galleries).cards;
+    }
+
+    private collectGallerySearchEntries(galleries: pxt.Map<string | pxt.GalleryProps>) {
+        const cards: pxt.CodeCard[] = [];
+        const entries = [] as { id: string; name: string; description?: string; tags?: string; }[];
+        const cardMap: pxt.Map<pxt.CodeCard> = {};
+        const seen = new Set<string>();
+
+        Object.keys(galleries).forEach(galleryName => {
+            const galProps = galleries[galleryName] as pxt.GalleryProps | string;
+            const path = typeof galProps === "string" ? galProps : galProps.url;
+            if (!path) return;
+
+            const res = this.getData(`gallery:${encodeURIComponent(path)}`) as pxt.gallery.Gallery[];
+            if (!res || res instanceof Error) return;
+
+            res.forEach(gal => gal.cards?.forEach(card => {
+                const key = (card.url || card.name || "") + (card.cardType || "");
+                if (seen.has(key)) return;
+                seen.add(key);
+                cards.push(card);
+                cardMap[key] = card;
+                entries.push({
+                    id: key,
+                    name: card.name || "",
+                    description: card.description || "",
+                    tags: Array.isArray(card.tags) ? card.tags.join(" ") : ""
+                });
+            }));
+        });
+
+        return { cards, entries, cardMap };
+    }
+
+    private runSearch(query: string) {
+        const normalized = (query || "").trim();
+        const galleries = this.getHomeGalleries();
+        const parent = this.props.parent;
+        const requestId = ++this.searchRequestId;
+
+        if (!normalized) {
+            const resetCategory = this.state.selectedCategory === SEARCH_CATEGORY ? undefined : this.state.selectedCategory;
+            const resetIndex = this.state.selectedCategory === SEARCH_CATEGORY ? undefined : this.state.selectedIndex;
+            parent.setHomeSearchQuery("");
+            compiler.homeSearchClear();
+            this.setState({ searchQuery: "", searchResults: undefined, selectedCategory: resetCategory, selectedIndex: resetIndex });
+            return;
+        }
+
+        const { entries, cardMap } = this.collectGallerySearchEntries(galleries);
+        parent.setHomeSearchQuery(normalized);
+        if (!entries.length) {
+            this.setState({ searchQuery: normalized, searchResults: [] });
+            return;
+        }
+
+        compiler.homeSearchAsync({ term: normalized, entries })
+            .then(results => {
+                if (requestId !== this.searchRequestId) return;
+
+                const matches = results
+                    .map(result => cardMap[result.id])
+                    .filter(card => !!card);
+
+                this.setState({
+                    searchQuery: normalized,
+                    searchResults: matches,
+                    selectedCategory: SEARCH_CATEGORY,
+                    selectedIndex: undefined
+                });
+            })
+            .catch(e => {
+                if (requestId !== this.searchRequestId) return;
+                pxt.reportException(e);
+                this.setState({
+                    searchQuery: normalized,
+                    searchResults: [],
+                    selectedCategory: SEARCH_CATEGORY,
+                    selectedIndex: undefined
+                });
+            });
+    }
+
+    public setSearchQuery(query: string) {
+        this.runSearch(query);
+    }
+
+    public getSearchQuery() {
+        return this.state.searchQuery || "";
+    }
+
+    private onSearchChange(ev: React.ChangeEvent<HTMLInputElement>) {
+        this.runSearch(ev?.target?.value || "");
+    }
+
+    public clearSearch() {
+        this.runSearch("");
+    }
+
+    private handleSearchCardClick(e: any, scr: pxt.CodeCard, index?: number) {
+        if (index == undefined) {
+            this.chgGallery(scr);
+            return;
+        }
+        this.setSelected(SEARCH_CATEGORY, index);
     }
 
     scrollElementIntoViewIfNeeded(domNode: Element) {
@@ -127,14 +270,12 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
 
         const targetTheme = pxt.appTarget.appTheme;
         const { scriptManager } = targetTheme;
-        const targetConfig = this.getData("target-config:") as pxt.TargetConfig;
-        const lang = pxt.Util.userLanguage();
-        // collect localized and unlocalized galleries
-        let galleries: pxt.Map<string | pxt.GalleryProps> = {};
-        if (targetConfig && targetConfig.localizedGalleries && targetConfig.localizedGalleries[lang])
-            pxt.Util.jsonCopyFrom(galleries, targetConfig.localizedGalleries[lang]);
-        if (targetConfig && targetConfig.galleries)
-            pxt.Util.jsonCopyFrom(galleries, targetConfig.galleries);
+        const galleries = this.getHomeGalleries();
+        const searchQuery = this.state.searchQuery || "";
+        const hasSearchQuery = !!searchQuery.trim();
+        const searchResults = this.state.searchResults || [];
+        const searchSelectedIndex = this.state.selectedCategory === SEARCH_CATEGORY ? this.state.selectedIndex : undefined;
+        const selectedSearchCard = searchSelectedIndex !== undefined ? searchResults[searchSelectedIndex] : undefined;
 
         // lf("Make")
         // lf("Code")
@@ -148,78 +289,158 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
 
         return <div ref="homeContainer" className={tabClasses} role="main">
             <HeroBanner parent={this.props.parent} />
-            <h1 className="accessible-hidden">{lf("MakeCode Home")}</h1>
-            <div key={`mystuff_gallerysegment`} className="ui segment gallerysegment mystuff-segment" role="region" aria-label={lf("My Projects")}>
-                <div className="ui heading">
-                    <div className="column" style={{ zIndex: 1 }}
-                        onClick={scriptManager && this.showScriptManager} onKeyDown={scriptManager && fireClickOnEnter}
-                    >
-                        {scriptManager ? <h2 className="ui header myproject-header">
-                            {lf("My Projects")}
-                            <span className="view-all-button" tabIndex={0} title={lf("View all projects")} role="button">
-                                {lf("View All")}
-                            </span>
-                        </h2> : <h2 className="ui header">{lf("My Projects")}</h2>}
-                    </div>
-                    <div className="column right aligned" style={{ zIndex: 1 }}>
-                        {pxt.appTarget.compile || (pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing) ?
-                            <sui.Button key="import" icon="upload" className="import-dialog-btn neutral" textClass="landscape only" text={lf("Import")} title={lf("Import a project")} onClick={this.importProject} /> : undefined}
-                    </div>
-                </div>
+            <div className="ui segment gallerysegment search-input-segment mobile only" role="search">
                 <div className="content">
-                    <ProjectsCarousel key={`mystuff_carousel`} parent={this.props.parent} name={'recent'} onClick={this.chgHeader} />
+                    <label className="accessible-hidden" htmlFor="homescreen-search">{lf("Search home content")}</label>
+                    <div className="ui fluid icon input">
+                        <input
+                            id="homescreen-search"
+                            type="text"
+                            placeholder={lf("Search tutorials, games, projects")}
+                            value={searchQuery}
+                            onChange={this.onSearchChange}
+                            aria-label={lf("Search tutorials, games, and projects")}
+                        />
+                        <i className="search icon" aria-hidden="true" />
+                    </div>
                 </div>
             </div>
-            {Object.keys(galleries)
-                .filter(galleryName => {
-                    // hide galleries that are part of an experiment and that experiment is
-                    // not enabled
-                    const galProps = galleries[galleryName] as pxt.GalleryProps | string
-                    if (typeof galProps === "string")
-                        return true
-                    // filter categories by experiment
-                    const exp = galProps.experimentName;
-                    if (exp && !(pxt.appTarget.appTheme as any)[exp])
-                        return false; // experiment not enabled
-                    const locales = galProps.locales;
-                    if (locales && locales.indexOf(pxt.Util.userLanguage()) < 0)
-                        return false; // locale not supported
-                    // test if blocked
-                    const testUrl = galProps.testUrl || (!!galProps.youTube && "https://www.youtube.com/favicon.ico");
-                    if (testUrl) {
-                        const ping = this.getData(`ping:${testUrl.replace('@random@', Math.random().toString())}`);
-                        if (ping !== true) // still loading or can't ping
-                            return false;
-                    }
-                    // show the gallery
-                    return true;
-                })
-                .map(galleryName => {
-                    const galProps = galleries[galleryName] as pxt.GalleryProps | string
-                    const url = typeof galProps === "string" ? galProps : galProps.url
-                    const shuffle: pxt.GalleryShuffle = typeof galProps === "string" ? undefined : galProps.shuffle;
-                    return <div key={`${galleryName}_gallerysegment`} className="ui segment gallerysegment" role="region" aria-label={pxt.Util.rlf(galleryName)}>
-                        <h2 className="ui header heading">{pxt.Util.rlf(galleryName)} </h2>
-                        <div className="content">
-                            <ProjectsCarousel ref={`${selectedCategory == galleryName ? 'activeCarousel' : ''}`}
-                                key={`${galleryName}_carousel`} parent={this.props.parent}
-                                name={galleryName}
-                                path={url}
-                                onClick={this.chgGallery} setSelected={this.setSelected}
-                                shuffle={shuffle}
-                                selectedIndex={selectedCategory == galleryName ? selectedIndex : undefined} />
+            {hasSearchQuery ? (
+                <div key={`search_gallerysegment`} className="ui segment gallerysegment search-segment" role="region" aria-label={lf("Search results")} style={{ padding: "1rem" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", padding: "0 0 1.5rem" }}>
+                        <h2 className="ui header" style={{ margin: 0, padding: 0 }}>
+                            {lf("Search results ({0})", searchResults.length ? searchResults.length : lf("No matches"))}
+                        </h2>
+                        <button
+                            type="button"
+                            className="ui button"
+                            onClick={this.clearSearch}
+                            aria-label={lf("Clear search")}
+                        >
+                            {lf("Clear search")}
+                        </button>
+                    </div>
+                    <div className="content" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "1rem", alignItems: "start", gridAutoFlow: "dense" }}>
+                        {searchResults.length ? searchResults.map((scr, index) =>
+                            <React.Fragment key={`search-${scr.youTubeId || scr.name || scr.url}-${index}`}>
+                                <ProjectsCodeCard
+                                    className={`example ${searchSelectedIndex === index ? "selected" : ""}`}
+                                    name={scr.name}
+                                    url={scr.url}
+                                    imageUrl={scr.imageUrl}
+                                    youTubeId={scr.youTubeId}
+                                    youTubePlaylistId={scr.youTubePlaylistId}
+                                    buttonLabel={scr.buttonLabel}
+                                    label={scr.label}
+                                    labelClass={scr.labelClass}
+                                    tags={scr.tags}
+                                    scr={scr} index={index}
+                                    onCardClick={this.handleSearchCardClick}
+                                    cardType={scr.cardType}
+                                    tutorialStep={scr.tutorialStep}
+                                    tutorialLength={scr.tutorialLength}
+                                    selected={!scr.directOpen ? searchSelectedIndex === index : undefined}
+                                />
+                                {selectedSearchCard && searchSelectedIndex === index && <div ref="searchDetailView" className={`detailview`} style={{ gridColumn: "1 / -1", minWidth: 0 }}>
+                                    <sui.CloseButton onClick={() => this.setSelected(SEARCH_CATEGORY, undefined)} />
+                                    <ProjectsDetail parent={this.props.parent}
+                                        name={selectedSearchCard.name}
+                                        key={'detailsearch' + selectedSearchCard.name}
+                                        description={selectedSearchCard.description}
+                                        url={selectedSearchCard.url}
+                                        imageUrl={selectedSearchCard.imageUrl}
+                                        largeImageUrl={selectedSearchCard.largeImageUrl}
+                                        videoUrl={selectedSearchCard.videoUrl}
+                                        youTubeId={selectedSearchCard.youTubeId}
+                                        youTubePlaylistId={selectedSearchCard.youTubePlaylistId}
+                                        buttonLabel={selectedSearchCard.buttonLabel}
+                                        actionIcon={selectedSearchCard.actionIcon}
+                                        scr={selectedSearchCard}
+                                        onClick={this.chgGallery}
+                                        cardType={selectedSearchCard.cardType}
+                                        tags={selectedSearchCard.tags}
+                                        otherActions={selectedSearchCard.otherActions}
+                                    />
+                                </div>}
+                            </React.Fragment>
+                        ) : <p className="ui grey inverted segment">{lf("Type more to see results")}</p>}
+                    </div>
+                </div>
+            ) : null}
+            {!hasSearchQuery && <>
+                <h1 className="accessible-hidden">{lf("MakeCode Home")}</h1>
+                <div key={`mystuff_gallerysegment`} className="ui segment gallerysegment mystuff-segment" role="region" aria-label={lf("My Projects")}>
+                    <div className="ui heading">
+                        <div className="column" style={{ zIndex: 1 }}
+                            onClick={scriptManager && this.showScriptManager} onKeyDown={scriptManager && fireClickOnEnter}
+                        >
+                            {scriptManager ? <h2 className="ui header myproject-header">
+                                {lf("My Projects")}
+                                <span className="view-all-button" tabIndex={0} title={lf("View all projects")} role="button">
+                                    {lf("View All")}
+                                </span>
+                            </h2> : <h2 className="ui header">{lf("My Projects")}</h2>}
+                        </div>
+                        <div className="column right aligned" style={{ zIndex: 1 }}>
+                            {pxt.appTarget.compile || (pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing) ?
+                                <sui.Button key="import" icon="upload" className="import-dialog-btn neutral" textClass="landscape only" text={lf("Import")} title={lf("Import a project")} onClick={this.importProject} /> : undefined}
                         </div>
                     </div>
-                }
-                )}
-            {targetTheme.organizationUrl || targetTheme.organizationUrl || targetTheme.privacyUrl || targetTheme.copyrightText ? <div className="ui horizontal small divided link list homefooter" role="contentinfo">
-                {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" target="_blank" rel="noopener noreferrer" href={targetTheme.organizationUrl}>{targetTheme.organization}</a> : undefined}
-                {targetTheme.selectLanguage ? <sui.Link className="item" icon="xicon globe" text={lf("Language")} onClick={this.showLanguagePicker} onKeyDown={fireClickOnEnter} role="button" /> : undefined}
-                {targetTheme.termsOfUseUrl ? <a target="_blank" className="item" href={targetTheme.termsOfUseUrl} rel="noopener noreferrer">{lf("Terms of Use")}</a> : undefined}
-                {targetTheme.privacyUrl ? <a target="_blank" className="item" href={targetTheme.privacyUrl} rel="noopener noreferrer">{lf("Privacy")}</a> : undefined}
-                {pxt.appTarget.versions ? <sui.Link className="item" text={`v${pxt.appTarget.versions.target}`} onClick={this.showAboutDialog} onKeyDown={fireClickOnEnter} role="button" /> : undefined}
-                {targetTheme.copyrightText ? <div className="ui item copyright">{targetTheme.copyrightText}</div> : undefined}
-            </div> : undefined}
+                    <div className="content">
+                        <ProjectsCarousel key={`mystuff_carousel`} parent={this.props.parent} name={'recent'} onClick={this.chgHeader} />
+                    </div>
+                </div>
+                {Object.keys(galleries)
+                    .filter(galleryName => {
+                        // hide galleries that are part of an experiment and that experiment is
+                        // not enabled
+                        const galProps = galleries[galleryName] as pxt.GalleryProps | string
+                        if (typeof galProps === "string")
+                            return true
+                        // filter categories by experiment
+                        const exp = galProps.experimentName;
+                        if (exp && !(pxt.appTarget.appTheme as any)[exp])
+                            return false; // experiment not enabled
+                        const locales = galProps.locales;
+                        if (locales && locales.indexOf(pxt.Util.userLanguage()) < 0)
+                            return false; // locale not supported
+                        // test if blocked
+                        const testUrl = galProps.testUrl || (!!galProps.youTube && "https://www.youtube.com/favicon.ico");
+                        if (testUrl) {
+                            const ping = this.getData(`ping:${testUrl.replace('@random@', Math.random().toString())}`);
+                            if (ping !== true) // still loading or can't ping
+                                return false;
+                        }
+                        // show the gallery
+                        return true;
+                    })
+                    .map(galleryName => {
+                        const galProps = galleries[galleryName] as pxt.GalleryProps | string
+                        const url = typeof galProps === "string" ? galProps : galProps.url
+                        const shuffle: pxt.GalleryShuffle = typeof galProps === "string" ? undefined : galProps.shuffle;
+                        return <div key={`${galleryName}_gallerysegment`} className="ui segment gallerysegment" role="region" aria-label={pxt.Util.rlf(galleryName)}>
+                            <h2 className="ui header heading">{pxt.Util.rlf(galleryName)} </h2>
+                            <div className="content">
+                                <ProjectsCarousel ref={`${selectedCategory == galleryName ? 'activeCarousel' : ''}`}
+                                    key={`${galleryName}_carousel`} parent={this.props.parent}
+                                    name={galleryName}
+                                    path={url}
+                                    onClick={this.chgGallery} setSelected={this.setSelected}
+                                    shuffle={shuffle}
+                                    selectedIndex={selectedCategory == galleryName ? selectedIndex : undefined} />
+                            </div>
+                        </div>
+                    }
+                    )}
+                {targetTheme.organizationUrl || targetTheme.organizationUrl || targetTheme.privacyUrl || targetTheme.copyrightText ? <div className="ui horizontal small divided link list homefooter" role="contentinfo">
+                    {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" target="_blank" rel="noopener noreferrer" href={targetTheme.organizationUrl}>{targetTheme.organization}</a> : undefined}
+                    {targetTheme.selectLanguage ? <sui.Link className="item" icon="xicon globe" text={lf("Language")} onClick={this.showLanguagePicker} onKeyDown={fireClickOnEnter} role="button" /> : undefined}
+                    {targetTheme.termsOfUseUrl ? <a target="_blank" className="item" href={targetTheme.termsOfUseUrl} rel="noopener noreferrer">{lf("Terms of Use")}</a> : undefined}
+                    {targetTheme.privacyUrl ? <a target="_blank" className="item" href={targetTheme.privacyUrl} rel="noopener noreferrer">{lf("Privacy")}</a> : undefined}
+                    {pxt.appTarget.versions ? <sui.Link className="item" text={`v${pxt.appTarget.versions.target}`} onClick={this.showAboutDialog} onKeyDown={fireClickOnEnter} role="button" /> : undefined}
+                    {targetTheme.copyrightText ? <div className="ui item copyright">{targetTheme.copyrightText}</div> : undefined}
+                </div> : undefined}
+            </>}
         </div>;
     }
 }
