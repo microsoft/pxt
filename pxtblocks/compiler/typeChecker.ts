@@ -7,6 +7,7 @@ import { CommonFunctionBlock } from "../plugins/functions/commonFunctionMixin";
 import { PXT_WARNING_ID } from "./compiler";
 import { DRAGGABLE_PARAM_INPUT_PREFIX } from "../loader";
 import { getContainingFunction } from "../plugins/duplicateOnDrag";
+import { ColorPickerBlock, COLOR_PICKER_BLOCK_TYPE } from "..";
 
 interface DeclaredVariable {
     name: string;
@@ -149,6 +150,22 @@ export function infer(allBlocks: Blockly.Block[], e: Environment, w: Blockly.Wor
                     break;
                 case pxtc.PAUSE_UNTIL_TYPE:
                     unionParam(e, b, "PREDICATE", pBoolean);
+                    break;
+                case COLOR_PICKER_BLOCK_TYPE:
+                    const format = (b as ColorPickerBlock).format;
+
+                    if (format === "hex") {
+                        unionParam(e, b, "HEX_INPUT", ground("string"));
+                    }
+                    else {
+                        for (let i = 0; i < 4; i++) {
+                            const input = b.getInput("INPUT" + i);
+                            if (input) {
+                                unionParam(e, b, input.name, ground("number"));
+                            }
+                        }
+                    }
+
                     break;
                 default:
                     if (b.type in e.stdCallTable) {
