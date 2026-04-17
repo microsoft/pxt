@@ -26,6 +26,7 @@ export const COLOR_THEME_IDS = `${USER_PREF_MODULE}:${FIELD_COLOR_THEME_IDS}`
 export const LANGUAGE = `${USER_PREF_MODULE}:${FIELD_LANGUAGE}`
 export const READER = `${USER_PREF_MODULE}:${FIELD_READER}`
 export const HAS_USED_CLOUD = "has-used-cloud"; // Key into local storage to see if this computer has logged in before
+export const LAST_IDENTITY_PROVIDER = "last-identity-provider";
 
 export class Component<TProps, TState> extends data.Component<TProps, TState> {
     public getUserProfile(): pxt.auth.UserProfile {
@@ -46,6 +47,11 @@ class AuthClient extends pxt.auth.AuthClient {
         if (!!workspace.getWorkspaceType())
             await cloud.syncAsync();
         pxt.storage.setLocal(HAS_USED_CLOUD, "true");
+
+        const providerId = pxt.auth.identityProviderId(state.profile);
+        if (providerId) {
+            pxt.storage.setLocal(LAST_IDENTITY_PROVIDER, providerId);
+        }
     }
     protected onSignedOut(): Promise<void> {
         core.infoNotification(lf("Signed out"));
@@ -193,6 +199,11 @@ export function userProfile(): pxt.auth.UserProfile {
 
 export function userPreferences(): pxt.auth.UserPreferences {
     return data.getData<pxt.auth.UserPreferences>(USER_PREFERENCES);
+}
+
+export function lastUsedIdentityProviderId(): pxt.IdentityProviderId | undefined {
+    const providerId = pxt.storage.getLocal(LAST_IDENTITY_PROVIDER) as pxt.IdentityProviderId;
+    return pxt.auth.identityProvider(providerId) ? providerId : undefined;
 }
 
 export async function authCheckAsync(): Promise<pxt.auth.UserProfile | undefined> {
