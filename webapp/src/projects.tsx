@@ -27,6 +27,7 @@ interface ProjectsState {
     visible?: boolean;
     selectedCategory?: string;
     selectedIndex?: number;
+    searchMode?: boolean;
     searchQuery?: string;
     searchResults?: pxt.CodeCard[];
 }
@@ -49,6 +50,8 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         this.importProject = this.importProject.bind(this);
         this.showScriptManager = this.showScriptManager.bind(this);
         this.setSelected = this.setSelected.bind(this);
+        this.openSearch = this.openSearch.bind(this);
+        this.closeSearch = this.closeSearch.bind(this);
         this.onSearchChange = this.onSearchChange.bind(this);
         this.clearSearch = this.clearSearch.bind(this);
         this.handleSearchCardClick = this.handleSearchCardClick.bind(this);
@@ -58,6 +61,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         return this.state.visible != nextState.visible
             || this.state.selectedCategory != nextState.selectedCategory
             || this.state.selectedIndex != nextState.selectedIndex
+            || this.state.searchMode != nextState.searchMode
             || this.state.searchQuery != nextState.searchQuery
             || this.state.searchResults != nextState.searchResults;
     }
@@ -206,6 +210,28 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         this.runSearch("");
     }
 
+    private openSearch() {
+        pxt.tickEvent("projects.searchmode.open", undefined, { interactiveConsent: true });
+        this.setState({
+            searchMode: true,
+            selectedCategory: this.state.selectedCategory === SEARCH_CATEGORY ? undefined : this.state.selectedCategory,
+            selectedIndex: this.state.selectedCategory === SEARCH_CATEGORY ? undefined : this.state.selectedIndex,
+        });
+    }
+
+    private closeSearch() {
+        pxt.tickEvent("projects.searchmode.close", undefined, { interactiveConsent: true });
+        this.searchRequestId++;
+        compiler.homeSearchClear();
+        this.setState({
+            searchMode: false,
+            searchQuery: "",
+            searchResults: undefined,
+            selectedCategory: undefined,
+            selectedIndex: undefined,
+        });
+    }
+
     private handleSearchCardClick(e: any, scr: pxt.CodeCard, index?: number) {
         if (index == undefined) {
             this.chgGallery(scr);
@@ -269,11 +295,13 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         const targetTheme = pxt.appTarget.appTheme;
         const { scriptManager } = targetTheme;
         const galleries = this.getHomeGalleries();
+        const searchMode = !!this.state.searchMode;
         const searchQuery = this.state.searchQuery || "";
         const hasSearchQuery = !!searchQuery.trim();
         const searchResults = this.state.searchResults || [];
         const searchSelectedIndex = this.state.selectedCategory === SEARCH_CATEGORY ? this.state.selectedIndex : undefined;
         const selectedSearchCard = searchSelectedIndex !== undefined ? searchResults[searchSelectedIndex] : undefined;
+        const canImport = !!(pxt.appTarget.compile || (pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing));
 
         // lf("Make")
         // lf("Code")
@@ -286,9 +314,46 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         ]);
 
         return <div ref="homeContainer" className={tabClasses} role="main">
+            <h1 className="accessible-hidden">{lf("MakeCode Home")}</h1>
             <HeroBanner parent={this.props.parent} />
-            <div className="ui segment gallerysegment search-input-segment" role="search">
-                <div className="content">
+            <div key={`mystuff_gallerysegment`} className="ui segment gallerysegment mystuff-segment" role="region" aria-label={searchMode ? lf("Search home content") : lf("My Projects")}>
+                <div className="ui heading">
+                    <div className="column" style={{ zIndex: 1 }}>
+                        {searchMode ?
+                            <sui.Button
+                                key="go-back"
+                                icon="chevron left"
+                                className="neutral"
+                                text={lf("Go Back")}
+                                title={lf("Go back")}
+                                onClick={this.closeSearch}
+                            />
+                            : scriptManager ? <h2 className="ui header myproject-header"
+                                onClick={this.showScriptManager}
+                                onKeyDown={fireClickOnEnter}
+                            >
+                                {lf("My Projects")}
+                                <span className="view-all-button" tabIndex={0} title={lf("View all projects")} role="button">
+                                    {lf("View All")}
+                                </span>
+                            </h2> : <h2 className="ui header">{lf("My Projects")}</h2>}
+                    </div>
+                    <div className="column right aligned" style={{ zIndex: 1, display: "flex", justifyContent: "flex-end", gap: "0.5rem", flexWrap: "wrap" }}>
+                        {!searchMode &&
+                            <sui.Button
+                                key="search"
+                                icon="search"
+                                className="neutral"
+                                textClass="landscape only"
+                                text={lf("Search")}
+                                title={lf("Search home content")}
+                                onClick={this.openSearch}
+                            />}
+                        {canImport ?
+                            <sui.Button key="import" icon="upload" className="import-dialog-btn neutral" textClass="landscape only" text={lf("Import")} title={lf("Import a project")} onClick={this.importProject} /> : undefined}
+                    </div>
+                </div>
+                {searchMode && <div className="content" role="search" style={{ paddingTop: "1rem" }}>
                     <label className="accessible-hidden" htmlFor="homescreen-search">{lf("Search home content")}</label>
                     <div className="ui fluid icon input">
                         <input
@@ -301,25 +366,28 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                         />
                         <i className="search icon" aria-hidden="true" />
                     </div>
-                </div>
+                </div>}
+                {!searchMode && <div className="content">
+                    <ProjectsCarousel key={`mystuff_carousel`} parent={this.props.parent} name={'recent'} onClick={this.chgHeader} />
+                </div>}
             </div>
-            {hasSearchQuery ? (
-                <div key={`search_gallerysegment`} className="ui segment gallerysegment search-segment" role="region" aria-label={lf("Search results")} style={{ padding: "1rem" }}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", padding: "0 0 1.5rem" }}>
-                        <h2 className="ui header" style={{ margin: 0, padding: 0 }}>
-                            {lf("Search results ({0})", searchResults.length ? searchResults.length : lf("No matches"))}
-                        </h2>
-                        <button
-                            type="button"
-                            className="ui button"
-                            onClick={this.clearSearch}
-                            aria-label={lf("Clear search")}
-                        >
-                            {lf("Clear search")}
-                        </button>
-                    </div>
-                    <div className="content" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "1rem", alignItems: "start", gridAutoFlow: "dense" }}>
-                        {searchResults.length ? searchResults.map((scr, index) =>
+            {searchMode && <div key={`search_gallerysegment`} className="ui segment gallerysegment search-segment" role="region" aria-label={lf("Search results")} style={{ padding: "1rem" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", padding: "0 0 1.5rem", flexWrap: "wrap" }}>
+                    <h2 className="ui header" style={{ margin: 0, padding: 0 }}>
+                        {hasSearchQuery ? lf("Search results") : lf("Search the home screen")}
+                    </h2>
+                    {hasSearchQuery && <button
+                        type="button"
+                        className="ui button"
+                        onClick={this.clearSearch}
+                        aria-label={lf("Clear search")}
+                    >
+                        {lf("Clear search")}
+                    </button>}
+                </div>
+                <div className="content" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "1rem", alignItems: "start", gridAutoFlow: "dense" }}>
+                    {!hasSearchQuery ? <p className="ui grey inverted segment">{lf("Start typing to search tutorials, games, and projects.")}</p>
+                        : searchResults.length ? searchResults.map((scr, index) =>
                             <React.Fragment key={`search-${scr.youTubeId || scr.name || scr.url}-${index}`}>
                                 <ProjectsCodeCard
                                     className={`example ${searchSelectedIndex === index ? "selected" : ""}`}
@@ -361,33 +429,10 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                                     />
                                 </div>}
                             </React.Fragment>
-                        ) : <p className="ui grey inverted segment">{lf("Type more to see results")}</p>}
-                    </div>
+                        ) : <p className="ui grey inverted segment">{lf("No search results found.")}</p>}
                 </div>
-            ) : null}
-            {!hasSearchQuery && <>
-                <h1 className="accessible-hidden">{lf("MakeCode Home")}</h1>
-                <div key={`mystuff_gallerysegment`} className="ui segment gallerysegment mystuff-segment" role="region" aria-label={lf("My Projects")}>
-                    <div className="ui heading">
-                        <div className="column" style={{ zIndex: 1 }}
-                            onClick={scriptManager && this.showScriptManager} onKeyDown={scriptManager && fireClickOnEnter}
-                        >
-                            {scriptManager ? <h2 className="ui header myproject-header">
-                                {lf("My Projects")}
-                                <span className="view-all-button" tabIndex={0} title={lf("View all projects")} role="button">
-                                    {lf("View All")}
-                                </span>
-                            </h2> : <h2 className="ui header">{lf("My Projects")}</h2>}
-                        </div>
-                        <div className="column right aligned" style={{ zIndex: 1 }}>
-                            {pxt.appTarget.compile || (pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing) ?
-                                <sui.Button key="import" icon="upload" className="import-dialog-btn neutral" textClass="landscape only" text={lf("Import")} title={lf("Import a project")} onClick={this.importProject} /> : undefined}
-                        </div>
-                    </div>
-                    <div className="content">
-                        <ProjectsCarousel key={`mystuff_carousel`} parent={this.props.parent} name={'recent'} onClick={this.chgHeader} />
-                    </div>
-                </div>
+            </div>}
+            {!searchMode && <>
                 {Object.keys(galleries)
                     .filter(galleryName => {
                         // hide galleries that are part of an experiment and that experiment is
