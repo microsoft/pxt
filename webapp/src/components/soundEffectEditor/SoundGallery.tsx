@@ -18,10 +18,13 @@ export interface SoundGalleryProps {
 
 interface SoundGalleryItemProps extends SoundGalleryItem {
     useMixerSynthesizer: boolean;
+    index: number;
     selectReference: (el: HTMLDivElement) => void;
     playReference: (el: HTMLButtonElement) => void;
-    previewKeyDown: (evt: React.KeyboardEvent<HTMLElement>) => void;
-    selectKeyDown: (evt: React.KeyboardEvent<HTMLElement>) => void;
+    activeDescendant: string;
+    gridFocused: boolean;
+    getCellId: (col: "select" | "preview", row: number) => string;
+    onPreviewButtonClick: (index: number) => void;
 }
 
 
@@ -31,25 +34,34 @@ export const SoundGallery = (props: SoundGalleryProps) => {
     const selectItemRefs = React.useRef<HTMLDivElement[]>([]);
     const playItemRefs = React.useRef<HTMLButtonElement[]>([]);
     const selectedCoord = React.useRef<{row: number, col: "select" | "preview"}>({row: 0, col: "select"});
+    const [activeDescendant, setActiveDescendant] = React.useState<string>("sound-gallery-cell-select-0");
+    const [gridFocused, setGridFocused] = React.useState(false);
+
+    const getCellId = (col: "select" | "preview", row: number) => `sound-gallery-cell-${col}-${row}`;
+
+    const updateActiveDescendant = (col: "select" | "preview", row: number) => {
+        selectedCoord.current = { col, row };
+        const id = getCellId(col, row);
+        setActiveDescendant(id);
+        document.getElementById(id)?.scrollIntoView({ block: "nearest" });
+    };
 
     const focusSelectOrPlayElement = React.useCallback((e: React.KeyboardEvent<HTMLElement> | React.FocusEvent) => {
         if (e.type === "focus") {
-            // Check to see if this focus event is coming from a click on a child element
             const playIndex = playItemRefs.current.indexOf(e.target as HTMLButtonElement);
             if (playIndex !== -1) {
-                selectedCoord.current = {col: "preview", row: playIndex};
+                updateActiveDescendant("preview", playIndex);
                 return;
             }
 
             const selectIndex = selectItemRefs.current.indexOf(e.target as HTMLDivElement);
             if (selectIndex !== -1) {
-                selectedCoord.current = {col: "select", row: selectIndex};
+                updateActiveDescendant("select", selectIndex);
                 return;
             }
         }
 
-        const elements = (selectedCoord.current.col === "select" ? selectItemRefs : playItemRefs).current;
-        elements[selectedCoord.current.row].focus();
+        updateActiveDescendant(selectedCoord.current.col, selectedCoord.current.row);
         e.preventDefault();
     }, []);
 
@@ -62,59 +74,79 @@ export const SoundGallery = (props: SoundGalleryProps) => {
         const arrowToPreview = pxt.Util.isUserLanguageRtl() ? "ArrowLeft" : "ArrowRight";
         switch(e.code) {
             case "ArrowDown":
-                selectedCoord.current.row = next;
+                updateActiveDescendant(selectedCoord.current.col, next);
                 break;
             case "ArrowUp":
-                selectedCoord.current.row = prev;
+                updateActiveDescendant(selectedCoord.current.col, prev);
                 break;
             case arrowToSelection:
-                selectedCoord.current.col = "select";
+                updateActiveDescendant("select", selectedCoord.current.row);
                 break;
             case arrowToPreview:
-                selectedCoord.current.col = "preview";
+                updateActiveDescendant("preview", selectedCoord.current.row);
                 break;
             case "Space":
             case "Enter":
                 if (selectedCoord.current.col === "select") {
-                    onSoundSelected(sounds[current].sound)
+                    onSoundSelected(sounds[current].sound);
                     e.stopPropagation();
-                    e.preventDefault();
+                } else {
+                    playItemRefs.current[selectedCoord.current.row]?.click();
                 }
+                e.preventDefault();
                 return;
             case "Home":
-                selectedCoord.current = {col: "select", row: 0};
+                updateActiveDescendant("select", 0);
                 break;
             case "End":
-                selectedCoord.current = {col: "preview", row: sounds.length - 1};
+                updateActiveDescendant("preview", sounds.length - 1);
                 break;
-            default: {
+            default:
                 return;
-            }
         }
-        focusSelectOrPlayElement(e);
+        e.preventDefault();
+    };
+
+    const ref = React.useRef<HTMLDivElement>(null);
+
+    const handlePreviewButtonClick = (index: number) => {
+        ref.current?.focus({preventScroll: true});
+        updateActiveDescendant("preview", index);
+        setGridFocused(false);
     }
 
     return <div className={classList("sound-gallery", visible && "visible")} aria-hidden={!visible}>
-        <div className="sound-gallery-scroller"
+        <div
+            ref={ref}
+            className="sound-gallery-scroller"
             tabIndex={0}
-            onFocus={focusSelectOrPlayElement}>
+            role="grid"
+            aria-activedescendant={activeDescendant}
+            onFocus={e => { setGridFocused(true); focusSelectOrPlayElement(e); }}
+            onBlur={() => setGridFocused(false)}
+            onKeyDown={e => {
+                const { row, col } = selectedCoord.current;
+                const prev = Math.max(row - 1, 0);
+                const next = Math.min(row + 1, sounds.length - 1);
+                handleKeyDown(prev, next, row, e);
+                setGridFocused(true);
+            }}>
             {sounds.map((item, index) => {
-                    const prev = Math.max(index - 1, 0);
-                    const next = Math.min(index + 1, sounds.length - 1);
-                    return(<div
+                return (
+                    <div
                         key={index}
                         onClick={() => onSoundSelected(item.sound)}
                         className="common-button">
-
                         <SoundGalleryEntry
                             {...item}
                             useMixerSynthesizer={useMixerSynthesizer}
-
+                            index={index}
                             selectReference={ref => selectItemRefs.current[index] = ref}
                             playReference={ref => playItemRefs.current[index] = ref}
-
-                            previewKeyDown={evt => handleKeyDown(prev, next, index, evt)}
-                            selectKeyDown={evt => handleKeyDown(prev, next, index, evt)}
+                            activeDescendant={activeDescendant}
+                            gridFocused={gridFocused}
+                            onPreviewButtonClick={handlePreviewButtonClick}
+                            getCellId={getCellId}
                         />
                     </div>);
                 })
@@ -128,17 +160,26 @@ const SoundGalleryEntry = (props: SoundGalleryItemProps) => {
         sound,
         name,
         useMixerSynthesizer,
+        index,
         playReference,
+        onPreviewButtonClick,
         selectReference,
-        previewKeyDown,
-        selectKeyDown
+        activeDescendant,
+        gridFocused,
+        getCellId,
     } = props;
     const width = 160;
     const height = 40;
 
     const [ cancelToken, setCancelToken ] = React.useState<CancellationToken>(null);
 
+    const selectId = getCellId("select", index);
+    const previewId = getCellId("preview", index);
+    const selectActive = gridFocused && activeDescendant === selectId;
+    const previewActive = gridFocused && activeDescendant === previewId;
+
     const handlePlayButtonClick = async () => {
+        onPreviewButtonClick(index);
         if (cancelToken) {
             cancelToken.cancelled = true
             setCancelToken(null);
@@ -159,17 +200,20 @@ const SoundGalleryEntry = (props: SoundGalleryItemProps) => {
         setCancelToken(null);
     }
 
-    return <div className="sound-gallery-item-label">
-        <div className="sound-gallery-item-label-inner"
-            tabIndex={-1}
+    return <div className="sound-gallery-item-label" role="row" id={`sound-gallery-row-${index}`}>
+        <div
+            id={selectId}
+            className="sound-gallery-item-label-inner"
             ref={selectReference}
-            onKeyDown={selectKeyDown}
-            title={name}
-            role="button">
-            <div className="sound-effect-name">
+            role="gridcell"
+            aria-selected={selectActive}>
+            <div className="sr-only">
+                {lf("Select {0} Sound", name)}
+            </div>
+            <div className="sound-effect-name" aria-hidden="true">
                 {name}
             </div>
-            <div className="sound-gallery-preview">
+            <div className="sound-gallery-preview" aria-hidden="true">
                 <svg viewBox={`0 0 ${width} ${height}`} xmlns="http://www.w3.org/2000/svg">
                     <path
                         className="sound-gallery-preview-wave"
@@ -180,15 +224,19 @@ const SoundGalleryEntry = (props: SoundGalleryItemProps) => {
             </div>
         </div>
         <Button
+            id={previewId}
             className="sound-effect-play-button"
             buttonRef={playReference}
             tabIndex={-1}
-            title={cancelToken ? lf("Stop Sound Preview") : lf("Preview Sound")}
             onClick={handlePlayButtonClick}
-            onKeydown={previewKeyDown}
+            // Don't allow focus to be stolen.
+            onMouseDown={(e) => e.preventDefault()}
             leftIcon={cancelToken ? "fas fa-stop" : "fas fa-play"}
-            />
+            role="gridcell"
+            ariaSelected={previewActive}
+            title={null}
+        >
+            <span className="sr-only">{cancelToken ? lf("Stop Sound Preview") : lf("Preview {0} Sound", name)}</span>
+        </Button>
     </div>
 }
-
-
