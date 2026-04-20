@@ -34,7 +34,7 @@ interface ProjectsState {
 const SEARCH_CATEGORY = "__search__";
 
 export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
-    private searchRequestId = 0;
+    protected searchRequestId = 0;
 
     constructor(props: ISettingsProps) {
         super(props)
@@ -147,20 +147,17 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
     private runSearch(query: string) {
         const normalized = (query || "").trim();
         const galleries = this.getHomeGalleries();
-        const parent = this.props.parent;
         const requestId = ++this.searchRequestId;
 
         if (!normalized) {
             const resetCategory = this.state.selectedCategory === SEARCH_CATEGORY ? undefined : this.state.selectedCategory;
             const resetIndex = this.state.selectedCategory === SEARCH_CATEGORY ? undefined : this.state.selectedIndex;
-            parent.setHomeSearchQuery("");
             compiler.homeSearchClear();
             this.setState({ searchQuery: "", searchResults: undefined, selectedCategory: resetCategory, selectedIndex: resetIndex });
             return;
         }
 
         const { entries, cardMap } = this.collectGallerySearchEntries(galleries);
-        parent.setHomeSearchQuery(normalized);
         if (!entries.length) {
             this.setState({ searchQuery: normalized, searchResults: [] });
             return;
@@ -290,7 +287,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
 
         return <div ref="homeContainer" className={tabClasses} role="main">
             <HeroBanner parent={this.props.parent} />
-            <div className="ui segment gallerysegment search-input-segment mobile only" role="search">
+            <div className="ui segment gallerysegment search-input-segment" role="search">
                 <div className="content">
                     <label className="accessible-hidden" htmlFor="homescreen-search">{lf("Search home content")}</label>
                     <div className="ui fluid icon input">

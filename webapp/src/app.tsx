@@ -172,7 +172,6 @@ export class ProjectView
     private shouldFocusToolbox: boolean;
 
     private themeManager: ThemeManager;
-    private homeSearchQuery = "";
 
     private cloudStatusSubscriber: data.DataSubscriber = {
         subscriptions: [],
@@ -4859,17 +4858,6 @@ export class ProjectView
             core.infoNotification(lf("Signed out from GitHub"))
         }
     }
-
-    setHomeSearchQuery(query: string) {
-        if (this.homeSearchQuery === query) return;
-        this.homeSearchQuery = query;
-        if (this.state.home) this.forceUpdate();
-    }
-
-    getHomeSearchQuery() {
-        return this.homeSearchQuery || "";
-    }
-
 
     ///////////////////////////////////////////////////////////
     ////////////             Tutorials            /////////////
