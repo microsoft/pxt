@@ -1581,7 +1581,7 @@ function codeCardUrl(props: Partial<ProjectsDetailProps>) {
 
 function cardActionButton(props: Partial<ProjectsDetailProps>, className: string, text: string, type: pxt.CodeCardType, onClick: any, autoFocus?: boolean, actionTitle?: string, linkRef?: React.RefObject<HTMLAnchorElement>) {
     const asLink = cardIsLink(props, type) && type != "forumExample";
-    const label = asLink ? lf("Open link in new window") : lf("Open in {0}", actionTitle || lf("Editor"));
+    const label = asLink ? lf("{0}, opens in new window", text) : lf("{0}, opens in {1}", text, actionTitle || lf("Editor"));
 
     return asLink ? // TODO (shakao)  migrate forumurl to otherAction json in md
         <sui.Link
