@@ -7,6 +7,7 @@ import * as ReactDOM from "react-dom";
 import { ImageFieldEditor } from "./components/ImageFieldEditor";
 import { setTelemetryFunction } from './components/ImageEditor/store/imageReducer';
 import { IFrameEmbeddedClient } from "../../pxtservices/iframeEmbeddedClient";
+import { PianoRoll } from "./components/pianoRoll/PianoRoll";
 
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -15,7 +16,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function init() {
     const assetDiv = document.getElementById("asset-editor-field-div") as HTMLDivElement;
-    ReactDOM.render(<AssetEditor />, assetDiv);
+    ReactDOM.render(<PianoRoll />, assetDiv);
 }
 
 interface AssetEditorState {
