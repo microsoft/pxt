@@ -23,7 +23,7 @@ export const PianoOctave = (props: Props) => {
             if (track !== selectedTrack) return;
             if (note < octave * 12 || note >= (octave + 1) * 12) return;
 
-            const key = container.querySelector(`#note-${note}`) as HTMLDivElement | null;
+            const key = container.querySelector(`#key-${note}`) as HTMLDivElement | null;
             if (key) {
                 key.classList.toggle("active", on);
             }
@@ -31,7 +31,7 @@ export const PianoOctave = (props: Props) => {
 
         for (let i = 0; i < 12; i++) {
             const note = (11 - i) + octave * 12;
-            const key = container.querySelector(`#note-${note}`) as HTMLDivElement | null;
+            const key = container.querySelector(`#key-${note}`) as HTMLDivElement | null;
             if (key) {
                 key.classList.toggle("active", false);
             }
@@ -45,7 +45,7 @@ export const PianoOctave = (props: Props) => {
     }, [octave, selectedTrack]);
 
     const playNote = useCallback(async (note: number) => {
-        const ref = containerRef.current?.querySelector(`#note-${note}`) as HTMLDivElement | null;
+        const ref = containerRef.current?.querySelector(`#key-${note}`) as HTMLDivElement | null;
         if (ref) {
             ref.classList.add("playing");
         }
@@ -88,7 +88,7 @@ export const PianoOctave = (props: Props) => {
                     }
 
                     return (
-                        <div key={note} id={`note-${note}`} className={classes} title={noteName} onClick={onClick}>
+                        <div key={note} id={`key-${note}`} className={classes} title={noteName} onClick={onClick}>
                             {text}
                         </div>
                     );

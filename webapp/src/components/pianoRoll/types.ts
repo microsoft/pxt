@@ -10,6 +10,8 @@ export interface Track {
     events: NoteEvent[];
     id: number;
     nextId: number;
+    minOctave: number;
+    maxOctave: number;
 }
 
 export interface Song {
@@ -24,8 +26,6 @@ export interface Song {
 interface BaseInstrument {
     name: string;
     id: number;
-    minOctave: number;
-    maxOctave: number;
 }
 
 export interface MelodicInstrument extends BaseInstrument {
@@ -69,7 +69,9 @@ export function getEmptySong(): Song {
             instrumentId: 0,
             events: [],
             nextId: 0,
-            id: 0
+            id: 0,
+            minOctave: 3,
+            maxOctave: 5
         }],
         measures: 2,
         tempo: 120
@@ -84,7 +86,7 @@ export function getNextNoteEvent(note: number, start: number, track: Track): Not
 
 export function getMaxDuration(note: number, start: number, track: Track, measures: number): number {
     const nextEvent = getNextNoteEvent(note, start, track);
-    if (!nextEvent) return measures * 4 - start;
+    if (!nextEvent) return measures * 4 * 4 - start;
 
     return nextEvent.start - start;
 }
@@ -147,7 +149,9 @@ export function newTrack(instrumentId: number, song: Song): Song {
         instrumentId,
         events: [],
         id: song.nextId++,
-        nextId: 0
+        nextId: 0,
+        minOctave: 3,
+        maxOctave: 5
     };
 
     return {
@@ -180,13 +184,6 @@ export function changeTrackInstrument(trackId: number, instrumentId: number, son
     if (isDrumInstrument(oldInstrument) !== isDrumInstrument(newInstrument)) {
         track.events = [];
     }
-    else {
-        if (oldInstrument.minOctave !== newInstrument.minOctave) {
-            for (const event of track.events) {
-                event.note += (newInstrument.minOctave - oldInstrument.minOctave) * 12;
-            }
-        }
-    }
 
     track.instrumentId = instrumentId;
 
@@ -204,6 +201,25 @@ export function changeMeasures(measures: number, song: Song): Song {
                 duration: Math.min(e.duration, measures * 4 * 4 - e.start)
             }))
         }))
+    }
+}
+
+export function changeOctaves(trackId: number, minOctave: number, maxOctave: number, song: Song): Song {
+    const trackIndex = song.tracks.findIndex(t => t.id === trackId);
+    const track = song.tracks[trackIndex];
+
+    return {
+        ...song,
+        tracks: [
+            ...song.tracks.slice(0, trackIndex),
+            {
+                ...track,
+                minOctave,
+                maxOctave,
+                events: track.events.filter(e => e.note >= minOctave * 12 && e.note < maxOctave * 12)
+            },
+            ...song.tracks.slice(trackIndex + 1)
+        ]
     }
 }
 

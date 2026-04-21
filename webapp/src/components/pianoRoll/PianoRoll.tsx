@@ -2,7 +2,7 @@ import { PianoRollThemeProvider, usePianoRollThemeContext } from "./context"
 import { Workspace } from "./Workspace"
 import { Sidebar } from "./Sidebar"
 import { useEffect, useState } from "react"
-import { changeMeasures, changeTrackInstrument, getEmptySong, isDrumInstrument, Song, toPXTSong, Track, updateTrack } from "./types"
+import { changeMeasures, changeOctaves, changeTrackInstrument, getEmptySong, isDrumInstrument, newTrack, Song, toPXTSong, Track, updateTrack } from "./types"
 import { Header } from "./Header"
 import { DeleteTrackModal } from "./DeleteTrackModal"
 import { DeleteErrorModal } from "./DeleteErrorModal"
@@ -60,19 +60,10 @@ const PianoRollInternal = (props: PianoRollProps) => {
     }
 
     const onTrackCreated = () => {
-        const newTrack: Track = {
-            id: song.nextId++,
-            nextId: 0,
-            instrumentId: song.instruments[0].id,
-            events: []
-        }
+        const newSong = newTrack(song.instruments[0].id, song);
+        updateSong(newSong);
 
-        updateSong({
-            ...song,
-            tracks: [...song.tracks, newTrack]
-        });
-
-        setSelectedTrack(newTrack.id);
+        setSelectedTrack(newSong.tracks[newSong.tracks.length - 1].id);
     }
 
     const onTrackDeleted = (trackId: number) => {
@@ -156,6 +147,19 @@ const PianoRollInternal = (props: PianoRollProps) => {
         });
     }
 
+    const onOctavesChanged = (minOctave: number, maxOctave: number) => {
+        const track = song.tracks.find(t => t.id === selectedTrack)!;
+
+        if (track.minOctave === minOctave && track.maxOctave === maxOctave) return;
+
+        if (isDrumInstrument(song.instruments.find(i => i.id === track.instrumentId)!)) {
+            return;
+        }
+
+        updateTheme({ minOctave, maxOctave });
+        updateSong(changeOctaves(selectedTrack, minOctave, maxOctave, song));
+    }
+
     const undo = () => {
         if (!undoStack.length) return;
 
@@ -203,11 +207,14 @@ const PianoRollInternal = (props: PianoRollProps) => {
     const track = song.tracks.find(t => t.id === selectedTrack)!;
     const instrument = song.instruments.find(i => i.id === track.instrumentId)!;
 
+    const minOctave = isDrumInstrument(instrument) ? 0 : track.minOctave;
+    const maxOctave = isDrumInstrument(instrument) ? 1 : track.maxOctave;
+
     useEffect(() => {
-        if (theme.minOctave !== instrument.minOctave || theme.maxOctave !== instrument.maxOctave || theme.measures !== song.measures) {
-            updateTheme({ minOctave: instrument.minOctave, maxOctave: instrument.maxOctave, measures: song.measures });
+        if (theme.minOctave !== minOctave || theme.maxOctave !== maxOctave || theme.measures !== song.measures) {
+            updateTheme({ minOctave, maxOctave, measures: song.measures });
         }
-    }, [instrument.minOctave, instrument.maxOctave, theme.minOctave, theme.maxOctave, updateTheme, song.measures])
+    }, [minOctave, maxOctave, theme.minOctave, theme.maxOctave, updateTheme, song.measures])
 
     return (
         <div className="piano-roll">
@@ -228,12 +235,18 @@ const PianoRollInternal = (props: PianoRollProps) => {
                     onInstrumentSelected={onInstrumentSelected}
                     onTrackCreated={onTrackCreated}
                     onTrackDeleted={onTrackDeleted}
+                    onOctavesChanged={onOctavesChanged}
                 />
             </div>
             <div className="scroll-container">
                 <div className="content-container">
                     <div className="sidebar-container">
-                        <Sidebar instrument={instrument} selectedTrack={selectedTrack} />
+                        <Sidebar
+                            instrument={instrument}
+                            selectedTrack={selectedTrack}
+                            minOctave={minOctave}
+                            maxOctave={maxOctave}
+                        />
                     </div>
                     <div className="workspace-container">
                         <Workspace
