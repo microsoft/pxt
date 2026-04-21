@@ -112,9 +112,13 @@
     outline: none;
 }
 
-.melody-editor-toggle-buttons:focus-visible {
+.melody-editor-toggle-buttons:focus-within {
     outline: 3px solid white;
     border-radius: 2px;
+}
+
+.melody-editor-toggle-buttons g {
+    outline: none;
 }
 
 .melody-editor-button {
@@ -127,6 +131,10 @@
 .melody-editor-button:hover {
     background-color: #cacbcd;
     color: rgb(0, 0, 0, 0.8);
+}
+
+.melody-editor-button:focus-visible {
+    outline: none;
 }
 
 .melody-editor-button.selected {

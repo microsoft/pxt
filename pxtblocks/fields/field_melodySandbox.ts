@@ -5,8 +5,12 @@ import * as Blockly from "blockly";
 import svg = pxt.svgUtil;
 import { clearDropDownDiv, FieldCustom, FieldCustomOptions, setMelodyEditorOpen } from "./field_utils";
 import { FieldMatrix } from "./field_matrix";
+
 export const HEADER_HEIGHT = 50;
 export const TOTAL_WIDTH = 300;
+const melodyContentDivId = "melody-content-div";
+const melodyEditorDivId = "melody-editor-div";
+const melodyGalleryDivId = "melody-editor-gallery";
 
 export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix implements FieldCustom {
     public isFieldCustom_ = true;
@@ -31,6 +35,7 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
     private bottomDiv: HTMLDivElement;
     private doneButton: HTMLButtonElement;
     private playButton: HTMLButtonElement;
+    private playButtonAriaText: HTMLSpanElement;
     private playIcon: HTMLElement;
     private tempoInput: HTMLInputElement;
     private firstFocusableElement: HTMLElement | SVGElement;
@@ -58,6 +63,7 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
     private gallery: pxtmelody.MelodyGallery;
     protected clearSelectionOnBlur = false;
     private matrixFocusBind: Blockly.browserEvents.Data | null = null;
+    private matrixKeydownBind: Blockly.browserEvents.Data | null = null;
     private tabKeyBind: Blockly.browserEvents.Data | null = null;
 
     constructor(value: string, params: U, validator?: Blockly.FieldValidator) {
@@ -79,15 +85,19 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
         Blockly.DropDownDiv.setColour(this.getDropdownBackgroundColour(), this.getDropdownBorderColour());
 
         let contentDiv = Blockly.DropDownDiv.getContentDiv() as HTMLDivElement;
+        contentDiv.id = melodyContentDivId;
+        contentDiv.setAttribute("role", "dialog");
+        contentDiv.ariaLabel = lf("Melody editor");
         pxt.BrowserUtils.addClass(contentDiv, "melody-content-div");
         pxt.BrowserUtils.addClass(contentDiv.parentElement, "melody-editor-dropdown");
 
-        this.gallery = new pxtmelody.MelodyGallery();
+        this.gallery = new pxtmelody.MelodyGallery(melodyGalleryDivId);
         this.renderEditor(contentDiv);
 
         this.addKeyboardFocusHandlers();
         this.attachEventHandlersToMatrix();
         this.matrixFocusBind = Blockly.browserEvents.bind(this.matrixSvg, 'focus', this, this.handleMatrixFocus.bind(this));
+        this.matrixKeydownBind = Blockly.browserEvents.bind(this.matrixSvg, 'keydown', this, this.handleMatrixKeydown.bind(this));
         this.tabKeyBind = Blockly.browserEvents.bind(contentDiv, 'keydown', this, this.handleTabKey.bind(this));
 
         this.prevString = this.getValue();
@@ -106,7 +116,7 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
         });
 
         if (keyboardTriggered) {
-            this.toggle.getRootElement().focus();
+            this.toggle.getFirstFocusableElement().focus();
         }
     }
 
@@ -172,6 +182,7 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
 
         // Same toggle set up as sprite editor
         this.root = new svg.SVG(this.topDiv).id("melody-editor-header-controls");
+        this.root.setAttribute("role", "presentation");
         this.toggle = new Toggle(this.root, { leftText: lf("Editor"), rightText: lf("Gallery"), baseColor: color });
         this.toggle.onStateChange(isLeft => {
             if (isLeft) {
@@ -181,7 +192,7 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
                 this.showGallery();
             }
         });
-        this.firstFocusableElement = this.toggle.getRootElement();
+        this.firstFocusableElement = this.toggle.getFirstFocusableElement();
 
         this.toggle.layout();
         this.toggle.translate((TOTAL_WIDTH - this.toggle.width()) / 2, TOGGLE_PADDING_TOP);
@@ -191,6 +202,9 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
 
         this.editorDiv = document.createElement("div");
         pxt.BrowserUtils.addClass(this.editorDiv, "melody-editor-div");
+        this.editorDiv.setAttribute("role", "tabpanel");
+        this.editorDiv.setAttribute("aria-labelledby", `${melodyEditorDivId}-control`);
+        this.editorDiv.id = melodyEditorDivId;
         this.editorDiv.style.setProperty("background-color", secondaryColor);
 
         this.gridDiv = this.createGridDisplay();
@@ -208,12 +222,17 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
 
         this.playButton = document.createElement("button");
         this.playButton.id = "melody-play-button";
+        this.playButtonAriaText = document.createElement("span");
+        this.playButtonAriaText.classList.add("sr-only");
+        this.playButtonAriaText.textContent = lf("Play melody");
         this.playButton.addEventListener("click", () => this.togglePlay());
 
         this.playIcon = document.createElement("i");
         this.playIcon.id = "melody-play-icon";
+        this.playIcon.ariaHidden = "true";
         pxt.BrowserUtils.addClass(this.playIcon, "play icon");
         this.playButton.appendChild(this.playIcon);
+        this.playButton.appendChild(this.playButtonAriaText);
 
         this.tempoInput = document.createElement("input");
         pxt.BrowserUtils.addClass(this.tempoInput, "ui input");
@@ -240,6 +259,10 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
         if (this.matrixFocusBind) {
             Blockly.browserEvents.unbind(this.matrixFocusBind);
             this.matrixFocusBind = undefined;
+        }
+        if (this.matrixKeydownBind) {
+            Blockly.browserEvents.unbind(this.matrixKeydownBind);
+            this.matrixKeydownBind = undefined;
         }
         if (this.tabKeyBind) {
             Blockly.browserEvents.unbind(this.tabKeyBind);
@@ -487,14 +510,18 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
 
             for (let col = 0; col < this.numMatrixCols; col++) {
                 const cell = this.cells[col][row];
+                const cellRect = cell.querySelector('rect');
+                const cellTextEl = cell.querySelector('text');
 
                 if (this.melody.getValue(row, col)) {
-                    pxt.BrowserUtils.removeClass(cell, "melody-default");
-                    pxt.BrowserUtils.addClass(cell, rowClass);
+                    pxt.BrowserUtils.removeClass(cellRect, "melody-default");
+                    pxt.BrowserUtils.addClass(cellRect, rowClass);
+                    cellTextEl.textContent = this.getCellLabel(row, true)
                 }
                 else {
-                    pxt.BrowserUtils.addClass(cell, "melody-default");
-                    pxt.BrowserUtils.removeClass(cell, rowClass);
+                    pxt.BrowserUtils.addClass(cellRect, "melody-default");
+                    pxt.BrowserUtils.removeClass(cellRect, rowClass);
+                    cellTextEl.textContent = this.getCellLabel(row, false)
                 }
             }
         }
@@ -566,8 +593,9 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
         const cells = this.cells[col];
 
         cells.forEach(cell => {
-            if (on) pxt.BrowserUtils.addClass(cell, "playing")
-            else pxt.BrowserUtils.removeClass(cell, "playing")
+            const cellRect = cell.querySelector('rect');
+            if (on) pxt.BrowserUtils.addClass(cellRect, "playing")
+            else pxt.BrowserUtils.removeClass(cellRect, "playing")
         });
     }
 
@@ -576,12 +604,12 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
         if (pxt.BrowserUtils.isEdge()) FieldCustomMelody.VIEWBOX_WIDTH += 37;
         FieldCustomMelody.VIEWBOX_HEIGHT = (FieldCustomMelody.CELL_WIDTH + FieldCustomMelody.CELL_VERTICAL_MARGIN) * this.numMatrixRows + FieldCustomMelody.CELL_VERTICAL_MARGIN;
         this.matrixSvg = pxsim.svg.parseString(`<svg xmlns="http://www.w3.org/2000/svg" class="melody-grid-div blocklyMatrix" role="grid" viewBox="0 0 ${FieldCustomMelody.VIEWBOX_WIDTH} ${FieldCustomMelody.VIEWBOX_HEIGHT}" tabindex="0" />`);
-        this.matrixSvg.ariaLabel = lf("Melody grid");
+        this.matrixSvg.ariaLabel = lf("Melody of eight notes. Use the left and right arrows to select the previous or next note in the sequence. Use the up and down arrows to select the note pitch. Use Enter or Space to toggle the note on or off. Press P to play the note.");
 
         this.createMatrixDisplay({
             cellWidth: FieldCustomMelody.CELL_WIDTH,
             cellHeight: FieldCustomMelody.CELL_WIDTH,
-            cellLabel: lf("Note"),
+            cellLabel: this.getCellLabel,
             cellStroke: "white",
             cellHorizontalMargin: FieldCustomMelody.CELL_HORIZONTAL_MARGIN,
             cellVerticalMargin: FieldCustomMelody.CELL_VERTICAL_MARGIN,
@@ -592,6 +620,13 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
         return this.matrixSvg;
     }
 
+    private getCellLabel(rowNum: number, value: boolean) {
+        if (value) {
+            return lf("Note {0}, on", pxtmelody.rowToNote(rowNum))
+        }
+        return lf("Note {0}, off", pxtmelody.rowToNote(rowNum))
+    }
+
     private handleMatrixFocus(_e: FocusEvent) {
         if (!this.selected) {
             const startNote = this.getMelodyNote(0) ?? 0;
@@ -599,6 +634,17 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
         }
         const [x, y] = this.selected;
         this.focusCell(x, y);
+        const focusVisible = this.matrixSvg.matches(":focus-visible");
+        if (!focusVisible && !this.forceFocusVisible) return;
+        if (this.hasMelodyNote(x)) {
+            this.playNote(y, x);
+        }
+    }
+
+    private handleMatrixKeydown(e: KeyboardEvent) {
+        if (e.key.toLowerCase() === "p") {
+            this.playNote(this.selected[1], this.selected[0]);
+        }
     }
 
     // Used for focus trap
@@ -624,30 +670,40 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
     }
 
     protected override handleArrowUp(x: number, y: number) {
-        const hasNote = this.getMelodyNote(x) !== undefined;
         this.selected = [x, y - 1]
-        if (hasNote) {
+        if (this.hasMelodyNote(x)) {
             this.toggleCell(this.selected[0], this.selected[1]);
         }
     }
     protected override handleArrowDown(x: number, y: number) {
-        const hasNote = this.getMelodyNote(x) !== undefined;
         this.selected = [x, y + 1]
-        if (hasNote) {
+        if (this.hasMelodyNote(x)) {
             this.toggleCell(this.selected[0], this.selected[1]);
         }
     }
 
     protected override handleArrowLeft(x: number, y: number) {
-        const newX = (x + this.numMatrixCols - 1) % this.numMatrixCols;
+        if (x === 0) {
+            return;
+        }
+        const newX = x - 1;
         const existingY = this.getMelodyNote(newX) ?? y;
-        this.selected = [newX, existingY]
+        this.selected = [newX, existingY];
+        if (this.hasMelodyNote(newX)) {
+            this.playNote(this.selected[1], this.selected[0]);
+        }
     }
 
     protected override handleArrowRight(x: number, y: number) {
-        const newX = (x + this.numMatrixCols + 1) % this.numMatrixCols;
+        if (x === this.numMatrixCols - 1) {
+            return;
+        }
+        const newX = x + 1;
         const existingY = this.getMelodyNote(newX) ?? y;
-        this.selected = [newX, existingY]
+        this.selected = [newX, existingY];
+        if (this.hasMelodyNote(newX)) {
+            this.playNote(this.selected[1], this.selected[0]);
+        }
     }
 
     private getMelodyNote(col: number) {
@@ -657,6 +713,10 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
             }
         }
         return undefined;
+    }
+
+    private hasMelodyNote(col: number): boolean {
+        return typeof this.getMelodyNote(col) === "number";
     }
 
     private togglePlay() {
@@ -674,10 +734,12 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
         if (this.isPlaying) {
             pxt.BrowserUtils.removeClass(this.playIcon, "play icon");
             pxt.BrowserUtils.addClass(this.playIcon, "stop icon");
+            this.playButtonAriaText.textContent = lf("Stop melody");
         }
         else {
             pxt.BrowserUtils.removeClass(this.playIcon, "stop icon");
             pxt.BrowserUtils.addClass(this.playIcon, "play icon");
+            this.playButtonAriaText.textContent = lf("Play melody");
         }
     }
 
@@ -699,7 +761,7 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
             pxt.AudioContextManager.stop();
             this.isPlaying = false;
 
-            this.cells.forEach(row => row.forEach(cell => pxt.BrowserUtils.removeClass(cell, "playing")));
+            this.cells.forEach(row => row.forEach(cell => pxt.BrowserUtils.removeClass(cell.querySelector('rect'), "playing")));
         }
     }
 
@@ -710,18 +772,23 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
             if (result) {
                 this.melody.parseNotes(result);
                 this.toggle.toggle();
-                this.toggle.getRootElement().focus();
                 this.updateFieldLabel();
                 this.updateGrid();
+                // Clear the selected grid cell. This ensures that focus is not returned to the previously
+                // focused grid cell. This can result in the focus of a note that is switched off in a column that
+                // has a different note switched on. This can result in unpredictable behavior.
+                this.selected = undefined;
             }
         });
 
+        this.firstFocusableElement = this.toggle.getFirstFocusableElement();
         this.lastFocusableElement = this.gallery.getLastFocusableElement();
     }
 
 
     private hideGallery() {
         this.gallery.hide();
+        this.firstFocusableElement = this.toggle.getFirstFocusableElement();
         this.lastFocusableElement = this.doneButton;
     }
 
@@ -845,20 +912,33 @@ class Toggle {
 
         // Draw the left option
         this.leftElement = this.root.group();
+        this.leftElement.setAttribute("aria-label", this.props.leftText);
+        this.leftElement.el.tabIndex = 0;
+        this.leftElement.el.ariaSelected = "true";
+        this.leftElement.setAttribute("role", "tab");
+        this.leftElement.el.id = `${melodyEditorDivId}-control`;
+        this.leftElement.el.setAttribute("aria-controls", melodyEditorDivId);
         this.leftText = mkText(this.props.leftText)
             .appendClass("sprite-editor-text")
             .fill(this.props.selectedTextColor);
+        this.leftText.setAttribute("aria-hidden", "true");
         this.leftElement.appendChild(this.leftText);
 
         // Draw the right option
         this.rightElement = this.root.group();
+        this.rightElement.el.ariaLabel = this.props.rightText
+        this.rightElement.el.tabIndex = -1;
+        this.rightElement.el.ariaSelected = "false";
+        this.rightElement.setAttribute("role", "tab");
+        this.rightElement.el.id = `${melodyGalleryDivId}-control`;
+        this.rightElement.el.setAttribute("aria-controls", `${melodyGalleryDivId}-outer`);
         this.rightText = mkText(this.props.rightText)
             .appendClass("sprite-editor-text")
             .fill(this.props.unselectedTextColor);
+        this.rightText.setAttribute("aria-hidden", "true");
         this.rightElement.appendChild(this.rightText);
 
         this.root.onClick(() => this.toggle());
-        this.root.el.tabIndex = 0;
         this.root.el.classList.add("melody-editor-toggle-buttons");
         this.root.el.addEventListener("keydown", (e) => {
             if (["Space", "ArrowLeft", "ArrowRight", "Enter"].includes(e.code)) {
@@ -874,12 +954,22 @@ class Toggle {
             this.switch.appendClass("toggle-right");
             this.leftText.fill(this.props.unselectedTextColor);
             this.rightText.fill(this.props.selectedTextColor);
+            this.leftElement.el.tabIndex = -1
+            this.leftElement.el.ariaSelected = "false";
+            this.rightElement.el.tabIndex = 0
+            this.rightElement.el.ariaSelected = "true";
+            this.rightElement.el.focus();
         }
         else {
             this.switch.removeClass("toggle-right");
             this.switch.appendClass("toggle-left");
             this.leftText.fill(this.props.selectedTextColor);
             this.rightText.fill(this.props.unselectedTextColor);
+            this.rightElement.el.tabIndex = -1
+            this.rightElement.el.ariaSelected = "false";
+            this.leftElement.el.tabIndex = 0
+            this.leftElement.el.ariaSelected = "true";
+            this.leftElement.el.focus();
         }
         this.isLeft = !this.isLeft;
 
@@ -910,8 +1000,11 @@ class Toggle {
         return TOGGLE_WIDTH;
     }
 
-    getRootElement() {
-        return this.root.el;
+    getFirstFocusableElement() {
+        if (this.leftElement.el.tabIndex === 0) {
+            return this.leftElement.el
+        }
+        return this.rightElement.el
     }
 }
 
