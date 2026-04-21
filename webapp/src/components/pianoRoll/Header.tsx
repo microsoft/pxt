@@ -89,7 +89,7 @@ export const Header = (props: Props) => {
         } else if (id === "bass") {
             onOctavesChanged(0, 3);
         } else if (id === "full") {
-            onOctavesChanged(0, 8);
+            onOctavesChanged(0, 7);
         }
     };
 
