@@ -2,12 +2,13 @@ import { PianoRollThemeProvider, usePianoRollThemeContext } from "./context"
 import { Workspace } from "./Workspace"
 import { Sidebar } from "./Sidebar"
 import { useEffect, useState } from "react"
-import { changeTrackInstrument, getEmptySong, isDrumInstrument, Song, toPXTSong, Track, updateTrack } from "./types"
+import { changeMeasures, changeTrackInstrument, getEmptySong, isDrumInstrument, Song, toPXTSong, Track, updateTrack } from "./types"
 import { Header } from "./Header"
 import { DeleteTrackModal } from "./DeleteTrackModal"
 import { DeleteErrorModal } from "./DeleteErrorModal"
 import { DrumWarningModal } from "./DrumWarningModal"
 import { isPlaying, startPlaybackAsync, stopPlayback, updatePlaybackSongAsync } from "../musicEditor/playback"
+import { PlaybackControls } from "../musicEditor/PlaybackControls"
 
 interface PianoRollProps {
 
@@ -23,20 +24,30 @@ export const PianoRoll = (props: PianoRollProps) => {
     )
 }
 
+interface StateSnapshot {
+    song: Song;
+    selectedTrack: number;
+}
+
+
 const PianoRollInternal = (props: PianoRollProps) => {
     const { state: theme, dispatch: updateTheme } = usePianoRollThemeContext();
 
     const [song, setSong] = useState<Song>(getEmptySong());
     const [selectedTrack, setSelectedTrack] = useState(song.tracks[0].id);
-    const [playing, setPlaying] = useState(false);
-
     const [modal, setModal] = useState<{ type: modalType, trackId?: number, instrumentId?: number } | null>(null);
 
-    const updateSong = (song: Song) => {
-        setSong(song);
+    const [undoStack, setUndoStack] = useState<StateSnapshot[]>([]);
+    const [redoStack, setRedoStack] = useState<StateSnapshot[]>([]);
+
+    const updateSong = (newSong: Song) => {
+        setUndoStack([...undoStack, { song, selectedTrack }]);
+        setRedoStack([])
+
+        setSong(newSong);
 
         if (isPlaying()) {
-            updatePlaybackSongAsync(toPXTSong(song));
+            updatePlaybackSongAsync(toPXTSong(newSong));
         }
     }
 
@@ -71,12 +82,11 @@ const PianoRollInternal = (props: PianoRollProps) => {
             setModal({ type: "delete-error" });
         }
         else if (!toDelete?.events.length) {
+            setSelectedTrack(song.tracks[0].id);
             updateSong({
                 ...song,
                 tracks: song.tracks.filter(t => t.id !== trackId)
             });
-
-            setSelectedTrack(song.tracks[0].id);
         }
         else {
             setModal({ type: "delete-track", trackId });
@@ -88,7 +98,7 @@ const PianoRollInternal = (props: PianoRollProps) => {
         const oldInstrument = song.instruments.find(i => i.id === track.instrumentId)!;
         const newInstrument = song.instruments.find(i => i.id === instrumentId)!;
 
-        if (isDrumInstrument(oldInstrument) && !isDrumInstrument(newInstrument) && track.events.length) {
+        if (isDrumInstrument(oldInstrument) !== isDrumInstrument(newInstrument) && track.events.length) {
             setModal({ type: "drum-warning", trackId, instrumentId });
             return;
         }
@@ -97,12 +107,11 @@ const PianoRollInternal = (props: PianoRollProps) => {
     }
 
     const deleteTrack = (trackId: number) => {
+        setSelectedTrack(song.tracks[0].id);
         updateSong({
             ...song,
             tracks: song.tracks.filter(t => t.id !== trackId)
         });
-
-        setSelectedTrack(song.tracks[0].id);
     }
 
     const setTrackInstrument = (trackId: number, instrumentId: number) => {
@@ -122,15 +131,71 @@ const PianoRollInternal = (props: PianoRollProps) => {
         }
     }
 
-    const togglePlaying = () => {
-        if (playing) {
-            stopPlayback();
+    const onPlaybackControlsClick = (action: "play" | "stop" | "loop") => {
+        if (action === "play") {
+            startPlaybackAsync(toPXTSong(song), false);
         }
-        else {
+        else if (action === "loop") {
             startPlaybackAsync(toPXTSong(song), true);
         }
+        else {
+            stopPlayback();
+        }
+    }
 
-        setPlaying(!playing);
+    const onMeasuresChanged = (newMeasures: number) => {
+        updateSong(changeMeasures(newMeasures, song));
+
+        updateTheme({ measures: newMeasures });
+    }
+
+    const onTempoChange = (newTempo: number) => {
+        updateSong({
+            ...song,
+            tempo: newTempo
+        });
+    }
+
+    const undo = () => {
+        if (!undoStack.length) return;
+
+        const lastState = undoStack.pop()!;
+        redoStack.push({ song, selectedTrack });
+
+        setUndoStack([...undoStack]);
+        setRedoStack([...redoStack]);
+
+        setSong(lastState.song);
+        setSelectedTrack(lastState.selectedTrack);
+
+        if (lastState.song.measures !== song.measures) {
+            updateTheme({ measures: lastState.song.measures });
+        }
+
+        if (isPlaying()) {
+            updatePlaybackSongAsync(toPXTSong(lastState.song));
+        }
+    }
+
+    const redo = () => {
+        if (!redoStack.length) return;
+
+        const nextState = redoStack.pop()!;
+        undoStack.push({ song, selectedTrack });
+
+        setUndoStack([...undoStack]);
+        setRedoStack([...redoStack]);
+
+        setSong(nextState.song);
+        setSelectedTrack(nextState.selectedTrack);
+
+        if (nextState.song.measures !== song.measures) {
+            updateTheme({ measures: nextState.song.measures });
+        }
+
+        if (isPlaying()) {
+            updatePlaybackSongAsync(toPXTSong(nextState.song));
+        }
     }
 
     const closeModal = () => setModal(null);
@@ -139,10 +204,10 @@ const PianoRollInternal = (props: PianoRollProps) => {
     const instrument = song.instruments.find(i => i.id === track.instrumentId)!;
 
     useEffect(() => {
-        if (theme.minOctave !== instrument.minOctave || theme.maxOctave !== instrument.maxOctave) {
-            updateTheme({ minOctave: instrument.minOctave, maxOctave: instrument.maxOctave });
+        if (theme.minOctave !== instrument.minOctave || theme.maxOctave !== instrument.maxOctave || theme.measures !== song.measures) {
+            updateTheme({ minOctave: instrument.minOctave, maxOctave: instrument.maxOctave, measures: song.measures });
         }
-    }, [instrument.minOctave, instrument.maxOctave, theme.minOctave, theme.maxOctave, updateTheme])
+    }, [instrument.minOctave, instrument.maxOctave, theme.minOctave, theme.maxOctave, updateTheme, song.measures])
 
     return (
         <div className="piano-roll">
@@ -163,8 +228,6 @@ const PianoRollInternal = (props: PianoRollProps) => {
                     onInstrumentSelected={onInstrumentSelected}
                     onTrackCreated={onTrackCreated}
                     onTrackDeleted={onTrackDeleted}
-                    togglePlaying={togglePlaying}
-                    playing={playing}
                 />
             </div>
             <div className="scroll-container">
@@ -178,9 +241,25 @@ const PianoRollInternal = (props: PianoRollProps) => {
                             onEdit={onTrackEdit}
                             isDrumTrack={isDrumInstrument(instrument)}
                             playNote={playNote}
+                            measures={song.measures}
                         />
                     </div>
                 </div>
+            </div>
+            <div className="footer">
+                <PlaybackControls
+                    beatsPerMinute={song.tempo}
+                    measures={song.measures}
+                    onControlsClick={onPlaybackControlsClick}
+                    onTempoChange={onTempoChange}
+                    onMeasuresChanged={onMeasuresChanged}
+                    hasUndo={undoStack.length > 0}
+                    hasRedo={redoStack.length > 0}
+                    onUndoClick={undo}
+                    onRedoClick={redo}
+                    hideBassClefOption={true}
+                    singlePlayButton={true}
+                />
             </div>
         </div>
     )

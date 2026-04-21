@@ -23,11 +23,12 @@ export const DrumWarningModal = (props: Props) => {
             actions={[
                 {
                     label: lf("Cancel"),
+                    className: "neutral",
                     onClick: onClose
                 },
                 {
                     label: lf("Confirm"),
-                    className: "danger",
+                    className: "red",
                     onClick: handleConfirm
                 }
             ]}

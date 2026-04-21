@@ -1,4 +1,3 @@
-import { Button } from "../../../../react-common/components/controls/Button";
 import { Dropdown, DropdownItem } from "../../../../react-common/components/controls/Dropdown";
 import { Song, lf } from "./types";
 
@@ -6,17 +5,14 @@ interface Props {
     song: Song;
     selectedTrack: number;
 
-    playing: boolean;
-
     onTrackSelected(trackId: number): void;
     onTrackCreated(): void;
     onTrackDeleted(trackId: number): void;
     onInstrumentSelected(trackId: number, instrumentId: number): void;
-    togglePlaying(): void;
 }
 
 export const Header = (props: Props) => {
-    const { song, selectedTrack, playing, onTrackSelected, onInstrumentSelected, onTrackCreated, onTrackDeleted, togglePlaying } = props;
+    const { song, selectedTrack, onTrackSelected, onInstrumentSelected, onTrackCreated, onTrackDeleted, } = props;
 
     const onTrackDropdownChange = (id: string) => {
         if (id === "new-track") {
@@ -82,12 +78,6 @@ export const Header = (props: Props) => {
                 )}
                 selectedId={instrumentId(track?.instrumentId ?? 0)}
                 onItemSelected={onInstrumentDropdownChange}
-            />
-
-            <Button
-                title={playing ? lf("Stop") : lf("Play")}
-                leftIcon={playing ? "fas fa-stop" : "fas fa-play"}
-                onClick={togglePlaying}
             />
         </div>
     );

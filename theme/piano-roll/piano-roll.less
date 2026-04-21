@@ -23,30 +23,48 @@
     max-height: 100%;
 }
 
+.piano-roll-root {
+    height: 100vh;
+    overflow-y: hidden;
+}
+
 .piano-roll .header-container {
     height: var(--header-height);
     flex-shrink: 0;
 }
 
-.piano-roll .header {
+.piano-roll .header, .piano-roll .footer {
     height: var(--header-height);
     display: flex;
     flex-direction: row;
     gap: 0.5rem;
     background-color: var(--header-background);
     align-items: center;
-    ;
 }
 
-.piano-roll-root {
-    height: 100vh;
-    width: 100%;
+.piano-roll .footer {
+    flex-shrink: 0;
+
+    .music-playback-controls {
+        .common-button {
+            height: calc(var(--header-height) - 0.3rem)
+        }
+
+        .music-undo-redo .common-button {
+            color: black;
+            background: none;
+            border: none;
+
+            &.disabled {
+                opacity: 0.5;
+            }
+        }
+    }
 }
 
 .piano-roll .sidebar-container {
     width: var(--sidebar-width);
     position: relative;
-
 }
 
 .piano-roll .content-container {

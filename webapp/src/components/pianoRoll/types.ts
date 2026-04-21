@@ -17,6 +17,7 @@ export interface Song {
 
     tracks: Track[];
     measures: number;
+    tempo: number;
     nextId: number;
 }
 
@@ -70,7 +71,8 @@ export function getEmptySong(): Song {
             nextId: 0,
             id: 0
         }],
-        measures: 4
+        measures: 2,
+        tempo: 120
     };
 
     return song;
@@ -80,30 +82,30 @@ export function getNextNoteEvent(note: number, start: number, track: Track): Not
     return track.events.find(e => e.note === note && e.start > start);
 }
 
-export function getMaxDuration(note: number, start: number, track: Track): number {
+export function getMaxDuration(note: number, start: number, track: Track, measures: number): number {
     const nextEvent = getNextNoteEvent(note, start, track);
-    if (!nextEvent) return Infinity;
+    if (!nextEvent) return measures * 4 - start;
 
     return nextEvent.start - start;
 }
 
-export function newNoteEvent(note: number, start: number, track: Track, isDrumTrack: boolean): Track {
+export function newNoteEvent(note: number, start: number, track: Track, isDrumTrack: boolean, measures: number): Track {
     const newEvent: NoteEvent = {
         id: track.nextId++,
         note,
         start,
-        duration: isDrumTrack ? 1 : Math.min(4, getMaxDuration(note, start, track))
+        duration: isDrumTrack ? 1 : Math.min(4, getMaxDuration(note, start, track, measures))
     };
 
     return insertNoteEvent(newEvent, track);
 }
 
-export function changeNoteEventDuration(id: number, duration: number, track: Track): Track {
+export function changeNoteEventDuration(id: number, duration: number, track: Track, measures: number): Track {
     const eventIndex = track.events.findIndex(e => e.id === id);
     if (eventIndex === -1) return track;
 
     const event = track.events[eventIndex];
-    const maxDuration = getMaxDuration(event.note, event.start, track);
+    const maxDuration = getMaxDuration(event.note, event.start, track, measures);
 
     const updatedEvent = {
         ...event,
@@ -189,7 +191,20 @@ export function changeTrackInstrument(trackId: number, instrumentId: number, son
     track.instrumentId = instrumentId;
 
     return updateTrack(track, song);
+}
 
+export function changeMeasures(measures: number, song: Song): Song {
+    return {
+        ...song,
+        measures,
+        tracks: song.tracks.map(track => ({
+            ...track,
+            events: track.events.filter(e => e.start < measures * 4 * 4).map(e => ({
+                ...e,
+                duration: Math.min(e.duration, measures * 4 * 4 - e.start)
+            }))
+        }))
+    }
 }
 
 export function isDrumInstrument(instrument: Instrument): instrument is DrumInstrument {
@@ -206,7 +221,7 @@ export function toPXTSong(song: Song): pxt.assets.music.Song {
     return {
         ticksPerBeat: 4,
         beatsPerMeasure: 4,
-        beatsPerMinute: 120,
+        beatsPerMinute: song.tempo,
         measures: song.measures,
         tracks: song.tracks.map(track => {
             const instrument = song.instruments.find(i => i.id === track.instrumentId)!;

@@ -8,6 +8,7 @@ import { ImageFieldEditor } from "./components/ImageFieldEditor";
 import { setTelemetryFunction } from './components/ImageEditor/store/imageReducer';
 import { IFrameEmbeddedClient } from "../../pxtservices/iframeEmbeddedClient";
 import { PianoRoll } from "./components/pianoRoll/PianoRoll";
+import { ThemeManager } from "../../react-common/components/theming/themeManager";
 
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -15,6 +16,9 @@ document.addEventListener("DOMContentLoaded", () => {
 })
 
 function init() {
+    const themeManager = ThemeManager.getInstance();
+
+    themeManager.switchColorTheme(themeManager.getAllColorThemes()[0].id);
     const assetDiv = document.getElementById("asset-editor-field-div") as HTMLDivElement;
     ReactDOM.render(<PianoRoll />, assetDiv);
 }

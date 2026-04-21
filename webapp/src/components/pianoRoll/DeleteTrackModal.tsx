@@ -22,16 +22,17 @@ export const DeleteTrackModal = (props: Props) => {
             actions={[
                 {
                     label: lf("Cancel"),
+                    className: "neutral",
                     onClick: onClose
                 },
                 {
                     label: lf("Delete"),
-                    className: "danger",
+                    className: "red",
                     onClick: handleDelete
                 }
             ]}
         >
-            <p>{lf("Are you sure you want to delete this track? This action cannot be undone.")}</p>
+            <p>{lf("Are you sure you want to delete this track?")}</p>
         </Modal>
     )
 }

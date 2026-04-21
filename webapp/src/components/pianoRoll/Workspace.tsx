@@ -11,6 +11,7 @@ interface Props {
     isDrumTrack: boolean;
     playNote: (note: number) => void;
     onEdit: (track: Track) => void;
+    measures: number;
 }
 
 interface GestureState {
@@ -24,7 +25,7 @@ interface GestureState {
 }
 
 export const Workspace = (props: Props) => {
-    const { track, onEdit, isDrumTrack, playNote } = props;
+    const { track, onEdit, isDrumTrack, playNote, measures } = props;
 
     const bg = useWorkspaceBackground();
     const theme = usePianoRollTheme();
@@ -55,7 +56,7 @@ export const Workspace = (props: Props) => {
             const coords = clientToNoteCoordinates(clientX, clientY);
             if (!coords) return 1;
 
-            const max = getMaxDuration(editing.note, editing.start + 1, track);
+            const max = getMaxDuration(editing.note, editing.start + 1, track, measures);
 
             return Math.max(1, Math.min(max, coords.time - editing.start + 1));
         }
@@ -132,13 +133,13 @@ export const Workspace = (props: Props) => {
                     const coords = clientToNoteCoordinates(gestureState.current.startX, gestureState.current.startY);
 
                     if (coords) {
-                        onEdit(newNoteEvent(coords.note, coords.time, track, isDrumTrack));
+                        onEdit(newNoteEvent(coords.note, coords.time, track, isDrumTrack, measures));
                         playNote(coords.note);
                     }
                 }
             }
             else if (gestureState.current.noteEvent && !isDrumTrack) {
-                onEdit(changeNoteEventDuration(gestureState.current.noteEvent.id, getNewNoteDuration(e.clientX, e.clientY), track));
+                onEdit(changeNoteEventDuration(gestureState.current.noteEvent.id, getNewNoteDuration(e.clientX, e.clientY), track, measures));
             }
 
             gestureState.current = null;
