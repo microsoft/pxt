@@ -221,7 +221,7 @@ function patchFloatingBlocks(dom: Element, info: pxtc.BlocksInfo) {
         const nextNode = node.nextElementSibling;
         // does this block is disable or have s nested statement block?
         const nodeType = node.getAttribute("type");
-        if (!node.getAttribute("disabled") && !node.getElementsByTagName("statement").length
+        if (!(node.hasAttribute("disabled") || node.hasAttribute("disabled-reasons")) && !node.getElementsByTagName("statement").length
             && (buildinBlockStatements[nodeType] ||
                 (blocks[nodeType] && blocks[nodeType].retType == "void" && !hasArrowFunction(blocks[nodeType])))
         ) {
