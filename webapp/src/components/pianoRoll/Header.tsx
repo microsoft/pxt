@@ -1,6 +1,5 @@
 import { Dropdown, DropdownItem } from "../../../../react-common/components/controls/Dropdown";
-import { Input } from "../../../../react-common/components/controls/Input";
-import { Song, lf, isDrumInstrument } from "./types";
+import { Song, lf, isDrumInstrument, NOTE_RANGES } from "./types";
 
 interface Props {
     song: Song;
@@ -65,46 +64,26 @@ export const Header = (props: Props) => {
         });
     }
 
-    const rangeOptions: DropdownItem[] = [
-        {
-            label: lf("Treble"),
-            title: lf("Treble"),
-            id: "treble"
-        },
-        {
-            label: lf("Bass"),
-            title: lf("Bass"),
-            id: "bass"
-        },
-        {
-            label: lf("Full"),
-            title: lf("Full"),
-            id: "full"
-        }
-    ]
+    const rangeOptions: DropdownItem[] = NOTE_RANGES.map(range => ({
+        label: range.name,
+        title: range.name,
+        id: range.id
+    }));
 
     const handleRangeDropdownChange = (id: string) => {
-        if (id === "treble") {
-            onOctavesChanged(3, 5);
-        } else if (id === "bass") {
-            onOctavesChanged(0, 3);
-        } else if (id === "full") {
-            onOctavesChanged(0, 7);
-        }
+        const range = NOTE_RANGES.find(r => r.id === id);
+
+        if (!range) return;
+        onOctavesChanged(range.minOctave, range.maxOctave);
     };
 
     let selectedRangeId = "full";
-    if (track) {
-        const minOctave = track.minOctave ?? 0;
-        const maxOctave = track.maxOctave ?? 8;
+    const range = NOTE_RANGES.find(r => r.minOctave === track?.minOctave && r.maxOctave === track?.maxOctave);
 
-        if (minOctave === 3 && maxOctave === 5) {
-            selectedRangeId = "treble";
-        }
-        else if (minOctave === 0 && maxOctave === 3) {
-            selectedRangeId = "bass";
-        }
+    if (range) {
+        selectedRangeId = range.id;
     }
+
 
     return (
         <div className="header">

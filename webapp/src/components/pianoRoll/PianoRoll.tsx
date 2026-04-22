@@ -2,7 +2,7 @@ import { PianoRollThemeProvider, usePianoRollThemeContext } from "./context"
 import { Workspace } from "./Workspace"
 import { Sidebar } from "./Sidebar"
 import { useEffect, useState } from "react"
-import { changeMeasures, changeOctaves, changeTrackInstrument, getEmptySong, isDrumInstrument, newTrack, Song, toPXTSong, Track, updateTrack } from "./types"
+import { changeMeasures, changeOctaves, changeTrackInstrument, fromPXTSong, getEmptySong, isDrumInstrument, newTrack, Song, toPXTSong, Track, updateTrack } from "./types"
 import { Header } from "./Header"
 import { DeleteTrackModal } from "./DeleteTrackModal"
 import { DeleteErrorModal } from "./DeleteErrorModal"
@@ -11,7 +11,10 @@ import { isPlaying, startPlaybackAsync, stopPlayback, updatePlaybackSongAsync } 
 import { PlaybackControls } from "../musicEditor/PlaybackControls"
 
 interface PianoRollProps {
-
+    onStateChanged?: (state: PianoRollState) => void;
+    asset?: pxt.assets.music.Song;
+    undoStack?: StateSnapshot[];
+    redoStack?: StateSnapshot[];
 }
 
 type modalType = "delete-track" | "delete-error" | "drum-warning";
@@ -24,6 +27,12 @@ export const PianoRoll = (props: PianoRollProps) => {
     )
 }
 
+export interface PianoRollState {
+    undoStack: StateSnapshot[];
+    redoStack: StateSnapshot[];
+    asset: pxt.assets.music.Song;
+}
+
 interface StateSnapshot {
     song: Song;
     selectedTrack: number;
@@ -31,20 +40,53 @@ interface StateSnapshot {
 
 
 const PianoRollInternal = (props: PianoRollProps) => {
-    const { state: theme, dispatch: updateTheme } = usePianoRollThemeContext();
+    const { onStateChanged, asset, undoStack: initialUndoStack, redoStack: initialRedoStack } = props;
+    const { state: theme, dispatch: updateTheme, } = usePianoRollThemeContext();
 
-    const [song, setSong] = useState<Song>(getEmptySong());
+    const [song, setSong] = useState<Song>(asset ? fromPXTSong(asset) : getEmptySong());
     const [selectedTrack, setSelectedTrack] = useState(song.tracks[0].id);
     const [modal, setModal] = useState<{ type: modalType, trackId?: number, instrumentId?: number } | null>(null);
 
-    const [undoStack, setUndoStack] = useState<StateSnapshot[]>([]);
-    const [redoStack, setRedoStack] = useState<StateSnapshot[]>([]);
+    const [undoStack, setUndoStack] = useState<StateSnapshot[]>(initialUndoStack || []);
+    const [redoStack, setRedoStack] = useState<StateSnapshot[]>(initialRedoStack || []);
+
+    useEffect(() => {
+        if (asset) {
+            const song = fromPXTSong(asset);
+            setSong(song);
+            setSelectedTrack(song.tracks[0].id);
+            setModal(null);
+            setUndoStack(props.undoStack || []);
+            setRedoStack(props.redoStack || []);
+            stopPlayback();
+        }
+    }, [asset])
+
+    useEffect(() => {
+        if (initialUndoStack) {
+            setUndoStack(initialUndoStack);
+        }
+        if (initialRedoStack) {
+            setRedoStack(initialRedoStack);
+        }
+    }, [initialUndoStack, initialRedoStack]);
+
+    const fireStateChange = (song: Song, undoStack: StateSnapshot[], redoStack: StateSnapshot[]) => {
+        if (onStateChanged) {
+            onStateChanged({
+                asset: toPXTSong(song),
+                undoStack,
+                redoStack
+            })
+        }
+    }
 
     const updateSong = (newSong: Song) => {
         setUndoStack([...undoStack, { song, selectedTrack }]);
         setRedoStack([])
 
         setSong(newSong);
+        fireStateChange(newSong, [...undoStack, { song, selectedTrack }], [])
 
         if (isPlaying()) {
             updatePlaybackSongAsync(toPXTSong(newSong));
@@ -172,6 +214,8 @@ const PianoRollInternal = (props: PianoRollProps) => {
         setSong(lastState.song);
         setSelectedTrack(lastState.selectedTrack);
 
+        fireStateChange(lastState.song, [...undoStack], [...redoStack])
+
         if (lastState.song.measures !== song.measures) {
             updateTheme({ measures: lastState.song.measures });
         }
@@ -192,6 +236,8 @@ const PianoRollInternal = (props: PianoRollProps) => {
 
         setSong(nextState.song);
         setSelectedTrack(nextState.selectedTrack);
+
+        fireStateChange(nextState.song, [...undoStack], [...redoStack])
 
         if (nextState.song.measures !== song.measures) {
             updateTheme({ measures: nextState.song.measures });
@@ -218,13 +264,13 @@ const PianoRollInternal = (props: PianoRollProps) => {
 
     return (
         <div className="piano-roll">
-            { modal?.type === "delete-track" &&
+            {modal?.type === "delete-track" &&
                 <DeleteTrackModal trackId={modal.trackId!} onClose={closeModal} onDelete={deleteTrack} />
             }
-            { modal?.type === "delete-error" &&
+            {modal?.type === "delete-error" &&
                 <DeleteErrorModal onClose={closeModal} />
             }
-            { modal?.type === "drum-warning" &&
+            {modal?.type === "drum-warning" &&
                 <DrumWarningModal trackId={modal.trackId!} instrumentId={modal.instrumentId!} onClose={closeModal} onConfirm={setTrackInstrument} />
             }
             <div className="header-container">
