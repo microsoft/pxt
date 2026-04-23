@@ -53,7 +53,6 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         this.openSearch = this.openSearch.bind(this);
         this.closeSearch = this.closeSearch.bind(this);
         this.onSearchChange = this.onSearchChange.bind(this);
-        this.clearSearch = this.clearSearch.bind(this);
         this.handleSearchCardClick = this.handleSearchCardClick.bind(this);
     }
 
@@ -206,10 +205,6 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         this.runSearch(ev?.target?.value || "");
     }
 
-    public clearSearch() {
-        this.runSearch("");
-    }
-
     private openSearch() {
         pxt.tickEvent("projects.searchmode.open", undefined, { interactiveConsent: true });
         this.setState({
@@ -316,9 +311,9 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         return <div ref="homeContainer" className={tabClasses} role="main">
             <h1 className="accessible-hidden">{lf("MakeCode Home")}</h1>
             <HeroBanner parent={this.props.parent} />
-            <div key={`mystuff_gallerysegment`} className="ui segment gallerysegment mystuff-segment" role="region" aria-label={searchMode ? lf("Search home content") : lf("My Projects")}>
+            <div key={`mystuff_gallerysegment`} className={sui.cx(["ui segment gallerysegment mystuff-segment", searchMode && "search-mode"])} role="region" aria-label={searchMode ? lf("Search home content") : lf("My Projects")}>
                 <div className="ui heading">
-                    <div className="column" style={{ zIndex: 1 }}>
+                    <div className="column gallery-heading-column">
                         {searchMode ?
                             <sui.Button
                                 key="go-back"
@@ -338,7 +333,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                                 </span>
                             </h2> : <h2 className="ui header">{lf("My Projects")}</h2>}
                     </div>
-                    <div className="column right aligned" style={{ zIndex: 1, display: "flex", justifyContent: "flex-end", gap: "0.5rem", flexWrap: "wrap" }}>
+                    <div className="column right aligned gallery-actions">
                         {!searchMode &&
                             <sui.Button
                                 key="search"
@@ -353,7 +348,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                             <sui.Button key="import" icon="upload" className="import-dialog-btn neutral" textClass="landscape only" text={lf("Import")} title={lf("Import a project")} onClick={this.importProject} /> : undefined}
                     </div>
                 </div>
-                {searchMode && <div className="content" role="search" style={{ paddingTop: "1rem" }}>
+                {searchMode && <div className="content homescreen-search-box" role="search">
                     <label className="accessible-hidden" htmlFor="homescreen-search">{lf("Search home content")}</label>
                     <div className="ui fluid icon input">
                         <input
@@ -371,22 +366,9 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                     <ProjectsCarousel key={`mystuff_carousel`} parent={this.props.parent} name={'recent'} onClick={this.chgHeader} />
                 </div>}
             </div>
-            {searchMode && <div key={`search_gallerysegment`} className="ui segment gallerysegment search-segment" role="region" aria-label={lf("Search results")} style={{ padding: "1rem" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", padding: "0 0 1.5rem", flexWrap: "wrap" }}>
-                    <h2 className="ui header" style={{ margin: 0, padding: 0 }}>
-                        {hasSearchQuery ? lf("Search results") : lf("Search the home screen")}
-                    </h2>
-                    {hasSearchQuery && <button
-                        type="button"
-                        className="ui button"
-                        onClick={this.clearSearch}
-                        aria-label={lf("Clear search")}
-                    >
-                        {lf("Clear search")}
-                    </button>}
-                </div>
-                <div className="content" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "1rem", alignItems: "start", gridAutoFlow: "dense" }}>
-                    {!hasSearchQuery ? <p className="ui grey inverted segment">{lf("Start typing to search tutorials, games, and projects.")}</p>
+            {searchMode && <div key={`search_gallerysegment`} className="ui segment gallerysegment search-segment" role="region" aria-label={lf("Search results")}>
+                <div className="content search-results-grid">
+                    {!hasSearchQuery ? <p className="ui grey inverted segment search-empty-state">{lf("Start typing to search tutorials, games, and projects.")}</p>
                         : searchResults.length ? searchResults.map((scr, index) =>
                             <React.Fragment key={`search-${scr.youTubeId || scr.name || scr.url}-${index}`}>
                                 <ProjectsCodeCard
@@ -407,7 +389,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                                     tutorialLength={scr.tutorialLength}
                                     selected={!scr.directOpen ? searchSelectedIndex === index : undefined}
                                 />
-                                {selectedSearchCard && searchSelectedIndex === index && <div ref="searchDetailView" className={`detailview`} style={{ gridColumn: "1 / -1", minWidth: 0 }}>
+                                {selectedSearchCard && searchSelectedIndex === index && <div ref="searchDetailView" className="detailview search-detailview">
                                     <sui.CloseButton onClick={() => this.setSelected(SEARCH_CATEGORY, undefined)} />
                                     <ProjectsDetail parent={this.props.parent}
                                         name={selectedSearchCard.name}

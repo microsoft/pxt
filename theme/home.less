@@ -156,6 +156,39 @@
         padding: 0rem;
         margin: 0;
 
+        &.mystuff-segment.search-mode {
+            .gallery-heading-column {
+                padding-left: @carouselArrowSize !important;
+            }
+        }
+
+        &.search-segment {
+            padding: 1rem @carouselArrowSize;
+
+            .search-results-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+                gap: 1rem;
+                align-items: start;
+                grid-auto-flow: dense;
+            }
+
+            .search-detailview {
+                grid-column: 1 / -1;
+                min-width: 0;
+            }
+
+            .search-empty-state {
+                margin: 0;
+                height: 12rem;
+                width: 100%;
+                box-sizing: border-box;
+                display: flex;
+                align-items: center;
+                align-self: stretch;
+            }
+        }
+
         .ui.header {
             margin: 0;
             padding-left: @carouselArrowSize;
@@ -192,12 +225,26 @@
             margin-bottom: -1rem !important;
             margin-top: 1rem !important;
         }
+        .gallery-heading-column,
+        .gallery-actions {
+            z-index: 1;
+        }
+        .gallery-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
         .column {
             padding: 0 !important;
         }
         .column.right.aligned {
             padding-right: @carouselArrowSize !important;
         }
+    }
+    .homescreen-search-box {
+        padding-top: 1em;
+        margin: 1em @carouselArrowSize;
     }
     .import-dialog-btn {
         position: relative;
@@ -760,6 +807,21 @@
 
 @media only screen and (max-width: @largestTabletScreen) {
     /* Carousel */
+    .gallerysegment.search-segment {
+        padding: 1rem @carouselArrowSizeTablet;
+
+        .search-empty-state {
+            height: 9rem;
+        }
+    }
+    .ui.segment.gallerysegment.mystuff-segment.search-mode {
+        .gallery-heading-column {
+            padding-left: @carouselArrowSizeTablet !important;
+        }
+    }
+    .homescreen-search-box {
+        margin: 1em @carouselArrowSizeTablet;
+    }
     .projectsdialog {
         .ui.segment.getting-started-segment {
             background-position: left center;
@@ -833,6 +895,17 @@
 
 @media only screen and (max-width: @largestMobileScreen) {
     /* Carousel */
+    .gallerysegment.search-segment {
+        padding: 1rem @carouselArrowSizeMobile;
+    }
+    .ui.segment.gallerysegment.mystuff-segment.search-mode {
+        .gallery-heading-column {
+            padding-left: @carouselArrowSizeMobile !important;
+        }
+    }
+    .homescreen-search-box {
+        margin: 1em @carouselArrowSizeMobile;
+    }
     .projectsdialog {
         .ui.segment.getting-started-segment {
             height: 10rem;
@@ -985,6 +1058,11 @@
 @media only screen and (max-height: @tallEditorBreakpoint) and (min-width: @largestMobileScreen) {
     .ui.segment.tabsegment {
         padding-top: calc(@thinMenuHeight + 2rem) !important;
+    }
+    .gallerysegment.search-segment {
+        .search-empty-state {
+            height: 9rem;
+        }
     }
     .projectsdialog {
         .ui.card, .ui.cards>.card {
