@@ -3,7 +3,7 @@ import { addPlaybackStateListener, addTickListener, removePlaybackStateListener,
 import { usePianoRollTheme } from "./context";
 import { NoteEventView } from "./NoteEvent"
 import { changeNoteEventDuration, getMaxDuration, newNoteEvent, NoteEvent, Track } from "./types";
-import { noteWidth, workspaceHeight, workspaceWidth, xToTick, yToNote } from "./utils";
+import { noteWidth, range, workspaceHeight, workspaceWidth, xToTick, yToNote } from "./utils";
 import { useWorkspaceBackground } from "./workspaceBackground";
 
 interface Props {
@@ -37,6 +37,7 @@ export const Workspace = (props: Props) => {
     useEffect(() => {
         const horizontalScroller = workspaceRef.current?.parentElement;
         const verticalScroller = horizontalScroller?.parentElement?.parentElement;
+        const measureScroller = document.getElementById("measure-header");
 
         const clientToNoteCoordinates = (clientX: number, clientY: number) => {
             const bounds = workspaceRef.current?.getBoundingClientRect();
@@ -83,6 +84,9 @@ export const Workspace = (props: Props) => {
                 if (!gestureState.current.noteEvent || isDrumTrack) {
                     if (horizontalScroller) {
                         horizontalScroller.scrollLeft = gestureState.current.startScrollX - deltaX;
+                    }
+                    if (measureScroller) {
+                        measureScroller.scrollLeft = gestureState.current.startScrollX - deltaX;
                     }
                     if (verticalScroller) {
                         verticalScroller.scrollTop = gestureState.current.startScrollY - deltaY;

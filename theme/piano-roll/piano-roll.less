@@ -1,3 +1,21 @@
+.piano-roll-root {
+    --key-border: 1px solid black;
+
+    --note-event-color: #a3f0c5;
+    --note-event-border: 2px solid #21905c;
+    --note-event-text-color: #21905c;
+
+    --white-key-color: white;
+    --black-key-color: black;
+    --key-text-color: black;
+
+    --workspace-white-key-color: #36535f;
+    --workspace-black-key-color: #2e4c58;
+    --workspace-grid-line-color: #1e343d;
+
+    --header-background: #f0f0f0;
+}
+
 .piano-roll {
     display: flex;
     flex-direction: column;
@@ -10,19 +28,8 @@
     --grid-cell-height: calc(var(--octave-height) / 12);
     --grid-cell-width: calc(var(--octave-width) / 16);
 
-    --key-border: 1px solid black;
-
-    --note-event-color: #a3f0c5;
-    --note-event-border: 2px solid #21905c;
-    --note-event-text-color: #21905c;
-
-    --white-key-color: white;
-    --black-key-color: black;
-    --key-text-color: black;
-
-    --header-background: #f0f0f0;
-
     --header-height: 2.5rem;
+    --timeline-height: 1.5rem;
 
     max-height: 100%;
     height: 100%;
@@ -31,7 +38,7 @@
 .piano-roll-root {
     height: 100%;
     overflow-y: hidden;
-    background: var(--pxt-neutral-background1)
+    background: var(--workspace-grid-line-color)
 }
 
 .piano-roll .header-container {
@@ -75,6 +82,32 @@
 
     & > .common-input-wrapper > .common-input-group {
         max-width: 2rem;
+    }
+}
+
+.measure-header {
+    height: var(--timeline-height);
+    display: flex;
+    flex-direction: row;
+    margin-left: var(--sidebar-width);
+    height: var(--timeline-height);
+    overflow-x: hidden;
+    overflow-y: hidden;
+    flex-shrink: 0;
+    max-width: 100%;
+
+    background: var(--workspace-grid-line-color);
+    color: white;
+
+    &.hidden {
+        display: none;
+    }
+
+    .measure {
+        width: var(--octave-width);
+        flex-shrink: 0;
+        padding-left: 0.25rem;
+        user-select: none;
     }
 }
 
@@ -140,6 +173,7 @@
 .piano-roll .workspace-container {
     flex: 1;
     overflow-x: hidden;
+    overflow-y: hidden;
 }
 
 .piano-roll .workspace {

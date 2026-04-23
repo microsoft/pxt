@@ -9,6 +9,7 @@ import { DeleteErrorModal } from "./DeleteErrorModal"
 import { DrumWarningModal } from "./DrumWarningModal"
 import { isPlaying, startPlaybackAsync, stopPlayback, updatePlaybackSongAsync } from "../musicEditor/playback"
 import { PlaybackControls } from "../musicEditor/PlaybackControls"
+import { MeasureHeader } from "./MeasureHeader"
 
 interface PianoRollProps {
     onStateChanged?: (state: PianoRollState) => void;
@@ -20,6 +21,12 @@ interface PianoRollProps {
 type modalType = "delete-track" | "delete-error" | "drum-warning";
 
 export const PianoRoll = (props: PianoRollProps) => {
+    useEffect(() => {
+        return () => {
+            stopPlayback();
+        }
+    }, [])
+
     return (
         <PianoRollThemeProvider>
             <PianoRollInternal {...props} />
@@ -284,6 +291,7 @@ const PianoRollInternal = (props: PianoRollProps) => {
                     onOctavesChanged={onOctavesChanged}
                 />
             </div>
+            <MeasureHeader measures={song.measures} />
             <div className="scroll-container">
                 <div className="content-container">
                     <div className="sidebar-container">

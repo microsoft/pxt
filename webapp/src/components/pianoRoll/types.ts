@@ -168,13 +168,14 @@ function insertNoteEvent(newEvent: NoteEvent, track: Track): Track {
 }
 
 export function newTrack(instrumentId: number, song: Song): Song {
+    const range = NOTE_RANGES.find(r => r.id === "treble")!;
     const newTrack: Track = {
         instrumentId,
         events: [],
         id: song.nextId++,
         nextId: 0,
-        minOctave: 3,
-        maxOctave: 5
+        minOctave: range.minOctave,
+        maxOctave: range.maxOctave
     };
 
     return {
@@ -298,8 +299,8 @@ export function fromPXTSong(pxtSong: pxt.assets.music.Song): Song {
             instrumentId: 0,
             events: [],
             nextId: 0,
-            minOctave: 3,
-            maxOctave: 5
+            minOctave: 7,
+            maxOctave: 0
         }
 
         const newNoteEvent = (note: number, startTick: number, endTick: number): void => {
@@ -347,7 +348,7 @@ export function fromPXTSong(pxtSong: pxt.assets.music.Song): Song {
             newTrack.maxOctave = range.maxOctave;
         }
 
-        if (newTrack.events.length > 0) {
+        if (newTrack.events.length > 0 || result.tracks.length === 0) {
             result.tracks.push(newTrack);
         }
     }
