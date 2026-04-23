@@ -147,6 +147,67 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         return { cards, entries, cardMap };
     }
 
+    private getLocalProjectHeaders(): pxt.workspace.Header[] {
+        const headers = (this.getData("headers:") || []) as pxt.workspace.Header[];
+        return headers.filter(h => !pxt.tutorial.shouldFilterProject(h.tutorial?.metadata));
+    }
+
+    private projectHeaderToSearchCard(header: pxt.workspace.Header): pxt.CodeCard & { projectHeader: pxt.workspace.Header } {
+        const tutorialStep =
+            header.tutorial ? header.tutorial.tutorialStep
+                : header.tutorialCompleted ? header.tutorialCompleted.steps - 1
+                    : undefined;
+        const tutorialLength =
+            header.tutorial ? header.tutorial.tutorialStepInfo.length
+                : header.tutorialCompleted ? header.tutorialCompleted.steps
+                    : undefined;
+        const ghid = pxt.github.parseRepoId(header.githubId);
+
+        return {
+            projectHeader: header,
+            cardType: "file",
+            name: (ghid && pxt.github.join(ghid.project, ghid.fileName)) || header.name,
+            time: header.modificationTime,
+            url: header.pubId && header.pubCurrent ? "/" + header.pubId : "",
+            tutorialStep,
+            tutorialLength,
+            projectId: header.id
+        };
+    }
+
+    private collectHomeSearchEntries(galleries: pxt.Map<string | pxt.GalleryProps>) {
+        const { cards, entries, cardMap } = this.collectGallerySearchEntries(galleries);
+        const seen = new Set(Object.keys(cardMap));
+
+        this.getLocalProjectHeaders().forEach(header => {
+            const key = `project:${header.id}`;
+            if (seen.has(key)) return;
+            seen.add(key);
+
+            const card = this.projectHeaderToSearchCard(header);
+            const ghid = pxt.github.parseRepoId(header.githubId);
+            const searchTerms = [
+                header.name,
+                ghid?.project,
+                ghid?.fileName,
+                header.githubId,
+                header.editor
+            ].filter(term => !!term).join(" ");
+
+            cards.push(card);
+            cardMap[key] = card;
+            entries.push({
+                id: key,
+                name: card.name || "",
+                description: "",
+                tags: "",
+                searchTerms
+            });
+        });
+
+        return { cards, entries, cardMap };
+    }
+
     private runSearch(query: string) {
         const normalized = (query || "").trim();
         const galleries = this.getHomeGalleries();
@@ -160,7 +221,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
             return;
         }
 
-        const { entries, cardMap } = this.collectGallerySearchEntries(galleries);
+        const { entries, cardMap } = this.collectHomeSearchEntries(galleries);
         if (!entries.length) {
             this.setState({ searchResults: [] });
             return;
@@ -207,7 +268,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
     }
 
     private warmSearchIndex() {
-        const { entries } = this.collectGallerySearchEntries(this.getHomeGalleries());
+        const { entries } = this.collectHomeSearchEntries(this.getHomeGalleries());
         if (!entries.length) return;
 
         // warm search index so that users get instant results when they start typing
@@ -239,6 +300,12 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
     }
 
     private handleSearchCardClick(e: any, scr: pxt.CodeCard, index?: number) {
+        const header = (scr as pxt.CodeCard & { projectHeader?: pxt.workspace.Header }).projectHeader;
+        if (header) {
+            this.chgHeader(header);
+            return;
+        }
+
         if (index == undefined) {
             this.chgGallery(scr);
             return;
@@ -394,9 +461,11 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                                     label={scr.label}
                                     labelClass={scr.labelClass}
                                     tags={scr.tags}
-                                    scr={scr} index={index}
+                                    scr={(scr as pxt.CodeCard & { projectHeader?: pxt.workspace.Header }).projectHeader || scr} index={index}
                                     onCardClick={this.handleSearchCardClick}
                                     cardType={scr.cardType}
+                                    time={scr.time}
+                                    projectId={scr.projectId}
                                     tutorialStep={scr.tutorialStep}
                                     tutorialLength={scr.tutorialLength}
                                     selected={!scr.directOpen ? searchSelectedIndex === index : undefined}
@@ -1570,6 +1639,8 @@ function codeCardButtonLabel(cardType: string, youTubeId?: string, youTubePlayli
         return lf("Start Tutorial");
     else if (cardType == "codeExample" || cardType == "example")
         return lf("Open Example");
+    else if (cardType == "file")
+        return lf("Open Project");
     else if (cardType == "forumUrl")
         return lf("Open in Forum");
     else if (cardType == "sharedExample")
