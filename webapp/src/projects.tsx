@@ -156,13 +156,13 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
             const resetCategory = this.state.selectedCategory === SEARCH_CATEGORY ? undefined : this.state.selectedCategory;
             const resetIndex = this.state.selectedCategory === SEARCH_CATEGORY ? undefined : this.state.selectedIndex;
             compiler.homeSearchClear();
-            this.setState({ searchQuery: "", searchResults: undefined, selectedCategory: resetCategory, selectedIndex: resetIndex });
+            this.setState({ searchResults: undefined, selectedCategory: resetCategory, selectedIndex: resetIndex });
             return;
         }
 
         const { entries, cardMap } = this.collectGallerySearchEntries(galleries);
         if (!entries.length) {
-            this.setState({ searchQuery: normalized, searchResults: [] });
+            this.setState({ searchResults: [] });
             return;
         }
 
@@ -175,7 +175,6 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                     .filter(card => !!card);
 
                 this.setState({
-                    searchQuery: normalized,
                     searchResults: matches,
                     selectedCategory: SEARCH_CATEGORY,
                     selectedIndex: undefined
@@ -185,7 +184,6 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                 if (requestId !== this.searchRequestId) return;
                 pxt.reportException(e);
                 this.setState({
-                    searchQuery: normalized,
                     searchResults: [],
                     selectedCategory: SEARCH_CATEGORY,
                     selectedIndex: undefined
@@ -194,6 +192,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
     }
 
     public setSearchQuery(query: string) {
+        this.setState({ searchQuery: query });
         this.runSearch(query);
     }
 
@@ -202,11 +201,23 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
     }
 
     private onSearchChange(ev: React.ChangeEvent<HTMLInputElement>) {
-        this.runSearch(ev?.target?.value || "");
+        const query = ev?.target?.value || "";
+        this.setState({ searchQuery: query });
+        this.runSearch(query);
+    }
+
+    private warmSearchIndex() {
+        const { entries } = this.collectGallerySearchEntries(this.getHomeGalleries());
+        if (!entries.length) return;
+
+        // warm search index so that users get instant results when they start typing
+        compiler.homeSearchAsync({ term: "", entries })
+            .catch(() => { });
     }
 
     private openSearch() {
         pxt.tickEvent("projects.searchmode.open", undefined, { interactiveConsent: true });
+        this.warmSearchIndex();
         this.setState({
             searchMode: true,
             selectedCategory: this.state.selectedCategory === SEARCH_CATEGORY ? undefined : this.state.selectedCategory,
@@ -357,6 +368,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                             placeholder={lf("Search tutorials, games, projects")}
                             value={searchQuery}
                             onChange={this.onSearchChange}
+                            autoFocus={true}
                             aria-label={lf("Search tutorials, games, and projects")}
                         />
                         <i className="search icon" aria-hidden="true" />
