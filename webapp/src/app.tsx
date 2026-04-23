@@ -3180,7 +3180,7 @@ export class ProjectView
     }
 
     importExampleAsync(options: pxt.editor.ExampleImportOptions): Promise<void> {
-        const { name, path, loadBlocks, prj, preferredEditor } = options;
+        let { name, path, loadBlocks, prj, preferredEditor } = options;
         core.showLoading("changingcode", lf("loading..."));
         this.loadingExample = true;
         return this.loadActivityFromMarkdownAsync(path, name?.toLowerCase(), preferredEditor)
@@ -3192,6 +3192,23 @@ export class ProjectView
                     throw new Error(lf("Example not found or invalid format"))
                 const opts: pxt.editor.ProjectCreationOptions = example;
                 if (prj) opts.prj = prj;
+
+                if (!preferredEditor && example.snippetType) {
+                    switch (example.snippetType) {
+                        case "blocks":
+                            preferredEditor = pxt.BLOCKS_PROJECT_NAME;
+                            loadBlocks = true;
+                            break;
+                        case "python":
+                            preferredEditor = pxt.PYTHON_PROJECT_NAME;
+                            break;
+                        case "javascript":
+                        case "typescript":
+                            preferredEditor = pxt.JAVASCRIPT_PROJECT_NAME;
+                            break;
+                    }
+                }
+
                 if (loadBlocks && preferredEditor == pxt.BLOCKS_PROJECT_NAME) {
                     return this.createProjectAsync(opts)
                         .then(() => {
