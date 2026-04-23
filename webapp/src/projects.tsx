@@ -54,6 +54,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         this.closeSearch = this.closeSearch.bind(this);
         this.onSearchChange = this.onSearchChange.bind(this);
         this.handleSearchCardClick = this.handleSearchCardClick.bind(this);
+        this.handleSearchDetailClick = this.handleSearchDetailClick.bind(this);
     }
 
     shouldComponentUpdate(nextProps: ISettingsProps, nextState: ProjectsState, nextContext: any): boolean {
@@ -313,6 +314,16 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         this.setSelected(SEARCH_CATEGORY, index);
     }
 
+    private handleSearchDetailClick(scr: pxt.CodeCard, action?: pxt.CodeCardAction) {
+        const header = (scr as pxt.CodeCard & { projectHeader?: pxt.workspace.Header }).projectHeader;
+        if (header && !action) {
+            this.chgHeader(header);
+            return;
+        }
+
+        this.chgGallery(scr, action);
+    }
+
     scrollElementIntoViewIfNeeded(domNode: Element) {
         let containerDomNode = ReactDOM.findDOMNode(this.refs['homeContainer']);
         // Determine if `domNode` fully fits inside `containerDomNode`.
@@ -446,7 +457,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                 </div>}
             </div>
             {searchMode && <div key={`search_gallerysegment`} className="ui segment gallerysegment search-segment" role="region" aria-label={lf("Search results")}>
-                <div className="content search-results-grid">
+                <div className="content search-results-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "1rem", alignItems: "start", gridAutoFlow: "dense" }}>
                     {!hasSearchQuery ? <p className="ui grey inverted segment search-empty-state">{lf("Start typing to search tutorials, games, and projects.")}</p>
                         : searchResults.length ? searchResults.map((scr, index) =>
                             <React.Fragment key={`search-${scr.youTubeId || scr.name || scr.url}-${index}`}>
@@ -470,7 +481,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                                     tutorialLength={scr.tutorialLength}
                                     selected={!scr.directOpen ? searchSelectedIndex === index : undefined}
                                 />
-                                {selectedSearchCard && searchSelectedIndex === index && <div ref="searchDetailView" className="detailview search-detailview">
+                                {selectedSearchCard && searchSelectedIndex === index && <div ref="searchDetailView" className="detailview search-detailview" style={{ gridColumn: "1 / -1", minWidth: 0 }}>
                                     <sui.CloseButton onClick={() => this.setSelected(SEARCH_CATEGORY, undefined)} />
                                     <ProjectsDetail parent={this.props.parent}
                                         name={selectedSearchCard.name}
@@ -485,7 +496,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                                         buttonLabel={selectedSearchCard.buttonLabel}
                                         actionIcon={selectedSearchCard.actionIcon}
                                         scr={selectedSearchCard}
-                                        onClick={this.chgGallery}
+                                        onClick={this.handleSearchDetailClick}
                                         cardType={selectedSearchCard.cardType}
                                         tags={selectedSearchCard.tags}
                                         otherActions={selectedSearchCard.otherActions}
