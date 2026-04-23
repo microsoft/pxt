@@ -1,0 +1,187 @@
+.piano-roll {
+    display: flex;
+    flex-direction: column;
+
+    --black-key-height: calc(var(--white-key-height) * 0.625);
+    --sidebar-width: 100px;
+
+    --octave-height: calc(var(--white-key-height) * 7);
+
+    --grid-cell-height: calc(var(--octave-height) / 12);
+    --grid-cell-width: calc(var(--octave-width) / 16);
+
+    --key-border: 1px solid black;
+
+    --note-event-color: #a3f0c5;
+    --note-event-border: 2px solid #21905c;
+    --note-event-text-color: #21905c;
+
+    --white-key-color: white;
+    --black-key-color: black;
+    --key-text-color: black;
+
+    --header-background: #f0f0f0;
+
+    --header-height: 2.5rem;
+
+    max-height: 100%;
+    height: 100%;
+}
+
+.piano-roll-root {
+    height: 100%;
+    overflow-y: hidden;
+    background: var(--pxt-neutral-background1)
+}
+
+.piano-roll .header-container {
+    height: var(--header-height);
+    flex-shrink: 0;
+}
+
+.piano-roll .header, .piano-roll .footer {
+    height: var(--header-height);
+    display: flex;
+    flex-direction: row;
+    gap: 0.5rem;
+    background-color: var(--header-background);
+    align-items: center;
+}
+
+.piano-roll .footer {
+    flex-shrink: 0;
+
+    .music-playback-controls {
+        .common-button {
+            height: calc(var(--header-height) - 0.3rem)
+        }
+
+        .music-undo-redo .common-button {
+            color: black;
+            background: none;
+            border: none;
+
+            &.disabled {
+                opacity: 0.5;
+            }
+        }
+    }
+}
+
+.piano-roll .header .octave-controls {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
+    & > .common-input-wrapper > .common-input-group {
+        max-width: 2rem;
+    }
+}
+
+.piano-roll .sidebar-container {
+    width: var(--sidebar-width);
+    position: relative;
+}
+
+.piano-roll .content-container {
+    display: flex;
+    flex-direction: row;
+}
+
+.octave-sidebar {
+    user-select: none;
+
+    .key.white {
+        height: var(--white-key-height);
+        border-right: var(--key-border);
+        border-bottom: var(--key-border);
+        background-color: var(--white-key-color);
+        color: var(--key-text-color);
+        display: flex;
+        align-items: flex-end;
+        justify-content: flex-end;
+
+        &.active, &.playing {
+            background-color: var(--note-event-color);
+        }
+    }
+
+    .key.black {
+        height: var(--black-key-height);
+        width: calc(var(--sidebar-width) * 0.8);
+        border: var(--key-border);
+        border-left: none;
+        background-color: var(--black-key-color);
+        position: absolute;
+        margin-top: calc(var(--black-key-height) * -0.5);
+
+        &.active, &.playing {
+            background-color: var(--note-event-color);
+        }
+    }
+
+    .drum {
+        height: var(--grid-cell-height);
+        border-bottom: var(--key-border);
+        width: var(--sidebar-width);
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding-right: 0.25rem;
+        background-color: var(--white-key-color);
+        color: var(--key-text-color);
+
+        &.active, &.playing {
+            background-color: var(--note-event-color);
+        }
+    }
+}
+
+.piano-roll .workspace-container {
+    flex: 1;
+    overflow-x: hidden;
+}
+
+.piano-roll .workspace {
+    background-size: var(--octave-width) var(--octave-height);
+    background-repeat: repeat;
+    position: relative;
+}
+
+.piano-roll .workspace .note-event {
+    height: calc(var(--grid-cell-height) + 1px);
+    position: absolute;
+    display: flex;
+    align-items: center;
+    user-select: none;
+
+    padding-left: 0.25rem;
+
+    font-size: calc(var(--grid-cell-height) * 0.6);
+    background-color: var(--note-event-color);
+    border: var(--note-event-border);
+    color: var(--note-event-text-color);
+
+    cursor: pointer;
+}
+
+.piano-roll .workspace .note-event:hover {
+    border-color: white;
+    color: white;
+}
+
+.piano-roll .scroll-container {
+    max-height: 100%;
+    width: 100%;
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+.piano-roll .workspace .playhead {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 2px;
+    height: 100%;
+    background-color: red;
+}
