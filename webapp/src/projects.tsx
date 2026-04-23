@@ -29,10 +29,17 @@ interface ProjectsState {
     selectedIndex?: number;
     searchMode?: boolean;
     searchQuery?: string;
-    searchResults?: pxt.CodeCard[];
+    searchResults?: SearchCard[];
 }
 
 const SEARCH_CATEGORY = "__search__";
+type SearchCard = pxt.CodeCard & { projectHeader?: pxt.workspace.Header };
+
+function getProjectDescriptionFromConfig(configText: string): string {
+    const config = pxt.Util.jsonTryParse(configText) as pxt.PackageConfig;
+    const description = config?.description?.trim();
+    return description || undefined;
+}
 
 export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
     protected searchRequestId = 0;
@@ -111,14 +118,14 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         return galleries;
     }
 
-    private collectGalleryCards(galleries: pxt.Map<string | pxt.GalleryProps>): pxt.CodeCard[] {
+    private collectGalleryCards(galleries: pxt.Map<string | pxt.GalleryProps>): SearchCard[] {
         return this.collectGallerySearchEntries(galleries).cards;
     }
 
     private collectGallerySearchEntries(galleries: pxt.Map<string | pxt.GalleryProps>) {
-        const cards: pxt.CodeCard[] = [];
+        const cards: SearchCard[] = [];
         const entries = [] as { id: string; name: string; description?: string; tags?: string; searchTerms?: string; }[];
-        const cardMap: pxt.Map<pxt.CodeCard> = {};
+        const cardMap: pxt.Map<SearchCard> = {};
         const seen = new Set<string>();
 
         Object.keys(galleries).forEach(galleryName => {
@@ -153,7 +160,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         return headers.filter(h => !pxt.tutorial.shouldFilterProject(h.tutorial?.metadata));
     }
 
-    private projectHeaderToSearchCard(header: pxt.workspace.Header): pxt.CodeCard & { projectHeader: pxt.workspace.Header } {
+    private projectHeaderToSearchCard(header: pxt.workspace.Header): SearchCard {
         const tutorialStep =
             header.tutorial ? header.tutorial.tutorialStep
                 : header.tutorialCompleted ? header.tutorialCompleted.steps - 1
@@ -300,8 +307,8 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         });
     }
 
-    private handleSearchCardClick(e: any, scr: pxt.CodeCard, index?: number) {
-        const header = (scr as pxt.CodeCard & { projectHeader?: pxt.workspace.Header }).projectHeader;
+    private handleSearchCardClick(e: any, scr: SearchCard, index?: number) {
+        const header = scr.projectHeader;
         if (header) {
             this.chgHeader(header);
             return;
@@ -314,14 +321,19 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         this.setSelected(SEARCH_CATEGORY, index);
     }
 
-    private handleSearchDetailClick(scr: pxt.CodeCard, action?: pxt.CodeCardAction) {
-        const header = (scr as pxt.CodeCard & { projectHeader?: pxt.workspace.Header }).projectHeader;
+    private handleSearchDetailClick(scr: SearchCard, action?: pxt.CodeCardAction) {
+        const header = scr.projectHeader;
         if (header && !action) {
             this.chgHeader(header);
             return;
         }
 
         this.chgGallery(scr, action);
+    }
+
+    private getLocalProjectDescription(header: pxt.workspace.Header): string {
+        const configText = this.getData(`text:${header.id}/${pxt.CONFIG_NAME}`) as string;
+        return getProjectDescriptionFromConfig(configText);
     }
 
     scrollElementIntoViewIfNeeded(domNode: Element) {
@@ -385,6 +397,10 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         const searchResults = this.state.searchResults || [];
         const searchSelectedIndex = this.state.selectedCategory === SEARCH_CATEGORY ? this.state.selectedIndex : undefined;
         const selectedSearchCard = searchSelectedIndex !== undefined ? searchResults[searchSelectedIndex] : undefined;
+        const selectedSearchProjectHeader = selectedSearchCard?.projectHeader;
+        const selectedSearchDescription = selectedSearchProjectHeader
+            ? this.getLocalProjectDescription(selectedSearchProjectHeader) || selectedSearchCard?.description
+            : selectedSearchCard?.description;
         const canImport = !!(pxt.appTarget.compile || (pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing));
 
         // lf("Make")
@@ -472,7 +488,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                                     label={scr.label}
                                     labelClass={scr.labelClass}
                                     tags={scr.tags}
-                                    scr={(scr as pxt.CodeCard & { projectHeader?: pxt.workspace.Header }).projectHeader || scr} index={index}
+                                    scr={scr.projectHeader || scr} index={index}
                                     onCardClick={this.handleSearchCardClick}
                                     cardType={scr.cardType}
                                     time={scr.time}
@@ -486,7 +502,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                                     <ProjectsDetail parent={this.props.parent}
                                         name={selectedSearchCard.name}
                                         key={'detailsearch' + selectedSearchCard.name}
-                                        description={selectedSearchCard.description}
+                                        description={selectedSearchDescription}
                                         url={selectedSearchCard.url}
                                         imageUrl={selectedSearchCard.imageUrl}
                                         largeImageUrl={selectedSearchCard.largeImageUrl}
