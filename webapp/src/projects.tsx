@@ -401,7 +401,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         const selectedSearchDescription = selectedSearchProjectHeader
             ? this.getLocalProjectDescription(selectedSearchProjectHeader) || selectedSearchCard?.description
             : selectedSearchCard?.description;
-        const canImport = !!(pxt.appTarget.compile || (pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing));
+        const canImport = !!(pxt.appTarget.compile || (pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing)) && !searchMode;
 
         // lf("Make")
         // lf("Code")
