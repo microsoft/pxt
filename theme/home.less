@@ -160,6 +160,21 @@
             .gallery-heading-column {
                 padding-left: @carouselArrowSize !important;
             }
+
+            .heading {
+                position: relative;
+                align-items: center;
+            }
+
+            .ui.header.search-mode-title {
+                position: absolute;
+                left: 50%;
+                transform: translateX(-50%);
+                padding-left: 0;
+                margin: 0;
+                text-align: center;
+                pointer-events: none;
+            }
         }
 
         &.search-segment {
@@ -896,6 +911,10 @@
     .ui.segment.gallerysegment.mystuff-segment.search-mode {
         .gallery-heading-column {
             padding-left: @carouselArrowSizeMobile !important;
+        }
+
+        .ui.header.search-mode-title {
+            display: none;
         }
     }
     .homescreen-search-box {

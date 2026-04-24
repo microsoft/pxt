@@ -438,6 +438,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                                 </span>
                             </h2> : <h2 className="ui header">{lf("My Projects")}</h2>}
                     </div>
+                    {searchMode && <h2 className="ui header search-mode-title">{lf("Search")}</h2>}
                     <div className="column right aligned gallery-actions">
                         {!searchMode &&
                             <sui.Button
