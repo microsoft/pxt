@@ -31,7 +31,9 @@
 .projectsdialog {
     position: relative;
     height: 100%;
-    overflow: auto;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    scrollbar-gutter: stable;
     z-index: @homeScreenZIndex+1;
     .accessibleMenu {
         z-index: @homeScreenZIndex+3 !important;
@@ -144,8 +146,11 @@
         padding-top: calc(@mainMenuHeight + 2rem) !important;
         margin: 0;
         border: 0;
+        display: flex;
+        flex-direction: column;
+        box-sizing: border-box;
         width: 100%;
-        min-height: 100%;
+        min-height: 100vh;
         background: var(--pxt-target-background1);
         color: var(--pxt-target-foreground1);
     }
@@ -277,8 +282,9 @@
         width: 100%;
         text-align: center;
         padding: 5px !important;
+        margin-top: auto !important;
         z-index: @homeFooterZIndex;
-        position: absolute;
+        position: relative;
         .item {
             font-size: 0.8rem !important;
             color: var(--pxt-neutral-foreground1) !important;
