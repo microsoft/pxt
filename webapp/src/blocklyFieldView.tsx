@@ -4,10 +4,9 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 
 import { ImageFieldEditor } from "./components/ImageFieldEditor";
-import { MusicEditor } from "./components/musicEditor/MusicEditor";
-import { MusicFieldEditor } from "./components/MusicFieldEditor";
 import { SoundEffectEditor } from "./components/soundEffectEditor/SoundEffectEditor";
 import { AssetFilePicker } from "./components/AssetFilePicker";
+import { PianoRollFieldEditor } from "./components/pianoRoll/fieldEditor";
 
 export interface EditorBounds {
     top: number;
@@ -18,7 +17,7 @@ export interface EditorBounds {
     verticalPadding?: number;
 }
 
-export interface FieldEditorComponent<U> extends React.Component {
+export interface FieldEditorComponent<U> {
     init(value: U, close: () => void, options?: any): void;
     getValue(): U;
 
@@ -270,6 +269,9 @@ export function init() {
                 break;
             case "file-picker":
                 current.injectElement(<AssetFilePicker ref={ refHandler } />);
+                break;
+            case "piano-roll-editor":
+                current.injectElement(<PianoRollFieldEditor handleRef={ refHandler } />);
                 break;
 
         }
