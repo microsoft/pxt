@@ -91,7 +91,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
             const hadNoResults = !prevState.searchResults || prevState.searchResults.length === 0;
             const stillNoResults = !this.state.searchResults || this.state.searchResults.length === 0;
             if (hadNoResults && stillNoResults) {
-                const cards = this.collectGalleryCards(this.getHomeGalleries());
+                const cards = this.collectGalleryCards(this.getSearchGalleries());
                 if (cards && cards.length) {
                     this.runSearch(this.state.searchQuery);
                 }
@@ -115,6 +115,14 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
             pxt.Util.jsonCopyFrom(galleries, targetConfig.localizedGalleries[lang]);
         if (targetConfig && targetConfig.galleries)
             pxt.Util.jsonCopyFrom(galleries, targetConfig.galleries);
+        return galleries;
+    }
+
+    private getSearchGalleries(): pxt.Map<string | pxt.GalleryProps> {
+        const targetConfig = this.getData("target-config:") as pxt.TargetConfig;
+        const galleries = this.getHomeGalleries();
+        if (targetConfig?.searchGalleries)
+            pxt.Util.jsonCopyFrom(galleries, targetConfig.searchGalleries);
         return galleries;
     }
 
@@ -183,7 +191,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         };
     }
 
-    private collectHomeSearchEntries(galleries: pxt.Map<string | pxt.GalleryProps>) {
+    private collectSearchEntries(galleries: pxt.Map<string | pxt.GalleryProps>) {
         const { cards, entries, cardMap } = this.collectGallerySearchEntries(galleries);
         const seen = new Set(Object.keys(cardMap));
 
@@ -218,7 +226,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
 
     private runSearch(query: string) {
         const normalized = (query || "").trim();
-        const galleries = this.getHomeGalleries();
+        const galleries = this.getSearchGalleries();
         const requestId = ++this.searchRequestId;
 
         if (!normalized) {
@@ -229,7 +237,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
             return;
         }
 
-        const { entries, cardMap } = this.collectHomeSearchEntries(galleries);
+        const { entries, cardMap } = this.collectSearchEntries(galleries);
         if (!entries.length) {
             this.setState({ searchResults: [] });
             return;
@@ -276,7 +284,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
     }
 
     private warmSearchIndex() {
-        const { entries } = this.collectHomeSearchEntries(this.getHomeGalleries());
+        const { entries } = this.collectSearchEntries(this.getSearchGalleries());
         if (!entries.length) return;
 
         // warm search index so that users get instant results when they start typing

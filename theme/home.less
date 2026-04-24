@@ -191,6 +191,11 @@
                 gap: 1rem;
                 align-items: start;
                 grid-auto-flow: dense;
+
+                // override default that's bumping it up
+                > .ui.card:first-child {
+                    margin: 1em 0;
+                }
             }
 
             .search-detailview {
