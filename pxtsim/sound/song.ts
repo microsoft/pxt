@@ -272,12 +272,17 @@ namespace pxsim.music {
             tracks: []
         };
 
+        const numTracks = buf[6];
         let current = 7;
 
-        while (current < buf.length) {
+        for (let i = 0; i < numTracks; i++) {
             const [track, pointer] = decodeTrack(buf, current);
             current = pointer;
             res.tracks.push(track);
+        }
+
+        while (current < buf.length) {
+            current = decodeTrackVelocity(buf, res.tracks, current);
         }
 
         return res;
@@ -318,6 +323,17 @@ namespace pxsim.music {
         }
 
         return decodeMelodicTrack(buf, offset);
+    }
+
+    function decodeTrackVelocity(buf: Uint8Array, tracks: pxt.assets.music.Track[], offset: number): number {
+        const trackId = buf[offset];
+        const track = tracks.find(t => t.id === trackId);
+        if (!track) return buf.length;
+
+        for (let i = 0; i < track.notes.length; i++) {
+            track.notes[i].velocity = buf[offset + i + 1];
+        }
+        return offset + track.notes.length + 1;
     }
 
     function decodeDrumInstrument(buf: Uint8Array, offset: number): pxt.assets.music.DrumInstrument {

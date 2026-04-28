@@ -2,7 +2,7 @@ import { PianoRollThemeProvider, usePianoRollThemeContext } from "./context"
 import { Workspace } from "./Workspace"
 import { Sidebar } from "./Sidebar"
 import { useEffect, useState } from "react"
-import { changeMeasures, changeOctaves, changeTrackInstrument, fromPXTSong, getEmptySong, isDrumInstrument, newTrack, Song, toPXTSong, Track, updateTrack } from "./types"
+import { changeMeasures, changeOctaves, changeTrackInstrument, fromPXTSong, getEmptySong, isDrumInstrument, newTrack, NoteEvent, Song, toPXTSong, Track, updateNoteEvent, updateNoteEvents, updateTrack } from "./types"
 import { Header } from "./Header"
 import { DeleteTrackModal } from "./DeleteTrackModal"
 import { DeleteErrorModal } from "./DeleteErrorModal"
@@ -10,6 +10,7 @@ import { DrumWarningModal } from "./DrumWarningModal"
 import { isPlaying, startPlaybackAsync, stopPlayback, updatePlaybackSongAsync } from "../musicEditor/playback"
 import { PlaybackControls } from "../musicEditor/PlaybackControls"
 import { MeasureHeader } from "./MeasureHeader"
+import { VelocityEditor } from "./VelocityEditor"
 
 interface PianoRollProps {
     onStateChanged?: (state: PianoRollState) => void;
@@ -56,6 +57,8 @@ const PianoRollInternal = (props: PianoRollProps) => {
 
     const [undoStack, setUndoStack] = useState<StateSnapshot[]>(initialUndoStack || []);
     const [redoStack, setRedoStack] = useState<StateSnapshot[]>(initialRedoStack || []);
+
+    const [velocityEditorVisible, setVelocityEditorVisible] = useState(false);
 
     useEffect(() => {
         if (asset) {
@@ -209,6 +212,14 @@ const PianoRollInternal = (props: PianoRollProps) => {
         updateSong(changeOctaves(selectedTrack, minOctave, maxOctave, song));
     }
 
+    const onVelocityChange = (notes: NoteEvent[]) => {
+        updateSong(updateNoteEvents(song, selectedTrack, notes));
+    }
+
+    const onVelocityEditorToggle = () => {
+        setVelocityEditorVisible(!velocityEditorVisible);
+    }
+
     const undo = () => {
         if (!undoStack.length) return;
 
@@ -284,6 +295,8 @@ const PianoRollInternal = (props: PianoRollProps) => {
                 <Header
                     song={song}
                     selectedTrack={selectedTrack}
+                    velocityEditorVisible={velocityEditorVisible}
+                    onVelocityEditorToggle={onVelocityEditorToggle}
                     onTrackSelected={onTrackSelected}
                     onInstrumentSelected={onInstrumentSelected}
                     onTrackCreated={onTrackCreated}
@@ -313,6 +326,9 @@ const PianoRollInternal = (props: PianoRollProps) => {
                     </div>
                 </div>
             </div>
+            { velocityEditorVisible &&
+                <VelocityEditor notes={track.events} onNotesChange={onVelocityChange} />
+            }
             <div className="footer">
                 <PlaybackControls
                     beatsPerMinute={song.tempo}

@@ -38,6 +38,27 @@ export const Workspace = (props: Props) => {
         const horizontalScroller = workspaceRef.current?.parentElement;
         const verticalScroller = horizontalScroller?.parentElement?.parentElement;
         const measureScroller = document.getElementById("measure-header");
+        const velocityEditor = document.getElementById("velocity-editor");
+
+        const changeHorizontalScroll = (delta: number) => {
+            const scroll = gestureState.current.startScrollX - delta;
+            if (horizontalScroller) {
+                horizontalScroller.scrollLeft = scroll;
+            }
+            if (measureScroller) {
+                measureScroller.scrollLeft = scroll;
+            }
+            if (velocityEditor) {
+                velocityEditor.scrollLeft = scroll;
+            }
+        }
+
+        const changeVerticalScroll = (delta: number) => {
+            const scroll = gestureState.current.startScrollY - delta;
+            if (verticalScroller) {
+                verticalScroller.scrollTop = scroll;
+            }
+        }
 
         const clientToNoteCoordinates = (clientX: number, clientY: number) => {
             const bounds = workspaceRef.current?.getBoundingClientRect();
@@ -82,15 +103,8 @@ export const Workspace = (props: Props) => {
 
             if (gestureState.current.isScrolling) {
                 if (!gestureState.current.noteEvent || isDrumTrack) {
-                    if (horizontalScroller) {
-                        horizontalScroller.scrollLeft = gestureState.current.startScrollX - deltaX;
-                    }
-                    if (measureScroller) {
-                        measureScroller.scrollLeft = gestureState.current.startScrollX - deltaX;
-                    }
-                    if (verticalScroller) {
-                        verticalScroller.scrollTop = gestureState.current.startScrollY - deltaY;
-                    }
+                    changeHorizontalScroll(deltaX);
+                    changeVerticalScroll(deltaY);
                 }
                 else {
                     const editing = gestureState.current.noteEvent;

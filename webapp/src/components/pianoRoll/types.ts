@@ -3,6 +3,7 @@ export interface NoteEvent {
     start: number;
     duration: number;
     note: number;
+    velocity: number;
 }
 
 export interface Track {
@@ -119,7 +120,8 @@ export function newNoteEvent(note: number, start: number, track: Track, isDrumTr
         id: track.nextId++,
         note,
         start,
-        duration: isDrumTrack ? 1 : Math.min(4, getMaxDuration(note, start, track, measures))
+        duration: isDrumTrack ? 1 : Math.min(4, getMaxDuration(note, start, track, measures)),
+        velocity: 128
     };
 
     return insertNoteEvent(newEvent, track);
@@ -198,6 +200,43 @@ export function updateTrack(updatedTrack: Track, song: Song): Song {
     };
 }
 
+export function updateNoteEvent(song: Song, trackId: number, updatedEvent: NoteEvent): Song {
+    const trackIndex = song.tracks.findIndex(t => t.id === trackId);
+    if (trackIndex === -1) return song;
+
+    const track = song.tracks[trackIndex];
+    const eventIndex = track.events.findIndex(e => e.id === updatedEvent.id);
+    if (eventIndex === -1) return song;
+
+    const updatedTrack = {
+        ...track,
+        events: [
+            ...track.events.slice(0, eventIndex),
+            updatedEvent,
+            ...track.events.slice(eventIndex + 1)
+        ]
+    };
+
+    return updateTrack(updatedTrack, song);
+}
+
+export function updateNoteEvents(song: Song, trackId: number, updatedEvents: NoteEvent[]): Song {
+    const trackIndex = song.tracks.findIndex(t => t.id === trackId);
+    if (trackIndex === -1) return song;
+
+    const track = song.tracks[trackIndex];
+
+    const updatedTrack = {
+        ...track,
+        events: track.events.map(e => {
+            const updatedEvent = updatedEvents.find(ue => ue.id === e.id);
+            return updatedEvent ? updatedEvent : e;
+        })
+    };
+
+    return updateTrack(updatedTrack, song);
+}
+
 export function changeTrackInstrument(trackId: number, instrumentId: number, song: Song): Song {
     const trackIndex = song.tracks.findIndex(t => t.id === trackId);
     const track = { ...song.tracks[trackIndex] };
@@ -273,7 +312,8 @@ export function toPXTSong(song: Song): pxt.assets.music.Song {
                     notes: [{
                         note: e.note,
                         enharmonicSpelling: "normal"
-                    }]
+                    }],
+                    velocity: e.velocity
                 })),
                 instrument: isDrumInstrument(instrument) ? undefined : (instrument as MelodicInstrument).instrument,
                 drums: isDrumInstrument(instrument) ? (instrument as DrumInstrument).drums : undefined
@@ -303,12 +343,13 @@ export function fromPXTSong(pxtSong: pxt.assets.music.Song): Song {
             maxOctave: 0
         }
 
-        const newNoteEvent = (note: number, startTick: number, endTick: number): void => {
+        const newNoteEvent = (note: number, startTick: number, endTick: number, velocity: number): void => {
             const newEvent: NoteEvent = {
                 id: newTrack.nextId++,
                 note,
                 start: Math.round(startTick / ticksPerSixteenth),
-                duration: Math.round((endTick - startTick) / ticksPerSixteenth)
+                duration: Math.round((endTick - startTick) / ticksPerSixteenth),
+                velocity: velocity ?? 128
             };
 
             newTrack.events.push(newEvent);
@@ -338,7 +379,7 @@ export function fromPXTSong(pxtSong: pxt.assets.music.Song): Song {
 
         for (const event of track.notes) {
             for (const note of event.notes) {
-                newNoteEvent(note.note, event.startTick, event.endTick);
+                newNoteEvent(note.note, event.startTick, event.endTick, event.velocity);
             }
         }
 
