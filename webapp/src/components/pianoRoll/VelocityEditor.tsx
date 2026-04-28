@@ -1,3 +1,5 @@
+import { useEffect, useRef, useState } from "react";
+import { classList } from "../../../../react-common/components/util";
 import { usePianoRollTheme } from "./context";
 import { NoteEvent } from "./types";
 import { noteLeft } from "./utils";
@@ -18,6 +20,8 @@ export const VelocityEditor = (props: Props) => {
     const theme = usePianoRollTheme();
     const { octaveWidth, measures } = theme;
 
+    const [highlightedTick, setHighlightedTick] = useState<Number>(undefined);
+
     const width = octaveWidth * measures;
 
     const offsets: NoteOffset[] = [];
@@ -32,17 +36,61 @@ export const VelocityEditor = (props: Props) => {
         }
     }
 
+    const highlightTick = (tick: number) => {
+        if (tick !== highlightedTick) {
+            if (highlightedTick) {
+                const previousEvents = offsets.find(n => n.start === highlightedTick);
+                if (previousEvents) {
+                    for (const note of previousEvents.events) {
+                        const el = document.getElementById(`note-${note.id}`);
+                        if (el) {
+                            el.classList.remove("highlighted");
+                        }
+                    }
+                }
+            }
+            setHighlightedTick(tick);
+            const currentEvents = offsets.find(n => n.start === tick);
+            if (currentEvents) {
+                for (const note of currentEvents.events) {
+                    const el = document.getElementById(`note-${note.id}`);
+                    if (el) {
+                        el.classList.add("highlighted");
+                    }
+                }
+            }
+        }
+    }
+
+    const onHighlightEnd = (tick: number) => {
+        if (highlightedTick === tick) {
+            const currentEvents = offsets.find(n => n.start === tick);
+            if (currentEvents) {
+                for (const note of currentEvents.events) {
+                    const el = document.getElementById(`note-${note.id}`);
+                    if (el) {
+                        el.classList.remove("highlighted");
+                    }
+                }
+            }
+            setHighlightedTick(undefined);
+        }
+    }
+
     return (
         <div id="velocity-editor" className="velocity-editor">
             <div className="velocity-editor-sidebar" />
             <div className="velocity-sliders" style={{ width: `${width}px` }}>
-                {offsets.map((note, i) => (
+                {offsets.map((notes, i) => (
                     <VelocitySlider
-                        key={note.start}
-                        velocity={note.velocity}
-                        tick={note.start}
+                        key={notes.start}
+                        velocity={notes.velocity}
+                        tick={notes.start}
+                        highlighted={highlightedTick === notes.start}
+                        onHighlight={highlightTick}
+                        onHighlightEnd={onHighlightEnd}
                         onChange={(velocity) => {
-                            onNotesChange(note.events.map(e => ({ ...e, velocity })));
+                            onNotesChange(notes.events.map(e => ({ ...e, velocity })));
                         }}
                     />
                 ))}
@@ -54,20 +102,47 @@ export const VelocityEditor = (props: Props) => {
 interface VelocitySliderProps {
     velocity: number;
     tick: number;
+    highlighted: boolean;
     onChange: (velocity: number) => void;
+    onHighlight: (tick: number) => void;
+    onHighlightEnd: (tick: number) => void;
 }
 
 
 const VelocitySlider = (props: VelocitySliderProps) => {
-    const { velocity, onChange, tick } = props;
+    const { velocity, onChange, tick, onHighlight, onHighlightEnd, highlighted } = props;
 
     const theme = usePianoRollTheme();
 
     const description = lf("Change velocity for notes at tick {0}", tick);
     const fill = (velocity / 128) * 100 + "%";
 
+    const sliderRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const onHover = (e: MouseEvent) => {
+            onHighlight(tick);
+        }
+
+        const onHoverEnd = (e: MouseEvent) => {
+            onHighlightEnd(tick);
+        }
+        sliderRef.current?.addEventListener("pointerenter", onHover);
+        sliderRef.current?.addEventListener("pointerleave", onHoverEnd);
+
+        return () => {
+            sliderRef.current?.removeEventListener("pointerenter", onHover);
+            sliderRef.current?.removeEventListener("pointerleave", onHoverEnd);
+        }
+    }, [onHighlight, onHighlightEnd, tick])
+
     return (
-        <div className="velocity-slider" style={{ left: noteLeft(theme, tick) }}>
+        <div
+            id={`velocity-slider-${tick}`}
+            className={classList("velocity-slider", highlighted && "highlighted")}
+            style={{ left: noteLeft(theme, tick) }}
+            ref={sliderRef}
+        >
             <div className="velocity-slider-inner">
                 <div
                     className="velocity-slider-view"

@@ -1,9 +1,9 @@
 .piano-roll-root {
     --key-border: 1px solid black;
 
-    --note-event-color: #a3f0c5;
-    --note-event-border: 2px solid #21905c;
-    --note-event-text-color: #21905c;
+    --note-event-color: #03adfc;
+    --note-event-border: 2px solid darken(#03adfc, 20%);
+    --note-event-text-color: darken(#03adfc, 30%);
 
     --note-event-text-color-hover: #ffffff;
     --note-event-border-hover: 2px solid #ffffff;
@@ -14,9 +14,9 @@
     --black-key-color: black;
     --key-text-color: black;
 
-    --workspace-white-key-color: #36535f;
-    --workspace-black-key-color: #2e4c58;
-    --workspace-grid-line-color: #1e343d;
+    --workspace-white-key-color: #405470;
+    --workspace-black-key-color: #36475f;
+    --workspace-grid-line-color: #283547;
 
     --measure-header-text-color: white;
 
@@ -223,9 +223,11 @@
     cursor: pointer;
 }
 
-.piano-roll .workspace .note-event:hover {
-    border: var(--note-event-border-hover);
-    color: var(--note-event-text-color-hover);
+.piano-roll .workspace {
+    .note-event:hover, .note-event.highlighted {
+        border: var(--note-event-border-hover);
+        color: var(--note-event-text-color-hover);
+    }
 }
 
 .piano-roll .scroll-container {
@@ -277,6 +279,7 @@
         height: var(--velocity-editor-height);
         width: var(--grid-cell-width);
         position: absolute;
+        cursor: grab;
 
         .velocity-slider-inner {
             position: relative;
@@ -306,7 +309,7 @@
             background-color: var(--note-event-color);
         }
 
-        &:focus-within {
+        &:focus-within, &:hover, &.highlighted {
             .velocity-slider-view {
                 border: var(--note-event-border-hover);
             }
