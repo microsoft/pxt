@@ -326,9 +326,10 @@ export function toPXTSong(song: Song): pxt.assets.music.Song {
 
 export function fromPXTSong(pxtSong: pxt.assets.music.Song): Song {
     const result = getEmptySong();
+    result.measures = pxtSong.measures;
 
     result.tracks = [];
-    result.nextId += 100;
+    result.nextId += 1000;
 
     const ticksPerSixteenth = pxtSong.ticksPerBeat / 4;
 
@@ -348,7 +349,7 @@ export function fromPXTSong(pxtSong: pxt.assets.music.Song): Song {
                 id: newTrack.nextId++,
                 note,
                 start: Math.round(startTick / ticksPerSixteenth),
-                duration: Math.round((endTick - startTick) / ticksPerSixteenth),
+                duration: Math.max(1, Math.round((endTick - startTick) / ticksPerSixteenth)),
                 velocity: velocity ?? 128
             };
 

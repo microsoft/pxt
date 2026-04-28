@@ -19,10 +19,8 @@ export const PianoRollFieldEditor = (props: Props) => {
 
     useEffect(() => {
         if (handleRef) {
-            let asset: pxt.Song | undefined;
             handleRef({
                 init: (value: pxt.Song, close: () => void) => {
-                    asset = value;
                     setAsset(value);
                 },
                 getValue: () => ({
@@ -47,7 +45,7 @@ export const PianoRollFieldEditor = (props: Props) => {
                 }
             })
         }
-    }, [handleRef])
+    }, [handleRef, asset])
 
     const onStateChange = useCallback((state: PianoRollState) => {
         resultRef.current = state;

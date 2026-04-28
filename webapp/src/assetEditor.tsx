@@ -164,10 +164,11 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
 
     render() {
         if (this.state.editing) {
+            const editorType = this.state.editing.type === "song" ? "music" : "image";
             return <ImageFieldEditor
                 ref={this.refHandler}
                 singleFrame={this.state.editing.type !== "animation"}
-                isMusicEditor={this.state.editing.type === "song"}
+                editorType={editorType}
                 doneButtonCallback={this.sendSaveRequest}
                 hideDoneButton={true}
                 includeSpecialTagsInFilter={true}

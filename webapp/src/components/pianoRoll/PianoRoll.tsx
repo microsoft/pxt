@@ -85,8 +85,9 @@ const PianoRollInternal = (props: PianoRollProps) => {
             setSelectedTrack(initialSelectedTrack || song.tracks[0].id);
             setVelocityEditorVisible(initialVelocityEditorVisible || false);
             stopPlayback();
+            fireStateChange({ asset, undoStack: initialUndoStack || [], redoStack: initialRedoStack || [], selectedTrack: initialSelectedTrack || song.tracks[0].id, velocityEditorVisible: initialVelocityEditorVisible || false })
         }
-    }, [asset])
+    }, [asset, onStateChanged])
 
     // these props might be passed in after the initial mounting of the component,
     // so this use effect ensures that we override the internal state whenever
@@ -105,6 +106,12 @@ const PianoRollInternal = (props: PianoRollProps) => {
             setVelocityEditorVisible(initialVelocityEditorVisible);
         }
     }, [initialUndoStack, initialRedoStack, initialSelectedTrack, initialVelocityEditorVisible]);
+
+    useEffect(() => {
+        if (onStateChanged) {
+            fireStateChange({});
+        }
+    }, [onStateChanged])
 
     const fireStateChange = (newState: Partial<PianoRollState>) => {
         if (onStateChanged) {
