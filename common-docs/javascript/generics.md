@@ -131,7 +131,7 @@ function identity<T>(arg: T): T {
     return arg;
 }
 
-let myIdentity: <U>(arg: U) => U = identity;
+let myIdentity: <V>(arg: V) => V = identity;
 ```
 
 We can also write the generic type as a call signature of an object literal type:
