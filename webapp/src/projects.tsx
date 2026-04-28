@@ -15,6 +15,9 @@ import { sendUpdateFeedbackTheme } from "../../react-common/components/controls/
 import { ThemeManager } from "../../react-common/components/theming/themeManager";
 import { ShareLinkDialog } from "../../react-common/components/share/ShareLinkDialog";
 import { EditorToggle } from "../../react-common/components/controls/EditorToggle";
+import { Button } from "../../react-common/components/controls/Button";
+import { Input } from "../../react-common/components/controls/Input";
+import { Link } from "../../react-common/components/controls/Link";
 
 import IProjectView = pxt.editor.IProjectView;
 import ISettingsProps = pxt.editor.ISettingsProps;
@@ -59,7 +62,6 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         this.setSelected = this.setSelected.bind(this);
         this.openSearch = this.openSearch.bind(this);
         this.closeSearch = this.closeSearch.bind(this);
-        this.onSearchChange = this.onSearchChange.bind(this);
         this.handleSearchCardClick = this.handleSearchCardClick.bind(this);
         this.handleSearchDetailClick = this.handleSearchDetailClick.bind(this);
     }
@@ -84,18 +86,6 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
     componentDidUpdate(prevProps: ISettingsProps, prevState: ProjectsState) {
         if (this.state.selectedCategory !== prevState.selectedCategory) {
             this.ensureSelectedItemVisible();
-        }
-
-        // If search query exists but results were empty when galleries weren't loaded yet, retry once galleries are available
-        if (this.state.searchQuery && this.state.searchQuery === prevState.searchQuery) {
-            const hadNoResults = !prevState.searchResults || prevState.searchResults.length === 0;
-            const stillNoResults = !this.state.searchResults || this.state.searchResults.length === 0;
-            if (hadNoResults && stillNoResults) {
-                const cards = this.collectGalleryCards(this.getSearchGalleries());
-                if (cards && cards.length) {
-                    this.runSearch(this.state.searchQuery);
-                }
-            }
         }
     }
 
@@ -124,10 +114,6 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         if (targetConfig?.searchGalleries)
             pxt.Util.jsonCopyFrom(galleries, targetConfig.searchGalleries);
         return galleries;
-    }
-
-    private collectGalleryCards(galleries: pxt.Map<string | pxt.GalleryProps>): SearchCard[] {
-        return this.collectGallerySearchEntries(galleries).cards;
     }
 
     private collectGallerySearchEntries(galleries: pxt.Map<string | pxt.GalleryProps>) {
@@ -184,7 +170,6 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
             cardType: "file",
             name: (ghid && pxt.github.join(ghid.project, ghid.fileName)) || header.name,
             time: header.modificationTime,
-            url: header.pubId && header.pubCurrent ? "/" + header.pubId : "",
             tutorialStep,
             tutorialLength,
             projectId: header.id
@@ -275,12 +260,6 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
 
     public getSearchQuery() {
         return this.state.searchQuery || "";
-    }
-
-    private onSearchChange(ev: React.ChangeEvent<HTMLInputElement>) {
-        const query = ev?.target?.value || "";
-        this.setState({ searchQuery: query });
-        this.runSearch(query);
     }
 
     private warmSearchIndex() {
@@ -428,11 +407,11 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                 <div className="ui heading">
                     <div className="column gallery-heading-column">
                         {searchMode ?
-                            <sui.Button
+                            <Button
                                 key="go-back"
-                                icon="chevron left"
-                                className="neutral"
-                                text={lf("Go Back")}
+                                leftIcon="icon chevron left"
+                                className="neutral large button"
+                                label={lf("Go Back")}
                                 title={lf("Go back")}
                                 onClick={this.closeSearch}
                             />
@@ -449,33 +428,33 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                     {searchMode && <h2 className="ui header search-mode-title">{lf("Search")}</h2>}
                     <div className="column right aligned gallery-actions">
                         {!searchMode &&
-                            <sui.Button
+                            <Button
                                 key="search"
-                                icon="search"
-                                className="neutral"
-                                textClass="landscape only"
-                                text={lf("Search")}
+                                leftIcon="icon search"
+                                className="neutral large button"
+                                label={lf("Search")}
+                                labelClassName="landscape only"
                                 title={lf("Search home content")}
                                 onClick={this.openSearch}
                             />}
                         {canImport ?
-                            <sui.Button key="import" icon="upload" className="import-dialog-btn neutral" textClass="landscape only" text={lf("Import")} title={lf("Import a project")} onClick={this.importProject} /> : undefined}
+                            <Button key="import" leftIcon="icon upload" className="import-dialog-btn neutral large button" labelClassName="landscape only" label={lf("Import")} title={lf("Import a project")} onClick={this.importProject} /> : undefined}
                     </div>
                 </div>
                 {searchMode && <div className="content homescreen-search-box" role="search">
                     <label className="accessible-hidden" htmlFor="homescreen-search">{lf("Search home content")}</label>
-                    <div className="ui fluid icon input">
-                        <input
-                            id="homescreen-search"
-                            type="text"
-                            placeholder={lf("Search tutorials, games, projects")}
-                            value={searchQuery}
-                            onChange={this.onSearchChange}
-                            autoFocus={true}
-                            aria-label={lf("Search tutorials, games, and projects")}
-                        />
-                        <i className="search icon" aria-hidden="true" />
-                    </div>
+                    <Input
+                        id="homescreen-search"
+                        className="ui fluid search-input"
+                        groupClassName="icon input search-input"
+                        type="text"
+                        placeholder={lf("Search tutorials, examples, projects")}
+                        initialValue={searchQuery}
+                        onChange={query => this.setSearchQuery(query)}
+                        autoFocus={true}
+                        icon="search icon"
+                        ariaLabel={lf("Search tutorials, examples, and projects")}
+                    />
                 </div>}
                 {!searchMode && <div className="content">
                     <ProjectsCarousel key={`mystuff_carousel`} parent={this.props.parent} name={'recent'} onClick={this.chgHeader} />
@@ -483,48 +462,27 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
             </div>
             {searchMode && <div key={`search_gallerysegment`} className="ui segment gallerysegment search-segment" role="region" aria-label={lf("Search results")}>
                 <div className="content search-results-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "1rem", alignItems: "start", gridAutoFlow: "dense" }}>
-                    {!hasSearchQuery ? <p className="ui grey inverted segment search-empty-state">{lf("Start typing to search tutorials, games, and projects.")}</p>
+                    {!hasSearchQuery ? <p className="ui grey inverted segment search-empty-state">{lf("Start typing to search tutorials, examples, and projects.")}</p>
                         : searchResults.length ? searchResults.map((scr, index) =>
                             <React.Fragment key={`search-${scr.youTubeId || scr.name || scr.url}-${index}`}>
                                 <ProjectsCodeCard
                                     className={`example ${searchSelectedIndex === index ? "selected" : ""}`}
-                                    name={scr.name}
-                                    url={scr.url}
-                                    imageUrl={scr.imageUrl}
-                                    youTubeId={scr.youTubeId}
-                                    youTubePlaylistId={scr.youTubePlaylistId}
-                                    buttonLabel={scr.buttonLabel}
-                                    label={scr.label}
-                                    labelClass={scr.labelClass}
-                                    tags={scr.tags}
+                                    { ...scr }
+                                    description="" // the description would show up below the card in the view; remove it, shows up in details.
                                     scr={scr.projectHeader || scr} index={index}
                                     onCardClick={this.handleSearchCardClick}
-                                    cardType={scr.cardType}
-                                    time={scr.time}
-                                    projectId={scr.projectId}
-                                    tutorialStep={scr.tutorialStep}
-                                    tutorialLength={scr.tutorialLength}
                                     selected={!scr.directOpen ? searchSelectedIndex === index : undefined}
                                 />
                                 {selectedSearchCard && searchSelectedIndex === index && <div ref="searchDetailView" className="detailview search-detailview" style={{ gridColumn: "1 / -1", minWidth: 0 }}>
                                     <sui.CloseButton onClick={() => this.setSelected(SEARCH_CATEGORY, undefined)} />
                                     <ProjectsDetail parent={this.props.parent}
+                                        { ...selectedSearchCard }
                                         name={selectedSearchCard.name}
+                                        cardType={selectedSearchCard.cardType}
                                         key={'detailsearch' + selectedSearchCard.name}
                                         description={selectedSearchDescription}
-                                        url={selectedSearchCard.url}
-                                        imageUrl={selectedSearchCard.imageUrl}
-                                        largeImageUrl={selectedSearchCard.largeImageUrl}
-                                        videoUrl={selectedSearchCard.videoUrl}
-                                        youTubeId={selectedSearchCard.youTubeId}
-                                        youTubePlaylistId={selectedSearchCard.youTubePlaylistId}
-                                        buttonLabel={selectedSearchCard.buttonLabel}
-                                        actionIcon={selectedSearchCard.actionIcon}
                                         scr={selectedSearchCard}
                                         onClick={this.handleSearchDetailClick}
-                                        cardType={selectedSearchCard.cardType}
-                                        tags={selectedSearchCard.tags}
-                                        otherActions={selectedSearchCard.otherActions}
                                     />
                                 </div>}
                             </React.Fragment>
@@ -1619,11 +1577,10 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                             title={lf("Open YouTube video in new window")}
                         />}
                     {pxt.appTarget.appTheme.shareHomepageContent && !!shareableLink &&
-                        <sui.Button
-                            text={lf("Share")}
+                        <Button
+                            label={lf("Share")}
                             className={`home-share-button button attached approve large`}
                             onClick={this.showShareDialog}
-                            onKeyDown={fireClickOnEnter}
                             title={lf("Create a link to share this content")} ariaLabel={lf("Create a link to share this content")}
                         />
                     }
@@ -1726,21 +1683,23 @@ function cardActionButton(props: Partial<ProjectsDetailProps>, className: string
     const asLink = cardIsLink(props, type) && type != "forumExample";
     const label = asLink ? lf("{0}, opens in new window", text) : lf("{0}, opens in {1}", text, actionTitle || lf("Editor"));
 
+    // todo: Left these two specifically with the ui class from semantic
+    // because messing with them too much had too many side effects
+    // for a side fix (detail card buttons, etc) 
     return asLink ? // TODO (shakao)  migrate forumurl to otherAction json in md
-        <sui.Link
+        <Link
             href={codeCardUrl(props)}
-            refCallback={autoFocus ? linkRef : undefined}
             target={'_blank'}
-            text={text}
-            className={className}
+            className={`ui ${className} card-action-button-link`} 
             title={label} ariaLabel={label}
-            autoFocus={autoFocus}
-        />
-        : <sui.Button
-            text={text}
-            className={className}
+            tabIndex={0}
+        >
+            <span className="ui text">{text}</span>
+        </Link>
+        : <Button
+            label={text}
+            className={`ui ${className}`}
             onClick={onClick}
-            onKeyDown={fireClickOnEnter}
             autoFocus={autoFocus}
             title={label} ariaLabel={label}
         />

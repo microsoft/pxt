@@ -154,12 +154,24 @@
         background: var(--pxt-target-background1);
         color: var(--pxt-target-foreground1);
     }
+    
+    .button.large {
+        font-weight: 700;
+    }
+
     .ui.segment.gallerysegment {
         background: none;
         border: none;
         box-shadow: none;
         padding: 0rem;
         margin: 0;
+
+        &.mystuff-segment {
+            .gallery-actions button,
+            &.search-mode .heading button {
+               padding: .75em;
+            }
+        }
 
         &.mystuff-segment.search-mode {
             .gallery-heading-column {
@@ -179,6 +191,16 @@
                 margin: 0;
                 text-align: center;
                 pointer-events: none;
+            }
+
+            .search-input {
+                height: 3em;
+                input {
+                    padding: .75em 1em;
+                }
+                i {
+                    bottom: 1em;
+                };
             }
         }
 
@@ -510,6 +532,19 @@
             /* unset semantic properties */
             .card-action > a:first-child {
                 padding: 0;
+                display: inline-block;
+                width: 100%;
+            }
+            .card-action .card-action-button-link.common-link {
+                text-decoration: none;
+            }
+            .card-action .card-action-button-link.common-link:hover,
+            .card-action .card-action-button-link.common-link:focus,
+            .card-action .card-action-button-link.common-link:visited {
+                text-decoration: none;
+                color: var(--pxt-neutral-foreground3);
+            }
+            .card-action .card-action-button-link .ui.text {
                 display: inline-block;
                 width: 100%;
             }
