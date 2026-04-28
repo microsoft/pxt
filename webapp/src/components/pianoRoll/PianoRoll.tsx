@@ -11,7 +11,7 @@ import { isPlaying, startPlaybackAsync, stopPlayback, updatePlaybackSongAsync } 
 import { PlaybackControls } from "../musicEditor/PlaybackControls"
 import { MeasureHeader } from "./MeasureHeader"
 import { VelocityEditor } from "./VelocityEditor"
-import { fire } from "blockly/core/events/utils"
+import { EditControls } from "../musicEditor/EditControls"
 
 interface PianoRollProps {
     onStateChanged?: (state: PianoRollState) => void;
@@ -20,6 +20,9 @@ interface PianoRollProps {
     redoStack?: StateSnapshot[];
     selectedTrack?: number;
     velocityEditorVisible?: boolean;
+    showEditControls?: boolean;
+    name?: string;
+    onDoneClicked?: () => void;
 }
 
 type modalType = "delete-track" | "delete-error" | "drum-warning";
@@ -44,6 +47,7 @@ export interface PianoRollState {
     asset: pxt.assets.music.Song;
     selectedTrack: number;
     velocityEditorVisible: boolean;
+    name?: string;
 }
 
 interface StateSnapshot {
@@ -59,7 +63,10 @@ const PianoRollInternal = (props: PianoRollProps) => {
         selectedTrack: initialSelectedTrack,
         velocityEditorVisible: initialVelocityEditorVisible,
         undoStack: initialUndoStack,
-        redoStack: initialRedoStack
+        redoStack: initialRedoStack,
+        name: initialName,
+        showEditControls,
+        onDoneClicked
     } = props;
     const { state: theme, dispatch: updateTheme, } = usePianoRollThemeContext();
 
@@ -71,6 +78,7 @@ const PianoRollInternal = (props: PianoRollProps) => {
 
     const [undoStack, setUndoStack] = useState<StateSnapshot[]>(initialUndoStack || []);
     const [redoStack, setRedoStack] = useState<StateSnapshot[]>(initialRedoStack || []);
+    const [name, setName] = useState(props.name || undefined);
 
     const [velocityEditorVisible, setVelocityEditorVisible] = useState(initialVelocityEditorVisible || false);
 
@@ -105,7 +113,8 @@ const PianoRollInternal = (props: PianoRollProps) => {
         if (initialVelocityEditorVisible !== undefined) {
             setVelocityEditorVisible(initialVelocityEditorVisible);
         }
-    }, [initialUndoStack, initialRedoStack, initialSelectedTrack, initialVelocityEditorVisible]);
+        setName(initialName);
+    }, [initialUndoStack, initialRedoStack, initialSelectedTrack, initialVelocityEditorVisible, initialName]);
 
     useEffect(() => {
         if (onStateChanged) {
@@ -121,7 +130,8 @@ const PianoRollInternal = (props: PianoRollProps) => {
                     undoStack,
                     redoStack,
                     selectedTrack,
-                    velocityEditorVisible
+                    velocityEditorVisible,
+                    name
                 };
             }
             const stateToFire = {
@@ -313,6 +323,11 @@ const PianoRollInternal = (props: PianoRollProps) => {
         }
     }
 
+    const onNameChange = (newName: string) => {
+        setName(newName);
+        fireStateChange({ name: newName });
+    }
+
     const closeModal = () => setModal(null);
 
     const track = song.tracks.find(t => t.id === selectedTrack)!;
@@ -390,6 +405,15 @@ const PianoRollInternal = (props: PianoRollProps) => {
                     hideBassClefOption={true}
                     singlePlayButton={true}
                 />
+                <div className="spacer" />
+                { showEditControls &&
+                    <EditControls
+                        assetName={name}
+                        onAssetNameChanged={onNameChange}
+                        hideDoneButton={!onDoneClicked}
+                        onDoneClicked={onDoneClicked}
+                    />
+                }
             </div>
         </div>
     )

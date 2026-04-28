@@ -6,10 +6,15 @@ interface Props {
     handleRef: (e: FieldEditorComponent<any>) => void;
 }
 
+interface DoneCallback {
+    onDoneClicked: () => void;
+}
+
 export const PianoRollFieldEditor = (props: Props) => {
     const { handleRef } = props;
 
     const [asset, setAsset] = useState<pxt.Song>();
+    const [onDoneClicked, setOnDoneClicked] = useState<DoneCallback>(undefined);
     const [undoStack, setUndoStack] = useState<PianoRollState["undoStack"]>([]);
     const [redoStack, setRedoStack] = useState<PianoRollState["redoStack"]>([]);
     const [velocityEditorVisible, setVelocityEditorVisible] = useState<PianoRollState["velocityEditorVisible"]>(undefined);
@@ -22,11 +27,23 @@ export const PianoRollFieldEditor = (props: Props) => {
             handleRef({
                 init: (value: pxt.Song, close: () => void) => {
                     setAsset(value);
+                    setOnDoneClicked({ onDoneClicked: close });
                 },
-                getValue: () => ({
-                    ...asset,
-                    song: resultRef.current.asset
-                }),
+                getValue: () => {
+                    const result = {
+                        ...asset,
+                        song: resultRef.current?.asset
+                    };
+
+                    if (resultRef.current?.name) {
+                        result.meta = {
+                            ...(asset.meta || result.meta || {}),
+                            displayName: resultRef.current.name
+                        }
+                    }
+
+                    return result;
+                },
                 getPersistentData: () => {
                     return {
                         undoStack: resultRef.current?.undoStack,
@@ -59,6 +76,9 @@ export const PianoRollFieldEditor = (props: Props) => {
             onStateChanged={onStateChange}
             selectedTrack={selectedTrack}
             velocityEditorVisible={velocityEditorVisible}
+            showEditControls={true}
+            onDoneClicked={onDoneClicked?.onDoneClicked}
+            name={asset?.meta?.displayName}
         />
     )
 }
