@@ -1690,7 +1690,7 @@ function cardActionButton(props: Partial<ProjectsDetailProps>, className: string
         <Link
             href={codeCardUrl(props)}
             target={'_blank'}
-            className={`ui ${className} card-action-button-link`} 
+            className={`ui ${className} card-action-button-link`}
             title={label} ariaLabel={label}
             tabIndex={0}
         >
