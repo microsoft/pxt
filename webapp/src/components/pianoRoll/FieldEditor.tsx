@@ -12,6 +12,8 @@ export const PianoRollFieldEditor = (props: Props) => {
     const [asset, setAsset] = useState<pxt.Song>();
     const [undoStack, setUndoStack] = useState<PianoRollState["undoStack"]>([]);
     const [redoStack, setRedoStack] = useState<PianoRollState["redoStack"]>([]);
+    const [velocityEditorVisible, setVelocityEditorVisible] = useState<PianoRollState["velocityEditorVisible"]>(undefined);
+    const [selectedTrack, setSelectedTrack] = useState<PianoRollState["selectedTrack"]>(undefined);
 
     const resultRef = useRef<PianoRollState>();
 
@@ -30,13 +32,17 @@ export const PianoRollFieldEditor = (props: Props) => {
                 getPersistentData: () => {
                     return {
                         undoStack: resultRef.current?.undoStack,
-                        redoStack: resultRef.current?.redoStack
+                        redoStack: resultRef.current?.redoStack,
+                        velocityEditorVisible: resultRef.current?.velocityEditorVisible,
+                        selectedTrack: resultRef.current?.selectedTrack
                     }
                 },
                 restorePersistentData: (value: any) => {
                     if (value) {
                         setUndoStack(value.undoStack || []);
                         setRedoStack(value.redoStack || []);
+                        setVelocityEditorVisible(value.velocityEditorVisible);
+                        setSelectedTrack(value.selectedTrack);
                     }
                 }
             })
@@ -53,6 +59,8 @@ export const PianoRollFieldEditor = (props: Props) => {
             undoStack={undoStack}
             redoStack={redoStack}
             onStateChanged={onStateChange}
+            selectedTrack={selectedTrack}
+            velocityEditorVisible={velocityEditorVisible}
         />
     )
 }

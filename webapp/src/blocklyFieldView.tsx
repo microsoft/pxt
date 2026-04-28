@@ -6,7 +6,7 @@ import * as ReactDOM from "react-dom";
 import { ImageFieldEditor } from "./components/ImageFieldEditor";
 import { SoundEffectEditor } from "./components/soundEffectEditor/SoundEffectEditor";
 import { AssetFilePicker } from "./components/AssetFilePicker";
-import { PianoRollFieldEditor } from "./components/pianoRoll/fieldEditor";
+import { PianoRollFieldEditor } from "./components/pianoRoll/FieldEditor";
 
 export interface EditorBounds {
     top: number;
