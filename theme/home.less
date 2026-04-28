@@ -220,9 +220,11 @@
                 }
             }
 
-            .search-detailview {
-                grid-column: 1 / -1;
+            .search-detailview.detailview {
+                grid-column-start: 1;
+                grid-column-end: -1;
                 min-width: 0;
+                width: 100%;
             }
 
             .search-empty-state {
