@@ -8,6 +8,7 @@ export interface ButtonViewProps extends ContainerProps {
     labelClassName?: string;
     leftIcon?: string;
     rightIcon?: string;
+    autoFocus?: boolean;
     disabled?: boolean;     // Disables the button in an accessible-friendly way.
     hardDisabled?: boolean; // Disables the button and prevents clicks. Not recommended. Use `disabled` instead.
     href?: string;
@@ -97,6 +98,7 @@ export function inflateButtonProps(props: ButtonProps) {
         href,
         target,
         tabIndex,
+        autoFocus,
     } = props;
 
     let {
@@ -140,6 +142,7 @@ export function inflateButtonProps(props: ButtonProps) {
         "onFocus": onFocus,
         "role": role || "button",
         "tabIndex": tabIndex || (disabled ? -1 : 0),
+        "autoFocus": autoFocus,
         "disabled": hardDisabled,
         "aria-label": ariaLabel,
         "aria-hidden": ariaHidden,
