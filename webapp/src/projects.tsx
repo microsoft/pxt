@@ -23,6 +23,7 @@ import IProjectView = pxt.editor.IProjectView;
 import ISettingsProps = pxt.editor.ISettingsProps;
 import UserInfo = pxt.editor.UserInfo;
 import { Dropdown, DropdownItem } from "../../react-common/components/controls/Dropdown";
+import { MenuDropdown, MenuItem } from "../../react-common/components/controls/MenuDropdown";
 
 
 // This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
@@ -632,22 +633,87 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
         const showFeedbackOption = pxt.U.ocvEnabled();
         sendUpdateFeedbackTheme(highContrast);
 
-        return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("Settings")} className="item icon more-dropdown-menuitem" ref={ref => this.dropdown = ref}>
-            {targetTheme.selectLanguage && <sui.Item icon='xicon globe' role="menuitem" text={lf("Language")} onClick={this.showLanguagePicker} />}
-            <sui.Item role="menuitem" icon="paint brush" text={lf("Theme")} onClick={this.showThemePicker} />
-            {githubUser && <div className="ui divider"></div>}
-            {githubUser && <div className="ui item" title={lf("Unlink {0} from GitHub", githubUser.name)} role="menuitem" onClick={this.signOutGithub}>
-                <div className="avatar" role="presentation">
-                    <img className="ui circular image" src={githubUser.photo} alt={lf("User picture")} />
-                </div>
-                {lf("Disconnect GitHub")}
-            </div>}
-            {showDivider && <div className="ui divider"></div>}
-            {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...")} onClick={this.showReportAbuse} /> : undefined}
-            <sui.Item role="menuitem" icon='sign out' text={lf("Reset")} onClick={this.showResetDialog} />
-            <sui.Item role="menuitem" text={lf("About...")} onClick={this.showAboutDialog} />
-            {showFeedbackOption ? <sui.Item role="menuitem" icon="comment" text={lf("Feedback")} onClick={this.showFeedbackDialog} /> : undefined}
-        </sui.DropdownMenu>;
+        const items: MenuItem[] = [];
+        if (targetTheme.selectLanguage) {
+            items.push({
+                role: "menuitem",
+                leftIcon: "xicon globe",
+                label: lf("Language"),
+                title: lf("Language"),
+                onClick: this.showLanguagePicker
+            });
+        }
+
+        items.push({
+            role: "menuitem",
+            leftIcon: "icon paint brush",
+            label: lf("Theme"),
+            title: lf("Theme"),
+            onClick: this.showThemePicker
+        });
+
+        if (githubUser) {
+            items.push({ role: "separator" });
+            items.push({
+                role: "menuitem",
+                className: "ui item",
+                title: lf("Unlink {0} from GitHub", githubUser.name),
+                onClick: this.signOutGithub,
+                children: <>
+                    <div className="avatar" role="presentation">
+                        <img className="ui circular image" src={githubUser.photo} alt={lf("User picture")} />
+                    </div>,
+                    {lf("Disconnect GitHub")}
+                </>
+            });
+        }
+
+        if (showDivider) {
+            items.push({ role: "separator" });
+        }
+
+        if (reportAbuse) {
+            items.push({
+                role: "menuitem",
+                leftIcon: "icon warning circle",
+                label: lf("Report Abuse..."),
+                title: lf("Report Abuse..."),
+                onClick: this.showReportAbuse
+            });
+        }
+
+        items.push({
+            role: "menuitem",
+            leftIcon: "icon sign out",
+            label: lf("Reset"),
+            title: lf("Reset"),
+            onClick: this.showResetDialog
+        });
+
+        items.push({
+            role: "menuitem",
+            label: lf("About..."),
+            title: lf("About..."),
+            onClick: this.showAboutDialog
+        });
+
+       if (showFeedbackOption) {
+            items.push({
+                role: "menuitem",
+                leftIcon: "icon comment",
+                label: lf("Feedback"),
+                title: lf("Feedback"),
+                onClick: this.showFeedbackDialog
+            });
+        }
+
+        return <MenuDropdown
+            id="settings-menuitem"
+            className="settings-menuitem"
+            title={lf("Settings")}
+            icon="icon setting large"
+            items={items}
+        />
     }
 }
 
