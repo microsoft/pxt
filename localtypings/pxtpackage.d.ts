@@ -158,6 +158,7 @@ declare namespace pxt {
         labelIcon?: string;
         labelClass?: string;
         tags?: string[]; // tags shown in home screen, colors specified in theme
+        searchTerms?: string[]; // extra terms used to improve home screen search matching
         tabIndex?: number;
         style?: string; // "card" | "item" | undefined;
 
