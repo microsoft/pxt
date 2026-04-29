@@ -32,6 +32,7 @@ namespace pxt.assets.music {
      *     5 measures
      *     6 number of tracks
      *     ...tracks
+     *     ...track velocities
      *
      * track(6 + instrument length + note length bytes)
      *     0 id
@@ -83,13 +84,24 @@ namespace pxt.assets.music {
      *          0 = normal
      *          1 = flat
      *          2 = sharp
+     *
+     * track velocity
+     *     0 track id
+     *     1...velocities
+     *
+     * velocty
+     *     1 byte
      */
 
     function encodeSong(song: Song) {
         const encodedTracks = song.tracks
             .filter((track) => track.notes.length > 0)
             .map(encodeTrack);
-        const trackLength = encodedTracks.reduce((d, c) => c.length + d, 0);
+        const encodedTrackVelocities = song.tracks
+            .map(encodeTrackVelocity)
+            .filter((v): v is Uint8Array => !!v);
+
+        const trackLength = (encodedTracks.concat(encodedTrackVelocities)).reduce((d, c) => c.length + d, 0);
 
         const out = new Uint8Array(7 + trackLength);
         out[0] = 0; // encoding version
@@ -105,6 +117,10 @@ namespace pxt.assets.music {
             current += track.length;
         }
 
+        for (const trackVelocity of encodedTrackVelocities) {
+            out.set(trackVelocity, current);
+            current += trackVelocity.length;
+        }
         return out;
     }
 
@@ -181,6 +197,17 @@ namespace pxt.assets.music {
         return encodeMelodicTrack(track);
     }
 
+    function encodeTrackVelocity(track: Track) {
+        if (!track.notes.some(note => note.velocity !== undefined && note.velocity < 128)) return undefined;
+
+        const out = new Uint8Array(1 + track.notes.length);
+        out[0] = track.id;
+        for (let i = 0; i < track.notes.length; i++) {
+            out[1 + i] = track.notes[i].velocity || 0;
+        }
+        return out;
+    }
+
     function encodeMelodicTrack(track: Track) {
         const encodedInstrument = encodeInstrument(track.instrument);
         const encodedNotes = track.notes.map(note => encodeNoteEvent(note, track.instrument.octave, false));
@@ -248,12 +275,17 @@ namespace pxt.assets.music {
             tracks: []
         };
 
+        const numTracks = buf[6];
         let current = 7;
 
-        while (current < buf.length) {
+        for (let i = 0; i < numTracks; i++) {
             const [track, pointer] = decodeTrack(buf, current);
             current = pointer;
             res.tracks.push(track);
+        }
+
+        while (current < buf.length) {
+            current = decodeTrackVelocity(buf, res.tracks, current);
         }
 
         return res;
@@ -294,6 +326,16 @@ namespace pxt.assets.music {
         }
 
         return decodeMelodicTrack(buf, offset);
+    }
+
+    function decodeTrackVelocity(buf: Uint8Array, tracks: Track[], offset: number): number {
+        const trackId = buf[offset];
+        const track = tracks.find(t => t.id === trackId);
+        if (!track) throw new Error(`Track with id ${trackId} not found`);
+        for (let i = 0; i < track.notes.length; i++) {
+            track.notes[i].velocity = buf[offset + i + 1];
+        }
+        return offset + track.notes.length + 1;
     }
 
     function decodeDrumInstrument(buf: Uint8Array, offset: number): DrumInstrument {

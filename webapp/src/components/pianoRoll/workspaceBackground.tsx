@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { usePianoRollTheme } from "./context"
+import { PianoRollTheme, usePianoRollTheme } from "./context"
 
 function createWorkspaceBackground(
     octaveWidth: number,
@@ -28,17 +28,25 @@ function createWorkspaceBackground(
 `.trim().replace(/\s+/g, " ")
 }
 
-function getBackgroundCss(octaveWidth: number, whiteKeyHeight: number) {
-    return `url("data:image/svg+xml,${encodeURIComponent(createWorkspaceBackground(octaveWidth, 7 * whiteKeyHeight))}")`;
+function getBackgroundCss(theme: PianoRollTheme) {
+    return `url("data:image/svg+xml,${encodeURIComponent(
+        createWorkspaceBackground(
+            theme.octaveWidth,
+            7 * theme.whiteKeyHeight,
+            theme.gridLineColor,
+            theme.blackKeyWorkspaceColor,
+            theme.whiteKeyWorkspaceColor
+        )
+    )}")`;
 }
 
 export function useWorkspaceBackground() {
     const theme = usePianoRollTheme();
-    const [bg, setBg] = useState(getBackgroundCss(theme.octaveWidth, theme.whiteKeyHeight));
+    const [bg, setBg] = useState(getBackgroundCss(theme));
 
     useEffect(() => {
-        setBg(getBackgroundCss(theme.octaveWidth, theme.whiteKeyHeight));
-    }, [theme.octaveWidth, theme.whiteKeyHeight])
+        setBg(getBackgroundCss(theme));
+    }, [theme.octaveWidth, theme.whiteKeyHeight, theme.gridLineColor, theme.blackKeyWorkspaceColor, theme.whiteKeyWorkspaceColor])
 
     return bg;
 }

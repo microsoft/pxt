@@ -1,3 +1,32 @@
+.piano-roll-root {
+    --key-border: 1px solid black;
+
+    --note-event-color: #03adfc;
+    --note-event-border: 2px solid darken(#03adfc, 20%);
+    --note-event-text-color: darken(#03adfc, 30%);
+
+    --note-event-text-color-hover: #ffffff;
+    --note-event-border-hover: 2px solid #ffffff;
+
+    --header-text-color: black;
+
+    --white-key-color: white;
+    --black-key-color: black;
+    --key-text-color: black;
+
+    --workspace-white-key-color: #405470;
+    --workspace-black-key-color: #36475f;
+    --workspace-grid-line-color: #283547;
+
+    --measure-header-text-color: white;
+
+    --playhead-color: #ff0000;
+
+    --velocity-slider-color: var(--note-event-color);
+
+    --header-background: #f0f0f0;
+}
+
 .piano-roll {
     display: flex;
     flex-direction: column;
@@ -10,28 +39,20 @@
     --grid-cell-height: calc(var(--octave-height) / 12);
     --grid-cell-width: calc(var(--octave-width) / 16);
 
-    --key-border: 1px solid black;
-
-    --note-event-color: #a3f0c5;
-    --note-event-border: 2px solid #21905c;
-    --note-event-text-color: #21905c;
-
-    --white-key-color: white;
-    --black-key-color: black;
-    --key-text-color: black;
-
-    --header-background: #f0f0f0;
-
     --header-height: 2.5rem;
+    --timeline-height: 1.5rem;
+    --velocity-editor-height: 130px;
 
     max-height: 100%;
     height: 100%;
+    overflow-x: hidden;
+    overflow-y: hidden;
 }
 
 .piano-roll-root {
     height: 100%;
     overflow-y: hidden;
-    background: var(--pxt-neutral-background1)
+    background: var(--workspace-grid-line-color)
 }
 
 .piano-roll .header-container {
@@ -39,25 +60,30 @@
     flex-shrink: 0;
 }
 
-.piano-roll .header, .piano-roll .footer {
+.piano-roll .header,
+.piano-roll .footer {
     height: var(--header-height);
     display: flex;
     flex-direction: row;
     gap: 0.5rem;
     background-color: var(--header-background);
     align-items: center;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
 }
 
 .piano-roll .footer {
     flex-shrink: 0;
+    color: var(--header-text-color);
 
     .music-playback-controls {
+        padding: 0;
         .common-button {
             height: calc(var(--header-height) - 0.3rem)
         }
 
         .music-undo-redo .common-button {
-            color: black;
+            color: var(--header-text-color);
             background: none;
             border: none;
 
@@ -68,13 +94,44 @@
     }
 }
 
-.piano-roll .header .octave-controls {
+.piano-roll .header {
+    user-select: none;
+    color: var(--header-text-color);
+
+    .octave-controls {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+
+        &>.common-input-wrapper>.common-input-group {
+            max-width: 2rem;
+        }
+    }
+}
+
+.measure-header {
+    height: var(--timeline-height);
     display: flex;
     flex-direction: row;
-    align-items: center;
+    margin-left: var(--sidebar-width);
+    height: var(--timeline-height);
+    overflow-x: hidden;
+    overflow-y: hidden;
+    flex-shrink: 0;
+    max-width: 100%;
 
-    & > .common-input-wrapper > .common-input-group {
-        max-width: 2rem;
+    background: var(--workspace-grid-line-color);
+    color: var(--measure-header-text-color);
+
+    &.hidden {
+        display: none;
+    }
+
+    .measure {
+        width: var(--octave-width);
+        flex-shrink: 0;
+        padding-left: 0.25rem;
+        user-select: none;
     }
 }
 
@@ -101,7 +158,8 @@
         align-items: flex-end;
         justify-content: flex-end;
 
-        &.active, &.playing {
+        &.active,
+        &.playing {
             background-color: var(--note-event-color);
         }
     }
@@ -115,7 +173,8 @@
         position: absolute;
         margin-top: calc(var(--black-key-height) * -0.5);
 
-        &.active, &.playing {
+        &.active,
+        &.playing {
             background-color: var(--note-event-color);
         }
     }
@@ -131,7 +190,8 @@
         background-color: var(--white-key-color);
         color: var(--key-text-color);
 
-        &.active, &.playing {
+        &.active,
+        &.playing {
             background-color: var(--note-event-color);
         }
     }
@@ -140,6 +200,7 @@
 .piano-roll .workspace-container {
     flex: 1;
     overflow-x: hidden;
+    overflow-y: hidden;
 }
 
 .piano-roll .workspace {
@@ -165,9 +226,11 @@
     cursor: pointer;
 }
 
-.piano-roll .workspace .note-event:hover {
-    border-color: white;
-    color: white;
+.piano-roll .workspace {
+    .note-event:hover, .note-event.highlighted {
+        border: var(--note-event-border-hover);
+        color: var(--note-event-text-color-hover);
+    }
 }
 
 .piano-roll .scroll-container {
@@ -183,5 +246,76 @@
     left: 0;
     width: 2px;
     height: 100%;
-    background-color: red;
+    background-color: var(--playhead-color);
+}
+
+.velocity-editor {
+    position: relative;
+    display: flex;
+
+    width: 100%;
+    height: var(--velocity-editor-height);
+    background-color: var(--workspace-grid-line-color);
+    flex-shrink: 0;
+    border-top: var(--note-event-border-hover);
+    overflow-x: hidden;
+    overflow-y: hidden;
+
+    .velocity-editor-sidebar {
+        position: sticky;
+        left: 0;
+        top: 0;
+        width: var(--sidebar-width);
+        height: var(--velocity-editor-height);
+        background-color: var(--workspace-grid-line-color);
+        flex-shrink: 0;
+        z-index: 1;
+    }
+
+    .velocity-sliders {
+        height: var(--velocity-editor-height);
+        position: relative;
+        flex-shrink: 0;
+    }
+
+    .velocity-slider {
+        height: var(--velocity-editor-height);
+        width: var(--grid-cell-width);
+        position: absolute;
+        cursor: grab;
+
+        .velocity-slider-inner {
+            position: relative;
+            height: var(--velocity-editor-height);
+            width: var(--grid-cell-width);
+        }
+
+        input[type="range"] {
+            position: absolute;
+            left: 0;
+            top: 0;
+
+            writing-mode: vertical-rl;
+            direction: rtl;
+            height: 100%;
+            width: 100%;
+            opacity: 0;
+        }
+
+        .velocity-slider-view {
+            position: absolute;
+            left: 0;
+            bottom: 0;
+
+            width: 100%;
+            border: var(--note-event-border);
+            background-color: var(--note-event-color);
+        }
+
+        &:focus-within, &:hover, &.highlighted {
+            .velocity-slider-view {
+                border: var(--note-event-border-hover);
+            }
+        }
+    }
 }

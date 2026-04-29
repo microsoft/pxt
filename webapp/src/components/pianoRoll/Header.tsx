@@ -1,19 +1,22 @@
+import { Checkbox } from "../../../../react-common/components/controls/Checkbox";
 import { Dropdown, DropdownItem } from "../../../../react-common/components/controls/Dropdown";
 import { Song, lf, isDrumInstrument, NOTE_RANGES } from "./types";
 
 interface Props {
     song: Song;
     selectedTrack: number;
+    velocityEditorVisible: boolean;
 
     onTrackSelected(trackId: number): void;
     onTrackCreated(): void;
     onTrackDeleted(trackId: number): void;
     onInstrumentSelected(trackId: number, instrumentId: number): void;
     onOctavesChanged(minOctave: number, maxOctave: number): void;
+    onVelocityEditorToggle(): void;
 }
 
 export const Header = (props: Props) => {
-    const { song, selectedTrack, onTrackSelected, onInstrumentSelected, onTrackCreated, onTrackDeleted, onOctavesChanged } = props;
+    const { song, selectedTrack, velocityEditorVisible, onVelocityEditorToggle, onTrackSelected, onInstrumentSelected, onTrackCreated, onTrackDeleted, onOctavesChanged } = props;
 
     const onTrackDropdownChange = (id: string) => {
         if (id === "new-track") {
@@ -118,6 +121,12 @@ export const Header = (props: Props) => {
                     />
                 </div>
             }
+            <Checkbox
+                id="velocity-editor-toggle"
+                label={lf("Show Velocity Editor")}
+                isChecked={velocityEditorVisible}
+                onChange={onVelocityEditorToggle}
+            />
         </div>
     );
 }
