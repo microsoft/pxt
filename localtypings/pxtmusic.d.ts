@@ -60,6 +60,7 @@ declare namespace pxt.assets.music {
     }
 
     export interface DrumInstrument {
+        name?: string;
         startFrequency: number;
         startVolume: number;
         steps: DrumSoundStep[];
