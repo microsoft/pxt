@@ -16,6 +16,7 @@ export interface InputProps extends ControlProps {
     disabled?: boolean;
     type?: string;
     readOnly?: boolean;
+    autoFocus?: boolean;
     autoComplete?: boolean;
     selectOnClick?: boolean;
     treatSpaceAsEnter?: boolean;
@@ -59,6 +60,7 @@ export const Input = (props: InputProps) => {
         disabled,
         type,
         readOnly,
+        autoFocus,
         autoComplete,
         selectOnClick,
         onChange,
@@ -217,6 +219,7 @@ export const Input = (props: InputProps) => {
                     placeholder={placeholder}
                     value={value}
                     readOnly={!!readOnly}
+                    autoFocus={autoFocus}
                     onClick={clickHandler}
                     onChange={changeHandler}
                     onKeyDown={keyDownHandler}

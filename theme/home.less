@@ -31,7 +31,9 @@
 .projectsdialog {
     position: relative;
     height: 100%;
-    overflow: auto;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    scrollbar-gutter: stable;
     z-index: @homeScreenZIndex+1;
     .accessibleMenu {
         z-index: @homeScreenZIndex+3 !important;
@@ -144,17 +146,96 @@
         padding-top: calc(@mainMenuHeight + 2rem) !important;
         margin: 0;
         border: 0;
+        display: flex;
+        flex-direction: column;
+        box-sizing: border-box;
         width: 100%;
-        min-height: 100%;
+        min-height: 100vh;
         background: var(--pxt-target-background1);
         color: var(--pxt-target-foreground1);
     }
+    
+    .button.large {
+        font-weight: 700;
+    }
+
     .ui.segment.gallerysegment {
         background: none;
         border: none;
         box-shadow: none;
         padding: 0rem;
         margin: 0;
+
+        &.mystuff-segment {
+            .gallery-actions button,
+            &.search-mode .heading button {
+               padding: .75em;
+            }
+        }
+
+        &.mystuff-segment.search-mode {
+            .gallery-heading-column {
+                padding-left: @carouselArrowSize !important;
+            }
+
+            .heading {
+                position: relative;
+                align-items: center;
+            }
+
+            .ui.header.search-mode-title {
+                position: absolute;
+                left: 50%;
+                transform: translateX(-50%);
+                padding-left: 0;
+                margin: 0;
+                text-align: center;
+                pointer-events: none;
+            }
+
+            .search-input {
+                height: 3em;
+                input {
+                    padding: .75em 1em;
+                }
+                i {
+                    bottom: 1em;
+                };
+            }
+        }
+
+        &.search-segment {
+            padding: 1rem @carouselArrowSize;
+
+            .search-results-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+                gap: 1rem;
+                align-items: start;
+                grid-auto-flow: dense;
+
+                // override default that's bumping it up
+                > .ui.card:first-child {
+                    margin: 1em 0;
+                }
+            }
+
+            .search-detailview.detailview {
+                grid-column-start: 1;
+                grid-column-end: -1;
+                min-width: 0;
+                width: 100%;
+            }
+
+            .search-empty-state {
+                margin: 0;
+                width: 100%;
+                box-sizing: border-box;
+                display: flex;
+                align-items: center;
+                align-self: stretch;
+            }
+        }
 
         .ui.header {
             margin: 0;
@@ -192,12 +273,26 @@
             margin-bottom: -1rem !important;
             margin-top: 1rem !important;
         }
+        .gallery-heading-column,
+        .gallery-actions {
+            z-index: 1;
+        }
+        .gallery-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
         .column {
             padding: 0 !important;
         }
         .column.right.aligned {
             padding-right: @carouselArrowSize !important;
         }
+    }
+    .homescreen-search-box {
+        padding-top: 1em;
+        margin: 1em @carouselArrowSize;
     }
     .import-dialog-btn {
         position: relative;
@@ -216,8 +311,9 @@
         width: 100%;
         text-align: center;
         padding: 5px !important;
+        margin-top: auto !important;
         z-index: @homeFooterZIndex;
-        position: absolute;
+        position: relative;
         .item {
             font-size: 0.8rem !important;
             color: var(--pxt-neutral-foreground1) !important;
@@ -438,6 +534,19 @@
             /* unset semantic properties */
             .card-action > a:first-child {
                 padding: 0;
+                display: inline-block;
+                width: 100%;
+            }
+            .card-action .card-action-button-link.common-link {
+                text-decoration: none;
+            }
+            .card-action .card-action-button-link.common-link:hover,
+            .card-action .card-action-button-link.common-link:focus,
+            .card-action .card-action-button-link.common-link:visited {
+                text-decoration: none;
+                color: var(--pxt-neutral-foreground3);
+            }
+            .card-action .card-action-button-link .ui.text {
                 display: inline-block;
                 width: 100%;
             }
@@ -760,6 +869,17 @@
 
 @media only screen and (max-width: @largestTabletScreen) {
     /* Carousel */
+    .gallerysegment.search-segment {
+        padding: 1rem @carouselArrowSizeTablet;
+    }
+    .ui.segment.gallerysegment.mystuff-segment.search-mode {
+        .gallery-heading-column {
+            padding-left: @carouselArrowSizeTablet !important;
+        }
+    }
+    .homescreen-search-box {
+        margin: 1em @carouselArrowSizeTablet;
+    }
     .projectsdialog {
         .ui.segment.getting-started-segment {
             background-position: left center;
@@ -833,6 +953,21 @@
 
 @media only screen and (max-width: @largestMobileScreen) {
     /* Carousel */
+    .gallerysegment.search-segment {
+        padding: 1rem @carouselArrowSizeMobile;
+    }
+    .ui.segment.gallerysegment.mystuff-segment.search-mode {
+        .gallery-heading-column {
+            padding-left: @carouselArrowSizeMobile !important;
+        }
+
+        .ui.header.search-mode-title {
+            display: none;
+        }
+    }
+    .homescreen-search-box {
+        margin: 1em @carouselArrowSizeMobile;
+    }
     .projectsdialog {
         .ui.segment.getting-started-segment {
             height: 10rem;
