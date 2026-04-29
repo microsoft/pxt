@@ -73,7 +73,7 @@ namespace pxsim.AudioContextManager {
     }
 
     function stopTone() {
-        AudioToneSource.dispose();
+        AudioToneSource.setCurrentToneGain(0, context().currentTime);
 
         if (audio) {
             audio.pause();
@@ -348,9 +348,15 @@ namespace pxsim.AudioContextManager {
     export function setListenerPosition(x: number, y: number, z: number) {
         const ctx = context();
         if (ctx) {
-            ctx.listener.positionX.setTargetAtTime(x, 0, 0.02);
-            ctx.listener.positionY.setTargetAtTime(y, 0, 0.02);
-            ctx.listener.positionZ.setTargetAtTime(z, 0, 0.02);
+            // Firefox does not support AudioParam-based positionX/Y/Z on AudioListener.
+            // Fall back to the deprecated setPosition() method.
+            if (ctx.listener.positionX) {
+                ctx.listener.positionX.setTargetAtTime(x, 0, 0.02);
+                ctx.listener.positionY.setTargetAtTime(y, 0, 0.02);
+                ctx.listener.positionZ.setTargetAtTime(z, 0, 0.02);
+            } else {
+                ctx.listener.setPosition(x, y, z);
+            }
         }
     }
 }

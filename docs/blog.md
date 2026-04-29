@@ -1,5 +1,13 @@
 # Microsoft MakeCode Blog
 
+## [Summer 2026 – MakeCode Professional Development](/blog/csp/summer-pd-2026)
+
+April 6th, 2026 by [Jaqster](https://github.com/jaqster)
+
+Planning your summer schedule? Make sure to register for some of these FREE MakeCode Professional Development opportunities.
+
+**[Continue reading this blog post](/blog/csp/summer-pd-2026)**
+
 ## [MakeCode Arcade 2026 Update](/blog/arcade/update-feb-2026)
 
 February 13th, 2026 by [Jaqster](https://github.com/jaqster)

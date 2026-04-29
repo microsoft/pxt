@@ -2833,7 +2833,7 @@ export class ProjectView
         return Util.promiseTimeout(1000, this.requestScreenshotPromise = new Promise<string>((resolve, reject) => {
             this.pushScreenshotHandler(msg => resolve(pxt.BrowserUtils.imageDataToPNG(msg.data, 3)));
         })) // simulator might be stopped or in bad shape
-            .catch(e => {
+            .catch((e: any) => {
                 pxt.tickEvent('screenshot.timeout');
                 return undefined;
             })

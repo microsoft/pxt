@@ -35,26 +35,20 @@ namespace pxsim.AudioContextManager {
             this.panner = new PannerNode(context, {
                 panningModel: 'HRTF',
                 distanceModel: "linear",
-                positionX: 0,
-                positionY: 0,
-                positionZ: 0,
-                orientationX: 0,
-                orientationY: 0,
-                orientationZ: -1,
             });
+            // Set initial position/orientation using the compat helpers
+            // (Firefox doesn't support AudioParam-based position/orientation properties)
+            setPannerPosition(this.panner, 0, 0, 0);
+            setPannerOrientation(this.panner, 0, 0, -1);
             this.panner.connect(destination);
         }
 
         setPosition(x: number, y: number, z: number) {
-            this.panner.positionX.setTargetAtTime(x, 0, 0.02);
-            this.panner.positionY.setTargetAtTime(y, 0, 0.02);
-            this.panner.positionZ.setTargetAtTime(z, 0, 0.02);
+            setPannerPosition(this.panner, x, y, z);
         }
 
         setOrientation(x: number, y: number, z: number) {
-            this.panner.orientationX.setTargetAtTime(x, 0, 0.02);
-            this.panner.orientationY.setTargetAtTime(y, 0, 0.02);
-            this.panner.orientationZ.setTargetAtTime(z, 0, 0.02);
+            setPannerOrientation(this.panner, x, y, z);
         }
 
         setCone(innerAngle: number, outerAngle: number, outerGain: number) {
@@ -83,9 +77,9 @@ namespace pxsim.AudioContextManager {
             }
         }
 
-        get x(): number { return this.panner.positionX.value; }
-        get y(): number { return this.panner.positionY.value; }
-        get z(): number { return this.panner.positionZ.value; }
+        get x(): number { return this.panner.positionX?.value ?? 0; }
+        get y(): number { return this.panner.positionY?.value ?? 0; }
+        get z(): number { return this.panner.positionZ?.value ?? 0; }
 
         dispose() {
             this.panner.disconnect();
@@ -108,6 +102,28 @@ namespace pxsim.AudioContextManager {
             }
 
             await this.audioWorkletSource.playInstructionsAsync(b);
+        }
+    }
+
+    // Firefox does not support AudioParam-based positionX/Y/Z and orientationX/Y/Z
+    // on PannerNode or AudioListener. Fall back to the deprecated setPosition()/setOrientation() methods.
+    function setPannerPosition(panner: PannerNode, x: number, y: number, z: number) {
+        if (panner.positionX) {
+            panner.positionX.setTargetAtTime(x, 0, 0.02);
+            panner.positionY.setTargetAtTime(y, 0, 0.02);
+            panner.positionZ.setTargetAtTime(z, 0, 0.02);
+        } else {
+            panner.setPosition(x, y, z);
+        }
+    }
+
+    function setPannerOrientation(panner: PannerNode, x: number, y: number, z: number) {
+        if (panner.orientationX) {
+            panner.orientationX.setTargetAtTime(x, 0, 0.02);
+            panner.orientationY.setTargetAtTime(y, 0, 0.02);
+            panner.orientationZ.setTargetAtTime(z, 0, 0.02);
+        } else {
+            panner.setOrientation(x, y, z);
         }
     }
 }
