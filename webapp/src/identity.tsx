@@ -53,9 +53,15 @@ export class LoginDialog extends auth.Component<LoginDialogProps, LoginDialogSta
 
     renderCore() {
         const { visible, dialogMessages } = this.state;
+        const lastUsedIdentityProvider = auth.lastUsedIdentityProviderId();
 
         return <>
-            {visible && <SignInModal onClose={this.hide} onSignIn={this.signInAsync} dialogMessages={dialogMessages} />}
+            {visible && <SignInModal
+                onClose={this.hide}
+                onSignIn={this.signInAsync}
+                dialogMessages={dialogMessages}
+                lastUsedIdentityProvider={lastUsedIdentityProvider}
+            />}
         </>;
     }
 }

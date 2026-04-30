@@ -152,20 +152,7 @@ export class CodeCardView extends data.Component<CodeCardProps, CodeCardState> {
                     })
                     }
                 </div> : undefined}
-            {card.time ? <div className="meta">
-                {card.tutorialLength ? <span className={`ui tutorial-progress ${tutorialDone ? "green" : "not-finished"} left floated label`}><i className={`${tutorialDone ? "trophy" : "circle"} icon`}></i>&nbsp;{lf("{0}/{1}", (card.tutorialStep || 0) + 1, card.tutorialLength)}</span> : undefined}
-                {!cloudStatus && card.time && <span key="date" className="date">{pxt.Util.timeSince(card.time)}</span>}
-                {cloudStatus && cloudShowTimestamp &&
-                    <span key="date" className={`date ${card.tutorialLength ? "small-screen hide" : ""}`}>{pxt.Util.timeSince(lastCloudSave)}{cloudStatus.indicator}</span>
-                }
-                {cloudStatus && !cloudShowTimestamp &&
-                    <span key="date" className="date">{cloudStatus.indicator}</span>
-                }
-                {cloudStatus &&
-                    // TODO: alternate icons depending on state
-                    <i className="ui large right floated icon cloud"></i>
-                }
-            </div> : undefined}
+            {card.time ? <ScriptMetadataView tutorialLength={card.tutorialLength} tutorialStep={card.tutorialStep} projectId={card.projectId} time={card.time} /> : undefined}
             {card.extracontent || card.learnMoreUrl || card.buyUrl || card.feedbackUrl ?
                 <div className="ui extra content mobile hide">
                     {card.extracontent}
@@ -193,5 +180,49 @@ export class CodeCardView extends data.Component<CodeCardProps, CodeCardState> {
         } else {
             return (renderButton(cardContent))
         }
+    }
+}
+
+interface ScriptMetadataProps {
+    tutorialLength?: number;
+    tutorialStep?: number;
+    projectId?: string;
+    time?: number;
+}
+
+export class ScriptMetadataView extends data.Component<ScriptMetadataProps, {}> {
+    renderCore() {
+        const { tutorialLength, tutorialStep, projectId, time } = this.props;
+
+        const tutorialDone = tutorialLength === tutorialStep + 1;
+
+        // these header-derived properties must be taken from the virtual API system, not the props. Otherwise
+        // they won't update dynamically when headers change.
+        const header = projectId ? this.getData<pxt.workspace.Header>(`header:${projectId}`) : null;
+        const cloudMd = projectId ? this.getData<cloud.CloudTempMetadata>(`${cloud.HEADER_CLOUDSTATE}:${projectId}`) : null;
+        const cloudStatus = cloudMd?.cloudStatus();
+        const lastCloudSave = cloudStatus ? Math.min(header.cloudLastSyncTime, header.modificationTime) : time;
+        const cloudShowTimestamp = cloudStatus && (cloudStatus.value === "synced" || cloudStatus.value === "justSynced" || cloudStatus.value === "localEdits");
+
+        return (
+            <div className="meta">
+                {tutorialLength ?
+                    <span className={`ui tutorial-progress ${tutorialDone ? "green" : "not-finished"} left floated label`}>
+                        <i className={`${tutorialDone ? "trophy" : "circle"} icon`}></i>&nbsp;{lf("{0}/{1}", (tutorialStep || 0) + 1, tutorialLength)}
+                    </span>
+                : undefined}
+                {!cloudStatus && time && <span className="date">{pxt.Util.timeSince(time)}</span>}
+                {cloudStatus && cloudShowTimestamp &&
+                    <span className={`date ${tutorialLength ? "small-screen hide" : ""}`}>{pxt.Util.timeSince(lastCloudSave)}{cloudStatus.indicator}</span>
+                }
+                {cloudStatus && !cloudShowTimestamp &&
+                    <span className="date">{cloudStatus.indicator}</span>
+                }
+                {cloudStatus &&
+                    // TODO: alternate icons depending on state
+                    <i className="ui large right floated icon cloud"></i>
+                }
+            </div>
+        );
     }
 }

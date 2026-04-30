@@ -297,14 +297,35 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
         let oldValue: string = value;
         try {
             value = value.slice(1, -1); // remove the boundary quotes
-            value = value.trim(); // remove boundary white space
+            const reader = new MelodyStringReader(value, true);
+
+            const notes: string[] = [];
+            const validNotes = [48, 50, 52, 53, 55, 57, 59, 60];
+
+            while (reader.hasNextNote()) {
+                reader.readNote();
+                if (reader.currentDuration !== 4) throw new Error(lf("Only quarter notes are supported"));
+
+                if (reader.currentNote === REST) {
+                    notes.push("-");
+                    continue;
+                }
+
+                const absoluteNote = reader.currentOctave * 12 + reader.currentNote;
+
+                if (!validNotes.includes(absoluteNote)) {
+                    throw new Error(lf("Invalid note '{0}'. Notes can be C D E F G A B C5", absoluteNote));
+                }
+
+                const noteName = pxtmelody.rowToNote(7 - validNotes.indexOf(absoluteNote));
+                notes.push(noteName);
+            }
+
+            if (notes.length > this.numMatrixCols) {
+                throw new Error(lf("Too many notes. Maximum is {0}", this.numMatrixCols));
+            }
+
             this.createMelodyIfDoesntExist();
-            let notes: string[] = value.split(" ");
-
-            notes.forEach(n => {
-                if (!this.isValidNote(n)) throw new Error(lf("Invalid note '{0}'. Notes can be C D E F G A B C5", n));
-            });
-
             this.melody.resetMelody();
 
             for (let j = 0; j < notes.length; j++) {
@@ -314,25 +335,11 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
                 }
             }
             this.updateFieldLabel();
-        } catch (e) {
+        }
+        catch (e) {
             pxt.log(e)
             this.invalidString = oldValue;
         }
-    }
-
-    private isValidNote(note: string): boolean {
-        switch (note) {
-            case "C":
-            case "D":
-            case "E":
-            case "F":
-            case "G":
-            case "A":
-            case "B":
-            case "C5":
-            case "-": return true;
-        }
-        return false;
     }
 
     // The width of the preview on the block itself
@@ -569,7 +576,7 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
         if (pxt.BrowserUtils.isEdge()) FieldCustomMelody.VIEWBOX_WIDTH += 37;
         FieldCustomMelody.VIEWBOX_HEIGHT = (FieldCustomMelody.CELL_WIDTH + FieldCustomMelody.CELL_VERTICAL_MARGIN) * this.numMatrixRows + FieldCustomMelody.CELL_VERTICAL_MARGIN;
         this.matrixSvg = pxsim.svg.parseString(`<svg xmlns="http://www.w3.org/2000/svg" class="melody-grid-div blocklyMatrix" role="grid" viewBox="0 0 ${FieldCustomMelody.VIEWBOX_WIDTH} ${FieldCustomMelody.VIEWBOX_HEIGHT}" tabindex="0" />`);
-        this.matrixSvg.ariaLabel =  lf("Melody grid");
+        this.matrixSvg.ariaLabel = lf("Melody grid");
 
         this.createMatrixDisplay({
             cellWidth: FieldCustomMelody.CELL_WIDTH,
@@ -943,4 +950,120 @@ function getPlaceholderColor(row: number): string {
         case 7: return "#B4009E"; // Tenor C
     }
     return "#DCDCDC";
+}
+
+const offsetLookup = [0x09, 0x0b, 0x00, 0x02, 0x04, 0x05, 0x07];
+const REST = -0xffff;
+
+// copied from pxt-microbit/libs/core/music.ts
+class MelodyStringReader {
+    currentOctave: number;
+    currentNote: number;
+    currentDuration: number;
+    melodyStringIndex: number;
+
+    constructor(public melody: string, public resetOctave: boolean) {
+        this.melodyStringIndex = 0;
+        this.currentOctave = 4;
+        this.currentDuration = 4;
+        this.currentNote = REST;
+    }
+
+    readNote() {
+        this.eatWhitespace();
+        if (this.resetOctave) {
+            this.currentOctave = 4;
+        }
+        let note: number = undefined;
+        let modifier = 0;
+
+        while (this.melodyStringIndex < this.melody.length) {
+            const c = this.melody.charCodeAt(this.melodyStringIndex++);
+            if (c == 32 /* space */) {
+                break;
+            }
+
+            else if (c === 35 /* # */) {
+                modifier++;
+            }
+            else if (c === 45 /* - */ || c === 114 /* r */ || c === 82 /* R */) {
+                if (note !== undefined) {
+                    this.melodyStringIndex--;
+                    break;
+                }
+                note = -1;
+            }
+            else if (c === 98 /* b */) {
+                if (note === undefined) {
+                    note = 11;
+                }
+                else {
+                    modifier--;
+                }
+            }
+            else if (c >= 48 && c <= 57) {
+                // number
+                if (note === undefined) {
+                    // invalid if we haven't seen a note yet, ignore the number
+                    continue;
+                }
+                else {
+                    this.melodyStringIndex--;
+                    this.currentOctave = this.readNumber();
+                }
+            }
+            else if (c >= 65 && c <= 71) {
+                // A-G
+                if (note !== undefined) {
+                    this.melodyStringIndex--;
+                    break;
+                }
+                note = offsetLookup[c - 65];
+            }
+            else if (c >= 97 && c <= 103) {
+                // a-g
+                if (note !== undefined) {
+                    this.melodyStringIndex--;
+                    break;
+                }
+                note = offsetLookup[c - 97];
+            }
+            else if (c === 58 /* : */) {
+                this.currentDuration = Math.max(1, this.readNumber());
+                break;
+            }
+        }
+
+        if (note === undefined || note < 0) {
+            // invalid note, treat as rest
+            this.currentNote = REST;
+        }
+        else {
+            this.currentNote = note + modifier;
+        }
+
+        this.eatWhitespace();
+    }
+
+    readNumber() {
+        let result = 0;
+        while (this.melodyStringIndex < this.melody.length) {
+            const c = this.melody.charCodeAt(this.melodyStringIndex);
+            if (c < 48 || c > 57) break;
+            result = result * 10 + (c - 48);
+            this.melodyStringIndex++;
+        }
+        return result;
+    }
+
+    eatWhitespace() {
+        while (this.melodyStringIndex < this.melody.length && this.melody.charAt(this.melodyStringIndex) == " ") {
+            this.melodyStringIndex++;
+        }
+    }
+
+    hasNextNote(): boolean {
+        this.eatWhitespace();
+        return this.melodyStringIndex < this.melody.length;
+    }
 }
