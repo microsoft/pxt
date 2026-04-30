@@ -6,42 +6,63 @@ interface Props {
     handleRef: (e: FieldEditorComponent<any>) => void;
 }
 
+interface DoneCallback {
+    onDoneClicked: () => void;
+}
+
 export const PianoRollFieldEditor = (props: Props) => {
     const { handleRef } = props;
 
     const [asset, setAsset] = useState<pxt.Song>();
+    const [onDoneClicked, setOnDoneClicked] = useState<DoneCallback>(undefined);
     const [undoStack, setUndoStack] = useState<PianoRollState["undoStack"]>([]);
     const [redoStack, setRedoStack] = useState<PianoRollState["redoStack"]>([]);
+    const [velocityEditorVisible, setVelocityEditorVisible] = useState<PianoRollState["velocityEditorVisible"]>(undefined);
+    const [selectedTrack, setSelectedTrack] = useState<PianoRollState["selectedTrack"]>(undefined);
 
     const resultRef = useRef<PianoRollState>();
 
     useEffect(() => {
         if (handleRef) {
-            let asset: pxt.Song | undefined;
             handleRef({
                 init: (value: pxt.Song, close: () => void) => {
-                    asset = value;
                     setAsset(value);
+                    setOnDoneClicked({ onDoneClicked: close });
                 },
-                getValue: () => ({
-                    ...asset,
-                    song: resultRef.current.asset
-                }),
+                getValue: () => {
+                    const result = {
+                        ...asset,
+                        song: resultRef.current?.asset
+                    };
+
+                    if (resultRef.current?.name) {
+                        result.meta = {
+                            ...(asset.meta || result.meta || {}),
+                            displayName: resultRef.current.name
+                        }
+                    }
+
+                    return result;
+                },
                 getPersistentData: () => {
                     return {
                         undoStack: resultRef.current?.undoStack,
-                        redoStack: resultRef.current?.redoStack
+                        redoStack: resultRef.current?.redoStack,
+                        velocityEditorVisible: resultRef.current?.velocityEditorVisible,
+                        selectedTrack: resultRef.current?.selectedTrack
                     }
                 },
                 restorePersistentData: (value: any) => {
                     if (value) {
                         setUndoStack(value.undoStack || []);
                         setRedoStack(value.redoStack || []);
+                        setVelocityEditorVisible(value.velocityEditorVisible);
+                        setSelectedTrack(value.selectedTrack);
                     }
                 }
             })
         }
-    }, [handleRef])
+    }, [handleRef, asset])
 
     const onStateChange = useCallback((state: PianoRollState) => {
         resultRef.current = state;
@@ -53,6 +74,11 @@ export const PianoRollFieldEditor = (props: Props) => {
             undoStack={undoStack}
             redoStack={redoStack}
             onStateChanged={onStateChange}
+            selectedTrack={selectedTrack}
+            velocityEditorVisible={velocityEditorVisible}
+            showEditControls={true}
+            onDoneClicked={onDoneClicked?.onDoneClicked}
+            name={asset?.meta?.displayName}
         />
     )
 }

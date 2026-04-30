@@ -3,6 +3,7 @@ export interface NoteEvent {
     start: number;
     duration: number;
     note: number;
+    velocity: number;
 }
 
 export interface Track {
@@ -119,7 +120,8 @@ export function newNoteEvent(note: number, start: number, track: Track, isDrumTr
         id: track.nextId++,
         note,
         start,
-        duration: isDrumTrack ? 1 : Math.min(4, getMaxDuration(note, start, track, measures))
+        duration: isDrumTrack ? 1 : Math.min(4, getMaxDuration(note, start, track, measures)),
+        velocity: 128
     };
 
     return insertNoteEvent(newEvent, track);
@@ -168,13 +170,14 @@ function insertNoteEvent(newEvent: NoteEvent, track: Track): Track {
 }
 
 export function newTrack(instrumentId: number, song: Song): Song {
+    const range = NOTE_RANGES.find(r => r.id === "treble")!;
     const newTrack: Track = {
         instrumentId,
         events: [],
         id: song.nextId++,
         nextId: 0,
-        minOctave: 3,
-        maxOctave: 5
+        minOctave: range.minOctave,
+        maxOctave: range.maxOctave
     };
 
     return {
@@ -195,6 +198,43 @@ export function updateTrack(updatedTrack: Track, song: Song): Song {
             ...song.tracks.slice(trackIndex + 1)
         ]
     };
+}
+
+export function updateNoteEvent(song: Song, trackId: number, updatedEvent: NoteEvent): Song {
+    const trackIndex = song.tracks.findIndex(t => t.id === trackId);
+    if (trackIndex === -1) return song;
+
+    const track = song.tracks[trackIndex];
+    const eventIndex = track.events.findIndex(e => e.id === updatedEvent.id);
+    if (eventIndex === -1) return song;
+
+    const updatedTrack = {
+        ...track,
+        events: [
+            ...track.events.slice(0, eventIndex),
+            updatedEvent,
+            ...track.events.slice(eventIndex + 1)
+        ]
+    };
+
+    return updateTrack(updatedTrack, song);
+}
+
+export function updateNoteEvents(song: Song, trackId: number, updatedEvents: NoteEvent[]): Song {
+    const trackIndex = song.tracks.findIndex(t => t.id === trackId);
+    if (trackIndex === -1) return song;
+
+    const track = song.tracks[trackIndex];
+
+    const updatedTrack = {
+        ...track,
+        events: track.events.map(e => {
+            const updatedEvent = updatedEvents.find(ue => ue.id === e.id);
+            return updatedEvent ? updatedEvent : e;
+        })
+    };
+
+    return updateTrack(updatedTrack, song);
 }
 
 export function changeTrackInstrument(trackId: number, instrumentId: number, song: Song): Song {
@@ -272,7 +312,8 @@ export function toPXTSong(song: Song): pxt.assets.music.Song {
                     notes: [{
                         note: e.note,
                         enharmonicSpelling: "normal"
-                    }]
+                    }],
+                    velocity: e.velocity
                 })),
                 instrument: isDrumInstrument(instrument) ? undefined : (instrument as MelodicInstrument).instrument,
                 drums: isDrumInstrument(instrument) ? (instrument as DrumInstrument).drums : undefined
@@ -285,9 +326,10 @@ export function toPXTSong(song: Song): pxt.assets.music.Song {
 
 export function fromPXTSong(pxtSong: pxt.assets.music.Song): Song {
     const result = getEmptySong();
+    result.measures = pxtSong.measures;
 
     result.tracks = [];
-    result.nextId += 100;
+    result.nextId += 1000;
 
     const ticksPerSixteenth = pxtSong.ticksPerBeat / 4;
 
@@ -298,16 +340,17 @@ export function fromPXTSong(pxtSong: pxt.assets.music.Song): Song {
             instrumentId: 0,
             events: [],
             nextId: 0,
-            minOctave: 3,
-            maxOctave: 5
+            minOctave: 7,
+            maxOctave: 0
         }
 
-        const newNoteEvent = (note: number, startTick: number, endTick: number): void => {
+        const newNoteEvent = (note: number, startTick: number, endTick: number, velocity: number): void => {
             const newEvent: NoteEvent = {
                 id: newTrack.nextId++,
                 note,
                 start: Math.round(startTick / ticksPerSixteenth),
-                duration: Math.round((endTick - startTick) / ticksPerSixteenth)
+                duration: Math.max(1, Math.round((endTick - startTick) / ticksPerSixteenth)),
+                velocity: velocity ?? 128
             };
 
             newTrack.events.push(newEvent);
@@ -337,7 +380,7 @@ export function fromPXTSong(pxtSong: pxt.assets.music.Song): Song {
 
         for (const event of track.notes) {
             for (const note of event.notes) {
-                newNoteEvent(note.note, event.startTick, event.endTick);
+                newNoteEvent(note.note, event.startTick, event.endTick, event.velocity);
             }
         }
 
@@ -347,7 +390,7 @@ export function fromPXTSong(pxtSong: pxt.assets.music.Song): Song {
             newTrack.maxOctave = range.maxOctave;
         }
 
-        if (newTrack.events.length > 0) {
+        if (newTrack.events.length > 0 || result.tracks.length === 0) {
             result.tracks.push(newTrack);
         }
     }

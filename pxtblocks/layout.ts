@@ -274,8 +274,9 @@ export function toSvgAsync(ws: Blockly.WorkspaceSvg, pixelDensity: number): Prom
         return Promise.resolve<{ width: number; height: number; xml: string; }>(undefined);
 
     const viewbox = ws.getBlocksBoundingBox();
-    const sg = ws.getParentSvg().cloneNode(true) as SVGElement;
-    cleanUpBlocklySvg(sg);
+    const sourceSvg = ws.getParentSvg();
+    const sg = sourceSvg.cloneNode(true) as SVGElement;
+    cleanUpBlocklySvg(sg, sourceSvg);
 
     // getBlocksBoundingBox doesn't include any expanded blocks comments, so
     // do a pass to expand the bounding box if any are present
@@ -328,7 +329,13 @@ export interface BlockSvg {
     width: number; height: number; svg: string; xml: string; css: string;
 }
 
-export function cleanUpBlocklySvg(svg: SVGElement): SVGElement {
+// Blockly sets --blocklyDisabledPattern on the injection div to reference an
+// SVG pattern for disabled blocks. Exported SVGs lose access to this CSS
+// variable, so we copy it explicitly.
+// See: blockly/core/renderers/common/constants.ts (createDom)
+const DISABLED_PATTERN_PROP = '--blocklyDisabledPattern';
+
+export function cleanUpBlocklySvg(svg: SVGElement, sourceSvg: SVGElement): SVGElement {
     pxt.BrowserUtils.removeClass(svg, "blocklySvg");
     pxt.BrowserUtils.addClass(svg, "blocklyPreview pxt-renderer classic-theme");
 
@@ -349,6 +356,11 @@ export function cleanUpBlocklySvg(svg: SVGElement): SVGElement {
     svg.querySelectorAll("[tabindex]").forEach(el => {
         el.removeAttribute("tabindex");
     });
+
+    const disabledPattern = window.getComputedStyle(sourceSvg).getPropertyValue(DISABLED_PATTERN_PROP);
+    if (disabledPattern) {
+        svg.style.setProperty(DISABLED_PATTERN_PROP, disabledPattern);
+    }
 
     // In order to get the Blockly comment's text area to serialize properly they have to have names
     const parser = new DOMParser();
@@ -401,6 +413,11 @@ export async function blocklyToSvgAsync(sg: SVGElement, x: number, y: number, wi
     const cssString = (blocklySvg ? blocklySvg.innerText : "") + '\n\n' + customCss.map(el => el + '\n\n');
     cssLink.appendChild(xsg.createCDATASection(cssString));
     xsg.documentElement.insertBefore(cssLink, xsg.documentElement.firstElementChild);
+
+    const disabledPattern = sg.style.getPropertyValue(DISABLED_PATTERN_PROP);
+    if (disabledPattern) {
+        (xsg.documentElement as unknown as SVGElement).style.setProperty(DISABLED_PATTERN_PROP, disabledPattern);
+    }
 
     await expandImagesAsync(xsg);
     await convertIconsToPngAsync(xsg);
