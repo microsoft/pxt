@@ -696,7 +696,6 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
                                 selected={selectedItem == "search"}
                                 treeRow={searchTreeRow}
                                 onCategoryClick={this.onCategoryClick}
-                                ariaLevel={1}
                             />
                         }
                         {nonAdvancedCategories.map(treeRow =>
@@ -712,7 +711,6 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
                                 shouldAnimate={this.state.shouldAnimate}
                                 hasDeleteButton={treeRow.allowDelete}
                                 onDeleteClick={this.handleRemoveExtension}
-                                ariaLevel={1}
                             >
                             </CategoryItem>
                             {treeRow.subcategories?.map(subTreeRow =>
@@ -725,7 +723,6 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
                                     selected={selectedItem == (subTreeRow.nameid + subTreeRow.subns)}
                                     treeRow={subTreeRow}
                                     onCategoryClick={this.onCategoryClick}
-                                    ariaLevel={1}
                                     ariaLabel={Util.capitalize(`${treeRow.nameid === "led" ? treeRow.nameid.toUpperCase() : treeRow.nameid} ${subTreeRow.name}`)}
                                 />
                             )}
@@ -748,7 +745,6 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
                                     }}
                                     onCategoryClick={this.advancedClicked}
                                     topRowIndex={topRowIndex++}
-                                    ariaLevel={1}
                                     ariaHidden={true}
                                 />
                                 {advancedCategories.map(treeRow =>
@@ -761,7 +757,6 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
                                             selected={selectedItem == treeRow.nameid}
                                             treeRow={treeRow}
                                             onCategoryClick={this.onCategoryClick}
-                                            ariaLevel={1}
                                             isExpanded={expandedItem == treeRow.nameid}
                                             >
                                         </CategoryItem>
@@ -775,7 +770,6 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
                                                 selected={selectedItem == (subTreeRow.nameid + subTreeRow.subns)}
                                                 treeRow={subTreeRow}
                                                 onCategoryClick={this.onCategoryClick}
-                                                ariaLevel={1}
                                                 ariaLabel={Util.capitalize(`${treeRow.nameid} ${subTreeRow.name}`)}
                                             />
                                         )}
@@ -800,7 +794,7 @@ export interface CategoryItemProps extends TreeRowProps {
     onDeleteClick?: (ns: string) => void;
     ariaHidden?: boolean;
     ariaLabel?: string;
-    ariaLevel: number;
+    ariaLevel?: number;
     isExpanded?: boolean;
     className?: string;
 }
