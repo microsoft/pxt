@@ -723,7 +723,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
                                     selected={selectedItem == (subTreeRow.nameid + subTreeRow.subns)}
                                     treeRow={subTreeRow}
                                     onCategoryClick={this.onCategoryClick}
-                                    ariaLabel={Util.capitalize(`${treeRow.nameid === "led" ? treeRow.nameid.toUpperCase() : treeRow.nameid} ${subTreeRow.name}`)}
+                                    ariaLabel={`${treeRow.name ? treeRow.name : Util.capitalize(treeRow.nameid)} ${subTreeRow.name}`}
                                 />
                             )}
                         </React.Fragment>
@@ -770,7 +770,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
                                                 selected={selectedItem == (subTreeRow.nameid + subTreeRow.subns)}
                                                 treeRow={subTreeRow}
                                                 onCategoryClick={this.onCategoryClick}
-                                                ariaLabel={Util.capitalize(`${treeRow.nameid} ${subTreeRow.name}`)}
+                                                ariaLabel={`${treeRow.name ? treeRow.name : Util.capitalize(treeRow.nameid)} ${subTreeRow.name}`}
                                             />
                                         )}
                                     </React.Fragment>
@@ -1024,7 +1024,7 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
             iconClass += ' image-icon';
             iconContent = undefined;
         }
-        const rowTitle = name ? name : nameid === 'led' ? nameid.toUpperCase() : Util.capitalize(subns || nameid);
+        const rowTitle = name ? name : Util.capitalize(subns || nameid);
         const dataNs = advancedButtonState || nameid;
 
         const extraIconClass = !subns && Object.keys(this.brandIcons).includes(icon) ? 'brandIcon' : ''
