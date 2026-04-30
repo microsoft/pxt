@@ -2,7 +2,7 @@
 // Helpers designed to help to make a simulator accessible.
 namespace pxsim.accessibility {
     let keydownListenerAdded = false;
-    let addNonBreakingSpace = false;
+    let zeroWidthSpace = false;
 
     export function makeFocusable(elem: SVGElement): void {
         elem.setAttribute("focusable", "true");
@@ -91,9 +91,8 @@ namespace pxsim.accessibility {
         }
 
         if (value) {
-            /* eslint-disable @microsoft/sdl/no-inner-html */
-            liveRegion.innerHTML = `<p>${value}${addNonBreakingSpace ? '&nbsp;' : ''}</p>`;
-            addNonBreakingSpace = !addNonBreakingSpace;
+            liveRegion.textContent = `${value}${zeroWidthSpace ? '\u200B': ''}`;
+            zeroWidthSpace = !zeroWidthSpace;
         }
     }
 }
