@@ -1,4 +1,4 @@
-import { fromFormatToHex, fromHexToFormat, fromHSVToFormat } from "./util";
+import { fromFormatToHex, fromFormatToHSV, fromHexToFormat, fromHSVToFormat } from "./util";
 import * as Blockly from "blockly";
 
 const thumbStylePrefix = `--blocklyFieldSliderBackgroundColor: ${createSliderGradient()}; --blocklyFieldSliderThumbBorderColor: #ffffff; `
@@ -141,6 +141,22 @@ export class ColorPickerWidget {
 
         this.updateBackgroundColor(fromFormatToHex("hsv", this.hsv));
         this.addEventListeners();
+    }
+
+    updateColorChannel(format: string, channel: number, value: number) {
+        if (format === "hsv") {
+            this.hsv[channel] = value;
+        }
+        else if (format === "hsl" && channel === 0) {
+            this.hsv[0] = value;
+        }
+        else {
+            const values = fromHSVToFormat(format, this.hsv);
+            values[channel] = value;
+            this.hsv = fromFormatToHSV(format, values);
+        }
+
+        this.updateBackgroundColor(fromFormatToHex("hsv", this.hsv));
     }
 
     protected updateBackgroundColor(color: string) {

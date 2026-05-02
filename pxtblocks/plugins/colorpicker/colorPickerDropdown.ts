@@ -21,13 +21,11 @@ export class ColorDropdownField extends FieldDropdown {
         super.doValueUpdate_(newValue);
 
         if (this.sourceBlock_?.type === COLOR_PICKER_BLOCK_TYPE) {
-            (this.sourceBlock_ as ColorPickerBlock).setFormat(newValue);
+            const colorPicker = this.sourceBlock_ as ColorPickerBlock;
+            if (!colorPicker.colorHSVLoaded) {
+                colorPicker.readColorFromInputs();
+            }
+            colorPicker.setFormat(newValue);
         }
     }
-}
-
-
-export function createColorPickerDropdown(initialColor: string, onColorSelected: (color: string) => void, onHide: () => void) {
-    const dropdown = Blockly.DropDownDiv.getContentDiv();
-
 }

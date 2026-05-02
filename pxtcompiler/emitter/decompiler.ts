@@ -105,6 +105,9 @@ namespace ts.pxtc.decompiler {
     const stringType = "text";
     const booleanType = "logic_boolean";
 
+    const colorPickerNumber = "makecode_color_picker_number";
+    const colorPickerString = "makecode_color_picker_string";
+
     const ops: pxt.Map<{ type: string; op?: string; leftName?: string; rightName?: string }> = {
         "+": { type: "math_arithmetic", op: "ADD" },
         "-": { type: "math_arithmetic", op: "MINUS" },
@@ -789,6 +792,7 @@ ${output}</xml>`;
                         case numberType:
                         case integerNumberType:
                         case wholeNumberType:
+                        case colorPickerNumber:
                             write(`<shadow type="${n.shadowType}"><field name="NUM">0</field></shadow>`)
                             break;
                         case minmaxNumberType:
@@ -802,7 +806,8 @@ ${output}</xml>`;
                             write(`<shadow type="${booleanType}"><field name="BOOL">TRUE</field></shadow>`)
                             break;
                         case stringType:
-                            write(`<shadow type="${stringType}"><field name="TEXT"></field></shadow>`)
+                        case colorPickerString:
+                            write(`<shadow type="${n.shadowType}"><field name="TEXT"></field></shadow>`)
                             break;
                         default:
                             write(`<shadow type="${n.shadowType}"/>`)
@@ -1972,6 +1977,23 @@ ${output}</xml>`;
                 r.fields = [getField("OP", "POWER")];
                 return r;
             }
+            else if (isColorPickerFunction(info)) {
+                const r = mkExpr("makecode_color_picker", node);
+
+                if (info.qName === "colorHelpers.hex") {
+                    r.inputs = [
+                        mkValue("HEX_INPUT", getOutputBlock(node.arguments[0]), colorPickerString)
+                    ]
+                }
+                else {
+                    r.inputs = node.arguments.map((arg, index) =>
+                        mkValue("INPUT" + index, getOutputBlock(arg), colorPickerNumber)
+                    )
+                }
+
+                r.fields = [getField("FORMAT", info.qName.substring(info.qName.lastIndexOf(".") + 1))]
+                return r;
+            }
             else if (pxt.Util.startsWith(info.qName, "Math.")) {
                 const op = info.qName.substring(5);
                 if (isSupportedMathFunction(op)) {
@@ -2761,7 +2783,7 @@ ${output}</xml>`;
                 return Util.lf("Function with forceStatement cannot be used as an expression.")
             }
 
-            if (info.qName == "Math.pow") {
+            if (info.qName == "Math.pow" || isColorPickerFunction(info)) {
                 return undefined;
             }
             else if (pxt.Util.startsWith(info.qName, "Math.")) {
@@ -3958,6 +3980,13 @@ ${output}</xml>`;
                 value.fields[0].name = 'SLIDER';
                 value.mutation = n.shadowMutation;
             }
+            else if (value.type === numberType && n.shadowType === colorPickerNumber) {
+                value.type = colorPickerNumber;
+            }
+            else if (value.type === stringType && n.shadowType === colorPickerString) {
+                value.type = colorPickerString;
+            }
+
             emitShadowOnly = value.type === n.shadowType;
             if (!emitShadowOnly) {
                 switch (value.type) {
@@ -3967,6 +3996,8 @@ ${output}</xml>`;
                     case "math_whole_number":
                     case "logic_boolean":
                     case "text":
+                    case colorPickerNumber:
+                    case colorPickerString:
                         emitShadowOnly = !n.shadowType;
                         break;
                 }
@@ -3985,5 +4016,18 @@ ${output}</xml>`;
         n.emitShadowOnly = emitShadowOnly;
 
         return emitShadowOnly;
+    }
+
+    function isColorPickerFunction(info: DecompilerCallInfo) {
+        switch (info?.qName) {
+            case "colorHelpers.rgb":
+            case "colorHelpers.hsv":
+            case "colorHelpers.hsl":
+            case "colorHelpers.hex":
+            case "colorHelpers.cmyk":
+                return true;
+        }
+
+        return false;
     }
 }

@@ -5,12 +5,13 @@ import { COLOR_STRING_BLOCK_TYPE, generateColorPickerStringShadowDom } from "./c
 import { FieldColorPickerNumberType, fromFormatToHex, fromFormatToHSV, fromHexToFormat, fromHSVToFormat, getFieldTypesForFormat } from "./util";
 
 export interface ColorPickerBlock extends Blockly.Block {
+    colorHSVLoaded: boolean;
     colorHSV: number[];
     format: string;
     updateShape: (format: string) => void;
     setColorHSV: (hsv: number[]) => void;
     setFormat: (format: string) => void;
-    updateColorFromInputs: () => void;
+    readColorFromInputs: () => void;
 }
 
 const HEX_INPUT_NAME = "HEX_INPUT";
@@ -24,6 +25,7 @@ export function initColorPickerBlock() {
 
         // store the color as HSV because converting to RGB causes us to lose
         // the hue value for some colors (e.g. grayscale colors)
+        colorHSVLoaded: false,
         colorHSV: [0, 0, 0],
 
         init: function (this: ColorPickerBlock) {
@@ -39,11 +41,14 @@ export function initColorPickerBlock() {
         },
 
         domToMutation: function (this: ColorPickerBlock, xmlElement: Element) {
-            this.colorHSV = [
-                parseFloat(xmlElement.getAttribute("hue")) || 0,
-                parseFloat(xmlElement.getAttribute("saturation")) || 0,
-                parseFloat(xmlElement.getAttribute("value")) || 0
-            ];
+            if (xmlElement.hasAttribute("hue") && xmlElement.hasAttribute("saturation") && xmlElement.hasAttribute("value")) {
+                this.colorHSVLoaded = true;
+                this.colorHSV = [
+                    parseFloat(xmlElement.getAttribute("hue")) || 0,
+                    parseFloat(xmlElement.getAttribute("saturation")) || 0,
+                    parseFloat(xmlElement.getAttribute("value")) || 0
+                ];
+            }
 
             this.setFormat(this.format);
         },
@@ -167,7 +172,8 @@ export function initColorPickerBlock() {
             }
         },
 
-        updateColorFromInputs: function (this: ColorPickerBlock) {
+        readColorFromInputs: function (this: ColorPickerBlock) {
+            this.colorHSVLoaded = true;
             if (this.format === "hex") {
                 // TODO: verify the target is a color picker string
                 const hexInput = this.getInput(HEX_INPUT_NAME);
@@ -175,7 +181,7 @@ export function initColorPickerBlock() {
 
                 if (target?.type === "text" || target?.type === COLOR_STRING_BLOCK_TYPE) {
                     const hex = target.getField("TEXT").getValue();
-                    this.colorHSV = fromHexToFormat("hsv", hex);
+                    this.colorHSV = fromHexToFormat("hsv", hex); ''
                 }
                 return;
             }

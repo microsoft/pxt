@@ -71,8 +71,9 @@ export class FieldColorPickerString extends FieldString {
         this.colorPicker.createDom(contentDiv, colorHSV);
 
         // Set colour and size of drop-down
+        const positionBlock = colorPickerBlock || this.sourceBlock_;
         Blockly.DropDownDiv.setColour('#ffffff', '#dddddd');
-        Blockly.DropDownDiv.showPositionedByBlock(this, this.sourceBlock_ as Blockly.BlockSvg, undefined, undefined, false);
+        Blockly.DropDownDiv.showPositionedByBlock(this, positionBlock as Blockly.BlockSvg, undefined, undefined, false);
 
         this.addEventListeners();
 
@@ -85,7 +86,7 @@ export class FieldColorPickerString extends FieldString {
     protected onColorChanged(hsv: number[]) {
         const parent = this.sourceBlock_?.getParent() as ColorPickerBlock | undefined;
 
-        if (parent?.type !== "makecode_color_picker") {
+        if (parent?.type !== COLOR_PICKER_BLOCK_TYPE) {
             return;
         }
 

@@ -1398,12 +1398,13 @@ function compileColorPicker(e: Environment, b: Blockly.Block, comments: string[]
 
     if (format === "hex") {
         return pxt.blocks.H.namespaceCall(
-            "color",
+            "colorHelpers",
             "hex",
             [compileExpression(e, getInputTargetBlock(e, b, "HEX_INPUT"), comments)],
             false
         );
-    } else {
+    }
+    else {
         const inputs: pxt.blocks.JsNode[] = [];
         for (let i = 0; i < 4; i++) {
             const input = b.getInput("INPUT" + i);
@@ -1412,7 +1413,7 @@ function compileColorPicker(e: Environment, b: Blockly.Block, comments: string[]
             }
         }
         return pxt.blocks.H.namespaceCall(
-            "color",
+            "colorHelpers",
             format,
             inputs,
             false
