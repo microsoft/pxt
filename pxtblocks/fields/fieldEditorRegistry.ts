@@ -31,6 +31,7 @@ import { FieldSoundEffect } from "./field_sound_effect";
 import { FieldAutoComplete } from "./field_autocomplete";
 import { FieldColorWheel } from "./field_colorwheel";
 import { FieldScopedValueSelector } from "./field_scopedvalueselector";
+import { FieldPianoRoll } from "./field_piano_roll";
 
 interface FieldEditorOptions {
     field: FieldCustomConstructor;
@@ -70,6 +71,7 @@ export function initFieldEditors() {
     registerFieldEditor('scopedvalueselector', FieldScopedValueSelector);
     if (pxt.appTarget.appTheme?.songEditor) {
         registerFieldEditor('musiceditor', FieldMusicEditor);
+        registerFieldEditor('pianoroll', FieldPianoRoll);
     }
 }
 

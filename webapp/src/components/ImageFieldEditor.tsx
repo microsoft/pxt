@@ -12,10 +12,11 @@ import { EditorToggle } from "../../../react-common/components/controls/EditorTo
 import { MusicFieldEditor } from "./MusicFieldEditor";
 import { classList } from "../../../react-common/components/util";
 import { FocusTrap, FocusTrapRegion } from "../../../react-common/components/controls/FocusTrap";
+import { PianoRollAssetEditor } from "./PianoRollFieldEditor";
 
 export interface ImageFieldEditorProps {
     singleFrame: boolean;
-    isMusicEditor?: boolean;
+    editorType: "image" | "music" | "piano-roll";
     doneButtonCallback?: () => void;
     hideDoneButton?: boolean;
     includeSpecialTagsInFilter?: boolean;
@@ -80,7 +81,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
 
         let showHeader = headerVisible;
         // If there is no asset, show the gallery to prevent changing shape when it's added
-        let showGallery = !this.props.isMusicEditor || !this.asset || editingTile;
+        let showGallery = !this.isSongEditor() || !this.asset || editingTile;
         const showMyAssets = !hideMyAssets && !editingTile;
 
         if (this.asset && !this.galleryAssets && showGallery) {
@@ -142,7 +143,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
         }
 
         return (
-            <FocusTrap onEscape={this.onDoneClick} className={classList("image-editor-wrapper", this.props.isMusicEditor && "music-asset-editor")}>
+            <FocusTrap onEscape={this.onDoneClick} className={classList("image-editor-wrapper", this.isSongEditor() && "music-asset-editor")}>
                 {showHeader && <div className="gallery-editor-header">
                     <div className="image-editor-header-left" />
                     <div className="image-editor-header-center">
@@ -172,8 +173,13 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
                             className="image-editor-region"
                             enabled={currentView === "editor"}
                         >
-                            {this.props.isMusicEditor ?
+                            {this.props.editorType === "music" ?
                                 <MusicFieldEditor
+                                    ref="image-editor"
+                                    onDoneClicked={this.onDoneClick}
+                                    hideDoneButton={this.props.hideDoneButton} /> :
+                            (this.props.editorType === "piano-roll" ?
+                                <PianoRollAssetEditor
                                     ref="image-editor"
                                     onDoneClicked={this.onDoneClick}
                                     hideDoneButton={this.props.hideDoneButton} /> :
@@ -186,7 +192,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
                                     hideDoneButton={this.props.hideDoneButton}
                                     hideAssetName={!pxt.appTarget?.appTheme?.assetEditor}
                                 />
-                            }
+                            )}
                         </FocusTrapRegion>
                         <ImageEditorGallery
                             items={filteredAssets}
@@ -650,6 +656,10 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
                 this.imageEditorRegion.focus();
             }
         })
+    }
+
+    protected isSongEditor(): boolean {
+        return this.props.editorType === "music" || this.props.editorType === "piano-roll";
     }
 }
 

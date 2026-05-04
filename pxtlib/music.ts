@@ -32,6 +32,7 @@ namespace pxt.assets.music {
      *     5 measures
      *     6 number of tracks
      *     ...tracks
+     *     ...track velocities
      *
      * track(6 + instrument length + note length bytes)
      *     0 id
@@ -83,13 +84,24 @@ namespace pxt.assets.music {
      *          0 = normal
      *          1 = flat
      *          2 = sharp
+     *
+     * track velocity
+     *     0 track id
+     *     1...velocities
+     *
+     * velocty
+     *     1 byte
      */
 
     function encodeSong(song: Song) {
         const encodedTracks = song.tracks
             .filter((track) => track.notes.length > 0)
             .map(encodeTrack);
-        const trackLength = encodedTracks.reduce((d, c) => c.length + d, 0);
+        const encodedTrackVelocities = song.tracks
+            .map(encodeTrackVelocity)
+            .filter((v): v is Uint8Array => !!v);
+
+        const trackLength = (encodedTracks.concat(encodedTrackVelocities)).reduce((d, c) => c.length + d, 0);
 
         const out = new Uint8Array(7 + trackLength);
         out[0] = 0; // encoding version
@@ -105,6 +117,10 @@ namespace pxt.assets.music {
             current += track.length;
         }
 
+        for (const trackVelocity of encodedTrackVelocities) {
+            out.set(trackVelocity, current);
+            current += trackVelocity.length;
+        }
         return out;
     }
 
@@ -181,6 +197,17 @@ namespace pxt.assets.music {
         return encodeMelodicTrack(track);
     }
 
+    function encodeTrackVelocity(track: Track) {
+        if (!track.notes.some(note => note.velocity !== undefined && note.velocity < 128)) return undefined;
+
+        const out = new Uint8Array(1 + track.notes.length);
+        out[0] = track.id;
+        for (let i = 0; i < track.notes.length; i++) {
+            out[1 + i] = track.notes[i].velocity || 0;
+        }
+        return out;
+    }
+
     function encodeMelodicTrack(track: Track) {
         const encodedInstrument = encodeInstrument(track.instrument);
         const encodedNotes = track.notes.map(note => encodeNoteEvent(note, track.instrument.octave, false));
@@ -248,12 +275,17 @@ namespace pxt.assets.music {
             tracks: []
         };
 
+        const numTracks = buf[6];
         let current = 7;
 
-        while (current < buf.length) {
+        for (let i = 0; i < numTracks; i++) {
             const [track, pointer] = decodeTrack(buf, current);
             current = pointer;
             res.tracks.push(track);
+        }
+
+        while (current < buf.length) {
+            current = decodeTrackVelocity(buf, res.tracks, current);
         }
 
         return res;
@@ -294,6 +326,16 @@ namespace pxt.assets.music {
         }
 
         return decodeMelodicTrack(buf, offset);
+    }
+
+    function decodeTrackVelocity(buf: Uint8Array, tracks: Track[], offset: number): number {
+        const trackId = buf[offset];
+        const track = tracks.find(t => t.id === trackId);
+        if (!track) throw new Error(`Track with id ${trackId} not found`);
+        for (let i = 0; i < track.notes.length; i++) {
+            track.notes[i].velocity = buf[offset + i + 1];
+        }
+        return offset + track.notes.length + 1;
     }
 
     function decodeDrumInstrument(buf: Uint8Array, offset: number): DrumInstrument {
@@ -460,7 +502,12 @@ namespace pxt.assets.music {
 
         song.tracks = base.tracks.map((track, index) => {
             const existing = song.tracks.find(t => t.id === index);
-            if (existing) track.notes = existing.notes;
+            if (existing) {
+                track.notes = existing.notes;
+                if (track.instrument) {
+                    track.instrument.octave = existing.instrument?.octave || track.instrument.octave;
+                }
+            }
             return track;
         })
     }
@@ -709,7 +756,7 @@ namespace pxt.assets.music {
                     },
                     drums: [
                         {
-                            /* neutral kick */
+                            name: lf("neutral kick"),
                             startFrequency: 100,
                             startVolume: 1024,
                             steps: [
@@ -728,7 +775,7 @@ namespace pxt.assets.music {
                             ]
                         },
                         {
-                            /* punchy kick */
+                            name: lf("punchy kick"),
                             startFrequency: 200,
                             startVolume: 1024,
                             steps: [{
@@ -740,7 +787,7 @@ namespace pxt.assets.music {
                         },
 
                         {
-                            /* booming kick */
+                            name: lf("booming kick"),
                             startFrequency: 100,
                             startVolume: 1024,
                             steps: [{
@@ -753,7 +800,7 @@ namespace pxt.assets.music {
 
 
                         {
-                            /* snare 1 */
+                            name: lf("snare 1"),
                             startFrequency: 175,
                             startVolume: 1024,
                             steps: [
@@ -785,7 +832,7 @@ namespace pxt.assets.music {
                         },
 
                         {
-                            /* snare 2 */
+                            name: lf("snare 2"),
                             startFrequency: 220,
                             startVolume: 1024,
                             steps: [
@@ -818,7 +865,7 @@ namespace pxt.assets.music {
 
 
                         {
-                            /* hat 1 */
+                            name: lf("hat 1"),
                             startFrequency: 400,
                             startVolume: 500,
                             steps: [
@@ -838,7 +885,7 @@ namespace pxt.assets.music {
                         },
 
                         {
-                            /* hat 2 */
+                            name: lf("hat 2"),
                             startFrequency: 400,
                             startVolume: 0,
                             steps: [
@@ -865,7 +912,7 @@ namespace pxt.assets.music {
 
 
                         {
-                            /* hat 3 */
+                            name: lf("hat 3"),
                             startFrequency: 400,
                             startVolume: 0,
                             steps: [
@@ -897,7 +944,7 @@ namespace pxt.assets.music {
                         },
 
                         {
-                            /* hat 4 */
+                            name: lf("hat 4"),
                             startFrequency: 400,
                             startVolume: 0,
                             steps: [
@@ -929,7 +976,7 @@ namespace pxt.assets.music {
                         },
 
                         {
-                            /* double hat */
+                            name: lf("double hat"),
                             startFrequency: 3500,
                             startVolume: 1024,
                             steps: [
@@ -967,7 +1014,7 @@ namespace pxt.assets.music {
                         },
 
                         {
-                            /* metallic */
+                            name: lf("metallic"),
                             startFrequency: 2000,
                             startVolume: 1024,
                             steps: [
@@ -987,7 +1034,7 @@ namespace pxt.assets.music {
                         },
 
                         {
-                            /* low tom */
+                            name: lf("low tom"),
                             startFrequency: 200,
                             startVolume: 200,
                             steps: [
@@ -1013,7 +1060,7 @@ namespace pxt.assets.music {
                         },
 
                         {
-                            /* mid tom */
+                            name: lf("mid tom"),
                             startFrequency: 300,
                             startVolume: 200,
                             steps: [
@@ -1039,7 +1086,7 @@ namespace pxt.assets.music {
                         },
 
                         {
-                            /* hi tom */
+                            name: lf("hi tom"),
                             startFrequency: 500,
                             startVolume: 200,
                             steps: [
@@ -1064,7 +1111,7 @@ namespace pxt.assets.music {
                             ]
                         },
                         {
-                            /* lo tom 2 */
+                            name: lf("lo tom 2"),
                             startFrequency: 200,
                             startVolume: 1024,
                             steps: [
@@ -1077,7 +1124,7 @@ namespace pxt.assets.music {
                             ]
                         },
                         {
-                            /* mid tom 2 */
+                            name: lf("mid tom 2"),
                             startFrequency: 300,
                             startVolume: 1024,
                             steps: [
@@ -1092,7 +1139,7 @@ namespace pxt.assets.music {
 
 
                         {
-                            /* hi tom 2 */
+                            name: lf("hi tom 2"),
                             startFrequency: 400,
                             startVolume: 1024,
                             steps: [
@@ -1107,7 +1154,7 @@ namespace pxt.assets.music {
 
 
                         {
-                            /* thump 1 */
+                            name: lf("thump 1"),
                             startFrequency: 200,
                             startVolume: 1024,
                             steps: [
@@ -1127,7 +1174,7 @@ namespace pxt.assets.music {
                         },
 
                         {
-                            /* thump 2 */
+                            name: lf("thump 2"),
                             startFrequency: 450,
                             startVolume: 1024,
                             steps: [
@@ -1147,7 +1194,7 @@ namespace pxt.assets.music {
                         },
 
                         {
-                            /* cymbal */
+                            name: lf("cymbal"),
                             startFrequency: 2500,
                             startVolume: 1024,
                             steps: [
@@ -1167,7 +1214,7 @@ namespace pxt.assets.music {
                         },
 
                         {
-                            /* crash 1 */
+                            name: lf("crash 1"),
                             startFrequency: 3000,
                             startVolume: 1024,
                             steps: [
@@ -1187,7 +1234,7 @@ namespace pxt.assets.music {
                         },
 
                         {
-                            /* crash 2 */
+                            name: lf("crash 2"),
                             startFrequency: 800,
                             startVolume: 0,
                             steps: [
@@ -1207,7 +1254,7 @@ namespace pxt.assets.music {
                         },
 
                         {
-                            /* crash 3 */
+                            name: lf("crash 3"),
                             startFrequency: 400,
                             startVolume: 0,
                             steps: [
@@ -1227,7 +1274,7 @@ namespace pxt.assets.music {
                         },
 
                         {
-                            /* buzzer */
+                            name: lf("buzzer"),
                             startFrequency: 2000,
                             startVolume: 1024,
                             steps: [
@@ -1244,7 +1291,8 @@ namespace pxt.assets.music {
                                     waveform: 16
                                 }
                             ]
-                        },]
+                        },
+                    ]
                 }
             ]
         }

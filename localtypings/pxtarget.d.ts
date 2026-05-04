@@ -24,6 +24,8 @@ declare namespace pxt {
         multiplayer?: MultiplayerConfig;
         // common galleries
         galleries?: pxt.Map<string | GalleryProps>;
+        // additional galleries included in projects search but not shown on the homescreen
+        searchGalleries?: pxt.Map<string | GalleryProps>;
         // localized galleries
         localizedGalleries?: pxt.Map<pxt.Map<string>>;
         windowsStoreLink?: string;
