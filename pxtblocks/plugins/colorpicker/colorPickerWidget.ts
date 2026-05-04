@@ -4,7 +4,10 @@ import * as Blockly from "blockly";
 const thumbStylePrefix = `--blocklyFieldSliderBackgroundColor: ${createSliderGradient()}; --blocklyFieldSliderThumbBorderColor: #ffffff; `
 
 export class ColorPickerWidget {
-    private slider: HTMLInputElement;
+    private hueSlider: HTMLInputElement;
+    private saturationSlider: HTMLInputElement;
+    private valueSlider: HTMLInputElement;
+
     private colorPreview: HTMLDivElement
     private canvas: HTMLCanvasElement;
     private canvasContainer: HTMLDivElement;
@@ -24,20 +27,41 @@ export class ColorPickerWidget {
     }
 
     createDom(container: HTMLDivElement, hsv: number[]) {
-        if (this.slider) return;
+        if (this.hueSlider) return;
 
         this.hsv = hsv;
 
-        this.slider = document.createElement("input");
-        this.slider.classList.add("blocklyFieldSlider");
-        this.slider.classList.add("hueSlider");
-        this.slider.type = "range";
-        this.slider.min = "0";
-        this.slider.max = "359";
-        this.slider.value = "0";
-        this.slider.step = "1";
-        this.slider.setAttribute("style", thumbStylePrefix + `--blocklyFieldSliderThumbColor: hsl(${this.hsv[0]}, 100%, 50%)`);
-        container.appendChild(this.slider);
+        this.hueSlider = document.createElement("input");
+        this.hueSlider.classList.add("blocklyFieldSlider");
+        this.hueSlider.classList.add("hueSlider");
+        this.hueSlider.type = "range";
+        this.hueSlider.min = "0";
+        this.hueSlider.max = "359";
+        this.hueSlider.value = hsv[0] + "";
+        this.hueSlider.step = "1";
+        this.hueSlider.setAttribute("style", thumbStylePrefix + `--blocklyFieldSliderThumbColor: hsl(${this.hsv[0]}, 100%, 50%)`);
+        this.hueSlider.setAttribute("aria-label", lf("Hue"));
+        container.appendChild(this.hueSlider);
+
+        this.saturationSlider = document.createElement("input");
+        this.saturationSlider.classList.add("screen-reader-only");
+        this.saturationSlider.type = "range";
+        this.saturationSlider.min = "0";
+        this.saturationSlider.max = "100";
+        this.saturationSlider.value = hsv[1] + "";
+        this.saturationSlider.step = "1";
+        this.saturationSlider.setAttribute("aria-label", lf("Saturation"));
+        container.appendChild(this.saturationSlider);
+
+        this.valueSlider = document.createElement("input");
+        this.valueSlider.classList.add("screen-reader-only");
+        this.valueSlider.type = "range";
+        this.valueSlider.min = "0";
+        this.valueSlider.max = "100";
+        this.valueSlider.value = hsv[2] + "";
+        this.valueSlider.step = "1";
+        this.valueSlider.setAttribute("aria-label", lf("Value"));
+        container.appendChild(this.valueSlider);
 
         const row = document.createElement("div");
         row.style.display = "flex";
@@ -83,22 +107,24 @@ export class ColorPickerWidget {
         };
 
         // Configure event handler.
-        Blockly.browserEvents.bind(this.slider, "input", this, (event: InputEvent) => {
-            const val = parseFloat(this.slider.value) || 0;
-            if (val !== null && val !== this.hsv[0]) {
-                this.hsv[0] = Math.round(val);
-
-                const newColor = fromFormatToHex("hsv", this.hsv);
-
-                this.updateBackgroundColor(newColor);
-                this.onColorChanged(this.hsv);
+        for (let i = 0; i < 3; i++) {
+            const slider = [this.hueSlider, this.saturationSlider, this.valueSlider][i];
+            Blockly.browserEvents.bind(slider, "focus", this, (event: FocusEvent) => {
                 focus();
-            }
-        });
+            });
+            Blockly.browserEvents.bind(slider, "input", this, (event: InputEvent) => {
+                const val = parseFloat(slider.value) || 0;
+                if (val !== null && val !== this.hsv[i]) {
+                    this.hsv[i] = Math.round(val);
 
-        Blockly.browserEvents.bind(this.slider, "focus", this, (event: FocusEvent) => {
-            focus();
-        });
+                    const newColor = fromFormatToHex("hsv", this.hsv);
+
+                    this.updateBackgroundColor(newColor);
+                    this.onColorChanged(this.hsv);
+                    focus();
+                }
+            });
+        }
 
         let pointerDown = false;
 
@@ -115,6 +141,8 @@ export class ColorPickerWidget {
 
             this.hsv[1] = saturation;
             this.hsv[2] = value;
+            this.saturationSlider.value = saturation + "";
+            this.valueSlider.value = value + "";
 
             const newColor = fromFormatToHex("hsv", this.hsv);
 
@@ -157,19 +185,21 @@ export class ColorPickerWidget {
         }
 
         this.updateBackgroundColor(fromFormatToHex("hsv", this.hsv));
+
+        return this.hsv.slice();
     }
 
     protected updateBackgroundColor(color: string) {
-        if (this.slider) {
-            this.slider.value = this.hsv[0] + "";
+        if (this.hueSlider) {
+            this.hueSlider.value = this.hsv[0] + "";
         }
 
         if (this.animFrameRequest) {
             cancelAnimationFrame(this.animFrameRequest);
         }
         this.animFrameRequest = requestAnimationFrame(() => {
-            if (this.slider) {
-                this.slider.setAttribute("style", thumbStylePrefix + `--blocklyFieldSliderThumbColor: hsl(${this.hsv[0]}, 100%, 50%)`);
+            if (this.hueSlider) {
+                this.hueSlider.setAttribute("style", thumbStylePrefix + `--blocklyFieldSliderThumbColor: hsl(${this.hsv[0]}, 100%, 50%)`);
             }
 
             if (this.colorPreview) {
@@ -197,9 +227,19 @@ export class ColorPickerWidget {
             this.animFrameRequest = undefined;
         }
 
-        if (this.slider) {
-            this.slider.remove();
-            this.slider = undefined;
+        if (this.hueSlider) {
+            this.hueSlider.remove();
+            this.hueSlider = undefined;
+        }
+
+        if (this.saturationSlider) {
+            this.saturationSlider.remove();
+            this.saturationSlider = undefined;
+        }
+
+        if (this.valueSlider) {
+            this.valueSlider.remove();
+            this.valueSlider = undefined;
         }
 
         if (this.colorPreview) {
@@ -214,8 +254,8 @@ export class ColorPickerWidget {
     }
 
     focusSlider() {
-        if (this.slider) {
-            this.slider.focus();
+        if (this.hueSlider) {
+            this.hueSlider.focus();
         }
     }
 
@@ -227,7 +267,15 @@ export class ColorPickerWidget {
         switch (e.key) {
             case 'ArrowUp': {
                 e.preventDefault();
-                this.focusHtmlInput();
+                if (e.target === this.valueSlider) {
+                    this.saturationSlider.focus();
+                }
+                else if (e.target === this.saturationSlider) {
+                    this.hueSlider.focus();
+                }
+                else {
+                    this.focusHtmlInput();
+                }
                 break;
             }
             case 'Enter':
@@ -240,25 +288,48 @@ export class ColorPickerWidget {
             case "ArrowDown": {
                 e.preventDefault();
                 e.stopPropagation();
+                if (e.target === this.hueSlider) {
+                    this.saturationSlider.focus();
+                }
+                else if (e.target === this.saturationSlider) {
+                    this.valueSlider.focus();
+                }
                 break;
             }
         }
     }
 
     private sliderBlurListener = (e: FocusEvent) => {
+        if (e.relatedTarget === this.hueSlider ||
+            e.relatedTarget === this.saturationSlider ||
+            e.relatedTarget === this.valueSlider) {
+            return;
+        }
         this.setKeyboardControlActive(false);
     }
 
     private addEventListeners() {
-        this.slider.addEventListener('keydown', this.sliderKeydownListener);
-        this.slider.addEventListener('blur', this.sliderBlurListener);
-        this.slider.addEventListener("pointerdown", this.sliderPointerdownListener);
+        this.hueSlider.addEventListener('keydown', this.sliderKeydownListener);
+        this.hueSlider.addEventListener('blur', this.sliderBlurListener);
+        this.hueSlider.addEventListener("pointerdown", this.sliderPointerdownListener);
+        this.saturationSlider.addEventListener('keydown', this.sliderKeydownListener);
+        this.saturationSlider.addEventListener('blur', this.sliderBlurListener);
+        this.saturationSlider.addEventListener("pointerdown", this.sliderPointerdownListener);
+        this.valueSlider.addEventListener('keydown', this.sliderKeydownListener);
+        this.valueSlider.addEventListener('blur', this.sliderBlurListener);
+        this.valueSlider.addEventListener("pointerdown", this.sliderPointerdownListener);
     }
 
     private removeEventListeners() {
-        this.slider.removeEventListener('keydown', this.sliderKeydownListener);
-        this.slider.removeEventListener('blur', this.sliderBlurListener);
-        this.slider.removeEventListener('pointerdown', this.sliderPointerdownListener);
+        this.hueSlider.removeEventListener('keydown', this.sliderKeydownListener);
+        this.hueSlider.removeEventListener('blur', this.sliderBlurListener);
+        this.hueSlider.removeEventListener('pointerdown', this.sliderPointerdownListener);
+        this.saturationSlider.removeEventListener('keydown', this.sliderKeydownListener);
+        this.saturationSlider.removeEventListener('blur', this.sliderBlurListener);
+        this.saturationSlider.removeEventListener('pointerdown', this.sliderPointerdownListener);
+        this.valueSlider.removeEventListener('keydown', this.sliderKeydownListener);
+        this.valueSlider.removeEventListener('blur', this.sliderBlurListener);
+        this.valueSlider.removeEventListener('pointerdown', this.sliderPointerdownListener);
     }
 }
 
@@ -349,5 +420,17 @@ input[type=range].blocklyFieldSlider.hueSlider::-moz-range-thumb {
     -webkit-box-shadow: 0 0 0 2px var(--blocklyFieldSliderThumbBorderColor);
     -moz-box-shadow: 0 0 0 2px var(--blocklyFieldSliderThumbBorderColor);
     box-shadow: 0 0 0 2px var(--blocklyFieldSliderThumbBorderColor);
+}
+input.screen-reader-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+    white-space: nowrap;
+    border-width: 0;
 }
 `)

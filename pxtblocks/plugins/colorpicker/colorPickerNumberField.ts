@@ -33,10 +33,12 @@ export class FieldColorPickerNumber extends Blockly.FieldNumber {
     private addEventListeners() {
         this.inputKeydownHandler = this.inputKeydownListener.bind(this);
         this.htmlInput_.addEventListener("keydown", this.inputKeydownHandler);
+        this.htmlInput_.addEventListener("keyup", this.inputKeyupListener);
     }
 
     private removeEventListeners() {
         this.htmlInput_.removeEventListener("keydown", this.inputKeydownHandler);
+        this.htmlInput_.removeEventListener("keyup", this.inputKeyupListener);
         this.colorPicker?.dispose();
         this.colorPicker = undefined;
     }
@@ -47,6 +49,19 @@ export class FieldColorPickerNumber extends Blockly.FieldNumber {
             this.keyboardControlActive = true;
             if (this.colorPicker) {
                 this.colorPicker.focusSlider();
+            }
+        }
+    }
+
+    private inputKeyupListener = (e: KeyboardEvent) => {
+        const colorPickerBlock = this.sourceBlock_?.getParent() as ColorPickerBlock;
+        const newValue = Math.max(0, Math.min(this.max_, parseInt(this.htmlInput_.value)));
+
+        if (!Number.isNaN(newValue)) {
+            if (colorPickerBlock?.type === COLOR_PICKER_BLOCK_TYPE && this.colorPicker) {
+                const channel = parseInt(this.sourceBlock_.outputConnection.targetConnection.getParentInput().name.slice(-1));
+
+                colorPickerBlock.setColorHSV(this.colorPicker.updateColorChannel(colorPickerBlock.format, channel, newValue));
             }
         }
     }
