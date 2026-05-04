@@ -45,6 +45,7 @@ declare namespace pxt.assets.music {
         notes: Note[];
         startTick: number;
         endTick: number;
+        velocity?: number;
     }
 
     export interface Note {

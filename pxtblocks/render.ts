@@ -72,8 +72,9 @@ export function renderWorkspace(options: BlocksRenderOptions = { emPixels: 18, l
 
     let metrics = workspace.getMetrics();
 
-    const svg = blocklyDiv.querySelectorAll('svg')[0].cloneNode(true) as SVGSVGElement;
-    cleanUpBlocklySvg(svg);
+    const sourceSvg = blocklyDiv.querySelectorAll('svg')[0];
+    const svg = sourceSvg.cloneNode(true) as SVGSVGElement;
+    cleanUpBlocklySvg(svg, sourceSvg);
 
     pxt.U.toArray(svg.querySelectorAll('.blocklyBlockCanvas,.blocklyBubbleCanvas'))
         .forEach(el => el.setAttribute('transform', `translate(${-metrics.contentLeft}, ${-metrics.contentTop}) scale(1)`));
