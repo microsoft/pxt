@@ -1991,7 +1991,13 @@ ${output}</xml>`;
                     )
                 }
 
-                r.fields = [getField("FORMAT", info.qName.substring(info.qName.lastIndexOf(".") + 1))]
+                r.fields = [getField("FORMAT", info.qName.substring(info.qName.lastIndexOf(".") + 1))];
+
+                const blockDef = blocksInfo.blocks.find(b => b.attributes.builtinBlockId === "makecode_color_picker");
+                if (blockDef && blockDef.attributes.color) {
+                    r.mutation = { color: blockDef.attributes.color };
+                }
+
                 return r;
             }
             else if (pxt.Util.startsWith(info.qName, "Math.")) {

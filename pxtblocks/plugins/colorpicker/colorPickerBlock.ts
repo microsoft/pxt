@@ -48,6 +48,13 @@ export function initColorPickerBlock() {
 
                 this.setFormat(this.getFieldValue("FORMAT"));
             }
+
+            if (xmlElement.hasAttribute("color")) {
+                const color = xmlElement.getAttribute("color");
+                if (color) {
+                    this.setColour(color);
+                }
+            }
         },
 
         mutationToDom: function () {
@@ -57,6 +64,8 @@ export function initColorPickerBlock() {
                 container.setAttribute("saturation", this.colorHSV[1].toString());
                 container.setAttribute("value", this.colorHSV[2].toString());
             }
+            container.setAttribute("color", this.getColour());
+
             return container;
         },
 

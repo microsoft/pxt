@@ -87,32 +87,6 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                         </block>
                     </value>
                 </block>`
-                },
-                {
-                    name: "makecode_color_picker",
-                    snippetName: "color picker",
-                    attributes: {
-                        blockId: "makecode_color_picker",
-                        weight: 10000
-                    },
-                    blockXml: `<block type="makecode_color_picker">
-                        <field name="FORMAT">rgb</field>
-                        <value name="INPUT0">
-                            <shadow type="makecode_color_picker_number">
-                                <field name="NUM">255</field>
-                            </shadow>
-                        </value>
-                        <value name="INPUT1">
-                            <shadow type="makecode_color_picker_number">
-                                <field name="NUM">255</field>
-                            </shadow>
-                        </value>
-                        <value name="INPUT2">
-                            <shadow type="makecode_color_picker_number">
-                                <field name="NUM">0</field>
-                            </shadow>
-                        </value>
-                    </block>`
                 }
             ],
             attributes: {
