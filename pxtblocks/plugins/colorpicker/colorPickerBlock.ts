@@ -186,7 +186,7 @@ export function initColorPickerBlock() {
 
                 if (target?.type === "text" || target?.type === COLOR_STRING_BLOCK_TYPE) {
                     const hex = target.getField("TEXT").getValue();
-                    this.colorHSV = fromHexToFormat("hsv", hex); ''
+                    this.colorHSV = fromHexToFormat("hsv", hex);
                 }
                 return;
             }
