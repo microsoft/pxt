@@ -7,7 +7,7 @@ import { CommonFunctionBlock } from "../plugins/functions/commonFunctionMixin";
 import { PXT_WARNING_ID } from "./compiler";
 import { DRAGGABLE_PARAM_INPUT_PREFIX } from "../loader";
 import { getContainingFunction } from "../plugins/duplicateOnDrag";
-import { ColorPickerBlock, COLOR_PICKER_BLOCK_TYPE } from "..";
+import { COLOR_PICKER_BLOCK_TYPE } from "..";
 
 interface DeclaredVariable {
     name: string;
@@ -152,7 +152,7 @@ export function infer(allBlocks: Blockly.Block[], e: Environment, w: Blockly.Wor
                     unionParam(e, b, "PREDICATE", pBoolean);
                     break;
                 case COLOR_PICKER_BLOCK_TYPE:
-                    const format = (b as ColorPickerBlock).format;
+                    const format = b.getFieldValue("FORMAT");
 
                     if (format === "hex") {
                         unionParam(e, b, "HEX_INPUT", ground("string"));

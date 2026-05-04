@@ -7,10 +7,9 @@ import { FieldColorPickerNumberType, fromFormatToHex, fromFormatToHSV, fromHexTo
 export interface ColorPickerBlock extends Blockly.Block {
     colorHSVLoaded: boolean;
     colorHSV: number[];
-    format: string;
     updateShape: (format: string) => void;
     setColorHSV: (hsv: number[]) => void;
-    setFormat: (format: string) => void;
+    setFormat: (format: string, prevFormat?: string) => void;
     readColorFromInputs: () => void;
 }
 
@@ -21,8 +20,6 @@ export const COLOR_PICKER_BLOCK_TYPE = "makecode_color_picker";
 
 export function initColorPickerBlock() {
     Blockly.Blocks[COLOR_PICKER_BLOCK_TYPE] = {
-        format: "rgb",
-
         // store the color as HSV because converting to RGB causes us to lose
         // the hue value for some colors (e.g. grayscale colors)
         colorHSVLoaded: false,
@@ -34,9 +31,9 @@ export function initColorPickerBlock() {
             this.setInputsInline(true);
 
             this.appendDummyInput()
-                .appendField(new ColorDropdownField(this.format), "FORMAT");
+                .appendField(new ColorDropdownField("rgb"), "FORMAT");
 
-            this.updateShape(this.format);
+            this.updateShape(this.getFieldValue("FORMAT"));
             this.setColorHSV(this.colorHSV);
         },
 
@@ -48,17 +45,18 @@ export function initColorPickerBlock() {
                     parseFloat(xmlElement.getAttribute("saturation")) || 0,
                     parseFloat(xmlElement.getAttribute("value")) || 0
                 ];
-            }
 
-            this.setFormat(this.format);
+                this.setFormat(this.getFieldValue("FORMAT"));
+            }
         },
 
         mutationToDom: function () {
             const container = document.createElement("mutation");
-            container.setAttribute("format", this.format);
-            container.setAttribute("hue", this.colorHSV[0].toString());
-            container.setAttribute("saturation", this.colorHSV[1].toString());
-            container.setAttribute("value", this.colorHSV[2].toString());
+            if (this.colorHSVLoaded) {
+                container.setAttribute("hue", this.colorHSV[0].toString());
+                container.setAttribute("saturation", this.colorHSV[1].toString());
+                container.setAttribute("value", this.colorHSV[2].toString());
+            }
             return container;
         },
 
@@ -127,7 +125,7 @@ export function initColorPickerBlock() {
         },
 
         setColorHSV: function (this: ColorPickerBlock, hsv: number[]) {
-            if (this.format === "hex") {
+            if (this.getFieldValue("FORMAT") === "hex") {
                 const color = fromFormatToHex("hsv", hsv);
 
                 const hexInput = this.getInput(HEX_INPUT_NAME);
@@ -140,7 +138,7 @@ export function initColorPickerBlock() {
                 return;
             }
 
-            const values = fromHSVToFormat(this.format, hsv);
+            const values = fromHSVToFormat(this.getFieldValue("FORMAT"), hsv);
 
             for (let i = 0; i < values.length; i++) {
                 const input = this.getInput("INPUT" + i);
@@ -155,11 +153,9 @@ export function initColorPickerBlock() {
             this.colorHSV = hsv;
         },
 
-        setFormat: function (this: ColorPickerBlock, format: string) {
+        setFormat: function (this: ColorPickerBlock, format: string, prevFormat = format) {
             const hsv = this.colorHSV;
-            const prevFormat = this.format
             if (format !== prevFormat) {
-                this.format = format;
                 this.updateShape(format);
 
                 const field = this.getField("FORMAT") as ColorDropdownField;
@@ -174,7 +170,7 @@ export function initColorPickerBlock() {
 
         readColorFromInputs: function (this: ColorPickerBlock) {
             this.colorHSVLoaded = true;
-            if (this.format === "hex") {
+            if (this.getFieldValue("FORMAT") === "hex") {
                 // TODO: verify the target is a color picker string
                 const hexInput = this.getInput(HEX_INPUT_NAME);
                 const target = hexInput?.connection.targetBlock();
@@ -186,7 +182,7 @@ export function initColorPickerBlock() {
                 return;
             }
 
-            const currentValues = fromHSVToFormat(this.format, this.colorHSV);
+            const currentValues = fromHSVToFormat(this.getFieldValue("FORMAT"), this.colorHSV);
             const newValues: number[] = [];
 
             for (let i = 0; i < currentValues.length; i++) {
@@ -202,7 +198,7 @@ export function initColorPickerBlock() {
                 }
             }
 
-            this.colorHSV = fromFormatToHSV(this.format, newValues);
+            this.colorHSV = fromFormatToHSV(this.getFieldValue("FORMAT"), newValues);
         }
     }
 }

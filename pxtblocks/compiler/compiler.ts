@@ -12,7 +12,7 @@ import { FieldTilemap, FieldTextInput } from "../fields";
 import { CommonFunctionBlock } from "../plugins/functions/commonFunctionMixin";
 import { getContainingFunction } from "../plugins/duplicateOnDrag";
 import { FUNCTION_DEFINITION_BLOCK_TYPE } from "../plugins/functions/constants";
-import { ColorPickerBlock, COLOR_NUMBER_BLOCK_TYPE, COLOR_PICKER_BLOCK_TYPE, COLOR_STRING_BLOCK_TYPE } from "../plugins/colorpicker";
+import { COLOR_NUMBER_BLOCK_TYPE, COLOR_PICKER_BLOCK_TYPE, COLOR_STRING_BLOCK_TYPE } from "../plugins/colorpicker";
 
 
 interface Rect {
@@ -1394,7 +1394,7 @@ function compileNumber(e: Environment, b: Blockly.Block, comments: string[]): px
 }
 
 function compileColorPicker(e: Environment, b: Blockly.Block, comments: string[]): pxt.blocks.JsNode {
-    const format = (b as ColorPickerBlock).format;
+    const format = b.getFieldValue("FORMAT");
 
     if (format === "hex") {
         return pxt.blocks.H.namespaceCall(

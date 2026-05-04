@@ -3,11 +3,11 @@ import { FieldDropdown } from "../../fields/field_dropdown";
 import { ColorPickerBlock, COLOR_PICKER_BLOCK_TYPE } from "./colorPickerBlock";
 
 const COLOR_FORMATS: [string, string][] = [
-    [ "RGB", "rgb" ],
-    [ "HSL", "hsl" ],
-    [ "HSV", "hsv" ],
-    [ "CMYK", "cmyk" ],
-    [ "Hex", "hex" ]
+    ["RGB", "rgb"],
+    ["HSL", "hsl"],
+    ["HSV", "hsv"],
+    ["CMYK", "cmyk"],
+    ["Hex", "hex"]
 ]
 
 export class ColorDropdownField extends FieldDropdown {
@@ -17,15 +17,23 @@ export class ColorDropdownField extends FieldDropdown {
         this.setValue(value);
     }
 
-    override doValueUpdate_(newValue: string) {
-        super.doValueUpdate_(newValue);
-
+    override onItemSelected_(menu: Blockly.Menu, menuItem: Blockly.MenuItem) {
         if (this.sourceBlock_?.type === COLOR_PICKER_BLOCK_TYPE) {
             const colorPicker = this.sourceBlock_ as ColorPickerBlock;
             if (!colorPicker.colorHSVLoaded) {
                 colorPicker.readColorFromInputs();
             }
-            colorPicker.setFormat(newValue);
+        }
+
+        super.onItemSelected_(menu, menuItem);
+    }
+
+    override doValueUpdate_(newValue: string) {
+        const prevValue = this.getValue();
+        super.doValueUpdate_(newValue);
+        if (this.sourceBlock_?.type === COLOR_PICKER_BLOCK_TYPE) {
+            const colorPicker = this.sourceBlock_ as ColorPickerBlock;
+            colorPicker.setFormat(newValue, prevValue);
         }
     }
 }

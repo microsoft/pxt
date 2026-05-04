@@ -61,7 +61,7 @@ export class FieldColorPickerNumber extends Blockly.FieldNumber {
             if (colorPickerBlock?.type === COLOR_PICKER_BLOCK_TYPE && this.colorPicker) {
                 const channel = parseInt(this.sourceBlock_.outputConnection.targetConnection.getParentInput().name.slice(-1));
 
-                colorPickerBlock.setColorHSV(this.colorPicker.updateColorChannel(colorPickerBlock.format, channel, newValue));
+                colorPickerBlock.setColorHSV(this.colorPicker.updateColorChannel(colorPickerBlock.getFieldValue("FORMAT"), channel, newValue));
             }
         }
     }
@@ -88,6 +88,14 @@ export class FieldColorPickerNumber extends Blockly.FieldNumber {
         contentDiv.setAttribute('aria-haspopup', 'true');
 
         const colorPickerBlock = this.sourceBlock_?.getParent() as ColorPickerBlock;
+
+        if (!colorPickerBlock) {
+            return;
+        }
+
+        if (!colorPickerBlock.colorHSVLoaded) {
+            colorPickerBlock.readColorFromInputs();
+        }
 
         let coorHSV = [0, 0, 0];
 
