@@ -63,5 +63,9 @@ for creating JavaScript/Blocks online editors.
 
 * [UF2 file format](http://github.com/microsoft/uf2)
 
+## Other Documentation
 
+* [Arcade](https://arcade.makecode.com/docs)
+* [Minecraft](https://minecraft.makecode.com/docs)
+* [Maker](https://maker.makecode.com/docs)
 
