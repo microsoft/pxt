@@ -98,6 +98,7 @@ declare namespace pxt {
             namespaces: {[index: string]: "visible" | "hidden" | "disabled"},
             blocks: {[index: string]: "visible" | "hidden" | "disabled"},
         }
+        disableHistory?: boolean; // if set to true, project history will not be saved for this project. useful for giant projects where diffing on each edit can slow things down
     }
 
     interface PackageExtension {
