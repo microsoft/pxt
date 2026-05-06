@@ -31,6 +31,7 @@ import { ArgumentReporterBlock, FieldArgumentReporter, setArgumentReporterLocali
 import { getArgumentReporterParent } from "./plugins/functions/utils";
 import { isFunctionDefinition } from "./compiler/util";
 import { AUTO_DISABLED_REASON } from "./compiler/compiler";
+import { DEFAULT_LED_COLORS, FieldLEDMatrixColorPicker, getDefaultColorNames } from "./fields/field_ledmatrix_colorPicker";
 
 export const DRAGGABLE_PARAM_INPUT_PREFIX = "HANDLER_DRAG_PARAM_";
 
@@ -322,15 +323,61 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
         }
     });
 
-    const gridTemplateString = fn.attributes.imageLiteral || fn.attributes.gridLiteral;
+    const gridTemplateString = fn.attributes.imageLiteral || fn.attributes.gridLiteral || fn.attributes.colorGridLiteral;
     if (gridTemplateString) {
         const columns = (fn.attributes.imageLiteralColumns || 5) * gridTemplateString;
         const rows = fn.attributes.imageLiteralRows || 5;
         const scale = fn.attributes.imageLiteralScale;
-        const onColor = fn.attributes.gridLiteralOnColor;
-        const offColor = fn.attributes.gridLiteralOffColor;
+
+        let colors: string[];
+        let colorNames: string[] = [];
+
+        if (fn.attributes.gridLiteralPalette) {
+            colors = fn.attributes.gridLiteralPalette.split(",").map(c => c.trim());
+        }
+        else if (fn.attributes.gridLiteralOnColor || fn.attributes.gridLiteralOffColor) {
+            colors = [
+                fn.attributes.gridLiteralOffColor || "#000000",
+                fn.attributes.gridLiteralOnColor || "#ffffff"
+            ];
+            colorNames = [lf("off"), lf("on")];
+        }
+        else {
+            colors = ["#000000", ...DEFAULT_LED_COLORS];
+            colorNames = [lf("off"), ...getDefaultColorNames()];
+        }
+
+        if (fn.attributes.gridLiteralPaletteNames) {
+            colorNames = fn.attributes.gridLiteralPaletteNames.split(",").map(c => pxt.U.rlf(`{id:color}${c.trim()}`));
+        }
+
+        for (let i = 0; i < colors.length; i++) {
+            if (!colorNames[i]) {
+                colorNames[i] = colors[i];
+            }
+        }
+
+
+        const topInput = block.inputList[block.inputList.length - 1];
+
+        if (fn.attributes.colorGridLiteral) {
+            // color 0 is the off color, so we don't need it to be in the color picker
+            topInput.appendField(new FieldLEDMatrixColorPicker(info, colors?.slice(1), colorNames?.slice(1)), "ON_COLOR");
+        }
+
         let ri = block.appendDummyInput();
-        ri.appendField(new FieldLedMatrix("", { columns, rows, scale, onColor, offColor }), "LEDS");
+        ri.appendField(
+            new FieldLedMatrix("", {
+                columns,
+                rows,
+                scale,
+                colors,
+                colorNames,
+                hasOffColor: !!fn.attributes.gridLiteralOffColor,
+                isColorMatrix: !!fn.attributes.colorGridLiteral
+            }),
+            "LEDS"
+        );
     }
 
     if (fn.attributes.inlineInputMode === "external") {

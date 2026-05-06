@@ -1608,6 +1608,8 @@ ${output}</xml>`;
         }
 
         function getImageLiteralStatement(node: ts.CallExpression, info: pxtc.CallInfo) {
+            const chars = ".#23456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
             let arg = node.arguments[0];
             if (arg.kind != SK.StringLiteral && arg.kind != SK.NoSubstitutionTemplateLiteral) {
                 error(node)
@@ -1619,23 +1621,45 @@ ${output}</xml>`;
             res.fields = [];
 
             const leds = ((arg as ts.StringLiteral).text || '').replace(/\s+/g, '');
-            const nc = (attributes.imageLiteralColumns || 5) * (attributes.imageLiteral || attributes.gridLiteral);
+            const nc = (attributes.imageLiteralColumns || 5) * gridLiteralValue(attributes);
             const nr = attributes.imageLiteralRows || 5;
             const nleds = nc * nr;
             if (nleds != leds.length) {
                 error(node, Util.lf("Invalid image pattern ({0} expected vs {1} actual)", nleds, leds.length));
                 return undefined;
             }
+            const isColor = attributes.colorGridLiteral;
             let ledString = '';
             for (let r = 0; r < nr; ++r) {
                 for (let c = 0; c < nc; ++c) {
-                    ledString += /[#*1]/.test(leds[r * nc + c]) ? '#' : '.';
+                    if (isColor) {
+                        ledString += chars.charAt(parseCharacter(leds[r * nc + c]));
+                    }
+                    else {
+                        ledString += /[#*1]/.test(leds[r * nc + c]) ? '#' : '.';
+                    }
                 }
                 ledString += '\n';
             }
             res.fields.push(getField(`LEDS`, `\`${ledString}\``));
 
             return res;
+        }
+
+        function parseCharacter(c: string): number {
+            const chars = ".#23456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            switch (c) {
+                case "#":
+                case "*":
+                case "1":
+                    return 1;
+                case ".":
+                case "_":
+                case "0":
+                    return 0;
+                default:
+                    return Math.max(0, chars.indexOf(c.toUpperCase()));
+            }
         }
 
         function getBinaryExpressionStatement(n: ts.BinaryExpression): StatementNode {
@@ -2061,7 +2085,7 @@ ${output}</xml>`;
                 attributes.blockId = builtin.blockId;
             }
 
-            if (attributes.imageLiteral || attributes.gridLiteral) {
+            if (gridLiteralValue(attributes)) {
                 return getImageLiteralStatement(node, info);
             }
 
@@ -2803,7 +2827,7 @@ ${output}</xml>`;
             const comp = env.compInfo(info);
             const totalDecompilableArgs = comp.parameters.length + (comp.thisParameter ? 1 : 0);
 
-            if (attributes.imageLiteral || attributes.gridLiteral) {
+            if (gridLiteralValue(attributes)) {
                 // Image literals do not show up in the block string, so it won't be in comp
                 if (info.args.length - totalDecompilableArgs > 1) {
                     return Util.lf("Function call has more arguments than are supported by its block");
@@ -2815,7 +2839,7 @@ ${output}</xml>`;
                 }
                 const leds = ((arg as ts.StringLiteral).text || '').replace(/\s+/g, '');
                 const nr = attributes.imageLiteralRows || 5;
-                const nc = (attributes.imageLiteralColumns || 5) * (attributes.imageLiteral || attributes.gridLiteral);
+                const nc = (attributes.imageLiteralColumns || 5) * gridLiteralValue(attributes);
                 const nleds = nc * nr;
                 if (nc * nr != leds.length) {
                     return Util.lf("Invalid image pattern ({0} expected vs {1} actual)", nleds, leds.length);
@@ -3985,5 +4009,9 @@ ${output}</xml>`;
         n.emitShadowOnly = emitShadowOnly;
 
         return emitShadowOnly;
+    }
+
+    function gridLiteralValue(attrs: CommentAttrs) {
+        return attrs.gridLiteral || attrs.imageLiteral || attrs.colorGridLiteral;
     }
 }

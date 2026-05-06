@@ -908,6 +908,9 @@ declare namespace ts.pxtc {
         iconURL?: string;
         imageLiteral?: number;
         gridLiteral?: number;
+        colorGridLiteral?: number;
+        gridLiteralPalette?: string;
+        gridLiteralPaletteNames?: string;
         gridLiteralOnColor?: string;
         gridLiteralOffColor?: string;
         imageLiteralColumns?: number; // optional number of columns
