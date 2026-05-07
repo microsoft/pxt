@@ -65,14 +65,14 @@ function parseInt(text: string, radix?: number): number {
     switch (text.charAt(start)) {
         case "-":
             sign = -1;
-            // fallthrough
+        // fallthrough
         case "+":
             ++start;
     }
 
     if ((!radix || radix == 16)
-            && "0" === text[start]
-            && ("x" === text[start + 1] || "X" === text[start + 1])) {
+        && "0" === text[start]
+        && ("x" === text[start + 1] || "X" === text[start + 1])) {
         radix = 16;
         start += 2;
     } else if (!radix) {
@@ -751,5 +751,172 @@ namespace __internal {
     //% ms.fieldOptions.data='[["100 ms", 100], ["200 ms", 200], ["500 ms", 500], ["1 second", 1000], ["2 seconds", 2000], ["5 seconds", 5000]]'
     export function __timePicker(ms: number): number {
         return ms;
+    }
+}
+
+
+// Converted to TS from https://github.com/Qix-/color-convert/blob/5c106a633b5cd2de554d9c287ad31f9eeca7a271/conversions.js
+// See ThirdPartyNotice in microsoft/pxt for license information
+namespace colorHelpers {
+    /**
+     * Converts a red, green, and blue color value into a single color number.
+     *
+     *
+     * @param red The red component of the color, between 0 and 255
+     * @param green The green component of the color, between 0 and 255
+     * @param blue The blue component of the color, between 0 and 255
+     * @returns The combined color as a single number
+     */
+    export function rgb(red: number, green: number, blue: number): number {
+        return (Math.clamp(0, 255, red) << 16) | (Math.clamp(0, 255, green) << 8) | Math.clamp(0, 255, blue);
+    }
+
+    /**
+     * Converts a hue, saturation, and value (HSV) color into a single color number.
+     *
+     *
+     * @param hue The hue component of the color, between 0 and 360
+     * @param saturation The saturation component of the color, between 0 and 100
+     * @param value The value component of the color, between 0 and 100
+     * @returns The combined color as a single number
+     */
+    export function hsv(hue: number, saturation: number, value: number): number {
+        hue = Math.clamp(0, 360, hue) / 60;
+        saturation = Math.clamp(0, 100, saturation) / 100;
+        value = Math.clamp(0, 100, value) / 100;
+
+        const hi = Math.floor(hue) % 6;
+
+        const f = hue - Math.floor(hue);
+        const p = 255 * value * (1 - saturation);
+        const q = 255 * value * (1 - (saturation * f));
+        const t = 255 * value * (1 - (saturation * (1 - f)));
+        value *= 255;
+
+        switch (hi) {
+            case 0:
+                return rgb(value, t, p);
+            case 1:
+                return rgb(q, value, p);
+            case 2:
+                return rgb(p, value, t);
+            case 3:
+                return rgb(p, q, value);
+            case 4:
+                return rgb(t, p, value);
+            case 5:
+                return rgb(value, p, q);
+        }
+
+        // never
+        return 0;
+    }
+
+    /**
+     * Converts a hue, saturation, and lightness (HSL) color into a single color number.
+     *
+     *
+     * @param hue The hue component of the color, between 0 and 360
+     * @param saturation The saturation component of the color, between 0 and 100
+     * @param lightness The lightness component of the color, between 0 and 100
+     * @returns The combined color as a single number
+     */
+    export function hsl(hue: number, saturation: number, lightness: number): number {
+        hue = Math.clamp(0, 360, hue) / 360;
+        saturation = Math.clamp(0, 100, saturation) / 100;
+        lightness = Math.clamp(0, 100, lightness) / 100;
+
+        let t3: number;
+        let value: number;
+
+        if (saturation === 0) {
+            value = lightness * 255;
+            return rgb(value, value, value);
+        }
+
+        const t2 = lightness < 0.5 ? lightness * (1 + saturation) : lightness + saturation - lightness * saturation;
+
+        const t1 = 2 * lightness - t2;
+
+        const channels: number[] = [0, 0, 0];
+        for (let i = 0; i < 3; i++) {
+            t3 = hue + 1 / 3 * -(i - 1);
+            if (t3 < 0) {
+                t3++;
+            }
+
+            if (t3 > 1) {
+                t3--;
+            }
+
+            if (6 * t3 < 1) {
+                value = t1 + (t2 - t1) * 6 * t3;
+            }
+            else if (2 * t3 < 1) {
+                value = t2;
+            }
+            else if (3 * t3 < 2) {
+                value = t1 + (t2 - t1) * (2 / 3 - t3) * 6;
+            }
+            else {
+                value = t1;
+            }
+
+            channels[i] = value * 255;
+        }
+
+        return rgb(channels[0], channels[1], channels[2]);
+    }
+
+    /**
+     * Converts a hexadecimal color string into a single color number. The hexadecimal string can be in the short
+     * 3-digit form ("#f0a") or the full 6-digit form ("#ff00aa").
+     *
+     *
+     * @param hex A hexadecimal color string, optionally starting with "#" and either in 3-digit or 6-digit format
+     * @returns The combined color as a single number
+     */
+    export function hex(hex: string): number {
+        if (hex.charAt(0) === "#") {
+            hex = hex.slice(1);
+        }
+
+        if (hex.length === 3) {
+            hex = hex.split("").map(c => c + c).join("");
+        }
+
+        if (hex.length !== 6) {
+            return 0;
+        }
+
+        const num = parseInt(hex, 16);
+        if (isNaN(num)) {
+            return 0;
+        }
+
+        return num;
+    }
+
+    /**
+     * Converts a CMYK color into a single color number.
+     *
+     *
+     * @param cyan The cyan component of the color, between 0 and 100
+     * @param magenta The magenta component of the color, between 0 and 100
+     * @param yellow The yellow component of the color, between 0 and 100
+     * @param black The black component of the color, between 0 and 100
+     * @returns The combined color as a single number
+     */
+    export function cmyk(cyan: number, magenta: number, yellow: number, black: number): number {
+        cyan = Math.clamp(0, 100, cyan) / 100;
+        magenta = Math.clamp(0, 100, magenta) / 100;
+        yellow = Math.clamp(0, 100, yellow) / 100;
+        black = Math.clamp(0, 100, black) / 100;
+
+        const r = 1 - Math.min(1, cyan * (1 - black) + black);
+        const g = 1 - Math.min(1, magenta * (1 - black) + black);
+        const b = 1 - Math.min(1, yellow * (1 - black) + black);
+
+        return rgb(r * 255, g * 255, b * 255);
     }
 }

@@ -1027,6 +1027,7 @@ declare namespace ts.pxtc {
         alias?: string; // another symbol alias for this member
         pyAlias?: string; // optional python version of the alias
         blockAliasFor?: string; // qname of the function this block is an alias for
+        builtinBlockId?: string; // if present, this block is to be replaced with a builtin block in the toolbox
     }
 
     interface ParamSnippet {

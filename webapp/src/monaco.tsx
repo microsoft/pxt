@@ -1878,6 +1878,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             if (!res[ns]) {
                 res[ns] = [];
             }
+
+            if (fn.attributes.builtinBlockId) {
+                res[ns].push(...snippets.getExtensionContributedBuiltinBlock(fn.attributes.builtinBlockId, fn.attributes.weight || 50));
+                return;
+            }
+
             res[ns].push(fn);
             if (fn.attributes.toolboxParent) {
                 const parent = this.blockInfo.blocks.find(b => b.attributes.blockId === fn.attributes.toolboxParent);
