@@ -809,7 +809,7 @@ function compileImage(e: Environment, b: Blockly.Block, frames: number, columns:
         for (let j = 0; j < columns; ++j) {
             if (j > 0)
                 state += ' ';
-            state += (leds[(i * columns) + j] === '#') ? "#" : ".";
+            state += leds[(i * columns) + j];
         }
         state += '\n';
     }

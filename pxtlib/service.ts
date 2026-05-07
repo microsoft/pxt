@@ -901,8 +901,12 @@ namespace ts.pxtc {
         "weight",
         "imageLiteral",
         "gridLiteral",
+        "colorGridLiteral",
         "topblockWeight",
-        "inlineInputModeLimit"
+        "inlineInputModeLimit",
+        "gridLiteralVerticalSpacing",
+        "gridLiteralHorizontalSpacing",
+        "gridLiteralBorderRadius",
     ];
 
     const booleanAttributes: (keyof CommentAttrs)[] = [
@@ -923,6 +927,7 @@ namespace ts.pxtc {
         "argsNullable",
         "compileHiddenArguments",
         "expandArgumentsInToolbox",
+        "gridLiteralUseProjectPalette"
     ];
 
     export function parseCommentString(cmt: string): CommentAttrs {

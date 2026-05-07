@@ -906,13 +906,7 @@ declare namespace ts.pxtc {
         icon?: string;
         jresURL?: string;
         iconURL?: string;
-        imageLiteral?: number;
-        gridLiteral?: number;
-        gridLiteralOnColor?: string;
-        gridLiteralOffColor?: string;
-        imageLiteralColumns?: number; // optional number of columns
-        imageLiteralRows?: number; // optional number of rows
-        imageLiteralScale?: number; // button sizing between 0.6 and 2, default is 1
+
         weight?: number;
         parts?: string;
         hiddenParts?: string; // allows an extesion to declaratively hide a part
@@ -988,6 +982,23 @@ declare namespace ts.pxtc {
         enumInitialMembers?: string[]; // The initial enum values which will be given the lowest values available
 
         /* end enum-only attributes */
+
+        /* led matrix field editor attributes */
+
+        imageLiteral?: number;
+        gridLiteral?: number;
+        colorGridLiteral?: number;
+        gridLiteralPalette?: string;
+        gridLiteralPaletteNames?: string;
+        gridLiteralUseProjectPalette?: boolean;
+        gridLiteralOnColor?: string;
+        gridLiteralOffColor?: string;
+        gridLiteralVerticalSpacing?: number; // optional spacing between pixels, default is 5
+        gridLiteralHorizontalSpacing?: number; // optional spacing between pixels, default is 7
+        gridLiteralBorderRadius?: number; // optional border radius for pixels, default is 5
+        imageLiteralColumns?: number; // optional number of columns
+        imageLiteralRows?: number; // optional number of rows
+        imageLiteralScale?: number; // button sizing between 0.6 and 2, default is 1
 
 
         isKind?: boolean; // annotation for built-in kinds in library code
