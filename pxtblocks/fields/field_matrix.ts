@@ -62,7 +62,7 @@ export abstract class FieldMatrix extends Blockly.Field {
                     'stroke': cellStroke,
                     'data-x': x,
                     'data-y': y,
-                    'rx': Math.max(2, scale * cornerRadius)
+                    'rx': Math.max(0, scale * cornerRadius)
                 };
                 const cellRect = pxsim.svg.child(cellG, "rect", rectOptions) as SVGRectElement;
                 this.cells[x][y] = cellRect;

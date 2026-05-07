@@ -332,7 +332,11 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
         let colors: string[];
         let colorNames: string[] = [];
 
-        if (fn.attributes.gridLiteralPalette) {
+        if (fn.attributes.gridLiteralUseProjectPalette) {
+            colors = pxt.appTarget.runtime.palette!;
+            colorNames = colors.map((c, i) => i === 0 ? lf("{id:color}transparency") : pxt.U.lf("{id:color}color {0}", i));
+        }
+        else if (fn.attributes.gridLiteralPalette) {
             colors = fn.attributes.gridLiteralPalette.split(",").map(c => c.trim());
         }
         else if (fn.attributes.gridLiteralOnColor || fn.attributes.gridLiteralOffColor) {
@@ -362,7 +366,15 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
 
         if (fn.attributes.colorGridLiteral) {
             // color 0 is the off color, so we don't need it to be in the color picker
-            topInput.appendField(new FieldLEDMatrixColorPicker(info, colors?.slice(1), colorNames?.slice(1)), "ON_COLOR");
+            topInput.appendField(
+                new FieldLEDMatrixColorPicker(
+                    info,
+                    colors?.slice(1),
+                    colorNames?.slice(1),
+                    !!fn.attributes.gridLiteralUseProjectPalette
+                ),
+                "ON_COLOR"
+            );
         }
 
         let ri = block.appendDummyInput();
@@ -373,6 +385,9 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
                 scale,
                 colors,
                 colorNames,
+                verticalSpacing: fn.attributes.gridLiteralVerticalSpacing,
+                horizontalSpacing: fn.attributes.gridLiteralHorizontalSpacing,
+                borderRadius: fn.attributes.gridLiteralBorderRadius,
                 hasOffColor: !!fn.attributes.gridLiteralOffColor,
                 isColorMatrix: !!fn.attributes.colorGridLiteral
             }),

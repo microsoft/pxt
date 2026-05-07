@@ -113,8 +113,11 @@ export class FieldLedMatrix extends FieldMatrix implements FieldCustom {
         else if (Math.max(this.numMatrixCols, this.numMatrixRows) > 10)
             this.scale = 0.9;
 
-        this.size_.height = this.scale * Number(this.numMatrixRows) * (FieldLedMatrix.CELL_WIDTH + FieldLedMatrix.CELL_VERTICAL_MARGIN) + FieldLedMatrix.CELL_VERTICAL_MARGIN * 2 + FieldLedMatrix.BOTTOM_MARGIN + this.getXAxisHeight()
-        this.size_.width = this.scale * Number(this.numMatrixCols) * (FieldLedMatrix.CELL_WIDTH + FieldLedMatrix.CELL_HORIZONTAL_MARGIN) + FieldLedMatrix.CELL_HORIZONTAL_MARGIN + this.getYAxisWidth();
+        const verticalMargin = isNaN(this.params.verticalSpacing) ? FieldLedMatrix.CELL_VERTICAL_MARGIN : this.params.verticalSpacing;
+        const horizontalMargin = isNaN(this.params.horizontalSpacing) ? FieldLedMatrix.CELL_HORIZONTAL_MARGIN : this.params.horizontalSpacing;
+
+        this.size_.height = this.scale * Number(this.numMatrixRows) * (FieldLedMatrix.CELL_WIDTH + verticalMargin) + verticalMargin * 2 + FieldLedMatrix.BOTTOM_MARGIN + this.getXAxisHeight()
+        this.size_.width = this.scale * Number(this.numMatrixCols) * (FieldLedMatrix.CELL_WIDTH + horizontalMargin) + horizontalMargin + this.getYAxisWidth();
     }
 
     protected getCellToggled(x: number, y: number): boolean {
@@ -182,13 +185,16 @@ export class FieldLedMatrix extends FieldMatrix implements FieldCustom {
 
             this.restoreStateFromString();
 
+            const verticalMargin = isNaN(this.params.verticalSpacing) ? FieldLedMatrix.CELL_VERTICAL_MARGIN : this.params.verticalSpacing;
+            const horizontalMargin = isNaN(this.params.horizontalSpacing) ? FieldLedMatrix.CELL_HORIZONTAL_MARGIN : this.params.horizontalSpacing;
+
             this.createMatrixDisplay({
                 cellWidth: FieldLedMatrix.CELL_WIDTH,
                 cellHeight: FieldLedMatrix.CELL_WIDTH,
                 cellLabel: lf("LED"),
-                cellHorizontalMargin: FieldLedMatrix.CELL_HORIZONTAL_MARGIN,
-                cellVerticalMargin: FieldLedMatrix.CELL_VERTICAL_MARGIN,
-                cornerRadius: FieldLedMatrix.CELL_CORNER_RADIUS,
+                cellHorizontalMargin: horizontalMargin,
+                cellVerticalMargin: verticalMargin,
+                cornerRadius: isNaN(this.params.borderRadius) ? FieldLedMatrix.CELL_CORNER_RADIUS : this.params.borderRadius,
                 cellFill: this.palette[0],
                 padLeft: this.getYAxisWidth(),
                 scale: this.scale
@@ -197,10 +203,10 @@ export class FieldLedMatrix extends FieldMatrix implements FieldCustom {
             this.updateValue();
 
             if (this.xAxisLabel !== LabelMode.None) {
-                const y = this.scale * this.numMatrixRows * (FieldLedMatrix.CELL_WIDTH + FieldLedMatrix.CELL_VERTICAL_MARGIN) + FieldLedMatrix.CELL_VERTICAL_MARGIN * 2 + FieldLedMatrix.BOTTOM_MARGIN
+                const y = this.scale * this.numMatrixRows * (FieldLedMatrix.CELL_WIDTH + verticalMargin) + verticalMargin * 2 + FieldLedMatrix.BOTTOM_MARGIN
                 const xAxis = pxsim.svg.child(this.matrixSvg, "g", { transform: `translate(${0} ${y})` });
                 for (let i = 0; i < this.numMatrixCols; i++) {
-                    const x = this.getYAxisWidth() + this.scale * i * (FieldLedMatrix.CELL_WIDTH + FieldLedMatrix.CELL_HORIZONTAL_MARGIN) + FieldLedMatrix.CELL_WIDTH / 2 + FieldLedMatrix.CELL_HORIZONTAL_MARGIN / 2;
+                    const x = this.getYAxisWidth() + this.scale * i * (FieldLedMatrix.CELL_WIDTH + horizontalMargin) + FieldLedMatrix.CELL_WIDTH / 2 + horizontalMargin / 2;
                     const lbl = pxsim.svg.child(xAxis, "text", { x, class: "blocklyText" })
                     lbl.textContent = this.getLabel(i, this.xAxisLabel);
                 }
@@ -209,7 +215,7 @@ export class FieldLedMatrix extends FieldMatrix implements FieldCustom {
             if (this.yAxisLabel !== LabelMode.None) {
                 const yAxis = pxsim.svg.child(this.matrixSvg, "g", {});
                 for (let i = 0; i < this.numMatrixRows; i++) {
-                    const y = this.scale * i * (FieldLedMatrix.CELL_WIDTH + FieldLedMatrix.CELL_VERTICAL_MARGIN) + FieldLedMatrix.CELL_WIDTH / 2 + FieldLedMatrix.CELL_VERTICAL_MARGIN * 2;
+                    const y = this.scale * i * (FieldLedMatrix.CELL_WIDTH + verticalMargin) + FieldLedMatrix.CELL_WIDTH / 2 + verticalMargin * 2;
                     const lbl = pxsim.svg.child(yAxis, "text", { x: 0, y, class: "blocklyText" })
                     lbl.textContent = this.getLabel(i, this.yAxisLabel);
                 }
