@@ -79,6 +79,7 @@ export class BaseFieldTextDropdown extends Blockly.FieldTextInput {
 
         this.inputKeydownHandler = this.inputKeydownListener.bind(this);
         this.htmlInput_.addEventListener('keydown', this.inputKeydownHandler);
+        this.htmlInput_.setAttribute("role", "combobox");
 
         if (!quietInput) {
             this.htmlInput_.focus();
