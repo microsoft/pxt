@@ -1070,18 +1070,7 @@ namespace pxt {
                             })
                     })))
                 .then(() => {
-                    // Subcategories and groups are translated in their respective package, but are not really APIs so
-                    // there's no way for the translation to be saved with a block. To work around this, we copy the
-                    // translations to the editor translations.
-                    const strings = U.getLocalizedStrings();
-                    Object.keys(loc).forEach((l) => {
-                        if (U.startsWith(l, "{id:subcategory}") || U.startsWith(l, "{id:group}")) {
-                            if (!strings[l]) {
-                                strings[l] = loc[l];
-                            }
-                        }
-                    });
-                    U.setLocalizedStrings(strings);
+                    U.copySubcategoryStrings(loc);
 
                     return Promise.resolve(loc);
                 });

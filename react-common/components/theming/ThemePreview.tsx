@@ -20,7 +20,7 @@ export const ThemePreview = (props: { theme: pxt.ColorThemeInfo }) => {
     }, [theme]);
 
     return (
-        <div className={classList("theme-preview-container", uniqueContainerClassName)}>
+        <div className={classList("theme-preview-container", uniqueContainerClassName)} aria-hidden="true">
             <style ref={styleRef} />
             <div className={classList("theme-preview", uniqueInnerClassName)}>
                 <div className="theme-preview-header">

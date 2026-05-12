@@ -6,7 +6,7 @@ import * as ReactTooltip from 'react-tooltip';
 import * as data from "./data";
 import * as core from "./core";
 import { fireClickOnEnter } from "./util";
-import { focusLastActive } from "../../react-common/components/util";
+import { classList, focusLastActive } from "../../react-common/components/util";
 import { ThemeManager } from "../../react-common/components/theming/themeManager";
 
 export const appElement = document.getElementById('content');
@@ -511,6 +511,7 @@ export interface ButtonProps extends UiProps, TooltipUIProps {
     id?: string;
     title?: string;
     ariaLabel?: string;
+    ariaDisabled?: boolean;
     ariaExpanded?: boolean;
     onClick?: (e: React.MouseEvent<HTMLElement>) => void;
     disabled?: boolean;
@@ -539,6 +540,7 @@ export class Button extends StatelessUIElement<ButtonProps> {
             tabIndex={this.props.tabIndex || 0}
             aria-label={this.props.ariaLabel}
             aria-expanded={this.props.ariaExpanded}
+            aria-disabled={this.props.ariaDisabled ?? disabled}
             onClick={this.props.onClick}
             onKeyDown={this.props.onKeyDown}
             autoFocus={this.props.autoFocus}
@@ -618,19 +620,31 @@ export function helpIconLink(url: string, title: string) {
 
 export class Field extends data.Component<{
     label?: string;
+    labelWrapper?: React.ElementType;
+    visuallyHidden?: boolean;
     children?: any;
-    ariaLabel?: string;
     htmlFor?: string;
 }, {}> {
     renderCore() {
         return (
             <div className="field">
-                {this.props.label ? <label htmlFor={!this.props.ariaLabel ? this.props.htmlFor : undefined}>{this.props.label}</label> : null}
-                {this.props.ariaLabel && this.props.htmlFor ? (<label htmlFor={this.props.htmlFor} className="accessible-hidden">{this.props.ariaLabel}</label>) : ""}
+                <LabelWrapper
+                    wrapperType={this.props.labelWrapper}
+                >
+                    {this.props.label && this.props.htmlFor && (<label className={classList(this.props.visuallyHidden ? "accessible-hidden" : "")} htmlFor={this.props.htmlFor}>{this.props.label}</label>)}
+                </LabelWrapper>
                 {this.props.children}
             </div>
         );
     }
+}
+
+const LabelWrapper = ({wrapperType, children}: {wrapperType?: React.ElementType, children: React.ReactNode}) => {
+    if (wrapperType) {
+        const Wrapper = wrapperType;
+        return <Wrapper>{children}</Wrapper>
+    }
+    return <>{children}</>
 }
 
 ///////////////////////////////////////////////////////////
@@ -639,7 +653,9 @@ export class Field extends data.Component<{
 
 export interface InputProps {
     label?: string;
+    labelWrapper?: React.ElementType
     inputLabel?: string;
+    visuallyHiddenLabel?: boolean;
     class?: string;
     value?: string;
     error?: string;
@@ -653,7 +669,6 @@ export interface InputProps {
     copy?: boolean;
     selectOnClick?: boolean;
     id?: string;
-    ariaLabel?: string;
     autoFocus?: boolean;
     autoComplete?: boolean;
     selectOnMount?: boolean;
@@ -746,14 +761,14 @@ export class Input extends data.Component<InputProps, InputState> {
 
     renderCore() {
         const p = this.props;
-        const { copy, error, ariaLabel, id, label, inputLabel, lines, autoFocus, placeholder, readOnly, autoComplete } = p;
+        const { copy, error, id, label, labelWrapper, inputLabel, lines, autoFocus, placeholder, readOnly, autoComplete, visuallyHiddenLabel } = p;
         const { value, copied } = this.state;
         const copyBtn = copy && document.queryCommandSupported('copy')
             ? <Button className={`ui right labeled ${copied ? "green" : "primary"} icon button`} text={copied ? lf("Copied!") : lf("Copy")} icon="copy" onClick={this.copy} />
             : null;
 
         return (
-            <Field ariaLabel={ariaLabel} htmlFor={id} label={label}>
+            <Field htmlFor={id} label={label} visuallyHidden={visuallyHiddenLabel} labelWrapper={labelWrapper}>
                 <div className={"ui input" + (p.inputLabel ? " labelled" : "") + (copy ? " action fluid" : "") + (p.disabled ? " disabled" : "")}>
                     {inputLabel ? (<div className="ui label">{inputLabel}</div>) : ""}
                     {!lines || lines == 1 ? <input

@@ -15,14 +15,14 @@ export const ThemeCard = (props: ThemeCardProps) => {
         <Card
             className="theme-card"
             role="listitem"
-            aria-label={theme.name}
+            ariaLabelledBy={theme.id + "-title"}
             key={theme.id}
             onClick={() => onClick(theme)}
             tabIndex={onClick && 0}
         >
             <div className="theme-info-box">
                 <ThemePreview theme={theme} />
-                <div className="theme-picker-item-name">{themeName}</div>
+                <div id={theme.id + "-title"} className="theme-picker-item-name">{themeName}</div>
             </div>
         </Card>
     );

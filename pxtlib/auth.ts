@@ -73,7 +73,7 @@ namespace pxt.auth {
     export const DEFAULT_USER_PREFERENCES: () => UserPreferences = () => ({
         language: pxt.appTarget.appTheme.defaultLocale,
         highContrast: false,
-        accessibleBlocks: false,
+        accessibleBlocks: undefined, // Defaulted at read time depending on flag
         colorThemeIds: {}, // Will lookup pxt.appTarget.appTheme.defaultColorTheme for active target
         reader: "",
         skillmap: { mapProgress: {}, completedTags: {} },

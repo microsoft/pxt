@@ -531,6 +531,20 @@ export function projectSearchClear() {
         });
 }
 
+export function homeSearchAsync(searchFor: pxtc.service.HomeSearchOptions): Promise<pxtc.service.HomeSearchInfo[]> {
+    return ensureApisInfoAsync()
+        .then(() => {
+            return workerOpAsync("homeSearch", { homeSearch: searchFor });
+        });
+}
+
+export function homeSearchClear() {
+    return ensureApisInfoAsync()
+        .then(() => {
+            return workerOpAsync("homeSearchClear", {});
+        });
+}
+
 export function formatAsync(input: string, pos: number) {
     return workerOpAsync("format", { format: { input: input, pos: pos } });
 }

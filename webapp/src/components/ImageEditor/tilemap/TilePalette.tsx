@@ -58,7 +58,7 @@ interface Category {
     tiles: GalleryTile[];
 }
 
-const options: Category[] = [
+export const BUILTIN_CATEGORIES: Category[] = [
     {
         id: "forest",
         text: lf("Forest"),
@@ -126,7 +126,7 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
                 }
             }
 
-            this.categories = options.concat(Object.keys(extraCategories).map(key => extraCategories[key]));
+            this.categories = BUILTIN_CATEGORIES.concat(Object.keys(extraCategories).map(key => extraCategories[key]));
         } else {
             this.categories = [];
         }
@@ -434,7 +434,7 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
     protected refreshGallery(props: TilePaletteProps) {
         const { gallery, tileset } = props;
         if (gallery) {
-            options.forEach(opt => {
+            BUILTIN_CATEGORIES.forEach(opt => {
                 opt.tiles = gallery.filter(t => t.tags.indexOf(opt.id) !== -1 && t.tileWidth === tileset.tileWidth);
             });
         }

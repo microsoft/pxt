@@ -168,6 +168,7 @@ export class ProjectView
     private preserveUndoStack: boolean;
     private rootClasses: string[];
     private pendingImport: pxt.Util.DeferredPromise<void>;
+    private editorMountComplete = pxt.Util.defer<void>();
     private shouldFocusToolbox: boolean;
 
     private themeManager: ThemeManager;
@@ -205,7 +206,8 @@ export class ProjectView
             isMultiplayerGame: false,
             activeTourConfig: undefined,
             mute: pxt.editor.MuteState.Unmuted,
-            feedback: {showing: false, kind: "generic"} // state that tracks if the feedback modal is showing and what kind
+            feedback: {showing: false, kind: "generic"}, // state that tracks if the feedback modal is showing and what kind
+            errorListCollapsed: true // error pane is collapsed by default
         };
         if (!this.settings.editorFontSize) this.settings.editorFontSize = /mobile/i.test(navigator.userAgent) ? 15 : 19;
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
@@ -720,8 +722,12 @@ export class ProjectView
         pxt.shell.setEditorLanguagePref("js");
     }
 
-    openBlocks() {
+    openBlocks(showKeyboardControlsHint?: boolean) {
         if (this.updatingEditorFile) return; // already transitioning
+
+        if (showKeyboardControlsHint) {
+            this.blocksEditor.pendingKeyboardControlsHint = true;
+        }
 
         if (this.isBlocksActive()) {
             if (this.state.embedSimView) this.setState({ embedSimView: false });
@@ -1198,6 +1204,7 @@ export class ProjectView
         // subscribe to user preference changes (for simulator or non-render subscriptions)
         data.subscribe(this.cloudStatusSubscriber, `${cloud.HEADER_CLOUDSTATE}:*`);
         data.subscribe(this.headerChangeSubscriber, "header:*");
+        this.editorMountComplete.resolve(undefined);
     }
 
     public componentWillUnmount() {
@@ -1731,6 +1738,7 @@ export class ProjectView
 
     private async internalLoadHeaderAsync(h: pxt.workspace.Header, editorState?: pxt.editor.EditorState): Promise<void> {
         pxt.debug(`loading ${h.id} (pxt v${h.targetVersion})`);
+        await this.editorMountComplete.promise;
         this.stopSimulator(true);
         if (pxt.appTarget.simulator && pxt.appTarget.simulator.aspectRatio) {
             simulator.driver.preload(pxt.appTarget.simulator.aspectRatio);
@@ -1925,7 +1933,13 @@ export class ProjectView
             pxt.BrowserUtils.changeHash("#editor", true);
             // Clear the focus.
             document.getElementById("root").focus();
-            /* await */ cmds.maybeReconnectAsync(false, true);
+            /** TODO: Resolve race condition that makes this having a delay necessary.
+             * Without this delay, in some circumstances (e.g. extensions being added) the reconnect will go through
+             * but webusb state will be lost right afterwards and the download icon will change from webusb connected
+             * to normal save icon (with some inconsistency on whether clicking download automatically reconnects,
+             * or requires further attention in form of disconnect/reconnect or page refresh)
+             */
+            /* await */ pxt.Util.delay(500).then(() => cmds.maybeReconnectAsync(false, true));
             this.editorLoaded();
         }
     }
@@ -2702,7 +2716,7 @@ export class ProjectView
 
     initDragAndDrop() {
         draganddrop.addDragAndDropHandler({
-            filter: file => file.size < 1000000,
+            filter: () => true,
             dragged: files => {
                 if (files) {
                     pxt.tickEvent("dragandrop.open")
@@ -2819,7 +2833,7 @@ export class ProjectView
         return Util.promiseTimeout(1000, this.requestScreenshotPromise = new Promise<string>((resolve, reject) => {
             this.pushScreenshotHandler(msg => resolve(pxt.BrowserUtils.imageDataToPNG(msg.data, 3)));
         })) // simulator might be stopped or in bad shape
-            .catch(e => {
+            .catch((e: any) => {
                 pxt.tickEvent('screenshot.timeout');
                 return undefined;
             })
@@ -2975,10 +2989,11 @@ export class ProjectView
                     if (hc) params.set("hc", "1");
                     else params.delete("hc");
                 }
+                // Need to add the URL parameters to the URL for the reload.
+                // Assigning to search will navigate on the first call but reload() needed
+                // for subsequent calls if there's a fragment (e.g. #editor).
                 location.search = params.toString();
-                // .reload refreshes without hitting server so it loses the params,
-                // so have to navigate directly
-                location.assign(location.toString());
+                location.reload();
             } else {
                 location.reload();
             }
@@ -3962,7 +3977,7 @@ export class ProjectView
             this.runToken = null
         }
 
-        if (this.isSimulatorRunning() || unload && simulator.driver.state !== pxsim.SimulatorState.Unloaded) {
+        if (simulator.driver && (this.isSimulatorRunning() || unload && simulator.driver.state !== pxsim.SimulatorState.Unloaded)) {
             simulator.stop(unload);
         }
 
@@ -4450,7 +4465,7 @@ export class ProjectView
 
     async publishAsync (name: string, description?: string,screenshotUri?: string, forceAnonymous?: boolean): Promise<pxt.editor.ShareData> {
         pxt.tickEvent("menu.embed.publish", undefined, { interactiveConsent: true });
-        if ((name && this.state.projectName != name) || description) {
+        if ((name && this.state.projectName != name) || description !== undefined) {
             await this.updateHeaderNameAsync(name, description);
         }
 
@@ -4600,18 +4615,18 @@ export class ProjectView
 
     updateHeaderNameAsync(name: string, description?: string): Promise<void> {
         // nothing to do?
-        if (pkg.mainPkg.config.name == name && (!description || pkg.mainPkg.config.description == description))
+        if (pkg.mainPkg.config.name == name && (description === undefined || pkg.mainPkg.config.description == description))
             return Promise.resolve();
 
         //Save the name in the target MainPackage as well
         pkg.mainPkg.config.name = name;
-        pkg.mainPkg.config.description = description || pkg.mainPkg.config.description;
+        pkg.mainPkg.config.description = description !== undefined ? description : pkg.mainPkg.config.description;
 
         pxt.debug('saving project name to ' + name);
         let f = pkg.mainEditorPkg().lookupFile("this/" + pxt.CONFIG_NAME);
         let config = JSON.parse(f.content) as pxt.PackageConfig;
         config.name = name;
-        config.description = description || config.description;
+        config.description = description !== undefined ? description : config.description;
         return f.setContentAsync(pxt.Package.stringifyConfig(config))
             .then(() => {
                 if (this.state.header)
@@ -6060,11 +6075,7 @@ function isProjectRelatedHash(hash: { cmd: string; arg: string }): boolean {
 }
 
 async function importGithubProject(repoid: string, requireSignin?: boolean) {
-    if (!pxt.appTarget.appTheme.githubEditor || pxt.BrowserUtils.isPxtElectron()) {
-        core.warningNotification(lf("Importing GitHub projects not currently supported"));
-        theEditor.openHome();
-        return;
-    }
+    const githubEnabled = !!pxt.appTarget.appTheme.githubEditor && !pxt.BrowserUtils.isPxtElectron();
 
     core.showLoading("loadingheader", lf("importing GitHub project..."));
     try {
@@ -6078,7 +6089,7 @@ async function importGithubProject(repoid: string, requireSignin?: boolean) {
             pxt.github.normalizeRepoId(h.githubId) == repoid
         );
         if (!hd) {
-            if (requireSignin) {
+            if (requireSignin && githubEnabled) {
                 const token = await cloudsync.githubProvider(true).routedLoginAsync(repoid);
                 if (!token.accessToken) { // did not sign in, give up
                     theEditor.openHome();
@@ -6087,8 +6098,14 @@ async function importGithubProject(repoid: string, requireSignin?: boolean) {
             }
             hd = await workspace.importGithubAsync(repoid);
         }
-        if (hd)
+        if (hd) {
+            if (!githubEnabled) {
+                hd.githubId = undefined;
+                hd.githubTag = undefined;
+                hd.githubCurrent = false;
+            }
             await theEditor.loadHeaderAsync(hd, null)
+        }
         else
             theEditor.openHome();
     } catch (e) {
@@ -6507,14 +6524,12 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
             if (showHome) return Promise.resolve();
 
-
             // default handlers
             const ent = theEditor.settings.fileHistory.filter(e => !!workspace.getHeader(e.id))[0];
             let hd = workspace.getHeaders()[0];
             if (ent) hd = workspace.getHeader(ent.id);
             if (hd) return theEditor.loadHeaderAsync(hd, theEditor.state.editorState)
-            else theEditor.newProject();
-            return Promise.resolve();
+            else return theEditor.newProject();
         })
         .catch(e => {
             theEditor.handleCriticalError(e, "Failure in DOM loaded handler");

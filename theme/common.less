@@ -447,6 +447,7 @@ div.simframe > iframe {
 
     ul.common-menu-dropdown-pane {
         overflow-y: auto;
+        overflow-x: hidden;
         max-height: calc(100vh - @mainMenuHeight);
     }
 
@@ -1604,7 +1605,9 @@ p.ui.font.small {
     .menubar .ui.item:not(.logo),
     #maineditor,
     #editortools,
-    #serialPreview {
+    #serialPreview,
+    .settings-menuitem,
+    .help-dropdown-menuitem  {
         display: none !important;
         z-index: -10 !important;
     }

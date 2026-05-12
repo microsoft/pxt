@@ -98,6 +98,7 @@ declare namespace pxt {
             namespaces: {[index: string]: "visible" | "hidden" | "disabled"},
             blocks: {[index: string]: "visible" | "hidden" | "disabled"},
         }
+        disableHistory?: boolean; // if set to true, project history will not be saved for this project. useful for giant projects where diffing on each edit can slow things down
     }
 
     interface PackageExtension {
@@ -158,6 +159,7 @@ declare namespace pxt {
         labelIcon?: string;
         labelClass?: string;
         tags?: string[]; // tags shown in home screen, colors specified in theme
+        searchTerms?: string[]; // extra terms used to improve home screen search matching
         tabIndex?: number;
         style?: string; // "card" | "item" | undefined;
 

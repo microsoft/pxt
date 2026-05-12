@@ -820,6 +820,7 @@ declare namespace pxt.editor {
         simSerialActive?: boolean;
         deviceSerialActive?: boolean;
         errorListState?: ErrorListState;
+        errorListCollapsed?: boolean;
         screenshoting?: boolean;
         extensionsVisible?: boolean;
         isMultiplayerGame?: boolean; // Arcade: Does the current project contain multiplayer blocks?
@@ -914,7 +915,7 @@ declare namespace pxt.editor {
         forceUpdate(): void;
 
         reloadEditor(): void;
-        openBlocks(): void;
+        openBlocks(showKeyboardControlsHint?: boolean): void;
         openJavaScript(giveFocusOnLoading?: boolean): void;
         openPython(giveFocusOnLoading?: boolean): void;
         openAssets(): void;

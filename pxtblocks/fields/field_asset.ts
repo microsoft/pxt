@@ -96,21 +96,18 @@ export abstract class FieldAssetEditor<U extends FieldAssetEditorOptions, V exte
 
         params.blocksInfo = this.blocksInfo;
 
-        let editorKind: string;
+        let editorKind = this.getEditorKind();
 
         switch (this.asset.type) {
             case pxt.AssetType.Tile:
             case pxt.AssetType.Image:
-                editorKind = "image-editor";
                 params.temporaryAssets = getTemporaryAssets(this.sourceBlock_.workspace, pxt.AssetType.Image);
                 break;
             case pxt.AssetType.Animation:
-                editorKind = "animation-editor";
                 params.temporaryAssets = getTemporaryAssets(this.sourceBlock_.workspace, pxt.AssetType.Image)
                     .concat(getTemporaryAssets(this.sourceBlock_.workspace, pxt.AssetType.Animation));
                 break;
             case pxt.AssetType.Tilemap:
-                editorKind = "tilemap-editor";
                 const project = pxt.react.getTilemapProject();
                 pxt.sprite.addMissingTilemapTilesAndReferences(project, this.asset);
 
@@ -121,7 +118,6 @@ export abstract class FieldAssetEditor<U extends FieldAssetEditorOptions, V exte
                 }
                 break;
             case pxt.AssetType.Song:
-                editorKind = "music-editor";
                 params.temporaryAssets = getTemporaryAssets(this.sourceBlock_.workspace, pxt.AssetType.Song);
                 setMelodyEditorOpen(this.sourceBlock_, true);
                 break;
@@ -134,6 +130,21 @@ export abstract class FieldAssetEditor<U extends FieldAssetEditorOptions, V exte
         else {
             this.showEditorInWidgetDiv(editorKind, params);
         }
+    }
+
+    protected getEditorKind(): string{
+        switch (this.asset.type) {
+            case pxt.AssetType.Tile:
+            case pxt.AssetType.Image:
+                return "image-editor";
+            case pxt.AssetType.Animation:
+                return "animation-editor";
+            case pxt.AssetType.Tilemap:
+                return "tilemap-editor";
+            case pxt.AssetType.Song:
+                return "music-editor";
+        }
+        return undefined;
     }
 
     getFieldDescription(): string {

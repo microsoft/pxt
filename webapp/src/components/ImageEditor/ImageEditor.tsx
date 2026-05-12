@@ -19,6 +19,7 @@ import { Unsubscribe, Action } from 'redux';
 import { createNewImageAsset, getNewInternalID } from '../../assets';
 import { AssetEditorCore } from '../ImageFieldEditor';
 import { classList } from '../../../../react-common/components/util';
+import { BUILTIN_CATEGORIES } from './tilemap/TilePalette';
 
 export const LIGHT_MODE_TRANSPARENT = "#dedede";
 
@@ -220,7 +221,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
         const remappedByBitmap: pxt.Map<pxt.Tile> = {};
 
         for (let i = 0; i < tiles.length; i++) {
-            const tile = tiles[i];
+            let tile = tiles[i];
             if (!tile) continue;
 
             const key = (tile as any).jresData || (tile.bitmap ? pxt.sprite.base64EncodeBitmap(tile.bitmap) : "");
@@ -250,7 +251,16 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
                 continue;
             }
 
+            const galleryTile = project.lookupAsset(pxt.AssetType.Tile, tile.id);
+            if (galleryTile) {
+                tile = galleryTile;
+            }
+
             if (tile.bitmap) {
+                if (tile.meta.tags?.some(t => t.startsWith("category-") || BUILTIN_CATEGORIES.some(c => c.id === t))) {
+                    // tile already exist in the tile palette dropdown, so skip to avoid creating duplicates in the project
+                    continue;
+                }
                 const originalName = getSourceTileName(tile);
                 const newName = originalName ? project.generateNewName(pxt.AssetType.Tile, originalName) : undefined;
 

@@ -3,7 +3,7 @@ import { Button } from "../../../../react-common/components/controls/Button";
 import { SoundControls } from "./SoundControls";
 import { SoundEffectHeader } from "./SoundEffectHeader";
 import { SoundGallery } from "./SoundGallery";
-import { SoundPreview } from "./SoundPreview";
+import { PreviewSynthListener, SoundPreview } from "./SoundPreview";
 import { getGallerySounds, soundToCodalSound } from "./soundUtil";
 import { FocusTrap, FocusTrapRegion } from "../../../../react-common/components/controls/FocusTrap";
 
@@ -44,7 +44,7 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
 
     let startPreviewAnimation: (duration: number) => void;
     let startControlsAnimation: (duration: number) => void;
-    let previewSynthListener: (freq: number, vol: number, sound: pxt.assets.Sound, cancelToken: CancellationToken) => void;
+    let previewSynthListener: PreviewSynthListener;
 
     const cancel = () => {
         if (!cancelToken) return;
@@ -67,8 +67,8 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
         if (startControlsAnimation) startControlsAnimation(toPlay.duration);
 
         const isCancelled = () => newToken.cancelled;
-        const onPull = (freq: number, volume: number) => {
-            previewSynthListener(freq, volume, toPlay, newToken)
+        const onPull = (snapshot: pxsim.AudioContextManager.SoundOscilloscopeData | pxsim.AudioContextManager.SoundSnapshotData) => {
+            previewSynthListener(snapshot, toPlay, newToken);
         }
 
         if (useMixerSynthesizer) {
@@ -109,6 +109,12 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
             play();
     }, [play, selectedView])
 
+    React.useEffect(() => {
+        return () => {
+            pxsim.AudioContextManager.stopAll();
+        }
+    }, [])
+
     const handlePlayButtonClick = () => {
         if (cancelToken) {
             cancel();
@@ -134,7 +140,7 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
         startControlsAnimation = startAnimation;
     }
 
-    const handleSynthListenerRef = (onPull: (freq: number, vol: number, sound: pxt.assets.Sound, token: CancellationToken) => void) => {
+    const handleSynthListenerRef = (onPull: PreviewSynthListener) => {
         previewSynthListener = onPull;
     }
 
@@ -153,7 +159,7 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
 
     return (
         <div className="sound-effect-editor" onKeyDown={handleKeyDown}>
-            {/* 
+            {/*
                 Don't steal focus to prevent focus-visible style if opened by mouse.
                 If opened by keyboard, we focus the editor / gallery toggle anyway.
             */}
@@ -177,7 +183,12 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
                             onClick={handlePlayButtonClick}
                             leftIcon={cancelToken ? "fas fa-stop" : "fas fa-play"}
                             />
-                        <SoundControls sound={sound} onSoundChange={handleSoundChange} handleStartAnimationRef={handleControlsAnimationRef} />
+                        <SoundControls
+                            sound={sound}
+                            onSoundChange={handleSoundChange}
+                            handleStartAnimationRef={handleControlsAnimationRef}
+                            isMixerSound={useMixerSynthesizer}
+                        />
                         <Button
                             className="link-button generate-similar"
                             leftIcon="fas fa-sync"

@@ -48,7 +48,7 @@ export class FieldAnimationEditor extends FieldAssetEditor<FieldAnimationOptions
     initView() {
         // Register mouseover events for animating preview
         (this.sourceBlock_ as Blockly.BlockSvg).getSvgRoot().addEventListener("mouseenter", this.onMouseEnter);
-        (this.sourceBlock_ as Blockly.BlockSvg).getSvgRoot().addEventListener("mouseleave", this.onMouseLeave);
+        (this.sourceBlock_ as Blockly.BlockSvg).getSvgRoot().addEventListener("mouseleave", this.cancelAnimation);
     }
 
     showEditor_() {
@@ -156,7 +156,7 @@ export class FieldAnimationEditor extends FieldAssetEditor<FieldAnimationOptions
         }
     }
 
-    protected onMouseEnter = () => {
+    protected onMouseEnter = (e: MouseEvent) => {
         if (this.animateRef || !this.asset) return;
 
         const assetInterval = this.getParentInterval() || this.asset.interval;
@@ -168,15 +168,27 @@ export class FieldAnimationEditor extends FieldAssetEditor<FieldAnimationOptions
             if (this.preview && this.frames[index]) this.preview.src(this.frames[index]);
             index = (index + 1) % this.frames.length;
         }, interval);
+
+        document.addEventListener("mousemove", this.onDocumentMouseMove);
     }
 
-    protected onMouseLeave = () => {
+    protected onDocumentMouseMove = (e: MouseEvent) => {
+        const rect = (this.sourceBlock_ as Blockly.BlockSvg).getSvgRoot().getBoundingClientRect();
+
+        if (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) {
+            this.cancelAnimation();
+        }
+    }
+
+    protected cancelAnimation = () => {
         if (this.animateRef) clearInterval(this.animateRef);
         this.animateRef = undefined;
 
         if (this.preview && this.frames[0]) {
             this.preview.src(this.frames[0]);
         }
+
+        document.removeEventListener("mousemove", this.onDocumentMouseMove);
     }
 
     protected getParentIntervalBlock(): Blockly.Block {
@@ -219,6 +231,17 @@ export class FieldAnimationEditor extends FieldAssetEditor<FieldAnimationOptions
 
     protected parseFieldOptions(opts: FieldAnimationOptions): ParsedFieldAnimationOptions {
         return parseFieldOptions(opts);
+    }
+
+    onDispose() {
+        super.onDispose();
+
+        const root = (this.sourceBlock_ as Blockly.BlockSvg)?.getSvgRoot?.();
+        if (root) {
+            root.removeEventListener("mouseenter", this.onMouseEnter);
+            root.removeEventListener("mouseleave", this.cancelAnimation);
+        }
+        document.removeEventListener("mousemove", this.onDocumentMouseMove);
     }
 }
 

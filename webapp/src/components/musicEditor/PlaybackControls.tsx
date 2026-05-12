@@ -6,23 +6,30 @@ import { classList } from "../../../../react-common/components/util";
 import { addPlaybackStateListener, isLooping, isPlaying, removePlaybackStateListener, setLooping, startPlaybackAsync, stopPlayback } from "./playback";
 
 export interface PlaybackControlsProps {
-    song: pxt.assets.music.Song;
+    measures: number;
+    beatsPerMinute: number;
+    onControlsClick(action: "play" | "stop" | "loop"): void;
     onTempoChange: (newTempo: number) => void;
     onMeasuresChanged: (newMeasures: number) => void;
-    showBassClef: boolean;
-    onBassClefCheckboxClick: (newValue: boolean) => void;
+    hideBassClefOption?: boolean;
+    showBassClef?: boolean;
+    onBassClefCheckboxClick?: (newValue: boolean) => void;
+
+    singlePlayButton?: boolean;
 
     hasUndo: boolean;
     hasRedo: boolean;
     onUndoClick: () => void;
-    onRedoClick: () => void;
-}
+    onRedoClick: () => void
+};
 
 type PlaybackState = "stop" | "play" | "loop"
 
 export const PlaybackControls = (props: PlaybackControlsProps) => {
     const {
-        song,
+        measures,
+        beatsPerMinute,
+        onControlsClick,
         onTempoChange,
         onMeasuresChanged,
         onUndoClick,
@@ -30,7 +37,9 @@ export const PlaybackControls = (props: PlaybackControlsProps) => {
         hasUndo,
         hasRedo,
         showBassClef,
-        onBassClefCheckboxClick
+        hideBassClefOption,
+        onBassClefCheckboxClick,
+        singlePlayButton
     } = props;
 
     const [state, setState] = React.useState<PlaybackState>("stop");
@@ -47,19 +56,19 @@ export const PlaybackControls = (props: PlaybackControlsProps) => {
     }, [])
 
     const onStopClick = () => {
-        stopPlayback();
+        onControlsClick("stop");
         setState("stop")
     }
 
     const onPlayClick = () => {
-        startPlaybackAsync(song, false, 0);
+        onControlsClick("play");
         setState("play")
     }
 
     const onLoopClick = () => {
         if (isLooping()) return;
         else if (isPlaying()) setLooping(true);
-        else startPlaybackAsync(song, true, 0);
+        else onControlsClick("loop");
         setState("loop")
     }
 
@@ -73,14 +82,14 @@ export const PlaybackControls = (props: PlaybackControlsProps) => {
     }
 
     const handleMeasureMinusClick = () => {
-        if (song.measures > 1) {
-            onMeasuresChanged(song.measures - 1);
+        if (measures > 1) {
+            onMeasuresChanged(measures - 1);
         }
     }
 
     const handleMeasurePlusClick = () => {
-        if (song.measures < 50) {
-            onMeasuresChanged(song.measures + 1);
+        if (measures < 50) {
+            onMeasuresChanged(measures + 1);
         }
     }
 
@@ -94,35 +103,52 @@ export const PlaybackControls = (props: PlaybackControlsProps) => {
 
     return <div className="music-playback-controls">
         <div className="music-playback-buttons">
-            <Button
-                className="square-button"
-                title={lf("Stop")}
-                leftIcon="fas fa-stop"
-                onClick={onStopClick} />
-            <Button
-                className={classList("square-button", state === "play" && "green")}
-                title={lf("Play")}
-                leftIcon="fas fa-play"
-                onClick={onPlayClick} />
-            <Button
-                className={classList("square-button", state === "loop" && "green")}
-                title={lf("Loop")}
-                leftIcon="fas fa-retweet"
-                onClick={onLoopClick} />
+            {!singlePlayButton &&
+                <>
+                    <Button
+                        className="square-button"
+                        title={lf("Stop")}
+                        leftIcon="fas fa-stop"
+                        onClick={onStopClick}
+                    />
+                    <Button
+                        className={classList("square-button", state === "play" && "green")}
+                        title={lf("Play")}
+                        leftIcon="fas fa-play"
+                        onClick={onPlayClick}
+                    />
+                    <Button
+                        className={classList("square-button", state === "loop" && "green")}
+                        title={lf("Loop")}
+                        leftIcon="fas fa-retweet"
+                        onClick={onLoopClick}
+                    />
+                </>
+            }
+            {singlePlayButton &&
+                <Button
+                    className={classList("square-button", state !== "stop" && "green")}
+                    title={lf("Play")}
+                    leftIcon={state === "stop" ? "fas fa-play" : "fas fa-stop"}
+                    onClick={state === "stop" ? onLoopClick : onStopClick}
+                />
+            }
         </div>
         <Input
             id="music-playback-tempo-input music-editor-label"
             label={lf("Tempo:")}
-            initialValue={song.beatsPerMinute.toString()}
+            initialValue={beatsPerMinute.toString()}
             onBlur={handleTempoChange}
             onEnterKey={handleTempoChange} />
-        <div className="spacer"/>
-        <Checkbox
-            className="music-editor-label"
-            id="show-bass-clef"
-            label={lf("Show bass clef")}
-            isChecked={showBassClef}
-            onChange={onBassClefCheckboxClick} />
+        <div className="spacer" />
+        {!hideBassClefOption &&
+            <Checkbox
+                className="music-editor-label"
+                id="show-bass-clef"
+                label={lf("Show bass clef")}
+                isChecked={showBassClef}
+                onChange={onBassClefCheckboxClick} />
+        }
         <div className="music-undo-redo common-button-group">
             <Button
                 className="square-button purple"
@@ -148,7 +174,7 @@ export const PlaybackControls = (props: PlaybackControlsProps) => {
                 onClick={handleMeasureMinusClick} />
             <Input
                 id="music-playback-measures-input"
-                initialValue={song.measures.toString()}
+                initialValue={measures.toString()}
                 onBlur={handleMeasureChange}
                 onEnterKey={handleMeasureChange}
             />

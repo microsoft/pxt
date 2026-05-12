@@ -1,8 +1,8 @@
 
 // Helpers designed to help to make a simulator accessible.
 namespace pxsim.accessibility {
-    let liveRegion: HTMLDivElement;
     let keydownListenerAdded = false;
+    let zeroWidthSpace = false;
 
     export function makeFocusable(elem: SVGElement): void {
         elem.setAttribute("focusable", "true");
@@ -73,27 +73,26 @@ namespace pxsim.accessibility {
     }
 
     export function setLiveContent(value: string): void {
+        let liveRegion = document.getElementById("sim-live-region");
         if (!liveRegion) {
-            let style = "position: absolute !important;" +
-                        "display: block;" +
-                        "visibility: visible;" +
-                        "overflow: hidden;" +
-                        "width: 1px;" +
+            let style = "border: 0;" +
+                        "clip: rect(0, 0, 0, 0);" +
                         "height: 1px;" +
                         "margin: -1px;" +
-                        "border: 0;" +
+                        "overflow: hidden;" +
                         "padding: 0;" +
-                        "clip: rect(0 0 0 0);";
+                        "position: absolute;" +
+                        "width: 1px;";
             liveRegion = document.createElement("div");
-            liveRegion.setAttribute("role", "status");
+            liveRegion.id = "sim-live-region";
             liveRegion.setAttribute("aria-live", "polite");
-            liveRegion.setAttribute("aria-hidden", "false");
             liveRegion.setAttribute("style", style);
             document.body.appendChild(liveRegion);
         }
 
-        if (liveRegion.textContent !== value) {
-            liveRegion.textContent = value;
+        if (value) {
+            liveRegion.textContent = `${value}${zeroWidthSpace ? '\u200B': ''}`;
+            zeroWidthSpace = !zeroWidthSpace;
         }
     }
 }

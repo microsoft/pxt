@@ -82,6 +82,7 @@ export class BaseFieldTextDropdown extends Blockly.FieldTextInput {
 
         if (!quietInput) {
             this.htmlInput_.focus();
+            this.htmlInput_.select();
         }
     }
 

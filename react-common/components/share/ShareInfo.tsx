@@ -386,7 +386,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
                             <Textarea
                                 ariaDescribedBy="share-description-title"
                                 ariaLabel={lf("Type a description for your project")}
-                                initialValue={projectDescription || ''}
+                                initialValue={description !== undefined ? description : (projectDescription || '')}
                                 onChange={setDescription}
                                 id="projectDescriptionTextareaShare"
                                 maxLength={pxt.MAX_DESCRIPTION_LENGTH}
@@ -501,13 +501,13 @@ export const ShareInfo = (props: ShareInfoProps) => {
                                         heading={lf("Share on WhatsApp")} />
                                     {
                                         pxt.appTarget?.appTheme?.shareToKiosk &&
-                                            <Button className="square-button neutral mobile-portrait-hidden"
+                                            <Button className="square-button neutral mobile-portrait-hidden social-button"
                                             title={lf("Share to MakeCode Arcade Kiosk")}
                                             leftIcon={"xicon kiosk"}
                                             onClick={handleKioskClick} />
                                     }
                                     {
-                                        navigator.share && <Button className="square-button device-share"
+                                        navigator.share && <Button className="square-button device-share social-button"
                                             title={lf("Show device share options")}
                                             ariaLabel={lf("Show device share options")}
                                             leftIcon={"icon share"}

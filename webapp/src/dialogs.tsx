@@ -701,7 +701,7 @@ export function showReportAbuseAsync(pubId?: string) {
                 core.infoNotification(lf("Sending abuse report..."));
                 Cloud.privatePostAsync(`${id}/abusereports`, {
                     text: reasonInput.value
-                })
+                }, true)
                     .then(res => {
                         core.infoNotification(lf("Report sent. Thank you!"))
                     })
