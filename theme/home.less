@@ -277,6 +277,17 @@
         .gallery-actions {
             z-index: 1;
         }
+        .gallery-heading-column > .ui.button,
+        .gallery-actions > .ui.button {
+            position: relative;
+            z-index: 1; /* Move up so it's above the carousel container that has an offset margin */
+            &:focus-visible {
+                outline-width: @homeCardBorderSize !important;
+                outline-style: solid;
+                outline-color: var(--pxt-focus-border);
+                outline-offset: 2px;
+            }
+        }
         .gallery-actions {
             display: flex;
             justify-content: flex-end;
@@ -293,16 +304,6 @@
     .homescreen-search-box {
         padding-top: 1em;
         margin: 1em @carouselArrowSize;
-    }
-    .import-dialog-btn {
-        position: relative;
-        z-index: 1; /* Move up so it's above the carousel container that has an offset margin */
-        &:focus-visible {
-            outline-width: @homeCardBorderSize !important;
-            outline-style: solid;
-            outline-color: var(--pxt-focus-border);
-            outline-offset: 2px;
-        }
     }
     /* Footer, Privary, Terms of Use */
     .homefooter {
