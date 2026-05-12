@@ -218,6 +218,40 @@
                 > .ui.card:first-child {
                     margin: 1em 0;
                 }
+
+                > .ui.card.selected {
+                    border: @homeSelectedCardBorderSize solid var(--pxt-neutral-background1) !important;
+                    z-index: @homeDetailViewSelectedCardZIndex;
+
+                    &:hover {
+                        transform: none;
+                    }
+
+                    &:after, &:before {
+                        top: 100%;
+                        left: 50%;
+                        border: solid transparent;
+                        content: " ";
+                        height: 0;
+                        width: 0;
+                        position: absolute;
+                        pointer-events: none;
+                    }
+
+                    &:after {
+                        border-color: var(--pxt-neutral-alpha0);
+                        border-top-color: var(--pxt-neutral-background1);
+                        border-width: 10px;
+                        margin-left: -10px;
+                    }
+
+                    &:before {
+                        border-color: var(--pxt-neutral-alpha0);
+                        border-top-color: var(--pxt-neutral-stencil3);
+                        border-width: 17px;
+                        margin-left: -17px;
+                    }
+                }
             }
 
             .search-detailview.detailview {
