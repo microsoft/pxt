@@ -91,6 +91,10 @@ namespace pxt.toolbox {
         return "";
     }
 
+    export function isImageIcon(icon: string): boolean {
+        return icon.length > 1 && /[/.]/.test(icon);
+    }
+
     export function advancedTitle() { return Util.lf("{id:category}Advanced"); }
     export function addPackageTitle() { return Util.lf("{id:category}Extensions"); }
     export function recipesTitle() { return Util.lf("{id:category}Tutorials"); }
