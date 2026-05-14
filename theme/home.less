@@ -218,6 +218,41 @@
                 > .ui.card:first-child {
                     margin: 1em 0;
                 }
+
+                > .ui.card.selected {
+                    border: @homeSelectedCardBorderSize solid var(--pxt-neutral-background1) !important;
+                    z-index: @homeDetailViewSelectedCardZIndex;
+                }
+
+                > .ui.card.selected:hover {
+                    transform: none;
+                }
+
+                > .ui.card.selected:after,
+                > .ui.card.selected:before {
+                    top: 100%;
+                    left: 50%;
+                    border: solid transparent;
+                    content: " ";
+                    height: 0;
+                    width: 0;
+                    position: absolute;
+                    pointer-events: none;
+                }
+
+                > .ui.card.selected:after {
+                    border-color: var(--pxt-neutral-alpha0);
+                    border-top-color: var(--pxt-neutral-background1);
+                    border-width: 10px;
+                    margin-left: -10px;
+                }
+
+                > .ui.card.selected:before {
+                    border-color: var(--pxt-neutral-alpha0);
+                    border-top-color: var(--pxt-neutral-stencil3);
+                    border-width: 17px;
+                    margin-left: -17px;
+                }
             }
 
             .search-detailview.detailview {
