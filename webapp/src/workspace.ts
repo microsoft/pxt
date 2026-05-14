@@ -633,16 +633,18 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
             .forEach(key => delete e.header[key as keyof Header]);
         h = e.header;
     }
-    if (text)
+    let pxtjson: pxt.PackageConfig | undefined;
+    if (text) {
         e.text = text
+        pxtjson = pxt.Package.parseAndValidConfig(text[pxt.CONFIG_NAME]);
+
+    }
     if (text || h.isDeleted) {
         h.saveId = null
     }
 
     // check if we have dynamic boards, store board info for home page rendering
-    if (text && pxt.appTarget.simulator && pxt.appTarget.simulator.dynamicBoardDefinition) {
-        const pxtjson = pxt.Package.parseAndValidConfig(text[pxt.CONFIG_NAME]);
-        if (pxtjson && pxtjson.dependencies)
+    if (pxtjson?.dependencies && pxt.appTarget.simulator && pxt.appTarget.simulator.dynamicBoardDefinition) {
             h.board = Object.keys(pxtjson.dependencies)
                 .filter(p => !!pxt.bundledSvg(p))[0];
     }
@@ -655,15 +657,22 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
 
         if (pxt.appTarget.appTheme.timeMachine) {
             try {
-                const previous = await impl.getAsync(h);
-
-                if (previous) {
-                    if (!toWrite && previous.header.pubVersions?.length !== h.pubVersions?.length) {
-                        toWrite = { ...previous.text };
+                if (pxtjson?.disableHistory) {
+                    if (toWrite?.[pxt.HISTORY_FILE]) {
+                        delete toWrite[pxt.HISTORY_FILE];
                     }
+                }
+                else {
+                    const previous = await impl.getAsync(h);
 
-                    if (toWrite) {
-                        pxteditor.history.updateHistory(previous.text, toWrite, Date.now(), h.pubVersions || [], diffText, patchText, true);
+                    if (previous) {
+                        if (!toWrite && previous.header.pubVersions?.length !== h.pubVersions?.length) {
+                            toWrite = { ...previous.text };
+                        }
+
+                        if (toWrite) {
+                            pxteditor.history.updateHistory(previous.text, toWrite, Date.now(), h.pubVersions || [], diffText, patchText, true);
+                        }
                     }
                 }
             }

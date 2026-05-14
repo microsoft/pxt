@@ -664,7 +664,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     {showErrorList && (
                         <ErrorList
                             onSizeChange={this.setErrorListState}
-                            collapsedByUser={this.parent.state.errorListCollapsedByUser}
+                            collapsedByUser={this.parent.state.errorListCollapsed}
                             onUserCollapse={this.setErrorListCollapsePreference}
                             errors={this.errors}
                             startDebugger={this.startDebugger}
@@ -963,7 +963,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     protected setErrorListCollapsePreference = (collapsed: boolean) => {
         this.parent.setState({
-            errorListCollapsedByUser: collapsed
+            errorListCollapsed: collapsed
         });
     }
 
@@ -1878,6 +1878,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             if (!res[ns]) {
                 res[ns] = [];
             }
+
+            if (fn.attributes.builtinBlockId) {
+                res[ns].push(...snippets.getExtensionContributedBuiltinBlock(fn.attributes.builtinBlockId, fn.attributes.weight || 50));
+                return;
+            }
+
             res[ns].push(fn);
             if (fn.attributes.toolboxParent) {
                 const parent = this.blockInfo.blocks.find(b => b.attributes.blockId === fn.attributes.toolboxParent);

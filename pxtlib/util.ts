@@ -593,7 +593,7 @@ namespace ts.pxtc.Util {
             }, ms);
         });
 
-        return Promise.race([ promise, timeoutPromise ])
+        return Promise.race([promise, timeoutPromise])
             .then(output => {
                 // clear any dangling timeout
                 if (res) {
@@ -1253,7 +1253,7 @@ namespace ts.pxtc.Util {
         "eu": { englishName: "Basque", localizedName: "Euskara" },
         "fa": { englishName: "Persian", localizedName: "فارسی" },
         "fi": { englishName: "Finnish", localizedName: "Suomi" },
-        "fil": {englishName: "Filipino", localizedName: "Filipino"},
+        "fil": { englishName: "Filipino", localizedName: "Filipino" },
         "fo": { englishName: "Faroese", localizedName: "føroyskt" },
         "fr": { englishName: "French", localizedName: "Français" },
         "fr-CA": { englishName: "French (Canada)", localizedName: "Français (Canada)" },
@@ -1279,7 +1279,7 @@ namespace ts.pxtc.Util {
         "kmr": { englishName: "Kurmanji (Kurdish)", localizedName: "کورمانجی‎" },
         "kn": { englishName: "Kannada", localizedName: "ಕನ್ನಡ" },
         "ko": { englishName: "Korean", localizedName: "한국어" },
-        "lo": { englishName: "Lao", localizedName: "ພາສາລາວ"},
+        "lo": { englishName: "Lao", localizedName: "ພາສາລາວ" },
         "lt": { englishName: "Lithuanian", localizedName: "Lietuvių" },
         "lv": { englishName: "Latvian", localizedName: "Latviešu" },
         "ml-IN": { englishName: "Malayalam", localizedName: "മലയാളം" },
@@ -1364,7 +1364,7 @@ namespace ts.pxtc.Util {
             .then((translations) => {
                 if (translations) {
                     setUserLanguage(code);
-                    pxt.analytics?.addDefaultProperties({lang: code}); //set the new language in analytics.
+                    pxt.analytics?.addDefaultProperties({ lang: code }); //set the new language in analytics.
                     setLocalizedStrings(translations);
                 }
 
@@ -1373,8 +1373,10 @@ namespace ts.pxtc.Util {
                     targetId, baseUrl, code, liveUpdateStrings,
                     ts.pxtc.Util.TranslationsKind.Apis)
                     .then(trs => {
-                        if (trs)
+                        if (trs) {
                             ts.pxtc.apiLocalizationStrings = trs;
+                            copySubcategoryStrings(trs);
+                        }
                     });
             });
     }
@@ -1465,6 +1467,23 @@ namespace ts.pxtc.Util {
                 pxt.error('failed to load localizations')
             })
                 .then(() => translations);
+        }
+    }
+
+    export function copySubcategoryStrings(apis: pxt.Map<string>) {
+        const t = getLocalizedStrings();
+
+        if (apis) {
+            // Subcategories and groups are translated in their respective package, but are not really APIs so
+            // there's no way for the translation to be saved with a block. To work around this, we copy the
+            // translations to the editor translations.
+            for (const key of Object.keys(apis)) {
+                if (U.startsWith(key, "{id:group}") || U.startsWith(key, "{id:subcategory}")) {
+                    t[key] = apis[key];
+                }
+            }
+
+            setLocalizedStrings(t);
         }
     }
 
@@ -1978,7 +1997,7 @@ namespace ts.pxtc.Util {
      * Attempts to remove commonly leaked PII
      * @param property The property which will be removed if it contains user data
      * @returns The new value for the property
-     * 
+     *
      * Taken from https://github.com/microsoft/vscode/blob/main/src/vs/platform/telemetry/common/telemetryUtils.ts
      */
     function removePropertiesWithPossibleUserInfo(property: string): string {

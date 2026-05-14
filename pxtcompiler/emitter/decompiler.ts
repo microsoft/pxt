@@ -105,6 +105,9 @@ namespace ts.pxtc.decompiler {
     const stringType = "text";
     const booleanType = "logic_boolean";
 
+    const colorPickerNumber = "makecode_color_picker_number";
+    const colorPickerString = "makecode_color_picker_string";
+
     const ops: pxt.Map<{ type: string; op?: string; leftName?: string; rightName?: string }> = {
         "+": { type: "math_arithmetic", op: "ADD" },
         "-": { type: "math_arithmetic", op: "MINUS" },
@@ -789,6 +792,7 @@ ${output}</xml>`;
                         case numberType:
                         case integerNumberType:
                         case wholeNumberType:
+                        case colorPickerNumber:
                             write(`<shadow type="${n.shadowType}"><field name="NUM">0</field></shadow>`)
                             break;
                         case minmaxNumberType:
@@ -802,7 +806,8 @@ ${output}</xml>`;
                             write(`<shadow type="${booleanType}"><field name="BOOL">TRUE</field></shadow>`)
                             break;
                         case stringType:
-                            write(`<shadow type="${stringType}"><field name="TEXT"></field></shadow>`)
+                        case colorPickerString:
+                            write(`<shadow type="${n.shadowType}"><field name="TEXT"></field></shadow>`)
                             break;
                         default:
                             write(`<shadow type="${n.shadowType}"/>`)
@@ -1608,6 +1613,8 @@ ${output}</xml>`;
         }
 
         function getImageLiteralStatement(node: ts.CallExpression, info: pxtc.CallInfo) {
+            const chars = ".#23456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
             let arg = node.arguments[0];
             if (arg.kind != SK.StringLiteral && arg.kind != SK.NoSubstitutionTemplateLiteral) {
                 error(node)
@@ -1619,23 +1626,45 @@ ${output}</xml>`;
             res.fields = [];
 
             const leds = ((arg as ts.StringLiteral).text || '').replace(/\s+/g, '');
-            const nc = (attributes.imageLiteralColumns || 5) * (attributes.imageLiteral || attributes.gridLiteral);
+            const nc = (attributes.imageLiteralColumns || 5) * gridLiteralValue(attributes);
             const nr = attributes.imageLiteralRows || 5;
             const nleds = nc * nr;
             if (nleds != leds.length) {
                 error(node, Util.lf("Invalid image pattern ({0} expected vs {1} actual)", nleds, leds.length));
                 return undefined;
             }
+            const isColor = attributes.colorGridLiteral;
             let ledString = '';
             for (let r = 0; r < nr; ++r) {
                 for (let c = 0; c < nc; ++c) {
-                    ledString += /[#*1]/.test(leds[r * nc + c]) ? '#' : '.';
+                    if (isColor) {
+                        ledString += chars.charAt(parseCharacter(leds[r * nc + c]));
+                    }
+                    else {
+                        ledString += /[#*1]/.test(leds[r * nc + c]) ? '#' : '.';
+                    }
                 }
                 ledString += '\n';
             }
             res.fields.push(getField(`LEDS`, `\`${ledString}\``));
 
             return res;
+        }
+
+        function parseCharacter(c: string): number {
+            const chars = ".#23456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            switch (c) {
+                case "#":
+                case "*":
+                case "1":
+                    return 1;
+                case ".":
+                case "_":
+                case "0":
+                    return 0;
+                default:
+                    return Math.max(0, chars.indexOf(c.toUpperCase()));
+            }
         }
 
         function getBinaryExpressionStatement(n: ts.BinaryExpression): StatementNode {
@@ -1972,6 +2001,29 @@ ${output}</xml>`;
                 r.fields = [getField("OP", "POWER")];
                 return r;
             }
+            else if (isColorPickerFunction(info)) {
+                const r = mkExpr("makecode_color_picker", node);
+
+                if (info.qName === "colorHelpers.hex") {
+                    r.inputs = [
+                        mkValue("HEX_INPUT", getOutputBlock(node.arguments[0]), colorPickerString)
+                    ]
+                }
+                else {
+                    r.inputs = node.arguments.map((arg, index) =>
+                        mkValue("INPUT" + index, getOutputBlock(arg), colorPickerNumber)
+                    )
+                }
+
+                r.fields = [getField("FORMAT", info.qName.substring(info.qName.lastIndexOf(".") + 1))];
+
+                const blockDef = blocksInfo.blocks.find(b => b.attributes.builtinBlockId === "makecode_color_picker");
+                if (blockDef && blockDef.attributes.color) {
+                    r.mutation = { color: blockDef.attributes.color };
+                }
+
+                return r;
+            }
             else if (pxt.Util.startsWith(info.qName, "Math.")) {
                 const op = info.qName.substring(5);
                 if (isSupportedMathFunction(op)) {
@@ -2061,7 +2113,7 @@ ${output}</xml>`;
                 attributes.blockId = builtin.blockId;
             }
 
-            if (attributes.imageLiteral || attributes.gridLiteral) {
+            if (gridLiteralValue(attributes)) {
                 return getImageLiteralStatement(node, info);
             }
 
@@ -2761,7 +2813,7 @@ ${output}</xml>`;
                 return Util.lf("Function with forceStatement cannot be used as an expression.")
             }
 
-            if (info.qName == "Math.pow") {
+            if (info.qName == "Math.pow" || isColorPickerFunction(info)) {
                 return undefined;
             }
             else if (pxt.Util.startsWith(info.qName, "Math.")) {
@@ -2803,7 +2855,7 @@ ${output}</xml>`;
             const comp = env.compInfo(info);
             const totalDecompilableArgs = comp.parameters.length + (comp.thisParameter ? 1 : 0);
 
-            if (attributes.imageLiteral || attributes.gridLiteral) {
+            if (gridLiteralValue(attributes)) {
                 // Image literals do not show up in the block string, so it won't be in comp
                 if (info.args.length - totalDecompilableArgs > 1) {
                     return Util.lf("Function call has more arguments than are supported by its block");
@@ -2815,7 +2867,7 @@ ${output}</xml>`;
                 }
                 const leds = ((arg as ts.StringLiteral).text || '').replace(/\s+/g, '');
                 const nr = attributes.imageLiteralRows || 5;
-                const nc = (attributes.imageLiteralColumns || 5) * (attributes.imageLiteral || attributes.gridLiteral);
+                const nc = (attributes.imageLiteralColumns || 5) * gridLiteralValue(attributes);
                 const nleds = nc * nr;
                 if (nc * nr != leds.length) {
                     return Util.lf("Invalid image pattern ({0} expected vs {1} actual)", nleds, leds.length);
@@ -3958,6 +4010,13 @@ ${output}</xml>`;
                 value.fields[0].name = 'SLIDER';
                 value.mutation = n.shadowMutation;
             }
+            else if (value.type === numberType && n.shadowType === colorPickerNumber) {
+                value.type = colorPickerNumber;
+            }
+            else if (value.type === stringType && n.shadowType === colorPickerString) {
+                value.type = colorPickerString;
+            }
+
             emitShadowOnly = value.type === n.shadowType;
             if (!emitShadowOnly) {
                 switch (value.type) {
@@ -3967,6 +4026,8 @@ ${output}</xml>`;
                     case "math_whole_number":
                     case "logic_boolean":
                     case "text":
+                    case colorPickerNumber:
+                    case colorPickerString:
                         emitShadowOnly = !n.shadowType;
                         break;
                 }
@@ -3985,5 +4046,23 @@ ${output}</xml>`;
         n.emitShadowOnly = emitShadowOnly;
 
         return emitShadowOnly;
+    }
+
+    function gridLiteralValue(attrs: CommentAttrs) {
+        return attrs.gridLiteral || attrs.imageLiteral || attrs.colorGridLiteral;
+
+    }
+
+    function isColorPickerFunction(info: DecompilerCallInfo) {
+        switch (info?.qName) {
+            case "colorHelpers.rgb":
+            case "colorHelpers.hsv":
+            case "colorHelpers.hsl":
+            case "colorHelpers.hex":
+            case "colorHelpers.cmyk":
+                return true;
+        }
+
+        return false;
     }
 }
