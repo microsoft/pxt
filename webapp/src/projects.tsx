@@ -1754,6 +1754,7 @@ function cardActionButton(props: Partial<ProjectsDetailProps>, className: string
     // for a side fix (detail card buttons, etc) 
     return asLink ? // TODO (shakao)  migrate forumurl to otherAction json in md
         <Link
+            ref={autoFocus ? linkRef : undefined}
             href={codeCardUrl(props)}
             target={'_blank'}
             className={`ui ${className} card-action-button-link`}
