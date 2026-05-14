@@ -1583,10 +1583,10 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
 
         addAction("primary", undefined);
 
-        for (const action of this.props.otherActions || []) {
-            if ((action?.cardType || primaryType) === primaryType) {
-                addAction(`other-${action.cardType || primaryType}`, action);
-            }
+        const otherActions = this.props.otherActions || [];
+        for (let i = 0; i < otherActions.length; i++) {
+            const action = otherActions[i];
+            addAction(`other-${i}-${action.cardType || primaryType}`, action);
         }
 
         if (primaryType === "forumUrl") {
