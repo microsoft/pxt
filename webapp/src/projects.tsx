@@ -411,7 +411,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                             <Button
                                 key="go-back"
                                 leftIcon="icon chevron left"
-                                className="neutral large button"
+                                className="go-back-btn neutral large button"
                                 label={lf("Go Back")}
                                 title={lf("Go back")}
                                 onClick={this.closeSearch}
@@ -432,14 +432,22 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                             <Button
                                 key="search"
                                 leftIcon="icon search"
-                                className="neutral large button"
+                                className="home-search-btn neutral large button"
                                 label={lf("Search")}
                                 labelClassName="landscape only"
                                 title={lf("Search home content")}
                                 onClick={this.openSearch}
                             />}
                         {canImport ?
-                            <Button key="import" leftIcon="icon upload" className="import-dialog-btn neutral large button" labelClassName="landscape only" label={lf("Import")} title={lf("Import a project")} onClick={this.importProject} /> : undefined}
+                            <Button
+                                key="import"
+                                leftIcon="icon upload"
+                                className="import-dialog-btn neutral large button"
+                                labelClassName="landscape only"
+                                label={lf("Import")}
+                                title={lf("Import a project")}
+                                onClick={this.importProject}
+                            /> : undefined}
                     </div>
                 </div>
                 {searchMode && <div className="content homescreen-search-box" role="search">
