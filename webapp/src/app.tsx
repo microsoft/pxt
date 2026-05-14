@@ -3195,6 +3195,7 @@ export class ProjectView
 
                 if (!preferredEditor && example.snippetType) {
                     switch (example.snippetType) {
+                        case "block":
                         case "blocks":
                             preferredEditor = pxt.BLOCKS_PROJECT_NAME;
                             loadBlocks = true;
