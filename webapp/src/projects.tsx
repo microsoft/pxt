@@ -483,7 +483,6 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                                     selected={!scr.directOpen ? searchSelectedIndex === index : undefined}
                                 />
                                 {selectedSearchCard && searchSelectedIndex === index && <div ref="searchDetailView" className="detailview search-detailview">
-                                    <sui.CloseButton onClick={() => this.setSelected(SEARCH_CATEGORY, undefined)} />
                                     <ProjectsDetail parent={this.props.parent}
                                         { ...selectedSearchCard }
                                         name={selectedSearchCard.name}
@@ -493,6 +492,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                                         scr={selectedSearchCard}
                                         onClick={this.handleSearchDetailClick}
                                     />
+                                    <sui.CloseButton onClick={() => this.setSelected(SEARCH_CATEGORY, undefined)} />
                                 </div>}
                             </React.Fragment>
                         ) : <p className="ui grey inverted segment">{lf("No search results found.")}</p>}
@@ -1142,7 +1142,6 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                         )}
                     </carousel.Carousel>
                     {selectedElement && <div ref="detailView" className={`detailview`}>
-                        <sui.CloseButton onClick={this.closeDetail} />
                         <ProjectsDetail parent={this.props.parent}
                             name={selectedElement.name}
                             key={'detail' + selectedElement.name}
@@ -1161,6 +1160,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                             tags={selectedElement.tags}
                             otherActions={selectedElement.otherActions}
                         />
+                        <sui.CloseButton onClick={this.closeDetail} />
                     </div>}
                 </div>
             }
