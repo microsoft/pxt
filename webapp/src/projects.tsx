@@ -467,7 +467,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                         : searchResults.length ? searchResults.map((scr, index) =>
                             <React.Fragment key={`search-${scr.youTubeId || scr.name || scr.url}-${index}`}>
                                 <ProjectsCodeCard
-                                    className={`example ${searchSelectedIndex === index ? "selected" : ""}`}
+                                    className={`${scr.projectHeader ? "" : "example"} ${searchSelectedIndex === index ? "selected" : ""}`.trim()}
                                     { ...scr }
                                     description="" // the description would show up below the card in the view; remove it, shows up in details.
                                     scr={scr.projectHeader || scr} index={index}
