@@ -216,11 +216,7 @@ div.field .ui.toggle.checkbox input:checked~label:before {
     z-index: 1;
 }
 
-table.diffview.update {
-    .diff-added {    
-        .ch-added {
-            color: var(--pxt-neutral-background1) !important;
-            outline-color: var(--pxt-neutral-background1) !important;
-        }
-    }
+table.diffview.update .diff-added .ch-added {
+    color: var(--pxt-neutral-background1) !important;
+    outline-color: var(--pxt-neutral-background1) !important;
 }
