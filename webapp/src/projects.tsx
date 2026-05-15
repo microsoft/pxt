@@ -39,6 +39,20 @@ interface ProjectsState {
 const SEARCH_CATEGORY = "__search__";
 type SearchCard = pxt.CodeCard & { projectHeader?: pxt.workspace.Header };
 
+function focusCard(card?: HTMLElement) {
+    if (card) card.focus();
+}
+
+function shouldRestoreFocusAfterClose(e: React.MouseEvent<HTMLElement>) {
+    return e.detail === 0;
+}
+
+function getPreviousSiblingCard(element: HTMLElement): HTMLElement | undefined {
+    const detailView = element.closest(".detailview");
+    const sourceCard = detailView?.previousElementSibling;
+    return sourceCard instanceof HTMLElement ? sourceCard : undefined;
+}
+
 function getProjectDescriptionFromConfig(configText: string): string {
     const config = pxt.Util.jsonTryParse(configText) as pxt.PackageConfig;
     const description = config?.description?.trim();
@@ -63,6 +77,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         this.setSelected = this.setSelected.bind(this);
         this.openSearch = this.openSearch.bind(this);
         this.closeSearch = this.closeSearch.bind(this);
+        this.closeSearchDetail = this.closeSearchDetail.bind(this);
         this.handleSearchCardClick = this.handleSearchCardClick.bind(this);
         this.handleSearchDetailClick = this.handleSearchDetailClick.bind(this);
     }
@@ -76,7 +91,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
             || this.state.searchResults != nextState.searchResults;
     }
 
-    setSelected(category: string, index: number) {
+    setSelected(category: string, index?: number) {
         if (index == undefined || this.state.selectedCategory == category && this.state.selectedIndex == index) {
             this.setState({ selectedCategory: undefined, selectedIndex: undefined });
         } else {
@@ -295,6 +310,12 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         });
     }
 
+    private closeSearchDetail(e: React.MouseEvent<HTMLElement>) {
+        const sourceCard = getPreviousSiblingCard(e.currentTarget);
+        this.setSelected(SEARCH_CATEGORY, undefined);
+        if (shouldRestoreFocusAfterClose(e)) focusCard(sourceCard);
+    }
+
     private handleSearchCardClick(e: any, scr: SearchCard, index?: number) {
         const header = scr.projectHeader;
         if (header) {
@@ -411,7 +432,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                             <Button
                                 key="go-back"
                                 leftIcon="icon chevron left"
-                                className="neutral large button"
+                                className="go-back-btn neutral large button"
                                 label={lf("Go Back")}
                                 title={lf("Go back")}
                                 onClick={this.closeSearch}
@@ -432,14 +453,22 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                             <Button
                                 key="search"
                                 leftIcon="icon search"
-                                className="neutral large button"
+                                className="home-search-btn neutral large button"
                                 label={lf("Search")}
                                 labelClassName="landscape only"
                                 title={lf("Search home content")}
                                 onClick={this.openSearch}
                             />}
                         {canImport ?
-                            <Button key="import" leftIcon="icon upload" className="import-dialog-btn neutral large button" labelClassName="landscape only" label={lf("Import")} title={lf("Import a project")} onClick={this.importProject} /> : undefined}
+                            <Button
+                                key="import"
+                                leftIcon="icon upload"
+                                className="import-dialog-btn neutral large button"
+                                labelClassName="landscape only"
+                                label={lf("Import")}
+                                title={lf("Import a project")}
+                                onClick={this.importProject}
+                            /> : undefined}
                     </div>
                 </div>
                 {searchMode && <div className="content homescreen-search-box" role="search">
@@ -475,7 +504,6 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                                     selected={!scr.directOpen ? searchSelectedIndex === index : undefined}
                                 />
                                 {selectedSearchCard && searchSelectedIndex === index && <div ref="searchDetailView" className="detailview search-detailview">
-                                    <sui.CloseButton onClick={() => this.setSelected(SEARCH_CATEGORY, undefined)} />
                                     <ProjectsDetail parent={this.props.parent}
                                         { ...selectedSearchCard }
                                         name={selectedSearchCard.name}
@@ -485,6 +513,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                                         scr={selectedSearchCard}
                                         onClick={this.handleSearchDetailClick}
                                     />
+                                    <sui.CloseButton onClick={this.closeSearchDetail} />
                                 </div>}
                             </React.Fragment>
                         ) : <p className="ui grey inverted segment">{lf("No search results found.")}</p>}
@@ -970,7 +999,7 @@ interface ProjectsCarouselProps extends ISettingsProps {
     cardWidth?: number;
     onClick: (src: any, action?: pxt.CodeCardAction) => void;
     selectedIndex?: number;
-    setSelected?: (name: string, index: number) => void;
+    setSelected?: (name: string, index?: number) => void;
     shuffle?: pxt.GalleryShuffle;
 }
 
@@ -990,6 +1019,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
         }
 
         this.closeDetail = this.closeDetail.bind(this);
+        this.closeDetailFromCloseButton = this.closeDetailFromCloseButton.bind(this);
         this.closeDetailOnEscape = this.closeDetailOnEscape.bind(this);
         this.reload = this.reload.bind(this);
         this.showScriptManager = this.showScriptManager.bind(this);
@@ -1041,15 +1071,26 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
         this.props.parent.showScriptManager();
     }
 
-    closeDetail() {
+    closeDetail(restoreFocus?: boolean) {
         const { name } = this.props;
+        const sourceCard = restoreFocus ? this.getSelectedCardDOM() : undefined;
         pxt.tickEvent("projects.detail.close");
         this.props.setSelected(name, undefined);
+        if (restoreFocus) focusCard(sourceCard);
+    }
+
+    closeDetailFromCloseButton(e: React.MouseEvent<HTMLElement>) {
+        this.closeDetail(shouldRestoreFocusAfterClose(e));
     }
 
     getCarouselDOM() {
         let carouselDom = ReactDOM.findDOMNode(this.refs["carousel"]);
         return carouselDom;
+    }
+
+    private getSelectedCardDOM(): HTMLElement | undefined {
+        const carouselDom = this.getCarouselDOM() as Element;
+        return carouselDom?.querySelector(".carouselitem.selected > .ui.card") as HTMLElement;
     }
 
     getDetailDOM() {
@@ -1060,7 +1101,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
     closeDetailOnEscape(e: KeyboardEvent) {
         const charCode = core.keyCodeFromEvent(e);
         if (charCode != core.ESC_KEY) return;
-        this.closeDetail();
+        this.closeDetail(true);
 
         document.removeEventListener('keydown', this.closeDetailOnEscape);
         e.preventDefault();
@@ -1134,7 +1175,6 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                         )}
                     </carousel.Carousel>
                     {selectedElement && <div ref="detailView" className={`detailview`}>
-                        <sui.CloseButton onClick={this.closeDetail} />
                         <ProjectsDetail parent={this.props.parent}
                             name={selectedElement.name}
                             key={'detail' + selectedElement.name}
@@ -1153,6 +1193,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                             tags={selectedElement.tags}
                             otherActions={selectedElement.otherActions}
                         />
+                        <sui.CloseButton onClick={this.closeDetailFromCloseButton} />
                     </div>}
                 </div>
             }
@@ -1290,6 +1331,16 @@ export interface ProjectsDetailProps extends ISettingsProps {
 export interface ProjectsDetailState {
     shareDialogVisible?: boolean;
     shareDialogEditor?: pxt.CodeCardEditorType;
+    shareDialogActionId?: string;
+    resolvedForumShareUrl?: string;
+    resolvingForumShare?: boolean;
+}
+
+interface ShareActionOption {
+    key: string;
+    label: string;
+    action?: pxt.CodeCardAction;
+    cardType: pxt.CodeCardType;
 }
 
 export class ProjectsDetail extends data.Component<ProjectsDetailProps, ProjectsDetailState> {
@@ -1307,19 +1358,31 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         this.showShareDialog = this.showShareDialog.bind(this);
         this.hideShareDialog = this.hideShareDialog.bind(this);
         this.setShareDialogEditor = this.setShareDialogEditor.bind(this);
+        this.setShareDialogAction = this.setShareDialogAction.bind(this);
         this.linkRef = React.createRef<HTMLAnchorElement>();
     }
 
     private showShareDialog() {
+        const shareActions = this.getShareableActions();
+        if (!shareActions.length) return;
+
+        if (this.props.cardType === "forumUrl") {
+            this.ensureForumShareLink();
+        }
+
         pxt.tickEvent("projects.share.open", { cardType: this.props.cardType }, { interactiveConsent: true });
-        const editors = this.getShareableEditors();
+
+        const previousActionId = this.state.shareDialogActionId;
+        const selectedAction = shareActions.find(action => action.key === previousActionId) || shareActions[0];
+        const editors = this.getShareableEditors(selectedAction?.action);
         const previousEditor = this.state.shareDialogEditor;
         const selectedEditor = previousEditor && editors.indexOf(previousEditor) !== -1
             ? previousEditor
             : editors[0];
         this.setState({
             shareDialogVisible: true,
-            shareDialogEditor: selectedEditor
+            shareDialogEditor: selectedEditor,
+            shareDialogActionId: selectedAction?.key
         });
     }
 
@@ -1331,10 +1394,73 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         this.setState({ shareDialogEditor: editor });
     }
 
-    private getShareableEditors(): pxt.CodeCardEditorType[] {
+    private setShareDialogAction(actionKey: string) {
+        const shareActions = this.getShareableActions();
+        const selectedAction = shareActions.find(action => action.key === actionKey) || shareActions[0];
+        if (!selectedAction) return;
+
+        const editors = this.getShareableEditors(selectedAction.action).filter(e => !!e) as pxt.CodeCardEditorType[];
+        const previousEditor = this.state.shareDialogEditor;
+        const shareDialogEditor = previousEditor && editors.indexOf(previousEditor) !== -1
+            ? previousEditor
+            : editors[0];
+
+        this.setState({
+            shareDialogActionId: selectedAction.key,
+            shareDialogEditor
+        });
+    }
+
+    private buildSharedExampleLink(raw: string): string {
+        return this.getShareableLink({
+            url: raw,
+            cardType: "sharedExample"
+        });
+    }
+
+    private getForumEditorShareLink(): string {
+        const { cardType, scr, url } = this.props;
+        if (cardType !== "forumUrl") return undefined;
+
+        const shareUrl = scr?.shareUrl || (this.props as any)?.shareUrl;
+        if (shareUrl) return this.buildSharedExampleLink(shareUrl);
+
+        if (this.state?.resolvedForumShareUrl) return this.state.resolvedForumShareUrl;
+
+        const parsed = pxt.Cloud.parseScriptId(url);
+        if (parsed) return this.buildSharedExampleLink(parsed);
+
+        return undefined;
+    }
+
+    private async ensureForumShareLink() {
+        const { cardType, url } = this.props;
+        if (cardType !== "forumUrl") return;
+        if (this.state.resolvedForumShareUrl || this.state.resolvingForumShare) return;
+
+        this.setState({ resolvingForumShare: true });
+        try {
+            const projectId = await pxt.discourse.extractSharedIdFromPostUrl(url);
+            if (projectId) {
+                const link = this.buildSharedExampleLink(projectId);
+                if (link) {
+                    this.setState({ resolvedForumShareUrl: link, resolvingForumShare: false });
+                    return;
+                }
+            }
+        } catch (e) {
+            core.handleNetworkError(e);
+        }
+        this.setState({ resolvingForumShare: false });
+    }
+
+    private getShareableEditors(action?: pxt.CodeCardAction): pxt.CodeCardEditorType[] {
         const { cardType, otherActions } = this.props;
 
-        if (cardType !== "tutorial" && cardType !== "example" && cardType !== "codeExample")
+        const primaryType = action?.cardType || cardType;
+        if (!primaryType) return [undefined];
+
+        if (primaryType !== "tutorial" && primaryType !== "example" && primaryType !== "codeExample" && primaryType !== "sharedExample")
             return [undefined];
 
         const available: pxt.CodeCardEditorType[] = [];
@@ -1344,12 +1470,14 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
             if (available.indexOf(editor) === -1) available.push(editor);
         }
 
-        addEditor(this.getActionEditor(cardType, undefined));
+        addEditor(this.getActionEditor(primaryType, action));
 
-        for (const action of (otherActions ?? [])) {
-            const actionCardType: pxt.CodeCardType = action.cardType || cardType;
-            if (actionCardType !== cardType) continue;
-            addEditor(this.getActionEditor(actionCardType, action));
+        const matchingActions = otherActions?.filter(other => (other.cardType || primaryType) === primaryType) || [];
+
+        for (const otherAction of matchingActions) {
+            const actionCardType: pxt.CodeCardType = otherAction.cardType || primaryType;
+            if (actionCardType !== primaryType) continue;
+            addEditor(this.getActionEditor(actionCardType, otherAction));
         }
 
         return available;
@@ -1460,8 +1588,77 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         </div>
     }
 
-    protected getShareableLink(overrideEditor?: pxt.CodeCardEditorType): string {
-        const { cardType, url, scr } = this.props;
+    protected getActionLabel(action?: pxt.CodeCardAction): string {
+        const { cardType, buttonLabel } = this.props;
+        if (!action) {
+            return buttonLabel ? ts.pxtc.Util.rlf(buttonLabel) : this.getClickLabel(cardType);
+        }
+
+        const candidate = (action as any)?.buttonLabel || (action as any)?.label;
+        if (candidate) return ts.pxtc.Util.rlf(candidate);
+
+        return this.getClickLabel(action.cardType || cardType);
+    }
+
+    protected getShareableActions(): ShareActionOption[] {
+        const actions: ShareActionOption[] = [];
+        const seen = new Set<string>();
+        const primaryType = this.props.cardType;
+        const scr = this.props.scr;
+
+        const addAction = (key: string, action?: pxt.CodeCardAction, precomputedUrl?: string) => {
+            const shareUrl = precomputedUrl || this.getShareableLink(action);
+            const cardType = action?.cardType || this.props.cardType;
+
+            if (!cardType || !shareUrl || seen.has(shareUrl)) return;
+
+            seen.add(shareUrl);
+
+            actions.push({
+                key,
+                label: this.getActionLabel(action),
+                action,
+                cardType
+            });
+        };
+
+        addAction("primary", undefined);
+
+        const otherActions = this.props.otherActions || [];
+        for (let i = 0; i < otherActions.length; i++) {
+            const action = otherActions[i];
+            addAction(`other-${i}-${action.cardType || primaryType}`, action);
+        }
+
+        if (primaryType === "forumUrl") {
+            const shareUrl = scr?.shareUrl || (this.props as any)?.shareUrl;
+            if (shareUrl) {
+                const precomputed = this.buildSharedExampleLink(shareUrl);
+                addAction("forum-editor", {
+                    url: shareUrl,
+                    cardType: "sharedExample",
+                    editor: undefined,
+                    buttonLabel: lf("Open in Editor")
+                } as any, precomputed);
+            } else {
+                const forumEditorLink = this.getForumEditorShareLink();
+                if (forumEditorLink) {
+                    addAction("forum-editor", {
+                        url: forumEditorLink,
+                        cardType: "sharedExample",
+                        editor: undefined,
+                        buttonLabel: lf("Open in Editor")
+                    } as any, forumEditorLink);
+                }
+            }
+        }
+
+        return actions;
+    }
+
+    protected getShareableLink(action?: pxt.CodeCardAction, overrideEditor?: pxt.CodeCardEditorType): string {
+        const { cardType: baseCardType, url, scr } = this.props;
+        const cardType = action?.cardType || baseCardType;
         if (!cardType) return undefined;
 
         const relPrefix = (pxt.webConfig?.relprefix || "").replace(/-+$/, "");
@@ -1471,8 +1668,8 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
             ? `${liveBaseUrl}${relPrefix}`
             : defaultBaseUrl;
 
-        const cardUrl = (scr?.url || url) as string;
-        const defaultEditor = this.getActionEditor(cardType, undefined);
+        const cardUrl = (action?.url || scr?.url || url) as string;
+        const defaultEditor = this.getActionEditor(cardType, action);
         const includeEditorPrefix = !!overrideEditor
             && overrideEditor !== defaultEditor;
         const editorPrefix = includeEditorPrefix ? normalizeEditorPrefix(overrideEditor) : "";
@@ -1490,7 +1687,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                 return `${baseUrl}#example:${editorPrefix}${examplePath}`;
             }
             case "sharedExample": {
-                const raw = cardUrl || (scr as any)?.shareUrl;
+                const raw = cardUrl || (action as any)?.shareUrl || (scr as any)?.shareUrl;
                 if (!raw) return undefined;
 
                 const repoId = pxt.github.normalizeRepoId(raw);
@@ -1597,14 +1794,17 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         const video = !highContrast && !pxt.BrowserUtils.isElectron() && !pxt.BrowserUtils.isIOS() && videoUrl;
         const showVideoOrImage = !pxt.appTarget.appTheme.hideHomeDetailsVideo;
         const youTubeWatchUrl = pxt.youtube.watchUrl(youTubeId, youTubePlaylistId);
-        const shareableLink = pxt.appTarget.appTheme.shareHomepageContent ? this.getShareableLink() : undefined;
-        const shareEditors = this.getShareableEditors().filter(e => !!e) as pxt.CodeCardEditorType[];
-        const shareDialogEditor = this.state.shareDialogEditor && shareEditors.indexOf(this.state.shareDialogEditor) !== -1
+        const shareActions = pxt.appTarget.appTheme.shareHomepageContent ? this.getShareableActions() : [];
+        const selectedShareAction = shareActions.find(action => action.key === this.state.shareDialogActionId) || shareActions[0];
+        const shareEditors = this.getShareableEditors(selectedShareAction?.action);
+        const shareEditorOptions = shareEditors.filter(e => !!e) as pxt.CodeCardEditorType[];
+        const shareDialogEditor = shareEditorOptions.length && shareEditorOptions.indexOf(this.state.shareDialogEditor) !== -1
             ? this.state.shareDialogEditor
-            : shareEditors[0];
-        const shareUrlForDialog = pxt.appTarget.appTheme.shareHomepageContent
-            ? this.getShareableLink(shareDialogEditor)
+            : shareEditorOptions[0];
+        const shareUrlForDialog = pxt.appTarget.appTheme.shareHomepageContent && selectedShareAction
+            ? this.getShareableLink(selectedShareAction.action, shareDialogEditor)
             : undefined;
+        const hasShareActions = pxt.appTarget.appTheme.shareHomepageContent && shareActions.length > 0;
 
         let clickLabel: string;
         if (buttonLabel)
@@ -1642,7 +1842,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                             className={`yt-button button attached approve large inverted`}
                             title={lf("Open YouTube video in new window")}
                         />}
-                    {pxt.appTarget.appTheme.shareHomepageContent && !!shareableLink &&
+                    {hasShareActions &&
                         <Button
                             label={lf("Share")}
                             className={`home-share-button button attached approve large`}
@@ -1676,17 +1876,29 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
             shareUrl={shareUrlForDialog}
             onClose={this.hideShareDialog}
         >
-            {shareEditors.length > 1 &&
+            {shareActions.length > 1 &&
+                <EditorToggle
+                    id="homepage-share-action-toggle"
+                    className="slim tablet-compact"
+                    items={shareActions.map((action: ShareActionOption) => ({
+                        label: action.label,
+                        title: lf("Share link for {0}", action.label),
+                        focusable: true,
+                        onClick: () => this.setShareDialogAction(action.key)
+                    }))}
+                    selected={Math.max(0, shareActions.findIndex(action => action.key === selectedShareAction?.key))}
+                />}
+            {shareEditorOptions.length > 1 &&
                 <EditorToggle
                     id="homepage-share-editor-toggle"
                     className="slim tablet-compact"
-                    items={shareEditors.map((e: pxt.CodeCardEditorType) => ({
+                    items={shareEditorOptions.map((e: pxt.CodeCardEditorType) => ({
                         label: e === "blocks" ? lf("Blocks") : e === "py" ? lf("Python") : lf("JavaScript"),
                         title: e === "blocks" ? lf("Share as Blocks") : e === "py" ? lf("Share as Python") : lf("Share as JavaScript"),
                         focusable: true,
                         onClick: () => this.setShareDialogEditor(e)
                     }))}
-                    selected={Math.max(0, shareEditors.indexOf(shareDialogEditor))}
+                    selected={Math.max(0, shareEditorOptions.indexOf(shareDialogEditor))}
                 />}
         </ShareLinkDialog>
         </>;
@@ -1754,6 +1966,7 @@ function cardActionButton(props: Partial<ProjectsDetailProps>, className: string
     // for a side fix (detail card buttons, etc) 
     return asLink ? // TODO (shakao)  migrate forumurl to otherAction json in md
         <Link
+            ref={autoFocus ? linkRef : undefined}
             href={codeCardUrl(props)}
             target={'_blank'}
             className={`ui ${className} card-action-button-link`}

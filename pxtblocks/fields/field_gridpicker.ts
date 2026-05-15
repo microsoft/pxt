@@ -25,7 +25,6 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
     private tooltipConfig_: FieldGridPickerToolTipConfig;
 
     private gridTooltip_: HTMLElement;
-    private firstItem_: HTMLElement;
 
     private hasSearchBar_: boolean;
 
@@ -48,6 +47,7 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
     private firstFocusableElement: HTMLElement | SVGElement;
     private lastFocusableElement: HTMLElement | SVGElement;
     private tabKeyBind: Blockly.browserEvents.Data | null = null;
+    private hasImageOptions: boolean;
 
     constructor(text: string, options: FieldGridPickerOptions, validator?: Function) {
         super(options.data);
@@ -66,6 +66,9 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
 
         this.tooltipConfig_ = tooltipCfg;
         this.hasSearchBar_ = !!options.hasSearchBar || false;
+
+        const dropdownOptions = options.data as [Object | string, string][];
+        this.hasImageOptions = dropdownOptions.some(option => typeof option[0] === 'object');
     }
 
     protected setFocusedItem_(_gridItemContainer: HTMLElement) {
@@ -102,7 +105,7 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
     }
 
     private createTooltip_() {
-        if (this.gridTooltip_) return;
+        if (this.gridTooltip_ || !this.hasImageOptions) return;
 
         // Create tooltip
         this.gridTooltip_ = document.createElement('div');
@@ -123,9 +126,6 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
         this.activeDescendantIndex = 0;
 
         pxsim.U.removeChildren(tableContainer);
-        if (options.length == 0) {
-            this.firstItem_ = undefined
-        }
 
         for (let i = 0; i < options.length / this.columns_; i++) {
             let row = this.populateRow(i, options, tableContainer);
@@ -163,7 +163,6 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
             menuItemContent.title = content['alt'] || content;
             menuItemContent.setAttribute('data-value', value);
 
-            const hasImages = typeof content == 'object';
 
             // Set colour
             let backgroundColour = this.backgroundColour_;
@@ -177,7 +176,7 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
                 // Save so we can scroll to it later
                 this.selectedItemDom = menuItem;
 
-                if (hasImages && !this.shouldShowTooltips()) {
+                if (this.hasImageOptions && !this.shouldShowTooltips()) {
                     this.updateSelectedBar_(content, value);
                 }
             }
@@ -186,7 +185,7 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
             menuItem.style.borderColor = this.borderColour_;
 
 
-            if (hasImages) {
+            if (this.hasImageOptions) {
                 // An image, not text.
                 const buttonImg = new Image(content['width'], content['height']);
                 buttonImg.setAttribute('draggable', 'false');
@@ -217,7 +216,7 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
                     if (this.pointerMoveTriggeredByUser()) {
                         this.gridItems.forEach(item => item.classList.remove('gridpicker-option-focused'))
                         this.activeDescendantIndex = i;
-                        if (hasImages) {
+                        if (this.gridTooltip_ && this.hasImageOptions) {
                             this.gridTooltip_.style.top = `${e.clientY + yOffset}px`;
                             this.gridTooltip_.style.left = `${e.clientX + xOffset}px`;
                             // Set tooltip text
@@ -237,7 +236,7 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
                 Blockly.browserEvents.bind(menuItem, 'pointerout', this, (e: PointerEvent) => {
                     if (this.pointerOutTriggeredByUser()) {
                         this.gridItems.forEach(item => item.classList.remove('gridpicker-option-focused'))
-                        if (hasImages) {
+                        if (this.gridTooltip_ && this.hasImageOptions) {
                             // Hide the tooltip
                             this.gridTooltip_.style.visibility = 'hidden';
                             this.gridTooltip_.style.display = 'none';
@@ -249,7 +248,7 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
                     }
                 });
             } else {
-                if (hasImages) {
+                if (this.hasImageOptions) {
                     // Show the selected bar
                     this.selectedBar_.style.display = '';
 
@@ -278,10 +277,6 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
             menuItem.appendChild(menuItemContent);
             this.gridItems.push(menuItem);
             rowContent.appendChild(menuItem);
-
-            if (i == 0) {
-                this.firstItem_ = menuItem;
-            }
         }
 
         return rowContent;
@@ -430,7 +425,6 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
         Blockly.WidgetDiv.positionWithAnchor(viewportBBox, anchorBBox, containerSize,
             this.sourceBlock_.RTL);
 
-//            (<any>scrollContainer).focus();
 
         this.highlightAndScrollSelected(tableContainer, scrollContainer)
     };
@@ -548,8 +542,10 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
                 this.highlightAndScrollSelected(tableContainer, scrollContainer)
             }
             // Hide the tooltip
-            this.gridTooltip_.style.visibility = 'hidden';
-            this.gridTooltip_.style.display = 'none';
+            if (this.gridTooltip_) {
+                this.gridTooltip_.style.visibility = 'hidden';
+                this.gridTooltip_.style.display = 'none';
+            }
         }, 300, false));
 
         // Select the first item if the enter key is pressed
