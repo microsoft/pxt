@@ -39,6 +39,20 @@ interface ProjectsState {
 const SEARCH_CATEGORY = "__search__";
 type SearchCard = pxt.CodeCard & { projectHeader?: pxt.workspace.Header };
 
+function focusCard(card?: HTMLElement) {
+    if (card) card.focus();
+}
+
+function shouldRestoreFocusAfterClose(e: React.MouseEvent<HTMLElement>) {
+    return e.detail === 0;
+}
+
+function getPreviousSiblingCard(element: HTMLElement): HTMLElement | undefined {
+    const detailView = element.closest(".detailview");
+    const sourceCard = detailView?.previousElementSibling;
+    return sourceCard instanceof HTMLElement ? sourceCard : undefined;
+}
+
 function getProjectDescriptionFromConfig(configText: string): string {
     const config = pxt.Util.jsonTryParse(configText) as pxt.PackageConfig;
     const description = config?.description?.trim();
@@ -63,6 +77,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         this.setSelected = this.setSelected.bind(this);
         this.openSearch = this.openSearch.bind(this);
         this.closeSearch = this.closeSearch.bind(this);
+        this.closeSearchDetail = this.closeSearchDetail.bind(this);
         this.handleSearchCardClick = this.handleSearchCardClick.bind(this);
         this.handleSearchDetailClick = this.handleSearchDetailClick.bind(this);
     }
@@ -76,7 +91,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
             || this.state.searchResults != nextState.searchResults;
     }
 
-    setSelected(category: string, index: number) {
+    setSelected(category: string, index?: number) {
         if (index == undefined || this.state.selectedCategory == category && this.state.selectedIndex == index) {
             this.setState({ selectedCategory: undefined, selectedIndex: undefined });
         } else {
@@ -295,6 +310,12 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         });
     }
 
+    private closeSearchDetail(e: React.MouseEvent<HTMLElement>) {
+        const sourceCard = getPreviousSiblingCard(e.currentTarget);
+        this.setSelected(SEARCH_CATEGORY, undefined);
+        if (shouldRestoreFocusAfterClose(e)) focusCard(sourceCard);
+    }
+
     private handleSearchCardClick(e: any, scr: SearchCard, index?: number) {
         const header = scr.projectHeader;
         if (header) {
@@ -411,7 +432,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                             <Button
                                 key="go-back"
                                 leftIcon="icon chevron left"
-                                className="neutral large button"
+                                className="go-back-btn neutral large button"
                                 label={lf("Go Back")}
                                 title={lf("Go back")}
                                 onClick={this.closeSearch}
@@ -432,14 +453,22 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                             <Button
                                 key="search"
                                 leftIcon="icon search"
-                                className="neutral large button"
+                                className="home-search-btn neutral large button"
                                 label={lf("Search")}
                                 labelClassName="landscape only"
                                 title={lf("Search home content")}
                                 onClick={this.openSearch}
                             />}
                         {canImport ?
-                            <Button key="import" leftIcon="icon upload" className="import-dialog-btn neutral large button" labelClassName="landscape only" label={lf("Import")} title={lf("Import a project")} onClick={this.importProject} /> : undefined}
+                            <Button
+                                key="import"
+                                leftIcon="icon upload"
+                                className="import-dialog-btn neutral large button"
+                                labelClassName="landscape only"
+                                label={lf("Import")}
+                                title={lf("Import a project")}
+                                onClick={this.importProject}
+                            /> : undefined}
                     </div>
                 </div>
                 {searchMode && <div className="content homescreen-search-box" role="search">
@@ -475,7 +504,6 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                                     selected={!scr.directOpen ? searchSelectedIndex === index : undefined}
                                 />
                                 {selectedSearchCard && searchSelectedIndex === index && <div ref="searchDetailView" className="detailview search-detailview">
-                                    <sui.CloseButton onClick={() => this.setSelected(SEARCH_CATEGORY, undefined)} />
                                     <ProjectsDetail parent={this.props.parent}
                                         { ...selectedSearchCard }
                                         name={selectedSearchCard.name}
@@ -485,6 +513,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                                         scr={selectedSearchCard}
                                         onClick={this.handleSearchDetailClick}
                                     />
+                                    <sui.CloseButton onClick={this.closeSearchDetail} />
                                 </div>}
                             </React.Fragment>
                         ) : <p className="ui grey inverted segment">{lf("No search results found.")}</p>}
@@ -970,7 +999,7 @@ interface ProjectsCarouselProps extends ISettingsProps {
     cardWidth?: number;
     onClick: (src: any, action?: pxt.CodeCardAction) => void;
     selectedIndex?: number;
-    setSelected?: (name: string, index: number) => void;
+    setSelected?: (name: string, index?: number) => void;
     shuffle?: pxt.GalleryShuffle;
 }
 
@@ -990,6 +1019,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
         }
 
         this.closeDetail = this.closeDetail.bind(this);
+        this.closeDetailFromCloseButton = this.closeDetailFromCloseButton.bind(this);
         this.closeDetailOnEscape = this.closeDetailOnEscape.bind(this);
         this.reload = this.reload.bind(this);
         this.showScriptManager = this.showScriptManager.bind(this);
@@ -1041,15 +1071,26 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
         this.props.parent.showScriptManager();
     }
 
-    closeDetail() {
+    closeDetail(restoreFocus?: boolean) {
         const { name } = this.props;
+        const sourceCard = restoreFocus ? this.getSelectedCardDOM() : undefined;
         pxt.tickEvent("projects.detail.close");
         this.props.setSelected(name, undefined);
+        if (restoreFocus) focusCard(sourceCard);
+    }
+
+    closeDetailFromCloseButton(e: React.MouseEvent<HTMLElement>) {
+        this.closeDetail(shouldRestoreFocusAfterClose(e));
     }
 
     getCarouselDOM() {
         let carouselDom = ReactDOM.findDOMNode(this.refs["carousel"]);
         return carouselDom;
+    }
+
+    private getSelectedCardDOM(): HTMLElement | undefined {
+        const carouselDom = this.getCarouselDOM() as Element;
+        return carouselDom?.querySelector(".carouselitem.selected > .ui.card") as HTMLElement;
     }
 
     getDetailDOM() {
@@ -1060,7 +1101,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
     closeDetailOnEscape(e: KeyboardEvent) {
         const charCode = core.keyCodeFromEvent(e);
         if (charCode != core.ESC_KEY) return;
-        this.closeDetail();
+        this.closeDetail(true);
 
         document.removeEventListener('keydown', this.closeDetailOnEscape);
         e.preventDefault();
@@ -1134,7 +1175,6 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                         )}
                     </carousel.Carousel>
                     {selectedElement && <div ref="detailView" className={`detailview`}>
-                        <sui.CloseButton onClick={this.closeDetail} />
                         <ProjectsDetail parent={this.props.parent}
                             name={selectedElement.name}
                             key={'detail' + selectedElement.name}
@@ -1153,6 +1193,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                             tags={selectedElement.tags}
                             otherActions={selectedElement.otherActions}
                         />
+                        <sui.CloseButton onClick={this.closeDetailFromCloseButton} />
                     </div>}
                 </div>
             }
@@ -1925,6 +1966,7 @@ function cardActionButton(props: Partial<ProjectsDetailProps>, className: string
     // for a side fix (detail card buttons, etc) 
     return asLink ? // TODO (shakao)  migrate forumurl to otherAction json in md
         <Link
+            ref={autoFocus ? linkRef : undefined}
             href={codeCardUrl(props)}
             target={'_blank'}
             className={`ui ${className} card-action-button-link`}
