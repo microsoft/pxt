@@ -839,11 +839,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const baseTheme: monaco.editor.BuiltinTheme = hc
             ? "hc-black"
             : (ThemeManager.getInstance(document)?.getCurrentColorTheme()?.monacoBaseTheme as monaco.editor.BuiltinTheme) ?? (inverted ? "vs-dark" : "vs");
+        const useColors = (hc || baseTheme === "vs-dark") ? {} : colors;
         monaco.editor.defineTheme('pxtTheme', {
             base: baseTheme,
             inherit: true, // can also be false to completely replace the builtin rules
             rules: rules,
-            colors: hc ? {} : colors
+            colors: useColors
         });
         monaco.editor.setTheme('pxtTheme');
 
