@@ -347,7 +347,7 @@ export function getHighContrastOnce(): boolean {
  * Returns true if keyboard controls should be enabled by default.
  */
 export function isKeyboardControlsByDefault(): boolean {
-    return /keyboardcontrols=1/i.test(window.location.href);
+    return /keyboardcontrols=1/i.test(window.location.href) || pxt.appTarget.appTheme?.blocklyKeyboardControlsByDefault;
 }
 
 export async function toggleAccessibleBlocks(eventSource: string) {
