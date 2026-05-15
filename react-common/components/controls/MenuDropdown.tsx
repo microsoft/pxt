@@ -115,6 +115,11 @@ export const MenuDropdown = (props: MenuDropdownProps) => {
         }
     }
 
+    const closeOnItemClick = () => {
+        setExpanded(false);
+        if (expandButton) expandButton.focus();
+    }
+
     const classes = classList("common-menu-dropdown", className);
     const menuId = id + "-menu";
 
@@ -165,7 +170,7 @@ export const MenuDropdown = (props: MenuDropdownProps) => {
                                             {...item}
                                             key={key}
                                             onClick={() => {
-                                                setExpanded(false);
+                                                closeOnItemClick();
                                                 item.onClick?.();
                                             }}
                                         />
@@ -177,7 +182,7 @@ export const MenuDropdown = (props: MenuDropdownProps) => {
                                             {...item}
                                             key={key}
                                             onClick={() => {
-                                                setExpanded(false);
+                                                closeOnItemClick();
                                                 item.onClick?.();
                                             }}
                                         />
@@ -189,7 +194,7 @@ export const MenuDropdown = (props: MenuDropdownProps) => {
                                             {...item}
                                             key={key}
                                             onChange={newValue => {
-                                                setExpanded(false);
+                                                closeOnItemClick();
                                                 item.onChange?.(newValue);
                                             }}
                                         />

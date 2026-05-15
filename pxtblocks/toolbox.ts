@@ -285,6 +285,9 @@ function createFlyoutLabel(name: string, color?: string, icon?: string, iconClas
         }
         else {
             headingLabel.setAttribute('web-icon-class', `blocklyFlyoutIcon${name}`);
+            if (pxt.toolbox.isImageIcon(icon)) {
+                headingLabel.setAttribute('web-icon-image', pxt.Util.pathJoin(pxt.webConfig.commitCdnUrl, encodeURI(icon)));
+            }
         }
     }
     return headingLabel;
