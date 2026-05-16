@@ -237,7 +237,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
 
         let id = subns ? nameid + subns : nameid;
 
-        if (this.state.selectedItem == id && !force && !onlyTriggerOnClick && !pxt.BrowserUtils.isTouchEnabled()) {
+        if (this.state.selectedItem === id && !force && !onlyTriggerOnClick && !pxt.BrowserUtils.isTouchEnabled()) {
             this.clearSelection();
 
             // Hide flyout
