@@ -61,6 +61,8 @@ function getProjectDescriptionFromConfig(configText: string): string {
 
 export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
     protected searchRequestId = 0;
+    protected searchButton: HTMLElement;
+    protected restoreSearchButtonFocusAfterClose = false;
 
     constructor(props: ISettingsProps) {
         super(props)
@@ -77,6 +79,8 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         this.setSelected = this.setSelected.bind(this);
         this.openSearch = this.openSearch.bind(this);
         this.closeSearch = this.closeSearch.bind(this);
+        this.handleCloseSearchButtonKeydown = this.handleCloseSearchButtonKeydown.bind(this);
+        this.handleSearchButtonRef = this.handleSearchButtonRef.bind(this);
         this.closeSearchDetail = this.closeSearchDetail.bind(this);
         this.handleSearchCardClick = this.handleSearchCardClick.bind(this);
         this.handleSearchDetailClick = this.handleSearchDetailClick.bind(this);
@@ -298,6 +302,9 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
     }
 
     private closeSearch() {
+        const restoreFocus = this.restoreSearchButtonFocusAfterClose;
+        this.restoreSearchButtonFocusAfterClose = false;
+
         pxt.tickEvent("projects.searchmode.close", undefined, { interactiveConsent: true });
         this.searchRequestId++;
         compiler.homeSearchClear();
@@ -307,7 +314,19 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
             searchResults: undefined,
             selectedCategory: undefined,
             selectedIndex: undefined,
+        }, () => {
+            if (restoreFocus) this.searchButton?.focus();
         });
+    }
+
+    private handleCloseSearchButtonKeydown(e: React.KeyboardEvent<HTMLElement>) {
+        const charCode = (typeof e.which == "number") ? e.which : e.keyCode;
+        if (charCode === 13 || charCode === 32) this.restoreSearchButtonFocusAfterClose = true;
+        fireClickOnEnter(e);
+    }
+
+    private handleSearchButtonRef(ref: HTMLElement) {
+        this.searchButton = ref;
     }
 
     private closeSearchDetail(e: React.MouseEvent<HTMLElement>) {
@@ -436,6 +455,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                                 label={lf("Go Back")}
                                 title={lf("Go back")}
                                 onClick={this.closeSearch}
+                                onKeydown={this.handleCloseSearchButtonKeydown}
                             />
                             : scriptManager ? <h2 className="ui header myproject-header"
                                 onClick={this.showScriptManager}
@@ -458,6 +478,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                                 labelClassName="landscape only"
                                 title={lf("Search home content")}
                                 onClick={this.openSearch}
+                                buttonRef={this.handleSearchButtonRef}
                             />}
                         {canImport ?
                             <Button
