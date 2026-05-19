@@ -331,7 +331,9 @@
     }
     .import-dialog-btn,
     .home-search-btn,
-    .go-back-btn {
+    .go-back-btn,
+    .yt-button,
+    .home-share-button {
         position: relative;
         z-index: 1; /* Move up so it's above the carousel container that has an offset margin */
         &:focus-visible {
@@ -422,6 +424,12 @@
             margin: 0;
             padding-left: @carouselArrowSize;
             margin-top: 2rem;
+        }
+        .project-info {
+            order: 1;
+        }
+        .actions {
+            order: 2;
         }
         .imagewrapper {
             position: absolute;
@@ -1108,7 +1116,7 @@
         }
 
         .detailview {
-            .column:first-child {
+            .project-info {
                 height: auto;
                 overflow: visible;
 

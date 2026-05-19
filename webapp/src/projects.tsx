@@ -1861,6 +1861,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
             ? this.getShareableLink(selectedShareAction.action, shareDialogEditor)
             : undefined;
         const hasShareActions = pxt.appTarget.appTheme.shareHomepageContent && shareActions.length > 0;
+        const showYouTubeButton = !!cardType && !!youTubeWatchUrl && this.isYouTubeOnline();
 
         let clickLabel: string;
         if (buttonLabel)
@@ -1874,7 +1875,24 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                 {video ? <video className="video" src={video} autoPlay={true} controls={false} loop={true} playsInline={true} />
                     : <div className="image" style={{ backgroundImage: `url("${image}")` }} />}
             </div>}
-            <div className="column six wide">
+            <div className="actions column ten wide">
+                <div className="segment">
+                    {this.getActionCard(clickLabel, cardType, this.handleDetailClick, true, undefined, undefined, actionIcon)}
+                    {otherActions && otherActions.map((el, i) => {
+                        let onClick = this.handleActionClick(el);
+                        let label = el.cardType ? this.getClickLabel(el.cardType) : clickLabel;
+                        return this.getActionCard(label, el.cardType || cardType, onClick, false, el, `action${i}`);
+                    })}
+                    {cardType === "forumUrl" && (!otherActions || otherActions.length == 0) &&
+                        // TODO (jwunderl) temporarily disabled in electron re: https://github.com/microsoft/pxt-arcade/issues/2346;
+                        // reenable CORS issue is fixed.
+                        !pxt.BrowserUtils.isPxtElectron() &&
+                        // TODO (shakao) migrate forumurl to otherAction json in md
+                        this.getActionCard(lf("Open in Editor"), "forumExample", this.handleOpenForumUrlInEditor)
+                    }
+                </div>
+            </div>
+            <div className="project-info column six wide">
                 <div className="segment">
                     <div className="header"> {name} </div>
                     {tags && <div className="ui labels">
@@ -1887,7 +1905,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                             </p>
                         })}
                     </div>
-                    {!!cardType && youTubeWatchUrl && this.isYouTubeOnline() &&
+                    {showYouTubeButton &&
                         // show youtube card
                         // thumbnail url `https://img.youtube.com/vi/${youTubeId}/default.jpg`
                         <sui.Link
@@ -1905,23 +1923,6 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                             onClick={this.showShareDialog}
                             title={lf("Create a link to share this content")} ariaLabel={lf("Create a link to share this content")}
                         />
-                    }
-                </div>
-            </div>
-            <div className="actions column ten wide">
-                <div className="segment">
-                    {this.getActionCard(clickLabel, cardType, this.handleDetailClick, true, undefined, undefined, actionIcon)}
-                    {otherActions && otherActions.map((el, i) => {
-                        let onClick = this.handleActionClick(el);
-                        let label = el.cardType ? this.getClickLabel(el.cardType) : clickLabel;
-                        return this.getActionCard(label, el.cardType || cardType, onClick, false, el, `action${i}`);
-                    })}
-                    {cardType === "forumUrl" && (!otherActions || otherActions.length == 0) &&
-                        // TODO (jwunderl) temporarily disabled in electron re: https://github.com/microsoft/pxt-arcade/issues/2346;
-                        // reenable CORS issue is fixed.
-                        !pxt.BrowserUtils.isPxtElectron() &&
-                        // TODO (shakao) migrate forumurl to otherAction json in md
-                        this.getActionCard(lf("Open in Editor"), "forumExample", this.handleOpenForumUrlInEditor)
                     }
                 </div>
             </div>
