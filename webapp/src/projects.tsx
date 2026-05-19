@@ -618,10 +618,6 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
         this.props.parent.toggleGreenScreen();
     }
 
-    toggleAccessibleBlocks() {
-        this.props.parent.toggleAccessibleBlocks("homesettings");
-    }
-
     showResetDialog() {
         pxt.tickEvent("home.reset", undefined, { interactiveConsent: true });
         this.props.parent.showResetDialog();

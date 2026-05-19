@@ -1,5 +1,5 @@
 import * as React from "react";
-import { getActionShortcut, getActionShortcutsAsKeys, ShortcutNames } from "../shortcut_formatting";
+import { getShortcutKeysShortAll, ShortcutNames } from "../shortcut_formatting";
 
 const isMacPlatform = pxt.BrowserUtils.isMac();
 
@@ -14,7 +14,7 @@ const KeyboardControlsHelp = () => {
     const contextMenuRow = <Row name={lf("Open context menu")} shortcuts={[ShortcutNames.MENU]} />
     const cleanUpRow = <Row name={lf("Workspace: Format code")} shortcuts={[ShortcutNames.CLEAN_UP]} />
     const orAsJoiner = lf("or")
-    const enterOrSpace = { shortcuts: getActionShortcutsAsKeys(ShortcutNames.EDIT_OR_CONFIRM), joiner: orAsJoiner}
+    const enterOrSpace = { shortcuts: getShortcutKeysShortAll(ShortcutNames.EDIT_OR_CONFIRM), joiner: orAsJoiner}
     const editOrConfirmRow = <Row name={lf("Edit or confirm")} {...enterOrSpace} />
     return (
         <aside id="keyboardnavhelp" aria-label={lf("Keyboard Controls")} ref={ref} tabIndex={0}>
@@ -61,7 +61,7 @@ const KeyboardControlsHelp = () => {
                     <Row name={lf("Paste")} shortcuts={[ShortcutNames.PASTE]} />
                     <Row name={lf("Cut")} shortcuts={[ShortcutNames.CUT]} />
                     <Row name={lf("Duplicate")} shortcuts={[ShortcutNames.DUPLICATE]} />
-                    <Row name={lf("Delete")} shortcuts={getActionShortcutsAsKeys(ShortcutNames.DELETE)} joiner={orAsJoiner} />
+                    <Row name={lf("Delete")} shortcuts={getShortcutKeysShortAll(ShortcutNames.DELETE)} joiner={orAsJoiner} />
                     <Row name={lf("Undo")} shortcuts={[ShortcutNames.UNDO]} />
                     <Row name={lf("Redo")} shortcuts={[ShortcutNames.REDO]} />
                     {contextMenuRow}
@@ -108,8 +108,8 @@ const Row = ({ name, shortcuts = [], joiner, children}: RowProps) => {
     const shortcutElements = shortcuts.map((s, idx) => {
         if (typeof s === "string") {
             // Pull keys from shortcut registry.
-            const shortcut = getActionShortcut(s);
-            return shortcut === null ? null : <Shortcut key={idx} keys={getActionShortcut(s)} />
+            const variants = getShortcutKeysShortAll(s);
+            return variants.length === 0 ? null : <Shortcut key={idx} keys={variants[0]} />
         } else {
             // Display keys as specified.
             return <Shortcut key={idx} keys={s} />

@@ -38,6 +38,11 @@ export class ConnectionPreviewer extends Blockly.InsertionMarkerPreviewer {
             this.staticConnectionIndicator = this.createConnectionIndicator(staticIndicatorParent, staticConn);
         }
         this.staticConnectionIndicator.parentElement.appendChild(this.staticConnectionIndicator);
+        // RenderedConnection.highlight() re-appends the connection's highlight
+        // path to the end of svgRoot every call, painting it over the indicator
+        // group. Re-append the group to the end of svgRoot to keep the dot on top.
+        const staticIndicatorParent = this.staticConnectionIndicator.parentElement;
+        staticIndicatorParent.parentElement?.appendChild(staticIndicatorParent);
 
         const radius = ConnectionPreviewer.CONNECTION_INDICATOR_RADIUS;
         const offset = draggedConn.getOffsetInBlock();

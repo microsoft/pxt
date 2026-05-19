@@ -1,8 +1,29 @@
 import * as Blockly from "blockly";
+import { isAllowlistedShadow } from "../plugins/duplicateOnDrag/duplicateOnDrag";
 
 interface PatchedGesture extends Blockly.Gesture {
     id: number | undefined
     boundEvents_: Blockly.browserEvents.Data[];
+}
+
+/**
+ * Make allowlisted shadow blocks (marked `duplicateShadowOnDrag`) the drag
+ * target rather than their parent. Blockly's default walks up to the nearest
+ * non-shadow ancestor; we want the shadow itself so the duplicate-on-drag
+ * strategy can extract it and refill the parent slot via setShadowDom.
+ */
+export function monkeyPatchShadowDragTargetBlock() {
+    const proto = Blockly.Gesture.prototype as any;
+    const origSetTargetBlock = proto.setTargetBlock;
+    proto.setTargetBlock = function (block: Blockly.BlockSvg) {
+        if (block.isShadow() && isAllowlistedShadow(block)) {
+            this.targetBlock = block;
+            block.bringToFront();
+            Blockly.getFocusManager().focusNode(block);
+            return;
+        }
+        return origSetTargetBlock.call(this, block);
+    };
 }
 
 export function monkeyPatchGesture() {

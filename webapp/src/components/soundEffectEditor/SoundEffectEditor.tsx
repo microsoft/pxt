@@ -107,6 +107,8 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
             if (selectedView === "gallery") return;
 
             play();
+            ev.preventDefault();
+            ev.stopPropagation();
     }, [play, selectedView])
 
     React.useEffect(() => {

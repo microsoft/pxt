@@ -61,7 +61,6 @@
   },
   "dependencies": {
     "@blockly/field-grid-dropdown": "6.0.4",
-    "@blockly/keyboard-navigation": "3.0.3",
     "@blockly/plugin-workspace-search": "10.1.2",
     "@crowdin/crowdin-api-client": "^1.33.0",
     "@fortawesome/fontawesome-free": "^5.15.4",
@@ -72,7 +71,7 @@
     "@zip.js/zip.js": "2.4.20",
     "adm-zip": "^0.5.12",
     "axios": "^1.12.2",
-    "blockly": "12.3.1",
+    "blockly": "13.0.0-beta.5",
     "browserify": "17.0.0",
     "chai": "^3.5.0",
     "chalk": "^4.1.2",
@@ -151,6 +150,12 @@
     "yargs": "^17.7.2"
   },
   "overrides": {
+    "@blockly/field-grid-dropdown": {
+      "blockly": "13.0.0-beta.5"
+    },
+    "@blockly/plugin-workspace-search": {
+      "blockly": "13.0.0-beta.5"
+    },
     "combine-source-map": {
       "source-map": "0.4.4"
     },
