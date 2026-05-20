@@ -110,7 +110,7 @@ export const SoundGallery = (props: SoundGalleryProps) => {
     const ref = React.useRef<HTMLDivElement>(null);
 
     const handlePreviewButtonClick = (index: number) => {
-        ref.current?.focus({preventScroll: true});
+        ref.current?.focus({ preventScroll: true });
         updateActiveDescendant("preview", index);
         setGridFocused(false);
     }
