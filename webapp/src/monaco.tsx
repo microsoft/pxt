@@ -1367,6 +1367,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.parent.setState({ hideEditorFloats: false });
     }
 
+    public isFlyoutVisible(): boolean {
+        return !!this.flyout?.state?.groups && !this.flyout?.state?.hide;
+    }
+
     updateToolbox() {
         let appTheme = pxt.appTarget.appTheme;
         if (!appTheme.monacoToolbox || pxt.shell.isReadOnly() || !this.editor) return;

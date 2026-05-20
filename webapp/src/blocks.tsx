@@ -1961,6 +1961,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
+    public isFlyoutVisible(): boolean {
+        return !!this.editor?.getFlyout()?.isVisible();
+    }
+
     ///////////////////////////////////////////////////////////
     ////////////         Toolbox methods          /////////////
     ///////////////////////////////////////////////////////////

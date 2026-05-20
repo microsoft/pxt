@@ -286,6 +286,7 @@ export abstract class ToolboxEditor extends srceditor.Editor {
     abstract showFlyout(treeRow: toolbox.ToolboxCategory): void;
     abstract hideFlyout(): void;
     abstract setFlyoutForceOpen(forceOpen: boolean): void;
+    abstract isFlyoutVisible(): boolean;
     moveFocusToFlyout() { }
 
     protected abstract showFlyoutHeadingLabel(ns: string, name: string, subns: string, icon: string, color: string): void;
