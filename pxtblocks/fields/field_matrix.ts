@@ -199,7 +199,7 @@ export abstract class FieldMatrix extends Blockly.Field {
         this.clearFocusIndicator();
         const focusVisible = this.matrixSvg.matches(":focus-visible");
         if (!focusVisible && !this.forceFocusVisible) return;
-        const cellRect = cell.querySelector('rect');
+        const cellRect = cell.children[1];
         const cellWidth = parseInt(cellRect.getAttribute("width"))
         const cornerRadius = parseInt(cellRect.getAttribute("rx"));
 
@@ -225,7 +225,7 @@ export abstract class FieldMatrix extends Blockly.Field {
                 "aria-hidden": "true"
             });
         }
-        const cellTextEl = cell.querySelector("text");
+        const cellTextEl = cell.firstElementChild;
         // Don't take effect for initial gridcell focus.
         // Only announce gridcells being toggled on/off, not navigated to.
         setTimeout(() => cellTextEl.setAttribute("aria-live", "polite"), 0);
@@ -233,9 +233,9 @@ export abstract class FieldMatrix extends Blockly.Field {
 
     protected clearFocusIndicator() {
         this.cells.forEach(cell => cell.forEach(cell => {
-            const cellTextEl = cell.querySelector("text");
+            const cellTextEl = cell.firstElementChild;
             cellTextEl.removeAttribute("aria-live");
-            const cellRect = cell.querySelector("rect");
+            const cellRect = cell.children[1];
             while (cellRect.nextElementSibling) {
                 cellRect.nextElementSibling.remove();
             }

@@ -510,8 +510,8 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
 
             for (let col = 0; col < this.numMatrixCols; col++) {
                 const cell = this.cells[col][row];
-                const cellRect = cell.querySelector('rect');
-                const cellTextEl = cell.querySelector('text');
+                const cellRect = cell.children[1] as SVGRectElement;
+                const cellTextEl = cell.firstElementChild as SVGTextElement;
 
                 if (this.melody.getValue(row, col)) {
                     pxt.BrowserUtils.removeClass(cellRect, "melody-default");
@@ -593,7 +593,7 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
         const cells = this.cells[col];
 
         cells.forEach(cell => {
-            const cellRect = cell.querySelector('rect');
+            const cellRect = cell.children[1] as SVGRectElement;
             if (on) pxt.BrowserUtils.addClass(cellRect, "playing")
             else pxt.BrowserUtils.removeClass(cellRect, "playing")
         });
@@ -761,7 +761,7 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
             pxt.AudioContextManager.stop();
             this.isPlaying = false;
 
-            this.cells.forEach(row => row.forEach(cell => pxt.BrowserUtils.removeClass(cell.querySelector('rect'), "playing")));
+            this.cells.forEach(row => row.forEach(cell => pxt.BrowserUtils.removeClass(cell.children[1] as SVGRectElement, "playing")));
         }
     }
 
