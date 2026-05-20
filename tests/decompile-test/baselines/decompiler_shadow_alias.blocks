@@ -9,7 +9,7 @@
 </value>
 <value name="value">
 <shadow type="math_number_minmax">
-<mutation min="0" max="1" />
+<mutation min="0" max="1" label="Value" />
 <field name="SLIDER">2</field>
 </shadow>
 </value>
