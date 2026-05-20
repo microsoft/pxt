@@ -108,6 +108,11 @@ export const SoundGallery = (props: SoundGalleryProps) => {
         setGridFocused(true);
     };
 
+    const handleFocus = (e: React.FocusEvent) => {
+        setGridFocused(true);
+        focusSelectOrPlayElement(e);
+    }
+
     const ref = React.useRef<HTMLDivElement>(null);
 
     const handlePreviewButtonClick = (index: number, keyboardTriggered: boolean) => {
@@ -123,9 +128,9 @@ export const SoundGallery = (props: SoundGalleryProps) => {
             tabIndex={0}
             role="grid"
             aria-activedescendant={activeDescendant}
-            onFocus={e => { setGridFocused(true); focusSelectOrPlayElement(e); }}
+            onFocus={handleFocus}
             onBlur={() => setGridFocused(false)}
-            onKeyDown={e => handleKeyDown(e)}>
+            onKeyDown={handleKeyDown}>
             {sounds.map((item, index) => {
                 return (
                     <div
