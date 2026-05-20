@@ -61,6 +61,8 @@ function getProjectDescriptionFromConfig(configText: string): string {
 
 export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
     protected searchRequestId = 0;
+    protected searchButton: HTMLElement;
+    protected restoreSearchButtonFocusAfterClose = false;
 
     constructor(props: ISettingsProps) {
         super(props)
@@ -77,6 +79,8 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         this.setSelected = this.setSelected.bind(this);
         this.openSearch = this.openSearch.bind(this);
         this.closeSearch = this.closeSearch.bind(this);
+        this.handleCloseSearchButtonKeydown = this.handleCloseSearchButtonKeydown.bind(this);
+        this.handleSearchButtonRef = this.handleSearchButtonRef.bind(this);
         this.closeSearchDetail = this.closeSearchDetail.bind(this);
         this.handleSearchCardClick = this.handleSearchCardClick.bind(this);
         this.handleSearchDetailClick = this.handleSearchDetailClick.bind(this);
@@ -298,6 +302,9 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
     }
 
     private closeSearch() {
+        const restoreFocus = this.restoreSearchButtonFocusAfterClose;
+        this.restoreSearchButtonFocusAfterClose = false;
+
         pxt.tickEvent("projects.searchmode.close", undefined, { interactiveConsent: true });
         this.searchRequestId++;
         compiler.homeSearchClear();
@@ -307,7 +314,19 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
             searchResults: undefined,
             selectedCategory: undefined,
             selectedIndex: undefined,
+        }, () => {
+            if (restoreFocus) this.searchButton?.focus();
         });
+    }
+
+    private handleCloseSearchButtonKeydown(e: React.KeyboardEvent<HTMLElement>) {
+        const charCode = (typeof e.which == "number") ? e.which : e.keyCode;
+        if (charCode === 13 || charCode === 32) this.restoreSearchButtonFocusAfterClose = true;
+        fireClickOnEnter(e);
+    }
+
+    private handleSearchButtonRef(ref: HTMLElement) {
+        this.searchButton = ref;
     }
 
     private closeSearchDetail(e: React.MouseEvent<HTMLElement>) {
@@ -436,6 +455,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                                 label={lf("Go Back")}
                                 title={lf("Go back")}
                                 onClick={this.closeSearch}
+                                onKeydown={this.handleCloseSearchButtonKeydown}
                             />
                             : scriptManager ? <h2 className="ui header myproject-header"
                                 onClick={this.showScriptManager}
@@ -458,6 +478,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                                 labelClassName="landscape only"
                                 title={lf("Search home content")}
                                 onClick={this.openSearch}
+                                buttonRef={this.handleSearchButtonRef}
                             />}
                         {canImport ?
                             <Button
@@ -1455,12 +1476,12 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
     }
 
     private getShareableEditors(action?: pxt.CodeCardAction): pxt.CodeCardEditorType[] {
-        const { cardType, otherActions } = this.props;
+        const { otherActions } = this.props;
 
-        const primaryType = action?.cardType || cardType;
+        const primaryType = this.getShareActionCardType(action);
         if (!primaryType) return [undefined];
 
-        if (primaryType !== "tutorial" && primaryType !== "example" && primaryType !== "codeExample" && primaryType !== "sharedExample")
+        if (!this.isEditorShareableCardType(primaryType))
             return [undefined];
 
         const available: pxt.CodeCardEditorType[] = [];
@@ -1470,17 +1491,45 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
             if (available.indexOf(editor) === -1) available.push(editor);
         }
 
-        addEditor(this.getActionEditor(primaryType, action));
-
-        const matchingActions = otherActions?.filter(other => (other.cardType || primaryType) === primaryType) || [];
-
-        for (const otherAction of matchingActions) {
-            const actionCardType: pxt.CodeCardType = otherAction.cardType || primaryType;
-            if (actionCardType !== primaryType) continue;
-            addEditor(this.getActionEditor(actionCardType, otherAction));
+        const addEditorFromAction = (editorAction?: pxt.CodeCardAction) => {
+            const actionCardType = this.getShareActionCardType(editorAction);
+            if (actionCardType !== primaryType || !this.isSameShareActionGroup(action, editorAction)) return;
+            addEditor(this.getActionEditor(actionCardType, editorAction));
         }
 
+        addEditorFromAction(action);
+        if (action) addEditorFromAction(undefined);
+
+        for (const otherAction of otherActions || []) addEditorFromAction(otherAction);
+
         return available;
+    }
+
+    private getShareActionCardType(action?: pxt.CodeCardAction): pxt.CodeCardType {
+        return action?.cardType || this.props.cardType;
+    }
+
+    private isEditorShareableCardType(cardType: pxt.CodeCardType): boolean {
+        return cardType === "tutorial" || cardType === "example" || cardType === "codeExample" || cardType === "sharedExample";
+    }
+
+    private isSameShareActionGroup(first?: pxt.CodeCardAction, second?: pxt.CodeCardAction): boolean {
+        return this.getShareActionCardType(first) === this.getShareActionCardType(second)
+            && this.getActionLabel(first) === this.getActionLabel(second);
+    }
+
+    private getShareActionForEditor(action?: pxt.CodeCardAction, editor?: pxt.CodeCardEditorType): pxt.CodeCardAction | undefined {
+        const primaryType = this.getShareActionCardType(action);
+        if (!editor || !this.isEditorShareableCardType(primaryType)) return action;
+
+        const candidates = [action, undefined].concat(this.props.otherActions || []);
+        for (const candidate of candidates) {
+            const candidateType = this.getShareActionCardType(candidate);
+            if (candidateType !== primaryType || !this.isSameShareActionGroup(action, candidate)) continue;
+            if (this.getActionEditor(candidateType, candidate) === editor) return candidate;
+        }
+
+        return action;
     }
 
     protected isLink(actionType?: pxt.CodeCardType) {
@@ -1603,16 +1652,21 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
     protected getShareableActions(): ShareActionOption[] {
         const actions: ShareActionOption[] = [];
         const seen = new Set<string>();
+        const seenEditorActionGroups = new Set<string>();
         const primaryType = this.props.cardType;
         const scr = this.props.scr;
 
         const addAction = (key: string, action?: pxt.CodeCardAction, precomputedUrl?: string) => {
             const shareUrl = precomputedUrl || this.getShareableLink(action);
-            const cardType = action?.cardType || this.props.cardType;
+            const cardType = this.getShareActionCardType(action);
 
             if (!cardType || !shareUrl || seen.has(shareUrl)) return;
 
+            const actionGroup = `${cardType}:${this.getActionLabel(action)}`;
+            if (action?.editor && this.isEditorShareableCardType(cardType) && seenEditorActionGroups.has(actionGroup)) return;
+
             seen.add(shareUrl);
+            if (this.isEditorShareableCardType(cardType)) seenEditorActionGroups.add(actionGroup);
 
             actions.push({
                 key,
@@ -1657,8 +1711,9 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
     }
 
     protected getShareableLink(action?: pxt.CodeCardAction, overrideEditor?: pxt.CodeCardEditorType): string {
+        const editorAction = this.getShareActionForEditor(action, overrideEditor);
         const { cardType: baseCardType, url, scr } = this.props;
-        const cardType = action?.cardType || baseCardType;
+        const cardType = editorAction?.cardType || baseCardType;
         if (!cardType) return undefined;
 
         const relPrefix = (pxt.webConfig?.relprefix || "").replace(/-+$/, "");
@@ -1668,11 +1723,12 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
             ? `${liveBaseUrl}${relPrefix}`
             : defaultBaseUrl;
 
-        const cardUrl = (action?.url || scr?.url || url) as string;
-        const defaultEditor = this.getActionEditor(cardType, action);
-        const includeEditorPrefix = !!overrideEditor
-            && overrideEditor !== defaultEditor;
-        const editorPrefix = includeEditorPrefix ? normalizeEditorPrefix(overrideEditor) : "";
+        const cardUrl = (editorAction?.url || scr?.url || url) as string;
+        const defaultEditor = this.getActionEditor(cardType, editorAction);
+        const requestedEditor = overrideEditor || editorAction?.editor;
+        const includeEditorPrefix = !!requestedEditor
+            && (requestedEditor !== defaultEditor || editorAction?.editor === requestedEditor);
+        const editorPrefix = includeEditorPrefix ? normalizeEditorPrefix(requestedEditor) : "";
 
         switch (cardType) {
             case "tutorial": {
@@ -1687,7 +1743,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                 return `${baseUrl}#example:${editorPrefix}${examplePath}`;
             }
             case "sharedExample": {
-                const raw = cardUrl || (action as any)?.shareUrl || (scr as any)?.shareUrl;
+                const raw = cardUrl || (editorAction as any)?.shareUrl || (scr as any)?.shareUrl;
                 if (!raw) return undefined;
 
                 const repoId = pxt.github.normalizeRepoId(raw);
@@ -1805,6 +1861,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
             ? this.getShareableLink(selectedShareAction.action, shareDialogEditor)
             : undefined;
         const hasShareActions = pxt.appTarget.appTheme.shareHomepageContent && shareActions.length > 0;
+        const showYouTubeButton = !!cardType && !!youTubeWatchUrl && this.isYouTubeOnline();
 
         let clickLabel: string;
         if (buttonLabel)
@@ -1818,7 +1875,24 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                 {video ? <video className="video" src={video} autoPlay={true} controls={false} loop={true} playsInline={true} />
                     : <div className="image" style={{ backgroundImage: `url("${image}")` }} />}
             </div>}
-            <div className="column six wide">
+            <div className="actions column ten wide">
+                <div className="segment">
+                    {this.getActionCard(clickLabel, cardType, this.handleDetailClick, true, undefined, undefined, actionIcon)}
+                    {otherActions && otherActions.map((el, i) => {
+                        let onClick = this.handleActionClick(el);
+                        let label = el.cardType ? this.getClickLabel(el.cardType) : clickLabel;
+                        return this.getActionCard(label, el.cardType || cardType, onClick, false, el, `action${i}`);
+                    })}
+                    {cardType === "forumUrl" && (!otherActions || otherActions.length == 0) &&
+                        // TODO (jwunderl) temporarily disabled in electron re: https://github.com/microsoft/pxt-arcade/issues/2346;
+                        // reenable CORS issue is fixed.
+                        !pxt.BrowserUtils.isPxtElectron() &&
+                        // TODO (shakao) migrate forumurl to otherAction json in md
+                        this.getActionCard(lf("Open in Editor"), "forumExample", this.handleOpenForumUrlInEditor)
+                    }
+                </div>
+            </div>
+            <div className="project-info column six wide">
                 <div className="segment">
                     <div className="header"> {name} </div>
                     {tags && <div className="ui labels">
@@ -1831,7 +1905,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                             </p>
                         })}
                     </div>
-                    {!!cardType && youTubeWatchUrl && this.isYouTubeOnline() &&
+                    {showYouTubeButton &&
                         // show youtube card
                         // thumbnail url `https://img.youtube.com/vi/${youTubeId}/default.jpg`
                         <sui.Link
@@ -1849,23 +1923,6 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                             onClick={this.showShareDialog}
                             title={lf("Create a link to share this content")} ariaLabel={lf("Create a link to share this content")}
                         />
-                    }
-                </div>
-            </div>
-            <div className="actions column ten wide">
-                <div className="segment">
-                    {this.getActionCard(clickLabel, cardType, this.handleDetailClick, true, undefined, undefined, actionIcon)}
-                    {otherActions && otherActions.map((el, i) => {
-                        let onClick = this.handleActionClick(el);
-                        let label = el.cardType ? this.getClickLabel(el.cardType) : clickLabel;
-                        return this.getActionCard(label, el.cardType || cardType, onClick, false, el, `action${i}`);
-                    })}
-                    {cardType === "forumUrl" && (!otherActions || otherActions.length == 0) &&
-                        // TODO (jwunderl) temporarily disabled in electron re: https://github.com/microsoft/pxt-arcade/issues/2346;
-                        // reenable CORS issue is fixed.
-                        !pxt.BrowserUtils.isPxtElectron() &&
-                        // TODO (shakao) migrate forumurl to otherAction json in md
-                        this.getActionCard(lf("Open in Editor"), "forumExample", this.handleOpenForumUrlInEditor)
                     }
                 </div>
             </div>
