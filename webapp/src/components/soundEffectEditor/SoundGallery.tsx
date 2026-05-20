@@ -24,7 +24,7 @@ interface SoundGalleryItemProps extends SoundGalleryItem {
     activeDescendant: string;
     gridFocused: boolean;
     getCellId: (col: "select" | "preview", row: number) => string;
-    onPreviewButtonClick: (index: number) => void;
+    onPreviewButtonClick: (index: number, keyboardTriggered: boolean) => void;
 }
 
 
@@ -110,10 +110,10 @@ export const SoundGallery = (props: SoundGalleryProps) => {
 
     const ref = React.useRef<HTMLDivElement>(null);
 
-    const handlePreviewButtonClick = (index: number) => {
+    const handlePreviewButtonClick = (index: number, keyboardTriggered: boolean) => {
         ref.current?.focus({ preventScroll: true });
         updateActiveDescendant("preview", index);
-        setGridFocused(false);
+        setGridFocused(keyboardTriggered);
     }
 
     return <div className={classList("sound-gallery", visible && "visible")} aria-hidden={!visible}>
@@ -173,8 +173,9 @@ const SoundGalleryEntry = (props: SoundGalleryItemProps) => {
     const selectActive = gridFocused && activeDescendant === selectId;
     const previewActive = gridFocused && activeDescendant === previewId;
 
-    const handlePlayButtonClick = async () => {
-        onPreviewButtonClick(index);
+    const handlePlayButtonClick = async (e: React.MouseEvent) => {
+        const keyboardTriggered = e.detail === 0;
+        onPreviewButtonClick(index, keyboardTriggered);
         if (cancelToken) {
             cancelToken.cancelled = true
             setCancelToken(null);
@@ -223,7 +224,8 @@ const SoundGalleryEntry = (props: SoundGalleryItemProps) => {
             className="sound-effect-play-button"
             buttonRef={playReference}
             tabIndex={-1}
-            onClick={handlePlayButtonClick}
+            onClick={null}
+            onClickEvent={e => handlePlayButtonClick(e)}
             // Don't allow focus to be stolen.
             onMouseDown={(e) => e.preventDefault()}
             leftIcon={cancelToken ? "fas fa-stop" : "fas fa-play"}
