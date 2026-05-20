@@ -66,32 +66,32 @@ export const SoundGallery = (props: SoundGalleryProps) => {
     }, []);
 
     const handleKeyDown = (
-        prev: number,
-        next: number,
-        current: number,
         e: React.KeyboardEvent<HTMLElement>) => {
+        const { row, col } = selectedCoord.current;
+        const prev = Math.max(row - 1, 0);
+        const next = Math.min(row + 1, sounds.length - 1);
         const arrowToSelection = pxt.Util.isUserLanguageRtl() ? "ArrowRight" : "ArrowLeft";
         const arrowToPreview = pxt.Util.isUserLanguageRtl() ? "ArrowLeft" : "ArrowRight";
         switch(e.code) {
             case "ArrowDown":
-                updateActiveDescendant(selectedCoord.current.col, next);
+                updateActiveDescendant(col, next);
                 break;
             case "ArrowUp":
-                updateActiveDescendant(selectedCoord.current.col, prev);
+                updateActiveDescendant(col, prev);
                 break;
             case arrowToSelection:
-                updateActiveDescendant("select", selectedCoord.current.row);
+                updateActiveDescendant("select", row);
                 break;
             case arrowToPreview:
-                updateActiveDescendant("preview", selectedCoord.current.row);
+                updateActiveDescendant("preview", row);
                 break;
             case "Space":
             case "Enter":
-                if (selectedCoord.current.col === "select") {
-                    onSoundSelected(sounds[current].sound);
+                if (col === "select") {
+                    onSoundSelected(sounds[row].sound);
                     e.stopPropagation();
                 } else {
-                    playItemRefs.current[selectedCoord.current.row]?.click();
+                    playItemRefs.current[row]?.click();
                 }
                 e.preventDefault();
                 return;
@@ -105,6 +105,7 @@ export const SoundGallery = (props: SoundGalleryProps) => {
                 return;
         }
         e.preventDefault();
+        setGridFocused(true);
     };
 
     const ref = React.useRef<HTMLDivElement>(null);
@@ -124,13 +125,7 @@ export const SoundGallery = (props: SoundGalleryProps) => {
             aria-activedescendant={activeDescendant}
             onFocus={e => { setGridFocused(true); focusSelectOrPlayElement(e); }}
             onBlur={() => setGridFocused(false)}
-            onKeyDown={e => {
-                const { row, col } = selectedCoord.current;
-                const prev = Math.max(row - 1, 0);
-                const next = Math.min(row + 1, sounds.length - 1);
-                handleKeyDown(prev, next, row, e);
-                setGridFocused(true);
-            }}>
+            onKeyDown={e => handleKeyDown(e)}>
             {sounds.map((item, index) => {
                 return (
                     <div
