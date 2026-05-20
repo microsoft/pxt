@@ -1238,10 +1238,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     public moveFocusToFlyout() {
-        if (Blockly.keyboardNavigationController.getIsActive()) {
-            // It's the nested workspace focus tree that takes focus for navigation.
-            Blockly.FocusManager.getFocusManager().focusTree(this.editor.getFlyout().getWorkspace())
-        }
+        // It's the nested workspace focus tree that takes focus for navigation.
+        Blockly.FocusManager.getFocusManager().focusTree(this.editor.getFlyout().getWorkspace())
     }
 
     // Modified from blockly-keyboard-experimentation plugin

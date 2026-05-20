@@ -561,11 +561,11 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         } else if ((charCode == 39 /* Right arrow key */ && !isRtl)
             || (charCode == 37 /* Left arrow key */ && isRtl)) {
                 if (this.selectedTreeRow.nameid !== "addpackage") {
+                    Blockly.keyboardNavigationController.setIsActive(true);
                     // Focus inside flyout
                     this.moveFocusToFlyout();
                     e.preventDefault();
                     e.stopPropagation();
-                    Blockly.keyboardNavigationController.setIsActive(true);
                 }
                 // addpackage has no flyout — fall through and let Blockly beep.
         } else if (charCode == 27) { // ESCAPE
