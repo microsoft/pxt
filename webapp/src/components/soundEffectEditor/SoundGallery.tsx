@@ -233,7 +233,7 @@ const SoundGalleryEntry = (props: SoundGalleryItemProps) => {
             ariaSelected={previewActive}
             title={null}
         >
-            <span className="sr-only">{cancelToken ? lf("Stop Sound Preview") : lf("Preview {0} Sound", name)}</span>
+            <span className="sr-only">{lf("Preview {0} Sound", name)}</span>
         </Button>
     </div>
 }
