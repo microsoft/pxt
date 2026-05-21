@@ -242,7 +242,6 @@ export abstract class FieldAssetEditor<U extends FieldAssetEditorOptions, V exte
         }
 
         const toolboxWidth = block.workspace.getToolbox().getWidth();
-        const workspaceLeft = injectDivBounds.left + toolboxWidth;
 
         if (divBounds.width > injectDivBounds.width - toolboxWidth) {
             widgetDiv.style.width = "";
@@ -256,16 +255,16 @@ export abstract class FieldAssetEditor<U extends FieldAssetEditorOptions, V exte
                 const blockLeft = workspaceToScreenCoordinates(block.workspace as Blockly.WorkspaceSvg,
                     new Blockly.utils.Coordinate(bounds.left, bounds.top));
 
-                if (blockLeft.x - divBounds.width - 20 > workspaceLeft) {
+                if (blockLeft.x - divBounds.width - 20 > toolboxWidth) {
                     widgetDiv.style.left = (blockLeft.x - divBounds.width - 20) + "px"
                 }
                 else {
                     // As a last resort, just center on the inject div
-                    widgetDiv.style.left = (workspaceLeft + ((injectDivBounds.width - toolboxWidth) / 2) - divBounds.width / 2) + "px";
+                    widgetDiv.style.left = (toolboxWidth + ((injectDivBounds.width - toolboxWidth) / 2) - divBounds.width / 2) + "px";
                 }
             }
             else if (divBounds.left < injectDivBounds.left) {
-                widgetDiv.style.left = workspaceLeft + "px"
+                widgetDiv.style.left = toolboxWidth + "px"
             }
         }
 

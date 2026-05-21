@@ -813,7 +813,6 @@ declare namespace pxt.editor {
         editorOffset?: string;
         print?: boolean;
         greenScreen?: boolean;
-        accessibleBlocks?: boolean;
         home?: boolean;
         hasError?: boolean;
         cancelledDownload?: boolean;
@@ -1049,8 +1048,6 @@ declare namespace pxt.editor {
         toggleHighContrast(): void;
         setHighContrast(on: boolean): void;
         toggleGreenScreen(): void;
-        toggleAccessibleBlocks(eventSource: string): void;
-        isAccessibleBlocks(): boolean;
         launchFullEditor(): void;
         resetWorkspace(): void;
 

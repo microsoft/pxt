@@ -326,11 +326,6 @@ export class ProjectView
      * Run a global action based on shortcuts triggered in sim or main window.
      */
     private runGlobalAction(action: pxsim.GlobalAction) {
-        // Escape always works to exit fullscreen, other actions require accessible blocks
-        if (action !== "escape" && !data.getData<boolean>(auth.ACCESSIBLE_BLOCKS)) {
-            return;
-        }
-
         switch (action) {
             case "escape": {
                 this.setSimulatorFullScreen(false);
@@ -1849,13 +1844,6 @@ export class ProjectView
                 this.shouldTryDecompile = true;
             }
 
-            // Onboard accessible blocks if accessible blocks has just been enabled
-            const onboardAccessibleBlocks = pxt.storage.getLocal("onboardAccessibleBlocks") === "1"
-            const sideDocsLoadUrl = onboardAccessibleBlocks ? `${container.builtInPrefix}keyboardControls` : ""
-            if (onboardAccessibleBlocks) {
-                pxt.storage.setLocal("onboardAccessibleBlocks", "0")
-            }
-
             // Force editor tools to collapse in headless tutorials and blocks mode (essentially hiding file explorer)
             const forceEditorToolsCollapse = pxt.appTarget.simulator.headless && (!!h.tutorial || h.editor === pxt.BLOCKS_PROJECT_NAME);
 
@@ -1867,7 +1855,7 @@ export class ProjectView
                 header: h,
                 projectName: h.name,
                 currFile: file,
-                sideDocsLoadUrl: sideDocsLoadUrl,
+                sideDocsLoadUrl: "",
                 debugging: false,
                 isMultiplayerGame: false,
                 collapseEditorTools: forceEditorToolsCollapse || this.state.collapseEditorTools,
@@ -4813,9 +4801,7 @@ export class ProjectView
             extensionsVisible: false
         })
 
-        if (this.getData<boolean>(auth.ACCESSIBLE_BLOCKS)) {
-            this.editor.focusToolbox(CategoryNameID.Extensions);
-        }
+        this.editor.focusToolbox(CategoryNameID.Extensions);
     }
 
     showPackageDialog() {
@@ -5335,19 +5321,6 @@ export class ProjectView
         this.setState({ greenScreen: greenScreenOn });
     }
 
-    async toggleAccessibleBlocks(eventSource: string) {
-        const nextEnabled = !this.getData<boolean>(auth.ACCESSIBLE_BLOCKS);
-        if (nextEnabled) {
-            pxt.storage.setLocal("onboardAccessibleBlocks", "1")
-        }
-        await core.toggleAccessibleBlocks(eventSource)
-        this.reloadEditor();
-    }
-
-    isAccessibleBlocks(): boolean {
-        return this.getData<boolean>(auth.ACCESSIBLE_BLOCKS);
-    }
-
     setBannerVisible(b: boolean) {
         this.setState({ bannerVisible: b });
     }
@@ -5561,7 +5534,6 @@ export class ProjectView
         const inHome = this.state.home && !sandbox;
         const inEditor = !!this.state.header && !inHome;
         const { lightbox, greenScreen } = this.state;
-        const accessibleBlocks = this.getData<boolean>(auth.ACCESSIBLE_BLOCKS)
         const hideTutorialIteration = inTutorial && tutorialOptions.metadata?.hideIteration;
         const hideToolbox = inTutorial && tutorialOptions.metadata?.hideToolbox;
         // flyoutOnly has become a de facto css class for styling tutorials (especially minecraft HOC), so keep it if hideToolbox is true, even if flyoutOnly is false.
@@ -5651,7 +5623,7 @@ export class ProjectView
                         header={this.state.header}
                         reloadHeaderAsync={async () => {
                             await this.reloadHeaderAsync()
-                            this.shouldFocusToolbox = !!accessibleBlocks;
+                            this.shouldFocusToolbox = true;
                         }}
                     />
                 }
@@ -6516,12 +6488,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             initHashchange();
             socketbridge.tryInit();
             electron.initElectron(theEditor);
-            pxt.tickEvent(
-                "accessibilty.accessibleBlocksEnabledForSession",
-                {
-                    enabled: data.getData<boolean>(auth.ACCESSIBLE_BLOCKS) ? "true" : "false",
-                }
-            );
         })
         .then(() => {
             const showHome = theEditor.shouldShowHomeScreen();

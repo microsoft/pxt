@@ -252,7 +252,7 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
 
     // TODO: eventually unify these components into one menu
     getSettingsMenu = (view: HeaderBarView) => {
-        const { greenScreen, accessibleBlocks, header } = this.props.parent.state;
+        const { greenScreen, header } = this.props.parent.state;
         switch (view){
             case "home":
                 return <projects.ProjectSettingsMenu parent={this.props.parent} />
@@ -262,7 +262,6 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
                     <container.SettingsMenu
                         parent={this.props.parent}
                         greenScreen={greenScreen}
-                        accessibleBlocks={accessibleBlocks}
                         showShare={!!header}
                         inBlocks={this.props.parent.isBlocksActive()}
                         inTutorial={this.props.parent.isTutorial()}

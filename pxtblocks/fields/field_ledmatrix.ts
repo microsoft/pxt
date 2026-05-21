@@ -142,13 +142,14 @@ export class FieldLedMatrix extends FieldMatrix implements FieldCustom {
         this.selected = [0, 0];
 
         const matrixRect = this.matrixSvg.getBoundingClientRect();
+        const injectDivBounds = (this.getSourceBlock().workspace as Blockly.WorkspaceSvg).getInjectionDiv().getBoundingClientRect();
 
         const widgetDiv = Blockly.WidgetDiv.getDiv();
         widgetDiv.append(this.matrixSvg);
         this.addKeyboardFocusHandlers();
 
-        widgetDiv.style.left = matrixRect.left + "px";
-        widgetDiv.style.top = matrixRect.top + "px";
+        widgetDiv.style.left = matrixRect.left - injectDivBounds.left + "px";
+        widgetDiv.style.top = matrixRect.top - injectDivBounds.top + "px";
         widgetDiv.style.transform = `scale(${(Blockly.getMainWorkspace() as Blockly.WorkspaceSvg).getScale()})`;
         widgetDiv.style.transformOrigin = "0 0";
 
