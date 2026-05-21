@@ -1,6 +1,7 @@
 import * as Blockly from "blockly";
 import { FieldImageNoText } from "../fields/field_imagenotext";
 import { ConstantProvider } from "../plugins/renderer/constants";
+import { maybeFocusMutatorButton } from "../utils";
 
 export function monkeyPatchBlockSvg() {
     const oldSetCollapsed = Blockly.BlockSvg.prototype.setCollapsed;
@@ -15,7 +16,9 @@ export function monkeyPatchBlockSvg() {
             const image = ConstantProvider.EXPAND_IMAGE_DATAURI;
             if (image) {
                 input.appendField(new FieldImageNoText(image, 24, 24, "", () => {
-                    this.setCollapsed(false)
+                    this.setCollapsed(false);
+                    const collapseBtn = this.inputList.find(i => i.name === "function_collapse")?.fieldRow[0];
+                    maybeFocusMutatorButton(collapseBtn);
                 }, false));
             }
         }

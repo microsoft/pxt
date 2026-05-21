@@ -1,6 +1,7 @@
 import * as Blockly from "blockly";
 import { InlineSvgsExtensionBlock } from "../functions";
 import { FieldImageNoText } from "../../fields/field_imagenotext";
+import { maybeFocusMutatorButton } from "../../utils";
 
 type TextJoinMixinType = typeof TEXT_JOIN_MUTATOR_MIXIN;
 
@@ -12,6 +13,8 @@ export type TextJoinBlock = InlineSvgsExtensionBlock & TextJoinMixin;
 const TEXT_JOIN_MUTATOR_MIXIN = {
     itemCount_: 0,
     valueConnections_: [] as Blockly.Connection[],
+    buttons: null as Blockly.Input | null,
+    delta: 0,
 
     mutationToDom: function (this: TextJoinBlock) {
         const container = Blockly.utils.xml.createElement('mutation');
@@ -38,6 +41,7 @@ const TEXT_JOIN_MUTATOR_MIXIN = {
         const update = () => {
             this.itemCount_++;
         };
+        this.delta = 1;
         this.update_(update);
         this.restoreValueConnections_();
         // Add shadow block
@@ -67,6 +71,7 @@ const TEXT_JOIN_MUTATOR_MIXIN = {
         const update = () => {
             this.itemCount_--;
         };
+        this.delta = -1;
         this.update_(update);
         this.restoreValueConnections_();
     },
@@ -97,7 +102,19 @@ const TEXT_JOIN_MUTATOR_MIXIN = {
             }, Blockly.config.bumpDelay);
         }
         if (block.rendered && block instanceof Blockly.BlockSvg) {
-            block.queueRender();
+            block.queueRender().then(() => {
+                block.queueRender().then(() => {
+                    if (this.buttons) {
+                        let field = this.buttons.fieldRow[0];
+                        if (this.buttons.fieldRow.length > 1) {
+                            field = this.delta < 0 ? field : this.buttons.fieldRow[1];
+                        }
+                        maybeFocusMutatorButton(field);
+                        this.buttons = null;
+                        this.delta = 0;
+                    }
+                });
+            })
         }
         Blockly.Events.setGroup(false);
     },
@@ -142,11 +159,11 @@ const TEXT_JOIN_MUTATOR_MIXIN = {
 
         // pxt-blockly: Use +/- buttons for mutation
         if (this.getInput('BUTTONS')) this.removeInput('BUTTONS');
-        const buttons = this.appendDummyInput('BUTTONS');
+        this.buttons = this.appendDummyInput('BUTTONS');
         if (this.itemCount_ > 1) {
-            buttons.appendField(new FieldImageNoText(this.REMOVE_IMAGE_DATAURI, 24, 24, "*", remove, false));
+            this.buttons.appendField(new FieldImageNoText(this.REMOVE_IMAGE_DATAURI, 24, 24, "*", remove, false));
         }
-        buttons.appendField(new FieldImageNoText(this.ADD_IMAGE_DATAURI, 24, 24, "*", add, false));
+        this.buttons.appendField(new FieldImageNoText(this.ADD_IMAGE_DATAURI, 24, 24, "*", add, false));
 
         // Switch to vertical list when there are too many items
         const horizontalLayout = this.itemCount_ <= 4;
