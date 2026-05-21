@@ -688,6 +688,21 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 return startMoveShortcut.callback!(workspace, e, shortcut, scope);
             }
         });
+
+        Blockly.ShortcutRegistry.registry.register({
+            name: "toggle_simulator",
+            keyCodes: [Blockly.ShortcutRegistry.registry.createSerializedKey(Blockly.utils.KeyCodes.S, null)],
+            preconditionFn: (workspace, scope) => {
+                if (workspace.isFlyout || !scope.focusedNode) {
+                    return false
+                }
+                return true;
+            },
+            callback: () => {
+                this.parent.startStopSimulator({ clickTrigger: true });
+                return true
+            }
+        });
     }
 
     private initWorkspaceSearch() {

@@ -34,6 +34,7 @@ const KeyboardControlsHelp = () => {
                     <Row name={lf("Copy / paste")} shortcuts={[names.COPY, names.PASTE]} joiner="/" />
                     {cleanUpRow}
                     {contextMenuRow}
+                    <Row name={lf("Start / stop simulator")} shortcuts={[["S"]]} />
                 </tbody>
             </table>
             <h3>{lf("Editor Overview")}</h3>
