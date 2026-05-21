@@ -966,25 +966,57 @@
             }
         }
         .detailview {
-            .actions .card-action {
-                max-width: 10rem;
-                .button.attached .icon:not(.xicon) {
-                    line-height: 6rem;
+            .project-info .segment {
+                padding-bottom: 1.5rem;
+            }
+            .ui.grid.stackable .actions {
+                // Switch to flex so multiple action cards shrink to fit on
+                // narrower (e.g. iPad portrait, ~834px) viewports instead of
+                // overflowing the column and being clipped by the parent
+                // `.detailview { overflow: hidden }`.
+                padding-right: 1.5rem !important;
+
+                .segment {
+                    display: flex;
+                    flex-wrap: nowrap;
+                    justify-content: flex-end;
+                    align-items: flex-start;
+                    gap: 0.75rem;
+                    margin-top: 4rem;
+                    margin-right: 0.5rem;
+                    white-space: normal;
+                }
+
+                .card-action {
+                    flex: 0 1 8rem;
+                    min-width: 0;
+                    max-width: 8rem;
+                    margin: 0;
+
+                    .button.attached .icon:not(.xicon) {
+                        font-size: 3.5rem;
+                        line-height: 6rem;
+                    }
+                }
+                .card-action.custom-icon i.xicon {
+                    font-size: 4.5rem;
+                    padding-top: 2rem;
+                }
+                .card-action > .item,
+                .card-action > .icon {
+                    height: 6rem;
+                    max-width: 100%;
+                    background-size: 60%;
+                }
+                .card-action-title {
+                    font-size: 1.1rem;
                 }
             }
-            .actions .card-action > .item,
-            .actions .card-action > .icon {
-                height: 6rem;
-                max-width: 10rem;
-                background-size: 60%;
-            }
-            .actions .segment {
-                margin-top: 4rem;
-                margin-right: 2rem;
-            }
             .ui.button.approve {
-                font-size: 1rem!important;
-                padding: 0.7rem 1rem;
+                font-size: 0.9rem!important;
+                padding: 0.6rem 0.75rem;
+                white-space: normal;
+                line-height: 1.2;
             }
         }
     }
@@ -1127,9 +1159,12 @@
                     padding-bottom: 1rem;
                 }
             }
+            // Match the `.ui.grid.stackable` specificity used at the tablet
+            // breakpoint so the mobile segment overrides win when stacked.
+            .ui.grid.stackable .actions,
             .actions {
                 height: auto;
-                padding-right: @carouselArrowSizeMobile !important;
+                padding-right: 0.5rem !important;
                 .card-action {
                     display: inline-block;
                     width: 8rem;
@@ -1145,6 +1180,8 @@
                     .button.approve {
                         font-size: 0.9rem !important;
                         padding: .35em 0.75em .5em;
+                        white-space: normal;
+                        line-height: 1.2;
                     }
                     .button.attached .icon:not(.xicon) {
                         font-size: 2rem;
@@ -1159,7 +1196,7 @@
 
                 .segment {
                     position: static;
-                    margin: 0 0.5rem 0.5rem;
+                    margin: 0 0 0.5rem;
                     text-align: right;
                     white-space: nowrap;
                 }
