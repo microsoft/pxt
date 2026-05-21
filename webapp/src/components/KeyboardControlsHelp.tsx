@@ -8,7 +8,7 @@ const KeyboardControlsHelp = () => {
     React.useEffect(() => {
         ref.current?.focus()
     }, []);
-    const ctrl = lf("Ctrl");
+    const ctrl = lf("{id:keyboard symbol}Ctrl");
     const cmd = isMacPlatform ? "⌘" : ctrl;
     const optionOrCtrl = isMacPlatform ? "⌥" : ctrl;
     const contextMenuRow = <Row name={lf("Open context menu")} shortcuts={[ShortcutNames.MENU]} />
@@ -38,7 +38,7 @@ const KeyboardControlsHelp = () => {
             <h3>{lf("Editor Overview")}</h3>
             <table>
                 <tbody>
-                    <Row name={lf("Move between menus, simulator and the workspace")} shortcuts={[[lf("Tab")], [lf("Shift"), lf("Tab")]]} joiner="row"/>
+                    <Row name={lf("Move between menus, simulator and the workspace")} shortcuts={[[lf("{id:keyboard symbol}Tab")], [lf("{id:keyboard symbol}Shift"), lf("{id:keyboard symbol}Tab")]]} joiner="row"/>
                     <Row name={lf("Open/close area menu")} shortcuts={[[cmd, "B"]]} />
                     <Row name={lf("Exit")} shortcuts={[ShortcutNames.EXIT]} />
                     <Row name={lf("Toolbox")} shortcuts={[ShortcutNames.TOOLBOX]} />

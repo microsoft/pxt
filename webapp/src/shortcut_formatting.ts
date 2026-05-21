@@ -1,4 +1,4 @@
-import { ShortcutRegistry } from 'blockly';
+import * as Blockly from 'blockly';
 
 const isMacPlatform = pxt.BrowserUtils.isMac();
 
@@ -65,20 +65,20 @@ export function getShortcutKeysShortAll(shortcutName: string): string[][] {
 }
 
 const longModifierNames: Record<string, string> = {
-  'Control': lf("Ctrl"),
-  'Meta': lf("Command"),
-  'Alt': isMacPlatform ? lf("Option") : lf("Alt"),
+  'Control': Blockly.Msg['CONTROL_KEY'],
+  'Meta': Blockly.Msg['COMMAND_KEY'],
+  'Alt': isMacPlatform ? Blockly.Msg['OPTION_KEY'] : Blockly.Msg['ALT_KEY'],
 };
 
 const shortModifierNames: Record<string, string> = {
-  'Control': lf("Ctrl"),
+  'Control': Blockly.Msg['CONTROL_KEY'],
   'Meta': '⌘',
-  'Alt': isMacPlatform ? '⌥' : lf("Alt"),
+  'Alt': isMacPlatform ? '⌥' : Blockly.Msg['ALT_KEY'],
 };
 
 /**
- * User-facing name for a keycode. Mirrors Blockly's getKeyName but uses pxt's
- * translation function for translatable strings.
+ * Mirror of Blockly's getKeyName. Translatable key labels are read from
+ * Blockly.Msg (populated by initAccessibilityMessages).
  */
 function getKeyName(keyCode: number): string {
   if (keyCode >= 65 && keyCode <= 90) {
@@ -87,26 +87,26 @@ function getKeyName(keyCode: number): string {
   }
 
   const keyNames: Record<number, string> = {
-    8: lf("Backspace"),
-    9: lf("Tab"),
-    13: lf("Enter"),
-    16: lf("Shift"),
-    17: lf("Ctrl"),
-    18: lf("Alt"),
-    19: lf("Pause"),
-    20: lf("Caps Lock"),
-    27: lf("Esc"),
-    32: lf("Space"),
-    33: lf("Page Up"),
-    34: lf("Page Down"),
-    35: lf("End"),
-    36: lf("Home"),
+    8: Blockly.Msg['BACKSPACE_KEY'],
+    9: Blockly.Msg['TAB_KEY'],
+    13: Blockly.Msg['ENTER_KEY'],
+    16: Blockly.Msg['SHIFT_KEY'],
+    17: Blockly.Msg['CONTROL_KEY'],
+    18: Blockly.Msg['ALT_KEY'],
+    19: Blockly.Msg['PAUSE_KEY'],
+    20: Blockly.Msg['CAPS_LOCK_KEY'],
+    27: Blockly.Msg['ESCAPE'],
+    32: Blockly.Msg['SPACE_KEY'],
+    33: Blockly.Msg['PAGE_UP_KEY'],
+    34: Blockly.Msg['PAGE_DOWN_KEY'],
+    35: Blockly.Msg['END_KEY'],
+    36: Blockly.Msg['HOME_KEY'],
     37: '←',
     38: '↑',
     39: '→',
     40: '↓',
-    45: lf("Insert"),
-    46: lf("Delete"),
+    45: Blockly.Msg['INSERT_KEY'],
+    46: Blockly.Msg['DELETE_KEY'],
     48: '0',
     49: '1',
     50: '2',
@@ -119,7 +119,7 @@ function getKeyName(keyCode: number): string {
     57: '9',
     59: ';',
     61: '=',
-    93: lf("Context Menu"),
+    93: Blockly.Msg['CONTEXT_MENU_KEY'],
     96: '0',
     97: '1',
     98: '2',
@@ -183,7 +183,7 @@ function getShortcutKeys(
   shortcutName: string,
   modifierNames: Record<string, string>,
 ): string[][] {
-  const shortcuts = ShortcutRegistry.registry.getKeyCodesByShortcutName(shortcutName);
+  const shortcuts = Blockly.ShortcutRegistry.registry.getKeyCodesByShortcutName(shortcutName);
   if (shortcuts.length === 0) {
     return [];
   }
