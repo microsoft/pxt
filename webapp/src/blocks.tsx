@@ -40,7 +40,7 @@ import { initContextMenu } from "../../pxtblocks/contextMenu";
 import { assertMethod } from "../../pxtblocks/monkeyPatches/util";
 import { HIDDEN_CLASS_NAME } from "../../pxtblocks/plugins/flyout/blockInflater";
 import { AIFooter } from "../../react-common/components/controls/AIFooter";
-import { getShortcutKeysShort, ShortcutNames } from "./shortcut_formatting";
+import { getShortcutKeysShort, LIST_SHORTCUTS_SHORTCUT } from "./shortcut_formatting";
 
 interface CopyDataEntry {
     version: 1;
@@ -650,7 +650,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     private initKeyboardControls() {
         Blockly.ShortcutRegistry.registry.register({
-            name: ShortcutNames.LIST_SHORTCUTS,
+            name: LIST_SHORTCUTS_SHORTCUT,
             callback: (workspace) => {
                 Blockly.Toast.hide(workspace, "helpHint");
                 return true
@@ -669,7 +669,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         Blockly.ShortcutRegistry.registry.unregister(cleanUpWorkspace.name);
         Blockly.ShortcutRegistry.registry.register({
             ...cleanUpWorkspace,
-            name: ShortcutNames.CLEAN_UP,
+            name: Blockly.ShortcutItems.names.CLEANUP,
             // The default key is 'c' to "clean up workspace". Use 'f' instead to align with "format code".
             keyCodes: [Blockly.ShortcutRegistry.registry.createSerializedKey(Blockly.utils.KeyCodes.F, null)],
             callback: (workspace) => {
@@ -962,7 +962,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     showKeyboardControlsHint() {
         if (!this.editor || !Blockly.Msg["HELP_PROMPT"]) return;
-        const shortcut = getShortcutKeysShort(ShortcutNames.LIST_SHORTCUTS);
+        const shortcut = getShortcutKeysShort(LIST_SHORTCUTS_SHORTCUT);
         if (!shortcut) return;
         Blockly.Toast.show(this.editor, {
             message: Blockly.Msg["HELP_PROMPT"].replace("%1", shortcut),

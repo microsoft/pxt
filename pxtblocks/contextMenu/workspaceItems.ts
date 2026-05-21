@@ -54,8 +54,8 @@ function registerFormatCode() {
         scopeType: Blockly.ContextMenuRegistry.ScopeType.WORKSPACE,
         id: 'pxtFormatCode',
         weight: WorkspaceContextWeight.FormatCode,
-        // Matches ShortcutNames.CLEAN_UP — re-registered with key F in blocks.tsx.
-        associatedKeyboardShortcut: 'clean_up_workspace',
+        // Re-registered with key F by webapp blocks.tsx initKeyboardControls.
+        associatedKeyboardShortcut: Blockly.ShortcutItems.names.CLEANUP,
     };
     Blockly.ContextMenuRegistry.registry.register(formatOption);
 }

@@ -3,35 +3,11 @@ import * as Blockly from 'blockly';
 const isMacPlatform = pxt.BrowserUtils.isMac();
 
 /**
- * Default keyboard navigation shortcut names.
- * Based from blockly-keyboard-experiment constants.ts.
- * See https://github.com/google/blockly-keyboard-experimentation/blob/main/src/constants.ts
+ * Name of the shortcut that opens the help dialog. Registered in blocks.tsx
+ * initKeyboardControls. The literal string is also hardcoded by Blockly core's
+ * hints.ts (it isn't exported from Blockly.ShortcutItems.names).
  */
-export enum ShortcutNames {
-  UP = 'up',
-  DOWN = 'down',
-  RIGHT = 'right',
-  LEFT = 'left',
-  NEXT_STACK = 'next_stack',
-  PREVIOUS_STACK = 'previous_stack',
-  INSERT = 'insert',
-  EDIT_OR_CONFIRM = 'edit_or_confirm',
-  DISCONNECT = 'disconnect',
-  TOOLBOX = 'toolbox',
-  EXIT = 'exit',
-  MENU = 'menu',
-  COPY = 'keyboard_nav_copy',
-  CUT = 'keyboard_nav_cut',
-  DUPLICATE = 'duplicate',
-  PASTE = 'keyboard_nav_paste',
-  DELETE = 'delete',
-  CREATE_WS_CURSOR = 'to_workspace',
-  LIST_SHORTCUTS = 'list_shortcuts',
-  CLEAN_UP = 'clean_up_workspace',
-  UNDO = 'undo',
-  REDO = 'redo',
-  MOVE = 'start_move',
-}
+export const LIST_SHORTCUTS_SHORTCUT = 'list_shortcuts';
 
 /**
  * Mirror of Blockly's getShortcutKeysShort (core/utils/shortcut_formatting.ts).
