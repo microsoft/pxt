@@ -121,7 +121,7 @@ export async function webUsbPairThemedDialogAsync(pairAsync: () => Promise<boole
         await showConnectionSuccessAsync(confirmAsync, implicitlyCalled);
     }
     else {
-        const tryAgain = await showConnectionFailureAsync(confirmAsync, implicitlyCalled, lastPairingError);
+        const tryAgain = await showConnectionFailureAsync(confirmAsync, true, lastPairingError);
 
         if (tryAgain) return webUsbPairThemedDialogAsync(pairAsync, confirmAsync, implicitlyCalled);
     }
@@ -263,9 +263,6 @@ function showConnectionFailureAsync(confirmAsync: ConfirmAsync, showDownloadAsFi
     const tryAgainText = lf("Try Again");
     const helpText = lf("Help");
     const downloadAsFileText = lf("Download as File");
-    const instructions = showDownloadAsFileButton
-        ? lf("Click \"{0}\" for more info, \"{1}\" to retry pairing, or \"{2}\" for drag-and-drop flashing.", helpText, tryAgainText, downloadAsFileText)
-        : lf("Click \"{0}\" for more info, or \"{1}\" to retry pairing.", helpText, tryAgainText);
 
     const errorDisplay = error?.type === "devicelocked"
         ? lf("We couldn't connect to your {0}. It may be in use by another application.", boardName)
@@ -276,7 +273,7 @@ function showConnectionFailureAsync(confirmAsync: ConfirmAsync, showDownloadAsFi
                 {errorDisplay}
                 <br />
                 <br />
-                {instructions}
+                {lf("Click \"{0}\" for more info, \"{1}\" to retry pairing, or \"{2}\" for drag-and-drop flashing.", helpText, tryAgainText, downloadAsFileText)}
             </div>
         </div>
     );
