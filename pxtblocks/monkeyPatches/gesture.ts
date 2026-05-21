@@ -1,5 +1,6 @@
 import * as Blockly from "blockly";
 import { isAllowlistedShadow } from "../plugins/duplicateOnDrag/duplicateOnDrag";
+import { assertMethod } from "./util";
 
 interface PatchedGesture extends Blockly.Gesture {
     id: number | undefined
@@ -14,6 +15,7 @@ interface PatchedGesture extends Blockly.Gesture {
  */
 export function monkeyPatchShadowDragTargetBlock() {
     const proto = Blockly.Gesture.prototype as any;
+    assertMethod(proto, "setTargetBlock");
     const origSetTargetBlock = proto.setTargetBlock;
     proto.setTargetBlock = function (block: Blockly.BlockSvg) {
         if (block.isShadow() && isAllowlistedShadow(block)) {

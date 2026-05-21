@@ -37,6 +37,7 @@ import { PathObject } from "../../pxtblocks/plugins/renderer/pathObject";
 import { Measurements } from "./constants";
 import { flow, initCopyPaste } from "../../pxtblocks";
 import { initContextMenu } from "../../pxtblocks/contextMenu";
+import { assertMethod } from "../../pxtblocks/monkeyPatches/util";
 import { HIDDEN_CLASS_NAME } from "../../pxtblocks/plugins/flyout/blockInflater";
 import { AIFooter } from "../../react-common/components/controls/AIFooter";
 import { getShortcutKeysShort, ShortcutNames } from "./shortcut_formatting";
@@ -522,8 +523,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         /**
          * Move the toolbox to the edge.
          */
-        const oldToolboxPosition = (Blockly as any).Toolbox.prototype.position;
-        (Blockly as any).Toolbox.prototype.position = function () {
+        assertMethod(Blockly.Toolbox.prototype, "position");
+        const oldToolboxPosition = Blockly.Toolbox.prototype.position;
+        Blockly.Toolbox.prototype.position = function () {
             oldToolboxPosition.call(this);
             editor.resizeToolbox();
         };
@@ -535,6 +537,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
          * it to select the first category and clear the selection.
          */
         const that = this;
+        assertMethod(Blockly.FlyoutNavigator.prototype, "getOutNode");
         Blockly.FlyoutNavigator.prototype.getOutNode = function(_node?: Blockly.IFocusableNode | null, _bypassAdjustments = false) {
             // Focus the React toolbox tree and return a non-null node so the
             // left-arrow shortcut doesn't beep. Blockly's subsequent
@@ -546,26 +549,32 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             that.toolbox.focus();
             return firstItem;
         }
+        assertMethod(Blockly.Toolbox.prototype, "getFocusableElement");
         Blockly.Toolbox.prototype.getFocusableElement = function() {
             return that.getToolboxDiv()?.querySelector(".blocklyTreeRoot [role=tree]") as HTMLElement ?? that.getBlocksAreaDiv();
         };
+        assertMethod(Blockly.Toolbox.prototype, "getRestoredFocusableNode");
         Blockly.Toolbox.prototype.getRestoredFocusableNode = function() {
             return null;
         };
+        assertMethod(Blockly.Toolbox.prototype, "onTreeFocus");
         Blockly.Toolbox.prototype.onTreeFocus = function() {
             return;
         };
+        assertMethod(Blockly.Toolbox.prototype, "setSelectedItem");
         Blockly.Toolbox.prototype.setSelectedItem = function (newItem: Blockly.ISelectableToolboxItem | null) {
             if (newItem === null) {
                 that.hideFlyout();
             }
         };
+        assertMethod(Blockly.Toolbox.prototype, "clearSelection");
         Blockly.Toolbox.prototype.clearSelection = function () {
             that.hideFlyout();
             that.toolbox.clearExpandedItem();
         };
+        assertMethod(Blockly.Toolbox.prototype, "onTreeBlur");
         const oldToolboxOnTreeBlur = Blockly.Toolbox.prototype.onTreeBlur;
-        (Blockly.Toolbox as any).prototype.onTreeBlur = function (nextTree: Blockly.IFocusableTree | null) {
+        Blockly.Toolbox.prototype.onTreeBlur = function (nextTree: Blockly.IFocusableTree | null) {
             // If the search box is focused and there are search results, the flyout is set to forceOpen.
             // Otherwise, the flyout closes and then re-opens causing an unpleasant visual effect.
             if ((that.editor.getFlyout() as pxtblockly.CachingFlyout).forceOpen) {
@@ -576,12 +585,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             }
             oldToolboxOnTreeBlur.call(this, nextTree);
         };
-        (Blockly.WorkspaceSvg as any).prototype.refreshToolboxSelection = function () {
+        assertMethod(Blockly.WorkspaceSvg.prototype, "refreshToolboxSelection");
+        Blockly.WorkspaceSvg.prototype.refreshToolboxSelection = function (this: any) {
             let ws = this.isFlyout ? this.targetWorkspace : this;
             if (ws && !ws.currentGesture_ && ws.toolbox_ && ws.toolbox_.flyout_) {
                 that.toolbox.refreshSelection();
             }
         };
+        assertMethod(Blockly.WorkspaceSvg.prototype, "getRestoredFocusableNode");
         const oldWorkspaceSvgGetRestoredFocusableNode = Blockly.WorkspaceSvg.prototype.getRestoredFocusableNode;
         Blockly.WorkspaceSvg.prototype.getRestoredFocusableNode = function (previousNode: Blockly.IFocusableNode | null) {
             // Specifically handle flyout case to work with the caching flyout implementation
@@ -596,8 +607,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             }
             return oldWorkspaceSvgGetRestoredFocusableNode.call(this, previousNode);
         };
+        assertMethod(Blockly.WorkspaceSvg.prototype, "onTreeBlur");
         const oldWorkspaceSvgOnTreeBlur = Blockly.WorkspaceSvg.prototype.onTreeBlur;
-        (Blockly.WorkspaceSvg as any).prototype.onTreeBlur = function (nextTree: Blockly.IFocusableNode | null): void {
+        Blockly.WorkspaceSvg.prototype.onTreeBlur = function (nextTree: Blockly.IFocusableTree | null): void {
             // Keep the flyout open whe a variable is created.
             if ((that.editor.getFlyout() as pxtblockly.CachingFlyout)?.forceOpen) {
                 that.setFlyoutForceOpen(false);
@@ -605,7 +617,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             }
             oldWorkspaceSvgOnTreeBlur.call(this, nextTree);
         };
-        const oldHideChaff = (Blockly as any).hideChaff;
+        assertMethod(Blockly, "hideChaff");
+        const oldHideChaff = Blockly.hideChaff;
         (Blockly as any).hideChaff = function (opt_allowToolbox?: boolean) {
             oldHideChaff(opt_allowToolbox);
             if (!opt_allowToolbox) that.hideFlyout();
@@ -615,8 +628,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private initWorkspaceSounds() {
         const editor = this;
 
-        const oldAudioPlay = (Blockly as any).WorkspaceAudio.prototype.play;
-        (Blockly as any).WorkspaceAudio.prototype.play = function (name: string, opt_volume?: number) {
+        assertMethod(Blockly.WorkspaceAudio.prototype, "play");
+        const oldAudioPlay = Blockly.WorkspaceAudio.prototype.play;
+        Blockly.WorkspaceAudio.prototype.play = function (name: string, opt_volume?: number) {
             const themeVolume = pxt.appTarget?.appTheme?.blocklySoundVolume;
 
             if (editor?.parent.state.mute === MuteState.Muted) {
@@ -630,7 +644,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     opt_volume = themeVolume;
                 }
             }
-            oldAudioPlay.call(this, name, opt_volume);
+            return oldAudioPlay.call(this, name, opt_volume);
         };
     }
 
