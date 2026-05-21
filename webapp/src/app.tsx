@@ -4796,17 +4796,22 @@ export class ProjectView
     }
 
     hidePackageDialog() {
+        const focusToolbox = this.state.extensionsToolboxTriggered;
         this.setState({
             ...this.state,
+            extensionsToolboxTriggered: false,
             extensionsVisible: false
         })
 
-        this.editor.focusToolbox(CategoryNameID.Extensions);
+        if (focusToolbox) {
+            this.editor.focusToolbox(CategoryNameID.Extensions);
+        }
     }
 
-    showPackageDialog() {
+    showPackageDialog(toolboxTriggered?: boolean) {
         this.setState({
             ...this.state,
+            extensionsToolboxTriggered: toolboxTriggered,
             extensionsVisible: true
         })
     }
