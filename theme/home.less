@@ -259,7 +259,13 @@
                 grid-column-start: 1;
                 grid-column-end: -1;
                 min-width: 0;
-                width: 100%;
+                // Negative horizontal margins extend the detail view past the
+                // `.search-segment` horizontal padding so it spans edge-to-edge,
+                // matching the non-search detail view (which is a sibling of
+                // the padded `.carouselcontainer`).
+                margin-left: -@carouselArrowSize;
+                margin-right: -@carouselArrowSize;
+                width: calc(100% + 2 * @carouselArrowSize);
             }
 
             .search-empty-state {
@@ -926,6 +932,12 @@
     /* Carousel */
     .gallerysegment.search-segment {
         padding: 1rem @carouselArrowSizeTablet;
+
+        .search-detailview.detailview {
+            margin-left: -@carouselArrowSizeTablet;
+            margin-right: -@carouselArrowSizeTablet;
+            width: calc(100% + 2 * @carouselArrowSizeTablet);
+        }
     }
     .ui.segment.gallerysegment.mystuff-segment.search-mode {
         .gallery-heading-column {
@@ -1042,6 +1054,12 @@
     /* Carousel */
     .gallerysegment.search-segment {
         padding: 1rem @carouselArrowSizeMobile;
+
+        .search-detailview.detailview {
+            margin-left: -@carouselArrowSizeMobile;
+            margin-right: -@carouselArrowSizeMobile;
+            width: calc(100% + 2 * @carouselArrowSizeMobile);
+        }
     }
     .ui.segment.gallerysegment.mystuff-segment.search-mode {
         .gallery-heading-column {
