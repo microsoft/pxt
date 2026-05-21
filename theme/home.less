@@ -1049,12 +1049,31 @@
         .ui.segment.tabsegment {
             padding-top: calc(@mobileMenuHeight + 2rem) !important;
         }
-        .gallerysegment {
+        .ui.segment.gallerysegment {
             .column.right.aligned {
                 padding-right: @carouselArrowSizeMobile !important;
             }
             .ui.header {
                 padding-left: @carouselArrowSizeMobile;
+            }
+
+            // Only the My Projects header has two columns (title + actions)
+            // that need to stack on mobile. Other gallery sections render
+            // their header as a single <h2 class="ui header heading">, so
+            // they must NOT be flipped into column-reverse / stretched.
+            &.mystuff-segment {
+                .heading {
+                    flex-direction: column-reverse;
+                    align-items: stretch;
+                    gap: 0.5rem;
+                }
+                .gallery-heading-column,
+                .gallery-actions {
+                    width: 100%;
+                }
+                .gallery-actions {
+                    padding-right: @carouselArrowSizeMobile !important;
+                }
             }
         }
         .carouselitem.selected {
@@ -1106,8 +1125,14 @@
             .content .header {
                 font-size: 1rem;
             }
+            .fileimage {
+                width: 2.5rem;
+                height: 2rem;
+                top: 0.5rem;
+                left: 0.5rem;
+            }
             .content {
-                margin-left: 0;
+                margin-left: 3rem;
             }
             .meta {
                 font-size: 0.7rem;
