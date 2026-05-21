@@ -263,6 +263,9 @@
             }
 
             .search-empty-state {
+                color: var(--pxt-neutral-foreground1) !important;
+                background-color: var(--pxt-neutral-background1) !important;
+                border: 1px solid var(--pxt-neutral-stencil1);
                 margin: 0;
                 width: 100%;
                 box-sizing: border-box;
@@ -331,7 +334,9 @@
     }
     .import-dialog-btn,
     .home-search-btn,
-    .go-back-btn {
+    .go-back-btn,
+    .yt-button,
+    .home-share-button {
         position: relative;
         z-index: 1; /* Move up so it's above the carousel container that has an offset margin */
         &:focus-visible {
@@ -423,6 +428,12 @@
             padding-left: @carouselArrowSize;
             margin-top: 2rem;
         }
+        .project-info {
+            order: 1;
+        }
+        .actions {
+            order: 2;
+        }
         .imagewrapper {
             position: absolute;
             top: 0; right: 0;
@@ -468,6 +479,13 @@
         button.home-share-button {
             color: var(--pxt-neutral-foreground1);
             background-color: var(--pxt-target-background1);
+        }
+        .yt-button + button.home-share-button {
+            display: block;
+            width: max-content;
+            margin-top: 0.75rem;
+            margin-left: 0;
+            max-width: 100%;
         }
         .ui.grid.stackable .actions {
             padding-right: 4rem !important;
@@ -1031,12 +1049,31 @@
         .ui.segment.tabsegment {
             padding-top: calc(@mobileMenuHeight + 2rem) !important;
         }
-        .gallerysegment {
+        .ui.segment.gallerysegment {
             .column.right.aligned {
                 padding-right: @carouselArrowSizeMobile !important;
             }
             .ui.header {
                 padding-left: @carouselArrowSizeMobile;
+            }
+
+            // Only the My Projects header has two columns (title + actions)
+            // that need to stack on mobile. Other gallery sections render
+            // their header as a single <h2 class="ui header heading">, so
+            // they must NOT be flipped into column-reverse / stretched.
+            &.mystuff-segment {
+                .heading {
+                    flex-direction: column-reverse;
+                    align-items: stretch;
+                    gap: 0.5rem;
+                }
+                .gallery-heading-column,
+                .gallery-actions {
+                    width: 100%;
+                }
+                .gallery-actions {
+                    padding-right: @carouselArrowSizeMobile !important;
+                }
             }
         }
         .carouselitem.selected {
@@ -1088,8 +1125,14 @@
             .content .header {
                 font-size: 1rem;
             }
+            .fileimage {
+                width: 2.5rem;
+                height: 2rem;
+                top: 0.5rem;
+                left: 0.5rem;
+            }
             .content {
-                margin-left: 0;
+                margin-left: 3rem;
             }
             .meta {
                 font-size: 0.7rem;
@@ -1101,7 +1144,7 @@
         }
 
         .detailview {
-            .column:first-child {
+            .project-info {
                 height: auto;
                 overflow: visible;
 
