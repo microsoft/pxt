@@ -12,7 +12,6 @@ const KeyboardControlsHelp = () => {
     }, []);
     const ctrl = lf("{id:keyboard symbol}Ctrl");
     const cmd = isMacPlatform ? "⌘" : ctrl;
-    const optionOrCtrl = isMacPlatform ? "⌥" : ctrl;
     const contextMenuRow = <Row name={lf("Open context menu")} shortcuts={[names.MENU]} />
     const cleanUpRow = <Row name={lf("Workspace: Format code")} shortcuts={[names.CLEANUP]} />
     const orAsJoiner = lf("or")
@@ -30,7 +29,7 @@ const KeyboardControlsHelp = () => {
                     {editOrConfirmRow}
                     <Row name={lf("Move mode")} shortcuts={[names.START_MOVE]} >
                         <p className="hint">{lf("Press arrow keys to move to connections")}</p>
-                        <p className="hint">{lf("Hold {0} to move anywhere", optionOrCtrl)}</p>
+                        <p className="hint">{lf("Hold {0} to move anywhere", cmd)}</p>
                     </Row>
                     <Row name={lf("Copy / paste")} shortcuts={[names.COPY, names.PASTE]} joiner="/" />
                     {cleanUpRow}
@@ -75,7 +74,7 @@ const KeyboardControlsHelp = () => {
                     <Row name={lf("Move mode")} shortcuts={[names.START_MOVE]} />
                     <Row name={lf("Move mode: Move to connections")} shortcuts={[names.NAVIGATE_UP, names.NAVIGATE_DOWN, names.NAVIGATE_LEFT, names.NAVIGATE_RIGHT]} />
                     <Row name={lf("Move mode: Move anywhere")}>
-                        {lf("Hold {0} and press arrow keys", optionOrCtrl)}
+                        {lf("Hold {0} and press arrow keys", cmd)}
                     </Row>
                     <Row name={lf("Move mode: Confirm")} {...enterOrSpace} />
                     <Row name={lf("Move mode: Cancel")} shortcuts={[names.ABORT_MOVE]} />
