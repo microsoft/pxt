@@ -41,6 +41,7 @@ import { assertMethod } from "../../pxtblocks/monkeyPatches/util";
 import { HIDDEN_CLASS_NAME } from "../../pxtblocks/plugins/flyout/blockInflater";
 import { AIFooter } from "../../react-common/components/controls/AIFooter";
 import { getShortcutKeysShort, LIST_SHORTCUTS_SHORTCUT } from "./shortcut_formatting";
+import { FlyoutButton } from "../../pxtblocks/plugins/flyout/flyoutButton";
 
 interface CopyDataEntry {
     version: 1;
@@ -1266,8 +1267,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (sourceBlock?.disposed || sourceBlock?.hasDisabledReason(HIDDEN_CLASS_NAME)) {
             return true;
         }
-        if (node instanceof Blockly.FlyoutButton) {
-            return node.getSvgRoot().parentNode === null;
+        if (node instanceof FlyoutButton) {
+            return node.isDisposed();
         }
         if (!sourceBlock) {
             return true;
