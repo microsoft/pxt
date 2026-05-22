@@ -826,6 +826,7 @@ function initAccessibilityMessages() {
         KEYBOARD_NAV_BLOCK_NAVIGATION_HINT: lf("Use %1 to navigate inside of blocks."),
         KEYBOARD_NAV_WORKSPACE_NAVIGATION_HINT: lf("Use the arrow keys to navigate."),
         KEYBOARD_NAV_FLYOUT_LABEL_HINT: lf("Use the arrow keys to navigate to a block, or press %1 to go to the next heading."),
+        SCREENREADER_HINT: lf("Use the arrow keys to navigate. Press %1 to toggle screenreader accessibility mode."),
         // Aria labels for the workspace tree.
         WORKSPACE_LABEL_1_STACK: lf("Blocks workspace. 1 stack of blocks"),
         WORKSPACE_LABEL_MANY_STACKS: lf("Blocks workspace. %1 stacks of blocks"),
@@ -847,16 +848,28 @@ function initAccessibilityMessages() {
         BLOCK_LABEL_HAS_INPUT: lf("has input"),
         BLOCK_LABEL_HAS_INPUTS: lf("has inputs"),
         BLOCK_LABEL_HAS_BRANCHES: lf("has %1 branches"),
-        BLOCK_LABEL_STATEMENT: lf("{id:block role}command"),
+        BLOCK_LABEL_STATEMENT: lf("{id:block role}statement"),
         BLOCK_LABEL_CONTAINER: lf("{id:block role}container"),
         BLOCK_LABEL_VALUE: lf("{id:block role}value"),
         BLOCK_LABEL_STACK_BLOCKS: lf("%1 stack blocks"),
-        // Aria labels for inputs.
+        // Aria labels for inputs. Only keys read by Blockly's own block code
+        // (for blocks PXT exposes unchanged) belong here; PXT-custom blocks
+        // set aria labels directly via setAriaLabelProvider / ariaLabelText.
         INPUT_LABEL_INDEX: lf("input %1"),
         INPUT_LABEL_VALUE: lf("{id:block position}value position"),
-        INPUT_LABEL_STATEMENT: lf("{id:block position}command position"),
+        INPUT_LABEL_STATEMENT: lf("{id:block position}statement position"),
         INPUT_LABEL_END_STATEMENT: lf("End %1"),
         INPUT_LABEL_EMPTY: lf("Empty"),
+        INPUT_LABEL_VALUE_A: lf("first value"),                  // logic_compare
+        INPUT_LABEL_VALUE_B: lf("second value"),                 // logic_compare
+        INPUT_LABEL_CONDITION_A: lf("first condition"),          // logic_operation
+        INPUT_LABEL_CONDITION_B: lf("second condition"),         // logic_operation
+        INPUT_LABEL_NUMBER_A: lf("first number"),                // math_arithmetic
+        INPUT_LABEL_NUMBER_B: lf("second number"),               // math_arithmetic
+        INPUT_LABEL_MATH_DIVIDEND: lf("dividend"),               // math_modulo
+        INPUT_LABEL_MATH_DIVISOR: lf("divisor"),                 // math_modulo
+        INPUT_LABEL_LOOP_TIMES: lf("number of times to repeat"), // controls_repeat_ext
+        INPUT_LABEL_TEXT_JOIN_ITEM: lf("value %1"),              // text_join
         // Generic aria labels.
         ARIA_LABEL_BUTTON: lf("button"),
         ARIA_LABEL_COMMENT: lf("Comment"),

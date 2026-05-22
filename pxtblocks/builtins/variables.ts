@@ -148,6 +148,7 @@ export function initVariables() {
                     {
                         "type": "input_value",
                         "name": "VALUE",
+                        "ariaLabelText": lf("value to set"),
                     },
                     ],
                     "previousStatement": null,
@@ -180,7 +181,8 @@ export function initVariables() {
                     {
                         "type": "input_value",
                         "name": "VALUE",
-                        "check": "Number"
+                        "check": "Number",
+                        "ariaLabelText": lf("amount to change by")
                     }
                 ],
                 "inputsInline": true,
