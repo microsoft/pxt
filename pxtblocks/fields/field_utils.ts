@@ -582,16 +582,8 @@ export function workspaceToScreenCoordinates(ws: Blockly.WorkspaceSvg, wsCoordin
     const clientOffsetPixels = Blockly.utils.Coordinate.sum(
         scaledWS, mainOffsetPixels);
 
-
-    const injectionDiv = ws.getInjectionDiv();
-
-    // Bounding rect coordinates are in client coordinates, meaning that they
-    // are in pixels relative to the upper left corner of the visible browser
-    // window.  These coordinates change when you scroll the browser window.
-    const boundingRect = injectionDiv.getBoundingClientRect();
-
-    return new Blockly.utils.Coordinate(clientOffsetPixels.x + boundingRect.left,
-        clientOffsetPixels.y + boundingRect.top)
+    return new Blockly.utils.Coordinate(clientOffsetPixels.x,
+        clientOffsetPixels.y)
 }
 
 export function getBlockData(block: Blockly.Block): PXTBlockData {

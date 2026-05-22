@@ -7,7 +7,7 @@ import dom = Blockly.utils.dom;
  * bubble, where it has a "tail" that points to the block, and a "head" that
  * displays arbitrary svg elements.
  */
-export abstract class Bubble implements Blockly.IDeletable, Blockly.IBubble, Blockly.ISelectable {
+export abstract class Bubble implements Blockly.IDeletable, Blockly.IBubble, Blockly.ISelectable, Blockly.IFocusableNode {
     /** The width of the border around the bubble. */
     static readonly BORDER_WIDTH = 0;
 
@@ -51,7 +51,7 @@ export abstract class Bubble implements Blockly.IDeletable, Blockly.IBubble, Blo
     /** The position of the left of the bubble realtive to its anchor. */
     private relativeLeft = 0;
 
-    private dragStrategy = new Blockly.dragging.BubbleDragStrategy(this, this.workspace);
+    private dragStrategy: Blockly.dragging.BubbleDragStrategy = new Blockly.dragging.BubbleDragStrategy(this, this.workspace);
 
     private focusableElement: SVGElement | HTMLElement;
 
@@ -294,6 +294,18 @@ export abstract class Bubble implements Blockly.IDeletable, Blockly.IBubble, Blo
      */
     moveTo(x: number, y: number) {
         this.svgRoot.setAttribute('transform', `translate(${x}, ${y})`);
+    }
+
+    /**
+     * Moves the bubble by the given amounts in the x and y directions.
+     *
+     * @param dx The distance to move along the x axis.
+     * @param dy The distance to move along the y axis.
+     * @param _reason A description of why this move is happening.
+     */
+    moveBy(dx: number, dy: number, _reason?: string[]) {
+        const origin = this.getRelativeToSurfaceXY();
+        this.moveTo(origin.x + dx, origin.y + dy);
     }
 
     /**
@@ -566,6 +578,21 @@ export abstract class Bubble implements Blockly.IDeletable, Blockly.IBubble, Blo
         );
     }
 
+    /**
+     * Returns the bounds of this bubble.
+     *
+     * @returns A bounding box for this bubble.
+     */
+    getBoundingRectangle(): Blockly.utils.Rect {
+        const origin = this.getRelativeToSurfaceXY();
+        return new Blockly.utils.Rect(
+        origin.y,
+        origin.y + this.size.height,
+        origin.x,
+        origin.x + this.size.width,
+        );
+    }
+
     /** @internal */
     getSvgRoot(): SVGElement {
         return this.svgRoot;
@@ -618,8 +645,8 @@ export abstract class Bubble implements Blockly.IDeletable, Blockly.IBubble, Blo
     }
 
     /** Starts a drag on the bubble. */
-    startDrag(): void {
-        this.dragStrategy.startDrag();
+    startDrag() {
+        return this.dragStrategy.startDrag();
     }
 
     /** Drags the bubble to the given location. */

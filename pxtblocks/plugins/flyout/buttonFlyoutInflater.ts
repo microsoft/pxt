@@ -14,17 +14,12 @@ export class ButtonFlyoutInflater extends Blockly.ButtonFlyoutInflater {
     }
 
     load(state: object, flyout: Blockly.IFlyout): Blockly.FlyoutItem {
-        const modifiedState = state as Blockly.utils.toolbox.ButtonOrLabelInfo & {id?: string};
         const button = new FlyoutButton(
             flyout.getWorkspace(),
             flyout.targetWorkspace!,
-            modifiedState,
+            state as Blockly.utils.toolbox.ButtonOrLabelInfo,
             false,
         );
-        if (modifiedState.id) {
-            // This id is used to manage focus after dialog interactions.
-            button.getSvgRoot().setAttribute("id", modifiedState.id)
-        }
         button.show();
 
         return new Blockly.FlyoutItem(button, BUTTON_TYPE);
