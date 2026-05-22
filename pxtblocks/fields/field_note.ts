@@ -175,13 +175,21 @@ export class FieldNote extends Blockly.FieldNumber implements FieldCustom {
         return this.value_ + "";
     }
 
+    override getAriaValue(): string {
+        return this.getNoteString();
+    }
+
+    override getAriaTypeName(): string {
+        return lf("tone");
+    }
+
     /**
      * Called by setValue if the text input is valid. Updates the value of the
      * field, and updates the text of the field if it is not currently being
      * edited (i.e. handled by the htmlInput_).
      * @param {string} note The new note in string format.
      */
-    doValueUpdate_(note: string) {
+    override doValueUpdate_(note: string) {
         if (isNaN(Number(note)) || Number(note) < 0)
             return;
 
@@ -199,6 +207,7 @@ export class FieldNote extends Blockly.FieldNumber implements FieldCustom {
 
         this.value_ = note;
         this.refreshText();
+        this.recomputeAriaContext();
     }
 
     /**
