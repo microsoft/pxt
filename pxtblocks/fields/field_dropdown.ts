@@ -24,6 +24,8 @@ export class FieldDropdown extends Blockly.FieldDropdown {
         this.clickTargetRect = this.borderRect_!;
         this.clickTargetRect.setAttribute("stroke-opacity", "0");
         this.clickTargetRect.setAttribute("fill-opacity", "0");
+        this.clickTargetRect.style.strokeOpacity = '0';
+        this.clickTargetRect.style.fillOpacity = '0';
 
         // Make sure to unset the border rect so that it isn't included in size
         // calculations

@@ -143,6 +143,7 @@ export class FieldImages extends FieldImageDropdown implements FieldCustom {
         } else if (this.borderRect_) {
             this.borderRect_.setAttribute('fill', sourceBlock.style.colourTertiary);
         }
+        this.getFocusableElement().ariaExpanded = 'true';
     }
 
     // Update color (deselect) on dropdown hide
@@ -157,6 +158,7 @@ export class FieldImages extends FieldImageDropdown implements FieldCustom {
         } else if (this.borderRect_) {
             this.borderRect_.setAttribute('fill', this.savedPrimary_);
         }
+        this.getFocusableElement().ariaExpanded = 'false';
     }
 
     protected createTextNode_(text: string) {
