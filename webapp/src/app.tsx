@@ -6239,7 +6239,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (optsQuery["dbg"] == "1") {
         pxt.setLogLevel(pxt.LogLevel.Debug);
     }
-    pxt.options.light = optsQuery["light"] == "1" || pxt.BrowserUtils.isARM() || pxt.BrowserUtils.isIE();
+    pxt.options.light = optsQuery["light"] == "1";
     if (pxt.options.light) {
         pxsim.U.addClass(document.body, 'light');
     }
