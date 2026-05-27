@@ -396,6 +396,7 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
             ref={handleRef}
             onFocus={() => this.handleFocus(qName)}
             onClick={() => buttonRef && buttonRef.focus()}
+            onPointerUp={() => { if (!this.dragging && buttonRef) buttonRef.focus(); }}
             onBlur={() => this.handleBlur()}
             onMouseOver={this.getBlockMouseOver(qName)}
             onMouseOut={this.getBlockMouseOut(qName)}

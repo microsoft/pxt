@@ -529,6 +529,37 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         this.shouldHandleCategoryTreeFocus = true;
     }
 
+    handlePointerUp = (e: React.PointerEvent) => {
+        // On iPad Safari, preventDefault() on pointerdown suppresses click events.
+        // Handle category selection on pointerup so tapping works on touch devices.
+        // Only needed for Monaco — Blockly has its own pointerdown handler for selection.
+        if (e.pointerType === "mouse" || this.props.editorname !== MONACO_EDITOR_NAME) return;
+
+        // Walk up from the target to find the treeitem element.
+        let treeItem: HTMLElement = e.target as HTMLElement;
+        while (treeItem && treeItem !== e.currentTarget) {
+            if (treeItem.getAttribute("role") === "treeitem") break;
+            treeItem = treeItem.parentElement;
+        }
+        if (!treeItem || treeItem === e.currentTarget) return;
+
+        const id = treeItem.id;
+
+        // Handle the Advanced toggle button
+        if (id === "advanced") {
+            this.advancedClicked();
+            return;
+        }
+
+        for (const item of this.items) {
+            const itemId = item.subns ? item.nameid + item.subns : item.nameid;
+            if (itemId === id) {
+                this.onCategoryClick(item, this.items.indexOf(item));
+                return;
+            }
+        }
+    }
+
     isRtl() {
         const { editorname } = this.props;
         return editorname == 'monaco' ? false : Util.isUserLanguageRtl();
@@ -702,6 +733,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
                         onKeyDown={this.handleKeyDown}
                         // Prevents focus handling from running on pointer down events.
                         onPointerDownCapture={this.handlePointerDownCapture}
+                        onPointerUp={this.handlePointerUp}
                         aria-activedescendant={selectedItem}
                     >
                         {tryToDeleteNamespace &&
