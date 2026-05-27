@@ -535,13 +535,12 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         // Only needed for Monaco — Blockly has its own pointerdown handler for selection.
         if (e.pointerType === "mouse" || this.props.editorname !== MONACO_EDITOR_NAME) return;
 
-        // Walk up from the target to find the treeitem element.
-        let treeItem: HTMLElement = e.target as HTMLElement;
-        while (treeItem && treeItem !== e.currentTarget) {
-            if (treeItem.getAttribute("role") === "treeitem") break;
-            treeItem = treeItem.parentElement;
-        }
-        if (!treeItem || treeItem === e.currentTarget) return;
+        const target = e.target as HTMLElement;
+        const treeRow = target.closest(".blocklyTreeRow") as HTMLElement;
+        if (!treeRow) return;
+
+        const treeItem = treeRow.closest("[role='treeitem']") as HTMLElement;
+        if (!treeItem) return;
 
         const id = treeItem.id;
 
