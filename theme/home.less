@@ -259,7 +259,13 @@
                 grid-column-start: 1;
                 grid-column-end: -1;
                 min-width: 0;
-                width: 100%;
+                // Negative horizontal margins extend the detail view past the
+                // `.search-segment` horizontal padding so it spans edge-to-edge,
+                // matching the non-search detail view (which is a sibling of
+                // the padded `.carouselcontainer`).
+                margin-left: -@carouselArrowSize;
+                margin-right: -@carouselArrowSize;
+                width: calc(100% + 2 * @carouselArrowSize);
             }
 
             .search-empty-state {
@@ -926,6 +932,12 @@
     /* Carousel */
     .gallerysegment.search-segment {
         padding: 1rem @carouselArrowSizeTablet;
+
+        .search-detailview.detailview {
+            margin-left: -@carouselArrowSizeTablet;
+            margin-right: -@carouselArrowSizeTablet;
+            width: calc(100% + 2 * @carouselArrowSizeTablet);
+        }
     }
     .ui.segment.gallerysegment.mystuff-segment.search-mode {
         .gallery-heading-column {
@@ -966,25 +978,57 @@
             }
         }
         .detailview {
-            .actions .card-action {
-                max-width: 10rem;
-                .button.attached .icon:not(.xicon) {
-                    line-height: 6rem;
+            .project-info .segment {
+                padding-bottom: 1.5rem;
+            }
+            .ui.grid.stackable .actions {
+                // Switch to flex so multiple action cards shrink to fit on
+                // narrower (e.g. iPad portrait, ~834px) viewports instead of
+                // overflowing the column and being clipped by the parent
+                // `.detailview { overflow: hidden }`.
+                padding-right: 1.5rem !important;
+
+                .segment {
+                    display: flex;
+                    flex-wrap: nowrap;
+                    justify-content: flex-end;
+                    align-items: flex-start;
+                    gap: 0.75rem;
+                    margin-top: 4rem;
+                    margin-right: 0.5rem;
+                    white-space: normal;
+                }
+
+                .card-action {
+                    flex: 0 1 8rem;
+                    min-width: 0;
+                    max-width: 8rem;
+                    margin: 0;
+
+                    .button.attached .icon:not(.xicon) {
+                        font-size: 3.5rem;
+                        line-height: 6rem;
+                    }
+                }
+                .card-action.custom-icon i.xicon {
+                    font-size: 4.5rem;
+                    padding-top: 2rem;
+                }
+                .card-action > .item,
+                .card-action > .icon {
+                    height: 6rem;
+                    max-width: 100%;
+                    background-size: 60%;
+                }
+                .card-action-title {
+                    font-size: 1.1rem;
                 }
             }
-            .actions .card-action > .item,
-            .actions .card-action > .icon {
-                height: 6rem;
-                max-width: 10rem;
-                background-size: 60%;
-            }
-            .actions .segment {
-                margin-top: 4rem;
-                margin-right: 2rem;
-            }
             .ui.button.approve {
-                font-size: 1rem!important;
-                padding: 0.7rem 1rem;
+                font-size: 0.9rem!important;
+                padding: 0.6rem 0.75rem;
+                white-space: normal;
+                line-height: 1.2;
             }
         }
     }
@@ -1010,6 +1054,12 @@
     /* Carousel */
     .gallerysegment.search-segment {
         padding: 1rem @carouselArrowSizeMobile;
+
+        .search-detailview.detailview {
+            margin-left: -@carouselArrowSizeMobile;
+            margin-right: -@carouselArrowSizeMobile;
+            width: calc(100% + 2 * @carouselArrowSizeMobile);
+        }
     }
     .ui.segment.gallerysegment.mystuff-segment.search-mode {
         .gallery-heading-column {
@@ -1049,12 +1099,31 @@
         .ui.segment.tabsegment {
             padding-top: calc(@mobileMenuHeight + 2rem) !important;
         }
-        .gallerysegment {
+        .ui.segment.gallerysegment {
             .column.right.aligned {
                 padding-right: @carouselArrowSizeMobile !important;
             }
             .ui.header {
                 padding-left: @carouselArrowSizeMobile;
+            }
+
+            // Only the My Projects header has two columns (title + actions)
+            // that need to stack on mobile. Other gallery sections render
+            // their header as a single <h2 class="ui header heading">, so
+            // they must NOT be flipped into column-reverse / stretched.
+            &.mystuff-segment {
+                .heading {
+                    flex-direction: column-reverse;
+                    align-items: stretch;
+                    gap: 0.5rem;
+                }
+                .gallery-heading-column,
+                .gallery-actions {
+                    width: 100%;
+                }
+                .gallery-actions {
+                    padding-right: @carouselArrowSizeMobile !important;
+                }
             }
         }
         .carouselitem.selected {
@@ -1106,8 +1175,14 @@
             .content .header {
                 font-size: 1rem;
             }
+            .fileimage {
+                width: 2.5rem;
+                height: 2rem;
+                top: 0.5rem;
+                left: 0.5rem;
+            }
             .content {
-                margin-left: 0;
+                margin-left: 3rem;
             }
             .meta {
                 font-size: 0.7rem;
@@ -1127,9 +1202,12 @@
                     padding-bottom: 1rem;
                 }
             }
+            // Match the `.ui.grid.stackable` specificity used at the tablet
+            // breakpoint so the mobile segment overrides win when stacked.
+            .ui.grid.stackable .actions,
             .actions {
                 height: auto;
-                padding-right: @carouselArrowSizeMobile !important;
+                padding-right: 0.5rem !important;
                 .card-action {
                     display: inline-block;
                     width: 8rem;
@@ -1145,6 +1223,8 @@
                     .button.approve {
                         font-size: 0.9rem !important;
                         padding: .35em 0.75em .5em;
+                        white-space: normal;
+                        line-height: 1.2;
                     }
                     .button.attached .icon:not(.xicon) {
                         font-size: 2rem;
@@ -1159,7 +1239,7 @@
 
                 .segment {
                     position: static;
-                    margin: 0 0.5rem 0.5rem;
+                    margin: 0 0 0.5rem;
                     text-align: right;
                     white-space: nowrap;
                 }

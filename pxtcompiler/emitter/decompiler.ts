@@ -782,7 +782,7 @@ ${output}</xml>`;
         function emitValueNode(n: ValueNode) {
             write(`<value name="${n.name}">`)
 
-            if (shouldEmitShadowOnly(n)) {
+            if (shouldEmitShadowOnly(n, blocksInfo)) {
                 emitOutputNode(n.value, true);
             }
             else {
@@ -2152,9 +2152,9 @@ ${output}</xml>`;
                 const paramComp = comp.parameters[comp.thisParameter ? i - 1 : i];
                 const paramRange = paramComp && paramComp.range;
                 if (paramRange) {
-                    const min = paramRange['min'];
-                    const max = paramRange['max'];
-                    shadowMutation = { 'min': min.toString(), 'max': max.toString() };
+                    const min = paramRange["min"];
+                    const max = paramRange["max"];
+                    shadowMutation = { "min": min.toString(), "max": max.toString(), "label": paramComp.actualName.charAt(0).toUpperCase() + paramComp.actualName.slice(1) };
                 }
 
                 if (i === 0 && attributes.defaultInstance) {
@@ -2357,7 +2357,7 @@ ${output}</xml>`;
                         if (!arg.param.isOptional) {
                             nonOptional++;
                         }
-                        else if (input && !shouldEmitShadowOnly(input)) {
+                        else if (input && !shouldEmitShadowOnly(input, blocksInfo)) {
                             expandCount = Math.max(arg.param.definitionIndex - nonOptional + 1, expandCount)
                         }
                     }
@@ -3996,7 +3996,7 @@ ${output}</xml>`;
         }
     }
 
-    function shouldEmitShadowOnly(n: ValueNode) {
+    function shouldEmitShadowOnly(n: ValueNode, blocksInfo: BlocksInfo) {
         if (n.emitShadowOnly !== undefined) {
             return n.emitShadowOnly;
         }
@@ -4004,6 +4004,32 @@ ${output}</xml>`;
         let emitShadowOnly = false;
 
         if (n.value.kind === "expr") {
+            if (n.value.type !== n.shadowType) {
+                const shadowBlockInfo = blocksInfo.blocksById[n.shadowType];
+                let shadowBlockShimType: string;
+                let shadowFieldName: string;
+
+                if (shadowBlockInfo?.attributes?.shim === "TD_ID") {
+                    const argType = shadowBlockInfo.parameters[0]?.type;
+                    const blockInfo = pxt.blocks.compileInfo(shadowBlockInfo);
+
+                    if (argType === shadowBlockInfo.retType) {
+                        shadowBlockShimType = argType;
+                        shadowFieldName = blockInfo.parameters[0].definitionName;
+                    }
+                }
+
+                if (
+                    shadowBlockShimType === "boolean" && isBooleanBlockType(n.value.type) ||
+                    shadowBlockShimType === "number" && isNumberBlockType(n.value.type) ||
+                    shadowBlockShimType === "string" && isStringBlockType(n.value.type)
+                ) {
+                    n.value.type = n.shadowType;
+                    n.value.fields[0].name = shadowFieldName;
+                    n.value.mutation = n.shadowMutation;
+                }
+            }
+
             const value = n.value as ExpressionNode;
             if (value.type === numberType && n.shadowType === minmaxNumberType) {
                 value.type = minmaxNumberType;
@@ -4019,23 +4045,14 @@ ${output}</xml>`;
 
             emitShadowOnly = value.type === n.shadowType;
             if (!emitShadowOnly) {
-                switch (value.type) {
-                    case "math_number":
-                    case "math_number_minmax":
-                    case "math_integer":
-                    case "math_whole_number":
-                    case "logic_boolean":
-                    case "text":
-                    case colorPickerNumber:
-                    case colorPickerString:
-                        emitShadowOnly = !n.shadowType;
-                        break;
+                if (isNumberBlockType(value.type) || isBooleanBlockType(value.type) || isStringBlockType(value.type)) {
+                    emitShadowOnly = !n.shadowType
                 }
             }
 
             if (emitShadowOnly && value.inputs) {
                 for (const input of value.inputs) {
-                    if (!shouldEmitShadowOnly(input)) {
+                    if (!shouldEmitShadowOnly(input, blocksInfo)) {
                         emitShadowOnly = false;
                         break;
                     }
@@ -4046,6 +4063,27 @@ ${output}</xml>`;
         n.emitShadowOnly = emitShadowOnly;
 
         return emitShadowOnly;
+    }
+
+    function isNumberBlockType(type: string) {
+        switch (type) {
+            case numberType:
+            case minmaxNumberType:
+            case integerNumberType:
+            case wholeNumberType:
+            case colorPickerNumber:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    function isBooleanBlockType(type: string) {
+        return type === booleanType;
+    }
+
+    function isStringBlockType(type: string) {
+        return type === stringType || type === colorPickerString;
     }
 
     function gridLiteralValue(attrs: CommentAttrs) {
