@@ -24,7 +24,7 @@ import { initContextMenu } from "./contextMenu";
 import { renderCodeCard } from "./codecardRenderer";
 import { FieldDropdown } from "./fields/field_dropdown";
 import { setDraggableShadowBlocks, setDuplicateOnDrag, setDuplicateOnDragStrategy } from "./plugins/duplicateOnDrag";
-import { initAccessibleBlocksCopyPasteContextMenu, initCopyPaste } from "./copyPaste";
+import { initCopyPaste } from "./copyPaste";
 export { initCopyPaste } from "./copyPaste";
 import { FieldVariable } from "./plugins/newVariableField/fieldVariable";
 import { ArgumentReporterBlock, FieldArgumentReporter, setArgumentReporterLocalizeFunction } from "./plugins/functions";
@@ -695,6 +695,7 @@ function init(blockInfo: pxtc.BlocksInfo) {
     initText();
     initComments();
     initTooltip();
+    initAccessibilityMessages();
 
     // in safari on ios, Blockly isn't always great at clearing touch
     // identifiers. for most browsers this doesn't matter because the
@@ -710,10 +711,6 @@ function init(blockInfo: pxtc.BlocksInfo) {
             })
         });
     }
-}
-
-export function initAccessibleBlocksContextMenuItems() {
-    initAccessibleBlocksCopyPasteContextMenu()
 }
 
 
@@ -785,6 +782,132 @@ export function setOutputCheck(block: Blockly.Block, retType: string, info: pxtc
 
 function initComments() {
     Blockly.Msg.WORKSPACE_COMMENT_DEFAULT_TEXT = '';
+}
+
+function initAccessibilityMessages() {
+    // Translatable overrides for Blockly's built-in keyboard-navigation strings.
+    // Excludes text used only in the shortcut dialog that we don't use.
+    Object.assign(Blockly.Msg, {
+        // Action labels.
+        EDIT_BLOCK_CONTENTS: lf("Edit Block contents"),
+        MOVE_BLOCK: lf("Move Block"),
+        // Modifier and key names — read by Blockly's shortcut formatter when
+        // rendering shortcut hints (e.g. in the move/copy hint toasts).
+        CONTROL_KEY: lf("{id:keyboard symbol}Ctrl"),
+        COMMAND_KEY: lf("{id:keyboard symbol}⌘ Command"),
+        OPTION_KEY: lf("{id:keyboard symbol}⌥ Option"),
+        ALT_KEY: lf("{id:keyboard symbol}Alt"),
+        ENTER_KEY: lf("{id:keyboard symbol}Enter"),
+        BACKSPACE_KEY: lf("{id:keyboard symbol}Backspace"),
+        DELETE_KEY: lf("{id:keyboard symbol}Delete"),
+        ESCAPE: lf("{id:keyboard symbol}Esc"),
+        TAB_KEY: lf("{id:keyboard symbol}Tab"),
+        SHIFT_KEY: lf("{id:keyboard symbol}Shift"),
+        CAPS_LOCK_KEY: lf("{id:keyboard symbol}Caps Lock"),
+        SPACE_KEY: lf("{id:keyboard symbol}Space"),
+        PAGE_UP_KEY: lf("{id:keyboard symbol}Page Up"),
+        PAGE_DOWN_KEY: lf("{id:keyboard symbol}Page Down"),
+        END_KEY: lf("{id:keyboard symbol}End"),
+        HOME_KEY: lf("{id:keyboard symbol}Home"),
+        INSERT_KEY: lf("{id:keyboard symbol}Insert"),
+        PAUSE_KEY: lf("{id:keyboard symbol}Pause"),
+        CONTEXT_MENU_KEY: lf("{id:keyboard symbol}≣ Menu"),
+        UNNAMED_KEY: lf("{id:keyboard symbol}unnamed"),
+        // Menu labels for the copy/cut/paste shortcut metadata.
+        CUT_SHORTCUT: lf("Cut"),
+        COPY_SHORTCUT: lf("Copy"),
+        PASTE_SHORTCUT: lf("Paste"),
+        // Keyboard nav hints (toasts).
+        HELP_PROMPT: lf("Press %1 for help on keyboard controls."),
+        KEYBOARD_NAV_UNCONSTRAINED_MOVE_HINT: lf("Hold %1 and use arrow keys to move freely, then %2 to accept the position."),
+        KEYBOARD_NAV_CONSTRAINED_MOVE_HINT: lf("Use the arrow keys to move, then %1 to accept the position."),
+        KEYBOARD_NAV_COPIED_HINT: lf("Copied. Press %1 to paste."),
+        KEYBOARD_NAV_CUT_HINT: lf("Cut. Press %1 to paste."),
+        KEYBOARD_NAV_BLOCK_NAVIGATION_HINT: lf("Use %1 to navigate inside of blocks."),
+        KEYBOARD_NAV_WORKSPACE_NAVIGATION_HINT: lf("Use the arrow keys to navigate."),
+        KEYBOARD_NAV_FLYOUT_LABEL_HINT: lf("Use the arrow keys to navigate to a block, or press %1 to go to the next heading."),
+        // Aria labels for the workspace tree.
+        WORKSPACE_LABEL_1_STACK: lf("Blocks workspace. 1 stack of blocks"),
+        WORKSPACE_LABEL_MANY_STACKS: lf("Blocks workspace. %1 stacks of blocks"),
+        WORKSPACE_LABEL_MUTATOR_WORKSPACE: lf("Block editor workspace"),
+        WORKSPACE_LABEL_FLYOUT_WORKSPACE: lf("%1 blocks"),
+        // Workspace contents announcement (the 'I' announce-info shortcut).
+        WORKSPACE_CONTENTS_BLOCKS_ZERO: lf("No blocks%2 in workspace."),
+        WORKSPACE_CONTENTS_BLOCKS_ONE: lf("One stack of blocks%2 in workspace."),
+        WORKSPACE_CONTENTS_BLOCKS_MANY: lf("%1 stacks of blocks%2 in workspace."),
+        WORKSPACE_CONTENTS_COMMENTS_ONE: lf(" and one comment"),
+        WORKSPACE_CONTENTS_COMMENTS_MANY: lf(" and %1 comments"),
+        // Aria labels for blocks.
+        BLOCK_LABEL_BEGIN_STACK: lf("Begin stack"),
+        BLOCK_LABEL_BEGIN_PREFIX: lf("Begin %1"),
+        BLOCK_LABEL_TOOLBOX_CATEGORY: lf("%1 category"),
+        BLOCK_LABEL_DISABLED: lf("{id:block state}disabled"),
+        BLOCK_LABEL_COLLAPSED: lf("{id:block state}collapsed"),
+        BLOCK_LABEL_REPLACEABLE: lf("{id:block state}replaceable"),
+        BLOCK_LABEL_HAS_INPUT: lf("has input"),
+        BLOCK_LABEL_HAS_INPUTS: lf("has inputs"),
+        BLOCK_LABEL_HAS_BRANCHES: lf("has %1 branches"),
+        BLOCK_LABEL_STATEMENT: lf("{id:block role}command"),
+        BLOCK_LABEL_CONTAINER: lf("{id:block role}container"),
+        BLOCK_LABEL_VALUE: lf("{id:block role}value"),
+        BLOCK_LABEL_STACK_BLOCKS: lf("%1 stack blocks"),
+        // Aria labels for inputs.
+        INPUT_LABEL_INDEX: lf("input %1"),
+        INPUT_LABEL_VALUE: lf("{id:block position}value position"),
+        INPUT_LABEL_STATEMENT: lf("{id:block position}command position"),
+        INPUT_LABEL_END_STATEMENT: lf("End %1"),
+        INPUT_LABEL_EMPTY: lf("Empty"),
+        // Generic aria labels.
+        ARIA_LABEL_BUTTON: lf("button"),
+        ARIA_LABEL_COMMENT: lf("Comment"),
+        ARIA_LABEL_COMMENT_COLLAPSE: lf("Collapse Comment"),
+        ARIA_LABEL_COMMENT_EXPAND: lf("Expand Comment"),
+        ARIA_LABEL_HEADING: lf("heading"),
+        // Field type labels for screen readers.
+        ARIA_TYPE_FIELD_CHECKBOX: lf("checkbox"),
+        ARIA_TYPE_FIELD_DROPDOWN: lf("dropdown"),
+        ARIA_TYPE_FIELD_IMAGE: lf("image"),
+        ARIA_TYPE_FIELD_INPUT: lf("{id:field type}input"),
+        ARIA_TYPE_FIELD_NUMBER: lf("{id:field type}number"),
+        ARIA_TYPE_FIELD_TEXT_INPUT: lf("{id:field type}text"),
+        // Field state labels.
+        FIELD_LABEL_CHECKBOX_CHECKED: lf("{id:checkbox}Checked"),
+        FIELD_LABEL_CHECKBOX_UNCHECKED: lf("{id:checkbox}Not checked"),
+        FIELD_LABEL_EDIT_PREFIX: lf("Edit %1"),
+        FIELD_LABEL_EMPTY: lf("empty"),
+        FIELD_LABEL_OPTION_INDEX: lf("{id:dropdown}Option %1"),
+        FIELD_LABEL_VARIABLE: lf("Variable '%1'"),
+        // Bubble labels.
+        BUBBLE_LABEL_COMMENT: lf("Comment: %1"),
+        BUBBLE_LABEL_DEFAULT: lf("{id:speech bubble}Bubble"),
+        BUBBLE_LABEL_WARNING: lf("Warning: %1"),
+        // Icon labels.
+        ICON_LABEL_COMMENT_CLOSED: lf("Open Comment"),
+        ICON_LABEL_COMMENT_OPEN: lf("Close Comment"),
+        ICON_LABEL_DEFAULT: lf("Icon"),
+        ICON_LABEL_MUTATOR_CLOSED: lf("Edit this block"),
+        ICON_LABEL_MUTATOR_OPEN: lf("Close block editor"),
+        ICON_LABEL_WARNING_CLOSED: lf("Open Warning"),
+        ICON_LABEL_WARNING_OPEN: lf("Close Warning"),
+        // Move-mode announcements.
+        ANNOUNCE_MOVE_WORKSPACE: lf("Moving %1 on workspace."),
+        ANNOUNCE_MOVE_BEFORE: lf("Moving %1 before %2."),
+        ANNOUNCE_MOVE_AFTER: lf("Moving %1 after %2."),
+        ANNOUNCE_MOVE_INSIDE: lf("Moving %1 inside %2."),
+        ANNOUNCE_MOVE_AROUND: lf("Moving %1 around %2."),
+        ANNOUNCE_MOVE_TO: lf("Moving %1 to %2."),
+        ANNOUNCE_MOVE_OF: lf("%1 of %2"),
+        ANNOUNCE_MOVE_CANCELED: lf("Canceled movement."),
+        // Block info announcements (the 'I' / Shift+I shortcuts).
+        CURRENT_BLOCK_ANNOUNCEMENT: lf("Current block: %1"),
+        PARENT_BLOCKS_ANNOUNCEMENT: lf("Parent blocks: %1"),
+        NO_PARENT_ANNOUNCEMENT: lf("Current block has no parent"),
+        // Screenreader mode toggle (Cmd/Ctrl+Alt+Z).
+        SCREENREADER_MODE_ENABLED: lf("Screenreader mode is on, press %1 to turn it off"),
+        SCREENREADER_MODE_DISABLED: lf("Screenreader mode is off, press %1 to turn it on"),
+        // Used for Blockly's toast close aria label.
+        CLOSE: lf("Close"),
+    });
 }
 
 function initTooltip() {

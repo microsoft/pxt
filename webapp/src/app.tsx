@@ -326,11 +326,6 @@ export class ProjectView
      * Run a global action based on shortcuts triggered in sim or main window.
      */
     private runGlobalAction(action: pxsim.GlobalAction) {
-        // Escape always works to exit fullscreen, other actions require accessible blocks
-        if (action !== "escape" && !data.getData<boolean>(auth.ACCESSIBLE_BLOCKS)) {
-            return;
-        }
-
         switch (action) {
             case "escape": {
                 this.setSimulatorFullScreen(false);
@@ -1849,13 +1844,6 @@ export class ProjectView
                 this.shouldTryDecompile = true;
             }
 
-            // Onboard accessible blocks if accessible blocks has just been enabled
-            const onboardAccessibleBlocks = pxt.storage.getLocal("onboardAccessibleBlocks") === "1"
-            const sideDocsLoadUrl = onboardAccessibleBlocks ? `${container.builtInPrefix}keyboardControls` : ""
-            if (onboardAccessibleBlocks) {
-                pxt.storage.setLocal("onboardAccessibleBlocks", "0")
-            }
-
             // Force editor tools to collapse in headless tutorials and blocks mode (essentially hiding file explorer)
             const forceEditorToolsCollapse = pxt.appTarget.simulator.headless && (!!h.tutorial || h.editor === pxt.BLOCKS_PROJECT_NAME);
 
@@ -1867,7 +1855,7 @@ export class ProjectView
                 header: h,
                 projectName: h.name,
                 currFile: file,
-                sideDocsLoadUrl: sideDocsLoadUrl,
+                sideDocsLoadUrl: "",
                 debugging: false,
                 isMultiplayerGame: false,
                 collapseEditorTools: forceEditorToolsCollapse || this.state.collapseEditorTools,
@@ -3180,7 +3168,7 @@ export class ProjectView
     }
 
     importExampleAsync(options: pxt.editor.ExampleImportOptions): Promise<void> {
-        const { name, path, loadBlocks, prj, preferredEditor } = options;
+        let { name, path, loadBlocks, prj, preferredEditor } = options;
         core.showLoading("changingcode", lf("loading..."));
         this.loadingExample = true;
         return this.loadActivityFromMarkdownAsync(path, name?.toLowerCase(), preferredEditor)
@@ -3192,6 +3180,24 @@ export class ProjectView
                     throw new Error(lf("Example not found or invalid format"))
                 const opts: pxt.editor.ProjectCreationOptions = example;
                 if (prj) opts.prj = prj;
+
+                if (!preferredEditor && example.snippetType) {
+                    switch (example.snippetType) {
+                        case "block":
+                        case "blocks":
+                            preferredEditor = pxt.BLOCKS_PROJECT_NAME;
+                            loadBlocks = true;
+                            break;
+                        case "python":
+                            preferredEditor = pxt.PYTHON_PROJECT_NAME;
+                            break;
+                        case "javascript":
+                        case "typescript":
+                            preferredEditor = pxt.JAVASCRIPT_PROJECT_NAME;
+                            break;
+                    }
+                }
+
                 if (loadBlocks && preferredEditor == pxt.BLOCKS_PROJECT_NAME) {
                     return this.createProjectAsync(opts)
                         .then(() => {
@@ -4795,9 +4801,7 @@ export class ProjectView
             extensionsVisible: false
         })
 
-        if (this.getData<boolean>(auth.ACCESSIBLE_BLOCKS)) {
-            this.editor.focusToolbox(CategoryNameID.Extensions);
-        }
+        this.editor.focusToolbox(CategoryNameID.Extensions);
     }
 
     showPackageDialog() {
@@ -5317,19 +5321,6 @@ export class ProjectView
         this.setState({ greenScreen: greenScreenOn });
     }
 
-    async toggleAccessibleBlocks(eventSource: string) {
-        const nextEnabled = !this.getData<boolean>(auth.ACCESSIBLE_BLOCKS);
-        if (nextEnabled) {
-            pxt.storage.setLocal("onboardAccessibleBlocks", "1")
-        }
-        await core.toggleAccessibleBlocks(eventSource)
-        this.reloadEditor();
-    }
-
-    isAccessibleBlocks(): boolean {
-        return this.getData<boolean>(auth.ACCESSIBLE_BLOCKS);
-    }
-
     setBannerVisible(b: boolean) {
         this.setState({ bannerVisible: b });
     }
@@ -5543,7 +5534,6 @@ export class ProjectView
         const inHome = this.state.home && !sandbox;
         const inEditor = !!this.state.header && !inHome;
         const { lightbox, greenScreen } = this.state;
-        const accessibleBlocks = this.getData<boolean>(auth.ACCESSIBLE_BLOCKS)
         const hideTutorialIteration = inTutorial && tutorialOptions.metadata?.hideIteration;
         const hideToolbox = inTutorial && tutorialOptions.metadata?.hideToolbox;
         // flyoutOnly has become a de facto css class for styling tutorials (especially minecraft HOC), so keep it if hideToolbox is true, even if flyoutOnly is false.
@@ -5633,7 +5623,7 @@ export class ProjectView
                         header={this.state.header}
                         reloadHeaderAsync={async () => {
                             await this.reloadHeaderAsync()
-                            this.shouldFocusToolbox = !!accessibleBlocks;
+                            this.shouldFocusToolbox = true;
                         }}
                     />
                 }
@@ -6249,7 +6239,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (optsQuery["dbg"] == "1") {
         pxt.setLogLevel(pxt.LogLevel.Debug);
     }
-    pxt.options.light = optsQuery["light"] == "1" || pxt.BrowserUtils.isARM() || pxt.BrowserUtils.isIE();
+    pxt.options.light = optsQuery["light"] == "1";
     if (pxt.options.light) {
         pxsim.U.addClass(document.body, 'light');
     }
@@ -6498,12 +6488,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             initHashchange();
             socketbridge.tryInit();
             electron.initElectron(theEditor);
-            pxt.tickEvent(
-                "accessibilty.accessibleBlocksEnabledForSession",
-                {
-                    enabled: data.getData<boolean>(auth.ACCESSIBLE_BLOCKS) ? "true" : "false",
-                }
-            );
         })
         .then(() => {
             const showHome = theEditor.shouldShowHomeScreen();

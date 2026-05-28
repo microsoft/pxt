@@ -343,21 +343,6 @@ export function getHighContrastOnce(): boolean {
     return ThemeManager.isCurrentThemeHighContrast();
 }
 
-/**
- * Returns true if keyboard controls should be enabled by default.
- */
-export function isKeyboardControlsByDefault(): boolean {
-    return /keyboardcontrols=1/i.test(window.location.href);
-}
-
-export async function toggleAccessibleBlocks(eventSource: string) {
-    await setAccessibleBlocks(!data.getData<boolean>(auth.ACCESSIBLE_BLOCKS), eventSource);
-}
-
-export async function setAccessibleBlocks(on: boolean, eventSource: string) {
-    await auth.setAccessibleBlocksPrefAsync(on, eventSource);
-}
-
 export async function setLanguage(lang: string) {
     pxt.BrowserUtils.setCookieLang(lang);
     pxt.Util.setUserLanguage(lang);

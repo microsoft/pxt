@@ -9,6 +9,10 @@
     z-index: 1;
 }
 
+.common-button.home-share-button {
+    border: 1px solid var(--pxt-neutral-foreground2) !important;
+}
+
 /*
 Override default button background for the area menu, which requires transparency,
 but still use a fairly opaque one to keep focus/visibility on the main buttons.
@@ -214,4 +218,9 @@ div.field .ui.toggle.checkbox input:checked~label:before {
     outline: var(--pxt-focus-border) solid 3px !important;
     outline-offset: -4px;
     z-index: 1;
+}
+
+table.diffview.update .diff-added .ch-added {
+    color: var(--pxt-neutral-background1) !important;
+    outline-color: var(--pxt-neutral-background1) !important;
 }

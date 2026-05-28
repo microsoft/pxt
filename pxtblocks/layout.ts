@@ -24,7 +24,7 @@ export function patchBlocksFromOldWorkspace(blockInfo: ts.pxtc.BlocksInfo, oldWs
         if (
             !pxt.BrowserUtils.isElement(child) ||
             child.localName !== "block" ||
-            child.getAttribute("disabled") !== "true"
+            !isDisabledBlocklyElement(child)
         ) {
             continue;
         }
@@ -704,4 +704,14 @@ function flowBlocks(comments: Blockly.comments.RenderedWorkspaceComment[], block
 function formattable(entity: Blockly.BlockSvg | Blockly.comments.RenderedWorkspaceComment): Formattable {
     const hw = entity instanceof Blockly.BlockSvg ? entity.getHeightWidth() : entity.getSize();
     return { value: entity, height: hw.height, width: hw.width }
+}
+
+export function isDisabledBlocklyElement(element: Element): boolean {
+    if (element.hasAttribute("disabled-reasons")) {
+        return !!element.getAttribute("disabled-reasons");
+    }
+    else if (element.hasAttribute("disabled")) {
+        return element.getAttribute("disabled") === "true";
+    }
+    return false;
 }

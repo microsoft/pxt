@@ -1,8 +1,6 @@
 /// <reference path="../../built/pxtlib.d.ts" />
 
 import * as React from "react";
-import * as auth from "./auth";
-import * as core from "./core";
 import * as data from "./data";
 import * as sui from "./sui";
 
@@ -31,11 +29,10 @@ export class EditorAccessibilityMenu extends data.Component<EditorAccessibilityM
         this.showThemePicker = this.showThemePicker.bind(this);
         this.goHome = this.goHome.bind(this);
         this.openBlocks = this.openBlocks.bind(this);
-        this.toggleAccessibleBlocks = this.toggleAccessibleBlocks.bind(this);
     }
 
     openBlocks(e: React.MouseEvent<HTMLElement>) {
-        this.props.parent.openBlocks(core.isKeyboardControlsByDefault());
+        this.props.parent.openBlocks(true);
     }
 
     openJavaScript() {
@@ -63,10 +60,6 @@ export class EditorAccessibilityMenu extends data.Component<EditorAccessibilityM
         this.props.parent.showExitAndSaveDialog();
     }
 
-    toggleAccessibleBlocks() {
-        this.props.parent.toggleAccessibleBlocks("accmenu");
-    }
-
     UNSAFE_componentWillReceiveProps(nextProps: EditorAccessibilityMenuProps) {
         const newState: EditorAccessibilityMenuState = {};
         if (nextProps.highContrast != undefined) {
@@ -83,28 +76,16 @@ export class EditorAccessibilityMenu extends data.Component<EditorAccessibilityM
         const targetTheme = pxt.appTarget.appTheme;
         const hasHome = !pxt.shell.isControllerMode();
 
-        const accessibleBlocksOn = this.getData<boolean>(auth.ACCESSIBLE_BLOCKS);
         const menuClass = classList(targetTheme.invertedMenu && "inverted", "menu");
 
         return <div className="ui accessibleMenu borderless fixed menu" role="menubar">
-            {!accessibleBlocksOn &&
-                <sui.Item
-                    className={menuClass}
-                    role="menuitem"
-                    icon="xicon blocks"
-                    text={lf("Enable blocks keyboard controls")}
-                    onClick={this.toggleAccessibleBlocks}
-                />
-            }
-            {accessibleBlocksOn &&
-                <sui.Item
-                    className={menuClass}
-                    role="menuitem"
-                    icon="xicon blocks"
-                    text={lf("Skip to Blocks workspace")}
-                    onClick={this.openBlocks}
-                />
-            }
+            <sui.Item
+                className={menuClass}
+                role="menuitem"
+                icon="xicon blocks"
+                text={lf("Skip to Blocks workspace")}
+                onClick={this.openBlocks}
+            />
             <sui.Item
                 className={menuClass}
                 role="menuitem"

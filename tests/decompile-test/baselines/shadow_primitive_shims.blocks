@@ -1,0 +1,40 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="robot_motorSteer">
+<value name="turnRatio">
+<shadow type="turnRatioPicker">
+<mutation min="-200" max="200" label="TurnRatio" />
+<field name="turnratio">10</field>
+</shadow>
+</value>
+<value name="speed">
+<shadow type="speedPicker">
+<field name="speed">-20</field>
+</shadow>
+</value>
+<next>
+<block type="robot_motorSteer">
+<mutation _expanded="1" />
+<value name="turnRatio">
+<shadow type="turnRatioPicker">
+<mutation min="-200" max="200" label="TurnRatio" />
+<field name="turnratio">10</field>
+</shadow>
+</value>
+<value name="speed">
+<shadow type="speedPicker">
+<field name="speed">-20</field>
+</shadow>
+</value>
+<value name="duration">
+<shadow type="timePicker">
+<field name="ms">100</field>
+</shadow>
+</value>
+</block>
+</next>
+</block>
+</statement>
+</block>
+</xml>

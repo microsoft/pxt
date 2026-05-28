@@ -15,13 +15,11 @@ export const LOGGED_IN = `${MODULE}:${FIELD_LOGGED_IN}`;
 const USER_PREF_MODULE = "user-pref";
 const FIELD_USER_PREFERENCES = "preferences";
 const FIELD_HIGHCONTRAST = "high-contrast";
-const FIELD_KEYBOARD_CONTROLS = "keyboard-controls";
 const FIELD_COLOR_THEME_IDS = "colorThemeIds";
 const FIELD_LANGUAGE = "language";
 const FIELD_READER = "reader";
 export const USER_PREFERENCES = `${USER_PREF_MODULE}:${FIELD_USER_PREFERENCES}`
 export const HIGHCONTRAST = `${USER_PREF_MODULE}:${FIELD_HIGHCONTRAST}`
-export const ACCESSIBLE_BLOCKS = `${USER_PREF_MODULE}:${FIELD_KEYBOARD_CONTROLS}`
 export const COLOR_THEME_IDS = `${USER_PREF_MODULE}:${FIELD_COLOR_THEME_IDS}`
 export const LANGUAGE = `${USER_PREF_MODULE}:${FIELD_LANGUAGE}`
 export const READER = `${USER_PREF_MODULE}:${FIELD_READER}`
@@ -71,7 +69,6 @@ class AuthClient extends pxt.auth.AuthClient {
             switch (op.path.join('/')) {
                 case "language": data.invalidate(LANGUAGE); break;
                 case "highContrast": data.invalidate(HIGHCONTRAST); break;
-                case "accessibleBlocks": data.invalidate(ACCESSIBLE_BLOCKS); break;
                 case "colorThemeIds": data.invalidate(COLOR_THEME_IDS); break;
                 case "reader": data.invalidate(READER); break;
             }
@@ -123,11 +120,6 @@ class AuthClient extends pxt.auth.AuthClient {
             // Identity not available, read from local storage
             switch (path) {
                 case HIGHCONTRAST: return /^true$/i.test(pxt.storage.getLocal(HIGHCONTRAST));
-                case ACCESSIBLE_BLOCKS: {
-                    const stored = pxt.storage.getLocal(ACCESSIBLE_BLOCKS);
-                    if (stored == null) return core.isKeyboardControlsByDefault();
-                    return /^true$/i.test(stored);
-                }
                 case COLOR_THEME_IDS: return pxt.U.jsonTryParse(pxt.storage.getLocal(COLOR_THEME_IDS)) as pxt.auth.ColorThemeIdsState;
                 case LANGUAGE: return pxt.storage.getLocal(LANGUAGE);
                 case READER: return pxt.storage.getLocal(READER);
@@ -144,7 +136,6 @@ class AuthClient extends pxt.auth.AuthClient {
             switch (field) {
                 case FIELD_USER_PREFERENCES: return { ...state.preferences };
                 case FIELD_HIGHCONTRAST: return state.preferences?.highContrast ?? pxt.auth.DEFAULT_USER_PREFERENCES().highContrast;
-                case FIELD_KEYBOARD_CONTROLS: return state.preferences?.accessibleBlocks ?? core.isKeyboardControlsByDefault();
                 case FIELD_COLOR_THEME_IDS: return state.preferences?.colorThemeIds ?? pxt.auth.DEFAULT_USER_PREFERENCES().colorThemeIds;
                 case FIELD_LANGUAGE: return state.preferences?.language ?? pxt.auth.DEFAULT_USER_PREFERENCES().language;
                 case FIELD_READER: return state.preferences?.reader ?? pxt.auth.DEFAULT_USER_PREFERENCES().reader;
@@ -255,32 +246,6 @@ export async function setHighContrastPrefAsync(highContrast: boolean): Promise<v
         // Identity not available, save this setting locally
         pxt.storage.setLocal(HIGHCONTRAST, highContrast.toString());
         data.invalidate(HIGHCONTRAST);
-    }
-}
-
-export async function setAccessibleBlocksPrefAsync(accessibleBlocks: boolean, eventSource: string): Promise<void> {
-    const cli = await clientAsync();
-
-    pxt.tickEvent(
-        "auth.setAccessibleBlocks",
-        {
-            enabling: accessibleBlocks ? "true" : "false",
-            defaultOn: core.isKeyboardControlsByDefault() ? "true" : "false",
-            eventSource: eventSource,
-            local: !cli ? "true" : "false"
-        }
-    );
-
-    if (cli) {
-        await cli.patchUserPreferencesAsync({
-            op: 'replace',
-            path: ['accessibleBlocks'],
-            value: accessibleBlocks
-        }, { immediate: true }); // sync this change immediately, as the page is about to reload.
-    } else {
-        // Identity not available, save this setting locally
-        pxt.storage.setLocal(ACCESSIBLE_BLOCKS, accessibleBlocks.toString());
-        data.invalidate(ACCESSIBLE_BLOCKS);
     }
 }
 
