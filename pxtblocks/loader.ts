@@ -448,6 +448,7 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
             let inputName: string;
             let inputCheck: string | string[];
             let hasParameter = false;
+            let inputParameter: pxt.blocks.BlockParameter;
 
             inputParts.forEach(part => {
                 if (part.kind !== "param") {
@@ -490,6 +491,7 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
                     let typeInfo = pxt.Util.lookup(info.apis.byQName, pr.type)
 
                     hasParameter = true;
+                    inputParameter = pr;
                     const defName = pr.definitionName;
                     const actName = pr.actualName;
 
@@ -604,6 +606,7 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
 
                 input = block.appendValueInput(inputName);
                 input.setAlign(Blockly.inputs.Align.LEFT);
+                if (inputParameter) applyInputLabel(input, inputParameter);
             }
             else if (expanded) {
                 const prefix = hasParameter ? optionalInputWithFieldPrefix : optionalDummyInputPrefix;
@@ -1005,6 +1008,13 @@ function splitInputs(def: pxtc.ParsedBlockDef): pxtc.BlockContentPart[][] {
 
 function namedField(field: Blockly.Field, name: string): NamedField {
     return { field, name };
+}
+
+function applyInputLabel(input: Blockly.Input, parameter: pxt.blocks.BlockParameter) {
+    const label = (parameter.labelLocalizationKey && pxtc.getBlockTranslationsCacheKey(parameter.labelLocalizationKey)) || parameter.label;
+    if (!label) return;
+
+    // Do something to set label on input? check 
 }
 
 function getEnumDropdownValues(apis: pxtc.ApisInfo, enumName: string) {
