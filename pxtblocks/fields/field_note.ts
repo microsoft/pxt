@@ -250,7 +250,9 @@ export class FieldNote extends Blockly.FieldNumber implements FieldCustom {
     };
 
     protected widgetDispose_(): void {
-        this.htmlInput_.removeEventListener("keydown", this.keyHandler);
+        if (this.htmlInput_) {
+            this.htmlInput_.removeEventListener("keydown", this.keyHandler);
+        }
         super.widgetDispose_();
     }
 
@@ -337,8 +339,10 @@ export class FieldNote extends Blockly.FieldNumber implements FieldCustom {
         Blockly.DropDownDiv.setColour(this.primaryColour, this.borderColour);
         Blockly.DropDownDiv.showPositionedByBlock(this, this.sourceBlock_ as Blockly.BlockSvg, () => this.onHide(), undefined, false);
 
-        this.htmlInput_.ariaLabel = lf("Press the up and down arrow keys to select the next or previous note, or enter a value in hertz");
-        this.htmlInput_.addEventListener("keydown", this.keyHandler);
+        if (this.htmlInput_) {
+            this.htmlInput_.ariaLabel = lf("Press the up and down arrow keys to select the next or previous note, or enter a value in hertz");
+            this.htmlInput_.addEventListener("keydown", this.keyHandler);
+        }
     }
 
     protected keyHandler = (ev: KeyboardEvent) => {
@@ -372,7 +376,9 @@ export class FieldNote extends Blockly.FieldNumber implements FieldCustom {
          * do not show up on the block itself until after the fieldeditor is closed,
          * as it is currently in an editable state.
          **/
-        (this as any).htmlInput_.value = this.getText();
+        if ((this as any).htmlInput_) {
+            (this as any).htmlInput_.value = this.getText();
+        }
 
         pxt.AudioContextManager.tone(frequency);
         setTimeout(() => {

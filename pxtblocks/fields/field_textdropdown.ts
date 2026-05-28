@@ -62,7 +62,7 @@ export class BaseFieldTextDropdown extends Blockly.FieldTextInput {
             e.preventDefault();
             this.selectedMenuItem = null;
             this.menu_.setHighlighted(null);
-            this.htmlInput_.focus();
+            if (this.htmlInput_) this.htmlInput_.focus();
         }
         this.lastHighlightedMenuElement = highlightedMenuElement;
     }
@@ -77,14 +77,16 @@ export class BaseFieldTextDropdown extends Blockly.FieldTextInput {
         if (!this.dropDownOpen_) this.showDropdown_();
         Blockly.Touch.clearTouchIdentifier();
 
-        this.inputKeydownHandler = this.inputKeydownListener.bind(this);
-        this.htmlInput_.addEventListener('keydown', this.inputKeydownHandler);
-        this.htmlInput_.setAttribute("role", "combobox");
-        this.htmlInput_.ariaExpanded = "true";
+        if (this.htmlInput_) {
+            this.inputKeydownHandler = this.inputKeydownListener.bind(this);
+            this.htmlInput_.addEventListener('keydown', this.inputKeydownHandler);
+            this.htmlInput_.setAttribute("role", "combobox");
+            this.htmlInput_.ariaExpanded = "true";
 
-        if (!quietInput) {
-            this.htmlInput_.focus();
-            this.htmlInput_.select();
+            if (!quietInput) {
+                this.htmlInput_.focus();
+                this.htmlInput_.select();
+            }
         }
     }
 
