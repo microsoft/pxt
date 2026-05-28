@@ -25,6 +25,10 @@ namespace ts.pxtc {
         "numops::lsrs": "_numops_lsrs",
         "pxt::toInt": "_numops_toInt",
         "pxt::fromInt": "_numops_fromInt",
+        "pxt::fromBool": "_pxt_fromBool",
+        "numops::toBool": "_numops_toBool",
+        "numops::toBoolDecr": "_numops_toBoolDecr",
+        "Boolean_::bang": "_pxt_boolean_bang",
     }
 
     // snippets for ARM Thumb assembly
@@ -323,6 +327,78 @@ _numops_fromInt:
     blx lr
 .over2:
     ${this.callCPPPush("pxt::fromInt")}
+
+_pxt_fromBool:
+    @scope _pxt_fromBool
+    cmp r0, #0
+    beq .false
+.true:
+    movs r0, #${taggedTrue}
+    blx lr
+.false:
+    movs r0, #${taggedFalse}
+    blx lr
+
+_pxt_boolean_bang:
+    @scope _pxt_boolean_bang
+    cmp r0, #0
+    beq .true
+.false:
+    movs r0, #0
+    blx lr
+.true:
+    movs r0, #1
+    blx lr
+
+_numops_toBool:
+    @scope _numops_toBool
+    cmp r0, #0
+    beq .false
+    cmp r0, #1
+    beq .false
+    lsls r1, r0, #31
+    bne .true
+    cmp r0, #${taggedNull}
+    beq .false
+    cmp r0, #${taggedFalse}
+    beq .false
+    cmp r0, #${taggedNaN}
+    beq .false
+    lsls r1, r0, #30
+    beq .boxed
+.true:
+    movs r0, #1
+    blx lr
+.false:
+    movs r0, #0
+    blx lr
+.boxed:
+    ${this.callCPPPush("numops::toBool")}
+
+_numops_toBoolDecr:
+    @scope _numops_toBoolDecr
+    cmp r0, #0
+    beq .false
+    cmp r0, #1
+    beq .false
+    lsls r1, r0, #31
+    bne .true
+    cmp r0, #${taggedNull}
+    beq .false
+    cmp r0, #${taggedFalse}
+    beq .false
+    cmp r0, #${taggedNaN}
+    beq .false
+    lsls r1, r0, #30
+    beq .boxed
+.true:
+    movs r0, #1
+    blx lr
+.false:
+    movs r0, #0
+    blx lr
+.boxed:
+    ${this.callCPPPush("numops::toBoolDecr")}
 `
 
 
@@ -351,7 +427,7 @@ _cmp_${op}:
                 // Also, cmp isn't needed when ref-counting (it ends with movs r0, r4)
                 r += boxedOp(`
                         bl numops::${op}
-                        bl numops::toBoolDecr
+                        bl _numops_toBoolDecr
                         cmp r0, #0`)
             }
 
