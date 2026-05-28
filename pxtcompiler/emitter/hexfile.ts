@@ -781,7 +781,10 @@ ${lbl}: ${snippets.obj_header("pxt::number_vt")}
                     }
                 }
 
-                if (minColl == -1 || minColl > numColl) {
+                // numColl == -1 means this multiplier failed to place all
+                // members at this size; only consider multipliers that
+                // succeeded, and keep the one with the fewest collisions.
+                if (numColl >= 0 && (minColl < 0 || numColl < minColl)) {
                     minColl = numColl
                     minMult = mult
                     minArr = arr
