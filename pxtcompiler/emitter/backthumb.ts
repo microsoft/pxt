@@ -25,6 +25,10 @@ namespace ts.pxtc {
         "numops::lsrs": "_numops_lsrs",
         "pxt::toInt": "_numops_toInt",
         "pxt::fromInt": "_numops_fromInt",
+        "pxt::fromBool": "_pxt_fromBool",
+        "numops::toBool": "_numops_toBool",
+        "numops::toBoolDecr": "_numops_toBoolDecr",
+        "Boolean_::bang": "_pxt_boolean_bang",
     }
 
     // snippets for ARM Thumb assembly
@@ -323,6 +327,96 @@ _numops_fromInt:
     blx lr
 .over2:
     ${this.callCPPPush("pxt::fromInt")}
+
+; Tag a raw 0/1 truth value into a boolean object (taggedTrue/taggedFalse).
+; Inverse of the toBool fast paths below; matches C++ pxt::fromBool.
+_pxt_fromBool:
+    @scope _pxt_fromBool
+    cmp r0, #0
+    beq .false
+.true:
+    movs r0, #${taggedTrue}
+    blx lr
+.false:
+    movs r0, #${taggedFalse}
+    blx lr
+
+; Logical NOT of a raw 0/1 truth value -> raw 0/1 (matches C++ bool bang(bool)).
+; Callers pass an already-tested condition, so this is raw-in / raw-out; value
+; context (`x = !y`) wraps the result with fromBool to re-tag it.
+_pxt_boolean_bang:
+    @scope _pxt_boolean_bang
+    cmp r0, #0
+    beq .true
+.false:
+    movs r0, #0
+    blx lr
+.true:
+    movs r0, #1
+    blx lr
+
+; Fast-path truthiness test: tagged value in r0 -> raw 0/1 in r0.
+; Value encodings (see taggedSpecialValue in emitter.ts): tagged int = (n<<1)|1
+; (low bit set); special tags = (n<<2)|2 with undefined=0, null, false, NaN,
+; true; heap objects have low 2 bits 00.
+; Only non-pointer values are decided inline here; any heap object is handed to
+; the C++ helper at .boxed (which also handles boxed numbers/strings like 0.0
+; and ""). INVARIANT: the falsy set below must match C++ numops::toBool exactly
+; -- if a new falsy tagged value is ever added, it must be added here too, or it
+; will fall through to .true.
+_numops_toBool:
+    @scope _numops_toBool
+    cmp r0, #0          ; undefined (0)            -> false
+    beq .false
+    cmp r0, #1          ; integer 0 ((0<<1)|1)     -> false
+    beq .false
+    lsls r1, r0, #31    ; odd => nonzero tagged int -> true
+    bne .true
+    cmp r0, #${taggedNull}   ; null  -> false
+    beq .false
+    cmp r0, #${taggedFalse}  ; false -> false
+    beq .false
+    cmp r0, #${taggedNaN}    ; NaN   -> false
+    beq .false
+    lsls r1, r0, #30    ; low 2 bits 00 => heap object -> defer to C++
+    beq .boxed
+.true:                  ; remaining specials (e.g. true) are truthy
+    movs r0, #1
+    blx lr
+.false:
+    movs r0, #0
+    blx lr
+.boxed:
+    ${this.callCPPPush("numops::toBool")}
+
+; Same truthiness classification as _numops_toBool (see comments above), but
+; this variant also consumes (ref-decrements) its argument. Only heap objects
+; are ref-counted, and those go through the C++ fallback which does the decr;
+; the inline non-pointer paths carry no refcount, so they need none.
+_numops_toBoolDecr:
+    @scope _numops_toBoolDecr
+    cmp r0, #0          ; undefined (0)            -> false
+    beq .false
+    cmp r0, #1          ; integer 0 ((0<<1)|1)     -> false
+    beq .false
+    lsls r1, r0, #31    ; odd => nonzero tagged int -> true
+    bne .true
+    cmp r0, #${taggedNull}   ; null  -> false
+    beq .false
+    cmp r0, #${taggedFalse}  ; false -> false
+    beq .false
+    cmp r0, #${taggedNaN}    ; NaN   -> false
+    beq .false
+    lsls r1, r0, #30    ; low 2 bits 00 => heap object -> defer to C++
+    beq .boxed
+.true:
+    movs r0, #1
+    blx lr
+.false:
+    movs r0, #0
+    blx lr
+.boxed:
+    ${this.callCPPPush("numops::toBoolDecr")}
 `
 
 
@@ -351,7 +445,7 @@ _cmp_${op}:
                 // Also, cmp isn't needed when ref-counting (it ends with movs r0, r4)
                 r += boxedOp(`
                         bl numops::${op}
-                        bl numops::toBoolDecr
+                        bl _numops_toBoolDecr
                         cmp r0, #0`)
             }
 

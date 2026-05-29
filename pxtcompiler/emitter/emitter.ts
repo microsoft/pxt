@@ -4157,7 +4157,41 @@ ${lbl}: .short 0xffff
         function emitExpressionStatement(node: ExpressionStatement) {
             emitExprAsStmt(node.expression)
         }
-        function emitCondition(expr: Expression, inner: ir.Expr = null) {
+        function emitCondition(expr: Expression, inner: ir.Expr = null): ir.Expr {
+            // Lower `&&` / `||` used as a condition into short-circuiting jumps
+            // that yield 0/1 directly, instead of boxing the intermediate
+            // booleans and converting them back with a runtime helper.
+            if (!inner && !isStackMachine() && expr.kind == SK.BinaryExpression) {
+                const binary = expr as BinaryExpression
+                const op = binary.operatorToken.kind
+                if (op == SK.AmpersandAmpersandToken || op == SK.BarBarToken) {
+                    const shortCircuitLabel = proc.mkLabel("lazycond")
+                    const doneLabel = proc.mkLabel("lazycondfin")
+                    if (op == SK.AmpersandAmpersandToken) {
+                        proc.emitJmp(shortCircuitLabel, emitCondition(binary.left), ir.JmpMode.IfZero)
+                        proc.emitJmp(shortCircuitLabel, emitCondition(binary.right), ir.JmpMode.IfZero)
+                        proc.emitJmp(doneLabel, ir.numlit(1), ir.JmpMode.Always)
+                        proc.emitLbl(shortCircuitLabel)
+                        proc.emitJmp(doneLabel, ir.numlit(0), ir.JmpMode.Always)
+                    } else {
+                        proc.emitJmp(shortCircuitLabel, emitCondition(binary.left), ir.JmpMode.IfNotZero)
+                        proc.emitJmp(shortCircuitLabel, emitCondition(binary.right), ir.JmpMode.IfNotZero)
+                        proc.emitJmp(doneLabel, ir.numlit(0), ir.JmpMode.Always)
+                        proc.emitLbl(shortCircuitLabel)
+                        proc.emitJmp(doneLabel, ir.numlit(1), ir.JmpMode.Always)
+                    }
+                    proc.emitLbl(doneLabel)
+                    return captureJmpValue()
+                }
+            }
+            // Lower `!expr` used as a condition by negating the operand's
+            // condition directly, avoiding a boxed boolean just to invert it.
+            if (!inner && !isStackMachine() && expr.kind == SK.PrefixUnaryExpression) {
+                const unary = expr as PrefixUnaryExpression
+                if (unary.operator == SK.ExclamationToken) {
+                    return ir.rtcall("Boolean_::bang", [emitCondition(unary.operand)])
+                }
+            }
             if (!inner && isThumb() && expr.kind == SK.BinaryExpression) {
                 let be = expr as BinaryExpression
                 let mapped = U.lookup(thumbCmpMap, simpleInstruction(be, be.operatorToken.kind))
