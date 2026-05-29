@@ -1514,6 +1514,19 @@ namespace pxt.hexloader {
             })
     }
 
+    export function stringifyHexInfoForCache(hexInfo: pxtc.HexInfo) {
+        if (!hexInfo?.hex) return undefined;
+
+        const cachedMeta = U.clone(hexInfo);
+        cachedMeta.hex = compressHex(cachedMeta.hex);
+        return JSON.stringify(cachedMeta);
+    }
+
+    export function storeHexInfoCacheEntryAsync(host: Host, sha: string, cachedHexInfo: string) {
+        if (!sha || !cachedHexInfo) return Promise.resolve();
+        return storeWithLimitAsync(host, "hex-keys", "hex-" + sha, cachedHexInfo);
+    }
+
     export function getHexInfoAsync(host: Host, extInfo: pxtc.ExtensionInfo, cloudModule?: any): Promise<pxtc.HexInfo> {
         if (!extInfo.sha)
             return Promise.resolve<any>(null)
@@ -1543,10 +1556,7 @@ namespace pxt.hexloader {
                 else {
                     return downloadHexInfoAsync(extInfo)
                         .then(meta => {
-                            let origHex = meta.hex
-                            meta.hex = compressHex(meta.hex)
-                            let store = JSON.stringify(meta)
-                            meta.hex = origHex
+                            let store = stringifyHexInfoForCache(meta)
                             return storeWithLimitAsync(host, "hex-keys", key, store)
                                 .then(() => meta)
                         }).catch(e => {
