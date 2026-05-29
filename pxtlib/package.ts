@@ -1279,7 +1279,7 @@ namespace pxt {
                 !opts.target.isNative
 
             if (!noFileEmbed) {
-                const files = await this.filesToBePublishedAsync(true)
+                const files = await this.filesToBePublishedAsync(true, !appTarget.compile.useUF2)
                 const headerString = JSON.stringify({
                     name: this.config.name,
                     comment: this.config.description,
@@ -1355,24 +1355,66 @@ namespace pxt {
             return cfg;
         }
 
-        filesToBePublishedAsync(allowPrivate = false) {
+        async filesToBePublishedAsync(allowPrivate = false, packExternalExtensions = false): Promise<Map<string>> {
             const files: Map<string> = {};
-            return this.loadAsync()
-                .then(() => {
-                    if (!allowPrivate && !this.config.public)
-                        U.userError('Only packages with "public":true can be published')
-                    const cfg = this.prepareConfigToBePublished();
-                    files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
-                    for (let f of this.getFiles()) {
-                        // already stored
-                        if (f === pxt.CONFIG_NAME || f === HISTORY_FILE) continue;
-                        let str = this.readFile(f)
-                        if (str == null)
-                            U.userError("referenced file missing: " + f)
-                        files[f] = str
+            await this.loadAsync();
+
+            if (!allowPrivate && !this.config.public)
+                U.userError('Only packages with "public":true can be published')
+
+            const cfg = this.prepareConfigToBePublished();
+            files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
+            for (let f of this.getFiles()) {
+                // already stored
+                if (f === pxt.CONFIG_NAME || f === HISTORY_FILE) continue;
+                let str = this.readFile(f)
+                if (str == null)
+                    U.userError("referenced file missing: " + f)
+                files[f] = str
+            }
+
+            if (packExternalExtensions) {
+                const packagedExtensions = this.packagedExternalExtensions();
+                if (Object.keys(packagedExtensions).length)
+                    files[pxt.PACKAGED_EXTENSIONS] = JSON.stringify(packagedExtensions);
+            }
+
+            return U.sortObjectFields(files)
+        }
+
+        private packagedExternalExtensions(): pxt.Map<pxt.Map<string>> {
+            const packaged: pxt.Map<pxt.Map<string>> = {};
+            const seen: pxt.Map<boolean> = {};
+
+            const packDeps = (pkg: Package) => {
+                for (const dep of pkg.resolvedDependencies()) {
+                    if (!dep) continue;
+
+                    const seenKey = `${dep.id}:${dep.version()}`;
+                    if (seen[seenKey]) continue;
+                    seen[seenKey] = true;
+
+                    if (dep.verProtocol() === "github" || dep.verProtocol() === "pub") {
+                        const depFiles: pxt.Map<string> = {};
+                        for (const fn of dep.getFiles()) {
+                            if (fn === pxt.CONFIG_NAME || fn === HISTORY_FILE) continue;
+                            const content = dep.readFile(fn);
+                            if (content != null) depFiles[fn] = content;
+                        }
+                        depFiles[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(dep.config);
+                        packaged[dep._verspec] = depFiles;
+                        if (dep.version() !== dep._verspec)
+                            packaged[dep.version()] = depFiles;
+                        if (dep.verProtocol() === "pub")
+                            packaged[dep.verArgument()] = depFiles;
                     }
-                    return U.sortObjectFields(files)
-                })
+
+                    packDeps(dep);
+                }
+            }
+
+            packDeps(this);
+            return packaged;
         }
 
         saveToJsonAsync(): Promise<pxt.cpp.HexFile> {

@@ -522,7 +522,7 @@ export function initGitHubDb() {
             }
         }
 
-        async loadPackageAsync(repopath: string, tag: string): Promise<pxt.github.CachedPackage> {
+        async loadPackageAsync(repopath: string, tag: string, backupScriptText?: pxt.Map<string>): Promise<pxt.github.CachedPackage> {
             repopath = repopath.toLowerCase()
             if (!tag) {
               pxt.debug(`dep: default to master`)
@@ -530,7 +530,7 @@ export function initGitHubDb() {
             }
             // don't cache master
             if (tag == "master")
-                return this.mem.loadPackageAsync(repopath, tag);
+                return this.loadPackageFromMemoryAsync(repopath, tag, backupScriptText);
 
             const id = this.packageCacheKey(repopath, tag);
             const cache = await getGitHubCacheAsync();
@@ -542,7 +542,7 @@ export function initGitHubDb() {
             }
             catch (e) {
                 pxt.debug(`github offline cache miss ${id}`);
-                const p = await this.mem.loadPackageAsync(repopath, tag);
+                const p = await this.loadPackageFromMemoryAsync(repopath, tag, backupScriptText);
 
                 await this.cachePackageAsync(cache, repopath, tag, p);
 
@@ -722,6 +722,21 @@ export function initGitHubDb() {
             catch (e) {
                 // ignore cache failures
                 pxt.debug(`Failed to cache files for ${repopath}#${tag}`);
+            }
+        }
+
+        private async loadPackageFromMemoryAsync(repopath: string, tag: string, backupScriptText?: pxt.Map<string>): Promise<pxt.github.CachedPackage> {
+            try {
+                return await this.mem.loadPackageAsync(repopath, tag, backupScriptText);
+            }
+            catch (e) {
+                if (backupScriptText) {
+                    return {
+                        files: pxt.Util.clone(backupScriptText),
+                        backupCopy: true
+                    };
+                }
+                throw e;
             }
         }
 

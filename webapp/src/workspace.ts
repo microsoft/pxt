@@ -770,9 +770,43 @@ export async function installAsync(h0: InstallHeader, text: ScriptText, dontOver
         pxt.shell.setEditorLanguagePref(cfg.preferredEditor);
     }
 
-    await pxt.github.cacheProjectDependenciesAsync(cfg)
+    let backupExtensionFiles: pxt.Map<pxt.Map<string>>;
+    if (text[pxt.PACKAGED_EXTENSIONS]) {
+        backupExtensionFiles = pxt.Util.jsonTryParse(text[pxt.PACKAGED_EXTENSIONS]);
+        delete text[pxt.PACKAGED_EXTENSIONS];
+    }
+
+    await cachePublishedScriptBackupsAsync(backupExtensionFiles);
+    await pxt.github.cacheProjectDependenciesAsync(cfg, backupExtensionFiles)
     await importAsync(h, text);
     return h;
+}
+
+async function cachePublishedScriptBackupsAsync(backupExtensionFiles?: pxt.Map<pxt.Map<string>>) {
+    if (!backupExtensionFiles) return;
+
+    const config = await pxt.packagesConfigAsync();
+    const scriptCache = await getScriptCacheAsync();
+    const seen: pxt.Map<boolean> = {};
+
+    await Promise.all(Object.keys(backupExtensionFiles).map(async key => {
+        if (pxt.github.isGithubId(key)) return;
+
+        const pubId = key.slice(0, 4) === "pub:" ? key.slice(4) : key;
+        if (!pubId || seen[pubId]) return;
+        seen[pubId] = true;
+
+        const files = backupExtensionFiles[key];
+        if (!files || !pxt.Package.parseAndValidConfig(files[pxt.CONFIG_NAME])) return;
+
+        try {
+            const id = encodeURIComponent(pxt.github.upgradedPackageId(config, pubId));
+            await scriptCache.setAsync({ id, files });
+        }
+        catch (e) {
+            pxt.log("Unable to cache packaged extension in DB");
+        }
+    }));
 }
 
 export async function renameAsync(h: Header, newName: string): Promise<Header> {

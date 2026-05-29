@@ -145,13 +145,22 @@ namespace pxt.github {
 
     export interface CachedPackage {
         files: Map<string>;
+        backupCopy?: boolean;
+    }
+
+    function cachedPackageFromBackup(backupScriptText?: pxt.Map<string>): CachedPackage {
+        if (!backupScriptText) return undefined;
+        return {
+            files: U.clone(backupScriptText),
+            backupCopy: true
+        };
     }
 
     // caching
     export interface IGithubDb {
         latestVersionAsync(repopath: string, config: PackagesConfig): Promise<string>;
         loadConfigAsync(repopath: string, tag: string): Promise<pxt.PackageConfig>;
-        loadPackageAsync(repopath: string, tag: string): Promise<CachedPackage>;
+        loadPackageAsync(repopath: string, tag: string, backupScriptText?: pxt.Map<string>): Promise<CachedPackage>;
         loadTutorialMarkdown(repopath: string, tag?: string): Promise<CachedPackage>;
         cacheReposAsync(response: GHTutorialResponse): Promise<void>;
     }
@@ -273,7 +282,7 @@ namespace pxt.github {
             return resolved
         }
 
-        async loadPackageAsync(repopath: string, tag: string): Promise<CachedPackage> {
+        async loadPackageAsync(repopath: string, tag: string, backupScriptText?: pxt.Map<string>): Promise<CachedPackage> {
             if (!tag) {
                 pxt.debug(`load pkg: default to master branch`)
                 tag = "master";
@@ -289,41 +298,42 @@ namespace pxt.github {
             }
 
             // try using github apis
-            return await this.githubLoadPackageAsync(repopath, tag);
+            return await this.githubLoadPackageAsync(repopath, tag, backupScriptText);
         }
 
-        private githubLoadPackageAsync(repopath: string, tag: string): Promise<CachedPackage> {
-            return tagToShaAsync(repopath, tag)
-                .then(sha => {
-                    // cache lookup
-                    const key = `${repopath}/${sha}`;
-                    let res = this.packages[key];
-                    if (res) {
-                        pxt.debug(`github cache ${repopath}/${tag}/text`);
-                        return Promise.resolve(U.clone(res));
-                    }
+        private async githubLoadPackageAsync(repopath: string, tag: string, backupScriptText?: pxt.Map<string>): Promise<CachedPackage> {
+            try {
+                const sha = await tagToShaAsync(repopath, tag);
 
-                    // load and cache
-                    pxt.log(`Downloading ${repopath}/${tag} -> ${sha}`)
-                    return downloadTextAsync(repopath, sha, pxt.CONFIG_NAME)
-                        .then(pkg => {
-                            const current: CachedPackage = {
-                                files: {}
-                            }
-                            current.files[pxt.CONFIG_NAME] = pkg
-                            const cfg: pxt.PackageConfig = JSON.parse(pkg)
-                            return U.promiseMapAll(pxt.allPkgFiles(cfg).slice(1),
-                                fn => downloadTextAsync(repopath, sha, fn)
-                                    .then(text => {
-                                        current.files[fn] = text
-                                    }))
-                                .then(() => {
-                                    // cache!
-                                    this.packages[key] = current;
-                                    return U.clone(current);
-                                })
-                        })
-                })
+                // cache lookup
+                const key = `${repopath}/${sha}`;
+                let res = this.packages[key];
+                if (res) {
+                    pxt.debug(`github cache ${repopath}/${tag}/text`);
+                    return U.clone(res);
+                }
+
+                // load and cache
+                pxt.log(`Downloading ${repopath}/${tag} -> ${sha}`)
+                const pkg = await downloadTextAsync(repopath, sha, pxt.CONFIG_NAME);
+                const current: CachedPackage = {
+                    files: {}
+                }
+                current.files[pxt.CONFIG_NAME] = pkg
+                const cfg: pxt.PackageConfig = JSON.parse(pkg)
+                await U.promiseMapAll(pxt.allPkgFiles(cfg).slice(1), async fn => {
+                    current.files[fn] = await downloadTextAsync(repopath, sha, fn);
+                });
+
+                // cache!
+                this.packages[key] = current;
+                return U.clone(current);
+            }
+            catch (e) {
+                const backup = cachedPackageFromBackup(backupScriptText);
+                if (backup) return backup;
+                throw e;
+            }
         }
 
         async loadTutorialMarkdown(repopath: string, tag?: string) {
@@ -731,7 +741,7 @@ namespace pxt.github {
         return await db.loadConfigAsync(repopath, tag)
     }
 
-    export async function downloadPackageAsync(repoWithTag: string, config: pxt.PackagesConfig): Promise<CachedPackage> {
+    export async function downloadPackageAsync(repoWithTag: string, config: pxt.PackagesConfig, backupScriptText?: pxt.Map<string>): Promise<CachedPackage> {
         const p = parseRepoId(repoWithTag)
         if (!p) {
             pxt.log('Unknown GitHub syntax');
@@ -746,9 +756,16 @@ namespace pxt.github {
 
         // always try to upgrade unbound versions
         if (!p.tag) {
-            p.tag = await db.latestVersionAsync(p.slug, config)
+            try {
+                p.tag = await db.latestVersionAsync(p.slug, config)
+            }
+            catch (e) {
+                const backup = cachedPackageFromBackup(backupScriptText);
+                if (backup) return backup;
+                throw e;
+            }
         }
-        const cached = await db.loadPackageAsync(p.fullName, p.tag)
+        const cached = await db.loadPackageAsync(p.fullName, p.tag, backupScriptText)
         const dv = upgradedDisablesVariants(config, repoWithTag)
         if (dv) {
             const cfg = Package.parseAndValidConfig(cached.files[pxt.CONFIG_NAME])
@@ -775,7 +792,11 @@ namespace pxt.github {
         return { version, config };
     }
 
-    export async function cacheProjectDependenciesAsync(cfg: pxt.PackageConfig): Promise<void> {
+    export async function cacheProjectDependenciesAsync(cfg: pxt.PackageConfig, backupExtensions?: pxt.Map<pxt.Map<string>>): Promise<void> {
+        await cacheProjectDependenciesCoreAsync(cfg, {}, backupExtensions);
+    }
+
+    async function cacheProjectDependenciesCoreAsync(cfg: pxt.PackageConfig, checked: pxt.Map<boolean>, backupExtensions?: pxt.Map<pxt.Map<string>>): Promise<void> {
         const ghExtensions = Object.keys(cfg.dependencies)
             ?.filter(dep => isGithubId(cfg.dependencies[dep]));
 
@@ -786,10 +807,15 @@ namespace pxt.github {
                 ghExtensions.map(
                     async ext => {
                         const extSrc = cfg.dependencies[ext];
-                        const ghPkg = await downloadPackageAsync(extSrc, pkgConfig);
+                        if (checked[extSrc]) return;
+                        checked[extSrc] = true;
+
+                        const ghPkg = await downloadPackageAsync(extSrc, pkgConfig, backupExtensions?.[extSrc]);
                         if (!ghPkg) {
                             throw new Error(lf("Cannot load extension {0} from {1}", ext, extSrc));
                         }
+                        const ghPkgCfg = Package.parseAndValidConfig(ghPkg.files[pxt.CONFIG_NAME]);
+                        if (ghPkgCfg) await cacheProjectDependenciesCoreAsync(ghPkgCfg, checked, backupExtensions);
                     }
                 )
             );
