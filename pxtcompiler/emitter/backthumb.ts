@@ -382,6 +382,21 @@ _pxt_switch_eq:
             // Array .length on a known RefCollection: read the length field and
             // tag it inline, skipping the call into C++ Array_::length + fromInt.
             // Anything that isn't a plain RefCollection pointer defers to C++.
+            //
+            // This depends on the C++ runtime object layout (pxt-common-packages
+            // pxtbase.h). If those structs are reordered, update the offsets here:
+            //   * object[0]   = RefObject.vtable      (RefObject: vtable is field 0)
+            //   * vtable[8]   = VTable.classNo (u16)  (struct VTable, non-VM build:
+            //                   numbytes@0, objectType/magic@2-3, ifaceTable@4-7,
+            //                   classNo@8) -- same layout this compiler emits in
+            //                   vtableToAsm(), so read and write stay in sync
+            //   * object[8]   = RefCollection.head.length  (RefCollection : RefObject
+            //                   {vtable@0} + Segment head@4; Segment {data@0, length@4})
+            // The length is read with ldrh; ramint_t may be u16 or u32 (pxtbase.h
+            // #if), but little-endian makes the low halfword correct for any array
+            // that fits in device RAM (< 65536 elements). The classNo guard ensures
+            // only genuine RefCollections take this path, so a layout change could
+            // only ever mis-read arrays, never unrelated objects.
             r += `
 .section code
 .object _pxt_helper_array_length_tagged
