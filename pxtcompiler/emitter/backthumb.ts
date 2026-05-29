@@ -395,8 +395,7 @@ _pxt_switch_eq:
             // The length is read with ldrh; ramint_t may be u16 or u32 (pxtbase.h
             // #if), but little-endian makes the low halfword correct for any array
             // that fits in device RAM (< 65536 elements). The classNo guard ensures
-            // only genuine RefCollections take this path, so a layout change could
-            // only ever mis-read arrays, never unrelated objects.
+            // only genuine RefCollections take this path.
             r += `
 .section code
 .object _pxt_helper_array_length_tagged
