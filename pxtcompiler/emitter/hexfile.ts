@@ -811,9 +811,9 @@ ${lbl}: ${snippets.obj_header("pxt::number_vt")}
         PVoid methods[2 or 4];
         */
 
-        const ifaceInfo = computeHashMultiplier(info.itable.map(e => e.idx))
-        //if (info.itable.length == 0)
-        //    ifaceInfo.mult = 0
+        const ifaceInfo = info.itable.length
+            ? computeHashMultiplier(info.itable.map(e => e.idx))
+            : { mult: 0, mapping: new Uint16Array(0), size: 0 }
 
         let ptrSz = target.shortPointers ? ".short" : ".word"
         let s = `
@@ -853,6 +853,13 @@ ${info.id}_IfaceVT:
         const descSize = 8
         const zeroOffset = ifaceInfo.mapping.length * 2
 
+        // Iface table is the one consumer that can elect the wrapper-skip
+        // optimization. Procs with useExactIfaceWrapper get pointed at _iface
+        // (which `b _nochk`); everyone else gets the usual _args wrapper entry.
+        // canUseExactIfaceWrapper guarantees this is safe for the elected procs.
+        const procIfaceLabel = (p: ir.Procedure) =>
+            (p.useExactIfaceWrapper ? p.label() + "_iface" : p.vtLabel()) + "@fn"
+
         let descs = ""
         let offset = zeroOffset
         let offsets: pxt.Map<number> = {}
@@ -860,11 +867,11 @@ ${info.id}_IfaceVT:
             offsets[e.idx + ""] = offset
             const desc = !e.proc ? 0 : e.proc.isGetter() ? 1 : 2
             descs += `  .short ${e.idx}, ${desc} ; ${e.name}\n`
-            descs += `  .word ${e.proc ? e.proc.vtLabel() + "@fn" : e.info}\n`
+            descs += `  .word ${e.proc ? procIfaceLabel(e.proc) : e.info}\n`
             offset += descSize
             if (e.setProc) {
                 descs += `  .short ${e.idx}, 0 ; set ${e.name}\n`
-                descs += `  .word ${e.setProc.vtLabel()}@fn\n`
+                descs += `  .word ${procIfaceLabel(e.setProc)}\n`
                 offset += descSize
             }
         }
@@ -881,7 +888,9 @@ ${info.id}_IfaceVT:
         }
 
         // offsets are relative to the position in the array
-        s += "  .short " + U.toArray(map).map((e, i) => (offsets[e + ""] || zeroOffset) - (i * 2)).join(", ") + "\n"
+        const hashOffsets = U.toArray(map).map((e, i) => (offsets[e + ""] || zeroOffset) - (i * 2))
+        if (hashOffsets.length)
+            s += "  .short " + hashOffsets.join(", ") + "\n"
         s += descs
 
         s += "\n"

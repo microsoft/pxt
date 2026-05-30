@@ -576,6 +576,11 @@ ${baseLabel}_nochk:
 
         private emitFieldAccess(e: ir.Expr, store = false) {
             let info = e.data as FieldAccessInfo
+            if (!store && this.shouldSpecializeCheckedFieldLoad(info)) {
+                this.emitCheckedFieldLoad(info)
+                return
+            }
+
             let pref = store ? "st" : "ld"
             let lbl = pref + "fld_" + info.classInfo.id + "_" + info.name
             if (info.needsCheck && !target.switches.skipClassCheck) {
@@ -594,6 +599,33 @@ ${baseLabel}_nochk:
             else
                 this.write(`ldr r0, [r0, ${xoff}]`)
             return
+        }
+
+        private checkedFieldAccessCountKey(info: FieldAccessInfo) {
+            return `${info.classInfo.id}:${info.name}:get`
+        }
+
+        private shouldSpecializeCheckedFieldLoad(info: FieldAccessInfo) {
+            if (!isThumb() || !this.bin.finalPass || target.switches.skipClassCheck || !info.needsCheck)
+                return false
+            return (this.bin.checkedFieldAccessCounts[this.checkedFieldAccessCountKey(info)] || 0) >= 5
+        }
+
+        private emitCheckedFieldLoad(info: FieldAccessInfo) {
+            const helperKey = "ldfldchk_" + info.classInfo.id + "_" + info.name
+            const helper = this.ensureLabelledHelper(helperKey, () => {
+                this.write(this.t.helper_prologue())
+                this.emitInstanceOf(info.classInfo, "validate")
+                let off = info.idx * 4 + 4
+                let xoff = "#" + off
+                if (off > 124) {
+                    this.write(this.t.emit_int(off, "r3"))
+                    xoff = "r3"
+                }
+                this.write(`ldr r0, [r0, ${xoff}]`)
+                this.write(this.t.helper_epilogue())
+            })
+            this.write(this.t.call_lbl(helper, false, this.stackAlignmentNeeded(0)))
         }
 
         private writeFailBranch() {
@@ -839,13 +871,52 @@ ${baseLabel}_nochk:
 
         private emitIfaceCall(procid: ir.ProcId, numargs: number, getset = "") {
             U.assert(procid.ifaceIndex > 0)
-            this.write(this.t.emit_int(procid.ifaceIndex, "r1"))
-
-            this.emitLabelledHelper("ifacecall" + numargs + "_" + getset, () => {
+            const helperKey = "ifacecall" + numargs + "_" + getset
+            const helper = this.ensureLabelledHelper(helperKey, () => {
                 this.write(`ldr r0, [sp, #0] ; ld-this`)
                 this.loadVTable()
                 this.ifaceCallCore(numargs, getset)
             })
+
+            if (this.shouldSpecializeIfaceCall(procid.ifaceIndex, numargs, getset)) {
+                const thunkKey = helperKey + "_i" + procid.ifaceIndex
+                this.emitLabelledHelper(thunkKey, () => {
+                    this.write(this.t.emit_int(procid.ifaceIndex, "r1"))
+                    this.write(`ldlit r7, ${helper}@fn`)
+                    this.write(`bx r7`)
+                })
+            } else {
+                this.write(this.t.emit_int(procid.ifaceIndex, "r1"))
+                this.write(this.t.call_lbl(helper))
+            }
+        }
+
+        private ifaceCallCountKey(ifaceIndex: number, numargs: number, getset: string) {
+            return `${ifaceIndex}:${numargs}:${getset || "call"}`
+        }
+
+        // Count-driven specialization decisions (this method and the related
+        // shouldSpecializeCheckedFieldLoad / shouldSpecializeMapSetByFieldId) assume:
+        //  - bin.finalPass is true, AND
+        //  - the count maps were populated during the same final-pass emit()
+        //    call that builds the IR this asm walk consumes.
+        // This is currently true because the frontend populates counts during IR
+        // generation and the backend reads them only during the subsequent asm walk.
+        // Any future change that interleaves IR generation with asm emission would
+        // silently regress these to "always false".
+        //
+        // Threshold of 3 is the break-even point for the labelled-thunk pattern:
+        // each shared call site saves ~4 bytes vs an inline call, and the thunk
+        // itself costs ~12 bytes. At 3 callers, savings break even with thunk cost.
+        private shouldSpecializeIfaceCall(ifaceIndex: number, numargs: number, getset: string) {
+            if (!isThumb() || !this.bin.finalPass)
+                return false
+            const count = this.bin.ifaceCallCounts[this.ifaceCallCountKey(ifaceIndex, numargs, getset)] || 0
+            if (getset == "get" && numargs == 1)
+                return count >= 3
+            if (getset == "set" || !getset)
+                return count >= 3
+            return false
         }
 
         // vtable in r3; clobber r2
@@ -951,6 +1022,8 @@ ${baseLabel}_nochk:
 
         private emitRtCall(topExpr: ir.Expr, genCall: () => void = null) {
             let name: string = topExpr.data
+            const mapSetFieldId = this.mapSetByFieldId(topExpr)
+            const specializeMapSetFieldId = mapSetFieldId !== undefined && this.shouldSpecializeMapSetByFieldId(mapSetFieldId)
 
             if (name == "pxt::beginTry") {
                 return this.emitBeginTry(topExpr)
@@ -965,6 +1038,8 @@ ${baseLabel}_nochk:
                 isRef: (maskInfo.refMask & (1 << i)) != 0,
                 conv: convs.find(c => c.argIdx == i)
             }))
+            if (specializeMapSetFieldId)
+                allArgs = allArgs.filter(a => a.idx != 1)
 
             U.assert(allArgs.length <= 4)
 
@@ -1071,7 +1146,9 @@ ${baseLabel}_nochk:
             if (genCall) {
                 genCall()
             } else {
-                if (name != "langsupp::ignore")
+                if (specializeMapSetFieldId)
+                    this.emitMapSetByFieldIdCall(mapSetFieldId)
+                else if (name != "langsupp::ignore")
                     this.alignedCall(name, "", 0, true)
             }
 
@@ -1081,27 +1158,67 @@ ${baseLabel}_nochk:
             }
         }
 
+        private mapSetByFieldId(topExpr: ir.Expr) {
+            if (topExpr.data != "pxtrt::mapSet" || topExpr.args.length != 3)
+                return undefined
+            const fieldId = topExpr.args[1]
+            if (fieldId.exprKind != ir.EK.NumberLiteral || typeof fieldId.data != "number")
+                return undefined
+            return fieldId.data as number
+        }
+
+        private shouldSpecializeMapSetByFieldId(fieldId: number) {
+            if (!isThumb() || !this.bin.finalPass)
+                return false
+            return (this.bin.mapSetByFieldIdCounts[fieldId + ""] || 0) >= 3
+        }
+
+        private emitMapSetByFieldIdCall(fieldId: number) {
+            const helper = this.ensureLabelledHelper("mapset_i" + fieldId, () => {
+                this.write(this.t.helper_prologue())
+                this.write(this.t.emit_int(fieldId, "r1"))
+                this.write(this.t.callCPP("pxtrt::mapSet"))
+                this.write(this.t.helper_epilogue())
+            })
+            this.write(this.t.call_lbl(helper, false, this.stackAlignmentNeeded(0)))
+        }
+
         private alignedCall(name: string, cmt = "", off = 0, saveStack = false) {
             if (U.startsWith(name, "_cmp_") || U.startsWith(name, "_pxt_"))
                 saveStack = false
             this.write(this.t.call_lbl(name, saveStack, this.stackAlignmentNeeded(off)) + cmt)
         }
 
-        private emitLabelledHelper(lbl: string, generate: () => void) {
+        // Lazily emit a deduped helper body and return its label.
+        // Use this when you want to BRANCH to (or reference) the helper without
+        // emitting a `bl` at the current cursor -- e.g. when wrapping the call in
+        // a thunk, or storing the label for later use.
+        private ensureLabelledHelper(lbl: string, generate: () => void) {
             if (!this.labelledHelpers[lbl]) {
                 let outp = this.redirectOutput(generate)
-                this.emitHelper(outp, lbl)
-                this.labelledHelpers[lbl] = this.bin.codeHelpers[outp];
-            } else {
-                this.write(this.t.call_lbl(this.labelledHelpers[lbl]))
+                this.labelledHelpers[lbl] = this.helperLabel(outp, lbl);
             }
+            return this.labelledHelpers[lbl]
         }
 
-        private emitHelper(asm: string, baseName = "hlp") {
+        // Ensure a deduped helper exists and emit a `bl` to it at the cursor.
+        // Use this for the common case of "factor this sequence into a helper and call it here".
+        private emitLabelledHelper(lbl: string, generate: () => void) {
+            const helper = this.ensureLabelledHelper(lbl, generate)
+            this.write(this.t.call_lbl(helper))
+            return helper
+        }
+
+        private helperLabel(asm: string, baseName = "hlp") {
             if (!this.bin.codeHelpers[asm]) {
                 let len = Object.keys(this.bin.codeHelpers).length
                 this.bin.codeHelpers[asm] = `_${baseName}_${len}`
             }
+            return this.bin.codeHelpers[asm]
+        }
+
+        private emitHelper(asm: string, baseName = "hlp") {
+            this.helperLabel(asm, baseName)
             this.write(this.t.call_lbl(this.bin.codeHelpers[asm]))
         }
 
@@ -1144,43 +1261,42 @@ ${baseLabel}_nochk:
             }
         }
 
-        private emitFieldMethods() {
-            for (let op of ["get", "set"]) {
-                this.write(`
+        private emitFieldMethod(op: string) {
+            this.write(`
                 ${this.helperObject(op)}
                 .section code
                 _pxt_map_${op}:
                 `)
 
-                this.loadVTable("r4")
-                this.checkSubtype(this.builtInClassNo(pxt.BuiltInType.RefMap), ".notmap", "r4")
+            this.loadVTable("r4")
+            this.checkSubtype(this.builtInClassNo(pxt.BuiltInType.RefMap), ".notmap", "r4")
 
-                this.write(this.t.callCPPPush(op == "set" ? "pxtrt::mapSetByString" : "pxtrt::mapGetByString"))
-                this.write(".notmap:")
+            this.write(this.t.callCPPPush(op == "set" ? "pxtrt::mapSetByString" : "pxtrt::mapGetByString"))
+            this.write(".notmap:")
 
-                let numargs = op == "set" ? 2 : 1
-                let hasAlign = false
+            let numargs = op == "set" ? 2 : 1
+            let hasAlign = false
 
-                this.write("mov r4, r3 ; save VT")
+            this.write("mov r4, r3 ; save VT")
 
-                if (op == "set") {
-                    if (target.stackAlign) {
-                        hasAlign = true
-                        this.write("push {lr} ; align")
-                    }
-                    this.write(`
+            if (op == "set") {
+                if (target.stackAlign) {
+                    hasAlign = true
+                    this.write("push {lr} ; align")
+                }
+                this.write(`
                             push {r0, r2, lr}
                             mov r0, r1
                         `)
 
-                } else {
-                    this.write(`
+            } else {
+                this.write(`
                             push {r0, lr}
                             mov r0, r1
                         `)
-                }
+            }
 
-                this.write(`
+            this.write(`
                     bl pxtrt::lookupMapKey
                     mov r1, r0 ; put key index in r1
                     ldr r0, [sp, #0] ; restore obj pointer
@@ -1189,13 +1305,47 @@ ${baseLabel}_nochk:
                 `)
 
 
-                this.write(this.t.pop_locals(numargs + (hasAlign ? 1 : 0)))
+            this.write(this.t.pop_locals(numargs + (hasAlign ? 1 : 0)))
 
-                this.write("pop {pc}")
+            this.write("pop {pc}")
 
-                this.write(".dowork:")
-                this.ifaceCallCore(numargs, op, true)
-            }
+            this.write(".dowork:")
+            this.ifaceCallCore(numargs, op, true)
+        }
+
+        private emitStringMapSetMethod() {
+            // Fast path for the well-typed "map with string index signature" case.
+            // - tagged-int / null receivers: unrecoverable, panic with failedCast (matches the
+            //   pre-optimization mapSetGeneric path, which also can't proceed on these).
+            // - non-RefMap pointer receivers: tail-call _pxt_map_set, which handles
+            //   non-map objects via interface dispatch. Preserves back-compat for code that
+            //   casts non-map objects to a string-index-signature type.
+            this.write(`
+                ${this.helperObject("set string map")}
+                .section code
+                _pxt_map_set_by_string:
+                    lsls r4, r0, #30
+                    bne .badtype
+                    cmp r0, #0
+                    beq .badtype
+                    ldr r3, [r0, #0]
+                `)
+
+            this.write(`
+                ldrh r4, [r3, #8]
+                cmp r4, #${pxt.BuiltInType.RefMap}
+                bne .fallback
+            `)
+            this.write(this.t.callCPPPush("pxtrt::mapSetByString"))
+            this.write(`
+                .fallback:
+                    b _pxt_map_set
+                .badtype:
+                    mov r1, lr
+                    mov r7, sp
+                    str r7, [r6, #4]
+                    bl pxt::failedCast
+            `)
         }
 
         private emitArrayMethod(op: string, isBuffer: boolean) {
@@ -1290,6 +1440,13 @@ ${baseLabel}_nochk:
                 this.emitArrayMethod(op, true)
                 this.emitArrayMethod(op, false)
             }
+        }
+
+        private emitFieldMethods() {
+            for (let op of ["get", "set"]) {
+                this.emitFieldMethod(op)
+            }
+            this.emitStringMapSetMethod()
         }
 
         private emitLambdaTrampoline() {
@@ -1657,6 +1814,13 @@ ${baseLabel}_nochk:
                 this.write(this.t.obj_header("pxt::RefAction_vtable"));
                 this.write(`.short 0, 0 ; no captured vars`)
                 this.write(`.word ${this.proc.label()}_args@fn`)
+            }
+
+            if (this.proc.useExactIfaceWrapper) {
+                this.write(`${this.proc.label()}_iface:`)
+                this.write(`b ${this.proc.label()}_nochk`)
+                if (!this.proc.info.usedAsValue)
+                    return
             }
 
             this.write(`${this.proc.label()}_args:`)
