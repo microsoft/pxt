@@ -349,7 +349,7 @@ export class FieldLedMatrix extends FieldMatrix implements FieldCustom {
     }
 
     private updateCell(x: number, y: number) {
-        const cellRect = this.cells[x][y];
+        const cellRect = this.cells[x][y].children[1];
         cellRect.setAttribute("fill", this.getColor(x, y));
         cellRect.setAttribute("fill-opacity", this.getOpacity(x, y));
         cellRect.setAttribute('class', `blocklyLed${this.cellState[x][y] ? 'On' : 'Off'}`);
