@@ -788,9 +788,6 @@ function initAccessibilityMessages() {
     // Translatable overrides for Blockly's built-in keyboard-navigation strings.
     // Excludes text used only in the shortcut dialog that we don't use.
     Object.assign(Blockly.Msg, {
-        // Action labels.
-        EDIT_BLOCK_CONTENTS: lf("Edit Block contents"),
-        MOVE_BLOCK: lf("Move Block"),
         // Modifier and key names — read by Blockly's shortcut formatter when
         // rendering shortcut hints (e.g. in the move/copy hint toasts).
         CONTROL_KEY: lf("{id:keyboard symbol}Control"),
@@ -813,10 +810,6 @@ function initAccessibilityMessages() {
         PAUSE_KEY: lf("{id:keyboard symbol}Pause"),
         CONTEXT_MENU_KEY: lf("{id:keyboard symbol}≣ Menu"),
         UNNAMED_KEY: lf("{id:keyboard symbol}unnamed"),
-        // Menu labels for the copy/cut/paste shortcut metadata.
-        CUT_SHORTCUT: lf("Cut"),
-        COPY_SHORTCUT: lf("Copy"),
-        PASTE_SHORTCUT: lf("Paste"),
         // Keyboard nav hints (toasts).
         HELP_PROMPT: lf("Press %1 for help on keyboard controls."),
         KEYBOARD_NAV_UNCONSTRAINED_MOVE_HINT: lf("Hold %1 and use arrow keys to move freely, then %2 to accept the position."),
@@ -893,7 +886,6 @@ function initAccessibilityMessages() {
         FIELD_LABEL_VARIABLE: lf("Variable '%1'"),
         // Bubble labels.
         BUBBLE_LABEL_COMMENT: lf("Comment: %1"),
-        BUBBLE_LABEL_DEFAULT: lf("{id:speech bubble}Bubble"),
         BUBBLE_LABEL_WARNING: lf("Warning: %1"),
         // Icon labels.
         ICON_LABEL_COMMENT_CLOSED: lf("Open Comment"),
