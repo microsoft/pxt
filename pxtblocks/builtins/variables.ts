@@ -4,7 +4,9 @@ import { installBuiltinHelpInfo, setBuiltinHelpInfo } from "../help";
 
 export function initVariables() {
     let varname = lf("{id:var}item");
-    Blockly.Variables.flyoutCategory = flyoutCategory;
+    // PXT renders variable flyouts itself as XML; Blockly's beta.8 signature
+    // expects JSON, but PXT's webapp consumes the Element[] return directly.
+    Blockly.Variables.flyoutCategory = flyoutCategory as unknown as typeof Blockly.Variables.flyoutCategory;
 
     Blockly.Variables.flyoutCategoryBlocks = function (workspace) {
         let variableModelList = workspace.getVariableMap().getVariablesOfType('');
@@ -226,9 +228,7 @@ export function initVariables() {
     msg.RENAME_VARIABLE_TITLE = lf("Rename all '%1' variables to:");
 }
 
-function flyoutCategory(workspace: Blockly.WorkspaceSvg, useXml: false): Blockly.utils.toolbox.FlyoutItemInfo[];
-function flyoutCategory(workspace: Blockly.WorkspaceSvg, useXml: true): Element[];
-function flyoutCategory(workspace: Blockly.WorkspaceSvg, useXml: boolean): Element[] | Blockly.utils.toolbox.FlyoutItemInfo[] {
+function flyoutCategory(workspace: Blockly.WorkspaceSvg): Element[] {
     let xmlList: HTMLElement[] = [];
 
     if (!pxt.appTarget.appTheme.hideFlyoutHeadings) {

@@ -793,14 +793,14 @@ function initAccessibilityMessages() {
         MOVE_BLOCK: lf("Move Block"),
         // Modifier and key names — read by Blockly's shortcut formatter when
         // rendering shortcut hints (e.g. in the move/copy hint toasts).
-        CONTROL_KEY: lf("{id:keyboard symbol}Ctrl"),
-        COMMAND_KEY: lf("{id:keyboard symbol}⌘ Command"),
-        OPTION_KEY: lf("{id:keyboard symbol}⌥ Option"),
+        CONTROL_KEY: lf("{id:keyboard symbol}Control"),
+        COMMAND_KEY: lf("{id:keyboard symbol}Command"),
+        OPTION_KEY: lf("{id:keyboard symbol}Option"),
         ALT_KEY: lf("{id:keyboard symbol}Alt"),
         ENTER_KEY: lf("{id:keyboard symbol}Enter"),
         BACKSPACE_KEY: lf("{id:keyboard symbol}Backspace"),
         DELETE_KEY: lf("{id:keyboard symbol}Delete"),
-        ESCAPE: lf("{id:keyboard symbol}Esc"),
+        ESCAPE: lf("{id:keyboard symbol}Escape"),
         TAB_KEY: lf("{id:keyboard symbol}Tab"),
         SHIFT_KEY: lf("{id:keyboard symbol}Shift"),
         CAPS_LOCK_KEY: lf("{id:keyboard symbol}Caps Lock"),
@@ -828,6 +828,7 @@ function initAccessibilityMessages() {
         KEYBOARD_NAV_FLYOUT_LABEL_HINT: lf("Use the arrow keys to navigate to a block, or press %1 to go to the next heading."),
         SCREENREADER_HINT: lf("Use the arrow keys to navigate. Press %1 to toggle screenreader accessibility mode."),
         // Aria labels for the workspace tree.
+        WORKSPACE_LABEL_PLAIN: lf("Blocks workspace."),
         WORKSPACE_LABEL_1_STACK: lf("Blocks workspace. 1 stack of blocks"),
         WORKSPACE_LABEL_MANY_STACKS: lf("Blocks workspace. %1 stacks of blocks"),
         WORKSPACE_LABEL_MUTATOR_WORKSPACE: lf("Block editor workspace"),

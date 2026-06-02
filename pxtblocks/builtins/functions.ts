@@ -211,7 +211,9 @@ export function initFunctions() {
     };
     installBuiltinHelpInfo(functionReturnId);
 
-    Blockly.Procedures.flyoutCategory = flyoutCategory;
+    // PXT renders the legacy-procedures flyout itself as XML; Blockly's beta.8
+    // signature expects JSON.
+    Blockly.Procedures.flyoutCategory = flyoutCategory as unknown as typeof Blockly.Procedures.flyoutCategory;
 
     // Configure function editor argument icons
     const iconsMap: pxt.Map<string> = {
@@ -403,11 +405,7 @@ function initReturnStatement(b: Blockly.Block) {
     }
 }
 
-function flyoutCategory(workspace: Blockly.WorkspaceSvg, useXml: false): Blockly.utils.toolbox.FlyoutItemInfo[];
-function flyoutCategory(workspace: Blockly.WorkspaceSvg, useXml: true): Element[];
-function flyoutCategory(workspace: Blockly.WorkspaceSvg, useXml: boolean): Element[] | Blockly.utils.toolbox.FlyoutItemInfo[] {
-    if (!useXml) return [];
-
+function flyoutCategory(workspace: Blockly.WorkspaceSvg): Element[] {
     let xmlList: Element[] = [];
 
     if (!pxt.appTarget.appTheme.hideFlyoutHeadings) {

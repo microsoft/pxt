@@ -1336,7 +1336,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     showVariablesFlyout() {
-        this.showFlyoutInternal_(Blockly.Variables.flyoutCategory(this.editor, true), "variables");
+        // PXT replaces Blockly.Variables.flyoutCategory with a function that
+        // returns Element[] for the XML-based flyout renderer.
+        const flyoutCategory = Blockly.Variables.flyoutCategory as unknown as (ws: Blockly.WorkspaceSvg) => Element[];
+        this.showFlyoutInternal_(flyoutCategory(this.editor), "variables");
     }
 
     showFunctionsFlyout() {
