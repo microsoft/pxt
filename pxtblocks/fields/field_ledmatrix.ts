@@ -32,7 +32,6 @@ export class FieldLedMatrix extends FieldMatrix implements FieldCustom {
     private palette: string[];
 
     private static DEFAULT_OFF_COLOR = "#000000";
-    private static DEFAULT_ON_COLOR = "#FFFFFF";
     private offOpacity = 0.2;
 
     private scale = 1;
@@ -349,7 +348,9 @@ export class FieldLedMatrix extends FieldMatrix implements FieldCustom {
     }
 
     private updateCell(x: number, y: number) {
-        const cellRect = this.cells[x][y];
+        const cellGroup = this.cells[x][y];
+        const cellRect = getFirstRect(cellGroup);
+        if (!cellRect) return;
         cellRect.setAttribute("fill", this.getColor(x, y));
         cellRect.setAttribute("fill-opacity", this.getOpacity(x, y));
         cellRect.setAttribute('class', `blocklyLed${this.cellState[x][y] ? 'On' : 'Off'}`);
@@ -468,6 +469,18 @@ function removeQuotes(str: string) {
         return str.substr(1, str.length - 2).trim();
     }
     return str;
+}
+
+function getFirstRect(element: Element): SVGRectElement | null {
+    if (element.tagName === "rect") {
+        return element as SVGRectElement;
+    }
+    for (const child of element.children) {
+        if (child.tagName === "rect") {
+            return child as SVGRectElement;
+        }
+    }
+    return null;
 }
 
 // Override the hover stroke which doesn't make sense here.
