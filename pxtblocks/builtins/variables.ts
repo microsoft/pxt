@@ -4,89 +4,6 @@ import { installBuiltinHelpInfo, setBuiltinHelpInfo } from "../help";
 
 export function initVariables() {
     let varname = lf("{id:var}item");
-    // PXT renders variable flyouts itself as XML; Blockly's beta.8 signature
-    // expects JSON, but PXT's webapp consumes the Element[] return directly.
-    Blockly.Variables.flyoutCategory = flyoutCategory as unknown as typeof Blockly.Variables.flyoutCategory;
-
-    Blockly.Variables.flyoutCategoryBlocks = function (workspace) {
-        let variableModelList = workspace.getVariableMap().getVariablesOfType('');
-
-        let xmlList: HTMLElement[] = [];
-        if (variableModelList.length > 0) {
-            let mostRecentVariable = variableModelList[variableModelList.length - 1];
-            variableModelList.sort(Blockly.Variables.compareByName);
-            // variables getters first
-            for (let i = 0; i < variableModelList.length; i++) {
-                const variable = variableModelList[i];
-                if (Blockly.Blocks['variables_get']) {
-                    const block = mkVariableFieldBlock(
-                        "variables_get",
-                        variable.getId(),
-                        variable.getType(),
-                        variable.getName(),
-                        false
-                    );
-                    block.setAttribute("gap", "8");
-                    xmlList.push(block);
-                }
-            }
-            xmlList[xmlList.length - 1].setAttribute('gap', '24');
-
-            if (Blockly.Blocks['variables_change'] || Blockly.Blocks['variables_set']) {
-                xmlList.unshift(createFlyoutGroupLabel(lf("Your Variables")));
-            }
-
-            if (Blockly.Blocks['variables_change']) {
-                let gap = Blockly.Blocks['variables_get'] ? 20 : 8;
-                const block = mkVariableFieldBlock(
-                    "variables_change",
-                    mostRecentVariable.getId(),
-                    mostRecentVariable.getType(),
-                    mostRecentVariable.getName(),
-                    false
-                );
-                block.setAttribute("gap", gap + "")
-                {
-                    let value = Blockly.utils.xml.createElement('value');
-                    value.setAttribute('name', 'VALUE');
-                    let shadow = Blockly.utils.xml.createElement('shadow');
-                    shadow.setAttribute("type", "math_number");
-                    value.appendChild(shadow);
-                    let field = Blockly.utils.xml.createElement('field');
-                    field.setAttribute('name', 'NUM');
-                    field.appendChild(document.createTextNode("1"));
-                    shadow.appendChild(field);
-                    block.appendChild(value);
-                }
-                xmlList.unshift(block);
-            }
-            if (Blockly.Blocks['variables_set']) {
-                let gap = Blockly.Blocks['variables_change'] ? 8 : 24;
-                const block = mkVariableFieldBlock(
-                    "variables_set",
-                    mostRecentVariable.getId(),
-                    mostRecentVariable.getType(),
-                    mostRecentVariable.getName(),
-                    false
-                );
-                block.setAttribute("gap", gap + "")
-                {
-                    let value = Blockly.utils.xml.createElement('value');
-                    value.setAttribute('name', 'VALUE');
-                    let shadow = Blockly.utils.xml.createElement('shadow');
-                    shadow.setAttribute("type", "math_number");
-                    value.appendChild(shadow);
-                    let field = Blockly.utils.xml.createElement('field');
-                    field.setAttribute('name', 'NUM');
-                    field.appendChild(document.createTextNode("0"));
-                    shadow.appendChild(field);
-                    block.appendChild(value);
-                }
-                xmlList.unshift(block);
-            }
-        }
-        return xmlList;
-    };
 
     // builtin variables_get
     const msg = Blockly.Msg;
@@ -228,7 +145,7 @@ export function initVariables() {
     msg.RENAME_VARIABLE_TITLE = lf("Rename all '%1' variables to:");
 }
 
-function flyoutCategory(workspace: Blockly.WorkspaceSvg): Element[] {
+export function createVariablesFlyoutCategory(workspace: Blockly.WorkspaceSvg): Element[] {
     let xmlList: HTMLElement[] = [];
 
     if (!pxt.appTarget.appTheme.hideFlyoutHeadings) {
@@ -249,7 +166,86 @@ function flyoutCategory(workspace: Blockly.WorkspaceSvg): Element[] {
 
     xmlList.push(button);
 
-    const blockList = Blockly.Variables.flyoutCategoryBlocks(workspace) as HTMLElement[];
-    xmlList = xmlList.concat(blockList);
+    xmlList = xmlList.concat(flyoutCategoryBlocks(workspace));
     return xmlList;
-};
+}
+
+function flyoutCategoryBlocks(workspace: Blockly.WorkspaceSvg): HTMLElement[] {
+    const variableModelList = workspace.getVariableMap().getVariablesOfType('');
+
+    const xmlList: HTMLElement[] = [];
+    if (variableModelList.length > 0) {
+        const mostRecentVariable = variableModelList[variableModelList.length - 1];
+        variableModelList.sort(Blockly.Variables.compareByName);
+        // variables getters first
+        for (let i = 0; i < variableModelList.length; i++) {
+            const variable = variableModelList[i];
+            if (Blockly.Blocks['variables_get']) {
+                const block = mkVariableFieldBlock(
+                    "variables_get",
+                    variable.getId(),
+                    variable.getType(),
+                    variable.getName(),
+                    false
+                );
+                block.setAttribute("gap", "8");
+                xmlList.push(block);
+            }
+        }
+        xmlList[xmlList.length - 1].setAttribute('gap', '24');
+
+        if (Blockly.Blocks['variables_change'] || Blockly.Blocks['variables_set']) {
+            xmlList.unshift(createFlyoutGroupLabel(lf("Your Variables")));
+        }
+
+        if (Blockly.Blocks['variables_change']) {
+            const gap = Blockly.Blocks['variables_get'] ? 20 : 8;
+            const block = mkVariableFieldBlock(
+                "variables_change",
+                mostRecentVariable.getId(),
+                mostRecentVariable.getType(),
+                mostRecentVariable.getName(),
+                false
+            );
+            block.setAttribute("gap", gap + "")
+            {
+                const value = Blockly.utils.xml.createElement('value');
+                value.setAttribute('name', 'VALUE');
+                const shadow = Blockly.utils.xml.createElement('shadow');
+                shadow.setAttribute("type", "math_number");
+                value.appendChild(shadow);
+                const field = Blockly.utils.xml.createElement('field');
+                field.setAttribute('name', 'NUM');
+                field.appendChild(document.createTextNode("1"));
+                shadow.appendChild(field);
+                block.appendChild(value);
+            }
+            xmlList.unshift(block);
+        }
+        if (Blockly.Blocks['variables_set']) {
+            const gap = Blockly.Blocks['variables_change'] ? 8 : 24;
+            const block = mkVariableFieldBlock(
+                "variables_set",
+                mostRecentVariable.getId(),
+                mostRecentVariable.getType(),
+                mostRecentVariable.getName(),
+                false
+            );
+            block.setAttribute("gap", gap + "")
+            {
+                const value = Blockly.utils.xml.createElement('value');
+                value.setAttribute('name', 'VALUE');
+                const shadow = Blockly.utils.xml.createElement('shadow');
+                shadow.setAttribute("type", "math_number");
+                value.appendChild(shadow);
+                const field = Blockly.utils.xml.createElement('field');
+                field.setAttribute('name', 'NUM');
+                field.appendChild(document.createTextNode("0"));
+                shadow.appendChild(field);
+                block.appendChild(value);
+            }
+            xmlList.unshift(block);
+        }
+    }
+    return xmlList;
+}
