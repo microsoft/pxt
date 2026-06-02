@@ -471,13 +471,13 @@ function removeQuotes(str: string) {
     return str;
 }
 
-function getFirstRect(element: Element): SVGRectElement | null {
-    if (element.tagName === "rect") {
-        return element as SVGRectElement;
+function getChildElementOfTag(element: Element, tagName: string): Element | null {
+    if (element.tagName.toLowerCase() === tagName.toLowerCase()) {
+        return element;
     }
     for (const child of element.children) {
-        if (child.tagName === "rect") {
-            return child as SVGRectElement;
+        if (child.tagName.toLowerCase() === tagName.toLowerCase()) {
+            return child;
         }
     }
     return null;
