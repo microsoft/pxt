@@ -502,9 +502,6 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         }
         if (!this.rootElement) return;
         if (this.selectedIndex !== undefined && this.selectedTreeRow) {
-            if (this.selectedTreeRow === this.selectedItem.props.treeRow) {
-                return;
-            }
             // 'Focus' the selected item
             this.setSelection(this.selectedTreeRow, this.selectedIndex, true);
         } else {
