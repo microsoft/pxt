@@ -435,12 +435,17 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
         const rgb = pxt.toolbox.getAccessibleBackground(pxt.toolbox.convertColor(color || (ns && pxt.toolbox.getNamespaceColor(ns)) || "255"));
         const iconClass = `blocklyTreeIcon${icon ? (ns || icon).toLowerCase() : "Default"}`.replace(/\s/g, "");
         const isBrandIcon = icon && brandIcons.hasOwnProperty(icon);
+        const isImageIcon = icon && pxt.toolbox.isImageIcon(icon);
+        const iconImageUrl = isImageIcon ? pxt.Util.pathJoin(pxt.webConfig.commitCdnUrl, encodeURI(icon)) : undefined;
         return <div id="monacoFlyoutWidget" className="monacoFlyout" style={this.getFlyoutStyle()} ref="flyout">
             <div id="monacoFlyoutWrapper" onScroll={this.scrollHandler} onWheel={this.wheelHandler} role="list">
                 <div className="monacoFlyoutLabel monacoFlyoutHeading">
-                    <span className={classList("monacoFlyoutHeadingIcon blocklyTreeIcon", iconClass, `${isBrandIcon ? "brandIcon" : ""}`)} role="presentation" style={this.getIconStyle(rgb)}>
-                        {(icon && icon.length === 1) ? icon : ""}
-                    </span>
+                    {isImageIcon
+                        ? <img className="monacoFlyoutHeadingIcon monacoFlyoutHeadingImage" src={iconImageUrl} role="presentation" alt="" />
+                        : <span className={classList("monacoFlyoutHeadingIcon blocklyTreeIcon", iconClass, `${isBrandIcon ? "brandIcon" : ""}`)} role="presentation" style={this.getIconStyle(rgb)}>
+                            {(icon && icon.length === 1) ? icon : ""}
+                        </span>
+                    }
                     <div className="monacoFlyoutLabelText">{pxtc.U.rlf(`{id:category}${name}`)}</div>
                 </div>
                 {groups && groups.map((g, i) => {
