@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FieldEditorComponent } from "../../blocklyFieldView"
-import { PianoRoll, PianoRollState } from "./PianoRoll"
+import { FieldEditorParams, PianoRoll, PianoRollState } from "./PianoRoll"
 
 interface Props {
     handleRef: (e: FieldEditorComponent<any>) => void;
+    fieldEditorParams?: FieldEditorParams;
 }
 
 interface DoneCallback {
@@ -11,7 +12,7 @@ interface DoneCallback {
 }
 
 export const PianoRollFieldEditor = (props: Props) => {
-    const { handleRef } = props;
+    const { handleRef, fieldEditorParams } = props;
 
     const [asset, setAsset] = useState<pxt.Song>();
     const [onDoneClicked, setOnDoneClicked] = useState<DoneCallback>(undefined);
@@ -79,6 +80,7 @@ export const PianoRollFieldEditor = (props: Props) => {
             showEditControls={true}
             onDoneClicked={onDoneClicked?.onDoneClicked}
             name={asset?.meta?.displayName}
+            fieldEditorParams={fieldEditorParams}
         />
     )
 }
