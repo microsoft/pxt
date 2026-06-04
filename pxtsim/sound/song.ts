@@ -58,6 +58,10 @@ namespace pxsim.music {
                 timePoints.push(nextALTime);
                 nextALTime += ampLFOInterval;
             }
+            else {
+                timePoints.push(totalDuration);
+                time = totalDuration
+            }
 
 
             if (time >= totalDuration) {
