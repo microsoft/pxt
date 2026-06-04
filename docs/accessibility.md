@@ -122,7 +122,7 @@ To close a dialog, press the `Escape` key or navigate to the close button (shown
 ### JavaScript and Python editor navigation
 
 These keyboard shortcuts are used in the JavaScript editor:
->By default, pressing `Tab` in the editor will insert the tab character. Toggle this behavior by pressing `Control`+`M` on **Windows** or `Control`+`Shift`+`M` on **Mac**. In order to jump to the toolbox from the editor. Press `Control`+`Alt`+`T` on **Windows** or `⌘`+`Alt`+`T` on **Mac**.
+>By default, pressing `Tab` in the editor moves focus to the next interactive element and `Shift`+`Tab` moves focus to the previous one, so the editor never traps the keyboard. To insert a tab character instead, toggle tab-trapping mode by pressing `Control`+`M` on **Windows** or `Control`+`Shift`+`M` on **Mac**. In order to jump to the toolbox from the editor. Press `Control`+`Alt`+`T` on **Windows** or `⌘`+`Alt`+`T` on **Mac**.
 
 ## Drop-down menu
 

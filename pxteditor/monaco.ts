@@ -129,6 +129,17 @@ export function createEditor(element: HTMLElement): monaco.editor.IStandaloneCod
         accessibilitySupport: "on"
     });
 
+    // Make Tab/Shift+Tab move focus out of the editor by default to avoid a
+    // keyboard trap (WCAG 2.1.2). Users can still press Ctrl+M (Ctrl+Shift+M on
+    // Mac) to toggle back to inserting tab characters. tabFocusMode is a
+    // computed-only Monaco option so we flip it via the built-in action, and
+    // guard against re-toggling because the underlying TabFocus setting is
+    // shared across editor instances.
+    if (!editor.getOption(monaco.editor.EditorOption.tabFocusMode)) {
+        const toggleTabFocus = editor.getAction("editor.action.toggleTabFocusMode");
+        if (toggleTabFocus) toggleTabFocus.run();
+    }
+
     editor.layout();
 
     return editor;
