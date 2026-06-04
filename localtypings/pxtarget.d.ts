@@ -397,7 +397,6 @@ declare namespace pxt {
         lightToc?: boolean; // if true: do NOT use inverted style in docs toc
         // FIXME (riknoll): Can't use Blockly types here
         blocklyOptions?: any; // Blockly options, see Configuration: https://developers.google.com/blockly/guides/get-started/web
-        blocklyKeyboardControlsByDefault?: boolean; // if true, keyboard controls will be enabled by default in the blockly editor
         hideFlyoutHeadings?: boolean; // Hide the flyout headings at the top of the flyout when on a mobile device.
         monacoColors?: pxt.Map<string>; // Monaco theme colors, see https://code.visualstudio.com/docs/getstarted/theme-color-reference
         simAnimationEnter?: string; // Simulator enter animation

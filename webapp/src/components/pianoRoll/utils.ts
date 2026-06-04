@@ -7,7 +7,7 @@ export function isBlackKey(note: number) {
 
 export function getNoteName(note: number, includeOctave: boolean = true) {
     const noteInOctave = note % 12;
-    const octave = Math.floor(note / 12);
+    const octave = Math.floor(note / 12) + 1;
     const noteNames = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
     return includeOctave ? `${noteNames[noteInOctave]}${octave}` : noteNames[noteInOctave];
 }
