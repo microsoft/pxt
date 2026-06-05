@@ -57,7 +57,7 @@ export const PianoOctave = (props: Props) => {
             }
         }
         else {
-            await pxsim.music.playNoteAsync(note, instrument.instrument, 300)
+            await pxsim.music.playNoteAsync(note + 1, instrument.instrument, 300)
         }
 
         if (ref) {

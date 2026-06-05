@@ -206,7 +206,6 @@ path.blocklyFlyoutBackground {
 *******************************/
 
 div.blocklyWidgetDiv {
-    position: fixed;
     /* Lower Z index for BlocklyWidgetDiv and grid picker tooltips */
     z-index: @blocklyWidgetDivZIndex;
     &:focus-visible {
@@ -271,7 +270,6 @@ text.blocklyCheckbox {
         stroke: #898989;
         stroke-width: 1;
     }
-
 }
 
 /*******************************
@@ -416,18 +414,16 @@ text.blocklyCheckbox {
 
 
 .injectionDiv {
-    --blockly-active-node-color: #fff200;
     --blockly-active-tree-color: var(--pxt-target-foreground1);
-    /* Comments are yellow default highlight is orange */
+    // PXT-only var; matches the tree colour for contrast against the yellow node highlight.
     --blockly-active-workspace-comment-color: var(--pxt-target-foreground1);
-    --blockly-selection-width: 3px;
 }
 
-// Avoid focus outlines when not using the keyboard navigation plugin.
+// PXT's React-rendered toolbox tree. Suppress the default :focus-visible
+// outline; the second rule shows a themed one when keyboard nav is active.
 div.blocklyTreeRoot > div[role="tree"]:focus-visible {
     outline: none;
 }
-
 .blocklyKeyboardNavigation div.blocklyTreeRoot > div[role="tree"]:focus-visible {
     outline: var(--blockly-selection-width) solid var(--blockly-active-tree-color);
     outline-offset: calc(var(--blockly-selection-width) * -1);
@@ -459,27 +455,21 @@ div.blocklyTreeRoot > div[role="tree"]:focus-visible {
     opacity: 1;
 }
 
-/* Toolbox and flyout. */
+// Suppress Blockly's outline on the toolbox wrapper; we show the active-tree
+// outline on the React-rendered tree above instead.
 .blocklyKeyboardNavigation .injectionDiv .blocklyToolbox:has(.blocklyActiveFocus) {
     outline: none;
 }
 
-/* Flyout buttons and labels */
-.blocklyKeyboardNavigation .blocklyFlyout .blocklyFlyoutLabel.blocklyActiveFocus,
-.blocklyKeyboardNavigation .blocklyFlyout .blocklyFlyoutButton.blocklyActiveFocus {
+// Outline the background rect rather than the text — our custom FlyoutButton
+// extends the background to wrap the icon plus the text.
+.blocklyKeyboardNavigation .injectionDiv .blocklyFlyout .blocklyFlyoutLabel.blocklyActiveFocus > .blocklyFlyoutLabelText {
     outline: none;
 }
-
-/* Use the backgrounds because the group can't have an outline on Safari */
-.blocklyKeyboardNavigation .blocklyFlyout .blocklyFlyoutLabel.blocklyActiveFocus > .blocklyFlyoutLabelBackground,
-.blocklyKeyboardNavigation .blocklyFlyout .blocklyFlyoutButton.blocklyActiveFocus > .blocklyFlyoutButtonBackground {
+.blocklyKeyboardNavigation .injectionDiv .blocklyFlyout .blocklyFlyoutLabel.blocklyActiveFocus > .blocklyFlyoutLabelBackground {
     outline-offset: 2px;
-    outline: var(--blockly-selection-width) solid
-        var(--blockly-active-node-color);
+    outline: var(--blockly-selection-width) solid var(--blockly-active-node-color);
     border-radius: 2px;
-}
-.blocklyKeyboardNavigation .blocklyFlyout .blocklyFlyoutLabel.blocklyActiveFocus > .blocklyFlyoutLabelBackground {
-    // Swap opacity for transparent fill so we can see the focus indicator.
     opacity: 1;
     fill: transparent;
 }

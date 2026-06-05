@@ -1,5 +1,6 @@
 /// <reference path="../../localtypings/pxtarget.d.ts" />
 
+import * as Blockly from "blockly"
 import * as React from "react"
 import * as data from "./data"
 import * as editor from "./toolboxeditor"
@@ -177,24 +178,33 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         this.selectedItem = item;
     }
 
-    setPreviousItem() {
+    /** @returns true if focus moved, false if we were already at the boundary. */
+    setPreviousItem(): boolean {
         if (this.selectedIndex > 0) {
             const newIndex = --this.selectedIndex;
             // Check if the previous item has a subcategory
             let previousItem = this.items[newIndex];
             this.setSelection(previousItem, newIndex);
+            return true;
         } else if (this.state.showSearchBox) {
             // Focus the search box if it exists
             const searchBox = this.refs.searchbox as ToolboxSearch;
-            if (searchBox) searchBox.focus();
+            if (searchBox) {
+                searchBox.focus();
+                return true;
+            }
         }
+        return false;
     }
 
-    setNextItem() {
+    /** @returns true if focus moved, false if we were already at the boundary. */
+    setNextItem(): boolean {
         if (this.items.length - 1 > this.selectedIndex) {
             const newIndex = ++this.selectedIndex;
             this.setSelection(this.items[newIndex], newIndex);
+            return true;
         }
+        return false;
     }
 
     setSearch() {
@@ -516,39 +526,78 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         this.shouldHandleCategoryTreeFocus = true;
     }
 
+    handlePointerUp = (e: React.PointerEvent) => {
+        // On iPad Safari, preventDefault() on pointerdown suppresses click events.
+        // Handle category selection on pointerup so tapping works on touch devices.
+        // Only needed for Monaco — Blockly has its own pointerdown handler for selection.
+        if (e.pointerType === "mouse" || this.props.editorname !== MONACO_EDITOR_NAME) return;
+
+        const target = e.target as HTMLElement;
+        const treeRow = target.closest(".blocklyTreeRow") as HTMLElement;
+        if (!treeRow) return;
+
+        const treeItem = treeRow.closest("[role='treeitem']") as HTMLElement;
+        if (!treeItem) return;
+
+        const id = treeItem.id;
+
+        // Handle the Advanced toggle button
+        if (id === "advanced") {
+            this.advancedClicked();
+            return;
+        }
+
+        for (const item of this.items) {
+            const itemId = item.subns ? item.nameid + item.subns : item.nameid;
+            if (itemId === id) {
+                this.onCategoryClick(item, this.items.indexOf(item));
+                return;
+            }
+        }
+    }
+
     isRtl() {
         const { editorname } = this.props;
         return editorname == 'monaco' ? false : Util.isUserLanguageRtl();
     }
 
     handleKeyDown(e: React.KeyboardEvent<HTMLElement>) {
+        // Take care to avoid default scroll behaviors and Blockly shortcuts running that overlap.
         const isRtl = Util.isUserLanguageRtl();
+        const audioManager = (Blockly.getMainWorkspace() as Blockly.WorkspaceSvg)?.getAudioManager();
 
         const charCode = core.keyCodeFromEvent(e);
         if (charCode == 40 /* Down arrow key */) {
+            let moved = false;
             if (this.state.selectedItem) {
-                this.nextItem();
+                moved = this.nextItem();
             } else {
                 this.selectFirstItem();
+                moved = true;
             }
-            // Don't trigger scroll behaviour inside the toolbox.
             e.preventDefault();
+            e.stopPropagation();
+            Blockly.keyboardNavigationController.setIsActive(true);
+            if (!moved) audioManager?.playErrorBeep();
         } else if (charCode == 38 /* Up arrow key */) {
+            let moved = false;
             if (this.state.selectedItem) {
-                this.previousItem();
+                moved = this.previousItem();
             }
-            // Don't trigger scroll behaviour inside the toolbox.
             e.preventDefault();
+            e.stopPropagation();
+            Blockly.keyboardNavigationController.setIsActive(true);
+            if (!moved) audioManager?.playErrorBeep();
         } else if ((charCode == 39 /* Right arrow key */ && !isRtl)
             || (charCode == 37 /* Left arrow key */ && isRtl)) {
                 if (this.selectedTreeRow.nameid !== "addpackage") {
+                    Blockly.keyboardNavigationController.setIsActive(true);
                     // Focus inside flyout
                     this.moveFocusToFlyout();
-                } else {
-                    // Prevent Blockly focus changes for the addpackage category item.
                     e.preventDefault();
                     e.stopPropagation();
                 }
+                // addpackage has no flyout — fall through and let Blockly beep.
         } else if (charCode == 27) { // ESCAPE
             // Close the flyout
             this.closeFlyout();
@@ -559,6 +608,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
                 onCategoryClick(treeRow, index, false);
                 e.preventDefault();
                 e.stopPropagation();
+                Blockly.keyboardNavigationController.setIsActive(true);
             }
         } else if (charCode == core.TAB_KEY
             || charCode == 37 /* Left arrow key */
@@ -570,21 +620,23 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
             // Escape tab and shift key
         } else {
             this.setSearch();
+            // We don't want any Blockly shortcut to fight search.
+            e.stopPropagation();
         }
     }
 
-    previousItem() {
+    previousItem(): boolean {
         const editorname = this.props.editorname;
 
         pxt.tickEvent(`${editorname}.toolbox.keyboard.prev`, undefined, { interactiveConsent: true });
-        this.setPreviousItem();
+        return this.setPreviousItem();
     }
 
-    nextItem() {
+    nextItem(): boolean {
         const editorname = this.props.editorname;
 
         pxt.tickEvent(`${editorname}.toolbox.keyboard.next`, undefined, { interactiveConsent: true });
-        this.setNextItem();
+        return this.setNextItem();
     }
 
     renderCore() {
@@ -677,6 +729,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
                         onKeyDown={this.handleKeyDown}
                         // Prevents focus handling from running on pointer down events.
                         onPointerDownCapture={this.handlePointerDownCapture}
+                        onPointerUp={this.handlePointerUp}
                         aria-activedescendant={selectedItem}
                     >
                         {tryToDeleteNamespace &&
@@ -1147,6 +1200,7 @@ export class ToolboxSearch extends data.Component<ToolboxSearchProps, ToolboxSea
         const { toolbox } = this.props;
         let charCode = (typeof e.which == "number") ? e.which : e.keyCode
         if (charCode === 40 /* Down Key */) {
+            Blockly.keyboardNavigationController.setIsActive(true);
             // Always select the first toolbox category item when using the down arrow.
             toolbox.selectFirstItem();
             (toolbox.refs.categoryTree as HTMLDivElement).focus();

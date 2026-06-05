@@ -1046,10 +1046,10 @@ function getPlaceholderColor(row: number): string {
 }
 
 const offsetLookup = [0x09, 0x0b, 0x00, 0x02, 0x04, 0x05, 0x07];
-const REST = -0xffff;
+export const REST = -0xffff;
 
 // copied from pxt-microbit/libs/core/music.ts
-class MelodyStringReader {
+export class MelodyStringReader {
     currentOctave: number;
     currentNote: number;
     currentDuration: number;
