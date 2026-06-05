@@ -25,6 +25,7 @@
     --velocity-slider-color: var(--note-event-color);
 
     --header-background: #f0f0f0;
+    --piano-roll-border-color: var(--workspace-grid-line-color);
 }
 
 .piano-roll {
@@ -47,12 +48,13 @@
     height: 100%;
     overflow-x: hidden;
     overflow-y: hidden;
+    background: var(--workspace-grid-line-color);
 }
 
 .piano-roll-root {
     height: 100%;
     overflow-y: hidden;
-    background: var(--workspace-grid-line-color)
+    background: var(--piano-roll-border-color);
 }
 
 .piano-roll .header-container {
@@ -317,5 +319,15 @@
                 border: var(--note-event-border-hover);
             }
         }
+    }
+}
+
+/* Inline field editor */
+.blocklyWidgetDiv .piano-roll-root {
+    padding: 0.25rem;
+
+    /* Hide the done button */
+    .music-editor-edit-controls .common-button.green {
+        display: none;
     }
 }

@@ -58,6 +58,14 @@ namespace pxsim.music {
                 timePoints.push(nextALTime);
                 nextALTime += ampLFOInterval;
             }
+            else if (time < gateLength) {
+                time = gateLength;
+                timePoints.push(gateLength);
+            }
+            else {
+                time = totalDuration;
+                timePoints.push(totalDuration);
+            }
 
 
             if (time >= totalDuration) {
@@ -104,18 +112,19 @@ namespace pxsim.music {
 
         let nextAmp: number;
         let nextPitch: number;
+
         const out = new Uint8Array(BUFFER_SIZE * (timePoints.length + 1));
+        let ptr = 0;
         for (let i = 1; i < timePoints.length; i++) {
             if (timePoints[i] - prevTime < 5) {
-                prevTime = timePoints[i];
                 continue;
             }
 
             nextAmp = instrumentVolumeAtTime(instrument, gateLength, timePoints[i], volume) | 0;
             nextPitch = instrumentPitchAtTime(instrument, noteFrequency, gateLength, timePoints[i]) | 0
-            addNote(
+            ptr = addNote(
                 out,
-                (i - 1) * 12,
+                ptr,
                 (timePoints[i] - prevTime) | 0,
                 prevAmp,
                 nextAmp,
@@ -128,16 +137,20 @@ namespace pxsim.music {
             prevPitch = nextPitch;
             prevTime = timePoints[i];
         }
-        addNote(
-            out,
-            timePoints.length * 12,
-            10,
-            prevAmp,
-            0,
-            instrument.waveform,
-            prevPitch,
-            prevPitch
-        )
+
+        // if the amp is still open, roll it off to prevent clipping
+        if (prevAmp) {
+            ptr = addNote(
+                out,
+                ptr,
+                10,
+                prevAmp,
+                0,
+                instrument.waveform,
+                prevPitch,
+                prevPitch
+            )
+        }
         return out;
     }
 
@@ -200,32 +213,23 @@ namespace pxsim.music {
         return ((Math.max(Math.min(mod, instrument.ampEnvelope.amplitude), 0) / 1024) * maxVolume) | 0;
     }
 
-    function envelopeValueAtTime(envelope: pxt.assets.music.Envelope, time: number, gateLength: number) {
-        const adjustedSustain = (envelope.sustain / 1024) * envelope.amplitude;
-
+    function envelopeValueAtTime(envelope: pxt.assets.music.Envelope, time: number, gateLength: number): number {
         if (time > gateLength) {
-            if (time - gateLength > envelope.release) return 0;
+            const releaseStartLevel = envelopeValueAtTime(envelope, gateLength, gateLength);
 
-            else if (time < envelope.attack) {
-                const height = (envelope.amplitude / envelope.attack) * gateLength;
-                return height - ((height / envelope.release) * (time - gateLength))
-            }
-            else if (time < envelope.attack + envelope.decay) {
-                const height2 = envelope.amplitude - ((envelope.amplitude - adjustedSustain) / envelope.decay) * (gateLength - envelope.attack);
-                return height2 - ((height2 / envelope.release) * (time - gateLength))
-            }
+            if (time - gateLength > envelope.release) return 0;
             else {
-                return adjustedSustain - (adjustedSustain / envelope.release) * (time - gateLength)
+                return releaseStartLevel - (releaseStartLevel / envelope.release) * (time - gateLength)
             }
         }
         else if (time < envelope.attack) {
             return (envelope.amplitude / envelope.attack) * time
         }
         else if (time < envelope.attack + envelope.decay) {
-            return envelope.amplitude - ((envelope.amplitude - adjustedSustain) / envelope.decay) * (time - envelope.attack)
+            return envelope.amplitude - ((envelope.amplitude - ((envelope.sustain / 1024) * envelope.amplitude)) / envelope.decay) * (time - envelope.attack)
         }
         else {
-            return adjustedSustain;
+            return (envelope.sustain / 1024) * envelope.amplitude;
         }
     }
 

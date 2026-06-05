@@ -258,7 +258,7 @@ text.blocklyCheckbox {
 }
 
 /* (arcade only) Sets the correct background color for the sprite image field */
-body .pxt-renderer.classic-theme {
+.pxt-renderer.classic-theme {
     .blocklyNonEditableText > rect.blocklySpriteField,
     .blocklyNonEditableText > rect.blocklyAnimationField,
     .blocklyNonEditableText > rect.blocklyTilemapField,
@@ -279,7 +279,7 @@ body .pxt-renderer.classic-theme {
 
 /* Transulcent blocks when dragging */
 
-body .blocklyDragging>.blocklyPath {
+.blocklyDragging>.blocklyPath {
     fill-opacity: 0.7;
 }
 
@@ -413,9 +413,7 @@ body .blocklyDragging>.blocklyPath {
 *******************************/
 
 
-// body prefix bumps specificity so --blockly-active-tree-color wins over
-// Blockly's runtime-injected .injectionDiv default regardless of load order.
-body .injectionDiv {
+.injectionDiv {
     --blockly-active-tree-color: var(--pxt-target-foreground1);
     // PXT-only var; matches the tree colour for contrast against the yellow node highlight.
     --blockly-active-workspace-comment-color: var(--pxt-target-foreground1);

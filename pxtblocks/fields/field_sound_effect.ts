@@ -4,7 +4,7 @@ import * as Blockly from "blockly";
 
 import svg = pxt.svgUtil;
 import { FieldBase } from "./field_base";
-import { FieldCustomOptions, workspaceToScreenCoordinates } from "./field_utils";
+import { FieldCustomOptions, isTrue, workspaceToScreenCoordinates } from "./field_utils";
 
 export interface FieldSoundEffectParams extends FieldCustomOptions {
     durationInputName: string;
@@ -424,21 +424,3 @@ function reverseLookup(map: {[index: string]: string}, value: string) {
     return Object.keys(map).find(k => map[k] === value);
 }
 
-function isTrue(value: any) {
-    if (!value) return false;
-
-    if (typeof value === "string") {
-        switch (value.toLowerCase().trim()) {
-            case "1":
-            case "yes":
-            case "y":
-            case "on":
-            case "true":
-                return true;
-            default:
-                return false;
-        }
-    }
-
-    return !!value;
-}
