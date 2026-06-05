@@ -498,8 +498,8 @@ describe("comment attribute parser", () => {
         chai.expect(explicitComp.parameters[0].labelLocalizationKey).to.equal("music.beat|param|fraction|label");
 
         const generatedComp = pxt.blocks.compileInfo(generated);
-    chai.expect(generatedComp.parameters[0].label).to.equal(undefined);
-    chai.expect(generatedComp.parameters[0].labelLocalizationKey).to.equal(undefined);
+        chai.expect(generatedComp.parameters[0].label).to.equal(undefined);
+        chai.expect(generatedComp.parameters[0].labelLocalizationKey).to.equal(undefined);
 
         const instanceComp = pxt.blocks.compileInfo(instance);
         chai.expect(instanceComp.thisParameter.label).to.equal("pin");
