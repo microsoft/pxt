@@ -441,8 +441,8 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
             <div id="monacoFlyoutWrapper" onScroll={this.scrollHandler} onWheel={this.wheelHandler} role="list">
                 <div className="monacoFlyoutLabel monacoFlyoutHeading">
                     {isImageIcon
-                        ? <img className="monacoFlyoutHeadingIcon monacoFlyoutHeadingImage" src={iconImageUrl} role="presentation"/>
-                        : <span className={classList("monacoFlyoutHeadingIcon blocklyTreeIcon", iconClass, `${isBrandIcon ? "brandIcon" : ""}`)} role="presentation" style={this.getIconStyle(rgb)}>
+                        ? <img className="monacoFlyoutHeadingIcon monacoFlyoutHeadingImage" src={iconImageUrl} role="presentation" alt="" />
+                        : <span className={classList("monacoFlyoutHeadingIcon blocklyTreeIcon", iconClass, `${isBrandIcon  && "brandIcon"}`)} role="presentation" style={this.getIconStyle(rgb)}>
                             {(icon && icon.length === 1) ? icon : ""}
                         </span>
                     }
