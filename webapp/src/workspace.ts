@@ -770,9 +770,9 @@ export async function installAsync(h0: InstallHeader, text: ScriptText, dontOver
         pxt.shell.setEditorLanguagePref(cfg.preferredEditor);
     }
 
-    let backupExtensionFiles: pxt.Map<pxt.Map<string>>;
+    let packagedExtensionFiles: pxt.Map<pxt.Map<string>>;
     if (text[pxt.PACKAGED_EXTENSIONS]) {
-        backupExtensionFiles = pxt.Util.jsonTryParse(text[pxt.PACKAGED_EXTENSIONS]);
+        packagedExtensionFiles = pxt.Util.jsonTryParse(text[pxt.PACKAGED_EXTENSIONS]);
         delete text[pxt.PACKAGED_EXTENSIONS];
     }
     let packagedExtInfo: pxt.Map<string>;
@@ -782,27 +782,27 @@ export async function installAsync(h0: InstallHeader, text: ScriptText, dontOver
     }
 
     await cachePackagedExtInfoAsync(packagedExtInfo);
-    await cachePublishedScriptBackupsAsync(backupExtensionFiles);
-    await pxt.github.cacheProjectDependenciesAsync(cfg, backupExtensionFiles)
+    await cachePackagedScriptExtensionsAsync(packagedExtensionFiles);
+    await pxt.github.cacheProjectDependenciesAsync(cfg, packagedExtensionFiles)
     await importAsync(h, text);
     return h;
 }
 
-async function cachePublishedScriptBackupsAsync(backupExtensionFiles?: pxt.Map<pxt.Map<string>>) {
-    if (!backupExtensionFiles) return;
+async function cachePackagedScriptExtensionsAsync(packagedExtensionFiles?: pxt.Map<pxt.Map<string>>) {
+    if (!packagedExtensionFiles) return;
 
     const config = await pxt.packagesConfigAsync();
     const scriptCache = await getScriptCacheAsync();
     const seen: pxt.Map<boolean> = {};
 
-    await Promise.all(Object.keys(backupExtensionFiles).map(async key => {
+    await Promise.all(Object.keys(packagedExtensionFiles).map(async key => {
         if (pxt.github.isGithubId(key)) return;
 
         const pubId = key.slice(0, 4) === "pub:" ? key.slice(4) : key;
         if (!pubId || seen[pubId]) return;
         seen[pubId] = true;
 
-        const files = backupExtensionFiles[key];
+        const files = packagedExtensionFiles[key];
         if (!files || !pxt.Package.parseAndValidConfig(files[pxt.CONFIG_NAME])) return;
 
         try {

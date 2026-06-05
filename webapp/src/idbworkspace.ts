@@ -522,7 +522,7 @@ export function initGitHubDb() {
             }
         }
 
-        async loadPackageAsync(repopath: string, tag: string, backupScriptText?: pxt.Map<string>): Promise<pxt.github.CachedPackage> {
+        async loadPackageAsync(repopath: string, tag: string, fallbackPackageFiles?: pxt.Map<string>): Promise<pxt.github.CachedPackage> {
             repopath = repopath.toLowerCase()
             if (!tag) {
               pxt.debug(`dep: default to master`)
@@ -530,7 +530,7 @@ export function initGitHubDb() {
             }
             // don't cache master
             if (tag == "master")
-                return this.loadPackageFromMemoryAsync(repopath, tag, backupScriptText);
+                return this.loadPackageFromMemoryAsync(repopath, tag, fallbackPackageFiles);
 
             const id = this.packageCacheKey(repopath, tag);
             const cache = await getGitHubCacheAsync();
@@ -542,7 +542,7 @@ export function initGitHubDb() {
             }
             catch (e) {
                 pxt.debug(`github offline cache miss ${id}`);
-                const p = await this.loadPackageFromMemoryAsync(repopath, tag, backupScriptText);
+                const p = await this.loadPackageFromMemoryAsync(repopath, tag, fallbackPackageFiles);
 
                 await this.cachePackageAsync(cache, repopath, tag, p);
 
@@ -725,15 +725,14 @@ export function initGitHubDb() {
             }
         }
 
-        private async loadPackageFromMemoryAsync(repopath: string, tag: string, backupScriptText?: pxt.Map<string>): Promise<pxt.github.CachedPackage> {
+        private async loadPackageFromMemoryAsync(repopath: string, tag: string, fallbackPackageFiles?: pxt.Map<string>): Promise<pxt.github.CachedPackage> {
             try {
-                return await this.mem.loadPackageAsync(repopath, tag, backupScriptText);
+                return await this.mem.loadPackageAsync(repopath, tag, fallbackPackageFiles);
             }
             catch (e) {
-                if (backupScriptText) {
+                if (fallbackPackageFiles) {
                     return {
-                        files: pxt.Util.clone(backupScriptText),
-                        backupCopy: true
+                        files: { ...fallbackPackageFiles }
                     };
                 }
                 throw e;

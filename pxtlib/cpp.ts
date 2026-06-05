@@ -1517,8 +1517,10 @@ namespace pxt.hexloader {
     export function stringifyHexInfoForCache(hexInfo: pxtc.HexInfo) {
         if (!hexInfo?.hex) return undefined;
 
-        const cachedMeta = U.clone(hexInfo);
-        cachedMeta.hex = compressHex(cachedMeta.hex);
+        const cachedMeta = {
+            ...hexInfo,
+            hex: compressHex(hexInfo.hex)
+        };
         return JSON.stringify(cachedMeta);
     }
 
