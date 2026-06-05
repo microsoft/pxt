@@ -348,6 +348,12 @@ namespace ts.pxtc {
             if (si.attributes.block) {
                 locStrings[`${si.qName}|block`] = si.attributes.block;
                 const comp = pxt.blocks.compileInfo(si);
+                const paramsWithLabels = comp.thisParameter ? [comp.thisParameter, ...comp.parameters] : comp.parameters;
+                for (const param of paramsWithLabels) {
+                    if (param.labelLocalizationKey && param.label) {
+                        locStrings[param.labelLocalizationKey] = param.label;
+                    }
+                }
                 if (comp.handlerArgs?.length) {
                     for (const arg of comp.handlerArgs) {
                         locStrings[arg.localizationKey] = arg.name;
