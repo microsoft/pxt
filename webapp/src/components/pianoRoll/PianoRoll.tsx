@@ -1,4 +1,4 @@
-import { PianoRollThemeProvider, usePianoRollThemeContext } from "./context"
+import { PianoRollTheme, PianoRollThemeProvider, usePianoRollThemeContext } from "./context"
 import { Workspace } from "./Workspace"
 import { Sidebar } from "./Sidebar"
 import { useEffect, useRef, useState } from "react"
@@ -23,6 +23,7 @@ interface PianoRollProps {
     showEditControls?: boolean;
     name?: string;
     onDoneClicked?: () => void;
+    fieldEditorParams?: FieldEditorParams;
 }
 
 type modalType = "delete-track" | "delete-error" | "drum-warning";
@@ -50,6 +51,14 @@ export interface PianoRollState {
     name?: string;
 }
 
+export interface FieldEditorParams {
+    hideHeader?: boolean;
+    maxPolyphony?: number;
+    borderColor?: string;
+    minOctave?: number;
+    maxOctave?: number;
+}
+
 interface StateSnapshot {
     song: Song;
     selectedTrack: number;
@@ -66,7 +75,8 @@ const PianoRollInternal = (props: PianoRollProps) => {
         redoStack: initialRedoStack,
         name: initialName,
         showEditControls,
-        onDoneClicked
+        onDoneClicked,
+        fieldEditorParams
     } = props;
     const { state: theme, dispatch: updateTheme, } = usePianoRollThemeContext();
 
@@ -121,6 +131,20 @@ const PianoRollInternal = (props: PianoRollProps) => {
             fireStateChange({});
         }
     }, [onStateChanged])
+
+    useEffect(() => {
+        const newTheme: Partial<PianoRollTheme> = {};
+
+        if (fieldEditorParams?.maxPolyphony) {
+            newTheme.maxPolyphony = fieldEditorParams.maxPolyphony;
+        }
+
+        if (fieldEditorParams?.borderColor) {
+            newTheme.borderColor = fieldEditorParams.borderColor;
+        }
+
+        updateTheme(newTheme);
+    }, [fieldEditorParams, updateTheme])
 
     const fireStateChange = (newState: Partial<PianoRollState>) => {
         if (onStateChanged) {
@@ -226,7 +250,7 @@ const PianoRollInternal = (props: PianoRollProps) => {
             pxsim.music.playDrumAsync(drum)
         }
         else {
-            pxsim.music.playNoteAsync(note, instrument.instrument, 300)
+            pxsim.music.playNoteAsync(note + 1, instrument.instrument, 300)
         }
     }
 
@@ -333,14 +357,30 @@ const PianoRollInternal = (props: PianoRollProps) => {
     const track = song.tracks.find(t => t.id === selectedTrack)!;
     const instrument = song.instruments.find(i => i.id === track.instrumentId)!;
 
-    const minOctave = isDrumInstrument(instrument) ? 0 : track.minOctave;
-    const maxOctave = isDrumInstrument(instrument) ? 1 : track.maxOctave;
+    let minOctave: number;
+    let maxOctave: number;
+
+    if (fieldEditorParams?.minOctave !== undefined) {
+        minOctave = fieldEditorParams.minOctave;
+    }
+    else {
+        minOctave = isDrumInstrument(instrument) ? 0 : track.minOctave;
+    }
+
+    if (fieldEditorParams?.maxOctave !== undefined) {
+        maxOctave = fieldEditorParams.maxOctave;
+    }
+    else {
+        maxOctave = isDrumInstrument(instrument) ? 1 : track.maxOctave;
+    }
 
     useEffect(() => {
         if (theme.minOctave !== minOctave || theme.maxOctave !== maxOctave || theme.measures !== song.measures) {
             updateTheme({ minOctave, maxOctave, measures: song.measures });
         }
     }, [minOctave, maxOctave, theme.minOctave, theme.maxOctave, updateTheme, song.measures])
+
+    const showHeader = !fieldEditorParams?.hideHeader;
 
     return (
         <div className="piano-roll">
@@ -353,19 +393,21 @@ const PianoRollInternal = (props: PianoRollProps) => {
             {modal?.type === "drum-warning" &&
                 <DrumWarningModal trackId={modal.trackId!} instrumentId={modal.instrumentId!} onClose={closeModal} onConfirm={setTrackInstrument} />
             }
-            <div className="header-container">
-                <Header
-                    song={song}
-                    selectedTrack={selectedTrack}
-                    velocityEditorVisible={velocityEditorVisible}
-                    onVelocityEditorToggle={onVelocityEditorToggle}
-                    onTrackSelected={onTrackSelected}
-                    onInstrumentSelected={onInstrumentSelected}
-                    onTrackCreated={onTrackCreated}
-                    onTrackDeleted={onTrackDeleted}
-                    onOctavesChanged={onOctavesChanged}
-                />
-            </div>
+            {showHeader &&
+                <div className="header-container">
+                    <Header
+                        song={song}
+                        selectedTrack={selectedTrack}
+                        velocityEditorVisible={velocityEditorVisible}
+                        onVelocityEditorToggle={onVelocityEditorToggle}
+                        onTrackSelected={onTrackSelected}
+                        onInstrumentSelected={onInstrumentSelected}
+                        onTrackCreated={onTrackCreated}
+                        onTrackDeleted={onTrackDeleted}
+                        onOctavesChanged={onOctavesChanged}
+                    />
+                </div>
+            }
             <MeasureHeader measures={song.measures} />
             <div className="scroll-container">
                 <div className="content-container">

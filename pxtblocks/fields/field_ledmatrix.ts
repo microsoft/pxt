@@ -32,7 +32,6 @@ export class FieldLedMatrix extends FieldMatrix implements FieldCustom {
     private palette: string[];
 
     private static DEFAULT_OFF_COLOR = "#000000";
-    private static DEFAULT_ON_COLOR = "#FFFFFF";
     private offOpacity = 0.2;
 
     private scale = 1;
@@ -349,13 +348,20 @@ export class FieldLedMatrix extends FieldMatrix implements FieldCustom {
     }
 
     private updateCell(x: number, y: number) {
-        const cellRect = this.cells[x][y];
+        const cellGroup = this.cells[x][y];
+        const cellRect = getChildElementOfTag(cellGroup, "rect");
+        if (!cellRect) return;
         cellRect.setAttribute("fill", this.getColor(x, y));
         cellRect.setAttribute("fill-opacity", this.getOpacity(x, y));
         cellRect.setAttribute('class', `blocklyLed${this.cellState[x][y] ? 'On' : 'Off'}`);
         cellRect.setAttribute("aria-checked", (!!this.cellState[x][y]).toString());
         if (this.isColorMatrix) {
-            cellRect.setAttribute("aria-label", this.colorNames[this.cellState[x][y]] || this.palette[this.cellState[x][y]] || lf("color {0}", this.cellState[x][y]));
+            const cellLabel = getChildElementOfTag(cellGroup, "text");
+            if (cellLabel) {
+                const colorIndex = this.cellState[x][y];
+                const colorName = this.colorNames[colorIndex] || this.palette[colorIndex] || lf("color {0}", colorIndex);
+                cellLabel.textContent = lf("{0} LED", colorName);
+            }
         }
     }
 
@@ -468,6 +474,18 @@ function removeQuotes(str: string) {
         return str.substr(1, str.length - 2).trim();
     }
     return str;
+}
+
+function getChildElementOfTag(element: Element, tagName: string): Element | null {
+    if (element.tagName.toLowerCase() === tagName.toLowerCase()) {
+        return element;
+    }
+    for (const child of element.children) {
+        if (child.tagName.toLowerCase() === tagName.toLowerCase()) {
+            return child;
+        }
+    }
+    return null;
 }
 
 // Override the hover stroke which doesn't make sense here.
