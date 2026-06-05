@@ -67,6 +67,10 @@ namespace pxt.blocks {
         // For example: parameterName.shadowOptions.columns=5
         shadowOptions?: Map<string>;
 
+        // User-friendly label for screen reader descriptions of this parameter.
+        label?: string;
+        labelLocalizationKey?: string;
+
         // The max and min for numerical inputs (if specified)
         range?: { min: number, max: number };
     }
@@ -152,6 +156,7 @@ namespace pxt.blocks {
             const def = refMap[THIS_NAME] || defParameters[0];
             const defName = def.name;
             const isVar = !def.shadowBlockId || def.shadowBlockId === "variables_get";
+            const label = parameterLabel(defName, THIS_NAME);
 
             let defaultValue = fn.attributes.paramDefl[defName] || fn.attributes.paramDefl["this"];
 
@@ -171,6 +176,8 @@ namespace pxt.blocks {
                 fieldEditor: fieldEditor(defName, THIS_NAME),
                 fieldOptions: fieldOptions(defName, THIS_NAME),
                 shadowOptions: shadowOptions(defName, THIS_NAME),
+                label,
+                labelLocalizationKey: parameterLabelLocalizationKey(THIS_NAME, label),
             };
         }
 
@@ -195,6 +202,7 @@ namespace pxt.blocks {
 
                     const defName = def ? def.name : (bInfo ? bInfo.params[defIndex++] : p.name);
                     const isVarOrArray = def && (def.shadowBlockId === "variables_get" || def.shadowBlockId == "lists_create_with");
+                    const label = parameterLabel(defName, p.name);
 
                     (res.parameters as BlockParameter[]).push({
                         actualName: p.name,
@@ -207,6 +215,8 @@ namespace pxt.blocks {
                         fieldEditor: fieldEditor(defName, p.name),
                         fieldOptions: fieldOptions(defName, p.name),
                         shadowOptions: shadowOptions(defName, p.name),
+                        label,
+                        labelLocalizationKey: parameterLabelLocalizationKey(p.name, label),
                         range
                     });
                 }
@@ -244,6 +254,15 @@ namespace pxt.blocks {
         function shadowOptions(defName: string, actualName: string) {
             return fn.attributes.paramShadowOptions &&
                 (fn.attributes.paramShadowOptions[defName] || fn.attributes.paramShadowOptions[actualName]);
+        }
+
+        function parameterLabel(defName: string, actualName: string) {
+            const labels = fn.attributes.paramLabels;
+            return labels && (labels[actualName] !== undefined ? labels[actualName] : labels[defName]);
+        }
+
+        function parameterLabelLocalizationKey(actualName: string, label: string) {
+            return label && fn.qName ? `${fn.qName}|param|${actualName}|label` : undefined;
         }
     }
 

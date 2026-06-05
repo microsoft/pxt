@@ -28,6 +28,7 @@ import * as contextMenu from "./contextMenu";
 import * as external from "./external";
 
 export * from "./breakpointIcon";
+export { createVariablesFlyoutCategory } from "./builtins/variables";
 
 export {
     contextMenu,

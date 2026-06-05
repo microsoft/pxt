@@ -448,6 +448,7 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
             let inputName: string;
             let inputCheck: string | string[];
             let hasParameter = false;
+            let inputParameter: pxt.blocks.BlockParameter;
 
             inputParts.forEach(part => {
                 if (part.kind !== "param") {
@@ -490,6 +491,7 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
                     let typeInfo = pxt.Util.lookup(info.apis.byQName, pr.type)
 
                     hasParameter = true;
+                    inputParameter = pr;
                     const defName = pr.definitionName;
                     const actName = pr.actualName;
 
@@ -604,6 +606,7 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
 
                 input = block.appendValueInput(inputName);
                 input.setAlign(Blockly.inputs.Align.LEFT);
+                if (inputParameter) applyInputLabel(input, inputParameter);
             }
             else if (expanded) {
                 const prefix = hasParameter ? optionalInputWithFieldPrefix : optionalDummyInputPrefix;
@@ -788,19 +791,16 @@ function initAccessibilityMessages() {
     // Translatable overrides for Blockly's built-in keyboard-navigation strings.
     // Excludes text used only in the shortcut dialog that we don't use.
     Object.assign(Blockly.Msg, {
-        // Action labels.
-        EDIT_BLOCK_CONTENTS: lf("Edit Block contents"),
-        MOVE_BLOCK: lf("Move Block"),
         // Modifier and key names — read by Blockly's shortcut formatter when
         // rendering shortcut hints (e.g. in the move/copy hint toasts).
-        CONTROL_KEY: lf("{id:keyboard symbol}Ctrl"),
-        COMMAND_KEY: lf("{id:keyboard symbol}⌘ Command"),
-        OPTION_KEY: lf("{id:keyboard symbol}⌥ Option"),
+        CONTROL_KEY: lf("{id:keyboard symbol}Control"),
+        COMMAND_KEY: lf("{id:keyboard symbol}Command"),
+        OPTION_KEY: lf("{id:keyboard symbol}Option"),
         ALT_KEY: lf("{id:keyboard symbol}Alt"),
         ENTER_KEY: lf("{id:keyboard symbol}Enter"),
         BACKSPACE_KEY: lf("{id:keyboard symbol}Backspace"),
         DELETE_KEY: lf("{id:keyboard symbol}Delete"),
-        ESCAPE: lf("{id:keyboard symbol}Esc"),
+        ESCAPE: lf("{id:keyboard symbol}Escape"),
         TAB_KEY: lf("{id:keyboard symbol}Tab"),
         SHIFT_KEY: lf("{id:keyboard symbol}Shift"),
         CAPS_LOCK_KEY: lf("{id:keyboard symbol}Caps Lock"),
@@ -813,10 +813,6 @@ function initAccessibilityMessages() {
         PAUSE_KEY: lf("{id:keyboard symbol}Pause"),
         CONTEXT_MENU_KEY: lf("{id:keyboard symbol}≣ Menu"),
         UNNAMED_KEY: lf("{id:keyboard symbol}unnamed"),
-        // Menu labels for the copy/cut/paste shortcut metadata.
-        CUT_SHORTCUT: lf("Cut"),
-        COPY_SHORTCUT: lf("Copy"),
-        PASTE_SHORTCUT: lf("Paste"),
         // Keyboard nav hints (toasts).
         HELP_PROMPT: lf("Press %1 for help on keyboard controls."),
         KEYBOARD_NAV_UNCONSTRAINED_MOVE_HINT: lf("Hold %1 and use arrow keys to move freely, then %2 to accept the position."),
@@ -826,7 +822,9 @@ function initAccessibilityMessages() {
         KEYBOARD_NAV_BLOCK_NAVIGATION_HINT: lf("Use %1 to navigate inside of blocks."),
         KEYBOARD_NAV_WORKSPACE_NAVIGATION_HINT: lf("Use the arrow keys to navigate."),
         KEYBOARD_NAV_FLYOUT_LABEL_HINT: lf("Use the arrow keys to navigate to a block, or press %1 to go to the next heading."),
+        SCREENREADER_HINT: lf("Use the arrow keys to navigate. Press %1 to toggle screenreader accessibility mode."),
         // Aria labels for the workspace tree.
+        WORKSPACE_LABEL_PLAIN: lf("Blocks workspace."),
         WORKSPACE_LABEL_1_STACK: lf("Blocks workspace. 1 stack of blocks"),
         WORKSPACE_LABEL_MANY_STACKS: lf("Blocks workspace. %1 stacks of blocks"),
         WORKSPACE_LABEL_MUTATOR_WORKSPACE: lf("Block editor workspace"),
@@ -847,16 +845,28 @@ function initAccessibilityMessages() {
         BLOCK_LABEL_HAS_INPUT: lf("has input"),
         BLOCK_LABEL_HAS_INPUTS: lf("has inputs"),
         BLOCK_LABEL_HAS_BRANCHES: lf("has %1 branches"),
-        BLOCK_LABEL_STATEMENT: lf("{id:block role}command"),
+        BLOCK_LABEL_STATEMENT: lf("{id:block role}statement"),
         BLOCK_LABEL_CONTAINER: lf("{id:block role}container"),
         BLOCK_LABEL_VALUE: lf("{id:block role}value"),
         BLOCK_LABEL_STACK_BLOCKS: lf("%1 stack blocks"),
-        // Aria labels for inputs.
+        // Aria labels for inputs. Only keys read by Blockly's own block code
+        // (for blocks PXT exposes unchanged) belong here; PXT-custom blocks
+        // set aria labels directly via setAriaLabelProvider / ariaLabelText.
         INPUT_LABEL_INDEX: lf("input %1"),
         INPUT_LABEL_VALUE: lf("{id:block position}value position"),
-        INPUT_LABEL_STATEMENT: lf("{id:block position}command position"),
+        INPUT_LABEL_STATEMENT: lf("{id:block position}statement position"),
         INPUT_LABEL_END_STATEMENT: lf("End %1"),
         INPUT_LABEL_EMPTY: lf("Empty"),
+        INPUT_LABEL_VALUE_A: lf("first value"),                  // logic_compare
+        INPUT_LABEL_VALUE_B: lf("second value"),                 // logic_compare
+        INPUT_LABEL_CONDITION_A: lf("first condition"),          // logic_operation
+        INPUT_LABEL_CONDITION_B: lf("second condition"),         // logic_operation
+        INPUT_LABEL_NUMBER_A: lf("first number"),                // math_arithmetic
+        INPUT_LABEL_NUMBER_B: lf("second number"),               // math_arithmetic
+        INPUT_LABEL_MATH_DIVIDEND: lf("dividend"),               // math_modulo
+        INPUT_LABEL_MATH_DIVISOR: lf("divisor"),                 // math_modulo
+        INPUT_LABEL_LOOP_TIMES: lf("number of times to repeat"), // controls_repeat_ext
+        INPUT_LABEL_TEXT_JOIN_ITEM: lf("value %1"),              // text_join
         // Generic aria labels.
         ARIA_LABEL_BUTTON: lf("button"),
         ARIA_LABEL_COMMENT: lf("Comment"),
@@ -879,7 +889,6 @@ function initAccessibilityMessages() {
         FIELD_LABEL_VARIABLE: lf("Variable '%1'"),
         // Bubble labels.
         BUBBLE_LABEL_COMMENT: lf("Comment: %1"),
-        BUBBLE_LABEL_DEFAULT: lf("{id:speech bubble}Bubble"),
         BUBBLE_LABEL_WARNING: lf("Warning: %1"),
         // Icon labels.
         ICON_LABEL_COMMENT_CLOSED: lf("Open Comment"),
@@ -1005,6 +1014,13 @@ function splitInputs(def: pxtc.ParsedBlockDef): pxtc.BlockContentPart[][] {
 
 function namedField(field: Blockly.Field, name: string): NamedField {
     return { field, name };
+}
+
+function applyInputLabel(input: Blockly.Input, parameter: pxt.blocks.BlockParameter) {
+    const label = (parameter.labelLocalizationKey && pxtc.getBlockTranslationsCacheKey(parameter.labelLocalizationKey)) || parameter.label;
+    if (!label) return;
+
+    input.setAriaLabelProvider(label);
 }
 
 function getEnumDropdownValues(apis: pxtc.ApisInfo, enumName: string) {

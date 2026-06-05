@@ -210,7 +210,8 @@ const LIST_CREATE_MIXIN = {
         // Add new inputs.
         for (i = 0; i < this.itemCount_; i++) {
             if (!this.getInput('ADD' + i)) {
-                this.appendValueInput('ADD' + i);
+                this.appendValueInput('ADD' + i)
+                    .setAriaLabelProvider(lf("value {0}", i + 1));
             }
         }
         // Remove deleted inputs.
