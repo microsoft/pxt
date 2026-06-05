@@ -1020,8 +1020,7 @@ function applyInputLabel(input: Blockly.Input, parameter: pxt.blocks.BlockParame
     const label = (parameter.labelLocalizationKey && pxtc.getBlockTranslationsCacheKey(parameter.labelLocalizationKey)) || parameter.label;
     if (!label) return;
 
-    // todo: uncomment following line after blockly update adds support
-    // input.setAriaLabelProvider(label);
+    input.setAriaLabelProvider(label);
 }
 
 function getEnumDropdownValues(apis: pxtc.ApisInfo, enumName: string) {
