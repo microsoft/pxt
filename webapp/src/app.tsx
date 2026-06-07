@@ -168,6 +168,7 @@ export class ProjectView
     private preserveUndoStack: boolean;
     private rootClasses: string[];
     private pendingImport: pxt.Util.DeferredPromise<void>;
+    private editorMountComplete = pxt.Util.defer<void>();
     private shouldFocusToolbox: boolean;
 
     private themeManager: ThemeManager;
@@ -205,7 +206,8 @@ export class ProjectView
             isMultiplayerGame: false,
             activeTourConfig: undefined,
             mute: pxt.editor.MuteState.Unmuted,
-            feedback: {showing: false, kind: "generic"} // state that tracks if the feedback modal is showing and what kind
+            feedback: {showing: false, kind: "generic"}, // state that tracks if the feedback modal is showing and what kind
+            errorListCollapsed: true // error pane is collapsed by default
         };
         if (!this.settings.editorFontSize) this.settings.editorFontSize = /mobile/i.test(navigator.userAgent) ? 15 : 19;
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
@@ -324,11 +326,6 @@ export class ProjectView
      * Run a global action based on shortcuts triggered in sim or main window.
      */
     private runGlobalAction(action: pxsim.GlobalAction) {
-        // Escape always works to exit fullscreen, other actions require accessible blocks
-        if (action !== "escape" && !data.getData<boolean>(auth.ACCESSIBLE_BLOCKS)) {
-            return;
-        }
-
         switch (action) {
             case "escape": {
                 this.setSimulatorFullScreen(false);
@@ -720,8 +717,12 @@ export class ProjectView
         pxt.shell.setEditorLanguagePref("js");
     }
 
-    openBlocks() {
+    openBlocks(showKeyboardControlsHint?: boolean) {
         if (this.updatingEditorFile) return; // already transitioning
+
+        if (showKeyboardControlsHint) {
+            this.blocksEditor.pendingKeyboardControlsHint = true;
+        }
 
         if (this.isBlocksActive()) {
             if (this.state.embedSimView) this.setState({ embedSimView: false });
@@ -1198,6 +1199,7 @@ export class ProjectView
         // subscribe to user preference changes (for simulator or non-render subscriptions)
         data.subscribe(this.cloudStatusSubscriber, `${cloud.HEADER_CLOUDSTATE}:*`);
         data.subscribe(this.headerChangeSubscriber, "header:*");
+        this.editorMountComplete.resolve(undefined);
     }
 
     public componentWillUnmount() {
@@ -1731,6 +1733,7 @@ export class ProjectView
 
     private async internalLoadHeaderAsync(h: pxt.workspace.Header, editorState?: pxt.editor.EditorState): Promise<void> {
         pxt.debug(`loading ${h.id} (pxt v${h.targetVersion})`);
+        await this.editorMountComplete.promise;
         this.stopSimulator(true);
         if (pxt.appTarget.simulator && pxt.appTarget.simulator.aspectRatio) {
             simulator.driver.preload(pxt.appTarget.simulator.aspectRatio);
@@ -1841,13 +1844,6 @@ export class ProjectView
                 this.shouldTryDecompile = true;
             }
 
-            // Onboard accessible blocks if accessible blocks has just been enabled
-            const onboardAccessibleBlocks = pxt.storage.getLocal("onboardAccessibleBlocks") === "1"
-            const sideDocsLoadUrl = onboardAccessibleBlocks ? `${container.builtInPrefix}keyboardControls` : ""
-            if (onboardAccessibleBlocks) {
-                pxt.storage.setLocal("onboardAccessibleBlocks", "0")
-            }
-
             // Force editor tools to collapse in headless tutorials and blocks mode (essentially hiding file explorer)
             const forceEditorToolsCollapse = pxt.appTarget.simulator.headless && (!!h.tutorial || h.editor === pxt.BLOCKS_PROJECT_NAME);
 
@@ -1859,7 +1855,7 @@ export class ProjectView
                 header: h,
                 projectName: h.name,
                 currFile: file,
-                sideDocsLoadUrl: sideDocsLoadUrl,
+                sideDocsLoadUrl: "",
                 debugging: false,
                 isMultiplayerGame: false,
                 collapseEditorTools: forceEditorToolsCollapse || this.state.collapseEditorTools,
@@ -2825,7 +2821,7 @@ export class ProjectView
         return Util.promiseTimeout(1000, this.requestScreenshotPromise = new Promise<string>((resolve, reject) => {
             this.pushScreenshotHandler(msg => resolve(pxt.BrowserUtils.imageDataToPNG(msg.data, 3)));
         })) // simulator might be stopped or in bad shape
-            .catch(e => {
+            .catch((e: any) => {
                 pxt.tickEvent('screenshot.timeout');
                 return undefined;
             })
@@ -2981,10 +2977,11 @@ export class ProjectView
                     if (hc) params.set("hc", "1");
                     else params.delete("hc");
                 }
+                // Need to add the URL parameters to the URL for the reload.
+                // Assigning to search will navigate on the first call but reload() needed
+                // for subsequent calls if there's a fragment (e.g. #editor).
                 location.search = params.toString();
-                // .reload refreshes without hitting server so it loses the params,
-                // so have to navigate directly
-                location.assign(location.toString());
+                location.reload();
             } else {
                 location.reload();
             }
@@ -3171,7 +3168,7 @@ export class ProjectView
     }
 
     importExampleAsync(options: pxt.editor.ExampleImportOptions): Promise<void> {
-        const { name, path, loadBlocks, prj, preferredEditor } = options;
+        let { name, path, loadBlocks, prj, preferredEditor } = options;
         core.showLoading("changingcode", lf("loading..."));
         this.loadingExample = true;
         return this.loadActivityFromMarkdownAsync(path, name?.toLowerCase(), preferredEditor)
@@ -3183,6 +3180,24 @@ export class ProjectView
                     throw new Error(lf("Example not found or invalid format"))
                 const opts: pxt.editor.ProjectCreationOptions = example;
                 if (prj) opts.prj = prj;
+
+                if (!preferredEditor && example.snippetType) {
+                    switch (example.snippetType) {
+                        case "block":
+                        case "blocks":
+                            preferredEditor = pxt.BLOCKS_PROJECT_NAME;
+                            loadBlocks = true;
+                            break;
+                        case "python":
+                            preferredEditor = pxt.PYTHON_PROJECT_NAME;
+                            break;
+                        case "javascript":
+                        case "typescript":
+                            preferredEditor = pxt.JAVASCRIPT_PROJECT_NAME;
+                            break;
+                    }
+                }
+
                 if (loadBlocks && preferredEditor == pxt.BLOCKS_PROJECT_NAME) {
                     return this.createProjectAsync(opts)
                         .then(() => {
@@ -3968,7 +3983,7 @@ export class ProjectView
             this.runToken = null
         }
 
-        if (this.isSimulatorRunning() || unload && simulator.driver.state !== pxsim.SimulatorState.Unloaded) {
+        if (simulator.driver && (this.isSimulatorRunning() || unload && simulator.driver.state !== pxsim.SimulatorState.Unloaded)) {
             simulator.stop(unload);
         }
 
@@ -4786,9 +4801,7 @@ export class ProjectView
             extensionsVisible: false
         })
 
-        if (this.getData<boolean>(auth.ACCESSIBLE_BLOCKS)) {
-            this.editor.focusToolbox(CategoryNameID.Extensions);
-        }
+        this.editor.focusToolbox(CategoryNameID.Extensions);
     }
 
     showPackageDialog() {
@@ -5308,19 +5321,6 @@ export class ProjectView
         this.setState({ greenScreen: greenScreenOn });
     }
 
-    async toggleAccessibleBlocks(eventSource: string) {
-        const nextEnabled = !this.getData<boolean>(auth.ACCESSIBLE_BLOCKS);
-        if (nextEnabled) {
-            pxt.storage.setLocal("onboardAccessibleBlocks", "1")
-        }
-        await core.toggleAccessibleBlocks(eventSource)
-        this.reloadEditor();
-    }
-
-    isAccessibleBlocks(): boolean {
-        return this.getData<boolean>(auth.ACCESSIBLE_BLOCKS);
-    }
-
     setBannerVisible(b: boolean) {
         this.setState({ bannerVisible: b });
     }
@@ -5534,7 +5534,6 @@ export class ProjectView
         const inHome = this.state.home && !sandbox;
         const inEditor = !!this.state.header && !inHome;
         const { lightbox, greenScreen } = this.state;
-        const accessibleBlocks = this.getData<boolean>(auth.ACCESSIBLE_BLOCKS)
         const hideTutorialIteration = inTutorial && tutorialOptions.metadata?.hideIteration;
         const hideToolbox = inTutorial && tutorialOptions.metadata?.hideToolbox;
         // flyoutOnly has become a de facto css class for styling tutorials (especially minecraft HOC), so keep it if hideToolbox is true, even if flyoutOnly is false.
@@ -5624,7 +5623,7 @@ export class ProjectView
                         header={this.state.header}
                         reloadHeaderAsync={async () => {
                             await this.reloadHeaderAsync()
-                            this.shouldFocusToolbox = !!accessibleBlocks;
+                            this.shouldFocusToolbox = true;
                         }}
                     />
                 }
@@ -6066,11 +6065,7 @@ function isProjectRelatedHash(hash: { cmd: string; arg: string }): boolean {
 }
 
 async function importGithubProject(repoid: string, requireSignin?: boolean) {
-    if (!pxt.appTarget.appTheme.githubEditor || pxt.BrowserUtils.isPxtElectron()) {
-        core.warningNotification(lf("Importing GitHub projects not currently supported"));
-        theEditor.openHome();
-        return;
-    }
+    const githubEnabled = !!pxt.appTarget.appTheme.githubEditor && !pxt.BrowserUtils.isPxtElectron();
 
     core.showLoading("loadingheader", lf("importing GitHub project..."));
     try {
@@ -6084,7 +6079,7 @@ async function importGithubProject(repoid: string, requireSignin?: boolean) {
             pxt.github.normalizeRepoId(h.githubId) == repoid
         );
         if (!hd) {
-            if (requireSignin) {
+            if (requireSignin && githubEnabled) {
                 const token = await cloudsync.githubProvider(true).routedLoginAsync(repoid);
                 if (!token.accessToken) { // did not sign in, give up
                     theEditor.openHome();
@@ -6093,8 +6088,14 @@ async function importGithubProject(repoid: string, requireSignin?: boolean) {
             }
             hd = await workspace.importGithubAsync(repoid);
         }
-        if (hd)
+        if (hd) {
+            if (!githubEnabled) {
+                hd.githubId = undefined;
+                hd.githubTag = undefined;
+                hd.githubCurrent = false;
+            }
             await theEditor.loadHeaderAsync(hd, null)
+        }
         else
             theEditor.openHome();
     } catch (e) {
@@ -6238,7 +6239,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (optsQuery["dbg"] == "1") {
         pxt.setLogLevel(pxt.LogLevel.Debug);
     }
-    pxt.options.light = optsQuery["light"] == "1" || pxt.BrowserUtils.isARM() || pxt.BrowserUtils.isIE();
+    pxt.options.light = optsQuery["light"] == "1";
     if (pxt.options.light) {
         pxsim.U.addClass(document.body, 'light');
     }
@@ -6487,12 +6488,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             initHashchange();
             socketbridge.tryInit();
             electron.initElectron(theEditor);
-            pxt.tickEvent(
-                "accessibilty.accessibleBlocksEnabledForSession",
-                {
-                    enabled: data.getData<boolean>(auth.ACCESSIBLE_BLOCKS) ? "true" : "false",
-                }
-            );
         })
         .then(() => {
             const showHome = theEditor.shouldShowHomeScreen();
@@ -6513,14 +6508,12 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
             if (showHome) return Promise.resolve();
 
-
             // default handlers
             const ent = theEditor.settings.fileHistory.filter(e => !!workspace.getHeader(e.id))[0];
             let hd = workspace.getHeaders()[0];
             if (ent) hd = workspace.getHeader(ent.id);
             if (hd) return theEditor.loadHeaderAsync(hd, theEditor.state.editorState)
-            else theEditor.newProject();
-            return Promise.resolve();
+            else return theEditor.newProject();
         })
         .catch(e => {
             theEditor.handleCriticalError(e, "Failure in DOM loaded handler");

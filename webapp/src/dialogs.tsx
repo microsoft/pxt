@@ -515,7 +515,7 @@ export function showCreateGithubRepoDialogAsync(name?: string) {
                     .finally(() => core.hideLoading("creategithub"))
                     .then(r => {
                         pxt.tickEvent("github.create.ok");
-                        return pxt.github.normalizeRepoId("https://github.com/" + r.fullName, "master");
+                        return pxt.github.normalizeRepoId("https://github.com/" + r.owner + "/" + r.name, "master", true);
                     }, err => {
                         if (!showGithubTokenError(err)) {
                             if (err.statusCode == 422)
@@ -701,7 +701,7 @@ export function showReportAbuseAsync(pubId?: string) {
                 core.infoNotification(lf("Sending abuse report..."));
                 Cloud.privatePostAsync(`${id}/abusereports`, {
                     text: reasonInput.value
-                })
+                }, true)
                     .then(res => {
                         core.infoNotification(lf("Report sent. Thank you!"))
                     })

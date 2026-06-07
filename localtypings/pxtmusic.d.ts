@@ -45,6 +45,7 @@ declare namespace pxt.assets.music {
         notes: Note[];
         startTick: number;
         endTick: number;
+        velocity?: number;
     }
 
     export interface Note {
@@ -60,6 +61,7 @@ declare namespace pxt.assets.music {
     }
 
     export interface DrumInstrument {
+        name?: string;
         startFrequency: number;
         startVolume: number;
         steps: DrumSoundStep[];

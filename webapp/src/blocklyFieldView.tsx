@@ -4,8 +4,6 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 
 import { ImageFieldEditor } from "./components/ImageFieldEditor";
-import { MusicEditor } from "./components/musicEditor/MusicEditor";
-import { MusicFieldEditor } from "./components/MusicFieldEditor";
 import { SoundEffectEditor } from "./components/soundEffectEditor/SoundEffectEditor";
 import { AssetFilePicker } from "./components/AssetFilePicker";
 
@@ -18,7 +16,7 @@ export interface EditorBounds {
     verticalPadding?: number;
 }
 
-export interface FieldEditorComponent<U> extends React.Component {
+export interface FieldEditorComponent<U> {
     init(value: U, close: () => void, options?: any): void;
     getValue(): U;
 
@@ -243,14 +241,14 @@ export function init() {
 
         switch (fieldEditorId) {
             case "image-editor":
-                current.injectElement(<ImageFieldEditor ref={ refHandler } singleFrame={true} />);
+                current.injectElement(<ImageFieldEditor ref={ refHandler } singleFrame={true} editorType="image" />);
                 break;
             case "animation-editor":
-                current.injectElement(<ImageFieldEditor ref={ refHandler } singleFrame={false} />);
+                current.injectElement(<ImageFieldEditor ref={ refHandler } singleFrame={false} editorType="image"  />);
                 break;
 
             case "tilemap-editor":
-                current.injectElement(<ImageFieldEditor ref={ refHandler } singleFrame={true} />);
+                current.injectElement(<ImageFieldEditor ref={ refHandler } singleFrame={true} editorType="image"  />);
                 break;
             case "soundeffect-editor":
                 current.injectElement(
@@ -266,10 +264,13 @@ export function init() {
                 )
                 break;
             case "music-editor":
-                current.injectElement(<ImageFieldEditor ref={ refHandler } singleFrame={true} isMusicEditor={true} />);
+                current.injectElement(<ImageFieldEditor ref={ refHandler } singleFrame={true} editorType="music" />);
                 break;
             case "file-picker":
                 current.injectElement(<AssetFilePicker ref={ refHandler } />);
+                break;
+            case "piano-roll-editor":
+                current.injectElement(<ImageFieldEditor ref={ refHandler } singleFrame={true} editorType="piano-roll" />);
                 break;
 
         }

@@ -31,7 +31,9 @@
 .projectsdialog {
     position: relative;
     height: 100%;
-    overflow: auto;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    scrollbar-gutter: stable;
     z-index: @homeScreenZIndex+1;
     .accessibleMenu {
         z-index: @homeScreenZIndex+3 !important;
@@ -144,17 +146,140 @@
         padding-top: calc(@mainMenuHeight + 2rem) !important;
         margin: 0;
         border: 0;
+        display: flex;
+        flex-direction: column;
+        box-sizing: border-box;
         width: 100%;
-        min-height: 100%;
+        min-height: 100vh;
         background: var(--pxt-target-background1);
         color: var(--pxt-target-foreground1);
     }
+    
+    .button.large {
+        font-weight: 700;
+    }
+
     .ui.segment.gallerysegment {
         background: none;
         border: none;
         box-shadow: none;
         padding: 0rem;
         margin: 0;
+
+        &.mystuff-segment {
+            .gallery-actions button,
+            &.search-mode .heading button {
+               padding: .75em;
+            }
+        }
+
+        &.mystuff-segment.search-mode {
+            .gallery-heading-column {
+                padding-left: @carouselArrowSize !important;
+            }
+
+            .heading {
+                position: relative;
+                align-items: center;
+            }
+
+            .ui.header.search-mode-title {
+                position: absolute;
+                left: 50%;
+                transform: translateX(-50%);
+                padding-left: 0;
+                margin: 0;
+                text-align: center;
+                pointer-events: none;
+            }
+
+            .search-input {
+                height: 3em;
+                input {
+                    padding: .75em 1em;
+                }
+                i {
+                    bottom: 1em;
+                };
+            }
+        }
+
+        &.search-segment {
+            padding: 1rem @carouselArrowSize;
+
+            .search-results-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+                gap: 1rem;
+                align-items: start;
+                grid-auto-flow: dense;
+
+                // override default that's bumping it up
+                > .ui.card:first-child {
+                    margin: 1em 0;
+                }
+
+                > .ui.card.selected {
+                    border: @homeSelectedCardBorderSize solid var(--pxt-neutral-background1) !important;
+                    z-index: @homeDetailViewSelectedCardZIndex;
+                }
+
+                > .ui.card.selected:hover {
+                    transform: none;
+                }
+
+                > .ui.card.selected:after,
+                > .ui.card.selected:before {
+                    top: 100%;
+                    left: 50%;
+                    border: solid transparent;
+                    content: " ";
+                    height: 0;
+                    width: 0;
+                    position: absolute;
+                    pointer-events: none;
+                }
+
+                > .ui.card.selected:after {
+                    border-color: var(--pxt-neutral-alpha0);
+                    border-top-color: var(--pxt-neutral-background1);
+                    border-width: 10px;
+                    margin-left: -10px;
+                }
+
+                > .ui.card.selected:before {
+                    border-color: var(--pxt-neutral-alpha0);
+                    border-top-color: var(--pxt-neutral-stencil3);
+                    border-width: 17px;
+                    margin-left: -17px;
+                }
+            }
+
+            .search-detailview.detailview {
+                grid-column-start: 1;
+                grid-column-end: -1;
+                min-width: 0;
+                // Negative horizontal margins extend the detail view past the
+                // `.search-segment` horizontal padding so it spans edge-to-edge,
+                // matching the non-search detail view (which is a sibling of
+                // the padded `.carouselcontainer`).
+                margin-left: -@carouselArrowSize;
+                margin-right: -@carouselArrowSize;
+                width: calc(100% + 2 * @carouselArrowSize);
+            }
+
+            .search-empty-state {
+                color: var(--pxt-neutral-foreground1) !important;
+                background-color: var(--pxt-neutral-background1) !important;
+                border: 1px solid var(--pxt-neutral-stencil1);
+                margin: 0;
+                width: 100%;
+                box-sizing: border-box;
+                display: flex;
+                align-items: center;
+                align-self: stretch;
+            }
+        }
 
         .ui.header {
             margin: 0;
@@ -192,6 +317,16 @@
             margin-bottom: -1rem !important;
             margin-top: 1rem !important;
         }
+        .gallery-heading-column,
+        .gallery-actions {
+            z-index: 1;
+        }
+        .gallery-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
         .column {
             padding: 0 !important;
         }
@@ -199,7 +334,15 @@
             padding-right: @carouselArrowSize !important;
         }
     }
-    .import-dialog-btn {
+    .homescreen-search-box {
+        padding-top: 1em;
+        margin: 1em @carouselArrowSize;
+    }
+    .import-dialog-btn,
+    .home-search-btn,
+    .go-back-btn,
+    .yt-button,
+    .home-share-button {
         position: relative;
         z-index: 1; /* Move up so it's above the carousel container that has an offset margin */
         &:focus-visible {
@@ -216,8 +359,9 @@
         width: 100%;
         text-align: center;
         padding: 5px !important;
+        margin-top: auto !important;
         z-index: @homeFooterZIndex;
-        position: absolute;
+        position: relative;
         .item {
             font-size: 0.8rem !important;
             color: var(--pxt-neutral-foreground1) !important;
@@ -290,6 +434,12 @@
             padding-left: @carouselArrowSize;
             margin-top: 2rem;
         }
+        .project-info {
+            order: 1;
+        }
+        .actions {
+            order: 2;
+        }
         .imagewrapper {
             position: absolute;
             top: 0; right: 0;
@@ -335,6 +485,13 @@
         button.home-share-button {
             color: var(--pxt-neutral-foreground1);
             background-color: var(--pxt-target-background1);
+        }
+        .yt-button + button.home-share-button {
+            display: block;
+            width: max-content;
+            margin-top: 0.75rem;
+            margin-left: 0;
+            max-width: 100%;
         }
         .ui.grid.stackable .actions {
             padding-right: 4rem !important;
@@ -441,6 +598,19 @@
                 display: inline-block;
                 width: 100%;
             }
+            .card-action .card-action-button-link.common-link {
+                text-decoration: none;
+            }
+            .card-action .card-action-button-link.common-link:hover,
+            .card-action .card-action-button-link.common-link:focus,
+            .card-action .card-action-button-link.common-link:visited {
+                text-decoration: none;
+                color: var(--pxt-neutral-foreground3);
+            }
+            .card-action .card-action-button-link .ui.text {
+                display: inline-block;
+                width: 100%;
+            }
             .card-action .button {
                 border: none!important;
                 outline: none!important;
@@ -473,10 +643,157 @@
             box-shadow: 0 0 0 3px var(--pxt-neutral-alpha20);
         }
     }
+}
 
+.projectsdialog, .project-row-name {
     .tutorial-progress.not-finished {
         background-color: var(--pxt-primary-background) !important;
         color: var(--pxt-primary-foreground) !important;
+    }
+
+    .tutorial-progress i {
+        margin-right: 0 !important;
+        background-color: unset !important;
+        color: var(--pxt-primary-foreground) !important;
+    }
+}
+
+.project-row-name .meta {
+    margin-left: 1rem;
+}
+
+.project-row-time .meta > :not(:first-child) {
+    margin-left: 1rem;
+}
+
+/* File card for the Home screen */
+
+.ui.card.file {
+    .fileimage {
+        position: absolute;
+        top: 0.7rem;
+        left: 0.7rem;
+        width: 4rem;
+        height: 3rem;
+        background-repeat: no-repeat;
+        background-size: contain;
+        background-image: @blocksIcon;
+        filter: @logoFilter;
+    }
+
+    .content {
+        margin-left: 4rem;
+        min-width: 5rem;
+        height: 8rem;
+
+        .header {
+            word-break: break-all;
+            overflow: hidden;
+            height: 6.5rem;
+            text-overflow: ellipsis;
+        }
+    }
+
+    .meta {
+        height: 4rem;
+        padding: 1rem;
+        text-align: right;
+    }
+
+    &.blocksprj .fileimage {
+        background-size: 85%;
+    }
+
+    &.tsprj .fileimage {
+        background-size: 65%;
+    }
+}
+
+.ui.table .project-row {
+    .fileimage {
+        filter: @logoFilter;
+        background-size: contain;
+        background-repeat: no-repeat;
+
+        display: inline-block;
+        margin-left: 0.7rem;
+        margin-right: 1rem;
+
+        height: 1.5rem;
+        width: 1.5rem;
+    }
+
+    td.project-row-name {
+        padding: 0;
+        display: flex;
+        flex-direction: row;
+        height: 3rem;
+        align-items: center;
+    }
+}
+
+.ui.card.file.github,
+.project-row.github {
+    .fileimage {
+        background-image: @githubFileLogo;
+    }
+}
+
+.ui.card.file.test,
+.project-row.test {
+    .fileimage {
+        background-image: @testFileLogo;
+    }
+}
+
+.ui.card.file.board,
+.project-row.board {
+    .fileimage {
+        background-image: unset;
+    }
+}
+
+.ui.card.file.blocksprj,
+.project-row.blocksprj {
+    .fileimage {
+        background-image: @blocksIcon;
+        background-position-y: 50%;
+    }
+}
+
+.ui.card.file.pyprj,
+.project-row.pyprj {
+    .fileimage {
+        background-image: @pyIcon;
+    }
+}
+
+.ui.card.file.tsprj,
+.project-row.tsprj {
+    .fileimage {
+        background-image: @jsIcon;
+        background-position-y: 50%;
+    }
+}
+
+.ui.card.file.positive,
+.ui.card.file.positive:focus {
+    border-color: var(--pxt-colors-green-background);
+}
+
+.ui.card.file.warning {
+    border-color: @warningBackgroundColor;
+}
+
+.ui.card.file .selected-label {
+    border-color: transparent !important;
+    cursor: pointer;
+
+    i.icon {
+        cursor: pointer;
+        font-size: 2rem;
+        left: 0;
+        top: 1rem;
     }
 }
 
@@ -613,6 +930,23 @@
 
 @media only screen and (max-width: @largestTabletScreen) {
     /* Carousel */
+    .gallerysegment.search-segment {
+        padding: 1rem @carouselArrowSizeTablet;
+
+        .search-detailview.detailview {
+            margin-left: -@carouselArrowSizeTablet;
+            margin-right: -@carouselArrowSizeTablet;
+            width: calc(100% + 2 * @carouselArrowSizeTablet);
+        }
+    }
+    .ui.segment.gallerysegment.mystuff-segment.search-mode {
+        .gallery-heading-column {
+            padding-left: @carouselArrowSizeTablet !important;
+        }
+    }
+    .homescreen-search-box {
+        margin: 1em @carouselArrowSizeTablet;
+    }
     .projectsdialog {
         .ui.segment.getting-started-segment {
             background-position: left center;
@@ -644,25 +978,57 @@
             }
         }
         .detailview {
-            .actions .card-action {
-                max-width: 10rem;
-                .button.attached .icon:not(.xicon) {
-                    line-height: 6rem;
+            .project-info .segment {
+                padding-bottom: 1.5rem;
+            }
+            .ui.grid.stackable .actions {
+                // Switch to flex so multiple action cards shrink to fit on
+                // narrower (e.g. iPad portrait, ~834px) viewports instead of
+                // overflowing the column and being clipped by the parent
+                // `.detailview { overflow: hidden }`.
+                padding-right: 1.5rem !important;
+
+                .segment {
+                    display: flex;
+                    flex-wrap: nowrap;
+                    justify-content: flex-end;
+                    align-items: flex-start;
+                    gap: 0.75rem;
+                    margin-top: 4rem;
+                    margin-right: 0.5rem;
+                    white-space: normal;
+                }
+
+                .card-action {
+                    flex: 0 1 8rem;
+                    min-width: 0;
+                    max-width: 8rem;
+                    margin: 0;
+
+                    .button.attached .icon:not(.xicon) {
+                        font-size: 3.5rem;
+                        line-height: 6rem;
+                    }
+                }
+                .card-action.custom-icon i.xicon {
+                    font-size: 4.5rem;
+                    padding-top: 2rem;
+                }
+                .card-action > .item,
+                .card-action > .icon {
+                    height: 6rem;
+                    max-width: 100%;
+                    background-size: 60%;
+                }
+                .card-action-title {
+                    font-size: 1.1rem;
                 }
             }
-            .actions .card-action > .item,
-            .actions .card-action > .icon {
-                height: 6rem;
-                max-width: 10rem;
-                background-size: 60%;
-            }
-            .actions .segment {
-                margin-top: 4rem;
-                margin-right: 2rem;
-            }
             .ui.button.approve {
-                font-size: 1rem!important;
-                padding: 0.7rem 1rem;
+                font-size: 0.9rem!important;
+                padding: 0.6rem 0.75rem;
+                white-space: normal;
+                line-height: 1.2;
             }
         }
     }
@@ -686,6 +1052,27 @@
 
 @media only screen and (max-width: @largestMobileScreen) {
     /* Carousel */
+    .gallerysegment.search-segment {
+        padding: 1rem @carouselArrowSizeMobile;
+
+        .search-detailview.detailview {
+            margin-left: -@carouselArrowSizeMobile;
+            margin-right: -@carouselArrowSizeMobile;
+            width: calc(100% + 2 * @carouselArrowSizeMobile);
+        }
+    }
+    .ui.segment.gallerysegment.mystuff-segment.search-mode {
+        .gallery-heading-column {
+            padding-left: @carouselArrowSizeMobile !important;
+        }
+
+        .ui.header.search-mode-title {
+            display: none;
+        }
+    }
+    .homescreen-search-box {
+        margin: 1em @carouselArrowSizeMobile;
+    }
     .projectsdialog {
         .ui.segment.getting-started-segment {
             height: 10rem;
@@ -712,12 +1099,31 @@
         .ui.segment.tabsegment {
             padding-top: calc(@mobileMenuHeight + 2rem) !important;
         }
-        .gallerysegment {
+        .ui.segment.gallerysegment {
             .column.right.aligned {
                 padding-right: @carouselArrowSizeMobile !important;
             }
             .ui.header {
                 padding-left: @carouselArrowSizeMobile;
+            }
+
+            // Only the My Projects header has two columns (title + actions)
+            // that need to stack on mobile. Other gallery sections render
+            // their header as a single <h2 class="ui header heading">, so
+            // they must NOT be flipped into column-reverse / stretched.
+            &.mystuff-segment {
+                .heading {
+                    flex-direction: column-reverse;
+                    align-items: stretch;
+                    gap: 0.5rem;
+                }
+                .gallery-heading-column,
+                .gallery-actions {
+                    width: 100%;
+                }
+                .gallery-actions {
+                    padding-right: @carouselArrowSizeMobile !important;
+                }
             }
         }
         .carouselitem.selected {
@@ -769,8 +1175,14 @@
             .content .header {
                 font-size: 1rem;
             }
+            .fileimage {
+                width: 2.5rem;
+                height: 2rem;
+                top: 0.5rem;
+                left: 0.5rem;
+            }
             .content {
-                margin-left: 0;
+                margin-left: 3rem;
             }
             .meta {
                 font-size: 0.7rem;
@@ -782,7 +1194,7 @@
         }
 
         .detailview {
-            .column:first-child {
+            .project-info {
                 height: auto;
                 overflow: visible;
 
@@ -790,9 +1202,12 @@
                     padding-bottom: 1rem;
                 }
             }
+            // Match the `.ui.grid.stackable` specificity used at the tablet
+            // breakpoint so the mobile segment overrides win when stacked.
+            .ui.grid.stackable .actions,
             .actions {
                 height: auto;
-                padding-right: @carouselArrowSizeMobile !important;
+                padding-right: 0.5rem !important;
                 .card-action {
                     display: inline-block;
                     width: 8rem;
@@ -808,6 +1223,8 @@
                     .button.approve {
                         font-size: 0.9rem !important;
                         padding: .35em 0.75em .5em;
+                        white-space: normal;
+                        line-height: 1.2;
                     }
                     .button.attached .icon:not(.xicon) {
                         font-size: 2rem;
@@ -822,7 +1239,7 @@
 
                 .segment {
                     position: static;
-                    margin: 0 0.5rem 0.5rem;
+                    margin: 0 0 0.5rem;
                     text-align: right;
                     white-space: nowrap;
                 }

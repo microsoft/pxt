@@ -8,6 +8,7 @@ export interface ButtonViewProps extends ContainerProps {
     labelClassName?: string;
     leftIcon?: string;
     rightIcon?: string;
+    autoFocus?: boolean;
     disabled?: boolean;     // Disables the button in an accessible-friendly way.
     hardDisabled?: boolean; // Disables the button and prevents clicks. Not recommended. Use `disabled` instead.
     href?: string;
@@ -28,6 +29,7 @@ export interface ButtonViewProps extends ContainerProps {
 
 export interface ButtonProps extends ButtonViewProps {
     onClick: () => void;
+    onClickEvent?: (e: React.MouseEvent) => void;
     onRightClick?: () => void;
     onBlur?: () => void;
     onFocus?: () => void;
@@ -85,6 +87,7 @@ export function inflateButtonProps(props: ButtonProps) {
         ariaPressed,
         role,
         onClick,
+        onClickEvent,
         onRightClick,
         onKeydown,
         onBlur,
@@ -95,6 +98,7 @@ export function inflateButtonProps(props: ButtonProps) {
         href,
         target,
         tabIndex,
+        autoFocus,
     } = props;
 
     let {
@@ -110,6 +114,7 @@ export function inflateButtonProps(props: ButtonProps) {
     );
 
     let clickHandler = (ev: React.MouseEvent) => {
+        if (onClickEvent) onClickEvent(ev);
         if (onClick) onClick();
         if (href) window.open(href, target || "_blank", "noopener,noreferrer")
         ev.stopPropagation();
@@ -137,6 +142,7 @@ export function inflateButtonProps(props: ButtonProps) {
         "onFocus": onFocus,
         "role": role || "button",
         "tabIndex": tabIndex || (disabled ? -1 : 0),
+        "autoFocus": autoFocus,
         "disabled": hardDisabled,
         "aria-label": ariaLabel,
         "aria-hidden": ariaHidden,

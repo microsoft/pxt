@@ -547,7 +547,7 @@ namespace pxt.docs {
             const rawLang = typeof token?.lang === "string" ? token.lang.trim() : "";
             const normalizedLang = htmlQuote(rawLang.toLowerCase());
             const text = typeof token?.text === "string" ? token.text : "";
-            const escaped = token?.escaped !== false;
+            const escaped = !!(token?.escaped) !== false;
             const code = escaped ? text : htmlQuote(text);
             const classAttr = normalizedLang ? ` class="lang-${normalizedLang}"` : "";
 

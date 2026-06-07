@@ -9,6 +9,10 @@
     z-index: 1;
 }
 
+.common-button.home-share-button {
+    border: 1px solid var(--pxt-neutral-foreground2) !important;
+}
+
 /*
 Override default button background for the area menu, which requires transparency,
 but still use a fairly opaque one to keep focus/visibility on the main buttons.
@@ -17,14 +21,14 @@ but still use a fairly opaque one to keep focus/visibility on the main buttons.
     background-color: var(--pxt-neutral-alpha80) !important;
 }
 
-/* 
+/*
  * "User-provided content" header in the import modal.
  */
 .ui.violet.message .header {
     color: var(--pxt-colors-purple-background) !important;
 }
 
-/* 
+/*
  * Checkbox styles
  * In HC the neutral and primary colors are the same, so we need to differentiate with
  * a different background color when checked.
@@ -75,7 +79,7 @@ div.field .ui.toggle.checkbox input:checked~label:before {
     opacity: 1;
 }
 
-/* 
+/*
  * Inverted image colors
  */
 .barcharticon,
@@ -214,4 +218,44 @@ div.field .ui.toggle.checkbox input:checked~label:before {
     outline: var(--pxt-focus-border) solid 3px !important;
     outline-offset: -4px;
     z-index: 1;
+}
+
+table.diffview.update .diff-added .ch-added {
+    color: var(--pxt-neutral-background1) !important;
+    outline-color: var(--pxt-neutral-background1) !important;
+}
+
+.blocklyFieldSliderDropdown {
+    background-color: var(--pxt-neutral-background1) !important;
+    border-color: var(--pxt-neutral-foreground1) !important;
+}
+
+.blocklyFieldSliderDropdown .blocklyFieldSliderLabel {
+    color: var(--pxt-neutral-foreground1) !important;
+}
+
+.blocklyFieldSliderDropdown input[type=range].blocklyFieldSlider {
+    outline: none !important;
+    background-color: var(--pxt-neutral-background1) !important;
+    --blocklyFieldSliderBackgroundColor: var(--pxt-neutral-background1) !important;
+    --blocklyFieldSliderThumbColor: var(--pxt-neutral-foreground1) !important;
+    --blocklyFieldSliderThumbBorderColor: var(--pxt-neutral-foreground1) !important;
+}
+
+.blocklyFieldSliderDropdown input[type=range].blocklyFieldSlider:hover::-webkit-slider-runnable-track, .blocklyFieldSliderDropdown input[type=range].blocklyFieldSlider:focus-visible::-webkit-slider-runnable-track {
+    outline: solid 3px var(--pxt-focus-border) !important;
+}
+
+input[type=range].blocklyFieldSlider::-webkit-slider-runnable-track {
+    border: solid 1px var(--pxt-neutral-foreground1) !important;
+    box-sizing: content-box;
+}
+
+input[type=range].blocklyFieldSlider::-moz-range-track {
+    border: solid 1px var(--pxt-neutral-foreground1) !important;
+    box-sizing: content-box;
+}
+
+.blocklyFieldSliderDropdown input[type=range].blocklyFieldSlider:hover::-moz-range-track, .blocklyFieldSliderDropdown input[type=range].blocklyFieldSlider:focus-visible::-moz-range-track {
+    outline: solid 3px var(--pxt-focus-border) !important;
 }

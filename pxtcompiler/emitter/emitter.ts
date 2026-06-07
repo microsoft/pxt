@@ -3866,11 +3866,19 @@ ${lbl}: .short 0xffff
                     throw U.oops("invalid format specifier: " + f)
                 }
             })
+            // Native Array_.length has a thumb fast path that returns an
+            // already-tagged int, so route to it and skip the fromInt return
+            // conversion the general path would otherwise add.
+            let skipNativeReturnConversion = false
+            if (opts.target.isNative && isThumb() && name == "Array_::length" && fmt[0] == "I") {
+                name = "_pxt_array_length_tagged"
+                skipNativeReturnConversion = true
+            }
             let r = ir.rtcallMask(name, mask,
                 attrs ? attrs.callingConvention : ir.CallingConvention.Plain, args2)
             if (!r.mask) r.mask = { refMask: 0 }
             r.mask.conversions = convInfos
-            if (opts.target.isNative) {
+            if (opts.target.isNative && !skipNativeReturnConversion) {
                 let f0 = fmt[0]
                 if (f0 == "I")
                     r = fromInt(r)

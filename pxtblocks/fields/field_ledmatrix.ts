@@ -2,6 +2,7 @@
 /// <reference path="../../built/pxtsim.d.ts" />
 
 import * as Blockly from "blockly";
+import { DEFAULT_LED_COLORS } from "./field_ledmatrix_colorPicker";
 import { FieldMatrix } from "./field_matrix";
 import { FieldCustom } from "./field_utils";
 
@@ -27,9 +28,11 @@ export class FieldLedMatrix extends FieldMatrix implements FieldCustom {
     public SERIALIZABLE = true;
 
     private params: any;
-    private onColor = "#FFFFFF";
-    private offColor: string;
+
+    private palette: string[];
+
     private static DEFAULT_OFF_COLOR = "#000000";
+    private offOpacity = 0.2;
 
     private scale = 1;
 
@@ -39,12 +42,17 @@ export class FieldLedMatrix extends FieldMatrix implements FieldCustom {
     private yAxisLabel: LabelMode = LabelMode.None;
     private xAxisLabel: LabelMode = LabelMode.None;
 
-    private cellState: boolean[][] = [];
+    private cellState: number[][] = [];
 
     private currentDragState_: boolean;
 
     protected clearSelectionOnBlur = true;
     protected forceFocusVisible = true;
+
+    protected isColorMatrix = false;
+    protected colorNames: string[];
+
+    private activeColor = 1;
 
     constructor(text: string, params: any, validator?: Blockly.FieldValidator) {
         super(text, validator);
@@ -64,12 +72,37 @@ export class FieldLedMatrix extends FieldMatrix implements FieldCustom {
             }
         }
 
-        if (this.params.onColor !== undefined) {
-            this.onColor = this.params.onColor;
+        this.isColorMatrix = !!this.params.isColorMatrix;
+
+        if (this.params.colors) {
+            this.palette = this.params.colors;
+        }
+        else {
+            this.palette = [
+                FieldLedMatrix.DEFAULT_OFF_COLOR,
+                ...DEFAULT_LED_COLORS
+            ];
         }
 
-        if (this.params.offColor !== undefined) {
-            this.offColor = this.params.offColor;
+        if (this.params.colorNames) {
+            this.colorNames = this.params.colorNames;
+        }
+        else {
+            this.colorNames = [
+                lf("off"),
+                ...DEFAULT_LED_COLORS
+            ];
+        }
+
+        if (this.params.hasOffColor) {
+            this.offOpacity = 1.0;
+        }
+
+        if (this.params.offOpacity) {
+            const val = parseFloat(this.params.offOpacity);
+            if (!isNaN(val) && val >= 0 && val <= 1) {
+                this.offOpacity = val;
+            }
         }
 
         if (this.params.scale !== undefined)
@@ -79,16 +112,25 @@ export class FieldLedMatrix extends FieldMatrix implements FieldCustom {
         else if (Math.max(this.numMatrixCols, this.numMatrixRows) > 10)
             this.scale = 0.9;
 
-        this.size_.height = this.scale * Number(this.numMatrixRows) * (FieldLedMatrix.CELL_WIDTH + FieldLedMatrix.CELL_VERTICAL_MARGIN) + FieldLedMatrix.CELL_VERTICAL_MARGIN * 2 + FieldLedMatrix.BOTTOM_MARGIN + this.getXAxisHeight()
-        this.size_.width = this.scale * Number(this.numMatrixCols) * (FieldLedMatrix.CELL_WIDTH + FieldLedMatrix.CELL_HORIZONTAL_MARGIN) + FieldLedMatrix.CELL_HORIZONTAL_MARGIN + this.getYAxisWidth();
+        const verticalMargin = isNaN(this.params.verticalSpacing) ? FieldLedMatrix.CELL_VERTICAL_MARGIN : this.params.verticalSpacing;
+        const horizontalMargin = isNaN(this.params.horizontalSpacing) ? FieldLedMatrix.CELL_HORIZONTAL_MARGIN : this.params.horizontalSpacing;
+
+        this.size_.height = this.scale * Number(this.numMatrixRows) * (FieldLedMatrix.CELL_WIDTH + verticalMargin) + verticalMargin * 2 + FieldLedMatrix.BOTTOM_MARGIN + this.getXAxisHeight()
+        this.size_.width = this.scale * Number(this.numMatrixCols) * (FieldLedMatrix.CELL_WIDTH + horizontalMargin) + horizontalMargin + this.getYAxisWidth();
     }
 
     protected getCellToggled(x: number, y: number): boolean {
-        return this.cellState[x][y];
+        return !!this.cellState[x][y];
     }
 
     protected useTwoToneFocusIndicator(x: number, y: number): boolean {
         return this.getCellToggled(x, y);
+    }
+
+    setActiveColorIndex(index: number) {
+        if (index >= 0 && index < this.palette.length) {
+            this.activeColor = index;
+        }
     }
 
     /**
@@ -99,13 +141,14 @@ export class FieldLedMatrix extends FieldMatrix implements FieldCustom {
         this.selected = [0, 0];
 
         const matrixRect = this.matrixSvg.getBoundingClientRect();
+        const injectDivBounds = (this.getSourceBlock().workspace as Blockly.WorkspaceSvg).getInjectionDiv().getBoundingClientRect();
 
         const widgetDiv = Blockly.WidgetDiv.getDiv();
         widgetDiv.append(this.matrixSvg);
         this.addKeyboardFocusHandlers();
 
-        widgetDiv.style.left = matrixRect.left + "px";
-        widgetDiv.style.top = matrixRect.top + "px";
+        widgetDiv.style.left = matrixRect.left - injectDivBounds.left + "px";
+        widgetDiv.style.top = matrixRect.top - injectDivBounds.top + "px";
         widgetDiv.style.transform = `scale(${(Blockly.getMainWorkspace() as Blockly.WorkspaceSvg).getScale()})`;
         widgetDiv.style.transformOrigin = "0 0";
 
@@ -136,20 +179,23 @@ export class FieldLedMatrix extends FieldMatrix implements FieldCustom {
             for (let i = 0; i < this.numMatrixCols; i++) {
                 this.cellState.push([])
                 for (let j = 0; j < this.numMatrixRows; j++) {
-                    this.cellState[i].push(false);
+                    this.cellState[i].push(0);
                 }
             }
 
             this.restoreStateFromString();
 
+            const verticalMargin = isNaN(this.params.verticalSpacing) ? FieldLedMatrix.CELL_VERTICAL_MARGIN : this.params.verticalSpacing;
+            const horizontalMargin = isNaN(this.params.horizontalSpacing) ? FieldLedMatrix.CELL_HORIZONTAL_MARGIN : this.params.horizontalSpacing;
+
             this.createMatrixDisplay({
                 cellWidth: FieldLedMatrix.CELL_WIDTH,
                 cellHeight: FieldLedMatrix.CELL_WIDTH,
                 cellLabel: lf("LED"),
-                cellHorizontalMargin: FieldLedMatrix.CELL_HORIZONTAL_MARGIN,
-                cellVerticalMargin: FieldLedMatrix.CELL_VERTICAL_MARGIN,
-                cornerRadius: FieldLedMatrix.CELL_CORNER_RADIUS,
-                cellFill: this.offColor,
+                cellHorizontalMargin: horizontalMargin,
+                cellVerticalMargin: verticalMargin,
+                cornerRadius: isNaN(this.params.borderRadius) ? FieldLedMatrix.CELL_CORNER_RADIUS : this.params.borderRadius,
+                cellFill: this.palette[0],
                 padLeft: this.getYAxisWidth(),
                 scale: this.scale
             });
@@ -157,10 +203,10 @@ export class FieldLedMatrix extends FieldMatrix implements FieldCustom {
             this.updateValue();
 
             if (this.xAxisLabel !== LabelMode.None) {
-                const y = this.scale * this.numMatrixRows * (FieldLedMatrix.CELL_WIDTH + FieldLedMatrix.CELL_VERTICAL_MARGIN) + FieldLedMatrix.CELL_VERTICAL_MARGIN * 2 + FieldLedMatrix.BOTTOM_MARGIN
+                const y = this.scale * this.numMatrixRows * (FieldLedMatrix.CELL_WIDTH + verticalMargin) + verticalMargin * 2 + FieldLedMatrix.BOTTOM_MARGIN
                 const xAxis = pxsim.svg.child(this.matrixSvg, "g", { transform: `translate(${0} ${y})` });
                 for (let i = 0; i < this.numMatrixCols; i++) {
-                    const x = this.getYAxisWidth() + this.scale * i * (FieldLedMatrix.CELL_WIDTH + FieldLedMatrix.CELL_HORIZONTAL_MARGIN) + FieldLedMatrix.CELL_WIDTH / 2 + FieldLedMatrix.CELL_HORIZONTAL_MARGIN / 2;
+                    const x = this.getYAxisWidth() + this.scale * i * (FieldLedMatrix.CELL_WIDTH + horizontalMargin) + FieldLedMatrix.CELL_WIDTH / 2 + horizontalMargin / 2;
                     const lbl = pxsim.svg.child(xAxis, "text", { x, class: "blocklyText" })
                     lbl.textContent = this.getLabel(i, this.xAxisLabel);
                 }
@@ -169,7 +215,7 @@ export class FieldLedMatrix extends FieldMatrix implements FieldCustom {
             if (this.yAxisLabel !== LabelMode.None) {
                 const yAxis = pxsim.svg.child(this.matrixSvg, "g", {});
                 for (let i = 0; i < this.numMatrixRows; i++) {
-                    const y = this.scale * i * (FieldLedMatrix.CELL_WIDTH + FieldLedMatrix.CELL_VERTICAL_MARGIN) + FieldLedMatrix.CELL_WIDTH / 2 + FieldLedMatrix.CELL_VERTICAL_MARGIN * 2;
+                    const y = this.scale * i * (FieldLedMatrix.CELL_WIDTH + verticalMargin) + FieldLedMatrix.CELL_WIDTH / 2 + verticalMargin * 2;
                     const lbl = pxsim.svg.child(yAxis, "text", { x: 0, y, class: "blocklyText" })
                     lbl.textContent = this.getLabel(i, this.yAxisLabel);
                 }
@@ -265,7 +311,7 @@ export class FieldLedMatrix extends FieldMatrix implements FieldCustom {
     }
 
     protected toggleCell = (x: number, y: number, value?: boolean) => {
-        this.cellState[x][y] = value ?? this.currentDragState_;
+        this.cellState[x][y] = (value ?? this.currentDragState_) ? this.activeColor : 0;
         this.updateValue();
     }
 
@@ -293,20 +339,30 @@ export class FieldLedMatrix extends FieldMatrix implements FieldCustom {
     }
 
     private getColor(x: number, y: number) {
-        return this.cellState[x][y] ? this.onColor : (this.offColor || FieldLedMatrix.DEFAULT_OFF_COLOR);
+        return this.palette[this.cellState[x][y]];
     }
 
     private getOpacity(x: number, y: number) {
-        const offOpacity = this.offColor ? '1.0': '0.2';
+        const offOpacity = this.offOpacity + "";
         return this.cellState[x][y] ? '1.0' : offOpacity;
     }
 
     private updateCell(x: number, y: number) {
-        const cellRect = this.cells[x][y];
+        const cellGroup = this.cells[x][y];
+        const cellRect = getChildElementOfTag(cellGroup, "rect");
+        if (!cellRect) return;
         cellRect.setAttribute("fill", this.getColor(x, y));
         cellRect.setAttribute("fill-opacity", this.getOpacity(x, y));
         cellRect.setAttribute('class', `blocklyLed${this.cellState[x][y] ? 'On' : 'Off'}`);
-        cellRect.setAttribute("aria-checked", this.cellState[x][y].toString());
+        cellRect.setAttribute("aria-checked", (!!this.cellState[x][y]).toString());
+        if (this.isColorMatrix) {
+            const cellLabel = getChildElementOfTag(cellGroup, "text");
+            if (cellLabel) {
+                const colorIndex = this.cellState[x][y];
+                const colorName = this.colorNames[colorIndex] || this.palette[colorIndex] || lf("color {0}", colorIndex);
+                cellLabel.textContent = lf("{0} LED", colorName);
+            }
+        }
     }
 
     setValue(newValue: string | number, restoreState = true) {
@@ -357,12 +413,10 @@ export class FieldLedMatrix extends FieldMatrix implements FieldCustom {
                 const row = rows[y];
 
                 for (let j = 0; j < row.length && x < this.numMatrixCols; j++) {
-                    if (isNegativeCharacter(row[j])) {
-                        this.cellState[x][y] = false;
-                        x++;
-                    }
-                    else if (isPositiveCharacter(row[j])) {
-                        this.cellState[x][y] = true;
+                    const val = parseCharacter(row[j]);
+
+                    if (val !== -1) {
+                        this.cellState[x][y] = val;
                         x++;
                     }
                 }
@@ -372,12 +426,13 @@ export class FieldLedMatrix extends FieldMatrix implements FieldCustom {
 
     // Composes the state into a string an updates the field's state
     private updateValue() {
+        const chars = ".#23456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         let res = "";
         for (let y = 0; y < this.numMatrixRows; y++) {
             for (let x = 0; x < this.numMatrixCols; x++) {
-                res += (this.cellState[x][y] ? "#" : ".") + " "
+                res += chars.charAt(this.cellState[x][y]) + " ";
             }
-            res += "\n" + FieldLedMatrix.TAB
+            res += "\n" + FieldLedMatrix.TAB;
         }
 
         // Blockly stores the state of the field as a string
@@ -393,12 +448,20 @@ export class FieldLedMatrix extends FieldMatrix implements FieldCustom {
     }
 }
 
-function isPositiveCharacter(c: string) {
-    return c === "#" || c === "*" || c === "1";
-}
-
-function isNegativeCharacter(c: string) {
-    return c === "." || c === "_" || c === "0";
+function parseCharacter(c: string): number {
+    const chars = ".#23456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    switch (c) {
+        case "#":
+        case "*":
+        case "1":
+            return 1;
+        case ".":
+        case "_":
+        case "0":
+            return 0;
+        default:
+            return chars.indexOf(c.toUpperCase());
+    }
 }
 
 
@@ -411,6 +474,18 @@ function removeQuotes(str: string) {
         return str.substr(1, str.length - 2).trim();
     }
     return str;
+}
+
+function getChildElementOfTag(element: Element, tagName: string): Element | null {
+    if (element.tagName.toLowerCase() === tagName.toLowerCase()) {
+        return element;
+    }
+    for (const child of element.children) {
+        if (child.tagName.toLowerCase() === tagName.toLowerCase()) {
+            return child;
+        }
+    }
+    return null;
 }
 
 // Override the hover stroke which doesn't make sense here.

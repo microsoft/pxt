@@ -8,7 +8,7 @@ export interface LinkProps extends ContainerProps {
     title?: string;
 }
 
-export const Link = (props: LinkProps) => {
+export const Link = React.forwardRef<HTMLAnchorElement, LinkProps>((props, ref) => {
     const {
         id,
         className,
@@ -29,6 +29,7 @@ export const Link = (props: LinkProps) => {
         <a
             id={id}
             className={classes}
+            ref={ref}
             aria-label={ariaLabel}
             href={href}
             target={target}
@@ -39,4 +40,4 @@ export const Link = (props: LinkProps) => {
             {children}
         </a>
     );
-}
+});
