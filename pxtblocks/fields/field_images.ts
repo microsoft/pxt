@@ -68,7 +68,6 @@ export class FieldImages extends FieldImageDropdown implements FieldCustom {
             button.setAttribute('role', 'gridcell');
             button.setAttribute('aria-selected', 'false');
             button.setAttribute('class', 'blocklyDropDownButton');
-            button.title = content.alt;
             if ((this as any).columns_) {
                 button.style.width = (((this as any).width_ / (this as any).columns_) - 8) + 'px';
                 //button.style.height = ((this.width_ / this.columns_) - 8) + 'px';
@@ -110,6 +109,7 @@ export class FieldImages extends FieldImageDropdown implements FieldCustom {
             // Store a data attribute on all possible click targets so we can match it to the icon.
             button.setAttribute('data-value', value);
             buttonImg.setAttribute('data-value', value);
+            buttonImg.setAttribute('aria-hidden', 'true');
             button.appendChild(buttonImg);
             if (this.addLabel_) {
                 const buttonText = this.createTextNode_(content.alt);

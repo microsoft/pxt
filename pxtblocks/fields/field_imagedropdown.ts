@@ -149,7 +149,6 @@ export class FieldImageDropdown extends FieldDropdownGrid implements FieldCustom
                 button.setAttribute('role', 'gridcell');
                 button.setAttribute('aria-selected', 'false');
                 button.classList.add('blocklyDropDownButton');
-                button.title = content.alt;
 
                 button.style.width = (columnButtonSize || content.width) + 'px';
                 button.style.height = (columnButtonSize || content.height) + 'px';
@@ -182,6 +181,10 @@ export class FieldImageDropdown extends FieldDropdownGrid implements FieldCustom
                         this.activeDescendantIndex = undefined;
                     }
                 });
+                const buttonText = document.createElement("span");
+                buttonText.classList.add("sr-only");
+                buttonText.textContent = content.alt;
+                button.appendChild(buttonText);
                 let buttonImg = document.createElement('img');
                 buttonImg.src = content.src;
                 //buttonImg.alt = icon.alt;
@@ -189,6 +192,7 @@ export class FieldImageDropdown extends FieldDropdownGrid implements FieldCustom
                 // Store a data attribute on all possible click targets so we can match it to the icon.
                 button.setAttribute('data-value', value);
                 buttonImg.setAttribute('data-value', value);
+                buttonImg.setAttribute('aria-hidden', 'true');
                 button.appendChild(buttonImg);
                 this.gridItems.push(button);
                 buttonContainer.appendChild(button);
