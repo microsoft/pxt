@@ -167,7 +167,7 @@ const IF_ELSE_MIXIN = {
                 .appendField(Blockly.Msg.CONTROLS_IF_MSG_THEN);
             this.appendDummyInput('IFBUTTONS' + i)
                 .appendField(
-                    new FieldImageNoText(this.REMOVE_IMAGE_DATAURI, 24, 24, "*", removeElseIf, false))
+                    new FieldImageNoText(this.REMOVE_IMAGE_DATAURI, 24, 24, pxt.Util.lf("remove else if branch"), removeElseIf, false))
                 .setAlign(Blockly.inputs.Align.RIGHT);
             this.appendStatementInput('DO' + i);
         }
@@ -177,7 +177,7 @@ const IF_ELSE_MIXIN = {
             this.appendDummyInput('ELSEBUTTONS')
                 .setAlign(Blockly.inputs.Align.RIGHT)
                 .appendField(
-                    new FieldImageNoText(this.REMOVE_IMAGE_DATAURI, 24, 24, "*", this.removeElse_.bind(this), false));
+                    new FieldImageNoText(this.REMOVE_IMAGE_DATAURI, 24, 24, pxt.Util.lf("remove else branch"), this.removeElse_.bind(this), false));
             this.appendStatementInput('ELSE');
         }
         if (this.getInput('ADDBUTTON')) this.removeInput('ADDBUTTON');
@@ -194,7 +194,7 @@ const IF_ELSE_MIXIN = {
         }();
         this.appendDummyInput('ADDBUTTON')
             .appendField(
-                new FieldImageNoText(this.ADD_IMAGE_DATAURI, 24, 24, "*", addElseIf, false));
+                new FieldImageNoText(this.ADD_IMAGE_DATAURI, 24, 24, this.elseCount_ ? pxt.Util.lf("add else if branch") : pxt.Util.lf("add else branch"), addElseIf, false));
     },
     /**
      * Reconstructs the block with all child blocks attached.
