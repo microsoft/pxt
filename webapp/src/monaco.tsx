@@ -795,7 +795,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     public showPackageDialog() {
         pxt.tickEvent("monaco.addpackage", undefined, { interactiveConsent: true });
         this.hideFlyout();
-        this.parent.showPackageDialog();
+        this.parent.showPackageDialog(true);
     }
 
     private defineEditorTheme(hc?: boolean, withNamespaces?: boolean) {
@@ -1355,6 +1355,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     public closeFlyout() {
         if (!this.editor) return;
         this.hideFlyout();
+    }
+
+    public isFlyoutVisible(): boolean {
+        return !!(this.flyout?.state?.groups && !this.flyout.state.hide);
     }
 
     public hideFlyout() {
