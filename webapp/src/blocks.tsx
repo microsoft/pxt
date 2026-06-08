@@ -1842,6 +1842,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (this.toolbox) this.toolbox.clear();
     }
 
+    public isFlyoutVisible(): boolean {
+        return !!this.editor?.getFlyout()?.isVisible();
+    }
+
     public setFlyoutForceOpen(forceOpen: boolean) {
         const flyout = this.editor.getFlyout() as pxtblockly.CachingFlyout
         if (flyout && typeof flyout.setForceOpen === 'function') {
