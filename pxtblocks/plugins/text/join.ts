@@ -159,9 +159,9 @@ const TEXT_JOIN_MUTATOR_MIXIN = {
         if (this.getInput('BUTTONS')) this.removeInput('BUTTONS');
         this.buttons = this.appendDummyInput('BUTTONS');
         if (this.itemCount_ > 1) {
-            this.buttons.appendField(new FieldImageNoText(this.REMOVE_IMAGE_DATAURI, 24, 24, "*", remove, false));
+            this.buttons.appendField(new FieldImageNoText(this.REMOVE_IMAGE_DATAURI, 24, 24, lf("remove argument"), remove, false));
         }
-        this.buttons.appendField(new FieldImageNoText(this.ADD_IMAGE_DATAURI, 24, 24, "*", add, false));
+        this.buttons.appendField(new FieldImageNoText(this.ADD_IMAGE_DATAURI, 24, 24, lf("add argument"), add, false));
 
         // Switch to vertical list when there are too many items
         const horizontalLayout = this.itemCount_ <= 4;

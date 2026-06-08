@@ -199,7 +199,7 @@ Blockly.Blocks[FUNCTION_DEFINITION_BLOCK_TYPE] = {
                     image,
                     24,
                     24,
-                    "",
+                    lf("Collapse block"),
                     () => {
                         this.setCollapsed(true);
                         const expandBtn = this.inputList.find(i => i.name === Blockly.constants.COLLAPSED_INPUT_NAME)?.fieldRow[1];

@@ -15,7 +15,7 @@ export function monkeyPatchBlockSvg() {
 
             const image = ConstantProvider.EXPAND_IMAGE_DATAURI;
             if (image) {
-                input.appendField(new FieldImageNoText(image, 24, 24, "", () => {
+                input.appendField(new FieldImageNoText(image, 24, 24, lf("Expand block"), () => {
                     this.setCollapsed(false);
                     const collapseBtn = this.inputList.find(i => i.name === "function_collapse")?.fieldRow[0];
                     maybeFocusMutatorButton(collapseBtn);

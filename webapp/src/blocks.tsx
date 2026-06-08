@@ -5,6 +5,7 @@ import * as pkg from "./package";
 import * as data from "./data";
 import * as auth from "./auth";
 import * as core from "./core";
+import * as cmds from "./cmds"
 import * as toolboxeditor from "./toolboxeditor"
 import * as compiler from "./compiler"
 import * as toolbox from "./toolbox";
@@ -41,6 +42,7 @@ import { assertMethod } from "../../pxtblocks/monkeyPatches/util";
 import { HIDDEN_CLASS_NAME } from "../../pxtblocks/plugins/flyout/blockInflater";
 import { AIFooter } from "../../react-common/components/controls/AIFooter";
 import { getShortcutKeysShort, LIST_SHORTCUTS_SHORTCUT } from "./shortcut_formatting";
+import { FlyoutButton } from "../../pxtblocks/plugins/flyout/flyoutButton";
 
 interface CopyDataEntry {
     version: 1;
@@ -688,6 +690,32 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 return startMoveShortcut.callback!(workspace, e, shortcut, scope);
             }
         });
+
+        Blockly.ShortcutRegistry.registry.register({
+            name: "download",
+            keyCodes: [Blockly.ShortcutRegistry.registry.createSerializedKey(Blockly.utils.KeyCodes.L, null)],
+            preconditionFn: (workspace, scope) => {
+                if (workspace.isFlyout || !scope.focusedNode) {
+                    return false
+                }
+                return true;
+            },
+            callback: () => {
+                if (pxt.commands.onDownloadButtonClick) {
+                    pxt.commands.onDownloadButtonClick();
+                } else {
+                    if (this.parent.shouldShowPairingDialogOnDownload()
+                        && !pxt.packetio.isConnected()
+                        && !pxt.packetio.isConnecting()
+                    ) {
+                        cmds.pairAsync(true).then(() => this.parent.compile());
+                    } else {
+                        this.parent.compile();
+                    }
+                }
+                return true
+            }
+        });
     }
 
     private initWorkspaceSearch() {
@@ -1016,6 +1044,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     closeFlyout() {
         if (!this.editor) return;
+        // E.g. a context menu on a flyout block.
+        Blockly.hideChaff(true);
         this.hideFlyout();
     }
 
@@ -1266,8 +1296,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (sourceBlock?.disposed || sourceBlock?.hasDisabledReason(HIDDEN_CLASS_NAME)) {
             return true;
         }
-        if (node instanceof Blockly.FlyoutButton) {
-            return node.getSvgRoot().parentNode === null;
+        if (node instanceof FlyoutButton) {
+            return node.isDisposed();
         }
         if (!sourceBlock) {
             return true;
@@ -1332,7 +1362,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     showPackageDialog() {
         pxt.tickEvent("blocks.addpackage");
         if (this.editor.getToolbox()) this.editor.getToolbox().clearSelection();
-        this.parent.showPackageDialog();
+        this.parent.showPackageDialog(true);
     }
 
     showVariablesFlyout() {
@@ -1740,7 +1770,17 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (this.editor.options.hasCategories === hasCategories) {
             // Toolbox is consistent with current mode, safe to update
             if (hasCategories) {
-                this.toolbox.setState({ loading: false, categories: this.getAllCategories(), showSearchBox: this.shouldShowSearch() });
+                const allCategories = this.getAllCategories()
+                this.toolbox.setState({ loading: false, categories: allCategories, showSearchBox: this.shouldShowSearch() });
+                // To include the toolbox category in the Blockly 'where am I' screen reader shortcuts (i and shift + i),
+                // the Blockly toolbox must be populated with categories that include their color and name.
+                const allCategoriesToToolboxItemInfo = allCategories.map(c => ({
+                    kind: "category",
+                    name: c.name ? c.name : Util.capitalize(c.nameid),
+                    colour: c.color,
+                    contents: [] as Blockly.utils.toolbox.ToolboxItemInfo[]
+                }));
+                (Blockly.getMainWorkspace() as Blockly.WorkspaceSvg).getToolbox().render({contents: allCategoriesToToolboxItemInfo});
             } else {
                 this.showFlyoutOnlyToolbox();
             }
@@ -1840,6 +1880,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.editor.getFlyout().hide();
         }
         if (this.toolbox) this.toolbox.clear();
+    }
+
+    public isFlyoutVisible(): boolean {
+        return !!this.editor?.getFlyout()?.isVisible();
     }
 
     public setFlyoutForceOpen(forceOpen: boolean) {
@@ -2152,6 +2196,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private showFlyoutInternal_(xmlList: Element[], flyoutName: string = "default", skipCache = false) {
+        // Blockly does this in Toolbox.onClick_ but the React toolbox doesn't trigger
+        // that as there's no valid Blockly toolbox item.
+        Blockly.hideChaff(true);
+
         this.currentFlyoutKey = flyoutName;
         const flyout = this.editor.getFlyout();
         flyout.show(xmlList);
@@ -2575,7 +2623,10 @@ function shouldEventHideFlyout(ev: Blockly.Events.Abstract) {
         ev.type === Blockly.Events.BLOCK_DRAG ||
         // Selected events are fired late when using 'T' to open the toolbox during a keyboard-driven block move.
         ev.type === Blockly.Events.SELECTED ||
-        ev.type === Blockly.Events.BLOCK_MOVE
+        ev.type === Blockly.Events.BLOCK_MOVE ||
+        // Prevent melody editor -> category click closing newly opened flyout.
+        ev.type === pxtblockly.FIELD_EDITOR_OPEN_EVENT_TYPE ||
+        (ev.type === Blockly.Events.BLOCK_CHANGE && (ev as Blockly.Events.BlockChange).element === "field")
     ) {
         return false;
     }
