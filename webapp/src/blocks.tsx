@@ -1016,6 +1016,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     closeFlyout() {
         if (!this.editor) return;
+        // E.g. a context menu on a flyout block.
+        Blockly.hideChaff(true);
         this.hideFlyout();
     }
 
@@ -2152,6 +2154,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private showFlyoutInternal_(xmlList: Element[], flyoutName: string = "default", skipCache = false) {
+        // Blockly does this in Toolbox.onClick_ but the React toolbox doesn't trigger
+        // that as there's no valid Blockly toolbox item.
+        Blockly.hideChaff(true);
+
         this.currentFlyoutKey = flyoutName;
         const flyout = this.editor.getFlyout();
         flyout.show(xmlList);
@@ -2575,7 +2581,10 @@ function shouldEventHideFlyout(ev: Blockly.Events.Abstract) {
         ev.type === Blockly.Events.BLOCK_DRAG ||
         // Selected events are fired late when using 'T' to open the toolbox during a keyboard-driven block move.
         ev.type === Blockly.Events.SELECTED ||
-        ev.type === Blockly.Events.BLOCK_MOVE
+        ev.type === Blockly.Events.BLOCK_MOVE ||
+        // Prevent melody editor -> category click closing newly opened flyout.
+        ev.type === pxtblockly.FIELD_EDITOR_OPEN_EVENT_TYPE ||
+        (ev.type === Blockly.Events.BLOCK_CHANGE && (ev as Blockly.Events.BlockChange).element === "field")
     ) {
         return false;
     }
