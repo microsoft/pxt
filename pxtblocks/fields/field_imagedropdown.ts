@@ -45,9 +45,10 @@ export class FieldImageDropdown extends FieldDropdownGrid implements FieldCustom
         }
     }
 
-    protected createRow() {
+    protected createRow(rowIndex: number) {
         const row = document.createElement('div');
         row.setAttribute('role', 'row');
+        row.id = `${this.sourceBlock_.id}:row-${rowIndex}`;
         return row;
     }
 
@@ -121,8 +122,8 @@ export class FieldImageDropdown extends FieldDropdownGrid implements FieldCustom
         let descendantIndex = 0;
 
         // now create the actual row elements
-        for (const row of rows) {
-            const rowDiv = this.createRow();
+        for (const [rowIndex, row] of rows.entries()) {
+            const rowDiv = this.createRow(rowIndex);
             rowDiv.style.width = row.width + "px";
             rowDiv.style.height = row.height + "px";
             contentDiv.appendChild(rowDiv);
@@ -144,7 +145,7 @@ export class FieldImageDropdown extends FieldDropdownGrid implements FieldCustom
                 const buttonContainer = document.createElement('div');
                 buttonContainer.setAttribute('class', 'blocklyDropDownButtonContainer')
                 const button = document.createElement('div');
-                button.setAttribute('id', ':' + localDescendantIndex); // For aria-activedescendant
+                button.setAttribute('id', `${this.sourceBlock_.id}:${localDescendantIndex}`); // For aria-activedescendant
                 button.setAttribute('role', 'gridcell');
                 button.setAttribute('aria-selected', 'false');
                 button.classList.add('blocklyDropDownButton');

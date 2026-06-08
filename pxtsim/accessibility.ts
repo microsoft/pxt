@@ -18,7 +18,7 @@ namespace pxsim.accessibility {
         } else if (e.key === "/" && meta) {
             e.preventDefault();
             return "togglekeyboardcontrolshelp";
-        } else if (e.key === "b" && meta) {
+        } else if (e.key.toLowerCase() === "b" && meta) {
             e.preventDefault();
             return "toggleareamenu"
         }
