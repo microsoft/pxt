@@ -1382,10 +1382,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     showVariablesFlyout() {
         this.showFlyoutInternal_(pxtblockly.createVariablesFlyoutCategory(this.editor), "variables");
+        this.setFlyoutLabel(lf("Variables"));
     }
 
     showFunctionsFlyout() {
         this.showFlyoutInternal_(pxtblockly.createFunctionsFlyoutCategory(this.editor), "functions", true);
+        this.setFlyoutLabel(lf("Functions"));
     }
 
     getViewState() {
@@ -1887,6 +1889,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         });
 
         return res;
+    }
+
+    public setFlyoutLabel(categoryName: string) {
+        const blockCanvas = this.editor.getFlyout().getWorkspace().getBlockCanvas();
+        blockCanvas.ariaLabel = lf("{0} blocks", categoryName);
     }
 
     public hideFlyout() {
