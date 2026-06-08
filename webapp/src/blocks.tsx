@@ -692,6 +692,21 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         });
 
         Blockly.ShortcutRegistry.registry.register({
+            name: "toggle_simulator",
+            keyCodes: [Blockly.ShortcutRegistry.registry.createSerializedKey(Blockly.utils.KeyCodes.S, null)],
+            preconditionFn: (workspace, scope) => {
+                if (workspace.isFlyout || !scope.focusedNode) {
+                    return false
+                }
+                return true;
+            },
+            callback: () => {
+                this.parent.startStopSimulator({ clickTrigger: true });
+                return true
+            }
+        });
+
+        Blockly.ShortcutRegistry.registry.register({
             name: "download",
             keyCodes: [Blockly.ShortcutRegistry.registry.createSerializedKey(Blockly.utils.KeyCodes.L, null)],
             preconditionFn: (workspace, scope) => {

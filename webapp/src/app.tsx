@@ -88,6 +88,7 @@ import { FeedbackModal } from "../../react-common/components/controls/Feedback/F
 import { ThemeManager } from "../../react-common/components/theming/themeManager";
 import { applyPolyfills } from "./polyfills";
 import { sendUpdateFeedbackTheme } from "../../react-common/components/controls/Feedback/FeedbackEventListener";
+import { ariaAnnounce } from "./util";
 
 pxt.blocks.requirePxtBlockly = () => pxtblockly as any;
 pxt.blocks.requireBlockly = () => Blockly;
@@ -3735,11 +3736,12 @@ export class ProjectView
                 break;
             case SimState.Running:
                 this.stopSimulator(false, opts);
+                ariaAnnounce(lf("Simulator stopped"), "assertive", "status");
                 break;
             default:
                 this.maybeShowPackageErrors(true);
                 this.startSimulator(opts);
-                if (!this.state.fullscreen && opts && opts.clickTrigger) getBoardView().focus();
+                ariaAnnounce(lf("Simulator running"), "assertive", "status");
                 break;
         }
     }
@@ -3950,9 +3952,6 @@ export class ProjectView
             this.startSimulator();
         } else {
             simulator.driver.restart(); // fast restart
-        }
-        if (!this.state.fullscreen) {
-            getBoardView().focus();
         }
         if (!isDebug) {
             this.blocksEditor.clearBreakpoints();
