@@ -96,6 +96,11 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
         firstFocusableElement?.focus();
     }
 
+    setLabel(label: string) {
+        const container = document.getElementById("monacoFlyoutWrapper");
+        container.ariaLabel = label;
+    }
+
     protected getBlockMouseOver = (name: string) => {
         return () => {
             pxt.tickEvent("monaco.toolbox.itemmouseover");
