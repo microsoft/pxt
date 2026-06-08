@@ -1357,6 +1357,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.hideFlyout();
     }
 
+    public isFlyoutVisible(): boolean {
+        return !!(this.flyout?.state?.groups && !this.flyout.state.hide);
+    }
+
     public hideFlyout() {
         if (this.flyout) this.flyout.setState({ groups: undefined });
 
