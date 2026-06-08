@@ -3370,6 +3370,13 @@ export class ProjectView
         return cmds.pairAsync();
     }
 
+    shouldShowPairingDialogOnDownload(): boolean {
+        return pxt.appTarget.appTheme.preferWebUSBDownload
+            && pxt.appTarget?.compile?.webUSB
+            && pxt.usb.isEnabled
+            && !webusb.userPrefersDownloadFlagSet();
+    }
+
     ///////////////////////////////////////////////////////////
     ////////////             Compile              /////////////
     ///////////////////////////////////////////////////////////
@@ -4795,17 +4802,22 @@ export class ProjectView
     }
 
     hidePackageDialog() {
+        const focusToolbox = this.state.extensionsToolboxTriggered;
         this.setState({
             ...this.state,
+            extensionsToolboxTriggered: false,
             extensionsVisible: false
         })
 
-        this.editor.focusToolbox(CategoryNameID.Extensions);
+        if (focusToolbox) {
+            this.editor.focusToolbox(CategoryNameID.Extensions);
+        }
     }
 
-    showPackageDialog() {
+    showPackageDialog(toolboxTriggered?: boolean) {
         this.setState({
             ...this.state,
+            extensionsToolboxTriggered: toolboxTriggered,
             extensionsVisible: true
         })
     }
