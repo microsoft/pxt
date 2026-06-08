@@ -5,6 +5,7 @@ import * as pkg from "./package";
 import * as data from "./data";
 import * as auth from "./auth";
 import * as core from "./core";
+import * as cmds from "./cmds"
 import * as toolboxeditor from "./toolboxeditor"
 import * as compiler from "./compiler"
 import * as toolbox from "./toolbox";
@@ -41,6 +42,7 @@ import { assertMethod } from "../../pxtblocks/monkeyPatches/util";
 import { HIDDEN_CLASS_NAME } from "../../pxtblocks/plugins/flyout/blockInflater";
 import { AIFooter } from "../../react-common/components/controls/AIFooter";
 import { getShortcutKeysShort, LIST_SHORTCUTS_SHORTCUT } from "./shortcut_formatting";
+import { FlyoutButton } from "../../pxtblocks/plugins/flyout/flyoutButton";
 
 interface CopyDataEntry {
     version: 1;
@@ -688,6 +690,32 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 return startMoveShortcut.callback!(workspace, e, shortcut, scope);
             }
         });
+
+        Blockly.ShortcutRegistry.registry.register({
+            name: "download",
+            keyCodes: [Blockly.ShortcutRegistry.registry.createSerializedKey(Blockly.utils.KeyCodes.L, null)],
+            preconditionFn: (workspace, scope) => {
+                if (workspace.isFlyout || !scope.focusedNode) {
+                    return false
+                }
+                return true;
+            },
+            callback: () => {
+                if (pxt.commands.onDownloadButtonClick) {
+                    pxt.commands.onDownloadButtonClick();
+                } else {
+                    if (this.parent.shouldShowPairingDialogOnDownload()
+                        && !pxt.packetio.isConnected()
+                        && !pxt.packetio.isConnecting()
+                    ) {
+                        cmds.pairAsync(true).then(() => this.parent.compile());
+                    } else {
+                        this.parent.compile();
+                    }
+                }
+                return true
+            }
+        });
     }
 
     private initWorkspaceSearch() {
@@ -1266,8 +1294,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (sourceBlock?.disposed || sourceBlock?.hasDisabledReason(HIDDEN_CLASS_NAME)) {
             return true;
         }
-        if (node instanceof Blockly.FlyoutButton) {
-            return node.getSvgRoot().parentNode === null;
+        if (node instanceof FlyoutButton) {
+            return node.isDisposed();
         }
         if (!sourceBlock) {
             return true;
@@ -1332,7 +1360,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     showPackageDialog() {
         pxt.tickEvent("blocks.addpackage");
         if (this.editor.getToolbox()) this.editor.getToolbox().clearSelection();
-        this.parent.showPackageDialog();
+        this.parent.showPackageDialog(true);
     }
 
     showVariablesFlyout() {
@@ -1850,6 +1878,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.editor.getFlyout().hide();
         }
         if (this.toolbox) this.toolbox.clear();
+    }
+
+    public isFlyoutVisible(): boolean {
+        return !!this.editor?.getFlyout()?.isVisible();
     }
 
     public setFlyoutForceOpen(forceOpen: boolean) {
