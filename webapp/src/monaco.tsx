@@ -795,7 +795,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     public showPackageDialog() {
         pxt.tickEvent("monaco.addpackage", undefined, { interactiveConsent: true });
         this.hideFlyout();
-        this.parent.showPackageDialog();
+        this.parent.showPackageDialog(true);
     }
 
     private defineEditorTheme(hc?: boolean, withNamespaces?: boolean) {
