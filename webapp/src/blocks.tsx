@@ -5,6 +5,7 @@ import * as pkg from "./package";
 import * as data from "./data";
 import * as auth from "./auth";
 import * as core from "./core";
+import * as cmds from "./cmds"
 import * as toolboxeditor from "./toolboxeditor"
 import * as compiler from "./compiler"
 import * as toolbox from "./toolbox";
@@ -686,6 +687,32 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 maybeCloneBlockForMove(workspace);
 
                 return startMoveShortcut.callback!(workspace, e, shortcut, scope);
+            }
+        });
+
+        Blockly.ShortcutRegistry.registry.register({
+            name: "download",
+            keyCodes: [Blockly.ShortcutRegistry.registry.createSerializedKey(Blockly.utils.KeyCodes.L, null)],
+            preconditionFn: (workspace, scope) => {
+                if (workspace.isFlyout || !scope.focusedNode) {
+                    return false
+                }
+                return true;
+            },
+            callback: () => {
+                if (pxt.commands.onDownloadButtonClick) {
+                    pxt.commands.onDownloadButtonClick();
+                } else {
+                    if (this.parent.shouldShowPairingDialogOnDownload()
+                        && !pxt.packetio.isConnected()
+                        && !pxt.packetio.isConnecting()
+                    ) {
+                        cmds.pairAsync(true).then(() => this.parent.compile());
+                    } else {
+                        this.parent.compile();
+                    }
+                }
+                return true
             }
         });
     }
