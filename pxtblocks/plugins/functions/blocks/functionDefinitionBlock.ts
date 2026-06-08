@@ -198,7 +198,7 @@ Blockly.Blocks[FUNCTION_DEFINITION_BLOCK_TYPE] = {
                     image,
                     24,
                     24,
-                    "",
+                    lf("Collapse block"),
                     () => {
                         this.setCollapsed(true);
                     },
