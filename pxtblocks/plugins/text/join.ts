@@ -103,18 +103,16 @@ const TEXT_JOIN_MUTATOR_MIXIN = {
         }
         if (block.rendered && block instanceof Blockly.BlockSvg) {
             block.queueRender().then(() => {
-                block.queueRender().then(() => {
-                    if (this.buttons) {
-                        let field = this.buttons.fieldRow[0];
-                        if (this.buttons.fieldRow.length > 1) {
-                            field = this.delta < 0 ? field : this.buttons.fieldRow[1];
-                        }
-                        maybeFocusMutatorButton(field);
-                        this.buttons = null;
-                        this.delta = 0;
+                if (this.buttons) {
+                    let field = this.buttons.fieldRow[0];
+                    if (this.buttons.fieldRow.length > 1) {
+                        field = this.delta < 0 ? field : this.buttons.fieldRow[1];
                     }
-                });
-            })
+                    maybeFocusMutatorButton(field);
+                    this.buttons = null;
+                    this.delta = 0;
+                }
+            });
         }
         Blockly.Events.setGroup(false);
     },
