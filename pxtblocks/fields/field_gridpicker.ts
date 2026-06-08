@@ -376,6 +376,7 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
         if (!e) {
             this.addKeyboardNavigableClass();
         }
+        this.getFocusableElement().ariaExpanded = 'true';
     }
 
     private positionMenu_(tableContainer: HTMLElement) {
@@ -690,6 +691,7 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
     private onClose_() {
         this.disposeTooltip();
         this.disposeGrid();
+        this.getFocusableElement().ariaExpanded = 'false';
     }
 
     // Used for focus trap

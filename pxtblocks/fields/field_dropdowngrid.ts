@@ -64,6 +64,17 @@ export abstract class FieldDropdownGrid extends FieldDropdown {
         }
     }
 
+    override recomputeAriaContext() {
+        const result = super.recomputeAriaContext();
+        if (!this.fieldGroup_) return false; // There's no element to set currently.
+        const element = this.getFocusableElement();
+        const isInFlyout = this.getSourceBlock()?.workspace?.isFlyout || false;
+        if (!isInFlyout) {
+            element.ariaHasPopup = "grid";
+        }
+        return result
+    }
+
     protected addKeyDownHandler(gridItemContainer: HTMLElement) {
         const nextKey = pxt.Util.isUserLanguageRtl() ? "ArrowLeft" : "ArrowRight";
         const prevKey = pxt.Util.isUserLanguageRtl() ? "ArrowRight" : "ArrowLeft";

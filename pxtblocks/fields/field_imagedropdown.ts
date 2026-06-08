@@ -233,6 +233,7 @@ export class FieldImageDropdown extends FieldDropdownGrid implements FieldCustom
         } else if (this.borderRect_) {
             this.borderRect_.setAttribute('fill', source.getColourTertiary());
         }
+        this.getFocusableElement().ariaExpanded = 'true';
     }
 
     doValueUpdate_(newValue: any): void {
@@ -268,6 +269,7 @@ export class FieldImageDropdown extends FieldDropdownGrid implements FieldCustom
         } else if (this.borderRect_) {
             this.borderRect_.setAttribute('fill', this.savedPrimary_);
         }
+        this.getFocusableElement().ariaExpanded = 'false';
     };
 }
 
