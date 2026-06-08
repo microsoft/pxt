@@ -21,6 +21,7 @@ export interface UiProps {
     role?: string;
     title?: string;
     ariaLabel?: string;
+    ariaHasPopup?: boolean | "dialog" | "menu" | "false" | "listbox" | "grid" | "tree" | "true";
     ariaHidden?: boolean;
     tabIndex?: number;
     rightIcon?: boolean;
@@ -458,7 +459,8 @@ export class Item extends data.Component<ItemProps, {}> {
             text,
             title,
             ariaLabel,
-            ariaHidden
+            ariaHidden,
+            ariaHasPopup
         } = this.props;
 
         return (
@@ -467,6 +469,7 @@ export class Item extends data.Component<ItemProps, {}> {
                 aria-label={(!this.props.role || this.props.role === "presentation") ? "" : ariaLabel || title || text}
                 aria-selected={this.props.active}
                 aria-hidden={ariaHidden}
+                aria-haspopup={ariaHasPopup}
                 title={title || text}
                 tabIndex={this.props.tabIndex || 0}
                 key={this.props.value}

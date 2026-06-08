@@ -46,7 +46,8 @@ export class FieldImages extends FieldImageDropdown implements FieldCustom {
         this.addKeyDownHandler(contentDiv)
         const options = this.getOptions();
         if (this.shouldSort_) options.sort();
-        let row = this.createRow();
+        let rowNum = 0;
+        let row = this.createRow(rowNum);
         for (let i = 0; i < options.length; i++) {
             const content = (options[i] as any)[0]; // Human-readable text or image.
             const value = (options[i] as any)[1]; // Language-neutral value.
@@ -63,7 +64,7 @@ export class FieldImages extends FieldImageDropdown implements FieldCustom {
             const buttonContainer = document.createElement('div');
             buttonContainer.setAttribute('class', 'blocklyDropDownButtonContainer')
             let button = document.createElement('div');
-            button.setAttribute('id', ':' + i); // For aria-activedescendant
+            button.setAttribute('id', `${this.sourceBlock_.id}:${i}`); // For aria-activedescendant
             button.setAttribute('role', 'gridcell');
             button.setAttribute('aria-selected', 'false');
             button.setAttribute('class', 'blocklyDropDownButton');
@@ -120,7 +121,7 @@ export class FieldImages extends FieldImageDropdown implements FieldCustom {
             row.append(buttonContainer)
             if (row.childElementCount === this.columns_) {
                 contentDiv.appendChild(row);
-                row = this.createRow();
+                row = this.createRow(++rowNum);
             }
         }
         if (row.childElementCount) {
