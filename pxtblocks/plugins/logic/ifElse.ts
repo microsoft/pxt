@@ -85,7 +85,7 @@ const IF_ELSE_MIXIN = {
         this.update_(update);
         // Focus the condition of the last elseif branch, fallback to the condition of the if.
         const focusIndex = this.elseifCount_;
-        const inputName = focusIndex === 0 ? 'IF0' : 'IF' + focusIndex;
+        const inputName = 'IF' + focusIndex;
         maybeFocusMutatorButton(this.getInput(inputName)?.connection?.targetBlock() as Blockly.BlockSvg);
     },
     addElseIf_: function (this: IfElseBlock) {
@@ -101,7 +101,7 @@ const IF_ELSE_MIXIN = {
         this.update_(update, arg);
         // Focus the condition of the branch before the one just removed.
         const prevIndex = arg - 1;
-        const inputName = prevIndex === 0 ? 'IF0' : 'IF' + prevIndex;
+        const inputName = 'IF' + prevIndex;
         maybeFocusMutatorButton(this.getInput(inputName)?.connection?.targetBlock() as Blockly.BlockSvg);
     },
     update_: function (this: IfElseBlock, update: () => void, arg?: number) {
