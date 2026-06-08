@@ -52,6 +52,16 @@ export class FieldSoundEffect extends FieldBase<FieldSoundEffectParams> {
                 this.workspace.addChangeListener(this.onWorkspaceChange);
             }
         }
+
+        this.fieldGroup_.ariaHasPopup = "dialog";
+        this.fieldGroup_.ariaExpanded = "false";
+        this.fieldGroup_.setAttribute("role", "button");
+        this.fieldGroup_.setAttribute("aria-controls", "sound-effect-editor");
+        this.fieldGroup_.ariaLabel = this.getAriaValue();
+    }
+
+    override getAriaValue() {
+        return lf("sound effect");
     }
 
     protected onDispose(): void {
@@ -156,6 +166,7 @@ export class FieldSoundEffect extends FieldBase<FieldSoundEffectParams> {
             widgetDiv.style.opacity = "";
             widgetDiv.style.transition = "";
             widgetDiv.style.alignItems = "";
+            this.fieldGroup_.ariaExpanded = "false";
 
             Blockly.Events.enable();
             Blockly.Events.setGroup(true);
@@ -209,6 +220,7 @@ export class FieldSoundEffect extends FieldBase<FieldSoundEffectParams> {
         widgetDiv.style.alignItems = "center";
         widgetDiv.style.transition = "transform 0.25s ease 0s, opacity 0.25s ease 0s";
         widgetDiv.style.borderRadius = "";
+        this.fieldGroup_.ariaExpanded = "true";
 
         fv.onHide(() => {
             // do nothing
