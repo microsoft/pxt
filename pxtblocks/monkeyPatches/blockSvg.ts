@@ -14,8 +14,8 @@ export function monkeyPatchBlockSvg() {
 
             const image = ConstantProvider.EXPAND_IMAGE_DATAURI;
             if (image) {
-                input.appendField(new FieldImageNoText(image, 24, 24, "", () => {
-                    this.setCollapsed(false)
+                input.appendField(new FieldImageNoText(image, 24, 24, lf("Expand block"), () => {
+                    this.setCollapsed(false);
                 }, false));
             }
         }
