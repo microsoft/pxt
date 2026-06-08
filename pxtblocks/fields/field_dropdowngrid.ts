@@ -41,7 +41,7 @@ export abstract class FieldDropdownGrid extends FieldDropdown {
     private setFocusedItem(gridItemContainer: HTMLElement, e: KeyboardEvent) {
         this.lastUserInputAction = 'keymove';
         this.setFocusedItem_(gridItemContainer);
-        gridItemContainer.setAttribute('aria-activedescendant', ":" + this.activeDescendantIndex);
+        gridItemContainer.setAttribute('aria-activedescendant', `${this.sourceBlock_.id}:${this.activeDescendantIndex}`);
         e.preventDefault();
         e.stopPropagation();
     }
