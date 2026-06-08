@@ -17,7 +17,8 @@
         "spritekind.ts",
         "decompilerShadowAlias.ts",
         "blockAliasFor.ts",
-        "forceStatement.ts"
+        "forceStatement.ts",
+        "robot.ts"
     ],
     "public": true,
     "dependencies": {},

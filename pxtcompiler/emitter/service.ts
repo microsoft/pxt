@@ -348,6 +348,12 @@ namespace ts.pxtc {
             if (si.attributes.block) {
                 locStrings[`${si.qName}|block`] = si.attributes.block;
                 const comp = pxt.blocks.compileInfo(si);
+                const paramsWithLabels = comp.thisParameter ? [comp.thisParameter, ...comp.parameters] : comp.parameters;
+                for (const param of paramsWithLabels) {
+                    if (param.labelLocalizationKey && param.label) {
+                        locStrings[param.labelLocalizationKey] = param.label;
+                    }
+                }
                 if (comp.handlerArgs?.length) {
                     for (const arg of comp.handlerArgs) {
                         locStrings[arg.localizationKey] = arg.name;
@@ -723,6 +729,8 @@ namespace ts.pxtc.service {
     // don't export, fuse is internal only
     let lastFuse: Fuse<SearchInfo>;
     let lastProjectFuse: Fuse<ProjectSearchInfo>;
+    let lastHomeFuse: Fuse<HomeSearchInfo>;
+    let lastHomeFuseKey: string;
     export let builtinItems: SearchInfo[];
     export let blockDefinitions: pxt.Map<pxt.blocks.BlockDefinition>;
     export let tbSubset: pxt.Map<boolean | string>;
@@ -771,6 +779,23 @@ namespace ts.pxtc.service {
         return newOpts
     }
 
+    export interface HomeSearchInfo {
+        id: string;
+        name: string;
+        description?: string;
+        tags?: string;
+        searchTerms?: string;
+    }
+
+    export interface HomeSearchOptions {
+        term: string;
+        entries: HomeSearchInfo[];
+    }
+
+    export interface OpArg {
+        homeSearch?: HomeSearchOptions;
+    }
+
     export interface ServiceOps {
         reset: () => void;
         setOptions: (v: OpArg) => void;
@@ -796,6 +821,8 @@ namespace ts.pxtc.service {
         apiSearch: (v: OpArg) => SearchInfo[];
         projectSearch: (v: OpArg) => ProjectSearchInfo[];
         projectSearchClear: () => void;
+        homeSearch: (v: OpArg) => HomeSearchInfo[];
+        homeSearchClear: () => void;
     };
 
     export type OpRes =
@@ -804,7 +831,7 @@ namespace ts.pxtc.service {
         | { words: number[]; }
         | KsDiagnostic[]
         | { formatted: string; pos: number; }
-        | ApisInfo | BlocksInfo | ProjectSearchInfo[]
+        | ApisInfo | BlocksInfo | ProjectSearchInfo[] | HomeSearchInfo[]
         | {};
 
     export type OpError = { errorMessage: string };
@@ -1025,7 +1052,7 @@ namespace ts.pxtc.service {
             }
 
             const { bannedCategories, screenSize } = v.runtime;
-            const { apis } = lastApiInfo;
+            const { apis, decls } = lastApiInfo;
             const blocksInfo = blocksInfoOp(apis, bannedCategories);
             const checker = service && service.getProgram().getTypeChecker();
             // needed for blocks that have parent wraps like music.play(...)
@@ -1039,7 +1066,8 @@ namespace ts.pxtc.service {
                 bannedCategories,
                 screenSize,
                 checker,
-                includeParentSnippet
+                includeParentSnippet,
+                decls
             }
             const snippetNode = getSnippet(snippetContext, fn, n as FunctionLikeDeclaration, isPython)
             const snippet = snippetStringify(snippetNode)
@@ -1361,6 +1389,38 @@ namespace ts.pxtc.service {
         },
         projectSearchClear: () => {
             lastProjectFuse = undefined;
+        },
+        homeSearch: v => {
+            const search = v.homeSearch;
+            const searchSet = search.entries;
+            const searchKey = searchSet.map((h: HomeSearchInfo) => h.id).join("\n");
+
+            if (!lastHomeFuse || lastHomeFuseKey !== searchKey) {
+                const fuseOptions = {
+                    shouldSort: true,
+                    threshold: 0.4,
+                    location: 0,
+                    distance: 1000,
+                    maxPatternLength: 16,
+                    minMatchCharLength: 2,
+                    findAllMatches: false,
+                    caseSensitive: false,
+                    keys: [
+                        { name: 'name', weight: 0.45 },
+                        { name: 'description', weight: 0.35 },
+                        { name: 'searchTerms', weight: 0.35 },
+                        { name: 'tags', weight: 0.15 },
+                    ]
+                };
+                lastHomeFuse = new Fuse(searchSet, fuseOptions);
+                lastHomeFuseKey = searchKey;
+            }
+
+            return lastHomeFuse.search(search.term);
+        },
+        homeSearchClear: () => {
+            lastHomeFuse = undefined;
+            lastHomeFuseKey = undefined;
         }
     }
 

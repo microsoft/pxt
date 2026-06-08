@@ -7,6 +7,7 @@ import { Toolbar } from "./Toolbar";
 import { ShareLinkInput } from "./ShareLinkInput";
 import { MakeCodeFrame } from "./MakecodeFrame";
 import { CatalogOverlay } from "./CatalogOverlay";
+import { AskAIOverlay } from "./AskAIOverlay";
 import { Strings, Ticks } from "../constants";
 import { setRunOnLoad } from "../transforms/setRunOnLoad";
 
@@ -41,6 +42,7 @@ export const ProjectWorkspace: React.FC = () => {
     return (
         <div className={css.panel}>
             <CatalogOverlay />
+            <AskAIOverlay />
             <Toolbar left={<ProjectName />} right={<ProjectToolbar />} />
             <ShareLinkInput />
             <MakeCodeFrame />

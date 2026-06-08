@@ -4,6 +4,7 @@ export interface CriteriaParameterOption {
     id?: string;
     value: string;
     label?: string;
+    category?: string;
 }
 
 // Represents a parameter definition in a catalog criteria.

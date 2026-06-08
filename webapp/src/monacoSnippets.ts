@@ -740,6 +740,75 @@ export function getPauseUntil() {
     return pauseUntil;
 }
 
+export function getExtensionContributedBuiltinBlock(id: string, weight: number): BlockDefinition[] | undefined {
+    if (id === "makecode_color_picker") {
+        return [
+            {
+                name: "makecode_color_picker_rgb",
+                snippetName: "colorHelpers.rgb",
+                snippet: "colorHelpers.rgb(255, 255, 0)",
+                pySnippetName: "colorHelpers.rgb",
+                pySnippet: "colorHelpers.rgb(255, 255, 0)",
+                attributes: {
+                    blockId: "makecode_color_picker",
+                    jsDoc: lf("Returns a color from red, green, and blue parameters"),
+                    weight: weight + 0.05
+                }
+            },
+            {
+                name: "makecode_color_picker_hsv",
+                snippetName: "colorHelpers.hsv",
+                snippet: "colorHelpers.hsv(0, 100, 100)",
+                pySnippetName: "colorHelpers.hsv",
+                pySnippet: "colorHelpers.hsv(0, 100, 100)",
+                attributes: {
+                    blockId: "makecode_color_picker",
+                    jsDoc: lf("Returns a color from hue, saturation, and value parameters"),
+                    weight: weight + 0.04
+                }
+            },
+            {
+                name: "makecode_color_picker_hsl",
+                snippetName: "colorHelpers.hsl",
+                snippet: "colorHelpers.hsl(0, 100, 100)",
+                pySnippetName: "colorHelpers.hsl",
+                pySnippet: "colorHelpers.hsl(0, 100, 100)",
+                attributes: {
+                    blockId: "makecode_color_picker",
+                    jsDoc: lf("Returns a color from hue, saturation, and lightness parameters"),
+                    weight: weight + 0.03
+                }
+            },
+            {
+                name: "makecode_color_picker_cmyk",
+                snippetName: "colorHelpers.cmyk",
+                snippet: "colorHelpers.cmyk(0, 100, 100, 0)",
+                pySnippetName: "colorHelpers.cmyk",
+                pySnippet: "colorHelpers.cmyk(0, 100, 100, 0)",
+                attributes: {
+                    blockId: "makecode_color_picker",
+                    jsDoc: lf("Returns a color from cyan, magenta, yellow, and black parameters"),
+                    weight: weight + 0.02
+                }
+            },
+            {
+                name: "makecode_color_picker_hex",
+                snippetName: "colorHelpers.hex",
+                snippet: "colorHelpers.hex(\"#FFFF00\")",
+                pySnippetName: "colorHelpers.hex",
+                pySnippet: "colorHelpers.hex(\"#FFFF00\")",
+                attributes: {
+                    blockId: "makecode_color_picker",
+                    jsDoc: lf("Returns a color from a hex string"),
+                    weight: weight + 0.01
+                }
+            }
+        ]
+    }
+
+    return [];
+}
+
 // Map of defined snippets to blockIds, for when multiple
 // blocks (eg "for index" and "repeat") map to the same snippet
 let _blockIdMap: pxt.Map<string[]>;

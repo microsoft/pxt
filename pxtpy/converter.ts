@@ -1882,7 +1882,7 @@ namespace pxt.py {
         }
 
         let lExp: B.JsNode | undefined = undefined;
-        if (annotation && annotAsType) {
+        if (annotation && annotAsType && target.kind === "Name" && (target as py.Name).isdef) {
             // if we have a type annotation, emit it in these cases if the r-value is:
             //  - null / undefined
             //  - empty list

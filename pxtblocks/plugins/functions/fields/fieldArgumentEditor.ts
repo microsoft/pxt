@@ -1,6 +1,8 @@
 import * as Blockly from "blockly";
 import { FunctionManager } from "../functionManager";
 import { ArgumentEditorBlock } from "../blocks/argumentEditorBlocks";
+import { prompt } from "../../../external";
+import { MsgKey } from "../msg";
 
 export interface FieldArgumentEditorConfig extends Blockly.FieldTextInputConfig {
 }
@@ -44,6 +46,50 @@ export class FieldArgumentEditor extends Blockly.FieldTextInput {
                 div.appendChild(typeIcon);
             }
         }
+    }
+
+    protected override showEditor_(
+        _e?: Event,
+        quietInput = false,
+        manageEphemeralFocus: boolean = true,
+    ) {
+        this.workspace_ = (this.sourceBlock_ as Blockly.BlockSvg).workspace;
+        if (
+            !quietInput &&
+            this.workspace_.options.modalInputs &&
+            (Blockly.utils.userAgent.MOBILE || Blockly.utils.userAgent.ANDROID || Blockly.utils.userAgent.IPAD)
+        ) {
+            this.showPromptEditorModal();
+        } else {
+            super.showEditor_(_e, quietInput, manageEphemeralFocus);
+        }
+    }
+
+    protected showPromptEditorModal() {
+        prompt(
+            Blockly.Msg.CHANGE_VALUE_TITLE,
+            this.getText(),
+            (text: string) => {
+                // Text is null if user pressed cancel button.
+                if (text !== null) {
+                    this.setValue(this.getValueFromEditorText_(text));
+                }
+                this.onFinishEditing_(this.value_);
+            },
+            {
+                placeholder: undefined,
+                buttons: [
+                    {
+                        label: Blockly.Msg[MsgKey.FUNCTIONS_DELETE_PARAMETER_BUTTON],
+                        className: "red",
+                        icon: "trash",
+                        onclick: () => {
+                            this.removeCallback();
+                        }
+                    }
+                ]
+            }
+        )
     }
 
     protected removeCallback() {

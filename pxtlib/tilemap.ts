@@ -1120,7 +1120,7 @@ namespace pxt {
                             meta: {
                                 // For tilemaps, use the id as the display name for backwards compat
                                 displayName: tm.displayName || tm.id,
-                                package: pack.id
+                                package: dep.id
                             },
                             data: decodeTilemap(tm, id => this.resolveTile(id))
                         });
@@ -1133,7 +1133,7 @@ namespace pxt {
                             meta: {
                                 // For tilemaps, use the id as the display name for backwards compat
                                 displayName: tm.displayName || tm.id,
-                                package: pack.id
+                                package: dep.id
                             },
                             data: decodeTilemap(tm, id => this.getAssetCollection(AssetType.Tile, true).getByID(id))
                         });
@@ -1403,11 +1403,21 @@ namespace pxt {
 
         generateNewName(type: AssetType, name?: string) {
             const defaultName = name || pxt.getDefaultAssetDisplayName(type);
-            let newName = defaultName;
-            let index = 0;
 
+            if (!this.isNameTaken(type, defaultName)) {
+                return defaultName;
+            }
+
+            // If ending in digits, continue incrementing that suffix (e.g. "level3" -> "level4")
+            // Otherwise append 1, 2, 3...
+            const matchEndingNumber = /^(.*)(\d+)$/.exec(defaultName);
+            const baseName = matchEndingNumber ? matchEndingNumber[1] : defaultName;
+            let index = matchEndingNumber ? parseInt(matchEndingNumber[2], 10) + 1 : 1;
+
+            let newName = baseName + index;
             while (this.isNameTaken(type, newName)) {
-                newName = defaultName + (index++);
+                index++;
+                newName = baseName + index;
             }
 
             return newName;
@@ -1579,6 +1589,28 @@ namespace pxt {
                 }
                 if (entry.tilemapTile) {
                     tags.push("tile");
+
+                    let category: string = undefined;
+                    if (entry.displayName && entry.displayName.indexOf("--") !== -1) {
+                        const rawCategory = entry.displayName.split("--")[1].trim();
+                        const categoryParts = rawCategory.split(/[\s\-]+/g).map((part, index) => {
+                            if (index === 0) {
+                                return part
+                            }
+                            else {
+                                return part.charAt(0).toUpperCase() + part.slice(1);
+                            }
+                        });
+                        category = categoryParts.join("");
+                    }
+
+                    if (!category && !/^transparency(?:4|8|16|32)$/.test(varName)) {
+                        category = namespaceName
+                    }
+
+                    if (category) {
+                        tags.push("category-" + category);
+                    }
                 }
             }
 
@@ -2291,11 +2323,11 @@ namespace pxt {
     }
 
     export function patchTemporaryAsset(oldValue: pxt.Asset, newValue: pxt.Asset, project: TilemapProject) {
-        if (!oldValue || assetEquals(oldValue, newValue)) return newValue;
+        if (!oldValue || assetEquals(oldValue, newValue) || newValue.id !== oldValue.id) return newValue;
 
         newValue = cloneAsset(newValue, true);
         const wasTemporary = oldValue.internalID === -1;
-        const isTemporary = newValue.internalID === -1;
+        const isTemporary = newValue.internalID === -1 && newValue.meta.displayName === undefined;
 
         // if we went from being temporary to no longer being temporary,
         // make sure we replace the junk id with a new value

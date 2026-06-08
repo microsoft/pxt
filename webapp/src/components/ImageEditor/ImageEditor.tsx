@@ -19,6 +19,7 @@ import { Unsubscribe, Action } from 'redux';
 import { createNewImageAsset, getNewInternalID } from '../../assets';
 import { AssetEditorCore } from '../ImageFieldEditor';
 import { classList } from '../../../../react-common/components/util';
+import { BUILTIN_CATEGORIES } from './tilemap/TilePalette';
 
 export const LIGHT_MODE_TRANSPARENT = "#dedede";
 
@@ -122,7 +123,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
         }
     }
 
-    openGalleryAsset(asset: pxt.Animation | pxt.ProjectImage | pxt.Tile) {
+    openGalleryAsset(asset: pxt.Asset) {
         const current = this.getAsset();
 
         const frames = (this.getStore().getState().store.present as AnimationState).frames;
@@ -150,6 +151,123 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
                         this.setCurrentFrame(pxt.sprite.Bitmap.fromData(asset.frames[0]), true);
                         break;
                 }
+                break;
+            case pxt.AssetType.Tilemap:
+                if (asset.type === pxt.AssetType.Tilemap) {
+                    const currentTilemap = current as pxt.ProjectTilemap;
+                    const copied = pxt.cloneAsset(asset) as pxt.ProjectTilemap;
+
+                    const project = pxt.react.getTilemapProject();
+                    pxt.sprite.updateTilemapReferencesFromResult(project, currentTilemap);
+                    this.prepareGalleryTilemapTemplate(project, currentTilemap, copied);
+
+                    copied.id = currentTilemap.id;
+                    copied.internalID = currentTilemap.internalID;
+                    copied.meta = { ...currentTilemap.meta };
+                    const { tileGallery } = this.getStore().getState().editor;
+                    this.openAsset(copied, tileGallery, false);
+                }
+                break;
+        }
+    }
+
+    protected prepareGalleryTilemapTemplate(
+        project: pxt.TilemapProject,
+        current: pxt.ProjectTilemap,
+        copied: pxt.ProjectTilemap
+    ) {
+        this.mergeTilemapTilesIntoProject(project, copied);
+        this.mergeCurrentTilemapCustomTilesIntoTileset(project, current, copied);
+    }
+
+    protected mergeCurrentTilemapCustomTilesIntoTileset(
+        project: pxt.TilemapProject,
+        source: pxt.ProjectTilemap,
+        target: pxt.ProjectTilemap
+    ) {
+        const sourceTiles = source?.data?.tileset?.tiles as pxt.Tile[];
+        const targetTiles = target?.data?.tileset?.tiles as pxt.Tile[];
+        const tileWidth = target?.data?.tileset?.tileWidth;
+
+        if (!sourceTiles?.length || !targetTiles || !tileWidth) return;
+
+        const transparencyId = `myTiles.transparency${tileWidth}`;
+
+        for (const tile of sourceTiles) {
+            if (!tile?.isProjectTile) continue;
+            if (tile.id === transparencyId) continue;
+            if (tile.bitmap?.width !== tileWidth || tile.bitmap?.height !== tileWidth) continue;
+
+            const resolved = project.resolveTile(tile.id);
+            if (!resolved) continue;
+            if (targetTiles.some(t => t?.id === resolved.id)) continue;
+
+            targetTiles.push(resolved);
+        }
+    }
+
+    /**
+     * When applying a gallery tilemap as a template, ensure the resulting tilemap references tiles in *this* project.
+     */
+    protected mergeTilemapTilesIntoProject(project: pxt.TilemapProject, tilemap: pxt.ProjectTilemap) {
+        const tiles = tilemap?.data?.tileset?.tiles;
+        if (!tiles?.length) return;
+
+        const getSourceTileName = (t: pxt.Tile) => {
+            const name = t?.meta?.displayName || pxt.getShortIDForAsset(t) || t?.id;
+            return name ? name.split(".").pop() : undefined;
+        }
+
+        const remappedByBitmap: pxt.Map<pxt.Tile> = {};
+
+        for (let i = 0; i < tiles.length; i++) {
+            let tile = tiles[i];
+            if (!tile) continue;
+
+            const key = (tile as any).jresData || (tile.bitmap ? pxt.sprite.base64EncodeBitmap(tile.bitmap) : "");
+            if (key && remappedByBitmap[key]) {
+                tiles[i] = remappedByBitmap[key];
+                continue;
+            }
+
+            const existing = tile.bitmap && project.lookupAssetByValue(pxt.AssetType.Tile, tile);
+            if (existing) {
+                tiles[i] = existing;
+                if (key) remappedByBitmap[key] = existing;
+
+                if (!existing.meta?.displayName) {
+                    const originalName = getSourceTileName(tile);
+                    if (originalName) {
+                        const uniqueDisplayName = project.generateNewName(pxt.AssetType.Tile, originalName);
+                        project.updateTile({
+                            ...existing,
+                            meta: {
+                                ...existing.meta,
+                                displayName: uniqueDisplayName
+                            }
+                        });
+                    }
+                }
+                continue;
+            }
+
+            const galleryTile = project.lookupAsset(pxt.AssetType.Tile, tile.id);
+            if (galleryTile) {
+                tile = galleryTile;
+            }
+
+            if (tile.bitmap) {
+                if (tile.meta.tags?.some(t => t.startsWith("category-") || BUILTIN_CATEGORIES.some(c => c.id === t))) {
+                    // tile already exist in the tile palette dropdown, so skip to avoid creating duplicates in the project
+                    continue;
+                }
+                const originalName = getSourceTileName(tile);
+                const newName = originalName ? project.generateNewName(pxt.AssetType.Tile, originalName) : undefined;
+
+                const created = project.createNewTile(tile.bitmap, undefined, newName);
+                tiles[i] = created;
+                if (key) remappedByBitmap[key] = created;
+            }
         }
     }
 

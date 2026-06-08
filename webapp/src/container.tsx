@@ -99,11 +99,10 @@ export class DocsMenu extends data.PureComponent<DocsMenuProps, {}> {
     renderCore() {
         const { parent, editor } = this.props;
         const targetTheme = pxt.appTarget.appTheme;
-        const accessibleBlocksEnabled = data.getData<boolean>(auth.ACCESSIBLE_BLOCKS);
 
         const items: MenuItem[] = [];
 
-        if (this.props.inBlocks && accessibleBlocksEnabled) {
+        if (this.props.inBlocks) {
             items.push({
                 role: "menuitem",
                 label: lf("Keyboard Controls"),
@@ -145,7 +144,6 @@ export class DocsMenu extends data.PureComponent<DocsMenuProps, {}> {
 
 export interface SettingsMenuProps extends ISettingsProps {
     greenScreen: boolean;
-    accessibleBlocks: boolean;
     showShare?: boolean;
     inBlocks: boolean;
     inTutorial: boolean;
@@ -154,7 +152,6 @@ export interface SettingsMenuProps extends ISettingsProps {
 // This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
 export interface SettingsMenuState {
     greenScreen?: boolean;
-    accessibleBlocks?: boolean;
     showShare?: boolean;
 }
 
@@ -175,7 +172,6 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.showThemePicker = this.showThemePicker.bind(this);
         this.toggleHighContrast = this.toggleHighContrast.bind(this);
         this.toggleGreenScreen = this.toggleGreenScreen.bind(this);
-        this.toggleAccessibleBlocks = this.toggleAccessibleBlocks.bind(this);
         this.showResetDialog = this.showResetDialog.bind(this);
         this.showShareDialog = this.showShareDialog.bind(this);
         this.showFeedbackDialog = this.showFeedbackDialog.bind(this);
@@ -261,10 +257,6 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.props.parent.toggleGreenScreen();
     }
 
-    toggleAccessibleBlocks() {
-        this.props.parent.toggleAccessibleBlocks("settings");
-    }
-
     showResetDialog() {
         pxt.tickEvent("menu.reset", undefined, { interactiveConsent: true });
         pxt.tickEvent("reset"); // Deprecated, will Feb 2018.
@@ -308,9 +300,6 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         if (nextProps.greenScreen !== undefined) {
             newState.greenScreen = nextProps.greenScreen;
         }
-        if (nextProps.accessibleBlocks !== undefined) {
-            newState.accessibleBlocks = nextProps.accessibleBlocks;
-        }
         if (nextProps.showShare !== undefined) {
             newState.showShare = nextProps.showShare;
         }
@@ -319,7 +308,6 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
 
     shouldComponentUpdate(nextProps: SettingsMenuProps, nextState: SettingsMenuState, nextContext: any): boolean {
         return this.state.greenScreen != nextState.greenScreen
-            || this.state.accessibleBlocks != nextState.accessibleBlocks
             || this.state.showShare != nextState.showShare
             || nextProps.inBlocks !== this.props.inBlocks
             || nextProps.inTutorial !== this.props.inTutorial;
@@ -329,7 +317,6 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         const hasIdentity = pxt.auth.hasIdentity();
         const highContrast = ThemeManager.isCurrentThemeHighContrast();
         const { greenScreen } = this.state;
-        const accessibleBlocks = this.getData<boolean>(auth.ACCESSIBLE_BLOCKS);
         const targetTheme = pxt.appTarget.appTheme;
         const packages = pxt.appTarget.cloud && !!pxt.appTarget.cloud.packages;
         const reportAbuse = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing;
@@ -365,6 +352,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         const simCollapseText = headless ? lf("Toggle the File Explorer") : lf("Toggle the simulator");
         const extDownloadMenuItems = pxt.commands.getDownloadMenuItems?.() || [];
 
+        const pxtjson = pkg.mainEditorPkg()?.getKsPkg()?.config;
 
         const items: MenuItem[] = [];
         if (showHome) {
@@ -465,7 +453,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             });
         }
 
-        if (targetTheme.timeMachine) {
+        if (targetTheme.timeMachine && !(pxtjson?.disableHistory)) {
             items.push({
                 role: "menuitem",
                 leftIcon: "icon history",
@@ -517,15 +505,6 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             title: lf("Theme"),
             onClick: this.showThemePicker
         });
-
-        if (this.props.inBlocks) {
-            items.push({
-                role: "menuitemcheckbox",
-                label: lf("Keyboard Controls"),
-                isChecked: accessibleBlocks,
-                onChange: this.toggleAccessibleBlocks
-            });
-        }
 
         if (showGreenScreen) {
             items.push({

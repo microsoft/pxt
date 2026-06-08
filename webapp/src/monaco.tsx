@@ -664,6 +664,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     {showErrorList && (
                         <ErrorList
                             onSizeChange={this.setErrorListState}
+                            collapsedByUser={this.parent.state.errorListCollapsed}
+                            onUserCollapse={this.setErrorListCollapsePreference}
                             errors={this.errors}
                             startDebugger={this.startDebugger}
                             getErrorHelp={this.getErrorHelp}
@@ -793,7 +795,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     public showPackageDialog() {
         pxt.tickEvent("monaco.addpackage", undefined, { interactiveConsent: true });
         this.hideFlyout();
-        this.parent.showPackageDialog();
+        this.parent.showPackageDialog(true);
     }
 
     private defineEditorTheme(hc?: boolean, withNamespaces?: boolean) {
@@ -837,11 +839,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const baseTheme: monaco.editor.BuiltinTheme = hc
             ? "hc-black"
             : (ThemeManager.getInstance(document)?.getCurrentColorTheme()?.monacoBaseTheme as monaco.editor.BuiltinTheme) ?? (inverted ? "vs-dark" : "vs");
+        const useColors = (hc || baseTheme === "vs-dark") ? {} : colors;
         monaco.editor.defineTheme('pxtTheme', {
             base: baseTheme,
             inherit: true, // can also be false to completely replace the builtin rules
             rules: rules,
-            colors: hc ? {} : colors
+            colors: useColors
         });
         monaco.editor.setTheme('pxtTheme');
 
@@ -957,6 +960,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 errorListState: newState
             });
         }
+    }
+
+    protected setErrorListCollapsePreference = (collapsed: boolean) => {
+        this.parent.setState({
+            errorListCollapsed: collapsed
+        });
     }
 
     prepare() {
@@ -1283,7 +1292,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (!this.editor) return;
         if (this.parent.settings.editorFontSize >= MAX_EDITOR_FONT_SIZE) return;
         let currentFont = this.getEditorFontSize();
-        this.parent.settings.editorFontSize = currentFont + 1;
+        this.parent.settings.editorFontSize = currentFont + 3;
         this.editor.updateOptions({ fontSize: this.parent.settings.editorFontSize });
         this.forceDiagnosticsUpdate();
     }
@@ -1292,7 +1301,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (!this.editor) return;
         if (this.parent.settings.editorFontSize <= MIN_EDITOR_FONT_SIZE) return;
         let currentFont = this.getEditorFontSize();
-        this.parent.settings.editorFontSize = currentFont - 1;
+        this.parent.settings.editorFontSize = currentFont - 3;
         this.editor.updateOptions({ fontSize: this.parent.settings.editorFontSize });
         this.forceDiagnosticsUpdate();
     }
@@ -1346,6 +1355,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     public closeFlyout() {
         if (!this.editor) return;
         this.hideFlyout();
+    }
+
+    public setFlyoutLabel(categoryName: string) {
+        this.flyout.setLabel(lf("{0} snippets", categoryName))
+    }
+
+    public isFlyoutVisible(): boolean {
+        return !!(this.flyout?.state?.groups && !this.flyout.state.hide);
     }
 
     public hideFlyout() {
@@ -1870,6 +1887,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             if (!res[ns]) {
                 res[ns] = [];
             }
+
+            if (fn.attributes.builtinBlockId) {
+                res[ns].push(...snippets.getExtensionContributedBuiltinBlock(fn.attributes.builtinBlockId, fn.attributes.weight || 50));
+                return;
+            }
+
             res[ns].push(fn);
             if (fn.attributes.toolboxParent) {
                 const parent = this.blockInfo.blocks.find(b => b.attributes.blockId === fn.attributes.toolboxParent);
@@ -2007,7 +2030,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private filterBlocks(subns: string, blocks: toolbox.BlockDefinition[]) {
         return blocks.filter((block => !(block.attributes.blockHidden)
             && !(block.attributes.deprecated && !this.parent.isTutorial())
-            && (block.name.indexOf('_') != 0)
+            && (block.name.indexOf('_') != 0 || block.attributes.blockAliasFor)
             && ((!subns && !block.attributes.subcategory && !block.attributes.advanced)
                 || (subns && ((block.attributes.advanced && subns == lf("more"))
                     || (block.attributes.subcategory && subns == block.attributes.subcategory))))));

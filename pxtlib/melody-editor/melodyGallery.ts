@@ -24,12 +24,15 @@ namespace pxtmelody {
         private focusHandler: (e: FocusEvent) => {} | undefined;
         private blurHandler: (e: FocusEvent) => {} | undefined;
 
-        constructor() {
+
+        constructor(melodyGalleryDivId: string) {
             this.containerDiv = document.createElement("div");
-            this.containerDiv.setAttribute("id", "melody-editor-gallery-outer");
+            this.containerDiv.setAttribute("id", `${melodyGalleryDivId}-outer`);
+            this.containerDiv.setAttribute("role", "tabpanel");
+            this.containerDiv.setAttribute("aria-labelledby", `${melodyGalleryDivId}-control`);
             this.contentDiv = document.createElement("div");
-            this.contentDiv.setAttribute("id", "melody-editor-gallery");
-            this.contentDiv.setAttribute("role", "menu");
+            this.contentDiv.setAttribute("id", melodyGalleryDivId);
+            this.contentDiv.setAttribute("role", "grid");
             this.contentDiv.setAttribute("tabindex", "0");
 
             this.keyDownHandler = this.keyDownListener.bind(this);
@@ -234,15 +237,18 @@ namespace pxtmelody {
         protected mkButton(sample: pxtmelody.MelodyInfo, i: number, width: string, height: string) {
             const outer = mkElement("div", {
                 className: "melody-gallery-button melody-editor-card",
-                id: `:${i}`
+                id: `melody-gallery:row-${i}`,
+                role: "row"
             });
 
             const icon = mkElement("i", {
                 className: "music icon melody-icon"
             });
+            addAriaHidden(icon);
 
             const label = mkElement("div", {
-                className: "melody-editor-text"
+                className: "melody-editor-text",
+                "aria-hidden": "true",
             });
 
             label.innerText = sample.name;
@@ -251,12 +257,17 @@ namespace pxtmelody {
 
             const leftButton = mkElement("div", {
                 className: "melody-editor-button left-button",
-                role: "menuitem",
-                title: sample.name,
+                role: "gridcell",
                 tabIndex: -1,
-                id: getCellId(i, 0)
-            }, () => this.handleSelection(sample))
+                id: getCellId(0, i)
+            }, () => this.handleSelection(sample));
 
+            const leftButtonAriaText = mkElement("p", {
+                className: "sr-only"
+            })
+            leftButtonAriaText.textContent = lf("Select {0} melody", sample.name)
+
+            leftButton.appendChild(leftButtonAriaText);
             leftButton.appendChild(icon);
             leftButton.appendChild(label);
             leftButton.appendChild(preview);
@@ -267,18 +278,24 @@ namespace pxtmelody {
 
             const rightButton = mkElement("div", {
                 className: "melody-editor-button right-button",
-                role: "menuitem",
-                title: lf("Preview {0}", sample.name),
+                role: "gridcell",
                 tabIndex: -1,
-                id: getCellId(i,1)
+                id: getCellId(1, i)
             }, () => this.togglePlay(sample, i));
 
             const playIcon = mkElement("i", {
                 className: "play icon"
             });
+            addAriaHidden(playIcon);
 
             this.playIcons[i] = playIcon;
 
+            const rightButtonAriaText = mkElement("p", {
+                className: "sr-only"
+            })
+            rightButtonAriaText.textContent = lf("Preview {0} melody", sample.name)
+
+            rightButton.appendChild(rightButtonAriaText);
             rightButton.appendChild(playIcon);
             outer.appendChild(rightButton);
 
@@ -415,4 +432,6 @@ namespace pxtmelody {
     }
 }
 
-const getCellId = (x: number, y: number) => `:${x}-${y === 0 ? "selection" : "preview"}`;
+const getCellId = (x: number, y: number) => `melody-gallery-cell:${y}-${x === 0 ? "selection" : "preview"}`;
+
+const addAriaHidden = (el: HTMLElement) => el.ariaHidden = "true";

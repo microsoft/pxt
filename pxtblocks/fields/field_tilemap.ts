@@ -10,6 +10,8 @@ export interface FieldTilemapOptions {
     tileWidth: string | number;
 
     filter?: string;
+    // Filter above is used for tiles in the tilemap editor; this is used to filter tilemaps themselves in the gallery
+    tilemapFilter?: string;
     lightMode: boolean;
 }
 
@@ -19,6 +21,7 @@ interface ParsedFieldTilemapOptions {
     disableResize: boolean;
     tileWidth: 4 | 8 | 16 | 32;
     filter?: string;
+    tilemapFilter?: string;
     lightMode: boolean;
 }
 
@@ -109,6 +112,10 @@ function parseFieldOptions(opts: FieldTilemapOptions) {
 
     if (opts.filter) {
         parsed.filter = opts.filter;
+    }
+
+    if (opts.tilemapFilter) {
+        parsed.tilemapFilter = opts.tilemapFilter;
     }
 
     if (opts.tileWidth) {

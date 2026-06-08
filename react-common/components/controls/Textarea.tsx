@@ -16,6 +16,7 @@ export interface TextareaProps extends ControlProps {
     resize?: "both" | "horizontal" | "vertical";
     wrap?: "hard" | "soft" | "off";
     autoResize?: boolean;
+    showRemainingCharacterCount?: boolean | number;
 
     onChange?: (newValue: string) => void;
     onEnterKey?: (value: string) => void;
@@ -43,7 +44,8 @@ export const Textarea = (props: TextareaProps) => {
         wrap,
         autoResize,
         onChange,
-        onEnterKey
+        onEnterKey,
+        showRemainingCharacterCount
     } = props;
 
     const [value, setValue] = React.useState(initialValue || "");
@@ -80,7 +82,7 @@ export const Textarea = (props: TextareaProps) => {
                 previousWidthRef.current = width;
             }
         });
-        
+
         if (textareaRef.current) {
             observer.observe(textareaRef.current);
         }
@@ -113,6 +115,12 @@ export const Textarea = (props: TextareaProps) => {
         }
     }
 
+    let shouldShowCharacterCount = maxLength !== undefined && !!showRemainingCharacterCount;
+
+    if (shouldShowCharacterCount && typeof showRemainingCharacterCount === "number") {
+        shouldShowCharacterCount = value.length >= (maxLength - showRemainingCharacterCount);
+    }
+
     return (
         <div className={classList("common-textarea-wrapper", disabled && "disabled", resize && `resize-${resize}`, className)}>
             {label && <label className="common-textarea-label">
@@ -143,6 +151,12 @@ export const Textarea = (props: TextareaProps) => {
                     autoCapitalize={autoComplete ? "" : "off"}
                     spellCheck={autoComplete}
                     disabled={disabled} />
+                    {
+                        shouldShowCharacterCount &&
+                        <div className="common-textarea-character-count" role="presentation" aria-hidden="true">
+                            {maxLength - value.length}
+                        </div>
+                    }
             </div>
         </div>
     );

@@ -41,7 +41,7 @@ export abstract class FieldDropdownGrid extends FieldDropdown {
     private setFocusedItem(gridItemContainer: HTMLElement, e: KeyboardEvent) {
         this.lastUserInputAction = 'keymove';
         this.setFocusedItem_(gridItemContainer);
-        gridItemContainer.setAttribute('aria-activedescendant', ":" + this.activeDescendantIndex);
+        gridItemContainer.setAttribute('aria-activedescendant', `${this.sourceBlock_.id}:${this.activeDescendantIndex}`);
         e.preventDefault();
         e.stopPropagation();
     }
@@ -62,6 +62,17 @@ export abstract class FieldDropdownGrid extends FieldDropdown {
                 y: pageY
             }
         }
+    }
+
+    override recomputeAriaContext() {
+        const result = super.recomputeAriaContext();
+        if (!this.fieldGroup_) return false; // There's no element to set currently.
+        const element = this.getFocusableElement();
+        const isInFlyout = this.getSourceBlock()?.workspace?.isFlyout || false;
+        if (!isInFlyout) {
+            element.ariaHasPopup = "grid";
+        }
+        return result
     }
 
     protected addKeyDownHandler(gridItemContainer: HTMLElement) {

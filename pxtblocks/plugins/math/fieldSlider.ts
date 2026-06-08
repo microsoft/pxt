@@ -9,7 +9,7 @@ export class FieldSlider extends Blockly.FieldNumber {
     private sliderKeydownHandler: (e: KeyboardEvent) => {} | undefined;
     private sliderBlurHandler: (e: FocusEvent) => {} | undefined;
     private sliderPointerdownHandler: (e: PointerEvent) => {} | undefined;
-    private keyboardControlActive = false;
+    protected keyboardControlActive = false;
 
     constructor(
         value?: string | number | typeof Blockly.Field.SKIP_SETUP,
@@ -167,6 +167,11 @@ export class FieldSlider extends Blockly.FieldNumber {
                 Blockly.hideChaff();
                 break;
             }
+            case "ArrowDown": {
+                e.preventDefault();
+                e.stopPropagation();
+                break;
+            }
         }
     }
 
@@ -181,11 +186,19 @@ export class FieldSlider extends Blockly.FieldNumber {
         // editor on mobile devices.
         super.showEditor_(_e, true);
 
+        if (typeof this.min_ === "number" && typeof this.max_ === "number") {
+            this.htmlInput_.ariaLabel = lf("Enter a value between {0} and {1}", this.min_, this.max_);
+        }
+
         Blockly.DropDownDiv.hideWithoutAnimation();
         Blockly.DropDownDiv.clearContent();
-        Blockly.DropDownDiv.getContentDiv().style.height = "";
+
 
         const contentDiv = Blockly.DropDownDiv.getContentDiv();
+        contentDiv.style.height = "";
+
+        // Used for high contrast styling
+        contentDiv.parentElement.classList.add("blocklyFieldSliderDropdown");
 
         // Accessibility properties
         contentDiv.setAttribute('role', 'menu');
@@ -312,11 +325,13 @@ Blockly.fieldRegistry.register('field_slider', FieldSlider);
 Blockly.Css.register(`
 :root {
     --blocklyFieldSliderBackgroundColor: #547AB2;
+    --blocklyFieldSliderThumbColor: #ffffff;
+    --blocklyFieldSliderThumbBorderColor: rgba(0, 0, 0, 0.15);
 }
 .blocklyFieldSliderLabel {
     font-family: "Helvetica Neue", "Segoe UI", Helvetica, sans-serif;
     font-size: 0.65rem;
-    color: $colour_toolboxText;
+    color: #000000;
     margin: 8px;
 }
 .blocklyFieldSliderLabelText {
@@ -348,15 +363,15 @@ input[type=range].blocklyFieldSlider::-webkit-slider-thumb {
     width: 26px;
     height: 26px;
     margin-top: -1px;
-    background-color: white;
+    background-color: var(--blocklyFieldSliderThumbColor);
     border-radius: 100%;
-    -webkit-box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.15);
-    -moz-box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.15);
-    box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.15);
+    -webkit-box-shadow: 0 0 0 4px var(--blocklyFieldSliderThumbBorderColor);
+    -moz-box-shadow: 0 0 0 4px var(--blocklyFieldSliderThumbBorderColor);
+    box-shadow: 0 0 0 4px var(--blocklyFieldSliderThumbBorderColor);
     cursor: pointer;
 }
 input[type=range].blocklyFieldSlider:focus-visible::-webkit-slider-thumb {
-    outline: 2px solid white; 
+    outline: 2px solid white;
     outline-offset: 3px;
     -webkit-box-shadow: 0 0 0 3px var(--pxt-focus-border);
     -moz-box-shadow: 0 0 0 3px var(--pxt-focus-border);
@@ -369,17 +384,17 @@ input[type=range].blocklyFieldSlider::-moz-range-track {
     outline: none;
     border-radius: 11px;
     margin-bottom: 20px;
-    background: #547AB2;
+    background: var(--blocklyFieldSliderBackgroundColor);
 }
 input[type=range].blocklyFieldSlider::-moz-range-thumb {
     width: 26px;
     height: 26px;
     margin-top: -1px;
-    background-color: white;
+    background-color: var(--blocklyFieldSliderThumbColor);
     border-radius: 100%;
-    -webkit-box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.15);
-    -moz-box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.15);
-    box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.15);
+    -webkit-box-shadow: 0 0 0 4px var(--blocklyFieldSliderThumbBorderColor);
+    -moz-box-shadow: 0 0 0 4px var(--blocklyFieldSliderThumbBorderColor);
+    box-shadow: 0 0 0 4px var(--blocklyFieldSliderThumbBorderColor);
     cursor: pointer;
 }
 `)

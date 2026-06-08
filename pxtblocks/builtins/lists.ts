@@ -32,7 +32,8 @@ export function initLists() {
                 {
                     "type": "input_value",
                     "name": "VALUE",
-                    "check": ['Array']
+                    "check": ['Array'],
+                    "ariaLabelText": lf("list to check")
                 }
             ],
             "output": 'Number',
@@ -53,12 +54,14 @@ export function initLists() {
                     {
                         "type": "input_value",
                         "name": "LIST",
-                        "check": "Array"
+                        "check": "Array",
+                        "ariaLabelText": lf("list to check")
                     },
                     {
                         "type": "input_value",
                         "name": "INDEX",
-                        "check": "Number"
+                        "check": "Number",
+                        "ariaLabelText": lf("position within list")
                     }
                 ],
                 "colour": pxt.toolbox.blockColors['arrays'],
@@ -84,17 +87,20 @@ export function initLists() {
                     {
                         "type": "input_value",
                         "name": "LIST",
-                        "check": "Array"
+                        "check": "Array",
+                        "ariaLabelText": lf("list to change")
                     },
                     {
                         "type": "input_value",
                         "name": "INDEX",
-                        "check": "Number"
+                        "check": "Number",
+                        "ariaLabelText": lf("position within list")
                     },
                     {
                         "type": "input_value",
                         "name": "VALUE",
-                        "check": null
+                        "check": null,
+                        "ariaLabelText": lf("value to set")
                     }
                 ],
                 "previousStatement": null,

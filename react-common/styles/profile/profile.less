@@ -400,18 +400,31 @@
                 background-color: var(--pxt-neutral-background1);
                 color: var(--pxt-neutral-foreground1);
                 border: solid 1px var(--pxt-neutral-foreground1);
+                position: relative;
+                overflow: visible;
 
                 .label {
                     display: flex;
                     flex-direction: row;
                     gap: 1rem;
+                    align-items: center;
+
+                    .last-used-ribbon {
+                        position: absolute;
+                        top: -1rem;
+                        right: -1rem;
+                        left: auto;
+                        transform: none;
+                        margin-right: 0;
+                        z-index: 1;
+                    }
 
                     .logo {
                         width: 1.25rem;
                     }
 
                     .title {
-                        align-self: center;
+                        text-align: left;
                     }
                 }
             }

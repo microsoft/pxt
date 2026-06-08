@@ -83,6 +83,12 @@ export default function reducer(state: AppState, action: Action): AppState {
                 catalogOpen: action.open,
             };
         }
+        case "SET_ASK_AI_OPEN": {
+            return {
+                ...state,
+                askAiOpen: action.open,
+            };
+        }
         case "SET_CHECKLIST": {
             /*await*/ updateStoredChecklistAsync(state.checklist, action.checklist); // fire and forget, we don't need to wait for this to finish.
             return {

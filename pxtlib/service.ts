@@ -756,6 +756,19 @@ namespace ts.pxtc {
                         }
                     }
                 }
+                const paramsWithLabels = comp.thisParameter ? [comp.thisParameter, ...comp.parameters] : comp.parameters;
+                for (const param of paramsWithLabels) {
+                    if (!param.labelLocalizationKey) continue;
+
+                    const locSuff = param.labelLocalizationKey.slice(fn.qName.length);
+                    const paramLabel = lookupLoc(locSuff, langLower + locSuff);
+                    if (paramLabel) {
+                        setBlockTranslationCacheKey(param.labelLocalizationKey, paramLabel);
+                    }
+                    else {
+                        clearBlockTranslationCacheKey(param.labelLocalizationKey);
+                    }
+                }
             }
 
             if (!locBlock && altLocSrcFn) {
@@ -901,8 +914,12 @@ namespace ts.pxtc {
         "weight",
         "imageLiteral",
         "gridLiteral",
+        "colorGridLiteral",
         "topblockWeight",
-        "inlineInputModeLimit"
+        "inlineInputModeLimit",
+        "gridLiteralVerticalSpacing",
+        "gridLiteralHorizontalSpacing",
+        "gridLiteralBorderRadius",
     ];
 
     const booleanAttributes: (keyof CommentAttrs)[] = [
@@ -923,6 +940,7 @@ namespace ts.pxtc {
         "argsNullable",
         "compileHiddenArguments",
         "expandArgumentsInToolbox",
+        "gridLiteralUseProjectPalette"
     ];
 
     export function parseCommentString(cmt: string): CommentAttrs {
@@ -986,6 +1004,9 @@ namespace ts.pxtc {
                         const key = n.slice(n.indexOf('.shadowOptions.') + 15, n.length);
                         if (!res.paramShadowOptions[field]) res.paramShadowOptions[field] = {};
                         res.paramShadowOptions[field][key] = v
+                    } else if (U.endsWith(n, ".label")) {
+                        if (!res.paramLabels) res.paramLabels = {};
+                        res.paramLabels[n.slice(0, n.length - 6)] = v;
                     } else if (U.endsWith(n, ".min")) {
                         if (!res.paramMin) res.paramMin = {}
                         res.paramMin[n.slice(0, n.length - 4)] = v
@@ -1740,6 +1761,7 @@ namespace ts.pxtc.service {
         blocks?: BlocksOptions;
         extensions?: ExtensionsOptions;
         projectSearch?: ProjectSearchOptions;
+        homeSearch?: HomeSearchOptions;
         snippet?: SnippetOptions;
         runtime?: pxt.RuntimeOptions;
         light?: boolean; // in light mode?
@@ -1805,6 +1827,19 @@ namespace ts.pxtc.service {
     export interface ProjectSearchInfo {
         name: string;
         id?: string;
+    }
+
+    export interface HomeSearchOptions {
+        term: string;
+        entries: HomeSearchInfo[];
+    }
+
+    export interface HomeSearchInfo {
+        id: string;
+        name: string;
+        description?: string;
+        tags?: string;
+        searchTerms?: string;
     }
 
     export interface BlocksOptions {

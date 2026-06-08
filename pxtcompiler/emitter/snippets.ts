@@ -106,6 +106,7 @@ namespace ts.pxtc.service {
         screenSize?: pxt.Size;
         parameterOverride?: { [key: string]: SnippetNode };
         includeParentSnippet?: boolean;
+        decls?: pxt.Map<ts.Declaration>;
     }
 
     export function getSnippet(context: SnippetContext, fn: SymbolInfo, decl: ts.FunctionLikeDeclaration, python?: boolean, recursionDepth = 0): SnippetNode {
@@ -115,6 +116,11 @@ namespace ts.pxtc.service {
 
         const PY_INDENT: string = (pxt as any).py.INDENT;
         const fileType = python ? "python" : "typescript";
+
+        if (fn.attributes.blockAliasFor) {
+            fn = apis.byQName[fn.attributes.blockAliasFor] || fn;
+            decl = context.decls?.[fn.qName] as ts.FunctionLikeDeclaration || decl;
+        }
 
         let snippetPrefix = fn.namespace;
         let addNamespace = false;

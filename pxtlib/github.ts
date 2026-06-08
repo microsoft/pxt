@@ -1208,12 +1208,12 @@ namespace pxt.github {
         return p ? "github:" + (ignoreCase ? p.fullName : p.fullName.toLowerCase()) + (p.tag ? `#${p.tag}` : '') : undefined;
     }
 
-    export function normalizeRepoId(id: string, defaultTag?: string) {
+    export function normalizeRepoId(id: string, defaultTag?: string, ignoreCase = false) {
         const gid = parseRepoId(id);
         if (!gid) return undefined;
         if (!gid.tag && defaultTag)
             gid.tag = defaultTag
-        return stringifyRepo(gid);
+        return stringifyRepo(gid, ignoreCase);
     }
 
     export function join(...parts: string[]) {

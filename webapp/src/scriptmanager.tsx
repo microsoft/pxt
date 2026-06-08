@@ -13,6 +13,7 @@ import { ProgressBar } from "./dialogs";
 import { classList } from "../../react-common/components/util";
 
 import ISettingsProps = pxt.editor.ISettingsProps;
+import { ScriptMetadataView } from "./codecard";
 
 declare const zip: any;
 
@@ -149,21 +150,21 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         const headers = this.getSortedHeaders();
         const selectedLength = Object.keys(selected).length;
         core.confirmDelete(selectedLength == 1 ? headers.find((h) => Object.keys(selected)[0].includes(h.id)).name
-                                               : selectedLength.toString(), () => {
-            const promises: Promise<void>[] = [];
-            headers.forEach((header, index) => {
-                if (selected[this.getId(header)]) {
-                    // Delete each selected project
-                    header.isDeleted = true;
-                    promises.push(workspace.forceSaveAsync(header, {}));
-                }
-            })
-            this.setState({ selected: {} })
-            return Promise.all(promises)
-                .then(() => {
-                    data.clearCache();
-                });
-        }, selectedLength > 1);
+            : selectedLength.toString(), () => {
+                const promises: Promise<void>[] = [];
+                headers.forEach((header, index) => {
+                    if (selected[this.getId(header)]) {
+                        // Delete each selected project
+                        header.isDeleted = true;
+                        promises.push(workspace.forceSaveAsync(header, {}));
+                    }
+                })
+                this.setState({ selected: {} })
+                return Promise.all(promises)
+                    .then(() => {
+                        data.clearCache();
+                    });
+            }, selectedLength > 1);
     }
 
     handleOpen() {
@@ -329,7 +330,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
 
         let done = 0;
 
-        const takenNames: {[index: string]: boolean} = {};
+        const takenNames: { [index: string]: boolean } = {};
 
         const format = (val: number, len = 2) => {
             let out = val + "";
@@ -400,8 +401,8 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                 let index = 2;
                 do {
                     fn = `${targetNickname}-${dateSnippet}-${sanitizedName}${index}.mkcd`
-                    index ++;
-                } while(takenNames[fn])
+                    index++;
+                } while (takenNames[fn])
             }
 
             takenNames[fn] = true;
@@ -659,12 +660,48 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                                     const isSelected = !!selected[id];
                                     const showMarkedNew = isMarkedNew && !isSelected;
 
-                                    return <ProjectsCodeRow key={id} id={id} selected={isSelected}
-                                        onRowClicked={this.handleCardClick} index={index}
-                                        scr={scr} markedNew={showMarkedNew}>
-                                        <td>{scr.name}</td>
-                                        <td>{pxt.Util.timeSince(scr.recentUse)}</td>
-                                    </ProjectsCodeRow>
+                                    const imageUrl = scr.board ? pxt.bundledSvg(scr.board) : undefined;
+
+                                    const tutorialStep =
+                                        scr.tutorial ? scr.tutorial.tutorialStep
+                                            : scr.tutorialCompleted ? scr.tutorialCompleted.steps - 1
+                                                : undefined;
+                                    const tutoriallength =
+                                        scr.tutorial ? scr.tutorial.tutorialStepInfo.length
+                                            : scr.tutorialCompleted ? scr.tutorialCompleted.steps
+                                                : undefined;
+
+                                    return (
+                                        <ProjectsCodeRow
+                                            key={id}
+                                            id={id}
+                                            selected={isSelected}
+                                            onRowClicked={this.handleCardClick}
+                                            index={index}
+                                            scr={scr}
+                                            markedNew={showMarkedNew}
+                                        >
+                                            <td className="project-row-name">
+                                                <span
+                                                    className="fileimage"
+                                                    style={imageUrl ? { backgroundImage: `url(${imageUrl})` } : undefined}
+                                                />
+                                                <span>
+                                                    {scr.name}
+                                                </span>
+                                                <ScriptMetadataView
+                                                    tutorialLength={tutoriallength}
+                                                    tutorialStep={tutorialStep}
+                                                />
+                                            </td>
+                                            <td className="project-row-time">
+                                                <ScriptMetadataView
+                                                    projectId={scr.id}
+                                                    time={scr.modificationTime}
+                                                />
+                                            </td>
+                                        </ProjectsCodeRow>
+                                    );
                                 })}
                             </tbody>
                         </table>
@@ -710,7 +747,25 @@ class ProjectsCodeRow extends sui.StatelessUIElement<ProjectsCodeRowProps> {
 
     renderCore() {
         const { scr, onRowClicked, onClick, selected, markedNew, children, ...rest } = this.props;
-        return <tr tabIndex={0} {...rest} onKeyDown={fireClickOnEnter} onClick={this.handleClick} style={{ cursor: 'pointer' }} className={`${markedNew ? 'warning' : selected ? 'positive' : ''}`}>
+        let iconClass: string;
+
+        if (scr.githubId)
+            iconClass = "github";
+        else if (scr.extensionUnderTest)
+            iconClass = "test";
+        else if (scr.board) {
+            iconClass = "board";
+        } else if (scr.editor) {
+            iconClass = scr.editor;
+        }
+
+        const className = classList(
+            "project-row",
+            iconClass,
+            markedNew ? "warning" : (selected ? "positive" : "")
+        )
+
+        return <tr tabIndex={0} {...rest} onKeyDown={fireClickOnEnter} onClick={this.handleClick} style={{ cursor: 'pointer' }} className={className}>
             <td className="collapsing" onClick={this.handleCheckboxClick}>
                 <sui.Icon icon={`circle outline large ${selected ? `check green` : markedNew ? 'black' : ''}`} />
             </td>

@@ -114,6 +114,16 @@ export function runNpmAsync(...args: string[]) {
     return runNpmAsyncWithCwd(".", ...args);
 }
 
+export async function npmLatestVersionAsync(packageName: string) {
+    const output = await spawnWithPipeAsync({
+        cmd: addCmd("npm"),
+        args: ["view", packageName, "dist-tags.latest"],
+        cwd: ".",
+    });
+
+    return output.toString("utf8").trim()
+}
+
 export interface NpmRegistry {
     _id: string;
     _name: string;

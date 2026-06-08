@@ -343,14 +343,6 @@ export function getHighContrastOnce(): boolean {
     return ThemeManager.isCurrentThemeHighContrast();
 }
 
-export async function toggleAccessibleBlocks(eventSource: string) {
-    await setAccessibleBlocks(!data.getData<boolean>(auth.ACCESSIBLE_BLOCKS), eventSource);
-}
-
-export async function setAccessibleBlocks(on: boolean, eventSource: string) {
-    await auth.setAccessibleBlocksPrefAsync(on, eventSource);
-}
-
 export async function setLanguage(lang: string) {
     pxt.BrowserUtils.setCookieLang(lang);
     pxt.Util.setUserLanguage(lang);

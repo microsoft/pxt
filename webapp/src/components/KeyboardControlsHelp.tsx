@@ -1,6 +1,8 @@
 import * as React from "react";
-import { getActionShortcut, getActionShortcutsAsKeys, ShortcutNames } from "../shortcut_formatting";
+import * as Blockly from "blockly";
+import { getShortcutKeysShortAll, LIST_SHORTCUTS_SHORTCUT } from "../shortcut_formatting";
 
+const names = Blockly.ShortcutItems.names;
 const isMacPlatform = pxt.BrowserUtils.isMac();
 
 const KeyboardControlsHelp = () => {
@@ -8,76 +10,76 @@ const KeyboardControlsHelp = () => {
     React.useEffect(() => {
         ref.current?.focus()
     }, []);
-    const ctrl = lf("Ctrl");
+    const ctrl = lf("{id:keyboard symbol}Ctrl");
     const cmd = isMacPlatform ? "⌘" : ctrl;
-    const optionOrCtrl = isMacPlatform ? "⌥" : ctrl;
-    const contextMenuRow = <Row name={lf("Open context menu")} shortcuts={[ShortcutNames.MENU]} />
-    const cleanUpRow = <Row name={lf("Workspace: Format code")} shortcuts={[ShortcutNames.CLEAN_UP]} />
+    const contextMenuRow = <Row name={lf("Open context menu")} shortcuts={[names.MENU]} />
+    const cleanUpRow = <Row name={lf("Workspace: Format code")} shortcuts={[names.CLEANUP]} />
     const orAsJoiner = lf("or")
-    const enterOrSpace = { shortcuts: getActionShortcutsAsKeys(ShortcutNames.EDIT_OR_CONFIRM), joiner: orAsJoiner}
+    const enterOrSpace = { shortcuts: getShortcutKeysShortAll(names.PERFORM_ACTION), joiner: orAsJoiner}
     const editOrConfirmRow = <Row name={lf("Edit or confirm")} {...enterOrSpace} />
     return (
         <aside id="keyboardnavhelp" aria-label={lf("Keyboard Controls")} ref={ref} tabIndex={0}>
             <h2>{lf("Keyboard Controls")}</h2>
             <table>
                 <tbody>
-                    <Row name={lf("Show/hide shortcut help")} shortcuts={[ShortcutNames.LIST_SHORTCUTS]} />
+                    <Row name={lf("Show/hide shortcut help")} shortcuts={[LIST_SHORTCUTS_SHORTCUT]} />
                     <Row name={lf("Open/close area menu")} shortcuts={[[cmd, "B"]]} />
-                    <Row name={lf("Block and toolbox navigation")} shortcuts={[ShortcutNames.UP, ShortcutNames.DOWN, ShortcutNames.LEFT, ShortcutNames.RIGHT]} />
-                    <Row name={lf("Toolbox")} shortcuts={[ShortcutNames.TOOLBOX]} />
+                    <Row name={lf("Block and toolbox navigation")} shortcuts={[names.NAVIGATE_UP, names.NAVIGATE_DOWN, names.NAVIGATE_LEFT, names.NAVIGATE_RIGHT]} />
+                    <Row name={lf("Toolbox")} shortcuts={[names.FOCUS_TOOLBOX]} />
                     {editOrConfirmRow}
-                    <Row name={lf("Move mode")} shortcuts={[ShortcutNames.MOVE]} >
+                    <Row name={lf("Move mode")} shortcuts={[names.START_MOVE]} >
                         <p className="hint">{lf("Press arrow keys to move to connections")}</p>
-                        <p className="hint">{lf("Hold {0} to move anywhere", optionOrCtrl)}</p>
+                        <p className="hint">{lf("Hold {0} to move anywhere", cmd)}</p>
                     </Row>
-                    <Row name={lf("Copy / paste")} shortcuts={[ShortcutNames.COPY, ShortcutNames.PASTE]} joiner="/" />
+                    <Row name={lf("Copy / paste")} shortcuts={[names.COPY, names.PASTE]} joiner="/" />
                     {cleanUpRow}
                     {contextMenuRow}
+                    <Row name={lf("Download your code to the {0}", pxt.appTarget.appTheme.boardName)} shortcuts={[["L"]]} />
                 </tbody>
             </table>
             <h3>{lf("Editor Overview")}</h3>
             <table>
                 <tbody>
-                    <Row name={lf("Move between menus, simulator and the workspace")} shortcuts={[[lf("Tab")], [lf("Shift"), lf("Tab")]]} joiner="row"/>
+                    <Row name={lf("Move between menus, simulator and the workspace")} shortcuts={[[lf("{id:keyboard symbol}Tab")], [lf("{id:keyboard symbol}Shift"), lf("{id:keyboard symbol}Tab")]]} joiner="row"/>
                     <Row name={lf("Open/close area menu")} shortcuts={[[cmd, "B"]]} />
-                    <Row name={lf("Exit")} shortcuts={[ShortcutNames.EXIT]} />
-                    <Row name={lf("Toolbox")} shortcuts={[ShortcutNames.TOOLBOX]} />
-                    <Row name={lf("Toolbox: Move in and out of categories")} shortcuts={[ShortcutNames.LEFT, ShortcutNames.RIGHT]} />
-                    <Row name={lf("Toolbox: Navigate categories or blocks")} shortcuts={[ShortcutNames.UP, ShortcutNames.DOWN]} />
+                    <Row name={lf("Exit")} shortcuts={[names.ESCAPE]} />
+                    <Row name={lf("Toolbox")} shortcuts={[names.FOCUS_TOOLBOX]} />
+                    <Row name={lf("Toolbox: Move in and out of categories")} shortcuts={[names.NAVIGATE_LEFT, names.NAVIGATE_RIGHT]} />
+                    <Row name={lf("Toolbox: Navigate categories or blocks")} shortcuts={[names.NAVIGATE_UP, names.NAVIGATE_DOWN]} />
                     <Row name={lf("Toolbox: Insert block")} {...enterOrSpace} />
-                    <Row name={lf("Workspace: Select workspace")} shortcuts={[ShortcutNames.CREATE_WS_CURSOR]} />
+                    <Row name={lf("Workspace: Select workspace")} shortcuts={[names.FOCUS_WORKSPACE]} />
                     {cleanUpRow}
-                    <Row name={lf("Next block stack")} shortcuts={[ShortcutNames.NEXT_STACK]} />
-                    <Row name={lf("Previous block stack")} shortcuts={[ShortcutNames.PREVIOUS_STACK]} />
+                    <Row name={lf("Next block stack")} shortcuts={[names.NEXT_STACK]} />
+                    <Row name={lf("Previous block stack")} shortcuts={[names.PREVIOUS_STACK]} />
                 </tbody>
             </table>
             <h3>{lf("Edit Blocks")}</h3>
             <table>
                 <tbody>
-                    <Row name={lf("Move in and out of a block")} shortcuts={[ShortcutNames.LEFT, ShortcutNames.RIGHT]} />
+                    <Row name={lf("Move in and out of a block")} shortcuts={[names.NAVIGATE_LEFT, names.NAVIGATE_RIGHT]} />
                     {editOrConfirmRow}
-                    <Row name={lf("Cancel or exit")} shortcuts={[ShortcutNames.EXIT]} />
-                    <Row name={lf("Copy")} shortcuts={[ShortcutNames.COPY]} />
-                    <Row name={lf("Paste")} shortcuts={[ShortcutNames.PASTE]} />
-                    <Row name={lf("Cut")} shortcuts={[ShortcutNames.CUT]} />
-                    <Row name={lf("Duplicate")} shortcuts={[ShortcutNames.DUPLICATE]} />
-                    <Row name={lf("Delete")} shortcuts={getActionShortcutsAsKeys(ShortcutNames.DELETE)} joiner={orAsJoiner} />
-                    <Row name={lf("Undo")} shortcuts={[ShortcutNames.UNDO]} />
-                    <Row name={lf("Redo")} shortcuts={[ShortcutNames.REDO]} />
+                    <Row name={lf("Cancel or exit")} shortcuts={[names.ESCAPE]} />
+                    <Row name={lf("Copy")} shortcuts={[names.COPY]} />
+                    <Row name={lf("Paste")} shortcuts={[names.PASTE]} />
+                    <Row name={lf("Cut")} shortcuts={[names.CUT]} />
+                    <Row name={lf("Duplicate")} shortcuts={[names.DUPLICATE]} />
+                    <Row name={lf("Delete")} shortcuts={getShortcutKeysShortAll(names.DELETE)} joiner={orAsJoiner} />
+                    <Row name={lf("Undo")} shortcuts={[names.UNDO]} />
+                    <Row name={lf("Redo")} shortcuts={[names.REDO]} />
                     {contextMenuRow}
                 </tbody>
             </table>
             <h3>{lf("Moving Blocks")}</h3>
             <table>
                 <tbody>
-                    <Row name={lf("Move mode")} shortcuts={[ShortcutNames.MOVE]} />
-                    <Row name={lf("Move mode: Move to connections")} shortcuts={[ShortcutNames.UP, ShortcutNames.DOWN, ShortcutNames.LEFT, ShortcutNames.RIGHT]} />
+                    <Row name={lf("Move mode")} shortcuts={[names.START_MOVE]} />
+                    <Row name={lf("Move mode: Move to connections")} shortcuts={[names.NAVIGATE_UP, names.NAVIGATE_DOWN, names.NAVIGATE_LEFT, names.NAVIGATE_RIGHT]} />
                     <Row name={lf("Move mode: Move anywhere")}>
-                        {lf("Hold {0} and press arrow keys", optionOrCtrl)}
+                        {lf("Hold {0} and press arrow keys", cmd)}
                     </Row>
                     <Row name={lf("Move mode: Confirm")} {...enterOrSpace} />
-                    <Row name={lf("Move mode: Cancel")} shortcuts={[ShortcutNames.EXIT]} />
-                    <Row name={lf("Disconnect block")} shortcuts={[ShortcutNames.DISCONNECT]} />
+                    <Row name={lf("Move mode: Cancel")} shortcuts={[names.ABORT_MOVE]} />
+                    <Row name={lf("Disconnect block")} shortcuts={[names.DISCONNECT]} />
                 </tbody>
             </table>
         </aside>
@@ -108,8 +110,8 @@ const Row = ({ name, shortcuts = [], joiner, children}: RowProps) => {
     const shortcutElements = shortcuts.map((s, idx) => {
         if (typeof s === "string") {
             // Pull keys from shortcut registry.
-            const shortcut = getActionShortcut(s);
-            return shortcut === null ? null : <Shortcut key={idx} keys={getActionShortcut(s)} />
+            const variants = getShortcutKeysShortAll(s);
+            return variants.length === 0 ? null : <Shortcut key={idx} keys={variants[0]} />
         } else {
             // Display keys as specified.
             return <Shortcut key={idx} keys={s} />

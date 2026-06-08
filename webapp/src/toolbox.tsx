@@ -1,5 +1,6 @@
 /// <reference path="../../localtypings/pxtarget.d.ts" />
 
+import * as Blockly from "blockly"
 import * as React from "react"
 import * as data from "./data"
 import * as editor from "./toolboxeditor"
@@ -10,8 +11,6 @@ import * as coretsx from "./coretsx";
 import Util = pxt.Util;
 import { fireClickOnEnter } from "./util"
 import { DeleteConfirmationModal } from "../../react-common/components/extensions/DeleteConfirmationModal"
-
-import * as Blockly from "blockly";
 import { classList } from "../../react-common/components/util"
 
 export const enum CategoryNameID {
@@ -56,6 +55,7 @@ export interface BlockDefinition {
         _def?: pxtc.ParsedBlockDef;
         parentBlock?: BlockDefinition;
         toolboxParentArgument?: string;
+        blockAliasFor?: string;
     };
     retType?: string;
     blockXml?: string;
@@ -168,40 +168,56 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         this.setState({ visible: true })
     }
 
-    setSelectedItem(item: CategoryItem) {
+    setSelectedItem(item: CategoryItem, name?: string) {
+        for (const item of this.items) {
+            if (item.nameid === name) {
+                this.setSelection(item, this.items.indexOf(item), true);
+                return;
+            }
+        }
         this.selectedItem = item;
     }
 
-    setPreviousItem() {
+    /** @returns true if focus moved, false if we were already at the boundary. */
+    setPreviousItem(): boolean {
         if (this.selectedIndex > 0) {
             const newIndex = --this.selectedIndex;
             // Check if the previous item has a subcategory
             let previousItem = this.items[newIndex];
             this.setSelection(previousItem, newIndex);
+            return true;
         } else if (this.state.showSearchBox) {
             // Focus the search box if it exists
             const searchBox = this.refs.searchbox as ToolboxSearch;
-            if (searchBox) searchBox.focus();
+            if (searchBox) {
+                searchBox.focus();
+                return true;
+            }
         }
+        return false;
     }
 
-    setNextItem() {
+    /** @returns true if focus moved, false if we were already at the boundary. */
+    setNextItem(): boolean {
         if (this.items.length - 1 > this.selectedIndex) {
             const newIndex = ++this.selectedIndex;
             this.setSelection(this.items[newIndex], newIndex);
+            return true;
         }
+        return false;
     }
 
     setSearch() {
         // Focus the search box if it exists
         const searchBox = this.refs.searchbox as ToolboxSearch;
-        if (searchBox) searchBox.focus();
+        if (searchBox) {
+            this.clear();
+            searchBox.focus();
+        }
     }
 
     clear() {
         this.clearSelection();
-        this.selectedIndex = 0;
-        this.selectedTreeRow = undefined;
     }
 
     clearSelection() {
@@ -231,7 +247,8 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
 
         let id = subns ? nameid + subns : nameid;
 
-        if (this.state.selectedItem == id && !force && !onlyTriggerOnClick) {
+        if (this.state.selectedItem == id && !force && !onlyTriggerOnClick
+            && (customClick || this.props.parent.isFlyoutVisible())) {
             this.clearSelection();
 
             // Hide flyout
@@ -262,8 +279,18 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         }
     }
 
-    onCategoryClick = (treeRow: ToolboxCategory, index: number) => {
-        this.setSelection(treeRow, index, undefined, true);
+    onCategoryClick = (treeRow: ToolboxCategory, index: number, isClick = true) => {
+        // The pointer gesture is ending; re-enable the keyboard focus handling
+        // that handlePointerDownCapture disabled for the duration of the tap.
+        this.shouldHandleCategoryTreeFocus = true;
+        if (isClick) {
+            return this.setSelection(treeRow, index, undefined, isClick);
+        }
+        const { customClick } = treeRow;
+        const { parent } = this.props;
+        if (customClick) {
+            customClick(parent);
+        }
     }
 
     focus(itemToFocus?: string) {
@@ -383,7 +410,15 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
 
     private showFlyout(treeRow: ToolboxCategory) {
         const { parent } = this.props;
+        let categoryName = treeRow.name && !treeRow.subns ? treeRow.name : Util.capitalize(treeRow.nameid);
+        if (treeRow.subns) {
+            const parentCategory = this.state.categories.find(c =>
+               c.subcategories?.some(sc => sc.nameid === treeRow.nameid)
+            )
+            categoryName = `${parentCategory!.name ? parentCategory!.name : Util.capitalize(treeRow.nameid)} ${treeRow.subns}`
+        }
         parent.showFlyout(treeRow);
+        parent.setFlyoutLabel(categoryName);
     }
 
     private async deleteExtension(ns: string) {
@@ -479,10 +514,6 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         }
         if (!this.rootElement) return;
         if (this.selectedIndex !== undefined && this.selectedTreeRow) {
-            if (this.selectedTreeRow === this.selectedItem.props.treeRow) {
-                // The flyout is already open with appropriate content.
-                return;
-            }
             // 'Focus' the selected item
             this.setSelection(this.selectedTreeRow, this.selectedIndex, true);
         } else {
@@ -502,9 +533,43 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
 
     handlePointerDownCapture = (e: React.PointerEvent) => {
         e.preventDefault();
+        // A pointer tap focuses the tree, which would make handleCategoryTreeFocus
+        // auto-select the remembered category. On touch that focus event can arrive
+        // asynchronously after pointerup (and before the click), so keep focus
+        // handling disabled for the whole gesture until the final click.
         this.shouldHandleCategoryTreeFocus = false;
         (this.refs.categoryTree as HTMLElement).focus();
-        this.shouldHandleCategoryTreeFocus = true;
+    }
+
+    handlePointerUp = (e: React.PointerEvent) => {
+        // On iOS Safari the *first* toolbox tap after Monaco's textarea has
+        // focus produces no synthesized mousedown/click. There's no clear cause
+        // (doesn't seem to be preventDefault, target element type, the manual
+        // focus call, or user-select) so we use pointerup for touch.
+        if (e.pointerType === "mouse" || this.props.editorname !== MONACO_EDITOR_NAME) return;
+
+        const target = e.target as HTMLElement;
+        const treeRow = target.closest(".blocklyTreeRow") as HTMLElement;
+        if (!treeRow) return;
+
+        const treeItem = treeRow.closest("[role='treeitem']") as HTMLElement;
+        if (!treeItem) return;
+
+        const id = treeItem.id;
+
+        // Handle the Advanced toggle button
+        if (id === "advanced") {
+            this.advancedClicked();
+            return;
+        }
+
+        for (const item of this.items) {
+            const itemId = item.subns ? item.nameid + item.subns : item.nameid;
+            if (itemId === id) {
+                this.onCategoryClick(item, this.items.indexOf(item));
+                return;
+            }
+        }
     }
 
     isRtl() {
@@ -513,37 +578,53 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
     }
 
     handleKeyDown(e: React.KeyboardEvent<HTMLElement>) {
+        // Take care to avoid default scroll behaviors and Blockly shortcuts running that overlap.
         const isRtl = Util.isUserLanguageRtl();
+        const audioManager = (Blockly.getMainWorkspace() as Blockly.WorkspaceSvg)?.getAudioManager();
 
         const charCode = core.keyCodeFromEvent(e);
         if (charCode == 40 /* Down arrow key */) {
-            this.nextItem();
-            // Don't trigger scroll behaviour inside the toolbox.
+            let moved = false;
+            if (this.state.selectedItem) {
+                moved = this.nextItem();
+            } else {
+                this.selectFirstItem();
+                moved = true;
+            }
             e.preventDefault();
+            e.stopPropagation();
+            Blockly.keyboardNavigationController.setIsActive(true);
+            if (!moved) audioManager?.playErrorBeep();
         } else if (charCode == 38 /* Up arrow key */) {
-            this.previousItem();
-            // Don't trigger scroll behaviour inside the toolbox.
+            let moved = false;
+            if (this.state.selectedItem) {
+                moved = this.previousItem();
+            }
             e.preventDefault();
+            e.stopPropagation();
+            Blockly.keyboardNavigationController.setIsActive(true);
+            if (!moved) audioManager?.playErrorBeep();
         } else if ((charCode == 39 /* Right arrow key */ && !isRtl)
             || (charCode == 37 /* Left arrow key */ && isRtl)) {
                 if (this.selectedTreeRow.nameid !== "addpackage") {
+                    Blockly.keyboardNavigationController.setIsActive(true);
                     // Focus inside flyout
                     this.moveFocusToFlyout();
-                } else {
-                    // Prevent Blockly focus changes for the addpackage category item.
                     e.preventDefault();
                     e.stopPropagation();
                 }
+                // addpackage has no flyout — fall through and let Blockly beep.
         } else if (charCode == 27) { // ESCAPE
             // Close the flyout
             this.closeFlyout();
             this.props.parent.focusWorkspace();
         } else if (charCode == core.ENTER_KEY || charCode == core.SPACE_KEY) {
-            const {onCategoryClick, treeRow, index} = this.selectedItem.props;
+            const {onCategoryClick, treeRow, index } = this.selectedItem.props;
             if (onCategoryClick) {
-                onCategoryClick(treeRow, index);
+                onCategoryClick(treeRow, index, false);
                 e.preventDefault();
                 e.stopPropagation();
+                Blockly.keyboardNavigationController.setIsActive(true);
             }
         } else if (charCode == core.TAB_KEY
             || charCode == 37 /* Left arrow key */
@@ -555,21 +636,23 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
             // Escape tab and shift key
         } else {
             this.setSearch();
+            // We don't want any Blockly shortcut to fight search.
+            e.stopPropagation();
         }
     }
 
-    previousItem() {
+    previousItem(): boolean {
         const editorname = this.props.editorname;
 
         pxt.tickEvent(`${editorname}.toolbox.keyboard.prev`, undefined, { interactiveConsent: true });
-        this.setPreviousItem();
+        return this.setPreviousItem();
     }
 
-    nextItem() {
+    nextItem(): boolean {
         const editorname = this.props.editorname;
 
         pxt.tickEvent(`${editorname}.toolbox.keyboard.next`, undefined, { interactiveConsent: true });
-        this.setNextItem();
+        return this.setNextItem();
     }
 
     renderCore() {
@@ -651,7 +734,10 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
                 <div className="blocklyTreeRoot">
                     <div
                         className="blocklyTreeInner"
+                        // Required for certain Blockly code to run.
+                        id="toolbox-tree"
                         role="tree"
+                        aria-label={lf("Toolbox")}
                         tabIndex={0}
                         ref="categoryTree"
                         onFocus={this.handleCategoryTreeFocus}
@@ -659,6 +745,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
                         onKeyDown={this.handleKeyDown}
                         // Prevents focus handling from running on pointer down events.
                         onPointerDownCapture={this.handlePointerDownCapture}
+                        onPointerUp={this.handlePointerUp}
                         aria-activedescendant={selectedItem}
                     >
                         {tryToDeleteNamespace &&
@@ -678,12 +765,11 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
                                 selected={selectedItem == "search"}
                                 treeRow={searchTreeRow}
                                 onCategoryClick={this.onCategoryClick}
-                                ariaLevel={1}
                             />
                         }
                         {nonAdvancedCategories.map(treeRow =>
+                        <React.Fragment key={treeRow.nameid}>
                             <CategoryItem
-                                key={treeRow.nameid}
                                 toolbox={this}
                                 index={index++}
                                 selectedIndex={this.selectedIndex}
@@ -694,26 +780,23 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
                                 shouldAnimate={this.state.shouldAnimate}
                                 hasDeleteButton={treeRow.allowDelete}
                                 onDeleteClick={this.handleRemoveExtension}
-                                ariaLevel={1}
-                                isExpanded={expandedItem == treeRow.nameid}
                             >
-                                {treeRow.subcategories && (
-                                    <div className={classList(expandedItem != treeRow.nameid && "hidden")} role="group">
-                                        {treeRow.subcategories.map(subTreeRow =>
-                                            <CategoryItem
-                                                key={subTreeRow.nameid + subTreeRow.subns}
-                                                index={index++}
-                                                selectedIndex={this.selectedIndex}
-                                                toolbox={this}
-                                                selected={selectedItem == (subTreeRow.nameid + subTreeRow.subns)}
-                                                treeRow={subTreeRow}
-                                                onCategoryClick={this.onCategoryClick}
-                                                ariaLevel={2}
-                                            />
-                                        )}
-                                    </div>
-                                )}
                             </CategoryItem>
+                            {treeRow.subcategories?.map(subTreeRow =>
+                                <CategoryItem
+                                    key={subTreeRow.nameid + subTreeRow.subns}
+                                    className={classList(expandedItem != treeRow.nameid && "sr-only")}
+                                    index={index++}
+                                    selectedIndex={this.selectedIndex}
+                                    toolbox={this}
+                                    selected={selectedItem == (subTreeRow.nameid + subTreeRow.subns)}
+                                    treeRow={subTreeRow}
+                                    onCategoryClick={this.onCategoryClick}
+                                    ariaLabel={`${treeRow.name ? treeRow.name : Util.capitalize(treeRow.nameid)} ${subTreeRow.name}`}
+                                />
+                            )}
+                        </React.Fragment>
+
                         )}
                         {hasAdvanced &&
                             <>
@@ -731,44 +814,36 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
                                     }}
                                     onCategoryClick={this.advancedClicked}
                                     topRowIndex={topRowIndex++}
-                                    ariaLevel={1}
-                                    isExpanded={showAdvanced}
-                                >
-                                    <div className={classList(!showAdvanced && "hidden")} role="group">
-                                        {
-                                            advancedCategories.map(treeRow =>
-                                                <CategoryItem
-                                                    key={treeRow.nameid}
-                                                    toolbox={this}
-                                                    index={index++}
-                                                    selectedIndex={this.selectedIndex}
-                                                    selected={selectedItem == treeRow.nameid}
-                                                    treeRow={treeRow}
-                                                    onCategoryClick={this.onCategoryClick}
-                                                    ariaLevel={2}
-                                                    isExpanded={expandedItem == treeRow.nameid}
-                                                >
-                                                    {treeRow.subcategories && (
-                                                        <div className={classList(expandedItem != treeRow.nameid && "hidden")} role="group">
-                                                            {treeRow.subcategories.map(subTreeRow =>
-                                                                <CategoryItem
-                                                                    key={subTreeRow.nameid + subTreeRow.subns}
-                                                                    toolbox={this}
-                                                                    index={index++}
-                                                                    selectedIndex={this.selectedIndex}
-                                                                    selected={selectedItem == (subTreeRow.nameid + subTreeRow.subns)}
-                                                                    treeRow={subTreeRow}
-                                                                    onCategoryClick={this.onCategoryClick}
-                                                                    ariaLevel={3}
-                                                                />
-                                                            )}
-                                                        </div>
-                                                    )}
-                                                </CategoryItem>
-                                            )
-                                        }
-                                    </div>
-                                </CategoryItem>
+                                    ariaHidden={true}
+                                />
+                                {advancedCategories.map(treeRow =>
+                                    <React.Fragment key={treeRow.nameid}>
+                                        <CategoryItem
+                                            className={classList(!showAdvanced && "sr-only")}
+                                            toolbox={this}
+                                            index={index++}
+                                            selectedIndex={this.selectedIndex}
+                                            selected={selectedItem == treeRow.nameid}
+                                            treeRow={treeRow}
+                                            onCategoryClick={this.onCategoryClick}
+                                            isExpanded={expandedItem == treeRow.nameid}
+                                            >
+                                        </CategoryItem>
+                                        {treeRow.subcategories?.map(subTreeRow =>
+                                            <CategoryItem
+                                                key={subTreeRow.nameid + subTreeRow.subns}
+                                                className={classList(expandedItem != treeRow.nameid && "sr-only")}
+                                                toolbox={this}
+                                                index={index++}
+                                                selectedIndex={this.selectedIndex}
+                                                selected={selectedItem == (subTreeRow.nameid + subTreeRow.subns)}
+                                                treeRow={subTreeRow}
+                                                onCategoryClick={this.onCategoryClick}
+                                                ariaLabel={`${treeRow.name ? treeRow.name : Util.capitalize(treeRow.nameid)} ${subTreeRow.name}`}
+                                            />
+                                        )}
+                                    </React.Fragment>
+                                )}
                             </>
                         }
                     </div>
@@ -780,14 +855,17 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
 
 export interface CategoryItemProps extends TreeRowProps {
     toolbox: Toolbox;
-    onCategoryClick?: (treeRow: ToolboxCategory, index: number) => void;
+    onCategoryClick?: (treeRow: ToolboxCategory, index: number, isClick?: boolean) => void;
     index?: number;
     selectedIndex?: number;
     topRowIndex?: number;
     hasDeleteButton?: boolean;
     onDeleteClick?: (ns: string) => void;
-    ariaLevel: number;
+    ariaHidden?: boolean;
+    ariaLabel?: string;
+    ariaLevel?: number;
     isExpanded?: boolean;
+    className?: string;
 }
 
 export interface CategoryItemState {
@@ -864,13 +942,13 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
     }
 
     renderCore() {
-        const { toolbox, hasDeleteButton, treeRow, ariaLevel, isExpanded } = this.props;
+        const { className, toolbox, hasDeleteButton, treeRow, ariaHidden, ariaLabel, ariaLevel, isExpanded } = this.props;
         const { selected } = this.state;
 
         const ariaExpanded = treeRow.subcategories ? isExpanded : undefined;
 
         return (
-            <TreeItem id={treeRow.nameid + (treeRow.subns ?? "")} selected={selected} ariaLevel={ariaLevel} ariaExpanded={ariaExpanded}>
+            <TreeItem id={treeRow.nameid + (treeRow.subns ?? "")} className={className} selected={selected} ariaHidden={ariaHidden} ariaLabel={ariaLabel} ariaLevel={ariaLevel} ariaExpanded={ariaExpanded}>
                 <TreeRow
                     ref={this.handleTreeRowRef}
                     isRtl={toolbox.isRtl()}
@@ -1066,22 +1144,28 @@ export interface TreeItemProps {
     selected: boolean;
     children?: any;
     id: string;
+    ariaHidden?: boolean;
+    ariaLabel?: string
     ariaLevel: number;
     ariaExpanded: boolean | undefined;
+    className?: string;
 }
 
 export class TreeItem extends data.Component<TreeItemProps, {}> {
     renderCore() {
-        const { selected, id, ariaLevel, ariaExpanded } = this.props;
+        const { className, selected, id, ariaHidden, ariaLabel, ariaLevel, ariaExpanded } = this.props;
         return (
             <div
                 id={id}
                 role="treeitem"
                 aria-selected={selected}
                 tabIndex={-1}
+                aria-label={ariaLabel}
                 aria-level={ariaLevel}
                 aria-expanded={ariaExpanded}
-                aria-labelledby={`${id}.label`}
+                aria-labelledby={!ariaLabel ? `${id}.label` : undefined}
+                className={classList(className)}
+                aria-hidden={ariaHidden}
             >
                 {this.props.children}
             </div>
@@ -1132,9 +1216,10 @@ export class ToolboxSearch extends data.Component<ToolboxSearchProps, ToolboxSea
         const { toolbox } = this.props;
         let charCode = (typeof e.which == "number") ? e.which : e.keyCode
         if (charCode === 40 /* Down Key */) {
-            // Focus the toolbox category tree which opens the currently selected
-            // item if one exists, or the first item.
-            (toolbox.refs.categoryTree as HTMLDivElement).focus()
+            Blockly.keyboardNavigationController.setIsActive(true);
+            // Always select the first toolbox category item when using the down arrow.
+            toolbox.selectFirstItem();
+            (toolbox.refs.categoryTree as HTMLDivElement).focus();
             // Don't trigger scroll behaviour inside the toolbox.
             e.preventDefault();
         } else if (charCode === 13 /* Enter */) {
@@ -1143,7 +1228,7 @@ export class ToolboxSearch extends data.Component<ToolboxSearchProps, ToolboxSea
                     toolbox.setState({
                         selectedItem: 'search'
                     });
-                    toolbox.setSelectedItem(toolbox.refs.searchCategory as CategoryItem);
+                    toolbox.setSelectedItem(toolbox.refs.searchCategory as CategoryItem, 'search');
                 }
                 this.props.parent.moveFocusToFlyout();
             });

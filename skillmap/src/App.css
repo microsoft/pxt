@@ -92,12 +92,14 @@ code {
     font-size: 1.5rem;
     user-select: none;
     display: flex;
+    align-items: center;
+    height: 100%;
 }
 
-.header .brand:before {
+.header .header-logo:after {
     position: relative;
     height: 1.5rem;
-    border-left: 2px solid var(--pxt-header-foreground);
+    border-right: 2px solid var(--pxt-header-foreground);
     content: " ";
 }
 
@@ -107,9 +109,13 @@ code {
     color: var(--pxt-header-background);
 }
 
-.ui.item.logo .name {
+.ui.item.logo span.name {
     margin-left: 1rem;
     margin-bottom: 1px;
+}
+
+.ui.item.logo button.name,button.name-short {
+    margin-left: 0 !important;
 }
 
 .header-logo img {

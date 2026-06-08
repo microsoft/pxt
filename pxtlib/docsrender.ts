@@ -484,7 +484,8 @@ namespace pxt.docs {
 
             if (href.startsWith("youtube:")) {
                 const videoId = href.split(":").pop();
-                return `<div class="tutorial-video-embed"><iframe class="yt-embed" src="https://www.youtube.com/embed/${videoId}" title="${text}" frameborder="0" allowFullScreen allow="autoplay; picture-in-picture"></iframe></div>`;
+                // This data-youtube attribute is handled in hydrateYoutubeEmbeds
+                return `<div class="tutorial-video-embed" data-youtube="${encodeURIComponent(videoId)}" title="${text}"></div>`;
             } else {
                 let out = `<img class="ui image" src="${href}" alt="${text}"`;
                 if (title) {
@@ -546,7 +547,7 @@ namespace pxt.docs {
             const rawLang = typeof token?.lang === "string" ? token.lang.trim() : "";
             const normalizedLang = htmlQuote(rawLang.toLowerCase());
             const text = typeof token?.text === "string" ? token.text : "";
-            const escaped = token?.escaped !== false;
+            const escaped = !!(token?.escaped) !== false;
             const code = escaped ? text : htmlQuote(text);
             const classAttr = normalizedLang ? ` class="lang-${normalizedLang}"` : "";
 
@@ -727,7 +728,7 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
             return r;
         }
 
-        html = html.replace(/<h(\d)[^>]+>\s*([~@])?\s*(.*?)<\/h\d>/g, (full: string, lvl: string, tp: string | undefined, body: string) => {
+        html = html.replace(/<h(\d)[^>]*>\s*([~@])?\s*(.*?)<\/h\d>/g, (full: string, lvl: string, tp: string | undefined, body: string) => {
             let m = /^(\w+)\s+(.*)/.exec(body)
             let cmd = m ? m[1] : body
             let args = m ? m[2] : ""
@@ -1238,5 +1239,37 @@ My links
         test(templ0, " ", templ0)
         test(templ0, inp0, outp0)
         test(templ0, inp1, outp1)
+    }
+
+    export function hydrateYouTubeEmbeds(content: HTMLElement, tickEvent: boolean) {
+        for (const videoContainer of content.querySelectorAll(".tutorial-video-embed[data-youtube]")) {
+            const videoId = decodeURIComponent(videoContainer.getAttribute("data-youtube"));
+            const iframe = document.createElement("iframe");
+            iframe.className = "yt-embed";
+            const rawUrl = `https://www.youtube-nocookie.com/embed/${videoId}`;
+
+            let lang = pxt.appTarget.appTheme?.defaultLocale ?? "en";
+            let url = new URL(rawUrl);
+            if (tickEvent) {
+                pxt.tickEvent("video.loaded", {
+                    player: "youtube",
+                    url: rawUrl
+                });
+            }
+            url.searchParams.append("hl", lang);
+            url.searchParams.append("rel", "0");
+            url.searchParams.append("modestbranding", "1");
+            url.searchParams.append("autoplay", "0");
+            url.searchParams.append("showinfo", "0");
+
+            iframe.setAttribute("src", url.toString());
+            iframe.setAttribute("title", videoContainer.getAttribute("title") || "");
+            iframe.setAttribute("frameborder", "0");
+            iframe.setAttribute("allowFullScreen", "true");
+            iframe.setAttribute("allow", "autoplay; picture-in-picture");
+            iframe.setAttribute("sandbox", "allow-same-origin allow-scripts");
+            videoContainer.textContent = "";
+            videoContainer.appendChild(iframe);
+        }
     }
 }
