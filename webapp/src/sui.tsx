@@ -21,7 +21,7 @@ export interface UiProps {
     role?: string;
     title?: string;
     ariaLabel?: string;
-    ariaHasPopup?: boolean | "dialog" | "menu" | "false" | "listbox" | "grid" | "tree" | "true";
+    ariaHasPopup?: React.AriaAttributes["aria-haspopup"];
     ariaHidden?: boolean;
     tabIndex?: number;
     rightIcon?: boolean;

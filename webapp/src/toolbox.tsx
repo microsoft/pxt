@@ -14,8 +14,6 @@ import { DeleteConfirmationModal } from "../../react-common/components/extension
 import { classList } from "../../react-common/components/util"
 import { Aria } from "react-modal"
 
-type AriaHasPopup = boolean | "dialog" | "menu" | "false" | "listbox" | "grid" | "tree" | "true";
-
 export const enum CategoryNameID {
     Loops = "loops",
     Logic = "logic",
@@ -875,7 +873,7 @@ export interface CategoryItemProps extends TreeRowProps {
     ariaHidden?: boolean;
     ariaLabel?: string;
     ariaLevel?: number;
-    ariaHasPopup?: AriaHasPopup;
+    ariaHasPopup?: React.AriaAttributes["aria-haspopup"];
     isExpanded?: boolean;
     className?: string;
 }
@@ -1161,7 +1159,7 @@ export interface TreeItemProps {
     ariaLabel?: string
     ariaLevel: number;
     ariaExpanded: boolean | undefined;
-    ariaHasPopup?: AriaHasPopup;
+    ariaHasPopup?: React.AriaAttributes["aria-haspopup"];
     className?: string;
 }
 
