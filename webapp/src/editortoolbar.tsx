@@ -393,10 +393,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         const showProjectRename = !tutorial && !readOnly && !isController
             && !targetTheme.hideProjectRename && !debugging;
         const showProjectRenameReadonly = false; // always allow renaming, even for github projects
-        const compile = pxt.appTarget.compile;
-        const compilesToDownloadableFile = compile.hasHex || compile.saveAsPNG || compile.useUF2;
-        const hasCompileButtonOverride = !!pxt.commands.onDownloadButtonClick;
-        const showCompileBtn = !isTimeMachineEmbed && (compilesToDownloadableFile || hasCompileButtonOverride);
+        const showCompileBtn = !isTimeMachineEmbed && pxt.canDownload();
         const compileLoading = !!compiling;
         const running = simState == SimState.Running;
         const starting = simState == SimState.Starting;
