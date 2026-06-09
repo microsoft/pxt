@@ -164,7 +164,7 @@ namespace pxt.cpp {
         let disabledDeps = ""
         let mainDeps: Package[] = []
 
-        mainPkg.loadConfig();
+        mainPkg.loadConfig(true);
 
         // order shouldn't matter for c++ compilation,
         // so use a stable order to prevent order changes from fetching a new hex file
