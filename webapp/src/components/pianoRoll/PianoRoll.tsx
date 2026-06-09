@@ -426,6 +426,7 @@ const PianoRollInternal = (props: PianoRollProps) => {
                             isDrumTrack={isDrumInstrument(instrument)}
                             playNote={playNote}
                             measures={song.measures}
+                            bpm={song.tempo}
                         />
                     </div>
                 </div>

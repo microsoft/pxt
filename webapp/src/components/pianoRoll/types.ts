@@ -354,6 +354,7 @@ export function toPXTSong(song: Song): pxt.assets.music.Song {
 export function fromPXTSong(pxtSong: pxt.assets.music.Song): Song {
     const result = getEmptySong();
     result.measures = pxtSong.measures;
+    result.tempo = pxtSong.beatsPerMinute;
 
     result.tracks = [];
     result.nextId += 1000;
