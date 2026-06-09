@@ -178,6 +178,13 @@ export function all(): Experiment[] {
             feedbackUrl: "https://github.com/microsoft/pxt/issues/10694",
             enableOnline: true
         },
+        {
+            id: "physicalSimulator",
+            name: lf("Physical simulator"),
+            description: lf("Simulate multiple boards in a 2D environment."),
+            // feedbackUrl: "https://github.com/microsoft/pxt/issues/10694",
+            enableOnline: true
+        },
     ];
 
     return exps.filter(experiment => ids.indexOf(experiment.id) > -1)

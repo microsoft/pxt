@@ -311,6 +311,10 @@ export class ProjectView
             } else if (msg.type === "action") {
                 const { action } = msg as pxsim.SimulatorActionMessage;
                 this.runGlobalAction(action);
+            } else {
+                // what else do we want to handle here?
+                // TBALL
+                console.log(`unhandled message from sim: ${msg.type}`)
             }
         }, false);
     }

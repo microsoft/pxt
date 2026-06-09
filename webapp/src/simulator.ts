@@ -368,6 +368,7 @@ export function run(pkg: pxt.MainPackage, debug: boolean,
         dependencies,
         activePlayer: playerNumber,
         theme: theme,
+        physicalSimulator: pxt.appTarget.appTheme.physicalSimulator,
     }
     //if (pxt.options.debug)
     //    pxt.debug(JSON.stringify(opts, null, 2))

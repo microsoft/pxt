@@ -90,6 +90,7 @@ namespace pxsim {
         mpRole?: "server" | "client";
         activePlayer?: 1 | 2 | 3 | 4 | undefined;
         theme?: string | pxt.Map<string>;
+        physicalSimulator?: boolean;
     }
 
     export interface HwDebugger {
@@ -459,7 +460,9 @@ namespace pxsim {
                             // start secondary frame if needed
                             const mkcdFrames = frames.filter(frame => !frame.dataset[FRAME_DATA_MESSAGE_CHANNEL]);
                             if (!messageChannel &&
-                                    (mkcdFrames.length == 0 || mkcdFrames.length == 1 && !this.singleSimulator)) {
+                                    (mkcdFrames.length == 0 || mkcdFrames.length == 1 && !this.singleSimulator ||
+                                        this._runOptions?.physicalSimulator
+                                    )) {
                                 // messageChannel is set to false whenever msg.type !== "messagepacket"
                                 // for example, in the case of msg.type === "radiopacket". However, in the case
                                 // where we have msg.type === "messagepacket" and msg.channel is not matched by an
@@ -841,7 +844,7 @@ namespace pxsim {
                 theme: this.themes[this.nextFrameId++ % this.themes.length],
                 mpRole
             };
-
+            msg.frameId = frame.id
             msg.id = `${msg.options.theme}-${this.nextId()}`;
             frame.dataset['runid'] = this.runId;
             frame.dataset['runtimeid'] = msg.id;
@@ -887,6 +890,7 @@ namespace pxsim {
                     break;
                 }
                 case 'status': {
+                    // TBALL: interesting - where do frameids get sent out?
                     const frameid = (msg as pxsim.SimulatorReadyMessage).frameid;
                     const frame = document.getElementById(frameid) as HTMLIFrameElement;
                     if (frame) {
