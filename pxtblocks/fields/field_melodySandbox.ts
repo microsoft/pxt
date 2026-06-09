@@ -118,6 +118,7 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
         if (keyboardTriggered) {
             this.toggle.getFirstFocusableElement().focus();
         }
+        (this.sourceBlock_ as Blockly.BlockSvg).getFocusableElement().ariaExpanded = 'true';
     }
 
     getValue() {
@@ -161,6 +162,16 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
             (this.sourceBlock_ as Blockly.BlockSvg).getSvgRoot().appendChild(this.fieldGroup_);
             this.updateFieldLabel();
         }
+        this.addAriaAtributes();
+    }
+
+    private addAriaAtributes() {
+        // ariaLabel is set in this.updateFieldLabel() as it is content dependent.
+        const el = (this.sourceBlock_ as Blockly.BlockSvg).getFocusableElement();
+        el.ariaHasPopup = 'dialog';
+        el.ariaExpanded = 'false';
+        el.setAttribute('role', 'button');
+        el.setAttribute('aria-controls', melodyContentDivId);
     }
 
     render_() {
@@ -279,6 +290,7 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
         }
 
         this.prevString = undefined;
+        (this.sourceBlock_ as Blockly.BlockSvg).getFocusableElement().ariaExpanded = 'false';
     }
 
     // when click done
@@ -417,6 +429,17 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
             pxt.BrowserUtils.addClass(cb.el, className);
             this.fieldGroup_.appendChild(cb.el);
         }
+        (this.sourceBlock_ as Blockly.BlockSvg).getFocusableElement().ariaLabel = this.getAriaValue();
+    }
+
+    override getAriaValue(): string {
+        const notes = this.melody.getStringRepresentation().trim().split(" ");
+        return notes.every(n => n === "-") ? lf("empty melody") : lf("melody");
+    }
+
+    override computeAriaLabel(_verbose?: boolean): string {
+        const notes = this.melody.getStringRepresentation().trim().split(" ");
+        return notes.every(n => n === "-") ? lf("empty") : lf("notes");
     }
 
     private setTempo(tempo: number): void {
@@ -1046,10 +1069,10 @@ function getPlaceholderColor(row: number): string {
 }
 
 const offsetLookup = [0x09, 0x0b, 0x00, 0x02, 0x04, 0x05, 0x07];
-const REST = -0xffff;
+export const REST = -0xffff;
 
 // copied from pxt-microbit/libs/core/music.ts
-class MelodyStringReader {
+export class MelodyStringReader {
     currentOctave: number;
     currentNote: number;
     currentDuration: number;

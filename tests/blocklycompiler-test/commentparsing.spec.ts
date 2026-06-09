@@ -1,4 +1,5 @@
 /// <reference path="..\..\built\pxtlib.d.ts" />
+/// <reference path="..\..\built\pxtcompiler.d.ts" />
 
 describe("comment attribute parser", () => {
     describe("default values for parameters", () => {
@@ -467,6 +468,50 @@ describe("comment attribute parser", () => {
         chai.assert(parsed.locs["fr|param|bar"] == "bah", JSON.stringify(parsed.locs));
     });
 
+    it("should parse parameter labels", () => {
+        const parsed = ts.pxtc.parseCommentString(`
+            /**
+             * Bla
+             */
+            //% block="foo $fraction"
+            //% fraction.label="beat"
+            //% soundExpression.label="sound effect"
+            //% fraction.fieldOptions.label="dropdown label"
+        `);
+
+        chai.expect(parsed.paramLabels["fraction"]).to.equal("beat");
+        chai.expect(parsed.paramLabels["soundExpression"]).to.equal("sound effect");
+        chai.expect(parsed.paramFieldEditorOptions["fraction"].label).to.equal("dropdown label");
+    });
+
+    it("should compile and extract parameter labels", () => {
+        const explicit = testSymbolInfo("music.beat", "%fraction|beat", [testParameter("fraction", "number")], `
+            //% fraction.label="beat"
+        `);
+        const generated = testSymbolInfo("music.playSound", "play %soundExpression", [testParameter("soundExpression", "string")]);
+        const instance = testSymbolInfo("pins.DigitalPin.digitalRead", "%pin|digital read", [], `
+            //% pin.label="pin"
+        `, pxtc.SymbolKind.Method, "pins.DigitalPin");
+
+        const explicitComp = pxt.blocks.compileInfo(explicit);
+        chai.expect(explicitComp.parameters[0].label).to.equal("beat");
+        chai.expect(explicitComp.parameters[0].labelLocalizationKey).to.equal("music.beat|param|fraction|label");
+
+        const generatedComp = pxt.blocks.compileInfo(generated);
+        chai.expect(generatedComp.parameters[0].label).to.equal(undefined);
+        chai.expect(generatedComp.parameters[0].labelLocalizationKey).to.equal(undefined);
+
+        const instanceComp = pxt.blocks.compileInfo(instance);
+        chai.expect(instanceComp.thisParameter.label).to.equal("pin");
+        chai.expect(instanceComp.thisParameter.labelLocalizationKey).to.equal("pins.DigitalPin.digitalRead|param|this|label");
+
+        const docs = pxtc.genDocs("test", testApisInfo([explicit, generated, instance]), { locs: true });
+        const strings = JSON.parse(docs["test-strings.json"]);
+        chai.expect(strings["music.beat|param|fraction|label"]).to.equal("beat");
+        chai.expect(strings["music.playSound|param|soundExpression|label"]).to.equal(undefined);
+        chai.expect(strings["pins.DigitalPin.digitalRead|param|this|label"]).to.equal("pin");
+    });
+
     it("should parse parameter snippets", () => {
         const parsed = ts.pxtc.parseCommentString(`
             /**
@@ -480,6 +525,41 @@ describe("comment attribute parser", () => {
         chai.assert(parsed.paramSnippets?.["bar"].python === "goodbye", "bar.pySnippet === \"goodbye\"")
     });
 });
+
+function testParameter(name: string, type: string): pxtc.ParameterDesc {
+    return {
+        name,
+        type,
+        description: ""
+    };
+}
+
+function testSymbolInfo(qName: string, block: string, parameters: pxtc.ParameterDesc[], attributes = "", kind = pxtc.SymbolKind.Function, namespace?: string): pxtc.SymbolInfo {
+    const attrs = pxtc.parseCommentString(`
+        //% block="${block}"
+        ${attributes}
+    `);
+    const qNameParts = qName.split(".");
+    return {
+        attributes: attrs,
+        name: qNameParts[qNameParts.length - 1],
+        namespace: namespace || qNameParts.slice(0, -1).join("."),
+        fileName: "test.ts",
+        kind,
+        parameters,
+        retType: "void",
+        qName
+    } as pxtc.SymbolInfo;
+}
+
+function testApisInfo(symbols: pxtc.SymbolInfo[]): pxtc.ApisInfo {
+    const byQName: pxt.Map<pxtc.SymbolInfo> = {};
+    symbols.forEach(symbol => byQName[symbol.qName] = symbol);
+    return {
+        byQName,
+        jres: {}
+    };
+}
 
 function brk(): pxtc.BlockBreak {
     return { kind: "break" };

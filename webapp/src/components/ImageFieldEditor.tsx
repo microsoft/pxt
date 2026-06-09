@@ -32,6 +32,7 @@ export interface ImageFieldEditorState {
     galleryFilter: string;
     editingTile?: boolean;
     hideCloseButton?: boolean;
+    options?: any;
 }
 
 export interface AssetEditorCore {
@@ -50,7 +51,6 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
     protected blocksInfo: pxtc.BlocksInfo;
     protected ref: AssetEditorCore;
     protected closeEditor: () => void;
-    protected options: any;
     protected editID: string;
     protected galleryAssets: pxt.Asset[];
     protected userAssets: pxt.Asset[];
@@ -82,7 +82,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
         let showHeader = headerVisible;
         // If there is no asset, show the gallery to prevent changing shape when it's added
         let showGallery = !this.isSongEditor() || !this.asset || editingTile;
-        const showMyAssets = !hideMyAssets && !editingTile;
+        const showMyAssets = !hideMyAssets && !editingTile && !!pxt.appTarget?.appTheme.assetEditor;
 
         if (this.asset && !this.galleryAssets && showGallery) {
             this.updateGalleryAssets();
@@ -182,7 +182,8 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
                                 <PianoRollAssetEditor
                                     ref="image-editor"
                                     onDoneClicked={this.onDoneClick}
-                                    hideDoneButton={this.props.hideDoneButton} /> :
+                                    hideDoneButton={this.props.hideDoneButton}
+                                    fieldEditorParams={this.state.options} /> :
                                 <ImageEditor
                                     ref="image-editor"
                                     singleFrame={this.props.singleFrame}
@@ -224,7 +225,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
 
     init(value: U, close: () => void, options?: any) {
         this.closeEditor = close;
-        this.options = options;
+        this.setState({ options });
         this.lightMode = options.lightMode;
 
         switch (value.type) {
@@ -306,7 +307,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
         if (this.ref) {
             this.ref.restorePersistentData(oldValue);
 
-            if (this.options && this.options.disableResize) {
+            if (this.state?.options?.disableResize) {
                 this.ref.disableResize();
             }
         }
@@ -424,7 +425,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
 
         if (useTags) {
             assets.forEach(a => {
-                if (!a.meta.tags && this.options) {
+                if (!a.meta.tags && this.state?.options) {
                     a.meta.tags = this.blocksInfo?.apis.byQName[a.id]?.attributes.tags?.split(" ") || [];
                 }})
 
@@ -553,7 +554,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
     protected showMyAssets = () => {
         this.setImageEditorShortcutsEnabled(false);
         tickImageEditorEvent("gallery-my-assets");
-        this.userAssets = getAssets(undefined, undefined, this.options.temporaryAssets);
+        this.userAssets = getAssets(undefined, undefined, this.state?.options?.temporaryAssets);
         this.setState({
             currentView: "my-assets",
             tileGalleryVisible: false

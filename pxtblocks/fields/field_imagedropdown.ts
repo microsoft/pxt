@@ -45,9 +45,10 @@ export class FieldImageDropdown extends FieldDropdownGrid implements FieldCustom
         }
     }
 
-    protected createRow() {
+    protected createRow(rowIndex: number) {
         const row = document.createElement('div');
         row.setAttribute('role', 'row');
+        row.id = `${this.sourceBlock_.id}:row-${rowIndex}`;
         return row;
     }
 
@@ -121,8 +122,8 @@ export class FieldImageDropdown extends FieldDropdownGrid implements FieldCustom
         let descendantIndex = 0;
 
         // now create the actual row elements
-        for (const row of rows) {
-            const rowDiv = this.createRow();
+        for (const [rowIndex, row] of rows.entries()) {
+            const rowDiv = this.createRow(rowIndex);
             rowDiv.style.width = row.width + "px";
             rowDiv.style.height = row.height + "px";
             contentDiv.appendChild(rowDiv);
@@ -144,11 +145,10 @@ export class FieldImageDropdown extends FieldDropdownGrid implements FieldCustom
                 const buttonContainer = document.createElement('div');
                 buttonContainer.setAttribute('class', 'blocklyDropDownButtonContainer')
                 const button = document.createElement('div');
-                button.setAttribute('id', ':' + localDescendantIndex); // For aria-activedescendant
+                button.setAttribute('id', `${this.sourceBlock_.id}:${localDescendantIndex}`); // For aria-activedescendant
                 button.setAttribute('role', 'gridcell');
                 button.setAttribute('aria-selected', 'false');
                 button.classList.add('blocklyDropDownButton');
-                button.title = content.alt;
 
                 button.style.width = (columnButtonSize || content.width) + 'px';
                 button.style.height = (columnButtonSize || content.height) + 'px';
@@ -181,6 +181,10 @@ export class FieldImageDropdown extends FieldDropdownGrid implements FieldCustom
                         this.activeDescendantIndex = undefined;
                     }
                 });
+                const buttonText = document.createElement("span");
+                buttonText.classList.add("sr-only");
+                buttonText.textContent = content.alt;
+                button.appendChild(buttonText);
                 let buttonImg = document.createElement('img');
                 buttonImg.src = content.src;
                 //buttonImg.alt = icon.alt;
@@ -188,6 +192,7 @@ export class FieldImageDropdown extends FieldDropdownGrid implements FieldCustom
                 // Store a data attribute on all possible click targets so we can match it to the icon.
                 button.setAttribute('data-value', value);
                 buttonImg.setAttribute('data-value', value);
+                buttonImg.setAttribute('aria-hidden', 'true');
                 button.appendChild(buttonImg);
                 this.gridItems.push(button);
                 buttonContainer.appendChild(button);
@@ -232,6 +237,7 @@ export class FieldImageDropdown extends FieldDropdownGrid implements FieldCustom
         } else if (this.borderRect_) {
             this.borderRect_.setAttribute('fill', source.getColourTertiary());
         }
+        this.getFocusableElement().ariaExpanded = 'true';
     }
 
     doValueUpdate_(newValue: any): void {
@@ -267,6 +273,7 @@ export class FieldImageDropdown extends FieldDropdownGrid implements FieldCustom
         } else if (this.borderRect_) {
             this.borderRect_.setAttribute('fill', this.savedPrimary_);
         }
+        this.getFocusableElement().ariaExpanded = 'false';
     };
 }
 
