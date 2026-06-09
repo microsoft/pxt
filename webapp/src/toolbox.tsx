@@ -12,7 +12,6 @@ import Util = pxt.Util;
 import { fireClickOnEnter } from "./util"
 import { DeleteConfirmationModal } from "../../react-common/components/extensions/DeleteConfirmationModal"
 import { classList } from "../../react-common/components/util"
-import { Aria } from "react-modal"
 
 export const enum CategoryNameID {
     Loops = "loops",
