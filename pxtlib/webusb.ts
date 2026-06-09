@@ -601,7 +601,7 @@ namespace pxt.usb {
     }
 
     export async function getReasonUnavailable(): Promise<"electron" | "notimpl" | "oldwindows" | "security" | undefined> {
-        if (pxt.BrowserUtils.isElectron()) {
+        if (pxt.BrowserUtils.isElectron() && !pxt.BrowserUtils.isPxtElectronWebUSBDeployEnabled()) {
             return "electron";
         }
 
