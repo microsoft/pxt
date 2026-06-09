@@ -133,6 +133,28 @@ export class FieldLedMatrix extends FieldMatrix implements FieldCustom {
         }
     }
 
+    computeAriaLabel(includeTypeInfo?: boolean) {
+        const numLedsOn = this.cellState.reduce((total, column) => total + column.filter(Boolean).length, 0);
+        if (includeTypeInfo) {
+            return numLedsOn === 1 ? lf("dropdown: LED, {0} LEDs on", numLedsOn) : lf("dropdown: LEDs, {0} LEDs on", numLedsOn);
+        }
+        return numLedsOn === 1 ? lf("{0} LED on", numLedsOn) : lf("{0} LEDs on", numLedsOn);
+    }
+
+    recomputeAriaContext() {
+        const result = super.recomputeAriaContext();
+        if (!this.fieldGroup_) return false; // There's no element to set currently.
+        const element = this.getFocusableElement();
+        const isInFlyout = this.getSourceBlock()?.workspace?.isFlyout || false;
+        if (!isInFlyout) {
+            element.ariaHasPopup = "grid";
+            element.setAttribute("role", "button");
+            element.ariaLabel = lf("dropdown: LEDs");
+            element.ariaExpanded = "false";
+        }
+        return result;
+    }
+
     /**
      * Show the inline free-text editor on top of the text.
      * @private
@@ -160,15 +182,17 @@ export class FieldLedMatrix extends FieldMatrix implements FieldCustom {
             widgetDiv.style.top = "";
             widgetDiv.style.transform = "";
             widgetDiv.style.transformOrigin = "";
+            this.getFocusableElement().ariaExpanded = "false";
         });
 
         this.matrixSvg.focus();
         this.focusCell(0, 0);
+        this.getFocusableElement().ariaExpanded = "true";
     }
 
     private initMatrix() {
         if (!this.sourceBlock_.isInsertionMarker()) {
-            this.matrixSvg = pxsim.svg.parseString(`<svg xmlns="http://www.w3.org/2000/svg" id="field-matrix" class="blocklyMatrix" tabindex="-1" role="grid" width="${this.size_.width}" height="${this.size_.height}"/>`);
+            this.matrixSvg = pxsim.svg.parseString(`<svg xmlns="http://www.w3.org/2000/svg" id="${this.sourceBlock_.id}:field-matrix" class="blocklyMatrix" tabindex="-1" role="grid" width="${this.size_.width}" height="${this.size_.height}"/>`);
             this.matrixSvg.ariaLabel = lf("LED grid");
             const workspace = Blockly.getMainWorkspace() as Blockly.WorkspaceSvg
             this.matrixSvg.style.boxShadow = `rgba(255, 255, 255, 0.3) 0 0 0 ${4 * workspace.getAbsoluteScale()}px`;
@@ -355,12 +379,19 @@ export class FieldLedMatrix extends FieldMatrix implements FieldCustom {
         cellRect.setAttribute("fill-opacity", this.getOpacity(x, y));
         cellRect.setAttribute('class', `blocklyLed${this.cellState[x][y] ? 'On' : 'Off'}`);
         cellRect.setAttribute("aria-checked", (!!this.cellState[x][y]).toString());
-        if (this.isColorMatrix) {
-            const cellLabel = getChildElementOfTag(cellGroup, "text");
-            if (cellLabel) {
+        this.updateCellLabel(x, y);
+    }
+
+    private updateCellLabel(x: number, y: number) {
+        const cellGroup = this.cells[x][y];
+        const cellLabel = getChildElementOfTag(cellGroup, "text");
+        if (cellLabel) {
+            if (this.isColorMatrix) {
                 const colorIndex = this.cellState[x][y];
                 const colorName = this.colorNames[colorIndex] || this.palette[colorIndex] || lf("color {0}", colorIndex);
-                cellLabel.textContent = lf("{0} LED", colorName);
+                cellLabel.textContent = colorIndex ? lf("{0} LED on", colorName) : lf("{0} LED off", colorName);
+            } else {
+                cellLabel.textContent = this.cellState[x][y] ? lf("LED on") : lf("LED off");
             }
         }
     }
@@ -389,6 +420,7 @@ export class FieldLedMatrix extends FieldMatrix implements FieldCustom {
             this.initMatrix();
         }
 
+        this.recomputeAriaContext();
     }
 
     // The return value of this function is inserted in the code

@@ -147,6 +147,7 @@ export abstract class FieldMatrix extends Blockly.Field {
                 case "Enter":
                 case "Space": {
                     this.toggleCell(x, y, !this.getCellToggled(x, y));
+                    this.updateFocusIndicator(this.cells[x][y], this.useTwoToneFocusIndicator(x, y))
                     e.preventDefault();
                     e.stopPropagation();
                     return;
@@ -229,6 +230,28 @@ export abstract class FieldMatrix extends Blockly.Field {
         // Don't take effect for initial gridcell focus.
         // Only announce gridcells being toggled on/off, not navigated to.
         setTimeout(() => cellTextEl.setAttribute("aria-live", "polite"), 0);
+    }
+
+    private updateFocusIndicator(cell: SVGElement, useTwoToneFocusIndicator: boolean) {
+        const focusVisible = this.matrixSvg.matches(":focus-visible");
+        if (!focusVisible && !this.forceFocusVisible) return;
+        const cellRect = cell.children[1];
+        const cellWidth = parseInt(cellRect.getAttribute("width"))
+        const cornerRadius = parseInt(cellRect.getAttribute("rx"));
+        if (useTwoToneFocusIndicator && !cell.children[3]) {
+            pxsim.svg.child(cell, "rect", {
+                transform: 'translate(-1, -1)',
+                width: cellWidth + 2,
+                height: cellWidth + 2,
+                rx: `${Math.max(2, cornerRadius)}px`,
+                stroke: "#000",
+                "stroke-width": 2,
+                fill: "none",
+                "aria-hidden": "true"
+            });
+        } else {
+            cell.children[3]?.remove();
+        }
     }
 
     protected clearFocusIndicator() {
