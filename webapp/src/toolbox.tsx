@@ -410,7 +410,15 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
 
     private showFlyout(treeRow: ToolboxCategory) {
         const { parent } = this.props;
+        let categoryName = treeRow.name && !treeRow.subns ? treeRow.name : Util.capitalize(treeRow.nameid);
+        if (treeRow.subns) {
+            const parentCategory = this.state.categories.find(c =>
+               c.subcategories?.some(sc => sc.nameid === treeRow.nameid)
+            )
+            categoryName = `${parentCategory!.name ? parentCategory!.name : Util.capitalize(treeRow.nameid)} ${treeRow.subns}`
+        }
         parent.showFlyout(treeRow);
+        parent.setFlyoutLabel(categoryName);
     }
 
     private async deleteExtension(ns: string) {

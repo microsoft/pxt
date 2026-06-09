@@ -692,6 +692,21 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         });
 
         Blockly.ShortcutRegistry.registry.register({
+            name: "toggle_simulator",
+            keyCodes: [Blockly.ShortcutRegistry.registry.createSerializedKey(Blockly.utils.KeyCodes.S, null)],
+            preconditionFn: (workspace, scope) => {
+                if (workspace.isFlyout || !scope.focusedNode) {
+                    return false
+                }
+                return true;
+            },
+            callback: () => {
+                this.parent.startStopSimulator({ clickTrigger: true });
+                return true
+            }
+        });
+
+        Blockly.ShortcutRegistry.registry.register({
             name: "download",
             keyCodes: [Blockly.ShortcutRegistry.registry.createSerializedKey(Blockly.utils.KeyCodes.L, null)],
             preconditionFn: (workspace, scope) => {
@@ -1367,10 +1382,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     showVariablesFlyout() {
         this.showFlyoutInternal_(pxtblockly.createVariablesFlyoutCategory(this.editor), "variables");
+        this.setFlyoutLabel(lf("Variables"));
     }
 
     showFunctionsFlyout() {
         this.showFlyoutInternal_(pxtblockly.createFunctionsFlyoutCategory(this.editor), "functions", true);
+        this.setFlyoutLabel(lf("Functions"));
     }
 
     getViewState() {
@@ -1872,6 +1889,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         });
 
         return res;
+    }
+
+    public setFlyoutLabel(categoryName: string) {
+        const blockCanvas = this.editor.getFlyout().getWorkspace().getBlockCanvas();
+        blockCanvas.ariaLabel = lf("{0} blocks", categoryName);
     }
 
     public hideFlyout() {
