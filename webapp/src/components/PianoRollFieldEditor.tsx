@@ -7,6 +7,7 @@ import { PianoRollFieldEditor } from "./pianoRoll/FieldEditor";
 interface PianoRollAssetEditorProps {
     onDoneClicked: () => void;
     hideDoneButton?: boolean;
+    fieldEditorParams?: any;
 }
 
 export class PianoRollAssetEditor extends React.Component<PianoRollAssetEditorProps, {}> implements AssetEditorCore {
@@ -24,6 +25,7 @@ export class PianoRollAssetEditor extends React.Component<PianoRollAssetEditorPr
         return (
             <PianoRollFieldEditor
                 handleRef={this.handlePianoFieldEditorRef}
+                fieldEditorParams={this.props.fieldEditorParams}
             />
         )
     }

@@ -214,7 +214,7 @@ export abstract class FieldAssetEditor<U extends FieldAssetEditorOptions, V exte
         widgetDiv.style.left = left + "px";
         widgetDiv.style.top = top + "px";
         widgetDiv.style.width = "50rem";
-        widgetDiv.style.height = "34.25rem";
+        widgetDiv.style.height = "39.5rem";
         widgetDiv.style.display = "flex";
         widgetDiv.style.alignItems = "center";
         widgetDiv.style.transition = "transform 0.25s ease 0s, opacity 0.25s ease 0s";
