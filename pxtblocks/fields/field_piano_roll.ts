@@ -1,6 +1,7 @@
 import { MelodyStringReader, REST } from "./field_melodySandbox";
 import { FieldMusicEditor, FieldMusicEditorOptions } from "./field_musiceditor";
 import { isTrue } from "./field_utils";
+import * as Blockly from "blockly";
 
 interface FieldPianoRollOptions extends FieldMusicEditorOptions {
     maxPolyphony?: number;
@@ -14,6 +15,20 @@ interface FieldPianoRollOptions extends FieldMusicEditorOptions {
 export class FieldPianoRoll extends FieldMusicEditor {
     protected showInWidgetDiv: boolean;
     protected encodeAsMelody: boolean;
+
+    override showEditor_() {
+        if (this.asset && this.encodeAsMelody) {
+            const field = this.getTempoField();
+            if (field) {
+                const bpm = parseInt(field.getValue() as string);
+
+                if (!isNaN(bpm)) {
+                    (this.asset as pxt.Song).song.beatsPerMinute = bpm;
+                }
+            }
+        }
+        super.showEditor_();
+    }
 
     protected override getEditorKind() {
         return "piano-roll-editor";
@@ -147,6 +162,42 @@ export class FieldPianoRoll extends FieldMusicEditor {
 
 
         return result;
+    }
+
+    protected override onEditorClose(newValue: pxt.Asset) {
+        super.onEditorClose(newValue);
+
+        if (this.encodeAsMelody) {
+            this.syncTempoField((newValue as pxt.Song).song.beatsPerMinute);
+        }
+    }
+
+    protected syncTempoField(bpm: number): void {
+        const field = this.getTempoField();
+        if (field) {
+            field.setValue(bpm);
+        }
+    }
+
+    protected getTempoField(): Blockly.Field {
+        const s = this.sourceBlock_;
+        if (s) {
+            for (const input of s.inputList) {
+                if (input.name === "tempo" || input.name === "bpm") {
+                    const tempoBlock = input.connection.targetBlock();
+                    if (tempoBlock) {
+                        if (tempoBlock.type === "math_number_minmax") {
+                            return tempoBlock.getField("SLIDER");
+                        }
+                        else {
+                            return tempoBlock.getField("NUM");
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+        return null;
     }
 }
 

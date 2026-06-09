@@ -2777,7 +2777,9 @@ function copy(workspace: Blockly.WorkspaceSvg, e: Event, _shortcut: Blockly.Shor
             copyWorkspace,
             pkg.mainEditorPkg().header.id
         );
-        showCopiedHint(workspace);
+        if (e instanceof KeyboardEvent) {
+            showCopiedHint(workspace);
+        }
     }
 
     return !!copyData;
@@ -2822,7 +2824,7 @@ function cut(workspace: Blockly.WorkspaceSvg, e: Event, _shortcut: Blockly.Short
         copied = true;
     }
 
-    if (copied) {
+    if (copied && e instanceof KeyboardEvent) {
         showCutHint(workspace);
     }
     return copied;
