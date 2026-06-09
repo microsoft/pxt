@@ -304,9 +304,12 @@ export abstract class FieldMatrix extends Blockly.Field {
         }
     }
 
-    protected getCellId = (x: number, y: number) => `${this.sourceBlock_.id}:${x}-${y}`;
+    // sourceBlock._id can clash between flyout and main workspace
+    protected domId = Blockly.utils.idGenerator.getNextUniqueId();
 
-    protected getRowId = (index: number) => `${this.sourceBlock_.id}:row-${index}`;
+    protected getCellId = (x: number, y: number) => `${this.domId}:${x}-${y}`;
+
+    protected getRowId = (index: number) => `${this.domId}:row-${index}`;
 
     protected abstract attachPointerEventHandlersToCell(x: number, y: number, cellRect: SVGElement): void;
 

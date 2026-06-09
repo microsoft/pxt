@@ -192,7 +192,7 @@ export class FieldLedMatrix extends FieldMatrix implements FieldCustom {
 
     private initMatrix() {
         if (!this.sourceBlock_.isInsertionMarker()) {
-            this.matrixSvg = pxsim.svg.parseString(`<svg xmlns="http://www.w3.org/2000/svg" id="${this.sourceBlock_.id}:field-matrix" class="blocklyMatrix" tabindex="-1" role="grid" width="${this.size_.width}" height="${this.size_.height}"/>`);
+            this.matrixSvg = pxsim.svg.parseString(`<svg xmlns="http://www.w3.org/2000/svg" id="${this.domId}:field-matrix" class="blocklyMatrix" tabindex="-1" role="grid" width="${this.size_.width}" height="${this.size_.height}"/>`);
             this.matrixSvg.ariaLabel = lf("LED grid");
             const workspace = Blockly.getMainWorkspace() as Blockly.WorkspaceSvg
             this.matrixSvg.style.boxShadow = `rgba(255, 255, 255, 0.3) 0 0 0 ${4 * workspace.getAbsoluteScale()}px`;
