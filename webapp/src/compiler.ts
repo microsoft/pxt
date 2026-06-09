@@ -572,6 +572,7 @@ export async function typecheckAsync(): Promise<pxtc.CompileResult | null> {
 
             const opts = await pkg.mainPkg.getCompileOptionsAsync();
             opts.testMode = true; // show errors in all top-level code
+            opts.enhancedErrors = true;
 
             await workerOpAsync("setOptions", { options: opts });
 

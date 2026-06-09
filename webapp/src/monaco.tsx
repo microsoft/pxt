@@ -1737,9 +1737,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (file && file.diagnostics) {
             const model = monaco.editor.getModel(monaco.Uri.parse(`pkg:${file.getName()}`))
             for (let d of file.diagnostics) {
+                const severity = d.category == ts.pxtc.DiagnosticCategory.Error
+                    ? monaco.MarkerSeverity.Error
+                    : d.category == ts.pxtc.DiagnosticCategory.Warning
+                        ? monaco.MarkerSeverity.Warning
+                        : monaco.MarkerSeverity.Info;
                 const addErrorMessage = (message: string) => {
                     monacoErrors.push({
-                        severity: monaco.MarkerSeverity.Error,
+                        severity,
                         message: message,
                         startLineNumber: d.line + 1,
                         startColumn: d.column + 1,

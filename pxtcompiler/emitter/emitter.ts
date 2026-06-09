@@ -247,7 +247,7 @@ namespace ts.pxtc {
         pxt.log(stringKind(n))
     }
 
-    // next free error 9284
+    // next free error 9285
     function userError(code: number, msg: string, secondary = false): Error {
         let e = new Error(msg);
         (<any>e).ksEmitterUserError = true;
@@ -4241,8 +4241,25 @@ ${lbl}: .short 0xffff
             return v
         }
 
+        function maybeWarnOnBareFunctionReference(node: Expression) {
+            if (!opts.enhancedErrors)
+                return
+
+            if (!node || node.kind != SK.Identifier)
+                return
+
+            const exprType = typeOf(node)
+            const signatures = exprType && !(exprType.flags & TypeFlags.Any)
+                && checker.getSignaturesOfType(exprType, SignatureKind.Call)
+            if (signatures && signatures.length)
+                warning(node, 9284, lf("Function reference used as a statement; did you mean to call it with '()'?"))
+        }
+
         function emitExprAsStmt(node: Expression) {
-            if (isNoopExpr(node)) return
+            if (isNoopExpr(node)) {
+                maybeWarnOnBareFunctionReference(node)
+                return
+            }
             emitBrk(node)
             let v = emitIgnored(node)
             proc.emitExpr(v)

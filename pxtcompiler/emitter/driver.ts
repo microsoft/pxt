@@ -92,6 +92,14 @@ namespace ts.pxtc {
         })
     }
 
+    export function hasErrorDiagnostics(diags: ReadonlyArray<{ category: DiagnosticCategory }>) {
+        return diags.some(d => d.category == DiagnosticCategory.Error)
+    }
+
+    export function hasBlockingDiagnostics(opts: CompileOptions, diags: ReadonlyArray<{ category: DiagnosticCategory }>) {
+        return opts.enhancedErrors ? hasErrorDiagnostics(diags) : diags.length > 0
+    }
+
     export function py2tsIfNecessary(opts: CompileOptions): transpile.TranspileResult | undefined {
         if (opts.target.preferredEditor == pxt.PYTHON_PROJECT_NAME) {
             let res = pxtc.transpile.pyToTs(opts)
@@ -237,7 +245,7 @@ namespace ts.pxtc {
             program = service.getProgram()
         } else {
             runConversionsAndStoreResults(opts, res)
-            if (res.diagnostics.length > 0)
+            if (hasBlockingDiagnostics(opts, res.diagnostics))
                 return res;
             program = buildProgram(opts, res)
         }
@@ -245,8 +253,8 @@ namespace ts.pxtc {
         const entryPoint = opts.sourceFiles.filter(f => U.endsWith(f, ".ts")).pop().replace(/.*\//, "")
 
         // First get and report any syntactic errors.
-        res.diagnostics = patchUpDiagnostics(program.getSyntacticDiagnostics(), opts.ignoreFileResolutionErrors);
-        if (res.diagnostics.length > 0) {
+        res.diagnostics = res.diagnostics.concat(patchUpDiagnostics(program.getSyntacticDiagnostics(), opts.ignoreFileResolutionErrors));
+        if (hasBlockingDiagnostics(opts, res.diagnostics)) {
             if (opts.forceEmit) {
                 pxt.debug('syntactic errors, forcing emit')
                 compileBinary(program, opts, res, entryPoint);
@@ -256,12 +264,12 @@ namespace ts.pxtc {
 
         // If we didn't have any syntactic errors, then also try getting the global and
         // semantic errors.
-        res.diagnostics = patchUpDiagnostics(program.getOptionsDiagnostics().concat(Util.toArray(program.getGlobalDiagnostics())), opts.ignoreFileResolutionErrors);
+        res.diagnostics = res.diagnostics.concat(patchUpDiagnostics(program.getOptionsDiagnostics().concat(Util.toArray(program.getGlobalDiagnostics())), opts.ignoreFileResolutionErrors));
 
         const semStart = U.cpuUs()
 
-        if (res.diagnostics.length == 0) {
-            res.diagnostics = patchUpDiagnostics(program.getSemanticDiagnostics(), opts.ignoreFileResolutionErrors);
+        if (!hasBlockingDiagnostics(opts, res.diagnostics)) {
+            res.diagnostics = res.diagnostics.concat(patchUpDiagnostics(program.getSemanticDiagnostics(), opts.ignoreFileResolutionErrors));
         }
 
         const emitStart = U.cpuUs()
@@ -273,13 +281,13 @@ namespace ts.pxtc {
             res.ast = program
         }
 
-        if (opts.ast || opts.forceEmit || res.diagnostics.length == 0) {
+        if (opts.ast || opts.forceEmit || !hasBlockingDiagnostics(opts, res.diagnostics)) {
             const binOutput = compileBinary(program, opts, res, entryPoint);
             res.times["compilebinary"] = U.cpuUs() - emitStart
             res.diagnostics = res.diagnostics.concat(patchUpDiagnostics(binOutput.diagnostics))
         }
 
-        if (res.diagnostics.length == 0)
+        if (!hasBlockingDiagnostics(opts, res.diagnostics))
             res.success = true
 
         for (let f of opts.sourceFiles) {
