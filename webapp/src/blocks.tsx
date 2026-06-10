@@ -728,6 +728,22 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             }
         });
 
+        // Route Blockly's built-in screenreader toggle (Ctrl/Cmd+Alt+Z) through
+        // MakeCode's persistent setting so the keyboard shortcut, the Settings
+        // menu checkbox, and the stored preference all stay in sync.
+        const toggleScreenreader = Blockly.ShortcutRegistry.registry.getRegistry()[Blockly.ShortcutItems.names.TOGGLE_SCREENREADER];
+        if (toggleScreenreader) {
+            Blockly.ShortcutRegistry.registry.unregister(toggleScreenreader.name);
+            Blockly.ShortcutRegistry.registry.register({
+                ...toggleScreenreader,
+                callback: (workspace, e) => {
+                    this.parent.toggleScreenReaderMode("shortcut");
+                    e.preventDefault();
+                    return true;
+                }
+            });
+        }
+
         Blockly.ShortcutRegistry.registry.register({
             name: "toggle_simulator",
             keyCodes: [Blockly.ShortcutRegistry.registry.createSerializedKey(Blockly.utils.KeyCodes.S, null)],
@@ -958,6 +974,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         initCopyPaste();
         this.initKeyboardControls();
         this.initWorkspaceSearch();
+        this.setScreenReaderMode(data.getData<boolean>(auth.SCREEN_READER_MODE));
         this.setupIntersectionObserver();
         this.resize();
 
@@ -1038,6 +1055,33 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.pendingKeyboardControlsHint = false;
             this.showKeyboardControlsHint();
         }
+    }
+
+    // Screen reader mode is the MakeCode-persisted equivalent of Blockly's
+    // built-in screenreader toggle: it disables navigation looping (so screen
+    // reader users hit a clear start/end) and enables audio cues when keyboard
+    // navigation changes nesting level.
+    setScreenReaderMode(enabled: boolean, showHint = false) {
+        if (!this.editor) return;
+        Blockly.keyboardNavigationController.setScopeChangeAudioCuesEnabled(enabled);
+        this.editor.getNavigator().setNavigationLoops(!enabled);
+        (this.editor.getToolbox() as Blockly.Toolbox)?.getNavigator()?.setNavigationLoops(!enabled);
+        this.editor.getFlyout()?.getWorkspace().getNavigator().setNavigationLoops(!enabled);
+        if (showHint) this.showScreenReaderModeHint(enabled);
+    }
+
+    private showScreenReaderModeHint(enabled: boolean) {
+        if (!this.editor) return;
+        const message = enabled
+            ? Blockly.Msg["SCREENREADER_MODE_ENABLED"]
+            : Blockly.Msg["SCREENREADER_MODE_DISABLED"];
+        if (!message) return;
+        const shortcut = getShortcutKeysShort(Blockly.ShortcutItems.names.TOGGLE_SCREENREADER);
+        Blockly.Toast.show(this.editor, {
+            message: shortcut ? message.replace("%1", shortcut) : message,
+            duration: 7,
+            id: "screenreaderModeHint",
+        });
     }
 
     showKeyboardControlsHint() {

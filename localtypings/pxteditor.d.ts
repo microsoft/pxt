@@ -1048,6 +1048,7 @@ declare namespace pxt.editor {
 
         toggleHighContrast(): void;
         setHighContrast(on: boolean): void;
+        toggleScreenReaderMode(eventSource: string): void;
         toggleGreenScreen(): void;
         launchFullEditor(): void;
         resetWorkspace(): void;
