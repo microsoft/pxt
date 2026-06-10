@@ -728,6 +728,22 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             }
         });
 
+        // Route Blockly's built-in screenreader toggle (Ctrl/Cmd+Alt+Z) through
+        // MakeCode's persistent setting so the keyboard shortcut, the Settings
+        // menu checkbox, and the stored preference all stay in sync.
+        const toggleScreenreader = Blockly.ShortcutRegistry.registry.getRegistry()[Blockly.ShortcutItems.names.TOGGLE_SCREENREADER];
+        if (toggleScreenreader) {
+            Blockly.ShortcutRegistry.registry.unregister(toggleScreenreader.name);
+            Blockly.ShortcutRegistry.registry.register({
+                ...toggleScreenreader,
+                callback: (workspace, e) => {
+                    this.parent.toggleScreenReaderMode("shortcut");
+                    e.preventDefault();
+                    return true;
+                }
+            });
+        }
+
         Blockly.ShortcutRegistry.registry.register({
             name: "toggle_simulator",
             keyCodes: [Blockly.ShortcutRegistry.registry.createSerializedKey(Blockly.utils.KeyCodes.S, null)],
@@ -958,6 +974,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         initCopyPaste();
         this.initKeyboardControls();
         this.initWorkspaceSearch();
+        this.setScreenReaderMode(data.getData<boolean>(auth.SCREEN_READER_MODE));
         this.setupIntersectionObserver();
         this.resize();
 
@@ -1038,6 +1055,41 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.pendingKeyboardControlsHint = false;
             this.showKeyboardControlsHint();
         }
+    }
+
+    // Screen reader mode is the MakeCode-persisted equivalent of Blockly's
+    // built-in screenreader toggle: it disables navigation looping (so screen
+    // reader users hit a clear start/end) and enables audio cues when keyboard
+    // navigation changes nesting level.
+    setScreenReaderMode(enabled: boolean, hintStyle?: "shortcut" | "menu") {
+        if (!this.editor) return;
+        Blockly.keyboardNavigationController.setScopeChangeAudioCuesEnabled(enabled);
+        this.editor.getNavigator().setNavigationLoops(!enabled);
+        (this.editor.getToolbox() as Blockly.Toolbox)?.getNavigator()?.setNavigationLoops(!enabled);
+        this.editor.getFlyout()?.getWorkspace().getNavigator().setNavigationLoops(!enabled);
+        if (hintStyle) this.showScreenReaderModeHint(enabled, hintStyle);
+    }
+
+    private showScreenReaderModeHint(enabled: boolean, hintStyle: "shortcut" | "menu") {
+        if (!this.editor) return;
+        let message: string;
+        if (hintStyle === "shortcut") {
+            const template = enabled
+                ? Blockly.Msg["SCREENREADER_MODE_ENABLED"]
+                : Blockly.Msg["SCREENREADER_MODE_DISABLED"];
+            if (!template) return;
+            const shortcut = getShortcutKeysShort(Blockly.ShortcutItems.names.TOGGLE_SCREENREADER);
+            message = shortcut ? template.replace("%1", shortcut) : template;
+        } else {
+            message = enabled
+                ? lf("Screen reader mode on")
+                : lf("Screen reader mode off");
+        }
+        Blockly.Toast.show(this.editor, {
+            message,
+            duration: 7,
+            id: "screenreaderModeHint",
+        });
     }
 
     showKeyboardControlsHint() {

@@ -171,6 +171,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.showLanguagePicker = this.showLanguagePicker.bind(this);
         this.showThemePicker = this.showThemePicker.bind(this);
         this.toggleHighContrast = this.toggleHighContrast.bind(this);
+        this.toggleScreenReaderMode = this.toggleScreenReaderMode.bind(this);
         this.toggleGreenScreen = this.toggleGreenScreen.bind(this);
         this.showResetDialog = this.showResetDialog.bind(this);
         this.showShareDialog = this.showShareDialog.bind(this);
@@ -250,6 +251,11 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
     toggleHighContrast() {
         pxt.tickEvent("menu.togglecontrast", undefined, { interactiveConsent: true });
         this.props.parent.toggleHighContrast();
+    }
+
+    toggleScreenReaderMode() {
+        pxt.tickEvent("menu.togglescreenreadermode", undefined, { interactiveConsent: true });
+        this.props.parent.toggleScreenReaderMode("settings");
     }
 
     toggleGreenScreen() {
@@ -512,6 +518,15 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
                 label: lf("Green Screen"),
                 isChecked: greenScreen,
                 onChange: this.toggleGreenScreen
+            });
+        }
+
+        if (this.props.inBlocks) {
+            items.push({
+                role: "menuitemcheckbox",
+                label: lf("Screen Reader Mode"),
+                isChecked: this.getData<boolean>(auth.SCREEN_READER_MODE),
+                onChange: this.toggleScreenReaderMode
             });
         }
 
