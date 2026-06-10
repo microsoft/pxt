@@ -365,8 +365,19 @@ namespace pxsim {
 
             if (frameID) frames = frames.filter(f => f.id === frameID);
 
-            let isDeferrableBroadcastMessage = false;
+            if (this._runOptions?.physicalSimulator) {
+                // in this mode, we do the following:
+                // 1. create a simulator only when receive a specific create sim 
+                //    message from above (no extension sim support for now)
+                // 2. pass any broadcast message from the sim to the parent window
+                //    to allow integration with physical simulator, which will decide
+                //    which messages to pass back here (e.g., the radio)
+                // 3. receive and forward messages from parent window to the sim, which allows the physical simulator to 
+                //    send messages to the specificied sim iframe (or frames)
+                return;
+            } 
 
+            let isDeferrableBroadcastMessage = false;
             const broadcastmsg = msg as pxsim.SimulatorBroadcastMessage;
             if (source && broadcastmsg?.broadcast) {
                 // include index of the source iframe
@@ -460,8 +471,7 @@ namespace pxsim {
                             // start secondary frame if needed
                             const mkcdFrames = frames.filter(frame => !frame.dataset[FRAME_DATA_MESSAGE_CHANNEL]);
                             if (!messageChannel &&
-                                    (mkcdFrames.length == 0 || mkcdFrames.length == 1 && !this.singleSimulator ||
-                                        this._runOptions?.physicalSimulator
+                                    (mkcdFrames.length == 0 || mkcdFrames.length == 1 && !this.singleSimulator
                                     )) {
                                 // messageChannel is set to false whenever msg.type !== "messagepacket"
                                 // for example, in the case of msg.type === "radiopacket". However, in the case
@@ -890,7 +900,6 @@ namespace pxsim {
                     break;
                 }
                 case 'status': {
-                    // TBALL: interesting - where do frameids get sent out?
                     const frameid = (msg as pxsim.SimulatorReadyMessage).frameid;
                     const frame = document.getElementById(frameid) as HTMLIFrameElement;
                     if (frame) {
@@ -931,6 +940,10 @@ namespace pxsim {
                 case 'debugger': this.handleDebuggerMessage(msg as DebuggerMessage); break;
                 case 'toplevelcodefinished': if (this.options.onTopLevelCodeEnd) this.options.onTopLevelCodeEnd(); break;
                 case 'setmutebuttonstate': this.options.onMuteButtonStateChange?.((msg as SetMuteButtonStateMessage).state); break;
+                case 'create':
+                    // create a new simulator 
+                    this.container.appendChild(this.createFrame());
+                    break;
                 default:
                     this.postMessage(msg, source);
                     break;
