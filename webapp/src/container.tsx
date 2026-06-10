@@ -132,7 +132,6 @@ export class DocsMenu extends data.PureComponent<DocsMenuProps, {}> {
         return (
             <MenuDropdown
                 id="docs-menuitem"
-                role="menuitem"
                 title={lf("Help")}
                 className="mobile-hidden help-dropdown-menuitem"
                 icon="icon help circle large"
@@ -614,6 +613,7 @@ interface IBaseMenuItemProps extends ISettingsProps {
     title?: string;
     className?: string;
     ariaLabel?: string;
+    role?: string;
 }
 
 class BaseMenuItemProps extends data.Component<IBaseMenuItemProps, {}> {
@@ -623,13 +623,13 @@ class BaseMenuItemProps extends data.Component<IBaseMenuItemProps, {}> {
 
     renderCore() {
         const active = this.props.isActive();
-        return <sui.Item className={`base-menuitem ${this.props.className} ${active ? "selected" : ""}`} role="option" textClass="landscape only"
+        return <sui.Item className={`base-menuitem ${this.props.className} ${active ? "selected" : ""}`} role={this.props.role || "button"} textClass="landscape only"
             text={this.props.text} icon={this.props.icon} active={active} onClick={this.props.onClick} title={this.props.title} ariaLabel={this.props.ariaLabel} />
     }
 }
 
-class JavascriptMenuItem extends data.Component<ISettingsProps, {}> {
-    constructor(props: ISettingsProps) {
+class JavascriptMenuItem extends data.Component<ISettingsProps & { role?: string }, {}> {
+    constructor(props: ISettingsProps & { role?: string }) {
         super(props);
     }
 
@@ -643,12 +643,12 @@ class JavascriptMenuItem extends data.Component<ISettingsProps, {}> {
     }
 
     renderCore() {
-        return <BaseMenuItemProps className="javascript-menuitem" icon="xicon js" text="JavaScript" title={lf("Convert code to JavaScript")} onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} ariaLabel={lf("Convert code to JavaScript")}/>
+        return <BaseMenuItemProps className="javascript-menuitem" icon="xicon js" text="JavaScript" title={lf("Convert code to JavaScript")} onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} ariaLabel={lf("Convert code to JavaScript")} role={this.props.role}/>
     }
 }
 
-class PythonMenuItem extends data.Component<ISettingsProps, {}> {
-    constructor(props: ISettingsProps) {
+class PythonMenuItem extends data.Component<ISettingsProps & { role?: string }, {}> {
+    constructor(props: ISettingsProps & { role?: string }) {
         super(props);
     }
 
@@ -662,7 +662,7 @@ class PythonMenuItem extends data.Component<ISettingsProps, {}> {
     }
 
     renderCore() {
-        return <BaseMenuItemProps className="python-menuitem" icon="xicon python" text="Python" title={lf("Convert code to Python")} onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} ariaLabel={lf("Convert code to Python")} />
+        return <BaseMenuItemProps className="python-menuitem" icon="xicon python" text="Python" title={lf("Convert code to Python")} onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} ariaLabel={lf("Convert code to Python")} role={this.props.role} />
     }
 }
 
@@ -776,14 +776,14 @@ export class EditorSelector extends data.Component<IEditorSelectorProps, {}> {
         }
 
         return (
-            <div id="editortoggle" className={`ui grid padded ${(pyOnly || tsOnly) ? "one-language" : ""}`} role="listbox" aria-orientation="horizontal" aria-label={lf("Editor toggle")}>
+            <div id="editortoggle" className={`ui grid padded ${(pyOnly || tsOnly) ? "one-language" : ""}`} role="group" aria-label={lf("Editor toggle")}>
                 {showSandbox && <SandboxMenuItem parent={parent} />}
                 {showBlocks && <BlocksMenuItem parent={parent} />}
                 {textLanguage}
                 {secondTextLanguage}
-                {showDropdown && <sui.DropdownMenu id="editordropdown" role="option" icon="chevron down" rightIcon title={lf("Select code editor language")} className={`item button attached right ${dropdownActive ? "active" : ""}`}>
-                    <JavascriptMenuItem parent={parent} />
-                    <PythonMenuItem parent={parent} />
+                {showDropdown && <sui.DropdownMenu id="editordropdown" role="button" icon="chevron down" rightIcon title={lf("Select code editor language")} className={`item button attached right ${dropdownActive ? "active" : ""}`}>
+                    <JavascriptMenuItem parent={parent} role="menuitem" />
+                    <PythonMenuItem parent={parent} role="menuitem" />
                 </sui.DropdownMenu>}
                 {showAssets && <AssetMenuItem parent={parent} />}
                 <div className={`ui item toggle ${dropdownActive ? 'dropdown-attached' : ''}`}></div>
