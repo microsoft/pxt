@@ -691,6 +691,59 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             }
         });
 
+        // Blockly's disconnect action unplugs the focused block, which would
+        // pull a duplicate-on-drag block out of its slot. Match the drag/move
+        // behavior instead: leave the original in place and disconnect a clone.
+        const disconnectShortcut = Blockly.ShortcutRegistry.registry.getRegistry()[Blockly.ShortcutItems.names.DISCONNECT];
+        Blockly.ShortcutRegistry.registry.unregister(disconnectShortcut.name);
+        Blockly.ShortcutRegistry.registry.register({
+            ...disconnectShortcut,
+            preconditionFn: (workspace, scope) => {
+                const focused = scope.focusedNode;
+                // duplicate-on-drag blocks (including allowlisted shadows) have special
+                // casing below so allow them through. 
+                if (focused instanceof Blockly.BlockSvg && shouldDuplicateOnDrag(focused)) {
+                    return !workspace.isReadOnly() && !workspace.isDragging();
+                }
+                // Workaround: https://github.com/RaspberryPiFoundation/blockly/issues/9963
+                if (focused instanceof Blockly.BlockSvg && focused.isShadow()) {
+                    workspace.getAudioManager().playErrorBeep();
+                    return false;
+                }
+                return disconnectShortcut.preconditionFn!(workspace, scope);
+            },
+            callback: (workspace, e, shortcut, scope) => {
+                const focused = Blockly.getFocusManager().getFocusedNode();
+                if (focused instanceof Blockly.BlockSvg && shouldDuplicateOnDrag(focused)) {
+                    Blockly.Events.setGroup(true);
+                    try {
+                        cloneDuplicateOnDragBlock(workspace, focused);
+                    } finally {
+                        Blockly.Events.setGroup(false);
+                    }
+                    return true;
+                }
+
+                return disconnectShortcut.callback!(workspace, e, shortcut, scope);
+            }
+        });
+
+        // Route Blockly's built-in screenreader toggle (Ctrl/Cmd+Alt+Z) through
+        // MakeCode's persistent setting so the keyboard shortcut, the Settings
+        // menu checkbox, and the stored preference all stay in sync.
+        const toggleScreenreader = Blockly.ShortcutRegistry.registry.getRegistry()[Blockly.ShortcutItems.names.TOGGLE_SCREENREADER];
+        if (toggleScreenreader) {
+            Blockly.ShortcutRegistry.registry.unregister(toggleScreenreader.name);
+            Blockly.ShortcutRegistry.registry.register({
+                ...toggleScreenreader,
+                callback: (workspace, e) => {
+                    this.parent.toggleScreenReaderMode("shortcut");
+                    e.preventDefault();
+                    return true;
+                }
+            });
+        }
+
         Blockly.ShortcutRegistry.registry.register({
             name: "toggle_simulator",
             keyCodes: [Blockly.ShortcutRegistry.registry.createSerializedKey(Blockly.utils.KeyCodes.S, null)],
@@ -921,6 +974,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         initCopyPaste();
         this.initKeyboardControls();
         this.initWorkspaceSearch();
+        this.setScreenReaderMode(data.getData<boolean>(auth.SCREEN_READER_MODE));
         this.setupIntersectionObserver();
         this.resize();
 
@@ -1001,6 +1055,41 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.pendingKeyboardControlsHint = false;
             this.showKeyboardControlsHint();
         }
+    }
+
+    // Screen reader mode is the MakeCode-persisted equivalent of Blockly's
+    // built-in screenreader toggle: it disables navigation looping (so screen
+    // reader users hit a clear start/end) and enables audio cues when keyboard
+    // navigation changes nesting level.
+    setScreenReaderMode(enabled: boolean, hintStyle?: "shortcut" | "menu") {
+        if (!this.editor) return;
+        Blockly.keyboardNavigationController.setScopeChangeAudioCuesEnabled(enabled);
+        this.editor.getNavigator().setNavigationLoops(!enabled);
+        (this.editor.getToolbox() as Blockly.Toolbox)?.getNavigator()?.setNavigationLoops(!enabled);
+        this.editor.getFlyout()?.getWorkspace().getNavigator().setNavigationLoops(!enabled);
+        if (hintStyle) this.showScreenReaderModeHint(enabled, hintStyle);
+    }
+
+    private showScreenReaderModeHint(enabled: boolean, hintStyle: "shortcut" | "menu") {
+        if (!this.editor) return;
+        let message: string;
+        if (hintStyle === "shortcut") {
+            const template = enabled
+                ? Blockly.Msg["SCREENREADER_MODE_ENABLED"]
+                : Blockly.Msg["SCREENREADER_MODE_DISABLED"];
+            if (!template) return;
+            const shortcut = getShortcutKeysShort(Blockly.ShortcutItems.names.TOGGLE_SCREENREADER);
+            message = shortcut ? template.replace("%1", shortcut) : template;
+        } else {
+            message = enabled
+                ? lf("Screen reader mode on")
+                : lf("Screen reader mode off");
+        }
+        Blockly.Toast.show(this.editor, {
+            message,
+            duration: 7,
+            id: "screenreaderModeHint",
+        });
     }
 
     showKeyboardControlsHint() {
@@ -2740,7 +2829,9 @@ function copy(workspace: Blockly.WorkspaceSvg, e: Event, _shortcut: Blockly.Shor
             copyWorkspace,
             pkg.mainEditorPkg().header.id
         );
-        showCopiedHint(workspace);
+        if (e instanceof KeyboardEvent) {
+            showCopiedHint(workspace);
+        }
     }
 
     return !!copyData;
@@ -2785,7 +2876,7 @@ function cut(workspace: Blockly.WorkspaceSvg, e: Event, _shortcut: Blockly.Short
         copied = true;
     }
 
-    if (copied) {
+    if (copied && e instanceof KeyboardEvent) {
         showCutHint(workspace);
     }
     return copied;
@@ -2829,21 +2920,29 @@ function maybeCloneBlockForMove(workspace: Blockly.WorkspaceSvg) {
     const block = Blockly.getFocusManager().getFocusedNode();
     if (!(block instanceof Blockly.BlockSvg)) return;
     if (block && shouldDuplicateOnDrag(block)) {
+        // Open a group and deliberately leave it open: the keyboard mover's
+        // dragger adopts an already-open group (Dragger.onDragStart) so the
+        // clone and the subsequent move become a single undo step, and the
+        // dragger closes the group when the move ends.
         Blockly.Events.setGroup(true);
-        const xml = Blockly.Xml.blockToDom(block);
-        const clone = Blockly.Xml.domToBlock(xml as Element, workspace);
-        clone.setShadow(false);
-
-        const position = block.getRelativeToSurfaceXY();
-        const snapRadius = Blockly.config.snapRadius;
-
-        clone.moveBy(
-            position.x + snapRadius,
-            position.y + snapRadius,
-        );
-
-        Blockly.getFocusManager().focusNode(clone as Blockly.BlockSvg);
+        cloneDuplicateOnDragBlock(workspace, block);
     }
+}
+
+function cloneDuplicateOnDragBlock(workspace: Blockly.WorkspaceSvg, block: Blockly.BlockSvg): Blockly.BlockSvg {
+    const state = Blockly.serialization.blocks.save(block, { saveIds: false });
+    const clone = Blockly.serialization.blocks.append(state, workspace, { recordUndo: true }) as Blockly.BlockSvg;
+
+    const position = block.getRelativeToSurfaceXY();
+    const snapRadius = Blockly.config.snapRadius;
+
+    clone.moveBy(
+        position.x + snapRadius,
+        position.y + snapRadius,
+    );
+
+    Blockly.getFocusManager().focusNode(clone);
+    return clone;
 }
 
 function getBlockConfigXml(block: toolbox.BlockDefinition, blockConfig: pxt.tutorial.TutorialBlockConfig): Element | undefined {
