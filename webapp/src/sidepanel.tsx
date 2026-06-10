@@ -191,7 +191,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
     onOpenPhysicalSimulatorClick = (evt: any) => {
         evt.preventDefault();
         pxt.tickEvent("sidepanel.openphysicalsimulator");
-        simulator.driver.postMessage({ type: "create" } as pxsim.SimulatorCreate);
+        simulator.driver.addSimulator();
         // for now, spin up a new simulator
         // this.props.parent.showShareDialog(undefined, "physicalsimulator");
     }

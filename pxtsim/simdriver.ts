@@ -351,6 +351,10 @@ namespace pxsim {
             this.singleSimulator = true
         }
 
+        public addSimulator() {
+            this.container.appendChild(this.createFrame());
+        }
+
         // BEGIN TEMPORARY: jacdac simulator
         newJacdacSimulator: boolean = false;
         // END TEMPORARY: jacdac simulator
@@ -375,7 +379,7 @@ namespace pxsim {
                 // 3. receive and forward messages from parent window to the sim, which allows the physical simulator to 
                 //    send messages to the specificied sim iframe (or frames)
                 return;
-            } 
+            }
 
             let isDeferrableBroadcastMessage = false;
             const broadcastmsg = msg as pxsim.SimulatorBroadcastMessage;
@@ -940,10 +944,6 @@ namespace pxsim {
                 case 'debugger': this.handleDebuggerMessage(msg as DebuggerMessage); break;
                 case 'toplevelcodefinished': if (this.options.onTopLevelCodeEnd) this.options.onTopLevelCodeEnd(); break;
                 case 'setmutebuttonstate': this.options.onMuteButtonStateChange?.((msg as SetMuteButtonStateMessage).state); break;
-                case 'create':
-                    // create a new simulator 
-                    this.container.appendChild(this.createFrame());
-                    break;
                 default:
                     this.postMessage(msg, source);
                     break;
