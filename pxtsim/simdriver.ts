@@ -854,7 +854,7 @@ namespace pxsim {
                 theme: this.themes[this.nextFrameId++ % this.themes.length],
                 mpRole
             };
-            msg.frameId = frame.id
+            // TBALL: msg.frameId = frame.id
             msg.id = `${msg.options.theme}-${this.nextId()}`;
             frame.dataset['runid'] = this.runId;
             frame.dataset['runtimeid'] = msg.id;

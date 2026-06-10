@@ -188,6 +188,14 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         this.props.parent.showShareDialog(undefined, "vscode");
     }
 
+    onOpenPhysicalSimulatorClick = (evt: any) => {
+        evt.preventDefault();
+        pxt.tickEvent("sidepanel.openphysicalsimulator");
+        simulator.driver.postMessage({ type: "create" } as pxsim.SimulatorCreate);
+        // for now, spin up a new simulator
+        // this.props.parent.showShareDialog(undefined, "physicalsimulator");
+    }
+
     onResizeDrag = (newSize: number) => {
         this.setComponentHeight(newSize, true);
     }
@@ -204,6 +212,8 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         const hasSimulator = !pxt.appTarget.simulator?.headless;
         const showOpenInVscodeButton = parent.isJavaScriptActive()
             && pxt.appTarget?.appTheme?.showOpenInVscode
+            && !pxt.shell.isTimeMachineEmbed();
+        const showPhysicalSimulator = hasSimulator && pxt.appTarget?.appTheme?.physicalSimulator
             && !pxt.shell.isTimeMachineEmbed();
 
         const showHostMultiplayerGameButton = isMultiplayerGame
@@ -265,6 +275,9 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                         </div>
                         <div className="ui item grid centered portrait hide hidefullscreen">
                             {showOpenInVscodeButton && <Button className={"secondary hostmultiplayergame-button"} icon={"icon share"} text={lf("Open in VS Code")} ariaLabel={lf("Open in Visual Studio Code for Web")} onClick={this.onOpenInVSCodeClick} />}
+                        </div>
+                        <div className="ui item grid centered portrait hide hidefullscreen">
+                            {showPhysicalSimulator && <Button className={"secondary hostmultiplayergame-button"} icon={"icon share"} text={lf("Open Physical Simulator")} ariaLabel={lf("Open Physical Simulator")} onClick={this.onOpenPhysicalSimulatorClick} />}
                         </div>
                         <div className="ui item grid centered portrait hide hidefullscreen">
                             {showHostMultiplayerGameButton && <Button className={"secondary hostmultiplayergame-button"} icon={"xicon multiplayer"} text={lf("Host multiplayer game")} ariaLabel={lf("Host multiplayer game")} onClick={this.onHostMultiplayerGameClick} />}
