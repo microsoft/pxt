@@ -5325,7 +5325,7 @@ export class ProjectView
         const nextEnabled = !this.getData<boolean>(auth.SCREEN_READER_MODE);
         await core.setScreenReaderMode(nextEnabled, eventSource);
         if (this.blocksEditor) {
-            this.blocksEditor.setScreenReaderMode(nextEnabled, /* showHint */ eventSource === "shortcut");
+            this.blocksEditor.setScreenReaderMode(nextEnabled, eventSource === "shortcut" ? "shortcut" : "menu");
         }
     }
 

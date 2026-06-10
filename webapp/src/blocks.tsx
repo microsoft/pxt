@@ -1061,24 +1061,32 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     // built-in screenreader toggle: it disables navigation looping (so screen
     // reader users hit a clear start/end) and enables audio cues when keyboard
     // navigation changes nesting level.
-    setScreenReaderMode(enabled: boolean, showHint = false) {
+    setScreenReaderMode(enabled: boolean, hintStyle?: "shortcut" | "menu") {
         if (!this.editor) return;
         Blockly.keyboardNavigationController.setScopeChangeAudioCuesEnabled(enabled);
         this.editor.getNavigator().setNavigationLoops(!enabled);
         (this.editor.getToolbox() as Blockly.Toolbox)?.getNavigator()?.setNavigationLoops(!enabled);
         this.editor.getFlyout()?.getWorkspace().getNavigator().setNavigationLoops(!enabled);
-        if (showHint) this.showScreenReaderModeHint(enabled);
+        if (hintStyle) this.showScreenReaderModeHint(enabled, hintStyle);
     }
 
-    private showScreenReaderModeHint(enabled: boolean) {
+    private showScreenReaderModeHint(enabled: boolean, hintStyle: "shortcut" | "menu") {
         if (!this.editor) return;
-        const message = enabled
-            ? Blockly.Msg["SCREENREADER_MODE_ENABLED"]
-            : Blockly.Msg["SCREENREADER_MODE_DISABLED"];
-        if (!message) return;
-        const shortcut = getShortcutKeysShort(Blockly.ShortcutItems.names.TOGGLE_SCREENREADER);
+        let message: string;
+        if (hintStyle === "shortcut") {
+            const template = enabled
+                ? Blockly.Msg["SCREENREADER_MODE_ENABLED"]
+                : Blockly.Msg["SCREENREADER_MODE_DISABLED"];
+            if (!template) return;
+            const shortcut = getShortcutKeysShort(Blockly.ShortcutItems.names.TOGGLE_SCREENREADER);
+            message = shortcut ? template.replace("%1", shortcut) : template;
+        } else {
+            message = enabled
+                ? lf("Screen reader mode on")
+                : lf("Screen reader mode off");
+        }
         Blockly.Toast.show(this.editor, {
-            message: shortcut ? message.replace("%1", shortcut) : message,
+            message,
             duration: 7,
             id: "screenreaderModeHint",
         });
