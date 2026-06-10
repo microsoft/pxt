@@ -146,10 +146,30 @@
                 ifrm.src = select.value + flags + h;
             }
             function handleHash() {
-                var route = (window.location.hash || "#");
-                var parts = route.replace(/^#/, '').split(':|:', 2);
-                updateSrc(left, selectLeft, parts[0]);
-                updateSrc(right, selectRight, parts[1]);
+                var route = decodeURIComponent(window.location.hash || "#");
+
+                if (route.indexOf(":|:") !== -1) {
+                    var parts = route.replace(/^#/, '').split(':|:', 2);
+                    updateSrc(left, selectLeft, parts[0]);
+                    updateSrc(right, selectRight, parts[1]);
+                }
+                else {
+                    route = route.replace(/^#/, '');
+                    var params = new URLSearchParams(route);
+                    if (params.has("left")) {
+                        updateSrc(left, selectLeft, params.get("left"));
+                    }
+                    else if (params.has("leftscript")) {
+                        updateSrc(left, selectLeft, "pub:" + params.get("leftscript"));
+                    }
+                    if (params.has("right")) {
+                        updateSrc(right, selectRight, params.get("right"));
+                    }
+                    else if (params.has("rightscript")) {
+                        updateSrc(right, selectRight, "pub:" + params.get("rightscript"));
+                    }
+                }
+
                 window.history.replaceState('', '', '#')
             }
 
