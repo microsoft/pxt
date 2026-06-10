@@ -6,8 +6,8 @@ import { assertMethod } from "./util";
  * very first field (inputList[0].fieldRow[0]) is itself a full block field. So
  * a reporter with a leading label, e.g. "melody $melody", is never recognised,
  * and is announced as just a value by screen readers with no indication that
- * it's interactive. Contrast "$fraction beat", where the dropdown isfirst and
- * so works.
+ * it's interactive. Contrast "$fraction beat", where the dropdown is first,
+ * which works.
  *
  * Workaround until Blockly's getFullBlockField considers fields beyond the first.
  * In future it would be good to include the "melody" and "beat" text in the
