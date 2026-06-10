@@ -330,7 +330,7 @@ namespace pxt {
                 })
         }
 
-        loadConfig() {
+        loadConfig(skipSave = false) {
             if (this.level != 0 && this.invalid())
                 return; // don't try load invalid dependency
 
@@ -340,7 +340,9 @@ namespace pxt {
             this.parseConfig(confStr);
             if (this.level != 0)
                 this.installedVersion = this.version()
-            this.saveConfig()
+            if (!skipSave) {
+                this.saveConfig()
+            }
         }
 
         protected validateConfig() {
