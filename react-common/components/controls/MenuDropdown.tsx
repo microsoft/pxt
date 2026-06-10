@@ -133,7 +133,7 @@ export const MenuDropdown = (props: MenuDropdownProps) => {
             buttonRef={handleButtonRef}
             title={title}
             leftIcon={icon}
-            role={role || "menuitem"}
+            role={role || "button"}
             className={classList("menu-button", expanded && "expanded")}
             onClick={null}
             onClickEvent={onMenuButtonClick}
