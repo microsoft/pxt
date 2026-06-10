@@ -1,5 +1,7 @@
 import * as Blockly from "blockly";
 
+const twoToneDataAttr = "data-two-tone-focus-rect";
+
 interface MatrixDisplayProps {
     cellWidth: number;
     cellHeight: number;
@@ -223,7 +225,8 @@ export abstract class FieldMatrix extends Blockly.Field {
                 stroke: "#000",
                 "stroke-width": 2,
                 fill: "none",
-                "aria-hidden": "true"
+                "aria-hidden": "true",
+                [twoToneDataAttr]: "true"
             });
         }
         const cellTextEl = cell.firstElementChild;
@@ -238,7 +241,8 @@ export abstract class FieldMatrix extends Blockly.Field {
         const cellRect = cell.children[1];
         const cellWidth = parseInt(cellRect.getAttribute("width"))
         const cornerRadius = parseInt(cellRect.getAttribute("rx"));
-        if (useTwoToneFocusIndicator && !cell.children[3]) {
+        const twoToneRect = Array.from(cell.children).find(c => c.hasAttribute(twoToneDataAttr));
+        if (useTwoToneFocusIndicator && !twoToneRect) {
             pxsim.svg.child(cell, "rect", {
                 transform: 'translate(-1, -1)',
                 width: cellWidth + 2,
@@ -247,10 +251,11 @@ export abstract class FieldMatrix extends Blockly.Field {
                 stroke: "#000",
                 "stroke-width": 2,
                 fill: "none",
-                "aria-hidden": "true"
+                "aria-hidden": "true",
+                [twoToneDataAttr]: "true"
             });
-        } else {
-            cell.children[3]?.remove();
+        } else if (!useTwoToneFocusIndicator && twoToneRect) {
+            twoToneRect.remove();
         }
     }
 
