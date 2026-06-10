@@ -3079,7 +3079,7 @@ export class ProjectView
         }
 
         if (options.dependencies) {
-            Util.jsonMergeFrom(cfg.dependencies, options.dependencies)
+            cfg.dependencies = pxt.tutorial.mergeTutorialDependencies(cfg.dependencies, options.dependencies);
         }
         if (options.extensionUnderTest) {
             const ext = workspace.getHeader(options.extensionUnderTest);
