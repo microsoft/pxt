@@ -162,11 +162,17 @@
                     else if (params.has("leftscript")) {
                         updateSrc(left, selectLeft, "pub:" + params.get("leftscript"));
                     }
+                    else {
+                        updateSrc(left, selectLeft);
+                    }
                     if (params.has("right")) {
                         updateSrc(right, selectRight, params.get("right"));
                     }
                     else if (params.has("rightscript")) {
                         updateSrc(right, selectRight, "pub:" + params.get("rightscript"));
+                    }
+                    else {
+                        updateSrc(right, selectRight);
                     }
                 }
 
