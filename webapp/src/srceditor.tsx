@@ -98,6 +98,7 @@ export class Editor implements IEditor {
     zoomOut() { }
     setScale(scale: number) { }
 
+    setFlyoutLabel(categoryName: string) { }
     closeFlyout() { }
     clearCaches() { }
     /*******************************

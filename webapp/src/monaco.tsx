@@ -1357,6 +1357,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.hideFlyout();
     }
 
+    public setFlyoutLabel(categoryName: string) {
+        this.flyout.setLabel(lf("{0} snippets", categoryName))
+    }
+
     public isFlyoutVisible(): boolean {
         return !!(this.flyout?.state?.groups && !this.flyout.state.hide);
     }
