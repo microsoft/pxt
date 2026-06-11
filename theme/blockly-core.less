@@ -379,6 +379,11 @@ text.blocklyCheckbox {
     color: #575E75;
 }
 
+/* Hide the comment placeholder from sighted users; it remains for screen readers. */
+.blocklyCommentText::placeholder {
+    opacity: 0;
+}
+
 /*******************************
         Workspace Search
 *******************************/
