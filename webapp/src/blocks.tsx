@@ -62,7 +62,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     loadingXmlPromise: Promise<any>;
     compilationResult: pxtblockly.BlockCompilationResult;
     shouldFocusWorkspace = false;
-    pendingKeyboardControlsHint = false;
     functionsDialog: CreateFunctionDialog = null;
 
     showCategories: boolean = true;
@@ -92,7 +91,18 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.createTourFromResponse = this.createTourFromResponse.bind(this)
         this.getErrorHelp = this.getErrorHelp.bind(this)
         this.startDebugger = this.startDebugger.bind(this);
+
+        document.addEventListener("keydown", this.trackKeyboardInput, true);
+        document.addEventListener("pointerdown", this.trackPointerInput, true);
     }
+
+    private lastInputModality: "keyboard" | "pointer";
+    private trackKeyboardInput = () => {
+        this.lastInputModality = "keyboard";
+    };
+    private trackPointerInput = () => {
+        this.lastInputModality = "pointer";
+    };
     setBreakpointsMap(breakpoints: pxtc.Breakpoint[], procCallLocations: pxtc.LocationInfo[]): void {
         if (!breakpoints || !this.compilationResult) return;
         const blockToAllBreakpoints: { [index: string]: pxtc.Breakpoint[] } = {};
@@ -851,6 +861,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.editor = Blockly.inject(blocklyDiv, this.getBlocklyOptions(forceHasCategories)) as Blockly.WorkspaceSvg;
         pxtblockly.contextMenu.setupWorkspaceContextMenu(this.editor);
 
+        (this.editor.getSvgGroup() as SVGElement).addEventListener("focusin", this.onWorkspaceFocus);
+
         // set Blockly Colors
         (async () => {
             await Blockly.renderManagement.finishQueuedRenders();
@@ -1050,11 +1062,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     focusWorkspace() {
         (this.editor.getSvgGroup() as SVGElement).focus();
         Blockly.hideChaff();
-
-        if (this.pendingKeyboardControlsHint) {
-            this.pendingKeyboardControlsHint = false;
-            this.showKeyboardControlsHint();
-        }
     }
 
     // Screen reader mode is the MakeCode-persisted equivalent of Blockly's
@@ -1091,6 +1098,15 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             id: "screenreaderModeHint",
         });
     }
+
+    private workspaceHasBeenFocused = false;
+    private onWorkspaceFocus = () => {
+        if (this.workspaceHasBeenFocused) return;
+        this.workspaceHasBeenFocused = true;
+        if (this.lastInputModality === "keyboard") {
+            this.showKeyboardControlsHint();
+        }
+    };
 
     showKeyboardControlsHint() {
         if (!this.editor || !Blockly.Msg["HELP_PROMPT"]) return;

@@ -719,12 +719,8 @@ export class ProjectView
         pxt.shell.setEditorLanguagePref("js");
     }
 
-    openBlocks(showKeyboardControlsHint?: boolean) {
+    openBlocks() {
         if (this.updatingEditorFile) return; // already transitioning
-
-        if (showKeyboardControlsHint) {
-            this.blocksEditor.pendingKeyboardControlsHint = true;
-        }
 
         if (this.isBlocksActive()) {
             if (this.state.embedSimView) this.setState({ embedSimView: false });
