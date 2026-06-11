@@ -41,6 +41,7 @@ interface SidepanelProps extends ISettingsProps {
     setEditorOffset?: () => void;
     showMiniSim: (visible?: boolean) => void;
     openSerial: (isSim: boolean) => void;
+    openPhysicalSimulator: () => void;
     handleHardwareDebugClick: () => void;
     handleFullscreenButtonClick: () => void;
 }
@@ -191,9 +192,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
     onOpenPhysicalSimulatorClick = (evt: any) => {
         evt.preventDefault();
         pxt.tickEvent("sidepanel.openphysicalsimulator");
-        simulator.driver.addSimulator();
-        // for now, spin up a new simulator
-        // this.props.parent.showShareDialog(undefined, "physicalsimulator");
+        this.props.openPhysicalSimulator();
     }
 
     onResizeDrag = (newSize: number) => {

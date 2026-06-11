@@ -587,7 +587,7 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
         }
         const prevProj = e
         const allChanges = computeChangeSummary(prevProj, {header: h, text})
-        const ignoredFiles = [GIT_JSON, pxt.SIMSTATE_JSON, pxt.SERIAL_EDITOR_FILE]
+        const ignoredFiles = [GIT_JSON, pxt.SIMSTATE_JSON, pxt.SERIAL_EDITOR_FILE, pxt.PHYSICAL_SIMULATOR_EDITOR_FILE]
         const ignoredHeaderFields: (keyof Header)[] = ['recentUse', 'modificationTime', 'cloudCurrent', '_rev', '_id' as keyof Header, 'cloudVersion']
         const userChanges: ProjectChanges = {
             header: allChanges.header.filter(f => ignoredHeaderFields.indexOf(f.key) < 0),

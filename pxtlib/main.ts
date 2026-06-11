@@ -504,6 +504,7 @@ namespace pxt {
     export const CONFIG_NAME = "pxt.json"
     export const SIMSTATE_JSON = ".simstate.json"
     export const SERIAL_EDITOR_FILE = "serial.txt"
+    export const PHYSICAL_SIMULATOR_EDITOR_FILE = "physicalsim.txt";
     export const README_FILE = "README.md"
     export const GITIGNORE_FILE = ".gitignore"
     export const ASSETS_FILE = "assets.json"

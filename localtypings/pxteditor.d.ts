@@ -991,6 +991,7 @@ declare namespace pxt.editor {
         publishCurrentHeaderAsync(persistent: boolean, screenshotUri?: string): Promise<string>;
         publishAsync (name: string, description?: string,screenshotUri?: string, forceAnonymous?: boolean): Promise<ShareData>;
 
+        addSimulator(): void;
         startStopSimulator(opts?: SimulatorStartOptions): void;
         stopSimulator(unload?: boolean, opts?: SimulatorStartOptions): void;
         restartSimulator(): void;

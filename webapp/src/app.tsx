@@ -88,6 +88,7 @@ import { FeedbackModal } from "../../react-common/components/controls/Feedback/F
 import { ThemeManager } from "../../react-common/components/theming/themeManager";
 import { applyPolyfills } from "./polyfills";
 import { sendUpdateFeedbackTheme } from "../../react-common/components/controls/Feedback/FeedbackEventListener";
+import { PhysicalSimulator } from "./physicalSimulator";
 
 pxt.blocks.requirePxtBlockly = () => pxtblockly as any;
 pxt.blocks.requireBlockly = () => Blockly;
@@ -136,6 +137,7 @@ export class ProjectView
     textEditor: monaco.Editor;
     pxtJsonEditor: pxtjson.Editor;
     serialEditor: serial.Editor;
+    physicalSimulatorEditor: PhysicalSimulator;
     blocksEditor: blocks.Editor;
     gitjsonEditor: gitjson.Editor;
     assetEditor: assetEditor.AssetEditor;
@@ -221,6 +223,7 @@ export class ProjectView
         this.openSimSerial = this.openSimSerial.bind(this);
         this.openDeviceSerial = this.openDeviceSerial.bind(this);
         this.openSerial = this.openSerial.bind(this);
+        this.openPhysicalSimulator = this.openPhysicalSimulator.bind(this);
         this.toggleGreenScreen = this.toggleGreenScreen.bind(this);
         this.toggleSimulatorFullscreen = this.toggleSimulatorFullscreen.bind(this);
         this.toggleSimulatorCollapse = this.toggleSimulatorCollapse.bind(this);
@@ -842,6 +845,17 @@ export class ProjectView
         this.setFile(mainEditorPkg.lookupFile("this/" + pxt.SERIAL_EDITOR_FILE))
     }
 
+    openPhysicalSimulator() {
+        if (this.editor == this.physicalSimulatorEditor)
+            return; // already showing
+        const mainEditorPkg = pkg.mainEditorPkg()
+        if (!mainEditorPkg) return; // no project loaded
+        if (!mainEditorPkg.lookupFile("this/" + pxt.PHYSICAL_SIMULATOR_EDITOR_FILE)) {
+            mainEditorPkg.setFile(pxt.PHYSICAL_SIMULATOR_EDITOR_FILE, "physicalsim\n", true)
+        }
+        this.setFile(mainEditorPkg.lookupFile("this/" + pxt.PHYSICAL_SIMULATOR_EDITOR_FILE))
+    }
+
     openPreviousEditor() {
         this.preserveUndoStack = true;
         const id = this.state.header.id;
@@ -1099,6 +1113,7 @@ export class ProjectView
         this.blocksEditor = new blocks.Editor(this);
         this.gitjsonEditor = new gitjson.Editor(this);
         this.assetEditor = new assetEditor.AssetEditor(this);
+        this.physicalSimulatorEditor = new PhysicalSimulator(this);
 
         let changeHandler = () => {
             if (this.editorFile) {
@@ -1117,7 +1132,7 @@ export class ProjectView
                 this.editorChangeHandler();
             }
         }
-        this.allEditors = [this.pxtJsonEditor, this.gitjsonEditor, this.blocksEditor, this.serialEditor, this.assetEditor, this.textEditor]
+        this.allEditors = [this.pxtJsonEditor, this.gitjsonEditor, this.blocksEditor, this.serialEditor, this.physicalSimulatorEditor, this.assetEditor, this.textEditor]
         this.allEditors.forEach(e => e.changeCallback = changeHandler)
         this.editor = this.allEditors[this.allEditors.length - 1]
     }
@@ -1581,6 +1596,10 @@ export class ProjectView
             tutorialId,
             projectHeaderId: this.state.header.id
         } as pxt.editor.EditorMessageTutorialExitEventRequest)
+    }
+
+    addSimulator(): void {
+        simulator.driver.addSimulator();
     }
 
     handleMessage(msg: pxsim.SimulatorMessage) {
@@ -5654,6 +5673,7 @@ export class ProjectView
                     devSerialActive={this.state.deviceSerialActive}
                     showMiniSim={this.showMiniSim}
                     openSerial={this.openSerial}
+                    openPhysicalSimulator={this.openPhysicalSimulator}
                     handleHardwareDebugClick={this.hwDebug}
                     handleFullscreenButtonClick={this.toggleSimulatorFullscreen}
                     tutorialOptions={isTabTutorial ? tutorialOptions : undefined}

@@ -430,6 +430,7 @@ export class EditorPackage {
     getAllFiles(): pxt.Map<string> {
         let r = Util.mapMap(this.files, (k, f) => f.content)
         delete r[pxt.SERIAL_EDITOR_FILE]
+        delete r[pxt.PHYSICAL_SIMULATOR_EDITOR_FILE]
         return r
     }
 
@@ -460,7 +461,7 @@ export class EditorPackage {
     sortedFiles(): File[] {
         let lst = Util.values(this.files)
         if (!pxt.options.debug)
-            lst = lst.filter(f => f.name != pxt.github.GIT_JSON && f.name != pxt.SIMSTATE_JSON && f.name != pxt.SERIAL_EDITOR_FILE && f.name != pxt.PALETTES_FILE && f.name !== pxt.HISTORY_FILE)
+            lst = lst.filter(f => f.name != pxt.github.GIT_JSON && f.name != pxt.SIMSTATE_JSON && f.name != pxt.SERIAL_EDITOR_FILE && f.name != pxt.PALETTES_FILE && f.name !== pxt.HISTORY_FILE && f.name !== pxt.PHYSICAL_SIMULATOR_EDITOR_FILE)
         lst.sort((a, b) => a.weight() - b.weight() || Util.strcmp(a.name, b.name))
         return lst
     }
