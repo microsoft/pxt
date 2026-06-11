@@ -1127,7 +1127,7 @@ export class ProjectView
 
     public async componentDidMount() {
         this.allEditors.forEach(e => e.prepare())
-        await simulator.initAsync(getBoardView(), {
+        await simulator.initAsync({
             orphanException: brk => {
                 // TODO: start debugging session
                 // TODO: user friendly error message
@@ -5722,10 +5722,6 @@ function render() {
 
 function getEditor() {
     return theEditor
-}
-
-function getBoardView() {
-    return document.getElementById("boardview");
 }
 
 function parseLocalToken() {
