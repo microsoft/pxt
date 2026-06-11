@@ -160,7 +160,7 @@ export class PhysicalSimulator extends srceditor.Editor {
                                 <span className="ui text landscape only">{lf("Go back")}</span>
                             </sui.Button>
                             <sui.Button title={lf("Add simulator")} tabIndex={0} onClick={this.addSimulator} onKeyDown={fireClickOnEnter} className="neutral">
-                                <sui.Icon icon="arrow left" />
+                                <sui.Icon icon="plus" />
                                 <span className="ui text landscape only">{lf("Add simulator")}</span>
                             </sui.Button>
                         </div>
