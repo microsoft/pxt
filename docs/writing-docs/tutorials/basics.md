@@ -416,7 +416,7 @@ If your tutorial needs to remove one of the default dependencies from the projec
 For example, the `bluetooth` extension in pxt-microbit is not compatible with the default `radio` extension. If we wanted to author a `bluetooth` tutorial, we would need to remove the `radio` extension like so:
 
 ````
-```packages
+```package
 bluetooth
 radio=remove
 ```
