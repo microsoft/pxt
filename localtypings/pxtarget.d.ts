@@ -1016,6 +1016,7 @@ declare namespace ts.pxtc {
         _expandedDef?: ParsedBlockDef;
         _untranslatedBlock?: string; // The block definition before it was translated
         _untranslatedJsDoc?: string // the jsDoc before it was translated
+        _untranslatedParamDefl?: pxt.Map<string>; // the parameter defaults before they were translated
         _translatedLanguageCode?: string // the language this block has been translated into
         _shadowOverrides?: pxt.Map<string>;
         jsDoc?: string;
