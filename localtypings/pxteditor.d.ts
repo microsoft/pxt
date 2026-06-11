@@ -822,6 +822,7 @@ declare namespace pxt.editor {
         errorListCollapsed?: boolean;
         screenshoting?: boolean;
         extensionsVisible?: boolean;
+        extensionsToolboxTriggered?: boolean;
         isMultiplayerGame?: boolean; // Arcade: Does the current project contain multiplayer blocks?
         activeTourConfig?: pxt.tour.TourConfig;
         areaMenuOpen?: boolean;
@@ -1047,6 +1048,7 @@ declare namespace pxt.editor {
 
         toggleHighContrast(): void;
         setHighContrast(on: boolean): void;
+        toggleScreenReaderMode(eventSource: string): void;
         toggleGreenScreen(): void;
         launchFullEditor(): void;
         resetWorkspace(): void;
@@ -1093,10 +1095,11 @@ declare namespace pxt.editor {
         showChooseHwDialog(skipDownload?: boolean): void;
         showExperimentsDialog(): void;
 
-        showPackageDialog(query?: string): void;
+        showPackageDialog(toolboxTriggered?: boolean): void;
         showBoardDialogAsync(features?: string[], closeIcon?: boolean): Promise<void>;
         checkForHwVariant(): boolean;
         pairAsync(): Promise<boolean>;
+        shouldShowPairingDialogOnDownload(): boolean;
 
         createModalClasses(classes?: string): string;
         showModalDialogAsync(options: ModalDialogOptions): Promise<void>;

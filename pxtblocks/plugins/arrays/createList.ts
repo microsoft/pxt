@@ -3,6 +3,7 @@ import { FUNCTION_CALL_OUTPUT_BLOCK_TYPE } from "../functions/constants";
 import { CommonFunctionBlock } from "../functions/commonFunctionMixin";
 import { InlineSvgsExtensionBlock } from "../functions";
 import { FieldImageNoText } from "../../fields/field_imagenotext";
+import { maybeFocusMutatorButton } from "../../utils";
 
 type ListCreateMixinType = typeof LIST_CREATE_MIXIN;
 
@@ -14,6 +15,8 @@ const LIST_CREATE_MIXIN = {
     valueConnections_: [] as Blockly.Connection[],
     horizontalAfter_: 3,
     itemCount_: 3,
+    buttons: null as Blockly.Input | null,
+    delta: 0,
     /**
      * Create XML to represent list inputs.
      * @return {!Element} XML storage element.
@@ -57,6 +60,7 @@ const LIST_CREATE_MIXIN = {
         const update = () => {
             this.itemCount_++;
         };
+        this.delta = 1;
         this.update_(update);
         this.restoreConnections_();
         // Add shadow block
@@ -147,6 +151,7 @@ const LIST_CREATE_MIXIN = {
         const update = () => {
             this.itemCount_--;
         };
+        this.delta = -1;
         this.update_(update);
         this.restoreConnections_();
     },
@@ -177,7 +182,17 @@ const LIST_CREATE_MIXIN = {
             }, Blockly.config.bumpDelay);
         }
         if (block.rendered && block instanceof Blockly.BlockSvg) {
-            block.queueRender();
+            block.queueRender().then(() => {
+                if (this.buttons) {
+                    let field = this.buttons.fieldRow[0];
+                    if (this.buttons.fieldRow.length > 1) {
+                        field = this.delta < 0 ? field : this.buttons.fieldRow[1];
+                    }
+                    maybeFocusMutatorButton(field);
+                    this.buttons = null;
+                    this.delta = 0;
+                }
+            });
         }
         Blockly.Events.setGroup(false);
     },
@@ -220,11 +235,11 @@ const LIST_CREATE_MIXIN = {
             i++;
         }
         if (this.getInput('BUTTONS')) this.removeInput('BUTTONS');
-        const buttons = this.appendDummyInput('BUTTONS');
+        this.buttons = this.appendDummyInput('BUTTONS');
         if (this.itemCount_ > 0) {
-            buttons.appendField(new FieldImageNoText(this.REMOVE_IMAGE_DATAURI, 24, 24, "*", remove, false));
+            this.buttons.appendField(new FieldImageNoText(this.REMOVE_IMAGE_DATAURI, 24, 24, lf("remove argument"), remove, false));
         }
-        buttons.appendField(new FieldImageNoText(this.ADD_IMAGE_DATAURI, 24, 24, "*", add, false));
+        this.buttons.appendField(new FieldImageNoText(this.ADD_IMAGE_DATAURI, 24, 24, lf("add argument"), add, false));
 
         /* Switch to vertical list when the list is too long */
         const showHorizontalList = this.itemCount_ <= this.horizontalAfter_;

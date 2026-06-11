@@ -170,6 +170,9 @@ function showConnectDeviceDialogAsync(confirmAsync: ConfirmAsync) {
 
 function showPickWebUSBDeviceDialogAsync(confirmAsync: ConfirmAsync, showDownloadAsFileButton?: boolean) {
     const boardName = getBoardName();
+    const devicePickerMessage = pxt.BrowserUtils.isPxtElectron()
+        ? lf("A device selection window will appear in the app.")
+        : lf("A window will appear in the top of your browser.");
 
     const selectDeviceImage = theme().selectDeviceImage;
     const columns = selectDeviceImage ? "two" : "one";
@@ -184,7 +187,7 @@ function showPickWebUSBDeviceDialogAsync(confirmAsync: ConfirmAsync, showDownloa
                                 {lf("Press the Pair button below.")}
                             </p>
                             <p>
-                                {lf("A window will appear in the top of your browser.")}
+                                {devicePickerMessage}
                             </p>
                             <p>
                                 {lf("Select the {0} device and click Connect.", boardName)}

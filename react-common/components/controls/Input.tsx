@@ -125,6 +125,9 @@ export const Input = (props: InputProps) => {
                 document.getElementById(getDropdownOptionId(optionValues[0]))?.focus();
             } else {
                 expandButtonClickHandler();
+                setTimeout(() => {
+                    document.getElementById(getDropdownOptionId(optionValues[0]))?.focus();
+                }, 0);
             }
             e.preventDefault();
             e.stopPropagation();

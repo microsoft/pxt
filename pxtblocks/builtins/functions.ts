@@ -6,10 +6,8 @@ import { FunctionDefinitionBlock, FunctionManager } from "../plugins/functions";
 import { FieldProcedure } from "../fields";
 import { cachedBlockInfo, setOutputCheck } from "../loader";
 import { domToWorkspaceNoEvents } from "../importer";
-
-import { shouldDuplicateOnDrag } from "../plugins/duplicateOnDrag";
-import { PathObject } from "../plugins/renderer/pathObject";
 import { FieldImageNoText } from "../fields/field_imagenotext";
+import { maybeFocusMutatorButton } from "../utils";
 
 export function initFunctions() {
     const msg = Blockly.Msg;
@@ -294,7 +292,8 @@ function initReturnStatement(b: Blockly.Block) {
         return mutation;
     }
 
-    function updateShape() {
+    function updateShape(userTriggered?: boolean) {
+        let buttonToFocus: null | Blockly.Input = null;
         const returnValueInput = b.getInput("RETURN_VALUE");
 
         if (returnValueVisible) {
@@ -319,7 +318,7 @@ function initReturnStatement(b: Blockly.Block) {
                 b.removeInput(buttonAddName);
             }
             if (!b.getInput(buttonRemName)) {
-                addMinusButton();
+                buttonToFocus = addMinusButton();
             }
 
             if (lastConnectedId) {
@@ -350,11 +349,15 @@ function initReturnStatement(b: Blockly.Block) {
                 b.removeInput(buttonRemName);
             }
             if (!b.getInput(buttonAddName)) {
-                addPlusButton();
+                buttonToFocus = addPlusButton();
             }
         }
 
         b.setInputsInline(true);
+
+        if (userTriggered) {
+            maybeFocusMutatorButton(buttonToFocus?.fieldRow[0]);
+        }
     }
 
     function setReturnValue(mutation: Element, hasReturnValue: boolean) {
@@ -365,12 +368,12 @@ function initReturnStatement(b: Blockly.Block) {
         return mutation.getAttribute("no_return_value") !== "true"
     }
 
-    function addPlusButton() {
-        addButton(buttonAddName, (b as any).ADD_IMAGE_DATAURI, lf("Add return value"));
+    function addPlusButton(): Blockly.Input  {
+        return addButton(buttonAddName, (b as any).ADD_IMAGE_DATAURI, lf("Add return value"));
     }
 
-    function addMinusButton() {
-        addButton(buttonRemName, (b as any).REMOVE_IMAGE_DATAURI, lf("Remove return value"));
+    function addMinusButton(): Blockly.Input  {
+        return addButton(buttonRemName, (b as any).REMOVE_IMAGE_DATAURI, lf("Remove return value"));
     }
 
     function mutationString() {
@@ -382,8 +385,8 @@ function initReturnStatement(b: Blockly.Block) {
             Blockly.Events.fire(new Blockly.Events.BlockChange(b, "mutation", null, pre, post));
     }
 
-    function addButton(name: string, uri: string, alt: string) {
-        b.appendDummyInput(name)
+    function addButton(name: string, uri: string, alt: string): Blockly.Input  {
+        return b.appendDummyInput(name)
             .appendField(new FieldImageNoText(uri, 24, 24, alt, () => {
                 const oldMutation = mutationString();
                 returnValueVisible = !returnValueVisible;
@@ -391,7 +394,7 @@ function initReturnStatement(b: Blockly.Block) {
                 const preUpdate = mutationString()
                 fireMutationChange(oldMutation, preUpdate);
 
-                updateShape();
+                updateShape(true);
 
                 const postUpdate = mutationString();
                 fireMutationChange(preUpdate, postUpdate);

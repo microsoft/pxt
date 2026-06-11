@@ -7,6 +7,7 @@ export interface FocusListProps extends ContainerProps {
     focusSelectsItem?: boolean;
     useUpAndDownArrowKeys?: boolean;
     onItemReceivedFocus?: (item: HTMLElement) => void;
+    onClose?: () => void;
 }
 
 /**
@@ -28,7 +29,8 @@ export const FocusList = (props: FocusListProps) => {
         children,
         focusSelectsItem,
         onItemReceivedFocus,
-        useUpAndDownArrowKeys
+        useUpAndDownArrowKeys,
+        onClose
     } = props;
 
     let focusableElements: HTMLElement[];
@@ -139,6 +141,13 @@ export const FocusList = (props: FocusListProps) => {
             focus(findNextFocusableElement(focusableElements, index, focusableElements.length - 1, true, isFocusable));
             e.preventDefault();
             e.stopPropagation();
+        }
+        else if (e.key === "Escape") {
+            if (onClose) {
+                onClose();
+                e.preventDefault();
+                e.stopPropagation();
+            }
         }
     }
 
