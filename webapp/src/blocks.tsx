@@ -705,11 +705,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 if (focused instanceof Blockly.BlockSvg && shouldDuplicateOnDrag(focused)) {
                     return !workspace.isReadOnly() && !workspace.isDragging();
                 }
-                // Workaround: https://github.com/RaspberryPiFoundation/blockly/issues/9963
-                if (focused instanceof Blockly.BlockSvg && focused.isShadow()) {
-                    workspace.getAudioManager().playErrorBeep();
-                    return false;
-                }
                 return disconnectShortcut.preconditionFn!(workspace, scope);
             },
             callback: (workspace, e, shortcut, scope) => {
