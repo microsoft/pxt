@@ -36,6 +36,9 @@ import { AIErrorExplanationText } from "./components/AIErrorExplanationText";
 
 const MIN_EDITOR_FONT_SIZE = 10
 const MAX_EDITOR_FONT_SIZE = 40
+const SUPPRESSIBLE_ENHANCED_DIAGNOSTICS = [9284]
+const TS_IGNORE_COMMENT = "// @ts-ignore"
+const TS_IGNORE_COMMENT_REGEX = /^\s*\/\/\s*@ts-ignore\b/
 
 interface TranspileResult {
     success: boolean;
@@ -742,11 +745,46 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     private getDisplayInfoForError(error: pxtc.KsDiagnostic): ErrorDisplayInfo {
         const message = lf("Line {0}: {1}", error.endLine ? error.endLine + 1 : error.line + 1, error.messageText);
+        const actions = error.category == ts.pxtc.DiagnosticCategory.Warning && SUPPRESSIBLE_ENHANCED_DIAGNOSTICS.indexOf(error.code) !== -1 ? [{
+            label: lf("Ignore"),
+            title: lf("Ignore this warning"),
+            ariaLabel: lf("Ignore this warning"),
+            onClick: () => this.insertTsIgnoreForDiagnostic(error)
+        }] : undefined;
         return {
             message,
             onClick: () => this.goToError(error),
-            preventsRunning: true
+            preventsRunning: error.category == ts.pxtc.DiagnosticCategory.Error,
+            actions
         };
+    }
+
+    private insertTsIgnoreForDiagnostic(error: pxtc.KsDiagnostic) {
+        if (error.line === undefined)
+            return;
+
+        const model = this.editor.getModel();
+        const lineNumber = error.line + 1;
+        if (lineNumber > 1 && TS_IGNORE_COMMENT_REGEX.test(model.getLineContent(lineNumber - 1))) {
+            this.goToError(error);
+            return;
+        }
+
+        const lineContent = model.getLineContent(lineNumber);
+        const indentation = /^\s*/.exec(lineContent)[0];
+
+        this.editor.pushUndoStop();
+        this.editor.executeEdits("ignoreDiagnostic", [{
+            range: new monaco.Range(lineNumber, 1, lineNumber, 1),
+            text: `${indentation}${TS_IGNORE_COMMENT}${model.getEOL()}`,
+            forceMoveMarkers: true
+        }]);
+        this.beforeCompile();
+        this.editor.pushUndoStop();
+
+        this.editor.revealLineInCenter(lineNumber);
+        this.editor.setPosition({ lineNumber: lineNumber + 1, column: (error.column || 0) + 1 });
+        this.editor.focus();
     }
 
     /**

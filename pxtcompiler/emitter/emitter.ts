@@ -4248,11 +4248,27 @@ ${lbl}: .short 0xffff
             if (!node || node.kind != SK.Identifier)
                 return
 
+            if (hasPrecedingTsIgnoreComment(node))
+                return
+
             const exprType = typeOf(node)
             const signatures = exprType && !(exprType.flags & TypeFlags.Any)
                 && checker.getSignaturesOfType(exprType, SignatureKind.Call)
             if (signatures && signatures.length)
                 warning(node, 9284, lf("Function reference used as a statement; did you mean to call it with '()'?"))
+        }
+
+        function hasPrecedingTsIgnoreComment(node: Node) {
+            const src = node.getSourceFile()
+            const line = ts.getLineAndCharacterOfPosition(src, node.getStart(src)).line
+            if (line <= 0)
+                return false
+
+            const lineStarts = src.getLineStarts()
+            const previousLineStart = lineStarts[line - 1]
+            const previousLineEnd = lineStarts[line]
+            const previousLine = src.text.slice(previousLineStart, previousLineEnd)
+            return /^\s*\/\/\s*@ts-ignore\b/.test(previousLine)
         }
 
         function emitExprAsStmt(node: Expression) {

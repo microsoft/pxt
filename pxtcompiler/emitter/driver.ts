@@ -262,7 +262,7 @@ namespace ts.pxtc {
             return res;
         }
 
-        // If we didn't have any syntactic errors, then also try getting the global and
+        // If we didn't have any blocking syntactic errors, then also try getting the global and
         // semantic errors.
         res.diagnostics = res.diagnostics.concat(patchUpDiagnostics(program.getOptionsDiagnostics().concat(Util.toArray(program.getGlobalDiagnostics())), opts.ignoreFileResolutionErrors));
 
