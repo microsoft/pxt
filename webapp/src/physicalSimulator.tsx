@@ -1,32 +1,49 @@
 import * as React from "react"
-import * as Smoothie from "smoothie"
 import * as pkg from "./package"
 import * as core from "./core"
 import * as sui from "./sui"
 import * as srceditor from "./srceditor"
-
-import IEditor = pxt.editor.IEditor;
-
-export type ViewState = any;
-
-export interface ParentProps {
-    parent: IProjectView;
-}
-
 import Util = pxt.Util
 import { fireClickOnEnter } from "./util"
-
 import IProjectView = pxt.editor.IProjectView;
+
+// function mkBoardImgSvg(def: BoardDefinition): visuals.SVGElAndSize {
+//     const boardView = pxsim.visuals.mkBoardView({
+//         visual: def.visual,
+//         boardDef: def
+//     });
+//     return boardView.getView();
+// }
+
+// base class for sprites in the physical simulator; needs to be 
+// inherited by the target to add target-specific functionality
+class BoardSprite {
+    private _name: string = "";
+    constructor(public id: number, public x: number, public y: number) {
+
+    }
+
+    set name(n: string) {
+        this._name = n;
+    }
+    get name() {
+        return this._name;
+    }
+}
 
 export class PhysicalSimulator extends srceditor.Editor {
     isVisible = false;
-    isSim: boolean = true;
     active: boolean = true
-
     lineColors: string[];
     hcLineColors: string[];
     currentLineColors: string[];
     highContrast?: boolean = false;
+
+    boards: BoardSprite[] = [];
+    nextBoardId: number = 0;
+    draggingBoard: BoardSprite | undefined;
+    dragOffsetX = 0;
+    dragOffsetY = 0;
 
     getId() {
         return "physicalSimulator"
@@ -64,13 +81,6 @@ export class PhysicalSimulator extends srceditor.Editor {
         }
     }
 
-    setSim(b: boolean) {
-        if (this.isSim != b) {
-            this.isSim = b
-            this.clear()
-        }
-    }
-
     simStateChanged() {
         // this.charts.forEach((chart) => chart.setRealtimeData(this.wantRealtimeData()));
     }
@@ -85,6 +95,12 @@ export class PhysicalSimulator extends srceditor.Editor {
 
         this.goBack = this.goBack.bind(this);
         this.addSimulator = this.addSimulator.bind(this);
+        this.clearSprites = this.clearSprites.bind(this);
+        this.onCanvasMouseDown = this.onCanvasMouseDown.bind(this);
+        this.onCanvasMouseMove = this.onCanvasMouseMove.bind(this);
+        this.onCanvasMouseUp = this.onCanvasMouseUp.bind(this);
+        // Add an initial board to the simulator
+        this.addSprite();
     }
 
     processEvent(ev: MessageEvent) {
@@ -115,8 +131,6 @@ export class PhysicalSimulator extends srceditor.Editor {
 
     processMessage(smsg: pxsim.SimulatorSerialMessage) {
         const sim = !!smsg.sim
-        const isCsv = !!smsg.csvType
-        if (sim != this.isSim) return;
 
     }
 
@@ -125,10 +139,6 @@ export class PhysicalSimulator extends srceditor.Editor {
     }
 
     clear() {
-        if (!this.isSim) {
-           //
-        }
-
         //pxt.BrowserUtils.addClass(this.serialRoot, "hide-view-latest");
 
         // If the editor is currently visible, leave these as is to leave toggle state.
@@ -144,14 +154,47 @@ export class PhysicalSimulator extends srceditor.Editor {
         this.parent.openPreviousEditor()
     }
 
+    private addSprite() {
+        // Create a new board sprite with random position
+        const canvas = document.getElementById("simulatorCanvas") as HTMLCanvasElement;
+        if (canvas) {
+            const x = Math.random() * (canvas.width - 40);
+            const y = Math.random() * (canvas.height - 40);
+            const sprite = new BoardSprite(this.nextBoardId, x, y);
+            sprite.name = `board${this.nextBoardId}`;
+            this.boards.push(sprite);
+            this.nextBoardId++;
+            this.drawBoards();
+        }
+
+    }
+
+    // TODO: upon entry, we need to create simulators for the board sprites, except for the first one
+    recreateSimulators() {
+        this.boards.forEach((board, index) => {
+            if (index === 0) return; // skip the first board, which is the default one
+            this.parent.addSimulator();
+        })
+    }
+
     addSimulator() {
         pxt.tickEvent("serial.newBoardButton", undefined, { interactiveConsent: true })
+        this.addSprite();
         this.parent.addSimulator()
+    }
+
+    clearSprites() {
+        pxt.tickEvent("serial.clearBoardsButton", undefined, { interactiveConsent: true })
+        if (this.boards.length <= 1) return;
+        this.boards = [this.boards[0]];
+        this.nextBoardId = 1;
+        this.drawBoards();
+        // this.parent.clearSimulators();
     }
 
     display() {
         return (
-            <div id="serialArea" className="no-toggle">
+            <div id="serialArea" className="no-toggle" style={{ display: "flex", flexDirection: "column", height: "100%" }}>
                 <div id="serialHeader" className="ui serialHeader">
                     <div className="leftHeaderWrapper">
                         <div className="leftHeader">
@@ -163,13 +206,116 @@ export class PhysicalSimulator extends srceditor.Editor {
                                 <sui.Icon icon="plus" />
                                 <span className="ui text landscape only">{lf("Add simulator")}</span>
                             </sui.Button>
+                            <sui.Button title={lf("Clear all but first board")} tabIndex={0} onClick={this.clearSprites} onKeyDown={fireClickOnEnter} className="neutral">
+                                <sui.Icon icon="trash" />
+                                <span className="ui text landscape only">{lf("Clear simulators")}</span>
+                            </sui.Button>
                         </div>
                     </div>
+                </div>
+                <div id="canvasContainer" style={{ backgroundColor: "#228B22", flex: 1, minHeight: 0, overflow: "hidden" }}>
+                    <canvas
+                        id="simulatorCanvas"
+                        style={{ display: "block", width: "100%", height: "100%" }}
+                        onMouseDown={this.onCanvasMouseDown}
+                        onMouseMove={this.onCanvasMouseMove}
+                        onMouseUp={this.onCanvasMouseUp}
+                        onMouseLeave={this.onCanvasMouseUp}
+                    />
                 </div>
             </div>
         )
     }
 
     domUpdate() {
+        this.drawBoards();
+    }
+
+    drawBoards() {
+        const canvas = document.getElementById("simulatorCanvas") as HTMLCanvasElement;
+        if (!canvas) return;
+
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+
+        // Set canvas size to match container
+        canvas.width = canvas.offsetWidth;
+        canvas.height = canvas.offsetHeight;
+
+        // Clear canvas
+        ctx.fillStyle = "#228B22";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Draw each board
+        const squareSize = 40;
+        this.boards.forEach((board) => {
+            // Draw black square
+            ctx.fillStyle = "#000000";
+            ctx.fillRect(board.x, board.y, squareSize, squareSize);
+
+            // Draw label text
+            ctx.fillStyle = "#FFFFFF";
+            ctx.font = "12px Arial";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(board.name, board.x + squareSize / 2, board.y + squareSize / 2);
+        });
+    }
+
+    private getCanvasMousePosition(ev: React.MouseEvent<HTMLCanvasElement, MouseEvent>) {
+        const canvas = ev.currentTarget;
+        const rect = canvas.getBoundingClientRect();
+        return {
+            x: ev.clientX - rect.left,
+            y: ev.clientY - rect.top
+        };
+    }
+
+    private findBoardAt(x: number, y: number) {
+        const squareSize = 40;
+        for (let i = this.boards.length - 1; i >= 0; i--) {
+            const board = this.boards[i];
+            if (x >= board.x && x <= board.x + squareSize && y >= board.y && y <= board.y + squareSize) {
+                return board;
+            }
+        }
+        return undefined;
+    }
+
+    private onCanvasMouseDown(ev: React.MouseEvent<HTMLCanvasElement, MouseEvent>) {
+        const pos = this.getCanvasMousePosition(ev);
+        const board = this.findBoardAt(pos.x, pos.y);
+        if (!board) return;
+
+        this.draggingBoard = board;
+        this.dragOffsetX = pos.x - board.x;
+        this.dragOffsetY = pos.y - board.y;
+
+        // keep dragged board on top
+        const idx = this.boards.indexOf(board);
+        if (idx >= 0 && idx !== this.boards.length - 1) {
+            this.boards.splice(idx, 1);
+            this.boards.push(board);
+        }
+        ev.preventDefault();
+    }
+
+    private onCanvasMouseMove(ev: React.MouseEvent<HTMLCanvasElement, MouseEvent>) {
+        if (!this.draggingBoard) return;
+        const pos = this.getCanvasMousePosition(ev);
+        const canvas = ev.currentTarget;
+        const squareSize = 40;
+        const maxX = canvas.width - squareSize;
+        const maxY = canvas.height - squareSize;
+
+        this.draggingBoard.x = Math.max(0, Math.min(maxX, pos.x - this.dragOffsetX));
+        this.draggingBoard.y = Math.max(0, Math.min(maxY, pos.y - this.dragOffsetY));
+        this.drawBoards();
+    }
+
+    private onCanvasMouseUp() {
+        if (this.draggingBoard) {
+            this.draggingBoard = undefined;
+        }
     }
 }
