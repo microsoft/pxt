@@ -4245,7 +4245,7 @@ ${lbl}: .short 0xffff
             if (!opts.enhancedErrors)
                 return
 
-            if (!node || node.kind != SK.Identifier)
+            if (!node || node.kind !== SK.Identifier)
                 return
 
             if (hasPrecedingTsIgnoreComment(node))

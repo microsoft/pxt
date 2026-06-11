@@ -287,6 +287,8 @@ export abstract class FieldAssetEditor<U extends FieldAssetEditorOptions, V exte
 
         if (result) {
             const old = this.getValue();
+            this.undoRedoState = fv.getPersistentData();
+
             if (pxt.assetEquals(this.asset, result)) return;
 
             result = pxt.patchTemporaryAsset(this.asset, result, project);
@@ -304,8 +306,6 @@ export abstract class FieldAssetEditor<U extends FieldAssetEditorOptions, V exte
             this.updateAssetListener();
             this.updateAssetMeta();
             this.redrawPreview();
-
-            this.undoRedoState = fv.getPersistentData();
 
             if (this.sourceBlock_ && Blockly.Events.isEnabled()) {
                 const event = new BlocklyTilemapChange(
