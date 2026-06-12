@@ -88,6 +88,7 @@ import { FeedbackModal } from "../../react-common/components/controls/Feedback/F
 import { ThemeManager } from "../../react-common/components/theming/themeManager";
 import { applyPolyfills } from "./polyfills";
 import { sendUpdateFeedbackTheme } from "../../react-common/components/controls/Feedback/FeedbackEventListener";
+import { ariaAnnounce } from "./util";
 
 pxt.blocks.requirePxtBlockly = () => pxtblockly as any;
 pxt.blocks.requireBlockly = () => Blockly;
@@ -222,6 +223,7 @@ export class ProjectView
         this.openDeviceSerial = this.openDeviceSerial.bind(this);
         this.openSerial = this.openSerial.bind(this);
         this.toggleGreenScreen = this.toggleGreenScreen.bind(this);
+        this.toggleScreenReaderMode = this.toggleScreenReaderMode.bind(this);
         this.toggleSimulatorFullscreen = this.toggleSimulatorFullscreen.bind(this);
         this.toggleSimulatorCollapse = this.toggleSimulatorCollapse.bind(this);
         this.showKeymap = this.showKeymap.bind(this);
@@ -717,12 +719,8 @@ export class ProjectView
         pxt.shell.setEditorLanguagePref("js");
     }
 
-    openBlocks(showKeyboardControlsHint?: boolean) {
+    openBlocks() {
         if (this.updatingEditorFile) return; // already transitioning
-
-        if (showKeyboardControlsHint) {
-            this.blocksEditor.pendingKeyboardControlsHint = true;
-        }
 
         if (this.isBlocksActive()) {
             if (this.state.embedSimView) this.setState({ embedSimView: false });
@@ -1125,7 +1123,7 @@ export class ProjectView
 
     public async componentDidMount() {
         this.allEditors.forEach(e => e.prepare())
-        await simulator.initAsync(getBoardView(), {
+        await simulator.initAsync({
             orphanException: brk => {
                 // TODO: start debugging session
                 // TODO: user friendly error message
@@ -3369,6 +3367,13 @@ export class ProjectView
         return cmds.pairAsync();
     }
 
+    shouldShowPairingDialogOnDownload(): boolean {
+        return pxt.appTarget.appTheme.preferWebUSBDownload
+            && pxt.appTarget?.compile?.webUSB
+            && pxt.usb.isEnabled
+            && !webusb.userPrefersDownloadFlagSet();
+    }
+
     ///////////////////////////////////////////////////////////
     ////////////             Compile              /////////////
     ///////////////////////////////////////////////////////////
@@ -3728,11 +3733,12 @@ export class ProjectView
                 break;
             case SimState.Running:
                 this.stopSimulator(false, opts);
+                ariaAnnounce(lf("Simulator stopped"), "assertive", "status");
                 break;
             default:
                 this.maybeShowPackageErrors(true);
                 this.startSimulator(opts);
-                if (!this.state.fullscreen && opts && opts.clickTrigger) getBoardView().focus();
+                ariaAnnounce(lf("Simulator running"), "assertive", "status");
                 break;
         }
     }
@@ -3943,9 +3949,6 @@ export class ProjectView
             this.startSimulator();
         } else {
             simulator.driver.restart(); // fast restart
-        }
-        if (!this.state.fullscreen) {
-            getBoardView().focus();
         }
         if (!isDebug) {
             this.blocksEditor.clearBreakpoints();
@@ -4796,17 +4799,22 @@ export class ProjectView
     }
 
     hidePackageDialog() {
+        const focusToolbox = this.state.extensionsToolboxTriggered;
         this.setState({
             ...this.state,
+            extensionsToolboxTriggered: false,
             extensionsVisible: false
         })
 
-        this.editor.focusToolbox(CategoryNameID.Extensions);
+        if (focusToolbox) {
+            this.editor.focusToolbox(CategoryNameID.Extensions);
+        }
     }
 
-    showPackageDialog() {
+    showPackageDialog(toolboxTriggered?: boolean) {
         this.setState({
             ...this.state,
+            extensionsToolboxTriggered: toolboxTriggered,
             extensionsVisible: true
         })
     }
@@ -5309,6 +5317,14 @@ export class ProjectView
         this.setColorThemeById(on ? pxt.appTarget.appTheme.highContrastColorTheme : pxt.appTarget.appTheme.defaultColorTheme, true);
     }
 
+    async toggleScreenReaderMode(eventSource: string) {
+        const nextEnabled = !this.getData<boolean>(auth.SCREEN_READER_MODE);
+        await core.setScreenReaderMode(nextEnabled, eventSource);
+        if (this.blocksEditor) {
+            this.blocksEditor.setScreenReaderMode(nextEnabled, eventSource === "shortcut" ? "shortcut" : "menu");
+        }
+    }
+
     toggleGreenScreen() {
         const greenScreenOn = !this.state.greenScreen;
 
@@ -5702,10 +5718,6 @@ function render() {
 
 function getEditor() {
     return theEditor
-}
-
-function getBoardView() {
-    return document.getElementById("boardview");
 }
 
 function parseLocalToken() {

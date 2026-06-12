@@ -403,6 +403,10 @@
                 position: relative;
                 overflow: visible;
 
+                &:focus-visible::after {
+                    outline: var(--pxt-neutral-foreground1) solid 1px;
+                }
+
                 .label {
                     display: flex;
                     flex-direction: row;
@@ -427,6 +431,10 @@
                         text-align: left;
                     }
                 }
+            }
+
+            .rememberme .common-checkbox:focus-within {
+                outline: var(--pxt-neutral-foreground1) solid 1px;
             }
         }
     }

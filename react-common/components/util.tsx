@@ -42,6 +42,7 @@ export function fireClickOnEnter(e: React.KeyboardEvent<HTMLElement>) {
     const charCode = (typeof e.which == "number") ? e.which : e.keyCode;
     if (charCode === 13 /* enter */ || charCode === 32 /* space */) {
         e.preventDefault();
+        e.stopPropagation();
         e.currentTarget.click();
     }
 }

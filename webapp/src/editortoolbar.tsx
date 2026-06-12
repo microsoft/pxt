@@ -191,7 +191,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
 
     protected onDownloadButtonClick = async () => {
         pxt.tickEvent("editortools.downloadbutton", { collapsed: this.getCollapsedState() }, { interactiveConsent: true });
-        if (this.shouldShowPairingDialogOnDownload()
+        if (this.props.parent.shouldShowPairingDialogOnDownload()
             && !pxt.packetio.isConnected()
             && !pxt.packetio.isConnecting()
         ) {
@@ -261,13 +261,6 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         window.open(pxt.appTarget.appTheme.downloadDialogTheme?.downloadMenuHelpURL);
     }
 
-    protected shouldShowPairingDialogOnDownload = () => {
-        return pxt.appTarget.appTheme.preferWebUSBDownload
-            && pxt.appTarget?.compile?.webUSB
-            && pxt.usb.isEnabled
-            && !userPrefersDownloadFlagSet();
-    }
-
     protected getCompileButton(view: View): JSX.Element[] {
         const collapsed = true; // TODO: Cleanup this
         const targetTheme = pxt.appTarget.appTheme;
@@ -297,7 +290,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         const packetioConnected = !!this.getData("packetio:connected");
         const packetioConnecting = !!this.getData("packetio:connecting");
         const packetioIcon = this.getData("packetio:icon") as string;
-        const hideFileDownloadIcon = view === View.Computer && this.shouldShowPairingDialogOnDownload();
+        const hideFileDownloadIcon = view === View.Computer && this.props.parent.shouldShowPairingDialogOnDownload();
         const fileDownloadIcon = targetTheme.downloadIcon || "xicon file-download";
 
         const successIcon = (packetioConnected && pxt.appTarget.appTheme.downloadDialogTheme?.deviceSuccessIcon)
@@ -362,7 +355,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         // Add the ... menu
         const usbIcon = pxt.appTarget.appTheme.downloadDialogTheme?.deviceIcon || "usb";
         el.push(
-            <sui.DropdownMenu ref={getMenuRef()} key="downloadmenu" role="menuitem" icon={`${downloadButtonIcon} horizontal ${hwIconClasses}`} title={lf("Download options")} className={`${hwIconClasses} right attached editortools-btn hw-button button`} dataTooltip={tooltip} displayAbove={true} displayRight={displayRight} closeOnItemClick={true} onShow={
+            <sui.DropdownMenu ref={getMenuRef()} key="downloadmenu" role="button" icon={`${downloadButtonIcon} horizontal ${hwIconClasses}`} title={lf("Download options")} className={`${hwIconClasses} right attached editortools-btn hw-button button`} dataTooltip={tooltip} displayAbove={true} displayRight={displayRight} closeOnItemClick={true} onShow={
                 () => this.forceUpdate() // force update to refresh extMenuItems
             }>
                 {webUSBSupported && !packetioConnected && <sui.Item role="menuitem" icon={usbIcon} text={lf("Connect Device")} tabIndex={-1} onClick={() => this.onPairClick(returnFocus)} />}
@@ -400,10 +393,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         const showProjectRename = !tutorial && !readOnly && !isController
             && !targetTheme.hideProjectRename && !debugging;
         const showProjectRenameReadonly = false; // always allow renaming, even for github projects
-        const compile = pxt.appTarget.compile;
-        const compilesToDownloadableFile = compile.hasHex || compile.saveAsPNG || compile.useUF2;
-        const hasCompileButtonOverride = !!pxt.commands.onDownloadButtonClick;
-        const showCompileBtn = !isTimeMachineEmbed && (compilesToDownloadableFile || hasCompileButtonOverride);
+        const showCompileBtn = !isTimeMachineEmbed && pxt.canDownload();
         const compileLoading = !!compiling;
         const running = simState == SimState.Running;
         const starting = simState == SimState.Starting;
@@ -442,7 +432,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         }
 
         return <div id="editortools" className="ui" role="region" aria-label={lf("Editor toolbar")}>
-            <div id="downloadArea" role="menubar" className="ui column items">
+            <div id="downloadArea" role="group" aria-label={lf("Download and device connection")} className="ui column items">
                 {showCompileBtn && <div className="ui item portrait hide">
                     {this.getCompileButton(computer)}
                 </div>}
@@ -458,7 +448,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
                         <identity.CloudSaveStatus headerId={header.id} />
                     </div>
                 </div>}
-            <div id="editorToolbarArea" role="menubar" className="ui column items">
+            <div id="editorToolbarArea" role="group" aria-label={lf("Editor tools")} className="ui column items">
                 {showUndoRedo && <div className="ui icon buttons">{this.getUndoRedo(computer)}</div>}
                 {showZoomControls && <div className="ui icon buttons mobile hide">{this.getZoomControl(computer)}</div>}
                 {targetTheme.bigRunButton && !pxt.shell.isTimeMachineEmbed() &&
@@ -607,7 +597,7 @@ class EditorToolbarButton extends sui.StatelessUIElement<EditorToolbarButtonProp
 
     renderCore() {
         const { onClick, onButtonClick, role, ...rest } = this.props;
-        return <sui.Button role={role || "menuitem"} {...rest} onClick={this.handleClick} />;
+        return <sui.Button role={role || "button"} {...rest} onClick={this.handleClick} />;
     }
 }
 

@@ -12,6 +12,7 @@ interface Props {
     playNote: (note: number) => void;
     onEdit: (track: Track) => void;
     measures: number;
+    bpm: number;
 }
 
 interface GestureState {
@@ -25,7 +26,7 @@ interface GestureState {
 }
 
 export const Workspace = (props: Props) => {
-    const { track, onEdit, isDrumTrack, playNote, measures } = props;
+    const { track, onEdit, isDrumTrack, playNote, measures, bpm } = props;
 
     const bg = useWorkspaceBackground();
     const theme = usePianoRollTheme();
@@ -78,7 +79,7 @@ export const Workspace = (props: Props) => {
             const coords = clientToNoteCoordinates(clientX, clientY);
             if (!coords) return 1;
 
-            const max = getMaxDuration(editing.note, editing.start + 1, track, measures);
+            const max = getMaxDuration(editing.note, editing.start, track, measures, theme.maxPolyphony);
 
             return Math.max(1, Math.min(max, coords.time - editing.start + 1));
         }
@@ -151,13 +152,13 @@ export const Workspace = (props: Props) => {
                     const coords = clientToNoteCoordinates(gestureState.current.startX, gestureState.current.startY);
 
                     if (coords) {
-                        onEdit(newNoteEvent(coords.note, coords.time, track, isDrumTrack, measures));
+                        onEdit(newNoteEvent(coords.note, coords.time, track, isDrumTrack, measures, theme.maxPolyphony));
                         playNote(coords.note);
                     }
                 }
             }
             else if (gestureState.current.noteEvent && !isDrumTrack) {
-                onEdit(changeNoteEventDuration(gestureState.current.noteEvent.id, getNewNoteDuration(e.clientX, e.clientY), track, measures));
+                onEdit(changeNoteEventDuration(gestureState.current.noteEvent.id, getNewNoteDuration(e.clientX, e.clientY), track, measures, theme.maxPolyphony));
             }
 
             gestureState.current = null;
@@ -180,7 +181,7 @@ export const Workspace = (props: Props) => {
 
 
     useEffect(() => {
-        const tickTime = pxsim.music.tickToMs(120, 4, 1);
+        const tickTime = pxsim.music.tickToMs(bpm, 4, 1);
         const tickDistance = noteWidth(theme, 1);
         let playbackHeadPosition = 0;
         let isPlaying = false;
@@ -218,7 +219,7 @@ export const Workspace = (props: Props) => {
             removePlaybackStateListener(onStop);
             if (animationFrameRef) cancelAnimationFrame(animationFrameRef);
         }
-    }, [theme])
+    }, [theme, bpm])
 
     return (
         <div className="workspace" style={{

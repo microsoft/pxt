@@ -104,35 +104,48 @@ export function getEmptySong(): Song {
     return song;
 }
 
-export function getNextNoteEvent(note: number, start: number, track: Track): NoteEvent | undefined {
+export function getNextNoteEvent(note: number, start: number, track: Track, maxPolyphony: number): NoteEvent | undefined {
     return track.events.find(e => e.note === note && e.start > start);
 }
 
-export function getMaxDuration(note: number, start: number, track: Track, measures: number): number {
-    const nextEvent = getNextNoteEvent(note, start, track);
-    if (!nextEvent) return measures * 4 * 4 - start;
+export function getMaxDuration(note: number, start: number, track: Track, measures: number, maxPolyphony: number): number {
+    let activeNotes: NoteEvent[] = [];
 
-    return nextEvent.start - start;
+    for (const event of track.events) {
+        if (event.start === start && event.note === note) continue;
+
+        activeNotes.push(event);
+        if (event.start >= start) {
+            if (event.note === note || activeNotes.length >= maxPolyphony) {
+                return event.start - start;
+            }
+        }
+        activeNotes = activeNotes.filter(e => e.start + e.duration < event.start);
+    }
+
+    return measures * 4 * 4 - start;
 }
 
-export function newNoteEvent(note: number, start: number, track: Track, isDrumTrack: boolean, measures: number): Track {
+export function newNoteEvent(note: number, start: number, track: Track, isDrumTrack: boolean, measures: number, maxPolyphony: number): Track {
+    track = removeEventAtTimeIfNeeded(start, track, maxPolyphony);
+
     const newEvent: NoteEvent = {
         id: track.nextId++,
         note,
         start,
-        duration: isDrumTrack ? 1 : Math.min(4, getMaxDuration(note, start, track, measures)),
+        duration: isDrumTrack ? 1 : Math.min(4, getMaxDuration(note, start, track, measures, maxPolyphony)),
         velocity: 128
     };
 
     return insertNoteEvent(newEvent, track);
 }
 
-export function changeNoteEventDuration(id: number, duration: number, track: Track, measures: number): Track {
+export function changeNoteEventDuration(id: number, duration: number, track: Track, measures: number, maxPolyphony: number): Track {
     const eventIndex = track.events.findIndex(e => e.id === id);
     if (eventIndex === -1) return track;
 
     const event = track.events[eventIndex];
-    const maxDuration = getMaxDuration(event.note, event.start, track, measures);
+    const maxDuration = getMaxDuration(event.note, event.start, track, measures, maxPolyphony);
 
     const updatedEvent = {
         ...event,
@@ -166,6 +179,20 @@ function insertNoteEvent(newEvent: NoteEvent, track: Track): Track {
     return {
         ...track,
         events: [...track.events, newEvent]
+    }
+}
+
+function removeEventAtTimeIfNeeded(start: number, track: Track, maxPolyphony: number): Track {
+    if (maxPolyphony === Infinity) return track;
+
+    const activeNotes = track.events.filter(e => e.start <= start && e.start + e.duration > start);
+    if (activeNotes.length < maxPolyphony) return track;
+
+    const eventToRemove = activeNotes.reduce((prev, current) => (prev.start > current.start) ? prev : current);
+
+    return {
+        ...track,
+        events: track.events.filter(e => e.id !== eventToRemove.id)
     }
 }
 
@@ -310,7 +337,7 @@ export function toPXTSong(song: Song): pxt.assets.music.Song {
                     startTick: e.start,
                     endTick: (e.start + e.duration),
                     notes: [{
-                        note: e.note,
+                        note: e.note + 1,
                         enharmonicSpelling: "normal"
                     }],
                     velocity: e.velocity
@@ -327,6 +354,7 @@ export function toPXTSong(song: Song): pxt.assets.music.Song {
 export function fromPXTSong(pxtSong: pxt.assets.music.Song): Song {
     const result = getEmptySong();
     result.measures = pxtSong.measures;
+    result.tempo = pxtSong.beatsPerMinute;
 
     result.tracks = [];
     result.nextId += 1000;
@@ -347,7 +375,7 @@ export function fromPXTSong(pxtSong: pxt.assets.music.Song): Song {
         const newNoteEvent = (note: number, startTick: number, endTick: number, velocity: number): void => {
             const newEvent: NoteEvent = {
                 id: newTrack.nextId++,
-                note,
+                note: note - 1,
                 start: Math.round(startTick / ticksPerSixteenth),
                 duration: Math.max(1, Math.round((endTick - startTick) / ticksPerSixteenth)),
                 velocity: velocity ?? 128
