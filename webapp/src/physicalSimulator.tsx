@@ -32,6 +32,7 @@ function mkBoardImgSvg(): pxsim.visuals.SVGElAndSize {
 
 class BoardSprite {
     private _name: string = "";
+    private _simulatorId: string | undefined;
     constructor(public id: number, public x: number, public y: number) {
 
     }
@@ -41,6 +42,12 @@ class BoardSprite {
     }
     get name() {
         return this._name;
+    }
+    set simulatorId(id: string | undefined) {
+        this._simulatorId = id;
+    }
+    get simulatorId() {
+        return this._simulatorId;
     }
 }
 
@@ -173,32 +180,30 @@ export class PhysicalSimulator extends srceditor.Editor {
     private addSprite() {
         // Create a new board sprite with random position
         const canvas = document.getElementById("simulatorCanvas") as HTMLCanvasElement;
-        if (canvas) {
-            const maxX = Math.max(canvas.width - this.spriteWidth, 0);
-            const maxY = Math.max(canvas.height - this.spriteHeight, 0);
-            const x = Math.random() * maxX;
-            const y = Math.random() * maxY;
-            const sprite = new BoardSprite(this.nextBoardId, x, y);
-            sprite.name = `board${this.nextBoardId}`;
-            this.boards.push(sprite);
-            this.nextBoardId++;
-            this.drawBoards();
-        }
-
+        const maxX = Math.max(canvas.width - this.spriteWidth, 0);
+        const maxY = Math.max(canvas.height - this.spriteHeight, 0);
+        const x = Math.random() * maxX;
+        const y = Math.random() * maxY;
+        const sprite = new BoardSprite(this.nextBoardId, x, y);
+        sprite.name = `board${this.nextBoardId}`;
+        this.boards.push(sprite);
+        this.nextBoardId++;
+        this.drawBoards();
+        return sprite;
     }
 
     // TODO: upon entry, we need to create simulators for the board sprites, except for the first one
     recreateSimulators() {
         this.boards.forEach((board, index) => {
             if (index === 0) return; // skip the first board, which is the default one
-            simulator.driver.addSimulator()
+            board.simulatorId = simulator.driver.addSimulator()
         })
     }
 
     addSimulator() {
         pxt.tickEvent("serial.newBoardButton", undefined, { interactiveConsent: true })
-        this.addSprite();
-        simulator.driver.addSimulator()
+        const sprite = this.addSprite();
+        sprite.simulatorId = simulator.driver.addSimulator();
     }
 
     clearSprites() {

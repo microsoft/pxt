@@ -337,6 +337,10 @@ namespace pxsim {
             return frames;
         }
 
+        public getFrameIds(): string[] {
+            return this.simFrames().map(f => f.id);
+        }
+
         private getSimUrl(): URL {
             const simUrl = this.options.simUrl || (window as any).pxtConfig?.simUrl || (pxt as any).webConfig?.simUrl || `${location.origin}/sim/simulator.html`;
             try {
