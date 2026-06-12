@@ -13,6 +13,8 @@ import IProjectView = pxt.editor.IProjectView;
 import * as simulator from "./simulator";
 
 // TODOs:
+
+// - need to handle entry into the sim from GUI
 // - keep the sprites and simulators in sync when adding/clearing boards
 //   - right now, the correspondence is based on order, which is brittle; 
 //     we should add an ID to the simulator and keep track of it in the sprite
@@ -20,8 +22,6 @@ import * as simulator from "./simulator";
 // - add a way to rename boards
 // - when we receive message from the simulator, update the corresponding board's sprite
 //   - on sending a radio message, do an animation around the sprite of the sending board
-
-
 
 class BoardSprite {
     private _name: string = "";
@@ -73,6 +73,8 @@ export class PhysicalSimulator extends srceditor.Editor {
         return file.name === pxt.PHYSICAL_SIMULATOR_EDITOR_FILE;
     }
 
+    // this is called when the editor is opened, 
+    // but before the file is loaded
     setVisible(b: boolean) {
         // TODO: It'd be great to re-render this component dynamically when the contrast changes,
         // TODO: but for now the user has to toggle the serial editor to see a change.
@@ -81,6 +83,10 @@ export class PhysicalSimulator extends srceditor.Editor {
             this.setHighContrast(highContrast)
         }
         this.isVisible = b;
+        if (b) {
+            this.recreateSimulators();
+        }
+        this.domUpdate();
     }
 
     setHighContrast(hc: boolean) {
@@ -113,8 +119,6 @@ export class PhysicalSimulator extends srceditor.Editor {
         this.onCanvasMouseDown = this.onCanvasMouseDown.bind(this);
         this.onCanvasMouseMove = this.onCanvasMouseMove.bind(this);
         this.onCanvasMouseUp = this.onCanvasMouseUp.bind(this);
-        // Add an initial board to the simulator
-        this.addSprite();
     }
 
     processEvent(ev: MessageEvent) {
@@ -171,7 +175,6 @@ export class PhysicalSimulator extends srceditor.Editor {
     private addSprite() {
         // Create a new board sprite with random position
         const canvas = document.getElementById("simulatorCanvas") as HTMLCanvasElement;
-        if (!canvas) return undefined;
         const x = Math.random() * (canvas.width - 40);
         const y = Math.random() * (canvas.height - 40);
         const sprite = new BoardSprite(this.nextBoardId, x, y);
@@ -184,18 +187,25 @@ export class PhysicalSimulator extends srceditor.Editor {
 
     // TODO: upon entry, we need to create simulators for the board sprites, except for the first one
     recreateSimulators() {
+        const sims = simulator.driver.getFrameIds();
+        if (sims.length > 0 && this.boards.length == 0) {
+            const firstBoard = this.addSprite(); // add the default board if we don't have any
+            firstBoard!.simulatorId = sims[0];
+        }
         this.boards.forEach((board, index) => {
-            if (index === 0) return; // skip the first board, which is the default one
-            board.simulatorId = simulator.driver.addSimulator()
+            if (index < sims.length) {
+                board.simulatorId = sims[index];
+                return;
+            } else {
+                board.simulatorId = simulator.driver.addSimulator()
+            }
         })
     }
 
     addSimulator() {
         pxt.tickEvent("serial.newBoardButton", undefined, { interactiveConsent: true })
         const sprite = this.addSprite();
-        if (sprite) {
-            sprite.simulatorId = simulator.driver.addSimulator();
-        }
+        sprite.simulatorId = simulator.driver.addSimulator();
     }
 
     clearSprites() {
