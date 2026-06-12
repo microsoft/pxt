@@ -1,3 +1,6 @@
+/// <reference path="../../localtypings/pxtparts.d.ts"/>
+/// <reference path="../../built/pxtsim.d.ts" />
+
 import * as React from "react"
 import * as pkg from "./package"
 import * as core from "./core"
@@ -6,17 +9,27 @@ import * as srceditor from "./srceditor"
 import Util = pxt.Util
 import { fireClickOnEnter } from "./util"
 import IProjectView = pxt.editor.IProjectView;
+import * as simulator from "./simulator";
 
-// function mkBoardImgSvg(def: BoardDefinition): visuals.SVGElAndSize {
-//     const boardView = pxsim.visuals.mkBoardView({
-//         visual: def.visual,
-//         boardDef: def
-//     });
-//     return boardView.getView();
-// }
+// TODOs:
+// - use the SVG board images instead of drawing squares; 
+// - keep the sprites and simulators in sync when adding/clearing boards
+//   - right now, the correspondence is based on order, which is brittle; 
+//     we should add an ID to the simulator and keep track of it in the sprite
+// - add a way to remove individual boards
+// - add a way to rename boards
+// - when we receive message from the simulator, update the corresponding board's sprite
+//   - on sending a radio message, do an animation around the sprite of the sending board
 
-// base class for sprites in the physical simulator; needs to be 
-// inherited by the target to add target-specific functionality
+function mkBoardImgSvg(): pxsim.visuals.SVGElAndSize {
+    const boardDefinition = pxt.appTarget.simulator.boardDefinition
+    const boardView = pxsim.visuals.mkBoardView({
+        visual: boardDefinition.visual,
+        boardDef: boardDefinition
+    });
+    return boardView.getView();
+}
+
 class BoardSprite {
     private _name: string = "";
     constructor(public id: number, public x: number, public y: number) {
@@ -44,6 +57,9 @@ export class PhysicalSimulator extends srceditor.Editor {
     draggingBoard: BoardSprite | undefined;
     dragOffsetX = 0;
     dragOffsetY = 0;
+    boardImgCached: HTMLImageElement | undefined;
+    spriteWidth = 40;
+    spriteHeight = 0;
 
     getId() {
         return "physicalSimulator"
@@ -158,8 +174,10 @@ export class PhysicalSimulator extends srceditor.Editor {
         // Create a new board sprite with random position
         const canvas = document.getElementById("simulatorCanvas") as HTMLCanvasElement;
         if (canvas) {
-            const x = Math.random() * (canvas.width - 40);
-            const y = Math.random() * (canvas.height - 40);
+            const maxX = Math.max(canvas.width - this.spriteWidth, 0);
+            const maxY = Math.max(canvas.height - this.spriteHeight, 0);
+            const x = Math.random() * maxX;
+            const y = Math.random() * maxY;
             const sprite = new BoardSprite(this.nextBoardId, x, y);
             sprite.name = `board${this.nextBoardId}`;
             this.boards.push(sprite);
@@ -173,14 +191,14 @@ export class PhysicalSimulator extends srceditor.Editor {
     recreateSimulators() {
         this.boards.forEach((board, index) => {
             if (index === 0) return; // skip the first board, which is the default one
-            this.parent.addSimulator();
+            simulator.driver.addSimulator()
         })
     }
 
     addSimulator() {
         pxt.tickEvent("serial.newBoardButton", undefined, { interactiveConsent: true })
         this.addSprite();
-        this.parent.addSimulator()
+        simulator.driver.addSimulator()
     }
 
     clearSprites() {
@@ -189,7 +207,6 @@ export class PhysicalSimulator extends srceditor.Editor {
         this.boards = [this.boards[0]];
         this.nextBoardId = 1;
         this.drawBoards();
-        // this.parent.clearSimulators();
     }
 
     display() {
@@ -246,20 +263,52 @@ export class PhysicalSimulator extends srceditor.Editor {
         ctx.fillStyle = "#228B22";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+        // Initialize cached board image if needed
+        if (!this.boardImgCached) {
+            this.initBoardImage();
+            if (!this.boardImgCached) return;
+        }
+
         // Draw each board
-        const squareSize = 40;
         this.boards.forEach((board) => {
-            // Draw black square
-            ctx.fillStyle = "#000000";
-            ctx.fillRect(board.x, board.y, squareSize, squareSize);
+            ctx.drawImage(this.boardImgCached!, board.x, board.y, this.spriteWidth, this.spriteHeight);
 
             // Draw label text
             ctx.fillStyle = "#FFFFFF";
             ctx.font = "12px Arial";
             ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            ctx.fillText(board.name, board.x + squareSize / 2, board.y + squareSize / 2);
+            ctx.textBaseline = "top";
+            ctx.fillText(board.name, board.x + this.spriteWidth / 2, board.y + this.spriteHeight + 2);
         });
+    }
+
+    private initBoardImage() {
+        const boardImg =  mkBoardImgSvg();
+        // Get dimensions from the SVG element
+        const svgEl = boardImg.el as SVGSVGElement;
+        let svgWidth = 100;
+        let svgHeight = 100;
+
+        if (svgEl.viewBox && svgEl.viewBox.baseVal) {
+            svgWidth = svgEl.viewBox.baseVal.width;
+            svgHeight = svgEl.viewBox.baseVal.height;
+        } else if (svgEl.width && svgEl.height) {
+            svgWidth = svgEl.width.baseVal?.value || 100;
+            svgHeight = svgEl.height.baseVal?.value || 100;
+        }
+
+        // Calculate scaled dimensions
+        const scale = this.spriteWidth / svgWidth;
+        this.spriteHeight = Math.round(svgHeight * scale);
+
+        // Convert SVG to image
+        const svgString = new XMLSerializer().serializeToString(boardImg.el);
+        const img = new Image();
+        img.onload = () => {
+            this.boardImgCached = img;
+            this.drawBoards();
+        };
+        img.src = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgString)));
     }
 
     private getCanvasMousePosition(ev: React.MouseEvent<HTMLCanvasElement, MouseEvent>) {
@@ -272,10 +321,9 @@ export class PhysicalSimulator extends srceditor.Editor {
     }
 
     private findBoardAt(x: number, y: number) {
-        const squareSize = 40;
         for (let i = this.boards.length - 1; i >= 0; i--) {
             const board = this.boards[i];
-            if (x >= board.x && x <= board.x + squareSize && y >= board.y && y <= board.y + squareSize) {
+            if (x >= board.x && x <= board.x + this.spriteWidth && y >= board.y && y <= board.y + this.spriteHeight) {
                 return board;
             }
         }
@@ -304,9 +352,8 @@ export class PhysicalSimulator extends srceditor.Editor {
         if (!this.draggingBoard) return;
         const pos = this.getCanvasMousePosition(ev);
         const canvas = ev.currentTarget;
-        const squareSize = 40;
-        const maxX = canvas.width - squareSize;
-        const maxY = canvas.height - squareSize;
+        const maxX = canvas.width - this.spriteWidth;
+        const maxY = canvas.height - this.spriteHeight;
 
         this.draggingBoard.x = Math.max(0, Math.min(maxX, pos.x - this.dragOffsetX));
         this.draggingBoard.y = Math.max(0, Math.min(maxY, pos.y - this.dragOffsetY));

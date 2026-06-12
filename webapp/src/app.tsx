@@ -1598,10 +1598,6 @@ export class ProjectView
         } as pxt.editor.EditorMessageTutorialExitEventRequest)
     }
 
-    addSimulator(): void {
-        simulator.driver.addSimulator();
-    }
-
     handleMessage(msg: pxsim.SimulatorMessage) {
         switch (msg.type) {
             case "opendoc":

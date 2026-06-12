@@ -351,8 +351,10 @@ namespace pxsim {
             this.singleSimulator = true
         }
 
-        public addSimulator() {
-            this.container.appendChild(this.createFrame());
+        public addSimulator(): string {
+            const newFrame = this.createFrame();
+            this.container.appendChild(newFrame);
+            return newFrame.id
         }
 
         // BEGIN TEMPORARY: jacdac simulator
