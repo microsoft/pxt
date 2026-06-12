@@ -1,6 +1,7 @@
 /// <reference path="../../localtypings/pxtparts.d.ts"/>
 /// <reference path="../../built/pxtsim.d.ts" />
 
+
 import * as React from "react"
 import * as pkg from "./package"
 import * as core from "./core"
@@ -12,7 +13,6 @@ import IProjectView = pxt.editor.IProjectView;
 import * as simulator from "./simulator";
 
 // TODOs:
-// - use the SVG board images instead of drawing squares; 
 // - keep the sprites and simulators in sync when adding/clearing boards
 //   - right now, the correspondence is based on order, which is brittle; 
 //     we should add an ID to the simulator and keep track of it in the sprite
@@ -21,14 +21,7 @@ import * as simulator from "./simulator";
 // - when we receive message from the simulator, update the corresponding board's sprite
 //   - on sending a radio message, do an animation around the sprite of the sending board
 
-function mkBoardImgSvg(): pxsim.visuals.SVGElAndSize {
-    const boardDefinition = pxt.appTarget.simulator.boardDefinition
-    const boardView = pxsim.visuals.mkBoardView({
-        visual: boardDefinition.visual,
-        boardDef: boardDefinition
-    });
-    return boardView.getView();
-}
+
 
 class BoardSprite {
     private _name: string = "";
@@ -65,8 +58,6 @@ export class PhysicalSimulator extends srceditor.Editor {
     dragOffsetX = 0;
     dragOffsetY = 0;
     boardImgCached: HTMLImageElement | undefined;
-    spriteWidth = 40;
-    spriteHeight = 0;
 
     getId() {
         return "physicalSimulator"
@@ -180,16 +171,15 @@ export class PhysicalSimulator extends srceditor.Editor {
     private addSprite() {
         // Create a new board sprite with random position
         const canvas = document.getElementById("simulatorCanvas") as HTMLCanvasElement;
-        const maxX = Math.max(canvas.width - this.spriteWidth, 0);
-        const maxY = Math.max(canvas.height - this.spriteHeight, 0);
-        const x = Math.random() * maxX;
-        const y = Math.random() * maxY;
+        if (!canvas) return undefined;
+        const x = Math.random() * (canvas.width - 40);
+        const y = Math.random() * (canvas.height - 40);
         const sprite = new BoardSprite(this.nextBoardId, x, y);
         sprite.name = `board${this.nextBoardId}`;
         this.boards.push(sprite);
         this.nextBoardId++;
         this.drawBoards();
-        return sprite;
+        return sprite
     }
 
     // TODO: upon entry, we need to create simulators for the board sprites, except for the first one
@@ -203,7 +193,9 @@ export class PhysicalSimulator extends srceditor.Editor {
     addSimulator() {
         pxt.tickEvent("serial.newBoardButton", undefined, { interactiveConsent: true })
         const sprite = this.addSprite();
-        sprite.simulatorId = simulator.driver.addSimulator();
+        if (sprite) {
+            sprite.simulatorId = simulator.driver.addSimulator();
+        }
     }
 
     clearSprites() {
@@ -268,52 +260,20 @@ export class PhysicalSimulator extends srceditor.Editor {
         ctx.fillStyle = "#228B22";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Initialize cached board image if needed
-        if (!this.boardImgCached) {
-            this.initBoardImage();
-            if (!this.boardImgCached) return;
-        }
-
         // Draw each board
+        const squareSize = 40;
         this.boards.forEach((board) => {
-            ctx.drawImage(this.boardImgCached!, board.x, board.y, this.spriteWidth, this.spriteHeight);
+            // Draw black square
+            ctx.fillStyle = "#000000";
+            ctx.fillRect(board.x, board.y, squareSize, squareSize);
 
             // Draw label text
             ctx.fillStyle = "#FFFFFF";
             ctx.font = "12px Arial";
             ctx.textAlign = "center";
-            ctx.textBaseline = "top";
-            ctx.fillText(board.name, board.x + this.spriteWidth / 2, board.y + this.spriteHeight + 2);
+            ctx.textBaseline = "middle";
+            ctx.fillText(board.name, board.x + squareSize / 2, board.y + squareSize / 2);
         });
-    }
-
-    private initBoardImage() {
-        const boardImg =  mkBoardImgSvg();
-        // Get dimensions from the SVG element
-        const svgEl = boardImg.el as SVGSVGElement;
-        let svgWidth = 100;
-        let svgHeight = 100;
-
-        if (svgEl.viewBox && svgEl.viewBox.baseVal) {
-            svgWidth = svgEl.viewBox.baseVal.width;
-            svgHeight = svgEl.viewBox.baseVal.height;
-        } else if (svgEl.width && svgEl.height) {
-            svgWidth = svgEl.width.baseVal?.value || 100;
-            svgHeight = svgEl.height.baseVal?.value || 100;
-        }
-
-        // Calculate scaled dimensions
-        const scale = this.spriteWidth / svgWidth;
-        this.spriteHeight = Math.round(svgHeight * scale);
-
-        // Convert SVG to image
-        const svgString = new XMLSerializer().serializeToString(boardImg.el);
-        const img = new Image();
-        img.onload = () => {
-            this.boardImgCached = img;
-            this.drawBoards();
-        };
-        img.src = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgString)));
     }
 
     private getCanvasMousePosition(ev: React.MouseEvent<HTMLCanvasElement, MouseEvent>) {
@@ -326,9 +286,10 @@ export class PhysicalSimulator extends srceditor.Editor {
     }
 
     private findBoardAt(x: number, y: number) {
+        const squareSize = 40;
         for (let i = this.boards.length - 1; i >= 0; i--) {
             const board = this.boards[i];
-            if (x >= board.x && x <= board.x + this.spriteWidth && y >= board.y && y <= board.y + this.spriteHeight) {
+            if (x >= board.x && x <= board.x + squareSize && y >= board.y && y <= board.y + squareSize) {
                 return board;
             }
         }
@@ -357,8 +318,9 @@ export class PhysicalSimulator extends srceditor.Editor {
         if (!this.draggingBoard) return;
         const pos = this.getCanvasMousePosition(ev);
         const canvas = ev.currentTarget;
-        const maxX = canvas.width - this.spriteWidth;
-        const maxY = canvas.height - this.spriteHeight;
+        const squareSize = 40;
+        const maxX = canvas.width - squareSize;
+        const maxY = canvas.height - squareSize;
 
         this.draggingBoard.x = Math.max(0, Math.min(maxX, pos.x - this.dragOffsetX));
         this.draggingBoard.y = Math.max(0, Math.min(maxY, pos.y - this.dragOffsetY));
