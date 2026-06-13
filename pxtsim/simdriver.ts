@@ -376,9 +376,13 @@ namespace pxsim {
             if (frameID) frames = frames.filter(f => f.id === frameID);
 
             if (this._runOptions?.physicalSimulator) {
+                // make sure that frames are up-to-date
+                 const mkcdFrames = frames.filter(frame => !frame.dataset[FRAME_DATA_MESSAGE_CHANNEL]);
+                 mkcdFrames.forEach(frame => {
+                    if (frame.dataset['runid'] != this.runId)
+                        this.startFrame(frame);
+                 })
                 // in this mode, we do the following:
-                // 1. create a simulator only when receive a specific create sim 
-                //    message from above (no extension sim support for now)
                 // 2. pass any broadcast message from the sim to the parent window
                 //    to allow integration with physical simulator, which will decide
                 //    which messages to pass back here (e.g., the radio)
@@ -472,7 +476,7 @@ namespace pxsim {
                                     startSimulatorExtension(url, messageSimulator.permanent, messageSimulator.aspectRatio);
                                 }
                             }
-                            // not running the curren run, restart
+                            // not running the current run, restart
                             else if (messageFrame.dataset['runid'] != this.runId) {
                                 this.startFrame(messageFrame);
                             }
@@ -744,7 +748,14 @@ namespace pxsim {
                 (100 / r) + "%";
         }
 
+        private removeFrame(frame: HTMLElement) {
+            if (this.options.removeElement) this.options.removeElement(frame.parentElement);
+            else frame.parentElement.remove();
+        }
+
         private cleanupFrames() {
+            if (this._runOptions?.physicalSimulator)
+                return
             // drop unused extras frames after 5 seconds
             const frames = this.simFrames(true);
             frames.shift(); // drop first frame
@@ -752,10 +763,18 @@ namespace pxsim {
                 .forEach(frame => {
                     if (this.state == SimulatorState.Stopped
                         || frame.dataset['runid'] != this.runId) {
-                        if (this.options.removeElement) this.options.removeElement(frame.parentElement);
-                        else frame.parentElement.remove();
+                        this.removeFrame(frame)
                     }
                 });
+        }
+
+        public removeFrameById(id: string) {
+            const frames = this.simFrames(true);
+            frames.shift(); // drop first frame
+            const frame = frames.find(frame => frame.id === id)
+            if (frame) {
+                this.removeFrame(frame)
+            }
         }
 
         public hide(completeHandler?: () => void) {
@@ -864,7 +883,6 @@ namespace pxsim {
                 theme: this.themes[this.nextFrameId++ % this.themes.length],
                 mpRole
             };
-            // TBALL: msg.frameId = frame.id
             msg.id = `${msg.options.theme}-${this.nextId()}`;
             frame.dataset['runid'] = this.runId;
             frame.dataset['runtimeid'] = msg.id;

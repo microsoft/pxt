@@ -14,12 +14,17 @@ import * as simulator from "./simulator";
 
 // TODOs:
 
-// - need to handle entry into the sim from GUI
-// - keep the sprites and simulators in sync when adding/clearing boards
-//   - right now, the correspondence is based on order, which is brittle; 
+// - when we recreate sims, they disappear after a few seconds!
+// X need to handle entry into the sim from GUI
+// X keep the sprites and simulators in sync when adding/clearing boards
+//   X right now, the correspondence is based on order, which is brittle; 
 //     we should add an ID to the simulator and keep track of it in the sprite
 // - add a way to remove individual boards
 // - add a way to rename boards
+// - plumbing between simdriver and physical simulator (via psim-tunnel message
+//.  - we can make a direct call to simdriver to send a message to one of the sims (or all)
+//.  - but if we need a response from a direct call, we need to make sure that response is 
+//     tunneled through to the psim
 // - when we receive message from the simulator, update the corresponding board's sprite
 //   - on sending a radio message, do an animation around the sprite of the sending board
 
@@ -174,9 +179,9 @@ export class PhysicalSimulator extends srceditor.Editor {
 
     private addSprite() {
         // Create a new board sprite with random position
-        const canvas = document.getElementById("simulatorCanvas") as HTMLCanvasElement;
-        const x = Math.random() * (canvas.width - 40);
-        const y = Math.random() * (canvas.height - 40);
+        const canvas = document.getElementById("simulatorCanvas") as HTMLCanvasElement
+        const x = canvas ? Math.random() * (canvas.width - 40) : 100 ;
+        const y = canvas ? Math.random() * (canvas.height - 40) : 100 ;
         const sprite = new BoardSprite(this.nextBoardId, x, y);
         sprite.name = `board${this.nextBoardId}`;
         this.boards.push(sprite);
@@ -185,8 +190,7 @@ export class PhysicalSimulator extends srceditor.Editor {
         return sprite
     }
 
-    // TODO: upon entry, we need to create simulators for the board sprites, except for the first one
-    recreateSimulators() {
+     recreateSimulators() {
         const sims = simulator.driver.getFrameIds();
         if (sims.length > 0 && this.boards.length == 0) {
             const firstBoard = this.addSprite(); // add the default board if we don't have any
@@ -211,6 +215,9 @@ export class PhysicalSimulator extends srceditor.Editor {
     clearSprites() {
         pxt.tickEvent("serial.clearBoardsButton", undefined, { interactiveConsent: true })
         if (this.boards.length <= 1) return;
+        this.boards.forEach((board,index) => {
+            if (index > 0) simulator.driver.removeFrameById(board.simulatorId)
+        })
         this.boards = [this.boards[0]];
         this.nextBoardId = 1;
         this.drawBoards();
