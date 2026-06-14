@@ -144,6 +144,10 @@ namespace pxsim {
 
         payload: SimulatorRadioPacketPayload;
     }
+    export interface SimulatorTunnelMessage extends SimulatorMessage {
+        type: "tunnel";
+        payload: SimulatorRadioPacketMessage | SimulatorScreenshotMessage
+    }
     export interface SimulatorInfraredPacketMessage extends SimulatorBroadcastMessage {
         type: "irpacket";
         broadcast: true;

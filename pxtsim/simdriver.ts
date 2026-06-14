@@ -365,50 +365,84 @@ namespace pxsim {
         newJacdacSimulator: boolean = false;
         // END TEMPORARY: jacdac simulator
         public postMessage(msg: pxsim.SimulatorMessage, source?: Window, frameID?: string) {
+
             if (this.hwdbg) {
                 this.hwdbg.postMessage(msg)
                 return
             }
 
-            const depEditors = this.dependentEditors();
-            let frames = this.simFrames();
-
-            if (frameID) frames = frames.filter(f => f.id === frameID);
-
-            if (this._runOptions?.physicalSimulator) {
-                // make sure that frames are up-to-date
-                 const mkcdFrames = frames.filter(frame => !frame.dataset[FRAME_DATA_MESSAGE_CHANNEL]);
-                 mkcdFrames.forEach(frame => {
-                    if (frame.dataset['runid'] != this.runId)
-                        this.startFrame(frame);
-                 })
-                // in this mode, we do the following:
-                // 2. pass any broadcast message from the sim to the parent window
-                //    to allow integration with physical simulator, which will decide
-                //    which messages to pass back here (e.g., the radio)
-                // 3. receive and forward messages from parent window to the sim, which allows the physical simulator to 
-                //    send messages to the specificied sim iframe (or frames)
-                return;
-            }
-
-            let isDeferrableBroadcastMessage = false;
-            const broadcastmsg = msg as pxsim.SimulatorBroadcastMessage;
-            if (source && broadcastmsg?.broadcast) {
-                // include index of the source iframe
-                broadcastmsg.srcFrameIndex = this.simFrames().findIndex((item) => item.contentWindow === source)
-                // if the editor is hosted in a multi-editor setting
-                // don't start extra frames
-                const single = !!this._currentRuntime?.single;
+            const postToParent = (id: string | undefined) => {
                 const parentWindow = window.parent && window.parent !== window.window
                     ? window.parent : window.opener;
                 if (parentWindow) {
                     // if message comes from parent already, don't echo
                     if (source !== parentWindow) {
                         // posting sim messages to parent frame; no origin restriction.
-                        parentWindow.postMessage(msg, "*");
+                        if (this._runOptions?.physicalSimulator &&
+                            (msg.type === "radiopacket" || msg.type === "screenshot")
+                        ) {
+                            const tunnel = {
+                                type: "tunnel",
+                                source: id,
+                                payload: msg
+                            }
+                            parentWindow.postMessage(tunnel, "*");
+                        } else
+                            parentWindow.postMessage(msg, "*");
                     }
                 }
+            }
+
+            const updateFrames = () => {
+                const mkcdFrames = this.simFrames().filter(frame => !frame.dataset[FRAME_DATA_MESSAGE_CHANNEL]);
+                mkcdFrames.forEach(frame => {
+                    if (frame.dataset['runid'] != this.runId)
+                        this.startFrame(frame);
+                })
+            }
+
+            let isDeferrableBroadcastMessage = false;
+            const sendMessagesDown = (frames: HTMLIFrameElement[]) => {
+                for (let i = 0; i < frames.length; ++i) {
+                    const frame = frames[i] as HTMLIFrameElement
+                    // same frame as source
+                    if (source && frame.contentWindow == source) continue;
+                    // frame not in DOM
+                    if (!frame.contentWindow) continue;
+
+                    // finally, send the message
+                    if (isDeferrableBroadcastMessage) {
+                        this.postDeferrableMessage(frame, msg);
+                    } else {
+                        this.postMessageCore(frame, msg);
+                    }
+
+                    // don't start more than 1 recorder
+                    if (msg.type == 'recorder'
+                        && (<pxsim.SimulatorRecorderMessage>msg).action == "start")
+                        break;
+                }
+            }
+
+            let frames = this.simFrames();
+            if (frameID) frames = frames.filter(f => f.id === frameID);
+
+            const broadcastmsg = msg as pxsim.SimulatorBroadcastMessage;
+            if (source && broadcastmsg?.broadcast) {
+                // include index of the source iframe
+                const index = this.simFrames().findIndex((item) => item.contentWindow === source)
+                broadcastmsg.srcFrameIndex = index
+
+                postToParent(index > 0 ? this.simFrames()[index].id : undefined)
+                if (this._runOptions?.physicalSimulator) {
+                    updateFrames();
+                    sendMessagesDown(frames)
+                    return
+                }
+                const single = !!this._currentRuntime?.single;
+                // if the editor is hosted in a multi-editor setting don't start extra frames
                 if (!this.options.nestedEditorSim && !broadcastmsg?.toParentIFrameOnly) {
+                    const depEditors = this.dependentEditors();
                     // send message to other editors
                     if (depEditors) {
                         depEditors.forEach(w => {
@@ -493,8 +527,8 @@ namespace pxsim {
                                 // extension, we don't want a second simulator to be created. 
                                 this.container.appendChild(this.createFrame());
                                 frames = this.simFrames();
-                                // there might be an old frame
                             } else if (mkcdFrames.length == 2 && mkcdFrames[1].dataset['runid'] != this.runId) {
+                                // there might be an old frame
                                 this.startFrame(mkcdFrames[1]);
                             }
                         }
@@ -504,25 +538,7 @@ namespace pxsim {
 
             // now that we have iframe starts,
             // dispatch message to other frames
-            for (let i = 0; i < frames.length; ++i) {
-                const frame = frames[i] as HTMLIFrameElement
-                // same frame as source
-                if (source && frame.contentWindow == source) continue;
-                // frame not in DOM
-                if (!frame.contentWindow) continue;
-
-                // finally, send the message
-                if (isDeferrableBroadcastMessage) {
-                    this.postDeferrableMessage(frame, msg);
-                } else {
-                    this.postMessageCore(frame, msg);
-                }
-
-                // don't start more than 1 recorder
-                if (msg.type == 'recorder'
-                    && (<pxsim.SimulatorRecorderMessage>msg).action == "start")
-                    break;
-            }
+            sendMessagesDown(frames)
         }
 
         protected deferredMessages: [HTMLIFrameElement, SimulatorMessage][];
@@ -968,6 +984,17 @@ namespace pxsim {
                 case 'debugger': this.handleDebuggerMessage(msg as DebuggerMessage); break;
                 case 'toplevelcodefinished': if (this.options.onTopLevelCodeEnd) this.options.onTopLevelCodeEnd(); break;
                 case 'setmutebuttonstate': this.options.onMuteButtonStateChange?.((msg as SetMuteButtonStateMessage).state); break;
+                case 'radiopacket': {
+                    if (this._runOptions?.physicalSimulator) {
+                        const frameid = source?.location.hash.slice(1)
+                        const tunnelMsg = {
+                            type: "tunnel",
+                            source: frameid,
+                            payload: msg as pxsim.SimulatorRadioPacketMessage
+                        }
+                    }
+                    // send up and out
+                }
                 default:
                     this.postMessage(msg, source);
                     break;
