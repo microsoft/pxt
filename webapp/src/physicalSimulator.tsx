@@ -199,6 +199,7 @@ export class PhysicalSimulator extends srceditor.Editor {
         this.boards.forEach((board, index) => {
             if (index < sims.length) {
                 board.simulatorId = sims[index];
+                // update
                 return;
             } else {
                 board.simulatorId = simulator.driver.addSimulator()

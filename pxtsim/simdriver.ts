@@ -361,6 +361,13 @@ namespace pxsim {
             return newFrame.id
         }
 
+        public updateSimulators() {
+            const mkcdFrames = this.simFrames().filter(frame => !frame.dataset[FRAME_DATA_MESSAGE_CHANNEL]);
+            mkcdFrames.forEach((frame,index) => {
+                if (index > 0 && frame.dataset['runid'] != this.runId)
+                    this.startFrame(frame);
+            })
+        }
         // BEGIN TEMPORARY: jacdac simulator
         newJacdacSimulator: boolean = false;
         // END TEMPORARY: jacdac simulator
@@ -391,14 +398,6 @@ namespace pxsim {
                             parentWindow.postMessage(msg, "*");
                     }
                 }
-            }
-
-            const updateFrames = () => {
-                const mkcdFrames = this.simFrames().filter(frame => !frame.dataset[FRAME_DATA_MESSAGE_CHANNEL]);
-                mkcdFrames.forEach(frame => {
-                    if (frame.dataset['runid'] != this.runId)
-                        this.startFrame(frame);
-                })
             }
 
             let isDeferrableBroadcastMessage = false;
@@ -435,7 +434,7 @@ namespace pxsim {
 
                 postToParent(index > 0 ? this.simFrames()[index].id : undefined)
                 if (this._runOptions?.physicalSimulator) {
-                    updateFrames();
+                    this.updateSimulators();
                     sendMessagesDown(frames)
                     return
                 }
@@ -882,6 +881,7 @@ namespace pxsim {
                 frame = wrapper.firstElementChild as HTMLIFrameElement;
             }
             this.startFrame(frame);
+            this.updateSimulators()
 
             this.debuggingFrame = frame.id;
 
