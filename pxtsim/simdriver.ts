@@ -369,36 +369,30 @@ namespace pxsim {
                     this.startFrame(frame);
             })
         }
-        // BEGIN TEMPORARY: jacdac simulator
-        newJacdacSimulator: boolean = false;
-        // END TEMPORARY: jacdac simulator
+
+        public screenshot(frameId: string) {
+            const frame = this.simFrames().find(frame => frame.id === frameId)
+            if (frame)
+                this.postMessageCore(frame, { type: "screenshot" })
+        }
+
+        private postToParent(source: Window | undefined, msg: pxsim.SimulatorMessage) {
+            const parentWindow = window.parent  // && window.parent !== window.window (TODO)
+                ? window.parent : window.opener;
+            if (parentWindow) {
+                // if message comes from parent already, don't echo
+                if (source !== parentWindow) {
+                    // posting sim messages to parent frame; no origin restriction.
+                    parentWindow.postMessage(msg, "*");
+                }
+            }
+        }
+
         public postMessage(msg: pxsim.SimulatorMessage, source?: Window, frameID?: string) {
 
             if (this.hwdbg) {
                 this.hwdbg.postMessage(msg)
                 return
-            }
-
-            const postToParent = (id: string | undefined) => {
-                const parentWindow = window.parent && window.parent !== window.window
-                    ? window.parent : window.opener;
-                if (parentWindow) {
-                    // if message comes from parent already, don't echo
-                    if (source !== parentWindow) {
-                        // posting sim messages to parent frame; no origin restriction.
-                        if (this._runOptions?.physicalSimulator &&
-                            (msg.type === "radiopacket" || msg.type === "screenshot")
-                        ) {
-                            const tunnel = {
-                                type: "tunnel",
-                                source: id,
-                                payload: msg
-                            }
-                            parentWindow.postMessage(tunnel, "*");
-                        } else
-                            parentWindow.postMessage(msg, "*");
-                    }
-                }
             }
 
             let isDeferrableBroadcastMessage = false;
@@ -433,7 +427,7 @@ namespace pxsim {
                 const index = this.simFrames().findIndex((item) => item.contentWindow === source)
                 broadcastmsg.srcFrameIndex = index
 
-                postToParent(index > 0 ? this.simFrames()[index].id : undefined)
+                this.postToParent(source, msg)
                 if (this._runOptions?.physicalSimulator) {
                     this.updateSimulators();
                     sendMessagesDown(frames)
@@ -478,10 +472,6 @@ namespace pxsim {
                         if (simulatorExtension) {
                             // find a frame already running that simulator
                             let messageFrame = frames.find(frame => frame.dataset[FRAME_DATA_MESSAGE_CHANNEL] === messageChannel);
-                            // BEGIN TEMPORARY: jacdac simulator
-                            if (messageChannel === "jacdac/pxt-jacdac")
-                                this.newJacdacSimulator = true;
-                            // END TEMPORARY: jacdac simulator
                             // not found, spin a new one
                             if (!messageFrame) {
                                 const url = new URL(simulatorExtension.url);
@@ -502,13 +492,11 @@ namespace pxsim {
                             let messageFrame = frames.find(frame => frame.dataset[FRAME_DATA_MESSAGE_CHANNEL] === messageChannel);
                             // not found, spin a new one
                             if (!messageFrame) {
-                                if (messageChannel !== "jacdac" || !this.newJacdacSimulator) { // TEMPORARY: jacdac simulator
-                                    const useLocalHost = U.isLocalHost() && /localhostmessagesims=1/i.test(window.location.href)
-                                    const url = ((useLocalHost && messageSimulator.localHostUrl) || messageSimulator.url)
-                                        .replace("$PARENT_ORIGIN$", encodeURIComponent(this.options.parentOrigin || ""))
-                                        .replace("$LANGUAGE$", encodeURIComponent(this.options.userLanguage))
-                                    startSimulatorExtension(url, messageSimulator.permanent, messageSimulator.aspectRatio);
-                                }
+                                const useLocalHost = U.isLocalHost() && /localhostmessagesims=1/i.test(window.location.href)
+                                const url = ((useLocalHost && messageSimulator.localHostUrl) || messageSimulator.url)
+                                    .replace("$PARENT_ORIGIN$", encodeURIComponent(this.options.parentOrigin || ""))
+                                    .replace("$LANGUAGE$", encodeURIComponent(this.options.userLanguage))
+                                startSimulatorExtension(url, messageSimulator.permanent, messageSimulator.aspectRatio);
                             }
                             // not running the current run, restart
                             else if (messageFrame.dataset['runid'] != this.runId) {
@@ -976,7 +964,8 @@ namespace pxsim {
                             source: frameid,
                             payload: msg as pxsim.SimulatorScreenshotMessage
                         }
-                        this.postMessage(tunnelMsg, source);
+                        // only send up
+                        this.postToParent(undefined, tunnelMsg);
                         return
                     }
                 case 'custom':
@@ -1004,7 +993,7 @@ namespace pxsim {
                             source: frameid,
                             payload: msg as pxsim.SimulatorRadioPacketMessage
                         }
-                        this.postMessage(tunnelMsg, source);
+                        this.postToParent(undefined, tunnelMsg);
                         return
                     }
                 }

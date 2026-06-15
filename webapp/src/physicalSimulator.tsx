@@ -304,10 +304,7 @@ export class PhysicalSimulator extends srceditor.Editor {
                 ctx.textAlign = "center";
                 ctx.textBaseline = "middle";
                 ctx.fillText(board.name, board.x + squareSize / 2, board.y + squareSize / 2);
-                simulator.driver.postMessage(
-                    { type: "screenshot",
-                    } as pxsim.SimulatorScreenshotMessage,
-                    undefined, board.simulatorId)
+                simulator.driver?.screenshot(board.simulatorId)
             }
         });
     }
