@@ -121,7 +121,7 @@ export async function webUsbPairThemedDialogAsync(pairAsync: () => Promise<boole
         await showConnectionSuccessAsync(confirmAsync, implicitlyCalled);
     }
     else {
-        const tryAgain = await showConnectionFailureAsync(confirmAsync, implicitlyCalled, lastPairingError);
+        const tryAgain = await showConnectionFailureAsync(confirmAsync, true, lastPairingError);
 
         if (tryAgain) return webUsbPairThemedDialogAsync(pairAsync, confirmAsync, implicitlyCalled);
     }
