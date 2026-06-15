@@ -60,7 +60,7 @@ export class CommentIcon extends Blockly.icons.Icon implements Blockly.IHasBubbl
     }
 
     protected override getAriaLabel(): string | null {
-        return lf("Open comment");
+        return Blockly.Msg.ICON_LABEL_COMMENT_CLOSED;
     }
 
     override initView(pointerdownListener: (e: PointerEvent) => void): void {
