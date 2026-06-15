@@ -9,7 +9,7 @@ import { DRAGGABLE_PARAM_INPUT_PREFIX, getBlocklyCheckForType, setVarFieldValue 
 import { UpdateBeforeRenderMixin } from "./plugins/renderer";
 import { FieldImageNoText } from "./fields/field_imagenotext";
 import { setDuplicateOnDrag } from "./plugins/duplicateOnDrag";
-import { maybeFocusMutatorButton } from "./utils";
+import { maybeMoveFocusFromButton } from "./utils";
 
 export interface ComposableMutation {
     // Set to save mutations. Should return an XML element
@@ -69,7 +69,7 @@ export function initVariableArgsBlock(b: Blockly.Block, handlerArgs: pxt.blocks.
         if (currentlyVisible >= handlerArgs.length) {
             i.removeField("_HANDLER_ADD");
             if (userTriggered) {
-                maybeFocusMutatorButton(fieldToFocus);
+                maybeMoveFocusFromButton(fieldToFocus);
             }
         }
         else if (actuallyVisible >= handlerArgs.length) {
@@ -269,7 +269,7 @@ export function initExpandableBlock(info: pxtc.BlocksInfo, b: Blockly.Block, def
                     if (buttonToFocus.fieldRow.length > 1) {
                         field = delta < 0 ? field : buttonToFocus.fieldRow[1];
                     }
-                    maybeFocusMutatorButton(field);
+                    maybeMoveFocusFromButton(field);
                     buttonToFocus = null;
                 }
             });
@@ -503,7 +503,7 @@ export function initVariableReporterArgs(b: Blockly.Block, handlerArgs: pxt.bloc
         setTimeout(() => {
             populateArguments();
             if (userTriggered && handlerArgs.length === state.getNumber(numVisibleAttr)) {
-                maybeFocusMutatorButton(inputToFocus.connection?.targetBlock() as Blockly.BlockSvg)
+                maybeMoveFocusFromButton(inputToFocus.connection?.targetBlock() as Blockly.BlockSvg)
             }
         }, 0);
     }
