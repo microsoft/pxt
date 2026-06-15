@@ -31,6 +31,7 @@ import * as simulator from "./simulator";
 class BoardSprite {
     private _name: string = "";
     private _simulatorId: string | undefined;
+    private _image: ImageData | undefined = undefined
     constructor(public id: number, public x: number, public y: number) {
 
     }
@@ -40,6 +41,12 @@ class BoardSprite {
     }
     get name() {
         return this._name;
+    }
+    set image(i: ImageData) {
+        this._image = i;
+    }
+    get image(): ImageData | undefined {
+        return this._image;
     }
     set simulatorId(id: string | undefined) {
         this._simulatorId = id;
@@ -62,7 +69,6 @@ export class PhysicalSimulator extends srceditor.Editor {
     draggingBoard: BoardSprite | undefined;
     dragOffsetX = 0;
     dragOffsetY = 0;
-    boardImgCached: HTMLImageElement | undefined;
 
     getId() {
         return "physicalSimulator"
@@ -90,6 +96,8 @@ export class PhysicalSimulator extends srceditor.Editor {
         this.isVisible = b;
         if (b) {
             this.recreateSimulators();
+        } else {
+            console.log(`PSIM: Visible = false`)
         }
         this.domUpdate();
     }
@@ -149,28 +157,27 @@ export class PhysicalSimulator extends srceditor.Editor {
 
         smsg.receivedTime = smsg.receivedTime || Util.now();
 
-        this.processMessage(smsg);
+        // TODO
     }
 
-    processMessage(smsg: pxsim.SimulatorSerialMessage) {
-        const sim = !!smsg.sim
-
-    }
-
-    clearNode(e: HTMLElement) {
-
-    }
-
-    clear() {
-        //pxt.BrowserUtils.addClass(this.serialRoot, "hide-view-latest");
-
-        // If the editor is currently visible, leave these as is to leave toggle state.
-        if (!this.isVisible) {
-            // if (this.serialRoot) {
-                // pxt.BrowserUtils.addClass(this.serialRoot, "no-toggle")
-            // }
+    processMessage(msg: pxsim.SimulatorTunnelMessage) {
+        if (!this.isVisible) return;
+        switch(msg.payload.type) {
+            case "radiopacket":
+                // 1. some sort of animation to show send of message 
+                // 2. determine which sim sprites "hear" the message
+                // 3. post to each of the associated sim
+                break
+            case "screenshot":
+                const scrMsg = msg.payload as pxsim.SimulatorScreenshotMessage
+                const simSprite = this.boards.find(board => board.simulatorId === msg.source)
+                if (simSprite) simSprite.image = scrMsg.data
+                this.domUpdate()
+                break
         }
     }
+
+    clear() { }
 
     goBack() {
         pxt.tickEvent("serial.backButton", undefined, { interactiveConsent: true })
@@ -281,16 +288,27 @@ export class PhysicalSimulator extends srceditor.Editor {
         // Draw each board
         const squareSize = 40;
         this.boards.forEach((board) => {
-            // Draw black square
-            ctx.fillStyle = "#000000";
-            ctx.fillRect(board.x, board.y, squareSize, squareSize);
+            if (board.image) {
+                // ctx.drawImage()
+                const boardWidth = 40
+                const boardHeight = 40 * (board.image.height / board.image.width)
+                ctx.putImageData(board.image, board.x, board.y, 0, 0, boardWidth, boardHeight)
+            } else {
+                // Draw black square
+                ctx.fillStyle = "#000000";
+                ctx.fillRect(board.x, board.y, squareSize, squareSize);
 
-            // Draw label text
-            ctx.fillStyle = "#FFFFFF";
-            ctx.font = "12px Arial";
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            ctx.fillText(board.name, board.x + squareSize / 2, board.y + squareSize / 2);
+                // Draw label text
+                ctx.fillStyle = "#FFFFFF";
+                ctx.font = "12px Arial";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText(board.name, board.x + squareSize / 2, board.y + squareSize / 2);
+                simulator.driver.postMessage(
+                    { type: "screenshot",
+                    } as pxsim.SimulatorScreenshotMessage,
+                    undefined, board.simulatorId)
+            }
         });
     }
 

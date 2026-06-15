@@ -314,10 +314,10 @@ export class ProjectView
             } else if (msg.type === "action") {
                 const { action } = msg as pxsim.SimulatorActionMessage;
                 this.runGlobalAction(action);
-            } else {
-                // what else do we want to handle here?
-                // TBALL
-                console.log(`unhandled message from sim: ${msg.type}`)
+            } else if (msg.type === "tunnel") {
+                const tunnelMsg = msg as pxsim.SimulatorTunnelMessage
+                console.log(`Tunnel from ${tunnelMsg.source}: ${tunnelMsg.payload.type}`)
+                this.physicalSimulatorEditor.processMessage(tunnelMsg)
             }
         }, false);
     }

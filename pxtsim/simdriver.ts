@@ -338,7 +338,8 @@ namespace pxsim {
         }
 
         public getFrameIds(): string[] {
-            return this.simFrames().map(f => f.id);
+            const mkcdFrames = this.simFrames().filter(frame => !frame.dataset[FRAME_DATA_MESSAGE_CHANNEL]);
+            return mkcdFrames.map(f => f.id);
         }
 
         private getSimUrl(): URL {
@@ -967,6 +968,17 @@ namespace pxsim {
                 case 'serial':
                 case 'pxteditor':
                 case 'screenshot':
+                    // in case of physical simulator, wrap and send out
+                    if (this._runOptions?.physicalSimulator) {
+                        const frameid = source?.location.hash.slice(1)
+                        const tunnelMsg = {
+                            type: "tunnel",
+                            source: frameid,
+                            payload: msg as pxsim.SimulatorScreenshotMessage
+                        }
+                        this.postMessage(tunnelMsg, source);
+                        return
+                    }
                 case 'custom':
                 case 'recorder':
                 case 'addextensions':
@@ -992,8 +1004,9 @@ namespace pxsim {
                             source: frameid,
                             payload: msg as pxsim.SimulatorRadioPacketMessage
                         }
+                        this.postMessage(tunnelMsg, source);
+                        return
                     }
-                    // send up and out
                 }
                 default:
                     this.postMessage(msg, source);
