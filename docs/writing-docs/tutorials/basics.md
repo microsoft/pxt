@@ -289,7 +289,7 @@ The `BlocksExistValidator` also has an `Enabled` property that determines whethe
 ```
 ````
 
-**Enable the `BlocksExistValidator` globally and ignore highlighted blocks**  
+**Enable the `BlocksExistValidator` globally and ignore highlighted blocks**
 _Note: highlight is not specified in the markers property._
 ````
 ```validation.global
@@ -306,7 +306,7 @@ _Note: highlight is not specified in the markers property._
 ```
 ````
 ## Accordion/hidden hints
-If you want to provide extra information without having to divert the coder's attention, you can include content in an "accordion" style hint control. 
+If you want to provide extra information without having to divert the coder's attention, you can include content in an "accordion" style hint control.
 
 ### ~ hint
 If you want your hint to display by default when a step is encountered see [Explicit Hints](/writing-docs/tutorials/control-options#explicit-hints).
@@ -383,3 +383,55 @@ If your tutorial requires the use of an extension, you can add it using the [pac
 microturtle=github:microsoft/pxt-microturtle
 ```
 ````
+
+These dependencies will be merged into the dependencies of the default project (i.e. the project you get when you click "New Project" on the home page).
+
+For example, in pxt-microbit the default project's dependencies look like this:
+
+```json
+{
+    "dependencies": {
+        "core": "*",
+        "radio": "*",
+        "microphone": "*"
+    }
+}
+```
+
+With the above package annotation, the dependencies would be updated to include and entry for `microturtle` like so:
+
+```json
+{
+    "dependencies": {
+        "core": "*",
+        "radio": "*",
+        "microphone": "*",
+        "microturtle": "microsoft/pxt-microturtle"
+    }
+}
+```
+
+If your tutorial needs to remove one of the default dependencies from the project, you can do so by placing the word "remove" after the equals sign.
+
+For example, the `bluetooth` extension in pxt-microbit is not compatible with the default `radio` extension. If we wanted to author a `bluetooth` tutorial, we would need to remove the `radio` extension like so:
+
+````
+```package
+bluetooth
+radio=remove
+```
+````
+
+which would result in:
+
+```json
+{
+    "dependencies": {
+        "core": "*",
+        "microphone": "*",
+        "bluetooth": "*"
+    }
+}
+```
+
+In general, it's better not to remove any dependencies from the project unless absolutely required!
