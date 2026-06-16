@@ -56,6 +56,8 @@ class BoardSprite {
     }
 }
 
+const boardWidth = 50
+const boardHeight = 40
 export class PhysicalSimulator extends srceditor.Editor {
     isVisible = false;
     active: boolean = true
@@ -171,7 +173,8 @@ export class PhysicalSimulator extends srceditor.Editor {
             case "screenshot":
                 const scrMsg = msg.payload as pxsim.SimulatorScreenshotMessage
                 const simSprite = this.boards.find(board => board.simulatorId === msg.source)
-                if (simSprite) simSprite.image = scrMsg.data
+                const scale = boardWidth / scrMsg.data.width
+                if (simSprite) simSprite.image = this.resizeImageData(scrMsg.data, scale) 
                 this.domUpdate()
                 break
         }
@@ -206,7 +209,7 @@ export class PhysicalSimulator extends srceditor.Editor {
         this.boards.forEach((board, index) => {
             if (index < sims.length) {
                 board.simulatorId = sims[index];
-                // update
+                simulator.driver?.screenshot(board.simulatorId)
                 return;
             } else {
                 board.simulatorId = simulator.driver.addSimulator()
@@ -218,6 +221,7 @@ export class PhysicalSimulator extends srceditor.Editor {
         pxt.tickEvent("serial.newBoardButton", undefined, { interactiveConsent: true })
         const sprite = this.addSprite();
         sprite.simulatorId = simulator.driver.addSimulator();
+        simulator.driver?.screenshot(sprite.simulatorId)
     }
 
     clearSprites() {
@@ -270,6 +274,29 @@ export class PhysicalSimulator extends srceditor.Editor {
         this.drawBoards();
     }
 
+    private resizeImageData(imageData: ImageData, scale: number) {
+        // Create source canvas
+        const srcCanvas = document.createElement('canvas');
+        srcCanvas.width = imageData.width;
+        srcCanvas.height = imageData.height;
+        const srcCtx = srcCanvas.getContext('2d');
+        srcCtx.putImageData(imageData, 0, 0);
+
+        // Create destination canvas
+        const destCanvas = document.createElement('canvas');
+        const newWidth = destCanvas.width = imageData.width * scale;
+        const newHeight = destCanvas.height = imageData.height * scale;
+        const destCtx = destCanvas.getContext('2d');
+
+        destCtx.imageSmoothingEnabled = true
+
+        // Draw scaled image
+        destCtx.drawImage(srcCanvas, 0, 0, newWidth, newHeight);
+
+        // Return resized ImageData
+        return destCtx.getImageData(0, 0, newWidth, newHeight);
+    }
+
     drawBoards() {
         const canvas = document.getElementById("simulatorCanvas") as HTMLCanvasElement;
         if (!canvas) return;
@@ -285,25 +312,20 @@ export class PhysicalSimulator extends srceditor.Editor {
         ctx.fillStyle = "#228B22";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Draw each board
-        const squareSize = 40;
         this.boards.forEach((board) => {
             if (board.image) {
-                // ctx.drawImage()
-                const boardWidth = 40
-                const boardHeight = 40 * (board.image.height / board.image.width)
-                ctx.putImageData(board.image, board.x, board.y, 0, 0, boardWidth, boardHeight)
+                ctx.putImageData(board.image, board.x, board.y)
             } else {
                 // Draw black square
                 ctx.fillStyle = "#000000";
-                ctx.fillRect(board.x, board.y, squareSize, squareSize);
+                ctx.fillRect(board.x, board.y, boardWidth, boardHeight);
 
                 // Draw label text
                 ctx.fillStyle = "#FFFFFF";
                 ctx.font = "12px Arial";
                 ctx.textAlign = "center";
                 ctx.textBaseline = "middle";
-                ctx.fillText(board.name, board.x + squareSize / 2, board.y + squareSize / 2);
+                ctx.fillText(board.name, board.x + boardWidth / 2, board.y + boardHeight / 2);
                 simulator.driver?.screenshot(board.simulatorId)
             }
         });
@@ -347,13 +369,13 @@ export class PhysicalSimulator extends srceditor.Editor {
         ev.preventDefault();
     }
 
+
     private onCanvasMouseMove(ev: React.MouseEvent<HTMLCanvasElement, MouseEvent>) {
         if (!this.draggingBoard) return;
         const pos = this.getCanvasMousePosition(ev);
         const canvas = ev.currentTarget;
-        const squareSize = 40;
-        const maxX = canvas.width - squareSize;
-        const maxY = canvas.height - squareSize;
+        const maxX = canvas.width - boardWidth;
+        const maxY = canvas.height - boardHeight;
 
         this.draggingBoard.x = Math.max(0, Math.min(maxX, pos.x - this.dragOffsetX));
         this.draggingBoard.y = Math.max(0, Math.min(maxY, pos.y - this.dragOffsetY));
