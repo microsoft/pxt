@@ -2003,10 +2003,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     public onToolboxBlur(e: React.FocusEvent, hasSearch: boolean): void {
         const searchInputFocused = e.relatedTarget === (this.toolbox.refs.searchbox as toolbox.ToolboxSearch).refs.searchInput;
         const flyoutFocused = e.relatedTarget === this.flyout.refs.flyout || (this.flyout.refs.flyout as HTMLElement).contains(e.relatedTarget);
-        if (((searchInputFocused && !hasSearch) || !searchInputFocused) && !flyoutFocused) {
+        const tree = this.toolbox.refs.categoryTree as HTMLElement;
+        const treeFocused = !!tree && (e.relatedTarget === tree || tree.contains(e.relatedTarget as Node));
+        if (((searchInputFocused && !hasSearch) || !searchInputFocused) && !flyoutFocused && !treeFocused) {
             this.hideFlyout();
         }
-        if (!flyoutFocused) {
+        if (!flyoutFocused && !treeFocused) {
             this.toolbox.clear();
             this.toolbox.clearExpandedItem();
         }
