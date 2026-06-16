@@ -1,7 +1,7 @@
 import * as Blockly from "blockly";
 import { InlineSvgsExtensionBlock } from "../functions";
 import { FieldImageNoText } from "../../fields/field_imagenotext";
-import { maybeFocusMutatorButton } from "../../utils";
+import { maybeMoveFocusFromButton } from "../../utils";
 
 type TextJoinMixinType = typeof TEXT_JOIN_MUTATOR_MIXIN;
 
@@ -108,7 +108,7 @@ const TEXT_JOIN_MUTATOR_MIXIN = {
                     if (this.buttons.fieldRow.length > 1) {
                         field = this.delta < 0 ? field : this.buttons.fieldRow[1];
                     }
-                    maybeFocusMutatorButton(field);
+                    maybeMoveFocusFromButton(field);
                     this.buttons = null;
                     this.delta = 0;
                 }

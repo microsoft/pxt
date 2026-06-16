@@ -7,7 +7,7 @@ import { FieldProcedure } from "../fields";
 import { cachedBlockInfo, setOutputCheck } from "../loader";
 import { domToWorkspaceNoEvents } from "../importer";
 import { FieldImageNoText } from "../fields/field_imagenotext";
-import { maybeFocusMutatorButton } from "../utils";
+import { maybeMoveFocusFromButton } from "../utils";
 
 export function initFunctions() {
     const msg = Blockly.Msg;
@@ -356,7 +356,7 @@ function initReturnStatement(b: Blockly.Block) {
         b.setInputsInline(true);
 
         if (userTriggered) {
-            maybeFocusMutatorButton(buttonToFocus?.fieldRow[0]);
+            maybeMoveFocusFromButton(buttonToFocus?.fieldRow[0]);
         }
     }
 
