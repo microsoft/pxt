@@ -23,9 +23,6 @@ const KeyboardControlsHelp = () => {
             <table>
                 <tbody>
                     <Row name={lf("Show/hide shortcut help")} shortcuts={[LIST_SHORTCUTS_SHORTCUT]} />
-                    <Row name={lf("Screen reader mode")} shortcuts={[names.TOGGLE_SCREENREADER]}>
-                        <p className="hint">{lf("Additional audio cues and navigation aids for screen reader users")}</p>
-                    </Row>
                     <Row name={lf("Move between menus, simulator and the workspace")} shortcuts={[[lf("{id:keyboard symbol}Tab")], [lf("{id:keyboard symbol}Shift"), lf("{id:keyboard symbol}Tab")]]} joiner="row"/>
                     <Row name={lf("Area menu")} shortcuts={[[cmd, "B"]]}>
                         <p className="hint">{lf("Then press an area's number, or Tab to it and press Enter")}</p>
@@ -47,6 +44,9 @@ const KeyboardControlsHelp = () => {
                     <Row name={lf("Toolbox")} shortcuts={[names.FOCUS_TOOLBOX]} />
                     {pxt.appTarget.simulator &&
                         <Row name={lf("Start or stop simulator")} shortcuts={[["S"]]} />}
+                    <Row name={lf("Screen reader mode")} shortcuts={[names.TOGGLE_SCREENREADER]}>
+                        <p className="hint">{lf("Additional audio cues and navigation aids for screen reader users")}</p>
+                    </Row>
                 </tbody>
             </table>
             <h3>{lf("Toolbox")}</h3>
