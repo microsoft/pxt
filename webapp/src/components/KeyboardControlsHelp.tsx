@@ -1,6 +1,6 @@
 import * as React from "react";
 import * as Blockly from "blockly";
-import { getShortcutKeysShortAll, LIST_SHORTCUTS_SHORTCUT } from "../shortcut_formatting";
+import { CONTROL_KEY_SHORT, getShortcutKeysShortAll, LIST_SHORTCUTS_SHORTCUT } from "../shortcut_formatting";
 
 const names = Blockly.ShortcutItems.names;
 const isMacPlatform = pxt.BrowserUtils.isMac();
@@ -10,10 +10,12 @@ const KeyboardControlsHelp = () => {
     React.useEffect(() => {
         ref.current?.focus()
     }, []);
-    const ctrl = lf("{id:keyboard symbol}Ctrl");
+    const ctrl = CONTROL_KEY_SHORT;
     const cmd = isMacPlatform ? "⌘" : ctrl;
     const orAsJoiner = lf("or")
     const enterOrSpace = { shortcuts: getShortcutKeysShortAll(names.PERFORM_ACTION), joiner: orAsJoiner}
+    // Split around {0} so the modifier renders as a <Key> (for its aria-label).
+    const moveAnywhere = lf("Hold {0} and press arrow keys").split("{0}");
     return (
         <aside id="keyboardnavhelp" aria-label={lf("Keyboard Controls")} ref={ref} tabIndex={0}>
             <h2>{lf("Keyboard Controls")}</h2>
@@ -37,7 +39,7 @@ const KeyboardControlsHelp = () => {
                     <Row name={lf("Next block stack")} shortcuts={[names.NEXT_STACK]} />
                     <Row name={lf("Previous block stack")} shortcuts={[names.PREVIOUS_STACK]} />
                     <Row name={lf("Select workspace")} shortcuts={[names.FOCUS_WORKSPACE]} />
-                    <Row name={lf("Open context menu")} shortcuts={[names.MENU]} />
+                    <Row name={lf("Context menu")} shortcuts={[names.MENU]} />
                     <Row name={lf("Format code")} shortcuts={[names.CLEANUP]} />
                     <Row name={lf("Undo / redo")} shortcuts={[names.UNDO, names.REDO]} joiner="/" />
                     {pxt.canDownload() &&
@@ -78,7 +80,7 @@ const KeyboardControlsHelp = () => {
                 <tbody>
                     <Row name={lf("Move to positions")} shortcuts={[names.NAVIGATE_UP, names.NAVIGATE_DOWN, names.NAVIGATE_LEFT, names.NAVIGATE_RIGHT]} />
                     <Row name={lf("Move anywhere")}>
-                        {lf("Hold {0} and press arrow keys", cmd)}
+                        {moveAnywhere[0]}<Key value={cmd} />{moveAnywhere[1]}
                     </Row>
                     <Row name={lf("Confirm")} {...enterOrSpace} />
                     <Row name={lf("Cancel")} shortcuts={[names.ABORT_MOVE]} />
@@ -175,6 +177,10 @@ const Key = ({ value }: { value: string }) => {
         }
         case "⌥": {
             aria = lf("Option");
+            break;
+        }
+        case CONTROL_KEY_SHORT: {
+            aria = lf("Control");
             break;
         }
     }
