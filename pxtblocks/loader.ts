@@ -784,7 +784,9 @@ export function setOutputCheck(block: Blockly.Block, retType: string, info: pxtc
 }
 
 function initComments() {
-    Blockly.Msg.WORKSPACE_COMMENT_DEFAULT_TEXT = '';
+    // Exposed to screen readers as placeholder text, but hidden from sighted users via
+    // the .blocklyCommentText::placeholder rule in blockly-core.less (no visual change).
+    Blockly.Msg.WORKSPACE_COMMENT_DEFAULT_TEXT = lf("Add a comment");
 }
 
 function initAccessibilityMessages() {
