@@ -123,6 +123,11 @@ export interface ToolboxState {
 
 const MONACO_EDITOR_NAME: string = "monaco";
 
+// Scoped to the editor so the blocks and Monaco toolboxes have unique ids.
+function getToolboxItemId(editorname: string, nameid: string, subns?: string): string {
+    return `${editorname}-${nameid}${subns ?? ""}`;
+}
+
 export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
     private rootElement: HTMLElement;
 
@@ -531,45 +536,11 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         this.props.parent.onToolboxBlur(e, this.state.hasSearch);
     }
 
-    handlePointerDownCapture = (e: React.PointerEvent) => {
-        e.preventDefault();
+    handlePointerDownCapture = () => {
         // A pointer tap focuses the tree, which would make handleCategoryTreeFocus
-        // auto-select the remembered category. On touch that focus event can arrive
-        // asynchronously after pointerup (and before the click), so keep focus
-        // handling disabled for the whole gesture until the final click.
+        // auto-select the remembered category, so keep focus handling disabled for
+        // the gesture; onCategoryClick (on the click) and handleKeyDown re-arm it.
         this.shouldHandleCategoryTreeFocus = false;
-        (this.refs.categoryTree as HTMLElement).focus();
-    }
-
-    handlePointerUp = (e: React.PointerEvent) => {
-        // On iOS Safari the *first* toolbox tap after Monaco's textarea has
-        // focus produces no synthesized mousedown/click. There's no clear cause
-        // (doesn't seem to be preventDefault, target element type, the manual
-        // focus call, or user-select) so we use pointerup for touch.
-        if (e.pointerType === "mouse" || this.props.editorname !== MONACO_EDITOR_NAME) return;
-
-        const target = e.target as HTMLElement;
-        const treeRow = target.closest(".blocklyTreeRow") as HTMLElement;
-        if (!treeRow) return;
-
-        const treeItem = treeRow.closest("[role='treeitem']") as HTMLElement;
-        if (!treeItem) return;
-
-        const id = treeItem.id;
-
-        // Handle the Advanced toggle button
-        if (id === "advanced") {
-            this.advancedClicked();
-            return;
-        }
-
-        for (const item of this.items) {
-            const itemId = item.subns ? item.nameid + item.subns : item.nameid;
-            if (itemId === id) {
-                this.onCategoryClick(item, this.items.indexOf(item));
-                return;
-            }
-        }
     }
 
     isRtl() {
@@ -578,6 +549,9 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
     }
 
     handleKeyDown(e: React.KeyboardEvent<HTMLElement>) {
+        // Keyboard use re-arms focus handling, which a touch gesture with no trailing
+        // click can leave disabled.
+        this.shouldHandleCategoryTreeFocus = true;
         // Take care to avoid default scroll behaviors and Blockly shortcuts running that overlap.
         const isRtl = Util.isUserLanguageRtl();
         const audioManager = (Blockly.getMainWorkspace() as Blockly.WorkspaceSvg)?.getAudioManager();
@@ -735,7 +709,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
                     <div
                         className="blocklyTreeInner"
                         // Required for certain Blockly code to run.
-                        id="toolbox-tree"
+                        id={`${editorname}-toolbox-tree`}
                         role="tree"
                         aria-label={lf("Toolbox")}
                         tabIndex={0}
@@ -745,8 +719,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
                         onKeyDown={this.handleKeyDown}
                         // Prevents focus handling from running on pointer down events.
                         onPointerDownCapture={this.handlePointerDownCapture}
-                        onPointerUp={this.handlePointerUp}
-                        aria-activedescendant={selectedItem}
+                        aria-activedescendant={selectedItem ? getToolboxItemId(editorname, selectedItem) : null}
                     >
                         {tryToDeleteNamespace &&
                             <DeleteConfirmationModal
@@ -759,6 +732,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
                             <CategoryItem
                                 key={"search"}
                                 ref="searchCategory"
+                                editorname={editorname}
                                 toolbox={this}
                                 index={index++}
                                 selectedIndex={this.selectedIndex}
@@ -772,6 +746,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
                             <CategoryItem
                                 toolbox={this}
                                 index={index++}
+                                editorname={editorname}
                                 selectedIndex={this.selectedIndex}
                                 selected={selectedItem == treeRow.nameid}
                                 treeRow={treeRow}
@@ -780,6 +755,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
                                 shouldAnimate={this.state.shouldAnimate}
                                 hasDeleteButton={treeRow.allowDelete}
                                 onDeleteClick={this.handleRemoveExtension}
+                                ariaHasPopup={treeRow.nameid === "addpackage" ? "dialog" : null}
                             >
                             </CategoryItem>
                             {treeRow.subcategories?.map(subTreeRow =>
@@ -787,6 +763,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
                                     key={subTreeRow.nameid + subTreeRow.subns}
                                     className={classList(expandedItem != treeRow.nameid && "sr-only")}
                                     index={index++}
+                                    editorname={editorname}
                                     selectedIndex={this.selectedIndex}
                                     toolbox={this}
                                     selected={selectedItem == (subTreeRow.nameid + subTreeRow.subns)}
@@ -813,6 +790,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
                                         subcategories: [],
                                     }}
                                     onCategoryClick={this.advancedClicked}
+                                    editorname={editorname}
                                     topRowIndex={topRowIndex++}
                                     ariaHidden={true}
                                 />
@@ -822,6 +800,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
                                             className={classList(!showAdvanced && "sr-only")}
                                             toolbox={this}
                                             index={index++}
+                                            editorname={editorname}
                                             selectedIndex={this.selectedIndex}
                                             selected={selectedItem == treeRow.nameid}
                                             treeRow={treeRow}
@@ -835,6 +814,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
                                                 className={classList(expandedItem != treeRow.nameid && "sr-only")}
                                                 toolbox={this}
                                                 index={index++}
+                                                editorname={editorname}
                                                 selectedIndex={this.selectedIndex}
                                                 selected={selectedItem == (subTreeRow.nameid + subTreeRow.subns)}
                                                 treeRow={subTreeRow}
@@ -855,6 +835,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
 
 export interface CategoryItemProps extends TreeRowProps {
     toolbox: Toolbox;
+    editorname: string;
     onCategoryClick?: (treeRow: ToolboxCategory, index: number, isClick?: boolean) => void;
     index?: number;
     selectedIndex?: number;
@@ -864,6 +845,7 @@ export interface CategoryItemProps extends TreeRowProps {
     ariaHidden?: boolean;
     ariaLabel?: string;
     ariaLevel?: number;
+    ariaHasPopup?: React.AriaAttributes["aria-haspopup"];
     isExpanded?: boolean;
     className?: string;
 }
@@ -918,7 +900,10 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
     }
 
     focusElement() {
-        this.treeRowElement.focus();
+        // preventScroll: a plain focus() scrolls ancestors to reveal the row, jerking
+        // the whole toolbox under the header; scrollElementIntoView below handles
+        // out-of-view rows.
+        this.treeRowElement.focus(true);
     }
 
     scrollElementIntoView(options: ScrollIntoViewOptions) {
@@ -942,13 +927,13 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
     }
 
     renderCore() {
-        const { className, toolbox, hasDeleteButton, treeRow, ariaHidden, ariaLabel, ariaLevel, isExpanded } = this.props;
+        const { className, toolbox, hasDeleteButton, treeRow, ariaHidden, ariaLabel, ariaLevel, ariaHasPopup, isExpanded, editorname } = this.props;
         const { selected } = this.state;
 
         const ariaExpanded = treeRow.subcategories ? isExpanded : undefined;
 
         return (
-            <TreeItem id={treeRow.nameid + (treeRow.subns ?? "")} className={className} selected={selected} ariaHidden={ariaHidden} ariaLabel={ariaLabel} ariaLevel={ariaLevel} ariaExpanded={ariaExpanded}>
+            <TreeItem id={getToolboxItemId(editorname, treeRow.nameid, treeRow.subns)} className={className} selected={selected} ariaHidden={ariaHidden} ariaLabel={ariaLabel} ariaLevel={ariaLevel} ariaExpanded={ariaExpanded} ariaHasPopup={ariaHasPopup}>
                 <TreeRow
                     ref={this.handleTreeRowRef}
                     isRtl={toolbox.isRtl()}
@@ -997,6 +982,7 @@ export interface TreeRowProps {
     shouldAnimate?: boolean;
     hasDeleteButton?: boolean;
     onDeleteClick?: (ns: string) => void;
+    editorname: string;
 }
 
 interface TreeRowPropsExtension extends React.CSSProperties {
@@ -1022,8 +1008,8 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
         this.handleDeleteClick = this.handleDeleteClick.bind(this);
     }
 
-    focus() {
-        if (this.treeRow) this.treeRow.focus();
+    focus(preventScroll = false) {
+        if (this.treeRow) this.treeRow.focus({ preventScroll });
     }
 
     scrollIntoView(options: ScrollIntoViewOptions) {
@@ -1059,7 +1045,7 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
     }
 
     renderCore() {
-        const { selected, onClick, onKeyDown, topRowIndex, hasDeleteButton } = this.props;
+        const { selected, onClick, onKeyDown, topRowIndex, hasDeleteButton, editorname } = this.props;
         const { nameid, advancedButtonState, subns, name, icon } = this.props.treeRow;
         const appTheme = pxt.appTarget.appTheme;
         const metaColor = this.getMetaColor();
@@ -1115,7 +1101,7 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
                     >
                         {iconContent}
                     </span>
-                    <span id={`${nameid + (subns ?? "")}.label`} className="blocklyTreeLabel">
+                    <span id={`${getToolboxItemId(editorname, nameid, subns)}.label`} className="blocklyTreeLabel">
                         {rowTitle}
                     </span>
                     {hasDeleteButton &&
@@ -1148,12 +1134,13 @@ export interface TreeItemProps {
     ariaLabel?: string
     ariaLevel: number;
     ariaExpanded: boolean | undefined;
+    ariaHasPopup?: React.AriaAttributes["aria-haspopup"];
     className?: string;
 }
 
 export class TreeItem extends data.Component<TreeItemProps, {}> {
     renderCore() {
-        const { className, selected, id, ariaHidden, ariaLabel, ariaLevel, ariaExpanded } = this.props;
+        const { className, selected, id, ariaHidden, ariaLabel, ariaLevel, ariaExpanded, ariaHasPopup } = this.props;
         return (
             <div
                 id={id}
@@ -1164,6 +1151,7 @@ export class TreeItem extends data.Component<TreeItemProps, {}> {
                 aria-level={ariaLevel}
                 aria-expanded={ariaExpanded}
                 aria-labelledby={!ariaLabel ? `${id}.label` : undefined}
+                aria-haspopup={ariaHasPopup}
                 className={classList(className)}
                 aria-hidden={ariaHidden}
             >

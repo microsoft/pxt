@@ -206,9 +206,11 @@
     }
 }
 
-.common-button.sound-effect-play-button:focus-visible {
-    outline: 3px solid var(--pxt-focus-border) !important;
-    outline-offset: 3px;
+.common-button.sound-effect-play-button {
+    &[aria-selected="true"], &:focus-visible {
+        outline: 3px solid var(--pxt-focus-border) !important;
+        outline-offset: 3px;
+    }
 }
 
 .sound-preview-baseline {
@@ -247,6 +249,9 @@
     min-height: 100%;
     display: flex;
     flex-direction: column;
+    &:focus, &:focus-visible {
+        outline: none;
+    }
 }
 
 .sound-gallery-scroller > .common-button {
@@ -279,6 +284,9 @@
     flex-grow: 1;
     margin-right: 0.5rem;
     padding: 0.3rem 0 0.3rem 0.5rem;
+    &[aria-selected="true"] {
+        outline: 3px solid var(--pxt-focus-border) !important;
+    }
 
     .sound-effect-name {
         font-size: 22px;
@@ -306,7 +314,7 @@
 }
 
 .hc {
-    .sound-gallery-item-label-inner:focus {
+    .sound-gallery-item-label-inner[aria-selected="true"] {
         outline: 3px solid @highContrastHighlightColor !important;
     }
 
@@ -315,7 +323,7 @@
             margin: 0 0 0 0.25rem;
             color: @highContrastTextColor;
         }
-        &:focus,:focus-visible {
+        &[aria-selected="true"] {
             outline: 3px solid var(--pxt-focus-border) !important;
             &:after {
                 border: none;
