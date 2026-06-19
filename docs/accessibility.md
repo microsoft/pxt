@@ -1,11 +1,9 @@
 # Accessibility
 
 Microsoft MakeCode includes some core features which promote greater accessibility for everyone. The menus and documentation are accessible with keyboard, assistive technology (including screen readers) and alternative themes, such as a high contrast color mode.  
-The JavaScript and Python editors are accessible using the keyboard and are accessible to screen readers.
+The JavaScript, Python, and Block editors are accessible using the keyboard and are accessible to screen readers.
 
-The MakeCode block editor is accessible with keyboard and assistive technologies when "Keyboard Controls" are turned on, but is not yet accessible to screen readers (screen reader compatibility is under development).
-
-Other MakeCode block editors including Arcade are not yet accessible, accessible coding is done using just the JavaScript or Python editors in these cases.
+Some MakeCode block editors including Arcade are not yet accessible. Accessible coding is done using just the JavaScript or Python editors in these cases.
 
 Here are the accessible features and how to enable and use them.
 
@@ -16,34 +14,32 @@ MakeCode includes features to assist in navigation when the keyboard is used as 
 >Navigation into menus, **JavaScript editor**, and **Python editor** are standardized .
 You can use the `Tab` key to jump between MakeCode controls. Use `Shift`+`Tab` to tab in reverse order. As you tab through the UI controls, you can see an indicator around the UI element once the element gains focus.
 
-## Blocks editor
+## Blocks editor keyboard controls
 
-The micro:bit MakeCode block editor allows you to use keyboard controls to create programs using blocks. Press `Tab` to reach 'Enable blocks keyboard controls' and press `Enter`. 
+The micro:bit MakeCode block editor allows you to use keyboard controls to create programs using blocks.
 
-![Enable blocks keyboard controls](static/images/accessibility/enable-blocks-keyboard.png)
-
-To turn the keyboard controls off, use `Tab` to navigate to the **Settings** menu, you will see a check next to **Keyboard Controls** when it is enabled, select **Keyboard Controls** to uncheck and disable keyboard controls. 
-
-![Settings menu select keyboard controls](/static/images/accessibility/settings-menu-keyboard.png)
+### Global
 
 These shortcuts are available in all areas of the editor:
 
 |Action | Windows | Mac |
 |-|-|-|
-| Show/hide embedded help | ``Ctrl``+`/` | `⌘`+`/` |
-| Open area menu | `Ctrl`+`B` | `⌘`+`B` |
+| Show/hide shortcut help | ``Ctrl``+`/` | `⌘`+`/` |
+| Screen reader mode (additional audio cues and navigation aids for screen reader users) | `Ctrl`+`Alt`+`Z` | `⌘`+`Alt`+`Z` |
+| Move between menus, simulator and the workspace | `Tab` or `Shift`+`Tab` | |
+| Area menu (then press an area's number, or `Tab` to it and press `Enter` )  | `Ctrl`+`B` | `⌘`+`B` |
 
-### Keyboard controls help
+#### Keyboard controls help
 
 Press `Control` + `/` on Windows or `⌘` + `/` on Mac to open or close the keyboard controls help.
 
 ![Keyboard controls](/static/images/accessibility/keyboard-controls.png)
 
-If you have enough space you can keep the embedded help open by navigating to the workspace. 
+If you have enough space you can keep the help open by navigating to the **Workspace**. 
 
-### Navigating between areas
+#### Navigating between areas
 
-`Tab` and `Shift`+`Tab` can be used to navigate the whole page.
+`Tab` and `Shift`+`Tab` can be used to navigate to, and within, areas outside the **Workspace**.
 
 Alternatively, use `Ctrl`+`B` followed by the number of the area you want to jump to.
 
@@ -52,62 +48,82 @@ Alternatively, use `Ctrl`+`B` followed by the number of the area you want to jum
 | Action | Windows | Mac |
 |-|-|-|
 | Top bar | `Ctrl`+`B` then `1` | `⌘`+`B` then `1` |
-| Simulator (micro:bit)| `Ctrl`+`B` then `2` | `⌘`+`B` then `2` |
+| Simulator | `Ctrl`+`B` then `2` | `⌘`+`B` then `2` |
 | Toolbox | `Ctrl`+`B` then `3` | `⌘`+`B` then `3` |
 | Workspace | `Ctrl`+`B` then `4` | `⌘`+`B` then `4` |
 | Bottom bar | `Ctrl`+`B` then `5` | `⌘`+`B` then `5` |
+
 <br/>
+
 The area numbers remain consistent when the layout changes, for example the simulator in the micro:bit MakeCode editor appears in the bottom right when the window is narrow or with high page zoom.
 
 When the area overlay is shown you can also use `Tab` and `Shift`+`Tab` to navigate to the next and previous area.
 
-### Workspace controls
-
-The following shortcuts are also available when you are already in the workspace:
+### Toolbox
 
 | Action | Windows | Mac |
-|-|-|-|
-| Open context menu | `Ctrl`+`Enter` | `⌘`+`Enter` |
-| Block and toolbox navigation | Arrow keys | Arrow keys |
-| Move in or along a block | `Left` and `right` arrow keys |`Left` and `right` arrow keys |
-| Edit or confirm | `Enter` or `Space` | `Enter` or `Space` |
-| Open toolbox | `T` | `T` |
-| Move block | `M` then arrow keys | `M` then arrow keys |
-| Drag block | `M` then `Ctrl` + arrow keys | `M` then `⌥` + arrow keys |
-| Format code | `F` | `F` |
-| Delete | `Delete` or `Backspace` | `Delete` or `Backspace` |
-| Disconnect block | `X` | `X` |
-| Select workspace | `W` | `W` |
-| Copy | `Ctrl`+`C` | `⌘`+`C` |
-| Paste | `Ctrl`+`V` | `⌘`+`V` |
-| Cut | `Ctrl`+`X` | `⌘`+`X` |
-| Undo | `Ctrl`+`Z` | `⌘`+`Z` |
-| Redo | `Ctrl`+`Y` or `Shift`+`Ctrl`+`Z` | `Shift`+`⌘`+`Z` |
-| Duplicate | D | D |
-| Navigate to next stack of blocks | N | N |
-| Navigate to previous stack of blocks | B | B |
+| - | - | - |
+| Move in and out of categories | `Left` and `Right` arrow keys | `Left` and `Right` arrow keys |
+| Navigate categories or blocks | `Up` and `Down` arrow keys | `Up` and `Down` arrow keys |
+| Insert block | `Enter` or `Space` | `Enter` or `Space` |
+| Next/Previous heading in blocks list | `H` or `Shift+H` | `H` or `Shift`+`H` |
 
-### Moving and Dragging blocks
+#### Search box
 
-Blocks added from the Toolbox are placed on the Workspace in move mode:
-
-![Move and dragging blocks](/static/images/accessibility/move-drag-blocks.png)
-
-Press `Enter` to confirm the position. Or use arrow keys to move the block to another position and then `Enter` to confirm. 
-
-Hold `Ctrl` and arrow keys to drag a block around the workspace (to any position not connected to existing blocks) and then `Enter` to confirm.
-
-### Search box
-
-The search box in the **Toolbox** can be useful for keyboard users. 
+The search box in the **Toolbox** can be useful for keyboard users.
 
 ![Toolbox search box](/static/images/accessibility/search-box.png)
 
-After pressing `T` (or `Ctrl`+`B` then `3`), just start typing and the text will appear in the search box. Matching search results are shown immediately. Press `Enter` to navigate to the search results. 
+After pressing `T` from the **Workspace** (or `Ctrl+B` then `3`), just start typing and the text will appear in the search box. Matching search results are shown immediately. Press `Enter` to navigate to the search results.
 
-## Pop-up help messages
+### Selected block
 
-Some actions display a helpful pop-up message at the bottom of the workspace.
+| Action | Windows | Mac |
+|-|-|-|
+| Move in and out of a block | `Left` and `right` arrow keys | `Left` and `right` arrow keys |
+| Edit or confirm | `Enter` or `Space` | `Enter` or `Space` |
+| Cancel or exit | `Escape` | `Escape` |
+| Move mode | `M` | `M` |
+| Move mode for a stack | `Shift`+`M` | `Shift`+`M` |
+| Copy | `Ctrl`+`C` | `⌘`+`C` |
+| Paste | `Ctrl`+`V` | `⌘`+`V` |
+| Cut | `Ctrl`+`X` | `⌘`+`X` |
+| Duplicate | `D` | `D` |
+| Disconnect block | `X` | `X` |
+| Delete | `Delete` or `Backspace` | `Delete` or `Backspace` |
+| Screen reader: More block information | `I` | `I` |
+| Screen reader: Container block information | `Shift`+`I` | `Shift`+`I` |
+
+</br>
+Some actions are also available from the context menu for a block by pressing the ≣ Menu key.
+
+
+### Move mode
+
+Keyboard controls in move mode:
+
+| Action | Windows | Mac |
+|-|-|-|
+| Move to positions | Arrow keys | Arrow keys |
+| Move anywhere | Hold `Ctrl` and press arrow keys | Hold `Ctrl` and press arrow keys |
+| Confirm | `Enter` or `Space` | `Enter` or `Space` |
+| Cancel | `Escape` | `Escape` |
+
+</br>
+
+Press `M` to put a single block into move mode or `Shift`+`M` to put a block stack into move mode.
+
+Blocks added from the **Toolbox** are placed on the **Workspace** in move mode:
+
+![Move and dragging blocks](/static/images/accessibility/move-drag-blocks.png)
+
+Press `Enter` to confirm the position OR use arrow keys to move the block to another position and then `Enter` to confirm.
+
+Hold `Ctrl` and arrow keys to move a block around the Workspace (to any position not connected to existing blocks) and then `Enter` to confirm.
+
+## Help messages
+
+Some actions display a helpful pop-up message at the bottom of the **Workspace**. For screen reader users a live region is used.
 
 ![Pop-up help message](/static/images/accessibility/popup-help-message.png)
 
@@ -122,6 +138,7 @@ To close a dialog, press the `Escape` key or navigate to the close button (shown
 ### JavaScript and Python editor navigation
 
 These keyboard shortcuts are used in the JavaScript editor:
+
 >By default, pressing `Tab` in the editor will insert the tab character. Toggle this behavior by pressing `Control`+`M` on **Windows** or `Control`+`Shift`+`M` on **Mac**. In order to jump to the toolbox from the editor. Press `Control`+`Alt`+`T` on **Windows** or `⌘`+`Alt`+`T` on **Mac**.
 
 ## Drop-down menu
@@ -156,7 +173,9 @@ The [MakeCode Arcade](https://arcade.makecode.com/) editor has the Immersive Rea
 
 ## Screen readers
 
-Several screen readers are available to help to use MakeCode. Currently the MakeCode block editor is not accessible to screen readers, but users can use the Javascript or Python editors instead. Screen reader access for the micro:bit MakeCode block editor is in development, provisionally aiming for a MakeCode release in summer 2026.
+Screen reader access for the micro:bit MakeCode block editor was added in summer 2026. Users can also use screen readers with the Javascript or Python editors. 
+
+Several screen readers are available to help to use MakeCode.
 
 ### JAWS (Job Access With Speech) Screen Reader
 
@@ -180,6 +199,9 @@ Narrator is the built-in screen reader that is part of Windows. To start Narrato
 
 >Use the **Ease Of Access** section in the Windows settings. Set **Narrator** to **On**.
 
+With Windows Narrator you need to turn scan mode off to use the MakeCode Blocks editor. To turn scan mode on or off, press your screen reader key (usually Insert or `Caps Lock`) and `Spacebar`. 
+
+
 ### Voice Over
 
 Voice Over is the built-in screen reader provided with the Mac. To start Voice Over:
@@ -189,6 +211,34 @@ Voice Over is the built-in screen reader provided with the Mac. To start Voice O
 >– OR –
 
 >Use the Universal Access pane of System Preferences.
+
+### ChomeVox
+
+ChromeVox is the built-in screen reader for ChromeOS. To start ChromeVox:
+
+>Press `Ctrl+Alt+Z`
+
+## Blocks editor with a screen reader
+
+In the MakeCode Blocks editor, press Tab to reach ‘Skip to Blocks Workspace’ and then `Enter`.
+
+Windows Narrator users may need to press their Narrator screen reader key (usually `Caps Lock` or `Insert`) and `Space` to turn scan mode off.
+
+To enable screen reader mode press `Control+Alt+Z` on **Windows** or `⌘+Alt+Z` on **Mac**. Screen reader mode includes hard stops instead of wrapping when navigating blocks and beeps when changing container nesting levels. 
+
+Screen reader users can use the keyboard controls to navigate MakeCode including the Blocks workspace.
+
+The following additional commands are available for screen reader users:
+
+| Action | Windows | Mac |
+|-|-|-|
+| Screen reader mode on or off | `Ctrl+Alt+Z` | `⌘+Alt+Z` |
+| Screen reader: More block information | `I` | `I` |
+| Screen reader: Container block information | `Shift+I` | `Shift+I` |
+  
+### Live regions
+
+Some announcements are made to an ARIA live region including: toast notifications, simulator status and move mode status. 
 
 ## Zoom and responsive layout
 
