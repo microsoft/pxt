@@ -180,7 +180,7 @@ const Key = ({ value }: { value: string }) => {
             break;
         }
         case CONTROL_KEY_SHORT: {
-            aria = lf("Control");
+            aria = Blockly.Msg['CONTROL_KEY'];
             break;
         }
     }
