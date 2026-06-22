@@ -458,6 +458,10 @@ export function initVariableReporterArgs(b: Blockly.Block, handlerArgs: pxt.bloc
                     inputToFocus = b.appendValueInput(DRAGGABLE_PARAM_INPUT_PREFIX + arg.name);
                     inputToFocus.setCheck(getBlocklyCheckForType(arg.type, info));
 
+                    // Use zero width space character. Empty strings and null are falsey
+                    // which results in the default value being used by Blockly "input i".
+                    inputToFocus.setAriaLabelProvider("\u200b");
+
                     setDuplicateOnDrag(b.type, inputToFocus.name);
 
                     if (buttonExists) {

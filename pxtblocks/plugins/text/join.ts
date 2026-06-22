@@ -143,7 +143,9 @@ const TEXT_JOIN_MUTATOR_MIXIN = {
             if (!this.getInput('ADD' + i)) {
                 const input = this.appendValueInput('ADD' + i)
                     // pxt-blockly: pxt-blockly/pull/112
-                    .setAlign(Blockly.inputs.Align.LEFT);
+                    .setAlign(Blockly.inputs.Align.LEFT)
+                    .setAriaLabelProvider(
+                        Blockly.Msg['INPUT_LABEL_TEXT_JOIN_ITEM'].replace('%1', (i + 1).toString()));
                 // if (i == 0) {
                 //   input.appendField(Blockly.Msg['TEXT_JOIN_TITLE_CREATEWITH']);
                 // }

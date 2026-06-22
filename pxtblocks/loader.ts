@@ -280,7 +280,9 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
                 } else {
                     i.setCheck("Variable");
                 }
-
+                // Use zero width space character. Empty strings and null are falsey
+                // which results in the default value being used by Blockly "input i".
+                i.setAriaLabelProvider("\u200b");
             });
 
             comp.handlerArgs.forEach(arg => {
@@ -863,8 +865,8 @@ function initAccessibilityMessages() {
         INPUT_LABEL_VALUE_B: lf("second value"),                 // logic_compare
         INPUT_LABEL_CONDITION_A: lf("first condition"),          // logic_operation
         INPUT_LABEL_CONDITION_B: lf("second condition"),         // logic_operation
-        INPUT_LABEL_NUMBER_A: lf("first number"),                // math_arithmetic
-        INPUT_LABEL_NUMBER_B: lf("second number"),               // math_arithmetic
+        INPUT_LABEL_NUMBER_A: lf("first value"),                // math_arithmetic
+        INPUT_LABEL_NUMBER_B: lf("second value"),               // math_arithmetic
         INPUT_LABEL_MATH_DIVIDEND: lf("dividend"),               // math_modulo
         INPUT_LABEL_MATH_DIVISOR: lf("divisor"),                 // math_modulo
         INPUT_LABEL_LOOP_TIMES: lf("number of times to repeat"), // controls_repeat_ext
