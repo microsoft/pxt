@@ -353,6 +353,12 @@ namespace ts.pxtc {
                     if (param.labelLocalizationKey && param.label) {
                         locStrings[param.labelLocalizationKey] = param.label;
                     }
+
+                    const defaultString = pxt.blocks.parameterDefaultToLocalizationString(param.defaultValue, param.type);
+                    const defaultLocalizationKey = pxt.blocks.parameterDefaultLocalizationKey(si.qName, param.actualName);
+                    if (defaultLocalizationKey && defaultString !== undefined) {
+                        locStrings[defaultLocalizationKey] = defaultString;
+                    }
                 }
                 if (comp.handlerArgs?.length) {
                     for (const arg of comp.handlerArgs) {
