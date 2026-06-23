@@ -276,8 +276,8 @@ class FileGithubDb implements pxt.github.IGithubDb {
         return this.loadAsync(repopath, tag, "pxt", (r, t) => this.db.loadConfigAsync(r, t));
     }
 
-    loadPackageAsync(repopath: string, tag: string): Promise<pxt.github.CachedPackage> {
-        return this.loadAsync(repopath, tag, "pkg", (r, t) => this.db.loadPackageAsync(r, t));
+    loadPackageAsync(repopath: string, tag: string, fallbackPackageFiles?: pxt.Map<string>): Promise<pxt.github.CachedPackage> {
+        return this.loadAsync(repopath, tag, "pkg", (r, t) => this.db.loadPackageAsync(r, t, fallbackPackageFiles));
     }
 
     loadTutorialMarkdown(repopath: string, tag?: string): Promise<pxt.github.CachedPackage> {
@@ -5839,7 +5839,9 @@ export async function buildCoreDeclarationFiles(parsed: commandParser.ParsedComm
     nodeutil.mkdirP(builtFolder);
     process.chdir(cwd);
 
-    const host = shareId ? new Host() : new SnippetHost("decl-build", { "main.ts" : "" }, { "blocksprj": "*" });
+    const blocksprjConfig = readBlocksprjConfig();
+
+    const host = shareId ? new Host() : new SnippetHost("decl-build", { "main.ts" : "" }, { ...blocksprjConfig.dependencies });
     const mainPkg = new pxt.MainPackage(host);
 
     if (shareId) {
@@ -6223,6 +6225,16 @@ function checkDocsAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
     )
 }
 
+function readBlocksprjConfig(): pxt.PackageConfig {
+    const configPath = path.join("libs", pxt.BLOCKS_PROJECT_NAME, "pxt.json");
+
+    if (!nodeutil.fileExistsSync(configPath)) {
+        return undefined;
+    }
+    const config = nodeutil.readJson(configPath) as pxt.PackageConfig;
+    return config;
+}
+
 function checkFileSize(files: string[]): number {
     if (!pxt.appTarget.cloud)
         return 0;
@@ -6261,6 +6273,8 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
     // only check each snippet once.
     const existingSnippets: pxt.Map<boolean> = {};
     let snippets: CodeSnippet[] = [];
+
+    const blocksprjConfig = readBlocksprjConfig();
 
     const maxFileSize = checkFileSize(nodeutil.allFiles("docs", { maxDepth: 10, allowMissing: true, includeDirs: true, ignoredFileMarker: ".ignorelargefiles" }));
     if (!pxt.appTarget.ignoreDocsErrors
@@ -6434,7 +6448,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
         }
 
         // look for snippets
-        getCodeSnippets(entrypath, md).forEach((snippet, snipIndex) => addSnippet(snippet, entrypath, snipIndex, entrypath));
+        getCodeSnippets(entrypath, md, blocksprjConfig).forEach((snippet, snipIndex) => addSnippet(snippet, entrypath, snipIndex, entrypath));
     }
 
     nodeutil.mkdirP("temp");
@@ -6479,8 +6493,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                                     continue;
                                 }
                                 const tutorial = pxt.tutorial.parseTutorial(tutorialMd);
-                                const pkgs: pxt.Map<string> = { "blocksprj": "*" };
-                                pxt.Util.jsonMergeFrom(pkgs, pxt.gallery.parsePackagesFromMarkdown(tutorialMd) || {});
+                                const pkgs = pxt.tutorial.mergeTutorialDependencies(blocksprjConfig.dependencies, pxt.gallery.parsePackagesFromMarkdown(tutorialMd) || {});
 
                                 let extraFiles: Map<string> = null;
 
@@ -6497,7 +6510,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                                     || (tutorial.language == "python")) {
                                     tutorial.steps
                                         .filter(step => !!step.contentMd)
-                                        .forEach((step, stepIndex) => getCodeSnippets(`${card.name}-step${stepIndex}`, step.contentMd)
+                                        .forEach((step, stepIndex) => getCodeSnippets(`${card.name}-step${stepIndex}`, step.contentMd, blocksprjConfig)
                                             .forEach((snippet, snippetIndex) => {
                                                 snippet.packages = pkgs;
                                                 snippet.extraFiles = extraFiles;
@@ -6539,8 +6552,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                                     continue;
                                 }
                                 const prj = pxt.gallery.parseExampleMarkdown(card.name, exMd);
-                                const pkgs: pxt.Map<string> = { "blocksprj": "*" };
-                                pxt.U.jsonMergeFrom(pkgs, prj.dependencies);
+                                const pkgs = pxt.tutorial.mergeTutorialDependencies(blocksprjConfig.dependencies, prj.dependencies);
 
                                 let extraFiles: Map<string> = undefined;
 
@@ -6616,6 +6628,8 @@ function internalCacheUsedBlocksAsync(): Promise<Map<pxt.BuiltTutorialInfo>> {
     const mdRegex = /\.md$/;
     const targetDirs = pxt.appTarget.cacheusedblocksdirs;
     const builtTututorialInfo: Map<pxt.BuiltTutorialInfo> = {};
+    const blocksprjConfig = readBlocksprjConfig();
+
     if (targetDirs) {
         targetDirs.forEach(dir => {
             pxt.log(`looking for tutorial markdown in ${dir}`);
@@ -6633,8 +6647,9 @@ function internalCacheUsedBlocksAsync(): Promise<Map<pxt.BuiltTutorialInfo>> {
             pxt.log(`error resolving tutorial markdown at ${path}`);
         }
         const tutorial = pxt.tutorial.parseTutorial(md) as TutorialInfo;
-        const pkgs: pxt.Map<string> = { "blocksprj": "*" };
-        pxt.Util.jsonMergeFrom(pkgs, pxt.gallery.parsePackagesFromMarkdown(md) || {});
+        const tutorialDeps = pxt.gallery.parsePackagesFromMarkdown(md) || {};
+        const pkgs: pxt.Map<string> = pxt.tutorial.mergeTutorialDependencies(blocksprjConfig.dependencies, tutorialDeps);
+
         tutorial.pkgs = pkgs;
         tutorial.path = path;
 
@@ -6752,7 +6767,7 @@ export interface CodeSnippet {
     src?: string;
 }
 
-export function getCodeSnippets(fileName: string, md: string): CodeSnippet[] {
+export function getCodeSnippets(fileName: string, md: string, baseConfig: pxt.PackageConfig): CodeSnippet[] {
     const supported: pxt.Map<string> = {
         "blocks": "ts",
         "block": "ts",
@@ -6778,21 +6793,20 @@ export function getCodeSnippets(fileName: string, md: string): CodeSnippet[] {
         };
     }
 
-
-    const pkgs: pxt.Map<string> = {
-        "blocksprj": "*"
-    }
-    snippets.filter(snip => snip.type == "package")
+    const tutorialDeps = snippets.filter(snip => snip.type == "package")
         .map(snip => snip.code.split('\n'))
-        .forEach(lines => lines
-            .map(l => l.replace(/\s*$/, ''))
-            .filter(line => !!line)
-            .forEach(line => {
+        .reduce((acc, lines) => {
+            for (let line of lines) {
+                line = line.replace(/\s*$/, '');
+                if (!line) continue;
                 const i = line.indexOf('=');
-                if (i < 0) pkgs[line] = "*";
-                else pkgs[line.substring(0, i)] = line.substring(i + 1);
-            })
-        );
+                if (i < 0) acc[line] = "*";
+                else acc[line.substring(0, i).trim()] = line.substring(i + 1);
+            }
+            return acc;
+        }, {} as pxt.Map<string>);
+
+    const pkgs = pxt.tutorial.mergeTutorialDependencies(baseConfig.dependencies, tutorialDeps);
 
     const pkgName = fileName.replace(/\\/g, '-').replace(/.md$/i, '');
     return codeSnippets.map((snip, i) => {
