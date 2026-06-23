@@ -74,8 +74,20 @@ async function stsErrorTestAsync(filename: string) {
 
     const opts = await pkg.getCompileOptionsAsync(target);
     opts.testMode = true;
+    const hasEnhancedErrors = /^\/\/\s*enhancedErrors\b/.test(text);
+    if (hasEnhancedErrors) {
+        const plainOpts = await pkg.getCompileOptionsAsync(target);
+        plainOpts.testMode = true;
+        const plainRes = pxtc.compile(plainOpts);
+        chai.assert(!plainRes.diagnostics.some(d => d.code == 9284), `${basename}: enhanced errors should require opt-in`);
+    }
+
+    opts.enhancedErrors = hasEnhancedErrors;
     const res = pxtc.compile(opts);
     checkDiagnostics(res.diagnostics, basename, text);
+    if (!res.diagnostics.some(d => d.category == pxtc.DiagnosticCategory.Error)) {
+        chai.assert(res.success, `${basename}: warning-only diagnostics should not fail compile`);
+    }
 }
 
 async function pyErrorTestAsync(filename: string) {
