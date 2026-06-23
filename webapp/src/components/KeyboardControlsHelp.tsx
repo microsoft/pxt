@@ -1,6 +1,7 @@
 import * as React from "react";
 import * as Blockly from "blockly";
 import { CONTROL_KEY_SHORT, getShortcutKeysShortAll, LIST_SHORTCUTS_SHORTCUT } from "../shortcut_formatting";
+import { jsxLF } from "../../../react-common/components/util";
 
 const names = Blockly.ShortcutItems.names;
 const isMacPlatform = pxt.BrowserUtils.isMac();
@@ -14,8 +15,6 @@ const KeyboardControlsHelp = () => {
     const cmd = isMacPlatform ? "⌘" : ctrl;
     const orAsJoiner = lf("or")
     const enterOrSpace = { shortcuts: getShortcutKeysShortAll(names.PERFORM_ACTION), joiner: orAsJoiner}
-    // Split around {0} so the modifier renders as a <Key> (for its aria-label).
-    const moveAnywhere = lf("Hold {0} and press arrow keys").split("{0}");
     return (
         <aside id="keyboardnavhelp" aria-label={lf("Keyboard Controls")} ref={ref} tabIndex={0}>
             <h2>{lf("Keyboard Controls")}</h2>
@@ -80,7 +79,7 @@ const KeyboardControlsHelp = () => {
                 <tbody>
                     <Row name={lf("Move to positions")} shortcuts={[names.NAVIGATE_UP, names.NAVIGATE_DOWN, names.NAVIGATE_LEFT, names.NAVIGATE_RIGHT]} />
                     <Row name={lf("Move anywhere")}>
-                        {moveAnywhere[0]}<Key value={cmd} />{moveAnywhere[1]}
+                        {jsxLF(lf("Hold {0} and press arrow keys"), <Key value={cmd} />)}
                     </Row>
                     <Row name={lf("Confirm")} {...enterOrSpace} />
                     <Row name={lf("Cancel")} shortcuts={[names.ABORT_MOVE]} />
