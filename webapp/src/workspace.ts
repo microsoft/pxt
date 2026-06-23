@@ -770,9 +770,77 @@ export async function installAsync(h0: InstallHeader, text: ScriptText, dontOver
         pxt.shell.setEditorLanguagePref(cfg.preferredEditor);
     }
 
-    await pxt.github.cacheProjectDependenciesAsync(cfg)
+    let packagedExtensionFiles: pxt.Map<pxt.Map<string>>;
+    if (text[pxt.PACKAGED_EXTENSIONS]) {
+        packagedExtensionFiles = pxt.Util.jsonTryParse(text[pxt.PACKAGED_EXTENSIONS]);
+        delete text[pxt.PACKAGED_EXTENSIONS];
+    }
+    let packagedExtInfo: pxt.Map<string>;
+    if (text[pxt.PACKAGED_EXT_INFO]) {
+        packagedExtInfo = pxt.Util.jsonTryParse(text[pxt.PACKAGED_EXT_INFO]);
+        delete text[pxt.PACKAGED_EXT_INFO];
+    }
+
+    await cachePackagedExtInfoAsync(packagedExtInfo);
+    await cachePackagedScriptExtensionsAsync(packagedExtensionFiles);
+    await pxt.github.cacheProjectDependenciesAsync(cfg, packagedExtensionFiles)
     await importAsync(h, text);
     return h;
+}
+
+async function cachePackagedScriptExtensionsAsync(packagedExtensionFiles?: pxt.Map<pxt.Map<string>>) {
+    if (!packagedExtensionFiles) return;
+
+    const config = await pxt.packagesConfigAsync();
+    const scriptCache = await getScriptCacheAsync();
+    const seen: pxt.Map<boolean> = {};
+
+    await Promise.all(Object.keys(packagedExtensionFiles).map(async key => {
+        if (pxt.github.isGithubId(key)) return;
+
+        const pubId = key.slice(0, 4) === "pub:" ? key.slice(4) : key;
+        if (!pubId || seen[pubId]) return;
+        seen[pubId] = true;
+
+        const files = packagedExtensionFiles[key];
+        if (!files || !pxt.Package.parseAndValidConfig(files[pxt.CONFIG_NAME])) return;
+
+        try {
+            const id = encodeURIComponent(pxt.github.upgradedPackageId(config, pubId));
+            await scriptCache.setAsync({ id, files });
+        }
+        catch (e) {
+            pxt.log("Unable to cache packaged extension in DB");
+        }
+    }));
+}
+
+async function cachePackagedExtInfoAsync(packagedExtInfo?: pxt.Map<string>) {
+    if (!packagedExtInfo) return;
+
+    const hostCache = await indexedDBWorkspace.getObjectStoreAsync<{ id: string, val: string }>(indexedDBWorkspace.HOSTCACHE_TABLE);
+    const cacheHost = {
+        cacheStoreAsync: async (id: string, val: string) => {
+            await hostCache.setAsync({ id, val });
+        },
+        cacheGetAsync: async (id: string) => {
+            try {
+                return (await hostCache.getAsync(id)).val;
+            }
+            catch (e) {
+                return null;
+            }
+        }
+    } as pxt.Host;
+
+    await Promise.all(Object.keys(packagedExtInfo).map(async sha => {
+        try {
+            await pxt.hexloader.storeHexInfoCacheEntryAsync(cacheHost, sha, packagedExtInfo[sha]);
+        }
+        catch (e) {
+            pxt.log("Unable to cache packaged extension hex info in DB");
+        }
+    }));
 }
 
 export async function renameAsync(h: Header, newName: string): Promise<Header> {
