@@ -6,13 +6,6 @@ namespace pxsim {
 //   present in pxsim namespace of the target. An example is basic.showString, which
 //   shows up in the JavaScript as pxsim.basic.showString("foo", 150). That is, the
 //   JavaScript namespace syntax is preserved.
-/*
-    window.addEventListener("message", ev => {
-        let m = ev.data;
-        if (!m) {
-            return;
-        }
-*/
 
 type UnknownFunction = (...args: any[]) => any;
 type NamespaceObject = Record<string, any>;
@@ -20,67 +13,57 @@ type NamespaceObject = Record<string, any>;
 /**
  * Dynamically resolves a string path to an object on the global scope.
  */
-function getNamespaceObject(pathString: string): NamespaceObject | undefined {
+function getNamespaceObject(module: NamespaceObject, pathString: string): [NamespaceObject | undefined, UnknownFunction | undefined] {
   const parts = pathString.split('.');
 
-  // Use globalThis cast as any to safely traverse unknown properties
-  let currentContext: any = globalThis;
+  let currentContext = module
 
+  let i = 0;
+  const funIndex = parts.length - 1;
   for (const part of parts) {
+    if (i === funIndex) {
+      break;
+    }
     if (currentContext && part in currentContext) {
       currentContext = currentContext[part];
+      i = i + 1;
     } else {
-      return undefined;
+      return [undefined, undefined]
     }
   }
 
-  return currentContext as NamespaceObject;
+  return [currentContext as NamespaceObject, currentContext[parts[funIndex]] as UnknownFunction];
 }
 
 /**
  * Instruments specified functions inside a string-resolved namespace.
  */
-export function instrumentNamespaceByPath(
-  pathString: string,
-  functionList: string[]
-): void {
-  const namespaceObj = getNamespaceObject(pathString);
-
-  if (!namespaceObj) {
-    console.error(`Namespace path "${pathString}" could not be found.`);
-    return;
-  }
-
+export function instrumentFunctions(functionList: string[]): void {
+  const pxsimModule = window['pxsim'] as NamespaceObject;
   functionList.forEach((funcName: string) => {
-    const originalFunc = namespaceObj[funcName];
 
-    if (typeof originalFunc === 'function') {
+    const [funModule, originalFunc] = getNamespaceObject(pxsimModule, funcName);
+
+    if (funModule && originalFunc && typeof originalFunc === 'function') {
       // Cast to UnknownFunction to safely intercept arguments and maintain context
       const typedOriginalFunc = originalFunc as UnknownFunction;
 
-      namespaceObj[funcName] = function (this: unknown, ...args: unknown[]): unknown {
+      funModule[funcName] = function (this: unknown, ...args: unknown[]): unknown {
 
         // Structure the strongly-typed message payload
         const messagePayload = {
           type: 'output' as const,
-          namespace: pathString,
           function: funcName,
           args
         } as pxsim.SimulatorOutput;
 
-        // Broadcast global message if window is available (browser environment)
-        if (typeof window !== 'undefined') {
-          window.postMessage(messagePayload, '*');
-        } else {
-          // Fallback log for non-browser environments (Node.js)
-          console.log('[Instrumentation Trace]', messagePayload);
-        }
+        Runtime.postMessage(messagePayload);
 
         // Execute original logic keeping context and arguments intact
         return typedOriginalFunc.apply(this, args);
       };
 
-      console.log(`Instrumented: ${pathString}.${funcName}`);
+      console.log(`Instrumented: ${funcName}`);
     }
   });
 }

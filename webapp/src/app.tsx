@@ -6627,6 +6627,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 theEditor.importFile(new File(msg.parts, msg.filename));
             return;
         }
+        console.log(`simulator message: ${JSON.stringify(m)}`);
     }, false);
 
     // Disable right-click in locked editor to prevent "Back". (Blockly context menu still enabled)

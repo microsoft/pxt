@@ -91,6 +91,7 @@ namespace pxsim {
         activePlayer?: 1 | 2 | 3 | 4 | undefined;
         theme?: string | pxt.Map<string>;
         physicalSimulator?: boolean;
+        instrument?: string[];
     }
 
     export interface HwDebugger {
@@ -836,6 +837,7 @@ namespace pxsim {
                 dependencies: opts.dependencies,
                 activePlayer: opts.activePlayer,
                 theme: opts.theme,
+                instrument: this._runOptions?.physicalSimulator ? (this._runOptions.instrument || []) : undefined
             }
             this.stopSound();
             this.start();
@@ -985,13 +987,14 @@ namespace pxsim {
                 case 'debugger': this.handleDebuggerMessage(msg as DebuggerMessage); break;
                 case 'toplevelcodefinished': if (this.options.onTopLevelCodeEnd) this.options.onTopLevelCodeEnd(); break;
                 case 'setmutebuttonstate': this.options.onMuteButtonStateChange?.((msg as SetMuteButtonStateMessage).state); break;
+                case 'output':
                 case 'radiopacket': {
                     if (this._runOptions?.physicalSimulator) {
                         const frameid = source?.location.hash.slice(1)
                         const tunnelMsg = {
                             type: "tunnel",
                             source: frameid,
-                            payload: msg as pxsim.SimulatorRadioPacketMessage
+                            payload: msg
                         }
                         this.postToParent(undefined, tunnelMsg);
                         return

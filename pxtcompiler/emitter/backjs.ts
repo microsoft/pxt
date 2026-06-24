@@ -250,7 +250,7 @@ switch (step) {
                 const declName = proc.getDeclName()
                 if (opts.instrument.find(name => name === declName)) {
                     // post message with function name and arguments
-                    write(`  postMessage({ type: "instrument", function: ${JSON.stringify(declName)}, 
+                    write(`  postMessage({ type: "output", function: ${JSON.stringify(declName)}, 
 args:[${proc.args.map((l) => locref(l)).join(", ")}] });`)
                 }
             }

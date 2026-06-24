@@ -1654,6 +1654,8 @@ namespace pxsim {
             runtime = this;
 
             initCurrentRuntime(msg);
+
+            if (msg.instrument) pxsim.instrumentFunctions(msg.instrument)
         }
 
         public setupPerfCounters(names: string[]) {
