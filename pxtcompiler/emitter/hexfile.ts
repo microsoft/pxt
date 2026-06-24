@@ -1102,9 +1102,8 @@ _stored_program: .hex ${res}
 
         res += U.uint8ArrayToString([
             metablob.length & 0xff, metablob.length >> 8,
-            binstring.length & 0xff, (binstring.length >> 8) & 0xff,
-            (binstring.length >> 16) & 0xff, (binstring.length >> 24) & 0xff,
-            0, 0
+            binstring.length & 0xff, binstring.length >> 8,
+            0, 0, 0, 0
         ])
 
         res += metablob
