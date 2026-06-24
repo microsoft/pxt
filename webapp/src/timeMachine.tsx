@@ -269,11 +269,17 @@ export const TimeMachine = (props: TimeMachineProps) => {
                             {selected ? formatFullDate(selected.timestamp) : lf("Now")}
                         </div>
                         <Button
+                            className="square-on-mobile"
+                            labelClassName="mobile-hidden"
+                            leftIcon="fas fa-save mobile-only"
                             label={lf("Save a copy")}
                             title={lf("Save a copy")}
                             onClick={onSaveCopySelect}
                         />
                         <Button
+                            className="square-on-mobile"
+                            labelClassName="mobile-hidden"
+                            leftIcon="fas fa-undo mobile-only"
                             label={lf("Restore")}
                             title={lf("Restore")}
                             onClick={onGoPressed}
