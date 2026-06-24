@@ -1526,11 +1526,6 @@ namespace pxt.hexloader {
         return JSON.stringify(cachedMeta);
     }
 
-    export function storeHexInfoCacheEntryAsync(host: Host, sha: string, cachedHexInfo: string) {
-        if (!sha || !cachedHexInfo) return Promise.resolve();
-        return storeWithLimitAsync(host, "hex-keys", "hex-" + sha, cachedHexInfo);
-    }
-
     export function getHexInfoAsync(host: Host, extInfo: pxtc.ExtensionInfo, cloudModule?: any): Promise<pxtc.HexInfo> {
         if (!extInfo.sha)
             return Promise.resolve<any>(null)
