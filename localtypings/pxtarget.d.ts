@@ -1135,6 +1135,7 @@ declare namespace ts.pxtc {
         fileSystem: pxt.Map<string>;
         target: CompileTarget;
         testMode?: boolean;
+        enhancedErrors?: boolean; // enable extra editor-only diagnostics
         sourceFiles?: string[]; // list of file names
         sourceTexts?: string[]; // list of file text content (TS string)
         generatedFiles?: string[];
