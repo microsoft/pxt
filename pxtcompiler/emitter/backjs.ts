@@ -135,7 +135,8 @@ namespace ts.pxtc {
         "buildResume",
         "mkVTable",
         "bind",
-        "leaveAccessor"
+        "leaveAccessor",
+        "postMessage"
     ]
 
     export function jsEmit(bin: Binary, opts: CompileOptions, cres: CompileResult) {
@@ -243,13 +244,11 @@ switch (step) {
             proc.args.forEach((l, i) => {
                 write(`  ${locref(l)} = (s.lambdaArgs[${i}]);`)
             })
-            if (opts.instrument) {
+            if (opts.instrument?.length) {
                 const declName = proc.getDeclName()
-                console.log("instrumenting " + proc.getDeclName())
                 if (opts.instrument.find(name => name === declName)) {
                     // post message with function name and arguments
-                    write(`if (typeof window !== 'undefined' && window.parent && window.parent.postMessage) {
-                           window.parent.postMessage({ type: "instrument", function: ${JSON.stringify(declName)}, args: s.lambdaArgs.slice(0, ${proc.args.length}) }, "*"); }`)
+                    write(`  postMessage({ type: "instrument", function: ${JSON.stringify(declName)}, args: s.lambdaArgs.slice(0, ${proc.args.length}) });`)
                 }
             }
             write(`  s.lambdaArgs = null;`)

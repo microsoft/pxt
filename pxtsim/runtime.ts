@@ -1237,6 +1237,7 @@ namespace pxsim {
                 mkVTable,
                 bind,
                 leaveAccessor,
+                postMessage: Runtime.postMessage
             }
 
             function oops(msg: string) {
