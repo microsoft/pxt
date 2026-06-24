@@ -244,14 +244,16 @@ switch (step) {
             proc.args.forEach((l, i) => {
                 write(`  ${locref(l)} = (s.lambdaArgs[${i}]);`)
             })
+            write(`  s.lambdaArgs = null;`)
+            write(`} else {`)
             if (opts.instrument?.length) {
                 const declName = proc.getDeclName()
                 if (opts.instrument.find(name => name === declName)) {
                     // post message with function name and arguments
-                    write(`  postMessage({ type: "instrument", function: ${JSON.stringify(declName)}, args: s.lambdaArgs.slice(0, ${proc.args.length}) });`)
+                    write(`  postMessage({ type: "instrument", function: ${JSON.stringify(declName)}, 
+args:[${proc.args.map((l) => locref(l)).join(", ")}] });`)
                 }
             }
-            write(`  s.lambdaArgs = null;`)
             write(`}`)
         }
 

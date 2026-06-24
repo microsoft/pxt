@@ -6,17 +6,13 @@ namespace pxsim {
 //   present in pxsim namespace of the target. An example is basic.showString, which
 //   shows up in the JavaScript as pxsim.basic.showString("foo", 150). That is, the
 //   JavaScript namespace syntax is preserved.
-// - a STS function, which is name mangled. An example is basic.showNumber: 
-//   - function basic_showNumber__P7093(s); unfortunately, in this case, the 
-//     arguments to showNumber are not kept in the function declaration, so in 
-//     this case we probably want to do compile-time instrumentation (sigh) where
-//     the arguments are read out, as below
-//      if (s.lambdaArgs) {
-//        s.arg0 = (s.lambdaArgs[0]);
-//        s.arg1 = (s.lambdaArgs[1]);
-//       // POST message here (namespace, function-name, args)
-//        s.lambdaArgs = null;
-//      }
+/*
+    window.addEventListener("message", ev => {
+        let m = ev.data;
+        if (!m) {
+            return;
+        }
+*/
 
 type UnknownFunction = (...args: any[]) => any;
 type NamespaceObject = Record<string, any>;

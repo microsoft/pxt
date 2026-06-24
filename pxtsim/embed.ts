@@ -148,7 +148,7 @@ namespace pxsim {
     // TODO: function to generate the following message
     export interface SimulatorOutput extends SimulatorMessage {
         type: "output";
-        namespace: string;
+        namespace?: string;
         function: string;
         args: { name: string; val: number | string | boolean }[];
     }
