@@ -2016,7 +2016,7 @@ function cardActionButton(props: Partial<ProjectsDetailProps>, className: string
 
     // todo: Left these two specifically with the ui class from semantic
     // because messing with them too much had too many side effects
-    // for a side fix (detail card buttons, etc) 
+    // for a side fix (detail card buttons, etc)
     return asLink ? // TODO (shakao)  migrate forumurl to otherAction json in md
         <Link
             ref={autoFocus ? linkRef : undefined}
@@ -2177,7 +2177,7 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
                 closeIcon={true} header={lf("Import")}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
             >
-                <div className={`ui ${cardClass} cards`}>
+                <div className={`ui ${cardClass} stackable cards`}>
                     {showOpenFiles &&
                         <codecard.CodeCardView
                             ariaLabel={lf("Open files from your computer")}
