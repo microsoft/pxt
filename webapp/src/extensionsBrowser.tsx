@@ -554,6 +554,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                     <Input
                         placeholder={lf("Search or enter project URL...")}
                         ariaLabel={lf("Search or enter project URL...")}
+                        iconTitle={lf("Search")}
                         onEnterKey={onSearchBarChange}
                         onIconClick={onSearchBarChange}
                         preserveValueOnBlur={true}

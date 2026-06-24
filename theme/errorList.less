@@ -152,6 +152,44 @@
                 &.stackframe {
                     padding-left: 2em;
                 }
+
+                &.errorListItemRow {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                }
+
+                .errorListItemMessage {
+                    flex: 1 1 auto;
+                    min-width: 0;
+                    margin: 0;
+                    padding: 0;
+                    background: none;
+                    color: inherit;
+                    line-height: inherit;
+                    text-align: start;
+
+                    &:hover {
+                        filter: none;
+                    }
+                }
+
+                .errorListItemText {
+                    overflow-wrap: anywhere;
+                }
+
+                .errorListItemActions {
+                    flex: 0 0 auto;
+                    display: flex;
+                    align-items: center;
+                }
+
+                .errorListAction {
+                    margin: 0;
+                    padding: 0.7rem;
+                    line-height: 0.8rem;
+                    white-space: nowrap;
+                }
             }
         }
     }
