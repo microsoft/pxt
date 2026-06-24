@@ -128,6 +128,7 @@ export interface CompileOptions {
     forceEmit?: boolean;
     clickTrigger?: boolean;
     jsMetaVersion?: string;
+    instrument?: string[];
 }
 
 export let emptyProgram =

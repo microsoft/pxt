@@ -196,7 +196,6 @@ export class PhysicalSimulator extends srceditor.Editor {
         sprite.name = `board${this.nextBoardId}`;
         this.boards.push(sprite);
         this.nextBoardId++;
-        this.drawBoards();
         return sprite
     }
 
@@ -215,6 +214,7 @@ export class PhysicalSimulator extends srceditor.Editor {
                 board.simulatorId = simulator.driver.addSimulator()
             }
         })
+        this.drawBoards()
     }
 
     addSimulator() {

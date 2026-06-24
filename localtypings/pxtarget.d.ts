@@ -262,6 +262,11 @@ declare namespace pxt {
         order?: number;     // Sort order
     }
 
+    interface InstrumentInstructions {
+        callees: string[]   // ["basic.showString","basic.showNumber"]
+    }
+
+
     interface AppSimulator {
         autoRun?: boolean; // enable autoRun in regular mode, not light mode
         autoRunLight?: boolean; // force autorun in light mode
@@ -302,6 +307,7 @@ declare namespace pxt {
         // This is for testing new simulator extensions before adding them to targetconfig.json.
         // DO NOT SHIP SIMULATOR EXTENSIONS HERE. Add them to targetconfig.json/approvedRepoLib instead.
         testSimulatorExtensions?: pxt.Map<SimulatorExtensionConfig>;
+        instrument?: InstrumentInstructions;
     }
 
     interface TargetCompileService {
@@ -1168,6 +1174,8 @@ declare namespace ts.pxtc {
 
         embedMeta?: string;
         embedBlob?: string; // base64
+
+        instrument?: string[];
 
         /* @internal */
         ignoreFileResolutionErrors?: boolean; // ignores triple-slash directive errors; debug only

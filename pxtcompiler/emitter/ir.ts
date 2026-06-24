@@ -598,6 +598,10 @@ namespace ts.pxtc.ir {
             return name
         }
 
+        getDeclName() {
+            return getDeclName(this.action)
+        }
+
         getName() {
             let text = this.action && this.action.name ? (<Identifier>this.action.name).text : null
             return text || "inline"

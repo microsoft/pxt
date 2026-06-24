@@ -1325,6 +1325,10 @@ namespace pxt {
                 dep.patchAppTargetPalette();
             }
 
+            if (pxt.appTarget?.appTheme?.physicalSimulator) {
+                opts.instrument = pxt.appTarget.simulator?.instrument?.callees || []
+            }
+
             this.patchAppTargetPalette();
             return opts;
         }

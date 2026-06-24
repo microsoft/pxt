@@ -138,7 +138,7 @@ namespace ts.pxtc {
         "leaveAccessor"
     ]
 
-    export function jsEmit(bin: Binary, cres: CompileResult) {
+    export function jsEmit(bin: Binary, opts: CompileOptions, cres: CompileResult) {
         let jsheader = "(function (ectx) {\n'use strict';\n"
 
         for (let n of evalIfaceFields) {
@@ -181,7 +181,7 @@ namespace ts.pxtc {
                     bin.hexlits[hexlit] = p.cachedJSHexLiterals[hexlit];
                 }
             } else {
-                curr = irToJS(bin, p)
+                curr = irToJS(bin, opts, p)
                 newLen += curr.length
             }
             jssource += "\n" + curr + "\n"
@@ -207,7 +207,7 @@ namespace ts.pxtc {
         bin.writeFile(BINARY_JS, sizes + jssource)
     }
 
-    function irToJS(bin: Binary, proc: ir.Procedure): string {
+    function irToJS(bin: Binary, opts: CompileOptions, proc: ir.Procedure): string {
         if (proc.cachedJS)
             return proc.cachedJS
 
@@ -243,6 +243,15 @@ switch (step) {
             proc.args.forEach((l, i) => {
                 write(`  ${locref(l)} = (s.lambdaArgs[${i}]);`)
             })
+            if (opts.instrument) {
+                const declName = proc.getDeclName()
+                console.log("instrumenting " + proc.getDeclName())
+                if (opts.instrument.find(name => name === declName)) {
+                    // post message with function name and arguments
+                    write(`if (typeof window !== 'undefined' && window.parent && window.parent.postMessage) {
+                           window.parent.postMessage({ type: "instrument", function: ${JSON.stringify(declName)}, args: s.lambdaArgs.slice(0, ${proc.args.length}) }, "*"); }`)
+                }
+            }
             write(`  s.lambdaArgs = null;`)
             write(`}`)
         }

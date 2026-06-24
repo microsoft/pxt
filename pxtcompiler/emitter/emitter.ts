@@ -1314,7 +1314,7 @@ namespace ts.pxtc {
                 else
                     processorEmit(bin, opts, res)
             } else {
-                jsEmit(bin, res)
+                jsEmit(bin, opts, res)
             }
 
             // Clear writeFile so that we don't leak the reference to res, which
