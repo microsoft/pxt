@@ -2182,35 +2182,35 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
                         <codecard.CodeCardView
                             ariaLabel={lf("Open files from your computer")}
                             role="button"
-                            key={'import'}
                             icon="upload"
                             iconColor="secondary"
                             name={lf("Import File...")}
                             description={lf("Open files from your computer")}
                             onClick={this.importHex}
-                        />}
+                        />
+                    }
                     {showImport &&
                         <codecard.CodeCardView
                             ariaLabel={lf("Open a shared project URL or GitHub repo")}
                             role="button"
-                            key={'importurl'}
                             icon="cloud download"
                             iconColor="secondary"
                             name={lf("Import URL...")}
                             description={lf("Open a shared project URL or GitHub repo")}
                             onClick={this.importUrl}
-                        />}
+                        />
+                    }
                     {showCreateGithubRepo &&
                         <codecard.CodeCardView
                             ariaLabel={lf("Clone or create your own GitHub repository")}
                             role="button"
-                            key={'importgithub'}
                             icon="github"
                             iconColor="secondary"
                             name={lf("Your GitHub Repo...")}
                             description={lf("Clone or create your own GitHub repository")}
                             onClick={this.cloneGithub}
-                        />}
+                        />
+                    }
                 </div>
             </sui.Modal>
         )
