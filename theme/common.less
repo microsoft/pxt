@@ -442,13 +442,15 @@ div.simframe > iframe {
 .menubar {
     .left.menu, .right.menu, .center.menu {
         display: flex;
-        flex: 1;
+        flex-grow: 1;
     }
     .right.menu {
         justify-content: flex-end;
+        flex-shrink: 0;
     }
     .center.menu {
         justify-content: center;
+        flex-shrink: 0;
     }
 
     .ui.item {

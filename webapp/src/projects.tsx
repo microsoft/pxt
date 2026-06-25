@@ -2177,7 +2177,7 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
                 closeIcon={true} header={lf("Import")}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
             >
-                <div className={`ui ${cardClass} cards`}>
+                <div className={`ui ${cardClass} stackable cards`}>
                     {showOpenFiles &&
                         <codecard.CodeCardView
                             ariaLabel={lf("Open files from your computer")}
