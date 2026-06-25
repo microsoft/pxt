@@ -399,8 +399,14 @@ export function showImportUrlDialogAsync() {
                 </div>
             </div>
             <div className="ui field">
-                <label id="selectUrlToOpenLabel">{lf("Copy the URL of the project.")}</label>
-                <input type="url" tabIndex={0} autoFocus aria-labelledby="selectUrlToOpenLabel" placeholder={lf("{0} or {1}...", shareUrl, "https://github.com/...")} className="ui blue fluid"></input>
+                <label id="selectUrlToOpenLabel" htmlFor="selectUrlToOpenInput">{lf("Copy the URL of the project.")}</label>
+                <Input
+                    id="selectUrlToOpenInput"
+                    type="url"
+                    autoFocus
+                    placeholder={lf("{0} or {1}...", shareUrl, "https://github.com/...")}
+                    aria-labelledby="selectUrlToOpenLabel"
+                />
             </div>
         </div>,
     }).then(res => {
@@ -935,7 +941,7 @@ export async function showTurnBackTimeDialogAsync(header: pxt.workspace.Header, 
 
         if (timestamp != undefined) {
             newHistory = {
-                entries:  history.entries.slice(0, history.entries.findIndex(e => e.timestamp === timestamp)),
+                entries: history.entries.slice(0, history.entries.findIndex(e => e.timestamp === timestamp)),
                 snapshots: history.snapshots.filter(s => s.timestamp <= timestamp),
                 shares: history.shares.filter(s => s.timestamp <= timestamp),
                 lastSaveTime: timestamp
