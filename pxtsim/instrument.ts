@@ -13,7 +13,7 @@ type NamespaceObject = Record<string, any>;
 /**
  * Dynamically resolves a string path to an object on the global scope.
  */
-function getNamespaceObject(module: NamespaceObject, pathString: string): [NamespaceObject | undefined, UnknownFunction | undefined] {
+function getNamespaceObject(module: NamespaceObject, pathString: string): [NamespaceObject | undefined, string | undefined, UnknownFunction | undefined] {
   const parts = pathString.split('.');
 
   let currentContext = module
@@ -28,11 +28,11 @@ function getNamespaceObject(module: NamespaceObject, pathString: string): [Names
       currentContext = currentContext[part];
       i = i + 1;
     } else {
-      return [undefined, undefined]
+      return [undefined, undefined, undefined]
     }
   }
 
-  return [currentContext as NamespaceObject, currentContext[parts[funIndex]] as UnknownFunction];
+  return [currentContext as NamespaceObject, parts[funIndex], currentContext[parts[funIndex]] as UnknownFunction];
 }
 
 /**
@@ -40,20 +40,20 @@ function getNamespaceObject(module: NamespaceObject, pathString: string): [Names
  */
 export function instrumentFunctions(functionList: string[]): void {
   const pxsimModule = window['pxsim'] as NamespaceObject;
-  functionList.forEach((funcName: string) => {
+  functionList.forEach((declName: string) => {
 
-    const [funModule, originalFunc] = getNamespaceObject(pxsimModule, funcName);
+    const [funModule, funName, originalFunc] = getNamespaceObject(pxsimModule, declName);
 
-    if (funModule && originalFunc && typeof originalFunc === 'function') {
+    if (funModule && funName && originalFunc && typeof originalFunc === 'function') {
       // Cast to UnknownFunction to safely intercept arguments and maintain context
       const typedOriginalFunc = originalFunc as UnknownFunction;
 
-      funModule[funcName] = function (this: unknown, ...args: unknown[]): unknown {
+      funModule[funName] = function (this: unknown, ...args: unknown[]): unknown {
 
         // Structure the strongly-typed message payload
         const messagePayload = {
           type: 'output' as const,
-          function: funcName,
+          function: declName,
           args
         } as pxsim.SimulatorOutput;
 
@@ -62,8 +62,6 @@ export function instrumentFunctions(functionList: string[]): void {
         // Execute original logic keeping context and arguments intact
         return typedOriginalFunc.apply(this, args);
       };
-
-      console.log(`Instrumented: ${funcName}`);
     }
   });
 }
