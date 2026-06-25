@@ -110,9 +110,19 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
 
         return <div className="ui item logo organization" aria-hidden="true">
             {targetTheme.organizationWideLogo || targetTheme.organizationLogo
-                ? <img className={`ui logo ${view !== "home" ? "mobile hide" : ""}`} src={targetTheme.organizationWideLogo || targetTheme.organizationLogo} alt={lf("{0} Logo", targetTheme.organization)} />
+                ? <img
+                    className="ui logo mobile hide"
+                    src={targetTheme.organizationWideLogo || targetTheme.organizationLogo}
+                    alt={lf("{0} Logo", targetTheme.organization)}
+                />
                 : <span className="name">{targetTheme.organization}</span>}
-            {targetTheme.organizationLogo && view !== "home" && (<img className={`ui image mobile only`} src={targetTheme.organizationLogo} alt={lf("{0} Logo", targetTheme.organization)} />)}
+            {targetTheme.organizationLogo &&
+                <img
+                    className="ui image mobile only"
+                    src={targetTheme.organizationLogo}
+                    alt={lf("{0} Logo", targetTheme.organization)}
+                />
+            }
         </div>
     }
 
@@ -124,7 +134,7 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
         const shouldLinkHome = pxt.shell.hasHomeScreen() && view !== "home";
 
         // TODO: "sandbox" view components are temporary share page layout
-        return <div aria-hidden={!shouldLinkHome} className={`ui item logo brand ${view !== "sandbox" && view !== "home" ? "mobile hide" : ""}`}>
+        return <div aria-hidden={!shouldLinkHome} className={`ui item logo brand ${view !== "sandbox" ? "mobile hide" : ""}`}>
             {targetTheme.useTextLogo
             ? (shouldLinkHome
                 ? [<Button className="name menu-button" key="org-name"

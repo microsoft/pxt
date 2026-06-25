@@ -299,6 +299,40 @@ pre {
             color: var(--pxt-primary-foreground-hover) !important;
         }
     }
+
+    .file-list-item {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+
+        .file-list-item-contents {
+            flex-grow: 1;
+        }
+
+        .button:focus-visible {
+            outline: @editorFocusBorderSize solid var(--pxt-focus-border);
+            outline-offset: 2px;
+        }
+
+        &.nested {
+            font-size: 0.9rem;
+            padding-left: 2rem;
+        }
+
+        & > i.icon.chevron {
+            margin-right: 0;
+            margin-left: 0.5rem;
+        }
+
+        & > i.icon.folder {
+            margin-right: 0.3rem;
+        }
+
+        &:focus-visible {
+            outline-offset: -3px;
+            outline: @editorFocusBorderSize solid var(--pxt-focus-border);
+        }
+    }
 }
 
 .filemenu .nested.item {
@@ -408,13 +442,15 @@ div.simframe > iframe {
 .menubar {
     .left.menu, .right.menu, .center.menu {
         display: flex;
-        flex: 1;
+        flex-grow: 1;
     }
     .right.menu {
         justify-content: flex-end;
+        flex-shrink: 0;
     }
     .center.menu {
         justify-content: center;
+        flex-shrink: 0;
     }
 
     .ui.item {

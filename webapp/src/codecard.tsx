@@ -94,10 +94,6 @@ export class CodeCardView extends data.Component<CodeCardProps, CodeCardState> {
         // they won't update dynamically when headers change.
         const header = card.projectId ? this.getData<pxt.workspace.Header>(`header:${card.projectId}`) : null;
         const name = header ? header.name : card.name;
-        const cloudMd = card.projectId ? this.getData<cloud.CloudTempMetadata>(`${cloud.HEADER_CLOUDSTATE}:${card.projectId}`) : null;
-        const cloudStatus = cloudMd?.cloudStatus();
-        const lastCloudSave = cloudStatus ? Math.min(header.cloudLastSyncTime, header.modificationTime) : card.time;
-        const cloudShowTimestamp = cloudStatus && (cloudStatus.value === "synced" || cloudStatus.value === "justSynced" || cloudStatus.value === "localEdits");
 
         const ariaLabel = card.ariaLabel || card.title || card.shortName || name;
         const ariaExpanded = !card.directOpen && card.selected !== undefined ? card.selected : undefined;
