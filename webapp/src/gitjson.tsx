@@ -22,6 +22,7 @@ import { Accordion } from "../../react-common/components/controls/Accordion";
 import { Button } from "../../react-common/components/controls/Button"
 import { Checkbox } from "../../react-common/components/controls/Checkbox";
 import { RadioButtonGroup } from "../../react-common/components/controls/RadioButtonGroup"
+import { Input } from "../../react-common/components/controls/Input"
 
 const MAX_COMMIT_DESCRIPTION_LENGTH = 70;
 
@@ -1293,9 +1294,19 @@ class CommmitComponent extends sui.StatelessUIElement<GitHubViewProps> {
         const descrError = description && description.length > MAX_COMMIT_DESCRIPTION_LENGTH
             ? lf("Your description is getting long...") : undefined;
         return <div>
-            <div className="ui field">
-                <sui.Input type="text" placeholder={lf("Describe your changes.")} value={this.props.parent.state.description} onChange={this.handleDescriptionChange}
-                    error={descrError} />
+            <div>
+                <Input
+                    id="githubCommitDescription"
+                    className="github-commit-message"
+                    label={lf("Commit Message")}
+                    type="text"
+                    placeholder={lf("Describe your changes.")}
+                    initialValue={this.props.parent.state.description}
+                    onChange={this.handleDescriptionChange}
+                />
+                {descrError &&
+                    <div className="ui yellow message">{descrError}</div>
+                }
             </div>
             <div className="ui field">
                 <sui.Button className="green" text={lf("Commit and push changes")} icon="long arrow alternate up" onClick={this.handleCommitClick} onKeyDown={fireClickOnEnter} />
