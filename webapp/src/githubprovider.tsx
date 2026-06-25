@@ -6,6 +6,7 @@ import * as dialogs from "./dialogs";
 import * as workspace from "./workspace";
 
 import UserInfo = pxt.editor.UserInfo;
+import { Input } from "../../react-common/components/controls/Input";
 
 export const PROVIDER_NAME = "github";
 
@@ -113,9 +114,15 @@ export class GithubProvider extends cloudsync.ProviderBase {
                         {lf("Click generate token, copy it, and paste it below.")}
                     </li>
                 </ol>}
-                {useToken && <div className="ui field">
-                    <label id="selectUrlToOpenLabel">{lf("Paste GitHub token here:")}</label>
-                    <input id="githubTokenInput" type="url" tabIndex={0} autoFocus aria-labelledby="selectUrlToOpenLabel" placeholder="ghp_ABC..." className="ui blue fluid"></input>
+                {useToken && <div>
+                    <label id="selectUrlToOpenLabel" htmlFor="githubTokenInput">{lf("Paste GitHub token here:")}</label>
+                    <Input
+                        id="githubTokenInput"
+                        type="url"
+                        autoFocus
+                        placeholder="ghp_ABC..."
+                        aria-labelledby="selectUrlToOpenLabel"
+                    />
                 </div>}
             </div>,
         }).then(res => {

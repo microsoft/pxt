@@ -1,5 +1,6 @@
 
 import * as React from "react";
+import { Input } from "../../../react-common/components/controls/Input";
 import * as sui from "../sui";
 
 export interface SearchInputProps extends React.HTMLProps<HTMLDivElement> {
@@ -43,9 +44,9 @@ export class SearchInput extends React.Component<SearchInputProps, SearchInputSt
         this.handleSearch(this.state.inputValue);
     }
 
-    private updateInputValue = (ev: React.ChangeEvent<HTMLInputElement>) => {
+    private updateInputValue = (newValue: string) => {
         const { searchOnChange } = this.props;
-        const inputValue = (ev.target as any).value;
+        const inputValue = newValue;
         this.setState({ inputValue });
 
         // If we search on change, call search
@@ -56,16 +57,23 @@ export class SearchInput extends React.Component<SearchInputProps, SearchInputSt
         const { ariaMessage, disabled, loading, placeholder, autoFocus, className, inputClassName, searchOnChange, searchHandler, ...rest } = this.props;
         const { inputValue } = this.state;
 
-        return <div className={`ui search ${className || ''}`} {...rest}>
-            <div className={`ui icon input ${inputClassName || ''}`}>
+        return <div className={className} {...rest}>
+            <div className={inputClassName}>
                 <div aria-live="polite" className="accessible-hidden" id="searchInputBoxLabel">{ariaMessage}</div>
-                <input role="search" autoFocus={autoFocus} ref="searchInput" aria-labelledby="searchInputBoxLabel"
-                    className="prompt" type="text" placeholder={placeholder}
-                    onChange={this.updateInputValue} value={inputValue}
-                    onKeyUp={this.handleSearchKeyUpdate} disabled={disabled}
-                    autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} />
-                <i role="button" onClick={this.handleClick} title={lf("Search")} style={{cursor: "pointer"}}
-                    className={`search link icon ${disabled ? 'disabled' : ''} ${loading ? 'loading' : ''}`} ></i>
+                <Input
+                    className="search-input project-manager"
+                    type="text"
+                    role="search"
+                    autoFocus={autoFocus}
+                    onChange={this.updateInputValue}
+                    onEnterKey={this.handleSearch}
+                    placeholder={placeholder}
+                    initialValue={inputValue}
+                    disabled={disabled}
+                    autoComplete={false}
+                    aria-labelledby="searchInputBoxLabel"
+                    icon={`search link icon ${disabled ? 'disabled' : ''} ${loading ? 'loading' : ''}`}
+                />
             </div>
         </div>
     }

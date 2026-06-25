@@ -2697,6 +2697,33 @@ button.ui.button.hostmultiplayergame-button {
     }
 }
 
+.search-input.common-input-wrapper {
+    border-radius: 500rem;
+    height: 3rem;
+
+    .common-input-group {
+        border-radius: 500rem;
+        height: 3rem;
+
+        input {
+            border-radius: 500rem;
+            height: 3rem;
+        }
+
+        &:focus-within:after, &:focus:after {
+            border-radius: 500rem;
+        }
+    }
+
+    i {
+        color: var(--pxt-neutral-foreground2);
+    }
+
+    &.project-manager {
+        max-width: 250px;
+    }
+}
+
 // win the specificity fight with hc mode
 #root.hc .sim-presence-bar .sim-presence-bar-player {
     background-repeat: no-repeat !important;
