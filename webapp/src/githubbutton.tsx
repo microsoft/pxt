@@ -5,6 +5,7 @@ import * as workspace from "./workspace";
 import { fireClickOnEnter } from "./util";
 
 import ISettingsProps = pxt.editor.ISettingsProps;
+import { classList } from "../../react-common/components/util";
 
 interface GithubButtonProps extends ISettingsProps {
     className?: string;
@@ -78,21 +79,25 @@ export class GithubButton extends sui.UIElement<GithubButtonProps, GithubButtonS
                     : modified ? lf("{0}: review, commit & push local changes to GitHub.", repoName)
                         : lf("{0}: local changes are synchronized with GitHub.", repoName)
 
-        return <div key="githubeditorbtn" role="button" className={`${defaultCls}
-            ${this.props.className || ""}`}
-            title={title}
-            onClick={this.handleClick} onKeyDown={fireClickOnEnter}
-            tabIndex={0}
-        >
-            <i className="github icon" />
-            <span className="ui mobile hide">{displayName}</span>
-            <span className="ui long mobile hide">
-                <i className={`${
-                    hasissue ? "exclamation circle"
-                        : haspull ? "arrow alternate down"
-                            : modified ? "arrow alternate up"
-                                : "check"} icon`} />
-            </span>
-        </div>;
+        return (
+            <div
+                role="button"
+                className={classList(defaultCls, this.props.className)}
+                title={title}
+                aria-label={title}
+                onClick={this.handleClick} onKeyDown={fireClickOnEnter}
+                tabIndex={0}
+            >
+                <i className="github icon" />
+                <span className="ui mobile hide">{displayName}</span>
+                <span className="ui long mobile hide">
+                    <i className={`${
+                        hasissue ? "exclamation circle"
+                            : haspull ? "arrow alternate down"
+                                : modified ? "arrow alternate up"
+                                    : "check"} icon`} />
+                </span>
+            </div>
+        );
     }
 }
