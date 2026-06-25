@@ -775,13 +775,7 @@ export async function installAsync(h0: InstallHeader, text: ScriptText, dontOver
         packagedExtensionFiles = pxt.Util.jsonTryParse(text[pxt.PACKAGED_EXTENSIONS]);
         delete text[pxt.PACKAGED_EXTENSIONS];
     }
-    let packagedExtInfo: pxt.Map<string>;
-    if (text[pxt.PACKAGED_EXT_INFO]) {
-        packagedExtInfo = pxt.Util.jsonTryParse(text[pxt.PACKAGED_EXT_INFO]);
-        delete text[pxt.PACKAGED_EXT_INFO];
-    }
 
-    await cachePackagedExtInfoAsync(packagedExtInfo);
     await cachePackagedScriptExtensionsAsync(packagedExtensionFiles);
     await pxt.github.cacheProjectDependenciesAsync(cfg, packagedExtensionFiles)
     await importAsync(h, text);
@@ -811,34 +805,6 @@ async function cachePackagedScriptExtensionsAsync(packagedExtensionFiles?: pxt.M
         }
         catch (e) {
             pxt.log("Unable to cache packaged extension in DB");
-        }
-    }));
-}
-
-async function cachePackagedExtInfoAsync(packagedExtInfo?: pxt.Map<string>) {
-    if (!packagedExtInfo) return;
-
-    const hostCache = await indexedDBWorkspace.getObjectStoreAsync<{ id: string, val: string }>(indexedDBWorkspace.HOSTCACHE_TABLE);
-    const cacheHost = {
-        cacheStoreAsync: async (id: string, val: string) => {
-            await hostCache.setAsync({ id, val });
-        },
-        cacheGetAsync: async (id: string) => {
-            try {
-                return (await hostCache.getAsync(id)).val;
-            }
-            catch (e) {
-                return null;
-            }
-        }
-    } as pxt.Host;
-
-    await Promise.all(Object.keys(packagedExtInfo).map(async sha => {
-        try {
-            await pxt.hexloader.storeHexInfoCacheEntryAsync(cacheHost, sha, packagedExtInfo[sha]);
-        }
-        catch (e) {
-            pxt.log("Unable to cache packaged extension hex info in DB");
         }
     }));
 }

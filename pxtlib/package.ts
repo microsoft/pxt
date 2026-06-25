@@ -1282,9 +1282,6 @@ namespace pxt {
 
             if (!noFileEmbed) {
                 const files = await this.filesToBePublishedAsync(true, !appTarget.compile.useUF2)
-                const packagedExtInfo = this.packagedExtensionHexInfo(opts);
-                if (Object.keys(packagedExtInfo).length)
-                    files[pxt.PACKAGED_EXT_INFO] = JSON.stringify(packagedExtInfo);
                 const headerString = JSON.stringify({
                     name: this.config.name,
                     comment: this.config.description,
@@ -1419,21 +1416,6 @@ namespace pxt {
             }
 
             packDeps(this);
-            return packaged;
-        }
-
-        private packagedExtensionHexInfo(opts: pxtc.CompileOptions): pxt.Map<string> {
-            const packaged: pxt.Map<string> = {};
-            const targets = [opts, ...(opts.otherMultiVariants || [])];
-
-            for (const target of targets) {
-                const extInfo = target.extinfo;
-                if (!extInfo?.sha || !extInfo.hexinfo?.hex) continue;
-
-                const serialized = pxt.hexloader.stringifyHexInfoForCache(extInfo.hexinfo);
-                if (serialized) packaged[extInfo.sha] = serialized;
-            }
-
             return packaged;
         }
 
