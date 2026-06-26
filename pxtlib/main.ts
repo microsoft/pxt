@@ -541,6 +541,7 @@ namespace pxt {
     export const TUTORIAL_CODE_STOP = "_onCodeStop.ts";
     export const TUTORIAL_INFO_FILE = "tutorial-info-cache.json";
     export const TUTORIAL_CUSTOM_TS = "tutorial.custom.ts";
+    export const PACKAGED_EXTENSIONS = "_packaged-extensions.json";
     export const BREAKPOINT_TABLET = 991; // TODO (shakao) revisit when tutorial stuff is more settled
     export const PALETTES_FILE = "_palettes.json";
     export const HISTORY_FILE = "_history";

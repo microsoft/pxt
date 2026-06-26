@@ -706,6 +706,7 @@ namespace ts.pxtc {
         const langLower = lang.toLowerCase();
         const attrJsLocsKey = langLower + "|jsdoc";
         const attrBlockLocsKey = langLower + "|block";
+        const attrAriaLabelLocsKey = langLower + "|ariaLabel";
 
         const loc = await mainPkg.localizationStringsAsync(lang);
         if (apiLocalizationStrings)
@@ -717,7 +718,8 @@ namespace ts.pxtc {
             const altLocSrcFn = altLocSrc && apis.byQName[altLocSrc];
 
             if (fn.attributes._untranslatedJsDoc) fn.attributes.jsDoc = fn.attributes._untranslatedJsDoc;
-            if (fn.attributes._untranslatedBlock) fn.attributes.jsDoc = fn.attributes._untranslatedBlock;
+            if (fn.attributes._untranslatedBlock) fn.attributes.block = fn.attributes._untranslatedBlock;
+            if (fn.attributes._untranslatedAriaLabel) fn.attributes.ariaLabel = fn.attributes._untranslatedAriaLabel;
             if (fn.attributes._untranslatedParamDefl) {
                 fn.attributes.paramDefl = U.clone(fn.attributes._untranslatedParamDefl);
                 syncParameterDefaults(fn);
@@ -747,6 +749,7 @@ namespace ts.pxtc {
 
             const nsDoc = loc['{id:category}' + Util.capitalize(fn.qName)];
             let locBlock = loc[`${fn.qName}|block`] || fn.attributes.locs?.[attrBlockLocsKey];
+            const locAriaLabel = loc[`${fn.qName}|ariaLabel`] || fn.attributes.locs?.[attrAriaLabelLocsKey];
 
             if (fn.attributes.block) {
                 const comp = pxt.blocks.compileInfo(fn);
@@ -847,6 +850,13 @@ namespace ts.pxtc {
                 }
             } else {
                 updateBlockDef(fn.attributes);
+            }
+
+            if (locAriaLabel) {
+                if (!fn.attributes._untranslatedAriaLabel) {
+                    fn.attributes._untranslatedAriaLabel = fn.attributes.ariaLabel;
+                }
+                fn.attributes.ariaLabel = locAriaLabel;
             }
             fn.attributes._translatedLanguageCode = lang;
         });
@@ -990,6 +1000,9 @@ namespace ts.pxtc {
                     } else if (U.startsWith(n, "jsdoc.loc.")) {
                         if (!res.locs) res.locs = {};
                         res.locs[n.slice("jsdoc.loc.".length).toLowerCase() + "|jsdoc"] = v;
+                    } else if (U.startsWith(n, "ariaLabel.loc.")) {
+                        if (!res.locs) res.locs = {};
+                        res.locs[n.slice("ariaLabel.loc.".length).toLowerCase() + "|ariaLabel"] = v;
                     } else if (U.contains(n, ".loc.")) {
                         if (!res.locs) res.locs = {};
                         const p = n.slice(0, n.indexOf('.loc.'));

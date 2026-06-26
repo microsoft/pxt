@@ -1,6 +1,7 @@
 import * as React from "react";
 import * as Blockly from "blockly";
-import { getShortcutKeysShortAll, LIST_SHORTCUTS_SHORTCUT } from "../shortcut_formatting";
+import { CONTROL_KEY_SHORT, getShortcutKeysShortAll, LIST_SHORTCUTS_SHORTCUT } from "../shortcut_formatting";
+import { jsxLF } from "../../../react-common/components/util";
 
 const names = Blockly.ShortcutItems.names;
 const isMacPlatform = pxt.BrowserUtils.isMac();
@@ -10,7 +11,7 @@ const KeyboardControlsHelp = () => {
     React.useEffect(() => {
         ref.current?.focus()
     }, []);
-    const ctrl = lf("{id:keyboard symbol}Ctrl");
+    const ctrl = CONTROL_KEY_SHORT;
     const cmd = isMacPlatform ? "⌘" : ctrl;
     const orAsJoiner = lf("or")
     const enterOrSpace = { shortcuts: getShortcutKeysShortAll(names.PERFORM_ACTION), joiner: orAsJoiner}
@@ -21,9 +22,6 @@ const KeyboardControlsHelp = () => {
             <table>
                 <tbody>
                     <Row name={lf("Show/hide shortcut help")} shortcuts={[LIST_SHORTCUTS_SHORTCUT]} />
-                    <Row name={lf("Screen reader mode")} shortcuts={[names.TOGGLE_SCREENREADER]}>
-                        <p className="hint">{lf("Additional audio cues and navigation aids for screen reader users")}</p>
-                    </Row>
                     <Row name={lf("Move between menus, simulator and the workspace")} shortcuts={[[lf("{id:keyboard symbol}Tab")], [lf("{id:keyboard symbol}Shift"), lf("{id:keyboard symbol}Tab")]]} joiner="row"/>
                     <Row name={lf("Area menu")} shortcuts={[[cmd, "B"]]}>
                         <p className="hint">{lf("Then press an area's number, or Tab to it and press Enter")}</p>
@@ -37,7 +35,7 @@ const KeyboardControlsHelp = () => {
                     <Row name={lf("Next block stack")} shortcuts={[names.NEXT_STACK]} />
                     <Row name={lf("Previous block stack")} shortcuts={[names.PREVIOUS_STACK]} />
                     <Row name={lf("Select workspace")} shortcuts={[names.FOCUS_WORKSPACE]} />
-                    <Row name={lf("Open context menu")} shortcuts={[names.MENU]} />
+                    <Row name={lf("Context menu")} shortcuts={[names.MENU]} />
                     <Row name={lf("Format code")} shortcuts={[names.CLEANUP]} />
                     <Row name={lf("Undo / redo")} shortcuts={[names.UNDO, names.REDO]} joiner="/" />
                     {pxt.canDownload() &&
@@ -45,6 +43,9 @@ const KeyboardControlsHelp = () => {
                     <Row name={lf("Toolbox")} shortcuts={[names.FOCUS_TOOLBOX]} />
                     {pxt.appTarget.simulator &&
                         <Row name={lf("Start or stop simulator")} shortcuts={[["S"]]} />}
+                    <Row name={lf("Screen reader mode")} shortcuts={[names.TOGGLE_SCREENREADER]}>
+                        <p className="hint">{lf("Additional audio cues and navigation aids for screen reader users")}</p>
+                    </Row>
                 </tbody>
             </table>
             <h3>{lf("Toolbox")}</h3>
@@ -78,7 +79,7 @@ const KeyboardControlsHelp = () => {
                 <tbody>
                     <Row name={lf("Move to positions")} shortcuts={[names.NAVIGATE_UP, names.NAVIGATE_DOWN, names.NAVIGATE_LEFT, names.NAVIGATE_RIGHT]} />
                     <Row name={lf("Move anywhere")}>
-                        {lf("Hold {0} and press arrow keys", cmd)}
+                        {jsxLF(lf("Hold {0} and press arrow keys"), <Key value={cmd} />)}
                     </Row>
                     <Row name={lf("Confirm")} {...enterOrSpace} />
                     <Row name={lf("Cancel")} shortcuts={[names.ABORT_MOVE]} />
@@ -175,6 +176,10 @@ const Key = ({ value }: { value: string }) => {
         }
         case "⌥": {
             aria = lf("Option");
+            break;
+        }
+        case CONTROL_KEY_SHORT: {
+            aria = Blockly.Msg['CONTROL_KEY'];
             break;
         }
     }

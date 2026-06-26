@@ -366,6 +366,10 @@ namespace ts.pxtc {
                     }
                 }
             }
+
+            if (si.attributes.ariaLabel) {
+                locStrings[`${si.qName}|ariaLabel`] = si.attributes.ariaLabel;
+            }
         }
         const mapLocs = (m: pxt.Map<string>, name: string) => {
             if (!options.locs) return;
@@ -385,6 +389,7 @@ namespace ts.pxtc {
         if (options.locs)
             enumMembers.forEach(em => {
                 if (em.attributes.block) locStrings[`${em.qName}|block`] = em.attributes.block;
+                if (em.attributes.ariaLabel) locStrings[`${em.qName}|ariaLabel`] = em.attributes.ariaLabel;
                 if (em.attributes.jsDoc) locStrings[em.qName] = em.attributes.jsDoc;
             });
         mapLocs(locStrings, "");
@@ -1442,7 +1447,8 @@ namespace ts.pxtc.service {
         for (let k of Object.keys(newFS))
             host.setFile(k, newFS[k]) // update version numbers
         res.fileSystem = U.flatClone(newFS)
-        if (res.diagnostics.length == 0) {
+        if (!hasBlockingDiagnostics(host.opts, res.diagnostics)) {
+            const conversionDiagnostics = res.diagnostics
             host.opts.skipPxtModulesEmit = false
             host.opts.skipPxtModulesTSC = false
             const currKey = host.opts.target.isNative ? "native" : "js"
@@ -1461,8 +1467,9 @@ namespace ts.pxtc.service {
                 sourceMap: res.sourceMap,
                 fileSystem: res.fileSystem,
                 ...ts2asm,
+                diagnostics: conversionDiagnostics.concat(ts2asm.diagnostics),
             }
-            if (res.needsFullRecompile || ((!res.success || res.diagnostics.length) && host.opts.clearIncrBuildAndRetryOnError)) {
+            if (res.needsFullRecompile || ((!res.success || hasBlockingDiagnostics(host.opts, res.diagnostics)) && host.opts.clearIncrBuildAndRetryOnError)) {
                 pxt.debug("triggering full recompile")
                 pxt.tickEvent("compile.fullrecompile")
                 host.opts.skipPxtModulesEmit = false;
@@ -1470,6 +1477,7 @@ namespace ts.pxtc.service {
                 res = {
                     sourceMap: res.sourceMap,
                     ...ts2asm,
+                    diagnostics: conversionDiagnostics.concat(ts2asm.diagnostics),
                 }
             }
             if (res.diagnostics.every(d => !isPxtModulesFilename(d.fileName)))

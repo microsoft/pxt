@@ -184,9 +184,22 @@ span.blocklyTreeLabel, text.blocklyText {
 *******************************/
 
 /* Blockly Search bar */
-.blocklySearchInputField {
+.ui.input > input.blocklySearchInputField {
     border: 0 !important;
     border-radius: 0 !important;
+
+    &::-webkit-input-placeholder {
+        color: var(--pxt-neutral-alpha50);
+    }
+    &:-moz-placeholder {
+        color: var(--pxt-neutral-alpha50);
+    }
+    &::-moz-placeholder {
+        color: var(--pxt-neutral-alpha50);
+    }
+    &:-ms-input-placeholder {
+        color: var(--pxt-neutral-alpha50);
+    }
 }
 
 @media only screen and (max-width: @largestMobileScreen) {

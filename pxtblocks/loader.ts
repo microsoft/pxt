@@ -538,7 +538,8 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
                                     height: 36,
                                     value: v.name
                                 } : k,
-                                v.namespace + "." + v.name
+                                v.namespace + "." + v.name,
+                                v.attributes.ariaLabel
                             ];
                         });
                         // if a value is provided, move it first

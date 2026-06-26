@@ -269,11 +269,17 @@ export const TimeMachine = (props: TimeMachineProps) => {
                             {selected ? formatFullDate(selected.timestamp) : lf("Now")}
                         </div>
                         <Button
+                            className="square-on-mobile"
+                            labelClassName="mobile-hidden"
+                            leftIcon="fas fa-save mobile-only"
                             label={lf("Save a copy")}
                             title={lf("Save a copy")}
                             onClick={onSaveCopySelect}
                         />
                         <Button
+                            className="square-on-mobile"
+                            labelClassName="mobile-hidden"
+                            leftIcon="fas fa-undo mobile-only"
                             label={lf("Restore")}
                             title={lf("Restore")}
                             onClick={onGoPressed}
@@ -302,13 +308,13 @@ export const TimeMachine = (props: TimeMachineProps) => {
                         {lf("Version History")}
                     </h3>
                     <div className="time-machine-tree-container">
-                        <Tree>
+                        <Tree title={lf("Version History Timeline")}>
                             {entries.map((e, i) =>
                                 <TreeItem key={i} initiallyExpanded={i === 0}>
                                     <TreeItemBody>
                                         {e.label}
                                     </TreeItemBody>
-                                    <Tree role="group">
+                                    <Tree role="group" title={lf("Versions from {0}", e.label)}>
                                         {e.entries.map((entry, index) => {
                                             const isSelected = (!selected && entry.timestamp === -1) ||
                                                 (selected?.kind === entry.kind && selected?.timestamp === entry.timestamp);
