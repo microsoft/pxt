@@ -193,6 +193,7 @@ export class FieldImageDropdown extends FieldDropdownGrid implements FieldCustom
                 button.setAttribute('data-value', value);
                 buttonImg.setAttribute('data-value', value);
                 buttonImg.setAttribute('aria-hidden', 'true');
+                button.title = content.alt;
                 button.appendChild(buttonImg);
                 this.gridItems.push(button);
                 buttonContainer.appendChild(button);

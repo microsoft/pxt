@@ -110,6 +110,7 @@ export class FieldImages extends FieldImageDropdown implements FieldCustom {
             button.setAttribute('data-value', value);
             buttonImg.setAttribute('data-value', value);
             buttonImg.setAttribute('aria-hidden', 'true');
+            button.title = content.alt;
             button.appendChild(buttonImg);
             if (this.addLabel_) {
                 const buttonText = this.createTextNode_(content.alt);
