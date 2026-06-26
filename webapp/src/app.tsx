@@ -223,6 +223,7 @@ export class ProjectView
         this.openDeviceSerial = this.openDeviceSerial.bind(this);
         this.openSerial = this.openSerial.bind(this);
         this.toggleGreenScreen = this.toggleGreenScreen.bind(this);
+        this.toggleScreenReaderMode = this.toggleScreenReaderMode.bind(this);
         this.toggleSimulatorFullscreen = this.toggleSimulatorFullscreen.bind(this);
         this.toggleSimulatorCollapse = this.toggleSimulatorCollapse.bind(this);
         this.showKeymap = this.showKeymap.bind(this);
@@ -487,7 +488,11 @@ export class ProjectView
             } else if (this.state.resumeOnVisibility) {
                 this.setState({ resumeOnVisibility: false });
                 // We did a save when the page was hidden, no need to save again.
-                this.runSimulator();
+                // Use background: true to avoid calling beforeCompile, which would
+                // close any open field editors (e.g., text input on a block).
+                // This is important for embedded browsers like Grid 3 where page
+                // changes cause brief visibility changes but the user is still editing.
+                this.runSimulator({ background: true });
                 cmds.maybeReconnectAsync(false, true);
             } else if (!this.state.home) {
                 cmds.maybeReconnectAsync(false, true);
@@ -718,12 +723,8 @@ export class ProjectView
         pxt.shell.setEditorLanguagePref("js");
     }
 
-    openBlocks(showKeyboardControlsHint?: boolean) {
+    openBlocks() {
         if (this.updatingEditorFile) return; // already transitioning
-
-        if (showKeyboardControlsHint) {
-            this.blocksEditor.pendingKeyboardControlsHint = true;
-        }
 
         if (this.isBlocksActive()) {
             if (this.state.embedSimView) this.setState({ embedSimView: false });
@@ -1126,7 +1127,7 @@ export class ProjectView
 
     public async componentDidMount() {
         this.allEditors.forEach(e => e.prepare())
-        await simulator.initAsync(getBoardView(), {
+        await simulator.initAsync({
             orphanException: brk => {
                 // TODO: start debugging session
                 // TODO: user friendly error message
@@ -3078,7 +3079,7 @@ export class ProjectView
         }
 
         if (options.dependencies) {
-            Util.jsonMergeFrom(cfg.dependencies, options.dependencies)
+            cfg.dependencies = pxt.tutorial.mergeTutorialDependencies(cfg.dependencies, options.dependencies);
         }
         if (options.extensionUnderTest) {
             const ext = workspace.getHeader(options.extensionUnderTest);
@@ -5320,6 +5321,14 @@ export class ProjectView
         this.setColorThemeById(on ? pxt.appTarget.appTheme.highContrastColorTheme : pxt.appTarget.appTheme.defaultColorTheme, true);
     }
 
+    async toggleScreenReaderMode(eventSource: string) {
+        const nextEnabled = !this.getData<boolean>(auth.SCREEN_READER_MODE);
+        await core.setScreenReaderMode(nextEnabled, eventSource);
+        if (this.blocksEditor) {
+            this.blocksEditor.setScreenReaderMode(nextEnabled, eventSource === "shortcut" ? "shortcut" : "menu");
+        }
+    }
+
     toggleGreenScreen() {
         const greenScreenOn = !this.state.greenScreen;
 
@@ -5713,10 +5722,6 @@ function render() {
 
 function getEditor() {
     return theEditor
-}
-
-function getBoardView() {
-    return document.getElementById("boardview");
 }
 
 function parseLocalToken() {

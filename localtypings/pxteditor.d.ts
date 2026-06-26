@@ -915,7 +915,7 @@ declare namespace pxt.editor {
         forceUpdate(): void;
 
         reloadEditor(): void;
-        openBlocks(showKeyboardControlsHint?: boolean): void;
+        openBlocks(): void;
         openJavaScript(giveFocusOnLoading?: boolean): void;
         openPython(giveFocusOnLoading?: boolean): void;
         openAssets(): void;
@@ -1048,6 +1048,7 @@ declare namespace pxt.editor {
 
         toggleHighContrast(): void;
         setHighContrast(on: boolean): void;
+        toggleScreenReaderMode(eventSource: string): void;
         toggleGreenScreen(): void;
         launchFullEditor(): void;
         resetWorkspace(): void;

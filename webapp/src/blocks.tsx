@@ -62,7 +62,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     loadingXmlPromise: Promise<any>;
     compilationResult: pxtblockly.BlockCompilationResult;
     shouldFocusWorkspace = false;
-    pendingKeyboardControlsHint = false;
     functionsDialog: CreateFunctionDialog = null;
 
     showCategories: boolean = true;
@@ -92,7 +91,18 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.createTourFromResponse = this.createTourFromResponse.bind(this)
         this.getErrorHelp = this.getErrorHelp.bind(this)
         this.startDebugger = this.startDebugger.bind(this);
+
+        document.addEventListener("keydown", this.trackKeyboardInput, true);
+        document.addEventListener("pointerdown", this.trackPointerInput, true);
     }
+
+    private lastInputModality: "keyboard" | "pointer";
+    private trackKeyboardInput = () => {
+        this.lastInputModality = "keyboard";
+    };
+    private trackPointerInput = () => {
+        this.lastInputModality = "pointer";
+    };
     setBreakpointsMap(breakpoints: pxtc.Breakpoint[], procCallLocations: pxtc.LocationInfo[]): void {
         if (!breakpoints || !this.compilationResult) return;
         const blockToAllBreakpoints: { [index: string]: pxtc.Breakpoint[] } = {};
@@ -705,11 +715,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 if (focused instanceof Blockly.BlockSvg && shouldDuplicateOnDrag(focused)) {
                     return !workspace.isReadOnly() && !workspace.isDragging();
                 }
-                // Workaround: https://github.com/RaspberryPiFoundation/blockly/issues/9963
-                if (focused instanceof Blockly.BlockSvg && focused.isShadow()) {
-                    workspace.getAudioManager().playErrorBeep();
-                    return false;
-                }
                 return disconnectShortcut.preconditionFn!(workspace, scope);
             },
             callback: (workspace, e, shortcut, scope) => {
@@ -727,6 +732,22 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 return disconnectShortcut.callback!(workspace, e, shortcut, scope);
             }
         });
+
+        // Route Blockly's built-in screenreader toggle (Ctrl/Cmd+Alt+Z) through
+        // MakeCode's persistent setting so the keyboard shortcut, the Settings
+        // menu checkbox, and the stored preference all stay in sync.
+        const toggleScreenreader = Blockly.ShortcutRegistry.registry.getRegistry()[Blockly.ShortcutItems.names.TOGGLE_SCREENREADER];
+        if (toggleScreenreader) {
+            Blockly.ShortcutRegistry.registry.unregister(toggleScreenreader.name);
+            Blockly.ShortcutRegistry.registry.register({
+                ...toggleScreenreader,
+                callback: (workspace, e) => {
+                    this.parent.toggleScreenReaderMode("shortcut");
+                    e.preventDefault();
+                    return true;
+                }
+            });
+        }
 
         Blockly.ShortcutRegistry.registry.register({
             name: "toggle_simulator",
@@ -834,6 +855,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         Blockly.config.connectingSnapRadius = 96;
         this.editor = Blockly.inject(blocklyDiv, this.getBlocklyOptions(forceHasCategories)) as Blockly.WorkspaceSvg;
         pxtblockly.contextMenu.setupWorkspaceContextMenu(this.editor);
+
+        (this.editor.getSvgGroup() as SVGElement).addEventListener("focusin", this.onWorkspaceFocus);
 
         // set Blockly Colors
         (async () => {
@@ -958,6 +981,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         initCopyPaste();
         this.initKeyboardControls();
         this.initWorkspaceSearch();
+        this.setScreenReaderMode(data.getData<boolean>(auth.SCREEN_READER_MODE));
         this.setupIntersectionObserver();
         this.resize();
 
@@ -1033,12 +1057,51 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     focusWorkspace() {
         (this.editor.getSvgGroup() as SVGElement).focus();
         Blockly.hideChaff();
+    }
 
-        if (this.pendingKeyboardControlsHint) {
-            this.pendingKeyboardControlsHint = false;
+    // Screen reader mode is the MakeCode-persisted equivalent of Blockly's
+    // built-in screenreader toggle: it disables navigation looping (so screen
+    // reader users hit a clear start/end) and enables audio cues when keyboard
+    // navigation changes nesting level.
+    setScreenReaderMode(enabled: boolean, hintStyle?: "shortcut" | "menu") {
+        if (!this.editor) return;
+        Blockly.keyboardNavigationController.setScopeChangeAudioCuesEnabled(enabled);
+        this.editor.getNavigator().setNavigationLoops(!enabled);
+        (this.editor.getToolbox() as Blockly.Toolbox)?.getNavigator()?.setNavigationLoops(!enabled);
+        this.editor.getFlyout()?.getWorkspace().getNavigator().setNavigationLoops(!enabled);
+        if (hintStyle) this.showScreenReaderModeHint(enabled, hintStyle);
+    }
+
+    private showScreenReaderModeHint(enabled: boolean, hintStyle: "shortcut" | "menu") {
+        if (!this.editor) return;
+        let message: string;
+        if (hintStyle === "shortcut") {
+            const template = enabled
+                ? Blockly.Msg["SCREENREADER_MODE_ENABLED"]
+                : Blockly.Msg["SCREENREADER_MODE_DISABLED"];
+            if (!template) return;
+            const shortcut = getShortcutKeysShort(Blockly.ShortcutItems.names.TOGGLE_SCREENREADER);
+            message = shortcut ? template.replace("%1", shortcut) : template;
+        } else {
+            message = enabled
+                ? lf("Screen reader mode on")
+                : lf("Screen reader mode off");
+        }
+        Blockly.Toast.show(this.editor, {
+            message,
+            duration: 7,
+            id: "screenreaderModeHint",
+        });
+    }
+
+    private workspaceHasBeenFocused = false;
+    private onWorkspaceFocus = () => {
+        if (this.workspaceHasBeenFocused) return;
+        this.workspaceHasBeenFocused = true;
+        if (this.lastInputModality === "keyboard") {
             this.showKeyboardControlsHint();
         }
-    }
+    };
 
     showKeyboardControlsHint() {
         if (!this.editor || !Blockly.Msg["HELP_PROMPT"]) return;

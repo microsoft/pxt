@@ -21,7 +21,7 @@ export interface UiProps {
     role?: string;
     title?: string;
     ariaLabel?: string;
-    ariaHasPopup?: boolean | "dialog" | "menu" | "false" | "listbox" | "grid" | "tree" | "true";
+    ariaHasPopup?: React.AriaAttributes["aria-haspopup"];
     ariaHidden?: boolean;
     tabIndex?: number;
     rightIcon?: boolean;
@@ -327,14 +327,17 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
 
     renderCore() {
         const { disabled, title, role, icon, className, titleContent, children,
-            displayAbove, displayLeft, displayRight, dataTooltip } = this.props;
+            displayAbove, displayLeft, displayRight, dataTooltip, ariaHasPopup } = this.props;
         const { open } = this.state;
 
+        const hasPopup = ariaHasPopup ?? !disabled;
         const aria = {
             'role': role || 'combobox',
             'aria-disabled': disabled,
-            'aria-haspopup': !disabled,
-            ...(role !== 'option' && { 'aria-expanded': open }) // Exclude aria-expanded when the dropdown is an option
+            'aria-haspopup': hasPopup,
+            // Exclude aria-expanded when the dropdown is an option, or when it opens a dialog
+            // (the dialog is modal and not a region owned/expanded by this control).
+            ...(role !== 'option' && hasPopup !== 'dialog' && { 'aria-expanded': open })
             }
         const menuAria = {
             'role': 'menu',
@@ -467,7 +470,7 @@ export class Item extends data.Component<ItemProps, {}> {
             <div className={genericClassName("ui item link", this.props, true) + ` ${this.props.active ? 'active' : ''}`}
                 role={this.props.role}
                 aria-label={(!this.props.role || this.props.role === "presentation") ? "" : ariaLabel || title || text}
-                aria-selected={this.props.active}
+                aria-selected={this.props.role === "option" ? this.props.active : undefined}
                 aria-hidden={ariaHidden}
                 aria-haspopup={ariaHasPopup}
                 title={title || text}

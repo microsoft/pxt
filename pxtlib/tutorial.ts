@@ -619,4 +619,17 @@ ${code}
         if (!metadata) return false;
         return !!(metadata.hideFromProjects || metadata.hideIteration);
     }
+
+    export function mergeTutorialDependencies(projectDependencies: pxt.Map<string>, tutorialDependencies: pxt.Map<string>): pxt.Map<string> {
+        const merged: pxt.Map<string> = { ...projectDependencies };
+        for (const dep of Object.keys(tutorialDependencies)) {
+            const ver = tutorialDependencies[dep];
+            if (ver.toLowerCase() === "remove") {
+                delete merged[dep];
+            } else {
+                merged[dep] = ver;
+            }
+        }
+        return merged;
+    }
 }
