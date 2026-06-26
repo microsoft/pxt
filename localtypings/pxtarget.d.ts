@@ -263,7 +263,7 @@ declare namespace pxt {
     }
 
     interface InstrumentInstructions {
-        callees: string[]   // ["basic.showString","basic.showNumber"]
+        output: string[]   // ["basic.showString","basic.showNumber"]
     }
 
 

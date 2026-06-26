@@ -369,7 +369,7 @@ export function run(pkg: pxt.MainPackage, debug: boolean,
         activePlayer: playerNumber,
         theme: theme,
         physicalSimulator: pxt.appTarget.appTheme.physicalSimulator,
-        instrument: pxt.appTarget.simulator?.instrument?.callees || []
+        instrument: pxt.appTarget.simulator?.instrument?.output || []
     }
     //if (pxt.options.debug)
     //    pxt.debug(JSON.stringify(opts, null, 2))
