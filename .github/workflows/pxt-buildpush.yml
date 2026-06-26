@@ -9,6 +9,11 @@ on:
   pull_request:
     branches:
       - '**' # Run workflow for pull requests targeting any branch
+  merge_group:
+    branches:
+      - '**' # Run workflow for merge queue checks targeting any branch
+    types:
+      - checks_requested
 
 permissions:
   contents: write
