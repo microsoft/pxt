@@ -9,6 +9,7 @@ import { fireClickOnEnter } from "./util";
 
 import IFile = pxt.editor.IFile;
 import ISettingsProps = pxt.editor.ISettingsProps;
+import { classList } from "../../react-common/components/util";
 
 interface FileListState {
     currentFile?: IFile;
@@ -215,12 +216,12 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                     previewUrl={previewUrl}
                     shareUrl={shareUrl}
                     addLocalizedFile={addLocale && localized}
-                    className={(currentFile == file ? "active " : "") + (pkg.isTopLevel() ? "" : "nested ") + (folder ? "folderitem " : "") + "item"}
+                    className={classList(currentFile === file && "active", !pkg.isTopLevel() && "nested", folder && "folderitem", "item")}
+                    locked={meta.isReadonly}
                 >
                     {file.name.slice(nameStart)}
                     {showStar ? "*" : ""}
                     {meta.isGitModified ? " ↑" : ""}
-                    {meta.isReadonly ? <sui.Icon icon="lock" /> : null}
                 </FileTreeItem>);
         })
     }
@@ -240,17 +241,25 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
         const meta: pkg.PackageMeta = this.getData("open-pkg-meta:" + p.getPkgId());
         let version = gh ? p.getKsPkg().verArgument().split('#')[1] : undefined; // extract github tag
         if (version && version.length > 20) version = version.substring(0, 7);
-        return [<PackgeTreeItem key={"hd-" + pkgid}
-            pkg={p} isActive={expandedPkg == pkgid} onItemClick={this.togglePkg}
-            hasDelete={del} onItemRemove={this.removePkg}
-            version={version} hasRefresh={upd} onItemRefresh={this.updatePkg} >
-            {!meta.numErrors ? null : <span className='ui label red'>{meta.numErrors}</span>}
-            {pkgid}
-            {expandedPkg == pkgid ?
-                <div role="group" className="menu">
+        const headerItem = (
+            <PackageTreeItem key={"hd-" + pkgid}
+                pkg={p} isActive={expandedPkg == pkgid} onItemClick={this.togglePkg}
+                hasDelete={del} onItemRemove={this.removePkg}
+                version={version} hasRefresh={upd} onItemRefresh={this.updatePkg} >
+                {!meta.numErrors ? null : <span className='ui label red'>{meta.numErrors}</span>}
+                {pkgid}
+            </PackageTreeItem>
+        );
+
+        const result = [headerItem];
+        if (expandedPkg == pkgid) {
+            result.push(
+                <div key={"grp-" + pkgid} role="group" className="menu">
                     {this.filesOf(p)}
-                </div> : undefined}
-        </PackgeTreeItem>]
+                </div>
+            );
+        }
+        return result;
     }
 
     private packageContainsFile(pkg: pkg.EditorPackage, f: IFile) {
@@ -396,15 +405,41 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
         const mainPkg = pkg.mainEditorPkg()
         const plus = showFiles && !pxt.shell.isReadOnly() && (!mainPkg.files[customFile] || pxt.appTarget.appTheme.addNewTypeScriptFile);
         const meta: pkg.PackageMeta = this.getData("open-pkg-meta:" + mainPkg.getPkgId());
-        return <div role="tree" className={`ui tiny vertical ${targetTheme.invertedMenu ? `inverted` : ''} menu filemenu landscape only hidefullscreen`}>
-            <div role="treeitem" aria-selected={showFiles} aria-expanded={showFiles} aria-label={lf("File explorer toolbar")} key="projectheader" className="link item" onClick={this.toggleVisibility} tabIndex={0} onKeyDown={fireClickOnEnter}>
-                {lf("Explorer")}
-                <sui.Icon icon={`chevron ${showFiles ? "up" : "down"} icon`} />
-                {plus ? <sui.Button className="neutral label" icon="plus" title={lf("Add custom blocks?")} onClick={this.handleCustomBlocksClick} onKeyDown={this.handleButtonKeydown} /> : undefined}
-                {!meta.numErrors ? null : <span className='ui label red'>{meta.numErrors}</span>}
+        return (
+            <div
+                role="tree"
+                className={`ui tiny vertical ${targetTheme.invertedMenu ? `inverted` : ''} menu filemenu landscape only hidefullscreen`}
+            >
+                <div
+                    role="treeitem"
+                    aria-selected={showFiles}
+                    aria-expanded={showFiles}
+                    aria-label={lf("File explorer toolbar")}
+                    key="projectheader"
+                    className="link item file-list-item"
+                    onClick={this.toggleVisibility}
+                    tabIndex={0}
+                    onKeyDown={fireClickOnEnter}
+                >
+                    <div className="file-list-item-contents">
+                        {lf("Explorer")}
+                    </div>
+                    {meta.numErrors ?
+                        <div className="ui label red">{meta.numErrors}</div> : undefined}
+                    {plus ?
+                        <sui.Button
+                            className="neutral label"
+                            icon="plus"
+                            title={lf("Add custom blocks?")}
+                            onClick={this.handleCustomBlocksClick}
+                            onKeyDown={this.handleButtonKeydown}
+                        /> : undefined
+                    }
+                    <sui.Icon icon={`chevron ${showFiles ? "up" : "down"} icon`} />
+                </div>
+                {showFiles ? pxt.Util.concat(pkg.allEditorPkgs().map(p => this.filesWithHeader(p))) : undefined}
             </div>
-            {showFiles ? pxt.Util.concat(pkg.allEditorPkgs().map(p => this.filesWithHeader(p))) : undefined}
-        </div>;
+        );
     }
 }
 
@@ -424,15 +459,22 @@ class FolderTreeItem extends sui.StatelessUIElement<FolderTreeItemProps> {
         if (!folder)
             return children;
 
-        return <>
-            <div className="folder item" role="treeitem"
-                aria-selected={false}
-                aria-label={lf("Files in folder {0}", folder)}>
-                <i className="folder open outline icon"></i>
-                {folder}
-            </div>
-            {children}
-        </>
+        return (
+            <>
+                <div
+                    className="item file-list-item"
+                    role="treeitem"
+                    aria-selected={false}
+                    aria-label={lf("Files in folder {0}", folder)}
+                >
+                    <div className="file-list-item-contents">
+                        {folder}
+                    </div>
+                    <i className="folder open outline icon"/>
+                </div>
+                {children}
+            </>
+        );
     }
 }
 interface FileTreeItemProps {
@@ -448,6 +490,7 @@ interface FileTreeItemProps {
     shareUrl?: string;
     addLocalizedFile?: string;
     className?: string;
+    locked?: boolean;
 }
 
 class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
@@ -513,29 +556,71 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
     }
 
     renderCore() {
-        const { isActive, hasDelete, file, meta, previewUrl, shareUrl, addLocalizedFile, className } = this.props;
+        const { isActive, hasDelete, file, meta, previewUrl, shareUrl, addLocalizedFile, className, locked } = this.props;
 
-        return <a
-            onClick={this.handleClick}
-            tabIndex={0}
-            role="treeitem"
-            aria-selected={isActive}
-            aria-label={isActive ? lf("{0}, it is the current opened file in the JavaScript editor", file.name) : file.name}
-            onKeyDown={fireClickOnEnter}
-            className={className}>
-            {this.props.children}
-            {hasDelete && <sui.Button className="neutral label" icon="trash"
-                title={lf("Delete file {0}", file.name)}
-                onClick={this.handleRemove}
-                onKeyDown={this.handleButtonKeydown} />}
-            {meta && meta.numErrors ? <span className='ui label red button' role="button" title={lf("Go to error")}>{meta.numErrors}</span> : undefined}
-            {shareUrl && <sui.Button className="button neutral label" icon="share alternate" title={lf("Share")} onClick={this.handleShare} onKeyDown={fireClickOnEnter} />}
-            {previewUrl && <sui.Button className="button neutral label" icon="flask" title={lf("Preview")} onClick={this.handlePreview} onKeyDown={fireClickOnEnter} />}
-            {!!addLocalizedFile && <sui.Button className="neutral label" icon="xicon globe"
-                title={lf("Add localized file")}
-                onClick={this.handleAddLocale}
-                onKeyDown={this.handleButtonKeydown} />}
-        </a>
+        return (
+            <a
+                onClick={this.handleClick}
+                tabIndex={0}
+                role="treeitem"
+                aria-selected={isActive}
+                aria-label={isActive ? lf("{0}, it is the current opened file in the JavaScript editor", file.name) : file.name}
+                onKeyDown={fireClickOnEnter}
+                className={classList("file-list-item", className)}
+            >
+                <div className="file-list-item-contents">
+                    {this.props.children}
+                </div>
+                {!!addLocalizedFile &&
+                    <sui.Button
+                        className="neutral label"
+                        icon="xicon globe"
+                        title={lf("Add localized file")}
+                        onClick={this.handleAddLocale}
+                        onKeyDown={fireClickOnEnter}
+                    />
+                }
+                {previewUrl &&
+                    <sui.Button
+                        className="button neutral label"
+                        icon="flask"
+                        title={lf("Preview")}
+                        onClick={this.handlePreview}
+                        onKeyDown={fireClickOnEnter}
+                    />
+                }
+                {shareUrl &&
+                    <sui.Button
+                        className="button neutral label"
+                        icon="share alternate"
+                        title={lf("Share")}
+                        onClick={this.handleShare}
+                        onKeyDown={fireClickOnEnter}
+                    />
+                }
+                {meta && meta.numErrors ?
+                    <div
+                        className="ui label red button"
+                        role="button"
+                        title={lf("Go to error")}
+                    >
+                        {meta.numErrors}
+                    </div> : undefined
+                }
+                {hasDelete &&
+                    <sui.Button
+                        className="neutral label"
+                        icon="trash"
+                        title={lf("Delete file {0}", file.name)}
+                        onClick={this.handleRemove}
+                        onKeyDown={fireClickOnEnter}
+                    />
+                }
+                {locked &&
+                    <sui.Icon icon="lock" />
+                }
+            </a>
+        )
     }
 }
 
@@ -550,7 +635,7 @@ interface PackageTreeItemProps {
     hasDelete?: boolean;
 }
 
-class PackgeTreeItem extends sui.StatelessUIElement<PackageTreeItemProps> {
+class PackageTreeItem extends sui.StatelessUIElement<PackageTreeItemProps> {
     constructor(props: PackageTreeItemProps) {
         super(props);
 
@@ -582,17 +667,48 @@ class PackgeTreeItem extends sui.StatelessUIElement<PackageTreeItemProps> {
         const { onItemClick, onItemRemove, onItemRefresh, version, // keep these to avoid warnings with ...rest
             isActive, hasRefresh, hasDelete, pkg: p, ...rest } = this.props;
 
-        return <div className="header link item" role="treeitem"
-            aria-selected={isActive} aria-expanded={isActive}
-            aria-label={lf("{0}, {1}", p.getPkgId(), isActive ? lf("expanded") : lf("collapsed"))}
-            onClick={this.handleClick} tabIndex={0} onKeyDown={fireClickOnEnter} {...rest}>
-            <sui.Icon icon={`chevron ${isActive ? "up" : "down"} icon`} />
-            {hasRefresh ? <sui.Button className="neutral label" icon="refresh" title={lf("Refresh extension {0}", p.getPkgId())}
-                onClick={this.handleRefresh} onKeyDown={this.handleButtonKeydown} text={version || ''}></sui.Button>
-                : version ? <span className="label" style={{background: 'transparent'}}>{version}</span> : undefined}
-            {hasDelete ? <sui.Button className="neutral label" icon="trash" title={lf("Delete extension {0}", p.getPkgId())}
-                onClick={this.handleRemove} onKeyDown={this.handleButtonKeydown} /> : undefined}
-            {this.props.children}
-        </div>
+        return (
+            <div
+                className="header link item file-list-item"
+                role="treeitem"
+                aria-selected={isActive}
+                aria-expanded={isActive}
+                aria-label={lf("{0}, {1}", p.getPkgId(), isActive ? lf("expanded") : lf("collapsed"))}
+                onClick={this.handleClick}
+                tabIndex={0}
+                onKeyDown={fireClickOnEnter}
+                {...rest}
+            >
+                <div className="file-list-item-contents">
+                    {this.props.children}
+                </div>
+                {hasDelete ?
+                    <sui.Button
+                        className="neutral label"
+                        icon="trash"
+                        title={lf("Delete extension {0}", p.getPkgId())}
+                        onClick={this.handleRemove}
+                        onKeyDown={this.handleButtonKeydown}
+                    /> : undefined
+                }
+                {hasRefresh ?
+                    <sui.Button
+                        className="neutral label"
+                        icon="refresh"
+                        title={lf("Refresh extension {0}", p.getPkgId())}
+                        onClick={this.handleRefresh}
+                        onKeyDown={this.handleButtonKeydown}
+                        text={version || ''}>
+                    </sui.Button>
+                    : version ?
+                        <div
+                            className="label"
+                            style={{ background: 'transparent' }}>
+                            {version}
+                        </div> : undefined
+                }
+                <sui.Icon icon={`chevron ${isActive ? "up" : "down"} icon`} />
+            </div>
+        )
     }
 }
