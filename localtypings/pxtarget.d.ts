@@ -980,6 +980,7 @@ declare namespace ts.pxtc {
         enumIsHash?: boolean; // if true, the name of the enum is normalized, then hashed to generate the value
         enumPromptHint?: string; // The hint that will be displayed in the member creation prompt
         enumInitialMembers?: string[]; // The initial enum values which will be given the lowest values available
+        ariaLabel?: string; // The aria label for the enum value if the screen reader text should differ from the block value in dropdown items
 
         /* end enum-only attributes */
 
@@ -1017,6 +1018,7 @@ declare namespace ts.pxtc {
         _untranslatedBlock?: string; // The block definition before it was translated
         _untranslatedJsDoc?: string // the jsDoc before it was translated
         _untranslatedParamDefl?: pxt.Map<string>; // the parameter defaults before they were translated
+        _untranslatedAriaLabel?: string; // the aria label before it was translated
         _translatedLanguageCode?: string // the language this block has been translated into
         _shadowOverrides?: pxt.Map<string>;
         jsDoc?: string;
