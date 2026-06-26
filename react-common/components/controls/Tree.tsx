@@ -5,6 +5,7 @@ import { FocusList } from "./FocusList";
 
 export interface TreeProps extends ContainerProps {
     role?: "tree" | "group";
+    title?: string;
 }
 
 export interface TreeItemProps extends ContainerProps {
@@ -26,6 +27,7 @@ export const Tree = (props: TreeProps) => {
         ariaHidden,
         ariaDescribedBy,
         role,
+        title
     } = props;
 
     if (!role || role === "tree") {
@@ -37,6 +39,7 @@ export const Tree = (props: TreeProps) => {
                 aria-hidden={ariaHidden}
                 aria-describedby={ariaDescribedBy}
                 role={role || "tree"}
+                title={title}
             >
                 {children}
             </FocusList>
@@ -51,6 +54,7 @@ export const Tree = (props: TreeProps) => {
             aria-hidden={ariaHidden}
             aria-describedby={ariaDescribedBy}
             role={role || "tree"}
+            title={title}
         >
             {children}
         </div>

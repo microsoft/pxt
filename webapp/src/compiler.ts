@@ -839,6 +839,11 @@ function cleanApiForCache(apiInfo: pxtc.SymbolInfo) {
         delete cachedAttrs._untranslatedJsDoc;
         defChanged = true;
     }
+    if (cachedAttrs._untranslatedAriaLabel) {
+        cachedAttrs.ariaLabel = cachedAttrs._untranslatedAriaLabel;
+        delete cachedAttrs._untranslatedAriaLabel;
+        defChanged = true;
+    }
     if (defChanged) {
         ts.pxtc.updateBlockDef(cachedAttrs);
     }

@@ -366,6 +366,10 @@ namespace ts.pxtc {
                     }
                 }
             }
+
+            if (si.attributes.ariaLabel) {
+                locStrings[`${si.qName}|ariaLabel`] = si.attributes.ariaLabel;
+            }
         }
         const mapLocs = (m: pxt.Map<string>, name: string) => {
             if (!options.locs) return;
@@ -385,6 +389,7 @@ namespace ts.pxtc {
         if (options.locs)
             enumMembers.forEach(em => {
                 if (em.attributes.block) locStrings[`${em.qName}|block`] = em.attributes.block;
+                if (em.attributes.ariaLabel) locStrings[`${em.qName}|ariaLabel`] = em.attributes.ariaLabel;
                 if (em.attributes.jsDoc) locStrings[em.qName] = em.attributes.jsDoc;
             });
         mapLocs(locStrings, "");
