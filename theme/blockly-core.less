@@ -39,6 +39,10 @@ svg.blocklySvg {
     .injectionDiv svg {
         overflow: visible;
     }
+    .injectionDiv .blocklyWidgetDiv svg,
+    .injectionDiv .blocklyDropDownDiv svg {
+        overflow: revert;
+    }
     > div.loading {
         position: absolute;
         left: 0;
@@ -377,6 +381,11 @@ text.blocklyCheckbox {
 .blocklyComment .blocklyTextarea {
     border: none;
     color: #575E75;
+}
+
+/* Hide the comment placeholder from sighted users; it remains for screen readers. */
+.blocklyCommentText::placeholder {
+    opacity: 0;
 }
 
 /*******************************

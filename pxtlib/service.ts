@@ -706,6 +706,7 @@ namespace ts.pxtc {
         const langLower = lang.toLowerCase();
         const attrJsLocsKey = langLower + "|jsdoc";
         const attrBlockLocsKey = langLower + "|block";
+        const attrAriaLabelLocsKey = langLower + "|ariaLabel";
 
         const loc = await mainPkg.localizationStringsAsync(lang);
         if (apiLocalizationStrings)
@@ -717,7 +718,12 @@ namespace ts.pxtc {
             const altLocSrcFn = altLocSrc && apis.byQName[altLocSrc];
 
             if (fn.attributes._untranslatedJsDoc) fn.attributes.jsDoc = fn.attributes._untranslatedJsDoc;
-            if (fn.attributes._untranslatedBlock) fn.attributes.jsDoc = fn.attributes._untranslatedBlock;
+            if (fn.attributes._untranslatedBlock) fn.attributes.block = fn.attributes._untranslatedBlock;
+            if (fn.attributes._untranslatedAriaLabel) fn.attributes.ariaLabel = fn.attributes._untranslatedAriaLabel;
+            if (fn.attributes._untranslatedParamDefl) {
+                fn.attributes.paramDefl = U.clone(fn.attributes._untranslatedParamDefl);
+                syncParameterDefaults(fn);
+            }
 
             const lookupLoc = (locSuff: string, attrKey: string) => {
                 return loc[fn.qName + locSuff] || fn.attributes.locs?.[attrKey]
@@ -743,6 +749,7 @@ namespace ts.pxtc {
 
             const nsDoc = loc['{id:category}' + Util.capitalize(fn.qName)];
             let locBlock = loc[`${fn.qName}|block`] || fn.attributes.locs?.[attrBlockLocsKey];
+            const locAriaLabel = loc[`${fn.qName}|ariaLabel`] || fn.attributes.locs?.[attrAriaLabelLocsKey];
 
             if (fn.attributes.block) {
                 const comp = pxt.blocks.compileInfo(fn);
@@ -758,15 +765,30 @@ namespace ts.pxtc {
                 }
                 const paramsWithLabels = comp.thisParameter ? [comp.thisParameter, ...comp.parameters] : comp.parameters;
                 for (const param of paramsWithLabels) {
-                    if (!param.labelLocalizationKey) continue;
-
-                    const locSuff = param.labelLocalizationKey.slice(fn.qName.length);
-                    const paramLabel = lookupLoc(locSuff, langLower + locSuff);
-                    if (paramLabel) {
-                        setBlockTranslationCacheKey(param.labelLocalizationKey, paramLabel);
+                    if (param.labelLocalizationKey) {
+                        const locSuff = param.labelLocalizationKey.slice(fn.qName.length);
+                        const paramLabel = lookupLoc(locSuff, langLower + locSuff);
+                        if (paramLabel) {
+                            setBlockTranslationCacheKey(param.labelLocalizationKey, paramLabel);
+                        }
+                        else {
+                            clearBlockTranslationCacheKey(param.labelLocalizationKey);
+                        }
                     }
-                    else {
-                        clearBlockTranslationCacheKey(param.labelLocalizationKey);
+
+                    const defaultString = pxt.blocks.parameterDefaultToLocalizationString(param.defaultValue, param.type);
+                    const defaultLocalizationKey = pxt.blocks.parameterDefaultLocalizationKey(fn.qName, param.actualName);
+                    if (defaultLocalizationKey && defaultString !== undefined) {
+                        const locSuff = defaultLocalizationKey.slice(fn.qName.length);
+                        const paramDefault = lookupLoc(locSuff, langLower + locSuff);
+                        if (paramDefault !== undefined) {
+                            if (!fn.attributes._untranslatedParamDefl) {
+                                fn.attributes._untranslatedParamDefl = U.clone(fn.attributes.paramDefl || {});
+                            }
+                            if (!fn.attributes.paramDefl) fn.attributes.paramDefl = {};
+                            fn.attributes.paramDefl[param.actualName] = pxt.blocks.localizationStringToParameterDefault(paramDefault);
+                            syncParameterDefaults(fn);
+                        }
                     }
                 }
             }
@@ -829,10 +851,25 @@ namespace ts.pxtc {
             } else {
                 updateBlockDef(fn.attributes);
             }
+
+            if (locAriaLabel) {
+                if (!fn.attributes._untranslatedAriaLabel) {
+                    fn.attributes._untranslatedAriaLabel = fn.attributes.ariaLabel;
+                }
+                fn.attributes.ariaLabel = locAriaLabel;
+            }
             fn.attributes._translatedLanguageCode = lang;
         });
 
         return cleanLocalizations(apis);
+    }
+
+    function syncParameterDefaults(fn: SymbolInfo) {
+        if (!fn.parameters) return;
+
+        for (const param of fn.parameters) {
+            param.default = fn.attributes.paramDefl && fn.attributes.paramDefl[param.name];
+        }
     }
 
     function cleanLocalizations(apis: ApisInfo) {
@@ -963,6 +1000,9 @@ namespace ts.pxtc {
                     } else if (U.startsWith(n, "jsdoc.loc.")) {
                         if (!res.locs) res.locs = {};
                         res.locs[n.slice("jsdoc.loc.".length).toLowerCase() + "|jsdoc"] = v;
+                    } else if (U.startsWith(n, "ariaLabel.loc.")) {
+                        if (!res.locs) res.locs = {};
+                        res.locs[n.slice("ariaLabel.loc.".length).toLowerCase() + "|ariaLabel"] = v;
                     } else if (U.contains(n, ".loc.")) {
                         if (!res.locs) res.locs = {};
                         const p = n.slice(0, n.indexOf('.loc.'));

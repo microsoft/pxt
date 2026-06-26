@@ -136,6 +136,11 @@ namespace pxt.BrowserUtils {
         return typeof window != "undefined" && !!(window as any).pxtElectron;
     }
 
+    export function isPxtElectronWebUSBDeployEnabled(): boolean {
+        const pxtElectron = typeof window != "undefined" && (window as any).pxtElectron as pxt.electron.PxtElectron;
+        return !!pxtElectron?.capabilities?.webUSBDeploy;
+    }
+
     export function isIpcRenderer(): boolean {
         return typeof window != "undefined" && !!(window as any).ipcRenderer;
     }

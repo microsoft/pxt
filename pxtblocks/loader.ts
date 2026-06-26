@@ -538,7 +538,8 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
                                     height: 36,
                                     value: v.name
                                 } : k,
-                                v.namespace + "." + v.name
+                                v.namespace + "." + v.name,
+                                v.attributes.ariaLabel
                             ];
                         });
                         // if a value is provided, move it first
@@ -784,7 +785,9 @@ export function setOutputCheck(block: Blockly.Block, retType: string, info: pxtc
 }
 
 function initComments() {
-    Blockly.Msg.WORKSPACE_COMMENT_DEFAULT_TEXT = '';
+    // Exposed to screen readers as placeholder text, but hidden from sighted users via
+    // the .blocklyCommentText::placeholder rule in blockly-core.less (no visual change).
+    Blockly.Msg.WORKSPACE_COMMENT_DEFAULT_TEXT = lf("Add a comment");
 }
 
 function initAccessibilityMessages() {
@@ -876,6 +879,7 @@ function initAccessibilityMessages() {
         // Field type labels for screen readers.
         ARIA_TYPE_FIELD_CHECKBOX: lf("checkbox"),
         ARIA_TYPE_FIELD_DROPDOWN: lf("dropdown"),
+        ARIA_TYPE_FIELD_GRID: lf("grid dropdown"),
         ARIA_TYPE_FIELD_IMAGE: lf("image"),
         ARIA_TYPE_FIELD_INPUT: lf("{id:field type}input"),
         ARIA_TYPE_FIELD_NUMBER: lf("{id:field type}number"),

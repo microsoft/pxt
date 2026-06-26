@@ -31,6 +31,10 @@ span.blocklyTreeIcon {
     cursor: inherit;
 }
 
+.blocklyTreeInner {
+    user-select: none;
+}
+
 .blocklyToolbox.blocklyToolboxDeleting {
     background: var(--pxt-colors-red-background) !important;
     filter: brightness(1.2) saturate(0.8);
@@ -180,9 +184,22 @@ span.blocklyTreeLabel, text.blocklyText {
 *******************************/
 
 /* Blockly Search bar */
-.blocklySearchInputField {
+.ui.input > input.blocklySearchInputField {
     border: 0 !important;
     border-radius: 0 !important;
+
+    &::-webkit-input-placeholder {
+        color: var(--pxt-neutral-alpha50);
+    }
+    &:-moz-placeholder {
+        color: var(--pxt-neutral-alpha50);
+    }
+    &::-moz-placeholder {
+        color: var(--pxt-neutral-alpha50);
+    }
+    &:-ms-input-placeholder {
+        color: var(--pxt-neutral-alpha50);
+    }
 }
 
 @media only screen and (max-width: @largestMobileScreen) {

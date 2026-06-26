@@ -141,6 +141,7 @@ const areas: Area[] = [
         },
         focus(projectView: IProjectView) {
             projectView.editor.focusToolbox();
+            Blockly.keyboardNavigationController.setIsActive(true);
         }
     },
     {
@@ -176,6 +177,7 @@ const areas: Area[] = [
                 findFirstFocusableDescendant(document.querySelector("#pxtJsonEditor"))?.focus();
             } else {
                 projectView.editor.focusWorkspace();
+                Blockly.keyboardNavigationController.setIsActive(true);
             }
         }
     },

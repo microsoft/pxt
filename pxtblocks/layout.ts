@@ -407,8 +407,10 @@ export async function blocklyToSvgAsync(sg: SVGElement, x: number, y: number, wi
     const blocklySvg = pxt.Util.toArray(document.head.querySelectorAll("style"))
         .filter((el: HTMLStyleElement) => /\.blocklySvg/.test(el.innerText))[0] as HTMLStyleElement;
     // Custom CSS injected directly into the DOM by Blockly
-    customCss.unshift((document.getElementById(`blockly-common-style`) as HTMLLinkElement)?.innerText || "");
-    customCss.unshift((document.getElementById(`blockly-renderer-style-pxt-classic`) as HTMLLinkElement)?.innerText || "");
+    customCss.unshift((document.getElementById(`blockly-common-style`) as HTMLStyleElement)?.innerText || "");
+    // Blockly injects renderer styles with className="blockly-renderer-style", not an id
+    const rendererStyle = document.querySelector(`style.blockly-renderer-style`) as HTMLStyleElement;
+    customCss.unshift(rendererStyle?.innerText || "");
     // CSS may contain <, > which need to be stored in CDATA section
     const cssString = (blocklySvg ? blocklySvg.innerText : "") + '\n\n' + customCss.map(el => el + '\n\n');
     cssLink.appendChild(xsg.createCDATASection(cssString));

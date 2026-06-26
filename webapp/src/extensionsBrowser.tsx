@@ -11,6 +11,7 @@ import { ImportModal } from "../../react-common/components/extensions/ImportModa
 import { ExtensionCard } from "../../react-common/components/extensions/ExtensionCard";
 import { Modal } from "../../react-common/components/controls/Modal";
 import { classList } from "../../react-common/components/util";
+import { TabList, TabListProps } from "../../react-common/components/controls/TabList";
 
 type ExtensionMeta = pxtc.service.ExtensionMeta;
 const ExtensionType = pxtc.service.ExtensionType;
@@ -24,10 +25,10 @@ interface ExtensionsProps {
     reloadHeaderAsync: () => Promise<void>;
 }
 
-enum TabState {
-    Recommended,
-    InDevelopment
-}
+const RECOMMENDED_TAG_ID = "extensions-recommended";
+const LOCAL_TAG_ID = "extensions-local";
+const SEARCH_TAG_ID = "extensions-search-results";
+const TARGET_TAG_PREFIX = "extensions-category-";
 
 export const ExtensionsBrowser = (props: ExtensionsProps) => {
 
@@ -36,8 +37,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
     const [allExtensions, setAllExtensions] = useState(fetchBundled());
     const extensionsInDevelopment = useMemo(() => fetchLocalRepositories(), []);
     const [extensionsToShow, setExtensionsToShow] = useState<(ExtensionMeta & EmptyCard)[]>([]);
-    const [selectedTag, setSelectedTag] = useState("");
-    const [currentTab, setCurrentTab] = useState(TabState.Recommended);
+    const [currentTab, setCurrentTab] = useState(RECOMMENDED_TAG_ID);
     const [showImportExtensionDialog, setShowImportExtensionDialog] = useState(false);
     const [preferredExts, setPreferredExts] = useState<(ExtensionMeta & EmptyCard)[]>([])
     const [extensionTags, setExtensionTags] = useState(new Map<string, string[]>())
@@ -75,7 +75,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
             window.location.href = `${homeUrl}${urlPath}`;
         }
 
-        setSelectedTag("")
+        setCurrentTab(SEARCH_TAG_ID)
         setSearchComplete(false)
         setExtensionsToShow([emptyCard, emptyCard, emptyCard, emptyCard])
 
@@ -224,7 +224,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
         // we should probably persist the s id and make it updatable with a refresh.
         const shareScript = await workspace.getPublishedScriptAsync(scr.id);
         const config = pxt.Util.jsonTryParse(shareScript[pxt.CONFIG_NAME]);
-        addDepIfNoConflict({...config, version: scr.id }, `pub:${scr.id}`);
+        addDepIfNoConflict({ ...config, version: scr.id }, `pub:${scr.id}`);
     }
 
     async function fetchGithubDataAsync(preferredRepos: string[]): Promise<pxt.github.GitRepo[]> {
@@ -336,12 +336,6 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
     }
 
     async function handleCategoryClick(category: string) {
-        if (category == selectedTag) {
-            setSelectedTag("")
-            setExtensionsToShow([])
-            return;
-        }
-        setSelectedTag(category)
         setSearchFor("")
 
         const categoryExtensions = extensionTags.get(category)
@@ -379,11 +373,6 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
             pkgConfig: p,
             description: p.description
         }
-    }
-
-    function handleHomeButtonClick() {
-        setSelectedTag("")
-        setSearchFor("")
     }
 
     function fetchBundled(): Map<string, ExtensionMeta> {
@@ -494,23 +483,57 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
         />;
     }
 
-    enum ExtensionView {
-        Tabbed,
-        Search,
-        Tags
-    }
+    const onTabSelected = (id: string) => {
+        setCurrentTab(id);
 
-    let displayMode: ExtensionView;
-    if (searchFor != "") {
-        displayMode = ExtensionView.Search
-    } else if (selectedTag != "") {
-        displayMode = ExtensionView.Tags
-    } else {
-        displayMode = ExtensionView.Tabbed;
-    }
+        if (id.startsWith(TARGET_TAG_PREFIX)) {
+            const category = id.replace(TARGET_TAG_PREFIX, "")
+            handleCategoryClick(category);
+        }
+    };
 
     const categoryNames = getCategoryNames();
-    const showImportFile = pxt.BrowserUtils.hasFileAccess();
+    const panelId = "extensions-results-panel";
+
+    const tabs: TabListProps["tabs"] = [
+        {
+            id: RECOMMENDED_TAG_ID,
+            className: "extension-tag",
+            label: lf("Recommended"),
+            title: lf("Recommended Extensions"),
+            ariaControls: panelId,
+        }
+    ];
+
+    for (const category of categoryNames) {
+        tabs.push({
+            id: `${TARGET_TAG_PREFIX}${category}`,
+            className: "extension-tag",
+            label: pxt.Util.rlf(`{id:extension-tag}${category}`),
+            title: pxt.Util.rlf(`{id:extension-tag}${category}`),
+            ariaControls: panelId,
+        });
+    }
+
+    if (extensionsInDevelopment.length) {
+        tabs.push({
+            id: LOCAL_TAG_ID,
+            className: "extension-tag",
+            label: lf("Local"),
+            title: lf("Local GitHub Projects"),
+            ariaControls: panelId,
+        });
+    }
+
+    if (searchFor !== "") {
+        tabs.push({
+            id: SEARCH_TAG_ID,
+            className: "extension-tag",
+            label: lf("Search Results"),
+            title: lf("Search Results"),
+            ariaControls: panelId,
+        });
+    }
 
     return (
         <Modal
@@ -531,115 +554,53 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                     <Input
                         placeholder={lf("Search or enter project URL...")}
                         ariaLabel={lf("Search or enter project URL...")}
+                        iconTitle={lf("Search")}
                         onEnterKey={onSearchBarChange}
                         onIconClick={onSearchBarChange}
                         preserveValueOnBlur={true}
                         icon="fas fa-search"
                     />
-                    <div className="extension-tags">
-                        {categoryNames.map(c =>
-                            <Button title={pxt.Util.rlf(c)}
-                                key={c}
-                                label={pxt.Util.rlf(`{id:extension-tag}${c}`)}
-                                onClick={() => handleCategoryClick(c)}
-                                onKeydown={() => handleCategoryClick}
-                                className={"extension-tag " + (selectedTag == c ? "selected" : "")}
-                            />
-                        )}
-                    </div>
-                    {/* TODO bring in the import modal in later! <div className="importButton">
-                            <span>{lf("or ")}</span>
-                            <div className="importButtonLink" onClick={() => setShowImportExtensionDialog(true)}>{lf("import extension")}</div>
-                        </div> */}
+                    <TabList
+                        className="extension-tags"
+                        tabs={tabs}
+                        manualActivation={true}
+                        selectedId={currentTab}
+                        onTabSelected={onTabSelected}
+                        orientation="horizontal"
+                    />
                 </div>
-                <div className="extension-display">
-                    <div className="extension-header">
-                        {(displayMode == ExtensionView.Search || displayMode == ExtensionView.Tags) &&
-                            <div className="breadcrumbs">
-                                <Button
-                                    title={lf("Home")}
-                                    label={lf("Home")}
-                                    onClick={handleHomeButtonClick}
-                                    className="link-button"
-                                />
-                                {displayMode == ExtensionView.Tags &&
-                                    <>
-                                        <span>/</span>
-                                        <span>{selectedTag}</span>
-                                    </>
-                                }
-                            </div>
-                        }
-                        {displayMode == ExtensionView.Tabbed &&
-                            <div className="tab-header">
-                                {!!extensionsInDevelopment.length &&
-                                    <>
-                                        <Button
-                                            title={lf("Recommended Extensions")}
-                                            label={lf("Recommended")}
-                                            onClick={() => { setCurrentTab(TabState.Recommended) }}
-                                            className={currentTab == TabState.Recommended ? "selected" : ""}
-                                        />
-                                        <Button
-                                            title={lf("Local GitHub Projects")}
-                                            label={lf("Local")}
-                                            onClick={() => { setCurrentTab(TabState.InDevelopment) }}
-                                            className={currentTab == TabState.InDevelopment ? "selected" : ""}
-                                        />
-                                    </>}
-                                {(!extensionsInDevelopment.length && !!preferredExts.length) &&
-                                    <h2>{lf("Recommended")}</h2>
-                                }
-                            </div>
-                        }
-                        {showImportFile &&
-                            <div className="import-button">
-                                <Button
-                                    ariaLabel={(lf("Open file from your computer"))}
-                                    title={(lf("Import File"))}
-                                    label={(lf("Import File"))}
-                                    leftIcon="fas fa-upload"
-                                    className="neutral"
-                                    onClick={importExtension}
-                                />
-                            </div>
-                        }
-                    </div>
-                    {displayMode == ExtensionView.Search &&
-                        <>
-                            <div className="extension-cards">
-                                {extensionsToShow?.map(
+                <div className="extension-display" id={panelId} role="tabpanel" aria-labelledby={currentTab}>
+                    <>
+                        <div className="extension-cards">
+                            {currentTab === RECOMMENDED_TAG_ID &&
+                                preferredExts?.map(
                                     (scr, index) => <ExtensionMetaCard extensionInfo={scr} key={index} />
-                                )}
-                            </div>
-                            {searchComplete && extensionsToShow.length == 0 &&
-                                <div aria-label="Extension search results">
-                                    <p>{lf("We couldn't find any extensions matching '{0}'", searchFor)}</p>
-                                </div>
+                                )
                             }
-                        </>}
-                    {displayMode == ExtensionView.Tags &&
-                        <div className="extension-cards">
-                            {extensionsToShow?.map(
-                                (scr, index) => <ExtensionMetaCard extensionInfo={scr} key={index} />
-                            )}
-                        </div>}
-                    {displayMode == ExtensionView.Tabbed &&
-                        <div className="extension-cards">
-                            {currentTab == TabState.Recommended && preferredExts.map(
-                                (scr, index) => <ExtensionMetaCard extensionInfo={scr} key={index} />
-                            )}
-                            {currentTab == TabState.InDevelopment && extensionsInDevelopment.map((p, index) =>
-                                <ExtensionCard
-                                    key={`local:${index}`}
-                                    title={p.name}
-                                    description={lf("Local copy of {0} hosted on github.com", p.githubId)}
-                                    imageUrl={p.icon}
-                                    extension={p}
-                                    onClick={addLocal}
-                                />
-                            )}
-                        </div>}
+                            {currentTab === LOCAL_TAG_ID &&
+                                extensionsInDevelopment.map((p, index) =>
+                                    <ExtensionCard
+                                        key={`local:${index}`}
+                                        title={p.name}
+                                        description={lf("Local copy of {0} hosted on github.com", p.githubId)}
+                                        imageUrl={p.icon}
+                                        extension={p}
+                                        onClick={addLocal}
+                                    />
+                                )
+                            }
+                            {currentTab !== RECOMMENDED_TAG_ID && currentTab !== LOCAL_TAG_ID &&
+                                extensionsToShow?.map(
+                                    (scr, index) => <ExtensionMetaCard extensionInfo={scr} key={index} />
+                                )
+                            }
+                        </div>
+                        {currentTab === SEARCH_TAG_ID && searchComplete && extensionsToShow.length == 0 &&
+                            <div aria-label="Extension search results">
+                                <p>{lf("We couldn't find any extensions matching '{0}'", searchFor)}</p>
+                            </div>
+                        }
+                    </>
                 </div>
             </div>
         </Modal>

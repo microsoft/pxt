@@ -2016,7 +2016,7 @@ function cardActionButton(props: Partial<ProjectsDetailProps>, className: string
 
     // todo: Left these two specifically with the ui class from semantic
     // because messing with them too much had too many side effects
-    // for a side fix (detail card buttons, etc) 
+    // for a side fix (detail card buttons, etc)
     return asLink ? // TODO (shakao)  migrate forumurl to otherAction json in md
         <Link
             ref={autoFocus ? linkRef : undefined}
@@ -2177,40 +2177,40 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
                 closeIcon={true} header={lf("Import")}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
             >
-                <div className={`ui ${cardClass} cards`}>
+                <div className={`ui ${cardClass} stackable cards`}>
                     {showOpenFiles &&
                         <codecard.CodeCardView
                             ariaLabel={lf("Open files from your computer")}
                             role="button"
-                            key={'import'}
                             icon="upload"
                             iconColor="secondary"
                             name={lf("Import File...")}
                             description={lf("Open files from your computer")}
                             onClick={this.importHex}
-                        />}
+                        />
+                    }
                     {showImport &&
                         <codecard.CodeCardView
                             ariaLabel={lf("Open a shared project URL or GitHub repo")}
                             role="button"
-                            key={'importurl'}
                             icon="cloud download"
                             iconColor="secondary"
                             name={lf("Import URL...")}
                             description={lf("Open a shared project URL or GitHub repo")}
                             onClick={this.importUrl}
-                        />}
+                        />
+                    }
                     {showCreateGithubRepo &&
                         <codecard.CodeCardView
                             ariaLabel={lf("Clone or create your own GitHub repository")}
                             role="button"
-                            key={'importgithub'}
                             icon="github"
                             iconColor="secondary"
                             name={lf("Your GitHub Repo...")}
                             description={lf("Clone or create your own GitHub repository")}
                             onClick={this.cloneGithub}
-                        />}
+                        />
+                    }
                 </div>
             </sui.Modal>
         )
