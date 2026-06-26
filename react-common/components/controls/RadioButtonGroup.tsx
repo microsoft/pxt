@@ -7,6 +7,7 @@ export interface RadioButtonGroupProps extends ControlProps {
     choices: RadioGroupChoice[];
     selectedId: string;
     onChoiceSelected: (id: string) => void;
+    ariaLabelledby?: string;
 }
 
 export interface RadioGroupChoice {
@@ -23,10 +24,11 @@ export const RadioButtonGroup = (props: RadioButtonGroupProps) => {
         className,
         ariaHidden,
         ariaLabel,
+        ariaLabelledby,
         role,
         choices,
         selectedId,
-        onChoiceSelected
+        onChoiceSelected,
     } = props;
 
     const onChoiceClick = (id: string) => {
@@ -39,7 +41,9 @@ export const RadioButtonGroup = (props: RadioButtonGroupProps) => {
             ariaHidden={ariaHidden}
             ariaLabel={ariaLabel}
             role={role || "radiogroup"}
-            childTabStopId={selectedId}>
+            childTabStopId={selectedId}
+            ariaLabelledby={ariaLabelledby}
+        >
             {choices.map(choice =>
                 <div key={choice.id}
                     className={classList("common-radio-choice", choice.className, selectedId === choice.id && "selected" )}>
