@@ -14,24 +14,21 @@ import * as simulator from "./simulator";
 
 // TODOs:
 
-// - when we recreate sims, they disappear after a few seconds!
-// X need to handle entry into the sim from GUI
-// X keep the sprites and simulators in sync when adding/clearing boards
-//   X right now, the correspondence is based on order, which is brittle; 
-//     we should add an ID to the simulator and keep track of it in the sprite
 // - add a way to remove individual boards
 // - add a way to rename boards
-// - plumbing between simdriver and physical simulator (via psim-tunnel message
-//.  - we can make a direct call to simdriver to send a message to one of the sims (or all)
-//.  - but if we need a response from a direct call, we need to make sure that response is 
-//     tunneled through to the psim
 // - when we receive message from the simulator, update the corresponding board's sprite
 //   - on sending a radio message, do an animation around the sprite of the sending board
+//   - determine which boards are in range of the message and update their sprites accordingly
 
 class BoardSprite {
     private _name: string = "";
     private _simulatorId: string | undefined;
     private _image: ImageData | undefined = undefined
+    // #define MICROBIT_RADIO_DEFAULT_TX_POWER         6
+    // TODO: we can use this to determine which boards are in range of each other for radio messages
+    private _transmitPower: number = 6
+    // TODO: show the string above the board sprite
+    private _screenString: string = ""
     constructor(public id: number, public x: number, public y: number) {
 
     }
@@ -54,11 +51,25 @@ class BoardSprite {
     get simulatorId() {
         return this._simulatorId;
     }
+    set transmitPower(p: number) {
+        this._transmitPower = p;
+    }
+    get transmitPower() {
+        return this._transmitPower;
+    }
+    set screenString(s: string) {
+        this._screenString = s;
+    }
+    get screenString() {
+        return this._screenString;
+    }
 }
 
 const boardWidth = 50
 const boardHeight = 40
 export class PhysicalSimulator extends srceditor.Editor {
+    canvasRef = React.createRef<HTMLCanvasElement>();
+    onBoardsChanged?: (boards: BoardSprite[]) => void;
     isVisible = false;
     active: boolean = true
     lineColors: string[];
@@ -174,7 +185,23 @@ export class PhysicalSimulator extends srceditor.Editor {
                 const scrMsg = msg.payload as pxsim.SimulatorScreenshotMessage
                 const simSprite = this.boards.find(board => board.simulatorId === msg.source)
                 const scale = boardWidth / scrMsg.data.width
-                if (simSprite) simSprite.image = this.resizeImageData(scrMsg.data, scale) 
+                if (simSprite) simSprite.image = this.resizeImageData(scrMsg.data, scale)
+                this.domUpdate()
+                break
+            case "output":
+                const outMsg = msg.payload as pxsim.SimulatorOutputMessage
+                const simSprite2 = this.boards.find(board => board.simulatorId === msg.source)
+                if (simSprite2) {
+                    // this could be done in a more generic way, 
+                    // but for now we just handle the two cases we care about
+                    if (outMsg.function === "basic.showString") {
+                        simSprite2.screenString = outMsg.args[0] as string
+                        console.log(`PSIM: ${simSprite2.name} shows string: ${simSprite2.screenString}`)
+                    } else if (outMsg.function === "radio.setTransmitPower") {
+                        simSprite2.transmitPower = outMsg.args[0] as number
+                        console.log(`PSIM: ${simSprite2.name} sets transmit power: ${simSprite2.transmitPower}`)
+                    }
+                }
                 this.domUpdate()
                 break
         }
@@ -189,7 +216,7 @@ export class PhysicalSimulator extends srceditor.Editor {
 
     private addSprite() {
         // Create a new board sprite with random position
-        const canvas = document.getElementById("simulatorCanvas") as HTMLCanvasElement
+        const canvas = this.canvasRef.current;
         const x = canvas ? Math.random() * (canvas.width - 40) : 100 ;
         const y = canvas ? Math.random() * (canvas.height - 40) : 100 ;
         const sprite = new BoardSprite(this.nextBoardId, x, y);
@@ -214,13 +241,14 @@ export class PhysicalSimulator extends srceditor.Editor {
                 board.simulatorId = simulator.driver.addSimulator()
             }
         })
-        this.drawBoards()
+        this.notifyBoardsChanged();
     }
 
     addSimulator() {
         pxt.tickEvent("serial.newBoardButton", undefined, { interactiveConsent: true })
         const sprite = this.addSprite();
         sprite.simulatorId = simulator.driver.addSimulator();
+        this.notifyBoardsChanged();
         simulator.driver?.screenshot(sprite.simulatorId)
     }
 
@@ -228,11 +256,11 @@ export class PhysicalSimulator extends srceditor.Editor {
         pxt.tickEvent("serial.clearBoardsButton", undefined, { interactiveConsent: true })
         if (this.boards.length <= 1) return;
         this.boards.forEach((board,index) => {
-            if (index > 0) simulator.driver.removeFrameById(board.simulatorId)
+            if (index > 0 && board.simulatorId) simulator.driver.removeFrameById(board.simulatorId)
         })
         this.boards = [this.boards[0]];
         this.nextBoardId = 1;
-        this.drawBoards();
+        this.notifyBoardsChanged();
     }
 
     display() {
@@ -257,21 +285,18 @@ export class PhysicalSimulator extends srceditor.Editor {
                     </div>
                 </div>
                 <div id="canvasContainer" style={{ backgroundColor: "#228B22", flex: 1, minHeight: 0, overflow: "hidden" }}>
-                    <canvas
-                        id="simulatorCanvas"
-                        style={{ display: "block", width: "100%", height: "100%" }}
-                        onMouseDown={this.onCanvasMouseDown}
-                        onMouseMove={this.onCanvasMouseMove}
-                        onMouseUp={this.onCanvasMouseUp}
-                        onMouseLeave={this.onCanvasMouseUp}
-                    />
+                    <PhysicalSimulatorCanvas simulator={this} />
                 </div>
             </div>
         )
     }
 
+    notifyBoardsChanged() {
+        this.onBoardsChanged?.([...this.boards]);
+    }
+
     domUpdate() {
-        this.drawBoards();
+        this.notifyBoardsChanged();
     }
 
     private resizeImageData(imageData: ImageData, scale: number) {
@@ -280,6 +305,7 @@ export class PhysicalSimulator extends srceditor.Editor {
         srcCanvas.width = imageData.width;
         srcCanvas.height = imageData.height;
         const srcCtx = srcCanvas.getContext('2d');
+        if (!srcCtx) return imageData;
         srcCtx.putImageData(imageData, 0, 0);
 
         // Create destination canvas
@@ -287,6 +313,7 @@ export class PhysicalSimulator extends srceditor.Editor {
         const newWidth = destCanvas.width = imageData.width * scale;
         const newHeight = destCanvas.height = imageData.height * scale;
         const destCtx = destCanvas.getContext('2d');
+        if (!destCtx) return imageData;
 
         destCtx.imageSmoothingEnabled = true
 
@@ -298,37 +325,7 @@ export class PhysicalSimulator extends srceditor.Editor {
     }
 
     drawBoards() {
-        const canvas = document.getElementById("simulatorCanvas") as HTMLCanvasElement;
-        if (!canvas) return;
-
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return;
-
-        // Set canvas size to match container
-        canvas.width = canvas.offsetWidth;
-        canvas.height = canvas.offsetHeight;
-
-        // Clear canvas
-        ctx.fillStyle = "#228B22";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        this.boards.forEach((board) => {
-            if (board.image) {
-                ctx.putImageData(board.image, board.x, board.y)
-            } else {
-                // Draw black square
-                ctx.fillStyle = "#000000";
-                ctx.fillRect(board.x, board.y, boardWidth, boardHeight);
-
-                // Draw label text
-                ctx.fillStyle = "#FFFFFF";
-                ctx.font = "12px Arial";
-                ctx.textAlign = "center";
-                ctx.textBaseline = "middle";
-                ctx.fillText(board.name, board.x + boardWidth / 2, board.y + boardHeight / 2);
-                simulator.driver?.screenshot(board.simulatorId)
-            }
-        });
+        this.notifyBoardsChanged();
     }
 
     private getCanvasMousePosition(ev: React.MouseEvent<HTMLCanvasElement, MouseEvent>) {
@@ -351,7 +348,7 @@ export class PhysicalSimulator extends srceditor.Editor {
         return undefined;
     }
 
-    private onCanvasMouseDown(ev: React.MouseEvent<HTMLCanvasElement, MouseEvent>) {
+    onCanvasMouseDown(ev: React.MouseEvent<HTMLCanvasElement, MouseEvent>) {
         const pos = this.getCanvasMousePosition(ev);
         const board = this.findBoardAt(pos.x, pos.y);
         if (!board) return;
@@ -370,7 +367,7 @@ export class PhysicalSimulator extends srceditor.Editor {
     }
 
 
-    private onCanvasMouseMove(ev: React.MouseEvent<HTMLCanvasElement, MouseEvent>) {
+    onCanvasMouseMove(ev: React.MouseEvent<HTMLCanvasElement, MouseEvent>) {
         if (!this.draggingBoard) return;
         const pos = this.getCanvasMousePosition(ev);
         const canvas = ev.currentTarget;
@@ -379,12 +376,87 @@ export class PhysicalSimulator extends srceditor.Editor {
 
         this.draggingBoard.x = Math.max(0, Math.min(maxX, pos.x - this.dragOffsetX));
         this.draggingBoard.y = Math.max(0, Math.min(maxY, pos.y - this.dragOffsetY));
-        this.drawBoards();
+        this.notifyBoardsChanged();
     }
 
-    private onCanvasMouseUp() {
+    onCanvasMouseUp() {
         if (this.draggingBoard) {
             this.draggingBoard = undefined;
         }
     }
+}
+
+interface PhysicalSimulatorCanvasProps {
+    simulator: PhysicalSimulator;
+}
+
+const PhysicalSimulatorCanvas: React.FC<PhysicalSimulatorCanvasProps> = ({ simulator: psim }) => {
+    const canvasRef = React.useRef<HTMLCanvasElement>(null);
+    const [boards, setBoards] = React.useState<BoardSprite[]>(() => [...psim.boards]);
+
+    // Keep psim.canvasRef in sync so addSprite() can read canvas dimensions
+    React.useEffect(() => {
+        (psim.canvasRef as React.MutableRefObject<HTMLCanvasElement | null>).current = canvasRef.current;
+    });
+
+    // Subscribe to board changes from the class
+    React.useEffect(() => {
+        psim.onBoardsChanged = setBoards;
+        // Sync state immediately in case boards were updated before mount
+        setBoards([...psim.boards]);
+        return () => { psim.onBoardsChanged = undefined; };
+    }, [psim]);
+
+    // Redraw the canvas whenever the board list changes
+    React.useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+
+        canvas.width = canvas.offsetWidth;
+        canvas.height = canvas.offsetHeight;
+
+        ctx.fillStyle = "#228B22";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        boards.forEach((board) => {
+            const centerX = board.x + boardWidth / 2;
+            const centerY = board.y + boardHeight / 2;
+
+            // Draw transmit-power radius circle (power 0–7 maps to 30–135 px)
+            const radius = 30 + board.transmitPower * 15;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+            ctx.strokeStyle = "rgba(255, 255, 100, 0.6)";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.fillStyle = "rgba(255, 255, 100, 0.08)";
+            ctx.fill();
+
+            if (board.image) {
+                ctx.putImageData(board.image, board.x, board.y);
+            } else {
+                ctx.fillStyle = "#000000";
+                ctx.fillRect(board.x, board.y, boardWidth, boardHeight);
+                ctx.fillStyle = "#FFFFFF";
+                ctx.font = "12px Arial";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText(board.name, centerX, centerY);
+                if (board.simulatorId) simulator.driver?.screenshot(board.simulatorId);
+            }
+        });
+    }, [boards]);
+
+    return (
+        <canvas
+            ref={canvasRef}
+            style={{ display: "block", width: "100%", height: "100%" }}
+            onMouseDown={psim.onCanvasMouseDown}
+            onMouseMove={psim.onCanvasMouseMove}
+            onMouseUp={psim.onCanvasMouseUp}
+            onMouseLeave={psim.onCanvasMouseUp}
+        />
+    );
 }

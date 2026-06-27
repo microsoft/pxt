@@ -55,7 +55,7 @@ export function instrumentFunctions(functionList: string[]): void {
           type: 'output' as const,
           function: declName,
           args
-        } as pxsim.SimulatorOutput;
+        } as pxsim.SimulatorOutputMessage;
 
         Runtime.postMessage(messagePayload);
 

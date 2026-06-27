@@ -147,15 +147,15 @@ namespace pxsim {
     }
     // TODO: given a namespace and function, we want to instrument the
     // TODO: function to generate the following message
-    export interface SimulatorOutput extends SimulatorMessage {
+    export interface SimulatorOutputMessage extends SimulatorMessage {
         type: "output";
         namespace?: string;
         function: string;
-        args: { name: string; val: number | string | boolean }[];
+        args: (number | string | boolean )[];
     }
     export interface SimulatorTunnelMessage extends SimulatorMessage {
         type: "tunnel";
-        payload: SimulatorRadioPacketMessage | SimulatorScreenshotMessage
+        payload: SimulatorRadioPacketMessage | SimulatorScreenshotMessage | SimulatorOutputMessage
     }
     export interface SimulatorInfraredPacketMessage extends SimulatorBroadcastMessage {
         type: "irpacket";
