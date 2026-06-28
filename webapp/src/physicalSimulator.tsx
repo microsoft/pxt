@@ -144,7 +144,9 @@ export class PhysicalSimulator extends srceditor.Editor {
                     this.boards.filter(receiver => receiver.simulatorId !== sender?.simulatorId && this.isInRange(sender, receiver))
                 receivers.forEach(receiver => {
                     // TODO: compute the signal strength based on distance and transmit power
-                    console.log(`PSIM: ${sender?.name} sent radio message to ${receiver.name}`)
+                    // TODO: The value is measured in -dbm. The higher the value, the stronger the signal.
+                    // TODO: Typical values are in the range -42 to -128.
+                    radioMsg.rssi =  -30;
                     simulator.driver?.postMessageToFrame(receiver.simulatorId, radioMsg)
                 });
                 if (sender) {

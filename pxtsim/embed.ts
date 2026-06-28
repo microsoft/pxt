@@ -139,7 +139,7 @@ namespace pxsim {
     export interface SimulatorRadioPacketMessage extends SimulatorBroadcastMessage {
         type: "radiopacket";
         broadcast: true;
-        rssi: number;
+        rssi: number;       // radio signal strength indicator
         serial: number;
         time: number;
 
