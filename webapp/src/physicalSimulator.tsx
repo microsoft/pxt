@@ -123,8 +123,12 @@ export class PhysicalSimulator extends srceditor.Editor {
 
     isInRange(sender: BoardSprite | undefined, receiver: BoardSprite) {
         if (!sender) return false;
-        const dx = sender.x - receiver.x;
-        const dy = sender.y - receiver.y;
+        const senderX = sender.x + boardWidth / 2;
+        const senderY = sender.y + boardHeight / 2;
+        const receiverX = receiver.x + boardWidth / 2;
+        const receiverY = receiver.y + boardHeight / 2;
+        const dx = senderX - receiverX;
+        const dy = senderY - receiverY;
         const distance = Math.sqrt(dx * dx + dy * dy);
         const senderRadius = 30 + sender.transmitPower * 15;
         return distance <= senderRadius;
@@ -137,9 +141,10 @@ export class PhysicalSimulator extends srceditor.Editor {
                 const radioMsg = msg.payload as pxsim.SimulatorRadioPacketMessage
                 const sender = this.boards.find(board => board.simulatorId === msg.source)
                 const receivers =
-                    this.boards.filter(board => board.simulatorId !== msg.source && this.isInRange(sender, board))
+                    this.boards.filter(receiver => receiver.simulatorId !== sender?.simulatorId && this.isInRange(sender, receiver))
                 receivers.forEach(receiver => {
                     // TODO: compute the signal strength based on distance and transmit power
+                    console.log(`PSIM: ${sender?.name} sent radio message to ${receiver.name}`)
                     simulator.driver?.postMessageToFrame(receiver.simulatorId, radioMsg)
                 });
                 if (sender) {
@@ -163,10 +168,10 @@ export class PhysicalSimulator extends srceditor.Editor {
                     // but for now we just handle the two cases we care about
                     if (outMsg.function === "basic.showString") {
                         simSprite2.screenString = outMsg.args[0] as string
-                        console.log(`PSIM: ${simSprite2.name} shows string: ${simSprite2.screenString}`)
+                        // console.log(`PSIM: ${simSprite2.name} shows string: ${simSprite2.screenString}`)
                     } else if (outMsg.function === "radio.setTransmitPower") {
                         simSprite2.transmitPower = outMsg.args[0] as number
-                        console.log(`PSIM: ${simSprite2.name} sets transmit power: ${simSprite2.transmitPower}`)
+                        // console.log(`PSIM: ${simSprite2.name} sets transmit power: ${simSprite2.transmitPower}`)
                     }
                 }
                 this.domUpdate()

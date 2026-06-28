@@ -316,7 +316,7 @@ export class ProjectView
                 this.runGlobalAction(action);
             } else if (msg.type === "tunnel") {
                 const tunnelMsg = msg as pxsim.SimulatorTunnelMessage
-                console.log(`Tunnel from ${tunnelMsg.source}: ${tunnelMsg.payload.type}`)
+                // console.log(`Tunnel from ${tunnelMsg.source}: ${tunnelMsg.payload.type}`)
                 this.physicalSimulatorEditor.processMessage(tunnelMsg)
             }
         }, false);
