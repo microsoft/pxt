@@ -21,48 +21,18 @@ import * as simulator from "./simulator";
 //   - determine which boards are in range of the message and update their sprites accordingly
 
 class BoardSprite {
-    private _name: string = "";
-    private _simulatorId: string | undefined;
-    private _image: ImageData | undefined = undefined
+    name: string = "";
+    simulatorId: string | undefined;
+    image: ImageData | undefined = undefined
     // #define MICROBIT_RADIO_DEFAULT_TX_POWER         6
     // TODO: we can use this to determine which boards are in range of each other for radio messages
-    private _transmitPower: number = 6
+    transmitPower: number = 6
     // TODO: show the string above the board sprite
-    private _screenString: string = ""
+    screenString: string = ""
     constructor(public id: number, public x: number, public y: number) {
 
     }
-
-    set name(n: string) {
-        this._name = n;
-    }
-    get name() {
-        return this._name;
-    }
-    set image(i: ImageData) {
-        this._image = i;
-    }
-    get image(): ImageData | undefined {
-        return this._image;
-    }
-    set simulatorId(id: string | undefined) {
-        this._simulatorId = id;
-    }
-    get simulatorId() {
-        return this._simulatorId;
-    }
-    set transmitPower(p: number) {
-        this._transmitPower = p;
-    }
-    get transmitPower() {
-        return this._transmitPower;
-    }
-    set screenString(s: string) {
-        this._screenString = s;
-    }
-    get screenString() {
-        return this._screenString;
-    }
+    radioFlashUntil: number = 0;
 }
 
 const boardWidth = 50
@@ -148,38 +118,35 @@ export class PhysicalSimulator extends srceditor.Editor {
     }
 
     processEvent(ev: MessageEvent) {
-        let msg = ev.data
-        if (msg.type === "serial") {
-            this.processEventCore(msg);
-        }
-        else if (msg.type === "bulkserial") {
-            (msg as pxsim.SimulatorBulkSerialMessage).data.forEach(datum => {
-                this.processEventCore({
-                    type: "serial",
-                    data: datum.data,
-                    receivedTime: datum.time,
-                    sim: msg.sim,
-                    id: msg.id
-                } as pxsim.SimulatorSerialMessage);
-            })
-        }
+
     }
 
-    processEventCore(smsg: pxsim.SimulatorSerialMessage) {
-        const isClearLog = smsg.csvType === "clear";
-
-        smsg.receivedTime = smsg.receivedTime || Util.now();
-
-        // TODO
+    isInRange(sender: BoardSprite | undefined, receiver: BoardSprite) {
+        if (!sender) return false;
+        const dx = sender.x - receiver.x;
+        const dy = sender.y - receiver.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        const senderRadius = 30 + sender.transmitPower * 15;
+        return distance <= senderRadius;
     }
 
     processMessage(msg: pxsim.SimulatorTunnelMessage) {
         if (!this.isVisible) return;
         switch(msg.payload.type) {
             case "radiopacket":
-                // 1. some sort of animation to show send of message 
-                // 2. determine which sim sprites "hear" the message
-                // 3. post to each of the associated sim
+                const radioMsg = msg.payload as pxsim.SimulatorRadioPacketMessage
+                const sender = this.boards.find(board => board.simulatorId === msg.source)
+                const receivers =
+                    this.boards.filter(board => board.simulatorId !== msg.source && this.isInRange(sender, board))
+                receivers.forEach(receiver => {
+                    // TODO: compute the signal strength based on distance and transmit power
+                    simulator.driver?.postMessageToFrame(receiver.simulatorId, radioMsg)
+                });
+                if (sender) {
+                    sender.radioFlashUntil = Date.now() + 100;
+                    setTimeout(() => { sender.radioFlashUntil = 0; this.domUpdate(); }, 100);
+                    this.domUpdate();
+                }
                 break
             case "screenshot":
                 const scrMsg = msg.payload as pxsim.SimulatorScreenshotMessage
@@ -426,12 +393,13 @@ const PhysicalSimulatorCanvas: React.FC<PhysicalSimulatorCanvasProps> = ({ simul
 
             // Draw transmit-power radius circle (power 0–7 maps to 30–135 px)
             const radius = 30 + board.transmitPower * 15;
+            const isFlashing = board.radioFlashUntil > Date.now();
             ctx.beginPath();
             ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
-            ctx.strokeStyle = "rgba(255, 255, 100, 0.6)";
-            ctx.lineWidth = 2;
+            ctx.strokeStyle = isFlashing ? "rgba(255, 255, 255, 0.9)" : "rgba(255, 255, 100, 0.6)";
+            ctx.lineWidth = isFlashing ? 3 : 2;
             ctx.stroke();
-            ctx.fillStyle = "rgba(255, 255, 100, 0.08)";
+            ctx.fillStyle = isFlashing ? "rgba(255, 255, 255, 0.2)" : "rgba(255, 255, 100, 0.08)";
             ctx.fill();
 
             if (board.image) {

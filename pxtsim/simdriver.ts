@@ -389,6 +389,12 @@ namespace pxsim {
             }
         }
 
+        public postMessageToFrame(frameId: string, msg: pxsim.SimulatorMessage) {
+            const frame = this.simFrames().find(frame => frame.id === frameId)
+            if (frame)
+                this.postMessageCore(frame, msg)
+        }
+
         public postMessage(msg: pxsim.SimulatorMessage, source?: Window, frameID?: string) {
 
             if (this.hwdbg) {
