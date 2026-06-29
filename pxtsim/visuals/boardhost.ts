@@ -234,7 +234,10 @@ namespace pxsim.visuals {
                 return "female";
             else return this.opts.boardDef.pinStyles[(<BoardLoc>loc).pin] || "female";
         }
-
+        public setTitle(title: string) {
+            if (this.boardView.setTitle)
+                this.boardView.setTitle(title);
+        }
         public addPart(partInst: PartInst): IBoardPart<any> {
             let part: IBoardPart<any> = null;
             if (partInst.simulationBehavior) {

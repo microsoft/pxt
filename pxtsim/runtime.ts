@@ -470,6 +470,8 @@ namespace pxsim {
         public screenshotAsync(width?: number): Promise<ImageData> {
             return Promise.resolve(undefined);
         }
+        public setTitle(title: string) {
+        }
         public kill() { }
 
         protected serialOutBuffer: string = '';
@@ -1070,6 +1072,12 @@ namespace pxsim {
                 window.parent.postMessage(data, "*");
             }
             if (Runtime.messagePosted) Runtime.messagePosted(data);
+        }
+
+        static setBoardTitle(title: string) {
+            const b = runtime && runtime.board;
+            if (!b) return;
+            b.setTitle(title);
         }
 
         static async postScreenshotAsync(opts?: SimulatorScreenshotMessage): Promise<void> {

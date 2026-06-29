@@ -1,3 +1,6 @@
+import Util = pxt.Util
+import * as simulator from "./simulator";
+
 const boardWidth = 50;
 const boardHeight = 40;
 
@@ -15,23 +18,24 @@ export class BoardSprite {
 }
 
 export interface PhysicalSimulatorHostOptions {
-    getFrameIds?: () => string[];
-    addSimulator?: () => string | undefined;
-    removeFrameById?: (id: string) => void;
-    screenshot?: (id: string) => void;
-    postMessageToFrame?: (id: string, message: any) => void;
     resizeImageData?: (imageData: ImageData, scale: number) => ImageData;
-    setTimeout?: (handler: () => void, timeoutMs: number) => void;
-    now?: () => number;
 }
 
 export class PhysicalSimulatorHost {
     onBoardsChanged?: (boards: BoardSprite[]) => void;
     boards: BoardSprite[] = [];
-    nextBoardId = 0;
+    private nextBoardId = 0;
 
     constructor(private readonly opts: PhysicalSimulatorHostOptions = {}) {
     }
+
+    private getFrameIds() { return simulator.driver.getFrameIds()}
+    private addSimulatorToSim() { return simulator.driver.addSimulator() }
+    private removeFrameById(id: string) { simulator.driver.removeFrameById(id) }
+    private postMessageToFrame(id: string, message: any) {
+        simulator.driver?.postMessageToFrame(id, message)
+    }
+    screenshot(id: string) { simulator.driver?.screenshot(id) }
 
     notifyBoardsChanged(): void {
         this.onBoardsChanged?.([...this.boards]);
@@ -46,7 +50,7 @@ export class PhysicalSimulatorHost {
     }
 
     recreateSimulators(): void {
-        const sims = this.opts.getFrameIds?.() || [];
+        const sims = this.getFrameIds();
         if (sims.length > 0 && this.boards.length === 0) {
             const firstBoard = this.addSprite();
             firstBoard.simulatorId = sims[0];
@@ -55,20 +59,30 @@ export class PhysicalSimulatorHost {
         this.boards.forEach((board, index) => {
             if (index < sims.length) {
                 board.simulatorId = sims[index];
-                if (board.simulatorId) this.opts.screenshot?.(board.simulatorId);
+                this.setTitle(board);
                 return;
             }
-            board.simulatorId = this.opts.addSimulator?.();
+            board.simulatorId = this.addSimulatorToSim();
         });
 
         this.notifyBoardsChanged();
     }
 
+    private setTitle(board: BoardSprite): void {
+        if (board.simulatorId) {
+            simulator.driver.postMessageToFrame(board.simulatorId,
+                { type: "settitle", title: board.name } as pxsim.SimulatorSetTitleMessage);
+        }
+    }
+
     addSimulator(x = 100, y = 100): BoardSprite {
         const sprite = this.addSprite(x, y);
-        sprite.simulatorId = this.opts.addSimulator?.();
+        sprite.simulatorId = this.addSimulatorToSim();
         this.notifyBoardsChanged();
-        if (sprite.simulatorId) this.opts.screenshot?.(sprite.simulatorId);
+        if (sprite.simulatorId) {
+            this.setTitle(sprite);
+            //this.opts.screenshot?.(sprite.simulatorId);
+        }
         return sprite;
     }
 
@@ -76,7 +90,7 @@ export class PhysicalSimulatorHost {
         if (this.boards.length <= 1) return;
 
         this.boards.forEach((board, index) => {
-            if (index > 0 && board.simulatorId) this.opts.removeFrameById?.(board.simulatorId);
+            if (index > 0 && board.simulatorId) this.removeFrameById(board.simulatorId);
         });
 
         this.boards = [this.boards[0]];
@@ -111,13 +125,12 @@ export class PhysicalSimulatorHost {
                 receivers.forEach(receiver => {
                     // TODO: Compute signal strength from distance and transmit power.
                     radioMsg.rssi = -30;
-                    if (receiver.simulatorId) this.opts.postMessageToFrame?.(receiver.simulatorId, radioMsg);
+                    if (receiver.simulatorId) this.postMessageToFrame(receiver.simulatorId, radioMsg);
                 });
 
                 if (sender) {
-                    sender.radioFlashUntil = (this.opts.now || Date.now)() + 100;
-                    const schedule = this.opts.setTimeout || ((handler: () => void, timeoutMs: number) => setTimeout(handler, timeoutMs));
-                    schedule(() => {
+                    sender.radioFlashUntil = Date.now() + 100;
+                    setTimeout(() => {
                         sender.radioFlashUntil = 0;
                         this.notifyBoardsChanged();
                     }, 100);

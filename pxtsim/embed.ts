@@ -145,17 +145,18 @@ namespace pxsim {
 
         payload: SimulatorRadioPacketPayload;
     }
-    // TODO: given a namespace and function, we want to instrument the
-    // TODO: function to generate the following message
     export interface SimulatorOutputMessage extends SimulatorMessage {
         type: "output";
-        namespace?: string;
         function: string;
         args: (number | string | boolean )[];
     }
     export interface SimulatorTunnelMessage extends SimulatorMessage {
         type: "tunnel";
         payload: SimulatorRadioPacketMessage | SimulatorScreenshotMessage | SimulatorOutputMessage
+    }
+    export interface SimulatorSetTitleMessage extends SimulatorMessage {
+        type: "settitle";
+        title: string;
     }
     export interface SimulatorInfraredPacketMessage extends SimulatorBroadcastMessage {
         type: "irpacket";
@@ -388,6 +389,11 @@ namespace pxsim {
             let type = data.type;
             if (!type) return;
             switch (type) {
+                case "settitle": {
+                    const msg = <SimulatorSetTitleMessage>data;
+                    Runtime.setBoardTitle(msg.title);
+                    break;
+                }
                 case "run": run(<SimulatorRunMessage>data); break;
                 case "instructions": pxsim.instructions.renderInstructions(<SimulatorInstructionsMessage>data); break;
                 case "stop": stop(); break;

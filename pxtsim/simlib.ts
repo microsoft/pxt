@@ -445,6 +445,7 @@ namespace pxsim.visuals {
         getPinDist(): number;
         highlightPin(pinNm: string): void;
         removeEventListeners?(): void;
+        setTitle?(title: string): void;
     }
 
     //expects rgb from 0,255, gives h in [0,360], s in [0, 100], l in [0, 100]

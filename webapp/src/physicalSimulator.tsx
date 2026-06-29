@@ -7,14 +7,16 @@ import * as pkg from "./package"
 import * as core from "./core"
 import * as sui from "./sui"
 import * as srceditor from "./srceditor"
-import Util = pxt.Util
 import { fireClickOnEnter } from "./util"
 import IProjectView = pxt.editor.IProjectView;
-import * as simulator from "./simulator";
 import { BoardSprite, boardHeight, boardWidth, PhysicalSimulatorHost } from "./physicalSimulatorHost";
 
-// TODOs:
 
+// BUGS
+// - creating a new board doesn't sync with the simulator
+
+// TODOs:
+// - propagate name changes to the simulator
 // - add a way to remove individual boards
 // - add a way to rename boards
 // - when we receive message from the simulator, update the corresponding board's sprite
@@ -94,14 +96,7 @@ export class PhysicalSimulator extends srceditor.Editor {
     constructor(public parent: IProjectView) {
         super(parent);
         this.host = new PhysicalSimulatorHost({
-            getFrameIds: () => simulator.driver.getFrameIds(),
-            addSimulator: () => simulator.driver.addSimulator(),
-            removeFrameById: id => simulator.driver.removeFrameById(id),
-            screenshot: id => simulator.driver?.screenshot(id),
-            postMessageToFrame: (id, message) => simulator.driver?.postMessageToFrame(id, message),
             resizeImageData: (imageData, scale) => this.resizeImageData(imageData, scale),
-            setTimeout: (handler, timeoutMs) => setTimeout(handler, timeoutMs),
-            now: () => Date.now()
         });
         window.addEventListener("message", this.processEvent.bind(this), false)
         const serialTheme = pxt.appTarget.serial && pxt.appTarget.serial.editorTheme;
@@ -320,7 +315,7 @@ const PhysicalSimulatorCanvas: React.FC<PhysicalSimulatorCanvasProps> = ({ simul
             } else {
                 ctx.fillStyle = "#000000";
                 ctx.fillRect(board.x, board.y, boardWidth, boardHeight);
-                if (board.simulatorId) simulator.driver?.screenshot(board.simulatorId);
+                // if (board.simulatorId) simulator.driver?.screenshot(board.simulatorId);
             }
             ctx.fillStyle = "#FFFFFF";
             ctx.font = "12px Arial";
