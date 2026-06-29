@@ -11,6 +11,7 @@ import Util = pxt.Util
 import { fireClickOnEnter } from "./util"
 import IProjectView = pxt.editor.IProjectView;
 import * as simulator from "./simulator";
+import { BoardSprite, boardHeight, boardWidth, PhysicalSimulatorHost } from "./physicalSimulatorHost";
 
 // TODOs:
 
@@ -20,35 +21,27 @@ import * as simulator from "./simulator";
 //   - on sending a radio message, do an animation around the sprite of the sending board
 //   - determine which boards are in range of the message and update their sprites accordingly
 
-class BoardSprite {
-    name: string = "";
-    simulatorId: string | undefined;
-    image: ImageData | undefined = undefined
-    // #define MICROBIT_RADIO_DEFAULT_TX_POWER         6
-    // TODO: we can use this to determine which boards are in range of each other for radio messages
-    transmitPower: number = 6
-    // TODO: show the string above the board sprite
-    screenString: string = ""
-    constructor(public id: number, public x: number, public y: number) {
-
-    }
-    radioFlashUntil: number = 0;
-}
-
-const boardWidth = 50
-const boardHeight = 40
 export class PhysicalSimulator extends srceditor.Editor {
     canvasRef = React.createRef<HTMLCanvasElement>();
-    onBoardsChanged?: (boards: BoardSprite[]) => void;
     isVisible = false;
     active: boolean = true
     lineColors: string[];
     hcLineColors: string[];
     currentLineColors: string[];
     highContrast?: boolean = false;
+    host: PhysicalSimulatorHost;
 
-    boards: BoardSprite[] = [];
-    nextBoardId: number = 0;
+    get boards() {
+        return this.host.boards;
+    }
+
+    get onBoardsChanged() {
+        return this.host.onBoardsChanged;
+    }
+
+    set onBoardsChanged(handler: ((boards: BoardSprite[]) => void) | undefined) {
+        this.host.onBoardsChanged = handler;
+    }
 
     getId() {
         return "physicalSimulator"
@@ -79,7 +72,7 @@ export class PhysicalSimulator extends srceditor.Editor {
         } else {
             console.log(`PSIM: Visible = false`)
         }
-        this.domUpdate();
+        this.notifyBoardsChanged();
     }
 
     setHighContrast(hc: boolean) {
@@ -100,6 +93,16 @@ export class PhysicalSimulator extends srceditor.Editor {
 
     constructor(public parent: IProjectView) {
         super(parent);
+        this.host = new PhysicalSimulatorHost({
+            getFrameIds: () => simulator.driver.getFrameIds(),
+            addSimulator: () => simulator.driver.addSimulator(),
+            removeFrameById: id => simulator.driver.removeFrameById(id),
+            screenshot: id => simulator.driver?.screenshot(id),
+            postMessageToFrame: (id, message) => simulator.driver?.postMessageToFrame(id, message),
+            resizeImageData: (imageData, scale) => this.resizeImageData(imageData, scale),
+            setTimeout: (handler, timeoutMs) => setTimeout(handler, timeoutMs),
+            now: () => Date.now()
+        });
         window.addEventListener("message", this.processEvent.bind(this), false)
         const serialTheme = pxt.appTarget.serial && pxt.appTarget.serial.editorTheme;
         this.lineColors = (serialTheme && serialTheme.lineColors) || ["#e00", "#00e", "#0e0"];
@@ -115,64 +118,9 @@ export class PhysicalSimulator extends srceditor.Editor {
 
     }
 
-    isInRange(sender: BoardSprite | undefined, receiver: BoardSprite) {
-        if (!sender) return false;
-        const senderX = sender.x + boardWidth / 2;
-        const senderY = sender.y + boardHeight / 2;
-        const receiverX = receiver.x + boardWidth / 2;
-        const receiverY = receiver.y + boardHeight / 2;
-        const dx = senderX - receiverX;
-        const dy = senderY - receiverY;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        const senderRadius = 30 + sender.transmitPower * 15;
-        return distance <= senderRadius;
-    }
-
     processMessage(msg: pxsim.SimulatorTunnelMessage) {
         if (!this.isVisible) return;
-        switch(msg.payload.type) {
-            case "radiopacket":
-                const radioMsg = msg.payload as pxsim.SimulatorRadioPacketMessage
-                const sender = this.boards.find(board => board.simulatorId === msg.source)
-                const receivers =
-                    this.boards.filter(receiver => receiver.simulatorId !== sender?.simulatorId && this.isInRange(sender, receiver))
-                receivers.forEach(receiver => {
-                    // TODO: compute the signal strength based on distance and transmit power
-                    // TODO: The value is measured in -dbm. The higher the value, the stronger the signal.
-                    // TODO: Typical values are in the range -42 to -128.
-                    radioMsg.rssi =  -30;
-                    simulator.driver?.postMessageToFrame(receiver.simulatorId, radioMsg)
-                });
-                if (sender) {
-                    sender.radioFlashUntil = Date.now() + 100;
-                    setTimeout(() => { sender.radioFlashUntil = 0; this.domUpdate(); }, 100);
-                    this.domUpdate();
-                }
-                break
-            case "screenshot":
-                const scrMsg = msg.payload as pxsim.SimulatorScreenshotMessage
-                const simSprite = this.boards.find(board => board.simulatorId === msg.source)
-                const scale = boardWidth / scrMsg.data.width
-                if (simSprite) simSprite.image = this.resizeImageData(scrMsg.data, scale)
-                this.domUpdate()
-                break
-            case "output":
-                const outMsg = msg.payload as pxsim.SimulatorOutputMessage
-                const simSprite2 = this.boards.find(board => board.simulatorId === msg.source)
-                if (simSprite2) {
-                    // this could be done in a more generic way, 
-                    // but for now we just handle the two cases we care about
-                    if (outMsg.function === "basic.showString") {
-                        simSprite2.screenString = outMsg.args[0] as string
-                        // console.log(`PSIM: ${simSprite2.name} shows string: ${simSprite2.screenString}`)
-                    } else if (outMsg.function === "radio.setTransmitPower") {
-                        simSprite2.transmitPower = outMsg.args[0] as number
-                        // console.log(`PSIM: ${simSprite2.name} sets transmit power: ${simSprite2.transmitPower}`)
-                    }
-                }
-                this.domUpdate()
-                break
-        }
+        this.host.processMessage(msg);
     }
 
     clear() { }
@@ -182,53 +130,20 @@ export class PhysicalSimulator extends srceditor.Editor {
         this.parent.openPreviousEditor()
     }
 
-    private addSprite() {
-        // Create a new board sprite with random position
-        const canvas = this.canvasRef.current;
-        const x = canvas ? Math.random() * (canvas.width - 40) : 100 ;
-        const y = canvas ? Math.random() * (canvas.height - 40) : 100 ;
-        const sprite = new BoardSprite(this.nextBoardId, x, y);
-        sprite.name = `board${this.nextBoardId}`;
-        this.boards.push(sprite);
-        this.nextBoardId++;
-        return sprite
-    }
-
      recreateSimulators() {
-        const sims = simulator.driver.getFrameIds();
-        if (sims.length > 0 && this.boards.length == 0) {
-            const firstBoard = this.addSprite(); // add the default board if we don't have any
-            firstBoard!.simulatorId = sims[0];
-        }
-        this.boards.forEach((board, index) => {
-            if (index < sims.length) {
-                board.simulatorId = sims[index];
-                simulator.driver?.screenshot(board.simulatorId)
-                return;
-            } else {
-                board.simulatorId = simulator.driver.addSimulator()
-            }
-        })
-        this.notifyBoardsChanged();
+        this.host.recreateSimulators();
     }
 
     addSimulator() {
         pxt.tickEvent("serial.newBoardButton", undefined, { interactiveConsent: true })
-        const sprite = this.addSprite();
-        sprite.simulatorId = simulator.driver.addSimulator();
-        this.notifyBoardsChanged();
-        simulator.driver?.screenshot(sprite.simulatorId)
+        const canvas = this.canvasRef.current;
+        const x = canvas ? Math.random() * (canvas.width - 40) : 100;
+        const y = canvas ? Math.random() * (canvas.height - 40) : 100;
+        this.host.addSimulator(x, y);
     }
 
     clearSprites() {
-        pxt.tickEvent("serial.clearBoardsButton", undefined, { interactiveConsent: true })
-        if (this.boards.length <= 1) return;
-        this.boards.forEach((board,index) => {
-            if (index > 0 && board.simulatorId) simulator.driver.removeFrameById(board.simulatorId)
-        })
-        this.boards = [this.boards[0]];
-        this.nextBoardId = 1;
-        this.notifyBoardsChanged();
+      this.host.clearSprites();
     }
 
     display() {
@@ -260,11 +175,7 @@ export class PhysicalSimulator extends srceditor.Editor {
     }
 
     notifyBoardsChanged() {
-        this.onBoardsChanged?.([...this.boards]);
-    }
-
-    domUpdate() {
-        this.notifyBoardsChanged();
+        this.host.notifyBoardsChanged();
     }
 
     private resizeImageData(imageData: ImageData, scale: number) {
