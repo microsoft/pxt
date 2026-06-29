@@ -414,13 +414,13 @@ const PhysicalSimulatorCanvas: React.FC<PhysicalSimulatorCanvasProps> = ({ simul
             } else {
                 ctx.fillStyle = "#000000";
                 ctx.fillRect(board.x, board.y, boardWidth, boardHeight);
-                ctx.fillStyle = "#FFFFFF";
-                ctx.font = "12px Arial";
-                ctx.textAlign = "center";
-                ctx.textBaseline = "middle";
-                ctx.fillText(board.name, centerX, centerY);
                 if (board.simulatorId) simulator.driver?.screenshot(board.simulatorId);
             }
+            ctx.fillStyle = "#FFFFFF";
+            ctx.font = "12px Arial";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(board.name, centerX, board.y - 10);
         });
     }, [boards]);
 
