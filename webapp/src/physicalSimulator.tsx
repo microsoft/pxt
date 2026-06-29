@@ -49,9 +49,6 @@ export class PhysicalSimulator extends srceditor.Editor {
 
     boards: BoardSprite[] = [];
     nextBoardId: number = 0;
-    draggingBoard: BoardSprite | undefined;
-    dragOffsetX = 0;
-    dragOffsetY = 0;
 
     getId() {
         return "physicalSimulator"
@@ -112,9 +109,6 @@ export class PhysicalSimulator extends srceditor.Editor {
         this.goBack = this.goBack.bind(this);
         this.addSimulator = this.addSimulator.bind(this);
         this.clearSprites = this.clearSprites.bind(this);
-        this.onCanvasMouseDown = this.onCanvasMouseDown.bind(this);
-        this.onCanvasMouseMove = this.onCanvasMouseMove.bind(this);
-        this.onCanvasMouseUp = this.onCanvasMouseUp.bind(this);
     }
 
     processEvent(ev: MessageEvent) {
@@ -302,62 +296,6 @@ export class PhysicalSimulator extends srceditor.Editor {
         this.notifyBoardsChanged();
     }
 
-    private getCanvasMousePosition(ev: React.MouseEvent<HTMLCanvasElement, MouseEvent>) {
-        const canvas = ev.currentTarget;
-        const rect = canvas.getBoundingClientRect();
-        return {
-            x: ev.clientX - rect.left,
-            y: ev.clientY - rect.top
-        };
-    }
-
-    private findBoardAt(x: number, y: number) {
-        const squareSize = 40;
-        for (let i = this.boards.length - 1; i >= 0; i--) {
-            const board = this.boards[i];
-            if (x >= board.x && x <= board.x + squareSize && y >= board.y && y <= board.y + squareSize) {
-                return board;
-            }
-        }
-        return undefined;
-    }
-
-    onCanvasMouseDown(ev: React.MouseEvent<HTMLCanvasElement, MouseEvent>) {
-        const pos = this.getCanvasMousePosition(ev);
-        const board = this.findBoardAt(pos.x, pos.y);
-        if (!board) return;
-
-        this.draggingBoard = board;
-        this.dragOffsetX = pos.x - board.x;
-        this.dragOffsetY = pos.y - board.y;
-
-        // keep dragged board on top
-        const idx = this.boards.indexOf(board);
-        if (idx >= 0 && idx !== this.boards.length - 1) {
-            this.boards.splice(idx, 1);
-            this.boards.push(board);
-        }
-        ev.preventDefault();
-    }
-
-
-    onCanvasMouseMove(ev: React.MouseEvent<HTMLCanvasElement, MouseEvent>) {
-        if (!this.draggingBoard) return;
-        const pos = this.getCanvasMousePosition(ev);
-        const canvas = ev.currentTarget;
-        const maxX = canvas.width - boardWidth;
-        const maxY = canvas.height - boardHeight;
-
-        this.draggingBoard.x = Math.max(0, Math.min(maxX, pos.x - this.dragOffsetX));
-        this.draggingBoard.y = Math.max(0, Math.min(maxY, pos.y - this.dragOffsetY));
-        this.notifyBoardsChanged();
-    }
-
-    onCanvasMouseUp() {
-        if (this.draggingBoard) {
-            this.draggingBoard = undefined;
-        }
-    }
 }
 
 interface PhysicalSimulatorCanvasProps {
@@ -367,6 +305,63 @@ interface PhysicalSimulatorCanvasProps {
 const PhysicalSimulatorCanvas: React.FC<PhysicalSimulatorCanvasProps> = ({ simulator: psim }) => {
     const canvasRef = React.useRef<HTMLCanvasElement>(null);
     const [boards, setBoards] = React.useState<BoardSprite[]>(() => [...psim.boards]);
+    const draggingBoard = React.useRef<BoardSprite | undefined>(undefined);
+    const dragOffsetX = React.useRef(0);
+    const dragOffsetY = React.useRef(0);
+
+    const getCanvasMousePosition = (ev: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
+        const canvas = ev.currentTarget;
+        const rect = canvas.getBoundingClientRect();
+        return {
+            x: ev.clientX - rect.left,
+            y: ev.clientY - rect.top
+        };
+    };
+
+    const findBoardAt = (x: number, y: number) => {
+        const squareSize = 40;
+        for (let i = psim.boards.length - 1; i >= 0; i--) {
+            const board = psim.boards[i];
+            if (x >= board.x && x <= board.x + squareSize && y >= board.y && y <= board.y + squareSize) {
+                return board;
+            }
+        }
+        return undefined;
+    };
+
+    const onCanvasMouseDown = (ev: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
+        const pos = getCanvasMousePosition(ev);
+        const board = findBoardAt(pos.x, pos.y);
+        if (!board) return;
+
+        draggingBoard.current = board;
+        dragOffsetX.current = pos.x - board.x;
+        dragOffsetY.current = pos.y - board.y;
+
+        // keep dragged board on top
+        const idx = psim.boards.indexOf(board);
+        if (idx >= 0 && idx !== psim.boards.length - 1) {
+            psim.boards.splice(idx, 1);
+            psim.boards.push(board);
+        }
+        ev.preventDefault();
+    };
+
+    const onCanvasMouseMove = (ev: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
+        if (!draggingBoard.current) return;
+        const pos = getCanvasMousePosition(ev);
+        const canvas = ev.currentTarget;
+        const maxX = canvas.width - boardWidth;
+        const maxY = canvas.height - boardHeight;
+
+        draggingBoard.current.x = Math.max(0, Math.min(maxX, pos.x - dragOffsetX.current));
+        draggingBoard.current.y = Math.max(0, Math.min(maxY, pos.y - dragOffsetY.current));
+        psim.notifyBoardsChanged();
+    };
+
+    const onCanvasMouseUp = () => {
+        draggingBoard.current = undefined;
+    };
 
     // Keep psim.canvasRef in sync so addSprite() can read canvas dimensions
     React.useEffect(() => {
@@ -428,10 +423,10 @@ const PhysicalSimulatorCanvas: React.FC<PhysicalSimulatorCanvasProps> = ({ simul
         <canvas
             ref={canvasRef}
             style={{ display: "block", width: "100%", height: "100%" }}
-            onMouseDown={psim.onCanvasMouseDown}
-            onMouseMove={psim.onCanvasMouseMove}
-            onMouseUp={psim.onCanvasMouseUp}
-            onMouseLeave={psim.onCanvasMouseUp}
+            onMouseDown={onCanvasMouseDown}
+            onMouseMove={onCanvasMouseMove}
+            onMouseUp={onCanvasMouseUp}
+            onMouseLeave={onCanvasMouseUp}
         />
     );
 }
