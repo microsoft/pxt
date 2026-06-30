@@ -54,12 +54,8 @@ export class PhysicalSimulatorHost {
     }
 
     recreateSimulators(): void {
+        if (this.boards.length === 0) return;
         const sims = this.getFrameIds();
-        if (sims.length > 0 && this.boards.length === 0) {
-            const firstBoard = this.addSprite();
-            firstBoard.simulatorId = sims[0];
-        }
-
         this.boards.forEach((board, index) => {
             if (index < sims.length) {
                 board.simulatorId = sims[index];
@@ -80,9 +76,13 @@ export class PhysicalSimulatorHost {
     }
 
     addSimulator(x = 100, y = 100, name?: string): BoardSprite {
+        const init = this.boards.length === 0;
         const sprite = this.addSprite(x, y);
         sprite.name = name || sprite.name;
-        sprite.simulatorId = this.addSimulatorToSim();
+        if (init) {
+            sprite.simulatorId = this.getFrameIds()[0];
+        } else
+            sprite.simulatorId = this.addSimulatorToSim();
         return sprite;
     }
 
