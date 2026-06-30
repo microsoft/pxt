@@ -37,6 +37,10 @@ export class PhysicalSimulatorHost {
     }
     screenshot(id: string) { simulator.driver?.screenshot(id) }
 
+    getNextBoardName() {
+        return `board${this.nextBoardId}`;
+    }
+
     notifyBoardsChanged(): void {
         this.onBoardsChanged?.([...this.boards]);
     }
@@ -75,8 +79,9 @@ export class PhysicalSimulatorHost {
         }
     }
 
-    addSimulator(x = 100, y = 100): BoardSprite {
+    addSimulator(x = 100, y = 100, name?: string): BoardSprite {
         const sprite = this.addSprite(x, y);
+        sprite.name = name || sprite.name;
         sprite.simulatorId = this.addSimulatorToSim();
         return sprite;
     }

@@ -14,9 +14,10 @@ import { BoardSprite, boardHeight, boardWidth, PhysicalSimulatorHost } from "./p
 
 // BUGS
 // - creating a new board doesn't sync with the simulator
+// - boards appear out of order
 
 // TODOs:
-// - propagate name changes to the simulator
+// - add modal to set the name of the board
 // - add a way to remove individual boards
 // - add a way to rename boards
 // - when we receive message from the simulator, update the corresponding board's sprite
@@ -133,12 +134,23 @@ export class PhysicalSimulator extends srceditor.Editor {
         this.host.recreateSimulators();
     }
 
-    addSimulator() {
+    async addSimulator() {
         pxt.tickEvent("serial.newBoardButton", undefined, { interactiveConsent: true })
+        const name = await core.promptAsync({
+            header: lf("Name your simulator"),
+            agreeLbl: lf("Add simulator"),
+            agreeClass: "green",
+            initialValue: this.host.getNextBoardName(),
+            placeholder: lf("Enter a simulator name")
+        });
+
+        if (name === null) return;
+
         const canvas = this.canvasRef;
         const x = canvas ? Math.random() * (canvas.width - 40) : 100;
         const y = canvas ? Math.random() * (canvas.height - 40) : 100;
-        this.host.addSimulator(x, y);
+        this.host.addSimulator(x, y, name.trim() || undefined);
+        this.notifyBoardsChanged();
     }
 
     clearSprites() {
