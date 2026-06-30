@@ -190,6 +190,7 @@ namespace pxsim {
         data: ImageData;
         delay?: number;
         modalContext?: string;
+        width?: number;
     }
 
     export interface SimulatorAutomaticThumbnailMessage extends SimulatorMessage {

@@ -63,9 +63,7 @@ export class HeatSourceSprite extends EmissionSourceSprite {
     temperatureCelsius = 28;
 }
 
-export interface PhysicalSimulatorHostOptions {
-    resizeImageData?: (imageData: ImageData, scale: number) => ImageData;
-}
+export interface PhysicalSimulatorHostOptions { }
 
 export class PhysicalSimulatorHost {
     onSpritesChanged?: (sprites: PhysicalSprite[]) => void;
@@ -91,7 +89,7 @@ export class PhysicalSimulatorHost {
     private postMessageToFrame(id: string, message: any) {
         simulator.driver?.postMessageToFrame(id, message)
     }
-    screenshot(id: string) { simulator.driver?.screenshot(id) }
+    screenshot(id: string) { simulator.driver?.screenshot(id, boardWidth) }
 
     getNextBoardName() {
         return `board${this.nextBoardNameId}`;
@@ -154,7 +152,7 @@ export class PhysicalSimulatorHost {
 
     private setTitle(board: BoardSprite): void {
         if (board.simulatorId) {
-            simulator.driver.postMessageToFrame(board.simulatorId,
+            this.postMessageToFrame(board.simulatorId,
                 { type: "settitle", title: board.name } as pxsim.SimulatorSetTitleMessage);
         }
     }
@@ -242,12 +240,7 @@ export class PhysicalSimulatorHost {
                 const scrMsg = msg.payload as pxsim.SimulatorScreenshotMessage;
                 const board = this.boards.find(candidate => candidate.simulatorId === msg.source);
                 if (board) {
-                    if (this.opts.resizeImageData) {
-                        const scale = boardWidth / scrMsg.data.width;
-                        board.image = this.opts.resizeImageData(scrMsg.data, scale);
-                    } else {
-                        board.image = scrMsg.data;
-                    }
+                    board.image = scrMsg.data;
                 }
                 this.notifySpritesChanged();
                 break;
@@ -262,6 +255,7 @@ export class PhysicalSimulatorHost {
                     else if (outMsg.function === "radio.setTransmitPower") {
                         board.transmitPower = outMsg.args[0] as number;
                     }
+                    this.screenshot(board.simulatorId);
                 }
                 this.notifySpritesChanged();
                 break;

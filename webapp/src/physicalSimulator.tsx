@@ -1,8 +1,6 @@
 /// <reference path="../../localtypings/pxtparts.d.ts"/>
 /// <reference path="../../built/pxtsim.d.ts" />
 
-
-import * as React from "react"
 import * as pkg from "./package"
 import * as core from "./core"
 import * as sui from "./sui"
@@ -24,14 +22,18 @@ import {
 
 
 // BUGS
-// - boards appear out of order
+// - boards appear out of order (debug this)
 
 // TODOs:
-// - add a way to remove individual boards
-// - add a way to rename boards
+// - move PhysicalSimulatorHost to out of the webapp so it can be used via the CLI
+// - reduce board image size on sim side rather than here, which should let us update more frequently and reduce lag
+// - add a way to remove individual boards, rename boards
 // - when we receive message from the simulator, update the corresponding board's sprite
 //   - on sending a radio message, do an animation around the sprite of the sending board
 //   - determine which boards are in range of the message and update their sprites accordingly
+//   - disable the sim sensor controls when the physical simulator is open, since they won't be in sync with the physical simulator state
+//     in particular, light/temperature/sound
+
 
 export class PhysicalSimulator extends srceditor.Editor {
     canvasRef: HTMLCanvasElement | undefined;
@@ -110,9 +112,7 @@ export class PhysicalSimulator extends srceditor.Editor {
 
     constructor(public parent: IProjectView) {
         super(parent);
-        this.host = new PhysicalSimulatorHost({
-            resizeImageData: (imageData, scale) => this.resizeImageData(imageData, scale),
-        });
+        this.host = new PhysicalSimulatorHost({});
         window.addEventListener("message", this.processEvent.bind(this), false)
         const serialTheme = pxt.appTarget.serial && pxt.appTarget.serial.editorTheme;
         this.lineColors = (serialTheme && serialTheme.lineColors) || ["#e00", "#00e", "#0e0"];
@@ -224,31 +224,6 @@ export class PhysicalSimulator extends srceditor.Editor {
 
     notifySpritesChanged() {
         this.host.notifySpritesChanged();
-    }
-
-    private resizeImageData(imageData: ImageData, scale: number) {
-        // Create source canvas
-        const srcCanvas = document.createElement('canvas');
-        srcCanvas.width = imageData.width;
-        srcCanvas.height = imageData.height;
-        const srcCtx = srcCanvas.getContext('2d');
-        if (!srcCtx) return imageData;
-        srcCtx.putImageData(imageData, 0, 0);
-
-        // Create destination canvas
-        const destCanvas = document.createElement('canvas');
-        const newWidth = destCanvas.width = imageData.width * scale;
-        const newHeight = destCanvas.height = imageData.height * scale;
-        const destCtx = destCanvas.getContext('2d');
-        if (!destCtx) return imageData;
-
-        destCtx.imageSmoothingEnabled = true
-
-        // Draw scaled image
-        destCtx.drawImage(srcCanvas, 0, 0, newWidth, newHeight);
-
-        // Return resized ImageData
-        return destCtx.getImageData(0, 0, newWidth, newHeight);
     }
 
     drawBoards() {

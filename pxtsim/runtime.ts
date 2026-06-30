@@ -1084,7 +1084,7 @@ namespace pxsim {
             const b = runtime && runtime.board;
             if (!b) return undefined;
 
-            const img = await b.screenshotAsync();
+            const img = await b.screenshotAsync(opts && opts.width);
             Runtime.postMessage({
                 type: "screenshot",
                 data: img,

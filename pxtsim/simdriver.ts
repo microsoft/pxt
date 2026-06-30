@@ -373,10 +373,10 @@ namespace pxsim {
             })
         }
 
-        public screenshot(frameId: string) {
+        public screenshot(frameId: string, width?: number) {
             const frame = this.simFrames().find(frame => frame.id === frameId)
             if (frame)
-                this.postMessageCore(frame, { type: "screenshot" })
+                this.postMessageCore(frame, { type: "screenshot", width } as pxsim.SimulatorScreenshotMessage)
         }
 
         private postToParent(source: Window | undefined, msg: pxsim.SimulatorMessage) {
