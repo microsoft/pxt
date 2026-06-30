@@ -828,8 +828,9 @@ function initAccessibilityMessages() {
         SCREENREADER_HINT: lf("Use the arrow keys to navigate. Press %1 to toggle screenreader accessibility mode."),
         // Aria labels for the workspace tree.
         WORKSPACE_LABEL_PLAIN: lf("Blocks workspace."),
-        WORKSPACE_LABEL_1_STACK: lf("Blocks workspace. 1 stack of blocks"),
-        WORKSPACE_LABEL_MANY_STACKS: lf("Blocks workspace. %1 stacks of blocks"),
+        WORKSPACE_ROLEDESCRIPTION: lf("workspace"),
+        WORKSPACE_LABEL_1_STACK: lf("1 stack of blocks"),
+        WORKSPACE_LABEL_MANY_STACKS: lf("%1 stacks of blocks"),
         WORKSPACE_LABEL_MUTATOR_WORKSPACE: lf("Block editor workspace"),
         WORKSPACE_LABEL_FLYOUT_WORKSPACE: lf("%1 blocks"),
         // Workspace contents announcement (the 'I' announce-info shortcut).
@@ -915,7 +916,7 @@ function initAccessibilityMessages() {
         CURRENT_BLOCK_ANNOUNCEMENT: lf("Current block: %1"),
         PARENT_BLOCKS_ANNOUNCEMENT: lf("Parent blocks: %1"),
         NO_PARENT_ANNOUNCEMENT: lf("Current block has no parent"),
-        // Screenreader mode toggle (Cmd/Ctrl+Alt+Z).
+        // Screenreader mode toggle (Alt/Option+Shift+A).
         SCREENREADER_MODE_ENABLED: lf("Screenreader mode is on, press %1 to turn it off"),
         SCREENREADER_MODE_DISABLED: lf("Screenreader mode is off, press %1 to turn it on"),
         // Used for Blockly's toast close aria label.
