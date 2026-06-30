@@ -6,8 +6,9 @@ export interface FocusListProps extends ContainerProps {
     childTabStopId?: string;
     focusSelectsItem?: boolean;
     useUpAndDownArrowKeys?: boolean;
-    title?: string;
+    ariaDescribedby?: string;
     ariaLabelledby?: string;
+    title?: string;
     onItemReceivedFocus?: (item: HTMLElement) => void;
     onClose?: () => void;
 }
@@ -27,13 +28,14 @@ export const FocusList = (props: FocusListProps) => {
         role,
         ariaHidden,
         ariaLabel,
+        ariaLabelledby,
+        ariaDescribedBy,
         childTabStopId,
         children,
         focusSelectsItem,
         onItemReceivedFocus,
         useUpAndDownArrowKeys,
         title,
-        ariaLabelledby,
         onClose
     } = props;
 
@@ -164,9 +166,9 @@ export const FocusList = (props: FocusListProps) => {
             ref={handleRef}
             aria-hidden={ariaHidden}
             aria-label={ariaLabel}
-            title={title}
             aria-labelledby={ariaLabelledby}
-        >
+            aria-describedby={ariaDescribedBy}
+            title={title}>
             {children}
         </div>
     );

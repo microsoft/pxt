@@ -981,7 +981,6 @@ export async function showTurnBackTimeDialogAsync(header: pxt.workspace.Header, 
     }
 
     await core.dialogAsync({
-        header: lf("Turn back time"),
         className: "time-machine-dialog",
         size: "fullscreen",
         hasCloseIcon: true,

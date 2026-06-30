@@ -94,9 +94,12 @@ export function screenToSVGCoord(ref: SVGSVGElement, coord: ClientCoordinates) {
     return screenCoord.matrixTransform(ref.getScreenCTM().inverse());
 }
 
-export function findNextFocusableElement(elements: HTMLElement[], focusedIndex: number, index: number, forward: boolean, filter?: (e: HTMLElement) => boolean): HTMLElement {
+export function findNextFocusableElement(elements: HTMLElement[], focusedIndex: number, index: number, forward: boolean, filter?: (e: HTMLElement) => boolean, wrap = true): HTMLElement {
     const increment = forward ? 1 : -1;
+    index = Math.max(0, Math.min(elements.length - 1, index));
+
     const element = elements[index];
+
     // in this case, there are no focusable elements
     if (focusedIndex === index) {
         return element;
@@ -105,14 +108,22 @@ export function findNextFocusableElement(elements: HTMLElement[], focusedIndex: 
         return element;
     } else {
         if (index + increment >= elements.length) {
-            index = 0;
+            if (wrap) {
+                index = 0;
+            } else {
+                return element;
+            }
         } else if (index + increment < 0) {
-            index = elements.length - 1;
+            if (wrap) {
+                index = elements.length - 1;
+            } else {
+                return element;
+            }
         } else {
             index += increment;
         }
     }
-    return findNextFocusableElement(elements, focusedIndex, index, forward, filter);
+    return findNextFocusableElement(elements, focusedIndex, index, forward, filter, wrap);
 }
 
 export function getFocusableDescendants(container: Element): Element[] {
