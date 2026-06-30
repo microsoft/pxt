@@ -24,7 +24,10 @@ import { BoardSprite, boardHeight, boardWidth, PhysicalSimulatorHost } from "./p
 //   - determine which boards are in range of the message and update their sprites accordingly
 
 export class PhysicalSimulator extends srceditor.Editor {
-    canvasRef = React.createRef<HTMLCanvasElement>();
+    canvasRef: HTMLCanvasElement | undefined;
+    draggingBoard: BoardSprite | undefined;
+    dragOffsetX: number;
+    dragOffsetY: number;
     isVisible = false;
     active: boolean = true
     lineColors: string[];
@@ -89,9 +92,7 @@ export class PhysicalSimulator extends srceditor.Editor {
         }
     }
 
-    simStateChanged() {
-        // this.charts.forEach((chart) => chart.setRealtimeData(this.wantRealtimeData()));
-    }
+    simStateChanged() {    }
 
     constructor(public parent: IProjectView) {
         super(parent);
@@ -107,6 +108,9 @@ export class PhysicalSimulator extends srceditor.Editor {
         this.goBack = this.goBack.bind(this);
         this.addSimulator = this.addSimulator.bind(this);
         this.clearSprites = this.clearSprites.bind(this);
+
+        this.dragOffsetX = 0;
+        this.dragOffsetY = 0;
     }
 
     processEvent(ev: MessageEvent) {
@@ -125,13 +129,13 @@ export class PhysicalSimulator extends srceditor.Editor {
         this.parent.openPreviousEditor()
     }
 
-     recreateSimulators() {
+    recreateSimulators() {
         this.host.recreateSimulators();
     }
 
     addSimulator() {
         pxt.tickEvent("serial.newBoardButton", undefined, { interactiveConsent: true })
-        const canvas = this.canvasRef.current;
+        const canvas = this.canvasRef;
         const x = canvas ? Math.random() * (canvas.width - 40) : 100;
         const y = canvas ? Math.random() * (canvas.height - 40) : 100;
         this.host.addSimulator(x, y);
@@ -163,7 +167,7 @@ export class PhysicalSimulator extends srceditor.Editor {
                     </div>
                 </div>
                 <div id="canvasContainer" style={{ backgroundColor: "#228B22", flex: 1, minHeight: 0, overflow: "hidden" }}>
-                    <PhysicalSimulatorCanvas simulator={this} />
+                    <canvas ref={this.handleCanvasRef} style={{ display: "block", width: "100%", height: "100%" }} />
                 </div>
             </div>
         )
@@ -202,90 +206,105 @@ export class PhysicalSimulator extends srceditor.Editor {
         this.notifyBoardsChanged();
     }
 
-}
+    handleCanvasRef = (c: HTMLCanvasElement | null) => {
+        if (this.canvasRef === c) return;
 
-interface PhysicalSimulatorCanvasProps {
-    simulator: PhysicalSimulator;
-}
+        if (this.canvasRef) {
+            this.detachCanvasListeners(this.canvasRef);
+        }
 
-const PhysicalSimulatorCanvas: React.FC<PhysicalSimulatorCanvasProps> = ({ simulator: psim }) => {
-    const canvasRef = React.useRef<HTMLCanvasElement>(null);
-    const [boards, setBoards] = React.useState<BoardSprite[]>(() => [...psim.boards]);
-    const draggingBoard = React.useRef<BoardSprite | undefined>(undefined);
-    const dragOffsetX = React.useRef(0);
-    const dragOffsetY = React.useRef(0);
+        this.canvasRef = c || undefined;
 
-    const getCanvasMousePosition = (ev: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
-        const canvas = ev.currentTarget;
+        if (this.canvasRef) {
+            this.host.onBoardsChanged = this.handleBoardsChanged;
+            this.attachCanvasListeners(this.canvasRef);
+            this.redrawCanvas();
+        } else if (this.host.onBoardsChanged === this.handleBoardsChanged) {
+            this.host.onBoardsChanged = undefined;
+        }
+    }
+
+    private attachCanvasListeners(canvas: HTMLCanvasElement) {
+        canvas.addEventListener("mousedown", this.onCanvasMouseDown);
+        canvas.addEventListener("mousemove", this.onCanvasMouseMove);
+        canvas.addEventListener("mouseup", this.onCanvasMouseUp);
+        canvas.addEventListener("mouseleave", this.onCanvasMouseUp);
+        window.addEventListener("resize", this.redrawCanvas);
+    }
+
+    private detachCanvasListeners(canvas: HTMLCanvasElement) {
+        canvas.removeEventListener("mousedown", this.onCanvasMouseDown);
+        canvas.removeEventListener("mousemove", this.onCanvasMouseMove);
+        canvas.removeEventListener("mouseup", this.onCanvasMouseUp);
+        canvas.removeEventListener("mouseleave", this.onCanvasMouseUp);
+        window.removeEventListener("resize", this.redrawCanvas);
+    }
+
+    private handleBoardsChanged = (_boards: BoardSprite[]) => {
+        this.redrawCanvas();
+    }
+
+    private getCanvasMousePosition(ev: MouseEvent, canvas: HTMLCanvasElement) {
         const rect = canvas.getBoundingClientRect();
         return {
             x: ev.clientX - rect.left,
             y: ev.clientY - rect.top
         };
-    };
+    }
 
-    const findBoardAt = (x: number, y: number) => {
-        const squareSize = 40;
-        for (let i = psim.boards.length - 1; i >= 0; i--) {
-            const board = psim.boards[i];
-            if (x >= board.x && x <= board.x + squareSize && y >= board.y && y <= board.y + squareSize) {
+    private findBoardAt(x: number, y: number) {
+        for (let i = this.boards.length - 1; i >= 0; i--) {
+            const board = this.boards[i];
+            if (x >= board.x && x <= board.x + boardWidth && y >= board.y && y <= board.y + boardHeight) {
                 return board;
             }
         }
         return undefined;
-    };
+    }
 
-    const onCanvasMouseDown = (ev: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
-        const pos = getCanvasMousePosition(ev);
-        const board = findBoardAt(pos.x, pos.y);
+    private onCanvasMouseDown = (ev: MouseEvent) => {
+        const canvas = this.canvasRef;
+        if (!canvas) return;
+
+        const pos = this.getCanvasMousePosition(ev, canvas);
+        const board = this.findBoardAt(pos.x, pos.y);
         if (!board) return;
 
-        draggingBoard.current = board;
-        dragOffsetX.current = pos.x - board.x;
-        dragOffsetY.current = pos.y - board.y;
+        this.draggingBoard = board;
+        this.dragOffsetX = pos.x - board.x;
+        this.dragOffsetY = pos.y - board.y;
 
         // keep dragged board on top
-        const idx = psim.boards.indexOf(board);
-        if (idx >= 0 && idx !== psim.boards.length - 1) {
-            psim.boards.splice(idx, 1);
-            psim.boards.push(board);
+        const idx = this.boards.indexOf(board);
+        if (idx >= 0 && idx !== this.boards.length - 1) {
+            this.boards.splice(idx, 1);
+            this.boards.push(board);
         }
-        ev.preventDefault();
-    };
 
-    const onCanvasMouseMove = (ev: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
-        if (!draggingBoard.current) return;
-        const pos = getCanvasMousePosition(ev);
-        const canvas = ev.currentTarget;
+        ev.preventDefault();
+    }
+
+    private onCanvasMouseMove = (ev: MouseEvent) => {
+        const canvas = this.canvasRef;
+        if (!canvas || !this.draggingBoard) return;
+
+        const pos = this.getCanvasMousePosition(ev, canvas);
         const maxX = canvas.width - boardWidth;
         const maxY = canvas.height - boardHeight;
 
-        draggingBoard.current.x = Math.max(0, Math.min(maxX, pos.x - dragOffsetX.current));
-        draggingBoard.current.y = Math.max(0, Math.min(maxY, pos.y - dragOffsetY.current));
-        psim.notifyBoardsChanged();
-    };
+        this.draggingBoard.x = Math.max(0, Math.min(maxX, pos.x - this.dragOffsetX));
+        this.draggingBoard.y = Math.max(0, Math.min(maxY, pos.y - this.dragOffsetY));
+        this.notifyBoardsChanged();
+    }
 
-    const onCanvasMouseUp = () => {
-        draggingBoard.current = undefined;
-    };
+    private onCanvasMouseUp = (_ev: MouseEvent) => {
+        this.draggingBoard = undefined;
+    }
 
-    // Keep psim.canvasRef in sync so addSprite() can read canvas dimensions
-    React.useEffect(() => {
-        (psim.canvasRef as React.MutableRefObject<HTMLCanvasElement | null>).current = canvasRef.current;
-    });
-
-    // Subscribe to board changes from the class
-    React.useEffect(() => {
-        psim.onBoardsChanged = setBoards;
-        // Sync state immediately in case boards were updated before mount
-        setBoards([...psim.boards]);
-        return () => { psim.onBoardsChanged = undefined; };
-    }, [psim]);
-
-    // Redraw the canvas whenever the board list changes
-    React.useEffect(() => {
-        const canvas = canvasRef.current;
+    private redrawCanvas = () => {
+        const canvas = this.canvasRef;
         if (!canvas) return;
+
         const ctx = canvas.getContext("2d");
         if (!ctx) return;
 
@@ -295,11 +314,11 @@ const PhysicalSimulatorCanvas: React.FC<PhysicalSimulatorCanvasProps> = ({ simul
         ctx.fillStyle = "#228B22";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        boards.forEach((board) => {
+        this.boards.forEach((board) => {
             const centerX = board.x + boardWidth / 2;
             const centerY = board.y + boardHeight / 2;
 
-            // Draw transmit-power radius circle (power 0–7 maps to 30–135 px)
+            // Draw transmit-power radius circle (power 0-7 maps to 30-135 px)
             const radius = 30 + board.transmitPower * 15;
             const isFlashing = board.radioFlashUntil > Date.now();
             ctx.beginPath();
@@ -317,22 +336,13 @@ const PhysicalSimulatorCanvas: React.FC<PhysicalSimulatorCanvasProps> = ({ simul
                 ctx.fillRect(board.x, board.y, boardWidth, boardHeight);
                 // if (board.simulatorId) simulator.driver?.screenshot(board.simulatorId);
             }
+
             ctx.fillStyle = "#FFFFFF";
             ctx.font = "12px Arial";
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
             ctx.fillText(board.name, centerX, board.y - 10);
         });
-    }, [boards]);
+    }
 
-    return (
-        <canvas
-            ref={canvasRef}
-            style={{ display: "block", width: "100%", height: "100%" }}
-            onMouseDown={onCanvasMouseDown}
-            onMouseMove={onCanvasMouseMove}
-            onMouseUp={onCanvasMouseUp}
-            onMouseLeave={onCanvasMouseUp}
-        />
-    );
 }

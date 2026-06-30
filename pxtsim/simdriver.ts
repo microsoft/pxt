@@ -924,6 +924,17 @@ namespace pxsim {
         }
 
         private handleMessage(msg: pxsim.SimulatorMessage, source?: Window) {
+            const makeTunnelMessage = (payload: pxsim.SimulatorMessage) => {
+                if (this._runOptions?.physicalSimulator) {
+                    const frameid = source?.location.hash.slice(1)
+                    const tunnelMsg = {
+                        type: "tunnel",
+                        source: frameid,
+                        payload
+                    }
+                    this.postToParent(undefined, tunnelMsg);
+                }
+            }
             switch (msg.type || '') {
                 case 'ready': {
                     const frameid = (msg as pxsim.SimulatorReadyMessage).frameid;
@@ -950,6 +961,7 @@ namespace pxsim {
                                 case "running":
                                     this.setState(SimulatorState.Running);
                                     this.handleDeferredMessages(frame);
+                                    makeTunnelMessage(msg);
                                     break;
                                 case "killed":
                                     this.setState(SimulatorState.Stopped);
@@ -961,22 +973,11 @@ namespace pxsim {
                 }
                 case 'simulator':
                     this.handleSimulatorCommand(msg as pxsim.SimulatorCommandMessage); break; //handled elsewhere
+                case 'screenshot':
+                    makeTunnelMessage(msg);
+                    break;
                 case 'serial':
                 case 'pxteditor':
-                case 'screenshot':
-                    // in case of physical simulator, wrap and send out
-                    if (this._runOptions?.physicalSimulator) {
-                        const frameid = source?.location.hash.slice(1)
-                        const tunnelMsg = {
-                            type: "tunnel",
-                            source: frameid,
-                            payload: msg as pxsim.SimulatorScreenshotMessage
-                        }
-                        // only send up
-                        this.postToParent(undefined, tunnelMsg);
-                        return
-                    }
-                case 'custom':
                 case 'recorder':
                 case 'addextensions':
                     break; //handled elsewhere
@@ -994,18 +995,9 @@ namespace pxsim {
                 case 'toplevelcodefinished': if (this.options.onTopLevelCodeEnd) this.options.onTopLevelCodeEnd(); break;
                 case 'setmutebuttonstate': this.options.onMuteButtonStateChange?.((msg as SetMuteButtonStateMessage).state); break;
                 case 'output':
-                case 'radiopacket': {
-                    if (this._runOptions?.physicalSimulator) {
-                        const frameid = source?.location.hash.slice(1)
-                        const tunnelMsg = {
-                            type: "tunnel",
-                            source: frameid,
-                            payload: msg
-                        }
-                        this.postToParent(undefined, tunnelMsg);
-                        return
-                    }
-                }
+                case 'radiopacket':
+                    makeTunnelMessage(msg);
+                    break;
                 default:
                     this.postMessage(msg, source);
                     break;

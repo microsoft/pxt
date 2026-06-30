@@ -152,7 +152,7 @@ namespace pxsim {
     }
     export interface SimulatorTunnelMessage extends SimulatorMessage {
         type: "tunnel";
-        payload: SimulatorRadioPacketMessage | SimulatorScreenshotMessage | SimulatorOutputMessage
+        payload: SimulatorRadioPacketMessage | SimulatorScreenshotMessage | SimulatorOutputMessage | SimulatorStateMessage;
     }
     export interface SimulatorSetTitleMessage extends SimulatorMessage {
         type: "settitle";

@@ -6,7 +6,7 @@ const boardHeight = 40;
 
 export class BoardSprite {
     name = "";
-    simulatorId: string | undefined;
+    simulatorId: string = "TBD"
     image: ImageData | undefined = undefined;
     // #define MICROBIT_RADIO_DEFAULT_TX_POWER 6
     transmitPower = 6;
@@ -78,11 +78,6 @@ export class PhysicalSimulatorHost {
     addSimulator(x = 100, y = 100): BoardSprite {
         const sprite = this.addSprite(x, y);
         sprite.simulatorId = this.addSimulatorToSim();
-        this.notifyBoardsChanged();
-        if (sprite.simulatorId) {
-            this.setTitle(sprite);
-            //this.opts.screenshot?.(sprite.simulatorId);
-        }
         return sprite;
     }
 
@@ -115,6 +110,16 @@ export class PhysicalSimulatorHost {
     processMessage(msg: pxsim.SimulatorTunnelMessage): void {
 
         switch (msg.payload.type) {
+            case "status": {
+                const statusMsg = msg.payload as pxsim.SimulatorStateMessage;
+                const board = this.boards.find(candidate => candidate.simulatorId === msg.source);
+                if (board && statusMsg.state === "running") {
+                    this.setTitle(board);
+                    this.screenshot(board.simulatorId);
+                    this.notifyBoardsChanged();
+                }
+                break
+            }
             case "radiopacket": {
                 const radioMsg = msg.payload as pxsim.SimulatorRadioPacketMessage;
                 const sender = this.boards.find(board => board.simulatorId === msg.source);
