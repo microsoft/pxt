@@ -9,7 +9,18 @@ import * as sui from "./sui"
 import * as srceditor from "./srceditor"
 import { fireClickOnEnter } from "./util"
 import IProjectView = pxt.editor.IProjectView;
-import { BoardSprite, boardHeight, boardWidth, PhysicalSimulatorHost } from "./physicalSimulatorHost";
+import {
+    BoardSprite,
+    boardHeight,
+    boardWidth,
+    EmissionSourceSprite,
+    EmissionSourceType,
+    HeatSourceSprite,
+    LightSourceSprite,
+    NoiseSourceSprite,
+    PhysicalSimulatorHost,
+    PhysicalSprite,
+} from "./physicalSimulatorHost";
 
 
 // BUGS
@@ -24,7 +35,7 @@ import { BoardSprite, boardHeight, boardWidth, PhysicalSimulatorHost } from "./p
 
 export class PhysicalSimulator extends srceditor.Editor {
     canvasRef: HTMLCanvasElement | undefined;
-    draggingBoard: BoardSprite | undefined;
+    draggingSprite: PhysicalSprite | undefined;
     dragOffsetX: number;
     dragOffsetY: number;
     isVisible = false;
@@ -35,16 +46,20 @@ export class PhysicalSimulator extends srceditor.Editor {
     highContrast?: boolean = false;
     host: PhysicalSimulatorHost;
 
+    get sprites() {
+        return this.host.sprites;
+    }
+
     get boards() {
         return this.host.boards;
     }
 
-    get onBoardsChanged() {
-        return this.host.onBoardsChanged;
+    get onSpritesChanged() {
+        return this.host.onSpritesChanged;
     }
 
-    set onBoardsChanged(handler: ((boards: BoardSprite[]) => void) | undefined) {
-        this.host.onBoardsChanged = handler;
+    set onSpritesChanged(handler: ((sprites: PhysicalSprite[]) => void) | undefined) {
+        this.host.onSpritesChanged = handler;
     }
 
     getId() {
@@ -76,7 +91,7 @@ export class PhysicalSimulator extends srceditor.Editor {
         } else {
             console.log(`PSIM: Visible = false`)
         }
-        this.notifyBoardsChanged();
+        this.notifySpritesChanged();
     }
 
     setHighContrast(hc: boolean) {
@@ -106,6 +121,9 @@ export class PhysicalSimulator extends srceditor.Editor {
 
         this.goBack = this.goBack.bind(this);
         this.addSimulator = this.addSimulator.bind(this);
+        this.addLightSource = this.addLightSource.bind(this);
+        this.addNoiseSource = this.addNoiseSource.bind(this);
+        this.addHeatSource = this.addHeatSource.bind(this);
         this.clearSprites = this.clearSprites.bind(this);
 
         this.dragOffsetX = 0;
@@ -148,7 +166,26 @@ export class PhysicalSimulator extends srceditor.Editor {
         const x = canvas ? Math.random() * (canvas.width - 40) : 100;
         const y = canvas ? Math.random() * (canvas.height - 40) : 100;
         this.host.addSimulator(x, y, name.trim() || undefined);
-        this.notifyBoardsChanged();
+        this.notifySpritesChanged();
+    }
+
+    addLightSource() {
+        this.addEmissionSource("light");
+    }
+
+    addNoiseSource() {
+        this.addEmissionSource("noise");
+    }
+
+    addHeatSource() {
+        this.addEmissionSource("heat");
+    }
+
+    private addEmissionSource(sourceType: EmissionSourceType) {
+        const canvas = this.canvasRef;
+        const x = canvas ? Math.random() * (canvas.width - 40) : 100;
+        const y = canvas ? Math.random() * (canvas.height - 40) : 100;
+        this.host.addEmissionSource(sourceType, x, y);
     }
 
     clearSprites() {
@@ -165,13 +202,15 @@ export class PhysicalSimulator extends srceditor.Editor {
                                 <sui.Icon icon="arrow left" />
                                 <span className="ui text landscape only">{lf("Go back")}</span>
                             </sui.Button>
-                            <sui.Button title={lf("Add simulator")} tabIndex={0} onClick={this.addSimulator} onKeyDown={fireClickOnEnter} className="neutral">
-                                <sui.Icon icon="plus" />
-                                <span className="ui text landscape only">{lf("Add simulator")}</span>
-                            </sui.Button>
-                            <sui.Button title={lf("Clear all but first board")} tabIndex={0} onClick={this.clearSprites} onKeyDown={fireClickOnEnter} className="neutral">
+                            <sui.DropdownMenu title={lf("Add sprite")} icon="add circle" className="button neutral" role="menuitem" closeOnItemClick={true}>
+                                <sui.Item role="menuitem" icon="microchip" text={lf("Simulator board")} onClick={this.addSimulator} />
+                                <sui.Item role="menuitem" icon="lightbulb" text={lf("Light source")} onClick={this.addLightSource} />
+                                <sui.Item role="menuitem" icon="volume up" text={lf("Noise source")} onClick={this.addNoiseSource} />
+                                <sui.Item role="menuitem" icon="thermometer half" text={lf("Heat source")} onClick={this.addHeatSource} />
+                            </sui.DropdownMenu>
+                            <sui.Button title={lf("Clear all but first board and remove sources")} tabIndex={0} onClick={this.clearSprites} onKeyDown={fireClickOnEnter} className="neutral">
                                 <sui.Icon icon="trash" />
-                                <span className="ui text landscape only">{lf("Clear simulators")}</span>
+                                <span className="ui text landscape only">{lf("Clear extra sprites")}</span>
                             </sui.Button>
                         </div>
                     </div>
@@ -183,8 +222,8 @@ export class PhysicalSimulator extends srceditor.Editor {
         )
     }
 
-    notifyBoardsChanged() {
-        this.host.notifyBoardsChanged();
+    notifySpritesChanged() {
+        this.host.notifySpritesChanged();
     }
 
     private resizeImageData(imageData: ImageData, scale: number) {
@@ -213,7 +252,7 @@ export class PhysicalSimulator extends srceditor.Editor {
     }
 
     drawBoards() {
-        this.notifyBoardsChanged();
+        this.notifySpritesChanged();
     }
 
     handleCanvasRef = (c: HTMLCanvasElement | null) => {
@@ -226,11 +265,11 @@ export class PhysicalSimulator extends srceditor.Editor {
         this.canvasRef = c || undefined;
 
         if (this.canvasRef) {
-            this.host.onBoardsChanged = this.handleBoardsChanged;
+            this.host.onSpritesChanged = this.handleSpritesChanged;
             this.attachCanvasListeners(this.canvasRef);
             this.redrawCanvas();
-        } else if (this.host.onBoardsChanged === this.handleBoardsChanged) {
-            this.host.onBoardsChanged = undefined;
+        } else if (this.host.onSpritesChanged === this.handleSpritesChanged) {
+            this.host.onSpritesChanged = undefined;
         }
     }
 
@@ -250,7 +289,7 @@ export class PhysicalSimulator extends srceditor.Editor {
         window.removeEventListener("resize", this.redrawCanvas);
     }
 
-    private handleBoardsChanged = (_boards: BoardSprite[]) => {
+    private handleSpritesChanged = (_sprites: PhysicalSprite[]) => {
         this.redrawCanvas();
     }
 
@@ -262,11 +301,11 @@ export class PhysicalSimulator extends srceditor.Editor {
         };
     }
 
-    private findBoardAt(x: number, y: number) {
-        for (let i = this.boards.length - 1; i >= 0; i--) {
-            const board = this.boards[i];
-            if (x >= board.x && x <= board.x + boardWidth && y >= board.y && y <= board.y + boardHeight) {
-                return board;
+    private findSpriteAt(x: number, y: number) {
+        for (let i = this.sprites.length - 1; i >= 0; i--) {
+            const sprite = this.sprites[i];
+            if (x >= sprite.x && x <= sprite.x + sprite.width && y >= sprite.y && y <= sprite.y + sprite.height) {
+                return sprite;
             }
         }
         return undefined;
@@ -277,18 +316,18 @@ export class PhysicalSimulator extends srceditor.Editor {
         if (!canvas) return;
 
         const pos = this.getCanvasMousePosition(ev, canvas);
-        const board = this.findBoardAt(pos.x, pos.y);
-        if (!board) return;
+        const sprite = this.findSpriteAt(pos.x, pos.y);
+        if (!sprite) return;
 
-        this.draggingBoard = board;
-        this.dragOffsetX = pos.x - board.x;
-        this.dragOffsetY = pos.y - board.y;
+        this.draggingSprite = sprite;
+        this.dragOffsetX = pos.x - sprite.x;
+        this.dragOffsetY = pos.y - sprite.y;
 
-        // keep dragged board on top
-        const idx = this.boards.indexOf(board);
-        if (idx >= 0 && idx !== this.boards.length - 1) {
-            this.boards.splice(idx, 1);
-            this.boards.push(board);
+        // keep dragged sprite on top
+        const idx = this.sprites.indexOf(sprite);
+        if (idx >= 0 && idx !== this.sprites.length - 1) {
+            this.sprites.splice(idx, 1);
+            this.sprites.push(sprite);
         }
 
         ev.preventDefault();
@@ -296,19 +335,19 @@ export class PhysicalSimulator extends srceditor.Editor {
 
     private onCanvasMouseMove = (ev: MouseEvent) => {
         const canvas = this.canvasRef;
-        if (!canvas || !this.draggingBoard) return;
+        if (!canvas || !this.draggingSprite) return;
 
         const pos = this.getCanvasMousePosition(ev, canvas);
-        const maxX = canvas.width - boardWidth;
-        const maxY = canvas.height - boardHeight;
+        const maxX = canvas.width - this.draggingSprite.width;
+        const maxY = canvas.height - this.draggingSprite.height;
 
-        this.draggingBoard.x = Math.max(0, Math.min(maxX, pos.x - this.dragOffsetX));
-        this.draggingBoard.y = Math.max(0, Math.min(maxY, pos.y - this.dragOffsetY));
-        this.notifyBoardsChanged();
+        this.draggingSprite.x = Math.max(0, Math.min(maxX, pos.x - this.dragOffsetX));
+        this.draggingSprite.y = Math.max(0, Math.min(maxY, pos.y - this.dragOffsetY));
+        this.notifySpritesChanged();
     }
 
     private onCanvasMouseUp = (_ev: MouseEvent) => {
-        this.draggingBoard = undefined;
+        this.draggingSprite = undefined;
     }
 
     private redrawCanvas = () => {
@@ -324,35 +363,140 @@ export class PhysicalSimulator extends srceditor.Editor {
         ctx.fillStyle = "#228B22";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        this.boards.forEach((board) => {
-            const centerX = board.x + boardWidth / 2;
-            const centerY = board.y + boardHeight / 2;
-
-            // Draw transmit-power radius circle (power 0-7 maps to 30-135 px)
-            const radius = 30 + board.transmitPower * 15;
-            const isFlashing = board.radioFlashUntil > Date.now();
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
-            ctx.strokeStyle = isFlashing ? "rgba(255, 255, 255, 0.9)" : "rgba(255, 255, 100, 0.6)";
-            ctx.lineWidth = isFlashing ? 3 : 2;
-            ctx.stroke();
-            ctx.fillStyle = isFlashing ? "rgba(255, 255, 255, 0.2)" : "rgba(255, 255, 100, 0.08)";
-            ctx.fill();
-
-            if (board.image) {
-                ctx.putImageData(board.image, board.x, board.y);
-            } else {
-                ctx.fillStyle = "#000000";
-                ctx.fillRect(board.x, board.y, boardWidth, boardHeight);
-                // if (board.simulatorId) simulator.driver?.screenshot(board.simulatorId);
+        this.sprites.forEach((sprite) => {
+            if (sprite instanceof BoardSprite) {
+                this.drawBoardSprite(ctx, sprite);
+            } else if (sprite instanceof EmissionSourceSprite) {
+                this.drawEmissionSource(ctx, sprite);
             }
-
-            ctx.fillStyle = "#FFFFFF";
-            ctx.font = "12px Arial";
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            ctx.fillText(board.name, centerX, board.y - 10);
         });
+    }
+
+    private drawBoardSprite(ctx: CanvasRenderingContext2D, board: BoardSprite) {
+        const isFlashing = board.radioFlashUntil > Date.now();
+        ctx.beginPath();
+        ctx.arc(board.centerX, board.centerY, board.radioRadius, 0, 2 * Math.PI);
+        ctx.strokeStyle = isFlashing ? "rgba(255, 255, 255, 0.9)" : "rgba(255, 255, 100, 0.6)";
+        ctx.lineWidth = isFlashing ? 3 : 2;
+        ctx.stroke();
+        ctx.fillStyle = isFlashing ? "rgba(255, 255, 255, 0.2)" : "rgba(255, 255, 100, 0.08)";
+        ctx.fill();
+
+        if (board.image) {
+            ctx.putImageData(board.image, board.x, board.y);
+        } else {
+            ctx.fillStyle = "#000000";
+            ctx.fillRect(board.x, board.y, boardWidth, boardHeight);
+        }
+
+        this.drawSpriteLabel(ctx, board.name, board.centerX, board.y - 10);
+    }
+
+    private drawEmissionSource(ctx: CanvasRenderingContext2D, source: EmissionSourceSprite) {
+        ctx.beginPath();
+        ctx.arc(source.centerX, source.centerY, source.range, 0, 2 * Math.PI);
+        ctx.strokeStyle = this.getSourceStrokeColor(source);
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.fillStyle = this.getSourceFillColor(source);
+        ctx.fill();
+
+        if (source instanceof LightSourceSprite) {
+            this.drawLightIcon(ctx, source);
+        } else if (source instanceof NoiseSourceSprite) {
+            this.drawNoiseIcon(ctx, source);
+        } else if (source instanceof HeatSourceSprite) {
+            this.drawHeatIcon(ctx, source);
+        }
+
+        this.drawSpriteLabel(ctx, source.name, source.centerX, source.y - 10);
+    }
+
+    private drawSpriteLabel(ctx: CanvasRenderingContext2D, text: string, x: number, y: number) {
+        ctx.fillStyle = "#FFFFFF";
+        ctx.font = "12px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(text, x, y);
+    }
+
+    private getSourceStrokeColor(source: EmissionSourceSprite) {
+        if (source instanceof LightSourceSprite) return "rgba(255, 245, 140, 0.75)";
+        if (source instanceof NoiseSourceSprite) return "rgba(120, 220, 255, 0.75)";
+        return "rgba(255, 145, 110, 0.75)";
+    }
+
+    private getSourceFillColor(source: EmissionSourceSprite) {
+        if (source instanceof LightSourceSprite) return "rgba(255, 245, 140, 0.14)";
+        if (source instanceof NoiseSourceSprite) return "rgba(120, 220, 255, 0.14)";
+        return "rgba(255, 145, 110, 0.14)";
+    }
+
+    private drawLightIcon(ctx: CanvasRenderingContext2D, source: LightSourceSprite) {
+        const radius = source.width / 4;
+
+        ctx.fillStyle = "#FFF2A8";
+        ctx.beginPath();
+        ctx.arc(source.centerX, source.centerY, radius, 0, 2 * Math.PI);
+        ctx.fill();
+
+        ctx.strokeStyle = "#FFFBE6";
+        ctx.lineWidth = 2;
+        for (let i = 0; i < 8; i++) {
+            const angle = i * Math.PI / 4;
+            ctx.beginPath();
+            ctx.moveTo(source.centerX + Math.cos(angle) * (radius + 2), source.centerY + Math.sin(angle) * (radius + 2));
+            ctx.lineTo(source.centerX + Math.cos(angle) * (radius + 8), source.centerY + Math.sin(angle) * (radius + 8));
+            ctx.stroke();
+        }
+    }
+
+    private drawNoiseIcon(ctx: CanvasRenderingContext2D, source: NoiseSourceSprite) {
+        const left = source.x + 6;
+        const midY = source.centerY;
+
+        ctx.fillStyle = "#A8ECFF";
+        ctx.beginPath();
+        ctx.moveTo(left, midY - 5);
+        ctx.lineTo(left + 6, midY - 5);
+        ctx.lineTo(left + 12, source.y + 8);
+        ctx.lineTo(left + 12, source.y + source.height - 8);
+        ctx.lineTo(left + 6, midY + 5);
+        ctx.lineTo(left, midY + 5);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.strokeStyle = "#E8FAFF";
+        ctx.lineWidth = 2;
+        [4, 8].forEach(offset => {
+            ctx.beginPath();
+            ctx.arc(source.x + source.width - 10, midY, offset, -Math.PI / 4, Math.PI / 4);
+            ctx.stroke();
+        });
+    }
+
+    private drawHeatIcon(ctx: CanvasRenderingContext2D, source: HeatSourceSprite) {
+        const stemX = source.centerX;
+        const stemTop = source.y + 6;
+        const stemBottom = source.y + source.height - 10;
+
+        ctx.strokeStyle = "#FFE6DB";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(stemX, stemTop);
+        ctx.lineTo(stemX, stemBottom);
+        ctx.stroke();
+
+        ctx.fillStyle = "#FF9F7A";
+        ctx.beginPath();
+        ctx.arc(stemX, stemBottom + 2, 6, 0, 2 * Math.PI);
+        ctx.fill();
+
+        ctx.strokeStyle = "#FFC7B3";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(stemX, stemTop + 4, 3, Math.PI, 0);
+        ctx.stroke();
     }
 
 }
