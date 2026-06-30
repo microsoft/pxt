@@ -77,13 +77,16 @@ export class PhysicalSimulatorHost {
 
     addSimulator(x = 100, y = 100, name?: string): BoardSprite {
         const init = this.boards.length === 0;
-        const sprite = this.addSprite(x, y);
-        sprite.name = name || sprite.name;
+        const board = this.addSprite(x, y);
+        board.name = name || board.name;
         if (init) {
-            sprite.simulatorId = this.getFrameIds()[0];
+            board.simulatorId = this.getFrameIds()[0];
+            this.setTitle(board);
+            this.screenshot(board.simulatorId);
+            this.notifyBoardsChanged();
         } else
-            sprite.simulatorId = this.addSimulatorToSim();
-        return sprite;
+            board.simulatorId = this.addSimulatorToSim();
+        return board;
     }
 
     clearSprites(): void {

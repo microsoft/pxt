@@ -13,11 +13,9 @@ import { BoardSprite, boardHeight, boardWidth, PhysicalSimulatorHost } from "./p
 
 
 // BUGS
-// - creating a new board doesn't sync with the simulator
 // - boards appear out of order
 
 // TODOs:
-// - add modal to set the name of the board
 // - add a way to remove individual boards
 // - add a way to rename boards
 // - when we receive message from the simulator, update the corresponding board's sprite

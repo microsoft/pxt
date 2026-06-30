@@ -339,6 +339,7 @@ namespace pxsim {
         }
 
         public getFrameIds(): string[] {
+            // TODO: need to get the frames in order from top to bottom
             const mkcdFrames = this.simFrames().filter(frame => !frame.dataset[FRAME_DATA_MESSAGE_CHANNEL]);
             return mkcdFrames.map(f => f.id);
         }
@@ -358,9 +359,10 @@ namespace pxsim {
         }
 
         public addSimulator(): string {
-            const newFrame = this.createFrame();
-            this.container.appendChild(newFrame);
-            return newFrame.id
+            const wrapper = this.createFrame();
+            this.container.appendChild(wrapper);
+            const frame = wrapper.firstElementChild as HTMLIFrameElement;
+            return frame.id
         }
 
         public updateSimulators() {
