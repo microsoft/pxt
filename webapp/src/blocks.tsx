@@ -733,7 +733,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             }
         });
 
-        // Route Blockly's built-in screenreader toggle (Ctrl/Cmd+Alt+Z) through
+        // Route Blockly's built-in screenreader toggle (Alt/Option+Shift+A) through
         // MakeCode's persistent setting so the keyboard shortcut, the Settings
         // menu checkbox, and the stored preference all stay in sync.
         const toggleScreenreader = Blockly.ShortcutRegistry.registry.getRegistry()[Blockly.ShortcutItems.names.TOGGLE_SCREENREADER];
