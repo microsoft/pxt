@@ -18,21 +18,29 @@ import {
     NoiseSourceSprite,
     PhysicalSimulatorHost,
     PhysicalSprite,
+    SpriteEditableField,
 } from "./physicalSimulatorHost";
 
 
 // BUGS
 // - boards appear out of order (debug this)
+// - focus on simulator doesn't work (debug this)
 
 // TODOs:
 // - move PhysicalSimulatorHost to out of the webapp so it can be used via the CLI
-// - reduce board image size on sim side rather than here, which should let us update more frequently and reduce lag
-// - add a way to remove individual boards, rename boards
+// - edit sprite properties
+//    - remove
+//    - rename
+//    - change properties of emission sources (range, intensity, etc)
+// - disable the sim sensor controls when the physical simulator is open, since they won't be in sync with the physical simulator state
+//     in particular, light/temperature/sound
+// - more realistic physical simulation
+//   - inverse square law for light and sound
+
+// ICING
 // - when we receive message from the simulator, update the corresponding board's sprite
 //   - on sending a radio message, do an animation around the sprite of the sending board
 //   - determine which boards are in range of the message and update their sprites accordingly
-//   - disable the sim sensor controls when the physical simulator is open, since they won't be in sync with the physical simulator state
-//     in particular, light/temperature/sound
 
 
 export class PhysicalSimulator extends srceditor.Editor {
@@ -253,6 +261,7 @@ export class PhysicalSimulator extends srceditor.Editor {
         canvas.addEventListener("mousemove", this.onCanvasMouseMove);
         canvas.addEventListener("mouseup", this.onCanvasMouseUp);
         canvas.addEventListener("mouseleave", this.onCanvasMouseUp);
+        canvas.addEventListener("dblclick", this.onCanvasDoubleClick);
         window.addEventListener("resize", this.redrawCanvas);
     }
 
@@ -261,6 +270,7 @@ export class PhysicalSimulator extends srceditor.Editor {
         canvas.removeEventListener("mousemove", this.onCanvasMouseMove);
         canvas.removeEventListener("mouseup", this.onCanvasMouseUp);
         canvas.removeEventListener("mouseleave", this.onCanvasMouseUp);
+        canvas.removeEventListener("dblclick", this.onCanvasDoubleClick);
         window.removeEventListener("resize", this.redrawCanvas);
     }
 
@@ -323,6 +333,92 @@ export class PhysicalSimulator extends srceditor.Editor {
 
     private onCanvasMouseUp = (_ev: MouseEvent) => {
         this.draggingSprite = undefined;
+    }
+
+    private onCanvasDoubleClick = async (ev: MouseEvent) => {
+        const canvas = this.canvasRef;
+        if (!canvas) return;
+
+        const pos = this.getCanvasMousePosition(ev, canvas);
+        const sprite = this.findSpriteAt(pos.x, pos.y);
+        if (!sprite) return;
+
+        await this.inspectSprite(sprite);
+        ev.preventDefault();
+    }
+
+    private async inspectSprite(sprite: PhysicalSprite) {
+        const fields = sprite.getEditableFields();
+        const values: pxt.Map<string> = {};
+        fields.forEach(field => {
+            values[field.key] = `${sprite.getEditableValue(field.key)}`;
+        });
+
+        let applied = false;
+        await core.dialogAsync({
+            header: lf("Edit properties"),
+            body: lf(""),
+            jsx: <div className="ui form">
+                {fields.map((field, index) => {
+                    const inputId = `sprite-${sprite.id}-field-${field.key}`;
+                    return <sui.Input
+                        key={field.key}
+                        id={inputId}
+                        label={field.label}
+                        value={values[field.key]}
+                        onChange={v => values[field.key] = v}
+                        autoFocus={index === 0}
+                    />;
+                })}
+            </div>,
+            buttons: [
+                {
+                    label: lf("Apply"),
+                    className: "green",
+                    icon: "checkmark",
+                    onclick: () => {
+                        applied = true;
+                    }
+                }
+            ]
+        });
+
+        if (!applied) return;
+
+        this.applyEditableFields(sprite, fields, values);
+
+        if (sprite instanceof BoardSprite) {
+            this.host.updateBoardProperties(sprite);
+            return;
+        }
+
+        this.notifySpritesChanged();
+    }
+
+    private applyEditableFields(sprite: PhysicalSprite, fields: SpriteEditableField[], values: pxt.Map<string>) {
+        fields.forEach(field => {
+            const rawValue = values[field.key];
+            if (field.type === "string") {
+                const trimmed = (rawValue || "").trim();
+                if (trimmed) sprite.setEditableValue(field.key, trimmed);
+                return;
+            }
+
+            const parsed = field.integer ? parseInt(rawValue, 10) : parseFloat(rawValue);
+            if (isNaN(parsed)) return;
+            const normalized = this.clampNumber(parsed, field.min, field.max, !!field.integer);
+            sprite.setEditableValue(field.key, normalized);
+        });
+    }
+
+    private clampInteger(value: number, min: number, max: number) {
+        return Math.max(min, Math.min(max, Math.round(value)));
+    }
+
+    private clampNumber(value: number, min?: number, max?: number, integer?: boolean) {
+        const normalized = integer ? Math.round(value) : value;
+        const withMin = min === undefined ? normalized : Math.max(min, normalized);
+        return max === undefined ? withMin : Math.min(max, withMin);
     }
 
     private redrawCanvas = () => {

@@ -4,6 +4,15 @@ const boardWidth = 50;
 const boardHeight = 40;
 const emissionSourceSize = 32;
 
+export interface SpriteEditableField {
+    key: string;
+    label: string;
+    type: "string" | "number";
+    min?: number;
+    max?: number;
+    integer?: boolean;
+}
+
 export abstract class PhysicalSprite {
     name = "";
 
@@ -16,6 +25,18 @@ export abstract class PhysicalSprite {
 
     get centerY() {
         return this.y + this.height / 2;
+    }
+
+    getEditableFields(): SpriteEditableField[] {
+        return [{ key: "name", label: "Name", type: "string" }];
+    }
+
+    getEditableValue(fieldKey: string): string | number {
+        return (this as any)[fieldKey];
+    }
+
+    setEditableValue(fieldKey: string, value: string | number): void {
+        (this as any)[fieldKey] = value;
     }
 }
 
@@ -34,6 +55,12 @@ export class BoardSprite extends PhysicalSprite {
     get radioRadius() {
         return 30 + this.transmitPower * 15;
     }
+
+    override getEditableFields(): SpriteEditableField[] {
+        return [
+            ...super.getEditableFields(),
+        ];
+    }
 }
 
 export type EmissionSourceType = "light" | "noise" | "heat";
@@ -46,24 +73,54 @@ export abstract class EmissionSourceSprite extends PhysicalSprite {
     }
 
     abstract readonly sourceType: EmissionSourceType;
+
+    override getEditableFields(): SpriteEditableField[] {
+        return [
+            ...super.getEditableFields(),
+            { key: "range", label: "Range", type: "number", min: 10, max: 400, integer: true }
+        ];
+    }
 }
 
 export class LightSourceSprite extends EmissionSourceSprite {
     readonly sourceType = "light" as const;
     luminosity = 100;
+
+    override getEditableFields(): SpriteEditableField[] {
+        return [
+            ...super.getEditableFields(),
+            { key: "luminosity", label: "Luminosity", type: "number", min: 0, max: 1000, integer: true }
+        ];
+    }
 }
 
 export class NoiseSourceSprite extends EmissionSourceSprite {
     readonly sourceType = "noise" as const;
     decibels = 70;
+
+    override getEditableFields(): SpriteEditableField[] {
+        return [
+            ...super.getEditableFields(),
+            { key: "decibels", label: "Noise level (dB)", type: "number", min: 0, max: 200, integer: true }
+        ];
+    }
 }
 
 export class HeatSourceSprite extends EmissionSourceSprite {
     readonly sourceType = "heat" as const;
     temperatureCelsius = 28;
+
+    override getEditableFields(): SpriteEditableField[] {
+        return [
+            ...super.getEditableFields(),
+            { key: "temperatureCelsius", label: "Temperature (C)", type: "number", min: -50, max: 500, integer: true }
+        ];
+    }
 }
 
-export interface PhysicalSimulatorHostOptions { }
+export interface PhysicalSimulatorHostOptions {
+    onSpritesChanged?: (sprites: PhysicalSprite[]) => void;
+}
 
 export class PhysicalSimulatorHost {
     onSpritesChanged?: (sprites: PhysicalSprite[]) => void;
@@ -81,6 +138,7 @@ export class PhysicalSimulatorHost {
     }
 
     constructor(private readonly opts: PhysicalSimulatorHostOptions = {}) {
+        this.onSpritesChanged = opts.onSpritesChanged;
     }
 
     private getFrameIds() { return simulator.driver.getFrameIds()}
@@ -155,6 +213,11 @@ export class PhysicalSimulatorHost {
             this.postMessageToFrame(board.simulatorId,
                 { type: "settitle", title: board.name } as pxsim.SimulatorSetTitleMessage);
         }
+    }
+
+    updateBoardProperties(board: BoardSprite): void {
+        this.setTitle(board);
+        this.notifySpritesChanged();
     }
 
     addSimulator(x = 100, y = 100, name?: string): BoardSprite {
