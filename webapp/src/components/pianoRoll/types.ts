@@ -21,7 +21,7 @@ export interface Song {
     tracks: Track[];
     measures: number;
     tempo: number;
-    nextId: number;
+    nextInstrumentId: number;
 }
 
 interface BaseInstrument {
@@ -65,7 +65,11 @@ export const NOTE_RANGES = [
 export function getEmptySong(): Song {
     const makecodeSong = pxt.assets.music.getEmptySong(4);
 
+    let nextInstrumentId = 0;
+
     const instruments: Instrument[] = makecodeSong.tracks.map(t => {
+        nextInstrumentId = Math.max(nextInstrumentId, t.id + 1);
+
         if (t.drums) {
             return {
                 id: t.id,
@@ -87,7 +91,7 @@ export function getEmptySong(): Song {
     });
 
     const song: Song = {
-        nextId: 1,
+        nextInstrumentId,
         instruments,
         tracks: [{
             instrumentId: 0,
@@ -196,12 +200,20 @@ function removeEventAtTimeIfNeeded(start: number, track: Track, maxPolyphony: nu
     }
 }
 
+function getNewTrackId(song: Song): number {
+    let id = 0;
+    while (song.tracks.some(t => t.id === id)) {
+        id++;
+    }
+    return id;
+}
+
 export function newTrack(instrumentId: number, song: Song): Song {
     const range = NOTE_RANGES.find(r => r.id === "treble")!;
     const newTrack: Track = {
         instrumentId,
         events: [],
-        id: song.nextId++,
+        id: getNewTrackId(song),
         nextId: 0,
         minOctave: range.minOctave,
         maxOctave: range.maxOctave
@@ -331,7 +343,7 @@ export function toPXTSong(song: Song): pxt.assets.music.Song {
             const instrument = song.instruments.find(i => i.id === track.instrumentId)!;
 
             const pxtTrack: pxt.assets.music.Track = {
-                id: track.instrumentId,
+                id: track.id,
                 name: instrument.name,
                 notes: track.events.map(e => ({
                     startTick: e.start,
@@ -357,7 +369,6 @@ export function fromPXTSong(pxtSong: pxt.assets.music.Song): Song {
     result.tempo = pxtSong.beatsPerMinute;
 
     result.tracks = [];
-    result.nextId += 1000;
 
     const ticksPerSixteenth = pxtSong.ticksPerBeat / 4;
 
@@ -397,7 +408,7 @@ export function fromPXTSong(pxtSong: pxt.assets.music.Song): Song {
             if (instrument) newTrack.instrumentId = instrument.id;
             else {
                 const newInstrument: MelodicInstrument = {
-                    id: result.nextId++,
+                    id: result.nextInstrumentId++,
                     name: lf("Instrument {0}", instrumentIdCounter++),
                     instrument: track.instrument,
                 };
