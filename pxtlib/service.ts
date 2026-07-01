@@ -1839,6 +1839,7 @@ namespace ts.pxtc.service {
         imageUrl?: string;
         type?: ExtensionType;
         learnMoreUrl?: string;
+        installed?: boolean;
 
         pkgConfig?: pxt.PackageConfig; // Added if the type is Bundled
         repo?: pxt.github.GitRepo; //Added if the type is Github VVN TODO ADD THIS
