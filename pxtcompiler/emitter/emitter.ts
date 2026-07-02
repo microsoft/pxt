@@ -4780,11 +4780,7 @@ ${lbl}: .short 0xffff
             let exres: ir.Expr
             if (isPossiblyGenericClassType(objType)) {
                 const info = getClassInfo(objType)
-                const idx = fieldIndexCore(info, getFieldInfo(info, fieldName))
-                if (idx.needsCheck && !target.switches.skipClassCheck) {
-
-                }
-                exres = ir.op(EK.FieldAccess, [objRef], idx)
+                exres = ir.op(EK.FieldAccess, [objRef], fieldIndexCore(info, getFieldInfo(info, fieldName)))
             } else {
                 // Dynamic field access on a non-class-typed receiver (any, structural type,
                 // etc). The call site supplies exactly 1 arg (the receiver) but the target
