@@ -427,9 +427,12 @@ namespace pxsim {
                 return
             }
 
-            let isDeferrableBroadcastMessage = false;
+            const depEditors = this.dependentEditors();
             let frames = this.simFrames();
+
             if (frameID) frames = frames.filter(f => f.id === frameID);
+
+            let isDeferrableBroadcastMessage = false;
 
             const broadcastmsg = msg as pxsim.SimulatorBroadcastMessage;
             if (source && broadcastmsg?.broadcast) {
@@ -447,7 +450,6 @@ namespace pxsim {
                 const single = !!this._currentRuntime?.single;
                 // if the editor is hosted in a multi-editor setting don't start extra frames
                 if (!this.options.nestedEditorSim && !broadcastmsg?.toParentIFrameOnly) {
-                    const depEditors = this.dependentEditors();
                     // send message to other editors
                     if (depEditors) {
                         depEditors.forEach(w => {
