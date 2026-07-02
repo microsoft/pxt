@@ -520,16 +520,15 @@ namespace pxsim {
                             // start secondary frame if needed
                             const mkcdFrames = frames.filter(frame => !frame.dataset[FRAME_DATA_MESSAGE_CHANNEL]);
                             if (!messageChannel &&
-                                    (mkcdFrames.length == 0 || mkcdFrames.length == 1 && !this.singleSimulator
-                                    )) {
+                                    (mkcdFrames.length == 0 || mkcdFrames.length == 1 && !this.singleSimulator)) {
                                 // messageChannel is set to false whenever msg.type !== "messagepacket"
                                 // for example, in the case of msg.type === "radiopacket". However, in the case
                                 // where we have msg.type === "messagepacket" and msg.channel is not matched by an
                                 // extension, we don't want a second simulator to be created. 
                                 this.container.appendChild(this.createFrame());
                                 frames = this.simFrames();
-                            } else if (mkcdFrames.length == 2 && mkcdFrames[1].dataset['runid'] != this.runId) {
                                 // there might be an old frame
+                            } else if (mkcdFrames.length == 2 && mkcdFrames[1].dataset['runid'] != this.runId) {
                                 this.startFrame(mkcdFrames[1]);
                             }
                         }
