@@ -3464,9 +3464,6 @@ ${lbl}: .short 0xffff
             }
             return field;
         }
-        function tryGetFieldInfo(info: ClassInfo, fieldName: string) {
-            return info.allfields.filter(f => (<Identifier>f.name).text == fieldName)[0] || null
-        }
 
         function emitStore(trg: Expression, src: Expression, checkAssign: boolean = false) {
             if (checkAssign) {
