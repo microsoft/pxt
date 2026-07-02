@@ -391,6 +391,29 @@ namespace pxsim {
             }
         }
 
+        private sendMessagesDown(source: Window | undefined, msg: pxsim.SimulatorMessage, 
+                frames: HTMLIFrameElement[], isDeferrable: boolean = false) {
+            for (let i = 0; i < frames.length; ++i) {
+                const frame = frames[i] as HTMLIFrameElement
+                // same frame as source
+                if (source && frame.contentWindow == source) continue;
+                // frame not in DOM
+                if (!frame.contentWindow) continue;
+
+                // finally, send the message
+                if (isDeferrable) {
+                    this.postDeferrableMessage(frame, msg);
+                } else {
+                    this.postMessageCore(frame, msg);
+                }
+
+                // don't start more than 1 recorder
+                if (msg.type == 'recorder'
+                    && (<pxsim.SimulatorRecorderMessage>msg).action == "start")
+                    break;
+            }
+        }
+
         public postMessageToFrame(frameId: string, msg: pxsim.SimulatorMessage) {
             const frame = this.simFrames().find(frame => frame.id === frameId)
             if (frame)
@@ -405,43 +428,22 @@ namespace pxsim {
             }
 
             let isDeferrableBroadcastMessage = false;
-            const sendMessagesDown = (frames: HTMLIFrameElement[]) => {
-                for (let i = 0; i < frames.length; ++i) {
-                    const frame = frames[i] as HTMLIFrameElement
-                    // same frame as source
-                    if (source && frame.contentWindow == source) continue;
-                    // frame not in DOM
-                    if (!frame.contentWindow) continue;
-
-                    // finally, send the message
-                    if (isDeferrableBroadcastMessage) {
-                        this.postDeferrableMessage(frame, msg);
-                    } else {
-                        this.postMessageCore(frame, msg);
-                    }
-
-                    // don't start more than 1 recorder
-                    if (msg.type == 'recorder'
-                        && (<pxsim.SimulatorRecorderMessage>msg).action == "start")
-                        break;
-                }
-            }
-
             let frames = this.simFrames();
             if (frameID) frames = frames.filter(f => f.id === frameID);
 
             const broadcastmsg = msg as pxsim.SimulatorBroadcastMessage;
             if (source && broadcastmsg?.broadcast) {
                 // include index of the source iframe
-                const index = this.simFrames().findIndex((item) => item.contentWindow === source)
-                broadcastmsg.srcFrameIndex = index
+                broadcastmsg.srcFrameIndex = this.simFrames().findIndex((item) => item.contentWindow === source)
 
                 this.postToParent(source, msg)
+
                 if (this._runOptions?.physicalSimulator) {
                     this.updateSimulators();
-                    sendMessagesDown(frames)
+                    this.sendMessagesDown(source, msg, frames)
                     return
                 }
+
                 const single = !!this._currentRuntime?.single;
                 // if the editor is hosted in a multi-editor setting don't start extra frames
                 if (!this.options.nestedEditorSim && !broadcastmsg?.toParentIFrameOnly) {
@@ -535,7 +537,7 @@ namespace pxsim {
 
             // now that we have iframe starts,
             // dispatch message to other frames
-            sendMessagesDown(frames)
+            this. sendMessagesDown(source, msg, frames, isDeferrableBroadcastMessage);
         }
 
         protected deferredMessages: [HTMLIFrameElement, SimulatorMessage][];
