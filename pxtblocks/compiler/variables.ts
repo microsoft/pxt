@@ -63,6 +63,15 @@ export function trackAllVariables(topBlocks: Blockly.Block[], e: Environment) {
         e.idToScope[block.id] = currentScope;
 
         if (block.type === "variables_get") {
+            case "pxt_variable_name":
+    // חילוץ מפתח המשתנה מתוך השדה בבלוק
+    let varId = block.getFieldValue("VAR");
+    // המרת ה-ID לשם המשתנה האמיתי כפי שהמשתמש הקליד אותו
+    let varName = block.workspace.getVariableById(varId).name;
+    // החזרת השם מוקף במרכאות כדי שהקוד יתייחס אליו כאל טקסט (String)
+    return `"${varName}"`;
+
+            
             const name = block.getField("VAR").getText();
             const info = findOrDeclareVariable(name, currentScope);
             currentScope.referencedVars.push(info.id);
