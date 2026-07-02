@@ -27,15 +27,13 @@ import {
 // - focus on simulator doesn't work (debug this)
 
 // TODOs:
+// - redo simdriver to keep PSIM logic separate from the main simulator logic
 // - move PhysicalSimulatorHost to out of the webapp so it can be used via the CLI
-// - edit sprite properties
-//    - remove
-//    - rename
-//    - change properties of emission sources (range, intensity, etc)
 // - disable the sim sensor controls when the physical simulator is open, since they won't be in sync with the physical simulator state
 //     in particular, light/temperature/sound
 // - more realistic physical simulation
 //   - inverse square law for light and sound
+// - showing the serial output of each board somehow... (maybe a bubble, or simple text output in a pane)
 
 // ICING
 // - when we receive message from the simulator, update the corresponding board's sprite
