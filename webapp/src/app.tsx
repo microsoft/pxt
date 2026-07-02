@@ -338,6 +338,9 @@ export class ProjectView
                 return
             }
             case "togglekeyboardcontrolshelp": {
+                if (this.isBlocksActive()) {
+                    Blockly.keyboardNavigationController.setIsActive(true);
+                }
                 this.toggleBuiltInSideDoc("keyboardControls", false);
                 return
             }
