@@ -1,5 +1,6 @@
 import { monkeyPatchBlockSvg } from "./blockSvg";
 import { monkeyPatchConnection } from "./connection";
+import { monkeyPatchDeleteArea } from "./deleteArea";
 import { monkeyPatchFullBlockField } from "./fullBlockField";
 import { monkeyPatchGesture, monkeyPatchShadowDragTargetBlock } from "./gesture";
 import { monkeyPatchGrid } from "./grid";
@@ -13,4 +14,5 @@ export function applyMonkeyPatches() {
     monkeyPatchAddKeyMapping();
     monkeyPatchConnection();
     monkeyPatchFullBlockField();
+    monkeyPatchDeleteArea();
 }
