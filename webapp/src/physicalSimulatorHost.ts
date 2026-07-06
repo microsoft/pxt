@@ -1,3 +1,4 @@
+import { CompileOptions } from "./compiler";
 import * as simulator from "./simulator";
 
 const boardWidth = 50;
@@ -117,6 +118,10 @@ export class HeatSourceSprite extends EmissionSourceSprite {
         ];
     }
 }
+
+/*
+export async function buildSimJsInfo(simOptions: SimulateOptions): Promise<pxtc.BuiltSimJsInfo> {
+ */
 
 export interface PhysicalSimulatorHostOptions {
     onSpritesChanged?: (sprites: PhysicalSprite[]) => void;
