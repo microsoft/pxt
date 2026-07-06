@@ -139,7 +139,8 @@ export const PlaybackControls = (props: PlaybackControlsProps) => {
             label={lf("Tempo:")}
             initialValue={beatsPerMinute.toString()}
             onBlur={handleTempoChange}
-            onEnterKey={handleTempoChange} />
+            onEnterKey={handleTempoChange}
+            validator={validateTempo} />
         <div className="spacer" />
         {!hideBassClefOption &&
             <Checkbox
@@ -177,6 +178,7 @@ export const PlaybackControls = (props: PlaybackControlsProps) => {
                 initialValue={measures.toString()}
                 onBlur={handleMeasureChange}
                 onEnterKey={handleMeasureChange}
+                validator={validateMeasures}
             />
             <Button
                 className="menu-button"
@@ -185,4 +187,24 @@ export const PlaybackControls = (props: PlaybackControlsProps) => {
                 onClick={handleMeasurePlusClick} />
         </div>
     </div>
+}
+
+function validateTempo(value: string, prevValue: string): string {
+    if (!value) return value;
+
+    const numValue = parseFloat(value);
+    if (isNaN(numValue)) {
+        return prevValue;
+    }
+    return Math.min(500, Math.max(20, Math.floor(numValue))).toString();
+}
+
+function validateMeasures(value: string, prevValue: string): string {
+    if (!value) return value;
+
+    const numValue = parseInt(value);
+    if (isNaN(numValue)) {
+        return prevValue;
+    }
+    return Math.max(1, Math.min(numValue, 50)).toString();
 }

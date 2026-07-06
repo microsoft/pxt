@@ -13,7 +13,7 @@ import { Modal } from "../../react-common/components/controls/Modal";
 import { classList } from "../../react-common/components/util";
 import { TabList, TabListProps } from "../../react-common/components/controls/TabList";
 
-type ExtensionMeta = pxtc.service.ExtensionMeta;
+type ExtensionMeta = pxtc.service.ExtensionMeta & { installed?: boolean };
 const ExtensionType = pxtc.service.ExtensionType;
 type EmptyCard = { name: string, loading?: boolean }
 const emptyCard: EmptyCard = { name: "", loading: true }
@@ -57,6 +57,76 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
             searchForBundledAndGithubAsync();
         }
     }, [searchFor])
+
+    function currentProjectDependencies(): pxt.Map<string> {
+        return pkg.mainPkg?.config?.dependencies || {};
+    }
+
+    function dependencyVersions(): string[] {
+        const dependencies = currentProjectDependencies();
+        return Object.keys(dependencies).map(dep => dependencies[dep]);
+    }
+
+    function isDependencyInstalled(name?: string): boolean {
+        return !!name && !!currentProjectDependencies()[name];
+    }
+
+    function normalizedPublishedScriptId(version: string): string | undefined {
+        if (!version) return undefined;
+        if (version.slice(0, 4) === "pub:") return version.slice(4);
+        return pxt.Cloud.parseScriptId(version);
+    }
+
+    function githubReposMatch(a?: pxt.github.ParsedRepo, b?: pxt.github.ParsedRepo): boolean {
+        if (!a || !b) return false;
+        if (a.fileName || b.fileName)
+            return a.fullName.toLowerCase() === b.fullName.toLowerCase();
+        return a.slug.toLowerCase() === b.slug.toLowerCase();
+    }
+
+    function isGithubExtensionInstalled(extensionInfo: ExtensionMeta): boolean {
+        const extensionRepos: pxt.github.ParsedRepo[] = [];
+        const repoIds = [extensionInfo.repo?.fullName, extensionInfo.fullRepo];
+        repoIds.forEach(repoId => {
+            const parsed = repoId && pxt.github.parseRepoId(repoId);
+            if (parsed) extensionRepos.push(parsed);
+        });
+        if (!extensionRepos.length) return false;
+
+        return dependencyVersions().some(version => {
+            const dependencyRepo = pxt.github.parseRepoId(version);
+            return extensionRepos.some(repo => githubReposMatch(repo, dependencyRepo));
+        });
+    }
+
+    function isShareScriptInstalled(scriptInfo?: pxt.Cloud.JsonScript): boolean {
+        if (!scriptInfo?.id) return false;
+        return dependencyVersions().some(version => normalizedPublishedScriptId(version) === scriptInfo.id);
+    }
+
+    function isLocalExtensionInstalled(header: pxt.workspace.Header): boolean {
+        return dependencyVersions().some(version => version === `workspace:${header.id}`);
+    }
+
+    function isExtensionInstalled(extensionInfo: ExtensionMeta): boolean {
+        switch (extensionInfo.type) {
+            case ExtensionType.Bundled:
+                return isDependencyInstalled(extensionInfo.pkgConfig?.name || extensionInfo.name);
+            case ExtensionType.Github:
+                return isGithubExtensionInstalled(extensionInfo) || isDependencyInstalled(extensionInfo.name);
+            case ExtensionType.ShareScript:
+                return isShareScriptInstalled(extensionInfo.scriptInfo) || isDependencyInstalled(extensionInfo.name);
+            default:
+                return isDependencyInstalled(extensionInfo.name);
+        }
+    }
+
+    function withInstalledFlag<T extends ExtensionMeta>(extensionInfo: T): T {
+        return {
+            ...extensionInfo,
+            installed: isExtensionInstalled(extensionInfo)
+        };
+    }
 
     /**
      * Github search
@@ -106,10 +176,17 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
         if (!newExtension) {
             return;
         }
-        const addedExtensions = allExtensions;
+        const addedExtensions = new Map(allExtensions);
         newExtension.forEach(e => {
-            if (!addedExtensions.has(e.name.toLowerCase())) {
-                addedExtensions.set(e.name.toLowerCase(), e)
+            const extensionWithStatus = withInstalledFlag(e);
+            if (!addedExtensions.has(extensionWithStatus.name.toLowerCase())) {
+                addedExtensions.set(extensionWithStatus.name.toLowerCase(), extensionWithStatus)
+            }
+            if (extensionWithStatus.fullRepo && !addedExtensions.has(extensionWithStatus.fullRepo.toLowerCase())) {
+                addedExtensions.set(extensionWithStatus.fullRepo.toLowerCase(), extensionWithStatus)
+            }
+            if (extensionWithStatus.repo?.fullName && !addedExtensions.has(extensionWithStatus.repo.fullName.toLowerCase())) {
+                addedExtensions.set(extensionWithStatus.repo.fullName.toLowerCase(), extensionWithStatus)
             }
         })
         setAllExtensions(addedExtensions);
@@ -308,7 +385,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
     }
 
     function parseGithubRepo(r: pxt.github.GitRepo): ExtensionMeta {
-        return {
+        return withInstalledFlag({
             name: ghName(r),
             displayName: r.displayName,
             type: ExtensionType.Github,
@@ -316,17 +393,17 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
             repo: r,
             description: r.description,
             fullRepo: r.fullName
-        }
+        })
     }
 
     function parseShareScript(s: pxt.Cloud.JsonScript): ExtensionMeta {
-        return {
+        return withInstalledFlag({
             name: s.name,
             type: ExtensionType.ShareScript,
             imageUrl: s.thumb ? `${pxt.Cloud.apiRoot}/${s.id}/thumb` : undefined,
             description: s.description,
             scriptInfo: s,
-        }
+        })
     }
 
 
@@ -364,7 +441,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
     }
 
     function packageConfigToExtensionMeta(p: pxt.PackageConfig): ExtensionMeta {
-        return {
+        return withInstalledFlag({
             name: p.name,
             displayName: p.displayName,
             imageUrl: p.icon,
@@ -372,7 +449,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
             learnMoreUrl: `/reference/${p.name}`,
             pkgConfig: p,
             description: p.description
-        }
+        })
     }
 
     function fetchBundled(): Map<string, ExtensionMeta> {
@@ -385,7 +462,6 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
             .filter(pk => !pk.searchOnly || searchFor?.length != 0)
             .filter(pk => pk.name != "core")
             .filter(pk => false == !!pk.core) // show core in "boards" mode
-            .filter(pk => !pkg.mainPkg.deps[pk.name] || pkg.mainPkg.deps[pk.name].cppOnly) // don't show package already referenced in extensions
             .sort((a, b) => {
                 // core first
                 if (a.core != b.core)
@@ -457,7 +533,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
     function ExtensionMetaCard(props: {
         extensionInfo: ExtensionMeta & EmptyCard,
     }) {
-        const { extensionInfo } = props;
+        const extensionInfo = withInstalledFlag(props.extensionInfo);
         const {
             description,
             fullRepo,
@@ -478,6 +554,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
             onClick={installExtension}
             learnMoreUrl={learnMoreUrl || (fullRepo ? `/pkg/${fullRepo}` : undefined)}
             loading={loading}
+            installed={extensionInfo.installed}
             label={pxt.isPkgBeta(extensionInfo) ? lf("Beta") : undefined}
             showDisclaimer={type != ExtensionType.Bundled && repo?.status != pxt.github.GitRepoStatus.Approved}
         />;
@@ -578,16 +655,18 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                                 )
                             }
                             {currentTab === LOCAL_TAG_ID &&
-                                extensionsInDevelopment.map((p, index) =>
-                                    <ExtensionCard
+                                extensionsInDevelopment.map((p, index) => {
+                                    const installed = isLocalExtensionInstalled(p);
+                                    return <ExtensionCard
                                         key={`local:${index}`}
                                         title={p.name}
                                         description={lf("Local copy of {0} hosted on github.com", p.githubId)}
                                         imageUrl={p.icon}
                                         extension={p}
                                         onClick={addLocal}
-                                    />
-                                )
+                                        installed={installed}
+                                    />;
+                                })
                             }
                             {currentTab !== RECOMMENDED_TAG_ID && currentTab !== LOCAL_TAG_ID &&
                                 extensionsToShow?.map(
