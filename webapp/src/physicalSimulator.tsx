@@ -5,6 +5,7 @@ import * as pkg from "./package"
 import * as core from "./core"
 import * as sui from "./sui"
 import * as srceditor from "./srceditor"
+import * as workspace from "./workspace"
 import { fireClickOnEnter } from "./util"
 import IProjectView = pxt.editor.IProjectView;
 import {
@@ -158,21 +159,70 @@ export class PhysicalSimulator extends srceditor.Editor {
 
     async addSimulator() {
         pxt.tickEvent("serial.newBoardButton", undefined, { interactiveConsent: true })
-        const name = await core.promptAsync({
-            header: lf("Name your simulator"),
-            agreeLbl: lf("Add simulator"),
-            agreeClass: "green",
-            initialValue: this.host.getNextBoardName(),
-            placeholder: lf("Enter a simulator name")
-        });
-
-        if (name === null) return;
+        const board = await this.promptForBoardInfoAsync();
+        if (!board) return;
 
         const canvas = this.canvasRef;
         const x = canvas ? Math.random() * (canvas.width - 40) : 100;
         const y = canvas ? Math.random() * (canvas.height - 40) : 100;
-        this.host.addSimulator(x, y, name.trim() || undefined);
+        this.host.addSimulator(x, y, board.name, board.projectHeaderId);
         this.notifySpritesChanged();
+    }
+
+    private async promptForBoardInfoAsync(): Promise<{ name: string; projectHeaderId?: string } | undefined> {
+        const defaultName = this.host.getNextBoardName();
+        const projectOptions = workspace.getHeaders()
+            .filter(header => !header.isDeleted)
+            .sort((a, b) => (b.modificationTime || 0) - (a.modificationTime || 0));
+
+        let name = defaultName;
+        let selectedProjectHeaderId: string | undefined = projectOptions[0]?.id;
+        let applied = false;
+
+        await core.dialogAsync({
+            header: lf("Add simulator board"),
+            jsx: <div className="ui form">
+                <sui.Input
+                    id="projectBoardNameInput"
+                    label={lf("Board name")}
+                    value={name}
+                    autoComplete={false}
+                    placeholder={lf("Enter a simulator name")}
+                    onChange={v => name = v}
+                    autoFocus
+                />
+                <div className="field">
+                    <label>{lf("Project")}</label>
+                    <select
+                        className="ui dropdown"
+                        defaultValue={selectedProjectHeaderId || ""}
+                        onChange={e => selectedProjectHeaderId = e.currentTarget.value || undefined}
+                        aria-label={lf("Project")}
+                    >
+                        <option value="">{lf("Default")}</option>
+                        {projectOptions.map(project =>
+                            <option key={project.id} value={project.id}>{project.name || lf("Untitled")}</option>
+                        )}
+                    </select>
+                </div>
+            </div>,
+            buttons: [{
+                label: lf("Add simulator"),
+                className: "approve positive",
+                icon: "check",
+                onclick: () => {
+                    name = (name || "").trim() || defaultName;
+                    applied = true;
+                }
+            }]
+        });
+
+        if (!applied) return undefined;
+
+        return {
+            name,
+            projectHeaderId: selectedProjectHeaderId
+        };
     }
 
     addLightSource() {

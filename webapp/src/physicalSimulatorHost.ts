@@ -43,6 +43,7 @@ export abstract class PhysicalSprite {
 
 export class BoardSprite extends PhysicalSprite {
     simulatorId: string = "TBD"
+    projectHeaderId?: string;
     image: ImageData | undefined = undefined;
     // #define MICROBIT_RADIO_DEFAULT_TX_POWER 6
     transmitPower = 6;
@@ -225,10 +226,11 @@ export class PhysicalSimulatorHost {
         this.notifySpritesChanged();
     }
 
-    addSimulator(x = 100, y = 100, name?: string): BoardSprite {
+    addSimulator(x = 100, y = 100, name?: string, projectHeaderId?: string): BoardSprite {
         const init = this.boards.length === 0;
         const board = this.addBoardSprite(x, y);
         board.name = name || board.name;
+        board.projectHeaderId = projectHeaderId;
         if (init) {
             board.simulatorId = this.getFrameIds()[0];
             this.setTitle(board);
