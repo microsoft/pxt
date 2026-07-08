@@ -25,7 +25,7 @@ These shortcuts are available in all areas of the editor:
 |Action | Windows | Mac |
 |-|-|-|
 | Show/hide shortcut help | ``Ctrl``+`/` | `⌘`+`/` |
-| Screen reader mode (additional audio cues and navigation aids for screen reader users) | `Ctrl`+`Alt`+`Z` | `⌘`+`Alt`+`Z` |
+| Screen reader mode (additional audio cues and navigation aids for screen reader users) | `Alt`+`Shift`+`A` | `⌥`+`Shift`+`A` |
 | Move between menus, simulator and the workspace | `Tab` or `Shift`+`Tab` | |
 | Area menu (then press an area's number, or `Tab` to it and press `Enter` )  | `Ctrl`+`B` | `⌘`+`B` |
 
