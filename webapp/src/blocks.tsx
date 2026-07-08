@@ -742,7 +742,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             Blockly.ShortcutRegistry.registry.register({
                 ...toggleScreenreader,
                 callback: (workspace, e) => {
-                    this.parent.toggleScreenReaderMode("shortcut");
+                    this.parent.toggleScreenReaderModeAsync("shortcut");
                     e.preventDefault();
                     return true;
                 }
