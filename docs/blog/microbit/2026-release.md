@@ -49,7 +49,7 @@ For additional accessibility resources like teacher guides, a tactile micro:bit 
 
 You may notice some minor updates we’ve made to the Home Page in this release –
 
-* **Search** – use the Search button to find tutorials, videos and other resources more quickly
+* **Search** – use the Search button to find tutorials, videos and other resources more quickly.
 
 ![Search button on homescreen](/static/blog/microbit/2026-release/search-button.png)
 
@@ -69,19 +69,19 @@ And we’ve added a couple of new blocks for folks who have requested them –
 
 ![New Math and Pause blocks](/static/blog/microbit/2026-release/new-blocks.png)
 
-* **Math convert block** – allows you to convert values between degrees and radians, and Celsius and Fahrenheit. Learn more at https://makecode.microbit.org/reference/math/convert-unit
-* **Pause until** – stops program execution until a condition is fulfilled. Learn more at https://makecode.microbit.org/blocks/pause-until
+* **Math convert block** – allows you to convert values between degrees and radians, and Celsius and Fahrenheit. Learn more at https://makecode.microbit.org/reference/math/convert.
+* **Pause until** – stops program execution until a condition is fulfilled. Learn more at https://makecode.microbit.org/blocks/pause-until.
 
 ## Extensions
 
 We have a really vibrant ecosystem of micro:bit extensions with over 280 different extensions being used every month in MakeCode.
 
-* **Gallery** – we’ve cleaned up the extension gallery view a bit to help with filtering, and we’ve added indicators on the extensions so you can easily see what extensions have been installed in your project
+* **Gallery** – we’ve cleaned up the extension gallery view a bit to help with filtering, and we’ve added indicators on the extensions so you can easily see what extensions have been installed in your project.
 
 
 <ExtGallery.png>
 
-* Piano Roll – a new extension that’s helpful for advanced music users
+* Piano Roll – a new extension that’s helpful for advanced music users.
 
 
 < include link and screenshot >
