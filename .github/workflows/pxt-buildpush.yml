@@ -44,9 +44,6 @@ jobs:
         with:
           node-version: 20.x
           
-      - name: Update npm
-        run: npm install -g npm@latest
-
       - name: npm install
         run: |
           sudo apt-get install xvfb
@@ -78,9 +75,6 @@ jobs:
         uses: actions/setup-node@main
         with:
           node-version: 20.x
-
-      - name: Update npm
-        run: npm install -g npm@latest
 
       - name: npm install
         run: |
