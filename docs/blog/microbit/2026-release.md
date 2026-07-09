@@ -81,10 +81,10 @@ We have a really vibrant ecosystem of micro:bit extensions with over 280 differe
 
 <ExtGallery.png>
 
-* Piano Roll – a new extension that’s helpful for advanced music users.
+* Piano Roll – a new extension that’s helpful for advanced music users.  Here is a sample project using the Piano Roll extension: https://makecode.microbit.org/_Ys3W6yU65iAj. Learn more about this extension at https://github.com/microsoft/pxt-piano-roll. 
 
 
-< include link and screenshot >
+<PianoRoll.png>
 
 
 Thank you to everyone who has logged bugs, submitted PR’s, translated and suggested new features throughout the year. And very special thanks to the micro:bit [Youth Ideation Panel](https://microbit.org/news/2026-05-19/cocreating-accessible-coding-experiences-with-young-people) whose feedback and input was invaluable as we were designing the accessible blocks experience. Any new bugs you find in this release, please log them in GitHub: https://github.com/Microsoft/pxt-microbit/issues. Other comments, suggestions, and feedback, please participate in the micro:bit developer community at https://tech.microbit.org/get-involved/where-to-find or the [MakeCode Forum](https://forum.makecode.com).
