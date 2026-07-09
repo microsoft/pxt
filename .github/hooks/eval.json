@@ -1,0 +1,102 @@
+{
+  "version": 1,
+  "_toast": true,
+  "hooks": {
+    "sessionStart": [
+      {
+        "type": "command",
+        "bash": "'C:\\Program Files\\nodejs\\node.exe' 'C:\\Users\\abchatra\\.toast\\sessions\\2026-06-30-160647\\hook-script.mjs'",
+        "powershell": "& 'C:\\Program Files\\nodejs\\node.exe' 'C:\\Users\\abchatra\\.toast\\sessions\\2026-06-30-160647\\hook-script.mjs'",
+        "env": {
+          "EVAL_EVENT": "sessionStart",
+          "EVAL_LOG_DIR": "C:\\Users\\abchatra\\.toast\\sessions\\2026-06-30-160647",
+          "HOOK_LOG_PREFIX": "copilot-hooks"
+        }
+      }
+    ],
+    "userPromptSubmitted": [
+      {
+        "type": "command",
+        "bash": "'C:\\Program Files\\nodejs\\node.exe' 'C:\\Users\\abchatra\\.toast\\sessions\\2026-06-30-160647\\hook-script.mjs'",
+        "powershell": "& 'C:\\Program Files\\nodejs\\node.exe' 'C:\\Users\\abchatra\\.toast\\sessions\\2026-06-30-160647\\hook-script.mjs'",
+        "env": {
+          "EVAL_EVENT": "userPromptSubmitted",
+          "EVAL_LOG_DIR": "C:\\Users\\abchatra\\.toast\\sessions\\2026-06-30-160647",
+          "HOOK_LOG_PREFIX": "copilot-hooks"
+        }
+      }
+    ],
+    "preToolUse": [
+      {
+        "type": "command",
+        "bash": "'C:\\Program Files\\nodejs\\node.exe' 'C:\\Users\\abchatra\\.toast\\sessions\\2026-06-30-160647\\hook-script.mjs'",
+        "powershell": "& 'C:\\Program Files\\nodejs\\node.exe' 'C:\\Users\\abchatra\\.toast\\sessions\\2026-06-30-160647\\hook-script.mjs'",
+        "env": {
+          "EVAL_EVENT": "preToolUse",
+          "EVAL_LOG_DIR": "C:\\Users\\abchatra\\.toast\\sessions\\2026-06-30-160647",
+          "HOOK_LOG_PREFIX": "copilot-hooks"
+        }
+      }
+    ],
+    "postToolUse": [
+      {
+        "type": "command",
+        "bash": "'C:\\Program Files\\nodejs\\node.exe' 'C:\\Users\\abchatra\\.toast\\sessions\\2026-06-30-160647\\hook-script.mjs'",
+        "powershell": "& 'C:\\Program Files\\nodejs\\node.exe' 'C:\\Users\\abchatra\\.toast\\sessions\\2026-06-30-160647\\hook-script.mjs'",
+        "env": {
+          "EVAL_EVENT": "postToolUse",
+          "EVAL_LOG_DIR": "C:\\Users\\abchatra\\.toast\\sessions\\2026-06-30-160647",
+          "HOOK_LOG_PREFIX": "copilot-hooks"
+        }
+      }
+    ],
+    "errorOccurred": [
+      {
+        "type": "command",
+        "bash": "'C:\\Program Files\\nodejs\\node.exe' 'C:\\Users\\abchatra\\.toast\\sessions\\2026-06-30-160647\\hook-script.mjs'",
+        "powershell": "& 'C:\\Program Files\\nodejs\\node.exe' 'C:\\Users\\abchatra\\.toast\\sessions\\2026-06-30-160647\\hook-script.mjs'",
+        "env": {
+          "EVAL_EVENT": "errorOccurred",
+          "EVAL_LOG_DIR": "C:\\Users\\abchatra\\.toast\\sessions\\2026-06-30-160647",
+          "HOOK_LOG_PREFIX": "copilot-hooks"
+        }
+      }
+    ],
+    "agentStop": [
+      {
+        "type": "command",
+        "bash": "'C:\\Program Files\\nodejs\\node.exe' 'C:\\Users\\abchatra\\.toast\\sessions\\2026-06-30-160647\\hook-script.mjs'",
+        "powershell": "& 'C:\\Program Files\\nodejs\\node.exe' 'C:\\Users\\abchatra\\.toast\\sessions\\2026-06-30-160647\\hook-script.mjs'",
+        "env": {
+          "EVAL_EVENT": "agentStop",
+          "EVAL_LOG_DIR": "C:\\Users\\abchatra\\.toast\\sessions\\2026-06-30-160647",
+          "HOOK_LOG_PREFIX": "copilot-hooks"
+        }
+      }
+    ],
+    "subagentStop": [
+      {
+        "type": "command",
+        "bash": "'C:\\Program Files\\nodejs\\node.exe' 'C:\\Users\\abchatra\\.toast\\sessions\\2026-06-30-160647\\hook-script.mjs'",
+        "powershell": "& 'C:\\Program Files\\nodejs\\node.exe' 'C:\\Users\\abchatra\\.toast\\sessions\\2026-06-30-160647\\hook-script.mjs'",
+        "env": {
+          "EVAL_EVENT": "subagentStop",
+          "EVAL_LOG_DIR": "C:\\Users\\abchatra\\.toast\\sessions\\2026-06-30-160647",
+          "HOOK_LOG_PREFIX": "copilot-hooks"
+        }
+      }
+    ],
+    "sessionEnd": [
+      {
+        "type": "command",
+        "bash": "'C:\\Program Files\\nodejs\\node.exe' 'C:\\Users\\abchatra\\.toast\\sessions\\2026-06-30-160647\\hook-script.mjs'",
+        "powershell": "& 'C:\\Program Files\\nodejs\\node.exe' 'C:\\Users\\abchatra\\.toast\\sessions\\2026-06-30-160647\\hook-script.mjs'",
+        "env": {
+          "EVAL_EVENT": "sessionEnd",
+          "EVAL_LOG_DIR": "C:\\Users\\abchatra\\.toast\\sessions\\2026-06-30-160647",
+          "HOOK_LOG_PREFIX": "copilot-hooks"
+        }
+      }
+    ]
+  }
+}
