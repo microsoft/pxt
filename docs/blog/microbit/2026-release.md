@@ -35,7 +35,7 @@ And the keyboard controls **Area** menu will allow you to quickly jump to a diff
 
 MakeCode now fully supports all screen readers, including [NVDA](https://www.nvaccess.org/download), [JAWS](https://support.freedomscientific.com/Downloads/JAWS), [Windows Narrator](https://www.microsoft.com/en-us/windows/learning-center/how-to-use-narrator), [Mac Voice Over](https://support.apple.com/guide/voiceover/welcome/mac), and [ChromeVox](https://support.google.com/chromebook/answer/7031755).
 
-<ChromeVox.png>
+![Chrome Vox example](/static/blog/microbit/2026-release/chrome-vox.png)
 
 Simply turn on your screen reader and navigate around the MakeCode user interface to hear descriptions and actions you can take. Optionally, you can turn on the Screen Reader mode from the **Settings** menu which will include hard stops when navigating through code on the workspace (instead of continuing to loop through blocks) and adds an audio cue when changing block container nesting levels.
 
@@ -79,13 +79,12 @@ We have a really vibrant ecosystem of micro:bit extensions with over 280 differe
 * **Gallery** – we’ve cleaned up the extension gallery view a bit to help with filtering, and we’ve added indicators on the extensions so you can easily see what extensions have been installed in your project.
 
 
-<ExtGallery.png>
+![Extension Gallery](/static/blog/microbit/2026-release/ext-gallery.png)
+
 
 * Piano Roll – a new extension that’s helpful for advanced music users.  Here is a sample project using the Piano Roll extension: https://makecode.microbit.org/_Ys3W6yU65iAj. Learn more about this extension at https://github.com/microsoft/pxt-piano-roll. 
 
-
-<PianoRoll.png>
-
+![Piano Roll](/static/blog/microbit/2026-release/piano-roll.png)
 
 Thank you to everyone who has logged bugs, submitted PR’s, translated and suggested new features throughout the year. And very special thanks to the micro:bit [Youth Ideation Panel](https://microbit.org/news/2026-05-19/cocreating-accessible-coding-experiences-with-young-people) whose feedback and input was invaluable as we were designing the accessible blocks experience. Any new bugs you find in this release, please log them in GitHub: https://github.com/Microsoft/pxt-microbit/issues. Other comments, suggestions, and feedback, please participate in the micro:bit developer community at https://tech.microbit.org/get-involved/where-to-find or the [MakeCode Forum](https://forum.makecode.com).
 
