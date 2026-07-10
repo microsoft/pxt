@@ -254,7 +254,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
 
     toggleScreenReaderMode() {
         pxt.tickEvent("menu.togglescreenreadermode", undefined, { interactiveConsent: true });
-        this.props.parent.toggleScreenReaderMode("settings");
+        this.props.parent.toggleScreenReaderModeAsync("settings");
     }
 
     toggleGreenScreen() {

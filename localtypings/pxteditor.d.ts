@@ -85,6 +85,7 @@ declare namespace pxt.editor {
         | "sethighcontrast" // EditorMessageSetHighContrastRequest
         | "togglegreenscreen"
         | "togglekeyboardcontrols"
+        | "togglescreenreadermode"
         | "settracestate" //
         | "setsimulatorfullscreen" // EditorMessageSimulatorFullScreenRequest
 
@@ -425,6 +426,7 @@ declare namespace pxt.editor {
         locale: string;
         availableLocales?: string[];
         keyboardControls: boolean;
+        screenReaderMode: boolean;
     }
 
     export interface PackageExtensionData {
@@ -1048,7 +1050,8 @@ declare namespace pxt.editor {
 
         toggleHighContrast(): void;
         setHighContrast(on: boolean): void;
-        toggleScreenReaderMode(eventSource: string): void;
+        toggleScreenReaderModeAsync(eventSource: string): Promise<void>;
+        isScreenReaderModeEnabled(): boolean;
         toggleGreenScreen(): void;
         launchFullEditor(): void;
         resetWorkspace(): void;

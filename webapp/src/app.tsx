@@ -223,7 +223,7 @@ export class ProjectView
         this.openDeviceSerial = this.openDeviceSerial.bind(this);
         this.openSerial = this.openSerial.bind(this);
         this.toggleGreenScreen = this.toggleGreenScreen.bind(this);
-        this.toggleScreenReaderMode = this.toggleScreenReaderMode.bind(this);
+        this.toggleScreenReaderModeAsync = this.toggleScreenReaderModeAsync.bind(this);
         this.toggleSimulatorFullscreen = this.toggleSimulatorFullscreen.bind(this);
         this.toggleSimulatorCollapse = this.toggleSimulatorCollapse.bind(this);
         this.showKeymap = this.showKeymap.bind(this);
@@ -5324,12 +5324,16 @@ export class ProjectView
         this.setColorThemeById(on ? pxt.appTarget.appTheme.highContrastColorTheme : pxt.appTarget.appTheme.defaultColorTheme, true);
     }
 
-    async toggleScreenReaderMode(eventSource: string) {
+    async toggleScreenReaderModeAsync(eventSource: string) {
         const nextEnabled = !this.getData<boolean>(auth.SCREEN_READER_MODE);
         await core.setScreenReaderMode(nextEnabled, eventSource);
         if (this.blocksEditor) {
             this.blocksEditor.setScreenReaderMode(nextEnabled, eventSource === "shortcut" ? "shortcut" : "menu");
         }
+    }
+
+    isScreenReaderModeEnabled(): boolean {
+        return !!this.getData<boolean>(auth.SCREEN_READER_MODE);
     }
 
     toggleGreenScreen() {
