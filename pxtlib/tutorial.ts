@@ -622,6 +622,9 @@ ${code}
 
     export function mergeTutorialDependencies(projectDependencies: pxt.Map<string>, tutorialDependencies: pxt.Map<string>): pxt.Map<string> {
         const merged: pxt.Map<string> = { ...projectDependencies };
+
+        if (!tutorialDependencies) return merged;
+
         for (const dep of Object.keys(tutorialDependencies)) {
             const ver = tutorialDependencies[dep];
             if (ver.toLowerCase() === "remove") {
