@@ -56,6 +56,7 @@ pxt.docs.requireDOMSanitizer = () => {
             code: mergeClassAttribute("code"),
             pre: mergeClassAttribute("pre"),
             div: mergeClassAttribute("div", "data-youtube", "title"),
+            img: mergeClassAttribute("img"),
         },
     };
 
