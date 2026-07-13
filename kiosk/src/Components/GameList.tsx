@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useContext, useCallback } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
-import { Swiper as SwiperClass, Pagination } from "swiper";
+import type { Swiper as SwiperClass } from "swiper";
+import { Pagination } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/keyboard";
 import GameSlide from "./GameSlide";

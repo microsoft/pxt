@@ -1,6 +1,6 @@
-import "swiper/scss";
-import "swiper/scss/navigation";
-import "swiper/scss/mousewheel";
+import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/mousewheel";
 
 import * as React from "react";
 import { useContext, useState } from "react";
@@ -13,7 +13,7 @@ import { resetChecklistAsync } from "../transforms/resetChecklistAsync";
 import { loadChecklistAsync } from "../transforms/loadChecklistAsync";
 import { Constants, Strings, Ticks } from "../constants";
 import { Swiper, SwiperSlide } from "swiper/react";
-import { Mousewheel, Navigation } from "swiper";
+import { Mousewheel, Navigation } from "swiper/modules";
 import { AppStateContext } from "../state/appStateContext";
 import { CarouselCardSet, RequestStatus } from "../types";
 import { useJsonDocRequest } from "../hooks/useJsonDocRequest";
