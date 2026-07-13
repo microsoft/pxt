@@ -625,7 +625,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                         className="menu-button"
                         title={lf("Import extension from file")}
                         label={lf("Import File")}
-                        labelClassName="mobile-hide"
+                        labelClassName="mobile-hidden"
                         onClick={importExtension}
                         leftIcon="fas fa-upload"
                     />
