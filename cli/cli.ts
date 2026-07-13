@@ -978,6 +978,9 @@ function gitUploadAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
 }
 
 async function uploadToGitRepoAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
+    if (process.env["PXT_SKIP_GIT_COMMIT"]) {
+        return writeFilesToPushAsync(opts, uplReqs);
+    }
     let label = opts.label
     if (!label) {
         console.log('no label; skip release upload');
@@ -1079,6 +1082,46 @@ async function uploadToGitRepoAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) 
                 })
             }
         })
+}
+
+async function writeFilesToPushAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
+    let label = opts.label
+    if (!label) {
+        console.log('no label; skip release upload');
+        return Promise.resolve();
+    }
+    let tid = pxt.appTarget.id
+    if (U.startsWith(label, tid + "/"))
+        label = label.slice(tid.length + 1)
+    if (!/^v\d/.test(label)) {
+        console.log(`label "${label}" is not a version; skipping release upload`);
+        return Promise.resolve();
+    }
+
+    const releasesDir = path.resolve("tmp/releases")
+    const outDir = path.join(releasesDir, "built");
+
+    console.log("writing release files to " + releasesDir)
+    nodeutil.mkdirP(outDir);
+
+    const info = await ciBuildInfoAsync();
+    const releaseInfo = {
+        url: info.commitUrl,
+        tag: label
+    };
+
+    // this gets read by the github actions workflow
+    fs.writeFileSync(path.join(releasesDir, "release.json"), JSON.stringify(releaseInfo, null, 2), { encoding: "utf8" });
+
+    // copy the files into the built directory. the actual push to the git repo will be
+    // handled by the github actions workflow
+    for (let u of U.values(uplReqs)) {
+        let fpath = path.join(outDir, u.filename)
+        nodeutil.mkdirP(path.dirname(fpath))
+        fs.writeFileSync(fpath, u.content, { encoding: u.encoding })
+    }
+    // make sure there's always something to commit
+    fs.writeFileSync(path.join(outDir, "stamp.txt"), new Date().toString())
 }
 
 function uploadedArtFileCdnUrl(fn: string): string {
