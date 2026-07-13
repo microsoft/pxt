@@ -3064,7 +3064,7 @@ function renderDocs(builtPackaged: string, localDir: string) {
 
                     html = pxt.docs.renderMarkdown({
                         template: docsTemplate,
-                        markdown: patchedMd,
+                        markdown: pxt.docs.normalizeStaticMarkdown(patchedMd),
                         theme: pxt.appTarget.appTheme,
                         filepath: path.join("docs", pathUnderDocs),
                     });
