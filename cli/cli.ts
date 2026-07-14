@@ -6278,6 +6278,23 @@ function readBlocksprjConfig(): pxt.PackageConfig {
     return config;
 }
 
+function mergeCorePackage(corePackage: pxt.PackageConfig, dependencies = {} as pxt.Map<string>): pxt.Map<string> {
+    for (const dep of Object.keys(dependencies)) {
+        const verSpec = dependencies[dep];
+
+        if (pxt.appTarget.bundledpkgs[dep] && (verSpec === "*" || verSpec.startsWith("file:"))) {
+            const bundled = pxt.appTarget.bundledpkgs[dep];
+            const config = pxt.U.jsonTryParse(bundled[pxt.CONFIG_NAME]);
+
+            if (config?.core) {
+                return dependencies;
+            }
+        }
+    }
+
+    return pxt.tutorial.mergeTutorialDependencies(corePackage.dependencies, dependencies);
+}
+
 function checkFileSize(files: string[]): number {
     if (!pxt.appTarget.cloud)
         return 0;
@@ -6536,7 +6553,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                                     continue;
                                 }
                                 const tutorial = pxt.tutorial.parseTutorial(tutorialMd);
-                                const pkgs = pxt.tutorial.mergeTutorialDependencies(blocksprjConfig.dependencies, pxt.gallery.parsePackagesFromMarkdown(tutorialMd) || {});
+                                const pkgs = mergeCorePackage(blocksprjConfig, pxt.gallery.parsePackagesFromMarkdown(tutorialMd) || {});
 
                                 let extraFiles: Map<string> = null;
 
@@ -6595,7 +6612,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                                     continue;
                                 }
                                 const prj = pxt.gallery.parseExampleMarkdown(card.name, exMd);
-                                const pkgs = pxt.tutorial.mergeTutorialDependencies(blocksprjConfig.dependencies, prj.dependencies);
+                                const pkgs = mergeCorePackage(blocksprjConfig, prj.dependencies);
 
                                 let extraFiles: Map<string> = undefined;
 
@@ -6691,7 +6708,7 @@ function internalCacheUsedBlocksAsync(): Promise<Map<pxt.BuiltTutorialInfo>> {
         }
         const tutorial = pxt.tutorial.parseTutorial(md) as TutorialInfo;
         const tutorialDeps = pxt.gallery.parsePackagesFromMarkdown(md) || {};
-        const pkgs: pxt.Map<string> = pxt.tutorial.mergeTutorialDependencies(blocksprjConfig.dependencies, tutorialDeps);
+        const pkgs: pxt.Map<string> = mergeCorePackage(blocksprjConfig, tutorialDeps);
 
         tutorial.pkgs = pkgs;
         tutorial.path = path;
@@ -6849,7 +6866,7 @@ export function getCodeSnippets(fileName: string, md: string, baseConfig: pxt.Pa
             return acc;
         }, {} as pxt.Map<string>);
 
-    const pkgs = pxt.tutorial.mergeTutorialDependencies(baseConfig.dependencies, tutorialDeps);
+    const pkgs = mergeCorePackage(baseConfig, tutorialDeps);
 
     const pkgName = fileName.replace(/\\/g, '-').replace(/.md$/i, '');
     return codeSnippets.map((snip, i) => {
