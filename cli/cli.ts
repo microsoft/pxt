@@ -56,6 +56,7 @@ pxt.docs.requireDOMSanitizer = () => {
             code: mergeClassAttribute("code"),
             pre: mergeClassAttribute("pre"),
             div: mergeClassAttribute("div", "data-youtube", "title"),
+            img: mergeClassAttribute("img"),
         },
     };
 
@@ -3063,7 +3064,7 @@ function renderDocs(builtPackaged: string, localDir: string) {
 
                     html = pxt.docs.renderMarkdown({
                         template: docsTemplate,
-                        markdown: patchedMd,
+                        markdown: pxt.docs.normalizeStaticMarkdown(patchedMd),
                         theme: pxt.appTarget.appTheme,
                         filepath: path.join("docs", pathUnderDocs),
                     });
