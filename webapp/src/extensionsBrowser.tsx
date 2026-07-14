@@ -12,6 +12,7 @@ import { ExtensionCard } from "../../react-common/components/extensions/Extensio
 import { Modal } from "../../react-common/components/controls/Modal";
 import { classList } from "../../react-common/components/util";
 import { TabList, TabListProps } from "../../react-common/components/controls/TabList";
+import { Link } from "../../react-common/components/controls/Link";
 
 type ExtensionMeta = pxtc.service.ExtensionMeta & { installed?: boolean };
 const ExtensionType = pxtc.service.ExtensionType;
@@ -618,7 +619,30 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
             fullscreen={true}
             className={"extensions-browser"}
             onClose={props.hideExtensions}
-            helpUrl={"/extensions"}
+            rightHeader={
+                <>
+                    <Button
+                        className="menu-button"
+                        title={lf("Import extension from file")}
+                        label={lf("Import File")}
+                        labelClassName="mobile-hidden"
+                        onClick={importExtension}
+                        leftIcon="fas fa-upload"
+                    />
+                    <div className="common-modal-help">
+                        <Link
+                            className="common-button menu-button"
+                            title={lf("Help on {0} dialog", lf("Extensions"))}
+                            href="/extensions"
+                            target="_blank"
+                        >
+                            <span className="common-button-flex">
+                                <i className="fas fa-question" aria-hidden={true}/>
+                            </span>
+                        </Link>
+                    </div>
+                </>
+            }
         >
             <div className="ui">
                 {showImportExtensionDialog &&
