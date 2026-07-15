@@ -96,7 +96,7 @@ class AssetGalleryImpl extends React.Component<AssetGalleryProps, AssetGallerySt
             this.props.showAssetFieldView(asset, (result: any) => {
                 project.pushUndo();
                 const name = result.meta?.displayName;
-                let newAsset: pxt.Asset;
+                let newAsset: pxt.Asset | undefined;
                 switch (type) {
                     case pxt.AssetType.Image:
                         newAsset = project.createNewProjectImage(result.bitmap, name); break;

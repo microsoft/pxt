@@ -95,9 +95,9 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
         this.props.showAssetFieldView(this.props.asset, this.editAssetDoneHandler);
     }
 
-    protected handleAssetOpError = (action: string) => (e: any) => {
+    protected handleAssetOpError = (message: string) => (e: any) => {
         pxt.reportException(e);
-        core.errorNotification(lf("Something went wrong while trying to {0} this asset.", action));
+        core.errorNotification(message);
     }
 
     protected editAssetDoneHandler = (result: pxt.Asset) => {
@@ -120,7 +120,7 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
         this.updateAssets().then(() => {
             simulator.setDirty();
             this.props.dispatchChangeSelectedAsset(result.type, result.id);
-        }).catch(this.handleAssetOpError(lf("edit")));
+        }).catch(this.handleAssetOpError(lf("Something went wrong while trying to edit this asset.")));
     }
 
     protected duplicateAssetHandler = () => {
@@ -138,7 +138,7 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
         this.updateAssets().then(() => {
             this.props.dispatchChangeSelectedAsset(type, id);
             if (isGalleryAsset) this.props.dispatchChangeGalleryView(GalleryView.User, type, id);
-        }).catch(this.handleAssetOpError(lf("duplicate")));
+        }).catch(this.handleAssetOpError(lf("Something went wrong while trying to duplicate this asset.")));
     }
 
     protected copyAssetHandler = () => {
@@ -189,7 +189,7 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
         project.pushUndo(this.props.asset?.id);
         project.removeAsset(this.props.asset);
         this.props.dispatchChangeSelectedAsset();
-        this.updateAssets().catch(this.handleAssetOpError(lf("delete")));
+        this.updateAssets().catch(this.handleAssetOpError(lf("Something went wrong while trying to delete this asset.")));
     }
 
     render() {
