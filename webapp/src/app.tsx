@@ -171,6 +171,8 @@ export class ProjectView
     private pendingImport: pxt.Util.DeferredPromise<void>;
     private editorMountComplete = pxt.Util.defer<void>();
     private shouldFocusToolbox: boolean;
+    private tutorialCompletionPromise: Promise<void>;
+    private tutorialCompletionEditorLoaded: pxt.Util.DeferredPromise<void>;
 
     private themeManager: ThemeManager;
 
@@ -5100,7 +5102,15 @@ export class ProjectView
         pxt.perf.measureEnd(Measurements.StartActivity);
     }
 
-    async completeTutorialAsync(): Promise<void> {
+    completeTutorialAsync(): Promise<void> {
+        if (!this.tutorialCompletionPromise) {
+            this.tutorialCompletionPromise = this.completeTutorialCoreAsync()
+                .finally(() => this.tutorialCompletionPromise = undefined);
+        }
+        return this.tutorialCompletionPromise;
+    }
+
+    private async completeTutorialCoreAsync(): Promise<void> {
         pxt.tickEvent("tutorial.finish", { tutorial: this.state.header?.tutorial?.tutorial });
         pxt.tickEvent("tutorial.complete", { tutorial: this.state.header?.tutorial?.tutorial });
         core.showLoading("leavingtutorial", lf("leaving tutorial..."));
@@ -5125,7 +5135,16 @@ export class ProjectView
             await this.exitTutorialAsync();
             if (!isSkillmap) {
                 const curr = pkg.mainEditorPkg().header;
-                await this.loadHeaderAsync(curr);
+                const editorLoaded = pxt.Util.defer<void>();
+                this.tutorialCompletionEditorLoaded = editorLoaded;
+                try {
+                    await this.loadHeaderAsync(curr);
+                    await editorLoaded.promise;
+                } finally {
+                    if (this.tutorialCompletionEditorLoaded === editorLoaded) {
+                        this.tutorialCompletionEditorLoaded = undefined;
+                    }
+                }
             }
         } finally {
             core.hideLoading("leavingtutorial");
@@ -5194,6 +5213,10 @@ export class ProjectView
     }
 
     onEditorContentLoaded() {
+        const tutorialCompletionEditorLoaded = this.tutorialCompletionEditorLoaded;
+        this.tutorialCompletionEditorLoaded = undefined;
+        tutorialCompletionEditorLoaded?.resolve();
+
         if (this.isTutorial()) {
             pxt.tickEvent("tutorial.editorLoaded")
             this.postTutorialLoaded();
