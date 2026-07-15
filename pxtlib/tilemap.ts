@@ -755,7 +755,7 @@ namespace pxt {
             }
         }
 
-        public pushUndo() {
+        public pushUndo(protectedAssetId?: string) {
             if (this.undoStack.length && this.committedState.revision === this.state.revision) return;
             this.redoStack = [];
             this.undoStack.push({
@@ -770,7 +770,7 @@ namespace pxt {
             }
 
             this.committedState = this.cloneState();
-            this.cleanupTemporaryAssets();
+            this.cleanupTemporaryAssets(protectedAssetId);
         }
 
         public revision() {
@@ -1477,9 +1477,10 @@ namespace pxt {
             return assets;
         }
 
-        protected cleanupTemporaryAssets() {
+        protected cleanupTemporaryAssets(protectedAssetId?: string) {
             const images = this.getAssetCollection(AssetType.Image);
-            const orphaned = images.getSnapshot(image => !image.meta.displayName && !(image.meta.blockIDs?.length));
+            const orphaned = images.getSnapshot(image =>
+                image.id !== protectedAssetId && !image.meta.displayName && !(image.meta.blockIDs?.length));
             for (const image of orphaned) {
                 images.removeByID(image.id);
             }
@@ -1842,9 +1843,9 @@ namespace pxt {
     }
 
     export function cloneAsset<U extends Asset>(asset: U, includeEditorData = false): U {
-        asset.meta = Object.assign({}, asset.meta);
-        if (asset.meta.temporaryInfo) {
-            asset.meta.temporaryInfo = Object.assign({}, asset.meta.temporaryInfo);
+        const meta = Object.assign({}, asset.meta);
+        if (meta.temporaryInfo) {
+            meta.temporaryInfo = Object.assign({}, meta.temporaryInfo);
         }
 
         switch (asset.type) {
@@ -1852,26 +1853,31 @@ namespace pxt {
             case AssetType.Image:
                 return {
                     ...asset,
+                    meta,
                     bitmap: cloneBitmap((asset as ProjectImage | Tile).bitmap)
                 };
             case AssetType.Animation:
                 return {
                     ...asset,
+                    meta,
                     frames: (asset as Animation).frames.map(frame => cloneBitmap(frame))
                 };
             case AssetType.Tilemap:
                 return {
                     ...asset,
+                    meta,
                     data: (asset as ProjectTilemap).data.cloneData(includeEditorData)
                 };
             case AssetType.Song:
                 return {
                     ...asset,
+                    meta,
                     song: pxt.assets.music.cloneSong(asset.song)
                 }
             case AssetType.Json:
                 return {
                     ...asset,
+                    meta,
                     data: U.clone((asset as JsonAsset).data),
                 }
         }
