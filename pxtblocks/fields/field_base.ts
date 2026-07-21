@@ -44,6 +44,7 @@ export abstract class FieldBase<U> extends Blockly.Field implements FieldCustom 
     }
 
     init() {
+        if (this.fieldGroup_) return;
         super.init();
         this.onInit();
 
