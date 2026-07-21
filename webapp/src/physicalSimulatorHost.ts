@@ -1,5 +1,7 @@
-import { CompileOptions } from "./compiler";
+import * as compiler from "./compiler";
+import * as pkg from "./package";
 import * as simulator from "./simulator";
+import * as workspace from "./workspace";
 
 const boardWidth = 50;
 const boardHeight = 40;
@@ -43,7 +45,7 @@ export abstract class PhysicalSprite {
 
 export class BoardSprite extends PhysicalSprite {
     simulatorId: string = "TBD"
-    projectHeaderId?: string;
+    projectHeaderId: string = "TBD"
     image: ImageData | undefined = undefined;
     // #define MICROBIT_RADIO_DEFAULT_TX_POWER 6
     transmitPower = 6;
@@ -131,6 +133,8 @@ export interface PhysicalSimulatorHostOptions {
 export class PhysicalSimulatorHost {
     onSpritesChanged?: (sprites: PhysicalSprite[]) => void;
     sprites: PhysicalSprite[] = [];
+    private compileCache: pxt.Map<Promise<string | undefined>> = {};
+    private compileQueue = Promise.resolve<void>(undefined);
     private nextSpriteId = 0;
     private nextBoardNameId = 0;
     private nextSourceNameIds: Record<EmissionSourceType, number> = {
@@ -148,12 +152,47 @@ export class PhysicalSimulatorHost {
     }
 
     private getFrameIds() { return simulator.driver.getFrameIds()}
-    private addSimulatorToSim() { return simulator.driver.addSimulator() }
+    private addSimulatorToSim(js: string) { return simulator.driver.addSimulator(js) }
     private removeFrameById(id: string) { simulator.driver.removeFrameById(id) }
     private postMessageToFrame(id: string, message: any) {
         simulator.driver?.postMessageToFrame(id, message)
     }
     screenshot(id: string) { simulator.driver?.screenshot(id, boardWidth) }
+
+    private async deployBoardProjectAsync(board: BoardSprite): Promise<string | undefined> {
+        if (!board || !board.simulatorId || !board.projectHeaderId) return undefined;
+        const compiledJs = await this.getCompiledProjectJsAsync(board.projectHeaderId);
+        return compiledJs
+    }
+
+    private async getCompiledProjectJsAsync(projectHeaderId: string): Promise<string | undefined> {
+        const cacheKey = projectHeaderId
+        if (!this.compileCache[cacheKey]) {
+            this.compileCache[cacheKey] = this.enqueueCompileTask(() => this.compileProjectHeaderJsAsync(projectHeaderId));
+        }
+
+        return this.compileCache[cacheKey];
+    }
+
+    private enqueueCompileTask<T>(task: () => Promise<T>): Promise<T> {
+        const queued = this.compileQueue.then(task, task);
+        this.compileQueue = queued.then(() => undefined, () => undefined);
+        return queued;
+    }
+
+    private async compileProjectHeaderJsAsync(projectHeaderId: string): Promise<string | undefined> {
+        const header = workspace.getHeader(projectHeaderId);
+        if (!header || header.isDeleted) return undefined;
+
+        try {
+            await pkg.loadPkgAsync(projectHeaderId);
+            const result = await compiler.compileAsync({ background: true });
+            return result?.outfiles?.[pxtc.BINARY_JS];
+        } catch (e) {
+            pxt.log(`PSIM: failed to compile board project ${projectHeaderId}: ${e}`);
+            return undefined;
+        }
+    }
 
     getNextBoardName() {
         return `board${this.nextBoardNameId}`;
@@ -207,10 +246,10 @@ export class PhysicalSimulatorHost {
                 board.simulatorId = sims[index];
                 this.setTitle(board);
                 return;
+            } else {
+                console.log(`PSIM: missing simulator for board ${board.name}`);
             }
-            board.simulatorId = this.addSimulatorToSim();
         });
-
         this.notifySpritesChanged();
     }
 
@@ -226,18 +265,25 @@ export class PhysicalSimulatorHost {
         this.notifySpritesChanged();
     }
 
-    addSimulator(x = 100, y = 100, name?: string, projectHeaderId?: string): BoardSprite {
+    addSimulator(x = 100, y = 100, name: string, projectHeaderId: string): BoardSprite {
         const init = this.boards.length === 0;
         const board = this.addBoardSprite(x, y);
         board.name = name || board.name;
         board.projectHeaderId = projectHeaderId;
         if (init) {
             board.simulatorId = this.getFrameIds()[0];
+            board.projectHeaderId = pkg.mainEditorPkg()?.header?.id;
             this.setTitle(board);
             this.screenshot(board.simulatorId);
             this.notifySpritesChanged();
-        } else
-            board.simulatorId = this.addSimulatorToSim();
+        } else {
+            this.deployBoardProjectAsync(board).then((js) => {
+                if (js)
+                    board.simulatorId = this.addSimulatorToSim(js);
+                else
+                    pxt.log(`PSIM: failed to deploy project ${board.projectHeaderId} to new board ${board.name}`);
+            })
+        }
         return board;
     }
 

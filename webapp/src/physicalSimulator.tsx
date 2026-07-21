@@ -26,13 +26,26 @@ import {
 // BUGS
 // - boards appear out of order (debug this)
 // - focus on simulator doesn't work (debug this)
-
 // TODOs:
-// - redo simdriver to keep PSIM logic separate from the main simulator logic
+// - sending sensor readings into a sim based on emission sources (light, sound, heat) and distance from the source
+//    - need to handle the value and events that might be raised by the sensor, especially the accelerometer, so as
+//      to keep the sim in sync with the physical simulator state
+//    - pxt/pxt-microbit/sim/state
+//      - accelerometer.ts
+//      - thermometer.ts: instrument temperature() to return a value based on the distance from heat sources and their intensity
+//      - microphone.ts: instrument soundLevel() to return a value based on the distance from noise sources and their intensity
+//      - lightsensor.ts: instrument lightLevel() to return a value based on the distance light sources and their intensity
+//          - the simple case of just returning a value can be done by instrumenting the lightLevel() function to return a 
+//            value based on the distance from light sources and their intensity; in this case, we are taking over control 
+//            of the lightLevel() function and not using the light sensor state in the sim, so we need to make sure that
+//            the sim is not using the light sensor state and perhaps remove the the GUI controls for the light sensor in the sim, 
+//            since they won't be in sync with the physical simulator state
+//          - to handle events, it would be best if it just worked by instrumenting the lightLevel() function 
+// - add "delete" option to board dialog
 // - move PhysicalSimulatorHost to out of the webapp so it can be used via the CLI
 // - disable the sim sensor controls when the physical simulator is open, since they won't be in sync with the physical simulator state
 //     in particular, light/temperature/sound
-// - more realistic physical simulation
+// - more realistic physical simulation and realistic distance metrics on playground 
 //   - inverse square law for light and sound
 // - showing the serial output of each board somehow... (maybe a bubble, or simple text output in a pane)
 

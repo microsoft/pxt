@@ -358,8 +358,8 @@ namespace pxsim {
             this.singleSimulator = true
         }
 
-        public addSimulator(): string {
-            const wrapper = this.createFrame();
+        public addSimulator(js: string = ""): string {
+            const wrapper = this.createFrame(undefined,js);
             this.container.appendChild(wrapper);
             const frame = wrapper.firstElementChild as HTMLIFrameElement;
             return frame.id
@@ -578,7 +578,7 @@ namespace pxsim {
             return urlObject.toString();
         }
 
-        private createFrame(url?: string): HTMLDivElement {
+        private createFrame(url?: string, js?: string): HTMLDivElement {
             const wrapper = document.createElement("div") as HTMLDivElement;
             wrapper.className = `simframe ui embed`;
             wrapper.setAttribute('tabindex', '0');
@@ -597,6 +597,7 @@ namespace pxsim {
             frame.src = furl;
             frame.frameBorder = "0";
             frame.dataset['runid'] = this.runId;
+            frame.dataset['code'] = js || (this._currentRuntime ? this._currentRuntime.code : "");
             frame.dataset['origin'] = new URL(furl).origin || "*";
             frame.dataset['loading'] = "true";
             if (this._runOptions?.autofocus) frame.setAttribute("autofocus", "true");
@@ -894,7 +895,11 @@ namespace pxsim {
         // ensure _currentRuntime is ready
         private startFrame(frame: HTMLIFrameElement): boolean {
             if (!this._currentRuntime || !frame.contentWindow) return false;
+            const frameJs = frame.dataset['code'];
+            const oldJs = this._currentRuntime.code;
+            if (frameJs) this._currentRuntime.code = frameJs;
             const msg = JSON.parse(JSON.stringify(this._currentRuntime)) as pxsim.SimulatorRunMessage;
+            this._currentRuntime.code = oldJs;
             msg.frameCounter = ++this.frameCounter;
             const mpRole = this._runOptions?.mpRole || /[\&\?]mp=(server|client)/i.exec(window.location.href)?.[1]?.toLowerCase();
             msg.options = {
