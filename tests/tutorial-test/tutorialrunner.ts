@@ -34,6 +34,49 @@ describe("tutorial test cases", () => {
     });
 });
 
+describe("documentation rendering", () => {
+    const template = `
+<aside id=youtube><div data-video="youtube:@ARGS@"></div></aside>
+<aside id=vimeo><div data-video="vimeo:@ARGS@"></div></aside>
+<main>@body@</main>`;
+
+    const videoCases = [
+        { name: "micro:bit YouTube", provider: "youtube", id: "S8NppVT_paw", url: "https://youtu.be/S8NppVT_paw" },
+        { name: "Arcade YouTube", provider: "youtube", id: "-P5I_BzoYdg", url: "https://youtu.be/-P5I_BzoYdg" },
+        { name: "Vimeo", provider: "vimeo", id: "123456", url: "https://vimeo.com/123456" }
+    ];
+
+    for (const video of videoCases) {
+        it(`should render ${video.name} links after static breaks`, () => {
+            const markdown = `
+| Column |
+|---|
+| Value |
+
+<br/>
+${video.url}
+
+## Next section`;
+            const html = pxt.docs.renderMarkdown({
+                template,
+                markdown: pxt.docs.normalizeStaticMarkdown(markdown),
+                theme: {}
+            });
+
+            chai.expect(html).to.contain(`data-video="${video.provider}:${video.id}"`);
+            chai.expect(html).not.to.contain(`### @${video.provider}`);
+        });
+
+        it(`should render ${video.name} links with CRLF line endings`, () => {
+            const markdown = ["# Video", "", video.url, "", "## Next section"].join("\r\n");
+            const html = pxt.docs.renderMarkdown({ template, markdown, theme: {} });
+
+            chai.expect(html).to.contain(`data-video="${video.provider}:${video.id}"`);
+            chai.expect(html).not.to.contain(`### @${video.provider}`);
+        });
+    }
+});
+
 function tutorialTest(filename: string) {
     const input = fs.readFileSync(filename, "utf8");
     const basename = path.basename(filename).slice(0, -3) + ".json";

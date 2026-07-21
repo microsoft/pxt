@@ -705,7 +705,7 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
 `;
 
         //Uses the CmdLink definitions to replace links to YouTube and Vimeo (limited at the moment)
-        markdown = markdown.replace(/^\s*https?:\/\/(\S+)\s*$/mg, (f, lnk) => {
+        markdown = markdown.replace(/^[ \t]*https?:\/\/(\S+)[ \t]*\r?$/mg, (f, lnk) => {
             for (let ent of links) {
                 let m = ent.rx.exec(lnk)
                 if (m) {
