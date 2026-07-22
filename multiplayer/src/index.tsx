@@ -55,7 +55,7 @@ window.addEventListener("DOMContentLoaded", () => {
         }
         pxt.webConfig.workerjs = `/blb${pxt.webConfig.workerjs}`;
     }
-    pxt.Cloud.apiRoot = "https://www.makecode.com/api/";
+    pxt.Cloud.apiRoot = "https://staging.pxt.io/api/";
 
     enableAnalytics();
 

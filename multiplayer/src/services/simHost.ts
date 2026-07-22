@@ -24,7 +24,7 @@ if (!pxt.react.getTilemapProject) {
 
 async function loadPackageAsync(runOpts: RunOptions) {
     const verspec =
-        runOpts.mpRole === "server" ? `pub:${runOpts.id}` : "empty:clientprj";
+        runOpts.mpRole !== "client" ? `pub:${runOpts.id}` : "empty:clientprj";
     const previousMainPackage = mainPkg();
     if (
         previousMainPackage?._verspec !== verspec ||
@@ -237,7 +237,7 @@ function getCompileOptionsAsync() {
 
 function getStoredState(runOpts: RunOptions) {
     let storedState: pxt.Map<string> = {};
-    if (runOpts.mpRole != "server") return storedState;
+    if (runOpts.mpRole === "client") return storedState;
     const id = runOpts.id;
     try {
         let projectStorage = window.localStorage.getItem(id);
@@ -249,7 +249,7 @@ function getStoredState(runOpts: RunOptions) {
 }
 
 function setStoredState(runOpts: RunOptions, key: string, value: any) {
-    if (runOpts.mpRole != "server") return;
+    if (runOpts.mpRole === "client") return;
     const id = runOpts.id;
     let storedState: pxt.Map<string> = getStoredState(runOpts);
 
@@ -305,7 +305,7 @@ export function simDriver(container?: HTMLElement) {
 }
 
 interface RunOptionsBase {
-    mpRole: "server" | "client";
+    mpRole: "server" | "client" | "peer";
     simQueryParams: string;
     mute?: boolean;
     builtJsInfo?: pxtc.BuiltSimJsInfo; // TODO probably move this out
@@ -317,8 +317,12 @@ interface ServerRunOptions extends RunOptionsBase {
 interface ClientRunOptions extends RunOptionsBase {
     mpRole: "client";
 }
+interface PeerRunOptions extends RunOptionsBase {
+    mpRole: "peer";
+    id: string;
+}
 
-export type RunOptions = ClientRunOptions | ServerRunOptions;
+export type RunOptions = ClientRunOptions | ServerRunOptions | PeerRunOptions;
 
 function initDriverAndOptions(
     container: HTMLElement,
@@ -399,7 +403,7 @@ export async function buildSimJsInfo(
         opts.computeUsedParts = true;
         opts.breakpoints = true;
 
-        if (runOpts.mpRole == "client")
+        if (runOpts.mpRole === "client")
             opts.fileSystem[pxt.MAIN_TS] = "multiplayer.init()";
 
         // Api info needed for py2ts conversion, if project is shared in Python

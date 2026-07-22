@@ -218,9 +218,21 @@ export namespace SimMultiplayer {
         connected: boolean;
     }
 
+    export type BufferMessage = MessageBase & {
+        content: "Buffer";
+        data: Uint8Array;
+    }
+
+    export type TextMessage = MessageBase & {
+        content: "Text";
+        text: string;
+    }
+
     export type Message =
         | ImageMessage
         | AudioMessage
         | InputMessage
-        | MultiplayerIconMessage;
+        | MultiplayerIconMessage
+        | BufferMessage
+        | TextMessage;
 }

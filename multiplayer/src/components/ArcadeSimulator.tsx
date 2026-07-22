@@ -52,6 +52,14 @@ export default function Render() {
         const { data } = icon || {};
         await gameClient.sendIconAsync(iconType, slot, palette, data);
     };
+    const postBufferMsg = async (msg: SimMultiplayer.BufferMessage) => {
+        const { data } = msg;
+        await gameClient.sendBufferAsync(data);
+    };
+    const postTextMsg = async (msg: SimMultiplayer.TextMessage) => {
+        const { text } = msg;
+        await gameClient.sendTextAsync(text);
+    };
 
     const setSimStopped = async () => {
         simDriver()?.resume(pxsim.SimulatorDebuggerCommand.Pause);
@@ -115,6 +123,10 @@ export default function Render() {
                         postAudioMsg(data);
                     } else if (origin === "server" && content === "Icon") {
                         postIconMsg(data);
+                    } else if (content === "Buffer") {
+                        postBufferMsg(data);
+                    } else if (content === "Text") {
+                        postTextMsg(data);
                     }
                     return;
             }
@@ -127,7 +139,14 @@ export default function Render() {
     const getOpts: () => RunOptions = () => {
         let opts: RunOptions;
 
-        if (isHost) {
+        if (!false) {
+            opts = {
+                simQueryParams: selectedPlayerTheme,
+                mpRole: "peer",
+                id: gameId!,
+            }
+        }
+        else if (isHost) {
             opts = {
                 simQueryParams: selectedPlayerTheme,
                 mpRole: "server",

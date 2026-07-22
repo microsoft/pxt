@@ -32,7 +32,7 @@ export interface SimulateOptions {
     autofocus?: boolean;
     additionalQueryParameters?: string;
     debug?: boolean;
-    mpRole?: "server" | "client";
+    mpRole?: "server" | "client" | "peer";
 }
 
 class EditorPackage {

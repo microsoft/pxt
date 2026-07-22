@@ -56,7 +56,7 @@ export async function initAsync(cfg: SimulatorConfig) {
     const trgConfig = await data.getAsync<pxt.TargetConfig>("target-config:")
 
     const nestedEditorSim = /nestededitorsim=1/i.test(window.location.href);
-    const mpRole = /[\&\?]mp=(server|client)/i.exec(window.location.href)?.[1]?.toLowerCase();
+    const mpRole = /[\&\?]mp=(server|client|peer)/i.exec(window.location.href)?.[1]?.toLowerCase();
     let parentOrigin: string = null;
     if (window.parent !== window) {
         const searchParams = new URLSearchParams(window.location.search);

@@ -87,7 +87,7 @@ namespace pxsim {
         hideSimButtons?: boolean;
         autofocus?: boolean;
         queryParameters?: string;
-        mpRole?: "server" | "client";
+        mpRole?: "server" | "client" | "peer";
         activePlayer?: 1 | 2 | 3 | 4 | undefined;
         theme?: string | pxt.Map<string>;
     }
@@ -463,7 +463,7 @@ namespace pxsim {
                                 // messageChannel is set to false whenever msg.type !== "messagepacket"
                                 // for example, in the case of msg.type === "radiopacket". However, in the case
                                 // where we have msg.type === "messagepacket" and msg.channel is not matched by an
-                                // extension, we don't want a second simulator to be created. 
+                                // extension, we don't want a second simulator to be created.
                                 this.container.appendChild(this.createFrame());
                                 frames = this.simFrames();
                                 // there might be an old frame
@@ -836,7 +836,7 @@ namespace pxsim {
             if (!this._currentRuntime || !frame.contentWindow) return false;
             const msg = JSON.parse(JSON.stringify(this._currentRuntime)) as pxsim.SimulatorRunMessage;
             msg.frameCounter = ++this.frameCounter;
-            const mpRole = this._runOptions?.mpRole || /[\&\?]mp=(server|client)/i.exec(window.location.href)?.[1]?.toLowerCase();
+            const mpRole = this._runOptions?.mpRole || /[\&\?]mp=(server|client|peer)/i.exec(window.location.href)?.[1]?.toLowerCase();
             msg.options = {
                 theme: this.themes[this.nextFrameId++ % this.themes.length],
                 mpRole

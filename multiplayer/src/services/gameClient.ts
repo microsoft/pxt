@@ -38,8 +38,9 @@ import {
 } from "../epics";
 import { simDriver } from "./simHost";
 
-const GAME_HOST_PROD = "https://mp.makecode.com";
+// const GAME_HOST_PROD = "https://mp.makecode.com";
 const GAME_HOST_STAGING = "https://multiplayer.staging.pxt.io";
+const GAME_HOST_PROD = GAME_HOST_STAGING;
 const GAME_HOST_LOCALHOST = "http://localhost:8082";
 const GAME_HOST_DEV = GAME_HOST_STAGING;
 const GAME_HOST = (() => {
@@ -98,6 +99,10 @@ class GameClient {
                     return await this.recvAudioMessageAsync(reader);
                 case Protocol.Binary.MessageType.Icon:
                     return await this.recvIconMessageAsync(reader);
+                case Protocol.Binary.MessageType.Buffer:
+                    return await this.recvBufferMessageAsync(reader);
+                case Protocol.Binary.MessageType.Text:
+                    return await this.recvTextMessageAsync(reader);
             }
         } else if (typeof payload === "string") {
             //-------------------------------------------------
@@ -461,6 +466,24 @@ class GameClient {
         }
     }
 
+    private async recvBufferMessageAsync(reader: SmartBuffer) {
+        const buffer = Protocol.Binary.unpackBufferMessage(reader);
+        this.postToSimFrame(<SimMultiplayer.BufferMessage>{
+            type: "multiplayer",
+            content: "Buffer",
+            data: buffer,
+        });
+    }
+
+    private async recvTextMessageAsync(reader: SmartBuffer) {
+        const text = Protocol.Binary.unpackTextMessage(reader);
+        this.postToSimFrame(<SimMultiplayer.TextMessage>{
+            type: "multiplayer",
+            content: "Text",
+            text: text,
+        });
+    }
+
     private postToSimFrame(msg: SimMultiplayer.Message) {
         simDriver()?.postMessage(msg);
     }
@@ -571,6 +594,16 @@ class GameClient {
             );
             this.sendMessage(buffer);
         }
+    }
+
+    public async sendBufferAsync(buffer: Uint8Array) {
+        const msgBuffer = Protocol.Binary.packBufferMessage(Buffer.from(buffer));
+        this.sendMessage(msgBuffer);
+    }
+
+    public async sendTextAsync(text: string) {
+        const msgBuffer = Protocol.Binary.packTextMessage(text);
+        this.sendMessage(msgBuffer);
     }
 
     public kickPlayer(clientId: string) {
@@ -707,6 +740,14 @@ export async function sendScreenUpdateAsync(
 
 export async function sendCurrentScreenAsync() {
     await gameClient?.sendCurrentScreenAsync();
+}
+
+export async function sendBufferAsync(buffer: Uint8Array) {
+    await gameClient?.sendBufferAsync(buffer);
+}
+
+export async function sendTextAsync(text: string) {
+    await gameClient?.sendTextAsync(text);
 }
 
 export function kickPlayer(clientId: string) {
@@ -862,6 +903,8 @@ namespace Protocol {
             CompressedScreen = 3,
             Audio = 4,
             Icon = 5,
+            Buffer = 6,
+            Text = 7
         }
 
         // Input
@@ -973,6 +1016,30 @@ namespace Protocol {
                 iconSlot,
                 iconBuffer,
             };
+        }
+
+        export function packBufferMessage(buffer: Buffer): Buffer {
+            const writer = new SmartBuffer();
+            writer.writeUInt16LE(MessageType.Buffer);
+            writer.writeBuffer(buffer);
+            return writer.toBuffer();
+        }
+        export function unpackBufferMessage(reader: SmartBuffer): Buffer {
+            // `type` field has already been read
+            const buffer = reader.readBuffer();
+            return buffer;
+        }
+
+        export function packTextMessage(text: string): Buffer {
+            const writer = new SmartBuffer();
+            writer.writeUInt16LE(MessageType.Text);
+            writer.writeStringNT(text);
+            return writer.toBuffer();
+        }
+        export function unpackTextMessage(reader: SmartBuffer): string {
+            // `type` field has already been read
+            const text = reader.readStringNT();
+            return text;
         }
     }
 }
