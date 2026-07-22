@@ -183,6 +183,7 @@ declare namespace pxsim {
         breakpointId: number;
         globals: Variables;
         environmentGlobals?: Variables;
+        energyVars?: Variables;
         stackframes: StackFrameInfo[];
         exceptionMessage?: string;
         exceptionStack?: string;
