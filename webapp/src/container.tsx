@@ -99,11 +99,10 @@ export class DocsMenu extends data.PureComponent<DocsMenuProps, {}> {
     renderCore() {
         const { parent, editor } = this.props;
         const targetTheme = pxt.appTarget.appTheme;
-        const accessibleBlocksEnabled = data.getData<boolean>(auth.ACCESSIBLE_BLOCKS);
 
         const items: MenuItem[] = [];
 
-        if (this.props.inBlocks && accessibleBlocksEnabled) {
+        if (this.props.inBlocks) {
             items.push({
                 role: "menuitem",
                 label: lf("Keyboard Controls"),
@@ -133,7 +132,6 @@ export class DocsMenu extends data.PureComponent<DocsMenuProps, {}> {
         return (
             <MenuDropdown
                 id="docs-menuitem"
-                role="menuitem"
                 title={lf("Help")}
                 className="mobile-hidden help-dropdown-menuitem"
                 icon="icon help circle large"
@@ -145,7 +143,6 @@ export class DocsMenu extends data.PureComponent<DocsMenuProps, {}> {
 
 export interface SettingsMenuProps extends ISettingsProps {
     greenScreen: boolean;
-    accessibleBlocks: boolean;
     showShare?: boolean;
     inBlocks: boolean;
     inTutorial: boolean;
@@ -154,7 +151,6 @@ export interface SettingsMenuProps extends ISettingsProps {
 // This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
 export interface SettingsMenuState {
     greenScreen?: boolean;
-    accessibleBlocks?: boolean;
     showShare?: boolean;
 }
 
@@ -174,8 +170,8 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.showLanguagePicker = this.showLanguagePicker.bind(this);
         this.showThemePicker = this.showThemePicker.bind(this);
         this.toggleHighContrast = this.toggleHighContrast.bind(this);
+        this.toggleScreenReaderMode = this.toggleScreenReaderMode.bind(this);
         this.toggleGreenScreen = this.toggleGreenScreen.bind(this);
-        this.toggleAccessibleBlocks = this.toggleAccessibleBlocks.bind(this);
         this.showResetDialog = this.showResetDialog.bind(this);
         this.showShareDialog = this.showShareDialog.bind(this);
         this.showFeedbackDialog = this.showFeedbackDialog.bind(this);
@@ -256,13 +252,14 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.props.parent.toggleHighContrast();
     }
 
+    toggleScreenReaderMode() {
+        pxt.tickEvent("menu.togglescreenreadermode", undefined, { interactiveConsent: true });
+        this.props.parent.toggleScreenReaderModeAsync("settings");
+    }
+
     toggleGreenScreen() {
         pxt.tickEvent("menu.togglegreenscreen", undefined, { interactiveConsent: true });
         this.props.parent.toggleGreenScreen();
-    }
-
-    toggleAccessibleBlocks() {
-        this.props.parent.toggleAccessibleBlocks("settings");
     }
 
     showResetDialog() {
@@ -308,9 +305,6 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         if (nextProps.greenScreen !== undefined) {
             newState.greenScreen = nextProps.greenScreen;
         }
-        if (nextProps.accessibleBlocks !== undefined) {
-            newState.accessibleBlocks = nextProps.accessibleBlocks;
-        }
         if (nextProps.showShare !== undefined) {
             newState.showShare = nextProps.showShare;
         }
@@ -319,7 +313,6 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
 
     shouldComponentUpdate(nextProps: SettingsMenuProps, nextState: SettingsMenuState, nextContext: any): boolean {
         return this.state.greenScreen != nextState.greenScreen
-            || this.state.accessibleBlocks != nextState.accessibleBlocks
             || this.state.showShare != nextState.showShare
             || nextProps.inBlocks !== this.props.inBlocks
             || nextProps.inTutorial !== this.props.inTutorial;
@@ -329,7 +322,6 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         const hasIdentity = pxt.auth.hasIdentity();
         const highContrast = ThemeManager.isCurrentThemeHighContrast();
         const { greenScreen } = this.state;
-        const accessibleBlocks = this.getData<boolean>(auth.ACCESSIBLE_BLOCKS);
         const targetTheme = pxt.appTarget.appTheme;
         const packages = pxt.appTarget.cloud && !!pxt.appTarget.cloud.packages;
         const reportAbuse = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing;
@@ -365,6 +357,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         const simCollapseText = headless ? lf("Toggle the File Explorer") : lf("Toggle the simulator");
         const extDownloadMenuItems = pxt.commands.getDownloadMenuItems?.() || [];
 
+        const pxtjson = pkg.mainEditorPkg()?.getKsPkg()?.config;
 
         const items: MenuItem[] = [];
         if (showHome) {
@@ -465,7 +458,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             });
         }
 
-        if (targetTheme.timeMachine) {
+        if (targetTheme.timeMachine && !(pxtjson?.disableHistory)) {
             items.push({
                 role: "menuitem",
                 leftIcon: "icon history",
@@ -518,21 +511,21 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             onClick: this.showThemePicker
         });
 
-        if (this.props.inBlocks) {
-            items.push({
-                role: "menuitemcheckbox",
-                label: lf("Keyboard Controls"),
-                isChecked: accessibleBlocks,
-                onChange: this.toggleAccessibleBlocks
-            });
-        }
-
         if (showGreenScreen) {
             items.push({
                 role: "menuitemcheckbox",
                 label: lf("Green Screen"),
                 isChecked: greenScreen,
                 onChange: this.toggleGreenScreen
+            });
+        }
+
+        if (this.props.inBlocks) {
+            items.push({
+                role: "menuitemcheckbox",
+                label: lf("Screen Reader Mode"),
+                isChecked: this.getData<boolean>(auth.SCREEN_READER_MODE),
+                onChange: this.toggleScreenReaderMode
             });
         }
 
@@ -620,6 +613,7 @@ interface IBaseMenuItemProps extends ISettingsProps {
     title?: string;
     className?: string;
     ariaLabel?: string;
+    role?: string;
 }
 
 class BaseMenuItemProps extends data.Component<IBaseMenuItemProps, {}> {
@@ -629,13 +623,13 @@ class BaseMenuItemProps extends data.Component<IBaseMenuItemProps, {}> {
 
     renderCore() {
         const active = this.props.isActive();
-        return <sui.Item className={`base-menuitem ${this.props.className} ${active ? "selected" : ""}`} role="option" textClass="landscape only"
+        return <sui.Item className={`base-menuitem ${this.props.className} ${active ? "selected" : ""}`} role={this.props.role || "button"} textClass="landscape only"
             text={this.props.text} icon={this.props.icon} active={active} onClick={this.props.onClick} title={this.props.title} ariaLabel={this.props.ariaLabel} />
     }
 }
 
-class JavascriptMenuItem extends data.Component<ISettingsProps, {}> {
-    constructor(props: ISettingsProps) {
+class JavascriptMenuItem extends data.Component<ISettingsProps & { role?: string }, {}> {
+    constructor(props: ISettingsProps & { role?: string }) {
         super(props);
     }
 
@@ -649,12 +643,12 @@ class JavascriptMenuItem extends data.Component<ISettingsProps, {}> {
     }
 
     renderCore() {
-        return <BaseMenuItemProps className="javascript-menuitem" icon="xicon js" text="JavaScript" title={lf("Convert code to JavaScript")} onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} ariaLabel={lf("Convert code to JavaScript")}/>
+        return <BaseMenuItemProps className="javascript-menuitem" icon="xicon js" text="JavaScript" title={lf("Convert code to JavaScript")} onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} ariaLabel={lf("Convert code to JavaScript")} role={this.props.role}/>
     }
 }
 
-class PythonMenuItem extends data.Component<ISettingsProps, {}> {
-    constructor(props: ISettingsProps) {
+class PythonMenuItem extends data.Component<ISettingsProps & { role?: string }, {}> {
+    constructor(props: ISettingsProps & { role?: string }) {
         super(props);
     }
 
@@ -668,7 +662,7 @@ class PythonMenuItem extends data.Component<ISettingsProps, {}> {
     }
 
     renderCore() {
-        return <BaseMenuItemProps className="python-menuitem" icon="xicon python" text="Python" title={lf("Convert code to Python")} onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} ariaLabel={lf("Convert code to Python")} />
+        return <BaseMenuItemProps className="python-menuitem" icon="xicon python" text="Python" title={lf("Convert code to Python")} onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} ariaLabel={lf("Convert code to Python")} role={this.props.role} />
     }
 }
 
@@ -782,14 +776,14 @@ export class EditorSelector extends data.Component<IEditorSelectorProps, {}> {
         }
 
         return (
-            <div id="editortoggle" className={`ui grid padded ${(pyOnly || tsOnly) ? "one-language" : ""}`} role="listbox" aria-orientation="horizontal" aria-label={lf("Editor toggle")}>
+            <div id="editortoggle" className={`ui grid padded ${(pyOnly || tsOnly) ? "one-language" : ""}`} role="group" aria-label={lf("Editor toggle")}>
                 {showSandbox && <SandboxMenuItem parent={parent} />}
                 {showBlocks && <BlocksMenuItem parent={parent} />}
                 {textLanguage}
                 {secondTextLanguage}
-                {showDropdown && <sui.DropdownMenu id="editordropdown" role="option" icon="chevron down" rightIcon title={lf("Select code editor language")} className={`item button attached right ${dropdownActive ? "active" : ""}`}>
-                    <JavascriptMenuItem parent={parent} />
-                    <PythonMenuItem parent={parent} />
+                {showDropdown && <sui.DropdownMenu id="editordropdown" role="button" icon="chevron down" rightIcon title={lf("Select code editor language")} className={`item button attached right ${dropdownActive ? "active" : ""}`}>
+                    <JavascriptMenuItem parent={parent} role="menuitem" />
+                    <PythonMenuItem parent={parent} role="menuitem" />
                 </sui.DropdownMenu>}
                 {showAssets && <AssetMenuItem parent={parent} />}
                 <div className={`ui item toggle ${dropdownActive ? 'dropdown-attached' : ''}`}></div>

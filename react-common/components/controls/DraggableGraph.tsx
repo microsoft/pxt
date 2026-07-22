@@ -16,6 +16,12 @@ export interface DraggableGraphProps extends ControlProps {
     handleStartAnimationRef?: (startAnimation: (duration: number) => void) => void;
 }
 
+const getSliderStepValue = (min: number, max: number) => {
+    const range = max - min;
+    // Assumes slider values are always integers.
+    return Math.max(1, Math.floor(range / 10));
+}
+
 export const DraggableGraph = (props: DraggableGraphProps) => {
     const {
         interpolation,
@@ -27,9 +33,6 @@ export const DraggableGraph = (props: DraggableGraphProps) => {
         id,
         className,
         ariaLabel,
-        ariaHidden,
-        ariaDescribedBy,
-        role,
         aspectRatio,
         squiggly,
         valueUnits
@@ -113,16 +116,37 @@ export const DraggableGraph = (props: DraggableGraphProps) => {
             };
 
             ref.onkeydown = ev => {
-                const step = (max - min) / 100;
-                if (ev.code === "ArrowDown" || ev.code === "ArrowLeft") {
-                    onPointChange(index, Math.max(min, points[index] - step));
-                    ev.stopPropagation();
+                const key = ev.key;
+                if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "PageUp", "PageDown", "Home", "End"].includes(key)) {
                     ev.preventDefault();
-                } else if (ev.code === "ArrowUp" || ev.code === "ArrowRight") {
-                    onPointChange(index, Math.min(max, points[index] + step));
-                    ev.stopPropagation();
-                    ev.preventDefault();
-                } 
+                }
+                const currentValue = points[index]
+                switch(key) {
+                    case "ArrowDown":
+                    case "ArrowLeft": {
+                        return onPointChange(index, Math.max(min, currentValue - 1));
+                    }
+                    case "ArrowUp":
+                    case "ArrowRight": {
+                        return onPointChange(index, Math.min(max, currentValue + 1));
+                    }
+                    case "Home": {
+                        return onPointChange(index, min);
+                    }
+                    case "End": {
+                        return onPointChange(index, max);
+                    }
+                    case "PageDown": {
+                        const step = getSliderStepValue(min, max);
+                        const value = currentValue - step;
+                        return onPointChange(index, Math.max(min, value));
+                    }
+                    case "PageUp": {
+                        const step = getSliderStepValue(min, max);
+                        const value = currentValue + step;
+                        return onPointChange(index, Math.min(max, value));
+                    }
+                }
             }
         });
     }, [dragIndex, onPointChange])
@@ -143,11 +167,7 @@ export const DraggableGraph = (props: DraggableGraphProps) => {
 
     return <div
         id={id}
-        className={classList("common-draggable-graph", className)}
-        aria-label={ariaLabel}
-        aria-hidden={ariaHidden}
-        aria-describedby={ariaDescribedBy}
-        role={role}>
+        className={classList("common-draggable-graph", className)}>
         <svg className="draggable-graph-svg" viewBox={`0 0 ${width} ${height}`} xmlns="http://www.w3.org/2000/svg">
             <defs>
                 <filter id="dropshadow">
@@ -232,7 +252,7 @@ export const DraggableGraph = (props: DraggableGraphProps) => {
                             opacity={0}
                             tabIndex={0}
                             role="slider"
-                            aria-label={lf("{0}, position {1}", ariaLabel, index)}
+                            aria-label={index === 0 ? lf("{0}, start", ariaLabel) : lf("{0}, end", ariaLabel)}
                             aria-valuemin={min}
                             aria-valuemax={max}
                             aria-valuenow={getValue(index)}

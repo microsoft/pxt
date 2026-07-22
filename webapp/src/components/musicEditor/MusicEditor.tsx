@@ -1,7 +1,7 @@
 import * as React from "react";
 import { EditControls } from "./EditControls";
 import { CursorState, handleKeyboardEvent } from "./keyboardNavigation";
-import { isPlaying, updatePlaybackSongAsync, stopPlayback } from "./playback";
+import { isPlaying, updatePlaybackSongAsync, stopPlayback, startPlaybackAsync } from "./playback";
 import { PlaybackControls } from "./PlaybackControls";
 import { ScrollableWorkspace } from "./ScrollableWorkspace";
 import { GridResolution, TrackSelector } from "./TrackSelector";
@@ -606,6 +606,18 @@ export const MusicEditor = (props: MusicEditorProps) => {
         setCursor(newCursor);
     }
 
+    const onPlaybackControlsClick = (action: "play" | "stop" | "loop") => {
+        if (action === "play") {
+            startPlaybackAsync(currentSong, false, 0);
+        }
+        else if (action === "loop") {
+            startPlaybackAsync(currentSong, true, 0);
+        }
+        else {
+            stopPlayback();
+        }
+    }
+
     return <div className="music-editor">
         <TrackSelector
             song={currentSong}
@@ -632,7 +644,9 @@ export const MusicEditor = (props: MusicEditorProps) => {
             cursor={cursorVisible ? cursor : undefined}
             onKeydown={onWorkspaceKeydown} />
         <PlaybackControls
-            song={currentSong}
+            beatsPerMinute={currentSong.beatsPerMinute}
+            measures={currentSong.measures}
+            onControlsClick={onPlaybackControlsClick}
             onTempoChange={onTempoChange}
             onMeasuresChanged={onMeasuresChanged}
             onUndoClick={undo}

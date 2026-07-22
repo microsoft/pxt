@@ -96,21 +96,18 @@ export abstract class FieldAssetEditor<U extends FieldAssetEditorOptions, V exte
 
         params.blocksInfo = this.blocksInfo;
 
-        let editorKind: string;
+        let editorKind = this.getEditorKind();
 
         switch (this.asset.type) {
             case pxt.AssetType.Tile:
             case pxt.AssetType.Image:
-                editorKind = "image-editor";
                 params.temporaryAssets = getTemporaryAssets(this.sourceBlock_.workspace, pxt.AssetType.Image);
                 break;
             case pxt.AssetType.Animation:
-                editorKind = "animation-editor";
                 params.temporaryAssets = getTemporaryAssets(this.sourceBlock_.workspace, pxt.AssetType.Image)
                     .concat(getTemporaryAssets(this.sourceBlock_.workspace, pxt.AssetType.Animation));
                 break;
             case pxt.AssetType.Tilemap:
-                editorKind = "tilemap-editor";
                 const project = pxt.react.getTilemapProject();
                 pxt.sprite.addMissingTilemapTilesAndReferences(project, this.asset);
 
@@ -121,7 +118,6 @@ export abstract class FieldAssetEditor<U extends FieldAssetEditorOptions, V exte
                 }
                 break;
             case pxt.AssetType.Song:
-                editorKind = "music-editor";
                 params.temporaryAssets = getTemporaryAssets(this.sourceBlock_.workspace, pxt.AssetType.Song);
                 setMelodyEditorOpen(this.sourceBlock_, true);
                 break;
@@ -134,6 +130,21 @@ export abstract class FieldAssetEditor<U extends FieldAssetEditorOptions, V exte
         else {
             this.showEditorInWidgetDiv(editorKind, params);
         }
+    }
+
+    protected getEditorKind(): string{
+        switch (this.asset.type) {
+            case pxt.AssetType.Tile:
+            case pxt.AssetType.Image:
+                return "image-editor";
+            case pxt.AssetType.Animation:
+                return "animation-editor";
+            case pxt.AssetType.Tilemap:
+                return "tilemap-editor";
+            case pxt.AssetType.Song:
+                return "music-editor";
+        }
+        return undefined;
     }
 
     getFieldDescription(): string {
@@ -203,7 +214,7 @@ export abstract class FieldAssetEditor<U extends FieldAssetEditorOptions, V exte
         widgetDiv.style.left = left + "px";
         widgetDiv.style.top = top + "px";
         widgetDiv.style.width = "50rem";
-        widgetDiv.style.height = "34.25rem";
+        widgetDiv.style.height = "39.5rem";
         widgetDiv.style.display = "flex";
         widgetDiv.style.alignItems = "center";
         widgetDiv.style.transition = "transform 0.25s ease 0s, opacity 0.25s ease 0s";
@@ -231,7 +242,6 @@ export abstract class FieldAssetEditor<U extends FieldAssetEditorOptions, V exte
         }
 
         const toolboxWidth = block.workspace.getToolbox().getWidth();
-        const workspaceLeft = injectDivBounds.left + toolboxWidth;
 
         if (divBounds.width > injectDivBounds.width - toolboxWidth) {
             widgetDiv.style.width = "";
@@ -245,16 +255,16 @@ export abstract class FieldAssetEditor<U extends FieldAssetEditorOptions, V exte
                 const blockLeft = workspaceToScreenCoordinates(block.workspace as Blockly.WorkspaceSvg,
                     new Blockly.utils.Coordinate(bounds.left, bounds.top));
 
-                if (blockLeft.x - divBounds.width - 20 > workspaceLeft) {
+                if (blockLeft.x - divBounds.width - 20 > toolboxWidth) {
                     widgetDiv.style.left = (blockLeft.x - divBounds.width - 20) + "px"
                 }
                 else {
                     // As a last resort, just center on the inject div
-                    widgetDiv.style.left = (workspaceLeft + ((injectDivBounds.width - toolboxWidth) / 2) - divBounds.width / 2) + "px";
+                    widgetDiv.style.left = (toolboxWidth + ((injectDivBounds.width - toolboxWidth) / 2) - divBounds.width / 2) + "px";
                 }
             }
             else if (divBounds.left < injectDivBounds.left) {
-                widgetDiv.style.left = workspaceLeft + "px"
+                widgetDiv.style.left = toolboxWidth + "px"
             }
         }
 
@@ -277,6 +287,8 @@ export abstract class FieldAssetEditor<U extends FieldAssetEditorOptions, V exte
 
         if (result) {
             const old = this.getValue();
+            this.undoRedoState = fv.getPersistentData();
+
             if (pxt.assetEquals(this.asset, result)) return;
 
             result = pxt.patchTemporaryAsset(this.asset, result, project);
@@ -294,8 +306,6 @@ export abstract class FieldAssetEditor<U extends FieldAssetEditorOptions, V exte
             this.updateAssetListener();
             this.updateAssetMeta();
             this.redrawPreview();
-
-            this.undoRedoState = fv.getPersistentData();
 
             if (this.sourceBlock_ && Blockly.Events.isEnabled()) {
                 const event = new BlocklyTilemapChange(

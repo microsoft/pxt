@@ -30,7 +30,8 @@ export function initText() {
                 {
                     "type": "input_value",
                     "name": "VALUE",
-                    "check": ['String']
+                    "check": ['String'],
+                    "ariaLabelText": lf("value")
                 }
             ],
             "output": 'Number',

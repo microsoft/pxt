@@ -36,6 +36,9 @@ import { AIErrorExplanationText } from "./components/AIErrorExplanationText";
 
 const MIN_EDITOR_FONT_SIZE = 10
 const MAX_EDITOR_FONT_SIZE = 40
+const SUPPRESSIBLE_ENHANCED_DIAGNOSTICS = [9284]
+const TS_IGNORE_COMMENT = "// @ts-ignore"
+const TS_IGNORE_COMMENT_REGEX = /^\s*\/\/\s*@ts-ignore\b/
 
 interface TranspileResult {
     success: boolean;
@@ -664,7 +667,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     {showErrorList && (
                         <ErrorList
                             onSizeChange={this.setErrorListState}
-                            collapsedByUser={this.parent.state.errorListCollapsedByUser}
+                            collapsedByUser={this.parent.state.errorListCollapsed}
                             onUserCollapse={this.setErrorListCollapsePreference}
                             errors={this.errors}
                             startDebugger={this.startDebugger}
@@ -742,11 +745,46 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     private getDisplayInfoForError(error: pxtc.KsDiagnostic): ErrorDisplayInfo {
         const message = lf("Line {0}: {1}", error.endLine ? error.endLine + 1 : error.line + 1, error.messageText);
+        const actions = error.category == ts.pxtc.DiagnosticCategory.Warning && SUPPRESSIBLE_ENHANCED_DIAGNOSTICS.indexOf(error.code) !== -1 ? [{
+            label: lf("Ignore"),
+            title: lf("Ignore this warning"),
+            ariaLabel: lf("Ignore this warning"),
+            onClick: () => this.insertTsIgnoreForDiagnostic(error)
+        }] : undefined;
         return {
             message,
             onClick: () => this.goToError(error),
-            preventsRunning: true
+            preventsRunning: error.category == ts.pxtc.DiagnosticCategory.Error,
+            actions
         };
+    }
+
+    private insertTsIgnoreForDiagnostic(error: pxtc.KsDiagnostic) {
+        if (error.line === undefined)
+            return;
+
+        const model = this.editor.getModel();
+        const lineNumber = error.line + 1;
+        if (lineNumber > 1 && TS_IGNORE_COMMENT_REGEX.test(model.getLineContent(lineNumber - 1))) {
+            this.goToError(error);
+            return;
+        }
+
+        const lineContent = model.getLineContent(lineNumber);
+        const indentation = /^\s*/.exec(lineContent)[0];
+
+        this.editor.pushUndoStop();
+        this.editor.executeEdits("ignoreDiagnostic", [{
+            range: new monaco.Range(lineNumber, 1, lineNumber, 1),
+            text: `${indentation}${TS_IGNORE_COMMENT}${model.getEOL()}`,
+            forceMoveMarkers: true
+        }]);
+        this.beforeCompile();
+        this.editor.pushUndoStop();
+
+        this.editor.revealLineInCenter(lineNumber);
+        this.editor.setPosition({ lineNumber: lineNumber + 1, column: (error.column || 0) + 1 });
+        this.editor.focus();
     }
 
     /**
@@ -795,7 +833,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     public showPackageDialog() {
         pxt.tickEvent("monaco.addpackage", undefined, { interactiveConsent: true });
         this.hideFlyout();
-        this.parent.showPackageDialog();
+        this.parent.showPackageDialog(true);
     }
 
     private defineEditorTheme(hc?: boolean, withNamespaces?: boolean) {
@@ -839,11 +877,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const baseTheme: monaco.editor.BuiltinTheme = hc
             ? "hc-black"
             : (ThemeManager.getInstance(document)?.getCurrentColorTheme()?.monacoBaseTheme as monaco.editor.BuiltinTheme) ?? (inverted ? "vs-dark" : "vs");
+        const useColors = (hc || baseTheme === "vs-dark") ? {} : colors;
         monaco.editor.defineTheme('pxtTheme', {
             base: baseTheme,
             inherit: true, // can also be false to completely replace the builtin rules
             rules: rules,
-            colors: hc ? {} : colors
+            colors: useColors
         });
         monaco.editor.setTheme('pxtTheme');
 
@@ -963,7 +1002,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     protected setErrorListCollapsePreference = (collapsed: boolean) => {
         this.parent.setState({
-            errorListCollapsedByUser: collapsed
+            errorListCollapsed: collapsed
         });
     }
 
@@ -1356,6 +1395,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.hideFlyout();
     }
 
+    public setFlyoutLabel(categoryName: string) {
+        this.flyout.setLabel(lf("{0} snippets", categoryName))
+    }
+
+    public isFlyoutVisible(): boolean {
+        return !!(this.flyout?.state?.groups && !this.flyout.state.hide);
+    }
+
     public hideFlyout() {
         if (this.flyout) this.flyout.setState({ groups: undefined });
 
@@ -1728,9 +1775,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (file && file.diagnostics) {
             const model = monaco.editor.getModel(monaco.Uri.parse(`pkg:${file.getName()}`))
             for (let d of file.diagnostics) {
+                const severity = d.category === ts.pxtc.DiagnosticCategory.Error
+                    ? monaco.MarkerSeverity.Error
+                    : d.category === ts.pxtc.DiagnosticCategory.Warning
+                        ? monaco.MarkerSeverity.Warning
+                        : monaco.MarkerSeverity.Info;
                 const addErrorMessage = (message: string) => {
                     monacoErrors.push({
-                        severity: monaco.MarkerSeverity.Error,
+                        severity,
                         message: message,
                         startLineNumber: d.line + 1,
                         startColumn: d.column + 1,
@@ -1878,6 +1930,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             if (!res[ns]) {
                 res[ns] = [];
             }
+
+            if (fn.attributes.builtinBlockId) {
+                res[ns].push(...snippets.getExtensionContributedBuiltinBlock(fn.attributes.builtinBlockId, fn.attributes.weight || 50));
+                return;
+            }
+
             res[ns].push(fn);
             if (fn.attributes.toolboxParent) {
                 const parent = this.blockInfo.blocks.find(b => b.attributes.blockId === fn.attributes.toolboxParent);
@@ -1988,10 +2046,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     public onToolboxBlur(e: React.FocusEvent, hasSearch: boolean): void {
         const searchInputFocused = e.relatedTarget === (this.toolbox.refs.searchbox as toolbox.ToolboxSearch).refs.searchInput;
         const flyoutFocused = e.relatedTarget === this.flyout.refs.flyout || (this.flyout.refs.flyout as HTMLElement).contains(e.relatedTarget);
-        if (((searchInputFocused && !hasSearch) || !searchInputFocused) && !flyoutFocused) {
+        const tree = this.toolbox.refs.categoryTree as HTMLElement;
+        const treeFocused = !!tree && (e.relatedTarget === tree || tree.contains(e.relatedTarget as Node));
+        if (((searchInputFocused && !hasSearch) || !searchInputFocused) && !flyoutFocused && !treeFocused) {
             this.hideFlyout();
         }
-        if (!flyoutFocused) {
+        if (!flyoutFocused && !treeFocused) {
             this.toolbox.clear();
             this.toolbox.clearExpandedItem();
         }

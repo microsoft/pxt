@@ -18,6 +18,10 @@ export class BaseFieldToggle extends Blockly.FieldNumber implements FieldCustom 
 
     private type_: string;
 
+    private focusBinding: Blockly.browserEvents.Data | null = null;
+    private blurBinding: Blockly.browserEvents.Data | null = null;
+    private ariaLabelElement_: HTMLElement | null = null;
+
     constructor(state: string, params: FieldCustomOptions, protected trueText: string, protected falseText: string, opt_validator?: Blockly.FieldValidator) {
         super(state, undefined, undefined, undefined, opt_validator);
         this.params = params;
@@ -62,6 +66,7 @@ export class BaseFieldToggle extends Blockly.FieldNumber implements FieldCustom 
             {
                 'class': `blocklyToggle ${this.state_ ? 'blocklyToggleOn' : 'blocklyToggleOff'}`,
                 'transform': `translate(8, ${size.height / 2})`,
+                'aria-hidden': 'true',
             }, this.fieldGroup_);
         switch (this.getOutputShape()) {
             case provider.SHAPES.HEXAGONAL:
@@ -116,6 +121,8 @@ export class BaseFieldToggle extends Blockly.FieldNumber implements FieldCustom 
 
         // Force a render.
         this.markDirty();
+        this.recomputeAriaContext();
+        this.attachAriaLiveHandlers();
     }
 
     getDisplayText_() {
@@ -132,6 +139,52 @@ export class BaseFieldToggle extends Blockly.FieldNumber implements FieldCustom 
 
     getFieldDescription(): string {
         return this.getDisplayText_();
+    }
+
+    override recomputeAriaContext(): boolean {
+        const result = super.recomputeAriaContext();
+        if (!this.fieldGroup_) return false;
+        const element = this.getFocusableElement();
+        element.setAttribute("role", "button");
+        // Move aria-label to inner element that is also read when its value changes
+        // via aria-live.
+        const label = element.getAttribute("aria-label") || this.computeAriaLabel(true);
+        element.removeAttribute("aria-label");
+        if (!this.ariaLabelElement_) {
+            this.ariaLabelElement_ = document.createElement("span");
+            this.ariaLabelElement_.classList.add("sr-only");
+            element.appendChild(this.ariaLabelElement_);
+        }
+        this.ariaLabelElement_.textContent = label;
+        this.textElement_?.setAttribute("aria-hidden", "true");
+        return result;
+    }
+
+    override getAriaTypeName(): string {
+        return lf("toggle");
+    }
+
+    override getAriaValue(): string {
+        return this.getDisplayText_();
+    }
+
+    private attachAriaLiveHandlers() {
+        if (this.sourceBlock_.isInFlyout) return;
+        const element = this.getFocusableElement();
+        if (this.focusBinding) Blockly.browserEvents.unbind(this.focusBinding);
+        if (this.blurBinding) Blockly.browserEvents.unbind(this.blurBinding);
+        this.focusBinding = Blockly.browserEvents.bind(element, "focus", this, () => {
+            setTimeout(() => element.setAttribute("aria-live", "polite"), 0);
+        });
+        this.blurBinding = Blockly.browserEvents.bind(element, "blur", this, () => {
+            element.removeAttribute("aria-live");
+        });
+    }
+
+    dispose() {
+        if (this.focusBinding) Blockly.browserEvents.unbind(this.focusBinding);
+        if (this.blurBinding) Blockly.browserEvents.unbind(this.blurBinding);
+        super.dispose();
     }
 
     updateSize_() {
@@ -194,6 +247,7 @@ export class BaseFieldToggle extends Blockly.FieldNumber implements FieldCustom 
 
             this.switchToggle(this.state_);
             this.isDirty_ = true;
+            this.recomputeAriaContext();
         }
     }
 

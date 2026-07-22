@@ -18,6 +18,8 @@ import { invalidate } from "./data";
 
 import IProjectView = pxt.editor.IProjectView;
 import ImportFileOptions = pxt.editor.ImportFileOptions;
+import { Input } from "../../react-common/components/controls/Input";
+import { Dropdown, DropdownItem } from "../../react-common/components/controls/Dropdown";
 
 let dontShowDownloadFlag = false;
 
@@ -397,8 +399,14 @@ export function showImportUrlDialogAsync() {
                 </div>
             </div>
             <div className="ui field">
-                <label id="selectUrlToOpenLabel">{lf("Copy the URL of the project.")}</label>
-                <input type="url" tabIndex={0} autoFocus aria-labelledby="selectUrlToOpenLabel" placeholder={lf("{0} or {1}...", shareUrl, "https://github.com/...")} className="ui blue fluid"></input>
+                <label id="selectUrlToOpenLabel" htmlFor="selectUrlToOpenInput">{lf("Copy the URL of the project.")}</label>
+                <Input
+                    id="selectUrlToOpenInput"
+                    type="url"
+                    autoFocus
+                    placeholder={lf("{0} or {1}...", shareUrl, "https://github.com/...")}
+                    aria-labelledby="selectUrlToOpenLabel"
+                />
             </div>
         </div>,
     }).then(res => {
@@ -468,8 +476,8 @@ export function showCreateGithubRepoDialogAsync(name?: string) {
         }
     }
 
-    function onPublicChanged(e: React.ChangeEvent<HTMLSelectElement>) {
-        const v = e.currentTarget.selectedIndex == 0;
+    function onPublicChanged(item: string) {
+        const v = item === "gh-public-visibility";
         if (repoPublic != v) {
             repoPublic = v;
             coretsx.forceUpdate();
@@ -481,28 +489,65 @@ export function showCreateGithubRepoDialogAsync(name?: string) {
         header: lf("Create GitHub repository"),
         jsxd: () => {
             const nameErr = repoNameError();
-            return <div className={`ui form`}>
-                <p>
-                    {lf("Host your code on GitHub and work together with friends.")}
-                    {sui.helpIconLink("/github", lf("Learn more about GitHub"))}
-                </p>
-                <div className="ui field">
-                    <sui.Input type="url" autoFocus value={repoName} onChange={onNameChanged}
-                        label={lf("Repository name")} id="githubRepoNameInput"
-                        placeholder={`pxt-my-gadget...`} class="fluid" error={nameErr} />
+
+            const dropdownOptions: DropdownItem[] = [
+                {
+                    label: lf("Public repository, anyone can look at your code."),
+                    title: lf("Public repository, anyone can look at your code."),
+                    id: "gh-public-visibility",
+                },
+                {
+                    label: lf("Private repository, your code is only visible to you."),
+                    title: lf("Private repository, your code is only visible to you."),
+                    id: "gh-private-visibility",
+                }
+            ]
+
+            return (
+                <div className="create-gh-content">
+                    <p>
+                        {lf("Host your code on GitHub and work together with friends.")}
+                        {sui.helpIconLink("/github", lf("Learn more about GitHub"))}
+                    </p>
+                    <div>
+                        <label id="githubRepoNameLabel" htmlFor="githubRepoNameInput">{lf("Repository name")}</label>
+                        <Input
+                            id="githubRepoNameInput"
+                            type="text"
+                            initialValue={repoName}
+                            onChange={onNameChanged}
+                            placeholder={`pxt-my-gadget...`}
+                            aria-labelledby="githubRepoNameLabel"
+                        />
+                    </div>
+                    {nameErr &&
+                        <div className="ui yellow message">
+                            {nameErr}
+                        </div>
+                    }
+                    <div>
+                        <label id="githubRepoDescriptionLabel" htmlFor="githubRepoDescriptionInput">{lf("Repository description")}</label>
+                        <Input
+                            id="githubRepoDescriptionInput"
+                            type="text"
+                            initialValue={repoDescription}
+                            onChange={onDescriptionChanged}
+                            placeholder={lf("MakeCode extension for my gadget")}
+                            aria-labelledby="githubRepoDescriptionLabel"
+                        />
+                    </div>
+                    <div>
+                        <label id="githubRepoVisibilityLabel" htmlFor="githubRepoVisibilityInput">{lf("Repository visibility")}</label>
+                        <Dropdown
+                            id="githubRepoVisibilityInput"
+                            items={dropdownOptions}
+                            selectedId={repoPublic ? "gh-public-visibility" : "gh-private-visibility"}
+                            onItemSelected={onPublicChanged}
+                            aria-labelledby="githubRepoVisibilityLabel"
+                        />
+                    </div>
                 </div>
-                <div className="ui field">
-                    <sui.Input type="text" value={repoDescription} onChange={onDescriptionChanged}
-                        label={lf("Repository description")} id="githubRepoDescriptionInput"
-                        placeholder={lf("MakeCode extension for my gadget")} class="fluid" />
-                </div>
-                <div className="ui field">
-                    <select className={`ui dropdown`} onChange={onPublicChanged} aria-label={lf("Repository visibility setting")}>
-                        <option aria-selected={repoPublic} value="true">{lf("Public repository, anyone can look at your code.")}</option>
-                        <option aria-selected={!repoPublic} value="false">{lf("Private repository, your code is only visible to you.")}</option>
-                    </select>
-                </div>
-            </div>
+            )
         },
     }).then(res => {
         if (!res)
@@ -515,7 +560,7 @@ export function showCreateGithubRepoDialogAsync(name?: string) {
                     .finally(() => core.hideLoading("creategithub"))
                     .then(r => {
                         pxt.tickEvent("github.create.ok");
-                        return pxt.github.normalizeRepoId("https://github.com/" + r.fullName, "master");
+                        return pxt.github.normalizeRepoId("https://github.com/" + r.owner + "/" + r.name, "master", true);
                     }, err => {
                         if (!showGithubTokenError(err)) {
                             if (err.statusCode == 422)
@@ -701,7 +746,7 @@ export function showReportAbuseAsync(pubId?: string) {
                 core.infoNotification(lf("Sending abuse report..."));
                 Cloud.privatePostAsync(`${id}/abusereports`, {
                     text: reasonInput.value
-                })
+                }, true)
                     .then(res => {
                         core.infoNotification(lf("Report sent. Thank you!"))
                     })
@@ -896,7 +941,7 @@ export async function showTurnBackTimeDialogAsync(header: pxt.workspace.Header, 
 
         if (timestamp != undefined) {
             newHistory = {
-                entries:  history.entries.slice(0, history.entries.findIndex(e => e.timestamp === timestamp)),
+                entries: history.entries.slice(0, history.entries.findIndex(e => e.timestamp === timestamp)),
                 snapshots: history.snapshots.filter(s => s.timestamp <= timestamp),
                 shares: history.shares.filter(s => s.timestamp <= timestamp),
                 lastSaveTime: timestamp
@@ -936,7 +981,6 @@ export async function showTurnBackTimeDialogAsync(header: pxt.workspace.Header, 
     }
 
     await core.dialogAsync({
-        header: lf("Turn back time"),
         className: "time-machine-dialog",
         size: "fullscreen",
         hasCloseIcon: true,

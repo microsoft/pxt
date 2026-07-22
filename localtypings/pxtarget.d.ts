@@ -24,6 +24,8 @@ declare namespace pxt {
         multiplayer?: MultiplayerConfig;
         // common galleries
         galleries?: pxt.Map<string | GalleryProps>;
+        // additional galleries included in projects search but not shown on the homescreen
+        searchGalleries?: pxt.Map<string | GalleryProps>;
         // localized galleries
         localizedGalleries?: pxt.Map<pxt.Map<string>>;
         windowsStoreLink?: string;
@@ -904,13 +906,7 @@ declare namespace ts.pxtc {
         icon?: string;
         jresURL?: string;
         iconURL?: string;
-        imageLiteral?: number;
-        gridLiteral?: number;
-        gridLiteralOnColor?: string;
-        gridLiteralOffColor?: string;
-        imageLiteralColumns?: number; // optional number of columns
-        imageLiteralRows?: number; // optional number of rows
-        imageLiteralScale?: number; // button sizing between 0.6 and 2, default is 1
+
         weight?: number;
         parts?: string;
         hiddenParts?: string; // allows an extesion to declaratively hide a part
@@ -984,8 +980,26 @@ declare namespace ts.pxtc {
         enumIsHash?: boolean; // if true, the name of the enum is normalized, then hashed to generate the value
         enumPromptHint?: string; // The hint that will be displayed in the member creation prompt
         enumInitialMembers?: string[]; // The initial enum values which will be given the lowest values available
+        ariaLabel?: string; // The aria label for the enum value if the screen reader text should differ from the block value in dropdown items
 
         /* end enum-only attributes */
+
+        /* led matrix field editor attributes */
+
+        imageLiteral?: number;
+        gridLiteral?: number;
+        colorGridLiteral?: number;
+        gridLiteralPalette?: string;
+        gridLiteralPaletteNames?: string;
+        gridLiteralUseProjectPalette?: boolean;
+        gridLiteralOnColor?: string;
+        gridLiteralOffColor?: string;
+        gridLiteralVerticalSpacing?: number; // optional spacing between pixels, default is 5
+        gridLiteralHorizontalSpacing?: number; // optional spacing between pixels, default is 7
+        gridLiteralBorderRadius?: number; // optional border radius for pixels, default is 5
+        imageLiteralColumns?: number; // optional number of columns
+        imageLiteralRows?: number; // optional number of rows
+        imageLiteralScale?: number; // button sizing between 0.6 and 2, default is 1
 
 
         isKind?: boolean; // annotation for built-in kinds in library code
@@ -1003,12 +1017,15 @@ declare namespace ts.pxtc {
         _expandedDef?: ParsedBlockDef;
         _untranslatedBlock?: string; // The block definition before it was translated
         _untranslatedJsDoc?: string // the jsDoc before it was translated
+        _untranslatedParamDefl?: pxt.Map<string>; // the parameter defaults before they were translated
+        _untranslatedAriaLabel?: string; // the aria label before it was translated
         _translatedLanguageCode?: string // the language this block has been translated into
         _shadowOverrides?: pxt.Map<string>;
         jsDoc?: string;
         paramHelp?: pxt.Map<string>;
         // foo.defl=12 -> paramDefl: { foo: "12" }; eg.: 12 in arg description will also go here
         paramDefl: pxt.Map<string>;
+        paramLabels?: pxt.Map<string>; //.label
         paramSnippets?: pxt.Map<ParamSnippet>;
         // this lists arguments that have .defl as opposed to just eg.: stuff
         explicitDefaults?: string[];
@@ -1025,6 +1042,7 @@ declare namespace ts.pxtc {
         alias?: string; // another symbol alias for this member
         pyAlias?: string; // optional python version of the alias
         blockAliasFor?: string; // qname of the function this block is an alias for
+        builtinBlockId?: string; // if present, this block is to be replaced with a builtin block in the toolbox
     }
 
     interface ParamSnippet {
@@ -1117,6 +1135,7 @@ declare namespace ts.pxtc {
         fileSystem: pxt.Map<string>;
         target: CompileTarget;
         testMode?: boolean;
+        enhancedErrors?: boolean; // enable extra editor-only diagnostics
         sourceFiles?: string[]; // list of file names
         sourceTexts?: string[]; // list of file text content (TS string)
         generatedFiles?: string[];

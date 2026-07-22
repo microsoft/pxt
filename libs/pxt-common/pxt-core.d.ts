@@ -15,6 +15,7 @@ interface Array<T> {
     //% help=arrays/push
     //% shim=Array_::push weight=50
     //% blockId="array_push" block="%list| add value %value| to end" blockNamespace="arrays"
+    //% list.label="list to change" item.label="value to add"
     //% group="Modify"
     push(item: T): void;
 
@@ -31,6 +32,7 @@ interface Array<T> {
     //% help=arrays/pop
     //% shim=Array_::pop weight=45
     //% blockId="array_pop" block="get and remove last value from %list" blockNamespace="arrays"
+    //% list.label="list to change"
     //% group="Read"
     pop(): T;
 
@@ -40,6 +42,7 @@ interface Array<T> {
     //% help=arrays/reverse
     //% helper=arrayReverse weight=10
     //% blockId="array_reverse" block="reverse %list" blockNamespace="arrays"
+    //% list.label="list to change"
     //% group="Operations"
     reverse(): void;
 
@@ -49,6 +52,7 @@ interface Array<T> {
     //% help=arrays/shift
     //% helper=arrayShift weight=30
     //% blockId="array_shift" block="get and remove first value from %list" blockNamespace="arrays"
+    //% list.label="list to change"
     //% group="Read"
     shift(): T;
 
@@ -59,6 +63,7 @@ interface Array<T> {
     //% help=arrays/unshift
     //% helper=arrayUnshift weight=25
     //% blockId="array_unshift" block="%list| insert %value| at beginning" blockNamespace="arrays"
+    //% list.label="list to change" value.label="value to add"
     //% group="Modify"
     //unshift(...values:T[]): number; //rest is not supported in our compiler yet.
     unshift(value: T): number;
@@ -159,6 +164,7 @@ interface Array<T> {
     //% help=arrays/remove-at
     //% shim=Array_::removeAt weight=47
     //% blockId="array_removeat" block="%list| get and remove value at %index" blockNamespace="arrays"
+    //% list.label="list to change" index.label="position within list"
     //% group="Read"
     removeAt(index: number): T;
 
@@ -170,6 +176,7 @@ interface Array<T> {
     //% help=arrays/insert-at
     //% shim=Array_::insertAt weight=20
     //% blockId="array_insertAt" block="%list| insert at %index| value %value" blockNamespace="arrays"
+    //% list.label="list to change" index.label="position within list" value.label="value to add"
     //% group="Modify"
     insertAt(index: number, value: T): void;
 
@@ -181,6 +188,7 @@ interface Array<T> {
     //% help=arrays/index-of
     //% shim=Array_::indexOf weight=40
     //% blockId="array_indexof" block="%list| find index of %value" blockNamespace="arrays"
+    //% list.label="list to check" item.label="value to find"
     //% group="Operations"
     indexOf(item: T, fromIndex?: number): number;
 
@@ -207,6 +215,7 @@ interface Array<T> {
     //% help=arrays/pick-random
     //% helper=arrayPickRandom weight=25
     //% blockId="array_pickRandom" block="get random value from %list"
+    //% list.label="list to check"
     //% blockNamespace="arrays"
     //% group="Read"
     _pickRandom(): T;
@@ -220,6 +229,7 @@ interface Array<T> {
     //% help=arrays/unshift
     //% helper=arrayUnshift weight=24
     //% blockId="array_unshift_statement" block="%list| insert %value| at beginning" blockNamespace="arrays"
+    //% list.label="list to change" value.label="value to add"
     //% blockAliasFor="Array.unshift"
     //% group="Modify"
     _unshiftStatement(value: T): void;
@@ -230,6 +240,7 @@ interface Array<T> {
     //% help=arrays/pop
     //% shim=Array_::pop weight=44
     //% blockId="array_pop_statement" block="remove last value from %list" blockNamespace="arrays"
+    //% list.label="list to change"
     //% blockAliasFor="Array.pop"
     //% group="Modify"
     _popStatement(): void;
@@ -240,6 +251,7 @@ interface Array<T> {
     //% help=arrays/shift
     //% helper=arrayShift weight=29
     //% blockId="array_shift_statement" block="remove first value from %list" blockNamespace="arrays"
+    //% list.label="list to change"
     //% blockAliasFor="Array.shift"
     //% group="Modify"
     _shiftStatement(): void;
@@ -248,6 +260,7 @@ interface Array<T> {
     //% help=arrays/remove-at-statement
     //% shim=Array_::removeAt weight=14
     //% blockId="array_removeat_statement" block="%list| remove value at %index" blockNamespace="arrays"
+    //% list.label="list to change" index.label="position within list"
     //% blockAliasFor="Array.removeAt"
     //% group="Modify"
     _removeAtStatement(index: number): void;
@@ -272,6 +285,7 @@ declare interface String {
     //% shim=String_::charAt weight=48
     //% help=text/char-at
     //% blockId="string_get" block="char from %this=text|at %pos" blockNamespace="text"
+    //% this.label="value" index.label="position within text"
     //% this.defl="this"
     charAt(index: number): string;
 
@@ -287,6 +301,7 @@ declare interface String {
     //% shim=String_::charCodeAt weight=46
     //% help=text/char-code-at
     //% blockId="string_charcode_at" block="char code from $this=text|at $index" blockNamespace="text"
+    //% this.label="value" index.label="position within text"
     //% this.defl="this"
     charCodeAt(index: number): number;
 
@@ -297,6 +312,7 @@ declare interface String {
     //% shim=String_::compare
     //% help=text/compare
     //% blockId="string_compare" block="compare %this=text| to %that" blockNamespace="text"
+    //% this.label="value" that.label="other value"
     //% this.defl="this"
     compare(that: string): number;
 
@@ -309,6 +325,7 @@ declare interface String {
     //% help=text/substr
     //% blockId=string_substr_new
     //% block="substring of $this|from $start||of length $length"
+    //% this.label="value" start.label="start position" length.label="length"
     //% this.shadow="text"
     //% this.defl="this"
     //% blockNamespace="text"
@@ -348,6 +365,7 @@ declare interface String {
     //% help=text/is-empty
     //% blockId="string_isempty" blockNamespace="text"
     //% block="%this=text| is empty"
+    //% this.label="value"
     //% this.defl="this"
     isEmpty(): boolean;
 
@@ -360,6 +378,7 @@ declare interface String {
     //% help=text/index-of
     //% blockId="string_indexof" blockNamespace="text"
     //% block="%this=text|find index of %searchValue"
+    //% this.label="value" searchValue.label="text to find"
     //% this.defl="this"
     indexOf(searchValue: string, start?: number): number;
 
@@ -372,6 +391,7 @@ declare interface String {
     //% help=text/includes
     //% blockId="string_includes" blockNamespace="text"
     //% block="%this=text|includes %searchValue"
+    //% this.label="value" searchValue.label="text to find"
     //% this.defl="this"
     includes(searchValue: string, start?: number): boolean;
 
@@ -384,6 +404,7 @@ declare interface String {
     //% help=text/split
     //% blockId="string_split" blockNamespace="text"
     //% block="split %this=text|at %separator"
+    //% this.label="value" separator.label="separator"
     //% this.defl="this"
     split(separator?: string, limit?: number): string[];
 
@@ -415,6 +436,7 @@ declare interface String {
     //% helper=stringSubstr
     //% help=text/substr
     //% blockId="string_substr" block="substring of %this=text|from %start|of length %length" blockNamespace="text"
+    //% this.label="value" start.label="start position" length.label="length"
     //% this.defl="this"
     //% blockAliasFor="String.substr"
     //% deprecated
@@ -430,6 +452,7 @@ declare interface String {
 //% shim=String_::toNumber
 //% help=text/parse-float
 //% blockId="string_parsefloat" block="parse to number %text" blockNamespace="text"
+//% text.label="value"
 //% text.defl="123"
 declare function parseFloat(text: string): number;
 
@@ -440,6 +463,7 @@ declare function parseFloat(text: string): number;
  * @param max the upper inclusive bound, eg: 10
  */
 //% blockId="device_random" block="pick random %min|to %limit"
+//% min.label="minimum" max.label="maximum"
 //% blockNamespace="Math"
 //% help=math/randint
 //% shim=Math_::randomRange
@@ -485,6 +509,7 @@ declare namespace String {
     //% help=math/from-char-code
     //% shim=String_::fromCharCode weight=1
     //% blockNamespace="text" blockId="stringFromCharCode" block="text from char code %code"
+    //% code.label="value"
     function fromCharCode(code: number): string;
 }
 
@@ -542,6 +567,7 @@ declare namespace Math {
      * @param max the upper inclusive bound, eg: 10
      */
     //% blockId="device_random_deprecated" block="pick random %min|to %limit"
+    //% min.label="minimum" max.label="maximum"
     //% help=math/random-range deprecated
     //% shim=Math_::randomRange
     function randomRange(min: number, max: number): number;

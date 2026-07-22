@@ -15,17 +15,18 @@ export const LOGGED_IN = `${MODULE}:${FIELD_LOGGED_IN}`;
 const USER_PREF_MODULE = "user-pref";
 const FIELD_USER_PREFERENCES = "preferences";
 const FIELD_HIGHCONTRAST = "high-contrast";
-const FIELD_KEYBOARD_CONTROLS = "keyboard-controls";
+const FIELD_SCREEN_READER_MODE = "screen-reader-mode";
 const FIELD_COLOR_THEME_IDS = "colorThemeIds";
 const FIELD_LANGUAGE = "language";
 const FIELD_READER = "reader";
 export const USER_PREFERENCES = `${USER_PREF_MODULE}:${FIELD_USER_PREFERENCES}`
 export const HIGHCONTRAST = `${USER_PREF_MODULE}:${FIELD_HIGHCONTRAST}`
-export const ACCESSIBLE_BLOCKS = `${USER_PREF_MODULE}:${FIELD_KEYBOARD_CONTROLS}`
+export const SCREEN_READER_MODE = `${USER_PREF_MODULE}:${FIELD_SCREEN_READER_MODE}`
 export const COLOR_THEME_IDS = `${USER_PREF_MODULE}:${FIELD_COLOR_THEME_IDS}`
 export const LANGUAGE = `${USER_PREF_MODULE}:${FIELD_LANGUAGE}`
 export const READER = `${USER_PREF_MODULE}:${FIELD_READER}`
 export const HAS_USED_CLOUD = "has-used-cloud"; // Key into local storage to see if this computer has logged in before
+export const LAST_IDENTITY_PROVIDER = "last-identity-provider";
 
 export class Component<TProps, TState> extends data.Component<TProps, TState> {
     public getUserProfile(): pxt.auth.UserProfile {
@@ -46,6 +47,11 @@ class AuthClient extends pxt.auth.AuthClient {
         if (!!workspace.getWorkspaceType())
             await cloud.syncAsync();
         pxt.storage.setLocal(HAS_USED_CLOUD, "true");
+
+        const providerId = pxt.auth.identityProviderId(state.profile);
+        if (providerId) {
+            pxt.storage.setLocal(LAST_IDENTITY_PROVIDER, providerId);
+        }
     }
     protected onSignedOut(): Promise<void> {
         core.infoNotification(lf("Signed out"));
@@ -65,7 +71,7 @@ class AuthClient extends pxt.auth.AuthClient {
             switch (op.path.join('/')) {
                 case "language": data.invalidate(LANGUAGE); break;
                 case "highContrast": data.invalidate(HIGHCONTRAST); break;
-                case "accessibleBlocks": data.invalidate(ACCESSIBLE_BLOCKS); break;
+                case "screenReaderMode": data.invalidate(SCREEN_READER_MODE); break;
                 case "colorThemeIds": data.invalidate(COLOR_THEME_IDS); break;
                 case "reader": data.invalidate(READER); break;
             }
@@ -117,7 +123,7 @@ class AuthClient extends pxt.auth.AuthClient {
             // Identity not available, read from local storage
             switch (path) {
                 case HIGHCONTRAST: return /^true$/i.test(pxt.storage.getLocal(HIGHCONTRAST));
-                case ACCESSIBLE_BLOCKS: return /^true$/i.test(pxt.storage.getLocal(ACCESSIBLE_BLOCKS));
+                case SCREEN_READER_MODE: return /^true$/i.test(pxt.storage.getLocal(SCREEN_READER_MODE));
                 case COLOR_THEME_IDS: return pxt.U.jsonTryParse(pxt.storage.getLocal(COLOR_THEME_IDS)) as pxt.auth.ColorThemeIdsState;
                 case LANGUAGE: return pxt.storage.getLocal(LANGUAGE);
                 case READER: return pxt.storage.getLocal(READER);
@@ -134,7 +140,7 @@ class AuthClient extends pxt.auth.AuthClient {
             switch (field) {
                 case FIELD_USER_PREFERENCES: return { ...state.preferences };
                 case FIELD_HIGHCONTRAST: return state.preferences?.highContrast ?? pxt.auth.DEFAULT_USER_PREFERENCES().highContrast;
-                case FIELD_KEYBOARD_CONTROLS: return state.preferences?.accessibleBlocks ?? pxt.auth.DEFAULT_USER_PREFERENCES().accessibleBlocks;
+                case FIELD_SCREEN_READER_MODE: return state.preferences?.screenReaderMode ?? pxt.auth.DEFAULT_USER_PREFERENCES().screenReaderMode;
                 case FIELD_COLOR_THEME_IDS: return state.preferences?.colorThemeIds ?? pxt.auth.DEFAULT_USER_PREFERENCES().colorThemeIds;
                 case FIELD_LANGUAGE: return state.preferences?.language ?? pxt.auth.DEFAULT_USER_PREFERENCES().language;
                 case FIELD_READER: return state.preferences?.reader ?? pxt.auth.DEFAULT_USER_PREFERENCES().reader;
@@ -191,6 +197,11 @@ export function userPreferences(): pxt.auth.UserPreferences {
     return data.getData<pxt.auth.UserPreferences>(USER_PREFERENCES);
 }
 
+export function lastUsedIdentityProviderId(): pxt.IdentityProviderId | undefined {
+    const providerId = pxt.storage.getLocal(LAST_IDENTITY_PROVIDER) as pxt.IdentityProviderId;
+    return pxt.auth.identityProvider(providerId) ? providerId : undefined;
+}
+
 export async function authCheckAsync(): Promise<pxt.auth.UserProfile | undefined> {
     const cli = await clientAsync();
     return await cli?.authCheckAsync();
@@ -243,28 +254,18 @@ export async function setHighContrastPrefAsync(highContrast: boolean): Promise<v
     }
 }
 
-export async function setAccessibleBlocksPrefAsync(accessibleBlocks: boolean, eventSource: string): Promise<void> {
+export async function setScreenReaderModePrefAsync(screenReaderMode: boolean): Promise<void> {
     const cli = await clientAsync();
-
-    pxt.tickEvent(
-        "auth.setAccessibleBlocks",
-        {
-            enabling: accessibleBlocks ? "true" : "false",
-            eventSource: eventSource,
-            local: !cli ? "true" : "false"
-        }
-    );
-
     if (cli) {
         await cli.patchUserPreferencesAsync({
             op: 'replace',
-            path: ['accessibleBlocks'],
-            value: accessibleBlocks
-        }, { immediate: true }); // sync this change immediately, as the page is about to reload.
+            path: ['screenReaderMode'],
+            value: screenReaderMode
+        });
     } else {
         // Identity not available, save this setting locally
-        pxt.storage.setLocal(ACCESSIBLE_BLOCKS, accessibleBlocks.toString());
-        data.invalidate(ACCESSIBLE_BLOCKS);
+        pxt.storage.setLocal(SCREEN_READER_MODE, screenReaderMode.toString());
+        data.invalidate(SCREEN_READER_MODE);
     }
 }
 

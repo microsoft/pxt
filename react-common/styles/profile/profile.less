@@ -400,20 +400,41 @@
                 background-color: var(--pxt-neutral-background1);
                 color: var(--pxt-neutral-foreground1);
                 border: solid 1px var(--pxt-neutral-foreground1);
+                position: relative;
+                overflow: visible;
+
+                &:focus-visible::after {
+                    outline: var(--pxt-neutral-foreground1) solid 1px;
+                }
 
                 .label {
                     display: flex;
                     flex-direction: row;
                     gap: 1rem;
+                    align-items: center;
+
+                    .last-used-ribbon {
+                        position: absolute;
+                        top: -1rem;
+                        right: -1rem;
+                        left: auto;
+                        transform: none;
+                        margin-right: 0;
+                        z-index: 1;
+                    }
 
                     .logo {
                         width: 1.25rem;
                     }
 
                     .title {
-                        align-self: center;
+                        text-align: left;
                     }
                 }
+            }
+
+            .rememberme .common-checkbox:focus-within {
+                outline: var(--pxt-neutral-foreground1) solid 1px;
             }
         }
     }
@@ -423,6 +444,13 @@
             display: flex;
             gap: 0.5rem;
             justify-content: center;
+
+            .link-button:focus-visible {
+                outline: var(--pxt-neutral-foreground1) solid 3px;
+                outline-offset: 2px;
+                border-radius: 0.1em;
+                text-decoration: none;
+            }
         }
 
         .learn {

@@ -258,8 +258,11 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
                                     .then(() => projectView.toggleGreenScreen());
                             }
                             case "togglekeyboardcontrols": {
-                                return Promise.resolve()
-                                    .then(() => projectView.toggleAccessibleBlocks("editormessage"));
+                                // Keyboard controls are always on; message kept for API compatibility.
+                                return Promise.resolve();
+                            }
+                            case "togglescreenreadermode": {
+                                return projectView.toggleScreenReaderModeAsync("settings");
                             }
                             case "print": {
                                 return Promise.resolve()
@@ -275,7 +278,8 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
                                             versions: pxt.appTarget.versions,
                                             locale: ts.pxtc.Util.userLanguage(),
                                             availableLocales: pxt.appTarget.appTheme.availableLocales,
-                                            keyboardControls: projectView.isAccessibleBlocks()
+                                            keyboardControls: true,
+                                            screenReaderMode: projectView.isScreenReaderModeEnabled()
                                         } as pxt.editor.InfoMessage;
                                     });
                             }

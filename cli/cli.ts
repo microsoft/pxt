@@ -56,6 +56,7 @@ pxt.docs.requireDOMSanitizer = () => {
             code: mergeClassAttribute("code"),
             pre: mergeClassAttribute("pre"),
             div: mergeClassAttribute("div", "data-youtube", "title"),
+            img: mergeClassAttribute("img"),
         },
     };
 
@@ -276,8 +277,8 @@ class FileGithubDb implements pxt.github.IGithubDb {
         return this.loadAsync(repopath, tag, "pxt", (r, t) => this.db.loadConfigAsync(r, t));
     }
 
-    loadPackageAsync(repopath: string, tag: string): Promise<pxt.github.CachedPackage> {
-        return this.loadAsync(repopath, tag, "pkg", (r, t) => this.db.loadPackageAsync(r, t));
+    loadPackageAsync(repopath: string, tag: string, fallbackPackageFiles?: pxt.Map<string>): Promise<pxt.github.CachedPackage> {
+        return this.loadAsync(repopath, tag, "pkg", (r, t) => this.db.loadPackageAsync(r, t, fallbackPackageFiles));
     }
 
     loadTutorialMarkdown(repopath: string, tag?: string): Promise<pxt.github.CachedPackage> {
@@ -978,6 +979,9 @@ function gitUploadAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
 }
 
 async function uploadToGitRepoAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
+    if (process.env["PXT_SKIP_GIT_COMMIT"]) {
+        return writeFilesToPushAsync(opts, uplReqs);
+    }
     let label = opts.label
     if (!label) {
         console.log('no label; skip release upload');
@@ -1079,6 +1083,46 @@ async function uploadToGitRepoAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) 
                 })
             }
         })
+}
+
+async function writeFilesToPushAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
+    let label = opts.label
+    if (!label) {
+        console.log('no label; skip release upload');
+        return Promise.resolve();
+    }
+    let tid = pxt.appTarget.id
+    if (U.startsWith(label, tid + "/"))
+        label = label.slice(tid.length + 1)
+    if (!/^v\d/.test(label)) {
+        console.log(`label "${label}" is not a version; skipping release upload`);
+        return Promise.resolve();
+    }
+
+    const releasesDir = path.resolve("tmp/releases")
+    const outDir = path.join(releasesDir, "built");
+
+    console.log("writing release files to " + releasesDir)
+    nodeutil.mkdirP(outDir);
+
+    const info = await ciBuildInfoAsync();
+    const releaseInfo = {
+        url: info.commitUrl,
+        tag: label
+    };
+
+    // this gets read by the github actions workflow
+    fs.writeFileSync(path.join(releasesDir, "release.json"), JSON.stringify(releaseInfo, null, 2), { encoding: "utf8" });
+
+    // copy the files into the built directory. the actual push to the git repo will be
+    // handled by the github actions workflow
+    for (let u of U.values(uplReqs)) {
+        let fpath = path.join(outDir, u.filename)
+        nodeutil.mkdirP(path.dirname(fpath))
+        fs.writeFileSync(fpath, u.content, { encoding: u.encoding })
+    }
+    // make sure there's always something to commit
+    fs.writeFileSync(path.join(outDir, "stamp.txt"), new Date().toString())
 }
 
 function uploadedArtFileCdnUrl(fn: string): string {
@@ -3020,7 +3064,7 @@ function renderDocs(builtPackaged: string, localDir: string) {
 
                     html = pxt.docs.renderMarkdown({
                         template: docsTemplate,
-                        markdown: patchedMd,
+                        markdown: pxt.docs.normalizeStaticMarkdown(patchedMd),
                         theme: pxt.appTarget.appTheme,
                         filepath: path.join("docs", pathUnderDocs),
                     });
@@ -5839,7 +5883,9 @@ export async function buildCoreDeclarationFiles(parsed: commandParser.ParsedComm
     nodeutil.mkdirP(builtFolder);
     process.chdir(cwd);
 
-    const host = shareId ? new Host() : new SnippetHost("decl-build", { "main.ts" : "" }, { "blocksprj": "*" });
+    const blocksprjConfig = readBlocksprjConfig();
+
+    const host = shareId ? new Host() : new SnippetHost("decl-build", { "main.ts" : "" }, { ...blocksprjConfig.dependencies });
     const mainPkg = new pxt.MainPackage(host);
 
     if (shareId) {
@@ -6223,6 +6269,33 @@ function checkDocsAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
     )
 }
 
+function readBlocksprjConfig(): pxt.PackageConfig {
+    const configPath = path.join("libs", pxt.BLOCKS_PROJECT_NAME, "pxt.json");
+
+    if (!nodeutil.fileExistsSync(configPath)) {
+        return undefined;
+    }
+    const config = nodeutil.readJson(configPath) as pxt.PackageConfig;
+    return config;
+}
+
+function mergeCorePackage(corePackage: pxt.PackageConfig, dependencies = {} as pxt.Map<string>): pxt.Map<string> {
+    for (const dep of Object.keys(dependencies)) {
+        const verSpec = dependencies[dep];
+
+        if (pxt.appTarget.bundledpkgs[dep] && (verSpec === "*" || verSpec.startsWith("file:"))) {
+            const bundled = pxt.appTarget.bundledpkgs[dep];
+            const config = pxt.U.jsonTryParse(bundled[pxt.CONFIG_NAME]);
+
+            if (config?.core) {
+                return dependencies;
+            }
+        }
+    }
+
+    return pxt.tutorial.mergeTutorialDependencies(corePackage.dependencies, dependencies);
+}
+
 function checkFileSize(files: string[]): number {
     if (!pxt.appTarget.cloud)
         return 0;
@@ -6261,6 +6334,8 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
     // only check each snippet once.
     const existingSnippets: pxt.Map<boolean> = {};
     let snippets: CodeSnippet[] = [];
+
+    const blocksprjConfig = readBlocksprjConfig();
 
     const maxFileSize = checkFileSize(nodeutil.allFiles("docs", { maxDepth: 10, allowMissing: true, includeDirs: true, ignoredFileMarker: ".ignorelargefiles" }));
     if (!pxt.appTarget.ignoreDocsErrors
@@ -6434,7 +6509,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
         }
 
         // look for snippets
-        getCodeSnippets(entrypath, md).forEach((snippet, snipIndex) => addSnippet(snippet, entrypath, snipIndex, entrypath));
+        getCodeSnippets(entrypath, md, blocksprjConfig).forEach((snippet, snipIndex) => addSnippet(snippet, entrypath, snipIndex, entrypath));
     }
 
     nodeutil.mkdirP("temp");
@@ -6479,8 +6554,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                                     continue;
                                 }
                                 const tutorial = pxt.tutorial.parseTutorial(tutorialMd);
-                                const pkgs: pxt.Map<string> = { "blocksprj": "*" };
-                                pxt.Util.jsonMergeFrom(pkgs, pxt.gallery.parsePackagesFromMarkdown(tutorialMd) || {});
+                                const pkgs = mergeCorePackage(blocksprjConfig, pxt.gallery.parsePackagesFromMarkdown(tutorialMd) || {});
 
                                 let extraFiles: Map<string> = null;
 
@@ -6497,7 +6571,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                                     || (tutorial.language == "python")) {
                                     tutorial.steps
                                         .filter(step => !!step.contentMd)
-                                        .forEach((step, stepIndex) => getCodeSnippets(`${card.name}-step${stepIndex}`, step.contentMd)
+                                        .forEach((step, stepIndex) => getCodeSnippets(`${card.name}-step${stepIndex}`, step.contentMd, blocksprjConfig)
                                             .forEach((snippet, snippetIndex) => {
                                                 snippet.packages = pkgs;
                                                 snippet.extraFiles = extraFiles;
@@ -6539,8 +6613,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                                     continue;
                                 }
                                 const prj = pxt.gallery.parseExampleMarkdown(card.name, exMd);
-                                const pkgs: pxt.Map<string> = { "blocksprj": "*" };
-                                pxt.U.jsonMergeFrom(pkgs, prj.dependencies);
+                                const pkgs = mergeCorePackage(blocksprjConfig, prj.dependencies);
 
                                 let extraFiles: Map<string> = undefined;
 
@@ -6616,6 +6689,8 @@ function internalCacheUsedBlocksAsync(): Promise<Map<pxt.BuiltTutorialInfo>> {
     const mdRegex = /\.md$/;
     const targetDirs = pxt.appTarget.cacheusedblocksdirs;
     const builtTututorialInfo: Map<pxt.BuiltTutorialInfo> = {};
+    const blocksprjConfig = readBlocksprjConfig();
+
     if (targetDirs) {
         targetDirs.forEach(dir => {
             pxt.log(`looking for tutorial markdown in ${dir}`);
@@ -6633,8 +6708,9 @@ function internalCacheUsedBlocksAsync(): Promise<Map<pxt.BuiltTutorialInfo>> {
             pxt.log(`error resolving tutorial markdown at ${path}`);
         }
         const tutorial = pxt.tutorial.parseTutorial(md) as TutorialInfo;
-        const pkgs: pxt.Map<string> = { "blocksprj": "*" };
-        pxt.Util.jsonMergeFrom(pkgs, pxt.gallery.parsePackagesFromMarkdown(md) || {});
+        const tutorialDeps = pxt.gallery.parsePackagesFromMarkdown(md) || {};
+        const pkgs: pxt.Map<string> = mergeCorePackage(blocksprjConfig, tutorialDeps);
+
         tutorial.pkgs = pkgs;
         tutorial.path = path;
 
@@ -6752,7 +6828,7 @@ export interface CodeSnippet {
     src?: string;
 }
 
-export function getCodeSnippets(fileName: string, md: string): CodeSnippet[] {
+export function getCodeSnippets(fileName: string, md: string, baseConfig: pxt.PackageConfig): CodeSnippet[] {
     const supported: pxt.Map<string> = {
         "blocks": "ts",
         "block": "ts",
@@ -6778,21 +6854,20 @@ export function getCodeSnippets(fileName: string, md: string): CodeSnippet[] {
         };
     }
 
-
-    const pkgs: pxt.Map<string> = {
-        "blocksprj": "*"
-    }
-    snippets.filter(snip => snip.type == "package")
+    const tutorialDeps = snippets.filter(snip => snip.type == "package")
         .map(snip => snip.code.split('\n'))
-        .forEach(lines => lines
-            .map(l => l.replace(/\s*$/, ''))
-            .filter(line => !!line)
-            .forEach(line => {
+        .reduce((acc, lines) => {
+            for (let line of lines) {
+                line = line.replace(/\s*$/, '');
+                if (!line) continue;
                 const i = line.indexOf('=');
-                if (i < 0) pkgs[line] = "*";
-                else pkgs[line.substring(0, i)] = line.substring(i + 1);
-            })
-        );
+                if (i < 0) acc[line] = "*";
+                else acc[line.substring(0, i).trim()] = line.substring(i + 1);
+            }
+            return acc;
+        }, {} as pxt.Map<string>);
+
+    const pkgs = mergeCorePackage(baseConfig, tutorialDeps);
 
     const pkgName = fileName.replace(/\\/g, '-').replace(/.md$/i, '');
     return codeSnippets.map((snip, i) => {

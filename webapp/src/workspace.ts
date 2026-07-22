@@ -633,16 +633,18 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
             .forEach(key => delete e.header[key as keyof Header]);
         h = e.header;
     }
-    if (text)
+    let pxtjson: pxt.PackageConfig | undefined;
+    if (text) {
         e.text = text
+        pxtjson = pxt.Package.parseAndValidConfig(text[pxt.CONFIG_NAME]);
+
+    }
     if (text || h.isDeleted) {
         h.saveId = null
     }
 
     // check if we have dynamic boards, store board info for home page rendering
-    if (text && pxt.appTarget.simulator && pxt.appTarget.simulator.dynamicBoardDefinition) {
-        const pxtjson = pxt.Package.parseAndValidConfig(text[pxt.CONFIG_NAME]);
-        if (pxtjson && pxtjson.dependencies)
+    if (pxtjson?.dependencies && pxt.appTarget.simulator && pxt.appTarget.simulator.dynamicBoardDefinition) {
             h.board = Object.keys(pxtjson.dependencies)
                 .filter(p => !!pxt.bundledSvg(p))[0];
     }
@@ -655,15 +657,22 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
 
         if (pxt.appTarget.appTheme.timeMachine) {
             try {
-                const previous = await impl.getAsync(h);
-
-                if (previous) {
-                    if (!toWrite && previous.header.pubVersions?.length !== h.pubVersions?.length) {
-                        toWrite = { ...previous.text };
+                if (pxtjson?.disableHistory) {
+                    if (toWrite?.[pxt.HISTORY_FILE]) {
+                        delete toWrite[pxt.HISTORY_FILE];
                     }
+                }
+                else {
+                    const previous = await impl.getAsync(h);
 
-                    if (toWrite) {
-                        pxteditor.history.updateHistory(previous.text, toWrite, Date.now(), h.pubVersions || [], diffText, patchText, true);
+                    if (previous) {
+                        if (!toWrite && previous.header.pubVersions?.length !== h.pubVersions?.length) {
+                            toWrite = { ...previous.text };
+                        }
+
+                        if (toWrite) {
+                            pxteditor.history.updateHistory(previous.text, toWrite, Date.now(), h.pubVersions || [], diffText, patchText, true);
+                        }
                     }
                 }
             }
@@ -761,9 +770,43 @@ export async function installAsync(h0: InstallHeader, text: ScriptText, dontOver
         pxt.shell.setEditorLanguagePref(cfg.preferredEditor);
     }
 
-    await pxt.github.cacheProjectDependenciesAsync(cfg)
+    let packagedExtensionFiles: pxt.Map<pxt.Map<string>>;
+    if (text[pxt.PACKAGED_EXTENSIONS]) {
+        packagedExtensionFiles = pxt.Util.jsonTryParse(text[pxt.PACKAGED_EXTENSIONS]);
+        delete text[pxt.PACKAGED_EXTENSIONS];
+    }
+
+    await cachePackagedScriptExtensionsAsync(packagedExtensionFiles);
+    await pxt.github.cacheProjectDependenciesAsync(cfg, packagedExtensionFiles)
     await importAsync(h, text);
     return h;
+}
+
+async function cachePackagedScriptExtensionsAsync(packagedExtensionFiles?: pxt.Map<pxt.Map<string>>) {
+    if (!packagedExtensionFiles) return;
+
+    const config = await pxt.packagesConfigAsync();
+    const scriptCache = await getScriptCacheAsync();
+    const seen: pxt.Map<boolean> = {};
+
+    await Promise.all(Object.keys(packagedExtensionFiles).map(async key => {
+        if (pxt.github.isGithubId(key)) return;
+
+        const pubId = key.slice(0, 4) === "pub:" ? key.slice(4) : key;
+        if (!pubId || seen[pubId]) return;
+        seen[pubId] = true;
+
+        const files = packagedExtensionFiles[key];
+        if (!files || !pxt.Package.parseAndValidConfig(files[pxt.CONFIG_NAME])) return;
+
+        try {
+            const id = encodeURIComponent(pxt.github.upgradedPackageId(config, pubId));
+            await scriptCache.setAsync({ id, files });
+        }
+        catch (e) {
+            pxt.log("Unable to cache packaged extension in DB");
+        }
+    }));
 }
 
 export async function renameAsync(h: Header, newName: string): Promise<Header> {

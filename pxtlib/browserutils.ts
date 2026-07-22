@@ -136,6 +136,11 @@ namespace pxt.BrowserUtils {
         return typeof window != "undefined" && !!(window as any).pxtElectron;
     }
 
+    export function isPxtElectronWebUSBDeployEnabled(): boolean {
+        const pxtElectron = typeof window != "undefined" && (window as any).pxtElectron as pxt.electron.PxtElectron;
+        return !!pxtElectron?.capabilities?.webUSBDeploy;
+    }
+
     export function isIpcRenderer(): boolean {
         return typeof window != "undefined" && !!(window as any).ipcRenderer;
     }
@@ -1449,6 +1454,21 @@ namespace pxt.BrowserUtils {
         }
 
         return url;
+    }
+
+    export function getCopilotServerParam(): "ppe" | "prod" | undefined {
+        if (typeof window === "undefined") return undefined;
+        const query = pxt.Util.parseQueryString(window.location.search || "");
+        const value = (query["useCopilotServer"] || "").toLowerCase();
+        return value === "ppe" || value === "prod" ? value : undefined;
+    }
+
+    export function appendCopilotServerQueryParam(url: string): string {
+        const value = getCopilotServerParam();
+        if (!value) return url;
+        const params = new URLSearchParams();
+        params.set("useCopilotServer", value);
+        return appendUrlQueryParams(url, params);
     }
 
     export function legacyCopyText(element: HTMLInputElement | HTMLTextAreaElement) {

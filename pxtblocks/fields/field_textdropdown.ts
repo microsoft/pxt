@@ -79,9 +79,12 @@ export class BaseFieldTextDropdown extends Blockly.FieldTextInput {
 
         this.inputKeydownHandler = this.inputKeydownListener.bind(this);
         this.htmlInput_.addEventListener('keydown', this.inputKeydownHandler);
+        this.htmlInput_.setAttribute("role", "combobox");
+        this.htmlInput_.ariaExpanded = "true";
 
         if (!quietInput) {
             this.htmlInput_.focus();
+            this.htmlInput_.select();
         }
     }
 
@@ -272,13 +275,13 @@ export class BaseFieldTextDropdown extends Blockly.FieldTextInput {
     }
 
     private handleMenuActionEvent(menuItem: Blockly.MenuItem) {
-        Blockly.DropDownDiv.hideIfOwner(this, true);
         this.onItemSelected_(this.menu_ as Blockly.Menu, menuItem);
     }
 
     protected onItemSelected_(menu: Blockly.Menu, menuItem: Blockly.MenuItem) {
         this.setValue(menuItem.getValue());
-
+        this.htmlInput_.focus();
+        Blockly.DropDownDiv.hideIfOwner(this, true);
         Blockly.WidgetDiv.hideIfOwner(this);
     }
 }

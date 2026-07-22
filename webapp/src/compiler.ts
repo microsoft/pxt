@@ -174,6 +174,7 @@ export function compileAsync(options: CompileOptions = {}): Promise<pxtc.Compile
             }
             opts.computeUsedSymbols = true;
             opts.computeUsedParts = true;
+            opts.enhancedErrors = true;
             if (options.forceEmit)
                 opts.forceEmit = true;
             if (/test=1/i.test(window.location.href))
@@ -531,6 +532,20 @@ export function projectSearchClear() {
         });
 }
 
+export function homeSearchAsync(searchFor: pxtc.service.HomeSearchOptions): Promise<pxtc.service.HomeSearchInfo[]> {
+    return ensureApisInfoAsync()
+        .then(() => {
+            return workerOpAsync("homeSearch", { homeSearch: searchFor });
+        });
+}
+
+export function homeSearchClear() {
+    return ensureApisInfoAsync()
+        .then(() => {
+            return workerOpAsync("homeSearchClear", {});
+        });
+}
+
 export function formatAsync(input: string, pos: number) {
     return workerOpAsync("format", { format: { input: input, pos: pos } });
 }
@@ -558,6 +573,7 @@ export async function typecheckAsync(): Promise<pxtc.CompileResult | null> {
 
             const opts = await pkg.mainPkg.getCompileOptionsAsync();
             opts.testMode = true; // show errors in all top-level code
+            opts.enhancedErrors = true;
 
             await workerOpAsync("setOptions", { options: opts });
 
@@ -821,6 +837,11 @@ function cleanApiForCache(apiInfo: pxtc.SymbolInfo) {
     if (cachedAttrs._untranslatedJsDoc) {
         cachedAttrs.jsDoc = cachedAttrs._untranslatedJsDoc;
         delete cachedAttrs._untranslatedJsDoc;
+        defChanged = true;
+    }
+    if (cachedAttrs._untranslatedAriaLabel) {
+        cachedAttrs.ariaLabel = cachedAttrs._untranslatedAriaLabel;
+        delete cachedAttrs._untranslatedAriaLabel;
         defChanged = true;
     }
     if (defChanged) {

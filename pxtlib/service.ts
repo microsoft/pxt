@@ -706,6 +706,7 @@ namespace ts.pxtc {
         const langLower = lang.toLowerCase();
         const attrJsLocsKey = langLower + "|jsdoc";
         const attrBlockLocsKey = langLower + "|block";
+        const attrAriaLabelLocsKey = langLower + "|ariaLabel";
 
         const loc = await mainPkg.localizationStringsAsync(lang);
         if (apiLocalizationStrings)
@@ -717,7 +718,12 @@ namespace ts.pxtc {
             const altLocSrcFn = altLocSrc && apis.byQName[altLocSrc];
 
             if (fn.attributes._untranslatedJsDoc) fn.attributes.jsDoc = fn.attributes._untranslatedJsDoc;
-            if (fn.attributes._untranslatedBlock) fn.attributes.jsDoc = fn.attributes._untranslatedBlock;
+            if (fn.attributes._untranslatedBlock) fn.attributes.block = fn.attributes._untranslatedBlock;
+            if (fn.attributes._untranslatedAriaLabel) fn.attributes.ariaLabel = fn.attributes._untranslatedAriaLabel;
+            if (fn.attributes._untranslatedParamDefl) {
+                fn.attributes.paramDefl = U.clone(fn.attributes._untranslatedParamDefl);
+                syncParameterDefaults(fn);
+            }
 
             const lookupLoc = (locSuff: string, attrKey: string) => {
                 return loc[fn.qName + locSuff] || fn.attributes.locs?.[attrKey]
@@ -743,6 +749,7 @@ namespace ts.pxtc {
 
             const nsDoc = loc['{id:category}' + Util.capitalize(fn.qName)];
             let locBlock = loc[`${fn.qName}|block`] || fn.attributes.locs?.[attrBlockLocsKey];
+            const locAriaLabel = loc[`${fn.qName}|ariaLabel`] || fn.attributes.locs?.[attrAriaLabelLocsKey];
 
             if (fn.attributes.block) {
                 const comp = pxt.blocks.compileInfo(fn);
@@ -753,6 +760,34 @@ namespace ts.pxtc {
                         }
                         else {
                             clearBlockTranslationCacheKey(arg.localizationKey);
+                        }
+                    }
+                }
+                const paramsWithLabels = comp.thisParameter ? [comp.thisParameter, ...comp.parameters] : comp.parameters;
+                for (const param of paramsWithLabels) {
+                    if (param.labelLocalizationKey) {
+                        const locSuff = param.labelLocalizationKey.slice(fn.qName.length);
+                        const paramLabel = lookupLoc(locSuff, langLower + locSuff);
+                        if (paramLabel) {
+                            setBlockTranslationCacheKey(param.labelLocalizationKey, paramLabel);
+                        }
+                        else {
+                            clearBlockTranslationCacheKey(param.labelLocalizationKey);
+                        }
+                    }
+
+                    const defaultString = pxt.blocks.parameterDefaultToLocalizationString(param.defaultValue, param.type);
+                    const defaultLocalizationKey = pxt.blocks.parameterDefaultLocalizationKey(fn.qName, param.actualName);
+                    if (defaultLocalizationKey && defaultString !== undefined) {
+                        const locSuff = defaultLocalizationKey.slice(fn.qName.length);
+                        const paramDefault = lookupLoc(locSuff, langLower + locSuff);
+                        if (paramDefault !== undefined) {
+                            if (!fn.attributes._untranslatedParamDefl) {
+                                fn.attributes._untranslatedParamDefl = U.clone(fn.attributes.paramDefl || {});
+                            }
+                            if (!fn.attributes.paramDefl) fn.attributes.paramDefl = {};
+                            fn.attributes.paramDefl[param.actualName] = pxt.blocks.localizationStringToParameterDefault(paramDefault);
+                            syncParameterDefaults(fn);
                         }
                     }
                 }
@@ -816,10 +851,25 @@ namespace ts.pxtc {
             } else {
                 updateBlockDef(fn.attributes);
             }
+
+            if (locAriaLabel) {
+                if (!fn.attributes._untranslatedAriaLabel) {
+                    fn.attributes._untranslatedAriaLabel = fn.attributes.ariaLabel;
+                }
+                fn.attributes.ariaLabel = locAriaLabel;
+            }
             fn.attributes._translatedLanguageCode = lang;
         });
 
         return cleanLocalizations(apis);
+    }
+
+    function syncParameterDefaults(fn: SymbolInfo) {
+        if (!fn.parameters) return;
+
+        for (const param of fn.parameters) {
+            param.default = fn.attributes.paramDefl && fn.attributes.paramDefl[param.name];
+        }
     }
 
     function cleanLocalizations(apis: ApisInfo) {
@@ -901,8 +951,12 @@ namespace ts.pxtc {
         "weight",
         "imageLiteral",
         "gridLiteral",
+        "colorGridLiteral",
         "topblockWeight",
-        "inlineInputModeLimit"
+        "inlineInputModeLimit",
+        "gridLiteralVerticalSpacing",
+        "gridLiteralHorizontalSpacing",
+        "gridLiteralBorderRadius",
     ];
 
     const booleanAttributes: (keyof CommentAttrs)[] = [
@@ -923,6 +977,7 @@ namespace ts.pxtc {
         "argsNullable",
         "compileHiddenArguments",
         "expandArgumentsInToolbox",
+        "gridLiteralUseProjectPalette"
     ];
 
     export function parseCommentString(cmt: string): CommentAttrs {
@@ -945,6 +1000,9 @@ namespace ts.pxtc {
                     } else if (U.startsWith(n, "jsdoc.loc.")) {
                         if (!res.locs) res.locs = {};
                         res.locs[n.slice("jsdoc.loc.".length).toLowerCase() + "|jsdoc"] = v;
+                    } else if (U.startsWith(n, "ariaLabel.loc.")) {
+                        if (!res.locs) res.locs = {};
+                        res.locs[n.slice("ariaLabel.loc.".length).toLowerCase() + "|ariaLabel"] = v;
                     } else if (U.contains(n, ".loc.")) {
                         if (!res.locs) res.locs = {};
                         const p = n.slice(0, n.indexOf('.loc.'));
@@ -986,6 +1044,9 @@ namespace ts.pxtc {
                         const key = n.slice(n.indexOf('.shadowOptions.') + 15, n.length);
                         if (!res.paramShadowOptions[field]) res.paramShadowOptions[field] = {};
                         res.paramShadowOptions[field][key] = v
+                    } else if (U.endsWith(n, ".label")) {
+                        if (!res.paramLabels) res.paramLabels = {};
+                        res.paramLabels[n.slice(0, n.length - 6)] = v;
                     } else if (U.endsWith(n, ".min")) {
                         if (!res.paramMin) res.paramMin = {}
                         res.paramMin[n.slice(0, n.length - 4)] = v
@@ -1740,6 +1801,7 @@ namespace ts.pxtc.service {
         blocks?: BlocksOptions;
         extensions?: ExtensionsOptions;
         projectSearch?: ProjectSearchOptions;
+        homeSearch?: HomeSearchOptions;
         snippet?: SnippetOptions;
         runtime?: pxt.RuntimeOptions;
         light?: boolean; // in light mode?
@@ -1777,6 +1839,7 @@ namespace ts.pxtc.service {
         imageUrl?: string;
         type?: ExtensionType;
         learnMoreUrl?: string;
+        installed?: boolean;
 
         pkgConfig?: pxt.PackageConfig; // Added if the type is Bundled
         repo?: pxt.github.GitRepo; //Added if the type is Github VVN TODO ADD THIS
@@ -1805,6 +1868,19 @@ namespace ts.pxtc.service {
     export interface ProjectSearchInfo {
         name: string;
         id?: string;
+    }
+
+    export interface HomeSearchOptions {
+        term: string;
+        entries: HomeSearchInfo[];
+    }
+
+    export interface HomeSearchInfo {
+        id: string;
+        name: string;
+        description?: string;
+        tags?: string;
+        searchTerms?: string;
     }
 
     export interface BlocksOptions {

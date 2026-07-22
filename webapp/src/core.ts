@@ -343,12 +343,13 @@ export function getHighContrastOnce(): boolean {
     return ThemeManager.isCurrentThemeHighContrast();
 }
 
-export async function toggleAccessibleBlocks(eventSource: string) {
-    await setAccessibleBlocks(!data.getData<boolean>(auth.ACCESSIBLE_BLOCKS), eventSource);
+export async function toggleScreenReaderMode(eventSource: string) {
+    await setScreenReaderMode(!data.getData<boolean>(auth.SCREEN_READER_MODE), eventSource);
 }
 
-export async function setAccessibleBlocks(on: boolean, eventSource: string) {
-    await auth.setAccessibleBlocksPrefAsync(on, eventSource);
+export async function setScreenReaderMode(on: boolean, eventSource: string) {
+    pxt.tickEvent("app.screenreadermode", { on: on ? 1 : 0, eventSource });
+    await auth.setScreenReaderModePrefAsync(on);
 }
 
 export async function setLanguage(lang: string) {

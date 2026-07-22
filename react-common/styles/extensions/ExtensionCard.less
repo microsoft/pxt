@@ -58,8 +58,16 @@
         border-bottom-right-radius: 0.5rem;
     }
 
+    .common-card-label.installed {
+        color: var(--pxt-colors-green-foreground);
+        background-color: var(--pxt-colors-green-background);
+        border-color: var(--pxt-colors-green-hover);
+    }
+
     a.link-button {
         float: right;
+        position: relative;
+        z-index: 1;
     }
 
     .common-extension-card-contents {
@@ -92,6 +100,14 @@
     }
 }
 
+.common-extension-card.installed {
+    overflow: visible;
+
+    .common-card-body {
+        overflow: hidden;
+    }
+}
+
 /****************************************************
  *                 High Contrast                    *
  ****************************************************/
@@ -100,5 +116,11 @@
     .common-extension-card {
         border-color: @highContrastTextColor;
         background-color: @highContrastBackgroundColor;
+
+        .common-card-label.installed {
+            color: @highContrastBackgroundColor;
+            background-color: @highContrastTextColor;
+            border-color: @highContrastTextColor;
+        }
     }
 }

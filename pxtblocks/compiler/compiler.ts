@@ -12,6 +12,7 @@ import { FieldTilemap, FieldTextInput } from "../fields";
 import { CommonFunctionBlock } from "../plugins/functions/commonFunctionMixin";
 import { getContainingFunction } from "../plugins/duplicateOnDrag";
 import { FUNCTION_DEFINITION_BLOCK_TYPE } from "../plugins/functions/constants";
+import { COLOR_NUMBER_BLOCK_TYPE, COLOR_PICKER_BLOCK_TYPE, COLOR_STRING_BLOCK_TYPE } from "../plugins/colorpicker";
 
 
 interface Rect {
@@ -436,8 +437,8 @@ export function compileExpression(e: Environment, b: Blockly.Block, comments: st
         case "math_number":
         case "math_integer":
         case "math_whole_number":
-            expr = compileNumber(e, b, comments); break;
         case "math_number_minmax":
+        case COLOR_NUMBER_BLOCK_TYPE:
             expr = compileNumber(e, b, comments); break;
         case "math_op2":
             expr = compileMathOp2(e, b, comments); break;
@@ -457,6 +458,7 @@ export function compileExpression(e: Environment, b: Blockly.Block, comments: st
         case "variables_get_reporter":
             expr = compileVariableGet(e, b); break;
         case "text":
+        case COLOR_STRING_BLOCK_TYPE:
             expr = compileText(e, b, comments); break;
         case "text_join":
             expr = compileTextJoin(e, b, comments); break;
@@ -480,6 +482,9 @@ export function compileExpression(e: Environment, b: Blockly.Block, comments: st
             break;
         case "function_call_output":
             expr = compileFunctionCall(e, b, comments, false); break;
+        case COLOR_PICKER_BLOCK_TYPE:
+            expr = compileColorPicker(e, b, comments);
+            break;
         default:
             let call = e.stdCallTable[b.type];
             if (call) {
@@ -804,7 +809,7 @@ function compileImage(e: Environment, b: Blockly.Block, frames: number, columns:
         for (let j = 0; j < columns; ++j) {
             if (j > 0)
                 state += ' ';
-            state += (leds[(i * columns) + j] === '#') ? "#" : ".";
+            state += leds[(i * columns) + j];
         }
         state += '\n';
     }
@@ -1338,13 +1343,13 @@ function compileWorkspaceComment(c: Blockly.comments.RenderedWorkspaceComment): 
 }
 
 function isLiteral(e: Environment, b: Blockly.Block) {
-    return isNumericLiteral(e, b) || b.type === "logic_boolean" || b.type === "text";
+    return isNumericLiteral(e, b) || b.type === "logic_boolean" || b.type === "text" || b.type === COLOR_STRING_BLOCK_TYPE;
 }
 
 function isNumericLiteral(e: Environment, b: Blockly.Block): boolean {
     if (!b) return false;
 
-    if (b.type === "math_number" || b.type === "math_integer" || b.type === "math_number_minmax" || b.type === "math_whole_number") {
+    if (b.type === "math_number" || b.type === "math_integer" || b.type === "math_number_minmax" || b.type === "math_whole_number" || b.type === COLOR_NUMBER_BLOCK_TYPE) {
         return true;
     }
 
@@ -1387,6 +1392,35 @@ function extractTsExpression(e: Environment, b: Blockly.Block, comments: string[
 function compileNumber(e: Environment, b: Blockly.Block, comments: string[]): pxt.blocks.JsNode {
     return pxt.blocks.H.mkNumberLiteral(extractNumber(b));
 }
+
+function compileColorPicker(e: Environment, b: Blockly.Block, comments: string[]): pxt.blocks.JsNode {
+    const format = b.getFieldValue("FORMAT");
+
+    if (format === "hex") {
+        return pxt.blocks.H.namespaceCall(
+            "colorHelpers",
+            "hex",
+            [compileExpression(e, getInputTargetBlock(e, b, "HEX_INPUT"), comments)],
+            false
+        );
+    }
+    else {
+        const inputs: pxt.blocks.JsNode[] = [];
+        for (let i = 0; i < 4; i++) {
+            const input = b.getInput("INPUT" + i);
+            if (input) {
+                inputs.push(compileExpression(e, getInputTargetBlock(e, b, input.name), comments));
+            }
+        }
+        return pxt.blocks.H.namespaceCall(
+            "colorHelpers",
+            format,
+            inputs,
+            false
+        );
+    }
+}
+
 
 function throwBlockError(msg: string, block: Blockly.Block) {
     let e = new Error(msg);

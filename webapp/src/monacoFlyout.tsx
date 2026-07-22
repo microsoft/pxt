@@ -15,6 +15,12 @@ import { classList } from "../../react-common/components/util";
 const DRAG_THRESHOLD = 5;
 const SELECTED_BORDER_WIDTH = 4;
 
+// Copied from toolbox.tsx
+const brandIcons: pxt.Map<string> = {
+    '\uf287': 'usb', '\uf368': 'accessible-icon', '\uf170': 'adn', '\uf1a7': 'pied-piper-pp', '\uf1b6': 'steam', '\uf294': 'bluetooth-b',
+    '\uf1d0': 'rebel', '\uf136': 'maxcdn', '\uf1aa': 'joomla', '\uf213': 'sellsy', '\uf20e': 'connectdevelop', '\uf113': 'github-alt'
+};
+
 interface BlockDragInfo {
     x: number;
     y: number;
@@ -88,6 +94,11 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
     focus() {
         const firstFocusableElement = (this.refs.flyout as HTMLDivElement)?.querySelector<HTMLElement>("[tabindex='0']");
         firstFocusableElement?.focus();
+    }
+
+    setLabel(label: string) {
+        const container = document.getElementById("monacoFlyoutWrapper");
+        container.ariaLabel = label;
     }
 
     protected getBlockMouseOver = (name: string) => {
@@ -173,6 +184,12 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
             const isRtl = pxt.Util.isUserLanguageRtl();
             const charCode = core.keyCodeFromEvent(e);
             const target = e.target as HTMLElement;
+            const handledKey = charCode == 40 || charCode == 38 || charCode == 37
+                || charCode == 27 || (charCode == 13 && !!block);
+            if (handledKey) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
             if (charCode == 40) { //  DOWN
                 // Next item
                 let nextSibling = target.nextElementSibling as HTMLElement;
@@ -428,12 +445,18 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
         const { name, ns, color, icon, groups, selectedBlock } = this.state;
         const rgb = pxt.toolbox.getAccessibleBackground(pxt.toolbox.convertColor(color || (ns && pxt.toolbox.getNamespaceColor(ns)) || "255"));
         const iconClass = `blocklyTreeIcon${icon ? (ns || icon).toLowerCase() : "Default"}`.replace(/\s/g, "");
+        const isBrandIcon = icon && brandIcons.hasOwnProperty(icon);
+        const isImageIcon = icon && pxt.toolbox.isImageIcon(icon);
+        const iconImageUrl = isImageIcon ? pxt.Util.pathJoin(pxt.webConfig.commitCdnUrl, encodeURI(icon)) : undefined;
         return <div id="monacoFlyoutWidget" className="monacoFlyout" style={this.getFlyoutStyle()} ref="flyout">
             <div id="monacoFlyoutWrapper" onScroll={this.scrollHandler} onWheel={this.wheelHandler} role="list">
                 <div className="monacoFlyoutLabel monacoFlyoutHeading">
-                    <span className={`monacoFlyoutHeadingIcon blocklyTreeIcon ${iconClass}`} role="presentation" style={this.getIconStyle(rgb)}>
-                        {(icon && icon.length === 1) ? icon : ""}
-                    </span>
+                    {isImageIcon
+                        ? <img className="monacoFlyoutHeadingIcon monacoFlyoutHeadingImage" src={iconImageUrl} role="presentation" alt="" />
+                        : <span className={classList("monacoFlyoutHeadingIcon blocklyTreeIcon", iconClass, `${isBrandIcon  && "brandIcon"}`)} role="presentation" style={this.getIconStyle(rgb)}>
+                            {(icon && icon.length === 1) ? icon : ""}
+                        </span>
+                    }
                     <div className="monacoFlyoutLabelText">{pxtc.U.rlf(`{id:category}${name}`)}</div>
                 </div>
                 {groups && groups.map((g, i) => {

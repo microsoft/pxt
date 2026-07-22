@@ -1,7 +1,6 @@
 /// <reference path="../../built/pxtlib.d.ts" />
 
 import * as React from "react";
-import * as auth from "./auth";
 import * as data from "./data";
 import * as sui from "./sui";
 
@@ -30,7 +29,6 @@ export class EditorAccessibilityMenu extends data.Component<EditorAccessibilityM
         this.showThemePicker = this.showThemePicker.bind(this);
         this.goHome = this.goHome.bind(this);
         this.openBlocks = this.openBlocks.bind(this);
-        this.toggleAccessibleBlocks = this.toggleAccessibleBlocks.bind(this);
     }
 
     openBlocks(e: React.MouseEvent<HTMLElement>) {
@@ -62,10 +60,6 @@ export class EditorAccessibilityMenu extends data.Component<EditorAccessibilityM
         this.props.parent.showExitAndSaveDialog();
     }
 
-    toggleAccessibleBlocks() {
-        this.props.parent.toggleAccessibleBlocks("accmenu");
-    }
-
     UNSAFE_componentWillReceiveProps(nextProps: EditorAccessibilityMenuProps) {
         const newState: EditorAccessibilityMenuState = {};
         if (nextProps.highContrast != undefined) {
@@ -82,31 +76,19 @@ export class EditorAccessibilityMenu extends data.Component<EditorAccessibilityM
         const targetTheme = pxt.appTarget.appTheme;
         const hasHome = !pxt.shell.isControllerMode();
 
-        const accessibleBlocksOn = this.getData<boolean>(auth.ACCESSIBLE_BLOCKS);
         const menuClass = classList(targetTheme.invertedMenu && "inverted", "menu");
 
-        return <div className="ui accessibleMenu borderless fixed menu" role="menubar">
-            {!accessibleBlocksOn &&
-                <sui.Item
-                    className={menuClass}
-                    role="menuitem"
-                    icon="xicon blocks"
-                    text={lf("Enable blocks keyboard controls")}
-                    onClick={this.toggleAccessibleBlocks}
-                />
-            }
-            {accessibleBlocksOn &&
-                <sui.Item
-                    className={menuClass}
-                    role="menuitem"
-                    icon="xicon blocks"
-                    text={lf("Skip to Blocks workspace")}
-                    onClick={this.openBlocks}
-                />
-            }
+        return <nav className="ui accessibleMenu borderless fixed menu" aria-label={lf("Skip links")}>
             <sui.Item
                 className={menuClass}
-                role="menuitem"
+                role="button"
+                icon="xicon blocks"
+                text={lf("Skip to Blocks workspace")}
+                onClick={this.openBlocks}
+            />
+            <sui.Item
+                className={menuClass}
+                role="button"
                 icon="xicon js"
                 text={lf("Skip to JavaScript editor")}
                 onClick={this.openJavaScript}
@@ -114,7 +96,7 @@ export class EditorAccessibilityMenu extends data.Component<EditorAccessibilityM
             {targetTheme.python &&
                 <sui.Item
                     className={menuClass}
-                    role="menuitem"
+                    role="button"
                     icon="xicon python"
                     text={lf("Skip to Python editor")}
                     onClick={this.openPython}
@@ -123,31 +105,33 @@ export class EditorAccessibilityMenu extends data.Component<EditorAccessibilityM
             {targetTheme.selectLanguage &&
                 <sui.Item
                     className={menuClass}
-                    role="menuitem"
+                    role="button"
                     icon="xicon globe"
                     text={lf("Select Language")}
                     onClick={this.showLanguagePicker}
+                    ariaHasPopup="dialog"
                 />
             }
             {targetTheme.defaultColorTheme &&
                 <sui.Item
                     className={menuClass}
-                    role="menuitem"
+                    role="button"
                     icon="paint brush"
                     text={lf("Select Theme")}
                     onClick={this.showThemePicker}
+                    ariaHasPopup="dialog"
                 />
             }
             {hasHome &&
                 <sui.Item
                     className={menuClass}
-                    role="menuitem"
+                    role="button"
                     icon="home"
                     text={lf("Go Home")}
                     onClick={this.goHome}
                 />
             }
-        </div>;
+        </nav>;
     }
 }
 
@@ -210,11 +194,11 @@ export class HomeAccessibilityMenu extends data.Component<HomeAccessibilityMenuP
     renderCore() {
         const { highContrast } = this.state;
         const targetTheme = pxt.appTarget.appTheme;
-        return <div className="ui accessibleMenu borderless fixed menu" role="menubar">
-            <sui.Item className={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="add circle" text={lf("New Project")} onClick={this.newProject} />
-            <sui.Item className={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="upload" text={lf("Import Project")} onClick={this.importProjectDialog} />
-            {targetTheme.selectLanguage ? <sui.Item className={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="xicon globe" text={lf("Select Language")} onClick={this.showLanguagePicker} /> : undefined}
-            {targetTheme.defaultColorTheme ? <sui.Item className={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="paint brush" text={("Select Theme")} onClick={this.showThemePicker} /> : undefined}
-        </div>;
+        return <nav className="ui accessibleMenu borderless fixed menu" aria-label={lf("Skip links")}>
+            <sui.Item className={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="button" icon="add circle" text={lf("New Project")} ariaHasPopup="dialog" onClick={this.newProject} />
+            <sui.Item className={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="button" icon="upload" text={lf("Import Project")} ariaHasPopup="dialog" onClick={this.importProjectDialog} />
+            {targetTheme.selectLanguage ? <sui.Item className={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="button" icon="xicon globe" text={lf("Select Language")} ariaHasPopup="dialog" onClick={this.showLanguagePicker} /> : undefined}
+            {targetTheme.defaultColorTheme ? <sui.Item className={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="button" icon="paint brush" text={lf("Select Theme")} ariaHasPopup="dialog" onClick={this.showThemePicker} /> : undefined}
+        </nav>;
     }
 }

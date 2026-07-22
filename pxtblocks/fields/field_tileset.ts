@@ -352,7 +352,7 @@ function constructTransparentTile(): TilesetDropdownOption {
     }, tile.id, tile];
 }
 
-function mkTransparentTileImage(sideLength: number) {
+export function mkTransparentTileImage(sideLength: number) {
     const canvas = document.createElement("canvas");
     const context = canvas.getContext("2d");
     canvas.width = sideLength;

@@ -44,21 +44,27 @@ export const EditControls = (props: EditControlsProps) => {
         }
     }
 
+    const showAssetName = !!pxt.appTarget?.appTheme.assetEditor;
+
     return <div className="music-editor-edit-controls">
         {nameError &&
             <div className="music-editor-name-error">
                 {nameError}
             </div>
         }
-        <Input
-            placeholder={lf("Asset Name")}
-            initialValue={assetName || editName}
-            onBlur={handleNameEdit}
-            onEnterKey={handleNameEdit} />
-        {!hideDoneButton && <Button
-            className="green"
-            title={lf("Done")}
-            label={lf("Done")}
-            onClick={onDoneClicked} />}
+        {showAssetName &&
+            <Input
+                placeholder={lf("Asset Name")}
+                initialValue={assetName || editName}
+                onBlur={handleNameEdit}
+                onEnterKey={handleNameEdit} />
+        }
+        {!hideDoneButton &&
+            <Button
+                className="green"
+                title={lf("Done")}
+                label={lf("Done")}
+                onClick={onDoneClicked} />
+        }
     </div>
 }

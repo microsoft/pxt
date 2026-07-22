@@ -23,13 +23,13 @@ export interface ModalAction {
 export interface ModalProps extends ContainerProps {
     title: string;
     leftIcon?: string;
-    helpUrl?: string
     ariaDescribedBy?: string;
     actions?: ModalAction[];
     onClose?: () => void;
     fullscreen?: boolean;
     parentElement?: Element;
     hideDismissButton?: boolean;
+    rightHeader?: React.ReactNode;
 }
 
 export const Modal = (props: ModalProps) => {
@@ -43,12 +43,12 @@ export const Modal = (props: ModalProps) => {
         role,
         title,
         leftIcon,
-        helpUrl,
         actions,
         onClose,
         parentElement,
         fullscreen,
         hideDismissButton,
+        rightHeader
     } = props;
 
     const closeClickHandler = (e?: React.MouseEvent<HTMLButtonElement>) => {
@@ -61,9 +61,34 @@ export const Modal = (props: ModalProps) => {
         className
     );
 
+    const modalRef = React.useRef<HTMLDivElement>(null);
+
+    React.useEffect(() => {
+        const root = parentElement || document.body;
+        const parent = modalRef.current?.parentElement;
+
+        const hiddenSiblings: Element[] = [];
+
+        for (const child of root.children) {
+            if (child !== parent) {
+                if (!child.hasAttribute("aria-hidden") || child.getAttribute("aria-hidden") === "false") {
+                    (child as HTMLElement).setAttribute("aria-hidden", "true");
+                    hiddenSiblings.push(child);
+                }
+            }
+        }
+
+        return () => {
+            for (const child of hiddenSiblings) {
+                (child as HTMLElement).removeAttribute("aria-hidden");
+            }
+        };
+    }, [parentElement])
+
     return ReactDOM.createPortal(<FocusTrap className={classes} onEscape={closeClickHandler}>
         <div id={id}
             className="common-modal"
+            ref={modalRef}
             role={role || "dialog"}
             aria-hidden={ariaHidden}
             aria-label={ariaLabel}
@@ -85,18 +110,9 @@ export const Modal = (props: ModalProps) => {
                     {leftIcon && <i className={leftIcon} aria-hidden={true}/>}
                     {title}
                 </div>
-                {fullscreen && helpUrl &&
-                    <div className="common-modal-help">
-                        <Link
-                            className="common-button menu-button"
-                            title={lf("Help on {0} dialog", title)}
-                            href={props.helpUrl}
-                            target="_blank"
-                        >
-                            <span className="common-button-flex">
-                                <i className="fas fa-question" aria-hidden={true}/>
-                            </span>
-                        </Link>
+                {fullscreen && rightHeader &&
+                    <div className="common-modal-right-menu">
+                        {rightHeader}
                     </div>
                 }
                 {!fullscreen && !hideDismissButton &&
@@ -131,5 +147,5 @@ export const Modal = (props: ModalProps) => {
                 </div>
             }
         </div>
-    </FocusTrap>, parentElement || document.getElementById("root") || document.body)
+    </FocusTrap>, parentElement || document.body)
 }

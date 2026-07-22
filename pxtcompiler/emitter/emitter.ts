@@ -247,7 +247,7 @@ namespace ts.pxtc {
         pxt.log(stringKind(n))
     }
 
-    // next free error 9284
+    // next free error 9285
     function userError(code: number, msg: string, secondary = false): Error {
         let e = new Error(msg);
         (<any>e).ksEmitterUserError = true;
@@ -3866,11 +3866,19 @@ ${lbl}: .short 0xffff
                     throw U.oops("invalid format specifier: " + f)
                 }
             })
+            // Native Array_.length has a thumb fast path that returns an
+            // already-tagged int, so route to it and skip the fromInt return
+            // conversion the general path would otherwise add.
+            let skipNativeReturnConversion = false
+            if (opts.target.isNative && isThumb() && name == "Array_::length" && fmt[0] == "I") {
+                name = "_pxt_array_length_tagged"
+                skipNativeReturnConversion = true
+            }
             let r = ir.rtcallMask(name, mask,
                 attrs ? attrs.callingConvention : ir.CallingConvention.Plain, args2)
             if (!r.mask) r.mask = { refMask: 0 }
             r.mask.conversions = convInfos
-            if (opts.target.isNative) {
+            if (opts.target.isNative && !skipNativeReturnConversion) {
                 let f0 = fmt[0]
                 if (f0 == "I")
                     r = fromInt(r)
@@ -4233,8 +4241,41 @@ ${lbl}: .short 0xffff
             return v
         }
 
+        function maybeWarnOnBareFunctionReference(node: Expression) {
+            if (!opts.enhancedErrors)
+                return
+
+            if (!node || node.kind !== SK.Identifier)
+                return
+
+            if (hasPrecedingTsIgnoreComment(node))
+                return
+
+            const exprType = typeOf(node)
+            const signatures = exprType && !(exprType.flags & TypeFlags.Any)
+                && checker.getSignaturesOfType(exprType, SignatureKind.Call)
+            if (signatures && signatures.length)
+                warning(node, 9284, lf("Function reference used as a statement; did you mean to call it with '()'?"))
+        }
+
+        function hasPrecedingTsIgnoreComment(node: Node) {
+            const src = node.getSourceFile()
+            const line = ts.getLineAndCharacterOfPosition(src, node.getStart(src)).line
+            if (line <= 0)
+                return false
+
+            const lineStarts = src.getLineStarts()
+            const previousLineStart = lineStarts[line - 1]
+            const previousLineEnd = lineStarts[line]
+            const previousLine = src.text.slice(previousLineStart, previousLineEnd)
+            return /^\s*\/\/\s*@ts-ignore\b/.test(previousLine)
+        }
+
         function emitExprAsStmt(node: Expression) {
-            if (isNoopExpr(node)) return
+            if (isNoopExpr(node)) {
+                maybeWarnOnBareFunctionReference(node)
+                return
+            }
             emitBrk(node)
             let v = emitIgnored(node)
             proc.emitExpr(v)

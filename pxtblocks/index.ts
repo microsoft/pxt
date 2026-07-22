@@ -7,6 +7,7 @@ export * from "./plugins/renderer";
 export * from "./plugins/flyout";
 export * from "./plugins/newVariableField";
 export * from "./plugins/comments";
+export * from "./plugins/colorpicker";
 export * from "./compiler/compiler";
 export * from "./compiler/environment";
 export * from "./loader";
@@ -27,6 +28,7 @@ import * as contextMenu from "./contextMenu";
 import * as external from "./external";
 
 export * from "./breakpointIcon";
+export { createVariablesFlyoutCategory } from "./builtins/variables";
 
 export {
     contextMenu,

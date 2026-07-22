@@ -12,10 +12,11 @@ import { EditorToggle } from "../../../react-common/components/controls/EditorTo
 import { MusicFieldEditor } from "./MusicFieldEditor";
 import { classList } from "../../../react-common/components/util";
 import { FocusTrap, FocusTrapRegion } from "../../../react-common/components/controls/FocusTrap";
+import { PianoRollAssetEditor } from "./PianoRollFieldEditor";
 
 export interface ImageFieldEditorProps {
     singleFrame: boolean;
-    isMusicEditor?: boolean;
+    editorType: "image" | "music" | "piano-roll";
     doneButtonCallback?: () => void;
     hideDoneButton?: boolean;
     includeSpecialTagsInFilter?: boolean;
@@ -31,6 +32,7 @@ export interface ImageFieldEditorState {
     galleryFilter: string;
     editingTile?: boolean;
     hideCloseButton?: boolean;
+    options?: any;
 }
 
 export interface AssetEditorCore {
@@ -49,7 +51,6 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
     protected blocksInfo: pxtc.BlocksInfo;
     protected ref: AssetEditorCore;
     protected closeEditor: () => void;
-    protected options: any;
     protected editID: string;
     protected galleryAssets: pxt.Asset[];
     protected userAssets: pxt.Asset[];
@@ -80,8 +81,8 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
 
         let showHeader = headerVisible;
         // If there is no asset, show the gallery to prevent changing shape when it's added
-        let showGallery = !this.props.isMusicEditor || !this.asset || editingTile;
-        const showMyAssets = !hideMyAssets && !editingTile;
+        let showGallery = !this.isSongEditor() || !this.asset || editingTile;
+        const showMyAssets = !hideMyAssets && !editingTile && !!pxt.appTarget?.appTheme.assetEditor;
 
         if (this.asset && !this.galleryAssets && showGallery) {
             this.updateGalleryAssets();
@@ -142,7 +143,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
         }
 
         return (
-            <FocusTrap onEscape={this.onDoneClick} className={classList("image-editor-wrapper", this.props.isMusicEditor && "music-asset-editor")}>
+            <FocusTrap onEscape={this.onDoneClick} className={classList("image-editor-wrapper", this.isSongEditor() && "music-asset-editor")}>
                 {showHeader && <div className="gallery-editor-header">
                     <div className="image-editor-header-left" />
                     <div className="image-editor-header-center">
@@ -172,11 +173,17 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
                             className="image-editor-region"
                             enabled={currentView === "editor"}
                         >
-                            {this.props.isMusicEditor ?
+                            {this.props.editorType === "music" ?
                                 <MusicFieldEditor
                                     ref="image-editor"
                                     onDoneClicked={this.onDoneClick}
                                     hideDoneButton={this.props.hideDoneButton} /> :
+                            (this.props.editorType === "piano-roll" ?
+                                <PianoRollAssetEditor
+                                    ref="image-editor"
+                                    onDoneClicked={this.onDoneClick}
+                                    hideDoneButton={this.props.hideDoneButton}
+                                    fieldEditorParams={this.state.options} /> :
                                 <ImageEditor
                                     ref="image-editor"
                                     singleFrame={this.props.singleFrame}
@@ -186,7 +193,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
                                     hideDoneButton={this.props.hideDoneButton}
                                     hideAssetName={!pxt.appTarget?.appTheme?.assetEditor}
                                 />
-                            }
+                            )}
                         </FocusTrapRegion>
                         <ImageEditorGallery
                             items={filteredAssets}
@@ -218,7 +225,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
 
     init(value: U, close: () => void, options?: any) {
         this.closeEditor = close;
-        this.options = options;
+        this.setState({ options });
         this.lightMode = options.lightMode;
 
         switch (value.type) {
@@ -300,7 +307,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
         if (this.ref) {
             this.ref.restorePersistentData(oldValue);
 
-            if (this.options && this.options.disableResize) {
+            if (this.state?.options?.disableResize) {
                 this.ref.disableResize();
             }
         }
@@ -418,7 +425,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
 
         if (useTags) {
             assets.forEach(a => {
-                if (!a.meta.tags && this.options) {
+                if (!a.meta.tags && this.state?.options) {
                     a.meta.tags = this.blocksInfo?.apis.byQName[a.id]?.attributes.tags?.split(" ") || [];
                 }})
 
@@ -547,7 +554,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
     protected showMyAssets = () => {
         this.setImageEditorShortcutsEnabled(false);
         tickImageEditorEvent("gallery-my-assets");
-        this.userAssets = getAssets(undefined, undefined, this.options.temporaryAssets);
+        this.userAssets = getAssets(undefined, undefined, this.state?.options?.temporaryAssets);
         this.setState({
             currentView: "my-assets",
             tileGalleryVisible: false
@@ -650,6 +657,10 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
                 this.imageEditorRegion.focus();
             }
         })
+    }
+
+    protected isSongEditor(): boolean {
+        return this.props.editorType === "music" || this.props.editorType === "piano-roll";
     }
 }
 

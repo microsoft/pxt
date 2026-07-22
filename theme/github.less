@@ -236,3 +236,56 @@
         }
     }
 }
+
+.create-gh-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    &>div {
+        display: flex;
+        flex-direction: column;
+
+        label {
+            font-weight: 800;
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+        }
+    }
+
+    .common-dropdown {
+        width: 100%;
+
+        button.common-button {
+            width: 100%;
+        }
+    }
+}
+
+.common-input-wrapper.github-commit-message {
+    margin-bottom: 1rem;
+
+    .common-input-group {
+        height: 3rem;
+
+        input {
+            height: 3rem;
+
+            &::-webkit-input-placeholder {
+                color: var(--pxt-neutral-alpha50);
+            }
+
+            &:-moz-placeholder {
+                color: var(--pxt-neutral-alpha50);
+            }
+
+            &::-moz-placeholder {
+                color: var(--pxt-neutral-alpha50);
+            }
+
+            &::-ms-input-placeholder {
+                color: var(--pxt-neutral-alpha50);
+            }
+        }
+    }
+}

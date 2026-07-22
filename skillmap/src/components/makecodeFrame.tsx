@@ -142,7 +142,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
         return <div className="makecode-frame-outer" style={{ display: activityId ? "block" : "none" }}>
             <div className={`makecode-frame-loader ${showLoader ? "" : "hidden"}`}>
                 <img src={resolvePath("assets/logo.svg")} alt={imageAlt} />
-                {openingProject && <ProgressBar className="makecode-frame-loader-bar" value={loadPercent! / 100} />}
+                {openingProject && <ProgressBar className="makecode-frame-loader-bar" value={loadPercent!} />}
                 <div className="makecode-frame-loader-text">{loadingText}</div>
             </div>
             <iframe className="makecode-frame" src={url} title={title} ref={this.handleFrameRef}></iframe>

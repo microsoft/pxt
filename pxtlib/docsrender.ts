@@ -91,6 +91,39 @@ namespace pxt.docs {
         return s;
     }
 
+    export function normalizeStaticMarkdown(markdown: string): string {
+        const lines = markdown.split(/\r?\n/)
+        let codeFenceMarker = ""
+
+        for (let i = 0; i < lines.length; i++) {
+            const fenceMatch = /^ {0,3}(`{3,}|~{3,})(.*)$/.exec(lines[i])
+            if (fenceMatch) {
+                const marker = fenceMatch[1]
+                const trailingText = fenceMatch[2]
+                const closesCodeFence = !!codeFenceMarker
+                    && marker[0] === codeFenceMarker[0]
+                    && marker.length >= codeFenceMarker.length
+                    && !trailingText.trim()
+
+                if (closesCodeFence) {
+                    codeFenceMarker = ""
+                } else if (!codeFenceMarker) {
+                    codeFenceMarker = marker
+                }
+
+                continue
+            }
+
+            if (!codeFenceMarker && /^ {0,3}<br\s*\/?>\s*$/i.test(lines[i])) {
+                // Marked treats a standalone break as inline content, which can extend a
+                // preceding table or keep the following Markdown in the same paragraph.
+                lines[i] = "\n<p><br/></p>\n"
+            }
+        }
+
+        return lines.join("\n")
+    }
+
     // the input already should be HTML-quoted but we want to make sure, and also quote quotes
     export function html2Quote(s: string) {
         if (!s) return s;
@@ -547,7 +580,7 @@ namespace pxt.docs {
             const rawLang = typeof token?.lang === "string" ? token.lang.trim() : "";
             const normalizedLang = htmlQuote(rawLang.toLowerCase());
             const text = typeof token?.text === "string" ? token.text : "";
-            const escaped = token?.escaped !== false;
+            const escaped = !!(token?.escaped) !== false;
             const code = escaped ? text : htmlQuote(text);
             const classAttr = normalizedLang ? ` class="lang-${normalizedLang}"` : "";
 
@@ -672,7 +705,7 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
 `;
 
         //Uses the CmdLink definitions to replace links to YouTube and Vimeo (limited at the moment)
-        markdown = markdown.replace(/^\s*https?:\/\/(\S+)\s*$/mg, (f, lnk) => {
+        markdown = markdown.replace(/^[ \t]*https?:\/\/(\S+)[ \t]*\r?$/mg, (f, lnk) => {
             for (let ent of links) {
                 let m = ent.rx.exec(lnk)
                 if (m) {

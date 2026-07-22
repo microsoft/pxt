@@ -39,7 +39,9 @@ export function setTranslations(translations: pxt.Map<string>) {
     }
 }
 
-export async function initAsync(root: HTMLElement, cfg: SimulatorConfig) {
+export async function initAsync(cfg: SimulatorConfig) {
+    // We previously hit a Safari < 18 codegen issue with root as a parameter.
+    const root = document.getElementById("boardview");
     if (!root) return;
     pxsim.U.clear(root);
     const simulatorsDiv = document.createElement('div');

@@ -16,6 +16,7 @@ export interface InputProps extends ControlProps {
     disabled?: boolean;
     type?: string;
     readOnly?: boolean;
+    autoFocus?: boolean;
     autoComplete?: boolean;
     selectOnClick?: boolean;
     treatSpaceAsEnter?: boolean;
@@ -24,6 +25,7 @@ export interface InputProps extends ControlProps {
     options?: pxt.Map<string>;
     filter?: string;
 
+    validator?: (value: string, prevValue: string) => string;
     onChange?: (newValue: string) => void;
     onEnterKey?: (value: string) => void;
     onIconClick?: (value: string) => void;
@@ -59,6 +61,7 @@ export const Input = (props: InputProps) => {
         disabled,
         type,
         readOnly,
+        autoFocus,
         autoComplete,
         selectOnClick,
         onChange,
@@ -69,7 +72,8 @@ export const Input = (props: InputProps) => {
         onOptionSelected,
         handleInputRef,
         preserveValueOnBlur = true,
-        options
+        options,
+        validator,
     } = props;
 
     const [value, setValue] = React.useState(initialValue || "");
@@ -114,15 +118,23 @@ export const Input = (props: InputProps) => {
     const keyDownHandler = (e: React.KeyboardEvent) => {
         const charCode = (typeof e.which == "number") ? e.which : e.keyCode;
         if (charCode === /*enter*/13 || props.treatSpaceAsEnter && charCode === /*space*/32) {
+            let validatedValue = value;
+            if (validator) {
+                validatedValue = validator(value, initialValue || "");
+                setValue(validatedValue);
+            }
             if (onEnterKey) {
                 e.preventDefault();
-                onEnterKey(value);
+                onEnterKey(validatedValue);
             }
         } else if (options && e.key === "ArrowDown") {
             if (expanded) {
                 document.getElementById(getDropdownOptionId(optionValues[0]))?.focus();
             } else {
                 expandButtonClickHandler();
+                setTimeout(() => {
+                    document.getElementById(getDropdownOptionId(optionValues[0]))?.focus();
+                }, 0);
             }
             e.preventDefault();
             e.stopPropagation();
@@ -159,8 +171,13 @@ export const Input = (props: InputProps) => {
     }
 
     const blurHandler = () => {
+        let validatedValue = value;
+        if (validator) {
+            validatedValue = validator(value, initialValue || "");
+            setValue(validatedValue);
+        }
         if (onBlur) {
-            onBlur(value);
+            onBlur(validatedValue);
         }
         if (!preserveValueOnBlur) {
             setValue("");
@@ -217,6 +234,7 @@ export const Input = (props: InputProps) => {
                     placeholder={placeholder}
                     value={value}
                     readOnly={!!readOnly}
+                    autoFocus={autoFocus}
                     onClick={clickHandler}
                     onChange={changeHandler}
                     onKeyDown={keyDownHandler}
