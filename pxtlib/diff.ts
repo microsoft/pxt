@@ -182,6 +182,10 @@ namespace pxt.diff {
     export function computeFormattedDiff(fileA: string, fileB: string, options: DiffOptions = {}): string[] {
         const diff = compute(fileA, fileB, options);
 
+        if (!diff) {
+            return null;
+        }
+
         if (options.context == Infinity || options.full) {
             return diff.map(formatEdit);
         }
