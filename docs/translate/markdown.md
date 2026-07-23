@@ -28,7 +28,7 @@ Code highlights help to ephasize text that represents a block in the editor Tool
 <0>||basic:show number||</0>
 ```
 
-The `<0>` and `<0/>` are mardown escape codes and you leave them as is, at the same place in the string. The `||` are delimiters for this highlight extension and those are left alone too. The portion of it to the left of the `:`, which is `basic`, is the blocks category and it stays untranslated. The rest of it, `show number` relates to the block text and it does get translated. Typically, this will translate to the same text as the blocks in the `jsdoc` files.
+The `<0>` and `<0/>` are markdown escape codes and you leave them as is, at the same place in the string. The `||` are delimiters for this highlight extension and those are left alone too. The portion of it to the left of the `:`, which is `basic`, is the blocks category and it stays untranslated. The rest of it, `show number` relates to the block text and it does get translated. Typically, this will translate to the same text as the blocks in the `jsdoc` files.
 
 ### Avatar sections
 
