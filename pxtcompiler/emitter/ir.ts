@@ -532,6 +532,7 @@ namespace ts.pxtc.ir {
         classInfo: ClassInfo = null;
         perfCounterName: string = null;
         perfCounterNo = 0;
+        useExactIfaceWrapper = false;
 
         body: Stmt[] = [];
         lblNo = 0;
@@ -553,6 +554,11 @@ namespace ts.pxtc.ir {
             return this.action && this.action.kind == ts.SyntaxKind.GetAccessor
         }
 
+        // Returns the proc's "_args" entry label -- the full arg-shuffling
+        // wrapper. Use this for any vtable-style reference where the caller
+        // cannot guarantee the wrapper-skip preconditions (numargs >= proc.args.length).
+        // For iface-table entries that CAN accept the optimization, the consumer
+        // (hexfile.ts) inspects useExactIfaceWrapper directly and picks _iface instead.
         vtLabel() {
             return this.label() + (isStackMachine() ? "" : "_args")
         }
