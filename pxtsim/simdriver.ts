@@ -367,6 +367,9 @@ namespace pxsim {
             if (source && broadcastmsg?.broadcast) {
                 // include index of the source iframe
                 broadcastmsg.srcFrameIndex = this.simFrames().findIndex((item) => item.contentWindow === source)
+                const messageChannel = msg.type === "messagepacket" && (msg as SimulatorControlMessage).channel;
+                if (broadcastmsg.srcFrameIndex > 0 && messageChannel === "jacdac")
+                    return; // only first frame should handle jacdac messages
                 // if the editor is hosted in a multi-editor setting
                 // don't start extra frames
                 const single = !!this._currentRuntime?.single;
