@@ -362,13 +362,13 @@ namespace pxsim {
             if (frameID) frames = frames.filter(f => f.id === frameID);
 
             let isDeferrableBroadcastMessage = false;
-
             const broadcastmsg = msg as pxsim.SimulatorBroadcastMessage;
             if (source && broadcastmsg?.broadcast) {
-                // include index of the source iframe
-                broadcastmsg.srcFrameIndex = this.simFrames().findIndex((item) => item.contentWindow === source)
+                const mkcdFrames = frames.filter(frame => !frame.dataset[FRAME_DATA_MESSAGE_CHANNEL]);
                 const messageChannel = msg.type === "messagepacket" && (msg as SimulatorControlMessage).channel;
-                if (broadcastmsg.srcFrameIndex > 0 && messageChannel === "jacdac")
+                // include index of the source iframe
+                broadcastmsg.srcFrameIndex = this.simFrames().findIndex((item) => item.contentWindow === source);   
+                if (mkcdFrames.indexOf(frames[broadcastmsg.srcFrameIndex]) >= 0 && broadcastmsg.srcFrameIndex > 0 && messageChannel === "jacdac")
                     return; // only first frame should handle jacdac messages
                 // if the editor is hosted in a multi-editor setting
                 // don't start extra frames
@@ -392,7 +392,6 @@ namespace pxsim {
                         })
                         // start second simulator
                     } else if (!single) {
-                        const messageChannel = msg.type === "messagepacket" && (msg as SimulatorControlMessage).channel;
                         const messageSimulator = messageChannel &&
                             this.options.messageSimulators &&
                             this.options.messageSimulators[messageChannel];
@@ -451,7 +450,6 @@ namespace pxsim {
                         } else {
                             isDeferrableBroadcastMessage = true;
                             // start secondary frame if needed
-                            const mkcdFrames = frames.filter(frame => !frame.dataset[FRAME_DATA_MESSAGE_CHANNEL]);
                             if (!messageChannel &&
                                     (mkcdFrames.length == 0 || mkcdFrames.length == 1 && !this.singleSimulator)) {
                                 // messageChannel is set to false whenever msg.type !== "messagepacket"
