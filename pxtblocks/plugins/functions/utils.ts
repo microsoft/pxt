@@ -518,6 +518,7 @@ function createFunctionCallbackFactory_(workspace: Blockly.WorkspaceSvg) {
                 if ((block as (FunctionDefinitionBlock & Blockly.BlockSvg)).afterWorkspaceLoad) {
                     (block as (FunctionDefinitionBlock & Blockly.BlockSvg)).afterWorkspaceLoad();
                 }
+                Blockly.getFocusManager().focusNode(block);
             });
         }
     };

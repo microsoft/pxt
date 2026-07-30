@@ -125,7 +125,12 @@
         padding-bottom: 1rem;
     }
 
-    h3 {
+    .time-machine-timeline-header {
+        font-size: 1.28571429rem;
+        font-weight: 700;
+        line-height: 1.28571429em;
+        margin: calc(2rem - .14286em) 0 1rem;
+
         padding-right: 1rem;
         padding-left: 1rem;
         padding-top: 1rem;
@@ -152,5 +157,12 @@
 @media @mobileAndBelow {
     .time-machine-header {
         height: @mobileMenuHeight;
+    }
+
+    button.common-button.square-on-mobile {
+        width: 3rem;
+        height: 3rem;
+        padding: 0;
+        min-width: 0;
     }
 }

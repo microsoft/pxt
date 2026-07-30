@@ -6,7 +6,11 @@ export interface FocusListProps extends ContainerProps {
     childTabStopId?: string;
     focusSelectsItem?: boolean;
     useUpAndDownArrowKeys?: boolean;
+    ariaDescribedby?: string;
+    ariaLabelledby?: string;
+    title?: string;
     onItemReceivedFocus?: (item: HTMLElement) => void;
+    onClose?: () => void;
 }
 
 /**
@@ -24,11 +28,15 @@ export const FocusList = (props: FocusListProps) => {
         role,
         ariaHidden,
         ariaLabel,
+        ariaLabelledby,
+        ariaDescribedBy,
         childTabStopId,
         children,
         focusSelectsItem,
         onItemReceivedFocus,
-        useUpAndDownArrowKeys
+        useUpAndDownArrowKeys,
+        title,
+        onClose
     } = props;
 
     let focusableElements: HTMLElement[];
@@ -140,6 +148,13 @@ export const FocusList = (props: FocusListProps) => {
             e.preventDefault();
             e.stopPropagation();
         }
+        else if (e.key === "Escape") {
+            if (onClose) {
+                onClose();
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        }
     }
 
     return (
@@ -150,7 +165,10 @@ export const FocusList = (props: FocusListProps) => {
             onKeyDown={onKeyDown}
             ref={handleRef}
             aria-hidden={ariaHidden}
-            aria-label={ariaLabel}>
+            aria-label={ariaLabel}
+            aria-labelledby={ariaLabelledby}
+            aria-describedby={ariaDescribedBy}
+            title={title}>
             {children}
         </div>
     );

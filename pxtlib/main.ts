@@ -321,6 +321,24 @@ namespace pxt {
         pxt.debug(`hwVariant: ${hwVariant} (${hwName})`)
     }
 
+    /**
+     * Whether the current target compiles user code to a file the user can
+     * download (hex, PNG or UF2).
+     */
+    function compilesToDownloadableFile(): boolean {
+        const compile = pxt.appTarget.compile;
+        return !!(compile?.hasHex || compile?.saveAsPNG || compile?.useUF2);
+    }
+
+    /**
+     * Whether a download action is available, either because the target
+     * produces a downloadable file or an extension overrides the download
+     * button.
+     */
+    export function canDownload(): boolean {
+        return compilesToDownloadableFile() || !!pxt.commands.onDownloadButtonClick;
+    }
+
     export function hasHwVariants(): boolean {
         return !!pxt.appTarget.variants
             && Object.keys(pxt.appTarget.bundledpkgs).some(pkg => /^hw---/.test(pkg));
@@ -523,6 +541,7 @@ namespace pxt {
     export const TUTORIAL_CODE_STOP = "_onCodeStop.ts";
     export const TUTORIAL_INFO_FILE = "tutorial-info-cache.json";
     export const TUTORIAL_CUSTOM_TS = "tutorial.custom.ts";
+    export const PACKAGED_EXTENSIONS = "_packaged-extensions.json";
     export const BREAKPOINT_TABLET = 991; // TODO (shakao) revisit when tutorial stuff is more settled
     export const PALETTES_FILE = "_palettes.json";
     export const HISTORY_FILE = "_history";

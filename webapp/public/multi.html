@@ -70,10 +70,36 @@
             function handleHash() {
                 var hashLeft = ""
                 var hashRight = ""
-                var route = (window.location.hash || "#");
-                var parts = route.replace(/^#/, '').split(':|:', 2);
-                updateSrc(left, parts[0]);
-                updateSrc(right, parts[1]);
+                var route = decodeURIComponent(window.location.hash || "#");
+
+                if (route.indexOf(":|:") !== -1) {
+                    var parts = route.replace(/^#/, '').split(':|:', 2);
+                    updateSrc(left, parts[0]);
+                    updateSrc(right, parts[1]);
+                }
+                else {
+                    route = route.replace(/^#/, '');
+                    var params = new URLSearchParams(route);
+                    if (params.has("left")) {
+                        updateSrc(left, params.get("left"));
+                    }
+                    else if (params.has("leftscript")) {
+                        updateSrc(left, "pub:" + params.get("leftscript"));
+                    }
+                    else {
+                        updateSrc(left);
+                    }
+                    if (params.has("right")) {
+                        updateSrc(right, params.get("right"));
+                    }
+                    else if (params.has("rightscript")) {
+                        updateSrc(right, "pub:" + params.get("rightscript"));
+                    }
+                    else {
+                        updateSrc(right);
+                    }
+                }
+
                 window.history.replaceState('', '', '#')
             }
             function handleMessage(msg) {

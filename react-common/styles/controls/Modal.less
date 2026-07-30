@@ -112,14 +112,16 @@
         align-items: center;
         font-size: 1.2rem;
         font-weight: 600;
-
-        .common-button.men .fas {
-
-        }
     }
 
     .common-modal-back:focus-within {
         border: 1px, solid var(--pxt-focus-border);
+    }
+
+    .common-modal-right-menu {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
     }
 
     .common-modal-help {
@@ -127,6 +129,11 @@
         align-items: center;
         font-size: 1.2rem;
         font-weight: 600;
+        height: 100%;
+
+        a:hover {
+            color: var(--pxt-primary-foreground);
+        }
     }
 
     .common-modal-title {

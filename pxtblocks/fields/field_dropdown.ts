@@ -1,5 +1,4 @@
 import * as Blockly from "blockly";
-import { showEditorMixin } from "../plugins/newVariableField/fieldDropdownMixin";
 
 export class FieldDropdown extends Blockly.FieldDropdown {
     // Everything in this class below this line is duplicated in pxtblocks/plugins/newVariableField/fieldVariable.ts
@@ -24,6 +23,8 @@ export class FieldDropdown extends Blockly.FieldDropdown {
         this.clickTargetRect = this.borderRect_!;
         this.clickTargetRect.setAttribute("stroke-opacity", "0");
         this.clickTargetRect.setAttribute("fill-opacity", "0");
+        this.clickTargetRect.style.strokeOpacity = '0';
+        this.clickTargetRect.style.fillOpacity = '0';
 
         // Make sure to unset the border rect so that it isn't included in size
         // calculations
@@ -120,10 +121,6 @@ export class FieldDropdown extends Blockly.FieldDropdown {
             'ry',
             String(this.getConstants()!.FIELD_BORDER_RECT_RADIUS),
         );
-    }
-
-    protected showEditor_(e?: MouseEvent): void {
-        showEditorMixin.call(this, e);
     }
 }
 

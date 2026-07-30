@@ -1,5 +1,6 @@
 
 import * as Blockly from "blockly";
+import { WorkspaceSvg } from "blockly";
 import { FieldCustom } from "./field_utils";
 
 /**
@@ -17,11 +18,13 @@ export class FieldImageNoText extends Blockly.FieldImage implements FieldCustom 
         return undefined;
     }
 
-    protected override showEditor_() {
+    protected override showEditor_(e?: Event) {
         super.showEditor_();
-        const sourceBlock = this.getSourceBlock();
-        if (sourceBlock instanceof Blockly.BlockSvg) {
-            Blockly.getFocusManager().focusNode(this.getSourceBlock() as Blockly.BlockSvg);
+        const keyboardTriggered = !e;
+        if (keyboardTriggered) {
+            return;
         }
+        const sourceBlock = this.getSourceBlock() as Blockly.BlockSvg;
+        Blockly.getFocusManager().focusNode(sourceBlock);
     }
 }

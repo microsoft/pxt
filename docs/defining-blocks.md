@@ -106,7 +106,7 @@ parameter = string
 * each `field` is mapped to a field name on the block.
 * the function parameters are mapped to the `$parameter` argument with an identical name. The loader automatically builds a mapping between the block field names and the function names.
 * the block will automatically switch to external inputs (wrapping) when there are four or more parameters.
-* the `|` indicates where to start a new line if the block is in external inputs mode. 
+* the `|` indicates where to start a new line if the block is in external inputs mode.
 
 ## Custom block localization
 
@@ -124,11 +124,12 @@ For example,
 export function square(x: number): number {}
 ```
 
-You can also override the ``jsdoc`` description and parameter info.
+You can also override the ``jsdoc`` description, parameter info, and ariaLabel (for dropdown values).
 
 ```
 jsdoc.loc.LOCALE = translated jsdoc
 PARAM.loc.LOCALE = parameter jsdoc
+ariaLabel.loc.LOCALE = translated aria label
 ```
 
 ```typescript-ignore
@@ -141,6 +142,14 @@ PARAM.loc.LOCALE = parameter jsdoc
 //% jsdoc.loc.fr="Calcule le carré de x"
 //% x.loc.fr="le nombre"
 export function square(x: number): number {}
+
+
+export enum MyEnum {
+    //% block="x"
+    //% ariaLabel="x axis"
+    //% ariaLabel.loc.fr="axe des x"
+    X
+}
 ```
 
 
@@ -339,14 +348,16 @@ Enum is supported and will automatically be represented by a dropdown in blocks.
 enum Button {
     A = 1,
     B = 2,
-    //% blockId="ApB" block="A+B"
+    //% block="A+B" ariaLabel="A and B"
     AB = 3,
 }
 ```
 
 * the initializer can be used to map the value
-* the `blockId` attribute can be used to override the block id
 * the `block` attribute can be used to override the rendered string
+* the `ariaLabel` attribute can be used to override the aria label on the dropdown value if the `block` value is not read correctly by screen readers
+
+The `block` and `ariaLabel` values can both be localized, either by including a strings JSON file or locally in the comments (see custom block localization section above).
 
 ### Tip: dropdown for non-enum parameters
 

@@ -1,6 +1,7 @@
 import * as Blockly from "blockly";
 import { InlineSvgsExtensionBlock } from "../functions";
 import { FieldImageNoText } from "../../fields/field_imagenotext";
+import { maybeMoveFocusFromButton } from "../../utils";
 
 
 type IfElseMixinType = typeof IF_ELSE_MIXIN;
@@ -71,6 +72,7 @@ const IF_ELSE_MIXIN = {
         if (this.getInput('ELSE')) this.elseStatementConnection_?.reconnect(this, 'ELSE');
     },
     addElse_: function (this: IfElseBlock) {
+        Blockly.utils.aria.announceDynamicAriaState(pxt.Util.lf("Else branch added."));
         const update = () => {
             this.elseCount_++;
         };
@@ -78,22 +80,33 @@ const IF_ELSE_MIXIN = {
 
     },
     removeElse_: function (this: IfElseBlock) {
+        Blockly.utils.aria.announceDynamicAriaState(pxt.Util.lf("Else branch removed."));
         const update = () => {
             this.elseCount_--;
         };
         this.update_(update);
+        // Focus the condition of the last elseif branch, fallback to the condition of the if.
+        const focusIndex = this.elseifCount_;
+        const inputName = 'IF' + focusIndex;
+        maybeMoveFocusFromButton(this.getInput(inputName)?.connection?.targetBlock() as Blockly.BlockSvg);
     },
     addElseIf_: function (this: IfElseBlock) {
+        Blockly.utils.aria.announceDynamicAriaState(pxt.Util.lf("Else if branch added."));
         const update = () => {
             this.elseifCount_++;
         };
         this.update_(update);
     },
     removeElseIf_: function (this: IfElseBlock, arg: number) {
+        Blockly.utils.aria.announceDynamicAriaState(pxt.Util.lf("Else if branch removed."));
         const update = () => {
             this.elseifCount_--;
         };
         this.update_(update, arg);
+        // Focus the condition of the branch before the one just removed.
+        const prevIndex = arg - 1;
+        const inputName = 'IF' + prevIndex;
+        maybeMoveFocusFromButton(this.getInput(inputName)?.connection?.targetBlock() as Blockly.BlockSvg);
     },
     update_: function (this: IfElseBlock, update: () => void, arg?: number) {
         Blockly.Events.setGroup(true);
@@ -163,7 +176,7 @@ const IF_ELSE_MIXIN = {
                 .appendField(Blockly.Msg.CONTROLS_IF_MSG_THEN);
             this.appendDummyInput('IFBUTTONS' + i)
                 .appendField(
-                    new FieldImageNoText(this.REMOVE_IMAGE_DATAURI, 24, 24, "*", removeElseIf, false))
+                    new FieldImageNoText(this.REMOVE_IMAGE_DATAURI, 24, 24, pxt.Util.lf("remove else if branch"), removeElseIf, false))
                 .setAlign(Blockly.inputs.Align.RIGHT);
             this.appendStatementInput('DO' + i);
         }
@@ -173,7 +186,7 @@ const IF_ELSE_MIXIN = {
             this.appendDummyInput('ELSEBUTTONS')
                 .setAlign(Blockly.inputs.Align.RIGHT)
                 .appendField(
-                    new FieldImageNoText(this.REMOVE_IMAGE_DATAURI, 24, 24, "*", this.removeElse_.bind(this), false));
+                    new FieldImageNoText(this.REMOVE_IMAGE_DATAURI, 24, 24, pxt.Util.lf("remove else branch"), this.removeElse_.bind(this), false));
             this.appendStatementInput('ELSE');
         }
         if (this.getInput('ADDBUTTON')) this.removeInput('ADDBUTTON');
@@ -182,15 +195,21 @@ const IF_ELSE_MIXIN = {
             return function () {
                 if (that.elseCount_ == 0) {
                     that.addElse_();
+                    // Focus the else 'remove branch' button (keyboard users only).
+                    maybeMoveFocusFromButton(that.getInput('ELSEBUTTONS')?.fieldRow[0]);
                 } else {
                     if (!that.elseifCount_) that.elseifCount_ = 0;
                     that.addElseIf_();
+                    // Focus the else if boolean (keyboard users only).
+                    const focusManager = Blockly.getFocusManager();
+                    const node = (that.getInput('IF' + that.elseifCount_)?.connection?.targetBlock() as Blockly.BlockSvg);
+                    focusManager.focusNode(node);
                 }
             };
         }();
         this.appendDummyInput('ADDBUTTON')
             .appendField(
-                new FieldImageNoText(this.ADD_IMAGE_DATAURI, 24, 24, "*", addElseIf, false));
+                new FieldImageNoText(this.ADD_IMAGE_DATAURI, 24, 24, this.elseCount_ ? pxt.Util.lf("add else if branch") : pxt.Util.lf("add else branch"), addElseIf, false));
     },
     /**
      * Reconstructs the block with all child blocks attached.

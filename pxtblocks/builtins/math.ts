@@ -30,13 +30,13 @@ export function initMath(blockInfo: pxtc.BlocksInfo) {
                         "type": "input_value",
                         "name": "x",
                         "check": "Number",
-                        "ariaLabelText": lf("first number")
+                        "ariaLabelText": lf("first value")
                     },
                     {
                         "type": "input_value",
                         "name": "y",
                         "check": "Number",
-                        "ariaLabelText": lf("second number")
+                        "ariaLabelText": lf("second value")
                     }
                 ],
                 "inputsInline": true,
@@ -72,7 +72,7 @@ export function initMath(blockInfo: pxtc.BlocksInfo) {
                         "type": "input_value",
                         "name": "x",
                         "check": "Number",
-                        "ariaLabelText": lf("number")
+                        "ariaLabelText": lf("value")
                     }
                 ],
                 "inputsInline": true,
@@ -219,8 +219,8 @@ export function initMathOpBlock() {
         i.setCheck("Number");
         i.setAriaLabelProvider(input =>
             b.getInput("ARG1")
-                ? (input.name === "ARG0" ? lf("first number") : lf("second number"))
-                : lf("number"));
+                ? (input.name === "ARG0" ? lf("first value") : lf("second value"))
+                : lf("value"));
         if (second) {
             (i.connection as any).setShadowDom(numberShadowDom());
             (i.connection as any).respawnShadow_();
@@ -304,6 +304,6 @@ export function initMathRoundBlock() {
     function addArgInput(b: Blockly.Block) {
         const i = b.appendValueInput("ARG0");
         i.setCheck("Number");
-        i.setAriaLabelProvider(lf("number"));
+        i.setAriaLabelProvider(lf("value"));
     }
 }

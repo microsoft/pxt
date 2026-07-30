@@ -616,6 +616,14 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                                     `right corner label large selected-label`;
                                 const label = showMarkedNew ? lf("New") : undefined;
 
+                                const tutorialStep =
+                                    scr.tutorial ? scr.tutorial.tutorialStep
+                                        : scr.tutorialCompleted ? scr.tutorialCompleted.steps - 1
+                                            : undefined;
+                                const tutorialLength =
+                                    scr.tutorial ? scr.tutorial.tutorialStepInfo.length
+                                        : scr.tutorialCompleted ? scr.tutorialCompleted.steps
+                                            : undefined;
 
                                 // TODO name={(scr.cloudSync && scr.blobCurrent ? '(Synced) ' : '') + scr.name}
                                 return <ProjectsCodeCard
@@ -633,6 +641,8 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                                     onCardClick={this.handleCardClick}
                                     onLabelClick={this.handleCheckboxClick}
                                     projectId={scr.id}
+                                    tutorialStep={tutorialStep}
+                                    tutorialLength={tutorialLength}
                                 />
                             })}
                         </div>

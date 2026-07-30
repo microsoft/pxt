@@ -512,6 +512,55 @@ describe("comment attribute parser", () => {
         chai.expect(strings["pins.DigitalPin.digitalRead|param|this|label"]).to.equal("pin");
     });
 
+    it("should compile and extract parameter default strings", () => {
+        const docDefault = testSymbolInfo("display.showString", "show string $text", [testParameter("text", "string")], `
+            /**
+             * Show text on the screen.
+             * @param text the text to print on the screen, eg: "name"
+             */
+        `);
+        const explicitDefault = testSymbolInfo("game.setGameOverMessage", "use message $message", [testParameter("message", "string")], `
+            /**
+             * Set the message that displays when the game is over.
+             * @param message the message, eg: "Try again"
+             */
+            //% message.defl="winner"
+        `);
+        const numericDefault = testSymbolInfo("display.showNumber", "show number $value", [testParameter("value", "number")], `
+            /**
+             * Show a number on the screen.
+             * @param value the number to show, eg: 42
+             */
+        `);
+
+        const docs = pxtc.genDocs("test", testApisInfo([docDefault, explicitDefault, numericDefault]), { locs: true });
+        const strings = JSON.parse(docs["test-strings.json"]);
+        chai.expect(strings["display.showString|param|text|defl"]).to.equal("name");
+        chai.expect(strings["game.setGameOverMessage|param|message|defl"]).to.equal("winner");
+        chai.expect(strings["display.showNumber|param|value|defl"]).to.equal(undefined);
+    });
+
+    it("should apply localized parameter default strings", async () => {
+        const explicitDefault = testSymbolInfo("game.setGameOverMessage", "use message $message", [testParameter("message", "string")], `
+            //% message.defl="GAME OVER!"
+        `);
+
+        pxt.Util.setUserLanguage("es");
+        try {
+            await pxtc.localizeApisAsync(testApisInfo([explicitDefault]), {
+                localizationStringsAsync: () => Promise.resolve({
+                    "game.setGameOverMessage|param|message|defl": "FIN DEL JUEGO"
+                })
+            } as unknown as pxt.MainPackage);
+
+            chai.expect(explicitDefault.attributes.paramDefl["message"]).to.equal("\"FIN DEL JUEGO\"");
+            chai.expect(explicitDefault.parameters[0].default).to.equal("\"FIN DEL JUEGO\"");
+        }
+        finally {
+            pxt.Util.setUserLanguage("en");
+        }
+    });
+
     it("should parse parameter snippets", () => {
         const parsed = ts.pxtc.parseCommentString(`
             /**
@@ -539,6 +588,7 @@ function testSymbolInfo(qName: string, block: string, parameters: pxtc.Parameter
         //% block="${block}"
         ${attributes}
     `);
+    parameters.forEach(parameter => parameter.default = attrs.paramDefl[parameter.name]);
     const qNameParts = qName.split(".");
     return {
         attributes: attrs,

@@ -96,6 +96,11 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
         firstFocusableElement?.focus();
     }
 
+    setLabel(label: string) {
+        const container = document.getElementById("monacoFlyoutWrapper");
+        container.ariaLabel = label;
+    }
+
     protected getBlockMouseOver = (name: string) => {
         return () => {
             pxt.tickEvent("monaco.toolbox.itemmouseover");
@@ -179,6 +184,12 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
             const isRtl = pxt.Util.isUserLanguageRtl();
             const charCode = core.keyCodeFromEvent(e);
             const target = e.target as HTMLElement;
+            const handledKey = charCode == 40 || charCode == 38 || charCode == 37
+                || charCode == 27 || (charCode == 13 && !!block);
+            if (handledKey) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
             if (charCode == 40) { //  DOWN
                 // Next item
                 let nextSibling = target.nextElementSibling as HTMLElement;

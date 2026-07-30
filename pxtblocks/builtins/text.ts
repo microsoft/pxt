@@ -31,7 +31,7 @@ export function initText() {
                     "type": "input_value",
                     "name": "VALUE",
                     "check": ['String'],
-                    "ariaLabelText": lf("text to check")
+                    "ariaLabelText": lf("value")
                 }
             ],
             "output": 'Number',

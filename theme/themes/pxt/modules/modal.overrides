@@ -262,16 +262,18 @@
     border-radius: 50%;
     font-size: 2.15rem;
     line-height: 2.15rem;
-    transition: all .15s ease-out;
     height: 2.15rem;
     width: 2.15rem;
     padding: 0;
 }
-.ui.modal > .closeIcon:focus .close,
-.ui.modal > .closeIcon:hover  .close {
-    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.50);
-    outline: none;
-    transform: scale(1.1);
+.ui.modal > .closeIcon:hover .close {
+    outline: solid 4px var(--pxt-neutral-alpha20);
+    outline-offset: 2px;
+}
+
+.ui.modal > .closeIcon:focus-visible .close {
+    outline: solid 4px var(--pxt-focus-border);
+    outline-offset: 2px;
 }
 
 .ui.button.icon.clear {

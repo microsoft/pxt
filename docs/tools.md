@@ -1,5 +1,16 @@
 # MakeCode Tools
 
+## Code Evaluation Tool
+
+![A screenshot of the Code Evaluation Tool page](/static/tools/code-eval-tool.png)
+
+Create a checklist of rules to evaluate student projects. Use AI prompts to get deeper insights and generate feedback.
+
+### Code Evaluation Tool Pages
+
+- [MakeCode Arcade](https://arcade.makecode.com/--eval)
+- [MakeCode for micro:bit](https://makecode.microbit.org/--eval)
+
 ## [GitHub Explorer](/github-explorer)
 
 ![A screenshot of the GitHub Explorer page](/static/tools/github-explorer.png)
@@ -40,6 +51,8 @@ Create a SVG image of the blocks shown for selected lines of code. Copy the scre
 
 ## See Also
 
+[Code Evaluation Tool (Arcade)](https://arcade.makecode.com/--eval),
+[Code Evaluation Tool (micro:bit)](https://makecode.microbit.org/--eval),
 [GitHub Explorer](/github-explorer),
 [Playground](/playground),
 [Tutorial tool](/tutorial-tool),

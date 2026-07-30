@@ -91,6 +91,28 @@ namespace pxt.blocks {
         localizationKey: string;
     }
 
+    export function parameterDefaultLocalizationKey(qName: string, actualName: string) {
+        return qName ? `${qName}|param|${actualName}|defl` : undefined;
+    }
+
+    export function parameterDefaultToLocalizationString(defaultValue: string, type?: string) {
+        if (!defaultValue) return undefined;
+        if (type === "string" && defaultValue.charAt(0) !== "\"") return defaultValue;
+        if (defaultValue.charAt(0) !== "\"") return undefined;
+
+        try {
+            const value = JSON.parse(defaultValue);
+            return typeof value === "string" ? value : undefined;
+        }
+        catch (e) {
+            return undefined;
+        }
+    }
+
+    export function localizationStringToParameterDefault(value: string) {
+        return JSON.stringify(value);
+    }
+
     // Information for blocks that compile to function calls but are defined by vanilla Blockly
     // and not dynamically by BlocklyLoader
     export const builtinFunctionInfo: pxt.Map<{ params: string[]; blockId: string; }> = {

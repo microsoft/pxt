@@ -144,6 +144,8 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
 
         const rowContent = document.createElement('div');
         rowContent.className = 'blocklyGridPickerRow';
+        rowContent.setAttribute('role', 'row');
+        rowContent.id = `${this.sourceBlock_.id}:row-${row}`;
 
         for (let i = (columns * row); i < Math.min((columns * row) + columns, options.length); i++) {
             let content = (options[i] as any)[0]; // Human-readable text or image.
@@ -151,7 +153,7 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
 
             const menuItem = document.createElement('div');
             menuItem.className = 'gridpicker-menuitem gridpicker-option';
-            menuItem.setAttribute('id', ':' + i); // For aria-activedescendant
+            menuItem.setAttribute('id', `${this.sourceBlock_.id}:${i}`); // For aria-activedescendant
             menuItem.setAttribute('role', 'gridcell');
             menuItem.setAttribute('aria-selected', 'false');
             menuItem.style.userSelect = 'none';
@@ -171,6 +173,7 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
                 menuItem.setAttribute('aria-selected', 'true');
                 this.activeDescendantIndex = i;
                 pxt.BrowserUtils.addClass(menuItem, `gridpicker-option-selected ${!this.openingPointerCoords ? 'gridpicker-option-focused' : '' }`);
+                tableContainer.setAttribute('aria-activedescendant', menuItem.id);
                 backgroundColour = (this.sourceBlock_ as Blockly.BlockSvg).getColourTertiary();
 
                 // Save so we can scroll to it later
@@ -373,6 +376,7 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
         if (!e) {
             this.addKeyboardNavigableClass();
         }
+        this.getFocusableElement().ariaExpanded = 'true';
     }
 
     private positionMenu_(tableContainer: HTMLElement) {
@@ -687,6 +691,7 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
     private onClose_() {
         this.disposeTooltip();
         this.disposeGrid();
+        this.getFocusableElement().ariaExpanded = 'false';
     }
 
     // Used for focus trap

@@ -61,8 +61,10 @@ export class Editor extends srceditor.Editor {
         this.isSaving = false;
         this.changeMade = true;
         // switch to previous coding experience
-        if (!stayInEditor) this.parent.openPreviousEditor();
-        core.resetFocus();
+        if (!stayInEditor) {
+            this.parent.openPreviousEditor();
+            core.resetFocus();
+        }
     }
 
     protected async saveConfigContentAsync() {

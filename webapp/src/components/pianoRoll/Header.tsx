@@ -4,7 +4,7 @@ import { Song, lf, isDrumInstrument, NOTE_RANGES } from "./types";
 
 interface Props {
     song: Song;
-    selectedTrack: number;
+    selectedTrackId: number;
     velocityEditorVisible: boolean;
 
     onTrackSelected(trackId: number): void;
@@ -16,7 +16,7 @@ interface Props {
 }
 
 export const Header = (props: Props) => {
-    const { song, selectedTrack, velocityEditorVisible, onVelocityEditorToggle, onTrackSelected, onInstrumentSelected, onTrackCreated, onTrackDeleted, onOctavesChanged } = props;
+    const { song, selectedTrackId: selectedTrack, velocityEditorVisible, onVelocityEditorToggle, onTrackSelected, onInstrumentSelected, onTrackCreated, onTrackDeleted, onOctavesChanged } = props;
 
     const onTrackDropdownChange = (id: string) => {
         if (id === "new-track") {

@@ -23,13 +23,13 @@ export interface ModalAction {
 export interface ModalProps extends ContainerProps {
     title: string;
     leftIcon?: string;
-    helpUrl?: string
     ariaDescribedBy?: string;
     actions?: ModalAction[];
     onClose?: () => void;
     fullscreen?: boolean;
     parentElement?: Element;
     hideDismissButton?: boolean;
+    rightHeader?: React.ReactNode;
 }
 
 export const Modal = (props: ModalProps) => {
@@ -43,12 +43,12 @@ export const Modal = (props: ModalProps) => {
         role,
         title,
         leftIcon,
-        helpUrl,
         actions,
         onClose,
         parentElement,
         fullscreen,
         hideDismissButton,
+        rightHeader
     } = props;
 
     const closeClickHandler = (e?: React.MouseEvent<HTMLButtonElement>) => {
@@ -110,18 +110,9 @@ export const Modal = (props: ModalProps) => {
                     {leftIcon && <i className={leftIcon} aria-hidden={true}/>}
                     {title}
                 </div>
-                {fullscreen && helpUrl &&
-                    <div className="common-modal-help">
-                        <Link
-                            className="common-button menu-button"
-                            title={lf("Help on {0} dialog", title)}
-                            href={props.helpUrl}
-                            target="_blank"
-                        >
-                            <span className="common-button-flex">
-                                <i className="fas fa-question" aria-hidden={true}/>
-                            </span>
-                        </Link>
+                {fullscreen && rightHeader &&
+                    <div className="common-modal-right-menu">
+                        {rightHeader}
                     </div>
                 }
                 {!fullscreen && !hideDismissButton &&

@@ -12,6 +12,7 @@ interface Props {
     playNote: (note: number) => void;
     onEdit: (track: Track) => void;
     measures: number;
+    bpm: number;
 }
 
 interface GestureState {
@@ -25,7 +26,7 @@ interface GestureState {
 }
 
 export const Workspace = (props: Props) => {
-    const { track, onEdit, isDrumTrack, playNote, measures } = props;
+    const { track, onEdit, isDrumTrack, playNote, measures, bpm } = props;
 
     const bg = useWorkspaceBackground();
     const theme = usePianoRollTheme();
@@ -180,7 +181,7 @@ export const Workspace = (props: Props) => {
 
 
     useEffect(() => {
-        const tickTime = pxsim.music.tickToMs(120, 4, 1);
+        const tickTime = pxsim.music.tickToMs(bpm, 4, 1);
         const tickDistance = noteWidth(theme, 1);
         let playbackHeadPosition = 0;
         let isPlaying = false;
@@ -218,7 +219,7 @@ export const Workspace = (props: Props) => {
             removePlaybackStateListener(onStop);
             if (animationFrameRef) cancelAnimationFrame(animationFrameRef);
         }
-    }, [theme])
+    }, [theme, bpm])
 
     return (
         <div className="workspace" style={{

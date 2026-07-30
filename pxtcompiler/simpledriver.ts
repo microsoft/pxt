@@ -52,8 +52,8 @@ namespace pxt {
             return this.loadAsync(repopath, tag, "pxt", (r, t) => this.db.loadConfigAsync(r, t));
         }
 
-        loadPackageAsync(repopath: string, tag: string): Promise<pxt.github.CachedPackage> {
-            return this.loadAsync(repopath, tag, "pkg", (r, t) => this.db.loadPackageAsync(r, t));
+        loadPackageAsync(repopath: string, tag: string, fallbackPackageFiles?: pxt.Map<string>): Promise<pxt.github.CachedPackage> {
+            return this.loadAsync(repopath, tag, "pkg", (r, t) => this.db.loadPackageAsync(r, t, fallbackPackageFiles));
         }
 
         loadTutorialMarkdown(repopath: string, tag?: string): Promise<pxt.github.CachedPackage> {

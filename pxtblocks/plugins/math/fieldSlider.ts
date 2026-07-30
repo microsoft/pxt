@@ -200,10 +200,6 @@ export class FieldSlider extends Blockly.FieldNumber {
         // Used for high contrast styling
         contentDiv.parentElement.classList.add("blocklyFieldSliderDropdown");
 
-        // Accessibility properties
-        contentDiv.setAttribute('role', 'menu');
-        contentDiv.setAttribute('aria-haspopup', 'true');
-
         this.addSlider_(contentDiv);
 
         // Set colour and size of drop-down

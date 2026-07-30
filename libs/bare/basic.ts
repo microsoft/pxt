@@ -18,6 +18,7 @@ namespace control {
      * @param ms how long to pause for, eg: 100, 200, 500, 1000, 2000
      */
     //% async block="pause (ms) %pause"
+    //% ms.label="value"
     //% blockId=device_pause icon="\uf110" shim=basic::pause
     export function pause(ms: number): void {
     }
@@ -42,6 +43,7 @@ namespace console {
     //% weight=90
     //% help=console/log blockGap=8 text.shadowOptions.toString=true
     //% blockId=console_log block="console|log %text"
+    //% value.label="value"
     export function log(value: any): void {
         let s: string = value + ""
         control.__log(s)
