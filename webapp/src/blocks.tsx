@@ -2499,8 +2499,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     const shadowType = info?.attributes?.builtinBlockId || type;
                     let b = this.getBlockXml(builtin ? builtin : { name: type, type: type, attributes: { blockId: type } }, ignoregap, true);
                     // Note: we're setting one innerHTML to another
-                    // eslint-disable-next-line @microsoft/sdl/no-inner-html
                     if (b && b.length > 0 && b[0] && b[0].getAttribute("type") === shadowType) {
+                        // eslint-disable-next-line @microsoft/sdl/no-inner-html
                         shadow.innerHTML = b[0].innerHTML;
                         shadow.setAttribute("type", shadowType);
                     }
