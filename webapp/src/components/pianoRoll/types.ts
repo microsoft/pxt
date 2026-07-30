@@ -341,6 +341,7 @@ export function toPXTSong(song: Song): pxt.assets.music.Song {
         measures: song.measures,
         tracks: song.tracks.map(track => {
             const instrument = song.instruments.find(i => i.id === track.instrumentId)!;
+            const isDrums = isDrumInstrument(instrument);
 
             const pxtTrack: pxt.assets.music.Track = {
                 id: track.id,
@@ -349,13 +350,13 @@ export function toPXTSong(song: Song): pxt.assets.music.Song {
                     startTick: e.start,
                     endTick: (e.start + e.duration),
                     notes: [{
-                        note: e.note + 1,
+                        note: isDrums ? e.note : e.note + 1,
                         enharmonicSpelling: "normal"
                     }],
                     velocity: e.velocity
                 })),
-                instrument: isDrumInstrument(instrument) ? undefined : (instrument as MelodicInstrument).instrument,
-                drums: isDrumInstrument(instrument) ? (instrument as DrumInstrument).drums : undefined
+                instrument: isDrums ? undefined : (instrument as MelodicInstrument).instrument,
+                drums: isDrums ? (instrument as DrumInstrument).drums : undefined
             }
 
             return pxtTrack;
@@ -386,7 +387,7 @@ export function fromPXTSong(pxtSong: pxt.assets.music.Song): Song {
         const newNoteEvent = (note: number, startTick: number, endTick: number, velocity: number): void => {
             const newEvent: NoteEvent = {
                 id: newTrack.nextId++,
-                note: note - 1,
+                note: track.drums?.length ? note : note - 1,
                 start: Math.round(startTick / ticksPerSixteenth),
                 duration: Math.max(1, Math.round((endTick - startTick) / ticksPerSixteenth)),
                 velocity: velocity ?? 128
