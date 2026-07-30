@@ -451,7 +451,15 @@ function instrumentsEqual(a: pxt.assets.music.Instrument, b: pxt.assets.music.In
 
 function envelopesEqual(a: pxt.assets.music.Envelope | undefined, b: pxt.assets.music.Envelope | undefined) {
     if (a === b) return true;
-    if (!a || !b) return false;
+    if (!a) {
+        if (!b) return true;
+        if (b.amplitude === 0) return true;
+        return false;
+    }
+    else if (!b) {
+        if (a.amplitude === 0) return true;
+        return false;
+    }
 
     if (a.attack !== b.attack) return false;
     if (a.decay !== b.decay) return false;
@@ -464,7 +472,15 @@ function envelopesEqual(a: pxt.assets.music.Envelope | undefined, b: pxt.assets.
 
 function lfosEqual(a: pxt.assets.music.LFO | undefined, b: pxt.assets.music.LFO | undefined) {
     if (a === b) return true;
-    if (!a || !b) return false;
+        if (!a) {
+        if (!b) return true;
+        if (b.amplitude === 0) return true;
+        return false;
+    }
+    else if (!b) {
+        if (a.amplitude === 0) return true;
+        return false;
+    }
 
     if (a.frequency !== b.frequency) return false;
     if (a.amplitude !== b.amplitude) return false;
