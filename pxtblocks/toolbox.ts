@@ -220,6 +220,9 @@ export function createShadowValue(info: pxtc.BlocksInfo, p: pxt.blocks.BlockPara
                         shadow.appendChild(shadowXml.firstChild.cloneNode(true));
                         shadowXml.firstChild.remove();
                     }
+                    if (shadowSymbol.attributes.builtinBlockId) {
+                        shadow.setAttribute("type", shadowSymbol.attributes.builtinBlockId);
+                    }
                 }
             }
         }
