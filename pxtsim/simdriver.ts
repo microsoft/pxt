@@ -350,9 +350,6 @@ namespace pxsim {
             this.singleSimulator = true
         }
 
-        // BEGIN TEMPORARY: jacdac simulator
-        newJacdacSimulator: boolean = false;
-        // END TEMPORARY: jacdac simulator
         public postMessage(msg: pxsim.SimulatorMessage, source?: Window, frameID?: string) {
             if (this.hwdbg) {
                 this.hwdbg.postMessage(msg)
@@ -365,11 +362,16 @@ namespace pxsim {
             if (frameID) frames = frames.filter(f => f.id === frameID);
 
             let isDeferrableBroadcastMessage = false;
-
             const broadcastmsg = msg as pxsim.SimulatorBroadcastMessage;
             if (source && broadcastmsg?.broadcast) {
+                const mkcdFrames = frames.filter(frame => !frame.dataset[FRAME_DATA_MESSAGE_CHANNEL]);
+                const messageChannel = msg.type === "messagepacket" && (msg as SimulatorControlMessage).channel;
                 // include index of the source iframe
-                broadcastmsg.srcFrameIndex = this.simFrames().findIndex((item) => item.contentWindow === source)
+                broadcastmsg.srcFrameIndex = this.simFrames().findIndex((item) => item.contentWindow === source);
+                const sourceFrame = broadcastmsg.srcFrameIndex >= 0 ? this.simFrames()[broadcastmsg.srcFrameIndex] : undefined;
+                // jacdac messages from a board sim other than first should be dropped
+                if (broadcastmsg.srcFrameIndex > 0 && mkcdFrames.find(f => f === sourceFrame) && messageChannel === "jacdac")
+                    return;
                 // if the editor is hosted in a multi-editor setting
                 // don't start extra frames
                 const single = !!this._currentRuntime?.single;
@@ -392,7 +394,6 @@ namespace pxsim {
                         })
                         // start second simulator
                     } else if (!single) {
-                        const messageChannel = msg.type === "messagepacket" && (msg as SimulatorControlMessage).channel;
                         const messageSimulator = messageChannel &&
                             this.options.messageSimulators &&
                             this.options.messageSimulators[messageChannel];
@@ -418,10 +419,6 @@ namespace pxsim {
                         if (simulatorExtension) {
                             // find a frame already running that simulator
                             let messageFrame = frames.find(frame => frame.dataset[FRAME_DATA_MESSAGE_CHANNEL] === messageChannel);
-                            // BEGIN TEMPORARY: jacdac simulator
-                            if (messageChannel === "jacdac/pxt-jacdac")
-                                this.newJacdacSimulator = true;
-                            // END TEMPORARY: jacdac simulator
                             // not found, spin a new one
                             if (!messageFrame) {
                                 const url = new URL(simulatorExtension.url);
@@ -442,13 +439,11 @@ namespace pxsim {
                             let messageFrame = frames.find(frame => frame.dataset[FRAME_DATA_MESSAGE_CHANNEL] === messageChannel);
                             // not found, spin a new one
                             if (!messageFrame) {
-                                if (messageChannel !== "jacdac" || !this.newJacdacSimulator) { // TEMPORARY: jacdac simulator
-                                    const useLocalHost = U.isLocalHost() && /localhostmessagesims=1/i.test(window.location.href)
-                                    const url = ((useLocalHost && messageSimulator.localHostUrl) || messageSimulator.url)
-                                        .replace("$PARENT_ORIGIN$", encodeURIComponent(this.options.parentOrigin || ""))
-                                        .replace("$LANGUAGE$", encodeURIComponent(this.options.userLanguage))
-                                    startSimulatorExtension(url, messageSimulator.permanent, messageSimulator.aspectRatio);
-                                }
+                                const useLocalHost = U.isLocalHost() && /localhostmessagesims=1/i.test(window.location.href)
+                                const url = ((useLocalHost && messageSimulator.localHostUrl) || messageSimulator.url)
+                                    .replace("$PARENT_ORIGIN$", encodeURIComponent(this.options.parentOrigin || ""))
+                                    .replace("$LANGUAGE$", encodeURIComponent(this.options.userLanguage))
+                                startSimulatorExtension(url, messageSimulator.permanent, messageSimulator.aspectRatio);
                             }
                             // not running the curren run, restart
                             else if (messageFrame.dataset['runid'] != this.runId) {
@@ -457,7 +452,6 @@ namespace pxsim {
                         } else {
                             isDeferrableBroadcastMessage = true;
                             // start secondary frame if needed
-                            const mkcdFrames = frames.filter(frame => !frame.dataset[FRAME_DATA_MESSAGE_CHANNEL]);
                             if (!messageChannel &&
                                     (mkcdFrames.length == 0 || mkcdFrames.length == 1 && !this.singleSimulator)) {
                                 // messageChannel is set to false whenever msg.type !== "messagepacket"
@@ -481,6 +475,9 @@ namespace pxsim {
                 const frame = frames[i] as HTMLIFrameElement
                 // same frame as source
                 if (source && frame.contentWindow == source) continue;
+                // if jacdac message, don't send to other (board) simulator frames
+                if (i > 0 && !frame.dataset[FRAME_DATA_MESSAGE_CHANNEL] &&
+                    msg.type === "messagepacket" && (msg as pxsim.SimulatorControlMessage).channel === "jacdac") continue;
                 // frame not in DOM
                 if (!frame.contentWindow) continue;
 
