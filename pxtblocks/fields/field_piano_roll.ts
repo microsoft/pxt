@@ -199,6 +199,10 @@ export class FieldPianoRoll extends FieldMusicEditor {
         }
         return null;
     }
+
+    protected override shouldInflateAsset(): boolean {
+        return false;
+    }
 }
 
 function melodyInstrument(): pxt.assets.music.Instrument {

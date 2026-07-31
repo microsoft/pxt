@@ -193,21 +193,23 @@ export const Workspace = (props: Props) => {
             lastTime = Date.now();
             if (!isPlaying) {
                 isPlaying = true;
-                playheadRef.current.style.left = `${playbackHeadPosition}px`;
-                playheadRef.current.style.display = "unset";
+                if (playheadRef.current) {
+                    playheadRef.current.style.left = `${playbackHeadPosition}px`;
+                    playheadRef.current.style.display = "unset";
+                }
                 animationFrameRef = requestAnimationFrame(onAnimationFrame);
             }
         }
 
         const onStop = () => {
             isPlaying = false;
-            playheadRef.current.style.display = "none";
+            if (playheadRef.current) playheadRef.current.style.display = "none";
             if (animationFrameRef) cancelAnimationFrame(animationFrameRef);
         }
 
         const onAnimationFrame = () => {
             const position = playbackHeadPosition + tickDistance * (Date.now() - lastTime) / tickTime;
-            playheadRef.current.style.left = `${position}px`;
+            if (playheadRef.current) playheadRef.current.style.left = `${position}px`;
             if (isPlaying) animationFrameRef = requestAnimationFrame(onAnimationFrame);
         }
 

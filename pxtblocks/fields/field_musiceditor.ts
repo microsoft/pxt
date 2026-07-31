@@ -56,7 +56,9 @@ export class FieldMusicEditor extends FieldAssetEditor<FieldMusicEditorOptions, 
         }
         else {
             // Restore all of the unused tracks
-            pxt.assets.music.inflateSong(song);
+            if (this.shouldInflateAsset()) {
+                pxt.assets.music.inflateSong(song);
+            }
         }
 
         const newAsset: pxt.Song = {
@@ -131,5 +133,9 @@ export class FieldMusicEditor extends FieldAssetEditor<FieldMusicEditorOptions, 
     protected previewWidth() {
         const measures = this.asset ? (this.asset as pxt.Song).song.measures : 2;
         return measures * PREVIEW_HEIGHT;
+    }
+
+    protected shouldInflateAsset(): boolean {
+        return true;
     }
 }
