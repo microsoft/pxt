@@ -797,7 +797,10 @@ namespace pxt.py {
                 let [exp, sup] = emitExp(s.body)
                 stmts = stmts.concat(sup)
                 stmts = stmts.concat(exp)
-                stmts = expWrap("return ", stmts)
+                const retType = tc.getTypeAtLocation(s.body)
+                if (retType && !hasTypeFlag(retType, ts.TypeFlags.Void)) {
+                    stmts = expWrap("return ", stmts)
+                }
             }
             if (stmts.length) {
                 // global or nonlocal declerations
