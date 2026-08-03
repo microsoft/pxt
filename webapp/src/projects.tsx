@@ -151,6 +151,8 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
             if (!res || res instanceof Error) return;
 
             res.forEach(gal => gal.cards?.forEach(card => {
+                if (card.hideFromSearch) return;
+
                 const key = (card.url || card.name || "") + (card.cardType || "");
                 if (seen.has(key)) return;
                 seen.add(key);
