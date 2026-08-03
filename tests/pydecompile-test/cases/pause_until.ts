@@ -1,0 +1,1 @@
+pauseUntil(() => input.buttonIsPressed(Button.A))

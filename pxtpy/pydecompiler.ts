@@ -796,7 +796,8 @@ namespace pxt.py {
             else {
                 let [exp, sup] = emitExp(s.body)
                 stmts = stmts.concat(sup)
-                stmts.concat(exp)
+                stmts = stmts.concat(exp)
+                stmts = expWrap("return ", stmts)
             }
             if (stmts.length) {
                 // global or nonlocal declerations

@@ -458,3 +458,20 @@ namespace music {
         return name;
     }
 }
+
+enum Button {
+    A,
+    B,
+    AB
+}
+
+namespace input {
+    //% help=input/button-is-pressed weight=60
+    //% block="button|%NAME|is pressed"
+    //% blockId=device_get_button2
+    //% icon="\uf192" blockGap=8
+    //% parts="buttonpair"
+    export function buttonIsPressed(button: Button): boolean {
+        return false;
+    }
+}
