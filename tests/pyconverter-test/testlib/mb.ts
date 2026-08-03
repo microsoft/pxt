@@ -373,4 +373,10 @@ namespace input {
     export function buttonIsPressed(button: Button): boolean {
         return false;
     }
+
+    //% help=input/on-button-pressed weight=85 blockGap=16
+    //% blockId=device_button_event block="on button|%NAME|pressed"
+    //% parts="buttonpair"
+    export function onButtonPressed(button: Button, handler: () => void): void {
+    }
 }
