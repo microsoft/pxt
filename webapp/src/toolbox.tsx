@@ -811,7 +811,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
                                         {treeRow.subcategories?.map(subTreeRow =>
                                             <CategoryItem
                                                 key={subTreeRow.nameid + subTreeRow.subns}
-                                                className={classList(expandedItem != treeRow.nameid && "sr-only")}
+                                                className={classList((!showAdvanced || expandedItem != treeRow.nameid) && "sr-only")}
                                                 toolbox={this}
                                                 index={index++}
                                                 editorname={editorname}
