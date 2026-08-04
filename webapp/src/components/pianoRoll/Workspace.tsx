@@ -181,7 +181,7 @@ export const Workspace = (props: Props) => {
 
 
     useEffect(() => {
-        const tickTime = pxsim.music.tickToMs(bpm, 4, 1);
+        const tickTime = pxsim.music.tickToMs(bpm, theme.ticksPerBeat, 1);
         const tickDistance = noteWidth(theme, 1);
         let playbackHeadPosition = 0;
         let isPlaying = false;
