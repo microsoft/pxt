@@ -3,7 +3,7 @@ import { addPlaybackStateListener, addTickListener, removePlaybackStateListener,
 import { usePianoRollTheme } from "./context";
 import { NoteEventView } from "./NoteEvent"
 import { changeNoteEventDuration, getMaxDuration, newNoteEvent, NoteEvent, Track } from "./types";
-import { noteWidth, range, workspaceHeight, workspaceWidth, xToTick, yToNote } from "./utils";
+import { noteLeft, noteTop, noteWidth, range, workspaceHeight, workspaceWidth, xToTick, yToNote } from "./utils";
 import { useWorkspaceBackground } from "./workspaceBackground";
 
 interface Props {
@@ -41,6 +41,12 @@ export const Workspace = (props: Props) => {
         const verticalScroller = horizontalScroller?.parentElement?.parentElement;
         const measureScroller = document.getElementById("measure-header");
         const velocityEditor = document.getElementById("velocity-editor");
+
+        const cursor = document.createElement("div");
+        cursor.className = "cursor";
+        cursor.style.position = "absolute";
+        cursor.style.display = "none";
+        workspaceRef.current?.appendChild(cursor);
 
         const changeHorizontalScroll = (delta: number) => {
             const scroll = gestureState.current.startScrollX - delta;
@@ -95,7 +101,31 @@ export const Workspace = (props: Props) => {
         }
 
         const updateGesture = (e: PointerEvent) => {
-            if (!gestureState.current) return;
+            if (!gestureState.current) {
+                const event = getNoteEventAtPosition(e.clientX, e.clientY);
+
+                if (!event) {
+                    cursor.style.display = "block";
+                    const coords = clientToNoteCoordinates(e.clientX, e.clientY);
+
+                    if (coords) {
+                        const snappedTime = snapTicks > 1 ? Math.floor(coords.time / snapTicks) * snapTicks : coords.time;
+                        coords.time = snappedTime;
+
+                        const maxDuration = isDrumTrack ? 1 : Math.min(getMaxDuration(coords.note, coords.time, track, maxTicks, theme.maxPolyphony), newNoteDuration);
+                        cursor.style.left = `${noteLeft(theme, coords.time)}px`;
+                        cursor.style.top = `${noteTop(theme, coords.note)}px`;
+                        cursor.style.width = `${noteWidth(theme, maxDuration)}px`;
+                    }
+
+                }
+                else {
+                    cursor.style.display = "none";
+                }
+                return;
+            }
+
+            cursor.style.display = "none";
 
             const deltaX = e.clientX - gestureState.current.startX;
             const deltaY = e.clientY - gestureState.current.startY;
@@ -141,7 +171,10 @@ export const Workspace = (props: Props) => {
         }
 
         const onPointerUp = (e: PointerEvent) => {
-            if (!gestureState.current) return;
+            if (!gestureState.current) {
+                cursor.style.display = "none";
+                return;
+            }
             updateGesture(e);
 
             if (!gestureState.current.isScrolling) {
@@ -181,6 +214,7 @@ export const Workspace = (props: Props) => {
             workspaceRef.current?.removeEventListener("pointerup", onPointerUp);
             workspaceRef.current?.removeEventListener("pointercancel", onPointerUp);
             workspaceRef.current?.removeEventListener("pointerleave", onPointerUp);
+            workspaceRef.current?.removeChild(cursor);
         }
     }, [track, onEdit, theme.minOctave, theme.maxOctave, isDrumTrack, snapTicks, maxTicks])
 

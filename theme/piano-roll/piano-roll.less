@@ -224,21 +224,29 @@
     position: relative;
 }
 
-.piano-roll .workspace .note-event {
-    height: calc(var(--grid-cell-height) + 1px);
-    position: absolute;
-    display: flex;
-    align-items: center;
-    user-select: none;
+.piano-roll .workspace {
+    .note-event, .cursor {
+        height: calc(var(--grid-cell-height) + 1px);
+        position: absolute;
+        display: flex;
+        align-items: center;
+        user-select: none;
 
-    padding-left: 0.25rem;
+        padding-left: 0.25rem;
 
-    font-size: calc(var(--grid-cell-height) * 0.6);
-    background-color: var(--note-event-color);
-    border: var(--note-event-border);
-    color: var(--note-event-text-color);
+        font-size: calc(var(--grid-cell-height) * 0.6);
+        cursor: pointer;
+    }
 
-    cursor: pointer;
+    .note-event {
+        border: var(--note-event-border);
+        background-color: var(--note-event-color);
+        color: var(--note-event-text-color);
+    }
+
+    .cursor {
+        border: var(--note-event-border-hover);
+    }
 }
 
 .piano-roll .workspace {
