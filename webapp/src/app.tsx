@@ -4832,7 +4832,7 @@ export class ProjectView
 
         return workspaceBlocks.some(block => {
             const symbol = blocksInfo.blocksById[block.type] || pxtblockly.blockSymbol(block.type);
-            return symbol?.pkg === dependencyName || symbol?.pkgs?.indexOf(dependencyName) !== -1;
+            return symbol?.pkg === dependencyName;
         });
     }
 

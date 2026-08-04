@@ -425,7 +425,8 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                 header: lf("Cannot remove {0} extension", displayName),
                 body: lf("This extension cannot be removed because blocks or code from it are used in your project. Remove them and try again."),
                 hideCancel: true,
-                agreeLbl: lf("OK")
+                agreeLbl: lf("OK"),
+                hasCloseIcon: true
             });
             return;
         }
@@ -442,7 +443,8 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                 header: lf("Cannot remove {0} extension", displayName),
                 body,
                 hideCancel: true,
-                agreeLbl: lf("OK")
+                agreeLbl: lf("OK"),
+                hasCloseIcon: true
             });
             return;
         }
@@ -453,13 +455,15 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
             body: lf("A newer version ({0}) is available. Would you like to update or remove this extension?", latestVersion),
             agreeIcon: "refresh",
             agreeLbl: lf("Update extension"),
-            deleteLbl: lf("Remove extension")
+            deleteLbl: lf("Remove extension"),
+            hasCloseIcon: true
         } : {
             header: lf("Remove {0} extension?", displayName),
             body: lf("Do you want to remove this extension from your project?"),
             agreeClass: "red",
             agreeIcon: "trash",
-            agreeLbl: lf("Remove extension")
+            agreeLbl: lf("Remove extension"),
+            hasCloseIcon: true
         });
         if (!action) return;
 
