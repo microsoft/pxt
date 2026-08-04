@@ -1,8 +1,10 @@
 import { createContext, useContext, useEffect, useReducer, useRef } from "react";
 
 export interface PianoRollTheme {
-    octaveWidth: number;
+    tickWidth: number;
     whiteKeyHeight: number;
+    ticksPerBeat: number;
+    beatsPerMeasure: number;
     measures: number;
     minOctave: number;
     maxOctave: number;
@@ -14,8 +16,10 @@ export interface PianoRollTheme {
 }
 
 const defaultTheme: PianoRollTheme = {
-    octaveWidth: 500,
+    tickWidth: 30,
     whiteKeyHeight: 40,
+    ticksPerBeat: 4,
+    beatsPerMeasure: 4,
     measures: 4,
     minOctave: 3,
     maxOctave: 5,
@@ -70,7 +74,7 @@ export function PianoRollThemeProvider(
 
     useEffect(() => {
         const styleParts = [
-            `--octave-width: ${value.state.octaveWidth}px`,
+            `--tick-width: ${value.state.tickWidth}px`,
             `--white-key-height: ${value.state.whiteKeyHeight}px`,
         ];
 
@@ -79,7 +83,7 @@ export function PianoRollThemeProvider(
         }
 
         rootRef.current!.setAttribute("style", styleParts.join("; "));
-    }, [value.state.octaveWidth, value.state.whiteKeyHeight, value.state.borderColor])
+    }, [value.state.tickWidth, value.state.whiteKeyHeight, value.state.borderColor])
 
     return (
         <PianoRollContext.Provider

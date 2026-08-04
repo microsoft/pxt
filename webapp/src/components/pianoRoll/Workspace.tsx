@@ -11,7 +11,7 @@ interface Props {
     isDrumTrack: boolean;
     playNote: (note: number) => void;
     onEdit: (track: Track) => void;
-    measures: number;
+    maxTicks: number;
     bpm: number;
 }
 
@@ -26,7 +26,7 @@ interface GestureState {
 }
 
 export const Workspace = (props: Props) => {
-    const { track, onEdit, isDrumTrack, playNote, measures, bpm } = props;
+    const { track, onEdit, isDrumTrack, playNote, maxTicks, bpm } = props;
 
     const bg = useWorkspaceBackground();
     const theme = usePianoRollTheme();
@@ -79,7 +79,7 @@ export const Workspace = (props: Props) => {
             const coords = clientToNoteCoordinates(clientX, clientY);
             if (!coords) return 1;
 
-            const max = getMaxDuration(editing.note, editing.start, track, measures, theme.maxPolyphony);
+            const max = getMaxDuration(editing.note, editing.start, track, maxTicks, theme.maxPolyphony);
 
             return Math.max(1, Math.min(max, coords.time - editing.start + 1));
         }
@@ -152,13 +152,13 @@ export const Workspace = (props: Props) => {
                     const coords = clientToNoteCoordinates(gestureState.current.startX, gestureState.current.startY);
 
                     if (coords) {
-                        onEdit(newNoteEvent(coords.note, coords.time, track, isDrumTrack, measures, theme.maxPolyphony));
+                        onEdit(newNoteEvent(coords.note, coords.time, track, isDrumTrack, maxTicks, theme.maxPolyphony));
                         playNote(coords.note);
                     }
                 }
             }
             else if (gestureState.current.noteEvent && !isDrumTrack) {
-                onEdit(changeNoteEventDuration(gestureState.current.noteEvent.id, getNewNoteDuration(e.clientX, e.clientY), track, measures, theme.maxPolyphony));
+                onEdit(changeNoteEventDuration(gestureState.current.noteEvent.id, getNewNoteDuration(e.clientX, e.clientY), track, maxTicks, theme.maxPolyphony));
             }
 
             gestureState.current = null;
@@ -226,6 +226,7 @@ export const Workspace = (props: Props) => {
     return (
         <div className="workspace" style={{
             backgroundImage: bg,
+            backgroundSize: `${theme.tickWidth * theme.ticksPerBeat}px ${7 * theme.whiteKeyHeight}px`,
             width: workspaceWidth(theme),
             height: workspaceHeight(theme)
         }} ref={workspaceRef}>

@@ -2,7 +2,7 @@ import { PianoRollTheme, PianoRollThemeProvider, usePianoRollThemeContext } from
 import { Workspace } from "./Workspace"
 import { Sidebar } from "./Sidebar"
 import { useEffect, useRef, useState } from "react"
-import { changeMeasures, changeOctaves, changeTrackInstrument, fromPXTSong, getEmptySong, isDrumInstrument, newTrack, NoteEvent, Song, toPXTSong, Track, updateNoteEvent, updateNoteEvents, updateTrack } from "./types"
+import { changeMeasures, changeOctaves, changeTimeSignature, changeTrackInstrument, fromPXTSong, getEmptySong, isDrumInstrument, newTrack, NoteEvent, Song, TIME_SIGNATURES, toPXTSong, Track, updateNoteEvent, updateNoteEvents, updateTrack } from "./types"
 import { Header } from "./Header"
 import { DeleteTrackModal } from "./DeleteTrackModal"
 import { DeleteErrorModal } from "./DeleteErrorModal"
@@ -12,6 +12,7 @@ import { PlaybackControls } from "../musicEditor/PlaybackControls"
 import { MeasureHeader } from "./MeasureHeader"
 import { VelocityEditor } from "./VelocityEditor"
 import { EditControls } from "../musicEditor/EditControls"
+import { Dropdown, DropdownItem } from "../../../../react-common/components/controls/Dropdown"
 
 interface PianoRollProps {
     onStateChanged?: (state: PianoRollState) => void;
@@ -57,6 +58,7 @@ export interface FieldEditorParams {
     borderColor?: string;
     minOctave?: number;
     maxOctave?: number;
+    showTimeSignature?: boolean;
 }
 
 interface StateSnapshot {
@@ -272,6 +274,16 @@ const PianoRollInternal = (props: PianoRollProps) => {
         updateTheme({ measures: newMeasures });
     }
 
+    const onTimeSignatureChanged = (id: string) => {
+        const signature = TIME_SIGNATURES.find(ts => ts.id === id);
+        if (!signature) return;
+
+        const { beatsPerMeasure, ticksPerBeat } = signature;
+        updateSong(changeTimeSignature(beatsPerMeasure, ticksPerBeat, song));
+
+        updateTheme({ beatsPerMeasure, ticksPerBeat });
+    }
+
     const onTempoChange = (newTempo: number) => {
         updateSong({
             ...song,
@@ -318,6 +330,9 @@ const PianoRollInternal = (props: PianoRollProps) => {
         if (lastState.song.measures !== song.measures) {
             updateTheme({ measures: lastState.song.measures });
         }
+        if (lastState.song.beatsPerMeasure !== song.beatsPerMeasure || lastState.song.ticksPerBeat !== song.ticksPerBeat) {
+            updateTheme({ beatsPerMeasure: lastState.song.beatsPerMeasure, ticksPerBeat: lastState.song.ticksPerBeat });
+        }
 
         if (isPlaying()) {
             updatePlaybackSongAsync(toPXTSong(lastState.song));
@@ -341,6 +356,9 @@ const PianoRollInternal = (props: PianoRollProps) => {
         if (nextState.song.measures !== song.measures) {
             updateTheme({ measures: nextState.song.measures });
         }
+        if (nextState.song.beatsPerMeasure !== song.beatsPerMeasure || nextState.song.ticksPerBeat !== song.ticksPerBeat) {
+            updateTheme({ beatsPerMeasure: nextState.song.beatsPerMeasure, ticksPerBeat: nextState.song.ticksPerBeat });
+        }
 
         if (isPlaying()) {
             updatePlaybackSongAsync(toPXTSong(nextState.song));
@@ -351,6 +369,13 @@ const PianoRollInternal = (props: PianoRollProps) => {
         setName(newName);
         fireStateChange({ name: newName });
     }
+
+    const timeSignatures: DropdownItem[] = TIME_SIGNATURES.map(ts => ({
+        label: ts.name,
+        title: ts.name,
+        id: ts.id
+    }));
+    const selectedTimeSignature = TIME_SIGNATURES.find(ts => ts.beatsPerMeasure === song.beatsPerMeasure && ts.ticksPerBeat === song.ticksPerBeat);
 
     const closeModal = () => setModal(null);
 
@@ -375,10 +400,16 @@ const PianoRollInternal = (props: PianoRollProps) => {
     }
 
     useEffect(() => {
-        if (theme.minOctave !== minOctave || theme.maxOctave !== maxOctave || theme.measures !== song.measures) {
-            updateTheme({ minOctave, maxOctave, measures: song.measures });
+        if (
+            theme.minOctave !== minOctave ||
+            theme.maxOctave !== maxOctave ||
+            theme.measures !== song.measures ||
+            theme.beatsPerMeasure !== song.beatsPerMeasure ||
+            theme.ticksPerBeat !== song.ticksPerBeat
+        ) {
+            updateTheme({ minOctave, maxOctave, measures: song.measures, beatsPerMeasure: song.beatsPerMeasure, ticksPerBeat: song.ticksPerBeat });
         }
-    }, [minOctave, maxOctave, theme.minOctave, theme.maxOctave, updateTheme, song.measures])
+    }, [minOctave, maxOctave, theme.minOctave, theme.maxOctave, updateTheme, song.measures, song.beatsPerMeasure, song.ticksPerBeat])
 
     const showHeader = !fieldEditorParams?.hideHeader;
 
@@ -408,7 +439,7 @@ const PianoRollInternal = (props: PianoRollProps) => {
                     />
                 </div>
             }
-            <MeasureHeader measures={song.measures} />
+            <MeasureHeader />
             <div className="scroll-container">
                 <div className="content-container">
                     <div className="sidebar-container">
@@ -425,7 +456,7 @@ const PianoRollInternal = (props: PianoRollProps) => {
                             onEdit={onTrackEdit}
                             isDrumTrack={isDrumInstrument(instrument)}
                             playNote={playNote}
-                            measures={song.measures}
+                            maxTicks={song.measures * song.beatsPerMeasure * song.ticksPerBeat}
                             bpm={song.tempo}
                         />
                     </div>
@@ -448,6 +479,14 @@ const PianoRollInternal = (props: PianoRollProps) => {
                     hideBassClefOption={true}
                     singlePlayButton={true}
                 />
+                {fieldEditorParams?.showTimeSignature &&
+                    <Dropdown
+                        id="time-signature-dropdown"
+                        items={timeSignatures}
+                        selectedId={selectedTimeSignature?.id}
+                        onItemSelected={onTimeSignatureChanged}
+                    />
+                }
                 <div className="spacer" />
                 { showEditControls &&
                     <EditControls

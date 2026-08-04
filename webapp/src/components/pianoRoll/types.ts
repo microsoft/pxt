@@ -22,6 +22,9 @@ export interface Song {
     measures: number;
     tempo: number;
     nextInstrumentId: number;
+
+    beatsPerMeasure: number;
+    ticksPerBeat: number;
 }
 
 interface BaseInstrument {
@@ -40,6 +43,45 @@ export interface DrumInstrument extends BaseInstrument {
 export type Instrument = MelodicInstrument | DrumInstrument;
 
 export const lf = pxt.U.lf;
+
+export const TIME_SIGNATURES = [
+    {
+        name: lf("4/4"),
+        id: "ts4-4",
+        beatsPerMeasure: 4,
+        ticksPerBeat: 4
+    },
+    {
+        name: lf("3/4"),
+        id: "ts3-4",
+        beatsPerMeasure: 3,
+        ticksPerBeat: 4
+    },
+    {
+        name: lf("2/4"),
+        id: "ts2-4",
+        beatsPerMeasure: 2,
+        ticksPerBeat: 4
+    },
+    {
+        name: lf("3/8"),
+        id: "ts3-8",
+        beatsPerMeasure: 3,
+        ticksPerBeat: 2
+    },
+    {
+        name: lf("6/8"),
+        id: "ts6-8",
+        beatsPerMeasure: 6,
+        ticksPerBeat: 2
+    },
+    {
+        name: lf("12/8"),
+        id: "ts12-8",
+        beatsPerMeasure: 12,
+        ticksPerBeat: 2
+    }
+]
 
 export const NOTE_RANGES = [
     {
@@ -93,6 +135,8 @@ export function getEmptySong(): Song {
     const song: Song = {
         nextInstrumentId,
         instruments,
+        beatsPerMeasure: 4,
+        ticksPerBeat: 4,
         tracks: [{
             instrumentId: 0,
             events: [],
@@ -112,7 +156,7 @@ export function getNextNoteEvent(note: number, start: number, track: Track, maxP
     return track.events.find(e => e.note === note && e.start > start);
 }
 
-export function getMaxDuration(note: number, start: number, track: Track, measures: number, maxPolyphony: number): number {
+export function getMaxDuration(note: number, start: number, track: Track, maxTicks: number, maxPolyphony: number): number {
     let activeNotes: NoteEvent[] = [];
 
     for (const event of track.events) {
@@ -127,29 +171,29 @@ export function getMaxDuration(note: number, start: number, track: Track, measur
         activeNotes = activeNotes.filter(e => e.start + e.duration < event.start);
     }
 
-    return measures * 4 * 4 - start;
+    return maxTicks - start;
 }
 
-export function newNoteEvent(note: number, start: number, track: Track, isDrumTrack: boolean, measures: number, maxPolyphony: number): Track {
+export function newNoteEvent(note: number, start: number, track: Track, isDrumTrack: boolean, maxTicks: number, maxPolyphony: number): Track {
     track = removeEventAtTimeIfNeeded(start, track, maxPolyphony);
 
     const newEvent: NoteEvent = {
         id: track.nextId++,
         note,
         start,
-        duration: isDrumTrack ? 1 : Math.min(4, getMaxDuration(note, start, track, measures, maxPolyphony)),
+        duration: isDrumTrack ? 1 : Math.min(4, getMaxDuration(note, start, track, maxTicks, maxPolyphony)),
         velocity: 128
     };
 
     return insertNoteEvent(newEvent, track);
 }
 
-export function changeNoteEventDuration(id: number, duration: number, track: Track, measures: number, maxPolyphony: number): Track {
+export function changeNoteEventDuration(id: number, duration: number, track: Track, maxTicks: number, maxPolyphony: number): Track {
     const eventIndex = track.events.findIndex(e => e.id === id);
     if (eventIndex === -1) return track;
 
     const event = track.events[eventIndex];
-    const maxDuration = getMaxDuration(event.note, event.start, track, measures, maxPolyphony);
+    const maxDuration = getMaxDuration(event.note, event.start, track, maxTicks, maxPolyphony);
 
     const updatedEvent = {
         ...event,
@@ -335,8 +379,8 @@ export function isMelodicInstrument(instrument: Instrument): instrument is Melod
 
 export function toPXTSong(song: Song): pxt.assets.music.Song {
     return {
-        ticksPerBeat: 4,
-        beatsPerMeasure: 4,
+        ticksPerBeat: song.ticksPerBeat,
+        beatsPerMeasure: song.beatsPerMeasure,
         beatsPerMinute: song.tempo,
         measures: song.measures,
         tracks: song.tracks.map(track => {
@@ -371,7 +415,10 @@ export function fromPXTSong(pxtSong: pxt.assets.music.Song): Song {
 
     result.tracks = [];
 
-    const ticksPerSixteenth = pxtSong.ticksPerBeat / 4;
+    const ticksPerSixteenth = pxtSong.ticksPerBeat === 8 ? 2 : 1;
+
+    result.beatsPerMeasure = pxtSong.beatsPerMeasure;
+    result.ticksPerBeat = pxtSong.ticksPerBeat === 8 ? 4 : pxtSong.ticksPerBeat;
 
     let instrumentIdCounter = 0;
     for (const track of pxtSong.tracks) {
@@ -436,6 +483,18 @@ export function fromPXTSong(pxtSong: pxt.assets.music.Song): Song {
     }
 
     return result;
+}
+
+export function changeTimeSignature(beatsPerMeasure: number, ticksPerBeat: number, song: Song): Song {
+    const prevTotalTicks = song.measures * song.beatsPerMeasure * song.ticksPerBeat;
+    const newMeasures = Math.ceil(prevTotalTicks / (beatsPerMeasure * ticksPerBeat));
+
+    return {
+        ...song,
+        measures: newMeasures,
+        beatsPerMeasure,
+        ticksPerBeat
+    };
 }
 
 function instrumentsEqual(a: pxt.assets.music.Instrument, b: pxt.assets.music.Instrument) {

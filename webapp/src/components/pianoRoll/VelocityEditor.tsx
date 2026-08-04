@@ -18,11 +18,11 @@ interface NoteOffset {
 export const VelocityEditor = (props: Props) => {
     const { notes, onNotesChange } = props;
     const theme = usePianoRollTheme();
-    const { octaveWidth, measures } = theme;
+    const { tickWidth, ticksPerBeat, beatsPerMeasure, measures } = theme;
 
-    const [highlightedTick, setHighlightedTick] = useState<Number>(undefined);
+    const [highlightedTick, setHighlightedTick] = useState<number | undefined>(undefined);
 
-    const width = octaveWidth * measures;
+    const width = tickWidth * ticksPerBeat * beatsPerMeasure * measures;
 
     const offsets: NoteOffset[] = [];
 

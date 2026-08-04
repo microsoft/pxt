@@ -10,6 +10,7 @@ interface FieldPianoRollOptions extends FieldMusicEditorOptions {
     encodeAsMelody?: boolean;
     minOctave?: number;
     maxOctave?: number;
+    showTimeSignature?: boolean;
 }
 
 export class FieldPianoRoll extends FieldMusicEditor {
@@ -158,6 +159,10 @@ export class FieldPianoRoll extends FieldMusicEditor {
             if (result.encodeAsMelody) {
                 result.maxPolyphony = 1;
             }
+        }
+
+        if (opts.showTimeSignature) {
+            result.showTimeSignature = isTrue(opts.showTimeSignature);
         }
 
 

@@ -38,7 +38,7 @@
     --octave-height: calc(var(--white-key-height) * 7);
 
     --grid-cell-height: calc(var(--octave-height) / 12);
-    --grid-cell-width: calc(var(--octave-width) / 16);
+    --tick-width: 30px;
 
     --header-height: 2.5rem;
     --timeline-height: 1.5rem;
@@ -94,6 +94,16 @@
             }
         }
     }
+
+    & > .common-dropdown {
+        .common-button {
+            min-width: 4.75rem;
+        }
+
+        .common-menu-dropdown-pane {
+            bottom: 2.25rem
+        }
+    }
 }
 
 .piano-roll .header {
@@ -130,7 +140,6 @@
     }
 
     .measure {
-        width: var(--octave-width);
         flex-shrink: 0;
         padding-left: 0.25rem;
         user-select: none;
@@ -207,7 +216,6 @@
 }
 
 .piano-roll .workspace {
-    background-size: var(--octave-width) var(--octave-height);
     background-repeat: repeat;
     position: relative;
 }
@@ -283,14 +291,14 @@
 
     .velocity-slider {
         height: var(--velocity-editor-height);
-        width: var(--grid-cell-width);
+        width: var(--tick-width);
         position: absolute;
         cursor: grab;
 
         .velocity-slider-inner {
             position: relative;
             height: var(--velocity-editor-height);
-            width: var(--grid-cell-width);
+            width: var(--tick-width);
         }
 
         input[type="range"] {
