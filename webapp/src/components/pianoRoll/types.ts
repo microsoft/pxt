@@ -83,6 +83,24 @@ export const TIME_SIGNATURES = [
     }
 ]
 
+export const SNAP_OPTIONS = [
+    {
+        name: lf("1/4"),
+        id: "quarter",
+        ticksPerSnap: 4
+    },
+    {
+        name: lf("1/8"),
+        id: "eighth",
+        ticksPerSnap: 2
+    },
+    {
+        name: lf("1/16"),
+        id: "sixteenth",
+        ticksPerSnap: 1
+    }
+];
+
 export const NOTE_RANGES = [
     {
         name: lf("Treble"),
@@ -174,14 +192,14 @@ export function getMaxDuration(note: number, start: number, track: Track, maxTic
     return maxTicks - start;
 }
 
-export function newNoteEvent(note: number, start: number, track: Track, isDrumTrack: boolean, maxTicks: number, maxPolyphony: number): Track {
+export function newNoteEvent(note: number, start: number, duration: number, track: Track, isDrumTrack: boolean, maxTicks: number, maxPolyphony: number): Track {
     track = removeEventAtTimeIfNeeded(start, track, maxPolyphony);
 
     const newEvent: NoteEvent = {
         id: track.nextId++,
         note,
         start,
-        duration: isDrumTrack ? 1 : Math.min(4, getMaxDuration(note, start, track, maxTicks, maxPolyphony)),
+        duration: isDrumTrack ? 1 : Math.min(duration, getMaxDuration(note, start, track, maxTicks, maxPolyphony)),
         velocity: 128
     };
 

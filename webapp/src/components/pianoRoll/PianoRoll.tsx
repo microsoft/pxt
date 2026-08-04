@@ -59,6 +59,7 @@ export interface FieldEditorParams {
     minOctave?: number;
     maxOctave?: number;
     showTimeSignature?: boolean;
+    showSnapControls?: boolean;
 }
 
 interface StateSnapshot {
@@ -91,6 +92,8 @@ const PianoRollInternal = (props: PianoRollProps) => {
     const [undoStack, setUndoStack] = useState<StateSnapshot[]>(initialUndoStack || []);
     const [redoStack, setRedoStack] = useState<StateSnapshot[]>(initialRedoStack || []);
     const [name, setName] = useState(initialName || undefined);
+
+    const [snapTicks, setSnapTicks] = useState(4);
 
     const [velocityEditorVisible, setVelocityEditorVisible] = useState(initialVelocityEditorVisible || false);
 
@@ -430,12 +433,15 @@ const PianoRollInternal = (props: PianoRollProps) => {
                         song={song}
                         selectedTrackId={track.id}
                         velocityEditorVisible={velocityEditorVisible}
+                        snapTicks={snapTicks}
+                        showSnapControls={fieldEditorParams?.showSnapControls}
                         onVelocityEditorToggle={onVelocityEditorToggle}
                         onTrackSelected={onTrackSelected}
                         onInstrumentSelected={onInstrumentSelected}
                         onTrackCreated={onTrackCreated}
                         onTrackDeleted={onTrackDeleted}
                         onOctavesChanged={onOctavesChanged}
+                        onSnapChanged={setSnapTicks}
                     />
                 </div>
             }
@@ -457,6 +463,8 @@ const PianoRollInternal = (props: PianoRollProps) => {
                             isDrumTrack={isDrumInstrument(instrument)}
                             playNote={playNote}
                             maxTicks={song.measures * song.beatsPerMeasure * song.ticksPerBeat}
+                            snapTicks={fieldEditorParams?.showSnapControls ? snapTicks : 1}
+                            newNoteDuration={fieldEditorParams?.showSnapControls ? snapTicks : 1}
                             bpm={song.tempo}
                         />
                     </div>

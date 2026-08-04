@@ -11,6 +11,7 @@ interface FieldPianoRollOptions extends FieldMusicEditorOptions {
     minOctave?: number;
     maxOctave?: number;
     showTimeSignature?: boolean;
+    showSnapControls?: boolean;
 }
 
 export class FieldPianoRoll extends FieldMusicEditor {
@@ -165,6 +166,9 @@ export class FieldPianoRoll extends FieldMusicEditor {
             result.showTimeSignature = isTrue(opts.showTimeSignature);
         }
 
+        if (opts.showSnapControls) {
+            result.showSnapControls = isTrue(opts.showSnapControls);
+        }
 
         return result;
     }

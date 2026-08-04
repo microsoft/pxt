@@ -12,6 +12,8 @@ interface Props {
     playNote: (note: number) => void;
     onEdit: (track: Track) => void;
     maxTicks: number;
+    snapTicks: number;
+    newNoteDuration: number;
     bpm: number;
 }
 
@@ -22,11 +24,10 @@ interface GestureState {
     startScrollY: number;
     noteEvent?: NoteEvent;
     isScrolling?: boolean
-    noteElement?: HTMLDivElement;
-}
+    noteElement?: HTMLDivElement;}
 
 export const Workspace = (props: Props) => {
-    const { track, onEdit, isDrumTrack, playNote, maxTicks, bpm } = props;
+    const { track, onEdit, isDrumTrack, playNote, maxTicks, bpm, snapTicks, newNoteDuration } = props;
 
     const bg = useWorkspaceBackground();
     const theme = usePianoRollTheme();
@@ -79,9 +80,11 @@ export const Workspace = (props: Props) => {
             const coords = clientToNoteCoordinates(clientX, clientY);
             if (!coords) return 1;
 
+            const snappedTime = Math.ceil((coords.time + 1) / snapTicks) * snapTicks;
+
             const max = getMaxDuration(editing.note, editing.start, track, maxTicks, theme.maxPolyphony);
 
-            return Math.max(1, Math.min(max, coords.time - editing.start + 1));
+            return Math.max(1, Math.min(max, snappedTime - editing.start));
         }
 
         const getNoteEventAtPosition = (x: number, y: number): NoteEvent | undefined => {
@@ -152,7 +155,9 @@ export const Workspace = (props: Props) => {
                     const coords = clientToNoteCoordinates(gestureState.current.startX, gestureState.current.startY);
 
                     if (coords) {
-                        onEdit(newNoteEvent(coords.note, coords.time, track, isDrumTrack, maxTicks, theme.maxPolyphony));
+                        const snappedTime = snapTicks > 1 ? Math.floor(coords.time / snapTicks) * snapTicks : coords.time;
+                        coords.time = snappedTime;
+                        onEdit(newNoteEvent(coords.note, coords.time, newNoteDuration, track, isDrumTrack, maxTicks, theme.maxPolyphony));
                         playNote(coords.note);
                     }
                 }
@@ -177,7 +182,7 @@ export const Workspace = (props: Props) => {
             workspaceRef.current?.removeEventListener("pointercancel", onPointerUp);
             workspaceRef.current?.removeEventListener("pointerleave", onPointerUp);
         }
-    }, [track, onEdit, theme.minOctave, theme.maxOctave, isDrumTrack])
+    }, [track, onEdit, theme.minOctave, theme.maxOctave, isDrumTrack, snapTicks, maxTicks])
 
 
     useEffect(() => {
