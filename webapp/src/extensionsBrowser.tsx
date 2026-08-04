@@ -420,58 +420,59 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
 
         const displayName = scr.displayName || scr.name || dependency.name;
         const hasExtensionBlocks = await props.hasBlocksFromExtensionAsync(dependency.name);
+        let restrictionReason: string;
         if (hasExtensionBlocks || pkg.mainPkg.isPackageInUse(dependency.name)) {
-            await core.confirmAsync({
-                header: lf("Cannot remove {0} extension", displayName),
-                body: lf("This extension cannot be removed because blocks or code from it are used in your project. Remove them and try again."),
-                hideCancel: true,
-                agreeLbl: lf("OK"),
-                hasCloseIcon: true
-            });
-            return;
+            restrictionReason = lf("This extension cannot be updated or removed because blocks or code from it are used in your project. Remove them and try again.");
         }
 
         const transitiveDependents = getTransitiveDependents(dependency.name);
-        if (transitiveDependents.length) {
+        if (!restrictionReason && transitiveDependents.length) {
             const dependentNames = transitiveDependents.map(dependent =>
                 dependent.config?.displayName || dependent.config?.name || dependent.id
             );
-            const body = dependentNames.length === 1
-                ? lf("Removing {0} as a direct dependency would not remove it from this project because {1} also depends on it. Remove {1} first.", displayName, dependentNames[0])
-                : lf("Removing {0} as a direct dependency would not remove it from this project because these extensions also depend on it: {1}. Remove them first.", displayName, dependentNames.join(", "));
-            await core.confirmAsync({
-                header: lf("Cannot remove {0} extension", displayName),
-                body,
-                hideCancel: true,
-                agreeLbl: lf("OK"),
-                hasCloseIcon: true
-            });
-            return;
+            restrictionReason = dependentNames.length === 1
+                ? lf("This extension cannot be updated or removed because {0} also depends on it. Remove {0} first.", dependentNames[0])
+                : lf("This extension cannot be updated or removed because these extensions also depend on it: {0}. Remove them first.", dependentNames.join(", "));
         }
 
         const latestVersion = await getAvailableExtensionUpdateAsync(dependency.name);
-        const action = await core.confirmAsync(latestVersion ? {
+        const canChangeExtension = !restrictionReason;
+        const updateLabel = latestVersion ? lf("Update extension") : lf("Up to date");
+        const updateUnavailableReason = restrictionReason || !latestVersion && lf("This extension is up to date.");
+
+        await core.dialogAsync({
             header: lf("{0} extension", displayName),
-            body: lf("A newer version ({0}) is available. Would you like to update or remove this extension?", latestVersion),
-            agreeIcon: "refresh",
-            agreeLbl: lf("Update extension"),
-            deleteLbl: lf("Remove extension"),
-            hasCloseIcon: true
-        } : {
-            header: lf("Remove {0} extension?", displayName),
-            body: lf("Do you want to remove this extension from your project?"),
-            agreeClass: "red",
-            agreeIcon: "trash",
-            agreeLbl: lf("Remove extension"),
+            jsx: <>
+                {latestVersion && <p>{lf("A newer version ({0}) is available.", latestVersion)}</p>}
+                <p>{restrictionReason || (latestVersion
+                    ? lf("Choose whether to update or remove this extension.")
+                    : lf("This extension is up to date. You can remove it if you no longer need it."))}</p>
+            </>,
+            buttons: [{
+                label: updateLabel,
+                icon: latestVersion ? "refresh" : "check",
+                disabled: !latestVersion || !canChangeExtension,
+                title: updateUnavailableReason || lf("Update {0} to {1}", displayName, latestVersion),
+                ariaLabel: updateUnavailableReason
+                    ? lf("{0}. {1}", updateLabel, updateUnavailableReason)
+                    : lf("Update {0} extension to {1}", displayName, latestVersion),
+                onclick: () => updateExtensionAsync(dependency.name, displayName, latestVersion)
+            }, {
+                label: lf("Remove extension"),
+                icon: "trash",
+                className: "delete red",
+                disabled: !canChangeExtension,
+                title: restrictionReason || lf("Remove {0} extension", displayName),
+                ariaLabel: restrictionReason
+                    ? lf("Remove extension unavailable. {0}", restrictionReason)
+                    : lf("Remove {0} extension", displayName),
+                onclick: () => removeExtensionAsync(dependency.name, displayName)
+            }],
             hasCloseIcon: true
         });
-        if (!action) return;
+    }
 
-        if (latestVersion && action === 1) {
-            await updateExtensionAsync(dependency.name, displayName, latestVersion);
-            return;
-        }
-
+    async function removeExtensionAsync(dependencyName: string, displayName: string): Promise<void> {
         props.hideExtensions();
         core.showLoading("removingextension", lf("Removing extension..."));
         try {
@@ -480,7 +481,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                 phase: "before",
                 extensionName: displayName
             });
-            await pkg.mainEditorPkg().removeDepAsync(dependency.name);
+            await pkg.mainEditorPkg().removeDepAsync(dependencyName);
             await workspace.saveSnapshotAsync(props.header.id, {
                 type: "extension-removed",
                 phase: "after",
