@@ -33,6 +33,7 @@ interface TimelineEntry {
 interface TimeEntry {
     label: string;
     timeLabel: string;
+    description?: string;
     timestamp: number;
     kind: "snapshot" | "diff" | "share";
     event?: SnapshotEvent;
@@ -358,7 +359,7 @@ export const TimeMachine = (props: TimeMachineProps) => {
                                             title = lf("Select shared version from {0} at {1}", e.label, entry.timeLabel);
                                         }
                                         else if (entry.event) {
-                                            title = lf("Select project version: {0}", entry.label);
+                                            title = entry.description;
                                         }
                                         else {
                                             title = lf("Select project version from {0} at {1}", e.label, entry.label);
@@ -369,10 +370,15 @@ export const TimeMachine = (props: TimeMachineProps) => {
                                                 key={index}
                                                 id={timeEntryId(entry, index)}
                                                 onClick={() => onTimeSelected(entry)}
-                                                className={classList(isSelected && "selected", entry.kind)}
+                                                className={classList(isSelected && "selected", entry.kind, entry.event && "extension-event")}
                                                 title={title}
+                                                ariaLabel={entry.event ? entry.description : undefined}
                                                 label={entry.label}
-                                                leftIcon={entry.kind === "share" ? "fas fa-share-alt" : undefined}
+                                                leftIcon={entry.event
+                                                    ? snapshotEventIcon(entry.event)
+                                                    : entry.kind === "share"
+                                                        ? "fas fa-share-alt"
+                                                        : undefined}
                                             />
                                         );
                                     }
@@ -513,11 +519,12 @@ function getTimelineEntries(history: HistoryFile): TimelineEntry[] {
 
         buckets[key].push({
             label: event
-                ? snapshotEventLabel(event, timeLabel)
+                ? snapshotEventLabel(event)
                 : share
                     ? lf("Shared version ({0})", timeLabel)
                     : timeLabel,
             timeLabel,
+            description: event ? snapshotEventDescription(event, timeLabel) : undefined,
             timestamp,
             kind,
             event,
@@ -615,7 +622,22 @@ function getShareUrl(entry?: TimeEntry): string | undefined {
     return `${rootUrl}${entry.shareId}`;
 }
 
-function snapshotEventLabel(event: SnapshotEvent, timeLabel: string): string {
+function snapshotEventLabel(event: SnapshotEvent): string {
+    return event.phase === "before"
+        ? lf("{0} (before)", event.extensionName)
+        : event.extensionName;
+}
+
+function snapshotEventIcon(event: SnapshotEvent): string {
+    switch (event.type) {
+        case "extension-added": return "fas fa-plus";
+        case "extension-removed": return "fas fa-minus";
+        case "extension-updated": return "fas fa-sync";
+        default: return "fas fa-history";
+    }
+}
+
+function snapshotEventDescription(event: SnapshotEvent, timeLabel: string): string {
     if (event.type === "extension-removed") {
         return event.phase === "before"
             ? lf("Before removing {0} extension ({1})", event.extensionName, timeLabel)
