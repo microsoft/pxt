@@ -19,7 +19,7 @@ import U = pxt.Util;
 import Cloud = pxt.Cloud;
 
 import * as pxtblockly from "../../pxtblocks";
-import { getTextAtTime, HistoryFile } from "../../pxteditor/history";
+import { getTextAtTime, HistoryFile, SnapshotEvent } from "../../pxteditor/history";
 import { Milestones } from "./constants";
 
 
@@ -330,11 +330,11 @@ export async function getTextAsync(id: string, getSavedText = false): Promise<Sc
     });
 }
 
-export async function saveSnapshotAsync(id: string): Promise<void> {
+export async function saveSnapshotAsync(id: string, event?: SnapshotEvent, snapshotText?: ScriptText): Promise<void> {
     await enqueueHistoryOperationAsync(
         id,
         text => {
-            pxteditor.history.pushSnapshotOnHistory(text, Date.now())
+            pxteditor.history.pushSnapshotOnHistory(text, Date.now(), event, snapshotText)
         }
     );
 }
